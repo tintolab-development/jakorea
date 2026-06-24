@@ -5,6 +5,7 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { WageItemRateResponse } from './wageItemRateResponse';
 
 export interface WageItemResponse {
   id?: number;
@@ -13,4 +14,11 @@ export interface WageItemResponse {
   amount?: number;
   calculationUnit?: string;
   editableYn?: boolean;
+  iconKey?: string;
+  emojiOverride?: string;
+  layout?: string;
+  basisHours?: number;
+  maxLimitWon?: number;
+  qualificationLines?: string[];
+  rateItems?: WageItemRateResponse[];
 }

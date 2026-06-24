@@ -9,4 +9,6 @@
 export type UnauthorizedResponseError = {
   code?: unknown;
   message?: unknown;
+  field?: unknown;
+  traceId?: unknown;
 };

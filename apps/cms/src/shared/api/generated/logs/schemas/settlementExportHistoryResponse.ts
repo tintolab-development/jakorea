@@ -22,4 +22,6 @@ export interface SettlementExportHistoryResponse {
   failureReason?: string;
   requestedAt?: string;
   completedAt?: string;
+  downloadUrl?: string;
+  pollingStatus?: string;
 }

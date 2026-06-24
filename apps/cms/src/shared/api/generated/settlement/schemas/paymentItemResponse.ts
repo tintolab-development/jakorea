@@ -12,4 +12,8 @@ export interface PaymentItemResponse {
   maxAmount?: number;
   taxableYn?: boolean;
   useYn?: boolean;
+  iconKey?: string;
+  emojiOverride?: string;
+  layout?: string;
+  maxLimitWon?: number;
 }

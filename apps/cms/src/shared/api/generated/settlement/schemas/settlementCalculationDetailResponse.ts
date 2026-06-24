@@ -11,4 +11,12 @@ export interface SettlementCalculationDetailResponse {
   calculationType?: string;
   basisJson?: string;
   resultAmount?: number;
+  layout?: string;
+  uiTitle?: string;
+  formulaText?: string;
+  lineLabels?: string[];
+  formulaLines?: string[];
+  summaryLabels?: string[];
+  iconKey?: string;
+  emojiOverride?: string;
 }

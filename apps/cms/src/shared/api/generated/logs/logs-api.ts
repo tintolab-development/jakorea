@@ -30,7 +30,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
- * - 호출 방식: `PATCH /api/logs/system-issues/{issueId}/status`
+ * - 호출 방식: `PATCH /api/admin/logs/system-issues/{issueId}/status`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: query/path/요청 본문 from 화면 필터
@@ -74,7 +74,7 @@ const updateSystemIssueStatus = (
     systemIssueStatusUpdateRequest?: SystemIssueStatusUpdateRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSystemIssueStatusResponse>>,) => {
       return customInstance<ApiResponseSystemIssueStatusResponse>(
-      {url: `/api/logs/system-issues/${issueId}/status`, method: 'PATCH',
+      {url: `/api/admin/logs/system-issues/${issueId}/status`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: systemIssueStatusUpdateRequest
     },
@@ -87,7 +87,7 @@ const updateSystemIssueStatus = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
- * - 호출 방식: `GET /api/logs/system-issues`
+ * - 호출 방식: `GET /api/admin/logs/system-issues`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: query/path/요청 본문 from 화면 필터
@@ -130,7 +130,7 @@ const systemIssueLogs = (
     params: SystemIssueLogsParams,
  options?: SecondParameter<typeof customInstance<BugIssueLogFrontendResponse[]>>,) => {
       return customInstance<BugIssueLogFrontendResponse[]>(
-      {url: `/api/logs/system-issues`, method: 'GET',
+      {url: `/api/admin/logs/system-issues`, method: 'GET',
         params
     },
       options);
@@ -142,7 +142,7 @@ const systemIssueLogs = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
- * - 호출 방식: `GET /api/logs/system-issues/{issueId}`
+ * - 호출 방식: `GET /api/admin/logs/system-issues/{issueId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: query/path/요청 본문 from 화면 필터
@@ -185,7 +185,7 @@ const systemIssueDetail = (
     issueId: number,
  options?: SecondParameter<typeof customInstance<SystemIssueDetailResponse>>,) => {
       return customInstance<SystemIssueDetailResponse>(
-      {url: `/api/logs/system-issues/${issueId}`, method: 'GET'
+      {url: `/api/admin/logs/system-issues/${issueId}`, method: 'GET'
     },
       options);
     }
@@ -196,7 +196,7 @@ const systemIssueDetail = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
- * - 호출 방식: `GET /api/logs/privacy-access`
+ * - 호출 방식: `GET /api/admin/logs/privacy-access`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: query/path/요청 본문 from 화면 필터
@@ -239,7 +239,7 @@ const privacyAccessLogs = (
     params: PrivacyAccessLogsParams,
  options?: SecondParameter<typeof customInstance<PersonalInfoAccessLogFrontendResponse[]>>,) => {
       return customInstance<PersonalInfoAccessLogFrontendResponse[]>(
-      {url: `/api/logs/privacy-access`, method: 'GET',
+      {url: `/api/admin/logs/privacy-access`, method: 'GET',
         params
     },
       options);
@@ -251,7 +251,7 @@ const privacyAccessLogs = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
- * - 호출 방식: `GET /api/logs/file-access`
+ * - 호출 방식: `GET /api/admin/logs/file-access`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: query/path/요청 본문 from 화면 필터
@@ -294,7 +294,7 @@ const fileAccessLogs = (
     params: FileAccessLogsParams,
  options?: SecondParameter<typeof customInstance<DownloadLogFrontendResponse[]>>,) => {
       return customInstance<DownloadLogFrontendResponse[]>(
-      {url: `/api/logs/file-access`, method: 'GET',
+      {url: `/api/admin/logs/file-access`, method: 'GET',
         params
     },
       options);

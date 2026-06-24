@@ -6,10 +6,10 @@
  * OpenAPI spec version: v9
  */
 import type { ValidationErrorResponseError } from './validationErrorResponseError';
-import type { ValidationErrorResponseMeta } from './validationErrorResponseMeta';
 
 export type ValidationErrorResponse = {
   success?: unknown;
+  data?: unknown;
+  message?: unknown;
   error?: ValidationErrorResponseError;
-  meta?: ValidationErrorResponseMeta;
 };

@@ -6,10 +6,10 @@
  * OpenAPI spec version: v9
  */
 import type { ConflictResponseError } from './conflictResponseError';
-import type { ConflictResponseMeta } from './conflictResponseMeta';
 
 export type ConflictResponse = {
   success?: unknown;
+  data?: unknown;
+  message?: unknown;
   error?: ConflictResponseError;
-  meta?: ConflictResponseMeta;
 };

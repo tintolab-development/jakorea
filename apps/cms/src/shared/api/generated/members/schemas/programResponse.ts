@@ -63,6 +63,7 @@ export interface ProgramResponse {
   additionalContentHtml?: string;
   recruitmentGuide?: string;
   learningSupportContent?: string;
+  serviceDetailJson?: string;
   attachmentFileNames?: string[];
   adminAssignments?: ProgramAdminAssignmentResponse[];
   schedules?: ProgramScheduleResponse[];

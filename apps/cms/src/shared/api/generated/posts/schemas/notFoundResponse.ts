@@ -6,10 +6,10 @@
  * OpenAPI spec version: v9
  */
 import type { NotFoundResponseError } from './notFoundResponseError';
-import type { NotFoundResponseMeta } from './notFoundResponseMeta';
 
 export type NotFoundResponse = {
   success?: unknown;
+  data?: unknown;
+  message?: unknown;
   error?: NotFoundResponseError;
-  meta?: NotFoundResponseMeta;
 };

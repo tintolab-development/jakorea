@@ -5,6 +5,7 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { WageItemRateUpsertRequest } from './wageItemRateUpsertRequest';
 
 export interface WageItemUpsertRequest {
   id?: number;
@@ -13,4 +14,5 @@ export interface WageItemUpsertRequest {
   amount?: number;
   calculationUnit?: string;
   editableYn?: boolean;
+  rateItems?: WageItemRateUpsertRequest[];
 }

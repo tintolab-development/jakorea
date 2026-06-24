@@ -8,10 +8,13 @@
 import type {
   ApiResponse,
   ApiResponseDashboardWidgetProgramFiltersSaveResponse,
+  ApiResponseNotificationReadAllResponse,
   DashboardHomeResponse,
   DashboardKpiProgressListResponse,
   DashboardKpiProgressParams,
   DashboardLogAlertListResponse,
+  DashboardMePreferencesRequest,
+  DashboardMePreferencesResponse,
   DashboardPreferencesResponse,
   DashboardPreferencesSaveRequest,
   DashboardProgramInquiriesParams,
@@ -20,12 +23,17 @@ import type {
   DashboardProgramSchedulesParams,
   DashboardRecruitmentListResponse,
   DashboardRecruitmentsParams,
+  DashboardShortcutBadgeReadRequest,
+  DashboardShortcutBadgeReadResponse,
+  DashboardShortcutBadgesResponse,
   DashboardShortcutListResponse,
   DashboardShortcutVisibilitySaveRequest,
   DashboardWidgetLayoutSaveRequest,
   DashboardWidgetListResponse,
   DashboardWidgetProgramFiltersResponse,
   NotificationUnreadCountResponse,
+  NotificationsParams,
+  PageResponse,
   WidgetProgramFiltersSaveRequest
 } from './schemas';
 
@@ -36,6 +44,112 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
   export const getJAKoreaCMSBackendAPIDashboardSubset = () => {
+/**
+ * ### 이 API가 하는 일
+ * - 내 대시보드 환경설정 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/me/dashboard-preferences`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: DASHBOARD_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수 아님
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend dashboard home preferences API handoff
+ * @summary 내 대시보드 환경설정 조회
+ */
+const getDashboardPreferences = (
+
+ options?: SecondParameter<typeof customInstance<DashboardMePreferencesResponse>>,) => {
+      return customInstance<DashboardMePreferencesResponse>(
+      {url: `/api/me/dashboard-preferences`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 내 대시보드 환경설정 저장 revision 낙관적 잠금
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `PUT /api/me/dashboard-preferences`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: DASHBOARD_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend dashboard home preferences API handoff
+ * @summary 내 대시보드 환경설정 저장 revision 낙관적 잠금
+ */
+const saveDashboardPreferences = (
+    dashboardMePreferencesRequest: DashboardMePreferencesRequest,
+ options?: SecondParameter<typeof customInstance<DashboardMePreferencesResponse>>,) => {
+      return customInstance<DashboardMePreferencesResponse>(
+      {url: `/api/me/dashboard-preferences`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: dashboardMePreferencesRequest
+    },
+      options);
+    }
+
 /**
  * ### 이 API가 하는 일
  * - 위젯별 프로그램 필터 조회
@@ -358,13 +472,445 @@ const dashboardPreferences = (
  * - 검토 메모: 프론트 localStorage 기반 대시보드 설정을 백엔드 계정별 저장값으로 전환
  * @summary 대시보드 개인화 설정 저장
  */
-const saveDashboardPreferences = (
+const saveDashboardPreferences1 = (
     dashboardPreferencesSaveRequest?: DashboardPreferencesSaveRequest,
  options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
       return customInstance<ApiResponse>(
       {url: `/api/admin/dashboard/preferences`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: dashboardPreferencesSaveRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 내 대시보드 바로가기 배지 읽음 처리
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/me/dashboard-shortcut-badges/{shortcutId}/read`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: DASHBOARD_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend dashboard badge read API handoff
+ * @summary 내 대시보드 바로가기 배지 읽음 처리
+ */
+const readDashboardShortcutBadge = (
+    shortcutId: string,
+    dashboardShortcutBadgeReadRequest?: DashboardShortcutBadgeReadRequest,
+ options?: SecondParameter<typeof customInstance<DashboardShortcutBadgeReadResponse>>,) => {
+      return customInstance<DashboardShortcutBadgeReadResponse>(
+      {url: `/api/me/dashboard-shortcut-badges/${shortcutId}/read`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: dashboardShortcutBadgeReadRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 알림 읽음 처리
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - 프론트 담당 영역: notifications (`notifications`)
+ * - 호출 방식: `PATCH /api/admin/notifications/{recipientId}/read`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `patch_admin_notifications_recipientId_read`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 알림 읽음 처리
+ */
+const markRead1 = (
+    recipientId: number,
+ options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
+      return customInstance<ApiResponse>(
+      {url: `/api/admin/notifications/${recipientId}/read`, method: 'PATCH'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 관리자 알림 숨김 처리
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - 프론트 담당 영역: notifications (`notifications`)
+ * - 호출 방식: `PATCH /api/admin/notifications/{recipientId}/hidden`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `patch_admin_notifications_recipientId_hidden`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: MIXED 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 관리자 알림 숨김 처리
+ */
+const hide = (
+    recipientId: number,
+ options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
+      return customInstance<ApiResponse>(
+      {url: `/api/admin/notifications/${recipientId}/hidden`, method: 'PATCH'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 관리자 알림 클릭 처리
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - 프론트 담당 영역: notifications (`notifications`)
+ * - 호출 방식: `PATCH /api/admin/notifications/{recipientId}/clicked`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `patch_admin_notifications_recipientId_clicked`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: MIXED 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 관리자 알림 클릭 처리
+ */
+const markClicked = (
+    recipientId: number,
+ options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
+      return customInstance<ApiResponse>(
+      {url: `/api/admin/notifications/${recipientId}/clicked`, method: 'PATCH'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 내 알림 전체 읽음 처리
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - 프론트 담당 영역: notifications (`notifications`)
+ * - 호출 방식: `PATCH /api/admin/notifications/read-all`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `patch_admin_notifications_read-all`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: -
+ * @summary 내 알림 전체 읽음 처리
+ */
+const readAllNotifications = (
+
+ options?: SecondParameter<typeof customInstance<ApiResponseNotificationReadAllResponse>>,) => {
+      return customInstance<ApiResponseNotificationReadAllResponse>(
+      {url: `/api/admin/notifications/read-all`, method: 'PATCH'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 내 대시보드 바로가기 배지 조회
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `GET /api/me/dashboard-shortcut-badges`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: DASHBOARD_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수 아님
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend dashboard badge aggregate API handoff
+ * @summary 내 대시보드 바로가기 배지 조회
+ */
+const getDashboardShortcutBadges = (
+
+ options?: SecondParameter<typeof customInstance<DashboardShortcutBadgesResponse>>,) => {
+      return customInstance<DashboardShortcutBadgesResponse>(
+      {url: `/api/me/dashboard-shortcut-badges`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 내 웹 내부 알림 목록
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - 프론트 담당 영역: notifications (`notifications`)
+ * - 호출 방식: `GET /api/admin/notifications`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_notifications`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수 아님
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 내 웹 내부 알림 목록
+ */
+const notifications = (
+    params?: NotificationsParams,
+ options?: SecondParameter<typeof customInstance<PageResponse>>,) => {
+      return customInstance<PageResponse>(
+      {url: `/api/admin/notifications`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 내 미읽음 알림 수
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
+ * - 프론트 담당 영역: notifications (`notifications`)
+ * - 호출 방식: `GET /api/admin/notifications/unread-count`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_notifications_unread-count`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요
+ * - 스테이징 점검 기준: REQUIRED
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: NOTIFICATION_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수 아님
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: -
+ * @summary 내 미읽음 알림 수
+ */
+const unreadNotificationCount = (
+
+ options?: SecondParameter<typeof customInstance<NotificationUnreadCountResponse>>,) => {
+      return customInstance<NotificationUnreadCountResponse>(
+      {url: `/api/admin/notifications/unread-count`, method: 'GET'
     },
       options);
     }
@@ -859,13 +1405,23 @@ const dashboardHome = (
       options);
     }
 
-return {getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardLogAlerts,dashboardKpiProgress,dashboardHome}};
+return {getDashboardPreferences,saveDashboardPreferences,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,readDashboardShortcutBadge,markRead1,hide,markClicked,readAllNotifications,getDashboardShortcutBadges,notifications,unreadNotificationCount,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardLogAlerts,dashboardKpiProgress,dashboardHome}};
+export type GetDashboardPreferencesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getDashboardPreferences']>>>
+export type SaveDashboardPreferencesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveDashboardPreferences']>>>
 export type GetWidgetProgramFiltersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getWidgetProgramFilters']>>>
 export type SaveWidgetProgramFiltersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveWidgetProgramFilters']>>>
 export type SaveDashboardWidgetLayoutResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveDashboardWidgetLayout']>>>
 export type SaveDashboardShortcutVisibilityResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveDashboardShortcutVisibility']>>>
 export type DashboardPreferencesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardPreferences']>>>
-export type SaveDashboardPreferencesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveDashboardPreferences']>>>
+export type SaveDashboardPreferences1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['saveDashboardPreferences1']>>>
+export type ReadDashboardShortcutBadgeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['readDashboardShortcutBadge']>>>
+export type MarkRead1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['markRead1']>>>
+export type HideResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['hide']>>>
+export type MarkClickedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['markClicked']>>>
+export type ReadAllNotificationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['readAllNotifications']>>>
+export type GetDashboardShortcutBadgesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getDashboardShortcutBadges']>>>
+export type NotificationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['notifications']>>>
+export type UnreadNotificationCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['unreadNotificationCount']>>>
 export type DashboardWidgetsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardWidgets']>>>
 export type DashboardShortcutsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardShortcuts']>>>
 export type DashboardRecruitmentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardRecruitments']>>>

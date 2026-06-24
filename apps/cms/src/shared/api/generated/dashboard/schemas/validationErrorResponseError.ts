@@ -9,4 +9,6 @@
 export type ValidationErrorResponseError = {
   code?: unknown;
   message?: unknown;
+  field?: unknown;
+  traceId?: unknown;
 };

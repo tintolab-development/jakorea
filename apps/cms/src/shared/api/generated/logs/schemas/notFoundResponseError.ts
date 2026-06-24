@@ -9,4 +9,6 @@
 export type NotFoundResponseError = {
   code?: unknown;
   message?: unknown;
+  field?: unknown;
+  traceId?: unknown;
 };

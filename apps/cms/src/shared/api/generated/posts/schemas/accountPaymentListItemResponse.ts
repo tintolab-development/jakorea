@@ -18,4 +18,8 @@ export interface AccountPaymentListItemResponse {
   netPaymentAmount?: number;
   scheduledPaymentDate?: string;
   paidAt?: string;
+  sourceType?: string;
+  sourceId?: number;
+  programId?: number;
+  memberId?: number;
 }

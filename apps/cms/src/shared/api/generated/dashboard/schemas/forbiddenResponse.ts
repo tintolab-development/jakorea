@@ -6,10 +6,10 @@
  * OpenAPI spec version: v9
  */
 import type { ForbiddenResponseError } from './forbiddenResponseError';
-import type { ForbiddenResponseMeta } from './forbiddenResponseMeta';
 
 export type ForbiddenResponse = {
   success?: unknown;
+  data?: unknown;
+  message?: unknown;
   error?: ForbiddenResponseError;
-  meta?: ForbiddenResponseMeta;
 };

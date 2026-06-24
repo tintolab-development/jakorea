@@ -10,6 +10,8 @@
  * 관리자 MFA challenge 응답
  */
 export interface AdminMfaChallengeResponse {
+  /** 관리자 MFA 필요 여부 */
+  requiresMfa?: boolean;
   /** MFA 검증에 사용할 challenge UUID */
   challengeUuid?: string;
   /** MFA 방식 */

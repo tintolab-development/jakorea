@@ -9,4 +9,6 @@
 export type ForbiddenResponseError = {
   code?: unknown;
   message?: unknown;
+  field?: unknown;
+  traceId?: unknown;
 };

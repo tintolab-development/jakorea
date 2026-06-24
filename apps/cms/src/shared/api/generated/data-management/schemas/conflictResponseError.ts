@@ -9,4 +9,6 @@
 export type ConflictResponseError = {
   code?: unknown;
   message?: unknown;
+  field?: unknown;
+  traceId?: unknown;
 };

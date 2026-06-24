@@ -20,16 +20,16 @@ export async function fetchTextbookRemote(id: string): Promise<TextbookResponse>
 }
 
 export async function createTextbookRemote(body: TextbookRequest): Promise<TextbookResponse> {
-  return unwrapApiBody(await dmApi.create2(body))
+  return unwrapApiBody(await dmApi.create(body))
 }
 
 export async function updateTextbookRemote(
   id: string,
   body: TextbookRequest
 ): Promise<TextbookResponse> {
-  return unwrapApiBody(await dmApi.update1(id, body))
+  return unwrapApiBody(await dmApi.update(id, body))
 }
 
 export async function deleteTextbookRemote(id: string): Promise<void> {
-  await dmApi.delete1(id)
+  await dmApi._delete(id)
 }

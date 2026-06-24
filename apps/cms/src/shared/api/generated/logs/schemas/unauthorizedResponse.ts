@@ -6,10 +6,10 @@
  * OpenAPI spec version: v9
  */
 import type { UnauthorizedResponseError } from './unauthorizedResponseError';
-import type { UnauthorizedResponseMeta } from './unauthorizedResponseMeta';
 
 export type UnauthorizedResponse = {
   success?: unknown;
+  data?: unknown;
+  message?: unknown;
   error?: UnauthorizedResponseError;
-  meta?: UnauthorizedResponseMeta;
 };

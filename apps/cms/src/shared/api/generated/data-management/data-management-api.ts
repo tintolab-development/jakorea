@@ -58,11 +58,122 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
   export const getJAKoreaCMSBackendAPIDataManagementSubset = () => {
 /**
  * ### 이 API가 하는 일
+ * - 교재 목록 조회
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - 프론트 담당 영역: master-data (`master-data`)
+ * - 호출 방식: `GET /api/admin/textbooks`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
+ * - 프론트 조회 키: `get_admin_textbooks`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MASTER_DATA_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수 아님
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 교재 목록 조회
+ */
+const textbooks = (
+    params?: TextbooksParams,
+ options?: SecondParameter<typeof customInstance<PageResponseTextbookResponse>>,) => {
+      return customInstance<PageResponseTextbookResponse>(
+      {url: `/api/admin/textbooks`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 교재 등록
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - 프론트 담당 영역: master-data (`master-data`)
+ * - 호출 방식: `POST /api/admin/textbooks`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
+ * - 프론트 조회 키: `post_admin_textbooks`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MASTER_DATA_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 교재 등록
+ */
+const create = (
+    textbookRequest: TextbookRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseTextbookResponse>>,) => {
+      return customInstance<ApiResponseTextbookResponse>(
+      {url: `/api/admin/textbooks`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: textbookRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 후원사 목록 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `GET /api/sponsors`
+ * - 호출 방식: `GET /api/admin/sponsors`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
@@ -105,7 +216,7 @@ const sponsors = (
     params?: SponsorsParams,
  options?: SecondParameter<typeof customInstance<SponsorResponse[]>>,) => {
       return customInstance<SponsorResponse[]>(
-      {url: `/api/sponsors`, method: 'GET',
+      {url: `/api/admin/sponsors`, method: 'GET',
         params
     },
       options);
@@ -117,7 +228,7 @@ const sponsors = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `POST /api/sponsors`
+ * - 호출 방식: `POST /api/admin/sponsors`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -156,11 +267,11 @@ const sponsors = (
  * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
  * @summary 후원사 등록
  */
-const create = (
+const create1 = (
     sponsorRequest: SponsorRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSponsorResponse>>,) => {
       return customInstance<ApiResponseSponsorResponse>(
-      {url: `/api/sponsors`, method: 'POST',
+      {url: `/api/admin/sponsors`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: sponsorRequest
     },
@@ -173,7 +284,7 @@ const create = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `GET /api/sponsors/{sponsorId}/yearly-businesses`
+ * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/yearly-businesses`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
@@ -216,7 +327,7 @@ const yearlyBusinesses = (
     sponsorId: number,
  options?: SecondParameter<typeof customInstance<SponsorYearlyBusinessResponse[]>>,) => {
       return customInstance<SponsorYearlyBusinessResponse[]>(
-      {url: `/api/sponsors/${sponsorId}/yearly-businesses`, method: 'GET'
+      {url: `/api/admin/sponsors/${sponsorId}/yearly-businesses`, method: 'GET'
     },
       options);
     }
@@ -227,7 +338,7 @@ const yearlyBusinesses = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `POST /api/sponsors/{sponsorId}/yearly-businesses`
+ * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/yearly-businesses`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -271,7 +382,7 @@ const addYearlyBusiness = (
     sponsorYearlyBusinessRequest: SponsorYearlyBusinessRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSponsorYearlyBusinessResponse>>,) => {
       return customInstance<ApiResponseSponsorYearlyBusinessResponse>(
-      {url: `/api/sponsors/${sponsorId}/yearly-businesses`, method: 'POST',
+      {url: `/api/admin/sponsors/${sponsorId}/yearly-businesses`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: sponsorYearlyBusinessRequest
     },
@@ -284,7 +395,7 @@ const addYearlyBusiness = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `POST /api/sponsors/{sponsorId}/end`
+ * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/end`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -327,7 +438,7 @@ const end = (
     sponsorId: number,
  options?: SecondParameter<typeof customInstance<ApiResponseSponsorResponse>>,) => {
       return customInstance<ApiResponseSponsorResponse>(
-      {url: `/api/sponsors/${sponsorId}/end`, method: 'POST'
+      {url: `/api/admin/sponsors/${sponsorId}/end`, method: 'POST'
     },
       options);
     }
@@ -338,7 +449,7 @@ const end = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `GET /api/sponsors/{sponsorId}/contacts`
+ * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/contacts`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
@@ -381,7 +492,7 @@ const contacts = (
     sponsorId: number,
  options?: SecondParameter<typeof customInstance<SponsorContactResponse[]>>,) => {
       return customInstance<SponsorContactResponse[]>(
-      {url: `/api/sponsors/${sponsorId}/contacts`, method: 'GET'
+      {url: `/api/admin/sponsors/${sponsorId}/contacts`, method: 'GET'
     },
       options);
     }
@@ -392,7 +503,7 @@ const contacts = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `POST /api/sponsors/{sponsorId}/contacts`
+ * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/contacts`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -436,120 +547,9 @@ const addContact = (
     sponsorContactRequest: SponsorContactRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSponsorContactResponse>>,) => {
       return customInstance<ApiResponseSponsorContactResponse>(
-      {url: `/api/sponsors/${sponsorId}/contacts`, method: 'POST',
+      {url: `/api/admin/sponsors/${sponsorId}/contacts`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: sponsorContactRequest
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 교재 목록 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
- * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `GET /api/cms/textbooks`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
- * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
- * - 프론트 조회 키: `get_admin_textbooks`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
- * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: MASTER_DATA_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
- * ### Swagger에서 확인할 때
- * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 교재 목록 조회
- */
-const textbooks = (
-    params?: TextbooksParams,
- options?: SecondParameter<typeof customInstance<PageResponseTextbookResponse>>,) => {
-      return customInstance<PageResponseTextbookResponse>(
-      {url: `/api/cms/textbooks`, method: 'GET',
-        params
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 교재 등록
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
- * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `POST /api/cms/textbooks`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 폼 상태 or 선택 행 action payload
- * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
- * - 프론트 조회 키: `post_admin_textbooks`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
- * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: MASTER_DATA_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 교재 등록
- */
-const create2 = (
-    textbookRequest: TextbookRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseTextbookResponse>>,) => {
-      return customInstance<ApiResponseTextbookResponse>(
-      {url: `/api/cms/textbooks`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: textbookRequest
     },
       options);
     }
@@ -946,11 +946,176 @@ const create4 = (
 
 /**
  * ### 이 API가 하는 일
+ * - 교재 상세
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - 프론트 담당 영역: master-data (`master-data`)
+ * - 호출 방식: `GET /api/admin/textbooks/{textbookId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
+ * - 프론트 조회 키: `get_admin_textbooks_textbookId`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MASTER_DATA_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 교재 상세
+ */
+const textbook = (
+    textbookId: string,
+ options?: SecondParameter<typeof customInstance<TextbookResponse>>,) => {
+      return customInstance<TextbookResponse>(
+      {url: `/api/admin/textbooks/${textbookId}`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 교재 삭제
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - 프론트 담당 영역: master-data (`master-data`)
+ * - 호출 방식: `DELETE /api/admin/textbooks/{textbookId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
+ * - 프론트 조회 키: `delete_admin_textbooks_textbookId`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MASTER_DATA_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 교재 삭제
+ */
+const _delete = (
+    textbookId: string,
+ options?: SecondParameter<typeof customInstance<ApiResponseTextbookResponse>>,) => {
+      return customInstance<ApiResponseTextbookResponse>(
+      {url: `/api/admin/textbooks/${textbookId}`, method: 'DELETE'
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 교재 수정
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - 프론트 담당 영역: master-data (`master-data`)
+ * - 호출 방식: `PATCH /api/admin/textbooks/{textbookId}`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
+ * - 프론트 조회 키: `patch_admin_textbooks_textbookId`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MASTER_DATA_WRITE 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 교재 수정
+ */
+const update = (
+    textbookId: string,
+    textbookRequest: TextbookRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseTextbookResponse>>,) => {
+      return customInstance<ApiResponseTextbookResponse>(
+      {url: `/api/admin/textbooks/${textbookId}`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: textbookRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 후원사 상세 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `GET /api/sponsors/{sponsorId}`
+ * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
@@ -993,7 +1158,7 @@ const sponsor = (
     sponsorId: number,
  options?: SecondParameter<typeof customInstance<SponsorDetailResponse>>,) => {
       return customInstance<SponsorDetailResponse>(
-      {url: `/api/sponsors/${sponsorId}`, method: 'GET'
+      {url: `/api/admin/sponsors/${sponsorId}`, method: 'GET'
     },
       options);
     }
@@ -1004,7 +1169,7 @@ const sponsor = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `DELETE /api/sponsors/{sponsorId}`
+ * - 호출 방식: `DELETE /api/admin/sponsors/{sponsorId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -1043,11 +1208,11 @@ const sponsor = (
  * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
  * @summary 후원사 삭제
  */
-const _delete = (
+const delete1 = (
     sponsorId: number,
  options?: SecondParameter<typeof customInstance<ApiResponseSponsorDeleteResponse>>,) => {
       return customInstance<ApiResponseSponsorDeleteResponse>(
-      {url: `/api/sponsors/${sponsorId}`, method: 'DELETE'
+      {url: `/api/admin/sponsors/${sponsorId}`, method: 'DELETE'
     },
       options);
     }
@@ -1058,7 +1223,7 @@ const _delete = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `PATCH /api/sponsors/{sponsorId}`
+ * - 호출 방식: `PATCH /api/admin/sponsors/{sponsorId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -1097,12 +1262,12 @@ const _delete = (
  * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
  * @summary 후원사 수정
  */
-const update = (
+const update1 = (
     sponsorId: number,
     sponsorRequest: SponsorRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSponsorResponse>>,) => {
       return customInstance<ApiResponseSponsorResponse>(
-      {url: `/api/sponsors/${sponsorId}`, method: 'PATCH',
+      {url: `/api/admin/sponsors/${sponsorId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: sponsorRequest
     },
@@ -1115,7 +1280,7 @@ const update = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `DELETE /api/sponsors/yearly-businesses/{yearlyBusinessId}`
+ * - 호출 방식: `DELETE /api/admin/sponsors/yearly-businesses/{yearlyBusinessId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -1158,7 +1323,7 @@ const deleteYearlyBusiness = (
     yearlyBusinessId: number,
  options?: SecondParameter<typeof customInstance<ApiResponseDeleteResponse>>,) => {
       return customInstance<ApiResponseDeleteResponse>(
-      {url: `/api/sponsors/yearly-businesses/${yearlyBusinessId}`, method: 'DELETE'
+      {url: `/api/admin/sponsors/yearly-businesses/${yearlyBusinessId}`, method: 'DELETE'
     },
       options);
     }
@@ -1169,7 +1334,7 @@ const deleteYearlyBusiness = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `PATCH /api/sponsors/yearly-businesses/{yearlyBusinessId}`
+ * - 호출 방식: `PATCH /api/admin/sponsors/yearly-businesses/{yearlyBusinessId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -1213,7 +1378,7 @@ const updateYearlyBusiness = (
     sponsorYearlyBusinessRequest: SponsorYearlyBusinessRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSponsorYearlyBusinessResponse>>,) => {
       return customInstance<ApiResponseSponsorYearlyBusinessResponse>(
-      {url: `/api/sponsors/yearly-businesses/${yearlyBusinessId}`, method: 'PATCH',
+      {url: `/api/admin/sponsors/yearly-businesses/${yearlyBusinessId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: sponsorYearlyBusinessRequest
     },
@@ -1226,7 +1391,7 @@ const updateYearlyBusiness = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `DELETE /api/sponsors/contacts/{contactId}`
+ * - 호출 방식: `DELETE /api/admin/sponsors/contacts/{contactId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -1269,7 +1434,7 @@ const deleteContact = (
     contactId: number,
  options?: SecondParameter<typeof customInstance<ApiResponseDeleteResponse>>,) => {
       return customInstance<ApiResponseDeleteResponse>(
-      {url: `/api/sponsors/contacts/${contactId}`, method: 'DELETE'
+      {url: `/api/admin/sponsors/contacts/${contactId}`, method: 'DELETE'
     },
       options);
     }
@@ -1280,7 +1445,7 @@ const deleteContact = (
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `PATCH /api/sponsors/contacts/{contactId}`
+ * - 호출 방식: `PATCH /api/admin/sponsors/contacts/{contactId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -1324,174 +1489,9 @@ const updateContact = (
     sponsorContactRequest: SponsorContactRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSponsorContactResponse>>,) => {
       return customInstance<ApiResponseSponsorContactResponse>(
-      {url: `/api/sponsors/contacts/${contactId}`, method: 'PATCH',
+      {url: `/api/admin/sponsors/contacts/${contactId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: sponsorContactRequest
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 교재 상세
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
- * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `GET /api/cms/textbooks/{textbookId}`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
- * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
- * - 프론트 조회 키: `get_admin_textbooks_textbookId`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
- * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: MASTER_DATA_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
- * ### Swagger에서 확인할 때
- * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 교재 상세
- */
-const textbook = (
-    textbookId: string,
- options?: SecondParameter<typeof customInstance<TextbookResponse>>,) => {
-      return customInstance<TextbookResponse>(
-      {url: `/api/cms/textbooks/${textbookId}`, method: 'GET'
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 교재 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
- * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `DELETE /api/cms/textbooks/{textbookId}`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 폼 상태 or 선택 행 action payload
- * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
- * - 프론트 조회 키: `delete_admin_textbooks_textbookId`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
- * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: MASTER_DATA_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 교재 삭제
- */
-const delete1 = (
-    textbookId: string,
- options?: SecondParameter<typeof customInstance<ApiResponseTextbookResponse>>,) => {
-      return customInstance<ApiResponseTextbookResponse>(
-      {url: `/api/cms/textbooks/${textbookId}`, method: 'DELETE'
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 교재 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
- * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `PATCH /api/cms/textbooks/{textbookId}`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 폼 상태 or 선택 행 action payload
- * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
- * - 프론트 조회 키: `patch_admin_textbooks_textbookId`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
- * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: MASTER_DATA_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 교재 수정
- */
-const update1 = (
-    textbookId: string,
-    textbookRequest: TextbookRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseTextbookResponse>>,) => {
-      return customInstance<ApiResponseTextbookResponse>(
-      {url: `/api/cms/textbooks/${textbookId}`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: textbookRequest
     },
       options);
     }
@@ -1828,11 +1828,66 @@ const update3 = (
 
 /**
  * ### 이 API가 하는 일
+ * - 프로그램 등록용 교재 매칭 조회
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - 프론트 담당 영역: master-data (`master-data`)
+ * - 호출 방식: `GET /api/admin/textbooks/matches`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
+ * - 프론트 조회 키: `get_admin_textbooks_matches`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MASTER_DATA_READ 권한 필요
+ * - 접근 범위: 관리자 CMS 권한 범위
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수 아님
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
+ * ### Swagger에서 확인할 때
+ * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
+ * @summary 프로그램 등록용 교재 매칭 조회
+ */
+const matches = (
+    params?: MatchesParams,
+ options?: SecondParameter<typeof customInstance<TextbookMatchResponse[]>>,) => {
+      return customInstance<TextbookMatchResponse[]>(
+      {url: `/api/admin/textbooks/matches`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 후원사 프로그램 진행 이력 필터 목록
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data-sponsors (`master-data-sponsors`)
- * - 호출 방식: `GET /api/sponsors/{sponsorId}/program-histories`
+ * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/program-histories`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 후원사 상세 선택 sponsorId와 프로그램명/년도/진행현황/교육대상/담당자 필터
@@ -1876,62 +1931,7 @@ const programHistories = (
     params?: ProgramHistoriesParams,
  options?: SecondParameter<typeof customInstance<PageResponseSponsorProgramHistoryResponse>>,) => {
       return customInstance<PageResponseSponsorProgramHistoryResponse>(
-      {url: `/api/sponsors/${sponsorId}/program-histories`, method: 'GET',
-        params
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 프로그램 등록용 교재 매칭 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
- * - 프론트 담당 영역: master-data (`master-data`)
- * - 호출 방식: `GET /api/cms/textbooks/matches`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
- * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
- * - 프론트 조회 키: `get_admin_textbooks_matches`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: DATA_MANAGEMENT_QA_SIGNOFF
- * - 목데이터 대체: 임시 목데이터/localStorage 상태를 master-data API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: MASTER_DATA_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
- * ### Swagger에서 확인할 때
- * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 프로그램 등록용 교재 매칭 조회
- */
-const matches = (
-    params?: MatchesParams,
- options?: SecondParameter<typeof customInstance<TextbookMatchResponse[]>>,) => {
-      return customInstance<TextbookMatchResponse[]>(
-      {url: `/api/cms/textbooks/matches`, method: 'GET',
+      {url: `/api/admin/sponsors/${sponsorId}/program-histories`, method: 'GET',
         params
     },
       options);
@@ -2049,16 +2049,16 @@ const calculate = (
       options);
     }
 
-return {sponsors,create,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,textbooks,create2,kits,create3,versions,createVersion,addTargetCount,detailedPrograms,create4,sponsor,_delete,update,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,textbook,delete1,update1,kit,delete2,update2,detailedProgram,delete3,update3,programHistories,matches,currentKitCalculation,calculate}};
-export type SponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['sponsors']>>>
+return {textbooks,create,sponsors,create1,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,kits,create3,versions,createVersion,addTargetCount,detailedPrograms,create4,textbook,_delete,update,sponsor,delete1,update1,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,kit,delete2,update2,detailedProgram,delete3,update3,matches,programHistories,currentKitCalculation,calculate}};
+export type TextbooksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbooks']>>>
 export type CreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create']>>>
+export type SponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['sponsors']>>>
+export type Create1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create1']>>>
 export type YearlyBusinessesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['yearlyBusinesses']>>>
 export type AddYearlyBusinessResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addYearlyBusiness']>>>
 export type EndResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['end']>>>
 export type ContactsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['contacts']>>>
 export type AddContactResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addContact']>>>
-export type TextbooksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbooks']>>>
-export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create2']>>>
 export type KitsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['kits']>>>
 export type Create3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create3']>>>
 export type VersionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['versions']>>>
@@ -2066,23 +2066,23 @@ export type CreateVersionResult = NonNullable<Awaited<ReturnType<ReturnType<type
 export type AddTargetCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addTargetCount']>>>
 export type DetailedProgramsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['detailedPrograms']>>>
 export type Create4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create4']>>>
-export type SponsorResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['sponsor']>>>
+export type TextbookResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbook']>>>
 export type _DeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['_delete']>>>
 export type UpdateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update']>>>
+export type SponsorResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['sponsor']>>>
+export type Delete1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['delete1']>>>
+export type Update1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update1']>>>
 export type DeleteYearlyBusinessResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['deleteYearlyBusiness']>>>
 export type UpdateYearlyBusinessResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['updateYearlyBusiness']>>>
 export type DeleteContactResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['deleteContact']>>>
 export type UpdateContactResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['updateContact']>>>
-export type TextbookResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbook']>>>
-export type Delete1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['delete1']>>>
-export type Update1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update1']>>>
 export type KitResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['kit']>>>
 export type Delete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['delete2']>>>
 export type Update2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update2']>>>
 export type DetailedProgramResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['detailedProgram']>>>
 export type Delete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['delete3']>>>
 export type Update3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update3']>>>
-export type ProgramHistoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['programHistories']>>>
 export type MatchesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['matches']>>>
+export type ProgramHistoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['programHistories']>>>
 export type CurrentKitCalculationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['currentKitCalculation']>>>
 export type CalculateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['calculate']>>>

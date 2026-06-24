@@ -17,4 +17,8 @@ export interface SettlementCalendarItemResponse {
   paymentStatus?: string;
   expectedAmount?: number;
   completedAmount?: number;
+  slotStartTime?: string;
+  slotEndTime?: string;
+  calendarWeekGridLabel?: string;
+  aggregateKey?: string;
 }

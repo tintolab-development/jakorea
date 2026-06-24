@@ -6,10 +6,10 @@
  * OpenAPI spec version: v9
  */
 import type { ServerErrorResponseError } from './serverErrorResponseError';
-import type { ServerErrorResponseMeta } from './serverErrorResponseMeta';
 
 export type ServerErrorResponse = {
   success?: unknown;
+  data?: unknown;
+  message?: unknown;
   error?: ServerErrorResponseError;
-  meta?: ServerErrorResponseMeta;
 };

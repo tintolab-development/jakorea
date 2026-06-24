@@ -5,9 +5,10 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ErrorDetail } from './errorDetail';
 
 /**
- * 공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에 표준 오류 코드와 안전한 메시지를 담습니다.
+ * 공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.
  */
 export interface ApiResponseVoid {
   /** 요청 처리 성공 여부 */
@@ -18,8 +19,13 @@ export interface ApiResponseVoid {
      */
   data?: null;
   /**
-     * 오류 또는 안내 메시지. 오류 응답은 CODE: message 형식을 사용합니다.
+     * 오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.
      * @nullable
      */
   message?: string | null;
+  /**
+     * 구조화된 오류 정보. 성공 응답에서는 null입니다.
+     * @nullable
+     */
+  error?: ErrorDetail;
 }
