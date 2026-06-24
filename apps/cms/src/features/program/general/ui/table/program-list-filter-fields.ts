@@ -140,15 +140,17 @@ export const participantFilterFields = [
 export interface ResolveProgramListFilterFieldsParams {
   scheduledViewActive: boolean
   inProgressViewActive: boolean
+  completedViewActive: boolean
 }
 
 /** ProgramStatusWidget 4탭에 맞는 필터 필드 */
 export function resolveProgramListFilterFields({
   scheduledViewActive,
   inProgressViewActive,
+  completedViewActive,
 }: ResolveProgramListFilterFieldsParams) {
   if (scheduledViewActive) return programListScheduledFilterFields
-  if (inProgressViewActive) return programListInProgressFilterFields
+  if (inProgressViewActive || completedViewActive) return programListInProgressFilterFields
   return programListOverviewFilterFields
 }
 

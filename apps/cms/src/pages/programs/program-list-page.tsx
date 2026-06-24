@@ -30,12 +30,23 @@ import { useProgramListActions } from './use-program-list-actions'
 import { useSearchSync } from './use-search-sync'
 import { ProgramListModals } from './program-list-modals'
 import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal'
+import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
+import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
+import {
+  TemplateWritingPreviewProvider,
+  useTemplateWritingPreview,
+} from '@/features/template/context/template-writing-preview-context'
+import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
+import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 
 import './program-list-page.css'
-import { CmsButton, ConfirmModal } from '@/shared/ui'
+import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants'
+import { CmsButton, DeleteGuideModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 
-export function ProgramListPage() {
+const PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY = 'new'
+
+function ProgramListPageContent() {
   const { showAlert } = useCmsAlert()
   const navigate = useNavigate()
   const location = useLocation()
@@ -62,6 +73,7 @@ export function ProgramListPage() {
   } = useProgramListActions()
 
   const { searchParams, setSearchParams } = useSearchSync()
+  const { isWritingUserPreviewOpen, closeWritingUserPreview } = useTemplateWritingPreview()
 
   // 2. Local State
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
@@ -108,6 +120,10 @@ export function ProgramListPage() {
   )
 
   const pNorm = location.pathname.replace(/\/$/, '') || '/'
+  const isCompanySchoolRegistrationOpen =
+    programType === 'company_school' &&
+    (pNorm === '/programs/company-school' || pNorm === '/programs/economy-education') &&
+    searchParams.has(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY)
   const isRecruitmentRoute =
     pNorm === '/programs/education/student-recruitment' ||
     pNorm === '/programs/education/instructor-recruitment' ||
@@ -174,6 +190,31 @@ export function ProgramListPage() {
     const tab = searchParams.get('tab') ?? 'info'
     navigate(buildUjatProgramDetailUrl(pid, ujatLnb, tab), { replace: true })
   }, [isFullPageModalPath, navigate, searchParams])
+
+  const userPreviewSyncParams = useMemo(
+    () => ({ userPreview: searchParams.get('userPreview') ?? undefined }),
+    [searchParams]
+  )
+
+  const setUserPreviewSyncParams = useCallback(
+    (updates: { userPreview?: string }, options?: SetQueryParamsOptions) => {
+      const next = new URLSearchParams(searchParams)
+      if (updates.userPreview === undefined || updates.userPreview === '') {
+        next.delete('userPreview')
+      } else {
+        next.set('userPreview', updates.userPreview)
+      }
+      setSearchParams(next, { replace: options?.replace ?? true })
+    },
+    [searchParams, setSearchParams]
+  )
+
+  useWritingUserPreviewUrlAuxiliarySync(
+    userPreviewSyncParams,
+    setUserPreviewSyncParams,
+    isWritingUserPreviewOpen,
+    closeWritingUserPreview
+  )
 
   useEffect(() => {
     if (!isFullPageModalPath) return
@@ -254,7 +295,32 @@ export function ProgramListPage() {
     setBulkDeleteModalOpen(true)
   }
 
+  const handleCloseCompanySchoolRegistrationFullpage = useCallback(() => {
+    closeWritingUserPreview()
+    const next = new URLSearchParams(searchParams)
+    next.delete(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY)
+    next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+    next.delete('userPreview')
+    setSearchParams(next, { replace: true })
+  }, [closeWritingUserPreview, searchParams, setSearchParams])
+
+  const handleCompanySchoolRegistrationSaved = useCallback(() => {
+    void fetchPrograms()
+    handleCloseCompanySchoolRegistrationFullpage()
+  }, [fetchPrograms, handleCloseCompanySchoolRegistrationFullpage])
+
   const handleProgramCreateClick = () => {
+    if (programType === 'company_school') {
+      const next = new URLSearchParams(searchParams)
+      next.set(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY, '1')
+      next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
+      next.delete('programId')
+      next.delete('lnb')
+      next.delete('tab')
+      setSearchParams(next, { replace: false })
+      return
+    }
+
     showAlert({
       title: '안내',
       content: FEATURE_COMING_SOON_ALERT_MESSAGE,
@@ -296,6 +362,13 @@ export function ProgramListPage() {
       setSelectedProgramForFullPageModal(program)
       const nextParams = new URLSearchParams(searchParams)
       nextParams.set('programId', program.id)
+      if (
+        programType === 'company_school' &&
+        (statusFilter === 'in_progress' || statusFilter === 'completed')
+      ) {
+        nextParams.set('lnb', 'applicants')
+        nextParams.set('tab', 'institutions')
+      }
       setSearchParams(nextParams, { replace: false })
       return
     }
@@ -398,6 +471,13 @@ export function ProgramListPage() {
         onClose={handleCloseFullPageModal}
       />
 
+      <GeneralProgramRegistrationFullpageModal
+        open={isCompanySchoolRegistrationOpen}
+        onClose={handleCloseCompanySchoolRegistrationFullpage}
+        onProgramRegistrationSaved={handleCompanySchoolRegistrationSaved}
+        registrationFormVariant="economy"
+      />
+
       <ProgramListModals
         drawerOpen={drawerOpen}
         drawerProgram={drawerProgram || selectedProgram || null}
@@ -449,13 +529,15 @@ export function ProgramListPage() {
         onCancelInstructorModal={() => setSelectedProgramForInstructorModal(null)}
       />
 
-      <ConfirmModal
+      <DeleteGuideModal
         open={bulkDeleteModalOpen}
         title="선택 삭제"
-        content={`선택한 ${programsPendingBulkDelete.length}건을 삭제하시겠습니까?`}
+        lines={[
+          `선택한 ${programsPendingBulkDelete.length}건의 프로그램을 삭제하시겠습니까?`,
+          '삭제된 프로그램은 복구할 수 없습니다.',
+        ]}
         confirmText="삭제"
-        cancelText="취소"
-        danger
+        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
         onConfirm={() => {
           handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
           setBulkDeleteModalOpen(false)
@@ -467,6 +549,14 @@ export function ProgramListPage() {
         }}
       />
     </div>
+  )
+}
+
+export function ProgramListPage() {
+  return (
+    <TemplateWritingPreviewProvider>
+      <ProgramListPageContent />
+    </TemplateWritingPreviewProvider>
   )
 }
 

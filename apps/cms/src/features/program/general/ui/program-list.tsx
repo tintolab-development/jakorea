@@ -107,6 +107,35 @@ export function ProgramList({
   const [internalSelectedRowKeys, setInternalSelectedRowKeys] = useState<React.Key[]>([])
   const [internalViewMode] = useState<'list' | 'calendar'>('list')
   const viewMode = externalViewMode ?? internalViewMode
+  const isOverviewTable = tableContext.mode === 'overview'
+  const overviewViewClass =
+    listView === 'SCHEDULED'
+      ? 'program-list-table-wrapper--program-list-period-columns program-list-card--program-list-period-columns'
+      : listView === 'ALL'
+        ? 'program-list-table-wrapper--program-list-all-programs program-list-card--program-list-all-programs'
+        : listView === 'IN_PROGRESS'
+          ? 'program-list-table-wrapper--program-list-in-progress program-list-card--program-list-in-progress'
+          : listView === 'COMPLETED'
+            ? 'program-list-table-wrapper--program-list-completed program-list-card--program-list-completed'
+            : ''
+  const overviewSelectionClass =
+    isOverviewTable && showRowSelection
+      ? 'program-list-table-wrapper--program-list-overview-selection'
+      : ''
+  const filterTableLayoutClassName = [
+    isOverviewTable && 'program-list-card--program-list-overview',
+    isOverviewTable && 'program-list-table-wrapper--program-list-overview',
+    isOverviewTable && overviewViewClass,
+    overviewSelectionClass,
+  ]
+    .filter(Boolean)
+    .join(' ')
+  const tableClassName = [
+    'cms-data-table',
+    isOverviewTable && 'cms-data-table--program-list-overview',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   const effectiveSelectedRowKeys =
     externalSelectedRowKeys !== undefined ? externalSelectedRowKeys : internalSelectedRowKeys
@@ -127,6 +156,7 @@ export function ProgramList({
       return resolveProgramListFilterFields({
         scheduledViewActive: listView === 'SCHEDULED',
         inProgressViewActive: listView === 'IN_PROGRESS',
+        completedViewActive: listView === 'COMPLETED',
       })
     }
     return programListFilterFields
@@ -148,13 +178,14 @@ export function ProgramList({
           title={headerTitle}
           description={`총 ${displayedCount.toLocaleString()}건`}
           actions={children}
+          className={filterTableLayoutClassName}
           excelExport={{
             columns: antdColumns,
             data: table.getFilteredRowModel().rows.map(row => row.original),
           }}
         >
           <Table
-            className="cms-data-table"
+            className={tableClassName}
             rowSelection={
               showRowSelection && (onBulkDelete != null || onSelectionChange != null)
                 ? {
@@ -168,6 +199,8 @@ export function ProgramList({
             columns={antdColumns}
             rowKey="id"
             loading={loading}
+            scroll={isOverviewTable ? { x: 'max-content' } : undefined}
+            tableLayout={isOverviewTable ? 'auto' : undefined}
             onRow={record => ({
               onClick: () => onView(record),
               style: { cursor: 'pointer' },

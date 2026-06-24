@@ -6,6 +6,7 @@
  * 데이터 소스: 현재는 `@/data/mock/*` 기반(로컬 목). API 연동 시 이 모듈에서 분기·어댑터만 교체.
  */
 
+import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock/programs'
 import { getEducationPrograms } from '@/data/mock/education-programs'
@@ -109,6 +110,19 @@ export type ProgramEconomyStages = ProgramOverviewStages
 
 export type ProgramProgressStagesResult = ProgramProgressStages | ProgramOverviewStages
 
+function resolveCompanySchoolOperationPhase(
+  program: Program
+): 'scheduled' | 'in_progress' | 'completed' | null {
+  const start = dayjs(program.startDate)
+  const end = dayjs(program.endDate)
+  if (!start.isValid() || !end.isValid()) return null
+
+  const today = dayjs().startOf('day')
+  if (today.isBefore(start.startOf('day'))) return 'scheduled'
+  if (today.isBefore(end.startOf('day'))) return 'in_progress'
+  return 'completed'
+}
+
 export interface PendingActionCounts {
   pendingApplications: number
   pendingMatchings: number
@@ -206,6 +220,31 @@ export async function getProgramProgressStages(options?: {
     }
 
     programs.forEach(program => {
+      if (options.programType === 'company_school') {
+        const operationPhase = resolveCompanySchoolOperationPhase(program)
+        if (operationPhase === 'scheduled') stages.scheduled++
+        else if (operationPhase === 'in_progress') stages.inProgress++
+        else if (operationPhase === 'completed') stages.completed++
+        else {
+          const status = program.lifecycleStatus || ''
+          if (
+            [
+              'recruiting_students',
+              'recruiting_instructors',
+              'matching_completed',
+              'education_before_textbook',
+            ].includes(status)
+          ) {
+            stages.scheduled++
+          } else if (status === 'education_after_textbook' || status === 'education_in_progress') {
+            stages.inProgress++
+          } else if (['education_completed', 'document_processing_completed'].includes(status)) {
+            stages.completed++
+          }
+        }
+        return
+      }
+
       const status = program.lifecycleStatus || ''
       if (
         [

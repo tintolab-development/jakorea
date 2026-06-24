@@ -29,7 +29,11 @@ export interface ResolveEducationColumnsParams {
 }
 
 const WIDTH_NO = 64
-const WIDTH_PROGRAM_TITLE = 600
+const WIDTH_PROGRAM_TITLE = 690
+const WIDTH_RECRUITMENT_COUNT = 160
+const WIDTH_TARGET_LEVEL = 160
+const WIDTH_OPERATION_PERIOD = 320
+const WIDTH_PARTICIPATION_COUNT = 160
 
 function participantCountRender(_: unknown, record: Program) {
   const cap = getCapacity(record)
@@ -80,7 +84,7 @@ function createProgramListAllColumns() {
       dataIndex: 'title',
       key: 'title',
       ellipsis: true,
-      width: WIDTH_PROGRAM_TITLE,
+      minWidth: WIDTH_PROGRAM_TITLE,
       align: 'center' as const,
       className: 'program-list-table__col-title',
       render: (_: unknown, record: Program) => resolveGeneralProgramListTitle(record),
@@ -89,6 +93,7 @@ function createProgramListAllColumns() {
       title: '프로그램 진행 현황',
       key: 'lifecycleProgress',
       align: 'center' as const,
+      className: 'program-list-table__col-progress',
       render: (_: unknown, record: Program) =>
         record.lifecycleStatus ? (
           <ProgramLifecycleStatusBadge status={record.lifecycleStatus} variant="table" />
@@ -99,20 +104,26 @@ function createProgramListAllColumns() {
     {
       title: '참여자 모집 인원',
       key: 'participantCapacity',
+      minWidth: WIDTH_RECRUITMENT_COUNT,
       align: 'center' as const,
+      className: 'program-list-table__col-recruitment',
       render: participantCountRender,
     },
     {
       title: '강사 모집 인원',
       key: 'instructorRecruitment',
+      minWidth: WIDTH_RECRUITMENT_COUNT,
       align: 'center' as const,
+      className: 'program-list-table__col-instructor-recruit',
       render: instructorRecruitRender,
     },
     {
       title: '교육 대상',
       dataIndex: 'targetLevel',
       key: 'targetLevel',
+      minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
+      className: 'program-list-table__col-target',
       render: (value: TargetLevel | undefined) => getProgramListTargetLevelLabel(value),
     },
   ]
@@ -134,7 +145,7 @@ function createProgramListScheduledColumns() {
       dataIndex: 'title',
       key: 'title',
       ellipsis: true,
-      width: WIDTH_PROGRAM_TITLE,
+      minWidth: WIDTH_PROGRAM_TITLE,
       align: 'center' as const,
       className: 'program-list-table__col-title',
       render: (_: unknown, record: Program) => resolveGeneralProgramListTitle(record),
@@ -142,26 +153,34 @@ function createProgramListScheduledColumns() {
     {
       title: '참여자 모집 인원',
       key: 'participantCapacity',
+      minWidth: WIDTH_RECRUITMENT_COUNT,
       align: 'center' as const,
+      className: 'program-list-table__col-recruitment',
       render: participantCountRender,
     },
     {
       title: '강사 모집 인원',
       key: 'instructorRecruitment',
+      minWidth: WIDTH_RECRUITMENT_COUNT,
       align: 'center' as const,
+      className: 'program-list-table__col-instructor-recruit',
       render: instructorRecruitRender,
     },
     {
       title: '교육 대상',
       dataIndex: 'targetLevel',
       key: 'targetLevel',
+      minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
+      className: 'program-list-table__col-target',
       render: (value: TargetLevel | undefined) => getProgramListTargetLevelLabel(value),
     },
     {
       title: '사업 운영 기간',
       key: 'operationPeriod',
+      minWidth: WIDTH_OPERATION_PERIOD,
       align: 'center' as const,
+      className: 'program-list-table__col-period',
       render: (_: unknown, record: Program) => formatDateRange(record.startDate, record.endDate),
     },
   ]
@@ -175,6 +194,7 @@ function createProgramListInProgressColumns() {
       key: 'no',
       width: WIDTH_NO,
       align: 'center' as const,
+      className: 'program-list-table__col-no',
       render: (_: unknown, __: Program, index: number) => index + 1,
     },
     {
@@ -182,33 +202,42 @@ function createProgramListInProgressColumns() {
       dataIndex: 'title',
       key: 'title',
       ellipsis: true,
-      width: WIDTH_PROGRAM_TITLE,
+      minWidth: WIDTH_PROGRAM_TITLE,
       align: 'center' as const,
+      className: 'program-list-table__col-title',
       render: (_: unknown, record: Program) => resolveGeneralProgramListTitle(record),
     },
     {
       title: '참여자 모집 인원',
       key: 'participantCapacity',
+      minWidth: WIDTH_RECRUITMENT_COUNT,
       align: 'center' as const,
+      className: 'program-list-table__col-recruitment',
       render: participantCountRender,
     },
     {
       title: '강사 모집 인원',
       key: 'instructorRecruitment',
+      minWidth: WIDTH_RECRUITMENT_COUNT,
       align: 'center' as const,
+      className: 'program-list-table__col-instructor-recruit',
       render: instructorRecruitRender,
     },
     {
       title: '총 참여 학교 수',
       key: 'participatingSchoolCount',
+      minWidth: WIDTH_PARTICIPATION_COUNT,
       align: 'center' as const,
+      className: 'program-list-table__col-school-count',
       render: (_: unknown, record: Program) =>
         record.participatingSchoolCount != null ? String(record.participatingSchoolCount) : '-',
     },
     {
       title: '총 참여 학생 수',
       key: 'participatingStudentCount',
+      minWidth: WIDTH_PARTICIPATION_COUNT,
       align: 'center' as const,
+      className: 'program-list-table__col-student-count',
       render: (_: unknown, record: Program) =>
         record.participatingStudentCount != null ? String(record.participatingStudentCount) : '-',
     },
@@ -216,7 +245,9 @@ function createProgramListInProgressColumns() {
       title: '교육 대상',
       dataIndex: 'targetLevel',
       key: 'targetLevel',
+      minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
+      className: 'program-list-table__col-target',
       render: (value: TargetLevel | undefined) => getProgramListTargetLevelLabel(value),
     },
   ]
