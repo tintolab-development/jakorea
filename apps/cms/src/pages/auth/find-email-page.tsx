@@ -41,14 +41,15 @@ export function FindEmailPage() {
   const [nameMismatchMessage, setNameMismatchMessage] = useState<string | null>(null)
 
   const runLookup = useCallback(
-    async (name: string, sessionUuid: string) => {
+    async (name: string, phoneNumber: string, birthDate?: string) => {
       setIsLookupLoading(true)
       setNameMismatchMessage(null)
 
       try {
         const result = await lookupFindEmail({
           name,
-          identityVerificationSessionUuid: sessionUuid,
+          phoneNumber,
+          birthDate,
         })
 
         if (result.kind === 'found') {
@@ -58,6 +59,10 @@ export function FindEmailPage() {
         }
 
         setNotFoundModalOpen(true)
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : '이메일 찾기에 실패했습니다.'
+        setNameMismatchMessage(message)
       } finally {
         setIsLookupLoading(false)
       }
@@ -70,6 +75,7 @@ export function FindEmailPage() {
       sessionUuid?: string
       verifiedName?: string
       verifiedPhone?: string
+      verifiedBirthDate?: string
       sessionId: number
     }) => {
       const inputName = normalizeName(form.getFieldValue('name') ?? '')
@@ -81,11 +87,17 @@ export function FindEmailPage() {
         return
       }
 
+      if (!result.verifiedPhone?.trim()) {
+        setNameMismatchMessage('본인인증 휴대폰 정보를 확인할 수 없습니다.')
+        setVerifiedName(undefined)
+        setVerifiedPhone(undefined)
+        return
+      }
+
       setVerifiedName(result.verifiedName)
       setVerifiedPhone(result.verifiedPhone)
 
-      const sessionUuid = result.sessionUuid ?? String(result.sessionId)
-      void runLookup(inputName, sessionUuid)
+      void runLookup(inputName, result.verifiedPhone, result.verifiedBirthDate)
     },
     [form, runLookup]
   )
@@ -99,10 +111,10 @@ export function FindEmailPage() {
     })
 
   const handleSubmit = useCallback(async () => {
-    await form.validateFields()
+    const values = await form.validateFields()
     resetError()
     setNameMismatchMessage(null)
-    await verify()
+    await verify({ name: normalizeName(values.name) })
   }, [form, resetError, verify])
 
   const displayError = nameMismatchMessage ?? errorMessage

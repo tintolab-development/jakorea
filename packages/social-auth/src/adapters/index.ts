@@ -53,14 +53,15 @@ function mapLinkedAccount(
 }
 
 function buildLinkAccountBody(input: LinkAccountInput): Record<string, unknown> {
+  const accessToken = input.accessToken ?? input.code
   const body: Record<string, unknown> = {
     provider: toApiProviderCode(input.provider),
     socialConsentVersion: input.consent.socialConsentVersion,
     socialConsentAgreed: input.consent.socialConsentAgreed,
     socialConsentSnapshotJson: input.consent.socialConsentSnapshotJson,
   }
-  if (input.accessToken) {
-    body.accessToken = input.accessToken
+  if (accessToken) {
+    body.accessToken = accessToken
   }
   if (input.code) {
     body.code = input.code
@@ -77,28 +78,72 @@ function buildLinkAccountBody(input: LinkAccountInput): Record<string, unknown> 
   return body
 }
 
+function extractSocialAccountItems(
+  payload: { content?: unknown[]; items?: unknown[]; accounts?: unknown[] } | unknown[] | null | undefined
+): unknown[] {
+  if (Array.isArray(payload)) {
+    return payload
+  }
+  if (!payload || typeof payload !== 'object') {
+    return []
+  }
+  const list = payload.content ?? payload.items ?? payload.accounts ?? []
+  return Array.isArray(list) ? list : []
+}
+
 export function createAdminSsoAdapter(options: CreateAdminSsoAdapterOptions): SocialAuthAdapter {
   const { http, paths } = options
 
   return {
     async startSso(input) {
-      const { data } = await http.post<{
-        authorizationUrl?: string
-        state?: string
-      }>(paths.ssoLogin(), {
-        provider: toApiProviderCode(input.provider),
-        redirectUri: input.redirectUri,
-        returnUrl: input.returnUrl,
-      })
+      try {
+        const { data } = await http.post(paths.ssoLogin(), {
+          provider: toApiProviderCode(input.provider),
+          redirectUri: input.redirectUri,
+          returnUrl: input.returnUrl,
+        })
 
-      const authorizationUrl = data?.authorizationUrl
-      if (!authorizationUrl) {
-        throw new SocialAuthApiError('INVALID_RESPONSE', 'SSO 시작 응답에 authorizationUrl이 없습니다.')
-      }
+        const payload = unwrapApiData<{
+          authorizationUrl?: string | null
+          state?: string | null
+          status?: string
+          message?: string
+        }>(data)
 
-      return {
-        authorizationUrl,
-        state: data.state,
+        const authorizationUrl =
+          typeof payload?.authorizationUrl === 'string' && payload.authorizationUrl.length > 0
+            ? payload.authorizationUrl
+            : null
+
+        if (!authorizationUrl) {
+          const backendMessage =
+            typeof payload?.message === 'string' && payload.message.length > 0
+              ? payload.message
+              : undefined
+          const status =
+            typeof payload?.status === 'string' && payload.status.length > 0
+              ? payload.status
+              : 'INVALID_RESPONSE'
+
+          if (status === 'PROVIDER_REHEARSAL_REQUIRED') {
+            throw new SocialAuthApiError(
+              status,
+              '관리자 소셜 로그인 OAuth 연동이 아직 준비되지 않았습니다. 이메일 로그인을 이용해 주세요.'
+            )
+          }
+
+          throw new SocialAuthApiError(
+            status,
+            backendMessage ?? 'SSO 시작 응답에 authorizationUrl이 없습니다.'
+          )
+        }
+
+        return {
+          authorizationUrl,
+          state: typeof payload.state === 'string' ? payload.state : undefined,
+        }
+      } catch (err) {
+        rethrowSocialAuthApiError(err, '관리자 SSO 로그인 시작에 실패했습니다.')
       }
     },
 
@@ -129,14 +174,12 @@ export function createAdminSsoAdapter(options: CreateAdminSsoAdapterOptions): So
     async listAccounts() {
       try {
         const { data } = await http.get(paths.socialAccounts())
-        const payload = unwrapApiData<{ items?: unknown[]; accounts?: unknown[] } | unknown[]>(data)
-        const items = Array.isArray(payload)
-          ? payload
-          : (payload?.items ?? payload?.accounts ?? [])
-
-        if (!Array.isArray(items)) {
-          return []
-        }
+        const payload = unwrapApiData<{
+          content?: unknown[]
+          items?: unknown[]
+          accounts?: unknown[]
+        } | unknown[]>(data)
+        const items = extractSocialAccountItems(payload)
 
         const accounts: LinkedSocialAccount[] = []
         for (const item of items) {
@@ -244,16 +287,10 @@ export function createCompositeRemoteAdapter(
   return {
     async startSso(input) {
       if (input.intent === 'link') {
-        if (!signupSocial.startSignup) {
-          throw new SocialAuthApiError('UNSUPPORTED', 'signup start adapter가 없습니다.')
+        if (!adminSso.startSso) {
+          throw new SocialAuthApiError('UNSUPPORTED', 'admin SSO start adapter가 없습니다.')
         }
-        if (!input.frontendReturnUrl) {
-          throw new SocialAuthApiError('INVALID_REQUEST', 'frontendReturnUrl이 필요합니다.')
-        }
-        return signupSocial.startSignup({
-          provider: input.provider,
-          frontendReturnUrl: input.frontendReturnUrl,
-        })
+        return adminSso.startSso(input)
       }
 
       if (!adminSso.startSso) {

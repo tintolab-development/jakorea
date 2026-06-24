@@ -1,5 +1,7 @@
 import { Button } from 'antd'
 
+import { JaKoreaLogo } from '@/shared/ui/icons/JaKoreaLogo'
+
 interface RegisterCompleteViewProps {
   onGoLogin: () => void
   onConnectSocial: () => void
@@ -9,6 +11,7 @@ export function RegisterCompleteView({ onGoLogin, onConnectSocial }: RegisterCom
   return (
     <div className="register-complete">
       <div className="register-complete__body">
+        <JaKoreaLogo className="register-complete__logo" />
         <h1 className="register-complete__title">가입이 완료 되었어요!</h1>
         <p className="register-complete__description">
           관리자 화면은 로그인 후에만 이용이 가능합니다.

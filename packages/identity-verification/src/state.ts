@@ -9,7 +9,7 @@ export interface IdentityVerificationState {
   getPendingChallenge: () => PendingIdentityChallenge | null
   clearPendingChallenge: () => void
   buildCallbackUrl: () => string
-  buildMockNiceUrl: (sessionId: number, nonce: string) => string
+  buildMockNiceUrl: (sessionId: number, nonce: string, name?: string) => string
   validatePendingState: (queryState: string | null) => boolean
   isIdentityMessage: (data: unknown) => data is IdentityMessage
 }
@@ -90,11 +90,14 @@ export function createIdentityVerificationState(
     return `${window.location.origin}${options.routes.callbackPath}`
   }
 
-  function buildMockNiceUrl(sessionId: number, nonce: string) {
+  function buildMockNiceUrl(sessionId: number, nonce: string, name?: string) {
     const params = new URLSearchParams({
       sessionId: String(sessionId),
       nonce,
     })
+    if (name?.trim()) {
+      params.set('name', name.trim())
+    }
     return `${window.location.origin}${options.routes.mockPath}?${params.toString()}`
   }
 

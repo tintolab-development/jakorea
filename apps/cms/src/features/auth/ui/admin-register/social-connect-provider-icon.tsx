@@ -9,7 +9,9 @@ interface SocialConnectProviderIconProps {
 }
 
 export function SocialConnectProviderIcon({ provider, className }: SocialConnectProviderIconProps) {
-  const iconClassName = className ? `${className} register-social-connect__icon` : 'register-social-connect__icon'
+  const iconClassName = className
+    ? `${className} social-connect-provider-list__icon`
+    : 'social-connect-provider-list__icon'
 
   if (provider === 'google') {
     return (

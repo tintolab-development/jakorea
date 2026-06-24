@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import type { SocialProvider } from '@jakorea/social-auth'
+import { SocialAuthApiError } from '@jakorea/social-auth'
 
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import { handleError } from '@/shared/utils/error-handler'
@@ -16,6 +17,9 @@ export function LoginSocialSection() {
     void cmsSocialAuthClient
       .startLogin({ provider, intent: 'login' })
       .then(url => {
+        if (!url?.trim()) {
+          throw new SocialAuthApiError('INVALID_RESPONSE', '소셜 로그인 URL을 받지 못했습니다.')
+        }
         if (import.meta.env.DEV) {
           console.info(
             `[social-auth] redirect_uri=${cmsSocialAuthClient.getRedirectUri(provider)}`

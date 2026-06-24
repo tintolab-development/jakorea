@@ -129,9 +129,11 @@ export type SignupSocialReturnOutcome =
   | {
       kind: 'linked'
       provider: SocialProvider
-      session: SocialVerificationSession
+      session?: SocialVerificationSession
       account?: LinkedSocialAccount
       pending?: boolean
     }
   | { kind: 'failed'; message: string }
   | { kind: 'cancelled' }
+
+export type OAuthLinkCallbackOutcome = SignupSocialReturnOutcome

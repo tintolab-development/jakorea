@@ -17,4 +17,5 @@ export const adminAuthPaths = {
   refresh: () => `${adminAuthPaths.prefix}/refresh`,
   mfaVerify: () => `${adminAuthPaths.prefix}/mfa/verify`,
   signupComplete: () => `${adminAuthPaths.prefix}/signup/complete`,
+  emailRecoveryLookup: () => `${adminAuthPaths.prefix}/email-recovery/lookup`,
 } as const

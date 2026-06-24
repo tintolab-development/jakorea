@@ -27,6 +27,12 @@ export interface UseIdentityVerificationOptions {
   missingNameMessage?: string
 }
 
+export interface VerifyIdentityOverride {
+  name?: string
+  birthDate?: string
+  gender?: string
+}
+
 export function useIdentityVerification({
   client,
   birthDate,
@@ -123,14 +129,18 @@ export function useIdentityVerification({
     }
   }, [cleanupPopupWatch])
 
-  const verify = useCallback(async () => {
+  const verify = useCallback(async (override?: VerifyIdentityOverride) => {
+    const resolvedBirthDate = override?.birthDate ?? birthDate
+    const resolvedGender = override?.gender ?? gender
+    const resolvedName = (override?.name ?? name)?.trim()
+
     if (requireBirthGender) {
-      if (!birthDate || !gender) {
+      if (!resolvedBirthDate || !resolvedGender) {
         setStatus('error')
         setErrorMessage(missingInputMessage)
         return
       }
-    } else if (requireName && !name?.trim()) {
+    } else if (requireName && !resolvedName) {
       setStatus('error')
       setErrorMessage(missingNameMessage)
       return
@@ -143,7 +153,11 @@ export function useIdentityVerification({
 
     try {
       popup = client.popup.openWindow()
-      const challenge = await client.startChallenge({ birthDate, gender, name: name?.trim() })
+      const challenge = await client.startChallenge({
+        birthDate: resolvedBirthDate,
+        gender: resolvedGender,
+        name: resolvedName,
+      })
       client.popup.navigate(popup, challenge.authUrl)
       popupRef.current = popup
       setStatus('popup_open')

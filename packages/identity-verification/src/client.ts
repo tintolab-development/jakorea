@@ -181,7 +181,7 @@ export function createIdentityVerificationClient(
 
     return {
       sessionId,
-      authUrl: state.buildMockNiceUrl(sessionId, nonce),
+      authUrl: state.buildMockNiceUrl(sessionId, nonce, input.name),
       expiresAt,
     }
   }

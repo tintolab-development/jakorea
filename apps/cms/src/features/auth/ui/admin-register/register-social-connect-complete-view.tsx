@@ -1,5 +1,7 @@
 import { Button } from 'antd'
 
+import { JaKoreaLogo } from '@/shared/ui/icons/JaKoreaLogo'
+
 interface RegisterSocialConnectCompleteViewProps {
   onGoLogin: () => void
   onConnectMore: () => void
@@ -12,6 +14,7 @@ export function RegisterSocialConnectCompleteView({
   return (
     <div className="register-complete">
       <div className="register-complete__body">
+        <JaKoreaLogo className="register-complete__logo" />
         <h1 className="register-complete__title">소셜 계정이 연결되었어요!</h1>
         <p className="register-complete__description">
           다음부터 이 계정으로 간편하게 로그인할 수 있어요.

@@ -1,5 +1,6 @@
 import type { SocialAuthAdapter } from './adapters'
 import { buildOAuthAuthorizeUrl, getOAuthRedirectUri } from './authorize'
+import { SocialAuthApiError } from './errors'
 import type { SocialAuthState } from './state'
 import { createSocialAuthState } from './state'
 import type {
@@ -66,6 +67,17 @@ function resolveOrigin(oauthConfig: OAuthClientConfig): string {
   return 'http://localhost:3000'
 }
 
+function shouldFallbackToFrontendOAuthStart(error: unknown): boolean {
+  if (!(error instanceof SocialAuthApiError)) {
+    return false
+  }
+  return (
+    error.code === 'PROVIDER_REHEARSAL_REQUIRED' ||
+    error.code === 'INVALID_RESPONSE' ||
+    error.message.includes('authorizationUrl')
+  )
+}
+
 export function createSocialAuthClient(options: CreateSocialAuthClientOptions): SocialAuthClient {
   const state = options.state ?? createSocialAuthState({ storagePrefix: options.storagePrefix })
   const clientShell = {
@@ -102,6 +114,43 @@ export function createSocialAuthClient(options: CreateSocialAuthClientOptions): 
       const redirectUri = getRedirectUri(provider)
       const frontendReturnUrl = buildSignupReturnUrl(returnUrl)
 
+      const buildFrontendAuthorizeUrl = () => {
+        const oauthState = state.createOAuthState(provider)
+        return buildOAuthAuthorizeUrl(
+          options.oauthConfig,
+          options.routes.callbackPath,
+          provider,
+          oauthState
+        )
+      }
+
+      if (adapter.startSso && clientShell.isRemoteEnabled(intent)) {
+        try {
+          const result = await adapter.startSso({
+            provider,
+            intent,
+            redirectUri,
+            returnUrl,
+            frontendReturnUrl,
+          })
+          if (result.state) {
+            state.storeOAuthState(provider, result.state)
+          }
+          return result.authorizationUrl
+        } catch (error: unknown) {
+          if (shouldFallbackToFrontendOAuthStart(error)) {
+            if (typeof console !== 'undefined' && console.warn) {
+              console.warn(
+                '[social-auth] Admin SSO start unavailable; using frontend Kakao/Naver/Google authorize URL.',
+                error instanceof Error ? error.message : error
+              )
+            }
+            return buildFrontendAuthorizeUrl()
+          }
+          throw error
+        }
+      }
+
       if (adapter.startSso) {
         const result = await adapter.startSso({
           provider,
@@ -116,13 +165,7 @@ export function createSocialAuthClient(options: CreateSocialAuthClientOptions): 
         return result.authorizationUrl
       }
 
-      const oauthState = state.createOAuthState(provider)
-      return buildOAuthAuthorizeUrl(
-        options.oauthConfig,
-        options.routes.callbackPath,
-        provider,
-        oauthState
-      )
+      return buildFrontendAuthorizeUrl()
     },
 
     completeCallback(input) {

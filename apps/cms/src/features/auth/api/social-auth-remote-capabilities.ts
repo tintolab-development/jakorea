@@ -1,13 +1,13 @@
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
-/** 가입 wizard 소셜 연결 — signup session API (`/api/auth/social/signup/...`) */
+/** 가입 wizard 소셜 연결 — Admin SSO link (`/api/admin/auth/sso/login` + `/api/admin/me/sso/accounts`) */
 export function isSocialAuthSignupRemoteEnabled(): boolean {
   return isRealApiModuleEnabled('socialAuth')
 }
 
 /** 관리자 소셜 로그인 — Admin SSO (`/api/admin/auth/sso/...`) */
 export function isSocialAuthLoginRemoteEnabled(): boolean {
-  return isRealApiModuleEnabled('socialAuthLogin')
+  return isRealApiModuleEnabled('socialAuthLogin') || isRealApiModuleEnabled('socialAuth')
 }
 
 /** 연결 목록·해제·flush 등 admin social-accounts API */

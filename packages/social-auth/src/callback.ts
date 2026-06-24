@@ -7,6 +7,7 @@ import {
 } from './errors'
 import type {
   OAuthCallbackOutcome,
+  OAuthLinkCallbackOutcome,
   SignupSocialReturnOutcome,
   SocialLinkConsent,
   SocialProvider,
@@ -80,7 +81,74 @@ export async function processOAuthCallback(
   }
 }
 
-/** 가입·연결 전용 — `/register/social-connect/callback` + signup session API */
+export interface ProcessOAuthLinkCallbackOptions {
+  cancelled?: boolean
+  consent?: SocialLinkConsent
+}
+
+/** 관리자 SSO 계정 연결 — `/oauth/{provider}` + intent `link` */
+export async function processOAuthLinkCallback(
+  client: SocialAuthClient,
+  provider: SocialProvider,
+  searchParams: URLSearchParams,
+  options: ProcessOAuthLinkCallbackOptions = {}
+): Promise<OAuthLinkCallbackOutcome> {
+  const { cancelled, consent } = options
+  const error = searchParams.get('error')
+  const code = searchParams.get('code')
+  const state = searchParams.get('state')
+  const idToken = searchParams.get('id_token') ?? undefined
+
+  if (error) {
+    return cancelled ? { kind: 'cancelled' } : { kind: 'failed', message: '소셜 인증이 취소되었습니다.' }
+  }
+
+  if (!code) {
+    return { kind: 'failed', message: '인가 코드가 없어 소셜 계정 연결을 진행할 수 없습니다.' }
+  }
+
+  if (!client.state.validateOAuthState(provider, state)) {
+    return { kind: 'failed', message: 'OAuth state 검증에 실패했습니다. 다시 시도해주세요.' }
+  }
+
+  const defaultConsent: SocialLinkConsent = consent ?? {
+    socialConsentVersion: '1.0',
+    socialConsentAgreed: true,
+  }
+
+  try {
+    if (!client.hasAccessToken()) {
+      client.state.setPendingSocialLink({
+        provider,
+        code,
+        state: state ?? undefined,
+        consent: defaultConsent,
+      })
+      client.state.addConnectedProvider(provider)
+      return { kind: 'linked', provider, pending: true }
+    }
+
+    const account = await client.linkAccount({
+      provider,
+      code,
+      idToken,
+      state: state ?? undefined,
+      consent: defaultConsent,
+    })
+    client.state.addConnectedProvider(provider)
+    return { kind: 'linked', provider, account, pending: false }
+  } catch (err) {
+    if (isSocialAccountAlreadyLinkedError(err)) {
+      return { kind: 'failed', message: '이미 연결된 소셜 계정입니다.' }
+    }
+    if (err instanceof Error) {
+      return { kind: 'failed', message: err.message }
+    }
+    return { kind: 'failed', message: '소셜 계정 연결에 실패했습니다.' }
+  }
+}
+
+/** @deprecated 가입 signup session API — mock 전용. 실 API는 {@link processOAuthLinkCallback} */
 export async function processSignupSocialReturn(
   client: SocialAuthClient,
   searchParams: URLSearchParams,

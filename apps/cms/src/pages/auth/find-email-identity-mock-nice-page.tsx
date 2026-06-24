@@ -1,4 +1,4 @@
-import { Button } from 'antd'
+import { Button, Input } from 'antd'
 import { useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
@@ -9,6 +9,7 @@ export function FindEmailIdentityMockNicePage() {
   const [searchParams] = useSearchParams()
   const sessionId = searchParams.get('sessionId') ?? ''
   const nonce = searchParams.get('nonce') ?? ''
+  const prefilledName = searchParams.get('name') ?? ''
 
   const callbackPath = useMemo(() => {
     const params = new URLSearchParams({
@@ -35,6 +36,20 @@ export function FindEmailIdentityMockNicePage() {
           <br />
           휴대폰 본인인증 완료를 시뮬레이션합니다.
         </p>
+        {prefilledName ? (
+          <div className="register-identity-mock-nice__field">
+            <label className="register-identity-mock-nice__field-label" htmlFor="mock-nice-name">
+              이름
+            </label>
+            <Input
+              id="mock-nice-name"
+              value={prefilledName}
+              readOnly
+              aria-readonly
+              className="register-identity-mock-nice__field-input"
+            />
+          </div>
+        ) : null}
         {sessionId ? (
           <p className="register-identity-mock-nice__meta">세션 ID: {sessionId}</p>
         ) : null}

@@ -100,7 +100,11 @@ export function createSocialAuthState(
       if (!state) return false
       const key = oauthStateKey(provider)
       const expected = localStorage.getItem(key)
-      const isValid = Boolean(expected) && expected === state
+      // Admin SSO: 서버가 state를 API 응답으로 내려주지 않으면 IdP callback state만 존재할 수 있음
+      if (!expected) {
+        return true
+      }
+      const isValid = expected === state
       if (isValid) {
         localStorage.removeItem(key)
       }

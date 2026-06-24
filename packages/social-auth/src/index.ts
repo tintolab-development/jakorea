@@ -1,8 +1,12 @@
 export { createSocialAuthClient } from './client'
 export type { CreateSocialAuthClientOptions, SocialAuthClient } from './client'
 
-export { processOAuthCallback, processSignupSocialReturn } from './callback'
-export type { ProcessOAuthCallbackOptions, ProcessSignupSocialReturnOptions } from './callback'
+export { processOAuthCallback, processOAuthLinkCallback, processSignupSocialReturn } from './callback'
+export type {
+  ProcessOAuthCallbackOptions,
+  ProcessOAuthLinkCallbackOptions,
+  ProcessSignupSocialReturnOptions,
+} from './callback'
 
 export { createSocialAuthState } from './state'
 export type { CreateSocialAuthStateOptions, SocialAuthState } from './state'
@@ -60,5 +64,6 @@ export type {
   OAuthClientConfig,
   PendingSocialLink,
   OAuthCallbackOutcome,
+  OAuthLinkCallbackOutcome,
   SignupSocialReturnOutcome,
 } from './types'

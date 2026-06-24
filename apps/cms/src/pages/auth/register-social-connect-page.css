@@ -3,6 +3,8 @@
  * auth-shell은 AuthPageShell에서 로드
  */
 
+@import '../../features/auth/ui/social-connect-provider-list.css';
+
 .auth-card.auth-card--register-social-connect {
   width: 600px;
   max-width: 100%;
@@ -33,129 +35,6 @@
   align-items: stretch;
   flex: 1;
   min-height: 0;
-}
-
-.register-social-connect__divider {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.register-social-connect__divider::before,
-.register-social-connect__divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--Color-border-default, #d9d9d9);
-}
-
-.register-social-connect__divider span {
-  color: var(--Color-netural-cool-500, #85969d);
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 140%;
-  white-space: nowrap;
-}
-
-.register-social-connect__list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  width: 100%;
-}
-
-.register-social-connect__item {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-height: 52px;
-}
-
-.register-social-connect__icon {
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  display: block;
-  margin-right: 16px;
-}
-
-.register-social-connect__label {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  min-width: 0;
-  margin: 0;
-}
-
-.register-social-connect__provider-name {
-  flex-shrink: 0;
-  margin-right: 12px;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.register-social-connect__label-separator {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  margin-right: 8px;
-}
-
-.register-social-connect__status {
-  color: var(--Color-netural-cool-500, #85969d);
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 140%;
-}
-
-.register-social-connect__status--connected {
-  color: var(--Color-primary-500_resilient_turquoise, #01a1af);
-  font-weight: 500;
-}
-
-.register-social-connect__action-btn.cms-button.ant-btn {
-  display: flex !important;
-  flex-shrink: 0;
-  margin-left: 12px;
-  width: auto !important;
-  min-width: 0;
-  height: auto !important;
-  padding: 6px var(--Spacing-20, 20px) !important;
-  justify-content: center !important;
-  align-items: center !important;
-  gap: var(--Spacing-4, 4px) !important;
-  border-radius: var(--Radius-8, 8px);
-  border: 1px solid var(--Color-border-default, #d9d9d9) !important;
-  background: var(--Color-netural-white, #fff) !important;
-  color: var(--Color-netural-black, #3d3d3d) !important;
-  text-align: center;
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 140%;
-  box-shadow: none !important;
-}
-
-.register-social-connect__action-btn.cms-button.ant-btn:not(:disabled):not(.ant-btn-disabled):hover,
-.register-social-connect__action-btn.cms-button.ant-btn:not(:disabled):not(.ant-btn-disabled):focus,
-.register-social-connect__action-btn.cms-button.ant-btn:not(:disabled):not(.ant-btn-disabled):active {
-  border-color: var(--Color-border-default, #d9d9d9) !important;
-  background: var(--Color-netural-white, #fff) !important;
-  color: var(--Color-netural-black, #3d3d3d) !important;
-  box-shadow: none !important;
 }
 
 .register-social-connect__actions {

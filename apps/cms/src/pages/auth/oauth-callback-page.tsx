@@ -1,18 +1,21 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Spin } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import {
   isSocialAccountAlreadyLinkedError,
   isSocialAccountNotLinkedError,
   processOAuthCallback,
+  processOAuthLinkCallback,
   type SocialProvider,
 } from '@jakorea/social-auth'
 
 import { loginWithSocial } from '@/entities/user/api/auth-service'
-import { isSocialAuthLoginRemoteEnabled, isSocialAuthSignupRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
+import {
+  isSocialAuthLoginRemoteEnabled,
+  isSocialAuthSignupRemoteEnabled,
+} from '@/features/auth/api/social-auth-remote-capabilities'
 import { ADMIN_REGISTER_TERMS_VERSION } from '@/features/auth/lib/admin-register.constants'
 import {
-  addConnectedProvider,
   buildRegisterSocialConnectCompletePath,
   buildRegisterSocialConnectFailedPath,
   clearOAuthIntent,
@@ -36,6 +39,13 @@ function isMfaRequiredLoginError(err: unknown): boolean {
   return err instanceof Error && err.message.includes('MFA')
 }
 
+function buildLinkSuccessPath(registerRedirect?: string) {
+  if (registerRedirect?.startsWith('/')) {
+    return registerRedirect
+  }
+  return buildRegisterSocialConnectCompletePath(registerRedirect)
+}
+
 interface OAuthCallbackPageProps {
   provider: SocialProvider
 }
@@ -43,9 +53,13 @@ interface OAuthCallbackPageProps {
 export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
   const navigate = useNavigate()
   const { setAuth, applySocialAuthTokens } = useAuthStore()
+  const startedRef = useRef(false)
 
   useEffect(() => {
-    let cancelled = false
+    if (startedRef.current) {
+      return
+    }
+    startedRef.current = true
 
     const navigateSocialNotLinked = () => {
       navigate(SOCIAL_NOT_LINKED_LOGIN_PATH, { replace: true })
@@ -56,59 +70,79 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
       const oauthIntent = getOAuthIntent()
       const registerRedirect = getRegisterSocialRedirect()
 
-      if (oauthIntent === 'link' && !isSocialAuthSignupRemoteEnabled()) {
-        const error = params.get('error')
+      if (oauthIntent === 'link') {
         const code = params.get('code')
         const state = params.get('state')
         const callbackKey = buildOAuthLinkCallbackKey(provider, code, state)
 
         if (isOAuthLinkCallbackHandled(callbackKey)) {
+          navigate(buildLinkSuccessPath(registerRedirect), { replace: true })
           return
         }
 
-        if (error || !code || !cmsSocialAuthClient.state.validateOAuthState(provider, state)) {
+        if (!isSocialAuthSignupRemoteEnabled()) {
+          const error = params.get('error')
+
+          if (error || !code || !cmsSocialAuthClient.state.validateOAuthState(provider, state)) {
+            clearOAuthIntent()
+            navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
+            return
+          }
+
+          cmsSocialAuthClient.state.setPendingSocialLink({
+            provider,
+            code,
+            state: state ?? '',
+            consent: {
+              socialConsentVersion: ADMIN_REGISTER_TERMS_VERSION,
+              socialConsentAgreed: true,
+            },
+          })
+          cmsSocialAuthClient.state.addConnectedProvider(provider)
           clearOAuthIntent()
-          navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
+          markOAuthLinkCallbackHandled(callbackKey)
+          navigate(buildLinkSuccessPath(registerRedirect), { replace: true })
           return
         }
 
-        cmsSocialAuthClient.state.setPendingSocialLink({
-          provider,
-          code,
-          state: state ?? '',
+        const linkOutcome = await processOAuthLinkCallback(cmsSocialAuthClient, provider, params, {
           consent: {
             socialConsentVersion: ADMIN_REGISTER_TERMS_VERSION,
             socialConsentAgreed: true,
           },
         })
-        addConnectedProvider(provider)
+
         clearOAuthIntent()
         markOAuthLinkCallbackHandled(callbackKey)
-        navigate(buildRegisterSocialConnectCompletePath(registerRedirect), { replace: true })
-        return
+
+        switch (linkOutcome.kind) {
+          case 'linked':
+            navigate(buildLinkSuccessPath(registerRedirect), { replace: true })
+            return
+          case 'cancelled':
+            navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
+            return
+          case 'failed':
+            handleError(new Error(linkOutcome.message), { context: 'oauthCallbackPage.linkFailed' })
+            navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
+            return
+          default:
+            navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
+            return
+        }
       }
 
-      if (oauthIntent === 'link' && isSocialAuthSignupRemoteEnabled()) {
-        clearOAuthIntent()
-        navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })
-        return
-      }
-
-      const outcome = await processOAuthCallback(cmsSocialAuthClient, provider, params, {
-        cancelled,
-      })
-
-      if (cancelled) {
-        return
-      }
+      const outcome = await processOAuthCallback(cmsSocialAuthClient, provider, params)
 
       clearOAuthIntent()
 
       switch (outcome.kind) {
         case 'cancelled':
+          navigateSocialNotLinked()
           return
 
         case 'failed':
+          handleError(new Error(outcome.message), { context: 'oauthCallbackPage.loginFailed' })
           navigateSocialNotLinked()
           return
 
@@ -145,6 +179,7 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
         }
 
         default:
+          navigateSocialNotLinked()
           return
       }
     }
@@ -160,22 +195,15 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
         return
       }
 
-      if (cancelled) {
-        return
-      }
-
       if (isMfaRequiredLoginError(err)) {
         handleError(err, { context: 'oauthCallbackPage.mfaRequired' })
         navigate('/login', { replace: true })
         return
       }
 
+      handleError(err, { context: 'oauthCallbackPage.unexpected' })
       navigateSocialNotLinked()
     })
-
-    return () => {
-      cancelled = true
-    }
   }, [applySocialAuthTokens, navigate, provider, setAuth])
 
   return (

@@ -6,7 +6,9 @@
 import { Space } from 'antd'
 import { useState } from 'react'
 import type { SocialProvider } from '@/entities/user/api/auth-service'
+import { SocialAuthApiError } from '@jakorea/social-auth'
 import { GoogleMarkIcon } from '@/shared/ui/icons'
+import { handleError } from '@/shared/utils/error-handler'
 import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import './social-login-form.css'
@@ -68,9 +70,12 @@ export function SocialLoginForm() {
     setLoading(provider)
     try {
       const authorizeUrl = await cmsSocialAuthClient.startLogin({ provider, intent: 'login' })
+      if (!authorizeUrl?.trim()) {
+        throw new SocialAuthApiError('INVALID_RESPONSE', '소셜 로그인 URL을 받지 못했습니다.')
+      }
       window.location.href = authorizeUrl
     } catch (error: unknown) {
-      console.debug('socialLoginForm redirect failed', error)
+      handleError(error, { context: 'socialLoginForm.redirect' })
     } finally {
       setLoading(null)
     }
