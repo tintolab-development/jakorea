@@ -12,10 +12,10 @@ const inputPath = join(root, 'openapi/backend.openapi.json')
 const outputPath = join(root, 'openapi/posts.openapi.json')
 
 const POSTS_PATH_PREFIXES = [
-  '/api/cms/admin/notices',
-  '/api/cms/admin/notice-categories',
-  '/api/cms/admin/faqs',
-  '/api/cms/admin/faq-categories',
+  '/api/admin/content/notices',
+  '/api/admin/content/notice-categories',
+  '/api/admin/content/faqs',
+  '/api/admin/content/faq-categories',
   '/api/admin/inquiries',
 ]
 

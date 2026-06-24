@@ -12,9 +12,9 @@ const inputPath = join(root, 'openapi/backend.openapi.json')
 const outputPath = join(root, 'openapi/settlement.openapi.json')
 
 const SETTLEMENT_PATH_PREFIXES = [
-  '/api/settlements',
-  '/api/account-payments',
-  '/api/settlement-configs',
+  '/api/admin/settlements',
+  '/api/admin/account-payments',
+  '/api/admin/settlement-configs',
 ]
 
 const spec = JSON.parse(readFileSync(inputPath, 'utf8'))
@@ -41,4 +41,8 @@ if (bearer && bearer.type === 'http' && 'name' in bearer) {
 }
 
 writeFileSync(outputPath, `${JSON.stringify(subset, null, 2)}\n`)
-console.log(`Wrote ${outputPath} (${Object.keys(filteredPaths).length} paths)`)
+const pathCount = Object.keys(filteredPaths).length
+if (pathCount === 0) {
+  throw new Error(`No paths matched SETTLEMENT_PATH_PREFIXES in ${inputPath}`)
+}
+console.log(`Wrote ${outputPath} (${pathCount} paths)`)

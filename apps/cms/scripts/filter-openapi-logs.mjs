@@ -11,7 +11,7 @@ const root = join(__dirname, '..')
 const inputPath = join(root, 'openapi/backend.openapi.json')
 const outputPath = join(root, 'openapi/logs.openapi.json')
 
-const LOGS_PATH_PREFIXES = ['/api/logs']
+const LOGS_PATH_PREFIXES = ['/api/admin/logs']
 
 const spec = JSON.parse(readFileSync(inputPath, 'utf8'))
 const filteredPaths = Object.fromEntries(
@@ -37,4 +37,8 @@ if (bearer && bearer.type === 'http' && 'name' in bearer) {
 }
 
 writeFileSync(outputPath, `${JSON.stringify(subset, null, 2)}\n`)
-console.log(`Wrote ${outputPath} (${Object.keys(filteredPaths).length} paths)`)
+const pathCount = Object.keys(filteredPaths).length
+if (pathCount === 0) {
+  throw new Error(`No paths matched LOGS_PATH_PREFIXES in ${inputPath}`)
+}
+console.log(`Wrote ${outputPath} (${pathCount} paths)`)
