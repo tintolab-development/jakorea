@@ -555,12 +555,13 @@ export function useProgramRegistrationEditor(
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    if (programRegistrationFormVariant !== 'general' || !onRegistrationSaved) return
+    if (!onRegistrationSaved) return
     try {
       persistGeneralRegistrationFormLocal({
         draft,
         participant,
         programType,
+        variant: programRegistrationFormVariant,
       })
       onRegistrationSaved()
     } catch (error) {

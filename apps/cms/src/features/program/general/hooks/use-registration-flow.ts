@@ -11,6 +11,7 @@ import {
 } from '@/features/template/model/template-registry/template-registry'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
+import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import {
@@ -32,6 +33,7 @@ export type UseGeneralProgramRegistrationFlowOptions = {
   onProgramRegistrationSaved?: () => void
   initialStep?: GeneralProgramRegistrationStepKey
   onStepChange?: (step: GeneralProgramRegistrationStepKey) => void
+  registrationFormVariant?: ProgramRegistrationFormVariant
 }
 
 function resolveStepTemplateName(templateId: string): string {
@@ -45,11 +47,15 @@ export function useGeneralProgramRegistrationFlow(
   open: boolean,
   options?: UseGeneralProgramRegistrationFlowOptions
 ) {
+  const registrationFormVariant = options?.registrationFormVariant ?? 'general'
+  const isCompanySchoolRegistration = registrationFormVariant === 'economy'
   const registrationVm = useProgramRegistrationEditor(
     open,
-    resolveStepTemplateName('registration-general'),
+    resolveStepTemplateName(
+      isCompanySchoolRegistration ? 'registration-economy' : 'registration-general'
+    ),
     {
-      programRegistrationFormVariant: 'general',
+      programRegistrationFormVariant: registrationFormVariant,
       onRegistrationSaved: options?.onProgramRegistrationSaved,
     }
   )
@@ -99,10 +105,24 @@ export function useGeneralProgramRegistrationFlow(
   )
 
   const currentStepDef = useMemo(
-    () =>
-      GENERAL_PROGRAM_REGISTRATION_STEPS.find(s => s.key === coercedActiveStep) ??
-      GENERAL_PROGRAM_REGISTRATION_STEPS[0],
-    [coercedActiveStep]
+    () => {
+      const base =
+        GENERAL_PROGRAM_REGISTRATION_STEPS.find(s => s.key === coercedActiveStep) ??
+        GENERAL_PROGRAM_REGISTRATION_STEPS[0]
+      if (!isCompanySchoolRegistration) return base
+      if (base.key === 'program') {
+        return { ...base, templateId: 'registration-economy' }
+      }
+      if (base.key === 'application-participant-school') {
+        return {
+          ...base,
+          templateId: 'application-economy',
+          editorVariant: 'economy-application-institution' as const,
+        }
+      }
+      return base
+    },
+    [coercedActiveStep, isCompanySchoolRegistration]
   )
 
   const participantTemplateName = useMemo(

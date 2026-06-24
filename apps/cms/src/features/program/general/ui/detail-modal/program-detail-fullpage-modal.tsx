@@ -49,12 +49,18 @@ import { ParticipatingVolunteersSection } from './program-status/participating-v
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
 import { ApplicantList } from '../../../shared/ui/program-detail/applicant-list/applicant-list'
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
+import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import { getEconomyPrograms, getGeneralPrograms } from '@/data/mock'
+import { COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/general/lib/registration-local-save'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
+import {
+  getGeneralSurveyMenuItems,
+  type GeneralSurveyNavKey,
+} from '@/features/program/general/lib/detail-meta'
 import {
   APPLICANT_ID_PARAM,
   DETAIL_TAB_PARAM,
@@ -65,6 +71,7 @@ import {
   LnbIconProgress,
   LnbIconProjectInfo,
 } from './program-detail-lnb-icons'
+import { GeneralLnbSurveyManagementIcon } from './detail-lnb-icons'
 import './program-detail-fullpage-modal.css'
 
 export interface ProgramDetailFullPageModalProps {
@@ -115,7 +122,25 @@ const PROGRAM_NESTED_DETAIL_QUERY_PARAMS = [
  * progress: 프로그램 진행 현황
  * managers: 담당자 정보
  */
-const LNB_KEYS_READONLY: readonly LnbKey[] = ['info', 'applicants', 'progress', 'managers']
+const LNB_KEYS_READONLY: readonly LnbKey[] = [
+  'info',
+  'applicants',
+  'applicant_instructors',
+  'progress',
+  'survey',
+  'managers',
+]
+
+function isCompanySchoolDetailProgram(program: Program | null): boolean {
+  if (!program?.id) return false
+  const id = String(program.id)
+  return (
+    id.startsWith('economy-prog-') ||
+    id.startsWith('company-school-prog-') ||
+    id.startsWith(COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX) ||
+    getEconomyPrograms().some(item => item.id === program.id)
+  )
+}
 
 function parseSchoolTabFromSearch(
   searchParams: URLSearchParams,
@@ -180,15 +205,38 @@ export function ProgramDetailFullPageModal({
     updateProgram,
   } = useProgramDetail(open ? programId : undefined)
   const displayProgram = useMemo(() => detailProgram ?? program ?? null, [detailProgram, program])
+  const isCompanySchoolDetail = useMemo(
+    () => isCompanySchoolDetailProgram(displayProgram),
+    [displayProgram]
+  )
+  const surveyMenuItems = useMemo(
+    () => (displayProgram ? getGeneralSurveyMenuItems(displayProgram) : []),
+    [displayProgram]
+  )
   const activeTab = open ? parseTabFromSearch(searchParams) : 'info'
   const editTab = open ? parseEditTabFromSearch(searchParams) : null
   const activeLnb = open ? (parseLnbFromSearch(searchParams) ?? 'info') : 'info'
   const activeChildMenu: TabKey | '' =
-    activeLnb === 'applicants' ? parseApplicantsChildTabFromSearch(searchParams) : ''
+    activeLnb === 'applicants'
+      ? isCompanySchoolDetail
+        ? 'institutions'
+        : parseApplicantsChildTabFromSearch(searchParams)
+      : activeLnb === 'applicant_instructors'
+        ? 'instructors'
+        : ''
   const progressTab = parseTabFromSearch(searchParams)
   const activeProgressChild: TabKey | '' =
-    activeLnb === 'progress' && ['institutions', 'instructors', 'volunteers'].includes(progressTab)
+    activeLnb === 'progress' &&
+    (isCompanySchoolDetail
+      ? ['institutions', 'instructors'].includes(progressTab)
+      : ['institutions', 'instructors', 'volunteers'].includes(progressTab))
       ? progressTab
+      : ''
+  const activeSurveyChild: GeneralSurveyNavKey | '' =
+    activeLnb === 'survey'
+      ? surveyMenuItems.some(item => item.key === searchParams.get(TAB_PARAM))
+        ? (searchParams.get(TAB_PARAM) as GeneralSurveyNavKey)
+        : (surveyMenuItems[0]?.key ?? '')
       : ''
 
   const APPLICANTS_TAB_KEYS: TabKey[] = ['institutions', 'instructors', 'volunteers']
@@ -214,10 +262,33 @@ export function ProgramDetailFullPageModal({
     if (!open) return
     const currentLnb = parseLnbFromSearch(searchParams)
     const currentTab = parseTabFromSearch(searchParams)
-    // 공통 정보(lnb=info) 내 탭: info | institutions | instructors | volunteers
-    if (currentLnb === 'info' && (TAB_KEYS as readonly string[]).includes(currentTab)) return
+    // 공통 정보(lnb=info) 내 탭: 1사1교는 봉사자 정보 없음
+    if (currentLnb === 'info') {
+      const validInfoTabs = isCompanySchoolDetail
+        ? (['info', 'institutions', 'instructors'] as TabKey[])
+        : [...TAB_KEYS]
+      if (validInfoTabs.includes(currentTab)) return
+
+      const next = new URLSearchParams(searchParams)
+      next.set(LNB_PARAM, 'info')
+      next.set(TAB_PARAM, 'info')
+      next.delete(EDIT_PARAM)
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+      return
+    }
     // 신청자 목록(lnb=applicants) 내 탭 — 유효하면 유지
     if (currentLnb === 'applicants') {
+      if (isCompanySchoolDetail) {
+        if (currentTab === 'institutions') return
+        const next = new URLSearchParams(searchParams)
+        next.set(LNB_PARAM, 'applicants')
+        next.set(TAB_PARAM, 'institutions')
+        next.delete(EDIT_PARAM)
+        if (programId) next.set('programId', programId)
+        setSearchParams(next, { replace: true })
+        return
+      }
       if (APPLICANTS_TAB_KEYS.includes(currentTab)) return
       const next = new URLSearchParams(searchParams)
       next.set(LNB_PARAM, 'applicants')
@@ -227,9 +298,21 @@ export function ProgramDetailFullPageModal({
       setSearchParams(next, { replace: true })
       return
     }
+    if (currentLnb === 'applicant_instructors') {
+      const next = new URLSearchParams(searchParams)
+      next.set(LNB_PARAM, 'applicant_instructors')
+      next.set(TAB_PARAM, 'instructors')
+      next.delete(EDIT_PARAM)
+      if (programId) next.set('programId', programId)
+      setSearchParams(next, { replace: true })
+      return
+    }
     // 프로그램 진행현황(lnb=progress) 내 탭 — 유효하면 유지
     if (currentLnb === 'progress') {
-      if (PROGRESS_TAB_KEYS.includes(currentTab)) return
+      const validProgressTabs = isCompanySchoolDetail
+        ? (['institutions', 'instructors'] as TabKey[])
+        : PROGRESS_TAB_KEYS
+      if (validProgressTabs.includes(currentTab)) return
       const next = new URLSearchParams(searchParams)
       next.set(LNB_PARAM, 'progress')
       next.set(TAB_PARAM, 'institutions')
@@ -238,6 +321,20 @@ export function ProgramDetailFullPageModal({
       if (programId) next.set('programId', programId)
       setSearchParams(next, { replace: true })
       return
+    }
+    if (currentLnb === 'survey') {
+      const nextSurveyKey = surveyMenuItems.some(item => item.key === searchParams.get(TAB_PARAM))
+        ? searchParams.get(TAB_PARAM)
+        : surveyMenuItems[0]?.key
+      if (nextSurveyKey) {
+        const next = new URLSearchParams(searchParams)
+        next.set(LNB_PARAM, 'survey')
+        next.set(TAB_PARAM, nextSurveyKey)
+        next.delete(EDIT_PARAM)
+        if (programId) next.set('programId', programId)
+        setSearchParams(next, { replace: true })
+        return
+      }
     }
     // 담당자 정보
     if (currentLnb === 'managers') return
@@ -248,7 +345,7 @@ export function ProgramDetailFullPageModal({
     next.delete(EDIT_PARAM)
     if (programId) next.set('programId', programId)
     setSearchParams(next, { replace: true })
-  }, [open, programId])
+  }, [open, programId, isCompanySchoolDetail, surveyMenuItems, searchParams, setSearchParams])
 
   // 진행현황 진입 시 tab=instructors면 subTab=instructors 보장(새로고침 시 세그먼트 복원)
   useEffect(() => {
@@ -348,20 +445,46 @@ export function ProgramDetailFullPageModal({
     next.set(LNB_PARAM, key)
     if (key === 'info') {
       const tab = searchParams.get(TAB_PARAM)
-      next.set(TAB_PARAM, tab && (TAB_KEYS as readonly string[]).includes(tab) ? tab : 'info')
+      if (isCompanySchoolDetail) {
+        const nextTab = childTab ?? tab
+        next.set(
+          TAB_PARAM,
+          nextTab && ['info', 'institutions', 'instructors'].includes(nextTab) ? nextTab : 'info'
+        )
+      } else {
+        next.set(TAB_PARAM, tab && (TAB_KEYS as readonly string[]).includes(tab) ? tab : 'info')
+      }
     } else if (key === 'applicants') {
-      const tab = childTab ?? searchParams.get(TAB_PARAM)
-      next.set(
-        TAB_PARAM,
-        tab && ['institutions', 'instructors', 'volunteers'].includes(tab) ? tab : 'institutions'
-      )
+      if (isCompanySchoolDetail) {
+        next.set(TAB_PARAM, 'institutions')
+      } else {
+        const tab = childTab ?? searchParams.get(TAB_PARAM)
+        next.set(
+          TAB_PARAM,
+          tab && ['institutions', 'instructors', 'volunteers'].includes(tab)
+            ? tab
+            : 'institutions'
+        )
+      }
+    } else if (key === 'applicant_instructors') {
+      next.set(TAB_PARAM, 'instructors')
     } else if (key === 'progress') {
       const tab = childTab ?? searchParams.get(TAB_PARAM)
-      const progressTabValue =
-        tab && ['institutions', 'instructors', 'volunteers'].includes(tab) ? tab : 'institutions'
+      const progressTabValue = tab && ['institutions', 'instructors'].includes(tab)
+        ? tab
+        : !isCompanySchoolDetail && tab === 'volunteers'
+          ? tab
+          : 'institutions'
       next.set(TAB_PARAM, progressTabValue)
       if (progressTabValue === 'instructors') next.set(SUB_TAB_PARAM, 'instructors')
       else next.delete(SUB_TAB_PARAM)
+    } else if (key === 'survey') {
+      const tab = searchParams.get(TAB_PARAM)
+      const surveyTab = surveyMenuItems.some(item => item.key === tab)
+        ? tab
+        : surveyMenuItems[0]?.key
+      if (surveyTab) next.set(TAB_PARAM, surveyTab)
+      next.delete(EDIT_PARAM)
     }
     setSearchParams(next, { replace: true })
   }
@@ -390,75 +513,158 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }
 
+  const setSurveyChild = (tab: GeneralSurveyNavKey) => {
+    const next = new URLSearchParams(searchParams)
+    next.set(LNB_PARAM, 'survey')
+    next.set(TAB_PARAM, tab)
+    if (programId) next.set('programId', programId)
+    next.delete(EDIT_PARAM)
+    next.delete(SCHOOL_ID_PARAM)
+    next.delete(SCHOOL_TAB_PARAM)
+    next.delete(INSTRUCTOR_ID_PARAM)
+    next.delete(INSTRUCTOR_TAB_PARAM)
+    next.delete(VOLUNTEER_ID_PARAM)
+    next.delete(VOLUNTEER_TAB_PARAM)
+    setSearchParams(next, { replace: true })
+  }
+
   const programSidebarItems = useMemo<DetailModalSidebarNavItem[]>(
-    () => [
-      { key: 'info', label: '프로젝트 정보', icon: <LnbIconProjectInfo /> },
-      {
-        key: 'applicants',
-        label: '신청자 목록',
-        icon: <LnbIconApplicants />,
-        children: [
-          { key: 'institutions', label: '신청 기관' },
-          { key: 'instructors', label: '신청 강사' },
-          { key: 'volunteers', label: '신청 봉사자' },
-        ],
-      },
-      {
-        key: 'progress',
-        label: '프로그램 진행 현황',
-        icon: <LnbIconProgress />,
-        children: [
-          { key: 'institutions', label: '참여 기관' },
-          { key: 'instructors', label: '참여 강사' },
-          { key: 'volunteers', label: '참여 봉사자' },
-        ],
-      },
-      { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> },
-    ],
-    []
+    () => {
+      if (isCompanySchoolDetail) {
+        return [
+          {
+            key: 'info',
+            label: '프로그램 정보',
+            icon: <LnbIconProjectInfo />,
+            children: [
+              { key: 'info', label: '공통 정보' },
+              { key: 'institutions', label: '모집 정보' },
+              { key: 'instructors', label: '신청 정보' },
+            ],
+          },
+          { key: 'applicants', label: '기관 신청 목록', icon: <LnbIconApplicants /> },
+          {
+            key: 'applicant_instructors',
+            label: '강사 신청 목록',
+            icon: <LnbIconApplicants />,
+          },
+          {
+            key: 'progress',
+            label: '프로그램 진행 현황',
+            icon: <LnbIconProgress />,
+            children: [
+              { key: 'institutions', label: '참여 기관' },
+              { key: 'instructors', label: '참여 강사' },
+            ],
+          },
+          ...(surveyMenuItems.length > 0
+            ? [
+                {
+                  key: 'survey',
+                  label: '설문 관리',
+                  icon: <GeneralLnbSurveyManagementIcon />,
+                  children: surveyMenuItems.map(item => ({
+                    key: item.key,
+                    label: item.label,
+                  })),
+                },
+              ]
+            : []),
+          { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> },
+        ]
+      }
+
+      return [
+        { key: 'info', label: '프로젝트 정보', icon: <LnbIconProjectInfo /> },
+        {
+          key: 'applicants',
+          label: '신청자 목록',
+          icon: <LnbIconApplicants />,
+          children: [
+            { key: 'institutions', label: '신청 기관' },
+            { key: 'instructors', label: '신청 강사' },
+            { key: 'volunteers', label: '신청 봉사자' },
+          ],
+        },
+        {
+          key: 'progress',
+          label: '프로그램 진행 현황',
+          icon: <LnbIconProgress />,
+          children: [
+            { key: 'institutions', label: '참여 기관' },
+            { key: 'instructors', label: '참여 강사' },
+            { key: 'volunteers', label: '참여 봉사자' },
+          ],
+        },
+        { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> },
+      ]
+    },
+    [isCompanySchoolDetail, surveyMenuItems]
   )
 
   const sidebarExpandedGroups = useMemo(
     () =>
-      activeLnb === 'applicants'
+      activeLnb === 'info' && isCompanySchoolDetail
+        ? (['info'] as const)
+        : activeLnb === 'applicants' && !isCompanySchoolDetail
         ? (['applicants'] as const)
         : activeLnb === 'progress'
           ? (['progress'] as const)
+          : activeLnb === 'survey'
+            ? (['survey'] as const)
           : ([] as const),
-    [activeLnb]
+    [activeLnb, isCompanySchoolDetail]
   )
 
   const sidebarActiveChildKey =
-    activeLnb === 'applicants'
+    activeLnb === 'info' && isCompanySchoolDetail
+      ? activeTab
+      : activeLnb === 'applicants'
       ? activeChildMenu
       : activeLnb === 'progress'
         ? activeProgressChild
+        : activeLnb === 'survey'
+          ? activeSurveyChild
         : ''
   const activeLnbItem = programSidebarItems.find(item => item.key === activeLnb)
   const activeChildItem = activeLnbItem?.children?.find(child => child.key === sidebarActiveChildKey)
 
   const handleSidebarSelectTop = (key: string) => {
     const k = key as LnbKey
+    if (k === 'info' && isCompanySchoolDetail) {
+      setLnb('info', 'info')
+      return
+    }
     if (k === 'applicants') {
       // 프로젝트 정보 등에서 남은 tab=instructors 등이 신청자 목록으로 이월되지 않도록 상위 클릭 시 항상 신청 기관
       setLnb('applicants', 'institutions')
+    } else if (k === 'applicant_instructors') {
+      setLnb('applicant_instructors', 'instructors')
     } else if (k === 'progress') {
       setLnb(
         'progress',
         activeLnb === 'progress' ? activeProgressChild || 'institutions' : 'institutions'
       )
+    } else if (k === 'survey') {
+      if (activeSurveyChild) setSurveyChild(activeSurveyChild)
+      else setLnb('survey')
     } else {
       setLnb(k)
     }
   }
 
   const handleSidebarSelectChild = (groupKey: string, childKey: string) => {
+    if (groupKey === 'info') {
+      setActiveTab(childKey as TabKey)
+      return
+    }
     if (groupKey === 'applicants' && childKey === 'volunteers') {
       window.alert(FEATURE_COMING_SOON_ALERT_MESSAGE)
       return
     }
     if (groupKey === 'applicants') setApplicantsChild(childKey as TabKey)
     else if (groupKey === 'progress') setProgressChild(childKey as TabKey)
+    else if (groupKey === 'survey') setSurveyChild(childKey as GeneralSurveyNavKey)
   }
 
   const setSchoolId = (id: string | null) => {
@@ -546,7 +752,10 @@ export function ProgramDetailFullPageModal({
       setVolunteerId(null)
       return
     }
-    if (activeLnb === 'applicants' && applicantCloseHandlerRef.current?.()) {
+    if (
+      (activeLnb === 'applicants' || activeLnb === 'applicant_instructors') &&
+      applicantCloseHandlerRef.current?.()
+    ) {
       return
     }
     onClose()
@@ -890,6 +1099,7 @@ export function ProgramDetailFullPageModal({
               program={displayProgram}
               sponsorName={sponsorName}
               isBodyLoading={loading && !displayProgram}
+              hideTabsRow={isCompanySchoolDetail}
               activeTab={activeTab}
               onSelectTab={setActiveTab}
               isEditModeInfo={isEditModeInfo}
@@ -912,9 +1122,9 @@ export function ProgramDetailFullPageModal({
             />
           )}
 
-          {activeLnb === 'applicants' && (
+          {(activeLnb === 'applicants' || activeLnb === 'applicant_instructors') && (
             <ApplicantList
-              menu={activeChildMenu}
+              menu={activeChildMenu || 'institutions'}
               program={displayProgram ?? null}
               onRegisterApplicantCloseHandler={fn => {
                 applicantCloseHandlerRef.current = fn
@@ -926,6 +1136,10 @@ export function ProgramDetailFullPageModal({
             <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
               <ProgramManagersTab programId={displayProgram.id} />
             </div>
+          )}
+
+          {activeLnb === 'survey' && activeSurveyChild && (
+            <GeneralSurveyManagementView program={displayProgram} activeTab={activeSurveyChild} />
           )}
 
           {activeLnb === 'progress' && (

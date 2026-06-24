@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import type { TemplateFullpageModalFooterAction } from '@/features/template/ui/template-management/template-fullpage-modal'
+import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import {
   GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY,
   normalizeGeneralProgramRegistrationStepKey,
@@ -11,17 +12,20 @@ import { useGeneralProgramRegistrationFlow } from '@/features/program/general/ho
 import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
+const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
 
 export type GeneralProgramRegistrationFullpageModalProps = {
   open: boolean
   onClose: () => void
   onProgramRegistrationSaved?: () => void
+  registrationFormVariant?: ProgramRegistrationFormVariant
 }
 
 export function GeneralProgramRegistrationFullpageModal({
   open,
   onClose,
   onProgramRegistrationSaved,
+  registrationFormVariant = 'general',
 }: GeneralProgramRegistrationFullpageModalProps) {
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -51,6 +55,7 @@ export function GeneralProgramRegistrationFullpageModal({
     initialStep,
     onProgramRegistrationSaved,
     onStepChange: syncStepToUrl,
+    registrationFormVariant,
   })
 
   const handleClose = useCallback(() => {
@@ -140,7 +145,11 @@ export function GeneralProgramRegistrationFullpageModal({
     <TemplateFullpageModal
       open={open}
       onClose={handleClose}
-      title={GENERAL_REGISTRATION_MODAL_TITLE}
+      title={
+        registrationFormVariant === 'economy'
+          ? COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE
+          : GENERAL_REGISTRATION_MODAL_TITLE
+      }
       titleReadOnly
       templateTabType="writing"
       registrationUserMode
