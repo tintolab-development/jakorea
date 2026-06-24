@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { CmsButton } from '@/shared/ui'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
@@ -12,7 +13,10 @@ import {
   maskAttendanceEmail,
 } from './attendance-display'
 import { filterAttendanceVolunteersForDisplay } from './use-list'
-import { UjatAttendanceSessionGroupPanel } from './session-group-panel'
+import {
+  UjatAttendanceSessionGroupHeader,
+  UjatAttendanceSessionGroupPanel,
+} from './session-group-panel'
 import { useUjatEducationProgressAttendance } from './use-list'
 import './section.css'
 
@@ -45,6 +49,9 @@ export function UjatEducationProgressAttendanceSection({
 }) {
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
     getDefaultUjatEducationRegionKey
+  )
+  const [openFirstSessionCorrection, setOpenFirstSessionCorrection] = useState<(() => void) | null>(
+    null
   )
 
   const {
@@ -85,9 +92,29 @@ export function UjatEducationProgressAttendanceSection({
     return rows
   }, [appliedFilters, getSessionVolunteers, sessionGroups])
 
+  const firstSessionTitle = useMemo(() => {
+    const [firstSession] = sessionGroups
+    if (!firstSession) return null
+    const firstSessionRows = filterAttendanceVolunteersForDisplay(
+      getSessionVolunteers(firstSession.id),
+      appliedFilters
+    )
+
+    return (
+      <UjatAttendanceSessionGroupHeader
+        session={firstSession}
+        totalCount={firstSessionRows.length}
+      />
+    )
+  }, [appliedFilters, getSessionVolunteers, sessionGroups])
+
   useEffect(() => {
     resetRegionState()
   }, [activeRegion, half, resetRegionState])
+
+  useEffect(() => {
+    setOpenFirstSessionCorrection(null)
+  }, [activeRegion, half])
 
   return (
     <div className="ujat-education-progress-attendance">
@@ -104,16 +131,27 @@ export function UjatEducationProgressAttendanceSection({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         showFilter
-        title="출결 관리"
+        title={firstSessionTitle}
+        actions={
+          firstSessionTitle != null ? (
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              width={120}
+              onClick={() => openFirstSessionCorrection?.()}
+            >
+              출결 정정
+            </CmsButton>
+          ) : null
+        }
         excelExport={{
           columns: UJAT_ATTENDANCE_EXCEL_COLUMNS,
           data: attendanceExcelRows,
         }}
       >
         {sessionGroups.length === 0 ? (
-          <div className="ujat-education-progress-attendance__empty">
-            조회 결과가 없습니다.
-          </div>
+          <div className="ujat-education-progress-attendance__empty">조회 결과가 없습니다.</div>
         ) : (
           <div className="ujat-education-progress-attendance__groups">
             {sessionGroups.map(session => (
@@ -123,6 +161,12 @@ export function UjatEducationProgressAttendanceSection({
                 appliedFilters={appliedFilters}
                 getSessionVolunteers={getSessionVolunteers}
                 onSave={saveSessionVolunteers}
+                showHeader={session.id !== sessionGroups[0]?.id}
+                onBindOpenCorrection={
+                  session.id === sessionGroups[0]?.id
+                    ? openCorrection => setOpenFirstSessionCorrection(() => openCorrection)
+                    : undefined
+                }
               />
             ))}
           </div>

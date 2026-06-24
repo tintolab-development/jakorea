@@ -39,7 +39,7 @@ export function buildUjatAttendanceFilterFields(
     {
       key: 'attendanceStatus',
       type: 'select',
-      label: '강의 출석 현황',
+      label: '교육 출결 현황',
       placeholder: '전체',
       options: attendanceStatusOptions,
       width: '33.33%',
