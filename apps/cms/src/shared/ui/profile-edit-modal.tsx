@@ -17,6 +17,7 @@ import {
   type ProfileEditFormData,
 } from '@/features/auth/model/profile-edit-schema'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { SocialConnectProviderList } from '@/features/auth/ui/social-connect-provider-list'
 import { CmsButton, CmsInput, ContentModal, useCmsAlert } from '@/shared/ui'
 import type { User } from '@/types/user'
 import './profile-edit-modal.css'
@@ -193,7 +194,7 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
       logout()
     } catch (error) {
       console.error('Failed to withdraw account:', error)
-      } finally {
+    } finally {
       setWithdrawing(false)
       setWithdrawKeyword('')
     }
@@ -248,15 +249,23 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
 
   if (!user) return null
 
+  const socialLinkRedirectPath =
+    typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : undefined
+
   const footer = (
-    <>
-      <CmsButton variant="secondary" size="large" onClick={handleCancel}>
-        닫기
-      </CmsButton>
-      <CmsButton variant="primary" size="large" type="submit" form="profile-edit-form" loading={saving}>
-        저장
-      </CmsButton>
-    </>
+    <div className="profile-edit-modal__footer">
+      <button type="button" className="profile-edit-modal__withdraw-button" onClick={handleOpenWithdrawModal}>
+        회원탈퇴
+      </button>
+      <div className="profile-edit-modal__footer-actions">
+        <CmsButton variant="secondary" size="large" onClick={handleCancel}>
+          닫기
+        </CmsButton>
+        <CmsButton variant="primary" size="large" type="submit" form="profile-edit-form" loading={saving}>
+          저장
+        </CmsButton>
+      </div>
+    </div>
   )
 
   return (
@@ -269,12 +278,16 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
       footer={footer}
     >
       <form id="profile-edit-form" onSubmit={handleSubmit(onFormSubmit)} className="profile-edit-modal__form">
-        <div className="profile-edit-modal__content">
+        <div className="profile-edit-modal__top">
           <div className="profile-edit-modal__avatar-column">
             <div className="profile-edit-modal__avatar-wrap">
               <div className="profile-edit-modal__avatar-button" aria-hidden>
                 {user.profileImageUrl ? (
-                  <img src={user.profileImageUrl} alt={`${user.name} 프로필 이미지`} className="profile-edit-modal__avatar-image" />
+                  <img
+                    src={user.profileImageUrl}
+                    alt={`${user.name} 프로필 이미지`}
+                    className="profile-edit-modal__avatar-image"
+                  />
                 ) : (
                   <ProfileAvatarGraphic />
                 )}
@@ -296,14 +309,13 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
                 onChange={handleAvatarUpload}
               />
             </div>
-            <button type="button" className="profile-edit-modal__withdraw-button" onClick={handleOpenWithdrawModal}>
-              회원탈퇴
-            </button>
           </div>
 
           <div className="profile-edit-modal__fields">
             <div className="profile-edit-modal__field-row">
-              <label className="profile-edit-modal__field-label" htmlFor="profile-edit-name">이름</label>
+              <label className="profile-edit-modal__field-label" htmlFor="profile-edit-name">
+                이름
+              </label>
               <Form.Item validateStatus={errors.name ? 'error' : ''} help={fieldValidationHelp(errors.name)}>
                 <Controller
                   name="name"
@@ -322,39 +334,53 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
               </Form.Item>
             </div>
 
-            <div className="profile-edit-modal__field-row">
-              <label className="profile-edit-modal__field-label" htmlFor="profile-edit-phone">연락처</label>
-              <Form.Item validateStatus={errors.phone ? 'error' : ''} help={fieldValidationHelp(errors.phone)}>
-                <Controller
-                  name="phone"
-                  control={control}
-                  render={({ field }) => (
-                    <CmsInput inputSize="large" width="100%" placeholder="010-1234-5678" {...field} id="profile-edit-phone" />
-                  )}
-                />
-              </Form.Item>
-            </div>
+            <div className="profile-edit-modal__field-row profile-edit-modal__field-row--split">
+              <div className="profile-edit-modal__field-col">
+                <label className="profile-edit-modal__field-label" htmlFor="profile-edit-phone">
+                  연락처
+                </label>
+                <Form.Item validateStatus={errors.phone ? 'error' : ''} help={fieldValidationHelp(errors.phone)}>
+                  <Controller
+                    name="phone"
+                    control={control}
+                    render={({ field }) => (
+                      <CmsInput
+                        inputSize="large"
+                        width="100%"
+                        placeholder="010-1234-5678"
+                        {...field}
+                        id="profile-edit-phone"
+                      />
+                    )}
+                  />
+                </Form.Item>
+              </div>
 
-            <div className="profile-edit-modal__field-row">
-              <label className="profile-edit-modal__field-label" htmlFor="profile-edit-email">이메일</label>
-              <Form.Item validateStatus={errors.email ? 'error' : ''} help={fieldValidationHelp(errors.email)}>
-                <Controller
-                  name="email"
-                  control={control}
-                  render={({ field }) => (
-                    <CmsInput
-                      inputSize="large"
-                      width="100%"
-                      placeholder="gilldong@naver.com"
-                      {...field}
-                      id="profile-edit-email"
-                    />
-                  )}
-                />
-              </Form.Item>
+              <div className="profile-edit-modal__field-col">
+                <label className="profile-edit-modal__field-label" htmlFor="profile-edit-email">
+                  이메일
+                </label>
+                <Form.Item validateStatus={errors.email ? 'error' : ''} help={fieldValidationHelp(errors.email)}>
+                  <Controller
+                    name="email"
+                    control={control}
+                    render={({ field }) => (
+                      <CmsInput
+                        inputSize="large"
+                        width="100%"
+                        placeholder="gilldong@naver.com"
+                        {...field}
+                        id="profile-edit-email"
+                      />
+                    )}
+                  />
+                </Form.Item>
+              </div>
             </div>
           </div>
         </div>
+
+        <SocialConnectProviderList redirectPath={socialLinkRedirectPath} />
       </form>
 
       <ContentModal
