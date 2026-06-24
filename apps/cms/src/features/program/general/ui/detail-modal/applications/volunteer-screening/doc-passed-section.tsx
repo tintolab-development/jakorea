@@ -3,16 +3,16 @@ import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
-import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import { buildGeneralVolunteerDocPassedFilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
 import {
   screeningDocPassedListTitle,
-  screeningWithdrawConfirmContent,
   type ScreeningSubjectKind,
 } from '@/features/program/general/lib/screening-subject-kind'
+import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
+import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import {
   useGeneralVolunteerApplicantDetail,
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
@@ -43,6 +43,10 @@ export function GeneralVolunteerDocPassedSection({
     [subjectKind]
   )
   const listTitle = screeningDocPassedListTitle(subjectKind)
+  const activityWithdrawScheduleOptions = useMemo(
+    () => getGeneralVolunteerActivityWithdrawScheduleOptions(program),
+    [program]
+  )
 
   const {
     list,
@@ -96,17 +100,14 @@ export function GeneralVolunteerDocPassedSection({
     [openApplicantDetail]
   )
 
-  const withdrawConfirmModal = withdrawTarget ? (
-    <ConfirmModal
-      open
-      title="활동 포기"
-      content={screeningWithdrawConfirmContent(subjectKind, withdrawTarget.name)}
-      confirmText="활동 포기"
-      danger
-      onConfirm={confirmWithdrawActivity}
+  const withdrawConfirmModal = (
+    <ActivityWithdrawScheduleModal
+      open={withdrawTarget != null}
+      scheduleOptions={activityWithdrawScheduleOptions}
       onCancel={cancelWithdrawActivity}
+      onConfirm={confirmWithdrawActivity}
     />
-  ) : null
+  )
 
   const assignModals = (
     <GeneralVolunteerInterviewAssignModals

@@ -18,6 +18,7 @@ import {
   guardGeneralVolunteerAssignInterview,
   guardGeneralVolunteerWithdrawActivity,
 } from './general-volunteer-applicant-guard-actions'
+import type { ActivityWithdrawScheduleModalPayload } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import type { GeneralInterviewAssignConfirmPayload } from './general-volunteer-interview-assign-modal'
 import { useGeneralVolunteerDocPassedColumns } from './doc-passed-columns'
 import {
@@ -159,7 +160,7 @@ export function useGeneralVolunteerDocPassed({
     setWithdrawTargetId(null)
   }, [])
 
-  const confirmWithdrawActivity = useCallback(() => {
+  const confirmWithdrawActivity = useCallback((_payload: ActivityWithdrawScheduleModalPayload) => {
     if (!withdrawTargetId) return
     const row = list.find(item => item.id === withdrawTargetId)
     if (!row) {
