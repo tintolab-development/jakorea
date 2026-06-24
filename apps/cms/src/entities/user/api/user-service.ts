@@ -174,7 +174,13 @@ export async function getUsersPage(
         page,
         size: PAGE_SIZE,
       })
-      const users = mapMemberListItems(res.items)
+      let users = mapMemberListItems(res.items)
+      if (filters?.instructorListPureOnly) {
+        users = users.filter(
+          user =>
+            user.role !== 'INSTRUCTOR' || resolveInstructorMemberProfile(user) === 'instructor_only'
+        )
+      }
       const total = res.totalElements ?? users.length
       const totalPages = res.totalPages ?? 0
       const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
