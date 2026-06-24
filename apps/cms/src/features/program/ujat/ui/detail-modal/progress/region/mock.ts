@@ -11,9 +11,10 @@ export { buildInitialRegionAssignmentTableData } from './mock-data'
 
 function formatRegionDirectAssignClassOptionLabel(
   dateLabel: string,
-  classLabel: string
+  classLabel: string,
+  institutionName: string
 ): string {
-  return `${dateLabel} ｜ ${classLabel}`
+  return `${dateLabel} ｜ ${classLabel} (${institutionName})`
 }
 
 function isRegionClassSlotUnassigned(
@@ -25,10 +26,16 @@ function isRegionClassSlotUnassigned(
   /** 배정 불가일에 배정된 건도 미배정으로 간주 */
   if (column.isBlockedDate) return true
 
-  return !rows.some(row => {
+  const assignedCount = rows.filter(row => {
     const cell = row.cells[columnIndex]
-    return cell?.kind === 'assigned' && cell.classLabel === classLabel
-  })
+    return (
+      cell?.kind === 'assigned' &&
+      !cell.isInvalidAssignment &&
+      cell.classLabel === classLabel
+    )
+  }).length
+
+  return assignedCount < 2
 }
 
 export function getRegionAssignmentTableData(
@@ -49,7 +56,7 @@ function isVolunteerUnassignedOnColumn(
   columnIndex: number
 ): boolean {
   const cell = row.cells[columnIndex]
-  return cell?.kind !== 'assigned'
+  return cell?.kind !== 'assigned' || cell.isInvalidAssignment === true
 }
 
 function countVolunteerAssignedDays(row: RegionAssignmentVolunteerRow): number {
@@ -107,7 +114,11 @@ export function getRegionDirectAssignClassOptions(
       )
       .map(slot => ({
         value: slot.id,
-        label: formatRegionDirectAssignClassOptionLabel(column.dateLabel, slot.classLabel),
+        label: formatRegionDirectAssignClassOptionLabel(
+          column.dateLabel,
+          slot.classLabel,
+          column.institutionName
+        ),
       }))
   )
 }

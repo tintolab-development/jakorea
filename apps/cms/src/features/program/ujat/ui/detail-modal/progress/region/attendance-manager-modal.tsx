@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal, CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type {
@@ -24,6 +25,13 @@ export function RegionAttendanceManagerModal({
 }: RegionAttendanceManagerModalProps) {
   const { showAlert } = useCmsAlert()
   const [selections, setSelections] = useState<Record<string, string | undefined>>({})
+  const scheduleItemRows = useMemo(() => {
+    const rows: RegionAttendanceManagerScheduleItem[][] = []
+    for (let i = 0; i < scheduleItems.length; i += 2) {
+      rows.push(scheduleItems.slice(i, i + 2))
+    }
+    return rows
+  }, [scheduleItems])
 
   useEffect(() => {
     if (!open) return
@@ -99,35 +107,53 @@ export function RegionAttendanceManagerModal({
       description="교육 진행일정 별로 출결 담당자를 지정해 주세요."
     >
       <div className="ujat-region-attendance-manager-modal__scroll">
-        <div className="ujat-region-attendance-manager-modal__grid">
-          {scheduleItems.map(item => (
-            <div key={item.columnId} className="ujat-region-attendance-manager-modal__slot">
-              <div className="ujat-region-attendance-manager-modal__label">{item.label}</div>
-              <div className="ujat-region-attendance-manager-modal__select-wrap">
-                <CmsSelect
-                  inputSize="large"
-                  width="100%"
-                  withAllOption={false}
-                  placeholder={
-                    item.volunteerOptions.length === 0
-                      ? '배정된 봉사자가 없습니다'
-                      : '출결 담당자를 선택해 주세요'
+        <DetailInfoForm
+          title="출결 담당자 설정"
+          hideHeader
+          mode="edit"
+          className="ujat-region-attendance-manager-modal__form"
+        >
+          {scheduleItemRows.map(row => (
+            <DetailInfoForm.Row
+              key={row.map(item => item.columnId).join('-')}
+              type="double"
+              className={
+                row.length === 1 ? 'ujat-region-attendance-manager-modal__row--single-item' : undefined
+              }
+            >
+              {row.map(item => (
+                <DetailInfoForm.Field
+                  key={item.columnId}
+                  label={item.label}
+                  labelWidth={240}
+                  view={selections[item.columnId] ?? '-'}
+                  edit={
+                    <CmsSelect
+                      inputSize="large"
+                      width="100%"
+                      withAllOption={false}
+                      placeholder={
+                        item.volunteerOptions.length === 0
+                          ? '배정된 봉사자가 없습니다'
+                          : '출결 담당자를 선택해 주세요'
+                      }
+                      value={selections[item.columnId]}
+                      disabled={item.volunteerOptions.length === 0}
+                      onChange={value =>
+                        setSelections(prev => ({
+                          ...prev,
+                          [item.columnId]: value == null ? undefined : String(value),
+                        }))
+                      }
+                      options={[...item.volunteerOptions]}
+                      aria-label={`${item.label} 출결 담당자`}
+                    />
                   }
-                  value={selections[item.columnId]}
-                  disabled={item.volunteerOptions.length === 0}
-                  onChange={value =>
-                    setSelections(prev => ({
-                      ...prev,
-                      [item.columnId]: value == null ? undefined : String(value),
-                    }))
-                  }
-                  options={[...item.volunteerOptions]}
-                  aria-label={`${item.label} 출결 담당자`}
                 />
-              </div>
-            </div>
+              ))}
+            </DetailInfoForm.Row>
           ))}
-        </div>
+        </DetailInfoForm>
       </div>
     </ContentModal>
   )
