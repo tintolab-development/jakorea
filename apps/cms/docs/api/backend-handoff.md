@@ -12,8 +12,8 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 | 항목            | 값                                                                                |
 | --------------- | --------------------------------------------------------------------------------- |
-| Swagger UI      | `https://bfba-115-94-189-196.ngrok-free.app/swagger-ui/index.html`                |
-| OpenAPI JSON    | `https://bfba-115-94-189-196.ngrok-free.app/v3/api-docs`                          |
+| Swagger UI      | `https://12aa-221-146-247-18.ngrok-free.app/swagger-ui/index.html`                |
+| OpenAPI JSON    | `https://12aa-221-146-247-18.ngrok-free.app/v3/api-docs`                          |
 | 프론트 스냅샷   | [`apps/cms/openapi/backend.openapi.json`](../../openapi/backend.openapi.json)     |
 | 대시보드 subset | [`apps/cms/openapi/dashboard.openapi.json`](../../openapi/dashboard.openapi.json) |
 
@@ -27,7 +27,7 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 2. **프록시 모드(권장)**
 
 ```env
-VITE_API_SERVER=https://bfba-115-94-189-196.ngrok-free.app
+VITE_API_SERVER=https://12aa-221-146-247-18.ngrok-free.app
 VITE_REAL_API_MODULES=adminAuth,dashboard,logs,detailedPrograms,textbooks,sponsors,notices,faqs,inquiries,paymentOrders,accountPayments,settlementConfigs
 VITE_ADMIN_AUTH_API_PREFIX=/api/admin/auth
 VITE_AUTH_REFRESH_PATH=/api/auth/refresh
@@ -74,32 +74,31 @@ CMS wiring: [`features/auth/social-auth/cms-client.ts`](../../src/features/auth/
 
 | API | 경로 | 용도 |
 | --- | --- | --- |
-| SSO 시작 | `POST /api/admin/auth/sso/login` | 관리자 소셜 **로그인** |
-| SSO 콜백 | `POST /api/admin/auth/sso/callback` | 로그인 code 교환 |
-| 가입 연결 시작 | `POST /api/auth/social/signup/{provider}/start` | 가입 wizard 소셜 **연결** |
-| 가입 연결 세션 | `GET /api/auth/social/signup/sessions/{sessionId}` | callback 후 세션 확인 |
-| 연결 목록 | `GET /api/admin/auth/me/social-accounts` | 로그인 후 연결 목록 |
-| 계정 연결 | `POST /api/admin/auth/me/social-accounts` | `socialVerificationSessionId` 전달 |
-| 연결 해제 | `DELETE /api/admin/auth/me/social-accounts/{provider}` | 연결 해제 |
+| SSO 시작 | `POST /api/admin/auth/sso/login` | 관리자 소셜 **로그인·연결** OAuth 시작 |
+| SSO 콜백 | `POST /api/admin/auth/sso/callback` | 로그인 code → JWT |
+| 연결 목록 | `GET /api/admin/me/sso/accounts` | 로그인 후 연결 목록 (`content[]`) |
+| 계정 연결 | `POST /api/admin/me/sso/accounts` | OAuth code + consent → 연결 |
+| 연결 해제 | `DELETE /api/admin/me/sso/accounts/{provider}` | 연결 해제 |
 
-### 관리자 소셜 로그인 (Admin SSO — 유지)
+> legacy alias `/api/admin/auth/me/social-accounts` 는 Swagger에서 제거됨. 프론트는 canonical `/api/admin/me/sso/accounts` 사용.
 
-1. 로그인 버튼 → `startLogin({ intent: 'login' })` → `sso/login`
+### 관리자 소셜 로그인 (Admin SSO)
+
+1. 로그인 버튼 → `startLogin({ intent: 'login' })` → `POST /api/admin/auth/sso/login`
 2. IdP → 프론트 `/oauth/{provider}?code&state`
-3. `processOAuthCallback` → `sso/callback` → JWT 저장
+3. `processOAuthCallback` → `POST /api/admin/auth/sso/callback` → JWT 저장
 
 - redirect URI: `http://localhost:3000/oauth/{provider}`
 
-### 가입 wizard 소셜 연결 (신규 세션 API)
+### 관리자 SSO 계정 연결 (내 정보 / 가입 wizard)
 
-1. 연결 버튼 → `startLogin({ intent: 'link' })` → `signup/{provider}/start` body `{ frontendReturnUrl }`
-2. IdP → **백엔드** `GET /api/auth/social/signup/{provider}/callback`
-3. 백엔드 → 프론트 `/register/social-connect/callback?socialVerificationSessionId=...`
-4. `processSignupSocialReturn` → `GET signup/sessions/{id}` → pending 저장
-5. 로그인 후 `flushSocialPendingLinks()` → `POST /api/admin/auth/me/social-accounts` body `{ socialVerificationSessionId, ...consent }`
+1. 연결 버튼 → `startLogin({ intent: 'link' })` → `POST /api/admin/auth/sso/login` (동일 OAuth 시작)
+2. IdP → 프론트 `/oauth/{provider}?code&state`
+3. `processOAuthLinkCallback` → 로그인 상태면 `POST /api/admin/me/sso/accounts` 즉시 연결
+4. 미로그인(가입 직후)이면 pending 저장 → 로그인 후 `flushSocialPendingLinks()` → `POST /api/admin/me/sso/accounts`
 
-- `frontendReturnUrl` 예: `http://localhost:3000/register/social-connect/callback`
-- 백엔드 origin whitelist에 CMS origin 등록 필요
+- POST body: `SocialLinkRequest` — `provider`, `accessToken`(OAuth code 대체 가능), `socialConsentVersion`, `socialConsentAgreed`
+- 연결 목록/해제: Bearer + `ADMIN_READ` / `ADMIN_WRITE`
 
 **환경 변수**
 
@@ -111,6 +110,7 @@ VITE_GOOGLE_CLIENT_ID=
 VITE_REAL_API_MODULES=...,socialAuth
 ```
 
+- `socialAuth` 모듈 하나로 Admin SSO **로그인·연결·목록** 실 API 활성화 (`socialAuthLogin` 별도 지정 가능)
 - `CLIENT_SECRET`은 프론트에 두지 않음 (서버 OAuth 사용)
 
 ---
