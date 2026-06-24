@@ -7,17 +7,25 @@ import type {
   DashboardHomeResponse,
   DashboardKpiProgressListResponse,
   DashboardLogAlertListResponse,
+  DashboardMePreferencesRequest,
+  DashboardMePreferencesResponse,
   DashboardPreferencesResponse,
   DashboardPreferencesSaveRequest,
   DashboardProgramInquiryListResponse,
   DashboardProgramScheduleListResponse,
   DashboardRecruitmentListResponse,
+  DashboardShortcutBadgeReadRequest,
+  DashboardShortcutBadgeReadResponse,
+  DashboardShortcutBadgesResponse,
   DashboardShortcutListResponse,
   DashboardKpiProgressParams,
   DashboardProgramInquiriesParams,
   DashboardProgramSchedulesParams,
   DashboardRecruitmentsParams,
+  NotificationReadAllResponse,
   NotificationUnreadCountResponse,
+  NotificationsParams,
+  PageResponse,
 } from '@/shared/api/generated/dashboard/schemas'
 
 const dashboardRemoteApi = getJAKoreaCMSBackendAPIDashboardSubset()
@@ -74,7 +82,7 @@ export async function fetchDashboardPreferencesRemote(): Promise<DashboardPrefer
 export async function saveDashboardPreferencesRemote(
   body: DashboardPreferencesSaveRequest
 ): Promise<DashboardPreferencesResponse> {
-  return unwrapBody(await dashboardRemoteApi.saveDashboardPreferences(body))
+  return unwrapBody(await dashboardRemoteApi.saveDashboardPreferences1(body))
 }
 
 export async function fetchDashboardShortcutsRemote(): Promise<DashboardShortcutListResponse> {
@@ -83,6 +91,53 @@ export async function fetchDashboardShortcutsRemote(): Promise<DashboardShortcut
 
 export async function fetchDashboardLogAlertsRemote(): Promise<DashboardLogAlertListResponse> {
   return unwrapBody(await dashboardRemoteApi.dashboardLogAlerts())
+}
+
+/** Swagger: GET /api/me/dashboard-preferences */
+export async function fetchMeDashboardPreferencesRemote(): Promise<DashboardMePreferencesResponse> {
+  return unwrapBody(await dashboardRemoteApi.getDashboardPreferences())
+}
+
+/** Swagger: PUT /api/me/dashboard-preferences */
+export async function saveMeDashboardPreferencesRemote(
+  body: DashboardMePreferencesRequest
+): Promise<DashboardMePreferencesResponse> {
+  return unwrapBody(await dashboardRemoteApi.saveDashboardPreferences(body))
+}
+
+/** Swagger: GET /api/me/dashboard-shortcut-badges */
+export async function fetchDashboardShortcutBadgesRemote(): Promise<DashboardShortcutBadgesResponse> {
+  return unwrapBody(await dashboardRemoteApi.getDashboardShortcutBadges())
+}
+
+/** Swagger: POST /api/me/dashboard-shortcut-badges/{shortcutId}/read */
+export async function readDashboardShortcutBadgeRemote(
+  shortcutId: string,
+  body?: DashboardShortcutBadgeReadRequest
+): Promise<DashboardShortcutBadgeReadResponse> {
+  return unwrapBody(await dashboardRemoteApi.readDashboardShortcutBadge(shortcutId, body ?? {}))
+}
+
+/** Swagger: GET /api/admin/notifications */
+export async function fetchAdminNotificationsRemote(
+  params?: NotificationsParams
+): Promise<PageResponse> {
+  return unwrapBody(await dashboardRemoteApi.notifications(params))
+}
+
+/** Swagger: PATCH /api/admin/notifications/{recipientId}/read */
+export async function markAdminNotificationReadRemote(recipientId: string): Promise<void> {
+  await dashboardRemoteApi.markRead1(Number(recipientId))
+}
+
+/** Swagger: PATCH /api/admin/notifications/read-all */
+export async function markAllAdminNotificationsReadRemote(): Promise<NotificationReadAllResponse> {
+  return unwrapBody(await dashboardRemoteApi.readAllNotifications())
+}
+
+/** Swagger: PATCH /api/admin/notifications/{recipientId}/hidden */
+export async function hideAdminNotificationRemote(recipientId: string): Promise<void> {
+  await dashboardRemoteApi.hide(Number(recipientId))
 }
 
 /** 위젯 programIds 필터 → 백엔드 params 맵 */

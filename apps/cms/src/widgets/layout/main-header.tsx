@@ -37,12 +37,12 @@ export function MainHeader() {
   const { data: remoteUnreadCount = 0 } = useDashboardNotificationCount(useRemoteNotificationCount)
   const {
     notifications: headerNotifications,
-    unreadCount: mockUnreadCount,
+    unreadCount: listUnreadCount,
     markAsRead,
     removeNotification,
   } = useNotifications()
-  const unreadCount = useRemoteNotificationCount ? remoteUnreadCount : mockUnreadCount
-  const dropdownNotifications = useRemoteNotificationCount ? [] : headerNotifications
+  const unreadCount = useRemoteNotificationCount ? remoteUnreadCount : listUnreadCount
+  const dropdownNotifications = headerNotifications
   const { items: breadcrumbItems } = useBreadcrumb()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false)

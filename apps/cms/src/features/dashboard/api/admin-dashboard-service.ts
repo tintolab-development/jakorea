@@ -38,6 +38,12 @@ import {
   fetchDashboardProgramSchedulesRemote,
   fetchDashboardRecruitmentsRemote,
   fetchDashboardShortcutsRemote,
+  fetchDashboardShortcutBadgesRemote,
+  readDashboardShortcutBadgeRemote,
+  fetchAdminNotificationsRemote,
+  markAdminNotificationReadRemote,
+  markAllAdminNotificationsReadRemote,
+  hideAdminNotificationRemote,
   toDashboardQueryParams,
 } from '@/features/dashboard/api/dashboard-api-client'
 import {
@@ -52,6 +58,8 @@ import {
   type DashboardScheduleEventDto,
   type ProgramInquiryRow,
 } from '@/features/dashboard/api/adapters/dashboard-adapters'
+import { mapNotificationInboxPage } from '@/features/dashboard/api/adapters/notification-adapters'
+import type { Notification } from '@/features/dashboard/api/notification-service'
 import { getMockDashboardProgramOptions } from '@/features/dashboard/api/dashboard-program-options-mock'
 import { getDashboardProgramTypeParamForWidget } from '@/features/dashboard/lib/dashboard-widget-program-type'
 
@@ -784,4 +792,57 @@ export async function getDashboardLogAlerts(): Promise<DashboardLogAlertItem[]> 
       }))
   }
   return []
+}
+
+/** Swagger: GET /api/me/dashboard-shortcut-badges */
+export async function getDashboardShortcutBadges(): Promise<Record<string, number>> {
+  if (shouldUseDashboardRemoteApi()) {
+    const dto = await fetchDashboardShortcutBadgesRemote()
+    return { ...(dto.counts ?? {}) }
+  }
+  return getMenuShortcutBadgeCounts()
+}
+
+/** Swagger: POST /api/me/dashboard-shortcut-badges/{shortcutId}/read */
+export async function readDashboardShortcutBadge(shortcutId: string): Promise<void> {
+  if (!shouldUseDashboardRemoteApi()) return
+  await readDashboardShortcutBadgeRemote(shortcutId, {
+    shortcutId,
+    readAt: new Date().toISOString(),
+  })
+}
+
+/** Swagger: GET /api/admin/notifications */
+export async function getAdminNotifications(options?: {
+  page?: number
+  size?: number
+  unreadOnly?: boolean
+}): Promise<Notification[]> {
+  if (!shouldUseDashboardRemoteApi()) {
+    return []
+  }
+  const dto = await fetchAdminNotificationsRemote({
+    page: options?.page ?? 0,
+    size: options?.size ?? 20,
+    unreadOnly: options?.unreadOnly,
+  })
+  return mapNotificationInboxPage(dto.items)
+}
+
+/** Swagger: PATCH /api/admin/notifications/{recipientId}/read */
+export async function markAdminNotificationAsRead(recipientId: string): Promise<void> {
+  if (!shouldUseDashboardRemoteApi()) return
+  await markAdminNotificationReadRemote(recipientId)
+}
+
+/** Swagger: PATCH /api/admin/notifications/read-all */
+export async function markAllAdminNotificationsAsRead(): Promise<void> {
+  if (!shouldUseDashboardRemoteApi()) return
+  await markAllAdminNotificationsReadRemote()
+}
+
+/** Swagger: PATCH /api/admin/notifications/{recipientId}/hidden */
+export async function hideAdminNotification(recipientId: string): Promise<void> {
+  if (!shouldUseDashboardRemoteApi()) return
+  await hideAdminNotificationRemote(recipientId)
 }

@@ -1,37 +1,42 @@
 /**
- * 대시보드 개인화 설정 — GET/PUT preferences (mock: zustand persist 유지)
+ * 대시보드 개인화 설정 — GET/PUT /api/me/dashboard-preferences (mock: zustand persist 유지)
  */
 import {
-  applyDashboardPreferencesResponse,
-  buildDashboardPreferencesSaveRequest,
-} from '@/features/dashboard/api/adapters/dashboard-preferences-adapters'
+  applyMeDashboardPreferencesResponse,
+  buildMeDashboardPreferencesRequest,
+} from '@/features/dashboard/api/adapters/dashboard-me-preferences-adapters'
 import {
-  fetchDashboardPreferencesRemote,
-  saveDashboardPreferencesRemote,
+  fetchMeDashboardPreferencesRemote,
+  saveMeDashboardPreferencesRemote,
 } from '@/features/dashboard/api/dashboard-api-client'
 import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
-import type { DashboardPreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardPreferencesResponse'
-import type { DashboardPreferencesSaveRequest } from '@/shared/api/generated/dashboard/schemas/dashboardPreferencesSaveRequest'
+import type { DashboardMePreferencesRequest } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesRequest'
+import type { DashboardMePreferencesResponse } from '@/shared/api/generated/dashboard/schemas/dashboardMePreferencesResponse'
+import { useAuthStore } from '@/features/auth/model/auth-store'
+import type { UserRole } from '@/types/user'
 
-export async function loadDashboardPreferences(): Promise<DashboardPreferencesResponse | null> {
+function resolvePreferencesRole(): UserRole {
+  const role = useAuthStore.getState().user?.role
+  return role ?? 'ADMIN'
+}
+
+export async function loadDashboardPreferences(): Promise<DashboardMePreferencesResponse | null> {
   if (!shouldUseDashboardRemoteApi()) {
     return null
   }
-  const dto = await fetchDashboardPreferencesRemote()
-  applyDashboardPreferencesResponse(dto)
+  const dto = await fetchMeDashboardPreferencesRemote()
+  applyMeDashboardPreferencesResponse(dto, resolvePreferencesRole())
   return dto
 }
 
 export async function saveDashboardPreferences(
-  payload?: DashboardPreferencesSaveRequest
-): Promise<DashboardPreferencesResponse | null> {
+  payload?: DashboardMePreferencesRequest
+): Promise<DashboardMePreferencesResponse | null> {
   if (!shouldUseDashboardRemoteApi()) {
     return null
   }
-  const body = payload ?? buildDashboardPreferencesSaveRequest()
-  const saved = await saveDashboardPreferencesRemote(body)
-  if (saved) {
-    applyDashboardPreferencesResponse(saved)
-  }
+  const body = payload ?? buildMeDashboardPreferencesRequest(resolvePreferencesRole())
+  const saved = await saveMeDashboardPreferencesRemote(body)
+  applyMeDashboardPreferencesResponse(saved, resolvePreferencesRole())
   return saved
 }
