@@ -8,7 +8,7 @@
 
 .container {
   display: flex;
-  width: 480px;
+  width: min(100%, 480px);
   flex-direction: column;
   align-items: center;
   padding-block: var(--spacing-100);
@@ -16,58 +16,45 @@
 
 .intro {
   display: flex;
-  width: 100%;
   flex-direction: column;
-  align-items: flex-start;
-  padding-left: var(--spacing-8);
-  text-align: left;
+  align-items: center;
+  text-align: center;
 }
 
 .illustration {
   width: 84px;
   height: 84px;
-  align-self: flex-start;
 }
 
 .title {
+  margin-top: var(--spacing-24);
   margin-bottom: var(--spacing-16);
 }
 
-.form {
+.guide {
   display: flex;
-  width: 100%;
+  align-self: stretch;
   flex-direction: column;
-  gap: var(--spacing-32);
-  margin-top: var(--spacing-40);
-}
-
-.input-group {
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  gap: var(--spacing-28);
-}
-
-.submit-button {
-  width: 100%;
-}
-
-.account-links {
-  display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: var(--spacing-24);
+  gap: 10px;
+  margin-top: var(--spacing-56);
+  margin-bottom: var(--spacing-40);
+  padding: var(--spacing-24);
+  border-radius: var(--radius-8);
+  background: var(--color-neutral-cool-50);
+  text-align: center;
 }
 
-.account-link-item {
-  display: inline-flex;
-  align-items: center;
+.actions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-12);
 }
 
-.account-link-separator {
-  width: 1px;
-  height: 15px;
-  background: var(--color-border-default);
+.action-button {
+  width: 100%;
 }
 
 .social-section {
@@ -76,7 +63,7 @@
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-24);
-  margin-top: var(--spacing-48);
+  margin-top: var(--spacing-80);
 }
 
 .social-divider {
@@ -96,7 +83,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-16);
+  gap: var(--spacing-24);
 }
 
 .social-button {

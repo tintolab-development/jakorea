@@ -109,7 +109,7 @@ export function TestPage() {
               <PFText as="span" typo="label-md" color="neutral-cool-500">
                 {size}
               </PFText>
-              <PFTextInput size={size} label="Label" placeholder="text" />
+              <PFTextInput size={size} label="Label" placeholder="text" required />
               <PFTextInput size={size} label="Label" placeholder="text" defaultValue="text" />
               <PFTextInput size={size} label="Label" placeholder="text" hasIcon />
               <PFTextInput size={size} label="Label" placeholder="text" defaultValue="text" disabled />

@@ -31,6 +31,7 @@ export function PFTextInput({
   hasIcon = false,
   error = false,
   disabled = false,
+  required = false,
   id,
   value,
   defaultValue,
@@ -77,9 +78,16 @@ export function PFTextInput({
   return (
     <div className={[styles.root, className].filter(Boolean).join(' ')}>
       {label ? (
-        <PFText as="label" typo="label-md" color="inherit" className={styles.label} htmlFor={inputId}>
-          {label}
-        </PFText>
+        <label className={styles.label} htmlFor={inputId}>
+          <PFText as="span" typo="label-md" color="inherit" className={styles['label-text']}>
+            {label}
+          </PFText>
+          {required ? (
+            <span className={styles['required-mark']} aria-hidden="true">
+              *
+            </span>
+          ) : null}
+        </label>
       ) : null}
 
       <div className={fieldClassName}>
@@ -88,6 +96,7 @@ export function PFTextInput({
           id={inputId}
           className={inputClassName}
           disabled={disabled}
+          required={required}
           value={currentValue}
           onChange={handleChange}
           {...props}
