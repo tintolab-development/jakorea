@@ -23,6 +23,8 @@ export interface CreateSocialAuthClientOptions {
   isRemoteEnabled: (intent?: OAuthIntent) => boolean
   remoteAdapter: SocialAuthAdapter
   mockAdapter: SocialAuthAdapter
+  /** true이면 IdP authorize URL을 프론트에서 직접 생성 (백엔드 SSO start 생략) */
+  useFrontendOAuthStart?: (intent?: OAuthIntent) => boolean
   storagePrefix?: string
   state?: SocialAuthState
   getAccessToken?: () => string | null
@@ -122,6 +124,10 @@ export function createSocialAuthClient(options: CreateSocialAuthClientOptions): 
           provider,
           oauthState
         )
+      }
+
+      if (options.useFrontendOAuthStart?.(intent)) {
+        return buildFrontendAuthorizeUrl()
       }
 
       if (adapter.startSso && clientShell.isRemoteEnabled(intent)) {
