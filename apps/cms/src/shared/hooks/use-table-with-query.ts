@@ -68,9 +68,9 @@ export interface UseTableWithQueryReturn<TData> {
 export function useTableWithQuery<TData>({
   data,
   columns,
-  filterKeys = [],
+  filterKeys: filterKeysInput = [],
   defaultPageSize = 10,
-  queryParamMapping = {},
+  queryParamMapping: queryParamMappingInput = {},
   tableOptions = {},
 }: UseTableWithQueryOptions<TData>): UseTableWithQueryReturn<TData> {
   type QueryParams = Record<string, string | undefined> & {
@@ -88,6 +88,16 @@ export function useTableWithQuery<TData>({
 
   // 초기 마운트 여부 추적
   const isMounted = useRef(false)
+
+  const filterKeysKey = filterKeysInput.join('\u0000')
+  const filterKeys = useMemo(() => filterKeysInput, [filterKeysKey])
+  const queryParamMappingKey = JSON.stringify(
+    Object.entries(queryParamMappingInput).sort(([a], [b]) => a.localeCompare(b))
+  )
+  const queryParamMapping = useMemo(
+    () => queryParamMappingInput,
+    [queryParamMappingKey]
+  )
 
   const safeParseInt = (value: string | undefined, fallback: number) => {
     if (!value) return fallback
