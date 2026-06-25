@@ -15,7 +15,7 @@
 
 import ExcelJS from '@zurmokeeper/exceljs'
 import type { ColumnsType, ColumnType } from 'antd/es/table'
-import type { Program } from '@/types/domain'
+import type { EducationRecordRow } from '@/features/education-record/model/education-record-types'
 import { downloadExcel, generateFilename } from '@/shared/utils/file-download'
 import {
   buildPivotExportRows,
@@ -72,7 +72,7 @@ const PIVOT_GRAND_ROW_BLUE = 'FFDDEBF7'
 const PIVOT_GRAND_TOTAL_PINK = 'FFFFC7CE'
 const PIVOT_GRAND_TOTAL_FONT_RED = 'FFFF0000'
 
-function addPivotSummaryWorksheet(workbook: ExcelJS.Workbook, programs: Program[]): void {
+function addPivotSummaryWorksheet(workbook: ExcelJS.Workbook, rows: EducationRecordRow[]): void {
   const worksheet = workbook.addWorksheet('합계')
 
   const headerRow = worksheet.addRow([...PIVOT_SHEET_HEADERS])
@@ -94,7 +94,7 @@ function addPivotSummaryWorksheet(workbook: ExcelJS.Workbook, programs: Program[
     }
   })
 
-  const pivotRows = buildPivotExportRows(programs)
+  const pivotRows = buildPivotExportRows(rows)
 
   for (const pr of pivotRows) {
     if (pr.kind === 'category') {
@@ -195,14 +195,14 @@ function addPivotSummaryWorksheet(workbook: ExcelJS.Workbook, programs: Program[
   worksheet.views = [{ state: 'frozen', ySplit: 1 }]
 }
 
-function isExportableColumn(col: ColumnsType<Program>[number]): col is ColumnType<Program> {
+function isExportableColumn(col: ColumnsType<EducationRecordRow>[number]): col is ColumnType<EducationRecordRow> {
   if ('children' in col && col.children) return false
   if (col.hidden) return false
   if (col.key != null && EXCLUDED_COLUMN_KEYS.has(String(col.key))) return false
   return true
 }
 
-function resolveRawValue(record: Program, col: ColumnType<Program>): unknown {
+function resolveRawValue(record: EducationRecordRow, col: ColumnType<EducationRecordRow>): unknown {
   const dataIndex = col.dataIndex
   if (dataIndex == null) return undefined
   if (Array.isArray(dataIndex)) {
@@ -243,8 +243,8 @@ function unwrapRenderResult(rendered: unknown): unknown {
 }
 
 function renderCell(
-  col: ColumnType<Program>,
-  record: Program,
+  col: ColumnType<EducationRecordRow>,
+  record: EducationRecordRow,
   rowIndex: number
 ): string | number | null {
   const rawValue = resolveRawValue(record, col)
@@ -257,7 +257,7 @@ function renderCell(
   return toCellValue(rawValue)
 }
 
-function headerTitle(col: ColumnType<Program>): string {
+function headerTitle(col: ColumnType<EducationRecordRow>): string {
   const title = col.title
   if (title == null) return ''
   if (typeof title === 'string' || typeof title === 'number') return String(title)
@@ -265,8 +265,8 @@ function headerTitle(col: ColumnType<Program>): string {
 }
 
 function computeColumnWidth(
-  col: ColumnType<Program>,
-  records: Program[],
+  col: ColumnType<EducationRecordRow>,
+  records: EducationRecordRow[],
   rowIndexBase: number
 ): number {
   const header = headerTitle(col)
@@ -293,8 +293,8 @@ function computeColumnWidth(
  * @param filename 확장자 제외 파일명 prefix (예: `'실적데이터'`)
  */
 export async function exportEducationRecordExcel(
-  columns: ColumnsType<Program>,
-  data: Program[],
+  columns: ColumnsType<EducationRecordRow>,
+  data: EducationRecordRow[],
   filename: string
 ): Promise<void> {
   const workbook = new ExcelJS.Workbook()

@@ -1,18 +1,18 @@
 /**
  * 실적 관리 목록 페이지
- * - 공통 필터(UnifiedFilterCard/TableFilterGroup)를 페이지 루트에 한 번 렌더
- * - 그 아래 구분선 + 탭 nav + 쿼리 파라미터(`?tab=data` / `?tab=summary`)에 따른 본문
+ * - 데이터 탭: 공통 필터(TableFilterGroup) + 구분선 + 탭 nav + 본문
+ * - 합계 탭: 필터 비노출, 탭 nav + 본문만 렌더
+ * - 쿼리 파라미터: `?tab=data`(기본) / `?tab=summary`
  * - 실적 데이터 탭은 `useTablePage` 결과(antdColumns/tableData/displayedCount)를 prop 으로 수신
  * - 합계 탭은 공통 필터와 독립된(목업) 집계 뷰를 렌더
  */
 
 import { useCallback, useMemo } from 'react'
+import { Alert, Spin } from 'antd'
 import { useSearchParams } from 'react-router-dom'
-import type { Program } from '@/types/domain'
 import { Divider } from '@/shared/components/divider'
 import { TableFilterGroup } from '@/shared/components/table-filter-group'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
-import { mockPrograms } from '@/data/mock'
 import { createEducationRecordFilterFields } from '@/features/education-record/model/education-record-filter-fields'
 import { exportEducationRecordExcel } from '@/features/education-record/lib/education-record-export'
 import { educationRecordTablePageConfig } from '@/features/education-record/model/education-record-table.config'
@@ -20,12 +20,18 @@ import type {
   EducationRecordTabKey,
   EducationRecordTableContext,
 } from '@/features/education-record/model/education-record-types'
-import { getAvailableYears } from '@/features/education-record/lib/education-record-region'
+import { getAvailableYearsFromRows } from '@/features/education-record/lib/education-record-region'
 import { EducationRecordDataTab } from '@/features/education-record/ui/education-record-data-tab'
 import { EducationRecordSummaryTab } from '@/features/education-record/ui/education-record-summary-tab'
 import { EducationRecordTabNav } from '@/features/education-record/ui/education-record-tab-nav'
+import { getPerformanceRemoteFilterNotice } from '@/features/education-record/api/performance-remote-capabilities'
+import {
+  usePerformanceListQuery,
+  usePerformanceRemoteEnabled,
+} from '@/features/education-record/hooks/use-performance-list-query'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ExcelButton } from '@/shared/ui/excel-button'
+import { MESSAGES } from '@/shared/constants'
 import './education-record-list-page.css'
 
 const TAB_PARAM = 'tab'
@@ -38,8 +44,12 @@ function parseTabKey(raw: string | null): EducationRecordTabKey {
 export function EducationRecordListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeKey = parseTabKey(searchParams.get(TAB_PARAM))
+  const remoteEnabled = usePerformanceRemoteEnabled()
 
-  const availableYears = useMemo(() => getAvailableYears(mockPrograms), [])
+  const listQuery = usePerformanceListQuery()
+  const sourceRows = listQuery.data ?? []
+
+  const availableYears = useMemo(() => getAvailableYearsFromRows(sourceRows), [sourceRows])
   const context = useMemo<EducationRecordTableContext>(
     () => ({ availableYears }),
     [availableYears]
@@ -53,7 +63,7 @@ export function EducationRecordListPage() {
     tableData,
     antdColumns,
   } = useTablePage(educationRecordTablePageConfig, {
-    data: mockPrograms as Program[],
+    data: sourceRows,
     searchParams,
     setSearchParams,
     context,
@@ -78,6 +88,9 @@ export function EducationRecordListPage() {
     [pendingFilters]
   )
 
+  const remoteFilterNotice = getPerformanceRemoteFilterNotice(remoteEnabled)
+  const isDataTab = activeKey === 'data'
+
   const handleTabChange = useCallback(
     (key: EducationRecordTabKey) => {
       setSearchParams(
@@ -96,7 +109,7 @@ export function EducationRecordListPage() {
     [setSearchParams]
   )
 
-  const { exportExcel: handleExportExcel, isExporting } = useTableExcelExport<Program>({
+  const { exportExcel: handleExportExcel, isExporting } = useTableExcelExport({
     columns: antdColumns,
     data: tableData,
     filename: '실적데이터',
@@ -107,18 +120,40 @@ export function EducationRecordListPage() {
   return (
     <div className="education-record-list-page">
       <div className="education-record-list-page__filter-card">
-        <div className="education-record-list-page__filter">
-          <TableFilterGroup
-            fields={filterFields}
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            onSearch={handleSearch}
+        {isDataTab && remoteFilterNotice ? (
+          <Alert
+            type="info"
+            showIcon
+            message={remoteFilterNotice}
+            className="education-record-list-page__remote-notice"
           />
-        </div>
+        ) : null}
 
-        <div className="education-record-list-page__divider">
-          <Divider />
-        </div>
+        {isDataTab && listQuery.isError ? (
+          <Alert
+            type="error"
+            showIcon
+            message={MESSAGES.error.performanceRecordsLoadFailed}
+            className="education-record-list-page__remote-notice"
+          />
+        ) : null}
+
+        {isDataTab ? (
+          <>
+            <div className="education-record-list-page__filter">
+              <TableFilterGroup
+                fields={filterFields}
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                onSearch={handleSearch}
+              />
+            </div>
+
+            <div className="education-record-list-page__divider">
+              <Divider />
+            </div>
+          </>
+        ) : null}
 
         <div className="education-record-list-page__top-nav">
           <EducationRecordTabNav activeTab={activeKey} onTabChange={handleTabChange} />
@@ -126,13 +161,17 @@ export function EducationRecordListPage() {
             <ExcelButton
               onClick={handleExportExcel}
               loading={isExporting}
-              disabled={tableData.length === 0}
+              disabled={tableData.length === 0 || listQuery.isLoading}
               style={{ height: 44 }}
             />
           </div>
         </div>
 
-        {activeKey === 'data' ? (
+        {listQuery.isLoading && isDataTab ? (
+          <div className="education-record-list-page__loading">
+            <Spin />
+          </div>
+        ) : isDataTab ? (
           <EducationRecordDataTab
             antdColumns={antdColumns}
             tableData={tableData}
