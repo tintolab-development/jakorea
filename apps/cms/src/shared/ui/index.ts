@@ -99,6 +99,7 @@ export {
 } from './app-datepicker'
 export type { AppDatePickerProps, AppDateRangePickerProps } from './app-datepicker'
 export { AppButton, FilterSearchButton } from './app-button'
+export { LoadingButton } from './loading-button'
 export { CmsButton, CMS_ACTION_BUTTON_WIDTH } from './cms-button'
 export type { CmsButtonProps, CmsButtonVariant, CmsButtonSize } from './cms-button'
 export { ExcelButton } from './excel-button'

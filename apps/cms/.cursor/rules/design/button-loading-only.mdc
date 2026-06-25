@@ -1,0 +1,32 @@
+---
+description: CMS 버튼 loading 시 스피너만 표시 — 전역 CSS·공통 래퍼
+alwaysApply: true
+category: design
+---
+
+# 버튼 로딩 상태 (스피너만)
+
+CMS **모든** antd `Button`은 `loading` prop이 켜지면 **텍스트·아이콘을 숨기고 로딩 스피너만** 표시한다.
+
+## 구현
+
+| 계층 | 경로 | 역할 |
+|------|------|------|
+| 전역 CSS | `apps/cms/src/shared/ui/button-loading-only.css` | raw `Button` 포함 전체 `.ant-btn-loading` |
+| 진입점 | `apps/cms/src/index.css` `@import` | 앱 전역 적용 |
+| 공통 래퍼 | `@/shared/ui/loading-button` · `LoadingButton` | auth·폼 등 antd 기본 스타일 버튼 |
+| CMS 스타일 | `@/shared/ui/cms-button` · `CmsButton` | variant·size 고정 버튼 (`ExcelButton` 등) |
+| 앱 액션 | `@/shared/ui/app-button` · `AppButton` | variant·필터·모달 버튼 (전역 CSS로 loading 처리) |
+
+## 규칙
+
+1. **`loading` 중 라벨·아이콘을 children으로 추가 노출하지 않는다.** 스피너만 보인다.
+2. **새 버튼**은 가능하면 `CmsButton` / `AppButton` / `LoadingButton`을 쓴다. raw `Button`도 전역 CSS로 동일 동작.
+3. **로딩 중 버튼 폭 유지** — 텍스트는 `visibility: hidden`으로 숨겨 레이아웃 시프트를 막는다. `display: none`으로 라벨을 제거하지 않는다.
+4. **`loading={{ icon: … }}` 커스텀 스피너**는 CMS에서 사용하지 않는다. 기본 antd 스피너를 따른다.
+
+## Related
+
+- [ant-design-usage.md](../libraries/ant-design-usage.md)
+
+**Last updated:** 2026-06-25

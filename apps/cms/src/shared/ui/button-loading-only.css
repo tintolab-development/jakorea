@@ -1,8 +1,30 @@
 /**
- * 로딩 버튼 — 라벨 영역은 유지(visibility)하고 스피너만 중앙 오버레이.
- * `AuthLoadingButton`, `CmsButton` 공통.
+ * CMS 버튼 로딩 — `loading` 시 텍스트·아이콘 숨기고 스피너만 중앙 표시.
+ * 라벨 영역은 visibility로 유지해 버튼 폭·레이아웃 시프트 방지.
+ *
+ * - 전역: 모든 antd `.ant-btn-loading`
+ * - 명시적: `.btn-loading-only` (`LoadingButton`, `CmsButton`)
  */
 
+/* ----- 전역 (raw antd Button 포함) ----- */
+.ant-btn.ant-btn-loading {
+  position: relative;
+}
+
+.ant-btn.ant-btn-loading > :not(.ant-btn-icon) {
+  visibility: hidden;
+}
+
+.ant-btn.ant-btn-loading .ant-btn-loading-icon {
+  position: absolute;
+  inset: 0;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  margin: 0 !important;
+}
+
+/* ----- 명시적 래퍼 (LoadingButton, CmsButton) ----- */
 .btn-loading-only.ant-btn {
   position: relative;
 }
@@ -25,4 +47,8 @@
   align-items: center;
   justify-content: center;
   margin: 0 !important;
+}
+
+.btn-loading-only.ant-btn-loading {
+  gap: 0 !important;
 }
