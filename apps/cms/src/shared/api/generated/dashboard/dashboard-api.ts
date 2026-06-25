@@ -46,7 +46,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
   export const getJAKoreaCMSBackendAPIDashboardSubset = () => {
 /**
  * ### 이 API가 하는 일
- * - 내 대시보드 환경설정 조회
+ * - 대상 리소스 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `GET /api/me/dashboard-preferences`
@@ -62,14 +62,14 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -84,8 +84,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Frontend dashboard home preferences API handoff
- * @summary 내 대시보드 환경설정 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 대상 리소스 조회
  */
 const getDashboardPreferences = (
 
@@ -98,7 +98,7 @@ const getDashboardPreferences = (
 
 /**
  * ### 이 API가 하는 일
- * - 내 대시보드 환경설정 저장 revision 낙관적 잠금
+ * - PUT /api/me/dashboard-preferences
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `PUT /api/me/dashboard-preferences`
@@ -114,13 +114,13 @@ const getDashboardPreferences = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -136,8 +136,8 @@ const getDashboardPreferences = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Frontend dashboard home preferences API handoff
- * @summary 내 대시보드 환경설정 저장 revision 낙관적 잠금
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary PUT /api/me/dashboard-preferences
  */
 const saveDashboardPreferences = (
     dashboardMePreferencesRequest: DashboardMePreferencesRequest,
@@ -152,7 +152,7 @@ const saveDashboardPreferences = (
 
 /**
  * ### 이 API가 하는 일
- * - 위젯별 프로그램 필터 조회
+ * - 프로그램 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -170,14 +170,14 @@ const saveDashboardPreferences = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -192,8 +192,8 @@ const saveDashboardPreferences = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 위젯별 프로그램 필터 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 프로그램 조회
  */
 const getWidgetProgramFilters = (
     widgetKey: string,
@@ -206,7 +206,7 @@ const getWidgetProgramFilters = (
 
 /**
  * ### 이 API가 하는 일
- * - 위젯별 프로그램 필터 저장
+ * - PUT /api/admin/dashboard/widgets/{widgetKey}/program-필터
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -224,13 +224,13 @@ const getWidgetProgramFilters = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -246,8 +246,8 @@ const getWidgetProgramFilters = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 위젯별 프로그램 필터 저장
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary PUT /api/admin/dashboard/widgets/{widgetKey}/program-필터
  */
 const saveWidgetProgramFilters = (
     widgetKey: string,
@@ -263,7 +263,7 @@ const saveWidgetProgramFilters = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자별 위젯 레이아웃 저장
+ * - PUT /api/admin/dashboard/widgets/layout
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -281,13 +281,13 @@ const saveWidgetProgramFilters = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -303,8 +303,8 @@ const saveWidgetProgramFilters = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 관리자별 위젯 레이아웃 저장
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary PUT /api/admin/dashboard/widgets/layout
  */
 const saveDashboardWidgetLayout = (
     dashboardWidgetLayoutSaveRequest?: DashboardWidgetLayoutSaveRequest,
@@ -319,7 +319,7 @@ const saveDashboardWidgetLayout = (
 
 /**
  * ### 이 API가 하는 일
- * - 메뉴 바로가기 노출 설정 저장
+ * - PUT /api/admin/dashboard/shortcuts/visibility
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -337,13 +337,13 @@ const saveDashboardWidgetLayout = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -359,8 +359,8 @@ const saveDashboardWidgetLayout = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 메뉴 바로가기 노출 설정 저장
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary PUT /api/admin/dashboard/shortcuts/visibility
  */
 const saveDashboardShortcutVisibility = (
     dashboardShortcutVisibilitySaveRequest?: DashboardShortcutVisibilitySaveRequest,
@@ -375,7 +375,7 @@ const saveDashboardShortcutVisibility = (
 
 /**
  * ### 이 API가 하는 일
- * - 대시보드 개인화 설정 조회
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 관리자 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -393,14 +393,14 @@ const saveDashboardShortcutVisibility = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -415,8 +415,8 @@ const saveDashboardShortcutVisibility = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: 프론트 dashboard-settings/dashboard-widget-order 저장소 구조와 호환되는 계정별 설정 조회 API
- * @summary 대시보드 개인화 설정 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const dashboardPreferences = (
 
@@ -429,7 +429,7 @@ const dashboardPreferences = (
 
 /**
  * ### 이 API가 하는 일
- * - 대시보드 개인화 설정 저장
+ * - PUT /api/admin/dashboard/preferences
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 관리자 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -447,13 +447,13 @@ const dashboardPreferences = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -469,8 +469,8 @@ const dashboardPreferences = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: 프론트 localStorage 기반 대시보드 설정을 백엔드 계정별 저장값으로 전환
- * @summary 대시보드 개인화 설정 저장
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary PUT /api/admin/dashboard/preferences
  */
 const saveDashboardPreferences1 = (
     dashboardPreferencesSaveRequest?: DashboardPreferencesSaveRequest,
@@ -485,7 +485,7 @@ const saveDashboardPreferences1 = (
 
 /**
  * ### 이 API가 하는 일
- * - 내 대시보드 바로가기 배지 읽음 처리
+ * - POST /api/me/dashboard-shortcut-badges/{shortcutId}/read
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `POST /api/me/dashboard-shortcut-badges/{shortcutId}/read`
@@ -501,13 +501,13 @@ const saveDashboardPreferences1 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -523,8 +523,8 @@ const saveDashboardPreferences1 = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Frontend dashboard badge read API handoff
- * @summary 내 대시보드 바로가기 배지 읽음 처리
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/me/dashboard-shortcut-badges/{shortcutId}/read
  */
 const readDashboardShortcutBadge = (
     shortcutId: string,
@@ -540,7 +540,7 @@ const readDashboardShortcutBadge = (
 
 /**
  * ### 이 API가 하는 일
- * - 알림 읽음 처리
+ * - 알림 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
@@ -558,13 +558,13 @@ const readDashboardShortcutBadge = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: NOTIFICATION_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -580,8 +580,8 @@ const readDashboardShortcutBadge = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 알림 읽음 처리
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 알림 부분 수정
  */
 const markRead1 = (
     recipientId: number,
@@ -594,7 +594,7 @@ const markRead1 = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자 알림 숨김 처리
+ * - 알림 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
@@ -612,13 +612,13 @@ const markRead1 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: NOTIFICATION_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: MIXED 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -634,8 +634,8 @@ const markRead1 = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 관리자 알림 숨김 처리
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 알림 부분 수정
  */
 const hide = (
     recipientId: number,
@@ -648,7 +648,7 @@ const hide = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자 알림 클릭 처리
+ * - 알림 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
@@ -666,13 +666,13 @@ const hide = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: NOTIFICATION_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: MIXED 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -688,8 +688,8 @@ const hide = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 관리자 알림 클릭 처리
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 알림 부분 수정
  */
 const markClicked = (
     recipientId: number,
@@ -702,7 +702,7 @@ const markClicked = (
 
 /**
  * ### 이 API가 하는 일
- * - 내 알림 전체 읽음 처리
+ * - 알림 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
@@ -720,13 +720,13 @@ const markClicked = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: NOTIFICATION_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -742,8 +742,8 @@ const markClicked = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 내 알림 전체 읽음 처리
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 알림 부분 수정
  */
 const readAllNotifications = (
 
@@ -756,7 +756,7 @@ const readAllNotifications = (
 
 /**
  * ### 이 API가 하는 일
- * - 내 대시보드 바로가기 배지 조회
+ * - 대상 리소스 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `GET /api/me/dashboard-shortcut-badges`
@@ -772,14 +772,14 @@ const readAllNotifications = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -794,8 +794,8 @@ const readAllNotifications = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Frontend dashboard badge aggregate API handoff
- * @summary 내 대시보드 바로가기 배지 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 대상 리소스 조회
  */
 const getDashboardShortcutBadges = (
 
@@ -808,7 +808,7 @@ const getDashboardShortcutBadges = (
 
 /**
  * ### 이 API가 하는 일
- * - 내 웹 내부 알림 목록
+ * - 알림 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
@@ -826,14 +826,14 @@ const getDashboardShortcutBadges = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: NOTIFICATION_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -848,8 +848,8 @@ const getDashboardShortcutBadges = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 내 웹 내부 알림 목록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 알림 조회
  */
 const notifications = (
     params?: NotificationsParams,
@@ -863,7 +863,7 @@ const notifications = (
 
 /**
  * ### 이 API가 하는 일
- * - 내 미읽음 알림 수
+ * - 알림 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
@@ -881,14 +881,14 @@ const notifications = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: NOTIFICATION_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -903,8 +903,8 @@ const notifications = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 내 미읽음 알림 수
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 알림 조회
  */
 const unreadNotificationCount = (
 
@@ -917,7 +917,7 @@ const unreadNotificationCount = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자별 위젯 레이아웃 조회
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -935,14 +935,14 @@ const unreadNotificationCount = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -957,8 +957,8 @@ const unreadNotificationCount = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 관리자별 위젯 레이아웃 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const dashboardWidgets = (
 
@@ -971,7 +971,7 @@ const dashboardWidgets = (
 
 /**
  * ### 이 API가 하는 일
- * - 메뉴 바로가기 조회
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -989,14 +989,14 @@ const dashboardWidgets = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1011,8 +1011,8 @@ const dashboardWidgets = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 메뉴 바로가기 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const dashboardShortcuts = (
 
@@ -1025,7 +1025,7 @@ const dashboardShortcuts = (
 
 /**
  * ### 이 API가 하는 일
- * - 모집 신청 현황 위젯 조회
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -1043,14 +1043,14 @@ const dashboardShortcuts = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1065,8 +1065,8 @@ const dashboardShortcuts = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 모집 신청 현황 위젯 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const dashboardRecruitments = (
     params: DashboardRecruitmentsParams,
@@ -1080,7 +1080,7 @@ const dashboardRecruitments = (
 
 /**
  * ### 이 API가 하는 일
- * - 프로그램 일정 위젯 조회
+ * - 프로그램 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -1098,14 +1098,14 @@ const dashboardRecruitments = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1120,8 +1120,8 @@ const dashboardRecruitments = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 프로그램 일정 위젯 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 프로그램 조회
  */
 const dashboardProgramSchedules = (
     params: DashboardProgramSchedulesParams,
@@ -1135,7 +1135,7 @@ const dashboardProgramSchedules = (
 
 /**
  * ### 이 API가 하는 일
- * - 프로그램 문의 현황 위젯 조회
+ * - 프로그램 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -1153,14 +1153,14 @@ const dashboardProgramSchedules = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1175,8 +1175,8 @@ const dashboardProgramSchedules = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 프로그램 문의 현황 위젯 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 프로그램 조회
  */
 const dashboardProgramInquiries = (
     params: DashboardProgramInquiriesParams,
@@ -1190,7 +1190,7 @@ const dashboardProgramInquiries = (
 
 /**
  * ### 이 API가 하는 일
- * - 대시보드 알림 count 조회
+ * - 알림 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)
  * - 프론트 담당 영역: notifications (`notifications`)
@@ -1208,14 +1208,14 @@ const dashboardProgramInquiries = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1230,8 +1230,8 @@ const dashboardProgramInquiries = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 대시보드 알림 count 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 알림 조회
  */
 const dashboardNotificationCount = (
 
@@ -1244,7 +1244,7 @@ const dashboardNotificationCount = (
 
 /**
  * ### 이 API가 하는 일
- * - MASTER 전용 로그 알림 요약 조회
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -1262,14 +1262,14 @@ const dashboardNotificationCount = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1284,8 +1284,8 @@ const dashboardNotificationCount = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary MASTER 전용 로그 알림 요약 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const dashboardLogAlerts = (
 
@@ -1298,7 +1298,7 @@ const dashboardLogAlerts = (
 
 /**
  * ### 이 API가 하는 일
- * - 사업별 KPI 달성률 위젯 조회
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -1316,14 +1316,14 @@ const dashboardLogAlerts = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1338,8 +1338,8 @@ const dashboardLogAlerts = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 사업별 KPI 달성률 위젯 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const dashboardKpiProgress = (
     params: DashboardKpiProgressParams,
@@ -1353,7 +1353,7 @@ const dashboardKpiProgress = (
 
 /**
  * ### 이 API가 하는 일
- * - 대시보드 홈 초기 조회
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 대시보드 (`SCR_DASHBOARD`)
  * - 프론트 담당 영역: 대시보드 (`dashboard`)
@@ -1371,14 +1371,14 @@ const dashboardKpiProgress = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: DASHBOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1393,8 +1393,8 @@ const dashboardKpiProgress = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 대시보드 홈 초기 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const dashboardHome = (
 

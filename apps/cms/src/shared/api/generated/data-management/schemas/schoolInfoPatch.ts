@@ -10,4 +10,5 @@ export interface SchoolInfoPatch {
   schoolName?: string;
   address?: string;
   position?: string;
+  employmentStatus?: string;
 }

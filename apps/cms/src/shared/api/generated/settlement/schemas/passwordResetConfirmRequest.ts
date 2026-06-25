@@ -8,13 +8,24 @@
 
 export interface PasswordResetConfirmRequest {
   /**
-     * @minLength 32
+     * @minLength 0
+     * @maxLength 255
+     */
+  email: string;
+  identityVerificationSessionId: number;
+  /**
+     * @minLength 0
      * @maxLength 512
      */
-  resetToken: string;
+  profileToken: string;
   /**
      * @minLength 12
      * @maxLength 128
      */
   newPassword: string;
+  /**
+     * @minLength 12
+     * @maxLength 128
+     */
+  newPasswordConfirm: string;
 }

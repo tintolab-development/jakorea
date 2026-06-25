@@ -7,15 +7,10 @@
  */
 
 export interface EmailRecoveryLookupRequest {
+  identityVerificationSessionId: number;
   /**
      * @minLength 0
-     * @maxLength 100
+     * @maxLength 512
      */
-  name: string;
-  /**
-     * @minLength 0
-     * @maxLength 30
-     */
-  phoneNumber: string;
-  birthDate?: string;
+  profileToken: string;
 }

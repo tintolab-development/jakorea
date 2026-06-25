@@ -18,8 +18,13 @@ export interface MemberDetailResponse {
   loginEnabled?: boolean;
   identityVerified?: boolean;
   preRegistered?: boolean;
+  createdByAdmin?: boolean;
+  under14?: boolean;
+  guardianConsentRequired?: boolean;
   external1365Id?: string;
   roles?: string[];
+  joinedAt?: string;
+  lastLoginAt?: string;
   createdAt?: string;
   updatedAt?: string;
 }

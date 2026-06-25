@@ -81,6 +81,10 @@
       "description": "정산, 지급조서, 계좌지급, 정산 캘린더, 정정 요청 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "신규 프론트 사용 금지: 정산 신청서 전환 전 데이터 보정/예외 처리 전용 API"
+    },
+    {
       "name": "공개 콘텐츠",
       "description": "로그인 전 공개 화면에서 조회하는 콘텐츠 API입니다."
     },
@@ -225,8 +229,16 @@
       "description": "회원가입 본인인증/보호자 인증 세션 API"
     },
     {
+      "name": "인증/세션",
+      "description": "SSO/OAuth callback fallback error endpoints"
+    },
+    {
       "name": "시스템 진단/운영 검증",
       "description": "시스템 상태, 릴리즈 준비도, provider 리허설, 오류 코드 카탈로그 등 운영 확인 API입니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "관리자 정산 신청서 검토 API"
     },
     {
       "name": "내부 운영 API",
@@ -235,6 +247,10 @@
     {
       "name": "알림",
       "description": "알림 발송, 템플릿, 읽음 처리, 발송 이력 조회 API입니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "강사용 정산 신청서 API"
     },
     {
       "name": "신청/프로그램 워크플로우",
@@ -263,8 +279,8 @@
         "tags": [
           "로그 관리"
         ],
-        "summary": "버그/이슈 로그 상태 변경",
-        "description": "### 이 API가 하는 일\n- 버그/이슈 로그 상태 변경\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `PATCH /api/admin/logs/system-issues/{issueId}/status`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `patch_api_logs_system-issues_issueId_status`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_WRITE 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: implemented in v4.4.0 화면 semantics hardening",
+        "summary": "시스템 상태 부분 수정",
+        "description": "### 이 API가 하는 일\n- 시스템 상태 부분 수정\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `PATCH /api/admin/logs/system-issues/{issueId}/status`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `patch_api_logs_system-issues_issueId_status`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: PROTECTED 계정 정책\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "updateSystemIssueStatus",
         "parameters": [
           {
@@ -321,8 +337,8 @@
         "tags": [
           "로그 관리"
         ],
-        "summary": "버그/이슈 로그 목록 조회",
-        "description": "### 이 API가 하는 일\n- 버그/이슈 로그 목록 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_system-issues`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: implemented in v4.4.0 화면 semantics hardening",
+        "summary": "시스템 상태 조회",
+        "description": "### 이 API가 하는 일\n- 시스템 상태 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_system-issues`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: PROTECTED 계정 정책\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "systemIssueLogs",
         "parameters": [
           {
@@ -372,8 +388,8 @@
         "tags": [
           "로그 관리"
         ],
-        "summary": "버그/이슈 로그 상세 조회",
-        "description": "### 이 API가 하는 일\n- 버그/이슈 로그 상세 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues/{issueId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_system-issues_issueId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: implemented in v4.4.0 화면 semantics hardening",
+        "summary": "시스템 상태 조회",
+        "description": "### 이 API가 하는 일\n- 시스템 상태 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues/{issueId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_system-issues_issueId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: PROTECTED 계정 정책\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "systemIssueDetail",
         "parameters": [
           {
@@ -418,8 +434,8 @@
         "tags": [
           "로그 관리"
         ],
-        "summary": "개인정보 조회 이력 로그 관리 화면 조회",
-        "description": "### 이 API가 하는 일\n- 개인정보 조회 이력 로그 관리 화면 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/privacy-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_privacy-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: implemented in v4.4.0 화면 semantics hardening",
+        "summary": "관리자 조회",
+        "description": "### 이 API가 하는 일\n- 관리자 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/privacy-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_privacy-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: PROTECTED 계정 정책\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "privacyAccessLogs",
         "parameters": [
           {
@@ -469,8 +485,8 @@
         "tags": [
           "로그 관리"
         ],
-        "summary": "파일 다운로드/접근 이력 로그 관리 화면 조회",
-        "description": "### 이 API가 하는 일\n- 파일 다운로드/접근 이력 로그 관리 화면 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/file-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_file-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: implemented in v4.4.0 화면 semantics hardening",
+        "summary": "파일 조회",
+        "description": "### 이 API가 하는 일\n- 파일 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 로그 관리 (`SCR_LOG`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/file-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_api_logs_file-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: Replace 화면-local dummy data API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: PROTECTED 계정 정책\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "fileAccessLogs",
         "parameters": [
           {
@@ -1984,6 +2000,217 @@
           }
         }
       },
+      "SettlementApplicationResubmitRequest": {
+        "type": "object",
+        "properties": {
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentFileIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        }
+      },
+      "ApiResponseSettlementApplicationResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/SettlementApplicationResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "SettlementApplicationCalculationDetailResponse": {
+        "type": "object",
+        "properties": {
+          "calculationType": {
+            "type": "string"
+          },
+          "formulaVersion": {
+            "type": "string"
+          },
+          "formulaText": {
+            "type": "string"
+          },
+          "basisJsonb": {
+            "type": "string"
+          },
+          "displayJsonb": {
+            "type": "string"
+          },
+          "resultAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SettlementApplicationItemResponse": {
+        "type": "object",
+        "properties": {
+          "applicationItemId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "itemCategory": {
+            "type": "string"
+          },
+          "itemType": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unitAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "requestedAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "approvedAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "taxable": {
+            "type": "boolean"
+          },
+          "taxIncomeType": {
+            "type": "string"
+          },
+          "calculationBasisJsonb": {
+            "type": "string"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SettlementApplicationResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationNo": {
+            "type": "string"
+          },
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programScheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lectureReportId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "originalApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rejectedReason": {
+            "type": "string"
+          },
+          "correctionRequestReason": {
+            "type": "string"
+          },
+          "formulaVersion": {
+            "type": "string"
+          },
+          "grossAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deductionAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "withholdingTaxAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "netPaymentAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationItemResponse"
+            }
+          },
+          "calculationDetails": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationCalculationDetailResponse"
+            }
+          }
+        }
+      },
       "MemberIndividualApplicationSubmitRequest": {
         "type": "object",
         "properties": {
@@ -1993,6 +2220,116 @@
           },
           "memo": {
             "type": "string"
+          }
+        }
+      },
+      "SettlementApplicationSubmitRequest": {
+        "type": "object",
+        "properties": {
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentFileIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        }
+      },
+      "ApiResponseSettlementApplicationPreviewResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/SettlementApplicationPreviewResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "SettlementApplicationPreviewResponse": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programScheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lectureReportId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formulaVersion": {
+            "type": "string"
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "blockerCode": {
+            "type": "string"
+          },
+          "blockerMessage": {
+            "type": "string"
+          },
+          "grossAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deductionAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "withholdingTaxAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "netPaymentAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationItemResponse"
+            }
+          },
+          "calculationDetails": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationCalculationDetailResponse"
+            }
           }
         }
       },
@@ -2105,7 +2442,7 @@
           "provider": {
             "type": "string",
             "minLength": 1,
-            "pattern": "^[A-Z_]{2,30}$"
+            "pattern": "^[A-Za-z_]{2,30}$"
           },
           "accessToken": {
             "type": "string",
@@ -2530,7 +2867,7 @@
             "description": "소셜 provider 코드",
             "example": "KAKAO",
             "minLength": 1,
-            "pattern": "^[A-Z_]{2,30}$"
+            "pattern": "^[A-Za-z_]{2,30}$"
           },
           "accessToken": {
             "type": "string",
@@ -2859,7 +3196,7 @@
           "newPassword"
         ]
       },
-      "PasswordResetRequest": {
+      "PasswordResetConfirmRequest": {
         "type": "object",
         "properties": {
           "email": {
@@ -2868,58 +3205,32 @@
             "maxLength": 255,
             "minLength": 0
           },
-          "name": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 0
+          "identityVerificationSessionId": {
+            "type": "integer",
+            "format": "int64"
           },
-          "phoneNumber": {
-            "type": "string",
-            "maxLength": 30,
-            "minLength": 0
-          },
-          "birthDate": {
-            "type": "string",
-            "format": "date"
-          }
-        },
-        "required": [
-          "email",
-          "name"
-        ]
-      },
-      "PasswordResetRequestResponse": {
-        "type": "object",
-        "properties": {
-          "accepted": {
-            "type": "boolean"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "deliveryStatus": {
-            "type": "string"
-          }
-        }
-      },
-      "PasswordResetConfirmRequest": {
-        "type": "object",
-        "properties": {
-          "resetToken": {
+          "profileToken": {
             "type": "string",
             "maxLength": 512,
-            "minLength": 32
+            "minLength": 0
           },
           "newPassword": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 12
+          },
+          "newPasswordConfirm": {
             "type": "string",
             "maxLength": 128,
             "minLength": 12
           }
         },
         "required": [
+          "email",
+          "identityVerificationSessionId",
           "newPassword",
-          "resetToken"
+          "newPasswordConfirm",
+          "profileToken"
         ]
       },
       "PasswordResetConfirmResponse": {
@@ -2993,28 +3304,84 @@
           }
         }
       },
-      "EmailRecoveryLookupRequest": {
+      "AccountEmailCheckRequest": {
         "type": "object",
         "properties": {
-          "name": {
+          "email": {
             "type": "string",
-            "maxLength": 100,
+            "format": "email",
+            "maxLength": 255,
             "minLength": 0
           },
-          "phoneNumber": {
+          "purpose": {
             "type": "string",
-            "maxLength": 30,
+            "maxLength": 40,
             "minLength": 0
-          },
-          "birthDate": {
-            "type": "string",
-            "format": "date"
           }
         },
         "required": [
-          "name",
-          "phoneNumber"
+          "email"
         ]
+      },
+      "AccountEmailCheckResponse": {
+        "type": "object",
+        "properties": {
+          "exists": {
+            "type": "boolean"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "nextAction": {
+            "type": "string"
+          }
+        }
+      },
+      "EmailRecoveryLookupRequest": {
+        "type": "object",
+        "properties": {
+          "identityVerificationSessionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "profileToken": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "identityVerificationSessionId",
+          "profileToken"
+        ]
+      },
+      "EmailRecoveryAccountResponse": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "accountType": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "maskedEmail": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "EmailRecoveryLookupResponse": {
         "type": "object",
@@ -3024,6 +3391,12 @@
           },
           "maskedEmail": {
             "type": "string"
+          },
+          "accounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmailRecoveryAccountResponse"
+            }
           }
         }
       },
@@ -3140,6 +3513,15 @@
           "preRegistered": {
             "type": "boolean"
           },
+          "createdByAdmin": {
+            "type": "boolean"
+          },
+          "under14": {
+            "type": "boolean"
+          },
+          "guardianConsentRequired": {
+            "type": "boolean"
+          },
           "external1365Id": {
             "type": "string"
           },
@@ -3148,6 +3530,14 @@
             "items": {
               "type": "string"
             }
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "createdAt": {
             "type": "string",
@@ -3171,6 +3561,55 @@
         "required": [
           "reason"
         ]
+      },
+      "AdminMemberCommentCreateRequest": {
+        "type": "object",
+        "properties": {
+          "screenCode": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "comment"
+        ]
+      },
+      "AdminCommentResponse": {
+        "type": "object",
+        "properties": {
+          "commentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "screenCode": {
+            "type": "string"
+          },
+          "comment": {
+            "type": "string"
+          },
+          "createdByAdminId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "AdminPreRegisterMemberRequest": {
         "type": "object",
@@ -8405,40 +8844,6 @@
           "targetType"
         ]
       },
-      "AdminCommentResponse": {
-        "type": "object",
-        "properties": {
-          "commentId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "targetType": {
-            "type": "string"
-          },
-          "targetId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "screenCode": {
-            "type": "string"
-          },
-          "comment": {
-            "type": "string"
-          },
-          "createdByAdminId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
       "CertificateDownloadLogRequest": {
         "type": "object",
         "properties": {
@@ -8491,7 +8896,7 @@
           "provider": {
             "type": "string",
             "minLength": 1,
-            "pattern": "^[A-Z_]{2,30}$"
+            "pattern": "^[A-Za-z_]{2,30}$"
           },
           "redirectUri": {
             "type": "string",
@@ -8527,34 +8932,6 @@
             "type": "string"
           }
         }
-      },
-      "AdminSsoCallbackRequest": {
-        "type": "object",
-        "properties": {
-          "provider": {
-            "type": "string",
-            "minLength": 1,
-            "pattern": "^[A-Z_]{2,30}$"
-          },
-          "code": {
-            "type": "string",
-            "maxLength": 4096,
-            "minLength": 0
-          },
-          "idToken": {
-            "type": "string",
-            "maxLength": 4096,
-            "minLength": 0
-          },
-          "state": {
-            "type": "string",
-            "maxLength": 256,
-            "minLength": 0
-          }
-        },
-        "required": [
-          "provider"
-        ]
       },
       "AdminSelfSignupRequest": {
         "type": "object",
@@ -8976,6 +9353,9 @@
           },
           "position": {
             "type": "string"
+          },
+          "employmentStatus": {
+            "type": "string"
           }
         }
       },
@@ -9002,6 +9382,27 @@
           },
           "instructorCareerSummaryLabel": {
             "type": "string"
+          }
+        }
+      },
+      "GuardianInfo": {
+        "type": "object",
+        "properties": {
+          "guardianName": {
+            "type": "string"
+          },
+          "relation": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "consentStatus": {
+            "type": "string"
+          },
+          "consentedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -9069,6 +9470,59 @@
             "items": {
               "$ref": "#/components/schemas/SchoolAffiliatedTeacherRow"
             }
+          }
+        }
+      },
+      "TermsAgreementRow": {
+        "type": "object",
+        "properties": {
+          "termsType": {
+            "type": "string"
+          },
+          "termsVersion": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "agreed": {
+            "type": "boolean"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorType": {
+            "type": "string"
+          },
+          "sourceFlow": {
+            "type": "string"
+          }
+        }
+      },
+      "UserDetailActionState": {
+        "type": "object",
+        "properties": {
+          "adminRegisteredNoticeVisible": {
+            "type": "boolean"
+          },
+          "editableByAdmin": {
+            "type": "boolean"
+          },
+          "deletable": {
+            "type": "boolean"
+          },
+          "deleteBlockedReason": {
+            "type": "string"
+          },
+          "commentWritable": {
+            "type": "boolean"
+          },
+          "privacyDetailAvailable": {
+            "type": "boolean"
+          },
+          "teacherEmploymentStatusEditable": {
+            "type": "boolean"
           }
         }
       },
@@ -9258,6 +9712,46 @@
           },
           "listMetrics": {
             "$ref": "#/components/schemas/UserListRowMetrics"
+          },
+          "guardianInfo": {
+            "$ref": "#/components/schemas/GuardianInfo"
+          },
+          "termsAgreements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermsAgreementRow"
+            }
+          },
+          "actionState": {
+            "$ref": "#/components/schemas/UserDetailActionState"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uuid": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "loginEnabled": {
+            "type": "boolean"
+          },
+          "identityVerified": {
+            "type": "boolean"
+          },
+          "preRegistered": {
+            "type": "boolean"
+          },
+          "external1365Id": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -9331,6 +9825,96 @@
           },
           "activeYn": {
             "type": "boolean"
+          }
+        }
+      },
+      "SettlementApplicationAdminActionRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponseSettlementApplicationAdminActionResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/SettlementApplicationAdminActionResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "SettlementApplicationAdminActionResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "settlementId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paymentStatementId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "SettlementApplicationAmountAdjustmentRequest": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationItemAmountAdjustmentRequest"
+            }
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "SettlementApplicationItemAmountAdjustmentRequest": {
+        "type": "object",
+        "properties": {
+          "applicationItemId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "approvedAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
           }
         }
       },
@@ -11073,6 +11657,87 @@
           }
         }
       },
+      "ApiResponseListSettlementApplicationListItemResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationListItemResponse"
+            }
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "SettlementApplicationListItemResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationNo": {
+            "type": "string"
+          },
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programScheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "grossAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "withholdingTaxAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "netPaymentAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "CertificateAvailabilityResponse": {
         "type": "object",
         "properties": {
@@ -11095,6 +11760,64 @@
           }
         }
       },
+      "ApiResponseSettlementApplicationAvailabilityResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/SettlementApplicationAvailabilityResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "SettlementApplicationAvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "blockerCode": {
+            "type": "string"
+          },
+          "blockerMessage": {
+            "type": "string"
+          },
+          "lectureReportId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "existingApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "existingApplicationStatus": {
+            "type": "string"
+          }
+        }
+      },
       "FileDownloadJobResponse": {
         "type": "object",
         "properties": {
@@ -11111,6 +11834,37 @@
           },
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "ApiResponseString": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
           }
         }
       },
@@ -12693,6 +13447,91 @@
               "type": "string",
               "format": "date"
             }
+          }
+        }
+      },
+      "PageResponseSettlementApplicationAdminListItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationAdminListItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SettlementApplicationAdminListItemResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationNo": {
+            "type": "string"
+          },
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programScheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "grossAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "withholdingTaxAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "netPaymentAmount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sourceSettlementId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
