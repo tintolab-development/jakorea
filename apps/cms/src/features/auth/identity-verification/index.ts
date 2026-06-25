@@ -56,7 +56,6 @@ export function useIdentityVerification(options: UseIdentityVerificationOptions)
 }
 
 interface UseFindEmailIdentityVerificationOptions {
-  name?: string
   onSuccess: (result: IdentityChallengeCompleteResult) => void
 }
 
@@ -65,11 +64,9 @@ export function useFindEmailIdentityVerification(
 ) {
   return useIdentityVerificationBase({
     client: findEmailIdentityVerificationClient,
-    name: options.name,
     requireBirthGender: false,
-    requireName: true,
+    requireName: false,
     onSuccess: options.onSuccess,
-    missingNameMessage: '이름을 먼저 입력해 주세요.',
   })
 }
 

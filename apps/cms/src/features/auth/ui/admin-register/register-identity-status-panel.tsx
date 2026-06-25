@@ -11,7 +11,8 @@ interface RegisterIdentityStatusPanelProps {
   verifiedPhone?: string
   className?: string
   idleTitle?: string
-  idleDescription?: ReactNode
+  /** `null`이면 본문(meta)을 숨깁니다. */
+  idleDescription?: ReactNode | null
 }
 
 function maskPhone(phone: string): string {
@@ -29,14 +30,18 @@ export function RegisterIdentityStatusPanel({
   verifiedPhone,
   className,
   idleTitle = '휴대폰 본인인증',
-  idleDescription = (
+  idleDescription,
+}: RegisterIdentityStatusPanelProps) {
+  const defaultIdleDescription = (
     <>
       버튼을 누르면 인증 창이 열립니다.
       <br />
       인증이 완료되면 다음 단계로 이동할 수 있어요.
     </>
-  ),
-}: RegisterIdentityStatusPanelProps) {
+  )
+  const resolvedIdleDescription =
+    idleDescription === undefined ? defaultIdleDescription : idleDescription
+
   const rootClass = className
     ? `register-identity-module ${className}`
     : 'register-identity-module'
@@ -82,7 +87,9 @@ export function RegisterIdentityStatusPanel({
   return (
     <div className={rootClass} role="region" aria-label="통신사 본인인증 안내">
       <p className="register-identity-module__title">{idleTitle}</p>
-      <p className="register-identity-module__meta">{idleDescription}</p>
+      {resolvedIdleDescription != null ? (
+        <p className="register-identity-module__meta">{resolvedIdleDescription}</p>
+      ) : null}
     </div>
   )
 }

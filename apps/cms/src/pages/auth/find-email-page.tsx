@@ -2,12 +2,12 @@
  * 이메일 찾기 페이지
  */
 
-import { Form } from 'antd'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { lookupFindEmail } from '@/features/auth/api/find-email-service'
 import { useFindEmailIdentityVerification } from '@/features/auth/identity-verification'
+import type { IdentityChallengeCompleteResult } from '@/features/auth/identity-verification'
 import { FindEmailForm } from '@/features/auth/ui/find-email/find-email-form'
 import { FindEmailResultView } from '@/features/auth/ui/find-email/find-email-result-view'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
@@ -21,103 +21,93 @@ function normalizeName(value: string): string {
   return value.trim().replace(/\s+/g, ' ')
 }
 
-function isNameMatched(inputName: string, verifiedName?: string): boolean {
-  if (!verifiedName?.trim()) {
-    return true
+function isRequestAborted(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false
   }
 
-  return normalizeName(inputName) === normalizeName(verifiedName)
+  const candidate = error as { code?: string; name?: string; message?: string }
+  return (
+    candidate.code === 'ERR_CANCELED' ||
+    candidate.name === 'AbortError' ||
+    candidate.name === 'CanceledError' ||
+    candidate.message === 'Request aborted' ||
+    candidate.message === 'canceled'
+  )
 }
 
 export function FindEmailPage() {
   const navigate = useNavigate()
-  const [form] = Form.useForm<{ name: string }>()
   const [view, setView] = useState<FindEmailView>('form')
   const [maskedEmail, setMaskedEmail] = useState('')
-  const [verifiedName, setVerifiedName] = useState<string>()
-  const [verifiedPhone, setVerifiedPhone] = useState<string>()
   const [isLookupLoading, setIsLookupLoading] = useState(false)
   const [notFoundModalOpen, setNotFoundModalOpen] = useState(false)
-  const [nameMismatchMessage, setNameMismatchMessage] = useState<string | null>(null)
 
-  const runLookup = useCallback(
-    async (name: string, phoneNumber: string, birthDate?: string) => {
-      setIsLookupLoading(true)
-      setNameMismatchMessage(null)
+  const handleAccountNotFoundRef = useRef<() => void>(() => {})
+  const resetErrorRef = useRef<() => void>(() => {})
 
-      try {
-        const result = await lookupFindEmail({
-          name,
-          phoneNumber,
-          birthDate,
-        })
+  const runLookup = useCallback(async (name: string, phoneNumber: string, birthDate?: string) => {
+    setIsLookupLoading(true)
 
-        if (result.kind === 'found') {
-          setMaskedEmail(result.maskedEmail)
-          setView('success')
-          return
-        }
+    try {
+      const result = await lookupFindEmail({
+        name,
+        phoneNumber,
+        birthDate,
+      })
 
-        setNotFoundModalOpen(true)
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : '이메일 찾기에 실패했습니다.'
-        setNameMismatchMessage(message)
-      } finally {
-        setIsLookupLoading(false)
+      if (result.kind === 'found') {
+        setMaskedEmail(result.maskedEmail)
+        setNotFoundModalOpen(false)
+        resetErrorRef.current()
+        setView('success')
+        return
       }
-    },
-    []
-  )
+
+      handleAccountNotFoundRef.current()
+    } catch (error) {
+      if (isRequestAborted(error)) {
+        return
+      }
+    } finally {
+      setIsLookupLoading(false)
+    }
+  }, [])
 
   const handleIdentitySuccess = useCallback(
-    (result: {
-      sessionUuid?: string
-      verifiedName?: string
-      verifiedPhone?: string
-      verifiedBirthDate?: string
-      sessionId: number
-    }) => {
-      const inputName = normalizeName(form.getFieldValue('name') ?? '')
+    (result: IdentityChallengeCompleteResult) => {
+      const identityName = normalizeName(result.verifiedName ?? '')
 
-      if (!isNameMatched(inputName, result.verifiedName)) {
-        setNameMismatchMessage('입력하신 이름과 본인인증 정보가 일치하지 않습니다.')
-        setVerifiedName(undefined)
-        setVerifiedPhone(undefined)
+      if (!identityName || !result.verifiedPhone?.trim()) {
         return
       }
 
-      if (!result.verifiedPhone?.trim()) {
-        setNameMismatchMessage('본인인증 휴대폰 정보를 확인할 수 없습니다.')
-        setVerifiedName(undefined)
-        setVerifiedPhone(undefined)
-        return
-      }
-
-      setVerifiedName(result.verifiedName)
-      setVerifiedPhone(result.verifiedPhone)
-
-      void runLookup(inputName, result.verifiedPhone, result.verifiedBirthDate)
+      void runLookup(identityName, result.verifiedPhone, result.verifiedBirthDate)
     },
-    [form, runLookup]
+    [runLookup]
   )
-
-  const nameValue = Form.useWatch('name', form)
 
   const { verify, status, isVerifying, errorMessage, resetError } =
     useFindEmailIdentityVerification({
-      name: nameValue,
       onSuccess: handleIdentitySuccess,
     })
 
-  const handleSubmit = useCallback(async () => {
-    const values = await form.validateFields()
+  const handleAccountNotFound = useCallback(() => {
     resetError()
-    setNameMismatchMessage(null)
-    await verify({ name: normalizeName(values.name) })
-  }, [form, resetError, verify])
+    setNotFoundModalOpen(true)
+  }, [resetError])
 
-  const displayError = nameMismatchMessage ?? errorMessage
+  handleAccountNotFoundRef.current = handleAccountNotFound
+  resetErrorRef.current = resetError
+
+  const handleSubmit = useCallback(async () => {
+    if (isLookupLoading || isVerifying) {
+      return
+    }
+
+    resetError()
+    await verify()
+  }, [isLookupLoading, isVerifying, resetError, verify])
 
   const cardClassName =
     view === 'success' ? 'auth-card--find-email-result' : 'auth-card--find-email'
@@ -127,13 +117,10 @@ export function FindEmailPage() {
       <div className="find-email-page-content">
         {view === 'form' ? (
           <FindEmailForm
-            form={form}
             status={status}
             isVerifying={isVerifying}
             isLookupLoading={isLookupLoading}
-            errorMessage={displayError}
-            verifiedName={verifiedName}
-            verifiedPhone={verifiedPhone}
+            errorMessage={isLookupLoading || notFoundModalOpen ? null : errorMessage}
             onSubmit={() => {
               void handleSubmit()
             }}
