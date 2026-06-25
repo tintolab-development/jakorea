@@ -283,6 +283,7 @@ export const MESSAGES = {
     permissionRequestSubmitFailed: '권한 요청 제출에 실패했습니다.',
     downloadQuotaLoadFailed: '다운로드 쿼터 조회에 실패했습니다.',
     performanceStatsLoadFailed: '실적 통계를 불러오는 중 오류가 발생했습니다.',
+    performanceRecordsLoadFailed: '실적 목록을 불러오는 중 오류가 발생했습니다.',
     scheduleLoadFailed: '일정 정보를 불러오는 중 오류가 발생했습니다.',
     favoriteProgramsLoadFailed: '관심 프로그램을 불러오는 중 오류가 발생했습니다.',
     favoriteProgramRemoveFailed: '관심 프로그램 해제 중 오류가 발생했습니다.',

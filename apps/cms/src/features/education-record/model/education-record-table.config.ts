@@ -6,20 +6,14 @@
 
 import type { ColumnDef } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
-import type { Program } from '@/types/domain'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
-import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
-import {
-  buildProgramRegionMap,
-  getProgramQuarter,
-  getProgramYear,
-  parseRegionTokens,
-} from '../lib/education-record-region'
+import { parseRegionTokens, getRowQuarter, getRowYear } from '../lib/education-record-region'
 import { createEducationRecordColumns } from './education-record-columns'
 import type {
   EducationRecordPendingFilters,
   EducationRecordQuarter,
+  EducationRecordRow,
   EducationRecordTableContext,
 } from './education-record-types'
 
@@ -65,10 +59,7 @@ function includesIgnoreCase(source: string | null | undefined, query: string): b
   return source.toLowerCase().includes(query.toLowerCase())
 }
 
-function filterPrograms(
-  data: Program[],
-  searchParams: URLSearchParams
-): Program[] {
+function filterRows(data: EducationRecordRow[], searchParams: URLSearchParams): EducationRecordRow[] {
   const filters = readFilters(searchParams)
   const yearNum = filters.year ? Number(filters.year) : null
   const sponsorNameQ = filters.sponsorName.trim()
@@ -78,25 +69,30 @@ function filterPrograms(
   const sidoQ = filters.sido.trim()
   const sigunguQ = filters.sigungu.trim()
 
-  const regionMap = buildProgramRegionMap()
-
-  return data.filter(program => {
+  return data.filter(row => {
     if (yearNum != null) {
-      const year = getProgramYear(program)
+      const year = getRowYear(row)
       if (year !== yearNum) return false
     }
 
     if (filters.quarter !== 'ALL') {
-      const quarter = getProgramQuarter(program)
+      const quarter = getRowQuarter(row)
       if (quarter !== filters.quarter) return false
     }
 
     if (sidoQ || sigunguQ) {
-      const info = regionMap.get(program.id)
-      const tokens = info
-        ? { si: info.si, gun: info.gun, gu: info.gu }
-        : parseRegionTokens(program.district)
-      const rowSido = info?.sido ?? ''
+      const tokens = {
+        si: row.si ?? '',
+        gun: row.gun ?? '',
+        gu: row.gu ?? '',
+      }
+      if (!row.si && !row.gun && !row.gu && row.district) {
+        const parsed = parseRegionTokens(row.district)
+        tokens.si = parsed.si
+        tokens.gun = parsed.gun
+        tokens.gu = parsed.gu
+      }
+      const rowSido = row.sido ?? ''
 
       if (sidoQ && rowSido !== sidoQ) return false
       if (
@@ -109,23 +105,16 @@ function filterPrograms(
       }
     }
 
-    if (sponsorNameQ) {
-      const sponsorNameKo = program.sponsorId ? sponsorService.getNameById(program.sponsorId) : ''
-      if (!includesIgnoreCase(sponsorNameKo, sponsorNameQ)) return false
-    }
-
-    if (mainTitleQ && !includesIgnoreCase(program.mainTitle, mainTitleQ)) return false
-    if (titleQ && !includesIgnoreCase(program.title, titleQ)) return false
-
-    if (textbookNameQ && !includesIgnoreCase(program.textbookName, textbookNameQ)) {
-      return false
-    }
+    if (sponsorNameQ && !includesIgnoreCase(row.sponsorNameKo, sponsorNameQ)) return false
+    if (mainTitleQ && !includesIgnoreCase(row.mainTitle, mainTitleQ)) return false
+    if (titleQ && !includesIgnoreCase(row.title, titleQ)) return false
+    if (textbookNameQ && !includesIgnoreCase(row.textbookName, textbookNameQ)) return false
 
     return true
   })
 }
 
-const tanstackColumns: ColumnDef<Program>[] = [{ accessorKey: 'id', header: 'id' }]
+const tanstackColumns: ColumnDef<EducationRecordRow>[] = [{ accessorKey: 'id', header: 'id' }]
 
 const searchSyncRules: readonly TableSearchParamRule<EducationRecordPendingFilters>[] = [
   {
@@ -186,10 +175,6 @@ const searchSyncRules: readonly TableSearchParamRule<EducationRecordPendingFilte
   },
 ]
 
-/**
- * `onFilterChange` 커스텀:
- * 시/도가 바뀌면 시/군/구를 초기화한다(유효성 강제).
- */
 function handleEducationRecordFilterChange(args: {
   prev: EducationRecordPendingFilters
   key: string
@@ -217,19 +202,14 @@ function handleEducationRecordFilterChange(args: {
 }
 
 export const educationRecordTablePageConfig: TablePageConfig<
-  Program,
+  EducationRecordRow,
   EducationRecordPendingFilters,
   EducationRecordTableContext
 > = {
   columns: {
     tanstack: tanstackColumns,
     filterKeys: [],
-    resolveAntdColumns: (): ColumnsType<Program> => {
-      const sponsors = sponsorService.getAllSync()
-      const sponsorMap = new Map(sponsors.map(s => [s.id, s]))
-      const programRegionMap = buildProgramRegionMap()
-      return createEducationRecordColumns({ sponsors, sponsorMap, programRegionMap })
-    },
+    resolveAntdColumns: (): ColumnsType<EducationRecordRow> => createEducationRecordColumns(),
   },
 
   filters: {
@@ -282,7 +262,7 @@ export const educationRecordTablePageConfig: TablePageConfig<
   },
 
   filterFn: ({ data, searchParams }) => {
-    const filtered = filterPrograms(data, searchParams)
+    const filtered = filterRows(data, searchParams)
     return { dataForTable: filtered, filteredData: filtered }
   },
 

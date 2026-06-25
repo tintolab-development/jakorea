@@ -217,6 +217,8 @@
   margin-top: 24px;
   width: 100%;
   min-width: 0;
+  flex: 1 1 auto;
+  min-height: 320px;
 }
 
 .admin-faq-detail-page__actions {
@@ -224,7 +226,8 @@
   justify-content: space-between;
   align-items: center;
   align-self: stretch;
-  margin-top: 32px;
+  margin-top: auto;
+  padding-top: 32px;
   gap: 16px;
   flex-wrap: wrap;
 }

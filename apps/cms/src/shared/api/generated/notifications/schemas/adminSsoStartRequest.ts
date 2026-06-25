@@ -9,7 +9,7 @@
 export interface AdminSsoStartRequest {
   /**
      * @minLength 1
-     * @pattern ^[A-Z_]{2,30}$
+     * @pattern ^[A-Za-z_]{2,30}$
      */
   provider: string;
   /**

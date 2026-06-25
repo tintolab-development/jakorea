@@ -41,3 +41,8 @@
   --cms-layout-content-padding-top: 16px;
   padding-top: 16px;
 }
+
+.layout-content-outlet {
+  width: 100%;
+  min-width: 0;
+}

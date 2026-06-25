@@ -237,10 +237,24 @@
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
-  border: 1px solid transparent;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: transparent;
   border-radius: 6px;
   background: transparent;
   box-shadow: none;
+}
+
+/* tag-100: ant-dropdown 래퍼 고정 — 트리거 중앙·호버 시 가로 밀림 방지 */
+.status-dropdown-cell__cell-status--tag-100 .ant-dropdown-trigger {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 116px;
+  margin-inline: auto;
+  box-sizing: border-box;
+  vertical-align: middle;
 }
 
 .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
@@ -257,19 +271,12 @@
 
 .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover,
 .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):focus-visible {
-  border: 1px solid transparent;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: transparent !important;
   box-shadow: none;
   background: transparent;
   outline: none;
-}
-
-.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
-  .editable-status-badge,
-.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):focus-visible
-  .editable-status-badge {
-  border: 1px solid transparent !important;
-  border-color: transparent !important;
-  box-sizing: border-box !important;
 }
 
 .status-dropdown-cell__status-trigger--tag-100 .editable-status-badge {
@@ -281,6 +288,63 @@
   max-height: 32px !important;
   margin: 0 !important;
   flex-shrink: 0;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  gap: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* tag-100: 호버·행 hover 시 톤 보더 유지 — transparent 전환으로 인한 1px 시각 흔들림 방지 */
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge.editable-status-badge--blue,
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--blue,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--blue {
+  border-color: var(--editable-badge-blue-border) !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge.editable-status-badge--gray,
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--gray,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--gray {
+  border-color: var(--editable-badge-gray-border) !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge.editable-status-badge--green,
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--green,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--green {
+  border-color: var(--editable-badge-green-border) !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge.editable-status-badge--green-overlay,
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--green-overlay,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--green-overlay {
+  border-color: var(--editable-badge-green-border) !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100 .editable-status-badge.editable-status-badge--red,
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.editable-status-badge--red,
+.status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover
+  .editable-status-badge.editable-status-badge--red {
+  border-color: var(--editable-badge-red-border) !important;
 }
 
 .status-dropdown-cell__dropdown-overlay--tag-100 {
@@ -335,9 +399,15 @@
   max-height: 32px !important;
 }
 
-/* 편집 가능 상태 배지 — 테이블 행 hover 시 border 유지(박스 크기 동일) */
-.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger .editable-status-badge,
-.ant-table-tbody > tr:hover > td.status-dropdown-cell__cell-status .editable-status-badge {
+/* 편집 가능 상태 배지 — 테이블 행 hover 시 border 유지(박스 크기 동일). tag-100은 톤 보더 유지(투명 전환 시 시각적 흔들림) */
+.ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger:not(.status-dropdown-cell__status-trigger--tag-100)
+  .editable-status-badge,
+.ant-table-tbody
+  > tr:hover
+  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-100)
+  .editable-status-badge {
   border: 1px solid transparent !important;
   border-color: transparent !important;
   box-sizing: border-box !important;

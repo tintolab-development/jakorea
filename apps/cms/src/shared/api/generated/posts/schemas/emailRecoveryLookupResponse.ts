@@ -5,8 +5,10 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { EmailRecoveryAccountResponse } from './emailRecoveryAccountResponse';
 
 export interface EmailRecoveryLookupResponse {
   matched?: boolean;
   maskedEmail?: string;
+  accounts?: EmailRecoveryAccountResponse[];
 }

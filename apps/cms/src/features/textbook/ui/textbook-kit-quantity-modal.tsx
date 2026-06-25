@@ -13,14 +13,15 @@ const KIT_LEVELS = [
 type KitLevelKey = (typeof KIT_LEVELS)[number]['key']
 export type TextbookKitQuantityValues = Record<KitLevelKey, string>
 
-const createDefaultQuantities = (): TextbookKitQuantityValues =>
-  KIT_LEVELS.reduce(
-    (acc, level) => {
-      acc[level.key] = level.defaultValue
-      return acc
-    },
-    {} as TextbookKitQuantityValues
-  )
+export const DEFAULT_KIT_QUANTITIES: TextbookKitQuantityValues = KIT_LEVELS.reduce(
+  (acc, level) => {
+    acc[level.key] = level.defaultValue
+    return acc
+  },
+  {} as TextbookKitQuantityValues
+)
+
+const createDefaultQuantities = (): TextbookKitQuantityValues => ({ ...DEFAULT_KIT_QUANTITIES })
 
 export interface TextbookKitQuantityModalProps {
   open: boolean

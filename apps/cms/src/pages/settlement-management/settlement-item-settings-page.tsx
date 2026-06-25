@@ -91,7 +91,7 @@ export default function SettlementItemSettingsPage() {
 
   if (settlementConfigsRemote && configQuery.isLoading) {
     return (
-      <div className="settlement-item-settings-page settlement-item-settings-page--loading">
+      <div className="settlement-item-settings-page page-content-loading page-content-loading--viewport" role="status">
         <Spin />
       </div>
     )
@@ -99,7 +99,7 @@ export default function SettlementItemSettingsPage() {
 
   if (settlementConfigsRemote && configQuery.isError) {
     return (
-      <div className="settlement-item-settings-page settlement-item-settings-page--error" role="alert">
+      <div className="settlement-item-settings-page page-content-error" role="alert">
         {configQuery.error instanceof Error
           ? configQuery.error.message
           : '정산 항목 설정을 불러오지 못했습니다.'}

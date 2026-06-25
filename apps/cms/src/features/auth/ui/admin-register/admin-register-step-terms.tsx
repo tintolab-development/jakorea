@@ -1,6 +1,9 @@
 import { Button } from 'antd'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
+import { useTermsViewModal } from '@/features/auth/hooks/use-terms-view-modal'
+import type { TermsViewType } from '@/features/auth/lib/terms-view-config'
+import { TermsViewModal } from '@/features/auth/ui/terms-view-modal'
 import type { ConsentFormData } from '@/types/consent'
 import type { AdminRegisterStep3Data } from '@/types/admin-register'
 
@@ -29,6 +32,7 @@ export function AdminRegisterStepTerms({
     ...initialValues,
   })
   const [mfaSetupAgreed, setMfaSetupAgreed] = useState(initialValues?.mfaSetupAgreed ?? false)
+  const { openType, isOpen, open, close } = useTermsViewModal()
 
   useEffect(() => {
     setConsent({
@@ -39,6 +43,27 @@ export function AdminRegisterStepTerms({
   }, [initialValues])
 
   const isValid = consent.termsOfService && consent.privacyPolicy && mfaSetupAgreed
+
+  const getAgreedForType = useCallback(
+    (type: TermsViewType) => {
+      if (type === 'mfaSetup') {
+        return mfaSetupAgreed
+      }
+      return consent[type]
+    },
+    [consent, mfaSetupAgreed],
+  )
+
+  const handleAgreedChange = useCallback(
+    (type: TermsViewType, agreed: boolean) => {
+      if (type === 'mfaSetup') {
+        setMfaSetupAgreed(agreed)
+        return
+      }
+      setConsent(previous => ({ ...previous, [type]: agreed }))
+    },
+    [],
+  )
 
   const handleContinue = () => {
     if (!isValid) {
@@ -69,6 +94,7 @@ export function AdminRegisterStepTerms({
           onChange={setConsent}
           mfaSetupAgreed={mfaSetupAgreed}
           onMfaSetupAgreedChange={setMfaSetupAgreed}
+          onViewTerm={open}
         />
         <div className="auth-actions admin-register-step__actions">
           <Button
@@ -86,6 +112,16 @@ export function AdminRegisterStepTerms({
         </div>
         <div className="admin-register-step__trailing" aria-hidden />
       </div>
+
+      {openType ? (
+        <TermsViewModal
+          open={isOpen}
+          type={openType}
+          agreed={getAgreedForType(openType)}
+          onAgreedChange={agreed => handleAgreedChange(openType, agreed)}
+          onClose={close}
+        />
+      ) : null}
     </div>
   )
 }

@@ -46,43 +46,49 @@ export function FindEmailPage() {
   const handleAccountNotFoundRef = useRef<() => void>(() => {})
   const resetErrorRef = useRef<() => void>(() => {})
 
-  const runLookup = useCallback(async (name: string, phoneNumber: string, birthDate?: string) => {
-    setIsLookupLoading(true)
-
-    try {
-      const result = await lookupFindEmail({
-        name,
-        phoneNumber,
-        birthDate,
-      })
-
-      if (result.kind === 'found') {
-        setMaskedEmail(result.maskedEmail)
-        setNotFoundModalOpen(false)
-        resetErrorRef.current()
-        setView('success')
+  const runLookup = useCallback(
+    async (identityResult: IdentityChallengeCompleteResult) => {
+      const profileToken = identityResult.profileToken?.trim()
+      if (!profileToken) {
         return
       }
 
-      handleAccountNotFoundRef.current()
-    } catch (error) {
-      if (isRequestAborted(error)) {
-        return
+      setIsLookupLoading(true)
+
+      try {
+        const result = await lookupFindEmail({
+          identityVerificationSessionId: identityResult.sessionId,
+          profileToken,
+          mockNotFoundHint: normalizeName(identityResult.verifiedName ?? ''),
+        })
+
+        if (result.kind === 'found') {
+          setMaskedEmail(result.maskedEmail)
+          setNotFoundModalOpen(false)
+          resetErrorRef.current()
+          setView('success')
+          return
+        }
+
+        handleAccountNotFoundRef.current()
+      } catch (error) {
+        if (isRequestAborted(error)) {
+          return
+        }
+      } finally {
+        setIsLookupLoading(false)
       }
-    } finally {
-      setIsLookupLoading(false)
-    }
-  }, [])
+    },
+    []
+  )
 
   const handleIdentitySuccess = useCallback(
     (result: IdentityChallengeCompleteResult) => {
-      const identityName = normalizeName(result.verifiedName ?? '')
-
-      if (!identityName || !result.verifiedPhone?.trim()) {
+      if (!result.profileToken?.trim()) {
         return
       }
 
-      void runLookup(identityName, result.verifiedPhone, result.verifiedBirthDate)
+      void runLookup(result)
     },
     [runLookup]
   )

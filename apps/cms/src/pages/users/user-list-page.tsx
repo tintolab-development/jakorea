@@ -269,6 +269,18 @@ export function UserListPage() {
    */
   const pendingOpenedUserIdRef = useRef<string | null>(null)
 
+  /**
+   * X 닫기 직후 `params.id`가 한 틱 남아 있으면 URL 복원 effect가 openDrawer를 다시 호출한다.
+   * 의도적 닫기 동안에는 복원을 막고, 다음 handleView에서만 해제한다.
+   */
+  const suppressDetailRestoreRef = useRef(false)
+  /** useUserDetailUrlSync가 닫기 직후 id·lnb를 URL에 다시 쓰지 않도록 */
+  const detailCloseIntentRef = useRef(false)
+  const drawerOpenRef = useRef(drawerOpen)
+  const drawerUserRef = useRef(drawerUser)
+  drawerOpenRef.current = drawerOpen
+  drawerUserRef.current = drawerUser
+
   /** 학교(SCHOOL) 상세 → 소속 교사 linkedUserId 진입 시, X 버튼으로 학교 상세로 되돌리기 */
   const schoolDetailReturnUserRef = useRef<Omit<User, 'password'> | null>(null)
 
@@ -359,13 +371,19 @@ export function UserListPage() {
     let cancelled = false
     const targetId = params.id?.trim()
 
-    if (!targetId) return
+    if (!targetId) {
+      return
+    }
+
+    if (suppressDetailRestoreRef.current) {
+      return
+    }
 
     if (pendingOpenedUserIdRef.current) {
       if (targetId === pendingOpenedUserIdRef.current) {
         pendingOpenedUserIdRef.current = null
       } else if (
-        drawerUser?.id === pendingOpenedUserIdRef.current &&
+        drawerUserRef.current?.id === pendingOpenedUserIdRef.current &&
         targetId !== pendingOpenedUserIdRef.current
       ) {
         return
@@ -376,7 +394,7 @@ export function UserListPage() {
       setSelectedUserId(targetId)
     }
 
-    if (drawerOpen && drawerUser?.id === targetId) return
+    if (drawerOpenRef.current && drawerUserRef.current?.id === targetId) return
 
     const listMatched = listUsers.find(u => u.id === targetId)
     if (listMatched) {
@@ -422,10 +440,6 @@ export function UserListPage() {
     params.id,
     selectedUser,
     listUsers,
-    drawerOpen,
-    drawerUser,
-    closeDrawer,
-    clearSelectedUserId,
     setSelectedUserId,
     openDrawer,
     fetchUserById,
@@ -473,6 +487,8 @@ export function UserListPage() {
   // 사용자 상세 보기
   const handleView = useCallback(
     async (user: Omit<User, 'password'>, opts?: { replace?: boolean }) => {
+      suppressDetailRestoreRef.current = false
+      detailCloseIntentRef.current = false
       pendingOpenedUserIdRef.current = user.id
       setDetailBridgeUser(user)
       setSelectedUserId(user.id)
@@ -531,21 +547,25 @@ export function UserListPage() {
 
   /** 모달·URL·복귀 스택까지 완전히 닫음 (탈퇴/삭제 플로우 등) */
   const flushUserDetailModal = useCallback(() => {
+    suppressDetailRestoreRef.current = true
+    detailCloseIntentRef.current = true
     pendingOpenedUserIdRef.current = null
     setDetailBridgeUser(null)
     schoolDetailReturnUserRef.current = null
     setDrawerUser(null)
     closeDrawer()
     clearSelectedUserId(null)
-    setParams(
-      {
-        id: undefined,
-        lnb: undefined,
-        [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete('id')
+        next.delete('lnb')
+        next.delete(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY)
+        return next
       },
       { replace: true }
     )
-  }, [closeDrawer, clearSelectedUserId, setParams, setDrawerUser])
+  }, [closeDrawer, clearSelectedUserId, setSearchParams, setDrawerUser])
 
   /** 풀페이지 X — 학교→교사 drill-down 중이면 학교 상세로, 아니면 목록으로 */
   const handleUserDetailModalClose = useCallback(() => {
@@ -901,6 +921,7 @@ export function UserListPage() {
         onWithdraw={canWrite && modalDetailUser ? handleWithdrawFromDetail : undefined}
         onNavigateToLinkedUser={handleNavigateToLinkedUser}
         onMemberBasicInfoSaved={handleMemberBasicInfoSaved}
+        detailCloseIntentRef={detailCloseIntentRef}
       />
 
       <ContentModal

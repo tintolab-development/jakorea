@@ -1,4 +1,8 @@
 import { axiosClient } from '@/shared/api'
+import {
+  checkAdminAuthEmail,
+  isEmailAvailableForSignup,
+} from '@/features/auth/api/admin-auth-email-check'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import { isAdminRegisterRemoteEnabled } from '@/features/auth/api/admin-register-remote-capabilities'
 import { buildAdminSelfSignupRequest } from '@/features/auth/lib/map-admin-register-signup-request'
@@ -115,15 +119,19 @@ export async function completeAdminSignup(
   return completeAdminSignupMock(formData)
 }
 
+async function checkAdminRegisterEmailAvailabilityRemote(email: string): Promise<boolean> {
+  const result = await checkAdminAuthEmail(email, 'SIGNUP')
+  return isEmailAvailableForSignup(result)
+}
+
 /**
- * 이메일 중복 확인 — 전용 API 없음.
- * - 실 API: 형식 검증 후 통과 (최종 `signup/complete`에서 중복 처리)
+ * 이메일 중복 확인
+ * - 실 API: POST /api/admin/auth/email/check
  * - mock: mockUsers 기준 중복 검사
  */
 export async function checkAdminRegisterEmailAvailability(email: string): Promise<boolean> {
   if (isAdminRegisterRemoteEnabled()) {
-    await new Promise(resolve => window.setTimeout(resolve, 200))
-    return true
+    return checkAdminRegisterEmailAvailabilityRemote(email)
   }
   return checkEmailAvailability(email)
 }

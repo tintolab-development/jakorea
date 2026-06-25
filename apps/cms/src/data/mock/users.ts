@@ -59,7 +59,12 @@ const mockAdmins: User[] = [
     birthDate: '1980-05-12',
     detailAddress: '서울특별시 강남구 테헤란로 123',
     affiliation: 'JAKorea | 총괄 관리자',
-    socialAccounts: ['구글'],
+    socialAccounts: ['카카오', '네이버', '구글'],
+    termsAgreements: [
+      { termsType: 'SERVICE_TERMS', agreed: true, agreedAt: '2026-01-15T09:15:42.000Z' },
+      { termsType: 'PERSONAL_INFO_COLLECTION', agreed: true, agreedAt: '2026-01-15T09:15:42.000Z' },
+      { termsType: 'MARKETING', agreed: true, agreedAt: '2026-01-15T09:15:42.000Z' },
+    ],
     adminComment: '전사 관리자 운영 기준 확인 후 권한 변경 바랍니다.',
     listMetrics: {
       adminPermissionVariant: 'manager',

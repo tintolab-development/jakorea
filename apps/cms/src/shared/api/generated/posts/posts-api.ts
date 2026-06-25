@@ -41,7 +41,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
   export const getJAKoreaCMSBackendAPIPostsSubset = () => {
 /**
  * ### 이 API가 하는 일
- * - 문의 답변 목록
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -59,13 +59,13 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: INQUIRY_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: MIXED 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -81,8 +81,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 문의 답변 목록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const answers = (
     inquiryId: number,
@@ -95,7 +95,7 @@ const answers = (
 
 /**
  * ### 이 API가 하는 일
- * - 문의 답변 등록
+ * - POST /api/admin/inquiries/{inquiryId}/answers
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -113,13 +113,13 @@ const answers = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: INQUIRY_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -135,8 +135,8 @@ const answers = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 문의 답변 등록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/inquiries/{inquiryId}/answers
  */
 const answer = (
     inquiryId: number,
@@ -152,7 +152,7 @@ const answer = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자 공지사항 목록
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -170,14 +170,14 @@ const answer = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -192,8 +192,8 @@ const answer = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 관리자 공지사항 목록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const notices = (
     params?: NoticesParams,
@@ -207,7 +207,7 @@ const notices = (
 
 /**
  * ### 이 API가 하는 일
- * - 공지사항 등록
+ * - POST /api/admin/content/notices
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -225,13 +225,13 @@ const notices = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -247,8 +247,8 @@ const notices = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 공지사항 등록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/content/notices
  */
 const createNotice = (
     noticeRequest: NoticeRequest,
@@ -263,7 +263,7 @@ const createNotice = (
 
 /**
  * ### 이 API가 하는 일
- * - CMS 공지 카테고리 목록 조회
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -281,14 +281,14 @@ const createNotice = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -303,8 +303,8 @@ const createNotice = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: stage97 프론트-canonical CMS category contract
- * @summary CMS 공지 카테고리 목록 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const noticeCategories = (
     params?: NoticeCategoriesParams,
@@ -318,7 +318,7 @@ const noticeCategories = (
 
 /**
  * ### 이 API가 하는 일
- * - CMS 공지 카테고리 생성
+ * - POST /api/admin/content/notice-categories
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -336,13 +336,13 @@ const noticeCategories = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -358,8 +358,8 @@ const noticeCategories = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: stage97 프론트-canonical CMS category contract
- * @summary CMS 공지 카테고리 생성
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/content/notice-categories
  */
 const createNoticeCategory = (
     categoryRequest: CategoryRequest,
@@ -374,7 +374,7 @@ const createNoticeCategory = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자 FAQ 목록
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -392,14 +392,14 @@ const createNoticeCategory = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -414,8 +414,8 @@ const createNoticeCategory = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 관리자 FAQ 목록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const faqs = (
     params?: FaqsParams,
@@ -429,7 +429,7 @@ const faqs = (
 
 /**
  * ### 이 API가 하는 일
- * - FAQ 등록
+ * - POST /api/admin/content/faqs
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -447,13 +447,13 @@ const faqs = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -469,8 +469,8 @@ const faqs = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary FAQ 등록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/content/faqs
  */
 const createFaq = (
     faqRequest: FaqRequest,
@@ -485,7 +485,7 @@ const createFaq = (
 
 /**
  * ### 이 API가 하는 일
- * - CMS FAQ 카테고리 목록 조회
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -503,14 +503,14 @@ const createFaq = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -525,8 +525,8 @@ const createFaq = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: stage97 프론트-canonical CMS category contract
- * @summary CMS FAQ 카테고리 목록 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const faqCategories = (
     params?: FaqCategoriesParams,
@@ -540,7 +540,7 @@ const faqCategories = (
 
 /**
  * ### 이 API가 하는 일
- * - CMS FAQ 카테고리 생성
+ * - POST /api/admin/content/faq-categories
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -558,13 +558,13 @@ const faqCategories = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -580,8 +580,8 @@ const faqCategories = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: stage97 프론트-canonical CMS category contract
- * @summary CMS FAQ 카테고리 생성
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/content/faq-categories
  */
 const createFaqCategory = (
     categoryRequest: CategoryRequest,
@@ -596,7 +596,7 @@ const createFaqCategory = (
 
 /**
  * ### 이 API가 하는 일
- * - 문의 답변 수정
+ * - 관리자 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -614,13 +614,13 @@ const createFaqCategory = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: INQUIRY_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -636,8 +636,8 @@ const createFaqCategory = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: -
- * @summary 문의 답변 수정
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 부분 수정
  */
 const updateInquiryAnswer = (
     inquiryId: number,
@@ -654,7 +654,7 @@ const updateInquiryAnswer = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자 공지 상세
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -672,14 +672,14 @@ const updateInquiryAnswer = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -694,8 +694,8 @@ const updateInquiryAnswer = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 관리자 공지 상세
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const notice = (
     noticeId: string,
@@ -708,7 +708,7 @@ const notice = (
 
 /**
  * ### 이 API가 하는 일
- * - 공지사항 삭제
+ * - 관리자 삭제
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -726,13 +726,13 @@ const notice = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -748,8 +748,8 @@ const notice = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 공지사항 삭제
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 삭제
  */
 const deleteNotice = (
     noticeId: string,
@@ -762,7 +762,7 @@ const deleteNotice = (
 
 /**
  * ### 이 API가 하는 일
- * - 공지사항 수정
+ * - 관리자 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -780,13 +780,13 @@ const deleteNotice = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -802,8 +802,8 @@ const deleteNotice = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 공지사항 수정
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 부분 수정
  */
 const updateNotice = (
     noticeId: string,
@@ -819,7 +819,7 @@ const updateNotice = (
 
 /**
  * ### 이 API가 하는 일
- * - CMS 공지 카테고리 삭제
+ * - 관리자 삭제
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -837,13 +837,13 @@ const updateNotice = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -859,8 +859,8 @@ const updateNotice = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: stage97 프론트-canonical CMS category contract
- * @summary CMS 공지 카테고리 삭제
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 삭제
  */
 const deleteNoticeCategory = (
     categoryId: string,
@@ -873,7 +873,7 @@ const deleteNoticeCategory = (
 
 /**
  * ### 이 API가 하는 일
- * - CMS 공지 카테고리 수정
+ * - 관리자 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -891,13 +891,13 @@ const deleteNoticeCategory = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -913,8 +913,8 @@ const deleteNoticeCategory = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: stage97 프론트-canonical CMS category contract
- * @summary CMS 공지 카테고리 수정
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 부분 수정
  */
 const updateNoticeCategory = (
     categoryId: string,
@@ -930,7 +930,7 @@ const updateNoticeCategory = (
 
 /**
  * ### 이 API가 하는 일
- * - FAQ 상세
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -948,13 +948,13 @@ const updateNoticeCategory = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: MIXED 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -970,8 +970,8 @@ const updateNoticeCategory = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary FAQ 상세
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const faq = (
     faqId: string,
@@ -984,7 +984,7 @@ const faq = (
 
 /**
  * ### 이 API가 하는 일
- * - FAQ 삭제
+ * - 관리자 삭제
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -1002,13 +1002,13 @@ const faq = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1024,8 +1024,8 @@ const faq = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary FAQ 삭제
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 삭제
  */
 const deleteFaq = (
     faqId: string,
@@ -1038,7 +1038,7 @@ const deleteFaq = (
 
 /**
  * ### 이 API가 하는 일
- * - FAQ 수정
+ * - 관리자 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -1056,13 +1056,13 @@ const deleteFaq = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1078,8 +1078,8 @@ const deleteFaq = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary FAQ 수정
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 부분 수정
  */
 const updateFaq = (
     faqId: string,
@@ -1095,7 +1095,7 @@ const updateFaq = (
 
 /**
  * ### 이 API가 하는 일
- * - CMS FAQ 카테고리 삭제
+ * - 관리자 삭제
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -1113,13 +1113,13 @@ const updateFaq = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1135,8 +1135,8 @@ const updateFaq = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: stage97 프론트-canonical CMS category contract
- * @summary CMS FAQ 카테고리 삭제
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 삭제
  */
 const deleteFaqCategory = (
     categoryId: string,
@@ -1149,7 +1149,7 @@ const deleteFaqCategory = (
 
 /**
  * ### 이 API가 하는 일
- * - CMS FAQ 카테고리 수정
+ * - 관리자 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -1167,13 +1167,13 @@ const deleteFaqCategory = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: BOARD_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1189,8 +1189,8 @@ const deleteFaqCategory = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: stage97 프론트-canonical CMS category contract
- * @summary CMS FAQ 카테고리 수정
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 부분 수정
  */
 const updateFaqCategory = (
     categoryId: string,
@@ -1206,7 +1206,7 @@ const updateFaqCategory = (
 
 /**
  * ### 이 API가 하는 일
- * - 문의내역 목록
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -1224,14 +1224,14 @@ const updateFaqCategory = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: INQUIRY_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1246,8 +1246,8 @@ const updateFaqCategory = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 문의내역 목록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const inquiries = (
     params?: InquiriesParams,
@@ -1261,7 +1261,7 @@ const inquiries = (
 
 /**
  * ### 이 API가 하는 일
- * - 문의 상세 및 개인정보 조회 로그
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 공지/FAQ/문의 (`SCR_CONTENT`)
  * - 프론트 담당 영역: content-inquiries (`content-inquiries`)
@@ -1279,14 +1279,14 @@ const inquiries = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: INQUIRY_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1301,8 +1301,8 @@ const inquiries = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 문의 상세 및 개인정보 조회 로그
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const inquiry = (
     inquiryId: number,

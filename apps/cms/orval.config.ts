@@ -113,4 +113,20 @@ export default defineConfig({
       },
     },
   },
+  performance: {
+    input: './openapi/performance.openapi.json',
+    output: {
+      mode: 'split',
+      target: './src/shared/api/generated/performance/performance-api.ts',
+      schemas: './src/shared/api/generated/performance/schemas',
+      client: 'axios',
+      prettier: false,
+      override: {
+        mutator: {
+          path: './src/shared/api/orval-mutator.ts',
+          name: 'customInstance',
+        },
+      },
+    },
+  },
 })

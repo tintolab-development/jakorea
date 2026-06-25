@@ -13,7 +13,7 @@ export interface SocialLoginRequest {
   /**
      * 소셜 provider 코드
      * @minLength 1
-     * @pattern ^[A-Z_]{2,30}$
+     * @pattern ^[A-Za-z_]{2,30}$
      */
   provider: string;
   /**

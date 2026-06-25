@@ -8,7 +8,10 @@ import type { Program } from '@/types/domain'
 import { mockApplications } from '@/data/mock'
 import { schoolService } from '@/entities/school/api/school-service'
 import { MOCK_SIDO_SIGUNGU } from '@/shared/constants/sido-sigungu'
-import type { EducationRecordQuarter } from '../model/education-record-types'
+import type {
+  EducationRecordQuarter,
+  EducationRecordRow,
+} from '../model/education-record-types'
 
 export type EducationRecordProgramRegion = {
   schoolId: string
@@ -85,6 +88,46 @@ export function buildProgramRegionMap(): Map<string, EducationRecordProgramRegio
   }
 
   return map
+}
+
+/** `educationMonth` 또는 `startDate`에서 연도(YYYY)를 꺼낸다. */
+export function getRowYear(row: EducationRecordRow): number | null {
+  if (row.educationMonth) {
+    const yearPart = row.educationMonth.trim().slice(0, 4)
+    const year = Number(yearPart)
+    if (/^\d{4}$/.test(yearPart) && Number.isFinite(year)) return year
+  }
+  if (!row.startDate) return null
+  const date = new Date(row.startDate)
+  if (Number.isNaN(date.getTime())) return null
+  return date.getFullYear()
+}
+
+/** `educationMonth` 또는 `startDate`에서 분기(1~4)를 꺼낸다. */
+export function getRowQuarter(row: EducationRecordRow): EducationRecordQuarter | null {
+  let month: number | null = null
+  if (row.educationMonth) {
+    const parts = row.educationMonth.trim().split('-')
+    if (parts.length >= 2) {
+      month = Number(parts[1])
+    }
+  }
+  if (month == null && row.startDate) {
+    const date = new Date(row.startDate)
+    if (!Number.isNaN(date.getTime())) month = date.getMonth() + 1
+  }
+  if (month == null || month < 1 || month > 12) return null
+  return Math.ceil(month / 3) as EducationRecordQuarter
+}
+
+/** 실적 행 집합에서 연도(내림차순) 리스트를 만든다. */
+export function getAvailableYearsFromRows(rows: EducationRecordRow[]): number[] {
+  const set = new Set<number>()
+  for (const row of rows) {
+    const y = getRowYear(row)
+    if (y != null) set.add(y)
+  }
+  return Array.from(set).sort((a, b) => b - a)
 }
 
 /** `startDate`에서 연도(YYYY)를 꺼낸다. 값이 없거나 파싱 실패 시 `null`. */

@@ -57,7 +57,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
   export const getJAKoreaCMSBackendAPISettlementSubset = () => {
 /**
  * ### 이 API가 하는 일
- * - 현재 정산 설정 조회
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -75,14 +75,14 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -98,8 +98,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 현재 정산 설정 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const currentConfig = (
 
@@ -112,7 +112,7 @@ const currentConfig = (
 
 /**
  * ### 이 API가 하는 일
- * - 현재 정산 설정 저장
+ * - PUT /api/admin/settlement-configs/current
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `PUT /api/admin/settlement-configs/current`
@@ -128,13 +128,13 @@ const currentConfig = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -151,8 +151,8 @@ const currentConfig = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Frontend CMS settlement-management P1 config save handoff
- * @summary 현재 정산 설정 저장
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary PUT /api/admin/settlement-configs/current
  */
 const updateCurrentConfig = (
     settlementConfigUpdateRequest: SettlementConfigUpdateRequest,
@@ -167,7 +167,7 @@ const updateCurrentConfig = (
 
 /**
  * ### 이 API가 하는 일
- * - 현재 정산 설정 삭제/초기화
+ * - 정산/계좌지급 삭제
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `DELETE /api/admin/settlement-configs/current`
@@ -183,13 +183,13 @@ const updateCurrentConfig = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -206,8 +206,8 @@ const updateCurrentConfig = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Frontend CMS settlement-management P1 config delete handoff
- * @summary 현재 정산 설정 삭제/초기화
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 삭제
  */
 const deleteCurrentConfig = (
 
@@ -220,7 +220,7 @@ const deleteCurrentConfig = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 재산출
+ * - POST /api/admin/settlements/{settlementId}/recalculate
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -238,13 +238,13 @@ const deleteCurrentConfig = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -261,8 +261,8 @@ const deleteCurrentConfig = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 정산 재산출
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/{settlementId}/recalculate
  */
 const recalculate = (
     settlementId: number,
@@ -278,7 +278,7 @@ const recalculate = (
 
 /**
  * ### 이 API가 하는 일
- * - 지급조서 확인 요청
+ * - POST /api/admin/settlements/{settlementId}/payment-statement/request
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -296,13 +296,13 @@ const recalculate = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -319,8 +319,8 @@ const recalculate = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 지급조서 확인 요청
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/{settlementId}/payment-statement/request
  */
 const requestPaymentStatement = (
     settlementId: number,
@@ -336,7 +336,7 @@ const requestPaymentStatement = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자 지급조서 다운로드 요청 이력 기록
+ * - POST /api/admin/settlements/{settlementId}/payment-statement/download-requests
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `POST /api/admin/settlements/{settlementId}/payment-statement/download-requests`
@@ -352,13 +352,13 @@ const requestPaymentStatement = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNMASKED_DOWNLOAD_AUDITED 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -375,8 +375,8 @@ const requestPaymentStatement = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Stage65: GET download is side-effect-free; POST records explicit download request and returns canonical download URL.
- * @summary 관리자 지급조서 다운로드 요청 이력 기록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/{settlementId}/payment-statement/download-requests
  */
 const requestPaymentStatementDownload = (
     settlementId: number,
@@ -389,7 +389,7 @@ const requestPaymentStatementDownload = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 지급정정 요청 생성
+ * - POST /api/admin/settlements/{settlementId}/correction-requests
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산 (`settlement`)
@@ -407,13 +407,13 @@ const requestPaymentStatementDownload = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -430,8 +430,8 @@ const requestPaymentStatementDownload = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: added for P1 hardening routes implemented in provider/session settlement/performance revision work
- * @summary 정산 지급정정 요청 생성
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/{settlementId}/correction-requests
  */
 const requestCorrection = (
     settlementId: number,
@@ -447,7 +447,7 @@ const requestCorrection = (
 
 /**
  * ### 이 API가 하는 일
- * - 지급조서 일괄 확인 및 이체 예정일 저장
+ * - POST /api/admin/settlements/statements/bulk-confirm
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `POST /api/admin/settlements/statements/bulk-confirm`
@@ -463,13 +463,13 @@ const requestCorrection = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: PAYMENT_AMOUNT 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -486,8 +486,8 @@ const requestCorrection = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Frontend CMS settlement-management P0 bulk confirm handoff
- * @summary 지급조서 일괄 확인 및 이체 예정일 저장
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/statements/bulk-confirm
  */
 const bulkConfirmPaymentStatements = (
     settlementBulkStatusChangeRequest: SettlementBulkStatusChangeRequest,
@@ -502,64 +502,7 @@ const bulkConfirmPaymentStatements = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 생성
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
- * - 프론트 담당 영역: 정산s (`settlements`)
- * - 호출 방식: `POST /api/admin/settlements/generate`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 폼 상태 or 선택 행 action payload
- * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
- * - 프론트 조회 키: `post_admin_settlements_generate`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: PROVIDER_PENDING
- * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
- * - 스테이징 점검 기준: REQUIRED
- * - 목데이터 대체: 임시 목데이터/localStorage 상태를 settlements API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 정산 상태는 지급조서 상태와 계좌 지급 상태를 분리해서 봅니다. `REQUESTED`, `CONFIRMED`, `REJECTED`, `CORRECTION_REQUESTED`, `PAID`, `FAILED`는 서로 다른 화면 배지와 버튼 조건으로 매핑합니다.
- * - 정정/재발행/지급 실패는 단순 표시값이 아니라 후속 처리 버튼과 감사 이력에 영향을 주므로, 프론트는 응답 원본 status 값을 그대로 보존합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 정산 생성
- */
-const generate = (
-    settlementGenerateRequest: SettlementGenerateRequest,
- options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
-      return customInstance<ApiResponse>(
-      {url: `/api/admin/settlements/generate`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: settlementGenerateRequest
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 정산 세금신고 export 생성 요청
+ * - POST /api/admin/settlements/exports/tax-report
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -577,13 +520,13 @@ const generate = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -600,8 +543,8 @@ const generate = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 정산 세금신고 export 생성 요청
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/exports/tax-report
  */
 const requestTaxReportExport = (
     settlementExportRequest?: SettlementExportRequest,
@@ -616,7 +559,7 @@ const requestTaxReportExport = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 대량이체 export 생성 요청
+ * - POST /api/admin/settlements/exports/bulk-transfer
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -634,13 +577,13 @@ const requestTaxReportExport = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -657,8 +600,8 @@ const requestTaxReportExport = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 정산 대량이체 export 생성 요청
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlements/exports/bulk-transfer
  */
 const requestBulkTransferExport = (
     settlementExportRequest?: SettlementExportRequest,
@@ -673,7 +616,7 @@ const requestBulkTransferExport = (
 
 /**
  * ### 이 API가 하는 일
- * - 현재 정산 설정 복제
+ * - POST /api/admin/settlement-configs/current/duplicate
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `POST /api/admin/settlement-configs/current/duplicate`
@@ -689,13 +632,13 @@ const requestBulkTransferExport = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -712,8 +655,8 @@ const requestBulkTransferExport = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Frontend CMS settlement-management P1 config duplicate handoff
- * @summary 현재 정산 설정 복제
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/settlement-configs/current/duplicate
  */
 const duplicateCurrentConfig = (
     settlementConfigUpdateRequest?: SettlementConfigUpdateRequest,
@@ -728,7 +671,7 @@ const duplicateCurrentConfig = (
 
 /**
  * ### 이 API가 하는 일
- * - 지급조서 확인 완료
+ * - 정산/계좌지급 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -746,13 +689,13 @@ const duplicateCurrentConfig = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -769,8 +712,8 @@ const duplicateCurrentConfig = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 지급조서 확인 완료
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 부분 수정
  */
 const confirmPaymentStatement = (
     statementId: number,
@@ -786,7 +729,7 @@ const confirmPaymentStatement = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 지급정정 요청 반려
+ * - 정산/계좌지급 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산 (`settlement`)
@@ -804,13 +747,13 @@ const confirmPaymentStatement = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -827,8 +770,8 @@ const confirmPaymentStatement = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: added for P1 hardening routes implemented in provider/session settlement/performance revision work
- * @summary 정산 지급정정 요청 반려
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 부분 수정
  */
 const rejectCorrection = (
     correctionRequestId: number,
@@ -844,7 +787,7 @@ const rejectCorrection = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 지급정정 요청 승인 및 revision 생성
+ * - 정산/계좌지급 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산 (`settlement`)
@@ -862,13 +805,13 @@ const rejectCorrection = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -885,8 +828,8 @@ const rejectCorrection = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: added for P1 hardening routes implemented in provider/session settlement/performance revision work
- * @summary 정산 지급정정 요청 승인 및 revision 생성
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 부분 수정
  */
 const approveCorrection = (
     correctionRequestId: number,
@@ -1073,7 +1016,7 @@ const bulkPaid = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 목록
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -1091,14 +1034,14 @@ const bulkPaid = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1114,8 +1057,8 @@ const bulkPaid = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 정산 목록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const listSettlements = (
     params?: ListSettlementsParams,
@@ -1129,7 +1072,7 @@ const listSettlements = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 상세
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -1147,14 +1090,14 @@ const listSettlements = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1170,8 +1113,8 @@ const listSettlements = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 정산 상세
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const getSettlement = (
     settlementId: number,
@@ -1184,7 +1127,7 @@ const getSettlement = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 revision 목록 조회
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산 (`settlement`)
@@ -1202,13 +1145,13 @@ const getSettlement = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1225,8 +1168,8 @@ const getSettlement = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: added for P1 hardening routes implemented in provider/session settlement/performance revision work
- * @summary 정산 revision 목록 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const listSettlementRevisions = (
     settlementId: number,
@@ -1241,7 +1184,7 @@ const listSettlementRevisions = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 revision 상세 조회
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산 (`settlement`)
@@ -1259,13 +1202,13 @@ const listSettlementRevisions = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1282,8 +1225,8 @@ const listSettlementRevisions = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: added for P1 hardening routes implemented in provider/session settlement/performance revision work
- * @summary 정산 revision 상세 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const getSettlementRevisionDetail = (
     settlementId: number,
@@ -1297,7 +1240,7 @@ const getSettlementRevisionDetail = (
 
 /**
  * ### 이 API가 하는 일
- * - 관리자 지급조서 다운로드
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -1315,13 +1258,13 @@ const getSettlementRevisionDetail = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1338,8 +1281,8 @@ const getSettlementRevisionDetail = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 관리자 지급조서 다운로드
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const downloadPaymentStatement = (
     settlementId: number,
@@ -1352,7 +1295,7 @@ const downloadPaymentStatement = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 교통비 거리/유가 스냅샷 목록
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -1370,13 +1313,13 @@ const downloadPaymentStatement = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1393,8 +1336,8 @@ const downloadPaymentStatement = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 정산 교통비 거리/유가 스냅샷 목록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const listTransportationSnapshots = (
     params?: ListTransportationSnapshotsParams,
@@ -1408,7 +1351,7 @@ const listTransportationSnapshots = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 UI/API 상태 매핑 조회
+ * - 정산/계좌지급 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `GET /api/admin/settlements/status-mappings`
@@ -1424,14 +1367,14 @@ const listTransportationSnapshots = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1447,8 +1390,8 @@ const listTransportationSnapshots = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Frontend CMS settlement-management P2 status enum mapping handoff
- * @summary 정산 UI/API 상태 매핑 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const statusMappings = (
 
@@ -1461,7 +1404,7 @@ const statusMappings = (
 
 /**
  * ### 이 API가 하는 일
- * - 지급조서 확인 목록
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -1479,13 +1422,13 @@ const statusMappings = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1502,8 +1445,8 @@ const statusMappings = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 지급조서 확인 목록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const listPaymentStatements = (
     params?: ListPaymentStatementsParams,
@@ -1517,7 +1460,7 @@ const listPaymentStatements = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 기획 확인 항목
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -1535,14 +1478,14 @@ const listPaymentStatements = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -1558,8 +1501,8 @@ const listPaymentStatements = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 정산 기획 확인 항목
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const openQuestions = (
 
@@ -1572,7 +1515,7 @@ const openQuestions = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 export 이력 조회
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -1590,13 +1533,13 @@ const openQuestions = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 기본 마스킹 응답
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1613,8 +1556,8 @@ const openQuestions = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 정산 export 이력 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const listExportHistories = (
     params?: ListExportHistoriesParams,
@@ -1628,7 +1571,7 @@ const listExportHistories = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 지급정정 요청 목록 조회
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산 (`settlement`)
@@ -1646,13 +1589,13 @@ const listExportHistories = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: PERSONAL_DATA 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1669,8 +1612,8 @@ const listExportHistories = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: added for P1 hardening routes implemented in provider/session settlement/performance revision work
- * @summary 정산 지급정정 요청 목록 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const listCorrectionRequests = (
     params?: ListCorrectionRequestsParams,
@@ -1684,7 +1627,7 @@ const listCorrectionRequests = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 화면 전용 캘린더. 출강일 기준 예정금/완료금/상태 조회
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -1702,13 +1645,13 @@ const listCorrectionRequests = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: PAYMENT_AMOUNT 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1725,8 +1668,8 @@ const listCorrectionRequests = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 정산 화면 전용 캘린더. 출강일 기준 예정금/완료금/상태 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const settlementCalendar = (
     params?: SettlementCalendarParams,
@@ -1740,7 +1683,7 @@ const settlementCalendar = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 캘린더 월별/연도별 완료금/예정금 요약
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -1758,13 +1701,13 @@ const settlementCalendar = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: PAYMENT_AMOUNT 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1781,8 +1724,8 @@ const settlementCalendar = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 정산 캘린더 월별/연도별 완료금/예정금 요약
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const settlementCalendarSummary = (
     params?: SettlementCalendarSummaryParams,
@@ -1796,7 +1739,7 @@ const settlementCalendarSummary = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 캘린더 일자 상세 조회
+ * - 정산/계좌지급 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 정산 관리 (`SCR_SETTLEMENT`)
  * - 프론트 담당 영역: 정산s (`settlements`)
@@ -1814,13 +1757,13 @@ const settlementCalendarSummary = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: PAYMENT_AMOUNT 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1837,8 +1780,8 @@ const settlementCalendarSummary = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: v2.8.0 P1 폼/런타임 및 마스터 워크플로우 기준 구현 완료
- * @summary 정산 캘린더 일자 상세 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const settlementCalendarDate = (
     date: string,
@@ -1851,7 +1794,7 @@ const settlementCalendarDate = (
 
 /**
  * ### 이 API가 하는 일
- * - 계좌 지급 확인 연간 예산 요약
+ * - 정산/계좌지급 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `GET /api/admin/settlements/budget-summary`
@@ -1867,13 +1810,13 @@ const settlementCalendarDate = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 관리자 CMS 권한 범위
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: PAYMENT_AMOUNT 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1890,8 +1833,8 @@ const settlementCalendarDate = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Frontend CMS settlement-management P0 budget summary handoff
- * @summary 계좌 지급 확인 연간 예산 요약
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const budgetSummary = (
     params?: BudgetSummaryParams,
@@ -1905,7 +1848,7 @@ const budgetSummary = (
 
 /**
  * ### 이 API가 하는 일
- * - 정산 지급조서 프로그램/강사별 집계 목록
+ * - 정산/계좌지급 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
  * - 호출 방식: `GET /api/admin/settlements/aggregates`
@@ -1921,13 +1864,13 @@ const budgetSummary = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: SETTLEMENT_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: PAYMENT_AMOUNT 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -1944,8 +1887,8 @@ const budgetSummary = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Frontend CMS settlement-management P0 aggregate list handoff
- * @summary 정산 지급조서 프로그램/강사별 집계 목록
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 정산/계좌지급 조회
  */
 const listSettlementAggregates = (
     params?: ListSettlementAggregatesParams,
@@ -2066,7 +2009,7 @@ const getAccountPayment = (
       options);
     }
 
-return {currentConfig,updateCurrentConfig,deleteCurrentConfig,recalculate,requestPaymentStatement,requestPaymentStatementDownload,requestCorrection,bulkConfirmPaymentStatements,generate,requestTaxReportExport,requestBulkTransferExport,duplicateCurrentConfig,confirmPaymentStatement,rejectCorrection,approveCorrection,markPaid,markFailed,bulkPaid,listSettlements,getSettlement,listSettlementRevisions,getSettlementRevisionDetail,downloadPaymentStatement,listTransportationSnapshots,statusMappings,listPaymentStatements,openQuestions,listExportHistories,listCorrectionRequests,settlementCalendar,settlementCalendarSummary,settlementCalendarDate,budgetSummary,listSettlementAggregates,listAccountPayments,getAccountPayment}};
+return {currentConfig,updateCurrentConfig,deleteCurrentConfig,recalculate,requestPaymentStatement,requestPaymentStatementDownload,requestCorrection,bulkConfirmPaymentStatements,requestTaxReportExport,requestBulkTransferExport,duplicateCurrentConfig,confirmPaymentStatement,rejectCorrection,approveCorrection,markPaid,markFailed,bulkPaid,listSettlements,getSettlement,listSettlementRevisions,getSettlementRevisionDetail,downloadPaymentStatement,listTransportationSnapshots,statusMappings,listPaymentStatements,openQuestions,listExportHistories,listCorrectionRequests,settlementCalendar,settlementCalendarSummary,settlementCalendarDate,budgetSummary,listSettlementAggregates,listAccountPayments,getAccountPayment}};
 export type CurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['currentConfig']>>>
 export type UpdateCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['updateCurrentConfig']>>>
 export type DeleteCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['deleteCurrentConfig']>>>
@@ -2075,7 +2018,6 @@ export type RequestPaymentStatementResult = NonNullable<Awaited<ReturnType<Retur
 export type RequestPaymentStatementDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestPaymentStatementDownload']>>>
 export type RequestCorrectionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestCorrection']>>>
 export type BulkConfirmPaymentStatementsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['bulkConfirmPaymentStatements']>>>
-export type GenerateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['generate']>>>
 export type RequestTaxReportExportResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestTaxReportExport']>>>
 export type RequestBulkTransferExportResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['requestBulkTransferExport']>>>
 export type DuplicateCurrentConfigResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPISettlementSubset>['duplicateCurrentConfig']>>>

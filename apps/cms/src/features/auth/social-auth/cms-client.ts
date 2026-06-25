@@ -60,6 +60,8 @@ export const cmsSocialAuthClient = createSocialAuthClient({
   paths: adminSocialAuthPaths,
   routes,
   oauthConfig,
+  /** 로그인: Kakao/Naver/Google authorize URL은 프론트 생성 → `/oauth/{provider}` 콜백 후 code는 실 API 교환 */
+  useFrontendOAuthStart: intent => intent === 'login',
   isRemoteEnabled: (intent?: OAuthIntent) => {
     if (intent === 'login') {
       return isSocialAuthLoginRemoteEnabled()

@@ -26,7 +26,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
   export const getJAKoreaCMSBackendAPILogsSubset = () => {
 /**
  * ### 이 API가 하는 일
- * - 버그/이슈 로그 상태 변경
+ * - 시스템 상태 부분 수정
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
@@ -44,14 +44,14 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: LOG_WRITE 권한 필요
- * - 접근 범위: 마스터 관리자만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -66,8 +66,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: implemented in v4.4.0 화면 semantics hardening
- * @summary 버그/이슈 로그 상태 변경
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 시스템 상태 부분 수정
  */
 const updateSystemIssueStatus = (
     issueId: number,
@@ -83,7 +83,7 @@ const updateSystemIssueStatus = (
 
 /**
  * ### 이 API가 하는 일
- * - 버그/이슈 로그 목록 조회
+ * - 시스템 상태 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
@@ -101,14 +101,14 @@ const updateSystemIssueStatus = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: LOG_READ 권한 필요
- * - 접근 범위: 마스터 관리자만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -123,8 +123,8 @@ const updateSystemIssueStatus = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: implemented in v4.4.0 화면 semantics hardening
- * @summary 버그/이슈 로그 목록 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 시스템 상태 조회
  */
 const systemIssueLogs = (
     params: SystemIssueLogsParams,
@@ -138,7 +138,7 @@ const systemIssueLogs = (
 
 /**
  * ### 이 API가 하는 일
- * - 버그/이슈 로그 상세 조회
+ * - 시스템 상태 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
@@ -156,14 +156,14 @@ const systemIssueLogs = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: LOG_READ 권한 필요
- * - 접근 범위: 마스터 관리자만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 없음
- * - 감사로그 저장: 필수 아님
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
  * ### 상태값/화면 배지 기준
@@ -178,8 +178,8 @@ const systemIssueLogs = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: implemented in v4.4.0 화면 semantics hardening
- * @summary 버그/이슈 로그 상세 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 시스템 상태 조회
  */
 const systemIssueDetail = (
     issueId: number,
@@ -192,7 +192,7 @@ const systemIssueDetail = (
 
 /**
  * ### 이 API가 하는 일
- * - 개인정보 조회 이력 로그 관리 화면 조회
+ * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
@@ -210,13 +210,13 @@ const systemIssueDetail = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: LOG_READ 권한 필요
- * - 접근 범위: 마스터 관리자만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -232,8 +232,8 @@ const systemIssueDetail = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: implemented in v4.4.0 화면 semantics hardening
- * @summary 개인정보 조회 이력 로그 관리 화면 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 관리자 조회
  */
 const privacyAccessLogs = (
     params: PrivacyAccessLogsParams,
@@ -247,7 +247,7 @@ const privacyAccessLogs = (
 
 /**
  * ### 이 API가 하는 일
- * - 파일 다운로드/접근 이력 로그 관리 화면 조회
+ * - 파일 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
  * - 프론트 담당 영역: logs (`logs`)
@@ -265,13 +265,13 @@ const privacyAccessLogs = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: LOG_READ 권한 필요
- * - 접근 범위: 마스터 관리자만 가능
+ * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
  *
  * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
  * - 감사로그 저장: 필수
  * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
  *
@@ -287,8 +287,8 @@ const privacyAccessLogs = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: implemented in v4.4.0 화면 semantics hardening
- * @summary 파일 다운로드/접근 이력 로그 관리 화면 조회
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary 파일 조회
  */
 const fileAccessLogs = (
     params: FileAccessLogsParams,

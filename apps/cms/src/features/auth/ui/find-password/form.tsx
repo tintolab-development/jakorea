@@ -8,27 +8,40 @@ import { RegisterStepHeader } from '@/features/auth/ui/admin-register/register-s
 import { VerificationExpiredNotice } from './verification-expired-notice'
 
 export const FIND_PASSWORD_EMAIL_NOT_FOUND_MESSAGE =
-  '가입한 이메일을 찾지 못했어요. 입력한 정보를 다시 확인해 주세요.'
+  '가입된 이메일을 찾지 못했어요. 입력한 정보를 다시 확인해 주세요.'
+
+export const FIND_PASSWORD_INVALID_EMAIL_DOMAIN_MESSAGE =
+  'JA Korea 이메일(@jakorea.org)만 사용할 수 있어요.'
+
+function getFindPasswordEmailFieldClassName({ hasError = false }: { hasError?: boolean } = {}) {
+  return [
+    'find-password-email-field',
+    'find-password-email-field--clearable',
+    hasError ? 'find-password-email-field--error' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+}
 
 interface FindPasswordFormProps {
   form: ReturnType<typeof Form.useForm<{ email: string }>>[0]
   emailError?: string | null
   isIdentityLoading: boolean
-  isEmailSending: boolean
   showVerificationExpired: boolean
+  onEmailChange?: () => void
   onIdentityVerify: () => void
-  onSendVerificationEmail: () => void
 }
 
 export function FindPasswordForm({
   form,
   emailError,
   isIdentityLoading,
-  isEmailSending,
   showVerificationExpired,
+  onEmailChange,
   onIdentityVerify,
-  onSendVerificationEmail,
 }: FindPasswordFormProps) {
+  const hasEmailError = Boolean(emailError)
+
   return (
     <div className="find-password-step">
       <RegisterStepHeader
@@ -41,12 +54,23 @@ export function FindPasswordForm({
         layout="vertical"
         requiredMark={false}
         className="auth-form find-password-step__form"
+        onValuesChange={changedValues => {
+          if ('email' in changedValues) {
+            onEmailChange?.()
+          }
+        }}
       >
         <Form.Item
           name="email"
           label={<AuthFormLabel>이메일</AuthFormLabel>}
-          validateStatus={emailError ? 'error' : undefined}
-          help={emailError ? <span className="find-password-email-error">{emailError}</span> : undefined}
+          validateStatus={hasEmailError ? 'error' : undefined}
+          help={
+            emailError ? (
+              <span className="find-password-email-error" role="alert">
+                {emailError}
+              </span>
+            ) : undefined
+          }
           rules={[
             { required: true, message: '이메일을 입력해 주세요.' },
             { type: 'email', message: '올바른 이메일 형식을 입력해 주세요.' },
@@ -57,6 +81,7 @@ export function FindPasswordForm({
             placeholder="이메일을 입력해 주세요"
             autoComplete="email"
             allowClear={authInputAllowClear}
+            className={getFindPasswordEmailFieldClassName({ hasError: hasEmailError })}
           />
         </Form.Item>
 
@@ -69,15 +94,6 @@ export function FindPasswordForm({
             onClick={onIdentityVerify}
           >
             본인인증 하기
-          </AuthLoadingButton>
-          <AuthLoadingButton
-            type="default"
-            block
-            className="auth-secondary-btn"
-            loading={isEmailSending}
-            onClick={onSendVerificationEmail}
-          >
-            인증메일 받기
           </AuthLoadingButton>
         </div>
 

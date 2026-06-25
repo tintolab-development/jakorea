@@ -101,7 +101,7 @@ export function AccountPaymentStatusDetailFullPageModal({
   if (detailLoading) {
     return (
       <DetailFullPageModal open={open} onClose={onClose} title="계좌 지급 현황 상세">
-        <div className="account-payments-page__loading" role="status">
+        <div className="detail-fullpage-modal__loading" role="status">
           <Spin />
         </div>
       </DetailFullPageModal>
@@ -111,7 +111,7 @@ export function AccountPaymentStatusDetailFullPageModal({
   if (detailError || !detail) {
     return (
       <DetailFullPageModal open={open} onClose={onClose} title="계좌 지급 현황 상세">
-        <div className="account-payments-page__error" role="alert">
+        <div className="page-content-error" role="alert">
           {detailError instanceof Error ? detailError.message : '상세를 불러오지 못했습니다.'}
         </div>
       </DetailFullPageModal>

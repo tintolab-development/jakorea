@@ -79,14 +79,7 @@
   min-height: 54px !important;
   max-height: 54px !important;
   box-sizing: border-box !important;
-}
-
-.filter-table-layout.sponsor-page
-  .filter-table-layout__table
-  .sponsor-page__table.cms-data-table
-  .ant-table-tbody
-  > tr
-  > td {
+  vertical-align: middle !important;
   padding-top: 10px !important;
   padding-bottom: 10px !important;
 }
@@ -108,12 +101,30 @@
   > td.status-dropdown-cell__cell-status--tag-100 {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
 }
 
+/* 드롭다운 열림 시 행 높이 고정 — UI shifting 방지 */
 .filter-table-layout.sponsor-page
   .filter-table-layout__table
   .sponsor-page__table.cms-data-table
-  td.status-dropdown-cell__cell-status--tag-100
-  .status-dropdown-cell__status-trigger--tag-100 {
-  margin-inline: auto;
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+}
+
+/* 행 hover 시 열린 tag-100 트리거 민트 외곽·그림자 유지 (공통 규칙이 border 제거함) */
+.filter-table-layout.sponsor-page
+  .filter-table-layout__table
+  .sponsor-page__table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  border-color: var(--JA-mint-01, #01a1af) !important;
+  box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1) !important;
+  background: #fff !important;
 }

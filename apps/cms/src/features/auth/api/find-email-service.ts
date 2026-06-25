@@ -1,5 +1,3 @@
-import { toApiBirthDate } from '@jakorea/identity-verification'
-
 import { axiosClient } from '@/shared/api'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
@@ -13,9 +11,10 @@ export type FindEmailLookupResult =
   | { kind: 'not_found' }
 
 export interface FindEmailLookupInput {
-  name: string
-  phoneNumber: string
-  birthDate?: string
+  identityVerificationSessionId: number
+  profileToken: string
+  /** mock 전용 — 실 API에서는 무시 */
+  mockNotFoundHint?: string
 }
 
 export class FindEmailApiError extends Error {
@@ -32,18 +31,6 @@ function delay(ms: number): Promise<void> {
   return new Promise(resolve => {
     window.setTimeout(resolve, ms)
   })
-}
-
-function normalizePhoneNumber(value: string): string {
-  return value.replace(/\D/g, '')
-}
-
-function toEmailRecoveryBirthDate(value: string): string {
-  const digits = value.replace(/\D/g, '')
-  if (digits.length === 8) {
-    return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`
-  }
-  return toApiBirthDate(value)
 }
 
 function unwrapEmailRecoveryLookup(payload: unknown): EmailRecoveryLookupResponse {
@@ -76,10 +63,19 @@ function parseFindEmailApiError(payload: unknown): FindEmailApiError {
   return new FindEmailApiError('UNKNOWN', '이메일 찾기에 실패했습니다.')
 }
 
+function resolveMaskedEmail(result: EmailRecoveryLookupResponse): string | undefined {
+  if (result.maskedEmail?.trim()) {
+    return result.maskedEmail.trim()
+  }
+
+  const firstAccount = result.accounts?.find(account => account.maskedEmail?.trim())
+  return firstAccount?.maskedEmail?.trim()
+}
+
 async function lookupFindEmailMock(input: FindEmailLookupInput): Promise<FindEmailLookupResult> {
   await delay(300)
 
-  if (input.name.includes('없음')) {
+  if (input.mockNotFoundHint?.includes('없음')) {
     return { kind: 'not_found' }
   }
 
@@ -88,12 +84,8 @@ async function lookupFindEmailMock(input: FindEmailLookupInput): Promise<FindEma
 
 async function lookupFindEmailRemote(input: FindEmailLookupInput): Promise<FindEmailLookupResult> {
   const body: EmailRecoveryLookupRequest = {
-    name: input.name.trim(),
-    phoneNumber: normalizePhoneNumber(input.phoneNumber),
-  }
-
-  if (input.birthDate?.trim()) {
-    body.birthDate = toEmailRecoveryBirthDate(input.birthDate)
+    identityVerificationSessionId: input.identityVerificationSessionId,
+    profileToken: input.profileToken.trim(),
   }
 
   try {
@@ -102,12 +94,13 @@ async function lookupFindEmailRemote(input: FindEmailLookupInput): Promise<FindE
       body
     )
     const result = unwrapEmailRecoveryLookup(payload)
+    const maskedEmail = resolveMaskedEmail(result)
 
-    if (!result.matched || !result.maskedEmail?.trim()) {
+    if (!result.matched || !maskedEmail) {
       return { kind: 'not_found' }
     }
 
-    return { kind: 'found', maskedEmail: result.maskedEmail }
+    return { kind: 'found', maskedEmail }
   } catch (error) {
     if (error instanceof FindEmailApiError) {
       throw error

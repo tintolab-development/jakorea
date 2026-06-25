@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, type MutableRefObject } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
@@ -83,6 +83,7 @@ export interface UseUserDetailControllerParams {
     patch: PatchUserBasicInfoInput
   ) => Promise<Omit<User, 'password'>>
   onMemberBasicInfoSaved?: (user: Omit<User, 'password'>) => void
+  detailCloseIntentRef?: MutableRefObject<boolean>
 }
 
 export function useUserDetailController({
@@ -95,6 +96,7 @@ export function useUserDetailController({
   modals,
   patchMemberBasicInfo,
   onMemberBasicInfoSaved,
+  detailCloseIntentRef,
 }: UseUserDetailControllerParams) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -124,6 +126,7 @@ export function useUserDetailController({
     setSearchParams,
     setTabState,
     programsChildQueryKey,
+    detailCloseIntentRef,
   })
 
   const resolvePersonalInfoAccessItem = useCallback(

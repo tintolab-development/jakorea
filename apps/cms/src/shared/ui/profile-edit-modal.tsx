@@ -1,27 +1,37 @@
 /**
- * 개인정보 수정 모달 컴포넌트
+ * 내 정보 확인 모달
  */
 
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Form } from 'antd'
-import { useEffect, useId, useRef, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
+import dayjs from 'dayjs'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { genderBirthView, socialView } from '@/features/user/detail/ui/user-basic-info/display'
+import { EditableField } from '@/features/user/detail/ui/user-basic-info/fields/editable-field'
+import { EditableRow } from '@/features/user/detail/ui/user-basic-info/fields/editable-row'
 import {
-  AdminProfileApiError,
-  shouldAttemptRemoteProfileUpdate,
-  updateMyProfile,
-} from '@/features/auth/api/admin-profile-service'
+  ADMIN_PERMISSION_TAG_LABEL,
+  getAdminPermissionVariant,
+} from '@/features/user/shared/lib/admin-permission-display'
 import {
-  profileEditSchema,
-  type ProfileEditFormData,
-} from '@/features/auth/model/profile-edit-schema'
+  getManagedProgramMetricsParts,
+  ManagedProgramCountDisplay,
+} from '@/features/user/detail/lib/user-detail-fullpage-helpers'
+import {
+  buildRegisterSocialConnectPath,
+  setRegisterSocialLinkIntent,
+} from '@/features/auth/lib/register-social-connect-state'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { SocialConnectProviderList } from '@/features/auth/ui/social-connect-provider-list'
-import { CmsButton, CmsInput, ContentModal, useCmsAlert } from '@/shared/ui'
+import {
+  cmsIdentityVerificationClient,
+  type IdentityChallengeCompleteResult,
+} from '@/features/auth/identity-verification'
+import { useIdentityVerification as useIdentityVerificationBase } from '@jakorea/identity-verification/react'
+import { CmsButton, CmsInput, CmsRadioGroup, ContentModal, useCmsAlert } from '@/shared/ui'
 import type { User } from '@/types/user'
+import { formatDate } from '@/shared/utils'
+import '@/features/user/detail/ui/user-consent-agreement-section.css'
 import './profile-edit-modal.css'
-import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 interface ProfileEditModalProps {
   open: boolean
@@ -29,144 +39,188 @@ interface ProfileEditModalProps {
   onSuccess?: () => void
 }
 
-function ProfileAvatarGraphic() {
-  const clipId = useId().replace(/:/g, '')
+type MarketingConsentValue = 'agree' | 'disagree'
+type TermsKind = 'SERVICE_TERMS' | 'PERSONAL_INFO' | 'MARKETING'
 
+const MARKETING_RADIO_OPTIONS = [
+  { label: '동의', value: 'agree' as const },
+  { label: '미동의', value: 'disagree' as const },
+]
+
+const SAMPLE_AGREED_AT = '2026.01.15 09:15:42'
+
+const TERMS_TYPE_TO_KIND: Record<string, TermsKind> = {
+  SERVICE_TERMS: 'SERVICE_TERMS',
+  TERMS_OF_SERVICE: 'SERVICE_TERMS',
+  PERSONAL_INFO: 'PERSONAL_INFO',
+  PERSONAL_INFO_COLLECTION: 'PERSONAL_INFO',
+  MARKETING: 'MARKETING',
+  MARKETING_CONSENT: 'MARKETING',
+}
+
+function formatTermsAgreedAt(iso?: string): string {
+  if (!iso?.trim()) return SAMPLE_AGREED_AT
+  const parsed = dayjs(iso)
+  return parsed.isValid() ? parsed.format('YYYY.MM.DD HH:mm:ss') : iso
+}
+
+function resolveTermsAgreement(
+  user: Omit<User, 'password'>,
+  kind: TermsKind
+): { agreed: boolean; agreedAtDisplay: string } {
+  const agreements = user.termsAgreements ?? []
+  const record = agreements.find(item => {
+    const type = item.termsType?.trim().toUpperCase()
+    return type != null && TERMS_TYPE_TO_KIND[type] === kind
+  })
+
+  if (!record) {
+    return { agreed: true, agreedAtDisplay: SAMPLE_AGREED_AT }
+  }
+
+  return {
+    agreed: record.agreed ?? false,
+    agreedAtDisplay: formatTermsAgreedAt(record.agreedAt),
+  }
+}
+
+function ConsentValueDisplay({ value }: { value: ReactNode }) {
+  if (typeof value !== 'string') return value
+  const idx = value.indexOf('|')
+  if (idx === -1) return value
+  const status = value.slice(0, idx).trim()
+  const datetime = value.slice(idx + 1).trim()
+  if (!datetime) return value
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none" aria-hidden>
-      <g clipPath={`url(#${clipId})`}>
-        <rect width="120" height="120" rx="60" fill="#296075" />
-        <circle opacity="0.7" cx="60" cy="48.75" r="22.5" fill="white" />
-        <circle opacity="0.7" cx="60" cy="120" r="45" fill="white" />
-      </g>
-      <defs>
-        <clipPath id={clipId}>
-          <rect width="120" height="120" rx="60" fill="white" />
-        </clipPath>
-      </defs>
-    </svg>
+    <span className="user-consent-agreement-section__value-inner">
+      <span className="user-consent-agreement-section__value-status">{status}</span>
+      <span className="user-consent-agreement-section__value-sep" aria-hidden>
+        |
+      </span>
+      <span className="user-consent-agreement-section__value-datetime">{datetime}</span>
+    </span>
   )
 }
 
-function AvatarCameraIcon() {
-  const maskId = useId().replace(/:/g, '')
-
+function consentReadonlyContent(agreed: boolean, agreedAtDisplay?: string) {
+  if (!agreed) {
+    return (
+      <span className="user-consent-agreement-section__value-inner">
+        <ConsentValueDisplay value="미동의" />
+      </span>
+    )
+  }
+  const text = agreedAtDisplay ? `동의 | ${agreedAtDisplay}` : '동의'
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden>
-      <rect width="36" height="36" rx="18" fill="white" />
-      <rect width="36" height="36" rx="18" fill="#3D3D3D" fillOpacity="0.1" />
-      <rect x="0.5" y="0.5" width="35" height="35" rx="17.5" stroke="#3D3D3D" strokeOpacity="0.1" />
-      <mask id={maskId} maskUnits="userSpaceOnUse" x="8" y="8" width="20" height="20">
-        <rect x="8" y="8" width="20" height="20" fill="#D9D9D9" />
-      </mask>
-      <g mask={`url(#${maskId})`}>
-        <path
-          d="M10.4999 25.5C10.0416 25.5 9.64922 25.3368 9.32284 25.0104C8.99645 24.684 8.83325 24.2917 8.83325 23.8333V13.8333C8.83325 13.375 8.99645 12.9826 9.32284 12.6563C9.64922 12.3299 10.0416 12.1667 10.4999 12.1667H13.1249L14.1666 11.0417C14.3194 10.875 14.5034 10.7431 14.7187 10.6458C14.9339 10.5486 15.1596 10.5 15.3958 10.5H18.8333C19.0694 10.5 19.2673 10.5799 19.427 10.7396C19.5867 10.8993 19.6666 11.0972 19.6666 11.3333C19.6666 11.5694 19.5867 11.7674 19.427 11.9271C19.2673 12.0868 19.0694 12.1667 18.8333 12.1667H15.3958L13.8749 13.8333H10.4999V23.8333H23.8333V17.1667C23.8333 16.9306 23.9131 16.7326 24.0728 16.5729C24.2326 16.4132 24.4305 16.3333 24.6666 16.3333C24.9027 16.3333 25.1006 16.4132 25.2603 16.5729C25.4201 16.7326 25.4999 16.9306 25.4999 17.1667V23.8333C25.4999 24.2917 25.3367 24.684 25.0103 25.0104C24.6839 25.3368 24.2916 25.5 23.8333 25.5H10.4999ZM23.8333 12.1667H22.9999C22.7638 12.1667 22.5659 12.0868 22.4062 11.9271C22.2464 11.7674 22.1666 11.5694 22.1666 11.3333C22.1666 11.0972 22.2464 10.8993 22.4062 10.7396C22.5659 10.5799 22.7638 10.5 22.9999 10.5H23.8333V9.66667C23.8333 9.43056 23.9131 9.23264 24.0728 9.07292C24.2326 8.9132 24.4305 8.83334 24.6666 8.83334C24.9027 8.83334 25.1006 8.9132 25.2603 9.07292C25.4201 9.23264 25.4999 9.43056 25.4999 9.66667V10.5H26.3333C26.5694 10.5 26.7673 10.5799 26.927 10.7396C27.0867 10.8993 27.1666 11.0972 27.1666 11.3333C27.1666 11.5694 27.0867 11.7674 26.927 11.9271C26.7673 12.0868 26.5694 12.1667 26.3333 12.1667H25.4999V13C25.4999 13.2361 25.4201 13.434 25.2603 13.5938C25.1006 13.7535 24.9027 13.8333 24.6666 13.8333C24.4305 13.8333 24.2326 13.7535 24.0728 13.5938C23.9131 13.434 23.8333 13.2361 23.8333 13V12.1667ZM17.1666 22.5833C18.2083 22.5833 19.0937 22.2188 19.8228 21.4896C20.552 20.7604 20.9166 19.875 20.9166 18.8333C20.9166 17.7917 20.552 16.9063 19.8228 16.1771C19.0937 15.4479 18.2083 15.0833 17.1666 15.0833C16.1249 15.0833 15.2395 15.4479 14.5103 16.1771C13.7812 16.9063 13.4166 17.7917 13.4166 18.8333C13.4166 19.875 13.7812 20.7604 14.5103 21.4896C15.2395 22.2188 16.1249 22.5833 17.1666 22.5833ZM17.1666 20.9167C16.5833 20.9167 16.0902 20.7153 15.6874 20.3125C15.2846 19.9097 15.0833 19.4167 15.0833 18.8333C15.0833 18.25 15.2846 17.7569 15.6874 17.3542C16.0902 16.9514 16.5833 16.75 17.1666 16.75C17.7499 16.75 18.243 16.9514 18.6458 17.3542C19.0485 17.7569 19.2499 18.25 19.2499 18.8333C19.2499 19.4167 19.0485 19.9097 18.6458 20.3125C18.243 20.7153 17.7499 20.9167 17.1666 20.9167Z"
-          fill="#3D3D3D"
-          fillOpacity="0.5"
-        />
-      </g>
-    </svg>
+    <span className="user-consent-agreement-section__value-inner">
+      <ConsentValueDisplay value={text} />
+    </span>
   )
 }
 
-export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModalProps) {
+function ProfileFieldWithAction({
+  value,
+  actionLabel,
+  onAction,
+  actionDisabled,
+  actionLoading,
+}: {
+  value: ReactNode
+  actionLabel: string
+  onAction: () => void
+  actionDisabled?: boolean
+  actionLoading?: boolean
+}) {
+  return (
+    <span className="profile-edit-modal__value-with-action">
+      <span className="profile-edit-modal__value-with-action-text">{value}</span>
+      <DetailInfoForm.TdDivider />
+      <CmsButton
+        variant="secondary"
+        size="small"
+        width={100}
+        type="button"
+        className="profile-edit-modal__field-action-btn"
+        disabled={actionDisabled}
+        loading={actionLoading}
+        onClick={onAction}
+      >
+        {actionLabel}
+      </CmsButton>
+    </span>
+  )
+}
+
+function resolveAdminPermissionLabel(user: Omit<User, 'password'>): string {
+  if (user.role !== 'ADMIN') return '-'
+  const hasPermissionData =
+    user.listMetrics?.adminPermissionVariant != null ||
+    (user.programRoles != null && Object.keys(user.programRoles).length > 0) ||
+    user.adminLevel != null
+  if (!hasPermissionData) return '-'
+  return ADMIN_PERMISSION_TAG_LABEL[getAdminPermissionVariant(user)]
+}
+
+function AdminManagedProgramsView({ user }: { user: Omit<User, 'password'> }) {
+  if (user.role !== 'ADMIN') return '-'
+  if (!getManagedProgramMetricsParts(user)) return '-'
+  return <ManagedProgramCountDisplay user={user} />
+}
+
+export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
+  const navigate = useNavigate()
   const { user, updateUser, logout } = useAuthStore()
   const { showAlert } = useCmsAlert()
-  const [saving, setSaving] = useState(false)
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
   const [withdrawKeyword, setWithdrawKeyword] = useState('')
   const [withdrawing, setWithdrawing] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const {
-    control,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<ProfileEditFormData>({
-    resolver: zodResolver(profileEditSchema),
-    defaultValues: {
-      name: '',
-      phone: '',
-      email: '',
+  const [marketingConsent, setMarketingConsent] = useState<MarketingConsentValue>('agree')
+  const [marketingAgreedAt, setMarketingAgreedAt] = useState(SAMPLE_AGREED_AT)
+  const identityVerifyAttemptRef = useRef(false)
+
+  const handleIdentitySuccess = useCallback(
+    (result: IdentityChallengeCompleteResult) => {
+      identityVerifyAttemptRef.current = false
+      const nextPhone = result.verifiedPhone?.trim()
+      updateUser({
+        ...(nextPhone ? { phone: nextPhone } : {}),
+        updatedAt: new Date().toISOString(),
+      })
+      showAlert({
+        title: '인증 완료',
+        content: '본인인증 재인증이 완료되었습니다.',
+      })
     },
+    [showAlert, updateUser]
+  )
+
+  const { verify, isVerifying, errorMessage, resetError } = useIdentityVerificationBase({
+    client: cmsIdentityVerificationClient,
+    requireBirthGender: false,
+    requireName: false,
+    onSuccess: handleIdentitySuccess,
   })
 
   useEffect(() => {
-    if (!open || !user) return
-    reset({
-      name: user.name,
-      email: user.email,
-      phone: user.phone || '',
-    })
-  }, [open, user, reset])
-
-  const onFormSubmit = async (values: ProfileEditFormData) => {
-    if (!user) return
-
-    const normalizedPhone = values.phone?.trim() || ''
-    const normalizedEmail = values.email.trim()
-    const currentPhone = user.phone?.trim() || ''
-    const currentEmail = user.email.trim()
-
-    if (normalizedPhone === currentPhone && normalizedEmail === currentEmail) {
-      showAlert({
-        title: '변경 사항 없음',
-        content: '수정된 내용이 없습니다.',
-      })
+    if (!identityVerifyAttemptRef.current || !errorMessage || isVerifying) {
       return
     }
 
-    setSaving(true)
-    try {
-      const saved = await updateMyProfile({
-        phone: normalizedPhone || undefined,
-        email: normalizedEmail,
-      })
+    identityVerifyAttemptRef.current = false
+    showAlert({
+      title: '본인인증 실패',
+      content: errorMessage,
+    })
+  }, [errorMessage, isVerifying, showAlert])
 
-      const updateData: Partial<Omit<User, 'password'>> = {
-        phone: saved.phone,
-        email: saved.email,
-        updatedAt: new Date().toISOString(),
-      }
-
-      updateUser(updateData)
-      onSuccess?.()
-      onCancel()
-
-      const savedMessage = shouldAttemptRemoteProfileUpdate()
-        ? '내 정보가 저장되었습니다.'
-        : hasRemoteAdminJwt()
-          ? '내 정보가 로컬 세션에 저장되었습니다. 서버 프로필 수정 API가 준비되면 동기화됩니다.'
-          : '내 정보가 저장되었습니다.'
-
-      showAlert({
-        title: '저장 완료',
-        content: savedMessage,
-      })
-    } catch (error) {
-      console.error('Failed to update profile:', error)
-      const message =
-        error instanceof AdminProfileApiError
-          ? error.message
-          : '내 정보 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.'
-      showAlert({
-        title: '저장 실패',
-        content: message,
-      })
-    } finally {
-      setSaving(false)
-    }
-  }
+  useEffect(() => {
+    if (!open || !user) return
+    const marketing = resolveTermsAgreement(user, 'MARKETING')
+    setMarketingConsent(marketing.agreed ? 'agree' : 'disagree')
+    setMarketingAgreedAt(marketing.agreedAtDisplay)
+  }, [open, user])
 
   const handleCancel = () => {
-    if (user) {
-      reset({
-        name: user.name,
-        email: user.email,
-        phone: user.phone || '',
-      })
-    }
     onCancel()
   }
 
@@ -200,57 +254,36 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
     }
   }
 
-  const handleCameraClick = () => {
-    fileInputRef.current?.click()
+  const handleSocialConnect = () => {
+    const redirectPath =
+      typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '/'
+
+    setRegisterSocialLinkIntent(redirectPath)
+    onCancel()
+    navigate(buildRegisterSocialConnectPath(redirectPath))
   }
 
-  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file || !user) return
-
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
-      showAlert({
-        title: '업로드 불가',
-        content: 'JPG, PNG, WEBP 형식의 이미지만 업로드할 수 있습니다.',
-      })
-      event.target.value = ''
+  const handleIdentityReverify = async () => {
+    if (isVerifying) {
       return
     }
 
-    const maxBytes = 2 * 1024 * 1024
-    if (file.size > maxBytes) {
-      showAlert({
-        title: '업로드 불가',
-        content: '프로필 이미지는 2MB 이하만 업로드할 수 있습니다.',
-      })
-      event.target.value = ''
-      return
-    }
+    identityVerifyAttemptRef.current = true
+    resetError()
+    await verify()
+  }
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = typeof reader.result === 'string' ? reader.result : ''
-      if (!result) {
-        return
-      }
+  const handleMarketingChange = (next: MarketingConsentValue) => {
+    if (!user || next === marketingConsent) return
 
-      updateUser({ profileImageUrl: result })
-    }
-    reader.onerror = () => {
-      showAlert({
-        title: '업로드 실패',
-        content: '이미지를 읽는 중 오류가 발생했습니다. 다시 시도해 주세요.',
-      })
-    }
-    reader.readAsDataURL(file)
-    event.target.value = ''
+    // TODO(api): 마케팅 제공 동의 변경 API 연동 후 서버 반영
+    setMarketingConsent(next)
   }
 
   if (!user) return null
 
-  const socialLinkRedirectPath =
-    typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : undefined
+  const serviceTerms = resolveTermsAgreement(user, 'SERVICE_TERMS')
+  const personalInfoTerms = resolveTermsAgreement(user, 'PERSONAL_INFO')
 
   const footer = (
     <div className="profile-edit-modal__footer">
@@ -258,11 +291,14 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
         회원탈퇴
       </button>
       <div className="profile-edit-modal__footer-actions">
-        <CmsButton variant="secondary" size="large" onClick={handleCancel}>
+        <CmsButton
+          variant="default"
+          size="medium"
+          type="button"
+          className="profile-edit-modal__close-btn"
+          onClick={handleCancel}
+        >
           닫기
-        </CmsButton>
-        <CmsButton variant="primary" size="large" type="submit" form="profile-edit-form" loading={saving}>
-          저장
         </CmsButton>
       </div>
     </div>
@@ -272,116 +308,130 @@ export function ProfileEditModal({ open, onCancel, onSuccess }: ProfileEditModal
     <ContentModal
       open={open}
       onCancel={handleCancel}
-      title="내 정보 수정"
-      width={800}
+      title="내 정보 확인"
+      width={1000}
       className="profile-edit-modal"
       footer={footer}
     >
-      <form id="profile-edit-form" onSubmit={handleSubmit(onFormSubmit)} className="profile-edit-modal__form">
-        <div className="profile-edit-modal__top">
-          <div className="profile-edit-modal__avatar-column">
-            <div className="profile-edit-modal__avatar-wrap">
-              <div className="profile-edit-modal__avatar-button" aria-hidden>
-                {user.profileImageUrl ? (
-                  <img
-                    src={user.profileImageUrl}
-                    alt={`${user.name} 프로필 이미지`}
-                    className="profile-edit-modal__avatar-image"
-                  />
-                ) : (
-                  <ProfileAvatarGraphic />
-                )}
-              </div>
-              <button
-                type="button"
-                className="profile-edit-modal__camera-icon-button"
-                aria-label="프로필 사진 업로드"
-                onClick={handleCameraClick}
-              >
-                <AvatarCameraIcon />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="profile-edit-modal__file-input"
-                aria-label="프로필 이미지 파일 선택"
-                onChange={handleAvatarUpload}
-              />
-            </div>
-          </div>
-
-          <div className="profile-edit-modal__fields">
-            <div className="profile-edit-modal__field-row">
-              <label className="profile-edit-modal__field-label" htmlFor="profile-edit-name">
-                이름
-              </label>
-              <Form.Item validateStatus={errors.name ? 'error' : ''} help={fieldValidationHelp(errors.name)}>
-                <Controller
-                  name="name"
-                  control={control}
-                  render={({ field }) => (
-                    <CmsInput
-                      inputSize="large"
-                      width="100%"
-                      disabled
-                      placeholder="홍길동"
-                      value={field.value}
-                      id="profile-edit-name"
-                    />
-                  )}
+      <div className="profile-edit-modal__body">
+        <DetailInfoForm
+          title="기본 정보"
+          mode="view"
+          className="profile-edit-modal__section profile-edit-modal__section--basic-info"
+        >
+          <div className="profile-edit-modal__basic-info-stack">
+            <div className="profile-edit-modal__basic-info-table profile-edit-modal__basic-info-table--top">
+              <EditableRow type="double" className="profile-edit-modal__row profile-edit-modal__row--tall">
+                <EditableField
+                  label="가입일"
+                  readOnlyDisplay
+                  view={<span>{formatDate(user.createdAt)}</span>}
                 />
-              </Form.Item>
+                <EditableField
+                  label="연동된 소셜 계정"
+                  readOnlyDisplay
+                  view={
+                    <ProfileFieldWithAction
+                      value={socialView(user)}
+                      actionLabel="계정 연동/해제"
+                      onAction={handleSocialConnect}
+                    />
+                  }
+                />
+              </EditableRow>
             </div>
 
-            <div className="profile-edit-modal__field-row profile-edit-modal__field-row--split">
-              <div className="profile-edit-modal__field-col">
-                <label className="profile-edit-modal__field-label" htmlFor="profile-edit-phone">
-                  연락처
-                </label>
-                <Form.Item validateStatus={errors.phone ? 'error' : ''} help={fieldValidationHelp(errors.phone)}>
-                  <Controller
-                    name="phone"
-                    control={control}
-                    render={({ field }) => (
-                      <CmsInput
-                        inputSize="large"
-                        width="100%"
-                        placeholder="010-1234-5678"
-                        {...field}
-                        id="profile-edit-phone"
-                      />
-                    )}
-                  />
-                </Form.Item>
-              </div>
+            <div className="profile-edit-modal__basic-info-table profile-edit-modal__basic-info-table--main">
+              <EditableRow type="double" className="profile-edit-modal__row">
+                <EditableField label="성명" readOnlyDisplay view={<span>{user.name || '-'}</span>} />
+                <EditableField
+                  label="성별 및 생년월일"
+                  readOnlyDisplay
+                  view={<span>{genderBirthView(user)}</span>}
+                />
+              </EditableRow>
 
-              <div className="profile-edit-modal__field-col">
-                <label className="profile-edit-modal__field-label" htmlFor="profile-edit-email">
-                  이메일
-                </label>
-                <Form.Item validateStatus={errors.email ? 'error' : ''} help={fieldValidationHelp(errors.email)}>
-                  <Controller
-                    name="email"
-                    control={control}
-                    render={({ field }) => (
-                      <CmsInput
-                        inputSize="large"
-                        width="100%"
-                        placeholder="gilldong@naver.com"
-                        {...field}
-                        id="profile-edit-email"
-                      />
-                    )}
-                  />
-                </Form.Item>
-              </div>
+              <EditableRow type="double" className="profile-edit-modal__row">
+                <EditableField
+                  label="연락처"
+                  readOnlyDisplay
+                  view={
+                    <ProfileFieldWithAction
+                      value={user.phone?.trim() || '-'}
+                      actionLabel="본인인증 재인증"
+                      onAction={() => {
+                        void handleIdentityReverify()
+                      }}
+                      actionDisabled={isVerifying}
+                      actionLoading={isVerifying}
+                    />
+                  }
+                />
+                <EditableField label="이메일" readOnlyDisplay view={<span>{user.email || '-'}</span>} />
+              </EditableRow>
+
+              <EditableRow type="double" className="profile-edit-modal__row">
+                <EditableField
+                  label="권한 유형"
+                  readOnlyDisplay
+                  view={<span>{resolveAdminPermissionLabel(user)}</span>}
+                />
+                <EditableField
+                  label="담당 프로그램 수"
+                  readOnlyDisplay
+                  view={
+                    <span className="profile-edit-modal__managed-programs">
+                      <AdminManagedProgramsView user={user} />
+                    </span>
+                  }
+                />
+              </EditableRow>
             </div>
           </div>
-        </div>
+        </DetailInfoForm>
 
-        <SocialConnectProviderList redirectPath={socialLinkRedirectPath} />
-      </form>
+        <DetailInfoForm
+          title="약관 및 동의"
+          mode="view"
+          className="profile-edit-modal__section profile-edit-modal__section--terms"
+        >
+          <div className="profile-edit-modal__terms-table">
+            <EditableRow type="double" className="profile-edit-modal__terms-row profile-edit-modal__terms-row--standard">
+              <EditableField
+                label="서비스 이용약관"
+                readOnlyDisplay
+                view={consentReadonlyContent(serviceTerms.agreed, serviceTerms.agreedAtDisplay)}
+              />
+              <EditableField
+                label="개인정보 수집·이용 동의"
+                readOnlyDisplay
+                view={consentReadonlyContent(personalInfoTerms.agreed, personalInfoTerms.agreedAtDisplay)}
+              />
+            </EditableRow>
+
+            <EditableRow type="single" className="profile-edit-modal__terms-row profile-edit-modal__terms-row--marketing">
+              <DetailInfoForm.Field
+                label="마케팅 제공 동의"
+                labelWidth={200}
+                mode="edit"
+                view={consentReadonlyContent(marketingConsent === 'agree', marketingAgreedAt)}
+                edit={
+                  <span className="profile-edit-modal__marketing-consent">
+                    <CmsRadioGroup
+                      size="medium"
+                      options={MARKETING_RADIO_OPTIONS}
+                      value={marketingConsent}
+                      onChange={event => handleMarketingChange(event.target.value as MarketingConsentValue)}
+                    />
+                    <DetailInfoForm.TdDivider />
+                    <span className="user-consent-agreement-section__value-datetime">{marketingAgreedAt}</span>
+                  </span>
+                }
+              />
+            </EditableRow>
+          </div>
+        </DetailInfoForm>
+      </div>
 
       <ContentModal
         open={withdrawModalOpen}

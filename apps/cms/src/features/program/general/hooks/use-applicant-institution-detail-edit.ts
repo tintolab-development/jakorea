@@ -27,6 +27,7 @@ import {
   buildInstitutionClassCountOptions,
   resolveProgramParticipantMaxClassCount,
 } from '@/features/template/lib/participant-recruitment-institution-limits'
+import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 
 export interface TextbookSelectOption {
   value: string
@@ -56,6 +57,8 @@ export function useApplicantInstitutionDetailEdit({
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<ApplicantInstitutionEditDraft | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+
+  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
 
   const resetEditState = useCallback(() => {
     setIsEditing(false)
@@ -143,12 +146,12 @@ export function useApplicantInstitutionDetailEdit({
         ? formatInstitutionApplicationGradeDisplay(draft.educationGrade)
         : institution?.educationGrade
     if (!gradeSource) return []
-    return filterTextbooksForApplicant(program, gradeSource).map(row => ({
+    return filterTextbooksForApplicant(program, gradeSource, textbookCatalog).map(row => ({
       value: row.id,
       label: resolveTextbookOptionLabel(row),
       textbookName: row.textbookName,
     }))
-  }, [draft?.educationGrade, institution?.educationGrade, isEditing, program])
+  }, [draft?.educationGrade, institution?.educationGrade, isEditing, program, textbookCatalog])
 
   const saveEdit = useCallback((): boolean => {
     if (!institution || !draft) return false
