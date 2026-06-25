@@ -1,27 +1,50 @@
 /**
- * 내 정보 수정 모달 스타일
+ * 내 정보 확인 모달 스타일
  */
 
 .content-modal.profile-edit-modal.ant-modal .ant-modal-content {
-  width: 800px;
-  min-height: 640px;
-  padding: 26px 30px 34px;
-  border-radius: var(--16, 16px);
+  display: flex;
+  width: 1000px;
+  padding: 26px 30px 34px 30px;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  flex-shrink: 0;
+  border-radius: 12px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
 }
 
+.content-modal.profile-edit-modal.ant-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 30px;
+  width: 100%;
+  padding: 0;
+}
+
 .content-modal.profile-edit-modal .teal-header-modal__header {
+  width: 100%;
   height: 36px;
   min-height: 36px;
   max-height: 36px;
+  align-self: stretch;
+  margin: 0;
 }
 
 .content-modal.profile-edit-modal .teal-header-modal__body {
-  padding-top: 30px;
+  width: 100%;
+  margin-top: 0;
+  padding-top: 0;
+  align-self: stretch;
 }
 
-.profile-edit-modal__form {
+.content-modal.profile-edit-modal .teal-header-modal__footer {
+  margin-top: 0;
+}
+
+.profile-edit-modal__body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -29,123 +52,255 @@
   width: 100%;
 }
 
-.profile-edit-modal__top {
-  display: flex;
-  align-items: flex-start;
-  gap: 30px;
+.profile-edit-modal__section.detail-info-form {
+  --detail-info-label-w: 160px;
+  margin-top: 0;
   width: 100%;
 }
 
-.profile-edit-modal__avatar-column {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  flex-shrink: 0;
-  min-width: 120px;
+.profile-edit-modal__section .detail-info-form__header {
+  margin-bottom: 10px;
 }
 
-.profile-edit-modal__avatar-wrap {
-  position: relative;
-  width: 120px;
-  height: 120px;
-}
-
-.profile-edit-modal__avatar-button {
-  width: 120px;
-  height: 120px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.profile-edit-modal__avatar-button svg {
-  display: block;
-}
-
-.profile-edit-modal__avatar-image {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
-  display: block;
-}
-
-.profile-edit-modal__camera-icon-button {
-  position: absolute;
-  left: 84px;
-  top: 84.5px;
-  width: 36px;
-  height: 36px;
-  border: none;
-  padding: 0;
-  background: transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.profile-edit-modal__file-input {
-  display: none;
-}
-
-.profile-edit-modal__fields {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 30px;
-  min-width: 0;
-}
-
-.profile-edit-modal__fields .ant-form-item {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-.profile-edit-modal__field-row {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-}
-
-.profile-edit-modal__field-row--split {
-  flex-direction: row;
-  gap: 16px;
-}
-
-.profile-edit-modal__field-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  min-width: 0;
-}
-
-.profile-edit-modal__field-label {
+/* 필드 td(값) 영역 텍스트 */
+.profile-edit-modal__section .detail-info-form__field-content {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
 }
 
-.profile-edit-modal__fields .ant-form-item-control-input {
-  min-height: 44px;
+.profile-edit-modal__value-with-action-text {
+  min-width: 0;
+  flex-shrink: 1;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
-.profile-edit-modal__field-row .ant-form-item,
-.profile-edit-modal__field-col .ant-form-item {
+.profile-edit-modal__section .user-consent-agreement-section__value-status {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.profile-edit-modal__managed-programs {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+
+/* 기본 정보 — 가입일·소셜 분리 테이블 + 나머지 단일 테이블 */
+.profile-edit-modal__section--basic-info .detail-info-form__body {
+  border: none;
+  background: transparent;
+  overflow: visible;
+  padding: 0;
+}
+
+.profile-edit-modal__basic-info-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
 }
 
-.profile-edit-modal__fields .cms-input__control {
+.profile-edit-modal__basic-info-table {
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.profile-edit-modal__basic-info-table--main .detail-info-form__row {
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.profile-edit-modal__basic-info-table--main .detail-info-form__row:last-child {
+  border-bottom: none;
+}
+
+.profile-edit-modal__section--basic-info .detail-info-form__field {
+  grid-template-columns: 160px minmax(0, 1fr);
+  min-height: 50px;
+}
+
+.profile-edit-modal__section--basic-info .detail-info-form__field-label {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+}
+
+.profile-edit-modal__section--basic-info .profile-edit-modal__row--tall .detail-info-form__field {
+  min-height: 56px;
+}
+
+.profile-edit-modal__section--basic-info .profile-edit-modal__row--tall .detail-info-form__field-label,
+.profile-edit-modal__section--basic-info .profile-edit-modal__row--tall .detail-info-form__field-content {
+  min-height: 56px;
+}
+
+.profile-edit-modal__section--basic-info .profile-edit-modal__row:not(.profile-edit-modal__row--tall) .detail-info-form__field-label,
+.profile-edit-modal__section--basic-info .profile-edit-modal__row:not(.profile-edit-modal__row--tall) .detail-info-form__field-content {
+  min-height: 50px;
+}
+
+/* 약관 및 동의 — 단일 테이블, 라벨(th) 200px */
+.profile-edit-modal__section--terms {
+  --detail-info-label-w: 200px;
+}
+
+.profile-edit-modal__section--terms .detail-info-form__body {
+  border: none;
+  background: transparent;
+  overflow: visible;
+  padding: 0;
+}
+
+.profile-edit-modal__terms-table {
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
   width: 100%;
+}
+
+.profile-edit-modal__terms-table .detail-info-form__row {
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.profile-edit-modal__terms-table .detail-info-form__row:last-child {
+  border-bottom: none;
+}
+
+.profile-edit-modal__section--terms .detail-info-form__field {
+  grid-template-columns: 200px minmax(0, 1fr);
+}
+
+.profile-edit-modal__section--terms .detail-info-form__field-label {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+}
+
+/* 서비스 이용약관 · 개인정보 수집·이용 — 50px */
+.profile-edit-modal__section--terms .profile-edit-modal__terms-row--standard .detail-info-form__field {
+  min-height: 50px;
+}
+
+.profile-edit-modal__section--terms .profile-edit-modal__terms-row--standard .detail-info-form__field-label,
+.profile-edit-modal__section--terms .profile-edit-modal__terms-row--standard .detail-info-form__field-content {
+  min-height: 50px;
+}
+
+/* 마케팅 제공 동의 — 64px, 라디오·일시 한 줄 */
+.profile-edit-modal__section--terms .profile-edit-modal__terms-row--marketing {
+  min-height: 64px;
+}
+
+.profile-edit-modal__section--terms .profile-edit-modal__terms-row--marketing .detail-info-form__field {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  width: 100%;
+}
+
+.profile-edit-modal__section--terms .profile-edit-modal__terms-row--marketing .detail-info-form__field-label,
+.profile-edit-modal__section--terms .profile-edit-modal__terms-row--marketing .detail-info-form__field-content {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.profile-edit-modal__section--terms .profile-edit-modal__terms-row--marketing .detail-info-form__field-content--edit {
+  overflow: hidden;
+}
+
+.profile-edit-modal__value-with-action {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.profile-edit-modal__field-action-btn.cms-button.ant-btn {
+  display: flex !important;
+  flex-shrink: 0;
+  width: 100px !important;
+  min-width: 100px;
+  max-width: 100px;
+  height: 32px;
+  padding: 6px 12px !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--6, 6px);
+  border: 1px solid var(--color-mint-01, #01a1af);
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff !important;
+  color: var(--color-mint-01, #01a1af) !important;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.profile-edit-modal__field-action-btn.cms-button.ant-btn .cms-button__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.profile-edit-modal__section--terms .profile-edit-modal__terms-row--marketing .detail-info-form__field-content--edit > .profile-edit-modal__marketing-consent {
+  display: inline-flex;
+  margin-block: 0;
+}
+
+.profile-edit-modal__marketing-consent {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.profile-edit-modal__marketing-consent .app-radio-group.ant-radio-group {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.profile-edit-modal__marketing-consent .detail-info-form-inputs-separator {
+  margin: 0 0 0 16px;
+}
+
+.profile-edit-modal__marketing-consent .user-consent-agreement-section__value-datetime {
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-left: 12px;
 }
 
 .profile-edit-modal .content-modal__footer-actions {
@@ -170,10 +325,71 @@
   margin-left: auto;
 }
 
-.profile-edit-modal__withdraw-button {
+.content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__close-btn.cms-button.ant-btn {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 4px !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 6px 16px !important;
+  box-sizing: border-box;
+  border-radius: var(--8, 8px) !important;
+  border: 1px solid rgba(61, 61, 61, 0.16) !important;
+  background: var(--main-WT, #fff) !important;
+  background-image: none !important;
+  color: var(--main-BK, #3d3d3d) !important;
+  box-shadow: none !important;
+}
+
+.content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__close-btn.cms-button.ant-btn .btn-loading-only__content,
+.content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__close-btn.cms-button.ant-btn .cms-button__label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+.content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__close-btn.cms-button.ant-btn:not(:disabled):not(.ant-btn-disabled):hover,
+.content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__close-btn.cms-button.ant-btn:not(:disabled):not(.ant-btn-disabled):focus,
+.content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__close-btn.cms-button.ant-btn:not(:disabled):not(.ant-btn-disabled):active {
+  border: 1px solid rgba(61, 61, 61, 0.16) !important;
+  background: var(--main-WT, #fff) !important;
+  background-image: none !important;
+  color: var(--main-BK, #3d3d3d) !important;
+  box-shadow: none !important;
+}
+
+.content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__withdraw-button {
+  display: inline;
+  flex-direction: unset;
+  justify-content: unset;
+  align-items: unset;
+  gap: 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
   border: none;
-  padding: 0 8px;
-  background: transparent;
+  background: none !important;
+  appearance: none;
+  box-shadow: none;
   color: var(--color-red, #c32f4a);
   text-align: center;
   font-family: Pretendard, sans-serif;
@@ -191,11 +407,23 @@
   flex-shrink: 0;
 }
 
+.content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__withdraw-button:hover,
+.content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__withdraw-button:focus,
+.content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__withdraw-button:active {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none !important;
+  box-shadow: none;
+  color: var(--color-red, #c32f4a);
+  text-decoration-line: underline;
+}
+
 .content-modal.profile-withdraw-modal.ant-modal .ant-modal-content {
   width: 600px;
   min-height: 314px;
   padding: 26px 30px 34px;
-  border-radius: var(--16, 16px);
+  border-radius: 12px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
 }
