@@ -1,0 +1,24 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 45%);
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  max-width: 100%;
+  max-height: 100%;
+  flex-direction: column;
+  outline: none;
+}
+
+.panel:focus-visible {
+  outline: 2px solid var(--color-border-focus, #01a1af);
+  outline-offset: 2px;
+}

@@ -8,7 +8,11 @@ import {
 import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
 import styles from './sign-in-page.module.css'
 
-const accountLinkItems = ['이메일 찾기', '비밀번호 찾기', '회원가입 하기']
+const accountLinkItems: Array<{ label: string; href?: string }> = [
+  { label: '이메일 찾기' },
+  { label: '비밀번호 찾기' },
+  { label: '회원가입 하기', href: '/auth/sign-up' },
+]
 
 const socialLoginItems = [
   { label: 'Google 로그인', icon: <GoogleSocialLoginIcon /> },
@@ -34,9 +38,19 @@ export function SignInPage() {
 
         <div className={styles['account-links']}>
           {accountLinkItems.map((item, index) => (
-            <div className={styles['account-link-item']} key={item}>
-              <PFButton variant="text" size="medium">
-                {item}
+            <div className={styles['account-link-item']} key={item.label}>
+              <PFButton
+                variant="text"
+                size="medium"
+                onClick={
+                  item.href
+                    ? () => {
+                        window.location.assign(item.href!)
+                      }
+                    : undefined
+                }
+              >
+                {item.label}
               </PFButton>
               {index < accountLinkItems.length - 1 ? (
                 <span className={styles['account-link-separator']} aria-hidden="true" />
