@@ -232,6 +232,25 @@ function IconEducationRecords() {
   )
 }
 
+/** LNB 카테고리 아이콘: 알림 메시지 관리 (20x20) */
+function IconNotificationMessages() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      style={svgStyle}
+    >
+      <path
+        d="M10 18.125C10.3472 18.125 10.6424 18.0035 10.8854 17.7604C11.1285 17.5174 11.25 17.2222 11.25 16.875H8.75C8.75 17.2222 8.87153 17.5174 9.11458 17.7604C9.35764 18.0035 9.65278 18.125 10 18.125ZM15 14.375V8.75C15 6.90972 14.0278 5.34722 12.4375 4.4375V3.75C12.4375 3.26389 12.2674 2.85069 11.9271 2.51042C11.5868 2.17014 11.1736 2 10.6875 2C10.2014 2 9.78819 2.17014 9.44792 2.51042C9.10764 2.85069 8.9375 3.26389 8.9375 3.75V4.4375C7.34722 5.34722 6.375 6.90972 6.375 8.75V14.375L5 15.75V16.25H15V15.75L13.625 14.375H15ZM14.375 14.375H5.625L7 13V8.75C7 7.3125 7.51042 6.11979 8.53125 5.17188C9.55208 4.22396 10.7639 3.75 12.1667 3.75C13.5694 3.75 14.7812 4.22396 15.8021 5.17188C16.8229 6.11979 17.3333 7.3125 17.3333 8.75V13L18.7083 14.375H14.375Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
 /** LNB 카테고리 아이콘: 보안 설정(로그 관리) (18x18) */
 function IconSecurityLogs() {
   return (
@@ -594,6 +613,29 @@ const allMenuItems: MenuItemConfig[] = [
       {
         key: '/detailed-program',
         label: '세부 프로그램 관리',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+    ],
+  },
+  {
+    key: 'notification-messages-group',
+    label: '알림 메시지 관리',
+    icon: <IconNotificationMessages />,
+    enabled: true,
+    allowedRoles: ['ADMIN'],
+    children: [
+      {
+        key: '/admin/notifications/kakao-alimtalk',
+        label: '카카오 알림톡 관리',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/admin/notifications/mail-sms',
+        label: '메일&문자 관리',
         icon: <FolderOutlined />,
         enabled: true,
         allowedRoles: ['ADMIN'],

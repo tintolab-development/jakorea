@@ -1,0 +1,52 @@
+.alimtalk-template-list__status {
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.alimtalk-template-list__status--approval-registered,
+.alimtalk-template-list__status--usage-blocked {
+  color: inherit;
+}
+
+.alimtalk-template-list__status--approval-requested,
+.alimtalk-template-list__status--usage-normal {
+  color: var(--color-blue, #017eaf);
+}
+
+.alimtalk-template-list__status--approval-approved {
+  color: var(--color-mint-01, #01a1af);
+}
+
+.alimtalk-template-list__status--approval-rejected,
+.alimtalk-template-list__status--usage-suspended {
+  color: var(--color-red, #c32f4a);
+}
+
+.alimtalk-template-list__status--usage-waiting,
+.alimtalk-template-list__status--usage-dormant {
+  color: var(--color-gray-02, #7d7d7d);
+}
+
+.alimtalk-template-list__content {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alimtalk-template-list__loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.alimtalk-template-list__error {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--color-gray-02, #7d7d7d);
+  font-size: 16px;
+  line-height: 150%;
+}

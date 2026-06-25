@@ -78,6 +78,10 @@ export function Sidebar() {
       keys.push('logs-group')
     }
 
+    if (user?.role === 'ADMIN' && path.startsWith('/admin/notifications')) {
+      keys.push('notification-messages-group')
+    }
+
     if (path.startsWith('/settlement-management')) {
       keys.push('settlement-management-group')
     }
