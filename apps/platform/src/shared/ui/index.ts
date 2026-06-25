@@ -2,3 +2,4 @@
 export { GoogleSocialLoginIcon, KakaoSocialLoginIcon, NaverSocialLoginIcon } from './icons'
 export { PFButton } from './pf-button'
 export { PFText } from './pf-text'
+export { PFTextInput } from './pf-text-input'

@@ -1,4 +1,4 @@
-import { PFButton, PFText } from '@/shared/ui'
+import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import styles from './test-page.module.css'
 
 const typographyItems = [
@@ -24,6 +24,7 @@ const colorItems = [
 
 const buttonSizes = ['small', 'medium', 'large', 'xlarge'] as const
 const buttonVariants = ['primary', 'secondary', 'tertiary', 'text'] as const
+const inputSizes = ['medium', 'large', 'xlarge'] as const
 
 export function TestPage() {
   return (
@@ -93,6 +94,26 @@ export function TestPage() {
                   disabled
                 </PFButton>
               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFTextInput
+        </PFText>
+        <div className={styles['input-stack']}>
+          {inputSizes.map((size) => (
+            <div className={styles['input-row']} key={size}>
+              <PFText as="span" typo="label-md" color="neutral-cool-500">
+                {size}
+              </PFText>
+              <PFTextInput size={size} label="Label" placeholder="text" />
+              <PFTextInput size={size} label="Label" placeholder="text" defaultValue="text" />
+              <PFTextInput size={size} label="Label" placeholder="text" hasIcon />
+              <PFTextInput size={size} label="Label" placeholder="text" defaultValue="text" disabled />
+              <PFTextInput size={size} label="Label" placeholder="text" defaultValue="text" error />
             </div>
           ))}
         </div>
