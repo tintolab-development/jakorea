@@ -57,6 +57,25 @@
   margin-top: 0;
 }
 
+.project-info-basic-info-section__company-school-forms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.project-info-company-school-curriculum > .detail-info-form__body {
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+}
+
+.project-info-detail__hidden-tabs-info-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--spacing-16);
+}
+
 /* 기본 정보 테이블 — 라벨: #F9F9F9·가운데정렬·굵게, 값: 흰색·좌정렬, 구분선 #E0E0E0 */
 .program-detail-info-tab__table {
   width: 100%;

@@ -86,9 +86,13 @@ const programDetailEditSchemaBase = z.object({
   applicationEndDate: z.string().min(1, '참여자 모집 종료일을 선택해주세요'),
   businessArea: z.string().optional(),
   sponsorId: z.string().min(1, '후원사를 선택해주세요'),
+  sponsorManagementIds: z.array(z.string()).optional(),
+  sponsorManagerContactId: z.string().optional(),
   managerName: z.string().min(1, '후원사 담당자를 입력해주세요'),
   contactPhone: z.string().optional(),
   contactEmail: z.string().optional(),
+  venueKind: z.enum(['inside', 'outside', 'other']).optional(),
+  venueDetail: z.string().optional(),
   oneLineIntroduction: z.string().optional(),
   keyVisualImage: z.string().optional(),
   posterImage: z.string().optional(),
@@ -100,6 +104,11 @@ const programDetailEditSchemaBase = z.object({
   learningSupportContent: z.string().min(1, '학습 지원 내용을 입력해주세요'),
   attachmentFileNames: z.array(z.string()).optional(),
   rounds: z.array(roundEditSchema),
+  curriculumSession1Title: z.string().optional(),
+  curriculumSession1Description: z.string().optional(),
+  curriculumSession2Title: z.string().optional(),
+  curriculumSession2Description: z.string().optional(),
+  educationScheduleLines: z.array(z.string()).optional(),
   // 수강자 모집
   /** 결과 발표일 및 방법(공통 정보 수강자 모집 / 참여자 정보 참여자 모집) */
   resultAnnouncementDate: z.string().min(1, '결과 발표일을 선택해주세요'),
@@ -165,6 +174,9 @@ const programDetailEditSchemaBase = z.object({
   ips: z.enum(['Inspire', 'Prepare', 'Succeed']).optional(),
   programCategory: z.string().optional(),
   programChannel: z.string().optional(),
+  surveySurvey: z.boolean().optional(),
+  surveySatisfaction: z.boolean().optional(),
+  surveyLectureEvaluation: z.boolean().optional(),
   // 임금 정보
   wageType: z.string().optional(),
   wagePricingTimeUnit: z.string().optional(),
@@ -176,6 +188,12 @@ const programDetailEditSchemaBase = z.object({
   wagePricingCompareMode: z.enum(['per', 'over', 'under']).optional(),
   wagePricingBase: z.string().optional(),
   wagePricingLongDistance: z.string().optional(),
+  wageGrade1Amount: z.string().optional(),
+  wageGrade2Amount: z.string().optional(),
+  wageGrade3Amount: z.string().optional(),
+  wageGrade1LongDistanceAmount: z.string().optional(),
+  wageGrade2LongDistanceAmount: z.string().optional(),
+  wageGrade3LongDistanceAmount: z.string().optional(),
   wagePaymentItems: z.string().optional(),
   wagePaymentItemIds: z.array(z.string()).optional(),
   wageDeductionItems: z.string().optional(),
@@ -199,6 +217,62 @@ export const programDetailInstitutionsEditSchema = programDetailEditSchemaBase.e
 })
 
 export type ProgramDetailEditFormValues = z.infer<typeof programDetailEditSchema>
+
+const COMPANY_SCHOOL_WAGE_GRADE_ROWS = [
+  {
+    grade: '1급 강사비',
+    amountKey: 'wageGrade1Amount',
+    longDistanceKey: 'wageGrade1LongDistanceAmount',
+  },
+  {
+    grade: '2급 강사비',
+    amountKey: 'wageGrade2Amount',
+    longDistanceKey: 'wageGrade2LongDistanceAmount',
+  },
+  {
+    grade: '3급 강사비',
+    amountKey: 'wageGrade3Amount',
+    longDistanceKey: 'wageGrade3LongDistanceAmount',
+  },
+] as const
+
+function parseWageAmountFromPricing(pricing: string | undefined, kind: 'regular' | 'longDistance') {
+  if (!pricing?.trim()) return undefined
+  const parts = pricing.split(/\s*\|\s*/).map(part => part.trim())
+  const target = parts.find(part =>
+    kind === 'regular'
+      ? part.includes('기본') || !part.includes('장거리')
+      : part.includes('장거리')
+  )
+  return target?.match(/([\d,]+)\s*원/)?.[1]
+}
+
+function buildWageGradeRowsFromDetailValues(
+  values: ProgramDetailEditFormValues,
+  existing: import('@/types/domain').Program
+) {
+  const existingRows = existing.generalCommonInfo?.wageGradeRows ?? []
+  const hasAny = COMPANY_SCHOOL_WAGE_GRADE_ROWS.some(row => {
+    return values[row.amountKey] != null || values[row.longDistanceKey] != null
+  })
+  if (!hasAny) return existing.generalCommonInfo?.wageGradeRows
+
+  return COMPANY_SCHOOL_WAGE_GRADE_ROWS.map(row => {
+    const existingRow = existingRows.find(saved => saved.grade.startsWith(row.grade.slice(0, 2)))
+    const amount =
+      values[row.amountKey] ??
+      parseWageAmountFromPricing(existingRow?.pricing, 'regular') ??
+      ''
+    const longDistance =
+      values[row.longDistanceKey] ??
+      parseWageAmountFromPricing(existingRow?.pricing, 'longDistance') ??
+      ''
+    return {
+      grade: row.grade,
+      pricing: `1시간 당 | 기본 : ${amount}원 | 장거리 : ${longDistance}원`,
+    }
+  })
+}
 
 /** 폼 참여자 유형(select)은 school | individual 만 지원 */
 function toDetailEditCategory(
@@ -227,9 +301,18 @@ export function programToDetailEditValues(
     applicationEndDate: toStr(program.applicationEndDate),
     businessArea: program.businessArea ?? undefined,
     sponsorId: program.sponsorId ?? '',
+    sponsorManagementIds: program.generalCommonInfo?.sponsorManagementIds ?? [],
+    sponsorManagerContactId: undefined,
     managerName: program.managerName ?? '',
     contactPhone: program.contactPhone ?? undefined,
     contactEmail: program.contactEmail ?? undefined,
+    venueKind:
+      program.institutionType === 'outside_school'
+        ? 'outside'
+        : program.institutionType === 'inside_school'
+          ? 'inside'
+          : 'inside',
+    venueDetail: program.generalCommonInfo?.venueDetail ?? undefined,
     oneLineIntroduction: program.oneLineIntroduction ?? undefined,
     keyVisualImage: program.keyVisualImage ?? undefined,
     posterImage: program.posterImage ?? undefined,
@@ -343,6 +426,11 @@ export function programToDetailEditValues(
       curriculum: r.curriculum ?? undefined,
       deliveryType: r.deliveryType ?? 'offline',
     })),
+    curriculumSession1Title: program.generalCommonInfo?.curriculumSessions?.[0]?.title,
+    curriculumSession1Description: program.generalCommonInfo?.curriculumSessions?.[0]?.description,
+    curriculumSession2Title: program.generalCommonInfo?.curriculumSessions?.[1]?.title,
+    curriculumSession2Description: program.generalCommonInfo?.curriculumSessions?.[1]?.description,
+    educationScheduleLines: program.generalCommonInfo?.educationScheduleLines,
     mainTitle: program.mainTitle ?? undefined,
     teamDivision: program.teamDivision ?? undefined,
     educationProcess: program.educationProcess ?? undefined,
@@ -352,6 +440,13 @@ export function programToDetailEditValues(
     ips: program.ips ?? undefined,
     programCategory: program.programCategory ?? undefined,
     programChannel: program.programChannel ?? undefined,
+    surveySurvey: program.generalSurveyMenuKeys?.includes('survey') ?? false,
+    surveySatisfaction: (() => {
+      const keys = new Set<string>(program.generalSurveyMenuKeys ?? [])
+      return keys.has('satisfaction') || keys.has('student_satisfaction') || keys.has('teacher_satisfaction')
+    })(),
+    surveyLectureEvaluation:
+      program.generalSurveyMenuKeys?.includes('lecture_evaluation') ?? false,
     wageType: undefined,
     wagePricingTimeUnit: undefined,
     wagePricingMeasureLabel: undefined,
@@ -363,6 +458,30 @@ export function programToDetailEditValues(
     wagePaymentItemIds:
       resolveProgramPaymentItemIdsFromLabels(program.generalCommonInfo?.paymentItems) ||
       undefined,
+    wageGrade1Amount: parseWageAmountFromPricing(
+      program.generalCommonInfo?.wageGradeRows?.[0]?.pricing,
+      'regular'
+    ),
+    wageGrade2Amount: parseWageAmountFromPricing(
+      program.generalCommonInfo?.wageGradeRows?.[1]?.pricing,
+      'regular'
+    ),
+    wageGrade3Amount: parseWageAmountFromPricing(
+      program.generalCommonInfo?.wageGradeRows?.[2]?.pricing,
+      'regular'
+    ),
+    wageGrade1LongDistanceAmount: parseWageAmountFromPricing(
+      program.generalCommonInfo?.wageGradeRows?.[0]?.pricing,
+      'longDistance'
+    ),
+    wageGrade2LongDistanceAmount: parseWageAmountFromPricing(
+      program.generalCommonInfo?.wageGradeRows?.[1]?.pricing,
+      'longDistance'
+    ),
+    wageGrade3LongDistanceAmount: parseWageAmountFromPricing(
+      program.generalCommonInfo?.wageGradeRows?.[2]?.pricing,
+      'longDistance'
+    ),
     wageDeductionItems: undefined,
     kpiFinalParticipants:
       program.generalCommonInfo?.kpi?.finalParticipants ?? program.approvedStudentCount ?? undefined,
@@ -403,6 +522,12 @@ export function detailEditValuesToProgramPatch(
     managerName: values.managerName,
     contactPhone: values.contactPhone,
     contactEmail: values.contactEmail,
+    institutionType:
+      values.venueKind === 'outside'
+        ? 'outside_school'
+        : values.venueKind === 'inside'
+          ? 'inside_school'
+          : existing.institutionType,
     oneLineIntroduction:
       values.participantRecruitmentNotesNotApplicable === 'not_applicable'
         ? undefined
@@ -420,8 +545,53 @@ export function detailEditValuesToProgramPatch(
     approvedStudentCount: values.kpiFinalParticipants ?? existing.approvedStudentCount,
     generalVolunteers: values.kpiVolunteerCount ?? existing.generalVolunteers,
     participatingSchoolCount: values.kpiFinalSchools ?? existing.participatingSchoolCount,
+    generalSurveyMenuKeys:
+      values.surveySurvey != null ||
+      values.surveySatisfaction != null ||
+      values.surveyLectureEvaluation != null
+        ? [
+            ...(values.surveySurvey ? (['survey'] as const) : []),
+            ...(values.surveySatisfaction ? (['satisfaction'] as const) : []),
+            ...(values.surveyLectureEvaluation ? (['lecture_evaluation'] as const) : []),
+          ]
+        : existing.generalSurveyMenuKeys,
     generalCommonInfo: {
       ...existing.generalCommonInfo,
+      sponsorManagementIds:
+        values.sponsorManagementIds ?? existing.generalCommonInfo?.sponsorManagementIds,
+      venueDetail: values.venueDetail ?? existing.generalCommonInfo?.venueDetail,
+      curriculumSessions:
+        values.curriculumSession1Title != null ||
+        values.curriculumSession1Description != null ||
+        values.curriculumSession2Title != null ||
+        values.curriculumSession2Description != null
+          ? [
+              {
+                sessionLabel: '1차시',
+                title:
+                  values.curriculumSession1Title ??
+                  existing.generalCommonInfo?.curriculumSessions?.[0]?.title ??
+                  '',
+                description:
+                  values.curriculumSession1Description ??
+                  existing.generalCommonInfo?.curriculumSessions?.[0]?.description ??
+                  '',
+              },
+              {
+                sessionLabel: '2차시',
+                title:
+                  values.curriculumSession2Title ??
+                  existing.generalCommonInfo?.curriculumSessions?.[1]?.title ??
+                  '',
+                description:
+                  values.curriculumSession2Description ??
+                  existing.generalCommonInfo?.curriculumSessions?.[1]?.description ??
+                  '',
+              },
+            ]
+          : existing.generalCommonInfo?.curriculumSessions,
+      educationScheduleLines:
+        values.educationScheduleLines ?? existing.generalCommonInfo?.educationScheduleLines,
       paymentItems:
         values.wagePaymentItemIds != null
           ? programPaymentItemLabelsFromIds(values.wagePaymentItemIds) ||
@@ -431,6 +601,7 @@ export function detailEditValuesToProgramPatch(
         values.wagePaymentItemIds != null
           ? resolveProgramWageDeductionLabel(values.wagePaymentItemIds)
           : existing.generalCommonInfo?.deductionItems,
+      wageGradeRows: buildWageGradeRowsFromDetailValues(values, existing),
       kpi: {
         finalParticipants:
           values.kpiFinalParticipants ??

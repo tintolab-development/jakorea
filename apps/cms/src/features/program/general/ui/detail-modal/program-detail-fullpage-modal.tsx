@@ -13,7 +13,7 @@
  * 병합 시 `edit` 파싱·`setEditMode`·폼 훅 호출 순서를 바꾸면 수정 모드와 폼이 엇갈릴 수 있음.
  */
 
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -49,6 +49,7 @@ import { ParticipatingVolunteersSection } from './program-status/participating-v
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
 import { ApplicantList } from '../../../shared/ui/program-detail/applicant-list/applicant-list'
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
+import { GeneralProgramRecruitmentView } from './info/recruitment-view'
 import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
@@ -57,6 +58,7 @@ import { COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
+import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
 import {
   getGeneralSurveyMenuItems,
   type GeneralSurveyNavKey,
@@ -209,6 +211,21 @@ export function ProgramDetailFullPageModal({
     () => isCompanySchoolDetailProgram(displayProgram),
     [displayProgram]
   )
+  const initialEditResetKeyRef = useRef<string | null>(null)
+  useLayoutEffect(() => {
+    const resetKey = open && isCompanySchoolDetail && programId ? programId : null
+    if (!resetKey) {
+      initialEditResetKeyRef.current = null
+      return
+    }
+    if (initialEditResetKeyRef.current === resetKey) return
+    initialEditResetKeyRef.current = resetKey
+    if (!searchParams.has(EDIT_PARAM)) return
+
+    const next = new URLSearchParams(searchParams)
+    next.delete(EDIT_PARAM)
+    setSearchParams(next, { replace: true })
+  }, [open, programId, isCompanySchoolDetail, searchParams, setSearchParams])
   const surveyMenuItems = useMemo(
     () => (displayProgram ? getGeneralSurveyMenuItems(displayProgram) : []),
     [displayProgram]
@@ -1048,6 +1065,22 @@ export function ProgramDetailFullPageModal({
     }
   }
 
+  const isCompanySchoolRecruitmentInfoTab =
+    isCompanySchoolDetail && activeLnb === 'info' && (activeTab === 'institutions' || activeTab === 'instructors')
+  const activeCompanySchoolRecruitTab: GeneralRecruitTabKey =
+    activeTab === 'instructors' ? 'instructors' : 'institutions'
+  const handleCompanySchoolRecruitTabChange = (tab: GeneralRecruitTabKey) => {
+    if (tab === 'volunteers') return
+    setActiveTab(tab)
+  }
+  const handleCompanySchoolRecruitSave = () => {
+    if (activeCompanySchoolRecruitTab === 'instructors') {
+      handleInstructorsExit()
+      return
+    }
+    handleInstitutionsExit()
+  }
+
   if (!open) return null
 
   const pNorm = location.pathname.replace(/\/$/, '') || '/'
@@ -1094,7 +1127,30 @@ export function ProgramDetailFullPageModal({
         </div>
       ) : displayProgram ? (
         <>
-          {activeLnb === 'info' && (
+          {activeLnb === 'info' && isCompanySchoolRecruitmentInfoTab && (
+            <GeneralProgramRecruitmentView
+              program={displayProgram}
+              sponsorName={sponsorName}
+              activeRecruitTab={activeCompanySchoolRecruitTab}
+              onRecruitTabChange={handleCompanySchoolRecruitTabChange}
+              showInstructorTab
+              showVolunteerTab={false}
+              canWrite
+              isEditModeInstitutions={isEditModeInstitutions}
+              institutionsForm={isEditModeInstitutions ? institutionsForm : undefined}
+              registerInstitutionsAdditionalHtml={registerInstitutionsAdditionalHtml}
+              isEditModeInstructors={isEditModeInstructors}
+              instructorsForm={isEditModeInstructors ? instructorsForm : undefined}
+              registerInstructorsAdditionalHtml={registerInstructorsAdditionalHtml}
+              isEditModeVolunteers={false}
+              volunteersForm={undefined}
+              registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
+              onEdit={handleInfoEdit}
+              onSave={handleCompanySchoolRecruitSave}
+            />
+          )}
+
+          {activeLnb === 'info' && !isCompanySchoolRecruitmentInfoTab && (
             <ProjectInfoDetailPanels
               program={displayProgram}
               sponsorName={sponsorName}
