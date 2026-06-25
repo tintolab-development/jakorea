@@ -223,6 +223,7 @@ export type UseProgramParticipantApplicationEditorOptions = {
   /** 프로그램 상세 — 공통·모집 정보 연동 미리보기/양식 수정 */
   program?: Program | null
   programLinkedApplicationFormPreview?: boolean
+  applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
 }
 
 export function useProgramParticipantApplicationEditor(
@@ -697,6 +698,7 @@ export function useProgramParticipantApplicationEditor(
         showInstitutionApplicationLimits:
           variant === 'applicant-recruit-institution' &&
           (editorOptions?.participantOrganization ?? true),
+        applicantRecruitInstitutionDefaults: editorOptions?.applicantRecruitInstitutionDefaults,
         applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
         recruitFormInstructor: variant === 'recruit-instructor',
         recruitFormVolunteer: variant === 'recruit-volunteer',
@@ -717,6 +719,7 @@ export function useProgramParticipantApplicationEditor(
       programApplicationFormVolunteerOptions,
       ujatProgramApplicationFormVolunteerOptions,
       editorOptions?.ujatRecruitParagraphProps,
+      editorOptions?.applicantRecruitInstitutionDefaults,
       editorOptions?.participantOrganization,
       editorOptions?.programLinkedInstitutionApplicationForm,
       seedParagraphIds,

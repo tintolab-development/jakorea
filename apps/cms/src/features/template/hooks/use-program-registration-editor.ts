@@ -195,7 +195,14 @@ export function useProgramRegistrationEditor(
       })
       return
     }
-    patchInstitutionApplicationProgramBridge({ educationScheduleMode })
+    patchInstitutionApplicationProgramBridge({
+      preEducationNoticeRequired: true,
+      maxScheduleCount: 2,
+      maxSessionsPerDay: 2,
+      educationStructure: 'curriculum',
+      sessionRound: 'multi',
+      educationScheduleMode: 'period',
+    })
   }, [
     active,
     programRegistrationFormVariant,

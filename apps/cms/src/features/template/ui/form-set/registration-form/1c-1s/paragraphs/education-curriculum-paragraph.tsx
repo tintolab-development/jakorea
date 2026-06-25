@@ -1,8 +1,5 @@
-import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
-import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 function CurriculumRow({ index }: { index: number }) {
@@ -23,9 +20,6 @@ function CurriculumRow({ index }: { index: number }) {
 }
 
 export function OneCOneSRegistrationEducationCurriculumParagraph() {
-  const [educationForm, setEducationForm] = useState('offline')
-  const educationFormOptions = getProgramRegistrationEducationFormOptions(true)
-
   return (
     <DetailInfoForm
       title="교육 진행 (커리큘럼)"
@@ -35,26 +29,6 @@ export function OneCOneSRegistrationEducationCurriculumParagraph() {
     >
       <CurriculumRow index={1} />
       <CurriculumRow index={2} />
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="교육 형태"
-          fullRow
-          edit={
-            <CmsRadioGroup
-              size="large"
-              value={educationForm}
-              onChange={event => setEducationForm(String(event.target.value))}
-            >
-              {educationFormOptions.map(option => (
-                <CmsRadio key={option.value} value={option.value}>
-                  {option.label}
-                </CmsRadio>
-              ))}
-            </CmsRadioGroup>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
     </DetailInfoForm>
   )
 }
