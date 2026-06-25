@@ -4,6 +4,15 @@ import type { IdentityVerificationClient } from '../client'
 import { NiceAuthPopupBlockedError } from '../popup'
 import type { IdentityChallengeCompleteResult } from '../types'
 
+function isAbortLikeMessage(message: string | undefined): boolean {
+  if (!message) {
+    return false
+  }
+
+  const normalized = message.trim().toLowerCase()
+  return normalized === 'request aborted' || normalized === 'canceled'
+}
+
 export type IdentityVerificationHookStatus =
   | 'idle'
   | 'loading'
@@ -86,11 +95,20 @@ export function useIdentityVerification({
       }
 
       if (event.data.type === 'IDENTITY_FAILED') {
+        if (completingRef.current) {
+          return
+        }
+
+        const failedMessage = event.data.message ?? '본인인증에 실패했습니다.'
+        if (isAbortLikeMessage(failedMessage)) {
+          return
+        }
+
         cleanupPopupWatch()
         client.state.clearPendingChallenge()
         completingRef.current = false
         setStatus('error')
-        setErrorMessage(event.data.message ?? '본인인증에 실패했습니다.')
+        setErrorMessage(failedMessage)
         return
       }
 
@@ -147,6 +165,7 @@ export function useIdentityVerification({
     }
 
     resetError()
+    completingRef.current = false
     setStatus('loading')
 
     let popup: Window | null = null
