@@ -21,6 +21,7 @@ import {
 } from '@/features/program/general/lib/participating-individual-participants-filter'
 import { useParticipatingIndividualParticipantsParams } from '@/features/program/general/hooks/use-participating-individual-participants-params'
 import { useProgressIndividualParticipantList } from '@/features/program/general/hooks/use-progress-individual-participant-list'
+import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
   PARTICIPATING_INDIVIDUAL_PARTICIPANTS_TABLE_MIN_SCROLL_X,
   useParticipatingIndividualParticipantColumns,
@@ -94,8 +95,9 @@ export function ParticipatingParticipantsSection({
   const [certificateExportActive, setCertificateExportActive] = useState(false)
 
   const hasStudentSatisfactionSurvey = useMemo(
-    () => program?.generalSurveyMenuKeys?.includes('student_satisfaction') ?? false,
-    [program]
+    () =>
+      normalizeGeneralSurveyMenuKeys(program?.generalSurveyMenuKeys ?? []).includes('satisfaction'),
+    [program?.generalSurveyMenuKeys]
   )
 
   useEffect(() => {

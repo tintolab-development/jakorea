@@ -17,6 +17,7 @@ import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-i
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
+import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import { getParticipatingInstitutionActivityWithdrawScheduleOptions } from '@/features/program/general/lib/participating-institution-activity-withdraw'
 import { screeningWithdrawCompleteContent } from '@/features/program/general/lib/screening-subject-kind'
 import { isWithinStudentCertificateIssuancePeriod } from '@/features/program/general/lib/resolve-student-certificate-kind'
@@ -106,7 +107,8 @@ export function ParticipatingParticipantFullpageView({
   )
 
   const hasStudentSatisfactionSurvey = useMemo(
-    () => program.generalSurveyMenuKeys?.includes('student_satisfaction') ?? false,
+    () =>
+      normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? []).includes('satisfaction'),
     [program.generalSurveyMenuKeys]
   )
 

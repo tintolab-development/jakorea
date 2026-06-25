@@ -131,7 +131,7 @@ function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     startTime: '09:00',
     endTime: '18:00',
     generalParticipantTypes: participantTypes,
-    generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'teacher_satisfaction', 'lecture_evaluation'],
+    generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
     rounds,
     createdAt: now,
     updatedAt: now,
