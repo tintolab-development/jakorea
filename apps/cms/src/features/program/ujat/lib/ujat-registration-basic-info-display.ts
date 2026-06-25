@@ -11,6 +11,9 @@ import {
   type UjatSurveyRowId,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
 import {
+  PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
+} from '@/features/template/lib/program-registration-survey-items'
+import {
   readUjatWagePaymentItemValuesFromOverlay,
   resolveUjatWageDeductionLabel,
   ujatPaymentItemLabelsFromIds,
@@ -29,12 +32,7 @@ import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '@/features/template/u
 
 type OperationRangeSeal = { start?: string | null; end?: string | null } | null
 
-const SURVEY_LABELS: Record<UjatSurveyRowId, string> = {
-  survey: '설문조사',
-  volunteer_satisfaction: '봉사단 만족도조사',
-  school_satisfaction: '학교 만족도조사',
-  lecture_evaluation: '강의평가',
-}
+const SURVEY_LABELS: Record<UjatSurveyRowId, string> = PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS
 
 function overlayString(overlay: Record<string, unknown>, key: string): string | undefined {
   const v = overlay[key]
@@ -55,13 +53,25 @@ function readOperationRangeSeal(overlay: Record<string, unknown>): OperationRang
 function readSurveyItems(overlay: Record<string, unknown>): Record<UjatSurveyRowId, boolean> {
   const raw = overlay['ujat.basicInfo.surveyItems']
   if (!raw || typeof raw !== 'object') return createUjatSurveyItemsDefault()
-  const o = raw as Partial<Record<UjatSurveyRowId, boolean>>
+  const o = raw as Record<string, unknown>
   const defaults = createUjatSurveyItemsDefault()
+  const legacySatisfaction =
+    o.satisfaction === true ||
+    o.volunteer_satisfaction === true ||
+    o.school_satisfaction === true ||
+    o.student_satisfaction === true ||
+    o.teacher_satisfaction === true
+
   return {
-    survey: o.survey ?? defaults.survey,
-    volunteer_satisfaction: o.volunteer_satisfaction ?? defaults.volunteer_satisfaction,
-    school_satisfaction: o.school_satisfaction ?? defaults.school_satisfaction,
-    lecture_evaluation: o.lecture_evaluation ?? defaults.lecture_evaluation,
+    survey: typeof o.survey === 'boolean' ? o.survey : defaults.survey,
+    satisfaction:
+      typeof o.satisfaction === 'boolean'
+        ? o.satisfaction
+        : legacySatisfaction
+          ? true
+          : defaults.satisfaction,
+    lecture_evaluation:
+      typeof o.lecture_evaluation === 'boolean' ? o.lecture_evaluation : defaults.lecture_evaluation,
   }
 }
 
@@ -144,16 +154,8 @@ export function resolveUjatSurveyMenuItems(program?: Program): UjatSurveyMenuIte
     items.push({ key: 'survey-poll', label: SURVEY_LABELS.survey })
   }
 
-  const hasVolunteerSatisfaction = surveyItems.volunteer_satisfaction
-  const hasSchoolSatisfaction = surveyItems.school_satisfaction
-  if (hasVolunteerSatisfaction || hasSchoolSatisfaction) {
-    const label =
-      hasVolunteerSatisfaction && hasSchoolSatisfaction
-        ? '만족도조사'
-        : hasVolunteerSatisfaction
-          ? SURVEY_LABELS.volunteer_satisfaction
-          : SURVEY_LABELS.school_satisfaction
-    items.push({ key: 'survey-satisfaction', label })
+  if (surveyItems.satisfaction) {
+    items.push({ key: 'survey-satisfaction', label: SURVEY_LABELS.satisfaction })
   }
 
   if (surveyItems.lecture_evaluation) {

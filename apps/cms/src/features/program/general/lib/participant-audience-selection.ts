@@ -84,7 +84,6 @@ function applyGeneralParticipantAudienceFlagsToEditForm(
   }
 
   if (next.individual) {
-    editForm.setValue('surveyTeacherSatisfaction', false, { shouldDirty: true })
     editForm.setValue('kpiFinalSchools', 0, { shouldDirty: true })
     editForm.setValue('kpiFinalClasses', 0, { shouldDirty: true })
   }

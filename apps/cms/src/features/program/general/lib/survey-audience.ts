@@ -41,6 +41,7 @@ export const GENERAL_SATISFACTION_NAV_TAB = 'satisfaction' as const
 
 export type GeneralSatisfactionSurveyNavTab =
   | typeof GENERAL_SATISFACTION_NAV_TAB
+  | 'satisfaction'
   | 'student_satisfaction'
   | 'teacher_satisfaction'
 
@@ -102,34 +103,22 @@ export function getEnabledGeneralSatisfactionAudienceTabs(
   program: Program
 ): ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>> {
   const keys = normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? [])
-  const tabs: SurveyAudienceTab<GeneralSatisfactionAudienceKey>[] = []
+  if (!keys.includes('satisfaction')) {
+    return []
+  }
 
   if (isGeneralIndividualProgram(program)) {
-    if (!keys.includes('student_satisfaction') && !keys.includes('teacher_satisfaction')) {
-      return []
+    if (programHasVolunteerParticipant(program)) {
+      return GENERAL_VOLUNTEER_SATISFACTION_AUDIENCE_TABS
     }
-    if (keys.includes('teacher_satisfaction')) {
-      tabs.push({ key: 'teacher', label: '교사' })
-    }
-    if (keys.includes('student_satisfaction')) {
-      if (programHasVolunteerParticipant(program)) {
-        tabs.push(...GENERAL_VOLUNTEER_SATISFACTION_AUDIENCE_TABS)
-      } else {
-        tabs.push({ key: 'individual', label: '참여자' })
-      }
-    }
-    return tabs
+    return GENERAL_INDIVIDUAL_SATISFACTION_AUDIENCE_TABS
   }
 
-  if (keys.includes('teacher_satisfaction')) {
-    tabs.push({ key: 'teacher', label: '교사' })
-  }
-  if (keys.includes('student_satisfaction')) {
-    if (programHasVolunteerParticipant(program)) {
-      tabs.push(...GENERAL_VOLUNTEER_SATISFACTION_AUDIENCE_TABS)
-    } else {
-      tabs.push({ key: 'student', label: '학생' })
-    }
+  const tabs: SurveyAudienceTab<GeneralSatisfactionAudienceKey>[] = [{ key: 'teacher', label: '교사' }]
+  if (programHasVolunteerParticipant(program)) {
+    tabs.push(...GENERAL_VOLUNTEER_SATISFACTION_AUDIENCE_TABS)
+  } else {
+    tabs.push({ key: 'student', label: '학생' })
   }
   return tabs
 }
@@ -141,6 +130,7 @@ export function programHasGeneralSatisfactionSurvey(program: Program): boolean {
 export function isGeneralSatisfactionSurveyNavTab(tab: string): boolean {
   return (
     tab === GENERAL_SATISFACTION_NAV_TAB ||
+    tab === 'satisfaction' ||
     tab === 'student_satisfaction' ||
     tab === 'teacher_satisfaction'
   )

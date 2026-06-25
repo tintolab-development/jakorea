@@ -75,6 +75,5 @@ describe('applyGeneralParticipantAudienceSelectToEditForm', () => {
     expect(next).toEqual({ individual: true, organization: false })
     expect(setValue).toHaveBeenCalledWith('participantIndividual', true, expect.any(Object))
     expect(setValue).toHaveBeenCalledWith('participantOrganization', false, expect.any(Object))
-    expect(setValue).toHaveBeenCalledWith('surveyTeacherSatisfaction', false, expect.any(Object))
   })
 })

@@ -105,8 +105,7 @@ export const generalProgramCommonInfoEditSchema = z
     venueKind: z.enum(['inside', 'outside', 'other']),
     venueDetail: z.string().optional(),
     surveySurvey: z.boolean(),
-    surveyStudentSatisfaction: z.boolean(),
-    surveyTeacherSatisfaction: z.boolean(),
+    surveySatisfaction: z.boolean(),
     surveyLectureEvaluation: z.boolean(),
     educationProcess: z.string().min(1, '교육 과정을 선택해주세요'),
     ipOwned: z.string().min(1, 'IP Owned를 선택해주세요'),
@@ -503,16 +502,12 @@ function participantFlagsFromProgram(program: Program): Pick<
 
 function surveyFlagsFromProgram(program: Program): Pick<
   GeneralProgramCommonInfoEditFormValues,
-  | 'surveySurvey'
-  | 'surveyStudentSatisfaction'
-  | 'surveyTeacherSatisfaction'
-  | 'surveyLectureEvaluation'
+  'surveySurvey' | 'surveySatisfaction' | 'surveyLectureEvaluation'
 > {
   const keys = new Set(normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? []))
   return {
     surveySurvey: keys.has('survey'),
-    surveyStudentSatisfaction: keys.has('student_satisfaction'),
-    surveyTeacherSatisfaction: keys.has('teacher_satisfaction'),
+    surveySatisfaction: keys.has('satisfaction'),
     surveyLectureEvaluation: keys.has('lecture_evaluation'),
   }
 }
@@ -852,8 +847,7 @@ function surveyKeysFromFlags(
 ): GeneralProgramSurveyMenuKey[] {
   const keys: GeneralProgramSurveyMenuKey[] = []
   if (values.surveySurvey) keys.push('survey')
-  if (values.surveyStudentSatisfaction) keys.push('student_satisfaction')
-  if (values.surveyTeacherSatisfaction) keys.push('teacher_satisfaction')
+  if (values.surveySatisfaction) keys.push('satisfaction')
   if (values.surveyLectureEvaluation) keys.push('lecture_evaluation')
   return keys
 }
@@ -1104,15 +1098,11 @@ export const GENERAL_SURVEY_EDIT_FIELDS: {
   id: ProgramRegistrationSurveyItemId
   formKey: keyof Pick<
     GeneralProgramCommonInfoEditFormValues,
-    | 'surveySurvey'
-    | 'surveyStudentSatisfaction'
-    | 'surveyTeacherSatisfaction'
-    | 'surveyLectureEvaluation'
+    'surveySurvey' | 'surveySatisfaction' | 'surveyLectureEvaluation'
   >
 }[] = [
   { id: 'survey', formKey: 'surveySurvey' },
-  { id: 'student_satisfaction', formKey: 'surveyStudentSatisfaction' },
-  { id: 'teacher_satisfaction', formKey: 'surveyTeacherSatisfaction' },
+  { id: 'satisfaction', formKey: 'surveySatisfaction' },
   { id: 'lecture_evaluation', formKey: 'surveyLectureEvaluation' },
 ]
 
@@ -1120,17 +1110,11 @@ export type GeneralSurveyEditFieldConfig = (typeof GENERAL_SURVEY_EDIT_FIELDS)[n
   label: string
 }
 
-/** 개인 대상 — 교사 만족도 제외, 학생 만족도는 「만족도조사」로 표기 */
 export function getGeneralSurveyEditFieldsForAudience(
-  isIndividualTarget: boolean
+  _isIndividualTarget: boolean
 ): GeneralSurveyEditFieldConfig[] {
-  return GENERAL_SURVEY_EDIT_FIELDS.filter(
-    field => !isIndividualTarget || field.id !== 'teacher_satisfaction'
-  ).map(field => ({
+  return GENERAL_SURVEY_EDIT_FIELDS.map(field => ({
     ...field,
-    label:
-      isIndividualTarget && field.id === 'student_satisfaction'
-        ? '만족도조사'
-        : PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[field.id],
+    label: PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[field.id],
   }))
 }

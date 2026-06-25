@@ -55,11 +55,10 @@ export type GeneralProgramParticipantType =
   | 'teacher_instructor'
   | 'volunteer'
 
-/** 일반 프로그램 등록 폼 — 설문 진행 항목 키 (등록 양식·상세 LNB 공통 4종) */
+/** 일반 프로그램 등록 폼 — 설문 진행 항목 키 (등록 양식·상세 LNB 공통 3종) */
 export type GeneralProgramSurveyMenuKey =
   | 'survey'
-  | 'student_satisfaction'
-  | 'teacher_satisfaction'
+  | 'satisfaction'
   | 'lecture_evaluation'
 
 /** 일반 프로그램 대분류 — 등록 폼 참여자 유형 [기관] / [개인] */

@@ -1,5 +1,9 @@
 import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
 import type { ProgramRegistrationIpsCategory } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
+import {
+  initialProgramRegistrationSurveyItems,
+  type ProgramRegistrationSurveyItemId,
+} from '@/features/template/lib/program-registration-survey-items'
 
 export const UJAT_REGISTRATION_TEMPLATE_ID = 'registration-ujat' as const
 
@@ -16,19 +20,10 @@ export const UJAT_SPONSOR_ALL_VALUE = '__all__' as const
 export const UJAT_DEFAULT_SPONSOR_ID =
   mockSponsorManagementListRows.find(s => s.name === '제이에이코리아')?.id ?? UJAT_SPONSOR_ALL_VALUE
 
-export type UjatSurveyRowId =
-  | 'survey'
-  | 'volunteer_satisfaction'
-  | 'school_satisfaction'
-  | 'lecture_evaluation'
+export type UjatSurveyRowId = ProgramRegistrationSurveyItemId
 
 export function createUjatSurveyItemsDefault(): Record<UjatSurveyRowId, boolean> {
-  return {
-    survey: true,
-    volunteer_satisfaction: true,
-    school_satisfaction: true,
-    lecture_evaluation: true,
-  }
+  return initialProgramRegistrationSurveyItems(true)
 }
 
 export const UJAT_SURVEY_ITEMS_DEFAULT = createUjatSurveyItemsDefault()
