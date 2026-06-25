@@ -22,7 +22,7 @@ export function LoginSocialSection() {
         }
         if (import.meta.env.DEV) {
           console.info(
-            `[social-auth] redirect_uri=${cmsSocialAuthClient.getRedirectUri(provider)}`
+            `[social-auth] frontend oauth redirect_uri=${cmsSocialAuthClient.getRedirectUri(provider)}`
           )
         }
         window.location.assign(url)
@@ -31,7 +31,7 @@ export function LoginSocialSection() {
         handleError(error, { context: 'loginSocialSection.startLogin' })
         if (import.meta.env.DEV) {
           console.info(
-            `[social-auth] Kakao 콘솔 > 카카오 로그인 > Redirect URI 등록 필요: ${cmsSocialAuthClient.getRedirectUri(provider)}`
+            `[social-auth] IdP 콘솔 Redirect URI 등록 필요: ${cmsSocialAuthClient.getRedirectUri(provider)}`
           )
         }
         setLoadingProvider(null)
