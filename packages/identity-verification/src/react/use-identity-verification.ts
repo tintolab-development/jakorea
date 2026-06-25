@@ -126,6 +126,7 @@ export function useIdentityVerification({
         onSuccess({
           sessionId: verified.sessionId,
           sessionUuid: verified.sessionUuid,
+          profileToken: verified.profileToken,
           verifiedName: verified.verifiedName,
           verifiedPhone: verified.verifiedPhone,
           verifiedBirthDate: verified.verifiedBirthDate,

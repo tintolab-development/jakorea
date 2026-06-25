@@ -57,6 +57,7 @@ export interface IdentityChallengeCompleteInput {
 export interface IdentityChallengeCompleteResult {
   sessionId: number
   sessionUuid?: string
+  profileToken?: string
   verifiedName?: string
   verifiedPhone?: string
   verifiedBirthDate?: string
@@ -67,6 +68,7 @@ export interface IdentityVerifiedPayload {
   type: 'IDENTITY_VERIFIED'
   sessionId: number
   sessionUuid?: string
+  profileToken?: string
   verifiedName?: string
   verifiedPhone?: string
   verifiedBirthDate?: string
