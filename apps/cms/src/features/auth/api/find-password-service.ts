@@ -1,27 +1,36 @@
 import { isValidRegisterPassword } from '@/features/auth/lib/validate-register-password'
+import {
+  checkAdminAuthEmail,
+  isAdminAuthEmailCheckRemoteEnabled,
+  isEmailRegisteredForPasswordReset,
+} from '@/features/auth/api/admin-auth-email-check'
+import {
+  AdminRegisterApiError,
+  parseAdminRegisterApiError,
+} from '@/features/auth/model/admin-register-api.types'
+import { axiosClient } from '@/shared/api'
+import type {
+  PasswordResetConfirmRequest,
+  PasswordResetConfirmResponse,
+} from '@/shared/api/generated/members/schemas'
+import { adminAuthPaths } from '@/shared/config/api-paths'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
 const VERIFICATION_TTL_MS = 10 * 60 * 1000
 
 export type FindPasswordEmailVerifyResult = { kind: 'found' } | { kind: 'not_found' }
 
-export type SendPasswordVerificationEmailResult = {
-  kind: 'sent'
-  resetSessionUuid: string
-  expiresAt: string
-}
-
 export type ChangePasswordAfterResetResult =
   | { kind: 'success' }
-  | { kind: 'wrong_current' }
-  | { kind: 'same_as_old' }
   | { kind: 'invalid_new_password' }
+  | { kind: 'api_error'; message: string }
 
 export interface ChangePasswordAfterResetInput {
   email: string
-  resetSessionUuid: string
-  currentPassword: string
+  identityVerificationSessionId: number
+  profileToken: string
   newPassword: string
+  newPasswordConfirm: string
 }
 
 function delay(ms: number): Promise<void> {
@@ -30,11 +39,23 @@ function delay(ms: number): Promise<void> {
   })
 }
 
-function createMockSessionUuid(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID()
+function isFindPasswordRemoteEnabled(): boolean {
+  return isRealApiModuleEnabled('findPassword') || isRealApiModuleEnabled('adminAuth')
+}
+
+function unwrapPasswordResetConfirm(payload: unknown): PasswordResetConfirmResponse {
+  if (!payload || typeof payload !== 'object') {
+    throw parseAdminRegisterApiError(payload)
   }
-  return `mock-reset-${Date.now()}`
+
+  const o = payload as Record<string, unknown>
+  if (o.success === false) {
+    throw parseAdminRegisterApiError(payload)
+  }
+  if (o.data && typeof o.data === 'object') {
+    return o.data as PasswordResetConfirmResponse
+  }
+  return o as PasswordResetConfirmResponse
 }
 
 async function verifyFindPasswordEmailMock(email: string): Promise<FindPasswordEmailVerifyResult> {
@@ -47,48 +68,19 @@ async function verifyFindPasswordEmailMock(email: string): Promise<FindPasswordE
   return { kind: 'found' }
 }
 
-async function verifyFindPasswordEmailRemote(_email: string): Promise<FindPasswordEmailVerifyResult> {
-  // TODO(backend): POST /api/admin/auth/find-password/verify-email 스펙 확정 후 연동
-  throw new Error('비밀번호 찾기 이메일 확인 API가 아직 연동되지 않았습니다.')
+async function verifyFindPasswordEmailRemote(email: string): Promise<FindPasswordEmailVerifyResult> {
+  const result = await checkAdminAuthEmail(email, 'PASSWORD_RESET')
+  return isEmailRegisteredForPasswordReset(result) ? { kind: 'found' } : { kind: 'not_found' }
 }
 
 export async function verifyFindPasswordEmail(
   email: string
 ): Promise<FindPasswordEmailVerifyResult> {
-  if (isRealApiModuleEnabled('findPassword')) {
+  if (isAdminAuthEmailCheckRemoteEnabled()) {
     return verifyFindPasswordEmailRemote(email)
   }
 
   return verifyFindPasswordEmailMock(email.trim())
-}
-
-async function sendPasswordVerificationEmailMock(
-  _email: string
-): Promise<SendPasswordVerificationEmailResult> {
-  await delay(300)
-
-  return {
-    kind: 'sent',
-    resetSessionUuid: createMockSessionUuid(),
-    expiresAt: new Date(Date.now() + VERIFICATION_TTL_MS).toISOString(),
-  }
-}
-
-async function sendPasswordVerificationEmailRemote(
-  _email: string
-): Promise<SendPasswordVerificationEmailResult> {
-  // TODO(backend): POST /api/admin/auth/find-password/send-verification-email 스펙 확정 후 연동
-  throw new Error('비밀번호 찾기 인증메일 API가 아직 연동되지 않았습니다.')
-}
-
-export async function sendPasswordVerificationEmail(
-  email: string
-): Promise<SendPasswordVerificationEmailResult> {
-  if (isRealApiModuleEnabled('findPassword')) {
-    return sendPasswordVerificationEmailRemote(email)
-  }
-
-  return sendPasswordVerificationEmailMock(email.trim())
 }
 
 async function changePasswordAfterResetMock(
@@ -96,32 +88,60 @@ async function changePasswordAfterResetMock(
 ): Promise<ChangePasswordAfterResetResult> {
   await delay(300)
 
-  if (input.currentPassword === '틀림') {
-    return { kind: 'wrong_current' }
-  }
-
   if (!isValidRegisterPassword(input.newPassword)) {
     return { kind: 'invalid_new_password' }
   }
 
-  if (input.newPassword === input.currentPassword) {
-    return { kind: 'same_as_old' }
+  if (input.newPassword !== input.newPasswordConfirm) {
+    return { kind: 'api_error', message: '비밀번호가 서로 달라요. 다시 한 번 확인해 주세요.' }
   }
 
   return { kind: 'success' }
 }
 
 async function changePasswordAfterResetRemote(
-  _input: ChangePasswordAfterResetInput
+  input: ChangePasswordAfterResetInput
 ): Promise<ChangePasswordAfterResetResult> {
-  // TODO(backend): POST /api/admin/auth/find-password/change 스펙 확정 후 연동
-  throw new Error('비밀번호 변경 API가 아직 연동되지 않았습니다.')
+  const body: PasswordResetConfirmRequest = {
+    email: input.email.trim(),
+    identityVerificationSessionId: input.identityVerificationSessionId,
+    profileToken: input.profileToken,
+    newPassword: input.newPassword,
+    newPasswordConfirm: input.newPasswordConfirm,
+  }
+
+  try {
+    const { data: payload } = await axiosClient.post<unknown>(
+      adminAuthPaths.passwordResetConfirm(),
+      body
+    )
+    const result = unwrapPasswordResetConfirm(payload)
+
+    if (result.resetCompleted === false) {
+      return { kind: 'api_error', message: '비밀번호 변경에 실패했습니다.' }
+    }
+
+    return { kind: 'success' }
+  } catch (error) {
+    if (error instanceof AdminRegisterApiError) {
+      return { kind: 'api_error', message: error.message }
+    }
+    const axiosErr = error as { response?: { data?: unknown } }
+    if (axiosErr.response?.data) {
+      const parsed = parseAdminRegisterApiError(axiosErr.response.data)
+      return { kind: 'api_error', message: parsed.message }
+    }
+    return {
+      kind: 'api_error',
+      message: error instanceof Error ? error.message : '비밀번호 변경 요청에 실패했습니다.',
+    }
+  }
 }
 
 export async function changePasswordAfterReset(
   input: ChangePasswordAfterResetInput
 ): Promise<ChangePasswordAfterResetResult> {
-  if (isRealApiModuleEnabled('findPassword')) {
+  if (isFindPasswordRemoteEnabled()) {
     return changePasswordAfterResetRemote(input)
   }
 

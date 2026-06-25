@@ -9,19 +9,17 @@ import { useNavigate } from 'react-router-dom'
 import {
   changePasswordAfterReset,
   FIND_PASSWORD_VERIFICATION_TTL_MS,
-  sendPasswordVerificationEmail,
   verifyFindPasswordEmail,
 } from '@/features/auth/api/find-password-service'
 import { useFindPasswordIdentityVerification } from '@/features/auth/identity-verification'
-import {
-  FindPasswordChangeForm,
-  FIND_PASSWORD_WRONG_CURRENT_MESSAGE,
-} from '@/features/auth/ui/find-password/change-password-form'
+import { FindPasswordChangeForm } from '@/features/auth/ui/find-password/change-password-form'
 import { FindPasswordCompleteView } from '@/features/auth/ui/find-password/complete-view'
 import {
   FIND_PASSWORD_EMAIL_NOT_FOUND_MESSAGE,
+  FIND_PASSWORD_INVALID_EMAIL_DOMAIN_MESSAGE,
   FindPasswordForm,
 } from '@/features/auth/ui/find-password/form'
+import { isValidJakoreaEmail } from '@/features/auth/lib/jakorea-email'
 import { AuthPageShell } from '@/features/auth/ui/auth-page-shell'
 
 import './find-password-page.css'
@@ -36,17 +34,19 @@ export function FindPasswordPage() {
   const navigate = useNavigate()
   const [emailForm] = Form.useForm<{ email: string }>()
   const [passwordForm] = Form.useForm<{
-    currentPassword: string
     newPassword: string
     newPasswordConfirm: string
   }>()
 
   const [view, setView] = useState<FindPasswordView>('form')
   const [email, setEmail] = useState('')
-  const [resetSessionUuid, setResetSessionUuid] = useState('')
+  const [identityVerificationSessionId, setIdentityVerificationSessionId] = useState<number | null>(
+    null
+  )
+  const [profileToken, setProfileToken] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
-  const [wrongCurrentMessage, setWrongCurrentMessage] = useState<string | null>(null)
-  const [isEmailSending, setIsEmailSending] = useState(false)
+  const [passwordSubmitError, setPasswordSubmitError] = useState<string | null>(null)
+  const [isEmailChecking, setIsEmailChecking] = useState(false)
   const [isPasswordSubmitting, setIsPasswordSubmitting] = useState(false)
   const [verificationStarted, setVerificationStarted] = useState(false)
   const [verificationExpiresAt, setVerificationExpiresAt] = useState<number | null>(null)
@@ -64,18 +64,31 @@ export function FindPasswordPage() {
     setVerificationExpiresAt(null)
   }, [])
 
-  const goToChangePassword = useCallback((sessionUuid: string, verifiedEmail: string) => {
-    setEmail(verifiedEmail)
-    setResetSessionUuid(sessionUuid)
-    resetVerificationTimer()
-    setView('changePassword')
-  }, [resetVerificationTimer])
+  const goToChangePassword = useCallback(
+    (input: {
+      verifiedEmail: string
+      sessionId: number
+      profileToken: string
+    }) => {
+      setEmail(input.verifiedEmail)
+      setIdentityVerificationSessionId(input.sessionId)
+      setProfileToken(input.profileToken)
+      setPasswordSubmitError(null)
+      passwordForm.resetFields()
+      resetVerificationTimer()
+      setView('changePassword')
+    },
+    [passwordForm, resetVerificationTimer]
+  )
 
   const handleIdentitySuccess = useCallback(
-    (result: { sessionUuid?: string; sessionId: number }) => {
+    (result: { sessionUuid?: string; sessionId: number; profileToken?: string }) => {
       const verifiedEmail = normalizeEmail(emailForm.getFieldValue('email') ?? '')
-      const sessionUuid = result.sessionUuid ?? String(result.sessionId)
-      goToChangePassword(sessionUuid, verifiedEmail)
+      goToChangePassword({
+        verifiedEmail,
+        sessionId: result.sessionId,
+        profileToken: result.profileToken ?? '',
+      })
     },
     [emailForm, goToChangePassword]
   )
@@ -102,20 +115,49 @@ export function FindPasswordPage() {
     }
   }, [verificationExpiresAt, verificationStarted, view])
 
-  const validateEmailRegistered = useCallback(async () => {
-    const values = await emailForm.validateFields()
-    const normalizedEmail = normalizeEmail(values.email)
+  const clearEmailError = useCallback(() => {
     setEmailError(null)
     resetError()
+  }, [resetError])
 
-    const result = await verifyFindPasswordEmail(normalizedEmail)
-    if (result.kind === 'not_found') {
-      setEmailError(FIND_PASSWORD_EMAIL_NOT_FOUND_MESSAGE)
+  const validateEmailRegistered = useCallback(async () => {
+    clearEmailError()
+
+    let values: { email: string }
+    try {
+      values = await emailForm.validateFields()
+    } catch {
+      const fieldError = emailForm.getFieldError('email')[0]
+      if (fieldError) {
+        setEmailError(fieldError)
+      }
       return null
     }
 
-    return normalizedEmail
-  }, [emailForm, resetError])
+    const normalizedEmail = normalizeEmail(values.email)
+
+    if (!isValidJakoreaEmail(normalizedEmail)) {
+      setEmailError(FIND_PASSWORD_INVALID_EMAIL_DOMAIN_MESSAGE)
+      return null
+    }
+
+    setIsEmailChecking(true)
+
+    try {
+      const result = await verifyFindPasswordEmail(normalizedEmail)
+      if (result.kind === 'not_found') {
+        setEmailError(FIND_PASSWORD_EMAIL_NOT_FOUND_MESSAGE)
+        return null
+      }
+
+      return normalizedEmail
+    } catch {
+      setEmailError('이메일 확인에 실패했어요. 다시 시도해 주세요.')
+      return null
+    } finally {
+      setIsEmailChecking(false)
+    }
+  }, [clearEmailError, emailForm])
 
   const handleIdentityVerify = useCallback(async () => {
     if (verificationExpired) {
@@ -141,65 +183,31 @@ export function FindPasswordPage() {
     verify,
   ])
 
-  const handleSendVerificationEmail = useCallback(async () => {
-    if (verificationExpired) {
-      resetVerificationTimer()
-    }
-
-    setIsEmailSending(true)
-    setEmailError(null)
-
-    try {
-      const normalizedEmail = await validateEmailRegistered()
-      if (!normalizedEmail) {
-        return
-      }
-
-      startVerificationTimer()
-      const result = await sendPasswordVerificationEmail(normalizedEmail)
-      goToChangePassword(result.resetSessionUuid, normalizedEmail)
-    } catch {
-      // validation errors handled by form
-    } finally {
-      setIsEmailSending(false)
-    }
-  }, [
-    goToChangePassword,
-    resetVerificationTimer,
-    startVerificationTimer,
-    validateEmailRegistered,
-    verificationExpired,
-  ])
-
   const handlePasswordChange = useCallback(async () => {
+    if (identityVerificationSessionId == null) {
+      setPasswordSubmitError('본인인증 정보가 없습니다. 처음부터 다시 진행해 주세요.')
+      return
+    }
+
     const values = await passwordForm.validateFields()
-    setWrongCurrentMessage(null)
+    setPasswordSubmitError(null)
     setIsPasswordSubmitting(true)
 
     try {
       const result = await changePasswordAfterReset({
         email,
-        resetSessionUuid,
-        currentPassword: values.currentPassword,
+        identityVerificationSessionId,
+        profileToken,
         newPassword: values.newPassword,
+        newPasswordConfirm: values.newPasswordConfirm,
       })
 
-      if (result.kind === 'wrong_current') {
-        setWrongCurrentMessage(FIND_PASSWORD_WRONG_CURRENT_MESSAGE)
-        return
-      }
-
-      if (result.kind === 'same_as_old') {
-        passwordForm.setFields([
-          {
-            name: 'newPassword',
-            errors: ['새 비밀번호가 기존 비밀번호와 같아요. 다른 비밀번호를 입력해 주세요'],
-          },
-        ])
-        return
-      }
-
       if (result.kind === 'invalid_new_password') {
+        return
+      }
+
+      if (result.kind === 'api_error') {
+        setPasswordSubmitError(result.message)
         return
       }
 
@@ -207,7 +215,7 @@ export function FindPasswordPage() {
     } finally {
       setIsPasswordSubmitting(false)
     }
-  }, [email, passwordForm, resetSessionUuid])
+  }, [email, identityVerificationSessionId, passwordForm, profileToken])
 
   const cardClassName =
     view === 'complete'
@@ -226,14 +234,11 @@ export function FindPasswordPage() {
           <FindPasswordForm
             form={emailForm}
             emailError={emailError ?? errorMessage}
-            isIdentityLoading={isVerifying}
-            isEmailSending={isEmailSending}
+            isIdentityLoading={isVerifying || isEmailChecking}
             showVerificationExpired={showVerificationExpired}
+            onEmailChange={clearEmailError}
             onIdentityVerify={() => {
               void handleIdentityVerify()
-            }}
-            onSendVerificationEmail={() => {
-              void handleSendVerificationEmail()
             }}
           />
         ) : null}
@@ -242,7 +247,10 @@ export function FindPasswordPage() {
           <FindPasswordChangeForm
             form={passwordForm}
             isSubmitting={isPasswordSubmitting}
-            wrongCurrentMessage={wrongCurrentMessage}
+            submitError={passwordSubmitError}
+            onPasswordChange={() => {
+              setPasswordSubmitError(null)
+            }}
             onSubmit={() => {
               void handlePasswordChange()
             }}
