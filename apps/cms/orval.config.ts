@@ -97,4 +97,20 @@ export default defineConfig({
       },
     },
   },
+  notifications: {
+    input: './openapi/notifications.openapi.json',
+    output: {
+      mode: 'split',
+      target: './src/shared/api/generated/notifications/notifications-api.ts',
+      schemas: './src/shared/api/generated/notifications/schemas',
+      client: 'axios',
+      prettier: false,
+      override: {
+        mutator: {
+          path: './src/shared/api/orval-mutator.ts',
+          name: 'customInstance',
+        },
+      },
+    },
+  },
 })
