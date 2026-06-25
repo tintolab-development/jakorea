@@ -6,7 +6,7 @@
  * 접근 권한이 없는 경로는 콘텐츠 영역에서만 Coming Soon 표시 (LNB·헤더 유지)
  */
 
-import { Suspense } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { Layout as AntLayout } from 'antd'
 import { Outlet, useLocation, useParams } from 'react-router-dom'
 import { RouterLoadingFallback } from '@/app/router/loading-fallback'
@@ -57,15 +57,25 @@ function LayoutContent() {
 
 export function Layout() {
   const location = useLocation()
+  const contentRef = useRef<HTMLElement>(null)
   const isTemplatesPath = location.pathname.startsWith('/templates')
+
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 })
+  }, [location.pathname])
 
   return (
     <AntLayout className="app-layout" style={{ minHeight: '100vh' }}>
       <Sidebar />
       <AntLayout>
         <MainHeader />
-        <Content className={`layout-content ${isTemplatesPath ? 'layout-content--templates' : ''}`}>
-          <LayoutContent />
+        <Content
+          ref={contentRef}
+          className={`layout-content ${isTemplatesPath ? 'layout-content--templates' : ''}`}
+        >
+          <div className="layout-content-outlet">
+            <LayoutContent />
+          </div>
         </Content>
       </AntLayout>
     </AntLayout>

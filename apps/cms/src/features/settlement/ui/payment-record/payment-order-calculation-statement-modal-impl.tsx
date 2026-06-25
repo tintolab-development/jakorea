@@ -100,7 +100,7 @@ export function PaymentOrderCalculationStatementModalImpl({
           </CmsButton>
         }
       >
-        <div className="account-payments-page__loading" role="status">
+        <div className="detail-fullpage-modal__loading" role="status">
           <Spin />
         </div>
       </ContentModal>

@@ -83,11 +83,11 @@ export default function PaymentOrdersPage() {
         excelExport={paymentOrdersExcelExport}
       >
         {contentLoading ? (
-          <div className="payment-orders-page__loading">
+          <div className="page-content-loading page-content-loading--table-slot" role="status">
             <Spin />
           </div>
         ) : contentError ? (
-          <div className="payment-orders-page__error" role="alert">
+          <div className="page-content-error" role="alert">
             {contentError instanceof Error ? contentError.message : '목록을 불러오지 못했습니다.'}
           </div>
         ) : (

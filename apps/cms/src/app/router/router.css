@@ -3,11 +3,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  position: absolute;
-  inset: 0;
   width: 100%;
-  height: 100%;
-  min-height: 200px;
+  min-height: calc(
+    100vh - 64px - var(--cms-layout-content-padding-top, 32px) - 32px
+  );
   background-color: var(--color-overlay-light-80);
   z-index: 100;
 }

@@ -68,6 +68,12 @@ export function AdminNoticeDetailPage() {
     downloadFile(fileName, fileUrl)
   }, [])
 
+  const attachmentItems = useMemo(() => {
+    if (!notice?.hasAttachment) return []
+    if (remoteEnabled) return []
+    return notice.attachments?.length ? notice.attachments : [{ name: '첨부파일.pdf' }]
+  }, [notice?.attachments, notice?.hasAttachment, remoteEnabled])
+
   if (!notice) {
     return (
       <div className="admin-notice-detail-page">
@@ -85,11 +91,6 @@ export function AdminNoticeDetailPage() {
 
   const dateStr = dayjs(notice.createdAt).format('YYYY년 M월 D일 HH:mm:ss')
   const isPublic = notice.status === 'published'
-  const attachmentItems = useMemo(() => {
-    if (!notice.hasAttachment) return []
-    if (remoteEnabled) return []
-    return notice.attachments?.length ? notice.attachments : [{ name: '첨부파일.pdf' }]
-  }, [notice.attachments, notice.hasAttachment, remoteEnabled])
 
   return (
     <div className="admin-notice-detail-page">

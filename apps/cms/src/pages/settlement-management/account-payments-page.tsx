@@ -803,11 +803,11 @@ export default function AccountPaymentsPage() {
         >
           {viewMode === 'list' ? (
             accountPaymentsRemote && accountPaymentsListQuery.isLoading ? (
-              <div className="account-payments-page__loading">
+              <div className="page-content-loading page-content-loading--table-slot" role="status">
                 <Spin />
               </div>
             ) : accountPaymentsRemote && accountPaymentsListQuery.isError ? (
-              <div className="account-payments-page__error" role="alert">
+              <div className="page-content-error" role="alert">
                 {accountPaymentsListQuery.error instanceof Error
                   ? accountPaymentsListQuery.error.message
                   : '목록을 불러오지 못했습니다.'}
@@ -831,11 +831,11 @@ export default function AccountPaymentsPage() {
             />
             )
           ) : accountPaymentsRemote && accountPaymentsListQuery.isLoading ? (
-            <div className="account-payments-page__loading">
+            <div className="page-content-loading page-content-loading--table-slot" role="status">
               <Spin />
             </div>
           ) : accountPaymentsRemote && accountPaymentsListQuery.isError ? (
-            <div className="account-payments-page__error" role="alert">
+            <div className="page-content-error" role="alert">
               {accountPaymentsListQuery.error instanceof Error
                 ? accountPaymentsListQuery.error.message
                 : '목록을 불러오지 못했습니다.'}
