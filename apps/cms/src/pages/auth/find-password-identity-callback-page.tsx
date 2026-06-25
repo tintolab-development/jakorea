@@ -2,25 +2,40 @@ import { useEffect, useState } from 'react'
 import { Alert, Spin } from 'antd'
 
 import {
+  buildIdentityCallbackKey,
+  isIdentityCallbackHandled,
+  markIdentityCallbackHandled,
+} from '@/features/auth/identity-verification/identity-callback-once'
+import {
   findPasswordIdentityVerificationClient,
   processIdentityCallback,
 } from '@/features/auth/identity-verification'
+
+const FIND_PASSWORD_IDENTITY_FLOW = 'FIND_PASSWORD'
 
 export function FindPasswordIdentityCallbackPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [noOpener, setNoOpener] = useState(false)
 
   useEffect(() => {
-    let cancelled = false
+    const callbackKey = buildIdentityCallbackKey(
+      FIND_PASSWORD_IDENTITY_FLOW,
+      window.location.search
+    )
+
+    if (isIdentityCallbackHandled(callbackKey)) {
+      return
+    }
+
+    markIdentityCallbackHandled(callbackKey)
 
     const execute = async () => {
       const outcome = await processIdentityCallback(
         findPasswordIdentityVerificationClient,
-        new URLSearchParams(window.location.search),
-        { cancelled }
+        new URLSearchParams(window.location.search)
       )
 
-      if (cancelled || outcome.kind === 'verified' || outcome.kind === 'cancelled') {
+      if (outcome.kind === 'verified' || outcome.kind === 'cancelled') {
         return
       }
 
@@ -31,10 +46,6 @@ export function FindPasswordIdentityCallbackPage() {
     }
 
     void execute()
-
-    return () => {
-      cancelled = true
-    }
   }, [])
 
   if (errorMessage) {

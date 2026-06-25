@@ -2,25 +2,40 @@ import { useEffect, useState } from 'react'
 import { Alert, Spin } from 'antd'
 
 import {
+  buildIdentityCallbackKey,
+  isIdentityCallbackHandled,
+  markIdentityCallbackHandled,
+} from '@/features/auth/identity-verification/identity-callback-once'
+import {
   findEmailIdentityVerificationClient,
   processIdentityCallback,
 } from '@/features/auth/identity-verification'
+
+const FIND_EMAIL_IDENTITY_FLOW = 'FIND_EMAIL'
 
 export function FindEmailIdentityCallbackPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [noOpener, setNoOpener] = useState(false)
 
   useEffect(() => {
-    let cancelled = false
+    const callbackKey = buildIdentityCallbackKey(
+      FIND_EMAIL_IDENTITY_FLOW,
+      window.location.search
+    )
+
+    if (isIdentityCallbackHandled(callbackKey)) {
+      return
+    }
+
+    markIdentityCallbackHandled(callbackKey)
 
     const execute = async () => {
       const outcome = await processIdentityCallback(
         findEmailIdentityVerificationClient,
-        new URLSearchParams(window.location.search),
-        { cancelled }
+        new URLSearchParams(window.location.search)
       )
 
-      if (cancelled || outcome.kind === 'verified' || outcome.kind === 'cancelled') {
+      if (outcome.kind === 'verified' || outcome.kind === 'cancelled') {
         return
       }
 
@@ -31,10 +46,6 @@ export function FindEmailIdentityCallbackPage() {
     }
 
     void execute()
-
-    return () => {
-      cancelled = true
-    }
   }, [])
 
   if (errorMessage) {
