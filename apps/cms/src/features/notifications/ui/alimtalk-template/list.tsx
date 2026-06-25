@@ -24,7 +24,6 @@ import type {
   TemplateUsageStatus,
 } from '@/features/notifications/model/alimtalk-template/types'
 import '@/pages/programs/program-list-page.css'
-import '@/pages/users/user-list-page.css'
 import './list.css'
 
 const APPROVAL_STATUS_LABEL: Record<KakaoApprovalStatus, string> = {
@@ -226,6 +225,7 @@ export function AlimtalkTemplateList() {
     <div className="program-list-page">
       <FilterTableLayout
         bordered={false}
+        filterResponsiveWrap={false}
         fields={ALIMTALK_TEMPLATE_FILTER_FIELDS}
         filters={{
           kakaoApprovalStatus: pendingFilters.kakaoApprovalStatus,
