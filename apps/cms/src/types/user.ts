@@ -6,6 +6,16 @@
 
 import type { UUID, DateValue } from './index'
 
+export interface TermsAgreementRow {
+  termsType?: string
+  termsVersion?: string
+  required?: boolean
+  agreed?: boolean
+  agreedAt?: string
+  actorType?: string
+  sourceFlow?: string
+}
+
 // ===== 역할 정의 =====
 
 // 프론트 사용자 역할 (§2.1)
@@ -153,6 +163,9 @@ export interface User {
   gender?: string
   affiliation?: string
   socialAccounts?: string[]
+
+  /** 약관·동의 이력 — `/me` API 연동 시 채움 */
+  termsAgreements?: TermsAgreementRow[]
 
   /** 강사 instructor-profile — 경력 텍스트 (remote) */
   instructorCareerText?: string

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type MutableRefObject } from 'react'
 import type { SetURLSearchParams } from 'react-router-dom'
 import type { Dispatch, SetStateAction } from 'react'
 import {
@@ -26,6 +26,8 @@ export function useUserDetailUrlSync(params: {
   setSearchParams: SetURLSearchParams
   setTabState: Dispatch<SetStateAction<TabState>>
   programsChildQueryKey: string
+  /** 목록 상세 닫기 중 — URL에 id·lnb를 다시 쓰지 않음 */
+  detailCloseIntentRef?: MutableRefObject<boolean>
 }) {
   const {
     open,
@@ -35,6 +37,7 @@ export function useUserDetailUrlSync(params: {
     setSearchParams,
     setTabState,
     programsChildQueryKey,
+    detailCloseIntentRef,
   } = params
 
   const detailUrlSyncSeenOpenRef = useRef(false)
@@ -42,6 +45,10 @@ export function useUserDetailUrlSync(params: {
   useEffect(() => {
     if (!open || !displayUser) {
       detailUrlSyncSeenOpenRef.current = false
+      return
+    }
+
+    if (detailCloseIntentRef?.current) {
       return
     }
 

@@ -3,7 +3,7 @@
  * 전체 회원 목록 행 클릭 시 프로그램 상세와 동일한 LNB+메인 레이아웃으로 노출
  */
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, type MutableRefObject } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
@@ -70,6 +70,8 @@ export interface UserDetailFullPageModalProps {
   onNavigateToLinkedUser?: (userId: string) => void
   /** 저장 후 목록·드로어 등 상위가 동일 회원 객체를 갱신할 때 */
   onMemberBasicInfoSaved?: (user: Omit<User, 'password'>) => void
+  /** 목록 상세 닫기 중 URL 동기화 차단 */
+  detailCloseIntentRef?: MutableRefObject<boolean>
 }
 
 export function UserDetailFullPageModal({
@@ -86,6 +88,7 @@ export function UserDetailFullPageModal({
   onPermissionResendNotification,
   onNavigateToLinkedUser,
   onMemberBasicInfoSaved,
+  detailCloseIntentRef,
 }: UserDetailFullPageModalProps) {
   const location = useLocation()
   const [searchParams] = useSearchParams()
@@ -105,6 +108,7 @@ export function UserDetailFullPageModal({
     modals,
     patchMemberBasicInfo,
     onMemberBasicInfoSaved,
+    detailCloseIntentRef,
   })
 
   const fullpageDerived = useUserDetailFullpageDerived({
