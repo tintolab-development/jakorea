@@ -606,7 +606,6 @@ const allMenuItems: MenuItemConfig[] = [
     icon: <IconEducationRecords />,
     enabled: true,
     allowedRoles: ['ADMIN'],
-    hidden: true,
   },
   {
     key: 'logs-group',
