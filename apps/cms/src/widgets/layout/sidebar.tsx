@@ -41,8 +41,8 @@ export function Sidebar() {
       keys.push('gemini-program-group')
     }
 
-    if (user?.role === 'ADMIN' && path.startsWith('/templates')) {
-      keys.push('templates-group')
+    if (user?.role === 'ADMIN' && path.startsWith('/message-management')) {
+      keys.push('message-management-group')
     }
 
     if (
@@ -115,6 +115,7 @@ export function Sidebar() {
       'volunteer',
       'general',
       'company-school',
+      'trained-teachers',
       'ujat',
       'gemini',
       'education',

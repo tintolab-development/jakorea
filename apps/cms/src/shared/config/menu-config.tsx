@@ -213,6 +213,38 @@ function IconSettlementManagement() {
   )
 }
 
+/** LNB 카테고리 아이콘: 알림 메시지 관리 (20x20) */
+function IconMessageManagement() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 24 24"
+      fill="none"
+      style={svgStyle}
+    >
+      <mask
+        id="lnb-message-management-mask"
+        style={{ maskType: 'alpha' }}
+        maskUnits="userSpaceOnUse"
+        x={2}
+        y={2}
+        width={20}
+        height={20}
+      >
+        <rect x={2} y={2} width={20} height={20} fill="#D9D9D9" />
+      </mask>
+      <g mask="url(#lnb-message-management-mask)">
+        <path
+          d="M5.33268 18.6666C4.87435 18.6666 4.48199 18.5034 4.1556 18.177C3.82921 17.8506 3.66602 17.4583 3.66602 16.9999V6.99992C3.66602 6.54159 3.82921 6.14922 4.1556 5.82284C4.48199 5.49645 4.87435 5.33325 5.33268 5.33325H18.666C19.1243 5.33325 19.5167 5.49645 19.8431 5.82284C20.1695 6.14922 20.3327 6.54159 20.3327 6.99992V16.9999C20.3327 17.4583 20.1695 17.8506 19.8431 18.177C19.5167 18.5034 19.1243 18.6666 18.666 18.6666H5.33268ZM11.9993 12.8333L5.33268 8.66659V16.9999H18.666V8.66659L11.9993 12.8333ZM11.9993 11.1666L18.666 6.99992H5.33268L11.9993 11.1666ZM5.33268 8.66659V6.99992V16.9999V8.66659Z"
+          fill="currentColor"
+        />
+      </g>
+    </svg>
+  )
+}
+
 /** LNB 카테고리 아이콘: 실적 관리 (18x18) */
 function IconEducationRecords() {
   return (
@@ -337,7 +369,7 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
   },
 
-  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 4분류 — 일반 `/programs/general`, 1사1교 `/programs/company-school`, UJAT `/programs/ujat`, Gemini 3뎁스(실적·찾아가는 연수) */
+  /* 1뎁스 프로그램 관리 (ADMIN): 일반 `/programs/general`, 1사1교 `/programs/company-school`, 교육받은 교사 `/programs/trained-teachers`, UJAT `/programs/ujat`, Gemini 3뎁스(실적·찾아가는 연수) */
   {
     key: 'programs-group',
     label: '프로그램 관리',
@@ -404,6 +436,13 @@ const allMenuItems: MenuItemConfig[] = [
             allowedRoles: ['ADMIN'],
           },
         ],
+      },
+      {
+        key: '/programs/trained-teachers',
+        label: '교육받은 교사 프로그램',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
       },
     ],
   },
@@ -525,20 +564,11 @@ const allMenuItems: MenuItemConfig[] = [
     ],
   },
   {
-    key: 'templates-group',
+    key: '/templates/form-management',
     label: '템플릿 관리',
     icon: <IconTemplate />,
     enabled: true,
     allowedRoles: ['ADMIN'],
-    children: [
-      {
-        key: '/templates/form-management',
-        label: '폼 양식 관리',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-    ],
   },
   {
     key: 'posts-group',
@@ -601,6 +631,36 @@ const allMenuItems: MenuItemConfig[] = [
     ],
   },
   {
+    key: 'message-management-group',
+    label: '알림 메시지 관리',
+    icon: <IconMessageManagement />,
+    enabled: true,
+    allowedRoles: ['ADMIN'],
+    children: [
+      {
+        key: '/message-management/alimtalk',
+        label: '알림톡 관리',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/message-management/mail',
+        label: '메일 관리',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+      {
+        key: '/message-management/sms',
+        label: '문자 관리',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
+      },
+    ],
+  },
+  {
     key: '/education-records',
     label: '실적 관리',
     icon: <IconEducationRecords />,
@@ -609,7 +669,7 @@ const allMenuItems: MenuItemConfig[] = [
   },
   {
     key: 'logs-group',
-    label: '보안 설정(로그 관리)',
+    label: '로그 관리',
     icon: <IconSecurityLogs />,
     enabled: true,
     allowedRoles: ['ADMIN'],
@@ -853,6 +913,7 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
   const programCategoryByPrefix: { prefix: string; menuKey: string }[] = [
     { prefix: '/programs/general', menuKey: '/programs/general' },
     { prefix: '/programs/company-school', menuKey: '/programs/company-school' },
+    { prefix: '/programs/trained-teachers', menuKey: '/programs/trained-teachers' },
     { prefix: '/programs/ujat/regions', menuKey: '/programs/ujat/regions' },
     { prefix: '/programs/ujat', menuKey: '/programs/ujat' },
     { prefix: '/programs/gemini/performance', menuKey: '/programs/gemini/performance' },
@@ -881,8 +942,9 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
     const programsReserved = [
       'general',
       'company-school',
+      'trained-teachers',
       'ujat',
-    'regions',
+      'regions',
       'gemini',
       'education',
       'economy-education',
@@ -1390,6 +1452,7 @@ export function getBreadcrumbByPath(
     'volunteer',
     'general',
     'company-school',
+    'trained-teachers',
     'ujat',
     'regions',
     'gemini',
