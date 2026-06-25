@@ -130,8 +130,19 @@ function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     scheduleTimeEnabled: true,
     startTime: '09:00',
     endTime: '18:00',
+    studentListRequired: isCompanySchool ? 'not_required' : 'required',
+    generalCommonInfo: isCompanySchool
+      ? {
+          educationScheduleMode: 'period',
+          participantRecruitmentInfo: {
+            preEducationNoticeRequired: true,
+            maxScheduleCount: 2,
+            maxSessionsPerDay: 2,
+          },
+        }
+      : undefined,
     generalParticipantTypes: participantTypes,
-    generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'teacher_satisfaction', 'lecture_evaluation'],
+    generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
     rounds,
     createdAt: now,
     updatedAt: now,

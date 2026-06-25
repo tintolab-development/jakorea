@@ -356,7 +356,7 @@ const allMenuItems: MenuItemConfig[] = [
     allowedRoles: ['ADMIN'],
   },
 
-  /* 1뎁스 프로그램 관리 (ADMIN): 2뎁스 4분류 — 일반 `/programs/general`, 1사1교 `/programs/company-school`, UJAT `/programs/ujat`, Gemini 3뎁스(실적·찾아가는 연수) */
+  /* 1뎁스 프로그램 관리 (ADMIN): 일반 `/programs/general`, 1사1교 `/programs/company-school`, 교육받은 교사 `/programs/trained-teachers`, UJAT `/programs/ujat`, Gemini 3뎁스(실적·찾아가는 연수) */
   {
     key: 'programs-group',
     label: '프로그램 관리',
@@ -423,6 +423,13 @@ const allMenuItems: MenuItemConfig[] = [
             allowedRoles: ['ADMIN'],
           },
         ],
+      },
+      {
+        key: '/programs/trained-teachers',
+        label: '교육받은 교사 프로그램',
+        icon: <FolderOutlined />,
+        enabled: true,
+        allowedRoles: ['ADMIN'],
       },
     ],
   },
@@ -544,20 +551,11 @@ const allMenuItems: MenuItemConfig[] = [
     ],
   },
   {
-    key: 'templates-group',
+    key: '/templates/form-management',
     label: '템플릿 관리',
     icon: <IconTemplate />,
     enabled: true,
     allowedRoles: ['ADMIN'],
-    children: [
-      {
-        key: '/templates/form-management',
-        label: '폼 양식 관리',
-        icon: <FolderOutlined />,
-        enabled: true,
-        allowedRoles: ['ADMIN'],
-      },
-    ],
   },
   {
     key: 'posts-group',
@@ -648,11 +646,10 @@ const allMenuItems: MenuItemConfig[] = [
     icon: <IconEducationRecords />,
     enabled: true,
     allowedRoles: ['ADMIN'],
-    hidden: true,
   },
   {
     key: 'logs-group',
-    label: '보안 설정(로그 관리)',
+    label: '로그 관리',
     icon: <IconSecurityLogs />,
     enabled: true,
     allowedRoles: ['ADMIN'],
@@ -896,6 +893,7 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
   const programCategoryByPrefix: { prefix: string; menuKey: string }[] = [
     { prefix: '/programs/general', menuKey: '/programs/general' },
     { prefix: '/programs/company-school', menuKey: '/programs/company-school' },
+    { prefix: '/programs/trained-teachers', menuKey: '/programs/trained-teachers' },
     { prefix: '/programs/ujat/regions', menuKey: '/programs/ujat/regions' },
     { prefix: '/programs/ujat', menuKey: '/programs/ujat' },
     { prefix: '/programs/gemini/performance', menuKey: '/programs/gemini/performance' },
@@ -924,8 +922,9 @@ export function canAccessPath(path: string, user: CanAccessPathUser): boolean {
     const programsReserved = [
       'general',
       'company-school',
+      'trained-teachers',
       'ujat',
-    'regions',
+      'regions',
       'gemini',
       'education',
       'economy-education',
@@ -1433,6 +1432,7 @@ export function getBreadcrumbByPath(
     'volunteer',
     'general',
     'company-school',
+    'trained-teachers',
     'ujat',
     'regions',
     'gemini',

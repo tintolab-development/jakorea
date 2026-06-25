@@ -1,26 +1,24 @@
 import type { GeneralProgramSurveyMenuKey } from '@/types/domain'
 
-const VALID_SURVEY_MENU_KEYS = new Set<string>([
-  'survey',
+const LEGACY_SATISFACTION_KEYS = new Set([
+  'satisfaction',
   'student_satisfaction',
   'teacher_satisfaction',
-  'lecture_evaluation',
+  'volunteer_satisfaction',
+  'school_satisfaction',
 ])
 
-/** 레거시 `satisfaction` → 학생·교사 만족도조사 2항목 */
+/** 레거시 4종·UJAT 4종 키 → 공통 3종(`satisfaction` 단일) */
 export function normalizeGeneralSurveyMenuKeys(
   keys: readonly string[]
 ): GeneralProgramSurveyMenuKey[] {
+  const hasSurvey = keys.includes('survey')
+  const hasLecture = keys.includes('lecture_evaluation')
+  const hasSatisfaction = keys.some(key => LEGACY_SATISFACTION_KEYS.has(key))
+
   const result: GeneralProgramSurveyMenuKey[] = []
-  for (const key of keys) {
-    if (key === 'satisfaction') {
-      if (!result.includes('student_satisfaction')) result.push('student_satisfaction')
-      if (!result.includes('teacher_satisfaction')) result.push('teacher_satisfaction')
-      continue
-    }
-    if (VALID_SURVEY_MENU_KEYS.has(key)) {
-      result.push(key as GeneralProgramSurveyMenuKey)
-    }
-  }
+  if (hasSurvey) result.push('survey')
+  if (hasSatisfaction) result.push('satisfaction')
+  if (hasLecture) result.push('lecture_evaluation')
   return result
 }

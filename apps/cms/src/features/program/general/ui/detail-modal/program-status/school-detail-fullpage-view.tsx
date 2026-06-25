@@ -17,6 +17,7 @@ import {
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
+import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import type {
   SchoolDetailForModal,
   SchoolDetailInstructorRow,
@@ -1275,7 +1276,9 @@ export function GeneralParticipatingInstitutionDetailView({
               programEndDate={program.endDate}
               participationAppliedAt={mergedDetail.participationAppliedAt}
               hasStudentSatisfactionSurvey={
-                program.generalSurveyMenuKeys?.includes('student_satisfaction') ?? false
+                normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? []).includes(
+                  'satisfaction'
+                )
               }
               readOnly={false}
               onViewDetail={() => {}}

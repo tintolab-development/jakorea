@@ -9,6 +9,7 @@ import { RecruitDetailInfoParagraph } from '@/features/template/ui/form-set/recr
 
 export type ApplicantRecruitFormInstitutionParagraphBodyOptions = {
   showInstitutionApplicationLimits?: boolean
+  defaults?: ApplicantRecruitParticipantInfoParagraphProps['defaults']
 }
 
 /** 템플릿 편집기 — 프로그램 참여자 모집 폼 (학교) 시드 단락 본문 */
@@ -20,6 +21,7 @@ export function renderApplicantRecruitFormInstitutionParagraphBody(
   if (!enabled) return null
   const limitsProps: ApplicantRecruitParticipantInfoParagraphProps = {
     showInstitutionApplicationLimits: options?.showInstitutionApplicationLimits ?? true,
+    defaults: options?.defaults,
   }
   switch (paragraph.id) {
     case APPLICANT_RECRUIT_FORM_INSTITUTION_IDS.participantRecruitInfo:

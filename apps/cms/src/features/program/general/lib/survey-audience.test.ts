@@ -58,7 +58,7 @@ describe('general survey audience', () => {
       category: 'individual',
       generalProgramAudience: 'individual',
       generalParticipantTypes: ['individual'],
-      generalSurveyMenuKeys: ['survey', 'student_satisfaction'],
+      generalSurveyMenuKeys: ['survey', 'satisfaction'],
     })
 
     expect(isGeneralIndividualProgram(p)).toBe(true)
@@ -67,26 +67,25 @@ describe('general survey audience', () => {
     expect(getEnabledGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)).toEqual(['individual'])
   })
 
-  it('개인 프로그램(봉사자 포함)은 교사·상·하반기 봉사자 만족도 탭을 제공한다', () => {
+  it('개인 프로그램(봉사자 포함)은 상·하반기 봉사자 만족도 탭을 제공한다', () => {
     const p = program({
       generalProgramAudience: 'individual',
-      generalParticipantTypes: ['individual', 'teacher_instructor', 'volunteer'],
-      generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'teacher_satisfaction'],
+      generalParticipantTypes: ['individual', 'volunteer'],
+      generalSurveyMenuKeys: ['survey', 'satisfaction'],
     })
 
     expect(getEnabledGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)).toEqual([
-      'teacher',
       'volunteer_h1',
       'volunteer_h2',
     ])
-    expect(getDefaultGeneralSatisfactionAudience(p)).toBe('teacher')
+    expect(getDefaultGeneralSatisfactionAudience(p)).toBe('volunteer_h1')
   })
 
   it('개인 프로그램(봉사자만)은 상·하반기 봉사자 만족도 탭을 제공한다', () => {
     const p = program({
       generalProgramAudience: 'individual',
       generalParticipantTypes: ['individual', 'volunteer'],
-      generalSurveyMenuKeys: ['survey', 'student_satisfaction'],
+      generalSurveyMenuKeys: ['survey', 'satisfaction'],
     })
 
     expect(getEnabledGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)).toEqual([
@@ -196,19 +195,22 @@ describe('general survey audience', () => {
     const org = program({
       generalProgramAudience: 'organization',
       generalParticipantTypes: ['school_institution', 'teacher_instructor'],
-      generalSurveyMenuKeys: ['survey', 'student_satisfaction'],
+      generalSurveyMenuKeys: ['survey', 'satisfaction'],
     })
 
-    expect(getEnabledGeneralSatisfactionAudienceTabs(org).map(tab => tab.key)).toEqual(['student'])
+    expect(getEnabledGeneralSatisfactionAudienceTabs(org).map(tab => tab.key)).toEqual([
+      'teacher',
+      'student',
+    ])
     expect(programHasGeneralSatisfactionSurvey(org)).toBe(true)
-    expect(getDefaultGeneralSatisfactionAudience(org)).toBe('student')
+    expect(getDefaultGeneralSatisfactionAudience(org)).toBe('teacher')
   })
 
-  it('만족도조사 LNB는 학생·교사 항목을 하나로 묶는다', () => {
+  it('만족도조사 LNB는 satisfaction 항목 하나로 묶는다', () => {
     const org = program({
       generalProgramAudience: 'organization',
       generalParticipantTypes: ['school_institution', 'teacher_instructor'],
-      generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'teacher_satisfaction'],
+      generalSurveyMenuKeys: ['survey', 'satisfaction'],
     })
 
     expect(getGeneralSurveyMenuItems(org).map(item => item.key)).toEqual(['survey', 'satisfaction'])
@@ -218,7 +220,7 @@ describe('general survey audience', () => {
     const volunteerProgram = program({
       generalProgramAudience: 'organization',
       generalParticipantTypes: ['school_institution', 'teacher_instructor', 'volunteer'],
-      generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'teacher_satisfaction'],
+      generalSurveyMenuKeys: ['survey', 'satisfaction'],
     })
 
     expect(getEnabledGeneralSatisfactionAudienceTabs(volunteerProgram).map(tab => tab.key)).toEqual([
@@ -233,7 +235,7 @@ describe('general survey audience', () => {
     const org = program({
       generalProgramAudience: 'organization',
       generalParticipantTypes: ['school_institution', 'teacher_instructor'],
-      generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'teacher_satisfaction'],
+      generalSurveyMenuKeys: ['survey', 'satisfaction'],
     })
 
     expect(getEnabledGeneralSatisfactionAudienceTabs(org).map(tab => tab.key)).toEqual([
@@ -242,22 +244,15 @@ describe('general survey audience', () => {
     ])
   })
 
-  it('개인 대상 설문 수정 항목은 교사 만족도를 제외한다', () => {
+  it('설문 수정 항목은 공통 3종을 제공한다', () => {
+    const fields = getGeneralSurveyEditFieldsForAudience(false)
+    expect(fields.map(field => field.id)).toEqual(['survey', 'satisfaction', 'lecture_evaluation'])
+    expect(fields.map(field => field.label)).toEqual(['설문조사', '만족도조사', '강의평가'])
+
     const individualFields = getGeneralSurveyEditFieldsForAudience(true)
     expect(individualFields.map(field => field.id)).toEqual([
       'survey',
-      'student_satisfaction',
-      'lecture_evaluation',
-    ])
-    expect(
-      individualFields.find(field => field.id === 'student_satisfaction')?.label
-    ).toBe('만족도조사')
-
-    const organizationFields = getGeneralSurveyEditFieldsForAudience(false)
-    expect(organizationFields.map(field => field.id)).toEqual([
-      'survey',
-      'student_satisfaction',
-      'teacher_satisfaction',
+      'satisfaction',
       'lecture_evaluation',
     ])
   })

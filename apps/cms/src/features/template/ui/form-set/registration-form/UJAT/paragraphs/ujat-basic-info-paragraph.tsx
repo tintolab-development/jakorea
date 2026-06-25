@@ -42,6 +42,10 @@ import {
   UJAT_SURVEY_ITEMS_DEFAULT,
   type UjatSurveyRowId,
 } from '@/features/program/ujat/lib/ujat-registration-basic-info-defaults'
+import {
+  PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
+  PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
+} from '@/features/template/lib/program-registration-survey-items'
 
 const PROGRAM_PROGRESS_STATIC_VIEW = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
 
@@ -413,34 +417,16 @@ export function UjatBasicInfoParagraph() {
             fullRow
             edit={
               <div className="detail-info-form-inputs-wrapper">
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={surveyItems.survey}
-                  onChange={toggleSurveyItem('survey')}
-                >
-                  설문조사
-                </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={surveyItems.volunteer_satisfaction}
-                  onChange={toggleSurveyItem('volunteer_satisfaction')}
-                >
-                  봉사단 만족도조사
-                </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={surveyItems.school_satisfaction}
-                  onChange={toggleSurveyItem('school_satisfaction')}
-                >
-                  학교 만족도조사
-                </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={surveyItems.lecture_evaluation}
-                  onChange={toggleSurveyItem('lecture_evaluation')}
-                >
-                  강의평가
-                </CmsCheckbox>
+                {PROGRAM_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
+                  <CmsCheckbox
+                    key={id}
+                    checkboxSize="large"
+                    checked={surveyItems[id]}
+                    onChange={toggleSurveyItem(id)}
+                  >
+                    {PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[id]}
+                  </CmsCheckbox>
+                ))}
               </div>
             }
             view="-"

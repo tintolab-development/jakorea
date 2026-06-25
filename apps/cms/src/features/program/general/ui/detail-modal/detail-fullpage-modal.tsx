@@ -268,7 +268,7 @@ function normalizeGeneralDetailParams(
   if (tab === 'student_satisfaction' || tab === 'teacher_satisfaction') {
     if (surveyKeys.includes('satisfaction')) {
       tab = 'satisfaction'
-    } else if (!surveyKeys.includes(tab)) {
+    } else if (!surveyKeys.includes('satisfaction')) {
       tab = surveyKeys[0] ?? 'main'
     }
   }

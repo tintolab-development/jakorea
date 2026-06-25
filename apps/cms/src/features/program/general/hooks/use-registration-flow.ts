@@ -139,7 +139,17 @@ export function useGeneralProgramRegistrationFlow(
     open && isParticipantStep,
     participantTemplateName,
     participantVariant,
-    { participantOrganization: participantFlags.organization }
+    {
+      participantOrganization: participantFlags.organization,
+      applicantRecruitInstitutionDefaults: isCompanySchoolRegistration
+        ? {
+            studentListRequired: 'none',
+            preguidanceRequired: 'need',
+            maxScheduleCount: 2,
+            maxSessionsPerDay: 2,
+          }
+        : undefined,
+    }
   )
 
   useEffect(() => {

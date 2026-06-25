@@ -91,6 +91,9 @@ const UjatProgramListPage = lazyLoad(() => import('@/pages/programs/UJAT/page'))
 const UjatEducationRegionsPage = lazyLoad(
   () => import('@/pages/programs/UJAT/education-regions-page')
 )
+const TrainedTeachersProgramPage = lazyLoad(
+  () => import('@/pages/programs/trained-teachers/page')
+)
 const GeminiVisitingTrainingPage = lazyLoad(
   () => import('@/pages/programs/gemini/visiting-training/page')
 )
@@ -321,6 +324,39 @@ export const router = createBrowserRouter([
         element: <DetailedProgramPage />,
       },
       {
+        path: 'message-management',
+        children: [
+          { index: true, element: <Navigate to="alimtalk" replace /> },
+          {
+            path: 'alimtalk',
+            element: (
+              <ComingSoonPage
+                title="알림톡 관리"
+                description="알림톡 관리 기능은 현재 준비 중입니다."
+              />
+            ),
+          },
+          {
+            path: 'mail',
+            element: (
+              <ComingSoonPage
+                title="메일 관리"
+                description="메일 관리 기능은 현재 준비 중입니다."
+              />
+            ),
+          },
+          {
+            path: 'sms',
+            element: (
+              <ComingSoonPage
+                title="문자 관리"
+                description="문자 관리 기능은 현재 준비 중입니다."
+              />
+            ),
+          },
+        ],
+      },
+      {
         path: 'programs',
         children: [
           { index: true, element: <ProgramListPage /> },
@@ -328,6 +364,8 @@ export const router = createBrowserRouter([
           { path: 'general/*', element: <ProgramListPage /> },
           { path: 'company-school', element: <ProgramListPage /> },
           { path: 'company-school/*', element: <ProgramListPage /> },
+          { path: 'trained-teachers', element: <TrainedTeachersProgramPage /> },
+          { path: 'trained-teachers/*', element: <TrainedTeachersProgramPage /> },
           { path: 'ujat/regions', element: <UjatEducationRegionsPage /> },
           { path: 'ujat/regions/*', element: <UjatEducationRegionsPage /> },
           { path: 'ujat', element: <UjatProgramListPage /> },

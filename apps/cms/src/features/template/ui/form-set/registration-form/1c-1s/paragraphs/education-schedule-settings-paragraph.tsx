@@ -11,7 +11,6 @@ import {
 } from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
-import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 function isValidDayjs(d: Dayjs | null | undefined): d is Dayjs {
@@ -19,31 +18,21 @@ function isValidDayjs(d: Dayjs | null | undefined): d is Dayjs {
 }
 
 export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
-  educationScheduleMode,
-  onEducationScheduleModeChange,
+  educationScheduleMode: _educationScheduleMode,
+  onEducationScheduleModeChange: _onEducationScheduleModeChange,
 }: {
   educationScheduleMode: ProgramRegistrationEducationScheduleMode
   onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
 }) {
-  const scheduleMode = educationScheduleMode
-  const [singleDate, setSingleDate] = useState<Dayjs | null>(null)
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null])
 
   const previewLines = useMemo((): string[] => {
-    if (scheduleMode === 'period') {
-      const [start, end] = dateRange
-      if (isValidDayjs(start) && isValidDayjs(end)) {
-        return [`${formatAppDatepickerDisplay(start)} ~ ${formatAppDatepickerDisplay(end)}`]
-      }
-      return []
+    const [start, end] = dateRange
+    if (isValidDayjs(start) && isValidDayjs(end)) {
+      return [`${formatAppDatepickerDisplay(start)} ~ ${formatAppDatepickerDisplay(end)}`]
     }
-
-    if (isValidDayjs(singleDate)) {
-      return [formatAppDatepickerDisplay(singleDate)]
-    }
-
     return []
-  }, [scheduleMode, dateRange, singleDate])
+  }, [dateRange])
 
   const rangePlaceholder: [string, string] = ['진행 기간을 선택하세요', '진행 기간을 선택하세요']
 
@@ -54,51 +43,18 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
       mode="edit"
       className="program-registration-paragraph"
     >
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="교육 진행 일정 유형"
-          edit={
-            <div className="program-registration-paragraph__schedule-inline">
-              <CmsRadioGroup
-                size="large"
-                value={scheduleMode}
-                onChange={e =>
-                  onEducationScheduleModeChange(
-                    e.target.value as ProgramRegistrationEducationScheduleMode
-                  )
-                }
-              >
-                <CmsRadio value="date" disabled>
-                  날짜 지정
-                </CmsRadio>
-                <CmsRadio value="period">기간 지정</CmsRadio>
-              </CmsRadioGroup>
-            </div>
-          }
-          view="-"
-        />
+      <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="교육 진행 일정 선택"
+          fullRow
           edit={
-            scheduleMode === 'date' ? (
-              <ParagraphDatePicker
-                mode="single"
-                presetMode="date"
-                customizable={false}
-                suppressAutoTodayWhenEmpty
-                value={singleDate}
-                onChange={setSingleDate}
-                width={240}
-              />
-            ) : (
-              <ParagraphDatePicker
-                mode="range"
-                value={dateRange}
-                onChange={setDateRange}
-                width={360}
-                placeholder={rangePlaceholder}
-              />
-            )
+            <ParagraphDatePicker
+              mode="range"
+              value={dateRange}
+              onChange={setDateRange}
+              width={360}
+              placeholder={rangePlaceholder}
+            />
           }
           view="-"
         />

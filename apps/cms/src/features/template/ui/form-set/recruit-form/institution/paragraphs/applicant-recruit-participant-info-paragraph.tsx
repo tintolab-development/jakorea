@@ -135,11 +135,18 @@ export type ApplicantRecruitParticipantInfoParagraphProps = {
    * 미전달 시 기관 모집 양식 편집기에서는 true로 간주.
    */
   showInstitutionApplicationLimits?: boolean
+  defaults?: {
+    studentListRequired?: 'need' | 'none'
+    preguidanceRequired?: 'need' | 'none'
+    maxScheduleCount?: number
+    maxSessionsPerDay?: number
+  }
 }
 
 /** 프로그램 참여자 모집 폼 (학교) — 참여자 모집 정보 */
 export function ApplicantRecruitParticipantInfoParagraph({
   showInstitutionApplicationLimits = true,
+  defaults,
 }: ApplicantRecruitParticipantInfoParagraphProps = {}) {
   const institutionApplicationBridge = useInstitutionApplicationProgramBridge()
   const showMaxScheduleCountField =
@@ -150,8 +157,12 @@ export function ApplicantRecruitParticipantInfoParagraph({
     shouldShowInstitutionApplicationMaxSessionsPerDayField(institutionApplicationBridge)
   const [announcementPublished, setAnnouncementPublished] =
     useState<ParticipantRecruitmentAnnouncementPublishedValue>('published')
-  const [preguidanceRequired, setPreguidanceRequired] = useState<string>('need')
-  const [studentListRequired, setStudentListRequired] = useState<string>('need')
+  const [preguidanceRequired, setPreguidanceRequired] = useState<string>(
+    defaults?.preguidanceRequired ?? 'need'
+  )
+  const [studentListRequired, setStudentListRequired] = useState<string>(
+    defaults?.studentListRequired ?? 'need'
+  )
   const [certificateProvided, setCertificateProvided] = useState<string>('provide')
 
   const [maxInstructors, setMaxInstructors] = useApplicantRecruitInstitutionOverlayKv<
@@ -162,10 +173,10 @@ export function ApplicantRecruitParticipantInfoParagraph({
   >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxClassCount, undefined)
   const [maxScheduleCount, setMaxScheduleCount] = useApplicantRecruitInstitutionOverlayKv<
     number | undefined
-  >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxScheduleCount, undefined)
+  >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxScheduleCount, defaults?.maxScheduleCount)
   const [maxSessionsPerDay, setMaxSessionsPerDay] = useApplicantRecruitInstitutionOverlayKv<
     number | undefined
-  >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxSessionsPerDay, undefined)
+  >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.maxSessionsPerDay, defaults?.maxSessionsPerDay)
 
   const maxInstructorsInput = maxInstructors != null ? String(maxInstructors) : ''
   const maxClassInput = maxClassCount != null ? String(maxClassCount) : ''

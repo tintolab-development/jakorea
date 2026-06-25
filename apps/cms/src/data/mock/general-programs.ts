@@ -42,11 +42,10 @@ const SPONSOR_ID = mockSponsors[0]?.id ?? 'sponsor-1'
 /** 기관 프로그램 공통 — 기관 신청·진행 현황 LNB는 항상 노출 */
 const BASE_PARTICIPANT_TYPES: GeneralProgramParticipantType[] = ['school_institution']
 
-/** 설문 2depth 있음 — 설문 진행 항목 4종 전체 */
+/** 설문 2depth 있음 — 설문 진행 항목 3종 전체 */
 const SURVEY_MENU_FULL: GeneralProgramSurveyMenuKey[] = [
   'survey',
-  'student_satisfaction',
-  'teacher_satisfaction',
+  'satisfaction',
   'lecture_evaluation',
 ]
 
@@ -349,7 +348,7 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     participatingStudentCount: 180,
     scheduleTimeEnabled: false,
     generalParticipantTypes: ['school_institution', 'teacher_instructor'],
-    generalSurveyMenuKeys: ['survey', 'student_satisfaction'],
+    generalSurveyMenuKeys: ['survey', 'satisfaction'],
     generalProgramEducationStructure: 'curriculum',
     generalProgramSessionRound: 'multi',
     generalCommonInfo: CALENDAR_DEMO_IN_PROGRESS_A_COMMON_INFO,
@@ -383,7 +382,7 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     interviewStartDate: calendarDemoIso(2026, 5, 8),
     interviewEndDate: calendarDemoIso(2026, 5, 12, true),
     interviewMethod: '대면 면접',
-    generalSurveyMenuKeys: ['survey', 'student_satisfaction', 'lecture_evaluation'],
+    generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
     generalProgramAudience: 'individual',
     generalProgramEducationStructure: 'schedule',
     generalProgramSessionRound: 'single',
@@ -422,7 +421,7 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     interviewStartDate: calendarDemoIso(2026, 4, 28),
     interviewEndDate: calendarDemoIso(2026, 5, 3, true),
     interviewMethod: '대면 면접',
-    generalSurveyMenuKeys: ['survey', 'student_satisfaction'],
+    generalSurveyMenuKeys: ['survey', 'satisfaction'],
     generalProgramAudience: 'organization',
     generalProgramEducationStructure: 'curriculum',
     generalProgramSessionRound: 'single',

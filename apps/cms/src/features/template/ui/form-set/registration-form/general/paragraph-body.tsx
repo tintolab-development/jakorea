@@ -6,6 +6,7 @@ import {
 import {
   OneCOneSRegistrationBasicInfoParagraph,
   OneCOneSRegistrationBusinessKpiParagraph,
+  OneCOneSRegistrationEducationCurriculumParagraph,
   OneCOneSRegistrationEducationScheduleSettingsParagraph,
   OneCOneSRegistrationWageInfoParagraph,
 } from '@/features/template/ui/form-set/registration-form/1c-1s'
@@ -93,6 +94,7 @@ export function renderProgramRegistrationParagraphBody(
           participant={options.participant}
           onIndividualChange={options.onIndividualChange}
           onOrganizationChange={options.onOrganizationChange}
+          onTeacherInstructorChange={options.onTeacherInstructorChange}
         />
       ) : (
         <ProgramRegistrationBasicInfoParagraph
@@ -147,7 +149,9 @@ export function renderProgramRegistrationParagraphBody(
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationCurriculum:
-      return options == null ? null : options.programType === 'schedule' ? (
+      return options == null ? null : options.programRegistrationFormVariant === 'economy' ? (
+        <OneCOneSRegistrationEducationCurriculumParagraph />
+      ) : options.programType === 'schedule' ? (
         <ProgramRegistrationEducationScheduleCurriculumParagraph
           key={`pr-schedule-curriculum-${options.sessionRoundType}-${options.educationFormScheduleDetail}-${options.participationScheduleDetail}-${options.ipsScheduleDetail}-${options.participant.organization ? 'org' : 'ind'}`}
           scheduleDetailCount={options.scheduleCurriculumDetailCount}

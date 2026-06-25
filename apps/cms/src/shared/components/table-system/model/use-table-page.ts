@@ -59,6 +59,10 @@ export function useTablePage<
     columns: config.columns.tanstack,
     filterKeys: config.columns.filterKeys,
   })
+  const columnFiltersKey = useMemo(
+    () => JSON.stringify(columnFilters.map(filter => [filter.id, filter.value])),
+    [columnFilters]
+  )
 
   const [pendingFilters, setPendingFilters] = useState<TFilters>(config.filters.initialPending)
   const pendingFiltersRef = useRef(pendingFilters)
@@ -74,12 +78,12 @@ export function useTablePage<
     })
     // `table`·`searchParams` 참조는 렌더마다 바뀔 수 있어 deps에 넣지 않는다. URL 내용은 `searchParamsKey`로만 감지한다.
   // eslint-disable-next-line react-hooks/exhaustive-deps -- 위 주석
-  }, [columnFilters, config, context, searchParamsKey])
+  }, [columnFiltersKey, config, context, searchParamsKey])
 
   const hasActiveFilters = useMemo(
     () => config.filters.hasActiveFilters({ context, searchParams, columnFilters }),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- searchParams 참조는 searchParamsKey로 대체
-    [columnFilters, config, context, searchParamsKey]
+    [columnFiltersKey, config, context, searchParamsKey]
   )
 
   const searchSync = useMemo(() => config.getSearchSync(context), [config, context])
@@ -110,7 +114,7 @@ export function useTablePage<
     return { tableData: rows, displayedCount: nextDisplayedCount }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `table` 참조만으로는 row model 갱신을 감지하지 못함
   }, [
-    columnFilters,
+    columnFiltersKey,
     config,
     context,
     dataForTable,
