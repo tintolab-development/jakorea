@@ -27,6 +27,7 @@ import {
 } from '@/features/program/general/lib/participating-institution-textbook'
 import { getSameSchoolParticipatingGrades } from '@/features/program/general/lib/get-same-school-participating-grades'
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
+import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 
 export interface SameSchoolParticipatingGradeOption {
   value: string
@@ -55,7 +56,12 @@ export function useParticipatingInstitutionDetailEdit({
   > | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
-  const usesTextbook = useMemo(() => programUsesTextbook(program), [program])
+  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
+
+  const usesTextbook = useMemo(
+    () => programUsesTextbook(program, textbookCatalog),
+    [program, textbookCatalog]
+  )
 
   const isCombinedClassProgramEligibleFlag = useMemo(
     () => isCombinedClassProgramEligible(program),
@@ -73,6 +79,7 @@ export function useParticipatingInstitutionDetailEdit({
         textbookGrade: detail.textbookGrade,
         textbookKits: detail.textbookKits,
         textbookQuantity: detail.textbookQuantity,
+        catalog: textbookCatalog,
       }),
     [
       detail.textbookGrade,
@@ -83,6 +90,7 @@ export function useParticipatingInstitutionDetailEdit({
       program,
       row.educationGrade,
       row.studentCount,
+      textbookCatalog,
     ]
   )
 
@@ -92,8 +100,8 @@ export function useParticipatingInstitutionDetailEdit({
     const rows =
       draft?.combinedClassApplication === '신청' ||
       toCombinedClassApplicationStatus(detail.combinedClassApplication) === '신청'
-        ? filterTextbooksForCombinedClassEdit(program)
-        : filterTextbooksForApplicant(program, row.educationGrade)
+        ? filterTextbooksForCombinedClassEdit(program, textbookCatalog)
+        : filterTextbooksForApplicant(program, row.educationGrade, textbookCatalog)
 
     return rows.map(textbookRow => ({
       value: textbookRow.id,
@@ -106,6 +114,7 @@ export function useParticipatingInstitutionDetailEdit({
     program,
     row.educationGrade,
     usesTextbook,
+    textbookCatalog,
   ])
 
   const canEditTextbook = usesTextbook && draft?.combinedClassApplication === '신청'
@@ -182,7 +191,7 @@ export function useParticipatingInstitutionDetailEdit({
         const next = { ...prev, ...partial }
         if (partial.textbookId != null && usesTextbook) {
           const selected = textbookOptions.find(option => option.value === partial.textbookId)
-          const storeRow = filterTextbooksForCombinedClassEdit(program).find(
+          const storeRow = filterTextbooksForCombinedClassEdit(program, textbookCatalog).find(
             rowItem => rowItem.id === partial.textbookId
           )
           if (selected && storeRow) {
@@ -205,7 +214,7 @@ export function useParticipatingInstitutionDetailEdit({
       })
       setValidationErrors({})
     },
-    [program, row.studentCount, textbookOptions, usesTextbook]
+    [program, row.studentCount, textbookCatalog, textbookOptions, usesTextbook]
   )
 
   const saveEdit = useCallback((): boolean => {
@@ -236,6 +245,7 @@ export function useParticipatingInstitutionDetailEdit({
       program,
       studentCount: row.studentCount,
       requiresTextbook: usesTextbook,
+      catalog: textbookCatalog,
     })
     if (Object.keys(patch).length === 0) {
       setValidationErrors({ form: '저장할 수 없습니다. 입력값을 확인해 주세요.' })
@@ -254,6 +264,7 @@ export function useParticipatingInstitutionDetailEdit({
     program,
     resetEditState,
     row.studentCount,
+    textbookCatalog,
     usesTextbook,
   ])
 

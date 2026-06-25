@@ -2,9 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { patchGeneralIndividualApplicantDetail } from '@/data/mock/general-individual-applications-mock'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
 import type { Program } from '@/types/domain'
-import {
-  buildIndividualApplicantTextbookOptions,
-} from '@/features/program/general/lib/individual-applicant-textbook'
+import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
+import { buildIndividualApplicantTextbookOptions } from '@/features/program/general/lib/individual-applicant-textbook'
 import {
   draftToIndividualSavePayload,
   parseApplicantIndividualEditDraft,
@@ -27,13 +26,16 @@ export function useApplicantIndividualDetailEdit({
   const [draft, setDraft] = useState<ApplicantIndividualEditDraft | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
+  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
+
   const textbookOptions = useMemo(
     () =>
       buildIndividualApplicantTextbookOptions(
         program,
-        applicant?.educationGrade ?? applicant?.detail?.affiliationGrade ?? ''
+        applicant?.educationGrade ?? applicant?.detail?.affiliationGrade ?? '',
+        textbookCatalog
       ),
-    [applicant?.detail?.affiliationGrade, applicant?.educationGrade, program]
+    [applicant?.detail?.affiliationGrade, applicant?.educationGrade, program, textbookCatalog]
   )
 
   const resetEditState = useCallback(() => {

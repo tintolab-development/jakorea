@@ -12,6 +12,9 @@ export const dataManagementQueryKeys = {
     list: (searchParamsKey: string) =>
       [...dataManagementQueryKeys.textbooks.all(), 'list', searchParamsKey] as const,
     detail: (id: string) => [...dataManagementQueryKeys.textbooks.all(), 'detail', id] as const,
+    matches: (catalogKey: string) =>
+      [...dataManagementQueryKeys.textbooks.all(), 'matches', catalogKey] as const,
+    kitQuantities: () => [...dataManagementQueryKeys.textbooks.all(), 'kit-quantities'] as const,
   },
   sponsors: {
     all: () => [...dataManagementQueryKeys.all, 'sponsors'] as const,

@@ -6,19 +6,27 @@ import {
 } from '@/features/textbook/api/textbook-filter-params'
 import {
   mapTextbookListResponse,
+  mapTextbookMatchResponse,
   mapTextbookResponse,
   toTextbookRequest,
 } from '@/features/textbook/api/adapters/textbook-adapters'
 import {
   createTextbookRemote,
   deleteTextbookRemote,
+  fetchTextbookMatchesRemote,
   fetchTextbookRemote,
   fetchTextbooksRemote,
   updateTextbookRemote,
 } from '@/features/textbook/api/textbooks-api-client'
+import {
+  buildTextbookMatchesParamsFromProgram,
+  listMockTextbookCatalogForProgram,
+} from '@/features/textbook/api/textbook-program-catalog'
 import type { TextbookCreateInput, TextbookRow } from '@/features/textbook/model/textbook.types'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import type { MatchesParams } from '@/shared/api/generated/data-management/schemas'
+import type { Program } from '@/types/domain'
 
 function assertTextbooksRemoteReady(): void {
   if (!isRealApiModuleEnabled('textbooks')) {
@@ -67,4 +75,17 @@ export async function deleteTextbooks(ids: string[]): Promise<void> {
   for (const id of ids) {
     await deleteTextbookRemote(id)
   }
+}
+
+export async function getTextbookMatches(params: MatchesParams = {}): Promise<TextbookRow[]> {
+  assertTextbooksRemoteReady()
+  const dtos = await fetchTextbookMatchesRemote(params)
+  return dtos.map(mapTextbookMatchResponse)
+}
+
+export async function getProgramTextbookCatalog(program: Program): Promise<TextbookRow[]> {
+  if (shouldUseTextbooksRemoteApi()) {
+    return getTextbookMatches(buildTextbookMatchesParamsFromProgram(program))
+  }
+  return listMockTextbookCatalogForProgram(program)
 }

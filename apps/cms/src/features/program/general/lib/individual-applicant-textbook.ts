@@ -10,6 +10,7 @@ import {
   filterTextbooksForApplicant,
   resolveTextbookOptionLabel,
 } from '@/features/program/general/lib/filter-textbooks-for-applicant'
+import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 
 export const TEXTBOOK_NOT_USED_OPTION_VALUE = '__TEXTBOOK_NOT_USED__'
@@ -17,19 +18,23 @@ export const TEXTBOOK_NOT_USED_OPTION_VALUE = '__TEXTBOOK_NOT_USED__'
 export const TEXTBOOK_UNDECIDED_LABEL = '미정'
 
 /** 개인 참여자 신청·진행 상세 — 승인 후 교재명 노출 (일정형도 카탈로그 매칭 시 표시) */
-export function individualApplicantUsesTextbook(program: Program | null | undefined): boolean {
+export function individualApplicantUsesTextbook(
+  program: Program | null | undefined,
+  catalog?: TextbookRow[]
+): boolean {
   if (!program) return false
-  return programHasTextbookCatalog(program)
+  return programHasTextbookCatalog(program, catalog)
 }
 
 export function buildIndividualApplicantTextbookOptions(
   program: Program | null | undefined,
-  educationGrade: string
+  educationGrade: string,
+  catalog?: TextbookRow[]
 ): TextbookSelectOption[] {
   if (!program) return []
   const grade = educationGrade.trim()
-  const catalog = grade
-    ? filterTextbooksForApplicant(program, grade).map(row => ({
+  const rows = grade
+    ? filterTextbooksForApplicant(program, grade, catalog).map(row => ({
         value: row.id,
         label: resolveTextbookOptionLabel(row),
         textbookName: row.textbookName,
@@ -38,7 +43,7 @@ export function buildIndividualApplicantTextbookOptions(
 
   return [
     { value: TEXTBOOK_NOT_USED_OPTION_VALUE, label: '해당 없음', textbookName: '해당 없음' },
-    ...catalog,
+    ...rows,
   ]
 }
 

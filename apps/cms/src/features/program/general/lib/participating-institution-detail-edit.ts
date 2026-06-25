@@ -3,7 +3,7 @@ import type { SchoolDetailForModal } from '@/features/program/general/model/scho
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import type { CombinedClassApplicationStatus } from '@/features/program/general/lib/applicant-institution-detail-edit'
 import type { Program } from '@/types/domain'
-import { listTextbooksFromStore } from '@/features/textbook/api/textbook-service'
+import type { TextbookRow } from '@/features/textbook/model/textbook.types'
 import {
   calculateParticipatingTextbookKitQuantity,
   resolveTextbookFieldsFromSelection,
@@ -108,6 +108,7 @@ export interface ParticipatingInstitutionEditPatchContext {
   program: Program
   studentCount: number
   requiresTextbook: boolean
+  catalog?: TextbookRow[]
 }
 
 export function participatingInstitutionEditDraftToDetailPatch(
@@ -129,7 +130,7 @@ export function participatingInstitutionEditDraftToDetailPatch(
   )
 
   const selectedTextbook = parsed.data.textbookId
-    ? listTextbooksFromStore().find(row => row.id === parsed.data.textbookId)
+    ? context.catalog?.find(row => row.id === parsed.data.textbookId)
     : undefined
 
   const textbookFields =

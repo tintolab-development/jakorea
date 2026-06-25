@@ -44,6 +44,7 @@ import type { Program } from '@/types/domain'
 import type { ParticipatingInstitutionsFilters } from '../../../hooks/use-participating-institutions-params'
 import { participatingInstitutionsFilterFields } from '../../../lib/participating-institutions-filter-fields'
 import { programUsesTextbook } from '../../../lib/participating-institution-textbook'
+import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import { formatParticipatingSchoolSessionLine } from '../../../lib/participating-school-session-display'
@@ -225,7 +226,9 @@ export function ParticipatingInstitutionsSection({
     setViewMode('list')
   }
 
-  const showTextbookFeatures = program ? programUsesTextbook(program) : true
+  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
+
+  const showTextbookFeatures = program ? programUsesTextbook(program, textbookCatalog) : true
 
   const filterFields = useMemo(
     () =>

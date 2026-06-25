@@ -22,6 +22,7 @@ import {
   individualApplicantUsesTextbook,
   resolveIndividualApplicantTextbookDisplay,
 } from '@/features/program/general/lib/individual-applicant-textbook'
+import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 import {
   shouldShowIndividualApplicantPreferredScheduleSection,
   shouldShowIndividualApplicantTeamSection,
@@ -463,10 +464,11 @@ export function ApplicantGeneralIndividualBasicInfo({
   const shouldMask = maskSensitive && applicant.approvalStatus !== 'approved'
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const showAdminComment = isProgressContext || applicant.approvalStatus === 'approved'
+  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
   const showTextbookField =
     screeningStage === 'main' &&
     applicant.approvalStatus === 'approved' &&
-    individualApplicantUsesTextbook(program)
+    individualApplicantUsesTextbook(program, textbookCatalog)
 
   const showTeamSection = shouldShowIndividualApplicantTeamSection(program, detail)
   const showManagerEvaluation = shouldShowIndividualManagerEvaluationSection(

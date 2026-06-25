@@ -42,14 +42,16 @@ export function dedupeTextbooksByName(textbooks: TextbookRow[]): TextbookRow[] {
 /** 프로그램 사업분야·교육 대상·신청 학년에 맞는 사용 중 교재 목록 */
 export function filterTextbooksForApplicant(
   program: Program,
-  educationGrade: string
+  educationGrade: string,
+  catalog?: TextbookRow[]
 ): TextbookRow[] {
   const educationTarget = resolveProgramEducationTarget(program)
   const grade = educationGrade.trim()
   if (!grade) return []
 
-  const filtered = listTextbooksFromStore().filter(row => {
-    if (row.useStatus !== 'USED') return false
+  const source = catalog ?? listTextbooksFromStore()
+  const filtered = source.filter(row => {
+    if (!catalog && row.useStatus !== 'USED') return false
     if (program.businessArea && row.businessArea !== program.businessArea) return false
     if (educationTarget && row.educationTarget !== educationTarget) return false
     return textbookIncludesGrade(row, grade)

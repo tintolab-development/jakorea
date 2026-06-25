@@ -14,12 +14,16 @@ import { getTextbookListFilterKey } from '@/features/textbook/api/admin-textbook
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { useTextbookListQuery } from '@/features/textbook/hooks/use-textbook-list-query'
 import { useTextbookMutations } from '@/features/textbook/hooks/use-textbook-mutations'
+import { useMaterialKitQuantitiesQuery } from '@/features/textbook/hooks/use-material-kit-quantities-query'
+import { useMaterialKitQuantitiesMutation } from '@/features/textbook/hooks/use-material-kit-quantities-mutation'
+import { useDataManagementRemoteEnabled } from '@/features/data-management/hooks/use-data-management-remote-enabled'
 import {
   TextbookRegisterModal,
   type TextbookRegisterPayload,
 } from '@/features/textbook/ui/textbook-register-modal'
 import {
   TextbookKitQuantityModal,
+  DEFAULT_KIT_QUANTITIES,
   type TextbookKitQuantityValues,
 } from '@/features/textbook/ui/textbook-kit-quantity-modal'
 import { TextbookDetailFullPageModal } from '@/features/textbook/ui/textbook-detail-fullpage-modal'
@@ -58,14 +62,6 @@ const INITIAL_FILTERS: TextbookFilters = {
   grade: 'ALL',
   textbookName: '',
   useStatus: 'ALL',
-}
-
-const DEFAULT_KIT_QUANTITIES: TextbookKitQuantityValues = {
-  kindergarten: '24',
-  elementary: '24',
-  middle: '24',
-  high: '32',
-  university: '32',
 }
 
 type FilterOption = { label: string; value: string }
@@ -109,10 +105,17 @@ export default function TextbookPage() {
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
   const [kitQuantityModalOpen, setKitQuantityModalOpen] = useState(false)
   const [kitQuantityChangeConfirmOpen, setKitQuantityChangeConfirmOpen] = useState(false)
-  const [kitQuantities, setKitQuantities] =
+  const remoteKitEnabled = useDataManagementRemoteEnabled('textbooks', true)
+  const kitQuantitiesQuery = useMaterialKitQuantitiesQuery(remoteKitEnabled)
+  const kitQuantitiesMutation = useMaterialKitQuantitiesMutation()
+  const [localKitQuantities, setLocalKitQuantities] =
     useState<TextbookKitQuantityValues>(DEFAULT_KIT_QUANTITIES)
+  const kitQuantities = remoteKitEnabled
+    ? (kitQuantitiesQuery.data ?? DEFAULT_KIT_QUANTITIES)
+    : localKitQuantities
   const [pendingKitQuantities, setPendingKitQuantities] =
     useState<TextbookKitQuantityValues | null>(null)
+  const [kitSaveError, setKitSaveError] = useState<string | null>(null)
 
   const listQuery = useTextbookListQuery(appliedFilters, true)
   const filterKey = getTextbookListFilterKey(appliedFilters)
@@ -264,13 +267,25 @@ export default function TextbookPage() {
     setKitQuantityChangeConfirmOpen(true)
   }, [])
 
-  const handleConfirmKitQuantityChange = useCallback(() => {
+  const handleConfirmKitQuantityChange = useCallback(async () => {
     if (pendingKitQuantities == null) return
-    setKitQuantities(pendingKitQuantities)
+    setKitSaveError(null)
+    if (remoteKitEnabled) {
+      try {
+        await kitQuantitiesMutation.mutateAsync(pendingKitQuantities)
+      } catch (error) {
+        setKitSaveError(
+          getDataManagementApiErrorMessage(error, '키트 수량 저장에 실패했습니다.')
+        )
+        return
+      }
+    } else {
+      setLocalKitQuantities(pendingKitQuantities)
+    }
     setPendingKitQuantities(null)
     setKitQuantityChangeConfirmOpen(false)
     setKitQuantityModalOpen(false)
-    }, [pendingKitQuantities])
+  }, [kitQuantitiesMutation, pendingKitQuantities, remoteKitEnabled])
 
   const { deleteGuideTitle, deleteGuideLines } = useMemo(() => {
     const n = selectedRowKeys.length
@@ -431,6 +446,7 @@ export default function TextbookPage() {
         onCancel={() => {
           setKitQuantityChangeConfirmOpen(false)
           setPendingKitQuantities(null)
+          setKitSaveError(null)
         }}
         title="키트수량 변경"
         width={600}
@@ -449,7 +465,12 @@ export default function TextbookPage() {
             >
               취소
             </CmsButton>
-            <CmsButton variant="primary" type="button" onClick={handleConfirmKitQuantityChange}>
+            <CmsButton
+              variant="primary"
+              type="button"
+              onClick={handleConfirmKitQuantityChange}
+              disabled={kitQuantitiesMutation.isPending}
+            >
               확인
             </CmsButton>
           </div>
@@ -460,6 +481,9 @@ export default function TextbookPage() {
           <br />
           <strong>신규로 진행되는 프로그램부터 적용됩니다.</strong>
         </p>
+        {kitSaveError ? (
+          <p className="textbook-kit-quantity-change-modal__error">{kitSaveError}</p>
+        ) : null}
       </ContentModal>
       <FilterTableLayout
         bordered={false}
