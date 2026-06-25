@@ -134,8 +134,32 @@ function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     generalCommonInfo: isCompanySchool
       ? {
           educationScheduleMode: 'period',
+          curriculumSessions: [
+            {
+              sessionLabel: '1차시',
+              title: '1단원 나를 알리는 기술',
+              description: '채용 공고 읽기, 이력서 작성하기 등 취업에 필요한 단계들을 알아봅니다.',
+            },
+            {
+              sessionLabel: '2차시',
+              title: '2단원 나를 보여주는 기술',
+              description: '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
+            },
+          ],
+          educationScheduleLines: [
+            `${dayjs(`${y}-03-01`).format('YYYY. MM. DD')} ~ ${dayjs(`${y}-12-31`).format('YYYY. MM. DD')}`,
+          ],
+          wageGradeRows: [
+            { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 500,000원 | 장거리 : 500,000원' },
+            { grade: '2급 강사비', pricing: '1시간 당 | 기본 : 400,000원 | 장거리 : 400,000원' },
+            { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 300,000원 | 장거리 : 300,000원' },
+          ],
+          paymentItems: '교통비(일사일교), 숙박비(일사일교)',
+          deductionItems: '일용근로자 원천징수세액',
           participantRecruitmentInfo: {
             preEducationNoticeRequired: true,
+            maxAssignableInstructors: 2,
+            maxClassCount: 4,
             maxScheduleCount: 2,
             maxSessionsPerDay: 2,
           },

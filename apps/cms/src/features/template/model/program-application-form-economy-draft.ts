@@ -6,6 +6,10 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import {
+  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION,
+  INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION,
+} from '@/features/template/lib/institution-sex-offense-consent-field-definitions'
 
 /** 1사1교 프로그램 참여자 신청 폼 — 시드 단락 ID */
 export const PROGRAM_APPLICATION_FORM_ECONOMY_IDS = {
@@ -13,6 +17,10 @@ export const PROGRAM_APPLICATION_FORM_ECONOMY_IDS = {
   thirdPartyConsent: 'program-application-economy-seed-third-party',
   basicInfo: 'program-application-economy-seed-basic-info',
   guidance: 'program-application-economy-seed-guidance',
+  sexOffenseConsentSubmissionRequest:
+    'program-application-economy-seed-sex-offense-consent-submission',
+  sexOffenseConsentInquiryMethod:
+    'program-application-economy-seed-sex-offense-consent-inquiry',
   lessonReply: 'program-application-economy-seed-lesson-reply',
   educationExperience: 'program-application-economy-seed-education-experience',
   preferredSchedule: 'program-application-economy-seed-preferred-schedule',
@@ -148,6 +156,16 @@ export function createProgramApplicationFormEconomyDraft(): WritingFormDraft {
       PROGRAM_APPLICATION_FORM_ECONOMY_IDS.guidance,
       '안내 사항',
       '강사님들에게 제공 또는 요청할 사전 정보를 작성해 주세요.'
+    ),
+    createEconomyPlaceholderTable(
+      PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentSubmissionRequest,
+      INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION.title,
+      INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION.description
+    ),
+    createEconomyPlaceholderTable(
+      PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentInquiryMethod,
+      INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.title,
+      INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description
     ),
     createEconomyPlaceholderTable(
       PROGRAM_APPLICATION_FORM_ECONOMY_IDS.lessonReply,

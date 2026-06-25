@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import type { Dayjs } from 'dayjs'
-import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
+import dayjs from 'dayjs'
+import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -40,9 +41,11 @@ function createEmptyBlockState(): ScheduleBlockState {
 function ScheduleDateAndSessionRow({
   block,
   onPatch,
+  disabledDate,
 }: {
   block: ScheduleBlockState
   onPatch: (patch: Partial<ScheduleBlockState>) => void
+  disabledDate?: (date: Dayjs) => boolean
 }) {
   return (
     <DetailInfoForm.Row type="single">
@@ -59,6 +62,7 @@ function ScheduleDateAndSessionRow({
               placeholder="희망 교육 날짜를 선택하세요"
               value={block.date}
               onChange={next => onPatch({ date: next })}
+              disabledDate={disabledDate}
               width={240}
               style={{ flex: '0 0 240px', width: 240 }}
             />
@@ -87,6 +91,7 @@ function ScheduleTimeRow({
   end,
   onPatch,
   note,
+  classPeriodDisabled = false,
 }: {
   label: string
   classPeriod: string | undefined
@@ -94,6 +99,7 @@ function ScheduleTimeRow({
   end: Dayjs | null
   onPatch: (patch: { classPeriod?: string; start: Dayjs | null; end: Dayjs | null }) => void
   note?: string
+  classPeriodDisabled?: boolean
 }) {
   return (
     <DetailInfoForm.Row type="single">
@@ -111,13 +117,15 @@ function ScheduleTimeRow({
               placeholder="수업 진행 교시"
               value={classPeriod ?? ''}
               inputMode="numeric"
-              onChange={event =>
+              disabled={classPeriodDisabled}
+              onChange={event => {
+                if (classPeriodDisabled) return
                 onPatch({
                   classPeriod: event.target.value.trim() === '' ? undefined : event.target.value,
                   start,
                   end,
                 })
-              }
+              }}
             />
             <span>교시</span>
             <DetailInfoForm.InputsSeparator />
@@ -145,15 +153,16 @@ function ScheduleBlock({
   title,
   block,
   onPatch,
-  showSecondClassTime = false,
-  deleteAction,
+  disabledDate,
 }: {
   title: string
   block: ScheduleBlockState
   onPatch: (patch: Partial<ScheduleBlockState>) => void
-  showSecondClassTime?: boolean
-  deleteAction?: ReactNode
+  disabledDate?: (date: Dayjs) => boolean
 }) {
+  const secondClassPeriod = resolveNextClassPeriod(block.firstClassPeriod)
+  const showSecondClassTime = block.session === '2'
+
   return (
     <div style={{ display: 'flex', alignItems: 'stretch', gap: 8 }}>
       <div style={{ flex: '1 1 0', minWidth: 0 }}>
@@ -161,7 +170,7 @@ function ScheduleBlock({
           {title}
         </div>
         <DetailInfoForm title={title} hideHeader mode="edit">
-          <ScheduleDateAndSessionRow block={block} onPatch={onPatch} />
+          <ScheduleDateAndSessionRow block={block} onPatch={onPatch} disabledDate={disabledDate} />
           <ScheduleTimeRow
             label="1차시 희망 교육 시간"
             classPeriod={block.firstClassPeriod}
@@ -178,43 +187,48 @@ function ScheduleBlock({
           {showSecondClassTime ? (
             <ScheduleTimeRow
               label="2차시 희망 교육 시간"
-              classPeriod={block.secondClassPeriod}
+              classPeriod={secondClassPeriod}
               start={block.secondStart}
               end={block.secondEnd}
               onPatch={patch =>
                 onPatch({
-                  secondClassPeriod: patch.classPeriod,
+                  secondClassPeriod,
                   secondStart: patch.start,
                   secondEnd: patch.end,
                 })
               }
+              classPeriodDisabled
               note="*1차시가 진행되는 교시의 다음 수업 시간을 작성해 주세요."
             />
           ) : null}
         </DetailInfoForm>
       </div>
-      {deleteAction ? (
-        <div
-          style={{
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            alignSelf: 'stretch',
-          }}
-        >
-          {deleteAction}
-        </div>
-      ) : null}
     </div>
   )
 }
 
+function resolveNextClassPeriod(value: string | undefined): string {
+  const trimmed = value?.trim()
+  if (!trimmed) return ''
+  const parsed = Number(trimmed)
+  if (!Number.isFinite(parsed)) return ''
+  return String(parsed + 1)
+}
+
 /** 1사1교 프로그램 참여자 신청 폼 — 진행 희망 교육 일정 */
 export function EconomyProgramApplicationPreferredScheduleParagraph() {
+  const bridge = useInstitutionApplicationProgramBridge()
   const [firstBlock, setFirstBlock] = useState<ScheduleBlockState>(() => createEmptyBlockState())
   const [secondBlock, setSecondBlock] = useState<ScheduleBlockState>(() => createEmptyBlockState())
-  const [showSecondBlock, setShowSecondBlock] = useState(true)
+
+  const disabledDate = useMemo(() => {
+    const range = bridge.educationScheduleRange
+    if (!range) return undefined
+    const start = dayjs(range.start).startOf('day')
+    const end = dayjs(range.end).endOf('day')
+    if (!start.isValid() || !end.isValid()) return undefined
+    return (date: Dayjs) => date.isBefore(start, 'day') || date.isAfter(end, 'day')
+  }, [bridge.educationScheduleRange])
 
   return (
     <div
@@ -225,27 +239,15 @@ export function EconomyProgramApplicationPreferredScheduleParagraph() {
         title="■ 1지망"
         block={firstBlock}
         onPatch={patch => setFirstBlock(prev => ({ ...prev, ...patch }))}
+        disabledDate={disabledDate}
       />
 
-      {showSecondBlock ? (
-        <ScheduleBlock
-          title="■ 2지망"
-          block={secondBlock}
-          onPatch={patch => setSecondBlock(prev => ({ ...prev, ...patch }))}
-          showSecondClassTime
-          deleteAction={
-            <ItemDeleteButton
-              className="item-delete-button"
-              aria-label="2지망 삭제"
-              onClick={event => {
-                event.stopPropagation()
-                setSecondBlock(createEmptyBlockState())
-                setShowSecondBlock(false)
-              }}
-            />
-          }
-        />
-      ) : null}
+      <ScheduleBlock
+        title="■ 2지망"
+        block={secondBlock}
+        onPatch={patch => setSecondBlock(prev => ({ ...prev, ...patch }))}
+        disabledDate={disabledDate}
+      />
     </div>
   )
 }

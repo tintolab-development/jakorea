@@ -62,6 +62,7 @@ import {
 } from '@/features/template/model/program-application-form-institution-draft'
 import {
   createProgramApplicationFormEconomyDraft,
+  PROGRAM_APPLICATION_FORM_ECONOMY_IDS,
   PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-economy-draft'
 import {
@@ -104,7 +105,10 @@ import {
   replaceUjatRecruitVolunteerOverlay,
   resetUjatRecruitVolunteerOverlay,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
-import { useInstitutionApplicationFormVisibilityVersion } from '@/features/program/general/lib/institution-application-form-visibility'
+import {
+  shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph,
+  useInstitutionApplicationFormVisibilityVersion,
+} from '@/features/program/general/lib/institution-application-form-visibility'
 import {
   getInstitutionApplicationFormHiddenParagraphIds,
   useInstitutionApplicationProgramBridge,
@@ -223,6 +227,7 @@ export type UseProgramParticipantApplicationEditorOptions = {
   /** 프로그램 상세 — 공통·모집 정보 연동 미리보기/양식 수정 */
   program?: Program | null
   programLinkedApplicationFormPreview?: boolean
+  applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
 }
 
@@ -625,6 +630,12 @@ export function useProgramParticipantApplicationEditor(
     return getInstitutionApplicationFormHiddenParagraphIds(institutionApplicationBridge)
   }, [variant, institutionApplicationBridge, institutionApplicationFormVisibilityVersion])
 
+  const economyApplicationHiddenParagraphIds = useMemo(() => {
+    if (variant !== 'economy-application-institution') return undefined
+    if (shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph()) return undefined
+    return new Set([PROGRAM_APPLICATION_FORM_ECONOMY_IDS.sexOffenseConsentInquiryMethod])
+  }, [variant, institutionApplicationFormVisibilityVersion])
+
   const volunteerApplicationHiddenParagraphIds = useMemo(() => {
     if (variant !== 'volunteer') return undefined
     return resolveGeneralApplicationFormHiddenParagraphIds('volunteer', {
@@ -690,6 +701,7 @@ export function useProgramParticipantApplicationEditor(
           }
           if (variant === 'volunteer') return volunteerApplicationHiddenParagraphIds
           if (variant === 'individual') return individualApplicationHiddenParagraphIds
+          if (variant === 'economy-application-institution') return economyApplicationHiddenParagraphIds
           return institutionApplicationHiddenParagraphIds
         })(),
         ujatProgramApplicationGradeInfo,
@@ -698,6 +710,8 @@ export function useProgramParticipantApplicationEditor(
         showInstitutionApplicationLimits:
           variant === 'applicant-recruit-institution' &&
           (editorOptions?.participantOrganization ?? true),
+        applicantRecruitInstitutionLayoutVariant:
+          editorOptions?.applicantRecruitInstitutionLayoutVariant,
         applicantRecruitInstitutionDefaults: editorOptions?.applicantRecruitInstitutionDefaults,
         applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
         recruitFormInstructor: variant === 'recruit-instructor',
@@ -719,6 +733,7 @@ export function useProgramParticipantApplicationEditor(
       programApplicationFormVolunteerOptions,
       ujatProgramApplicationFormVolunteerOptions,
       editorOptions?.ujatRecruitParagraphProps,
+      editorOptions?.applicantRecruitInstitutionLayoutVariant,
       editorOptions?.applicantRecruitInstitutionDefaults,
       editorOptions?.participantOrganization,
       editorOptions?.programLinkedInstitutionApplicationForm,
@@ -729,6 +744,7 @@ export function useProgramParticipantApplicationEditor(
       ujatProgramApplicationGradeInfo,
       ujatProgramApplicationGradeClassTime,
       institutionApplicationHiddenParagraphIds,
+      economyApplicationHiddenParagraphIds,
       volunteerApplicationHiddenParagraphIds,
       individualApplicationHiddenParagraphIds,
     ]
@@ -813,9 +829,13 @@ export function useProgramParticipantApplicationEditor(
     ujatProgramApplicationGradeInfo,
     ujatProgramApplicationGradeClassTime,
     ujatRecruitParagraphProps: editorOptions?.ujatRecruitParagraphProps,
+    applicantRecruitInstitutionLayoutVariant:
+      editorOptions?.applicantRecruitInstitutionLayoutVariant,
+    applicantRecruitInstitutionDefaults: editorOptions?.applicantRecruitInstitutionDefaults,
     programLinkedInstitutionApplicationForm:
       editorOptions?.programLinkedInstitutionApplicationForm === true,
     institutionApplicationHiddenParagraphIds,
+    economyApplicationHiddenParagraphIds,
     volunteerApplicationHiddenParagraphIds,
     individualApplicationHiddenParagraphIds,
   }

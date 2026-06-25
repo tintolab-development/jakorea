@@ -416,6 +416,7 @@ export function HorizontalTableParagraphBody({
   ujatProgramApplicationGradeClassTime,
   applicantRecruitFormInstitution,
   showInstitutionApplicationLimits,
+  applicantRecruitInstitutionLayoutVariant,
   applicantRecruitInstitutionDefaults,
   ujatRecruitFormInstitution,
   applicantRecruitFormIndividual,
@@ -460,6 +461,7 @@ export function HorizontalTableParagraphBody({
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormInstitution?: boolean
   showInstitutionApplicationLimits?: boolean
+  applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
   /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormInstitution?: boolean
@@ -530,7 +532,11 @@ export function HorizontalTableParagraphBody({
   const applicantRecruitFormInstitutionBody = renderApplicantRecruitFormInstitutionParagraphBody(
     p,
     applicantRecruitFormInstitution,
-    { showInstitutionApplicationLimits, defaults: applicantRecruitInstitutionDefaults }
+    {
+      showInstitutionApplicationLimits,
+      layoutVariant: applicantRecruitInstitutionLayoutVariant,
+      defaults: applicantRecruitInstitutionDefaults,
+    }
   )
   if (applicantRecruitFormInstitutionBody != null) return applicantRecruitFormInstitutionBody
 

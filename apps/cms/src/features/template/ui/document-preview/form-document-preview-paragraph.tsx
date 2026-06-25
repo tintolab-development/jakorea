@@ -328,6 +328,9 @@ function renderBody(
           }
           applicantRecruitFormInstitution={paragraphBodyOptions?.applicantRecruitFormInstitution}
           showInstitutionApplicationLimits={paragraphBodyOptions?.showInstitutionApplicationLimits}
+          applicantRecruitInstitutionLayoutVariant={
+            paragraphBodyOptions?.applicantRecruitInstitutionLayoutVariant
+          }
           applicantRecruitInstitutionDefaults={
             paragraphBodyOptions?.applicantRecruitInstitutionDefaults
           }

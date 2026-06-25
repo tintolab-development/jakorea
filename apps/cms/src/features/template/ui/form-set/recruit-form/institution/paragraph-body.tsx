@@ -9,6 +9,7 @@ import { RecruitDetailInfoParagraph } from '@/features/template/ui/form-set/recr
 
 export type ApplicantRecruitFormInstitutionParagraphBodyOptions = {
   showInstitutionApplicationLimits?: boolean
+  layoutVariant?: ApplicantRecruitParticipantInfoParagraphProps['layoutVariant']
   defaults?: ApplicantRecruitParticipantInfoParagraphProps['defaults']
 }
 
@@ -21,6 +22,7 @@ export function renderApplicantRecruitFormInstitutionParagraphBody(
   if (!enabled) return null
   const limitsProps: ApplicantRecruitParticipantInfoParagraphProps = {
     showInstitutionApplicationLimits: options?.showInstitutionApplicationLimits ?? true,
+    layoutVariant: options?.layoutVariant,
     defaults: options?.defaults,
   }
   switch (paragraph.id) {
@@ -33,6 +35,7 @@ export function renderApplicantRecruitFormInstitutionParagraphBody(
           textFields={[
             { label: '프로그램 설명', placeholder: '프로그램 설명을 작성하세요' },
             { label: '모집 안내', placeholder: '모집 안내를 작성하세요' },
+            { label: '지원 방법', placeholder: '지원 방법을 작성하세요' },
             { label: '학습 지원 내용', placeholder: '학습 지원 내용을 작성하세요' },
           ]}
         />

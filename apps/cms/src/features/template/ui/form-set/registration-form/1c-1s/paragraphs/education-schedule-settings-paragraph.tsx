@@ -9,6 +9,7 @@ import {
   EducationSchedulePreviewLines,
   EDUCATION_SCHEDULE_PREVIEW_PLACEHOLDER,
 } from '@/features/template/ui/shared/education-schedule-preview-lines'
+import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
@@ -25,6 +26,17 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
   onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
 }) {
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null])
+
+  const handleDateRangeChange = (next: [Dayjs | null, Dayjs | null]) => {
+    setDateRange(next)
+    const [start, end] = next
+    patchInstitutionApplicationProgramBridge({
+      educationScheduleRange:
+        isValidDayjs(start) && isValidDayjs(end)
+          ? { start: start.toISOString(), end: end.toISOString() }
+          : undefined,
+    })
+  }
 
   const previewLines = useMemo((): string[] => {
     const [start, end] = dateRange
@@ -51,7 +63,7 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
             <ParagraphDatePicker
               mode="range"
               value={dateRange}
-              onChange={setDateRange}
+              onChange={handleDateRangeChange}
               width={360}
               placeholder={rangePlaceholder}
             />
