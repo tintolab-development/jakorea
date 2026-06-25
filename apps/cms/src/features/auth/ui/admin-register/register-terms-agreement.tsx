@@ -1,4 +1,5 @@
 import type { ConsentFormData } from '@/types/consent'
+import type { TermsViewType } from '@/features/auth/lib/terms-view-config'
 
 import { RegisterTermsCheckControl } from './register-terms-check-control'
 import { RegisterTermsAgreeAllCheckIcon } from './register-terms-check-icon'
@@ -25,7 +26,7 @@ const TERMS_ITEMS: TermsItemConfig[] = [...REQUIRED_TERMS_ITEMS, ...OPTIONAL_TER
 interface RegisterTermsAgreementProps {
   value: ConsentFormData
   onChange: (value: ConsentFormData) => void
-  onViewTerm?: (key: ConsentFieldKey) => void
+  onViewTerm?: (type: TermsViewType) => void
   mfaSetupAgreed?: boolean
   onMfaSetupAgreedChange?: (checked: boolean) => void
 }
@@ -114,6 +115,13 @@ export function RegisterTermsAgreement({
                 필수
               </span>
               <span className="register-terms-agreement__label">2단계 인증(MFA) 설정 동의</span>
+              <button
+                type="button"
+                className="register-terms-agreement__view"
+                onClick={() => onViewTerm?.('mfaSetup')}
+              >
+                보기
+              </button>
             </li>
           ) : null}
           {OPTIONAL_TERMS_ITEMS.map(item => {

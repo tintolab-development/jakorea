@@ -2,7 +2,6 @@ import { Form, Input } from 'antd'
 
 import {
   isValidRegisterPassword,
-  REGISTER_PASSWORD_CONDITION_MESSAGE,
   REGISTER_PASSWORD_HELP_TEXT,
   REGISTER_PASSWORD_MIN_LENGTH,
   REGISTER_PASSWORD_MISMATCH_MESSAGE,
@@ -84,11 +83,7 @@ export function FindPasswordChangeForm({
               <p className="register-password-field__message register-password-field__message--error">
                 {submitError}
               </p>
-            ) : isNewPasswordConditionError ? (
-              <p className="register-password-field__message register-password-field__message--error">
-                {REGISTER_PASSWORD_CONDITION_MESSAGE}
-              </p>
-            ) : (
+            ) : isNewPasswordConditionError ? null : (
               <p className="register-password-field__help">{REGISTER_PASSWORD_HELP_TEXT}</p>
             )
           }
