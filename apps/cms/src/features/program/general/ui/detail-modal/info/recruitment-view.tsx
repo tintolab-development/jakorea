@@ -35,6 +35,7 @@ export function GeneralProgramRecruitmentView({
   onRecruitTabChange,
   showInstructorTab,
   showVolunteerTab,
+  showParticipantRecruitmentMethod = false,
   canWrite,
   isEditModeInstitutions,
   institutionsForm,
@@ -54,6 +55,7 @@ export function GeneralProgramRecruitmentView({
   onRecruitTabChange: (tab: GeneralRecruitTabKey) => void
   showInstructorTab: boolean
   showVolunteerTab: boolean
+  showParticipantRecruitmentMethod?: boolean
   canWrite: boolean
   isEditModeInstitutions: boolean
   isEditModeInstructors: boolean
@@ -91,6 +93,7 @@ export function GeneralProgramRecruitmentView({
           form={isEditModeInstitutions ? institutionsForm : undefined}
           onRegisterGetAdditionalContentHtml={registerInstitutionsAdditionalHtml}
           showThumbnail
+          showRecruitmentMethod={showParticipantRecruitmentMethod}
         />
       )
       break
@@ -156,7 +159,7 @@ export function GeneralProgramRecruitmentView({
         trailing={
           canWrite || isEditMode ? (
             <CmsButton
-              variant="secondary"
+              variant="primary"
               size="large"
               width={140}
               onClick={resolveProgramEditInfoClick(isEditMode, {
