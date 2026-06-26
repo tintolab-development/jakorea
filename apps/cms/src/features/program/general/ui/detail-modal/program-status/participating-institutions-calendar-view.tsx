@@ -18,6 +18,7 @@ import {
 import { SCHEDULE_COLORS } from '../../../../shared/ui/program-schedule-colors'
 import {
   ParticipatingInstitutionsCalendarDayList,
+  formatParticipatingSessionsPeriodForCalendarDisplay,
   formatParticipatingSessionPeriodForCalendarDisplay,
   getPrimaryParticipatingSessionLine,
   parseParticipatingSessionTimeRange,
@@ -116,7 +117,10 @@ function getInstructorCalendarPopoverParts(ev: CalendarEvent): ParticipatingCale
   }
 }
 
-function getPopoverRowParts(ev: CalendarEvent): ParticipatingCalendarPopoverRowParts {
+function getPopoverRowParts(
+  ev: CalendarEvent,
+  usePreferredScheduleFormat = false
+): ParticipatingCalendarPopoverRowParts {
   if (isVolunteerCalendarEventItem(ev.originalItem)) {
     return getVolunteerCalendarPopoverParts(ev)
   }
@@ -128,13 +132,16 @@ function getPopoverRowParts(ev: CalendarEvent): ParticipatingCalendarPopoverRowP
     title: row.schoolName?.trim() || '-',
     location: formatInstitutionRegionForCalendarListDisplay(row.region),
     grade: educationGrade?.trim() || row.educationGrade?.trim() || '-',
-    sessionLine: getPrimaryParticipatingSessionLine(sessionsOnDate),
+    sessionLine: usePreferredScheduleFormat
+      ? formatParticipatingSessionsPeriodForCalendarDisplay(sessionsOnDate)
+      : getPrimaryParticipatingSessionLine(sessionsOnDate),
   }
 }
 
 function resolveEventPopoverRowParts(
   ev: CalendarEvent,
-  resolvePopoverRowParts?: ParticipatingInstitutionsCalendarViewProps['resolvePopoverRowParts']
+  resolvePopoverRowParts?: ParticipatingInstitutionsCalendarViewProps['resolvePopoverRowParts'],
+  usePreferredScheduleFormat = false
 ): ParticipatingCalendarPopoverRowParts {
   if (isVolunteerCalendarEventItem(ev.originalItem)) {
     return getVolunteerCalendarPopoverParts(ev)
@@ -148,22 +155,26 @@ function resolveEventPopoverRowParts(
       date: dayjs(ev.startDate),
     })
   }
-  return getPopoverRowParts(ev)
+  return getPopoverRowParts(ev, usePreferredScheduleFormat)
 }
 
 function ParticipatingCalendarEventPopoverContent({
   events,
   titleColorMap,
   resolvePopoverRowParts,
+  usePreferredScheduleFormat,
 }: {
   events: CalendarEvent[]
   titleColorMap?: Map<string, string>
   resolvePopoverRowParts?: (ev: CalendarEvent) => ParticipatingCalendarPopoverRowParts
+  usePreferredScheduleFormat?: boolean
 }) {
   return (
     <div className="participating-institutions-calendar-popover">
       {events.map(ev => {
-        const parts = resolvePopoverRowParts ? resolvePopoverRowParts(ev) : getPopoverRowParts(ev)
+        const parts = resolvePopoverRowParts
+          ? resolvePopoverRowParts(ev)
+          : getPopoverRowParts(ev, usePreferredScheduleFormat)
         const titleColor = titleColorMap?.get(String(ev.id))
         const instructorName = parts.instructorName?.trim()
         const volunteerName = parts.volunteerName?.trim()
@@ -248,30 +259,73 @@ function ParticipatingCalendarEventPopoverContent({
   )
 }
 
-function buildEventsFromSchools(schools: ParticipatingSchoolRow[]): CalendarEvent[] {
+function buildEventsFromSchools(
+  schools: ParticipatingSchoolRow[],
+  usePreferredScheduleFormat = false
+): CalendarEvent[] {
   const events: CalendarEvent[] = []
   for (const row of schools) {
-    for (const session of row.sessions ?? []) {
-      const d = parseSessionDate(session.date)
-      const times = parseParticipatingSessionTimeRange(session.timeRange)
-      const timeRangeDisplay = session.timeRange.replace(/\s*~\s*/g, ' ~ ')
-      const periodLabel = session.classNum.endsWith('교시')
-        ? session.classNum
-        : `${session.classNum}교시`
-      const periodStr = `${periodLabel} (${timeRangeDisplay})`
-      const dateKey = d.format('YYYY-MM-DD')
+    if (!usePreferredScheduleFormat) {
+      for (const session of row.sessions ?? []) {
+        const d = parseSessionDate(session.date)
+        if (!d.isValid()) continue
+        const times = parseParticipatingSessionTimeRange(session.timeRange)
+        const timeRangeDisplay = session.timeRange.replace(/\s*~\s*/g, ' ~ ')
+        const periodLabel = session.classNum.endsWith('교시')
+          ? session.classNum
+          : `${session.classNum}교시`
+        const periodStr = `${periodLabel} (${timeRangeDisplay})`
+        const dateKey = d.format('YYYY-MM-DD')
+        events.push({
+          id: `${row.id}_${dateKey}_r${session.round}`,
+          title: row.schoolName?.trim() || '-',
+          startDate: dateKey,
+          endDate: dateKey,
+          startTime: times?.startTime,
+          endTime: times?.endTime,
+          originalItem: {
+            row,
+            sessionsOnDate: [session],
+            educationGrade: row.educationGrade,
+            desiredEducationPeriod: periodStr,
+          },
+        })
+      }
+      continue
+    }
+
+    const sessionsByDate = new Map<string, ParticipatingSchoolSession[]>()
+
+    for (const session of row.sessions?.filter(s => s.status !== 'not_planned') ?? []) {
+      const date = parseSessionDate(session.date)
+      if (!date.isValid()) continue
+      const dateKey = date.format('YYYY-MM-DD')
+      const prev = sessionsByDate.get(dateKey)
+      if (prev) prev.push(session)
+      else sessionsByDate.set(dateKey, [session])
+    }
+
+    for (const [dateKey, sessionsOnDate] of sessionsByDate) {
+      const timeRanges = sessionsOnDate
+        .map(session => parseParticipatingSessionTimeRange(session.timeRange))
+        .filter((range): range is NonNullable<typeof range> => range != null)
+      const startTimes = timeRanges.map(range => range.startTime).sort()
+      const endTimes = timeRanges.map(range => range.endTime).sort()
+      const startTime = startTimes[0]
+      const endTime = endTimes.length > 0 ? endTimes[endTimes.length - 1] : undefined
+
       events.push({
-        id: `${row.id}_${dateKey}_r${session.round}`,
+        id: `${row.id}_${dateKey}`,
         title: row.schoolName?.trim() || '-',
         startDate: dateKey,
         endDate: dateKey,
-        startTime: times?.startTime,
-        endTime: times?.endTime,
+        startTime,
+        endTime,
         originalItem: {
           row,
-          sessionsOnDate: [session],
+          sessionsOnDate,
           educationGrade: row.educationGrade,
-          desiredEducationPeriod: periodStr,
+          desiredEducationPeriod: getPrimaryParticipatingSessionLine(sessionsOnDate),
         },
       })
     }
@@ -300,6 +354,8 @@ export interface ParticipatingInstitutionsCalendarViewProps {
   customEvents?: CalendarEvent[]
   /** 월간 셀 strip 내부 커스텀 렌더 (참여 강사: 학교명 | 강사명) */
   renderMonthEventContent?: RenderCalendarMonthEventContent
+  /** 1사1교: 기관+날짜별 신청 차시를 묶어 `N차시 (시작 ~ 종료)`로 표시 */
+  usePreferredScheduleFormat?: boolean
 }
 
 export function ParticipatingInstitutionsCalendarView({
@@ -314,6 +370,7 @@ export function ParticipatingInstitutionsCalendarView({
   resolvePopoverRowParts,
   customEvents,
   renderMonthEventContent,
+  usePreferredScheduleFormat = false,
 }: ParticipatingInstitutionsCalendarViewProps) {
   const [fallbackCalendarMode, setFallbackCalendarMode] = useState<'month' | 'week'>('month')
   const calendarControlled =
@@ -328,8 +385,8 @@ export function ParticipatingInstitutionsCalendarView({
     createInitialCalendarNavigationState(calendarGranularityProp ?? 'month').viewAnchor
   )
   const baseEvents = useMemo(
-    () => customEvents ?? buildEventsFromSchools(schools),
-    [customEvents, schools]
+    () => customEvents ?? buildEventsFromSchools(schools, usePreferredScheduleFormat),
+    [customEvents, schools, usePreferredScheduleFormat]
   )
   const events = useMemo(
     () =>
@@ -406,8 +463,13 @@ export function ParticipatingInstitutionsCalendarView({
                   ])
                 )}
                 resolvePopoverRowParts={event =>
-                  resolveEventPopoverRowParts(event, resolvePopoverRowParts)
+                  resolveEventPopoverRowParts(
+                    event,
+                    resolvePopoverRowParts,
+                    usePreferredScheduleFormat
+                  )
                 }
+                usePreferredScheduleFormat={usePreferredScheduleFormat}
               />
             )
           }}
@@ -421,6 +483,7 @@ export function ParticipatingInstitutionsCalendarView({
             events={eventsForSelectedDate}
             getColorForEvent={e => getColorForEvent(e as CalendarEvent)}
             onSchoolClick={onSchoolClick}
+            usePreferredScheduleFormat={usePreferredScheduleFormat}
           />
         )
       }

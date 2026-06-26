@@ -19,6 +19,7 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
   STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
 } from '@/shared/components'
 import { useParticipatingInstitutionsParams } from '../../../hooks/use-participating-institutions-params'
 import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
@@ -44,14 +45,28 @@ import type { Program } from '@/types/domain'
 import type { ParticipatingInstitutionsFilters } from '../../../hooks/use-participating-institutions-params'
 import { participatingInstitutionsFilterFields } from '../../../lib/participating-institutions-filter-fields'
 import { programUsesTextbook } from '../../../lib/participating-institution-textbook'
+import { resolveInstitutionApplicationProgramBridge } from '../../../lib/institution-application-program-bridge'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
-import { formatParticipatingSchoolSessionLine } from '../../../lib/participating-school-session-display'
+import {
+  buildParticipatingSchoolPreferredScheduleLines,
+  formatParticipatingSchoolSessionLine,
+} from '../../../lib/participating-school-session-display'
 import './participating-institutions-section.css'
 
 function formatSessionLine(s: ParticipatingSchoolSession): string {
   return formatParticipatingSchoolSessionLine(s)
+}
+
+function isCompanySchoolProgram(program: Program | null | undefined): boolean {
+  return (
+    program?.id.startsWith('economy-prog-') === true ||
+    program?.id.startsWith('company-school-prog-') === true ||
+    program?.id.startsWith('company-school-local-') === true ||
+    program?.mainTitle?.includes('1사1교') === true ||
+    program?.title.includes('1사1교') === true
+  )
 }
 
 export interface ParticipatingInstitutionsSectionProps {
@@ -228,14 +243,21 @@ export function ParticipatingInstitutionsSection({
 
   const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
 
+  const isCompanySchool = isCompanySchoolProgram(program)
+  const programBridge = useMemo(
+    () => resolveInstitutionApplicationProgramBridge(program),
+    [program]
+  )
+  const maxClassCount = isCompanySchool ? programBridge.maxClassCount : undefined
   const showTextbookFeatures = program ? programUsesTextbook(program, textbookCatalog) : true
+  const showTextbookStatusColumn = isCompanySchool || showTextbookFeatures
 
   const filterFields = useMemo(
     () =>
-      showTextbookFeatures
+      showTextbookStatusColumn
         ? participatingInstitutionsFilterFields
         : participatingInstitutionsFilterFields.filter(field => field.key !== 'textbookStatus'),
-    [showTextbookFeatures]
+    [showTextbookStatusColumn]
   )
 
   const columns: ColumnsType<ParticipatingSchoolRow> = useMemo(
@@ -273,19 +295,21 @@ export function ParticipatingInstitutionsSection({
         }),
         onCell: () => ({ className: 'participating-institutions-section__td-sessions' }),
         render: (_: unknown, record: ParticipatingSchoolRow) => {
-          const sessions = record.sessions ?? []
-          const total = sessions.length
+          const sessionLines = isCompanySchool
+            ? buildParticipatingSchoolPreferredScheduleLines(record.sessions)
+            : (record.sessions ?? []).map(formatSessionLine)
+          const total = sessionLines.length
           const showCount = total <= 3 ? total : 2
-          const displaySessions = sessions.slice(0, showCount)
+          const displaySessions = sessionLines.slice(0, showCount)
           const restCount = total - showCount
           return (
             <div className="participating-institutions-section__sessions-cell">
-              {displaySessions.map((s, index) => (
+              {displaySessions.map((line, index) => (
                 <div
-                  key={`${record.id}-session-${s.round}-${index}`}
+                  key={`${record.id}-session-${index}`}
                   className="participating-institutions-section__session-line"
                 >
-                  {formatSessionLine(s)}
+                  {line}
                 </div>
               ))}
               {restCount > 0 && (
@@ -297,7 +321,7 @@ export function ParticipatingInstitutionsSection({
           )
         },
       },
-      ...(showTextbookFeatures
+      ...(showTextbookStatusColumn
         ? [
             {
               title: '교재 배송 현황',
@@ -305,23 +329,34 @@ export function ParticipatingInstitutionsSection({
               key: 'textbookStatus',
               width: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH,
               align: 'center' as const,
-              onCell: () => ({
-                className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+              onHeaderCell: () => ({
+                className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
               }),
-              render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
-                <StatusDropdownCell<TextbookStatusKey>
-                  status={status ?? null}
-                  statusOptions={TEXTBOOK_STATUS_OPTION_KEYS}
-                  renderBadge={s => <TextbookStatusBadge status={s} />}
-                  isItemDisabled={(cur, opt) => cur === opt}
-                  onChange={key => handleTextbookStatusChange(record.id, key)}
-                  isOpen={openTextbookDropdownId === record.id}
-                  onOpenChange={open => setOpenTextbookDropdownId(open ? record.id : null)}
-                  emptyPlaceholder="-"
-                  style={PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE}
-                  tagLayout="tag100"
-                />
-              ),
+              onCell: (record: ParticipatingSchoolRow) =>
+                record.textbookStatus === 'not_applicable'
+                  ? {}
+                  : {
+                      className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+                    },
+              render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => {
+                if (status === 'not_applicable') return '-'
+                return (
+                  <StatusDropdownCell<TextbookStatusKey>
+                    status={status ?? null}
+                    statusOptions={TEXTBOOK_STATUS_OPTION_KEYS.filter(
+                      key => key !== 'not_applicable'
+                    )}
+                    renderBadge={s => <TextbookStatusBadge status={s} />}
+                    isItemDisabled={(cur, opt) => cur === opt}
+                    onChange={key => handleTextbookStatusChange(record.id, key)}
+                    isOpen={openTextbookDropdownId === record.id}
+                    onOpenChange={open => setOpenTextbookDropdownId(open ? record.id : null)}
+                    emptyPlaceholder="-"
+                    style={PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE}
+                    tagLayout="tag100"
+                  />
+                )
+              },
             },
           ]
         : []),
@@ -344,7 +379,11 @@ export function ParticipatingInstitutionsSection({
           className: 'participating-institutions-section__th-class-count',
         }),
         onCell: () => ({ className: 'participating-institutions-section__td-class-count' }),
-        render: (v: number) => (v != null ? `${v}개` : '-'),
+        render: (v: number) => {
+          if (v == null) return '-'
+          const limited = maxClassCount != null ? Math.min(v, maxClassCount) : v
+          return `${limited}개`
+        },
       },
       {
         title: '총 학생 수',
@@ -374,8 +413,10 @@ export function ParticipatingInstitutionsSection({
     [
       getInstructorDisplayForSchool,
       handleTextbookStatusChange,
+      isCompanySchool,
+      maxClassCount,
       openTextbookDropdownId,
-      showTextbookFeatures,
+      showTextbookStatusColumn,
     ]
   )
 
@@ -519,6 +560,7 @@ export function ParticipatingInstitutionsSection({
               }}
               calendarGranularity={progressCalendarGranularity}
               onCalendarGranularityChange={setProgressCalendarGranularity}
+              usePreferredScheduleFormat={isCompanySchool}
             />
           </div>
         )}

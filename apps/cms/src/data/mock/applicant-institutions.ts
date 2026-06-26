@@ -291,6 +291,7 @@ export const MOCK_APPLICANT_INSTITUTIONS: ApplicantSchoolRow[] = (() => {
     row.desiredEducationPeriod = '26.04.20(월)~26.04.27(월)'
     row.detail = { ...APPLICANT_SCHOOL_1_DETAIL }
     row.sessions = APPLICANT_SCHOOL_1_SESSIONS
+    row.assignedInstructorNames = '김강사1, 이강사2, 박강사3'
   }
   const rowJinwol4 = list.find(s => s.id === 'applicant-school-5')
   if (rowJinwol4) {

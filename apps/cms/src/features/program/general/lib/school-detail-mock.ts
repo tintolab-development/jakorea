@@ -4,13 +4,15 @@
  * ApplicantSchoolRow → 상세 (신청자 목록 탭용)
  */
 
-import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
+import type {
+  ParticipatingSchoolRow,
+  ParticipatingSchoolSession,
+} from '@/data/mock/participating-schools'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
 import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
-import {
-  countLectureAttendanceHeldAndAttended,
-} from './lecture-attendance-count'
+import { countLectureAttendanceHeldAndAttended } from './lecture-attendance-count'
+import { buildParticipatingSchoolPreferredScheduleLines } from './participating-school-session-display'
 import type {
   SchoolDetailForModal,
   SchoolDetailInstructorRow,
@@ -182,6 +184,8 @@ const WAITING_DISTANCES = ['2km', '4km', '6km', '5km', '7km']
 /** 배정 대기 강사 테이블용 행 (목 데이터) */
 export interface WaitingInstructorRowMock {
   id: string
+  instructorId?: string
+  scheduleKey?: string
   no: number
   instructorName: string
   homeAddress?: string
@@ -190,6 +194,30 @@ export interface WaitingInstructorRowMock {
   hopeDate?: string
   hopeTime?: string
   hopeSession?: string
+  hopeScheduleLine?: string
+}
+
+function scheduleGroupsForWaitingInstructor(
+  sessions: ParticipatingSchoolSession[] | undefined
+): Array<{
+  scheduleKey: string
+  sessions: ParticipatingSchoolSession[]
+  hopeScheduleLine: string
+}> {
+  const groups = new Map<string, ParticipatingSchoolSession[]>()
+  for (const session of sessions?.filter(s => s.status !== 'not_planned') ?? []) {
+    const scheduleKey = `${session.date}|${session.dayOfWeek}`
+    const prev = groups.get(scheduleKey)
+    if (prev) prev.push(session)
+    else groups.set(scheduleKey, [session])
+  }
+
+  const lines = buildParticipatingSchoolPreferredScheduleLines(sessions)
+  return Array.from(groups.entries()).map(([scheduleKey, group], index) => ({
+    scheduleKey,
+    sessions: group,
+    hopeScheduleLine: lines[index] ?? '-',
+  }))
 }
 
 export function getWaitingInstructorRows(
@@ -230,6 +258,73 @@ export function getWaitingInstructorRows(
       }
     })
   )
+}
+
+/** 1사1교 — 신청 강사 + 신청 일정별 배정 대기 행 */
+export function getCompanySchoolWaitingInstructorScheduleRows(
+  schoolName: string,
+  instructorList: ParticipatingInstructorRow[],
+  schoolRows: ParticipatingSchoolRow[] = [],
+  assignedInstructorIds: Set<string> = new Set()
+): WaitingInstructorRowMock[] {
+  const occupiedSlots = buildOccupiedWaitingInstructorScheduleSlots(
+    instructorList,
+    schoolName,
+    schoolRows
+  )
+  const currentSchool = schoolRows.find(s => s.schoolName === schoolName)
+  const scheduleGroups = scheduleGroupsForWaitingInstructor(currentSchool?.sessions)
+  const notAssignedToThisSchool = instructorList.filter(
+    r => r.schoolName !== schoolName && !assignedInstructorIds.has(r.id)
+  )
+
+  const rows: WaitingInstructorRowMock[] = []
+  notAssignedToThisSchool.slice(0, 12).forEach((r, instructorIndex) => {
+    const seed = hash(r.id)
+    const sourceGroups =
+      scheduleGroups.length > 0
+        ? scheduleGroups
+        : [
+            {
+              scheduleKey: `${r.id}|fallback`,
+              sessions: [] as ParticipatingSchoolSession[],
+              hopeScheduleLine: `${pick(WAITING_HOPE_DATES, instructorIndex % 3)} ${pick(
+                WAITING_HOPE_TIMES,
+                instructorIndex % 3
+              )} | ${pick(WAITING_HOPE_SESSIONS, instructorIndex % 2)}`,
+            },
+          ]
+
+    sourceGroups.forEach((group, scheduleIndex) => {
+      const session = group.sessions[0]
+      const hopeSchedule = session
+        ? participatingSchoolSessionToHopeSchedule(session)
+        : {
+            hopeDate: pick(WAITING_HOPE_DATES, scheduleIndex % 3),
+            hopeTime: pick(WAITING_HOPE_TIMES, scheduleIndex % 3),
+            hopeSession: pick(WAITING_HOPE_SESSIONS, scheduleIndex % 2),
+          }
+
+      rows.push({
+        id: `${r.id}__${group.scheduleKey}`,
+        instructorId: r.id,
+        scheduleKey: group.scheduleKey,
+        no: 0,
+        instructorName: r.instructorName,
+        homeAddress: r.address ?? pick(WAITING_HOME_ADDRESSES, seed + instructorIndex),
+        distanceToSchool: pick(WAITING_DISTANCES, seed + scheduleIndex),
+        assignmentStatus: resolveWaitingInstructorAssignmentStatus(hopeSchedule, occupiedSlots),
+        hopeDate: hopeSchedule.hopeDate,
+        hopeTime: hopeSchedule.hopeTime,
+        hopeSession: hopeSchedule.hopeSession,
+        hopeScheduleLine: group.hopeScheduleLine,
+      })
+    })
+  })
+
+  const sorted = sortWaitingInstructorRowsUnavailableToBottom(rows)
+  const n = sorted.length
+  return sorted.map((row, index) => ({ ...row, no: n - index }))
 }
 
 /**

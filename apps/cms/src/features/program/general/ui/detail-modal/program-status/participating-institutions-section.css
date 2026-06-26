@@ -195,6 +195,29 @@
   max-height: 53px !important;
 }
 
+.participating-institutions-section__table--textbook-dropdown.cms-data-table
+  th.status-dropdown-cell__header--tag-100,
+.participating-institutions-section__table--textbook-dropdown.cms-data-table
+  td.status-dropdown-cell__cell-status--tag-100 {
+  width: 152px !important;
+  min-width: 152px !important;
+  max-width: 152px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.participating-institutions-section__table--textbook-dropdown.cms-data-table
+  td.status-dropdown-cell__cell-status--tag-100
+  .ant-dropdown-trigger {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin-inline: auto;
+  width: 100%;
+}
+
 /* --------------------------------------------------------------------------
  * 참여 강사 전용 (같은 레이아웃·테이블 토큰 재사용, 루트에 --instructors 수정자)
  * -------------------------------------------------------------------------- */

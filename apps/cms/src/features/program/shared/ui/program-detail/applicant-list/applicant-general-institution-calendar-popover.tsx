@@ -7,10 +7,12 @@ import type { ReactNode } from 'react'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import type { CalendarItem } from '@/shared/components/calendar'
+import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
+import { CalendarApprovalStatusBadge } from '@/shared/components/calendar/ui/item-list/calendar-approval-status-badge'
 import type { ApplicantCalendarEvent } from './applicant-calendar-events'
 import {
-  findInstitutionSessionForDate,
-  formatInstitutionCalendarSessionTimeDisplay,
+  findInstitutionSessionsForDate,
+  formatInstitutionCalendarSessionsTimeDisplay,
   getInstitutionRegionShort,
 } from './applicant-institution-calendar-session'
 
@@ -34,6 +36,13 @@ function resolveInstitutionFromCalendarItem(item: CalendarItem): {
   return { institution, dateKey }
 }
 
+function approvalStatusModifier(status: ApprovalStatusKey | undefined): ApprovalStatusKey {
+  if (status === 'approved' || status === 'rejected' || status === 'pending') {
+    return status
+  }
+  return 'pending'
+}
+
 export function renderGeneralInstitutionCalendarPreviewTooltipContent({
   events,
   colorMap,
@@ -48,21 +57,27 @@ export function renderGeneralInstitutionCalendarPreviewTooltipContent({
         if (resolved == null) return null
 
         const { institution, dateKey } = resolved
-        const session = findInstitutionSessionForDate(institution, dateKey)
+        const sessions = findInstitutionSessionsForDate(institution, dateKey)
         const titleColor = colorMap.get(item.id)?.text
-        const sessionLine = formatInstitutionCalendarSessionTimeDisplay(
-          session,
+        const sessionLine = formatInstitutionCalendarSessionsTimeDisplay(
+          sessions,
           institution.desiredEducationPeriod
         )
         const gradeLabel = institution.educationGrade?.trim() || '-'
+        const approvalStatus = approvalStatusModifier(
+          institution.approvalStatus as ApprovalStatusKey | undefined
+        )
 
         return (
           <div key={String(item.id)} className="participating-institutions-calendar-popover__entry">
-            <div
-              className="participating-institutions-calendar-popover__title"
-              style={titleColor ? { color: titleColor } : undefined}
-            >
-              {institution.schoolName.trim() || '-'}
+            <div className="participating-institutions-calendar-popover__title-row">
+              <span
+                className="participating-institutions-calendar-popover__title"
+                style={titleColor ? { color: titleColor } : undefined}
+              >
+                {institution.schoolName.trim() || '-'}
+              </span>
+              <CalendarApprovalStatusBadge status={approvalStatus} />
             </div>
             <div className="participating-institutions-calendar-popover__meta">
               <span className="participating-institutions-calendar-popover__meta-part">

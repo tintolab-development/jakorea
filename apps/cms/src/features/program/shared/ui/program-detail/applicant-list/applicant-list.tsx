@@ -337,7 +337,9 @@ export function ApplicantList({
     menu === 'instructors' && instructorColumnPreset === 'general-detail'
 
   const useGeneralInstitutionActionModal =
-    menu === 'institutions' && institutionColumnPreset === 'general-detail'
+    menu === 'institutions' &&
+    (institutionColumnPreset === 'general-detail' || institutionColumnPreset === 'company-school')
+  const useGeneralInstitutionCalendarVariant = useGeneralInstitutionActionModal
 
   const useGeneralParticipantActionModal =
     menu === 'individual-applications' && detailVariant === 'general'
@@ -472,12 +474,23 @@ export function ApplicantList({
     return individualList.find(row => row.id === id) ?? null
   }, [selectedRowKeys, individualList])
 
+  const resolveSingleSelectedInstitution = useCallback((): ApplicantSchoolRow | null => {
+    if (selectedRowKeys.length !== 1) return null
+    const id = String(selectedRowKeys[0])
+    return institutionList.find(row => row.id === id) ?? null
+  }, [selectedRowKeys, institutionList])
+
   const handleBulkRejectClick = () => {
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
     if (useGeneralInstitutionActionModal) {
+      const single = resolveSingleSelectedInstitution()
+      if (single) {
+        setInstitutionRejectTarget({ id: single.id, name: single.schoolName })
+        return
+      }
       setInstitutionBulkRejectOpen(true)
       return
     }
@@ -503,6 +516,11 @@ export function ApplicantList({
       return
     }
     if (useGeneralInstitutionActionModal) {
+      const single = resolveSingleSelectedInstitution()
+      if (single) {
+        setInstitutionApproveTarget({ id: single.id, name: single.schoolName })
+        return
+      }
       setInstitutionBulkApproveOpen(true)
       return
     }
@@ -531,7 +549,7 @@ export function ApplicantList({
     if (!usesInstitutionTableScroll || displayViewMode !== 'table' || selectedItem) return
     const el = institutionTableWrapRef.current
     if (!el) return
-    const minW = 1280
+    const minW = institutionColumnPreset === 'company-school' ? 1600 : 1280
     const update = () => {
       const w = el.getBoundingClientRect().width
       setInstitutionTableScrollX(Math.max(minW, Math.floor(w)))
@@ -1621,35 +1639,35 @@ export function ApplicantList({
             </div>
           ) : (
             <div className="applicant-details__calendar-wrap">
-            <ApplicantCalendarView
-              useSplitCardPageScroll={detailVariant === 'general'}
-              events={mapApplicantDataToCalendarEvents(
-                tableData as
-                  | ApplicantSchoolRow[]
-                  | ApplicantInstructorRow[]
-                  | GeneralIndividualApplicantRow[],
-                menu
-              )}
-              loading={false}
-              selectedRowKeys={selectedRowKeys}
-              onSelectionChange={setSelectedRowKeys}
-              onItemClick={item => {
-                setSelectedItem(item)
-              }}
-              menu={menu}
-              showEntityFilter={showCalendarEntityFilter}
-              calendarGranularity={applicantsCalendarGranularity}
-              onCalendarGranularityChange={setApplicantsCalendarGranularity}
-              calendarVariant={
-                instructorColumnPreset === 'general-detail' && menu === 'instructors'
-                  ? 'general-instructor'
-                  : institutionColumnPreset === 'general-detail' && menu === 'institutions'
-                    ? 'general-institution'
-                    : menu === 'individual-applications' && !showCalendarEntityFilter
-                      ? 'general-individual'
-                      : 'default'
-              }
-            />
+              <ApplicantCalendarView
+                useSplitCardPageScroll={detailVariant === 'general'}
+                events={mapApplicantDataToCalendarEvents(
+                  tableData as
+                    | ApplicantSchoolRow[]
+                    | ApplicantInstructorRow[]
+                    | GeneralIndividualApplicantRow[],
+                  menu
+                )}
+                loading={false}
+                selectedRowKeys={selectedRowKeys}
+                onSelectionChange={setSelectedRowKeys}
+                onItemClick={item => {
+                  setSelectedItem(item)
+                }}
+                menu={menu}
+                showEntityFilter={showCalendarEntityFilter}
+                calendarGranularity={applicantsCalendarGranularity}
+                onCalendarGranularityChange={setApplicantsCalendarGranularity}
+                calendarVariant={
+                  instructorColumnPreset === 'general-detail' && menu === 'instructors'
+                    ? 'general-instructor'
+                    : useGeneralInstitutionCalendarVariant
+                      ? 'general-institution'
+                      : menu === 'individual-applications' && !showCalendarEntityFilter
+                        ? 'general-individual'
+                        : 'default'
+                }
+              />
             </div>
           )}
         </FilterTableLayout>

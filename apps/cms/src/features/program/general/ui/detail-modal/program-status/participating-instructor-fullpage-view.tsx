@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback, type Key } from 'react'
-import { Table, Select } from 'antd'
+import { Table } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
@@ -30,7 +30,6 @@ import {
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import { ContentModal } from '@/shared/ui/content-modal'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -50,6 +49,7 @@ import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-b
 import {
   buildInitialAssignedSchoolRows,
   buildWaitingSchoolRows,
+  buildWaitingSchoolScheduleRows,
   createWaitingRowForSchool,
   schoolRowToAssignedRow,
   renumberAssignedRows,
@@ -58,9 +58,13 @@ import {
   type InstructorWaitingSchoolRow,
   type InstructorWaitingAssignmentStatus,
 } from '@/features/program/general/lib/instructor-institution-assignment-mock'
+import {
+  mapParticipatingSessionsToInstructorAssignOptions,
+} from '@/features/program/general/lib/instructor-assign-session-options'
 import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
+import { AssignGuideModal } from './assign-guide-modal'
 import { ParticipatingInstructorApplicationInfo } from './participating-instructor-application-info'
 import { useParticipatingInstructorDetailEdit } from '@/features/program/general/hooks/use-participating-instructor-detail-edit'
 import {
@@ -112,6 +116,14 @@ function renderEducationScheduleLines(lines: string[]) {
   )
 }
 
+function renderWaitingTableEmpty() {
+  return (
+    <div className="participating-instructor-fullpage-view__waiting-table-empty" role="status">
+      배정 대기 중인 기관이 없습니다.
+    </div>
+  )
+}
+
 export const INSTRUCTOR_DETAIL_TAB_KEYS = [
   'application',
   'institutionAssignment',
@@ -139,6 +151,16 @@ const TAB_LABELS: Record<InstructorDetailTabKey, string> = {
 }
 
 const NO_DATA = '데이터 없음'
+
+function isCompanySchoolProgram(program: Program): boolean {
+  return (
+    program.id.startsWith('economy-prog-') ||
+    program.id.startsWith('company-school-prog-') ||
+    program.id.startsWith('company-school-local-') ||
+    program.mainTitle?.includes('1사1교') === true ||
+    program.title.includes('1사1교')
+  )
+}
 
 function getEducationLevelBadge(educationLevel?: string, schoolType?: string): string {
   const raw = schoolType ?? educationLevel ?? ''
@@ -229,9 +251,10 @@ export function ParticipatingInstructorFullpageView({
     targetNames: string[]
     reason: string
   } | null>(null)
-  const [selectAssignConfirmOpen, setSelectAssignConfirmOpen] = useState(false)
-  const [addAssignModalOpen, setAddAssignModalOpen] = useState(false)
-  const [addAssignSchoolId, setAddAssignSchoolId] = useState<string | null>(null)
+  const [assignGuideMode, setAssignGuideMode] = useState<'select' | 'add' | null>(null)
+  const [assignGuideSchoolId, setAssignGuideSchoolId] = useState<string | null>(null)
+  const [assignGuideRole, setAssignGuideRole] = useState<InstructorRoleKey>('assistant')
+  const [assignGuideSessionIds, setAssignGuideSessionIds] = useState<string[]>([])
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
   const [savedAdminComment, setSavedAdminComment] = useState('')
   const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
@@ -246,6 +269,7 @@ export function ParticipatingInstructorFullpageView({
   const mergedInstructor = useMemo(() => ({ ...d, ...instructorPatches }), [d, instructorPatches])
 
   const isIndividualProgram = isGeneralIndividualProgram(program)
+  const isCompanySchool = isCompanySchoolProgram(program)
 
   const isActivityWithdrawn = mergedInstructor.activityWithdrawn === true
 
@@ -295,14 +319,21 @@ export function ParticipatingInstructorFullpageView({
 
   useEffect(() => {
     const assigned = buildInitialAssignedSchoolRows(d, schoolRows, instructorList)
+    const assignedSchoolIds = new Set(assigned.map(r => r.id))
     setAssignedSchools(assigned)
     setWaitingSchools(
-      buildWaitingSchoolRows(d, schoolRows, instructorList, new Set(assigned.map(r => r.id)))
+      isCompanySchool
+        ? buildWaitingSchoolScheduleRows(d, schoolRows, instructorList, assignedSchoolIds)
+        : buildWaitingSchoolRows(d, schoolRows, instructorList, assignedSchoolIds)
     )
     setSelectedAssignedSchoolKeys([])
     setSelectedWaitingSchoolKeys([])
     setOpenRoleDropdownId(null)
-  }, [d.id, schoolRows, instructorList])
+    setAssignGuideMode(null)
+    setAssignGuideSchoolId(null)
+    setAssignGuideRole('assistant')
+    setAssignGuideSessionIds([])
+  }, [d, isCompanySchool, schoolRows, instructorList])
 
   useEffect(() => {
     setSavedAdminComment(d.adminComment ?? '')
@@ -561,8 +592,14 @@ export function ParticipatingInstructorFullpageView({
     if (!movable) {
       return
     }
-    setSelectAssignConfirmOpen(true)
-  }, [selectedWaitingSchoolKeys, waitingSchools, showAlert])
+    const firstSelected = waitingSchools.find(
+      w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus === 'waiting'
+    )
+    setAssignGuideMode('select')
+    setAssignGuideSchoolId(firstSelected?.schoolId ?? firstSelected?.id ?? null)
+    setAssignGuideRole(assignedSchools.some(row => row.role === 'lead') ? 'assistant' : 'lead')
+    setAssignGuideSessionIds([])
+  }, [selectedWaitingSchoolKeys, waitingSchools, assignedSchools, showAlert])
 
   const handleUnassignConfirm = useCallback(
     (payload: PermissionModalPayload) => {
@@ -579,7 +616,11 @@ export function ParticipatingInstructorFullpageView({
           for (const row of removedRows) {
             const school = schoolRows.find(s => s.id === row.id)
             if (school) {
-              added.push(createWaitingRowForSchool(school, d, instructorList, 0, 'waiting'))
+              if (isCompanySchool) {
+                added.push(...buildWaitingSchoolScheduleRows(d, [school], instructorList, new Set()))
+              } else {
+                added.push(createWaitingRowForSchool(school, d, instructorList, 0, 'waiting'))
+              }
             }
           }
           return renumberWaitingRows([...wPrev, ...added])
@@ -594,78 +635,122 @@ export function ParticipatingInstructorFullpageView({
         reason: payload.reason,
       })
     },
-    [selectedAssignedSchoolKeys, assignedSchools, schoolRows, d, instructorList]
+    [selectedAssignedSchoolKeys, assignedSchools, schoolRows, d, instructorList, isCompanySchool]
   )
 
-  const handleSelectAssignConfirm = useCallback(() => {
-    const selectedRows = waitingSchools.filter(
-      w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus === 'waiting'
-    )
-    if (selectedRows.length === 0) {
-      return
-    }
-    const ids = new Set(selectedRows.map(r => r.id))
-    setWaitingSchools(prev => renumberWaitingRows(prev.filter(w => !ids.has(w.id))))
-    setAssignedSchools(prev => {
-      const next = [...prev]
-      let idx = next.length
-      let hasLead = next.some(r => r.role === 'lead')
-      for (const w of selectedRows) {
-        const school = schoolRows.find(s => s.id === w.id)
-        if (!school) continue
-        const role: InstructorRoleKey = hasLead ? 'assistant' : 'lead'
-        next.push(schoolRowToAssignedRow(school, d, instructorList, 0, role, idx))
-        if (role === 'lead') hasLead = true
-        idx += 1
-      }
-      return renumberAssignedRows(next)
-    })
-    setSelectAssignConfirmOpen(false)
-    setSelectedWaitingSchoolKeys([])
-  }, [selectedWaitingSchoolKeys, waitingSchools, schoolRows, d, instructorList])
+  const closeAssignGuideModal = useCallback(() => {
+    setAssignGuideMode(null)
+    setAssignGuideSchoolId(null)
+    setAssignGuideRole('assistant')
+    setAssignGuideSessionIds([])
+  }, [])
 
-  const handleAddAssignConfirm = useCallback(() => {
-    if (!addAssignSchoolId) {
+  const handleAssignGuideConfirm = useCallback(() => {
+    if (!assignGuideMode || !assignGuideSchoolId) {
       return
     }
-    const school = schoolRows.find(s => s.id === addAssignSchoolId)
-    if (!school) {
-      return
-    }
-    setWaitingSchools(prev => renumberWaitingRows(prev.filter(w => w.id !== addAssignSchoolId)))
+    const school = schoolRows.find(s => s.id === assignGuideSchoolId)
+    if (!school) return
+
+    const selectedWaitingRowKeys = new Set(selectedWaitingSchoolKeys.map(String))
+    const selectedAssignSessionIds = new Set(assignGuideSessionIds)
+    const hasSelectedSession = (row: InstructorWaitingSchoolRow): boolean =>
+      row.sessions?.some(session =>
+        selectedAssignSessionIds.has(`session-${session.round}-${session.date}-${session.timeRange}`)
+      ) === true
+
+    setWaitingSchools(prev =>
+      renumberWaitingRows(
+        prev
+          .filter(w => {
+            if (!isCompanySchool) return w.id !== assignGuideSchoolId
+            const rowSchoolId = w.schoolId ?? w.id
+            if (rowSchoolId !== assignGuideSchoolId) return true
+            if (selectedWaitingRowKeys.has(w.id) || hasSelectedSession(w)) return false
+            return true
+          })
+          .map(w => {
+            if (!isCompanySchool) return w
+            const rowSchoolId = w.schoolId ?? w.id
+            if (rowSchoolId !== assignGuideSchoolId || w.assignmentStatus !== 'waiting') return w
+            return { ...w, assignmentStatus: 'cancelled' satisfies InstructorWaitingAssignmentStatus }
+          })
+      )
+    )
     setAssignedSchools(prev => {
-      const hasLead = prev.some(r => r.role === 'lead')
-      const role: InstructorRoleKey = hasLead ? 'assistant' : 'lead'
       const next = [
         ...prev,
-        schoolRowToAssignedRow(school, d, instructorList, 0, role, prev.length),
+        schoolRowToAssignedRow(school, d, instructorList, 0, assignGuideRole, prev.length),
       ]
       return renumberAssignedRows(next)
     })
-    setAddAssignModalOpen(false)
-    setAddAssignSchoolId(null)
-  }, [addAssignSchoolId, schoolRows, d, instructorList])
+    setSelectedWaitingSchoolKeys(prev =>
+      prev.filter(key => {
+        if (!isCompanySchool) return String(key) !== assignGuideSchoolId
+        return !selectedWaitingSchoolKeys.includes(key)
+      })
+    )
+    closeAssignGuideModal()
+  }, [
+    assignGuideMode,
+    assignGuideSchoolId,
+    assignGuideRole,
+    selectedWaitingSchoolKeys,
+    assignGuideSessionIds,
+    isCompanySchool,
+    schoolRows,
+    d,
+    instructorList,
+    closeAssignGuideModal,
+  ])
 
   const addAssignOptions = useMemo(
     () =>
       waitingSchools
         .filter(w => w.assignmentStatus === 'waiting')
-        .map(w => ({ value: w.id, label: w.schoolName })),
+        .reduce<Array<{ value: string; label: string }>>((acc, w) => {
+          const value = w.schoolId ?? w.id
+          if (acc.some(option => option.value === value)) return acc
+          acc.push({ value, label: w.schoolName })
+          return acc
+        }, []),
     [waitingSchools]
   )
+
+  const selectAssignOptions = useMemo(
+    () =>
+      waitingSchools
+        .filter(w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus === 'waiting')
+        .reduce<Array<{ value: string; label: string }>>((acc, w) => {
+          const value = w.schoolId ?? w.id
+          if (acc.some(option => option.value === value)) return acc
+          acc.push({ value, label: w.schoolName })
+          return acc
+        }, []),
+    [selectedWaitingSchoolKeys, waitingSchools]
+  )
+
+  const assignGuideInstitutionOptions =
+    assignGuideMode === 'select' ? selectAssignOptions : addAssignOptions
+
+  const assignGuideSchool = useMemo(
+    () => schoolRows.find(school => school.id === assignGuideSchoolId) ?? null,
+    [assignGuideSchoolId, schoolRows]
+  )
+
+  const assignGuideSessionOptions = useMemo(
+    () => mapParticipatingSessionsToInstructorAssignOptions(assignGuideSchool?.sessions),
+    [assignGuideSchool]
+  )
+
+  useEffect(() => {
+    setAssignGuideSessionIds([])
+  }, [assignGuideSchoolId])
 
   const unassignSchoolNames = useMemo(
     () =>
       assignedSchools.filter(r => selectedAssignedSchoolKeys.includes(r.id)).map(r => r.schoolName),
     [assignedSchools, selectedAssignedSchoolKeys]
-  )
-
-  const selectAssignSchoolNames = useMemo(
-    () =>
-      waitingSchools
-        .filter(w => selectedWaitingSchoolKeys.includes(w.id) && w.assignmentStatus === 'waiting')
-        .map(w => w.schoolName),
-    [waitingSchools, selectedWaitingSchoolKeys]
   )
 
   const privacyMasked = !personalInfoRevealed
@@ -968,8 +1053,12 @@ export function ParticipatingInstructorFullpageView({
                       if (addAssignOptions.length === 0) {
                         return
                       }
-                      setAddAssignSchoolId(addAssignOptions[0]?.value ?? null)
-                      setAddAssignModalOpen(true)
+                      setAssignGuideMode('add')
+                      setAssignGuideSchoolId(addAssignOptions[0]?.value ?? null)
+                      setAssignGuideRole(
+                        assignedSchools.some(row => row.role === 'lead') ? 'assistant' : 'lead'
+                      )
+                      setAssignGuideSessionIds([])
                     }}
                   >
                     추가 배정
@@ -1024,39 +1113,30 @@ export function ParticipatingInstructorFullpageView({
                   />
                 </div>
               </div>
-              <div className="participating-institutions-section__table-wrap">
-                {waitingSchools.length === 0 ? (
-                  <div
-                    className="school-detail-fullpage-view__instructor-list-empty"
-                    role="status"
-                    aria-label="배정 대기 학교 없음"
-                  >
-                    배정 대기 중인 기관이 없습니다.
-                  </div>
-                ) : (
-                  <Table<InstructorWaitingSchoolRow>
-                    className="participating-institutions-section__table cms-data-table"
-                    rowKey="id"
-                    size="middle"
-                    pagination={false}
-                    scroll={{ x: 1300 }}
-                    rowSelection={{
-                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                      selectedRowKeys: selectedWaitingSchoolKeys,
-                      onChange: keys => setSelectedWaitingSchoolKeys(keys),
-                      getCheckboxProps: record => ({
-                        disabled: record.assignmentStatus !== 'waiting',
-                      }),
-                    }}
-                    columns={waitingSchoolColumns}
-                    dataSource={waitingSchools}
-                    rowClassName={record =>
-                      record.assignmentStatus !== 'waiting'
-                        ? 'school-detail-fullpage-view__waiting-row--assigned'
-                        : ''
-                    }
-                  />
-                )}
+              <div className="participating-institutions-section__table-wrap participating-instructor-fullpage-view__waiting-table-scroll">
+                <Table<InstructorWaitingSchoolRow>
+                  className="participating-institutions-section__table cms-data-table"
+                  rowKey="id"
+                  size="middle"
+                  pagination={false}
+                  scroll={{ x: 1300 }}
+                  rowSelection={{
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys: selectedWaitingSchoolKeys,
+                    onChange: keys => setSelectedWaitingSchoolKeys(keys),
+                    getCheckboxProps: record => ({
+                      disabled: record.assignmentStatus !== 'waiting',
+                    }),
+                  }}
+                  columns={waitingSchoolColumns}
+                  dataSource={waitingSchools}
+                  locale={{ emptyText: renderWaitingTableEmpty() }}
+                  rowClassName={record =>
+                    record.assignmentStatus !== 'waiting'
+                      ? 'school-detail-fullpage-view__waiting-row--assigned'
+                      : ''
+                  }
+                />
               </div>
             </div>
 
@@ -1075,75 +1155,20 @@ export function ParticipatingInstructorFullpageView({
               reason={unassignCompleteModal?.reason ?? ''}
             />
 
-            <ContentModal
-              open={selectAssignConfirmOpen}
-              onCancel={() => setSelectAssignConfirmOpen(false)}
-              title="기관 배정 안내"
-              width={560}
-              footer={
-                <>
-                  <CmsButton
-                    variant="secondary"
-                    size="large"
-                    onClick={() => setSelectAssignConfirmOpen(false)}
-                  >
-                    취소
-                  </CmsButton>
-                  <CmsButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
-                    배정
-                  </CmsButton>
-                </>
-              }
-            >
-              <p>
-                [<strong>{d.instructorName}</strong>] 강사님을 다음 기관에 배정하시겠습니까?{' '}
-                {selectAssignSchoolNames.map((name, i) => (
-                  <span key={`${name}-${i}`}>
-                    [<strong>{name}</strong>]{i < selectAssignSchoolNames.length - 1 ? ', ' : ''}
-                  </span>
-                ))}
-              </p>
-            </ContentModal>
-
-            <ContentModal
-              open={addAssignModalOpen}
-              onCancel={() => {
-                setAddAssignModalOpen(false)
-                setAddAssignSchoolId(null)
-              }}
-              title="추가 배정"
-              width={480}
-              footer={
-                <>
-                  <CmsButton
-                    variant="secondary"
-                    size="large"
-                    onClick={() => {
-                      setAddAssignModalOpen(false)
-                      setAddAssignSchoolId(null)
-                    }}
-                  >
-                    취소
-                  </CmsButton>
-                  <CmsButton variant="primary" size="large" onClick={handleAddAssignConfirm}>
-                    배정
-                  </CmsButton>
-                </>
-              }
-            >
-              <div style={{ marginBottom: 16 }}>
-                <span style={{ display: 'block', marginBottom: 8 }}>기관 선택</span>
-                <Select
-                  style={{ width: '100%' }}
-                  placeholder="기관을 선택하세요"
-                  options={addAssignOptions}
-                  value={addAssignSchoolId ?? undefined}
-                  onChange={v => setAddAssignSchoolId(v)}
-                  allowClear
-                  getPopupContainer={() => document.body}
-                />
-              </div>
-            </ContentModal>
+            <AssignGuideModal
+              open={assignGuideMode != null}
+              instructorName={d.instructorName}
+              institutionOptions={assignGuideInstitutionOptions}
+              selectedInstitutionId={assignGuideSchoolId}
+              role={assignGuideRole}
+              sessionOptions={assignGuideSessionOptions}
+              selectedSessionIds={assignGuideSessionIds}
+              onInstitutionChange={setAssignGuideSchoolId}
+              onRoleChange={setAssignGuideRole}
+              onSessionIdsChange={setAssignGuideSessionIds}
+              onCancel={closeAssignGuideModal}
+              onConfirm={handleAssignGuideConfirm}
+            />
           </div>
           ))}
         {effectiveTab === 'lectureReports' && (

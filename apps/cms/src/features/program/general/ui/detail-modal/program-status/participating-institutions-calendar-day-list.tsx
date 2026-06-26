@@ -48,6 +48,49 @@ export function formatParticipatingSessionLine(session: ParticipatingSchoolSessi
   return `${resolveParticipatingSessionPeriodLabel(session)} (${timeRangeDisplay})`
 }
 
+function timeToMinutes(value: string): number | null {
+  const [hourRaw, minuteRaw = '00'] = value.split(':')
+  const hour = Number.parseInt(hourRaw, 10)
+  const minute = Number.parseInt(minuteRaw, 10)
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null
+  return hour * 60 + minute
+}
+
+function minutesToTime(totalMinutes: number): string {
+  const hour = Math.floor(totalMinutes / 60)
+  const minute = totalMinutes % 60
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
+export function formatParticipatingSessionsPeriodForCalendarDisplay(
+  sessions: ParticipatingSchoolSession[]
+): string {
+  const availableSessions = sessions.filter(session => session.status !== 'not_planned')
+  if (availableSessions.length === 0) return '-'
+
+  const sorted = [...availableSessions].sort((a, b) => a.round - b.round)
+  const ranges = sorted
+    .map(session => parseParticipatingSessionTimeRange(session.timeRange))
+    .filter((range): range is NonNullable<typeof range> => range != null)
+    .map(range => ({
+      start: timeToMinutes(range.startTime),
+      end: timeToMinutes(range.endTime),
+    }))
+    .filter(
+      (range): range is { start: number; end: number } => range.start != null && range.end != null
+    )
+
+  const first = sorted[0]!
+  const sessionCount =
+    sorted.length === 1 && first.round > 0 ? first.round : Math.max(sorted.length, 1)
+
+  if (ranges.length === 0) return `${sessionCount}차시`
+
+  const start = Math.min(...ranges.map(range => range.start))
+  const end = Math.max(...ranges.map(range => range.end))
+  return `${sessionCount}차시 (${minutesToTime(start)} ~ ${minutesToTime(end)})`
+}
+
 /** 캘린더 우측 목록 2행 — 교시·차시 + 시간만 (학년 제외) */
 export function formatParticipatingSessionPeriodForCalendarDisplay(
   session: ParticipatingSchoolSession
@@ -65,10 +108,12 @@ export function ParticipatingInstitutionsCalendarDayList({
   events,
   getColorForEvent,
   onSchoolClick,
+  usePreferredScheduleFormat = false,
 }: {
   events: ParticipatingInstitutionsCalendarDayListEvent[]
   getColorForEvent: (event: ParticipatingInstitutionsCalendarDayListEvent) => ScheduleColorPair
   onSchoolClick: (row: ParticipatingSchoolRow) => void
+  usePreferredScheduleFormat?: boolean
 }) {
   const sortedEvents = [...events].sort((a, b) =>
     (a.originalItem.row.schoolName || '').localeCompare(b.originalItem.row.schoolName || '', 'ko')
@@ -90,7 +135,9 @@ export function ParticipatingInstitutionsCalendarDayList({
           const color = getColorForEvent(ev)
           const region = formatInstitutionRegionForCalendarListDisplay(row.region)
           const grade = educationGrade?.trim() || row.educationGrade?.trim() || '-'
-          const sessionLine = getPrimaryParticipatingSessionLine(sessionsOnDate)
+          const sessionLine = usePreferredScheduleFormat
+            ? formatParticipatingSessionsPeriodForCalendarDisplay(sessionsOnDate)
+            : getPrimaryParticipatingSessionLine(sessionsOnDate)
 
           return (
             <div

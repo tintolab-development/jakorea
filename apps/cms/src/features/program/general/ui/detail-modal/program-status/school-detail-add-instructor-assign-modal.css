@@ -83,6 +83,15 @@
   margin-bottom: 0 !important;
 }
 
+.school-detail-add-instructor-assign-modal__field-label {
+  margin-bottom: 14px;
+  color: var(--color-text-label);
+  font-family: Pretendard, sans-serif;
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-500);
+  line-height: 150%;
+}
+
 .school-detail-add-instructor-assign-modal__field .ant-form-item-label {
   padding-bottom: 0;
   margin-bottom: var(--spacing-6);
@@ -146,4 +155,3 @@
   color: var(--color-text-secondary, #8c8c8c);
   line-height: 150%;
 }
-

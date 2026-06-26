@@ -333,6 +333,74 @@
   word-break: keep-all;
 }
 
+/* 배정 대기 강사 목록 — 테이블 영역 개별 스크롤, 최대 높이 365px */
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap.school-detail-fullpage-view__assignment-table-scroll:has(
+    .cms-data-table
+  ),
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap.school-detail-fullpage-view__waiting-table-scroll:has(
+    .cms-data-table
+  ) {
+  max-height: 365px;
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: #fff;
+}
+
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap.school-detail-fullpage-view__assignment-table-scroll:has(
+    .cms-data-table
+  )
+  .cms-data-table
+  .ant-table-container,
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap.school-detail-fullpage-view__waiting-table-scroll:has(
+    .cms-data-table
+  )
+  .cms-data-table
+  .ant-table-container {
+  border: none;
+  border-radius: 0;
+}
+
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap.school-detail-fullpage-view__assignment-table-scroll:has(
+    .cms-data-table
+  )
+  .ant-table-thead
+  > tr
+  > th,
+.school-detail-fullpage-view__instructor-section
+  .participating-institutions-section__table-wrap.school-detail-fullpage-view__waiting-table-scroll:has(
+    .cms-data-table
+  )
+  .ant-table-thead
+  > tr
+  > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--table-header-bg, #fafafa);
+}
+
+.school-detail-fullpage-view__waiting-table-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 24px;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.5;
+  word-break: keep-all;
+}
+
 /* 역할 컬럼 — StatusDropdownCell 사용 시 행/셀 고정 (교재 배송현황 드롭다운과 동일) */
 .school-detail-fullpage-view .ant-table-tbody > tr:has(td.status-dropdown-cell__cell-status) {
   height: 53px;
