@@ -180,7 +180,10 @@ function ProgramListPageContent() {
 
   // 풀페이지 모달 ↔ 쿼리 파라미터(programId) 연동
   const isFullPageModalPath =
-    pNorm === '/programs' || pNorm === '/programs/education'
+    pNorm === '/programs' ||
+    pNorm === '/programs/education' ||
+    pNorm === '/programs/economy-education' ||
+    pNorm === '/programs/company-school'
 
   useEffect(() => {
     if (!isFullPageModalPath) return

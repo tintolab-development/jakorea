@@ -245,7 +245,7 @@ export function SettlementDetailModal({
       width={600}
       className="settlement-reject-confirm"
       centered
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="settlement-reject-confirm__content">
         <h2 className="settlement-reject-confirm__title">지급 반려 안내</h2>
@@ -333,7 +333,7 @@ export function SettlementDetailModal({
       width={600}
       className="settlement-payment-confirm"
       centered
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="settlement-payment-confirm__content">
         <h2 className="settlement-payment-confirm__title">강의료 지급 안내</h2>

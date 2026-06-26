@@ -90,7 +90,7 @@ export function TealHeaderModal({
       rootClassName={rootClassName}
       styles={styles}
       aria-labelledby={hideHeader ? undefined : titleId}
-      destroyOnClose
+      destroyOnHidden
       maskClosable
       /** Ant `centered`는 wrap에 `::before` 정렬을 쓰는데, 아래 CSS가 같은 wrap을 flex로 잡아 두 방식이 충돌해 화면 중앙이 어긋날 수 있음 — flex 래퍼만 사용 */
       centered={false}

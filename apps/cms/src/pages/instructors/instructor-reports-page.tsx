@@ -328,7 +328,7 @@ export function InstructorReportsPage() {
         }}
         footer={null}
         width={640}
-        destroyOnClose
+        destroyOnHidden
       >
         {selectedReport && (
           <Space direction="vertical" size="large" style={{ width: '100%' }}>

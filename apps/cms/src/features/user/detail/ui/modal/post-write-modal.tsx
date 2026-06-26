@@ -179,7 +179,7 @@ export function PostWriteModal({
         </div>
       }
       closable
-      destroyOnClose
+      destroyOnHidden
       maskClosable
       centered
     >

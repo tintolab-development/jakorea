@@ -45,6 +45,14 @@
   border-bottom: 1px solid #e8e8e8;
 }
 
+.participating-institutions-calendar-popover__title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
 .participating-institutions-calendar-popover__title {
   width: 100%;
   min-width: 0;
@@ -56,6 +64,12 @@
   font-size: 14px;
   font-weight: 700;
   line-height: 150%;
+}
+
+.participating-institutions-calendar-popover__title-row
+  .participating-institutions-calendar-popover__title {
+  flex: 0 1 auto;
+  width: auto;
 }
 
 .participating-institutions-calendar-popover__meta {

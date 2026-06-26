@@ -57,7 +57,7 @@ export function ToolbarDropdown({
         open={open}
         onOpenChange={onOpenChange}
         getPopupContainer={() => document.body}
-        dropdownRender={() => (
+        popupRender={() => (
           <div
             className="rich-text-toolbar__dropdown-panel"
             onMouseDown={event => event.preventDefault()}

@@ -65,6 +65,7 @@ export function TextbookStatusBadge(props: TextbookStatusBadgeProps) {
         label={label}
         tone={getTextbookStatusBadgeTone(status as TextbookStatusKey)}
         className={className}
+        style={userStyle}
       />
     )
   }
