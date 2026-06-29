@@ -70,6 +70,15 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
       const oauthIntent = getOAuthIntent()
       const registerRedirect = getRegisterSocialRedirect()
 
+      if (oauthIntent !== 'link' && isSocialAuthLoginRemoteEnabled()) {
+        if (params.has('socialLoginSessionId')) {
+          navigate(`/login/social/complete?${params.toString()}`, { replace: true })
+          return
+        }
+        navigate('/login', { replace: true })
+        return
+      }
+
       if (oauthIntent === 'link') {
         const code = params.get('code')
         const state = params.get('state')

@@ -9,6 +9,8 @@ interface ImportMetaEnv {
   readonly VITE_KAKAO_CLIENT_SECRET?: string
   /** OAuth redirect_uri origin. 미설정 시 `window.location.origin` 사용 */
   readonly VITE_OAUTH_REDIRECT_ORIGIN?: string
+  /** Admin SSO callback용 백엔드 public origin (ngrok 등). `redirectUri` body·IdP 등록에 사용 */
+  readonly VITE_OAUTH_BACKEND_ORIGIN?: string
   readonly VITE_OAUTH_EXCHANGE_MODE?: string
   /**
    * 쉼표 구분 실 API 모듈 키 (`shared/config/real-api-modules`). 미설정·빈 값이면 원격 URL이 있어도 전부 mock.

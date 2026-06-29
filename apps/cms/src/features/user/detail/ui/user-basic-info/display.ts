@@ -38,7 +38,7 @@ function inlineSegmentsWithDivider(
   return inlineSegmentsWithDividers([segments[0], segments[1]], className)
 }
 
-function inlineSegmentsWithDividers(
+export function inlineSegmentsWithDividers(
   segments: ReactNode[],
   className = 'user-basic-info-section__inline-segments'
 ): ReactNode {

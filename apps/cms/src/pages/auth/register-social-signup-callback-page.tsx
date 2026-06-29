@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Spin } from 'antd'
 import { useNavigate } from 'react-router-dom'
-import { processSignupSocialReturn } from '@jakorea/social-auth'
+import { processAdminSsoLinkReturn } from '@jakorea/social-auth'
 
 import { isSocialAuthSignupRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
 import { ADMIN_REGISTER_TERMS_VERSION } from '@/features/auth/lib/admin-register.constants'
@@ -58,13 +58,24 @@ export function RegisterSocialSignupCallbackPage() {
         return
       }
 
-      const outcome = await processSignupSocialReturn(cmsSocialAuthClient, searchParams, {
-        cancelled: abortController.signal.aborted,
-        consent: {
-          socialConsentVersion: ADMIN_REGISTER_TERMS_VERSION,
-          socialConsentAgreed: true,
-        },
-      })
+      const providerParam = searchParams.get('provider')
+      const providerFromQuery =
+        providerParam === 'google' || providerParam === 'naver' || providerParam === 'kakao'
+          ? providerParam
+          : null
+
+      const outcome = await processAdminSsoLinkReturn(
+        cmsSocialAuthClient,
+        providerFromQuery,
+        searchParams,
+        {
+          cancelled: abortController.signal.aborted,
+          consent: {
+            socialConsentVersion: ADMIN_REGISTER_TERMS_VERSION,
+            socialConsentAgreed: true,
+          },
+        }
+      )
 
       if (abortController.signal.aborted) {
         return

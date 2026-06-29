@@ -41,6 +41,7 @@ import { FindPasswordIdentityCallbackPage } from '@/pages/auth/find-password-ide
 import { FindPasswordIdentityMockNicePage } from '@/pages/auth/find-password-identity-mock-nice-page'
 import { MfaPage } from '@/pages/auth/mfa-page'
 import { OAuthCallbackPage } from '@/pages/auth/oauth-callback-page'
+import { LoginSocialCompletePage } from '@/pages/auth/login-social-complete-page'
 import { RegisterSocialSignupCallbackPage } from '@/pages/auth/register-social-signup-callback-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
@@ -229,6 +230,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/login/social/complete',
+    element: <LoginSocialCompletePage />,
   },
   {
     path: '/find-email',

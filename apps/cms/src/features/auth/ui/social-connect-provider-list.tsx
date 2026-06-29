@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import type { SocialProvider } from '@jakorea/social-auth'
+import { isLinkedSocialAccount } from '@jakorea/social-auth'
 
 import { isSocialAdminSocialApiRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
 import {
@@ -22,21 +23,21 @@ const SOCIAL_CONNECT_DISPLAY_NAME: Record<SocialProvider, string> = {
   kakao: '카카오',
 }
 
+function syncSessionConnectedProviders(providers: Set<SocialProvider>) {
+  for (const provider of SOCIAL_CONNECT_PROVIDERS) {
+    if (providers.has(provider)) {
+      cmsSocialAuthClient.state.addConnectedProvider(provider)
+    } else {
+      cmsSocialAuthClient.state.removeConnectedProvider(provider)
+      cmsSocialAuthClient.state.removePendingSocialLink(provider)
+    }
+  }
+}
+
 interface SocialConnectProviderListProps {
   redirectPath?: string
   onConnectSuccess?: (provider: SocialProvider) => void
   className?: string
-}
-
-function mergeConnectedProviders(
-  sessionProviders: Set<SocialProvider>,
-  remoteProviders: SocialProvider[]
-): Set<SocialProvider> {
-  const next = new Set(sessionProviders)
-  for (const provider of remoteProviders) {
-    next.add(provider)
-  }
-  return next
 }
 
 export function SocialConnectProviderList({
@@ -44,36 +45,35 @@ export function SocialConnectProviderList({
   onConnectSuccess: _onConnectSuccess,
   className,
 }: SocialConnectProviderListProps) {
-  const [connectedProviders, setConnectedProviders] = useState<Set<SocialProvider>>(
-    () => getConnectedProviders()
+  const remoteEnabled = isSocialAdminSocialApiRemoteEnabled()
+  const [connectedProviders, setConnectedProviders] = useState<Set<SocialProvider>>(() =>
+    remoteEnabled ? new Set() : getConnectedProviders()
   )
   const [loadingProvider, setLoadingProvider] = useState<SocialProvider | null>(null)
   const [loadingAccounts, setLoadingAccounts] = useState(false)
 
   const syncConnectedProviders = useCallback(async () => {
-    const sessionProviders = getConnectedProviders()
-
-    if (!isSocialAdminSocialApiRemoteEnabled() || !cmsSocialAuthClient.hasAccessToken()) {
-      setConnectedProviders(sessionProviders)
+    if (!remoteEnabled || !cmsSocialAuthClient.hasAccessToken()) {
+      setConnectedProviders(getConnectedProviders())
       return
     }
 
     setLoadingAccounts(true)
     try {
-      const accounts = await cmsSocialAuthClient.listAccounts()
-      const remoteProviders = accounts.map(account => account.provider)
-      const merged = mergeConnectedProviders(sessionProviders, remoteProviders)
-      setConnectedProviders(merged)
-      for (const provider of remoteProviders) {
-        cmsSocialAuthClient.state.addConnectedProvider(provider)
-      }
+      const accounts = await cmsSocialAuthClient.listAllSocialAccounts()
+      const remoteLinked = new Set(
+        accounts.filter(isLinkedSocialAccount).map(account => account.provider)
+      )
+      setConnectedProviders(remoteLinked)
+      syncSessionConnectedProviders(remoteLinked)
     } catch (error: unknown) {
-      console.debug('socialConnectProviderList listAccounts failed', error)
-      setConnectedProviders(sessionProviders)
+      console.debug('socialConnectProviderList listAllSocialAccounts failed', error)
+      setConnectedProviders(new Set())
+      syncSessionConnectedProviders(new Set())
     } finally {
       setLoadingAccounts(false)
     }
-  }, [])
+  }, [remoteEnabled])
 
   useEffect(() => {
     void syncConnectedProviders()
@@ -111,6 +111,7 @@ export function SocialConnectProviderList({
         next.delete(provider)
         return next
       })
+      await syncConnectedProviders()
     })()
   }
 

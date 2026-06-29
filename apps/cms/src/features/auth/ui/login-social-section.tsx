@@ -3,7 +3,13 @@ import { useState } from 'react'
 import type { SocialProvider } from '@jakorea/social-auth'
 import { SocialAuthApiError } from '@jakorea/social-auth'
 
+import { isSocialAuthLoginRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
+import {
+  logOAuthBackendOriginDebug,
+  resolveBackendApiOrigin,
+} from '@/features/auth/lib/oauth-backend-origin'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
+import { adminSocialAuthPaths } from '@/shared/config/social-auth-paths'
 import { handleError } from '@/shared/utils/error-handler'
 import { NaverSocialLoginIcon } from '@/shared/ui/icons/NaverSocialLoginIcon'
 import { KakaoSocialLoginIcon } from '@/shared/ui/icons/KakaoSocialLoginIcon'
@@ -14,6 +20,9 @@ export function LoginSocialSection() {
 
   const handleSocialLogin = (provider: SocialProvider) => {
     setLoadingProvider(provider)
+    if (import.meta.env.DEV) {
+      logOAuthBackendOriginDebug(`loginSocialSection.startLogin:${provider}`)
+    }
     void cmsSocialAuthClient
       .startLogin({ provider, intent: 'login' })
       .then(url => {
@@ -21,18 +30,32 @@ export function LoginSocialSection() {
           throw new SocialAuthApiError('INVALID_RESPONSE', '소셜 로그인 URL을 받지 못했습니다.')
         }
         if (import.meta.env.DEV) {
-          console.info(
-            `[social-auth] frontend oauth redirect_uri=${cmsSocialAuthClient.getRedirectUri(provider)}`
-          )
+          if (isSocialAuthLoginRemoteEnabled()) {
+            const backendBase = resolveBackendApiOrigin()
+            console.info(
+              `[social-auth] backend oauth redirect_uri=${backendBase}${adminSocialAuthPaths.ssoProviderCallback(provider)}`
+            )
+          } else {
+            console.info(
+              `[social-auth] mock frontend oauth redirect_uri=${cmsSocialAuthClient.getRedirectUri(provider)}`
+            )
+          }
         }
         window.location.assign(url)
       })
       .catch((error: unknown) => {
         handleError(error, { context: 'loginSocialSection.startLogin' })
         if (import.meta.env.DEV) {
-          console.info(
-            `[social-auth] IdP 콘솔 Redirect URI 등록 필요: ${cmsSocialAuthClient.getRedirectUri(provider)}`
-          )
+          if (isSocialAuthLoginRemoteEnabled()) {
+            const backendBase = resolveBackendApiOrigin()
+            console.info(
+              `[social-auth] IdP Redirect URI 등록 필요: ${backendBase}${adminSocialAuthPaths.ssoProviderCallback(provider)}`
+            )
+          } else {
+            console.info(
+              `[social-auth] IdP Redirect URI 등록 필요: ${cmsSocialAuthClient.getRedirectUri(provider)}`
+            )
+          }
         }
         setLoadingProvider(null)
       })
