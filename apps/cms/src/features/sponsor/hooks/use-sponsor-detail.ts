@@ -26,6 +26,8 @@ export interface UseSponsorDetailReturn {
   handleToggleBasicInfoEdit: (canWrite: boolean) => void
   programHistoryDeleteDisabled: boolean
   refetchDetail: () => Promise<unknown>
+  isLoading: boolean
+  isError: boolean
 }
 
 export function buildBasicInfoEditStateFromDetail(
@@ -127,5 +129,7 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
     handleToggleBasicInfoEdit,
     programHistoryDeleteDisabled: true,
     refetchDetail: () => detailQuery.refetch(),
+    isLoading: detailQuery.isLoading,
+    isError: detailQuery.isError,
   }
 }

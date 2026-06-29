@@ -2,10 +2,11 @@
  * 프로그램 상세 URL 쿼리 스택 — 후원사 상세 오버레이 (`?programId=…&sponsorId=…&sponsorLnb=…`)
  */
 
-import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
 import { isGeneralProgramListPath } from '@/features/program/general/lib/detail-url'
-import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
+import type { QueryClient } from '@tanstack/react-query'
 import { SPONSOR_DETAIL_LNB } from '@/features/sponsor/lib/sponsor-detail-page-url'
+import { resolveSponsorManagementRowByIdAsync } from '@/features/sponsor/lib/sponsor-resolve'
+import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 
 export const SPONSOR_DETAIL_QUERY_ID_PARAM = 'sponsorId' as const
 export const SPONSOR_DETAIL_QUERY_LNB_PARAM = 'sponsorLnb' as const
@@ -20,12 +21,11 @@ export function isProgramDetailSponsorQueryStackPath(pathname: string): boolean 
   return isGeneralProgramListPath(pathname) || isUjatProgramListPath(pathname)
 }
 
-export function resolveSponsorManagementRowById(
+export async function resolveSponsorManagementRowById(
+  queryClient: QueryClient,
   sponsorManagementId: string | null | undefined
-): SponsorManagementRow | undefined {
-  const id = sponsorManagementId?.trim()
-  if (!id) return undefined
-  return mockSponsorManagementListRows.find(row => row.id === id)
+): Promise<SponsorManagementRow | undefined> {
+  return resolveSponsorManagementRowByIdAsync(queryClient, sponsorManagementId)
 }
 
 export function appendSponsorDetailQueryStack(

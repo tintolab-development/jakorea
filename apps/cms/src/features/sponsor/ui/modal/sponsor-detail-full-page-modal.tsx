@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react'
+import { Spin } from 'antd'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import {
   addSponsorContact,
@@ -10,7 +11,7 @@ import type { SponsorContactsRemoteActions } from '@/features/sponsor/hooks/use-
 import { BulbOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
-import { useProgramHistoryFilter } from '@/features/sponsor/hooks/use-program-history-filter'
+import { useSponsorProgramHistoryFilter } from '@/features/sponsor/hooks/use-sponsor-program-history-filter'
 import { useSponsorContacts } from '@/features/sponsor/hooks/use-sponsor-contacts'
 import { useSponsorDelete } from '@/features/sponsor/hooks/use-sponsor-delete'
 import { useSponsorDetail } from '@/features/sponsor/hooks/use-sponsor-detail'
@@ -94,10 +95,11 @@ function SponsorDetailFullPageModalInner({
     handleBasicInfoChange,
     isEditingBasicInfo,
     handleToggleBasicInfoEdit,
-    programHistories,
     removeProgramHistoryRows,
     programHistoryDeleteDisabled,
     refetchDetail,
+    isLoading: isDetailLoading,
+    isError: isDetailError,
   } = sponsorDetail
 
   const remoteContactActions = useMemo((): SponsorContactsRemoteActions => ({
@@ -144,7 +146,7 @@ function SponsorDetailFullPageModalInner({
     remoteContactActions
   )
   const { registerModalOpen, setRegisterModalOpen, handleRegister } = sponsorContacts
-  const programHistory = useProgramHistoryFilter(programHistories)
+  const programHistory = useSponsorProgramHistoryFilter(sponsor.id)
   const { contactColumns, programHistoryColumns } = useSponsorDetailModalTableColumns({
     contacts,
     canWrite,
@@ -185,7 +187,17 @@ function SponsorDetailFullPageModalInner({
     handleToggleBasicInfoEdit(canWrite)
   }, [canWrite, handleToggleBasicInfoEdit])
 
-  if (!basicInfo) return null
+  if (isDetailLoading && !basicInfo) {
+    return (
+      <DetailFullPageModal open={open} onClose={onClose} title="후원사 상세" className="sponsor-detail-fullpage-modal">
+        <div className="sponsor-detail-fullpage-modal__loading">
+          <Spin size="large" />
+        </div>
+      </DetailFullPageModal>
+    )
+  }
+
+  if (isDetailError || !basicInfo) return null
 
   const title = `후원사 상세_${detail.nameDisplayKo}`
   const activeLnbItem =
@@ -258,6 +270,8 @@ function SponsorDetailFullPageModalInner({
           canWrite={canWrite}
           onRemoveProgramHistories={removeProgramHistoryRows}
           deleteDisabled={programHistoryDeleteDisabled}
+          totalCount={programHistory.totalElements}
+          loading={programHistory.isLoading}
         />
       )}
       <SponsorDeleteModal

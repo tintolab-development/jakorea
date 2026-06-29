@@ -1,14 +1,13 @@
-import { buildSponsorManagementDetailView } from '@/data/mock/sponsor-management-detail'
-import type { SponsorContactRow, SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
+import { getSponsorDetail } from '@/features/sponsor/api/admin-sponsors-service'
+import type { SponsorContactRow } from '@/features/sponsor/model/sponsor-management.types'
 import { normalizeSponsorContactsSingleLead } from '@/features/sponsor/utils/normalize-sponsor-contacts-single-lead'
 
 /**
- * 후원사 상세(`/sponsor?sponsorId=…`) 담당자 테이블과 동일한 목록(목 데이터 + `normalizeSponsorContactsSingleLead`).
- * 추후 API 연동 시 이 함수 내부만 서비스 호출로 교체하면 됨.
+ * 후원사 담당자 목록 — API 조회 후 `normalizeSponsorContactsSingleLead` 적용
  */
-export function getSponsorDetailContactsNormalized(
-  sponsor: SponsorManagementRow
-): SponsorContactRow[] {
-  const detail = buildSponsorManagementDetailView(sponsor)
-  return normalizeSponsorContactsSingleLead(detail.contacts.map(c => ({ ...c })))
+export async function fetchSponsorDetailContactsNormalized(
+  sponsorId: string
+): Promise<SponsorContactRow[]> {
+  const detail = await getSponsorDetail(sponsorId)
+  return normalizeSponsorContactsSingleLead(detail.contacts.map(contact => ({ ...contact })))
 }

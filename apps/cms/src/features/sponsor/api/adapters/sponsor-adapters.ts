@@ -115,6 +115,11 @@ export function toSponsorRequestFromBasicInfo(
   return {
     name: basicInfo.nameDisplayKo.trim() || existing.name,
     nameEn: basicInfo.nameDisplayEn.trim() || existing.nameEn,
+    nameDisplayKo: basicInfo.nameDisplayKo.trim() || existing.nameDisplayKo,
+    nameDisplayEn: basicInfo.nameDisplayEn.trim() || existing.nameDisplayEn,
+    businessNumber: basicInfo.businessNumber.trim() || existing.businessNumber,
+    executives: basicInfo.executives.trim() || existing.executives,
+    address: address || existing.address,
     description: existing.description,
     organizationKind: basicInfo.organizationKind,
     sponsorshipStatus: basicInfo.sponsorshipStatus,
@@ -125,7 +130,7 @@ export function toSponsorRequestFromBasicInfo(
           ? String(existing.sponsorshipStartDate)
           : undefined,
     managers: existing.managers,
-    contactInfo: address || existing.contactInfo,
+    contactInfo: existing.contactInfo,
     securityMemo: existing.securityMemo,
   }
 }

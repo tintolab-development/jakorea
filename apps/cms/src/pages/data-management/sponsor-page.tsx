@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
 import { useSponsorListQuery } from '@/features/sponsor/hooks/use-sponsor-list-query'
+import { useSponsorDetailQuery } from '@/features/sponsor/hooks/use-sponsor-detail-query'
 import { useSponsorMutations } from '@/features/sponsor/hooks/use-sponsor-mutations'
 import type { SponsorSponsorshipStatus } from '@/types/domain'
 import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
@@ -89,14 +90,35 @@ export default function SponsorPage() {
   const [actionResultMessage, setActionResultMessage] = useState('')
 
   const sponsorIdFromUrl = searchParams.get('sponsorId') ?? ''
-  const sponsorRowForDetail = useMemo(
-    () => (sponsorIdFromUrl ? (rows.find(r => r.id === sponsorIdFromUrl) ?? null) : null),
-    [sponsorIdFromUrl, rows]
-  )
+  const detailFromUrlQuery = useSponsorDetailQuery(sponsorIdFromUrl || null, Boolean(sponsorIdFromUrl))
+  const sponsorRowForDetail = useMemo((): SponsorManagementRow | null => {
+    if (!sponsorIdFromUrl) return null
+    const fromList = rows.find(r => r.id === sponsorIdFromUrl)
+    if (fromList) return fromList
+    if (detailFromUrlQuery.data) {
+      const { contacts: _c, programHistories: _p, ...row } = detailFromUrlQuery.data
+      return row
+    }
+    if (detailFromUrlQuery.isLoading) {
+      return {
+        id: sponsorIdFromUrl,
+        name: '',
+        createdAt: '',
+        updatedAt: '',
+        programCount: 0,
+      }
+    }
+    return null
+  }, [detailFromUrlQuery.data, detailFromUrlQuery.isLoading, rows, sponsorIdFromUrl])
   const sponsorDetailOpen = Boolean(sponsorIdFromUrl && sponsorRowForDetail)
 
   useEffect(() => {
-    if (sponsorIdFromUrl && sponsorRowForDetail == null) {
+    if (
+      sponsorIdFromUrl &&
+      !detailFromUrlQuery.isLoading &&
+      detailFromUrlQuery.isError &&
+      sponsorRowForDetail?.name === ''
+    ) {
       setSearchParams(prev => {
         const next = new URLSearchParams(prev)
         next.delete('sponsorId')
@@ -104,7 +126,13 @@ export default function SponsorPage() {
         return next
       })
     }
-  }, [sponsorIdFromUrl, sponsorRowForDetail, setSearchParams])
+  }, [
+    detailFromUrlQuery.isError,
+    detailFromUrlQuery.isLoading,
+    setSearchParams,
+    sponsorIdFromUrl,
+    sponsorRowForDetail?.name,
+  ])
 
   const closeSponsorDetail = useCallback(() => {
     const returnTo = sanitizeInternalReturnTo(searchParams.get(SPONSOR_DETAIL_RETURN_TO_PARAM))

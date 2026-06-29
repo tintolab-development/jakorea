@@ -95,16 +95,17 @@ LNB 「데이터 관리」 3화면(후원사·교재·세부 프로그램)과 Sw
 
 | Method | Path | UI |
 |--------|------|-----|
-| GET | `/api/sponsors` | 목록 |
-| POST | `/api/sponsors` | 등록 |
-| GET | `/api/sponsors/{id}` | 상세 (contacts, programHistories embed) |
-| PATCH | `/api/sponsors/{id}` | 기본정보 수정 |
-| DELETE | `/api/sponsors/{id}` | 삭제 |
-| POST | `/api/sponsors/{id}/end` | 후원 종료 |
-| GET/POST | `/api/sponsors/{id}/contacts` | 담당자 |
-| PATCH/DELETE | `/api/sponsors/contacts/{contactId}` | 담당자 |
-| GET/POST | `/api/sponsors/{id}/yearly-businesses` | 연도별 사업 (서비스만, UI 미연동) |
-| PATCH/DELETE | `/api/sponsors/yearly-businesses/{id}` | 연도별 사업 |
+| GET | `/api/admin/sponsors` | 목록 (전체 배열, page/size 없음) |
+| POST | `/api/admin/sponsors` | 등록 |
+| GET | `/api/admin/sponsors/{id}` | 상세 (contacts embed) |
+| PATCH | `/api/admin/sponsors/{id}` | 기본정보 수정 |
+| DELETE | `/api/admin/sponsors/{id}` | 삭제 |
+| POST | `/api/admin/sponsors/{id}/end` | 후원 종료 |
+| GET | `/api/admin/sponsors/{sponsorId}/program-histories` | 프로그램 진행 이력 (page·서버 필터) |
+| GET/POST | `/api/admin/sponsors/{id}/contacts` | 담당자 |
+| PATCH/DELETE | `/api/admin/sponsors/contacts/{contactId}` | 담당자 |
+| GET/POST | `/api/admin/sponsors/{id}/yearly-businesses` | 연도별 사업 (서비스만, UI 미연동) |
+| PATCH/DELETE | `/api/admin/sponsors/yearly-businesses/{id}` | 연도별 사업 |
 
 ### 목록 필터
 
@@ -117,8 +118,16 @@ LNB 「데이터 관리」 3화면(후원사·교재·세부 프로그램)과 Sw
 
 ### 프로그램 진행 이력
 
-- 조회: 상세 `programHistories` embed (별도 list API 없음)
+- 조회: `GET /api/admin/sponsors/{sponsorId}/program-histories` (keyword, year, lifecycleStatus, educationTarget, managerName, page, size)
+- 상세 embed `programHistories`는 초기 placeholder용; 목록·필터·페이지는 별도 list API 사용
 - 삭제: **API 없음** — 삭제 버튼 항상 비활성
+
+### 프로그램 폼·링크 연동
+
+- 후원사 관리 LNB(`/sponsor`)는 API 전용 (mock fallback 없음)
+- 프로그램 등록/기본정보 폼 후원사·담당자 셀렉트: `useSponsorOptionsQuery` / `useSponsorContactsQuery`
+- 프로그램 상세 → 후원사 링크: `resolveSponsorManagementRowById` / `resolveSponsorManagementIdForDetailLink` (API keyword 검색)
+- API 비활성(`VITE_REAL_API_MODULES`에 `sponsors` 미포함) 시 빈 옵션 + 안내 (mock 대체 없음)
 
 ---
 
@@ -151,7 +160,7 @@ OpenAPI subset에 포함. 교재 「키트 수량 관리」 UI는 textbook-kit �
 | # | 항목 | 상태 |
 |---|------|------|
 | 1 | 후원사 프로그램 이력 삭제 | API 없음 → remote UI 비활성 |
-| 2 | 후원사 프로그램 이력 목록 API | 상세 embed만 |
+| 2 | 후원사 프로그램 이력 목록 API | 연동 완료 (`program-histories`) |
 | 3 | 세부 프로그램 이름 서버 필터 | `businessArea`, `useYn`만 |
 | 4 | 세부 프로그램 `inUse` | mock only → DELETE 409 |
 | 5 | 세부 프로그램 `nameEn`, `businessArea` UI | API 있음 / UI 없음 |
@@ -159,4 +168,4 @@ OpenAPI subset에 포함. 교재 「키트 수량 관리」 UI는 textbook-kit �
 | 7 | 교재 키트 수량 | API 있음 / UI 보류 |
 | 8 | material-kits DELETE | API 없음 |
 
-**Last updated:** 2026-06-12
+**Last updated:** 2026-06-26

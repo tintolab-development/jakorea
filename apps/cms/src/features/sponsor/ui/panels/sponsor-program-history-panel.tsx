@@ -86,6 +86,8 @@ export type SponsorProgramHistoryPanelProps = UseProgramHistoryFilterReturn & {
   onRemoveProgramHistories: (ids: string[]) => void
   /** 실 API 모드 — 삭제 API 없음 */
   deleteDisabled?: boolean
+  totalCount?: number
+  loading?: boolean
 }
 
 /**
@@ -102,6 +104,8 @@ export function SponsorProgramHistoryPanel({
   canWrite,
   onRemoveProgramHistories,
   deleteDisabled = false,
+  totalCount,
+  loading = false,
 }: SponsorProgramHistoryPanelProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteBlockedModalOpen, setDeleteBlockedModalOpen] = useState(false)
@@ -194,7 +198,7 @@ export function SponsorProgramHistoryPanel({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="프로그램 진행 이력"
-        description={`총 ${filteredRows.length.toLocaleString()}건`}
+        description={`총 ${(totalCount ?? filteredRows.length).toLocaleString()}건`}
         actions={
           <CmsButton
             variant="delete"
@@ -215,6 +219,7 @@ export function SponsorProgramHistoryPanel({
           className="cms-data-table"
           columns={columns}
           dataSource={filteredRows}
+          loading={loading}
           pagination={false}
           scroll={{ x: 'max-content' }}
           rowSelection={rowSelection}
