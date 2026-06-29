@@ -11,4 +11,8 @@ export interface AdminSocialAccountResponse {
   providerUserIdMasked?: string;
   status?: string;
   linkedAt?: string;
+  authorizationUrl?: string;
+  state?: string;
+  expiresAt?: string;
+  message?: string;
 }

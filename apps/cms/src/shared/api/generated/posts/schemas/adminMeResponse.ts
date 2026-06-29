@@ -18,6 +18,7 @@ export interface AdminMeResponse {
   roleCode?: string;
   roleName?: string;
   mfaRequired?: boolean;
+  permissionCodes?: string[];
   lastLoginAt?: string;
   createdAt?: string;
   updatedAt?: string;

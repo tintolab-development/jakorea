@@ -7,11 +7,8 @@
  */
 
 export interface AdminSsoStartRequest {
-  /**
-     * @minLength 1
-     * @pattern ^[A-Za-z_]{2,30}$
-     */
-  provider: string;
+  /** @pattern ^[A-Za-z_]{2,30}$ */
+  provider?: string;
   /**
      * @minLength 0
      * @maxLength 2048

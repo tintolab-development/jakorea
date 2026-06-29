@@ -97,6 +97,10 @@
       "description": "Admin Operations 관련 관리자 API"
     },
     {
+      "name": "기타 API",
+      "description": "회원가입/관리자 회원가입 약관 문서 버전 관리 API"
+    },
+    {
       "name": "폼/설문",
       "description": "Forms 관련 관리자 API"
     },
@@ -107,10 +111,6 @@
     {
       "name": "공개 콘텐츠",
       "description": "Public Content 관련 관리자 API"
-    },
-    {
-      "name": "인증/세션",
-      "description": "관리자 SSO/소셜 계정 연동 API"
     },
     {
       "name": "프로그램 게시판",
@@ -173,6 +173,10 @@
       "description": "프로그램 등록, 일정, 운영, 후원사/교재 연결 API"
     },
     {
+      "name": "인증/세션",
+      "description": "관리자 인증/세션 API. 외부 로그인은 POST /api/admin/auth/sso/login으로 시작하고 provider callback은 /api/admin/auth/sso/{provider}/callback만 사용합니다."
+    },
+    {
       "name": "기타 API",
       "description": "로그인 사용자 기준 CMS 대시보드 개인화 설정 API"
     },
@@ -199,6 +203,10 @@
     {
       "name": "로그 관리",
       "description": "개인정보 접근 로그, 파일 접근 로그, 시스템 이슈 로그, 이메일 발송 이력 조회 API입니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "행정안전부 도로명주소 검색 프록시 API"
     },
     {
       "name": "시스템 준비도",
@@ -2555,6 +2563,79 @@
           }
         }
       },
+      "AdminMarketingConsentUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "agreed": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "string"
+          },
+          "consentTextSnapshot": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminMarketingConsentResponse": {
+        "type": "object",
+        "properties": {
+          "adminId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "consentType": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "agreed": {
+            "type": "boolean"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "withdrawnAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApiResponseAdminMarketingConsentResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/AdminMarketingConsentResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
       "FormTemplateVersionUpdateRequest": {
         "type": "object",
         "properties": {
@@ -4759,6 +4840,130 @@
           },
           "registeredAt": {
             "type": "string"
+          }
+        }
+      },
+      "TermsDocumentUpsertRequest": {
+        "type": "object",
+        "properties": {
+          "termsType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1
+          },
+          "contentFormat": {
+            "type": "string"
+          },
+          "requiredYn": {
+            "type": "boolean"
+          },
+          "publishedYn": {
+            "type": "boolean"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "content",
+          "requiredYn",
+          "termsType",
+          "title",
+          "version"
+        ]
+      },
+      "ApiResponseTermsDocumentResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/TermsDocumentResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "TermsDocumentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "termsType": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "contentFormat": {
+            "type": "string"
+          },
+          "requiredYn": {
+            "type": "boolean"
+          },
+          "publishedYn": {
+            "type": "boolean"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -7809,6 +8014,19 @@
           "linkedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "authorizationUrl": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "message": {
+            "type": "string"
           }
         }
       },
@@ -9884,7 +10102,6 @@
         "properties": {
           "provider": {
             "type": "string",
-            "minLength": 1,
             "pattern": "^[A-Za-z_]{2,30}$"
           },
           "redirectUri": {
@@ -9897,10 +10114,7 @@
             "maxLength": 2048,
             "minLength": 0
           }
-        },
-        "required": [
-          "provider"
-        ]
+        }
       },
       "AdminSsoStartResponse": {
         "type": "object",
@@ -11948,6 +12162,12 @@
           "mfaRequired": {
             "type": "boolean"
           },
+          "permissionCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "lastLoginAt": {
             "type": "string",
             "format": "date-time"
@@ -11974,6 +12194,82 @@
           "data": {
             "type": "null",
             "$ref": "#/components/schemas/AdminMeResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "AdminIdentityContactUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "identityVerificationSessionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "profileToken": {
+            "type": "string"
+          }
+        }
+      },
+      "AdminIdentityContactResponse": {
+        "type": "object",
+        "properties": {
+          "adminId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "maskedPhone": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "identityVerifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "verificationStatus": {
+            "type": "string"
+          },
+          "nextAction": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiResponseAdminIdentityContactResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/AdminIdentityContactResponse",
             "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
           },
           "message": {
@@ -12643,6 +12939,58 @@
             "type": "string",
             "description": "공개 가시성 기준",
             "example": "PUBLIC"
+          }
+        }
+      },
+      "AddressSearchItem": {
+        "type": "object",
+        "properties": {
+          "zipcode": {
+            "type": "string"
+          },
+          "roadAddress": {
+            "type": "string"
+          },
+          "jibunAddress": {
+            "type": "string"
+          },
+          "englishAddress": {
+            "type": "string"
+          },
+          "buildingName": {
+            "type": "string"
+          },
+          "sido": {
+            "type": "string"
+          },
+          "sigungu": {
+            "type": "string"
+          }
+        }
+      },
+      "AddressSearchResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AddressSearchItem"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "source": {
+            "type": "string"
           }
         }
       },
@@ -16324,6 +16672,12 @@
           "stats": {
             "$ref": "#/components/schemas/Stats"
           },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SummarySection"
+            }
+          },
           "businessArea": {
             "type": "string"
           },
@@ -16394,6 +16748,67 @@
           "satisfactionScore": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "SummarySection": {
+        "type": "object",
+        "properties": {
+          "businessArea": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetTotal"
+            }
+          },
+          "total": {
+            "$ref": "#/components/schemas/TargetTotal"
+          }
+        }
+      },
+      "TargetTotal": {
+        "type": "object",
+        "properties": {
+          "targetLevel": {
+            "type": "string"
+          },
+          "schoolCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "classCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalParticipants": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "educationHours": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "generalVolunteerCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "employeeVolunteerCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "generalTeacherCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "trainedTeacherCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instructorCount": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
