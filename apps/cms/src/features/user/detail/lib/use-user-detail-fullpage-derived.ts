@@ -49,7 +49,9 @@ export function useUserDetailFullpageDerived({
             fullLabel: displayUser.id1365.trim(),
             onOpen: openPortal1365Main,
           }
-        : rawSections.basicTab.externalId1365
+        : isMembersRemoteEnabled()
+          ? undefined
+          : rawSections.basicTab.externalId1365
     const sections: UserDetailStrategySectionConfig = {
       ...rawSections,
       basicTab: {

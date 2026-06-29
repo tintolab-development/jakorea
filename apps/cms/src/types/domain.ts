@@ -842,6 +842,8 @@ export interface UserHistory {
   finalStatus: FinalStatus
   /** CMS 봉사·참여 이력 목록 필터/표시용 (API 연동 시) */
   managerName?: string
+  /** API program-history 응답 programName (programService 폴백 전) */
+  programName?: string
   // 강사인 경우
   paymentStatus?: PaymentStatus
   paymentAmount?: number

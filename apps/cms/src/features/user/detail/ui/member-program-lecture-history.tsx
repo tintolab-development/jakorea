@@ -59,7 +59,14 @@ function programYear(programId: string): number | null {
   return new Date(p.startDate).getFullYear()
 }
 
-function programTitle(programId: string): string {
+function programTitle(
+  programId: string,
+  record?: Application | UserHistory
+): string {
+  const fromApi =
+    (record as Application | undefined)?.customFields?.programName ??
+    (record as UserHistory | undefined)?.programName
+  if (typeof fromApi === 'string' && fromApi.trim()) return fromApi.trim()
   const p = programService.getByIdSync(programId)
   return p?.title ?? programId
 }
@@ -273,7 +280,7 @@ export function MemberProgramLectureHistory({
     const keySet = new Set(selectedRowKeys.map(String))
     const titles = tableData
       .filter(row => keySet.has(String(row.id)))
-      .map(row => programTitle(row.programId))
+      .map(row => programTitle(row.programId, row))
     return buildProgramProgressHistoryDeleteGuide(titles, historyDeleteDomain)
   }, [tableData, selectedRowKeys, historyDeleteDomain])
 
@@ -282,7 +289,7 @@ export function MemberProgramLectureHistory({
     const keySet = new Set(selectedRowKeys.map(String))
     const titles = tableData
       .filter(row => keySet.has(String(row.id)))
-      .map(row => programTitle(row.programId))
+      .map(row => programTitle(row.programId, row))
     if (titles.length === 0 || !buildProgramProgressHistoryDeleteGuide(titles, historyDeleteDomain)) {
       return
     }
@@ -352,7 +359,7 @@ export function MemberProgramLectureHistory({
           ellipsis: true,
           minWidth: 300,
           align: 'center',
-          render: (_: unknown, record: UserHistory) => programTitle(record.programId),
+          render: (_: unknown, record: UserHistory) => programTitle(record.programId, record),
         },
         {
           title: '진행년도',
@@ -408,7 +415,7 @@ export function MemberProgramLectureHistory({
         key: 'programTitle',
         ellipsis: true,
         align: 'center',
-        render: (_: unknown, record: Application) => programTitle(record.programId),
+        render: (_: unknown, record: Application) => programTitle(record.programId, record),
       },
       {
         title: '진행년도',

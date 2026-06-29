@@ -22,6 +22,7 @@ import { mockUsers } from '@/data/mock/users'
 import { mockUserHistories } from '@/data/mock/mypage'
 import type { UUID } from '@/types/index'
 import {
+  isAdminPermissionVariantPatchRemoteEnabled,
   isMemberBasicInfoPatchRemoteEnabled,
   isMembersRemoteEnabled,
   stripUnsupportedMemberListFilters,
@@ -34,13 +35,20 @@ import {
   mapUserRoleToApiRole,
 } from '@/features/user/api/map-member-role'
 import {
+  createMemberCommentRemote,
   deleteMemberRemote,
   fetchMemberDetailRemote,
   fetchMemberExternalIdentifiersRemote,
   fetchMemberInstructorProfileRemote,
   fetchMembersPageRemote,
   preRegisterMemberRemote,
+  updateMemberBasicInfoRemote,
 } from '@/features/user/api/members-api-client'
+import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
+import {
+  hasAdminCommentPatch,
+  mapPatchUserBasicInfoToApiRequest,
+} from '@/features/user/api/map-patch-user-basic-info'
 import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
 import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
@@ -222,12 +230,124 @@ export type PatchUserBasicInfoInput = Partial<
   >
 >
 
+function isAdminPermissionVariantOnlyPatch(patch: PatchUserBasicInfoInput): boolean {
+  const keys = Object.keys(patch) as (keyof PatchUserBasicInfoInput)[]
+  if (keys.length !== 1 || keys[0] !== 'listMetrics' || !patch.listMetrics) return false
+  const metricKeys = Object.keys(patch.listMetrics)
+  return (
+    metricKeys.length === 1 &&
+    metricKeys[0] === 'adminPermissionVariant' &&
+    (patch.listMetrics.adminPermissionVariant === 'manager' ||
+      patch.listMetrics.adminPermissionVariant === 'partner' ||
+      patch.listMetrics.adminPermissionVariant === 'viewer')
+  )
+}
+
+async function mergeUserFromApiResponse(
+  userId: UUID,
+  response: Awaited<ReturnType<typeof updateMemberBasicInfoRemote>>,
+  patch?: PatchUserBasicInfoInput
+): Promise<Omit<User, 'password'>> {
+  const existing = await getUserById(userId)
+  const mapped = mapMemberListItems([response])[0]
+  if (!mapped) {
+    throw new Error('회원 정보 수정 응답을 처리하지 못했습니다.')
+  }
+  if (!existing) return mapped
+  return {
+    ...existing,
+    ...mapped,
+    listMetrics: {
+      ...existing.listMetrics,
+      ...mapped.listMetrics,
+      ...patch?.listMetrics,
+    },
+    schoolInfo: patch?.schoolInfo
+      ? { ...existing.schoolInfo, ...mapped.schoolInfo, ...patch.schoolInfo }
+      : mapped.schoolInfo ?? existing.schoolInfo,
+    instructorInfo: patch?.instructorInfo
+      ? { ...existing.instructorInfo, ...mapped.instructorInfo, ...patch.instructorInfo }
+      : mapped.instructorInfo ?? existing.instructorInfo,
+    ...(patch && Object.prototype.hasOwnProperty.call(patch, 'adminComment')
+      ? { adminComment: patch.adminComment }
+      : {}),
+  }
+}
+
+async function patchUserBasicInfoRemote(
+  userId: UUID,
+  patch: PatchUserBasicInfoInput
+): Promise<Omit<User, 'password'>> {
+  const memberId = resolveMemberIdForApi(userId)
+  try {
+    if (hasAdminCommentPatch(patch)) {
+      const comment = patch.adminComment?.trim()
+      if (comment) {
+        await createMemberCommentRemote(memberId, {
+          screenCode: MEMBER_DETAIL_SCREEN_CODE,
+          comment,
+        })
+      }
+    }
+
+    const { adminComment: _adminComment, ...patchWithoutComment } = patch
+    const body = mapPatchUserBasicInfoToApiRequest(patchWithoutComment)
+    const hasBodyFields = Object.keys(body).length > 0
+
+    if (!hasBodyFields && hasAdminCommentPatch(patch)) {
+      const existing = await getUserById(userId)
+      if (!existing) {
+        throw new Error('사용자를 찾을 수 없습니다.')
+      }
+      return {
+        ...existing,
+        adminComment: patch.adminComment?.trim() || existing.adminComment,
+      }
+    }
+
+    if (!hasBodyFields) {
+      const existing = await getUserById(userId)
+      if (!existing) throw new Error('사용자를 찾을 수 없습니다.')
+      return existing
+    }
+
+    const response = await updateMemberBasicInfoRemote(memberId, body)
+    return mergeUserFromApiResponse(userId, response, patch)
+  } catch (error) {
+    throw new Error(getMemberApiErrorMessage(error, '회원 정보 저장에 실패했습니다.'))
+  }
+}
+
+async function patchAdminPermissionVariantRemote(
+  userId: UUID,
+  variant: AdminPermissionTagVariant
+): Promise<Omit<User, 'password'>> {
+  const memberId = resolveMemberIdForApi(userId)
+  void memberId
+  try {
+    const response = await updateMemberBasicInfoRemote(memberId, {
+      listMetrics: { adminPermissionVariant: variant },
+    })
+    return mergeUserFromApiResponse(userId, response, {
+      listMetrics: { adminPermissionVariant: variant },
+    })
+  } catch (error) {
+    throw new Error(getMemberApiErrorMessage(error, '관리자 권한 유형 변경에 실패했습니다.'))
+  }
+}
+
 /** CMS: 관리자 등록 회원 등 기본 정보 일부 수정 (Mock — mockUsers 반영) */
 export async function patchUserBasicInfo(
   userId: UUID,
   patch: PatchUserBasicInfoInput
 ): Promise<Omit<User, 'password'>> {
-  if (isMembersRemoteEnabled() && !isMemberBasicInfoPatchRemoteEnabled()) {
+  if (isMembersRemoteEnabled()) {
+    if (isAdminPermissionVariantOnlyPatch(patch) && isAdminPermissionVariantPatchRemoteEnabled()) {
+      return patchAdminPermissionVariantRemote(userId, patch.listMetrics!.adminPermissionVariant!)
+    }
+    if (isMemberBasicInfoPatchRemoteEnabled()) {
+      return patchUserBasicInfoRemote(userId, patch)
+    }
     throw new Error('회원 기본정보 수정 API가 아직 제공되지 않습니다.')
   }
 

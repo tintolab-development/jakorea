@@ -4,6 +4,7 @@ LNB 「회원 관리」 3화면(회원 목록·권한 승인·권한 설정)과 
 
 - 공통 가이드: [backend-handoff.md](./backend-handoff.md) · [api-routes-and-client.md](./api-routes-and-client.md)
 - 백엔드 갭·스펙 불일치: [members-api-backend-gaps.md](./members-api-backend-gaps.md)
+- 회원 상세 미존재 API (백엔드 전달용): [members-api-detail-missing-endpoints-handoff.md](./members-api-detail-missing-endpoints-handoff.md)
 - OpenAPI 기준: `openapi/backend.openapi.json` (v9) · subset: `openapi/members.openapi.json`
 
 ---
@@ -200,14 +201,17 @@ subset path prefix (`scripts/filter-openapi-members.mjs`):
 
 | 탭/섹션 | remote 조건 | API / 데이터 |
 |---------|-------------|--------------|
-| 기본정보 핵심 | `members` | `GET /api/users/{memberId}` |
+| 기본정보 핵심 | `members` | `GET /api/admin/users/{memberId}` |
+| 기본정보 저장 | `members` | `PATCH /api/admin/users/{memberId}` (`updateMemberBasicInfo`) |
+| 관리자 권한 유형(드롭다운) | `members` | 동일 PATCH (`listMetrics.adminPermissionVariant`) |
+| 관리자 코멘트 | `members` | `GET/POST .../comments` (최신 1건 표시) |
+| 소속 교사 | `members` | `GET .../affiliated-teachers` |
 | 강사 프로필·이력서 일부 | `members` + INSTRUCTOR | `GET .../instructor-profile` (계좌·자격증 등 일부 mock) |
-| 1365 ID | `members` | `GET .../external-identifiers` + `external1365Id` |
+| 1365 ID | `members` | `GET .../external-identifiers` + `external1365Id` (없으면 placeholder 미표시) |
 | 정보 제공 동의 | `members` | `GET .../consent-records` |
-| 관리자 코멘트 | — | mock + 배너 |
-| 소속 교사 | — | mock + 배너 |
-| 프로그램 이력·신청 | — | `mockUserHistories` / `applicationService` + 배너 |
-| 관리자 담당 프로그램 이력 | — | `mockPrograms` + 배너 |
+| 프로그램 신청 이력 | `members` | `GET .../applications` (+ `program-history` 보조) |
+| 프로그램 참여(봉사) 이력 | `members` | `GET .../program-history` |
+| 관리자 담당 프로그램 이력 | `members` | `GET .../admin-programs` |
 | 강사 정산 현황 | `members` + settlement 모듈 | `GET /api/settlements?instructorMemberId=` |
 | 강사 정산 (settlement 미활성) | `members` only | mock + 배너 |
 
@@ -217,24 +221,28 @@ subset path prefix (`scripts/filter-openapi-members.mjs`):
 
 | Method | Path | UI |
 |--------|------|-----|
-| GET | `/api/users/{memberId}` | 기본정보 탭 (상세 열 때 재조회) |
-| GET | `/api/users/{memberId}/instructor-profile` | 강사 프로필 (`INSTRUCTOR`) |
-| GET | `/api/users/{memberId}/external-identifiers` | 1365 외부 식별자 |
-| GET | `/api/users/{memberId}/consent-records` | 정보 제공 동의 섹션 |
+| GET | `/api/admin/users/{memberId}` | 기본정보 탭 (상세 열 때 재조회) |
+| PATCH | `/api/admin/users/{memberId}` | 기본정보 저장 (`isMemberBasicInfoPatchRemoteEnabled()`) |
+| GET | `/api/admin/users/{memberId}/comments` | 관리자 코멘트 조회 |
+| POST | `/api/admin/users/{memberId}/comments` | 관리자 코멘트 등록 |
+| GET | `/api/admin/users/{memberId}/affiliated-teachers` | 학교 소속 교사 |
+| GET | `/api/admin/users/{memberId}/applications` | 프로그램 신청 이력 |
+| GET | `/api/admin/users/{memberId}/program-history` | 프로그램 참여(봉사) 이력 |
+| GET | `/api/admin/users/{memberId}/admin-programs` | 관리자 담당 프로그램 |
+| GET | `/api/admin/users/{memberId}/instructor-profile` | 강사 프로필 (`INSTRUCTOR`) |
+| GET | `/api/admin/users/{memberId}/external-identifiers` | 1365 외부 식별자 |
+| GET | `/api/admin/users/{memberId}/consent-records` | 정보 제공 동의 섹션 |
 | GET | `/api/settlements?instructorMemberId=` | 강사 정산 탭 (`paymentOrders` 또는 `accountPayments` 모듈) |
-| POST | `/api/users/{memberId}/privacy/unmask` | 개인정보 해제 (`memberId` 숫자 전달) |
-| POST | `/api/users/{memberId}/delete` | 탈퇴/삭제 |
+| POST | `/api/admin/users/{memberId}/privacy/unmask` | 개인정보 해제 (`memberId` 숫자 전달) |
+| POST | `/api/admin/users/{memberId}/delete` | 탈퇴/삭제 |
 
-**저장**: `PATCH /api/users/{memberId}` 미제공 → remote 시 「정보 수정」 버튼 숨김 (`isMemberBasicInfoPatchRemoteEnabled() === false`).
+**mock 유지 + 안내 배너** (`members` remote 시, API 미제공 기능):
 
-**mock 유지 + 안내 배너** (`members` remote 시):
-
-- 프로그램 이력 (`mockUserHistories`)
-- 신청·등록 stub (`applicationService`)
-- 관리자 담당 프로그램 이력 (`mockPrograms`)
-- 관리자 코멘트
-- 기관 소속 교사
-- 강사 이력서 일부(계좌·학력 상세·자격증·수상)
+- 프로그램 이력 **진행상태 변경** (`applicationService.update`)
+- 강의보고/출석/과제 모달, 수료증 일괄 발급
+- 소속 교사 **재직 현황 변경**
+- 관리자 담당 프로그램 **이력 삭제** 등 일부 액션
+- 강사 이력서 일부(계좌·학력 상세·자격증·수상 — API 필드 부족)
 - 강사 정산 (`paymentOrders`/`accountPayments` 미활성 시)
 
 ---
