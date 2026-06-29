@@ -47,6 +47,16 @@ export type ApplicantDetailVariant = 'legacy' | 'general'
 
 const DETAIL_TAB_PARAM = 'detailTab'
 
+function isCompanySchoolProgram(program: Program | null | undefined): boolean {
+  return (
+    program?.id.startsWith('economy-prog-') === true ||
+    program?.id.startsWith('company-school-prog-') === true ||
+    program?.id.startsWith('company-school-local-') === true ||
+    program?.mainTitle?.includes('1사1교') === true ||
+    program?.title.includes('1사1교') === true
+  )
+}
+
 function parseDetailTabFromSearch(
   searchParams: URLSearchParams,
   type: ApplicantType,
@@ -771,6 +781,7 @@ export function ApplicantsDetailContents({
   const institutionInfoPanel = useMemo(() => {
     if (!isInstitution || !institutionData) return null
     const d = institutionData
+    const isCompanySchool = isCompanySchoolProgram(program)
     if (isGeneralDetail) {
       return (
         <ApplicantGeneralInstitutionBasicInfo
@@ -788,6 +799,7 @@ export function ApplicantsDetailContents({
           showEducationFormatField={institutionDetailEdit.showEducationFormatField}
           isCombinedClassProgramEligible={institutionDetailEdit.isCombinedClassProgramEligible}
           isCombinedClassApplyRadioDisabled={institutionDetailEdit.isCombinedClassApplyRadioDisabled}
+          hideCombinedClass={isCompanySchool}
           validationErrors={institutionDetailEdit.validationErrors}
           onResendNotificationClick={onResendNotification}
           isAdminCommentEditing={isAdminCommentEditing}

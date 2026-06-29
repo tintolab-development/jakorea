@@ -1,7 +1,7 @@
 /**
  * 경제 교육 프로그램 Mock 데이터
  * 스크린샷 기준: /programs/economy-education 테이블 데이터
- * 전체 206건, 상위 8건은 스크린샷과 동일
+ * 대표 조합 8건, 기존 연동용 ID(economy-prog-001~008)는 유지
  * 공통 정보 탭(기본 정보·KPI·임금·커리큘럼) 표시용 필드 보강
  */
 
@@ -11,7 +11,6 @@ import type {
   ProgramCategory,
   ProgramLifecycleStatus,
   TargetLevel,
-  IPSClassification,
   InstitutionType,
 } from '../../types/domain'
 import { mockSponsors } from './sponsors'
@@ -114,26 +113,19 @@ const ECONOMY_SHARED_COMMON: Partial<Program> = {
   resultAnnouncementMethod: '홈페이지 공지 및 합격자 개별 안내',
 }
 
-const IPS_CYCLE: IPSClassification[] = ['Prepare', 'Succeed', 'Inspire']
-
-const DISTRICT_SAMPLES = [
-  '서울 강남구',
-  '부산 해운대구',
-  '대구 수성구',
-  '인천 연수구',
-  '경기 성남시',
-  '충북 청주시',
-  '전북 전주시',
-  '제주 제주시',
-]
-
 const PARTICIPANT_CATEGORY_CYCLE: ProgramCategory[] = [
   'school',
   'instructor',
 ]
 
-/** 스크린샷 상위 8건 (No. 1~8) */
-const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'updatedAt'>[] = [
+const SURVEY_MENU_FULL = ['survey', 'satisfaction', 'lecture_evaluation'] as const
+const SURVEY_MENU_SINGLE = ['survey'] as const
+
+/** 1사1교 대표 케이스 8건 (No. 1~8) */
+const COMPANY_SCHOOL_CASE_PROGRAMS: Omit<
+  Program,
+  'id' | 'rounds' | 'createdAt' | 'updatedAt'
+>[] = [
   {
     ...ECONOMY_SHARED_COMMON,
     sponsorId: SPONSOR_ID,
@@ -144,12 +136,12 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[0 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: 'HSBC/HKU Business Case Competition 2026',
-    startDate: getDate(60),
-    endDate: getDate(30),
-    applicationStartDate: getDate(90),
-    applicationEndDate: getDate(45),
+    startDate: getDate(-45),
+    endDate: getDate(-180),
+    applicationStartDate: getDate(-30),
+    applicationEndDate: getDate(-7),
     status: 'pending',
-    lifecycleStatus: 'recruiting_students' as ProgramLifecycleStatus,
+    lifecycleStatus: 'planned' as ProgramLifecycleStatus,
     businessArea: '경제금융',
     targetLevel: 'elementary' as TargetLevel,
     approvedStudentCount: 0,
@@ -163,7 +155,8 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     educationTime: 8,
     textbookName: 'Business Case Study Workbook',
     textbookNameEn: 'Business Case Study Workbook',
-    resultAnnouncementDate: getDate(40),
+    resultAnnouncementDate: getDate(-1),
+    generalSurveyMenuKeys: [],
   },
   {
     ...ECONOMY_SHARED_COMMON,
@@ -175,12 +168,12 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[1 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: '대학생경제교육봉사단 UJAT 36기',
-    startDate: getDate(45),
-    endDate: getDate(15),
-    applicationStartDate: getDate(90),
-    applicationEndDate: getDate(30),
-    status: 'active',
-    lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
+    startDate: getDate(-60),
+    endDate: getDate(-210),
+    applicationStartDate: getDate(10),
+    applicationEndDate: getDate(-20),
+    status: 'pending',
+    lifecycleStatus: 'recruiting_students' as ProgramLifecycleStatus,
     businessArea: '경제금융',
     targetLevel: 'high' as TargetLevel,
     approvedStudentCount: 30,
@@ -195,8 +188,7 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     textbookNameEn: 'Our Region',
     managerName: '사업팀 김담당 매니저',
     contactPhone: '02-6347-6113',
-    participatingSchoolCount: 42,
-    participatingStudentCount: 1280,
+    generalSurveyMenuKeys: [...SURVEY_MENU_SINGLE],
   },
   {
     ...ECONOMY_SHARED_COMMON,
@@ -208,12 +200,14 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[2 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: 'Growth to Professional 2026',
-    startDate: getDate(75),
-    endDate: getDate(45),
-    applicationStartDate: getDate(120),
-    applicationEndDate: getDate(60),
+    startDate: getDate(-70),
+    endDate: getDate(-220),
+    applicationStartDate: getDate(20),
+    applicationEndDate: getDate(-25),
+    instructorApplicationStartDate: getDate(5),
+    instructorApplicationEndDate: getDate(-25),
     status: 'pending',
-    lifecycleStatus: 'recruiting_students' as ProgramLifecycleStatus,
+    lifecycleStatus: 'recruiting_instructors' as ProgramLifecycleStatus,
     businessArea: '경제금융',
     targetLevel: 'high' as TargetLevel,
     approvedStudentCount: 30,
@@ -226,7 +220,9 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     partnerInvolvement: true,
     textbookName: 'Career Readiness Module',
     textbookNameEn: 'Career Readiness Module',
-    resultAnnouncementDate: getDate(55),
+    resultAnnouncementDate: getDate(-18),
+    instructors: 12,
+    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
   },
   {
     ...ECONOMY_SHARED_COMMON,
@@ -238,12 +234,12 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[3 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: '초등 경제교육 모집',
-    startDate: getDate(90),
-    endDate: getDate(60),
-    applicationStartDate: getDate(150),
-    applicationEndDate: getDate(75),
+    startDate: getDate(-80),
+    endDate: getDate(-240),
+    applicationStartDate: getDate(30),
+    applicationEndDate: getDate(5),
     status: 'pending',
-    lifecycleStatus: 'recruiting_students' as ProgramLifecycleStatus,
+    lifecycleStatus: 'matching_completed' as ProgramLifecycleStatus,
     businessArea: '경제금융',
     targetLevel: 'elementary' as TargetLevel,
     approvedStudentCount: 10,
@@ -257,7 +253,9 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     maleParticipants: 120,
     femaleParticipants: 118,
     totalParticipants: 238,
-    resultAnnouncementDate: getDate(70),
+    resultAnnouncementDate: getDate(1),
+    instructors: 24,
+    generalSurveyMenuKeys: [],
   },
   {
     ...ECONOMY_SHARED_COMMON,
@@ -269,12 +267,12 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[4 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: 'SAP 함께 성장하JA IT SW 멘토링',
-    startDate: getDate(100),
-    endDate: getDate(70),
-    applicationStartDate: getDate(130),
-    applicationEndDate: getDate(85),
-    status: 'pending',
-    lifecycleStatus: 'recruiting_students' as ProgramLifecycleStatus,
+    startDate: getDate(-10),
+    endDate: getDate(-120),
+    applicationStartDate: getDate(80),
+    applicationEndDate: getDate(20),
+    status: 'active',
+    lifecycleStatus: 'education_before_textbook' as ProgramLifecycleStatus,
     businessArea: '경제금융',
     targetLevel: 'high' as TargetLevel,
     approvedStudentCount: 30,
@@ -288,7 +286,9 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     educationTime: 4,
     textbookName: 'Digital Skills for Future',
     textbookNameEn: 'Digital Skills for Future',
-    resultAnnouncementDate: getDate(80),
+    resultAnnouncementDate: getDate(18),
+    instructors: 28,
+    generalSurveyMenuKeys: [...SURVEY_MENU_SINGLE],
   },
   {
     ...ECONOMY_SHARED_COMMON,
@@ -300,8 +300,8 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[5 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: 'Global Career Discovery 원데이 취업 멘토링',
-    startDate: getDate(50),
-    endDate: getDate(20),
+    startDate: getDate(20),
+    endDate: getDate(-45),
     applicationStartDate: getDate(100),
     applicationEndDate: getDate(35),
     status: 'active',
@@ -321,8 +321,9 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     educationTime: 6,
     textbookName: 'Career Discovery Guide',
     textbookNameEn: 'Career Discovery Guide',
-    participatingSchoolCount: 28,
-    participatingStudentCount: 840,
+    participatingSchoolCount: 12,
+    participatingStudentCount: 360,
+    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
   },
   {
     ...ECONOMY_SHARED_COMMON,
@@ -334,12 +335,12 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[6 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: '경제금융교육 전문강사단 모집',
-    startDate: getDate(55),
-    endDate: getDate(25),
+    startDate: getDate(90),
+    endDate: getDate(10),
     applicationStartDate: getDate(95),
     applicationEndDate: getDate(40),
-    status: 'active',
-    lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
+    status: 'completed',
+    lifecycleStatus: 'education_completed' as ProgramLifecycleStatus,
     businessArea: '경제금융',
     targetLevel: 'high' as TargetLevel,
     approvedStudentCount: 30,
@@ -355,6 +356,7 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     educationTime: 3,
     participatingSchoolCount: 15,
     participatingStudentCount: 462,
+    generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
   },
   {
     ...ECONOMY_SHARED_COMMON,
@@ -371,7 +373,7 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     applicationStartDate: getDate(180),
     applicationEndDate: getDate(100),
     status: 'completed',
-    lifecycleStatus: 'education_completed' as ProgramLifecycleStatus,
+    lifecycleStatus: 'document_processing_completed' as ProgramLifecycleStatus,
     businessArea: '경제금융',
     targetLevel: 'high' as TargetLevel,
     approvedStudentCount: 20,
@@ -391,158 +393,39 @@ const SCREENSHOT_PROGRAMS: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'update
     instructorCapacity: 28,
     participatingSchoolCount: 8,
     participatingStudentCount: 356,
+    generalSurveyMenuKeys: [],
   },
 ]
 
-const TITLES = [
-  'JA Korea 경제교육 프로그램',
-  '기업가정신 함양 프로그램',
-  '진로탐색 경제교육',
-  '금융리터러시 교육',
-  '창업 멘토링 프로그램',
-  '취업 준비 워크숍',
-  '경제교육 봉사단 모집',
-  '초등 경제교육 지원',
-  '중등 경제교육 지원',
-  '고등 경제교육 지원',
-]
+/** 1사1교 대표 조합 프로그램 */
+let economyProgramsCache: Program[] | null = null
 
-function extraFieldsForGeneratedIndex(i: number): Partial<Program> {
-  const category = PARTICIPANT_CATEGORY_CYCLE[i % PARTICIPANT_CATEGORY_CYCLE.length]
-  const ips = IPS_CYCLE[i % 3]
-  const institutionType: InstitutionType =
-    category === 'school' ? 'inside_school' : 'outside_school'
-  const yearSuffix = 2026 - (i % 3)
-  const baseTitle = TITLES[i % TITLES.length]
+function buildCompanySchoolCaseProgram(
+  base: Omit<Program, 'id' | 'rounds' | 'createdAt' | 'updatedAt'>,
+  index: number
+): Program {
+  const id = `economy-prog-${String(index + 1).padStart(3, '0')}`
+  const capacity = 30
+  const { startTime, endTime } = buildProgramStartEndTime(index)
 
   return {
-    ...ECONOMY_SHARED_COMMON,
-    mainTitle: baseTitle,
-    titleEn: `${baseTitle.replace(/\s+/g, ' ')} ${yearSuffix}`,
-    institutionType,
-    district: DISTRICT_SAMPLES[i % DISTRICT_SAMPLES.length],
-    ips,
-    programCategory: ips === 'Succeed' ? 'Workshop (워크숍)' : null,
-    programChannel:
-      ips === 'Inspire' ? '다운받을 자료 (Downloadable material)' : null,
-    partnerInvolvement: ips === 'Prepare' ? (i % 4 === 0) : i % 2 === 0,
-    courseDeliveredBy: i % 5 === 0 ? 'Jointly' : 'JA',
-    textbookName: ips === 'Prepare' ? '성공하는 경제생활' : 'JA Economics for Success',
-    textbookNameEn: ips === 'Prepare' ? 'JA Economics for Success' : 'JA Economics for Success',
-    resultAnnouncementDate: getDate(100 - (i % 40)),
-    instructorCapacity: 40,
-  }
+    ...base,
+    id,
+    rounds: createRounds(id, capacity),
+    startTime,
+    endTime,
+    createdAt: getDate(90 - index),
+    updatedAt: getDate(90 - index),
+    posterImage: `https://picsum.photos/seed/${id}/400/300`,
+    keyVisualImage: `https://picsum.photos/seed/${id}/400/300`,
+  } as Program
 }
-
-/** 1사1교 프로그램 206건 (스크린샷 상위 8건 + 나머지 198건) */
-let economyProgramsCache: Program[] | null = null
 
 export function getCompanySchoolPrograms(): Program[] {
   if (economyProgramsCache) return economyProgramsCache
 
-  const programs: Program[] = []
-
-  // 스크린샷 상위 8건
-  SCREENSHOT_PROGRAMS.forEach((base, i) => {
-    const id = `economy-prog-${String(i + 1).padStart(3, '0')}`
-    const capacity = 30
-    const { startTime, endTime } = buildProgramStartEndTime(i)
-    programs.push({
-      ...base,
-      id,
-      rounds: createRounds(id, capacity),
-      startTime,
-      endTime,
-      createdAt: getDate(90 - i),
-      updatedAt: getDate(90 - i),
-      posterImage: `https://picsum.photos/seed/${id}/400/300`,
-      keyVisualImage: `https://picsum.photos/seed/${id}/400/300`,
-    } as Program)
-  })
-
-  // 나머지 198건 (총 206건) — 예정 위젯 4단계 골고루, 진행·완료는 테이블(학교/학생 수·강사)용 필드 채움
-  const scheduledStatuses: ProgramLifecycleStatus[] = [
-    'recruiting_students',
-    'recruiting_instructors',
-    'matching_completed',
-    'education_before_textbook',
-  ]
-  const inProgressStatus: ProgramLifecycleStatus = 'education_after_textbook'
-  const statusSequence: ProgramLifecycleStatus[] = [
-    ...Array.from({ length: 116 }, (_, j) => scheduledStatuses[j % scheduledStatuses.length]),
-    ...Array(9).fill(inProgressStatus),
-    ...Array(5).fill('education_completed' as ProgramLifecycleStatus),
-    ...Array(5).fill('document_processing_completed' as ProgramLifecycleStatus),
-    ...Array(63).fill('planned' as ProgramLifecycleStatus),
-  ]
-
-  for (let i = 8; i < 206; i++) {
-    const id = `economy-prog-${String(i + 1).padStart(3, '0')}`
-    const capacity = 30
-    const lifecycleStatus = statusSequence[i - 8] ?? scheduledStatuses[0]
-    const category = PARTICIPANT_CATEGORY_CYCLE[i % PARTICIPANT_CATEGORY_CYCLE.length]
-    const targetLevels: TargetLevel[] = ['elementary', 'middle', 'high']
-    const targetLevel = targetLevels[i % 3]
-    const approvedCount = i % 5 === 0 ? 0 : Math.min(30, Math.floor((i * 7) % 31))
-    const extras = extraFieldsForGeneratedIndex(i)
-    const { startTime, endTime } = buildProgramStartEndTime(i)
-    const instCap = extras.instructorCapacity ?? 40
-    const inProgress = lifecycleStatus === 'education_after_textbook'
-    const isCompleted =
-      lifecycleStatus === 'education_completed' ||
-      lifecycleStatus === 'document_processing_completed'
-
-    const participatingSchoolCount =
-      inProgress ? 5 + (i % 15) : isCompleted ? 3 + (i % 22) : undefined
-
-    const participatingStudentCount = inProgress
-      ? 180 + ((i * 97) % 2200)
-      : isCompleted
-        ? 120 + ((i * 53) % 2400)
-        : undefined
-
-    const instructors =
-      inProgress || isCompleted
-        ? Math.min(Math.max(approvedCount, 6), instCap - (i % 4))
-        : undefined
-
-    programs.push({
-      id,
-      sponsorId: SPONSOR_ID,
-      title: `${TITLES[i % TITLES.length]} ${2026 - (i % 3)}`,
-      type: 'offline',
-      format: 'workshop',
-      category,
-      description: '경제금융 분야 교육 프로그램',
-      rounds: createRounds(id, capacity),
-      startTime,
-      endTime,
-      startDate: getDate(120 - i),
-      endDate: getDate(90 - i),
-      applicationStartDate: getDate(150 - i),
-      applicationEndDate: getDate(100 - i),
-      status:
-        lifecycleStatus === 'document_processing_completed'
-          ? 'completed'
-          : ['education_after_textbook', 'education_completed'].includes(lifecycleStatus)
-            ? 'active'
-            : 'pending',
-      lifecycleStatus,
-      businessArea: '경제금융',
-      targetLevel,
-      approvedStudentCount: approvedCount,
-      instructors,
-      participatingSchoolCount,
-      participatingStudentCount,
-      createdAt: getDate(200 - i),
-      updatedAt: getDate(200 - i),
-      posterImage: `https://picsum.photos/seed/${id}/400/300`,
-      keyVisualImage: `https://picsum.photos/seed/${id}/400/300`,
-      ...extras,
-    } as Program)
-  }
-
-  economyProgramsCache = programs
+  // 기존 mock 연동을 위해 economy-prog-001~008 ID는 유지한다.
+  economyProgramsCache = COMPANY_SCHOOL_CASE_PROGRAMS.map(buildCompanySchoolCaseProgram)
   return economyProgramsCache
 }
 

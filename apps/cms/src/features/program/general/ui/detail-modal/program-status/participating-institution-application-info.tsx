@@ -2,7 +2,7 @@
  * 참여 기관 상세 — 신청 정보 탭 (기관 신청 상세와 동일 테이블·정렬)
  */
 
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
 import type { Program } from '@/types/domain'
 import { resolveParticipatingInstitutionScheduleRowLabel } from '@/features/program/general/lib/participating-school-session-display'
@@ -17,6 +17,10 @@ import {
   institutionApplicationTableLabelWithParenthesisHint,
   INSTITUTION_OTHER_NOTES_TABLE_LABEL,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-info-table'
+import {
+  ProgramDetailTdSegmentWrap,
+  withProgramDetailTdDivider,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info.css'
 import './participating-institution-application-info.css'
@@ -35,6 +39,7 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   combinedClassCell: ReactNode
   usesTextbook?: boolean
   textbookEditFullWidth?: boolean
+  hideCombinedClass?: boolean
   schoolName: ReactNode
   educationGrade: ReactNode
   region: ReactNode
@@ -51,6 +56,96 @@ export interface ParticipatingInstitutionApplicationInfoProps {
   criminalCheck: ReactNode
   program: Program
   sessions: ParticipatingSchoolSession[]
+  useCompanySchoolScheduleFormat?: boolean
+}
+
+function padScheduleTimePart(part: string): string {
+  const trimmed = part.trim()
+  const [h, m = '00'] = trimmed.split(':')
+  return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`
+}
+
+function formatCompanySchoolDateWithDay(session: ParticipatingSchoolSession): string {
+  const datePart = session.date.replace(/\./g, '. ').replace(/\s+/g, ' ').trim()
+  return `${datePart}(${session.dayOfWeek})`
+}
+
+function formatCompanySchoolClassTime(session: ParticipatingSchoolSession): string {
+  const [startRaw, endRaw] = session.timeRange.split('~')
+  const timePart = `${padScheduleTimePart(startRaw)} ~ ${padScheduleTimePart(endRaw ?? startRaw)}`
+  const classLabel = session.classNum?.trim() || `${session.round}교시`
+  return `${classLabel} (${timePart})`
+}
+
+function groupCompanySchoolSessions(
+  sessions: ParticipatingSchoolSession[]
+): ParticipatingSchoolSession[][] {
+  const groups = new Map<string, ParticipatingSchoolSession[]>()
+  for (const session of sessions.filter(s => s.status !== 'not_planned')) {
+    const key = `${session.date}|${session.dayOfWeek}`
+    const prev = groups.get(key)
+    if (prev) prev.push(session)
+    else groups.set(key, [session])
+  }
+
+  return Array.from(groups.values()).map(group => [...group].sort((a, b) => a.round - b.round))
+}
+
+function CompanySchoolProgressScheduleRows({ sessions }: { sessions: ParticipatingSchoolSession[] }) {
+  return (
+    <>
+      {groupCompanySchoolSessions(sessions).map(group => {
+        const first = group[0]!
+        const isCompleted = group.every(session => session.status === 'completed')
+        const statusLabel = isCompleted ? '진행 완료' : '진행 대기'
+        const statusClass = isCompleted
+          ? 'participating-institution-application-info__session-status--completed'
+          : 'participating-institution-application-info__session-status--pending'
+        const scheduleLabel = (
+          <ProgramDetailTdSegmentWrap>
+            {withProgramDetailTdDivider([formatCompanySchoolDateWithDay(first), `${group.length}차시`])}
+          </ProgramDetailTdSegmentWrap>
+        )
+        const timeLabel = (
+          <ProgramDetailTdSegmentWrap>
+            {withProgramDetailTdDivider(group.map(formatCompanySchoolClassTime))}
+          </ProgramDetailTdSegmentWrap>
+        )
+
+        return (
+          <Fragment key={`${first.date}-${first.dayOfWeek}`}>
+            <tr>
+              <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
+                교육 진행 현황
+              </td>
+              <td
+                colSpan={3}
+                className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
+              >
+                <span className={`participating-institution-application-info__session-status ${statusClass}`}>
+                  {statusLabel}
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
+                교육일 및 차시
+              </td>
+              <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
+                {scheduleLabel}
+              </td>
+              <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
+                교육 시간
+              </td>
+              <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
+                {timeLabel}
+              </td>
+            </tr>
+          </Fragment>
+        )
+      })}
+    </>
+  )
 }
 
 export function ParticipatingInstitutionApplicationInfo({
@@ -66,6 +161,7 @@ export function ParticipatingInstitutionApplicationInfo({
   combinedClassCell,
   usesTextbook = true,
   textbookEditFullWidth = false,
+  hideCombinedClass = false,
   schoolName,
   educationGrade,
   region,
@@ -82,6 +178,7 @@ export function ParticipatingInstitutionApplicationInfo({
   criminalCheck,
   program,
   sessions,
+  useCompanySchoolScheduleFormat = false,
 }: ParticipatingInstitutionApplicationInfoProps) {
   return (
     <div className="institution-basic-info applicant-institution-basic-info participating-institution-application-info">
@@ -111,21 +208,27 @@ export function ParticipatingInstitutionApplicationInfo({
                 {usesTextbook && textbookEditFullWidth ? (
                   <>
                     <InstitutionApplicationTableRowFullWidth label="교재명" value={textbookCell} />
-                    <InstitutionApplicationTableRowFullWidth
-                      label="합반 신청 여부"
-                      value={combinedClassCell}
-                    />
+                    {!hideCombinedClass ? (
+                      <InstitutionApplicationTableRowFullWidth
+                        label="합반 신청 여부"
+                        value={combinedClassCell}
+                      />
+                    ) : null}
                   </>
                 ) : null}
                 {usesTextbook && !textbookEditFullWidth ? (
-                  <InstitutionApplicationTableRowTwoCols
-                    label1="교재명"
-                    value1={textbookCell}
-                    label2="합반 신청 여부"
-                    value2={combinedClassCell}
-                  />
+                  hideCombinedClass ? (
+                    <InstitutionApplicationTableRowFullWidth label="교재명" value={textbookCell} />
+                  ) : (
+                    <InstitutionApplicationTableRowTwoCols
+                      label1="교재명"
+                      value1={textbookCell}
+                      label2="합반 신청 여부"
+                      value2={combinedClassCell}
+                    />
+                  )
                 ) : null}
-                {!usesTextbook ? (
+                {!usesTextbook && !hideCombinedClass ? (
                   <InstitutionApplicationTableRowFullWidth
                     label="합반 신청 여부"
                     value={combinedClassCell}
@@ -208,7 +311,9 @@ export function ParticipatingInstitutionApplicationInfo({
         <h3 className="applicant-institution-basic-info__title">교육 진행 일정</h3>
         <div className="applicant-institution-basic-info__table-wrap">
           <table className="applicant-institution-basic-info__table">
-            {INSTITUTION_APPLICATION_SCHEDULE_COLGROUP}
+            {useCompanySchoolScheduleFormat
+              ? INSTITUTION_APPLICATION_INFO_COLGROUP
+              : INSTITUTION_APPLICATION_SCHEDULE_COLGROUP}
             <tbody>
               {sessions.length === 0 ? (
                 <tr>
@@ -219,6 +324,8 @@ export function ParticipatingInstitutionApplicationInfo({
                     등록된 교육 일정이 없습니다.
                   </td>
                 </tr>
+              ) : useCompanySchoolScheduleFormat ? (
+                <CompanySchoolProgressScheduleRows sessions={sessions} />
               ) : (
                 sessions.map(session => (
                   <ParticipatingProgressScheduleRow

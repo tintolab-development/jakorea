@@ -94,6 +94,7 @@ export function GeneralProgramRecruitmentView({
           onRegisterGetAdditionalContentHtml={registerInstitutionsAdditionalHtml}
           showThumbnail
           showRecruitmentMethod={showParticipantRecruitmentMethod}
+          recruitmentMethodLabel="지원 방법"
         />
       )
       break

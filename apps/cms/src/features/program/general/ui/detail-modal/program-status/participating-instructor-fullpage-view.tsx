@@ -658,6 +658,17 @@ export function ParticipatingInstructorFullpageView({
       row.sessions?.some(session =>
         selectedAssignSessionIds.has(`session-${session.round}-${session.date}-${session.timeRange}`)
       ) === true
+    const selectedScheduleKeys = new Set<string>()
+    waitingSchools.forEach(row => {
+      if ((selectedWaitingRowKeys.has(row.id) || hasSelectedSession(row)) && row.scheduleKey) {
+        selectedScheduleKeys.add(row.scheduleKey)
+      }
+    })
+    school.sessions?.forEach(session => {
+      if (selectedAssignSessionIds.has(`session-${session.round}-${session.date}-${session.timeRange}`)) {
+        selectedScheduleKeys.add(`${session.date}|${session.dayOfWeek}`)
+      }
+    })
 
     setWaitingSchools(prev =>
       renumberWaitingRows(
@@ -672,7 +683,15 @@ export function ParticipatingInstructorFullpageView({
           .map(w => {
             if (!isCompanySchool) return w
             const rowSchoolId = w.schoolId ?? w.id
-            if (rowSchoolId !== assignGuideSchoolId || w.assignmentStatus !== 'waiting') return w
+            const isSameAssignedSchool = rowSchoolId === assignGuideSchoolId
+            const isSameAssignedSchedule =
+              w.scheduleKey != null && selectedScheduleKeys.has(w.scheduleKey)
+            if (
+              (!isSameAssignedSchool && !isSameAssignedSchedule) ||
+              w.assignmentStatus !== 'waiting'
+            ) {
+              return w
+            }
             return { ...w, assignmentStatus: 'cancelled' satisfies InstructorWaitingAssignmentStatus }
           })
       )
@@ -697,6 +716,7 @@ export function ParticipatingInstructorFullpageView({
     assignGuideRole,
     selectedWaitingSchoolKeys,
     assignGuideSessionIds,
+    waitingSchools,
     isCompanySchool,
     schoolRows,
     d,

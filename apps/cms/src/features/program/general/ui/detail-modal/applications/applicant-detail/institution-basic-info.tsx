@@ -99,6 +99,7 @@ export interface ApplicantGeneralInstitutionBasicInfoProps {
   showEducationFormatField?: boolean
   isCombinedClassProgramEligible?: boolean
   isCombinedClassApplyRadioDisabled?: boolean
+  hideCombinedClass?: boolean
   validationErrors?: Record<string, string>
   onResendNotificationClick?: () => void
   program?: Program | null
@@ -228,6 +229,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
   showEducationFormatField = false,
   isCombinedClassProgramEligible: isCombinedClassProgramEligibleProp,
   isCombinedClassApplyRadioDisabled = true,
+  hideCombinedClass = false,
   validationErrors,
   onResendNotificationClick,
   program = null,
@@ -292,7 +294,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
   const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, shouldMask)
   const sessions = institution.sessions ?? []
 
-  const textbookViewValue = detail?.textbookName ?? '-'
+  const textbookViewValue = detail?.textbookName?.trim() || (hideCombinedClass ? '미정' : '-')
   const combinedClassViewValue = buildCombinedClassViewValue(detail, combinedClassProgramEligible)
 
   const addressDetailValue =
@@ -433,12 +435,16 @@ export function ApplicantGeneralInstitutionBasicInfo({
                   label="프로그램 승인 현황"
                   value={<ProgramApprovalStatusValue institution={institution} onResendNotificationClick={onResendNotificationClick} />}
                 />
-                <InstitutionApplicationTableRowTwoCols
-                  label1="교재명"
-                  value1={textbookEditValue}
-                  label2="합반 신청 여부"
-                  value2={combinedClassEditValue}
-                />
+                {hideCombinedClass ? (
+                  <InstitutionApplicationTableRowFullWidth label="교재명" value={textbookEditValue} />
+                ) : (
+                  <InstitutionApplicationTableRowTwoCols
+                    label1="교재명"
+                    value1={textbookEditValue}
+                    label2="합반 신청 여부"
+                    value2={combinedClassEditValue}
+                  />
+                )}
               </tbody>
             </table>
           </div>

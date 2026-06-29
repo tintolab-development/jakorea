@@ -1130,9 +1130,11 @@ export function GeneralParticipatingInstitutionDetailView({
       <TextbookStatusBadge status={mergedDetail.textbookStatus} />
     )
 
-  const textbookNameView = textbookDisplay.textbookName
+  const hasSelectedTextbook =
+    (mergedDetail.textbookId?.trim() ?? '') !== '' || (mergedDetail.textbookName?.trim() ?? '') !== ''
+  const textbookNameView = isCompanySchool && !hasSelectedTextbook ? '미정' : textbookDisplay.textbookName
   const kitsAndQty =
-    textbookDisplay.textbookKits > 0
+    hasSelectedTextbook && textbookDisplay.textbookKits > 0
       ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
       : '-'
 
@@ -1294,8 +1296,9 @@ export function GeneralParticipatingInstitutionDetailView({
               }
               textbookCell={textbookCell}
               combinedClassCell={combinedClassCell}
-              usesTextbook={usesTextbook}
+              usesTextbook={isCompanySchool || usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
+              hideCombinedClass={isCompanySchool}
               schoolName={mergedDetail.schoolName}
               educationGrade={mergedDetail.educationGrade}
               region={mergedDetail.region}
@@ -1412,6 +1415,7 @@ export function GeneralParticipatingInstitutionDetailView({
               criminalCheck={formatGuidanceSegmentValue(mergedDetail.criminalCheckRequest)}
               program={program}
               sessions={sessions}
+              useCompanySchoolScheduleFormat={isCompanySchool}
             />
           </div>
         )}
