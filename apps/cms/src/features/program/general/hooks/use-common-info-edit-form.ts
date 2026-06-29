@@ -10,8 +10,11 @@ import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/g
 import {
   generalProgramCommonInfoEditSchema,
   programToGeneralCommonInfoEditValues,
+  resolveSponsorManagementIds,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
+import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
+import { useSponsorOptionsQuery } from '@/features/sponsor/hooks/use-sponsor-options-query'
 
 export interface UseGeneralProgramCommonInfoEditFormOptions {
   program: Program | null
@@ -72,10 +75,24 @@ export function useGeneralProgramCommonInfoEditForm({
   program,
   isEditMode,
 }: UseGeneralProgramCommonInfoEditFormOptions): UseFormReturn<GeneralProgramCommonInfoEditFormValues> {
+  const sponsorsQuery = useSponsorOptionsQuery(Boolean(program))
+  const interimSponsorContext = useMemo(
+    () => ({
+      sponsors: sponsorsQuery.data ?? [],
+      contactsBySponsorId: {},
+    }),
+    [sponsorsQuery.data]
+  )
+  const initialSponsorIds = useMemo(
+    () => (program ? resolveSponsorManagementIds(program, interimSponsorContext) : []),
+    [interimSponsorContext, program]
+  )
+  const sponsorContext = useGeneralProgramSponsorEditContext(initialSponsorIds)
+
   const defaultValues = useMemo(() => {
-    if (program) return programToGeneralCommonInfoEditValues(program)
+    if (program) return programToGeneralCommonInfoEditValues(program, sponsorContext)
     return EMPTY_DEFAULTS
-  }, [program])
+  }, [program, sponsorContext])
 
   const form = useForm<GeneralProgramCommonInfoEditFormValues>({
     resolver: zodResolver(generalProgramCommonInfoEditSchema),
@@ -87,15 +104,15 @@ export function useGeneralProgramCommonInfoEditForm({
 
   useEffect(() => {
     if (program) {
-      reset(programToGeneralCommonInfoEditValues(program), { keepDefaultValues: false })
+      reset(programToGeneralCommonInfoEditValues(program, sponsorContext), { keepDefaultValues: false })
     }
-  }, [program, reset])
+  }, [program, reset, sponsorContext])
 
   useLayoutEffect(() => {
     if (isEditMode && program) {
-      reset(programToGeneralCommonInfoEditValues(program), { keepDefaultValues: false })
+      reset(programToGeneralCommonInfoEditValues(program, sponsorContext), { keepDefaultValues: false })
     }
-  }, [isEditMode, program, reset])
+  }, [isEditMode, program, reset, sponsorContext])
 
   return form
 }

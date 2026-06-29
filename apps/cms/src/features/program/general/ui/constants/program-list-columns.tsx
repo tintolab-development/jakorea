@@ -1,7 +1,7 @@
 import { formatDateRange } from '../../hooks/use-format-date'
 import { getCapacity, getApplicationCountByProgram } from '../../lib/program-helpers'
 import { resolveGeneralProgramListTitle } from '../../lib/detail-common-info-display'
-import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
+import { SponsorNameById } from '@/features/sponsor/ui/sponsor-name-by-id'
 import type { Program, ProgramCategory, TargetLevel } from '@/types/domain'
 import {
   programTypes,
@@ -113,7 +113,7 @@ export const studentRecruitmentTableColumns = [
     key: 'sponsorId',
     width: 120,
     align: 'center' as const,
-    render: (id: string | undefined) => (id ? sponsorService.getNameById(id) : '-'),
+    render: (id: string | undefined) => (id ? <SponsorNameById sponsorId={id} /> : '-'),
   },
   {
     title: '담당자',
@@ -228,7 +228,7 @@ export const instructorRecruitmentTableColumns = [
     key: 'sponsorId',
     width: 120,
     align: 'center' as const,
-    render: (id: string | undefined) => (id ? sponsorService.getNameById(id) : '-'),
+    render: (id: string | undefined) => (id ? <SponsorNameById sponsorId={id} /> : '-'),
   },
   {
     title: '담당자',
@@ -320,7 +320,7 @@ export const optionalColumns = [
     key: 'sponsorId',
     width: 120,
     align: 'center' as const,
-    render: (id: string | undefined) => (id ? sponsorService.getNameById(id) : '-'),
+    render: (id: string | undefined) => (id ? <SponsorNameById sponsorId={id} /> : '-'),
   },
   {
     title: '담당자',

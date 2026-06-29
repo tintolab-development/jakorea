@@ -7,7 +7,9 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type React
 import { Controller, useFieldArray, type UseFormReturn } from 'react-hook-form'
 import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
-import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
+import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
+import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
@@ -21,7 +23,6 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ProgramProgressStatusText } from '@/shared/components/program-enrollment-status-text'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
-import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import {
   applyCurriculumTypeSettingsDetailChangeToForm,
@@ -261,20 +262,24 @@ function BasicInfoSection({
   const isFormEdit = isEditMode && !!form
   const isScheduleType = isGeneralProgramScheduleType(program)
   const detailedProgramOptions = useMemo(() => getGeneralDetailedProgramSelectOptions(), [])
-  const sponsorOptions = useMemo(
-    () => mockSponsorManagementListRows.map(s => ({ value: s.id, label: s.name })),
-    []
+  const { options: sponsorOptions, data: sponsorRows = [] } = useSponsorSelectOptions(true)
+  const viewSponsorContext = useMemo(
+    () => ({
+      sponsors: sponsorRows,
+      contactsBySponsorId: {},
+    }),
+    [sponsorRows]
   )
 
   const announcementTitle = commonInfo.announcementTitle ?? program.title
   const detailedName = resolveGeneralProgramDetailedProgramNameDisplay(program, commonInfo)
-  const sponsorManagementIds = resolveSponsorManagementIds(program)
+  const sponsorManagementIds = resolveSponsorManagementIds(program, viewSponsorContext)
   const sponsorDisplay =
     sponsorManagementIds.length > 0 ? (
       <>
         {sponsorManagementIds.map((sponsorManagementId, index) => {
           const sponsorRow =
-            mockSponsorManagementListRows.find(row => row.id === sponsorManagementId) ?? null
+            sponsorRows.find(row => row.id === sponsorManagementId) ?? null
           const name =
             sponsorRow?.name?.trim() ||
             (index === 0 ? sponsorName?.trim() : '') ||
@@ -307,17 +312,19 @@ function BasicInfoSection({
     } as unknown as UseFormReturn<GeneralProgramCommonInfoEditFormValues>)
 
   const watchedSponsorIds = isFormEdit ? (editForm.watch('sponsorManagementIds') ?? []) : []
+  const sponsorEditContext = useGeneralProgramSponsorEditContext(watchedSponsorIds)
   const selectedSponsors = useMemo(
     () =>
       watchedSponsorIds
-        .map(id => mockSponsorManagementListRows.find(s => s.id === id))
-        .filter((sponsor): sponsor is NonNullable<typeof sponsor> => sponsor != null),
-    [watchedSponsorIds]
+        .map(id => sponsorEditContext.sponsors.find(s => s.id === id))
+        .filter((sponsor): sponsor is SponsorManagementRow => sponsor != null),
+    [watchedSponsorIds, sponsorEditContext.sponsors]
   )
   const managerOptions = useMemo(() => {
     const options: Array<{ value: string; label: string }> = []
     for (const sponsor of selectedSponsors) {
-      for (const contact of getSponsorDetailContactsNormalized(sponsor)) {
+      const contacts = sponsorEditContext.contactsBySponsorId[sponsor.id] ?? []
+      for (const contact of contacts) {
         const label =
           selectedSponsors.length > 1
             ? `${sponsor.name} · ${contact.position ? `${contact.position} ` : ''}${contact.name}`
@@ -331,7 +338,7 @@ function BasicInfoSection({
       }
     }
     return options
-  }, [selectedSponsors])
+  }, [selectedSponsors, sponsorEditContext.contactsBySponsorId])
 
   useEffect(() => {
     if (!isFormEdit) return

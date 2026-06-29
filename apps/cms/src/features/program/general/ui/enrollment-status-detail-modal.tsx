@@ -12,7 +12,7 @@ import { CmsButton } from '@/shared/ui'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
-import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
+import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { getCapacity } from '../lib/program-helpers'
 import {
   getRecruitmentStatus,
@@ -72,9 +72,7 @@ export function EnrollmentStatusDetailModal({
     null
   )
   const [openApprovalDropdownId, setOpenApprovalDropdownId] = useState<string | null>(null)
-  const sponsorName = program?.sponsorId
-    ? sponsorService.getByIdSync(program.sponsorId)?.name
-    : undefined
+  const sponsorName = useSponsorNameById(program?.sponsorId, open)
   const totalCapacity = program ? getCapacity(program) : undefined
   const recruitmentStatus = program ? getRecruitmentStatus(program) : null
 

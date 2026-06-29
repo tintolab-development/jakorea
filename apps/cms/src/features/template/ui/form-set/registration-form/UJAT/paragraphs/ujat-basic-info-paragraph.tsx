@@ -7,7 +7,7 @@ import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
-import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
+import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -147,7 +147,7 @@ export function UjatBasicInfoParagraph() {
     'economy_finance'
   )
 
-  const [sponsorId, setSponsorId] = useUjatProgramRegistrationOverlayKv(
+  const [sponsorId, setSponsorId] = useUjatProgramRegistrationOverlayKv<string>(
     'ujat.basicInfo.sponsorId',
     UJAT_DEFAULT_SPONSOR_ID
   )
@@ -176,12 +176,14 @@ export function UjatBasicInfoParagraph() {
     'no'
   )
 
+  const { options: sponsorApiOptions } = useSponsorSelectOptions()
+
   const sponsorOptions = useMemo(
     () => [
       { value: UJAT_SPONSOR_ALL_VALUE, label: '전체' },
-      ...mockSponsorManagementListRows.map(s => ({ value: s.id, label: s.name })),
+      ...sponsorApiOptions,
     ],
-    []
+    [sponsorApiOptions]
   )
 
   const managerOptions: Array<{ value: string; label: string }> = []

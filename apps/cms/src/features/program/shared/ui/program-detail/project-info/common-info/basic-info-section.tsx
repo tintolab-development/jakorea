@@ -7,13 +7,14 @@
  * - 수정 모드: react-hook-form Controller, 기존 프로그램 값이 default로 채워짐
  */
 
-import { useEffect } from 'react'
+
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { Controller } from 'react-hook-form'
-import { useSponsorStore } from '@/features/sponsor/model/sponsor-store'
+import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -63,13 +64,11 @@ export function BasicInfoSection({
   isEditMode = false,
   form,
 }: BasicInfoSectionProps) {
-  const { sponsors, fetchSponsors } = useSponsorStore()
-
-  useEffect(() => {
-    fetchSponsors()
-  }, [fetchSponsors])
-
   const isFormEdit = isEditMode && form
+  const { options: sponsorOptions } = useSponsorSelectOptions(Boolean(isFormEdit || program.sponsorId))
+  const watchedSponsorId = isFormEdit ? form?.watch('sponsorId') : program.sponsorId
+  const contactsQuery = useSponsorContactsQuery(watchedSponsorId, Boolean(isFormEdit))
+  const managers = contactsQuery.data ?? []
   const categoryLabel = CATEGORY_LABEL[program.category] ?? program.category ?? '-'
 
   /* 공통 정보 탭 기본 정보 */
@@ -267,7 +266,7 @@ export function BasicInfoSection({
                     placeholder="후원사 선택"
                     showSearch
                     optionFilterProp="label"
-                    options={sponsors.map(s => ({ value: s.id, label: s.name }))}
+                    options={sponsorOptions}
                     onChange={v => field.onChange(v ?? '')}
                     width={'100%'}
                     status={commonInfoForm.formState.errors.sponsorId ? 'error' : undefined}
@@ -296,9 +295,6 @@ export function BasicInfoSection({
           edit={
             <div>
               {(() => {
-                const sponsorId = commonInfoForm.watch('sponsorId')
-                const selectedSponsor = sponsors.find(s => s.id === sponsorId)
-                const managers = selectedSponsor?.managers ?? []
                 return (
                   <>
                     <div className="detail-info-form-inputs-wrapper">
