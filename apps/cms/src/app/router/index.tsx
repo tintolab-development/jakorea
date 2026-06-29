@@ -31,6 +31,7 @@ import { RegisterCompletePage } from '@/pages/auth/register-complete-page'
 import { RegisterSocialConnectCompletePage } from '@/pages/auth/register-social-connect-complete-page'
 import { RegisterSocialConnectFailedPage } from '@/pages/auth/register-social-connect-failed-page'
 import { RegisterSocialConnectPage } from '@/pages/auth/register-social-connect-page'
+import { SocialConnectCompletePage } from '@/pages/auth/social-connect-complete-page'
 import { RegisterIdentityCallbackPage } from '@/pages/auth/register-identity-callback-page'
 import { RegisterIdentityMockNicePage } from '@/pages/auth/register-identity-mock-nice-page'
 import { FindEmailPage } from '@/pages/auth/find-email-page'
@@ -214,6 +215,10 @@ export const router = createBrowserRouter([
   {
     path: '/register/social-connect/failed',
     element: <RegisterSocialConnectFailedPage />,
+  },
+  {
+    path: '/social-connect/complete',
+    element: <SocialConnectCompletePage />,
   },
   {
     path: '/register/social-connect/callback',

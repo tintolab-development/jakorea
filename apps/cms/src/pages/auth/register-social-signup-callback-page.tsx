@@ -9,9 +9,11 @@ import {
   addConnectedProvider,
   buildRegisterSocialConnectCompletePath,
   buildRegisterSocialConnectFailedPath,
+  buildSocialConnectCompletePath,
   clearOAuthIntent,
   getRegisterSocialRedirect,
 } from '@/features/auth/lib/register-social-connect-state'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   buildSignupCallbackKey,
   isSignupCallbackHandled,
@@ -36,6 +38,10 @@ export function RegisterSocialSignupCallbackPage() {
     const execute = async () => {
       const searchParams = new URLSearchParams(window.location.search)
       const registerRedirect = params.redirect ?? getRegisterSocialRedirect()
+      const isAuthenticated = useAuthStore.getState().isAuthenticated
+      const linkCompletePath = isAuthenticated
+        ? buildSocialConnectCompletePath(registerRedirect)
+        : buildRegisterSocialConnectCompletePath(registerRedirect)
 
       if (!isSocialAuthSignupRemoteEnabled()) {
         if (searchParams.has('socialVerificationSessionId')) {
@@ -54,7 +60,7 @@ export function RegisterSocialSignupCallbackPage() {
         }
         clearOAuthIntent()
         markSignupCallbackHandled(callbackKey)
-        navigate(buildRegisterSocialConnectCompletePath(registerRedirect), { replace: true })
+        navigate(linkCompletePath, { replace: true })
         return
       }
 
@@ -86,7 +92,7 @@ export function RegisterSocialSignupCallbackPage() {
 
       switch (outcome.kind) {
         case 'linked':
-          navigate(buildRegisterSocialConnectCompletePath(registerRedirect), { replace: true })
+          navigate(linkCompletePath, { replace: true })
           return
         case 'cancelled':
         case 'failed':
