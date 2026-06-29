@@ -1,23 +1,43 @@
-.general-detail-fullpage-modal .ujat-survey-registered {
+.general-detail-fullpage-modal .survey-management-registered {
   min-height: 0;
 }
 
-.general-detail-fullpage-modal .ujat-survey-registered__tabs {
+.general-detail-fullpage-modal .survey-management-registered__tabs {
   flex-shrink: 0;
 }
 
-/* 설문 모달 — UJAT fullpage CSS 미로드 시 ContentModal 기본 푸터·본문 보완 */
-.ujat-survey-delete-modal .content-modal__description {
+.survey-management-delete-modal .content-modal__description {
   margin-bottom: 16px;
 }
 
-.ujat-survey-delete-modal__field {
+.survey-management-delete-modal__field {
   display: flex;
   width: 100%;
   flex-direction: column;
   gap: 16px;
 }
 
-.ujat-survey-create-modal .teal-header-modal__body:has(> .content-modal__description) {
+.survey-management-create-modal__field {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.survey-management-create-modal__label {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.survey-management-create-modal .cms-select {
+  width: 100%;
+}
+
+.survey-management-create-modal .teal-header-modal__body:has(> .content-modal__description) {
   padding-top: 12px;
 }

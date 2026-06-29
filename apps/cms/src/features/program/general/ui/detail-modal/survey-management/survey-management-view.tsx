@@ -15,7 +15,7 @@ import {
   resolvePreviewHeaderTitle,
 } from '@/features/template/model/template-registry/template-registry'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
-import { getSurveyWritingTemplateSelectOptions } from '@/features/program/ujat/ui/detail-modal/survey-management/lib/ujat-survey-template-options'
+import { getSurveyWritingTemplateSelectOptions } from '@/features/program/shared/lib/survey-management/survey-template-options'
 import {
   buildLectureEvalFormDraft,
   canEditLectureEvalResponse,
@@ -29,7 +29,7 @@ import {
 import {
   buildLectureEvalResultsPdfFileName,
   exportLectureEvalResultsPdf,
-} from '@/features/program/ujat/ui/detail-modal/survey-management/lib/export-lecture-eval-results-pdf'
+} from '@/features/program/shared/lib/survey-management/export-lecture-eval-results-pdf'
 import type { Program } from '@/types/domain'
 import {
   GENERAL_LECTURE_EVAL_ACTION_LABELS,
@@ -73,6 +73,7 @@ import {
   getGeneralSatisfactionCreateDescription,
   getGeneralSatisfactionDeleteModalTitle,
   getGeneralSatisfactionEmptyCopy,
+  isCompanySchoolProgram,
   isGeneralIndividualProgram,
   isGeneralSatisfactionSurveyNavTab,
   resolveGeneralSatisfactionAudienceFromNavTab,
@@ -201,6 +202,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     () => getEnabledGeneralSatisfactionAudienceTabs(program),
     [program]
   )
+  const isCompanySchool = isCompanySchoolProgram(program)
+  const showSatisfactionAudienceTabs = !isCompanySchool && satisfactionAudienceTabs.length > 0
   const activeSatisfactionSurvey = satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null
   const pollResponses = useMemo(() => buildGeneralSurveyMockState(program).responses, [program])
   const satisfactionResponses = pollResponses
@@ -557,9 +560,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         onRegisterClick={() => openCreateModal('survey')}
       />
     ) : (
-      <div className="program-detail-fullpage-modal__info-tab ujat-survey-registered">
+      <div className="program-detail-fullpage-modal__info-tab survey-management-registered">
         <CmsTextTabs
-          className="ujat-survey-registered__tabs"
+          className="survey-management-registered__tabs"
           variant="list"
           activeKey={activeRegisteredSurveyId ?? ''}
           onChange={setActiveRegisteredSurveyId}
@@ -639,10 +642,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       surveysByAudience={satisfactionSurveysByAudience}
       activeAudience={activeSatisfactionAudience}
       audienceTabs={satisfactionAudienceTabs}
+      className={isCompanySchool ? 'company-school-satisfaction-survey' : undefined}
       emptyCopy={getGeneralSatisfactionEmptyCopy(activeSatisfactionAudience, program)}
       noResponseCopy={GENERAL_SATISFACTION_NO_RESPONSE_COPY}
       actionLabels={getGeneralSatisfactionActionLabels()}
-      showAudienceTabs={satisfactionAudienceTabs.length > 0}
+      showAudienceTabs={showSatisfactionAudienceTabs}
       showShareButton
       onAudienceChange={setActiveSatisfactionAudience}
       onRegisterClick={() => openCreateModal('satisfaction', activeSatisfactionAudience)}
@@ -709,7 +713,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         onCancel={closeCreateModal}
         title={createTitle}
         width={600}
-        className="ujat-survey-create-modal"
+        className="survey-management-create-modal"
         description={createDescription}
         footer={
           <>
@@ -739,8 +743,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           </>
         }
       >
-        <div className="ujat-survey-create-modal__field">
-          <p className="ujat-survey-create-modal__label">템플릿 유형</p>
+        <div className="survey-management-create-modal__field">
+          <p className="survey-management-create-modal__label">템플릿 유형</p>
           <CmsSelect
             width="100%"
             withAllOption={false}
@@ -765,7 +769,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         }
         width={600}
         modalStyles={{ content: { minHeight: 310 } }}
-        className="ujat-survey-delete-modal"
+        className="survey-management-delete-modal"
         description={`**[${
           deleteModalKind === 'satisfaction' && activeSatisfactionAudience != null
             ? `${getGeneralSatisfactionAudienceLabel(activeSatisfactionAudience)} 만족도조사`
@@ -802,7 +806,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           </>
         }
       >
-        <div className="ujat-survey-delete-modal__field">
+        <div className="survey-management-delete-modal__field">
           <CmsInput
             width="100%"
             placeholder="삭제하시려면 해당란에 [삭제]를 입력해 주세요."

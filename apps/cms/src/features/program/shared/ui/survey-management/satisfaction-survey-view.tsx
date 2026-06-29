@@ -11,6 +11,7 @@ export type SatisfactionSurveyViewProps<TKey extends string> = {
   surveysByAudience: Partial<Record<TKey, RegisteredSurvey>>
   activeAudience: TKey
   audienceTabs: ReadonlyArray<SurveyAudienceTab<TKey>>
+  className?: string
   emptyCopy: SurveyEmptyCopy
   noResponseCopy: SurveyNoResponseCopy
   actionLabels: SurveyActionLabels
@@ -30,6 +31,7 @@ export function SatisfactionSurveyView<TKey extends string>({
   surveysByAudience,
   activeAudience,
   audienceTabs,
+  className,
   emptyCopy,
   noResponseCopy,
   actionLabels,
@@ -45,6 +47,15 @@ export function SatisfactionSurveyView<TKey extends string>({
   resultsResponses,
 }: SatisfactionSurveyViewProps<TKey>) {
   const activeSurvey = surveysByAudience[activeAudience]
+  const rootClassName = [
+    'program-detail-fullpage-modal__info-tab',
+    activeSurvey == null
+      ? 'survey-management-satisfaction'
+      : 'survey-management-registered survey-management-satisfaction',
+    className,
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   const trailingActions =
     activeSurvey != null ? (
@@ -62,7 +73,7 @@ export function SatisfactionSurveyView<TKey extends string>({
 
   const audienceTabRow = showAudienceTabs ? (
     <CmsTextTabs
-      className="ujat-survey-registered__tabs"
+      className="survey-management-registered__tabs"
       variant="list"
       activeKey={activeAudience}
       onChange={key => onAudienceChange(key as TKey)}
@@ -70,12 +81,12 @@ export function SatisfactionSurveyView<TKey extends string>({
       trailing={trailingActions}
     />
   ) : activeSurvey != null ? (
-    <div className="ujat-survey-registered__tabs">{trailingActions}</div>
+    <div className="survey-management-registered__tabs">{trailingActions}</div>
   ) : null
 
   if (activeSurvey == null) {
     return (
-      <div className="program-detail-fullpage-modal__info-tab ujat-satisfaction-survey">
+      <div className={rootClassName}>
         {showAudienceTabs ? audienceTabRow : null}
         <SurveyEmptyState
           title={emptyCopy.title}
@@ -93,7 +104,7 @@ export function SatisfactionSurveyView<TKey extends string>({
     audienceTabs.find(tab => tab.key === activeAudience)?.label ?? '참여자'
 
   return (
-    <div className="program-detail-fullpage-modal__info-tab ujat-survey-registered ujat-satisfaction-survey">
+    <div className={rootClassName}>
       {audienceTabRow}
       {activeSurvey.status === 'before_start' ? (
         <SurveyNoResponseState

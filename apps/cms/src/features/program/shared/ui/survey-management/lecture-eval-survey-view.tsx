@@ -136,9 +136,9 @@ export function LectureEvalSurveyView({
     ) : null
 
   return (
-    <div className="program-detail-fullpage-modal__info-tab ujat-survey-registered ujat-lecture-eval-survey">
+    <div className="program-detail-fullpage-modal__info-tab survey-management-registered ujat-lecture-eval-survey">
       <CmsTextTabs
-        className="ujat-survey-registered__tabs"
+        className="survey-management-registered__tabs"
         variant="list"
         activeKey={activeTab}
         onChange={key => onTabChange(key as LectureEvalTabKey)}

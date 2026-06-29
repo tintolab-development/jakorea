@@ -9,6 +9,7 @@ import {
 import {
   getDefaultGeneralSatisfactionAudience,
   getEnabledGeneralSatisfactionAudienceTabs,
+  getGeneralSatisfactionEmptyCopy,
   getGeneralSatisfactionAudienceTabs,
   isGeneralIndividualParticipantSelection,
   isGeneralIndividualProgram,
@@ -16,6 +17,7 @@ import {
 } from './survey-audience'
 import { getGeneralSurveyMenuItems } from './detail-meta'
 import { getGeneralSurveyEditFieldsForAudience } from '@/features/program/general/model/common-info-edit-schema'
+import { buildGeneralSurveyMockState } from '@/features/program/general/ui/detail-modal/survey-management/survey-mock'
 
 function program(overrides: Partial<Program>): Program {
   return {
@@ -242,6 +244,28 @@ describe('general survey audience', () => {
       'teacher',
       'student',
     ])
+  })
+
+  it('1사1교 프로그램은 교사용 만족도조사만 제공한다', () => {
+    const companySchool = program({
+      id: 'company-school-local-test',
+      mainTitle: '1사1교 대표 케이스',
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+      generalSurveyMenuKeys: ['survey', 'satisfaction'],
+    })
+
+    expect(getEnabledGeneralSatisfactionAudienceTabs(companySchool).map(tab => tab.key)).toEqual([
+      'teacher',
+    ])
+    expect(getDefaultGeneralSatisfactionAudience(companySchool)).toBe('teacher')
+    expect(getGeneralSatisfactionEmptyCopy('teacher', companySchool)).toMatchObject({
+      title: '아직 등록된 만족도조사가 없습니다.',
+      description: '만족도조사 등록 버튼을 눌러 설문 내용을 추가해 주세요.',
+      secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.',
+      registerButton: '만족도조사 등록',
+    })
+    expect(buildGeneralSurveyMockState(companySchool).satisfactionSurveysByAudience).toEqual({})
   })
 
   it('설문 수정 항목은 공통 3종을 제공한다', () => {
