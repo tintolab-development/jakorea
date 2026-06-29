@@ -22,8 +22,10 @@ import {
 } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import {
   buildRegisterSocialConnectPath,
+  isSocialConnectAuthFlowPath,
   setRegisterSocialLinkIntent,
 } from '@/features/auth/lib/register-social-connect-state'
+import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   cmsIdentityVerificationClient,
@@ -259,8 +261,11 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   }
 
   const handleSocialConnect = () => {
-    const redirectPath =
+    const currentPath =
       typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '/'
+    const redirectPath = isSocialConnectAuthFlowPath(currentPath)
+      ? getRedirectPathByRole(user)
+      : currentPath
 
     setRegisterSocialLinkIntent(redirectPath)
     onCancel()
