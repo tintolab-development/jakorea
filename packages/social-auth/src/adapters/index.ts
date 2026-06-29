@@ -125,6 +125,51 @@ function parseSocialAccountItemsFromResponse(data: unknown): LinkedSocialAccount
   return accounts
 }
 
+type SsoAuthorizationStartPayload = {
+  authorizationUrl?: string | null
+  state?: string | null
+  status?: string
+  message?: string
+}
+
+function resolveSsoAuthorizationStartResult(
+  payload: SsoAuthorizationStartPayload | null | undefined,
+  redirectUri: string
+): { authorizationUrl: string; state?: string } {
+  const authorizationUrl =
+    typeof payload?.authorizationUrl === 'string' && payload.authorizationUrl.length > 0
+      ? payload.authorizationUrl
+      : null
+
+  if (!authorizationUrl) {
+    const backendMessage =
+      typeof payload?.message === 'string' && payload.message.length > 0
+        ? payload.message
+        : undefined
+    const status =
+      typeof payload?.status === 'string' && payload.status.length > 0
+        ? payload.status
+        : 'INVALID_RESPONSE'
+
+    if (status === 'PROVIDER_REHEARSAL_REQUIRED') {
+      throw new SocialAuthApiError(
+        status,
+        '관리자 소셜 로그인 OAuth 연동이 아직 준비되지 않았습니다. 이메일 로그인을 이용해 주세요.'
+      )
+    }
+
+    throw new SocialAuthApiError(
+      status,
+      backendMessage ?? 'SSO 시작 응답에 authorizationUrl이 없습니다.'
+    )
+  }
+
+  return {
+    authorizationUrl: rewriteOAuthAuthorizationRedirectUri(authorizationUrl, redirectUri),
+    state: typeof payload?.state === 'string' ? payload.state : undefined,
+  }
+}
+
 export function createAdminSsoAdapter(options: CreateAdminSsoAdapterOptions): SocialAuthAdapter {
   const { http, paths, resolveBackendCallbackUri } = options
 
@@ -137,58 +182,38 @@ export function createAdminSsoAdapter(options: CreateAdminSsoAdapterOptions): So
             ? (input.loginReturnUrl ?? input.frontendReturnUrl ?? input.returnUrl)
             : (input.frontendReturnUrl ?? input.returnUrl)
 
+        if (input.intent === 'link') {
+          const { data } = await http.post(paths.socialAccounts(), {
+            provider: toApiProviderCode(input.provider),
+            redirectUri,
+            returnUrl,
+            frontendReturnUrl: input.frontendReturnUrl ?? input.returnUrl,
+            startOAuth: true,
+          })
+
+          return resolveSsoAuthorizationStartResult(
+            unwrapApiData<SsoAuthorizationStartPayload>(data),
+            redirectUri
+          )
+        }
+
         const { data } = await http.post(paths.ssoLogin(), {
           provider: toApiProviderCode(input.provider),
           redirectUri,
           returnUrl,
         })
 
-        const payload = unwrapApiData<{
-          authorizationUrl?: string | null
-          state?: string | null
-          status?: string
-          message?: string
-        }>(data)
-
-        const authorizationUrl =
-          typeof payload?.authorizationUrl === 'string' && payload.authorizationUrl.length > 0
-            ? payload.authorizationUrl
-            : null
-
-        if (!authorizationUrl) {
-          const backendMessage =
-            typeof payload?.message === 'string' && payload.message.length > 0
-              ? payload.message
-              : undefined
-          const status =
-            typeof payload?.status === 'string' && payload.status.length > 0
-              ? payload.status
-              : 'INVALID_RESPONSE'
-
-          if (status === 'PROVIDER_REHEARSAL_REQUIRED') {
-            throw new SocialAuthApiError(
-              status,
-              '관리자 소셜 로그인 OAuth 연동이 아직 준비되지 않았습니다. 이메일 로그인을 이용해 주세요.'
-            )
-          }
-
-          throw new SocialAuthApiError(
-            status,
-            backendMessage ?? 'SSO 시작 응답에 authorizationUrl이 없습니다.'
-          )
-        }
-
-        const correctedAuthorizationUrl = rewriteOAuthAuthorizationRedirectUri(
-          authorizationUrl,
+        return resolveSsoAuthorizationStartResult(
+          unwrapApiData<SsoAuthorizationStartPayload>(data),
           redirectUri
         )
-
-        return {
-          authorizationUrl: correctedAuthorizationUrl,
-          state: typeof payload.state === 'string' ? payload.state : undefined,
-        }
       } catch (err) {
-        rethrowSocialAuthApiError(err, '관리자 SSO 로그인 시작에 실패했습니다.')
+        rethrowSocialAuthApiError(
+          err,
+          input.intent === 'link'
+            ? '관리자 SSO 계정 연결 시작에 실패했습니다.'
+            : '관리자 SSO 로그인 시작에 실패했습니다.'
+        )
       }
     },
 
