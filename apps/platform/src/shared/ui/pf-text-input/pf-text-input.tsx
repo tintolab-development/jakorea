@@ -10,12 +10,15 @@ import searchIconUrl from '../icons/search.svg'
 import styles from './pf-text-input.module.css'
 
 type PFTextInputSize = 'medium' | 'large' | 'xlarge'
+type PFTextInputMessageStatus = 'neutral' | 'success' | 'error'
 
 type PFTextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> & {
   size?: PFTextInputSize
   label?: string
   hasIcon?: boolean
   error?: boolean
+  message?: string
+  messageStatus?: PFTextInputMessageStatus
   onValueChange?: (value: string) => void
 }
 
@@ -30,6 +33,8 @@ export function PFTextInput({
   label,
   hasIcon = false,
   error = false,
+  message,
+  messageStatus = 'neutral',
   disabled = false,
   required = false,
   id,
@@ -57,6 +62,10 @@ export function PFTextInput({
     .join(' ')
 
   const inputClassName = [styles.input, sizeTypographyClassMap[size]].join(' ')
+  const messageClassName = [
+    styles.message,
+    styles[`message-${messageStatus}`],
+  ].join(' ')
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (!isControlled) {
@@ -112,6 +121,7 @@ export function PFTextInput({
           </button>
         ) : null}
       </div>
+      {message ? <p className={messageClassName}>{message}</p> : null}
     </div>
   )
 }
