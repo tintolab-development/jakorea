@@ -6,7 +6,16 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 관리자 계정 승인/반려 요청. APPROVED 처리 시 roleCode를 보내면 해당 권한 유형으로 승인합니다.
+ */
 export interface AdminAccountVerificationRequest {
+  /** 검증 결과. APPROVED 또는 REJECTED */
   result?: string;
+  /** 승인/반려 사유. 반려 시 필수입니다. */
   reason?: string;
+  /** 승인 시 최종 적용할 관리자 권한 코드. 미전달 시 기존 신청 권한 유지 */
+  roleCode?: string;
+  /** 프론트 호환용 권한 코드 필드. roleCode가 없고 requestedRoleCode가 있으면 이 값을 사용합니다. */
+  requestedRoleCode?: string;
 }

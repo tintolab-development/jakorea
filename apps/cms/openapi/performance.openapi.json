@@ -37,6 +37,10 @@
       "description": "실적 목록, 상세, 재생성, 마감, 정정, 외부 반출 API입니다."
     },
     {
+      "name": "인증/세션",
+      "description": "Canonical authenticated admin SSO link session API"
+    },
+    {
       "name": "수료증/참여인증서",
       "description": "수료증과 참여인증서 발급, 조회, 다운로드, 상태 확인 API입니다."
     },
@@ -69,10 +73,6 @@
       "description": "교재 목록, 등록, 수정, 사용 상태 변경, 교재 마스터 관리 API입니다."
     },
     {
-      "name": "관리자 관리",
-      "description": "Admin Management 관련 관리자 API"
-    },
-    {
       "name": "관리자 운영 기능",
       "description": "관리자 CMS 운영 화면에서 사용하는 통합 기능 API입니다. 대시보드 개인화 설정, 운영 현황, 화면용 편의 기능을 포함합니다."
     },
@@ -89,16 +89,16 @@
       "description": "로그인 전 공개 화면에서 조회하는 콘텐츠 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "회원가입 약관 문서를 DB에서 버전 관리하고 피그마 약관 모달에 공급하는 API"
+    },
+    {
       "name": "개인정보/감사",
       "description": "개인정보 원문 조회, export 승인, 감사로그 API"
     },
     {
       "name": "관리자 운영 기능",
       "description": "Admin Operations 관련 관리자 API"
-    },
-    {
-      "name": "기타 API",
-      "description": "회원가입/관리자 회원가입 약관 문서 버전 관리 API"
     },
     {
       "name": "폼/설문",
@@ -111,6 +111,10 @@
     {
       "name": "공개 콘텐츠",
       "description": "Public Content 관련 관리자 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "관리자 계정 등록, 삭제, 승인, 반려, 권한 유형, 권한 매트릭스 관리 API"
     },
     {
       "name": "프로그램 게시판",
@@ -1734,6 +1738,85 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "MemberProgramRoleSaveRequest": {
+        "type": "object",
+        "properties": {
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramRoleItem"
+            }
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "ProgramRoleItem": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentRole": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "programId"
+        ]
+      },
+      "MemberAdminProgramResponse": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programName": {
+            "type": "string"
+          },
+          "assignmentRole": {
+            "type": "string"
+          },
+          "assignedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PageResponseMemberAdminProgramResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberAdminProgramResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -4956,39 +5039,66 @@
       },
       "TermsDocumentUpsertRequest": {
         "type": "object",
+        "description": "약관 문서 등록/수정 요청. contentFormat=HTML을 권장합니다.",
         "properties": {
           "termsType": {
             "type": "string",
+            "description": "약관 타입",
+            "enum": [
+              "SERVICE_TERMS",
+              "PRIVACY_COLLECTION",
+              "MFA_SETUP_CONSENT",
+              "MARKETING"
+            ],
+            "example": "SERVICE_TERMS",
             "minLength": 1
           },
           "version": {
             "type": "string",
+            "description": "약관 버전",
+            "example": "2026-01",
             "minLength": 1
           },
           "title": {
             "type": "string",
+            "description": "약관 제목",
+            "example": "서비스 이용약관",
             "minLength": 1
           },
           "content": {
             "type": "string",
+            "description": "약관 본문. HTML 저장 시 프론트는 sanitize 후 렌더링합니다.",
             "minLength": 1
           },
           "contentFormat": {
-            "type": "string"
+            "type": "string",
+            "description": "본문 형식",
+            "enum": [
+              "HTML",
+              "MARKDOWN",
+              "TEXT"
+            ],
+            "example": "HTML"
           },
           "requiredYn": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "필수 동의 여부",
+            "example": true
           },
           "publishedYn": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "게시 여부. true이면 현재 약관 조회 대상이 됩니다.",
+            "example": true
           },
           "effectiveFrom": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "적용 시작 시각"
           },
           "effectiveTo": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "적용 종료 시각"
           }
         },
         "required": [
@@ -5030,51 +5140,83 @@
       },
       "TermsDocumentResponse": {
         "type": "object",
+        "description": "약관 문서 응답. content는 contentFormat에 맞춰 그대로 렌더링합니다.",
         "properties": {
           "id": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "약관 문서 ID",
+            "example": 1
           },
           "termsType": {
-            "type": "string"
+            "type": "string",
+            "description": "약관 타입",
+            "enum": [
+              "SERVICE_TERMS",
+              "PRIVACY_COLLECTION",
+              "MFA_SETUP_CONSENT",
+              "MARKETING"
+            ],
+            "example": "SERVICE_TERMS"
           },
           "version": {
-            "type": "string"
+            "type": "string",
+            "description": "약관 버전",
+            "example": "2026-01"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "약관 제목",
+            "example": "서비스 이용약관"
           },
           "content": {
-            "type": "string"
+            "type": "string",
+            "description": "약관 본문. HTML이면 h1/h2/p/ul/ol/strong/br 등 제한된 마크업을 포함합니다."
           },
           "contentFormat": {
-            "type": "string"
+            "type": "string",
+            "description": "본문 형식. 현재 피그마 약관 모달은 HTML 렌더링 기준입니다.",
+            "enum": [
+              "HTML",
+              "MARKDOWN",
+              "TEXT"
+            ],
+            "example": "HTML"
           },
           "requiredYn": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "필수 동의 여부. MARKETING은 false입니다.",
+            "example": true
           },
           "publishedYn": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "게시 여부",
+            "example": true
           },
           "effectiveFrom": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "적용 시작 시각"
           },
           "effectiveTo": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "적용 종료 시각. null이면 종료일 없음"
           },
           "publishedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "게시 시각"
           },
           "createdAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "생성 시각"
           },
           "updatedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "수정 시각"
           }
         }
       },
@@ -8110,6 +8252,31 @@
           }
         }
       },
+      "AdminSsoLinkSessionConsumeRequest": {
+        "type": "object",
+        "properties": {
+          "adminSsoSessionId": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "provider": {
+            "type": "string",
+            "pattern": "^[A-Za-z_]{2,30}$"
+          },
+          "socialConsentVersion": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "socialConsentAgreed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "adminSsoSessionId"
+        ]
+      },
       "AdminSocialAccountResponse": {
         "type": "object",
         "properties": {
@@ -8140,6 +8307,57 @@
             "type": "string"
           }
         }
+      },
+      "AdminSsoAccountLinkRequest": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z_]{2,30}$"
+          },
+          "redirectUri": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          },
+          "returnUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          },
+          "frontendReturnUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          },
+          "startOAuth": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 0
+          },
+          "providerUserId": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 0
+          },
+          "providerUserIdRaw": {
+            "type": "string",
+            "maxLength": 1024,
+            "minLength": 0
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "provider"
+        ]
       },
       "MaterialKitRequest": {
         "type": "object",
@@ -10224,6 +10442,11 @@
             "type": "string",
             "maxLength": 2048,
             "minLength": 0
+          },
+          "intent": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
           }
         }
       },
@@ -10247,61 +10470,157 @@
           }
         }
       },
+      "AdminSsoSessionConsumeRequest": {
+        "type": "object",
+        "properties": {
+          "adminSsoSessionId": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "adminSsoSessionId"
+        ]
+      },
+      "AdminSignupSsoLinkStartRequest": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "pattern": "^[A-Za-z_]{2,30}$"
+          },
+          "redirectUri": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          },
+          "returnUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          },
+          "signupSocialLinkToken": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        }
+      },
+      "AdminSignupSsoLinkStartResponse": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "authorizationUrl": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
       "AdminSelfSignupRequest": {
         "type": "object",
+        "description": "관리자 셀프 회원가입 최종 제출 요청. 피그마 약관동의 화면의 4개 항목을 그대로 전달합니다.",
         "properties": {
           "email": {
             "type": "string",
             "format": "email",
+            "description": "관리자 이메일",
+            "example": "admin1@jakorea.org",
             "maxLength": 255,
             "minLength": 0
           },
           "password": {
             "type": "string",
+            "description": "관리자 비밀번호. 서버 비밀번호 정책을 통과해야 합니다.",
+            "example": "admin1234!",
             "maxLength": 255,
             "minLength": 0
           },
           "name": {
             "type": "string",
+            "description": "관리자 이름",
+            "example": "홍길동",
             "maxLength": 255,
             "minLength": 0
           },
           "phone": {
             "type": "string",
+            "description": "휴대폰 번호",
+            "example": "010-1234-5678",
             "maxLength": 255,
             "minLength": 0
           },
           "gender": {
             "type": "string",
+            "description": "성별",
+            "enum": [
+              "MALE",
+              "FEMALE",
+              "OTHER"
+            ],
+            "example": "MALE",
             "pattern": "^(MALE|FEMALE|OTHER)?$"
           },
           "birthDate": {
             "type": "string",
+            "description": "생년월일 yyyy-MM-dd",
+            "example": "1990-01-01",
             "pattern": "^$|^\\d{4}-\\d{2}-\\d{2}$"
           },
           "requestedRoleCode": {
             "type": "string",
+            "description": "요청 관리자 권한 코드. 미전달 시 VIEWER로 생성됩니다.",
+            "example": "VIEWER",
             "maxLength": 60,
             "minLength": 0
           },
           "identityVerificationSessionUuid": {
             "type": "string",
+            "description": "본인인증 완료 세션 UUID 또는 provider transaction id",
+            "example": "identity-session-uuid",
             "maxLength": 60,
             "minLength": 0
           },
           "termsVersion": {
             "type": "string",
+            "description": "약관 버전. 현재 seed 기준 2026-01이며 네 가지 약관 문서 버전과 맞춰 저장합니다.",
+            "example": "2026-01",
             "maxLength": 60,
             "minLength": 0
           },
           "termsAgreed": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "필수 서비스 이용약관 동의 여부. true 필수",
+            "example": true
           },
           "privacyAgreed": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "필수 개인정보 수집·이용 동의 여부. true 필수",
+            "example": true
           },
           "mfaSetupAgreed": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "필수 2단계 인증 MFA 설정 동의 여부. true 필수",
+            "example": true
+          },
+          "marketingAgreed": {
+            "type": "boolean",
+            "description": "선택 마케팅 정보 수신 동의 여부. 미전달 시 false로 저장",
+            "example": false
           }
         },
         "required": [
@@ -10340,6 +10659,16 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "signupSocialLinkToken": {
+            "type": "string"
+          },
+          "signupSocialLinkExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signupSocialLinkStartEndpoint": {
+            "type": "string"
           }
         }
       },
@@ -10484,11 +10813,72 @@
           "reason"
         ]
       },
-      "AdminAccountApprovalDecisionRequest": {
+      "AdminPermissionRequestNotificationResponse": {
         "type": "object",
         "properties": {
-          "reason": {
+          "requestId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "requestType": {
             "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "notificationQueued": {
+            "type": "boolean"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApiResponseAdminPermissionRequestNotificationResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/AdminPermissionRequestNotificationResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "AdminAccountApprovalDecisionRequest": {
+        "type": "object",
+        "description": "관리자 승인/반려 처리 요청. 승인 시 roleCode를 함께 보내면 신청자가 선택한 권한 유형 대신 MASTER가 최종 승인한 권한 유형으로 적용됩니다.",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "승인/반려 사유. 반려 시 필수입니다."
+          },
+          "roleCode": {
+            "type": "string",
+            "description": "승인 시 최종 적용할 관리자 권한 코드. 예: PM, PARTNER, VIEWER. 미전달 시 회원가입 신청 권한을 그대로 적용합니다."
+          },
+          "requestedRoleCode": {
+            "type": "string",
+            "description": "프론트 호환용 권한 코드 필드. roleCode가 없고 requestedRoleCode가 있으면 이 값을 사용합니다."
           }
         }
       },
@@ -10550,12 +10940,15 @@
       },
       "AdminAccountCreateRequest": {
         "type": "object",
+        "description": "관리자 신규 등록 요청. MASTER 관리자가 직접 등록하는 관리자 계정은 즉시 ACTIVE 상태가 되며, 초기 비밀번호는 이메일 주소와 동일하게 저장됩니다.",
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "관리자 로그인 이메일. 초기 비밀번호도 이 이메일 값과 동일하게 설정됩니다."
           },
           "rawPassword": {
-            "type": "string"
+            "type": "string",
+            "description": "사용하지 않습니다. 관리자 신규 등록 초기 비밀번호는 항상 email 값으로 설정됩니다."
           },
           "name": {
             "type": "string"
@@ -10570,7 +10963,8 @@
             "type": "string"
           },
           "roleCode": {
-            "type": "string"
+            "type": "string",
+            "description": "관리자 권한 코드. MASTER, PM, PARTNER, VIEWER"
           },
           "reason": {
             "type": "string"
@@ -10579,12 +10973,33 @@
       },
       "AdminAccountVerificationRequest": {
         "type": "object",
+        "description": "관리자 계정 승인/반려 요청. APPROVED 처리 시 roleCode를 보내면 해당 권한 유형으로 승인합니다.",
         "properties": {
           "result": {
-            "type": "string"
+            "type": "string",
+            "description": "검증 결과. APPROVED 또는 REJECTED"
           },
           "reason": {
-            "type": "string"
+            "type": "string",
+            "description": "승인/반려 사유. 반려 시 필수입니다."
+          },
+          "roleCode": {
+            "type": "string",
+            "description": "승인 시 최종 적용할 관리자 권한 코드. 미전달 시 기존 신청 권한 유지"
+          },
+          "requestedRoleCode": {
+            "type": "string",
+            "description": "프론트 호환용 권한 코드 필드. roleCode가 없고 requestedRoleCode가 있으면 이 값을 사용합니다."
+          }
+        }
+      },
+      "AdminAccountPasswordResetRequest": {
+        "type": "object",
+        "description": "관리자 비밀번호 초기화 요청입니다. 초기화 비밀번호는 관리자 이메일 값과 동일하게 설정합니다.",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "비밀번호 초기화 사유"
           }
         }
       },
@@ -11123,6 +11538,30 @@
             "format": "date-time"
           }
         }
+      },
+      "AdminCommentUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "comment": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "comment"
+        ]
+      },
+      "TeacherEmploymentStatusUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "employmentStatus": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "employmentStatus"
+        ]
       },
       "UjatEducationRegionUpdateRequest": {
         "type": "object",
@@ -12529,14 +12968,6 @@
           }
         }
       },
-      "AdminCommentUpdateRequest": {
-        "type": "object",
-        "properties": {
-          "comment": {
-            "type": "string"
-          }
-        }
-      },
       "AdminCommentMutationResponse": {
         "type": "object",
         "properties": {
@@ -12640,6 +13071,20 @@
           }
         }
       },
+      "AdminAccountStatusChangeRequest": {
+        "type": "object",
+        "description": "관리자 계정 사용 상태 변경 요청입니다. 삭제는 DELETE API를 사용합니다.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "변경할 상태. ACTIVE 또는 SUSPENDED"
+          },
+          "reason": {
+            "type": "string",
+            "description": "상태 변경 사유"
+          }
+        }
+      },
       "AdminRoleChangeRequest": {
         "type": "object",
         "properties": {
@@ -12648,6 +13093,32 @@
           },
           "reason": {
             "type": "string"
+          }
+        }
+      },
+      "AdminAccountBasicInfoUpdateRequest": {
+        "type": "object",
+        "description": "관리자 상세 화면의 기본 정보 수정 요청입니다. 이메일은 로그인 식별자라 이 API에서 변경하지 않습니다.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "관리자 이름"
+          },
+          "phone": {
+            "type": "string",
+            "description": "관리자 연락처"
+          },
+          "gender": {
+            "type": "string",
+            "description": "성별 코드"
+          },
+          "birthDate": {
+            "type": "string",
+            "description": "생년월일. yyyy-MM-dd 형식"
+          },
+          "reason": {
+            "type": "string",
+            "description": "수정 사유"
           }
         }
       },
@@ -13698,10 +14169,10 @@
           }
         }
       },
-      "MemberAdminProgramResponse": {
+      "MemberLectureReportResponse": {
         "type": "object",
         "properties": {
-          "assignmentId": {
+          "reportId": {
             "type": "integer",
             "format": "int64"
           },
@@ -13709,40 +14180,91 @@
             "type": "integer",
             "format": "int64"
           },
-          "programName": {
-            "type": "string"
-          },
-          "assignmentRole": {
-            "type": "string"
-          },
-          "assignedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "PageResponseMemberAdminProgramResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MemberAdminProgramResponse"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
+          "programScheduleId": {
             "type": "integer",
             "format": "int64"
           },
-          "totalPages": {
+          "instructorAssignmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reportStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectReason": {
+            "type": "string"
+          }
+        }
+      },
+      "MemberEnrollmentSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lectureAttendance": {
+            "type": "string"
+          },
+          "hasLectureReportSubmission": {
+            "type": "boolean"
+          },
+          "hasAssignmentSubmission": {
+            "type": "boolean"
+          },
+          "managerName": {
+            "type": "string"
+          }
+        }
+      },
+      "MemberAssignmentSubmissionResponse": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contextType": {
+            "type": "string"
+          },
+          "responseStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedByAdminId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "fileCount": {
             "type": "integer",
             "format": "int32"
           }
@@ -19153,47 +19675,6 @@
           }
         }
       },
-      "DashboardLogAlertListResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DashboardLogAlertResponse"
-            }
-          },
-          "masterOnly": {
-            "type": "boolean"
-          }
-        }
-      },
-      "DashboardLogAlertResponse": {
-        "type": "object",
-        "properties": {
-          "accessLogId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "actionType": {
-            "type": "string"
-          },
-          "targetType": {
-            "type": "string"
-          },
-          "targetId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "adminId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "accessedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
       "DashboardKpiProgressListResponse": {
         "type": "object",
         "properties": {
@@ -19591,73 +20072,6 @@
           }
         }
       },
-      "AdminPermissionChangeLogResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "targetAdminId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "targetRoleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "changeType": {
-            "type": "string"
-          },
-          "permissionCode": {
-            "type": "string"
-          },
-          "fromValue": {
-            "type": "string"
-          },
-          "toValue": {
-            "type": "string"
-          },
-          "changedByAdminId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "reason": {
-            "type": "string"
-          },
-          "changedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "PageResponseAdminPermissionChangeLogResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AdminPermissionChangeLogResponse"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
       "AdminAccountListItemResponse": {
         "type": "object",
         "properties": {
@@ -19797,6 +20211,102 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "socialAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminLinkedSocialAccountResponse"
+            }
+          }
+        }
+      },
+      "AdminLinkedSocialAccountResponse": {
+        "type": "object",
+        "description": "관리자 계정에 연결된 소셜 계정 상태 응답",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "소셜 provider. GOOGLE, KAKAO, NAVER"
+          },
+          "status": {
+            "type": "string",
+            "description": "연결 상태. CONNECTED 또는 DISCONNECTED"
+          },
+          "providerUserIdMasked": {
+            "type": "string",
+            "description": "마스킹된 provider 사용자 식별자. 연결되지 않은 경우 null"
+          },
+          "linkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "연결 시각. 연결되지 않은 경우 null"
+          }
+        }
+      },
+      "AdminPermissionChangeLogResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "targetAdminId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "targetRoleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "changeType": {
+            "type": "string"
+          },
+          "permissionCode": {
+            "type": "string"
+          },
+          "fromValue": {
+            "type": "string"
+          },
+          "toValue": {
+            "type": "string"
+          },
+          "changedByAdminId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PageResponseAdminPermissionChangeLogResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminPermissionChangeLogResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

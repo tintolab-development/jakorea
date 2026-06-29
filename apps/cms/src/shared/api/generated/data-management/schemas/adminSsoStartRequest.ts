@@ -19,4 +19,9 @@ export interface AdminSsoStartRequest {
      * @maxLength 2048
      */
   returnUrl?: string;
+  /**
+     * @minLength 0
+     * @maxLength 30
+     */
+  intent?: string;
 }

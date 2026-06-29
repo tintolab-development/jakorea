@@ -33,7 +33,6 @@ import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import {
   fetchDashboardHomeRemote,
   fetchDashboardKpiProgressRemote,
-  fetchDashboardLogAlertsRemote,
   fetchDashboardNotificationCountRemote,
   fetchDashboardProgramInquiriesRemote,
   fetchDashboardProgramSchedulesRemote,
@@ -815,21 +814,8 @@ export interface DashboardLogAlertItem {
   accessedAt: string
 }
 
-/** Swagger: GET /api/admin/dashboard/log-alerts */
+/** 백엔드 v9 스펙에서 GET /api/admin/dashboard/log-alerts 제거됨 — 위젯은 빈 목록 유지 */
 export async function getDashboardLogAlerts(): Promise<DashboardLogAlertItem[]> {
-  if (shouldUseDashboardRemoteApi()) {
-    const dto = await fetchDashboardLogAlertsRemote()
-    return (dto.items ?? [])
-      .filter(item => item.accessLogId != null)
-      .map(item => ({
-        id: String(item.accessLogId),
-        actionType: item.actionType ?? '-',
-        targetType: item.targetType ?? '-',
-        targetId: item.targetId,
-        adminId: item.adminId,
-        accessedAt: item.accessedAt ?? '',
-      }))
-  }
   return []
 }
 

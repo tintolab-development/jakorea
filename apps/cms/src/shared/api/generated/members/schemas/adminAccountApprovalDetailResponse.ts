@@ -5,6 +5,7 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { AdminLinkedSocialAccountResponse } from './adminLinkedSocialAccountResponse';
 
 export interface AdminAccountApprovalDetailResponse {
   id?: number;
@@ -26,4 +27,5 @@ export interface AdminAccountApprovalDetailResponse {
   lastLoginAt?: string;
   createdAt?: string;
   updatedAt?: string;
+  socialAccounts?: AdminLinkedSocialAccountResponse[];
 }

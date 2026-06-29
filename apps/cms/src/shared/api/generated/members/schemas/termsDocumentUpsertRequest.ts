@@ -5,19 +5,41 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { TermsDocumentUpsertRequestContentFormat } from './termsDocumentUpsertRequestContentFormat';
+import type { TermsDocumentUpsertRequestTermsType } from './termsDocumentUpsertRequestTermsType';
 
+/**
+ * 약관 문서 등록/수정 요청. contentFormat=HTML을 권장합니다.
+ */
 export interface TermsDocumentUpsertRequest {
-  /** @minLength 1 */
-  termsType: string;
-  /** @minLength 1 */
+  /**
+     * 약관 타입
+     * @minLength 1
+     */
+  termsType: TermsDocumentUpsertRequestTermsType;
+  /**
+     * 약관 버전
+     * @minLength 1
+     */
   version: string;
-  /** @minLength 1 */
+  /**
+     * 약관 제목
+     * @minLength 1
+     */
   title: string;
-  /** @minLength 1 */
+  /**
+     * 약관 본문. HTML 저장 시 프론트는 sanitize 후 렌더링합니다.
+     * @minLength 1
+     */
   content: string;
-  contentFormat?: string;
+  /** 본문 형식 */
+  contentFormat?: TermsDocumentUpsertRequestContentFormat;
+  /** 필수 동의 여부 */
   requiredYn: boolean;
+  /** 게시 여부. true이면 현재 약관 조회 대상이 됩니다. */
   publishedYn?: boolean;
+  /** 적용 시작 시각 */
   effectiveFrom?: string;
+  /** 적용 종료 시각 */
   effectiveTo?: string;
 }

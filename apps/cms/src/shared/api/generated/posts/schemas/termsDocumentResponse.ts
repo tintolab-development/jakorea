@@ -5,19 +5,37 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { TermsDocumentResponseContentFormat } from './termsDocumentResponseContentFormat';
+import type { TermsDocumentResponseTermsType } from './termsDocumentResponseTermsType';
 
+/**
+ * 약관 문서 응답. content는 contentFormat에 맞춰 그대로 렌더링합니다.
+ */
 export interface TermsDocumentResponse {
+  /** 약관 문서 ID */
   id?: number;
-  termsType?: string;
+  /** 약관 타입 */
+  termsType?: TermsDocumentResponseTermsType;
+  /** 약관 버전 */
   version?: string;
+  /** 약관 제목 */
   title?: string;
+  /** 약관 본문. HTML이면 h1/h2/p/ul/ol/strong/br 등 제한된 마크업을 포함합니다. */
   content?: string;
-  contentFormat?: string;
+  /** 본문 형식. 현재 피그마 약관 모달은 HTML 렌더링 기준입니다. */
+  contentFormat?: TermsDocumentResponseContentFormat;
+  /** 필수 동의 여부. MARKETING은 false입니다. */
   requiredYn?: boolean;
+  /** 게시 여부 */
   publishedYn?: boolean;
+  /** 적용 시작 시각 */
   effectiveFrom?: string;
+  /** 적용 종료 시각. null이면 종료일 없음 */
   effectiveTo?: string;
+  /** 게시 시각 */
   publishedAt?: string;
+  /** 생성 시각 */
   createdAt?: string;
+  /** 수정 시각 */
   updatedAt?: string;
 }
