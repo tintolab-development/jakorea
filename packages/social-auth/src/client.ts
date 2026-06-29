@@ -8,6 +8,7 @@ import type {
   LinkAccountInput,
   OAuthClientConfig,
   OAuthIntent,
+  AdminSsoLinkSessionInput,
   SocialAuthHttpClient,
   SocialAuthPaths,
   SocialAuthRoutes,
@@ -23,7 +24,7 @@ export interface CreateSocialAuthClientOptions {
   isRemoteEnabled: (intent?: OAuthIntent) => boolean
   remoteAdapter: SocialAuthAdapter
   mockAdapter: SocialAuthAdapter
-  /** true이면 IdP authorize URL을 프론트에서 직접 생성 (백엔드 SSO start 생략) */
+  /** mock adapter 전용 — remote는 백엔드 SSO start 사용 */
   useFrontendOAuthStart?: (intent?: OAuthIntent) => boolean
   storagePrefix?: string
   state?: SocialAuthState
@@ -37,12 +38,17 @@ export interface SocialAuthClient {
   isRemoteEnabled: (intent?: OAuthIntent) => boolean
   hasAccessToken: () => boolean
   getRedirectUri: (provider: SocialProvider) => string
+  buildLoginReturnUrl: () => string
   buildSignupReturnUrl: (returnUrl?: string) => string
   startLogin: (input: { provider: SocialProvider; intent: OAuthIntent; returnUrl?: string }) => Promise<string>
   completeCallback: (input: CallbackInput) => ReturnType<SocialAuthAdapter['completeCallback']>
+  completeLinkSession: (
+    input: AdminSsoLinkSessionInput
+  ) => ReturnType<NonNullable<SocialAuthAdapter['completeLinkSession']>>
   fetchSignupSession: (sessionId: number) => Promise<SocialVerificationSession>
   linkAccount: (input: LinkAccountInput) => Promise<import('./types').LinkedSocialAccount>
   listAccounts: () => Promise<import('./types').LinkedSocialAccount[]>
+  listAllSocialAccounts: () => Promise<import('./types').LinkedSocialAccount[]>
   unlinkAccount: (provider: SocialProvider) => Promise<void>
   flushPendingLinks: (consent: import('./types').SocialLinkConsent) => Promise<void>
 }
@@ -91,6 +97,12 @@ export function createSocialAuthClient(options: CreateSocialAuthClientOptions): 
   const getRedirectUri = (provider: SocialProvider) =>
     getOAuthRedirectUri(options.oauthConfig, options.routes.callbackPath, provider)
 
+  const buildLoginReturnUrl = () => {
+    const origin = resolveOrigin(options.oauthConfig)
+    const path = options.routes.loginCompletePath ?? '/login/social/complete'
+    return `${origin}${path}`
+  }
+
   const buildSignupReturnUrl = (returnUrl?: string) => {
     const origin = resolveOrigin(options.oauthConfig)
     const path = options.routes.signupReturnPath
@@ -108,13 +120,15 @@ export function createSocialAuthClient(options: CreateSocialAuthClientOptions): 
     isRemoteEnabled: options.isRemoteEnabled,
     hasAccessToken: () => Boolean(options.getAccessToken?.()),
     getRedirectUri,
+    buildLoginReturnUrl,
     buildSignupReturnUrl,
 
     async startLogin({ provider, intent, returnUrl }) {
       state.setOAuthIntent(intent, returnUrl)
       const adapter = resolveAdapter(clientShell, intent)
-      const redirectUri = getRedirectUri(provider)
-      const frontendReturnUrl = buildSignupReturnUrl(returnUrl)
+      const loginReturnUrl = buildLoginReturnUrl()
+      const frontendReturnUrl =
+        intent === 'login' ? loginReturnUrl : buildSignupReturnUrl(returnUrl)
 
       const buildFrontendAuthorizeUrl = () => {
         const oauthState = state.createOAuthState(provider)
@@ -126,18 +140,22 @@ export function createSocialAuthClient(options: CreateSocialAuthClientOptions): 
         )
       }
 
-      if (options.useFrontendOAuthStart?.(intent)) {
+      const useFrontendStart =
+        options.useFrontendOAuthStart?.(intent) ?? !clientShell.isRemoteEnabled(intent)
+
+      if (useFrontendStart) {
         return buildFrontendAuthorizeUrl()
       }
 
-      if (adapter.startSso && clientShell.isRemoteEnabled(intent)) {
+      if (adapter.startSso) {
         try {
           const result = await adapter.startSso({
             provider,
             intent,
-            redirectUri,
+            redirectUri: getRedirectUri(provider),
             returnUrl,
             frontendReturnUrl,
+            loginReturnUrl,
           })
           if (result.state) {
             state.storeOAuthState(provider, result.state)
@@ -157,25 +175,19 @@ export function createSocialAuthClient(options: CreateSocialAuthClientOptions): 
         }
       }
 
-      if (adapter.startSso) {
-        const result = await adapter.startSso({
-          provider,
-          intent,
-          redirectUri,
-          returnUrl,
-          frontendReturnUrl,
-        })
-        if (result.state) {
-          state.storeOAuthState(provider, result.state)
-        }
-        return result.authorizationUrl
-      }
-
       return buildFrontendAuthorizeUrl()
     },
 
     completeCallback(input) {
       return resolveAdapter(clientShell, input.intent).completeCallback(input)
+    },
+
+    completeLinkSession(input) {
+      const adapter = resolveAdapter(clientShell, 'link')
+      if (!adapter.completeLinkSession) {
+        throw new Error('현재 adapter는 completeLinkSession을 지원하지 않습니다.')
+      }
+      return adapter.completeLinkSession(input)
     },
 
     fetchSignupSession(sessionId) {
@@ -200,6 +212,14 @@ export function createSocialAuthClient(options: CreateSocialAuthClientOptions): 
         return []
       }
       return adapter.listAccounts()
+    },
+
+    async listAllSocialAccounts() {
+      const adapter = resolveAdapter(clientShell, 'link')
+      if (!adapter.listAllSocialAccounts) {
+        return adapter.listAccounts?.() ?? []
+      }
+      return adapter.listAllSocialAccounts()
     },
 
     async unlinkAccount(provider) {
@@ -230,7 +250,7 @@ export function createSocialAuthClient(options: CreateSocialAuthClientOptions): 
         try {
           await adapter.linkAccount({
             provider: link.provider,
-            code: link.code,
+            accessToken: link.code,
             state: link.state,
             socialVerificationSessionId: link.socialVerificationSessionId,
             consent: link.consent ?? consent,

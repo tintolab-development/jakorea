@@ -1,7 +1,7 @@
 export { createSocialAuthClient } from './client'
 export type { CreateSocialAuthClientOptions, SocialAuthClient } from './client'
 
-export { processOAuthCallback, processOAuthLinkCallback, processSignupSocialReturn } from './callback'
+export { processOAuthCallback, processOAuthLinkCallback, processSignupSocialReturn, processSocialLoginSessionReturn, processAdminSsoLinkReturn } from './callback'
 export type {
   ProcessOAuthCallbackOptions,
   ProcessOAuthLinkCallbackOptions,
@@ -26,6 +26,12 @@ export {
 } from './errors'
 
 export { toApiProviderCode, fromApiProviderCode, isSocialProvider } from './provider-map'
+
+export {
+  filterLinkedSocialAccounts,
+  isLinkedSocialAccount,
+  isLinkedSocialAccountStatus,
+} from './social-account-status'
 
 export {
   createAdminSsoAdapter,
