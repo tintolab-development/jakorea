@@ -1,18 +1,23 @@
+import '@jakorea/rich-text/extension-types'
 import type { Editor } from '@tiptap/react'
 import { useEditorState } from '@tiptap/react'
 import type { MenuProps } from 'antd'
 import { useCallback, useMemo, useRef, type ChangeEvent } from 'react'
 import {
+  insertEmoji,
   insertHorizontalRule,
   insertImageFromFile,
   insertImageFromUrl,
+  indentListItem,
   insertTable,
   insertYoutubeFromUrl,
+  LINE_HEIGHT_OPTIONS,
+  LIST_OPTIONS,
   promptImageUrl,
   promptLinkUrl,
   promptYoutubeUrl,
   RICH_TEXT_IMAGE_ACCEPT,
-} from './lib/rich-text-insert-actions'
+} from '@jakorea/rich-text'
 import {
   FONT_FAMILY_OPTIONS,
   FONT_SIZE_OPTIONS,
@@ -21,17 +26,31 @@ import {
   TEXT_ALIGN_OPTIONS,
   TEXT_COLOR_OPTIONS,
   type HeadingLevel,
+  type ListTypeValue,
   type TextAlignValue,
 } from './rich-text-toolbar.constants'
-import { ColorSwatchGrid, ToolbarDropdown } from './rich-text-toolbar-dropdown'
+import {
+  ColorSwatchGrid,
+  EmojiPickerGrid,
+  ToolbarDropdown,
+} from './rich-text-toolbar-dropdown'
 import {
   AlignLeftIcon,
-  BulletListIcon,
+  BoldIcon,
+  EmojiIcon,
   FontFamilyIcon,
-  OrderedListIcon,
+  HighlightIcon,
+  HorizontalRuleIcon,
+  IndentIcon,
+  ItalicIcon,
+  LineHeightIcon,
+  ListMenuIcon,
   PaletteIcon,
-  ToolbarGlyphToggle,
+  StrikeIcon,
+  SuperscriptIcon,
+  TableIcon,
   ToolbarToggle,
+  UnderlineIcon,
 } from './rich-text-toolbar-toggle'
 import './rich-text-toolbar.css'
 
@@ -44,6 +63,7 @@ const EMPTY_TOOLBAR_STATE = {
   heading: 'p' as HeadingLevel,
   fontFamily: '',
   fontSize: '',
+  lineHeight: '',
   textColor: '',
   highlightColor: '',
   textAlign: 'left' as TextAlignValue,
@@ -51,6 +71,8 @@ const EMPTY_TOOLBAR_STATE = {
   isItalic: false,
   isStrike: false,
   isUnderline: false,
+  isSuperscript: false,
+  isBlockquote: false,
   isBulletList: false,
   isOrderedList: false,
 }
@@ -65,6 +87,13 @@ function getHeadingLevel(editor: Editor): HeadingLevel {
 function getTextStyleAttr(editor: Editor, attr: string): string {
   const attrs = editor.getAttributes('textStyle') as Record<string, string | undefined>
   return attrs[attr] ?? ''
+}
+
+function getLineHeight(editor: Editor): string {
+  if (editor.isActive('heading')) {
+    return (editor.getAttributes('heading').lineHeight as string | undefined) ?? ''
+  }
+  return (editor.getAttributes('paragraph').lineHeight as string | undefined) ?? ''
 }
 
 function getActiveTextAlign(editor: Editor): TextAlignValue {
@@ -90,6 +119,7 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
           heading: getHeadingLevel(ed),
           fontFamily: getTextStyleAttr(ed, 'fontFamily'),
           fontSize: getTextStyleAttr(ed, 'fontSize'),
+          lineHeight: getLineHeight(ed),
           textColor: getTextStyleAttr(ed, 'color'),
           highlightColor: (ed.getAttributes('highlight').color as string | undefined) ?? '',
           textAlign: getActiveTextAlign(ed),
@@ -97,6 +127,8 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
           isItalic: ed.isActive('italic'),
           isStrike: ed.isActive('strike'),
           isUnderline: ed.isActive('underline'),
+          isSuperscript: ed.isActive('superscript'),
+          isBlockquote: ed.isActive('blockquote'),
           isBulletList: ed.isActive('bulletList'),
           isOrderedList: ed.isActive('orderedList'),
         }
@@ -104,6 +136,11 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
     }) ?? EMPTY_TOOLBAR_STATE
 
   const disabled = !editor || !state.canEdit
+  const activeListType: ListTypeValue | '' = state.isBulletList
+    ? 'bullet'
+    : state.isOrderedList
+      ? 'ordered'
+      : ''
 
   const run = useCallback(
     (action: (ed: Editor) => void) => {
@@ -175,12 +212,46 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
     [handleHeadingChange]
   )
 
+  const lineHeightMenuItems: MenuProps['items'] = useMemo(
+    () =>
+      LINE_HEIGHT_OPTIONS.map(opt => ({
+        key: opt.value || 'default',
+        label: opt.label,
+        onClick: () =>
+          run(ed => {
+            if (!opt.value) {
+              ed.chain().focus().unsetLineHeight().run()
+              return
+            }
+            ed.chain().focus().setLineHeight(opt.value).run()
+          }),
+      })),
+    [run]
+  )
+
   const textAlignMenuItems: MenuProps['items'] = useMemo(
     () =>
       TEXT_ALIGN_OPTIONS.map(opt => ({
         key: opt.value,
         label: opt.label,
         onClick: () => run(ed => ed.chain().focus().setTextAlign(opt.value).run()),
+      })),
+    [run]
+  )
+
+  const listMenuItems: MenuProps['items'] = useMemo(
+    () =>
+      LIST_OPTIONS.map(opt => ({
+        key: opt.value,
+        label: opt.label,
+        onClick: () =>
+          run(ed => {
+            if (opt.value === 'bullet') {
+              ed.chain().focus().toggleBulletList().run()
+              return
+            }
+            ed.chain().focus().toggleOrderedList().run()
+          }),
       })),
     [run]
   )
@@ -215,14 +286,9 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
         onClick: () => run(ed => promptLinkUrl(ed)),
       },
       {
-        key: 'table',
-        label: '표',
-        onClick: () => run(ed => insertTable(ed)),
-      },
-      {
-        key: 'hr',
-        label: '구분선',
-        onClick: () => run(ed => insertHorizontalRule(ed)),
+        key: 'blockquote',
+        label: '인용',
+        onClick: () => run(ed => ed.chain().focus().toggleBlockquote().run()),
       },
     ],
     [run]
@@ -279,34 +345,74 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
         disabled={disabled}
       />
 
-      <ToolbarGlyphToggle
+      <ToolbarToggle
         title="굵게"
-        glyph="B"
         active={state.isBold}
         disabled={disabled}
         onAction={() => run(ed => ed.chain().focus().toggleBold().run())}
-      />
-      <ToolbarGlyphToggle
+      >
+        <BoldIcon />
+      </ToolbarToggle>
+      <ToolbarToggle
         title="기울임"
-        glyph="I"
         active={state.isItalic}
         disabled={disabled}
         onAction={() => run(ed => ed.chain().focus().toggleItalic().run())}
-      />
-      <ToolbarGlyphToggle
+      >
+        <ItalicIcon />
+      </ToolbarToggle>
+      <ToolbarToggle
         title="밑줄"
-        glyph="U"
-        underline
         active={state.isUnderline}
         disabled={disabled}
         onAction={() => run(ed => ed.chain().focus().toggleUnderline().run())}
-      />
-      <ToolbarGlyphToggle
+      >
+        <UnderlineIcon />
+      </ToolbarToggle>
+      <ToolbarToggle
         title="취소선"
-        glyph="S"
         active={state.isStrike}
         disabled={disabled}
         onAction={() => run(ed => ed.chain().focus().toggleStrike().run())}
+      >
+        <StrikeIcon />
+      </ToolbarToggle>
+
+      <ToolbarDropdown
+        ariaLabel="줄간격"
+        label="줄간격"
+        leadingIcon={<LineHeightIcon />}
+        iconOnly
+        valueLabel={
+          state.lineHeight
+            ? LINE_HEIGHT_OPTIONS.find(o => o.value === state.lineHeight)?.label
+            : undefined
+        }
+        menuItems={lineHeightMenuItems}
+        disabled={disabled}
+      />
+
+      <ToolbarToggle
+        title="위 첨자"
+        active={state.isSuperscript}
+        disabled={disabled}
+        onAction={() => run(ed => ed.chain().focus().toggleSuperscript().run())}
+      >
+        <SuperscriptIcon />
+      </ToolbarToggle>
+
+      <ToolbarDropdown
+        ariaLabel="이모지"
+        label="이모지"
+        leadingIcon={<EmojiIcon />}
+        iconOnly
+        disabled={disabled}
+        panel={
+          <EmojiPickerGrid
+            disabled={disabled}
+            onPick={name => run(ed => insertEmoji(ed, name))}
+          />
+        }
       />
 
       <ToolbarDropdown
@@ -330,6 +436,7 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
       <ToolbarDropdown
         ariaLabel="하이라이트"
         label="하이라이트"
+        leadingIcon={<HighlightIcon />}
         disabled={disabled}
         panel={
           <ColorSwatchGrid
@@ -349,25 +456,47 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
         ariaLabel="정렬"
         label="정렬"
         leadingIcon={<AlignLeftIcon />}
+        iconOnly
         menuItems={textAlignMenuItems}
         disabled={disabled}
       />
 
-      <ToolbarToggle
-        title="글머리 목록"
-        active={state.isBulletList}
+      <ToolbarDropdown
+        ariaLabel="목록"
+        label="목록"
+        leadingIcon={<ListMenuIcon />}
+        iconOnly
+        valueLabel={
+          activeListType
+            ? LIST_OPTIONS.find(o => o.value === activeListType)?.label
+            : undefined
+        }
+        menuItems={listMenuItems}
         disabled={disabled}
-        onAction={() => run(ed => ed.chain().focus().toggleBulletList().run())}
+      />
+
+      <ToolbarToggle
+        title="구분선"
+        disabled={disabled}
+        onAction={() => run(ed => insertHorizontalRule(ed))}
       >
-        <BulletListIcon />
+        <HorizontalRuleIcon />
       </ToolbarToggle>
+
       <ToolbarToggle
-        title="번호 목록"
-        active={state.isOrderedList}
+        title="들여쓰기"
         disabled={disabled}
-        onAction={() => run(ed => ed.chain().focus().toggleOrderedList().run())}
+        onAction={() => run(ed => indentListItem(ed))}
       >
-        <OrderedListIcon />
+        <IndentIcon />
+      </ToolbarToggle>
+
+      <ToolbarToggle
+        title="표"
+        disabled={disabled}
+        onAction={() => run(ed => insertTable(ed))}
+      >
+        <TableIcon />
       </ToolbarToggle>
 
       <ToolbarDropdown

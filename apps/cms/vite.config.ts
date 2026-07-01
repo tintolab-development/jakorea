@@ -21,6 +21,10 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, './src'),
         '@jakorea/social-auth': path.resolve(__dirname, '../../packages/social-auth/src/index.ts'),
+        '@jakorea/rich-text/react': path.resolve(
+          __dirname,
+          '../../packages/rich-text/src/react/index.ts'
+        ),
       },
     },
     server: {

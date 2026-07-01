@@ -1,3 +1,6 @@
+export type { LineHeightValue, ListTypeValue } from '@jakorea/rich-text'
+export { LINE_HEIGHT_OPTIONS, LIST_OPTIONS } from '@jakorea/rich-text'
+
 export type HeadingLevel = 'p' | '1' | '2' | '3'
 
 export type TextAlignValue = 'left' | 'center' | 'right' | 'justify'

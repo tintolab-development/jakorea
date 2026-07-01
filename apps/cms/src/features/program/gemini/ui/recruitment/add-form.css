@@ -98,6 +98,8 @@
 .gemini-recruitment-add-form__card--training .rich-text-editor__body {
   flex: 1 1 auto;
   min-height: 0;
+  height: auto;
+  max-height: none;
 }
 
 .gemini-recruitment-add-form__footer {

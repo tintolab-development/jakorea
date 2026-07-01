@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import type { Editor } from '@tiptap/react'
+import type { Editor } from '@/shared/rich-text'
 import { useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { StatusBadge } from '@/shared/components/status-badge'

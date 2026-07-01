@@ -1,6 +1,8 @@
-import { DownOutlined } from '@ant-design/icons'
-import { Dropdown, type MenuProps } from 'antd'
-import type { ReactNode } from 'react'
+import { RtChevronDownIcon } from '@jakorea/rich-text/icons'
+import type { EmojiItem } from '@jakorea/rich-text'
+import { filterEmojis, getEmojiQuickPickItems } from '@jakorea/rich-text'
+import { Dropdown, Input, type MenuProps } from 'antd'
+import { useMemo, useState, type ReactNode } from 'react'
 
 export type ToolbarDropdownProps = {
   label: ReactNode
@@ -14,6 +16,8 @@ export type ToolbarDropdownProps = {
   onOpenChange?: (open: boolean) => void
   /** 색상·하이라이트 그리드 패널 */
   panel?: ReactNode
+  /** 라벨 숨김 — 아이콘+chevron만 (줄간격·이모지·정렬·목록) */
+  iconOnly?: boolean
   ariaLabel: string
 }
 
@@ -26,12 +30,21 @@ export function ToolbarDropdown({
   open,
   onOpenChange,
   panel,
+  iconOnly,
   ariaLabel,
 }: ToolbarDropdownProps) {
   const trigger = (
     <button
       type="button"
-      className="rich-text-toolbar__dropdown-trigger"
+      className={[
+        'rich-text-toolbar__dropdown-trigger',
+        'rt-toolbar-trigger',
+        iconOnly
+          ? 'rich-text-toolbar__dropdown-trigger--icon-only rt-toolbar-icon-control'
+          : 'rich-text-toolbar__dropdown-trigger--labeled',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       disabled={disabled}
       aria-label={ariaLabel}
       aria-haspopup="menu"
@@ -42,10 +55,12 @@ export function ToolbarDropdown({
           {leadingIcon}
         </span>
       ) : null}
-      <span className="rich-text-toolbar__dropdown-label">
-        {valueLabel ?? label}
-      </span>
-      <DownOutlined className="rich-text-toolbar__dropdown-chevron" />
+      {!iconOnly ? (
+        <span className="rich-text-toolbar__dropdown-label">
+          {valueLabel ?? label}
+        </span>
+      ) : null}
+      <RtChevronDownIcon className="rich-text-toolbar__dropdown-chevron" />
     </button>
   )
 
@@ -142,6 +157,49 @@ export function ColorSwatchGrid({
       >
         {clearLabel}
       </button>
+    </div>
+  )
+}
+
+export function EmojiPickerGrid({
+  disabled,
+  onPick,
+}: {
+  disabled?: boolean
+  onPick: (name: string) => void
+}) {
+  const [query, setQuery] = useState('')
+  const quickPick = useMemo(() => getEmojiQuickPickItems(), [])
+  const filtered = useMemo(() => filterEmojis(query, 64), [query])
+  const items = query.trim() ? filtered : quickPick.length > 0 ? quickPick : filtered
+
+  return (
+    <div className="rich-text-toolbar__emoji-picker">
+      <Input
+        size="small"
+        placeholder="이모지 검색"
+        value={query}
+        disabled={disabled}
+        allowClear
+        onChange={event => setQuery(event.target.value)}
+        onMouseDown={event => event.stopPropagation()}
+      />
+      <div className="rich-text-toolbar__emoji-grid" role="listbox" aria-label="이모지">
+        {items.map((emoji: EmojiItem) => (
+          <button
+            key={emoji.name}
+            type="button"
+            className="rich-text-toolbar__emoji-cell"
+            title={emoji.name}
+            disabled={disabled}
+            role="option"
+            onMouseDown={event => event.preventDefault()}
+            onClick={() => onPick(emoji.name)}
+          >
+            {emoji.emoji ?? `:${emoji.name}:`}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
