@@ -1,5 +1,12 @@
 import type { ReactNode } from 'react'
-import { RequiredPage, SignInPage, SignUpPage, SocialErrorPage } from '@/pages/auth'
+import {
+  RequiredPage,
+  SignInPage,
+  SignUpCompletePage,
+  SignUpPage,
+  SignUpSocialConnectPage,
+  SocialErrorPage,
+} from '@/pages/auth'
 import { HomePage } from '@/pages/home'
 import { TestPage } from '@/pages/test'
 
@@ -14,6 +21,8 @@ export const routes: RouteConfig[] = [
   { path: '/auth/required', element: <RequiredPage /> },
   { path: '/auth/sign-in', element: <SignInPage /> },
   { path: '/auth/sign-up', element: <SignUpPage /> },
+  { path: '/auth/sign-up/complete', element: <SignUpCompletePage /> },
+  { path: '/auth/sign-up/social-connect', element: <SignUpSocialConnectPage /> },
   { path: '/auth/social/error', element: <SocialErrorPage /> },
   { path: '/test', element: <TestPage /> },
 ]

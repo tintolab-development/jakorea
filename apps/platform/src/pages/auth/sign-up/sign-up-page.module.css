@@ -86,14 +86,6 @@
   margin-bottom: var(--spacing-40);
 }
 
-.next-button {
-  width: 100%;
-}
-
-.previous-button {
-  width: 100%;
-}
-
 .step-content {
   display: flex;
   width: 100%;
@@ -118,10 +110,6 @@
   display: flex;
   width: 100%;
   gap: var(--spacing-12);
-}
-
-.gender-button {
-  width: 100%;
 }
 
 .identity-module {
@@ -283,7 +271,6 @@
 }
 
 .duplicate-check-button {
-  width: 100%;
   margin-top: 23px;
 }
 
@@ -337,10 +324,6 @@
   gap: var(--spacing-12);
 }
 
-.school-status-button {
-  width: 100%;
-}
-
 .inline-required-mark {
   color: var(--color-red);
 }
@@ -352,50 +335,48 @@
   gap: var(--spacing-12);
 }
 
-.address-search-button {
-  width: 100%;
+.confirm-title {
+  margin-top: var(--spacing-48);
+  margin-bottom: var(--spacing-16);
 }
 
-.address-modal {
-  display: flex;
-  width: min(100vw - 32px, 600px);
-  max-height: min(720px, calc(100vh - 64px));
-  flex-direction: column;
-  gap: var(--spacing-24);
-  padding: var(--spacing-32);
-  border-radius: var(--radius-16);
-  background: var(--color-neutral-white);
+.confirm-description {
+  margin: 0;
+  margin-bottom: var(--spacing-48);
 }
 
-.address-modal-search-row {
-  display: grid;
-  grid-template-columns: 1fr 89px;
-  gap: var(--spacing-12);
-}
-
-.address-modal-results {
-  display: flex;
-  min-height: 160px;
-  flex-direction: column;
-  gap: var(--spacing-12);
-  overflow-y: auto;
-}
-
-.address-result-button {
+.confirm-review {
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: var(--spacing-4);
-  padding: var(--spacing-12);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-8);
-  background: var(--color-neutral-white);
-  text-align: left;
+  margin-bottom: var(--spacing-40);
 }
 
-.address-result-button:hover {
-  border-color: var(--color-border-focus);
-  background: var(--color-element-hover);
+.confirm-review-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--spacing-16);
+  padding: var(--spacing-16) var(--spacing-12);
+  border-top: 1px solid var(--color-border-default);
+}
+
+.confirm-review-row-first {
+  border-top: 2px solid var(--color-primary-500);
+}
+
+.confirm-review-label {
+  overflow: hidden;
+  width: 120px;
+  flex: 0 0 120px;
+  text-overflow: ellipsis;
+}
+
+.confirm-review-value {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .step-message {
