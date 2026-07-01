@@ -65,7 +65,7 @@ export function useJusoAddressSearch({
   const searchGenerationRef = useRef(0)
 
   const search = useCallback(
-    async (keyword: string, page = 1) => {
+    async (keyword: string, page = 1, pageSize = countPerPage) => {
       const generation = ++searchGenerationRef.current
       const trimmedKeyword = keyword.trim()
 
@@ -78,7 +78,9 @@ export function useJusoAddressSearch({
       }
 
       if (!confmKey) {
-        const nextError = new Error('주소 API 승인키가 설정되지 않았습니다.')
+        const nextError = new Error(
+          '주소 API 승인키가 설정되지 않았습니다. apps/platform/.env에 VITE_ADDRESS_API_KEY 또는 VITE_JUSO_CONFM_KEY를 설정한 뒤 Platform dev server를 재시작해 주세요.'
+        )
         setError(nextError)
         setAddresses([])
         setTotalCount(0)
@@ -92,7 +94,7 @@ export function useJusoAddressSearch({
         const params = new URLSearchParams({
           confmKey,
           currentPage: String(page),
-          countPerPage: String(Math.min(100, Math.max(1, countPerPage))),
+          countPerPage: String(Math.min(100, Math.max(1, pageSize))),
           keyword: trimmedKeyword,
           resultType: 'json',
         })
