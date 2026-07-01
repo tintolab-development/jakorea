@@ -10,7 +10,15 @@ export function filterApplicantsTableData(
 ): ApplicantSchoolRow[] | ApplicantInstructorRow[] {
   if (menu === 'institutions') {
     return institutionList.filter(item => {
-      const { organizationName, region, grade, teacherName, approvalStatus } = appliedFilters
+      const {
+        organizationName,
+        region,
+        institutionSido,
+        institutionSigungu,
+        grade,
+        teacherName,
+        approvalStatus,
+      } = appliedFilters
       if (
         organizationName &&
         organizationName.trim() !== '' &&
@@ -18,6 +26,18 @@ export function filterApplicantsTableData(
       )
         return false
       if (region && region !== 'all' && !item.region.includes(region)) return false
+      if (
+        institutionSido &&
+        institutionSido !== 'all' &&
+        !item.region.includes(String(institutionSido))
+      )
+        return false
+      if (
+        institutionSigungu &&
+        institutionSigungu !== 'all' &&
+        !item.region.includes(String(institutionSigungu))
+      )
+        return false
       if (grade && grade !== 'all' && item.educationGrade !== grade) return false
       if (teacherName && teacherName.trim() !== '' && !item.teacherName.includes(teacherName))
         return false

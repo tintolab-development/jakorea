@@ -73,7 +73,7 @@ export function ProgramListModals({
         onCancel={onFormCancel}
         footer={null}
         width={LAYOUT_CONSTANTS.widths.modal.xlarge}
-        destroyOnClose
+        destroyOnHidden
         zIndex={1001}
       >
         <ProgramForm

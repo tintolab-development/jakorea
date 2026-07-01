@@ -110,6 +110,9 @@ export function withProgramRegistrationCurriculumTitleTrailing(
   if (paragraph.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum || pr == null) {
     return heading
   }
+  if (pr.programRegistrationFormVariant === 'economy') {
+    return heading
+  }
   if (pr.programType === 'schedule') {
     const isScheduleMultiAllPer =
       pr.sessionRoundType === 'multi' &&

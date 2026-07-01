@@ -407,6 +407,9 @@ export interface DetailInfoSectionProps {
   onRegisterGetAdditionalContentHtml?: (getter: () => string) => void
   /** 참여자 정보 탭 등에서 상세 정보 상단에 썸네일 이미지 행 노출 */
   showThumbnail?: boolean
+  /** 참여자 모집 상세 정보에서 모집 방법(applicationMethod) 행 노출 */
+  showRecruitmentMethod?: boolean
+  recruitmentMethodLabel?: string
   sectionTitle?: string
   sectionDescription?: string | null
   /** UJAT 프로그램 상세 — title만, description·기본 안내 문구 미노출 */
@@ -421,6 +424,8 @@ export function DetailInfoSection({
   form,
   onRegisterGetAdditionalContentHtml,
   showThumbnail = false,
+  showRecruitmentMethod = false,
+  recruitmentMethodLabel = '모집 방법',
   sectionTitle,
   sectionDescription,
   sectionTitleOnly = false,
@@ -504,6 +509,17 @@ export function DetailInfoSection({
               DEFAULT_RECRUITMENT_GUIDE
             )}
           />
+          {showRecruitmentMethod ? (
+            <TextAreaFieldRow
+              label={recruitmentMethodLabel}
+              showRequiredStar={false}
+              isFormEdit={isFormEdit}
+              form={f}
+              name="applicationMethod"
+              placeholder={recruitmentMethodLabel}
+              readContent={program.applicationMethod ?? '-'}
+            />
+          ) : null}
           <TextAreaFieldRow
             label="학습 지원 내용"
             showRequiredStar={false}

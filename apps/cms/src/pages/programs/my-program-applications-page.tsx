@@ -235,7 +235,7 @@ export function MyProgramApplicationsPage() {
         }}
         footer={null}
         width={560}
-        destroyOnClose
+        destroyOnHidden
       >
         {selectedApplication && (
           <Descriptions column={1} bordered size="small">

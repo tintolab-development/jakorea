@@ -6,10 +6,18 @@
 
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import type { Program, RoundDeliveryType } from '@/types/domain'
-import type { UseFormReturn } from 'react-hook-form'
+import { Controller, type UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { EducationSchedulePreviewLines } from '@/features/template/ui/shared/education-schedule-preview-lines'
+import { formatDateRange } from '@/features/program/shared/lib/program-detail-info-constants'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
+import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
+import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 const ROUND_DELIVERY_OPTIONS: { value: RoundDeliveryType; label: string }[] = [
   { value: 'online', label: '온라인' },
@@ -48,6 +56,74 @@ function parseCurriculumContent(content: string | undefined): {
     duration: content.slice(0, idx).trim() || '1시간',
     description: content.slice(idx + sep.length).trim(),
   }
+}
+
+function isCompanySchoolProgram(program: Program): boolean {
+  return (
+    program.id.startsWith('economy-prog-') ||
+    program.id.startsWith('company-school-prog-') ||
+    program.id.startsWith('company-school-local-') ||
+    program.mainTitle?.includes('1사1교') === true ||
+    program.title.includes('1사1교')
+  )
+}
+
+function resolveCompanySchoolCurriculumRows(program: Program) {
+  const commonInfo = resolveGeneralProgramCommonInfo(program)
+  const sessions = commonInfo.curriculumSessions ?? []
+  const rows = sessions.slice(0, 2).map((session, index) => ({
+    unitName: session.title?.trim() || `${index + 1}차시`,
+    content: session.description?.trim() || '-',
+  }))
+
+  while (rows.length < 2) {
+    const round = program.rounds?.[rows.length]
+    const parsed = parseCurriculumContent(round?.curriculum)
+    rows.push({
+      unitName: parsed.duration && parsed.duration !== '1시간' ? parsed.duration : `${rows.length + 1}차시`,
+      content: parsed.description || round?.curriculum?.trim() || '-',
+    })
+  }
+
+  return rows
+}
+
+function resolveCompanySchoolEducationScheduleLines(program: Program): string[] {
+  const commonInfo = resolveGeneralProgramCommonInfo(program)
+  if (commonInfo.educationScheduleLines?.length) return commonInfo.educationScheduleLines
+  return [formatDateRange(program.startDate, program.endDate)]
+}
+
+function getCompanySchoolCurriculumFieldNames(index: number) {
+  return index === 0
+    ? ({
+        title: 'curriculumSession1Title',
+        description: 'curriculumSession1Description',
+      } as const)
+    : ({
+        title: 'curriculumSession2Title',
+        description: 'curriculumSession2Description',
+      } as const)
+}
+
+function parseCompanySchoolScheduleLineToRange(line: string | undefined): [Dayjs | null, Dayjs | null] {
+  if (!line?.trim()) return [null, null]
+  const [startText, endText] = line.split('~').map(part => part.trim())
+  const parse = (value: string | undefined) => {
+    if (!value) return null
+    const match = value.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/)
+    if (!match) return null
+    const [, year, month, day] = match
+    const parsed = dayjs(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`)
+    return parsed.isValid() ? parsed : null
+  }
+  return [parse(startText), parse(endText)]
+}
+
+function formatCompanySchoolScheduleRange(range: [Dayjs | null, Dayjs | null]): string | null {
+  const [start, end] = range
+  if (!start?.isValid() || !end?.isValid()) return null
+  return `${formatAppDatepickerDisplay(start)} ~ ${formatAppDatepickerDisplay(end)}`
 }
 
 function getRoundCurriculumContent(
@@ -93,6 +169,7 @@ export interface CurriculumSectionProps {
 
 export function CurriculumSection({ program, isEditMode = false, form }: CurriculumSectionProps) {
   const isFormEdit = isEditMode && form
+  const isCompanySchool = isCompanySchoolProgram(program)
   const roundsFromForm = isFormEdit ? (form.watch('rounds') ?? []) : []
   const sortedRounds = (isFormEdit ? roundsFromForm : program.rounds)?.length
     ? [...(isFormEdit ? roundsFromForm : program.rounds!)].sort(
@@ -113,6 +190,101 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
     const current = form.getValues('rounds') ?? []
     const nextRounds = current.map((r, i) => (i === roundIndex ? { ...r, deliveryType } : r))
     form.setValue('rounds', nextRounds)
+  }
+
+  if (isCompanySchool) {
+    const rows = resolveCompanySchoolCurriculumRows(program)
+
+    return (
+      <DetailInfoForm
+        title="교육 진행 (커리큘럼)"
+        mode={isFormEdit ? 'edit' : 'view'}
+        className="detail-info-form--gap project-info-company-school-curriculum"
+      >
+        {isFormEdit ? (
+          <>
+            {rows.map((row, index) => {
+              const fieldNames = getCompanySchoolCurriculumFieldNames(index)
+              return (
+                <DetailInfoForm.Row key={`company-school-curriculum-edit-${index}`} type="double">
+                  <DetailInfoForm.Field
+                    label={`${index + 1}차시 단원명`}
+                    edit={
+                      <Controller
+                        name={fieldNames.title}
+                        control={form.control}
+                        render={({ field }) => (
+                          <CmsInput
+                            inputSize="medium"
+                            placeholder="단원명을 입력하세요"
+                            width="100%"
+                            value={field.value ?? row.unitName}
+                            onChange={field.onChange}
+                          />
+                        )}
+                      />
+                    }
+                    view="-"
+                  />
+                  <DetailInfoForm.Field
+                    label={`${index + 1}차시 교육 내용`}
+                    edit={
+                      <Controller
+                        name={fieldNames.description}
+                        control={form.control}
+                        render={({ field }) => (
+                          <CmsInput
+                            inputSize="medium"
+                            placeholder="교육 내용을 작성하세요"
+                            width="100%"
+                            value={field.value ?? row.content}
+                            onChange={field.onChange}
+                          />
+                        )}
+                      />
+                    }
+                    view="-"
+                  />
+                </DetailInfoForm.Row>
+              )
+            })}
+          </>
+        ) : (
+          <div className="program-registration-curriculum__sessions">
+            {rows.map((row, index) => (
+              <div
+                key={`company-school-curriculum-${index}`}
+                className="program-registration-curriculum__session-block"
+              >
+                <div className="program-registration-curriculum__session-heading">
+                  ■ {index + 1}차시
+                </div>
+                <DetailInfoForm
+                  title={`${index + 1}차시`}
+                  hideHeader
+                  mode="view"
+                  className="program-registration-paragraph"
+                >
+                  <DetailInfoForm.Row type="single">
+                    <DetailInfoForm.Field
+                      label="단원명 및 교육 내용"
+                      fullRow
+                      view={
+                        <>
+                          {row.unitName}
+                          <DetailInfoForm.InputsSeparator />
+                          {row.content}
+                        </>
+                      }
+                    />
+                  </DetailInfoForm.Row>
+                </DetailInfoForm>
+              </div>
+            ))}
+          </div>
+        )}
+      </DetailInfoForm>
+    )
   }
 
   return (
@@ -177,6 +349,84 @@ export function CurriculumSection({ program, isEditMode = false, form }: Curricu
           <DetailInfoForm.Field label="안내" fullRow view="등록된 회차가 없습니다." />
         </DetailInfoForm.Row>
       )}
+    </DetailInfoForm>
+  )
+}
+
+export function EducationScheduleSettingsSection({
+  program,
+  isEditMode = false,
+  form,
+}: {
+  program: Program
+  isEditMode?: boolean
+  form?: UseFormReturn<ProgramDetailEditFormValues>
+}) {
+  if (!isCompanySchoolProgram(program)) return null
+
+  const isFormEdit = isEditMode && form
+  const formLines = isFormEdit ? form.watch('educationScheduleLines') : undefined
+  const lines = isFormEdit
+    ? (formLines ?? resolveCompanySchoolEducationScheduleLines(program))
+    : resolveCompanySchoolEducationScheduleLines(program)
+  const scheduleRange = parseCompanySchoolScheduleLineToRange(lines[0])
+
+  const removeLine = (index: number) => {
+    if (!form) return
+    const current = form.getValues('educationScheduleLines') ?? []
+    form.setValue(
+      'educationScheduleLines',
+      current.filter((_, i) => i !== index),
+      { shouldDirty: true }
+    )
+  }
+
+  const handleScheduleRangeChange = (range: [Dayjs | null, Dayjs | null]) => {
+    if (!form) return
+    const nextLine = formatCompanySchoolScheduleRange(range)
+    if (!nextLine) return
+    const current = form.getValues('educationScheduleLines') ?? lines
+    const nextLines = current.length > 0 ? [nextLine, ...current.slice(1)] : [nextLine]
+    form.setValue('educationScheduleLines', nextLines, { shouldDirty: true })
+  }
+
+  return (
+    <DetailInfoForm
+      title="교육 진행 일정 설정"
+      mode={isFormEdit ? 'edit' : 'view'}
+      className="detail-info-form--gap"
+    >
+      {isFormEdit ? (
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="교육 진행 일정 선택"
+            fullRow
+            edit={
+              <ParagraphDatePicker
+                mode="range"
+                value={scheduleRange}
+                onChange={handleScheduleRangeChange}
+                width={360}
+                placeholder={['진행 기간을 선택하세요', '진행 기간을 선택하세요']}
+              />
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+      ) : null}
+      <DetailInfoForm.Row type="single">
+        <DetailInfoForm.Field
+          label="교육 진행 예정일"
+          fullRow
+          readOnlyDisplay
+          view={
+            <EducationSchedulePreviewLines
+              lines={lines}
+              onRemove={isFormEdit ? removeLine : undefined}
+            />
+          }
+        />
+      </DetailInfoForm.Row>
     </DetailInfoForm>
   )
 }

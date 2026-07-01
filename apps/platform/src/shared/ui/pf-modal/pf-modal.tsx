@@ -1,10 +1,14 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import closeIconUrl from '../icons/close.svg'
+import { PFText } from '../pf-text'
 import styles from './pf-modal.module.css'
 
 type PFModalProps = {
   open: boolean
   onClose: () => void
+  title?: ReactNode
+  width?: CSSProperties['width']
   ariaLabelledBy?: string
   ariaDescribedBy?: string
   closeOnBackdropClick?: boolean
@@ -15,6 +19,8 @@ type PFModalProps = {
 export function PFModal({
   open,
   onClose,
+  title,
+  width,
   ariaLabelledBy,
   ariaDescribedBy,
   closeOnBackdropClick = true,
@@ -23,7 +29,7 @@ export function PFModal({
 }: PFModalProps) {
   const fallbackTitleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
-  const titleId = ariaLabelledBy ?? fallbackTitleId
+  const titleId = ariaLabelledBy ?? (title ? fallbackTitleId : undefined)
 
   useEffect(() => {
     if (!open) return
@@ -66,7 +72,16 @@ export function PFModal({
         aria-describedby={ariaDescribedBy}
         tabIndex={-1}
         className={[styles.panel, className].filter(Boolean).join(' ')}
+        style={width ? { width } : undefined}
       >
+        <button className={styles['close-button']} type="button" aria-label="닫기" onClick={onClose}>
+          <img className={styles['close-icon']} src={closeIconUrl} alt="" aria-hidden="true" />
+        </button>
+        {title ? (
+          <PFText as="div" typo="hl-lg" color="black" id={titleId} className={styles.title}>
+            {title}
+          </PFText>
+        ) : null}
         {children}
       </div>
     </div>,

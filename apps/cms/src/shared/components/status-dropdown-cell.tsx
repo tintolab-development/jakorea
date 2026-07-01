@@ -30,6 +30,9 @@ import type { MenuProps } from 'antd'
 import {
   cloneElement,
   isValidElement,
+  useEffect,
+  useId,
+  useState,
   type CSSProperties,
   type ReactElement,
   type ReactNode,
@@ -117,6 +120,19 @@ const BADGE_CELL_STYLE_CLASS = 'status-dropdown-cell__badge--cell-style'
 const TRIGGER_CELL_STYLE_CLASS = 'status-dropdown-cell__trigger--cell-style'
 const OVERLAY_CELL_STYLE_CLASS = 'status-dropdown-cell__dropdown-overlay--cell-style'
 
+let activeStatusDropdownCellId: string | null = null
+const activeStatusDropdownListeners = new Set<() => void>()
+
+function setActiveStatusDropdownCellId(id: string | null) {
+  activeStatusDropdownCellId = id
+  activeStatusDropdownListeners.forEach(listener => listener())
+}
+
+function subscribeActiveStatusDropdown(listener: () => void): () => void {
+  activeStatusDropdownListeners.add(listener)
+  return () => activeStatusDropdownListeners.delete(listener)
+}
+
 /** 배지 가로 크기용 변수 — 패널 폭은 CSS에서 `+ 16px`(트리거 좌우 padding 8px×2) */
 function overlayStyleFromCellStyle(cellStyle: CSSProperties | undefined): CSSProperties | undefined {
   if (cellStyle?.width == null) return undefined
@@ -170,6 +186,34 @@ export function StatusDropdownCell<T extends string = string>({
   tagLayout = 'default',
   style,
 }: StatusDropdownCellProps<T>) {
+  const dropdownCellId = useId()
+  const [activeDropdownVersion, setActiveDropdownVersion] = useState(0)
+  const isActiveDropdown = activeStatusDropdownCellId === dropdownCellId
+  const controlledOpen = isOpen && isActiveDropdown
+
+  useEffect(() => {
+    return subscribeActiveStatusDropdown(() => setActiveDropdownVersion(v => v + 1))
+  }, [])
+
+  useEffect(() => {
+    if (!isOpen || isActiveDropdown) return
+    onOpenChange(false)
+  }, [isOpen, isActiveDropdown, onOpenChange, activeDropdownVersion])
+
+  useEffect(() => {
+    if (!isOpen || activeStatusDropdownCellId === dropdownCellId) return
+    setActiveStatusDropdownCellId(dropdownCellId)
+  }, [dropdownCellId, isOpen])
+
+  useEffect(
+    () => () => {
+      if (activeStatusDropdownCellId === dropdownCellId) {
+        setActiveStatusDropdownCellId(null)
+      }
+    },
+    [dropdownCellId]
+  )
+
   const menuItems: MenuProps['items'] = statusOptions.map(opt => ({
     key: opt,
     label: (
@@ -218,15 +262,24 @@ export function StatusDropdownCell<T extends string = string>({
           domEvent.stopPropagation()
           domEvent.preventDefault()
           onChange(key as T)
+          if (activeStatusDropdownCellId === dropdownCellId) {
+            setActiveStatusDropdownCellId(null)
+          }
+          onOpenChange?.(false)
         },
       }}
       trigger={['click']}
+      placement="bottomCenter"
       disabled={isUpdating}
       overlayClassName={overlayClassName}
       overlayStyle={overlayStyle}
       getPopupContainer={() => document.body}
-      open={isOpen}
-      onOpenChange={onOpenChange}
+      open={controlledOpen}
+      destroyOnHidden
+      onOpenChange={open => {
+        setActiveStatusDropdownCellId(open ? dropdownCellId : null)
+        onOpenChange(open)
+      }}
       popupRender={originNode => (
         <div
           onMouseDown={e => {
@@ -244,9 +297,10 @@ export function StatusDropdownCell<T extends string = string>({
         }${tagLayout === 'tag132' ? ' status-dropdown-cell__status-trigger--tag-132' : ''
         }${tagLayout === 'tag160' ? ' status-dropdown-cell__status-trigger--tag-160' : ''}${
           tagLayout === 'paymentOrderLine' ? ' status-dropdown-cell__status-trigger--payment-order-line' : ''
-        }${isOpen ? ' status-dropdown-cell__status-trigger--open' : ''}${
+        }${controlledOpen ? ' status-dropdown-cell__status-trigger--open' : ''}${
           style != null ? ` ${TRIGGER_CELL_STYLE_CLASS}` : ''
         }`}
+        style={overlayStyle}
         onClick={e => e.stopPropagation()}
       >
         {injectBadgeCellStyle(renderBadge(status), style)}

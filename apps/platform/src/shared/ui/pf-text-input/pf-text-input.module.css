@@ -2,15 +2,36 @@
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: 5px;
+  gap: var(--spacing-4);
 }
 
 .label {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--spacing-4);
   overflow: hidden;
   padding-left: var(--spacing-8);
   color: var(--color-neutral-warm-600);
+}
+
+.label-text {
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.required-mark {
+  overflow: hidden;
+  flex: 0 0 auto;
+  color: var(--color-red);
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
 }
 
 .field {
@@ -98,4 +119,27 @@
 .clear-icon {
   width: 18px;
   height: 18px;
+}
+
+.message {
+  margin: 0;
+  padding-left: var(--spacing-8);
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+.message-neutral {
+  color: var(--color-neutral-warm-500);
+}
+
+.message-success {
+  color: var(--color-status-success-light);
+}
+
+.message-error {
+  color: var(--color-status-error-default);
 }

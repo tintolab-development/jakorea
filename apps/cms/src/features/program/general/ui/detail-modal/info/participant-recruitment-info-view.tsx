@@ -69,6 +69,16 @@ const CERTIFICATE_OPTIONS = [
 
 const FORM_CLASS = 'program-registration-paragraph'
 
+function isCompanySchoolRecruitmentProgram(program: Program): boolean {
+  return (
+    program.id.startsWith('economy-prog-') ||
+    program.id.startsWith('company-school-prog-') ||
+    program.id.startsWith('company-school-local-') ||
+    program.mainTitle?.includes('1사1교') === true ||
+    program.title.includes('1사1교')
+  )
+}
+
 function NumberWithSuffixEdit({
   form,
   name,
@@ -171,6 +181,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
 
   const contactOrg = display.contactOrganizationName
   const isIndividual = isGeneralIndividualProgram(program)
+  const isCompanySchool = isCompanySchoolRecruitmentProgram(program)
   const editInterviewValue = form?.watch('participantRecruitmentInterviewEnabled')
   const interviewEnabled = resolveParticipantRecruitmentInterviewEnabled(
     program,
@@ -424,7 +435,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
             ) : null}
           </DetailInfoForm.Row>
 
-          {!isIndividual ? (
+          {!isIndividual && !isCompanySchool ? (
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="학생 명단 제출 여부"
@@ -506,7 +517,8 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                 />
               </DetailInfoForm.Row>
 
-              {display.showMaxScheduleCountField || display.showMaxSessionsPerDayField ? (
+              {!isCompanySchool &&
+              (display.showMaxScheduleCountField || display.showMaxSessionsPerDayField) ? (
                 <DetailInfoForm.Row
                   type={
                     display.showMaxScheduleCountField && display.showMaxSessionsPerDayField
@@ -653,7 +665,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
             />
           </DetailInfoForm.Row>
 
-          {!isIndividual ? (
+          {!isIndividual && !isCompanySchool ? (
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="수료증 발급 여부"

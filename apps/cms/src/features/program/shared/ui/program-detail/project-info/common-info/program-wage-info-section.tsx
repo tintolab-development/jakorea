@@ -14,9 +14,14 @@ import {
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
+import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
+import type { Program } from '@/types/domain'
+import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 export interface ProgramWageInfoSectionProps {
   programId: string
+  program?: Program
   isEditMode?: boolean
   form?: UseFormReturn<ProgramDetailEditFormValues>
 }
@@ -26,6 +31,140 @@ const WAGE_COMPARE_RADIO_OPTIONS = [
   { value: 'over' as const, label: '초과' },
   { value: 'under' as const, label: '이하' },
 ]
+
+const COMPANY_SCHOOL_WAGE_DEDUCTION_VIEW = '일용근로자 원천징수세액'
+const COMPANY_SCHOOL_PAYMENT_ID_TRANSPORT = 'p-2'
+const COMPANY_SCHOOL_PAYMENT_ID_LODGING = 'p-7'
+
+const COMPANY_SCHOOL_WAGE_ROWS = [
+  {
+    gradeLabel: '1급',
+    regularLabel: '1급 강사비 책정',
+    longDistanceLabel: '1급 강사 장거리비 책정',
+    regularField: 'wageGrade1Amount' as const,
+    longDistanceField: 'wageGrade1LongDistanceAmount' as const,
+    regularValue: '500,000',
+    longDistanceValue: '500,000',
+    maxAmount: 500000,
+    maxText: '최대 500,000원',
+  },
+  {
+    gradeLabel: '2급',
+    regularLabel: '2급 강사비 책정',
+    longDistanceLabel: '2급 강사 장거리비 책정',
+    regularField: 'wageGrade2Amount' as const,
+    longDistanceField: 'wageGrade2LongDistanceAmount' as const,
+    regularValue: '400,000',
+    longDistanceValue: '400,000',
+    maxAmount: 400000,
+    maxText: '최대 400,000원',
+  },
+  {
+    gradeLabel: '3급',
+    regularLabel: '3급 강사비 책정',
+    longDistanceLabel: '3급 강사 장거리비 책정',
+    regularField: 'wageGrade3Amount' as const,
+    longDistanceField: 'wageGrade3LongDistanceAmount' as const,
+    regularValue: '300,000',
+    longDistanceValue: '300,000',
+    maxAmount: 300000,
+    maxText: '최대 300,000원',
+  },
+]
+
+function isCompanySchoolProgramId(programId: string): boolean {
+  return (
+    programId.startsWith('economy-prog-') ||
+    programId.startsWith('company-school-prog-') ||
+    programId.startsWith('company-school-local-')
+  )
+}
+
+function getCompanySchoolPaymentItemOptions(): CmsSelectMultipleOption[] {
+  return getTemplateRegistrationPaymentItemOptions().map(opt => {
+    if (opt.value === COMPANY_SCHOOL_PAYMENT_ID_TRANSPORT) {
+      return { ...opt, label: '교통비(일사일교)' }
+    }
+    if (opt.value === COMPANY_SCHOOL_PAYMENT_ID_LODGING) {
+      return { ...opt, label: '숙박비(일사일교)' }
+    }
+    return opt
+  })
+}
+
+function companySchoolWageView(amount: string, maxText: string) {
+  return (
+    <>
+      1시간 당
+      <DetailInfoForm.InputsSeparator />
+      {amount}원 ({maxText})
+    </>
+  )
+}
+
+function normalizeCompanySchoolWageInput(raw: string, maxAmount: number): string {
+  const numeric = raw.replace(/[^\d]/g, '')
+  if (!numeric) return ''
+  const clamped = Math.min(Number(numeric), maxAmount)
+  return clamped.toLocaleString()
+}
+
+function companySchoolWageEdit(
+  form: UseFormReturn<ProgramDetailEditFormValues>,
+  name: keyof ProgramDetailEditFormValues,
+  maxAmount: number,
+  maxText: string
+) {
+  return (
+    <div className="detail-info-form-inputs-wrapper">
+      <span className="detail-info-form--text">1시간 당</span>
+      <Controller
+        name={name}
+        control={form.control}
+        render={({ field }) => (
+          <CmsInput
+            inputSize="medium"
+            placeholder="직접 입력"
+            width={120}
+            value={String(field.value ?? '')}
+            onChange={event =>
+              field.onChange(normalizeCompanySchoolWageInput(event.target.value, maxAmount))
+            }
+          />
+        )}
+      />
+      <span className="detail-info-form--text">원 ({maxText})</span>
+    </div>
+  )
+}
+
+function parseCompanySchoolWageAmount(
+  pricing: string | undefined,
+  kind: 'regular' | 'longDistance'
+): string | undefined {
+  if (!pricing?.trim()) return undefined
+  const parts = pricing.split(/\s*\|\s*/).map(part => part.trim())
+  const target = parts.find(part =>
+    kind === 'regular'
+      ? part.includes('기본') || !part.includes('장거리')
+      : part.includes('장거리')
+  )
+  return target?.match(/([\d,]+)\s*원/)?.[1]
+}
+
+function resolveCompanySchoolWageRows(program: Program | undefined) {
+  const savedRows = program?.generalCommonInfo?.wageGradeRows ?? []
+  return COMPANY_SCHOOL_WAGE_ROWS.map(row => {
+    const saved = savedRows.find(savedRow => savedRow.grade.startsWith(row.gradeLabel))
+    return {
+      ...row,
+      regularValue:
+        parseCompanySchoolWageAmount(saved?.pricing, 'regular') ?? row.regularValue,
+      longDistanceValue:
+        parseCompanySchoolWageAmount(saved?.pricing, 'longDistance') ?? row.longDistanceValue,
+    }
+  })
+}
 
 function WageValueParts({ text }: { text: string }) {
   const parts = text.split(/\s*\|\s*/)
@@ -112,10 +251,13 @@ function syncWagePricingTimeUnit(form: UseFormReturn<ProgramDetailEditFormValues
 
 export function ProgramWageInfoSection({
   programId,
+  program,
   isEditMode = false,
   form,
 }: ProgramWageInfoSectionProps) {
   const data = useMemo(() => getProgramWageInfoMock(programId), [programId])
+  const isCompanySchool = isCompanySchoolProgramId(programId)
+  const companySchoolPaymentItemOptions = useMemo(() => getCompanySchoolPaymentItemOptions(), [])
   const isFormEdit = isEditMode && form
   const parsedPricing = useMemo(
     () => parsePricingDisplay(data.pricingDisplay),
@@ -142,6 +284,79 @@ export function ProgramWageInfoSection({
       form.setValue('wagePricingLongDistance', parsedPricing.longDistancePrice)
     }
   }, [isFormEdit, form, data, parsedPricing])
+
+  useEffect(() => {
+    if (!isCompanySchool || !isFormEdit || !form) return
+    const current = form.getValues()
+    for (const row of COMPANY_SCHOOL_WAGE_ROWS) {
+      if (!current[row.regularField]) form.setValue(row.regularField, row.regularValue)
+      if (!current[row.longDistanceField]) {
+        form.setValue(row.longDistanceField, row.longDistanceValue)
+      }
+    }
+    if (!current.wagePaymentItemIds?.length) {
+      form.setValue('wagePaymentItemIds', [
+        COMPANY_SCHOOL_PAYMENT_ID_TRANSPORT,
+        COMPANY_SCHOOL_PAYMENT_ID_LODGING,
+      ])
+    }
+  }, [isCompanySchool, isFormEdit, form])
+
+  if (isCompanySchool) {
+    const wageRows = resolveCompanySchoolWageRows(program)
+    const paymentItemsView = '교통비(일사일교), 숙박비(일사일교)'
+
+    return (
+      <DetailInfoForm
+        title="임금 정보"
+        mode={isFormEdit ? 'edit' : 'view'}
+        className="detail-info-form--gap"
+      >
+        {wageRows.map(row => (
+          <DetailInfoForm.Row key={row.gradeLabel} type="double">
+            <DetailInfoForm.Field
+              label={row.regularLabel}
+              view={companySchoolWageView(row.regularValue, row.maxText)}
+              edit={isFormEdit && form ? companySchoolWageEdit(form, row.regularField, row.maxAmount, row.maxText) : undefined}
+            />
+            <DetailInfoForm.Field
+              label={row.longDistanceLabel}
+              view={companySchoolWageView(row.longDistanceValue, row.maxText)}
+              edit={isFormEdit && form ? companySchoolWageEdit(form, row.longDistanceField, row.maxAmount, row.maxText) : undefined}
+            />
+          </DetailInfoForm.Row>
+        ))}
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="지급 항목"
+            view={paymentItemsView}
+            edit={
+              isFormEdit && form ? (
+                <div className="detail-info-form-inputs-wrapper-no-gap">
+                  <Controller
+                    name="wagePaymentItemIds"
+                    control={form.control}
+                    render={({ field }) => (
+                      <CmsSelect
+                        mode="multiple"
+                        withAllOption={false}
+                        value={field.value ?? []}
+                        onChange={next => field.onChange(next as string[])}
+                        options={companySchoolPaymentItemOptions}
+                        placeholder="지급 항목을 선택하세요"
+                        style={{ width: '100%', minWidth: 0 }}
+                      />
+                    )}
+                  />
+                </div>
+              ) : undefined
+            }
+          />
+          <DetailInfoForm.Field label="공제 항목" view={COMPANY_SCHOOL_WAGE_DEDUCTION_VIEW} />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+    )
+  }
 
   return (
     <DetailInfoForm

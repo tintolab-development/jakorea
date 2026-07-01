@@ -13,7 +13,7 @@
  * 병합 시 `edit` 파싱·`setEditMode`·폼 훅 호출 순서를 바꾸면 수정 모드와 폼이 엇갈릴 수 있음.
  */
 
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -48,7 +48,13 @@ import {
 import { ParticipatingVolunteersSection } from './program-status/participating-volunteers-section'
 import { ParticipatingInstructorsSection } from './program-status/participating-instructors-section'
 import { ApplicantList } from '../../../shared/ui/program-detail/applicant-list/applicant-list'
+import { generalOrganizationApplicationFilterFields } from '@/features/program/general/lib/application-filter-fields'
 import { ProjectInfoDetailPanels } from '../../../shared/ui/program-detail/project-info/project-info-detail'
+import {
+  CompanySchoolApplicationInfoView,
+  type CompanySchoolApplicationInfoTabKey,
+} from './info/company-school-application-info-view'
+import { GeneralProgramRecruitmentView } from './info/recruitment-view'
 import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import type { Program } from '@/types/domain'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
@@ -57,6 +63,7 @@ import { COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
+import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
 import {
   getGeneralSurveyMenuItems,
   type GeneralSurveyNavKey,
@@ -72,6 +79,7 @@ import {
   LnbIconProjectInfo,
 } from './program-detail-lnb-icons'
 import { GeneralLnbSurveyManagementIcon } from './detail-lnb-icons'
+import './applications/participant-applications.css'
 import './program-detail-fullpage-modal.css'
 
 export interface ProgramDetailFullPageModalProps {
@@ -209,6 +217,21 @@ export function ProgramDetailFullPageModal({
     () => isCompanySchoolDetailProgram(displayProgram),
     [displayProgram]
   )
+  const initialEditResetKeyRef = useRef<string | null>(null)
+  useLayoutEffect(() => {
+    const resetKey = open && isCompanySchoolDetail && programId ? programId : null
+    if (!resetKey) {
+      initialEditResetKeyRef.current = null
+      return
+    }
+    if (initialEditResetKeyRef.current === resetKey) return
+    initialEditResetKeyRef.current = resetKey
+    if (!searchParams.has(EDIT_PARAM)) return
+
+    const next = new URLSearchParams(searchParams)
+    next.delete(EDIT_PARAM)
+    setSearchParams(next, { replace: true })
+  }, [open, programId, isCompanySchoolDetail, searchParams, setSearchParams])
   const surveyMenuItems = useMemo(
     () => (displayProgram ? getGeneralSurveyMenuItems(displayProgram) : []),
     [displayProgram]
@@ -765,6 +788,7 @@ export function ProgramDetailFullPageModal({
     const next = new URLSearchParams(searchParams)
     next.set(LNB_PARAM, 'info')
     next.set(TAB_PARAM, key)
+    next.delete(SUB_TAB_PARAM)
     next.delete(EDIT_PARAM)
     setSearchParams(next, { replace: true })
   }
@@ -892,6 +916,15 @@ export function ProgramDetailFullPageModal({
     return items
   })()
 
+  const isCompanySchoolRecruitmentInfoTab =
+    isCompanySchoolDetail && activeLnb === 'info' && activeTab === 'institutions'
+  const activeCompanySchoolRecruitTab: GeneralRecruitTabKey =
+    isCompanySchoolRecruitmentInfoTab && searchParams.get(SUB_TAB_PARAM) === 'instructors'
+      ? 'instructors'
+      : 'institutions'
+  const isCompanySchoolRecruitmentInstructorTab =
+    isCompanySchoolRecruitmentInfoTab && activeCompanySchoolRecruitTab === 'instructors'
+
   /** 공통정보 탭 수정 모드: 이 때만 `infoForm` 을 자식에 넘김 (RHF + Zod 단일 스키마) */
   const isEditModeInfo = activeTab === 'info' && editTab === 'info' && !!displayProgram
   const infoForm = useProgramDetailEditForm({
@@ -944,7 +977,9 @@ export function ProgramDetailFullPageModal({
   })
 
   const isEditModeInstructors =
-    activeTab === 'instructors' && editTab === 'instructors' && !!displayProgram
+    (activeTab === 'instructors' || isCompanySchoolRecruitmentInstructorTab) &&
+    editTab === 'instructors' &&
+    !!displayProgram
   const instructorsForm = useProgramDetailEditForm({
     program: displayProgram,
     isEditMode: isEditModeInstructors,
@@ -973,6 +1008,11 @@ export function ProgramDetailFullPageModal({
     if (activeTab === 'info' && displayProgram) {
       infoResetToProgram()
       setEditMode('info')
+      return
+    }
+    if (isCompanySchoolRecruitmentInstructorTab && displayProgram) {
+      instructorsResetToProgram()
+      setEditMode('instructors')
       return
     }
     if (activeTab === 'institutions' && displayProgram) {
@@ -1048,6 +1088,39 @@ export function ProgramDetailFullPageModal({
     }
   }
 
+  const handleCompanySchoolRecruitTabChange = (tab: GeneralRecruitTabKey) => {
+    if (tab === 'volunteers') return
+    const next = new URLSearchParams(searchParams)
+    next.set(LNB_PARAM, 'info')
+    next.set(TAB_PARAM, 'institutions')
+    if (tab === 'instructors') next.set(SUB_TAB_PARAM, 'instructors')
+    else next.delete(SUB_TAB_PARAM)
+    next.delete(EDIT_PARAM)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }
+  const handleCompanySchoolRecruitSave = () => {
+    if (activeCompanySchoolRecruitTab === 'instructors') {
+      handleInstructorsExit()
+      return
+    }
+    handleInstitutionsExit()
+  }
+  const isCompanySchoolApplicationInfoTab =
+    isCompanySchoolDetail && activeLnb === 'info' && activeTab === 'instructors'
+  const activeCompanySchoolApplicationTab: CompanySchoolApplicationInfoTabKey =
+    searchParams.get(SUB_TAB_PARAM) === 'instructors' ? 'instructors' : 'institutions'
+  const handleCompanySchoolApplicationTabChange = (tab: CompanySchoolApplicationInfoTabKey) => {
+    const next = new URLSearchParams(searchParams)
+    next.set(LNB_PARAM, 'info')
+    next.set(TAB_PARAM, 'instructors')
+    if (tab === 'instructors') next.set(SUB_TAB_PARAM, 'instructors')
+    else next.delete(SUB_TAB_PARAM)
+    next.delete(EDIT_PARAM)
+    if (programId) next.set('programId', programId)
+    setSearchParams(next, { replace: true })
+  }
+
   if (!open) return null
 
   const pNorm = location.pathname.replace(/\/$/, '') || '/'
@@ -1094,7 +1167,40 @@ export function ProgramDetailFullPageModal({
         </div>
       ) : displayProgram ? (
         <>
-          {activeLnb === 'info' && (
+          {activeLnb === 'info' && isCompanySchoolRecruitmentInfoTab && (
+            <GeneralProgramRecruitmentView
+              program={displayProgram}
+              sponsorName={sponsorName}
+              activeRecruitTab={activeCompanySchoolRecruitTab}
+              onRecruitTabChange={handleCompanySchoolRecruitTabChange}
+              showInstructorTab
+              showVolunteerTab={false}
+              showParticipantRecruitmentMethod
+              canWrite
+              isEditModeInstitutions={isEditModeInstitutions}
+              institutionsForm={isEditModeInstitutions ? institutionsForm : undefined}
+              registerInstitutionsAdditionalHtml={registerInstitutionsAdditionalHtml}
+              isEditModeInstructors={isEditModeInstructors}
+              instructorsForm={isEditModeInstructors ? instructorsForm : undefined}
+              registerInstructorsAdditionalHtml={registerInstructorsAdditionalHtml}
+              isEditModeVolunteers={false}
+              volunteersForm={undefined}
+              registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
+              onEdit={handleInfoEdit}
+              onSave={handleCompanySchoolRecruitSave}
+            />
+          )}
+
+          {activeLnb === 'info' && isCompanySchoolApplicationInfoTab && (
+            <CompanySchoolApplicationInfoView
+              activeTab={activeCompanySchoolApplicationTab}
+              onTabChange={handleCompanySchoolApplicationTabChange}
+            />
+          )}
+
+          {activeLnb === 'info' &&
+            !isCompanySchoolRecruitmentInfoTab &&
+            !isCompanySchoolApplicationInfoTab && (
             <ProjectInfoDetailPanels
               program={displayProgram}
               sponsorName={sponsorName}
@@ -1122,15 +1228,47 @@ export function ProgramDetailFullPageModal({
             />
           )}
 
-          {(activeLnb === 'applicants' || activeLnb === 'applicant_instructors') && (
-            <ApplicantList
-              menu={activeChildMenu || 'institutions'}
-              program={displayProgram ?? null}
-              onRegisterApplicantCloseHandler={fn => {
-                applicantCloseHandlerRef.current = fn
-              }}
-            />
-          )}
+          {(activeLnb === 'applicants' || activeLnb === 'applicant_instructors') &&
+            (isCompanySchoolDetail && activeLnb === 'applicants' ? (
+              <div className="participant-applications">
+                <ApplicantList
+                  menu={activeChildMenu || 'institutions'}
+                  program={displayProgram ?? null}
+                  programId={displayProgram.id}
+                  filterFields={generalOrganizationApplicationFilterFields}
+                  institutionColumnPreset="company-school"
+                  detailVariant="general"
+                  onRegisterApplicantCloseHandler={fn => {
+                    applicantCloseHandlerRef.current = fn
+                  }}
+                />
+              </div>
+            ) : isCompanySchoolDetail && activeLnb === 'applicant_instructors' ? (
+              <div className="participant-applications general-instructor-applications">
+                <ApplicantList
+                  menu="instructors"
+                  program={displayProgram ?? null}
+                  programId={displayProgram.id}
+                  listTitle="강사 신청 목록"
+                  instructorColumnPreset="general-detail"
+                  detailVariant="general"
+                  onRegisterApplicantCloseHandler={fn => {
+                    applicantCloseHandlerRef.current = fn
+                  }}
+                />
+              </div>
+            ) : (
+              <ApplicantList
+                menu={activeChildMenu || 'institutions'}
+                program={displayProgram ?? null}
+                programId={displayProgram.id}
+                institutionColumnPreset={isCompanySchoolDetail ? 'company-school' : undefined}
+                detailVariant="legacy"
+                onRegisterApplicantCloseHandler={fn => {
+                  applicantCloseHandlerRef.current = fn
+                }}
+              />
+            ))}
 
           {activeLnb === 'managers' && displayProgram?.id && (
             <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">

@@ -28,8 +28,10 @@ type PFTextColor =
   | 'neutral-cool-500'
   | 'neutral-cool-600'
   | 'neutral-warm-500'
+  | 'neutral-warm-600'
   | 'primary-500'
   | 'primary-700'
+  | 'primary-800'
   | 'error'
   | 'success'
   | 'gradient-primary-01'
@@ -73,8 +75,10 @@ const colorClassMap: Record<PFTextColor, string> = {
   'neutral-cool-500': styles['color-neutral-cool-500'],
   'neutral-cool-600': styles['color-neutral-cool-600'],
   'neutral-warm-500': styles['color-neutral-warm-500'],
+  'neutral-warm-600': styles['color-neutral-warm-600'],
   'primary-500': styles['color-primary-500'],
   'primary-700': styles['color-primary-700'],
+  'primary-800': styles['color-primary-800'],
   error: styles['color-error'],
   success: styles['color-success'],
   'gradient-primary-01': styles['color-gradient-primary-01'],

@@ -1,10 +1,13 @@
+import type { FormEvent } from 'react'
 import {
   GoogleSocialLoginIcon,
   KakaoSocialLoginIcon,
   NaverSocialLoginIcon,
   PFButton,
   PFText,
+  PFTextInput,
 } from '@/shared/ui'
+import { setDevAuthLoggedIn } from '@/shared/lib'
 import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
 import styles from './sign-in-page.module.css'
 
@@ -21,6 +24,20 @@ const socialLoginItems = [
 ]
 
 export function SignInPage() {
+  const handleDevSignIn = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const searchParams = new URLSearchParams(window.location.search)
+    const redirectPath = searchParams.get('redirect') ?? '/'
+
+    setDevAuthLoggedIn(true)
+    window.location.assign(redirectPath)
+  }
+
+  const handleSocialLogin = () => {
+    window.location.assign('/auth/social/error?reason=not-linked')
+  }
+
   return (
     <section className={styles.page}>
       <div className={styles.container}>
@@ -34,7 +51,29 @@ export function SignInPage() {
           </PFText>
         </div>
 
-        <div className={styles['input-slot']} aria-hidden="true" />
+        <form className={styles.form} noValidate onSubmit={handleDevSignIn}>
+          <div className={styles['input-group']}>
+            <PFTextInput
+              size="xlarge"
+              label="이메일"
+              type="email"
+              placeholder="이메일 주소를 입력해 주세요"
+              autoComplete="email"
+              required
+            />
+            <PFTextInput
+              size="xlarge"
+              label="비밀번호"
+              type="password"
+              placeholder="비밀번호를 입력해 주세요"
+              autoComplete="current-password"
+              required
+            />
+          </div>
+          <PFButton type="submit" size="xlarge" className={styles['submit-button']}>
+            로그인하기
+          </PFButton>
+        </form>
 
         <div className={styles['account-links']}>
           {accountLinkItems.map((item, index) => (
@@ -70,7 +109,13 @@ export function SignInPage() {
 
           <div className={styles['social-icons']}>
             {socialLoginItems.map(({ label, icon }) => (
-              <button className={styles['social-button']} type="button" aria-label={label} key={label}>
+              <button
+                className={styles['social-button']}
+                type="button"
+                aria-label={label}
+                key={label}
+                onClick={handleSocialLogin}
+              >
                 {icon}
               </button>
             ))}

@@ -141,10 +141,13 @@ export function useGeneralProgramRegistrationFlow(
     participantVariant,
     {
       participantOrganization: participantFlags.organization,
+      applicantRecruitInstitutionLayoutVariant: isCompanySchoolRegistration ? 'economy' : undefined,
       applicantRecruitInstitutionDefaults: isCompanySchoolRegistration
         ? {
             studentListRequired: 'none',
             preguidanceRequired: 'need',
+            maxAssignableInstructors: 2,
+            maxClassCount: 4,
             maxScheduleCount: 2,
             maxSessionsPerDay: 2,
           }

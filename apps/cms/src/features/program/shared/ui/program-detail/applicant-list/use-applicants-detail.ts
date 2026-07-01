@@ -130,7 +130,11 @@ export function useApplicantsDetail({
 }) {
   const resolvedSessionPreset: SessionLinePreset =
     sessionLinePreset ??
-    (institutionColumnPreset === 'general-detail' ? 'general-detail' : 'legacy')
+    (institutionColumnPreset === 'general-detail' || institutionColumnPreset === 'company-school'
+      ? 'general-detail'
+      : 'legacy')
+  const usesProgramInstitutionApplications =
+    institutionColumnPreset === 'general-detail' || institutionColumnPreset === 'company-school'
 
   const institutionApplicationBridge = useMemo(
     () => (program ? resolveInstitutionApplicationProgramBridge(program) : null),
@@ -156,7 +160,7 @@ export function useApplicantsDetail({
   const [appliedFilters, setAppliedFilters] = useState<Record<string, unknown>>({})
 
   const [institutionList, setInstitutionList] = useState<ApplicantSchoolRow[]>(() => {
-    if (programId && institutionColumnPreset === 'general-detail') {
+    if (programId && usesProgramInstitutionApplications) {
       return getGeneralInstitutionApplicationsForProgram(programId)
     }
     return [...MOCK_APPLICANT_INSTITUTIONS]
@@ -348,10 +352,10 @@ export function useApplicantsDetail({
   }, [viewMode, menu, instructorColumnPreset, setPendingFilters])
 
   useEffect(() => {
-    if (programId && institutionColumnPreset === 'general-detail' && menu === 'institutions') {
+    if (programId && usesProgramInstitutionApplications && menu === 'institutions') {
       setInstitutionList(getGeneralInstitutionApplicationsForProgram(programId))
     }
-  }, [programId, institutionColumnPreset, menu])
+  }, [programId, usesProgramInstitutionApplications, menu])
 
   useEffect(() => {
     if (programId && menu === 'individual-applications') {

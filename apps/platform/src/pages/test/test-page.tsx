@@ -1,4 +1,5 @@
-import { PFButton, PFText, PFTextInput } from '@/shared/ui'
+import { useState } from 'react'
+import { PFButton, PFPagination, PFText, PFTextInput } from '@/shared/ui'
 import styles from './test-page.module.css'
 
 const typographyItems = [
@@ -25,8 +26,12 @@ const colorItems = [
 const buttonSizes = ['small', 'medium', 'large', 'xlarge'] as const
 const buttonVariants = ['primary', 'secondary', 'tertiary', 'text'] as const
 const inputSizes = ['medium', 'large', 'xlarge'] as const
+const paginationSizes = ['large', 'small'] as const
 
 export function TestPage() {
+  const [numberedPage, setNumberedPage] = useState(1)
+  const [compactPage, setCompactPage] = useState(1)
+
   return (
     <section className={styles.page}>
       <div className={styles.header}>
@@ -109,13 +114,55 @@ export function TestPage() {
               <PFText as="span" typo="label-md" color="neutral-cool-500">
                 {size}
               </PFText>
-              <PFTextInput size={size} label="Label" placeholder="text" />
+              <PFTextInput size={size} label="Label" placeholder="text" required />
               <PFTextInput size={size} label="Label" placeholder="text" defaultValue="text" />
               <PFTextInput size={size} label="Label" placeholder="text" hasIcon />
               <PFTextInput size={size} label="Label" placeholder="text" defaultValue="text" disabled />
               <PFTextInput size={size} label="Label" placeholder="text" defaultValue="text" error />
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFPagination
+        </PFText>
+        <div className={styles['pagination-stack']}>
+          <div className={styles['pagination-row']}>
+            <PFText as="span" typo="label-md" color="neutral-cool-500">
+              numbered
+            </PFText>
+            <div className={styles['pagination-list']}>
+              {paginationSizes.map((size) => (
+                <PFPagination
+                  currentPage={numberedPage}
+                  totalPages={8}
+                  onPageChange={setNumberedPage}
+                  size={size}
+                  key={`numbered-${size}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className={styles['pagination-row']}>
+            <PFText as="span" typo="label-md" color="neutral-cool-500">
+              compact
+            </PFText>
+            <div className={styles['pagination-list']}>
+              {paginationSizes.map((size) => (
+                <PFPagination
+                  currentPage={compactPage}
+                  totalPages={8}
+                  onPageChange={setCompactPage}
+                  variant="compact"
+                  size={size}
+                  key={`compact-${size}`}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>

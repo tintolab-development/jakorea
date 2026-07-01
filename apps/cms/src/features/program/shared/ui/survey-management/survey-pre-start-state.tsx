@@ -18,21 +18,21 @@ export function SurveyPreStartState({
   onOpenTemplatePreview,
 }: SurveyPreStartStateProps) {
   const rootClassName = embedded
-    ? 'ujat-survey-registered-empty-state ujat-survey-pre-start-state'
-    : 'program-detail-fullpage-modal__info-tab ujat-survey-registered-empty-state ujat-survey-pre-start-state'
+    ? 'survey-management-status-state survey-management-pre-start-state'
+    : 'program-detail-fullpage-modal__info-tab survey-management-status-state survey-management-pre-start-state'
 
   return (
     <div className={rootClassName}>
-      <div className="ujat-survey-registered-empty-state__content">
-        <span className="ujat-survey-registered-empty-state__icon" aria-hidden>
+      <div className="survey-management-status-state__content">
+        <span className="survey-management-status-state__icon" aria-hidden>
           <SurveyEmptyIcon maskId="survey-pre-start-icon-mask" />
         </span>
-        <div className="ujat-survey-registered-empty-state__texts">
-          <p className="ujat-survey-registered-empty-state__title">{title}</p>
-          <p className="ujat-survey-registered-empty-state__description">{description}</p>
+        <div className="survey-management-status-state__texts">
+          <p className="survey-management-status-state__title">{title}</p>
+          <p className="survey-management-status-state__description">{description}</p>
         </div>
         <CmsButton
-          className="ujat-survey-pre-start-state__preview-button"
+          className="survey-management-pre-start-state__preview-button"
           width={180}
           onClick={onOpenTemplatePreview}
         >

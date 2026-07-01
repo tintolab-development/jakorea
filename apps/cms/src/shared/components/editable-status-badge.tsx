@@ -6,14 +6,20 @@ import {
   getEditableStatusBadgeClassName,
   type EditableStatusBadgeTone,
 } from '@/shared/constants/editable-status-badge-tones'
+import type { CSSProperties } from 'react'
 import './editable-status-badge.css'
 
 export interface EditableStatusBadgeProps {
   label: string
   tone: EditableStatusBadgeTone
   className?: string
+  style?: CSSProperties
 }
 
-export function EditableStatusBadge({ label, tone, className }: EditableStatusBadgeProps) {
-  return <span className={getEditableStatusBadgeClassName(tone, className)}>{label}</span>
+export function EditableStatusBadge({ label, tone, className, style }: EditableStatusBadgeProps) {
+  return (
+    <span className={getEditableStatusBadgeClassName(tone, className)} style={style}>
+      {label}
+    </span>
+  )
 }

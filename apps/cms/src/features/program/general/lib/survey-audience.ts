@@ -60,6 +60,16 @@ export function programHasVolunteerParticipant(program: Program): boolean {
   return (program.generalParticipantTypes ?? []).includes('volunteer')
 }
 
+export function isCompanySchoolProgram(program: Program): boolean {
+  return (
+    program.id.startsWith('economy-prog-') ||
+    program.id.startsWith('company-school-prog-') ||
+    program.id.startsWith('company-school-local-') ||
+    program.mainTitle?.includes('1사1교') === true ||
+    program.title.includes('1사1교')
+  )
+}
+
 export function isGeneralIndividualProgram(program: Program): boolean {
   if (program.generalProgramAudience != null) {
     return program.generalProgramAudience === 'individual'
@@ -105,6 +115,10 @@ export function getEnabledGeneralSatisfactionAudienceTabs(
   const keys = normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? [])
   if (!keys.includes('satisfaction')) {
     return []
+  }
+
+  if (isCompanySchoolProgram(program)) {
+    return [{ key: 'teacher', label: '교사' }]
   }
 
   if (isGeneralIndividualProgram(program)) {
@@ -163,6 +177,15 @@ export function getGeneralSatisfactionEmptyCopy(
   audience: GeneralSatisfactionAudienceKey,
   program: Program
 ): SurveyEmptyCopy {
+  if (isCompanySchoolProgram(program)) {
+    return {
+      title: GENERAL_SATISFACTION_EMPTY_COPY.title,
+      description: GENERAL_SATISFACTION_EMPTY_COPY.description,
+      secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.',
+      registerButton: '만족도조사 등록',
+    }
+  }
+
   if (isGeneralIndividualProgram(program)) {
     if (audience === 'teacher') {
       return {

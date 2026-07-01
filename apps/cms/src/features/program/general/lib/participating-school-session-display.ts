@@ -13,6 +13,32 @@ function padTimePart(part: string): string {
   return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`
 }
 
+function parseTimeRangeMinutes(timeRange: string): { start: number; end: number } | null {
+  const [startRaw, endRaw = startRaw] = timeRange.split('~')
+  const start = padTimePart(startRaw)
+  const end = padTimePart(endRaw)
+  const [startHour, startMinute] = start.split(':').map(Number)
+  const [endHour, endMinute] = end.split(':').map(Number)
+  if (
+    !Number.isFinite(startHour) ||
+    !Number.isFinite(startMinute) ||
+    !Number.isFinite(endHour) ||
+    !Number.isFinite(endMinute)
+  ) {
+    return null
+  }
+  return {
+    start: startHour * 60 + startMinute,
+    end: endHour * 60 + endMinute,
+  }
+}
+
+function formatMinutes(totalMinutes: number): string {
+  const hour = Math.floor(totalMinutes / 60)
+  const minute = totalMinutes % 60
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
 /** 스크린샷 형식: YYYY. MM. DD(요일) HH:mm ~ HH:mm | N차시 */
 export function formatParticipatingSchoolSessionLine(s: ParticipatingSchoolSession): string {
   const datePart = s.date.replace(/\./g, '. ')
@@ -112,6 +138,39 @@ export function buildParticipatingSchoolSessionLines(
 ): string[] {
   if (!sessions?.length) return []
   return sessions.map(formatParticipatingSchoolSessionLine)
+}
+
+/** 1사1교 참여 기관 목록 — 신청 날짜별 `첫 차시 시작 ~ 마지막 차시 종료 | 신청 총 차시` */
+export function buildParticipatingSchoolPreferredScheduleLines(
+  sessions: ParticipatingSchoolSession[] | undefined
+): string[] {
+  if (!sessions?.length) return []
+
+  const grouped = new Map<string, ParticipatingSchoolSession[]>()
+  for (const session of sessions.filter(s => s.status !== 'not_planned')) {
+    const key = `${session.date}|${session.dayOfWeek}`
+    const prev = grouped.get(key)
+    if (prev) prev.push(session)
+    else grouped.set(key, [session])
+  }
+
+  return Array.from(grouped.values()).map(group => {
+    const first = group[0]!
+    const datePart = first.date.replace(/\./g, '. ')
+    const ranges = group
+      .map(session => parseTimeRangeMinutes(session.timeRange))
+      .filter((range): range is NonNullable<typeof range> => range != null)
+    const totalSessions =
+      group.length === 1 && first.round > 0 ? first.round : Math.max(group.length, 1)
+
+    if (ranges.length === 0) {
+      return `${datePart}(${first.dayOfWeek}) | ${totalSessions}차시`
+    }
+
+    const start = Math.min(...ranges.map(range => range.start))
+    const end = Math.max(...ranges.map(range => range.end))
+    return `${datePart}(${first.dayOfWeek}) ${formatMinutes(start)} ~ ${formatMinutes(end)} | ${totalSessions}차시`
+  })
 }
 
 /**

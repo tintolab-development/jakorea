@@ -108,6 +108,7 @@ export interface ParticipatingInstitutionEditPatchContext {
   program: Program
   studentCount: number
   requiresTextbook: boolean
+  allowTextbookSelectionWithoutCombinedClass?: boolean
   catalog?: TextbookRow[]
 }
 
@@ -132,9 +133,13 @@ export function participatingInstitutionEditDraftToDetailPatch(
   const selectedTextbook = parsed.data.textbookId
     ? context.catalog?.find(row => row.id === parsed.data.textbookId)
     : undefined
+  const shouldPersistSelectedTextbook =
+    context.requiresTextbook &&
+    selectedTextbook != null &&
+    (isApplied || context.allowTextbookSelectionWithoutCombinedClass === true)
 
   const textbookFields =
-    context.requiresTextbook && isApplied && selectedTextbook
+    shouldPersistSelectedTextbook
       ? resolveTextbookFieldsFromSelection(
           context.program,
           selectedTextbook,

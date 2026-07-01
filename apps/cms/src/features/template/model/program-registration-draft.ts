@@ -94,17 +94,19 @@ export function createProgramRegistrationDraft(
   paragraphs.push(
     createSeedParagraph(
       PROGRAM_REGISTRATION_IDS.educationCurriculum,
-      variant === 'economy' ? '교육 커리큘럼' : PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.title,
+      variant === 'economy'
+        ? '교육 진행 (커리큘럼)'
+        : PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.title,
       variant === 'general'
         ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationCurriculum.editDescription
-        : ''
+        : '차시 별 정보를 입력해 주세요'
     ),
     createSeedParagraph(
       PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
       PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.title,
       variant === 'general'
         ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.editDescription
-        : ''
+        : '교육이 실행되는 일정을 설정해 주세요.'
     )
   )
   return normalizeWritingFormDraft({

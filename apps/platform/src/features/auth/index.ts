@@ -1,3 +1,5 @@
+export { useSignUp } from './sign-up'
+export type { UseSignUpReturn } from './sign-up'
 export type { SignUpConsentFieldKey, SignUpConsentState } from './model/sign-up-consent.types'
 export type { TermsViewType } from './model/terms-view.types'
 export { TERMS_VIEW_TITLES } from './lib/terms-view-config'

@@ -489,22 +489,41 @@ function buildKpiMetricsForPattern(patternIndex: number, program?: Program): Kpi
   ]
 }
 
+function isCompanySchoolKpiProgram(programOrId: Program | string): boolean {
+  const id = typeof programOrId === 'string' ? programOrId : programOrId.id
+  const title = typeof programOrId === 'string' ? '' : (programOrId.mainTitle ?? programOrId.title)
+  return (
+    id.startsWith('economy-prog-') ||
+    id.startsWith('company-school-prog-') ||
+    id.startsWith('company-school-local-') ||
+    title.includes('1사1교')
+  )
+}
+
 function buildProgramKpiItemFromProgram(program: Program, patternIndex: number): ProgramKpiItem {
+  const isCompanySchool = isCompanySchoolKpiProgram(program)
   return {
     programId: program.id,
     programTitle: program.title ?? '',
     kpis: buildKpiMetricsForPattern(patternIndex, program),
-    educationInstructorTargets: { instructors: 80, volunteers: 80 },
+    educationInstructorTargets: {
+      instructors: isCompanySchool ? (program.instructors ?? program.instructorCapacity ?? 0) : 80,
+      volunteers: isCompanySchool ? 0 : 80,
+    },
   }
 }
 
 /** 상세 모달 등: id만 알 때 — 목 KPI로 항상 행이 채워지도록 */
 function buildDefaultProgramKpiItem(programId: string, title: string): ProgramKpiItem {
+  const isCompanySchool = isCompanySchoolKpiProgram(programId) || title.includes('1사1교')
   return {
     programId,
     programTitle: title,
     kpis: buildKpiMetricsForPattern(0),
-    educationInstructorTargets: { instructors: 80, volunteers: 80 },
+    educationInstructorTargets: {
+      instructors: isCompanySchool ? 0 : 80,
+      volunteers: isCompanySchool ? 0 : 80,
+    },
   }
 }
 

@@ -73,6 +73,9 @@
 }
 
 .application-view__preview-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
   min-width: 0;
 }

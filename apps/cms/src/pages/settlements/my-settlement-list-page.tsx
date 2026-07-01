@@ -399,7 +399,7 @@ export function MySettlementListPage() {
         }}
         footer={null}
         width={640}
-        destroyOnClose
+        destroyOnHidden
       >
         {selectedSettlement && (
           <Descriptions column={1} bordered size="small">

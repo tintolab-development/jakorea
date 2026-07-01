@@ -37,11 +37,13 @@ import {
   getInstructorRowsForSchool,
   getAssignedInstructorDisplayRows,
   getWaitingInstructorRows,
+  getCompanySchoolWaitingInstructorScheduleRows,
   type WaitingInstructorRowMock,
 } from '../../../lib/school-detail-mock'
 import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '../../../lib/waiting-instructor-assignment'
 import {
   isWaitingInstructorProgramApproved,
+  buildSchoolAddInstructorSessionSlotKey,
   resolveWaitingInstructorFeeGradeLabel,
 } from '../../../lib/school-add-instructor-assign'
 import {
@@ -115,6 +117,7 @@ import {
   getParticipatingInstitutionActivityWithdrawScheduleOptions,
   resolveParticipatingInstitutionActivityWithdrawPatch,
 } from '@/features/program/general/lib/participating-institution-activity-withdraw'
+import { buildParticipatingSchoolPreferredScheduleLines } from '@/features/program/general/lib/participating-school-session-display'
 import {
   ActivityWithdrawScheduleModal,
   type ActivityWithdrawScheduleModalPayload,
@@ -170,12 +173,35 @@ interface AssignedInstructorDisplayRow extends SchoolDetailInstructorRow {
   assignedDate?: string
   assignedTime?: string
   assignedSession?: string
+  assignedScheduleLine?: string
 }
 
 type WaitingInstructorRow = WaitingInstructorRowMock
 
 /** 필요 배정 인원(분모) — 상세에 필드 없으면 mock */
 const MOCK_REQUIRED_INSTRUCTORS = 4
+
+function isCompanySchoolProgram(program: Program): boolean {
+  return (
+    program.id.startsWith('economy-prog-') ||
+    program.id.startsWith('company-school-prog-') ||
+    program.id.startsWith('company-school-local-') ||
+    program.mainTitle?.includes('1사1교') === true ||
+    program.title.includes('1사1교')
+  )
+}
+
+function getWaitingInstructorRowInstructorId(row: WaitingInstructorRow): string {
+  return row.instructorId ?? row.id
+}
+
+function renderWaitingInstructorTableEmpty() {
+  return (
+    <div className="school-detail-fullpage-view__waiting-table-empty" role="status">
+      배정 대기 중인 강사가 없습니다.
+    </div>
+  )
+}
 
 /** td 내 세로 디바이더 — 1×13px, default-BK @ 50%, 양옆 gap 12px */
 function TdDivider() {
@@ -220,6 +246,7 @@ function formatHomeAddressToSecondUnit(address?: string): string {
 }
 
 function formatAssignedInstructorScheduleExport(row: AssignedInstructorDisplayRow): string {
+  if (row.assignedScheduleLine) return row.assignedScheduleLine
   const date = row.assignedDate ?? '-'
   const time = row.assignedTime ?? '-'
   if (date === '-' && time === '-') return '-'
@@ -233,7 +260,29 @@ function formatAssignedInstructorScheduleExport(row: AssignedInstructorDisplayRo
   return dateTime
 }
 
+function buildAssignedScheduleLineFromSessionIds(
+  schoolId: string,
+  sessions: ParticipatingSchoolRow['sessions'],
+  sessionIds: string[] | undefined
+): string | undefined {
+  if (!sessions?.length || !sessionIds?.length) return undefined
+  const selectedSessionIds = new Set(sessionIds)
+  const selectedSessions = sessions.filter(session =>
+    selectedSessionIds.has(buildSchoolAddInstructorSessionSlotKey(schoolId, session))
+  )
+  return buildParticipatingSchoolPreferredScheduleLines(selectedSessions)[0]
+}
+
+function renderAssignedInstructorTableEmpty() {
+  return (
+    <div className="school-detail-fullpage-view__waiting-table-empty" role="status">
+      배정된 강사가 없습니다.
+    </div>
+  )
+}
+
 function formatWaitingInstructorHopeScheduleExport(row: WaitingInstructorRow): string {
+  if (row.hopeScheduleLine) return row.hopeScheduleLine
   const date = row.hopeDate ?? '-'
   const time = row.hopeTime ?? '-'
   const session = row.hopeSession
@@ -304,6 +353,13 @@ export function GeneralParticipatingInstitutionDetailView({
   }
   const [selectedAssignedKeys, setSelectedAssignedKeys] = useState<React.Key[]>([])
   const [selectedWaitingKeys, setSelectedWaitingKeys] = useState<React.Key[]>([])
+  const [completedWaitingRowKeys, setCompletedWaitingRowKeys] = useState<Set<string>>(() => new Set())
+  const [disabledWaitingInstructorIds, setDisabledWaitingInstructorIds] = useState<Set<string>>(
+    () => new Set()
+  )
+  const [assignedScheduleLinesByInstructorId, setAssignedScheduleLinesByInstructorId] = useState<
+    Record<string, string>
+  >({})
   const [addAssignModalOpen, setAddAssignModalOpen] = useState(false)
   const [addAssignOverflowOpen, setAddAssignOverflowOpen] = useState(false)
   const [addModalOpenedFromOverflow, setAddModalOpenedFromOverflow] = useState(false)
@@ -342,6 +398,11 @@ export function GeneralParticipatingInstitutionDetailView({
 
   useEffect(() => {
     setTextbookStatusDropdownOpen(false)
+    setSelectedAssignedKeys([])
+    setSelectedWaitingKeys([])
+    setCompletedWaitingRowKeys(new Set())
+    setDisabledWaitingInstructorIds(new Set())
+    setAssignedScheduleLinesByInstructorId({})
   }, [detail.id])
 
   useEffect(() => {
@@ -354,6 +415,7 @@ export function GeneralParticipatingInstitutionDetailView({
   const mergedDetail = { ...detail, ...savedBasicPatches[detail.id] }
   const sessions = row.sessions ?? []
   const isActivityWithdrawn = mergedDetail.activityWithdrawn === true
+  const isCompanySchool = isCompanySchoolProgram(program)
 
   const activityWithdrawScheduleOptions = useMemo(
     () => getParticipatingInstitutionActivityWithdrawScheduleOptions(program, sessions),
@@ -469,6 +531,11 @@ export function GeneralParticipatingInstitutionDetailView({
         }))
       : getInstructorRowsForSchool(row.schoolName, instructorList)
 
+  const assignedInstructorIdSet = useMemo(
+    () => new Set(instructors.map(instructor => instructor.id)),
+    [instructors]
+  )
+
   /** 담당 교사 정보: 담당 교사 : 이름 | Tel : … | M : … | E-mail : … */
   const teacherDisplaySegments = [
     mergedDetail.teacherName &&
@@ -512,14 +579,65 @@ export function GeneralParticipatingInstitutionDetailView({
   }
   /** 배정된 강사 테이블용 행 (목 데이터 연동) */
   const assignedRows: AssignedInstructorDisplayRow[] = useMemo(
-    () => getAssignedInstructorDisplayRows(instructors),
-    [instructors]
+    () => {
+      const rows = getAssignedInstructorDisplayRows(instructors)
+      if (!isCompanySchool) return rows
+      const defaultScheduleLine = buildParticipatingSchoolPreferredScheduleLines(row.sessions)[0]
+      return rows.map(assignedRow => ({
+        ...assignedRow,
+        assignedScheduleLine:
+          assignedScheduleLinesByInstructorId[assignedRow.id] ?? defaultScheduleLine,
+      }))
+    },
+    [instructors, isCompanySchool, row.sessions, assignedScheduleLinesByInstructorId]
   )
 
   /** 배정 대기 강사 목록 (목 데이터 연동: 해당 학교 미배정 참여 강사 + 배정 현황/희망 일정) */
   const waitingRows: WaitingInstructorRow[] = useMemo(
-    () => getWaitingInstructorRows(row.schoolName, instructorList, participatingSchoolList),
-    [row.schoolName, instructorList, participatingSchoolList]
+    () => {
+      if (isCompanySchool) {
+        const defaultScheduleLine = buildParticipatingSchoolPreferredScheduleLines(row.sessions)[0]
+        return getCompanySchoolWaitingInstructorScheduleRows(
+          row.schoolName,
+          instructorList,
+          participatingSchoolList
+        )
+          .filter(waitingRow => {
+            if (completedWaitingRowKeys.has(waitingRow.id)) return false
+            const instructorId = getWaitingInstructorRowInstructorId(waitingRow)
+            const assignedScheduleLine =
+              assignedScheduleLinesByInstructorId[instructorId] ?? defaultScheduleLine
+            if (!assignedInstructorIdSet.has(instructorId)) return true
+            return waitingRow.hopeScheduleLine !== assignedScheduleLine
+          })
+          .map(waitingRow => {
+              const instructorId = getWaitingInstructorRowInstructorId(waitingRow)
+              if (
+                (disabledWaitingInstructorIds.has(instructorId) ||
+                  assignedInstructorIdSet.has(instructorId)) &&
+                waitingRow.assignmentStatus === 'waiting'
+              ) {
+                return { ...waitingRow, assignmentStatus: 'unavailable' as const }
+              }
+              return waitingRow
+            })
+      }
+
+      return getWaitingInstructorRows(row.schoolName, instructorList, participatingSchoolList).filter(
+        waitingRow => !assignedInstructorIdSet.has(getWaitingInstructorRowInstructorId(waitingRow))
+      )
+    },
+    [
+      row.schoolName,
+      row.sessions,
+      instructorList,
+      participatingSchoolList,
+      isCompanySchool,
+      completedWaitingRowKeys,
+      disabledWaitingInstructorIds,
+      assignedScheduleLinesByInstructorId,
+      assignedInstructorIdSet,
+    ]
   )
 
   const assignedInstructorNames = useMemo(
@@ -555,19 +673,23 @@ export function GeneralParticipatingInstitutionDetailView({
         })
       )
       const newFormList: InstructorListFormInstructor[] = rows
-        .map(w => {
-          const fromList = instructorList.find(r => r.id === w.id)
-          return fromList
-            ? {
-                id: fromList.id,
-                role: 'assistant' as InstructorRoleKey,
-                instructorName: fromList.instructorName,
-                contact: fromList.contact ?? '',
-                email: fromList.email ?? '',
-              }
-            : null
-        })
-        .filter((x): x is InstructorListFormInstructor => x != null)
+        .reduce<InstructorListFormInstructor[]>((acc, w) => {
+          const instructorId = getWaitingInstructorRowInstructorId(w)
+          if (acc.some(item => item.id === instructorId)) return acc
+          const fromList = instructorList.find(r => r.id === instructorId)
+          if (!fromList) return acc
+          acc.push({
+            id: fromList.id,
+            role:
+              instructors.length === 0 && acc.length === 0
+                ? ('lead' as InstructorRoleKey)
+                : ('assistant' as InstructorRoleKey),
+            instructorName: fromList.instructorName,
+            contact: fromList.contact ?? '',
+            email: fromList.email ?? '',
+          })
+          return acc
+        }, [])
 
       if (newFormList.length === 0) return
 
@@ -577,12 +699,32 @@ export function GeneralParticipatingInstitutionDetailView({
       setSelectAssignFeeApprovalOpen(false)
       setSelectAssignPendingInstructor(null)
       setSelectAssignOverflowOpen(false)
+      setCompletedWaitingRowKeys(prev => {
+        const next = new Set(prev)
+        rows.forEach(waitingRow => next.add(waitingRow.id))
+        return next
+      })
+      setDisabledWaitingInstructorIds(prev => {
+        const next = new Set(prev)
+        rows.forEach(waitingRow => next.add(getWaitingInstructorRowInstructorId(waitingRow)))
+        return next
+      })
+      setAssignedScheduleLinesByInstructorId(prev => {
+        const next = { ...prev }
+        rows.forEach(waitingRow => {
+          const scheduleLine = waitingRow.hopeScheduleLine ?? formatWaitingInstructorHopeScheduleExport(waitingRow)
+          if (scheduleLine && scheduleLine !== '-') {
+            next[getWaitingInstructorRowInstructorId(waitingRow)] = scheduleLine
+          }
+        })
+        return next
+      })
       setSelectedWaitingKeys([])
 
       const instructorNameLabel =
         rows.length === 1
           ? (rows[0]?.instructorName ?? '')
-          : rows.map(r => r.instructorName).join(', ')
+          : Array.from(new Set(rows.map(r => r.instructorName))).join(', ')
 
       setAssignCompleteModal({
         instructorName: instructorNameLabel,
@@ -620,7 +762,7 @@ export function GeneralParticipatingInstitutionDetailView({
     }
 
     const unapprovedRows = selectedWaitingRows.filter(w => {
-      const participating = instructorList.find(r => r.id === w.id)
+      const participating = instructorList.find(r => r.id === getWaitingInstructorRowInstructorId(w))
       return !isWaitingInstructorProgramApproved(w.instructorName, participating, programId)
     })
 
@@ -633,7 +775,9 @@ export function GeneralParticipatingInstitutionDetailView({
         return
       }
       const target = unapprovedRows[0]!
-      const participating = instructorList.find(r => r.id === target.id)
+      const participating = instructorList.find(
+        r => r.id === getWaitingInstructorRowInstructorId(target)
+      )
       setSelectAssignPendingInstructor({
         id: target.id,
         name: target.instructorName,
@@ -667,6 +811,13 @@ export function GeneralParticipatingInstitutionDetailView({
           email,
         }))
       onSaveInstructorInfo?.(detail.id, newFormList)
+      setAssignedScheduleLinesByInstructorId(prev => {
+        const next = { ...prev }
+        selectedAssignedKeys.forEach(key => {
+          delete next[String(key)]
+        })
+        return next
+      })
       setUnassignConfirmOpen(false)
       setSelectedAssignedKeys([])
       setUnassignCompleteModal({
@@ -779,6 +930,7 @@ export function GeneralParticipatingInstitutionDetailView({
         width: 280,
         align: 'center',
         render: (v: string | undefined, record: AssignedInstructorDisplayRow) => {
+          if (record.assignedScheduleLine) return record.assignedScheduleLine
           const date = v ?? '-'
           const time = record.assignedTime ?? '-'
           if (!date && !time) return '-'
@@ -837,6 +989,7 @@ export function GeneralParticipatingInstitutionDetailView({
         width: 300,
         align: 'center',
         render: (v: string | undefined, record: WaitingInstructorRow) => {
+          if (record.hopeScheduleLine) return record.hopeScheduleLine
           const date = v ?? '-'
           const time = record.hopeTime ?? '-'
           const session = record.hopeSession
@@ -977,9 +1130,11 @@ export function GeneralParticipatingInstitutionDetailView({
       <TextbookStatusBadge status={mergedDetail.textbookStatus} />
     )
 
-  const textbookNameView = textbookDisplay.textbookName
+  const hasSelectedTextbook =
+    (mergedDetail.textbookId?.trim() ?? '') !== '' || (mergedDetail.textbookName?.trim() ?? '') !== ''
+  const textbookNameView = isCompanySchool && !hasSelectedTextbook ? '미정' : textbookDisplay.textbookName
   const kitsAndQty =
-    textbookDisplay.textbookKits > 0
+    hasSelectedTextbook && textbookDisplay.textbookKits > 0
       ? `${textbookDisplay.textbookKits}키트 (${textbookDisplay.textbookQuantity}권)`
       : '-'
 
@@ -1141,8 +1296,9 @@ export function GeneralParticipatingInstitutionDetailView({
               }
               textbookCell={textbookCell}
               combinedClassCell={combinedClassCell}
-              usesTextbook={usesTextbook}
+              usesTextbook={isCompanySchool || usesTextbook}
               textbookEditFullWidth={isApplicationInfoEditing && canEditTextbook}
+              hideCombinedClass={isCompanySchool}
               schoolName={mergedDetail.schoolName}
               educationGrade={mergedDetail.educationGrade}
               region={mergedDetail.region}
@@ -1259,6 +1415,7 @@ export function GeneralParticipatingInstitutionDetailView({
               criminalCheck={formatGuidanceSegmentValue(mergedDetail.criminalCheckRequest)}
               program={program}
               sessions={sessions}
+              useCompanySchoolScheduleFormat={isCompanySchool}
             />
           </div>
         )}
@@ -1328,31 +1485,22 @@ export function GeneralParticipatingInstitutionDetailView({
                   />
                 </div>
               </div>
-              <div className="participating-institutions-section__table-wrap">
-                {assignedRows.length === 0 ? (
-                  <div
-                    className="school-detail-fullpage-view__instructor-list-empty"
-                    role="status"
-                    aria-label="배정된 강사 없음"
-                  >
-                    배정된 강사가 없습니다.
-                  </div>
-                ) : (
-                  <Table<AssignedInstructorDisplayRow>
-                    className="participating-institutions-section__table cms-data-table"
-                    rowKey="id"
-                    size="middle"
-                    pagination={false}
-                    scroll={{ x: 1100 }}
-                    rowSelection={{
-                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                      selectedRowKeys: selectedAssignedKeys,
-                      onChange: keys => setSelectedAssignedKeys(keys),
-                    }}
-                    columns={assignedInstructorColumns}
-                    dataSource={assignedRows}
-                  />
-                )}
+              <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__assignment-table-scroll">
+                <Table<AssignedInstructorDisplayRow>
+                  className="participating-institutions-section__table cms-data-table"
+                  rowKey="id"
+                  size="middle"
+                  pagination={false}
+                  scroll={{ x: 1100 }}
+                  rowSelection={{
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys: selectedAssignedKeys,
+                    onChange: keys => setSelectedAssignedKeys(keys),
+                  }}
+                  columns={assignedInstructorColumns}
+                  dataSource={assignedRows}
+                  locale={{ emptyText: renderAssignedInstructorTableEmpty() }}
+                />
               </div>
             </div>
 
@@ -1382,39 +1530,30 @@ export function GeneralParticipatingInstitutionDetailView({
                   />
                 </div>
               </div>
-              <div className="participating-institutions-section__table-wrap">
-                {waitingRows.length === 0 ? (
-                  <div
-                    className="school-detail-fullpage-view__instructor-list-empty"
-                    role="status"
-                    aria-label="배정 대기 강사 없음"
-                  >
-                    배정 대기 중인 강사가 없습니다.
-                  </div>
-                ) : (
-                  <Table<WaitingInstructorRow>
-                    className="participating-institutions-section__table cms-data-table"
-                    rowKey="id"
-                    size="middle"
-                    pagination={false}
-                    scroll={{ x: 1000 }}
-                    rowSelection={{
-                      columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                      selectedRowKeys: selectedWaitingKeys,
-                      onChange: keys => setSelectedWaitingKeys(keys),
-                      getCheckboxProps: record => ({
-                        disabled: record.assignmentStatus === 'unavailable',
-                      }),
-                    }}
-                    columns={waitingInstructorColumns}
-                    dataSource={waitingRows}
-                    rowClassName={record =>
-                      record.assignmentStatus === 'unavailable'
-                        ? 'school-detail-fullpage-view__waiting-row--unavailable'
-                        : ''
-                    }
-                  />
-                )}
+              <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__waiting-table-scroll">
+                <Table<WaitingInstructorRow>
+                  className="participating-institutions-section__table cms-data-table"
+                  rowKey="id"
+                  size="middle"
+                  pagination={false}
+                  scroll={{ x: 1000 }}
+                  rowSelection={{
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys: selectedWaitingKeys,
+                    onChange: keys => setSelectedWaitingKeys(keys),
+                    getCheckboxProps: record => ({
+                      disabled: record.assignmentStatus === 'unavailable',
+                    }),
+                  }}
+                  columns={waitingInstructorColumns}
+                  dataSource={waitingRows}
+                  locale={{ emptyText: renderWaitingInstructorTableEmpty() }}
+                  rowClassName={record =>
+                    record.assignmentStatus === 'unavailable'
+                      ? 'school-detail-fullpage-view__waiting-row--unavailable'
+                      : ''
+                  }
+                />
               </div>
             </div>
 
@@ -1447,10 +1586,11 @@ export function GeneralParticipatingInstitutionDetailView({
               requiredInstructorCount={MOCK_REQUIRED_INSTRUCTORS}
               overflowAlreadyConfirmed={addModalOpenedFromOverflow}
               onAdd={(_instructorId, role, option, _meta) => {
+                const nextRole: InstructorRoleKey = instructors.length === 0 ? 'lead' : role
                 const existingFormList: InstructorListFormInstructor[] = instructors.map(
                   ({ id, role: r, instructorName, contact, email }) => ({
                     id,
-                    role: r,
+                    role: nextRole === 'lead' ? 'assistant' : r,
                     instructorName,
                     contact,
                     email,
@@ -1458,12 +1598,23 @@ export function GeneralParticipatingInstitutionDetailView({
                 )
                 const newInstructor: InstructorListFormInstructor = {
                   id: option.value,
-                  role,
+                  role: nextRole,
                   instructorName: option.label,
                   contact: option.contact ?? '',
                   email: option.email ?? '',
                 }
                 onSaveInstructorInfo?.(detail.id, [...existingFormList, newInstructor])
+                const scheduleLine = buildAssignedScheduleLineFromSessionIds(
+                  row.id,
+                  row.sessions,
+                  _meta?.sessionIds
+                )
+                if (scheduleLine) {
+                  setAssignedScheduleLinesByInstructorId(prev => ({
+                    ...prev,
+                    [option.value]: scheduleLine,
+                  }))
+                }
                 setAddAssignModalOpen(false)
                 setAddModalOpenedFromOverflow(false)
                 setAssignCompleteModal({

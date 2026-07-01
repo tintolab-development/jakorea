@@ -136,6 +136,7 @@ export type RenderFormParagraphBodyOptions = {
   applicantRecruitFormInstitution?: boolean
   /** 참여자 모집 폼 — 학교/기관 대상일 때만 최대 강사·학급·일정·차시 입력 */
   showInstitutionApplicationLimits?: boolean
+  applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
   /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormInstitution?: boolean
@@ -331,6 +332,9 @@ export function renderFormParagraphBody(
           ujatProgramApplicationGradeClassTime={options?.ujatProgramApplicationGradeClassTime}
           applicantRecruitFormInstitution={options?.applicantRecruitFormInstitution}
           showInstitutionApplicationLimits={options?.showInstitutionApplicationLimits}
+          applicantRecruitInstitutionLayoutVariant={
+            options?.applicantRecruitInstitutionLayoutVariant
+          }
           applicantRecruitInstitutionDefaults={options?.applicantRecruitInstitutionDefaults}
           ujatRecruitFormInstitution={options?.ujatRecruitFormInstitution}
           applicantRecruitFormIndividual={options?.applicantRecruitFormIndividual}

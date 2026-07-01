@@ -28,6 +28,8 @@ export type InstitutionApplicationProgramBridge = {
   educationScheduleMode?: InstitutionApplicationEducationScheduleMode
   /** 날짜 지정 등 — 신청 폼 고정 일정 선택지 (프로그램 등록 교육 진행 예정일) */
   educationScheduleLines?: readonly string[]
+  /** 기간 지정 — 신청 폼 희망 교육일 선택 가능 범위 */
+  educationScheduleRange?: { start: string; end: string }
 }
 
 const DEFAULT_BRIDGE: InstitutionApplicationProgramBridge = {

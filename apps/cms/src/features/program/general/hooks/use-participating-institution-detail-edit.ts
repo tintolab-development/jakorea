@@ -29,6 +29,16 @@ import { getSameSchoolParticipatingGrades } from '@/features/program/general/lib
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 
+function isCompanySchoolProgram(program: Program): boolean {
+  return (
+    program.id.startsWith('economy-prog-') ||
+    program.id.startsWith('company-school-prog-') ||
+    program.id.startsWith('company-school-local-') ||
+    program.mainTitle?.includes('1사1교') === true ||
+    program.title.includes('1사1교')
+  )
+}
+
 export interface SameSchoolParticipatingGradeOption {
   value: string
   label: string
@@ -58,9 +68,11 @@ export function useParticipatingInstitutionDetailEdit({
 
   const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
 
+  const isCompanySchool = useMemo(() => isCompanySchoolProgram(program), [program])
+
   const usesTextbook = useMemo(
-    () => programUsesTextbook(program, textbookCatalog),
-    [program, textbookCatalog]
+    () => isCompanySchool || programUsesTextbook(program, textbookCatalog),
+    [isCompanySchool, program, textbookCatalog]
   )
 
   const isCombinedClassProgramEligibleFlag = useMemo(
@@ -98,8 +110,9 @@ export function useParticipatingInstitutionDetailEdit({
     if (!usesTextbook) return []
 
     const rows =
-      draft?.combinedClassApplication === '신청' ||
-      toCombinedClassApplicationStatus(detail.combinedClassApplication) === '신청'
+      !isCompanySchool &&
+      (draft?.combinedClassApplication === '신청' ||
+        toCombinedClassApplicationStatus(detail.combinedClassApplication) === '신청')
         ? filterTextbooksForCombinedClassEdit(program, textbookCatalog)
         : filterTextbooksForApplicant(program, row.educationGrade, textbookCatalog)
 
@@ -111,13 +124,16 @@ export function useParticipatingInstitutionDetailEdit({
   }, [
     detail.combinedClassApplication,
     draft?.combinedClassApplication,
+    isCompanySchool,
     program,
     row.educationGrade,
     usesTextbook,
     textbookCatalog,
   ])
 
-  const canEditTextbook = usesTextbook && draft?.combinedClassApplication === '신청'
+  const canEditTextbook =
+    usesTextbook &&
+    (isCompanySchool ? row.approvalStatus === 'approved' : draft?.combinedClassApplication === '신청')
 
   const sameSchoolGradeOptions = useMemo((): SameSchoolParticipatingGradeOption[] => {
     if (!isCombinedClassProgramEligibleFlag) return []
@@ -245,6 +261,7 @@ export function useParticipatingInstitutionDetailEdit({
       program,
       studentCount: row.studentCount,
       requiresTextbook: usesTextbook,
+      allowTextbookSelectionWithoutCombinedClass: isCompanySchool,
       catalog: textbookCatalog,
     })
     if (Object.keys(patch).length === 0) {
@@ -264,6 +281,7 @@ export function useParticipatingInstitutionDetailEdit({
     program,
     resetEditState,
     row.studentCount,
+    isCompanySchool,
     textbookCatalog,
     usesTextbook,
   ])

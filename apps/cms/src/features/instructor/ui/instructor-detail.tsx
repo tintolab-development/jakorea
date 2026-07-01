@@ -595,7 +595,7 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
         }}
         width={640}
         zIndex={1001}
-        destroyOnClose
+        destroyOnHidden
         footer={
           <Space>
             <Button

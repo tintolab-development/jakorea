@@ -269,6 +269,18 @@
   align-items: center !important;
 }
 
+.status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__trigger--cell-style {
+  width: calc(var(--sdcb-overlay-w) + 16px) !important;
+  min-width: calc(var(--sdcb-overlay-minw) + 16px) !important;
+  max-width: calc(var(--sdcb-overlay-maxw) + 16px) !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__trigger--cell-style.status-dropdown-cell__status-trigger--open {
+  width: calc(var(--sdcb-overlay-w) + 16px) !important;
+  min-width: calc(var(--sdcb-overlay-minw) + 16px) !important;
+  max-width: calc(var(--sdcb-overlay-maxw) + 16px) !important;
+}
+
 .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover,
 .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):focus-visible {
   border-width: 1px !important;
@@ -294,6 +306,16 @@
   gap: 0 !important;
   align-items: center !important;
   justify-content: center !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-100
+  .editable-status-badge.status-dropdown-cell__badge--cell-style,
+.status-dropdown-cell__dropdown-overlay--tag-100
+  .status-dropdown-cell__dropdown-item
+  .editable-status-badge.status-dropdown-cell__badge--cell-style {
+  width: var(--sdcb-badge-w, 100px) !important;
+  min-width: var(--sdcb-badge-minw, 100px) !important;
+  max-width: var(--sdcb-badge-maxw, 100px) !important;
 }
 
 /* tag-100: 호버·행 hover 시 톤 보더 유지 — transparent 전환으로 인한 1px 시각 흔들림 방지 */
@@ -353,6 +375,11 @@
   max-width: 116px !important;
 }
 
+.status-dropdown-cell__dropdown-overlay--tag-100.status-dropdown-cell__dropdown-overlay--cell-style {
+  display: flex;
+  justify-content: center;
+}
+
 .status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu {
   box-sizing: border-box;
   min-width: 116px !important;
@@ -369,6 +396,11 @@
   gap: 8px;
 }
 
+.status-dropdown-cell__dropdown-overlay--tag-100.status-dropdown-cell__dropdown-overlay--cell-style
+  .ant-dropdown-menu {
+  margin-inline: auto;
+}
+
 .status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu-item {
   margin: 0;
   width: 100%;
@@ -380,6 +412,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100.status-dropdown-cell__dropdown-overlay--cell-style
+  .status-dropdown-cell__dropdown-item {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu-item:last-child {

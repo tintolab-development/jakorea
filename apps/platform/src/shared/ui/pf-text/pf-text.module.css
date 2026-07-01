@@ -26,12 +26,20 @@
   color: var(--color-neutral-warm-500);
 }
 
+.color-neutral-warm-600 {
+  color: var(--color-neutral-warm-600);
+}
+
 .color-primary-500 {
   color: var(--color-primary-500);
 }
 
 .color-primary-700 {
   color: var(--color-primary-700);
+}
+
+.color-primary-800 {
+  color: var(--color-primary-800);
 }
 
 .color-error {

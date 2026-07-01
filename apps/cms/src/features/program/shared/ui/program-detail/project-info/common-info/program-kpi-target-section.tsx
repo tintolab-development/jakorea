@@ -8,7 +8,7 @@
 import { Fragment, type ReactNode, useEffect, useState } from 'react'
 import { Controller } from 'react-hook-form'
 import { getKpiAchievementList } from '@/features/dashboard/api/admin-dashboard-service'
-import type { KpiMetric } from '@/features/dashboard/api/admin-dashboard-service'
+import type { ProgramKpiItem } from '@/features/dashboard/api/admin-dashboard-service'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
@@ -18,6 +18,7 @@ import './program-kpi-target-section.css'
 
 export interface ProgramKpiTargetSectionProps {
   programId: string
+  showVolunteerKpi?: boolean
   isEditMode?: boolean
   form?: UseFormReturn<ProgramDetailEditFormValues>
 }
@@ -72,13 +73,38 @@ function formatKpiValueWithBoldNumbers(value: string | number | undefined): Reac
   return <>{boldNumbersInSegment(str, 'kpi-flat')}</>
 }
 
+function formatEducationInstructorTargets(
+  targets: ProgramKpiItem['educationInstructorTargets'] | undefined,
+  showVolunteerKpi: boolean,
+  isFormEdit: boolean | undefined
+): ReactNode {
+  if (showVolunteerKpi) {
+    if (isFormEdit) return undefined
+    return formatKpiValueWithBoldNumbers(
+      `강사: ${targets?.instructors ?? 0} 봉사자: ${targets?.volunteers ?? 0}`
+    )
+  }
+
+  return (
+    <span className="program-kpi-target-section__inline-segments">
+      <span>
+        강사: <span style={{ fontWeight: 'bold' }}>{targets?.instructors ?? 0}</span>
+      </span>
+      <DetailInfoForm.InputsSeparator />
+      <span>봉사자: 해당 없음</span>
+    </span>
+  )
+}
+
 export function ProgramKpiTargetSection({
   programId,
+  showVolunteerKpi = true,
   isEditMode = false,
   form,
 }: ProgramKpiTargetSectionProps) {
-  const [kpis, setKpis] = useState<KpiMetric[] | null>(null)
+  const [kpiItem, setKpiItem] = useState<ProgramKpiItem | null>(null)
   const isFormEdit = isEditMode && form
+  const kpis = kpiItem?.kpis ?? null
 
   useEffect(() => {
     let cancelled = false
@@ -86,9 +112,9 @@ export function ProgramKpiTargetSection({
       .then(list => {
         if (cancelled) return
         const item = list.find(p => p.programId === programId)
-        setKpis(item?.kpis ?? null)
+        setKpiItem(item ?? null)
       })
-      .catch(() => setKpis(null))
+      .catch(() => setKpiItem(null))
     return () => {
       cancelled = true
     }
@@ -100,6 +126,7 @@ export function ProgramKpiTargetSection({
     const participantsRow = kpis.find(k => k.key === 'finalParticipants')
     const schoolsRow = kpis.find(k => k.key === 'finalSchools')
     const classesRow = kpis.find(k => k.key === 'finalClasses')
+    const instructorTarget = kpiItem?.educationInstructorTargets?.instructors
     const current = form.getValues()
     if (participantsRow?.target != null && current.kpiFinalParticipants == null) {
       form.setValue('kpiFinalParticipants', Number(participantsRow.target))
@@ -110,12 +137,23 @@ export function ProgramKpiTargetSection({
     if (classesRow?.target != null && current.kpiFinalClasses == null) {
       form.setValue('kpiFinalClasses', Number(classesRow.target))
     }
-  }, [isFormEdit, kpis, form])
+    if (instructorTarget != null && current.kpiInstructorCount == null) {
+      form.setValue('kpiInstructorCount', Number(instructorTarget))
+    }
+    if (!showVolunteerKpi && current.kpiVolunteerCount == null) {
+      form.setValue('kpiVolunteerCount', 0)
+    }
+  }, [isFormEdit, kpis, kpiItem, showVolunteerKpi, form])
 
   const participantsRow = kpis?.find(k => k.key === 'finalParticipants')
   const schoolsRow = kpis?.find(k => k.key === 'finalSchools')
   const classesRow = kpis?.find(k => k.key === 'finalClasses')
-  const instructorDisplay: string | undefined = isFormEdit ? undefined : '강사: 80 봉사자 : 80'
+  const educationInstructorTargets = kpiItem?.educationInstructorTargets
+  const instructorDisplay = formatEducationInstructorTargets(
+    educationInstructorTargets,
+    showVolunteerKpi,
+    Boolean(isFormEdit)
+  )
 
   return (
     <DetailInfoForm
@@ -162,7 +200,7 @@ export function ProgramKpiTargetSection({
             <DetailInfoForm.Field
               label="교육진행자 최종 인원"
               required
-              view={formatKpiValueWithBoldNumbers(instructorDisplay ?? undefined)}
+              view={instructorDisplay}
               edit={
                 form ? (
                   <div className="program-kpi-target-section__instructor-edit">
@@ -190,24 +228,28 @@ export function ProgramKpiTargetSection({
                     <DetailInfoForm.InputsSeparator />
                     <div className="program-kpi-target-section__instructor-edit-group">
                       <span>봉사자</span>
-                      <Controller
-                        name="kpiVolunteerCount"
-                        control={form.control}
-                        render={({ field }) => (
-                          <CmsInput
-                            width={120}
-                            type="number"
-                            min={0}
-                            {...field}
-                            value={field.value ?? ''}
-                            onChange={e => {
-                              const n = parseInt(e.target.value, 10)
-                              field.onChange(isNaN(n) ? undefined : n)
-                            }}
-                            status={form.formState.errors.kpiVolunteerCount ? 'error' : undefined}
-                          />
-                        )}
-                      />
+                      {showVolunteerKpi ? (
+                        <Controller
+                          name="kpiVolunteerCount"
+                          control={form.control}
+                          render={({ field }) => (
+                            <CmsInput
+                              width={120}
+                              type="number"
+                              min={0}
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={e => {
+                                const n = parseInt(e.target.value, 10)
+                                field.onChange(isNaN(n) ? undefined : n)
+                              }}
+                              status={form.formState.errors.kpiVolunteerCount ? 'error' : undefined}
+                            />
+                          )}
+                        />
+                      ) : (
+                        <CmsInput width={120} value="해당 없음" disabled />
+                      )}
                     </div>
                   </div>
                 ) : undefined

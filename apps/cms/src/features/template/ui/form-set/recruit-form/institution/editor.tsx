@@ -34,6 +34,8 @@ export function ApplicantRecruitFormInstitutionEditorLeftColumn({
         structureLockedAuthoringChoicePreview: true,
         applicantRecruitFormInstitution: true,
         showInstitutionApplicationLimits: true,
+        applicantRecruitInstitutionLayoutVariant: vm.applicantRecruitInstitutionLayoutVariant,
+        applicantRecruitInstitutionDefaults: vm.applicantRecruitInstitutionDefaults,
       }}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />

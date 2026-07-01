@@ -263,7 +263,7 @@ export function MainHeader() {
               trigger={['click']}
               placement="bottomRight"
               overlayStyle={{ overflow: 'visible' }}
-              dropdownRender={() => (
+              popupRender={() => (
                 <div className="main-header-notification-dropdown">
                   <NotificationDropdown
                     notifications={dropdownNotifications}
@@ -324,7 +324,7 @@ export function MainHeader() {
                 onOpenChange={setAccountDropdownOpen}
                 trigger={['click']}
                 placement="bottomRight"
-                dropdownRender={() => (
+                popupRender={() => (
                   <div className="main-header-account-dropdown">
                     <button
                       type="button"

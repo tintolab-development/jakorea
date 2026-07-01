@@ -81,6 +81,51 @@
   margin-left: 8px;
 }
 
+/* 배정 대기 기관 목록 — 테이블 영역 개별 스크롤, 최대 높이 365px */
+.participating-instructor-fullpage-view
+  .participating-instructor-fullpage-view__waiting-table-scroll:has(.cms-data-table) {
+  max-height: 365px;
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: #fff;
+}
+
+.participating-instructor-fullpage-view
+  .participating-instructor-fullpage-view__waiting-table-scroll:has(.cms-data-table)
+  .cms-data-table
+  .ant-table-container {
+  border: none;
+  border-radius: 0;
+}
+
+.participating-instructor-fullpage-view
+  .participating-instructor-fullpage-view__waiting-table-scroll:has(.cms-data-table)
+  .ant-table-thead
+  > tr
+  > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--table-header-bg, #fafafa);
+}
+
+.participating-instructor-fullpage-view__waiting-table-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 24px;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.5;
+  word-break: keep-all;
+}
+
 /* 교육 배정 현황 — 배정 불가(취소) 상태는 스크린샷과 동일하게 default-BK */
 .participating-instructor-fullpage-view
   .school-detail-fullpage-view__assignment-status--cancelled {

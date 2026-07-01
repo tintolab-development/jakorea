@@ -7,6 +7,7 @@ export type SurveyEmptyStateProps = {
   description: string
   secondaryDescription?: string
   registerButtonLabel: string
+  registerButtonWidth?: number | string
   embedded?: boolean
   onRegisterClick: () => void
 }
@@ -16,29 +17,38 @@ export function SurveyEmptyState({
   description,
   secondaryDescription,
   registerButtonLabel,
+  registerButtonWidth = 180,
   embedded = false,
   onRegisterClick,
 }: SurveyEmptyStateProps) {
   const rootClassName = embedded
-    ? 'ujat-survey-poll-empty ujat-survey-poll-empty--embedded'
-    : 'program-detail-fullpage-modal__info-tab ujat-survey-poll-empty'
+    ? 'survey-management-empty survey-management-empty--embedded'
+    : 'program-detail-fullpage-modal__info-tab survey-management-empty'
+  const descriptionLines = [description, secondaryDescription].filter(
+    (line): line is string => line != null && line !== ''
+  )
 
   return (
     <div className={rootClassName}>
-      <div className="ujat-survey-poll-empty__content">
-        <span className="ujat-survey-poll-empty__icon" aria-hidden>
+      <div className="survey-management-empty__content">
+        <span className="survey-management-empty__icon" aria-hidden>
           <SurveyEmptyIcon maskId="survey-empty-icon-mask" />
         </span>
-        <div className="ujat-survey-poll-empty__texts">
-          <p className="ujat-survey-poll-empty__title">{title}</p>
-          <p className="ujat-survey-poll-empty__description">{description}</p>
-          {secondaryDescription != null && secondaryDescription !== '' ? (
-            <p className="ujat-survey-poll-empty__secondary-description">{secondaryDescription}</p>
-          ) : null}
+        <div className="survey-management-empty__texts">
+          <p className="survey-management-empty__title">{title}</p>
+          <p className="survey-management-empty__description">
+            {descriptionLines.map((line, index) => (
+              <span key={`${line}-${index}`}>
+                {index > 0 ? <br /> : null}
+                {line}
+              </span>
+            ))}
+          </p>
         </div>
         <CmsButton
-          className="ujat-survey-poll-empty__register-button"
+          className="survey-management-empty__register-button"
           size="large"
+          width={registerButtonWidth}
           onClick={onRegisterClick}
         >
           {registerButtonLabel}

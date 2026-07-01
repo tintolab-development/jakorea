@@ -23,6 +23,22 @@ import {
 
 const GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH = 185
 const GENERAL_DETAIL_INSTITUTION_SESSIONS_COL_MIN_WIDTH = 360
+const COMPANY_SCHOOL_INSTITUTION_SESSIONS_COL_MIN_WIDTH = 320
+
+function formatCompanySchoolPreferredSchedule(sessions: ApplicantSchoolRow['sessions']): string {
+  if (!sessions?.length) return '-'
+  const first = sessions[0]
+  const last = sessions[sessions.length - 1]
+  const startTime = first.timeRange?.split('~')[0]?.trim()
+  const endTime = last.timeRange?.split('~')[1]?.trim()
+  const totalSessions = sessions.reduce((sum, session) => {
+    const parsed = Number.parseInt(session.classNum ?? '', 10)
+    return sum + (Number.isFinite(parsed) ? parsed : 1)
+  }, 0)
+  const dateLabel = [first.date, first.dayOfWeek ? `(${first.dayOfWeek})` : ''].join('')
+  const timeLabel = startTime && endTime ? `${startTime} ~ ${endTime}` : (first.timeRange ?? '-')
+  return `${dateLabel} ${timeLabel} | ${totalSessions}차시`
+}
 
 export function useInstitutionApplicantColumns(params: {
   setSelectedItem: (record: ApplicantSchoolRow) => void
@@ -49,13 +65,98 @@ export function useInstitutionApplicantColumns(params: {
     programBridge = null,
   } = params
   const isGeneralDetail = preset === 'general-detail'
+  const isCompanySchool = preset === 'company-school'
   const showSessionsColumn =
-    !isGeneralDetail ||
+    (!isGeneralDetail && !isCompanySchool) ||
     programBridge == null ||
     shouldShowInstitutionApplicationSessionsColumn(programBridge)
 
   return useMemo(
     () => {
+      if (isCompanySchool) {
+        const maxClassCount = programBridge?.maxClassCount
+        const columns: ColumnsType<ApplicantSchoolRow> = [
+          { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
+          {
+            title: '신청 기관명',
+            dataIndex: 'schoolName',
+            key: 'schoolName',
+            width: 180,
+            align: 'center',
+            ellipsis: true,
+            render: (text: string, record) => (
+              <a
+                onClick={() => setSelectedItem(record)}
+                style={{ color: 'var(--color-primary)', fontWeight: 500 }}
+              >
+                {text}
+              </a>
+            ),
+          },
+          {
+            title: '기관 소재지',
+            dataIndex: 'region',
+            key: 'region',
+            width: 200,
+            align: 'center',
+            ellipsis: true,
+          },
+          {
+            title: '프로그램 승인 현황',
+            dataIndex: 'approvalStatus',
+            key: 'approvalStatus',
+            width: 160,
+            align: 'center',
+            render: (status: ApprovalStatusKey) =>
+              status ? <ApprovalStatusText status={status} /> : '-',
+          },
+          {
+            title: '진행 희망 교육 일정',
+            key: 'sessions',
+            width: COMPANY_SCHOOL_INSTITUTION_SESSIONS_COL_MIN_WIDTH,
+            minWidth: COMPANY_SCHOOL_INSTITUTION_SESSIONS_COL_MIN_WIDTH,
+            align: 'center',
+            render: (_: unknown, record: ApplicantSchoolRow) =>
+              formatCompanySchoolPreferredSchedule(record.sessions),
+          },
+          {
+            title: '신청 학년',
+            dataIndex: 'educationGrade',
+            key: 'educationGrade',
+            width: 110,
+            align: 'center',
+          },
+          {
+            title: '신청 학급 수',
+            dataIndex: 'classCount',
+            key: 'classCount',
+            width: 120,
+            align: 'center',
+            render: (v: number) => {
+              const next = maxClassCount != null ? Math.min(v, maxClassCount) : v
+              return next != null ? `${next}개` : '-'
+            },
+          },
+          {
+            title: '총 학생 수',
+            dataIndex: 'studentCount',
+            key: 'studentCount',
+            width: 110,
+            align: 'center',
+            render: (v: number) => (v != null ? `${v}명` : '-'),
+          },
+          {
+            title: '신청 교사명',
+            dataIndex: 'teacherName',
+            key: 'teacherName',
+            width: 120,
+            align: 'center',
+          },
+        ]
+
+        return showSessionsColumn ? columns : columns.filter(column => column.key !== 'sessions')
+      }
+
       const columns: ColumnsType<ApplicantSchoolRow> = [
       /* 화면 너비 대비 비율 분배(합 100%). 가로 스크롤은 scroll.x = max(최소, 래퍼 너비)로 처리 */
       { title: 'No.', dataIndex: 'no', key: 'no', width: '64px', align: 'center' },
@@ -233,6 +334,7 @@ export function useInstitutionApplicantColumns(params: {
       approvalStatusKeys,
       getSessionLineParts,
       handleInstitutionApprovalStatusChange,
+      isCompanySchool,
       isGeneralDetail,
       openApprovalDropdownId,
       programBridge,

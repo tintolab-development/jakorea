@@ -313,7 +313,7 @@ export function InstructorListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={LAYOUT_CONSTANTS.widths.modal.medium}
-        destroyOnClose
+        destroyOnHidden
       >
         <InstructorForm
           key={editingInstructor?.id || 'new'}

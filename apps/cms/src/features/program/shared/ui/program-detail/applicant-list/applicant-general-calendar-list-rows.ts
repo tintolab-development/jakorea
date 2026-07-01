@@ -12,8 +12,8 @@ import type {
   CalendarGeneralIndividualApplicationListRow,
 } from '@/shared/components/calendar'
 import {
-  findInstitutionSessionForDate,
-  formatInstitutionCalendarSessionTimeDisplay,
+  findInstitutionSessionsForDate,
+  formatInstitutionCalendarSessionsTimeDisplay,
   getInstitutionRegionShort,
 } from './applicant-institution-calendar-session'
 import { getInstructorCalendarSessionCardLabel } from './applicant-instructor-calendar-session'
@@ -50,7 +50,7 @@ export function buildGeneralInstitutionCalendarListRows(
     seen.add(selectionKey)
 
     const dateKey = dayjs(event.startDate).format('YYYY-MM-DD')
-    const session = findInstitutionSessionForDate(institution, dateKey)
+    const sessions = findInstitutionSessionsForDate(institution, dateKey)
 
     rows.push({
       id: selectionKey,
@@ -61,8 +61,8 @@ export function buildGeneralInstitutionCalendarListRows(
       ),
       regionLabel: getInstitutionRegionShort(institution.region),
       gradeLabel: institution.educationGrade?.trim() || '-',
-      sessionLabel: formatInstitutionCalendarSessionTimeDisplay(
-        session,
+      sessionLabel: formatInstitutionCalendarSessionsTimeDisplay(
+        sessions,
         institution.desiredEducationPeriod
       ),
     })
@@ -87,7 +87,7 @@ export function buildGeneralIndividualCalendarListRows(
     seen.add(selectionKey)
 
     const dateKey = dayjs(event.startDate).format('YYYY-MM-DD')
-    const session = findInstitutionSessionForDate(applicant, dateKey)
+    const sessions = findInstitutionSessionsForDate(applicant, dateKey)
 
     rows.push({
       id: selectionKey,
@@ -98,7 +98,7 @@ export function buildGeneralIndividualCalendarListRows(
       ),
       regionLabel: getInstitutionRegionShort(applicant.homeAddress),
       gradeLabel: applicant.educationGrade?.trim() || '-',
-      sessionLabel: formatInstitutionCalendarSessionTimeDisplay(session),
+      sessionLabel: formatInstitutionCalendarSessionsTimeDisplay(sessions),
     })
   }
 

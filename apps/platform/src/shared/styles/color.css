@@ -72,6 +72,9 @@
   --color-palette-jade: #46b17b;
   --color-palette-forest: #00763d;
 
+  /* Common */
+  --color-red: #c32f4a;
+
   /* Status / Error */
   --color-status-error-bg: rgba(252, 215, 215, 0.4);
   --color-status-error-dark: #4d0a0b;
