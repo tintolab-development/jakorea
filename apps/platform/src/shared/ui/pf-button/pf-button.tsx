@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
 import styles from './pf-button.module.css'
 
 type PFButtonSize = 'small' | 'medium' | 'large' | 'xlarge'
@@ -8,6 +8,7 @@ type PFButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: PFButtonSize
   variant?: PFButtonVariant
   selected?: boolean
+  width?: CSSProperties['width']
   children: ReactNode
 }
 
@@ -22,7 +23,9 @@ export function PFButton({
   size = 'medium',
   variant = 'primary',
   selected = false,
+  width,
   className,
+  style,
   children,
   type = 'button',
   ...props
@@ -40,7 +43,7 @@ export function PFButton({
     .join(' ')
 
   return (
-    <button className={buttonClassName} type={type} {...props}>
+    <button className={buttonClassName} type={type} style={{ ...style, width }} {...props}>
       {children}
     </button>
   )

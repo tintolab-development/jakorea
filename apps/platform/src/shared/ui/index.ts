@@ -2,6 +2,8 @@
 export { GoogleSocialLoginIcon, KakaoSocialLoginIcon, NaverSocialLoginIcon } from './icons'
 export { PFButton } from './pf-button'
 export { PFModal } from './pf-modal'
+export { PFPagination } from './pf-pagination'
+export type { PFPaginationProps, PFPaginationSize, PFPaginationVariant } from './pf-pagination'
 export { PFStepProgress } from './pf-step-progress'
 export { PFText } from './pf-text'
 export { PFTextInput } from './pf-text-input'
