@@ -1,4 +1,9 @@
 import { useState } from 'react'
+import {
+  PfRichTextEditor,
+  RichTextViewer,
+  useRichTextEditor,
+} from '@/shared/rich-text'
 import { PFButton, PFPagination, PFText, PFTextInput } from '@/shared/ui'
 import styles from './test-page.module.css'
 
@@ -31,6 +36,15 @@ const paginationSizes = ['large', 'small'] as const
 export function TestPage() {
   const [numberedPage, setNumberedPage] = useState(1)
   const [compactPage, setCompactPage] = useState(1)
+  const [richTextPreview, setRichTextPreview] = useState('')
+  const [richTextHtmlPreview, setRichTextHtmlPreview] = useState('')
+
+  const { editor, api } = useRichTextEditor({
+    enabled: true,
+    initialContent: '**Platform** rich text 데모',
+    contentFormat: 'markdown',
+    placeholder: '내용을 입력해 주세요.',
+  })
 
   return (
     <section className={styles.page}>
@@ -41,6 +55,47 @@ export function TestPage() {
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
           공통 컴포넌트와 스타일 토큰을 확인하기 위한 테스트 페이지입니다.
         </PFText>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PfRichTextEditor
+        </PFText>
+        <div className={styles['rich-text-demo']}>
+          <PfRichTextEditor editor={editor} />
+          <div className={styles['rich-text-actions']}>
+            <PFButton
+              size="medium"
+              variant="secondary"
+              onClick={() => setRichTextPreview(api?.getMarkdown() ?? '')}
+            >
+              Markdown 미리보기
+            </PFButton>
+            <PFButton
+              size="medium"
+              variant="secondary"
+              onClick={() => setRichTextHtmlPreview(api?.getHTML() ?? '')}
+            >
+              HTML 미리보기
+            </PFButton>
+          </div>
+          {richTextPreview ? (
+            <div className={styles['rich-text-preview']}>
+              <PFText as="div" typo="label-md" color="neutral-cool-500">
+                Markdown 미리보기
+              </PFText>
+              <RichTextViewer markdown={richTextPreview} maxHeight="240px" />
+            </div>
+          ) : null}
+          {richTextHtmlPreview ? (
+            <div className={styles['rich-text-preview']}>
+              <PFText as="div" typo="label-md" color="neutral-cool-500">
+                HTML 미리보기
+              </PFText>
+              <pre className={styles['rich-text-html-preview']}>{richTextHtmlPreview}</pre>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className={styles.section}>
