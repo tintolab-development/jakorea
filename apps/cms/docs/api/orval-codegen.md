@@ -16,7 +16,7 @@ Swagger 스펙에서 TypeScript API 클라이언트·스키마를 생성하는 �
 | `pnpm --filter cms filter:openapi:settlement`      | 정산 subset                                                               |
 | `pnpm --filter cms generate:api`                   | 위 filter 전체 + Orval codegen                                            |
 
-기본 ngrok fallback: `https://12aa-221-146-247-18.ngrok-free.app/`
+기본 ngrok fallback: `https://7836-183-102-114-192.ngrok-free.app/`
 
 ---
 

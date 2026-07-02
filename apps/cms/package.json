@@ -22,7 +22,8 @@
     "filter:openapi:members": "node scripts/filter-openapi-members.mjs",
     "filter:openapi:notifications": "node scripts/filter-openapi-notifications.mjs",
     "filter:openapi:performance": "node scripts/filter-openapi-performance.mjs",
-    "generate:api": "pnpm filter:openapi:dashboard && pnpm filter:openapi:logs && pnpm filter:openapi:data-management && pnpm filter:openapi:posts && pnpm filter:openapi:settlement && pnpm filter:openapi:members && pnpm filter:openapi:notifications && pnpm filter:openapi:performance && orval --config orval.config.ts",
+    "filter:openapi:forms-surveys": "node scripts/filter-openapi-forms-surveys.mjs",
+    "generate:api": "pnpm filter:openapi:dashboard && pnpm filter:openapi:logs && pnpm filter:openapi:data-management && pnpm filter:openapi:posts && pnpm filter:openapi:settlement && pnpm filter:openapi:members && pnpm filter:openapi:notifications && pnpm filter:openapi:performance && pnpm filter:openapi:forms-surveys && orval --config orval.config.ts",
     "generate:api:watch": "orval --config orval.config.ts --watch openapi/dashboard.openapi.json"
   },
   "dependencies": {
