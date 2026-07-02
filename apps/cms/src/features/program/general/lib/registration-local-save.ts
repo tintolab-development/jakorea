@@ -84,7 +84,9 @@ function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const now = new Date().toISOString()
   const y = dayjs().year()
   const isCompanySchool = args.variant === 'economy'
-  const title = `신규 ${isCompanySchool ? '1사1교' : '일반'} 프로그램 (${dayjs().format('YYYY-MM-DD HH:mm')})`
+  const isTrainedTeachers = args.variant === 'trainedTeachers'
+  const programLabel = isCompanySchool ? '1사1교' : isTrainedTeachers ? '교육받은 교사' : '일반'
+  const title = `신규 ${programLabel} 프로그램 (${dayjs().format('YYYY-MM-DD HH:mm')})`
   const mainTitle = title
   const participantTypes = participantTypesFromState(args.participant)
   const capacity = 30
@@ -112,8 +114,11 @@ function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     mainTitle,
     type: 'offline',
     format: 'workshop',
-    category: isCompanySchool ? 'school' : primaryCategoryFromParticipant(args.participant),
-    description: `${isCompanySchool ? '1사1교' : '일반'} 프로그램 등록(임시 저장)`,
+    category:
+      isCompanySchool || isTrainedTeachers
+        ? 'school'
+        : primaryCategoryFromParticipant(args.participant),
+    description: `${programLabel} 프로그램 등록(임시 저장)`,
     startDate: dayjs(`${y}-04-01`).startOf('day').toISOString(),
     endDate: dayjs(`${y}-12-31`).endOf('day').toISOString(),
     applicationStartDate: dayjs().startOf('day').toISOString(),
@@ -143,7 +148,8 @@ function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
             {
               sessionLabel: '2차시',
               title: '2단원 나를 보여주는 기술',
-              description: '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
+              description:
+                '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
             },
           ],
           educationScheduleLines: [
