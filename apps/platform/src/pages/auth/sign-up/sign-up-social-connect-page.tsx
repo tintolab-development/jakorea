@@ -58,10 +58,32 @@ export function SignUpSocialConnectPage() {
   const [connectedMap, setConnectedMap] = useState<Record<SocialProvider, boolean>>({
     google: false,
     naver: false,
-    kakao: true,
+    kakao: false,
   })
 
+  const SOCIAL_CONNECT_COMPLETE_PATH = '/auth/sign-up/social-connect/complete'
+  const SOCIAL_CONNECT_ERROR_PATH = '/auth/sign-up/social-connect/error'
+
   const toggleConnection = (provider: SocialProvider) => {
+    const isConnected = connectedMap[provider]
+
+    if (!isConnected) {
+      if (provider === 'google') {
+        window.location.assign(SOCIAL_CONNECT_COMPLETE_PATH)
+        return
+      }
+
+      if (provider === 'naver') {
+        window.location.assign(`${SOCIAL_CONNECT_ERROR_PATH}?reason=connection-failed`)
+        return
+      }
+
+      if (provider === 'kakao') {
+        window.location.assign(`${SOCIAL_CONNECT_ERROR_PATH}?reason=already-linked`)
+        return
+      }
+    }
+
     setConnectedMap(prev => ({ ...prev, [provider]: !prev[provider] }))
   }
 
@@ -116,6 +138,7 @@ export function SignUpSocialConnectPage() {
                     <PFText
                       typo="label-md"
                       color={isConnected ? 'primary-500' : 'neutral-cool-500'}
+                      className={styles['social-connect-status']}
                     >
                       {isConnected ? '연결됨' : '연결되지 않음'}
                     </PFText>

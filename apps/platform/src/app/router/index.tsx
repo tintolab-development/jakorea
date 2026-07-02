@@ -4,6 +4,8 @@ import {
   SignInPage,
   SignUpCompletePage,
   SignUpPage,
+  SignUpSocialConnectCompletePage,
+  SignUpSocialConnectErrorPage,
   SignUpSocialConnectPage,
   SocialErrorPage,
 } from '@/pages/auth'
@@ -23,6 +25,14 @@ export const routes: RouteConfig[] = [
   { path: '/auth/sign-up', element: <SignUpPage /> },
   { path: '/auth/sign-up/complete', element: <SignUpCompletePage /> },
   { path: '/auth/sign-up/social-connect', element: <SignUpSocialConnectPage /> },
+  {
+    path: '/auth/sign-up/social-connect/complete',
+    element: <SignUpSocialConnectCompletePage />,
+  },
+  {
+    path: '/auth/sign-up/social-connect/error',
+    element: <SignUpSocialConnectErrorPage />,
+  },
   { path: '/auth/social/error', element: <SocialErrorPage /> },
   { path: '/test', element: <TestPage /> },
 ]
