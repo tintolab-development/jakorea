@@ -13,6 +13,7 @@ import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
+const TRAINED_TEACHERS_REGISTRATION_MODAL_TITLE = '교육받은 교사 프로그램 등록'
 
 export type GeneralProgramRegistrationFullpageModalProps = {
   open: boolean
@@ -148,6 +149,8 @@ export function GeneralProgramRegistrationFullpageModal({
       title={
         registrationFormVariant === 'economy'
           ? COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE
+          : registrationFormVariant === 'trainedTeachers'
+            ? TRAINED_TEACHERS_REGISTRATION_MODAL_TITLE
           : GENERAL_REGISTRATION_MODAL_TITLE
       }
       titleReadOnly
