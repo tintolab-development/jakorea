@@ -35,6 +35,7 @@ import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/
 import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/institution/paragraph-body'
 import { renderEconomyProgramApplicationParagraphBody } from '@/features/template/ui/form-set/application-form/1c-1s/paragraph-body'
+import { renderTrainedTeachersProgramApplicationParagraphBody } from '@/features/template/ui/form-set/application-form/trained-teachers/paragraph-body'
 import { renderGeminiVisitingTrainingApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-institution/paragraph-body'
 import { renderGeminiVisitingTrainingApplicationFormInstructorParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-instructor/paragraph-body'
 import { renderUjatProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraph-body'
@@ -408,6 +409,7 @@ export function HorizontalTableParagraphBody({
   ujatProgramRegistration,
   programApplicationFormInstitution,
   programApplicationFormEconomyInstitution,
+  programApplicationFormTrainedTeachersInstitution,
   programApplicationFormGeminiInstitution,
   programApplicationFormGeminiInstructor,
   ujatProgramApplicationFormInstitution,
@@ -448,6 +450,8 @@ export function HorizontalTableParagraphBody({
   programApplicationFormInstitution?: boolean
   /** 1사1교 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormEconomyInstitution?: boolean
+  /** 교육받은 교사 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  programApplicationFormTrainedTeachersInstitution?: boolean
   /** Gemini 찾아가는 연수 학교 신청 폼 시드 단락 — 전용 본문 */
   programApplicationFormGeminiInstitution?: boolean
   /** Gemini 찾아가는 연수 강사 신청 폼 시드 단락 — 전용 본문 */
@@ -611,6 +615,15 @@ export function HorizontalTableParagraphBody({
     paragraphInteractionMode === 'authoring'
   )
   if (economyProgramApplicationBody != null) return economyProgramApplicationBody
+
+  const trainedTeachersProgramApplicationBody =
+    renderTrainedTeachersProgramApplicationParagraphBody(
+      p,
+      programApplicationFormTrainedTeachersInstitution,
+      paragraphInteractionMode === 'authoring'
+    )
+  if (trainedTeachersProgramApplicationBody != null)
+    return trainedTeachersProgramApplicationBody
 
   const ujatProgramApplicationFormInstitutionBody =
     renderUjatProgramApplicationFormInstitutionParagraphBody(

@@ -66,6 +66,10 @@ import {
   PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-economy-draft'
 import {
+  createProgramApplicationFormTrainedTeachersDraft,
+  PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/program-application-form-trained-teachers-draft'
+import {
   createProgramApplicationFormInstructorDraft,
   PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-instructor-draft'
@@ -202,6 +206,7 @@ export type ProgramParticipantApplicationEditorVariant =
   | 'individual'
   | 'institution'
   | 'economy-application-institution'
+  | 'trained-teachers-application-institution'
   | 'gemini-application-institution'
   | 'gemini-application-instructor'
   | 'ujat-application-institution'
@@ -241,6 +246,8 @@ export function useProgramParticipantApplicationEditor(
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'economy-application-institution')
       return PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS
+    if (variant === 'trained-teachers-application-institution')
+      return PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_SEED_PARAGRAPH_IDS
     if (variant === 'gemini-application-institution')
       return GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'gemini-application-instructor')
@@ -297,6 +304,8 @@ export function useProgramParticipantApplicationEditor(
     if (variant === 'institution') return createProgramApplicationFormInstitutionDraft()
     if (variant === 'economy-application-institution')
       return createProgramApplicationFormEconomyDraft()
+    if (variant === 'trained-teachers-application-institution')
+      return createProgramApplicationFormTrainedTeachersDraft()
     if (variant === 'gemini-application-institution')
       return createGeminiVisitingTrainingApplicationFormInstitutionDraft()
     if (variant === 'gemini-application-instructor')
@@ -688,6 +697,8 @@ export function useProgramParticipantApplicationEditor(
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormInstitution: variant === 'institution',
         programApplicationFormEconomyInstitution: variant === 'economy-application-institution',
+        programApplicationFormTrainedTeachersInstitution:
+          variant === 'trained-teachers-application-institution',
         programApplicationFormGeminiInstitution: variant === 'gemini-application-institution',
         programApplicationFormGeminiInstructor: variant === 'gemini-application-instructor',
         ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',

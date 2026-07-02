@@ -49,6 +49,10 @@ import {
   EconomyProgramApplicationEditorRightColumn,
 } from '@/features/template/ui/form-set/application-form/1c-1s'
 import {
+  TrainedTeachersProgramApplicationEditorLeftColumn,
+  TrainedTeachersProgramApplicationEditorRightColumn,
+} from '@/features/template/ui/form-set/application-form/trained-teachers'
+import {
   UjatProgramApplicationFormInstitutionEditorLeftColumn,
   UjatProgramApplicationFormInstitutionEditorRightColumn,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution'
@@ -101,6 +105,8 @@ function resolveParticipantApplicationLeft(
       return <UjatProgramApplicationFormVolunteerEditorLeftColumn vm={vm} />
     case 'economy-application-institution':
       return <EconomyProgramApplicationEditorLeftColumn vm={vm} />
+    case 'trained-teachers-application-institution':
+      return <TrainedTeachersProgramApplicationEditorLeftColumn vm={vm} />
     case 'applicant-recruit-individual':
       return <ApplicantRecruitFormIndividualEditorLeftColumn vm={vm} />
     case 'recruit-volunteer':
@@ -140,6 +146,8 @@ function resolveParticipantApplicationRight(
       return <UjatProgramApplicationFormVolunteerEditorRightColumn vm={vm} />
     case 'economy-application-institution':
       return <EconomyProgramApplicationEditorRightColumn vm={vm} />
+    case 'trained-teachers-application-institution':
+      return <TrainedTeachersProgramApplicationEditorRightColumn vm={vm} />
     case 'applicant-recruit-individual':
       return <ApplicantRecruitFormIndividualEditorRightColumn vm={vm} />
     case 'recruit-volunteer':
