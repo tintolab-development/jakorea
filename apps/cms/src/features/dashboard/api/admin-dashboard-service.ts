@@ -12,6 +12,7 @@ import { mockPrograms, mockProgramsMap } from '@/data/mock/programs'
 import { getEducationPrograms } from '@/data/mock/education-programs'
 import { getCompanySchoolPrograms, getCompanySchoolProgramById } from '@/data/mock/economy-programs'
 import { getGeneralPrograms } from '@/data/mock/general-programs'
+import { getTrainedTeachersPrograms } from '@/data/mock/trained-teachers-programs'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { getVolunteerPrograms } from '@/data/mock/volunteer-programs'
 import { mockApplications } from '@/data/mock/applications'
@@ -213,13 +214,21 @@ export async function getProgramProgressSummary(): Promise<ProgramProgressSummar
  * - programType 'company_school' | 'general' 시 4카드(예정/진행/완료) 집계
  */
 export async function getProgramProgressStages(options?: {
-  programType?: 'education' | 'company_school' | 'general' | 'volunteer' | 'all'
+  programType?: 'education' | 'company_school' | 'general' | 'trained_teachers' | 'volunteer' | 'all'
 }): Promise<ProgramProgressStagesResult> {
   await new Promise(resolve => setTimeout(resolve, 300))
 
-  if (options?.programType === 'company_school' || options?.programType === 'general') {
+  if (
+    options?.programType === 'company_school' ||
+    options?.programType === 'general' ||
+    options?.programType === 'trained_teachers'
+  ) {
     const programs =
-      options.programType === 'general' ? getGeneralPrograms() : getCompanySchoolPrograms()
+      options.programType === 'general'
+        ? getGeneralPrograms()
+        : options.programType === 'trained_teachers'
+          ? getTrainedTeachersPrograms()
+          : getCompanySchoolPrograms()
     const stages = {
       scheduled: 0,
       inProgress: 0,
@@ -227,7 +236,7 @@ export async function getProgramProgressStages(options?: {
     }
 
     programs.forEach(program => {
-      if (options.programType === 'company_school') {
+      if (options.programType === 'company_school' || options.programType === 'trained_teachers') {
         const operationPhase = resolveCompanySchoolOperationPhase(program)
         if (operationPhase === 'scheduled') stages.scheduled++
         else if (operationPhase === 'in_progress') stages.inProgress++

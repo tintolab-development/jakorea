@@ -1,7 +1,8 @@
 /**
  * 프로그램 진행 현황 위젯 (목록/대시보드)
  * Phase 4.5: 전체 프로그램 진행 현황 (상태별 집계)
- * 경로 기반 선택: /programs/general, /programs/company-school(및 레거시 education·economy-education URL)
+ * 경로 기반 선택: /programs/general, /programs/company-school, /programs/trained-teachers
+ * (및 레거시 education·economy-education URL)
  */
 
 import { useLocation, useSearchParams, useNavigate } from 'react-router-dom'
@@ -56,6 +57,11 @@ const isCompanySchoolLayoutPath = (pathname: string) => {
   )
 }
 
+const isTrainedTeachersLayoutPath = (pathname: string) => {
+  const p = pathname.replace(/\/$/, '') || '/'
+  return p === '/programs/trained-teachers' || p.startsWith('/programs/trained-teachers/')
+}
+
 /** 의존성 배열용 빈 배열 */
 const EMPTY_PROGRAMS: readonly unknown[] = []
 
@@ -74,10 +80,13 @@ export function ProgramStatusWidget({
   const [progress, setProgress] = useState<ProgramProgressStagesResult | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const programType = useMemo<'education' | 'company_school' | 'general' | 'volunteer' | 'all'>(() => {
+  const programType = useMemo<
+    'education' | 'company_school' | 'general' | 'trained_teachers' | 'volunteer' | 'all'
+  >(() => {
     if (isGeneralProgramListRoot(location.pathname)) return 'general'
     if (isEducationLayoutPath(location.pathname)) return 'education'
     if (isCompanySchoolLayoutPath(location.pathname)) return 'company_school'
+    if (isTrainedTeachersLayoutPath(location.pathname)) return 'trained_teachers'
     if (location.pathname === '/programs/volunteer') return 'volunteer'
     return 'all'
   }, [location.pathname])
@@ -105,7 +114,10 @@ export function ProgramStatusWidget({
   }, [location.search, selectedFromPath])
 
   const programs = useProgramStore(state =>
-    programType === 'education' || programType === 'company_school' || programType === 'general'
+    programType === 'education' ||
+    programType === 'company_school' ||
+    programType === 'general' ||
+    programType === 'trained_teachers'
       ? state.programs
       : EMPTY_PROGRAMS
   )
@@ -133,8 +145,12 @@ export function ProgramStatusWidget({
   const stages = useMemo((): ProgressStageItem[] => {
     if (!progress) return []
 
-    // 일반·1사1교 프로그램 루트 4단계 UI (Total, Scheduled, In Progress, Completed)
-    if (programType === 'company_school' || programType === 'general') {
+    // 일반·1사1교·교육받은 교사 프로그램 루트 4단계 UI
+    if (
+      programType === 'company_school' ||
+      programType === 'general' ||
+      programType === 'trained_teachers'
+    ) {
       const p = progress as ProgramOverviewStages
       const s = selectedStatus
       return [
@@ -217,7 +233,11 @@ export function ProgramStatusWidget({
   }, [progress, selectedStatus, selectedFromPath, programType])
 
   const handleStageClick = (key: string) => {
-    if (programType === 'company_school' || programType === 'general') {
+    if (
+      programType === 'company_school' ||
+      programType === 'general' ||
+      programType === 'trained_teachers'
+    ) {
       const nextParams = new URLSearchParams(searchParams)
       if (key === 'total') {
         nextParams.delete('status')
@@ -280,7 +300,13 @@ export function ProgramStatusWidget({
       showBottomDivider
       onStageClick={handleStageClick}
       loading={loading}
-      loadingCardCount={programType === 'company_school' || programType === 'general' ? 4 : 8}
+      loadingCardCount={
+        programType === 'company_school' ||
+        programType === 'general' ||
+        programType === 'trained_teachers'
+          ? 4
+          : 8
+      }
     />
   )
 }
