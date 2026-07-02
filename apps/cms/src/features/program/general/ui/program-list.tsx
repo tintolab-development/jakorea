@@ -14,7 +14,10 @@ import {
 } from './table/program-list-filter-fields'
 import { buildProgramListFilters } from './table/program-list-filter-builder'
 import type { ProgramListProgramMode } from '../model/program-list-program-mode'
-import type { ProgramListView } from './table/program-table-column-resolver'
+import type {
+  ProgramListColumnPreset,
+  ProgramListView,
+} from './table/program-table-column-resolver'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { FilterTableLayout } from '@/shared/ui'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
@@ -29,6 +32,7 @@ export type ProgramListConfig = {
   view?: ProgramListView
   tableType?: 'student' | 'instructor'
   lifecycleStatus?: ProgramLifecycleStatus | null
+  columnPreset?: ProgramListColumnPreset
 }
 
 export interface ProgramListProps {
@@ -69,6 +73,7 @@ export function ProgramList({
   const tableType = config?.tableType
   const mode = config?.mode ?? 'general'
   const effectiveLifecycleStatus = config?.lifecycleStatus
+  const columnPreset = config?.columnPreset ?? 'default'
 
   const tableContext = useMemo<ProgramTableContext>(
     () => ({
@@ -76,13 +81,14 @@ export function ProgramList({
       view: listView,
       tableType,
       effectiveLifecycleStatus,
+      columnPreset,
     }),
-    [mode, listView, tableType, effectiveLifecycleStatus]
+    [mode, listView, tableType, effectiveLifecycleStatus, columnPreset]
   )
 
   const tableConfig = useMemo(
     () => getProgramTablePageConfig(tableContext),
-    [mode, listView, tableType, effectiveLifecycleStatus]
+    [mode, listView, tableType, effectiveLifecycleStatus, columnPreset]
   )
 
   const {

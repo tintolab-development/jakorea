@@ -55,7 +55,9 @@ export function ProgramLifecycleStatusBadge({
     p === '/programs/company-school' ||
     p.startsWith('/programs/company-school/') ||
     p === '/programs/general' ||
-    p.startsWith('/programs/general/')
+    p.startsWith('/programs/general/') ||
+    p === '/programs/trained-teachers' ||
+    p.startsWith('/programs/trained-teachers/')
 
   const label = isOverviewListPage
     ? getListPhaseDisplayLabel(status)
