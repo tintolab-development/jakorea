@@ -72,8 +72,17 @@
 }
 
 .social-connect-name {
+  display: inline-flex;
+  align-items: center;
   flex: 0 0 auto;
   margin-right: var(--spacing-12);
+}
+
+.social-connect-status {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  line-height: 27px;
 }
 
 .status-dot {
