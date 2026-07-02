@@ -13,6 +13,8 @@ export interface FormTemplateVersionResponse {
   versionLabel?: string;
   versionStatus?: string;
   schemaJson?: string;
+  extensionJson?: string;
+  settingsJson?: string;
   effectiveFrom?: string;
   effectiveTo?: string;
   publishedAt?: string;

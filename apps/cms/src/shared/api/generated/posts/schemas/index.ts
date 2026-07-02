@@ -231,6 +231,8 @@ export * from './formAutoFillKeyResponse';
 export * from './formResponseAnswerResponse';
 export * from './formResponseCreateRequest';
 export * from './formResponseCreateRequestAnswers';
+export * from './formResponseDocumentSnapshotResponse';
+export * from './formResponseProjectionResponse';
 export * from './formResponseResponse';
 export * from './formRuntimeResponse';
 export * from './formRuntimeSubmitRequest';

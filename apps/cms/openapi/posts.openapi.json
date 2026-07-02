@@ -2725,7 +2725,15 @@
           "versionLabel": {
             "type": "string"
           },
-          "schemaJson": {}
+          "schemaJson": {
+            "type": "string"
+          },
+          "extensionJson": {
+            "type": "string"
+          },
+          "settingsJson": {
+            "type": "string"
+          }
         }
       },
       "FormVersionAdminResponse": {
@@ -2739,6 +2747,9 @@
             "type": "integer",
             "format": "int64"
           },
+          "templateCode": {
+            "type": "string"
+          },
           "versionNo": {
             "type": "integer",
             "format": "int32"
@@ -2750,6 +2761,12 @@
             "type": "string"
           },
           "schemaJson": {
+            "type": "string"
+          },
+          "extensionJson": {
+            "type": "string"
+          },
+          "settingsJson": {
             "type": "string"
           },
           "effectiveFrom": {
@@ -9223,6 +9240,12 @@
           },
           "schemaJson": {
             "type": "string"
+          },
+          "extensionJson": {
+            "type": "string"
+          },
+          "settingsJson": {
+            "type": "string"
           }
         }
       },
@@ -9248,6 +9271,12 @@
             "type": "string"
           },
           "schemaJson": {
+            "type": "string"
+          },
+          "extensionJson": {
+            "type": "string"
+          },
+          "settingsJson": {
             "type": "string"
           },
           "effectiveFrom": {
@@ -10593,7 +10622,7 @@
           },
           "totpSecret": {
             "type": "string",
-            "description": "선택 입력용 TOTP secret입니다. 비어 있으면 개발용 임시 secret을 사용합니다.",
+            "description": "호환성 유지용 입력값입니다. 실제 TOTP secret은 서버 환경설정에서 결정하며 이 값은 저장하지 않습니다.",
             "example": "JBSWY3DPEHPK3PXP",
             "maxLength": 256,
             "minLength": 0
@@ -10649,17 +10678,17 @@
           },
           "secretKey": {
             "type": "string",
-            "description": "Authenticator 앱 수동 입력용 임시 secret key",
+            "description": "Microsoft Authenticator 앱 수동 입력용 Base32 secret key",
             "example": "JBSWY3DPEHPK3PXP"
           },
           "manualEntryKey": {
             "type": "string",
-            "description": "Authenticator 앱 수동 입력용 임시 key 별칭",
+            "description": "Microsoft Authenticator 앱 수동 입력용 key 별칭",
             "example": "JBSWY3DPEHPK3PXP"
           },
           "totpSecret": {
             "type": "string",
-            "description": "TOTP 임시 secret 값",
+            "description": "Microsoft Authenticator 등록용 TOTP secret 값",
             "example": "JBSWY3DPEHPK3PXP"
           },
           "otpauthUri": {
@@ -10688,7 +10717,7 @@
           },
           "verificationCodeHint": {
             "type": "string",
-            "description": "로컬 임시 MFA 통과 코드",
+            "description": "로컬 프로필 전용 MFA 통과 코드",
             "example": "000000"
           }
         }
@@ -10750,17 +10779,17 @@
           },
           "secretKey": {
             "type": "string",
-            "description": "Authenticator 앱 수동 입력용 임시 secret key",
+            "description": "Microsoft Authenticator 앱 수동 입력용 Base32 secret key",
             "example": "JBSWY3DPEHPK3PXP"
           },
           "manualEntryKey": {
             "type": "string",
-            "description": "Authenticator 앱 수동 입력용 임시 key 별칭",
+            "description": "Microsoft Authenticator 앱 수동 입력용 key 별칭",
             "example": "JBSWY3DPEHPK3PXP"
           },
           "totpSecret": {
             "type": "string",
-            "description": "TOTP 임시 secret 값",
+            "description": "Microsoft Authenticator 등록용 TOTP secret 값",
             "example": "JBSWY3DPEHPK3PXP"
           },
           "otpauthUri": {
@@ -10789,7 +10818,7 @@
           },
           "verificationCodeHint": {
             "type": "string",
-            "description": "로컬 임시 MFA 통과 코드",
+            "description": "로컬 프로필 전용 MFA 통과 코드",
             "example": "000000"
           }
         }
@@ -19023,6 +19052,10 @@
           "useYn": {
             "type": "boolean"
           },
+          "latestVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "latestVersionNo": {
             "type": "integer",
             "format": "int32"
@@ -19043,33 +19076,6 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FormTemplateListItemResponse"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
-      "PageResponseFormResponseResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FormResponseResponse"
             }
           },
           "page": {
@@ -19135,6 +19141,151 @@
           },
           "status": {
             "type": "string"
+          }
+        }
+      },
+      "PageResponseFormResponseResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormResponseResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "FormResponseDocumentSnapshotResponse": {
+        "type": "object",
+        "properties": {
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateCode": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "formType": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "documentTitle": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contextType": {
+            "type": "string"
+          },
+          "contextId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "responseStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rawAnswersJson": {
+            "type": "string"
+          },
+          "projectionReady": {
+            "type": "boolean"
+          },
+          "projectionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormResponseAnswerResponse"
+            }
+          },
+          "projections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormResponseProjectionResponse"
+            }
+          }
+        }
+      },
+      "FormResponseProjectionResponse": {
+        "type": "object",
+        "properties": {
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contextType": {
+            "type": "string"
+          },
+          "contextId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "projectionKey": {
+            "type": "string"
+          },
+          "projectionValueText": {
+            "type": "string"
+          },
+          "projectionValueNumber": {
+            "type": "number"
+          },
+          "projectionValueBool": {
+            "type": "boolean"
+          },
+          "projectionValueDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "projectionValueJson": {
+            "type": "string"
+          },
+          "sourceQuestionKey": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

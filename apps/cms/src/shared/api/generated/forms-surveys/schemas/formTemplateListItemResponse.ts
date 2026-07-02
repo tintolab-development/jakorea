@@ -13,6 +13,7 @@ export interface FormTemplateListItemResponse {
   formType?: string;
   category?: string;
   useYn?: boolean;
+  latestVersionId?: number;
   latestVersionNo?: number;
   latestVersionStatus?: string;
   updatedAt?: string;

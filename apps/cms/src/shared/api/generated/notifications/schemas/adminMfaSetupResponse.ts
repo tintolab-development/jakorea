@@ -20,11 +20,11 @@ export interface AdminMfaSetupResponse {
   message?: string;
   /** Authenticator 앱 등록 정보가 필요한지 여부 */
   mfaSetupRequired?: boolean;
-  /** Authenticator 앱 수동 입력용 임시 secret key */
+  /** Microsoft Authenticator 앱 수동 입력용 Base32 secret key */
   secretKey?: string;
-  /** Authenticator 앱 수동 입력용 임시 key 별칭 */
+  /** Microsoft Authenticator 앱 수동 입력용 key 별칭 */
   manualEntryKey?: string;
-  /** TOTP 임시 secret 값 */
+  /** Microsoft Authenticator 등록용 TOTP secret 값 */
   totpSecret?: string;
   /** Microsoft Authenticator 호환 otpauth URI */
   otpauthUri?: string;
@@ -38,6 +38,6 @@ export interface AdminMfaSetupResponse {
   qrImageUrl?: string;
   /** QR 이미지 별칭 */
   qrCodeImageUrl?: string;
-  /** 로컬 임시 MFA 통과 코드 */
+  /** 로컬 프로필 전용 MFA 통과 코드 */
   verificationCodeHint?: string;
 }

@@ -17,7 +17,7 @@ export interface AdminMfaSetupRequest {
      */
   mfaMethod?: string;
   /**
-     * 선택 입력용 TOTP secret입니다. 비어 있으면 개발용 임시 secret을 사용합니다.
+     * 호환성 유지용 입력값입니다. 실제 TOTP secret은 서버 환경설정에서 결정하며 이 값은 저장하지 않습니다.
      * @minLength 0
      * @maxLength 256
      */
