@@ -1,6 +1,4 @@
 import type {
-  AgreementItem,
-  AgreementState,
   ConfirmationRow,
   GenderType,
   MemberType,
@@ -73,11 +71,17 @@ export function formatHomeAddress(address: string, addressDetail: string) {
   return [address.trim(), addressDetail.trim()].filter(Boolean).join(' ')
 }
 
-export function isAllAgreed(agreements: AgreementState, items: AgreementItem[]) {
+export function isAllAgreed<T extends string>(
+  agreements: Record<T, boolean>,
+  items: { key: T }[],
+) {
   return items.every(item => agreements[item.key])
 }
 
-export function isRequiredAgreed(agreements: AgreementState, items: AgreementItem[]) {
+export function isRequiredAgreed<T extends string>(
+  agreements: Record<T, boolean>,
+  items: { key: T; required: boolean }[],
+) {
   return items.filter(item => item.required).every(item => agreements[item.key])
 }
 

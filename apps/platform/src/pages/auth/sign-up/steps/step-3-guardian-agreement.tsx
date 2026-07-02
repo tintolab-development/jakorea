@@ -9,24 +9,19 @@ import { SignUpLayout } from '../layout/sign-up-layout'
 import { StepHeader } from '../layout/step-header'
 import styles from '../sign-up-page.module.css'
 
-type Step3AgreementProps = {
+type Step3GuardianAgreementProps = {
   signUp: UseSignUpReturn
 }
 
-export function Step3Agreement({ signUp }: Step3AgreementProps) {
-  const { step, agreement } = signUp
+export function Step3GuardianAgreement({ signUp }: Step3GuardianAgreementProps) {
+  const { step, guardian } = signUp
+  const { agreement } = guardian
 
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <StepHeader
-        title={
-          <>
-            서비스 이용을 위한
-            <br />
-            약관에 동의해 주세요
-          </>
-        }
-        description="필수 항목 동의는 가입을 위해 꼭 필요해요."
+        title="보호자님의 동의가 완료되면 가입을 계속할 수 있어요"
+        description="필수 항목인 서비스 이용과 개인정보 동의 내용을 확인해 주세요."
         titleClassName={styles['terms-title']}
         descriptionClassName={styles['terms-description']}
       />
@@ -69,7 +64,7 @@ export function Step3Agreement({ signUp }: Step3AgreementProps) {
                   alt=""
                   aria-hidden="true"
                 />
-                <span className={styles['agreement-text']}>
+                <div className={styles['agreement-text']}>
                   <PFText
                     typo="bd-sm-md"
                     color="inherit"
@@ -80,7 +75,7 @@ export function Step3Agreement({ signUp }: Step3AgreementProps) {
                   <PFText typo="bd-md-md" color="black">
                     {item.label}
                   </PFText>
-                </span>
+                </div>
               </button>
               <button className={styles['terms-view-button']} type="button">
                 <PFText typo="bd-sm-md" color="inherit">

@@ -1,10 +1,21 @@
 import { useState } from 'react'
-import type { AgreementKey, AgreementState, GenderType, MemberType, SchoolStatus } from '../model/sign-up.types'
+import type {
+  AgreementKey,
+  AgreementState,
+  GenderType,
+  GuardianAgreementKey,
+  GuardianAgreementState,
+  MemberType,
+  SchoolStatus,
+} from '../model/sign-up.types'
 import {
   memberTypeOptions,
   SIGN_IN_PATH,
   SIGN_UP_COMPLETE_PATH,
   SIGN_UP_TOTAL_STEPS,
+  SIGN_UP_UNDER_AGE_TOTAL_STEPS,
+  MOCK_VERIFIED_NAME,
+  MOCK_VERIFIED_PHONE,
 } from '../lib/sign-up.constants'
 import { buildConfirmationRows } from '../lib/sign-up.utils'
 import {
@@ -14,9 +25,17 @@ import {
   toggleAgreementState,
   toggleAllAgreementState,
 } from '../agreement/agreement.logic'
+import {
+  createInitialGuardianAgreementState,
+  getGuardianAgreementDerived,
+  guardianAgreementItems,
+  toggleAllGuardianAgreementState,
+  toggleGuardianAgreementState,
+} from '../agreement/guardian-agreement.logic'
 import { validateEmailDuplicateCheck } from '../email/email.logic'
 import { getPasswordDerived } from '../password/password.logic'
 import { isProfileStepValid } from '../profile/profile.logic'
+import { isGuardianProfileValid } from '../guardian/guardian-profile.logic'
 import { isBirthStepValid, validateBirthStep } from '../identity/identity.logic'
 
 export type UseSignUpReturn = ReturnType<typeof useSignUp>
@@ -27,6 +46,14 @@ export function useSignUp() {
   const [birthDate, setBirthDate] = useState('')
   const [gender, setGender] = useState<GenderType | null>(null)
   const [stepTwoMessage, setStepTwoMessage] = useState('')
+  const [requiresGuardianConsent, setRequiresGuardianConsent] = useState(false)
+  const [isUnderAgeSignup, setIsUnderAgeSignup] = useState(false)
+  const [isGuardianAgreementCompleted, setIsGuardianAgreementCompleted] = useState(false)
+  const [isGuardianIdentityVerified, setIsGuardianIdentityVerified] = useState(false)
+  const [guardianAgreements, setGuardianAgreements] = useState<GuardianAgreementState>(
+    createInitialGuardianAgreementState,
+  )
+  const [guardianRelationship, setGuardianRelationship] = useState('')
   const [isIdentityVerified, setIsIdentityVerified] = useState(false)
   const [agreements, setAgreements] = useState<AgreementState>(createInitialAgreementState)
   const [email, setEmail] = useState('')
@@ -41,9 +68,11 @@ export function useSignUp() {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
 
   const agreementDerived = getAgreementDerived(agreements)
+  const guardianAgreementDerived = getGuardianAgreementDerived(guardianAgreements)
   const passwordDerived = getPasswordDerived(password, passwordConfirm)
   const isStepTwoValid = isBirthStepValid(birthDate, gender)
   const isStepSixValid = isProfileStepValid(address, addressDetail)
+  const isGuardianProfileValidState = isGuardianProfileValid(guardianRelationship)
 
   const handleSignIn = () => {
     window.location.assign(SIGN_IN_PATH)
@@ -56,18 +85,56 @@ export function useSignUp() {
   }
 
   const handleStepTwoNext = () => {
-    const message = validateBirthStep(birthDate)
+    const result = validateBirthStep(birthDate)
 
-    if (message) {
-      setStepTwoMessage(message)
+    if (result.status === 'invalid-format') {
+      setIsUnderAgeSignup(false)
+      setRequiresGuardianConsent(false)
+      setStepTwoMessage(result.message)
+      return
+    }
+
+    if (result.status === 'under-age') {
+      setStepTwoMessage('')
+      setIsUnderAgeSignup(true)
+      setRequiresGuardianConsent(true)
       return
     }
 
     setStepTwoMessage('')
+    setIsUnderAgeSignup(false)
+    setRequiresGuardianConsent(false)
     setCurrentStep(3)
   }
 
   const handlePreviousStep = () => {
+    if (currentStep === 2 && requiresGuardianConsent) {
+      setRequiresGuardianConsent(false)
+      return
+    }
+
+    if (currentStep === 3 && isUnderAgeSignup) {
+      if (isGuardianIdentityVerified) {
+        setIsGuardianIdentityVerified(false)
+        return
+      }
+
+      if (isGuardianAgreementCompleted) {
+        setIsGuardianAgreementCompleted(false)
+        return
+      }
+
+      setRequiresGuardianConsent(true)
+      setCurrentStep(2)
+      return
+    }
+
+    if (currentStep === 4 && isUnderAgeSignup) {
+      setIsGuardianIdentityVerified(false)
+      setCurrentStep(3)
+      return
+    }
+
     if (currentStep === 3 && isIdentityVerified) {
       setIsIdentityVerified(false)
       return
@@ -84,6 +151,31 @@ export function useSignUp() {
 
   const toggleAllAgreements = () => {
     setAgreements(toggleAllAgreementState(!agreementDerived.isAllAgreed))
+  }
+
+  const toggleGuardianAgreement = (key: GuardianAgreementKey) => {
+    setGuardianAgreements(prev => toggleGuardianAgreementState(prev, key))
+  }
+
+  const toggleAllGuardianAgreements = () => {
+    setGuardianAgreements(toggleAllGuardianAgreementState(!guardianAgreementDerived.isAllAgreed))
+  }
+
+  const handleGuardianAgreementContinue = () => {
+    if (guardianAgreementDerived.isRequiredAgreed) {
+      setIsGuardianAgreementCompleted(true)
+    }
+  }
+
+  const handleGuardianIdentityVerify = () => {
+    setIsGuardianIdentityVerified(true)
+    setCurrentStep(4)
+  }
+
+  const handleGuardianProfileContinue = () => {
+    if (isGuardianProfileValidState) {
+      setCurrentStep(5)
+    }
   }
 
   const handleEmailChange = (value: string) => {
@@ -106,13 +198,36 @@ export function useSignUp() {
 
   const handleEmailNext = () => {
     if (emailCheckStatus === 'success') {
-      setCurrentStep(5)
+      setCurrentStep(isUnderAgeSignup ? 6 : 5)
     }
+  }
+
+  const handlePasswordContinue = () => {
+    setCurrentStep(isUnderAgeSignup ? 7 : 6)
+  }
+
+  const handleProfileContinue = () => {
+    setCurrentStep(isUnderAgeSignup ? 8 : 7)
   }
 
   const handleBirthDateChange = (value: string) => {
     setBirthDate(value)
     setStepTwoMessage('')
+    setRequiresGuardianConsent(false)
+    setIsUnderAgeSignup(false)
+    setIsGuardianAgreementCompleted(false)
+    setIsGuardianIdentityVerified(false)
+    setGuardianAgreements(createInitialGuardianAgreementState())
+    setGuardianRelationship('')
+  }
+
+  const handleStartGuardianConsent = () => {
+    setRequiresGuardianConsent(false)
+    setIsGuardianAgreementCompleted(false)
+    setIsGuardianIdentityVerified(false)
+    setGuardianAgreements(createInitialGuardianAgreementState())
+    setGuardianRelationship('')
+    setCurrentStep(3)
   }
 
   const confirmationRows = buildConfirmationRows({
@@ -129,7 +244,7 @@ export function useSignUp() {
   return {
     step: {
       current: currentStep,
-      total: SIGN_UP_TOTAL_STEPS,
+      total: isUnderAgeSignup ? SIGN_UP_UNDER_AGE_TOTAL_STEPS : SIGN_UP_TOTAL_STEPS,
       goTo: setCurrentStep,
       goPrevious: handlePreviousStep,
       goNextFromStep1: handleNextStep,
@@ -147,6 +262,33 @@ export function useSignUp() {
       setGender,
       message: stepTwoMessage,
       isValid: isStepTwoValid,
+      requiresGuardianConsent,
+      startGuardianConsent: handleStartGuardianConsent,
+    },
+    guardian: {
+      isUnderAgeSignup,
+      isAgreementCompleted: isGuardianAgreementCompleted,
+      agreement: {
+        items: guardianAgreementItems,
+        state: guardianAgreements,
+        isAllAgreed: guardianAgreementDerived.isAllAgreed,
+        isRequiredAgreed: guardianAgreementDerived.isRequiredAgreed,
+        toggle: toggleGuardianAgreement,
+        toggleAll: toggleAllGuardianAgreements,
+        continue: handleGuardianAgreementContinue,
+      },
+      identity: {
+        isVerified: isGuardianIdentityVerified,
+        verify: handleGuardianIdentityVerify,
+      },
+      profile: {
+        name: MOCK_VERIFIED_NAME,
+        phone: MOCK_VERIFIED_PHONE,
+        relationship: guardianRelationship,
+        setRelationship: setGuardianRelationship,
+        isValid: isGuardianProfileValidState,
+        continue: handleGuardianProfileContinue,
+      },
     },
     identity: {
       isVerified: isIdentityVerified,
@@ -177,7 +319,7 @@ export function useSignUp() {
       setConfirm: setPasswordConfirm,
       isMismatch: passwordDerived.isMismatch,
       isValid: passwordDerived.isValid,
-      continue: () => setCurrentStep(6),
+      continue: handlePasswordContinue,
     },
     profile: {
       schoolStatus,
@@ -192,7 +334,7 @@ export function useSignUp() {
       openAddressModal: () => setIsAddressModalOpen(true),
       closeAddressModal: () => setIsAddressModalOpen(false),
       isValid: isStepSixValid,
-      continue: () => setCurrentStep(7),
+      continue: handleProfileContinue,
     },
     confirmation: {
       rows: confirmationRows,

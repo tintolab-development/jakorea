@@ -1,9 +1,10 @@
 import illustHouseUrl from '@/shared/assets/illustration/illust-house.svg'
 import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
-import type { AgreementItem, MemberTypeOption } from '../model/sign-up.types'
+import type { AgreementItem, MemberTypeOption, GuardianAgreementItem } from '../model/sign-up.types'
 
 export const MIN_GENERAL_MEMBER_AGE = 14
 export const SIGN_UP_TOTAL_STEPS = 7
+export const SIGN_UP_UNDER_AGE_TOTAL_STEPS = 8
 
 export const SIGN_IN_PATH = '/auth/sign-in'
 export const SIGN_UP_COMPLETE_PATH = '/auth/sign-up/complete'
@@ -37,6 +38,23 @@ export const agreementItems: AgreementItem[] = [
     key: 'portrait',
     required: false,
     label: '초상권 수집·이용 동의',
+    guide: '* 미동의 시 프로그램 참여가 불가능해요.',
+  },
+]
+
+export const guardianAgreementItems: GuardianAgreementItem[] = [
+  { key: 'service', required: true, label: '서비스 이용약관' },
+  { key: 'privacy', required: true, label: '개인정보 수집·이용 동의' },
+  {
+    key: 'guardianLegal',
+    required: true,
+    label: '만 14세 미만 아동 회원가입 및 개인정보 수집·이용에 대한 법정대리인 동의',
+  },
+  { key: 'marketing', required: false, label: '마케팅 정보 수신 동의' },
+  {
+    key: 'portrait',
+    required: false,
+    label: '초상권 수집·이용 동의 항목',
     guide: '* 미동의 시 프로그램 참여가 불가능해요.',
   },
 ]
