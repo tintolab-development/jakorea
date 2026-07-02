@@ -21,6 +21,7 @@ import { mockSponsors } from '@/data/mock/sponsors'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
 export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
+export const TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'trained-teachers-local-'
 
 const STORAGE_KEY = 'cms.jakorea.generalRegistrationLocalSaves.v1'
 
@@ -53,6 +54,11 @@ function newLocalProgramId(): string {
 function newCompanySchoolLocalProgramId(): string {
   const uuid = globalThis.crypto?.randomUUID?.()
   return `${COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}${uuid ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`
+}
+
+function newTrainedTeachersLocalProgramId(): string {
+  const uuid = globalThis.crypto?.randomUUID?.()
+  return `${TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX}${uuid ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`
 }
 
 function participantTypesFromState(
@@ -88,7 +94,9 @@ function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const programLabel = isCompanySchool ? '1사1교' : isTrainedTeachers ? '교육받은 교사' : '일반'
   const title = `신규 ${programLabel} 프로그램 (${dayjs().format('YYYY-MM-DD HH:mm')})`
   const mainTitle = title
-  const participantTypes = participantTypesFromState(args.participant)
+  const participantTypes: GeneralProgramParticipantType[] = isTrainedTeachers
+    ? ['school_institution']
+    : participantTypesFromState(args.participant)
   const capacity = 30
 
   const rounds: ProgramRound[] = [
@@ -136,7 +144,7 @@ function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     startTime: '09:00',
     endTime: '18:00',
     studentListRequired: isCompanySchool ? 'not_required' : 'required',
-    generalCommonInfo: isCompanySchool
+    generalCommonInfo: isCompanySchool || isTrainedTeachers
       ? {
           educationScheduleMode: 'period',
           curriculumSessions: [
@@ -155,16 +163,27 @@ function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
           educationScheduleLines: [
             `${dayjs(`${y}-03-01`).format('YYYY. MM. DD')} ~ ${dayjs(`${y}-12-31`).format('YYYY. MM. DD')}`,
           ],
-          wageGradeRows: [
-            { grade: '1급 강사비', pricing: '1시간 당 | 기본 : 500,000원 | 장거리 : 500,000원' },
-            { grade: '2급 강사비', pricing: '1시간 당 | 기본 : 400,000원 | 장거리 : 400,000원' },
-            { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 300,000원 | 장거리 : 300,000원' },
-          ],
-          paymentItems: '교통비(일사일교), 숙박비(일사일교)',
-          deductionItems: '일용근로자 원천징수세액',
+          wageGradeRows: isCompanySchool
+            ? [
+                {
+                  grade: '1급 강사비',
+                  pricing: '1시간 당 | 기본 : 500,000원 | 장거리 : 500,000원',
+                },
+                {
+                  grade: '2급 강사비',
+                  pricing: '1시간 당 | 기본 : 400,000원 | 장거리 : 400,000원',
+                },
+                {
+                  grade: '3급 강사비',
+                  pricing: '1시간 당 | 기본 : 300,000원 | 장거리 : 300,000원',
+                },
+              ]
+            : undefined,
+          paymentItems: isCompanySchool ? '교통비(일사일교), 숙박비(일사일교)' : undefined,
+          deductionItems: isCompanySchool ? '일용근로자 원천징수세액' : undefined,
           participantRecruitmentInfo: {
             preEducationNoticeRequired: true,
-            maxAssignableInstructors: 2,
+            maxAssignableInstructors: isCompanySchool ? 2 : undefined,
             maxClassCount: 4,
             maxScheduleCount: 2,
             maxSessionsPerDay: 2,
@@ -192,7 +211,8 @@ export function readGeneralRegistrationLocalSaveRecords(): GeneralRegistrationLo
         row.version === 1 &&
         typeof row.id === 'string' &&
         (row.id.startsWith(GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX) ||
-          row.id.startsWith(COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)) &&
+          row.id.startsWith(COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX) ||
+          row.id.startsWith(TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)) &&
         row.program != null &&
         typeof row.program === 'object'
     )
@@ -213,6 +233,12 @@ export function readCompanySchoolRegistrationLocalSavePrograms(): Program[] {
     .map(r => r.program)
 }
 
+export function readTrainedTeachersRegistrationLocalSavePrograms(): Program[] {
+  return readGeneralRegistrationLocalSaveRecords()
+    .filter(r => r.id.startsWith(TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX))
+    .map(r => r.program)
+}
+
 export function findGeneralRegistrationLocalSaveProgramById(id: string): Program | undefined {
   return readGeneralRegistrationLocalSaveRecords().find(r => r.id === id)?.program
 }
@@ -224,7 +250,12 @@ export function persistGeneralRegistrationFormLocal(args: {
   variant?: ProgramRegistrationFormVariant
 }): Program {
   const variant = args.variant ?? 'general'
-  const id = variant === 'economy' ? newCompanySchoolLocalProgramId() : newLocalProgramId()
+  const id =
+    variant === 'economy'
+      ? newCompanySchoolLocalProgramId()
+      : variant === 'trainedTeachers'
+        ? newTrainedTeachersLocalProgramId()
+        : newLocalProgramId()
   const program = buildGeneralProgramListRowFromRegistrationSnapshot({
     id,
     participant: args.participant,
