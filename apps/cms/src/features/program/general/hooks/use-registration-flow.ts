@@ -11,6 +11,7 @@ import {
 } from '@/features/template/model/template-registry/template-registry'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
+import { PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE } from '@/features/template/lib/program-registration-editor-state'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
@@ -73,6 +74,10 @@ export function useGeneralProgramRegistrationFlow(
     {
       programRegistrationFormVariant: registrationFormVariant,
       onRegistrationSaved: options?.onProgramRegistrationSaved,
+      templateCode:
+        registrationFormVariant === 'general'
+          ? PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
+          : undefined,
     }
   )
 

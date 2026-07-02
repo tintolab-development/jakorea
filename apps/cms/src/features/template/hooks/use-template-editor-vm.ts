@@ -12,6 +12,7 @@ import {
   resolvePreviewHeaderTitle,
   type TemplateRegistryDefinition,
 } from '@/features/template/model/template-registry/template-registry'
+import { PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE } from '@/features/template/lib/program-registration-editor-state'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
 import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT'
@@ -48,6 +49,11 @@ export function useTemplateEditorVm({
     {
       restrictCurriculumSessionStructure: true,
       programRegistrationFormVariant: entry?.registrationFormVariant ?? 'general',
+      templateCode:
+        entry?.id === PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE ||
+        templateId === PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
+          ? PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
+          : undefined,
     }
   )
 

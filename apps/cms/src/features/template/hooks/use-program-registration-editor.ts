@@ -45,6 +45,16 @@ import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/feat
 import { resolveProgramRegistrationCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
 import { persistGeneralRegistrationFormLocal } from '@/features/program/general/lib/registration-local-save'
+import {
+  applyProgramRegistrationEditorState,
+  buildProgramRegistrationEditorState,
+  PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
+  type ProgramRegistrationEditorState,
+} from '@/features/template/lib/program-registration-editor-state'
+import {
+  loadWritingFormTemplateDraft,
+  persistWritingFormTemplateDraft,
+} from '@/features/template/lib/writing-form-template-local-save'
 
 export type ProgramRegistrationParticipantSelection = {
   individual: boolean
@@ -69,6 +79,27 @@ function getDefaultEducationScheduleMode(
   variant: ProgramRegistrationFormVariant
 ): ProgramRegistrationEducationScheduleMode {
   return variant === 'economy' ? 'period' : 'date'
+}
+
+function createDefaultRegistrationEditorState(
+  variant: ProgramRegistrationFormVariant
+): ProgramRegistrationEditorState {
+  return {
+    participant: getDefaultProgramRegistrationParticipant(variant),
+    programType: 'curriculum',
+    sessionRoundType: 'single',
+    educationFormScheduleDetail: 'common',
+    participationScheduleDetail: 'common',
+    ipsScheduleDetail: 'common',
+    curriculumSessionCount: 1,
+    curriculumChartSessionCount: variant === 'trainedTeachers' ? 2 : 1,
+    scheduleCurriculumDetailCount: 1,
+    scheduleCurriculumGroupCount: 1,
+    scheduleCurriculumPreEducation: false,
+    trainedTeachersTeacherTrainingEnabled: true,
+    educationScheduleMode: getDefaultEducationScheduleMode(variant),
+    activeParagraphId: null,
+  }
 }
 
 function useProgramRegistrationMiddleActions(
@@ -158,6 +189,8 @@ export type UseProgramRegistrationEditorOptions = {
   programRegistrationFormVariant?: ProgramRegistrationFormVariant
   /** 일반 프로그램 등록 풀페이지 — 임시 저장 성공 후(목록 갱신·모달 닫기 등) */
   onRegistrationSaved?: () => void
+  /** forms-surveys draft API 연동 대상 templateCode (현재 `registration-general`만) */
+  templateCode?: string
 }
 
 export function useProgramRegistrationEditor(
@@ -170,6 +203,10 @@ export function useProgramRegistrationEditor(
   const programRegistrationFormVariant: ProgramRegistrationFormVariant =
     editorOptions?.programRegistrationFormVariant ?? 'general'
   const onRegistrationSaved = editorOptions?.onRegistrationSaved
+  const templateCode = editorOptions?.templateCode
+  const usesTemplateDraftApi =
+    templateCode === PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE &&
+    programRegistrationFormVariant === 'general'
   const seedParagraphIds = useMemo(
     () => getProgramRegistrationSeedParagraphIds(programRegistrationFormVariant),
     [programRegistrationFormVariant]
@@ -247,28 +284,71 @@ export function useProgramRegistrationEditor(
     })
   }, [active, programRegistrationFormVariant, programType, sessionRoundType, educationScheduleMode])
 
-  useEffect(() => {
-    if (!active) return
+  const applyEditorStateSnapshot = useCallback((state: ProgramRegistrationEditorState) => {
+    setParticipant(state.participant)
+    setProgramType(state.programType)
+    setSessionRoundType(state.sessionRoundType)
+    setEducationFormScheduleDetail(state.educationFormScheduleDetail)
+    setParticipationScheduleDetail(state.participationScheduleDetail)
+    setIpsScheduleDetail(state.ipsScheduleDetail)
+    setCurriculumSessionCount(state.curriculumSessionCount)
+    setCurriculumChartSessionCount(state.curriculumChartSessionCount)
+    setScheduleCurriculumDetailCount(state.scheduleCurriculumDetailCount)
+    setScheduleCurriculumGroupCount(state.scheduleCurriculumGroupCount)
+    setScheduleCurriculumPreEducation(state.scheduleCurriculumPreEducation)
+    setTrainedTeachersTeacherTrainingEnabled(state.trainedTeachersTeacherTrainingEnabled)
+    setEducationScheduleMode(state.educationScheduleMode)
+  }, [])
+
+  const resetRegistrationEditorToSeed = useCallback(() => {
     const next = normalizeWritingFormDraft(
       createProgramRegistrationDraft(programRegistrationFormVariant)
     )
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
-    setParticipant(getDefaultProgramRegistrationParticipant(programRegistrationFormVariant))
-    setSessionRoundType('single')
-    setEducationFormScheduleDetail('common')
-    setParticipationScheduleDetail('common')
-    setIpsScheduleDetail('common')
-    setCurriculumSessionCount(1)
-    setCurriculumChartSessionCount(programRegistrationFormVariant === 'trainedTeachers' ? 2 : 1)
-    setProgramType('curriculum')
-    setScheduleCurriculumDetailCount(1)
-    setScheduleCurriculumGroupCount(1)
-    setScheduleCurriculumPreEducation(false)
-    setTrainedTeachersTeacherTrainingEnabled(true)
-    setEducationScheduleMode(getDefaultEducationScheduleMode(programRegistrationFormVariant))
-  }, [active, programRegistrationFormVariant, restrictCurriculumSessionStructure])
+    applyEditorStateSnapshot(
+      createDefaultRegistrationEditorState(programRegistrationFormVariant)
+    )
+  }, [applyEditorStateSnapshot, programRegistrationFormVariant])
+
+  useEffect(() => {
+    if (!active) return
+
+    if (usesTemplateDraftApi && templateCode) {
+      let cancelled = false
+      const defaults = createDefaultRegistrationEditorState('general')
+
+      void loadWritingFormTemplateDraft(templateCode).then(saved => {
+        if (cancelled) return
+        if (saved?.draft) {
+          const normalized = normalizeWritingFormDraft(saved.draft)
+          setDraft(normalized)
+          const restored = applyProgramRegistrationEditorState(saved.editorState, defaults)
+          applyEditorStateSnapshot(restored)
+          setActiveParagraphId(
+            restored.activeParagraphId ?? normalized.paragraphs[0]?.id ?? null
+          )
+          setSingleItemListActiveItemId(null)
+          return
+        }
+        resetRegistrationEditorToSeed()
+      })
+
+      return () => {
+        cancelled = true
+      }
+    }
+
+    resetRegistrationEditorToSeed()
+  }, [
+    active,
+    applyEditorStateSnapshot,
+    resetRegistrationEditorToSeed,
+    restrictCurriculumSessionStructure,
+    templateCode,
+    usesTemplateDraftApi,
+  ])
 
   useEffect(() => {
     if (!active) closeWritingUserPreview()
@@ -627,8 +707,30 @@ export function useProgramRegistrationEditor(
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    if (!onRegistrationSaved) return
     try {
+      if (usesTemplateDraftApi && templateCode) {
+        void persistWritingFormTemplateDraft({
+          templateId: templateCode,
+          draft,
+          editorState: buildProgramRegistrationEditorState({
+            participant,
+            programType,
+            sessionRoundType,
+            educationFormScheduleDetail,
+            participationScheduleDetail,
+            ipsScheduleDetail,
+            curriculumSessionCount,
+            curriculumChartSessionCount,
+            scheduleCurriculumDetailCount,
+            scheduleCurriculumGroupCount,
+            scheduleCurriculumPreEducation,
+            trainedTeachersTeacherTrainingEnabled,
+            educationScheduleMode,
+            activeParagraphId,
+          }),
+        })
+      }
+      if (!onRegistrationSaved) return
       persistGeneralRegistrationFormLocal({
         draft,
         participant,
@@ -639,7 +741,27 @@ export function useProgramRegistrationEditor(
     } catch (error) {
       console.debug('programRegistrationEditor save failed', error)
     }
-  }, [draft, onRegistrationSaved, participant, programRegistrationFormVariant, programType])
+  }, [
+    activeParagraphId,
+    curriculumChartSessionCount,
+    curriculumSessionCount,
+    draft,
+    educationFormScheduleDetail,
+    educationScheduleMode,
+    ipsScheduleDetail,
+    onRegistrationSaved,
+    participant,
+    participationScheduleDetail,
+    programRegistrationFormVariant,
+    programType,
+    scheduleCurriculumDetailCount,
+    scheduleCurriculumGroupCount,
+    scheduleCurriculumPreEducation,
+    sessionRoundType,
+    templateCode,
+    trainedTeachersTeacherTrainingEnabled,
+    usesTemplateDraftApi,
+  ])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {
     setActiveParagraphId(paragraphId)
