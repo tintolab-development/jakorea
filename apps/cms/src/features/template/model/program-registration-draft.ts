@@ -30,17 +30,27 @@ export const PROGRAM_REGISTRATION_ECONOMY_SEED_PARAGRAPH_IDS = new Set<string>([
   PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
 ])
 
-/** @deprecated `getProgramRegistrationSeedParagraphIds` 사용 권장 */
-export const PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS = PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS
+/** 교육받은 교사 프로그램 등록 폼 — 학교(교사) 진행, 강사비 섹션 제외 */
+export const PROGRAM_REGISTRATION_TRAINED_TEACHERS_SEED_PARAGRAPH_IDS = new Set<string>([
+  PROGRAM_REGISTRATION_IDS.basicInfo,
+  PROGRAM_REGISTRATION_IDS.businessKpi,
+  PROGRAM_REGISTRATION_IDS.typeSettings,
+  PROGRAM_REGISTRATION_IDS.educationCurriculum,
+  PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
+])
 
-export type ProgramRegistrationFormVariant = 'general' | 'economy'
+/** @deprecated `getProgramRegistrationSeedParagraphIds` 사용 권장 */
+export const PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS =
+  PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS
+
+export type ProgramRegistrationFormVariant = 'general' | 'economy' | 'trainedTeachers'
 
 export function getProgramRegistrationSeedParagraphIds(
   variant: ProgramRegistrationFormVariant
 ): ReadonlySet<string> {
-  return variant === 'economy'
-    ? PROGRAM_REGISTRATION_ECONOMY_SEED_PARAGRAPH_IDS
-    : PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS
+  if (variant === 'economy') return PROGRAM_REGISTRATION_ECONOMY_SEED_PARAGRAPH_IDS
+  if (variant === 'trainedTeachers') return PROGRAM_REGISTRATION_TRAINED_TEACHERS_SEED_PARAGRAPH_IDS
+  return PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS
 }
 
 function createSeedParagraph(
@@ -76,13 +86,17 @@ export function createProgramRegistrationDraft(
   const paragraphs: HorizontalTableParagraph[] = [
     createSeedParagraph(PROGRAM_REGISTRATION_IDS.basicInfo, '기본 정보'),
     createSeedParagraph(PROGRAM_REGISTRATION_IDS.businessKpi, '사업 KPI 목표'),
-    createSeedParagraph(
-      PROGRAM_REGISTRATION_IDS.wageInfo,
-      PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.title,
-      PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.editDescription
-    ),
   ]
-  if (variant === 'general') {
+  if (variant !== 'trainedTeachers') {
+    paragraphs.push(
+      createSeedParagraph(
+        PROGRAM_REGISTRATION_IDS.wageInfo,
+        PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.title,
+        PROGRAM_REGISTRATION_GENERAL_SECTION_META.wageInfo.editDescription
+      )
+    )
+  }
+  if (variant !== 'economy') {
     paragraphs.push(
       createSeedParagraph(
         PROGRAM_REGISTRATION_IDS.typeSettings,
@@ -104,7 +118,7 @@ export function createProgramRegistrationDraft(
     createSeedParagraph(
       PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
       PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.title,
-      variant === 'general'
+      variant !== 'economy'
         ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.educationScheduleSettings.editDescription
         : '교육이 실행되는 일정을 설정해 주세요.'
     )

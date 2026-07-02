@@ -15,7 +15,7 @@ export type TemplateRegistryDefinition = {
   category: TemplateRegistryCategory
   rendererKey: string
   editorVariant?: ProgramParticipantApplicationEditorVariant
-  registrationFormVariant?: 'general' | 'economy'
+  registrationFormVariant?: 'general' | 'economy' | 'trainedTeachers'
   registrationEditor?: 'general' | 'ujat'
   previewStrategy?: TemplateRegistryPreviewStrategy
   agreementConfigKey?: string
@@ -56,6 +56,14 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     rendererKey: 'registration-ujat',
     registrationEditor: 'ujat',
     previewHeaderTitleFallback: 'UJAT 프로그램 등록 폼',
+  },
+  'registration-trained-teachers': {
+    id: 'registration-trained-teachers',
+    category: 'registration',
+    rendererKey: 'registration-trained-teachers',
+    registrationEditor: 'general',
+    registrationFormVariant: 'trainedTeachers',
+    previewHeaderTitleFallback: '교육받은 교사 프로그램 등록 폼',
   },
   'recruitment-participant-school': {
     id: 'recruitment-participant-school',
@@ -133,6 +141,13 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     rendererKey: 'participant-application',
     editorVariant: 'economy-application-institution',
     previewHeaderTitleFallback: '1사1교 프로그램 참여자 신청 폼',
+  },
+  'application-trained-teachers': {
+    id: 'application-trained-teachers',
+    category: 'application',
+    rendererKey: 'participant-application',
+    editorVariant: 'trained-teachers-application-institution',
+    previewHeaderTitleFallback: '교육받은 교사 프로그램 참여자 신청 폼',
   },
   'application-gemini-visiting-training-instructor': {
     id: 'application-gemini-visiting-training-instructor',

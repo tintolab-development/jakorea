@@ -73,6 +73,11 @@ export const TEMPLATE_CODE_CATALOG: Record<string, TemplateCodeCatalogEntry> = {
     category: 'REGISTRATION',
     variant: 'default',
   },
+  'registration-trained-teachers': {
+    templateName: '교육받은 교사 프로그램 등록 폼',
+    category: 'REGISTRATION',
+    variant: 'default',
+  },
   'recruitment-participant-school': {
     templateName: '프로그램 참여자 모집 폼 (학교)',
     category: 'RECRUITMENT',
@@ -125,6 +130,11 @@ export const TEMPLATE_CODE_CATALOG: Record<string, TemplateCodeCatalogEntry> = {
   },
   'application-economy': {
     templateName: '1사1교 프로그램 참여자 신청 폼',
+    category: 'APPLICATION',
+    variant: 'default',
+  },
+  'application-trained-teachers': {
+    templateName: '교육받은 교사 프로그램 참여자 신청 폼',
     category: 'APPLICATION',
     variant: 'default',
   },
