@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react'
 import {
   applyGeneralParticipantAudienceSelection,
   shouldResetParticipationScheduleDetailForAudience,
@@ -46,25 +53,46 @@ export type ProgramRegistrationParticipantSelection = {
   volunteer: boolean
 }
 
+function getDefaultProgramRegistrationParticipant(
+  variant: ProgramRegistrationFormVariant
+): ProgramRegistrationParticipantSelection {
+  if (variant === 'economy') {
+    return { individual: false, organization: true, teacherInstructor: true, volunteer: false }
+  }
+  if (variant === 'trainedTeachers') {
+    return { individual: false, organization: true, teacherInstructor: false, volunteer: false }
+  }
+  return { individual: true, organization: false, teacherInstructor: false, volunteer: false }
+}
+
+function getDefaultEducationScheduleMode(
+  variant: ProgramRegistrationFormVariant
+): ProgramRegistrationEducationScheduleMode {
+  return variant === 'economy' ? 'period' : 'date'
+}
+
 function useProgramRegistrationMiddleActions(
   setDraft: Dispatch<SetStateAction<WritingFormDraft>>,
   setActiveParagraphId: Dispatch<SetStateAction<string | null>>,
   seedParagraphIds: ReadonlySet<string>
 ) {
-  const appendBasicTitleParagraph = useCallback((paragraphId?: string) => {
-    const newId = crypto.randomUUID()
-    const insert = createAgreementExplanationTextParagraphForInsert(newId)
-    let inserted = false
-    setDraft(prev => {
-      const targetId = paragraphId ?? prev.paragraphs[prev.paragraphs.length - 1]?.id
-      if (targetId == null) return prev
-      const next = insertMiddleParagraphAfter(prev.paragraphs, targetId, insert)
-      if (next == null) return prev
-      inserted = true
-      return { ...prev, paragraphs: next }
-    })
-    if (inserted) setActiveParagraphId(newId)
-  }, [setDraft, setActiveParagraphId])
+  const appendBasicTitleParagraph = useCallback(
+    (paragraphId?: string) => {
+      const newId = crypto.randomUUID()
+      const insert = createAgreementExplanationTextParagraphForInsert(newId)
+      let inserted = false
+      setDraft(prev => {
+        const targetId = paragraphId ?? prev.paragraphs[prev.paragraphs.length - 1]?.id
+        if (targetId == null) return prev
+        const next = insertMiddleParagraphAfter(prev.paragraphs, targetId, insert)
+        if (next == null) return prev
+        inserted = true
+        return { ...prev, paragraphs: next }
+      })
+      if (inserted) setActiveParagraphId(newId)
+    },
+    [setDraft, setActiveParagraphId]
+  )
 
   const onAddAfter = useCallback(
     (paragraphId: string) => {
@@ -150,9 +178,10 @@ export function useProgramRegistrationEditor(
   const [draft, setDraft] = useState<WritingFormDraft>(() =>
     normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant))
   )
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(() =>
-    normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant))
-      .paragraphs[0]?.id ?? null
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
+    () =>
+      normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant))
+        .paragraphs[0]?.id ?? null
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const [participant, setParticipant] = useState<ProgramRegistrationParticipantSelection>({
@@ -162,19 +191,23 @@ export function useProgramRegistrationEditor(
     volunteer: false,
   })
   const [programType, setProgramType] = useState<ProgramRegistrationType>('curriculum')
-  const [sessionRoundType, setSessionRoundType] = useState<ProgramRegistrationSessionRoundType>('single')
+  const [sessionRoundType, setSessionRoundType] =
+    useState<ProgramRegistrationSessionRoundType>('single')
   const [educationFormScheduleDetail, setEducationFormScheduleDetail] =
     useState<ProgramRegistrationScheduleDetailKind>('common')
   const [participationScheduleDetail, setParticipationScheduleDetail] =
     useState<ProgramRegistrationScheduleDetailKind>('common')
-  const [ipsScheduleDetail, setIpsScheduleDetail] = useState<ProgramRegistrationScheduleDetailKind>('common')
+  const [ipsScheduleDetail, setIpsScheduleDetail] =
+    useState<ProgramRegistrationScheduleDetailKind>('common')
   const [curriculumSessionCount, setCurriculumSessionCount] = useState(1)
   const [curriculumChartSessionCount, setCurriculumChartSessionCount] = useState(1)
   const [scheduleCurriculumDetailCount, setScheduleCurriculumDetailCount] = useState(1)
   const [scheduleCurriculumGroupCount, setScheduleCurriculumGroupCount] = useState(1)
   const [scheduleCurriculumPreEducation, setScheduleCurriculumPreEducation] = useState(false)
+  const [trainedTeachersTeacherTrainingEnabled, setTrainedTeachersTeacherTrainingEnabled] =
+    useState(true)
   const defaultEducationScheduleMode: ProgramRegistrationEducationScheduleMode =
-    programRegistrationFormVariant === 'economy' ? 'period' : 'date'
+    getDefaultEducationScheduleMode(programRegistrationFormVariant)
   const [educationScheduleMode, setEducationScheduleMode] =
     useState<ProgramRegistrationEducationScheduleMode>(defaultEducationScheduleMode)
 
@@ -195,6 +228,15 @@ export function useProgramRegistrationEditor(
       })
       return
     }
+    if (programRegistrationFormVariant === 'trainedTeachers') {
+      patchInstitutionApplicationProgramBridge({
+        preEducationNoticeRequired: true,
+        educationStructure: 'curriculum',
+        sessionRound: 'single',
+        educationScheduleMode,
+      })
+      return
+    }
     patchInstitutionApplicationProgramBridge({
       preEducationNoticeRequired: true,
       maxScheduleCount: 2,
@@ -203,36 +245,29 @@ export function useProgramRegistrationEditor(
       sessionRound: 'multi',
       educationScheduleMode: 'period',
     })
-  }, [
-    active,
-    programRegistrationFormVariant,
-    programType,
-    sessionRoundType,
-    educationScheduleMode,
-  ])
+  }, [active, programRegistrationFormVariant, programType, sessionRoundType, educationScheduleMode])
 
   useEffect(() => {
     if (!active) return
-    const next = normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant))
+    const next = normalizeWritingFormDraft(
+      createProgramRegistrationDraft(programRegistrationFormVariant)
+    )
     setDraft(next)
     setActiveParagraphId(next.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)
-    setParticipant(
-      programRegistrationFormVariant === 'economy'
-        ? { individual: false, organization: true, teacherInstructor: true, volunteer: false }
-        : { individual: true, organization: false, teacherInstructor: false, volunteer: false }
-    )
+    setParticipant(getDefaultProgramRegistrationParticipant(programRegistrationFormVariant))
     setSessionRoundType('single')
     setEducationFormScheduleDetail('common')
     setParticipationScheduleDetail('common')
     setIpsScheduleDetail('common')
     setCurriculumSessionCount(1)
-    setCurriculumChartSessionCount(1)
+    setCurriculumChartSessionCount(programRegistrationFormVariant === 'trainedTeachers' ? 2 : 1)
     setProgramType('curriculum')
     setScheduleCurriculumDetailCount(1)
     setScheduleCurriculumGroupCount(1)
     setScheduleCurriculumPreEducation(false)
-    setEducationScheduleMode(programRegistrationFormVariant === 'economy' ? 'period' : 'date')
+    setTrainedTeachersTeacherTrainingEnabled(true)
+    setEducationScheduleMode(getDefaultEducationScheduleMode(programRegistrationFormVariant))
   }, [active, programRegistrationFormVariant, restrictCurriculumSessionStructure])
 
   useEffect(() => {
@@ -355,13 +390,19 @@ export function useProgramRegistrationEditor(
     [programRegistrationFormVariant, programType, restrictCurriculumSessionStructure]
   )
 
-  const onEducationFormScheduleDetailChange = useCallback((value: ProgramRegistrationScheduleDetailKind) => {
-    setEducationFormScheduleDetail(value)
-  }, [])
+  const onEducationFormScheduleDetailChange = useCallback(
+    (value: ProgramRegistrationScheduleDetailKind) => {
+      setEducationFormScheduleDetail(value)
+    },
+    []
+  )
 
-  const onParticipationScheduleDetailChange = useCallback((value: ProgramRegistrationScheduleDetailKind) => {
-    setParticipationScheduleDetail(value)
-  }, [])
+  const onParticipationScheduleDetailChange = useCallback(
+    (value: ProgramRegistrationScheduleDetailKind) => {
+      setParticipationScheduleDetail(value)
+    },
+    []
+  )
 
   const onIpsScheduleDetailChange = useCallback((value: ProgramRegistrationScheduleDetailKind) => {
     setIpsScheduleDetail(value)
@@ -381,47 +422,61 @@ export function useProgramRegistrationEditor(
   )
 
   const onAddCurriculumChartSession = useCallback(() => {
-    if (restrictCurriculumSessionStructure) return
+    if (
+      restrictCurriculumSessionStructure &&
+      programRegistrationFormVariant !== 'trainedTeachers'
+    ) {
+      return
+    }
     setCurriculumChartSessionCount(c =>
       Math.min(c + 1, GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT)
     )
-  }, [restrictCurriculumSessionStructure])
+  }, [programRegistrationFormVariant, restrictCurriculumSessionStructure])
 
   const onDeleteCurriculumChartSession = useCallback(
     (chartIndex: number) => {
-      if (restrictCurriculumSessionStructure || chartIndex <= 1) return
+      if (
+        (restrictCurriculumSessionStructure &&
+          programRegistrationFormVariant !== 'trainedTeachers') ||
+        chartIndex <= 1
+      ) {
+        return
+      }
       setCurriculumChartSessionCount(c => Math.max(1, c - 1))
     },
-    [restrictCurriculumSessionStructure]
+    [programRegistrationFormVariant, restrictCurriculumSessionStructure]
   )
 
-  const onProgramTypeChange = useCallback((next: ProgramRegistrationType) => {
-    if (programRegistrationFormVariant === 'economy' && next !== 'curriculum') return
-    setProgramType(next)
-    setDraft(prev => ({
-      ...prev,
-      paragraphs: prev.paragraphs.map(p => {
-        if (p.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum) return p
-        if (p.kind !== 'single_item' || p.variant !== 'horizontal_table') return p
-        const ht = p as HorizontalTableParagraph
-        if (next === 'schedule') {
+  const onProgramTypeChange = useCallback(
+    (next: ProgramRegistrationType) => {
+      if (programRegistrationFormVariant !== 'general' && next !== 'curriculum') return
+      setProgramType(next)
+      setDraft(prev => ({
+        ...prev,
+        paragraphs: prev.paragraphs.map(p => {
+          if (p.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum) return p
+          if (p.kind !== 'single_item' || p.variant !== 'horizontal_table') return p
+          const ht = p as HorizontalTableParagraph
+          if (next === 'schedule') {
+            return {
+              ...ht,
+              paragraphTitle: '교육 진행 (일정형)',
+              paragraphDescription: '',
+            }
+          }
           return {
             ...ht,
-            paragraphTitle: '교육 진행 (일정형)',
-            paragraphDescription: '',
+            paragraphTitle: '교육 진행 (커리큘럼)',
+            paragraphDescription:
+              programRegistrationFormVariant === 'general'
+                ? resolveProgramRegistrationCurriculumEditDescription(sessionRoundType)
+                : '',
           }
-        }
-        return {
-          ...ht,
-          paragraphTitle: '교육 진행 (커리큘럼)',
-          paragraphDescription:
-            programRegistrationFormVariant === 'general'
-              ? resolveProgramRegistrationCurriculumEditDescription(sessionRoundType)
-              : '',
-        }
-      }),
-    }))
-  }, [programRegistrationFormVariant])
+        }),
+      }))
+    },
+    [programRegistrationFormVariant]
+  )
 
   const onAddScheduleCurriculumDetail = useCallback(() => {
     setScheduleCurriculumDetailCount(c => Math.min(c + 1, 99))
@@ -445,9 +500,16 @@ export function useProgramRegistrationEditor(
     setScheduleCurriculumPreEducation(checked)
   }, [])
 
-  const onEducationScheduleModeChange = useCallback((value: ProgramRegistrationEducationScheduleMode) => {
-    setEducationScheduleMode(value)
+  const onTrainedTeachersTeacherTrainingEnabledChange = useCallback((checked: boolean) => {
+    setTrainedTeachersTeacherTrainingEnabled(checked)
   }, [])
+
+  const onEducationScheduleModeChange = useCallback(
+    (value: ProgramRegistrationEducationScheduleMode) => {
+      setEducationScheduleMode(value)
+    },
+    []
+  )
 
   const paragraphBodyOptions = useMemo(
     () =>
@@ -467,14 +529,13 @@ export function useProgramRegistrationEditor(
         onParticipationScheduleDetailChange,
         ipsScheduleDetail,
         onIpsScheduleDetailChange,
-        curriculumSessionCount: restrictCurriculumSessionStructure
-          ? 1
-          : curriculumSessionCount,
+        curriculumSessionCount: restrictCurriculumSessionStructure ? 1 : curriculumSessionCount,
         onAddCurriculumSession,
         onDeleteCurriculumSession,
-        curriculumChartSessionCount: restrictCurriculumSessionStructure
-          ? 1
-          : curriculumChartSessionCount,
+        curriculumChartSessionCount:
+          restrictCurriculumSessionStructure && programRegistrationFormVariant !== 'trainedTeachers'
+            ? 1
+            : curriculumChartSessionCount,
         onAddCurriculumChartSession,
         onDeleteCurriculumChartSession,
         restrictCurriculumSessionStructure,
@@ -487,6 +548,8 @@ export function useProgramRegistrationEditor(
         onDeleteScheduleCurriculumGroup,
         scheduleCurriculumPreEducation,
         onScheduleCurriculumPreEducationChange,
+        trainedTeachersTeacherTrainingEnabled,
+        onTrainedTeachersTeacherTrainingEnabledChange,
         educationScheduleMode,
         onEducationScheduleModeChange,
       }),
@@ -504,6 +567,7 @@ export function useProgramRegistrationEditor(
       onAddScheduleCurriculumGroup,
       onDeleteScheduleCurriculumGroup,
       onScheduleCurriculumPreEducationChange,
+      onTrainedTeachersTeacherTrainingEnabledChange,
       onEducationFormScheduleDetailChange,
       onIpsScheduleDetailChange,
       onIndividualChange,
@@ -519,6 +583,7 @@ export function useProgramRegistrationEditor(
       scheduleCurriculumDetailCount,
       scheduleCurriculumGroupCount,
       scheduleCurriculumPreEducation,
+      trainedTeachersTeacherTrainingEnabled,
       sessionRoundType,
       restrictCurriculumSessionStructure,
       programRegistrationFormVariant,

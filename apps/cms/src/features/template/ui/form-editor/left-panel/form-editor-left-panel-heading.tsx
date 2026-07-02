@@ -63,10 +63,7 @@ export function withoutPlaceholderDescriptionInPreview<
   if (!heading || !hideInPreview) return heading
   if (heading.showDescription === false) return heading
   const trimmedDescription = heading.descriptionValue?.trim() ?? ''
-  if (
-    trimmedDescription.length === 0 ||
-    HIDDEN_PREVIEW_DESCRIPTION_TEXTS.has(trimmedDescription)
-  ) {
+  if (trimmedDescription.length === 0 || HIDDEN_PREVIEW_DESCRIPTION_TEXTS.has(trimmedDescription)) {
     return { ...heading, showDescription: false }
   }
   return heading
@@ -112,6 +109,42 @@ export function withProgramRegistrationCurriculumTitleTrailing(
   }
   if (pr.programRegistrationFormVariant === 'economy') {
     return heading
+  }
+  if (pr.programRegistrationFormVariant === 'trainedTeachers') {
+    const curriculumChartSessionAtMax =
+      pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
+    return {
+      ...heading,
+      titleTrailing: (
+        <div
+          className="program-registration-paragraph__card-title-actions"
+          onClick={e => e.stopPropagation()}
+          onKeyDown={e => e.stopPropagation()}
+          role="presentation"
+        >
+          <CmsToggle
+            label="교사 연수"
+            checked={pr.trainedTeachersTeacherTrainingEnabled}
+            onChange={pr.onTrainedTeachersTeacherTrainingEnabledChange}
+          />
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="medium"
+            width={160}
+            disabled={curriculumChartSessionAtMax}
+            icon={<PlusOutlined aria-hidden />}
+            onClick={e => {
+              e.stopPropagation()
+              if (curriculumChartSessionAtMax) return
+              pr.onAddCurriculumChartSession()
+            }}
+          >
+            강의 진행 차시 추가
+          </CmsButton>
+        </div>
+      ),
+    }
   }
   if (pr.programType === 'schedule') {
     const isScheduleMultiAllPer =
@@ -223,8 +256,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
   const isMulti = pr.sessionRoundType === 'multi'
   const curriculumAddDisabled = pr.restrictCurriculumSessionStructure === true
   const curriculumChartSessionAtMax =
-    !isMulti &&
-    pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
+    !isMulti && pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
   return {
     ...heading,
     titleTrailing: (
@@ -546,15 +578,14 @@ export function paragraphEditableHeading(
         titleIsEditMode,
         descriptionIsEditMode,
         titleValue: p.paragraphTitle,
-        onTitleChange:
-          titleIsEditMode
-            ? (next: string) =>
-                updateParagraph(p.id, cur =>
-                  cur.kind === 'single_item' && cur.id === p.id
-                    ? { ...cur, paragraphTitle: next }
-                    : cur
-                )
-            : () => {},
+        onTitleChange: titleIsEditMode
+          ? (next: string) =>
+              updateParagraph(p.id, cur =>
+                cur.kind === 'single_item' && cur.id === p.id
+                  ? { ...cur, paragraphTitle: next }
+                  : cur
+              )
+          : () => {},
         titlePlaceholder: '타이틀을 입력해 주세요',
         titleRequired,
         titleClassName: formCardTitleUsesPlaceholderTone(paragraph)
