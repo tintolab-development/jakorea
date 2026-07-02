@@ -2,6 +2,9 @@
 
 `/templates/form-management` 작성·발급 양식과 Swagger `forms-surveys` 도메인 매핑입니다.
 
+**마이그레이션 실행 가이드 (PHASE 0–6)**: [forms-surveys-api-migration-guide.md](./forms-surveys-api-migration-guide.md)  
+**백엔드 갭·미구현 목록**: [forms-surveys-api-backend-gaps.md](./forms-surveys-api-backend-gaps.md)
+
 공통 가이드: [backend-handoff.md](./backend-handoff.md) · [api-routes-and-client.md](./api-routes-and-client.md)
 
 ---

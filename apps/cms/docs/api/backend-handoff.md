@@ -4,7 +4,8 @@ Swagger/OpenAPI 기반 실 API 연동 시 공통 설정·인증·응답 규칙�
 
 상세 클라이언트 규칙: [api-routes-and-client.md](./api-routes-and-client.md)  
 Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)  
-대시보드 1차 파일럿: [dashboard-api-integration.md](./dashboard-api-integration.md)
+대시보드 1차 파일럿: [dashboard-api-integration.md](./dashboard-api-integration.md)  
+**템플릿 양식 (forms-surveys)**: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) · [PHASE별 마이그레이션](./forms-surveys-api-migration-guide.md) · [**백엔드 갭 목록**](./forms-surveys-api-backend-gaps.md)
 
 ---
 
@@ -46,7 +47,7 @@ VITE_AUTH_REFRESH_PATH=/api/auth/refresh
 | --------------- | ------------------------------------------------------------------------- |
 | 관리자 로그인   | `POST /api/admin/auth/login`                                              |
 | MFA 검증        | `POST /api/admin/auth/mfa/verify`                                         |
-| MFA TOTP 등록   | `POST /api/admin/auth/mfa/setup` (`mfaMethod`, `enabled`, `challengeUuid`·`totpSecret`) |
+| MFA TOTP 등록   | `POST /api/admin/auth/mfa/enrollment` (`mfaMethod`, `enabled`, `challengeUuid`·`totpSecret`) |
 | 관리자 로그아웃 | `POST /api/admin/auth/logout` body: `{ refreshToken }` (Bearer + refresh) |
 | 관리자 refresh  | `POST /api/admin/auth/refresh` (`adminAuth` 활성 시 axios가 자동 사용)    |
 
@@ -55,11 +56,11 @@ VITE_AUTH_REFRESH_PATH=/api/auth/refresh
 1. `POST /api/admin/auth/login` → `{ requiresMfa, challengeUuid, mfaMethod, expiresAt }` (래퍼 없음)
 2. `mfaMethod` 분기:
    - `LOCAL_TEST_CODE`: QR 없음 — 테스트 코드 **`000000`** 입력
-   - `TOTP`: `POST /api/admin/auth/mfa/setup`으로 시크릿 등록 후 QR 표시 → Authenticator 6자리 입력
+   - `TOTP`: `POST /api/admin/auth/mfa/enrollment`으로 시크릿 등록 후 QR 표시 → Authenticator 6자리 입력
 3. `POST /api/admin/auth/mfa/verify` body: `{ challengeUuid, verificationCode }`
 4. 성공 시 `{ accessToken, refreshToken, expiresInSeconds }` → `auth_token` / `auth_refresh_token` 저장
 
-**TOTP 최초 등록 (`mfa/setup`)**
+**TOTP 최초 등록 (`mfa/enrollment`)**
 
 - 로그인 직후 challenge가 있을 때 `challengeUuid`를 body에 포함해 호출합니다.
 - `totpSecret` 없이 호출하면 서버가 시크릿을 생성할 수 있고, 실패 시 프론트가 시크릿을 생성해 재전송합니다.
