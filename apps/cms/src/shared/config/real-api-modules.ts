@@ -37,6 +37,7 @@ export const REAL_API_MODULE_KEYS = [
   'findPassword',
   'notifications',
   'performanceRecords',
+  'formsSurveys',
 ] as const
 export type RealApiModule = (typeof REAL_API_MODULE_KEYS)[number]
 

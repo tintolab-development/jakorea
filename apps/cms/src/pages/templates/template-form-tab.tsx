@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
-import { writingSections } from '@/features/template/model/template.schema'
 import type { TemplateRow } from '@/features/template/model/template.schema'
+import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
   lookupTemplateRegistry,
@@ -38,6 +38,7 @@ type TemplateFormTabQuery = {
 
 export default function TemplateFormTab() {
   const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
+  const { sections: writingSections } = useWritingFormSections()
   const isPreviewOpen = params.mode === 'edit'
   const { closeWritingUserPreview, isWritingUserPreviewOpen } = useTemplateWritingPreview()
 
@@ -85,13 +86,13 @@ export default function TemplateFormTab() {
       return
     }
     const normalizedId = params.id.trim()
-    const row = findWritingTemplateRowByDefinitionId(normalizedId)
+    const row = findWritingTemplateRowByDefinitionId(normalizedId, writingSections)
     if (row) {
       openTemplatePreview(row)
       return
     }
     closeTemplatePreview()
-  }, [params.mode, params.id, closeTemplatePreview, openTemplatePreview])
+  }, [params.mode, params.id, closeTemplatePreview, openTemplatePreview, writingSections])
 
   const rightNavigationConfig = useMemo(
     () => buildRightNavigationConfig(orderedLeftContentConfig),

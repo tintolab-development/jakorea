@@ -86,8 +86,8 @@ import {
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import {
-  loadWritingFormTemplateSave,
-  persistWritingFormTemplateSave,
+  loadWritingFormTemplateDraft,
+  persistWritingFormTemplateDraft,
 } from '@/features/template/lib/writing-form-template-local-save'
 import {
   loadUjatRecruitInstitutionTemplateSave,
@@ -321,6 +321,7 @@ export function useProgramParticipantApplicationEditor(
   useEffect(() => {
     if (!active) return
     /* eslint-disable react-hooks/set-state-in-effect -- 풀페이지 미리보기 열림과 동기화해 시드·저장본을 반영 */
+    let cancelled = false
     const applyDraft = (next: WritingFormDraft) => {
       const normalized = normalizeWritingFormDraft(next)
       setDraft(normalized)
@@ -348,23 +349,25 @@ export function useProgramParticipantApplicationEditor(
       }
     } else {
       const templateId = getTemplateIdForParticipantApplicationVariant(variant)
-      const saved = loadWritingFormTemplateSave(templateId)
-      if (saved?.draft) {
-        applyDraft(saved.draft)
-        const count = saved.editorState?.volunteerExceptionScheduleCount
-        if (typeof count === 'number' && Number.isFinite(count)) {
-          setVolunteerExceptionScheduleCount(Math.max(0, Math.floor(count)))
+      void loadWritingFormTemplateDraft(templateId).then(saved => {
+        if (cancelled) return
+        if (saved?.draft) {
+          applyDraft(saved.draft)
+          const count = saved.editorState?.volunteerExceptionScheduleCount
+          if (typeof count === 'number' && Number.isFinite(count)) {
+            setVolunteerExceptionScheduleCount(Math.max(0, Math.floor(count)))
+          }
+          const appType = saved.editorState?.ujatVolunteerApplicationType
+          if (appType === 'new' || appType === 'ujat-graduate') {
+            setUjatVolunteerApplicationType(appType)
+          }
+        } else {
+          applyDraft(createSeedDraft())
+          if (variant === 'ujat-application-volunteer') {
+            setUjatVolunteerApplicationType('ujat-graduate')
+          }
         }
-        const appType = saved.editorState?.ujatVolunteerApplicationType
-        if (appType === 'new' || appType === 'ujat-graduate') {
-          setUjatVolunteerApplicationType(appType)
-        }
-      } else {
-        applyDraft(createSeedDraft())
-        if (variant === 'ujat-application-volunteer') {
-          setUjatVolunteerApplicationType('ujat-graduate')
-        }
-      }
+      })
     }
 
     if (variant === 'ujat-application-institution') {
@@ -373,6 +376,10 @@ export function useProgramParticipantApplicationEditor(
       setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
     }
     /* eslint-enable react-hooks/set-state-in-effect */
+
+    return () => {
+      cancelled = true
+    }
   }, [active, createSeedDraft, variant])
 
   useEffect(() => {
@@ -784,7 +791,7 @@ export function useProgramParticipantApplicationEditor(
       if (variant === 'ujat-application-volunteer') {
         editorState.ujatVolunteerApplicationType = ujatVolunteerApplicationType
       }
-      persistWritingFormTemplateSave({
+      void persistWritingFormTemplateDraft({
         templateId,
         draft,
         editorState: Object.keys(editorState).length > 0 ? editorState : undefined,
