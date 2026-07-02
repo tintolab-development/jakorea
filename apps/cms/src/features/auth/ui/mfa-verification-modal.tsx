@@ -5,6 +5,7 @@
 import { Modal, Form, Alert, Spin } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useMfaVerification } from '@/features/auth/hooks/use-mfa-verification'
+import { ADMIN_MFA_LOCAL_TEST_CODE } from '@/shared/constants/mfa-policy'
 import { MfaModalHeader } from './mfa-modal-header'
 import { MfaOtpInput } from './mfa-otp-input'
 import { MfaOtpStatus } from './mfa-otp-status'
@@ -24,6 +25,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
     provisioning,
     provisioningLoading,
     provisioningError,
+    isLocalTestMfa,
     failedAttempts,
     isLocked,
     handleVerify,
@@ -61,10 +63,19 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
       }}
     >
       <div className="mfa-verification-modal__body">
-        <MfaModalHeader />
+        <MfaModalHeader isLocalTest={isLocalTestMfa} />
 
         {lockMessage && (
           <Alert type="error" description={lockMessage} showIcon className="mfa-verification-modal__alert" />
+        )}
+
+        {isLocalTestMfa && (
+          <Alert
+            type="info"
+            description={`테스트 코드 ${ADMIN_MFA_LOCAL_TEST_CODE} 을 입력하세요. (백엔드 mfaMethod: LOCAL_TEST_CODE)`}
+            showIcon
+            className="mfa-verification-modal__alert"
+          />
         )}
 
         {provisioningError && (
@@ -76,19 +87,23 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
           />
         )}
 
-        <div className="mfa-verification-modal__qr">
-          {provisioningLoading ? (
-            <Spin tip="QR 코드 생성 중…" />
-          ) : provisioning ? (
-            <img
-              src={provisioning.qrDataUrl}
-              alt="TOTP QR"
-              className="mfa-verification-modal__qr-image"
-              width={220}
-              height={220}
-            />
-          ) : null}
-        </div>
+        {!isLocalTestMfa && (
+          <div className="mfa-verification-modal__qr">
+            {provisioningLoading ? (
+              <Spin tip="QR 코드 생성 중…" />
+            ) : provisioning ? (
+              <img
+                src={provisioning.qrDataUrl}
+                alt="TOTP QR"
+                className="mfa-verification-modal__qr-image"
+                width={220}
+                height={220}
+              />
+            ) : provisioningError ? null : (
+              <Spin tip="QR 코드 생성 중…" />
+            )}
+          </div>
+        )}
 
         <Form form={form} layout="vertical" onFinish={handleVerify} className="mfa-verification-modal__form">
           <MfaOtpInput

@@ -9,14 +9,18 @@ import type {
   OtpVerifyRequest,
   OtpVerifyResponse,
   TotpProvisioning } from '@/types/mfa'
-import { generateURI, verify } from 'otplib'
+import { generateSecret, generateURI, verify } from 'otplib'
 import QRCode from 'qrcode'
 import { TOTP_ISSUER } from '@/shared/constants/totp'
 import { getTotpSecretByEmail } from '@/data/mock/totp-secrets'
-import { OTP_POLICY } from '@/shared/constants/mfa-policy'
+import {
+  ADMIN_MFA_METHOD,
+  isAdminLocalTestMfa,
+  OTP_POLICY,
+} from '@/shared/constants/mfa-policy'
 import { generateMockOtp, verifyMockOtp } from '@/data/mock/mfa'
 import { saveSmsLog, updateSmsLogStatus, getSmsLogByOtp } from '@/data/mock/sms-logs'
-import { fetchAdminMfaVerify } from '@/features/auth/api/admin-auth-fetcher'
+import { fetchAdminMfaSetup, fetchAdminMfaVerify } from '@/features/auth/api/admin-auth-fetcher'
 import type { AuthTokenResponse } from '@/features/auth/model/admin-login-api.types'
 
 // Mock: 사용자별 OTP 저장 (실제로는 백엔드에서 관리)
@@ -191,9 +195,90 @@ export async function verifyOtp(request: OtpVerifyRequest): Promise<OtpVerifyRes
   }
 }
 
-/** Microsoft Authenticator 등 표준 앱용 TOTP QR·수동 키 (Mock) */
-export async function getTotpProvisioning(email: string): Promise<TotpProvisioning> {
+export interface GetTotpProvisioningOptions {
+  challengeUuid?: string
+  mfaMethod?: string
+  totpSecret?: string
+  otpauthUri?: string
+  qrDataUrl?: string
+}
+
+async function buildTotpProvisioningFromSecret(
+  email: string,
+  secret: string,
+  otpauthUri?: string,
+  qrDataUrl?: string
+): Promise<TotpProvisioning> {
+  const resolvedUri =
+    otpauthUri ?? generateURI({ issuer: TOTP_ISSUER, label: email, secret })
+  const resolvedQr =
+    qrDataUrl ?? (await QRCode.toDataURL(resolvedUri, { margin: 2, width: 220 }))
+
+  return {
+    otpauthUri: resolvedUri,
+    qrDataUrl: resolvedQr,
+    manualSecret: secret,
+  }
+}
+
+async function getRemoteTotpProvisioning(
+  email: string,
+  challengeUuid: string,
+  preset?: Pick<GetTotpProvisioningOptions, 'totpSecret' | 'otpauthUri' | 'qrDataUrl'>
+): Promise<TotpProvisioning> {
+  if (preset?.totpSecret || preset?.otpauthUri || preset?.qrDataUrl) {
+    const secret = preset.totpSecret ?? generateSecret()
+    return buildTotpProvisioningFromSecret(
+      email,
+      secret,
+      preset.otpauthUri,
+      preset.qrDataUrl
+    )
+  }
+
+  let setupResult = await fetchAdminMfaSetup({
+    mfaMethod: ADMIN_MFA_METHOD.TOTP,
+    enabled: true,
+    challengeUuid,
+  })
+
+  let secret = setupResult.totpSecret
+  if (!secret) {
+    secret = generateSecret()
+    setupResult = await fetchAdminMfaSetup({
+      mfaMethod: ADMIN_MFA_METHOD.TOTP,
+      enabled: true,
+      challengeUuid,
+      totpSecret: secret,
+    })
+    secret = setupResult.totpSecret ?? secret
+  }
+
+  return buildTotpProvisioningFromSecret(
+    email,
+    secret,
+    setupResult.otpauthUri,
+    setupResult.qrDataUrl
+  )
+}
+
+/** Microsoft Authenticator 등 표준 앱용 TOTP QR·수동 키 */
+export async function getTotpProvisioning(
+  email: string,
+  options?: GetTotpProvisioningOptions
+): Promise<TotpProvisioning | null> {
   await new Promise(resolve => setTimeout(resolve, 200))
+
+  if (options?.challengeUuid) {
+    try {
+      return await getRemoteTotpProvisioning(email, options.challengeUuid, options)
+    } catch (error) {
+      if (isAdminLocalTestMfa(options.mfaMethod)) {
+        return null
+      }
+      throw error
+    }
+  }
 
   const secret = getTotpSecretByEmail(email)
   if (!secret) {
@@ -202,13 +287,7 @@ export async function getTotpProvisioning(email: string): Promise<TotpProvisioni
     )
   }
 
-  const otpauthUri = generateURI({
-    issuer: TOTP_ISSUER,
-    label: email,
-    secret })
-  const qrDataUrl = await QRCode.toDataURL(otpauthUri, { margin: 2, width: 220 })
-
-  return { otpauthUri, qrDataUrl, manualSecret: secret }
+  return buildTotpProvisioningFromSecret(email, secret)
 }
 
 /** TOTP 6자리 검증 — challengeUuid 있으면 실 API mfa/verify (API 로그인) */

@@ -12,8 +12,8 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 | 항목            | 값                                                                                |
 | --------------- | --------------------------------------------------------------------------------- |
-| Swagger UI      | `https://12aa-221-146-247-18.ngrok-free.app//swagger-ui/index.html`               |
-| OpenAPI JSON    | `https://12aa-221-146-247-18.ngrok-free.app//v3/api-docs`                         |
+| Swagger UI      | `https://7836-183-102-114-192.ngrok-free.app//swagger-ui/index.html`               |
+| OpenAPI JSON    | `https://7836-183-102-114-192.ngrok-free.app//v3/api-docs`                         |
 | 프론트 스냅샷   | [`apps/cms/openapi/backend.openapi.json`](../../openapi/backend.openapi.json)     |
 | 대시보드 subset | [`apps/cms/openapi/dashboard.openapi.json`](../../openapi/dashboard.openapi.json) |
 
@@ -27,7 +27,7 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 2. **프록시 모드(권장)**
 
 ```env
-VITE_API_SERVER=https://12aa-221-146-247-18.ngrok-free.app/
+VITE_API_SERVER=https://7836-183-102-114-192.ngrok-free.app/
 VITE_REAL_API_MODULES=adminAuth,dashboard,logs,detailedPrograms,textbooks,sponsors,notices,faqs,inquiries,paymentOrders,accountPayments,settlementConfigs
 VITE_ADMIN_AUTH_API_PREFIX=/api/admin/auth
 VITE_AUTH_REFRESH_PATH=/api/auth/refresh
@@ -45,15 +45,25 @@ VITE_AUTH_REFRESH_PATH=/api/auth/refresh
 | API             | 경로                                                                      |
 | --------------- | ------------------------------------------------------------------------- |
 | 관리자 로그인   | `POST /api/admin/auth/login`                                              |
-| MFA             | `POST /api/admin/auth/mfa/verify`                                         |
+| MFA 검증        | `POST /api/admin/auth/mfa/verify`                                         |
+| MFA TOTP 등록   | `POST /api/admin/auth/mfa/setup` (`mfaMethod`, `enabled`, `challengeUuid`·`totpSecret`) |
 | 관리자 로그아웃 | `POST /api/admin/auth/logout` body: `{ refreshToken }` (Bearer + refresh) |
 | 관리자 refresh  | `POST /api/admin/auth/refresh` (`adminAuth` 활성 시 axios가 자동 사용)    |
 
 **로그인 → MFA 흐름**
 
-1. `POST /api/admin/auth/login` → `{ challengeUuid, mfaMethod, expiresAt }` (래퍼 없음)
-2. `POST /api/admin/auth/mfa/verify` body: `{ challengeUuid, verificationCode }`
-3. 성공 시 `{ accessToken, refreshToken, expiresInSeconds }` → `auth_token` / `auth_refresh_token` 저장
+1. `POST /api/admin/auth/login` → `{ requiresMfa, challengeUuid, mfaMethod, expiresAt }` (래퍼 없음)
+2. `mfaMethod` 분기:
+   - `LOCAL_TEST_CODE`: QR 없음 — 테스트 코드 **`000000`** 입력
+   - `TOTP`: `POST /api/admin/auth/mfa/setup`으로 시크릿 등록 후 QR 표시 → Authenticator 6자리 입력
+3. `POST /api/admin/auth/mfa/verify` body: `{ challengeUuid, verificationCode }`
+4. 성공 시 `{ accessToken, refreshToken, expiresInSeconds }` → `auth_token` / `auth_refresh_token` 저장
+
+**TOTP 최초 등록 (`mfa/setup`)**
+
+- 로그인 직후 challenge가 있을 때 `challengeUuid`를 body에 포함해 호출합니다.
+- `totpSecret` 없이 호출하면 서버가 시크릿을 생성할 수 있고, 실패 시 프론트가 시크릿을 생성해 재전송합니다.
+- OpenAPI `AdminMfaSetupResponse`에는 QR 필드가 없어, 프론트는 `totpSecret`/`otpauthUri`가 오면 사용하고 없으면 로컬에서 QR 이미지를 생성합니다.
 
 **로컬 백엔드 (`mfaMethod: LOCAL_TEST_CODE`)**
 
@@ -106,7 +116,7 @@ CMS wiring: [`features/auth/social-auth/cms-client.ts`](../../src/features/auth/
 **환경 변수**
 
 ```env
-VITE_API_SERVER=https://12aa-221-146-247-18.ngrok-free.app/
+VITE_API_SERVER=https://7836-183-102-114-192.ngrok-free.app/
 VITE_KAKAO_CLIENT_ID=
 VITE_NAVER_CLIENT_ID=
 VITE_GOOGLE_CLIENT_ID=

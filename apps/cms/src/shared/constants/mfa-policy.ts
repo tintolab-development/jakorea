@@ -28,3 +28,21 @@ export const OTP_LENGTH = 6
 
 /** 백엔드 `LOCAL_TEST_CODE` MFA 방식용 고정 테스트 코드 (Swagger 예시) */
 export const ADMIN_MFA_LOCAL_TEST_CODE = '000000'
+
+/** 관리자 MFA 방식 (POST /api/admin/auth/login → mfaMethod) */
+export const ADMIN_MFA_METHOD = {
+  TOTP: 'TOTP',
+  LOCAL_TEST_CODE: 'LOCAL_TEST_CODE',
+} as const
+
+export function normalizeAdminMfaMethod(method?: string): string {
+  return method?.trim().toUpperCase() || ADMIN_MFA_METHOD.TOTP
+}
+
+export function isAdminLocalTestMfa(method?: string): boolean {
+  return normalizeAdminMfaMethod(method) === ADMIN_MFA_METHOD.LOCAL_TEST_CODE
+}
+
+export function isAdminTotpMfa(method?: string): boolean {
+  return normalizeAdminMfaMethod(method) === ADMIN_MFA_METHOD.TOTP
+}

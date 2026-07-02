@@ -9,7 +9,7 @@ import type { FormInstance } from 'antd/es/form'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { getTotpProvisioning, verifyTotp } from '@/entities/user/api/mfa-service'
-import { OTP_LENGTH } from '@/shared/constants/mfa-policy'
+import { OTP_LENGTH, isAdminLocalTestMfa } from '@/shared/constants/mfa-policy'
 import { unknownErrorText } from '@/shared/utils/error-handler'
 import type { TotpProvisioning } from '@/types/mfa'
 
@@ -25,6 +25,7 @@ interface UseMfaVerificationResult {
   provisioning: TotpProvisioning | null
   provisioningLoading: boolean
   provisioningError: string | null
+  isLocalTestMfa: boolean
   failedAttempts: number
   isLocked: boolean
   lockUntil: string | null
@@ -52,6 +53,11 @@ export function useMfaVerification({
   const verifyInFlightRef = useRef(false)
 
   const isRemoteMfa = Boolean(mfaState?.challengeUuid)
+  const isLocalTestMfa =
+    isRemoteMfa &&
+    isAdminLocalTestMfa(mfaState?.mfaMethod) &&
+    !provisioning &&
+    !provisioningLoading
   const displayFailedAttempts = isRemoteMfa ? remoteFailedAttempts : failedAttempts
 
   const clearOtpInput = useCallback(() => {
@@ -66,10 +72,17 @@ export function useMfaVerification({
 
   const refreshProvisioning = useCallback(async () => {
     if (!user?.email) return
+
     setProvisioningLoading(true)
     setProvisioningError(null)
     try {
-      const p = await getTotpProvisioning(user.email)
+      const p = await getTotpProvisioning(user.email, {
+        challengeUuid: mfaState?.challengeUuid,
+        mfaMethod: mfaState?.mfaMethod,
+        totpSecret: mfaState?.totpSecret,
+        otpauthUri: mfaState?.otpauthUri,
+        qrDataUrl: mfaState?.qrDataUrl,
+      })
       setProvisioning(p)
     } catch (e: unknown) {
       const err = unknownErrorText(e, 'QR 정보를 불러오지 못했습니다.')
@@ -78,7 +91,14 @@ export function useMfaVerification({
     } finally {
       setProvisioningLoading(false)
     }
-  }, [user?.email])
+  }, [
+    user?.email,
+    mfaState?.challengeUuid,
+    mfaState?.mfaMethod,
+    mfaState?.totpSecret,
+    mfaState?.otpauthUri,
+    mfaState?.qrDataUrl,
+  ])
 
   useEffect(() => {
     if (open && user?.email) {
@@ -266,6 +286,7 @@ export function useMfaVerification({
     provisioning,
     provisioningLoading,
     provisioningError,
+    isLocalTestMfa,
     failedAttempts: displayFailedAttempts,
     isLocked,
     lockUntil,
