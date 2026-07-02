@@ -17,7 +17,7 @@ export interface SocialLoginRequest {
      */
   provider: string;
   /**
-     * provider access token
+     * 제공자 액세스 토큰
      * @minLength 0
      * @maxLength 4096
      */

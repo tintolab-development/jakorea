@@ -40,7 +40,7 @@ export interface FileUploadPrepareRequest {
      */
   originalFileName: string;
   /**
-     * MIME content type
+     * MIME 콘텐츠 타입
      * @minLength 0
      * @maxLength 120
      */

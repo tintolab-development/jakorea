@@ -10896,46 +10896,114 @@
       },
       "AdminMfaSetupRequest": {
         "type": "object",
+        "description": "관리자 MFA 설정 요청",
         "properties": {
           "mfaMethod": {
             "type": "string",
+            "description": "설정할 MFA 방식입니다. 관리자 QR 인증은 TOTP로 정규화합니다.",
+            "example": "TOTP",
             "maxLength": 40,
             "minLength": 0
           },
           "totpSecret": {
             "type": "string",
+            "description": "선택 입력용 TOTP secret입니다. 비어 있으면 개발용 임시 secret을 사용합니다.",
+            "example": "JBSWY3DPEHPK3PXP",
             "maxLength": 256,
             "minLength": 0
           },
           "backupCodesHashJson": {
             "type": "string",
+            "description": "백업 코드 해시 JSON입니다.",
             "maxLength": 4096,
             "minLength": 0
           },
           "enabled": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "MFA 활성화 여부입니다. 비어 있으면 true로 처리합니다.",
+            "example": true
+          },
+          "challengeUuid": {
+            "type": "string",
+            "description": "로그인 직후 QR 설정을 허용하기 위한 MFA challenge UUID입니다.",
+            "example": "mfa-challenge-sample-uuid",
+            "maxLength": 255,
+            "minLength": 0
           }
-        },
-        "required": [
-          "enabled",
-          "mfaMethod"
-        ]
+        }
       },
       "AdminMfaSetupResponse": {
         "type": "object",
+        "description": "관리자 MFA 설정 응답",
         "properties": {
           "adminId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "관리자 계정 ID",
+            "example": 1
           },
           "mfaMethod": {
-            "type": "string"
+            "type": "string",
+            "description": "MFA 방식",
+            "example": "TOTP"
           },
           "enabled": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "MFA 활성화 여부",
+            "example": true
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "description": "MFA 설정 처리 메시지"
+          },
+          "mfaSetupRequired": {
+            "type": "boolean",
+            "description": "Authenticator 앱 등록 정보가 필요한지 여부",
+            "example": true
+          },
+          "secretKey": {
+            "type": "string",
+            "description": "Authenticator 앱 수동 입력용 임시 secret key",
+            "example": "JBSWY3DPEHPK3PXP"
+          },
+          "manualEntryKey": {
+            "type": "string",
+            "description": "Authenticator 앱 수동 입력용 임시 key 별칭",
+            "example": "JBSWY3DPEHPK3PXP"
+          },
+          "totpSecret": {
+            "type": "string",
+            "description": "TOTP 임시 secret 값",
+            "example": "JBSWY3DPEHPK3PXP"
+          },
+          "otpauthUri": {
+            "type": "string",
+            "description": "Microsoft Authenticator 호환 otpauth URI"
+          },
+          "qrCodeUrl": {
+            "type": "string",
+            "description": "QR 이미지 URL 또는 data URI"
+          },
+          "qrCodeDataUrl": {
+            "type": "string",
+            "description": "QR 이미지 data URI"
+          },
+          "qrDataUrl": {
+            "type": "string",
+            "description": "프론트 호환용 QR data URI 별칭"
+          },
+          "qrImageUrl": {
+            "type": "string",
+            "description": "QR 이미지 별칭"
+          },
+          "qrCodeImageUrl": {
+            "type": "string",
+            "description": "QR 이미지 별칭"
+          },
+          "verificationCodeHint": {
+            "type": "string",
+            "description": "로컬 임시 MFA 통과 코드",
+            "example": "000000"
           }
         }
       },
@@ -10988,6 +11056,55 @@
             "format": "date-time",
             "description": "challenge 만료 시각",
             "example": "2026-06-02T09:10:00Z"
+          },
+          "mfaSetupRequired": {
+            "type": "boolean",
+            "description": "MFA 앱 등록 정보가 필요한지 여부",
+            "example": true
+          },
+          "secretKey": {
+            "type": "string",
+            "description": "Authenticator 앱 수동 입력용 임시 secret key",
+            "example": "JBSWY3DPEHPK3PXP"
+          },
+          "manualEntryKey": {
+            "type": "string",
+            "description": "Authenticator 앱 수동 입력용 임시 key 별칭",
+            "example": "JBSWY3DPEHPK3PXP"
+          },
+          "totpSecret": {
+            "type": "string",
+            "description": "TOTP 임시 secret 값",
+            "example": "JBSWY3DPEHPK3PXP"
+          },
+          "otpauthUri": {
+            "type": "string",
+            "description": "Microsoft Authenticator 호환 otpauth URI"
+          },
+          "qrCodeUrl": {
+            "type": "string",
+            "description": "QR 이미지 URL 또는 data URI"
+          },
+          "qrCodeDataUrl": {
+            "type": "string",
+            "description": "QR 이미지 data URI"
+          },
+          "qrDataUrl": {
+            "type": "string",
+            "description": "프론트 호환용 QR data URI 별칭"
+          },
+          "qrImageUrl": {
+            "type": "string",
+            "description": "QR 이미지 별칭"
+          },
+          "qrCodeImageUrl": {
+            "type": "string",
+            "description": "QR 이미지 별칭"
+          },
+          "verificationCodeHint": {
+            "type": "string",
+            "description": "로컬 임시 MFA 통과 코드",
+            "example": "000000"
           }
         }
       },

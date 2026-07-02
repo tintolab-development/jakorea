@@ -30,7 +30,7 @@ export interface PrivacyExportApprovalResponse {
   businessPurpose?: string;
   /** 검색 조건/필터 snapshot hash */
   searchSnapshotHash?: string;
-  /** payload hash */
+  /** 페이로드 해시 */
   payloadHash?: string;
   /** 요청 시각 */
   requestedAt?: string;

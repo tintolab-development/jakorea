@@ -20,9 +20,9 @@ export interface SensitiveFileDownloadResponse {
   fileType?: string;
   /** 요청 시각 */
   requestedAt?: string;
-  /** one-time relay token */
+  /** 일회성 릴레이 토큰 */
   relayToken?: string;
-  /** relay stream URL */
+  /** 릴레이 스트림 URL */
   streamUrl?: string;
   /** relay token 또는 stream URL 만료 시각 */
   expiresAt?: string;

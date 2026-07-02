@@ -34,7 +34,7 @@ export interface FileObjectResponse {
   privacyLevel?: string;
   /** 원본 파일명 */
   originalFileName?: string;
-  /** MIME content type */
+  /** MIME 콘텐츠 타입 */
   contentType?: string;
   /** 파일 크기(byte) */
   fileSize?: number;

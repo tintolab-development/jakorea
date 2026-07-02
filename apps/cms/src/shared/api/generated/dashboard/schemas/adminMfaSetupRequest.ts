@@ -6,21 +6,34 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 관리자 MFA 설정 요청
+ */
 export interface AdminMfaSetupRequest {
   /**
+     * 설정할 MFA 방식입니다. 관리자 QR 인증은 TOTP로 정규화합니다.
      * @minLength 0
      * @maxLength 40
      */
-  mfaMethod: string;
+  mfaMethod?: string;
   /**
+     * 선택 입력용 TOTP secret입니다. 비어 있으면 개발용 임시 secret을 사용합니다.
      * @minLength 0
      * @maxLength 256
      */
   totpSecret?: string;
   /**
+     * 백업 코드 해시 JSON입니다.
      * @minLength 0
      * @maxLength 4096
      */
   backupCodesHashJson?: string;
-  enabled: boolean;
+  /** MFA 활성화 여부입니다. 비어 있으면 true로 처리합니다. */
+  enabled?: boolean;
+  /**
+     * 로그인 직후 QR 설정을 허용하기 위한 MFA challenge UUID입니다.
+     * @minLength 0
+     * @maxLength 255
+     */
+  challengeUuid?: string;
 }

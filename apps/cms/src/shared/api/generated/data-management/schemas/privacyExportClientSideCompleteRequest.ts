@@ -41,7 +41,7 @@ export interface PrivacyExportClientSideCompleteRequest {
      */
   searchSnapshotHash?: string;
   /**
-     * payload hash
+     * 페이로드 해시
      * @minLength 0
      * @maxLength 128
      */

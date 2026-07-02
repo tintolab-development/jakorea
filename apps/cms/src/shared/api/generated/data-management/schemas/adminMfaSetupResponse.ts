@@ -6,9 +6,38 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 관리자 MFA 설정 응답
+ */
 export interface AdminMfaSetupResponse {
+  /** 관리자 계정 ID */
   adminId?: number;
+  /** MFA 방식 */
   mfaMethod?: string;
+  /** MFA 활성화 여부 */
   enabled?: boolean;
+  /** MFA 설정 처리 메시지 */
   message?: string;
+  /** Authenticator 앱 등록 정보가 필요한지 여부 */
+  mfaSetupRequired?: boolean;
+  /** Authenticator 앱 수동 입력용 임시 secret key */
+  secretKey?: string;
+  /** Authenticator 앱 수동 입력용 임시 key 별칭 */
+  manualEntryKey?: string;
+  /** TOTP 임시 secret 값 */
+  totpSecret?: string;
+  /** Microsoft Authenticator 호환 otpauth URI */
+  otpauthUri?: string;
+  /** QR 이미지 URL 또는 data URI */
+  qrCodeUrl?: string;
+  /** QR 이미지 data URI */
+  qrCodeDataUrl?: string;
+  /** 프론트 호환용 QR data URI 별칭 */
+  qrDataUrl?: string;
+  /** QR 이미지 별칭 */
+  qrImageUrl?: string;
+  /** QR 이미지 별칭 */
+  qrCodeImageUrl?: string;
+  /** 로컬 임시 MFA 통과 코드 */
+  verificationCodeHint?: string;
 }

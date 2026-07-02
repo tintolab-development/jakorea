@@ -14,6 +14,6 @@ export type NoticeRequestStatus = typeof NoticeRequestStatus[keyof typeof Notice
 
 export const NoticeRequestStatus = {
   published: 'published',
-  draft: 'draft',
+  임시저장: '임시저장',
   archived: 'archived',
 } as const;
