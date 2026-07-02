@@ -53,6 +53,8 @@ export interface FilterTableLayoutProps extends TableFilterGroupProps {
   description?: ReactNode
   /** 헤더 우측 버튼·액션 (엑셀 다운로드 버튼 좌측). 버튼 간격은 레이아웃에서 8px 고정 — 별도 gap 래퍼 불필요 */
   actions?: ReactNode
+  /** 엑셀 다운로드 버튼 우측 액션 (예: 프로그램 신규 등록) */
+  actionsAfterExcel?: ReactNode
   /** true면 툴바 우측 엑셀 다운로드 버튼 숨김 (기본 false) */
   hideExcelDownload?: boolean
   /** 테이블 엑셀 export 설정 — `onExcelDownload` 없을 때 내부 훅으로 연결 */
@@ -81,6 +83,7 @@ export function FilterTableLayout({
   titleNote,
   description,
   actions,
+  actionsAfterExcel,
   hideExcelDownload = false,
   excelExport,
   onExcelDownload,
@@ -148,12 +151,13 @@ export function FilterTableLayout({
 
   const toolbarTitle = showTitle ? title : null
   const showExcelButton = !hideExcelDownload
-  const showToolbarActions = actions != null || showExcelButton
+  const showToolbarActions = actions != null || actionsAfterExcel != null || showExcelButton
   const showToolbar =
     toolbarTitle != null ||
     titleNote != null ||
     description != null ||
     actions != null ||
+    actionsAfterExcel != null ||
     showExcelButton
 
   return (
@@ -202,6 +206,9 @@ export function FilterTableLayout({
                     disabled={excelDownloadDisabled || resolvedOnExcelDownload == null}
                   />
                 </div>
+              ) : null}
+              {actionsAfterExcel != null ? (
+                <div className="filter-table-layout__toolbar-actions-slot">{actionsAfterExcel}</div>
               ) : null}
             </div>
           ) : null}

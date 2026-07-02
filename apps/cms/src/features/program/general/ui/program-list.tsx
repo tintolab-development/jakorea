@@ -50,6 +50,8 @@ export interface ProgramListProps {
   onDisplayCountChange?: (count: number, hasActiveFilters: boolean) => void
   config?: ProgramListConfig
   children?: React.ReactNode
+  /** 엑셀 다운로드 버튼 우측 툴바 액션 (예: 프로그램 신규 등록) */
+  toolbarActionsAfterExcel?: React.ReactNode
 }
 
 export function ProgramList({
@@ -67,6 +69,7 @@ export function ProgramList({
   onDisplayCountChange,
   config,
   children,
+  toolbarActionsAfterExcel,
 }: ProgramListProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const listView: ProgramListView = config?.view ?? 'ALL'
@@ -184,6 +187,7 @@ export function ProgramList({
           title={headerTitle}
           description={`총 ${displayedCount.toLocaleString()}건`}
           actions={children}
+          actionsAfterExcel={toolbarActionsAfterExcel}
           className={filterTableLayoutClassName}
           excelExport={{
             columns: antdColumns,
@@ -230,6 +234,7 @@ export function ProgramList({
                   <span className="table-description">{`총 ${displayedCount.toLocaleString()}건`}</span>
                 </div>
                 {children}
+                {toolbarActionsAfterExcel}
               </div>
             }
           />
