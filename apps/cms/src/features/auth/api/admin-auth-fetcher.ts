@@ -111,12 +111,12 @@ function unwrapMfaSetupResponse(payload: unknown): AdminMfaSetupResult {
   throw parseAuthError(payload, 'MFA 설정 응답 형식이 올바르지 않습니다.')
 }
 
-/** POST /api/admin/auth/mfa/setup — TOTP 최초 등록·갱신 */
-export async function fetchAdminMfaSetup(
+/** POST /api/admin/auth/mfa/enrollment — TOTP 최초 등록·갱신 */
+export async function fetchAdminMfaEnrollment(
   body: AdminMfaSetupRequestBody
 ): Promise<AdminMfaSetupResult> {
   try {
-    const { data: payload } = await axiosClient.post<unknown>(adminAuthPaths.mfaSetup(), body)
+    const { data: payload } = await axiosClient.post<unknown>(adminAuthPaths.mfaEnrollment(), body)
     return unwrapMfaSetupResponse(payload)
   } catch (err) {
     if (err instanceof AdminMfaApiError) throw err

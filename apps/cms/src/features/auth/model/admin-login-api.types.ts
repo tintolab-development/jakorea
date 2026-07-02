@@ -1,6 +1,7 @@
 /**
  * 관리자 인증 API 계약 (Swagger v9)
  * - POST `/api/admin/auth/login` → MFA challenge
+ * - POST `/api/admin/auth/mfa/enrollment` → TOTP 등록·QR provisioning
  * - POST `/api/admin/auth/mfa/verify` → access/refresh token
  * - POST `/api/admin/auth/refresh` → token 갱신
  */
@@ -22,7 +23,7 @@ export interface AdminMfaChallengeResponse {
   qrDataUrl?: string
 }
 
-/** POST /api/admin/auth/mfa/setup */
+/** POST /api/admin/auth/mfa/enrollment */
 export interface AdminMfaSetupRequestBody {
   mfaMethod: string
   enabled: boolean
@@ -32,7 +33,7 @@ export interface AdminMfaSetupRequestBody {
   challengeUuid?: string
 }
 
-/** POST /api/admin/auth/mfa/setup 200 — 문서 외 provisioning 필드 허용 */
+/** POST /api/admin/auth/mfa/enrollment 200 — 문서 외 provisioning 필드 허용 */
 export interface AdminMfaSetupResult {
   adminId?: number
   mfaMethod?: string
