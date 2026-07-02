@@ -17,6 +17,14 @@
   padding-bottom: 10px;
 }
 
+/* 라디오 활성화 시 Ant 기본 전환·스케일 애니메이션 제거 — 즉시 선택 상태 반영 */
+.program-registration-paragraph .ant-radio,
+.program-registration-paragraph .ant-radio .ant-radio-inner,
+.program-registration-paragraph .ant-radio .ant-radio-inner::after {
+  transition: none !important;
+  animation: none !important;
+}
+
 .program-registration-paragraph__schedule-preview-placeholder {
   color: var(--gray-85969-d, #85969d);
   font-family: Pretendard, sans-serif;
