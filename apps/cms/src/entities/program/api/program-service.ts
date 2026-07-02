@@ -9,10 +9,12 @@ import type { Program, ProgramRound } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock'
 import { getCompanySchoolProgramById } from '@/data/mock/economy-programs'
 import { getGeneralProgramById } from '@/data/mock/general-programs'
+import { getTrainedTeachersProgramById } from '@/data/mock/trained-teachers-programs'
 import {
   COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
   findGeneralRegistrationLocalSaveProgramById,
   readCompanySchoolRegistrationLocalSavePrograms,
+  TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
 } from '@/features/program/general/lib/registration-local-save'
 import {
   mockUjatElementaryListPrograms,
@@ -35,6 +37,13 @@ function isCompanySchoolProgramId(id: string): boolean {
     id.startsWith('economy-prog-') ||
     id.startsWith('company-school-prog-') ||
     id.startsWith(COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
+  )
+}
+
+function isTrainedTeachersProgramId(id: string): boolean {
+  return (
+    id.startsWith('trained-teachers-prog-') ||
+    id.startsWith(TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
   )
 }
 
@@ -62,8 +71,21 @@ function resolveProgramFromStores(id: string): Program | undefined {
     )
   }
 
+  if (isTrainedTeachersProgramId(id)) {
+    return (
+      getTrainedTeachersProgramById(id) ??
+      mockProgramsMap.get(id) ??
+      getCompanySchoolProgramById(id) ??
+      getGeneralProgramById(id) ??
+      findGeneralRegistrationLocalSaveProgramById(id) ??
+      mockUjatElementaryListProgramsMap.get(id) ??
+      findUjatRegistrationLocalSaveProgramById(id)
+    )
+  }
+
   return (
     mockProgramsMap.get(id) ??
+    getTrainedTeachersProgramById(id) ??
     getCompanySchoolProgramById(id) ??
     getGeneralProgramById(id) ??
     findGeneralRegistrationLocalSaveProgramById(id) ??
