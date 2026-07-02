@@ -25,48 +25,52 @@
       "description": "개인정보 조회, export, 승인, raw 다운로드, 감사로그와 보관 정책 API입니다."
     },
     {
-      "name": "알림",
-      "description": "알림 템플릿, 이벤트, 발송 상태 API"
-    },
-    {
-      "name": "CMS 콘텐츠",
-      "description": "CMS 공지사항, FAQ, 카테고리 관리 API"
-    },
-    {
       "name": "실적",
       "description": "실적 목록, 상세, 재생성, 마감, 정정, 외부 반출 API입니다."
-    },
-    {
-      "name": "인증/세션",
-      "description": "Canonical authenticated admin SSO link session API"
     },
     {
       "name": "수료증/참여인증서",
       "description": "수료증과 참여인증서 발급, 조회, 다운로드, 상태 확인 API입니다."
     },
     {
-      "name": "시스템 진단/운영 검증",
-      "description": "헬스체크, 릴리즈 readiness, 프론트 연동 pack API"
+      "name": "개인정보/감사",
+      "description": "개인정보 원문 조회, export 승인, 감사로그 API"
     },
     {
-      "name": "시스템 준비도",
-      "description": "운영 readiness, local RC, staging rehearsal 점검 API"
+      "name": "기타 API",
+      "description": "행정안전부 도로명주소 검색 프록시 API"
     },
     {
-      "name": "인증/세션",
-      "description": "Canonical admin SSO account management API"
+      "name": "알림",
+      "description": "알림 템플릿, 이벤트, 발송 상태 API"
+    },
+    {
+      "name": "수료증/참여인증서",
+      "description": "수료증/참여인증서 발급, 이력, 차단 사유 API"
+    },
+    {
+      "name": "공개 콘텐츠",
+      "description": "Public Content 관련 관리자 API"
+    },
+    {
+      "name": "회원/강사",
+      "description": "Members 관련 관리자 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "학교 검색 공공 API 캐시/프록시 API"
     },
     {
       "name": "콘텐츠/고객지원",
       "description": "공지사항, FAQ, 문의, 고객지원 화면에서 사용하는 API입니다."
     },
     {
-      "name": "파일 관리",
-      "description": "파일 메타데이터, 스캔 상태, 다운로드 claim, 삭제/파기 API"
-    },
-    {
       "name": "후원사",
       "description": "후원사, 담당자, 연도별 후원사업 관리 API입니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "로그인 사용자 기준 CMS 대시보드 개인화 설정 API"
     },
     {
       "name": "CMS 교재",
@@ -81,96 +85,48 @@
       "description": "정산, 지급조서, 계좌지급, 정산 캘린더, 정정 요청 API입니다."
     },
     {
-      "name": "기타 API",
-      "description": "신규 프론트 사용 금지: 정산 신청서 전환 전 데이터 보정/예외 처리 전용 API"
+      "name": "폼/설문",
+      "description": "Forms 관련 관리자 API"
     },
     {
       "name": "공개 콘텐츠",
       "description": "로그인 전 공개 화면에서 조회하는 콘텐츠 API입니다."
     },
     {
-      "name": "기타 API",
-      "description": "회원가입 약관 문서를 DB에서 버전 관리하고 피그마 약관 모달에 공급하는 API"
-    },
-    {
-      "name": "개인정보/감사",
-      "description": "개인정보 원문 조회, export 승인, 감사로그 API"
-    },
-    {
-      "name": "관리자 운영 기능",
-      "description": "Admin Operations 관련 관리자 API"
-    },
-    {
-      "name": "폼/설문",
-      "description": "Forms 관련 관리자 API"
-    },
-    {
-      "name": "인증/세션",
-      "description": "Canonical member SSO login API"
-    },
-    {
-      "name": "공개 콘텐츠",
-      "description": "Public Content 관련 관리자 API"
-    },
-    {
-      "name": "기타 API",
-      "description": "관리자 계정 등록, 삭제, 승인, 반려, 권한 유형, 권한 매트릭스 관리 API"
-    },
-    {
-      "name": "프로그램 게시판",
-      "description": "프로그램 게시글, 공개 노출, 상세 조회, 게시 상태 관리 API입니다."
-    },
-    {
-      "name": "프로그램",
-      "description": "프로그램 목록, 상세, 생성, 수정, 삭제, 임시저장, 일정 관리 API입니다."
-    },
-    {
-      "name": "콘텐츠/고객지원",
-      "description": "공지사항, FAQ, 문의, 공개 콘텐츠 관리 API"
-    },
-    {
-      "name": "CMS 콘텐츠",
-      "description": "CMS 내부 콘텐츠 관리 화면에서 사용하는 공지, FAQ, 문의, 템플릿 등 콘텐츠 관리 API입니다."
-    },
-    {
-      "name": "프로그램 게시판",
-      "description": "프로그램 게시글, 댓글, 반응, 읽음 상태 API"
-    },
-    {
-      "name": "폼/설문",
-      "description": "폼 템플릿, 폼 버전, 런타임 제출, 응답 조회 API입니다."
-    },
-    {
-      "name": "인증/세션",
-      "description": "관리자/회원 로그인, MFA, 토큰 갱신, 로그아웃 API"
-    },
-    {
-      "name": "기타 API",
-      "description": "UJAT 교육 지역 순서 마스터 API"
-    },
-    {
-      "name": "로그 관리",
-      "description": "Logging 관련 관리자 API"
+      "name": "파일 관리",
+      "description": "파일 메타데이터, 스캔 상태, 다운로드 claim, 삭제/파기 API"
     },
     {
       "name": "기타 API",
       "description": "Gemini 찾아가는 연수 CMS API"
     },
     {
-      "name": "외부 연동 제공자",
-      "description": "External Providers 관련 관리자 API"
+      "name": "시스템 준비도",
+      "description": "운영 readiness, local RC, staging rehearsal 점검 API"
+    },
+    {
+      "name": "인증/세션",
+      "description": "회원 SSO 로그인 표준 API"
     },
     {
       "name": "기타 API",
-      "description": "학교 검색 공공 API 캐시/프록시 API"
+      "description": "신규 프론트 사용 금지: 정산 신청서 전환 전 데이터 보정/예외 처리 전용 API"
     },
     {
-      "name": "외부 연동 제공자",
-      "description": "외부 provider 연동 상태, 콜백, 리허설, 운영 확인용 API입니다."
+      "name": "인증/세션",
+      "description": "로그인된 관리자 SSO 연결 세션 표준 API"
     },
     {
-      "name": "수료증/참여인증서",
-      "description": "수료증/참여인증서 발급, 이력, 차단 사유 API"
+      "name": "기타 API",
+      "description": "관리자 계정 등록, 삭제, 승인, 반려, 권한 유형, 권한 매트릭스 관리 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "강사용 정산 신청서 API"
+    },
+    {
+      "name": "인증/세션",
+      "description": "관리자 SSO 계정 관리 표준 API"
     },
     {
       "name": "프로그램",
@@ -178,23 +134,39 @@
     },
     {
       "name": "인증/세션",
+      "description": "SSO/OAuth 콜백 실패 fallback 엔드포인트"
+    },
+    {
+      "name": "시스템 진단/운영 검증",
+      "description": "헬스체크, 릴리즈 readiness, 프론트 연동 pack API"
+    },
+    {
+      "name": "관리자 운영 기능",
+      "description": "Admin Operations 관련 관리자 API"
+    },
+    {
+      "name": "프로그램 게시판",
+      "description": "프로그램 게시글, 공개 노출, 상세 조회, 게시 상태 관리 API입니다."
+    },
+    {
+      "name": "신청/프로그램 워크플로우",
+      "description": "프로그램 신청, 승인/반려, 강사/참여자 워크플로우 API"
+    },
+    {
+      "name": "프로그램",
+      "description": "프로그램 목록, 상세, 생성, 수정, 삭제, 임시저장, 일정 관리 API입니다."
+    },
+    {
+      "name": "CMS 콘텐츠",
+      "description": "CMS 내부 콘텐츠 관리 화면에서 사용하는 공지, FAQ, 문의, 템플릿 등 콘텐츠 관리 API입니다."
+    },
+    {
+      "name": "인증/세션",
       "description": "관리자 인증/세션 API. 외부 로그인은 POST /api/admin/auth/sso/login으로 시작하고 provider callback은 /api/admin/auth/sso/{provider}/callback만 사용합니다."
     },
     {
-      "name": "기타 API",
-      "description": "로그인 사용자 기준 CMS 대시보드 개인화 설정 API"
-    },
-    {
-      "name": "파일 관리",
-      "description": "파일 업로드, 다운로드, 민감파일 relay, 첨부파일, 파일 접근 로그 API입니다."
-    },
-    {
-      "name": "마스터 데이터",
-      "description": "공통 코드, 카탈로그, 정산 항목, 운영 기준값 등 마스터 데이터 API입니다."
-    },
-    {
-      "name": "CMS 교재",
-      "description": "CMS 교재 관리 API"
+      "name": "폼/설문",
+      "description": "폼 템플릿, 폼 버전, 런타임 제출, 응답 조회 API입니다."
     },
     {
       "name": "실적",
@@ -202,47 +174,55 @@
     },
     {
       "name": "인증/세션",
-      "description": "관리자/회원 로그인, MFA 검증, 토큰 갱신, 로그아웃 API입니다."
+      "description": "관리자/회원 로그인, MFA, 토큰 갱신, 로그아웃 API"
     },
     {
-      "name": "로그 관리",
-      "description": "개인정보 접근 로그, 파일 접근 로그, 시스템 이슈 로그, 이메일 발송 이력 조회 API입니다."
+      "name": "외부 연동 제공자",
+      "description": "외부 provider 연동 상태, 콜백, 리허설, 운영 확인용 API입니다."
     },
     {
-      "name": "기타 API",
-      "description": "행정안전부 도로명주소 검색 프록시 API"
-    },
-    {
-      "name": "시스템 준비도",
-      "description": "로컬 RC, staging, provider, 개인정보 감사, 배치 멱등성 등 readiness 확인 API입니다."
-    },
-    {
-      "name": "후원사",
-      "description": "후원사 관리 API"
-    },
-    {
-      "name": "마스터 데이터",
-      "description": "Master 관련 관리자 API"
-    },
-    {
-      "name": "회원/강사",
-      "description": "Members 관련 관리자 API"
+      "name": "CMS 교재",
+      "description": "CMS 교재 관리 API"
     },
     {
       "name": "정산",
       "description": "정산, 지급조서, 계좌 지급, 정산 파일/export API"
     },
     {
-      "name": "신청/프로그램 워크플로우",
-      "description": "프로그램 신청, 승인/반려, 강사/참여자 워크플로우 API"
+      "name": "파일 관리",
+      "description": "파일 업로드, 다운로드, 민감파일 relay, 첨부파일, 파일 접근 로그 API입니다."
     },
     {
-      "name": "본인인증",
-      "description": "회원가입 본인인증/보호자 인증 세션 API"
+      "name": "CMS 콘텐츠",
+      "description": "CMS 공지사항, FAQ, 카테고리 관리 API"
+    },
+    {
+      "name": "마스터 데이터",
+      "description": "공통 코드, 카탈로그, 정산 항목, 운영 기준값 등 마스터 데이터 API입니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "UJAT 교육 지역 순서 마스터 API"
     },
     {
       "name": "인증/세션",
-      "description": "SSO/OAuth callback fallback error endpoints"
+      "description": "관리자/회원 로그인, MFA 검증, 토큰 갱신, 로그아웃 API입니다."
+    },
+    {
+      "name": "콘텐츠/고객지원",
+      "description": "공지사항, FAQ, 문의, 공개 콘텐츠 관리 API"
+    },
+    {
+      "name": "로그 관리",
+      "description": "개인정보 접근 로그, 파일 접근 로그, 시스템 이슈 로그, 이메일 발송 이력 조회 API입니다."
+    },
+    {
+      "name": "후원사",
+      "description": "후원사 관리 API"
+    },
+    {
+      "name": "시스템 준비도",
+      "description": "로컬 RC, staging, provider, 개인정보 감사, 배치 멱등성 등 readiness 확인 API입니다."
     },
     {
       "name": "시스템 진단/운영 검증",
@@ -253,16 +233,20 @@
       "description": "관리자 정산 신청서 검토 API"
     },
     {
+      "name": "로그 관리",
+      "description": "Logging 관련 관리자 API"
+    },
+    {
+      "name": "외부 연동 제공자",
+      "description": "External Providers 관련 관리자 API"
+    },
+    {
       "name": "내부 운영 API",
       "description": "일반 화면이 아니라 내부 운영, 릴리즈 확인, QA 검증에서 사용하는 API입니다."
     },
     {
       "name": "알림",
       "description": "알림 발송, 템플릿, 읽음 처리, 발송 이력 조회 API입니다."
-    },
-    {
-      "name": "기타 API",
-      "description": "강사용 정산 신청서 API"
     },
     {
       "name": "신청/프로그램 워크플로우",
@@ -273,12 +257,28 @@
       "description": "일반회원, 학교회원, 강사회원, 강사 신청/승인, 개인정보 마스킹 조회 API입니다."
     },
     {
+      "name": "프로그램 게시판",
+      "description": "프로그램 게시글, 댓글, 반응, 읽음 상태 API"
+    },
+    {
       "name": "본인인증",
       "description": "본인인증 요청, 콜백 검증, 재사용 방지, 인증 결과 조회 API입니다."
     },
     {
       "name": "관리자 관리",
       "description": "현재 로그인 관리자 프로필 API"
+    },
+    {
+      "name": "본인인증",
+      "description": "회원가입 본인인증/보호자 인증 세션 API"
+    },
+    {
+      "name": "마스터 데이터",
+      "description": "Master 관련 관리자 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "회원가입 약관 문서를 DB에서 버전 관리하고 피그마 약관 모달에 공급하는 API"
     },
     {
       "name": "관리자 관리",
@@ -23410,7 +23410,7 @@
       },
       "head": {
         "tags": [
-          "Identity Verification"
+          "본인인증"
         ],
         "summary": "NICE 본인인증 표준창 return HEAD 처리",
         "description": "브라우저/프록시 사전 확인용 HEAD 요청은 인증 완료 처리나 profileToken 발급을 수행하지 않습니다.",
@@ -29889,7 +29889,7 @@
           "관리자 운영 기능"
         ],
         "summary": "프로그램 조회",
-        "description": "### 이 API가 하는 일\n- 프로그램 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 파일/생성파일 (`SCR_FILE`)\n- 프론트 담당 영역: 파일s (`files`)\n- 호출 방식: `GET /api/admin/programs/{programId}/post-attachments/{attachmentId}/download`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_programs_programId_post-attachments_attachmentId_download`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: PROVIDER_PENDING\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 files API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: PROTECTED 계정 정책\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 프로그램 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 파일/생성파일 (`SCR_FILE`)\n- 프론트 담당 영역: 파일s (`files`)\n- 호출 방식: `GET /api/admin/programs/{programId}/post-attachments/{attachmentId}/download`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_programs_programId_post-attachments_attachmentId_download`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: PROVIDER_PENDING\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 files API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: PROTECTED 계정 정책\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "downloadPostAttachment",
         "parameters": [
           {
@@ -30195,7 +30195,7 @@
           "신청/프로그램 워크플로우"
         ],
         "summary": "프로그램 조회",
-        "description": "### 이 API가 하는 일\n- 프로그램 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 파일/생성파일 (`SCR_FILE`)\n- 프론트 담당 영역: 파일s (`files`)\n- 호출 방식: `GET /api/admin/programs/{programId}/lecture-reports/download`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_programs_programId_lecture-reports_download`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: PROVIDER_PENDING\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 files API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: PROTECTED 계정 정책\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 프로그램 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 파일/생성파일 (`SCR_FILE`)\n- 프론트 담당 영역: 파일s (`files`)\n- 호출 방식: `GET /api/admin/programs/{programId}/lecture-reports/download`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_programs_programId_lecture-reports_download`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: PROVIDER_PENDING\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 files API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: PROTECTED 계정 정책\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "lectureReportDownload",
         "parameters": [
           {
@@ -39333,7 +39333,7 @@
           },
           "accessToken": {
             "type": "string",
-            "description": "provider access token",
+            "description": "제공자 액세스 토큰",
             "example": "sample-provider-access-token",
             "maxLength": 4096,
             "minLength": 0
@@ -42608,7 +42608,7 @@
           },
           "payloadHash": {
             "type": "string",
-            "description": "payload hash",
+            "description": "페이로드 해시",
             "maxLength": 128,
             "minLength": 0
           },
@@ -42725,7 +42725,7 @@
           },
           "payloadHash": {
             "type": "string",
-            "description": "payload hash",
+            "description": "페이로드 해시",
             "maxLength": 128,
             "minLength": 0
           }
@@ -42791,7 +42791,7 @@
           },
           "payloadHash": {
             "type": "string",
-            "description": "payload hash"
+            "description": "페이로드 해시"
           },
           "requestedAt": {
             "type": "string",
@@ -44768,11 +44768,11 @@
           },
           "relayToken": {
             "type": "string",
-            "description": "one-time relay token"
+            "description": "일회성 릴레이 토큰"
           },
           "streamUrl": {
             "type": "string",
-            "description": "relay stream URL"
+            "description": "릴레이 스트림 URL"
           },
           "expiresAt": {
             "type": "string",
@@ -44871,7 +44871,7 @@
           },
           "contentType": {
             "type": "string",
-            "description": "MIME content type",
+            "description": "MIME 콘텐츠 타입",
             "example": "application/pdf"
           },
           "fileSize": {
@@ -45014,7 +45014,7 @@
           },
           "contentType": {
             "type": "string",
-            "description": "MIME content type",
+            "description": "MIME 콘텐츠 타입",
             "example": "application/pdf",
             "maxLength": 120,
             "minLength": 0
@@ -45286,7 +45286,7 @@
             "description": "상태",
             "enum": [
               "published",
-              "draft",
+              "임시저장",
               "archived"
             ],
             "example": "published"
@@ -45377,7 +45377,7 @@
             "description": "상태",
             "enum": [
               "published",
-              "draft",
+              "임시저장",
               "archived"
             ],
             "example": "published"
@@ -45469,7 +45469,7 @@
             "description": "상태",
             "enum": [
               "published",
-              "draft",
+              "임시저장",
               "archived"
             ],
             "example": "published"
@@ -45539,7 +45539,7 @@
             "description": "상태",
             "enum": [
               "published",
-              "draft",
+              "임시저장",
               "archived"
             ],
             "example": "published"
@@ -54454,7 +54454,7 @@
           },
           "userAgent": {
             "type": "string",
-            "description": "User-Agent"
+            "description": "User-Agent 헤더"
           },
           "traceId": {
             "type": "string",
