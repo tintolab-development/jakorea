@@ -1,0 +1,83 @@
+/* 교육받은 교사 상세 — 공통 정보 (일반 detail-common-info-view 레이아웃 복제) */
+
+.trained-teachers-common-info {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding-top: 4px;
+}
+
+.trained-teachers-common-info__header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--spacing-16) 0 0;
+  min-height: 0;
+}
+
+.trained-teachers-common-info__section {
+  width: 100%;
+  min-width: 0;
+}
+
+.trained-teachers-common-info__section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 프로그램 유형 설정 — 구조/회차 1블록 + 교육 형태·IPS 1블록, 간격 16px */
+.trained-teachers-common-info__section-body--type-settings {
+  gap: 16px;
+}
+
+/* 교육 진행 (커리큘럼) — 교육일지/교사 연수/차시 블록 간 16px */
+.trained-teachers-common-info__section-body--curriculum {
+  gap: 16px;
+}
+
+/* 교육 진행 (일정형) — 세부 일정·행사 일정 블록 간 16px */
+.trained-teachers-common-info__section-body--schedule-curriculum {
+  gap: 16px;
+}
+
+.trained-teachers-common-info__section-body--schedule-curriculum
+  > .program-registration-schedule-curriculum__block {
+  margin-bottom: 0;
+}
+
+.trained-teachers-common-info__kpi-number {
+  font-weight: 700;
+}
+
+/* 수정 모드 — KPI 교육받은 교사 라벨+인풋 */
+.trained-teachers-common-info__kpi-labeled-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 수정 모드 — 섹션 타이틀 우측 (교사 연수 토글 + 추가 버튼) */
+.trained-teachers-common-info__section-title-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 수정 모드 — 진행 시간 그룹 행 목록 */
+.trained-teachers-common-info__progress-groups {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.trained-teachers-common-info__progress-group-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trained-teachers-common-info__progress-group-label {
+  min-width: 48px;
+}
