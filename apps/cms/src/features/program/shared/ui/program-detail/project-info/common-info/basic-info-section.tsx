@@ -58,6 +58,11 @@ export interface BasicInfoSectionProps {
   isEditMode?: boolean
   /** 수정 모드일 때만 전달, react-hook-form 인스턴스 */
   form?: UseFormReturn<ProgramDetailEditFormValues>
+  /**
+   * 1사1교 레이아웃 강제 (교육받은 교사 등 파생 유형 전용 opt-in).
+   * 미지정 시 기존 id/타이틀 기반 판별 유지 — 다른 유형 동작 불변.
+   */
+  forceCompanySchoolLayout?: boolean
 }
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -139,6 +144,7 @@ export function BasicInfoSection({
   lifecycleStatus,
   isEditMode = false,
   form,
+  forceCompanySchoolLayout = false,
 }: BasicInfoSectionProps) {
   const isFormEdit = isEditMode && form
   const { options: sponsorOptions } = useSponsorSelectOptions(Boolean(isFormEdit || program.sponsorId))
@@ -175,7 +181,7 @@ export function BasicInfoSection({
       getValues: () => undefined,
     } as unknown as UseFormReturn<ProgramDetailEditFormValues>)
 
-  if (isCompanySchoolProgram(program)) {
+  if (forceCompanySchoolLayout || isCompanySchoolProgram(program)) {
     const commonInfo = program.generalCommonInfo
     const announcementTitle = commonInfo?.announcementTitle ?? program.title
     const detailedProgramName =
