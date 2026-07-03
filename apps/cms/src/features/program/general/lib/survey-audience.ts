@@ -70,6 +70,18 @@ export function isCompanySchoolProgram(program: Program): boolean {
   )
 }
 
+export function isTrainedTeachersProgram(program: Program): boolean {
+  return (
+    program.id.startsWith('trained-teachers-prog-') ||
+    program.id.startsWith('trained-teachers-local-')
+  )
+}
+
+/** 1사1교·교육받은 교사 — 교사용 만족도조사 단일 폼, 대상 탭 미노출 */
+export function isInstitutionTeacherOnlySatisfactionProgram(program: Program): boolean {
+  return isCompanySchoolProgram(program) || isTrainedTeachersProgram(program)
+}
+
 export function isGeneralIndividualProgram(program: Program): boolean {
   if (program.generalProgramAudience != null) {
     return program.generalProgramAudience === 'individual'
@@ -117,7 +129,7 @@ export function getEnabledGeneralSatisfactionAudienceTabs(
     return []
   }
 
-  if (isCompanySchoolProgram(program)) {
+  if (isInstitutionTeacherOnlySatisfactionProgram(program)) {
     return [{ key: 'teacher', label: '교사' }]
   }
 
@@ -177,7 +189,7 @@ export function getGeneralSatisfactionEmptyCopy(
   audience: GeneralSatisfactionAudienceKey,
   program: Program
 ): SurveyEmptyCopy {
-  if (isCompanySchoolProgram(program)) {
+  if (isInstitutionTeacherOnlySatisfactionProgram(program)) {
     return {
       title: GENERAL_SATISFACTION_EMPTY_COPY.title,
       description: GENERAL_SATISFACTION_EMPTY_COPY.description,

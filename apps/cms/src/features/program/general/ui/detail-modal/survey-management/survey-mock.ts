@@ -11,8 +11,8 @@ import type {
 } from '@/features/program/shared/lib/survey-management/survey-management-types'
 import {
   getEnabledGeneralSatisfactionAudienceTabs,
-  isCompanySchoolProgram,
   isGeneralIndividualProgram,
+  isInstitutionTeacherOnlySatisfactionProgram,
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
 
@@ -47,7 +47,7 @@ function buildSatisfactionSurveysByAudience(
   prefix: string,
   participantTotal: number
 ): Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>> {
-  if (isCompanySchoolProgram(program)) {
+  if (isInstitutionTeacherOnlySatisfactionProgram(program)) {
     return {}
   }
 

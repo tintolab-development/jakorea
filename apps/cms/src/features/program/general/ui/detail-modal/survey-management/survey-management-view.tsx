@@ -73,8 +73,8 @@ import {
   getGeneralSatisfactionCreateDescription,
   getGeneralSatisfactionDeleteModalTitle,
   getGeneralSatisfactionEmptyCopy,
-  isCompanySchoolProgram,
   isGeneralIndividualProgram,
+  isInstitutionTeacherOnlySatisfactionProgram,
   isGeneralSatisfactionSurveyNavTab,
   resolveGeneralSatisfactionAudienceFromNavTab,
   type GeneralSatisfactionAudienceKey,
@@ -202,8 +202,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     () => getEnabledGeneralSatisfactionAudienceTabs(program),
     [program]
   )
-  const isCompanySchool = isCompanySchoolProgram(program)
-  const showSatisfactionAudienceTabs = !isCompanySchool && satisfactionAudienceTabs.length > 0
+  const isInstitutionTeacherOnlySatisfaction = isInstitutionTeacherOnlySatisfactionProgram(program)
+  const showSatisfactionAudienceTabs =
+    !isInstitutionTeacherOnlySatisfaction && satisfactionAudienceTabs.length > 0
   const activeSatisfactionSurvey = satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null
   const pollResponses = useMemo(() => buildGeneralSurveyMockState(program).responses, [program])
   const satisfactionResponses = pollResponses
@@ -642,7 +643,9 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       surveysByAudience={satisfactionSurveysByAudience}
       activeAudience={activeSatisfactionAudience}
       audienceTabs={satisfactionAudienceTabs}
-      className={isCompanySchool ? 'company-school-satisfaction-survey' : undefined}
+      className={
+        isInstitutionTeacherOnlySatisfaction ? 'company-school-satisfaction-survey' : undefined
+      }
       emptyCopy={getGeneralSatisfactionEmptyCopy(activeSatisfactionAudience, program)}
       noResponseCopy={GENERAL_SATISFACTION_NO_RESPONSE_COPY}
       actionLabels={getGeneralSatisfactionActionLabels()}
