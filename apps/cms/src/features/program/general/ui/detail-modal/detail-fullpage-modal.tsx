@@ -95,10 +95,10 @@ import { ParticipatingIndividualProgressAssignmentSection } from './program-stat
 import { ProgramProgressPostsSection } from './program-status/program-progress-posts-section'
 import { PARTICIPATING_PARTICIPANTS_VIEW_PARAM } from '@/features/program/general/hooks/use-participating-individual-participants-params'
 import {
-  GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
-  normalizeGeneralParticipatingInstitutionDetailTab,
-  type GeneralParticipatingInstitutionDetailTabKey,
-} from './program-status/general-participating-institution-detail-view'
+  normalizeParticipatingInstitutionDetailTab,
+  type ParticipatingInstitutionDetailTabKey,
+  isParticipatingInstitutionDetailTabKeyForProgram,
+} from '@/features/program/general/lib/participating-institution-detail-tabs'
 import {
   normalizeInstructorDetailTab,
   type InstructorDetailTabKey,
@@ -160,14 +160,12 @@ const GENERAL_DETAIL_QUERY_PARAMS = [
 
 function parseSchoolTabFromSearch(
   searchParams: URLSearchParams,
-  program?: Pick<Program, 'studentListRequired'> | null
-): GeneralParticipatingInstitutionDetailTabKey {
+  program?: Program | null
+): ParticipatingInstitutionDetailTabKey {
   const t = searchParams.get(SCHOOL_TAB_PARAM)
-  if (t && (GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS as readonly string[]).includes(t))
-    return normalizeGeneralParticipatingInstitutionDetailTab(
-      t as GeneralParticipatingInstitutionDetailTabKey,
-      program
-    )
+  if (t && isParticipatingInstitutionDetailTabKeyForProgram(t, program)) {
+    return normalizeParticipatingInstitutionDetailTab(t, program)
+  }
   return 'application'
 }
 
@@ -918,9 +916,9 @@ export function GeneralProgramDetailFullPageModal({
   )
 
   const setSchoolTab = useCallback(
-    (tab: GeneralParticipatingInstitutionDetailTabKey) => {
+    (tab: ParticipatingInstitutionDetailTabKey) => {
       const next = new URLSearchParams(searchParams)
-      next.set(SCHOOL_TAB_PARAM, normalizeGeneralParticipatingInstitutionDetailTab(tab, displayProgram))
+      next.set(SCHOOL_TAB_PARAM, normalizeParticipatingInstitutionDetailTab(tab, displayProgram))
       if (programId) next.set('programId', programId)
       setSearchParams(next, { replace: true })
     },
