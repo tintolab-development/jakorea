@@ -10,14 +10,16 @@
  * - 커리큘럼형 복수: ■ N회차(차시 및 교육 내용/과제 설정), 교육 형태·IPS 회차 별 상이 시 1단/2단 행
  * - 일정형 단일: ■ 세부 일정 NN(일정명/진행 시간 — 진행 그룹 A/B)
  * - 일정형 복수: ■ 행사 일정 NN(일정명/진행 일정/과제 설정) — 교육 진행 일정 설정 섹션 비노출
- * - 교사 연수 ON: 첫 블록 교사 연수 (IPS Prepare 고정)
+ * - 교육 연수 ON: 첫 진행 항목 타이틀·일정명 교육 연수 치환 (IPS Prepare 고정)
  *
- * 수정 모드: KPI 인풋·교육일지 라디오·차시/회차/일정 추가·삭제·교사 연수 토글·진행 그룹 구분 추가.
+ * 수정 모드: KPI 인풋·교육일지 라디오·차시/회차/일정 추가·삭제·교육 연수 토글·진행 그룹 구분 추가
+ * (진행 그룹은 전 테이블 동시 적용).
  * mock 단계 — 저장 시 컴포넌트 로컬 오버레이에 반영 (API 연동 전).
  */
 
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { PlusOutlined } from '@ant-design/icons'
+import dayjs, { type Dayjs } from 'dayjs'
 import type {
   GeneralProgramCurriculumSessionRow,
   GeneralProgramScheduleDetailRow,
@@ -48,6 +50,7 @@ import { EducationSchedulePreviewLines } from '@/features/template/ui/shared/edu
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import {
   formatEducationScheduleLineFromRange,
   parseEducationScheduleLineToRange,
@@ -55,12 +58,13 @@ import {
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import '@/features/template/ui/shared/paragraph-date-picker.css'
+import '@/features/template/ui/shared/paragraph-time-picker.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './common-info-view.css'
 
-/** 교사 연수 — IPS Prepare 고정 표기 */
+/** 교육 연수 — IPS Prepare 고정 표기 */
 const TEACHER_TRAINING_IPS_SUMMARY = 'Prepare | 해당없음'
-const TEACHER_TRAINING_HEADING = '교사 연수'
+const TEACHER_TRAINING_HEADING = '교육 연수'
 
 type TrainedTeachersCommonInfo = NonNullable<Program['generalCommonInfo']>
 
@@ -75,7 +79,10 @@ interface TrainedTeachersCommonInfoDraft {
   teacherTrainingEnabled: boolean
   curriculumSessions: GeneralProgramCurriculumSessionRow[]
   scheduleDetails: GeneralProgramScheduleDetailRow[]
-  /** 일정형 단일 — 세부 일정별 진행 그룹 시간 텍스트 (progressTimeSummary 분해) */
+  /**
+   * 일정형 단일 — 세부 일정별 진행 그룹 시간 텍스트 (progressTimeSummary 분해).
+   * 그룹 추가·삭제는 전 테이블 동시 적용 — 모든 배열의 길이 동일 유지.
+   */
   progressGroupsByDetail: string[][]
 }
 
@@ -100,11 +107,27 @@ function joinProgressGroups(groups: string[]): string {
   return filled.map((g, i) => `그룹 ${progressGroupLetter(i)} : ${g}`).join(' | ')
 }
 
+/** `09:30 ~ 09:40` → dayjs 시간 범위 (진행 그룹 시간 필드 시드) */
+function parseProgressTimeRange(text: string): [Dayjs, Dayjs] | null {
+  const match = text.trim().match(/^(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})$/)
+  if (!match) return null
+  const base = dayjs().second(0).millisecond(0)
+  return [
+    base.hour(Number(match[1])).minute(Number(match[2])),
+    base.hour(Number(match[3])).minute(Number(match[4])),
+  ]
+}
+
 function seedDraft(
   commonInfo: TrainedTeachersCommonInfo,
   educatedTeachers: number | undefined
 ): TrainedTeachersCommonInfoDraft {
   const scheduleDetails = (commonInfo.scheduleDetails ?? []).map(detail => ({ ...detail }))
+  // 그룹 수는 전 테이블 공통 — 최대 그룹 수 기준으로 정규화
+  const parsedGroups = scheduleDetails.map(detail =>
+    parseProgressGroups(detail.progressTimeSummary)
+  )
+  const maxGroupCount = Math.max(1, ...parsedGroups.map(groups => groups.length))
   return {
     kpiFinalParticipants: commonInfo.kpi?.finalParticipants,
     kpiEducatedTeachers: educatedTeachers,
@@ -114,9 +137,10 @@ function seedDraft(
     teacherTrainingEnabled: commonInfo.teacherTrainingEnabled === true,
     curriculumSessions: (commonInfo.curriculumSessions ?? []).map(session => ({ ...session })),
     scheduleDetails,
-    progressGroupsByDetail: scheduleDetails.map(detail =>
-      parseProgressGroups(detail.progressTimeSummary)
-    ),
+    progressGroupsByDetail: parsedGroups.map(groups => [
+      ...groups,
+      ...Array<string>(maxGroupCount - groups.length).fill(''),
+    ]),
   }
 }
 
@@ -440,55 +464,6 @@ function EducationJournalBlock({
   )
 }
 
-/** 커리큘럼형 — 교사 연수 첫 블록 (진행 일정/단원명 및 교육 내용, IPS Prepare 고정) */
-function TeacherTrainingCurriculumBlock({
-  schedule,
-}: {
-  schedule: TrainedTeachersCommonInfo['teacherTrainingSchedule']
-}) {
-  return (
-    <div className="program-registration-curriculum__session-block">
-      <div className="program-registration-curriculum__session-heading">
-        ■ {TEACHER_TRAINING_HEADING}
-      </div>
-      <DetailInfoForm
-        title={TEACHER_TRAINING_HEADING}
-        hideHeader
-        mode="view"
-        className="program-registration-paragraph"
-      >
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="진행 일정"
-            fullRow
-            view={schedule?.scheduleDateLabel?.trim() || '-'}
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="단원명 및 교육 내용"
-            fullRow
-            view={
-              <>
-                {schedule?.title?.trim() || '-'}
-                <DetailInfoForm.InputsSeparator />
-                {schedule?.description?.trim() || '-'}
-              </>
-            }
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="교육 형태" view={schedule?.educationFormLabel ?? '-'} />
-          <DetailInfoForm.Field
-            label="IPS 유형"
-            view={<PipeSeparatedInlineView text={TEACHER_TRAINING_IPS_SUMMARY} />}
-          />
-        </DetailInfoForm.Row>
-      </DetailInfoForm>
-    </div>
-  )
-}
-
 /** 수정 모드 — 블록 우측 X 삭제 래퍼 (2개 이상일 때 노출) */
 function DeletableBlockRow({
   children,
@@ -517,9 +492,11 @@ function DeletableBlockRow({
   )
 }
 
-/** 커리큘럼형 단일 — ■ N차시 블록 */
+/** 커리큘럼형 단일 — ■ N차시 블록 (교육 연수 치환 시 heading·IPS Prepare 고정) */
 function SingleRoundSessionBlock({
   session,
+  heading,
+  ipsSummaryOverride,
   showIpsPerSession,
   isFormEdit,
   showDelete,
@@ -527,15 +504,21 @@ function SingleRoundSessionBlock({
   onRemove,
 }: {
   session: GeneralProgramCurriculumSessionRow
+  heading?: string
+  ipsSummaryOverride?: string
   showIpsPerSession: boolean
   isFormEdit: boolean
   showDelete: boolean
   onChange?: (patch: Partial<GeneralProgramCurriculumSessionRow>) => void
   onRemove?: () => void
 }) {
+  const showIpsRow = showIpsPerSession || ipsSummaryOverride != null
+  const ipsSummary = ipsSummaryOverride ?? session.ipsTypeSummary
   return (
     <div className="program-registration-curriculum__session-block">
-      <div className="program-registration-curriculum__session-heading">■ {session.sessionLabel}</div>
+      <div className="program-registration-curriculum__session-heading">
+        ■ {heading ?? session.sessionLabel}
+      </div>
       <DeletableBlockRow
         showDelete={isFormEdit && showDelete}
         deleteAriaLabel={`${session.sessionLabel} 삭제`}
@@ -583,13 +566,13 @@ function SingleRoundSessionBlock({
               }
             />
           </DetailInfoForm.Row>
-          {showIpsPerSession ? (
+          {showIpsRow ? (
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="IPS 유형"
                 fullRow
                 readOnlyDisplay={isFormEdit}
-                view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
+                view={<PipeSeparatedInlineView text={ipsSummary} />}
               />
             </DetailInfoForm.Row>
           ) : null}
@@ -650,9 +633,11 @@ function AssignmentSettingEdit({
   )
 }
 
-/** 커리큘럼형 복수 — ■ N회차 블록 (차시 및 교육 내용/과제 설정 + 상이 시 교육 형태·IPS 행) */
+/** 커리큘럼형 복수 — ■ N회차 블록 (차시 및 교육 내용/과제 설정 + 상이 시 교육 형태·IPS 행, 교육 연수 치환 지원) */
 function MultiRoundSessionBlock({
   session,
+  heading,
+  ipsSummaryOverride,
   showEducationPerRound,
   showIpsPerRound,
   isFormEdit,
@@ -661,6 +646,8 @@ function MultiRoundSessionBlock({
   onRemove,
 }: {
   session: GeneralProgramCurriculumSessionRow
+  heading?: string
+  ipsSummaryOverride?: string
   showEducationPerRound: boolean
   showIpsPerRound: boolean
   isFormEdit: boolean
@@ -668,9 +655,13 @@ function MultiRoundSessionBlock({
   onChange?: (patch: Partial<GeneralProgramCurriculumSessionRow>) => void
   onRemove?: () => void
 }) {
+  const showIpsRow = showIpsPerRound || ipsSummaryOverride != null
+  const ipsSummary = ipsSummaryOverride ?? session.ipsTypeSummary
   return (
     <div className="program-registration-curriculum__session-block">
-      <div className="program-registration-curriculum__session-heading">■ {session.sessionLabel}</div>
+      <div className="program-registration-curriculum__session-heading">
+        ■ {heading ?? session.sessionLabel}
+      </div>
       <DeletableBlockRow
         showDelete={isFormEdit && showDelete}
         deleteAriaLabel={`${session.sessionLabel} 삭제`}
@@ -740,7 +731,7 @@ function MultiRoundSessionBlock({
               }
             />
           </DetailInfoForm.Row>
-          {showEducationPerRound && showIpsPerRound ? (
+          {showEducationPerRound && showIpsRow ? (
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="교육 형태"
@@ -750,7 +741,7 @@ function MultiRoundSessionBlock({
               <DetailInfoForm.Field
                 label="IPS 유형"
                 readOnlyDisplay={isFormEdit}
-                view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
+                view={<PipeSeparatedInlineView text={ipsSummary} />}
               />
             </DetailInfoForm.Row>
           ) : showEducationPerRound ? (
@@ -762,13 +753,13 @@ function MultiRoundSessionBlock({
                 view={session.educationFormLabel ?? '-'}
               />
             </DetailInfoForm.Row>
-          ) : showIpsPerRound ? (
+          ) : showIpsRow ? (
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="IPS 유형"
                 fullRow
                 readOnlyDisplay={isFormEdit}
-                view={<PipeSeparatedInlineView text={session.ipsTypeSummary} />}
+                view={<PipeSeparatedInlineView text={ipsSummary} />}
               />
             </DetailInfoForm.Row>
           ) : null}
@@ -870,14 +861,17 @@ function TrainedTeachersCurriculumSection({
         isFormEdit={isFormEdit}
         onChange={next => updateDraft(d => ({ ...d, educationJournalEnabled: next }))}
       />
-      {teacherTrainingEnabled ? (
-        <TeacherTrainingCurriculumBlock schedule={commonInfo.teacherTrainingSchedule} />
-      ) : null}
-      {sessions.map((session, index) =>
-        isMulti ? (
+      {sessions.map((session, index) => {
+        // 교육 연수 ON — 첫 차시/회차 타이틀 교육 연수 치환, IPS Prepare 고정
+        const isTeacherTrainingBlock = teacherTrainingEnabled && index === 0
+        return isMulti ? (
           <MultiRoundSessionBlock
             key={session.sessionLabel || index}
             session={session}
+            heading={isTeacherTrainingBlock ? TEACHER_TRAINING_HEADING : undefined}
+            ipsSummaryOverride={
+              isTeacherTrainingBlock ? TEACHER_TRAINING_IPS_SUMMARY : undefined
+            }
             showEducationPerRound={showEducationPerRound}
             showIpsPerRound={showIpsPerRound}
             isFormEdit={isFormEdit}
@@ -889,6 +883,10 @@ function TrainedTeachersCurriculumSection({
           <SingleRoundSessionBlock
             key={session.sessionLabel || index}
             session={session}
+            heading={isTeacherTrainingBlock ? TEACHER_TRAINING_HEADING : undefined}
+            ipsSummaryOverride={
+              isTeacherTrainingBlock ? TEACHER_TRAINING_IPS_SUMMARY : undefined
+            }
             showIpsPerSession={showIpsPerSession}
             isFormEdit={isFormEdit}
             showDelete={sessions.length >= 2}
@@ -896,12 +894,35 @@ function TrainedTeachersCurriculumSection({
             onRemove={() => removeSession(index)}
           />
         )
-      )}
+      })}
     </TrainedTeachersDetailSection>
   )
 }
 
-/** 일정형 — ■ 세부 일정 NN 블록 (일정명/진행 시간 — 진행 그룹) */
+/** 진행 그룹 시간 필드 — "HH:mm ~ HH:mm" 텍스트 ↔ ParagraphTimePicker */
+function ProgressGroupTimeField({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (next: string) => void
+}) {
+  const range = useMemo(() => parseProgressTimeRange(value), [value])
+  return (
+    <ParagraphTimePicker
+      endTimeAlwaysOn
+      placeholder="시간 선택"
+      width={200}
+      value={range?.[0] ?? null}
+      initialTimeRange={range}
+      onTimeRangeChange={([start, end]) =>
+        onChange(`${start.format('HH:mm')} ~ ${end.format('HH:mm')}`)
+      }
+    />
+  )
+}
+
+/** 일정형 — ■ 세부 일정 NN 블록 (일정명/진행 시간 — 진행 그룹, 그룹 추가·삭제는 전 테이블 공통) */
 function ScheduleDetailBlock({
   detail,
   showIpsPerSchedule,
@@ -909,7 +930,9 @@ function ScheduleDetailBlock({
   showDelete,
   progressGroups,
   onChange,
-  onGroupsChange,
+  onGroupTimeChange,
+  onAddGroup,
+  onRemoveGroup,
   onRemove,
 }: {
   detail: GeneralProgramScheduleDetailRow
@@ -918,7 +941,11 @@ function ScheduleDetailBlock({
   showDelete: boolean
   progressGroups?: string[]
   onChange?: (patch: Partial<GeneralProgramScheduleDetailRow>) => void
-  onGroupsChange?: (groups: string[]) => void
+  onGroupTimeChange?: (groupIndex: number, next: string) => void
+  /** 진행 그룹 구분 추가 — 모든 세부 일정 테이블에 동시 적용 */
+  onAddGroup?: () => void
+  /** 그룹 삭제 — 모든 세부 일정 테이블에서 해당 그룹 제거 */
+  onRemoveGroup?: (groupIndex: number) => void
   onRemove?: () => void
 }) {
   const groups = progressGroups ?? ['']
@@ -976,24 +1003,15 @@ function ScheduleDetailBlock({
                               그룹 {progressGroupLetter(groupIndex)}
                             </span>
                           ) : null}
-                          <CmsInput
-                            inputSize="medium"
-                            placeholder="예: 09:30 ~ 09:40"
-                            width={240}
+                          <ProgressGroupTimeField
                             value={group}
-                            onChange={e =>
-                              onGroupsChange?.(
-                                groups.map((g, i) => (i === groupIndex ? e.target.value : g))
-                              )
-                            }
+                            onChange={next => onGroupTimeChange?.(groupIndex, next)}
                           />
                           {groups.length > 1 ? (
                             <ItemDeleteButton
                               className="item-delete-button"
                               aria-label={`그룹 ${progressGroupLetter(groupIndex)} 삭제`}
-                              onClick={() =>
-                                onGroupsChange?.(groups.filter((_, i) => i !== groupIndex))
-                              }
+                              onClick={() => onRemoveGroup?.(groupIndex)}
                             />
                           ) : null}
                         </div>
@@ -1004,7 +1022,7 @@ function ScheduleDetailBlock({
                         size="medium"
                         width={180}
                         icon={<PlusOutlined aria-hidden />}
-                        onClick={() => onGroupsChange?.([...groups, ''])}
+                        onClick={() => onAddGroup?.()}
                       >
                         진행 그룹 구분 추가
                       </CmsButton>
@@ -1044,7 +1062,7 @@ function ScheduleEventBlock({
   onRemove,
 }: {
   detail: GeneralProgramScheduleDetailRow
-  /** 교사 연수 치환 시 heading·일정명·IPS 고정 */
+  /** 교육 연수 치환 시 heading·일정명·IPS 고정 */
   heading?: string
   nameOverride?: string
   ipsSummaryOverride?: string
@@ -1220,23 +1238,46 @@ function TrainedTeachersScheduleSection({
       ),
     }))
 
-  const setGroups = (index: number, groups: string[]) =>
+  const setGroupTime = (detailIndex: number, groupIndex: number, next: string) =>
     updateDraft(d => ({
       ...d,
-      progressGroupsByDetail: d.progressGroupsByDetail.map((g, i) =>
-        i === index ? groups : g
+      progressGroupsByDetail: d.progressGroupsByDetail.map((groups, i) =>
+        i === detailIndex ? groups.map((g, gi) => (gi === groupIndex ? next : g)) : groups
+      ),
+    }))
+
+  // 진행 그룹 구분 추가 — 모든 세부 일정 테이블의 진행 시간 칼럼에 시간 필드 추가
+  const addGroupToAll = () =>
+    updateDraft(d => ({
+      ...d,
+      progressGroupsByDetail: d.progressGroupsByDetail.map(groups => [...groups, '']),
+    }))
+
+  // 그룹 삭제 — 모든 테이블에서 동일 인덱스 그룹 제거
+  const removeGroupFromAll = (groupIndex: number) =>
+    updateDraft(d => ({
+      ...d,
+      progressGroupsByDetail: d.progressGroupsByDetail.map(groups =>
+        groups.filter((_, gi) => gi !== groupIndex)
       ),
     }))
 
   const addDetail = () =>
-    updateDraft(d => ({
-      ...d,
-      scheduleDetails: relabelScheduleDetails(
-        [...d.scheduleDetails, { scheduleLabel: '', name: '' }],
-        isMulti
-      ),
-      progressGroupsByDetail: [...d.progressGroupsByDetail, ['']],
-    }))
+    updateDraft(d => {
+      // 새 테이블도 현재 그룹 수만큼 시간 필드 유지
+      const groupCount = d.progressGroupsByDetail[0]?.length ?? 1
+      return {
+        ...d,
+        scheduleDetails: relabelScheduleDetails(
+          [...d.scheduleDetails, { scheduleLabel: '', name: '' }],
+          isMulti
+        ),
+        progressGroupsByDetail: [
+          ...d.progressGroupsByDetail,
+          Array<string>(groupCount).fill(''),
+        ],
+      }
+    })
 
   const removeDetail = (index: number) =>
     updateDraft(d => ({
@@ -1268,7 +1309,7 @@ function TrainedTeachersScheduleSection({
               icon={<PlusOutlined aria-hidden />}
               onClick={addDetail}
             >
-              {isMulti ? '행사 일정 추가' : '세부 일정 추가'}
+              강의 진행 일정 추가
             </CmsButton>
           </div>
         ) : undefined
@@ -1281,7 +1322,7 @@ function TrainedTeachersScheduleSection({
       />
       {details.map((detail, index) => {
         const isEventSchedule = isMulti || detail.scheduleLabel.includes('행사 일정')
-        // 교사 연수 ON — 첫 일정 항목 타이틀·일정명 교사 연수 치환, IPS Prepare 고정
+        // 교육 연수 ON — 첫 일정 항목 타이틀·일정명 교육 연수 치환, IPS Prepare 고정
         const isTeacherTrainingBlock = teacherTrainingEnabled && index === 0
 
         if (isEventSchedule) {
@@ -1312,7 +1353,9 @@ function TrainedTeachersScheduleSection({
             showDelete={details.length >= 2}
             progressGroups={isFormEdit ? draft.progressGroupsByDetail[index] : undefined}
             onChange={patch => patchDetail(index, patch)}
-            onGroupsChange={groups => setGroups(index, groups)}
+            onGroupTimeChange={(groupIndex, next) => setGroupTime(index, groupIndex, next)}
+            onAddGroup={addGroupToAll}
+            onRemoveGroup={removeGroupFromAll}
             onRemove={() => removeDetail(index)}
           />
         )

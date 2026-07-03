@@ -31,7 +31,7 @@
   gap: 16px;
 }
 
-/* 교육 진행 (커리큘럼) — 교육일지/교사 연수/차시 블록 간 16px */
+/* 교육 진행 (커리큘럼) — 교육일지/차시 블록 간 16px */
 .trained-teachers-common-info__section-body--curriculum {
   gap: 16px;
 }
@@ -57,7 +57,7 @@
   gap: 8px;
 }
 
-/* 수정 모드 — 섹션 타이틀 우측 (교사 연수 토글 + 추가 버튼) */
+/* 수정 모드 — 섹션 타이틀 우측 (교육 연수 토글 + 추가 버튼) */
 .trained-teachers-common-info__section-title-actions {
   display: inline-flex;
   align-items: center;
