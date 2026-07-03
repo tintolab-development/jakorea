@@ -32,6 +32,20 @@ const TRAINED_TEACHERS_CASE_KPI: NonNullable<TrainedTeachersCommonInfo['kpi']> =
   finalClasses: 100,
 }
 
+/** 참여자 모집 정보 — 스크린샷 값 (모집 정보 화면 공통 mock) */
+const TRAINED_TEACHERS_PARTICIPANT_RECRUITMENT_INFO = {
+  announcementPublished: true,
+  preEducationNoticeRequired: true,
+  maxAssignableInstructors: 2,
+  maxClassCount: 4,
+  maxScheduleCount: 3,
+  maxSessionsPerDay: 8,
+  operationPeriodLabel: '2026. 04. 03(금) ~ 2026. 11. 20(금)',
+  recruitmentPeriodLabel: '2025. 12. 08(월) ~ 2026. 01. 16(금)',
+  finalAnnouncementLabel: '2026. 01. 26 (금) | 홈페이지 공지 및 담당교사 개별 안내',
+  contactOrganizationName: 'JA Korea',
+} as const
+
 const CURRICULUM_SESSION_1_DESCRIPTION =
   '채용 공고 읽기, 이력서 작성하기 등 취업에 필요한 단계들을 알아봅니다.'
 const CURRICULUM_SESSION_2_DESCRIPTION =
@@ -39,14 +53,14 @@ const CURRICULUM_SESSION_2_DESCRIPTION =
 
 /**
  * 케이스 매트릭스 (스크린샷 순서)
- * - 001 커리큘럼형·단일·기간 선택 — 교사 연수 ON, 교육일지 있음
+ * - 001 커리큘럼형·단일·기간 선택 — 교육 연수 ON(첫 차시 치환), 교육일지 있음
  * - 002 커리큘럼형·복수·날짜 지정 — 과제 설정, 교육일지 있음
  * - 003 커리큘럼형·단일·기간 선택 — IPS 차시 별 상이, 교육일지 없음
  * - 004 커리큘럼형·복수·기간 선택 — 교육 형태+IPS 회차 별 상이(2단)
  * - 005 일정형·단일·날짜 지정 — 진행 그룹 A/B, 교육일지 있음
  * - 006 일정형·복수 — 행사 일정 별 진행 일정+과제 설정 (일정 설정 섹션 비노출)
  * - 007 일정형·단일·기간 선택 — 그룹 구분 없음
- * - 008 일정형·복수 — 교육 형태·IPS 일정 별 상이 + 교사 연수 ON
+ * - 008 일정형·복수 — 교육 형태·IPS 일정 별 상이 + 교육 연수 ON(첫 일정 치환)
  */
 export const TRAINED_TEACHERS_COMMON_INFO_CASES: Record<string, TrainedTeachersCommonInfoCase> = {
   'trained-teachers-prog-001': {
@@ -62,13 +76,8 @@ export const TRAINED_TEACHERS_COMMON_INFO_CASES: Record<string, TrainedTeachersC
       ipsScheduleDetail: 'common',
       educationJournalEnabled: true,
       teacherTrainingEnabled: true,
-      teacherTrainingSchedule: {
-        scheduleDateLabel: '26년 4월 1일(수) 14:00 ~ 15:00',
-        title: '1단원 나를 알리는 기술',
-        description: CURRICULUM_SESSION_1_DESCRIPTION,
-        educationFormLabel: '온라인',
-      },
       curriculumSessions: [
+        // 교육 연수 ON — 첫 차시 타이틀이 교육 연수로 치환 노출 (IPS Prepare 고정)
         {
           sessionLabel: '1차시',
           title: '1단원 나를 알리는 기술',
@@ -306,10 +315,6 @@ export const TRAINED_TEACHERS_COMMON_INFO_CASES: Record<string, TrainedTeachersC
       ipsScheduleDetail: 'perSchedule',
       educationJournalEnabled: true,
       teacherTrainingEnabled: true,
-      teacherTrainingSchedule: {
-        scheduleDateLabel: '26년 3월 2일(월) 14:00 ~ 15:00',
-        educationFormLabel: '온라인',
-      },
       curriculumSessions: undefined,
       scheduleDetails: [
         {
@@ -356,6 +361,10 @@ function toTrainedTeachersProgram(base: Program, index: number): Program {
     instructorCapacity: undefined,
     educatedTeachers: base.educatedTeachers ?? base.approvedStudentCount ?? 0,
     generalParticipantTypes: ['school_institution'],
+    studentListRequired: 'required',
+    contactPhone: '02-6085-6028',
+    contactEmail: 'cc@jakorea.org',
+    generalSurveyMenuKeys: ['survey', 'satisfaction'],
     generalCommonInfo: {
       ...base.generalCommonInfo,
       kpi: {
@@ -367,8 +376,7 @@ function toTrainedTeachersProgram(base: Program, index: number): Program {
       },
       participantRecruitmentInfo: {
         ...base.generalCommonInfo?.participantRecruitmentInfo,
-        preEducationNoticeRequired: true,
-        maxAssignableInstructors: undefined,
+        ...TRAINED_TEACHERS_PARTICIPANT_RECRUITMENT_INFO,
       },
     },
     rounds: base.rounds.map(round => ({
