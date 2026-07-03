@@ -36,4 +36,10 @@ export interface AdminMfaSetupRequest {
      * @maxLength 255
      */
   challengeUuid?: string;
+  /**
+     * QR SVG 이미지 가로/세로 크기(px). 미입력 시 220으로 생성합니다.
+     * @minimum 160
+     * @maximum 400
+     */
+  qrSize?: number;
 }

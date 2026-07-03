@@ -11487,6 +11487,14 @@
             "example": "mfa-challenge-sample-uuid",
             "maxLength": 255,
             "minLength": 0
+          },
+          "qrSize": {
+            "type": "integer",
+            "format": "int32",
+            "description": "QR SVG 이미지 가로/세로 크기(px). 미입력 시 220으로 생성합니다.",
+            "example": 220,
+            "maximum": 400,
+            "minimum": 160
           }
         }
       },
