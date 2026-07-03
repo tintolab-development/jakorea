@@ -1,1 +1,1 @@
-export { SocialErrorPage } from './error-page'
+export { SocialErrorPage } from './page'

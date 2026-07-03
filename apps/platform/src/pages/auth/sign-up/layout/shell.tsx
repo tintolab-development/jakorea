@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { PFStepProgress } from '@/shared/ui'
-import styles from '../sign-up-page.module.css'
+import styles from '../wizard.module.css'
 
 type SignUpLayoutProps = {
   currentStep: number

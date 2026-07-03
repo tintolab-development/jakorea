@@ -6,7 +6,7 @@ import {
   PFText,
 } from '@/shared/ui'
 import illustSquareUrl from '@/shared/assets/illustration/illust-square.svg'
-import styles from './error-page.module.css'
+import styles from './page.module.css'
 
 const socialLoginItems = [
   { label: 'Google 로그인', icon: <GoogleSocialLoginIcon /> },

@@ -6,7 +6,7 @@ import {
   PFButton,
   PFText,
 } from '@/shared/ui'
-import styles from './sign-up-social-connect-page.module.css'
+import styles from './page.module.css'
 
 type SocialProvider = 'google' | 'naver' | 'kakao'
 

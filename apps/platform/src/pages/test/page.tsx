@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { PFAlertModal, PFButton, PFModal, PFPagination, PFText, PFTextInput } from '@/shared/ui'
-import styles from './test-page.module.css'
+import styles from './page.module.css'
 
 const typographyItems = [
   { label: 'page-title', typo: 'page-title' },

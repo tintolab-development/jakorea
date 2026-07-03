@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import type { SignUpConsentFieldKey, SignUpConsentState } from '../model/sign-up-consent.types'
+import type { SignUpConsentFieldKey, SignUpConsentState } from '../model/consent.types'
 
 const INITIAL_CONSENT: SignUpConsentState = {
   serviceTerms: false,

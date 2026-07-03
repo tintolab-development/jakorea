@@ -1,6 +1,6 @@
 import type { AgreementKey, AgreementState } from '../model/sign-up.types'
-import { agreementItems } from '../lib/sign-up.constants'
-import { isAllAgreed, isRequiredAgreed } from '../lib/sign-up.utils'
+import { agreementItems } from '../lib/constants'
+import { isAllAgreed, isRequiredAgreed } from '../lib/utils'
 
 export { agreementItems }
 

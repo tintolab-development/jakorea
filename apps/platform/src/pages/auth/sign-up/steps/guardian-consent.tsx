@@ -1,13 +1,13 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
 import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamation.svg'
 import { PFButton, PFText } from '@/shared/ui'
-import styles from './step-2-guardian-consent.module.css'
+import styles from './guardian-consent.module.css'
 
-type Step2GuardianConsentProps = {
+type GuardianConsentStepProps = {
   signUp: UseSignUpReturn
 }
 
-export function Step2GuardianConsent({ signUp }: Step2GuardianConsentProps) {
+export function GuardianConsentStep({ signUp }: GuardianConsentStepProps) {
   const { birth } = signUp
 
   return (

@@ -7,7 +7,7 @@ import type {
 import {
   MOCK_VERIFIED_NAME,
   MOCK_VERIFIED_PHONE,
-} from './sign-up.constants'
+} from './constants'
 
 export function parseBirthDate(value: string) {
   const matched = value.trim().match(/^(\d{4})\.(\d{2})\.(\d{2})$/)

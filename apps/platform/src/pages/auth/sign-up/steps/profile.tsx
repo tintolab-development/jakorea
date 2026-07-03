@@ -2,17 +2,17 @@ import type { UseSignUpReturn } from '@/features/auth/sign-up'
 import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE, schoolGradeOptions } from '@/features/auth/sign-up'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
-import { AddressSearchModal } from '../address-search-modal'
-import { SignUpActions } from '../layout/sign-up-actions'
-import { SignUpLayout } from '../layout/sign-up-layout'
+import { AddressSearchModal } from '@/features/auth/sign-up/ui/address-search-modal'
+import { SignUpActions } from '../layout/actions'
+import { SignUpLayout } from '../layout/shell'
 import { StepHeader } from '../layout/step-header'
-import styles from '../sign-up-page.module.css'
+import styles from '../wizard.module.css'
 
-type Step6ProfileProps = {
+type ProfileStepProps = {
   signUp: UseSignUpReturn
 }
 
-export function Step6Profile({ signUp }: Step6ProfileProps) {
+export function ProfileStep({ signUp }: ProfileStepProps) {
   const { step, profile } = signUp
 
   return (

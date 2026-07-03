@@ -1,6 +1,6 @@
 import type { GuardianAgreementKey, GuardianAgreementState } from '../model/sign-up.types'
-import { guardianAgreementItems } from '../lib/sign-up.constants'
-import { isAllAgreed, isRequiredAgreed } from '../lib/sign-up.utils'
+import { guardianAgreementItems } from '../lib/constants'
+import { isAllAgreed, isRequiredAgreed } from '../lib/utils'
 
 export { guardianAgreementItems }
 

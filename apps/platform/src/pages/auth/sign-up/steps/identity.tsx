@@ -1,22 +1,22 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
 import { PFButton, PFText } from '@/shared/ui'
-import { SignUpActions } from '../layout/sign-up-actions'
-import { SignUpLayout } from '../layout/sign-up-layout'
+import { SignUpActions } from '../layout/actions'
+import { SignUpLayout } from '../layout/shell'
 import { StepHeader } from '../layout/step-header'
-import styles from '../sign-up-page.module.css'
+import styles from '../wizard.module.css'
 
-type Step3GuardianIdentityProps = {
+type IdentityStepProps = {
   signUp: UseSignUpReturn
 }
 
-export function Step3GuardianIdentity({ signUp }: Step3GuardianIdentityProps) {
-  const { step, guardian } = signUp
+export function IdentityStep({ signUp }: IdentityStepProps) {
+  const { step, identity } = signUp
 
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
       <StepHeader
-        title="보호자 본인인증을 진행해 주세요"
-        description="안전하게 가입하기 위해 휴대폰 본인인증이 필요해요. 동의 확인과 법정대리인 확인을 위해 사용돼요."
+        title="본인인증을 진행해 주세요"
+        description="안전하게 가입하기 위해 휴대폰 본인인증이 필요해요. 인증 결과는 생년월일과 함께 확인하며, 회원가입 절차에만 사용돼요."
         titleClassName={styles.title}
         descriptionClassName={styles.description}
       />
@@ -32,8 +32,8 @@ export function Step3GuardianIdentity({ signUp }: Step3GuardianIdentityProps) {
       </div>
 
       <SignUpActions variant="default">
-        <PFButton size="xlarge" width="100%" onClick={guardian.identity.verify}>
-          보호자 본인인증하기
+        <PFButton size="xlarge" width="100%" onClick={identity.verify}>
+          휴대폰 본인인증하기
         </PFButton>
       </SignUpActions>
     </SignUpLayout>

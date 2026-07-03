@@ -1,4 +1,4 @@
-import type { SignUpConsentFieldKey, SignUpConsentState } from '../../model/sign-up-consent.types'
+import type { SignUpConsentFieldKey, SignUpConsentState } from '../../sign-up/model/consent.types'
 import type { TermsViewType } from '../../model/terms-view.types'
 import styles from './register-terms-agreement.module.css'
 

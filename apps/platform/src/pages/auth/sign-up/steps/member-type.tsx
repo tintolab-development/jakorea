@@ -1,16 +1,16 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
 import { PFButton, PFText } from '@/shared/ui'
-import { renderMultilineText } from '../ui/render-multiline-text'
-import { SignUpActions } from '../layout/sign-up-actions'
-import { SignUpLayout } from '../layout/sign-up-layout'
+import { renderMultilineText } from '../lib/multiline-text'
+import { SignUpActions } from '../layout/actions'
+import { SignUpLayout } from '../layout/shell'
 import { StepHeader } from '../layout/step-header'
-import styles from '../sign-up-page.module.css'
+import styles from '../wizard.module.css'
 
-type Step1MemberTypeProps = {
+type MemberTypeStepProps = {
   signUp: UseSignUpReturn
 }
 
-export function Step1MemberType({ signUp }: Step1MemberTypeProps) {
+export function MemberTypeStep({ signUp }: MemberTypeStepProps) {
   const { step, memberType, navigation } = signUp
 
   return (

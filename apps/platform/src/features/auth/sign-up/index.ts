@@ -22,7 +22,7 @@ export {
   SIGN_UP_COMPLETE_PATH,
   SIGN_UP_TOTAL_STEPS,
   schoolGradeOptions,
-} from './lib/sign-up.constants'
+} from './lib/constants'
 export {
   buildConfirmationRows,
   calculateInternationalAge,
@@ -33,4 +33,4 @@ export {
   isValidEmail,
   isValidPassword,
   parseBirthDate,
-} from './lib/sign-up.utils'
+} from './lib/utils'

@@ -9,7 +9,7 @@ import {
 } from '@/shared/ui'
 import { setDevAuthLoggedIn } from '@/shared/lib'
 import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
-import styles from './sign-in-page.module.css'
+import styles from './page.module.css'
 
 const accountLinkItems: Array<{ label: string; href?: string }> = [
   { label: '이메일 찾기' },

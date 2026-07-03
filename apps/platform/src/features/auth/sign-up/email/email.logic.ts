@@ -1,6 +1,6 @@
 import type { EmailCheckStatus } from '../model/sign-up.types'
-import { MOCK_DUPLICATE_EMAIL } from '../lib/sign-up.constants'
-import { isValidEmail } from '../lib/sign-up.utils'
+import { MOCK_DUPLICATE_EMAIL } from '../lib/constants'
+import { isValidEmail } from '../lib/utils'
 
 export function validateEmailDuplicateCheck(email: string): {
   status: EmailCheckStatus

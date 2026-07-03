@@ -1,5 +1,5 @@
 import type { SignUpStepComponent, SignUpStepNumber } from '@/features/auth/sign-up'
-import { Step1MemberType } from './steps/step-1-member-type'
+import { MemberTypeStep } from './steps/member-type'
 import { Step2 } from './steps/step-2'
 import { Step3 } from './steps/step-3'
 import { Step4 } from './steps/step-4'
@@ -9,7 +9,7 @@ import { Step7 } from './steps/step-7'
 import { Step8 } from './steps/step-8'
 
 export const STEP_COMPONENTS = {
-  1: Step1MemberType,
+  1: MemberTypeStep,
   2: Step2,
   3: Step3,
   4: Step4,

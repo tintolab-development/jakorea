@@ -1,15 +1,15 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
 import { PFButton, PFTextInput } from '@/shared/ui'
-import { SignUpActions } from '../layout/sign-up-actions'
-import { SignUpLayout } from '../layout/sign-up-layout'
+import { SignUpActions } from '../layout/actions'
+import { SignUpLayout } from '../layout/shell'
 import { StepHeader } from '../layout/step-header'
-import styles from '../sign-up-page.module.css'
+import styles from '../wizard.module.css'
 
-type Step4GuardianConfirmProps = {
+type GuardianConfirmStepProps = {
   signUp: UseSignUpReturn
 }
 
-export function Step4GuardianConfirm({ signUp }: Step4GuardianConfirmProps) {
+export function GuardianConfirmStep({ signUp }: GuardianConfirmStepProps) {
   const { step, guardian } = signUp
   const { profile } = guardian
 

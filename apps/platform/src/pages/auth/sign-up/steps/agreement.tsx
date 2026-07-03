@@ -4,16 +4,16 @@ import checkOffLargeUrl from '@/shared/assets/icons/check-off-large.svg'
 import checkOffSmallUrl from '@/shared/assets/icons/check-off-small.svg'
 import checkOnLargeUrl from '@/shared/assets/icons/check-on-large.svg'
 import checkOnSmallUrl from '@/shared/assets/icons/check-on-small.svg'
-import { SignUpActions } from '../layout/sign-up-actions'
-import { SignUpLayout } from '../layout/sign-up-layout'
+import { SignUpActions } from '../layout/actions'
+import { SignUpLayout } from '../layout/shell'
 import { StepHeader } from '../layout/step-header'
-import styles from '../sign-up-page.module.css'
+import styles from '../wizard.module.css'
 
-type Step3AgreementProps = {
+type AgreementStepProps = {
   signUp: UseSignUpReturn
 }
 
-export function Step3Agreement({ signUp }: Step3AgreementProps) {
+export function AgreementStep({ signUp }: AgreementStepProps) {
   const { step, agreement } = signUp
 
   return (

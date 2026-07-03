@@ -1,6 +1,6 @@
 import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamation.svg'
 import { PFButton, PFText } from '@/shared/ui'
-import styles from './sign-up-social-connect-error-page.module.css'
+import styles from './error.module.css'
 
 const SOCIAL_CONNECT_PATH = '/auth/sign-up/social-connect'
 const SIGN_IN_PATH = '/auth/sign-in'

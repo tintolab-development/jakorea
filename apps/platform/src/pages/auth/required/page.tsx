@@ -1,6 +1,6 @@
 import { PFButton, PFText } from '@/shared/ui'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation.svg'
-import styles from './required-page.module.css'
+import styles from './page.module.css'
 
 export function RequiredPage() {
   const searchParams = new URLSearchParams(window.location.search)

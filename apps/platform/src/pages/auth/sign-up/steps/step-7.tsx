@@ -1,6 +1,6 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import { Step6Profile } from './step-6-profile'
-import { Step7Confirmation } from './step-7-confirmation'
+import { ConfirmationStep } from './confirmation'
+import { ProfileStep } from './profile'
 
 type Step7Props = {
   signUp: UseSignUpReturn
@@ -8,8 +8,8 @@ type Step7Props = {
 
 export function Step7({ signUp }: Step7Props) {
   return signUp.guardian.isUnderAgeSignup ? (
-    <Step6Profile signUp={signUp} />
+    <ProfileStep signUp={signUp} />
   ) : (
-    <Step7Confirmation signUp={signUp} />
+    <ConfirmationStep signUp={signUp} />
   )
 }

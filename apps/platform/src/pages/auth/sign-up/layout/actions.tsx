@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import styles from '../sign-up-page.module.css'
+import styles from '../wizard.module.css'
 
 type SignUpActionsProps = {
   variant: 'default' | 'terms'

@@ -1,16 +1,18 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
+import arrowRightUrl from '@/shared/assets/icons/arrow-right.svg'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
-import { SignUpActions } from '../layout/sign-up-actions'
-import { SignUpLayout } from '../layout/sign-up-layout'
+import { SignUpActions } from '../layout/actions'
+import { SignUpLayout } from '../layout/shell'
 import { StepHeader } from '../layout/step-header'
-import styles from '../sign-up-page.module.css'
+import styles from '../wizard.module.css'
 
-type Step2BirthProps = {
+type BirthStepProps = {
   signUp: UseSignUpReturn
 }
 
-export function Step2Birth({ signUp }: Step2BirthProps) {
-  const { step, birth } = signUp
+export function BirthStep({ signUp }: BirthStepProps) {
+  const { step, birth, memberType } = signUp
+  const isTeacherSignup = memberType.selected === 'teacher'
 
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
@@ -66,6 +68,33 @@ export function Step2Birth({ signUp }: Step2BirthProps) {
               여성
             </PFButton>
           </div>
+
+          {isTeacherSignup ? (
+            <div className={styles['teacher-birth-guide']}>
+              <PFText as="p" typo="bd-sm-rg" color="primary-700">
+                교사회원은{' '}
+                <PFText as="span" typo="bd-sm-sb" color="primary-700">
+                  만 14세 이상
+                </PFText>
+                만 가입할 수 있어요.
+              </PFText>
+              <button
+                className={styles['teacher-general-sign-up-link']}
+                type="button"
+                onClick={memberType.switchToGeneral}
+              >
+                <PFText typo="label-md" color="black">
+                  일반회원 가입하기
+                </PFText>
+                <img
+                  className={styles['teacher-general-sign-up-arrow']}
+                  src={arrowRightUrl}
+                  alt=""
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -84,8 +113,8 @@ export function Step2Birth({ signUp }: Step2BirthProps) {
         >
           다음
         </PFButton>
-        <PFButton size="medium" variant="text" onClick={step.goPrevious}>
-          이전
+        <PFButton size="large" variant="text" onClick={step.goPrevious}>
+          이전으로
         </PFButton>
       </SignUpActions>
     </SignUpLayout>

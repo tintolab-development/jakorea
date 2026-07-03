@@ -1,16 +1,18 @@
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
-import styles from './sign-up-social-connect-complete-page.module.css'
+import styles from './complete.module.css'
 
-const SOCIAL_CONNECT_PATH = '/auth/sign-up/social-connect'
-
-export function SignUpSocialConnectCompletePage() {
+export function SignUpCompletePage() {
   const handleStart = () => {
     window.location.assign('/')
   }
 
-  const handleConnectMore = () => {
-    window.location.assign(SOCIAL_CONNECT_PATH)
+  const handleGoMyPage = () => {
+    window.location.assign('/')
+  }
+
+  const handleConnectSocial = () => {
+    window.location.assign('/auth/sign-up/social-connect')
   }
 
   return (
@@ -19,10 +21,12 @@ export function SignUpSocialConnectCompletePage() {
         <div className={styles.intro}>
           <img className={styles.illustration} src={illustCheckUrl} alt="" aria-hidden="true" />
           <PFText as="div" typo="hd-md" color="black" className={styles.title}>
-            소셜 계정이 연결되었어요!
+            가입이 완료되었어요!
           </PFText>
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.description}>
-            다음부터 이 계정으로 간편하게 로그인할 수 있어요.
+            이제 JA Korea의 다양한 프로그램과 소식을
+            <br />
+            확인할 수 있어요.
           </PFText>
         </div>
 
@@ -30,8 +34,11 @@ export function SignUpSocialConnectCompletePage() {
           <PFButton size="xlarge" width="100%" onClick={handleStart}>
             시작하기
           </PFButton>
-          <PFButton size="xlarge" variant="tertiary" width="100%" onClick={handleConnectMore}>
-            다른 소셜계정도 연결하기
+          <PFButton size="xlarge" variant="tertiary" width="100%" onClick={handleGoMyPage}>
+            마이페이지로 이동하기
+          </PFButton>
+          <PFButton variant="text" size="large" width="100%" onClick={handleConnectSocial}>
+            소셜계정 연결하기
           </PFButton>
         </div>
       </div>
