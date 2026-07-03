@@ -32,8 +32,8 @@ import {
   EditableStatusBadge,
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
 } from '@/shared/components'
 import { getProgramRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -202,7 +202,13 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
   )
 
   const renderRoleBadge = useCallback((r: ProgramRole) => {
-    return <EditableStatusBadge label={PROGRAM_ROLE_LABELS[r]} tone={getProgramRoleBadgeTone(r)} />
+    return (
+      <EditableStatusBadge
+        label={PROGRAM_ROLE_LABELS[r]}
+        tone={getProgramRoleBadgeTone(r)}
+        className="program-managers-tab__role-badge"
+      />
+    )
   }, [])
 
   const columns: ColumnsType<ProgramManagerRow> = useMemo(
@@ -218,11 +224,11 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         title: '권한',
         dataIndex: 'role',
         key: 'role',
-        width: 116,
+        width: 150,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME }),
         onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME}`,
         }),
         render: (role: ProgramRole, record: ProgramManagerRow) => (
           <StatusDropdownCell<ProgramRole>
@@ -234,7 +240,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            tagLayout="tag100"
+            tagLayout="tag132"
           />
         ),
       },
