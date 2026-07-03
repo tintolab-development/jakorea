@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PFButton, PFPagination, PFText, PFTextInput } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFModal, PFPagination, PFText, PFTextInput } from '@/shared/ui'
 import styles from './test-page.module.css'
 
 const typographyItems = [
@@ -31,6 +31,8 @@ const paginationSizes = ['large', 'small'] as const
 export function TestPage() {
   const [numberedPage, setNumberedPage] = useState(1)
   const [compactPage, setCompactPage] = useState(1)
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   return (
     <section className={styles.page}>
@@ -165,6 +167,41 @@ export function TestPage() {
           </div>
         </div>
       </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFModal
+        </PFText>
+        <div className={styles['modal-stack']}>
+          <PFButton variant="secondary" onClick={() => setIsModalOpen(true)}>
+            PFModal 열기
+          </PFButton>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFAlertModal
+        </PFText>
+        <div className={styles['modal-stack']}>
+          <PFButton variant="secondary" onClick={() => setIsAlertModalOpen(true)}>
+            PFAlertModal 열기
+          </PFButton>
+        </div>
+      </div>
+
+      <PFModal open={isModalOpen} title="모달 제목" onClose={() => setIsModalOpen(false)}>
+        <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
+          PFModal은 X 버튼과 자유로운 children 콘텐츠를 가진 작업용 모달입니다.
+        </PFText>
+      </PFModal>
+
+      <PFAlertModal
+        open={isAlertModalOpen}
+        title="본인인증을 완료하지 못했어요."
+        description="정보를 확인한 뒤 다시 시도해 주세요."
+        onConfirm={() => setIsAlertModalOpen(false)}
+      />
     </section>
   )
 }

@@ -1,5 +1,7 @@
 /** 공유 UI primitive barrel — 컴포넌트 추가 시 export */
 export { GoogleSocialLoginIcon, KakaoSocialLoginIcon, NaverSocialLoginIcon } from './icons'
+export { PFAlertModal } from './pf-alert-modal'
+export type { PFAlertModalProps } from './pf-alert-modal'
 export { PFButton } from './pf-button'
 export { PFModal } from './pf-modal'
 export { PFPagination } from './pf-pagination'

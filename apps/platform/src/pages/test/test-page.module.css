@@ -103,3 +103,10 @@
   align-items: center;
   gap: var(--spacing-32);
 }
+
+.modal-stack {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-16);
+}
