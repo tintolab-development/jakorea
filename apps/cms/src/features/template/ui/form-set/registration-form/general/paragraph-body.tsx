@@ -86,7 +86,7 @@ export interface ProgramRegistrationParagraphBodyOptions {
   /** 일정형(복수·일정 별 상이 조합) 카드 헤더 — 사전 교육 토글 */
   scheduleCurriculumPreEducation: boolean
   onScheduleCurriculumPreEducationChange: (checked: boolean) => void
-  /** 교육받은 교사 — 카드 헤더 교사 연수 토글 */
+  /** 교육받은 교사 — 카드 헤더 교육 연수 토글 */
   trainedTeachersTeacherTrainingEnabled: boolean
   onTrainedTeachersTeacherTrainingEnabledChange: (checked: boolean) => void
   educationScheduleMode: ProgramRegistrationEducationScheduleMode

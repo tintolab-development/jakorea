@@ -30,6 +30,15 @@ const EDUCATION_PLACE_OPTIONS = [
 
 const TEMPLATE_AUTO_USER_INFO_HINT = '로그인 사용자 정보가 자동으로 반영됩니다.'
 
+/** 미리보기 전용 — 로그인 사용자 자동 반영 필드 예시 값 */
+const PREVIEW_AUTO_USER_INFO_SAMPLE = {
+  institutionName: '진일초등학교',
+  institutionAddress: '광주광역시 남구 광복마을4길 40',
+  teacherName: '홍길동',
+  mobile: '010-1234-0000',
+  email: 'ti**@naver.com',
+} as const
+
 const inlineChoiceStyle = { display: 'flex', flexWrap: 'wrap' as const, gap: 16 }
 
 /** 교육받은 교사 프로그램 참여자 신청 폼 — 기본 정보 */
@@ -50,9 +59,19 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           label="신청 기관명"
           readOnlyDisplay
           view={
-            <span className="form-editor-template-field-hint-text">
-              {TEMPLATE_AUTO_USER_INFO_HINT}
-            </span>
+            isTemplateAuthoringMode ? (
+              <span className="form-editor-template-field-hint-text">
+                {TEMPLATE_AUTO_USER_INFO_HINT}
+              </span>
+            ) : (
+              <CmsInput
+                inputSize="medium"
+                width="100%"
+                value={PREVIEW_AUTO_USER_INFO_SAMPLE.institutionName}
+                disabled
+                readOnly
+              />
+            )
           }
         />
         <DetailInfoForm.Field
@@ -77,9 +96,19 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
           label="기관 소재지"
           readOnlyDisplay
           view={
-            <span className="form-editor-template-field-hint-text">
-              {TEMPLATE_AUTO_USER_INFO_HINT}
-            </span>
+            isTemplateAuthoringMode ? (
+              <span className="form-editor-template-field-hint-text">
+                {TEMPLATE_AUTO_USER_INFO_HINT}
+              </span>
+            ) : (
+              <CmsInput
+                inputSize="medium"
+                width="100%"
+                value={PREVIEW_AUTO_USER_INFO_SAMPLE.institutionAddress}
+                disabled
+                readOnly
+              />
+            )
           }
         />
         <DetailInfoForm.Field
@@ -180,9 +209,13 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
             isTemplateAuthoringMode ? undefined : (
               <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
                 <span>담당 교사</span>
-                <span className="form-editor-template-field-hint-text">
-                  {TEMPLATE_AUTO_USER_INFO_HINT}
-                </span>
+                <CmsInput
+                  inputSize="medium"
+                  width={120}
+                  value={PREVIEW_AUTO_USER_INFO_SAMPLE.teacherName}
+                  disabled
+                  readOnly
+                />
                 <span style={{ color: '#9ca3af' }}>|</span>
                 <span>Tel</span>
                 <CmsInput
@@ -192,10 +225,20 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
                 />
                 <span style={{ color: '#9ca3af' }}>|</span>
                 <span>M</span>
-                <CmsInput inputSize="medium" width={160} placeholder="휴대폰" />
+                <CmsInput
+                  inputSize="medium"
+                  width={160}
+                  placeholder="휴대폰"
+                  defaultValue={PREVIEW_AUTO_USER_INFO_SAMPLE.mobile}
+                />
                 <span style={{ color: '#9ca3af' }}>|</span>
                 <span>E-mail</span>
-                <CmsInput inputSize="medium" width={180} placeholder="이메일" />
+                <CmsInput
+                  inputSize="medium"
+                  width={180}
+                  placeholder="이메일"
+                  defaultValue={PREVIEW_AUTO_USER_INFO_SAMPLE.email}
+                />
               </div>
             )
           }

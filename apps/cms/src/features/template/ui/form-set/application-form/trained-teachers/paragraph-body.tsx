@@ -8,7 +8,8 @@ import { TrainedTeachersProgramApplicationPreferredScheduleParagraph } from '@/f
 export function renderTrainedTeachersProgramApplicationParagraphBody(
   paragraph: HorizontalTableParagraph,
   enabled: boolean | undefined,
-  isTemplateAuthoringMode = false
+  isTemplateAuthoringMode = false,
+  readOnlyPreview = false
 ): ReactNode | null {
   if (!enabled) return null
 
@@ -20,7 +21,11 @@ export function renderTrainedTeachersProgramApplicationParagraphBody(
         />
       )
     case PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule:
-      return <TrainedTeachersProgramApplicationPreferredScheduleParagraph />
+      return (
+        <TrainedTeachersProgramApplicationPreferredScheduleParagraph
+          readOnlyPreview={readOnlyPreview}
+        />
+      )
     default:
       return null
   }

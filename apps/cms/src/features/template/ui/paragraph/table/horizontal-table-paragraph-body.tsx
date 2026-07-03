@@ -620,7 +620,8 @@ export function HorizontalTableParagraphBody({
     renderTrainedTeachersProgramApplicationParagraphBody(
       p,
       programApplicationFormTrainedTeachersInstitution,
-      paragraphInteractionMode === 'authoring'
+      paragraphInteractionMode === 'authoring',
+      isFormPreviewReadonlyMode(paragraphInteractionMode)
     )
   if (trainedTeachersProgramApplicationBody != null)
     return trainedTeachersProgramApplicationBody

@@ -34,16 +34,16 @@ function createTrainedTeachersPersonalInfoHorizontalTable(): HorizontalTablePara
   const bodyRow = [
     {
       kind: 'text' as const,
-      value: '이름, 기관명, 기관 소재지, 개인 연락처, 이메일',
+      value: '이름, 학교명, 학교주소, 개인 연락처, e-mail',
     },
     {
       kind: 'text' as const,
-      value: '교육받은 교사 프로그램 신청 접수 및 교육 운영에 필요한 정보 안내',
+      value: 'JA 프로그램의 참가자 선발 및 프로그램 진행에 필요한 정보 안내',
     },
     {
       kind: 'text' as const,
       value:
-        '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기',
+        '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 동의일로부터 3년 보관 후 폐기',
     },
   ]
 
@@ -84,9 +84,9 @@ function createTrainedTeachersThirdPartyHorizontalTable(): HorizontalTableParagr
     },
     {
       kind: 'text' as const,
-      value: '교육받은 교사 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
+      value: 'JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내',
     },
-    { kind: 'text' as const, value: '5년' },
+    { kind: 'text' as const, value: '동의일로부터 3년 보관 후 폐기' },
   ]
 
   return normalizeHorizontalTableParagraph({
@@ -148,7 +148,7 @@ export function createProgramApplicationFormTrainedTeachersDraft(): WritingFormD
     createTrainedTeachersPlaceholderTable(
       PROGRAM_APPLICATION_FORM_TRAINED_TEACHERS_IDS.preferredSchedule,
       '진행 희망 교육 일정',
-      '교육을 희망하는 날짜와 시간을 모두 작성해 주세요. 수업은 N일, N차시 운영됩니다. (최대 N개까지 희망 일정 신청이 가능합니다.)'
+      '교육 진행 예정인 날짜 및 진행 차시를 회차 별로 작성해 주세요.'
     ),
   ]
 

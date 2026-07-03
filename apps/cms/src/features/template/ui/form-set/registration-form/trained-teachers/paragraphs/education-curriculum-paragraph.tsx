@@ -27,7 +27,7 @@ function TrainedTeachersTeacherTrainingTable() {
 
   return (
     <DetailInfoForm
-      title="교사 연수"
+      title="교육 연수"
       hideHeader
       mode="edit"
       className="program-registration-paragraph"
@@ -100,7 +100,7 @@ function TrainedTeachersTeacherTrainingSection({ enabled }: { enabled: boolean }
             edit={
               <CmsInput
                 inputSize="medium"
-                placeholder="교사 연수 없이 교재 배송 후 교사가 교육을 진행합니다."
+                placeholder="교육 연수 없이 교재 배송 후 교사가 교육을 진행합니다."
                 width="100%"
                 disabled
               />
@@ -114,7 +114,7 @@ function TrainedTeachersTeacherTrainingSection({ enabled }: { enabled: boolean }
 
   return (
     <div className="program-registration-curriculum__session-block">
-      <div className="program-registration-curriculum__session-heading">■ 교사 연수</div>
+      <div className="program-registration-curriculum__session-heading">■ 교육 연수</div>
       <div className="program-registration-curriculum__session-row">
         <TrainedTeachersTeacherTrainingTable />
       </div>
