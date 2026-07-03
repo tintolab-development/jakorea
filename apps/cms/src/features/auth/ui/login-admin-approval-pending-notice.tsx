@@ -1,3 +1,5 @@
+import { ADMIN_LOGIN_APPROVAL_PENDING_MESSAGE } from '@/features/auth/errors/admin-login-approval-pending-error'
+
 function AdminApprovalPendingIcon() {
   return (
     <svg
@@ -22,7 +24,7 @@ export function LoginAdminApprovalPendingNotice() {
     <div className="login-admin-approval-pending-notice" role="alert">
       <AdminApprovalPendingIcon />
       <p className="login-admin-approval-pending-notice__text">
-        현재 관리자 승인 대기 중입니다. 승인 완료 후 로그인 및 서비스 이용이 가능합니다.
+        {ADMIN_LOGIN_APPROVAL_PENDING_MESSAGE}
       </p>
     </div>
   )

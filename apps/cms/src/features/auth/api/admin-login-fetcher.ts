@@ -6,6 +6,7 @@ import { axiosClient } from '@/shared/api'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import {
   AdminLoginApprovalPendingError,
+  ADMIN_LOGIN_APPROVAL_PENDING_MESSAGE,
   isAdminLoginApprovalPendingCode,
 } from '@/features/auth/errors/admin-login-approval-pending-error'
 import type {
@@ -39,7 +40,7 @@ function parseLoginError(payload: unknown): AdminLoginApiError | AdminLoginAppro
       '로그인에 실패했습니다.'
     const normalizedCode = String(code)
     if (isAdminLoginApprovalPendingCode(normalizedCode)) {
-      return new AdminLoginApprovalPendingError(message)
+      return new AdminLoginApprovalPendingError(ADMIN_LOGIN_APPROVAL_PENDING_MESSAGE)
     }
     return new AdminLoginApiError(normalizedCode, message)
   }
