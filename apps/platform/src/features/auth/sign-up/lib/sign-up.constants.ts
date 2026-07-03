@@ -13,6 +13,23 @@ export const MOCK_VERIFIED_NAME = '홍길동'
 export const MOCK_VERIFIED_PHONE = '010-1234-5678'
 export const MOCK_DUPLICATE_EMAIL = 'ja@gmail.com'
 
+export const schoolGradeOptions = [
+  '1학년',
+  '2학년',
+  '3학년',
+  '4학년',
+  '5학년',
+  '6학년',
+  '7학년',
+  '8학년',
+  '9학년',
+  '10학년',
+  '11학년',
+  '12학년',
+] as const
+
+export type SchoolGrade = (typeof schoolGradeOptions)[number]
+
 export const memberTypeOptions: MemberTypeOption[] = [
   {
     type: 'general',

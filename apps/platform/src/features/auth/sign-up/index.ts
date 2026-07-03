@@ -21,6 +21,7 @@ export {
   SIGN_IN_PATH,
   SIGN_UP_COMPLETE_PATH,
   SIGN_UP_TOTAL_STEPS,
+  schoolGradeOptions,
 } from './lib/sign-up.constants'
 export {
   buildConfirmationRows,

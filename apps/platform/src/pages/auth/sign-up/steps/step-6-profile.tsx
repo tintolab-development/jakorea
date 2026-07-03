@@ -1,6 +1,7 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from '@/features/auth/sign-up'
+import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE, schoolGradeOptions } from '@/features/auth/sign-up'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
+import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
 import { AddressSearchModal } from '../address-search-modal'
 import { SignUpActions } from '../layout/sign-up-actions'
 import { SignUpLayout } from '../layout/sign-up-layout'
@@ -65,6 +66,48 @@ export function Step6Profile({ signUp }: Step6ProfileProps) {
             </PFButton>
           </div>
         </div>
+
+        {profile.schoolStatus === 'enrolled' ? (
+          <>
+            <PFTextInput
+              size="xlarge"
+              label="소속/학교명"
+              placeholder="소속 또는 학교명을 입력해 주세요"
+              required
+              value={profile.schoolName}
+              onValueChange={profile.setSchoolName}
+            />
+
+            <div className={styles['grade-field']}>
+              <PFText as="span" typo="label-md" color="inherit" className={styles['field-label']}>
+                학년 <span className={styles['inline-required-mark']}>*</span>
+              </PFText>
+              <div className={styles['grade-select-wrap']}>
+                <select
+                  className={styles['grade-select']}
+                  required
+                  value={profile.grade}
+                  onChange={event => profile.setGrade(event.target.value)}
+                >
+                  <option value="" disabled hidden>
+                    학년을 선택해 주세요
+                  </option>
+                  {schoolGradeOptions.map(option => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <img
+                  className={styles['grade-select-arrow']}
+                  src={chevronRightGrayUrl}
+                  alt=""
+                  aria-hidden="true"
+                />
+              </div>
+            </div>
+          </>
+        ) : null}
 
         <div className={styles['address-field']}>
           <PFText as="span" typo="label-md" color="inherit" className={styles['field-label']}>

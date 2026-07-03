@@ -62,6 +62,8 @@ export function useSignUp() {
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [schoolStatus, setSchoolStatus] = useState<SchoolStatus>('none')
+  const [schoolName, setSchoolName] = useState('')
+  const [grade, setGrade] = useState('')
   const [address, setAddress] = useState('')
   const [addressDetail, setAddressDetail] = useState('')
   const [volunteerId, setVolunteerId] = useState('')
@@ -71,7 +73,13 @@ export function useSignUp() {
   const guardianAgreementDerived = getGuardianAgreementDerived(guardianAgreements)
   const passwordDerived = getPasswordDerived(password, passwordConfirm)
   const isStepTwoValid = isBirthStepValid(birthDate, gender)
-  const isStepSixValid = isProfileStepValid(address, addressDetail)
+  const isStepSixValid = isProfileStepValid(
+    address,
+    addressDetail,
+    schoolStatus,
+    schoolName,
+    grade,
+  )
   const isGuardianProfileValidState = isGuardianProfileValid(guardianRelationship)
 
   const handleSignIn = () => {
@@ -202,6 +210,15 @@ export function useSignUp() {
     }
   }
 
+  const handleSchoolStatusChange = (status: SchoolStatus) => {
+    setSchoolStatus(status)
+
+    if (status === 'none') {
+      setSchoolName('')
+      setGrade('')
+    }
+  }
+
   const handlePasswordContinue = () => {
     setCurrentStep(isUnderAgeSignup ? 7 : 6)
   }
@@ -323,7 +340,11 @@ export function useSignUp() {
     },
     profile: {
       schoolStatus,
-      setSchoolStatus,
+      setSchoolStatus: handleSchoolStatusChange,
+      schoolName,
+      setSchoolName,
+      grade,
+      setGrade,
       address,
       setAddress,
       addressDetail,
