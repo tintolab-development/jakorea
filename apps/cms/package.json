@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/identity-verification --filter @jakorea/social-auth build",
+    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/identity-verification --filter @jakorea/social-auth --filter @jakorea/location build",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint . --max-warnings=-1",
@@ -35,6 +35,7 @@
     "@fortune-sheet/react": "^1.0.4",
     "@hookform/resolvers": "^3.9.1",
     "@jakorea/identity-verification": "workspace:*",
+    "@jakorea/location": "workspace:*",
     "@jakorea/social-auth": "workspace:*",
     "@jakorea/ui": "workspace:*",
     "@jakorea/utils": "workspace:*",

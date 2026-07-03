@@ -1,15 +1,4 @@
-// mockSidoSigungu.ts
-export type SigunguType = '시' | '군' | '구'
-
-export interface Sigungu {
-  name: string // 반드시 ~시/~군/~구 로 끝남
-  type: SigunguType
-}
-
-export interface SidoCategory {
-  name: string // 반드시 ~도 또는 ~시 로 끝남
-  sigungu: Sigungu[]
-}
+import type { SidoCategory } from "./types"
 
 export const MOCK_SIDO_SIGUNGU: SidoCategory[] = [
   {

@@ -42,6 +42,8 @@ interface ImportMetaEnv {
    * 사업용 키는 `https://business.juso.go.kr/addrlink/addrLinkApi.do` 등으로 지정
    */
   readonly VITE_JUSO_ADDRESS_API_URL?: string
+  /** NEIS(나이스) 학교 검색 API 인증키 */
+  readonly VITE_NEIS_API_KEY?: string
 }
 
 interface ImportMeta {
