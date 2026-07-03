@@ -36,6 +36,7 @@ import {
   resolveParticipantRecruitmentInterviewEnabled,
 } from '@/features/program/general/lib/participant-recruitment-display'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './participant-recruitment-info-view.css'
@@ -182,10 +183,37 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   const contactOrg = display.contactOrganizationName
   const isIndividual = isGeneralIndividualProgram(program)
   const isCompanySchool = isCompanySchoolRecruitmentProgram(program)
+  // 교육받은 교사 — 공고 게시|학생 명단 1행, 사전 안내·수료증 비노출 (기존 유형 렌더 불변)
+  const isTrainedTeachers = isTrainedTeachersDetailProgram(program)
   const editInterviewValue = form?.watch('participantRecruitmentInterviewEnabled')
   const interviewEnabled = resolveParticipantRecruitmentInterviewEnabled(
     program,
     isEdit && form ? editInterviewValue : undefined
+  )
+
+  const studentListField = (
+    <DetailInfoForm.Field
+      label="학생 명단 제출 여부"
+      view={display.studentListLabel}
+      edit={
+        isEdit && form ? (
+          <Controller
+            name="studentListRequired"
+            control={form.control}
+            render={({ field }) => (
+              <CmsRadio.Group
+                {...field}
+                size="large"
+                value={field.value ?? undefined}
+                onChange={e => field.onChange(e.target.value)}
+                options={NEED_OR_NOT_OPTIONS}
+                className={RECRUITMENT_RADIO_CLASS}
+              />
+            )}
+          />
+        ) : undefined
+      }
+    />
   )
 
   const recruitmentPeriodField = (
@@ -385,10 +413,10 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           mode={formMode}
           className={FORM_CLASS}
         >
-          <DetailInfoForm.Row type={isIndividual ? 'double' : 'single'}>
+          <DetailInfoForm.Row type={isIndividual || isTrainedTeachers ? 'double' : 'single'}>
             <DetailInfoForm.Field
               label="공고 게시 여부"
-              fullRow={!isIndividual}
+              fullRow={!isIndividual && !isTrainedTeachers}
               view={display.announcementPublishedLabel}
               edit={
                 isEdit && form ? (
@@ -433,32 +461,12 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                 }
               />
             ) : null}
+            {isTrainedTeachers ? studentListField : null}
           </DetailInfoForm.Row>
 
-          {!isIndividual && !isCompanySchool ? (
+          {!isIndividual && !isCompanySchool && !isTrainedTeachers ? (
             <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field
-                label="학생 명단 제출 여부"
-                view={display.studentListLabel}
-                edit={
-                  isEdit && form ? (
-                    <Controller
-                      name="studentListRequired"
-                      control={form.control}
-                      render={({ field }) => (
-                        <CmsRadio.Group
-                          {...field}
-                          size="large"
-                          value={field.value ?? undefined}
-                          onChange={e => field.onChange(e.target.value)}
-                          options={NEED_OR_NOT_OPTIONS}
-                          className={RECRUITMENT_RADIO_CLASS}
-                        />
-                      )}
-                    />
-                  ) : undefined
-                }
-              />
+              {studentListField}
               <DetailInfoForm.Field
                 label="사전 안내 사항 작성 여부"
                 view={display.preEducationNoticeLabel}
@@ -665,7 +673,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
             />
           </DetailInfoForm.Row>
 
-          {!isIndividual && !isCompanySchool ? (
+          {!isIndividual && !isCompanySchool && !isTrainedTeachers ? (
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="수료증 발급 여부"

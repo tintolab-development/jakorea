@@ -32,10 +32,10 @@ import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-sa
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import { ParticipatingInstitutionsSection } from './program-status/participating-institutions-section'
 import {
-  GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
-  normalizeGeneralParticipatingInstitutionDetailTab,
-  type GeneralParticipatingInstitutionDetailTabKey,
-} from './program-status/general-participating-institution-detail-view'
+  normalizeParticipatingInstitutionDetailTab,
+  type ParticipatingInstitutionDetailTabKey,
+  isParticipatingInstitutionDetailTabKeyForProgram,
+} from '@/features/program/general/lib/participating-institution-detail-tabs'
 import { ProgramManagersTab } from './managers/program-managers-tab'
 import {
   normalizeInstructorDetailTab,
@@ -54,6 +54,7 @@ import {
   CompanySchoolApplicationInfoView,
   type CompanySchoolApplicationInfoTabKey,
 } from './info/company-school-application-info-view'
+import { GeneralProgramApplicationTemplateEditModal } from './info/application-template-edit-modal'
 import { GeneralProgramRecruitmentView } from './info/recruitment-view'
 import { GeneralSurveyManagementView } from './survey-management/survey-management-view'
 import type { Program } from '@/types/domain'
@@ -62,6 +63,7 @@ import { getEconomyPrograms, getGeneralPrograms, getTrainedTeachersPrograms } fr
 import { COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/general/lib/registration-local-save'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { TrainedTeachersCommonInfoView } from '@/features/program/trained-teachers/ui/common-info/common-info-view'
+import { TrainedTeachersApplicationInfoView } from '@/features/program/trained-teachers/ui/application-info/application-info-view'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
@@ -154,14 +156,12 @@ function isCompanySchoolDetailProgram(program: Program | null): boolean {
 
 function parseSchoolTabFromSearch(
   searchParams: URLSearchParams,
-  program?: Pick<Program, 'studentListRequired'> | null
-): GeneralParticipatingInstitutionDetailTabKey {
+  program?: Program | null
+): ParticipatingInstitutionDetailTabKey {
   const t = searchParams.get(SCHOOL_TAB_PARAM)
-  if (t && (GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS as readonly string[]).includes(t))
-    return normalizeGeneralParticipatingInstitutionDetailTab(
-      t as GeneralParticipatingInstitutionDetailTabKey,
-      program
-    )
+  if (t && isParticipatingInstitutionDetailTabKeyForProgram(t, program)) {
+    return normalizeParticipatingInstitutionDetailTab(t, program)
+  }
   return 'application'
 }
 
@@ -815,9 +815,9 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }
 
-  const setSchoolTab = (tab: GeneralParticipatingInstitutionDetailTabKey) => {
+  const setSchoolTab = (tab: ParticipatingInstitutionDetailTabKey) => {
     const next = new URLSearchParams(searchParams)
-    next.set(SCHOOL_TAB_PARAM, normalizeGeneralParticipatingInstitutionDetailTab(tab, displayProgram))
+    next.set(SCHOOL_TAB_PARAM, normalizeParticipatingInstitutionDetailTab(tab, displayProgram))
     setSearchParams(next, { replace: true })
   }
 
@@ -864,6 +864,9 @@ export function ProgramDetailFullPageModal({
   const [schoolDetailTitle, setSchoolDetailTitle] = useState<string | null>(null)
   const [instructorDetailTitle, setInstructorDetailTitle] = useState<string | null>(null)
   const [volunteerDetailTitle, setVolunteerDetailTitle] = useState<string | null>(null)
+  /** 교육받은 교사 — 신청 정보 양식 수정 모달·미리보기 갱신 키 */
+  const [trainedTeachersFormEditOpen, setTrainedTeachersFormEditOpen] = useState(false)
+  const [trainedTeachersFormPreviewReloadKey, setTrainedTeachersFormPreviewReloadKey] = useState(0)
 
   useEffect(() => {
     if (!schoolIdFromUrl) setSchoolDetailTitle(null)
@@ -1169,6 +1172,8 @@ export function ProgramDetailFullPageModal({
   }
   const isCompanySchoolApplicationInfoTab =
     isOverviewProgramDetail && activeLnb === 'info' && activeTab === 'instructors'
+  const isTrainedTeachersApplicationInfoTab =
+    isTrainedTeachersDetail && isCompanySchoolApplicationInfoTab
   const activeCompanySchoolApplicationTab: CompanySchoolApplicationInfoTabKey =
     searchParams.get(SUB_TAB_PARAM) === 'instructors' ? 'instructors' : 'institutions'
   const handleCompanySchoolApplicationTabChange = (tab: CompanySchoolApplicationInfoTabKey) => {
@@ -1200,7 +1205,8 @@ export function ProgramDetailFullPageModal({
         getTrainedTeachersPrograms().some(pr => pr.id === displayProgram.id)))
 
   return (
-    <DetailFullPageModal
+    <>
+      <DetailFullPageModal
       open={open}
       onClose={onClose}
       onHeaderClose={handleHeaderCloseClick}
@@ -1255,7 +1261,18 @@ export function ProgramDetailFullPageModal({
             />
           )}
 
-          {activeLnb === 'info' && isCompanySchoolApplicationInfoTab && (
+          {activeLnb === 'info' && isTrainedTeachersApplicationInfoTab && (
+            <TrainedTeachersApplicationInfoView
+              program={displayProgram}
+              canWrite
+              onEditForm={() => setTrainedTeachersFormEditOpen(true)}
+              previewReloadKey={trainedTeachersFormPreviewReloadKey}
+            />
+          )}
+
+          {activeLnb === 'info' &&
+            isCompanySchoolApplicationInfoTab &&
+            !isTrainedTeachersApplicationInfoTab && (
             <CompanySchoolApplicationInfoView
               activeTab={activeCompanySchoolApplicationTab}
               onTabChange={handleCompanySchoolApplicationTabChange}
@@ -1405,6 +1422,22 @@ export function ProgramDetailFullPageModal({
       ) : (
         <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
       )}
-    </DetailFullPageModal>
+      </DetailFullPageModal>
+      {/* 닫힌 상태로 mount하면 수정 모달 effect가 미리보기의 기관 신청 브리지를 초기화하므로 open일 때만 렌더 */}
+      {isTrainedTeachersDetail && displayProgram && trainedTeachersFormEditOpen ? (
+        <GeneralProgramApplicationTemplateEditModal
+          open
+          program={displayProgram}
+          applicationTab="institutions"
+          variantOverride="trained-teachers-application-institution"
+          onClose={() => {
+            setTrainedTeachersFormEditOpen(false)
+            // 모달 unmount 시 브리지가 초기화되므로 미리보기를 remount해 재연동
+            setTrainedTeachersFormPreviewReloadKey(key => key + 1)
+          }}
+          onSaved={() => setTrainedTeachersFormPreviewReloadKey(key => key + 1)}
+        />
+      ) : null}
+    </>
   )
 }
