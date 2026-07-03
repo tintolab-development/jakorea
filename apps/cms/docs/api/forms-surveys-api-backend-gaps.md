@@ -7,7 +7,7 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9) · subset `openapi/forms-sur
 마이그레이션 PHASE: [forms-surveys-api-migration-guide.md](./forms-surveys-api-migration-guide.md)
 
 **작성일**: 2026-07-01  
-**Swagger 서버 스냅샷**: `https://7836-183-102-114-192.ngrok-free.app/`
+**Swagger 서버 스냅샷**: `https://12aa-221-146-247-18.ngrok-free.app/`
 
 ---
 
