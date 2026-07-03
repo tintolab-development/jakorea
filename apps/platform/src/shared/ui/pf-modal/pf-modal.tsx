@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import closeIconUrl from '../icons/close.svg'
+import closeIconUrl from './icons/close.svg'
 import { PFText } from '../pf-text'
 import styles from './pf-modal.module.css'
 
