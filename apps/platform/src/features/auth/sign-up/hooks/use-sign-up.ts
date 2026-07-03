@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type {
   AgreementKey,
   AgreementState,
+  EmploymentStatus,
   GenderType,
   GuardianAgreementKey,
   GuardianAgreementState,
@@ -16,8 +17,8 @@ import {
   SIGN_UP_UNDER_AGE_TOTAL_STEPS,
   MOCK_VERIFIED_NAME,
   MOCK_VERIFIED_PHONE,
-} from '../lib/sign-up.constants'
-import { buildConfirmationRows } from '../lib/sign-up.utils'
+} from '../lib/constants'
+import { buildConfirmationRows } from '../lib/utils'
 import {
   agreementItems,
   createInitialAgreementState,
@@ -35,6 +36,7 @@ import {
 import { validateEmailDuplicateCheck } from '../email/email.logic'
 import { getPasswordDerived } from '../password/password.logic'
 import { isProfileStepValid } from '../profile/profile.logic'
+import { isTeacherProfileValid } from '../profile/teacher-profile.logic'
 import { isGuardianProfileValid } from '../guardian/guardian-profile.logic'
 import { isBirthStepValid, validateBirthStep } from '../identity/identity.logic'
 
@@ -64,22 +66,21 @@ export function useSignUp() {
   const [schoolStatus, setSchoolStatus] = useState<SchoolStatus>('none')
   const [schoolName, setSchoolName] = useState('')
   const [grade, setGrade] = useState('')
+  const [employmentStatus, setEmploymentStatus] = useState<EmploymentStatus | null>('employed')
   const [address, setAddress] = useState('')
   const [addressDetail, setAddressDetail] = useState('')
   const [volunteerId, setVolunteerId] = useState('')
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+  const [isSchoolSearchModalOpen, setIsSchoolSearchModalOpen] = useState(false)
 
   const agreementDerived = getAgreementDerived(agreements)
   const guardianAgreementDerived = getGuardianAgreementDerived(guardianAgreements)
   const passwordDerived = getPasswordDerived(password, passwordConfirm)
   const isStepTwoValid = isBirthStepValid(birthDate, gender)
-  const isStepSixValid = isProfileStepValid(
-    address,
-    addressDetail,
-    schoolStatus,
-    schoolName,
-    grade,
-  )
+  const isStepSixValid =
+    selectedType === 'teacher'
+      ? isTeacherProfileValid(schoolName, employmentStatus)
+      : isProfileStepValid(address, addressDetail, schoolStatus, schoolName, grade)
   const isGuardianProfileValidState = isGuardianProfileValid(guardianRelationship)
 
   const handleSignIn = () => {
@@ -103,6 +104,11 @@ export function useSignUp() {
     }
 
     if (result.status === 'under-age') {
+      if (selectedType === 'teacher') {
+        setStepTwoMessage('교사회원은 만 14세 이상만 가입할 수 있어요.')
+        return
+      }
+
       setStepTwoMessage('')
       setIsUnderAgeSignup(true)
       setRequiresGuardianConsent(true)
@@ -113,6 +119,13 @@ export function useSignUp() {
     setIsUnderAgeSignup(false)
     setRequiresGuardianConsent(false)
     setCurrentStep(3)
+  }
+
+  const handleSwitchToGeneralMember = () => {
+    setSelectedType('general')
+    setStepTwoMessage('')
+    setRequiresGuardianConsent(false)
+    setIsUnderAgeSignup(false)
   }
 
   const handlePreviousStep = () => {
@@ -270,6 +283,7 @@ export function useSignUp() {
     memberType: {
       selected: selectedType,
       setSelected: setSelectedType,
+      switchToGeneral: handleSwitchToGeneralMember,
       options: memberTypeOptions,
     },
     birth: {
@@ -345,6 +359,8 @@ export function useSignUp() {
       setSchoolName,
       grade,
       setGrade,
+      employmentStatus,
+      setEmploymentStatus,
       address,
       setAddress,
       addressDetail,
@@ -354,6 +370,9 @@ export function useSignUp() {
       isAddressModalOpen,
       openAddressModal: () => setIsAddressModalOpen(true),
       closeAddressModal: () => setIsAddressModalOpen(false),
+      isSchoolSearchModalOpen,
+      openSchoolSearchModal: () => setIsSchoolSearchModalOpen(true),
+      closeSchoolSearchModal: () => setIsSchoolSearchModalOpen(false),
       isValid: isStepSixValid,
       continue: handleProfileContinue,
     },
