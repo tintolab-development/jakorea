@@ -1,5 +1,5 @@
 import { PFText } from '@/shared/ui'
-import jaLogoGrayUrl from '@/shared/assets/ja-logo-gray.svg'
+import jaLogoGrayUrl from '@/shared/assets/brand/ja-logo-gray.svg'
 import facebookIconUrl from './image/icon/facebook.svg'
 import instagramIconUrl from './image/icon/instagram.svg'
 import youtubeIconUrl from './image/icon/youtube.svg'

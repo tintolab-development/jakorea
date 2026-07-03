@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { PFText } from '@/shared/ui'
-import logoUrl from '@/shared/assets/ja-logo.svg'
+import logoUrl from '@/shared/assets/brand/ja-logo.svg'
 import logOutIconUrl from './image/icon/log-out.svg'
 import notificationsIconUrl from './image/icon/notifications.svg'
 import personIconUrl from './image/icon/person.svg'

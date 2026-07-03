@@ -11,7 +11,7 @@ import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/components/table-filter-group-field-width'
-import { MOCK_SIDO_SIGUNGU } from '@/shared/constants/sido-sigungu'
+import { MOCK_SIDO_SIGUNGU } from '@jakorea/location/sido-sigungu'
 
 const QUARTER_OPTIONS: Array<{ label: string; value: string | number }> = [
   { label: '1분기', value: 1 },

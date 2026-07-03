@@ -1,4 +1,4 @@
-import { isValidPassword } from '../lib/sign-up.utils'
+import { isValidPassword } from '../lib/utils'
 
 export function getPasswordDerived(password: string, passwordConfirm: string) {
   const isMismatch = passwordConfirm.length > 0 && password !== passwordConfirm

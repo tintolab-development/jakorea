@@ -1,5 +1,5 @@
-import { calculateInternationalAge } from '../lib/sign-up.utils'
-import { MIN_GENERAL_MEMBER_AGE } from '../lib/sign-up.constants'
+import { calculateInternationalAge } from '../lib/utils'
+import { MIN_GENERAL_MEMBER_AGE } from '../lib/constants'
 
 export type BirthStepValidationResult =
   | { status: 'valid' }

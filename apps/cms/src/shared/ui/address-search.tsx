@@ -7,7 +7,13 @@ import { Fragment, useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Flex, Pagination } from 'antd'
-import { readJusoConfmKeyFromEnv, useJusoAddressSearch, type JusoAddressItem } from '@/shared/hooks'
+import {
+  getCmsJusoMissingKeyMessage,
+  readJusoApiUrlFromEnv,
+  readJusoConfmKeyFromEnv,
+  useJusoAddressSearch,
+  type JusoAddressItem,
+} from '@/shared/hooks'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -97,7 +103,10 @@ export function AddressSearch({
 
   const { addresses, totalCount, loading, error, search, reset } = useJusoAddressSearch({
     confmKey,
-    countPerPage })
+    countPerPage,
+    apiUrl: readJusoApiUrlFromEnv(),
+    missingKeyMessage: getCmsJusoMissingKeyMessage(),
+  })
 
   const closeModal = useCallback(() => {
     setOpen(false)

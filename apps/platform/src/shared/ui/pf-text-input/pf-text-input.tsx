@@ -5,8 +5,8 @@ import {
   useState,
 } from 'react'
 import { PFText } from '../pf-text'
-import cancelIconUrl from '../icons/cancel.svg'
-import searchIconUrl from '../icons/search.svg'
+import cancelIconUrl from './icons/cancel.svg'
+import searchIconUrl from './icons/search.svg'
 import styles from './pf-text-input.module.css'
 
 type PFTextInputSize = 'medium' | 'large' | 'xlarge'

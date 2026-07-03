@@ -1,7 +1,7 @@
-import arrowLeftBlackUrl from '../icons/arrow-left-black.svg'
-import arrowLeftGrayUrl from '../icons/arrow-left-gray.svg'
-import arrowRightBlackUrl from '../icons/arrow-right-black.svg'
-import arrowRightGrayUrl from '../icons/arrow-right-gray.svg'
+import chevronLeftBlackUrl from '@/shared/assets/icons/chevron-left-black.svg'
+import chevronLeftGrayUrl from '@/shared/assets/icons/chevron-left-gray.svg'
+import chevronRightBlackUrl from '@/shared/assets/icons/chevron-right-black.svg'
+import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
 import styles from './pf-pagination.module.css'
 
 export type PFPaginationVariant = 'numbered' | 'compact'
@@ -91,7 +91,7 @@ export function PFPagination({
       >
         <img
           className={styles.icon}
-          src={isFirstPage ? arrowLeftGrayUrl : arrowLeftBlackUrl}
+          src={isFirstPage ? chevronLeftGrayUrl : chevronLeftBlackUrl}
           alt=""
           aria-hidden="true"
         />
@@ -147,7 +147,7 @@ export function PFPagination({
       >
         <img
           className={styles.icon}
-          src={isLastPage ? arrowRightGrayUrl : arrowRightBlackUrl}
+          src={isLastPage ? chevronRightGrayUrl : chevronRightBlackUrl}
           alt=""
           aria-hidden="true"
         />

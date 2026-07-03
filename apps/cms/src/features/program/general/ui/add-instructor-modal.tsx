@@ -9,7 +9,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Form, Input, DatePicker, Modal, Pagination } from 'antd'
 import type { InputHTMLAttributes } from 'react'
 import { useForm, type Path } from 'react-hook-form'
-import { readJusoConfmKeyFromEnv, useJusoAddressSearch, type JusoAddressItem } from '@/shared/hooks'
+import {
+  getCmsJusoMissingKeyMessage,
+  readJusoApiUrlFromEnv,
+  readJusoConfmKeyFromEnv,
+  useJusoAddressSearch,
+  type JusoAddressItem,
+} from '@/shared/hooks'
 
 /** 주소 검색용: 아이콘 + 네이티브 input 한 묶음 220×40, Form.Item value/onChange는 input에 전달 */
 interface AddressSearchInputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -260,7 +266,10 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
     search: searchAddress,
     reset: resetAddressSearch } = useJusoAddressSearch({
     confmKey: readJusoConfmKeyFromEnv(),
-    countPerPage: ADDRESS_SEARCH_COUNT_PER_PAGE })
+    countPerPage: ADDRESS_SEARCH_COUNT_PER_PAGE,
+    apiUrl: readJusoApiUrlFromEnv(),
+    missingKeyMessage: getCmsJusoMissingKeyMessage(),
+  })
   const jaKoreaExperiences = Form.useWatch('jaKoreaExperiences', form) ?? []
   const qualifications = Form.useWatch('qualifications', form) ?? []
   const awards = Form.useWatch('awards', form) ?? []

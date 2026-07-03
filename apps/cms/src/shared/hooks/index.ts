@@ -25,21 +25,33 @@ export { useModalState } from './use-modal-state'
 export type { UseModalStateOptions, UseModalStateReturn } from './use-modal-state'
 export { useBreadcrumb } from './use-breadcrumb'
 export type { UseBreadcrumbReturn } from './use-breadcrumb'
-export { useNeisSchoolSearch } from './use-neis-school-search'
+export { useNeisSchoolSearch } from '@jakorea/location/neis/react'
 export type {
   UseNeisSchoolSearchOptions,
   UseNeisSchoolSearchReturn,
   NeisSchoolItem,
-  NeisSchoolRow } from './use-neis-school-search'
+  NeisSchoolRow,
+} from '@jakorea/location/neis'
+export { filterNeisSchoolsByRegion } from '@jakorea/location/neis'
 export {
-  useJusoAddressSearch,
-  JUSO_BUSINESS_ADDR_LINK_API_URL,
-  readJusoConfmKeyFromEnv } from './use-juso-address-search'
+  getSidoMatchTokens,
+  matchesSidoInText,
+  SIDO_MATCH_TOKENS,
+} from '@jakorea/location/sido-sigungu'
+export { useJusoAddressSearch } from '@jakorea/location/juso/react'
+export { JUSO_BUSINESS_ADDR_LINK_API_URL } from '@jakorea/location/juso'
 export type {
   UseJusoAddressSearchOptions,
   UseJusoAddressSearchReturn,
   JusoAddressItem,
-  JusoAddressRow } from './use-juso-address-search'
+  JusoAddressRow,
+} from '@jakorea/location/juso'
+export {
+  readJusoConfmKeyFromEnv,
+  readJusoApiUrlFromEnv,
+  readNeisApiKeyFromEnv,
+  getCmsJusoMissingKeyMessage,
+} from '@/shared/lib/location-env'
 export { useObjectUrlFromFile } from './use-object-url-from-file'
 export { useFormInputsWidth } from './use-form-inputs-width'
 export type { FormInputsWidthOptions } from './use-form-inputs-width'

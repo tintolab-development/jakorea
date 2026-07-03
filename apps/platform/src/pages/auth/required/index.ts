@@ -1,1 +1,1 @@
-export { RequiredPage } from './required-page'
+export { RequiredPage } from './page'

@@ -1,6 +1,6 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import { Step4Email } from './step-4-email'
-import { Step5Password } from './step-5-password'
+import { EmailStep } from './email'
+import { PasswordStep } from './password'
 
 type Step5Props = {
   signUp: UseSignUpReturn
@@ -8,8 +8,8 @@ type Step5Props = {
 
 export function Step5({ signUp }: Step5Props) {
   return signUp.guardian.isUnderAgeSignup ? (
-    <Step4Email signUp={signUp} />
+    <EmailStep signUp={signUp} />
   ) : (
-    <Step5Password signUp={signUp} />
+    <PasswordStep signUp={signUp} />
   )
 }
