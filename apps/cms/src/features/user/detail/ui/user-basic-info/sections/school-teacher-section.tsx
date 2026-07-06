@@ -13,7 +13,7 @@ import { EditableRow } from '../fields/editable-row'
 import { NameBlockField } from '../fields/name-block-field'
 import { ContactInfoFieldsRow } from './shared'
 import type { BasicInfoSectionContext } from './types'
-import { affiliationAndGradeView, detailAddressView, genderBirthView, socialLine } from '../display'
+import { affiliationAndGradeView, detailAddressView, genderBirthView, socialView } from '../display'
 import { formatDate } from '@/shared/utils'
 
 export function SchoolTeacherMetaSection(ctx: BasicInfoSectionContext) {
@@ -21,7 +21,7 @@ export function SchoolTeacherMetaSection(ctx: BasicInfoSectionContext) {
   return (
     <EditableRow type="double">
       <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
-      <EditableField label="연동된 소셜 계정" readOnlyDisplay view={<span>{socialLine(user)}</span>} />
+      <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
     </EditableRow>
   )
 }
