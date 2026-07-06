@@ -292,21 +292,10 @@
   outline: none;
 }
 
+/* tag-100 트리거 내부 배지 — editable-status-badge.css 정본(column·gap·max-width) 유지 */
 .status-dropdown-cell__status-trigger--tag-100 .editable-status-badge {
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
   margin: 0 !important;
   flex-shrink: 0;
-  box-sizing: border-box !important;
-  display: inline-flex !important;
-  flex-direction: row !important;
-  gap: 0 !important;
-  align-items: center !important;
-  justify-content: center !important;
 }
 
 .status-dropdown-cell__status-trigger--tag-100
@@ -316,7 +305,7 @@
   .editable-status-badge.status-dropdown-cell__badge--cell-style {
   width: var(--sdcb-badge-w, 100px) !important;
   min-width: var(--sdcb-badge-minw, 100px) !important;
-  max-width: var(--sdcb-badge-maxw, 100px) !important;
+  max-width: var(--sdcb-badge-maxw, 200px) !important;
 }
 
 /* tag-100: 호버·행 hover 시 톤 보더 유지 — transparent 전환으로 인한 1px 시각 흔들림 방지 */
@@ -430,14 +419,6 @@
   background: transparent !important;
 }
 
-.status-dropdown-cell__dropdown-overlay--tag-100 .editable-status-badge {
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
-}
 
 /* 편집 가능 상태 배지 — 테이블 행 hover 시 border 유지(박스 크기 동일). tag-100·tag-132는 톤 보더 유지(투명 전환 시 시각적 흔들림) */
 .ant-table-tbody
@@ -465,13 +446,6 @@
 
 .status-dropdown-cell__dropdown-item .editable-status-badge {
   pointer-events: none;
-  box-sizing: border-box;
-  width: 100px !important;
-  min-width: 100px !important;
-  max-width: 100px !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
   margin: 0;
   transition: none !important;
 }
