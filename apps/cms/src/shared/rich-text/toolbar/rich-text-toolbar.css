@@ -1,15 +1,18 @@
 .rich-text-toolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   align-self: stretch;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
   gap: var(--rt-toolbar-gap, 12px);
-  row-gap: var(--rt-toolbar-row-gap, 8px);
   padding: var(--rt-toolbar-padding, 8px);
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
 }
 
 .rich-text-toolbar > * {

@@ -25,7 +25,7 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  overflow: visible;
+  overflow: hidden;
   border-bottom: 1px solid var(--rt-toolbar-border, var(--table-line, #e0e0e0));
   border-top-left-radius: var(--rt-radius, 8px);
   border-top-right-radius: var(--rt-radius, 8px);

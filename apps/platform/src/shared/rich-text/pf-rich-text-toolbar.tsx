@@ -7,7 +7,6 @@ import {
   insertHorizontalRule,
   insertImageFromFile,
   insertImageFromUrl,
-  indentListItem,
   insertTable,
   insertYoutubeFromUrl,
   LINE_HEIGHT_OPTIONS,
@@ -40,7 +39,6 @@ import {
   PfFontFamilyIcon,
   PfHighlightIcon,
   PfHorizontalRuleIcon,
-  PfIndentIcon,
   PfItalicIcon,
   PfLineHeightIcon,
   PfListIcon,
@@ -466,14 +464,6 @@ export function PfRichTextToolbar({ editor }: PfRichTextToolbarProps) {
         onAction={() => run(ed => insertHorizontalRule(ed))}
       >
         <PfHorizontalRuleIcon />
-      </PfToolbarToggle>
-
-      <PfToolbarToggle
-        title="들여쓰기"
-        disabled={disabled}
-        onAction={() => run(ed => indentListItem(ed))}
-      >
-        <PfIndentIcon />
       </PfToolbarToggle>
 
       <PfToolbarToggle

@@ -8,7 +8,6 @@ import {
   insertHorizontalRule,
   insertImageFromFile,
   insertImageFromUrl,
-  indentListItem,
   insertTable,
   insertYoutubeFromUrl,
   LINE_HEIGHT_OPTIONS,
@@ -41,7 +40,6 @@ import {
   FontFamilyIcon,
   HighlightIcon,
   HorizontalRuleIcon,
-  IndentIcon,
   ItalicIcon,
   LineHeightIcon,
   ListMenuIcon,
@@ -481,14 +479,6 @@ export function RichTextToolbar({ editor }: RichTextToolbarProps) {
         onAction={() => run(ed => insertHorizontalRule(ed))}
       >
         <HorizontalRuleIcon />
-      </ToolbarToggle>
-
-      <ToolbarToggle
-        title="들여쓰기"
-        disabled={disabled}
-        onAction={() => run(ed => indentListItem(ed))}
-      >
-        <IndentIcon />
       </ToolbarToggle>
 
       <ToolbarToggle
