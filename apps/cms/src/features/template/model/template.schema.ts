@@ -105,7 +105,7 @@ const applicationDefinitions: TemplateDefinition[] = [
   },
   {
     id: 'application-gemini-visiting-training-school',
-    templateName: 'Gemini 찾아가는 연수 학교 신청 폼',
+    templateName: 'Gemini 찾아가는 연수 참여 기관 신청 폼',
     variant: 'default',
   },
   {

@@ -5,7 +5,7 @@ import { GeminiVisitingTrainingContactPersonParagraph } from '@/features/templat
 import { GeminiVisitingTrainingPreferredScheduleParagraph } from '@/features/template/ui/form-set/application-form/gemini-institution/paragraphs/gemini-preferred-schedule-paragraph'
 import { GeminiVisitingTrainingTrainingInfoParagraph } from '@/features/template/ui/form-set/application-form/gemini-institution/paragraphs/gemini-training-info-paragraph'
 
-/** Gemini 찾아가는 연수 학교 신청 폼 — 시드 단락 본문 */
+/** Gemini 찾아가는 연수 참여 기관 신청 폼 — 시드 단락 본문 */
 export function renderGeminiVisitingTrainingApplicationFormInstitutionParagraphBody(
   paragraph: HorizontalTableParagraph,
   enabled: boolean | undefined

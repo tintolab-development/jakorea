@@ -354,6 +354,11 @@
   align-items: center;
 }
 
+/* TemplateFullpageModal(authoring·등록) — form-layout 클래스만 공유할 때 좌측 52px 기준 정렬 */
+.template-preview-modal--form-layout.full-page-modal .full-page-modal__body {
+  align-items: flex-start;
+}
+
 /* 카드형(user) 미리보기 — 단일 스크롤·하단 52px 스페이서(full-page-modal과 동일) */
 .template-preview-modal--card-layout .template-preview-modal__body {
   padding-bottom: 0;

@@ -3,14 +3,14 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
-/** Gemini 찾아가는 연수 학교 신청 — 담당자 정보 */
+/** Gemini 찾아가는 연수 참여 기관 신청 — 담당 교사 정보 */
 export function GeminiVisitingTrainingContactPersonParagraph() {
   const [jobTitle, setJobTitle] = useState('')
   const [subject, setSubject] = useState('')
 
   return (
     <div className="program-registration-paragraph">
-      <DetailInfoForm title="담당자 정보" hideHeader mode="edit">
+      <DetailInfoForm title="담당 교사 정보" hideHeader mode="edit">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="직급"

@@ -144,7 +144,7 @@ export const TEMPLATE_CODE_CATALOG: Record<string, TemplateCodeCatalogEntry> = {
     variant: 'default',
   },
   'application-gemini-visiting-training-school': {
-    templateName: 'Gemini 찾아가는 연수 학교 신청 폼',
+    templateName: 'Gemini 찾아가는 연수 참여 기관 신청 폼',
     category: 'APPLICATION',
     variant: 'default',
   },

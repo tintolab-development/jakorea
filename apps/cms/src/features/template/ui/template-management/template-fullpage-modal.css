@@ -2,6 +2,14 @@
   --full-page-modal-padding-x: 52px;
   --full-page-modal-padding-top: 32px;
   --full-page-modal-padding-bottom: 52px;
+  /* 1920 = pad(52) + left(1404) + gap(32) + right(380) + pad(52) */
+  --full-page-modal-layout-max-width: 1920px;
+  --full-page-modal-left-column-width: 1404px;
+  --full-page-modal-contents-gap: 32px;
+  --full-page-modal-right-column-width: 380px;
+  --full-page-modal-contents-max-width: calc(
+    var(--full-page-modal-layout-max-width) - 2 * var(--full-page-modal-padding-x)
+  );
 }
 
 .full-page-modal .teal-header-modal__body {
@@ -153,7 +161,8 @@
      패딩까지 덮어써서 하단 패딩이 안 보이는 문제 방지 */
   padding: var(--full-page-modal-padding-top) var(--full-page-modal-padding-x) 0;
   flex-direction: column;
-  align-items: stretch;
+  /* 좌 52px body 패딩 기준 — 콘텐츠 밴드를 가운데로 밀지 않음 */
+  align-items: flex-start;
   gap: 16px;
   background: #f4f6f6;
   overflow-y: auto;
@@ -170,8 +179,10 @@
 
 .full-page-modal__body-header {
   display: flex;
+  align-self: flex-start;
   width: 100%;
-  max-width: none;
+  max-width: var(--full-page-modal-contents-max-width);
+  margin-inline: 0;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
@@ -206,17 +217,23 @@
 .full-page-modal__contents {
   display: flex;
   flex: 0 0 auto;
+  align-self: flex-start;
   min-height: auto;
   width: 100%;
-  max-width: none;
+  max-width: var(--full-page-modal-contents-max-width);
+  margin-inline: 0;
   align-items: stretch;
-  gap: 20px;
+  gap: var(--full-page-modal-contents-gap);
   box-sizing: border-box;
 }
 
 .full-page-modal__left {
   flex: 1 1 auto;
   min-width: 0;
+  max-width: min(
+    var(--full-page-modal-left-column-width),
+    calc(100% - var(--full-page-modal-right-column-width) - var(--full-page-modal-contents-gap))
+  );
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -224,6 +241,9 @@
 
 .full-page-modal .form-editor-left {
   flex: none;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
   overflow: visible;
   scrollbar-gutter: auto;
   padding-right: 0;
@@ -233,8 +253,8 @@
   display: flex;
   flex-direction: column;
   align-self: stretch;
-  width: 380px;
-  flex: 0 0 380px;
+  width: var(--full-page-modal-right-column-width);
+  flex: 0 0 var(--full-page-modal-right-column-width);
   min-height: 0;
 }
 
@@ -440,12 +460,15 @@
 /* 하단 CTA — 양식 최하단 단락 아래 32px, 본문 스크롤 흐름(고정 float 없음) */
 .full-page-modal--registration-user-mode .full-page-modal__footer-cta {
   flex-shrink: 0;
+  align-self: flex-start;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
   width: 100%;
+  max-width: var(--full-page-modal-contents-max-width);
+  margin-inline: 0;
   margin-top: 32px;
   box-sizing: border-box;
 }

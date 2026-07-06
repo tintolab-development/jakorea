@@ -7,7 +7,7 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 
-/** Gemini 찾아가는 연수 학교 신청 폼 — 시드 단락 ID */
+/** Gemini 찾아가는 연수 참여 기관 신청 폼 — 시드 단락 ID */
 export const GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS = {
   personalInfoCollection: 'gemini-vt-inst-seed-personal-info',
   thirdPartyConsent: 'gemini-vt-inst-seed-third-party',
@@ -40,8 +40,8 @@ function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '개인 정보수집 및 제공에 대한 동의',
-    paragraphDescription: '설정 입력',
+    paragraphTitle: '개인정보 수집·이용',
+    paragraphDescription: '설명 입력',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
     columnHeaders: ['수집 항목', '수집·이용 목적', '보유기간'],
@@ -60,7 +60,7 @@ function createPersonalInfoCollectionParagraph(): HorizontalTableParagraph {
         {
           kind: 'text',
           value:
-            '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기',
+            '- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 동의일로부터 3년 보관 후 폐기',
         },
       ],
     ],
@@ -79,8 +79,8 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '제 3자 정보 제공 동의',
-    paragraphDescription: '설정 입력',
+    paragraphTitle: '개인정보 제3자 정보 제공·이용 동의',
+    paragraphDescription: '설명 입력',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
     columnHeaders: ['제공받는 곳', '수집 항목', '수집·이용 목적', '제공받는 자의 보유기간'],
@@ -102,7 +102,7 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
           kind: 'text',
           value: 'Gemini Academy 연수 참가자 공유 및 프로그램 진행에 필요한 정보 안내',
         },
-        { kind: 'text', value: '해당 프로그램이 진행되는 기간' },
+        { kind: 'text', value: '동의일로부터 3년 보관 후 폐기' },
       ],
     ],
     bottomText: THIRD_PARTY_BOTTOM,
@@ -120,7 +120,7 @@ function createPortraitConsentParagraph(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '초상권에 대한 동의',
+    paragraphTitle: '초상권 수집·이용 동의',
     paragraphDescription: '설명 입력',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
@@ -155,13 +155,14 @@ function createPortraitConsentParagraph(): HorizontalTableParagraph {
 function createSeedHorizontalTable(
   id: string,
   paragraphTitle: string,
-  paragraphDescription: string
+  paragraphDescription: string,
+  requiredMark = true
 ): HorizontalTableParagraph {
   return normalizeHorizontalTableParagraph({
     id,
     kind: 'single_item',
     variant: 'horizontal_table',
-    requiredMark: true,
+    requiredMark,
     paragraphTitle,
     paragraphDescription,
     participatesInTitleNumbering: true,
@@ -190,13 +191,14 @@ export function createGeminiVisitingTrainingApplicationFormInstitutionDraft(): W
     ),
     createSeedHorizontalTable(
       GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.contactPerson,
-      '담당자 정보',
+      '담당 교사 정보',
       ''
     ),
     createSeedHorizontalTable(
       GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
       '진행 희망 교육 일정',
-      '1~3순위 희망 날짜 및 강의 희망 차시를 기재해 주세요.'
+      '1~3순위 희망 날짜 및 강의 희망 차시를 기재해 주세요.',
+      false
     ),
   ]
   return normalizeWritingFormDraft({
