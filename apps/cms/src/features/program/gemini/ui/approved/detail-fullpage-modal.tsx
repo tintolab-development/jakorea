@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import dayjs from 'dayjs'
 import { Typography } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
@@ -11,6 +10,7 @@ import {
   LnbIconApplicants,
   LnbIconProjectInfo,
 } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
+import { useToday } from '../../hooks/use-today'
 import { GEMINI_RECRUITMENT_ADD_PARAM } from '../../lib/recruitment/add-url'
 import {
   GEMINI_RECRUITMENT_EDIT_PARAM,
@@ -23,6 +23,7 @@ import {
   parseGeminiApprovedTrainingDetailLnb,
   type GeminiApprovedTrainingDetailLnbKey,
 } from '../../lib/approved/detail-url'
+import { formatTrainingDatetimeDisplay } from '../../lib/approved/format-display'
 import { getGeminiApprovedTrainingDetail } from '../../model/approved/detail-mock'
 import { GeminiApprovedTrainingDetailInstructorApplicationTab } from './detail-instructor-application-tab'
 import { GeminiApprovedTrainingDetailProgramInfoTab } from './detail-program-info-tab'
@@ -33,13 +34,6 @@ const SIDEBAR_ITEMS: DetailModalSidebarNavItem[] = [
   { key: 'info', label: '프로그램 정보', icon: <LnbIconProjectInfo /> },
   { key: 'instructors', label: '강사 신청 목록', icon: <LnbIconApplicants /> },
 ]
-
-const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
-
-function formatTitleDate(rawDate: string): string {
-  const x = dayjs(rawDate)
-  return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]})`
-}
 
 export function GeminiApprovedTrainingDetailFullPageModal({
   approvedTrainingId,
@@ -53,6 +47,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
   const activeLnb = parseGeminiApprovedTrainingDetailLnb(
     searchParams.get(GEMINI_APPROVED_TRAINING_LNB_PARAM)
   )
+  const todayKey = useToday()
   const detail = getGeminiApprovedTrainingDetail(approvedTrainingId)
 
   const setActiveLnb = useCallback(
@@ -94,7 +89,11 @@ export function GeminiApprovedTrainingDetailFullPageModal({
       open={Boolean(approvedTrainingId)}
       onClose={onClose}
       title={
-        detail ? `${detail.institutionName} (${formatTitleDate(detail.trainingDate)})` : '승인 연수 상세'
+        detail
+          ? detail.instructorAssigned
+            ? `${detail.institutionName} (${formatTrainingDatetimeDisplay(detail)})`
+            : detail.institutionName
+          : '승인 연수 상세'
       }
       className="program-detail-fullpage-modal gemini-recruitment-detail-fullpage-modal"
       sidebar={
@@ -122,7 +121,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
                   onClick={handlePrivateInfoClick}
                 />
               </div>
-              <GeminiApprovedTrainingDetailProgramInfoTab detail={detail} />
+              <GeminiApprovedTrainingDetailProgramInfoTab detail={detail} todayKey={todayKey} />
             </>
           ) : (
             <GeminiApprovedTrainingDetailInstructorApplicationTab

@@ -1,10 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import dayjs from 'dayjs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { EditableStatusBadge } from '@/shared/components'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
 import type { EditableStatusBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import {
+  approvedTrainingStatusModifier,
+  formatStatusLabel,
+} from '../../lib/approved/format-display'
+import { resolveApprovedTrainingStatus } from '../../lib/approved/resolve-status'
 import type {
   GeminiApprovedTrainingDetail,
   GeminiApprovedTrainingEmploymentStatus,
@@ -14,12 +20,6 @@ import '@/features/program/shared/ui/program-detail/project-info/project-info-fo
 import './detail-program-info-tab.css'
 
 const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
-
-const STATUS_LABEL: Record<GeminiApprovedTrainingStatus, string> = {
-  SCHEDULED: '프로그램 진행 예정',
-  IN_PROGRESS: '프로그램 진행 중',
-  ENDED: '프로그램 진행 종료',
-}
 
 const EMPLOYMENT_STATUS_LABEL: Record<GeminiApprovedTrainingEmploymentStatus, string> = {
   ACTIVE: '재직 중',
@@ -33,22 +33,19 @@ const EMPLOYMENT_STATUS_ORDER: GeminiApprovedTrainingEmploymentStatus[] = [
   'TRANSFER',
 ]
 
-function formatTrainingDate(rawDate: string) {
-  const x = dayjs(rawDate)
-  return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]})`
-}
-
-function splitTrainingTimeText(raw: string): { time: string; session: string } {
-  const matched = raw.match(/^(.*?)(?:\((.+)\))?$/)
-  const time = matched?.[1]?.trim() || raw
-  const session = matched?.[2]?.trim() || ''
-  return { time, session }
-}
-
 function statusClassName(status: GeminiApprovedTrainingStatus) {
-  if (status === 'SCHEDULED') return 'gemini-approved-training-detail-info__status--scheduled'
-  if (status === 'IN_PROGRESS') return 'gemini-approved-training-detail-info__status--in-progress'
-  return 'gemini-approved-training-detail-info__status--ended'
+  return `gemini-approved-training-detail-info__status--${approvedTrainingStatusModifier(status)}`
+}
+
+function formatDetailTrainingDatetime(detail: GeminiApprovedTrainingDetail): string {
+  if (!detail.instructorAssigned) {
+    return '-'
+  }
+  const x = dayjs(detail.trainingDate)
+  if (!x.isValid()) {
+    return '-'
+  }
+  return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]}) | ${detail.trainingTimeText}`
 }
 
 function getGeminiEmploymentBadgeTone(
@@ -68,15 +65,23 @@ function employmentStatusBadge(status: GeminiApprovedTrainingEmploymentStatus) {
 
 export function GeminiApprovedTrainingDetailProgramInfoTab({
   detail,
+  todayKey,
 }: {
   detail: GeminiApprovedTrainingDetail
+  todayKey: string
 }) {
-  const trainingTime = splitTrainingTimeText(detail.trainingTimeText)
+  const status = resolveApprovedTrainingStatus(
+    {
+      instructorAssigned: detail.instructorAssigned,
+      lastPreferredDate: detail.lastPreferredDate,
+      trainingDate: detail.trainingDate,
+    },
+    dayjs(todayKey)
+  )
   const [employmentStatus, setEmploymentStatus] = useState<GeminiApprovedTrainingEmploymentStatus>(
     detail.managerEmploymentStatus
   )
   const [isEmploymentStatusOpen, setIsEmploymentStatusOpen] = useState(false)
-  const employmentBadgeStyle = useMemo(() => ({ width: 100, minWidth: 100, maxWidth: 200 }), [])
 
   useEffect(() => {
     setEmploymentStatus(detail.managerEmploymentStatus)
@@ -98,27 +103,15 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="연수일시"
-            view={
-              <>
-                {formatTrainingDate(detail.trainingDate)}
-                <DetailInfoForm.InputsSeparator />
-                {trainingTime.time}
-                {trainingTime.session ? (
-                  <>
-                    <DetailInfoForm.InputsSeparator />
-                    {trainingTime.session}
-                  </>
-                ) : null}
-              </>
-            }
+            view={renderDetailInfoPipeSeparated(formatDetailTrainingDatetime(detail))}
           />
           <DetailInfoForm.Field
             label="프로그램 진행 현황"
             view={
               <span
-                className={`gemini-approved-training-detail-info__status ${statusClassName(detail.status)}`}
+                className={`gemini-approved-training-detail-info__status ${statusClassName(status)}`}
               >
-                {STATUS_LABEL[detail.status]}
+                {formatStatusLabel(status)}
               </span>
             }
           />
@@ -172,7 +165,6 @@ export function GeminiApprovedTrainingDetailProgramInfoTab({
                 onChange={setEmploymentStatus}
                 isOpen={isEmploymentStatusOpen}
                 onOpenChange={setIsEmploymentStatusOpen}
-                style={employmentBadgeStyle}
                 tagLayout="tag100"
               />
             }

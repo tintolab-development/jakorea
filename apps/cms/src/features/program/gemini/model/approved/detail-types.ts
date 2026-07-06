@@ -1,5 +1,3 @@
-import type { GeminiApprovedTrainingStatus } from './types'
-
 export type GeminiApprovedTrainingEmploymentStatus = 'ACTIVE' | 'LEAVE' | 'TRANSFER'
 
 export type GeminiApprovedTrainingInstructorInfo = {
@@ -14,7 +12,6 @@ export type GeminiApprovedTrainingInstructorInfo = {
 export type GeminiApprovedTrainingDetail = {
   id: string
   institutionName: string
-  status: GeminiApprovedTrainingStatus
   trainingDate: string
   trainingTimeText: string
   studentCount: number
@@ -35,4 +32,8 @@ export type GeminiApprovedTrainingDetail = {
   instructor: GeminiApprovedTrainingInstructorInfo
   officialDocumentType: string
   officialDocumentRequiredInfo: string
+  trainingContent: string
+  instructorAssigned: boolean
+  lastPreferredDate: string
+  officialDocumentRequired: boolean
 }
