@@ -2,6 +2,11 @@
  * 교육받은 교사 — 참여 기관 상세 mock (지망 일정·교육일지)
  */
 
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
+
+dayjs.extend(customParseFormat)
+
 export type TrainedTeachersPreferredScheduleSessionTime = {
   sessionIndex: number
   classPeriod: string
@@ -27,6 +32,7 @@ export type TrainedTeachersEducationJournalEntry = {
   roundOrScheduleLabel?: string
   fileName: string
   submittedAt: string
+  fileUrl?: string
 }
 
 export const TRAINED_TEACHERS_APPLICANT_PENDING_ID = 'trained-teachers-applicant-pending'
@@ -82,22 +88,46 @@ export const TRAINED_TEACHERS_JINWOL_EDUCATION_JOURNALS: TrainedTeachersEducatio
   {
     id: 'tt-journal-001',
     no: 1,
-    date: '2026.04.20',
+    date: '2026.01.05',
     dayOfWeek: '월',
     timeRange: '09:00 ~ 09:40',
-    roundOrScheduleLabel: '1차시',
-    fileName: '진월초등학교_20260420_1차시_교육일지.pdf',
-    submittedAt: '2026.04.20 11:32:15',
+    roundOrScheduleLabel: '1회차',
+    fileName:
+      'JA Korea 청소년 경제금융프로그램_진월초등학교_이길동_1회차 교육일지_260105.pdf',
+    submittedAt: '2026.01.05 11:32:15',
   },
   {
     id: 'tt-journal-002',
     no: 2,
-    date: '2026.04.27',
+    date: '2026.01.12',
+    dayOfWeek: '월',
+    timeRange: '09:00 ~ 09:40',
+    roundOrScheduleLabel: '2회차',
+    fileName:
+      'JA Korea 청소년 경제금융프로그램_진월초등학교_이길동_2회차 교육일지_260112.pdf',
+    submittedAt: '2026.01.12 10:45:00',
+  },
+  {
+    id: 'tt-journal-003',
+    no: 3,
+    date: '2026.01.19',
     dayOfWeek: '월',
     timeRange: '09:00 ~ 10:30',
-    roundOrScheduleLabel: '2차시',
-    fileName: '진월초등학교_20260427_교육일지.hwp',
-    submittedAt: '2026.04.27 10:45:00',
+    roundOrScheduleLabel: '3회차',
+    fileName:
+      'JA Korea 청소년 경제금융프로그램_진월초등학교_이길동_3회차 교육일지_260119.hwp',
+    submittedAt: '2026.01.19 14:20:00',
+  },
+  {
+    id: 'tt-journal-004',
+    no: 4,
+    date: '2026.01.26',
+    dayOfWeek: '월',
+    timeRange: '09:00 ~ 09:40',
+    roundOrScheduleLabel: '4회차',
+    fileName:
+      'JA Korea 청소년 경제금융프로그램_진월초등학교_이길동_4회차 교육일지_260126.pdf',
+    submittedAt: '2026.01.26 09:15:30',
   },
 ]
 
@@ -133,4 +163,29 @@ export function formatTrainedTeachersEducationJournalScheduleLabel(
     parts.push(entry.roundOrScheduleLabel.trim())
   }
   return parts.join(' | ')
+}
+
+const SUBMITTED_AT_PARSE_FORMATS = [
+  'YYYY.MM.DD HH:mm:ss',
+  'YYYY-MM-DD HH:mm:ss',
+  'YYYY-MM-DD',
+  'YYYY.MM.DD',
+] as const
+
+/** 제출일자 표시 — YYYY. MM. DD (요일 없음) */
+export function formatTrainedTeachersEducationJournalSubmittedDate(
+  submittedAt: string
+): string {
+  const trimmed = submittedAt.trim()
+  if (!trimmed) return '-'
+
+  for (const format of SUBMITTED_AT_PARSE_FORMATS) {
+    const parsed = dayjs(trimmed, format, true)
+    if (parsed.isValid()) {
+      return parsed.format('YYYY. MM. DD')
+    }
+  }
+
+  const fallback = dayjs(trimmed)
+  return fallback.isValid() ? fallback.format('YYYY. MM. DD') : trimmed
 }
