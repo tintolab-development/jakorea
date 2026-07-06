@@ -48,6 +48,12 @@
   flex: 0 0 auto;
 }
 
+.gemini-performance-upload-duplicate-modal__message {
+  margin: 0;
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
 .gemini-performance-list.filter-table-layout
   .table-filter-group__fields-inner
   .ant-col
