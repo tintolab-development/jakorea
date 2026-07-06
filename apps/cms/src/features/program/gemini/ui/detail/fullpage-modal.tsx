@@ -1,8 +1,13 @@
-import { useCallback, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useCallback, useMemo, useState } from 'react'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { Typography } from 'antd'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import {
+  buildSearchParams,
+  makeBreadcrumbItem,
+} from '@/shared/lib/detail-fullpage-query-stack'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
@@ -29,6 +34,10 @@ import {
   parseGeminiRecruitmentDetailLnb,
   type GeminiRecruitmentDetailLnbKey,
 } from '../../lib/recruitment/detail-url'
+import {
+  GEMINI_APPROVED_TRAINING_ID_PARAM,
+  GEMINI_APPROVED_TRAINING_LNB_PARAM,
+} from '../../lib/approved/detail-url'
 import { GeminiRecruitmentAddPreviewModal } from '../recruitment/add-preview-modal'
 import { GeminiRecruitmentInfoTab } from './recruitment-info-tab'
 import { GeminiInstitutionApplicationTab } from './institution-application-tab'
@@ -45,6 +54,18 @@ const SIDEBAR_ITEMS: DetailModalSidebarNavItem[] = [
   { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> },
 ]
 
+const VISITING_TRAINING_TAB_PARAM = 'tab'
+
+const RECRUITMENT_DETAIL_QUERY_SWEEP = [
+  GEMINI_RECRUITMENT_ID_PARAM,
+  GEMINI_RECRUITMENT_LNB_PARAM,
+  GEMINI_RECRUITMENT_ADD_PARAM,
+  GEMINI_RECRUITMENT_EDIT_PARAM,
+  GEMINI_APPROVED_TRAINING_ID_PARAM,
+  GEMINI_APPROVED_TRAINING_LNB_PARAM,
+  VISITING_TRAINING_TAB_PARAM,
+] as const
+
 export function GeminiRecruitmentDetailFullPageModal({
   recruitmentId,
   onClose,
@@ -52,6 +73,7 @@ export function GeminiRecruitmentDetailFullPageModal({
   recruitmentId: string
   onClose: () => void
 }) {
+  const location = useLocation()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
@@ -59,6 +81,8 @@ export function GeminiRecruitmentDetailFullPageModal({
   const todayKey = useToday()
   const activeLnb = parseGeminiRecruitmentDetailLnb(searchParams.get(GEMINI_RECRUITMENT_LNB_PARAM))
   const [previewOpen, setPreviewOpen] = useState(false)
+  const activeLnbItem =
+    SIDEBAR_ITEMS.find(item => item.key === activeLnb) ?? SIDEBAR_ITEMS[0]
 
   const {
     detail,
@@ -74,6 +98,48 @@ export function GeminiRecruitmentDetailFullPageModal({
 
   const previewSnapshot =
     resolvedDetail != null ? detailToAddFormSnapshot(resolvedDetail) : null
+
+  const detailTitle = resolvedDetail?.title ?? detail?.title ?? '모집 공고 상세'
+
+  const headerBreadcrumbItems = useMemo(() => {
+    const listParams = buildSearchParams(searchParams, {
+      delete: [...RECRUITMENT_DETAIL_QUERY_SWEEP],
+    })
+    const items = [makeBreadcrumbItem('모집 공고', location.pathname, listParams)]
+
+    if (!resolvedDetail) {
+      items.push({ label: '모집 공고 상세' })
+      return items
+    }
+
+    const detailParams = buildSearchParams(searchParams, {
+      delete: [
+        GEMINI_RECRUITMENT_LNB_PARAM,
+        GEMINI_RECRUITMENT_EDIT_PARAM,
+        GEMINI_APPROVED_TRAINING_ID_PARAM,
+        GEMINI_APPROVED_TRAINING_LNB_PARAM,
+        VISITING_TRAINING_TAB_PARAM,
+      ],
+      set: { [GEMINI_RECRUITMENT_ID_PARAM]: recruitmentId },
+    })
+
+    if (activeLnb === 'info') {
+      items.push({ label: detailTitle })
+      return items
+    }
+
+    items.push(makeBreadcrumbItem(detailTitle, location.pathname, detailParams))
+    items.push({ label: activeLnbItem.label })
+    return items
+  }, [
+    activeLnb,
+    activeLnbItem.label,
+    detailTitle,
+    location.pathname,
+    recruitmentId,
+    resolvedDetail,
+    searchParams,
+  ])
 
   const setActiveLnb = useCallback(
     (lnb: GeminiRecruitmentDetailLnbKey) => {
@@ -123,7 +189,8 @@ export function GeminiRecruitmentDetailFullPageModal({
       <DetailFullPageModal
         open={open}
         onClose={onClose}
-        title={resolvedDetail?.title ?? detail?.title ?? '모집 공고 상세'}
+        title={detailTitle}
+        headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
         className="program-detail-fullpage-modal gemini-recruitment-detail-fullpage-modal"
         sidebar={
           <DetailModalSidebar
