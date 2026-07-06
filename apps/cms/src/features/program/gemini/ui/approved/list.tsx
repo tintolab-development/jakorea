@@ -26,7 +26,10 @@ import {
 } from '../../lib/approved/resolve-status'
 import { useGeminiApprovedTrainingRows } from '../../hooks/use-gemini-approved-training-rows'
 import { useToday } from '../../hooks/use-today'
-import { GEMINI_APPROVED_TRAINING_FILTER_FIELDS } from '../../model/approved/filter-fields'
+import {
+  GEMINI_APPROVED_TRAINING_FILTER_FIELDS,
+  GEMINI_APPROVED_TRAINING_TRAILING_FILTER_KEYS,
+} from '../../model/approved/filter-fields'
 import type {
   GeminiApprovedTrainingRow,
   GeminiApprovedTrainingStatus,
@@ -212,8 +215,11 @@ export function GeminiApprovedTrainingList() {
         key: 'trainingDatetime',
         width: COL.trainingDatetime,
         align: 'center',
-        render: (_: unknown, row) =>
-          renderProgramDetailPipeSeparated(formatTrainingDatetimeDisplay(row)),
+        render: (_: unknown, row) => (
+          <div className="gemini-approved-training-list__training-datetime-cell">
+            {renderProgramDetailPipeSeparated(formatTrainingDatetimeDisplay(row))}
+          </div>
+        ),
       },
       {
         title: '수강 인원',
@@ -247,6 +253,9 @@ export function GeminiApprovedTrainingList() {
         bordered={false}
         className="gemini-approved-training-list"
         filterResponsiveWrap={false}
+        multiRowGridMode="responsive"
+        multiRowResponsiveLayout="merged-auto-fill"
+        mergedAutoFillTrailingFieldKeys={GEMINI_APPROVED_TRAINING_TRAILING_FILTER_KEYS}
         fields={GEMINI_APPROVED_TRAINING_FILTER_FIELDS}
         filters={pendingFilters}
         onFilterChange={(key, value) => {

@@ -5,6 +5,9 @@ import {
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/components/table-filter-group-field-width'
 
+/** 2행 하단(연수일 + 조회) — `mergedAutoFillTrailingFieldKeys` */
+export const GEMINI_APPROVED_TRAINING_TRAILING_FILTER_KEYS = ['trainingDateRange'] as const
+
 export const GEMINI_APPROVED_TRAINING_FILTER_FIELDS: FilterFieldConfig[] = [
   {
     key: 'institutionName',
