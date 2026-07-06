@@ -21,6 +21,7 @@ import {
   sortParticipatingIndividualParticipantAssignmentRows,
 } from '@/features/program/general/lib/participating-individual-participant-assignment-mock'
 import { PARTICIPATING_INDIVIDUAL_PARTICIPANT_ASSIGNMENT_EXCEL_COLUMNS } from '@/features/program/general/lib/participating-individual-participant-assignment-export'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
   ParticipatingIndividualParticipantAssignmentRow,
   ParticipatingIndividualParticipantAssignmentTeamRole,
@@ -303,6 +304,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
           width: 300,
           key: 'scheduleLabel',
           align: 'center',
+          render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
         },
         {
           title: '과제 제출 기간',

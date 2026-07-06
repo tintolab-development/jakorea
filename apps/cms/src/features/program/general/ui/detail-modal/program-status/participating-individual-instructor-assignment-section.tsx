@@ -54,6 +54,7 @@ import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-comp
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import './instructor-assignment-status-text.css'
 import './participating-individual-instructor-assignment-section.css'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
 const ASSIGNED_EMPTY_TEXT = '배정된 일정이 없습니다.'
 const WAITING_EMPTY_TEXT = '배정 대기 중인 일정이 없습니다.'
@@ -61,7 +62,7 @@ const WAITING_EMPTY_TEXT = '배정 대기 중인 일정이 없습니다.'
 function renderScheduleCell(label: string) {
   return (
     <div className="participating-individual-instructor-assignment-section__schedule-cell">
-      {label}
+      {renderProgramDetailPipeSeparated(label)}
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { Program } from '@/types/domain'
 import { StatusBadge } from '@/shared/components'
 import { CmsButton, ExcelButton } from '@/shared/ui'
@@ -223,6 +224,7 @@ export function ParticipatingIndividualInstructorSettlementSection({
         key: 'scheduleLabel',
         align: 'center',
         width: 400,
+        render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
       },
       {
         title: '강의 진행 여부',

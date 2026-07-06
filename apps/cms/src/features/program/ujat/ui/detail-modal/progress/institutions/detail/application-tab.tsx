@@ -6,7 +6,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { InstitutionTeacherEdit } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import { withProgramDetailTdDivider, renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { UjatInstitutionTeacherInfoValue } from '../../../application-institution/detail/detail-display'
 import {
   ClassTimeTable,
@@ -210,7 +210,9 @@ export function UjatEducationProgressInstitutionApplicationTab({
                     fullRow
                     view={
                       <span className="ujat-education-progress-institution-detail__textbook-row">
-                        <span>{formatGradeTextbookSupplyDisplay(textbook)}</span>
+                        <span>
+                          {renderDetailInfoPipeSeparated(formatGradeTextbookSupplyDisplay(textbook))}
+                        </span>
                         <span
                           className={`ujat-education-progress-institution-detail__textbook-badge ujat-education-progress-institution-detail__textbook-badge--${textbook.status}`}
                         >

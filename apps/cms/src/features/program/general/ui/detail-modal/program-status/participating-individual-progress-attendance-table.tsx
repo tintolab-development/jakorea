@@ -10,6 +10,7 @@ import {
 } from '@/features/program/general/lib/participating-individual-progress-attendance-display'
 import type { ParticipatingIndividualProgressAttendanceParticipantRow } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
 import { ProgramAttendanceStatusText } from '@/features/program/shared/ui/program-attendance-status-text'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import '@/features/program/shared/ui/program-attendance-detail.css'
 
 export const PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_TABLE_SCROLL_X = 1280
@@ -51,6 +52,7 @@ export function ParticipatingIndividualProgressAttendanceTable({
         key: 'genderBirthLabel',
         width: 180,
         align: 'center',
+        render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
       },
       {
         title: '소속 및 학년',
@@ -58,6 +60,7 @@ export function ParticipatingIndividualProgressAttendanceTable({
         key: 'affiliationGradeLabel',
         width: 200,
         align: 'center',
+        render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
       },
       {
         title: '연락처',

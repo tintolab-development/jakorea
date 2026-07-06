@@ -54,6 +54,7 @@ import { buildParticipatingVolunteerCalendarEvents } from '../../../lib/build-pa
 import { getSchoolNamesForDateFromVolunteerEvents } from '../../../lib/participating-calendar-date-schools'
 import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '../../../lib/participating-institutions-table'
 import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import { renderParticipatingVolunteerCalendarMonthEventContent } from './participating-volunteer-calendar-month-event'
 import { ParticipatingVolunteersCalendarRight } from './participating-volunteers-calendar-right'
@@ -381,7 +382,7 @@ export function ParticipatingVolunteersSection({
                   key={`${record.id}-session-${s.round}-${index}`}
                   className="participating-institutions-section__session-line"
                 >
-                  {formatParticipatingSchoolSessionLine(s)}
+                  {renderProgramDetailPipeSeparated(formatParticipatingSchoolSessionLine(s))}
                 </div>
               ))}
               {restCount > 0 && (

@@ -48,6 +48,7 @@ import { programUsesTextbook } from '../../../lib/participating-institution-text
 import { resolveInstitutionApplicationProgramBridge } from '../../../lib/institution-application-program-bridge'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import {
   buildParticipatingSchoolPreferredScheduleLines,
@@ -310,7 +311,7 @@ export function ParticipatingInstitutionsSection({
                   key={`${record.id}-session-${index}`}
                   className="participating-institutions-section__session-line"
                 >
-                  {line}
+                  {renderProgramDetailPipeSeparated(line)}
                 </div>
               ))}
               {restCount > 0 && (

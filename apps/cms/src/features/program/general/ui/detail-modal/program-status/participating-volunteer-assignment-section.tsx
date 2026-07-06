@@ -18,6 +18,7 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
 import {
@@ -61,7 +62,9 @@ function renderVolunteerScheduleLines(lines: string[]) {
 function renderHopeScheduleLine(line: string) {
   return (
     <div className="participating-institutions-section__sessions-cell">
-      <div className="participating-institutions-section__session-line">{line}</div>
+      <div className="participating-institutions-section__session-line">
+        {renderProgramDetailPipeSeparated(line)}
+      </div>
     </div>
   )
 }

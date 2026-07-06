@@ -30,6 +30,7 @@ import {
   ProgramDetailDateMethodReadRow,
   ProgramDetailInterviewReadRow,
 } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import {
   resolveGeneralProgramParticipantRecruitmentDisplay,
@@ -361,7 +362,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
             method={program.resultAnnouncementMethod}
           />
         ) : (
-          display.finalAnnouncementLabel
+          renderDetailInfoPipeSeparated(display.finalAnnouncementLabel)
         )
       }
       edit={

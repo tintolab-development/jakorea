@@ -20,6 +20,7 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
 import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
@@ -475,7 +476,7 @@ export function BasicInfoSection({
             <DetailInfoForm.Field
               label="교육 장소"
               fullRow
-              view={formatCompanySchoolVenue(program)}
+              view={renderDetailInfoPipeSeparated(formatCompanySchoolVenue(program))}
               edit={
                 <div className="detail-info-form-inputs-wrapper">
                   <Controller

@@ -13,6 +13,7 @@ import { CmsButton, CMS_ACTION_BUTTON_WIDTH, CmsRadio } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { ColumnsType } from 'antd/es/table'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
   SchoolDetailForModal,
   SchoolDetailInstructorRow,
@@ -407,18 +408,24 @@ export function SchoolDetailModal({
 
   if (!detail) return null
 
-  const mealDisplay = detail.mealProvided ? `제공 | ${detail.mealNotice ?? ''}` : '미제공'
-  const teacherDisplay = [
-    detail.teacherName && `문의처 : ${detail.teacherName}`,
-    detail.teacherPhone && `Tel: ${detail.teacherPhone}`,
-    detail.teacherEmail && `E-mail: ${detail.teacherEmail}`,
-  ]
-    .filter(Boolean)
-    .join(' | ')
-  const classDisplay = `${detail.classCount}개 학급 | 총 ${detail.studentCount}명`
+  const mealDisplay = detail.mealProvided
+    ? renderDetailInfoPipeSeparated(`제공 | ${detail.mealNotice ?? ''}`)
+    : '미제공'
+  const teacherDisplay = renderDetailInfoPipeSeparated(
+    [
+      detail.teacherName && `문의처 : ${detail.teacherName}`,
+      detail.teacherPhone && `Tel: ${detail.teacherPhone}`,
+      detail.teacherEmail && `E-mail: ${detail.teacherEmail}`,
+    ]
+      .filter(Boolean)
+      .join(' | ') || undefined
+  )
+  const classDisplay = renderDetailInfoPipeSeparated(
+    `${detail.classCount}개 학급 | 총 ${detail.studentCount}명`
+  )
   const waitingDisplay =
     detail.waitingRoomAvailable && detail.waitingRoomLocation
-      ? `있음 | ${detail.waitingRoomLocation}`
+      ? renderDetailInfoPipeSeparated(`있음 | ${detail.waitingRoomLocation}`)
       : '없음'
 
   /* 기획 시안 순서(school-detail-modal-view-edit-comparison.md): 1행 참여학교명|지역, 2행 대상학년|학급수, 3행 진행장소|대기실, 풀폭 식사·담당교사 */

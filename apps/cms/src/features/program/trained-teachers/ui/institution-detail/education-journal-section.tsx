@@ -8,6 +8,7 @@ import {
   getTrainedTeachersEducationJournals,
   type TrainedTeachersEducationJournalEntry,
 } from '@/data/mock/trained-teachers-institution-detail'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { TrainedTeachersEducationJournalViewModal } from './education-journal-view-modal'
 import './education-journal-section.css'
 
@@ -93,7 +94,10 @@ export function TrainedTeachersEducationJournalSection({
       {
         title: '교육 진행 일정',
         key: 'schedule',
-        render: (_: unknown, record) => formatTrainedTeachersEducationJournalScheduleLabel(record),
+        render: (_: unknown, record) =>
+          renderProgramDetailPipeSeparated(
+            formatTrainedTeachersEducationJournalScheduleLabel(record)
+          ),
       },
       {
         title: '교육일지',

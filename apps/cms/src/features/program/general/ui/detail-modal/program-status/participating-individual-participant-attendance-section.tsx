@@ -23,6 +23,7 @@ import {
 import {
   formatParticipatingIndividualParticipantAttendanceShortDateLabel,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-display'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { PARTICIPATING_INDIVIDUAL_PARTICIPANT_ATTENDANCE_EXCEL_COLUMNS } from '@/features/program/general/lib/participating-individual-participant-attendance-export'
 import type {
   ParticipatingIndividualParticipantAbsenceReason,
@@ -247,6 +248,7 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
         dataIndex: 'scheduleLabel',
         key: 'scheduleLabel',
         align: 'center',
+        render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
       },
       {
         title: '출결 현황',

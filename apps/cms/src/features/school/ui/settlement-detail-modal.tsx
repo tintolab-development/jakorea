@@ -8,6 +8,7 @@ import { Input, Modal } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { SETTLEMENT_ROW_STATUS_LABELS, type SettlementDetail } from '@/data/mock/school-detail'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import './settlement-detail-modal.css'
 
 export interface BankInfo {
@@ -94,7 +95,11 @@ export function SettlementDetailModal({
                 <div className="settlement-detail__info-split">
                   <div className="settlement-detail__info-split-cell">
                     <span className="settlement-detail__info-split-label">강의 진행일 및 시간</span>
-                    <span className="settlement-detail__info-split-value">{detail.lectureDate} | {detail.lectureDuration}</span>
+                    <span className="settlement-detail__info-split-value">
+                      {renderDetailInfoPipeSeparated(
+                        `${detail.lectureDate} | ${detail.lectureDuration}`
+                      )}
+                    </span>
                   </div>
                   <div className="settlement-detail__info-split-cell">
                     <span className="settlement-detail__info-split-label">강의 진행 시간</span>

@@ -42,6 +42,11 @@ import {
 } from '@/shared/components/status-dropdown-cell'
 import { ApplicantInstructorDetailModal } from './applicant-instructor-detail-modal'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
+import {
+  withProgramDetailTdDivider,
+  ProgramDetailTdSegmentWrap,
+  renderDetailInfoPipeSeparated,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import './instructor-recruitment-detail-modal.css'
 
 export interface InstructorRecruitmentDetailModalProps {
@@ -278,14 +283,25 @@ export function InstructorRecruitmentDetailModal({
                       <td>{sponsorName ?? '-'}</td>
                       <th>후원사 담당자</th>
                       <td>
-                        {program.managerName ? `${program.managerName} | 010-1234-5678` : '-'}
+                        {program.managerName ? (
+                          <ProgramDetailTdSegmentWrap>
+                            {withProgramDetailTdDivider([
+                              program.managerName,
+                              '010-1234-5678',
+                            ])}
+                          </ProgramDetailTdSegmentWrap>
+                        ) : (
+                          '-'
+                        )}
                       </td>
                     </tr>
                     <tr className="instructor-recruitment-detail-modal__info-table-row-full">
                       <th>문의처</th>
                       <td colSpan={3}>
                         {program.contactPhone || program.contactEmail
-                          ? `문의처 : JA Korea | Tel: ${program.contactPhone ?? '-'} | E-mail: ${program.contactEmail ?? '-'}`
+                          ? renderDetailInfoPipeSeparated(
+                              `문의처 : JA Korea | Tel: ${program.contactPhone ?? '-'} | E-mail: ${program.contactEmail ?? '-'}`
+                            )
                           : '-'}
                       </td>
                     </tr>
@@ -340,7 +356,9 @@ export function InstructorRecruitmentDetailModal({
                   <th>1차 서류 합격자 발표</th>
                   <td>
                     {program.documentPassAnnouncementDate
-                      ? `${formatDateOnly(program.documentPassAnnouncementDate)} | ${program.documentPassAnnouncementMethod ?? '-'}`
+                      ? renderDetailInfoPipeSeparated(
+                          `${formatDateOnly(program.documentPassAnnouncementDate)} | ${program.documentPassAnnouncementMethod ?? '-'}`
+                        )
                       : '-'}
                   </td>
                 </tr>
@@ -348,13 +366,17 @@ export function InstructorRecruitmentDetailModal({
                   <th>2차 면접 심사</th>
                   <td>
                     {program.interviewStartDate && program.interviewEndDate
-                      ? `${formatDateRange(program.interviewStartDate, program.interviewEndDate)} | ${program.interviewMethod ?? '-'}`
+                      ? renderDetailInfoPipeSeparated(
+                          `${formatDateRange(program.interviewStartDate, program.interviewEndDate)} | ${program.interviewMethod ?? '-'}`
+                        )
                       : '-'}
                   </td>
                   <th>최종 합격자 발표</th>
                   <td>
                     {program.finalPassAnnouncementDate
-                      ? `${formatDateOnly(program.finalPassAnnouncementDate)} | ${program.finalPassAnnouncementMethod ?? '-'}`
+                      ? renderDetailInfoPipeSeparated(
+                          `${formatDateOnly(program.finalPassAnnouncementDate)} | ${program.finalPassAnnouncementMethod ?? '-'}`
+                        )
                       : '-'}
                   </td>
                 </tr>

@@ -15,6 +15,7 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { SectionSchema } from '@/features/program/shared/model/recruitment-schema'
 import { DateRangeEdit, ProgramDetailContactReadRow } from '../components/recruitment-form-parts'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import dayjs from 'dayjs'
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -151,7 +152,7 @@ export function createInstitutionsSchema({
           },
           {
             label: '결과 발표일 및 방법',
-            view: resultLine,
+            view: renderDetailInfoPipeSeparated(resultLine),
             edit:
               isEdit && form ? (
                 <div className="program-detail-info-tab__result-row">

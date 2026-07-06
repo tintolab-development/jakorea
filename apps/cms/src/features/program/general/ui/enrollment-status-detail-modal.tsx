@@ -44,6 +44,11 @@ import {
 import { SchoolDetailModal } from './detail-modal/program-status/school-detail-modal'
 import { getApplicantSchoolDetail } from '../lib/school-detail-mock'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
+import {
+  withProgramDetailTdDivider,
+  ProgramDetailTdSegmentWrap,
+  renderDetailInfoPipeSeparated,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import './enrollment-status-detail-modal.css'
 
 export interface EnrollmentStatusDetailModalProps {
@@ -291,14 +296,25 @@ export function EnrollmentStatusDetailModal({
                       <td>{sponsorName ?? '-'}</td>
                       <th>후원사 담당자</th>
                       <td>
-                        {program.managerName ? `${program.managerName} | 010-1234-5678` : '-'}
+                        {program.managerName ? (
+                          <ProgramDetailTdSegmentWrap>
+                            {withProgramDetailTdDivider([
+                              program.managerName,
+                              '010-1234-5678',
+                            ])}
+                          </ProgramDetailTdSegmentWrap>
+                        ) : (
+                          '-'
+                        )}
                       </td>
                     </tr>
                     <tr className="enrollment-status-detail-modal__info-table-row-full">
                       <th>문의처</th>
                       <td colSpan={3}>
                         {program.contactPhone || program.contactEmail
-                          ? `문의처 : JA Korea | Tel: ${program.contactPhone ?? '-'} | E-mail: ${program.contactEmail ?? '-'}`
+                          ? renderDetailInfoPipeSeparated(
+                              `문의처 : JA Korea | Tel: ${program.contactPhone ?? '-'} | E-mail: ${program.contactEmail ?? '-'}`
+                            )
                           : '-'}
                       </td>
                     </tr>
@@ -351,7 +367,9 @@ export function EnrollmentStatusDetailModal({
                   <th>결과 발표일 및 방법</th>
                   <td>
                     {program.resultAnnouncementDate
-                      ? `${formatDateOnly(program.resultAnnouncementDate)} | ${program.resultAnnouncementMethod ?? '-'}`
+                      ? renderDetailInfoPipeSeparated(
+                          `${formatDateOnly(program.resultAnnouncementDate)} | ${program.resultAnnouncementMethod ?? '-'}`
+                        )
                       : '-'}
                   </td>
                 </tr>

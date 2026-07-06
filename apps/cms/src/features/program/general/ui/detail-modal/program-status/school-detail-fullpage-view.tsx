@@ -107,6 +107,8 @@ import { InstitutionCombinedClassEditCell } from '@/features/program/general/ui/
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
+  renderProgramDetailPipeSeparated,
+  renderDetailInfoPipeSeparated,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -576,7 +578,7 @@ export function GeneralParticipatingInstitutionDetailView(
     mergedDetail.mealNotice === '가능'
       ? '가능'
       : mergedDetail.mealProvided
-        ? `제공 | ${mergedDetail.mealNotice ?? ''}`
+        ? renderDetailInfoPipeSeparated(`제공 | ${mergedDetail.mealNotice ?? ''}`)
         : '미제공'
 
   /** ` | ` 구분 값 → td 디바이더 (안내 사항·성범죄 경력 조회서 등) */
@@ -943,7 +945,9 @@ export function GeneralParticipatingInstitutionDetailView(
         width: 280,
         align: 'center',
         render: (v: string | undefined, record: AssignedInstructorDisplayRow) => {
-          if (record.assignedScheduleLine) return record.assignedScheduleLine
+          if (record.assignedScheduleLine) {
+            return renderProgramDetailPipeSeparated(record.assignedScheduleLine)
+          }
           const date = v ?? '-'
           const time = record.assignedTime ?? '-'
           if (!date && !time) return '-'
@@ -1002,7 +1006,9 @@ export function GeneralParticipatingInstitutionDetailView(
         width: 300,
         align: 'center',
         render: (v: string | undefined, record: WaitingInstructorRow) => {
-          if (record.hopeScheduleLine) return record.hopeScheduleLine
+          if (record.hopeScheduleLine) {
+            return renderProgramDetailPipeSeparated(record.hopeScheduleLine)
+          }
           const date = v ?? '-'
           const time = record.hopeTime ?? '-'
           const session = record.hopeSession
