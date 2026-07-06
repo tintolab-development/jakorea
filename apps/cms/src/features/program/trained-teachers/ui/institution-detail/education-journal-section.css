@@ -1,7 +1,40 @@
+.trained-teachers-education-journal-section--progress .table-header-actions {
+  margin-bottom: 16px;
+}
+
 .trained-teachers-education-journal-section__view-cell-inner {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.trained-teachers-education-journal-section__file-link {
+  display: inline-block;
+  box-sizing: border-box;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+  color: #0070e7;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+}
+
+.trained-teachers-education-journal-section__file-link:hover {
+  color: #005bb5;
 }
 
 .trained-teachers-education-journal-view__file-name {
