@@ -445,6 +445,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         {activeTab === 'journal' && (
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__journal-tab">
             <TrainedTeachersEducationJournalSection
+              variant="progress"
               institutionId={row.id}
               institutionName={mergedDetail.schoolName ?? row.schoolName}
             />
