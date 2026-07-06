@@ -4,6 +4,20 @@
   gap: 30px;
 }
 
+.gemini-approved-training-detail-info__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gemini-approved-training-detail-info__section .program-detail-info-tab__section-title {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
 .gemini-approved-training-detail-info__status {
   font-weight: 500;
 }
@@ -31,35 +45,85 @@
   gap: 8px;
 }
 
-/* DetailInfoForm body border + program-detail-info-tab__table-wrapper 이중 테두리 방지 */
-.gemini-approved-training-detail-info__table-only-block .detail-info-form__body {
-  border: none;
-  border-radius: 0;
-  overflow: visible;
-  background: transparent;
+.gemini-approved-training-detail-info__affiliation-with-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.gemini-approved-training-detail-info__table-only-block .detail-info-form__row {
-  border-bottom: none;
+/* 세로 테이블 — 라벨 200px 고정, 값 영역 균등 분배 */
+.gemini-approved-training-detail-info__vertical-table-wrap {
+  width: 100%;
 }
 
-.gemini-approved-training-detail-info__instructor-table-wrap {
+.gemini-approved-training-detail-info__vertical-table .gemini-approved-training-detail-info__col-label {
+  width: 200px;
+}
+
+.gemini-approved-training-detail-info__vertical-table .gemini-approved-training-detail-info__col-value {
+  width: auto;
+}
+
+.gemini-approved-training-detail-info__vertical-table tbody th {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+}
+
+.gemini-approved-training-detail-info__vertical-table tbody td {
+  min-width: 0;
+  font-weight: 500;
+}
+
+/* 가로 테이블 — 열 헤더 + 데이터 행 */
+.gemini-approved-training-detail-info__horizontal-table-wrap {
   width: 100%;
   overflow-x: auto;
 }
 
-/* 공통 table th는 row 라벨용 200px 고정 — 열 헤더(thead)는 해제 */
-.gemini-approved-training-detail-info__instructor-table thead th {
+.gemini-approved-training-detail-info__horizontal-table {
+  table-layout: fixed;
+}
+
+.gemini-approved-training-detail-info__horizontal-table thead th {
   width: auto !important;
   min-width: 0 !important;
   max-width: none !important;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 16px;
-  line-height: 150%;
+  line-height: 140%;
+  text-align: center;
+  background: #f5f6f7;
 }
 
-.gemini-approved-training-detail-info__instructor-table tbody td {
+.gemini-approved-training-detail-info__horizontal-table tbody td {
   text-align: center;
   font-weight: 500;
   min-width: 0 !important;
+  word-break: break-word;
+}
+
+.gemini-approved-training-detail-info__horizontal-col-name {
+  width: 140px;
+}
+
+.gemini-approved-training-detail-info__horizontal-col-address {
+  width: 180px;
+}
+
+.gemini-approved-training-detail-info__horizontal-col-career {
+  width: 110px;
+}
+
+.gemini-approved-training-detail-info__horizontal-col-grade {
+  width: 120px;
+}
+
+.gemini-approved-training-detail-info__horizontal-col-contact {
+  width: 140px;
+}
+
+.gemini-approved-training-detail-info__horizontal-col-email {
+  width: 180px;
 }
