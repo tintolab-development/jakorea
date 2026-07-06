@@ -18,6 +18,9 @@ const TRAINING_CONTENT = `안녕하세요, JA Korea입니다.
 감사합니다.
 JA Korea 드림`
 
+const DEFAULT_RECRUITMENT_TITLE =
+  '(Google for Education & JA Korea)Gemini Academy Coding Bootcamp'
+
 const DEFAULT_DETAIL: Omit<
   GeminiApprovedTrainingDetail,
   | 'id'
@@ -32,18 +35,29 @@ const DEFAULT_DETAIL: Omit<
   | 'lastPreferredDate'
   | 'officialDocumentRequired'
 > = {
+  recruitmentTitle: DEFAULT_RECRUITMENT_TITLE,
   recruitmentCount: 8,
   completedRecruitmentCount: 5,
   institutionAddress: '광주광역시 남구 광복마을4길 40',
   joinedAt: '2025. 09. 15',
-  managerNameKo: '박틴토',
+  managerMemberId: 'member-gemini-teacher-001',
+  managerNameKo: '박민토',
   managerScheduleChangeCount: 1,
   managerGender: '남성',
   managerBirthDate: '1990. 09. 15 (만 35세)',
   managerEmploymentStatus: 'ACTIVE',
-  managerContact: '010-****-0000',
-  managerEmail: 'ti***@naver.com',
+  managerContact: '010-1234-5678',
+  managerEmail: 'tintolab@naver.com',
   managerSchool: '진월초등학교',
+  managerHomeAddress: '서울특별시 강서구 화곡동 123-45',
+  managerLectureExperience: '3년',
+  managerAccountBank: '국민은행',
+  managerAccountNumber: '123456-12-345678',
+  managerAccountHolder: '박민토',
+  managerInstructorFeeGrade: '3급 강사비',
+  managerBusinessIncomeLabel: '해당 없음',
+  managerOneLineIntro:
+    '학생들과 함께 성장하는 AI·디지털 리터러시 교육을 지향하는 교사입니다.',
   managerPosition: '교장',
   managerSubject: '과학',
   trainingContent: TRAINING_CONTENT,
@@ -62,11 +76,11 @@ function buildInstructor(row: GeminiApprovedTrainingRow): GeminiApprovedTraining
   }
   return {
     name: row.instructorName,
-    region: `${row.institutionSido} ${row.institutionSigungu}`,
+    region: '서울특별시 강서구 화곡동 123-45',
     experienceYears: 3,
     grade: 'A등급',
-    contact: '010-****-0000',
-    email: 'ti***@naver.com',
+    contact: '010-1234-5678',
+    email: 'tintolab@naver.com',
   }
 }
 
@@ -74,6 +88,7 @@ function rowToDetail(row: GeminiApprovedTrainingRow): GeminiApprovedTrainingDeta
   return {
     ...DEFAULT_DETAIL,
     id: row.id,
+    recruitmentTitle: row.recruitmentTitle ?? DEFAULT_RECRUITMENT_TITLE,
     institutionName: row.institutionName,
     trainingDate: row.instructorAssigned ? row.trainingDate : row.lastPreferredDate,
     trainingTimeText: row.instructorAssigned ? row.trainingTimeText : '-',

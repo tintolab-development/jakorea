@@ -7,6 +7,7 @@ export type GeminiApprovedTrainingStatus =
 export type GeminiApprovedTrainingRow = {
   id: string
   no: number
+  recruitmentTitle?: string
   institutionName: string
   institutionSido: string
   institutionSigungu: string

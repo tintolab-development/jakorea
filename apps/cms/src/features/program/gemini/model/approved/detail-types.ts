@@ -11,6 +11,7 @@ export type GeminiApprovedTrainingInstructorInfo = {
 
 export type GeminiApprovedTrainingDetail = {
   id: string
+  recruitmentTitle: string
   institutionName: string
   trainingDate: string
   trainingTimeText: string
@@ -19,6 +20,7 @@ export type GeminiApprovedTrainingDetail = {
   completedRecruitmentCount: number
   institutionAddress: string
   joinedAt: string
+  managerMemberId?: string
   managerNameKo: string
   managerScheduleChangeCount: number
   managerGender: string
@@ -27,6 +29,14 @@ export type GeminiApprovedTrainingDetail = {
   managerContact: string
   managerEmail: string
   managerSchool: string
+  managerHomeAddress: string
+  managerLectureExperience: string
+  managerAccountBank: string
+  managerAccountNumber: string
+  managerAccountHolder: string
+  managerInstructorFeeGrade: string
+  managerBusinessIncomeLabel: string
+  managerOneLineIntro: string
   managerPosition: string
   managerSubject: string
   instructor: GeminiApprovedTrainingInstructorInfo
