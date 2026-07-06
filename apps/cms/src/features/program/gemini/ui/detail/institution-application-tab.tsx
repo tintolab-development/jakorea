@@ -2,26 +2,28 @@ import { useCallback, useMemo, useState, type Key } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+} from '@/shared/components'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
+import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
+import {
+  getGeminiInstitutionApplicationRows,
+  patchGeminiInstitutionApplicationApprovalStatus,
+  type GeminiInstitutionApplicationRow,
+  type GeminiInstitutionApprovalStatus,
+} from '../../model/recruitment/institution-application-mock'
+import {
+  GEMINI_INSTITUTION_APPROVAL_STATUS_OPTIONS,
+  GeminiInstitutionApprovalStatusBadge,
+} from './gemini-institution-approval-status-badge'
+import { GeminiInstitutionPreferredLectureScheduleCell } from './gemini-institution-preferred-lecture-schedule-cell'
 import './institution-application-tab.css'
-
-type GeminiInstitutionApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
-
-type GeminiInstitutionApplicationRow = {
-  id: string
-  no: number
-  institutionName: string
-  institutionSido: string
-  institutionSigungu: string
-  approvalStatus: GeminiInstitutionApprovalStatus
-  preferredLectureSchedule: string
-  studentCount: number
-  teacherName: string
-}
 
 type PendingFilters = {
   institutionName: string
@@ -29,12 +31,6 @@ type PendingFilters = {
   institutionSigungu: string
   approvalStatus: GeminiInstitutionApprovalStatus | 'ALL'
   teacherName: string
-}
-
-const APPROVAL_STATUS_LABEL: Record<GeminiInstitutionApprovalStatus, string> = {
-  PENDING: '승인 대기',
-  APPROVED: '승인 완료',
-  REJECTED: '신청 반려',
 }
 
 const FILTER_FIELDS: FilterFieldConfig[] = [
@@ -54,8 +50,8 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     width: '25%',
     options: [
       { label: '전체', value: 'ALL' },
+      { label: '승인', value: 'APPROVED' },
       { label: '승인 대기', value: 'PENDING' },
-      { label: '승인 완료', value: 'APPROVED' },
       { label: '신청 반려', value: 'REJECTED' },
     ],
   },
@@ -76,57 +72,8 @@ const INITIAL_PENDING_FILTERS: PendingFilters = {
   teacherName: '',
 }
 
-const MOCK_ROWS: GeminiInstitutionApplicationRow[] = [
-  {
-    id: 'gia-30',
-    no: 30,
-    institutionName: '강서초등학교',
-    institutionSido: '서울특별시',
-    institutionSigungu: '강서구',
-    approvalStatus: 'PENDING',
-    preferredLectureSchedule:
-      '1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)\n2지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)\n3지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)',
-    studentCount: 15,
-    teacherName: '홍길동',
-  },
-  {
-    id: 'gia-29',
-    no: 29,
-    institutionName: '푸른솔초등학교',
-    institutionSido: '경기도',
-    institutionSigungu: '성남시 분당구',
-    approvalStatus: 'APPROVED',
-    preferredLectureSchedule:
-      '1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)\n2지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)\n3지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)',
-    studentCount: 15,
-    teacherName: '홍길동',
-  },
-  {
-    id: 'gia-28',
-    no: 28,
-    institutionName: '하늘빛초등학교',
-    institutionSido: '인천광역시',
-    institutionSigungu: '연수구',
-    approvalStatus: 'REJECTED',
-    preferredLectureSchedule:
-      '1지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)\n2지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)\n3지망 : 2026. 01. 09(금) | 15:30~16:40(2차시)',
-    studentCount: 15,
-    teacherName: '홍길동',
-  },
-]
-
-const TABLE_SCROLL_X = TABLE_COLUMN_WIDTHS.checkbox + 72 + 150 + 170 + 120 + 420 + 100 + 120 + 48
-
-function approvalStatusText(status: GeminiInstitutionApprovalStatus) {
-  const base = 'gemini-institution-application-tab__approval'
-  const modifier =
-    status === 'PENDING'
-      ? `${base}--pending`
-      : status === 'APPROVED'
-        ? `${base}--approved`
-        : `${base}--rejected`
-  return <span className={`${base} ${modifier}`}>{APPROVAL_STATUS_LABEL[status]}</span>
-}
+const TABLE_SCROLL_X =
+  TABLE_COLUMN_WIDTHS.checkbox + 72 + 150 + 170 + 150 + 420 + 100 + 120 + 48
 
 function toRegionText(row: GeminiInstitutionApplicationRow): string {
   return `${row.institutionSido} ${row.institutionSigungu}`.trim()
@@ -156,15 +103,60 @@ function filterRows(rows: GeminiInstitutionApplicationRow[], filters: PendingFil
   })
 }
 
+function buildBulkRejectMessageLines(count: number): string[] {
+  if (count <= 0) return []
+  return [
+    `선택한 ${count}건의 기관 신청을 반려하시겠습니까?`,
+    '반려 시 해당 기관들의 승인 현황이 [신청 반려]로 변경됩니다.',
+    '정말로 반려하시겠습니까?',
+  ]
+}
+
+function buildBulkApproveMessageLines(count: number): string[] {
+  if (count <= 0) return []
+  return [
+    `선택한 ${count}건의 기관 신청을 승인하시겠습니까?`,
+    '승인 시 해당 기관들의 승인 현황이 [승인]으로 변경됩니다.',
+    '정말로 승인하시겠습니까?',
+  ]
+}
+
 export function GeminiInstitutionApplicationTab() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
+  const [rows, setRows] = useState(() => getGeminiInstitutionApplicationRows())
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
+  const [openApprovalDropdownId, setOpenApprovalDropdownId] = useState<string | null>(null)
+  const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
+  const [bulkApproveOpen, setBulkApproveOpen] = useState(false)
 
-  const filteredRows = useMemo(() => filterRows(MOCK_ROWS, appliedFilters), [appliedFilters])
+  const filteredRows = useMemo(() => filterRows(rows, appliedFilters), [rows, appliedFilters])
+
+  const selectedRows = useMemo(
+    () => rows.filter(row => selectedRowKeys.includes(row.id)),
+    [rows, selectedRowKeys]
+  )
+
+  const rejectDisabled = useMemo(
+    () =>
+      selectedRows.length === 0 ||
+      selectedRows.some(row => row.approvalStatus === 'REJECTED'),
+    [selectedRows]
+  )
+
+  const approveDisabled = useMemo(
+    () =>
+      selectedRows.length === 0 ||
+      selectedRows.some(row => row.approvalStatus === 'APPROVED'),
+    [selectedRows]
+  )
+
+  const refreshRows = useCallback(() => {
+    setRows([...getGeminiInstitutionApplicationRows()])
+  }, [])
 
   const showNoSelectionAlert = useCallback(() => {
     showAlert({
@@ -179,8 +171,9 @@ export function GeminiInstitutionApplicationTab() {
       showNoSelectionAlert()
       return
     }
-    // TODO: 참여 기관 신청 선택 반려 확인 모달·API 연동
-  }, [canWrite, selectedRowKeys.length, showNoSelectionAlert])
+    if (rejectDisabled) return
+    setBulkRejectOpen(true)
+  }, [canWrite, rejectDisabled, selectedRowKeys.length, showNoSelectionAlert])
 
   const handleBulkApprove = useCallback(() => {
     if (!canWrite) return
@@ -188,8 +181,44 @@ export function GeminiInstitutionApplicationTab() {
       showNoSelectionAlert()
       return
     }
-    // TODO: 참여 기관 신청 선택 승인 확인 모달·API 연동
-  }, [canWrite, selectedRowKeys.length, showNoSelectionAlert])
+    if (approveDisabled) return
+    setBulkApproveOpen(true)
+  }, [approveDisabled, canWrite, selectedRowKeys.length, showNoSelectionAlert])
+
+  const confirmBulkReject = useCallback(() => {
+    const ids = selectedRows
+      .filter(row => row.approvalStatus !== 'REJECTED')
+      .map(row => row.id)
+    if (ids.length === 0) return
+    patchGeminiInstitutionApplicationApprovalStatus(ids, 'REJECTED')
+    refreshRows()
+    setSelectedRowKeys([])
+    setBulkRejectOpen(false)
+    // TODO: 참여 기관 신청 선택 반려 API 연동
+  }, [refreshRows, selectedRows])
+
+  const confirmBulkApprove = useCallback(() => {
+    const ids = selectedRows
+      .filter(row => row.approvalStatus !== 'APPROVED')
+      .map(row => row.id)
+    if (ids.length === 0) return
+    patchGeminiInstitutionApplicationApprovalStatus(ids, 'APPROVED')
+    refreshRows()
+    setSelectedRowKeys([])
+    setBulkApproveOpen(false)
+    // TODO: 참여 기관 신청 선택 승인 API 연동
+  }, [refreshRows, selectedRows])
+
+  const handleApprovalStatusChange = useCallback(
+    (rowId: string, next: GeminiInstitutionApprovalStatus) => {
+      if (!canWrite) return
+      patchGeminiInstitutionApplicationApprovalStatus([rowId], next)
+      refreshRows()
+      setOpenApprovalDropdownId(null)
+      // TODO: 승인 현황 변경 API 연동
+    },
+    [canWrite, refreshRows]
+  )
 
   const columns = useMemo<ColumnsType<GeminiInstitutionApplicationRow>>(
     () => [
@@ -218,9 +247,24 @@ export function GeminiInstitutionApplicationTab() {
         title: '승인 현황',
         dataIndex: 'approvalStatus',
         key: 'approvalStatus',
-        width: 120,
+        width: 150,
         align: 'center',
-        render: (status: GeminiInstitutionApprovalStatus) => approvalStatusText(status),
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        render: (status: GeminiInstitutionApprovalStatus, record) => (
+          <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
+            <StatusDropdownCell<GeminiInstitutionApprovalStatus>
+              status={status}
+              statusOptions={GEMINI_INSTITUTION_APPROVAL_STATUS_OPTIONS}
+              renderBadge={s => <GeminiInstitutionApprovalStatusBadge status={s} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={
+                canWrite ? next => handleApprovalStatusChange(record.id, next) : undefined
+              }
+              isOpen={openApprovalDropdownId === record.id}
+              onOpenChange={open => setOpenApprovalDropdownId(open ? record.id : null)}
+            />
+          </div>
+        ),
       },
       {
         title: '강의 진행 희망 교육 날짜 및 시간',
@@ -230,7 +274,7 @@ export function GeminiInstitutionApplicationTab() {
         align: 'center',
         onCell: () => ({ className: 'gemini-institution-application-tab__schedule-cell' }),
         render: (value: string) => (
-          <div className="gemini-institution-application-tab__schedule">{value}</div>
+          <GeminiInstitutionPreferredLectureScheduleCell value={value} />
         ),
       },
       {
@@ -249,95 +293,120 @@ export function GeminiInstitutionApplicationTab() {
         align: 'center',
       },
     ],
-    []
+    [canWrite, handleApprovalStatusChange, openApprovalDropdownId]
   )
 
+  const rejectTargetCount = selectedRows.filter(row => row.approvalStatus !== 'REJECTED').length
+  const approveTargetCount = selectedRows.filter(row => row.approvalStatus !== 'APPROVED').length
+
   return (
-    <FilterTableLayout
-      bordered={false}
-      fields={FILTER_FIELDS}
-      filters={pendingFilters}
-      onFilterChange={(key, value) => {
-        if (key === 'institutionSido') {
+    <>
+      <FilterTableLayout
+        bordered={false}
+        fields={FILTER_FIELDS}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          if (key === 'institutionSido') {
+            setPendingFilters(prev => ({
+              ...prev,
+              institutionSido: value == null ? '' : String(value),
+              institutionSigungu: '',
+            }))
+            return
+          }
+          if (key === 'institutionSigungu') {
+            setPendingFilters(prev => ({
+              ...prev,
+              institutionSigungu: value == null ? '' : String(value),
+            }))
+            return
+          }
+          if (key === 'approvalStatus') {
+            setPendingFilters(prev => ({
+              ...prev,
+              approvalStatus: (value == null
+                ? 'ALL'
+                : String(value)) as PendingFilters['approvalStatus'],
+            }))
+            return
+          }
           setPendingFilters(prev => ({
             ...prev,
-            institutionSido: value == null ? '' : String(value),
-            institutionSigungu: '',
+            [key]: value == null ? '' : String(value),
           }))
-          return
+        }}
+        onSearch={() => {
+          setAppliedFilters(pendingFilters)
+          setSelectedRowKeys([])
+        }}
+        title="기관 신청 목록"
+        description={`총 ${filteredRows.length.toLocaleString()}건`}
+        actions={
+          canWrite ? (
+            <>
+              <CmsButton
+                variant="delete"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                disabled={rejectDisabled}
+                onClick={handleBulkReject}
+              >
+                선택 반려
+              </CmsButton>
+              <CmsButton
+                variant="secondary"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                disabled={approveDisabled}
+                onClick={handleBulkApprove}
+              >
+                선택 승인
+              </CmsButton>
+            </>
+          ) : null
         }
-        if (key === 'institutionSigungu') {
-          setPendingFilters(prev => ({
-            ...prev,
-            institutionSigungu: value == null ? '' : String(value),
-          }))
-          return
-        }
-        if (key === 'approvalStatus') {
-          setPendingFilters(prev => ({
-            ...prev,
-            approvalStatus: (value == null
-              ? 'ALL'
-              : String(value)) as PendingFilters['approvalStatus'],
-          }))
-          return
-        }
-        setPendingFilters(prev => ({
-          ...prev,
-          [key]: value == null ? '' : String(value),
-        }))
-      }}
-      onSearch={() => setAppliedFilters(pendingFilters)}
-      title="참여 기관 신청 목록"
-      description={`총 ${filteredRows.length.toLocaleString()}건`}
-      actions={
-        canWrite ? (
-          <>
-            <CmsButton
-              variant="delete"
-              size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={handleBulkReject}
-            >
-              선택 반려
-            </CmsButton>
-            <CmsButton
-              variant="secondary"
-              size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={handleBulkApprove}
-            >
-              선택 승인
-            </CmsButton>
-          </>
-        ) : null
-      }
-      excelExport={{
-        columns,
-        data: filteredRows,
-      }}
-    >
-      <Table<GeminiInstitutionApplicationRow>
-        rowKey="id"
-        className="cms-data-table"
-        tableLayout="fixed"
-        scroll={{ x: TABLE_SCROLL_X }}
-        columns={columns}
-        dataSource={filteredRows}
-        pagination={false}
-        rowSelection={
-          canWrite
-            ? {
-                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                selectedRowKeys,
-                onChange: keys => setSelectedRowKeys(keys),
-                preserveSelectedRowKeys: false,
-              }
-            : undefined
-        }
+        excelExport={{
+          columns,
+          data: filteredRows,
+        }}
+      >
+        <Table<GeminiInstitutionApplicationRow>
+          rowKey="id"
+          className="cms-data-table"
+          tableLayout="fixed"
+          scroll={{ x: TABLE_SCROLL_X }}
+          columns={columns}
+          dataSource={filteredRows}
+          pagination={false}
+          rowSelection={
+            canWrite
+              ? {
+                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                  selectedRowKeys,
+                  onChange: keys => setSelectedRowKeys(keys),
+                  preserveSelectedRowKeys: false,
+                }
+              : undefined
+          }
+        />
+      </FilterTableLayout>
+
+      <DeleteGuideModal
+        open={bulkRejectOpen}
+        title="선택 반려"
+        lines={buildBulkRejectMessageLines(rejectTargetCount)}
+        onCancel={() => setBulkRejectOpen(false)}
+        onConfirm={confirmBulkReject}
       />
-    </FilterTableLayout>
+      <DeleteGuideModal
+        open={bulkApproveOpen}
+        title="선택 승인"
+        lines={buildBulkApproveMessageLines(approveTargetCount)}
+        onCancel={() => setBulkApproveOpen(false)}
+        onConfirm={confirmBulkApprove}
+      />
+    </>
   )
 }

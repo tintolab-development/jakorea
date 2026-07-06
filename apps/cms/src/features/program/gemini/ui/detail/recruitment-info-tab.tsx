@@ -1,28 +1,21 @@
-import dayjs from 'dayjs'
-import type { Dayjs } from 'dayjs'
+import dayjs, { type Dayjs } from 'dayjs'
 import type { Editor } from '@/shared/rich-text'
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { StatusBadge } from '@/shared/components/status-badge'
-import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
-import { CmsInput } from '@/shared/ui/cms-input'
-import { RichTextEditor } from '@/shared/rich-text'
-import {
-  ANNOUNCEMENT_PUBLISHED_OPTIONS,
-} from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
+import {
+  recruitmentProgramProgressModifier,
+  resolveRecruitmentAnnouncementDisplayLabel,
+  resolveRecruitmentProgramProgressLabel,
+} from '../../lib/recruitment/resolve-recruitment-display'
+import { formatRecruitmentAuditDate } from '../../lib/recruitment/format-period'
 import type { GeminiRecruitmentDetail } from '../../model/recruitment/detail-types'
 import type { GeminiRecruitmentInfoEditDraft } from '../../model/recruitment/info-edit-draft'
 import { toDateRangeValue } from '../../model/recruitment/info-edit-draft'
-import {
-  formatRecruitmentAuditDate,
-  formatRecruitmentPeriodRange,
-} from '../../lib/recruitment/format-period'
-import {
-  geminiRecruitmentStatusToEnrollmentDisplay,
-  resolveRecruitmentStatus,
-} from '../../lib/recruitment/resolve-status'
+import { GeminiRecruitmentInstitutionFields } from '../recruitment/gemini-recruitment-institution-fields'
+import { GeminiRecruitmentDetailFields } from '../recruitment/gemini-recruitment-detail-fields'
 import '@/features/posts/ui/notice-register-modal.css'
+import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './recruitment-info-tab.css'
 
 function commitDateRange(
@@ -33,14 +26,6 @@ function commitDateRange(
   const end = dates?.[1]
   if (start == null || end == null) return
   onCommit(start.startOf('day').toISOString(), end.startOf('day').toISOString())
-}
-
-function resolveAnnouncementPublishedLabel(
-  value: GeminiRecruitmentDetail['announcementPublished']
-): string {
-  return (
-    ANNOUNCEMENT_PUBLISHED_OPTIONS.find(option => option.value === value)?.label ?? '-'
-  )
 }
 
 export function GeminiRecruitmentInfoTab({
@@ -60,30 +45,78 @@ export function GeminiRecruitmentInfoTab({
   editor?: Editor | null
   editorMinHeight?: string | number
 }) {
-  const status = resolveRecruitmentStatus(
-    detail.applicationPeriodStart,
-    detail.applicationPeriodEnd,
-    dayjs(todayKey)
-  )
-
   const resolvedDetail = useMemo((): GeminiRecruitmentDetail => {
     if (!isEditMode || draft == null) return detail
     return { ...detail, ...draft }
   }, [detail, draft, isEditMode])
 
-  const applicationRange = draft
+  const fieldValues = useMemo(
+    () => ({
+      title: resolvedDetail.title,
+      announcementPublished: resolvedDetail.announcementPublished,
+      educationTargetLevels: resolvedDetail.educationTargetLevels,
+      educationTargetDetail: resolvedDetail.educationTargetDetail,
+      applicationPeriodStart: resolvedDetail.applicationPeriodStart,
+      applicationPeriodEnd: resolvedDetail.applicationPeriodEnd,
+      trainingRequestPeriodStart: resolvedDetail.trainingRequestPeriodStart,
+      trainingRequestPeriodEnd: resolvedDetail.trainingRequestPeriodEnd,
+      minStudentCount: resolvedDetail.minStudentCount,
+      educationForm: resolvedDetail.educationForm,
+      inquiryContactName: resolvedDetail.inquiryContactName,
+      inquiryTel: resolvedDetail.inquiryTel,
+      inquiryEmail: resolvedDetail.inquiryEmail,
+      notesNotApplicable: resolvedDetail.notesNotApplicable,
+      notes: resolvedDetail.notes,
+      thumbnailFileName: resolvedDetail.thumbnailFileName,
+      programDescription: resolvedDetail.programDescription,
+      recruitmentGuide: resolvedDetail.recruitmentGuide,
+      applicationMethod: resolvedDetail.applicationMethod,
+      learningSupportContent: resolvedDetail.learningSupportContent,
+      additionalContentMarkdown: resolvedDetail.additionalContentMarkdown,
+      attachmentFileNames: resolvedDetail.attachmentFileNames,
+    }),
+    [resolvedDetail]
+  )
+
+  const announcementDisplayLabel = resolveRecruitmentAnnouncementDisplayLabel(
+    resolvedDetail.applicationPeriodStart,
+    dayjs(todayKey)
+  )
+  const programProgressLabel = resolveRecruitmentProgramProgressLabel(
+    detail.id,
+    resolvedDetail.applicationPeriodStart,
+    resolvedDetail.applicationPeriodEnd,
+    dayjs(todayKey)
+  )
+  const programProgressModifier = recruitmentProgramProgressModifier(programProgressLabel)
+
+  const applicationPeriod = draft
     ? toDateRangeValue(draft.applicationPeriodStart, draft.applicationPeriodEnd)
     : null
-  const trainingRequestRange = draft
+  const trainingRequestPeriod = draft
     ? toDateRangeValue(draft.trainingRequestPeriodStart, draft.trainingRequestPeriodEnd)
     : null
 
-  const basicInfoMode = isEditMode && draft != null && onDraftChange != null ? 'edit' : 'view'
+  const contentMode = isEditMode && draft != null && onDraftChange != null ? 'edit' : 'view'
+
+  const handleMinStudentCountChange = useCallback(
+    (value: string) => {
+      if (!onDraftChange) return
+      const digits = value.replace(/\D/g, '')
+      if (digits === '') return
+      onDraftChange({ minStudentCount: Number(digits) })
+    },
+    [onDraftChange]
+  )
 
   return (
     <div className="gemini-recruitment-info-tab">
-      <div className="gemini-recruitment-info-tab__basic-info" role="group" aria-label="기본 정보">
-        <DetailInfoForm title="기본 정보" mode="view" className="program-registration-paragraph">
+      <div className="gemini-recruitment-info-tab__recruitment-section">
+        <DetailInfoForm
+          title="모집 정보"
+          mode={contentMode}
+          className="program-registration-paragraph"
+        >
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="최초 등록일"
@@ -106,18 +139,11 @@ export function GeminiRecruitmentInfoTab({
               }
             />
           </DetailInfoForm.Row>
-        </DetailInfoForm>
-
-        <DetailInfoForm
-          title="기본 정보"
-          hideHeader
-          mode={basicInfoMode}
-          className="program-registration-paragraph gemini-recruitment-info-tab__basic-info-block"
-        >
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="공고 게시 여부"
-              view={resolveAnnouncementPublishedLabel(resolvedDetail.announcementPublished)}
+              readOnlyDisplay={contentMode === 'view'}
+              view={announcementDisplayLabel}
               edit={
                 draft != null && onDraftChange != null ? (
                   <ParticipantRecruitmentAnnouncementPublishedRadios
@@ -128,131 +154,78 @@ export function GeminiRecruitmentInfoTab({
               }
             />
             <DetailInfoForm.Field
-              label="공고명"
-              view={resolvedDetail.title}
-              edit={
-                draft != null && onDraftChange != null ? (
-                  <CmsInput
-                    inputSize="medium"
-                    width="100%"
-                    placeholder="공고명을 입력하세요"
-                    value={draft.title}
-                    onChange={e => onDraftChange({ title: e.target.value })}
-                  />
-                ) : undefined
-              }
-            />
-          </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field
-              label="신청 기간"
-              view={formatRecruitmentPeriodRange(
-                resolvedDetail.applicationPeriodStart,
-                resolvedDetail.applicationPeriodEnd
-              )}
-              edit={
-                draft != null && onDraftChange != null ? (
-                  <CmsDateRangePicker
-                    value={applicationRange}
-                    onChange={dates =>
-                      commitDateRange(dates, (start, end) =>
-                        onDraftChange({
-                          applicationPeriodStart: start,
-                          applicationPeriodEnd: end,
-                        })
-                      )
-                    }
-                    format="YYYY. MM. DD"
-                    width="100%"
-                    placeholder={['시작일', '종료일']}
-                  />
-                ) : undefined
-              }
-            />
-            <DetailInfoForm.Field
-              label="연수 요청 가능 기간"
-              view={formatRecruitmentPeriodRange(
-                resolvedDetail.trainingRequestPeriodStart,
-                resolvedDetail.trainingRequestPeriodEnd
-              )}
-              edit={
-                draft != null && onDraftChange != null ? (
-                  <CmsDateRangePicker
-                    value={trainingRequestRange}
-                    onChange={dates =>
-                      commitDateRange(dates, (start, end) =>
-                        onDraftChange({
-                          trainingRequestPeriodStart: start,
-                          trainingRequestPeriodEnd: end,
-                        })
-                      )
-                    }
-                    format="YYYY. MM. DD"
-                    width="100%"
-                    placeholder={['시작일', '종료일']}
-                  />
-                ) : undefined
-              }
-            />
-          </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field
-              label="최소 수강 인원"
-              view={resolvedDetail.minStudentCount.toLocaleString('ko-KR')}
-              edit={
-                draft != null && onDraftChange != null ? (
-                  <CmsInput
-                    inputSize="medium"
-                    width={260}
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    value={draft.minStudentCount}
-                    onChange={e => {
-                      const digits = e.target.value.replace(/\D/g, '')
-                      if (digits === '') return
-                      onDraftChange({ minStudentCount: Number(digits) })
-                    }}
-                  />
-                ) : undefined
-              }
-            />
-            <DetailInfoForm.Field
               label="프로그램 진행 현황"
               readOnlyDisplay
               view={
-                <StatusBadge
-                  domain="programEnrollment"
-                  status={geminiRecruitmentStatusToEnrollmentDisplay(status)}
-                  variant="text"
-                />
+                <span
+                  className={`gemini-recruitment-info-tab__progress gemini-recruitment-info-tab__progress--${programProgressModifier}`}
+                >
+                  {programProgressLabel}
+                </span>
               }
             />
           </DetailInfoForm.Row>
         </DetailInfoForm>
+
+        <DetailInfoForm
+          title="모집 정보"
+          hideHeader
+          mode={contentMode}
+          className="program-registration-paragraph"
+        >
+          {contentMode === 'edit' && draft != null && onDraftChange != null ? (
+            <GeminiRecruitmentInstitutionFields
+              mode="edit"
+              values={fieldValues}
+              showAnnouncementRow={false}
+              applicationPeriod={applicationPeriod}
+              onApplicationPeriodChange={dates =>
+                commitDateRange(dates, (start, end) =>
+                  onDraftChange({
+                    applicationPeriodStart: start,
+                    applicationPeriodEnd: end,
+                  })
+                )
+              }
+              trainingRequestPeriod={trainingRequestPeriod}
+              onTrainingRequestPeriodChange={dates =>
+                commitDateRange(dates, (start, end) =>
+                  onDraftChange({
+                    trainingRequestPeriodStart: start,
+                    trainingRequestPeriodEnd: end,
+                  })
+                )
+              }
+              onMinStudentCountChange={handleMinStudentCountChange}
+              onChange={patch => onDraftChange(patch as Partial<GeminiRecruitmentInfoEditDraft>)}
+            />
+          ) : (
+            <GeminiRecruitmentInstitutionFields
+              mode="view"
+              values={fieldValues}
+              showAnnouncementRow={false}
+            />
+          )}
+        </DetailInfoForm>
       </div>
 
       <DetailInfoForm
-        title="연수 내용"
-        mode={isEditMode && draft != null && onDraftChange != null ? 'edit' : 'view'}
-        className="gemini-recruitment-info-tab__training"
+        title="상세 정보"
+        mode={contentMode}
+        className="program-registration-paragraph gemini-recruitment-info-tab__detail-block"
       >
-        <DetailInfoForm.Row type="custom">
-          {isEditMode && draft != null && onDraftChange != null ? (
-            <div className="notice-register-modal__section notice-register-modal__section--editor gemini-recruitment-info-tab__editor">
-              <div className="notice-register-modal__editor-host">
-                <RichTextEditor
-                  editor={editor}
-                  minHeight={editorMinHeight}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="gemini-recruitment-info-tab__training-body">
-              {resolvedDetail.trainingContent}
-            </div>
-          )}
-        </DetailInfoForm.Row>
+        <GeminiRecruitmentDetailFields
+          mode={contentMode}
+          values={fieldValues}
+          editor={editor}
+          editorMinHeight={editorMinHeight}
+          readOnlyUpload={contentMode === 'view'}
+          onChange={
+            onDraftChange
+              ? patch => onDraftChange(patch as Partial<GeminiRecruitmentInfoEditDraft>)
+              : undefined
+          }
+        />
       </DetailInfoForm>
     </div>
   )

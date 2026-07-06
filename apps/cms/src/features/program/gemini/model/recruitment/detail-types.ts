@@ -1,12 +1,21 @@
-import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import type { GeminiRecruitmentAddFormSnapshot } from '../../lib/recruitment/add-local-save'
 import type { GeminiRecruitmentRow } from './types'
 
-export type GeminiRecruitmentDetail = GeminiRecruitmentRow & {
-  createdAt: string
-  createdByName: string
-  updatedAt: string
-  updatedByName: string
-  announcementPublished: ParticipantRecruitmentAnnouncementPublishedValue
-  minStudentCount: number
-  trainingContent: string
-}
+export type GeminiRecruitmentDetailFields = Omit<
+  GeminiRecruitmentAddFormSnapshot,
+  | 'institutionSectionDescription'
+  | 'detailSectionDescription'
+  | 'applicationPeriodStart'
+  | 'applicationPeriodEnd'
+  | 'trainingRequestPeriodStart'
+  | 'trainingRequestPeriodEnd'
+  | 'title'
+>
+
+export type GeminiRecruitmentDetail = GeminiRecruitmentRow &
+  GeminiRecruitmentDetailFields & {
+    createdAt: string
+    createdByName: string
+    updatedAt: string
+    updatedByName: string
+  }

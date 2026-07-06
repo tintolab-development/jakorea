@@ -23,6 +23,7 @@ export const GEMINI_RECRUITMENT_FILTER_FIELDS: FilterFieldConfig[] = [
       { label: '예정', value: 'SCHEDULED' },
       { label: '진행 중', value: 'IN_PROGRESS' },
       { label: '종료', value: 'ENDED' },
+      { label: '임시저장', value: 'DRAFT' },
     ],
   },
   {

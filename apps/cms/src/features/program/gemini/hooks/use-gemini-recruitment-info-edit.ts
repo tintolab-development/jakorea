@@ -55,15 +55,17 @@ export function useGeminiRecruitmentInfoEdit(
     resetDraftFromDetail()
   }, [isEditMode, resetDraftFromDetail])
 
-  const trainingContentSource =
-    isEditMode && draft != null ? draft.trainingContent : detail?.trainingContent ?? ''
+  const additionalContentSource =
+    isEditMode && draft != null
+      ? draft.additionalContentMarkdown
+      : detail?.additionalContentMarkdown ?? ''
 
   const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
     isEditMode && detail != null,
-    trainingContentSource,
+    additionalContentSource,
     `gemini-recruitment-info-edit-${recruitmentId ?? 'none'}-${isEditMode ? 'edit' : 'view'}`,
     {
-      placeholder: '모집 내용을 입력해 주세요. (ex. 연수 모집 절차, 연수 내용 등)',
+      placeholder: '내용을 작성하세요',
     }
   )
 
@@ -98,18 +100,12 @@ export function useGeminiRecruitmentInfoEdit(
     if (detail == null || draft == null) return
     const nextDraft: GeminiRecruitmentInfoEditDraft = {
       ...draft,
-      trainingContent: getMarkdown() || draft.trainingContent,
+      additionalContentMarkdown: getMarkdown() || draft.additionalContentMarkdown,
     }
     const nextDetail = applyInfoEditDraft(detail, nextDraft)
     patchRecruitmentDetail(detail.id, {
+      ...nextDraft,
       title: nextDetail.title,
-      announcementPublished: nextDetail.announcementPublished,
-      applicationPeriodStart: nextDetail.applicationPeriodStart,
-      applicationPeriodEnd: nextDetail.applicationPeriodEnd,
-      trainingRequestPeriodStart: nextDetail.trainingRequestPeriodStart,
-      trainingRequestPeriodEnd: nextDetail.trainingRequestPeriodEnd,
-      minStudentCount: nextDetail.minStudentCount,
-      trainingContent: nextDetail.trainingContent,
       updatedAt: nextDetail.updatedAt,
     })
     setEditMode(false)

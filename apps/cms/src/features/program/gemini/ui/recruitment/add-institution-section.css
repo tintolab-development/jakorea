@@ -1,0 +1,9 @@
+.gemini-recruitment-add-institution-section__forms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gemini-recruitment-add-institution-section__forms .detail-info-form {
+  margin: 0;
+}
