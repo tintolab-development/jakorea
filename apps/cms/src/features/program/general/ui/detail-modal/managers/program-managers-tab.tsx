@@ -7,6 +7,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Table } from 'antd'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
 import {
@@ -50,9 +51,10 @@ const TABLE_ROLE_ORDER: ProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
 
 interface ProgramManagersTabProps {
   programId: string
+  maskSensitive?: boolean
 }
 
-export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
+export function ProgramManagersTab({ programId, maskSensitive = false }: ProgramManagersTabProps) {
   const { filters, setFilters } = useProgramManagersParams()
   const [pendingFilters, setPendingFilters] = useState<ProgramManagersFilters>(() => ({
     ...filters,
@@ -252,7 +254,8 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         align: 'center',
         render: (phone: string) => {
           const value = phone?.trim()
-          return value || '-'
+          if (!value) return '-'
+          return maskSensitive ? MASKING_POLICY.phone(value) : value
         },
       },
       {
@@ -264,7 +267,8 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         ellipsis: true,
         render: (email: string) => {
           const value = email?.trim()
-          return value || '-'
+          if (!value) return '-'
+          return maskSensitive ? MASKING_POLICY.email(value) : value
         },
       },
       {
@@ -277,6 +281,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     ],
     [
       handleTableRoleChange,
+      maskSensitive,
       openRoleDropdownId,
       renderRoleBadge,
       roleItemDisabled,
