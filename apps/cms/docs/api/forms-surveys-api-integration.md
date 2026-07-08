@@ -2,6 +2,7 @@
 
 `/templates/form-management` 작성·발급 양식과 Swagger `forms-surveys` 도메인 매핑입니다.
 
+**JSON 계약 SSOT (응답·저장 형식)**: [form-template-json-contract.md](./form-template-json-contract.md)  
 **마이그레이션 실행 가이드 (PHASE 0–6)**: [forms-surveys-api-migration-guide.md](./forms-surveys-api-migration-guide.md)  
 **백엔드 갭·미구현 목록**: [forms-surveys-api-backend-gaps.md](./forms-surveys-api-backend-gaps.md)
 
@@ -22,6 +23,8 @@
 ---
 
 ## schemaJson 계약 (프론트 제안 — 백엔드 확인 필요)
+
+전체 JSON 계약(응답·저장·작성/발급 44종 매핑): [form-template-json-contract.md](./form-template-json-contract.md)
 
 `FormTemplateVersionResponse.schemaJson`에는 CMS `WritingFormDraft` JSON을 그대로 저장합니다.
 

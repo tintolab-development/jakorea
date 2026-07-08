@@ -608,6 +608,7 @@ BE/FE 공동 sign-off:
 
 | 역할 | 경로 |
 |------|------|
+| **JSON 계약 SSOT** | `docs/api/form-template-json-contract.md` |
 | 연동 명세 | `docs/api/forms-surveys-api-integration.md` |
 | **이 문서** | `docs/api/forms-surveys-api-migration-guide.md` |
 | 서비스 | `features/template/api/admin-form-templates-service.ts` |
@@ -639,3 +640,4 @@ BE/FE 공동 sign-off:
 | 날짜 | 변경 |
 |------|------|
 | 2026-07-01 | 초안 — PHASE 0–6, 매트릭스, DoD, 롤백, 부록 |
+| 2026-07-08 | JSON 계약 SSOT 문서 링크 추가 (`form-template-json-contract.md`) |

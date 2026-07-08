@@ -3,11 +3,12 @@
 CMS `/templates/form-management` 작성·발급 양식 mock → `forms-surveys` API 전환 시, **백엔드에 요청·확인이 필요한 항목** 목록입니다.
 
 OpenAPI 기준: `openapi/backend.openapi.json` (v9) · subset `openapi/forms-surveys.openapi.json` (19 paths)  
+JSON 계약 SSOT: [form-template-json-contract.md](./form-template-json-contract.md)  
 연동 명세: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md)  
 마이그레이션 PHASE: [forms-surveys-api-migration-guide.md](./forms-surveys-api-migration-guide.md)
 
 **작성일**: 2026-07-01  
-**Swagger 서버 스냅샷**: `https://12aa-221-146-247-18.ngrok-free.app/`
+**Swagger 서버 스냅샷**: `https://8eed-221-146-247-18.ngrok-free.app/`
 
 ---
 

@@ -1,0 +1,23 @@
+{
+  "templateCode": "document-3",
+  "templateName": "수료증",
+  "formType": "ISSUANCE",
+  "category": "ISSUANCE",
+  "schemaJson": null,
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": {
+    "orgLogo": null,
+    "orgLogo02": null,
+    "certificateBackground": null,
+    "chairmanSeal": null,
+    "titleName": "수료증",
+    "bodyContent": "귀하는 위의 과정에 참여하여\n교육과정을 수료하였음을 확인합니다.",
+    "participantRowVisibility": [true, true, true, true, true, true]
+  },
+  "_apiStorageNote": "인증서 양식은 schemaJson 없이 settingsJson만 사용. DB/API에는 settingsJson을 JSON.stringify한 string으로 저장",
+  "_imageFieldNote": "orgLogo 등 이미지 필드는 BE 합의 후 fileId 또는 { fileId, url } 객체로 확장"
+}
