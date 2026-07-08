@@ -22,4 +22,6 @@ export interface PrivacyExportDownloadResponse {
   status?: string;
   /** 다운로드 만료 시각 */
   expiresAt?: string;
+  /** 개인정보 export 다운로드 요청 후 가능한 프론트 액션 */
+  availableActions?: string[];
 }

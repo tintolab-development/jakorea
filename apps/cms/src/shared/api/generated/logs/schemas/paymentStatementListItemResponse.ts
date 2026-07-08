@@ -10,8 +10,10 @@ export interface PaymentStatementListItemResponse {
   statementId?: number;
   settlementId?: number;
   statementStatus?: string;
+  paymentStatus?: string;
   instructorName?: string;
   netPaymentAmount?: number;
   confirmedAt?: string;
   issuedAt?: string;
+  availableActions?: string[];
 }

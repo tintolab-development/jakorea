@@ -15,7 +15,11 @@ export interface FormTemplateResponse {
   category?: string;
   description?: string;
   useYn?: boolean;
+  responseCount?: number;
+  activeBindingCount?: number;
+  systemTemplate?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  availableActions?: string[];
   versions?: FormTemplateVersionSummaryResponse[];
 }

@@ -24,4 +24,5 @@ export interface InstructorApplicationListItemResponse {
   approvedAt?: string;
   rejectedAt?: string;
   rejectReason?: string;
+  availableActions?: string[];
 }

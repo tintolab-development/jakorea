@@ -31,4 +31,5 @@ export interface SettlementListItemResponse {
   correctionReason?: string;
   supersededBySettlementId?: number;
   taxIncomeType?: string;
+  availableActions?: string[];
 }

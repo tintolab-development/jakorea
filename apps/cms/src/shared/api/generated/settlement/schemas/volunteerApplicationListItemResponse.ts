@@ -22,4 +22,5 @@ export interface VolunteerApplicationListItemResponse {
   isReparticipation?: boolean;
   giveUpYn?: boolean;
   submittedAt?: string;
+  availableActions?: string[];
 }

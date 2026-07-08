@@ -16,5 +16,9 @@ export interface FormTemplateListItemResponse {
   latestVersionId?: number;
   latestVersionNo?: number;
   latestVersionStatus?: string;
+  responseCount?: number;
+  activeBindingCount?: number;
+  systemTemplate?: boolean;
   updatedAt?: string;
+  availableActions?: string[];
 }

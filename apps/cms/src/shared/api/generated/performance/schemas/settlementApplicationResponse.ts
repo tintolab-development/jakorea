@@ -31,4 +31,5 @@ export interface SettlementApplicationResponse {
   createdAt?: string;
   items?: SettlementApplicationItemResponse[];
   calculationDetails?: SettlementApplicationCalculationDetailResponse[];
+  availableActions?: string[];
 }

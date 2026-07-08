@@ -26,4 +26,5 @@ export interface SettlementFrontendResponse {
   approvalHistories?: SettlementFrontendApprovalHistoryResponse[];
   createdAt?: string;
   updatedAt?: string;
+  availableActions?: string[];
 }

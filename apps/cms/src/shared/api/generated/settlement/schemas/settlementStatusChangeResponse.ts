@@ -10,4 +10,5 @@ export interface SettlementStatusChangeResponse {
   settlementId?: number;
   statusAxis?: string;
   toStatus?: string;
+  availableActions?: string[];
 }

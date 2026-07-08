@@ -40,6 +40,26 @@ export interface MemberSignupRequest {
   identityVerificationSessionId?: number;
   /** 보호자 인증/동의 세션 ID. 만 14세 미만 일반회원은 필수입니다. */
   guardianVerificationSessionId?: number;
+  /** 학교 재학 여부. ENROLLED 또는 NOT_ENROLLED */
+  schoolEnrollmentStatus?: string;
+  /** 재학중 선택 시 학교/기관 ID */
+  schoolOrganizationId?: number;
+  /** 학교명 snapshot. 검색 팝업 선택값 또는 프론트 표시값 */
+  schoolName?: string;
+  /** 재학중 선택 시 학년 */
+  grade?: string;
+  /** 미재학 선택 시 선택 입력 가능한 소속 기관명 */
+  affiliationName?: string;
+  /** 자택 우편번호 */
+  postalCode?: string;
+  /** 자택 기본 주소 */
+  address?: string;
+  /** 자택 상세 주소 */
+  addressDetail?: string;
+  /** 주소 시/도 */
+  regionSido?: string;
+  /** 주소 시/군/구 */
+  regionSigungu?: string;
   /** 외부 1365 연계 ID. 실제 식별자는 문서 예시에 남기지 않습니다. */
   external1365Id?: string;
   /** 회원가입 시점에 서버가 원장으로 저장해야 하는 약관/개인정보 동의 목록 */

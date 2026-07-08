@@ -62,4 +62,6 @@ export interface FileObjectResponse {
   bundleAllowedYn?: boolean;
   /** 파일 만료 시각 */
   expiresAt?: string;
+  /** 현재 파일 상태/민감도 기준으로 가능한 프론트 액션 */
+  availableActions?: string[];
 }

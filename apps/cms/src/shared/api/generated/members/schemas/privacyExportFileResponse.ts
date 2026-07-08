@@ -34,4 +34,6 @@ export interface PrivacyExportFileResponse {
   downloadedAt?: string;
   /** 삭제/파기 시각 */
   deletedAt?: string;
+  /** 개인정보 export 파일 상태 기준 가능한 프론트 액션 */
+  availableActions?: string[];
 }

@@ -13,4 +13,5 @@ export interface ApplicationDecisionResponse {
   toStatus?: string;
   participantId?: number;
   notificationEventId?: number;
+  availableActions?: string[];
 }

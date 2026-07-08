@@ -16,4 +16,6 @@ export interface FileDownloadRequestResponse {
   downloadUrl?: string;
   /** 다운로드 URL 만료 시각 */
   expiresAt?: string;
+  /** 다운로드 요청 생성 이후 가능한 프론트 액션 */
+  availableActions?: string[];
 }

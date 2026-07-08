@@ -19,4 +19,6 @@ export interface FileDownloadResolveResponse {
   expiresAt?: string;
   /** 다운로드 시 추가로 필요한 요청 헤더 */
   requiredHeaders?: FileDownloadResolveResponseRequiredHeaders;
+  /** 다운로드 URL 발급 이후 가능한 프론트 액션 */
+  availableActions?: string[];
 }

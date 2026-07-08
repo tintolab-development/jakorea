@@ -34,4 +34,5 @@ export interface ProgramFormBindingResponse {
   submittedCount?: number;
   createdAt?: string;
   updatedAt?: string;
+  availableActions?: string[];
 }
