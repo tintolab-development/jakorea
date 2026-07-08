@@ -8,6 +8,10 @@ import {
 import { dataManagementQueryKeys } from '@/features/data-management/api/data-management-query-keys'
 import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 
+function readSponsorRowsFromQueryCache(data: unknown): SponsorManagementRow[] {
+  return Array.isArray(data) ? data : []
+}
+
 export function getSponsorNameFromCache(queryClient: QueryClient, sponsorId: string): string | undefined {
   const detail = queryClient.getQueryData<{ name?: string; nameDisplayKo?: string }>(
     dataManagementQueryKeys.sponsors.detail(sponsorId)
@@ -15,17 +19,17 @@ export function getSponsorNameFromCache(queryClient: QueryClient, sponsorId: str
   if (detail?.nameDisplayKo?.trim()) return detail.nameDisplayKo.trim()
   if (detail?.name?.trim()) return detail.name.trim()
 
-  const options = queryClient.getQueryData<SponsorManagementRow[]>(
+  const options = queryClient.getQueryData<unknown>(
     dataManagementQueryKeys.sponsors.options()
   )
-  const fromOptions = options?.find(row => row.id === sponsorId)
+  const fromOptions = readSponsorRowsFromQueryCache(options).find(row => row.id === sponsorId)
   if (fromOptions?.name?.trim()) return fromOptions.name.trim()
 
-  const listQueries = queryClient.getQueriesData<SponsorManagementRow[]>({
+  const listQueries = queryClient.getQueriesData<unknown>({
     queryKey: dataManagementQueryKeys.sponsors.all(),
   })
   for (const [, data] of listQueries) {
-    const hit = data?.find(row => row.id === sponsorId)
+    const hit = readSponsorRowsFromQueryCache(data).find(row => row.id === sponsorId)
     if (hit?.name?.trim()) return hit.name.trim()
   }
 
@@ -66,17 +70,17 @@ export function findSponsorInListCache(
   queryClient: QueryClient,
   sponsorId: string
 ): SponsorManagementRow | undefined {
-  const options = queryClient.getQueryData<SponsorManagementRow[]>(
+  const options = queryClient.getQueryData<unknown>(
     dataManagementQueryKeys.sponsors.options()
   )
-  const fromOptions = options?.find(row => row.id === sponsorId)
+  const fromOptions = readSponsorRowsFromQueryCache(options).find(row => row.id === sponsorId)
   if (fromOptions) return fromOptions
 
-  const listQueries = queryClient.getQueriesData<SponsorManagementRow[]>({
+  const listQueries = queryClient.getQueriesData<unknown>({
     queryKey: dataManagementQueryKeys.sponsors.all(),
   })
   for (const [, data] of listQueries) {
-    const hit = data?.find(row => row.id === sponsorId)
+    const hit = readSponsorRowsFromQueryCache(data).find(row => row.id === sponsorId)
     if (hit) return hit
   }
 
