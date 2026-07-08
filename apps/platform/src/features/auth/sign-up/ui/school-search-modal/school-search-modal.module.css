@@ -61,6 +61,7 @@
 .school-result-list {
   display: flex;
   width: 100%;
+  flex: 0 0 auto;
   flex-direction: column;
   margin: 0;
   padding: var(--spacing-16) var(--spacing-20);
@@ -68,6 +69,8 @@
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-16);
   background: var(--color-neutral-white);
+  max-height: 464px;
+  overflow-y: auto;
 }
 
 .school-result-item {

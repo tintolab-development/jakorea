@@ -12,7 +12,7 @@ import styles from './address-search-modal.module.css'
 
 const LIVE_SEARCH_DEBOUNCE_MS = 280
 const SUGGEST_COUNT_PER_PAGE = 10
-const RESULT_COUNT_PER_PAGE = 4
+const RESULT_COUNT_PER_PAGE = 10
 const KEYWORD_TOO_SHORT_MESSAGE = '검색어는 두글자 이상 입력되어야 합니다.'
 
 function isKeywordTooShortError(message: string) {
