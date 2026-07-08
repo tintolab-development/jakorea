@@ -68,15 +68,18 @@ const EMPTY_PROGRAMS: readonly unknown[] = []
 interface ProgramStatusWidgetProps {
   title?: string | null
   showDetailLink?: boolean
+  /** 상태 카드 클릭 직전 호출 (일반 프로그램 상세 URL 정리 등) */
+  onBeforeStageChange?: () => void
 }
 
 export function ProgramStatusWidget({
   title: _title = '전체 프로그램 진행 현황',
   showDetailLink: _showDetailLink = true,
+  onBeforeStageChange,
 }: ProgramStatusWidgetProps) {
   const location = useLocation()
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [, setSearchParams] = useSearchParams()
   const [progress, setProgress] = useState<ProgramProgressStagesResult | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -233,24 +236,31 @@ export function ProgramStatusWidget({
   }, [progress, selectedStatus, selectedFromPath, programType])
 
   const handleStageClick = (key: string) => {
+    onBeforeStageChange?.()
+
     if (
       programType === 'company_school' ||
       programType === 'general' ||
       programType === 'trained_teachers'
     ) {
-      const nextParams = new URLSearchParams(searchParams)
-      if (key === 'total') {
-        nextParams.delete('status')
-      } else {
-        nextParams.set('status', key)
-      }
-      setSearchParams(nextParams, { replace: true })
+      setSearchParams(
+        prev => {
+          const nextParams = new URLSearchParams(prev)
+          if (key === 'total') {
+            nextParams.delete('status')
+          } else {
+            nextParams.set('status', key)
+          }
+          return nextParams
+        },
+        { replace: true }
+      )
       return
     }
 
     if (isEducationLayoutPath(location.pathname)) {
       const mergeQuery = (path: string, statusValue: string | null) => {
-        const next = new URLSearchParams(searchParams)
+        const next = new URLSearchParams(location.search)
         if (statusValue) next.set('status', statusValue)
         else next.delete('status')
         const query = next.toString()
@@ -274,22 +284,26 @@ export function ProgramStatusWidget({
       return
     }
 
-    const nextParams = new URLSearchParams(searchParams)
-    if (key === 'total') {
-      nextParams.delete('status')
-      setSearchParams(nextParams, { replace: false })
-      return
-    }
-    const stageKey = key as ProgramProgressStageKey
-    const current = nextParams.get('status') as ProgramLifecycleStatus | null
-    const isSelected = current === (STAGE_TO_LIFECYCLE[stageKey] ?? null)
-    if (isSelected) {
-      nextParams.delete('status')
-    } else {
-      const value = STAGE_TO_PROGRAMS_QUERY[stageKey]?.value
-      if (value) nextParams.set('status', value)
-    }
-    setSearchParams(nextParams, { replace: false })
+    setSearchParams(
+      prev => {
+        const nextParams = new URLSearchParams(prev)
+        if (key === 'total') {
+          nextParams.delete('status')
+          return nextParams
+        }
+        const stageKey = key as ProgramProgressStageKey
+        const current = nextParams.get('status') as ProgramLifecycleStatus | null
+        const isSelected = current === (STAGE_TO_LIFECYCLE[stageKey] ?? null)
+        if (isSelected) {
+          nextParams.delete('status')
+        } else {
+          const value = STAGE_TO_PROGRAMS_QUERY[stageKey]?.value
+          if (value) nextParams.set('status', value)
+        }
+        return nextParams
+      },
+      { replace: false }
+    )
   }
 
   return (
