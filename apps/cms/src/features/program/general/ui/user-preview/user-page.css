@@ -1,0 +1,81 @@
+.user-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 1920px;
+  min-height: 0;
+  --user-page-inline-padding: 240px;
+  background: var(--color-neutral-white);
+}
+
+.user-page__main {
+  flex: 0 1 auto;
+  width: 100%;
+  min-height: 0;
+  padding-top: var(--user-page-main-padding-top, var(--spacing-100, 100px));
+  background: var(--color-neutral-white);
+}
+
+.user-page__top-fab {
+  position: absolute;
+  top: var(--user-page-top-fab-offset-from-page-top, 960px);
+  right: calc(var(--user-page-inline-padding, 240px) - 60px);
+  z-index: 2;
+  display: flex;
+  width: 60px;
+  height: 60px;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-999, 999px);
+  background: var(--color-primary-700, #285f74);
+  color: var(--color-neutral-white, #fff);
+  cursor: default;
+  pointer-events: none;
+}
+
+.user-page__top-fab-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.user-page--fullscreen {
+  --content-max-width: 1920px;
+  --page-padding-x: var(--spacing-60, 60px);
+}
+
+/* fullscreen: 헤더·푸터를 뷰포트 전체 너비로 (1920 캔버스 밖으로 breakout) */
+.user-page--fullscreen .platform-preview-header,
+.user-page--fullscreen .platform-preview-footer {
+  position: relative;
+  right: 50%;
+  left: 50%;
+  width: 100vw;
+  margin-right: -50vw;
+  margin-left: -50vw;
+}
+
+.user-page--fullscreen .platform-preview-header__inner,
+.user-page--fullscreen .platform-preview-footer__navigation,
+.user-page--fullscreen .platform-preview-footer__content {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1920px;
+  margin-inline: auto;
+  padding-inline: var(--spacing-60, 60px);
+}
+
+.platform-user-preview-root:not(.user-page--fullscreen) .platform-preview-header__inner {
+  max-width: 1920px;
+}
+
+.platform-user-preview-root:not(.user-page--fullscreen) .platform-preview-footer__navigation,
+.platform-user-preview-root:not(.user-page--fullscreen) .platform-preview-footer__content {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1920px;
+  margin-inline: auto;
+  padding-inline: var(--spacing-60, 60px);
+}

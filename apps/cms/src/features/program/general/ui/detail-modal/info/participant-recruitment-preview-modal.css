@@ -1,0 +1,30 @@
+.participant-recruitment-preview-modal {
+  --template-preview-paragraph-column-max: 1400px;
+  --template-preview-content-max-width: 1550px;
+  --template-preview-notice-text-width: 1400px;
+  --template-preview-notice-to-a4-gap: 16px;
+  --template-preview-a4-design-page-width: 1920px;
+  --template-preview-a4-display-width: var(--template-preview-content-max-width, 1550px);
+  --template-preview-a4-width: var(--template-preview-a4-display-width);
+  --template-preview-a4-scale: calc(
+    var(--template-preview-a4-display-width) / var(--template-preview-a4-design-page-width)
+  );
+}
+
+.participant-recruitment-preview-modal .template-preview-modal__a4-scale-inner {
+  width: var(--template-preview-a4-design-page-width, 1920px);
+  height: auto;
+  min-height: calc(1920px * 92 / 65);
+  transform-origin: top left;
+  transform: scale(var(--template-preview-a4-scale));
+}
+
+.participant-recruitment-preview-modal__page-shift {
+  will-change: transform;
+}
+
+.participant-recruitment-preview-modal .template-preview-modal__a4-frame {
+  aspect-ratio: 65 / 92;
+  width: var(--template-preview-a4-width, 1550px);
+  height: calc(var(--template-preview-a4-width, 1550px) * 92 / 65);
+}
