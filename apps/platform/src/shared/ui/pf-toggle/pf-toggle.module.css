@@ -1,0 +1,64 @@
+.toggle {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.check-large {
+  gap: var(--spacing-16);
+  width: 100%;
+}
+
+.check-small {
+  width: 100%;
+  min-width: 0;
+  gap: var(--spacing-20);
+}
+
+.icon {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.icon-check-large {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-check-small {
+  width: 20px;
+  height: 20px;
+}
+
+.content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.text {
+  color: var(--color-neutral-cool-400);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+  letter-spacing: 0;
+}
+
+.text-on {
+  color: var(--color-primary-500);
+}
+
+.label {
+  white-space: nowrap;
+}
