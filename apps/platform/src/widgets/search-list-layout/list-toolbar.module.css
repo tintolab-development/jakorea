@@ -1,0 +1,27 @@
+.toolbar {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-24);
+}
+
+.title {
+  min-width: 0;
+  flex: 0 1 auto;
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 144%;
+  letter-spacing: 0;
+}
+
+.sort {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-20);
+}
