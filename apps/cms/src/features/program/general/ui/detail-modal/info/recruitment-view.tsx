@@ -2,7 +2,7 @@
  * 일반 프로그램 상세 — 모집 정보 탭 (참여자 / 강사 / 봉사자)
  */
 
-import type { ReactNode } from 'react'
+import { useCallback, useState, type ReactNode } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -25,12 +25,13 @@ import { GeneralProgramParticipantRecruitmentInfoView } from './participant-recr
 import { GeneralProgramInstructorRecruitmentInfoView } from './instructor-recruitment-info-view'
 import { GeneralProgramVolunteerRecruitmentInfoView } from './volunteer-recruitment-info-view'
 import { GeneralProgramVolunteerInterviewScheduleSection } from './volunteer-interview-schedule-section'
+import { ParticipantRecruitmentPreviewModal } from './participant-recruitment-preview-modal'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './recruitment-view.css'
 
 export function GeneralProgramRecruitmentView({
   program,
-  sponsorName: _sponsorName,
+  sponsorName,
   activeRecruitTab,
   onRecruitTabChange,
   showInstructorTab,
@@ -69,6 +70,16 @@ export function GeneralProgramRecruitmentView({
   onEdit: () => void
   onSave: () => void
 }) {
+  const [previewOpen, setPreviewOpen] = useState(false)
+
+  const handleOpenPreview = useCallback(() => {
+    setPreviewOpen(true)
+  }, [])
+
+  const handleClosePreview = useCallback(() => {
+    setPreviewOpen(false)
+  }, [])
+
   const isEditMode =
     (activeRecruitTab === 'institutions' && isEditModeInstitutions) ||
     (activeRecruitTab === 'instructors' && isEditModeInstructors) ||
@@ -147,36 +158,61 @@ export function GeneralProgramRecruitmentView({
     }
   }
 
+  const showHeaderActions = canWrite || isEditMode || activeRecruitTab === 'institutions'
+
   return (
-    <div className="recruitment-view program-detail-fullpage-modal__info-tab">
-      <CmsTextTabs
-        className="recruitment-view__tabs"
-        activeKey={activeRecruitTab}
-        onChange={key => onRecruitTabChange(key as GeneralRecruitTabKey)}
-        items={generalRecruitTabItems({
-          showInstructor: showInstructorTab,
-          showVolunteer: showVolunteerTab,
-        })}
-        trailing={
-          canWrite || isEditMode ? (
-            <CmsButton
-              variant="primary"
-              size="large"
-              width={140}
-              onClick={resolveProgramEditInfoClick(isEditMode, {
-                onEnterEdit: onEdit,
-                onSaveEdit: onSave,
-              })}
-            >
-              {PROGRAM_EDIT_INFO_BUTTON_LABEL}
-            </CmsButton>
-          ) : null
-        }
-      />
-      <div className="recruitment-view__body">
-        {recruitment}
-        <div className="detail-info-form--gap">{detail}</div>
+    <>
+      <div className="recruitment-view program-detail-fullpage-modal__info-tab">
+        <CmsTextTabs
+          className="recruitment-view__tabs"
+          activeKey={activeRecruitTab}
+          onChange={key => onRecruitTabChange(key as GeneralRecruitTabKey)}
+          items={generalRecruitTabItems({
+            showInstructor: showInstructorTab,
+            showVolunteer: showVolunteerTab,
+          })}
+          trailing={
+            showHeaderActions ? (
+              <div className="recruitment-view__header-actions">
+                {canWrite || isEditMode ? (
+                  <CmsButton
+                    variant="primary"
+                    size="large"
+                    width={140}
+                    onClick={resolveProgramEditInfoClick(isEditMode, {
+                      onEnterEdit: onEdit,
+                      onSaveEdit: onSave,
+                    })}
+                  >
+                    {PROGRAM_EDIT_INFO_BUTTON_LABEL}
+                  </CmsButton>
+                ) : null}
+                {activeRecruitTab === 'institutions' ? (
+                  <CmsButton
+                    type="button"
+                    variant="primary"
+                    size="large"
+                    className="recruitment-view__preview-btn"
+                    onClick={handleOpenPreview}
+                  >
+                    미리보기
+                  </CmsButton>
+                ) : null}
+              </div>
+            ) : null
+          }
+        />
+        <div className="recruitment-view__body">
+          {recruitment}
+          <div className="detail-info-form--gap">{detail}</div>
+        </div>
       </div>
-    </div>
+      <ParticipantRecruitmentPreviewModal
+        open={previewOpen}
+        onClose={handleClosePreview}
+        program={program}
+        sponsorName={sponsorName}
+      />
+    </>
   )
 }

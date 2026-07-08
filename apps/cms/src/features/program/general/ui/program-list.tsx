@@ -5,6 +5,7 @@
 import { Table } from 'antd'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import type { TableSearchSetSearchParams } from '@/shared/hooks/use-table-search'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import './program-list.css'
 import { ProgramCalendarView } from './program-calendar-view'
@@ -52,6 +53,11 @@ export interface ProgramListProps {
   children?: React.ReactNode
   /** 엑셀 다운로드 버튼 우측 툴바 액션 (예: 프로그램 신규 등록) */
   toolbarActionsAfterExcel?: React.ReactNode
+  /** 상위에서 URL 쿼리를 단일 관리할 때 전달 (일반 프로그램 상세 LNB와 충돌 방지) */
+  searchParams?: URLSearchParams
+  setSearchParams?: TableSearchSetSearchParams
+  /** 상세 모달 등이 열려 있을 때 테이블 state→URL 동기화 비활성화 */
+  disableUrlSync?: boolean
 }
 
 export function ProgramList({
@@ -70,8 +76,13 @@ export function ProgramList({
   config,
   children,
   toolbarActionsAfterExcel,
+  searchParams: searchParamsProp,
+  setSearchParams: setSearchParamsProp,
+  disableUrlSync = false,
 }: ProgramListProps) {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [internalSearchParams, internalSetSearchParams] = useSearchParams()
+  const searchParams = searchParamsProp ?? internalSearchParams
+  const setSearchParams = setSearchParamsProp ?? internalSetSearchParams
   const listView: ProgramListView = config?.view ?? 'ALL'
   const tableType = config?.tableType
   const mode = config?.mode ?? 'general'
@@ -107,6 +118,7 @@ export function ProgramList({
     searchParams,
     setSearchParams,
     context: tableContext,
+    disableUrlSync,
   })
 
   useEffect(() => {
