@@ -38,6 +38,7 @@ export const REAL_API_MODULE_KEYS = [
   'notifications',
   'performanceRecords',
   'formsSurveys',
+  'programs',
 ] as const
 export type RealApiModule = (typeof REAL_API_MODULE_KEYS)[number]
 
