@@ -192,12 +192,6 @@
   color: var(--color-primary-600);
 }
 
-.check-icon {
-  width: 24px;
-  height: 24px;
-  flex: 0 0 auto;
-}
-
 .agreement-list {
   display: flex;
   width: 100%;
@@ -220,17 +214,7 @@
   width: 100%;
   min-width: 0;
   align-items: center;
-  gap: var(--spacing-20);
-  padding: 0;
-  border: 0;
-  background: transparent;
   text-align: left;
-}
-
-.agreement-check-icon {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 auto;
 }
 
 .agreement-text {
