@@ -5,10 +5,11 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { JsonNode } from './jsonNode';
 
 export interface FormTemplateVersionCreateRequest {
   versionLabel?: string;
-  schemaJson?: string;
-  extensionJson?: string;
-  settingsJson?: string;
+  schemaJson?: JsonNode;
+  extensionJson?: JsonNode;
+  settingsJson?: JsonNode;
 }
