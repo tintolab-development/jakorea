@@ -5,6 +5,7 @@
 **관련 API 도메인**: Swagger `forms-surveys`  
 **연동 명세**: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md)  
 **백엔드 갭 핸드오프**: [forms-surveys-api-backend-gaps.md](./forms-surveys-api-backend-gaps.md)  
+**발급 양식 후속**: [issuance-form-api-follow-up.md](./issuance-form-api-follow-up.md)  
 **공통 가이드**: [backend-handoff.md](./backend-handoff.md) · [api-routes-and-client.md](./api-routes-and-client.md)
 
 ---
@@ -418,6 +419,8 @@ VITE_REAL_API_MODULES=...,notices,faqs  # formsSurveys 없음
 
 ## PHASE 5 — 발급 양식 (ISSUANCE)
 
+> **2026-07-09:** FE 1차 구현 완료. 남은 BE 시드·Payload E 등은 [issuance-form-api-follow-up.md](./issuance-form-api-follow-up.md).
+
 ### 목표
 
 `issuance-form-tab.tsx` 하드코딩 → `formType=ISSUANCE` API.
@@ -425,28 +428,30 @@ VITE_REAL_API_MODULES=...,notices,faqs  # formsSurveys 없음
 ### 선행 조건
 
 - PHASE 4 DoD (작성 양식 안정)
-- **발급 templateCode 카탈로그 확정** (현재 `issuance-1` 등 FE 전용 key)
+- **발급 templateCode 카탈로그 확정** (FE `ISSUANCE_TEMPLATE_CODE_CATALOG` — BE 시드 합의 대기)
 
 ### 추가 설계 필요
 
 | 항목 | 현재 | 필요 |
 |------|------|------|
-| templateCode | `issuance-1`, `issuance-ujat-edu-journal` … | BE 시드표 신규 |
-| formType | 제안 `ISSUANCE` | BE enum |
-| draft | `*-issuance-draft.ts` | schemaJson 시드 export |
+| templateCode | FE SSOT 14종 | BE 시드 등록·합의 |
+| formType | `ISSUANCE` (FE 사용 중) | BE enum 확정 |
+| draft | `*-issuance-draft.ts` | Payload A 시드 JSON export |
 | PDF/미리보기 | 클라이언트 생성 | API 범위 외 |
 
 ### 작업 개요
 
-1. FE: `ISSUANCE_TEMPLATE_CATALOG` + adapter (작성 양식 패턴 복제)
-2. BE: ISSUANCE 시드 + GET 목록
-3. FE: `use-issuance-form-sections` (작명 예시) + 탭 연동
-4. 에디터별 draft save (payment-statement, settlement, lecture-report, UJAT …)
+1. [x] FE: `ISSUANCE_TEMPLATE_CATALOG` + adapter
+2. [ ] BE: ISSUANCE 시드 + GET 목록 (13종 JSON 미작성)
+3. [x] FE: `use-issuance-form-sections` + 탭 연동
+4. [x] 에디터별 draft save 11종 + 인증서 `settingsJson` + 프로그램 실발급 연동
 
 ### DoD
 
-- [ ] 발급 목록 GET + mock fallback
-- [ ] 발급 1종 save/load E2E
+- [x] 발급 목록 GET + mock fallback
+- [x] 발급 save/load E2E (11종 — `document-payment-order-issue` 파일럿 포함)
+- [ ] BE 시드 14종 DRAFT
+- [ ] Payload E 3종 제품 스펙
 
 ---
 

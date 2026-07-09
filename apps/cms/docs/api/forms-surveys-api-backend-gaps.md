@@ -210,17 +210,16 @@ JSON 계약 SSOT: [form-template-json-contract.md](./form-template-json-contract
 
 ---
 
-### 8. 발급 양식(ISSUANCE) 시드 — **templateCode·데이터 없음**
+### 8. 발급 양식(ISSUANCE) 시드 — **BE 시드 JSON 대기**
 
 | | |
 |---|---|
 | **화면** | `/templates/form-management` 발급 양식 탭 (`issuance-form-tab.tsx`) |
-| **UI id (FE 전용)** | `issuance-1`, `issuance-2`, `issuance-ujat-edu-journal`, `issuance-3`~`5`, `document-payment-order-issue`, `document-1`~`5`, `document-participation-certificate` 등 **약 14행** |
-| **현재 API** | `formType=ISSUANCE` 필터는 제안만 있음 — **시드·매핑표 없음** |
-| **갭 유형** | **데이터·계약 없음** |
-| **BE 요청** | FE와 **발급 templateCode 표** 합의 후 WRITING 27종과 동일하게 시드 |
+| **FE 상태 (2026-07-09)** | 목록 GET + 11종 load/save + 프로그램 실발급 `settingsJson` 연동 **완료** |
+| **갭 유형** | **BE 시드·DRAFT JSON 13종 미작성** (`document-3-certificate.json`만 존재) |
+| **상세** | [issuance-form-api-follow-up.md](./issuance-form-api-follow-up.md) §2 |
 
-**발급 행 예시 (FE 하드코딩 — BE `templateCode` 확정 필요)**
+**발급 templateCode (FE SSOT — BE 합의 필요)**
 
 | FE key (임시) | templateName |
 |---------------|--------------|

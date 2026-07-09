@@ -2,6 +2,8 @@
 
 `GET/PUT /api/admin/form-template-versions/{versionId}` 시드·초기 DRAFT용입니다.
 
+**발급 양식 14종** 시드·후속 작업: [issuance-form-api-follow-up.md](./issuance-form-api-follow-up.md)
+
 ## 제외
 
 - `registration-general` (일반 프로그램 등록 폼) — 별도: [form-template-seeds/registration-general.json](./form-template-seeds/registration-general.json)
