@@ -9,6 +9,8 @@ import {
   buildActivityCertificateFileName,
   buildActivityCertificateInitialStringValuesForVolunteer,
 } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
+import { VOLUNTEER_ACTIVITY_CERTIFICATE_TEMPLATE_CODE } from '@/features/template/lib/certificate-form-settings'
+import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -21,7 +23,6 @@ import {
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { useFormCertificatePdfDownload } from '@/pages/templates/use-form-certificate-pdf-download'
 import { useFormCertificatePreviewProps } from '@/pages/templates/use-form-certificate-preview-props'
-import { useFormTemplateCertificateModalState } from '@/pages/templates/use-form-template-certificate-modal-state'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import '@/pages/templates/form-certificate-preview.css'
 import './activity-certificate-issuance-preview-modal.css'
@@ -42,7 +43,7 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
   const { showAlert } = useCmsAlert()
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
 
-  const initialStringValues = useMemo(
+  const runtimeStringValues = useMemo(
     () =>
       buildActivityCertificateInitialStringValuesForVolunteer(volunteer.volunteerName, {
         birthDate: volunteer.birthDate,
@@ -52,7 +53,13 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
     [program, volunteer.assignedInstitutionNames, volunteer.birthDate, volunteer.volunteerName]
   )
 
-  const modalState = useFormTemplateCertificateModalState(open, initialStringValues)
+  const modalState = useCertificateTemplateModalState({
+    open,
+    templateCode: VOLUNTEER_ACTIVITY_CERTIFICATE_TEMPLATE_CODE,
+    fallbackTitleName: ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
+    runtimeStringValues,
+    runtimeStringOverrideKeys: ['participantInfo'],
+  })
   const { interactive: certificateInteractiveProps, pdfExport: certificatePdfExportProps } =
     useFormCertificatePreviewProps(modalState)
 
