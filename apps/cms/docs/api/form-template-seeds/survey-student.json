@@ -1,0 +1,237 @@
+{
+  "templateCode": "survey-student",
+  "formType": "WRITING",
+  "category": "SURVEY",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "q123"
+    },
+    "paragraphs": [
+      {
+        "id": "survey-paragraph-title",
+        "kind": "description",
+        "variant": "survey_title_with_period",
+        "requiredMark": true,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "surveyTitle": "",
+        "surveyDescription": "",
+        "periodMode": "immediate",
+        "startAt": null,
+        "endAt": null,
+        "showWritingPeriodOnForm": false
+      },
+      {
+        "id": "survey-paragraph-user",
+        "kind": "single_item",
+        "variant": "user_info",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "설문자 정보",
+        "paragraphDescription": "선택한 항목을 자동으로 불러옵니다.",
+        "participatesInTitleNumbering": true,
+        "userFields": [
+          {
+            "key": "name",
+            "label": "이름"
+          },
+          {
+            "key": "gender",
+            "label": "성별"
+          },
+          {
+            "key": "birthDate",
+            "label": "생년월일"
+          },
+          {
+            "key": "phone",
+            "label": "연락처"
+          },
+          {
+            "key": "email",
+            "label": "이메일"
+          },
+          {
+            "key": "addressRegion",
+            "label": "자택 주소지(지역)"
+          },
+          {
+            "key": "addressDetail",
+            "label": "자택 주소지(상세)"
+          },
+          {
+            "key": "affiliation",
+            "label": "소속"
+          },
+          {
+            "key": "applicantType",
+            "label": "신청자 유형"
+          },
+          {
+            "key": "programName",
+            "label": "프로그램명"
+          },
+          {
+            "key": "period",
+            "label": "교육 진행 일정(진행 기간)"
+          },
+          {
+            "key": "institutionName",
+            "label": "기관명"
+          },
+          {
+            "key": "institutionRegion",
+            "label": "기관 소재지(시군구)"
+          },
+          {
+            "key": "educationTarget",
+            "label": "교육 대상(담당 대상)"
+          },
+          {
+            "key": "educationGrade",
+            "label": "교육 학년(담당 학년)"
+          },
+          {
+            "key": "teamName",
+            "label": "팀 명"
+          },
+          {
+            "key": "teamPartnerName",
+            "label": "팀원/파트너 명"
+          }
+        ],
+        "selectedUserFieldKeys": [
+          "name",
+          "addressRegion"
+        ]
+      },
+      {
+        "id": "survey-paragraph-score",
+        "kind": "single_item",
+        "variant": "scale_type",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "오리엔테이션에서 제공된 정보가 이해하기 쉬웠나요?",
+        "paragraphDescription": "설명 입력",
+        "participatesInTitleNumbering": true,
+        "items": [
+          {
+            "id": "scale-type-item-1",
+            "label": "전혀 그렇지 않다"
+          },
+          {
+            "id": "scale-type-item-2",
+            "label": "그렇지 않다"
+          },
+          {
+            "id": "scale-type-item-3",
+            "label": "보통이다"
+          },
+          {
+            "id": "scale-type-item-4",
+            "label": "그렇다"
+          },
+          {
+            "id": "scale-type-item-5",
+            "label": "매우 그렇다"
+          }
+        ],
+        "selectedPreviewItemId": "scale-type-item-5"
+      },
+      {
+        "id": "survey-paragraph-score-2",
+        "kind": "single_item",
+        "variant": "scale_type",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "프로그램 전반적인 프로세스에 대해 명확히 이해했나요?",
+        "paragraphDescription": "설명 입력",
+        "participatesInTitleNumbering": true,
+        "items": [
+          {
+            "id": "scale-type-item-1",
+            "label": "전혀 그렇지 않다"
+          },
+          {
+            "id": "scale-type-item-2",
+            "label": "그렇지 않다"
+          },
+          {
+            "id": "scale-type-item-3",
+            "label": "보통이다"
+          },
+          {
+            "id": "scale-type-item-4",
+            "label": "그렇다"
+          },
+          {
+            "id": "scale-type-item-5",
+            "label": "매우 그렇다"
+          }
+        ],
+        "selectedPreviewItemId": "scale-type-item-5"
+      },
+      {
+        "id": "survey-paragraph-subjective",
+        "kind": "single_item",
+        "variant": "short_essay",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "오늘 강의에서 배운 점, 기억나는 점, 좋았던 점 등을 작성해 주세요.",
+        "paragraphDescription": "설명 입력",
+        "participatesInTitleNumbering": true,
+        "showItemTitle": false,
+        "items": [
+          {
+            "id": "survey-short-essay-item-1",
+            "label": "Title 01",
+            "placeholder": "답변을 입력해 주세요",
+            "bodyText": ""
+          }
+        ],
+        "bodyPlaceholder": "답변을 입력해 주세요",
+        "bodyText": ""
+      },
+      {
+        "id": "survey-paragraph-subjective-2",
+        "kind": "single_item",
+        "variant": "short_essay",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "기타 의견이 있다면 작성해 주세요.",
+        "paragraphDescription": "교육 워크숍 진행, 강의 내용 등에 대한 기타 의견을 작성해 주세요.",
+        "participatesInTitleNumbering": true,
+        "showItemTitle": false,
+        "items": [
+          {
+            "id": "survey-short-essay-item-2",
+            "label": "Title 01",
+            "placeholder": "답변을 입력해 주세요",
+            "bodyText": ""
+          }
+        ],
+        "bodyPlaceholder": "답변을 입력해 주세요",
+        "bodyText": ""
+      },
+      {
+        "id": "survey-paragraph-closing",
+        "kind": "description",
+        "variant": "closing",
+        "requiredMark": false,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "body": "설문에 참여해 주셔서 감사합니다."
+      }
+    ]
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장"
+}

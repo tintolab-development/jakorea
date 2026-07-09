@@ -1,5 +1,5 @@
 {
-  "templateCode": "application-participant-individual",
+  "templateCode": "application-trained-teachers",
   "formType": "WRITING",
   "category": "APPLICATION",
   "schemaJson": {
@@ -9,7 +9,7 @@
     },
     "paragraphs": [
       {
-        "id": "program-participant-application-seed-personal-info",
+        "id": "program-application-trained-teachers-seed-personal-info",
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
@@ -47,7 +47,7 @@
           [
             {
               "kind": "text",
-              "value": "이름, 연락처(휴대전화번호), 이메일, 소속(학교), 학년, 성별"
+              "value": "이름, 학교명, 학교주소, 개인 연락처, e-mail"
             },
             {
               "kind": "text",
@@ -55,7 +55,7 @@
             },
             {
               "kind": "text",
-              "value": "- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기"
+              "value": "- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 동의일로부터 3년 보관 후 폐기"
             }
           ]
         ],
@@ -67,7 +67,7 @@
         "idTypeWithInput": null
       },
       {
-        "id": "program-participant-application-seed-third-party",
+        "id": "program-application-trained-teachers-seed-third-party",
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
@@ -91,7 +91,7 @@
         ],
         "columnFields": [
           {
-            "kind": "text",
+            "kind": "subjective",
             "placeholder": "제공받는 곳을 입력해 주세요"
           },
           {
@@ -110,12 +110,12 @@
         "fieldDataRows": [
           [
             {
-              "kind": "text",
+              "kind": "subjective",
               "value": ""
             },
             {
               "kind": "text",
-              "value": "이름, 연락처(휴대전화번호), 이메일,\n소속(학교), 학년, 성별"
+              "value": "이름, 학교명, 학교주소, 개인 연락처, e-mail"
             },
             {
               "kind": "text",
@@ -123,7 +123,7 @@
             },
             {
               "kind": "text",
-              "value": "5년"
+              "value": "동의일로부터 3년 보관 후 폐기"
             }
           ]
         ],
@@ -135,25 +135,12 @@
         "idTypeWithInput": null
       },
       {
-        "id": "program-participant-application-seed-self-intro",
-        "kind": "single_item",
-        "variant": "short_essay",
-        "requiredMark": true,
-        "paragraphTitle": "자기소개 및 지원동기",
-        "paragraphDescription": "",
-        "participatesInTitleNumbering": true,
-        "answerRequired": true,
-        "showItemTitle": false,
-        "bodyPlaceholder": "자유롭게 작성해 주세요",
-        "bodyText": ""
-      },
-      {
-        "id": "program-participant-application-seed-team-info",
+        "id": "program-application-trained-teachers-seed-basic-info",
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "팀 정보",
-        "paragraphDescription": "팀원 모두 ★반드시 개별로 신청서 작성★하여 제출해야 합니다. (팀장은 신청 시 팀원 중 한 명만 선택해 주세요)",
+        "paragraphTitle": "기본 정보",
+        "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [
@@ -176,27 +163,32 @@
         "idTypeWithInput": null
       },
       {
-        "id": "program-participant-application-seed-schedule",
+        "id": "program-application-trained-teachers-seed-preferred-schedule",
         "kind": "single_item",
-        "variant": "multiple_choice",
+        "variant": "horizontal_table",
         "requiredMark": true,
         "paragraphTitle": "진행 희망 교육 일정",
-        "paragraphDescription": "진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.",
+        "paragraphDescription": "교육 진행 예정인 날짜 및 진행 차시를 회차 별로 작성해 주세요.",
         "participatesInTitleNumbering": true,
-        "answerRequired": true,
-        "allowMultiple": true,
-        "items": [
-          {
-            "id": "participant-schedule-slot-1",
-            "label": "26년 4월 20일(일) 9:30 ~ 12:20"
-          },
-          {
-            "id": "participant-schedule-slot-2",
-            "label": "26년 4월 27일(월) 13:00 ~ 15:50"
-          }
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
         ],
-        "selectedPreviewSingleId": null,
-        "selectedPreviewMultipleIds": []
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
       }
     ]
   },

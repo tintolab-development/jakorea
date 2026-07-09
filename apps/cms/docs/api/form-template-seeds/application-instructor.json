@@ -1,5 +1,5 @@
 {
-  "templateCode": "application-participant-individual",
+  "templateCode": "application-instructor",
   "formType": "WRITING",
   "category": "APPLICATION",
   "schemaJson": {
@@ -9,7 +9,7 @@
     },
     "paragraphs": [
       {
-        "id": "program-participant-application-seed-personal-info",
+        "id": "program-instructor-application-seed-personal-info",
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
@@ -47,7 +47,7 @@
           [
             {
               "kind": "text",
-              "value": "이름, 연락처(휴대전화번호), 이메일, 소속(학교), 학년, 성별"
+              "value": "이름, 연락처(휴대전화번호), 이메일"
             },
             {
               "kind": "text",
@@ -67,7 +67,7 @@
         "idTypeWithInput": null
       },
       {
-        "id": "program-participant-application-seed-third-party",
+        "id": "program-instructor-application-seed-third-party",
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
@@ -111,19 +111,19 @@
           [
             {
               "kind": "text",
-              "value": ""
+              "value": "배정된 교육 대상 학교"
             },
             {
               "kind": "text",
-              "value": "이름, 연락처(휴대전화번호), 이메일,\n소속(학교), 학년, 성별"
+              "value": "이름, 개인 연락처, e-mail"
             },
             {
               "kind": "text",
-              "value": "JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내"
+              "value": "JA 프로그램 진행을 위한 업무 연락"
             },
             {
               "kind": "text",
-              "value": "5년"
+              "value": "1년"
             }
           ]
         ],
@@ -135,25 +135,12 @@
         "idTypeWithInput": null
       },
       {
-        "id": "program-participant-application-seed-self-intro",
-        "kind": "single_item",
-        "variant": "short_essay",
-        "requiredMark": true,
-        "paragraphTitle": "자기소개 및 지원동기",
-        "paragraphDescription": "",
-        "participatesInTitleNumbering": true,
-        "answerRequired": true,
-        "showItemTitle": false,
-        "bodyPlaceholder": "자유롭게 작성해 주세요",
-        "bodyText": ""
-      },
-      {
-        "id": "program-participant-application-seed-team-info",
+        "id": "program-instructor-application-seed-crime-record",
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "팀 정보",
-        "paragraphDescription": "팀원 모두 ★반드시 개별로 신청서 작성★하여 제출해야 합니다. (팀장은 신청 시 팀원 중 한 명만 선택해 주세요)",
+        "paragraphTitle": "성범죄 경력 조회서 제출",
+        "paragraphDescription": "학교에 전달할 성범죄 경력 조회서 파일을 제출해 주세요.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [
@@ -176,27 +163,32 @@
         "idTypeWithInput": null
       },
       {
-        "id": "program-participant-application-seed-schedule",
+        "id": "program-instructor-application-seed-available-schedule",
         "kind": "single_item",
-        "variant": "multiple_choice",
+        "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "진행 희망 교육 일정",
-        "paragraphDescription": "진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.",
+        "paragraphTitle": "강의 진행 가능 일정",
+        "paragraphDescription": "강의 진행이 가능한 일정을 모두 선택해 주세요.",
         "participatesInTitleNumbering": true,
-        "answerRequired": true,
-        "allowMultiple": true,
-        "items": [
-          {
-            "id": "participant-schedule-slot-1",
-            "label": "26년 4월 20일(일) 9:30 ~ 12:20"
-          },
-          {
-            "id": "participant-schedule-slot-2",
-            "label": "26년 4월 27일(월) 13:00 ~ 15:50"
-          }
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "강의 진행 가능일",
+          ""
         ],
-        "selectedPreviewSingleId": null,
-        "selectedPreviewMultipleIds": []
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
       }
     ]
   },
