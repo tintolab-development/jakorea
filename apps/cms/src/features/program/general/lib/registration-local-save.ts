@@ -17,6 +17,8 @@ import type {
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
+import { createGeneralProgram } from '@/features/program/general/api/admin-general-programs-service'
+import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { mockSponsors } from '@/data/mock/sponsors'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
@@ -81,7 +83,7 @@ function primaryCategoryFromParticipant(
   return 'individual'
 }
 
-function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
+export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   id: string
   participant: ProgramRegistrationParticipantState
   programType: ProgramRegistrationType
@@ -275,4 +277,31 @@ export function persistGeneralRegistrationFormLocal(args: {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(nextFile))
 
   return program
+}
+
+export async function persistGeneralProgramRegistration(args: {
+  draft: WritingFormDraft
+  participant: ProgramRegistrationParticipantState
+  programType: ProgramRegistrationType
+  variant?: ProgramRegistrationFormVariant
+}): Promise<Program> {
+  const variant = args.variant ?? 'general'
+  const id =
+    variant === 'economy'
+      ? newCompanySchoolLocalProgramId()
+      : variant === 'trainedTeachers'
+        ? newTrainedTeachersLocalProgramId()
+        : newLocalProgramId()
+  const program = buildGeneralProgramListRowFromRegistrationSnapshot({
+    id,
+    participant: args.participant,
+    programType: args.programType,
+    variant,
+  })
+
+  if (shouldUseGeneralProgramsRemoteApi()) {
+    return createGeneralProgram(program)
+  }
+
+  return persistGeneralRegistrationFormLocal(args)
 }

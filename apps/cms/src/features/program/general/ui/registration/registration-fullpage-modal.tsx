@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import type { TemplateFullpageModalFooterAction } from '@/features/template/ui/template-management/template-fullpage-modal'
+import type { Program } from '@/types/domain'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import {
   GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY,
@@ -18,7 +19,7 @@ const TRAINED_TEACHERS_REGISTRATION_MODAL_TITLE = '교육받은 교사 프로그
 export type GeneralProgramRegistrationFullpageModalProps = {
   open: boolean
   onClose: () => void
-  onProgramRegistrationSaved?: () => void
+  onProgramRegistrationSaved?: (program?: Program) => void
   registrationFormVariant?: ProgramRegistrationFormVariant
 }
 

@@ -1,10 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
 import { invalidateGeneralProgramsCache } from '@/data/mock/general-programs'
 import {
   fetchGeneralProgramsRemoteList,
   getGeneralProgramsMockList,
 } from '@/features/program/general/api/admin-general-programs-service'
+import type { GeneralProgramListTableFilters } from '@/features/program/general/api/general-program-list-filter-params'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
 import {
@@ -22,8 +24,26 @@ export interface GeneralProgramListQueryParams extends Record<string, string | u
   status?: GeneralProgramOverviewStatusFilter | 'economy_scheduled' | 'economy_in_progress' | 'economy_completed'
 }
 
+function readTableFiltersFromSearchParams(
+  searchParams: URLSearchParams
+): GeneralProgramListTableFilters {
+  return {
+    title: searchParams.get('title') ?? undefined,
+    lifecycleStatus: searchParams.get('lifecycleStatus') ?? undefined,
+    targetLevel: searchParams.get('targetLevel') ?? undefined,
+    participantRecruitment: searchParams.get('participantRecruitment') ?? undefined,
+    operationStartDate: searchParams.get('operationStartDate') ?? undefined,
+    operationEndDate: searchParams.get('operationEndDate') ?? undefined,
+  }
+}
+
+function serializeTableFilters(filters: GeneralProgramListTableFilters): string {
+  return JSON.stringify(filters)
+}
+
 export function useGeneralProgramListFilters() {
   const { params, setParam } = useQueryParams<GeneralProgramListQueryParams>()
+  const [searchParams] = useSearchParams()
   const [mockListVersion, setMockListVersion] = useState(0)
   const remoteEnabled = useGeneralProgramsRemoteEnabled()
 
@@ -38,9 +58,15 @@ export function useGeneralProgramListFilters() {
     return null
   }, [params.status])
 
+  const tableFilters = useMemo(
+    () => readTableFiltersFromSearchParams(searchParams),
+    [searchParams]
+  )
+  const tableFiltersKey = useMemo(() => serializeTableFilters(tableFilters), [tableFilters])
+
   const remoteListQuery = useQuery({
-    queryKey: generalProgramQueryKeys.list(statusFilter),
-    queryFn: () => fetchGeneralProgramsRemoteList(statusFilter),
+    queryKey: generalProgramQueryKeys.list(statusFilter, tableFiltersKey),
+    queryFn: () => fetchGeneralProgramsRemoteList(statusFilter, tableFilters),
     enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,
