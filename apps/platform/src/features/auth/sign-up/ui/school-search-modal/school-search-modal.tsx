@@ -11,7 +11,7 @@ import { highlightKeyword } from '@/shared/lib/highlight-keyword'
 import { PFButton, PFModal, PFPagination, PFText, PFTextInput } from '@/shared/ui'
 import styles from './school-search-modal.module.css'
 
-const SCHOOL_SEARCH_PAGE_SIZE = 5
+const SCHOOL_SEARCH_PAGE_SIZE = 10
 
 type SchoolSearchModalProps = {
   open: boolean

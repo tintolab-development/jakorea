@@ -12,8 +12,8 @@ import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
 import styles from './page.module.css'
 
 const accountLinkItems: Array<{ label: string; href?: string }> = [
-  { label: '이메일 찾기' },
-  { label: '비밀번호 찾기' },
+  { label: '이메일 찾기', href: '/auth/find-email' },
+  { label: '비밀번호 찾기', href: '/auth/find-password' },
   { label: '회원가입 하기', href: '/auth/sign-up' },
 ]
 

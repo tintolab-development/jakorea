@@ -1,4 +1,6 @@
 export { SignInPage } from './sign-in'
+export { FindEmailCompletePage, FindEmailPage } from './find-email'
+export { FindPasswordCompletePage, FindPasswordPage, FindPasswordResetPage } from './find-password'
 export {
   SignUpPage,
   SignUpCompletePage,

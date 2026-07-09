@@ -1,0 +1,53 @@
+.bar {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.filters {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.reset-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  padding: var(--spacing-12);
+  border: 0;
+  border-radius: var(--radius-999);
+  background: var(--color-element-default-blue);
+  cursor: pointer;
+  width: 48px;
+  height: 48px;
+}
+
+.reset-button:hover:not(:disabled) .reset-icon-default {
+  display: none;
+}
+
+.reset-button:hover:not(:disabled) .reset-icon-hover {
+  display: block;
+}
+
+.reset-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.reset-icon {
+  display: block;
+  width: 16px;
+  height: 22px;
+}
+
+.reset-icon-hover {
+  display: none;
+}

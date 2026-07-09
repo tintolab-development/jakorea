@@ -135,7 +135,7 @@
   flex: 1;
   flex-direction: column;
   gap: var(--spacing-12);
-  overflow-y: auto;
+  min-height: 0;
 }
 
 .address-result-notice {
@@ -158,13 +158,15 @@
   flex-direction: column;
   align-items: flex-start;
   align-self: stretch;
-  flex: 1 0 0;
+  flex: 0 0 auto;
   gap: var(--spacing-16);
   padding: var(--spacing-16) var(--spacing-20);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-16);
   background: var(--color-neutral-white);
   margin-top: 28px;
+  max-height: 474px;
+  overflow-y: auto;
 }
 
 .address-result-button {

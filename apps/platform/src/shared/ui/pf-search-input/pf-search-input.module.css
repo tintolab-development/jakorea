@@ -1,0 +1,68 @@
+.field {
+  display: flex;
+  width: 100%;
+  max-width: 1440px;
+  height: 56px;
+  box-sizing: border-box;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: 8px;
+  border-bottom: 2px solid var(--color-primary-800);
+  transition: border-color 160ms ease;
+}
+
+.field:hover:not(.disabled) {
+  border-bottom-color: var(--color-primary-500);
+}
+
+.field.completed {
+  border-bottom-color: var(--color-primary-800);
+}
+
+.field.completed:hover:not(.disabled) {
+  border-bottom-color: var(--color-primary-500);
+}
+
+.field.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.icon {
+  display: block;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+}
+
+.input {
+  min-width: 0;
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-neutral-cool-500);
+  font-family: var(--font-family-base);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-neutral-cool-500);
+}
+
+.field.completed .input {
+  color: var(--color-neutral-cool-700);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+}
+
+.input::-webkit-search-cancel-button {
+  display: none;
+}

@@ -1,9 +1,5 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import { PFButton, PFText } from '@/shared/ui'
-import checkOffLargeUrl from '@/shared/assets/icons/check-off-large.svg'
-import checkOffSmallUrl from '@/shared/assets/icons/check-off-small.svg'
-import checkOnLargeUrl from '@/shared/assets/icons/check-on-large.svg'
-import checkOnSmallUrl from '@/shared/assets/icons/check-on-small.svg'
+import { PFButton, PFToggle, PFText } from '@/shared/ui'
 import { SignUpActions } from '../layout/actions'
 import { SignUpLayout } from '../layout/shell'
 import { StepHeader } from '../layout/step-header'
@@ -32,43 +28,31 @@ export function AgreementStep({ signUp }: AgreementStepProps) {
       />
 
       <div className={styles['terms-content']}>
-        <button
+        <PFToggle
+          variant="check-large"
+          checked={agreement.isAllAgreed}
+          onChange={() => agreement.toggleAll()}
           className={[
             styles['all-agreement-button'],
             agreement.isAllAgreed ? styles['all-agreement-button-checked'] : undefined,
           ]
             .filter(Boolean)
             .join(' ')}
-          type="button"
-          aria-pressed={agreement.isAllAgreed}
-          onClick={agreement.toggleAll}
         >
-          <img
-            className={styles['check-icon']}
-            src={agreement.isAllAgreed ? checkOnLargeUrl : checkOffLargeUrl}
-            alt=""
-            aria-hidden="true"
-          />
           <PFText typo="bd-lg-sb" color="inherit">
             전체 동의하기
           </PFText>
-        </button>
+        </PFToggle>
 
         <div className={styles['agreement-list']}>
           {agreement.items.map(item => (
             <div className={styles['agreement-item']} key={item.key}>
-              <button
+              <PFToggle
+                variant="check-small"
+                checked={agreement.state[item.key]}
+                onChange={() => agreement.toggle(item.key)}
                 className={styles['agreement-check-button']}
-                type="button"
-                aria-pressed={agreement.state[item.key]}
-                onClick={() => agreement.toggle(item.key)}
               >
-                <img
-                  className={styles['agreement-check-icon']}
-                  src={agreement.state[item.key] ? checkOnSmallUrl : checkOffSmallUrl}
-                  alt=""
-                  aria-hidden="true"
-                />
                 <span className={styles['agreement-text']}>
                   <PFText
                     typo="bd-sm-md"
@@ -81,7 +65,7 @@ export function AgreementStep({ signUp }: AgreementStepProps) {
                     {item.label}
                   </PFText>
                 </span>
-              </button>
+              </PFToggle>
               <button className={styles['terms-view-button']} type="button">
                 <PFText typo="bd-sm-md" color="inherit">
                   보기
