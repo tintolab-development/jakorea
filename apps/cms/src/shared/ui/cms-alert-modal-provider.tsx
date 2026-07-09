@@ -24,6 +24,7 @@ const initialState: AlertState = {
   content: '',
   width: DEFAULT_WIDTH,
   confirmLabel: '확인',
+  onConfirm: undefined,
 }
 
 export type CmsAlertModalContextValue = {
@@ -44,6 +45,7 @@ export function CmsAlertModalProvider({ children }: { children: ReactNode }) {
       width: options.width ?? DEFAULT_WIDTH,
       confirmLabel: options.confirmLabel ?? '확인',
       zIndex: options.zIndex ?? CMS_ALERT_MODAL_Z_INDEX,
+      onConfirm: options.onConfirm,
     })
   }, [])
 
@@ -75,6 +77,7 @@ export function CmsAlertModalProvider({ children }: { children: ReactNode }) {
         width={state.width}
         confirmLabel={state.confirmLabel}
         zIndex={state.zIndex}
+        onConfirm={state.onConfirm}
       />
     </CmsAlertModalContext.Provider>
   )
