@@ -14,4 +14,7 @@ export interface AdminSelfSignupResponse {
   loginEnabled?: boolean;
   nextStep?: string;
   createdAt?: string;
+  signupSocialLinkToken?: string;
+  signupSocialLinkExpiresAt?: string;
+  signupSocialLinkStartEndpoint?: string;
 }

@@ -24,6 +24,10 @@ const lazyLoad = <T extends React.ComponentType<any>>(importFunc: () => Promise<
   })
 }
 
+const ParticipantRecruitmentUserFullPage = lazyLoad(
+  () => import('@/pages/programs/general/participant-recruitment-user-full-page')
+)
+
 // 인증 관련 페이지 (즉시 로드)
 import { LoginPage } from '@/pages/auth/login-page'
 import { RegisterPage } from '@/pages/auth/register-page'
@@ -31,6 +35,7 @@ import { RegisterCompletePage } from '@/pages/auth/register-complete-page'
 import { RegisterSocialConnectCompletePage } from '@/pages/auth/register-social-connect-complete-page'
 import { RegisterSocialConnectFailedPage } from '@/pages/auth/register-social-connect-failed-page'
 import { RegisterSocialConnectPage } from '@/pages/auth/register-social-connect-page'
+import { SocialConnectCompletePage } from '@/pages/auth/social-connect-complete-page'
 import { RegisterIdentityCallbackPage } from '@/pages/auth/register-identity-callback-page'
 import { RegisterIdentityMockNicePage } from '@/pages/auth/register-identity-mock-nice-page'
 import { FindEmailPage } from '@/pages/auth/find-email-page'
@@ -41,6 +46,7 @@ import { FindPasswordIdentityCallbackPage } from '@/pages/auth/find-password-ide
 import { FindPasswordIdentityMockNicePage } from '@/pages/auth/find-password-identity-mock-nice-page'
 import { MfaPage } from '@/pages/auth/mfa-page'
 import { OAuthCallbackPage } from '@/pages/auth/oauth-callback-page'
+import { LoginSocialCompletePage } from '@/pages/auth/login-social-complete-page'
 import { RegisterSocialSignupCallbackPage } from '@/pages/auth/register-social-signup-callback-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
@@ -63,9 +69,8 @@ function ProgramsSubpathRedirect({ toBase }: { toBase: string }) {
 import TemplatesFormManagementOutlet from '@/pages/templates/templates-form-management-outlet'
 import { TemplatesRouteLayout } from '@/pages/templates/templates-route-layout'
 import { GeneralProgramListRouteShell } from '@/pages/programs/general/general-program-list-route-shell'
-import {
-  RedirectLegacyTemplatesProgramForms,
-} from '@/features/template/template-route-redirects'
+import { RedirectLegacyTemplatesProgramForms } from '@/features/template/template-route-redirects'
+import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
 
 // 대시보드 (즉시 로드 - 첫 화면)
 import { IndexPage } from '@/pages/home/index-page'
@@ -215,6 +220,10 @@ export const router = createBrowserRouter([
     element: <RegisterSocialConnectFailedPage />,
   },
   {
+    path: '/social-connect/complete',
+    element: <SocialConnectCompletePage />,
+  },
+  {
     path: '/register/social-connect/callback',
     element: <RegisterSocialSignupCallbackPage />,
   },
@@ -229,6 +238,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/login/social/complete',
+    element: <LoginSocialCompletePage />,
   },
   {
     path: '/find-email',
@@ -273,6 +286,23 @@ export const router = createBrowserRouter([
   {
     path: '/oauth/naver',
     element: <OAuthCallbackPage provider="naver" />,
+  },
+  {
+    path: '/preview/programs/general/participant-recruitment',
+    element: (
+      <Navigate
+        to={`/preview/programs/general/${GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID}/participant-recruitment`}
+        replace
+      />
+    ),
+  },
+  {
+    path: '/preview/programs/general/:programId/participant-recruitment',
+    element: (
+      <ProtectedRoute>
+        <ParticipantRecruitmentUserFullPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/',

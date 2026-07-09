@@ -18,4 +18,26 @@ export interface AdminMfaChallengeResponse {
   mfaMethod?: string;
   /** challenge 만료 시각 */
   expiresAt?: string;
+  /** MFA 앱 등록 정보가 필요한지 여부 */
+  mfaSetupRequired?: boolean;
+  /** Microsoft Authenticator 앱 수동 입력용 Base32 secret key */
+  secretKey?: string;
+  /** Microsoft Authenticator 앱 수동 입력용 key 별칭 */
+  manualEntryKey?: string;
+  /** Microsoft Authenticator 등록용 TOTP secret 값 */
+  totpSecret?: string;
+  /** Microsoft Authenticator 호환 otpauth URI */
+  otpauthUri?: string;
+  /** QR 이미지 URL 또는 data URI */
+  qrCodeUrl?: string;
+  /** QR 이미지 data URI */
+  qrCodeDataUrl?: string;
+  /** 프론트 호환용 QR data URI 별칭 */
+  qrDataUrl?: string;
+  /** QR 이미지 별칭 */
+  qrImageUrl?: string;
+  /** QR 이미지 별칭 */
+  qrCodeImageUrl?: string;
+  /** 로컬 프로필 전용 MFA 통과 코드 */
+  verificationCodeHint?: string;
 }

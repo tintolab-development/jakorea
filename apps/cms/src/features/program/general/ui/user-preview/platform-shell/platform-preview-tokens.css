@@ -1,0 +1,66 @@
+@import '../../../../../../../../platform/src/shared/styles/color.css';
+@import '../../../../../../../../platform/src/shared/styles/size.css';
+@import '../../../../../../../../platform/src/shared/styles/tokens.css';
+@import '../../../../../../../../platform/src/shared/styles/typography.css';
+
+@font-face {
+  font-family: 'Pretendard';
+  src: url('../../../../../../../../platform/public/fonts/PretendardVariable.woff2')
+    format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+.platform-user-preview-root {
+  --font-family-base: 'Pretendard', system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Noto Sans KR', sans-serif;
+  font-family: var(--font-family-base);
+  color: var(--color-neutral-black);
+  box-sizing: border-box;
+}
+
+.platform-user-preview-root *,
+.platform-user-preview-root *::before,
+.platform-user-preview-root *::after {
+  box-sizing: border-box;
+}
+
+.platform-user-preview-root header button,
+.platform-user-preview-root footer button {
+  border-radius: 0;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  font-size: inherit;
+  font-weight: inherit;
+  cursor: default;
+  transition: none;
+}
+
+.platform-user-preview-root header button:hover,
+.platform-user-preview-root footer button:hover {
+  border: none;
+  background-color: transparent;
+}
+
+.platform-user-preview-root .typo-page-title,
+.platform-user-preview-root .typo-hd-lg,
+.platform-user-preview-root .typo-hd-md,
+.platform-user-preview-root .typo-hd-sm,
+.platform-user-preview-root .typo-hl-lg,
+.platform-user-preview-root .typo-hl-sm,
+.platform-user-preview-root .typo-bd-lg-rg,
+.platform-user-preview-root .typo-bd-lg-sb,
+.platform-user-preview-root .typo-bd-md-rg,
+.platform-user-preview-root .typo-bd-md-md,
+.platform-user-preview-root .typo-bd-md-sb,
+.platform-user-preview-root .typo-bd-md-bd,
+.platform-user-preview-root .typo-bd-sm-rg,
+.platform-user-preview-root .typo-bd-sm-md,
+.platform-user-preview-root .typo-bd-sm-sb,
+.platform-user-preview-root .typo-label-md,
+.platform-user-preview-root .typo-caption-rg,
+.platform-user-preview-root .typo-caption-sb {
+  font-family: var(--font-family-base);
+}

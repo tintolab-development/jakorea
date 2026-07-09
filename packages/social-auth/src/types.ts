@@ -6,24 +6,31 @@ export type OAuthIntent = 'login' | 'link'
 
 export interface SocialAuthPaths {
   ssoLogin: () => string
-  ssoCallback: () => string
+  ssoProviderCallback: (provider: string) => string
+  loginSessionConsume: () => string
+  /** Admin SSO link callback 후 one-time session 소비 */
+  linkSessionConsume?: () => string
+  /** @deprecated canonical 아님 — remote adapter 미사용 */
+  ssoCallback?: () => string
   socialAccounts: () => string
   socialAccount: (providerCode: string) => string
   signupStart: (provider: string) => string
   signupSession: (sessionId: number) => string
+  ssoError?: () => string
   /** 회원(Platform) 확장용 */
   loginStart?: (provider: string) => string
-  loginSessionConsume?: () => string
   memberSocialLogin?: () => string
   memberSocialAccounts?: () => string
   memberSocialAccount?: (providerCode: string) => string
 }
 
 export interface SocialAuthRoutes {
-  /** `/oauth/{provider}` — `{provider}` 플레이스홀더 포함 (관리자 로그인) */
+  /** `/oauth/{provider}` — `{provider}` 플레이스홀더 포함 (mock 전용) */
   callbackPath: string
   /** 가입·연결 OAuth 완료 후 프론트 return URL 경로 */
   signupReturnPath: string
+  /** Admin SSO login 완료 return URL 경로 (remote) */
+  loginCompletePath?: string
 }
 
 export interface SocialAuthHttpClient {
@@ -73,6 +80,7 @@ export interface SsoStartInput {
   redirectUri: string
   returnUrl?: string
   frontendReturnUrl?: string
+  loginReturnUrl?: string
 }
 
 export interface SsoStartResult {
@@ -86,6 +94,7 @@ export interface CallbackInput {
   code?: string
   idToken?: string
   state?: string
+  socialLoginSessionId?: string
 }
 
 export interface LinkAccountInput {
@@ -94,7 +103,14 @@ export interface LinkAccountInput {
   idToken?: string
   state?: string
   accessToken?: string
+  adminSsoSessionId?: string
   socialVerificationSessionId?: number
+  consent: SocialLinkConsent
+}
+
+export interface AdminSsoLinkSessionInput {
+  provider: SocialProvider
+  adminSsoSessionId: string
   consent: SocialLinkConsent
 }
 
@@ -122,6 +138,7 @@ export type OAuthCallbackOutcome =
     }
   | { kind: 'not_linked' }
   | { kind: 'already_linked' }
+  | { kind: 'mfa_required'; challengeUuid: string; mfaMethod?: string }
   | { kind: 'failed'; message: string }
   | { kind: 'cancelled' }
 

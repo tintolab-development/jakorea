@@ -6,7 +6,10 @@ import dayjs from 'dayjs'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { genderBirthView, socialView } from '@/features/user/detail/ui/user-basic-info/display'
+import { genderBirthView, inlineSegmentsWithDividers, socialView } from '@/features/user/detail/ui/user-basic-info/display'
+import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
+import { isSocialAdminSocialApiRemoteEnabled } from '@/features/auth/api/social-auth-remote-capabilities'
+import { useAdminLinkedSocialAccounts } from '@/features/auth/hooks/use-admin-linked-social-accounts'
 import { EditableField } from '@/features/user/detail/ui/user-basic-info/fields/editable-field'
 import { EditableRow } from '@/features/user/detail/ui/user-basic-info/fields/editable-row'
 import {
@@ -19,8 +22,10 @@ import {
 } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import {
   buildRegisterSocialConnectPath,
+  isSocialConnectAuthFlowPath,
   setRegisterSocialLinkIntent,
 } from '@/features/auth/lib/register-social-connect-state'
+import { getRedirectPathByRole } from '@/shared/utils/auth-redirect'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   cmsIdentityVerificationClient,
@@ -171,6 +176,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   const navigate = useNavigate()
   const { user, updateUser, logout } = useAuthStore()
   const { showAlert } = useCmsAlert()
+  const { linkedLabels, loading: loadingLinkedSocialAccounts } = useAdminLinkedSocialAccounts(open)
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
   const [withdrawKeyword, setWithdrawKeyword] = useState('')
   const [withdrawing, setWithdrawing] = useState(false)
@@ -255,8 +261,11 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   }
 
   const handleSocialConnect = () => {
-    const redirectPath =
+    const currentPath =
       typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '/'
+    const redirectPath = isSocialConnectAuthFlowPath(currentPath)
+      ? getRedirectPathByRole(user)
+      : currentPath
 
     setRegisterSocialLinkIntent(redirectPath)
     onCancel()
@@ -284,6 +293,14 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
 
   const serviceTerms = resolveTermsAgreement(user, 'SERVICE_TERMS')
   const personalInfoTerms = resolveTermsAgreement(user, 'PERSONAL_INFO')
+  const linkedSocialDisplay =
+    isSocialAdminSocialApiRemoteEnabled() && cmsSocialAuthClient.hasAccessToken()
+      ? linkedLabels.length > 0
+        ? inlineSegmentsWithDividers(linkedLabels)
+        : loadingLinkedSocialAccounts
+          ? '조회 중...'
+          : '-'
+      : socialView(user)
 
   const footer = (
     <div className="profile-edit-modal__footer">
@@ -332,7 +349,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
                   readOnlyDisplay
                   view={
                     <ProfileFieldWithAction
-                      value={socialView(user)}
+                      value={linkedSocialDisplay}
                       actionLabel="계정 연동/해제"
                       onAction={handleSocialConnect}
                     />

@@ -431,10 +431,13 @@ function ProgramListPageContent() {
       >
         {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
       </CmsButton>
-      <CmsButton width={180} onClick={handleProgramCreateClick}>
-        프로그램 신규 등록
-      </CmsButton>
     </div>
+  )
+
+  const programListToolbarActionsAfterExcel = (
+    <CmsButton width={180} onClick={handleProgramCreateClick}>
+      프로그램 신규 등록
+    </CmsButton>
   )
 
   return (
@@ -464,6 +467,7 @@ function ProgramListPageContent() {
         tableVariant={programType === 'company_school' ? 'overview' : 'general'}
         config={programListConfig}
         onDisplayCountChange={handleDisplayCountChange}
+        toolbarActionsAfterExcel={programListToolbarActionsAfterExcel}
       >
         {programListToolbarActions}
       </ProgramList>

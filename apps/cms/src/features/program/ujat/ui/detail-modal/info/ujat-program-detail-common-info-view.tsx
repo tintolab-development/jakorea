@@ -8,6 +8,7 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatDate } from '@/features/program/shared/lib/program-detail-info-constants'
 import { resolveUjatRegistrationBasicInfoDisplay } from '@/features/program/ujat/lib/ujat-registration-basic-info-display'
+import { useSponsorOptionsQuery } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { UjatBusinessKpiProgramView } from './ujat-business-kpi-program-view'
 import { UjatWageInfoProgramView } from './ujat-wage-info-program-view'
 import { UjatBasicInfoParagraph } from '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-basic-info-paragraph'
@@ -58,7 +59,13 @@ export function UjatProgramDetailCommonInfoView({
   isEditMode = false,
   infoForm,
 }: UjatProgramDetailCommonInfoViewProps) {
-  const basicInfoDisplay = resolveUjatRegistrationBasicInfoDisplay(program, sponsorName)
+  const sponsorsQuery = useSponsorOptionsQuery(true)
+  const basicInfoDisplay = resolveUjatRegistrationBasicInfoDisplay(
+    program,
+    sponsorName,
+    undefined,
+    sponsorsQuery.data ?? []
+  )
 
   return (
     <div className="program-detail-fullpage-modal__info-tab">

@@ -268,6 +268,27 @@ describe('general survey audience', () => {
     expect(buildGeneralSurveyMockState(companySchool).satisfactionSurveysByAudience).toEqual({})
   })
 
+  it('교육받은 교사 프로그램은 1사1교와 동일한 교사용 만족도조사만 제공한다', () => {
+    const trainedTeachers = program({
+      id: 'trained-teachers-prog-001',
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+      generalSurveyMenuKeys: ['survey', 'satisfaction'],
+    })
+
+    expect(getEnabledGeneralSatisfactionAudienceTabs(trainedTeachers).map(tab => tab.key)).toEqual([
+      'teacher',
+    ])
+    expect(getDefaultGeneralSatisfactionAudience(trainedTeachers)).toBe('teacher')
+    expect(getGeneralSatisfactionEmptyCopy('teacher', trainedTeachers)).toMatchObject({
+      title: '아직 등록된 만족도조사가 없습니다.',
+      description: '만족도조사 등록 버튼을 눌러 설문 내용을 추가해 주세요.',
+      secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.',
+      registerButton: '만족도조사 등록',
+    })
+    expect(buildGeneralSurveyMockState(trainedTeachers).satisfactionSurveysByAudience).toEqual({})
+  })
+
   it('설문 수정 항목은 공통 3종을 제공한다', () => {
     const fields = getGeneralSurveyEditFieldsForAudience(false)
     expect(fields.map(field => field.id)).toEqual(['survey', 'satisfaction', 'lecture_evaluation'])

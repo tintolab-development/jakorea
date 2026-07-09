@@ -15,6 +15,7 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH } from '@/features/program/general/lib/participating-institutions-table'
 import {
@@ -46,7 +47,7 @@ const WAITING_EMPTY_TEXT = '배정 대기 중인 봉사 일정이 없습니다.'
 function renderScheduleCell(label: string) {
   return (
     <div className="participating-individual-volunteer-assignment-section__schedule-cell">
-      {label}
+      {renderProgramDetailPipeSeparated(label)}
     </div>
   )
 }

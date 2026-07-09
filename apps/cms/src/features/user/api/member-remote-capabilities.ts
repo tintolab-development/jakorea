@@ -23,9 +23,14 @@ export function isAdminPermissionsRemoteEnabled(): boolean {
   return isRealApiModuleEnabled('adminPermissions')
 }
 
-/** remote 모드에서 PATCH /api/users/{memberId} 미제공 — 기본정보 저장 불가 */
+/** remote 모드에서 PATCH /api/admin/users/{memberId} — 기본정보 일괄 저장 */
 export function isMemberBasicInfoPatchRemoteEnabled(): boolean {
-  return false
+  return isMembersRemoteEnabled()
+}
+
+/** 관리자 회원 관리 — 권한 유형(목록·상세 드롭다운) 변경 */
+export function isAdminPermissionVariantPatchRemoteEnabled(): boolean {
+  return isMembersRemoteEnabled()
 }
 
 /** 회원 상세 강사 정산 탭 — settlement list API */

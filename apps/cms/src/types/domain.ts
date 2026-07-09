@@ -165,6 +165,10 @@ export interface GeneralProgramCommonInfoExtension {
   volunteerInterviewScheduleInfo?: GeneralProgramVolunteerInterviewScheduleInfo
   /** 교육 진행 일정 설정 — `date` 날짜 지정 · `period` 기간 지정(기획: 날짜 선택(기간)) */
   educationScheduleMode?: 'date' | 'period'
+  /** 교육받은 교사 — 교육일지 설정 (있음/없음) */
+  educationJournalEnabled?: boolean
+  /** 교육받은 교사 — 교육 연수 토글. ON이면 첫 진행 항목 타이틀·일정명이 교육 연수로 치환(IPS Prepare 고정) */
+  teacherTrainingEnabled?: boolean
   /** 일반 프로그램 캘린더 — 설문조사 시작/종료 등 */
   calendarSurveySchedules?: GeneralProgramCalendarScheduleRow[]
   /** 일반 프로그램 캘린더 — 과제 제출 마감 등 */
@@ -842,6 +846,8 @@ export interface UserHistory {
   finalStatus: FinalStatus
   /** CMS 봉사·참여 이력 목록 필터/표시용 (API 연동 시) */
   managerName?: string
+  /** API program-history 응답 programName (programService 폴백 전) */
+  programName?: string
   // 강사인 경우
   paymentStatus?: PaymentStatus
   paymentAmount?: number

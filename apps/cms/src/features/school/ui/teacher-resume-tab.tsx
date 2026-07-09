@@ -8,6 +8,10 @@ import type {
   TeacherResumeCareer,
   TeacherResumeEducation,
 } from '@/data/mock/school-detail'
+import {
+  ProgramDetailTdDivider,
+  withProgramDetailTdDivider,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import '@/features/program/general/ui/applicant-instructor-detail-modal.css'
 
 function getEducationLevelBadge(educationLevel?: string, schoolType?: string): string {
@@ -93,13 +97,18 @@ export function TeacherResumeTab({ detail }: TeacherResumeTabProps) {
               const schoolLabel = item.schoolName
                 ? [item.schoolName, item.schoolType ? `(${getEducationLevelBadge(undefined, item.schoolType)})` : ''].filter(Boolean).join(' ')
                 : NO_DATA
-              const majorPart = item.major ? ` | ${item.major}` : ''
+              const majorPart = item.major ? item.major : ''
               return (
                 <div key={idx} className="applicant-instructor-detail-modal__resume-row applicant-instructor-detail-modal__resume-row--career">
                   <span className="applicant-instructor-detail-modal__resume-row-left">{period || NO_DATA}</span>
                   <span className="applicant-instructor-detail-modal__resume-row-right applicant-instructor-detail-modal__resume-row-right--with-divider">
                     <span className="applicant-instructor-detail-modal__resume-emphasis applicant-instructor-detail-modal__resume-emphasis--left">{schoolLabel}</span>
-                    {majorPart ? <span className="applicant-instructor-detail-modal__resume-role">{majorPart}</span> : null}
+                    {majorPart ? (
+                      <>
+                        <ProgramDetailTdDivider />
+                        <span className="applicant-instructor-detail-modal__resume-role">{majorPart}</span>
+                      </>
+                    ) : null}
                   </span>
                 </div>
               )
@@ -109,7 +118,9 @@ export function TeacherResumeTab({ detail }: TeacherResumeTabProps) {
               <span className="applicant-instructor-detail-modal__resume-row-left">-</span>
               <span className="applicant-instructor-detail-modal__resume-row-right applicant-instructor-detail-modal__resume-row-right--with-divider">
                 <span className="applicant-instructor-detail-modal__resume-emphasis applicant-instructor-detail-modal__resume-emphasis--left">
-                  {[detail.education, detail.university].filter(Boolean).join(' | ') || NO_DATA}
+                  {withProgramDetailTdDivider(
+                    [detail.education, detail.university].filter(Boolean) as string[]
+                  ) || NO_DATA}
                 </span>
               </span>
             </div>
@@ -140,9 +151,15 @@ export function TeacherResumeTab({ detail }: TeacherResumeTabProps) {
                   <span className="applicant-instructor-detail-modal__resume-row-right applicant-instructor-detail-modal__resume-row-right--with-divider">
                     {item.companyName || item.role ? (
                       <>
-                        {item.companyName && <span className="applicant-instructor-detail-modal__resume-emphasis applicant-instructor-detail-modal__resume-emphasis--left">{item.companyName}</span>}
-                        {item.companyName && item.role ? ' | ' : ''}
-                        {item.role != null && item.role !== '' ? <span className="applicant-instructor-detail-modal__resume-role">{item.role}</span> : null}
+                        {item.companyName && (
+                          <span className="applicant-instructor-detail-modal__resume-emphasis applicant-instructor-detail-modal__resume-emphasis--left">
+                            {item.companyName}
+                          </span>
+                        )}
+                        {item.companyName && item.role ? <ProgramDetailTdDivider /> : null}
+                        {item.role != null && item.role !== '' ? (
+                          <span className="applicant-instructor-detail-modal__resume-role">{item.role}</span>
+                        ) : null}
                       </>
                     ) : NO_DATA}
                   </span>

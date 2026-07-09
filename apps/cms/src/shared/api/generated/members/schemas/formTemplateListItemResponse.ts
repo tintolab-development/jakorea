@@ -13,7 +13,12 @@ export interface FormTemplateListItemResponse {
   formType?: string;
   category?: string;
   useYn?: boolean;
+  latestVersionId?: number;
   latestVersionNo?: number;
   latestVersionStatus?: string;
+  responseCount?: number;
+  activeBindingCount?: number;
+  systemTemplate?: boolean;
   updatedAt?: string;
+  availableActions?: string[];
 }

@@ -7,6 +7,7 @@ import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Table } from 'antd'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
 import {
@@ -32,8 +33,8 @@ import {
   EditableStatusBadge,
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
 } from '@/shared/components'
 import { getProgramRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -50,9 +51,10 @@ const TABLE_ROLE_ORDER: ProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
 
 interface ProgramManagersTabProps {
   programId: string
+  maskSensitive?: boolean
 }
 
-export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
+export function ProgramManagersTab({ programId, maskSensitive = false }: ProgramManagersTabProps) {
   const { filters, setFilters } = useProgramManagersParams()
   const [pendingFilters, setPendingFilters] = useState<ProgramManagersFilters>(() => ({
     ...filters,
@@ -202,7 +204,13 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
   )
 
   const renderRoleBadge = useCallback((r: ProgramRole) => {
-    return <EditableStatusBadge label={PROGRAM_ROLE_LABELS[r]} tone={getProgramRoleBadgeTone(r)} />
+    return (
+      <EditableStatusBadge
+        label={PROGRAM_ROLE_LABELS[r]}
+        tone={getProgramRoleBadgeTone(r)}
+        className="program-managers-tab__role-badge"
+      />
+    )
   }, [])
 
   const columns: ColumnsType<ProgramManagerRow> = useMemo(
@@ -218,11 +226,11 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         title: '권한',
         dataIndex: 'role',
         key: 'role',
-        width: 116,
+        width: 150,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
+        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME }),
         onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME}`,
         }),
         render: (role: ProgramRole, record: ProgramManagerRow) => (
           <StatusDropdownCell<ProgramRole>
@@ -234,7 +242,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            tagLayout="tag100"
+            tagLayout="tag132"
           />
         ),
       },
@@ -246,7 +254,8 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         align: 'center',
         render: (phone: string) => {
           const value = phone?.trim()
-          return value || '-'
+          if (!value) return '-'
+          return maskSensitive ? MASKING_POLICY.phone(value) : value
         },
       },
       {
@@ -258,7 +267,8 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         ellipsis: true,
         render: (email: string) => {
           const value = email?.trim()
-          return value || '-'
+          if (!value) return '-'
+          return maskSensitive ? MASKING_POLICY.email(value) : value
         },
       },
       {
@@ -271,6 +281,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     ],
     [
       handleTableRoleChange,
+      maskSensitive,
       openRoleDropdownId,
       renderRoleBadge,
       roleItemDisabled,

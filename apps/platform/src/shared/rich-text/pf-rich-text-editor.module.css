@@ -1,0 +1,19 @@
+.pf-rich-text-editor {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  --rt-body-min-height: 200px;
+  --rt-border: var(--table-line, #e0e0e0);
+  --rt-radius: 8px;
+  --rt-background: var(--color-white, #fff);
+  --rt-toolbar-bg: var(--color-white, #fff);
+  --rt-toolbar-border: var(--table-line, #e0e0e0);
+  --rt-content-color: var(--color-neutral-cool-800, #1f2937);
+  --rt-link-color: var(--color-primary-500, #01a1af);
+  --rt-placeholder-color: var(--color-neutral-cool-400, #9ca3af);
+  --rt-body-padding: 16px;
+}
+
+.pf-rich-text-editor :global(.rich-text-editor__body .tiptap) {
+  min-height: 100%;
+}

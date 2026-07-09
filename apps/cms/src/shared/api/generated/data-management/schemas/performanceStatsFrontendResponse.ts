@@ -7,6 +7,7 @@
  */
 import type { Period } from './period';
 import type { Stats } from './stats';
+import type { SummarySection } from './summarySection';
 
 export interface PerformanceStatsFrontendResponse {
   id?: string;
@@ -15,6 +16,7 @@ export interface PerformanceStatsFrontendResponse {
   sponsorId?: string;
   period?: Period;
   stats?: Stats;
+  sections?: SummarySection[];
   businessArea?: string;
   ips?: string;
   targetLevel?: string;

@@ -36,6 +36,8 @@ import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { TrainedTeachersApplicantInstitutionDetailContents } from '@/features/program/trained-teachers/ui/institution-detail/applicant-institution-detail-contents'
 
 export type ApplicantType =
   | 'institutions'
@@ -461,6 +463,12 @@ export function ApplicantsDetailContents({
   const [individualAdminCommentDraft, setIndividualAdminCommentDraft] = useState('')
   const [individualAdminCommentError, setIndividualAdminCommentError] = useState<string | undefined>()
 
+  const isInstitution = type === 'institutions'
+  const isInstructor = type === 'instructors'
+  const isVolunteer = type === 'volunteers'
+  const isIndividual = type === 'individual-applications'
+  const isGeneralDetail = detailVariant === 'general'
+
   const activeTab = useMemo(
     () => parseDetailTabFromSearch(searchParams, type, detailVariant),
     [searchParams, type, detailVariant]
@@ -480,12 +488,6 @@ export function ApplicantsDetailContents({
     },
     [searchParams, setSearchParams, type]
   )
-
-  const isInstitution = type === 'institutions'
-  const isInstructor = type === 'instructors'
-  const isVolunteer = type === 'volunteers'
-  const isIndividual = type === 'individual-applications'
-  const isGeneralDetail = detailVariant === 'general'
 
   const institutionData = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorData = isInstructor ? (data as ApplicantInstructorRow) : null
@@ -781,7 +783,9 @@ export function ApplicantsDetailContents({
   const institutionInfoPanel = useMemo(() => {
     if (!isInstitution || !institutionData) return null
     const d = institutionData
-    const isCompanySchool = isCompanySchoolProgram(program)
+    /** 1사1교·교육받은 교사 — 합반 신청 케이스 없음(신청 불가) */
+    const isCombinedClassHidden =
+      isCompanySchoolProgram(program) || isTrainedTeachersDetailProgram(program ?? null)
     if (isGeneralDetail) {
       return (
         <ApplicantGeneralInstitutionBasicInfo
@@ -799,7 +803,7 @@ export function ApplicantsDetailContents({
           showEducationFormatField={institutionDetailEdit.showEducationFormatField}
           isCombinedClassProgramEligible={institutionDetailEdit.isCombinedClassProgramEligible}
           isCombinedClassApplyRadioDisabled={institutionDetailEdit.isCombinedClassApplyRadioDisabled}
-          hideCombinedClass={isCompanySchool}
+          hideCombinedClass={isCombinedClassHidden}
           validationErrors={institutionDetailEdit.validationErrors}
           onResendNotificationClick={onResendNotification}
           isAdminCommentEditing={isAdminCommentEditing}
@@ -944,6 +948,29 @@ export function ApplicantsDetailContents({
   ])
 
   const tabDefs = isVolunteer ? [{ key: 'info', label: '기본 정보' }] : []
+
+  if (
+    isInstitution &&
+    isGeneralDetail &&
+    isTrainedTeachersDetailProgram(program ?? null) &&
+    institutionData
+  ) {
+    return (
+      <TrainedTeachersApplicantInstitutionDetailContents
+        institution={institutionData}
+        program={program}
+        personalInfoRevealed={personalInfoRevealed}
+        headerExtraContent={headerExtraContent}
+        personalInfoRevealModal={personalInfoRevealModal}
+        institutionDetailEdit={institutionDetailEdit}
+        onResendNotification={onResendNotification}
+        isAdminCommentEditing={isAdminCommentEditing}
+        adminCommentDraft={adminCommentDraft}
+        onAdminCommentDraftChange={handleAdminCommentDraftChange}
+        adminCommentError={adminCommentError}
+      />
+    )
+  }
 
   if (isIndividual || isInstitution || isInstructor) {
     return (

@@ -1,4 +1,5 @@
 import {
+  mapProgramHistoryResponse,
   mapSponsorContactResponse,
   mapSponsorDetailResponse,
   mapSponsorResponse,
@@ -7,6 +8,7 @@ import {
   toSponsorRequestFromBasicInfo,
   toSponsorRequestFromRegister,
 } from '@/features/sponsor/api/adapters/sponsor-adapters'
+import { programHistoriesParamsFromFilters } from '@/features/sponsor/api/program-histories-filter-params'
 import { sponsorsParamsFromSearchParams } from '@/features/sponsor/api/sponsor-filter-params'
 import {
   addSponsorContactRemote,
@@ -14,6 +16,7 @@ import {
   deleteSponsorContactRemote,
   deleteSponsorRemote,
   endSponsorRemote,
+  fetchProgramHistoriesRemote,
   fetchSponsorRemote,
   fetchSponsorsRemote,
   updateSponsorContactRemote,
@@ -23,6 +26,8 @@ import type {
   SponsorContactRow,
   SponsorManagementDetailView,
   SponsorManagementRow,
+  SponsorProgramHistoryFilters,
+  SponsorProgramHistoryRow,
 } from '@/features/sponsor/model/sponsor-management.types'
 import type { BasicInfoEditState } from '@/features/sponsor/ui/sponsor-detail-basic-info'
 import type { SponsorContactRegisterPayload } from '@/features/sponsor/ui/modal/sponsor-contact-register-modal'
@@ -118,4 +123,37 @@ export async function deleteSponsorContacts(contactIds: string[]): Promise<void>
   for (const id of contactIds) {
     await deleteSponsorContactRemote(id)
   }
+}
+
+export interface SponsorProgramHistoriesPage {
+  items: SponsorProgramHistoryRow[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
+export async function getSponsorProgramHistories(
+  sponsorId: string,
+  filters: SponsorProgramHistoryFilters,
+  page = 0,
+  size = 200
+): Promise<SponsorProgramHistoriesPage> {
+  assertSponsorsRemoteReady()
+  const dto = await fetchProgramHistoriesRemote(
+    sponsorId,
+    programHistoriesParamsFromFilters(filters, page, size)
+  )
+  return {
+    items: (dto.items ?? []).map(mapProgramHistoryResponse),
+    page: dto.page ?? page,
+    size: dto.size ?? size,
+    totalElements: dto.totalElements ?? 0,
+    totalPages: dto.totalPages ?? 0,
+  }
+}
+
+/** 후원사 셀렉트·이름 조회용 전체 목록 (필터 없음) */
+export async function getSponsorOptionsList(): Promise<SponsorManagementRow[]> {
+  return getSponsorList(new URLSearchParams())
 }

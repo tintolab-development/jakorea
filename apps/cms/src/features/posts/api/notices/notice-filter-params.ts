@@ -1,4 +1,5 @@
 import type { NoticesParams } from '@/shared/api/generated/posts/schemas'
+import { NoticeRequestStatus } from '@/shared/api/generated/posts/schemas/noticeRequestStatus'
 
 export const NOTICE_LIST_PAGE_SIZE = 500
 
@@ -12,7 +13,7 @@ export function noticesParamsFromSearchParams(searchParams: URLSearchParams): No
   if (vis === 'public') {
     params.status = 'published'
   } else if (vis === 'private') {
-    params.status = 'draft'
+    params.status = NoticeRequestStatus.임시저장
   }
 
   return params

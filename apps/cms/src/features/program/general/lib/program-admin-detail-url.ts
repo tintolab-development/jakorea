@@ -38,6 +38,14 @@ export function getProgramAdminDetailUrlFromPathname(programId: string, pathname
   ) {
     return `/programs?programId=${encodeURIComponent(programId)}`
   }
+  if (pathname.startsWith('/programs/trained-teachers')) {
+    const params = new URLSearchParams({
+      programId,
+      lnb: 'info',
+      tab: 'info',
+    })
+    return `/programs/trained-teachers?${params.toString()}`
+  }
   if (pathname.startsWith('/programs/education') || pathname.startsWith('/programs/general')) {
     return buildGeneralProgramDetailUrl(programId, 'info', 'info')
   }

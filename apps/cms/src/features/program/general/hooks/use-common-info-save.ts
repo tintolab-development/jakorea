@@ -11,6 +11,7 @@ import {
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 
 export interface UseGeneralProgramCommonInfoSaveOptions {
   form: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
@@ -24,6 +25,8 @@ export function useGeneralProgramCommonInfoSave({
   onSaveEdit,
 }: UseGeneralProgramCommonInfoSaveOptions) {
   const savingRef = useRef(false)
+  const watchedSponsorIds = form.watch('sponsorManagementIds') ?? []
+  const sponsorContext = useGeneralProgramSponsorEditContext(watchedSponsorIds)
 
   const triggerSave = useCallback(async (): Promise<boolean> => {
     if (savingRef.current || !onSaveEdit || !program) return false
@@ -32,7 +35,7 @@ export function useGeneralProgramCommonInfoSave({
       const isValid = await form.trigger()
       if (!isValid) return false
       const values = form.getValues()
-      const patch = generalCommonInfoEditValuesToProgramPatch(values, program)
+      const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
       const resolvedCommon = resolveGeneralProgramCommonInfo(program)
       const draftToSave: Program = {
         ...program,
@@ -51,13 +54,15 @@ export function useGeneralProgramCommonInfoSave({
     } finally {
       savingRef.current = false
     }
-  }, [form, program, onSaveEdit])
+  }, [form, program, onSaveEdit, sponsorContext])
 
   const resetToProgram = useCallback(() => {
     if (program) {
-      form.reset(programToGeneralCommonInfoEditValues(program), { keepDefaultValues: false })
+      form.reset(programToGeneralCommonInfoEditValues(program, sponsorContext), {
+        keepDefaultValues: false,
+      })
     }
-  }, [form, program])
+  }, [form, program, sponsorContext])
 
   return { triggerSave, resetToProgram }
 }

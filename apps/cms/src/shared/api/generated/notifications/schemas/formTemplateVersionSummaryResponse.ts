@@ -11,6 +11,9 @@ export interface FormTemplateVersionSummaryResponse {
   versionNo?: number;
   versionLabel?: string;
   versionStatus?: string;
+  responseCount?: number;
+  activeBindingCount?: number;
   publishedAt?: string;
   updatedAt?: string;
+  availableActions?: string[];
 }

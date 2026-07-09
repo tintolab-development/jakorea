@@ -9,7 +9,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import { getEducationPrograms } from '@/data/mock/education-programs'
 import { getApplicationCountByProgram, getCapacity } from '../lib/program-helpers'
-import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
+import { SponsorNameById } from '@/features/sponsor/ui/sponsor-name-by-id'
 import {
   programTypes,
   businessAreaOptions,
@@ -139,11 +139,8 @@ export function EnrollmentStatusTable({ data, loading }: EnrollmentStatusTablePr
       key: 'sponsorId',
       width: 140,
       ellipsis: true,
-      render: (sponsorId: string | undefined) => {
-        if (!sponsorId) return '-'
-        const sponsor = sponsorService.getByIdSync(sponsorId)
-        return sponsor?.name ?? '-'
-      },
+      render: (sponsorId: string | undefined) =>
+        sponsorId ? <SponsorNameById sponsorId={sponsorId} /> : '-',
     },
     {
       title: '담당자',

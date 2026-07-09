@@ -7,9 +7,45 @@
   width: 100%;
 }
 
-/* 컬럼 width 합 68+80+246+116+246+246+246 = 1248 */
+/* 컬럼 width 합 68+80+246+150+246+246+246 = 1282 */
 .program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid .ant-table-container {
-  min-width: 1248px;
+  min-width: 1282px;
+}
+
+/* 권한 배지 — StatusDropdownCell tag132 내부 132×33 */
+.program-managers-tab__role-badge {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: row;
+  width: 132px;
+  min-width: 132px;
+  max-width: 132px;
+  height: 33px;
+  min-height: 33px;
+  max-height: 33px;
+  padding: 6px 10px;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 4px;
+  border-width: 1px;
+  border-style: solid;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .status-dropdown-cell__status-trigger--tag-132
+  .program-managers-tab__role-badge {
+  width: 132px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+  height: 33px !important;
+  min-height: 33px !important;
+  max-height: 33px !important;
 }
 
 .program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid {
@@ -67,34 +103,87 @@
   overflow: visible;
 }
 
-/* 권한 열: 드롭다운 래퍼·트리거 수평 중앙 (열림 시 margin-inline:auto 밀림 방지) */
+/* 권한 열: cms-data-table 기본 좌우 padding(16px) 제거 — 150px 트리거가 셀을 넘어 연락처 열을 밀지 않도록 */
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
-  td.status-dropdown-cell__cell-status--tag-100 {
-  text-align: center !important;
+  .ant-table-tbody
+  > tr
+  > td.status-dropdown-cell__cell-status--tag-132,
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.status-dropdown-cell__cell-status--tag-132 {
   padding-left: 0 !important;
   padding-right: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
 }
 
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
-  td.status-dropdown-cell__cell-status--tag-100
+  .ant-table-tbody
+  > tr
+  > td.status-dropdown-cell__cell-status--tag-132
   .ant-dropdown-trigger {
   display: inline-flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  max-width: 116px;
+  max-width: 150px;
   margin-inline: auto;
   box-sizing: border-box;
+  vertical-align: middle;
 }
 
-/* 행 hover 시 열린 tag-100 트리거 민트 외곽·그림자 유지 (공통 규칙이 border 제거함) */
+/* tag-132 트리거: 닫힘·호버·행 hover 동일 외곽 치수 유지 */
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open),
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open):hover,
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open):focus-visible,
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
   .ant-table-tbody
   > tr:hover
-  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open) {
+  display: inline-flex !important;
+  box-sizing: border-box !important;
+  width: 150px !important;
+  min-width: 150px !important;
+  max-width: 150px !important;
+  padding: 8px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  outline: none !important;
+}
+
+/* 드롭다운 열림 시 행 높이 고정 — UI shifting 방지 */
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+}
+
+/* 행 hover 시 열린 tag-132 트리거 민트 외곽·그림자 유지 (공통 규칙이 border 제거함) */
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__status-trigger--tag-132.status-dropdown-cell__status-trigger--open {
   border-color: var(--JA-mint-01, #01a1af) !important;
   box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1) !important;
   background: #fff !important;

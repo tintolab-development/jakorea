@@ -6,17 +6,17 @@ Swagger 스펙에서 TypeScript API 클라이언트·스키마를 생성하는 �
 
 ## 스크립트
 
-| 명령                                               | 설명                                                                        |
-| -------------------------------------------------- | --------------------------------------------------------------------------- |
+| 명령                                               | 설명                                                                      |
+| -------------------------------------------------- | ------------------------------------------------------------------------- |
 | `pnpm --filter cms fetch:openapi`                  | `openapi/backend.openapi.json` 다운로드 (`{VITE_API_SERVER}/v3/api-docs`) |
-| `pnpm --filter cms filter:openapi:dashboard`       | 대시보드 subset                                                             |
-| `pnpm --filter cms filter:openapi:logs`            | 로그 subset                                                                 |
-| `pnpm --filter cms filter:openapi:data-management` | 데이터 관리 subset                                                          |
-| `pnpm --filter cms filter:openapi:posts`           | 게시글 subset                                                               |
-| `pnpm --filter cms filter:openapi:settlement`      | 정산 subset                                                                 |
-| `pnpm --filter cms generate:api`                   | 위 filter 전체 + Orval codegen                                              |
+| `pnpm --filter cms filter:openapi:dashboard`       | 대시보드 subset                                                           |
+| `pnpm --filter cms filter:openapi:logs`            | 로그 subset                                                               |
+| `pnpm --filter cms filter:openapi:data-management` | 데이터 관리 subset                                                        |
+| `pnpm --filter cms filter:openapi:posts`           | 게시글 subset                                                             |
+| `pnpm --filter cms filter:openapi:settlement`      | 정산 subset                                                               |
+| `pnpm --filter cms generate:api`                   | 위 filter 전체 + Orval codegen                                            |
 
-기본 ngrok fallback: `https://12aa-221-146-247-18.ngrok-free.app`
+기본 ngrok fallback: `https://8eed-221-146-247-18.ngrok-free.app/`
 
 ---
 

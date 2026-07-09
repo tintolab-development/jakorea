@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/location build",
+    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/rich-text --filter @jakorea/location build",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint . --max-warnings=-1",
@@ -13,8 +13,12 @@
   },
   "dependencies": {
     "@jakorea/location": "workspace:*",
+    "@jakorea/rich-text": "workspace:*",
     "@jakorea/ui": "workspace:*",
     "@jakorea/utils": "workspace:*",
+    "@tiptap/core": "^3.25.0",
+    "@tiptap/pm": "^3.25.0",
+    "@tiptap/react": "^3.25.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

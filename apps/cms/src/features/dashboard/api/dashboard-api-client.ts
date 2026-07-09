@@ -6,7 +6,6 @@ import { getJAKoreaCMSBackendAPIDashboardSubset } from '@/shared/api/generated/d
 import type {
   DashboardHomeResponse,
   DashboardKpiProgressListResponse,
-  DashboardLogAlertListResponse,
   DashboardMePreferencesRequest,
   DashboardMePreferencesResponse,
   DashboardPreferencesResponse,
@@ -87,10 +86,6 @@ export async function saveDashboardPreferencesRemote(
 
 export async function fetchDashboardShortcutsRemote(): Promise<DashboardShortcutListResponse> {
   return unwrapBody(await dashboardRemoteApi.dashboardShortcuts())
-}
-
-export async function fetchDashboardLogAlertsRemote(): Promise<DashboardLogAlertListResponse> {
-  return unwrapBody(await dashboardRemoteApi.dashboardLogAlerts())
 }
 
 /** Swagger: GET /api/me/dashboard-preferences */

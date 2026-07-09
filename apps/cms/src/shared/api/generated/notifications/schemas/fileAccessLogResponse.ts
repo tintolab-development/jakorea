@@ -36,7 +36,7 @@ export interface FileAccessLogResponse {
   failReason?: string;
   /** 요청 IP */
   requestIp?: string;
-  /** User-Agent */
+  /** User-Agent 헤더 */
   userAgent?: string;
   /** 요청 trace ID */
   traceId?: string;

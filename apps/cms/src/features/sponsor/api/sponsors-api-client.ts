@@ -1,6 +1,7 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPIDataManagementSubset } from '@/shared/api/generated/data-management/data-management-api'
 import type {
+  ProgramHistoriesParams,
   SponsorContactRequest,
   SponsorContactResponse,
   SponsorDetailResponse,
@@ -10,6 +11,7 @@ import type {
   SponsorYearlyBusinessRequest,
   SponsorYearlyBusinessResponse,
 } from '@/shared/api/generated/data-management/schemas'
+import type { PageResponseSponsorProgramHistoryResponse } from '@/shared/api/generated/data-management/schemas/pageResponseSponsorProgramHistoryResponse'
 
 const dmApi = getJAKoreaCMSBackendAPIDataManagementSubset()
 
@@ -28,14 +30,14 @@ export async function fetchSponsorRemote(id: string): Promise<SponsorDetailRespo
 }
 
 export async function createSponsorRemote(body: SponsorRequest): Promise<SponsorResponse> {
-  return unwrapApiBody(await dmApi.create1(body))
+  return unwrapApiBody(await dmApi.create2(body))
 }
 
 export async function updateSponsorRemote(
   id: string,
   body: SponsorRequest
 ): Promise<SponsorResponse> {
-  return unwrapApiBody(await dmApi.update1(pathId(id), body))
+  return unwrapApiBody(await dmApi.update2(pathId(id), body))
 }
 
 export async function deleteSponsorRemote(id: string): Promise<void> {
@@ -92,4 +94,11 @@ export async function updateYearlyBusinessRemote(
 
 export async function deleteYearlyBusinessRemote(yearlyBusinessId: string): Promise<void> {
   await dmApi.deleteYearlyBusiness(pathId(yearlyBusinessId))
+}
+
+export async function fetchProgramHistoriesRemote(
+  sponsorId: string,
+  params?: ProgramHistoriesParams
+): Promise<PageResponseSponsorProgramHistoryResponse> {
+  return unwrapApiBody(await dmApi.programHistories(pathId(sponsorId), params))
 }

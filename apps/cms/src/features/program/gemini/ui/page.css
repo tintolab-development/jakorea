@@ -1,7 +1,12 @@
-/* 탭 그룹 왼쪽 여백 — 권한 승인 페이지와 동일 */
+/* 탭 — 계좌 지급 확인(account-payments-page__top-nav)과 동일: 행 패딩 없음, 탭↔본문 16px */
+.gemini-visiting-training-page__tabs.cms-text-tabs {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--spacing-16, 16px);
+}
+
 .gemini-visiting-training-page__tabs.cms-text-tabs .cms-text-tabs__row {
-  padding-left: 20px;
-  padding-bottom: 16px;
+  padding: 0;
 }
 
 .gemini-visiting-training-page__approved-placeholder {

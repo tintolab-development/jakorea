@@ -7,5 +7,6 @@
  */
 
 export interface AdminCommentUpdateRequest {
-  comment?: string;
+  /** @minLength 1 */
+  comment: string;
 }

@@ -12,4 +12,5 @@ export interface SettlementApplicationAdminActionResponse {
   settlementId?: number;
   paymentStatementId?: number;
   message?: string;
+  availableActions?: string[];
 }

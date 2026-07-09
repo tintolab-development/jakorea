@@ -5,11 +5,12 @@ export const GEMINI_RECRUITMENT_LNB_PARAM = 'lnb'
 export const GEMINI_RECRUITMENT_EDIT_PARAM = 'edit'
 export const GEMINI_RECRUITMENT_EDIT_INFO_VALUE = 'info'
 
-export type GeminiRecruitmentDetailLnbKey = 'info' | 'institutions'
+export type GeminiRecruitmentDetailLnbKey = 'info' | 'institutions' | 'managers'
 
 export function parseGeminiRecruitmentDetailLnb(
   raw: string | null
 ): GeminiRecruitmentDetailLnbKey {
   if (raw === 'institutions') return 'institutions'
+  if (raw === 'managers') return 'managers'
   return 'info'
 }

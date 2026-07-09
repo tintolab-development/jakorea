@@ -7,7 +7,8 @@ import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
-import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
+import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
+import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -16,8 +17,6 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
-import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
-import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
@@ -98,32 +97,27 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     setSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
   }
 
-  const sponsorOptions = useMemo(
-    () => [
-      { value: ALL_VALUE, label: '전체' },
-      ...mockSponsorManagementListRows.map(s => ({ value: s.id, label: s.name })),
-    ],
-    []
+  const { options: sponsorApiOptions } = useSponsorSelectOptions()
+  const contactsQuery = useSponsorContactsQuery(
+    sponsorId === ALL_VALUE ? null : sponsorId,
+    sponsorId !== ALL_VALUE && Boolean(sponsorId)
   )
 
-  const selectedSponsor = useMemo<SponsorManagementRow | null>(
-    () =>
-      sponsorId === ALL_VALUE
-        ? null
-        : (mockSponsorManagementListRows.find(s => s.id === sponsorId) ?? null),
-    [sponsorId]
+  const sponsorOptions = useMemo(
+    () => [{ value: ALL_VALUE, label: '전체' }, ...sponsorApiOptions],
+    [sponsorApiOptions]
   )
 
   const managerOptions = useMemo(() => {
     if (sponsorId === ALL_VALUE) {
       return [{ value: ALL_VALUE, label: '전체' }]
     }
-    if (!selectedSponsor) return []
-    return getSponsorDetailContactsNormalized(selectedSponsor).map(c => ({
+    if (!sponsorId) return []
+    return (contactsQuery.data ?? []).map(c => ({
       value: c.id,
       label: c.name,
     }))
-  }, [selectedSponsor, sponsorId])
+  }, [contactsQuery.data, sponsorId])
 
   const detailedProgramOptions = useMemo(
     () => [

@@ -14,8 +14,7 @@
   flex-direction: column;
   gap: 32px;
   width: 100%;
-  max-width: var(--form-editor-paragraph-column-max-width, 1400px);
-  margin-inline: auto;
+  max-width: var(--form-editor-paragraph-column-max-width, 1404px);
   min-height: 0;
   flex: 1 1 auto;
   overflow: auto;

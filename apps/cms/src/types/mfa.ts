@@ -30,6 +30,10 @@ export interface MfaState {
   challengeUuid?: string
   mfaMethod?: string
   challengeExpiresAt?: string
+  /** 로그인 challenge·setup 응답에 포함된 TOTP 시크릿(최초 등록) */
+  totpSecret?: string
+  otpauthUri?: string
+  qrDataUrl?: string
 }
 
 /** TOTP 등록/QR 프로비저닝 결과 (Mock) */

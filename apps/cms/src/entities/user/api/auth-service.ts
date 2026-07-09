@@ -6,6 +6,7 @@
 import type { LoginRequest, LoginResponse, User } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
 import { fetchAdminLogin } from '@/features/auth/api/admin-login-fetcher'
+import type { AdminMfaChallengeResponse } from '@/features/auth/model/admin-login-api.types'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
@@ -50,7 +51,7 @@ function buildPendingAdminUser(email: string): Omit<User, 'password'> {
 
 function buildMfaStateFromChallenge(
   email: string,
-  challenge: { challengeUuid: string; mfaMethod: string; expiresAt: string }
+  challenge: AdminMfaChallengeResponse
 ): MfaState {
   return {
     method: 'totp',
@@ -64,6 +65,9 @@ function buildMfaStateFromChallenge(
     challengeUuid: challenge.challengeUuid,
     mfaMethod: challenge.mfaMethod,
     challengeExpiresAt: challenge.expiresAt,
+    totpSecret: challenge.totpSecret,
+    otpauthUri: challenge.otpauthUri,
+    qrDataUrl: challenge.qrDataUrl,
   }
 }
 

@@ -22,4 +22,5 @@ export interface AccountPaymentListItemResponse {
   sourceId?: number;
   programId?: number;
   memberId?: number;
+  availableActions?: string[];
 }

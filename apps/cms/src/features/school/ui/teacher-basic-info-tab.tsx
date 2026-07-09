@@ -6,6 +6,8 @@ import { CmsButton } from '@/shared/ui'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { formatDate } from '@/shared/utils'
 import type { TeacherDetailData } from '@/data/mock/school-detail'
+import { inlineSegmentsWithDividers } from '@/features/user/detail/ui/user-basic-info/display'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
 export interface TeacherBasicInfoTabProps {
   detail: TeacherDetailData
@@ -75,7 +77,7 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                   <span>주민등록번호</span>
                 </td>
                 <td className="teacher-detail-modal__cell--input">
-                  {detail.residentNumber} | 만 {detail.age}세
+                  {inlineSegmentsWithDividers([detail.residentNumber, `만 ${detail.age}세`])}
                 </td>
               </tr>
 
@@ -90,7 +92,7 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                   <span>성별 및 병역사항</span>
                 </td>
                 <td className="teacher-detail-modal__cell--input">
-                  {detail.gender} | {detail.militaryStatus}
+                  {inlineSegmentsWithDividers([detail.gender, detail.militaryStatus])}
                 </td>
               </tr>
 
@@ -126,7 +128,7 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                   <span>소속 및 강사 경력</span>
                 </td>
                 <td className="teacher-detail-modal__cell--input">
-                  {detail.schoolName} | {detail.instructorExperience}
+                  {inlineSegmentsWithDividers([detail.schoolName, detail.instructorExperience])}
                 </td>
               </tr>
 
@@ -138,7 +140,9 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                   <span>정산 계좌 정보</span>
                 </td>
                 <td colSpan={3} className="teacher-detail-modal__cell--input">
-                  {detail.bankName} {detail.accountNumber} | {detail.accountHolder}
+                  {renderDetailInfoPipeSeparated(
+                    `${detail.bankName} ${detail.accountNumber} | ${detail.accountHolder}`
+                  )}
                 </td>
               </tr>
             </tbody>
@@ -160,7 +164,7 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                 <span>연동된 소셜 계정</span>
               </td>
               <td className="teacher-detail-modal__cell--input">
-                {detail.socialAccounts.join(' | ')}
+                {inlineSegmentsWithDividers(detail.socialAccounts)}
               </td>
               <td className="teacher-detail-modal__cell--label">
                 <span>가입일</span>
@@ -174,13 +178,19 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                 <span>개인정보 수집 동의</span>
               </td>
               <td className="teacher-detail-modal__cell--input">
-                {detail.personalInfoConsentDate} | {detail.personalInfoConsent ? '동의' : '미동의'}
+                {inlineSegmentsWithDividers([
+                  detail.personalInfoConsentDate,
+                  detail.personalInfoConsent ? '동의' : '미동의',
+                ])}
               </td>
               <td className="teacher-detail-modal__cell--label">
                 <span>마케팅 제공 동의</span>
               </td>
               <td className="teacher-detail-modal__cell--input">
-                {detail.marketingConsentDate} | {detail.marketingConsent ? '동의' : '미동의'}
+                {inlineSegmentsWithDividers([
+                  detail.marketingConsentDate,
+                  detail.marketingConsent ? '동의' : '미동의',
+                ])}
               </td>
             </tr>
           </tbody>
@@ -204,7 +214,7 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
                     <span>최종 학력</span>
                   </td>
                   <td colSpan={3} className="teacher-detail-modal__cell--input">
-                    {detail.education} | {detail.university}
+                    {inlineSegmentsWithDividers([detail.education, detail.university])}
                   </td>
                 </tr>
                 <tr>

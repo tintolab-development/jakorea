@@ -21,7 +21,19 @@ import type {
   PageResponseAdminAccountListItemResponse,
   PageResponseInstructorRoleRequestListItemResponse,
 } from '@/shared/api/generated/members/schemas'
+import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
+import type { AdminMemberCommentCreateRequest } from '@/shared/api/generated/members/schemas/adminMemberCommentCreateRequest'
 import type { AdminMemberDeleteRequest } from '@/shared/api/generated/members/schemas/adminMemberDeleteRequest'
+import type { AdminCommentResponse } from '@/shared/api/generated/members/schemas/adminCommentResponse'
+import type { UserResponse } from '@/shared/api/generated/members/schemas/userResponse'
+import type { ListMemberApplicationsParams } from '@/shared/api/generated/members/schemas/listMemberApplicationsParams'
+import type { ListMemberProgramHistoryParams } from '@/shared/api/generated/members/schemas/listMemberProgramHistoryParams'
+import type { ListMemberAdminProgramsParams } from '@/shared/api/generated/members/schemas/listMemberAdminProgramsParams'
+import type { PageResponseMemberApplicationHistoryResponse } from '@/shared/api/generated/members/schemas/pageResponseMemberApplicationHistoryResponse'
+import type { PageResponseMemberProgramHistoryResponse } from '@/shared/api/generated/members/schemas/pageResponseMemberProgramHistoryResponse'
+import type { PageResponseMemberAdminProgramResponse } from '@/shared/api/generated/members/schemas/pageResponseMemberAdminProgramResponse'
+import type { SchoolAffiliatedTeacherRow } from '@/shared/api/generated/members/schemas/schoolAffiliatedTeacherRow'
+import type { ListMemberCommentsParams } from '@/shared/api/generated/members/schemas/listMemberCommentsParams'
 import type { AdminPermissionResponse } from '@/shared/api/generated/members/schemas/adminPermissionResponse'
 import type { AdminRoleResponse } from '@/shared/api/generated/members/schemas/adminRoleResponse'
 import type { MemberConsentRecordResponse } from '@/shared/api/generated/members/schemas/memberConsentRecordResponse'
@@ -39,6 +51,56 @@ export async function fetchMembersPageRemote(params: ListMembersParams): Promise
 
 export async function fetchMemberDetailRemote(memberId: number): Promise<MemberDetailResponse> {
   return unwrapApiBody(await membersApi.getMemberDetail(memberIdParam(memberId)))
+}
+
+export async function updateMemberBasicInfoRemote(
+  memberId: number,
+  body: AdminMemberBasicInfoUpdateRequest
+): Promise<UserResponse> {
+  return unwrapApiBody(await membersApi.updateMemberBasicInfo(memberId, body))
+}
+
+export async function fetchMemberCommentsRemote(
+  memberId: number,
+  params?: ListMemberCommentsParams
+): Promise<AdminCommentResponse[]> {
+  const data = await unwrapApiBody(await membersApi.listMemberComments(memberId, params))
+  return Array.isArray(data) ? data : []
+}
+
+export async function createMemberCommentRemote(
+  memberId: number,
+  body: AdminMemberCommentCreateRequest
+): Promise<AdminCommentResponse> {
+  return unwrapApiBody(await membersApi.createMemberComment(memberId, body))
+}
+
+export async function fetchMemberApplicationsRemote(
+  memberId: number,
+  params?: ListMemberApplicationsParams
+): Promise<PageResponseMemberApplicationHistoryResponse> {
+  return unwrapApiBody(await membersApi.listMemberApplications(memberId, params))
+}
+
+export async function fetchMemberProgramHistoryRemote(
+  memberId: number,
+  params?: ListMemberProgramHistoryParams
+): Promise<PageResponseMemberProgramHistoryResponse> {
+  return unwrapApiBody(await membersApi.listMemberProgramHistory(memberId, params))
+}
+
+export async function fetchAffiliatedTeachersRemote(
+  memberId: number
+): Promise<SchoolAffiliatedTeacherRow[]> {
+  const data = await unwrapApiBody(await membersApi.listAffiliatedTeachers(memberId))
+  return Array.isArray(data) ? data : []
+}
+
+export async function fetchMemberAdminProgramsRemote(
+  memberId: number,
+  params?: ListMemberAdminProgramsParams
+): Promise<PageResponseMemberAdminProgramResponse> {
+  return unwrapApiBody(await membersApi.listMemberAdminPrograms(memberId, params))
 }
 
 export async function fetchMemberInstructorProfileRemote(

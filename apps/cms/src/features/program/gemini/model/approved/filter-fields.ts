@@ -5,6 +5,9 @@ import {
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/components/table-filter-group-field-width'
 
+/** 2행 하단(연수일 + 조회) — `mergedAutoFillTrailingFieldKeys` */
+export const GEMINI_APPROVED_TRAINING_TRAILING_FILTER_KEYS = ['trainingDateRange'] as const
+
 export const GEMINI_APPROVED_TRAINING_FILTER_FIELDS: FilterFieldConfig[] = [
   {
     key: 'institutionName',
@@ -24,7 +27,8 @@ export const GEMINI_APPROVED_TRAINING_FILTER_FIELDS: FilterFieldConfig[] = [
       { label: '전체', value: 'ALL' },
       { label: '프로그램 진행 예정', value: 'SCHEDULED' },
       { label: '프로그램 진행 중', value: 'IN_PROGRESS' },
-      { label: '프로그램 진행 종료', value: 'ENDED' },
+      { label: '프로그램 미진행', value: 'NOT_CONDUCTED' },
+      { label: '프로그램 진행 완료', value: 'COMPLETED' },
     ],
   },
   {
@@ -36,7 +40,7 @@ export const GEMINI_APPROVED_TRAINING_FILTER_FIELDS: FilterFieldConfig[] = [
     options: [
       { label: '전체', value: 'ALL' },
       { label: '필요', value: 'Y' },
-      { label: '불필요', value: 'N' },
+      { label: '필요 없음', value: 'N' },
     ],
   },
   {

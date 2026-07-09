@@ -1,7 +1,7 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput, CmsSelect } from '@/shared/ui'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import { affiliationLine, detailAddressView, formatGenderBirthLine } from '../display'
+import { affiliationView, detailAddressView, genderBirthView } from '../display'
 import { useBasicInfoEditing } from '../use-basic-info-editing'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
@@ -14,7 +14,7 @@ import {
 } from './constants'
 import type { BasicInfoSectionContext } from './types'
 import { formatDate } from '@/shared/utils'
-import { socialLine } from '../display'
+import { socialView } from '../display'
 
 export function AllUsersSection(ctx: BasicInfoSectionContext) {
   const {
@@ -104,7 +104,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                 />
               </span>
             ) : (
-              <span>{formatGenderBirthLine(user)}</span>
+              genderBirthView(user)
             ),
           },
         ]}
@@ -138,7 +138,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
         <EditableField
           label="소속"
           readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={<span>{affiliationLine(user)}</span>}
+          view={affiliationView(user)}
           edit={
             <span className="detail-info-form-inputs-wrapper-no-gap">
               <CmsInput
@@ -168,7 +168,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
 
       <EditableRow type="double">
         <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
-        <EditableField label="연동된 소셜 계정" readOnlyDisplay view={<span>{socialLine(user)}</span>} />
+        <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
       </EditableRow>
     </>
   )

@@ -112,6 +112,11 @@ export {
 } from './economy-programs'
 export { getGeneralPrograms, getGeneralProgramById } from './general-programs'
 export {
+  getTrainedTeachersPrograms,
+  getTrainedTeachersProgramById,
+  invalidateTrainedTeachersProgramsCache,
+} from './trained-teachers-programs'
+export {
   isGeminiProgram,
   getGeneralEducationPrograms,
   getGeminiPrograms,

@@ -6,9 +6,10 @@ import {
   createSocialAuthClient,
   createSocialAuthState,
   type CallbackInput,
+  toApiProviderCode,
 } from '@jakorea/social-auth'
 
-import type { OAuthIntent } from '@jakorea/social-auth'
+import type { OAuthIntent, SocialProvider } from '@jakorea/social-auth'
 
 import { loginWithSocial } from '@/entities/user/api/auth-service'
 import {
@@ -16,6 +17,7 @@ import {
   isSocialAuthSignupRemoteEnabled,
   isSocialAdminSocialApiRemoteEnabled,
 } from '@/features/auth/api/social-auth-remote-capabilities'
+import { resolveBackendApiOrigin } from '@/features/auth/lib/oauth-backend-origin'
 import { resolveOAuthRedirectOrigin } from '@/features/auth/lib/oauth-redirect-origin'
 import { axiosClient } from '@/shared/api'
 import { adminSocialAuthPaths } from '@/shared/config/social-auth-paths'
@@ -32,6 +34,7 @@ const oauthConfig = {
 const routes = {
   callbackPath: '/oauth/{provider}',
   signupReturnPath: '/register/social-connect/callback',
+  loginCompletePath: '/login/social/complete',
 } as const
 
 const storagePrefix = 'cms_admin_oauth'
@@ -44,9 +47,15 @@ const httpClient = {
   delete: (url: string) => axiosClient.delete(url),
 }
 
+function resolveBackendSsoCallbackUri(provider: SocialProvider): string {
+  const base = resolveBackendApiOrigin()
+  return `${base}${adminSocialAuthPaths.ssoProviderCallback(toApiProviderCode(provider).toLowerCase())}`
+}
+
 const adminSsoAdapter = createAdminSsoAdapter({
   http: httpClient,
   paths: adminSocialAuthPaths,
+  resolveBackendCallbackUri: resolveBackendSsoCallbackUri,
 })
 
 const signupSocialAdapter = createSignupSocialAdapter({
@@ -60,8 +69,6 @@ export const cmsSocialAuthClient = createSocialAuthClient({
   paths: adminSocialAuthPaths,
   routes,
   oauthConfig,
-  /** 로그인: Kakao/Naver/Google authorize URL은 프론트 생성 → `/oauth/{provider}` 콜백 후 code는 실 API 교환 */
-  useFrontendOAuthStart: intent => intent === 'login',
   isRemoteEnabled: (intent?: OAuthIntent) => {
     if (intent === 'login') {
       return isSocialAuthLoginRemoteEnabled()

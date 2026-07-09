@@ -107,6 +107,8 @@ import { InstitutionCombinedClassEditCell } from '@/features/program/general/ui/
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
+  renderProgramDetailPipeSeparated,
+  renderDetailInfoPipeSeparated,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -128,34 +130,39 @@ import '@/features/program/general/ui/detail-modal/applications/applicant-detail
 import {
   GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
   getGeneralParticipatingInstitutionDetailTabKeys,
-  normalizeGeneralParticipatingInstitutionDetailTab,
+  normalizeParticipatingInstitutionDetailTab,
   type GeneralParticipatingInstitutionDetailTabKey,
+  type ParticipatingInstitutionDetailTabKey,
 } from '../../../lib/participating-institution-detail-tabs'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { TrainedTeachersParticipatingInstitutionDetailView } from '@/features/program/trained-teachers/ui/institution-detail/participating-institution-detail-view'
 
 export {
   GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
-  normalizeGeneralParticipatingInstitutionDetailTab,
+  normalizeParticipatingInstitutionDetailTab as normalizeGeneralParticipatingInstitutionDetailTab,
+  normalizeParticipatingInstitutionDetailTab,
   type GeneralParticipatingInstitutionDetailTabKey,
+  type ParticipatingInstitutionDetailTabKey,
 }
 
 /** @deprecated 일반 참여 기관 상세와 동일 — URL 파라미터 호환용 */
 export const SCHOOL_DETAIL_TAB_KEYS = GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS
-export type SchoolDetailTabKey = GeneralParticipatingInstitutionDetailTabKey
+export type SchoolDetailTabKey = ParticipatingInstitutionDetailTabKey
 
 export const SCHOOL_DETAIL_DISABLED_TAB_KEYS: readonly SchoolDetailTabKey[] = []
 
 export function normalizeSchoolDetailTab(
   tab: SchoolDetailTabKey,
-  program?: Pick<Program, 'studentListRequired'> | null
+  program?: Program | null
 ): SchoolDetailTabKey {
-  return normalizeGeneralParticipatingInstitutionDetailTab(tab, program)
+  return normalizeParticipatingInstitutionDetailTab(tab, program)
 }
 
 function isSchoolDetailTabDisabled(key: SchoolDetailTabKey): boolean {
   return SCHOOL_DETAIL_DISABLED_TAB_KEYS.includes(key)
 }
 
-const SCHOOL_DETAIL_TAB_LABELS: Record<SchoolDetailTabKey, string> = {
+const SCHOOL_DETAIL_TAB_LABELS: Record<GeneralParticipatingInstitutionDetailTabKey, string> = {
   application: '신청 정보',
   students: '학생 명단',
   instructors: '강사 배정 현황',
@@ -319,22 +326,30 @@ export interface SchoolDetailFullpageViewProps {
   onTextbookStatusChange?: (schoolId: string, status: TextbookStatusKey) => void
 }
 
-export function GeneralParticipatingInstitutionDetailView({
-  program,
-  detail,
-  row,
-  participatingSchoolList = [],
-  activeTab: activeTabFromUrl,
-  onTabChange,
-  onClearSchoolId: _onClearSchoolId,
-  onSaveBasicInfo,
-  onSaveInstructorInfo,
-  savedBasicPatches = {},
-  savedInstructorPatches = {},
-  instructorList,
-  onCancelApproval: _onCancelApproval,
-  onTextbookStatusChange,
-}: SchoolDetailFullpageViewProps) {
+export function GeneralParticipatingInstitutionDetailView(
+  props: SchoolDetailFullpageViewProps
+) {
+  if (isTrainedTeachersDetailProgram(props.program)) {
+    return <TrainedTeachersParticipatingInstitutionDetailView {...props} />
+  }
+
+  const {
+    program,
+    detail,
+    row,
+    participatingSchoolList = [],
+    activeTab: activeTabFromUrl,
+    onTabChange,
+    onClearSchoolId: _onClearSchoolId,
+    onSaveBasicInfo,
+    onSaveInstructorInfo,
+    savedBasicPatches = {},
+    savedInstructorPatches = {},
+    instructorList,
+    onCancelApproval: _onCancelApproval,
+    onTextbookStatusChange,
+  } = props
+
   const currentUser = useAuthStore(state => state.user)
   const showAdminCommentSection = isCmsAdminUser(currentUser)
   const { showAlert } = useCmsAlert()
@@ -563,7 +578,7 @@ export function GeneralParticipatingInstitutionDetailView({
     mergedDetail.mealNotice === '가능'
       ? '가능'
       : mergedDetail.mealProvided
-        ? `제공 | ${mergedDetail.mealNotice ?? ''}`
+        ? renderDetailInfoPipeSeparated(`제공 | ${mergedDetail.mealNotice ?? ''}`)
         : '미제공'
 
   /** ` | ` 구분 값 → td 디바이더 (안내 사항·성범죄 경력 조회서 등) */
@@ -930,7 +945,9 @@ export function GeneralParticipatingInstitutionDetailView({
         width: 280,
         align: 'center',
         render: (v: string | undefined, record: AssignedInstructorDisplayRow) => {
-          if (record.assignedScheduleLine) return record.assignedScheduleLine
+          if (record.assignedScheduleLine) {
+            return renderProgramDetailPipeSeparated(record.assignedScheduleLine)
+          }
           const date = v ?? '-'
           const time = record.assignedTime ?? '-'
           if (!date && !time) return '-'
@@ -989,7 +1006,9 @@ export function GeneralParticipatingInstitutionDetailView({
         width: 300,
         align: 'center',
         render: (v: string | undefined, record: WaitingInstructorRow) => {
-          if (record.hopeScheduleLine) return record.hopeScheduleLine
+          if (record.hopeScheduleLine) {
+            return renderProgramDetailPipeSeparated(record.hopeScheduleLine)
+          }
           const date = v ?? '-'
           const time = record.hopeTime ?? '-'
           const session = record.hopeSession
@@ -1222,7 +1241,7 @@ export function GeneralParticipatingInstitutionDetailView({
         onChange={key => setActiveTab(key as SchoolDetailTabKey)}
         items={visibleDetailTabs.map(key => ({
           key,
-          label: SCHOOL_DETAIL_TAB_LABELS[key],
+          label: SCHOOL_DETAIL_TAB_LABELS[key as GeneralParticipatingInstitutionDetailTabKey],
           disabled: isSchoolDetailTabDisabled(key),
           title: isSchoolDetailTabDisabled(key) ? '해당 화면은 준비 중입니다.' : undefined,
         }))}

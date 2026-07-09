@@ -74,3 +74,31 @@ export function persistWritingFormTemplateSave(args: {
     )
   }
 }
+
+/** localStorage 우선 저장 + formsSurveys API 동기화(활성 시 fire-and-forget) */
+export async function persistWritingFormTemplateDraft(args: {
+  templateId: string
+  draft: WritingFormDraft
+  overlay?: Record<string, unknown>
+  editorState?: Record<string, unknown>
+}): Promise<void> {
+  const { saveFormTemplateVersionDraft } = await import(
+    '@/features/template/api/admin-form-templates-service'
+  )
+  await saveFormTemplateVersionDraft({
+    templateCode: args.templateId,
+    draft: args.draft,
+    overlay: args.overlay,
+    editorState: args.editorState,
+  })
+}
+
+/** API draft 우선, 실패·미활성 시 localStorage */
+export async function loadWritingFormTemplateDraft(
+  templateId: string
+): Promise<WritingFormTemplateSaveRecord | null> {
+  const { loadFormTemplateVersionDraft } = await import(
+    '@/features/template/api/admin-form-templates-service'
+  )
+  return loadFormTemplateVersionDraft(templateId)
+}

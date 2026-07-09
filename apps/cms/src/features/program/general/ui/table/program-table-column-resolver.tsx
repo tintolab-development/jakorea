@@ -1,6 +1,7 @@
+import type { ColumnsType } from 'antd/es/table'
 import { STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components/status-dropdown-cell'
 import { ProgramLifecycleStatusTableCell } from '@/shared/components/program-lifecycle-status-table-cell'
-import { ProgramLifecycleStatusBadge } from '@/shared/components/program-lifecycle-status-badge'
+import { ProgramListOverviewProgressCell } from '@/shared/components/program-list-overview-progress-cell'
 import { formatDateRange } from '../../hooks/use-format-date'
 import { getCapacity } from '../../lib/program-helpers'
 import { resolveGeneralProgramListTitle } from '../../lib/detail-common-info-display'
@@ -19,6 +20,7 @@ export type ProgramListView = 'ALL' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED'
 
 /** 위젯 미선택 등 비정상 상태 */
 export type ProgramListTableView = ProgramListView | 'FALLBACK'
+export type ProgramListColumnPreset = 'default' | 'trainedTeachers'
 
 export interface ResolveEducationColumnsParams {
   studentRecruitmentTable?: boolean
@@ -26,6 +28,11 @@ export interface ResolveEducationColumnsParams {
   isOverviewListPage?: boolean
   programMode?: ProgramListProgramMode
   listView?: ProgramListTableView
+  columnPreset?: ProgramListColumnPreset
+}
+
+function removeInstructorRecruitmentColumn(columns: ColumnsType<Program>): ColumnsType<Program> {
+  return columns.filter(column => column.key !== 'instructorRecruitment')
 }
 
 const WIDTH_NO = 64
@@ -96,7 +103,7 @@ function createProgramListAllColumns() {
       className: 'program-list-table__col-progress',
       render: (_: unknown, record: Program) =>
         record.lifecycleStatus ? (
-          <ProgramLifecycleStatusBadge status={record.lifecycleStatus} variant="table" />
+          <ProgramListOverviewProgressCell status={record.lifecycleStatus} />
         ) : (
           '-'
         ),
@@ -269,7 +276,7 @@ function createProgramListFallbackColumns() {
       align: 'center' as const,
       render: (_: unknown, record: Program) =>
         record.lifecycleStatus ? (
-          <ProgramLifecycleStatusBadge status={record.lifecycleStatus} variant="table" />
+          <ProgramListOverviewProgressCell status={record.lifecycleStatus} />
         ) : (
           '-'
         ),
@@ -354,6 +361,7 @@ export function resolveEducationColumns(params: ResolveEducationColumnsParams) {
     instructorRecruitmentTable,
     isOverviewListPage,
     listView = 'ALL',
+    columnPreset = 'default',
     ...rest
   } = params
 
@@ -362,20 +370,28 @@ export function resolveEducationColumns(params: ResolveEducationColumnsParams) {
   if (instructorRecruitmentTable) return instructorRecruitmentTableColumns
 
   if (isOverviewListPage) {
-    switch (listView) {
-      case 'ALL':
-        return createProgramListAllColumns()
+    const resolveColumns = () => {
+      switch (listView) {
+        case 'ALL':
+          return createProgramListAllColumns()
 
-      case 'SCHEDULED':
-        return createProgramListScheduledColumns()
+        case 'SCHEDULED':
+          return createProgramListScheduledColumns()
 
-      case 'IN_PROGRESS':
-      case 'COMPLETED':
-        return createProgramListInProgressColumns()
+        case 'IN_PROGRESS':
+        case 'COMPLETED':
+          return createProgramListInProgressColumns()
 
-      default:
-        return createProgramListFallbackColumns()
+        default:
+          return createProgramListFallbackColumns()
+      }
     }
+
+    const columns = resolveColumns() as ColumnsType<Program>
+    if (columnPreset === 'trainedTeachers') {
+      return removeInstructorRecruitmentColumn(columns)
+    }
+    return columns
   }
 
   return createGeneralColumns(rest)

@@ -21,9 +21,8 @@ export const GEMINI_PERFORMANCE_FILTER_FIELDS: FilterFieldConfig[] = [
     width: FILTER_CONTROL_MAX_WIDTH_PX,
     options: [
       { label: '전체', value: 'ALL' },
-      { label: '대면', value: 'OFFLINE' },
-      { label: '비대면', value: 'ONLINE' },
-      { label: '혼합', value: 'HYBRID' },
+      { label: '온라인', value: 'ONLINE' },
+      { label: '오프라인', value: 'OFFLINE' },
     ],
   },
   {

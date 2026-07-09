@@ -20,6 +20,7 @@ import {
 } from './user-detail-fullpage-helpers'
 import { buildUserDetailSidebarItems } from '../ui/detail-info/user-detail-fullpage-sidebar-items'
 import { useUserDetailApplications } from './use-user-detail-applications'
+import { useMemberProgramHistoryQuery } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { useUserDetailUrlSync } from './use-user-detail-url-sync'
 import type { UseUserDetailModalsResult } from './use-user-detail-modals'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
@@ -57,10 +58,11 @@ import {
 } from '@/features/user/detail/ui/user-basic-info-section'
 import { handleError } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useQueryClient } from '@tanstack/react-query'
+import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
 import {
-  isMemberBasicInfoPatchRemoteEnabled,
   isMembersRemoteEnabled,
 } from '@/features/user/api/member-remote-capabilities'
 
@@ -101,10 +103,19 @@ export function useUserDetailController({
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const currentUser = useAuthStore(state => state.user)
+  const queryClient = useQueryClient()
 
   const [tabState, setTabState] = useState<TabState>({ lnb: 'detail-info' })
   const { applications, enrollmentApplications, applicationsLoading, refetchApplications } =
     useUserDetailApplications(open, displayUser)
+
+  const membersRemote = isMembersRemoteEnabled()
+  const { data: programHistoryData, isLoading: programHistoryLoading } =
+    useMemberProgramHistoryQuery(
+      displayUser?.memberId,
+      displayUser?.id,
+      open && membersRemote
+    )
 
   const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
   const [volunteerHistoriesLoading, setVolunteerHistoriesLoading] = useState(false)
@@ -174,6 +185,12 @@ export function useUserDetailController({
   }, [displayUser?.id])
 
   useEffect(() => {
+    if (membersRemote) {
+      setVolunteerHistories(programHistoryData?.volunteerHistories ?? [])
+      setVolunteerHistoriesLoading(programHistoryLoading)
+      return
+    }
+
     if (open && displayUser) {
       setVolunteerHistoriesLoading(true)
       try {
@@ -191,7 +208,7 @@ export function useUserDetailController({
     } else {
       setVolunteerHistories([])
     }
-  }, [open, displayUser])
+  }, [open, displayUser, membersRemote, programHistoryData, programHistoryLoading])
 
   const handleProgressStatusChange = useCallback(
     async (app: Application, displayStatus: ProgramEnrollmentDisplayStatus) => {
@@ -374,12 +391,6 @@ export function useUserDetailController({
 
   const saveBasicInfoEdit = useCallback(async () => {
     if (!displayUser || !basicInfoDraft || !patchMemberBasicInfo) return
-    if (isMembersRemoteEnabled() && !isMemberBasicInfoPatchRemoteEnabled()) {
-      handleError(new Error('회원 기본정보 수정 API가 아직 제공되지 않습니다.'), {
-        defaultMessage: '회원 기본정보 수정 API가 아직 제공되지 않습니다.',
-      })
-      return
-    }
     if (displayUser.role === 'ADMIN' && !canAccessAdminCommentInAdminDetail(currentUser)) return
     setBasicInfoSaveLoading(true)
     try {
@@ -404,6 +415,11 @@ export function useUserDetailController({
         patch = draftToBasicInfoPatch(basicInfoDraft)
       }
       const updated = await patchMemberBasicInfo(displayUser.id, patch)
+      if (membersRemote && displayUser.memberId != null) {
+        void queryClient.invalidateQueries({
+          queryKey: [...memberQueryKeys.all, 'comments', displayUser.memberId],
+        })
+      }
       setBasicInfoEditing(false)
       setBasicInfoDraft(null)
       onMemberBasicInfoSaved?.(updated)
@@ -418,6 +434,8 @@ export function useUserDetailController({
     patchMemberBasicInfo,
     onMemberBasicInfoSaved,
     currentUser,
+    membersRemote,
+    queryClient,
   ])
 
   const updateBasicInfoDraft = useCallback((partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => {

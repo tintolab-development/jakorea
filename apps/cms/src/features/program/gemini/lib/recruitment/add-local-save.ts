@@ -3,18 +3,49 @@
  * @see apps/cms/docs/implementation/template-form-draft-local-save.md
  */
 
+import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import type { GeminiRecruitmentEducationForm } from './add-form-options'
+
 const STORAGE_KEY = 'cms.jakorea.geminiRecruitmentAddDraft.v1'
 
 export const GEMINI_RECRUITMENT_ADD_TEMPLATE_ID = 'gemini-visiting-training-recruitment-add'
 
+/** v1 호환 — 로드 시 normalizeSnapshot으로 v2로 승격 */
+type LegacyGeminiRecruitmentAddFormSnapshot = {
+  title?: string
+  applicationPeriodStart?: string | null
+  applicationPeriodEnd?: string | null
+  trainingRequestPeriodStart?: string | null
+  trainingRequestPeriodEnd?: string | null
+  minStudentCount?: number | null
+  trainingContentMarkdown?: string
+}
+
 export type GeminiRecruitmentAddFormSnapshot = {
   title: string
+  announcementPublished: ParticipantRecruitmentAnnouncementPublishedValue
+  educationTargetLevels: string[]
+  educationTargetDetail: string
   applicationPeriodStart: string | null
   applicationPeriodEnd: string | null
   trainingRequestPeriodStart: string | null
   trainingRequestPeriodEnd: string | null
   minStudentCount: number | null
-  trainingContentMarkdown: string
+  educationForm: GeminiRecruitmentEducationForm
+  inquiryContactName: string
+  inquiryTel: string
+  inquiryEmail: string
+  notesNotApplicable: boolean
+  notes: string
+  thumbnailFileName: string | null
+  programDescription: string
+  recruitmentGuide: string
+  applicationMethod: string
+  learningSupportContent: string
+  additionalContentMarkdown: string
+  attachmentFileNames: string[]
+  institutionSectionDescription: string
+  detailSectionDescription: string
 }
 
 export type GeminiRecruitmentAddDraftSaveRecord = {
@@ -27,6 +58,86 @@ export type GeminiRecruitmentAddDraftSaveRecord = {
 type LocalSaveFile = {
   version: 1
   byTemplateId: Record<string, GeminiRecruitmentAddDraftSaveRecord>
+}
+
+export function createDefaultGeminiRecruitmentAddFormSnapshot(): GeminiRecruitmentAddFormSnapshot {
+  return {
+    title: '',
+    announcementPublished: 'published',
+    educationTargetLevels: [],
+    educationTargetDetail: '',
+    applicationPeriodStart: null,
+    applicationPeriodEnd: null,
+    trainingRequestPeriodStart: null,
+    trainingRequestPeriodEnd: null,
+    minStudentCount: 15,
+    educationForm: 'online',
+    inquiryContactName: '',
+    inquiryTel: '',
+    inquiryEmail: '',
+    notesNotApplicable: false,
+    notes: '',
+    thumbnailFileName: null,
+    programDescription: '',
+    recruitmentGuide: '',
+    applicationMethod: '',
+    learningSupportContent: '',
+    additionalContentMarkdown: '',
+    attachmentFileNames: [],
+    institutionSectionDescription: '',
+    detailSectionDescription: '',
+  }
+}
+
+export function normalizeGeminiRecruitmentAddFormSnapshot(
+  raw: LegacyGeminiRecruitmentAddFormSnapshot | GeminiRecruitmentAddFormSnapshot | null | undefined
+): GeminiRecruitmentAddFormSnapshot {
+  const defaults = createDefaultGeminiRecruitmentAddFormSnapshot()
+  if (raw == null) return defaults
+
+  const legacy = raw as LegacyGeminiRecruitmentAddFormSnapshot & GeminiRecruitmentAddFormSnapshot
+  const additionalContentMarkdown =
+    legacy.additionalContentMarkdown ??
+    legacy.trainingContentMarkdown ??
+    defaults.additionalContentMarkdown
+
+  return {
+    title: legacy.title ?? defaults.title,
+    announcementPublished: legacy.announcementPublished ?? defaults.announcementPublished,
+    educationTargetLevels: Array.isArray(legacy.educationTargetLevels)
+      ? [...legacy.educationTargetLevels]
+      : defaults.educationTargetLevels,
+    educationTargetDetail: legacy.educationTargetDetail ?? defaults.educationTargetDetail,
+    applicationPeriodStart: legacy.applicationPeriodStart ?? defaults.applicationPeriodStart,
+    applicationPeriodEnd: legacy.applicationPeriodEnd ?? defaults.applicationPeriodEnd,
+    trainingRequestPeriodStart:
+      legacy.trainingRequestPeriodStart ?? defaults.trainingRequestPeriodStart,
+    trainingRequestPeriodEnd: legacy.trainingRequestPeriodEnd ?? defaults.trainingRequestPeriodEnd,
+    minStudentCount:
+      typeof legacy.minStudentCount === 'number' && Number.isFinite(legacy.minStudentCount)
+        ? legacy.minStudentCount
+        : defaults.minStudentCount,
+    educationForm:
+      legacy.educationForm === 'offline' ? 'offline' : defaults.educationForm,
+    inquiryContactName: legacy.inquiryContactName ?? defaults.inquiryContactName,
+    inquiryTel: legacy.inquiryTel ?? defaults.inquiryTel,
+    inquiryEmail: legacy.inquiryEmail ?? defaults.inquiryEmail,
+    notesNotApplicable: legacy.notesNotApplicable ?? defaults.notesNotApplicable,
+    notes: legacy.notes ?? defaults.notes,
+    thumbnailFileName: legacy.thumbnailFileName ?? defaults.thumbnailFileName,
+    programDescription: legacy.programDescription ?? defaults.programDescription,
+    recruitmentGuide: legacy.recruitmentGuide ?? defaults.recruitmentGuide,
+    applicationMethod: legacy.applicationMethod ?? defaults.applicationMethod,
+    learningSupportContent: legacy.learningSupportContent ?? defaults.learningSupportContent,
+    additionalContentMarkdown,
+    attachmentFileNames: Array.isArray(legacy.attachmentFileNames)
+      ? [...legacy.attachmentFileNames]
+      : defaults.attachmentFileNames,
+    institutionSectionDescription:
+      legacy.institutionSectionDescription ?? defaults.institutionSectionDescription,
+    detailSectionDescription:
+      legacy.detailSectionDescription ?? defaults.detailSectionDescription,
+  }
 }
 
 function cloneJson<T>(value: T): T {
@@ -56,7 +167,7 @@ export function loadGeminiRecruitmentAddDraft(): GeminiRecruitmentAddDraftSaveRe
   if (!record || record.version !== 1) return null
   return {
     ...record,
-    form: cloneJson(record.form),
+    form: normalizeGeminiRecruitmentAddFormSnapshot(cloneJson(record.form)),
   }
 }
 
@@ -67,7 +178,7 @@ export function persistGeminiRecruitmentAddDraft(form: GeminiRecruitmentAddFormS
       version: 1,
       templateId: GEMINI_RECRUITMENT_ADD_TEMPLATE_ID,
       savedAt: new Date().toISOString(),
-      form: cloneJson(form),
+      form: cloneJson(normalizeGeminiRecruitmentAddFormSnapshot(form)),
     }
     writeFile(file)
     return true

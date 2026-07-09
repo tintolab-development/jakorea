@@ -146,7 +146,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
               ) : null}
               {hasAddressResults ? (
                 <ul className={styles['address-suggest-list']} aria-label="주소 자동완성">
-                  {addresses.map(item => {
+                  {addresses.map((item: JusoAddressItem) => {
                     const line = suggestionPrimaryLine(item)
                     const key = `${item.roadAddr}-${item.zipNo}-${item.jibunAddr}-${line}`
 
@@ -256,7 +256,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
               {hasAddressResults ? (
                 <>
                   <div className={styles['address-result-list']}>
-                    {addresses.map(item => (
+                    {addresses.map((item: JusoAddressItem) => (
                       <button
                         className={styles['address-result-button']}
                         type="button"

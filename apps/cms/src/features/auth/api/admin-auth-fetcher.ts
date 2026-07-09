@@ -7,6 +7,8 @@ import { adminAuthPaths } from '@/shared/config/api-paths'
 import type { InternalAxiosRequestConfig } from 'axios'
 import type {
   AdminMfaVerifyRequestBody,
+  AdminMfaSetupRequestBody,
+  AdminMfaSetupResult,
   AuthTokenResponse,
   RefreshTokenRequestBody,
 } from '@/features/auth/model/admin-login-api.types'
@@ -69,6 +71,61 @@ function unwrapTokenResponse(payload: unknown): AuthTokenResponse {
     }
   }
   throw parseAuthError(payload, '인증 토큰 응답 형식이 올바르지 않습니다.')
+}
+
+function readOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+function unwrapMfaSetupResponse(payload: unknown): AdminMfaSetupResult {
+  if (payload && typeof payload === 'object') {
+    const o = payload as Record<string, unknown>
+    if (o.success === true && o.data && typeof o.data === 'object') {
+      return unwrapMfaSetupResponse(o.data)
+    }
+
+    const totpSecret =
+      readOptionalString(o.totpSecret) ??
+      readOptionalString(o.secret) ??
+      readOptionalString(o.manualSecret)
+
+    if (
+      totpSecret ||
+      readOptionalString(o.otpauthUri) ||
+      readOptionalString(o.qrDataUrl) ||
+      typeof o.enabled === 'boolean' ||
+      typeof o.adminId === 'number'
+    ) {
+      return {
+        adminId: typeof o.adminId === 'number' ? o.adminId : undefined,
+        mfaMethod: readOptionalString(o.mfaMethod),
+        enabled: typeof o.enabled === 'boolean' ? o.enabled : undefined,
+        message: readOptionalString(o.message),
+        totpSecret,
+        otpauthUri: readOptionalString(o.otpauthUri),
+        qrDataUrl: readOptionalString(o.qrDataUrl) ?? readOptionalString(o.qrCode),
+      }
+    }
+  }
+
+  throw parseAuthError(payload, 'MFA 설정 응답 형식이 올바르지 않습니다.')
+}
+
+/** POST /api/admin/auth/mfa/enrollment — TOTP 최초 등록·갱신 */
+export async function fetchAdminMfaEnrollment(
+  body: AdminMfaSetupRequestBody
+): Promise<AdminMfaSetupResult> {
+  try {
+    const { data: payload } = await axiosClient.post<unknown>(adminAuthPaths.mfaEnrollment(), body)
+    return unwrapMfaSetupResponse(payload)
+  } catch (err) {
+    if (err instanceof AdminMfaApiError) throw err
+    if (err && typeof err === 'object' && 'response' in err) {
+      const axiosErr = err as { response?: { data?: unknown } }
+      throw parseAuthError(axiosErr.response?.data, 'MFA 설정에 실패했습니다.')
+    }
+    throw new AdminMfaApiError('NETWORK', 'MFA 설정 요청에 실패했습니다.')
+  }
 }
 
 export async function fetchAdminMfaVerify(

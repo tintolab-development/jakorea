@@ -20,6 +20,7 @@ import {
   getInstitutionApplicationSessionsTableSlice,
   shouldShowInstitutionApplicationSessionsColumn,
 } from '@/features/program/general/lib/institution-application-session-display'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
 const GENERAL_DETAIL_INSTITUTION_TEXT_COL_MIN_WIDTH = 185
 const GENERAL_DETAIL_INSTITUTION_SESSIONS_COL_MIN_WIDTH = 360
@@ -117,7 +118,9 @@ export function useInstitutionApplicantColumns(params: {
             minWidth: COMPANY_SCHOOL_INSTITUTION_SESSIONS_COL_MIN_WIDTH,
             align: 'center',
             render: (_: unknown, record: ApplicantSchoolRow) =>
-              formatCompanySchoolPreferredSchedule(record.sessions),
+              renderProgramDetailPipeSeparated(
+                formatCompanySchoolPreferredSchedule(record.sessions)
+              ),
           },
           {
             title: '신청 학년',

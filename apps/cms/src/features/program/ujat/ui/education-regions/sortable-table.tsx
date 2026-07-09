@@ -19,6 +19,7 @@ import {
   useSensors,
   type DragEndEvent,
   type DragOverEvent,
+  type Modifier,
 } from '@dnd-kit/core'
 import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities'
 import {
@@ -39,6 +40,12 @@ type RowContextProps = {
 
 const RowContext = createContext<RowContextProps>({})
 
+/** 드래그 중 가로 이동을 막고 세로 순서 변경만 허용 */
+const restrictToVerticalAxis: Modifier = ({ transform }) => ({
+  ...transform,
+  x: 0,
+})
+
 type SortableRowProps = React.HTMLAttributes<HTMLTableRowElement> & {
   'data-row-key'?: string | number
 }
@@ -57,7 +64,14 @@ const SortableRow: React.FC<SortableRowProps> = props => {
 
   const style: CSSProperties = {
     ...props.style,
-    transform: CSS.Translate.toString(transform),
+    transform: transform
+      ? CSS.Translate.toString({
+          x: 0,
+          y: transform.y,
+          scaleX: 1,
+          scaleY: 1,
+        })
+      : undefined,
     transition,
     ...(isDragging ? { position: 'relative', zIndex: 9999 } : {}),
   }
@@ -144,6 +158,7 @@ export function UjatEducationRegionsSortableTable({
   return (
     <DndContext
       sensors={sensors}
+      modifiers={[restrictToVerticalAxis]}
       collisionDetection={closestCenter}
       measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
       onDragStart={handleDragStart}

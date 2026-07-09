@@ -11,6 +11,7 @@ import {
 } from '@/features/template/model/template-registry/template-registry'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
+import { PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE } from '@/features/template/lib/program-registration-editor-state'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
@@ -22,6 +23,7 @@ import {
   getVisibleGeneralProgramRecruitTabKeys,
   GENERAL_PROGRAM_REGISTRATION_STEPS,
   getGeneralProgramRegistrationPhase,
+  type GeneralProgramRegistrationApplicationTabKey,
   isParticipantRegistrationStep,
   normalizeGeneralProgramRegistrationStepKey,
   type GeneralProgramRegistrationParticipantFlags,
@@ -43,20 +45,39 @@ function resolveStepTemplateName(templateId: string): string {
   )
 }
 
+function coerceRegistrationStepForVariant(
+  step: GeneralProgramRegistrationStepKey,
+  flags: GeneralProgramRegistrationParticipantFlags,
+  variant: ProgramRegistrationFormVariant
+): GeneralProgramRegistrationStepKey {
+  const coercedStep = coerceGeneralProgramRegistrationStep(step, flags)
+  if (variant !== 'trainedTeachers') return coercedStep
+  if (coercedStep === 'program') return coercedStep
+  return 'application-participant-school'
+}
+
 export function useGeneralProgramRegistrationFlow(
   open: boolean,
   options?: UseGeneralProgramRegistrationFlowOptions
 ) {
   const registrationFormVariant = options?.registrationFormVariant ?? 'general'
   const isCompanySchoolRegistration = registrationFormVariant === 'economy'
+  const isTrainedTeachersRegistration = registrationFormVariant === 'trainedTeachers'
+  const registrationTemplateId = isCompanySchoolRegistration
+    ? 'registration-economy'
+    : isTrainedTeachersRegistration
+      ? 'registration-trained-teachers'
+      : 'registration-general'
   const registrationVm = useProgramRegistrationEditor(
     open,
-    resolveStepTemplateName(
-      isCompanySchoolRegistration ? 'registration-economy' : 'registration-general'
-    ),
+    resolveStepTemplateName(registrationTemplateId),
     {
       programRegistrationFormVariant: registrationFormVariant,
       onRegistrationSaved: options?.onProgramRegistrationSaved,
+      templateCode:
+        registrationFormVariant === 'general'
+          ? PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
+          : undefined,
     }
   )
 
@@ -65,31 +86,43 @@ export function useGeneralProgramRegistrationFlow(
   const [activeStep, setActiveStep] = useState<GeneralProgramRegistrationStepKey>(() => {
     const initial = options?.initialStep
     if (initial == null) return 'program'
-    return normalizeGeneralProgramRegistrationStepKey(initial, participantFlags)
+    return coerceRegistrationStepForVariant(
+      normalizeGeneralProgramRegistrationStepKey(initial, participantFlags),
+      participantFlags,
+      registrationFormVariant
+    )
   })
 
   useEffect(() => {
     if (!open) return
     const fromUrl = options?.initialStep
     if (fromUrl == null) return
-    const normalized = normalizeGeneralProgramRegistrationStepKey(fromUrl, participantFlags)
+    const normalized = coerceRegistrationStepForVariant(
+      normalizeGeneralProgramRegistrationStepKey(fromUrl, participantFlags),
+      participantFlags,
+      registrationFormVariant
+    )
     if (normalized === activeStep) return
     setActiveStep(normalized)
-  }, [open, options?.initialStep, activeStep, participantFlags])
+  }, [open, options?.initialStep, activeStep, participantFlags, registrationFormVariant])
 
   const visibleRecruitTabKeys = useMemo(
-    () => getVisibleGeneralProgramRecruitTabKeys(participantFlags),
-    [participantFlags]
+    () =>
+      isTrainedTeachersRegistration ? [] : getVisibleGeneralProgramRecruitTabKeys(participantFlags),
+    [isTrainedTeachersRegistration, participantFlags]
   )
 
   const visibleApplicationTabKeys = useMemo(
-    () => getVisibleGeneralProgramApplicationTabKeys(participantFlags),
-    [participantFlags]
+    (): GeneralProgramRegistrationApplicationTabKey[] =>
+      isTrainedTeachersRegistration
+        ? ['application-participant-school']
+        : getVisibleGeneralProgramApplicationTabKeys(participantFlags),
+    [isTrainedTeachersRegistration, participantFlags]
   )
 
   const coercedActiveStep = useMemo(
-    () => coerceGeneralProgramRegistrationStep(activeStep, participantFlags),
-    [activeStep, participantFlags]
+    () => coerceRegistrationStepForVariant(activeStep, participantFlags, registrationFormVariant),
+    [activeStep, participantFlags, registrationFormVariant]
   )
 
   useEffect(() => {
@@ -109,6 +142,19 @@ export function useGeneralProgramRegistrationFlow(
       const base =
         GENERAL_PROGRAM_REGISTRATION_STEPS.find(s => s.key === coercedActiveStep) ??
         GENERAL_PROGRAM_REGISTRATION_STEPS[0]
+      if (isTrainedTeachersRegistration) {
+        if (base.key === 'program') {
+          return { ...base, templateId: 'registration-trained-teachers' }
+        }
+        if (base.key === 'application-participant-school') {
+          return {
+            ...base,
+            templateId: 'application-trained-teachers',
+            editorVariant: 'trained-teachers-application-institution' as const,
+          }
+        }
+        return base
+      }
       if (!isCompanySchoolRegistration) return base
       if (base.key === 'program') {
         return { ...base, templateId: 'registration-economy' }
@@ -122,7 +168,7 @@ export function useGeneralProgramRegistrationFlow(
       }
       return base
     },
-    [coercedActiveStep, isCompanySchoolRegistration]
+    [coercedActiveStep, isCompanySchoolRegistration, isTrainedTeachersRegistration]
   )
 
   const participantTemplateName = useMemo(
@@ -212,11 +258,15 @@ export function useGeneralProgramRegistrationFlow(
 
   const selectStep = useCallback(
     (key: GeneralProgramRegistrationStepKey) => {
-      const next = coerceGeneralProgramRegistrationStep(key, participantFlags)
+      const next = coerceRegistrationStepForVariant(
+        key,
+        participantFlags,
+        registrationFormVariant
+      )
       setActiveStep(next)
       options?.onStepChange?.(next)
     },
-    [options, participantFlags]
+    [options, participantFlags, registrationFormVariant]
   )
 
   const goToPhase = useCallback(
@@ -229,9 +279,13 @@ export function useGeneralProgramRegistrationFlow(
         selectStep(getDefaultGeneralProgramRecruitStep(participantFlags))
         return
       }
-      selectStep(getDefaultGeneralProgramApplicationStep(participantFlags))
+      selectStep(
+        isTrainedTeachersRegistration
+          ? 'application-participant-school'
+          : getDefaultGeneralProgramApplicationStep(participantFlags)
+      )
     },
-    [selectStep, participantFlags]
+    [selectStep, participantFlags, isTrainedTeachersRegistration]
   )
 
   const handlePreview = useCallback(() => {

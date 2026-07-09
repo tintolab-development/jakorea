@@ -1,6 +1,5 @@
 import type { Program } from '@/types/domain'
 import { mockPrograms } from '@/data/mock/programs'
-import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
 import {
   buildProgramRegionMap,
   parseRegionTokens,
@@ -83,15 +82,16 @@ export function mapPerformanceRecordToRow(
   )
 }
 
+export type SponsorNameLookup = Map<string, { nameKo?: string; nameEn?: string }>
+
 export function mapProgramToEducationRecordRow(
   program: Program,
-  regionMap: Map<string, EducationRecordProgramRegion>
+  regionMap: Map<string, EducationRecordProgramRegion>,
+  sponsorLookup?: SponsorNameLookup
 ): EducationRecordRow {
   const regionInfo = regionMap.get(program.id)
-  const sponsorNameKo = program.sponsorId ? sponsorService.getNameById(program.sponsorId) : undefined
-  const sponsor = program.sponsorId
-    ? sponsorService.getAllSync().find(s => s.id === program.sponsorId)
-    : undefined
+  const sponsor = program.sponsorId ? sponsorLookup?.get(program.sponsorId) : undefined
+  const sponsorNameKo = sponsor?.nameKo
 
   const classCount = program.rounds?.[0]?.classCount
   const startDate =
@@ -148,9 +148,12 @@ export function mapProgramToEducationRecordRow(
   )
 }
 
-export function mapProgramsToEducationRecordRows(programs: Program[]): EducationRecordRow[] {
+export function mapProgramsToEducationRecordRows(
+  programs: Program[],
+  sponsorLookup?: SponsorNameLookup
+): EducationRecordRow[] {
   const regionMap = buildProgramRegionMap()
-  return programs.map(program => mapProgramToEducationRecordRow(program, regionMap))
+  return programs.map(program => mapProgramToEducationRecordRow(program, regionMap, sponsorLookup))
 }
 
 export function getMockEducationRecordRows(): EducationRecordRow[] {

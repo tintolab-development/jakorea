@@ -5,6 +5,7 @@
 import { Table } from 'antd'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import type { TableSearchSetSearchParams } from '@/shared/hooks/use-table-search'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import './program-list.css'
 import { ProgramCalendarView } from './program-calendar-view'
@@ -14,7 +15,10 @@ import {
 } from './table/program-list-filter-fields'
 import { buildProgramListFilters } from './table/program-list-filter-builder'
 import type { ProgramListProgramMode } from '../model/program-list-program-mode'
-import type { ProgramListView } from './table/program-table-column-resolver'
+import type {
+  ProgramListColumnPreset,
+  ProgramListView,
+} from './table/program-table-column-resolver'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { FilterTableLayout } from '@/shared/ui'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
@@ -29,6 +33,7 @@ export type ProgramListConfig = {
   view?: ProgramListView
   tableType?: 'student' | 'instructor'
   lifecycleStatus?: ProgramLifecycleStatus | null
+  columnPreset?: ProgramListColumnPreset
 }
 
 export interface ProgramListProps {
@@ -46,6 +51,13 @@ export interface ProgramListProps {
   onDisplayCountChange?: (count: number, hasActiveFilters: boolean) => void
   config?: ProgramListConfig
   children?: React.ReactNode
+  /** 엑셀 다운로드 버튼 우측 툴바 액션 (예: 프로그램 신규 등록) */
+  toolbarActionsAfterExcel?: React.ReactNode
+  /** 상위에서 URL 쿼리를 단일 관리할 때 전달 (일반 프로그램 상세 LNB와 충돌 방지) */
+  searchParams?: URLSearchParams
+  setSearchParams?: TableSearchSetSearchParams
+  /** 상세 모달 등이 열려 있을 때 테이블 state→URL 동기화 비활성화 */
+  disableUrlSync?: boolean
 }
 
 export function ProgramList({
@@ -63,12 +75,19 @@ export function ProgramList({
   onDisplayCountChange,
   config,
   children,
+  toolbarActionsAfterExcel,
+  searchParams: searchParamsProp,
+  setSearchParams: setSearchParamsProp,
+  disableUrlSync = false,
 }: ProgramListProps) {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [internalSearchParams, internalSetSearchParams] = useSearchParams()
+  const searchParams = searchParamsProp ?? internalSearchParams
+  const setSearchParams = setSearchParamsProp ?? internalSetSearchParams
   const listView: ProgramListView = config?.view ?? 'ALL'
   const tableType = config?.tableType
   const mode = config?.mode ?? 'general'
   const effectiveLifecycleStatus = config?.lifecycleStatus
+  const columnPreset = config?.columnPreset ?? 'default'
 
   const tableContext = useMemo<ProgramTableContext>(
     () => ({
@@ -76,13 +95,14 @@ export function ProgramList({
       view: listView,
       tableType,
       effectiveLifecycleStatus,
+      columnPreset,
     }),
-    [mode, listView, tableType, effectiveLifecycleStatus]
+    [mode, listView, tableType, effectiveLifecycleStatus, columnPreset]
   )
 
   const tableConfig = useMemo(
     () => getProgramTablePageConfig(tableContext),
-    [mode, listView, tableType, effectiveLifecycleStatus]
+    [mode, listView, tableType, effectiveLifecycleStatus, columnPreset]
   )
 
   const {
@@ -98,6 +118,7 @@ export function ProgramList({
     searchParams,
     setSearchParams,
     context: tableContext,
+    disableUrlSync,
   })
 
   useEffect(() => {
@@ -178,6 +199,7 @@ export function ProgramList({
           title={headerTitle}
           description={`총 ${displayedCount.toLocaleString()}건`}
           actions={children}
+          actionsAfterExcel={toolbarActionsAfterExcel}
           className={filterTableLayoutClassName}
           excelExport={{
             columns: antdColumns,
@@ -224,6 +246,7 @@ export function ProgramList({
                   <span className="table-description">{`총 ${displayedCount.toLocaleString()}건`}</span>
                 </div>
                 {children}
+                {toolbarActionsAfterExcel}
               </div>
             }
           />

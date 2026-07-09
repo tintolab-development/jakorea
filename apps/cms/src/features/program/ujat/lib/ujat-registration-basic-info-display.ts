@@ -1,6 +1,5 @@
 import dayjs from 'dayjs'
 import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
-import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
 import type { Program } from '@/types/domain'
 import {
   createUjatRegistrationBasicInfoOverlayDefaults,
@@ -28,6 +27,7 @@ import {
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
   TEMPLATE_FORM_PARTNER_INVOLVEMENT_OPTIONS,
 } from '@/features/template/lib/template-form-select-options'
+import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 
 type OperationRangeSeal = { start?: string | null; end?: string | null } | null
@@ -89,10 +89,14 @@ function resolveDetailedProgramName(detailedProgramId: string): string {
   return row?.name ?? '-'
 }
 
-function resolveSponsorName(sponsorId: string, fallbackName?: string): string {
+function resolveSponsorName(
+  sponsorId: string,
+  fallbackName?: string,
+  sponsors: readonly SponsorManagementRow[] = []
+): string {
   if (fallbackName?.trim()) return fallbackName.trim()
   if (!sponsorId || sponsorId === UJAT_SPONSOR_ALL_VALUE) return '-'
-  return mockSponsorManagementListRows.find(s => s.id === sponsorId)?.name ?? '-'
+  return sponsors.find(s => s.id === sponsorId)?.name ?? '-'
 }
 
 function resolveOperationRange(
@@ -194,9 +198,10 @@ export function resolveUjatRegistrationBasicInfoOverlay(
 export function resolveUjatRegistrationBasicInfoDisplay(
   program: Program,
   sponsorName?: string,
-  overlayInput?: Record<string, unknown>
+  overlayInput?: Record<string, unknown>,
+  sponsors: readonly SponsorManagementRow[] = []
 ): UjatRegistrationBasicInfoDisplay {
-  const defaults = createUjatRegistrationBasicInfoOverlayDefaults()
+  const defaults = createUjatRegistrationBasicInfoOverlayDefaults(sponsors)
   const overlay = resolveUjatRegistrationBasicInfoOverlay(overlayInput)
 
   const repKo = overlayString(overlay, 'ujat.basicInfo.repKo')?.trim() || defaults.repKo
@@ -233,7 +238,7 @@ export function resolveUjatRegistrationBasicInfoDisplay(
     operationRange: resolveOperationRange(operationSeal, program),
     participantTypes: resolveParticipantTypes(overlay, defaults),
     businessField: optionLabel(TEMPLATE_FORM_BUSINESS_AREA_OPTIONS, businessField),
-    sponsorName: resolveSponsorName(sponsorId, sponsorName),
+    sponsorName: resolveSponsorName(sponsorId, sponsorName, sponsors),
     sponsorManager: '-',
     surveyItems: resolveSurveyItemsText(surveyItems),
     educationCourse: optionLabel([...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS], educationCourse),

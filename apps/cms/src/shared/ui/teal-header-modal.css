@@ -310,3 +310,11 @@
     linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
     var(--color-bg-base);
 }
+
+/* 모달 내 라디오 — Ant 기본 전환·스케일 애니메이션 제거 */
+.teal-header-modal .ant-radio,
+.teal-header-modal .ant-radio .ant-radio-inner,
+.teal-header-modal .ant-radio .ant-radio-inner::after {
+  transition: none !important;
+  animation: none !important;
+}

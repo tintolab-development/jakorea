@@ -18,7 +18,11 @@ import {
   programMatchesProgressPhase,
   type ProgramProgressPhaseFilter,
 } from './constants/program-list-constants'
-import { resolveEducationColumns, type ProgramListView } from './table/program-table-column-resolver'
+import {
+  resolveEducationColumns,
+  type ProgramListColumnPreset,
+  type ProgramListView,
+} from './table/program-table-column-resolver'
 
 dayjs.extend(isSameOrBefore)
 dayjs.extend(isSameOrAfter)
@@ -30,6 +34,7 @@ export type ProgramTableContext = {
   view: ProgramListView
   tableType?: 'student' | 'instructor'
   effectiveLifecycleStatus?: ProgramLifecycleStatus | null
+  columnPreset?: ProgramListColumnPreset
 }
 
 const tanstackColumns: ColumnDef<Program>[] = [
@@ -125,6 +130,7 @@ export function getProgramTablePageConfig(
           isOverviewListPage: ctx.mode === 'overview',
           programMode: ctx.mode,
           listView: ctx.mode === 'overview' ? ctx.view : undefined,
+          columnPreset: ctx.columnPreset,
         })
       },
     },

@@ -23,4 +23,5 @@ export interface OrganizationApplicationListItemResponse {
   approvedAt?: string;
   rejectedAt?: string;
   rejectReason?: string;
+  availableActions?: string[];
 }

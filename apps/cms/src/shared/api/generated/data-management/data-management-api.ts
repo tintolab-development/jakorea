@@ -267,7 +267,7 @@ const sponsors = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/sponsors
  */
-const create1 = (
+const create2 = (
     sponsorRequest: SponsorRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSponsorResponse>>,) => {
       return customInstance<ApiResponseSponsorResponse>(
@@ -654,7 +654,7 @@ const kits = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/material-kits
  */
-const create3 = (
+const create4 = (
     materialKitRequest: MaterialKitRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseMaterialKitResponse>>,) => {
       return customInstance<ApiResponseMaterialKitResponse>(
@@ -933,7 +933,7 @@ const detailedPrograms = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/detailed-programs
  */
-const create4 = (
+const create5 = (
     detailedProgramRequest: DetailedProgramRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseDetailedProgramResponse>>,) => {
       return customInstance<ApiResponseDetailedProgramResponse>(
@@ -1262,7 +1262,7 @@ const delete1 = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary 관리자 부분 수정
  */
-const update1 = (
+const update2 = (
     sponsorId: number,
     sponsorRequest: SponsorRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSponsorResponse>>,) => {
@@ -1649,7 +1649,7 @@ const delete2 = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary 관리자 부분 수정
  */
-const update2 = (
+const update3 = (
     kitId: number,
     materialKitRequest: MaterialKitRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseMaterialKitResponse>>,) => {
@@ -1814,7 +1814,7 @@ const delete3 = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary 프로그램 부분 수정
  */
-const update3 = (
+const update4 = (
     detailedProgramId: number,
     detailedProgramRequest: DetailedProgramRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseDetailedProgramResponse>>,) => {
@@ -2049,39 +2049,39 @@ const calculate = (
       options);
     }
 
-return {textbooks,create,sponsors,create1,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,kits,create3,versions,createVersion,addTargetCount,detailedPrograms,create4,textbook,_delete,update,sponsor,delete1,update1,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,kit,delete2,update2,detailedProgram,delete3,update3,matches,programHistories,currentKitCalculation,calculate}};
+return {textbooks,create,sponsors,create2,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,kits,create4,versions,createVersion,addTargetCount,detailedPrograms,create5,textbook,_delete,update,sponsor,delete1,update2,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,kit,delete2,update3,detailedProgram,delete3,update4,matches,programHistories,currentKitCalculation,calculate}};
 export type TextbooksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbooks']>>>
 export type CreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create']>>>
 export type SponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['sponsors']>>>
-export type Create1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create1']>>>
+export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create2']>>>
 export type YearlyBusinessesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['yearlyBusinesses']>>>
 export type AddYearlyBusinessResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addYearlyBusiness']>>>
 export type EndResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['end']>>>
 export type ContactsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['contacts']>>>
 export type AddContactResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addContact']>>>
 export type KitsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['kits']>>>
-export type Create3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create3']>>>
+export type Create4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create4']>>>
 export type VersionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['versions']>>>
 export type CreateVersionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['createVersion']>>>
 export type AddTargetCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addTargetCount']>>>
 export type DetailedProgramsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['detailedPrograms']>>>
-export type Create4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create4']>>>
+export type Create5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create5']>>>
 export type TextbookResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbook']>>>
 export type _DeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['_delete']>>>
 export type UpdateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update']>>>
 export type SponsorResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['sponsor']>>>
 export type Delete1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['delete1']>>>
-export type Update1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update1']>>>
+export type Update2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update2']>>>
 export type DeleteYearlyBusinessResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['deleteYearlyBusiness']>>>
 export type UpdateYearlyBusinessResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['updateYearlyBusiness']>>>
 export type DeleteContactResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['deleteContact']>>>
 export type UpdateContactResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['updateContact']>>>
 export type KitResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['kit']>>>
 export type Delete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['delete2']>>>
-export type Update2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update2']>>>
+export type Update3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update3']>>>
 export type DetailedProgramResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['detailedProgram']>>>
 export type Delete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['delete3']>>>
-export type Update3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update3']>>>
+export type Update4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update4']>>>
 export type MatchesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['matches']>>>
 export type ProgramHistoriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['programHistories']>>>
 export type CurrentKitCalculationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['currentKitCalculation']>>>

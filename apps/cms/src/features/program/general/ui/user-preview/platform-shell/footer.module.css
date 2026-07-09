@@ -1,0 +1,103 @@
+.footer {
+  width: 100%;
+  background: var(--color-neutral-white);
+  pointer-events: none;
+}
+
+.navigation-area {
+  background: var(--color-neutral-cool-80);
+}
+
+.navigation,
+.content-area {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  padding-inline: var(--page-padding-x);
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-48);
+  min-height: var(--spacing-68);
+}
+
+.navigation-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  white-space: nowrap;
+}
+
+.content-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  padding: 60px 0;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-80);
+}
+
+.ja-logo {
+  width: 195px;
+  height: 60px;
+}
+
+.info-area {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.company-info-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-8) var(--spacing-20);
+}
+
+.company-info-list > * {
+  white-space: nowrap;
+}
+
+.social-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-80);
+}
+
+.social-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.social-link {
+  display: inline-flex;
+  width: var(--spacing-24);
+  height: var(--spacing-24);
+  align-items: center;
+  justify-content: center;
+}
+
+.partner-logos {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-48);
+}
+
+.partner-logo {
+  width: auto;
+  height: 60px;
+}
+
+.copyright {
+  text-align: right;
+  white-space: nowrap;
+}

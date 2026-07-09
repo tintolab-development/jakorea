@@ -11,13 +11,14 @@ import {
   type MouseEvent,
 } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
+import { Table, Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program, TargetLevel } from '@/types/domain'
 import type { User } from '@/types/user'
 import { programService } from '@/entities/program/api/program-service'
 import { mockPrograms } from '@/data/mock'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { useMemberAdminProgramsQuery } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { MemberDetailMockDataBanner } from '@/features/user/detail/ui/member-detail-mock-data-banner'
 import {
   getEnrollmentDisplayStatusFromProgramLifecycle,
@@ -116,7 +117,14 @@ export interface AdminManagedProgramHistoryProps {
 
 export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryProps) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const sourcePrograms = useMemo(() => resolveManagedPrograms(user), [user])
+  const membersRemote = isMembersRemoteEnabled()
+  const { data: remotePrograms = [], isLoading: remoteProgramsLoading } =
+    useMemberAdminProgramsQuery(user.memberId, membersRemote)
+
+  const sourcePrograms = useMemo(() => {
+    if (membersRemote) return remotePrograms
+    return resolveManagedPrograms(user)
+  }, [membersRemote, remotePrograms, user])
 
   const [localPrograms, setLocalPrograms] = useState<Program[]>(() => sourcePrograms)
   useEffect(() => {
@@ -335,8 +343,8 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
 
   return (
     <>
-      {isMembersRemoteEnabled() ? (
-        <MemberDetailMockDataBanner message="관리자 담당 프로그램 이력 Admin API가 제공되지 않아 mock 데이터를 표시합니다." />
+      {membersRemote ? (
+        <MemberDetailMockDataBanner message="프로그램 삭제 등 일부 액션은 API 미제공으로 mock 동작이 유지됩니다." />
       ) : null}
       <FilterTableLayout
         bordered={false}
@@ -366,7 +374,8 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
           data: tableData,
         }}
       >
-        <Table<Program>
+        <Spin spinning={membersRemote && remoteProgramsLoading}>
+          <Table<Program>
           rowSelection={{
             columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             selectedRowKeys,
@@ -380,6 +389,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
           className="cms-data-table cms-data-table--fluid"
           onRow={adminManagedProgramTableOnRow}
         />
+        </Spin>
       </FilterTableLayout>
       {deleteModalOpen && deleteGuide && (
         <DeleteGuideModal

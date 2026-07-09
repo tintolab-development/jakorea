@@ -18,4 +18,5 @@ export interface SettlementApplicationListItemResponse {
   netPaymentAmount?: number;
   submittedAt?: string;
   createdAt?: string;
+  availableActions?: string[];
 }

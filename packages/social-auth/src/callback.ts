@@ -5,6 +5,7 @@ import {
   SocialAccountAlreadyLinkedError,
   SocialAccountNotLinkedError,
 } from './errors'
+import { fromApiProviderCode, isSocialProvider } from './provider-map'
 import type {
   OAuthCallbackOutcome,
   OAuthLinkCallbackOutcome,
@@ -35,7 +36,184 @@ function isSignupSessionReady(status?: string): boolean {
   return true
 }
 
-/** 관리자 소셜 로그인 전용 — `/oauth/{provider}` + Admin SSO callback */
+/** Admin SSO login — backend callback 후 `/login/social/complete?socialLoginSessionId=...` */
+export async function processSocialLoginSessionReturn(
+  client: SocialAuthClient,
+  searchParams: URLSearchParams
+): Promise<OAuthCallbackOutcome> {
+  const error = searchParams.get('error')
+  const challengeUuid = searchParams.get('challengeUuid') ?? searchParams.get('mfaChallengeUuid')
+
+  if (challengeUuid) {
+    return {
+      kind: 'mfa_required',
+      challengeUuid,
+      mfaMethod: searchParams.get('mfaMethod') ?? undefined,
+    }
+  }
+
+  if (error) {
+    const cancelled = error === 'access_denied' || error === 'user_cancelled'
+    return cancelled
+      ? { kind: 'cancelled' }
+      : {
+          kind: 'failed',
+          message:
+            searchParams.get('error_description') ??
+            searchParams.get('message') ??
+            '소셜 인증이 취소되었습니다.',
+        }
+  }
+
+  const socialLoginSessionId = searchParams.get('socialLoginSessionId')
+  if (!socialLoginSessionId) {
+    return { kind: 'failed', message: 'socialLoginSessionId가 없어 로그인을 완료할 수 없습니다.' }
+  }
+
+  try {
+    const tokens = await client.completeCallback({
+      provider: 'kakao',
+      intent: 'login',
+      socialLoginSessionId,
+    })
+    return { kind: 'authenticated', tokens }
+  } catch (err) {
+    if (isSocialAccountNotLinkedError(err)) {
+      return { kind: 'not_linked' }
+    }
+    if (isSocialAccountAlreadyLinkedError(err)) {
+      return { kind: 'already_linked' }
+    }
+    if (err instanceof Error) {
+      return { kind: 'failed', message: err.message }
+    }
+    return { kind: 'failed', message: '소셜 로그인 처리에 실패했습니다.' }
+  }
+}
+
+const ADMIN_SSO_LINK_READY_STATUSES = new Set(['READY', 'READY_TO_LINK', 'CONNECTED'])
+
+function isAdminSsoLinkReadyStatus(status?: string | null): boolean {
+  if (!status) {
+    return false
+  }
+  return ADMIN_SSO_LINK_READY_STATUSES.has(status.trim().toUpperCase())
+}
+
+/** Admin SSO link — backend callback 후 returnUrl query 처리 (remote) */
+export async function processAdminSsoLinkReturn(
+  client: SocialAuthClient,
+  provider: SocialProvider | null,
+  searchParams: URLSearchParams,
+  options: ProcessOAuthLinkCallbackOptions = {}
+): Promise<OAuthLinkCallbackOutcome> {
+  const { cancelled, consent } = options
+  const error = searchParams.get('error')
+
+  if (error) {
+    return cancelled
+      ? { kind: 'cancelled' }
+      : {
+          kind: 'failed',
+          message:
+            searchParams.get('error_description') ??
+            searchParams.get('message') ??
+            '소셜 인증이 취소되었습니다.',
+        }
+  }
+
+  const challengeUuid = searchParams.get('challengeUuid') ?? searchParams.get('mfaChallengeUuid')
+  const requiresMfa = searchParams.get('requiresMfa') === 'true'
+  if (challengeUuid || requiresMfa) {
+    return {
+      kind: 'failed',
+      message:
+        '소셜 계정 연결 단계에서는 MFA가 필요하지 않습니다. 백엔드 SSO link callback이 로그인 MFA 응답을 보내지 않는지 확인해 주세요.',
+    }
+  }
+
+  const providerParam = searchParams.get('provider')
+  const resolvedProvider: SocialProvider | null =
+    provider ??
+    (providerParam && isSocialProvider(providerParam)
+      ? providerParam
+      : providerParam
+        ? fromApiProviderCode(providerParam)
+        : null)
+
+  const linkedFlag =
+    searchParams.get('linked') === 'true' ||
+    searchParams.get('linked') === '1' ||
+    searchParams.get('status')?.toUpperCase() === 'LINKED' ||
+    searchParams.get('status')?.toUpperCase() === 'CONNECTED'
+
+  if (linkedFlag && resolvedProvider) {
+    client.state.addConnectedProvider(resolvedProvider)
+    return { kind: 'linked', provider: resolvedProvider, pending: false }
+  }
+
+  const adminSsoSessionId = searchParams.get('adminSsoSessionId')
+  const statusParam = searchParams.get('status')
+  if (adminSsoSessionId && resolvedProvider) {
+    if (!consent) {
+      return { kind: 'failed', message: '소셜 계정 연결 결과를 확인할 수 없습니다.' }
+    }
+
+    if (statusParam && !isAdminSsoLinkReadyStatus(statusParam)) {
+      return {
+        kind: 'failed',
+        message: '소셜 계정 연결이 완료되지 않았습니다. 다시 시도해 주세요.',
+      }
+    }
+
+    try {
+      const account = await client.completeLinkSession({
+        provider: resolvedProvider,
+        adminSsoSessionId,
+        consent,
+      })
+      client.state.addConnectedProvider(resolvedProvider)
+      return { kind: 'linked', provider: resolvedProvider, account, pending: false }
+    } catch (err) {
+      if (isSocialAccountAlreadyLinkedError(err)) {
+        return { kind: 'failed', message: '이미 연결된 소셜 계정입니다.' }
+      }
+      if (err instanceof Error) {
+        return { kind: 'failed', message: err.message }
+      }
+      return { kind: 'failed', message: '소셜 계정 연결을 완료하지 못했습니다.' }
+    }
+  }
+
+  const code = searchParams.get('code')
+  if (code && resolvedProvider) {
+    return processOAuthLinkCallback(client, resolvedProvider, searchParams, options)
+  }
+
+  const normalizedStatus = statusParam?.trim().toUpperCase()
+  if (
+    resolvedProvider &&
+    !error &&
+    (normalizedStatus === 'DISCONNECTED' ||
+      normalizedStatus === 'NOT_LINKED' ||
+      normalizedStatus === 'UNLINKED' ||
+      normalizedStatus === 'NOT_CONNECTED')
+  ) {
+    client.state.removeConnectedProvider(resolvedProvider)
+    return {
+      kind: 'failed',
+      message: '소셜 계정 연결이 완료되지 않았습니다. 다시 시도해 주세요.',
+    }
+  }
+
+  if (!consent) {
+    return { kind: 'failed', message: '소셜 계정 연결 결과를 확인할 수 없습니다.' }
+  }
+
+  return { kind: 'failed', message: '소셜 계정 연결 결과를 확인할 수 없습니다.' }
+}
+
+/** 관리자 소셜 로그인 전용 — mock `/oauth/{provider}` + code 교환 */
 export async function processOAuthCallback(
   client: SocialAuthClient,
   provider: SocialProvider,
@@ -130,7 +308,7 @@ export async function processOAuthLinkCallback(
 
     const account = await client.linkAccount({
       provider,
-      code,
+      accessToken: code,
       idToken,
       state: state ?? undefined,
       consent: defaultConsent,

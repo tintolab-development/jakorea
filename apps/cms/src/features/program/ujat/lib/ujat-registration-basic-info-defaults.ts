@@ -1,9 +1,9 @@
-import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
 import type { ProgramRegistrationIpsCategory } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import {
   initialProgramRegistrationSurveyItems,
   type ProgramRegistrationSurveyItemId,
 } from '@/features/template/lib/program-registration-survey-items'
+import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 
 export const UJAT_REGISTRATION_TEMPLATE_ID = 'registration-ujat' as const
 
@@ -17,8 +17,11 @@ export const UJAT_DETAILED_PROGRAM_UJAT_LABEL = '대학생경제교육봉사단'
 
 export const UJAT_SPONSOR_ALL_VALUE = '__all__' as const
 
-export const UJAT_DEFAULT_SPONSOR_ID =
-  mockSponsorManagementListRows.find(s => s.name === '제이에이코리아')?.id ?? UJAT_SPONSOR_ALL_VALUE
+export const UJAT_DEFAULT_SPONSOR_ID = UJAT_SPONSOR_ALL_VALUE
+
+export function resolveUjatDefaultSponsorId(sponsors: readonly SponsorManagementRow[]): string {
+  return sponsors.find(s => s.name === '제이에이코리아')?.id ?? UJAT_SPONSOR_ALL_VALUE
+}
 
 export type UjatSurveyRowId = ProgramRegistrationSurveyItemId
 
@@ -48,7 +51,9 @@ export type UjatRegistrationBasicInfoOverlayDefaults = {
   partnerInvolvement: 'yes' | 'no'
 }
 
-export function createUjatRegistrationBasicInfoOverlayDefaults(): UjatRegistrationBasicInfoOverlayDefaults {
+export function createUjatRegistrationBasicInfoOverlayDefaults(
+  sponsors: readonly SponsorManagementRow[] = []
+): UjatRegistrationBasicInfoOverlayDefaults {
   return {
     repKo: UJAT_BASIC_INFO_REP_KO_DEFAULT,
     repEn: UJAT_BASIC_INFO_REP_EN_DEFAULT,
@@ -60,7 +65,7 @@ export function createUjatRegistrationBasicInfoOverlayDefaults(): UjatRegistrati
     participantTeacher: false,
     participantVolunteer: true,
     businessField: 'economy_finance',
-    sponsorId: UJAT_DEFAULT_SPONSOR_ID,
+    sponsorId: resolveUjatDefaultSponsorId(sponsors),
     ipOwned: 'ja',
     courseDeliveredBy: 'ja',
     ipsCategory: 'prepare',

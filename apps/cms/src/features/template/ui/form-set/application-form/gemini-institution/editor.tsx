@@ -6,7 +6,7 @@ import {
   FormEditorTitleNumberingField,
 } from '@/features/template/ui/form-editor/right-panel/form-editor-right-panel'
 
-/** Gemini 찾아가는 연수 학교 신청 폼 전용 편집 UI */
+/** Gemini 찾아가는 연수 참여 기관 신청 폼 전용 편집 UI */
 export function GeminiVisitingTrainingApplicationFormInstitutionEditorLeftColumn({
   vm,
 }: {

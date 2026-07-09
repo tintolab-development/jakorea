@@ -1,21 +1,26 @@
-import { useCallback, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useRef, useState, type ChangeEvent, type Key } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { resolveFilterTableExcelFilename } from '@/shared/components/filter-table-excel-filename'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guide-modal'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, DeleteGuideModal, ExcelButton, useCmsAlert } from '@/shared/ui'
+import {
+  GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
+  geminiPerformanceService,
+} from '../../api/performance-service'
+import { useGeminiPerformanceRows } from '../../hooks/use-gemini-performance-rows'
 import { GEMINI_PERFORMANCE_FILTER_FIELDS } from '../../model/performance/filter-fields'
-import { createPerformanceMockRows } from '../../model/performance/mock'
 import type {
   GeminiPerformanceRow,
   GeminiPerformanceTrainingMethod,
 } from '../../model/performance/types'
-import { useGeminiPerformanceReportAddUrl } from './report-add-fullpage-modal'
+import { UploadDuplicateModal } from './upload-duplicate-modal'
 import '@/pages/programs/program-list-page.css'
 import './list.css'
 
@@ -29,7 +34,6 @@ type PendingFilters = {
 const TRAINING_METHOD_LABEL: Record<GeminiPerformanceTrainingMethod, string> = {
   OFFLINE: '오프라인',
   ONLINE: '온라인',
-  HYBRID: '혼합',
 }
 
 const COL = {
@@ -63,11 +67,18 @@ const TABLE_SCROLL_X =
   COL.trainingMethod +
   48
 
-const INITIAL_PENDING_FILTERS: PendingFilters = {
-  instructorName: '',
-  trainingMethod: 'ALL',
-  trainingLocation: '',
-  trainingDateRange: null,
+function getDefaultDateRange(): [Dayjs, Dayjs] {
+  return [dayjs().startOf('year'), dayjs()]
+}
+
+function createInitialFilters(): PendingFilters {
+  const [from, to] = getDefaultDateRange()
+  return {
+    instructorName: '',
+    trainingMethod: 'ALL',
+    trainingLocation: '',
+    trainingDateRange: [from, to],
+  }
 }
 
 function formatTrainingDate(rawDate: string): string {
@@ -79,10 +90,8 @@ function filterRows(rows: GeminiPerformanceRow[], filters: PendingFilters) {
   const locationQ = filters.trainingLocation.trim().toLowerCase()
 
   return rows.filter(row => {
-    if (instructorQ) {
-      const inMain = row.instructorName.toLowerCase().includes(instructorQ)
-      const inAssist = row.assistantInstructorNames.toLowerCase().includes(instructorQ)
-      if (!inMain && !inAssist) return false
+    if (instructorQ && !row.instructorName.toLowerCase().includes(instructorQ)) {
+      return false
     }
     if (filters.trainingMethod !== 'ALL' && row.trainingMethod !== filters.trainingMethod) {
       return false
@@ -106,12 +115,15 @@ export function GeminiPerformanceList() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
-  const { openAdd } = useGeminiPerformanceReportAddUrl()
-  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
-  const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
+  const allRows = useGeminiPerformanceRows()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const allRows = useMemo(() => createPerformanceMockRows(), [])
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [pendingFilters, setPendingFilters] = useState<PendingFilters>(createInitialFilters)
+  const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(createInitialFilters)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false)
+  const [pendingImportRows, setPendingImportRows] = useState<GeminiPerformanceRow[]>([])
 
   const filteredRows = useMemo(
     () => filterRows(allRows, appliedFilters),
@@ -125,19 +137,67 @@ export function GeminiPerformanceList() {
     })
   }, [showAlert])
 
-  const handleBulkDelete = useCallback(() => {
+  const handleBulkDeleteClick = useCallback(() => {
     if (!canWrite) return
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
-    // TODO: 연수 실적 선택 삭제 확인 모달·API 연동
+    setDeleteModalOpen(true)
   }, [canWrite, selectedRowKeys.length, showNoSelectionAlert])
 
-  const handleAddReport = useCallback(() => {
+  const handleConfirmDelete = useCallback(() => {
+    geminiPerformanceService.delete(selectedRowKeys.map(key => String(key)))
+    setSelectedRowKeys([])
+    setDeleteModalOpen(false)
+  }, [selectedRowKeys])
+
+  const handleAddReportClick = useCallback(() => {
     if (!canWrite) return
-    openAdd()
-  }, [canWrite, openAdd])
+    fileInputRef.current?.click()
+  }, [canWrite])
+
+  const handleFileChange = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      event.target.value = ''
+      if (!file) return
+
+      try {
+        const { importedRows, duplicateKeys } = await geminiPerformanceService.prepareImport(file)
+        if (duplicateKeys.length > 0) {
+          setPendingImportRows(importedRows)
+          setDuplicateModalOpen(true)
+          return
+        }
+        geminiPerformanceService.applyImport(importedRows, 'append')
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message === GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
+            ? GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
+            : '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.'
+        showAlert({ title: '안내', content: message })
+      }
+    },
+    [showAlert]
+  )
+
+  const handleDuplicateCancel = useCallback(() => {
+    setDuplicateModalOpen(false)
+    setPendingImportRows([])
+  }, [])
+
+  const handleDuplicateOverwrite = useCallback(() => {
+    geminiPerformanceService.applyImport(pendingImportRows, 'overwrite')
+    setDuplicateModalOpen(false)
+    setPendingImportRows([])
+  }, [pendingImportRows])
+
+  const handleDuplicateAppend = useCallback(() => {
+    geminiPerformanceService.applyImport(pendingImportRows, 'append')
+    setDuplicateModalOpen(false)
+    setPendingImportRows([])
+  }, [pendingImportRows])
 
   const columns: ColumnsType<GeminiPerformanceRow> = useMemo(
     () => [
@@ -241,6 +301,14 @@ export function GeminiPerformanceList() {
 
   return (
     <div className="program-list-page">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls"
+        hidden
+        onChange={event => void handleFileChange(event)}
+      />
+
       <FilterTableLayout
         bordered={false}
         className="gemini-performance-list"
@@ -277,11 +345,11 @@ export function GeminiPerformanceList() {
         description={`총 ${filteredRows.length.toLocaleString()}건`}
         actions={
           <>
-            <CmsButton variant="delete" disabled={!canWrite} onClick={handleBulkDelete}>
+            <CmsButton variant="delete" disabled={!canWrite} onClick={handleBulkDeleteClick}>
               선택 삭제
             </CmsButton>
             <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
-            <CmsButton variant="primary" disabled={!canWrite} onClick={handleAddReport}>
+            <CmsButton variant="primary" disabled={!canWrite} onClick={handleAddReportClick}>
               연수 보고서 등록
             </CmsButton>
           </>
@@ -308,6 +376,26 @@ export function GeminiPerformanceList() {
           }
         />
       </FilterTableLayout>
+
+      <DeleteGuideModal
+        open={deleteModalOpen}
+        title="선택 삭제"
+        lines={[
+          `선택한 ${selectedRowKeys.length}건의 연수 실적을 삭제하시겠습니까?`,
+          '삭제된 실적은 복구할 수 없습니다.',
+        ]}
+        confirmText="삭제"
+        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteModalOpen(false)}
+      />
+
+      <UploadDuplicateModal
+        open={duplicateModalOpen}
+        onCancel={handleDuplicateCancel}
+        onOverwrite={handleDuplicateOverwrite}
+        onAppend={handleDuplicateAppend}
+      />
     </div>
   )
 }

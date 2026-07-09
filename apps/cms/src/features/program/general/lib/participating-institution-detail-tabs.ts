@@ -1,4 +1,11 @@
 import type { Program } from '@/types/domain'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import {
+  TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS,
+  type TrainedTeachersInstitutionDetailTabKey,
+  normalizeTrainedTeachersInstitutionDetailTab,
+  isTrainedTeachersInstitutionDetailTabKey,
+} from '@/features/program/trained-teachers/lib/institution-detail-tabs'
 
 /** 일반 프로그램 참여 기관 상세 탭 (UJAT 상세 탭과 별도) */
 export const GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS = [
@@ -56,4 +63,44 @@ export function normalizeGeneralParticipatingInstitutionDetailTab(
     return 'application'
   }
   return tab
+}
+
+export type ParticipatingInstitutionDetailTabKey =
+  | GeneralParticipatingInstitutionDetailTabKey
+  | TrainedTeachersInstitutionDetailTabKey
+
+/** 프로그램 유형별 참여 기관 상세 탭 — TT는 신청 정보 | 교육 일지만 */
+export function getParticipatingInstitutionDetailTabKeys(
+  program?: Program | null
+): readonly ParticipatingInstitutionDetailTabKey[] {
+  if (isTrainedTeachersDetailProgram(program ?? null)) {
+    return TRAINED_TEACHERS_INSTITUTION_DETAIL_TAB_KEYS
+  }
+  return getGeneralParticipatingInstitutionDetailTabKeys(program)
+}
+
+export function normalizeParticipatingInstitutionDetailTab(
+  tab: string | null | undefined,
+  program?: Program | null
+): ParticipatingInstitutionDetailTabKey {
+  if (isTrainedTeachersDetailProgram(program ?? null)) {
+    return normalizeTrainedTeachersInstitutionDetailTab(tab)
+  }
+  const generalTab = (tab ?? 'application') as GeneralParticipatingInstitutionDetailTabKey
+  if (
+    !(GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS as readonly string[]).includes(generalTab)
+  ) {
+    return 'application'
+  }
+  return normalizeGeneralParticipatingInstitutionDetailTab(generalTab, program)
+}
+
+export function isParticipatingInstitutionDetailTabKeyForProgram(
+  tab: string,
+  program?: Program | null
+): tab is ParticipatingInstitutionDetailTabKey {
+  if (isTrainedTeachersDetailProgram(program ?? null)) {
+    return isTrainedTeachersInstitutionDetailTabKey(tab)
+  }
+  return (GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS as readonly string[]).includes(tab)
 }

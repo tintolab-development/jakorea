@@ -5,9 +5,9 @@
  * - 쓰기 권한 판별
  */
 
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useProgramStore } from '@/features/program/general/model/program-store'
-import { useSponsorService } from '@/features/sponsor/hooks/use-sponsor-service'
+import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 
@@ -20,13 +20,8 @@ export function useProgramDetail(id: string | undefined) {
     setSelectedProgram,
     updateProgram,
   } = useProgramStore()
-  const { getByIdSync: getSponsorByIdSync } = useSponsorService()
-
   const canWrite = canPerformWriteAction(user)
-
-  const sponsorName = useMemo(() => {
-    return program?.sponsorId ? getSponsorByIdSync(program.sponsorId)?.name : undefined
-  }, [program?.sponsorId, getSponsorByIdSync])
+  const sponsorName = useSponsorNameById(program?.sponsorId, Boolean(program?.sponsorId))
 
   useEffect(() => {
     if (id) {

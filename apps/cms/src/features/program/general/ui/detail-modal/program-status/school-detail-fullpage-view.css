@@ -97,6 +97,15 @@
   gap: 0;
 }
 
+/* 교육 일지 탭: 탭 ↔ 섹션 제목 32px */
+.school-detail-fullpage-view .school-detail-fullpage-view__tabs-row.cms-text-tabs--detail .cms-text-tabs__row {
+  padding-bottom: 32px;
+}
+
+.school-detail-fullpage-view__journal-tab {
+  padding-top: 0;
+}
+
 .school-detail-fullpage-view__content {
   padding-left: 0;
   padding-right: 0;

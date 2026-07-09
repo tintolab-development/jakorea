@@ -47,6 +47,11 @@ const registrationDefinitions: TemplateDefinition[] = [
   { id: 'registration-general', templateName: '일반 프로그램 등록 폼', variant: 'default' },
   { id: 'registration-economy', templateName: '1사 1교 프로그램 등록 폼', variant: 'default' },
   { id: 'registration-ujat', templateName: 'UJAT 프로그램 등록 폼', variant: 'default' },
+  {
+    id: 'registration-trained-teachers',
+    templateName: '교육받은 교사 프로그램 등록 폼',
+    variant: 'default',
+  },
 ]
 
 const recruitmentDefinitions: TemplateDefinition[] = [
@@ -89,13 +94,18 @@ const applicationDefinitions: TemplateDefinition[] = [
     variant: 'default',
   },
   {
+    id: 'application-trained-teachers',
+    templateName: '교육받은 교사 프로그램 참여자 신청 폼',
+    variant: 'default',
+  },
+  {
     id: 'application-gemini-visiting-training-instructor',
     templateName: 'Gemini 찾아가는 연수 강사 신청 폼',
     variant: 'default',
   },
   {
     id: 'application-gemini-visiting-training-school',
-    templateName: 'Gemini 찾아가는 연수 학교 신청 폼',
+    templateName: 'Gemini 찾아가는 연수 참여 기관 신청 폼',
     variant: 'default',
   },
   {

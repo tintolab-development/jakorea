@@ -38,7 +38,8 @@ const CATEGORY_TO_PARTICIPANT: Record<ProgramCategory, GeneralProgramParticipant
   volunteer: 'volunteer',
 }
 
-export function isGeneralProgramId(programId: string): boolean {
+export function isGeneralProgramId(programId: string, knownPrograms?: readonly Program[]): boolean {
+  if (knownPrograms?.some(p => p.id === programId)) return true
   return (
     getGeneralPrograms().some(p => p.id === programId) ||
     programId.startsWith(GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)

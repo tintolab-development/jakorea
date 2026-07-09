@@ -57,7 +57,7 @@ export function UserProgramsSection(props: UserProgramsSectionProps) {
   return (
     <div className="user-detail-fullpage-modal__programs">
       {isMembersRemoteEnabled() ? (
-        <MemberDetailMockDataBanner message="프로그램 이력·신청 목록 Admin API가 제공되지 않아 mock 데이터를 표시합니다." />
+        <MemberDetailMockDataBanner message="진행상태 변경·강의보고/출석/과제 모달·수료증 일괄 발급은 API 미제공으로 mock 동작이 유지됩니다." />
       ) : null}
       <ProgramsViewRenderer {...props} showCertificateBulkIssue={showCertificateBulkIssue} />
     </div>

@@ -23,4 +23,5 @@ export interface IndividualApplicationListItemResponse {
   submittedAt?: string;
   approvedAt?: string;
   rejectedAt?: string;
+  availableActions?: string[];
 }

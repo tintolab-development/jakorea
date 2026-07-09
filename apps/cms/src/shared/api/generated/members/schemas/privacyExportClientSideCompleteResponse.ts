@@ -26,4 +26,6 @@ export interface PrivacyExportClientSideCompleteResponse {
   status?: string;
   /** 완료 시각 */
   completedAt?: string;
+  /** 클라이언트 export 완료 후 가능한 프론트 액션 */
+  availableActions?: string[];
 }

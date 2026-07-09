@@ -10,6 +10,13 @@ import {
   OneCOneSRegistrationEducationScheduleSettingsParagraph,
   OneCOneSRegistrationWageInfoParagraph,
 } from '@/features/template/ui/form-set/registration-form/1c-1s'
+import {
+  TrainedTeachersRegistrationBasicInfoParagraph,
+  TrainedTeachersRegistrationBusinessKpiParagraph,
+  TrainedTeachersRegistrationEducationCurriculumParagraph,
+  TrainedTeachersRegistrationEducationScheduleSettingsParagraph,
+  TrainedTeachersRegistrationTypeSettingsParagraph,
+} from '@/features/template/ui/form-set/registration-form/trained-teachers'
 import { ProgramRegistrationBasicInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/basic-info-paragraph'
 import { ProgramRegistrationBusinessKpiParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/business-kpi-paragraph'
 import { ProgramRegistrationEducationCurriculumParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-curriculum-paragraph'
@@ -79,6 +86,9 @@ export interface ProgramRegistrationParagraphBodyOptions {
   /** 일정형(복수·일정 별 상이 조합) 카드 헤더 — 사전 교육 토글 */
   scheduleCurriculumPreEducation: boolean
   onScheduleCurriculumPreEducationChange: (checked: boolean) => void
+  /** 교육받은 교사 — 카드 헤더 교육 연수 토글 */
+  trainedTeachersTeacherTrainingEnabled: boolean
+  onTrainedTeachersTeacherTrainingEnabledChange: (checked: boolean) => void
   educationScheduleMode: ProgramRegistrationEducationScheduleMode
   onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
 }
@@ -89,7 +99,16 @@ export function renderProgramRegistrationParagraphBody(
 ) {
   switch (paragraph.id) {
     case PROGRAM_REGISTRATION_IDS.basicInfo:
-      return options == null ? null : options.programRegistrationFormVariant === 'economy' ? (
+      return options == null ? null : options.programRegistrationFormVariant ===
+        'trainedTeachers' ? (
+        <TrainedTeachersRegistrationBasicInfoParagraph
+          participant={options.participant}
+          onIndividualChange={options.onIndividualChange}
+          onOrganizationChange={options.onOrganizationChange}
+          onTeacherInstructorChange={options.onTeacherInstructorChange}
+          onVolunteerChange={options.onVolunteerChange}
+        />
+      ) : options.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationBasicInfoParagraph
           participant={options.participant}
           onIndividualChange={options.onIndividualChange}
@@ -106,7 +125,9 @@ export function renderProgramRegistrationParagraphBody(
         />
       )
     case PROGRAM_REGISTRATION_IDS.businessKpi:
-      return options?.programRegistrationFormVariant === 'economy' ? (
+      return options?.programRegistrationFormVariant === 'trainedTeachers' ? (
+        <TrainedTeachersRegistrationBusinessKpiParagraph />
+      ) : options?.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationBusinessKpiParagraph />
       ) : (
         <ProgramRegistrationBusinessKpiParagraph
@@ -115,7 +136,9 @@ export function renderProgramRegistrationParagraphBody(
             options?.participant.teacherInstructor === true ? '목표값 입력' : '해당 없음'
           }
           volunteerDisabled={options?.participant.volunteer !== true}
-          volunteerPlaceholder={options?.participant.volunteer === true ? '목표값 입력' : '해당 없음'}
+          volunteerPlaceholder={
+            options?.participant.volunteer === true ? '목표값 입력' : '해당 없음'
+          }
           dispatchedSchoolDisabled={options?.participant.individual === true}
           dispatchedSchoolPlaceholder={
             options?.participant.individual === true ? '해당 없음' : '목표값 입력'
@@ -127,13 +150,24 @@ export function renderProgramRegistrationParagraphBody(
         />
       )
     case PROGRAM_REGISTRATION_IDS.wageInfo:
+      if (options?.programRegistrationFormVariant === 'trainedTeachers') return null
       return options?.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationWageInfoParagraph />
       ) : (
         <ProgramRegistrationWageInfoParagraph />
       )
     case PROGRAM_REGISTRATION_IDS.typeSettings:
-      return options == null ? null : (
+      return options == null ? null : options.programRegistrationFormVariant ===
+        'trainedTeachers' ? (
+        <TrainedTeachersRegistrationTypeSettingsParagraph
+          sessionRoundType={options.sessionRoundType}
+          onSessionRoundTypeChange={options.onSessionRoundTypeChange}
+          educationFormScheduleDetail={options.educationFormScheduleDetail}
+          onEducationFormScheduleDetailChange={options.onEducationFormScheduleDetailChange}
+          ipsScheduleDetail={options.ipsScheduleDetail}
+          onIpsScheduleDetailChange={options.onIpsScheduleDetailChange}
+        />
+      ) : (
         <ProgramRegistrationTypeSettingsParagraph
           programType={options.programType}
           onProgramTypeChange={options.onProgramTypeChange}
@@ -149,7 +183,14 @@ export function renderProgramRegistrationParagraphBody(
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationCurriculum:
-      return options == null ? null : options.programRegistrationFormVariant === 'economy' ? (
+      return options == null ? null : options.programRegistrationFormVariant ===
+        'trainedTeachers' ? (
+        <TrainedTeachersRegistrationEducationCurriculumParagraph
+          teacherTrainingEnabled={options.trainedTeachersTeacherTrainingEnabled}
+          curriculumSessionCount={options.curriculumChartSessionCount}
+          onDeleteCurriculumSession={options.onDeleteCurriculumChartSession}
+        />
+      ) : options.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationEducationCurriculumParagraph />
       ) : options.programType === 'schedule' ? (
         <ProgramRegistrationEducationScheduleCurriculumParagraph
@@ -181,7 +222,13 @@ export function renderProgramRegistrationParagraphBody(
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationScheduleSettings:
-      return options == null ? null : options.programRegistrationFormVariant === 'economy' ? (
+      return options == null ? null : options.programRegistrationFormVariant ===
+        'trainedTeachers' ? (
+        <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
+          educationScheduleMode={options.educationScheduleMode}
+          onEducationScheduleModeChange={options.onEducationScheduleModeChange}
+        />
+      ) : options.programRegistrationFormVariant === 'economy' ? (
         <OneCOneSRegistrationEducationScheduleSettingsParagraph
           educationScheduleMode={options.educationScheduleMode}
           onEducationScheduleModeChange={options.onEducationScheduleModeChange}

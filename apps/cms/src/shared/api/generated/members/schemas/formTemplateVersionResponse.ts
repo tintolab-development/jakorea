@@ -13,9 +13,14 @@ export interface FormTemplateVersionResponse {
   versionLabel?: string;
   versionStatus?: string;
   schemaJson?: string;
+  extensionJson?: string;
+  settingsJson?: string;
+  responseCount?: number;
+  activeBindingCount?: number;
   effectiveFrom?: string;
   effectiveTo?: string;
   publishedAt?: string;
   createdAt?: string;
   updatedAt?: string;
+  availableActions?: string[];
 }

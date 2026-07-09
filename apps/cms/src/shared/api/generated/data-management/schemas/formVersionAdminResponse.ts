@@ -9,10 +9,13 @@
 export interface FormVersionAdminResponse {
   templateVersionId?: number;
   templateId?: number;
+  templateCode?: string;
   versionNo?: number;
   versionLabel?: string;
   versionStatus?: string;
   schemaJson?: string;
+  extensionJson?: string;
+  settingsJson?: string;
   effectiveFrom?: string;
   effectiveTo?: string;
   publishedAt?: string;

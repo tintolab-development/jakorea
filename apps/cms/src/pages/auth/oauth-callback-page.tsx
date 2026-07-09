@@ -18,6 +18,7 @@ import { ADMIN_REGISTER_TERMS_VERSION } from '@/features/auth/lib/admin-register
 import {
   buildRegisterSocialConnectCompletePath,
   buildRegisterSocialConnectFailedPath,
+  buildSocialConnectCompletePath,
   clearOAuthIntent,
   getOAuthIntent,
   getRegisterSocialRedirect,
@@ -39,9 +40,9 @@ function isMfaRequiredLoginError(err: unknown): boolean {
   return err instanceof Error && err.message.includes('MFA')
 }
 
-function buildLinkSuccessPath(registerRedirect?: string) {
-  if (registerRedirect?.startsWith('/')) {
-    return registerRedirect
+function buildLinkSuccessPath(registerRedirect?: string, isAuthenticated = false) {
+  if (isAuthenticated) {
+    return buildSocialConnectCompletePath(registerRedirect)
   }
   return buildRegisterSocialConnectCompletePath(registerRedirect)
 }
@@ -70,13 +71,23 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
       const oauthIntent = getOAuthIntent()
       const registerRedirect = getRegisterSocialRedirect()
 
+      if (oauthIntent !== 'link' && isSocialAuthLoginRemoteEnabled()) {
+        if (params.has('socialLoginSessionId')) {
+          navigate(`/login/social/complete?${params.toString()}`, { replace: true })
+          return
+        }
+        navigate('/login', { replace: true })
+        return
+      }
+
       if (oauthIntent === 'link') {
         const code = params.get('code')
         const state = params.get('state')
         const callbackKey = buildOAuthLinkCallbackKey(provider, code, state)
+        const isAuthenticated = useAuthStore.getState().isAuthenticated
 
         if (isOAuthLinkCallbackHandled(callbackKey)) {
-          navigate(buildLinkSuccessPath(registerRedirect), { replace: true })
+          navigate(buildLinkSuccessPath(registerRedirect, isAuthenticated), { replace: true })
           return
         }
 
@@ -101,7 +112,7 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
           cmsSocialAuthClient.state.addConnectedProvider(provider)
           clearOAuthIntent()
           markOAuthLinkCallbackHandled(callbackKey)
-          navigate(buildLinkSuccessPath(registerRedirect), { replace: true })
+          navigate(buildLinkSuccessPath(registerRedirect, isAuthenticated), { replace: true })
           return
         }
 
@@ -117,7 +128,7 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
 
         switch (linkOutcome.kind) {
           case 'linked':
-            navigate(buildLinkSuccessPath(registerRedirect), { replace: true })
+            navigate(buildLinkSuccessPath(registerRedirect, isAuthenticated), { replace: true })
             return
           case 'cancelled':
             navigate(buildRegisterSocialConnectFailedPath(registerRedirect), { replace: true })

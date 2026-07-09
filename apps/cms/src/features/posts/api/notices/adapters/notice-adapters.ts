@@ -5,10 +5,19 @@ import type {
   NoticeResponse,
   PageResponseNoticeResponse,
 } from '@/shared/api/generated/posts/schemas'
+import { NoticeRequestStatus } from '@/shared/api/generated/posts/schemas/noticeRequestStatus'
 
 function parseNoticeStatus(value: string | undefined): Notice['status'] {
-  if (value === 'published' || value === 'draft' || value === 'archived') return value
+  if (value === 'published' || value === 'archived') return value
+  if (value === 'draft' || value === NoticeRequestStatus.임시저장) return 'draft'
   return 'draft'
+}
+
+function toNoticeRequestStatus(status: Notice['status'] | undefined): NoticeRequest['status'] {
+  if (status == null) return undefined
+  if (status === 'published') return NoticeRequestStatus.published
+  if (status === 'archived') return NoticeRequestStatus.archived
+  return NoticeRequestStatus.임시저장
 }
 
 export function mapNoticeResponse(dto: NoticeResponse): Notice {
@@ -40,7 +49,8 @@ export function toNoticeRequestFromForm(params: BuildNoticeBodyParams): NoticeRe
     isImportant: params.pinToTop,
     author: params.author,
     hasAttachment: attachmentNames.length > 0,
-    status: params.visibility === 'public' ? 'published' : 'draft',
+    status:
+      params.visibility === 'public' ? NoticeRequestStatus.published : NoticeRequestStatus.임시저장,
   }
 }
 
@@ -52,6 +62,6 @@ export function toNoticeRequestFromNotice(notice: Notice): NoticeRequest {
     isImportant: notice.isImportant,
     author: notice.author,
     hasAttachment: notice.hasAttachment,
-    status: notice.status,
+    status: toNoticeRequestStatus(notice.status),
   }
 }

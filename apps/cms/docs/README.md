@@ -143,6 +143,9 @@
 
 | 문서 | 설명 |
 |------|------|
+| [forms-surveys-api-integration.md](api/forms-surveys-api-integration.md) | 템플릿 양식 API 연동 명세 |
+| [forms-surveys-api-migration-guide.md](api/forms-surveys-api-migration-guide.md) | 템플릿 양식 API **PHASE별 마이그레이션 가이드** |
+| [forms-surveys-api-backend-gaps.md](api/forms-surveys-api-backend-gaps.md) | 템플릿 양식 **백엔드 갭·미구현 핸드오프** |
 | [api-spec-mock-detailed.md](api/api-spec-mock-detailed.md) | API 명세 상세 |
 | [api-spec-mock-extended.md](api/api-spec-mock-extended.md) | API 명세 확장 |
 

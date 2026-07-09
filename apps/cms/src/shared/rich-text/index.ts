@@ -1,29 +1,34 @@
 /**
- * CMS Rich Text (Tiptap headless)
+ * CMS Rich Text — `@jakorea/rich-text` re-export + Ant Design 툴바 어댑터
  *
- * - MIT / 무료 extension만 (`extensions.ts` 주석 참고)
- * - UI: `RichTextEditor` + `toolbar` 슬롯 또는 `editor.chain()` 커스텀
- * - Toast UI 교체: `docs/implementation/rich-text-editor-tiptap-migration.md`
+ * - 패키지: Tiptap core + React shell
+ * - CMS: Ant Design 툴바, 기존 `@/shared/rich-text` import 경로 유지
+ * - @see packages/rich-text/README.md
  */
 
-export { createRichTextExtensions } from './extensions'
-export { createRichTextEditorApi } from './lib/editor-api'
+import '@jakorea/rich-text/styles/content.css'
+import '@jakorea/rich-text/styles/editor.css'
+import '@jakorea/rich-text/styles/toolbar.css'
+
 export {
+  createRichTextExtensions,
+  createRichTextEditorApi,
   getInitialEditorContent,
   markdownToHtml,
   serializeEditorContent,
   toEditorContentType,
-} from './lib/content'
-export { RichTextEditor } from './rich-text-editor'
-export { RichTextToolbar } from './rich-text-toolbar'
-export { RichTextViewer } from './rich-text-viewer'
-export { useRichTextEditor } from './use-rich-text-editor'
+} from '@jakorea/rich-text'
+export { RichTextViewer, useRichTextEditor } from '@jakorea/rich-text/react'
+export { CmsRichTextEditor as RichTextEditor } from './cms-rich-text-editor'
+export { RichTextToolbar } from './toolbar/rich-text-toolbar'
+export type { RichTextToolbarProps } from './toolbar/rich-text-toolbar'
 export type {
   CreateRichTextExtensionsOptions,
+  Editor,
   RichTextContentFormat,
   RichTextEditorApi,
   RichTextEditorContentType,
   RichTextEditorProps,
   RichTextViewerProps,
   UseRichTextEditorOptions,
-} from './types'
+} from '@jakorea/rich-text/react'

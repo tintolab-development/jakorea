@@ -1,112 +1,16 @@
-/*
- * 승인 연수 필터 — 5필드+조회 한 줄, 카드 너비(100%) 안에서만 배치(페이지 가로 스크롤 없음).
- * 합산 폭이 좁을 때는 열·컨트롤이 비율 축소(shrink), 넓을 때는 240/235.5/500px 상한 유지.
- */
-.program-list-page:has(> .gemini-approved-training-list) {
-  min-width: 0;
-  max-width: 100%;
-}
-
-.gemini-approved-training-list.filter-table-layout {
-  max-width: 100%;
-  overflow-x: clip;
-  box-sizing: border-box;
-}
-
-.gemini-approved-training-list.filter-table-layout .filter-table-layout__filter {
-  min-width: 0;
-  max-width: 100%;
-}
-
-.gemini-approved-training-list.filter-table-layout .table-filter-group__container {
+.gemini-approved-training-list__training-datetime-cell {
+  display: flex;
+  justify-content: center;
   width: 100%;
-  max-width: 100%;
-  flex-wrap: nowrap;
-  box-sizing: border-box;
 }
 
-.gemini-approved-training-list.filter-table-layout .table-filter-group__fields-container {
-  flex: 1 1 0;
-  min-width: 0;
-  width: auto;
-}
-
-.gemini-approved-training-list.filter-table-layout .table-filter-group__fields-inner.ant-row {
-  width: 100%;
-  max-width: 100%;
-  flex-wrap: nowrap;
-}
-
-/* Ant Col 기본 flex: 0 0 Npx → shrink 허용해 한 줄·무스크롤 */
-.gemini-approved-training-list.filter-table-layout
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col.table-filter-group__col--explicit-width {
-  flex: 0 1 var(--filter-field-width) !important;
-  min-width: 0 !important;
-  max-width: var(--filter-field-width);
-}
-
-.gemini-approved-training-list.filter-table-layout .table-filter-group__fields-shell {
-  flex: 0 0 auto;
-}
-
-/* 축소 시 컨트롤이 Col 폭을 따름 */
-.gemini-approved-training-list.filter-table-layout
-  .table-filter-group__fields-inner
-  .ant-col
-  .labeled-search-input,
-.gemini-approved-training-list.filter-table-layout
-  .table-filter-group__fields-inner
-  .ant-col
-  .cms-select,
-.gemini-approved-training-list.filter-table-layout
-  .table-filter-group__fields-inner
-  .ant-col
-  .ant-select,
-.gemini-approved-training-list.filter-table-layout
-  .table-filter-group__fields-inner
-  .ant-col
-  .cms-datepicker:not(.cms-datepicker--range-split) {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-.gemini-approved-training-list.filter-table-layout
-  .table-filter-group__fields-inner
-  .ant-col.table-filter-group__col--date-range
-  .cms-datepicker.cms-datepicker--range-split {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-.gemini-approved-training-list.filter-table-layout
-  .table-filter-group__fields-inner
-  .ant-col.table-filter-group__col--date-range
-  .cms-datepicker--range-split
-  .cms-datepicker__segment {
-  flex: 1 1 0 !important;
-  width: auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
-}
-
-.gemini-approved-training-list.filter-table-layout
-  .table-filter-group__fields-inner
-  .ant-col.table-filter-group__col--address-region-field
-  .table-filter-group__address-region-selects
-  > .cms-select,
-.gemini-approved-training-list.filter-table-layout
-  .table-filter-group__fields-inner
-  .ant-col.table-filter-group__col--address-region-field
-  .table-filter-group__address-region-selects
-  > .ant-select {
-  flex: 1 1 0 !important;
-  width: auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
+.gemini-approved-training-list__training-datetime-cell .program-detail-td-segment-wrap {
+  justify-content: center;
 }
 
 .gemini-approved-training-list__status {
+  display: inline-block;
+  text-align: center;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 16px;
   font-style: normal;
@@ -122,8 +26,13 @@
   color: var(--color-blue, #017eaf);
 }
 
-.gemini-approved-training-list__status--ended {
-  color: var(--color-red, #c32f4a);
+.gemini-approved-training-list__status--completed {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.gemini-approved-training-list__status--not-conducted {
+  color: var(--main-BK, #3d3d3d);
+  opacity: 0.5;
 }
 
 .gemini-approved-training-list__instructor--unassigned {

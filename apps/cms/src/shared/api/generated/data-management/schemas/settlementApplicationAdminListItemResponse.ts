@@ -21,4 +21,5 @@ export interface SettlementApplicationAdminListItemResponse {
   sourceSettlementId?: number;
   submittedAt?: string;
   createdAt?: string;
+  availableActions?: string[];
 }

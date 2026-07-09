@@ -129,4 +129,20 @@ export default defineConfig({
       },
     },
   },
+  formsSurveys: {
+    input: './openapi/forms-surveys.openapi.json',
+    output: {
+      mode: 'split',
+      target: './src/shared/api/generated/forms-surveys/forms-surveys-api.ts',
+      schemas: './src/shared/api/generated/forms-surveys/schemas',
+      client: 'axios',
+      prettier: false,
+      override: {
+        mutator: {
+          path: './src/shared/api/orval-mutator.ts',
+          name: 'customInstance',
+        },
+      },
+    },
+  },
 })

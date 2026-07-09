@@ -4,10 +4,19 @@ import type {
   FaqResponse,
   PageResponseFaqResponse,
 } from '@/shared/api/generated/posts/schemas'
+import { FaqRequestStatus } from '@/shared/api/generated/posts/schemas/faqRequestStatus'
 
 function parseFaqStatus(value: string | undefined): AdminFaq['status'] {
-  if (value === 'published' || value === 'draft' || value === 'archived') return value
+  if (value === 'published' || value === 'archived') return value
+  if (value === 'draft' || value === FaqRequestStatus.임시저장) return 'draft'
   return 'draft'
+}
+
+function toFaqRequestStatus(status: AdminFaq['status'] | undefined): FaqRequest['status'] {
+  if (status == null) return undefined
+  if (status === 'published') return FaqRequestStatus.published
+  if (status === 'archived') return FaqRequestStatus.archived
+  return FaqRequestStatus.임시저장
 }
 
 export function mapFaqResponse(dto: FaqResponse): AdminFaq {
@@ -38,6 +47,6 @@ export function toFaqRequest(payload: FaqCreatePayload | FaqUpdatePayload): FaqR
     question: payload.question,
     answer: payload.answer,
     author: payload.author,
-    status: payload.status,
+    status: toFaqRequestStatus(payload.status),
   }
 }

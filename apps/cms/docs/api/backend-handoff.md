@@ -4,7 +4,8 @@ Swagger/OpenAPI 기반 실 API 연동 시 공통 설정·인증·응답 규칙�
 
 상세 클라이언트 규칙: [api-routes-and-client.md](./api-routes-and-client.md)  
 Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)  
-대시보드 1차 파일럿: [dashboard-api-integration.md](./dashboard-api-integration.md)
+대시보드 1차 파일럿: [dashboard-api-integration.md](./dashboard-api-integration.md)  
+**템플릿 양식 (forms-surveys)**: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) · [PHASE별 마이그레이션](./forms-surveys-api-migration-guide.md) · [**백엔드 갭 목록**](./forms-surveys-api-backend-gaps.md)
 
 ---
 
@@ -12,8 +13,8 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 | 항목            | 값                                                                                |
 | --------------- | --------------------------------------------------------------------------------- |
-| Swagger UI      | `https://12aa-221-146-247-18.ngrok-free.app/swagger-ui/index.html`                |
-| OpenAPI JSON    | `https://12aa-221-146-247-18.ngrok-free.app/v3/api-docs`                          |
+| Swagger UI      | `https://8eed-221-146-247-18.ngrok-free.app//swagger-ui/index.html`               |
+| OpenAPI JSON    | `https://8eed-221-146-247-18.ngrok-free.app//v3/api-docs`                         |
 | 프론트 스냅샷   | [`apps/cms/openapi/backend.openapi.json`](../../openapi/backend.openapi.json)     |
 | 대시보드 subset | [`apps/cms/openapi/dashboard.openapi.json`](../../openapi/dashboard.openapi.json) |
 
@@ -27,7 +28,7 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 2. **프록시 모드(권장)**
 
 ```env
-VITE_API_SERVER=https://12aa-221-146-247-18.ngrok-free.app
+VITE_API_SERVER=https://8eed-221-146-247-18.ngrok-free.app/
 VITE_REAL_API_MODULES=adminAuth,dashboard,logs,detailedPrograms,textbooks,sponsors,notices,faqs,inquiries,paymentOrders,accountPayments,settlementConfigs
 VITE_ADMIN_AUTH_API_PREFIX=/api/admin/auth
 VITE_AUTH_REFRESH_PATH=/api/auth/refresh
@@ -45,15 +46,25 @@ VITE_AUTH_REFRESH_PATH=/api/auth/refresh
 | API             | 경로                                                                      |
 | --------------- | ------------------------------------------------------------------------- |
 | 관리자 로그인   | `POST /api/admin/auth/login`                                              |
-| MFA             | `POST /api/admin/auth/mfa/verify`                                         |
+| MFA 검증        | `POST /api/admin/auth/mfa/verify`                                         |
+| MFA TOTP 등록   | `POST /api/admin/auth/mfa/enrollment` (`mfaMethod`, `enabled`, `challengeUuid`·`totpSecret`) |
 | 관리자 로그아웃 | `POST /api/admin/auth/logout` body: `{ refreshToken }` (Bearer + refresh) |
 | 관리자 refresh  | `POST /api/admin/auth/refresh` (`adminAuth` 활성 시 axios가 자동 사용)    |
 
 **로그인 → MFA 흐름**
 
-1. `POST /api/admin/auth/login` → `{ challengeUuid, mfaMethod, expiresAt }` (래퍼 없음)
-2. `POST /api/admin/auth/mfa/verify` body: `{ challengeUuid, verificationCode }`
-3. 성공 시 `{ accessToken, refreshToken, expiresInSeconds }` → `auth_token` / `auth_refresh_token` 저장
+1. `POST /api/admin/auth/login` → `{ requiresMfa, challengeUuid, mfaMethod, expiresAt }` (래퍼 없음)
+2. `mfaMethod` 분기:
+   - `LOCAL_TEST_CODE`: QR 없음 — 테스트 코드 **`000000`** 입력
+   - `TOTP`: `POST /api/admin/auth/mfa/enrollment`으로 시크릿 등록 후 QR 표시 → Authenticator 6자리 입력
+3. `POST /api/admin/auth/mfa/verify` body: `{ challengeUuid, verificationCode }`
+4. 성공 시 `{ accessToken, refreshToken, expiresInSeconds }` → `auth_token` / `auth_refresh_token` 저장
+
+**TOTP 최초 등록 (`mfa/enrollment`)**
+
+- 로그인 직후 challenge가 있을 때 `challengeUuid`를 body에 포함해 호출합니다.
+- `totpSecret` 없이 호출하면 서버가 시크릿을 생성할 수 있고, 실패 시 프론트가 시크릿을 생성해 재전송합니다.
+- OpenAPI `AdminMfaSetupResponse`에는 QR 필드가 없어, 프론트는 `totpSecret`/`otpauthUri`가 오면 사용하고 없으면 로컬에서 QR 이미지를 생성합니다.
 
 **로컬 백엔드 (`mfaMethod: LOCAL_TEST_CODE`)**
 
@@ -72,42 +83,46 @@ CMS는 `useAuthStore` 토큰 → [`axios-instance.ts`](../../src/shared/instance
 공유 패키지: [`packages/social-auth`](../../../../packages/social-auth)  
 CMS wiring: [`features/auth/social-auth/cms-client.ts`](../../src/features/auth/social-auth/cms-client.ts)
 
-| API | 경로 | 용도 |
-| --- | --- | --- |
-| SSO 시작 | `POST /api/admin/auth/sso/login` | 관리자 소셜 **로그인·연결** OAuth 시작 |
-| SSO 콜백 | `POST /api/admin/auth/sso/callback` | 로그인 code → JWT |
-| 연결 목록 | `GET /api/admin/me/sso/accounts` | 로그인 후 연결 목록 (`content[]`) |
-| 계정 연결 | `POST /api/admin/me/sso/accounts` | OAuth code + consent → 연결 |
-| 연결 해제 | `DELETE /api/admin/me/sso/accounts/{provider}` | 연결 해제 |
+| API                    | 경로                                           | 용도                                                                                                |
+| ---------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| SSO 시작               | `POST /api/admin/auth/sso/login`               | 관리자 소셜 **로그인·연결** OAuth 시작 (`redirectUri`=백엔드 callback, `returnUrl`=프론트 complete) |
+| SSO provider callback  | `GET /api/admin/auth/sso/{provider}/callback`  | IdP → 백엔드 code 교환 (브라우저 redirect, 프론트 XHR 아님)                                         |
+| 로그인 session consume | `POST /api/auth/sso/login/sessions/consume`    | `socialLoginSessionId` → JWT                                                                        |
+| 연결 목록              | `GET /api/admin/me/sso/accounts`               | 로그인 후 연결 목록 (`content[]`)                                                                   |
+| 계정 연결              | `POST /api/admin/me/sso/accounts`              | mock/pending flush 시 `accessToken` + consent                                                       |
+| 연결 해제              | `DELETE /api/admin/me/sso/accounts/{provider}` | 연결 해제                                                                                           |
 
-> legacy alias `/api/admin/auth/me/social-accounts` 는 Swagger에서 제거됨. 프론트는 canonical `/api/admin/me/sso/accounts` 사용.
+> legacy `POST /api/admin/auth/sso/callback` 는 Swagger에서 제거됨. canonical은 backend redirect + session consume.
 
 ### 관리자 소셜 로그인 (Admin SSO)
 
 1. 로그인 버튼 → `startLogin({ intent: 'login' })` → `POST /api/admin/auth/sso/login`
-2. IdP → 프론트 `/oauth/{provider}?code&state`
-3. `processOAuthCallback` → `POST /api/admin/auth/sso/callback` → JWT 저장
+2. IdP → **백엔드** `GET /api/admin/auth/sso/{provider}/callback`
+3. 백엔드 → 프론트 `/login/social/complete?socialLoginSessionId=...`
+4. `processSocialLoginSessionReturn` → `POST /api/auth/sso/login/sessions/consume` → JWT 저장
 
-- redirect URI: `http://localhost:3000/oauth/{provider}`
+- IdP Redirect URI: `{VITE_API_SERVER}/api/admin/auth/sso/{kakao\|naver\|google}/callback`
+- mock 모드: 기존 `{origin}/oauth/{provider}` 프론트 콜백 유지
 
 ### 관리자 SSO 계정 연결 (내 정보 / 가입 wizard)
 
-1. 연결 버튼 → `startLogin({ intent: 'link' })` → `POST /api/admin/auth/sso/login` (동일 OAuth 시작)
-2. IdP → 프론트 `/oauth/{provider}?code&state`
-3. `processOAuthLinkCallback` → 로그인 상태면 `POST /api/admin/me/sso/accounts` 즉시 연결
-4. 미로그인(가입 직후)이면 pending 저장 → 로그인 후 `flushSocialPendingLinks()` → `POST /api/admin/me/sso/accounts`
+1. 연결 버튼 → `startLogin({ intent: 'link' })` → `POST /api/admin/auth/sso/login` (`returnUrl`=`/register/social-connect/callback`)
+2. IdP → **백엔드** callback → 프론트 returnUrl (`linked`, `provider` query)
+3. `processAdminSsoLinkReturn` → 연결 상태 반영
+4. mock: 기존 `/oauth/{provider}` + pending link + `flushSocialPendingLinks()` 유지
 
-- POST body: `SocialLinkRequest` — `provider`, `accessToken`(OAuth code 대체 가능), `socialConsentVersion`, `socialConsentAgreed`
-- 연결 목록/해제: Bearer + `ADMIN_READ` / `ADMIN_WRITE`
+- POST body (`SocialLinkRequest`): `provider`, `accessToken`, `socialConsentVersion`, `socialConsentAgreed`
+- 연결 목록/해제: Bearer 필요
 
 **환경 변수**
 
 ```env
-VITE_API_SERVER=https://12aa-221-146-247-18.ngrok-free.app
+VITE_API_SERVER=https://8eed-221-146-247-18.ngrok-free.app/
 VITE_KAKAO_CLIENT_ID=
 VITE_NAVER_CLIENT_ID=
 VITE_GOOGLE_CLIENT_ID=
 VITE_REAL_API_MODULES=...,socialAuth
+# IdP Redirect URI: {VITE_API_SERVER}/api/admin/auth/sso/kakao|naver|google/callback
 ```
 
 - `socialAuth` 모듈 하나로 Admin SSO **로그인·연결·목록** 실 API 활성화 (`socialAuthLogin` 별도 지정 가능)

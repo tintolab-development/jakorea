@@ -12,7 +12,7 @@ import {
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import { ManagedProgramCountDisplay } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
-import { formatGenderBirthLine, socialLine } from '../display'
+import { genderBirthView, socialView } from '../display'
 import { PermissionApprovalStatusWithResend } from '../status'
 import { useBasicInfoEditing } from '../use-basic-info-editing'
 import { EditableField } from '../fields/editable-field'
@@ -135,7 +135,7 @@ export function AdminSection(ctx: BasicInfoSectionContext) {
             ),
             sideLabel: isAdminPermissionDetail ? '성별 및 생년월일' : '담당 프로그램 수',
             side: isAdminPermissionDetail ? (
-              <span>{formatGenderBirthLine(user)}</span>
+              genderBirthView(user)
             ) : (
               <span className="user-basic-info-section__admin-managed-programs">
                 <ManagedProgramCountDisplay user={user} />
@@ -159,7 +159,7 @@ export function AdminSection(ctx: BasicInfoSectionContext) {
 
       <EditableRow type="double">
         <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
-        <EditableField label="연동된 소셜 계정" readOnlyDisplay view={<span>{socialLine(user)}</span>} />
+        <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
       </EditableRow>
     </>
   )

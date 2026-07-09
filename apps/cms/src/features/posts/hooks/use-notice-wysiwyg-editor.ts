@@ -1,4 +1,4 @@
-import type { Editor } from '@tiptap/react'
+import type { Editor } from '@/shared/rich-text'
 import { useCallback, useRef } from 'react'
 import {
   useRichTextEditor,

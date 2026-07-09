@@ -37,7 +37,10 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import './program-applicants-tab.css'
+import {
+  withProgramDetailTdDivider,
+  ProgramDetailTdSegmentWrap,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 
 const SUB_TAB_SCHOOLS = 'schools'
 const SUB_TAB_INSTRUCTORS = 'instructors'
@@ -467,8 +470,11 @@ export function ProgramApplicantsTab({
         width: 200,
         align: 'center',
         ellipsis: true,
-        render: (_: unknown, row: ApplicantInstructorRow) =>
-          `${row.educationLevel} | ${row.educationSchoolName}`,
+        render: (_: unknown, row: ApplicantInstructorRow) => (
+          <ProgramDetailTdSegmentWrap>
+            {withProgramDetailTdDivider([row.educationLevel, row.educationSchoolName])}
+          </ProgramDetailTdSegmentWrap>
+        ),
       },
       {
         title: '연락처',

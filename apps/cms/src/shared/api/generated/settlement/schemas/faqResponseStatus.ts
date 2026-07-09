@@ -14,6 +14,6 @@ export type FaqResponseStatus = typeof FaqResponseStatus[keyof typeof FaqRespons
 
 export const FaqResponseStatus = {
   published: 'published',
-  draft: 'draft',
+  임시저장: '임시저장',
   archived: 'archived',
 } as const;

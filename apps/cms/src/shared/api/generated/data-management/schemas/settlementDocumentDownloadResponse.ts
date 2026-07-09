@@ -12,4 +12,5 @@ export interface SettlementDocumentDownloadResponse {
   status?: string;
   fileObjectId?: number;
   downloadUrl?: string;
+  availableActions?: string[];
 }

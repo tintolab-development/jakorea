@@ -24,6 +24,10 @@ import {
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useMemberConsentRecordsQuery } from '@/features/user/api/hooks/use-member-detail-query'
+import {
+  useAffiliatedTeachersQuery,
+  useMemberCommentsQuery,
+} from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { applyConsentRecordsToSchema } from '@/features/user/api/map-member-consent-records'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { MemberDetailMockDataBanner } from '@/features/user/detail/ui/member-detail-mock-data-banner'
@@ -81,6 +85,26 @@ export function UserDetailFullpageBasicTabContent({
     membersRemote && basicTab.showConsentAgreement
   )
 
+  const {
+    data: commentsData,
+    isError: commentsError,
+    isLoading: commentsLoading,
+  } = useMemberCommentsQuery(user.memberId, membersRemote && canShowAdminCommentForTarget)
+
+  const { data: affiliatedTeachers = [], isError: teachersError } = useAffiliatedTeachersQuery(
+    user.memberId,
+    membersRemote && basicTab.showSchoolAffiliatedTeachers
+  )
+
+  const userForAdminComment = useMemo(() => {
+    if (!commentsData?.latestComment) return user
+    return { ...user, adminComment: commentsData.latestComment }
+  }, [user, commentsData?.latestComment])
+
+  const affiliatedTeacherRows = membersRemote
+    ? affiliatedTeachers
+    : (user.schoolInfo?.affiliatedTeachers ?? [])
+
   const remoteConsentRows = useMemo(() => {
     if (!membersRemote || !basicTab.showConsentAgreement) return undefined
     const baseSchema =
@@ -100,11 +124,11 @@ export function UserDetailFullpageBasicTabContent({
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
       {canShowAdminCommentForTarget ? (
         <>
-          {membersRemote ? (
-            <MemberDetailMockDataBanner message="관리자 코멘트는 API가 제공되지 않아 mock 데이터로 표시됩니다." />
+          {membersRemote && (commentsError || commentsLoading) ? (
+            <MemberDetailMockDataBanner message="관리자 코멘트 API 조회에 실패했습니다. mock 데이터가 표시될 수 있습니다." />
           ) : null}
           <UserDetailAdminCommentSection
-            user={user}
+            user={userForAdminComment}
             memberInfoEditing={memberInfoEditing}
             adminCommentDraft={memberInfoDraft?.adminComment}
             onAdminCommentChange={
@@ -149,11 +173,14 @@ export function UserDetailFullpageBasicTabContent({
       ) : null}
       {basicTab.showSchoolAffiliatedTeachers ? (
         <>
+          {membersRemote && teachersError ? (
+            <MemberDetailMockDataBanner message="소속 교사 목록 API 조회에 실패했습니다. mock 데이터가 표시될 수 있습니다." />
+          ) : null}
           {membersRemote ? (
-            <MemberDetailMockDataBanner message="소속 교사 목록 API가 제공되지 않아 mock 데이터로 표시됩니다." />
+            <MemberDetailMockDataBanner message="재직 현황 변경 API는 미제공으로 mock 동작이 유지됩니다." />
           ) : null}
           <SchoolAffiliatedTeachersSection
-            rows={user.schoolInfo?.affiliatedTeachers ?? []}
+            rows={affiliatedTeacherRows}
             personalInfoRevealed={personalInfoRevealed}
             onLinkedUserClick={onNavigateToLinkedUser}
           />

@@ -11,9 +11,7 @@ import type {
   Program,
 } from '@/types/domain'
 import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
-import { mockSponsors } from '@/data/mock/sponsors'
-import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
-import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
+import type { SponsorContactRow, SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   resolveGeneralProgramCommonInfo,
   resolveScheduleTypeDetailedProgramNameFromDetails,
@@ -413,7 +411,30 @@ export function decodeSponsorManagerContactRef(
   }
 }
 
-export function resolveSponsorManagementIds(program: Program): string[] {
+export type GeneralProgramSponsorEditContext = {
+  sponsors: SponsorManagementRow[]
+  contactsBySponsorId: Record<string, SponsorContactRow[]>
+}
+
+const EMPTY_SPONSOR_CONTEXT: GeneralProgramSponsorEditContext = {
+  sponsors: [],
+  contactsBySponsorId: {},
+}
+
+function findSponsorByName(
+  sponsors: readonly SponsorManagementRow[],
+  name: string
+): SponsorManagementRow | undefined {
+  const trimmed = name.trim()
+  if (!trimmed) return undefined
+  return sponsors.find(row => row.name === trimmed)
+}
+
+export function resolveSponsorManagementIds(
+  program: Program,
+  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
+): string[] {
+  const { sponsors } = context
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   if (commonInfo.sponsorManagementIds?.length) return [...commonInfo.sponsorManagementIds]
   if (commonInfo.sponsorManagementId) return [commonInfo.sponsorManagementId]
@@ -421,30 +442,27 @@ export function resolveSponsorManagementIds(program: Program): string[] {
   if (displayName) {
     const names = displayName.split(',').map(name => name.trim()).filter(Boolean)
     const ids = names
-      .map(name => mockSponsorManagementListRows.find(row => row.name === name)?.id)
+      .map(name => findSponsorByName(sponsors, name)?.id)
       .filter((id): id is string => Boolean(id))
     if (ids.length > 0) return ids
   }
   if (program.sponsorId) {
-    const sponsorName = mockSponsors.find(row => row.id === program.sponsorId)?.name?.trim()
-    if (sponsorName) {
-      const matched = mockSponsorManagementListRows.find(row => row.name === sponsorName)
-      if (matched) return [matched.id]
-    }
+    const byId = sponsors.find(row => row.id === program.sponsorId)
+    if (byId) return [byId.id]
+    const sponsorName = commonInfo.sponsorDisplayName?.trim() || program.title
+    void sponsorName
   }
-  const fallback = mockSponsorManagementListRows[0]
-  return fallback ? [fallback.id] : []
+  return sponsors[0] ? [sponsors[0].id] : []
 }
 
 function resolveSponsorManagerContactId(
   program: Program,
-  sponsorManagementIds: string[]
+  sponsorManagementIds: string[],
+  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
 ): string {
   const primarySponsorId = sponsorManagementIds[0]
   if (!primarySponsorId) return ''
-  const sponsor = mockSponsorManagementListRows.find(row => row.id === primarySponsorId)
-  if (!sponsor) return ''
-  const contacts = getSponsorDetailContactsNormalized(sponsor)
+  const contacts = context.contactsBySponsorId[primarySponsorId] ?? []
   const commonInfo = resolveGeneralProgramCommonInfo(program)
   const line = commonInfo.sponsorManagerLine?.trim() || program.managerName?.trim() || ''
   if (!line) {
@@ -459,16 +477,17 @@ function resolveSponsorManagerContactId(
   return contact ? encodeSponsorManagerContactRef(primarySponsorId, contact.id) : ''
 }
 
-function resolveManagerFromFormValues(values: GeneralProgramCommonInfoEditFormValues) {
+function resolveManagerFromFormValues(
+  values: GeneralProgramCommonInfoEditFormValues,
+  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
+) {
   const decoded = decodeSponsorManagerContactRef(values.sponsorManagerContactId)
   const sponsorManagementId = decoded?.sponsorManagementId ?? values.sponsorManagementIds[0]
   const contactId = decoded?.contactId ?? values.sponsorManagerContactId
   if (!sponsorManagementId || !contactId) {
     return { manager: undefined, sponsorManagementId }
   }
-  const sponsor = mockSponsorManagementListRows.find(row => row.id === sponsorManagementId)
-  if (!sponsor) return { manager: undefined, sponsorManagementId }
-  const manager = getSponsorDetailContactsNormalized(sponsor).find(c => c.id === contactId)
+  const manager = context.contactsBySponsorId[sponsorManagementId]?.find(c => c.id === contactId)
   return { manager, sponsorManagementId }
 }
 
@@ -773,10 +792,11 @@ function resolveWageFromProgram(program: Program): Pick<
 }
 
 export function programToGeneralCommonInfoEditValues(
-  program: Program
+  program: Program,
+  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
 ): GeneralProgramCommonInfoEditFormValues {
   const commonInfo = resolveGeneralProgramCommonInfo(program)
-  const sponsorManagementIds = resolveSponsorManagementIds(program)
+  const sponsorManagementIds = resolveSponsorManagementIds(program, context)
   const typeSettings = resolveTypeSettingsFromProgram(program)
   const educationProcess =
     resolveEducationProcessFormValue(program.educationProcess) ||
@@ -800,7 +820,7 @@ export function programToGeneralCommonInfoEditValues(
     endDate: toIso(program.endDate),
     businessArea: resolveBusinessAreaFormValue(program.businessArea),
     sponsorManagementIds,
-    sponsorManagerContactId: resolveSponsorManagerContactId(program, sponsorManagementIds),
+    sponsorManagerContactId: resolveSponsorManagerContactId(program, sponsorManagementIds, context),
     venueKind: resolveVenueKind(program),
     venueDetail: commonInfo.venueDetail?.trim() || program.venue?.trim() || '',
     ...participantFlagsFromProgram(program),
@@ -869,12 +889,13 @@ function resolveDetailedProgramName(detailedProgramId: string | undefined): stri
 
 export function generalCommonInfoEditValuesToProgramPatch(
   values: GeneralProgramCommonInfoEditFormValues,
-  existing: Program
+  existing: Program,
+  context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT
 ): Partial<Program> {
   const sponsorRows = values.sponsorManagementIds
-    .map(id => mockSponsorManagementListRows.find(row => row.id === id))
-    .filter((row): row is NonNullable<typeof row> => row != null)
-  const { manager } = resolveManagerFromFormValues(values)
+    .map(id => context.sponsors.find(row => row.id === id))
+    .filter((row): row is SponsorManagementRow => row != null)
+  const { manager } = resolveManagerFromFormValues(values, context)
   const participantTypes = participantTypesFromFlags(values)
   const primaryCategory =
     participantTypes.includes('individual') && !participantTypes.includes('school_institution')

@@ -34,6 +34,11 @@ const TEST_ACCOUNTS = {
     email: 'admin1@jakorea.org',
     password: 'admin1234!',
   },
+  /** 실 API 가입·승인 대기 등 — 개발용 자동 입력 */
+  adminRegistered: {
+    email: '123@jakorea.org',
+    password: '!Tinto05270527',
+  },
 }
 
 type LoginSocialView = 'default' | 'socialNotLinked' | 'socialAlreadyLinked'
@@ -359,6 +364,17 @@ export function LoginPage() {
                           }}
                         >
                           어드민 계정정보 자동 입력
+                        </Button>
+                        <Button
+                          size="small"
+                          onClick={() => {
+                            form.setFieldsValue({
+                              email: TEST_ACCOUNTS.adminRegistered.email,
+                              password: TEST_ACCOUNTS.adminRegistered.password,
+                            })
+                          }}
+                        >
+                          어드민 가입계정 자동 입력
                         </Button>
                         <Button size="small" onClick={handleDevLoginBypass}>
                           로그인 우회

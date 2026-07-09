@@ -21,5 +21,8 @@ export const dataManagementQueryKeys = {
     list: (searchParamsKey: string) =>
       [...dataManagementQueryKeys.sponsors.all(), 'list', searchParamsKey] as const,
     detail: (id: string) => [...dataManagementQueryKeys.sponsors.all(), 'detail', id] as const,
+    options: () => [...dataManagementQueryKeys.sponsors.all(), 'options'] as const,
+    programHistories: (sponsorId: string, paramsKey: string) =>
+      [...dataManagementQueryKeys.sponsors.all(), 'program-histories', sponsorId, paramsKey] as const,
   },
 } as const

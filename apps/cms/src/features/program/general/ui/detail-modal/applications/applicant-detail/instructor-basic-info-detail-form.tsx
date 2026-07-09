@@ -180,7 +180,7 @@ export interface InstructorBasicInfoDetailFormProps {
   profile: InstructorBasicInfoProfileFields
 }
 
-function InstructorBasicInfoProfileGrid({
+export function InstructorBasicInfoProfileGrid({
   profile,
 }: {
   profile: InstructorBasicInfoProfileFields

@@ -41,4 +41,5 @@ export interface SettlementResponse {
   calculationSnapshotJson?: string;
   items?: SettlementItemResponse[];
   calculationDetails?: SettlementCalculationDetailResponse[];
+  availableActions?: string[];
 }

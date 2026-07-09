@@ -7,18 +7,20 @@
  * - 수정 모드: react-hook-form Controller, 기존 프로그램 값이 default로 채워짐
  */
 
-import { useEffect } from 'react'
+
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { Controller } from 'react-hook-form'
-import { useSponsorStore } from '@/features/sponsor/model/sponsor-store'
+import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
 import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
 import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
@@ -57,6 +59,11 @@ export interface BasicInfoSectionProps {
   isEditMode?: boolean
   /** 수정 모드일 때만 전달, react-hook-form 인스턴스 */
   form?: UseFormReturn<ProgramDetailEditFormValues>
+  /**
+   * 1사1교 레이아웃 강제 (교육받은 교사 등 파생 유형 전용 opt-in).
+   * 미지정 시 기존 id/타이틀 기반 판별 유지 — 다른 유형 동작 불변.
+   */
+  forceCompanySchoolLayout?: boolean
 }
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
@@ -138,14 +145,13 @@ export function BasicInfoSection({
   lifecycleStatus,
   isEditMode = false,
   form,
+  forceCompanySchoolLayout = false,
 }: BasicInfoSectionProps) {
-  const { sponsors, fetchSponsors } = useSponsorStore()
-
-  useEffect(() => {
-    fetchSponsors()
-  }, [fetchSponsors])
-
   const isFormEdit = isEditMode && form
+  const { options: sponsorOptions } = useSponsorSelectOptions(Boolean(isFormEdit || program.sponsorId))
+  const watchedSponsorId = isFormEdit ? form?.watch('sponsorId') : program.sponsorId
+  const contactsQuery = useSponsorContactsQuery(watchedSponsorId, Boolean(isFormEdit))
+  const managers = contactsQuery.data ?? []
   const categoryLabel = CATEGORY_LABEL[program.category] ?? program.category ?? '-'
 
   /* 공통 정보 탭 기본 정보 */
@@ -176,7 +182,7 @@ export function BasicInfoSection({
       getValues: () => undefined,
     } as unknown as UseFormReturn<ProgramDetailEditFormValues>)
 
-  if (isCompanySchoolProgram(program)) {
+  if (forceCompanySchoolLayout || isCompanySchoolProgram(program)) {
     const commonInfo = program.generalCommonInfo
     const announcementTitle = commonInfo?.announcementTitle ?? program.title
     const detailedProgramName =
@@ -470,7 +476,7 @@ export function BasicInfoSection({
             <DetailInfoForm.Field
               label="교육 장소"
               fullRow
-              view={formatCompanySchoolVenue(program)}
+              view={renderDetailInfoPipeSeparated(formatCompanySchoolVenue(program))}
               edit={
                 <div className="detail-info-form-inputs-wrapper">
                   <Controller
@@ -835,7 +841,7 @@ export function BasicInfoSection({
                     placeholder="후원사 선택"
                     showSearch
                     optionFilterProp="label"
-                    options={sponsors.map(s => ({ value: s.id, label: s.name }))}
+                    options={sponsorOptions}
                     onChange={v => field.onChange(v ?? '')}
                     width={'100%'}
                     status={commonInfoForm.formState.errors.sponsorId ? 'error' : undefined}
@@ -864,9 +870,6 @@ export function BasicInfoSection({
           edit={
             <div>
               {(() => {
-                const sponsorId = commonInfoForm.watch('sponsorId')
-                const selectedSponsor = sponsors.find(s => s.id === sponsorId)
-                const managers = selectedSponsor?.managers ?? []
                 return (
                   <>
                     <div className="detail-info-form-inputs-wrapper">

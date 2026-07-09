@@ -31,6 +31,17 @@ export function affiliationLine(user: Omit<User, 'password'>): string {
   return '-'
 }
 
+/** 소속 td — 문자 `|` 대신 TdDivider, gap 12px */
+export function affiliationView(user: Omit<User, 'password'>): ReactNode {
+  if (user.affiliation) return user.affiliation
+  if (user.schoolInfo) {
+    const { schoolName, position } = user.schoolInfo
+    if (position) return inlineSegmentsWithDivider([schoolName, position])
+    return schoolName
+  }
+  return '-'
+}
+
 function inlineSegmentsWithDivider(
   segments: [ReactNode, ReactNode],
   className = 'user-basic-info-section__inline-segments'
@@ -38,7 +49,7 @@ function inlineSegmentsWithDivider(
   return inlineSegmentsWithDividers([segments[0], segments[1]], className)
 }
 
-function inlineSegmentsWithDividers(
+export function inlineSegmentsWithDividers(
   segments: ReactNode[],
   className = 'user-basic-info-section__inline-segments'
 ): ReactNode {

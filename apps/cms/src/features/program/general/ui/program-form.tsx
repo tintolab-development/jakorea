@@ -22,7 +22,7 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { programSchema, type ProgramFormData } from '@/entities/program/model/schema'
 import type { Program } from '@/types/domain'
-import { mockSponsors } from '@/data/mock'
+import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import { programService } from '@/entities/program/api/program-service'
 import { mockFileTemplates } from '@/data/mock/templates'
@@ -66,6 +66,7 @@ const statusOptions = [
 ]
 
 export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFormProps) {
+  const { options: sponsorOptions } = useSponsorSelectOptions(true)
   const [currentStep, setCurrentStep] = useState(0)
   const [customizeModalOpen, setCustomizeModalOpen] = useState(false)
 
@@ -247,9 +248,9 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                 return label ? label.toLowerCase().includes(input.toLowerCase()) : false
               }}
             >
-              {mockSponsors.map(sponsor => (
-                <Option key={sponsor.id} value={sponsor.id}>
-                  {sponsor.name}
+              {sponsorOptions.map(sponsor => (
+                <Option key={sponsor.value} value={sponsor.value}>
+                  {sponsor.label}
                 </Option>
               ))}
             </Select>

@@ -9,4 +9,6 @@
 export interface FormTemplateVersionCreateRequest {
   versionLabel?: string;
   schemaJson?: string;
+  extensionJson?: string;
+  settingsJson?: string;
 }

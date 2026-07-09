@@ -3,7 +3,8 @@ import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
-import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
+import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
+import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -12,8 +13,6 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
-import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
-import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import { GeneralParticipantAudienceCheckboxGroup } from '@/features/program/general/ui/participant-audience-checkbox-group'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
@@ -25,6 +24,10 @@ import {
   PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
   PROGRAM_REGISTRATION_IP_OWNED_OPTIONS,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
+import {
+  ProgramRegistrationIpsTypeFields,
+  type ProgramRegistrationIpsTypeValue,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
 import {
   initialProgramRegistrationSurveyItems,
   PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
@@ -48,6 +51,10 @@ type ProgramRegistrationBasicInfoParagraphProps = {
   onOrganizationChange: (checked: boolean) => void
   onTeacherInstructorChange: (checked: boolean) => void
   onVolunteerChange: (checked: boolean) => void
+  /** true면 교육 장소 행 미노출 (교육받은 교사 등록 폼) */
+  hideEducationPlace?: boolean
+  /** true면 하단 테이블에 IPS 유형 행 추가 (교육받은 교사 등록 폼) */
+  includeFooterIpsType?: boolean
 }
 
 export function ProgramRegistrationBasicInfoParagraph({
@@ -56,6 +63,8 @@ export function ProgramRegistrationBasicInfoParagraph({
   onOrganizationChange,
   onTeacherInstructorChange,
   onVolunteerChange,
+  hideEducationPlace = false,
+  includeFooterIpsType = false,
 }: ProgramRegistrationBasicInfoParagraphProps) {
   const [businessField, setBusinessField] = useState('')
   const [partnerInvolvement, setPartnerInvolvement] = useState<'yes' | 'no'>('yes')
@@ -74,32 +83,29 @@ export function ProgramRegistrationBasicInfoParagraph({
   const [educationCourse, setEducationCourse] = useState('')
   const [ipOwned, setIpOwned] = useState('')
   const [courseDeliveredBy, setCourseDeliveredBy] = useState('')
-  const [surveyItems, setSurveyItems] = useState<
-    Record<ProgramRegistrationSurveyItemId, boolean>
-  >(initialProgramRegistrationSurveyItems)
+  const [footerIpsType, setFooterIpsType] = useState<ProgramRegistrationIpsTypeValue>({
+    category: '',
+    detail: '',
+  })
+  const [surveyItems, setSurveyItems] = useState<Record<ProgramRegistrationSurveyItemId, boolean>>(
+    initialProgramRegistrationSurveyItems
+  )
 
   const toggleSurveyItem = (id: ProgramRegistrationSurveyItemId) => (e: CheckboxChangeEvent) => {
     setSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
   }
 
-  /** `/sponsor` 후원사 관리 목록과 동일 mock (`mockSponsorManagementListRows`) */
-  const sponsorOptions = useMemo(
-    () => mockSponsorManagementListRows.map(s => ({ value: s.id, label: s.name })),
-    []
-  )
-
-  const selectedSponsor = useMemo<SponsorManagementRow | null>(
-    () => mockSponsorManagementListRows.find(s => s.id === sponsorId) ?? null,
-    [sponsorId]
-  )
+  /** `/sponsor` 후원사 관리 목록 API */
+  const { options: sponsorOptions } = useSponsorSelectOptions()
+  const contactsQuery = useSponsorContactsQuery(sponsorId || null, Boolean(sponsorId))
 
   const managerOptions = useMemo(() => {
-    if (!selectedSponsor) return []
-    return getSponsorDetailContactsNormalized(selectedSponsor).map(c => ({
+    if (!sponsorId) return []
+    return (contactsQuery.data ?? []).map(c => ({
       value: c.id,
       label: c.name,
     }))
-  }, [selectedSponsor])
+  }, [contactsQuery.data, sponsorId])
 
   const detailedProgramOptions = useMemo(
     () =>
@@ -294,29 +300,31 @@ export function ProgramRegistrationBasicInfoParagraph({
             view="-"
           />
         </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="교육 장소"
-            fullRow
-            edit={
-              <div className="detail-info-form-inputs-wrapper">
-                <CmsRadioGroup size="large" value="inside">
-                  <CmsRadio value="inside">기관 안</CmsRadio>
-                  <CmsRadio value="outside">기관 밖</CmsRadio>
-                  <CmsRadio value="other">기타(직접입력)</CmsRadio>
-                </CmsRadioGroup>
-                <DetailInfoForm.InputsSeparator />
-                <CmsInput
-                  inputSize="medium"
-                  placeholder="교육이 진행될 상세 장소를 입력해 주세요"
-                  width="100%"
-                  style={{ flex: '1 1 0', minWidth: 0 }}
-                />
-              </div>
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+        {hideEducationPlace ? null : (
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="교육 장소"
+              fullRow
+              edit={
+                <div className="detail-info-form-inputs-wrapper">
+                  <CmsRadioGroup size="large" value="inside">
+                    <CmsRadio value="inside">기관 안</CmsRadio>
+                    <CmsRadio value="outside">기관 밖</CmsRadio>
+                    <CmsRadio value="other">기타(직접입력)</CmsRadio>
+                  </CmsRadioGroup>
+                  <DetailInfoForm.InputsSeparator />
+                  <CmsInput
+                    inputSize="medium"
+                    placeholder="교육이 진행될 상세 장소를 입력해 주세요"
+                    width="100%"
+                    style={{ flex: '1 1 0', minWidth: 0 }}
+                  />
+                </div>
+              }
+              view="-"
+            />
+          </DetailInfoForm.Row>
+        )}
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="설문 진행 항목"
@@ -340,7 +348,7 @@ export function ProgramRegistrationBasicInfoParagraph({
         </DetailInfoForm.Row>
       </DetailInfoForm>
 
-      <DetailInfoForm title="" hideHeader mode="edit">
+      <DetailInfoForm title="" hideHeader mode="edit" className="program-registration-paragraph">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="교육 과정"
@@ -412,6 +420,21 @@ export function ProgramRegistrationBasicInfoParagraph({
             view="-"
           />
         </DetailInfoForm.Row>
+        {includeFooterIpsType ? (
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="IPS 유형"
+              fullRow
+              edit={
+                <ProgramRegistrationIpsTypeFields
+                  value={footerIpsType}
+                  onChange={setFooterIpsType}
+                />
+              }
+              view="-"
+            />
+          </DetailInfoForm.Row>
+        ) : null}
       </DetailInfoForm>
     </>
   )

@@ -28,7 +28,7 @@ import type { ProgressFilters } from '../../../hooks/use-program-progress-params
 import { SchoolDetailModal } from './school-detail-modal'
 import {
   GeneralParticipatingInstitutionDetailView,
-  type GeneralParticipatingInstitutionDetailTabKey,
+  type SchoolDetailTabKey,
 } from './general-participating-institution-detail-view'
 import {
   PARTICIPATING_INSTITUTIONS_ASSIGNED_INSTRUCTOR_COLUMN_WIDTH,
@@ -48,6 +48,7 @@ import { programUsesTextbook } from '../../../lib/participating-institution-text
 import { resolveInstitutionApplicationProgramBridge } from '../../../lib/institution-application-program-bridge'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import {
   buildParticipatingSchoolPreferredScheduleLines,
@@ -75,10 +76,10 @@ export interface ParticipatingInstitutionsSectionProps {
   program?: Program | null
   /** URL의 schoolId. 있으면 해당 학교 상세 인라인 뷰 표시 */
   schoolIdFromUrl?: string | null
-  /** URL의 학교 상세 탭(application | students | instructors | posts). 쿼리 파라미터 연동용 */
-  schoolTabFromUrl?: GeneralParticipatingInstitutionDetailTabKey | null
+  /** URL의 학교 상세 탭(application | students | instructors | posts | journal). 쿼리 파라미터 연동용 */
+  schoolTabFromUrl?: SchoolDetailTabKey | null
   /** 학교 상세 뷰 내 탭 변경 시 호출 (쿼리 파라미터 갱신용) */
-  onSchoolTabChange?: (tab: GeneralParticipatingInstitutionDetailTabKey) => void
+  onSchoolTabChange?: (tab: SchoolDetailTabKey) => void
   /** 행 클릭 시 호출 (풀페이지 인라인 뷰용). 있으면 모달 대신 schoolId로 전환 */
   onSchoolRowClick?: (row: ParticipatingSchoolRow) => void
   /** 상세 뷰 닫기(목록으로) 시 호출 */
@@ -197,6 +198,7 @@ export function ParticipatingInstitutionsSection({
   const schoolHook = useProgressSchoolList({
     appliedFilters: progressFilters,
     instructorList: instructorHook.instructorList,
+    programId: program?.id,
   })
 
   const {
@@ -309,7 +311,7 @@ export function ParticipatingInstitutionsSection({
                   key={`${record.id}-session-${index}`}
                   className="participating-institutions-section__session-line"
                 >
-                  {line}
+                  {renderProgramDetailPipeSeparated(line)}
                 </div>
               ))}
               {restCount > 0 && (

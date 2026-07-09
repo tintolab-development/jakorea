@@ -49,6 +49,7 @@ export type TemplateFullpageModalFooterAction = {
   variant?: 'primary' | 'secondary'
   /** primary CTA 우측 `>` — `true`일 때만 표시 */
   showArrow?: boolean
+  disabled?: boolean
 }
 
 interface TemplateFullpageModalCardTitleProps {
@@ -248,6 +249,7 @@ export function TemplateFullpageModal({
                   width={180}
                   variant={action.variant === 'secondary' ? 'secondary' : undefined}
                   className="full-page-modal__footer-cta-btn"
+                  disabled={action.disabled}
                   onClick={action.onClick}
                 >
                   {action.variant === 'secondary' ? <LeftOutlined aria-hidden /> : null}

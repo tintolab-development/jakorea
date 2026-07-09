@@ -120,7 +120,9 @@ export type RenderFormParagraphBodyOptions = {
   programApplicationFormInstitution?: boolean
   /** 1사1교 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormEconomyInstitution?: boolean
-  /** Gemini 찾아가는 연수 학교 신청 폼 시드 단락 — 전용 본문 */
+  /** 교육받은 교사 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  programApplicationFormTrainedTeachersInstitution?: boolean
+  /** Gemini 찾아가는 연수 참여 기관 신청 폼 시드 단락 — 전용 본문 */
   programApplicationFormGeminiInstitution?: boolean
   /** Gemini 찾아가는 연수 강사 신청 폼 시드 단락 — 전용 본문 */
   programApplicationFormGeminiInstructor?: boolean
@@ -323,6 +325,9 @@ export function renderFormParagraphBody(
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
           programApplicationFormEconomyInstitution={
             options?.programApplicationFormEconomyInstitution
+          }
+          programApplicationFormTrainedTeachersInstitution={
+            options?.programApplicationFormTrainedTeachersInstitution
           }
           programApplicationFormGeminiInstitution={options?.programApplicationFormGeminiInstitution}
           programApplicationFormGeminiInstructor={options?.programApplicationFormGeminiInstructor}

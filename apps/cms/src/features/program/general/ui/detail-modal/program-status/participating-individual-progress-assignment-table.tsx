@@ -5,6 +5,7 @@ import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { useCmsAlert } from '@/shared/ui'
 import { resolveProgressAssignmentRemark } from '@/features/program/general/lib/participating-individual-progress-assignment-display'
 import type { ParticipatingIndividualProgressAssignmentParticipantRow } from '@/features/program/general/lib/participating-individual-progress-assignment-types'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
 export const PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_TABLE_SCROLL_X = 1100
 
@@ -87,6 +88,7 @@ export function ParticipatingIndividualProgressAssignmentTable({
         key: 'genderBirthLabel',
         width: 180,
         align: 'center',
+        render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
       },
       {
         title: '소속 및 학년',
@@ -94,6 +96,7 @@ export function ParticipatingIndividualProgressAssignmentTable({
         key: 'affiliationGradeLabel',
         width: 200,
         align: 'center',
+        render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
       },
       {
         title: '제출 파일',

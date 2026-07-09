@@ -14,6 +14,16 @@ export const memberQueryKeys = {
     [...memberQueryKeys.all, 'externalIdentifiers', memberId] as const,
   instructorSettlements: (memberId: number) =>
     [...memberQueryKeys.all, 'instructorSettlements', memberId] as const,
+  comments: (memberId: number, screenCode?: string) =>
+    [...memberQueryKeys.all, 'comments', memberId, screenCode ?? ''] as const,
+  applications: (memberId: number) =>
+    [...memberQueryKeys.all, 'applications', memberId] as const,
+  programHistory: (memberId: number) =>
+    [...memberQueryKeys.all, 'programHistory', memberId] as const,
+  affiliatedTeachers: (memberId: number) =>
+    [...memberQueryKeys.all, 'affiliatedTeachers', memberId] as const,
+  adminPrograms: (memberId: number) =>
+    [...memberQueryKeys.all, 'adminPrograms', memberId] as const,
   instructorRoleRequests: {
     all: () => [...memberQueryKeys.all, 'instructorRoleRequests'] as const,
     list: (paramsKey: string) =>

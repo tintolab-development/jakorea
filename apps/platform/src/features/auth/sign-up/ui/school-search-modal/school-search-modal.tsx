@@ -230,7 +230,7 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
             {hasResults ? (
               <>
                 <ul className={styles['school-result-list']} aria-label="학교 검색 결과">
-                  {filteredSchools.map(school => (
+                  {filteredSchools.map((school: NeisSchoolItem) => (
                     <li key={schoolResultKey(school)} className={styles['school-result-item']}>
                       <div className={styles['school-result-content']}>
                         <PFText

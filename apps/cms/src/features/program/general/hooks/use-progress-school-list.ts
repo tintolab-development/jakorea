@@ -5,6 +5,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import {
+  getParticipatingSchoolsForProgram,
   MOCK_PARTICIPATING_SCHOOLS,
   type ParticipatingSchoolRow,
   type ParticipatingSchoolApprovalStatusKey,
@@ -22,15 +23,17 @@ import type { ProgressFilters } from './use-program-progress-params'
 export interface UseProgressSchoolListOptions {
   appliedFilters: ProgressFilters
   instructorList: ParticipatingInstructorRow[]
+  programId?: string
 }
 
 export function useProgressSchoolList({
   appliedFilters,
   instructorList,
+  programId,
 }: UseProgressSchoolListOptions) {
-  const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>(() => [
-    ...MOCK_PARTICIPATING_SCHOOLS,
-  ])
+  const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>(() =>
+    programId ? getParticipatingSchoolsForProgram(programId) : [...MOCK_PARTICIPATING_SCHOOLS]
+  )
   const [selectedSchoolRowKeys, setSelectedSchoolRowKeys] = useState<React.Key[]>([])
   const [selectedSchoolForDetail, setSelectedSchoolForDetail] =
     useState<ParticipatingSchoolRow | null>(null)

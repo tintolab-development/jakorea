@@ -3,7 +3,8 @@
 프론트 CMS 회원 관리 LNB 3화면 API 연동 후 확인된 **미존재 API·구조 불일치** 목록입니다.  
 OpenAPI 기준: `openapi/backend.openapi.json` (v9)
 
-연동 명세: [members-api-integration.md](./members-api-integration.md)
+연동 명세: [members-api-integration.md](./members-api-integration.md)  
+회원 상세 미존재 endpoint 전용: [members-api-detail-missing-endpoints-handoff.md](./members-api-detail-missing-endpoints-handoff.md)
 
 ---
 
@@ -46,16 +47,15 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9)
 
 ---
 
-### 2. `PATCH /api/users/{memberId}` 회원 기본정보 수정
+### 2. `PATCH /api/admin/users/{memberId}` 회원 기본정보 수정
 
 | | |
 |---|---|
 | **화면** | 회원 상세 풀페이지 — 기본정보 탭 「정보 수정」 |
-| **UI 요구** | 이름·연락처·이메일·기관 정보·강사 계좌·관리자 코멘트 등 `patchUserBasicInfo` |
-| **현재 API** | **없음** |
-| **갭 유형** | API 없음 |
-| **프론트 임시 대응** | remote 모드에서 수정 버튼 숨김 + 저장 시 에러 |
-| **제안** | `PATCH /api/users/{memberId}` + 역할별 partial DTO (`AdminMemberUpdateRequest` 등) |
+| **UI 요구** | 이름·연락처·이메일·기관 정보·강사 계좌·관리자 권한 유형 등 `patchUserBasicInfo` |
+| **현재 API** | `PATCH /api/admin/users/{memberId}` (`AdminMemberBasicInfoUpdateRequest`) |
+| **프론트** | `isMemberBasicInfoPatchRemoteEnabled()` — `members` remote 시 활성. 관리자 코멘트는 `POST .../comments` 분리 |
+| **잔여 갭** | 코멘트 수정/삭제 API 없음(등록만). 강사 이력서 상세 배열 미제공 |
 
 ---
 
@@ -153,19 +153,9 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9)
 | | |
 |---|---|
 | **화면** | 회원 상세 — 프로그램 이력 / 신청 / 관리자 담당 프로그램 |
-| **UI 요구** | `mockUserHistories`, `applicationService`, `mockPrograms` |
-| **현재 API** | member self-service 경로만 (`/api/users/me/programs/...`) |
-| **갭 유형** | API 없음 |
-| **프론트 임시 대응** | remote 시 mock 데이터 + 상단 안내 배너 |
-| **제안** | `GET /api/users/{memberId}/program-history`, `/applications` (Admin) |
-
-**탭별 UI 필드 (최소)**
-
-| 탭 | UI 필드 | 비고 |
-|----|---------|------|
-| 수강/신청 이력 | 프로그램명, 신청일, 진행상태, 수료 여부 | `Application` 도메인 |
-| 봉사 이력 | `UserHistory` (기관, 활동일, 최종 상태) | |
-| 관리자 담당 이력 | 프로그램명, 연도, lifecycle, 참여 유형 | `Program` 목록 subset |
+| **현재 API** | `GET .../applications`, `.../program-history`, `.../admin-programs` (Admin) |
+| **프론트** | remote 시 API 조회 연동 완료 |
+| **잔여 갭** | 신청 **진행상태 변경** mutation 없음. `lectureAttendance`, `hasLectureReportSubmission` 등 UI 전용 필드 없음. 관리자 프로그램 lifecycle·필터 필드 제한적 |
 
 ---
 
@@ -226,8 +216,9 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9)
 | | |
 |---|---|
 | **화면** | 회원 상세 — 관리자 코멘트, 기관 소속 교사 |
-| **현재 API** | 없음 |
-| **프론트 임시 대응** | mock only + remote 시 안내 배너 |
+| **현재 API** | `GET/POST .../comments`, `GET .../affiliated-teachers` |
+| **프론트** | remote 시 API 조회·코멘트 등록 연동 |
+| **잔여 갭** | 코멘트 수정/삭제. 소속 교사 재직 현황 변경 mutation |
 
 ---
 
@@ -259,3 +250,4 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9)
 |------|------|
 | 2026-06-12 | 회원 관리 mock→API Phase 0~5 프론트 연동 기준 초안 |
 | 2026-06-12 | 상세 하위 탭 Phase A~C — consent/external-id/정산 연동, #9 확장, #13~#15 추가 |
+| 2026-06-26 | 회원 상세 mock→API 전환 — 기본정보 PATCH, 코멘트, 소속 교사, 신청/참여/관리자 프로그램 이력 |

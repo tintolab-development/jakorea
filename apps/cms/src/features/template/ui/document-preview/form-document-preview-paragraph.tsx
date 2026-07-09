@@ -317,6 +317,9 @@ function renderBody(
           programApplicationFormEconomyInstitution={
             paragraphBodyOptions?.programApplicationFormEconomyInstitution
           }
+          programApplicationFormTrainedTeachersInstitution={
+            paragraphBodyOptions?.programApplicationFormTrainedTeachersInstitution
+          }
           programApplicationFormGeminiInstitution={
             paragraphBodyOptions?.programApplicationFormGeminiInstitution
           }
