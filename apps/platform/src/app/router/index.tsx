@@ -11,6 +11,7 @@ import {
 } from '@/pages/auth'
 import { HomePage } from '@/pages/home'
 import { TestPage } from '@/pages/test'
+import { YoutubeEmbedPage } from '@/pages/youtube-embed'
 
 type RouteConfig = {
   path: string
@@ -35,4 +36,5 @@ export const routes: RouteConfig[] = [
   },
   { path: '/auth/social/error', element: <SocialErrorPage /> },
   { path: '/test', element: <TestPage /> },
+  { path: '/dev/youtube', element: <YoutubeEmbedPage /> },
 ]

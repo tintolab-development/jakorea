@@ -1,0 +1,129 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.banner {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 21 / 9;
+  min-height: 220px;
+  max-height: 480px;
+  overflow: hidden;
+  background: #dbeafe;
+}
+
+.bannerImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bannerOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 24px;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0%) 35%, rgb(0 0 0 / 45%) 100%);
+}
+
+.bannerOverlay p {
+  color: #fff;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scrollSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 72vh;
+  padding: 24px;
+  border-radius: 12px;
+  background: var(--color-neutral-cool-50, #f8fafc);
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.applyButton {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-primary-500, #2563eb);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.applyButton:hover {
+  opacity: 0.92;
+}
+
+.applyButton:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
+}
+
+.iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+@media (min-width: 768px) {
+  .banner {
+    min-height: 320px;
+  }
+
+  .content {
+    padding: 48px 24px 64px;
+    gap: 32px;
+  }
+
+  .controls {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  .controls > :first-child {
+    flex: 1;
+    min-width: 0;
+  }
+}
