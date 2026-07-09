@@ -5,7 +5,8 @@ Swagger/OpenAPI 기반 실 API 연동 시 공통 설정·인증·응답 규칙�
 상세 클라이언트 규칙: [api-routes-and-client.md](./api-routes-and-client.md)  
 Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)  
 대시보드 1차 파일럿: [dashboard-api-integration.md](./dashboard-api-integration.md)  
-**템플릿 양식 (forms-surveys)**: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) · [PHASE별 마이그레이션](./forms-surveys-api-migration-guide.md) · [**백엔드 갭 목록**](./forms-surveys-api-backend-gaps.md)
+**템플릿 양식 (forms-surveys)**: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) · [PHASE별 마이그레이션](./forms-surveys-api-migration-guide.md) · [**백엔드 갭 목록**](./forms-surveys-api-backend-gaps.md)  
+**일반 프로그램 (programs)**: [programs-api-integration.md](./programs-api-integration.md) · [마이그레이션 가이드](./programs-api-migration-guide.md) · [백엔드 갭](./programs-api-backend-gaps.md) · [남은 작업](./programs-api-remaining-work.md)
 
 ---
 
