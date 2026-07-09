@@ -59,3 +59,35 @@ export async function fetchAdminProgramByIdRemote(programId: string): Promise<Pr
     })
   )
 }
+
+export async function createAdminProgramRemote(
+  payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest
+): Promise<ProgramResponse> {
+  return unwrapApiBody<ProgramResponse>(
+    await customInstance({
+      url: '/api/admin/programs',
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function updateAdminProgramRemote(
+  programId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/programUpdateRequest').ProgramUpdateRequest
+): Promise<ProgramResponse> {
+  return unwrapApiBody<ProgramResponse>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}`,
+      method: 'PATCH',
+      data: payload,
+    })
+  )
+}
+
+export async function deleteAdminProgramRemote(programId: string): Promise<void> {
+  await customInstance({
+    url: `/api/admin/programs/${encodeURIComponent(programId)}`,
+    method: 'DELETE',
+  })
+}

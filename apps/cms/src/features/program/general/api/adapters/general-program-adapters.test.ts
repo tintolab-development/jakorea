@@ -2,7 +2,42 @@ import { describe, expect, it } from 'vitest'
 import {
   filterGeneralProgramsByOverviewStatus,
   mapAdminProgramListItemToProgram,
+  mapGeneralProgramToCreateRequest,
+  mapGeneralProgramToUpdateRequest,
 } from '@/features/program/general/api/adapters/general-program-adapters'
+import type { Program } from '@/types/domain'
+
+const sampleProgram: Program = {
+  id: 'prog-1',
+  sponsorId: 'sponsor-1',
+  title: '테스트 프로그램',
+  mainTitle: '테스트 프로그램',
+  type: 'offline',
+  format: 'workshop',
+  category: 'school',
+  description: '설명',
+  rounds: [
+    {
+      id: 'round-1',
+      programId: 'prog-1',
+      roundNumber: 1,
+      startDate: '2026-04-01T00:00:00.000Z',
+      endDate: '2026-04-30T00:00:00.000Z',
+      capacity: 30,
+      status: 'active',
+    },
+  ],
+  startDate: '2026-04-01T00:00:00.000Z',
+  endDate: '2026-12-31T00:00:00.000Z',
+  applicationStartDate: '2026-03-01T00:00:00.000Z',
+  applicationEndDate: '2026-03-31T00:00:00.000Z',
+  status: 'pending',
+  lifecycleStatus: 'recruiting_students',
+  businessArea: '경제금융',
+  targetLevel: 'elementary',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+}
 
 describe('general-program-adapters', () => {
   it('maps API list item to Program domain', () => {
@@ -30,5 +65,24 @@ describe('general-program-adapters', () => {
     expect(filterGeneralProgramsByOverviewStatus(programs, 'scheduled')).toHaveLength(1)
     expect(filterGeneralProgramsByOverviewStatus(programs, 'in_progress')).toHaveLength(1)
     expect(filterGeneralProgramsByOverviewStatus(programs, 'completed')).toHaveLength(1)
+  })
+
+  it('maps Program to create request with core fields', () => {
+    const request = mapGeneralProgramToCreateRequest(sampleProgram)
+
+    expect(request.title).toBe('테스트 프로그램')
+    expect(request.type).toBe('offline')
+    expect(request.lifecycleStatus).toBe('recruiting_students')
+    expect(request.targetLevel).toBe('elementary')
+    expect(request.rounds).toHaveLength(1)
+  })
+
+  it('maps Program patch to update request', () => {
+    const request = mapGeneralProgramToUpdateRequest(sampleProgram, {
+      title: '수정된 제목',
+    })
+
+    expect(request.title).toBe('수정된 제목')
+    expect(request.mainTitle).toBe('테스트 프로그램')
   })
 })
