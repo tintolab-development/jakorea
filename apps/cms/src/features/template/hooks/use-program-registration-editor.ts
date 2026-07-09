@@ -44,11 +44,11 @@ import { patchInstitutionApplicationProgramBridge } from '@/features/program/gen
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { resolveProgramRegistrationCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
-import { persistGeneralRegistrationFormLocal } from '@/features/program/general/lib/registration-local-save'
+import { persistGeneralProgramRegistration } from '@/features/program/general/lib/registration-local-save'
+import type { Program } from '@/types/domain'
 import {
   applyProgramRegistrationEditorState,
   buildProgramRegistrationEditorState,
-  PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
   type ProgramRegistrationEditorState,
 } from '@/features/template/lib/program-registration-editor-state'
 import {
@@ -189,7 +189,7 @@ export type UseProgramRegistrationEditorOptions = {
   /** `economy`: 1사 1교 등록 폼 시드(프로그램 유형 설정 단락 없음) */
   programRegistrationFormVariant?: ProgramRegistrationFormVariant
   /** 일반 프로그램 등록 풀페이지 — 임시 저장 성공 후(목록 갱신·모달 닫기 등) */
-  onRegistrationSaved?: () => void
+  onRegistrationSaved?: (program?: Program) => void
   /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
   onTemplateDraftSaveConfirmed?: () => void
   /** forms-surveys draft API 연동 대상 templateCode (현재 `registration-general`만) */
@@ -209,9 +209,7 @@ export function useProgramRegistrationEditor(
   const onTemplateDraftSaveConfirmed = editorOptions?.onTemplateDraftSaveConfirmed
   const templateCode = editorOptions?.templateCode
   const { showAlert } = useCmsAlert()
-  const usesTemplateDraftApi =
-    templateCode === PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE &&
-    programRegistrationFormVariant === 'general'
+  const usesTemplateDraftApi = templateCode != null && templateCode !== ''
   const seedParagraphIds = useMemo(
     () => getProgramRegistrationSeedParagraphIds(programRegistrationFormVariant),
     [programRegistrationFormVariant]
@@ -322,7 +320,7 @@ export function useProgramRegistrationEditor(
 
     if (usesTemplateDraftApi && templateCode) {
       let cancelled = false
-      const defaults = createDefaultRegistrationEditorState('general')
+      const defaults = createDefaultRegistrationEditorState(programRegistrationFormVariant)
 
       void loadWritingFormTemplateDraft(templateCode).then(saved => {
         if (cancelled) return
@@ -349,8 +347,8 @@ export function useProgramRegistrationEditor(
   }, [
     active,
     applyEditorStateSnapshot,
+    programRegistrationFormVariant,
     resetRegistrationEditorToSeed,
-    restrictCurriculumSessionStructure,
     templateCode,
     usesTemplateDraftApi,
   ])
@@ -743,13 +741,13 @@ export function useProgramRegistrationEditor(
         }
       }
       if (!onRegistrationSaved) return
-      persistGeneralRegistrationFormLocal({
+      const createdProgram = await persistGeneralProgramRegistration({
         draft,
         participant,
         programType,
         variant: programRegistrationFormVariant,
       })
-      onRegistrationSaved()
+      onRegistrationSaved(createdProgram)
     } catch (error) {
       console.debug('programRegistrationEditor save failed', error)
       if (!onRegistrationSaved) {

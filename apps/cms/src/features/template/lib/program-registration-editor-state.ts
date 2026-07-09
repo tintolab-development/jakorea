@@ -5,14 +5,20 @@ import type {
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 
+import {
+  shouldUseRemoteDraftApiForTemplateCode,
+} from '@/features/template/lib/form-template-remote-draft'
+
 export const PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE = 'registration-general' as const
 
-/** `registration-general` — forms-surveys draft API 연동 */
-export const REGISTRATION_GENERAL_USE_REMOTE_DRAFT_API = true
+export {
+  REGISTRATION_GENERAL_USE_REMOTE_DRAFT_API,
+  shouldUseRemoteDraftApiForTemplateCode,
+} from '@/features/template/lib/form-template-remote-draft'
 
+/** @deprecated `shouldUseRemoteDraftApiForTemplateCode` 사용 */
 export function shouldUseRegistrationGeneralRemoteDraftApi(templateCode: string): boolean {
-  if (templateCode !== PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE) return true
-  return REGISTRATION_GENERAL_USE_REMOTE_DRAFT_API
+  return shouldUseRemoteDraftApiForTemplateCode(templateCode)
 }
 
 export type ProgramRegistrationParticipantSelection = {

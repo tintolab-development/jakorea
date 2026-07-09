@@ -176,6 +176,8 @@ export default function TemplateFormTab() {
     return (
       <AgreementWritingFormShell
         {...agreementWritingFormConfig}
+        templateCode={params.id?.trim()}
+        onTemplateDraftSaveConfirmed={handleCloseTemplatePreview}
         onClose={handleCloseTemplatePreview}
       />
     )

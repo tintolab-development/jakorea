@@ -40,15 +40,18 @@ const UJAT_ISSUANCE_CONFIG: Record<
 /**
  * 발급 양식 > UJAT 교육계획서 / 교육일지 — 단락 편집·미리보기(설문 에디터 공통 훅)
  */
-export function useUjatEducationIssuanceEditor(active: boolean, variant: UjatEducationIssuanceVariant) {
+export function useUjatEducationIssuanceEditor(
+  active: boolean,
+  variant: UjatEducationIssuanceVariant,
+  templateCode?: string,
+  onTemplateDraftSaveConfirmed?: () => void
+) {
   const cfg = UJAT_ISSUANCE_CONFIG[variant]
   const getInitialDraft = useCallback(() => cfg.createDraft(), [cfg])
   const getDefaultActiveParagraphId = useCallback(
     (_draft: WritingFormDraft) => cfg.defaultActiveParagraphId,
     [cfg]
   )
-  const onSave = useCallback(() => {
-    }, [])
 
   const ujatA4Preview = useMemo(
     () =>
@@ -69,7 +72,8 @@ export function useUjatEducationIssuanceEditor(active: boolean, variant: UjatEdu
     editorKind: 'survey',
     previewParagraphBodyOptions: ujatA4Preview.paragraphBodyOptions,
     a4PreviewOptions: ujatA4Preview.a4PreviewOptions,
-    onSave,
+    templateCode,
+    onTemplateDraftSaveConfirmed,
   })
 
   return {

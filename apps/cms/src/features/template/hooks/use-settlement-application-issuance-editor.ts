@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import {
+  loadWritingFormTemplateDraft,
+  persistWritingFormTemplateDraft,
+} from '@/features/template/lib/writing-form-template-local-save'
 import { usePaymentStatementIssuanceMiddleActions } from '@/features/template/hooks/use-payment-statement-issuance-middle-actions'
 import {
   getSettlementApplicationA4ParagraphGap,
@@ -21,14 +26,32 @@ import {
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import { SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/settlement-application-issuance/paragraph-config'
 
-export function useSettlementApplicationIssuanceEditor(active: boolean, previewHeaderTitle: string) {
-  const [draft, setDraft] = useState<WritingFormDraft>(() =>
-    normalizeWritingFormDraft(createSettlementApplicationIssuanceDraft())
+export function useSettlementApplicationIssuanceEditor(
+  active: boolean,
+  previewHeaderTitle: string,
+  templateCode?: string,
+  onTemplateDraftSaveConfirmed?: () => void
+) {
+  const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+  const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
+
+  const getInitialDraft = useCallback(
+    () => normalizeWritingFormDraft(createSettlementApplicationIssuanceDraft()),
+    []
   )
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(() =>
-    normalizeWritingFormDraft(createSettlementApplicationIssuanceDraft()).paragraphs[0]?.id ?? null
+
+  const [draft, setDraft] = useState<WritingFormDraft>(() => getInitialDraft())
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
+    () => getInitialDraft().paragraphs[0]?.id ?? null
   )
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
+
+  const applyDraftSnapshot = useCallback((next: WritingFormDraft) => {
+    const normalized = normalizeWritingFormDraft(next)
+    setDraft(normalized)
+    setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
+    setSingleItemListActiveItemId(null)
+  }, [])
 
   const {
     openWritingUserPreview,
@@ -39,11 +62,24 @@ export function useSettlementApplicationIssuanceEditor(active: boolean, previewH
 
   useEffect(() => {
     if (!active) return
-    const next = normalizeWritingFormDraft(createSettlementApplicationIssuanceDraft())
-    setDraft(next)
-    setActiveParagraphId(next.paragraphs[0]?.id ?? null)
-    setSingleItemListActiveItemId(null)
-  }, [active])
+
+    if (templateCode != null && templateCode !== '') {
+      let cancelled = false
+      void loadWritingFormTemplateDraft(templateCode).then(saved => {
+        if (cancelled) return
+        if (saved?.draft) {
+          applyDraftSnapshot(saved.draft)
+          return
+        }
+        applyDraftSnapshot(getInitialDraft())
+      })
+      return () => {
+        cancelled = true
+      }
+    }
+
+    applyDraftSnapshot(getInitialDraft())
+  }, [active, applyDraftSnapshot, getInitialDraft, templateCode])
 
   useEffect(() => {
     if (!active) closeWritingUserPreview()
@@ -146,7 +182,31 @@ export function useSettlementApplicationIssuanceEditor(active: boolean, previewH
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    }, [])
+    if (templateCode == null || templateCode === '') return
+    void (async () => {
+      try {
+        await persistWritingFormTemplateDraft({
+          templateId: templateCode,
+          draft,
+        })
+        if (isTemplateManagementSave) {
+          showSaveSuccess(onTemplateDraftSaveConfirmed)
+        }
+      } catch (error) {
+        console.debug('settlementApplicationIssuance save failed', error)
+        if (isTemplateManagementSave) {
+          showSaveFailure()
+        }
+      }
+    })()
+  }, [
+    draft,
+    isTemplateManagementSave,
+    onTemplateDraftSaveConfirmed,
+    showSaveFailure,
+    showSaveSuccess,
+    templateCode,
+  ])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {
     setActiveParagraphId(paragraphId)

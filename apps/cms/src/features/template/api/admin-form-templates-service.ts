@@ -6,6 +6,8 @@ import {
   extensionJsonToExtensionPayload,
   extensionPayloadToExtensionJson,
   schemaJsonToWritingFormDraft,
+  settingsJsonToSettingsPayload,
+  settingsPayloadToSettingsJson,
   writingFormDraftToSchemaJson,
 } from '@/features/template/api/adapters/form-template-draft-adapters'
 import { ISSUANCE_FORM_TYPE, WRITING_FORM_TYPE } from '@/features/template/api/form-template-catalog'
@@ -22,26 +24,34 @@ import {
   publishFormTemplateVersionRemote,
   updateFormTemplateVersionRemote,
 } from '@/features/template/api/form-templates-api-client'
+import { normalizeWritingFormDraftFromApi } from '@/features/template/lib/form-template-seed-registry'
+import { shouldUseRemoteDraftApiForTemplateCode } from '@/features/template/lib/form-template-remote-draft'
 import {
   loadWritingFormTemplateSave,
   persistWritingFormTemplateSave,
   type WritingFormTemplateSaveRecord,
 } from '@/features/template/lib/writing-form-template-local-save'
-import {
-  PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
-  shouldUseRegistrationGeneralRemoteDraftApi,
-} from '@/features/template/lib/program-registration-editor-state'
-import { createProgramRegistrationDraft } from '@/features/template/model/program-registration-draft'
 import { issuanceFormSections } from '@/features/template/model/issuance-form.schema'
 import { writingSections, type TemplateSection } from '@/features/template/model/template.schema'
-import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import {
+  normalizeWritingFormDraft,
+  type WritingFormDraft,
+} from '@/features/template/model/writing-form-draft.schema'
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
 function shouldUseRemoteDraftApiForTemplate(templateCode: string): boolean {
   return (
-    shouldUseFormsSurveysRemoteApi() && shouldUseRegistrationGeneralRemoteDraftApi(templateCode)
+    shouldUseFormsSurveysRemoteApi() && shouldUseRemoteDraftApiForTemplateCode(templateCode)
   )
+}
+
+function hasExtensionPayload(args: {
+  overlay?: Record<string, unknown>
+  editorState?: Record<string, unknown>
+  uiState?: Record<string, unknown>
+}): boolean {
+  return args.overlay != null || args.editorState != null || args.uiState != null
 }
 
 function assertFormsSurveysRemoteReady(): void {
@@ -93,15 +103,6 @@ export function getMockIssuanceFormSections(): TemplateSection[] {
   return issuanceFormSections
 }
 
-function normalizeRegistrationGeneralDraftFromApi(draft: WritingFormDraft): WritingFormDraft {
-  if (draft.paragraphs.length > 0) return draft
-  const seed = createProgramRegistrationDraft('general')
-  return {
-    ...draft,
-    paragraphs: seed.paragraphs,
-  }
-}
-
 async function resolveTemplateVersionId(templateCode: string): Promise<number | null> {
   const cached = getFormTemplateVersionCacheEntry(templateCode)
   if (cached?.templateVersionId != null) return cached.templateVersionId
@@ -134,20 +135,29 @@ async function resolveTemplateVersionId(templateCode: string): Promise<number | 
   return versionId
 }
 
+const EMPTY_SCHEMA_DRAFT: WritingFormDraft = normalizeWritingFormDraft({
+  schemaVersion: 1,
+  formSettings: { titleNumbering: 'none' },
+  paragraphs: [],
+})
+
 function buildSaveRecordFromVersionResponse(args: {
   templateCode: string
   schemaJson?: string | Record<string, unknown> | null
   extensionJson?: string | Record<string, unknown> | null
+  settingsJson?: string | Record<string, unknown> | null
   updatedAt?: string
 }): WritingFormTemplateSaveRecord | null {
-  let draft = schemaJsonToWritingFormDraft(args.schemaJson)
-  if (draft == null) return null
-
-  if (args.templateCode === PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE) {
-    draft = normalizeRegistrationGeneralDraftFromApi(draft)
-  }
-
   const extension = extensionJsonToExtensionPayload(args.extensionJson)
+  const settings = settingsJsonToSettingsPayload(args.settingsJson)
+
+  let draft = schemaJsonToWritingFormDraft(args.schemaJson)
+  if (draft == null) {
+    if (settings == null) return null
+    draft = EMPTY_SCHEMA_DRAFT
+  } else {
+    draft = normalizeWritingFormDraftFromApi(args.templateCode, draft)
+  }
 
   return {
     version: 1,
@@ -156,6 +166,7 @@ function buildSaveRecordFromVersionResponse(args: {
     draft,
     overlay: extension?.overlay,
     editorState: extension?.editorState,
+    settingsJson: settings ?? undefined,
   }
 }
 
@@ -171,6 +182,7 @@ export async function loadFormTemplateVersionDraft(
           templateCode,
           schemaJson: version.schemaJson,
           extensionJson: version.extensionJson,
+          settingsJson: version.settingsJson,
           updatedAt: version.updatedAt,
         })
         if (record != null) {
@@ -189,6 +201,7 @@ export async function loadFormTemplateVersionDraft(
             draft: record.draft,
             overlay: record.overlay,
             editorState: record.editorState,
+            settingsJson: record.settingsJson,
           })
           return record
         }
@@ -206,12 +219,15 @@ export async function saveFormTemplateVersionDraft(args: {
   draft: WritingFormDraft
   overlay?: Record<string, unknown>
   editorState?: Record<string, unknown>
+  uiState?: Record<string, unknown>
+  settingsJson?: Record<string, unknown>
 }): Promise<void> {
   persistWritingFormTemplateSave({
     templateId: args.templateCode,
     draft: args.draft,
     overlay: args.overlay,
     editorState: args.editorState,
+    settingsJson: args.settingsJson,
   })
 
   if (!shouldUseRemoteDraftApiForTemplate(args.templateCode)) return
@@ -225,15 +241,27 @@ export async function saveFormTemplateVersionDraft(args: {
     const body: {
       schemaJson: string
       extensionJson?: string
+      settingsJson?: string
     } = {
       schemaJson: writingFormDraftToSchemaJson(args.draft),
     }
 
-    if (args.templateCode === PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE) {
+    if (
+      hasExtensionPayload({
+        overlay: args.overlay,
+        editorState: args.editorState,
+        uiState: args.uiState,
+      })
+    ) {
       body.extensionJson = extensionPayloadToExtensionJson({
         overlay: args.overlay,
         editorState: args.editorState,
+        uiState: args.uiState,
       })
+    }
+
+    if (args.settingsJson != null) {
+      body.settingsJson = settingsPayloadToSettingsJson(args.settingsJson)
     }
 
     await updateFormTemplateVersionRemote(versionId, body)

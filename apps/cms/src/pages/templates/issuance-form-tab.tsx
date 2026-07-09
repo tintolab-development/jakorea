@@ -92,13 +92,18 @@ import { handleError } from '@/shared/utils/error-handler'
 import { useIssuanceFormSections } from '@/features/template/hooks/use-issuance-form-sections'
 import {
   findIssuanceTemplateRowById,
+  LECTURE_REPORT_TEMPLATE_CODE,
   LECTURE_REPORT_TEMPLATE_NAME,
+  PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_CODE,
   PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME,
   PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_CODE,
   PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME,
+  SETTLEMENT_APPLICATION_TEMPLATE_CODE,
   SETTLEMENT_APPLICATION_TEMPLATE_NAME,
   type IssuanceTemplateRow,
+  UJAT_EDUCATION_JOURNAL_TEMPLATE_CODE,
   UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME,
+  UJAT_EDUCATION_PLAN_TEMPLATE_CODE,
   UJAT_EDUCATION_PLAN_TEMPLATE_NAME,
 } from '@/features/template/model/issuance-form.schema'
 
@@ -160,23 +165,34 @@ export function IssuanceFormTab() {
     closeWritingUserPreview
   )
   const isPreviewOpen = params.mode === 'edit'
+  const closeTemplatePreview = useCallback(() => {
+    setParams({ mode: undefined, id: undefined, userPreview: undefined })
+  }, [setParams])
   const [selectedTemplate, setSelectedTemplate] = useState<IssuanceTemplateRow | null>(null)
 
   const isPaymentStatementIssuance =
+    selectedTemplate?.id === PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_CODE ||
     selectedTemplate?.templateName === PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME
   const isPaymentStatementPreConsent =
     selectedTemplate?.id === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_CODE ||
     selectedTemplate?.templateName === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME
-  const isUjatEducationPlan = selectedTemplate?.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
-  const isUjatEducationJournal = selectedTemplate?.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
+  const isUjatEducationPlan =
+    selectedTemplate?.id === UJAT_EDUCATION_PLAN_TEMPLATE_CODE ||
+    selectedTemplate?.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
+  const isUjatEducationJournal =
+    selectedTemplate?.id === UJAT_EDUCATION_JOURNAL_TEMPLATE_CODE ||
+    selectedTemplate?.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
   const ujatStructuredIssuanceVariant: UjatEducationIssuanceVariant | null = isUjatEducationPlan
     ? 'plan'
     : isUjatEducationJournal
       ? 'journal'
       : null
   const isUjatStructuredIssuance = ujatStructuredIssuanceVariant != null
-  const isLectureReportIssuance = selectedTemplate?.templateName === LECTURE_REPORT_TEMPLATE_NAME
+  const isLectureReportIssuance =
+    selectedTemplate?.id === LECTURE_REPORT_TEMPLATE_CODE ||
+    selectedTemplate?.templateName === LECTURE_REPORT_TEMPLATE_NAME
   const isSettlementApplicationIssuance =
+    selectedTemplate?.id === SETTLEMENT_APPLICATION_TEMPLATE_CODE ||
     selectedTemplate?.templateName === SETTLEMENT_APPLICATION_TEMPLATE_NAME
   const isCertificateIssuance =
     selectedTemplate != null && isCertificateIssuanceTemplateName(selectedTemplate.templateName)
@@ -190,22 +206,32 @@ export function IssuanceFormTab() {
 
   const paymentStatementVm = usePaymentStatementIssuanceEditor(
     isPreviewOpen && isPaymentStatementIssuance,
-    selectedTemplate?.templateName ?? PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME
+    selectedTemplate?.templateName ?? PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME,
+    isPaymentStatementIssuance ? selectedTemplate?.id : undefined,
+    closeTemplatePreview
   )
   const paymentStatementPreConsentVm = usePaymentStatementPreConsentEditor(
     isPreviewOpen && isPaymentStatementPreConsent,
-    selectedTemplate?.templateName ?? PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME
+    selectedTemplate?.templateName ?? PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME,
+    isPaymentStatementPreConsent ? selectedTemplate?.id : undefined,
+    closeTemplatePreview
   )
   const ujatStructuredIssuanceVm = useUjatEducationIssuanceEditor(
     Boolean(isPreviewOpen && !isCertificateIssuance && isUjatStructuredIssuance),
-    ujatStructuredIssuanceVariant ?? 'plan'
+    ujatStructuredIssuanceVariant ?? 'plan',
+    isUjatStructuredIssuance ? selectedTemplate?.id : undefined,
+    closeTemplatePreview
   )
   const lectureReportVm = useLectureReportIssuanceEditor(
-    Boolean(isPreviewOpen && !isCertificateIssuance && isLectureReportIssuance)
+    Boolean(isPreviewOpen && !isCertificateIssuance && isLectureReportIssuance),
+    isLectureReportIssuance ? selectedTemplate?.id : undefined,
+    closeTemplatePreview
   )
   const settlementVm = useSettlementApplicationIssuanceEditor(
     Boolean(isPreviewOpen && !isCertificateIssuance && isSettlementApplicationIssuance),
-    selectedTemplate?.templateName ?? SETTLEMENT_APPLICATION_TEMPLATE_NAME
+    selectedTemplate?.templateName ?? SETTLEMENT_APPLICATION_TEMPLATE_NAME,
+    isSettlementApplicationIssuance ? selectedTemplate?.id : undefined,
+    closeTemplatePreview
   )
   const paymentStatementPdfHostRef = useRef<HTMLDivElement>(null)
   const [paymentStatementPdfLoading, setPaymentStatementPdfLoading] = useState(false)
@@ -381,10 +407,6 @@ export function IssuanceFormTab() {
     },
     [setParams]
   )
-
-  const closeTemplatePreview = useCallback(() => {
-    setParams({ mode: undefined, id: undefined, userPreview: undefined })
-  }, [setParams])
 
   useEffect(() => {
     if (params.mode !== 'edit' || params.id == null || params.id === '') {
@@ -913,6 +935,8 @@ export function IssuanceFormTab() {
         open={isPreviewOpen && isCertificateIssuance}
         onClose={closeTemplatePreview}
         title={selectedTemplate?.templateName ?? '인증서'}
+        templateCode={isCertificateIssuance ? selectedTemplate?.id : undefined}
+        onSaveConfirmed={closeTemplatePreview}
         initialStringValues={certificateInitialStringValues}
         issueDate={certificateIssueDate}
         buildFilenameTitle={selectedTemplate?.templateName}

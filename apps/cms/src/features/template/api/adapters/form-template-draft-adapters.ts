@@ -75,3 +75,15 @@ export function extensionPayloadToExtensionJson(payload: FormTemplateExtensionPa
     uiState: payload.uiState ?? {},
   })
 }
+
+export function settingsJsonToSettingsPayload(
+  settingsJson: string | Record<string, unknown> | null | undefined
+): Record<string, unknown> | null {
+  const parsed = parseJsonTextField(settingsJson)
+  if (parsed == null || typeof parsed !== 'object') return null
+  return parsed as Record<string, unknown>
+}
+
+export function settingsPayloadToSettingsJson(settings: Record<string, unknown>): string {
+  return JSON.stringify(settings)
+}
