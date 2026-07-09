@@ -21,7 +21,7 @@ export const GENERAL_PROGRAM_DETAIL_NESTED_QUERY_PARAMS = [
   'volunteerTab',
   'participantId',
   'participantTab',
-  'participatingParticipantsView',
+  'participantView',
   'progressCalendarRange',
   'schoolName',
   'institutionSido',

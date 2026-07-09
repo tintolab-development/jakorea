@@ -12,6 +12,8 @@ import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb
 import type { DetailFullpageBreadcrumbItem } from '@/shared/ui/detail-fullpage-breadcrumb'
 import { buildSearchParams } from '@/shared/lib/detail-fullpage-query-stack'
 import { useGeneralProgramDetail } from '@/features/program/general/hooks/use-general-program-detail'
+import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
+import { useUpdateGeneralProgram } from '@/features/program/general/hooks/use-update-general-program'
 import { useProgramStore } from '@/features/program/general/model/program-store'
 import type { Program } from '@/types/domain'
 import {
@@ -48,7 +50,9 @@ import {
   GENERAL_PROGRAM_DETAIL_QUERY_PARAMS,
   GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM,
   GENERAL_PROGRAM_DETAIL_TAB_PARAM,
+  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE,
   GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
+  isParticipantRecruitmentPreviewOpen,
   readGeneralProgramDetailRoute,
 } from '@/features/program/general/lib/general-program-detail-route'
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
@@ -62,6 +66,7 @@ import {
 } from '@/features/program/general/lib/common-info-edit-policy'
 import {
   applyGeneralProgramDetailSession,
+  clearGeneralProgramDetailSession,
   setGeneralProgramDetailSession,
 } from '@/features/program/general/lib/general-program-detail-session'
 import {
@@ -73,6 +78,10 @@ import { saveGeneralProgramDetailSnapshot } from '@/data/mock/general-programs'
 import { GeneralProgramDetailSidebar } from './detail-sidebar'
 import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
 import { GeneralProgramRecruitmentView } from './info/recruitment-view'
+import { ParticipantRecruitmentPreviewModal } from './info/participant-recruitment-preview-modal'
+import {
+  GENERAL_PROGRAM_DETAIL_FULLPAGE_MODAL_Z_INDEX,
+} from '@/features/program/general/lib/general-program-modal-z-index'
 import { GeneralProgramApplicationView } from './info/application-view'
 import { GeneralProgramApplicationTemplateEditModal } from './info/application-template-edit-modal'
 import {
@@ -429,14 +438,17 @@ export function GeneralProgramDetailFullPageModal({
   searchParams: searchParamsProp,
   setSearchParams: setSearchParamsProp,
 }: GeneralProgramDetailFullPageModalProps) {
-  const [internalSearchParams, internalSetSearchParams] = useSearchParams()
-  const searchParams = searchParamsProp ?? internalSearchParams
+  const [routerSearchParams, internalSetSearchParams] = useSearchParams()
+  const searchParams = searchParamsProp ?? routerSearchParams
   const setSearchParams = setSearchParamsProp ?? internalSetSearchParams
   const searchParamsKey = searchParams.toString()
+  const routerSearchParamsKey = routerSearchParams.toString()
   const programId =
     program?.id ?? programIdHint ?? searchParams.get('programId') ?? undefined
 
   const { updateProgram, setSelectedProgram } = useProgramStore()
+  const remoteEnabled = useGeneralProgramsRemoteEnabled(open && Boolean(programId))
+  const updateGeneralProgramMutation = useUpdateGeneralProgram()
   const {
     program: detailProgram,
     loading,
@@ -453,8 +465,34 @@ export function GeneralProgramDetailFullPageModal({
       program ??
       (programId ? (resolveGeneralProgramForDetail(programId) ?? null) : null)
     if (base == null) return null
+    if (remoteEnabled && detailProgram) return detailProgram
     return applyGeneralProgramDetailSession(base)
-  }, [detailProgram, program, programId])
+  }, [detailProgram, program, programId, remoteEnabled])
+
+  const persistGeneralProgramDraft = useCallback(
+    async (draft: Program) => {
+      if (remoteEnabled) {
+        await updateGeneralProgramMutation.mutateAsync({
+          programId: draft.id,
+          program: draft,
+        })
+        clearGeneralProgramDetailSession(draft.id)
+        setSelectedProgram(draft)
+        return
+      }
+
+      setGeneralProgramDetailSession(draft)
+      setSelectedProgram(draft)
+      saveGeneralProgramDetailSnapshot(draft)
+      try {
+        const { id: _id, createdAt: _c, ...patch } = draft
+        await updateProgram(draft.id, patch)
+      } catch {
+        // API·mockProgramsMap 미연동 일반 프로그램 — 세션·mock 스냅샷 유지
+      }
+    },
+    [remoteEnabled, setSelectedProgram, updateGeneralProgramMutation, updateProgram]
+  )
 
   const volunteerInterviewEnabled = displayProgram
     ? getGeneralVolunteerInterviewEnabled(displayProgram)
@@ -605,15 +643,7 @@ export function GeneralProgramDetailFullPageModal({
       program: displayProgram ?? null,
       onSaveEdit: displayProgram
         ? async draft => {
-            setGeneralProgramDetailSession(draft)
-            setSelectedProgram(draft)
-            saveGeneralProgramDetailSnapshot(draft)
-            try {
-              const { id: _id, createdAt: _c, ...patch } = draft
-              await updateProgram(draft.id, patch)
-            } catch {
-              // API·mockProgramsMap 미연동 일반 프로그램 — 세션·mock 스냅샷 유지
-            }
+            await persistGeneralProgramDraft(draft)
           }
         : undefined,
     })
@@ -755,20 +785,7 @@ export function GeneralProgramDetailFullPageModal({
     !!displayProgram &&
     canEditRecruitmentInfo
 
-  const persistRecruitmentProgramDraft = useCallback(
-    async (draft: Program) => {
-      setGeneralProgramDetailSession(draft)
-      setSelectedProgram(draft)
-      saveGeneralProgramDetailSnapshot(draft)
-      try {
-        const { id: _id, createdAt: _c, ...patch } = draft
-        await updateProgram(draft.id, patch)
-      } catch {
-        // API·mockProgramsMap 미연동 일반 프로그램 — 세션·mock 스냅샷 유지
-      }
-    },
-    [setSelectedProgram, updateProgram]
-  )
+  const persistRecruitmentProgramDraft = persistGeneralProgramDraft
 
   const institutionsForm = useProgramDetailEditForm({
     program: displayProgram,
@@ -946,6 +963,60 @@ export function GeneralProgramDetailFullPageModal({
     setOptimisticDetailRoute(null)
     onClose()
   }, [onClose])
+
+  const participantRecruitmentPreviewOpenFromUrl = useMemo(
+    () => isParticipantRecruitmentPreviewOpen(routerSearchParams),
+    [routerSearchParamsKey, routerSearchParams]
+  )
+
+  const [participantRecruitmentPreviewOpenOptimistic, setParticipantRecruitmentPreviewOpenOptimistic] =
+    useState(false)
+
+  useEffect(() => {
+    if (!open) {
+      setParticipantRecruitmentPreviewOpenOptimistic(false)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!participantRecruitmentPreviewOpenFromUrl) {
+      setParticipantRecruitmentPreviewOpenOptimistic(false)
+    }
+  }, [participantRecruitmentPreviewOpenFromUrl])
+
+  const participantRecruitmentPreviewOpen =
+    open &&
+    displayProgram != null &&
+    (participantRecruitmentPreviewOpenFromUrl || participantRecruitmentPreviewOpenOptimistic)
+
+  const handleOpenParticipantRecruitmentPreview = useCallback(() => {
+    if (!programId) return
+    setParticipantRecruitmentPreviewOpenOptimistic(true)
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set('programId', programId)
+        next.set(
+          GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
+          GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE
+        )
+        return next
+      },
+      { replace: false }
+    )
+  }, [programId, setSearchParams])
+
+  const handleCloseParticipantRecruitmentPreview = useCallback(() => {
+    setParticipantRecruitmentPreviewOpenOptimistic(false)
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM)
+        return next
+      },
+      { replace: true }
+    )
+  }, [setSearchParams])
 
   const setSchoolId = useCallback(
     (id: string | null) => {
@@ -1513,6 +1584,7 @@ export function GeneralProgramDetailFullPageModal({
       <DetailFullPageModal
         open={open}
         onClose={handleModalClose}
+        zIndex={GENERAL_PROGRAM_DETAIL_FULLPAGE_MODAL_Z_INDEX}
         title={modalTitle}
         closeAriaLabel={
           schoolIdFromUrl ||
@@ -1564,7 +1636,6 @@ export function GeneralProgramDetailFullPageModal({
             ) : activeLnb === 'info' && activeTab === 'recruitment' ? (
               <GeneralProgramRecruitmentView
                 program={displayProgram}
-                sponsorName={sponsorName}
                 activeRecruitTab={recruitSubTab}
                 onRecruitTabChange={handleRecruitSubTabChange}
                 showInstructorTab={showInstructorApplications}
@@ -1581,8 +1652,7 @@ export function GeneralProgramDetailFullPageModal({
                 registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
                 onEdit={handleRecruitmentEdit}
                 onSave={handleRecruitmentSave}
-                searchParams={searchParams}
-                setSearchParams={setSearchParams}
+                onOpenParticipantRecruitmentPreview={handleOpenParticipantRecruitmentPreview}
               />
             ) : activeLnb === 'info' && activeTab === 'application' ? (
               <GeneralProgramApplicationView
@@ -1737,6 +1807,14 @@ export function GeneralProgramDetailFullPageModal({
           applicationTab={applicationSubTab}
           onClose={handleApplicationTemplateEditClose}
           onSaved={handleApplicationTemplateSaved}
+        />
+      ) : null}
+      {displayProgram ? (
+        <ParticipantRecruitmentPreviewModal
+          open={participantRecruitmentPreviewOpen}
+          onClose={handleCloseParticipantRecruitmentPreview}
+          program={displayProgram}
+          sponsorName={sponsorName}
         />
       ) : null}
       <ProgramDetailSponsorDetailOverlay />

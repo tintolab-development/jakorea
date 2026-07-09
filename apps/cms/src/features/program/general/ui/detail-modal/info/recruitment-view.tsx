@@ -3,7 +3,6 @@
  */
 
 import { useCallback, type ReactNode } from 'react'
-import type { SetURLSearchParams } from 'react-router-dom'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -22,22 +21,15 @@ import {
   generalRecruitTabItems,
   type GeneralRecruitTabKey,
 } from '@/features/program/general/lib/recruitment-tabs'
-import {
-  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE,
-  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
-  isParticipantRecruitmentPreviewOpen,
-} from '@/features/program/general/lib/general-program-detail-route'
 import { GeneralProgramParticipantRecruitmentInfoView } from './participant-recruitment-info-view'
 import { GeneralProgramInstructorRecruitmentInfoView } from './instructor-recruitment-info-view'
 import { GeneralProgramVolunteerRecruitmentInfoView } from './volunteer-recruitment-info-view'
 import { GeneralProgramVolunteerInterviewScheduleSection } from './volunteer-interview-schedule-section'
-import { ParticipantRecruitmentPreviewModal } from './participant-recruitment-preview-modal'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './recruitment-view.css'
 
 export function GeneralProgramRecruitmentView({
   program,
-  sponsorName,
   activeRecruitTab,
   onRecruitTabChange,
   showInstructorTab,
@@ -55,11 +47,9 @@ export function GeneralProgramRecruitmentView({
   registerVolunteersAdditionalHtml,
   onEdit,
   onSave,
-  searchParams,
-  setSearchParams,
+  onOpenParticipantRecruitmentPreview,
 }: {
   program: Program
-  sponsorName?: string
   activeRecruitTab: GeneralRecruitTabKey
   onRecruitTabChange: (tab: GeneralRecruitTabKey) => void
   showInstructorTab: boolean
@@ -77,35 +67,12 @@ export function GeneralProgramRecruitmentView({
   registerVolunteersAdditionalHtml: (getter: () => string) => void
   onEdit: () => void
   onSave: () => void
-  searchParams: URLSearchParams
-  setSearchParams: SetURLSearchParams
+  /** 참여자 모집 사용자 미리보기 — URL·optimistic open은 상세 모달에서 처리 */
+  onOpenParticipantRecruitmentPreview?: () => void
 }) {
-  const previewOpen = isParticipantRecruitmentPreviewOpen(searchParams)
-
   const handleOpenPreview = useCallback(() => {
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.set(
-          GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
-          GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE
-        )
-        return next
-      },
-      { replace: false }
-    )
-  }, [setSearchParams])
-
-  const handleClosePreview = useCallback(() => {
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.delete(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM)
-        return next
-      },
-      { replace: true }
-    )
-  }, [setSearchParams])
+    onOpenParticipantRecruitmentPreview?.()
+  }, [onOpenParticipantRecruitmentPreview])
 
   const isEditMode =
     (activeRecruitTab === 'institutions' && isEditModeInstitutions) ||
@@ -234,12 +201,6 @@ export function GeneralProgramRecruitmentView({
           <div className="detail-info-form--gap">{detail}</div>
         </div>
       </div>
-      <ParticipantRecruitmentPreviewModal
-        open={previewOpen}
-        onClose={handleClosePreview}
-        program={program}
-        sponsorName={sponsorName}
-      />
     </>
   )
 }

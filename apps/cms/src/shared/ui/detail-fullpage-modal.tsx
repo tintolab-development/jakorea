@@ -24,6 +24,8 @@ export interface DetailFullPageModalProps {
   /** ant-modal 루트에 추가 (예: program-detail-fullpage-modal) */
   className?: string
   closeAriaLabel?: string
+  /** 다른 풀페이지·미리보기 모달과 스택 순서 조정 (기본 ant Modal 1000) */
+  zIndex?: number
 }
 
 export function DetailFullPageModal({
@@ -38,6 +40,7 @@ export function DetailFullPageModal({
   onHeaderClose,
   className: classNameProp,
   closeAriaLabel = '닫기',
+  zIndex,
 }: DetailFullPageModalProps) {
   const handleClose = onHeaderClose ?? onClose
   const rootClass = [
@@ -56,6 +59,7 @@ export function DetailFullPageModal({
       size="full"
       hideHeader
       className={rootClass}
+      zIndex={zIndex}
     >
       <div className="detail-fullpage-modal__layout">
         {sidebar ?? null}

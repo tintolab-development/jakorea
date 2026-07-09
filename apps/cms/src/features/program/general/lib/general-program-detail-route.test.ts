@@ -81,9 +81,7 @@ describe('general-program-detail-route', () => {
   it('exposes a complete detail query sweep list', () => {
     expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain('programId')
     expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain('subTab')
-    expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain(
-      GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM
-    )
+    expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain('participantView')
   })
 
   it('detects participant recruitment preview from search params', () => {

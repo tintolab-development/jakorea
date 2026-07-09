@@ -8,12 +8,12 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import type { Program } from '@/types/domain'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { TEMPLATE_WRITING_USER_PREVIEW_Z_INDEX } from '@/features/template/context/template-writing-preview-context'
 import { TemplatePreviewPageNavigator } from '@/features/template/ui/modal/template-preview-page-navigator'
 import {
   ParticipantRecruitmentUserPage,
   RECRUITMENT_USER_PREVIEW_PAGE_HEIGHT,
 } from '@/features/program/general/ui/user-preview'
+import { PARTICIPANT_RECRUITMENT_PREVIEW_MODAL_Z_INDEX } from '@/features/program/general/lib/general-program-modal-z-index'
 import '@/features/template/ui/modal/template-preview-modal.css'
 import './participant-recruitment-preview-modal.css'
 
@@ -84,7 +84,7 @@ export function ParticipantRecruitmentPreviewModal({
       size="full"
       hideHeader
       className="template-preview-modal template-preview-modal--form-layout template-preview-modal--agreement-layout template-preview-modal--survey-layout teal-header-modal--full participant-recruitment-preview-modal"
-      zIndex={TEMPLATE_WRITING_USER_PREVIEW_Z_INDEX}
+      zIndex={PARTICIPANT_RECRUITMENT_PREVIEW_MODAL_Z_INDEX}
     >
       <div className="template-preview-modal__shell">
         <header className="template-preview-modal__title-row">
