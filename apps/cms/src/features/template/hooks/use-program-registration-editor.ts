@@ -55,6 +55,7 @@ import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
 } from '@/features/template/lib/writing-form-template-local-save'
+import { useCmsAlert } from '@/shared/ui'
 
 export type ProgramRegistrationParticipantSelection = {
   individual: boolean
@@ -189,6 +190,8 @@ export type UseProgramRegistrationEditorOptions = {
   programRegistrationFormVariant?: ProgramRegistrationFormVariant
   /** 일반 프로그램 등록 풀페이지 — 임시 저장 성공 후(목록 갱신·모달 닫기 등) */
   onRegistrationSaved?: () => void
+  /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
+  onTemplateDraftSaveConfirmed?: () => void
   /** forms-surveys draft API 연동 대상 templateCode (현재 `registration-general`만) */
   templateCode?: string
 }
@@ -203,7 +206,9 @@ export function useProgramRegistrationEditor(
   const programRegistrationFormVariant: ProgramRegistrationFormVariant =
     editorOptions?.programRegistrationFormVariant ?? 'general'
   const onRegistrationSaved = editorOptions?.onRegistrationSaved
+  const onTemplateDraftSaveConfirmed = editorOptions?.onTemplateDraftSaveConfirmed
   const templateCode = editorOptions?.templateCode
+  const { showAlert } = useCmsAlert()
   const usesTemplateDraftApi =
     templateCode === PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE &&
     programRegistrationFormVariant === 'general'
@@ -706,10 +711,10 @@ export function useProgramRegistrationEditor(
     openWritingUserPreview(writingPreviewSession)
   }, [openWritingUserPreview, writingPreviewSession])
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     try {
       if (usesTemplateDraftApi && templateCode) {
-        void persistWritingFormTemplateDraft({
+        await persistWritingFormTemplateDraft({
           templateId: templateCode,
           draft,
           editorState: buildProgramRegistrationEditorState({
@@ -729,6 +734,13 @@ export function useProgramRegistrationEditor(
             activeParagraphId,
           }),
         })
+        if (!onRegistrationSaved) {
+          showAlert({
+            title: '저장',
+            content: '양식이 저장되었습니다.',
+            onConfirm: onTemplateDraftSaveConfirmed,
+          })
+        }
       }
       if (!onRegistrationSaved) return
       persistGeneralRegistrationFormLocal({
@@ -740,6 +752,12 @@ export function useProgramRegistrationEditor(
       onRegistrationSaved()
     } catch (error) {
       console.debug('programRegistrationEditor save failed', error)
+      if (!onRegistrationSaved) {
+        showAlert({
+          title: '저장 실패',
+          content: '양식 저장 중 오류가 발생했습니다. 다시 시도해 주세요.',
+        })
+      }
     }
   }, [
     activeParagraphId,
@@ -750,6 +768,7 @@ export function useProgramRegistrationEditor(
     educationScheduleMode,
     ipsScheduleDetail,
     onRegistrationSaved,
+    onTemplateDraftSaveConfirmed,
     participant,
     participationScheduleDetail,
     programRegistrationFormVariant,
@@ -758,6 +777,7 @@ export function useProgramRegistrationEditor(
     scheduleCurriculumGroupCount,
     scheduleCurriculumPreEducation,
     sessionRoundType,
+    showAlert,
     templateCode,
     trainedTeachersTeacherTrainingEnabled,
     usesTemplateDraftApi,

@@ -89,14 +89,18 @@ import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-o
 import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
 import './form-test-single-item-fullpage-modal.css'
 import { handleError } from '@/shared/utils/error-handler'
-
-const PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME = '지급조서(발급용)'
-const PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME = '지급조서 사전 동의서'
-const PAYMENT_STATEMENT_PRE_CONSENT_ROW_KEY = 'document-payment-order-pre-consent'
-const SETTLEMENT_APPLICATION_TEMPLATE_NAME = '정산 신청서'
-const UJAT_EDUCATION_PLAN_TEMPLATE_NAME = 'UJAT 교육계획서'
-const UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME = 'UJAT 교육일지'
-const LECTURE_REPORT_TEMPLATE_NAME = '강의보고서'
+import { useIssuanceFormSections } from '@/features/template/hooks/use-issuance-form-sections'
+import {
+  findIssuanceTemplateRowById,
+  LECTURE_REPORT_TEMPLATE_NAME,
+  PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME,
+  PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_CODE,
+  PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME,
+  SETTLEMENT_APPLICATION_TEMPLATE_NAME,
+  type IssuanceTemplateRow,
+  UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME,
+  UJAT_EDUCATION_PLAN_TEMPLATE_NAME,
+} from '@/features/template/model/issuance-form.schema'
 
 const UJAT_STRUCTURED_ISSUANCE_HIDDEN_DRAG_HANDLES: Record<
   UjatEducationIssuanceVariant,
@@ -139,124 +143,11 @@ type IssuanceFormTabQuery = {
   userPreview?: string
 }
 
-interface IssuanceTemplateRow {
-  key: string
-  no: number
-  templateName: string
-  creator: string
-  createdAt: string
-  updatedAt: string
-}
-
-const issuanceRows: IssuanceTemplateRow[] = [
-  {
-    key: 'issuance-1',
-    no: 1,
-    templateName: 'UJAT 결과리포트',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'issuance-2',
-    no: 2,
-    templateName: 'UJAT 교육계획서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'issuance-ujat-edu-journal',
-    no: 3,
-    templateName: 'UJAT 교육일지',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'issuance-3',
-    no: 4,
-    templateName: '강의보고서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'issuance-4',
-    no: 5,
-    templateName: '정산 신청서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'issuance-5',
-    no: 6,
-    templateName: '결과보고서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-]
-
-const documentRows: IssuanceTemplateRow[] = [
-  {
-    key: 'document-payment-order-issue',
-    no: 1,
-    templateName: PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME,
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: PAYMENT_STATEMENT_PRE_CONSENT_ROW_KEY,
-    no: 2,
-    templateName: PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME,
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'document-1',
-    no: 3,
-    templateName: '지출증빙서류(필수폼)',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'document-2',
-    no: 4,
-    templateName: '휴가 인증서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'document-3',
-    no: 5,
-    templateName: '수료증',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'document-participation-certificate',
-    no: 6,
-    templateName: '참여인증서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'document-4',
-    no: 7,
-    templateName: '강사 활동 인증서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'document-5',
-    no: 8,
-    templateName: '봉사 활동 인증서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-]
-
-const issuanceRowsByKey = new Map<string, IssuanceTemplateRow>(
-  [...issuanceRows, ...documentRows].map(row => [row.key, row])
-)
-
 export function IssuanceFormTab() {
+  const { sections: issuanceSections, isLoading: isIssuanceSectionsLoading } =
+    useIssuanceFormSections()
+  const reportSection = issuanceSections.find(section => section.key === 'issuance-report')
+  const documentSection = issuanceSections.find(section => section.key === 'issuance-document')
   const {
     openWritingUserPreview,
     closeWritingUserPreview,
@@ -274,7 +165,7 @@ export function IssuanceFormTab() {
   const isPaymentStatementIssuance =
     selectedTemplate?.templateName === PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME
   const isPaymentStatementPreConsent =
-    selectedTemplate?.key === PAYMENT_STATEMENT_PRE_CONSENT_ROW_KEY ||
+    selectedTemplate?.id === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_CODE ||
     selectedTemplate?.templateName === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME
   const isUjatEducationPlan = selectedTemplate?.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
   const isUjatEducationJournal = selectedTemplate?.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
@@ -295,7 +186,7 @@ export function IssuanceFormTab() {
       ...DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
       titleName: selectedTemplate.templateName }
   }, [isCertificateIssuance, selectedTemplate])
-  const certificateIssueDate = useMemo(() => new Date(), [selectedTemplate?.key])
+  const certificateIssueDate = useMemo(() => new Date(), [selectedTemplate?.id])
 
   const paymentStatementVm = usePaymentStatementIssuanceEditor(
     isPreviewOpen && isPaymentStatementIssuance,
@@ -484,7 +375,7 @@ export function IssuanceFormTab() {
   const openTemplatePreview = useCallback(
     (row: IssuanceTemplateRow) => {
       setParams(
-        { mode: 'edit', id: row.key, userPreview: undefined },
+        { mode: 'edit', id: row.id, userPreview: undefined },
         { replace: false }
       )
     },
@@ -500,14 +391,14 @@ export function IssuanceFormTab() {
       setSelectedTemplate(null)
       return
     }
-    const row = issuanceRowsByKey.get(params.id)
+    const row = findIssuanceTemplateRowById(params.id, issuanceSections)
     if (row != null) {
       setSelectedTemplate(row)
       return
     }
     setParams({ mode: undefined, id: undefined, userPreview: undefined })
     setSelectedTemplate(null)
-  }, [params.mode, params.id, setParams])
+  }, [params.mode, params.id, setParams, issuanceSections])
 
   const issuanceColumns: ColumnsType<IssuanceTemplateRow> = [
     { title: 'No.', dataIndex: 'no', key: 'no', width: 88, align: 'center' },
@@ -579,7 +470,7 @@ export function IssuanceFormTab() {
     const isSettlementPreview =
       selectedTemplate.templateName === SETTLEMENT_APPLICATION_TEMPLATE_NAME
     const isPreConsentPreview =
-      selectedTemplate.key === PAYMENT_STATEMENT_PRE_CONSENT_ROW_KEY ||
+      selectedTemplate.id === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_CODE ||
       selectedTemplate.templateName === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME
     const ujatA4Preview =
       ujatPreviewVariant != null
@@ -800,32 +691,38 @@ export function IssuanceFormTab() {
       {isPreviewOpen && isLectureReportIssuance ? lectureReportPdfMeasureLayer : null}
       {isPreviewOpen && isUjatStructuredIssuance ? ujatStructuredPdfMeasureLayer : null}
       <div className="template-form-tab__content">
-        <TemplateListCard
-          title="보고 양식"
-          description="모든 프로그램에 동일한 구조로 노출되는 양식입니다."
-          headerInline
-        >
-          <Table
-            className="cms-data-table"
-            rowKey="key"
-            columns={issuanceColumns}
-            dataSource={issuanceRows}
-            pagination={false}
-          />
-        </TemplateListCard>
-        <TemplateListCard
-          title="서류 양식"
-          description="모든 프로그램에 동일한 구조로 노출되는 양식입니다."
-          headerInline
-        >
-          <Table
-            className="cms-data-table"
-            rowKey="key"
-            columns={issuanceColumns}
-            dataSource={documentRows}
-            pagination={false}
-          />
-        </TemplateListCard>
+        {isIssuanceSectionsLoading ? (
+          <p className="template-form-tab__loading">양식 목록을 불러오는 중입니다.</p>
+        ) : (
+          <>
+            <TemplateListCard
+              title={reportSection?.title ?? '보고 양식'}
+              description={reportSection?.description ?? ''}
+              headerInline
+            >
+              <Table
+                className="cms-data-table"
+                rowKey="key"
+                columns={issuanceColumns}
+                dataSource={reportSection?.rows ?? []}
+                pagination={false}
+              />
+            </TemplateListCard>
+            <TemplateListCard
+              title={documentSection?.title ?? '서류 양식'}
+              description={documentSection?.description ?? ''}
+              headerInline
+            >
+              <Table
+                className="cms-data-table"
+                rowKey="key"
+                columns={issuanceColumns}
+                dataSource={documentSection?.rows ?? []}
+                pagination={false}
+              />
+            </TemplateListCard>
+          </>
+        )}
       </div>
 
       <TemplateFullpageModal

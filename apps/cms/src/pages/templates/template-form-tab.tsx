@@ -38,7 +38,7 @@ type TemplateFormTabQuery = {
 
 export default function TemplateFormTab() {
   const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
-  const { sections: writingSections } = useWritingFormSections()
+  const { sections: writingSections, isLoading: isWritingSectionsLoading } = useWritingFormSections()
   const isPreviewOpen = params.mode === 'edit'
   const { closeWritingUserPreview, isWritingUserPreviewOpen } = useTemplateWritingPreview()
 
@@ -104,6 +104,7 @@ export default function TemplateFormTab() {
     templateId,
     templateName: selectedTemplate?.templateName,
     registryEntry,
+    onTemplateDraftSaveConfirmed: handleCloseTemplatePreview,
   })
 
   const { handlePreview } = useTemplatePreviewController({
@@ -183,15 +184,19 @@ export default function TemplateFormTab() {
   return (
     <>
       <div className="template-form-tab__content">
-        {writingSections.map(section => (
-          <TemplateListCard
-            key={section.key}
-            title={section.title}
-            description={section.description}
-          >
-            <TemplateTable rows={section.rows} onPreview={handleOpenTemplatePreview} />
-          </TemplateListCard>
-        ))}
+        {isWritingSectionsLoading ? (
+          <p className="template-form-tab__loading">양식 목록을 불러오는 중입니다.</p>
+        ) : (
+          writingSections.map(section => (
+            <TemplateListCard
+              key={section.key}
+              title={section.title}
+              description={section.description}
+            >
+              <TemplateTable rows={section.rows} onPreview={handleOpenTemplatePreview} />
+            </TemplateListCard>
+          ))
+        )}
       </div>
 
       <CrimeRecordConsentDocumentFullpageModal

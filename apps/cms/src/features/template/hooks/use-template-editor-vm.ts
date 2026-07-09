@@ -24,6 +24,8 @@ export type TemplateEditorVmInput = {
   templateId: string | undefined
   templateName: string | undefined
   registryEntry: TemplateRegistryDefinition | undefined
+  /** 템플릿 draft 저장 확인 후 편집 모달 닫기 */
+  onTemplateDraftSaveConfirmed?: () => void
 }
 
 export function useTemplateEditorVm({
@@ -31,6 +33,7 @@ export function useTemplateEditorVm({
   templateId,
   templateName,
   registryEntry,
+  onTemplateDraftSaveConfirmed,
 }: TemplateEditorVmInput) {
   const entry = registryEntry ?? lookupTemplateRegistry(templateId)
 
@@ -54,6 +57,7 @@ export function useTemplateEditorVm({
         templateId === PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
           ? PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
           : undefined,
+      onTemplateDraftSaveConfirmed,
     }
   )
 

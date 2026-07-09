@@ -7,6 +7,14 @@ import type {
 
 export const PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE = 'registration-general' as const
 
+/** `registration-general` — forms-surveys draft API 연동 */
+export const REGISTRATION_GENERAL_USE_REMOTE_DRAFT_API = true
+
+export function shouldUseRegistrationGeneralRemoteDraftApi(templateCode: string): boolean {
+  if (templateCode !== PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE) return true
+  return REGISTRATION_GENERAL_USE_REMOTE_DRAFT_API
+}
+
 export type ProgramRegistrationParticipantSelection = {
   individual: boolean
   organization: boolean
