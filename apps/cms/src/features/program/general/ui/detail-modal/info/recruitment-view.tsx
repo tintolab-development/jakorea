@@ -2,7 +2,8 @@
  * 일반 프로그램 상세 — 모집 정보 탭 (참여자 / 강사 / 봉사자)
  */
 
-import { useCallback, useState, type ReactNode } from 'react'
+import { useCallback, type ReactNode } from 'react'
+import type { SetURLSearchParams } from 'react-router-dom'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -21,6 +22,11 @@ import {
   generalRecruitTabItems,
   type GeneralRecruitTabKey,
 } from '@/features/program/general/lib/recruitment-tabs'
+import {
+  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE,
+  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
+  isParticipantRecruitmentPreviewOpen,
+} from '@/features/program/general/lib/general-program-detail-route'
 import { GeneralProgramParticipantRecruitmentInfoView } from './participant-recruitment-info-view'
 import { GeneralProgramInstructorRecruitmentInfoView } from './instructor-recruitment-info-view'
 import { GeneralProgramVolunteerRecruitmentInfoView } from './volunteer-recruitment-info-view'
@@ -49,6 +55,8 @@ export function GeneralProgramRecruitmentView({
   registerVolunteersAdditionalHtml,
   onEdit,
   onSave,
+  searchParams,
+  setSearchParams,
 }: {
   program: Program
   sponsorName?: string
@@ -69,16 +77,35 @@ export function GeneralProgramRecruitmentView({
   registerVolunteersAdditionalHtml: (getter: () => string) => void
   onEdit: () => void
   onSave: () => void
+  searchParams: URLSearchParams
+  setSearchParams: SetURLSearchParams
 }) {
-  const [previewOpen, setPreviewOpen] = useState(false)
+  const previewOpen = isParticipantRecruitmentPreviewOpen(searchParams)
 
   const handleOpenPreview = useCallback(() => {
-    setPreviewOpen(true)
-  }, [])
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set(
+          GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
+          GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE
+        )
+        return next
+      },
+      { replace: false }
+    )
+  }, [setSearchParams])
 
   const handleClosePreview = useCallback(() => {
-    setPreviewOpen(false)
-  }, [])
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM)
+        return next
+      },
+      { replace: true }
+    )
+  }, [setSearchParams])
 
   const isEditMode =
     (activeRecruitTab === 'institutions' && isEditModeInstitutions) ||

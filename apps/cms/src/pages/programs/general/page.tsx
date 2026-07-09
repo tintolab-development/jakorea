@@ -168,7 +168,10 @@ export function GeneralProgramListPageContent() {
 
   const generalDetailProgram = selectedProgramForDetail
 
+  const applyListSearchRef = useRef<(() => void) | null>(null)
+
   const handleCloseFullPageModal = useCallback(() => {
+    applyListSearchRef.current?.()
     setSelectedProgramForDetail(null)
     setSearchParams(
       prev =>
@@ -210,8 +213,15 @@ export function GeneralProgramListPageContent() {
   }
 
   const handleProgramCreateClick = useCallback(() => {
-    navigate({ pathname: '/programs/general', search: '?new=1' })
-  }, [navigate])
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set(PROGRAMS_GENERAL_NEW_QUERY_KEY, '1')
+        return next
+      },
+      { replace: false }
+    )
+  }, [setSearchParams])
 
   const handleView = (program: Program) => {
     if (!user || !isAuthenticated) {
@@ -225,8 +235,8 @@ export function GeneralProgramListPageContent() {
       prev => {
         const nextParams = new URLSearchParams(prev)
         nextParams.set('programId', program.id)
-        nextParams.set('lnb', 'info')
-        nextParams.set('tab', 'info')
+        if (!nextParams.get('lnb')) nextParams.set('lnb', 'info')
+        if (!nextParams.get('tab')) nextParams.set('tab', 'info')
         return nextParams
       },
       { replace: false }
@@ -303,6 +313,9 @@ export function GeneralProgramListPageContent() {
         searchParams={searchParams}
         setSearchParams={setSearchParams}
         disableUrlSync={generalDetailModalOpen}
+        onRegisterApplySearch={applySearch => {
+          applyListSearchRef.current = applySearch
+        }}
         onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
         selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
         showRowSelection={isScheduledFilter}

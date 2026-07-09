@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   clearGeneralProgramDetailQueryParams,
+  GENERAL_PROGRAM_DETAIL_QUERY_PARAMS,
+  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE,
+  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
+  isParticipantRecruitmentPreviewOpen,
   patchGeneralProgramDetailLnbTab,
   preserveGeneralProgramDetailProgramId,
   readGeneralProgramDetailRoute,
@@ -49,15 +53,46 @@ describe('general-program-detail-route', () => {
 
   it('clears detail query params while preserving list filters', () => {
     const source = new URLSearchParams(
-      'status=scheduled&programId=general-prog-1&lnb=info&tab=recruitment&schoolId=s1&applicantId=a1'
+      [
+        'status=scheduled',
+        'title=test',
+        'programId=general-prog-1',
+        'lnb=info',
+        'tab=recruitment',
+        'subTab=institutions',
+        `${GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM}=${GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE}`,
+        'schoolId=s1',
+        'applicantId=a1',
+      ].join('&')
     )
     const next = clearGeneralProgramDetailQueryParams(source)
 
     expect(next.get('status')).toBe('scheduled')
+    expect(next.get('title')).toBe('test')
     expect(next.get('programId')).toBeNull()
     expect(next.get('lnb')).toBeNull()
     expect(next.get('tab')).toBeNull()
+    expect(next.get('subTab')).toBeNull()
+    expect(next.get(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM)).toBeNull()
     expect(next.get('schoolId')).toBeNull()
     expect(next.get('applicantId')).toBeNull()
+  })
+
+  it('exposes a complete detail query sweep list', () => {
+    expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain('programId')
+    expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain('subTab')
+    expect(GENERAL_PROGRAM_DETAIL_QUERY_PARAMS).toContain(
+      GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM
+    )
+  })
+
+  it('detects participant recruitment preview from search params', () => {
+    const open = new URLSearchParams(
+      `${GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM}=${GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE}`
+    )
+    const closed = new URLSearchParams()
+
+    expect(isParticipantRecruitmentPreviewOpen(open)).toBe(true)
+    expect(isParticipantRecruitmentPreviewOpen(closed)).toBe(false)
   })
 })

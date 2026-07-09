@@ -1258,6 +1258,8 @@ export function ProgramDetailFullPageModal({
               registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
               onEdit={handleInfoEdit}
               onSave={handleCompanySchoolRecruitSave}
+              searchParams={searchParams}
+              setSearchParams={setSearchParams}
             />
           )}
 

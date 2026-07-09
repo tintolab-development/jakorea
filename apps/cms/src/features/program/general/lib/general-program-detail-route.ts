@@ -7,6 +7,10 @@ import {
 export const GENERAL_PROGRAM_DETAIL_TAB_PARAM = 'tab'
 export const GENERAL_PROGRAM_DETAIL_LNB_PARAM = 'lnb'
 export const GENERAL_PROGRAM_DETAIL_EDIT_PARAM = 'edit'
+export const GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM = 'subTab'
+export const GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM =
+  'participantRecruitmentPreview'
+export const GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE = '1'
 
 export const GENERAL_PROGRAM_DETAIL_NESTED_QUERY_PARAMS = [
   'schoolId',
@@ -30,6 +34,17 @@ export const GENERAL_PROGRAM_DETAIL_NESTED_QUERY_PARAMS = [
   'homeSigungu',
   'applicantId',
   'detailTab',
+] as const
+
+/** breadcrumb·닫기 시 sweep — 목록 필터(`status`, `title`, `viewMode` 등)는 delete 대상 아님 */
+export const GENERAL_PROGRAM_DETAIL_QUERY_PARAMS = [
+  'programId',
+  GENERAL_PROGRAM_DETAIL_LNB_PARAM,
+  GENERAL_PROGRAM_DETAIL_TAB_PARAM,
+  GENERAL_PROGRAM_DETAIL_EDIT_PARAM,
+  GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM,
+  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
+  ...GENERAL_PROGRAM_DETAIL_NESTED_QUERY_PARAMS,
 ] as const
 
 export function readGeneralProgramDetailRoute(searchParams: URLSearchParams): {
@@ -106,13 +121,17 @@ export function clearGeneralProgramDetailQueryParams(
   source: URLSearchParams
 ): URLSearchParams {
   const next = new URLSearchParams(source)
-  next.delete('programId')
-  next.delete(GENERAL_PROGRAM_DETAIL_LNB_PARAM)
-  next.delete(GENERAL_PROGRAM_DETAIL_TAB_PARAM)
-  next.delete(GENERAL_PROGRAM_DETAIL_EDIT_PARAM)
-  for (const key of GENERAL_PROGRAM_DETAIL_NESTED_QUERY_PARAMS) {
+  for (const key of GENERAL_PROGRAM_DETAIL_QUERY_PARAMS) {
     next.delete(key)
   }
-  next.delete('subTab')
   return next
+}
+
+export function isParticipantRecruitmentPreviewOpen(
+  searchParams: URLSearchParams
+): boolean {
+  return (
+    searchParams.get(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM) ===
+    GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE
+  )
 }
