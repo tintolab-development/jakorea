@@ -83,13 +83,19 @@
 
 .mfa-verification-modal__qr {
   display: flex;
+  width: 220px;
+  height: 220px;
+  margin-inline: auto;
   justify-content: center;
   align-items: center;
-  min-height: 220px;
+  flex-shrink: 0;
 }
 
 .mfa-verification-modal__qr-image {
   display: block;
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
 }
 
 .mfa-verification-modal__form {
