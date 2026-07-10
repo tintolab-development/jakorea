@@ -307,11 +307,11 @@ export function useGeneralProgramRegistrationFlow(
 
   const handleCompleteRegistration = useCallback(() => {
     if (isProgramStep) {
-      registrationVm.handleSave()
+      void registrationVm.handleCompleteRegistration()
       return
     }
     participantVm.handleSave()
-    registrationVm.handleSave()
+    void registrationVm.handleCompleteRegistration()
   }, [isProgramStep, registrationVm, participantVm])
 
   const hasRecruitmentPhase = visibleRecruitTabKeys.length > 0

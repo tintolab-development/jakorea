@@ -7,12 +7,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams, type SetURLSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
-import { useCmsAlert } from '@/shared/ui'
+import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import type { DetailFullpageBreadcrumbItem } from '@/shared/ui/detail-fullpage-breadcrumb'
 import { buildSearchParams } from '@/shared/lib/detail-fullpage-query-stack'
 import { useGeneralProgramDetail } from '@/features/program/general/hooks/use-general-program-detail'
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
+import { useDeleteGeneralPrograms } from '@/features/program/general/hooks/use-delete-general-program'
 import { useUpdateGeneralProgram } from '@/features/program/general/hooks/use-update-general-program'
 import { useProgramStore } from '@/features/program/general/model/program-store'
 import type { Program } from '@/types/domain'
@@ -45,6 +46,7 @@ import {
   type GeneralDetailLnbKey,
 } from '@/features/program/general/lib/detail-url'
 import {
+  clearGeneralProgramDetailQueryParams,
   GENERAL_PROGRAM_DETAIL_EDIT_PARAM,
   GENERAL_PROGRAM_DETAIL_LNB_PARAM,
   GENERAL_PROGRAM_DETAIL_QUERY_PARAMS,
@@ -203,6 +205,8 @@ export interface GeneralProgramDetailFullPageModalProps {
   /** 목록 페이지와 동일한 searchParams 인스턴스 — LNB 라우팅 충돌 방지 */
   searchParams?: URLSearchParams
   setSearchParams?: SetURLSearchParams
+  /** 삭제 성공 후 목록 refetch 등 */
+  onProgramDeleted?: () => void
 }
 
 function defaultTabForLnb(
@@ -437,6 +441,7 @@ export function GeneralProgramDetailFullPageModal({
   programIdHint = null,
   searchParams: searchParamsProp,
   setSearchParams: setSearchParamsProp,
+  onProgramDeleted,
 }: GeneralProgramDetailFullPageModalProps) {
   const [routerSearchParams, internalSetSearchParams] = useSearchParams()
   const searchParams = searchParamsProp ?? routerSearchParams
@@ -446,9 +451,11 @@ export function GeneralProgramDetailFullPageModal({
   const programId =
     program?.id ?? programIdHint ?? searchParams.get('programId') ?? undefined
 
-  const { updateProgram, setSelectedProgram } = useProgramStore()
+  const { updateProgram, setSelectedProgram, deleteProgram } = useProgramStore()
   const remoteEnabled = useGeneralProgramsRemoteEnabled(open && Boolean(programId))
   const updateGeneralProgramMutation = useUpdateGeneralProgram()
+  const deleteGeneralProgramsMutation = useDeleteGeneralPrograms()
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const {
     program: detailProgram,
     loading,
@@ -963,6 +970,41 @@ export function GeneralProgramDetailFullPageModal({
     setOptimisticDetailRoute(null)
     onClose()
   }, [onClose])
+
+  const handleConfirmProgramDelete = useCallback(async () => {
+    if (!programId || !displayProgram) return
+    try {
+      if (remoteEnabled) {
+        await deleteGeneralProgramsMutation.mutateAsync([programId])
+      } else {
+        await deleteProgram(programId)
+      }
+      clearGeneralProgramDetailSession(programId)
+      setDeleteConfirmOpen(false)
+      setSearchParams(
+        prev => clearGeneralProgramDetailQueryParams(new URLSearchParams(prev)),
+        { replace: true }
+      )
+      onProgramDeleted?.()
+      handleRequestClose()
+    } catch (error) {
+      console.debug('general program detail delete failed', error)
+      showAlert({
+        title: '삭제 실패',
+        content: '프로그램 삭제 중 오류가 발생했습니다. 다시 시도해 주세요.',
+      })
+    }
+  }, [
+    deleteGeneralProgramsMutation,
+    deleteProgram,
+    displayProgram,
+    handleRequestClose,
+    onProgramDeleted,
+    programId,
+    remoteEnabled,
+    setSearchParams,
+    showAlert,
+  ])
 
   const participantRecruitmentPreviewOpenFromUrl = useMemo(
     () => isParticipantRecruitmentPreviewOpen(routerSearchParams),
@@ -1597,6 +1639,24 @@ export function GeneralProgramDetailFullPageModal({
             : undefined
         }
         headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
+        contentExtra={
+          displayProgram &&
+          canWrite &&
+          activeLnb === 'info' &&
+          activeTab === 'info' &&
+          !isEditModeInfo ? (
+            <div className="info-section-buttons--wrapper">
+              <CmsButton
+                variant="delete"
+                size="medium"
+                onClick={() => setDeleteConfirmOpen(true)}
+                loading={deleteGeneralProgramsMutation.isPending}
+              >
+                프로그램 삭제
+              </CmsButton>
+            </div>
+          ) : null
+        }
         className="program-detail-fullpage-modal general-detail-fullpage-modal program-detail-fullpage-modal--program-list-overview"
         sidebar={
           programId ? (
@@ -1817,6 +1877,16 @@ export function GeneralProgramDetailFullPageModal({
           sponsorName={sponsorName}
         />
       ) : null}
+      <ConfirmModal
+        open={deleteConfirmOpen}
+        title="프로그램 삭제"
+        content={`[${displayProgram ? resolveGeneralProgramDisplayTitle(displayProgram) : '프로그램'}] 프로그램을 삭제하시겠습니까?\n삭제된 항목은 되돌릴 수 없습니다.`}
+        confirmText="삭제"
+        cancelText="취소"
+        danger
+        onConfirm={() => void handleConfirmProgramDelete()}
+        onCancel={() => setDeleteConfirmOpen(false)}
+      />
       <ProgramDetailSponsorDetailOverlay />
     </>
   )
