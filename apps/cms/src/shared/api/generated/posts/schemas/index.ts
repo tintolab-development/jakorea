@@ -335,7 +335,6 @@ export * from './interviewEvaluationRequest';
 export * from './interviewEvaluationResponse';
 export * from './interviewSlotCreateRequest';
 export * from './interviewSlotResponse';
-export * from './jsonNode';
 export * from './kpiTargetResponse';
 export * from './kpiTargetUpsertRequest';
 export * from './lectureReportDecisionResponse';

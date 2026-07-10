@@ -4745,17 +4745,16 @@
             "type": "string"
           },
           "schemaJson": {
-            "$ref": "#/components/schemas/JsonNode"
+            "type": "string"
           },
           "extensionJson": {
-            "$ref": "#/components/schemas/JsonNode"
+            "type": "string"
           },
           "settingsJson": {
-            "$ref": "#/components/schemas/JsonNode"
+            "type": "string"
           }
         }
       },
-      "JsonNode": {},
       "FormVersionAdminResponse": {
         "type": "object",
         "properties": {
@@ -11729,13 +11728,13 @@
             "type": "string"
           },
           "schemaJson": {
-            "$ref": "#/components/schemas/JsonNode"
+            "type": "string"
           },
           "extensionJson": {
-            "$ref": "#/components/schemas/JsonNode"
+            "type": "string"
           },
           "settingsJson": {
-            "$ref": "#/components/schemas/JsonNode"
+            "type": "string"
           }
         }
       },
@@ -11845,13 +11844,13 @@
             "type": "string"
           },
           "schemaJson": {
-            "$ref": "#/components/schemas/JsonNode"
+            "type": "string"
           },
           "extensionJson": {
-            "$ref": "#/components/schemas/JsonNode"
+            "type": "string"
           },
           "settingsJson": {
-            "$ref": "#/components/schemas/JsonNode"
+            "type": "string"
           }
         }
       },

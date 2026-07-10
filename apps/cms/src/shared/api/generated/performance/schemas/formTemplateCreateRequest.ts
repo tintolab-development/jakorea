@@ -5,7 +5,6 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { JsonNode } from './jsonNode';
 
 export interface FormTemplateCreateRequest {
   templateCode?: string;
@@ -15,7 +14,7 @@ export interface FormTemplateCreateRequest {
   description?: string;
   useYn?: boolean;
   versionLabel?: string;
-  schemaJson?: JsonNode;
-  extensionJson?: JsonNode;
-  settingsJson?: JsonNode;
+  schemaJson?: string;
+  extensionJson?: string;
+  settingsJson?: string;
 }
