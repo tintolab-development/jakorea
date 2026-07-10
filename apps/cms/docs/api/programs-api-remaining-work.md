@@ -1,6 +1,7 @@
 # 일반 프로그램 API — 남은 작업 (프롬프트용)
 
 **작성일**: 2026-07-09  
+**갱신**: 2026-07-10  
 **대상**: CMS `/programs/general` (일반 프로그램만 — UJAT·1사1교·Gemini 간섭 금지)  
 **관련 문서**: [programs-api-integration.md](./programs-api-integration.md) · [programs-api-migration-guide.md](./programs-api-migration-guide.md) · [programs-api-backend-gaps.md](./programs-api-backend-gaps.md)
 
@@ -15,13 +16,17 @@
 | 영역 | 상태 |
 |------|------|
 | programs 목록/상세 GET | `use-general-program-list-filters`, `use-general-program-detail` |
-| programs POST/PATCH/DELETE | create/update 상세·등록, **목록 bulk delete** |
+| programs POST/PATCH/DELETE | create/update 상세·등록, **목록 bulk delete**, **상세 단건 삭제** |
 | URL 쿼리 (상세) | `programId`, `lnb`, `tab`, `subTab`, `participantView`, `edit`, 진행 nested params |
 | 등록 완료 URL | `new`/`generalStep` 제거 → `programId` + `lnb=info` |
-| applications 2차 | 기관/강사/개인 목록 GET + **권한 모달** 일괄 승인/반려 |
-| programProgress 2차 | 참여자(개인) 목록 `GET .../participants` |
+| 등록 중복 POST 방지 | 중간 저장 = template draft만 / 「등록 완료」만 `persistGeneralProgramRegistration` POST |
+| 등록 API 실패 알림 | `showAlert` (등록 완료·draft 저장) |
+| applications 2차 | 기관/강사/개인 목록 GET + **권한 모달** + **빠른 승인/반려·행 드롭다운** remote |
+| applicationsLoading | 테이블·캘린더 `loading` 연동 |
+| programProgress 2차 | 참여자(개인) 목록 `GET .../participants` + URL deep link는 `participantList` lookup |
 | 모집 미리보기 | `participantRecruitmentPreview=1` + `ParticipantRecruitmentPreviewModal` (optimistic open, z-index 분리) |
-| env | `.env.local.example`에 `programs,applications,programProgress` |
+| env | `.env.example` / `.env.local.example`에 `programs,applications,programProgress` |
+| dead code | `useCreateGeneralProgram` 제거 (등록은 `persistGeneralProgramRegistration` 유지) |
 
 ### Remote 활성 조건
 
@@ -42,92 +47,15 @@ VITE_REAL_API_MODULES=...,programs,applications,programProgress
 
 ---
 
-## 🔴 P0 — 버그 (즉시)
-
-### 1. 등록 remote 중복 POST
-
-**증상**: remote ON 시 프로그램 등록 단계에서 「저장」마다 `createGeneralProgram` 호출 → 프로그램 중복 생성
-
-**원인**:
-- `use-registration-flow.ts` — `handleSave` / `handleCompleteRegistration` 모두 `registrationVm.handleSave()` 호출
-- `use-program-registration-editor.ts` — `onRegistrationSaved` 있으면 매 `handleSave`마다 `persistGeneralProgramRegistration` → POST
-
-**수정 방향**:
-- `persistGeneralProgramRegistration` / `onRegistrationSaved`는 **「등록 완료」1회**만
-- 중간 저장은 template draft만 (remote draft API 있으면 별도, 없으면 local only)
-
-**주요 파일**:
-- `hooks/use-registration-flow.ts`
-- `features/template/hooks/use-program-registration-editor.ts`
-- `lib/registration-local-save.ts`
-
----
-
-### 2. 등록 API 실패 시 사용자 알림 없음
-
-**증상**: `onRegistrationSaved` 경로에서 catch 후 `console.debug`만, alert 없음
-
-**수정**: `showAlert` 또는 toast로 실패 메시지 노출
-
-**파일**: `use-program-registration-editor.ts` (catch 블록)
-
----
-
-### 3. 참여자 진행현황 URL deep link mock 의존
-
-**증상**: remote에서 참여자 목록은 API인데 `participantId` URL 상세는 mock finder → 404/빈 화면
-
-**원인**: `participating-participants-section.tsx` L128 `findParticipatingIndividualParticipantById` (mock)
-
-**수정**: `useProgressIndividualParticipantList`의 `participantList.find(id)` 사용
-
-**파일**: `ui/detail-modal/program-status/participating-participants-section.tsx`
-
----
-
-## 🟠 P1 — 1차 계획 미완료
-
-### 4. 상세 모달 단건 삭제 (Phase 2.5)
-
-**현재**: 목록 `useDeleteGeneralPrograms` bulk만 연동, 상세 내 삭제 UI 없음
-
-**수정**:
-- 상세 모달 삭제 액션 → `deleteGeneralProgram(programId)`
-- 성공 시 `clearGeneralProgramDetailQueryParams` + 목록 refetch
-
-**파일**: `detail-fullpage-modal.tsx`, `page.tsx`
-
----
-
-### 5. `useCreateGeneralProgram` 미사용
-
-**현재**: 등록은 `persistGeneralProgramRegistration` → `createGeneralProgram` 직접 호출
-
-**선택**: 훅으로 통일하거나 dead code 제거
-
----
-
-### 6. 문서·env 정리
-
-- [ ] `.env.example`에 `programs,applications,programProgress` 주석 예시
-- [ ] `backend-handoff.md` programs 본문 (필드·enum SSOT)
-- [ ] `programs-api-migration-guide.md` 수동 체크리스트 `[x]` 반영
-
----
-
-## 🟠 P1 — 신청(applications) 2차 잔여
+## 🟠 P1 — 신청(applications) 잔여
 
 **모듈**: `applications` (+ `programs` 필수)
 
 | 항목 | 현재 | 파일 |
 |------|------|------|
-| `handleBulkApprove` / `handleBulkReject` (권한 모달 없는 빠른 버튼) | mock only | `use-applicants-detail.ts` L755+ |
-| 행 단위 승인 드롭다운 (`handleInstitutionApprovalStatusChange` 등) | mock only | 동일 L484+ |
-| 봉사자 신청 | `fetchVolunteerApplicationsRemote` 클라이언트만 | `applications-api-client.ts` |
-| `applicationsLoading` | 훅 반환만, UI 없음 | `use-general-program-applications-remote-sync.ts` |
-| API 에러 UX | remote 승인 throw 시 사용자 메시지 없음 | `use-applicants-detail.ts` confirmBulk* |
+| 봉사자 신청 | `fetchVolunteerApplicationsRemote` 클라이언트만 — service/sync/approve·reject 미연동 | `applications-api-client.ts` |
 
-**참고**: `confirmBulk*Approve/Reject` (권한 모달 경로)는 `applyRemote*Decision` 연동 **완료**
+**참고**: `confirmBulk*` / `handleBulk*` / 행 드롭다운 / `applicationsLoading` / remote 에러 `showAlert` 는 **완료**
 
 ---
 
@@ -166,13 +94,13 @@ VITE_REAL_API_MODULES=...,programs,applications,programProgress
 - [ ] breadcrumb 목록 복귀 시 상세 params sweep
 - [x] `subTab` · `participantRecruitmentPreview` URL 동기화 (optimistic open 포함)
 - [ ] `edit=1` → 저장 → `edit` 제거
-- [ ] `new=1` → 완료 → `programId` 전환
+- [x] `new=1` → 완료 → `programId` 전환 (중간 저장은 POST 없음)
 - [ ] 상세 닫기 시 테이블 URL flush
 
 **API**
 - [ ] remote ON: 저장 후 새로고침 유지
-- [ ] create → list 반영
-- [ ] delete → 목록·URL 정리
+- [x] create → list 반영 (등록 완료만)
+- [x] delete → 목록·URL 정리 (bulk + 상세 단건)
 - [ ] remote OFF: mock 회귀
 
 **모집 미리보기**
@@ -190,7 +118,7 @@ VITE_REAL_API_MODULES=...,programs,applications,programProgress
 | CRUD | `api/admin-general-programs-service.ts`, `api/programs-api-client.ts` |
 | Adapter | `api/adapters/general-program-adapters.ts`, `general-applications-adapters.ts` |
 | 상세 | `ui/detail-modal/detail-fullpage-modal.tsx` |
-| 등록 | `lib/registration-local-save.ts`, `pages/programs/general/page.tsx` |
+| 등록 | `lib/registration-local-save.ts`, `hooks/use-registration-flow.ts`, `template/hooks/use-program-registration-editor.ts` |
 | 신청 UI | `shared/ui/program-detail/applicant-list/use-applicants-detail.ts` |
 | 진행 UI | `hooks/use-progress-individual-participant-list.ts`, `participating-participants-section.tsx` |
 | 쿼리 SSOT | `lib/general-program-detail-route.ts` |
@@ -202,16 +130,12 @@ VITE_REAL_API_MODULES=...,programs,applications,programProgress
 ## 프롬프트 예시
 
 ```
-apps/cms/docs/api/programs-api-remaining-work.md 를 읽고 P0 #1(등록 중복 POST)부터 수정해줘.
+apps/cms/docs/api/programs-api-remaining-work.md 를 읽고 P2 진행현황(기관/강사 목록) remote 연동해줘.
 일반 프로그램만 수정하고 UJAT/1사1교/Gemini는 건드리지 마.
 ```
 
 ```
-programs-api-remaining-work.md P1 #4 상세 단건 삭제 연동해줘.
-```
-
-```
-programs-api-remaining-work.md 신청 2차 잔여 — handleBulkApprove remote 연동 + applicationsLoading UI.
+programs-api-remaining-work.md 봉사자 신청 applications remote 연동해줘.
 ```
 
 ---

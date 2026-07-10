@@ -466,6 +466,8 @@ SSOT: `issuance-form-tab.tsx` `issuanceRows` + `documentRows`.
 | `registration-general.json` | `registration-general` | `schemaJson` + `extensionJson.editorState` |
 | `application-participant-individual.json` | `application-participant-individual` | `schemaJson` |
 | `document-3-certificate.json` | `document-3` | `settingsJson` only |
+| `document-payment-order-issue.json` | `document-payment-order-issue` | `schemaJson` (발급 Payload A) |
+| `document-payment-order-pre-consent.json` | `document-payment-order-pre-consent` | `schemaJson` (발급 Payload A) |
 
 DB/API 저장 시 위 object를 **각각 JSON string으로 stringify**하여 `schemaJson` / `extensionJson` / `settingsJson` 컬럼에 넣습니다.
 
@@ -490,7 +492,7 @@ DB/API 저장 시 위 object를 **각각 JSON string으로 stringify**하여 `sc
 - [x] `schemaJson: null` + `settingsJson` only 로드
 - [x] 프로그램 실발급 PDF — 템플릿 `settingsJson` 반영
 - [ ] Payload E 3종 (`issuance-1`, `issuance-5`, `document-1`) save/load
-- [ ] BE 시드 JSON 13종 — [issuance-form-api-follow-up.md §2.1](./issuance-form-api-follow-up.md)
+- [ ] BE 시드 JSON 11종 잔여 (P0 지급조서 2종 FE 시드 완료) — [issuance-form-api-follow-up.md §2.1](./issuance-form-api-follow-up.md)
 
 ### 레거시·정리 대기
 

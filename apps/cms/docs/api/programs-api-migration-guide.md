@@ -97,13 +97,19 @@ flowchart LR
 - [ ] 위젯 status → 목록 필터 URL → 테이블
 - [ ] 행 클릭 시 목록 필터 + `programId`/`lnb`/`tab`
 - [ ] breadcrumb 목록 복귀 시 상세 params sweep
-- [ ] `subTab` · `participantRecruitmentPreview` URL 동기화
+- [x] `subTab` · `participantRecruitmentPreview` URL 동기화
 - [ ] `edit=1` → 저장 → `edit` 제거
-- [ ] `new=1` → 완료 → `programId` 전환
+- [x] `new=1` → 완료 → `programId` 전환 (등록 완료만 POST; 중간 저장은 draft)
 - [ ] 상세 닫기 시 테이블 URL flush
 
 **API**
 - [ ] remote ON: 저장 후 새로고침 유지
-- [ ] create → list 반영
-- [ ] delete → 목록·URL 정리
+- [x] create → list 반영 (등록 완료 경로)
+- [x] delete → 목록·URL 정리 (목록 bulk + 상세 단건)
 - [ ] remote OFF: mock 회귀
+
+**신청 (applications)**
+- [x] 권한 모달 confirmBulk* remote
+- [x] 빠른 승인/반려·행 드롭다운 remote (`remoteEnabled` 시)
+- [x] `applicationsLoading` 테이블/캘린더 스피너
+- [ ] 봉사자 신청 remote (클라이언트만 — 백엔드 연동 잔여)

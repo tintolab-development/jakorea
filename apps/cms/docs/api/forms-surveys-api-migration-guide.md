@@ -436,21 +436,24 @@ VITE_REAL_API_MODULES=...,notices,faqs  # formsSurveys 없음
 |------|------|------|
 | templateCode | FE SSOT 14종 | BE 시드 등록·합의 |
 | formType | `ISSUANCE` (FE 사용 중) | BE enum 확정 |
-| draft | `*-issuance-draft.ts` | Payload A 시드 JSON export |
+| draft | `*-issuance-draft.ts` | Payload A 시드 JSON export (`exportIssuanceFormTemplateSeeds` — P0 완료) |
 | PDF/미리보기 | 클라이언트 생성 | API 범위 외 |
 
 ### 작업 개요
 
 1. [x] FE: `ISSUANCE_TEMPLATE_CATALOG` + adapter
-2. [ ] BE: ISSUANCE 시드 + GET 목록 (13종 JSON 미작성)
+2. [ ] BE: ISSUANCE 시드 + GET 목록 (FE JSON: P0 지급조서 2종 + `document-3` 완료, 잔여 미작성)
 3. [x] FE: `use-issuance-form-sections` + 탭 연동
 4. [x] 에디터별 draft save 11종 + 인증서 `settingsJson` + 프로그램 실발급 연동
+5. [x] FE: P0 시드 JSON 2종 (`document-payment-order-issue` / `pre-consent`)
 
 ### DoD
 
 - [x] 발급 목록 GET + mock fallback
 - [x] 발급 save/load E2E (11종 — `document-payment-order-issue` 파일럿 포함)
-- [ ] BE 시드 14종 DRAFT
+- [x] FE 시드 JSON P0 (지급조서 2종) — [issuance-form-api-follow-up.md §3.2](./issuance-form-api-follow-up.md)
+- [ ] BE 시드 14종 DRAFT 등록
+- [ ] FE 시드 JSON P1/P2 잔여
 - [ ] Payload E 3종 제품 스펙
 
 ---
