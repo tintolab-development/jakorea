@@ -5,6 +5,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
+import { Spin } from 'antd'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
 import { NoticeAttachmentDownloadIcon } from '@/features/posts/ui/notice-attachment-download-icon'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
@@ -73,6 +74,20 @@ export function AdminNoticeDetailPage() {
     if (remoteEnabled) return []
     return notice.attachments?.length ? notice.attachments : [{ name: '첨부파일.pdf' }]
   }, [notice?.attachments, notice?.hasAttachment, remoteEnabled])
+
+  if (detailQuery.isLoading) {
+    return (
+      <div className="admin-notice-detail-page">
+        <div
+          className="page-content-loading page-content-loading--viewport"
+          role="status"
+          aria-label="공지 불러오는 중"
+        >
+          <Spin size="large" />
+        </div>
+      </div>
+    )
+  }
 
   if (!notice) {
     return (

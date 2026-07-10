@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import dayjs from 'dayjs'
+import { Spin } from 'antd'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { shouldUseInquiriesRemoteApi } from '@/features/posts/api/inquiries/admin-inquiries-service'
 import { useInquiryDetailQuery } from '@/features/posts/hooks/use-inquiry-detail-query'
@@ -106,7 +107,15 @@ export function AdminInquiryDetailModal({
         footer={footer}
         zIndex={1100}
       >
-        {!detail ? (
+        {detailQuery.isLoading ? (
+          <div
+            className="admin-inquiry-detail-modal__empty admin-inquiry-detail-modal__loading"
+            role="status"
+            aria-label="문의 불러오는 중"
+          >
+            <Spin size="large" />
+          </div>
+        ) : !detail ? (
           <div className="admin-inquiry-detail-modal__empty">문의를 불러올 수 없습니다.</div>
         ) : (
           <div className="admin-inquiry-detail-modal__inner">

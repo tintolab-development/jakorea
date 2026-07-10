@@ -5,10 +5,11 @@
 
 import { useCallback, useEffect, useMemo, useState, type Key, type MouseEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { shouldUseInquiriesRemoteApi } from '@/features/posts/api/inquiries/admin-inquiries-service'
+import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useAdminInquiryCategories } from '@/features/posts/hooks/use-admin-inquiry-categories'
 import { useInquiryListQuery } from '@/features/posts/hooks/use-inquiry-list-query'
 import { buildAdminInquiryFilterRows } from '@/features/posts/model/admin-inquiry-management-filter-fields'
@@ -63,6 +64,10 @@ export function AdminInquiryPage() {
 
   const listQuery = useInquiryListQuery(searchParams, true)
   const rows = listQuery.data ?? []
+  const contentLoading = listQuery.isLoading
+  const contentError = listQuery.isError
+    ? getPostsApiErrorMessage(listQuery.error, '문의 목록을 불러오지 못했습니다.')
+    : null
 
   const { categoryRows, allowedCategoryLabels, allowedCategorySet } =
     useAdminInquiryCategories(rows)
@@ -340,38 +345,48 @@ export function AdminInquiryPage() {
           data: tableData,
         }}
       >
-        <Table<AdminInquiryRow>
-          rowKey="id"
-          className="cms-data-table admin-inquiry-page__table"
-          tableLayout="fixed"
-          scroll={{ x: INQUIRY_LIST_TABLE_SCROLL_X }}
-          columns={columns}
-          dataSource={tableData}
-          pagination={false}
-          onRow={record => ({
-            className: 'admin-inquiry-page__row--clickable',
-            onClick: (e: MouseEvent) => {
-              const el = e.target as HTMLElement
-              if (
-                el.closest('.ant-checkbox-wrapper') ||
-                el.closest('.ant-table-selection-column')
-              ) {
-                return
-              }
-              openDetailModal(record.id)
-            },
-          })}
-          rowSelection={
-            canWrite
-              ? {
-                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                  selectedRowKeys,
-                  onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
-                  preserveSelectedRowKeys: false,
+        {contentLoading ? (
+          <div className="page-content-loading page-content-loading--table-slot" role="status">
+            <Spin />
+          </div>
+        ) : contentError ? (
+          <div className="page-content-error" role="alert">
+            {contentError}
+          </div>
+        ) : (
+          <Table<AdminInquiryRow>
+            rowKey="id"
+            className="cms-data-table admin-inquiry-page__table"
+            tableLayout="fixed"
+            scroll={{ x: INQUIRY_LIST_TABLE_SCROLL_X }}
+            columns={columns}
+            dataSource={tableData}
+            pagination={false}
+            onRow={record => ({
+              className: 'admin-inquiry-page__row--clickable',
+              onClick: (e: MouseEvent) => {
+                const el = e.target as HTMLElement
+                if (
+                  el.closest('.ant-checkbox-wrapper') ||
+                  el.closest('.ant-table-selection-column')
+                ) {
+                  return
                 }
-              : undefined
-          }
-        />
+                openDetailModal(record.id)
+              },
+            })}
+            rowSelection={
+              canWrite
+                ? {
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys,
+                    onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                    preserveSelectedRowKeys: false,
+                  }
+                : undefined
+            }
+          />
+        )}
       </FilterTableLayout>
     </div>
   )

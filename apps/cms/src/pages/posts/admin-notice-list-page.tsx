@@ -12,7 +12,7 @@ import {
   type MouseEvent,
 } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { Notice } from '@/data/mock/notices'
@@ -63,6 +63,10 @@ export function AdminNoticeListPage() {
   const listQuery = useNoticeListQuery(searchParams, true)
   const { bulkDeleteMutation } = useNoticeMutations()
   const rows = listQuery.data ?? []
+  const contentLoading = listQuery.isLoading
+  const contentError = listQuery.isError
+    ? getPostsApiErrorMessage(listQuery.error, '공지사항 목록을 불러오지 못했습니다.')
+    : null
 
   const {
     categoryRows,
@@ -285,38 +289,48 @@ export function AdminNoticeListPage() {
           data: tableData,
         }}
       >
-        <Table<Notice>
-          rowKey="id"
-          className="cms-data-table admin-notice-list-page__table"
-          tableLayout="fixed"
-          scroll={{ x: NOTICE_LIST_TABLE_SCROLL_X }}
-          columns={columns}
-          dataSource={tableData}
-          pagination={false}
-          onRow={record => ({
-            className: 'admin-notice-list-page__row--clickable',
-            onClick: (e: MouseEvent) => {
-              const el = e.target as HTMLElement
-              if (
-                el.closest('.ant-checkbox-wrapper') ||
-                el.closest('.ant-table-selection-column')
-              ) {
-                return
-              }
-              navigate(`/admin/posts/notices/${record.id}`)
-            },
-          })}
-          rowSelection={
-            canWrite
-              ? {
-                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                  selectedRowKeys,
-                  onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
-                  preserveSelectedRowKeys: false,
+        {contentLoading ? (
+          <div className="page-content-loading page-content-loading--table-slot" role="status">
+            <Spin />
+          </div>
+        ) : contentError ? (
+          <div className="page-content-error" role="alert">
+            {contentError}
+          </div>
+        ) : (
+          <Table<Notice>
+            rowKey="id"
+            className="cms-data-table admin-notice-list-page__table"
+            tableLayout="fixed"
+            scroll={{ x: NOTICE_LIST_TABLE_SCROLL_X }}
+            columns={columns}
+            dataSource={tableData}
+            pagination={false}
+            onRow={record => ({
+              className: 'admin-notice-list-page__row--clickable',
+              onClick: (e: MouseEvent) => {
+                const el = e.target as HTMLElement
+                if (
+                  el.closest('.ant-checkbox-wrapper') ||
+                  el.closest('.ant-table-selection-column')
+                ) {
+                  return
                 }
-              : undefined
-          }
-        />
+                navigate(`/admin/posts/notices/${record.id}`)
+              },
+            })}
+            rowSelection={
+              canWrite
+                ? {
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys,
+                    onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                    preserveSelectedRowKeys: false,
+                  }
+                : undefined
+            }
+          />
+        )}
       </FilterTableLayout>
     </div>
   )
