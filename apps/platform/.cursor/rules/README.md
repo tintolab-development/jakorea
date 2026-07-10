@@ -32,11 +32,20 @@
 - [Package management](./environment/package-management.md)
 - [Shared packages](./libraries/shared-packages.md)
 
+## Data / TanStack Query (모노레포 공통)
+
+- 앱 포인터: [libraries/tanstack-query-cache.mdc](./libraries/tanstack-query-cache.mdc)
+- 공통 Rule: [`.cursor/rules/backend-response-cache-policy.mdc`](../../../../.cursor/rules/backend-response-cache-policy.mdc)
+- 공통 Skill: [`.cursor/skills/tanstack-query-backend-cache/SKILL.md`](../../../../.cursor/skills/tanstack-query-backend-cache/SKILL.md)
+
+키 루트는 Platform 도입 시 `['platform', …]` (CMS `['cms', …]`와 분리).
+
 ## Skills
 
 - `.cursor/skills/css-modules-responsive/SKILL.md`
 - `.cursor/skills/typescript/SKILL.md`
 - `.cursor/skills/frontend-design/SKILL.md`
+- 모노레포: [tanstack-query-backend-cache](../../../../.cursor/skills/tanstack-query-backend-cache/SKILL.md)
 
 ## References
 

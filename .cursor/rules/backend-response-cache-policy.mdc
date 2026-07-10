@@ -1,0 +1,106 @@
+---
+description: TanStack Query v5 backend API response caching policy (CMS + Platform)
+globs: apps/cms/src/**/*.{ts,tsx},apps/platform/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Backend Response Cache Policy (TanStack Query)
+
+Applies to **CMS** (`apps/cms`) and **Platform** (`apps/platform`) whenever creating or modifying TanStack Query hooks, query/mutation options, query keys, auth/session boundaries, pagination, infinite queries, or prefetch.
+
+This is **frontend server-state caching only** — not browser HTTP, CDN, Redis, backend, or Service Worker cache.
+
+## Scope by app
+
+| App | Status | Query key root |
+| --- | --- | --- |
+| CMS | Active (`@tanstack/react-query` v5) | `['cms', …]` |
+| Platform | Adopt this policy when introducing RQ | `['platform', …]` |
+
+Do not share query caches or key roots across apps. Do not copy CMS key factories into Platform without renaming the root.
+
+## General
+
+- Use TanStack Query **v5** APIs. Use `gcTime`, never deprecated `cacheTime`.
+- Treat backend responses as **server state**. Do not duplicate them in Zustand/Context/component state without a documented reason.
+- Keep UI-only state outside TanStack Query.
+- Do not invent `staleTime`/`gcTime` without freshness + mutation reasoning.
+- Do not change backend response contracts without explicit justification.
+- Prefer domain `queryOptions` / `infiniteQueryOptions` near the feature API layer, not ad-hoc page inline options.
+- Forward `AbortSignal` when the API client supports it.
+
+## Query keys
+
+- Use domain query key factories under `features/<domain>/api/*-query-keys.ts` (or app `shared/api`).
+- Separate `list` and `detail` namespaces.
+- Include every parameter that changes the response: filters, search, page, size, sort, scope ids.
+- Include user / org / tenant / role scope when the response depends on them.
+- Normalize filter objects before putting them in keys (stable empty defaults, sorted arrays).
+- No functions, class instances, or non-serializable values in keys.
+- No unrelated string literals scattered in hooks — factory only.
+- Keys must support **targeted** invalidation (`all` → resource → list/detail → params).
+
+## Query options
+
+- Define caching on domain query options; local overrides need a one-line reason.
+- `enabled` for required ids and auth/remote prerequisites.
+- Paginated lists: `placeholderData: keepPreviousData` when filter identity is in the key.
+- Do not use `initialData` only to hide loading.
+- `select` only for pure transforms.
+
+## Freshness classes (defaults)
+
+| Class | Examples | staleTime | gcTime | Focus refetch |
+| --- | --- | ---: | ---: | --- |
+| A Static reference | codes, categories, menus | 30m–Infinity | 1h–24h | false |
+| B Low-frequency | profile, org, settings | 5–15m | 30–60m | false |
+| C Standard list | posts, members, programs | 30s–3m | 10–30m | false |
+| D Detail | post/user/program detail | 1–5m | 10–30m | false |
+| E Operational | counts, approval, jobs | 0–30s | 5–10m | domain-specific |
+| F Scoped | my-*, permissions, tenant | per B–E + scope in key | same | false |
+| G Non-cacheable | presigned URL, one-time token | 0 | minimal | n/a — prefer mutation/direct call |
+
+Use `Infinity` staleTime only with explicit invalidation or app-version busting.
+
+## Mutations
+
+- Never call unfiltered `invalidateQueries()`.
+- Prefer `setQueryData` when the mutation response is the authoritative resource; then invalidate derived lists/counts if needed.
+- After delete: `removeQueries` for that detail; update/invalidate related lists and counts.
+- Optimistic updates only with cancel + rollback.
+- Mutations: `retry: false` unless the operation is explicitly idempotent.
+
+## Auth / security
+
+- On logout and account switch: cancel in-flight queries, then remove user-scoped caches (CMS: existing `clear*QueryCache` helpers — keep coverage complete; prefer app-root `removeQueries` or `clear()` when the whole cache is session-bound).
+- On org/tenant switch: remove previous-scope queries before rendering new-scope data.
+- Do not persist auth tokens or sensitive responses in the query cache.
+- No full-cache persistence without an allowlist + version buster + logout clear.
+- Do not cache temporary URLs / authz decisions longer than required.
+
+## Retry / refetch
+
+- Do not retry 400, 401, 403, 404, 409, 422 by default.
+- Limited retries for network / selected 5xx (bounded).
+- Do not retry auth failures.
+- Global default: `refetchOnWindowFocus: false`; re-enable per domain only when required.
+- `refetchOnReconnect: true` for normal reads.
+- Avoid short `staleTime` + aggressive focus/mount/interval refetch without justification.
+- No polling without a clear stop condition.
+
+## CMS-specific (preserve)
+
+- Dashboard mock vs remote: keep `dashboardQueryKeys.scope('remote' | 'mock')` and auth-boundary clears.
+- Singleton client: `apps/cms/src/shared/lib/query-client.ts`.
+- Details: `apps/cms/.cursor/rules/libraries/tanstack-query-cache.mdc`.
+
+## Platform-specific
+
+- When adding RQ: create `apps/platform/src/shared/lib/query-client.ts` + provider; root keys `['platform', …]`.
+- Wire logout / session switch to remove `['platform']` (or scoped) queries before any CMS patterns are copied.
+
+## Skill
+
+For audit, classification, implementation, and verification workflows, use:
+
+`.cursor/skills/tanstack-query-backend-cache/SKILL.md`
