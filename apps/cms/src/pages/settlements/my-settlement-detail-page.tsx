@@ -29,12 +29,15 @@ export function MySettlementDetailPage() {
   const navigate = useNavigate()
   const { getByIdSync: getProgramByIdSync } = useProgramService()
   const [settlement, setSettlement] = useState<Settlement | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [confirming, setConfirming] = useState(false)
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
 
   const loadSettlement = useCallback(async () => {
-    if (!id || !user?.instructorId) return
+    if (!id || !user?.instructorId) {
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     try {
@@ -53,9 +56,15 @@ export function MySettlementDetailPage() {
   }, [id, navigate, user?.instructorId])
 
   useEffect(() => {
-    if (id && user?.instructorId) {
-      loadSettlement()
+    if (!id) {
+      setLoading(false)
+      return
     }
+    if (user?.instructorId) {
+      void loadSettlement()
+      return
+    }
+    setLoading(false)
   }, [id, user?.instructorId, loadSettlement])
 
   // 지급조서 확인 완료 처리
@@ -97,7 +106,11 @@ export function MySettlementDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
+      <div
+        className="page-content-loading page-content-loading--viewport"
+        role="status"
+        aria-label="정산 불러오는 중"
+      >
         <Spin size="large" />
       </div>
     )
