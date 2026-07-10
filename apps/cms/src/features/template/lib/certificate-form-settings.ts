@@ -48,12 +48,18 @@ export type CertificateFormSettingsState = {
 function isFileUploadResult(value: unknown): value is FileUploadResult {
   if (value == null || typeof value !== 'object') return false
   const row = value as Record<string, unknown>
-  return typeof row.url === 'string' && typeof row.fileName === 'string'
+  return typeof row.url === 'string' && row.url.trim() !== ''
 }
 
 function parseImageField(value: unknown): FileUploadResult | undefined {
-  if (isFileUploadResult(value)) return value
-  return undefined
+  if (!isFileUploadResult(value)) return undefined
+  const row = value as FileUploadResult & Record<string, unknown>
+  return {
+    url: row.url,
+    fileName: typeof row.fileName === 'string' && row.fileName !== '' ? row.fileName : 'image',
+    fileSize: typeof row.fileSize === 'number' ? row.fileSize : 0,
+    uploadedAt: typeof row.uploadedAt === 'string' ? row.uploadedAt : new Date().toISOString(),
+  }
 }
 
 function parseParticipantRowVisibility(value: unknown): boolean[] | undefined {

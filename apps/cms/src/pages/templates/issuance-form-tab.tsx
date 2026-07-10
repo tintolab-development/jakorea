@@ -165,10 +165,12 @@ export function IssuanceFormTab() {
     closeWritingUserPreview
   )
   const isPreviewOpen = params.mode === 'edit'
+  const [selectedTemplate, setSelectedTemplate] = useState<IssuanceTemplateRow | null>(null)
   const closeTemplatePreview = useCallback(() => {
+    // URL보다 먼저 비워 일반/인증서 모달 전환 레이스·잔여 mask를 막음
+    setSelectedTemplate(null)
     setParams({ mode: undefined, id: undefined, userPreview: undefined })
   }, [setParams])
-  const [selectedTemplate, setSelectedTemplate] = useState<IssuanceTemplateRow | null>(null)
 
   const isPaymentStatementIssuance =
     selectedTemplate?.id === PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_CODE ||
@@ -400,6 +402,9 @@ export function IssuanceFormTab() {
 
   const openTemplatePreview = useCallback(
     (row: IssuanceTemplateRow) => {
+      // URL sync(useEffect) 전에 동기 설정 — isPreviewOpen만 true인 한 프레임에
+      // 일반 TemplateFullpageModal이 먼저 열려 mask가 쌓이는 것을 방지
+      setSelectedTemplate(row)
       setParams(
         { mode: 'edit', id: row.id, userPreview: undefined },
         { replace: false }
@@ -753,7 +758,7 @@ export function IssuanceFormTab() {
             ? 'form-test-single-item-fullpage-modal'
             : undefined
         }
-        open={isPreviewOpen && !isCertificateIssuance}
+        open={isPreviewOpen && selectedTemplate != null && !isCertificateIssuance}
         onClose={closeTemplatePreview}
         title={selectedTemplate?.templateName ?? '발급 양식 미리보기'}
         description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."

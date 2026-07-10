@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   buildCertificateFormSettings,
   EMPTY_CERTIFICATE_SCHEMA_DRAFT,
@@ -22,6 +22,7 @@ import {
   FormCertificatePreview,
   FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS,
 } from './form-certificate-preview'
+import { FormCertificateEditScaleViewport } from './form-certificate-edit-scale-viewport'
 import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
 import { useFormCertificatePdfDownload } from './use-form-certificate-pdf-download'
 import { useFormCertificatePreviewProps } from './use-form-certificate-preview-props'
@@ -79,6 +80,11 @@ export function FormTemplateFullpageModal({
 
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
   const [certificatePreviewOpen, setCertificatePreviewOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open) setCertificatePreviewOpen(false)
+  }, [open])
+
   const buildPdfFilename = useCallback(
     () => generateFilename(buildFilenameTitle ?? title, 'pdf'),
     [buildFilenameTitle, title]
@@ -131,7 +137,7 @@ export function FormTemplateFullpageModal({
     <>
     <FormCertificatePdfExportOverlay visible={isPdfDownloading} />
     <TealHeaderModal
-      open={certificatePreviewOpen}
+      open={open && certificatePreviewOpen}
       onCancel={() => setCertificatePreviewOpen(false)}
       title=""
       size="full"
@@ -191,7 +197,9 @@ export function FormTemplateFullpageModal({
       downloadDocumentLoading={isPdfDownloading}
       leftContent={
         <>
-          <FormCertificatePreview {...certificatePreviewProps} />
+          <FormCertificateEditScaleViewport>
+            <FormCertificatePreview {...certificatePreviewProps} />
+          </FormCertificateEditScaleViewport>
           <div className={FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS} aria-hidden>
             <FormCertificatePreview {...certificatePdfExportProps} canvasRef={pdfExportCanvasRef} />
           </div>

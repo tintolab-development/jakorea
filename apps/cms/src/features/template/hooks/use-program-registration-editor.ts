@@ -709,54 +709,28 @@ export function useProgramRegistrationEditor(
     openWritingUserPreview(writingPreviewSession)
   }, [openWritingUserPreview, writingPreviewSession])
 
-  const handleSave = useCallback(async () => {
-    try {
-      if (usesTemplateDraftApi && templateCode) {
-        await persistWritingFormTemplateDraft({
-          templateId: templateCode,
-          draft,
-          editorState: buildProgramRegistrationEditorState({
-            participant,
-            programType,
-            sessionRoundType,
-            educationFormScheduleDetail,
-            participationScheduleDetail,
-            ipsScheduleDetail,
-            curriculumSessionCount,
-            curriculumChartSessionCount,
-            scheduleCurriculumDetailCount,
-            scheduleCurriculumGroupCount,
-            scheduleCurriculumPreEducation,
-            trainedTeachersTeacherTrainingEnabled,
-            educationScheduleMode,
-            activeParagraphId,
-          }),
-        })
-        if (!onRegistrationSaved) {
-          showAlert({
-            title: '저장',
-            content: '양식이 저장되었습니다.',
-            onConfirm: onTemplateDraftSaveConfirmed,
-          })
-        }
-      }
-      if (!onRegistrationSaved) return
-      const createdProgram = await persistGeneralProgramRegistration({
-        draft,
+  const persistTemplateDraftIfNeeded = useCallback(async () => {
+    if (!usesTemplateDraftApi || !templateCode) return
+    await persistWritingFormTemplateDraft({
+      templateId: templateCode,
+      draft,
+      editorState: buildProgramRegistrationEditorState({
         participant,
         programType,
-        variant: programRegistrationFormVariant,
-      })
-      onRegistrationSaved(createdProgram)
-    } catch (error) {
-      console.debug('programRegistrationEditor save failed', error)
-      if (!onRegistrationSaved) {
-        showAlert({
-          title: '저장 실패',
-          content: '양식 저장 중 오류가 발생했습니다. 다시 시도해 주세요.',
-        })
-      }
-    }
+        sessionRoundType,
+        educationFormScheduleDetail,
+        participationScheduleDetail,
+        ipsScheduleDetail,
+        curriculumSessionCount,
+        curriculumChartSessionCount,
+        scheduleCurriculumDetailCount,
+        scheduleCurriculumGroupCount,
+        scheduleCurriculumPreEducation,
+        trainedTeachersTeacherTrainingEnabled,
+        educationScheduleMode,
+        activeParagraphId,
+      }),
+    })
   }, [
     activeParagraphId,
     curriculumChartSessionCount,
@@ -765,20 +739,84 @@ export function useProgramRegistrationEditor(
     educationFormScheduleDetail,
     educationScheduleMode,
     ipsScheduleDetail,
-    onRegistrationSaved,
-    onTemplateDraftSaveConfirmed,
     participant,
     participationScheduleDetail,
-    programRegistrationFormVariant,
     programType,
     scheduleCurriculumDetailCount,
     scheduleCurriculumGroupCount,
     scheduleCurriculumPreEducation,
     sessionRoundType,
-    showAlert,
     templateCode,
     trainedTeachersTeacherTrainingEnabled,
     usesTemplateDraftApi,
+  ])
+
+  /** 중간 저장 — template draft만. 프로그램 POST는 handleCompleteRegistration에서만. */
+  const handleSave = useCallback(async () => {
+    try {
+      await persistTemplateDraftIfNeeded()
+      if (onRegistrationSaved) {
+        if (usesTemplateDraftApi) {
+          showAlert({
+            title: '저장',
+            content: '작성 중인 양식이 저장되었습니다.',
+          })
+        }
+        return
+      }
+      if (usesTemplateDraftApi) {
+        showAlert({
+          title: '저장',
+          content: '양식이 저장되었습니다.',
+          onConfirm: onTemplateDraftSaveConfirmed,
+        })
+      }
+    } catch (error) {
+      console.debug('programRegistrationEditor save failed', error)
+      showAlert({
+        title: '저장 실패',
+        content: '양식 저장 중 오류가 발생했습니다. 다시 시도해 주세요.',
+      })
+    }
+  }, [
+    onRegistrationSaved,
+    onTemplateDraftSaveConfirmed,
+    persistTemplateDraftIfNeeded,
+    showAlert,
+    usesTemplateDraftApi,
+  ])
+
+  /** 등록 완료 — 프로그램 생성 POST 1회 */
+  const handleCompleteRegistration = useCallback(async () => {
+    if (!onRegistrationSaved) {
+      await handleSave()
+      return
+    }
+    try {
+      await persistTemplateDraftIfNeeded()
+      const createdProgram = await persistGeneralProgramRegistration({
+        draft,
+        participant,
+        programType,
+        variant: programRegistrationFormVariant,
+      })
+      onRegistrationSaved(createdProgram)
+    } catch (error) {
+      console.debug('programRegistrationEditor complete registration failed', error)
+      showAlert({
+        title: '등록 실패',
+        content: '프로그램 등록 중 오류가 발생했습니다. 다시 시도해 주세요.',
+      })
+    }
+  }, [
+    draft,
+    handleSave,
+    onRegistrationSaved,
+    participant,
+    persistTemplateDraftIfNeeded,
+    programRegistrationFormVariant,
+    programType,
+    showAlert,
   ])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {
@@ -808,6 +846,7 @@ export function useProgramRegistrationEditor(
     focusVerticalTableBodyRow,
     handlePreview,
     handleSave,
+    handleCompleteRegistration,
     onSelectSingleItemListItem,
     paragraphBodyOptions,
     participant,
