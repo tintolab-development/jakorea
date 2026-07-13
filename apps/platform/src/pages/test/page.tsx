@@ -6,6 +6,7 @@ import {
 } from '@/shared/rich-text'
 import {
   PFAlertModal,
+  PFArrowButton,
   PFButton,
   PFModal,
   PFPagination,
@@ -17,6 +18,11 @@ import {
   PFTextInput,
 } from '@/shared/ui'
 import { SearchListLayout } from '@/widgets/search-list-layout'
+import {
+  educationTargetFilterOptions,
+  mockOrgFilterOptions,
+  recruitmentStatusFilterOptions,
+} from '@/shared/lib/filter-options'
 import styles from './page.module.css'
 
 const tabItems: { key: string; label: string; badge: string }[] = [
@@ -29,13 +35,6 @@ const pillItems: { key: string; label: string }[] = [
   { key: 'pill-1', label: 'tab title' },
   { key: 'pill-2', label: 'tab title' },
   { key: 'pill-3', label: 'tab title' },
-]
-
-const searchFilterOptions = [
-  { value: 'all', label: '전체' },
-  { value: 'open', label: '검색필터' },
-  { value: 'closed', label: '검색필터' },
-  { value: 'scheduled', label: '검색필터' },
 ]
 
 const layoutSortOptions = [
@@ -65,6 +64,8 @@ const colorItems = [
   { label: 'gradient-primary-01', color: 'gradient-primary-01' },
 ] as const
 
+const arrowButtonSizes = ['large', 'medium'] as const
+const arrowButtonVariants = ['primary', 'secondary'] as const
 const buttonSizes = ['small', 'medium', 'large', 'xlarge'] as const
 const buttonVariants = ['primary', 'secondary', 'tertiary', 'text'] as const
 const inputSizes = ['medium', 'large', 'xlarge'] as const
@@ -187,6 +188,32 @@ export function TestPage() {
 
       <div className={styles.section}>
         <PFText as="div" typo="hl-sm" color="black">
+          PFArrowButton
+        </PFText>
+        <div className={styles['button-stack']}>
+          {arrowButtonVariants.map(variant => (
+            <div className={styles['button-row']} key={variant}>
+              <PFText typo="label-md" color="neutral-cool-500">
+                {variant}
+              </PFText>
+              <div className={styles['button-list']}>
+                {arrowButtonSizes.map(size => (
+                  <PFArrowButton
+                    key={`${variant}-${size}`}
+                    size={size}
+                    variant={variant}
+                    aria-label={`${variant} ${size} arrow`}
+                  />
+                ))}
+                <PFArrowButton variant={variant} disabled aria-label={`${variant} disabled`} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
           PFButton
         </PFText>
         <div className={styles['button-stack']}>
@@ -257,13 +284,13 @@ export function TestPage() {
         <div className={styles['search-stack']}>
           <PFSearchFilter
             label="모집현황"
-            options={searchFilterOptions}
+            options={recruitmentStatusFilterOptions}
             value={searchFilterValue}
             onChange={setSearchFilterValue}
           />
           <PFSearchFilter
             label="모집현황"
-            options={searchFilterOptions}
+            options={recruitmentStatusFilterOptions}
             value="all"
             onChange={() => undefined}
             disabled
@@ -416,19 +443,19 @@ export function TestPage() {
             <>
               <PFSearchFilter
                 label="모집대상"
-                options={searchFilterOptions}
+                options={educationTargetFilterOptions}
                 value={layoutFilterTarget}
                 onChange={setLayoutFilterTarget}
               />
               <PFSearchFilter
                 label="모집현황"
-                options={searchFilterOptions}
+                options={recruitmentStatusFilterOptions}
                 value={layoutFilterStatus}
                 onChange={setLayoutFilterStatus}
               />
               <PFSearchFilter
                 label="운영기관"
-                options={searchFilterOptions}
+                options={mockOrgFilterOptions}
                 value={layoutFilterOrg}
                 onChange={setLayoutFilterOrg}
               />
