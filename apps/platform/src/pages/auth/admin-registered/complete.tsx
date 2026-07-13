@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { clearAdminRegisteredWizardState } from '@/features/auth/admin-registered'
+import { MYPAGE_PATH } from '@/features/mypage'
 import { setDevAuthLoggedIn } from '@/shared/lib'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
@@ -16,7 +17,7 @@ export function AdminRegisteredCompletePage() {
   }
 
   const handleGoMyPage = () => {
-    window.location.assign('/')
+    window.location.assign(MYPAGE_PATH)
   }
 
   const handleConnectSocial = () => {
