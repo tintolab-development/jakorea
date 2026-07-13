@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   mapApiApplicationStatusToApprovalStatus,
   mapOrganizationApplicationToApplicantSchoolRow,
+  mapVolunteerApplicationToGeneralVolunteerApplicantRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import {
   parseGeneralProgramServiceDetailJson,
@@ -35,6 +36,31 @@ describe('general-applications-adapters', () => {
     expect(row.schoolName).toBe('서울초')
     expect(row.approvalStatus).toBe('pending')
     expect(row.programId).toBe('5001')
+  })
+
+  it('maps volunteer application list item to screening row', () => {
+    const row = mapVolunteerApplicationToGeneralVolunteerApplicantRow(
+      {
+        id: 55,
+        programId: 5001,
+        memberName: '김봉사',
+        documentStatus: 'PASS',
+        interviewStatus: 'ASSIGNED',
+        finalResultStatus: 'RESERVE',
+        reserveRank: 2,
+        isReparticipation: true,
+        giveUpYn: false,
+      },
+      0,
+      '5001'
+    )
+
+    expect(row.id).toBe('55')
+    expect(row.name).toBe('김봉사')
+    expect(row.documentScreeningStatus).toBe('pass')
+    expect(row.interviewAssignmentStatus).toBe('assigned')
+    expect(row.secondInterviewScreeningStatus).toBe('reserve2')
+    expect(row.applicationType).toBe('ujat-graduate')
   })
 })
 

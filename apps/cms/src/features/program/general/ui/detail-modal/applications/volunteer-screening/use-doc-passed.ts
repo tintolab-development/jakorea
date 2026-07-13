@@ -14,6 +14,7 @@ import {
   filterGeneralDocPassedApplicants,
   type GeneralVolunteerDocPassedFilters,
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import {
   guardGeneralVolunteerAssignInterview,
   guardGeneralVolunteerWithdrawActivity,
@@ -63,6 +64,12 @@ export function useGeneralVolunteerDocPassed({
   }, [programId, subjectKind])
 
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() => loadRows())
+  const volunteerRemote = useGeneralVolunteerApplicationsRemote({
+    programId,
+    stage: 'docPassed',
+    enabled: subjectKind === 'volunteer',
+    setList,
+  })
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerDocPassedFilters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS,
   }))
@@ -76,11 +83,12 @@ export function useGeneralVolunteerDocPassed({
   assignFlowRef.current = assignFlow
 
   useEffect(() => {
+    if (volunteerRemote.remoteEnabled) return
     setList(loadRows())
     setPendingFilters({ ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS })
     setAppliedFilters({ ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS })
     setViewMode('list')
-  }, [loadRows])
+  }, [loadRows, volunteerRemote.remoteEnabled])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -214,5 +222,7 @@ export function useGeneralVolunteerDocPassed({
     handleViewCalendar,
     handleViewList,
     calendarEvents,
+    applicationsLoading: volunteerRemote.applicationsLoading,
+    isRemoteDataSource: volunteerRemote.remoteEnabled,
   }
 }

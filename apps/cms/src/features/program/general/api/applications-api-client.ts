@@ -6,7 +6,9 @@ import type { IndividualApplicationListItemResponse } from '@/shared/api/generat
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
 import type { PageResponseOrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/pageResponseOrganizationApplicationListItemResponse'
+import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
+import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
 
 export type ApplicationsListQuery = {
   status?: string
@@ -141,6 +143,32 @@ export async function rejectIndividualApplicationRemote(
   return unwrapApiBody<ApplicationDecisionResponse>(
     await customInstance({
       url: `/api/admin/individual-applications/${encodeURIComponent(applicationId)}/reject`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function submitVolunteerDocumentResultRemote(
+  applicationId: string,
+  payload: DocumentResultRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/document-result`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function submitVolunteerFinalResultRemote(
+  applicationId: string,
+  payload: VolunteerFinalResultRequest
+): Promise<ApplicationDecisionResponse> {
+  return unwrapApiBody<ApplicationDecisionResponse>(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/final-result`,
       method: 'POST',
       data: payload,
     })
