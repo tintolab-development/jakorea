@@ -1,0 +1,48 @@
+.shell {
+  --mypage-background-height: 400px;
+  --mypage-header-height: var(--spacing-100);
+
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  background: var(--color-neutral-cool-50);
+}
+
+.background {
+  position: absolute;
+  top: calc(-1 * var(--mypage-header-height));
+  left: 50%;
+  z-index: 0;
+  width: 100vw;
+  height: var(--mypage-background-height);
+  transform: translateX(-50%);
+  background-image: url('./image/background/mypage-background.svg');
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: cover;
+  pointer-events: none;
+}
+
+.layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.sidebar {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  padding: 251px 99px 70px 82px;
+}
+
+.content {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding-top: 140px;
+  padding-right: var(--spacing-24);
+  padding-bottom: var(--spacing-72);
+}
