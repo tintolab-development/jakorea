@@ -1,4 +1,9 @@
 import type { FormEvent } from 'react'
+import { useState } from 'react'
+import {
+  isMockAdminRegisteredFirstLogin,
+  setAdminRegisteredPasswordChangeRequired,
+} from '@/features/auth/admin-registered'
 import {
   GoogleSocialLoginIcon,
   KakaoSocialLoginIcon,
@@ -24,8 +29,17 @@ const socialLoginItems = [
 ]
 
 export function SignInPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
   const handleDevSignIn = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (isMockAdminRegisteredFirstLogin(email, password)) {
+      setAdminRegisteredPasswordChangeRequired(email)
+      window.location.assign('/auth/admin-registered/notice')
+      return
+    }
 
     const searchParams = new URLSearchParams(window.location.search)
     const redirectPath = searchParams.get('redirect') ?? '/'
@@ -60,6 +74,8 @@ export function SignInPage() {
               placeholder="이메일 주소를 입력해 주세요"
               autoComplete="email"
               required
+              value={email}
+              onValueChange={setEmail}
             />
             <PFTextInput
               size="xlarge"
@@ -68,6 +84,8 @@ export function SignInPage() {
               placeholder="비밀번호를 입력해 주세요"
               autoComplete="current-password"
               required
+              value={password}
+              onValueChange={setPassword}
             />
           </div>
           <PFButton type="submit" size="xlarge" className={styles['submit-button']}>

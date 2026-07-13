@@ -1,10 +1,12 @@
 import type { EmailCheckStatus } from '../model/sign-up.types'
+import { isMockAdminRegisteredEmail } from '@/features/auth/admin-registered'
 import { MOCK_DUPLICATE_EMAIL } from '../lib/constants'
 import { isValidEmail } from '../lib/utils'
 
 export function validateEmailDuplicateCheck(email: string): {
   status: EmailCheckStatus
   message: string
+  shouldRedirectToAdminRegisteredNotice?: boolean
 } {
   const normalizedEmail = email.trim()
 
@@ -12,6 +14,14 @@ export function validateEmailDuplicateCheck(email: string): {
     return {
       status: 'error',
       message: '이메일 형식으로 입력해주세요.',
+    }
+  }
+
+  if (isMockAdminRegisteredEmail(normalizedEmail)) {
+    return {
+      status: 'error',
+      message: '관리자가 등록한 계정이에요. 본인인증 후 비밀번호를 변경해 주세요.',
+      shouldRedirectToAdminRegisteredNotice: true,
     }
   }
 

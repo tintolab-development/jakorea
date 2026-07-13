@@ -34,6 +34,12 @@ import {
   toggleGuardianAgreementState,
 } from '../agreement/guardian-agreement.logic'
 import { validateEmailDuplicateCheck } from '../email/email.logic'
+import {
+  ADMIN_REGISTERED_NOTICE_PATH,
+  isMockAdminRegisteredIdentityMatch,
+  setAdminRegisteredPasswordChangeRequired,
+  startAdminRegisteredFlowFromSignUp,
+} from '@/features/auth/admin-registered'
 import { getPasswordDerived } from '../password/password.logic'
 import { isProfileStepValid } from '../profile/profile.logic'
 import { isTeacherProfileValid } from '../profile/teacher-profile.logic'
@@ -207,6 +213,13 @@ export function useSignUp() {
 
   const handleEmailDuplicateCheck = () => {
     const result = validateEmailDuplicateCheck(email)
+
+    if (result.shouldRedirectToAdminRegisteredNotice) {
+      setAdminRegisteredPasswordChangeRequired(email, 'sign-up')
+      window.location.assign('/auth/admin-registered/notice')
+      return
+    }
+
     setEmailCheckStatus(result.status)
     setEmailMessage(result.message)
   }
@@ -323,7 +336,20 @@ export function useSignUp() {
     },
     identity: {
       isVerified: isIdentityVerified,
-      verify: () => setIsIdentityVerified(true),
+      verify: () => {
+        // TODO: 본인인증 결과와 DB 대조 API 연동
+        if (isMockAdminRegisteredIdentityMatch(birthDate)) {
+          if (!gender) {
+            return
+          }
+
+          startAdminRegisteredFlowFromSignUp({ birthDate, gender })
+          window.location.assign(ADMIN_REGISTERED_NOTICE_PATH)
+          return
+        }
+
+        setIsIdentityVerified(true)
+      },
       resetVerified: () => setIsIdentityVerified(false),
     },
     agreement: {

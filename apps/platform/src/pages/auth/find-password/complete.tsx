@@ -1,9 +1,11 @@
+import { clearAdminRegisteredPasswordChangeRequired } from '@/features/auth/admin-registered'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './complete.module.css'
 
 export function FindPasswordCompletePage() {
   const handleGoLogin = () => {
+    clearAdminRegisteredPasswordChangeRequired()
     window.location.assign('/auth/sign-in')
   }
 
