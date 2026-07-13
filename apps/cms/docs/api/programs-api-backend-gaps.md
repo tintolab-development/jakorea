@@ -3,7 +3,8 @@
 CMS `/programs/general` mock → `programs` API 전환 시 백엔드 확인·요청 항목입니다.
 
 연동 명세: [programs-api-integration.md](./programs-api-integration.md)  
-마이그레이션: [programs-api-migration-guide.md](./programs-api-migration-guide.md)
+마이그레이션: [programs-api-migration-guide.md](./programs-api-migration-guide.md)  
+상세 완료율 · Phase 5–10: [programs-detail-api-conversion-status.md](./programs-detail-api-conversion-status.md)
 
 **작성일**: 2026-07-09
 

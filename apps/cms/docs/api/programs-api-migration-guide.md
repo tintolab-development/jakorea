@@ -4,7 +4,8 @@
 **대상 화면**: CMS `/programs/general` (목록 · 상세 · 등록)  
 **연동 명세**: [programs-api-integration.md](./programs-api-integration.md)  
 **백엔드 갭**: [programs-api-backend-gaps.md](./programs-api-backend-gaps.md)  
-**남은 작업 (프롬프트용)**: [programs-api-remaining-work.md](./programs-api-remaining-work.md)
+**남은 작업 (프롬프트용)**: [programs-api-remaining-work.md](./programs-api-remaining-work.md)  
+**상세 LNB 완료율 · Phase 5–10**: [programs-detail-api-conversion-status.md](./programs-detail-api-conversion-status.md)
 
 ---
 
@@ -75,13 +76,17 @@ flowchart LR
 
 ## 2차 트랙 — 신청·진행현황 (진행 중)
 
+상세 LNB별 완료율·잔여 Phase(5–10) SSOT: [programs-detail-api-conversion-status.md](./programs-detail-api-conversion-status.md)
+
 - [x] `applications` · `programProgress` 모듈 키
 - [x] 기관/강사/개인 신청 목록 GET + 승인/반려 POST
 - [x] 진행현황 참여자 `GET .../participants`
 - [x] `serviceDetailJson` v1 nested 필드
-- [ ] 봉사자 신청·면접
-- [ ] 참여 기관/강사/봉사 진행 목록
-- [ ] `GET .../navigation` LNB 서버화
+- [x] 봉사자 신청·면접 → **Phase 5** (목록·서류/최종 결과 remote; 면접 배정 mock)
+- [x] 참여 기관/강사/봉사 진행 목록 → **Phase 6**
+- [x] `GET .../navigation` LNB 서버화 → **Phase 7**
+- [ ] 출석·과제·중첩 상세 / 게시글·설문 고도화 → Phase 8–9 잔여
+- [ ] 담당자·신청경로·backend gaps → Phase 10 잔여
 
 ---
 

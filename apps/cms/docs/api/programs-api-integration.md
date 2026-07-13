@@ -3,7 +3,8 @@
 `/programs/general` 목록·상세·등록과 Swagger `programs` 도메인 매핑입니다.
 
 **마이그레이션 실행 가이드 (PHASE 0–4)**: [programs-api-migration-guide.md](./programs-api-migration-guide.md)  
-**백엔드 갭·미구현 목록**: [programs-api-backend-gaps.md](./programs-api-backend-gaps.md)
+**백엔드 갭·미구현 목록**: [programs-api-backend-gaps.md](./programs-api-backend-gaps.md)  
+**상세 LNB 완료율 · Phase 5–10**: [programs-detail-api-conversion-status.md](./programs-detail-api-conversion-status.md)
 
 공통 가이드: [backend-handoff.md](./backend-handoff.md) · [api-routes-and-client.md](./api-routes-and-client.md)
 

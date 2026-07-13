@@ -1,9 +1,9 @@
 # 일반 프로그램 API — 남은 작업 (프롬프트용)
 
 **작성일**: 2026-07-09  
-**갱신**: 2026-07-10  
+**갱신**: 2026-07-13  
 **대상**: CMS `/programs/general` (일반 프로그램만 — UJAT·1사1교·Gemini 간섭 금지)  
-**관련 문서**: [programs-api-integration.md](./programs-api-integration.md) · [programs-api-migration-guide.md](./programs-api-migration-guide.md) · [programs-api-backend-gaps.md](./programs-api-backend-gaps.md)
+**관련 문서**: [programs-api-integration.md](./programs-api-integration.md) · [programs-api-migration-guide.md](./programs-api-migration-guide.md) · [programs-api-backend-gaps.md](./programs-api-backend-gaps.md) · [**상세 완료율 · Phase 5–10**](./programs-detail-api-conversion-status.md)
 
 > 이 문서만 프롬프트에 붙여도 다음 작업을 이어갈 수 있도록 작성했습니다.
 
@@ -49,11 +49,12 @@ VITE_REAL_API_MODULES=...,programs,applications,programProgress
 
 ## 🟠 P1 — 신청(applications) 잔여
 
-**모듈**: `applications` (+ `programs` 필수)
+**모듈**: `applications` (+ `programs` 필수)  
+**상세 계획**: [Phase 5](./programs-detail-api-conversion-status.md#phase-5--봉사자-신청-remote)
 
 | 항목 | 현재 | 파일 |
 |------|------|------|
-| 봉사자 신청 | `fetchVolunteerApplicationsRemote` 클라이언트만 — service/sync/approve·reject 미연동 | `applications-api-client.ts` |
+| 봉사자 신청 | **하이브리드** — list/document-result/final-result 연동. 면접 배정·슬롯 mock | `admin-applications-service.ts`, `use-general-volunteer-applications-remote.ts` |
 
 **참고**: `confirmBulk*` / `handleBulk*` / 행 드롭다운 / `applicationsLoading` / remote 에러 `showAlert` 는 **완료**
 
@@ -61,16 +62,17 @@ VITE_REAL_API_MODULES=...,programs,applications,programProgress
 
 ## 🟡 P2 — 진행현황·기타 mock
 
-**모듈**: `programProgress` (+ `programs` 필수)
+**모듈**: `programProgress` (+ `programs` 필수)  
+**상세 계획**: [Phase 6–10](./programs-detail-api-conversion-status.md#phase-5--10-상세-실행-계획)
 
-| 항목 | 상태 |
-|------|------|
-| 참여 기관/강사/봉사 진행 목록 | mock |
-| `GET .../navigation` LNB 탭 가용성 | 미연동 |
-| 출석·게시글·설문 등 | mock |
-| lifecycle 변경 | `use-program-status-manager` → mock `updateProgram` |
-| 신청경로 변경 | `use-application-path-management` → mock |
-| 담당자 탭 삭제 | mock |
+| 항목 | 상태 | Phase |
+|------|------|-------|
+| 참여 기관/강사/봉사 진행 목록 | **하이브리드** (`participants` type 필터) | 6 |
+| `GET .../navigation` LNB 탭 가용성 | **하이브리드** (실패 시 meta fallback) | 7 |
+| 출석·게시글·설문 등 | 게시글·설문 목록 부분 / 출석·과제 mock | 8–9 |
+| lifecycle 변경 | **하이브리드** (`use-program-status-manager` → PATCH) | 10 |
+| 신청경로 변경 | mock | 10 |
+| 담당자 탭 | mock | 10 |
 
 ---
 
