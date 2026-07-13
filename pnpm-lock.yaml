@@ -102,6 +102,9 @@ importers:
       '@hookform/resolvers':
         specifier: ^3.9.1
         version: 3.10.0(react-hook-form@7.68.0(react@19.2.0))
+      '@jakorea/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@jakorea/identity-verification':
         specifier: workspace:*
         version: link:../../packages/identity-verification
@@ -308,6 +311,9 @@ importers:
 
   apps/platform:
     dependencies:
+      '@jakorea/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@jakorea/location':
         specifier: workspace:*
         version: link:../../packages/location
@@ -354,6 +360,12 @@ importers:
       vite:
         specifier: ^7.2.4
         version: 7.2.4(@types/node@24.10.1)(jiti@2.7.0)(yaml@2.9.0)
+
+  packages/domain:
+    devDependencies:
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
 
   packages/identity-verification:
     devDependencies:

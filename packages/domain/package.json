@@ -1,0 +1,39 @@
+{
+  "name": "@jakorea/domain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -w -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "exports": {
+    "./recruitment/education-target": {
+      "types": "./dist/recruitment/education-target.d.ts",
+      "import": "./dist/recruitment/education-target.js"
+    },
+    "./recruitment/recruitment-status": {
+      "types": "./dist/recruitment/recruitment-status.d.ts",
+      "import": "./dist/recruitment/recruitment-status.js"
+    },
+    "./recruitment/participant-type": {
+      "types": "./dist/recruitment/participant-type.d.ts",
+      "import": "./dist/recruitment/participant-type.js"
+    },
+    "./shared/option-helpers": {
+      "types": "./dist/shared/option-helpers.d.ts",
+      "import": "./dist/shared/option-helpers.js"
+    },
+    "./shared/types": {
+      "types": "./dist/shared/types.d.ts",
+      "import": "./dist/shared/types.js"
+    }
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  }
+}
