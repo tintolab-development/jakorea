@@ -91,7 +91,17 @@ export default function TemplateFormTab() {
       openTemplatePreview(row)
       return
     }
-    closeTemplatePreview()
+    // 신규 create/copy 직후 목록 반영 전에도 에디터 진입 가능하도록 임시 row 사용
+    openTemplatePreview({
+      id: normalizedId,
+      templateName: normalizedId,
+      variant: 'default',
+      key: `pending-${normalizedId}`,
+      no: 0,
+      creator: '-',
+      createdAt: '-',
+      updatedAt: '-',
+    })
   }, [params.mode, params.id, closeTemplatePreview, openTemplatePreview, writingSections])
 
   const rightNavigationConfig = useMemo(

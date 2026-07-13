@@ -18,6 +18,7 @@ import {
 } from '@/features/template/api/form-template-version-cache'
 import {
   copyFormTemplateVersionRemote,
+  createFormTemplateRemote,
   fetchFormTemplateVersionRemote,
   fetchFormTemplateVersionsRemote,
   fetchFormTemplatesRemote,
@@ -34,6 +35,8 @@ import {
 import { issuanceFormSections } from '@/features/template/model/issuance-form.schema'
 import { writingSections, type TemplateSection } from '@/features/template/model/template.schema'
 import {
+  createDefaultDirectAgreementDraft,
+  createDefaultSurveyDraft,
   normalizeWritingFormDraft,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -300,7 +303,7 @@ export async function duplicateFormTemplateVersionRemote(args: {
     versionLabel: args.versionLabel,
   })
 
-  const newCode = args.sourceTemplateCode
+  const newCode = copied.templateCode?.trim() || args.sourceTemplateCode
   if (copied.templateId != null && copied.templateVersionId != null) {
     upsertFormTemplateVersionCacheEntry({
       templateCode: newCode,
@@ -308,6 +311,52 @@ export async function duplicateFormTemplateVersionRemote(args: {
       templateVersionId: copied.templateVersionId,
       latestVersionId: copied.templateVersionId,
       latestVersionNo: copied.versionNo,
+    })
+  }
+
+  return newCode
+}
+
+export async function createWritingFormTemplateRemote(args: {
+  target: 'survey' | 'agreement'
+  templateName?: string
+}): Promise<string> {
+  assertFormsSurveysRemoteReady()
+
+  const category = args.target === 'survey' ? 'SURVEY' : 'AGREEMENT'
+  const templateName =
+    args.templateName?.trim() ||
+    (args.target === 'survey' ? '신규 설문 양식' : '신규 동의 양식')
+  const draft =
+    args.target === 'survey' ? createDefaultSurveyDraft() : createDefaultDirectAgreementDraft()
+
+  const created = await createFormTemplateRemote({
+    templateName,
+    formType: WRITING_FORM_TYPE,
+    category,
+    useYn: true,
+    versionLabel: 'v1',
+    schemaJson: writingFormDraftToSchemaJson(draft),
+  })
+
+  const newCode = created.templateCode?.trim()
+  if (newCode == null || newCode === '') {
+    throw new Error('생성된 템플릿 코드를 응답에서 찾을 수 없습니다.')
+  }
+
+  const firstVersion = created.versions?.[0]
+  if (created.templateId != null && firstVersion?.templateVersionId != null) {
+    upsertFormTemplateVersionCacheEntry({
+      templateCode: newCode,
+      templateId: created.templateId,
+      templateVersionId: firstVersion.templateVersionId,
+      latestVersionId: firstVersion.templateVersionId,
+      latestVersionNo: firstVersion.versionNo,
+    })
+  } else if (created.templateId != null) {
+    upsertFormTemplateVersionCacheEntry({
+      templateCode: newCode,
+      templateId: created.templateId,
     })
   }
 

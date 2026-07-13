@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui/cms-button'
-import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { CmsSelect } from '@/shared/ui/cms-select'
+import { useQueryClient } from '@tanstack/react-query'
+import { createWritingTemplate } from '@/features/template/api/create-writing-template'
 import { duplicateWritingTemplate } from '@/features/template/api/duplicate-writing-template'
+import { formTemplateQueryKeys } from '@/features/template/api/form-template-query-keys'
+import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import { getWritingTemplateRowsByCategory } from '@/features/template/lib/writing-template-create-helpers'
 import type {
   TemplateCreateKind,
   TemplateCreateSelection,
   WritingTemplateCategory,
 } from '@/features/template/model/template-create.types'
+import { ContentModal } from '@/shared/ui/content-modal'
+import { CmsButton } from '@/shared/ui/cms-button'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import './template-create-modal.css'
 
 export interface TemplateCreateModalProps {
@@ -30,10 +35,17 @@ function resolveSelection(
     }
     return null
   }
-  if (kind === 'application' || kind === 'survey' || kind === 'agreement') {
+  if (kind === 'application' || kind === 'application_form' || kind === 'survey' || kind === 'agreement') {
     return { source: 'template', templateId: selectValue, category: kind }
   }
   return null
+}
+
+function resolveErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim() !== '') {
+    return error.message
+  }
+  return fallback
 }
 
 export function TemplateCreateModal({
@@ -42,6 +54,9 @@ export function TemplateCreateModal({
   onDirectRegister,
   onDuplicateSuccess,
 }: TemplateCreateModalProps) {
+  const queryClient = useQueryClient()
+  const { showAlert } = useCmsAlert()
+  const { sections } = useWritingFormSections()
   const [kind, setKind] = useState<TemplateCreateKind>('application')
   const [selectValue, setSelectValue] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -61,11 +76,11 @@ export function TemplateCreateModal({
       ]
     }
     const category = kind as WritingTemplateCategory
-    return getWritingTemplateRowsByCategory(category).map(row => ({
+    return getWritingTemplateRowsByCategory(category, sections).map(row => ({
       label: row.templateName,
       value: row.id,
     }))
-  }, [kind])
+  }, [kind, sections])
 
   const selection = useMemo(() => resolveSelection(kind, selectValue), [kind, selectValue])
   const canSubmit = selection != null
@@ -79,12 +94,38 @@ export function TemplateCreateModal({
     onCancel()
   }, [onCancel])
 
+  const invalidateWritingSections = useCallback(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: formTemplateQueryKeys.writingSections(),
+    })
+  }, [queryClient])
+
   const handleRegister = useCallback(async () => {
     const resolved = resolveSelection(kind, selectValue)
     if (resolved == null) return
 
     if (resolved.source === 'direct') {
-      onDirectRegister(resolved.target)
+      setSubmitting(true)
+      try {
+        const result = await createWritingTemplate(resolved.target)
+        if (result.mode === 'local-new') {
+          onDirectRegister(result.target)
+          return
+        }
+        await invalidateWritingSections()
+        onDuplicateSuccess(result.newTemplateId)
+      } catch (error) {
+        console.debug('templateCreateModal create failed', error)
+        showAlert({
+          title: '등록 실패',
+          content: resolveErrorMessage(
+            error,
+            '템플릿 등록 중 오류가 발생했습니다. 다시 시도해 주세요.'
+          ),
+        })
+      } finally {
+        setSubmitting(false)
+      }
       return
     }
 
@@ -94,13 +135,28 @@ export function TemplateCreateModal({
         sourceTemplateId: resolved.templateId,
         category: resolved.category,
       })
+      await invalidateWritingSections()
       onDuplicateSuccess(newTemplateId)
     } catch (error) {
       console.debug('templateCreateModal duplicate failed', error)
+      showAlert({
+        title: '등록 실패',
+        content: resolveErrorMessage(
+          error,
+          '템플릿 복제 중 오류가 발생했습니다. 다시 시도해 주세요.'
+        ),
+      })
     } finally {
       setSubmitting(false)
     }
-  }, [kind, onDirectRegister, onDuplicateSuccess, selectValue])
+  }, [
+    invalidateWritingSections,
+    kind,
+    onDirectRegister,
+    onDuplicateSuccess,
+    selectValue,
+    showAlert,
+  ])
 
   const footer = (
     <div className="template-create-modal__footer-inner">
@@ -145,7 +201,8 @@ export function TemplateCreateModal({
           value={kind}
           onChange={e => handleKindChange(e.target.value as TemplateCreateKind)}
         >
-          <CmsRadio value="application">신청 양식</CmsRadio>
+          <CmsRadio value="application">모집 양식</CmsRadio>
+          <CmsRadio value="application_form">신청 양식</CmsRadio>
           <CmsRadio value="survey">설문 양식</CmsRadio>
           <CmsRadio value="agreement">동의 양식</CmsRadio>
           <CmsRadio value="direct">직접 등록</CmsRadio>
