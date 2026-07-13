@@ -18,7 +18,10 @@ import {
   createAdminProgramRemote,
   deleteAdminProgramRemote,
   fetchAdminProgramByIdRemote,
+  fetchAdminProgramNavigationRemote,
+  fetchAdminProgramPostsRemote,
   fetchAdminProgramsRemote,
+  fetchAdminProgramSurveysRemote,
   updateAdminProgramRemote,
 } from '@/features/program/general/api/programs-api-client'
 import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
@@ -110,6 +113,25 @@ export async function deleteGeneralPrograms(programIds: string[]): Promise<void>
   for (const programId of programIds) {
     await deleteGeneralProgram(programId)
   }
+}
+
+export async function fetchGeneralProgramNavigation(programId: string) {
+  if (!shouldUseGeneralProgramsRemoteApi()) return null
+  assertGeneralProgramsRemoteReady()
+  return fetchAdminProgramNavigationRemote(programId)
+}
+
+export async function fetchGeneralProgramPosts(programId: string) {
+  if (!shouldUseGeneralProgramsRemoteApi()) return []
+  assertGeneralProgramsRemoteReady()
+  const page = await fetchAdminProgramPostsRemote(programId)
+  return page.items ?? []
+}
+
+export async function fetchGeneralProgramSurveys(programId: string) {
+  if (!shouldUseGeneralProgramsRemoteApi()) return []
+  assertGeneralProgramsRemoteReady()
+  return fetchAdminProgramSurveysRemote(programId)
 }
 
 export { GENERAL_PROGRAM_API_TYPE }

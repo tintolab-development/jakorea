@@ -80,6 +80,7 @@ import {
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
 import { buildGeneralSurveyMockState } from './survey-mock'
+import { useGeneralProgramSurveys } from '@/features/program/general/hooks/use-general-program-posts-surveys'
 import './survey-management.css'
 
 type CreateModalKind = 'survey' | 'satisfaction' | 'lecture'
@@ -118,6 +119,7 @@ function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: 
 
 export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurveyManagementViewProps) {
   const initialMock = useMemo(() => buildGeneralSurveyMockState(program), [program])
+  const { registeredSurveys: remoteRegisteredSurveys } = useGeneralProgramSurveys(program.id)
   const [registeredSurveys, setRegisteredSurveys] = useState(initialMock.registeredSurveys)
   const [activeRegisteredSurveyId, setActiveRegisteredSurveyId] = useState<string | null>(
     initialMock.activeRegisteredSurveyId
@@ -176,6 +178,12 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     setLectureEvalResponses([])
     setActiveLectureEvalTab('eval')
   }, [program])
+
+  useEffect(() => {
+    if (!remoteRegisteredSurveys || remoteRegisteredSurveys.length === 0) return
+    setRegisteredSurveys(remoteRegisteredSurveys)
+    setActiveRegisteredSurveyId(prev => prev ?? remoteRegisteredSurveys[0]?.id ?? null)
+  }, [remoteRegisteredSurveys])
 
   useEffect(() => {
     if (!isGeneralSatisfactionSurveyNavTab(activeTab)) return

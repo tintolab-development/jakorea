@@ -4,6 +4,10 @@ export const generalProgramQueryKeys = {
     [...generalProgramQueryKeys.all, 'list', statusFilter ?? 'all', tableFiltersKey] as const,
   detail: (programId: string) =>
     [...generalProgramQueryKeys.all, 'detail', programId] as const,
+  navigation: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'navigation', programId] as const,
+  posts: (programId: string) => [...generalProgramQueryKeys.all, 'posts', programId] as const,
+  surveys: (programId: string) => [...generalProgramQueryKeys.all, 'surveys', programId] as const,
   mutations: {
     create: () => [...generalProgramQueryKeys.all, 'mutation', 'create'] as const,
     update: (programId: string) =>

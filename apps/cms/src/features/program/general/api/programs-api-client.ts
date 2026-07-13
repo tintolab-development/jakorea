@@ -91,3 +91,47 @@ export async function deleteAdminProgramRemote(programId: string): Promise<void>
     method: 'DELETE',
   })
 }
+
+export async function fetchAdminProgramNavigationRemote(
+  programId: string
+): Promise<import('@/shared/api/generated/dashboard/schemas/programNavigationResponse').ProgramNavigationResponse> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/navigation`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function fetchAdminProgramPostsRemote(
+  programId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostListResponse').ProgramPostListResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function fetchAdminProgramSurveysRemote(
+  programId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programSurveyResponse').ProgramSurveyResponse[]
+> {
+  const body = await unwrapApiBody<
+    | import('@/shared/api/generated/dashboard/schemas/programSurveyResponse').ProgramSurveyResponse[]
+    | {
+        items?: import('@/shared/api/generated/dashboard/schemas/programSurveyResponse').ProgramSurveyResponse[]
+      }
+  >(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/surveys`,
+      method: 'GET',
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.items ?? []
+}

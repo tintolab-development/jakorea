@@ -32,6 +32,8 @@ export interface EnrollmentProgramDetailPostsTabProps {
   writeAuthorName?: string
   /** 게시글 등록 성공 시 추가 콜백 (목록 갱신 후 호출) */
   onPostWriteSuccess?: () => void
+  /** remote API 등으로 주입한 게시글 목록 — 있으면 mock 대신 사용 */
+  postsOverride?: ProgramPost[] | null
 }
 
 function formatKoDate(date: string | Date): string {
@@ -273,6 +275,7 @@ export function EnrollmentProgramDetailPostsTab({
   onWriteModalOpenChange,
   writeAuthorName = DEFAULT_WRITE_AUTHOR_NAME,
   onPostWriteSuccess,
+  postsOverride = null,
 }: EnrollmentProgramDetailPostsTabProps) {
   const [internalWriteModalOpen, setInternalWriteModalOpen] = useState(false)
   const isWriteModalControlled =
@@ -287,14 +290,17 @@ export function EnrollmentProgramDetailPostsTab({
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
   const [postsVersion, setPostsVersion] = useState(0)
   const posts = useMemo(() => {
-    const list = schoolId
-      ? getProgramPostsByProgramIdAndSchoolId(program.id, schoolId)
-      : getProgramPostsByProgramId(program.id)
+    const list =
+      postsOverride != null
+        ? postsOverride
+        : schoolId
+          ? getProgramPostsByProgramIdAndSchoolId(program.id, schoolId)
+          : getProgramPostsByProgramId(program.id)
     return [...list].sort((a, b) => {
       if (a.read !== b.read) return a.read ? 1 : -1
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     })
-  }, [program.id, schoolId, postsVersion])
+  }, [program.id, schoolId, postsVersion, postsOverride])
   const allFilesRaw = useMemo(
     () => getProgramFilesByProgramId(program.id),
     [program.id, postsVersion]

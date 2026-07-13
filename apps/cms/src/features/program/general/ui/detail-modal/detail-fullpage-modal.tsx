@@ -12,6 +12,7 @@ import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb
 import type { DetailFullpageBreadcrumbItem } from '@/shared/ui/detail-fullpage-breadcrumb'
 import { buildSearchParams } from '@/shared/lib/detail-fullpage-query-stack'
 import { useGeneralProgramDetail } from '@/features/program/general/hooks/use-general-program-detail'
+import { useGeneralProgramNavigation } from '@/features/program/general/hooks/use-general-program-navigation'
 import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
 import { useUpdateGeneralProgram } from '@/features/program/general/hooks/use-update-general-program'
 import { useProgramStore } from '@/features/program/general/model/program-store'
@@ -452,12 +453,14 @@ export function GeneralProgramDetailFullPageModal({
   const {
     program: detailProgram,
     loading,
+    error: detailError,
     sponsorName,
     canWrite,
   } = useGeneralProgramDetail(open ? programId : undefined, {
     initialProgram: program,
     enabled: open,
   })
+  const { disabledLnbKeys } = useGeneralProgramNavigation(open ? programId : undefined, open)
   const { showAlert } = useCmsAlert()
   const displayProgram = useMemo(() => {
     const base =
@@ -513,14 +516,28 @@ export function GeneralProgramDetailFullPageModal({
   )
   const surveyKeys = useMemo(() => surveyItems.map(s => s.key), [surveyItems])
   const showInstructorApplications = displayProgram
-    ? hasGeneralInstructorApplications(displayProgram)
+    ? hasGeneralInstructorApplications(displayProgram) &&
+      !disabledLnbKeys.has('instructor_applications')
     : false
   const showVolunteerApplications = displayProgram
-    ? hasGeneralVolunteerApplications(displayProgram)
+    ? hasGeneralVolunteerApplications(displayProgram) &&
+      !disabledLnbKeys.has('volunteer_applications')
     : false
   const showParticipantApplications = displayProgram
-    ? hasGeneralParticipantApplications(displayProgram)
+    ? hasGeneralParticipantApplications(displayProgram) &&
+      !disabledLnbKeys.has('institution_applications')
     : false
+  const progressMenuItemsFiltered = useMemo(
+    () =>
+      disabledLnbKeys.has('progress')
+        ? []
+        : progressMenuItems,
+    [disabledLnbKeys, progressMenuItems]
+  )
+  const surveyItemsFiltered = useMemo(
+    () => (disabledLnbKeys.has('survey') ? [] : surveyItems),
+    [disabledLnbKeys, surveyItems]
+  )
   const participantApplicationsLnbLabel = useMemo(
     () =>
       displayProgram
@@ -1609,8 +1626,8 @@ export function GeneralProgramDetailFullPageModal({
               showVolunteerApplications={showVolunteerApplications}
               participantInterviewEnabled={participantInterviewEnabled}
               volunteerInterviewEnabled={volunteerInterviewEnabled}
-              progressMenuItems={progressMenuItems}
-              surveyItems={surveyItems}
+              progressMenuItems={progressMenuItemsFiltered}
+              surveyItems={surveyItemsFiltered}
               onSelectChildTab={setLnbTab}
             />
           ) : null
@@ -1796,6 +1813,10 @@ export function GeneralProgramDetailFullPageModal({
               />
             )}
           </div>
+        ) : detailError ? (
+          <Typography.Text type="danger">
+            프로그램 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+          </Typography.Text>
         ) : (
           <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
         )}
