@@ -14,4 +14,16 @@ export const generalProgramProgressQueryKeys = {
   all: ['general-program-progress'] as const,
   participants: (programId: string, participantType?: string | null) =>
     [...generalProgramProgressQueryKeys.all, 'participants', programId, participantType ?? 'all'] as const,
+  institutions: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'institutions', programId] as const,
+  instructors: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'instructors', programId] as const,
+  volunteers: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'volunteers', programId] as const,
+  posts: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'posts', programId] as const,
+  surveys: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'surveys', programId] as const,
+  navigation: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'navigation', programId] as const,
 }

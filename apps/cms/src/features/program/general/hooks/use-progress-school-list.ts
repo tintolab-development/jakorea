@@ -3,7 +3,8 @@
  * schoolList state, 선택/삭제/상세 모달, 교재현황 변경, 필터링, 담당 강사진 표시
  */
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   getParticipatingSchoolsForProgram,
   MOCK_PARTICIPATING_SCHOOLS,
@@ -19,6 +20,9 @@ import type {
   InstructorListFormInstructor,
 } from '../model/school-detail-types'
 import type { ProgressFilters } from './use-program-progress-params'
+import { fetchGeneralParticipatingInstitutions } from '@/features/program/general/api/admin-program-progress-service'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 
 export interface UseProgressSchoolListOptions {
   appliedFilters: ProgressFilters
@@ -31,9 +35,29 @@ export function useProgressSchoolList({
   instructorList,
   programId,
 }: UseProgressSchoolListOptions) {
+  const remoteEnabled = shouldUseGeneralProgramProgressRemoteApi() && Boolean(programId)
+  const remoteQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.institutions(programId ?? ''),
+    queryFn: () => fetchGeneralParticipatingInstitutions(programId!),
+    enabled: remoteEnabled,
+    staleTime: 30_000,
+    retry: false,
+  })
+
   const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>(() =>
     programId ? getParticipatingSchoolsForProgram(programId) : [...MOCK_PARTICIPATING_SCHOOLS]
   )
+
+  useEffect(() => {
+    if (remoteEnabled) {
+      if (remoteQuery.data) setSchoolList(remoteQuery.data)
+      return
+    }
+    setSchoolList(
+      programId ? getParticipatingSchoolsForProgram(programId) : [...MOCK_PARTICIPATING_SCHOOLS]
+    )
+  }, [programId, remoteEnabled, remoteQuery.data])
+
   const [selectedSchoolRowKeys, setSelectedSchoolRowKeys] = useState<React.Key[]>([])
   const [selectedSchoolForDetail, setSelectedSchoolForDetail] =
     useState<ParticipatingSchoolRow | null>(null)
@@ -194,5 +218,7 @@ export function useProgressSchoolList({
     handleSchoolApprovalCancel,
     getInstructorDisplayForSchool,
     getInstructorRowsForSchool,
+    applicationsLoading: remoteEnabled ? remoteQuery.isFetching : false,
+    isRemoteDataSource: remoteEnabled,
   }
 }
