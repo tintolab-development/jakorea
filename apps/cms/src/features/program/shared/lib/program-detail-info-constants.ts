@@ -78,11 +78,9 @@ export function getRecruitmentStatusValue(program: Program): 'scheduled' | 'recr
   return v ?? 'scheduled'
 }
 
-export const RECRUITMENT_RADIO_OPTIONS = [
-  { value: 'scheduled', label: '모집 예정' },
-  { value: 'recruiting', label: '모집 중' },
-  { value: 'closed', label: '모집 마감' },
-]
+import { RECRUITMENT_STATUS_OPTIONS } from '@jakorea/domain/recruitment/recruitment-status'
+
+export const RECRUITMENT_RADIO_OPTIONS = RECRUITMENT_STATUS_OPTIONS
 
 /** 강사 모집 대상 옵션 (강사 정보 탭) */
 export const INSTRUCTOR_TARGET_OPTIONS = [
