@@ -1,5 +1,5 @@
-import { isValidEmail } from '@/features/auth/sign-up'
 import type { GenderType } from '@/features/auth/sign-up'
+import { isValidEmailId, normalizeEmailId } from '@/shared/lib/email-id'
 import { MOCK_ADMIN_REGISTERED_BIRTH_DATE, MOCK_ADMIN_REGISTERED_EMAIL } from './constants'
 import {
   clearAdminRegisteredWizardState,
@@ -9,7 +9,7 @@ import {
 } from './wizard-state'
 
 export function isMockAdminRegisteredEmail(email: string) {
-  return email.trim().toLowerCase() === MOCK_ADMIN_REGISTERED_EMAIL.toLowerCase()
+  return normalizeEmailId(email) === normalizeEmailId(MOCK_ADMIN_REGISTERED_EMAIL)
 }
 
 /** API 연동 전: 본인인증 결과와 DB 대조 시 관리자 등록 회원 mock */
@@ -36,14 +36,14 @@ export function getAdminRegisteredSignUpChangePasswordPath() {
 
 /** API 연동 전: 이메일·비밀번호가 동일하면 관리자 등록 회원 최초 로그인으로 취급 */
 export function isMockAdminRegisteredFirstLogin(email: string, password: string) {
-  const normalizedEmail = email.trim()
-  const normalizedPassword = password.trim()
+  const normalizedEmail = normalizeEmailId(email)
+  const normalizedPassword = password.trim().toLowerCase()
 
-  if (!isValidEmail(normalizedEmail)) {
+  if (!isValidEmailId(normalizedEmail)) {
     return false
   }
 
-  return normalizedEmail.toLowerCase() === normalizedPassword.toLowerCase()
+  return normalizedEmail === normalizedPassword
 }
 
 export function canSkipAdminRegisteredBirthStep() {
@@ -55,7 +55,7 @@ export function setAdminRegisteredPasswordChangeRequired(
   email: string,
   entrySource: 'first-login' | 'sign-up' = 'first-login',
 ) {
-  initAdminRegisteredWizardState(email, entrySource)
+  initAdminRegisteredWizardState(normalizeEmailId(email), entrySource)
 }
 
 export function getAdminRegisteredPasswordChangeRequired() {
@@ -74,5 +74,5 @@ export function requiresAdminRegisteredPasswordChange(email: string) {
     return false
   }
 
-  return pending.email.toLowerCase() === email.trim().toLowerCase()
+  return pending.email === normalizeEmailId(email)
 }

@@ -44,8 +44,10 @@ export function calculateInternationalAge(birthDateValue: string) {
   return today.getFullYear() - birthDate.getFullYear() - (hasBirthdayPassed ? 0 : 1)
 }
 
+import { isValidEmailId } from '@/shared/lib/email-id'
+
 export function isValidEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+  return isValidEmailId(value)
 }
 
 export function isValidPassword(value: string) {

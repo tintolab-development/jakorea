@@ -12,7 +12,7 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
-import { setDevAuthLoggedIn } from '@/shared/lib'
+import { setDevAuthLoggedIn, validateEmailId } from '@/shared/lib'
 import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
 import styles from './page.module.css'
 
@@ -31,12 +31,27 @@ const socialLoginItems = [
 export function SignInPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [emailError, setEmailError] = useState<string | null>(null)
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value)
+    if (emailError) {
+      setEmailError(null)
+    }
+  }
 
   const handleDevSignIn = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (isMockAdminRegisteredFirstLogin(email, password)) {
-      setAdminRegisteredPasswordChangeRequired(email)
+    const validation = validateEmailId(email)
+
+    if (!validation.ok) {
+      setEmailError(validation.message)
+      return
+    }
+
+    if (isMockAdminRegisteredFirstLogin(validation.normalized, password)) {
+      setAdminRegisteredPasswordChangeRequired(validation.normalized)
       window.location.assign('/auth/admin-registered/notice')
       return
     }
@@ -75,7 +90,10 @@ export function SignInPage() {
               autoComplete="email"
               required
               value={email}
-              onValueChange={setEmail}
+              onValueChange={handleEmailChange}
+              error={Boolean(emailError)}
+              message={emailError ?? undefined}
+              messageStatus="error"
             />
             <PFTextInput
               size="xlarge"
