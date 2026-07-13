@@ -22,6 +22,7 @@ import {
   SocialErrorPage,
 } from '@/pages/auth'
 import { HomePage } from '@/pages/home'
+import { MypageHomePage } from '@/pages/mypage'
 import { TestPage } from '@/pages/test'
 
 type RouteConfig = {
@@ -58,5 +59,6 @@ export const routes: RouteConfig[] = [
     element: <SignUpSocialConnectErrorPage />,
   },
   { path: '/auth/social/error', element: <SocialErrorPage /> },
+  { path: '/mypage', element: <MypageHomePage /> },
   { path: '/test', element: <TestPage /> },
 ]
