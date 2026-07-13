@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { MYPAGE_PATH } from '@/features/mypage'
 import { getDevAuthLoggedIn, setDevAuthLoggedIn } from '@/shared/lib'
 import styles from './app-layout.module.css'
 import { Footer } from './footer'
@@ -8,8 +9,13 @@ type AppLayoutProps = {
   children: ReactNode
 }
 
+function isMypagePath(pathname: string) {
+  return pathname === MYPAGE_PATH || pathname.startsWith(`${MYPAGE_PATH}/`)
+}
+
 export function AppLayout({ children }: AppLayoutProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(getDevAuthLoggedIn)
+  const isMypage = isMypagePath(window.location.pathname)
 
   const handleLogout = () => {
     setDevAuthLoggedIn(false)
@@ -19,8 +25,8 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className={styles.layout}>
-      <Header isLoggedIn={isLoggedIn} onLogout={handleLogout} />
-      <main className={styles.main}>{children}</main>
+      <Header isLoggedIn={isLoggedIn} onLogout={handleLogout} transparent={isMypage} />
+      <main className={isMypage ? styles['main-mypage'] : styles.main}>{children}</main>
       <Footer />
     </div>
   )

@@ -20,3 +20,8 @@
   /* padding-block: var(--page-padding-y); */
   min-width: 0;
 }
+
+.main-mypage {
+  composes: main;
+  overflow: visible;
+}

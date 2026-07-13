@@ -5,6 +5,13 @@
   background: var(--color-neutral-white);
 }
 
+.header-transparent {
+  position: relative;
+  z-index: 2;
+  border-bottom: 0;
+  background: transparent;
+}
+
 .inner {
   display: grid;
   grid-template-columns: 195px 1fr 152px;
