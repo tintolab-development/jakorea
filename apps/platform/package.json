@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/rich-text --filter @jakorea/location build",
+    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/rich-text --filter @jakorea/location --filter @jakorea/domain build",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint . --max-warnings=-1",
@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@jakorea/domain": "workspace:*",
     "@jakorea/location": "workspace:*",
     "@jakorea/rich-text": "workspace:*",
     "@jakorea/ui": "workspace:*",

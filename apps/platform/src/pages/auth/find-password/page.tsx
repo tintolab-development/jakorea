@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { isValidEmail } from '@/features/auth/sign-up'
+import { normalizeEmailId, validateEmailId } from '@/shared/lib/email-id'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import styles from './page.module.css'
 
@@ -19,19 +19,14 @@ export function FindPasswordPage() {
   }
 
   const handleVerify = () => {
-    const trimmedEmail = email.trim()
+    const validation = validateEmailId(email)
 
-    if (!trimmedEmail) {
-      setEmailError('이메일을 입력해 주세요.')
+    if (!validation.ok) {
+      setEmailError(validation.message)
       return
     }
 
-    if (!isValidEmail(trimmedEmail)) {
-      setEmailError('올바른 이메일 형식을 입력해 주세요.')
-      return
-    }
-
-    if (trimmedEmail.toLowerCase() === MOCK_NOT_FOUND_EMAIL) {
+    if (validation.normalized === normalizeEmailId(MOCK_NOT_FOUND_EMAIL)) {
       setEmailError(EMAIL_NOT_FOUND_MESSAGE)
       return
     }

@@ -1,4 +1,13 @@
 export { SignInPage } from './sign-in'
+export {
+  AdminRegisteredBirthPage,
+  AdminRegisteredChangePasswordPage,
+  AdminRegisteredCompletePage,
+  AdminRegisteredConfirmPage,
+  AdminRegisteredEditPage,
+  AdminRegisteredIdentityPage,
+  AdminRegisteredNoticePage,
+} from './admin-registered'
 export { FindEmailCompletePage, FindEmailPage } from './find-email'
 export { FindPasswordCompletePage, FindPasswordPage, FindPasswordResetPage } from './find-password'
 export {

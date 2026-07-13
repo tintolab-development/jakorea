@@ -1,4 +1,9 @@
 import type { FormEvent } from 'react'
+import { useState } from 'react'
+import {
+  isMockAdminRegisteredFirstLogin,
+  setAdminRegisteredPasswordChangeRequired,
+} from '@/features/auth/admin-registered'
 import {
   GoogleSocialLoginIcon,
   KakaoSocialLoginIcon,
@@ -7,7 +12,7 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
-import { setDevAuthLoggedIn } from '@/shared/lib'
+import { setDevAuthLoggedIn, validateEmailId } from '@/shared/lib'
 import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
 import styles from './page.module.css'
 
@@ -24,8 +29,32 @@ const socialLoginItems = [
 ]
 
 export function SignInPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [emailError, setEmailError] = useState<string | null>(null)
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value)
+    if (emailError) {
+      setEmailError(null)
+    }
+  }
+
   const handleDevSignIn = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    const validation = validateEmailId(email)
+
+    if (!validation.ok) {
+      setEmailError(validation.message)
+      return
+    }
+
+    if (isMockAdminRegisteredFirstLogin(validation.normalized, password)) {
+      setAdminRegisteredPasswordChangeRequired(validation.normalized)
+      window.location.assign('/auth/admin-registered/notice')
+      return
+    }
 
     const searchParams = new URLSearchParams(window.location.search)
     const redirectPath = searchParams.get('redirect') ?? '/'
@@ -60,6 +89,11 @@ export function SignInPage() {
               placeholder="이메일 주소를 입력해 주세요"
               autoComplete="email"
               required
+              value={email}
+              onValueChange={handleEmailChange}
+              error={Boolean(emailError)}
+              message={emailError ?? undefined}
+              messageStatus="error"
             />
             <PFTextInput
               size="xlarge"
@@ -68,6 +102,8 @@ export function SignInPage() {
               placeholder="비밀번호를 입력해 주세요"
               autoComplete="current-password"
               required
+              value={password}
+              onValueChange={setPassword}
             />
           </div>
           <PFButton type="submit" size="xlarge" className={styles['submit-button']}>

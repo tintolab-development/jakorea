@@ -34,3 +34,10 @@ export {
   isValidPassword,
   parseBirthDate,
 } from './lib/utils'
+export {
+  EMAIL_ID_MESSAGES,
+  isValidEmailId,
+  normalizeEmailId,
+  validateEmailId,
+} from '@/shared/lib/email-id'
+export type { EmailIdErrorCode, EmailIdValidationResult } from '@/shared/lib/email-id'
