@@ -83,7 +83,7 @@ import {
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import {
   createContentOnlyA4PreviewOptions,
-  isCertificateIssuanceTemplateName,
+  isCertificateIssuanceTemplate,
   shouldUseA4PreviewForIssuanceTemplate } from '@/features/template/lib/a4-preview-template-options'
 import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
 import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
@@ -197,7 +197,11 @@ export function IssuanceFormTab() {
     selectedTemplate?.id === SETTLEMENT_APPLICATION_TEMPLATE_CODE ||
     selectedTemplate?.templateName === SETTLEMENT_APPLICATION_TEMPLATE_NAME
   const isCertificateIssuance =
-    selectedTemplate != null && isCertificateIssuanceTemplateName(selectedTemplate.templateName)
+    selectedTemplate != null &&
+    isCertificateIssuanceTemplate({
+      templateCode: selectedTemplate.id,
+      templateName: selectedTemplate.templateName,
+    })
   const certificateInitialStringValues = useMemo(() => {
     if (!isCertificateIssuance || selectedTemplate == null) return undefined
     return {
@@ -486,7 +490,10 @@ export function IssuanceFormTab() {
   const noopUpdateParagraph: FormUpdateParagraph = () => {}
   const handleOpenUserPreview = useCallback(() => {
     if (selectedTemplate == null) return
-    const useA4Preview = shouldUseA4PreviewForIssuanceTemplate(selectedTemplate.templateName)
+    const useA4Preview = shouldUseA4PreviewForIssuanceTemplate({
+      templateCode: selectedTemplate.id,
+      templateName: selectedTemplate.templateName,
+    })
     const isUjatPlanPreview = selectedTemplate.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
     const isJournalPreview = selectedTemplate.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
     const ujatPreviewVariant: UjatEducationIssuanceVariant | null = isUjatPlanPreview

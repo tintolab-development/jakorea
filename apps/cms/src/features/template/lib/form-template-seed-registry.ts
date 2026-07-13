@@ -1,3 +1,4 @@
+import { CERTIFICATE_ISSUANCE_TEMPLATE_CODES } from '@/features/template/api/form-template-catalog'
 import { createApplicantRecruitFormIndividualDraft } from '@/features/template/model/applicant-recruit-form-individual-draft'
 import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import { createGeminiVisitingTrainingApplicationFormInstructorDraft } from '@/features/template/model/gemini-visiting-training-application-form-instructor-draft'
@@ -71,8 +72,15 @@ const FORM_TEMPLATE_SEED_FACTORIES: Record<string, FormTemplateSeedFactory> = {
   'issuance-4': () => createSettlementApplicationIssuanceDraft(),
 }
 
-/** paragraphs 빈 배열을 허용하는 templateCode (시드 보정 제외) */
-const EMPTY_PARAGRAPHS_ALLOWED = new Set(['agreement-crime'])
+/**
+ * paragraphs 빈 배열을 허용하는 templateCode (시드 보정 제외).
+ * - agreement-crime: settingsJson only
+ * - 인증서 5종(Payload D): schemaJson null / empty + settingsJson only
+ */
+const EMPTY_PARAGRAPHS_ALLOWED = new Set<string>([
+  'agreement-crime',
+  ...CERTIFICATE_ISSUANCE_TEMPLATE_CODES,
+])
 
 export function getFormTemplateSeedDraft(templateCode: string): WritingFormDraft | null {
   const factory = FORM_TEMPLATE_SEED_FACTORIES[templateCode]

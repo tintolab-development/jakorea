@@ -270,6 +270,28 @@ export const ISSUANCE_TEMPLATE_CODE_CATALOG: Record<string, IssuanceTemplateCode
   'document-5': { templateName: '봉사 활동 인증서', category: 'DOCUMENT' },
 }
 
+/**
+ * Payload D — `settingsJson` only (schemaJson null / empty paragraphs 허용).
+ * UI는 `settingsJson`만 소비한다. `schemaJson.paragraphs`로 그리지 않는다.
+ */
+export const CERTIFICATE_ISSUANCE_TEMPLATE_CODES = [
+  'document-2',
+  'document-3',
+  'document-participation-certificate',
+  'document-4',
+  'document-5',
+] as const
+
+export type CertificateIssuanceTemplateCode =
+  (typeof CERTIFICATE_ISSUANCE_TEMPLATE_CODES)[number]
+
+const CERTIFICATE_ISSUANCE_TEMPLATE_CODE_SET = new Set<string>(CERTIFICATE_ISSUANCE_TEMPLATE_CODES)
+
+export function isCertificateIssuanceTemplateCode(templateCode?: string): boolean {
+  if (templateCode == null || templateCode === '') return false
+  return CERTIFICATE_ISSUANCE_TEMPLATE_CODE_SET.has(templateCode)
+}
+
 export function resolveIssuanceFormCategory(
   templateCode: string,
   apiCategory?: string

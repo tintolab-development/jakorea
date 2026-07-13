@@ -176,6 +176,18 @@ FE 목록 adapter는 `REPORT` / `DOCUMENT` 서브분류를 [form-template-catalo
 | `certificate-form-settings.ts` | `parseCertificateFormSettings` / `buildCertificateFormSettings` round-trip |
 | `resolveCertificateStringPreviewValues` | API 로드 후 `participantInfo`만 런타임 덮어쓰기 |
 | `admin-form-templates-service` | `schemaJson: null` + `settingsJson` only → record 반환 |
+| `a4-preview-template-options.ts` | 인증서 판별 **templateCode 우선** (`수료증 (API)` 이름에도 Payload D 모달) — **완료** (2026-07-13) |
+| `form-template-seed-registry.ts` | 인증서 코드는 빈 paragraphs 시드 보정 제외 — **완료** (2026-07-13) |
+
+### 3.3.1 FE 라우팅·빈 paragraphs 가드 (2026-07-13)
+
+| 이슈 | 대응 |
+|------|------|
+| API `templateName`이 `수료증 (API)`처럼 catalog와 다르면 name exact match만으로는 인증서 모달이 안 열림 | `isCertificateIssuanceTemplate({ templateCode, templateName })` — **code 우선** |
+| 인증서 `schemaJson` empty 시 다른 factory와 혼동 위험 | `EMPTY_PARAGRAPHS_ALLOWED`에 Payload D 5종 포함 |
+| Payload A vs D 필드 소비 | A=`schemaJson`→`draft`, D=`settingsJson` only (변경 없음, catalog에 `CERTIFICATE_ISSUANCE_TEMPLATE_CODES` 명시) |
+
+**BE 시드 확인 (여전히 필요):** Payload A는 `schemaJson.paragraphs` 비어 있으면 FE가 로컬 시드로 보정할 수 있음. 인증서는 `settingsJson`에 `titleName`/`bodyContent`가 있어야 UI가 response를 반영한다.
 
 ### 3.4 dead code·개발용 화면
 
