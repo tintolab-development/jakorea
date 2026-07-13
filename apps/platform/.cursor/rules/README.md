@@ -12,6 +12,10 @@
 
 - [Project structure](./architecture/project-structure.md) — FSD-lite 레이어
 
+## Auth
+
+- [email-id-policy.mdc](./auth/email-id-policy.mdc) — 회원 이메일 ID 형식·금칙어·중복·정규화 정책
+
 ## Coding (CMS 공통 규칙 선별)
 
 - [Code style](./coding/code-style.md) — ESLint, TypeScript, kebab-case
