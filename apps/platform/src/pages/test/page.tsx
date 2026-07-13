@@ -4,6 +4,8 @@ import {
   MOCK_ADMIN_REGISTERED_EMAIL,
   MOCK_ADMIN_REGISTERED_PROFILE,
 } from '@/features/auth/admin-registered'
+import { MYPAGE_PATH } from '@/features/mypage'
+import type { PlatformMemberProfile } from '@/features/mypage'
 import { MOCK_DUPLICATE_EMAIL, MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from '@/features/auth/sign-up'
 import {
   PfRichTextEditor,
@@ -24,6 +26,13 @@ import {
   PFTextInput,
 } from '@/shared/ui'
 import { SearchListLayout } from '@/widgets/search-list-layout'
+import {
+  DEV_MEMBER_PROFILE_OPTIONS,
+  getDevAuthLoggedIn,
+  getDevMemberProfile,
+  setDevAuthLoggedIn,
+  setDevMemberProfile,
+} from '@/shared/lib'
 import {
   educationTargetFilterOptions,
   mockOrgFilterOptions,
@@ -245,6 +254,7 @@ const authRouteLinks = [
   { label: '이메일 찾기', href: '/auth/find-email' },
   { label: '비밀번호 찾기', href: '/auth/find-password' },
   { label: '로그인 필요', href: '/auth/required' },
+  { label: '마이페이지', href: MYPAGE_PATH },
   { label: '소셜 오류', href: '/auth/social/error?reason=not-linked' },
 ] as const
 
@@ -270,6 +280,20 @@ export function TestPage() {
   const [richTextHtmlPreview, setRichTextHtmlPreview] = useState('')
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [devMemberProfile, setDevMemberProfileState] = useState<PlatformMemberProfile>(
+    () => getDevMemberProfile()
+  )
+  const [devIsLoggedIn, setDevIsLoggedInState] = useState(() => getDevAuthLoggedIn())
+
+  const handleDevMemberProfileChange = (profile: PlatformMemberProfile) => {
+    setDevMemberProfile(profile)
+    setDevMemberProfileState(profile)
+  }
+
+  const handleDevLoginToggle = (loggedIn: boolean) => {
+    setDevAuthLoggedIn(loggedIn)
+    setDevIsLoggedInState(loggedIn)
+  }
 
   const { editor, api } = useRichTextEditor({
     enabled: true,
@@ -695,6 +719,62 @@ export function TestPage() {
 
       <div className={styles.section}>
         <PFText as="div" typo="hl-sm" color="black">
+          Mypage Dev Tools
+        </PFText>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          마이페이지 유형 분기·로그인 게이트를 localStorage mock으로 확인합니다.
+        </PFText>
+
+        <div className={styles['guide-block']}>
+          <PFText as="div" typo="bd-md-sb" color="black">
+            회원 프로필 (platform:dev:member-profile)
+          </PFText>
+          <div className={styles['guide-link-row']}>
+            {DEV_MEMBER_PROFILE_OPTIONS.map(option => (
+              <PFButton
+                key={option.value}
+                size="medium"
+                variant={devMemberProfile === option.value ? 'primary' : 'tertiary'}
+                onClick={() => handleDevMemberProfileChange(option.value)}
+              >
+                {option.label}
+              </PFButton>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles['guide-block']}>
+          <PFText as="div" typo="bd-md-sb" color="black">
+            dev 로그인 상태
+          </PFText>
+          <div className={styles['guide-link-row']}>
+            <PFButton
+              size="medium"
+              variant={devIsLoggedIn ? 'primary' : 'tertiary'}
+              onClick={() => handleDevLoginToggle(true)}
+            >
+              로그인 ON
+            </PFButton>
+            <PFButton
+              size="medium"
+              variant={!devIsLoggedIn ? 'primary' : 'tertiary'}
+              onClick={() => handleDevLoginToggle(false)}
+            >
+              로그인 OFF
+            </PFButton>
+            <PFButton
+              size="medium"
+              variant="secondary"
+              onClick={() => window.location.assign(MYPAGE_PATH)}
+            >
+              마이페이지 열기
+            </PFButton>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
           Platform Auth 화면 테스트 가이드 (Mock)
         </PFText>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
@@ -779,6 +859,10 @@ export function TestPage() {
             dev 로그인 상태: localStorage{' '}
             <PFText as="span" typo="bd-sm-sb" color="black">
               platform:dev:is-logged-in
+            </PFText>
+            . 마이페이지 프로필:{' '}
+            <PFText as="span" typo="bd-sm-sb" color="black">
+              platform:dev:member-profile
             </PFText>
             . 관리자 등록 wizard:{' '}
             <PFText as="span" typo="bd-sm-sb" color="black">
