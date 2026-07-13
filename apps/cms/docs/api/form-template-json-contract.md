@@ -465,9 +465,9 @@ SSOT: `issuance-form-tab.tsx` `issuanceRows` + `documentRows`.
 |------|--------------|----------|
 | `registration-general.json` | `registration-general` | `schemaJson` + `extensionJson.editorState` |
 | `application-participant-individual.json` | `application-participant-individual` | `schemaJson` |
+| 발급 14종 | `ISSUANCE_TEMPLATE_CODE_CATALOG` | [issuance-form-seeds-backend-handoff.md](./issuance-form-seeds-backend-handoff.md) |
 | `document-3-certificate.json` | `document-3` | `settingsJson` only |
 | `document-payment-order-issue.json` | `document-payment-order-issue` | `schemaJson` (발급 Payload A) |
-| `document-payment-order-pre-consent.json` | `document-payment-order-pre-consent` | `schemaJson` (발급 Payload A) |
 
 DB/API 저장 시 위 object를 **각각 JSON string으로 stringify**하여 `schemaJson` / `extensionJson` / `settingsJson` 컬럼에 넣습니다.
 

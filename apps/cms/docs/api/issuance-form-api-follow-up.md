@@ -62,20 +62,22 @@
 
 | templateCode | templateName | Payload | BE 시드 JSON | FE 시드 factory |
 |--------------|--------------|---------|--------------|-----------------|
-| `issuance-1` | UJAT 결과리포트 | E | **미작성** | 없음 |
-| `issuance-2` | UJAT 교육계획서 | A | **미작성** | `createUjatEducationPlanIssuanceDraft()` |
-| `issuance-ujat-edu-journal` | UJAT 교육일지 | A | **미작성** | `createUjatEducationJournalIssuanceDraft()` |
-| `issuance-3` | 강의보고서 | A | **미작성** | `createLectureReportIssuanceDraft()` |
-| `issuance-4` | 정산 신청서 | A | **미작성** | `createSettlementApplicationIssuanceDraft()` |
-| `issuance-5` | 결과보고서 | E | **미작성** | 없음 |
+| `issuance-1` | UJAT 결과리포트 | E | [issuance-1.json](./form-template-seeds/issuance-1.json) | 없음 (빈 DRAFT) |
+| `issuance-2` | UJAT 교육계획서 | A | [issuance-2.json](./form-template-seeds/issuance-2.json) | `createUjatEducationPlanIssuanceDraft()` |
+| `issuance-ujat-edu-journal` | UJAT 교육일지 | A | [issuance-ujat-edu-journal.json](./form-template-seeds/issuance-ujat-edu-journal.json) | `createUjatEducationJournalIssuanceDraft()` |
+| `issuance-3` | 강의보고서 | A | [issuance-3.json](./form-template-seeds/issuance-3.json) | `createLectureReportIssuanceDraft()` |
+| `issuance-4` | 정산 신청서 | A | [issuance-4.json](./form-template-seeds/issuance-4.json) | `createSettlementApplicationIssuanceDraft()` |
+| `issuance-5` | 결과보고서 | E | [issuance-5.json](./form-template-seeds/issuance-5.json) | 없음 (빈 DRAFT) |
 | `document-payment-order-issue` | 지급조서(발급용) | A | [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json) | `createPaymentStatementIssuanceDraft()` |
 | `document-payment-order-pre-consent` | 지급조서 사전 동의서 | A | [document-payment-order-pre-consent.json](./form-template-seeds/document-payment-order-pre-consent.json) | `createPaymentStatementPreConsentDraft()` |
-| `document-1` | 지출증빙서류(필수폼) | E | **미작성** | 없음 |
-| `document-2` | 휴가 인증서 | D | **미작성** | `settingsJson` only |
+| `document-1` | 지출증빙서류(필수폼) | E | [document-1.json](./form-template-seeds/document-1.json) | 없음 (빈 DRAFT) |
+| `document-2` | 휴가 인증서 | D | [document-2.json](./form-template-seeds/document-2.json) | `settingsJson` only |
 | `document-3` | 수료증 | D | [document-3-certificate.json](./form-template-seeds/document-3-certificate.json) | `settingsJson` only |
-| `document-participation-certificate` | 참여인증서 | D | **미작성** | `settingsJson` only |
-| `document-4` | 강사 활동 인증서 | D | **미작성** | `settingsJson` only |
-| `document-5` | 봉사 활동 인증서 | D | **미작성** | `settingsJson` only |
+| `document-participation-certificate` | 참여인증서 | D | [document-participation-certificate.json](./form-template-seeds/document-participation-certificate.json) | `settingsJson` only |
+| `document-4` | 강사 활동 인증서 | D | [document-4.json](./form-template-seeds/document-4.json) | `settingsJson` only |
+| `document-5` | 봉사 활동 인증서 | D | [document-5.json](./form-template-seeds/document-5.json) | `settingsJson` only |
+
+**백엔드 전달 SSOT:** [issuance-form-seeds-backend-handoff.md](./issuance-form-seeds-backend-handoff.md)
 
 **BE 요청**
 
@@ -152,22 +154,19 @@ FE 목록 adapter는 `REPORT` / `DOCUMENT` 서브분류를 [form-template-catalo
 | [forms-surveys-api-backend-gaps.md](./forms-surveys-api-backend-gaps.md) §8 | «시드 없음» → «FE 연동 완료, BE 시드 대기» + P0 JSON 링크 | **완료** (2026-07-10) |
 | [forms-surveys-api-migration-guide.md](./forms-surveys-api-migration-guide.md) PHASE 5 | DoD 체크리스트 갱신 (P0 FE 시드 반영) | **완료** (2026-07-10) |
 
-### 3.2 발급 시드 JSON 파일 생성 (13종)
+### 3.2 발급 시드 JSON 파일 생성 (14종) — **완료** (2026-07-13)
 
-`docs/api/form-template-seeds/`에 작성 양식과 동일 형식으로 추가.
+`docs/api/form-template-seeds/` + 핸드오프: [issuance-form-seeds-backend-handoff.md](./issuance-form-seeds-backend-handoff.md)
 
-| 우선순위 | 파일명 (안) | templateCode | 상태 |
-|----------|-------------|--------------|------|
-| P0 | `document-payment-order-issue.json` | `document-payment-order-issue` | **완료** (2026-07-10) |
-| P0 | `document-payment-order-pre-consent.json` | `document-payment-order-pre-consent` | **완료** (2026-07-10) |
-| P1 | `issuance-4-settlement.json` | `issuance-4` | 미작성 |
-| P1 | `document-2-certificate.json` … `document-5-certificate.json` | 인증서 4종 (document-3 참고) | 미작성 |
-| P2 | `issuance-2-ujat-plan.json`, `issuance-ujat-edu-journal.json`, `issuance-3-lecture-report.json` | UJAT·강의보고서 | 미작성 |
+| Payload | 파일 | 상태 |
+|---------|------|------|
+| A (6) | `issuance-2/3/4`, `issuance-ujat-edu-journal`, 지급조서 2종 | **완료** |
+| D (5) | `document-2/4/5`, `document-participation-certificate`, `document-3-certificate` | **완료** |
+| E (3) | `issuance-1`, `issuance-5`, `document-1` (빈 DRAFT) | **완료** |
 
 **생성 방법**
 
-- Payload A: `exportIssuanceFormTemplateSeeds()` (`export-writing-form-template-seeds.ts`) — P0 2종 등록됨. P1/P2 factory를 `ISSUANCE_FORM_SEED_SPECS`에 추가 후 동일 export
-- Payload D: `document-3-certificate.json` 템플릿 복제
+- `exportIssuanceFormTemplateSeeds()` (`export-writing-form-template-seeds.ts`) — 14종 전체
 
 ### 3.3 단위 테스트
 
@@ -224,7 +223,7 @@ Payload A 6종은 각 에디터 `vm.handlePreview()`가 API 로드 draft를 사�
 - [ ] 발급 Payload E 3종 save/load
 - [ ] BE 발급 시드 11종 JSON (P0 지급조서 2종 제외 — FE 시드 완료)
 - [ ] `settingsJson` 이미지 BE 파일 스토리지
-- [x] `exportIssuanceFormTemplateSeeds()` — P0 지급조서 2종 (P1/P2 확장 대기)
+- [x] `exportIssuanceFormTemplateSeeds()` — 발급 14종 + [issuance-form-seeds-backend-handoff.md](./issuance-form-seeds-backend-handoff.md)
 
 ---
 
@@ -252,4 +251,5 @@ Payload A 6종은 각 에디터 `vm.handlePreview()`가 API 로드 draft를 사�
 | 날짜 | 내용 |
 |------|------|
 | 2026-07-10 | §3.2 P0 — 지급조서 2종 시드 JSON + `exportIssuanceFormTemplateSeeds()` |
+| 2026-07-13 | §2.1·§3.2 — 발급 14종 시드 JSON + [issuance-form-seeds-backend-handoff.md](./issuance-form-seeds-backend-handoff.md) |
 | 2026-07-09 | 초안 — 발급 API 1차 구현·동기화 완료 후 남은 FE/BE 항목 정리 |

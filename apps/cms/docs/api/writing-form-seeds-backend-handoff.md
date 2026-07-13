@@ -2,8 +2,7 @@
 
 `GET/PUT /api/admin/form-template-versions/{versionId}` 시드·초기 DRAFT용입니다.
 
-**발급 양식 14종** 시드·후속 작업: [issuance-form-api-follow-up.md](./issuance-form-api-follow-up.md)  
-P0 지급조서 2종 FE 시드: [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json), [document-payment-order-pre-consent.json](./form-template-seeds/document-payment-order-pre-consent.json) (`exportIssuanceFormTemplateSeeds`)
+**발급 양식 14종** 시드: [issuance-form-seeds-backend-handoff.md](./issuance-form-seeds-backend-handoff.md) (`exportIssuanceFormTemplateSeeds`)
 
 ## 제외
 
