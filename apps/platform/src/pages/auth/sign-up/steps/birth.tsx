@@ -1,5 +1,5 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import arrowRightUrl from '@/shared/assets/icons/arrow-right.svg'
+import arrowRightUrl from '@/shared/assets/icons/arrow-right-black.svg'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import { SignUpActions } from '../layout/actions'
 import { SignUpLayout } from '../layout/shell'

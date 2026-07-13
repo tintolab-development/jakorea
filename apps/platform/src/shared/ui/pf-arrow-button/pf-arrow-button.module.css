@@ -1,0 +1,71 @@
+.button {
+  display: flex;
+  aspect-ratio: 1 / 1;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-999);
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.button:disabled {
+  background: var(--color-neutral-warm-100);
+  cursor: not-allowed;
+}
+
+.large {
+  width: 52px;
+  height: 52px;
+}
+
+.medium {
+  width: 48px;
+  height: 48px;
+}
+
+.icon {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.large .icon {
+  width: 32px;
+  height: 32px;
+}
+
+.medium .icon {
+  width: 24px;
+  height: 24px;
+}
+
+.primary {
+  background: var(--color-primary-500);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--color-primary-400);
+}
+
+.secondary {
+  background:
+    linear-gradient(
+      0deg,
+      var(--color-element-hover) 0%,
+      var(--color-element-hover) 100%
+    ),
+    var(--color-neutral-white);
+}
+
+.secondary:hover:not(:disabled) {
+  background:
+    linear-gradient(0deg, rgba(1, 161, 175, 0.2) 0%, rgba(1, 161, 175, 0.2) 100%),
+    var(--color-neutral-white);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+}
