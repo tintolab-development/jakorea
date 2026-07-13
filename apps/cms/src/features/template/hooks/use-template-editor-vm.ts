@@ -70,7 +70,10 @@ export function useTemplateEditorVm({
     isParticipantApplication,
     participantPreviewTitle,
     participantVariant,
-    { onTemplateDraftSaveConfirmed }
+    {
+      onTemplateDraftSaveConfirmed,
+      templateCode: isParticipantApplication ? (entry?.id ?? templateId) : undefined,
+    }
   )
 
   const getSurveyListInitialDraft = useCallback((): WritingFormDraft => {

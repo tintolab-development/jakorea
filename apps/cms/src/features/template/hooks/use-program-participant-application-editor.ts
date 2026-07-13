@@ -228,6 +228,11 @@ export type ProgramParticipantApplicationEditorVariant =
 export type UseProgramParticipantApplicationEditorOptions = {
   /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
   onTemplateDraftSaveConfirmed?: () => void
+  /**
+   * 템플릿 관리에서 복제·신규 code (`recruitment-volunteer-copy-01` 등).
+   * 있으면 seed variant id 대신 이 code로 draft 로드/저장.
+   */
+  templateCode?: string
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
   /** 프로그램 등록 마법사 — 참여자 유형이 학교/기관일 때만 모집 최대값 필드 노출 */
   participantOrganization?: boolean
@@ -252,6 +257,12 @@ export function useProgramParticipantApplicationEditor(
   const onTemplateDraftSaveConfirmed = editorOptions?.onTemplateDraftSaveConfirmed
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+
+  const resolvePersistTemplateId = useCallback(() => {
+    const override = editorOptions?.templateCode?.trim()
+    if (override != null && override !== '') return override
+    return getTemplateIdForParticipantApplicationVariant(variant)
+  }, [editorOptions?.templateCode, variant])
 
   const seedParagraphIds = useMemo(() => {
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
@@ -350,7 +361,7 @@ export function useProgramParticipantApplicationEditor(
     }
 
     if (variant === 'ujat-recruit-institution' || variant === 'ujat-recruit-volunteer') {
-      const templateId = getTemplateIdForParticipantApplicationVariant(variant)
+      const templateId = resolvePersistTemplateId()
       void loadWritingFormTemplateDraft(templateId).then(saved => {
         if (cancelled) return
         if (saved?.draft) {
@@ -384,7 +395,7 @@ export function useProgramParticipantApplicationEditor(
         }
       })
     } else {
-      const templateId = getTemplateIdForParticipantApplicationVariant(variant)
+      const templateId = resolvePersistTemplateId()
       void loadWritingFormTemplateDraft(templateId).then(saved => {
         if (cancelled) return
         if (saved?.draft) {
@@ -417,7 +428,7 @@ export function useProgramParticipantApplicationEditor(
     return () => {
       cancelled = true
     }
-  }, [active, createSeedDraft, variant])
+  }, [active, createSeedDraft, resolvePersistTemplateId, variant])
 
   useEffect(() => {
     if (!active) {
@@ -809,10 +820,11 @@ export function useProgramParticipantApplicationEditor(
   const handleSave = useCallback(() => {
     void (async () => {
       try {
+        const templateId = resolvePersistTemplateId()
         if (variant === 'ujat-recruit-institution') {
           const overlay = { ...getUjatRecruitInstitutionOverlayRecord() }
           await persistWritingFormTemplateDraft({
-            templateId: getTemplateIdForParticipantApplicationVariant(variant),
+            templateId,
             draft,
             overlay,
           })
@@ -820,13 +832,12 @@ export function useProgramParticipantApplicationEditor(
         } else if (variant === 'ujat-recruit-volunteer') {
           const overlay = { ...getUjatRecruitVolunteerOverlayRecord() }
           await persistWritingFormTemplateDraft({
-            templateId: getTemplateIdForParticipantApplicationVariant(variant),
+            templateId,
             draft,
             overlay,
           })
           persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
         } else {
-          const templateId = getTemplateIdForParticipantApplicationVariant(variant)
           const editorState = buildParticipantApplicationEditorState({
             variant,
             volunteerExceptionScheduleCount,
@@ -855,6 +866,7 @@ export function useProgramParticipantApplicationEditor(
     draft,
     isTemplateManagementSave,
     onTemplateDraftSaveConfirmed,
+    resolvePersistTemplateId,
     showSaveFailure,
     showSaveSuccess,
     ujatApplicationGradeByBlockId,

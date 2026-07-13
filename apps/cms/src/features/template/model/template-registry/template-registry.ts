@@ -260,11 +260,41 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
 
 export const TEMPLATE_FORM_MODAL_DESCRIPTION = REGISTRATION_MODAL_DESCRIPTION
 
+/**
+ * API 복제·직접 생성 code → 에디터 레지스트리용 베이스 code.
+ * - `recruitment-volunteer-copy-01` → `recruitment-volunteer`
+ * - `survey-custom-20260713-01` → `survey-default`
+ * - `agreement-custom-…` → 직접 등록 동의(셸 없음) — undefined 유지 후 호출부 처리
+ */
+export function resolveBaseTemplateCodeForRegistry(
+  templateCode: string
+): string | undefined {
+  const code = templateCode.trim()
+  if (code === '') return undefined
+
+  const copyMatch = code.match(/^(.*)-copy-\d+$/)
+  if (copyMatch?.[1]) return copyMatch[1]
+
+  if (/^survey-custom-/i.test(code)) return 'survey-default'
+
+  return undefined
+}
+
 export function lookupTemplateRegistry(
   templateId: string | undefined | null
 ): TemplateRegistryDefinition | undefined {
   if (templateId == null || templateId.trim() === '') return undefined
-  return TEMPLATE_REGISTRY[templateId.trim()]
+  const code = templateId.trim()
+  const exact = TEMPLATE_REGISTRY[code]
+  if (exact != null) return exact
+
+  const baseCode = resolveBaseTemplateCodeForRegistry(code)
+  if (baseCode == null) return undefined
+  const base = TEMPLATE_REGISTRY[baseCode]
+  if (base == null) return undefined
+
+  // 에디터 종류는 베이스를 따르고, draft 로드/저장 id는 실제 templateCode 유지
+  return { ...base, id: code }
 }
 
 export function isParticipantApplicationRegistryEntry(
