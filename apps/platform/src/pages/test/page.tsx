@@ -1,5 +1,11 @@
 import { useState } from 'react'
 import {
+  MOCK_ADMIN_REGISTERED_BIRTH_DATE,
+  MOCK_ADMIN_REGISTERED_EMAIL,
+  MOCK_ADMIN_REGISTERED_PROFILE,
+} from '@/features/auth/admin-registered'
+import { MOCK_DUPLICATE_EMAIL, MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from '@/features/auth/sign-up'
+import {
   PfRichTextEditor,
   RichTextViewer,
   useRichTextEditor,
@@ -70,6 +76,177 @@ const buttonSizes = ['small', 'medium', 'large', 'xlarge'] as const
 const buttonVariants = ['primary', 'secondary', 'tertiary', 'text'] as const
 const inputSizes = ['medium', 'large', 'xlarge'] as const
 const paginationSizes = ['large', 'small'] as const
+
+const authMockDataRows = [
+  { label: '본인인증 이름', value: MOCK_VERIFIED_NAME },
+  { label: '본인인증 휴대폰', value: MOCK_VERIFIED_PHONE },
+  { label: '회원가입 중복 이메일', value: MOCK_DUPLICATE_EMAIL },
+  { label: '관리자 등록 이메일', value: MOCK_ADMIN_REGISTERED_EMAIL },
+  { label: '관리자 등록 판별 생년월일', value: MOCK_ADMIN_REGISTERED_BIRTH_DATE },
+  { label: '비밀번호 찾기 — 미가입 이메일', value: 'ja@gmail.com' },
+  { label: '이메일 찾기 결과 mock', value: 'Ja****@gmail.com' },
+  { label: '이메일 ID 금칙어 예시', value: 'admin@test.com' },
+  { label: '이메일 ID 공백 거부 예시', value: 'user name@test.com' },
+  { label: '이메일 ID 형식 거부 예시', value: '.user@test.com' },
+  {
+    label: '관리자 등록 프로필 — 주소',
+    value: `${MOCK_ADMIN_REGISTERED_PROFILE.address} ${MOCK_ADMIN_REGISTERED_PROFILE.addressDetail}`,
+  },
+] as const
+
+type AuthGuideScenario = {
+  title: string
+  steps: readonly string[]
+  href?: string
+  buttonLabel?: string
+}
+
+const authGuideSections: { title: string; scenarios: readonly AuthGuideScenario[] }[] = [
+  {
+    title: '로그인 (/auth/sign-in)',
+    scenarios: [
+      {
+        title: '일반 로그인 (dev mock)',
+        steps: [
+          '유효한 이메일 형식 입력 후 로그인하기 클릭 (validateEmailId 통과 필요)',
+          '형식·금칙어·공백 오류 시 정책 안내 문구 표시 (예: admin@test.com, user name@test.com)',
+          '통과 시 localStorage 로그인 처리 (platform:dev:is-logged-in = true)',
+          'URL에 ?redirect= 경로가 있으면 해당 경로로, 없으면 / 로 이동',
+        ],
+        href: '/auth/sign-in',
+        buttonLabel: '로그인 화면',
+      },
+      {
+        title: '관리자 등록 회원 — 최초 로그인',
+        steps: [
+          '유효한 이메일 형식에서 이메일과 비밀번호를 동일하게 입력 (예: test@gmail.com / test@gmail.com)',
+          '로그인 처리 없이 /auth/admin-registered/notice (최초 로그인 전용 UI)로 이동',
+          '본인인증 후 비밀번호 변경하기 → birth → identity → change-password → confirm → (edit) → complete',
+          'complete에서 dev 로그인 처리 후 wizard state 초기화',
+        ],
+        href: '/auth/sign-in',
+        buttonLabel: '로그인 화면',
+      },
+      {
+        title: '소셜 로그인',
+        steps: [
+          'Google / 네이버 / 카카오 아이콘 클릭',
+          '/auth/social/error?reason=not-linked 로 이동 (연동 계정 없음 mock)',
+        ],
+      },
+    ],
+  },
+  {
+    title: '회원가입 (/auth/sign-up)',
+    scenarios: [
+      {
+        title: '일반 회원가입',
+        steps: [
+          '스텝1~7 일반 플로우 (회원유형 → 생년월일·성별 → 본인인증 → 약관 → 이메일 → 비밀번호 → 프로필 → 확인)',
+          '본인인증·프로필 단계 이름/휴대폰은 mock 고정값 표시',
+          `이메일 중복확인: ${MOCK_DUPLICATE_EMAIL} → "이미 가입된 이메일이에요. 로그인하거나 다른 이메일을 입력해 주세요."`,
+          '금칙어: admin@test.com → "사용할 수 없는 이메일이에요. 다른 이메일을 입력해 주세요."',
+          '가입 완료 → /auth/sign-up/complete',
+        ],
+        href: '/auth/sign-up',
+        buttonLabel: '회원가입 시작',
+      },
+      {
+        title: '관리자 등록 회원 — 스텝3 본인인증 감지',
+        steps: [
+          '스텝1~2 일반과 동일',
+          `스텝2 생년월일 ${MOCK_ADMIN_REGISTERED_BIRTH_DATE} 입력 후 스텝3 본인인증하기`,
+          '회원가입 전용 관리자 등록 안내 (안내 박스 + 비밀번호 변경하기 / 이메일 찾기)',
+          '비밀번호 변경하기 → change-password → confirm → complete (birth·identity 생략)',
+        ],
+        href: '/auth/sign-up',
+        buttonLabel: '회원가입 시작',
+      },
+      {
+        title: '관리자 등록 회원 — 이메일 중복확인',
+        steps: [
+          `이메일 단계에서 ${MOCK_ADMIN_REGISTERED_EMAIL} 중복확인`,
+          '회원가입 전용 관리자 등록 안내 화면으로 이동',
+        ],
+        href: '/auth/sign-up',
+        buttonLabel: '회원가입 시작',
+      },
+    ],
+  },
+  {
+    title: '이메일 찾기 (/auth/find-email)',
+    scenarios: [
+      {
+        title: '이메일 찾기 mock',
+        steps: [
+          '본인인증 모듈 placeholder → "본인인증 후 이메일 찾기" 클릭',
+          '/auth/find-email/complete — Ja****@gmail.com 표시',
+        ],
+        href: '/auth/find-email',
+        buttonLabel: '이메일 찾기',
+      },
+    ],
+  },
+  {
+    title: '비밀번호 찾기 (/auth/find-password)',
+    scenarios: [
+      {
+        title: '미가입 이메일 에러',
+        steps: [
+          'ja@gmail.com 입력 → 본인인증 하기',
+          '"가입한 이메일을 찾지 못했어요. 입력한 정보를 다시 확인해 주세요."',
+        ],
+        href: '/auth/find-password',
+        buttonLabel: '비밀번호 찾기',
+      },
+      {
+        title: '정상 플로우',
+        steps: [
+          '그 외 유효한 이메일 → reset (새 비밀번호 2필드) → complete → sign-in',
+        ],
+        href: '/auth/find-password',
+        buttonLabel: '비밀번호 찾기',
+      },
+    ],
+  },
+  {
+    title: '관리자 등록 회원 — 비밀번호 변경 (change-password mock)',
+    scenarios: [
+      {
+        title: '검증 규칙',
+        steps: [
+          '현재 비밀번호 = 로그인 이메일(초기 비밀번호)과 일치해야 함',
+          '새 비밀번호 = 이메일과 동일하면 에러',
+          '새/확인 불일치, isValidPassword 미충족 시 에러',
+        ],
+      },
+    ],
+  },
+  {
+    title: '소셜 계정 연결 (/auth/sign-up/social-connect)',
+    scenarios: [
+      {
+        title: '연결 mock',
+        steps: [
+          'Google 선택 → complete · 네이버 → connection-failed · 카카오 → already-linked',
+          'complete / error 화면으로 이동',
+        ],
+        href: '/auth/sign-up/social-connect',
+        buttonLabel: '소셜 연결',
+      },
+    ],
+  },
+]
+
+const authRouteLinks = [
+  { label: '로그인', href: '/auth/sign-in' },
+  { label: '회원가입', href: '/auth/sign-up' },
+  { label: '관리자 등록 안내', href: '/auth/admin-registered/notice' },
+  { label: '이메일 찾기', href: '/auth/find-email' },
+  { label: '비밀번호 찾기', href: '/auth/find-password' },
+  { label: '로그인 필요', href: '/auth/required' },
+  { label: '소셜 오류', href: '/auth/social/error?reason=not-linked' },
+] as const
 
 export function TestPage() {
   const [numberedPage, setNumberedPage] = useState(1)
@@ -513,6 +690,103 @@ export function TestPage() {
           <PFButton variant="secondary" onClick={() => setIsAlertModalOpen(true)}>
             PFAlertModal 열기
           </PFButton>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          Platform Auth 화면 테스트 가이드 (Mock)
+        </PFText>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          API 연동 전 인증 관련 화면의 mock 동작·분기 조건·테스트 데이터입니다. 이메일 ID는
+          shared/lib/email-id 정책(형식·길이·금칙어·소문자 정규화)을 따르며, 관리자 등록 회원은
+          최초 로그인과 회원가입에서 서로 다른 안내 UI로 분기합니다.
+        </PFText>
+
+        <div className={styles['guide-block']}>
+          <PFText as="div" typo="bd-md-sb" color="black">
+            Mock 데이터
+          </PFText>
+          <div className={styles['guide-table']}>
+            {authMockDataRows.map(row => (
+              <div className={styles['guide-table-row']} key={row.label}>
+                <PFText as="span" typo="bd-sm-md" color="neutral-cool-500">
+                  {row.label}
+                </PFText>
+                <PFText as="span" typo="bd-sm-sb" color="black">
+                  {row.value}
+                </PFText>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles['guide-block']}>
+          <PFText as="div" typo="bd-md-sb" color="black">
+            화면 바로가기
+          </PFText>
+          <div className={styles['guide-link-row']}>
+            {authRouteLinks.map(link => (
+              <PFButton
+                key={link.href}
+                size="medium"
+                variant="tertiary"
+                onClick={() => window.location.assign(link.href)}
+              >
+                {link.label}
+              </PFButton>
+            ))}
+          </div>
+        </div>
+
+        {authGuideSections.map(section => (
+          <div className={styles['guide-block']} key={section.title}>
+            <PFText as="div" typo="bd-md-sb" color="black">
+              {section.title}
+            </PFText>
+            <div className={styles['guide-scenario-stack']}>
+              {section.scenarios.map(scenario => (
+                <div className={styles['guide-card']} key={scenario.title}>
+                  <PFText as="div" typo="bd-md-sb" color="black">
+                    {scenario.title}
+                  </PFText>
+                  <ol className={styles['guide-list']}>
+                    {scenario.steps.map(step => (
+                      <li key={step}>
+                        <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
+                          {step}
+                        </PFText>
+                      </li>
+                    ))}
+                  </ol>
+                  {scenario.href ? (
+                    <PFButton
+                      size="medium"
+                      variant="primary"
+                      onClick={() => window.location.assign(scenario.href!)}
+                    >
+                      {scenario.buttonLabel}
+                    </PFButton>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <div className={styles['guide-note']}>
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            dev 로그인 상태: localStorage{' '}
+            <PFText as="span" typo="bd-sm-sb" color="black">
+              platform:dev:is-logged-in
+            </PFText>
+            . 관리자 등록 wizard:{' '}
+            <PFText as="span" typo="bd-sm-sb" color="black">
+              platform:dev:admin-registered-wizard
+            </PFText>
+            . API 연동 후 mock 함수(isMockAdminRegisteredFirstLogin,
+            isMockAdminRegisteredIdentityMatch 등)를 API 응답으로 교체합니다.
+          </PFText>
         </div>
       </div>
 
