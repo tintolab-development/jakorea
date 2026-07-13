@@ -648,7 +648,7 @@
         "paragraphTitle": "",
         "paragraphDescription": "",
         "participatesInTitleNumbering": false,
-        "body": "2026년 07월 10일"
+        "body": "2026년 07월 13일"
       },
       {
         "id": "payment-statement-seed-closing-signature",
@@ -669,5 +669,6 @@
   },
   "settingsJson": null,
   "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장",
-  "_feSubcategoryNote": "FE 목록 서브분류: DOCUMENT (ISSUANCE_TEMPLATE_CODE_CATALOG). BE category enum은 ISSUANCE 단일 vs REPORT/DOCUMENT 분리 확인 필요."
+  "_feSubcategoryNote": "FE 목록 서브분류: DOCUMENT (ISSUANCE_TEMPLATE_CODE_CATALOG). BE category enum은 ISSUANCE 단일 vs REPORT/DOCUMENT 분리 확인 필요.",
+  "_payload": "A"
 }

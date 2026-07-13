@@ -1,6 +1,6 @@
 {
-  "templateCode": "document-3",
-  "templateName": "수료증",
+  "templateCode": "document-2",
+  "templateName": "휴가 인증서",
   "formType": "ISSUANCE",
   "category": "ISSUANCE",
   "schemaJson": null,
@@ -14,7 +14,7 @@
     "orgLogo02": null,
     "certificateBackground": null,
     "chairmanSeal": null,
-    "titleName": "수료증",
+    "titleName": "휴가 인증서",
     "bodyContent": "귀하는 위의 과정에 참여하여\n교육과정을 수료하였음을 확인합니다.",
     "participantRowVisibility": [
       true,

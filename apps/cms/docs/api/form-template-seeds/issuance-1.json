@@ -1,0 +1,23 @@
+{
+  "templateCode": "issuance-1",
+  "templateName": "UJAT 결과리포트",
+  "formType": "ISSUANCE",
+  "category": "ISSUANCE",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "none"
+    },
+    "paragraphs": []
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장",
+  "_feSubcategoryNote": "FE 목록 서브분류: REPORT (ISSUANCE_TEMPLATE_CODE_CATALOG). BE category enum은 ISSUANCE 단일 vs REPORT/DOCUMENT 분리 확인 필요.",
+  "_payload": "E",
+  "_note": "플레이스홀더. FE 편집기·저장 UI 없음. BE는 메타 등록 또는 빈 DRAFT만."
+}
