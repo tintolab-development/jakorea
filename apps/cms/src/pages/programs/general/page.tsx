@@ -366,7 +366,6 @@ export function GeneralProgramListPageContent() {
         searchParams={searchParams}
         setSearchParams={setSearchParams}
         onClose={handleCloseFullPageModal}
-        onProgramDeleted={refetchPrograms}
       />
 
       <GeneralProgramRegistrationFullpageModal
