@@ -5,17 +5,12 @@ import styles from './instructor-apply-cta.module.css'
 export function InstructorApplyCta() {
   return (
     <button className={styles.cta} type="button" disabled aria-disabled="true">
-      <img
-        className={styles.icon}
-        src={instructorApplyIllustrationUrl}
-        alt=""
-        aria-hidden="true"
-      />
+      <img className={styles.icon} src={instructorApplyIllustrationUrl} alt="" aria-hidden="true" />
       <span className={styles.copy}>
-        <PFText as="span" typo="bd-md-sb" color="white" className={styles.title}>
+        <PFText as="span" typo="bd-lg-sb" color="white" className={styles.title}>
           강사 신청
         </PFText>
-        <PFText as="span" typo="bd-sm-rg" color="white" className={styles.subtitle}>
+        <PFText as="span" typo="label-md" color="white" className={styles.subtitle}>
           강사이신가요? 권한을 신청해 주세요.
         </PFText>
       </span>

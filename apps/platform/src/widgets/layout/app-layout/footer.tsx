@@ -43,10 +43,10 @@ const partnerLogos = [
 export function Footer() {
   return (
     <footer className={styles.footer}>
-      <div className={styles['navigation-area']}>
+      <div className={styles.navigationArea}>
         <nav className={styles.navigation} aria-label="하단 메뉴">
           {footerNavItems.map((item) => (
-            <button className={styles['navigation-button']} type="button" key={item}>
+            <button className={styles.navigationButton} type="button" key={item}>
               <PFText typo="bd-md-rg" color="neutral-cool-500">
                 {item}
               </PFText>
@@ -55,24 +55,24 @@ export function Footer() {
         </nav>
       </div>
 
-      <div className={styles['content-area']}>
-        <div className={styles['logo-area']}>
-          <img className={styles['ja-logo']} src={jaLogoGrayUrl} alt="JA Korea" />
+      <div className={styles.contentArea}>
+        <div className={styles.logoArea}>
+          <img className={styles.jaLogo} src={jaLogoGrayUrl} alt="JA Korea" />
 
-          <div className={styles['partner-logos']}>
+          <div className={styles.partnerLogos}>
             {partnerLogos.map(({ label, logoUrl }) => (
-              <img className={styles['partner-logo']} src={logoUrl} alt={label} key={label} />
+              <img className={styles.partnerLogo} src={logoUrl} alt={label} key={label} />
             ))}
           </div>
         </div>
 
-        <div className={styles['info-area']}>
+        <div className={styles.infoArea}>
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-500">
             사단법인 제이에이코리아 서울특별시 강서구 마곡중앙로 171 마곡나루역
             프라이빗타워2차 714호
           </PFText>
 
-          <div className={styles['company-info-list']}>
+          <div className={styles.companyInfoList}>
             {companyInfoItems.map((item) => (
               <PFText as="span" typo="bd-sm-rg" color="neutral-cool-500" key={item}>
                 {item}
@@ -81,10 +81,10 @@ export function Footer() {
           </div>
         </div>
 
-        <div className={styles['social-area']}>
-          <div className={styles['social-links']}>
+        <div className={styles.socialArea}>
+          <div className={styles.socialLinks}>
             {socialLinks.map(({ label, iconUrl }) => (
-              <a className={styles['social-link']} href="/" aria-label={label} key={label}>
+              <a className={styles.socialLink} href="/" aria-label={label} key={label}>
                 <img src={iconUrl} alt="" aria-hidden="true" />
               </a>
             ))}

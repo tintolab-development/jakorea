@@ -1,0 +1,19 @@
+.shell {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--content-shell-max-width);
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  margin-inline: auto;
+  padding-block: var(--content-padding-block);
+}
+
+.inner {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+}

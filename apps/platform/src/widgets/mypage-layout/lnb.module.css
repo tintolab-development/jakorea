@@ -26,16 +26,16 @@
   gap: var(--spacing-12);
   border: 0;
   border-radius: var(--radius-16);
-  background: transparent;
   cursor: pointer;
   text-align: left;
+  background-color: white;
 }
 
-.item-active {
-  background: #e0f2f5;
+.itemActive {
+  background: var(--color-element-hover-strong);
 }
 
-.item-disabled {
+.itemDisabled {
   cursor: default;
 }
 
@@ -43,7 +43,7 @@
   font-weight: 500;
 }
 
-.label-active {
+.labelActive {
   font-weight: 700;
 }
 
@@ -59,7 +59,7 @@
   outline-offset: 2px;
 }
 
-.cta-wrap {
+.ctaWrap {
   align-self: stretch;
   width: 100%;
   margin-top: var(--spacing-8);

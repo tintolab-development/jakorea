@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { isProgramsPath, PROGRAMS_PATH } from '@/features/program'
 import { MYPAGE_PATH } from '@/features/mypage'
 import { getDevAuthLoggedIn } from '@/shared/lib'
 import { PFText } from '@/shared/ui'
@@ -16,6 +17,7 @@ type HeaderProps = {
 
 const navigationItems = ['JA Korea', '임팩트', '교육 소개', '참여하기', '후원하기']
 const navigationItemRoutes: Partial<Record<string, string>> = {
+  참여하기: PROGRAMS_PATH,
   후원하기: '/auth/required?redirect=/support',
 }
 const guestUserActionRoutes: Record<string, string> = {
@@ -39,16 +41,26 @@ function getLoggedInActionRoute(label: string) {
   return loggedInActionRoutes[label]
 }
 
+function getActiveNavigationItem(pathname: string) {
+  if (isProgramsPath(pathname)) {
+    return '참여하기'
+  }
+
+  return 'JA Korea'
+}
+
 export function Header({ isLoggedIn = false, onLogout, transparent = false }: HeaderProps) {
-  const [activeNavigationItem, setActiveNavigationItem] = useState(navigationItems[0])
-  const headerClassName = [styles.header, transparent ? styles['header-transparent'] : undefined]
+  const [activeNavigationItem, setActiveNavigationItem] = useState(() =>
+    getActiveNavigationItem(window.location.pathname)
+  )
+  const headerClassName = [styles.header, transparent ? styles.headerTransparent : undefined]
     .filter(Boolean)
     .join(' ')
 
   return (
     <header className={headerClassName}>
       <div className={styles.inner}>
-        <a className={styles['logo-link']} href="/" aria-label="JA Korea 홈">
+        <a className={styles.logoLink} href="/" aria-label="JA Korea 홈">
           <img className={styles.logo} src={logoUrl} alt="JA Korea" />
         </a>
 
@@ -57,8 +69,8 @@ export function Header({ isLoggedIn = false, onLogout, transparent = false }: He
             const isActive = item === activeNavigationItem
             const route = navigationItemRoutes[item]
             const buttonClassName = [
-              styles['navigation-button'],
-              isActive ? styles['navigation-button-active'] : undefined,
+              styles.navigationButton,
+              isActive ? styles.navigationButtonActive : undefined,
             ]
               .filter(Boolean)
               .join(' ')
@@ -85,10 +97,10 @@ export function Header({ isLoggedIn = false, onLogout, transparent = false }: He
         </nav>
 
         {isLoggedIn ? (
-          <div className={styles['logged-in-actions']}>
+          <div className={styles.loggedInActions}>
             {loggedInActions.map(({ label, iconUrl }) => (
               <button
-                className={styles['icon-action-button']}
+                className={styles.iconActionButton}
                 type="button"
                 aria-label={label}
                 key={label}
@@ -104,18 +116,18 @@ export function Header({ isLoggedIn = false, onLogout, transparent = false }: He
                   }
                 }}
               >
-                <img className={styles['action-icon']} src={iconUrl} alt="" aria-hidden="true" />
+                <img className={styles.actionIcon} src={iconUrl} alt="" aria-hidden="true" />
               </button>
             ))}
           </div>
         ) : (
-          <div className={styles['user-actions']}>
+          <div className={styles.userActions}>
             {Object.keys(guestUserActionRoutes).map(action => {
               const route = guestUserActionRoutes[action]
 
               return (
                 <button
-                  className={styles['user-action-button']}
+                  className={styles.userActionButton}
                   type="button"
                   key={action}
                   onClick={() => window.location.assign(route)}

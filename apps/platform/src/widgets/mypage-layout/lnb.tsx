@@ -16,8 +16,8 @@ export function Lnb({ items, showInstructorApply = false }: LnbProps) {
         {items.map(item => {
           const itemClassName = [
             styles.item,
-            item.active ? styles['item-active'] : undefined,
-            item.enabled === false ? styles['item-disabled'] : undefined,
+            item.active ? styles.itemActive : undefined,
+            item.enabled === false ? styles.itemDisabled : undefined,
           ]
             .filter(Boolean)
             .join(' ')
@@ -40,7 +40,7 @@ export function Lnb({ items, showInstructorApply = false }: LnbProps) {
                 as="span"
                 typo="bd-md-md"
                 color={item.active ? 'primary-700' : 'neutral-cool-600'}
-                className={item.active ? styles['label-active'] : styles.label}
+                className={item.active ? styles.labelActive : styles.label}
               >
                 {item.label}
               </PFText>
@@ -50,7 +50,7 @@ export function Lnb({ items, showInstructorApply = false }: LnbProps) {
       </div>
 
       {showInstructorApply ? (
-        <div className={styles['cta-wrap']}>
+        <div className={styles.ctaWrap}>
           <InstructorApplyCta />
         </div>
       ) : null}

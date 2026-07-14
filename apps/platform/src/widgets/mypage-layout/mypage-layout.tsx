@@ -12,12 +12,14 @@ type MypageLayoutProps = {
 export function MypageLayout({ lnbItems, showInstructorApply = false, children }: MypageLayoutProps) {
   return (
     <div className={styles.shell}>
-      <div className={styles.background} aria-hidden="true" />
+      <div className={styles.pageBackground} aria-hidden="true" />
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
           <Lnb items={lnbItems} showInstructorApply={showInstructorApply} />
         </aside>
-        <div className={styles.content}>{children}</div>
+        <div className={styles.content}>
+          <div className={styles.contentInner}>{children}</div>
+        </div>
       </div>
     </div>
   )

@@ -1,21 +1,20 @@
 import { useState, type ReactNode } from 'react'
-import { MYPAGE_PATH } from '@/features/mypage'
 import { getDevAuthLoggedIn, setDevAuthLoggedIn } from '@/shared/lib'
+import type { LayoutVariant } from '@/widgets/layout/layout-variant'
+import { ContentShell } from '@/widgets/layout/content-shell'
 import styles from './app-layout.module.css'
 import { Footer } from './footer'
 import { Header } from './header'
 
 type AppLayoutProps = {
   children: ReactNode
+  layout?: LayoutVariant
 }
 
-function isMypagePath(pathname: string) {
-  return pathname === MYPAGE_PATH || pathname.startsWith(`${MYPAGE_PATH}/`)
-}
-
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(getDevAuthLoggedIn)
-  const isMypage = isMypagePath(window.location.pathname)
+  const isMypage = layout === 'mypage'
+  const useContentShell = layout === 'default'
 
   const handleLogout = () => {
     setDevAuthLoggedIn(false)
@@ -26,7 +25,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className={styles.layout}>
       <Header isLoggedIn={isLoggedIn} onLogout={handleLogout} transparent={isMypage} />
-      <main className={isMypage ? styles['main-mypage'] : styles.main}>{children}</main>
+      <main className={isMypage ? styles.mainMypage : styles.main}>
+        {useContentShell ? <ContentShell>{children}</ContentShell> : children}
+      </main>
       <Footer />
     </div>
   )
