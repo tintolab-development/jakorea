@@ -12,6 +12,8 @@ import { FormsSection } from './ui/forms-section'
 import { FoundationsSection } from './ui/foundations-section'
 import { ModalsExtendedSection } from './ui/modals-extended-section'
 import { ModalsSection } from './ui/modals-section'
+import { StatusExtendedSection } from './ui/status-extended-section'
+import { StatusSection } from './ui/status-section'
 import { DesignSystemToc } from './ui/toc'
 import './page.css'
 
@@ -39,6 +41,8 @@ export function DesignSystemPage() {
           <ModalsSection />
           <ModalsExtendedSection />
           <CalendarSection />
+          <StatusSection />
+          <StatusExtendedSection />
         </div>
       </div>
     </div>
