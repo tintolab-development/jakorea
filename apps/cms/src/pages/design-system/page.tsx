@@ -3,6 +3,7 @@
  * Layout·LNB 밖 전용 페이지. ADMIN만 접근.
  */
 
+import { ButtonsSection } from './ui/buttons-section'
 import { FoundationsSection } from './ui/foundations-section'
 import { DesignSystemToc } from './ui/toc'
 import './page.css'
@@ -23,6 +24,7 @@ export function DesignSystemPage() {
           </header>
 
           <FoundationsSection />
+          <ButtonsSection />
         </div>
       </div>
     </div>
