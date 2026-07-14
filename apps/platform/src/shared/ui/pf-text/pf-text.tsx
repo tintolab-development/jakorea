@@ -69,19 +69,19 @@ const typographyClassMap: Record<PFTypography, string> = {
 }
 
 const colorClassMap: Record<PFTextColor, string> = {
-  inherit: styles['color-inherit'],
-  black: styles['color-black'],
-  white: styles['color-white'],
-  'neutral-cool-500': styles['color-neutral-cool-500'],
-  'neutral-cool-600': styles['color-neutral-cool-600'],
-  'neutral-warm-500': styles['color-neutral-warm-500'],
-  'neutral-warm-600': styles['color-neutral-warm-600'],
-  'primary-500': styles['color-primary-500'],
-  'primary-700': styles['color-primary-700'],
-  'primary-800': styles['color-primary-800'],
-  error: styles['color-error'],
-  success: styles['color-success'],
-  'gradient-primary-01': styles['color-gradient-primary-01'],
+  inherit: styles.colorInherit,
+  black: styles.colorBlack,
+  white: styles.colorWhite,
+  'neutral-cool-500': styles.colorNeutralCool500,
+  'neutral-cool-600': styles.colorNeutralCool600,
+  'neutral-warm-500': styles.colorNeutralWarm500,
+  'neutral-warm-600': styles.colorNeutralWarm600,
+  'primary-500': styles.colorPrimary500,
+  'primary-700': styles.colorPrimary700,
+  'primary-800': styles.colorPrimary800,
+  error: styles.colorError,
+  success: styles.colorSuccess,
+  'gradient-primary-01': styles.colorGradientPrimary01,
 }
 
 export function PFText<T extends ElementType = 'span'>({

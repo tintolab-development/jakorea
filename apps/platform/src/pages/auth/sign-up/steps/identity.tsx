@@ -21,8 +21,8 @@ export function IdentityStep({ signUp }: IdentityStepProps) {
         descriptionClassName={styles.description}
       />
 
-      <div className={styles['step-content']}>
-        <div className={styles['identity-module']}>
+      <div className={styles.stepContent}>
+        <div className={styles.identityModule}>
           <PFText as="p" typo="bd-sm-rg" color="neutral-warm-500">
             통신사 본인인증 모듈 영역
             <br />

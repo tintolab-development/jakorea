@@ -45,14 +45,14 @@
   gap: var(--spacing-16);
 }
 
-.actions-terms {
+.actionsTerms {
   display: flex;
   width: 100%;
   flex-direction: column;
   gap: var(--spacing-8);
 }
 
-.identity-module {
+.identityModule {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -65,18 +65,18 @@
   text-align: center;
 }
 
-.identity-module p {
+.identityModule p {
   margin: 0;
 }
 
-.confirm-review {
+.confirmReview {
   display: flex;
   width: 100%;
   flex-direction: column;
   margin-bottom: var(--spacing-40);
 }
 
-.confirm-review-row {
+.confirmReviewRow {
   display: flex;
   width: 100%;
   align-items: center;
@@ -85,72 +85,72 @@
   border-top: 1px solid var(--color-border-default);
 }
 
-.confirm-review-row-first {
+.confirmReviewRowFirst {
   border-top: 2px solid var(--color-primary-500);
 }
 
-.confirm-review-label {
+.confirmReviewLabel {
   overflow: hidden;
   width: 120px;
   flex: 0 0 120px;
   text-overflow: ellipsis;
 }
 
-.confirm-review-value {
+.confirmReviewValue {
   min-width: 0;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.gender-field,
-.school-status-field,
-.address-field {
+.genderField,
+.schoolStatusField,
+.addressField {
   display: flex;
   width: 100%;
   flex-direction: column;
   gap: var(--spacing-8);
 }
 
-.field-label {
+.fieldLabel {
   padding-left: var(--spacing-8);
   color: var(--color-neutral-warm-600);
 }
 
-.gender-options,
-.school-status-options {
+.genderOptions,
+.schoolStatusOptions {
   display: flex;
   width: 100%;
   gap: var(--spacing-12);
 }
 
-.inline-required-mark {
+.inlineRequiredMark {
   color: var(--color-error);
 }
 
-.address-search-row {
+.addressSearchRow {
   display: flex;
   width: 100%;
   gap: var(--spacing-12);
 }
 
-.address-search-row > :first-child {
+.addressSearchRow > :first-child {
   flex: 1;
 }
 
-.grade-field {
+.gradeField {
   display: flex;
   width: 100%;
   flex-direction: column;
   gap: var(--spacing-8);
 }
 
-.grade-select-wrap {
+.gradeSelectWrap {
   position: relative;
   width: 100%;
 }
 
-.grade-select {
+.gradeSelect {
   width: 100%;
   height: 56px;
   padding: 0 var(--spacing-40) 0 var(--spacing-16);
@@ -160,7 +160,7 @@
   appearance: none;
 }
 
-.grade-select-arrow {
+.gradeSelectArrow {
   position: absolute;
   top: 50%;
   right: var(--spacing-16);
@@ -170,7 +170,7 @@
   pointer-events: none;
 }
 
-.password-inputs-container {
+.passwordInputsContainer {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -181,7 +181,7 @@
   margin: 0 0 var(--spacing-16);
 }
 
-.complete-intro {
+.completeIntro {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -190,16 +190,16 @@
   text-align: center;
 }
 
-.complete-illustration {
+.completeIllustration {
   width: 84px;
   height: 84px;
   object-fit: contain;
 }
 
-.complete-title {
+.completeTitle {
   margin: var(--spacing-24) 0 0;
 }
 
-.complete-description {
+.completeDescription {
   margin: var(--spacing-16) 0 0;
 }

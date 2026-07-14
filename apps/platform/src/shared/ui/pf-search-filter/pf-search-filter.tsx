@@ -102,7 +102,7 @@ export function PFSearchFilter({
       </button>
 
       <div
-        className={[styles['menu-wrapper'], isOpen ? styles['menu-wrapper-open'] : undefined]
+        className={[styles.menuWrapper, isOpen ? styles.menuWrapperOpen : undefined]
           .filter(Boolean)
           .join(' ')}
       >

@@ -105,14 +105,14 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
     <PFModal open={open} title="주소 검색" onClose={handleClose}>
       <div
         className={[
-          styles['address-modal-main'],
-          hasSearched ? styles['address-modal-main--active'] : undefined,
+          styles.addressModalMain,
+          hasSearched ? styles.addressModalMainActive : undefined,
         ]
           .filter(Boolean)
           .join(' ')}
       >
-        <div className={styles['address-modal-search-area']}>
-          <div className={styles['address-modal-search-row']}>
+        <div className={styles.addressModalSearchArea}>
+          <div className={styles.addressModalSearchRow}>
             <PFTextInput
               size="xlarge"
               placeholder="예) 마곡중앙로 171, 분당 주공, 백현동"
@@ -136,28 +136,28 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
           </div>
 
           {showSuggestOverlay ? (
-            <div className={styles['address-suggest-overlay']}>
+            <div className={styles.addressSuggestOverlay}>
               {suggestOverlayError ? (
-                <div className={styles['address-suggest-error']}>
+                <div className={styles.addressSuggestError}>
                   <PFText typo="bd-md-sb" color="error">
                     {suggestOverlayError}
                   </PFText>
                 </div>
               ) : null}
               {hasAddressResults ? (
-                <ul className={styles['address-suggest-list']} aria-label="주소 자동완성">
+                <ul className={styles.addressSuggestList} aria-label="주소 자동완성">
                   {addresses.map((item: JusoAddressItem) => {
                     const line = suggestionPrimaryLine(item)
                     const key = `${item.roadAddr}-${item.zipNo}-${item.jibunAddr}-${line}`
 
                     return (
-                      <li key={key} className={styles['address-suggest-item']}>
+                      <li key={key} className={styles.addressSuggestItem}>
                         <button
                           type="button"
-                          className={styles['address-suggest-button']}
+                          className={styles.addressSuggestButton}
                           onClick={() => handleSelect(item)}
                         >
-                          {highlightKeyword(line, keyword, styles['address-suggest-hit'])}
+                          {highlightKeyword(line, keyword, styles.addressSuggestHit)}
                         </button>
                       </li>
                     )
@@ -168,9 +168,9 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
           ) : null}
         </div>
 
-        <div className={styles['address-modal-body']}>
+        <div className={styles.addressModalBody}>
           {!hasSearched ? (
-            <div className={styles['address-modal-tip']}>
+            <div className={styles.addressModalTip}>
               <PFText as="div" typo="bd-lg-sb" color="black">
                 Tip
               </PFText>
@@ -178,12 +178,12 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
                 as="p"
                 typo="bd-sm-md"
                 color="black"
-                className={styles['address-modal-tip-lead']}
+                className={styles.addressModalTipLead}
               >
                 아래와 같은 조합으로 검색을 하시면 더욱 정확한 결과가 검색됩니다.
               </PFText>
-              <div className={styles['address-modal-tip-list']}>
-                <div className={styles['address-modal-tip-item']}>
+              <div className={styles.addressModalTipList}>
+                <div className={styles.addressModalTipItem}>
                   <PFText typo="bd-sm-md" color="black">
                     도로명 + 건물번호
                   </PFText>
@@ -191,7 +191,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
                     예) 마곡중앙로 171, 제주 첨단로 242
                   </PFText>
                 </div>
-                <div className={styles['address-modal-tip-item']}>
+                <div className={styles.addressModalTipItem}>
                   <PFText typo="bd-sm-md" color="black">
                     지역명(동/리) + 번지
                   </PFText>
@@ -199,7 +199,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
                     예) 백현동 532, 제주 영평동 2181
                   </PFText>
                 </div>
-                <div className={styles['address-modal-tip-item']}>
+                <div className={styles.addressModalTipItem}>
                   <PFText typo="bd-sm-md" color="black">
                     지역명(동/리) + 건물명(아파트명)
                   </PFText>
@@ -207,7 +207,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
                     예) 분당 주공, 연수동 주공3차
                   </PFText>
                 </div>
-                <div className={styles['address-modal-tip-item']}>
+                <div className={styles.addressModalTipItem}>
                   <PFText typo="bd-sm-md" color="black">
                     사서함명 + 번호
                   </PFText>
@@ -220,21 +220,21 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
           ) : null}
 
           {hasSearched ? (
-            <div className={styles['address-modal-results']}>
+            <div className={styles.addressModalResults}>
               {loading && !hasAddressResults ? (
                 <PFText typo="bd-sm-rg" color="neutral-warm-500">
                   검색 중입니다.
                 </PFText>
               ) : null}
               {error ? (
-                <div className={styles['address-result-notice']}>
+                <div className={styles.addressResultNotice}>
                   <PFText typo="bd-md-sb" color="error">
                     {error.message}
                   </PFText>
                 </div>
               ) : null}
               {!error && totalPages > 1 ? (
-                <div className={styles['address-result-notice']}>
+                <div className={styles.addressResultNotice}>
                   <PFText as="p" typo="bd-md-sb" color="black">
                     검색 결과가 많아요
                   </PFText>
@@ -247,7 +247,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
                 </div>
               ) : null}
               {!loading && !error && !hasAddressResults ? (
-                <div className={styles['address-result-notice']}>
+                <div className={styles.addressResultNotice}>
                   <PFText as="p" typo="bd-md-sb" color="black">
                     검색 결과가 없습니다.
                   </PFText>
@@ -255,10 +255,10 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
               ) : null}
               {hasAddressResults ? (
                 <>
-                  <div className={styles['address-result-list']}>
+                  <div className={styles.addressResultList}>
                     {addresses.map((item: JusoAddressItem) => (
                       <button
-                        className={styles['address-result-button']}
+                        className={styles.addressResultButton}
                         type="button"
                         key={`${item.zipNo}-${item.roadAddr}-${item.jibunAddr}`}
                         onClick={() => handleSelect(item)}
@@ -267,18 +267,18 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
                           as="span"
                           typo="bd-md-bd"
                           color="primary-500"
-                          className={styles['address-result-zip']}
+                          className={styles.addressResultZip}
                         >
                           {item.zipNo || '-'}
                         </PFText>
-                        <span className={styles['address-result-line']}>
-                          <span className={styles['address-result-tag']}>도로명</span>
+                        <span className={styles.addressResultLine}>
+                          <span className={styles.addressResultTag}>도로명</span>
                           <PFText as="span" typo="bd-sm-md" color="black">
                             {item.roadAddr || '-'}
                           </PFText>
                         </span>
-                        <span className={styles['address-result-line']}>
-                          <span className={styles['address-result-tag']}>지번</span>
+                        <span className={styles.addressResultLine}>
+                          <span className={styles.addressResultTag}>지번</span>
                           <PFText as="span" typo="bd-sm-md" color="black">
                             {item.jibunAddr || '-'}
                           </PFText>
@@ -287,7 +287,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
                     ))}
                   </div>
                   {totalCount > RESULT_COUNT_PER_PAGE ? (
-                    <div className={styles['address-pagination']}>
+                    <div className={styles.addressPagination}>
                       <PFPagination
                         currentPage={currentPage}
                         totalPages={totalPages}

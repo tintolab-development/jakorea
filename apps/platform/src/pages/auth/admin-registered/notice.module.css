@@ -36,7 +36,7 @@
   margin: var(--spacing-16) 0 0;
 }
 
-.info-box {
+.infoBox {
   display: flex;
   width: 100%;
   align-items: center;
@@ -48,7 +48,7 @@
   text-align: center;
 }
 
-.info-box p {
+.infoBox p {
   margin: 0;
 }
 
@@ -59,7 +59,7 @@
   margin-top: var(--spacing-56);
 }
 
-.actions-group {
+.actionsGroup {
   display: flex;
   width: 100%;
   flex-direction: column;

@@ -22,12 +22,12 @@ export function MemberTypeStep({ signUp }: MemberTypeStepProps) {
         descriptionClassName={styles.description}
       />
 
-      <div className={styles['member-type-cards']}>
+      <div className={styles.memberTypeCards}>
         {memberType.options.map(option => {
           const isSelected = memberType.selected === option.type
           const cardClassName = [
-            styles['member-type-card'],
-            isSelected ? styles['member-type-card-selected'] : undefined,
+            styles.memberTypeCard,
+            isSelected ? styles.memberTypeCardSelected : undefined,
           ]
             .filter(Boolean)
             .join(' ')
@@ -41,16 +41,16 @@ export function MemberTypeStep({ signUp }: MemberTypeStepProps) {
               onClick={() => memberType.setSelected(option.type)}
             >
               <img
-                className={styles['member-type-image']}
+                className={styles.memberTypeImage}
                 src={option.imageUrl}
                 alt=""
                 aria-hidden="true"
               />
-              <div className={styles['member-type-text']}>
+              <div className={styles.memberTypeText}>
                 <PFText as="span" typo="hl-sm" color="black">
                   {option.title}
                 </PFText>
-                <div className={styles['member-type-description']}>
+                <div className={styles.memberTypeDescription}>
                   <PFText as="p" typo="bd-md-md" color="black">
                     {renderMultilineText(option.primaryDescription)}
                   </PFText>
@@ -75,11 +75,11 @@ export function MemberTypeStep({ signUp }: MemberTypeStepProps) {
         </PFButton>
       </SignUpActions>
 
-      <div className={styles['sign-in-guide']}>
+      <div className={styles.signInGuide}>
         <PFText typo="label-md" color="neutral-cool-500">
           이미 계정이 있으신가요?
         </PFText>
-        <button className={styles['sign-in-link']} type="button" onClick={navigation.signIn}>
+        <button className={styles.signInLink} type="button" onClick={navigation.signIn}>
           <PFText typo="bd-md-md" color="black">
             로그인 하기
           </PFText>

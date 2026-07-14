@@ -36,7 +36,7 @@
   white-space: nowrap;
 }
 
-.close-button {
+.closeButton {
   position: absolute;
   top: var(--spacing-28);
   right: var(--spacing-28);
@@ -50,7 +50,7 @@
   background: transparent;
 }
 
-.close-icon {
+.closeIcon {
   width: 17px;
   height: 17px;
 }

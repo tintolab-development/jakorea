@@ -310,7 +310,7 @@ export function PfRichTextToolbar({ editor }: PfRichTextToolbarProps) {
         ref={imageFileInputRef}
         type="file"
         accept={RICH_TEXT_IMAGE_ACCEPT}
-        className={styles['file-input']}
+        className={styles.fileInput}
         tabIndex={-1}
         aria-hidden
         onChange={handleImageFileChange}

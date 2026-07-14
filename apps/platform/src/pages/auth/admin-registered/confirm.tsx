@@ -39,12 +39,12 @@ export function AdminRegisteredConfirmPage() {
           </PFText>
         </div>
 
-        <div className={sharedStyles['confirm-review']}>
+        <div className={sharedStyles.confirmReview}>
           {rows.map((row, index) => (
             <div
               className={[
-                sharedStyles['confirm-review-row'],
-                index === 0 ? sharedStyles['confirm-review-row-first'] : undefined,
+                sharedStyles.confirmReviewRow,
+                index === 0 ? sharedStyles.confirmReviewRowFirst : undefined,
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -53,18 +53,18 @@ export function AdminRegisteredConfirmPage() {
               <PFText
                 typo="bd-md-md"
                 color="neutral-cool-500"
-                className={sharedStyles['confirm-review-label']}
+                className={sharedStyles.confirmReviewLabel}
               >
                 {row.label}
               </PFText>
-              <PFText typo="bd-md-sb" color="black" className={sharedStyles['confirm-review-value']}>
+              <PFText typo="bd-md-sb" color="black" className={sharedStyles.confirmReviewValue}>
                 {row.value}
               </PFText>
             </div>
           ))}
         </div>
 
-        <div className={sharedStyles['actions-terms']}>
+        <div className={sharedStyles.actionsTerms}>
           <PFButton size="xlarge" width="100%" onClick={handleComplete}>
             가입 정보 확인 완료
           </PFButton>

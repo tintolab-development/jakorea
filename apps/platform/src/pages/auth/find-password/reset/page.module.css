@@ -37,7 +37,7 @@
   gap: var(--spacing-40);
 }
 
-.password-inputs-container {
+.passwordInputsContainer {
   display: flex;
   width: 100%;
   flex-direction: column;

@@ -18,11 +18,11 @@ export function GuardianConfirmStep({ signUp }: GuardianConfirmStepProps) {
       <StepHeader
         title="보호자 동의에 필요한 정보만 확인해요"
         description="입력한 정보는 보호자 본인인증과 동의 확인에만 사용돼요."
-        titleClassName={styles['guardian-confirm-title']}
-        descriptionClassName={styles['guardian-confirm-description']}
+        titleClassName={styles.guardianConfirmTitle}
+        descriptionClassName={styles.guardianConfirmDescription}
       />
 
-      <div className={styles['guardian-confirm-content']}>
+      <div className={styles.guardianConfirmContent}>
         <PFTextInput
           size="xlarge"
           label="보호자님 이름"

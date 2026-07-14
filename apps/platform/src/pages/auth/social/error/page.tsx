@@ -49,32 +49,32 @@ export function SocialErrorPage() {
         </div>
 
         <div className={styles.actions}>
-          <PFButton size="xlarge" className={styles['action-button']} onClick={handleSignIn}>
+          <PFButton size="xlarge" className={styles.actionButton} onClick={handleSignIn}>
             이메일로 로그인
           </PFButton>
           <PFButton
             size="xlarge"
             variant="secondary"
-            className={styles['action-button']}
+            className={styles.actionButton}
             onClick={handleSignUp}
           >
             회원가입하기
           </PFButton>
         </div>
 
-        <div className={styles['social-section']}>
-          <div className={styles['social-divider']}>
-            <span className={styles['social-divider-line']} />
+        <div className={styles.socialSection}>
+          <div className={styles.socialDivider}>
+            <span className={styles.socialDividerLine} />
             <PFText typo="caption-rg" color="neutral-cool-500">
               다른 소셜 계정으로 시도
             </PFText>
-            <span className={styles['social-divider-line']} />
+            <span className={styles.socialDividerLine} />
           </div>
 
-          <div className={styles['social-icons']}>
+          <div className={styles.socialIcons}>
             {socialLoginItems.map(({ label, icon }) => (
               <button
-                className={styles['social-button']}
+                className={styles.socialButton}
                 type="button"
                 aria-label={label}
                 key={label}

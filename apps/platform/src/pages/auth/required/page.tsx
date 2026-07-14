@@ -42,13 +42,13 @@ export function RequiredPage() {
         </div>
 
         <div className={styles.actions}>
-          <PFButton size="xlarge" className={styles['action-button']} onClick={handleSignIn}>
+          <PFButton size="xlarge" className={styles.actionButton} onClick={handleSignIn}>
             로그인하기
           </PFButton>
           <PFButton
             size="xlarge"
             variant="secondary"
-            className={styles['action-button']}
+            className={styles.actionButton}
             onClick={handleSignUp}
           >
             회원가입하기

@@ -20,14 +20,14 @@ export function PFStepProgress({
           const isCompleted = step < currentStep
           const circleClassName = [
             styles.circle,
-            isActive ? styles['circle-active'] : undefined,
-            isCompleted ? styles['circle-completed'] : undefined,
+            isActive ? styles.circleActive : undefined,
+            isCompleted ? styles.circleCompleted : undefined,
           ]
             .filter(Boolean)
             .join(' ')
           const lineClassName = [
             styles.line,
-            step < currentStep ? styles['line-active'] : undefined,
+            step < currentStep ? styles.lineActive : undefined,
           ]
             .filter(Boolean)
             .join(' ')

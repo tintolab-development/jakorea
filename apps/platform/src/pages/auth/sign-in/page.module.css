@@ -41,36 +41,36 @@
   margin-top: var(--spacing-40);
 }
 
-.input-group {
+.inputGroup {
   display: flex;
   width: 100%;
   flex-direction: column;
   gap: var(--spacing-28);
 }
 
-.submit-button {
+.submitButton {
   width: 100%;
 }
 
-.account-links {
+.accountLinks {
   display: flex;
   align-items: center;
   justify-content: center;
   margin-top: var(--spacing-24);
 }
 
-.account-link-item {
+.accountLinkItem {
   display: inline-flex;
   align-items: center;
 }
 
-.account-link-separator {
+.accountLinkSeparator {
   width: 1px;
   height: 15px;
   background: var(--color-border-default);
 }
 
-.social-section {
+.socialSection {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -79,27 +79,27 @@
   margin-top: var(--spacing-48);
 }
 
-.social-divider {
+.socialDivider {
   display: flex;
   width: 100%;
   align-items: center;
   gap: var(--spacing-16);
 }
 
-.social-divider-line {
+.socialDividerLine {
   height: 1px;
   flex: 1;
   background: var(--color-border-default);
 }
 
-.social-icons {
+.socialIcons {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-16);
 }
 
-.social-button {
+.socialButton {
   display: inline-flex;
   width: 54px;
   height: 54px;

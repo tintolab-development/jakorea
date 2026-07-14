@@ -62,7 +62,7 @@ export function PfToolbarDropdown({
       ? createPortal(
           <div
             ref={panelRef}
-            className={styles['dropdown-panel']}
+            className={styles.dropdownPanel}
             style={{
               position: 'fixed',
               top: panelStyle.top,
@@ -77,7 +77,7 @@ export function PfToolbarDropdown({
                 <button
                   key={item.key}
                   type="button"
-                  className={styles['dropdown-item']}
+                  className={styles.dropdownItem}
                   role="menuitem"
                   onMouseDown={event => event.preventDefault()}
                   onClick={() => {
@@ -101,7 +101,7 @@ export function PfToolbarDropdown({
         className={[
           styles.trigger,
           'rt-toolbar-trigger',
-          iconOnly ? `${styles['trigger-icon-only']} rt-toolbar-icon-control` : styles['trigger-labeled'],
+          iconOnly ? `${styles.triggerIconOnly} rt-toolbar-icon-control` : styles.triggerLabeled,
         ]
           .filter(Boolean)
           .join(' ')}
@@ -113,12 +113,12 @@ export function PfToolbarDropdown({
         onClick={() => setOpen(prev => !prev)}
       >
         {leadingIcon ? (
-          <span className={styles['trigger-leading']} aria-hidden>
+          <span className={styles.triggerLeading} aria-hidden>
             {leadingIcon}
           </span>
         ) : null}
         {!iconOnly ? (
-          <span className={styles['trigger-label']}>{valueLabel ?? label}</span>
+          <span className={styles.triggerLabel}>{valueLabel ?? label}</span>
         ) : null}
         <PfChevronDown />
       </button>
@@ -143,8 +143,8 @@ export function PfColorSwatchGrid({
   clearLabel?: string
 }) {
   return (
-    <div className={styles['swatch-grid']}>
-      <div className={styles['swatch-row']}>
+    <div className={styles.swatchGrid}>
+      <div className={styles.swatchRow}>
         {colors
           .filter(color => color.value)
           .map(color => (
@@ -153,7 +153,7 @@ export function PfColorSwatchGrid({
               type="button"
               className={[
                 styles.swatch,
-                activeValue === color.value ? styles['swatch-active'] : '',
+                activeValue === color.value ? styles.swatchActive : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -167,7 +167,7 @@ export function PfColorSwatchGrid({
       </div>
       <button
         type="button"
-        className={styles['swatch-clear']}
+        className={styles.swatchClear}
         disabled={disabled}
         onMouseDown={event => event.preventDefault()}
         onClick={onClear}
@@ -191,7 +191,7 @@ export function PfEmojiPickerGrid({
   const items = query.trim() ? filtered : quickPick.length > 0 ? quickPick : filtered
 
   return (
-    <div className={styles['emoji-picker']}>
+    <div className={styles.emojiPicker}>
       <PFTextInput
         size="medium"
         placeholder="이모지 검색"
@@ -199,12 +199,12 @@ export function PfEmojiPickerGrid({
         disabled={disabled}
         onChange={event => setQuery(event.target.value)}
       />
-      <div className={styles['emoji-grid']} role="listbox" aria-label="이모지">
+      <div className={styles.emojiGrid} role="listbox" aria-label="이모지">
         {items.map((emoji: EmojiItem) => (
           <button
             key={emoji.name}
             type="button"
-            className={styles['emoji-cell']}
+            className={styles.emojiCell}
             title={emoji.name}
             disabled={disabled}
             role="option"

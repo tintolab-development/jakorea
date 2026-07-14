@@ -1,4 +1,4 @@
-.pf-rich-text-editor {
+.pfRichTextEditor {
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -14,6 +14,6 @@
   --rt-body-padding: 16px;
 }
 
-.pf-rich-text-editor :global(.rich-text-editor__body .tiptap) {
+.pfRichTextEditor :global(.richTextEditor__body .tiptap) {
   min-height: 100%;
 }

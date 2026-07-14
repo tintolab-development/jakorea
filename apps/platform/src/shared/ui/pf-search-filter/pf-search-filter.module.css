@@ -77,7 +77,7 @@
   transform: rotate(180deg);
 }
 
-.menu-wrapper {
+.menuWrapper {
   position: absolute;
   top: 100%;
   left: 0;
@@ -91,7 +91,7 @@
   transition: grid-template-rows 200ms ease 120ms;
 }
 
-.menu-wrapper-open {
+.menuWrapperOpen {
   grid-template-rows: 1fr;
   pointer-events: auto;
   transition: grid-template-rows 200ms ease 0ms;
@@ -111,7 +111,7 @@
   transition: opacity 120ms ease;
 }
 
-.menu-wrapper-open .menu {
+.menuWrapperOpen .menu {
   border-top: 1px solid var(--color-primary-100);
   border-right: 1px solid var(--color-element-hover);
   border-bottom: 1px solid var(--color-element-hover);
@@ -165,7 +165,7 @@
 @media (prefers-reduced-motion: reduce) {
   .trigger,
   .chevron,
-  .menu-wrapper,
+  .menuWrapper,
   .menu {
     transition: none;
   }

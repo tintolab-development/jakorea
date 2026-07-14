@@ -83,16 +83,16 @@ export function AdminRegisteredBirthPage() {
             onValueChange={handleBirthDateChange}
           />
 
-          <div className={styles['gender-field']}>
+          <div className={styles.genderField}>
             <PFText
               as="span"
               typo="label-md"
               color="neutral-warm-500"
-              className={styles['field-label']}
+              className={styles.fieldLabel}
             >
               성별
             </PFText>
-            <div className={styles['gender-options']}>
+            <div className={styles.genderOptions}>
               <PFButton
                 size="xlarge"
                 variant="tertiary"

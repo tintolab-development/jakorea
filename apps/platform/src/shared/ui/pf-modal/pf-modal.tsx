@@ -74,8 +74,8 @@ export function PFModal({
         className={[styles.panel, className].filter(Boolean).join(' ')}
         style={width ? { width } : undefined}
       >
-        <button className={styles['close-button']} type="button" aria-label="닫기" onClick={onClose}>
-          <img className={styles['close-icon']} src={closeIconUrl} alt="" aria-hidden="true" />
+        <button className={styles.closeButton} type="button" aria-label="닫기" onClick={onClose}>
+          <img className={styles.closeIcon} src={closeIconUrl} alt="" aria-hidden="true" />
         </button>
         {title ? (
           <PFText as="div" typo="hl-lg" color="black" id={titleId} className={styles.title}>

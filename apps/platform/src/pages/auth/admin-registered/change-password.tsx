@@ -67,7 +67,7 @@ export function AdminRegisteredChangePasswordPage() {
         </div>
 
         <div className={sharedStyles.content}>
-          <div className={sharedStyles['password-inputs-container']}>
+          <div className={sharedStyles.passwordInputsContainer}>
             <PFTextInput
               size="xlarge"
               label="현재 비밀번호"

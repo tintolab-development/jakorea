@@ -44,13 +44,13 @@ export function MypageHomePage() {
               {MOCK_MYPAGE_USER_NAME}님
             </PFText>
             <button
-              className={styles['settings-button']}
+              className={styles.settingsButton}
               type="button"
               disabled
               aria-disabled="true"
             >
               <img
-                className={styles['settings-icon']}
+                className={styles.settingsIcon}
                 src={settingsIconUrl}
                 alt=""
                 aria-hidden="true"

@@ -19,19 +19,19 @@ export function TeacherProfileStep({ signUp }: TeacherProfileStepProps) {
       <StepHeader
         title="교사회원 정보를 입력해 주세요"
         description="교육 활동에 필요한 선생님 정보를 확인할게요."
-        titleClassName={styles['profile-title']}
-        descriptionClassName={styles['profile-description']}
+        titleClassName={styles.profileTitle}
+        descriptionClassName={styles.profileDescription}
       />
 
-      <div className={styles['profile-content']}>
+      <div className={styles.profileContent}>
         <PFTextInput size="xlarge" label="이름" value={MOCK_VERIFIED_NAME} required disabled />
         <PFTextInput size="xlarge" label="휴대폰 번호" value={MOCK_VERIFIED_PHONE} disabled />
 
-        <div className={styles['address-field']}>
-          <PFText as="span" typo="label-md" color="inherit" className={styles['field-label']}>
-            소속/학교 <span className={styles['inline-required-mark']}>*</span>
+        <div className={styles.addressField}>
+          <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+            소속/학교 <span className={styles.inlineRequiredMark}>*</span>
           </PFText>
-          <div className={styles['address-search-row']}>
+          <div className={styles.addressSearchRow}>
             <PFTextInput
               size="xlarge"
               placeholder="소속 또는 학교를 입력해 주세요"
@@ -49,11 +49,11 @@ export function TeacherProfileStep({ signUp }: TeacherProfileStepProps) {
           </div>
         </div>
 
-        <div className={styles['school-status-field']}>
-          <PFText as="span" typo="label-md" color="inherit" className={styles['field-label']}>
-            재직 현황 <span className={styles['inline-required-mark']}>*</span>
+        <div className={styles.schoolStatusField}>
+          <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+            재직 현황 <span className={styles.inlineRequiredMark}>*</span>
           </PFText>
-          <div className={styles['school-status-options']}>
+          <div className={styles.schoolStatusOptions}>
             <PFButton
               size="xlarge"
               variant="tertiary"

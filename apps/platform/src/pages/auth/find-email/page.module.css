@@ -37,7 +37,7 @@
   gap: var(--spacing-32);
 }
 
-.identity-module {
+.identityModule {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -50,10 +50,10 @@
   text-align: center;
 }
 
-.identity-module p {
+.identityModule p {
   margin: 0;
 }
 
-.submit-button {
+.submitButton {
   width: 100%;
 }

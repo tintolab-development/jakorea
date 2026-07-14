@@ -41,14 +41,14 @@ function RegionSelect({
   return (
     <div
       className={[
-        styles['school-modal-select-wrap'],
-        disabled ? styles['school-modal-select-wrap--disabled'] : undefined,
+        styles.schoolModalSelectWrap,
+        disabled ? styles.schoolModalSelectWrapDisabled : undefined,
       ]
         .filter(Boolean)
         .join(' ')}
     >
       <select
-        className={styles['school-modal-select']}
+        className={styles.schoolModalSelect}
         disabled={disabled}
         value={value}
         onChange={event => onChange(event.target.value)}
@@ -63,7 +63,7 @@ function RegionSelect({
         ))}
       </select>
       <img
-        className={styles['school-modal-select-arrow']}
+        className={styles.schoolModalSelectArrow}
         src={chevronRightGrayUrl}
         alt=""
         aria-hidden="true"
@@ -137,13 +137,13 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
     <PFModal open={open} title="소속/학교 검색" onClose={handleClose}>
       <div
         className={[
-          styles['school-modal-main'],
-          hasSearched ? styles['school-modal-main--active'] : undefined,
+          styles.schoolModalMain,
+          hasSearched ? styles.schoolModalMainActive : undefined,
         ]
           .filter(Boolean)
           .join(' ')}
       >
-        <div className={styles['school-modal-region-row']}>
+        <div className={styles.schoolModalRegionRow}>
           <RegionSelect
             placeholder="시/도"
             value={sido}
@@ -161,8 +161,8 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
 
         <div
           className={[
-            styles['school-modal-search-row'],
-            hasSearched ? styles['school-modal-search-row--active'] : undefined,
+            styles.schoolModalSearchRow,
+            hasSearched ? styles.schoolModalSearchRowActive : undefined,
           ]
             .filter(Boolean)
             .join(' ')}
@@ -196,29 +196,29 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
         </div>
 
         {!hasSearched ? (
-          <PFText as="p" typo="bd-sm-md" className={styles['school-modal-guide']}>
+          <PFText as="p" typo="bd-sm-md" className={styles.schoolModalGuide}>
             지역을 먼저 선택 후 소속 또는 학교를 입력해 주세요.
           </PFText>
         ) : (
-          <div className={styles['school-modal-results']}>
+          <div className={styles.schoolModalResults}>
             {loading && !hasResults ? (
               <PFText
                 typo="bd-sm-rg"
                 color="neutral-warm-500"
-                className={styles['school-result-status']}
+                className={styles.schoolResultStatus}
               >
                 검색 중입니다.
               </PFText>
             ) : null}
             {error ? (
-              <div className={styles['school-result-notice']}>
+              <div className={styles.schoolResultNotice}>
                 <PFText typo="bd-md-sb" color="error">
                   {error.message}
                 </PFText>
               </div>
             ) : null}
             {!loading && !error && !hasResults ? (
-              <div className={styles['school-result-notice']}>
+              <div className={styles.schoolResultNotice}>
                 <PFText as="p" typo="bd-md-sb" color="black">
                   검색 결과가 없습니다.
                 </PFText>
@@ -229,33 +229,33 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
             ) : null}
             {hasResults ? (
               <>
-                <ul className={styles['school-result-list']} aria-label="학교 검색 결과">
+                <ul className={styles.schoolResultList} aria-label="학교 검색 결과">
                   {filteredSchools.map((school: NeisSchoolItem) => (
-                    <li key={schoolResultKey(school)} className={styles['school-result-item']}>
-                      <div className={styles['school-result-content']}>
+                    <li key={schoolResultKey(school)} className={styles.schoolResultItem}>
+                      <div className={styles.schoolResultContent}>
                         <PFText
                           as="p"
                           typo="bd-md-bd"
                           color="black"
-                          className={styles['school-result-name']}
+                          className={styles.schoolResultName}
                         >
-                          {highlightKeyword(school.schulNm, keyword, styles['school-result-hit'])}
+                          {highlightKeyword(school.schulNm, keyword, styles.schoolResultHit)}
                         </PFText>
                         {school.orgRdnma ? (
-                          <div className={styles['school-result-address-row']}>
-                            <span className={styles['school-result-tag']}>소재지</span>
+                          <div className={styles.schoolResultAddressRow}>
+                            <span className={styles.schoolResultTag}>소재지</span>
                             <PFText
                               as="span"
                               typo="bd-sm-md"
                               color="black"
-                              className={styles['school-result-address']}
+                              className={styles.schoolResultAddress}
                             >
                               {school.orgRdnma}
                             </PFText>
                           </div>
                         ) : null}
                       </div>
-                      <div className={styles['school-result-select-button']}>
+                      <div className={styles.schoolResultSelectButton}>
                         <PFButton
                           size="medium"
                           variant="secondary"
@@ -269,7 +269,7 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
                   ))}
                 </ul>
                 {totalCount > SCHOOL_SEARCH_PAGE_SIZE ? (
-                  <div className={styles['school-pagination']}>
+                  <div className={styles.schoolPagination}>
                     <PFPagination
                       currentPage={currentPage}
                       totalPages={totalPages}

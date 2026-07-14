@@ -4,7 +4,7 @@ import styles from './schedule-placeholder.module.css'
 export function SchedulePlaceholder() {
   return (
     <section className={styles.section} aria-label="프로그램 일정">
-      <div className={styles['calendar-slot']} aria-hidden="true" />
+      <div className={styles.calendarSlot} aria-hidden="true" />
       <div className={styles.empty}>
         <PFText as="p" typo="bd-md-md" color="black" className={styles.title}>
           예정된 프로그램 일정이 없어요

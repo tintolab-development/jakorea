@@ -27,27 +27,27 @@ export function AdminRegisteredCompletePage() {
   return (
     <section className={sharedStyles.page}>
       <div className={sharedStyles.container}>
-        <div className={sharedStyles['complete-intro']}>
+        <div className={sharedStyles.completeIntro}>
           <img
-            className={sharedStyles['complete-illustration']}
+            className={sharedStyles.completeIllustration}
             src={illustCheckUrl}
             alt=""
             aria-hidden="true"
           />
-          <PFText as="h1" typo="hd-md" color="black" className={sharedStyles['complete-title']}>
+          <PFText as="h1" typo="hd-md" color="black" className={sharedStyles.completeTitle}>
             확인이 완료되었어요!
           </PFText>
           <PFText
             as="p"
             typo="bd-lg-rg"
             color="primary-800"
-            className={sharedStyles['complete-description']}
+            className={sharedStyles.completeDescription}
           >
             JA Korea의 다양한 프로그램과 소식을 확인해 보세요.
           </PFText>
         </div>
 
-        <div className={sharedStyles['actions-terms']}>
+        <div className={sharedStyles.actionsTerms}>
           <PFButton size="xlarge" width="100%" onClick={handleStart}>
             시작하기
           </PFButton>

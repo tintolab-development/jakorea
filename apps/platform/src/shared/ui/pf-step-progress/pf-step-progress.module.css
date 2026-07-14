@@ -43,8 +43,8 @@
   line-height: 1;
 }
 
-.circle-active,
-.circle-completed {
+.circleActive,
+.circleCompleted {
   border-color: var(--color-primary-800);
   background: var(--color-primary-800);
   color: var(--color-neutral-white);
@@ -57,6 +57,6 @@
   background: var(--color-border-default);
 }
 
-.line-active {
+.lineActive {
   background: var(--color-primary-800);
 }

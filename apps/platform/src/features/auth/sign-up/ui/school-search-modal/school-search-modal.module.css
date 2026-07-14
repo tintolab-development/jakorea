@@ -1,4 +1,4 @@
-.school-modal-region-row {
+.schoolModalRegionRow {
   display: grid;
   width: 100%;
   grid-template-columns: 1fr 1fr;
@@ -6,7 +6,7 @@
   margin-top: var(--spacing-28);
 }
 
-.school-modal-search-row {
+.schoolModalSearchRow {
   display: grid;
   width: 100%;
   grid-template-columns: 1fr 160px;
@@ -14,25 +14,25 @@
   margin: var(--spacing-12) 0 var(--spacing-28) 0;
 }
 
-.school-modal-search-row--active {
+.schoolModalSearchRowActive {
   margin-bottom: var(--spacing-12);
 }
 
-.school-modal-guide {
+.schoolModalGuide {
   padding-left: var(--spacing-8);
 }
 
-.school-modal-main {
+.schoolModalMain {
   display: flex;
   width: 100%;
   flex-direction: column;
 }
 
-.school-modal-main--active {
+.schoolModalMainActive {
   min-height: 513px;
 }
 
-.school-modal-results {
+.schoolModalResults {
   display: flex;
   width: 100%;
   flex: 1 1 auto;
@@ -41,11 +41,11 @@
   min-height: 0;
 }
 
-.school-result-status {
+.schoolResultStatus {
   padding-left: var(--spacing-8);
 }
 
-.school-result-notice {
+.schoolResultNotice {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -53,12 +53,12 @@
   padding-left: var(--spacing-8);
 }
 
-.school-result-notice p {
+.schoolResultNotice p {
   display: block;
   margin: 0;
 }
 
-.school-result-list {
+.schoolResultList {
   display: flex;
   width: 100%;
   flex: 0 0 auto;
@@ -73,7 +73,7 @@
   overflow-y: auto;
 }
 
-.school-result-item {
+.schoolResultItem {
   display: flex;
   width: 100%;
   align-items: center;
@@ -81,15 +81,15 @@
   padding: var(--spacing-16) 0;
   border-bottom: 1px solid rgb(61 61 61 / 10%);
 }
-.school-result-item:first-child {
+.schoolResultItem:first-child {
   padding-top: 0;
 }
-.school-result-item:last-child {
+.schoolResultItem:last-child {
   padding-bottom: 0;
   border-bottom: 0;
 }
 
-.school-result-content {
+.schoolResultContent {
   display: flex;
   min-width: 0;
   flex: 1 1 auto;
@@ -97,21 +97,21 @@
   gap: var(--spacing-12);
 }
 
-.school-result-name {
+.schoolResultName {
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.school-result-address-row {
+.schoolResultAddressRow {
   display: flex;
   align-items: center;
   gap: var(--spacing-8);
   min-width: 0;
 }
 
-.school-result-tag {
+.schoolResultTag {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
@@ -128,28 +128,28 @@
   letter-spacing: 0;
 }
 
-.school-result-address {
+.schoolResultAddress {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.school-result-select-button {
+.schoolResultSelectButton {
   height: 60px;
 }
 
-.school-result-hit {
+.schoolResultHit {
   color: var(--color-primary-500);
 }
 
-.school-pagination {
+.schoolPagination {
   display: flex;
   width: 100%;
   justify-content: center;
   margin-top: var(--spacing-16);
 }
 
-.school-modal-select-wrap {
+.schoolModalSelectWrap {
   position: relative;
   display: flex;
   width: 100%;
@@ -160,15 +160,15 @@
   background: var(--color-neutral-white);
 }
 
-.school-modal-select-wrap:focus-within {
+.schoolModalSelectWrap:focus-within {
   border-color: var(--color-border-focus);
 }
 
-.school-modal-select-wrap--disabled {
+.schoolModalSelectWrapDisabled {
   background: var(--color-neutral-warm-100);
 }
 
-.school-modal-select {
+.schoolModalSelect {
   width: 100%;
   height: 100%;
   padding: 0 var(--spacing-40) 0 14px;
@@ -186,16 +186,16 @@
   outline: 0;
 }
 
-.school-modal-select:disabled {
+.schoolModalSelect:disabled {
   color: var(--color-neutral-warm-500);
   cursor: not-allowed;
 }
 
-.school-modal-select option[value=''] {
+.schoolModalSelect option[value=''] {
   color: var(--color-neutral-warm-500);
 }
 
-.school-modal-select-arrow {
+.schoolModalSelectArrow {
   position: absolute;
   right: 14px;
   width: 20px;

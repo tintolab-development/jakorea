@@ -32,12 +32,12 @@ const iconMap = {
   'check-large': {
     on: checkOnLargeUrl,
     off: checkOffLargeUrl,
-    className: styles['icon-check-large'],
+    className: styles.iconCheckLarge,
   },
   'check-small': {
     on: checkOnSmallUrl,
     off: checkOffSmallUrl,
-    className: styles['icon-check-small'],
+    className: styles.iconCheckSmall,
   },
 } as const
 
@@ -55,7 +55,7 @@ export function PFToggle(props: PFToggleProps) {
   const toggleClassName = [
     styles.toggle,
     styles[variant],
-    variant === 'text' && checked ? styles['text-on'] : undefined,
+    variant === 'text' && checked ? styles.textOn : undefined,
     className,
   ]
     .filter(Boolean)

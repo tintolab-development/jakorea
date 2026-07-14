@@ -23,11 +23,11 @@ export function EmailStep({ signUp }: EmailStepProps) {
           </>
         }
         description="로그인에 사용할 이메일 주소를 입력해 주세요. 자주 사용하는 이메일을 권장해요. 소셜 계정은 가입을 마친 뒤 연결할 수 있어요."
-        titleClassName={styles['email-title']}
-        descriptionClassName={styles['email-description']}
+        titleClassName={styles.emailTitle}
+        descriptionClassName={styles.emailDescription}
       />
 
-      <div className={styles['email-content']}>
+      <div className={styles.emailContent}>
         <PFTextInput
           size="xlarge"
           label="이메일"
@@ -44,7 +44,7 @@ export function EmailStep({ signUp }: EmailStepProps) {
           size="xlarge"
           variant="secondary"
           width="100%"
-          className={styles['duplicate-check-button']}
+          className={styles.duplicateCheckButton}
           onClick={email.duplicateCheck}
         >
           중복확인
