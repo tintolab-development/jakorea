@@ -39,6 +39,7 @@ import {
   recruitmentStatusFilterOptions,
 } from '@/shared/lib/filter-options'
 import styles from './page.module.css'
+import { FormTemplateSmokeDemo } from '@/features/form-template/form-template-smoke-demo'
 
 const tabItems: { key: string; label: string; badge: string }[] = [
   { key: 'tab-1', label: 'tab title', badge: '00' },
@@ -315,11 +316,18 @@ export function TestPage() {
 
       <div className={styles.section}>
         <PFText as="div" typo="hl-sm" color="black">
+          FormTemplate (CMS embed)
+        </PFText>
+        <FormTemplateSmokeDemo />
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
           PfRichTextEditor
         </PFText>
-        <div className={styles['rich-text-demo']}>
+        <div className={styles.richTextDemo}>
           <PfRichTextEditor editor={editor} />
-          <div className={styles['rich-text-actions']}>
+          <div className={styles.richTextActions}>
             <PFButton
               size="medium"
               variant="secondary"
@@ -336,7 +344,7 @@ export function TestPage() {
             </PFButton>
           </div>
           {richTextPreview ? (
-            <div className={styles['rich-text-preview']}>
+            <div className={styles.richTextPreview}>
               <PFText as="div" typo="label-md" color="neutral-cool-500">
                 Markdown 미리보기
               </PFText>
@@ -344,11 +352,11 @@ export function TestPage() {
             </div>
           ) : null}
           {richTextHtmlPreview ? (
-            <div className={styles['rich-text-preview']}>
+            <div className={styles.richTextPreview}>
               <PFText as="div" typo="label-md" color="neutral-cool-500">
                 HTML 미리보기
               </PFText>
-              <pre className={styles['rich-text-html-preview']}>{richTextHtmlPreview}</pre>
+              <pre className={styles.richTextHtmlPreview}>{richTextHtmlPreview}</pre>
             </div>
           ) : null}
         </div>
@@ -360,7 +368,7 @@ export function TestPage() {
         </PFText>
         <div className={styles.stack}>
           {typographyItems.map(({ label, typo }) => (
-            <div className={styles['sample-row']} key={label}>
+            <div className={styles.sampleRow} key={label}>
               <PFText as="span" typo="label-md" color="neutral-cool-500">
                 {label}
               </PFText>
@@ -376,9 +384,9 @@ export function TestPage() {
         <PFText as="div" typo="hl-sm" color="black">
           PFText Color
         </PFText>
-        <div className={styles['color-grid']}>
+        <div className={styles.colorGrid}>
           {colorItems.map(({ label, color }) => (
-            <div className={styles['color-card']} key={label}>
+            <div className={styles.colorCard} key={label}>
               <PFText as="span" typo="bd-sm-sb" color={color}>
                 {label}
               </PFText>
@@ -391,13 +399,13 @@ export function TestPage() {
         <PFText as="div" typo="hl-sm" color="black">
           PFArrowButton
         </PFText>
-        <div className={styles['button-stack']}>
+        <div className={styles.buttonStack}>
           {arrowButtonVariants.map(variant => (
-            <div className={styles['button-row']} key={variant}>
+            <div className={styles.buttonRow} key={variant}>
               <PFText typo="label-md" color="neutral-cool-500">
                 {variant}
               </PFText>
-              <div className={styles['button-list']}>
+              <div className={styles.buttonList}>
                 {arrowButtonSizes.map(size => (
                   <PFArrowButton
                     key={`${variant}-${size}`}
@@ -417,13 +425,13 @@ export function TestPage() {
         <PFText as="div" typo="hl-sm" color="black">
           PFButton
         </PFText>
-        <div className={styles['button-stack']}>
+        <div className={styles.buttonStack}>
           {buttonVariants.map(variant => (
-            <div className={styles['button-row']} key={variant}>
+            <div className={styles.buttonRow} key={variant}>
               <PFText as="span" typo="label-md" color="neutral-cool-500">
                 {variant}
               </PFText>
-              <div className={styles['button-list']}>
+              <div className={styles.buttonList}>
                 {buttonSizes.map(size => (
                   <PFButton size={size} variant={variant} key={`${variant}-${size}`}>
                     {size}
@@ -445,9 +453,9 @@ export function TestPage() {
         <PFText as="div" typo="hl-sm" color="black">
           PFTextInput
         </PFText>
-        <div className={styles['input-stack']}>
+        <div className={styles.inputStack}>
           {inputSizes.map(size => (
-            <div className={styles['input-row']} key={size}>
+            <div className={styles.inputRow} key={size}>
               <PFText as="span" typo="label-md" color="neutral-cool-500">
                 {size}
               </PFText>
@@ -471,7 +479,7 @@ export function TestPage() {
         <PFText as="div" typo="hl-sm" color="black">
           PFSearchInput
         </PFText>
-        <div className={styles['search-stack']}>
+        <div className={styles.searchStack}>
           <PFSearchInput value={searchQuery} onValueChange={setSearchQuery} />
           <PFSearchInput defaultValue="기업가 정신" />
           <PFSearchInput disabled placeholder="disabled" />
@@ -482,7 +490,7 @@ export function TestPage() {
         <PFText as="div" typo="hl-sm" color="black">
           PFSearchFilter
         </PFText>
-        <div className={styles['search-stack']}>
+        <div className={styles.searchStack}>
           <PFSearchFilter
             label="모집현황"
             options={recruitmentStatusFilterOptions}
@@ -503,7 +511,7 @@ export function TestPage() {
         <PFText as="div" typo="hl-sm" color="black">
           PFToggle
         </PFText>
-        <div className={styles['toggle-stack']}>
+        <div className={styles.toggleStack}>
           <PFToggle variant="check-large" checked={toggleLarge} onChange={setToggleLarge}>
             <PFText typo="bd-lg-sb" color="inherit">
               전체 동의하기
@@ -535,12 +543,12 @@ export function TestPage() {
         <PFText as="div" typo="hl-sm" color="black">
           PFPagination
         </PFText>
-        <div className={styles['pagination-stack']}>
-          <div className={styles['pagination-row']}>
+        <div className={styles.paginationStack}>
+          <div className={styles.paginationRow}>
             <PFText as="span" typo="label-md" color="neutral-cool-500">
               numbered
             </PFText>
-            <div className={styles['pagination-list']}>
+            <div className={styles.paginationList}>
               {paginationSizes.map(size => (
                 <PFPagination
                   currentPage={numberedPage}
@@ -553,11 +561,11 @@ export function TestPage() {
             </div>
           </div>
 
-          <div className={styles['pagination-row']}>
+          <div className={styles.paginationRow}>
             <PFText as="span" typo="label-md" color="neutral-cool-500">
               compact
             </PFText>
-            <div className={styles['pagination-list']}>
+            <div className={styles.paginationList}>
               {paginationSizes.map(size => (
                 <PFPagination
                   currentPage={compactPage}
@@ -577,8 +585,8 @@ export function TestPage() {
         <PFText as="div" typo="hl-sm" color="black">
           PFTabs
         </PFText>
-        <div className={styles['tabs-stack']}>
-          <div className={styles['tabs-row']}>
+        <div className={styles.tabsStack}>
+          <div className={styles.tabsRow}>
             <PFText as="span" typo="label-md" color="neutral-cool-500">
               underline / isolated
             </PFText>
@@ -591,7 +599,7 @@ export function TestPage() {
             />
           </div>
 
-          <div className={styles['tabs-row']}>
+          <div className={styles.tabsRow}>
             <PFText as="span" typo="label-md" color="neutral-cool-500">
               underline / bordered
             </PFText>
@@ -604,7 +612,7 @@ export function TestPage() {
             />
           </div>
 
-          <div className={styles['tabs-row']}>
+          <div className={styles.tabsRow}>
             <PFText as="span" typo="label-md" color="neutral-cool-500">
               pill / large
             </PFText>
@@ -617,7 +625,7 @@ export function TestPage() {
             />
           </div>
 
-          <div className={styles['tabs-row']}>
+          <div className={styles.tabsRow}>
             <PFText as="span" typo="label-md" color="neutral-cool-500">
               pill / medium
             </PFText>
@@ -675,8 +683,8 @@ export function TestPage() {
                   key={option.key}
                   type="button"
                   className={[
-                    styles['sort-option'],
-                    layoutSort === option.key ? styles['sort-option-active'] : undefined,
+                    styles.sortOption,
+                    layoutSort === option.key ? styles.sortOptionActive : undefined,
                   ]
                     .filter(Boolean)
                     .join(' ')}
@@ -691,7 +699,7 @@ export function TestPage() {
             <PFPagination currentPage={layoutPage} totalPages={8} onPageChange={setLayoutPage} />
           }
         >
-          <div className={styles['list-slot-placeholder']} />
+          <div className={styles.listSlotPlaceholder} />
         </SearchListLayout>
       </div>
 
@@ -699,7 +707,7 @@ export function TestPage() {
         <PFText as="div" typo="hl-sm" color="black">
           PFModal
         </PFText>
-        <div className={styles['modal-stack']}>
+        <div className={styles.modalStack}>
           <PFButton variant="secondary" onClick={() => setIsModalOpen(true)}>
             PFModal 열기
           </PFButton>
@@ -710,7 +718,7 @@ export function TestPage() {
         <PFText as="div" typo="hl-sm" color="black">
           PFAlertModal
         </PFText>
-        <div className={styles['modal-stack']}>
+        <div className={styles.modalStack}>
           <PFButton variant="secondary" onClick={() => setIsAlertModalOpen(true)}>
             PFAlertModal 열기
           </PFButton>
@@ -725,11 +733,11 @@ export function TestPage() {
           마이페이지 유형 분기·로그인 게이트를 localStorage mock으로 확인합니다.
         </PFText>
 
-        <div className={styles['guide-block']}>
+        <div className={styles.guideBlock}>
           <PFText as="div" typo="bd-md-sb" color="black">
             회원 프로필 (platform:dev:member-profile)
           </PFText>
-          <div className={styles['guide-link-row']}>
+          <div className={styles.guideLinkRow}>
             {DEV_MEMBER_PROFILE_OPTIONS.map(option => (
               <PFButton
                 key={option.value}
@@ -743,11 +751,11 @@ export function TestPage() {
           </div>
         </div>
 
-        <div className={styles['guide-block']}>
+        <div className={styles.guideBlock}>
           <PFText as="div" typo="bd-md-sb" color="black">
             dev 로그인 상태
           </PFText>
-          <div className={styles['guide-link-row']}>
+          <div className={styles.guideLinkRow}>
             <PFButton
               size="medium"
               variant={devIsLoggedIn ? 'primary' : 'tertiary'}
@@ -783,13 +791,13 @@ export function TestPage() {
           최초 로그인과 회원가입에서 서로 다른 안내 UI로 분기합니다.
         </PFText>
 
-        <div className={styles['guide-block']}>
+        <div className={styles.guideBlock}>
           <PFText as="div" typo="bd-md-sb" color="black">
             Mock 데이터
           </PFText>
-          <div className={styles['guide-table']}>
+          <div className={styles.guideTable}>
             {authMockDataRows.map(row => (
-              <div className={styles['guide-table-row']} key={row.label}>
+              <div className={styles.guideTableRow} key={row.label}>
                 <PFText as="span" typo="bd-sm-md" color="neutral-cool-500">
                   {row.label}
                 </PFText>
@@ -801,11 +809,11 @@ export function TestPage() {
           </div>
         </div>
 
-        <div className={styles['guide-block']}>
+        <div className={styles.guideBlock}>
           <PFText as="div" typo="bd-md-sb" color="black">
             화면 바로가기
           </PFText>
-          <div className={styles['guide-link-row']}>
+          <div className={styles.guideLinkRow}>
             {authRouteLinks.map(link => (
               <PFButton
                 key={link.href}
@@ -820,17 +828,17 @@ export function TestPage() {
         </div>
 
         {authGuideSections.map(section => (
-          <div className={styles['guide-block']} key={section.title}>
+          <div className={styles.guideBlock} key={section.title}>
             <PFText as="div" typo="bd-md-sb" color="black">
               {section.title}
             </PFText>
-            <div className={styles['guide-scenario-stack']}>
+            <div className={styles.guideScenarioStack}>
               {section.scenarios.map(scenario => (
-                <div className={styles['guide-card']} key={scenario.title}>
+                <div className={styles.guideCard} key={scenario.title}>
                   <PFText as="div" typo="bd-md-sb" color="black">
                     {scenario.title}
                   </PFText>
-                  <ol className={styles['guide-list']}>
+                  <ol className={styles.guideList}>
                     {scenario.steps.map(step => (
                       <li key={step}>
                         <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
@@ -854,7 +862,7 @@ export function TestPage() {
           </div>
         ))}
 
-        <div className={styles['guide-note']}>
+        <div className={styles.guideNote}>
           <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
             dev 로그인 상태: localStorage{' '}
             <PFText as="span" typo="bd-sm-sb" color="black">
