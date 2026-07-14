@@ -7,4 +7,4 @@ export {
   type DetailInfoFormNameBlockRow,
   type DetailInfoFormProps,
   type DetailInfoFormRowProps,
-} from './detail-info-form'
+} from '@jakorea/form-template-runtime'
