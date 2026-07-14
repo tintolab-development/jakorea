@@ -1,0 +1,32 @@
+/**
+ * CMS Design System — 독립 쇼케이스 (/design-system)
+ * Layout·LNB 밖 전용 페이지. ADMIN만 접근.
+ */
+
+import { FoundationsSection } from './ui/foundations-section'
+import { DesignSystemToc } from './ui/toc'
+import './page.css'
+
+export function DesignSystemPage() {
+  return (
+    <div className="ds-page-shell">
+      <div className="ds-page">
+        <DesignSystemToc />
+        <div className="ds-page__main">
+          <header className="ds-page__hero">
+            <p className="ds-page__eyebrow">CMS Design System</p>
+            <h1 className="ds-page__title">Component Showcase</h1>
+            <p className="ds-page__lead">
+              CMS 페이지에서 실제로 쓰는 <code>shared/ui</code> · <code>shared/components</code>{' '}
+              컴포넌트와 토큰을 한곳에서 확인합니다. Storybook이 아닌 앱 내 라이브 쇼케이스입니다.
+            </p>
+          </header>
+
+          <FoundationsSection />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default DesignSystemPage

@@ -1,0 +1,382 @@
+/**
+ * CMS Design System 쇼케이스 페이지 (Layout/LNB 밖 독립 셸)
+ */
+
+.ds-page-shell {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: var(--spacing-32) var(--spacing-24) var(--spacing-50);
+  background: var(--color-bg-secondary);
+  font-family: var(--font-family-primary);
+  color: var(--color-text-heading);
+  overflow-x: clip;
+}
+
+.ds-page {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: var(--spacing-24);
+  align-items: start;
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  min-width: 0;
+}
+
+.ds-page__toc {
+  position: sticky;
+  top: var(--spacing-16);
+  max-height: calc(100vh - var(--spacing-32));
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-16);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-8);
+  background: var(--color-bg-base);
+}
+
+.ds-page__toc-title {
+  margin: 0 0 var(--spacing-8);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-700);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.ds-page__toc-link {
+  display: block;
+  padding: var(--spacing-6) var(--spacing-8);
+  border-radius: var(--radius-4);
+  color: var(--color-text-body);
+  font-size: var(--font-size-13);
+  line-height: var(--line-height-normal);
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ds-page__toc-link:hover {
+  background: var(--color-brand-primary-overlay-08);
+  color: var(--color-brand-primary);
+}
+
+.ds-page__main {
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-32);
+}
+
+.ds-page__hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  padding-bottom: var(--spacing-24);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ds-page__eyebrow {
+  margin: 0;
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-600);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-brand-primary);
+}
+
+.ds-page__title {
+  margin: 0;
+  font-size: var(--font-size-32);
+  font-weight: var(--font-weight-700);
+  line-height: var(--line-height-tight);
+  color: var(--color-text-heading);
+}
+
+.ds-page__lead {
+  margin: 0;
+  max-width: 52rem;
+  font-size: var(--font-size-15);
+  line-height: 1.6;
+  color: var(--color-text-body);
+}
+
+.ds-section {
+  scroll-margin-top: var(--spacing-24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  min-width: 0;
+}
+
+.ds-section__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.ds-section__title {
+  margin: 0;
+  font-size: var(--font-size-24);
+  font-weight: var(--font-weight-700);
+  line-height: var(--line-height-tight);
+}
+
+.ds-section__desc {
+  margin: 0;
+  font-size: var(--font-size-14);
+  line-height: 1.55;
+  color: var(--color-text-body);
+}
+
+.ds-note {
+  margin: 0;
+  padding: var(--spacing-12) var(--spacing-16);
+  border-left: 3px solid var(--color-brand-primary);
+  background: var(--color-bg-accent);
+  border-radius: 0 var(--radius-6) var(--radius-6) 0;
+  font-size: var(--font-size-13);
+  line-height: 1.5;
+  color: var(--color-text-body);
+}
+
+.ds-note--warn {
+  border-left-color: var(--color-settlement);
+  background: var(--color-settlement-light);
+}
+
+.ds-demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  padding: var(--spacing-20);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-8);
+  background: var(--color-bg-base);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.ds-demo__label {
+  margin: 0;
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-600);
+  color: var(--color-text-secondary);
+}
+
+.ds-demo__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+  min-width: 0;
+}
+
+/* 긴 라벨 트리거 — CmsButton 고정 width(140/120/100) 대신 텍스트 맞춤 */
+.ds-demo__row--fluid .cms-button.ant-btn {
+  width: auto !important;
+  min-width: fit-content;
+  max-width: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ds-demo__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  width: 100%;
+  max-width: 480px;
+  min-width: 0;
+}
+
+.ds-swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--spacing-12);
+}
+
+.ds-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.ds-swatch__chip {
+  height: 56px;
+  border-radius: var(--radius-6);
+  border: 1px solid var(--color-border);
+}
+
+.ds-swatch__name {
+  margin: 0;
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-600);
+  color: var(--color-text-heading);
+  word-break: break-all;
+}
+
+.ds-swatch__token {
+  margin: 0;
+  font-size: var(--font-size-11);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-number);
+}
+
+.ds-token-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-13);
+}
+
+.ds-token-table th,
+.ds-token-table td {
+  padding: var(--spacing-8) var(--spacing-12);
+  border-bottom: 1px solid var(--color-border-light);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.ds-token-table th {
+  background: var(--color-table-head-bg);
+  font-weight: var(--font-weight-600);
+  color: var(--color-text-heading);
+}
+
+.ds-token-table code {
+  font-family: var(--font-family-number);
+  font-size: var(--font-size-12);
+  color: var(--color-brand-secondary-1);
+}
+
+.ds-space-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.ds-space-bar__mark {
+  height: 12px;
+  background: var(--color-brand-primary);
+  border-radius: var(--radius-3);
+  flex-shrink: 0;
+}
+
+.ds-type-sample {
+  margin: 0;
+  color: var(--color-text-heading);
+}
+
+.ds-list {
+  margin: 0;
+  padding-left: var(--spacing-20);
+  font-size: var(--font-size-14);
+  line-height: 1.6;
+  color: var(--color-text-body);
+}
+
+.ds-list li + li {
+  margin-top: var(--spacing-6);
+}
+
+.ds-loading-demo {
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*
+ * Calendar 쇼케이스: 본문 컬럼(~1100px)보다 큰 기본 min-width를 줄여 맞춤.
+ * shared calendar.css 본체는 변경하지 않음.
+ */
+.ds-calendar-demo {
+  --calendar-cell-min-width: 88px;
+  --calendar-cell-min-height: 88px;
+  --calendar-main-horizontal-padding: 16px;
+  --calendar-main-vertical-padding: 16px;
+  --calendar-split-card-height: 640px;
+  --calendar-sub-right-list-min-width: 220px;
+  --calendar-split-card-column-gap: 12px;
+
+  width: 100%;
+  max-width: 100%;
+  min-height: 480px;
+  overflow: auto;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-8);
+  background: var(--color-bg-base);
+}
+
+.ds-calendar-demo--split {
+  min-height: 640px;
+}
+
+.ds-calendar-demo .calendar-main,
+.ds-calendar-demo .calendar-split-card-layout,
+.ds-calendar-demo .calendar-split-card--left,
+.ds-calendar-demo .calendar-set-scroll-host {
+  --calendar-cell-min-width: 88px;
+  --calendar-cell-min-height: 88px;
+  --calendar-main-horizontal-padding: 16px;
+  --calendar-main-vertical-padding: 16px;
+  --calendar-split-card-height: 640px;
+  --calendar-sub-right-list-min-width: 220px;
+}
+
+.ds-calendar-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  padding: var(--spacing-12);
+  height: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ds-calendar-side__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  padding: var(--spacing-12);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-6);
+  background: var(--color-bg-secondary);
+}
+
+.ds-demo--table {
+  padding: var(--spacing-16);
+}
+
+.ds-demo--table .filter-table-layout {
+  min-width: 0;
+}
+
+/* DetailInfoForm 데모: 고정 헤더 높이로 description이 잘리지 않게 */
+.ds-demo .detail-info-form__header-lead {
+  height: auto;
+  min-height: 40px;
+  align-items: center;
+}
+
+@media (max-width: 960px) {
+  .ds-page-shell {
+    padding: var(--spacing-20) var(--spacing-16) var(--spacing-32);
+  }
+
+  .ds-page {
+    grid-template-columns: 1fr;
+  }
+
+  .ds-page__toc {
+    position: static;
+    max-height: none;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
