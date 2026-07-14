@@ -9,6 +9,8 @@ import { FiltersTablesSection } from './ui/filters-tables-section'
 import { FormsExtrasSection } from './ui/forms-extras-section'
 import { FormsSection } from './ui/forms-section'
 import { FoundationsSection } from './ui/foundations-section'
+import { ModalsExtendedSection } from './ui/modals-extended-section'
+import { ModalsSection } from './ui/modals-section'
 import { DesignSystemToc } from './ui/toc'
 import './page.css'
 
@@ -33,6 +35,8 @@ export function DesignSystemPage() {
           <DetailFormsSection />
           <FormsExtrasSection />
           <FiltersTablesSection />
+          <ModalsSection />
+          <ModalsExtendedSection />
         </div>
       </div>
     </div>
