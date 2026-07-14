@@ -9,6 +9,7 @@ export const DS_TOC_ITEMS: TocItem[] = [
   { id: 'forms', label: 'Forms' },
   { id: 'detail-forms', label: 'Detail Forms' },
   { id: 'forms-extras', label: 'Forms extras' },
+  { id: 'filters-tables', label: 'Filters & Tables' },
 ]
 
 export function DesignSystemToc() {

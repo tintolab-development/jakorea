@@ -5,6 +5,7 @@
 
 import { ButtonsSection } from './ui/buttons-section'
 import { DetailFormsSection } from './ui/detail-forms-section'
+import { FiltersTablesSection } from './ui/filters-tables-section'
 import { FormsExtrasSection } from './ui/forms-extras-section'
 import { FormsSection } from './ui/forms-section'
 import { FoundationsSection } from './ui/foundations-section'
@@ -31,6 +32,7 @@ export function DesignSystemPage() {
           <FormsSection />
           <DetailFormsSection />
           <FormsExtrasSection />
+          <FiltersTablesSection />
         </div>
       </div>
     </div>
