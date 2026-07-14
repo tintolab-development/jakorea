@@ -1,0 +1,45 @@
+/**
+ * CMS 템플릿 surface — Platform typo 격리 및 DetailInfoForm radius override
+ */
+
+.form-template-host {
+  --detail-info-form-body-radius: 8px;
+  --default-BK: #3d3d3d;
+  --main-WT: #fff;
+  --table-line: #e0e0e0;
+  --JA-mint-01: #01a1af;
+
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--default-BK);
+  min-width: 0;
+}
+
+.form-template-host[data-surface='cmsAdmin'] {
+  --detail-info-form-body-radius: 8px;
+}
+
+.form-template-host[data-surface='platformUser'] {
+  --detail-info-form-body-radius: 16px;
+}
+
+/* Platform 전역 typo utility가 CMS surface 안으로 스며드는 것 방지 */
+.form-template-host :is([class*='typo-']) {
+  all: unset;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  color: inherit;
+}
+
+.form-template-host .form-template-renderer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
