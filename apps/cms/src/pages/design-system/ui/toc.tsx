@@ -15,6 +15,9 @@ export const DS_TOC_ITEMS: TocItem[] = [
   { id: 'calendar', label: 'Calendar' },
   { id: 'status', label: 'Status' },
   { id: 'status-extended', label: 'Status (extended)' },
+  { id: 'navigation', label: 'Navigation' },
+  { id: 'feedback', label: 'Empty & Loading' },
+  { id: 'do-dont', label: "Do / Don't" },
 ]
 
 export function DesignSystemToc() {
