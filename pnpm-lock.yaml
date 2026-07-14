@@ -105,6 +105,12 @@ importers:
       '@jakorea/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@jakorea/form-schema':
+        specifier: workspace:*
+        version: link:../../packages/form-schema
+      '@jakorea/form-template-runtime':
+        specifier: workspace:*
+        version: link:../../packages/form-template-runtime
       '@jakorea/identity-verification':
         specifier: workspace:*
         version: link:../../packages/identity-verification
@@ -311,9 +317,18 @@ importers:
 
   apps/platform:
     dependencies:
+      '@ant-design/icons':
+        specifier: ^5.5.1
+        version: 5.6.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@jakorea/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@jakorea/form-schema':
+        specifier: workspace:*
+        version: link:../../packages/form-schema
+      '@jakorea/form-template-runtime':
+        specifier: workspace:*
+        version: link:../../packages/form-template-runtime
       '@jakorea/location':
         specifier: workspace:*
         version: link:../../packages/location
@@ -335,6 +350,9 @@ importers:
       '@tiptap/react':
         specifier: ^3.25.0
         version: 3.27.1(@floating-ui/dom@1.7.6)(@tiptap/core@3.27.1(@tiptap/pm@3.27.1))(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      antd:
+        specifier: ^5.28.0
+        version: 5.29.2(date-fns@4.1.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react:
         specifier: ^19.2.0
         version: 19.2.0
@@ -363,6 +381,44 @@ importers:
 
   packages/domain:
     devDependencies:
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+
+  packages/form-schema:
+    dependencies:
+      dayjs:
+        specifier: ^1.11.13
+        version: 1.11.19
+    devDependencies:
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+
+  packages/form-template-runtime:
+    dependencies:
+      '@jakorea/form-schema':
+        specifier: workspace:*
+        version: link:../form-schema
+    devDependencies:
+      '@ant-design/icons':
+        specifier: ^5.5.1
+        version: 5.6.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@types/react':
+        specifier: ^19.2.5
+        version: 19.2.7
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.7)
+      antd:
+        specifier: ^5.22.0
+        version: 5.29.2(date-fns@4.1.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react:
+        specifier: ^19.2.0
+        version: 19.2.0
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.0(react@19.2.0)
       typescript:
         specifier: ~5.9.3
         version: 5.9.3
@@ -4247,7 +4303,7 @@ snapshots:
     dependencies:
       '@ant-design/colors': 7.2.1
       '@ant-design/icons-svg': 4.4.2
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.29.7
       classnames: 2.5.1
       rc-util: 5.44.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react: 19.2.0
@@ -4927,7 +4983,7 @@ snapshots:
 
   '@rc-component/async-validator@5.0.4':
     dependencies:
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.29.7
 
   '@rc-component/color-picker@2.0.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
@@ -4940,14 +4996,14 @@ snapshots:
 
   '@rc-component/context@1.4.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.29.7
       rc-util: 5.44.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
 
   '@rc-component/mini-decimal@1.1.0':
     dependencies:
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.29.7
 
   '@rc-component/mutate-observer@1.1.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
@@ -4959,7 +5015,7 @@ snapshots:
 
   '@rc-component/portal@1.1.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.29.7
       classnames: 2.5.1
       rc-util: 5.44.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react: 19.2.0
@@ -7279,7 +7335,7 @@ snapshots:
 
   rc-overflow@1.5.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.29.7
       classnames: 2.5.1
       rc-resize-observer: 1.4.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       rc-util: 5.44.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -7457,7 +7513,7 @@ snapshots:
 
   rc-virtual-list@3.19.2(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:
-      '@babel/runtime': 7.28.4
+      '@babel/runtime': 7.29.7
       classnames: 2.5.1
       rc-resize-observer: 1.4.3(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       rc-util: 5.44.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
