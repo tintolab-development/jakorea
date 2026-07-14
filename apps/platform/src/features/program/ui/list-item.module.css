@@ -1,0 +1,96 @@
+.row {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: var(--spacing-24);
+  padding: var(--spacing-24);
+  border: 1px solid var(--color-neutral-cool-100);
+  border-radius: 16px;
+  background: var(--color-neutral-white);
+  cursor: pointer;
+  text-align: left;
+  grid-template-columns: 88px minmax(0, 1fr) auto auto;
+}
+
+.row:hover {
+  border-color: var(--color-primary-200);
+}
+
+.thumbnailWrap {
+  width: 88px;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--color-neutral-cool-50);
+}
+
+.thumbnail {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.title {
+  margin: 0;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
+}
+
+.tag {
+  padding: var(--spacing-4) var(--spacing-8);
+  border-radius: 999px;
+  background: var(--color-neutral-cool-50);
+}
+
+.recruitment {
+  display: flex;
+  min-width: 140px;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.arrow {
+  flex-shrink: 0;
+}
+
+@media (max-width: 1023px) {
+  .row {
+    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-areas:
+      'thumbnail content'
+      'thumbnail recruitment'
+      'arrow arrow';
+  }
+
+  .thumbnailWrap {
+    grid-area: thumbnail;
+    width: 72px;
+  }
+
+  .content {
+    grid-area: content;
+  }
+
+  .recruitment {
+    grid-area: recruitment;
+    min-width: 0;
+  }
+
+  .arrow {
+    grid-area: arrow;
+    justify-self: end;
+  }
+}
