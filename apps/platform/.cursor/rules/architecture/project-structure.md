@@ -49,7 +49,7 @@ app-layout/
 
 ## Styling
 
-- **컴포넌트 스코프**: `*.module.css` (kebab-case 파일명)
+- **컴포넌트 스코프**: `*.module.css` (파일명 kebab-case, **클래스명 camelCase**)
 - **전역**: `src/shared/styles/` (`tokens.css`, `reset.css`)
 - **인라인 style**: 동적 값이 CSS 변수로 표현 불가할 때만
 - **반응형**: JS viewport 분기 대신 CSS media query 우선

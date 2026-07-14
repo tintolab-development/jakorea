@@ -20,6 +20,7 @@ Use this checklist when reviewing CSS Modules and responsive UI changes.
 
 ## CSS Quality
 
+- Class names use **camelCase** (not kebab-case); TSX uses `styles.className` dot access.
 - Class names describe role or structure.
 - Repeated spacing uses parent `gap` where possible.
 - CSS variables are used for repeated design values.

@@ -11,6 +11,7 @@ Apply this skill when implementing or reviewing frontend UI in `apps/platform` t
 
 - Produce complete, ready-to-replace files when the user asks for code.
 - Prefer kebab-case files: `home-page.tsx` + `home-page.module.css`, PascalCase export (`export function HomePage`).
+- **CSS Module class names: camelCase** (`heroTitle`, `sortOptionActive`); use `styles.className` in TSX.
 - Keep styling in CSS Modules unless inline style is required for dynamic values.
 - Use mobile-first CSS by default.
 - Avoid JavaScript viewport checks unless CSS cannot solve the layout.

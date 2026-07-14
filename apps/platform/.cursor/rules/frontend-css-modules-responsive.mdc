@@ -41,6 +41,8 @@ When modifying an existing component, follow the existing project structure inst
 
 ## CSS Modules Naming
 
+**Class names use camelCase.** File and folder names stay kebab-case (`home-page.module.css`); selectors inside modules use camelCase (`heroTitle`, `sortOptionActive`).
+
 Use clear class names that describe structure or role, not visual appearance only.
 
 Good:
@@ -53,15 +55,19 @@ Good:
 .cardList {}
 .thumbnailWrap {}
 .primaryButton {}
+.sortOptionActive {}
 ```
 
 Avoid:
 
 ```css
+.sort-option-active {}  /* kebab-case — Platform convention is camelCase */
 .bigRedBox {}
 .marginTop20 {}
 .flexDiv {}
 ```
+
+In TSX, prefer dot access: `styles.sortOptionActive` (not `styles['sort-option-active']`).
 
 ## React Class Usage
 
