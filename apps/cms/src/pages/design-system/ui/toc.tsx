@@ -6,6 +6,9 @@ type TocItem = {
 export const DS_TOC_ITEMS: TocItem[] = [
   { id: 'foundations', label: 'Foundations' },
   { id: 'buttons', label: 'Buttons' },
+  { id: 'forms', label: 'Forms' },
+  { id: 'detail-forms', label: 'Detail Forms' },
+  { id: 'forms-extras', label: 'Forms extras' },
 ]
 
 export function DesignSystemToc() {

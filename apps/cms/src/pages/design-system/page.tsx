@@ -4,6 +4,9 @@
  */
 
 import { ButtonsSection } from './ui/buttons-section'
+import { DetailFormsSection } from './ui/detail-forms-section'
+import { FormsExtrasSection } from './ui/forms-extras-section'
+import { FormsSection } from './ui/forms-section'
 import { FoundationsSection } from './ui/foundations-section'
 import { DesignSystemToc } from './ui/toc'
 import './page.css'
@@ -25,6 +28,9 @@ export function DesignSystemPage() {
 
           <FoundationsSection />
           <ButtonsSection />
+          <FormsSection />
+          <DetailFormsSection />
+          <FormsExtrasSection />
         </div>
       </div>
     </div>
