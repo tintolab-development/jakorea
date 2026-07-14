@@ -4,6 +4,7 @@
  */
 
 import { ButtonsSection } from './ui/buttons-section'
+import { CalendarSection } from './ui/calendar-section'
 import { DetailFormsSection } from './ui/detail-forms-section'
 import { FiltersTablesSection } from './ui/filters-tables-section'
 import { FormsExtrasSection } from './ui/forms-extras-section'
@@ -37,6 +38,7 @@ export function DesignSystemPage() {
           <FiltersTablesSection />
           <ModalsSection />
           <ModalsExtendedSection />
+          <CalendarSection />
         </div>
       </div>
     </div>

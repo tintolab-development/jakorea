@@ -12,6 +12,7 @@ export const DS_TOC_ITEMS: TocItem[] = [
   { id: 'filters-tables', label: 'Filters & Tables' },
   { id: 'modals', label: 'Modals' },
   { id: 'modals-extended', label: 'Modals (extended)' },
+  { id: 'calendar', label: 'Calendar' },
 ]
 
 export function DesignSystemToc() {
