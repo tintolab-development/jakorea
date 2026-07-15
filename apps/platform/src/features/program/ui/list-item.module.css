@@ -1,27 +1,28 @@
 .row {
-  display: grid;
+  display: flex;
   width: 100%;
   min-width: 0;
   align-items: center;
-  gap: var(--spacing-24);
-  padding: var(--spacing-24);
-  border: 1px solid var(--color-neutral-cool-100);
-  border-radius: 16px;
+  align-self: stretch;
+  gap: var(--spacing-40);
+  border: none;
   background: var(--color-neutral-white);
   cursor: pointer;
   text-align: left;
-  grid-template-columns: 88px minmax(0, 1fr) auto auto;
 }
 
-.row:hover {
-  border-color: var(--color-primary-200);
+.row:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
 }
 
 .thumbnailWrap {
-  width: 88px;
-  aspect-ratio: 3 / 4;
+  width: 176px;
+  height: 220px;
+  flex-shrink: 0;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 16px;
   background: var(--color-neutral-cool-50);
 }
 
@@ -35,62 +36,63 @@
 .content {
   display: flex;
   min-width: 0;
+  flex: 1 0 0;
   flex-direction: column;
-  gap: var(--spacing-8);
+  align-items: flex-start;
+  gap: var(--spacing-20);
+  padding-block: var(--spacing-20);
+}
+
+.info {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+  align-self: stretch;
 }
 
 .title {
   margin: 0;
 }
 
-.tags {
+.recruitmentAside {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-8);
-}
-
-.tag {
-  padding: var(--spacing-4) var(--spacing-8);
-  border-radius: 999px;
-  background: var(--color-neutral-cool-50);
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-60);
+  padding-left: var(--spacing-32);
+  border-left: 1px solid var(--color-border-default);
 }
 
 .recruitment {
   display: flex;
-  min-width: 140px;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--spacing-4);
-}
-
-.arrow {
-  flex-shrink: 0;
 }
 
 @media (max-width: 1023px) {
   .row {
-    grid-template-columns: 72px minmax(0, 1fr);
-    grid-template-areas:
-      'thumbnail content'
-      'thumbnail recruitment'
-      'arrow arrow';
+    flex-wrap: wrap;
+    gap: var(--spacing-24);
   }
 
   .thumbnailWrap {
-    grid-area: thumbnail;
-    width: 72px;
+    width: 120px;
+    height: 150px;
   }
 
   .content {
-    grid-area: content;
+    flex: 1 1 240px;
+    padding-block: 0;
   }
 
-  .recruitment {
-    grid-area: recruitment;
-    min-width: 0;
-  }
-
-  .arrow {
-    grid-area: arrow;
-    justify-self: end;
+  .recruitmentAside {
+    width: 100%;
+    justify-content: space-between;
+    padding-left: 0;
+    border-left: none;
   }
 }

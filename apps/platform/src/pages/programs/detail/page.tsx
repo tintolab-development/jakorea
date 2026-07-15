@@ -2,6 +2,7 @@ import {
   getMockProgramById,
   getProgramIdFromPath,
   ProgramBackButton,
+  ProgramStatusBadges,
   programApplyPath,
   programApplyRequiredPath,
   PROGRAMS_PATH,
@@ -67,15 +68,12 @@ export function ProgramDetailPage() {
             </PFText>
           </div>
 
-          <div className={styles.tags}>
-            {program.statusTags.map(tag => (
-              <span className={styles.tag} key={tag}>
-                <PFText as="span" typo="caption-rg" color="neutral-cool-600">
-                  {tag}
-                </PFText>
-              </span>
-            ))}
-          </div>
+          <ProgramStatusBadges
+            recruitmentStatus={program.recruitmentStatus}
+            educationTargetLabel={program.educationTargetLabel}
+            educationForm={program.educationForm}
+            educationFormLabel={program.educationFormLabel}
+          />
 
           <section className={styles.section}>
             <PFText as="h2" typo="hl-sm" color="black">

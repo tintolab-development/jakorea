@@ -32,17 +32,5 @@
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: var(--spacing-16);
-}
-
-.sortOption {
-  border: 0;
-  background: transparent;
-  color: var(--color-neutral-cool-500);
-  cursor: pointer;
-}
-
-.sortOptionActive {
-  color: var(--color-black);
-  font-weight: 600;
+  gap: 40px;
 }

@@ -1,20 +1,23 @@
 import { useMemo, useState } from 'react'
-import type { ProgramCategory } from '@/features/program'
+import type { ProgramCategory, ProgramsListParams } from '@/features/program'
 import {
   buildProgramsListPath,
+  DEFAULT_PROGRAMS_LIST_PARAMS,
   getProgramsListReturnPath,
   getMockPrograms,
   PROGRAM_CATEGORY_ITEMS,
-  PROGRAM_SORT_OPTIONS,
+  PROGRAM_FILTER_KEYS,
   programDetailPath,
-  readProgramsListParams,
   ProgramListItemRow,
+  ProgramSort,
+  readProgramsListParams,
 } from '@/features/program'
 import {
   educationTargetFilterOptions,
-  participantTypeFilterOptions,
   recruitmentStatusFilterOptions,
+  recruitmentTargetFilterOptions,
 } from '@/shared/lib/filter-options'
+import { useSearchFilters } from '@/shared/hooks'
 import { PFPagination, PFSearchFilter, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
 import jaArrowUrl from '@/shared/assets/brand/ja-arrow.svg'
 import { SearchListLayout } from '@/widgets/search-list-layout'
@@ -31,6 +34,19 @@ const educationFormFilterOptions = [
 
 export function ProgramsPage() {
   const [params, setParams] = useState(readProgramsListParams)
+
+  const updateParams = (next: Partial<ProgramsListParams>) => {
+    const merged = { ...params, ...next }
+    setParams(merged)
+    window.location.assign(buildProgramsListPath(merged))
+  }
+
+  const { bindFilter, bindSort, reset } = useSearchFilters({
+    params,
+    updateParams,
+    defaultValues: DEFAULT_PROGRAMS_LIST_PARAMS,
+    filterKeys: PROGRAM_FILTER_KEYS,
+  })
 
   const filteredPrograms = useMemo(() => {
     let items = getMockPrograms()
@@ -54,12 +70,6 @@ export function ProgramsPage() {
   const totalPages = Math.max(1, Math.ceil(filteredPrograms.length / PAGE_SIZE))
   const currentPage = Math.min(params.page, totalPages)
   const pageItems = filteredPrograms.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
-
-  const updateParams = (next: Partial<typeof params>) => {
-    const merged = { ...params, ...next }
-    setParams(merged)
-    window.location.assign(buildProgramsListPath(merged))
-  }
 
   return (
     <section className={styles.page}>
@@ -95,59 +105,29 @@ export function ProgramsPage() {
           <>
             <PFSearchFilter
               label="모집대상"
-              options={participantTypeFilterOptions}
-              value={params.recruitmentTarget}
-              onChange={recruitmentTarget => updateParams({ recruitmentTarget, page: 1 })}
+              options={recruitmentTargetFilterOptions}
+              {...bindFilter('recruitmentTarget')}
             />
             <PFSearchFilter
               label="모집현황"
               options={recruitmentStatusFilterOptions}
-              value={params.recruitmentStatus}
-              onChange={recruitmentStatus => updateParams({ recruitmentStatus, page: 1 })}
+              {...bindFilter('recruitmentStatus')}
             />
             <PFSearchFilter
               label="교육대상"
               options={educationTargetFilterOptions}
-              value={params.educationTarget}
-              onChange={educationTarget => updateParams({ educationTarget, page: 1 })}
+              {...bindFilter('educationTarget')}
             />
             <PFSearchFilter
               label="교육형태"
               options={educationFormFilterOptions}
-              value={params.educationForm}
-              onChange={educationForm => updateParams({ educationForm, page: 1 })}
+              {...bindFilter('educationForm')}
             />
           </>
         }
-        onFilterReset={() =>
-          updateParams({
-            recruitmentTarget: 'all',
-            recruitmentStatus: 'all',
-            educationTarget: 'all',
-            educationForm: 'all',
-            page: 1,
-          })
-        }
+        onFilterReset={reset}
         toolbarTitle={`총 ${filteredPrograms.length}개 프로그램`}
-        sort={
-          <>
-            {PROGRAM_SORT_OPTIONS.map(option => (
-              <button
-                key={option.key}
-                type="button"
-                className={[
-                  styles.sortOption,
-                  params.sort === option.key ? styles.sortOptionActive : undefined,
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                onClick={() => updateParams({ sort: option.key, page: 1 })}
-              >
-                {option.label}
-              </button>
-            ))}
-          </>
-        }
+        sort={<ProgramSort {...bindSort('sort')} />}
         pagination={
           <PFPagination
             currentPage={currentPage}

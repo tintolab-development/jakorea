@@ -2,12 +2,12 @@ export type {
   ProgramCategory,
   ProgramDetail,
   ProgramListItem,
-  ProgramSort,
   ProgramsListParams,
 } from './model/types'
 export {
   DEFAULT_PROGRAMS_LIST_PARAMS,
   PROGRAM_CATEGORY_ITEMS,
+  PROGRAM_FILTER_KEYS,
   PROGRAM_SORT_OPTIONS,
   PROGRAMS_PATH,
   programApplyCompletePath,
@@ -30,3 +30,5 @@ export {
 } from './lib/routes'
 export { ProgramBackButton } from './ui/back-button'
 export { ProgramListItemRow } from './ui/list-item'
+export { ProgramSort } from './ui/program-sort'
+export { ProgramStatusBadges } from './ui/program-status-badges'

@@ -1,4 +1,4 @@
-import type { ProgramCategory, ProgramSort } from '../model/types'
+import type { ProgramCategory, ProgramSort, ProgramsListParams } from '../model/types'
 
 export const PROGRAMS_PATH = '/programs'
 
@@ -25,6 +25,13 @@ export const DEFAULT_PROGRAMS_LIST_PARAMS = {
   sort: 'latest',
   page: 1,
 } as const
+
+export const PROGRAM_FILTER_KEYS = [
+  'recruitmentTarget',
+  'recruitmentStatus',
+  'educationTarget',
+  'educationForm',
+] as const satisfies readonly (keyof ProgramsListParams)[]
 
 export const programDetailPath = (id: string, from?: string) => {
   const base = `/programs/${id}`

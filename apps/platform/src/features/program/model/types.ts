@@ -1,6 +1,10 @@
+import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
+
 export type ProgramCategory = 'all' | 'youth' | 'institution' | 'instructor'
 
 export type ProgramSort = 'latest' | 'name' | 'closing-soon'
+
+export type EducationForm = 'online' | 'offline' | 'hybrid'
 
 export type ProgramListItem = {
   id: string
@@ -9,7 +13,10 @@ export type ProgramListItem = {
   title: string
   operatingPeriodLabel: string
   recruitmentPeriodLabel: string
-  statusTags: string[]
+  recruitmentStatus: RecruitmentStatus
+  educationTargetLabel: string
+  educationForm: EducationForm
+  educationFormLabel: string
   thumbnailUrl: string
 }
 
