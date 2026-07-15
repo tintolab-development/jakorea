@@ -1,0 +1,8 @@
+.root {
+  display: inline-flex;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  border-radius: var(--radius-999);
+  vertical-align: middle;
+}

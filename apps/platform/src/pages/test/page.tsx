@@ -13,18 +13,22 @@ import {
   useRichTextEditor,
 } from '@/shared/rich-text'
 import {
+  PFCategoryBadge,
   PFAlertModal,
   PFArrowButton,
   PFButton,
   PFModal,
+  PFMetaBadge,
   PFPagination,
   PFSearchFilter,
   PFSearchInput,
+  PFStateBadge,
   PFTabs,
   PFToggle,
   PFText,
   PFTextInput,
 } from '@/shared/ui'
+import searchMintIconUrl from '@/shared/assets/icons/search-mint.svg'
 import { SearchListLayout } from '@/widgets/search-list-layout'
 import {
   DEV_MEMBER_PROFILE_OPTIONS,
@@ -82,6 +86,10 @@ const colorItems = [
 
 const arrowButtonSizes = ['large', 'medium'] as const
 const arrowButtonVariants = ['primary', 'secondary'] as const
+const badgeSizes = ['large', 'small'] as const
+const categoryBadgeVariants = ['primary', 'secondary', 'closed'] as const
+const categoryBadgeIconVariants = ['primary', 'secondary'] as const
+const stateBadgeTones = ['progress', 'success', 'error', 'disabled'] as const
 const buttonSizes = ['small', 'medium', 'large', 'xlarge'] as const
 const buttonVariants = ['primary', 'secondary', 'tertiary', 'text'] as const
 const inputSizes = ['medium', 'large', 'xlarge'] as const
@@ -446,6 +454,89 @@ export function TestPage() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFCategoryBadge
+        </PFText>
+        <div className={styles.buttonStack}>
+          {categoryBadgeVariants.map(variant => (
+            <div className={styles.buttonRow} key={variant}>
+              <PFText as="span" typo="label-md" color="neutral-cool-500">
+                {variant}
+              </PFText>
+              <div className={styles.buttonList}>
+                {badgeSizes.map(size => (
+                  <PFCategoryBadge key={`${variant}-${size}`} size={size} variant={variant}>
+                    카테고리
+                  </PFCategoryBadge>
+                ))}
+              </div>
+            </div>
+          ))}
+          {categoryBadgeIconVariants.map(iconVariant => (
+            <div className={styles.buttonRow} key={`icon-${iconVariant}`}>
+              <PFText as="span" typo="label-md" color="neutral-cool-500">
+                icon / {iconVariant}
+              </PFText>
+              <div className={styles.buttonList}>
+                {badgeSizes.map(size => (
+                  <PFCategoryBadge
+                    key={`icon-${iconVariant}-${size}`}
+                    size={size}
+                    iconVariant={iconVariant}
+                    icon={
+                      <img src={searchMintIconUrl} alt="" width={16} height={16} aria-hidden="true" />
+                    }
+                  >
+                    카테고리
+                  </PFCategoryBadge>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFStateBadge
+        </PFText>
+        <div className={styles.buttonStack}>
+          {stateBadgeTones.map(tone => (
+            <div className={styles.buttonRow} key={tone}>
+              <PFText as="span" typo="label-md" color="neutral-cool-500">
+                {tone}
+              </PFText>
+              <div className={styles.buttonList}>
+                {badgeSizes.map(size => (
+                  <PFStateBadge key={`${tone}-${size}`} size={size} tone={tone}>
+                    상태
+                  </PFStateBadge>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFMetaBadge
+        </PFText>
+        <div className={styles.buttonList}>
+          <PFMetaBadge
+            icon={<img src={searchMintIconUrl} alt="" width={16} height={16} aria-hidden="true" />}
+            primary="text"
+            secondary="text"
+          />
+          <PFMetaBadge
+            icon={<img src={searchMintIconUrl} alt="" width={16} height={16} aria-hidden="true" />}
+            primary="학교"
+            secondary="서울"
+          />
         </div>
       </div>
 

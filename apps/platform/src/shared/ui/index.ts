@@ -4,6 +4,17 @@ export { PFAlertModal } from './pf-alert-modal'
 export type { PFAlertModalProps } from './pf-alert-modal'
 export { PFArrowButton } from './pf-arrow-button'
 export type { PFArrowButtonProps, PFArrowButtonSize, PFArrowButtonVariant } from './pf-arrow-button'
+export { PFCategoryBadge } from './pf-category-badge'
+export type {
+  PFCategoryBadgeIconVariant,
+  PFCategoryBadgeProps,
+  PFCategoryBadgeSize,
+  PFCategoryBadgeVariant,
+} from './pf-category-badge'
+export { PFMetaBadge } from './pf-meta-badge'
+export type { PFMetaBadgeProps } from './pf-meta-badge'
+export { PFStateBadge } from './pf-state-badge'
+export type { PFStateBadgeProps, PFStateBadgeSize, PFStateBadgeTone } from './pf-state-badge'
 export { PFButton } from './pf-button'
 export { PFModal } from './pf-modal'
 export { PFPagination } from './pf-pagination'
