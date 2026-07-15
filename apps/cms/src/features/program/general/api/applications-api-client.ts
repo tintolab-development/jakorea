@@ -175,4 +175,48 @@ export async function submitVolunteerFinalResultRemote(
   )
 }
 
+export async function createInterviewSlotRemote(
+  programId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/interviewSlotCreateRequest').InterviewSlotCreateRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/interviewSlotResponse').InterviewSlotResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/interview-slots`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function createInterviewAssignmentRemote(
+  payload: import('@/shared/api/generated/dashboard/schemas/interviewAssignmentCreateRequest').InterviewAssignmentCreateRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/interviewAssignmentResponse').InterviewAssignmentResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: '/api/admin/interview-assignments',
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function assignVolunteerInterviewSlotRemote(
+  applicationId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/interviewAssignmentRequest').InterviewAssignmentRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/interviewAssignmentResponse').InterviewAssignmentResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/applications/volunteers/${encodeURIComponent(applicationId)}/interview-assignments`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
 export type { PageResponseOrganizationApplicationListItemResponse }

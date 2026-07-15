@@ -12,6 +12,8 @@ import {
   approveIndividualApplicationRemote,
   approveInstructorApplicationRemote,
   approveOrganizationApplicationRemote,
+  assignVolunteerInterviewSlotRemote,
+  createInterviewSlotRemote,
   fetchIndividualApplicationsRemote,
   fetchInstructorApplicationsRemote,
   fetchOrganizationApplicationsRemote,
@@ -223,6 +225,47 @@ export async function submitGeneralVolunteerFinalResult(
   if (!shouldUseGeneralApplicationsRemoteApi()) return
   assertApplicationsRemoteReady()
   await submitVolunteerFinalResultRemote(applicationId, payload)
+}
+
+/**
+ * remote ON: 면접 슬롯 생성 후 봉사자 신청에 배정.
+ * OpenAPI에 슬롯 목록 GET이 없어 배정 시 ad-hoc create.
+ * remote OFF: no-op (호출부에서 로컬 row patch만).
+ */
+export async function assignGeneralVolunteerInterview(params: {
+  programId: string
+  applicationId: string
+  slotDate: string
+  startAt: string
+  endAt: string
+  maxAssignCount?: number
+}): Promise<{ interviewSlotId?: number; interviewAssignmentId?: number }> {
+  if (!shouldUseGeneralApplicationsRemoteApi()) {
+    return {}
+  }
+  assertApplicationsRemoteReady()
+
+  const slot = await createInterviewSlotRemote(params.programId, {
+    slotDate: params.slotDate,
+    startAt: params.startAt,
+    endAt: params.endAt,
+    maxAssignCount: params.maxAssignCount ?? 1,
+    exceptionSlot: false,
+  })
+
+  const interviewSlotId = slot.interviewSlotId
+  if (interviewSlotId == null) {
+    throw new Error('면접 슬롯 생성 응답에 interviewSlotId가 없습니다.')
+  }
+
+  const assignment = await assignVolunteerInterviewSlotRemote(params.applicationId, {
+    interviewSlotId,
+  })
+
+  return {
+    interviewSlotId,
+    interviewAssignmentId: assignment.interviewAssignmentId,
+  }
 }
 
 export function mapSecondInterviewStatusToFinalResultPayload(
