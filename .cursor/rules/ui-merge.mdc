@@ -38,7 +38,7 @@ alwaysApply: true
    다음을 건드리면 요약에 **리뷰 권고**를 명시한다:
    - `apps/*/src/shared/**`, `packages/ui/**`
    - 디자인 토큰·`:root`·테마 (`theme-provider`, `index.css` 전역 import 체인)
-   - Ant Design `Table` / `Modal` / `Form` 래핑·공통 필터(`UnifiedFilterCard`, `AppButton`, `FilterSearchButton` 등)
+   - Ant Design `Table` / `Modal` / `Form` 래핑·공통 필터(`UnifiedFilterCard`, `CmsButton` 등)
 
 7. **모노레포·앱 경로**  
    - 경로가 `apps/cms`인지 `apps/lms` 등인지 먼저 구분한다.  

@@ -40,7 +40,7 @@ globs:
 
 | 표현 | 사용 컴포넌트 / CSS |
 |------|---------------------|
-| **배지** (테두리·배경 6%) | `InstructorPaymentStatusBadge` 또는 `SettlementStatusBadge` → `status-badge.css` `status-badge--instructor-settlement-*` |
+| **배지** (테두리·배경 6%) | `InstructorPaymentStatusBadge` → `status-badge.css` `status-badge--instructor-settlement-*` |
 | **텍스트만** (테이블 열) | `InstructorSettlementStatusText` → `instructor-settlement-status-text.css` |
 | **캘린더·인라인 태그** | `INSTRUCTOR_SETTLEMENT_STATUS_TAG_STYLE` (bg/color/border) |
 
@@ -49,6 +49,7 @@ globs:
 - `participating-instructors` mock의 구 6키 (`pending`, `partial`, `completed`, `reviewing` 등) **신규 코드에 사용 금지**
 - 화면별 `--settlement-text--pending` 등 **로컬 색상·라벨 하드코딩 금지** — 공통 상수·컴포넌트로 대체
 - `status-badge--settlement-pending` (구 participating 6종) — 신규는 `instructor-settlement-*` 만 사용
+- 삭제된 `SettlementStatusBadge` alias를 import하거나 복원하지 않는다.
 
 ## 신규 화면 체크리스트
 
@@ -61,3 +62,5 @@ globs:
 ## 관련 문서
 
 - 지급조서 발급 조건: `docs/features/instructor-settlement-payment-statement-issue-rules.md`
+
+**Last updated:** 2026-07-15

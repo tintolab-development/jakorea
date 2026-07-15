@@ -29,6 +29,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 ## UI / UX
 
 - [UI principles](./design/ui-principles.md)  
+- [숫자 입력 UX](./design/numeric-input-ux.mdc) — 정수·소수·금액·날짜 텍스트·숫자형 식별자 입력 규칙
 - [Modal viewport centering](./design/modal-viewport-centering.md) — center modals in viewport  
 - Prefer **`ContentModal`**; direct **`TealHeaderModal`** use is deprecated  
 - [CMS 공통 Alert 모달](./libraries/cms-alert-modal.md) — 단일 확인 안내 (`useCmsAlert` / `cmsAlertModal`)  
@@ -37,6 +38,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [Color palette](./design/color-palette.md)  
 - [Instructor settlement status (8종)](./design/instructor-settlement-status.mdc) — 정산 현황 라벨·색상·UI 공통  
 - [Styling tokens](./design/styling-tokens.md)  
+- **[Design System Impact audit 지표 동기화](./design/design-system-impact-audit.mdc)** — DS/`shared`/토큰 변경 시 `#impact-audit`·Canvas 수치 갱신  
 - [Schedule / calendar UX](./design/schedule-calendar-ux.md)  
 - [Calendar sub-right list](./design/calendar-sub-right-list.md) — `.calendar-list` / `.calendar-list-item` 공통 shell·mint hover  
 - [Cross table (행·열 교차 격자)](./design/cross-table.md) — `CrossTable` (`@/shared/ui/cross-table`)  
