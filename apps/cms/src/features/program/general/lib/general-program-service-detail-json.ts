@@ -8,6 +8,12 @@ export interface GeneralProgramServiceDetailJsonV1 {
   generalParticipantTypes?: Program['generalParticipantTypes']
   generalSurveyMenuKeys?: Program['generalSurveyMenuKeys']
   targetLevels?: Program['targetLevels']
+  /** 교육 진행 구조 (커리큘럼형 / 일정형) — 탑레벨 API 필드 없음 → JSON 영속 */
+  generalProgramEducationStructure?: Program['generalProgramEducationStructure']
+  /** 수업 회차 유형 */
+  generalProgramSessionRound?: Program['generalProgramSessionRound']
+  /** 참여자 대상 (기관 / 개인) */
+  generalProgramAudience?: Program['generalProgramAudience']
   instructorApplicationStartDate?: Program['instructorApplicationStartDate']
   instructorApplicationEndDate?: Program['instructorApplicationEndDate']
   volunteerApplicationStartDate?: Program['volunteerApplicationStartDate']
@@ -23,6 +29,9 @@ export function serializeGeneralProgramServiceDetailJson(program: Program): stri
     generalParticipantTypes: program.generalParticipantTypes,
     generalSurveyMenuKeys: program.generalSurveyMenuKeys,
     targetLevels: program.targetLevels,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    generalProgramAudience: program.generalProgramAudience,
     instructorApplicationStartDate: program.instructorApplicationStartDate,
     instructorApplicationEndDate: program.instructorApplicationEndDate,
     volunteerApplicationStartDate: program.volunteerApplicationStartDate,
@@ -59,6 +68,9 @@ export function parseGeneralProgramServiceDetailJson(
       generalParticipantTypes: parsed.generalParticipantTypes,
       generalSurveyMenuKeys: parsed.generalSurveyMenuKeys,
       targetLevels: parsed.targetLevels,
+      generalProgramEducationStructure: parsed.generalProgramEducationStructure,
+      generalProgramSessionRound: parsed.generalProgramSessionRound,
+      generalProgramAudience: parsed.generalProgramAudience,
       instructorApplicationStartDate: parsed.instructorApplicationStartDate,
       instructorApplicationEndDate: parsed.instructorApplicationEndDate,
       volunteerApplicationStartDate: parsed.volunteerApplicationStartDate,

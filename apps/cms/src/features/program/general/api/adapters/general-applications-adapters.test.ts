@@ -65,11 +65,14 @@ describe('general-applications-adapters', () => {
 })
 
 describe('general-program-service-detail-json', () => {
-  it('round-trips CMS-only nested fields', () => {
+  it('round-trips CMS-only nested fields including education structure', () => {
     const program = {
       generalCommonInfo: { educationScheduleMode: 'period' as const },
       generalParticipantTypes: ['individual' as const],
       targetLevels: ['elementary' as const],
+      generalProgramEducationStructure: 'curriculum' as const,
+      generalProgramSessionRound: 'single' as const,
+      generalProgramAudience: 'organization' as const,
     } as Program
 
     const raw = serializeGeneralProgramServiceDetailJson(program)
@@ -79,5 +82,8 @@ describe('general-program-service-detail-json', () => {
     expect(parsed.generalCommonInfo?.educationScheduleMode).toBe('period')
     expect(parsed.generalParticipantTypes).toEqual(['individual'])
     expect(parsed.targetLevels).toEqual(['elementary'])
+    expect(parsed.generalProgramEducationStructure).toBe('curriculum')
+    expect(parsed.generalProgramSessionRound).toBe('single')
+    expect(parsed.generalProgramAudience).toBe('organization')
   })
 })

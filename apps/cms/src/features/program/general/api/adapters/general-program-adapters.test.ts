@@ -85,4 +85,23 @@ describe('general-program-adapters', () => {
     expect(request.title).toBe('수정된 제목')
     expect(request.mainTitle).toBe('테스트 프로그램')
   })
+
+  it('puts education structure fields into serviceDetailJson for update', () => {
+    const request = mapGeneralProgramToUpdateRequest({
+      ...sampleProgram,
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'single',
+      generalProgramAudience: 'individual',
+    })
+
+    expect(request.serviceDetailJson).toBeTruthy()
+    const parsed = JSON.parse(request.serviceDetailJson!) as {
+      generalProgramEducationStructure?: string
+      generalProgramSessionRound?: string
+      generalProgramAudience?: string
+    }
+    expect(parsed.generalProgramEducationStructure).toBe('schedule')
+    expect(parsed.generalProgramSessionRound).toBe('single')
+    expect(parsed.generalProgramAudience).toBe('individual')
+  })
 })
