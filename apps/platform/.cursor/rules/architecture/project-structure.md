@@ -57,6 +57,7 @@ app-layout/
 ## Related
 
 - [feature-file-naming.mdc](../coding/feature-file-naming.mdc)
+- [image-assets.mdc](./image-assets.mdc)
 - [frontend-css-modules-responsive.mdc](../frontend-css-modules-responsive.mdc)
 - [react-component-css-modules-pattern.mdc](../react-component-css-modules-pattern.mdc)
 
