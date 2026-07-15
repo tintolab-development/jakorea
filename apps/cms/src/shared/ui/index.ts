@@ -164,3 +164,15 @@ export { LogoutIcon, GoogleMarkIcon, ProfileAvatarIcon } from './icons'
 export type { LogoutIconProps, GoogleMarkIconProps, ProfileAvatarIconProps } from './icons'
 export { CrossTable } from './cross-table'
 export type { CrossTableProps, CrossTableRow } from './cross-table'
+
+export { CmsNumericInput } from './numeric-input'
+export type { CmsNumericInputProps } from './numeric-input'
+export type { NumericInputMode } from '../lib/numeric-input'
+export {
+  CmsDateTextInput,
+  DateTextInput,
+  isValidCalendarDate,
+  normalizeDateTextInputOnBlur,
+  sanitizeDateTextInput,
+} from './date-text-input'
+export type { CmsDateTextInputProps, DateTextInputProps } from './date-text-input'
