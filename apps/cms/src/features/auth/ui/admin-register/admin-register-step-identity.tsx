@@ -1,4 +1,4 @@
-import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
+import { LoadingButton } from '@/shared/ui/loading-button'
 
 import type { IdentityVerificationHookStatus } from '@/features/auth/identity-verification'
 
@@ -43,7 +43,7 @@ export function AdminRegisterStepIdentity({
           verifiedPhone={verifiedPhone}
         />
         <div className="admin-register-step__actions admin-register-step__actions--single">
-          <AuthLoadingButton
+          <LoadingButton
             type="primary"
             block
             className="auth-submit-btn"
@@ -51,7 +51,7 @@ export function AdminRegisterStepIdentity({
             onClick={onStartVerify}
           >
             휴대폰 본인인증하기
-          </AuthLoadingButton>
+          </LoadingButton>
         </div>
         <div className="admin-register-step__trailing" aria-hidden />
       </div>

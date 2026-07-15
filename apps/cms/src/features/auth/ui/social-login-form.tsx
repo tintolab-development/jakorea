@@ -9,7 +9,7 @@ import type { SocialProvider } from '@/entities/user/api/auth-service'
 import { SocialAuthApiError } from '@jakorea/social-auth'
 import { GoogleMarkIcon } from '@/shared/ui/icons'
 import { handleError } from '@/shared/utils/error-handler'
-import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
+import { LoadingButton } from '@/shared/ui/loading-button'
 import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import './social-login-form.css'
 
@@ -84,7 +84,7 @@ export function SocialLoginForm() {
   return (
     <div className="social-login-form">
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-        <AuthLoadingButton
+        <LoadingButton
           type="primary"
           block
           style={kakaoButtonStyle}
@@ -94,9 +94,9 @@ export function SocialLoginForm() {
           icon={<span style={{ fontSize: '20px' }}>K</span>}
         >
           카카오로 시작하기
-        </AuthLoadingButton>
+        </LoadingButton>
 
-        <AuthLoadingButton
+        <LoadingButton
           type="primary"
           block
           style={naverButtonStyle}
@@ -106,9 +106,9 @@ export function SocialLoginForm() {
           icon={<span style={{ fontSize: '20px', fontWeight: 'bold' }}>N</span>}
         >
           네이버로 시작하기
-        </AuthLoadingButton>
+        </LoadingButton>
 
-        <AuthLoadingButton
+        <LoadingButton
           type="default"
           block
           className="social-login-google-btn"
@@ -119,7 +119,7 @@ export function SocialLoginForm() {
           icon={<GoogleMarkIcon />}
         >
           Google로 시작하기
-        </AuthLoadingButton>
+        </LoadingButton>
       </Space>
 
     </div>

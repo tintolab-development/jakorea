@@ -1,9 +1,9 @@
-import { Alert, Button } from 'antd'
+import { Alert } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { completeAdminSignup } from '@/features/auth/api/admin-register-service'
-import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
+import { LoadingButton } from '@/shared/ui'
 import type { AdminRegisterWizardData } from '@/types/admin-register'
 
 import { RegisterReviewSummary } from './register-review-summary'
@@ -75,7 +75,7 @@ export function AdminRegisterStepReview({
         ) : null}
 
         <div className="auth-actions admin-register-step__actions">
-          <AuthLoadingButton
+          <LoadingButton
             type="primary"
             block
             className="auth-submit-btn"
@@ -83,10 +83,10 @@ export function AdminRegisterStepReview({
             onClick={handleComplete}
           >
             가입 완료하기
-          </AuthLoadingButton>
-          <Button type="default" block className="auth-secondary-btn" onClick={onBack}>
+          </LoadingButton>
+          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onBack}>
             이전으로
-          </Button>
+          </LoadingButton>
         </div>
         <div className="admin-register-step__trailing" aria-hidden />
       </div>

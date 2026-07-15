@@ -3,11 +3,11 @@
  * Phase 0.1.3 수정: 회원가입 시 휴대폰 본인인증
  */
 
-import { Form, Input, Button, Space } from 'antd'
+import { Form, Input, Space } from 'antd'
 import { MobileOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useState, useMemo } from 'react'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
-import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
+import { LoadingButton } from '@/shared/ui'
 import type { OtpSendRequest, OtpVerifyRequest } from '@/types/mfa'
 
 interface PhoneVerificationFormProps {
@@ -102,7 +102,7 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
     <div>
       <Form form={form} layout="vertical" size="middle">
         {!otpSent ? (
-          <AuthLoadingButton
+          <LoadingButton
             type="default"
             block
             icon={<MobileOutlined />}
@@ -111,7 +111,7 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
             disabled={disabled || !phoneNumber || phoneNumber.length < 13}
           >
             본인인증
-          </AuthLoadingButton>
+          </LoadingButton>
         ) : (
           <>
             <Form.Item
@@ -131,7 +131,7 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
               />
             </Form.Item>
             <Space direction="vertical" style={{ width: '100%' }} size="small">
-              <AuthLoadingButton
+              <LoadingButton
                 type="primary"
                 block
                 onClick={handleVerifyOtp}
@@ -139,10 +139,10 @@ export function PhoneVerificationForm({ phoneNumber, onVerified, disabled }: Pho
                 disabled={disabled}
               >
                 인증번호 확인
-              </AuthLoadingButton>
-              <Button block onClick={handleReset} disabled={verifying || disabled}>
+              </LoadingButton>
+              <LoadingButton block onClick={handleReset} disabled={verifying || disabled}>
                 다시 시작
-              </Button>
+              </LoadingButton>
             </Space>
           </>
         )}

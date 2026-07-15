@@ -8,7 +8,7 @@ import { Form, Input, Card, Typography, Space, Alert, Spin } from 'antd'
 import { SafetyOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
+import { LoadingButton } from '@/shared/ui/loading-button'
 import { useMfa } from '@/features/auth/hooks/use-mfa'
 import { useOtpVerification } from '@/features/auth/hooks/use-otp-verification'
 import { getTotpProvisioning } from '@/entities/user/api/mfa-service'
@@ -239,7 +239,7 @@ export function MfaPage() {
           </div>
 
           <Space direction="vertical" style={{ width: '100%' }} size="middle">
-            <AuthLoadingButton
+            <LoadingButton
               type="primary" htmlType="submit"
               block
               size="large"
@@ -248,9 +248,9 @@ export function MfaPage() {
               icon={<SafetyOutlined />}
             >
               인증하기
-            </AuthLoadingButton>
+            </LoadingButton>
 
-            <AuthLoadingButton
+            <LoadingButton
               type="default"
               onClick={() => void loadProvisioning()}
               block
@@ -260,7 +260,7 @@ export function MfaPage() {
               icon={<ReloadOutlined />}
             >
               QR 코드 다시 불러오기
-            </AuthLoadingButton>
+            </LoadingButton>
           </Space>
         </Form>
 

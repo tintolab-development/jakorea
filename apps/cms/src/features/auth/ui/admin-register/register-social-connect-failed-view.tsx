@@ -1,4 +1,4 @@
-import { Button } from 'antd'
+import { LoadingButton } from '@/shared/ui'
 
 import bubbleIconImage from '@/assets/images/logo/bubble.png'
 
@@ -26,12 +26,12 @@ export function RegisterSocialConnectFailedView({
       <p className="register-social-connect-failed__description">잠시후 다시 시도해 주세요.</p>
 
       <div className="auth-actions register-social-connect-failed__actions">
-        <Button type="primary" block className="auth-submit-btn" onClick={onRetry}>
+        <LoadingButton type="primary" block className="auth-submit-btn" onClick={onRetry}>
           다시 시도하기
-        </Button>
-        <Button type="default" block className="auth-secondary-btn" onClick={onSkipLogin}>
+        </LoadingButton>
+        <LoadingButton type="default" block className="auth-secondary-btn" onClick={onSkipLogin}>
           연결하지 않고 로그인하기
-        </Button>
+        </LoadingButton>
       </div>
     </div>
   )

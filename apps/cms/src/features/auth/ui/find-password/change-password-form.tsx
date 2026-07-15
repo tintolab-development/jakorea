@@ -8,7 +8,7 @@ import {
 } from '@/features/auth/lib/validate-register-password'
 import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
 import { authInputAllowClear } from '@/features/auth/ui/auth-input-clear-icon'
-import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
+import { LoadingButton } from '@/shared/ui/loading-button'
 import { RegisterStepHeader } from '@/features/auth/ui/admin-register/register-step-header'
 
 function getRegisterPasswordFieldClassName({ hasError = false }: { hasError?: boolean } = {}) {
@@ -122,7 +122,7 @@ export function FindPasswordChangeForm({
         </Form.Item>
 
         <div className="auth-actions find-password-change-step__actions">
-          <AuthLoadingButton
+          <LoadingButton
             type="primary"
             htmlType="submit"
             block
@@ -131,7 +131,7 @@ export function FindPasswordChangeForm({
             disabled={!canSubmit}
           >
             비밀번호 변경하기
-          </AuthLoadingButton>
+          </LoadingButton>
         </div>
       </Form>
     </div>

@@ -1,5 +1,6 @@
-import { Button, Form } from 'antd'
+import { Form } from 'antd'
 import { useEffect, useState } from 'react'
+import { LoadingButton } from '@/shared/ui'
 
 import { checkAdminRegisterEmailAvailability } from '@/features/auth/api/admin-register-service'
 import {
@@ -186,7 +187,7 @@ export function AdminRegisterStepEmail({
         </Form.Item>
 
         <div className="auth-actions admin-register-step__actions">
-          <Button
+          <LoadingButton
             type="primary"
             htmlType="submit"
             block
@@ -194,10 +195,10 @@ export function AdminRegisterStepEmail({
             disabled={!canProceed}
           >
             다음
-          </Button>
-          <Button type="default" block className="auth-secondary-btn" onClick={onBack}>
+          </LoadingButton>
+          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onBack}>
             이전으로
-          </Button>
+          </LoadingButton>
         </div>
         <div className="admin-register-step__trailing" aria-hidden />
       </Form>

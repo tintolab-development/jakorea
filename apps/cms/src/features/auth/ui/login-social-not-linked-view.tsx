@@ -1,4 +1,4 @@
-import { Button } from 'antd'
+import { LoadingButton } from '@/shared/ui'
 
 import { LoginUtilityLinks } from './login-utility-links'
 import { LoginSocialSection } from './login-social-section'
@@ -30,9 +30,9 @@ export function LoginSocialNotLinkedView({
         </p>
       </div>
 
-      <Button type="primary" block className="login-submit-btn" onClick={onEmailLogin}>
+      <LoadingButton type="primary" block className="login-submit-btn" onClick={onEmailLogin}>
         이메일로 로그인
-      </Button>
+      </LoadingButton>
 
       <LoginUtilityLinks registerPath={registerPath} />
       <LoginSocialSection />

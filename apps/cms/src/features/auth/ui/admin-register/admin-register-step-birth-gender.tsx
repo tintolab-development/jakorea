@@ -1,8 +1,10 @@
-import { Button, Form, Input } from 'antd'
+import { Form } from 'antd'
 import { useEffect } from 'react'
+import { LoadingButton } from '@/shared/ui'
 
 import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
-import { formatBirthDateInput, isValidBirthDate } from '@/features/auth/lib/format-birth-date'
+import { isValidBirthDate } from '@/features/auth/lib/format-birth-date'
+import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import type { AdminRegisterStep1Data, AdminRegisterWizardData } from '@/types/admin-register'
 
 import { RegisterGenderToggle } from './register-gender-toggle'
@@ -64,6 +66,8 @@ export function AdminRegisterStepBirthGender({
         <Form.Item
           name="birthDate"
           label={<AuthFormLabel>생년월일</AuthFormLabel>}
+          trigger="onValueChange"
+          validateTrigger="onValueChange"
           rules={[
             { required: true, message: '생년월일을 입력해 주세요.' },
             {
@@ -76,15 +80,10 @@ export function AdminRegisterStepBirthGender({
             },
           ]}
         >
-          <Input
+          <CmsDateTextInput
             className="admin-register-birth-input"
             placeholder="YYYY.MM.DD"
-            inputMode="numeric"
             maxLength={10}
-            onChange={event => {
-              const formatted = formatBirthDateInput(event.target.value)
-              form.setFieldValue('birthDate', formatted)
-            }}
           />
         </Form.Item>
 
@@ -97,12 +96,12 @@ export function AdminRegisterStepBirthGender({
         </Form.Item>
 
         <div className="auth-actions admin-register-step__actions">
-          <Button type="primary" htmlType="submit" block className="auth-submit-btn">
+          <LoadingButton type="primary" htmlType="submit" block className="auth-submit-btn">
             다음
-          </Button>
-          <Button type="default" block className="auth-secondary-btn" onClick={onBack}>
+          </LoadingButton>
+          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onBack}>
             이전으로
-          </Button>
+          </LoadingButton>
         </div>
         <div className="admin-register-step__trailing" aria-hidden />
       </Form>

@@ -1,5 +1,6 @@
-import { Button, Form, Input } from 'antd'
+import { Form, Input } from 'antd'
 import { useEffect } from 'react'
+import { LoadingButton } from '@/shared/ui'
 
 import {
   isValidRegisterPassword,
@@ -131,7 +132,7 @@ export function AdminRegisterStepPassword({
         </Form.Item>
 
         <div className="auth-actions admin-register-step__actions">
-          <Button
+          <LoadingButton
             type="primary"
             htmlType="submit"
             block
@@ -139,10 +140,10 @@ export function AdminRegisterStepPassword({
             disabled={!canProceed}
           >
             가입 정보 확인하기
-          </Button>
-          <Button type="default" block className="auth-secondary-btn" onClick={onBack}>
+          </LoadingButton>
+          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onBack}>
             이전으로
-          </Button>
+          </LoadingButton>
         </div>
         <div className="admin-register-step__trailing" aria-hidden />
       </Form>

@@ -1,5 +1,4 @@
-import { Button } from 'antd'
-
+import { LoadingButton } from '@/shared/ui'
 import { JaKoreaLogo } from '@/shared/ui/icons/JaKoreaLogo'
 
 interface SocialConnectCompleteViewProps {
@@ -21,12 +20,12 @@ export function SocialConnectCompleteView({
         </p>
 
         <div className="auth-actions register-complete__actions">
-          <Button type="primary" block className="auth-submit-btn" onClick={onGoHome}>
+          <LoadingButton type="primary" block className="auth-submit-btn" onClick={onGoHome}>
             홈으로 이동하기
-          </Button>
-          <Button type="default" block className="auth-secondary-btn" onClick={onConnectMore}>
+          </LoadingButton>
+          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onConnectMore}>
             다른 소셜계정도 연결하기
-          </Button>
+          </LoadingButton>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import type { IdentityVerificationHookStatus } from '@/features/auth/identity-verification'
-import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
+import { LoadingButton } from '@/shared/ui/loading-button'
 import { RegisterIdentityStatusPanel } from '@/features/auth/ui/admin-register/register-identity-status-panel'
 import { RegisterStepHeader } from '@/features/auth/ui/admin-register/register-step-header'
 
@@ -36,7 +36,7 @@ export function FindEmailForm({
         />
 
         <div className="auth-actions find-email-step__actions">
-          <AuthLoadingButton
+          <LoadingButton
             type="primary"
             block
             className="auth-submit-btn"
@@ -44,7 +44,7 @@ export function FindEmailForm({
             onClick={onSubmit}
           >
             본인인증 후 이메일 찾기
-          </AuthLoadingButton>
+          </LoadingButton>
         </div>
       </div>
     </div>

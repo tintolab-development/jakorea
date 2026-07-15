@@ -2,7 +2,7 @@ import { Form, Input } from 'antd'
 
 import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
 import { authInputAllowClear } from '@/features/auth/ui/auth-input-clear-icon'
-import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
+import { LoadingButton } from '@/shared/ui/loading-button'
 import { RegisterStepHeader } from '@/features/auth/ui/admin-register/register-step-header'
 
 import { VerificationExpiredNotice } from './verification-expired-notice'
@@ -86,7 +86,7 @@ export function FindPasswordForm({
         </Form.Item>
 
         <div className="auth-actions find-password-step__actions">
-          <AuthLoadingButton
+          <LoadingButton
             type="primary"
             block
             className="auth-submit-btn"
@@ -94,7 +94,7 @@ export function FindPasswordForm({
             onClick={onIdentityVerify}
           >
             본인인증 하기
-          </AuthLoadingButton>
+          </LoadingButton>
         </div>
 
         {showVerificationExpired ? <VerificationExpiredNotice /> : null}

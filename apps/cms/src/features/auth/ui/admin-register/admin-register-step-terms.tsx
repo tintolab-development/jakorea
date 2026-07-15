@@ -1,5 +1,5 @@
-import { Button } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
+import { LoadingButton } from '@/shared/ui'
 
 import { useTermsViewModal } from '@/features/auth/hooks/use-terms-view-modal'
 import type { TermsViewType } from '@/features/auth/lib/terms-view-config'
@@ -97,7 +97,7 @@ export function AdminRegisterStepTerms({
           onViewTerm={open}
         />
         <div className="auth-actions admin-register-step__actions">
-          <Button
+          <LoadingButton
             type="primary"
             block
             className="auth-submit-btn"
@@ -105,10 +105,10 @@ export function AdminRegisterStepTerms({
             onClick={handleContinue}
           >
             동의하고 계속하기
-          </Button>
-          <Button type="default" block className="auth-secondary-btn" onClick={onBack}>
+          </LoadingButton>
+          <LoadingButton type="default" block className="auth-secondary-btn" onClick={onBack}>
             이전으로
-          </Button>
+          </LoadingButton>
         </div>
         <div className="admin-register-step__trailing" aria-hidden />
       </div>

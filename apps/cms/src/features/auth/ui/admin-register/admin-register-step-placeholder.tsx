@@ -1,4 +1,4 @@
-import { Button } from 'antd'
+import { LoadingButton } from '@/shared/ui'
 
 import type { AdminRegisterWizardData } from '@/types/admin-register'
 
@@ -32,13 +32,13 @@ export function AdminRegisterStepPlaceholder({
 
       <div className="auth-actions admin-register-step__actions">
         {step < 6 ? (
-          <Button type="primary" block className="auth-submit-btn" onClick={onNext}>
+          <LoadingButton type="primary" block className="auth-submit-btn" onClick={onNext}>
             다음
-          </Button>
+          </LoadingButton>
         ) : null}
-        <Button type="default" block className="auth-secondary-btn" onClick={onBack}>
+        <LoadingButton type="default" block className="auth-secondary-btn" onClick={onBack}>
           이전으로
-        </Button>
+        </LoadingButton>
       </div>
     </div>
   )

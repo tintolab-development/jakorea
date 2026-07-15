@@ -1,8 +1,7 @@
-import { Button } from 'antd'
-
 import type { SocialProvider } from '@jakorea/social-auth'
 
 import { SocialConnectProviderList } from '@/features/auth/ui/social-connect-provider-list'
+import { LoadingButton } from '@/shared/ui'
 
 import { RegisterStepHeader } from './register-step-header'
 
@@ -42,9 +41,9 @@ export function RegisterSocialConnectView({
         <SocialConnectProviderList redirectPath={redirectPath} onConnectSuccess={onConnectSuccess} />
 
         <div className="register-social-connect__actions">
-          <Button type="primary" block className="auth-submit-btn" onClick={onComplete}>
+          <LoadingButton type="primary" block className="auth-submit-btn" onClick={onComplete}>
             완료
-          </Button>
+          </LoadingButton>
         </div>
 
         <div className="register-social-connect__skip-wrap">

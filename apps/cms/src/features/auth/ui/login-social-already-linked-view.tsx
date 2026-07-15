@@ -1,4 +1,4 @@
-import { Button } from 'antd'
+import { LoadingButton } from '@/shared/ui'
 
 import bubbleIconImage from '@/assets/images/logo/bubble.png'
 
@@ -32,17 +32,17 @@ export function LoginSocialAlreadyLinkedView({
       </p>
 
       <div className="login-social-already-linked__actions">
-        <Button
+        <LoadingButton
           type="primary"
           block
           className="login-submit-btn"
           onClick={onConnectOtherSocial}
         >
           다른 소셜계정 연결하기
-        </Button>
-        <Button block className="login-secondary-btn" onClick={onEmailLogin}>
+        </LoadingButton>
+        <LoadingButton block className="login-secondary-btn" onClick={onEmailLogin}>
           이메일로 로그인
-        </Button>
+        </LoadingButton>
       </div>
     </div>
   )

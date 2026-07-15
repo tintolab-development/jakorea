@@ -6,7 +6,7 @@ import { Form, Input, Button, Typography, Space, Alert } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { AuthLoadingButton } from '@/features/auth/ui/auth-loading-button'
+import { LoadingButton } from '@/shared/ui/loading-button'
 import { useEffect, useState } from 'react'
 import type { LoginRequest } from '@/types/user'
 import type { LoginMode } from '@/entities/user/api/auth-service'
@@ -329,7 +329,7 @@ export function LoginPage() {
                     )}
 
                     <Form.Item className="login-submit-actions">
-                      <AuthLoadingButton
+                      <LoadingButton
                         type="primary"
                         block
                         className="login-submit-btn"
@@ -338,7 +338,7 @@ export function LoginPage() {
                         onClick={() => handleLoginClick('api')}
                       >
                         로그인하기
-                      </AuthLoadingButton>
+                      </LoadingButton>
                       {!apiLoginAvailable && (
                         <Text type="secondary" className="login-api-hint">
                           API 로그인은 `VITE_API_SERVER` 또는 `VITE_API_BASE_URL` 설정 후 사용할 수

@@ -4,8 +4,9 @@
  * 세션 만료 5분 전 경고 및 세션 연장 기능
  */
 
-import { Modal, Button, Typography, Space } from 'antd'
+import { Modal, Typography, Space } from 'antd'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
+import { LoadingButton } from '@/shared/ui'
 import { useSessionTimeout } from '../hooks/use-session-timeout'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 
@@ -45,12 +46,12 @@ export function SessionWarningModal() {
       closable={false}
       maskClosable={false}
       footer={[
-        <Button key="extend" type="primary" onClick={handleExtend}>
+        <LoadingButton key="extend" type="primary" onClick={handleExtend}>
           세션 연장
-        </Button>,
-        <Button key="logout" onClick={handleLogout}>
+        </LoadingButton>,
+        <LoadingButton key="logout" onClick={handleLogout}>
           로그아웃
-        </Button>,
+        </LoadingButton>,
       ]}
       centered
     >

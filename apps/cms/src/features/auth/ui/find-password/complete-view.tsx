@@ -1,4 +1,4 @@
-import { Button } from 'antd'
+import { LoadingButton } from '@/shared/ui'
 
 import { FindEmailSearchIcon } from '@/features/auth/ui/find-email/find-email-search-icon'
 
@@ -18,9 +18,9 @@ export function FindPasswordCompleteView({ onGoLogin }: FindPasswordCompleteView
         </p>
 
         <div className="auth-actions find-password-complete__actions">
-          <Button type="primary" block className="auth-submit-btn" onClick={onGoLogin}>
+          <LoadingButton type="primary" block className="auth-submit-btn" onClick={onGoLogin}>
             로그인하기
-          </Button>
+          </LoadingButton>
         </div>
       </div>
     </div>
