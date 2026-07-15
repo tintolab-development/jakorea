@@ -102,9 +102,9 @@ export function GeminiRecruitmentInfoTab({
   const handleMinStudentCountChange = useCallback(
     (value: string) => {
       if (!onDraftChange) return
-      const digits = value.replace(/\D/g, '')
-      if (digits === '') return
-      onDraftChange({ minStudentCount: Number(digits) })
+      onDraftChange({
+        minStudentCount: value === '' ? null : Number.parseInt(value, 10),
+      })
     },
     [onDraftChange]
   )

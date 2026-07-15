@@ -343,9 +343,9 @@
 .participating-institutions-section
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-132):not(
-    .status-dropdown-cell__cell-status--tag-160
-  ):not(.status-dropdown-cell__cell-status--payment-order-line) {
+  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-160):not(
+    .status-dropdown-cell__cell-status--payment-order-line
+  ) {
   width: 136px;
   min-width: 136px;
   max-width: 136px;
@@ -358,9 +358,7 @@
 }
 
 .participating-institutions-section
-  .status-dropdown-cell__status-trigger--open:not(
-    .status-dropdown-cell__status-trigger--tag-132
-  ):not(.status-dropdown-cell__status-trigger--tag-160):not(
+  .status-dropdown-cell__status-trigger--open:not(.status-dropdown-cell__status-trigger--tag-160):not(
     .status-dropdown-cell__status-trigger--payment-order-line
   ):not(.status-dropdown-cell__trigger--cell-style) {
   box-sizing: border-box !important;

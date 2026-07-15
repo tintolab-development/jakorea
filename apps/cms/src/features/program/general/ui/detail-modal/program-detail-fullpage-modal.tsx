@@ -27,6 +27,7 @@ import {
   makeBreadcrumbItem,
 } from '@/shared/lib/detail-fullpage-query-stack'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
+import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { useProgramDetailEditForm } from '../../hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '../../hooks/use-program-detail-info-save'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -90,6 +91,13 @@ export interface ProgramDetailFullPageModalProps {
   open: boolean
   onClose: () => void
   program: Program | null
+  programVariant?: 'company-school'
+  externalLoading?: boolean
+  onUpdateProgram?: (
+    programId: string,
+    program: Program,
+    patch: Partial<Program>
+  ) => Promise<void>
 }
 
 const TAB_PARAM = 'tab'
@@ -203,6 +211,9 @@ export function ProgramDetailFullPageModal({
   open,
   onClose,
   program,
+  programVariant,
+  externalLoading = false,
+  onUpdateProgram,
 }: ProgramDetailFullPageModalProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -210,14 +221,29 @@ export function ProgramDetailFullPageModal({
   const programId = program?.id
   const {
     program: detailProgram,
-    loading,
-    sponsorName,
+    loading: legacyLoading,
+    sponsorName: legacySponsorName,
     updateProgram,
-  } = useProgramDetail(open ? programId : undefined)
-  const displayProgram = useMemo(() => detailProgram ?? program ?? null, [detailProgram, program])
+  } = useProgramDetail(onUpdateProgram ? undefined : (open ? programId : undefined))
+  const externalSponsorName = useSponsorNameById(
+    program?.sponsorId,
+    Boolean(onUpdateProgram && program?.sponsorId)
+  )
+  const loading = onUpdateProgram ? externalLoading : legacyLoading
+  const sponsorName = onUpdateProgram ? externalSponsorName : legacySponsorName
+  const displayProgram = useMemo(() => program ?? detailProgram ?? null, [detailProgram, program])
+  const persistProgramPatch = async (draft: Program, patch: Partial<Program>) => {
+    if (onUpdateProgram) {
+      await onUpdateProgram(draft.id, draft, patch)
+      return
+    }
+    await updateProgram(draft.id, patch)
+  }
   const isCompanySchoolDetail = useMemo(
-    () => isCompanySchoolDetailProgram(displayProgram),
-    [displayProgram]
+    () =>
+      programVariant === 'company-school' ||
+      isCompanySchoolDetailProgram(displayProgram),
+    [displayProgram, programVariant]
   )
   const isTrainedTeachersDetail = useMemo(
     () => isTrainedTeachersDetailProgram(displayProgram),
@@ -1000,11 +1026,11 @@ export function ProgramDetailFullPageModal({
       form: infoForm,
       program: displayProgram ?? ({} as Program),
       onSaveEdit:
-        displayProgram && updateProgram
+        displayProgram
           ? async draft => {
               try {
                 const { id: _id, createdAt: _c, ...patch } = draft
-                await updateProgram(draft.id, patch)
+                await persistProgramPatch(draft, patch)
                 setEditMode(null)
               } catch (error) {
                 handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
@@ -1027,11 +1053,11 @@ export function ProgramDetailFullPageModal({
     form: institutionsForm,
     program: displayProgram ?? ({} as Program),
     onSaveEdit:
-      displayProgram && updateProgram
+      displayProgram
         ? async draft => {
             try {
               const { id: _id, createdAt: _c, ...patch } = draft
-              await updateProgram(draft.id, patch)
+              await persistProgramPatch(draft, patch)
               setEditMode(null)
             } catch (error) {
               handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
@@ -1055,11 +1081,11 @@ export function ProgramDetailFullPageModal({
     form: instructorsForm,
     program: displayProgram ?? ({} as Program),
     onSaveEdit:
-      displayProgram && updateProgram
+      displayProgram
         ? async draft => {
             try {
               const { id: _id, createdAt: _c, ...patch } = draft
-              await updateProgram(draft.id, patch)
+              await persistProgramPatch(draft, patch)
               setEditMode(null)
             } catch (error) {
               handleError(error, { context: 'programDetailFullpageModal.saveEdit' })
@@ -1128,11 +1154,11 @@ export function ProgramDetailFullPageModal({
     form: volunteersForm,
     program: displayProgram ?? ({} as Program),
     onSaveEdit:
-      displayProgram && updateProgram
+      displayProgram
         ? async draft => {
             try {
               const { id: _id, createdAt: _c, ...patch } = draft
-              await updateProgram(draft.id, patch)
+              await persistProgramPatch(draft, patch)
               setEditMode(null)
             } catch (error) {
               handleError(error, { context: 'programDetailFullpageModal.saveEdit' })

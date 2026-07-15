@@ -49,7 +49,7 @@ export function GeneralIndividualTeamRoleDropdown({
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       emptyPlaceholder="-"
-      tagLayout="tag132"
+      style={{ width: 132, minWidth: 132, maxWidth: 132 }}
     />
   )
 }
