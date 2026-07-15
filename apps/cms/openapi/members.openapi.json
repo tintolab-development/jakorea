@@ -8243,6 +8243,9 @@
           "sponsorId": {
             "type": "string"
           },
+          "programType": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
@@ -8262,6 +8265,12 @@
             "type": "string"
           },
           "endDate": {
+            "type": "string"
+          },
+          "businessStartDate": {
+            "type": "string"
+          },
+          "businessEndDate": {
             "type": "string"
           },
           "applicationStartDate": {
@@ -8441,6 +8450,9 @@
           },
           "serviceDetailJson": {
             "type": "string"
+          },
+          "autoApplyDefaultFormBindings": {
+            "type": "boolean"
           }
         }
       },
@@ -11734,6 +11746,28 @@
             "type": "string"
           },
           "settingsJson": {
+            "type": "string"
+          },
+          "sourceTemplateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sourceVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sourceTemplateCode": {
+            "type": "string"
+          },
+          "baseTemplateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "baseVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "baseTemplateCode": {
             "type": "string"
           }
         }
@@ -24793,7 +24827,7 @@
       },
       "ProgramCreateRequest": {
         "summary": "프로그램 생성 요청",
-        "value": "{\"sponsorId\":\"1\",\"title\":\"경제교육 프로그램\",\"type\":\"offline\",\"format\":\"school\",\"businessArea\":\"ECONOMY\",\"applicationStartDate\":\"2026-06-01\",\"applicationEndDate\":\"2026-06-30\"}"
+        "value": "{\"programType\":\"GENERAL\",\"sponsorId\":\"1\",\"title\":\"일반 프로그램\",\"type\":\"offline\",\"format\":\"school\",\"category\":\"general\",\"startDate\":\"2026-06-01\",\"endDate\":\"2026-12-31\",\"applicationStartDate\":\"2026-06-01T00:00:00Z\",\"applicationEndDate\":\"2026-06-30T23:59:59Z\",\"lifecycleStatus\":\"recruiting_students\",\"serviceDetailJson\":\"{\"schemaVersion\":1,\"generalParticipantTypes\":[\"school\"],\"generalSurveyMenuKeys\":[]}\"}"
       },
       "ApplicationDecisionRequest": {
         "summary": "신청 승인/반려 요청",

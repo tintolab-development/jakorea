@@ -16,6 +16,7 @@ import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
  */
 export interface ProgramCreateRequest {
   sponsorId?: string;
+  programType?: string;
   title?: string;
   type?: string;
   format?: string;
@@ -23,6 +24,8 @@ export interface ProgramCreateRequest {
   description?: string;
   startDate?: string;
   endDate?: string;
+  businessStartDate?: string;
+  businessEndDate?: string;
   applicationStartDate?: string;
   applicationEndDate?: string;
   status?: string;
@@ -73,4 +76,5 @@ export interface ProgramCreateRequest {
   wagePolicies?: ProgramWagePolicyRequest[];
   paymentItems?: ProgramSettlementPaymentItemRequest[];
   serviceDetailJson?: string;
+  autoApplyDefaultFormBindings?: boolean;
 }

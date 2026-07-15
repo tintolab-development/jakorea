@@ -17,4 +17,10 @@ export interface FormTemplateCreateRequest {
   schemaJson?: string;
   extensionJson?: string;
   settingsJson?: string;
+  sourceTemplateId?: number;
+  sourceVersionId?: number;
+  sourceTemplateCode?: string;
+  baseTemplateId?: number;
+  baseVersionId?: number;
+  baseTemplateCode?: string;
 }
