@@ -80,6 +80,10 @@ export function ProgramRegistrationBasicInfoParagraph({
   /** 후원사 상세 담당자 행 `SponsorContactRow.id` (목 데이터; 추후 API 값으로 교체) */
   const [managerContactId, setManagerContactId] = useState<string>('')
   const [detailedProgramId, setDetailedProgramId] = useState<string>('')
+  const [educationVenueKind, setEducationVenueKind] = useState<'inside' | 'outside' | 'other'>(
+    'inside'
+  )
+  const [educationVenueDetail, setEducationVenueDetail] = useState('')
   const [educationCourse, setEducationCourse] = useState('')
   const [ipOwned, setIpOwned] = useState('')
   const [courseDeliveredBy, setCourseDeliveredBy] = useState('')
@@ -307,7 +311,13 @@ export function ProgramRegistrationBasicInfoParagraph({
               fullRow
               edit={
                 <div className="detail-info-form-inputs-wrapper">
-                  <CmsRadioGroup size="large" value="inside">
+                  <CmsRadioGroup
+                    size="large"
+                    value={educationVenueKind}
+                    onChange={e =>
+                      setEducationVenueKind(e.target.value as 'inside' | 'outside' | 'other')
+                    }
+                  >
                     <CmsRadio value="inside">기관 안</CmsRadio>
                     <CmsRadio value="outside">기관 밖</CmsRadio>
                     <CmsRadio value="other">기타(직접입력)</CmsRadio>
@@ -318,6 +328,8 @@ export function ProgramRegistrationBasicInfoParagraph({
                     placeholder="교육이 진행될 상세 장소를 입력해 주세요"
                     width="100%"
                     style={{ flex: '1 1 0', minWidth: 0 }}
+                    value={educationVenueDetail}
+                    onChange={e => setEducationVenueDetail(e.target.value)}
                   />
                 </div>
               }
