@@ -135,3 +135,132 @@ export async function fetchAdminProgramSurveysRemote(
   if (Array.isArray(body)) return body
   return body.items ?? []
 }
+
+export async function createAdminProgramPostRemote(
+  programId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/programPostUpsertRequest').ProgramPostUpsertRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostMutationResponse').ProgramPostMutationResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function updateAdminProgramPostRemote(
+  programId: string,
+  postId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/programPostUpsertRequest').ProgramPostUpsertRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostMutationResponse').ProgramPostMutationResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}`,
+      method: 'PATCH',
+      data: payload,
+    })
+  )
+}
+
+export async function deleteAdminProgramPostRemote(
+  programId: string,
+  postId: string
+): Promise<void> {
+  await customInstance({
+    url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}`,
+    method: 'DELETE',
+  })
+}
+
+export async function fetchAdminProgramPostCommentsRemote(
+  programId: string,
+  postId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostCommentListResponse').ProgramPostCommentListResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/comments`,
+      method: 'GET',
+    })
+  )
+}
+
+export async function createAdminProgramPostCommentRemote(
+  programId: string,
+  postId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/programPostCommentRequest').ProgramPostCommentRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostCommentMutationResponse').ProgramPostCommentMutationResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/comments`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+export async function putAdminProgramPostReactionRemote(
+  programId: string,
+  postId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/programPostReactionRequest').ProgramPostReactionRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programPostReactionMutationResponse').ProgramPostReactionMutationResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/posts/${encodeURIComponent(postId)}/reaction`,
+      method: 'PUT',
+      data: payload,
+    })
+  )
+}
+
+export async function fetchAdminProgramSurveyResponsesRemote(
+  programId: string,
+  templateVersionId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse').SurveyResponseListItemResponse[]
+> {
+  const body = await unwrapApiBody<
+    | import('@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse').SurveyResponseListItemResponse[]
+    | {
+        items?: import('@/shared/api/generated/dashboard/schemas/surveyResponseListItemResponse').SurveyResponseListItemResponse[]
+      }
+  >(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/surveys/${encodeURIComponent(templateVersionId)}/responses`,
+      method: 'GET',
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.items ?? []
+}
+
+export async function fetchAdminProgramSurveySummaryRemote(
+  programId: string,
+  templateVersionId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/surveySummaryResponse').SurveySummaryResponse[]
+> {
+  const body = await unwrapApiBody<
+    | import('@/shared/api/generated/dashboard/schemas/surveySummaryResponse').SurveySummaryResponse[]
+    | {
+        items?: import('@/shared/api/generated/dashboard/schemas/surveySummaryResponse').SurveySummaryResponse[]
+      }
+  >(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/surveys/${encodeURIComponent(templateVersionId)}/summary`,
+      method: 'GET',
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.items ?? []
+}

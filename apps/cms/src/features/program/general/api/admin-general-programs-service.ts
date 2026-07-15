@@ -16,13 +16,18 @@ import {
 } from '@/features/program/general/api/general-programs-remote-capabilities'
 import {
   createAdminProgramRemote,
+  createAdminProgramPostRemote,
   deleteAdminProgramRemote,
+  deleteAdminProgramPostRemote,
   fetchAdminProgramByIdRemote,
   fetchAdminProgramNavigationRemote,
   fetchAdminProgramPostsRemote,
   fetchAdminProgramsRemote,
+  fetchAdminProgramSurveyResponsesRemote,
+  fetchAdminProgramSurveySummaryRemote,
   fetchAdminProgramSurveysRemote,
   updateAdminProgramRemote,
+  updateAdminProgramPostRemote,
 } from '@/features/program/general/api/programs-api-client'
 import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
@@ -132,6 +137,61 @@ export async function fetchGeneralProgramSurveys(programId: string) {
   if (!shouldUseGeneralProgramsRemoteApi()) return []
   assertGeneralProgramsRemoteReady()
   return fetchAdminProgramSurveysRemote(programId)
+}
+
+export async function createGeneralProgramPost(
+  programId: string,
+  payload: {
+    title?: string
+    content: string
+    visibilityType?: string
+  }
+) {
+  if (!shouldUseGeneralProgramsRemoteApi()) return null
+  assertGeneralProgramsRemoteReady()
+  return createAdminProgramPostRemote(programId, {
+    title: payload.title ?? payload.content.slice(0, 40),
+    content: payload.content,
+    visibilityType: payload.visibilityType,
+  })
+}
+
+export async function updateGeneralProgramPost(
+  programId: string,
+  postId: string,
+  payload: {
+    title?: string
+    content?: string
+    visibilityType?: string
+  }
+) {
+  if (!shouldUseGeneralProgramsRemoteApi()) return null
+  assertGeneralProgramsRemoteReady()
+  return updateAdminProgramPostRemote(programId, postId, payload)
+}
+
+export async function deleteGeneralProgramPost(programId: string, postId: string) {
+  if (!shouldUseGeneralProgramsRemoteApi()) return
+  assertGeneralProgramsRemoteReady()
+  await deleteAdminProgramPostRemote(programId, postId)
+}
+
+export async function fetchGeneralProgramSurveyResponses(
+  programId: string,
+  templateVersionId: string
+) {
+  if (!shouldUseGeneralProgramsRemoteApi()) return []
+  assertGeneralProgramsRemoteReady()
+  return fetchAdminProgramSurveyResponsesRemote(programId, templateVersionId)
+}
+
+export async function fetchGeneralProgramSurveySummary(
+  programId: string,
+  templateVersionId: string
+) {
+  if (!shouldUseGeneralProgramsRemoteApi()) return []
+  assertGeneralProgramsRemoteReady()
+  return fetchAdminProgramSurveySummaryRemote(programId, templateVersionId)
 }
 
 export { GENERAL_PROGRAM_API_TYPE }

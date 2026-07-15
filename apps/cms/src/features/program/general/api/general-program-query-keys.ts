@@ -8,6 +8,10 @@ export const generalProgramQueryKeys = {
     [...generalProgramQueryKeys.all, 'navigation', programId] as const,
   posts: (programId: string) => [...generalProgramQueryKeys.all, 'posts', programId] as const,
   surveys: (programId: string) => [...generalProgramQueryKeys.all, 'surveys', programId] as const,
+  surveyResponses: (programId: string, templateVersionId: string) =>
+    [...generalProgramQueryKeys.all, 'survey-responses', programId, templateVersionId] as const,
+  surveySummary: (programId: string, templateVersionId: string) =>
+    [...generalProgramQueryKeys.all, 'survey-summary', programId, templateVersionId] as const,
   mutations: {
     create: () => [...generalProgramQueryKeys.all, 'mutation', 'create'] as const,
     update: (programId: string) =>
