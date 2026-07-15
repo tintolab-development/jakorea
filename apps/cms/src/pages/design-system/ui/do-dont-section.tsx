@@ -31,9 +31,17 @@ export function DoDontSection() {
             Permission / ActionResult 모달을 사용합니다.
           </li>
           <li>
+            모달은 뷰포트 중앙 정렬(<code>getContainer=document.body</code>)을 유지하고, 표준
+            컨텐츠는 <code>ContentModal</code>·풀페이지 상세는 <code>DetailFullPageModal</code> +{' '}
+            <code>DetailModalSidebar</code>를 사용합니다.
+          </li>
+          <li>
             색·간격은 <code>var(--color-*)</code>, <code>var(--spacing-*)</code> 토큰을 우선합니다.
           </li>
-          <li>상세 화면은 로딩 스피너를 empty/not-found보다 먼저 보여줍니다.</li>
+          <li>
+            상세·풀페이지는 <code>detail-fullpage-modal__loading</code> 스피너를 empty/not-found보다
+            먼저 보여줍니다.
+          </li>
         </ul>
       </div>
 
@@ -45,7 +53,11 @@ export function DoDontSection() {
             <code>ListPageFilters</code>를 쓰지 않습니다.
           </li>
           <li>
-            antd <code>message</code> / <code>notification</code> 토스트를 쓰지 않습니다.
+            antd <code>message</code> / <code>notification</code> 토스트를 쓰지 않습니다. 페이지에{' '}
+            <code>AlertModal</code>을 직접 마운트하지 않습니다.
+          </li>
+          <li>
+            모달을 메인 컬럼(사이드바 오른쪽) 기준으로 가운데 맞추지 마세요 — 전체 뷰포트 기준입니다.
           </li>
           <li>필터 칸을 flex-grow로 늘리지 말고 규격 폭(240×44) · 조회 160×44를 지킵니다.</li>
           <li>
@@ -90,6 +102,8 @@ export function DoDontSection() {
         <code>apps/cms/.cursor/rules/libraries/no-antd-message.mdc</code>
         <br />
         <code>apps/cms/.cursor/rules/libraries/cms-alert-modal.md</code>
+        <br />
+        <code>apps/cms/.cursor/rules/design/modal-viewport-centering.md</code>
         <br />
         <code>apps/cms/.cursor/rules/tables/table-implementation.md</code>
         <br />

@@ -76,11 +76,11 @@ export function CalendarSection() {
     <DsSection
       id="calendar"
       title="Calendar"
-      description="월간/주간 캘린더 키트. 실제 화면은 CalendarMain + SplitCard(+ Mini) 조합을 쓰고, CalendarSet은 export만 되어 실사용이 없습니다."
+      description="월간/주간 캘린더 키트. 치수는 CMS shared 토큰 1:1(셀 116×124, split 높이 900px). 실제 화면은 CalendarMain + SplitCard(+ Mini) 조합을 쓰고, CalendarSet은 export만 되어 실사용이 없습니다."
     >
       <p className="ds-note">
-        데모는 <code>events</code> 모드 + mock 데이터입니다. 도메인 SubRight 리스트·tooltip은
-        DS에 포함하지 않습니다.
+        좁은 DS 본문에서는 <code>layout-content</code>와 같이 가로 스크롤로 수용합니다. 도메인
+        SubRight 리스트·tooltip은 DS에 포함하지 않습니다.
       </p>
 
       <DsDemo label="CalendarMain — 월간 / 주간">
@@ -115,10 +115,12 @@ export function CalendarSection() {
       </DsDemo>
 
       <DsDemo label="SplitCard + Mini + Main">
-        <div className="ds-calendar-demo ds-calendar-demo--split">
+        <div className="ds-calendar-demo">
           <CalendarSplitCardLayout
+            pageScroll
             left={
               <CalendarMain
+                className="calendar-split-card-main"
                 events={events}
                 selectedDate={split.selectedDate}
                 currentMonth={split.currentMonth}

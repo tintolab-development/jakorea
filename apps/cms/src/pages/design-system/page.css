@@ -292,61 +292,39 @@
 }
 
 /*
- * Calendar 쇼케이스: 본문 컬럼(~1100px)보다 큰 기본 min-width를 줄여 맞춤.
- * shared calendar.css 본체는 변경하지 않음.
+ * Calendar 쇼케이스: CMS shared 토큰 1:1 (셀 116×124, split 900px 등).
+ * 좁은 DS 본문에서는 layout-content와 같이 가로 스크롤만 허용 — 치수 축소 금지.
  */
 .ds-calendar-demo {
-  --calendar-cell-min-width: 88px;
-  --calendar-cell-min-height: 88px;
-  --calendar-main-horizontal-padding: 16px;
-  --calendar-main-vertical-padding: 16px;
-  --calendar-split-card-height: 640px;
-  --calendar-sub-right-list-min-width: 220px;
-  --calendar-split-card-column-gap: 12px;
-
   width: 100%;
   max-width: 100%;
-  min-height: 480px;
-  overflow: auto;
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-8);
-  background: var(--color-bg-base);
-}
-
-.ds-calendar-demo--split {
-  min-height: 640px;
-}
-
-.ds-calendar-demo .calendar-main,
-.ds-calendar-demo .calendar-split-card-layout,
-.ds-calendar-demo .calendar-split-card--left,
-.ds-calendar-demo .calendar-set-scroll-host {
-  --calendar-cell-min-width: 88px;
-  --calendar-cell-min-height: 88px;
-  --calendar-main-horizontal-padding: 16px;
-  --calendar-main-vertical-padding: 16px;
-  --calendar-split-card-height: 640px;
-  --calendar-sub-right-list-min-width: 220px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .ds-calendar-side {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-16);
-  padding: var(--spacing-12);
+  padding: var(--spacing-16);
   height: 100%;
+  min-height: 0;
   min-width: 0;
   box-sizing: border-box;
 }
 
 .ds-calendar-side__list {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: var(--spacing-8);
-  padding: var(--spacing-12);
+  min-height: 0;
+  padding: var(--spacing-16);
   border: 1px dashed var(--color-border);
-  border-radius: var(--radius-6);
+  border-radius: var(--radius-8);
   background: var(--color-bg-secondary);
+  box-sizing: border-box;
 }
 
 .ds-demo--table {

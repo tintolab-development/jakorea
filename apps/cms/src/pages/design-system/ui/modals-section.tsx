@@ -1,63 +1,134 @@
 import { useState } from 'react'
+import { BookOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons'
+import { Spin } from 'antd'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsModal } from '@/shared/ui/cms-modal'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
+import { DetailModalSidebar, type DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
+import {
+  ModalSpecTable,
+  ModalSpecTableRadioCell,
+  ModalSpecTableRow,
+} from '@/shared/ui/modal-spec-table/modal-spec-table'
 import { DsDemo, DsSection } from './section'
+
+const SIDEBAR_DEMO_ITEMS: DetailModalSidebarNavItem[] = [
+  {
+    key: 'basic',
+    label: '기본 정보',
+    icon: <UserOutlined className="detail-fullpage-modal__lnb-icon" />,
+  },
+  {
+    key: 'applicants',
+    label: '신청 현황',
+    icon: <TeamOutlined className="detail-fullpage-modal__lnb-icon" />,
+    children: [
+      { key: 'list', label: '신청 목록' },
+      { key: 'status', label: '상태별 집계' },
+    ],
+  },
+  {
+    key: 'history',
+    label: '이력',
+    icon: <BookOutlined className="detail-fullpage-modal__lnb-icon" />,
+  },
+]
 
 export function ModalsSection() {
   const { showAlert } = useCmsAlert()
   const [contentOpen, setContentOpen] = useState(false)
   const [contentLargeOpen, setContentLargeOpen] = useState(false)
+  const [cmsModalOneOpen, setCmsModalOneOpen] = useState(false)
+  const [cmsModalTwoOpen, setCmsModalTwoOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmDangerOpen, setConfirmDangerOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteTypedOpen, setDeleteTypedOpen] = useState(false)
+  const [specTableOpen, setSpecTableOpen] = useState(false)
+  const [specRadio, setSpecRadio] = useState<'required' | 'not_required'>('required')
   const [fullpageOpen, setFullpageOpen] = useState(false)
   const [fullpageSidebarOpen, setFullpageSidebarOpen] = useState(false)
   const [fullpageBreadcrumbOpen, setFullpageBreadcrumbOpen] = useState(false)
+  const [fullpageLoadingOpen, setFullpageLoadingOpen] = useState(false)
+  const [sidebarActiveKey, setSidebarActiveKey] = useState('applicants')
+  const [sidebarChildKey, setSidebarChildKey] = useState('list')
+  const [sidebarExpanded, setSidebarExpanded] = useState<readonly string[]>(['applicants'])
 
   return (
     <DsSection
       id="modals"
-      title="Modals"
-      description="컨텐츠·확인·삭제 안내는 ContentModal 계열, 상세는 DetailFullPageModal. 피드백은 useCmsAlert / cmsAlertModal을 쓰고 antd message는 쓰지 않습니다."
+      title="Modals (core)"
+      description="표준 오버레이는 ContentModal 계열, 상세는 DetailFullPageModal입니다. 피드백은 useCmsAlert / cmsAlertModal을 쓰고 antd message는 쓰지 않습니다."
     >
+      <p className="ds-note">
+        <strong>선택 순서</strong> — 안내(1버튼)→{' '}
+        <code>useCmsAlert</code> / <code>CmsModal</code> · 확인·취소→ <code>ConfirmModal</code> ·
+        삭제 안내→ <code>DeleteGuideModal</code> · 폼·표 컨텐츠→ <code>ContentModal</code> (+{' '}
+        <code>ModalSpecTable</code>) · 상세 화면→ <code>DetailFullPageModal</code> (+{' '}
+        <code>DetailModalSidebar</code>). 뷰포트 중앙 정렬은{' '}
+        <code>modal-viewport-centering</code> 규칙을 따릅니다. z-index는 Alert가{' '}
+        <code>CMS_ALERT_MODAL_Z_INDEX</code>(10000)로 항상 최상위입니다.
+      </p>
       <p className="ds-note--warn ds-note">
-        antd `message` / `notification` 토스트는 CMS에서 금지입니다. AlertModal(useCmsAlert /
-        cmsAlertModal)을 사용하세요.
+        antd <code>message</code> / <code>notification</code> 토스트는 CMS에서 금지입니다. Alert는
+        페이지에 <code>AlertModal</code>을 직접 마운트하지 말고 <code>useCmsAlert</code> /{' '}
+        <code>cmsAlertModal</code>만 사용하세요.
       </p>
 
-      <DsDemo label="Triggers">
+      <DsDemo label="ContentModal">
         <div className="ds-demo__row ds-demo__row--fluid">
           <CmsButton variant="primary" onClick={() => setContentOpen(true)}>
-            ContentModal
+            default (~800px)
           </CmsButton>
           <CmsButton variant="secondary" onClick={() => setContentLargeOpen(true)}>
-            ContentModal large
+            size=&quot;large&quot; (~1400px)
           </CmsButton>
+        </div>
+      </DsDemo>
+
+      <DsDemo label="CmsModal (1~2 버튼 프리셋)">
+        <div className="ds-demo__row ds-demo__row--fluid">
+          <CmsButton variant="primary" onClick={() => setCmsModalOneOpen(true)}>
+            1버튼 안내
+          </CmsButton>
+          <CmsButton variant="secondary" onClick={() => setCmsModalTwoOpen(true)}>
+            2버튼 확인
+          </CmsButton>
+        </div>
+      </DsDemo>
+
+      <DsDemo label="ConfirmModal / DeleteGuideModal">
+        <div className="ds-demo__row ds-demo__row--fluid">
           <CmsButton variant="default" onClick={() => setConfirmOpen(true)}>
-            ConfirmModal
+            Confirm
           </CmsButton>
           <CmsButton variant="delete" onClick={() => setConfirmDangerOpen(true)}>
             Confirm danger
           </CmsButton>
           <CmsButton variant="delete" onClick={() => setDeleteOpen(true)}>
-            DeleteGuideModal
+            DeleteGuide
           </CmsButton>
           <CmsButton variant="delete" onClick={() => setDeleteTypedOpen(true)}>
             Delete + typed confirm
           </CmsButton>
+        </div>
+      </DsDemo>
+
+      <DsDemo label="Alert (useCmsAlert / cmsAlertModal)">
+        <div className="ds-demo__row ds-demo__row--fluid">
           <CmsButton
             variant="primary"
             onClick={() =>
               showAlert({
                 title: '알림',
-                content: '작업이 완료되었습니다. (useCmsAlert)',
+                content: '작업이 완료되었습니다.\n(useCmsAlert)',
               })
             }
           >
@@ -68,20 +139,36 @@ export function ModalsSection() {
             onClick={() =>
               cmsAlertModal.show({
                 title: '알림',
-                content: '작업이 완료되었습니다. (cmsAlertModal.show)',
+                content: '작업이 완료되었습니다.\n(cmsAlertModal.show)',
               })
             }
           >
-            cmsAlertModal
+            cmsAlertModal (비 React)
           </CmsButton>
+        </div>
+      </DsDemo>
+
+      <DsDemo label="ModalSpecTable (본문 스펙 표)">
+        <div className="ds-demo__row ds-demo__row--fluid">
+          <CmsButton variant="secondary" onClick={() => setSpecTableOpen(true)}>
+            ContentModal + ModalSpecTable
+          </CmsButton>
+        </div>
+      </DsDemo>
+
+      <DsDemo label="DetailFullPageModal">
+        <div className="ds-demo__row ds-demo__row--fluid">
           <CmsButton variant="secondary" onClick={() => setFullpageOpen(true)}>
-            DetailFullPage (no sidebar)
+            no sidebar
           </CmsButton>
           <CmsButton variant="secondary" onClick={() => setFullpageSidebarOpen(true)}>
-            DetailFullPage + sidebar
+            + DetailModalSidebar
           </CmsButton>
           <CmsButton variant="secondary" onClick={() => setFullpageBreadcrumbOpen(true)}>
-            DetailFullPage + breadcrumb
+            + breadcrumb / contentExtra
+          </CmsButton>
+          <CmsButton variant="default" onClick={() => setFullpageLoadingOpen(true)}>
+            loading (empty 전)
           </CmsButton>
         </div>
       </DsDemo>
@@ -90,7 +177,7 @@ export function ModalsSection() {
         open={contentOpen}
         onCancel={() => setContentOpen(false)}
         title="컨텐츠 모달"
-        description="기본 size(default, 약 800px). 본문과 푸터 패턴을 확인합니다."
+        description="기본 size(default). description은 **볼드**와\n줄바꿈을 지원합니다."
         footer={
           <>
             <CmsButton variant="secondary" onClick={() => setContentOpen(false)}>
@@ -103,7 +190,8 @@ export function ModalsSection() {
         }
       >
         <p style={{ margin: 0, color: 'var(--color-text-body)' }}>
-          ContentModal은 TealHeaderModal을 감싼 표준 컨텐츠 모달입니다.
+          ContentModal은 TealHeaderModal을 감싼 표준 컨텐츠 모달입니다. 일반 폼·안내에 우선
+          사용합니다.
         </p>
       </ContentModal>
 
@@ -122,6 +210,25 @@ export function ModalsSection() {
           size=&quot;large&quot;는 넓은 표·폼에 사용합니다.
         </p>
       </ContentModal>
+
+      <CmsModal
+        open={cmsModalOneOpen}
+        onClose={() => setCmsModalOneOpen(false)}
+        title="안내"
+        content="CmsModal은 ContentModal 위에 버튼 1~2개 푸터를 프리셋으로 둡니다."
+        buttons={[{ label: '확인', onClick: () => setCmsModalOneOpen(false) }]}
+      />
+
+      <CmsModal
+        open={cmsModalTwoOpen}
+        onClose={() => setCmsModalTwoOpen(false)}
+        title="저장하시겠습니까?"
+        content="변경한 내용을 저장합니다."
+        buttons={[
+          { label: '취소', onClick: () => setCmsModalTwoOpen(false), variant: 'secondary' },
+          { label: '저장', onClick: () => setCmsModalTwoOpen(false), variant: 'primary' },
+        ]}
+      />
 
       <ConfirmModal
         open={confirmOpen}
@@ -162,6 +269,37 @@ export function ModalsSection() {
         requiredConfirmInput="삭제"
       />
 
+      <ContentModal
+        open={specTableOpen}
+        onCancel={() => setSpecTableOpen(false)}
+        title="스펙 표 데모"
+        description="모달 본문의 라벨·값 2열 표는 ModalSpecTable을 사용합니다."
+        footer={
+          <CmsButton variant="primary" onClick={() => setSpecTableOpen(false)}>
+            닫기
+          </CmsButton>
+        }
+      >
+        <ModalSpecTable aria-label="데모 스펙">
+          <ModalSpecTableRow label="산정 기준" labelVariant="basis">
+            <span style={{ color: 'var(--color-text-body)' }}>인당 지급</span>
+          </ModalSpecTableRow>
+          <ModalSpecTableRow label="비고" labelVariant="remark">
+            <CmsInput placeholder="비고 입력" style={{ width: '100%' }} />
+          </ModalSpecTableRow>
+          <ModalSpecTableRow label="증빙 제출" labelVariant="paymentRequirementShort">
+            <ModalSpecTableRadioCell
+              value={specRadio}
+              onChange={setSpecRadio}
+              options={[
+                { value: 'required', label: '필요' },
+                { value: 'not_required', label: '불필요' },
+              ]}
+            />
+          </ModalSpecTableRow>
+        </ModalSpecTable>
+      </ContentModal>
+
       <DetailFullPageModal
         open={fullpageOpen}
         onClose={() => setFullpageOpen(false)}
@@ -175,27 +313,35 @@ export function ModalsSection() {
       <DetailFullPageModal
         open={fullpageSidebarOpen}
         onClose={() => setFullpageSidebarOpen(false)}
-        title="상세 풀페이지 + LNB"
+        title="상세 풀페이지 + DetailModalSidebar"
         sidebar={
-          <aside
-            style={{
-              width: 200,
-              padding: 16,
-              borderRight: '1px solid var(--color-border)',
-              color: 'var(--color-text-body)',
-              fontSize: 14,
+          <DetailModalSidebar
+            navAriaLabel="상세 메뉴 데모"
+            items={SIDEBAR_DEMO_ITEMS}
+            activeKey={sidebarActiveKey}
+            activeChildKey={sidebarChildKey}
+            expandedGroupKeys={sidebarExpanded}
+            onSelectTop={key => {
+              setSidebarActiveKey(key)
+              const item = SIDEBAR_DEMO_ITEMS.find(i => i.key === key)
+              if (item?.children?.length) {
+                setSidebarExpanded(prev => (prev.includes(key) ? prev : [...prev, key]))
+                setSidebarChildKey(item.children[0]?.key ?? '')
+              } else {
+                setSidebarChildKey('')
+              }
             }}
-          >
-            <div>기본 정보</div>
-            <div style={{ marginTop: 8, color: 'var(--color-brand-primary)', fontWeight: 600 }}>
-              신청 현황
-            </div>
-            <div style={{ marginTop: 8 }}>이력</div>
-          </aside>
+            onSelectChild={(groupKey, childKey) => {
+              setSidebarActiveKey(groupKey)
+              setSidebarChildKey(childKey)
+            }}
+          />
         }
       >
         <p style={{ margin: 0, color: 'var(--color-text-body)' }}>
-          왼쪽 LNB + 메인 스크롤 영역의 상세 편집 셸입니다.
+          raw <code>&lt;aside&gt;</code> 대신 <code>DetailModalSidebar</code>를 표준 LNB로
+          사용합니다. 선택 키: {sidebarActiveKey}
+          {sidebarChildKey ? ` / ${sidebarChildKey}` : ''}.
         </p>
       </DetailFullPageModal>
 
@@ -214,10 +360,29 @@ export function ModalsSection() {
             ]}
           />
         }
+        contentExtra={
+          <CmsButton variant="primary" size="medium" onClick={() => undefined}>
+            정보 수정
+          </CmsButton>
+        }
       >
         <p style={{ margin: 0, color: 'var(--color-text-body)' }}>
-          headerTrailing에 DetailFullpageBreadcrumb를 넣는 패턴입니다.
+          <code>headerTrailing</code>에 breadcrumb, <code>contentExtra</code>에 액션 버튼을 둡니다.
         </p>
+      </DetailFullPageModal>
+
+      <DetailFullPageModal
+        open={fullpageLoadingOpen}
+        onClose={() => setFullpageLoadingOpen(false)}
+        title="상세 로딩"
+      >
+        <div
+          className="detail-fullpage-modal__loading"
+          role="status"
+          aria-label="상세 불러오는 중"
+        >
+          <Spin size="large" />
+        </div>
       </DetailFullPageModal>
     </DsSection>
   )

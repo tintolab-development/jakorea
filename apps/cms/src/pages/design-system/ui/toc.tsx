@@ -10,7 +10,7 @@ export const DS_TOC_ITEMS: TocItem[] = [
   { id: 'detail-forms', label: 'Detail Forms' },
   { id: 'forms-extras', label: 'Forms extras' },
   { id: 'filters-tables', label: 'Filters & Tables' },
-  { id: 'modals', label: 'Modals' },
+  { id: 'modals', label: 'Modals (core)' },
   { id: 'modals-extended', label: 'Modals (extended)' },
   { id: 'calendar', label: 'Calendar' },
   { id: 'status', label: 'Status' },

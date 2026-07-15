@@ -17,29 +17,41 @@ export function ModalsExtendedSection() {
     <DsSection
       id="modals-extended"
       title="Modals (extended)"
-      description="ContentModal 바깥의 권한·결과·헤더 셸 패턴입니다. ContentModal은 TealHeaderModal을 감싼 표준 컨텐츠 모달입니다."
+      description="승인·반려·결과·헤더 셸 패턴입니다. 일반 폼·안내는 ContentModal을 우선하고, 아래는 특수한 경우에만 사용합니다."
     >
       <p className="ds-note">
-        raw <code>TealHeaderModal</code>은 커스텀 셸이 필요할 때, <code>PlainHeaderModal</code>은
-        문서·내역처럼 흰 헤더가 필요할 때 사용합니다. 일반 폼/안내는 ContentModal을 우선합니다.
+        <code>TealHeaderModal</code>은 ContentModal의 기반 셸(커스텀 바디·푸터).{' '}
+        <code>PlainHeaderModal</code>은 문서·내역처럼 흰 헤더가 필요할 때.{' '}
+        <code>PermissionModal</code>은 승인/반려 플로우, <code>ActionResultModal</code>은 등록·삭제
+        완료 결과 안내입니다.
       </p>
 
-      <DsDemo label="Triggers">
+      <DsDemo label="PermissionModal">
         <div className="ds-demo__row ds-demo__row--fluid">
           <CmsButton variant="primary" onClick={() => setApproveOpen(true)}>
-            Permission approve
+            approve
           </CmsButton>
           <CmsButton variant="delete" onClick={() => setRejectOpen(true)}>
-            Permission reject
+            reject
           </CmsButton>
+        </div>
+      </DsDemo>
+
+      <DsDemo label="Header shells">
+        <div className="ds-demo__row ds-demo__row--fluid">
           <CmsButton variant="secondary" onClick={() => setTealOpen(true)}>
             TealHeaderModal
           </CmsButton>
           <CmsButton variant="default" onClick={() => setPlainOpen(true)}>
             PlainHeaderModal
           </CmsButton>
+        </div>
+      </DsDemo>
+
+      <DsDemo label="ActionResultModal">
+        <div className="ds-demo__row ds-demo__row--fluid">
           <CmsButton variant="primary" onClick={() => setResultOpen(true)}>
-            ActionResultModal
+            등록 완료
           </CmsButton>
         </div>
       </DsDemo>
