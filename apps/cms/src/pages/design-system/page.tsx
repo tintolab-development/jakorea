@@ -1,6 +1,6 @@
 /**
  * CMS Design System — 독립 쇼케이스 (/design-system)
- * Layout·LNB 밖 전용 페이지. ADMIN만 접근.
+ * Layout·LNB 밖 전용 페이지. 비로그인 포함 공개 접근.
  */
 
 import { ButtonsSection } from './ui/buttons-section'

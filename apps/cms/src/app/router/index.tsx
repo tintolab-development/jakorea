@@ -307,13 +307,12 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    // 로그인·역할 없이 공개 접근 (쇼케이스/문서용)
     path: '/design-system',
     element: (
-      <ProtectedRoute requiredRoles={['ADMIN']}>
-        <Suspense fallback={<RouterLoadingFallback />}>
-          <DesignSystemPage />
-        </Suspense>
-      </ProtectedRoute>
+      <Suspense fallback={<RouterLoadingFallback />}>
+        <DesignSystemPage />
+      </Suspense>
     ),
   },
   {
