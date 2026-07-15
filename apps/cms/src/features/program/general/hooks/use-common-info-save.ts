@@ -13,6 +13,11 @@ import {
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
 
+export type GeneralProgramCommonInfoSaveResult =
+  | { ok: true }
+  | { ok: false; kind: 'validation' }
+  | { ok: false; kind: 'api'; error: unknown }
+
 export interface UseGeneralProgramCommonInfoSaveOptions {
   form: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
   program: Program | null
@@ -28,12 +33,14 @@ export function useGeneralProgramCommonInfoSave({
   const watchedSponsorIds = form.watch('sponsorManagementIds') ?? []
   const sponsorContext = useGeneralProgramSponsorEditContext(watchedSponsorIds)
 
-  const triggerSave = useCallback(async (): Promise<boolean> => {
-    if (savingRef.current || !onSaveEdit || !program) return false
+  const triggerSave = useCallback(async (): Promise<GeneralProgramCommonInfoSaveResult> => {
+    if (savingRef.current || !onSaveEdit || !program) {
+      return { ok: false, kind: 'validation' }
+    }
     savingRef.current = true
     try {
       const isValid = await form.trigger()
-      if (!isValid) return false
+      if (!isValid) return { ok: false, kind: 'validation' }
       const values = form.getValues()
       const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
       const resolvedCommon = resolveGeneralProgramCommonInfo(program)
@@ -48,9 +55,9 @@ export function useGeneralProgramCommonInfoSave({
         },
       }
       await onSaveEdit(draftToSave)
-      return true
-    } catch {
-      return false
+      return { ok: true }
+    } catch (error) {
+      return { ok: false, kind: 'api', error }
     } finally {
       savingRef.current = false
     }

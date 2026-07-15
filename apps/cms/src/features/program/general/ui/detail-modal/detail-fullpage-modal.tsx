@@ -59,6 +59,7 @@ import {
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
 import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
 import { getGeneralCommonInfoEditValidationMessage } from '@/features/program/general/model/common-info-edit-schema'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
   canGeneralProgramCommonInfoEdit,
   canGeneralProgramRecruitmentInfoEdit,
@@ -700,16 +701,27 @@ export function GeneralProgramDetailFullPageModal({
   }, [open, editTab, displayProgram, activeLnb, activeTab, setEditMode])
 
   const handleInfoSave = useCallback(async () => {
-    const saved = await infoTriggerSave()
-    if (!saved) {
-      infoResetToProgram()
-      const message = getGeneralCommonInfoEditValidationMessage(infoForm.getValues())
-      if (message) {
-        void showAlert({ title: '입력 확인', content: message })
+    const result = await infoTriggerSave()
+    if (!result.ok) {
+      if (result.kind === 'validation') {
+        const message = getGeneralCommonInfoEditValidationMessage(infoForm.getValues())
+        void showAlert({
+          title: '입력 확인',
+          content: message ?? '입력값을 확인해 주세요.',
+        })
+      } else {
+        void showAlert({
+          title: '저장 실패',
+          content: getGeneralProgramApiErrorMessage(
+            result.error,
+            '저장 중 오류가 발생했습니다. 다시 시도해 주세요.'
+          ),
+        })
       }
+      return
     }
     setEditMode(null)
-  }, [infoForm, infoTriggerSave, infoResetToProgram, setEditMode, showAlert])
+  }, [infoForm, infoTriggerSave, setEditMode, showAlert])
 
   const recruitSubTab = useMemo((): GeneralRecruitTabKey => {
     if (activeLnb !== 'info' || activeTab !== 'recruitment') return 'institutions'
@@ -907,16 +919,14 @@ export function GeneralProgramDetailFullPageModal({
     let saved = false
     if (recruitSubTab === 'institutions') {
       saved = await institutionsTriggerSave()
-      if (!saved) institutionsResetToProgram()
     } else if (recruitSubTab === 'instructors') {
       saved = await instructorsTriggerSave()
-      if (!saved) instructorsResetToProgram()
     } else if (recruitSubTab === 'volunteers') {
       saved = await volunteersTriggerSave()
-      if (!saved) volunteersResetToProgram()
     }
     if (!saved) {
       void showAlert({ title: '입력 확인', content: '입력값을 확인해 주세요.' })
+      return
     }
     setEditMode(null)
   }, [
@@ -924,9 +934,6 @@ export function GeneralProgramDetailFullPageModal({
     institutionsTriggerSave,
     instructorsTriggerSave,
     volunteersTriggerSave,
-    institutionsResetToProgram,
-    instructorsResetToProgram,
-    volunteersResetToProgram,
     setEditMode,
     showAlert,
   ])
