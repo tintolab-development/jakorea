@@ -269,7 +269,14 @@ function mapProgramCoreFieldsToRequest(
 }
 
 export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreateRequest {
-  return mapProgramCoreFieldsToRequest(program)
+  const core = mapProgramCoreFieldsToRequest(program)
+  return {
+    ...core,
+    programType: 'GENERAL',
+    businessStartDate: toRequestDate(program.startDate),
+    businessEndDate: toRequestDate(program.endDate),
+    autoApplyDefaultFormBindings: true,
+  }
 }
 
 export function mapGeneralProgramToUpdateRequest(

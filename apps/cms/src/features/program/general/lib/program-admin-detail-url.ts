@@ -36,7 +36,15 @@ export function getProgramAdminDetailUrlFromPathname(programId: string, pathname
     pathname.startsWith('/programs/economy-education') ||
     pathname.startsWith('/programs/company-school')
   ) {
-    return `/programs?programId=${encodeURIComponent(programId)}`
+    const params = new URLSearchParams({
+      programId,
+      lnb: 'info',
+      tab: 'info',
+    })
+    const basePath = p.startsWith('/programs/economy-education')
+      ? '/programs/economy-education'
+      : '/programs/company-school'
+    return `${basePath}?${params.toString()}`
   }
   if (pathname.startsWith('/programs/trained-teachers')) {
     const params = new URLSearchParams({

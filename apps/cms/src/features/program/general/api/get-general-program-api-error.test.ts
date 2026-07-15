@@ -30,4 +30,14 @@ describe('getGeneralProgramApiErrorMessage', () => {
     }
     expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toBe('Invalid field')
   })
+
+  it('sponsor 관련 400을 한글 안내로 변환한다', () => {
+    const error = {
+      response: {
+        status: 400,
+        data: { message: 'sponsorId does not exist' },
+      },
+    }
+    expect(getGeneralProgramApiErrorMessage(error, 'fallback')).toContain('후원사')
+  })
 })

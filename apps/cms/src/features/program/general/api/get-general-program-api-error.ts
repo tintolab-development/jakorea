@@ -5,10 +5,15 @@
 const BUSINESS_START_LOCK_PATTERN =
   /business_start_date|schedule lock|only be modified before/i
 
+const SPONSOR_INVALID_PATTERN = /sponsor|후원사|program_sponsor|sponsorId/i
+
 export function getGeneralProgramApiErrorMessage(error: unknown, fallback: string): string {
   const raw = extractRawApiMessage(error)
   if (raw && BUSINESS_START_LOCK_PATTERN.test(raw)) {
-    return '사업 시작일이 지난 프로그램은 수정할 수 없습니다. 사업일 이전에만 정보 수정이 가능합니다.'
+    return '사업 시작일이 지난 프로그램은 수정할 수 없습니다. 시작일 이전에만 정보 수정이 가능합니다.'
+  }
+  if (raw && SPONSOR_INVALID_PATTERN.test(raw)) {
+    return '유효한 후원사를 선택해 주세요. 존재하지 않거나 사용할 수 없는 후원사입니다.'
   }
   if (raw?.trim()) {
     // CONFLICT: prefix 제거

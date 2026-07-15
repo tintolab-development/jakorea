@@ -6,9 +6,7 @@ import { programLifecycleStatusConfig } from '@/shared/constants/status'
 import {
   getVolunteerPrograms,
   getEducationPrograms,
-  getEconomyPrograms,
 } from '@/data/mock'
-import { readCompanySchoolRegistrationLocalSavePrograms } from '@/features/program/general/lib/registration-local-save'
 import type { Program, ProgramLifecycleStatus, ProgramCategory } from '@/types/domain'
 import type { User } from '@/types/user'
 
@@ -116,11 +114,7 @@ export function useProgramListFilters(
     let filtered: Program[]
 
     if (isAdmin && programType === 'company_school') {
-      const economyPrograms = getEconomyPrograms()
-      const localCompanySchoolPrograms = readCompanySchoolRegistrationLocalSavePrograms().filter(
-        localProgram => !economyPrograms.some(program => program.id === localProgram.id)
-      )
-      filtered = [...economyPrograms, ...localCompanySchoolPrograms]
+      filtered = programs
     } else if (isAdmin && programType === 'education') {
       filtered = getEducationPrograms()
     } else {

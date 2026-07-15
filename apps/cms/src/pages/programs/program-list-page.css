@@ -33,7 +33,7 @@
   margin-right: 0;
 }
 
-/* 위젯 상단 액션 영역: 검색바 300×44 반응형, 버튼 160×44 (AppButton size=filter) */
+/* 위젯 상단 액션 영역: 검색바 300×44 반응형, CmsButton은 호출부별 140/180×44 */
 .program-list-page__widget-header-actions {
   display: flex;
   align-items: center;

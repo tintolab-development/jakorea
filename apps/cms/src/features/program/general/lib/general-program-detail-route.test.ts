@@ -9,6 +9,7 @@ import {
   preserveGeneralProgramDetailProgramId,
   readGeneralProgramDetailRoute,
 } from './general-program-detail-route'
+import { getProgramAdminDetailUrlFromPathname } from './program-admin-detail-url'
 
 describe('general-program-detail-route', () => {
   it('reads lnb/tab from search params', () => {
@@ -92,5 +93,16 @@ describe('general-program-detail-route', () => {
 
     expect(isParticipantRecruitmentPreviewOpen(open)).toBe(true)
     expect(isParticipantRecruitmentPreviewOpen(closed)).toBe(false)
+  })
+
+  it('keeps the company-school route when opening a newly created detail', () => {
+    const url = getProgramAdminDetailUrlFromPathname(
+      'company-school-remote-1',
+      '/programs/company-school'
+    )
+
+    expect(url).toBe(
+      '/programs/company-school?programId=company-school-remote-1&lnb=info&tab=info'
+    )
   })
 })

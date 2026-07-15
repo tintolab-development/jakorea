@@ -19,6 +19,7 @@ import type {
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import { createGeneralProgram } from '@/features/program/general/api/admin-general-programs-service'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
+import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { mockSponsors } from '@/data/mock/sponsors'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
@@ -88,6 +89,8 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   participant: ProgramRegistrationParticipantState
   programType: ProgramRegistrationType
   variant: ProgramRegistrationFormVariant
+  /** 일반 등록 UI에서 선택한 후원사. 없으면 local mock 폴백 */
+  sponsorId?: string
 }): Program {
   const now = new Date().toISOString()
   const y = dayjs().year()
@@ -96,10 +99,13 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   const programLabel = isCompanySchool ? '1사1교' : isTrainedTeachers ? '교육받은 교사' : '일반'
   const title = `신규 ${programLabel} 프로그램 (${dayjs().format('YYYY-MM-DD HH:mm')})`
   const mainTitle = title
-  const participantTypes: GeneralProgramParticipantType[] = isTrainedTeachers
-    ? ['school_institution']
-    : participantTypesFromState(args.participant)
+  const participantTypes: GeneralProgramParticipantType[] = isCompanySchool
+    ? ['school_institution', 'teacher_instructor']
+    : isTrainedTeachers
+      ? ['school_institution']
+      : participantTypesFromState(args.participant)
   const capacity = 30
+  const sponsorId = args.sponsorId?.trim() || resolveDefaultSponsorId()
 
   const rounds: ProgramRound[] = [
     {
@@ -119,7 +125,7 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
 
   return {
     id: args.id,
-    sponsorId: resolveDefaultSponsorId(),
+    sponsorId,
     title,
     mainTitle,
     type: 'offline',
@@ -129,7 +135,9 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
         ? 'school'
         : primaryCategoryFromParticipant(args.participant),
     description: `${programLabel} 프로그램 등록(임시 저장)`,
-    startDate: dayjs(`${y}-04-01`).startOf('day').toISOString(),
+    startDate: dayjs(`${y}-${isCompanySchool ? '01-01' : '04-01'}`)
+      .startOf('day')
+      .toISOString(),
     endDate: dayjs(`${y}-12-31`).endOf('day').toISOString(),
     applicationStartDate: dayjs().startOf('day').toISOString(),
     applicationEndDate: dayjs().add(30, 'day').endOf('day').toISOString(),
@@ -140,6 +148,12 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     approvedStudentCount: 0,
     instructors: 0,
     instructorCapacity: isCompanySchool ? 30 : undefined,
+    instructorApplicationStartDate: isCompanySchool
+      ? dayjs(`${y}-01-01`).startOf('day').toISOString()
+      : undefined,
+    instructorApplicationEndDate: isCompanySchool
+      ? dayjs(`${y}-12-31`).endOf('day').toISOString()
+      : undefined,
     participatingSchoolCount: 0,
     participatingStudentCount: 0,
     scheduleTimeEnabled: true,
@@ -235,6 +249,46 @@ export function readCompanySchoolRegistrationLocalSavePrograms(): Program[] {
     .map(r => r.program)
 }
 
+export function updateCompanySchoolRegistrationLocalSaveProgram(
+  programId: string,
+  patch: Partial<Program>
+): Program | null {
+  const records = readGeneralRegistrationLocalSaveRecords()
+  const index = records.findIndex(record => record.id === programId)
+  if (index < 0) return null
+
+  const current = records[index]
+  const updatedAt = new Date().toISOString()
+  const updatedProgram: Program = {
+    ...current.program,
+    ...patch,
+    id: current.program.id,
+    createdAt: current.program.createdAt,
+    updatedAt,
+  }
+  records[index] = {
+    ...current,
+    savedAt: updatedAt,
+    program: updatedProgram,
+  }
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ version: 1, items: records } satisfies LocalSaveFile)
+  )
+  return updatedProgram
+}
+
+export function deleteCompanySchoolRegistrationLocalSaveProgram(programId: string): boolean {
+  const records = readGeneralRegistrationLocalSaveRecords()
+  const nextRecords = records.filter(record => record.id !== programId)
+  if (nextRecords.length === records.length) return false
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ version: 1, items: nextRecords } satisfies LocalSaveFile)
+  )
+  return true
+}
+
 export function readTrainedTeachersRegistrationLocalSavePrograms(): Program[] {
   return readGeneralRegistrationLocalSaveRecords()
     .filter(r => r.id.startsWith(TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX))
@@ -250,6 +304,7 @@ export function persistGeneralRegistrationFormLocal(args: {
   participant: ProgramRegistrationParticipantState
   programType: ProgramRegistrationType
   variant?: ProgramRegistrationFormVariant
+  sponsorId?: string
 }): Program {
   const variant = args.variant ?? 'general'
   const id =
@@ -263,6 +318,7 @@ export function persistGeneralRegistrationFormLocal(args: {
     participant: args.participant,
     programType: args.programType,
     variant,
+    sponsorId: args.sponsorId,
   })
   const record: GeneralRegistrationLocalSaveRecord = {
     version: 1,
@@ -284,6 +340,7 @@ export async function persistGeneralProgramRegistration(args: {
   participant: ProgramRegistrationParticipantState
   programType: ProgramRegistrationType
   variant?: ProgramRegistrationFormVariant
+  sponsorId?: string
 }): Promise<Program> {
   const variant = args.variant ?? 'general'
   const id =
@@ -297,9 +354,17 @@ export async function persistGeneralProgramRegistration(args: {
     participant: args.participant,
     programType: args.programType,
     variant,
+    sponsorId: args.sponsorId,
   })
 
-  if (shouldUseGeneralProgramsRemoteApi()) {
+  if (variant === 'economy' && shouldUseCompanySchoolRemoteApi()) {
+    const { createCompanySchoolProgram } = await import(
+      '@/features/program/1c-1s/api/service'
+    )
+    return createCompanySchoolProgram(program)
+  }
+
+  if (variant !== 'economy' && shouldUseGeneralProgramsRemoteApi()) {
     return createGeneralProgram(program)
   }
 

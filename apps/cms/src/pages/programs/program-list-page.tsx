@@ -43,6 +43,12 @@ import './program-list-page.css'
 import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants'
 import { CmsButton, DeleteGuideModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  useCompanySchoolProgramDetail,
+  useCompanySchoolPrograms,
+  useDeleteCompanySchoolProgram,
+  useUpdateCompanySchoolProgram,
+} from '@/features/program/1c-1s/api/hooks'
 
 const PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY = 'new'
 
@@ -50,13 +56,23 @@ function ProgramListPageContent() {
   const { showAlert } = useCmsAlert()
   const navigate = useNavigate()
   const location = useLocation()
+  const pNorm = location.pathname.replace(/\/$/, '') || '/'
+  const isCompanySchoolPath =
+    pNorm === '/programs/company-school' ||
+    pNorm.startsWith('/programs/company-school/') ||
+    pNorm === '/programs/economy-education' ||
+    pNorm.startsWith('/programs/economy-education/')
   const { user, isAuthenticated } = useAuthStore()
   const programStore = useProgramStore()
   const { programs, loading, fetchPrograms, selectedProgram, setSelectedProgram } = programStore
+  const companySchoolListQuery = useCompanySchoolPrograms({}, isCompanySchoolPath)
+  const companySchoolProgramSource = isCompanySchoolPath
+    ? (companySchoolListQuery.data ?? [])
+    : programs
 
   // 1. Logic Hooks
   const { programType, statusFilter, filteredPrograms, params, setParam } = useProgramListFilters(
-    programs,
+    companySchoolProgramSource,
     user
   )
 
@@ -119,7 +135,6 @@ function ProgramListPageContent() {
     viewModeFromUrl === 'list' || viewModeFromUrl === 'calendar' ? viewModeFromUrl : 'list'
   )
 
-  const pNorm = location.pathname.replace(/\/$/, '') || '/'
   const isCompanySchoolRegistrationOpen =
     programType === 'company_school' &&
     (pNorm === '/programs/company-school' || pNorm === '/programs/economy-education') &&
@@ -155,11 +170,20 @@ function ProgramListPageContent() {
     useState<Program | null>(null)
   const [selectedProgramForFullPageModal, setSelectedProgramForFullPageModal] =
     useState<Program | null>(null)
+  const companySchoolDetailQuery = useCompanySchoolProgramDetail(
+    selectedProgramForFullPageModal?.id,
+    isCompanySchoolPath && Boolean(selectedProgramForFullPageModal)
+  )
+  const updateCompanySchoolMutation = useUpdateCompanySchoolProgram()
+  const deleteCompanySchoolMutation = useDeleteCompanySchoolProgram()
+  const companySchoolDetailProgram =
+    companySchoolDetailQuery.data ?? selectedProgramForFullPageModal
 
   // 4. Effects
   useEffect(() => {
+    if (isCompanySchoolPath) return
     fetchPrograms()
-  }, [fetchPrograms])
+  }, [fetchPrograms, isCompanySchoolPath])
 
   useEffect(() => {
     const urlViewMode = searchParams.get('viewMode') as 'list' | 'calendar' | null
@@ -307,10 +331,24 @@ function ProgramListPageContent() {
     setSearchParams(next, { replace: true })
   }, [closeWritingUserPreview, searchParams, setSearchParams])
 
-  const handleCompanySchoolRegistrationSaved = useCallback(() => {
-    void fetchPrograms()
-    handleCloseCompanySchoolRegistrationFullpage()
-  }, [fetchPrograms, handleCloseCompanySchoolRegistrationFullpage])
+  const handleCompanySchoolRegistrationSaved = useCallback((program?: Program) => {
+    void companySchoolListQuery.refetch()
+    closeWritingUserPreview()
+    if (!program) {
+      handleCloseCompanySchoolRegistrationFullpage()
+      return
+    }
+    setSelectedProgramForFullPageModal(program)
+    navigate(getProgramAdminDetailUrlFromPathname(program.id, location.pathname), {
+      replace: true,
+    })
+  }, [
+    closeWritingUserPreview,
+    companySchoolListQuery,
+    handleCloseCompanySchoolRegistrationFullpage,
+    location.pathname,
+    navigate,
+  ])
 
   const handleProgramCreateClick = () => {
     if (programType === 'company_school') {
@@ -456,7 +494,7 @@ function ProgramListPageContent() {
       </div>
       <ProgramList
         data={filteredPrograms}
-        loading={loading}
+        loading={isCompanySchoolPath ? companySchoolListQuery.isFetching : loading}
         headerTitle={headerTitle}
         onView={handleView}
         onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
@@ -474,8 +512,24 @@ function ProgramListPageContent() {
 
       <ProgramDetailFullPageModal
         open={!!selectedProgramForFullPageModal}
-        program={selectedProgramForFullPageModal}
+        program={companySchoolDetailProgram}
+        programVariant={isCompanySchoolPath ? 'company-school' : undefined}
+        externalLoading={
+          isCompanySchoolPath ? companySchoolDetailQuery.isFetching : undefined
+        }
         onClose={handleCloseFullPageModal}
+        onUpdateProgram={
+          isCompanySchoolPath
+            ? async (programId, program, patch) => {
+                await updateCompanySchoolMutation.mutateAsync({
+                  programId,
+                  program,
+                  patch,
+                })
+                void companySchoolListQuery.refetch()
+              }
+            : undefined
+        }
       />
 
       <GeneralProgramRegistrationFullpageModal
@@ -546,9 +600,29 @@ function ProgramListPageContent() {
         confirmText="삭제"
         requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
         onConfirm={() => {
-          handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
-          setBulkDeleteModalOpen(false)
-          setProgramsPendingBulkDelete([])
+          void (async () => {
+            try {
+              if (isCompanySchoolPath) {
+                for (const program of programsPendingBulkDelete) {
+                  await deleteCompanySchoolMutation.mutateAsync(program.id)
+                }
+                await companySchoolListQuery.refetch()
+                setSelectedRowKeys([])
+              } else {
+                await handleBulkDelete(programsPendingBulkDelete, () =>
+                  setSelectedRowKeys([])
+                )
+              }
+              setBulkDeleteModalOpen(false)
+              setProgramsPendingBulkDelete([])
+            } catch (error) {
+              console.debug('program bulk delete failed', error)
+              showAlert({
+                title: '삭제 실패',
+                content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+              })
+            }
+          })()
         }}
         onCancel={() => {
           setBulkDeleteModalOpen(false)

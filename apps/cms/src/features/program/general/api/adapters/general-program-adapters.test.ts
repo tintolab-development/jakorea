@@ -75,6 +75,18 @@ describe('general-program-adapters', () => {
     expect(request.lifecycleStatus).toBe('recruiting_students')
     expect(request.targetLevel).toBe('elementary')
     expect(request.rounds).toHaveLength(1)
+    expect(request.programType).toBe('GENERAL')
+    expect(request.businessStartDate).toBe('2026-04-01T00:00:00.000Z')
+    expect(request.businessEndDate).toBe('2026-12-31T00:00:00.000Z')
+    expect(request.autoApplyDefaultFormBindings).toBe(true)
+  })
+
+  it('does not put create-only fields on update request', () => {
+    const request = mapGeneralProgramToUpdateRequest(sampleProgram)
+    expect(request).not.toHaveProperty('programType')
+    expect(request).not.toHaveProperty('autoApplyDefaultFormBindings')
+    expect(request).not.toHaveProperty('businessStartDate')
+    expect(request).not.toHaveProperty('businessEndDate')
   })
 
   it('maps Program patch to update request', () => {
