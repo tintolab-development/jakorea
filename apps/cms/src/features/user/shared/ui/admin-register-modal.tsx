@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
-import type { ChangeEvent } from 'react'
 import type { Rule } from 'antd/es/form'
 import { Form } from 'antd'
 import { CmsButton, CmsInput, CmsRadioGroup, ContentModal } from '@/shared/ui'
+import { CmsDateTextInput, isValidCalendarDate } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
 import './admin-register-modal.css'
@@ -67,7 +67,7 @@ const ADMIN_REGISTER_BIRTH_DATE_RULES: Rule[] = [
   {
     validator: async (_, value: string | undefined) => {
       const trimmed = value?.trim()
-      if (!trimmed || BIRTH_DATE_PATTERN.test(trimmed)) {
+      if (!trimmed || isValidBirthDateDigits(trimmed)) {
         return
       }
       throw new Error('생년월일 8자리 숫자로 입력해 주세요.')
@@ -138,7 +138,7 @@ function canSubmitAdminRegisterForm(values: AdminRegisterModalFormValues | undef
   return Boolean(
     name &&
       birthDate &&
-      BIRTH_DATE_PATTERN.test(birthDate) &&
+      isValidBirthDateDigits(birthDate) &&
       contact &&
       KOREAN_PHONE_REGEX.test(contact) &&
       email &&
@@ -149,8 +149,16 @@ function canSubmitAdminRegisterForm(values: AdminRegisterModalFormValues | undef
   )
 }
 
-function sanitizeBirthDateInput(event: ChangeEvent<HTMLInputElement>): string {
-  return event.target.value.replace(/\D/g, '').slice(0, 8)
+function isValidBirthDateDigits(value: string): boolean {
+  if (!BIRTH_DATE_PATTERN.test(value)) return false
+
+  return isValidCalendarDate(
+    `${value.slice(0, 4)}.${value.slice(4, 6)}.${value.slice(6, 8)}`
+  )
+}
+
+function sanitizeBirthDateInput(value: string): string {
+  return value.replace(/\D/g, '').slice(0, 8)
 }
 
 export function AdminRegisterModal({
@@ -255,14 +263,15 @@ export function AdminRegisterModal({
                       name="birthDate"
                       style={{ ...FORM_ITEM_STYLE, flex: '1 1 0', minWidth: 0 }}
                       rules={ADMIN_REGISTER_BIRTH_DATE_RULES}
+                      trigger="onValueChange"
+                      validateTrigger="onValueChange"
                       getValueFromEvent={sanitizeBirthDateInput}
                     >
-                      <CmsInput
+                      <CmsDateTextInput
                         placeholder="생년월일 8자리"
-                        maxLength={8}
+                        maxLength={10}
                         inputSize="medium"
                         width="100%"
-                        inputMode="numeric"
                       />
                     </Form.Item>
                   </span>

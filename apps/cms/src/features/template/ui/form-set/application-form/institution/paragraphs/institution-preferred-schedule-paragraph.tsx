@@ -12,7 +12,7 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
@@ -118,15 +118,15 @@ function ScheduleTimeRow({
             className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
             style={{ alignItems: 'center', flexWrap: 'wrap', gap: 8, width: '100%' }}
           >
-            <CmsInput
+            <CmsNumericInput
               inputSize="medium"
               width={120}
               placeholder="수업 진행 교시"
               value={classPeriod ?? ''}
-              inputMode="numeric"
-              onChange={event =>
+              mode="integer"
+              onValueChange={value =>
                 onPatch({
-                  classPeriod: event.target.value.trim() === '' ? undefined : event.target.value,
+                  classPeriod: value === '' ? undefined : value,
                   start,
                   end,
                 })

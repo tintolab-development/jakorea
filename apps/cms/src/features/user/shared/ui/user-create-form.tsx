@@ -6,6 +6,7 @@
 import { Form, Input, Select, Switch, Space } from 'antd'
 import type { AdminLevel, ProgramRole, UserRole } from '@/types/user'
 import { getRoleLabel, getAdminLevelLabel, getProgramRoleLabel } from '@/shared/ui'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 
 const { Option } = Select
@@ -186,8 +187,8 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
           <Form.Item name="bankName" label="은행명">
             <Input placeholder="은행명을 입력하세요" />
           </Form.Item>
-          <Form.Item name="accountNumber" label="계좌번호">
-            <Input placeholder="계좌번호를 입력하세요" />
+          <Form.Item name="accountNumber" label="계좌번호" trigger="onValueChange">
+            <CmsNumericInput mode="numericText" placeholder="계좌번호를 입력하세요" />
           </Form.Item>
           <Form.Item name="accountHolder" label="예금주">
             <Input placeholder="예금주를 입력하세요" />

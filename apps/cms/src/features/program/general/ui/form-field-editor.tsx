@@ -17,6 +17,7 @@ import {
   Switch,
   Card } from 'antd'
 import { CmsButton } from '@/shared/ui'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import {
   PlusOutlined,
   EditOutlined,
@@ -305,15 +306,15 @@ export function FormFieldEditor({
                         <Form.Item
                           name="fileMaxSize"
                           label="최대 파일 크기 (MB)"
-                          getValueFromEvent={e => {
-                            const value = e.target.value
+                          trigger="onValueChange"
+                          getValueFromEvent={(value: string) => {
                             return value ? Number(value) * 1024 * 1024 : undefined
                           }}
                           getValueProps={value => {
                             return { value: value ? (value / (1024 * 1024)).toString() : '' }
                           }}
                         >
-                          <Input type="number" placeholder="5" />
+                          <CmsNumericInput mode="decimal" placeholder="5" />
                         </Form.Item>
                       </>
                     )

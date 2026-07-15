@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Input, InputNumber } from 'antd'
+import { Input } from 'antd'
 import type {
   UjatVolunteerApplicantRow,
   UjatVolunteerInterviewEvaluationPayload,
@@ -7,6 +7,7 @@ import type {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 
 const MANAGER_SCORE_MAX = 5
 
@@ -63,13 +64,13 @@ export function UjatVolunteerInterviewEvaluationModal({
           <DetailInfoForm.Field
             label="담당자 A 점수"
             edit={
-              <InputNumber
+              <CmsNumericInput
+                mode="integer"
                 min={0}
                 max={MANAGER_SCORE_MAX}
                 precision={0}
-                controls={false}
-                value={managerAScore}
-                onChange={value => setManagerAScore(typeof value === 'number' ? value : null)}
+                value={managerAScore == null ? '' : String(managerAScore)}
+                onValueChange={value => setManagerAScore(value === '' ? null : Number(value))}
                 placeholder="점수 입력"
                 style={{ width: '100%' }}
               />
@@ -79,13 +80,13 @@ export function UjatVolunteerInterviewEvaluationModal({
           <DetailInfoForm.Field
             label="담당자 B 점수"
             edit={
-              <InputNumber
+              <CmsNumericInput
+                mode="integer"
                 min={0}
                 max={MANAGER_SCORE_MAX}
                 precision={0}
-                controls={false}
-                value={managerBScore}
-                onChange={value => setManagerBScore(typeof value === 'number' ? value : null)}
+                value={managerBScore == null ? '' : String(managerBScore)}
+                onValueChange={value => setManagerBScore(value === '' ? null : Number(value))}
                 placeholder="점수 입력"
                 style={{ width: '100%' }}
               />

@@ -4,6 +4,7 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
 import { CmsRadio } from '@/shared/ui/cms-radio'
@@ -202,14 +203,13 @@ export function createInstitutionsSchema({
                   name="rounds.0.classCount"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsInput
-                      type="number"
+                    <CmsNumericInput
+                      mode="integer"
                       min={0}
-                      value={field.value ?? ''}
-                      onChange={e => {
-                        const n = parseInt(e.target.value, 10)
-                        field.onChange(isNaN(n) ? undefined : n)
-                      }}
+                      value={field.value == null ? '' : String(field.value)}
+                      onValueChange={raw =>
+                        field.onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+                      }
                       className="program-detail-info-tab__max-class-count-input"
                     />
                   )}

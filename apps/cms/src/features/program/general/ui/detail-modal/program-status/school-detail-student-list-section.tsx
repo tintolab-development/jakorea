@@ -11,6 +11,7 @@ import { CheckOutlined, DownloadOutlined } from '@ant-design/icons'
 import { Table } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { CmsButton, CmsInput, CmsRadio, CmsSelect, FilterTableLayout, useCmsAlert } from '@/shared/ui'
+import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import type { ColumnsType } from 'antd/es/table'
 import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
@@ -774,11 +775,21 @@ export function SchoolDetailStudentListSection({
             name={`students.${index}.birthDate`}
             render={({ field }) => (
               <StudentListEditCell>
-                <CmsInput
-                  {...field}
+                <CmsDateTextInput
+                  value={field.value ?? ''}
+                  onValueChange={value => {
+                    const digits = value.replace(/\D/g, '')
+                    field.onChange(
+                      digits.length === 8 ? formatStudentBirthDateFromDigits(digits) : value
+                    )
+                  }}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
                   inputSize="medium"
                   width="100%"
                   placeholder="YYYY. MM. DD."
+                  maxLength={10}
                 />
               </StudentListEditCell>
             )}

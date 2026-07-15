@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
-import { CmsInput, CmsSelect } from '@/shared/ui'
+import { CmsInput, CmsNumericInput, CmsSelect } from '@/shared/ui'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import type {
   GeneralIndividualApplicantDetail,
@@ -630,16 +630,16 @@ export function ApplicantGeneralIndividualBasicInfo({
         {draft.teamMemberCountSelect === 'custom' ? (
           <>
             <DetailInfoForm.InputsSeparator />
-            <CmsInput
+            <CmsNumericInput
               inputSize="large"
-              type="number"
+              mode="integer"
+              min={1}
               width="100%"
               style={{ flex: '1 1 160px', minWidth: 140 }}
-              value={String(draft.teamMemberCount)}
-              onChange={event => {
-                const parsed = Number(event.target.value)
+              value={draft.teamMemberCount > 0 ? String(draft.teamMemberCount) : ''}
+              onValueChange={raw => {
                 onDraftChange({
-                  teamMemberCount: Number.isFinite(parsed) && parsed > 0 ? parsed : 1,
+                  teamMemberCount: raw === '' ? 0 : Number.parseInt(raw, 10),
                 })
               }}
             />

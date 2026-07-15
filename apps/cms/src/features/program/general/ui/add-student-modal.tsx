@@ -10,6 +10,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsInput, CmsRadioGroup, CmsSelect } from '@/shared/ui'
 import {
+  CmsDateTextInput,
+  isValidCalendarDate,
+  sanitizeDateTextInput,
+} from '@/shared/ui/date-text-input'
+import {
   addStudentFormSchema,
   type AddStudentFormValues,
   DEFAULT_ADD_STUDENT_FORM_VALUES,
@@ -40,6 +45,7 @@ export function AddStudentModal({
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<AddStudentFormValues>({
     resolver: zodResolver(addStudentFormSchema),
@@ -53,6 +59,14 @@ export function AddStudentModal({
   }, [open, reset])
 
   const onSubmit = (values: AddStudentFormValues) => {
+    if (!isValidCalendarDate(sanitizeDateTextInput(values.birthDate))) {
+      setError('birthDate', {
+        type: 'validate',
+        message: '생년월일 8자리를 입력해주세요',
+      })
+      return
+    }
+
     onAdd(values)
     onCancel()
   }
@@ -137,17 +151,16 @@ export function AddStudentModal({
               name="birthDate"
               control={control}
               render={({ field }) => (
-                <CmsInput
-                  {...field}
+                <CmsDateTextInput
                   value={field.value ?? ''}
+                  onValueChange={value => field.onChange(value.replace(/\D/g, '').slice(0, 8))}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
                   inputSize="medium"
                   width="100%"
                   placeholder="생년월일 8자리를 입력하세요"
-                  maxLength={8}
-                  inputMode="numeric"
-                  onChange={e => {
-                    field.onChange(e.target.value.replace(/\D/g, '').slice(0, 8))
-                  }}
+                  maxLength={10}
                 />
               )}
             />

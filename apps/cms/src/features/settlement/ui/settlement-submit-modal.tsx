@@ -4,8 +4,9 @@
  */
 
 import { CmsRadio } from '@/shared/ui'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { useState, useEffect, useCallback } from 'react'
-import { Modal, Form, Select, InputNumber, Input, Upload, Button, Space, Divider, Typography, Switch, DatePicker, Collapse, Card } from 'antd'
+import { Modal, Form, Select, Input, Upload, Button, Space, Divider, Typography, Switch, DatePicker, Collapse, Card } from 'antd'
 import { UploadOutlined, CalculatorOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -85,9 +86,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
     if (
       calculationMode === 'auto' &&
       sessions &&
-      distance !== undefined &&
-      fuelCost !== undefined &&
-      tollFee !== undefined
+      distance !== undefined
     ) {
       try {
         // Form.useWatch가 즉시 반영되지 않을 수 있으므로 form.getFieldValue로 최신 값 가져오기
@@ -456,12 +455,20 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                   <Form.Item
                     label="편도 거리 (km)"
                     name="distance"
+                    trigger="onValueChange"
+                    getValueProps={(value: number | undefined) => ({
+                      value: value == null ? '' : String(value),
+                    })}
+                    getValueFromEvent={(raw: string) =>
+                      raw === '' ? undefined : Number(raw)
+                    }
                     rules={[
                       { required: true },
                       { type: 'number', min: 0 },
                     ]}
                   >
-                    <InputNumber
+                    <CmsNumericInput
+                      mode="decimal"
                       style={{ width: '100%' }}
                       placeholder="편도 거리를 입력하세요"
                       min={0}
@@ -474,21 +481,21 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                   <Form.Item
                     label="주유비 (원)"
                     name="fuelCost"
+                    trigger="onValueChange"
+                    getValueProps={(value: number | undefined) => ({
+                      value: value == null ? '' : String(value),
+                    })}
+                    getValueFromEvent={(raw: string) =>
+                      raw === '' ? undefined : Number(raw)
+                    }
                     rules={[{ type: 'number', min: 0 }]}
                   >
-                    <InputNumber
+                    <CmsNumericInput
+                      mode="currency"
                       style={{ width: '100%' }}
                       placeholder="주유비를 입력하세요"
                       min={0}
                       precision={0}
-                      formatter={value =>
-                        value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''
-                      }
-                      parser={value => {
-                        if (!value) return 0 as any
-                        const parsed = value.replace(/\$\s?|(,*)/g, '')
-                        return (parsed === '' ? 0 : parseFloat(parsed) || 0) as any
-                      }}
                       disabled={submitting}
                     />
                   </Form.Item>
@@ -496,21 +503,21 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                   <Form.Item
                     label="통행료 (원)"
                     name="tollFee"
+                    trigger="onValueChange"
+                    getValueProps={(value: number | undefined) => ({
+                      value: value == null ? '' : String(value),
+                    })}
+                    getValueFromEvent={(raw: string) =>
+                      raw === '' ? undefined : Number(raw)
+                    }
                     rules={[{ type: 'number', min: 0 }]}
                   >
-                    <InputNumber
+                    <CmsNumericInput
+                      mode="currency"
                       style={{ width: '100%' }}
                       placeholder="통행료를 입력하세요"
                       min={0}
                       precision={0}
-                      formatter={value =>
-                        value ? `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''
-                      }
-                      parser={value => {
-                        if (!value) return 0 as any
-                        const parsed = value.replace(/\$\s?|(,*)/g, '')
-                        return (parsed === '' ? 0 : parseFloat(parsed) || 0) as any
-                      }}
                       disabled={submitting}
                     />
                   </Form.Item>
@@ -528,9 +535,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                         if (
                           calculationMode === 'auto' &&
                           sessions &&
-                          distance !== undefined &&
-                          fuelCost !== undefined &&
-                          tollFee !== undefined
+                          distance !== undefined
                         ) {
                           const currentHasAccommodation =
                             form.getFieldValue('hasAccommodation') ?? false
@@ -563,9 +568,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                         if (
                           calculationMode === 'auto' &&
                           sessions &&
-                          distance !== undefined &&
-                          fuelCost !== undefined &&
-                          tollFee !== undefined
+                          distance !== undefined
                         ) {
                           const currentIsBusinessIncome =
                             form.getFieldValue('isBusinessIncome') ?? false
@@ -620,6 +623,13 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                           <Form.Item
                             label="강사비"
                             name="instructorFee"
+                            trigger="onValueChange"
+                            getValueProps={(value: number | undefined) => ({
+                              value: value == null ? '' : String(value),
+                            })}
+                            getValueFromEvent={(raw: string) =>
+                              raw === '' ? undefined : Number(raw)
+                            }
                             rules={[
                               { required: true },
                               {
@@ -628,41 +638,14 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                             ]}
                             style={{ marginBottom: 0 }}
                           >
-                            <InputNumber
+                            <CmsNumericInput
+                              mode="currency"
                               style={{ width: '100%' }}
                               placeholder="강사비를 입력하세요"
                               min={0}
                               precision={0}
-                              size="large"
-                              controls
-                              keyboard
-                              formatter={(value?: string | number) =>
-                                value
-                                  ? `${value}`.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                                  : ''
-                              }
-                              parser={(raw?: string) => {
-                                const value = raw ?? ''
-                                const parsed = value.replace(/\$\s?|(,*)/g, '')
-                                return parsed === '' ? 0 : Number(parsed)
-                              }}
+                              inputSize="large"
                               disabled={submitting}
-                              onKeyPress={e => {
-                                // 숫자와 일부 특수키만 허용
-                                if (
-                                  !/[0-9]/.test(e.key) &&
-                                  ![
-                                    'Backspace',
-                                    'Delete',
-                                    'Tab',
-                                    'Enter',
-                                    'ArrowLeft',
-                                    'ArrowRight',
-                                  ].includes(e.key)
-                                ) {
-                                  e.preventDefault()
-                                }
-                              }}
                             />
                           </Form.Item>
                           <div className="settlement-help-text">
@@ -674,6 +657,13 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                           <Form.Item
                             label="교통비"
                             name="transportationFee"
+                            trigger="onValueChange"
+                            getValueProps={(value: number | undefined) => ({
+                              value: value == null ? '' : String(value),
+                            })}
+                            getValueFromEvent={(raw: string) =>
+                              raw === '' ? undefined : Number(raw)
+                            }
                             rules={[
                               {
                                 type: 'number',
@@ -681,41 +671,14 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                             ]}
                             style={{ marginBottom: 0 }}
                           >
-                            <InputNumber
+                            <CmsNumericInput
+                              mode="currency"
                               style={{ width: '100%' }}
                               placeholder="교통비를 입력하세요 (선택사항)"
                               min={0}
                               precision={0}
-                              size="large"
-                              controls
-                              keyboard
-                              formatter={(value?: string | number) =>
-                                value
-                                  ? `${value}`.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-                                  : ''
-                              }
-                              parser={(raw?: string) => {
-                                const value = raw ?? ''
-                                const parsed = value.replace(/\$\s?|(,*)/g, '')
-                                return parsed === '' ? 0 : Number(parsed)
-                              }}
+                              inputSize="large"
                               disabled={submitting}
-                              onKeyPress={e => {
-                                // 숫자와 일부 특수키만 허용
-                                if (
-                                  !/[0-9]/.test(e.key) &&
-                                  ![
-                                    'Backspace',
-                                    'Delete',
-                                    'Tab',
-                                    'Enter',
-                                    'ArrowLeft',
-                                    'ArrowRight',
-                                  ].includes(e.key)
-                                ) {
-                                  e.preventDefault()
-                                }
-                              }}
                             />
                           </Form.Item>
                           <div className="settlement-help-text">

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ContentModal, CmsButton, useCmsAlert } from '@/shared/ui'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
 import {
@@ -105,13 +105,15 @@ function ClassRowFields({
         />
       </div>
       <div className="add-class-modal__field-student">
-        <CmsInput
+        <CmsNumericInput
+          mode="integer"
+          min={1}
           inputSize="medium"
           width={110}
           placeholder="총 학생 수"
           value={studentCount}
           readOnly={readOnly}
-          onChange={event => onStudentCountChange?.(event.target.value)}
+          onValueChange={value => onStudentCountChange?.(value)}
           aria-label={studentCountAriaLabel}
         />
       </div>
@@ -284,7 +286,7 @@ export function UjatEducationProgressAddClassModal({
                   setDraft(prev => ({ ...prev, classNo: value }))
                 }}
                 onStudentCountChange={value => {
-                  setDraft(prev => ({ ...prev, studentCount: value.replace(/\D/g, '') }))
+                  setDraft(prev => ({ ...prev, studentCount: value }))
                 }}
                 gradeAriaLabel="신청 학년"
                 classAriaLabel="신청 학급"

@@ -4,9 +4,9 @@
  */
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
-import { Form, Input, Select, Button, Space, Table, InputNumber, Upload, Alert, DatePicker } from 'antd'
+import { Form, Input, Select, Button, Space, Table, Upload, Alert, DatePicker } from 'antd'
 import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'
-import { useForm, useFieldArray, type SubmitHandler } from 'react-hook-form'
+import { Controller, useForm, useFieldArray, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { settlementSchema, type SettlementFormData } from '@/entities/settlement/model/schema'
 import type { Settlement } from '@/types/domain'
@@ -17,6 +17,7 @@ import { useMemo } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import locale from 'antd/es/date-picker/locale/ko_KR'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -259,19 +260,26 @@ export function InstructorSettlementForm({
                   const itemType = watch(`items.${index}.type`)
                   const isAccommodation = itemType === 'accommodation'
                   return (
-                    <InputNumber
-                      value={watch(`items.${index}.amount`)}
-                      onChange={value => {
-                        // 숙박비는 8만원 고정이므로 변경 불가
-                        if (!isAccommodation) {
-                          setValue(`items.${index}.amount`, value || 0)
-                        }
-                      }}
-                      min={0}
-                      style={{ width: '100%' }}
-                      disabled={isAccommodation}
-                      formatter={value => `${value || ''}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={value => Number(value!.replace(/\$\s?|(,*)/g, '')) || 0}
+                    <Controller
+                      name={`items.${index}.amount`}
+                      control={control}
+                      render={({ field }) => (
+                        <CmsNumericInput
+                          mode="currency"
+                          value={field.value == null ? '' : String(field.value)}
+                          onBlur={field.onBlur}
+                          onValueChange={raw => {
+                            // 숙박비는 8만원 고정이므로 변경 불가
+                            if (!isAccommodation) {
+                              field.onChange(raw === '' ? undefined : Number(raw))
+                            }
+                          }}
+                          min={0}
+                          precision={0}
+                          style={{ width: '100%' }}
+                          disabled={isAccommodation}
+                        />
+                      )}
                     />
                   )
                 } },

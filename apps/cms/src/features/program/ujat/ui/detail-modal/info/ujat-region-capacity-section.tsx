@@ -21,7 +21,7 @@ import {
   useUjatProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import '@/features/template/ui/form-set/registration-form/UJAT/paragraphs/ujat-education-class-capacity-by-region-paragraph.css'
 
 function RegionCapacityView({
@@ -53,28 +53,26 @@ function RegionCapacityInputs({
 }) {
   return (
     <div className="ujat-education-class-capacity__inputs">
-      <CmsInput
+      <CmsNumericInput
+        mode="integer"
         inputSize="medium"
         width={120}
         placeholder="최대 학급 수"
-        type="text"
-        inputMode="numeric"
         value={values?.classCount ?? ''}
-        onChange={e =>
-          onChange(region, 'classCount', parseUjatRegionCapacityNumericInput(e.target.value))
+        onValueChange={value =>
+          onChange(region, 'classCount', parseUjatRegionCapacityNumericInput(value))
         }
       />
       <span className="ujat-education-class-capacity__unit">개 학급</span>
       <DetailInfoForm.InputsSeparator />
-      <CmsInput
+      <CmsNumericInput
+        mode="integer"
         inputSize="medium"
         width={120}
         placeholder="최대 봉사자 수"
-        type="text"
-        inputMode="numeric"
         value={values?.volunteerCount ?? ''}
-        onChange={e =>
-          onChange(region, 'volunteerCount', parseUjatRegionCapacityNumericInput(e.target.value))
+        onValueChange={value =>
+          onChange(region, 'volunteerCount', parseUjatRegionCapacityNumericInput(value))
         }
       />
       <span className="ujat-education-class-capacity__unit">명</span>

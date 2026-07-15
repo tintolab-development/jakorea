@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import {
@@ -9,7 +9,6 @@ import {
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { ApplicantInstructorEditDraft } from '@/features/program/general/lib/applicant-instructor-detail-edit'
 import {
-  formatLectureFeeAmountInput,
   formatLectureFeeAmountWon,
   LECTURE_FEE_BASIS_TYPE_OPTIONS,
   LECTURE_FEE_MEASURE_NOT_APPLICABLE,
@@ -17,7 +16,6 @@ import {
   LECTURE_FEE_MEASURE_OPTIONS,
   DEFAULT_LECTURE_FEE_MEASURE,
   lectureFeeBasisTypeLabel,
-  parseLectureFeeAmountDigits,
   resolveLectureFeeBasisFromRow,
   type ApplicantInstructorBusinessIncomeStatus,
   type ApplicantInstructorLectureFeeBasisType,
@@ -138,16 +136,16 @@ export function LectureFeeBasisEditField({
           onChange={v => onDraftChange({ lectureFeeMeasure: v != null ? String(v) : '' })}
           getPopupContainer={() => document.body}
         />
-        <CmsInput
+        <CmsNumericInput
+          mode="currency"
           className="applicant-general-instructor-basic-info__lecture-fee-amount"
           inputSize="medium"
-          value={formatLectureFeeAmountInput(draft.lectureFeeAmount)}
-          onChange={e =>
+          value={draft.lectureFeeAmount}
+          onValueChange={value =>
             onDraftChange({
-              lectureFeeAmount: parseLectureFeeAmountDigits(e.target.value),
+              lectureFeeAmount: value,
             })
           }
-          inputMode="numeric"
           suffix="원"
         />
       </div>

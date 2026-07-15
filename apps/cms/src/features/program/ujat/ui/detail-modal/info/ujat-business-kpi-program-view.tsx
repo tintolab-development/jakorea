@@ -9,6 +9,7 @@ import { createUjatRegistrationBasicInfoOverlayDefaults } from '@/features/progr
 import { useUjatProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 function KpiNumber({ value }: { value: number }) {
@@ -20,8 +21,7 @@ function NotApplicableText() {
 }
 
 function parseOptionalNonNegativeInt(raw: string): number | undefined {
-  const n = parseInt(raw, 10)
-  return Number.isNaN(n) ? undefined : n
+  return raw === '' ? undefined : Number.parseInt(raw, 10)
 }
 
 /** UJAT 사업 KPI 목표 — 등록 양식(`UjatBusinessKpiParagraph`)과 동일 레이아웃 */
@@ -56,14 +56,14 @@ export function UjatBusinessKpiProgramView({
                 name="kpiFinalParticipants"
                 control={form.control}
                 render={({ field }) => (
-                  <CmsInput
+                  <CmsNumericInput
                     inputSize="medium"
                     placeholder="목표값 입력"
                     width={120}
-                    type="number"
+                    mode="integer"
                     min={0}
-                    value={field.value ?? ''}
-                    onChange={e => field.onChange(parseOptionalNonNegativeInt(e.target.value))}
+                    value={field.value == null ? '' : String(field.value)}
+                    onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
                     status={form.formState.errors.kpiFinalParticipants ? 'error' : undefined}
                   />
                 )}
@@ -111,14 +111,14 @@ export function UjatBusinessKpiProgramView({
                       name="kpiVolunteerCount"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsInput
+                        <CmsNumericInput
                           inputSize="medium"
                           placeholder="목표값 입력"
                           width={120}
-                          type="number"
+                          mode="integer"
                           min={0}
-                          value={field.value ?? ''}
-                          onChange={e => field.onChange(parseOptionalNonNegativeInt(e.target.value))}
+                          value={field.value == null ? '' : String(field.value)}
+                          onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
                           status={form.formState.errors.kpiVolunteerCount ? 'error' : undefined}
                         />
                       )}
@@ -148,14 +148,14 @@ export function UjatBusinessKpiProgramView({
                 name="kpiFinalSchools"
                 control={form.control}
                 render={({ field }) => (
-                  <CmsInput
+                  <CmsNumericInput
                     inputSize="medium"
                     placeholder="목표값 입력"
                     width={120}
-                    type="number"
+                    mode="integer"
                     min={0}
-                    value={field.value ?? ''}
-                    onChange={e => field.onChange(parseOptionalNonNegativeInt(e.target.value))}
+                    value={field.value == null ? '' : String(field.value)}
+                    onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
                     status={form.formState.errors.kpiFinalSchools ? 'error' : undefined}
                   />
                 )}
@@ -172,14 +172,14 @@ export function UjatBusinessKpiProgramView({
                 name="kpiFinalClasses"
                 control={form.control}
                 render={({ field }) => (
-                  <CmsInput
+                  <CmsNumericInput
                     inputSize="medium"
                     placeholder="목표값 입력"
                     width={120}
-                    type="number"
+                    mode="integer"
                     min={0}
-                    value={field.value ?? ''}
-                    onChange={e => field.onChange(parseOptionalNonNegativeInt(e.target.value))}
+                    value={field.value == null ? '' : String(field.value)}
+                    onValueChange={raw => field.onChange(parseOptionalNonNegativeInt(raw))}
                     status={form.formState.errors.kpiFinalClasses ? 'error' : undefined}
                   />
                 )}

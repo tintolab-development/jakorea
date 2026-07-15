@@ -26,7 +26,7 @@ import type {
   Program,
 } from '@/types/domain'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsButton, CmsToggle } from '@/shared/ui'
+import { CmsButton, CmsNumericInput, CmsToggle } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -241,15 +241,14 @@ function KpiNumberInput({
   width?: number | string
 }) {
   return (
-    <CmsInput
+    <CmsNumericInput
       width={width}
-      type="number"
+      mode="integer"
       min={0}
-      value={value ?? ''}
-      onChange={e => {
-        const n = parseInt(e.target.value, 10)
-        onChange(Number.isNaN(n) ? undefined : n)
-      }}
+      value={value == null ? '' : String(value)}
+      onValueChange={raw =>
+        onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+      }
     />
   )
 }

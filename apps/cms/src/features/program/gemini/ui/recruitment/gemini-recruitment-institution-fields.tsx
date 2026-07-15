@@ -20,6 +20,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { GeminiRecruitmentPeriodDatePicker } from './gemini-recruitment-period-date-picker'
@@ -213,15 +214,14 @@ export function GeminiRecruitmentInstitutionFields({
           edit={
             isEdit && onMinStudentCountChange ? (
               <div className={MAX_SUFFIX_CLASS}>
-                <CmsInput
+                <CmsNumericInput
                   inputSize="medium"
-                  type="number"
-                  inputMode="numeric"
+                  mode="integer"
                   min={0}
                   placeholder="최소 수강 인원을 입력하세요"
                   width={120}
                   value={minStudentCountInput}
-                  onChange={e => onMinStudentCountChange(e.target.value)}
+                  onValueChange={raw => onMinStudentCountChange(raw)}
                 />
                 <span style={{ marginLeft: 6 }}>명</span>
               </div>

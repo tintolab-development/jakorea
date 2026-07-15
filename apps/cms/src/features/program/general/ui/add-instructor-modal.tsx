@@ -53,7 +53,7 @@ function AddressSearchInput({ onSearchClick, ...props }: AddressSearchInputProps
   )
 }
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CmsRadio } from '@/shared/ui'
+import { CmsButton, CmsNumericInput, CmsRadio } from '@/shared/ui'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey } from '@/data/mock/participating-instructors'
@@ -457,14 +457,17 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       <div className="add-instructor-modal__resident-registration-row">
                         <Form.Item
                           name="residentRegistrationFirst"
+                          trigger="onValueChange"
                           rules={[
                             { required: true },
                             { len: 6 },
                           ]}
                           noStyle
                         >
-                          <input
-                            className="add-instructor-modal__table-input add-instructor-modal__resident-registration-input"
+                          <CmsNumericInput
+                            mode="numericText"
+                            inputSize="medium"
+                            width={164.5}
                             placeholder="주민등록 앞 6자리"
                             maxLength={6}
                           />
@@ -477,14 +480,17 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         </span>
                         <Form.Item
                           name="residentRegistrationLast"
+                          trigger="onValueChange"
                           rules={[
                             { required: true },
                             { len: 7 },
                           ]}
                           noStyle
                         >
-                          <input
-                            className="add-instructor-modal__table-input add-instructor-modal__resident-registration-input"
+                          <CmsNumericInput
+                            mode="numericText"
+                            inputSize="medium"
+                            width={164.5}
                             placeholder="주민등록 뒤 7자리"
                             maxLength={7}
                           />
@@ -589,9 +595,16 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                             className="add-instructor-modal__table-input add-instructor-modal__bank-account-select"
                           />
                         </Form.Item>
-                        <Form.Item name="accountNumber" rules={[{ required: true }]} noStyle>
-                          <input
-                            className="add-instructor-modal__table-input add-instructor-modal__bank-account-input--number"
+                        <Form.Item
+                          name="accountNumber"
+                          trigger="onValueChange"
+                          rules={[{ required: true }]}
+                          noStyle
+                        >
+                          <CmsNumericInput
+                            mode="numericText"
+                            inputSize="medium"
+                            width={160}
                             placeholder="계좌번호(숫자만)"
                           />
                         </Form.Item>

@@ -12,7 +12,7 @@ import type { ProgramKpiItem } from '@/features/dashboard/api/admin-dashboard-se
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
-import { CmsInput } from '@/shared/ui'
+import { CmsInput, CmsNumericInput } from '@/shared/ui'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
 import './program-kpi-target-section.css'
 
@@ -179,16 +179,14 @@ export function ProgramKpiTargetSection({
                       name="kpiFinalParticipants"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsInput
+                        <CmsNumericInput
                           width={'50%'}
-                          type="number"
+                          mode="integer"
                           min={0}
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={e => {
-                            const n = parseInt(e.target.value, 10)
-                            field.onChange(isNaN(n) ? undefined : n)
-                          }}
+                          value={field.value == null ? '' : String(field.value)}
+                          onValueChange={raw =>
+                            field.onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+                          }
                           status={form.formState.errors.kpiFinalParticipants ? 'error' : undefined}
                         />
                       )}
@@ -210,16 +208,14 @@ export function ProgramKpiTargetSection({
                         name="kpiInstructorCount"
                         control={form.control}
                         render={({ field }) => (
-                          <CmsInput
+                          <CmsNumericInput
                             width={120}
-                            type="number"
+                            mode="integer"
                             min={0}
-                            {...field}
-                            value={field.value ?? ''}
-                            onChange={e => {
-                              const n = parseInt(e.target.value, 10)
-                              field.onChange(isNaN(n) ? undefined : n)
-                            }}
+                            value={field.value == null ? '' : String(field.value)}
+                            onValueChange={raw =>
+                              field.onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+                            }
                             status={form.formState.errors.kpiInstructorCount ? 'error' : undefined}
                           />
                         )}
@@ -233,16 +229,14 @@ export function ProgramKpiTargetSection({
                           name="kpiVolunteerCount"
                           control={form.control}
                           render={({ field }) => (
-                            <CmsInput
+                            <CmsNumericInput
                               width={120}
-                              type="number"
+                              mode="integer"
                               min={0}
-                              {...field}
-                              value={field.value ?? ''}
-                              onChange={e => {
-                                const n = parseInt(e.target.value, 10)
-                                field.onChange(isNaN(n) ? undefined : n)
-                              }}
+                              value={field.value == null ? '' : String(field.value)}
+                              onValueChange={raw =>
+                                field.onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+                              }
                               status={form.formState.errors.kpiVolunteerCount ? 'error' : undefined}
                             />
                           )}
@@ -269,16 +263,14 @@ export function ProgramKpiTargetSection({
                       name="kpiFinalSchools"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsInput
+                        <CmsNumericInput
                           width={'50%'}
-                          type="number"
+                          mode="integer"
                           min={0}
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={e => {
-                            const n = parseInt(e.target.value, 10)
-                            field.onChange(isNaN(n) ? undefined : n)
-                          }}
+                          value={field.value == null ? '' : String(field.value)}
+                          onValueChange={raw =>
+                            field.onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+                          }
                           status={form.formState.errors.kpiFinalSchools ? 'error' : undefined}
                         />
                       )}
@@ -298,16 +290,14 @@ export function ProgramKpiTargetSection({
                       name="kpiFinalClasses"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsInput
+                        <CmsNumericInput
                           width={'50%'}
-                          type="number"
+                          mode="integer"
                           min={0}
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={e => {
-                            const n = parseInt(e.target.value, 10)
-                            field.onChange(isNaN(n) ? undefined : n)
-                          }}
+                          value={field.value == null ? '' : String(field.value)}
+                          onValueChange={raw =>
+                            field.onChange(raw === '' ? undefined : Number.parseInt(raw, 10))
+                          }
                           status={form.formState.errors.kpiFinalClasses ? 'error' : undefined}
                         />
                       )}

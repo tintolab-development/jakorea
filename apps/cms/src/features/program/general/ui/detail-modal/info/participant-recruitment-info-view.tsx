@@ -22,6 +22,7 @@ import { parsePositiveIntInput } from '@/features/template/lib/participant-recru
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { DividerVertical } from '@/shared/components/divider-vertical'
@@ -102,14 +103,14 @@ function NumberWithSuffixEdit({
       control={form.control}
       render={({ field }) => (
         <div className={MAX_SUFFIX_CLASS}>
-          <CmsInput
+          <CmsNumericInput
             inputSize="medium"
-            type="number"
+            mode="integer"
             min={0}
             placeholder={placeholder}
             width={120}
-            value={field.value ?? ''}
-            onChange={e => field.onChange(parsePositiveIntInput(e.target.value))}
+            value={field.value == null ? '' : String(field.value)}
+            onValueChange={raw => field.onChange(parsePositiveIntInput(raw))}
             className="program-detail-info-tab__max-class-count-input"
           />
           <span style={{ marginLeft: 6 }}>{suffix}</span>

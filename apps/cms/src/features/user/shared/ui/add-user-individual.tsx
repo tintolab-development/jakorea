@@ -7,6 +7,7 @@ import {
   CmsButton,
   CmsInput,
   CmsInputSearch,
+  CmsNumericInput,
   CmsRadioGroup,
   CmsSelect } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -149,10 +150,12 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
                 <Space.Compact style={{ width: '100%', alignItems: 'center' }}>
                   <Form.Item
                     name="residentRegistrationFirst"
+                    trigger="onValueChange"
                     noStyle
                     rules={[{ required: true }]}
                   >
-                    <CmsInput
+                    <CmsNumericInput
+                      mode="numericText"
                       placeholder="주민등록 앞 6자리"
                       maxLength={6}
                       inputSize="medium"
@@ -162,10 +165,12 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
                   <div style={{ margin: '0 8px', height: '100%' }}>-</div>
                   <Form.Item
                     name="residentRegistrationLast"
+                    trigger="onValueChange"
                     noStyle
                     rules={[{ required: true }]}
                   >
-                    <CmsInput
+                    <CmsNumericInput
+                      mode="numericText"
                       placeholder="주민등록 뒤 7자리"
                       maxLength={7}
                       inputSize="medium"

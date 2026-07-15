@@ -1,5 +1,5 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 export type ProgramRegistrationBusinessKpiProgressItem = {
@@ -24,6 +24,29 @@ export type ProgramRegistrationBusinessKpiParagraphProps = {
   dispatchedClassPlaceholder?: string
   /** 교육진행자 최종 인원 항목 오버라이드 — 미지정 시 강사/봉사자 */
   educationProgressItems?: readonly ProgramRegistrationBusinessKpiProgressItem[]
+}
+
+function KpiCountInput({
+  disabled,
+  placeholder,
+  defaultValue,
+}: {
+  disabled?: boolean
+  placeholder?: string
+  defaultValue?: string
+}) {
+  return (
+    <CmsNumericInput
+      mode="integer"
+      min={0}
+      allowNegative={false}
+      disabled={disabled}
+      inputSize="medium"
+      placeholder={placeholder ?? '목표값 입력'}
+      defaultValue={defaultValue}
+      width={120}
+    />
+  )
 }
 
 export function ProgramRegistrationBusinessKpiParagraph({
@@ -60,7 +83,7 @@ export function ProgramRegistrationBusinessKpiParagraph({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="참여자 최종 인원"
-          edit={<CmsInput inputSize="medium" placeholder="목표값 입력" width={120} />}
+          edit={<KpiCountInput placeholder="목표값 입력" />}
           view="-"
         />
         <DetailInfoForm.Field
@@ -74,12 +97,10 @@ export function ProgramRegistrationBusinessKpiParagraph({
                 >
                   {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
                   <span className="detail-info-form--text">{item.label}</span>
-                  <CmsInput
+                  <KpiCountInput
                     disabled={item.disabled}
-                    inputSize="medium"
                     placeholder={item.placeholder ?? '목표값 입력'}
                     defaultValue={item.defaultValue}
-                    width={120}
                   />
                 </div>
               ))}
@@ -92,11 +113,9 @@ export function ProgramRegistrationBusinessKpiParagraph({
         <DetailInfoForm.Field
           label="최종 파견 학교 수"
           edit={
-            <CmsInput
+            <KpiCountInput
               disabled={dispatchedSchoolDisabled}
-              inputSize="medium"
               placeholder={dispatchedSchoolPlaceholder}
-              width={120}
             />
           }
           view="-"
@@ -104,11 +123,9 @@ export function ProgramRegistrationBusinessKpiParagraph({
         <DetailInfoForm.Field
           label="최종 파견 학급 수"
           edit={
-            <CmsInput
+            <KpiCountInput
               disabled={dispatchedClassDisabled}
-              inputSize="medium"
               placeholder={dispatchedClassPlaceholder}
-              width={120}
             />
           }
           view="-"

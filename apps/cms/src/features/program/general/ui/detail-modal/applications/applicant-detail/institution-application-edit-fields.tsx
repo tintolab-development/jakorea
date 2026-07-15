@@ -7,7 +7,7 @@ import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { InstitutionAffiliatedTeacherOption } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { INSTITUTION_APPLICATION_GRADE_OPTIONS } from '@/features/program/general/lib/institution-application-detail-edit-policy'
-import { CmsInput, CmsRadio, CmsRadioGroup, CmsTextArea } from '@/shared/ui'
+import { CmsInput, CmsNumericInput, CmsRadio, CmsRadioGroup, CmsTextArea } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
 
 export const INSTITUTION_EDUCATION_FORMAT_OPTIONS = [
@@ -306,14 +306,14 @@ export function InstitutionClassAndStudentCountEdit({
         />
         <span style={nowrapSpanStyle}>개 학급</span>
         <DetailInfoForm.InputsSeparator />
-        <CmsInput
+        <CmsNumericInput
           inputSize="medium"
-          type="number"
+          mode="integer"
           min={1}
           placeholder="총 학생 수"
           width={120}
           value={studentCount}
-          onChange={event => onChange({ studentCount: event.target.value })}
+          onValueChange={raw => onChange({ studentCount: raw })}
         />
         <span style={nowrapSpanStyle}>명</span>
       </div>

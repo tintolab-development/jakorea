@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Input, InputNumber } from 'antd'
+import { Input } from 'antd'
 import type {
   GeneralVolunteerApplicantRow,
   GeneralVolunteerInterviewEvaluationPayload,
@@ -14,6 +14,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 
 export type GeneralVolunteerInterviewEvaluationModalProps = {
   open: boolean
@@ -107,13 +108,13 @@ export function GeneralVolunteerInterviewEvaluationModal({
           <DetailInfoForm.Field
             label="담당자 A 점수"
             edit={
-              <InputNumber
+              <CmsNumericInput
+                mode="integer"
                 min={0}
                 max={GENERAL_INTERVIEW_TOTAL_SCORE_MAX}
                 precision={0}
-                controls={false}
-                value={managerAScore}
-                onChange={value => setManagerAScore(typeof value === 'number' ? value : null)}
+                value={managerAScore == null ? '' : String(managerAScore)}
+                onValueChange={value => setManagerAScore(value === '' ? null : Number(value))}
                 placeholder="점수 입력"
                 style={{ width: '100%' }}
               />
@@ -123,13 +124,13 @@ export function GeneralVolunteerInterviewEvaluationModal({
           <DetailInfoForm.Field
             label="담당자 B 점수"
             edit={
-              <InputNumber
+              <CmsNumericInput
+                mode="integer"
                 min={0}
                 max={GENERAL_INTERVIEW_TOTAL_SCORE_MAX}
                 precision={0}
-                controls={false}
-                value={managerBScore}
-                onChange={value => setManagerBScore(typeof value === 'number' ? value : null)}
+                value={managerBScore == null ? '' : String(managerBScore)}
+                onValueChange={value => setManagerBScore(value === '' ? null : Number(value))}
                 placeholder="점수 입력"
                 style={{ width: '100%' }}
               />

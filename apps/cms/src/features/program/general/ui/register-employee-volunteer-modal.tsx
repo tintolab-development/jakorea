@@ -3,11 +3,11 @@
  * 프로그램 진행 현황 > 참여 봉사자 > 임직원 자원봉사자 등록
  */
 
-import { useCallback, useEffect, type KeyboardEvent } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Form } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CmsInput, CmsSelect } from '@/shared/ui'
+import { CmsButton, CmsNumericInput, CmsSelect } from '@/shared/ui'
 import { parsePositiveIntInput } from '@/features/template/lib/participant-recruitment-institution-limits'
 import type {
   EmployeeVolunteerSessionRow,
@@ -53,14 +53,6 @@ export interface RegisterEmployeeVolunteerModalProps {
 
 const MODAL_WIDTH = 800
 
-function blockNonNumericVolunteerCountKey(event: KeyboardEvent<HTMLInputElement>) {
-  if (event.ctrlKey || event.metaKey || event.altKey) return
-  const allowed = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End']
-  if (allowed.includes(event.key)) return
-  if (/^\d$/.test(event.key)) return
-  event.preventDefault()
-}
-
 function SessionVolunteerCountPair({
   sessionRow,
   field,
@@ -75,17 +67,18 @@ function SessionVolunteerCountPair({
       <span className="detail-info-form--text">{label}</span>
       <Form.Item
         name={['countsBySessionId', sessionRow.id, field]}
-        getValueFromEvent={e => parsePositiveIntInput(e.target.value)}
+        trigger="onValueChange"
+        getValueFromEvent={value => parsePositiveIntInput(value)}
+        getValueProps={value => ({ value: value == null ? '' : String(value) })}
       >
-        <CmsInput
+        <CmsNumericInput
+          mode="integer"
+          min={0}
           inputSize="large"
-          type="text"
-          inputMode="numeric"
           pattern="[0-9]*"
           width="100%"
           placeholder="자원봉사자 수 입력"
           aria-label={`${sessionRow.label} ${label} 자원봉사자 수`}
-          onKeyDown={blockNonNumericVolunteerCountKey}
         />
       </Form.Item>
     </div>

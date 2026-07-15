@@ -13,7 +13,7 @@ import {
 } from '@/data/mock/program-wage-info'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { CmsSelect } from '@/shared/ui/cms-select'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
 import type { Program } from '@/types/domain'
@@ -102,13 +102,6 @@ function companySchoolWageView(amount: string, maxText: string) {
   )
 }
 
-function normalizeCompanySchoolWageInput(raw: string, maxAmount: number): string {
-  const numeric = raw.replace(/[^\d]/g, '')
-  if (!numeric) return ''
-  const clamped = Math.min(Number(numeric), maxAmount)
-  return clamped.toLocaleString()
-}
-
 function companySchoolWageEdit(
   form: UseFormReturn<ProgramDetailEditFormValues>,
   name: keyof ProgramDetailEditFormValues,
@@ -122,14 +115,16 @@ function companySchoolWageEdit(
         name={name}
         control={form.control}
         render={({ field }) => (
-          <CmsInput
+          <CmsNumericInput
+            mode="currency"
             inputSize="medium"
             placeholder="직접 입력"
             width={120}
+            min={0}
+            max={maxAmount}
+            precision={0}
             value={String(field.value ?? '')}
-            onChange={event =>
-              field.onChange(normalizeCompanySchoolWageInput(event.target.value, maxAmount))
-            }
+            onValueChange={field.onChange}
           />
         )}
       />
@@ -426,17 +421,15 @@ export function ProgramWageInfoSection({
                     name="wagePricingQuantity"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsInput
+                      <CmsNumericInput
+                        mode="integer"
                         width={112}
                         style={{ flexShrink: 0 }}
-                        type="number"
                         min={0}
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={e => {
-                          const raw = e.target.value
-                          const n = parseInt(raw, 10)
-                          field.onChange(raw === '' ? undefined : Number.isNaN(n) ? undefined : n)
+                        value={field.value == null ? '' : String(field.value)}
+                        onBlur={field.onBlur}
+                        onValueChange={raw => {
+                          field.onChange(raw === '' ? undefined : Number(raw))
                           syncWagePricingTimeUnit(form)
                         }}
                       />
@@ -480,7 +473,13 @@ export function ProgramWageInfoSection({
                   name="wagePricingBase"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsInput {...field} value={field.value ?? ''} placeholder="직접 입력" />
+                    <CmsNumericInput
+                      mode="currency"
+                      value={field.value ?? ''}
+                      onBlur={field.onBlur}
+                      onValueChange={field.onChange}
+                      placeholder="직접 입력"
+                    />
                   )}
                 />
                 <span>원</span>
@@ -497,7 +496,13 @@ export function ProgramWageInfoSection({
                   name="wagePricingLongDistance"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsInput {...field} value={field.value ?? ''} placeholder="직접 입력" />
+                    <CmsNumericInput
+                      mode="currency"
+                      value={field.value ?? ''}
+                      onBlur={field.onBlur}
+                      onValueChange={field.onChange}
+                      placeholder="직접 입력"
+                    />
                   )}
                 />
                 <span>원</span>

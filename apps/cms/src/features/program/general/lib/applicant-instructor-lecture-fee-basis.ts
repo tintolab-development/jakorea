@@ -2,6 +2,7 @@ import type {
   ApplicantInstructorLectureFeeBasisType,
   ApplicantInstructorRow,
 } from '@/data/mock/applicant-instructors'
+import { formatCurrencyInput, sanitizeNumericInput } from '@/shared/lib/numeric-input'
 
 export type { ApplicantInstructorLectureFeeBasisType } from '@/data/mock/applicant-instructors'
 
@@ -65,19 +66,18 @@ export function parseBusinessIncomeStatus(
 }
 
 export function parseLectureFeeAmountDigits(raw: string | undefined): string {
-  return (raw ?? '').replace(/[^\d]/g, '')
+  return sanitizeNumericInput(raw ?? '', { mode: 'currency' })
 }
 
 export function formatLectureFeeAmountWon(amountDigits: string | undefined): string {
   const digits = parseLectureFeeAmountDigits(amountDigits)
   if (!digits) return ''
-  return `${Number.parseInt(digits, 10).toLocaleString('ko-KR')}원`
+  return `${formatCurrencyInput(digits.replace(/^0+(?=\d)/, ''))}원`
 }
 
 export function formatLectureFeeAmountInput(amountDigits: string | undefined): string {
   const digits = parseLectureFeeAmountDigits(amountDigits)
-  if (!digits) return ''
-  return Number.parseInt(digits, 10).toLocaleString('ko-KR')
+  return formatCurrencyInput(digits)
 }
 
 function inferLectureFeeBasisTypeFromDisplay(

@@ -1,6 +1,8 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { CmsInput, CmsSelect } from '@/shared/ui'
+import { CmsDateTextInput } from '@/shared/ui/date-text-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
 import { NameBlockField } from '../fields/name-block-field'
@@ -135,12 +137,15 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                   inputSize="medium"
                   width={120}
                 />
-                <CmsInput
-                  value={d?.birthDate ?? ''}
-                  onChange={e => onMemberInfoDraftChange?.({ birthDate: e.target.value })}
+                <CmsDateTextInput
+                  value={(d?.birthDate ?? '').replace(/-/g, '.')}
+                  onValueChange={value =>
+                    onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
+                  }
                   inputSize="medium"
                   width={160}
                   placeholder="YYYY-MM-DD"
+                  maxLength={10}
                   aria-label="생년월일"
                 />
               </span>
@@ -182,10 +187,11 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
                 placeholder="은행명"
               />
               <DetailInfoForm.InputsSeparator />
-              <CmsInput
+              <CmsNumericInput
+                mode="numericText"
                 value={d?.instructorAccountNumber ?? ''}
-                onChange={e =>
-                  onMemberInfoDraftChange?.({ instructorAccountNumber: e.target.value })
+                onValueChange={value =>
+                  onMemberInfoDraftChange?.({ instructorAccountNumber: value })
                 }
                 inputSize="medium"
                 width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}

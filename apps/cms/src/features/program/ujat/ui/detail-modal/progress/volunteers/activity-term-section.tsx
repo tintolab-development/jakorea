@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput, CmsRadio, CmsRadioGroup } from '@/shared/ui'
+import { CmsNumericInput, CmsRadio, CmsRadioGroup } from '@/shared/ui'
 
 /** 관리자 대리 작성 — 활동 시기 및 UJAT 등록 기수 */
 export function UjatEducationProgressVolunteerActivityTermSection() {
@@ -30,12 +30,13 @@ export function UjatEducationProgressVolunteerActivityTermSection() {
           label="UJAT 등록 기수"
           required
           edit={
-            <CmsInput
+            <CmsNumericInput
+              mode="numericText"
               inputSize="medium"
               width="100%"
               placeholder="숫자만 기재"
               value={cohort}
-              onChange={e => setCohort(e.target.value)}
+              onValueChange={setCohort}
             />
           }
           view="-"

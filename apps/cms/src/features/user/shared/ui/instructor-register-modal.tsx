@@ -14,6 +14,7 @@ import {
   CmsCheckbox,
   CmsDatePicker,
   CmsInput,
+  CmsNumericInput,
   CmsRadioGroup,
   CmsSelect,
   ContentModal,
@@ -360,8 +361,9 @@ export function InstructorRegisterModal({
                 view="-"
                 edit={
                   <Space.Compact style={{ width: '100%', alignItems: 'center' }}>
-                    <Form.Item name="residentFront" noStyle>
-                      <CmsInput
+                    <Form.Item name="residentFront" trigger="onValueChange" noStyle>
+                      <CmsNumericInput
+                        mode="numericText"
                         placeholder="주민등록 앞 6자리"
                         maxLength={6}
                         inputSize="medium"
@@ -371,8 +373,9 @@ export function InstructorRegisterModal({
                     <span className="instructor-register-modal__hyphen" aria-hidden>
                       -
                     </span>
-                    <Form.Item name="residentBack" noStyle>
-                      <CmsInput
+                    <Form.Item name="residentBack" trigger="onValueChange" noStyle>
+                      <CmsNumericInput
+                        mode="numericText"
                         placeholder="주민등록 뒤 7자리"
                         maxLength={7}
                         inputSize="medium"
@@ -468,8 +471,13 @@ export function InstructorRegisterModal({
                       />
                     </Form.Item>
                     <DetailInfoForm.InputsSeparator />
-                    <Form.Item name="accountNumber" noStyle>
-                      <CmsInput placeholder="계좌번호(숫자만)" inputSize="medium" width="34%" />
+                    <Form.Item name="accountNumber" trigger="onValueChange" noStyle>
+                      <CmsNumericInput
+                        mode="numericText"
+                        placeholder="계좌번호(숫자만)"
+                        inputSize="medium"
+                        width="34%"
+                      />
                     </Form.Item>
                     <DetailInfoForm.InputsSeparator />
                     <Form.Item name="accountHolder" noStyle>

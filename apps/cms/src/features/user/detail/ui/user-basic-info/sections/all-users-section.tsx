@@ -1,5 +1,6 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput, CmsSelect } from '@/shared/ui'
+import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { affiliationView, detailAddressView, genderBirthView } from '../display'
 import { useBasicInfoEditing } from '../use-basic-info-editing'
@@ -94,12 +95,15 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
                   inputSize="medium"
                   width={120}
                 />
-                <CmsInput
-                  value={d?.birthDate ?? ''}
-                  onChange={e => onMemberInfoDraftChange?.({ birthDate: e.target.value })}
+                <CmsDateTextInput
+                  value={(d?.birthDate ?? '').replace(/-/g, '.')}
+                  onValueChange={value =>
+                    onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
+                  }
                   inputSize="medium"
                   width={160}
                   placeholder="YYYY-MM-DD"
+                  maxLength={10}
                   aria-label="생년월일"
                 />
               </span>

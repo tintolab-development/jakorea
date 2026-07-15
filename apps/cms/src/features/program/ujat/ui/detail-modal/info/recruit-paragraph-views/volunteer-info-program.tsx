@@ -19,6 +19,7 @@ import { UjatRecruitSectionDescriptionHeader } from '../ujat-recruit-section-des
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { UjatVolunteerRecruitHalf } from '../ujat-recruit-paragraph-props'
@@ -212,14 +213,14 @@ export function UjatRecruitVolunteerInfoProgramView({
                   name={`rounds.${roundIndex}.curriculum` as 'rounds.0.curriculum'}
                   control={form.control}
                   render={({ field }) => (
-                    <CmsInput
+                    <CmsNumericInput
                       {...field}
+                      mode="numericText"
                       value={(field.value as string | undefined) ?? ''}
                       inputSize="medium"
                       width="100%"
-                      inputMode="numeric"
                       placeholder="활동 기수"
-                      onChange={e => field.onChange(e.target.value.replace(/\D/g, ''))}
+                      onValueChange={field.onChange}
                     />
                   )}
                 />

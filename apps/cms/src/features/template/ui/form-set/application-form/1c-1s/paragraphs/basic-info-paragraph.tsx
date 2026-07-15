@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
@@ -111,7 +112,12 @@ export function EconomyProgramApplicationBasicInfoParagraph({
               />
               <span>개 학급</span>
               <span style={{ color: '#9ca3af' }}>|</span>
-              <CmsInput inputSize="medium" width={120} type="number" placeholder="총 학생 수" />
+              <CmsNumericInput
+                inputSize="medium"
+                width={120}
+                mode="integer"
+                placeholder="총 학생 수"
+              />
               <span>명</span>
             </div>
           }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './gemini-training-info-paragraph.css'
 
@@ -18,14 +18,14 @@ export function GeminiVisitingTrainingTrainingInfoParagraph() {
               <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap gemini-training-info-paragraph__headcount">
                 <div className="gemini-training-info-paragraph__headcount-value">
                   <span className="gemini-training-info-paragraph__headcount-prefix">총</span>
-                  <CmsInput
+                  <CmsNumericInput
                     className="gemini-training-info-paragraph__headcount-input"
                     inputSize="medium"
                     width={120}
-                    type="number"
+                    mode="integer"
                     placeholder="학생 수"
                     value={headcount}
-                    onChange={e => setHeadcount(e.target.value.replace(/\D/g, ''))}
+                    onValueChange={setHeadcount}
                   />
                 </div>
                 <span>명</span>

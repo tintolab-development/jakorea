@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -63,14 +64,14 @@ export function ProgramApplicationFormIndividualTeamInfoParagraph() {
               {memberCountSelect === 'custom' ? (
                 <>
                   <DetailInfoForm.InputsSeparator />
-                  <CmsInput
+                  <CmsNumericInput
                     inputSize="medium"
-                    type="number"
+                    mode="integer"
                     width="100%"
                     style={{ flex: '1 1 160px', minWidth: 140 }}
                     placeholder="팀원 수를 입력해 주세요"
                     value={customMemberCount}
-                    onChange={event => setCustomMemberCount(event.target.value)}
+                    onValueChange={setCustomMemberCount}
                   />
                 </>
               ) : null}

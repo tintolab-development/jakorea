@@ -18,6 +18,7 @@ import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/feature
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-editor/form-editor.css'
@@ -67,14 +68,14 @@ function NumberWithSuffixRow({
 }) {
   return (
     <div className={MAX_SUFFIX_CLASS}>
-      <CmsInput
+      <CmsNumericInput
         inputSize="medium"
-        type="number"
+        mode="integer"
         min={0}
         placeholder={placeholder}
         width={120}
         value={value}
-        onChange={e => onChange(parsePositiveIntInput(e.target.value))}
+        onValueChange={raw => onChange(parsePositiveIntInput(raw))}
       />
       <span style={{ marginLeft: 6 }}>{suffix}</span>
     </div>

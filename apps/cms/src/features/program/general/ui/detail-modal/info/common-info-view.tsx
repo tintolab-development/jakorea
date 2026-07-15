@@ -79,6 +79,7 @@ import {
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsToggle } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import {
@@ -917,10 +918,14 @@ function KpiSection({
                 name="kpiFinalParticipants"
                 control={editForm.control}
                 render={({ field }) => (
-                  <CmsInput
+                  <CmsNumericInput
                     {...field}
-                    value={field.value ?? ''}
-                    onChange={e => field.onChange(Number(e.target.value) || 0)}
+                    mode="integer"
+                    min={0}
+                    value={field.value == null ? '' : String(field.value)}
+                    onValueChange={value =>
+                      field.onChange(value === '' ? undefined : Number(value))
+                    }
                     inputSize="medium"
                     placeholder="목표값 입력"
                     width={120}
@@ -948,10 +953,14 @@ function KpiSection({
                     name="kpiInstructorCount"
                     control={editForm.control}
                     render={({ field }) => (
-                      <CmsInput
+                      <CmsNumericInput
                         {...field}
-                        value={field.value ?? ''}
-                        onChange={e => field.onChange(Number(e.target.value) || 0)}
+                        mode="integer"
+                        min={0}
+                        value={field.value == null ? '' : String(field.value)}
+                        onValueChange={value =>
+                          field.onChange(value === '' ? undefined : Number(value))
+                        }
                         inputSize="medium"
                         placeholder="목표값 입력"
                         width={120}
@@ -968,10 +977,14 @@ function KpiSection({
                     name="kpiVolunteerCount"
                     control={editForm.control}
                     render={({ field }) => (
-                      <CmsInput
+                      <CmsNumericInput
                         {...field}
-                        value={field.value ?? ''}
-                        onChange={e => field.onChange(Number(e.target.value) || 0)}
+                        mode="integer"
+                        min={0}
+                        value={field.value == null ? '' : String(field.value)}
+                        onValueChange={value =>
+                          field.onChange(value === '' ? undefined : Number(value))
+                        }
                         inputSize="medium"
                         placeholder="목표값 입력"
                         width={120}
@@ -1009,10 +1022,14 @@ function KpiSection({
                   name="kpiFinalSchools"
                   control={editForm.control}
                   render={({ field }) => (
-                    <CmsInput
+                    <CmsNumericInput
                       {...field}
-                      value={field.value ?? ''}
-                      onChange={e => field.onChange(Number(e.target.value) || 0)}
+                      mode="integer"
+                      min={0}
+                      value={field.value == null ? '' : String(field.value)}
+                      onValueChange={value =>
+                        field.onChange(value === '' ? undefined : Number(value))
+                      }
                       inputSize="medium"
                       placeholder="목표값 입력"
                       width={120}
@@ -1045,10 +1062,14 @@ function KpiSection({
                   name="kpiFinalClasses"
                   control={editForm.control}
                   render={({ field }) => (
-                    <CmsInput
+                    <CmsNumericInput
                       {...field}
-                      value={field.value ?? ''}
-                      onChange={e => field.onChange(Number(e.target.value) || 0)}
+                      mode="integer"
+                      min={0}
+                      value={field.value == null ? '' : String(field.value)}
+                      onValueChange={value =>
+                        field.onChange(value === '' ? undefined : Number(value))
+                      }
                       inputSize="medium"
                       placeholder="목표값 입력"
                       width={120}

@@ -3,6 +3,7 @@ import { buildInstitutionClassCountOptions } from '@/features/template/lib/parti
 import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
@@ -116,9 +117,9 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph() {
               />
               <span>개 학급</span>
               <DetailInfoForm.InputsSeparator />
-              <CmsInput
+              <CmsNumericInput
                 inputSize="medium"
-                type="number"
+                mode="integer"
                 placeholder="총 학생 수"
                 width={120}
               />
