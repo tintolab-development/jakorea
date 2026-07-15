@@ -30,3 +30,50 @@ export async function fetchProgramParticipantsRemote(
     })
   )
 }
+
+export async function fetchScheduleAttendancesRemote(
+  programId: string,
+  scheduleId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
+> {
+  const body = await unwrapApiBody<
+    | import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
+    | {
+        items?: import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
+      }
+  >(
+    await customInstance({
+      url: `/api/admin/program-execution/programs/${encodeURIComponent(programId)}/schedules/${encodeURIComponent(scheduleId)}/attendances`,
+      method: 'GET',
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.items ?? []
+}
+
+export async function putScheduleAttendancesRemote(
+  scheduleId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/scheduleAttendanceBulkUpsertRequest').ScheduleAttendanceBulkUpsertRequest
+): Promise<void> {
+  await customInstance({
+    url: `/api/admin/program-schedules/${encodeURIComponent(scheduleId)}/attendances`,
+    method: 'PUT',
+    data: payload,
+  })
+}
+
+export async function bulkUpsertProgramAttendancesRemote(
+  programId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/attendanceBulkUpsertRequest').AttendanceBulkUpsertRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/attendanceBulkUpsertResponse').AttendanceBulkUpsertResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/program-execution/programs/${encodeURIComponent(programId)}/attendances:bulk-upsert`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}

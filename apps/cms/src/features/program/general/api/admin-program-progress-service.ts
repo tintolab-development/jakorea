@@ -7,6 +7,8 @@ import {
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import {
   fetchProgramParticipantsRemote,
+  fetchScheduleAttendancesRemote,
+  putScheduleAttendancesRemote,
   type ProgramParticipantsListQuery,
 } from '@/features/program/general/api/program-progress-api-client'
 import {
@@ -106,4 +108,19 @@ export async function fetchGeneralParticipatingVolunteers(
   return (page.items ?? []).map((item, index) =>
     mapParticipantToParticipatingVolunteerRow(item, index, programId)
   )
+}
+
+export async function fetchGeneralScheduleAttendances(programId: string, scheduleId: string) {
+  if (!shouldUseGeneralProgramProgressRemoteApi()) return []
+  assertProgramProgressRemoteReady()
+  return fetchScheduleAttendancesRemote(programId, scheduleId)
+}
+
+export async function saveGeneralScheduleAttendances(
+  scheduleId: string,
+  attendances: import('@/shared/api/generated/dashboard/schemas/attendanceItemRequest').AttendanceItemRequest[]
+) {
+  if (!shouldUseGeneralProgramProgressRemoteApi()) return
+  assertProgramProgressRemoteReady()
+  await putScheduleAttendancesRemote(scheduleId, { attendances })
 }

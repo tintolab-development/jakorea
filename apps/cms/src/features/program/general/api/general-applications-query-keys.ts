@@ -20,6 +20,8 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'instructors', programId] as const,
   volunteers: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'volunteers', programId] as const,
+  attendances: (programId: string, scheduleId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'attendances', programId, scheduleId] as const,
   posts: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'posts', programId] as const,
   surveys: (programId: string) =>
