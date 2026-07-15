@@ -1,12 +1,17 @@
 /**
  * Ant Design Theme Provider
- * 색상 variation을 다양하게 설정
+ * Hex 시맨틱 값은 `@/shared/constants/colors` 의 brandColorsHex / domainColorsHex 와 동기화.
+ * CSS 토큰 SSOT는 `./theme-provider.css` (:root). Platform·packages/ui와 무관.
  */
 
 import { ConfigProvider, theme } from 'antd'
 import type { ReactNode } from 'react'
+import { brandColorsHex, domainColorsHex } from '@/shared/constants/colors'
 import './theme-provider.css'
 import './ant-modal-motion-disable.css'
+
+/** `theme-provider.css` `--color-table-row-hover` / selected overlay 와 동일값 유지 */
+const TABLE_ROW_BRAND_OVERLAY = 'rgba(1, 161, 175, 0.06)'
 
 interface ThemeProviderProps {
   children: ReactNode
@@ -17,14 +22,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     <ConfigProvider
       theme={{
         token: {
-          // Primary 색상 - 메인 브랜드 컬러 (#01A1AF)
-          colorPrimary: '#01a1af',
-          colorSuccess: '#52c41a', // 매칭 색상 활용
-          colorWarning: '#fadb14', // 일정 색상 활용
-          colorError: '#ff4d4f', // 정산 색상 활용
-          colorInfo: '#01a1af', // 메인 컬러
+          colorPrimary: brandColorsHex.primary,
+          colorSuccess: domainColorsHex.matching.primary,
+          colorWarning: domainColorsHex.schedule.primary,
+          colorError: domainColorsHex.settlement.primary,
+          colorInfo: brandColorsHex.primary,
 
-          // Border radius
+          // Border radius — `:root` --radius-6 / --radius-8 / --radius-4 와 동일
           borderRadius: 6,
           borderRadiusLG: 8,
           borderRadiusSM: 4,
@@ -44,10 +48,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
           },
           Table: {
             borderRadius: 8,
-            rowHoverBg: 'rgba(1, 161, 175, 0.06)',
-            rowSelectedBg: 'rgba(1, 161, 175, 0.06)',
+            rowHoverBg: TABLE_ROW_BRAND_OVERLAY,
+            rowSelectedBg: TABLE_ROW_BRAND_OVERLAY,
             /* 선택 행 호버 시 배경이 진해지지 않도록(기본 rowSelectedHoverBg와 분리됨) */
-            rowSelectedHoverBg: 'rgba(1, 161, 175, 0.06)',
+            rowSelectedHoverBg: TABLE_ROW_BRAND_OVERLAY,
           },
           Input: {
             borderRadius: 6,

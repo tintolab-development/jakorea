@@ -1,6 +1,7 @@
 /**
  * 도메인별 색상 상수
- * 브랜드 컬러 기반 색상 시스템
+ * CSS 토큰 SSOT: `apps/cms/src/app/providers/theme-provider.css` (:root)
+ * Hex 미러는 Ant Design·인라인 스타일용 — 값 변경 시 CSS :root 와 함께 맞출 것.
  * 메인 컬러: #01A1AF, 서브 컬러: #296075, #22404B
  */
 
