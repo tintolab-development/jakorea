@@ -4,10 +4,11 @@
  * - 월간: 월 그리드 + 우측 일정 리스트 / 주간: 주간 그리드 셀 내 이벤트
  */
 
-import { Card, List, Button, Empty, Popover } from 'antd'
+import { Card, List, Empty, Popover } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useState, useMemo, useRef, useLayoutEffect, Fragment, type ReactElement } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { LoadingButton } from '@/shared/ui'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
 import {
@@ -938,6 +939,7 @@ export function ProgramScheduleWidget({
   return (
     <Card
       ref={cardRef}
+      bordered={false}
       title={
         <div className="program-schedule-widget__head-row">
           <div className="program-schedule-widget__head-left">
@@ -982,14 +984,14 @@ export function ProgramScheduleWidget({
                 ]}
               />
             </div>
-            <Button
+            <LoadingButton
               type="link"
               size="small"
               onClick={handleViewAll}
               className="widget-more-button program-schedule-widget__head-more"
             >
               더보기
-            </Button>
+            </LoadingButton>
           </div>
         </div>
       }

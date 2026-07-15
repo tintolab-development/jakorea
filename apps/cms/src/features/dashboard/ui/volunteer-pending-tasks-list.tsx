@@ -3,9 +3,10 @@
  * Phase: 봉사단 권한 마이그레이션
  */
 
-import { Card, List, Tag, Typography, Button, Empty } from 'antd'
+import { Card, List, Tag, Typography, Empty } from 'antd'
 import { RightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import { LoadingButton } from '@/shared/ui'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import { formatDate } from '@/shared/utils'
 import dayjs from 'dayjs'
@@ -87,9 +88,9 @@ export function VolunteerPendingTasksList({
           <List dataSource={reportTasks.slice(0, 5)} renderItem={renderTaskItem} />
           {reportTasks.length > 5 && (
             <div style={{ textAlign: 'center', marginTop: 16 }}>
-              <Button type="link" size="small" onClick={handleViewAll}>
+              <LoadingButton type="link" size="small" onClick={handleViewAll}>
                 더보기 <RightOutlined />
-              </Button>
+              </LoadingButton>
             </div>
           )}
         </>

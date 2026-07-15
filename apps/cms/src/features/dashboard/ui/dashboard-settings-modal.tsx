@@ -25,7 +25,7 @@ import { getMockDashboardProgramOptions } from '../api/dashboard-program-options
 import { dashboardQueryKeys } from '../api/dashboard-query-keys'
 import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
 import './dashboard-settings-modal.css'
-import { AppButton } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 
 export interface DashboardSettingsModalProps {
   open: boolean
@@ -383,12 +383,12 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
 
   const footer = (
     <>
-      <AppButton variant="cancel" onClick={onCancel}>
+      <CmsButton variant="secondary" size="small" onClick={onCancel}>
         닫기
-      </AppButton>
-      <AppButton variant="primary" onClick={handleApply}>
+      </CmsButton>
+      <CmsButton variant="primary" size="small" onClick={handleApply}>
         설정
-      </AppButton>
+      </CmsButton>
     </>
   )
 

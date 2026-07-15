@@ -2,7 +2,6 @@
  * 대시보드 위젯 id → 렌더 함수 레지스트리 (switch 대체)
  */
 
-import { Card, Statistic } from 'antd'
 import type { DashboardWidgetType } from '@/shared/config/dashboard-config'
 import { DashboardWidgetSkeleton } from '@/features/dashboard/ui/dashboard-widget-skeleton'
 import type { OverallStatistics } from '@/features/dashboard/api/statistics-service'
@@ -34,6 +33,8 @@ import { MenuShortcutWidget } from '@/features/dashboard/ui/menu-shortcut-widget
 import { RecruitmentStatusWidget } from '@/features/dashboard/ui/recruitment-status-widget'
 import { KpiAchievementWidget } from '@/features/dashboard/ui/kpi-achievement-widget'
 import { LogAlertsWidget } from '@/features/dashboard/ui/log-alerts-widget'
+import { StatisticsCard } from '@/features/dashboard/ui/statistics-card'
+import { UserOutlined } from '@ant-design/icons'
 
 export interface DashboardWidgetRenderProps {
   overallStatistics: OverallStatistics | null
@@ -41,7 +42,6 @@ export interface DashboardWidgetRenderProps {
   instructorActivity: InstructorActivitySummary | null
   instructorActivityLoading: boolean
   instructorCount: number
-  onInstructorCardClick: () => void
   /** 관리자 프로그램 일정 위젯 ACL */
   user?: Omit<User, 'password'> | null
 }
@@ -59,14 +59,13 @@ function renderOverallStatisticsCards(p: DashboardWidgetRenderProps) {
 
 function renderInstructorCountCard(p: DashboardWidgetRenderProps) {
   return (
-    <Card hoverable onClick={p.onInstructorCardClick} style={{ height: '100%', cursor: 'pointer' }}>
-      <Statistic
-        title="등록된 강사"
-        value={p.instructorCount}
-        suffix="명"
-        valueStyle={{ color: '#000000', fontWeight: 'bold' }}
-      />
-    </Card>
+    <StatisticsCard
+      title="등록된 강사"
+      value={p.instructorCount}
+      prefix={<UserOutlined />}
+      suffix="명"
+      to="/users/list?kind=instructors"
+    />
   )
 }
 

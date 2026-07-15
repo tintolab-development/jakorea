@@ -3,10 +3,11 @@
  * Phase 5.2.1: 강사/봉사자 대시보드
  */
 
-import { Card, List, Tag, Typography, Button, Empty } from 'antd'
+import { Card, List, Tag, Typography, Empty } from 'antd'
 import { CalendarOutlined, RightOutlined } from '@ant-design/icons'
 import type { Schedule } from '@/types'
 import { useNavigate } from 'react-router-dom'
+import { LoadingButton } from '@/shared/ui'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import dayjs from 'dayjs'
 
@@ -61,9 +62,9 @@ export function UpcomingSchedulesList({
       loading={loading}
       extra={
         hasMore && (
-          <Button type="link" size="small" onClick={handleViewAll}>
+          <LoadingButton type="link" size="small" onClick={handleViewAll}>
             더보기 <RightOutlined />
-          </Button>
+          </LoadingButton>
         )
       }
       style={{ height: '100%' }}

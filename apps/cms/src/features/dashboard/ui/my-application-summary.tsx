@@ -4,13 +4,14 @@
  * 수강자용: 본인 신청 현황
  */
 
-import { Card, Row, Col, Statistic, Tag, Button } from 'antd'
+import { Card, Row, Col, Statistic, Tag } from 'antd'
 import {
   FileTextOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   SyncOutlined,
 } from '@ant-design/icons'
+import { LoadingButton } from '@/shared/ui'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useMemo, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -139,9 +140,9 @@ export function MyApplicationSummary() {
     <Card
       title="내 프로그램 현황"
       extra={
-        <Button type="link" onClick={() => navigate('/programs/my')}>
+        <LoadingButton type="link" onClick={() => navigate('/programs/my')}>
           전체 보기
-        </Button>
+        </LoadingButton>
       }
       style={{ height: '100%' }}
     >

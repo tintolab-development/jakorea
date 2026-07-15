@@ -7,7 +7,6 @@
  */
 
 import { useMemo, useCallback, useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Row } from 'antd'
 import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, type SortingStrategy } from '@dnd-kit/sortable'
@@ -45,7 +44,6 @@ const noScaleRectSortingStrategy: SortingStrategy = args => {
 
 export function Dashboard() {
   const { user } = useAuthStore()
-  const navigate = useNavigate()
   const { activePrograms } = useDashboardData()
   const isAdmin = user?.role === 'ADMIN'
   const useRemoteDashboard = isAdmin && shouldUseDashboardRemoteApi()
@@ -121,10 +119,6 @@ export function Dashboard() {
       onLayoutSaved: handlePersistLayout,
     })
 
-  const handleInstructorCardClick = useCallback(() => {
-    navigate('/users/list?kind=instructors')
-  }, [navigate])
-
   const widgetRendererProps = useMemo(
     () => ({
       overallStatistics,
@@ -132,7 +126,6 @@ export function Dashboard() {
       instructorActivity,
       instructorActivityLoading,
       instructorCount,
-      onInstructorCardClick: handleInstructorCardClick,
       user: user ?? undefined,
     }),
     [
@@ -141,7 +134,6 @@ export function Dashboard() {
       instructorActivity,
       instructorActivityLoading,
       instructorCount,
-      handleInstructorCardClick,
       user,
     ]
   )

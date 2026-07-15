@@ -3,13 +3,14 @@
  * Phase: 관리자 홈 화면 - 알림 리스트 위젯 형식으로 변경
  */
 
-import { Modal, Typography, Button, Empty, Space, Card } from 'antd'
+import { Modal, Typography, Empty, Space, Card } from 'antd'
 import {
   BellOutlined,
   DollarOutlined,
   FileTextOutlined,
   CalendarOutlined,
   CheckCircleOutlined } from '@ant-design/icons'
+import { CmsButton, LoadingButton } from '@/shared/ui'
 import type { Notification, NotificationType } from '../api/notification-service'
 
 const { Text, Title } = Typography
@@ -105,16 +106,16 @@ export function NotificationModal({
       onCancel={onClose}
       footer={[
         onMarkAllAsRead && (
-          <Button key="mark-all" type="link" onClick={onMarkAllAsRead} disabled={unreadCount === 0}>
+          <LoadingButton key="mark-all" type="link" onClick={onMarkAllAsRead} disabled={unreadCount === 0}>
             모두 읽음
-          </Button>
+          </LoadingButton>
         ),
-        <Button key="refresh" type="link" onClick={onRefresh}>
+        <LoadingButton key="refresh" type="link" onClick={onRefresh}>
           새로고침
-        </Button>,
-        <Button key="close" type="primary" onClick={onClose}>
+        </LoadingButton>,
+        <CmsButton key="close" variant="primary" onClick={onClose}>
           닫기
-        </Button>,
+        </CmsButton>,
       ].filter(Boolean)}
       width={900}
       style={{ top: 20 }}
@@ -168,13 +169,14 @@ export function NotificationModal({
                 </div>
                 <div onClick={e => e.stopPropagation()}>
                   {onConfirm && (
-                    <Button
+                    <CmsButton
+                      variant="default"
                       size="small"
                       onClick={() => onConfirm(notification)}
                       style={{ backgroundColor: '#f5f5f5', borderColor: '#d9d9d9' }}
                     >
                       확인하기
-                    </Button>
+                    </CmsButton>
                   )}
                 </div>
               </div>

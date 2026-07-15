@@ -3,11 +3,12 @@
  * 프로그램별 KPI(최종 달성 인원, 파견 학교 수, 파견 학급 수) 바 차트 + 달성/KPI/달성률
  */
 
-import { Card, Button, Empty, Typography } from 'antd'
+import { Card, Empty, Typography } from 'antd'
 import {
   type ProgramKpiItem,
   type KpiMetric,
 } from '../api/admin-dashboard-service'
+import { LoadingButton } from '@/shared/ui'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { useKpiAchievementList } from '../hooks/use-kpi-achievement-list'
 import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
@@ -106,14 +107,14 @@ export function KpiAchievementWidget() {
         </WidgetTitleWithHandle>
       }
       extra={
-        <Button
+        <LoadingButton
           type="link"
           size="small"
           onClick={() => window.alert(WIDGET_MORE_ALERT_MESSAGE)}
           className="widget-more-button"
         >
           더보기
-        </Button>
+        </LoadingButton>
       }
     >
       {isError ? (

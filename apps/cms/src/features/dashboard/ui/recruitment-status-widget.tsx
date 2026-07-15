@@ -5,10 +5,11 @@
  * 모집 신청 현황 컬럼: 프로그램 lifecycleStatus 기반 읽기 전용 텍스트 표시 (프로그램 일정과 연동)
  */
 
-import { Card, Button, Table, Typography } from 'antd'
+import { Card, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { LoadingButton } from '@/shared/ui'
 import type { Program } from '@/types/domain'
 import { getCapacity } from '@/features/program/general/lib/program-helpers'
 import { ProgramLifecycleStatusText } from '@/shared/components/program-lifecycle-status-text'
@@ -125,14 +126,14 @@ export function RecruitmentStatusWidget() {
         </WidgetTitleWithHandle>
       }
       extra={
-        <Button
+        <LoadingButton
           type="link"
           size="small"
           onClick={() => navigate('/programs/general')}
           className="widget-more-button"
         >
           더보기
-        </Button>
+        </LoadingButton>
       }
     >
       {isError ? (

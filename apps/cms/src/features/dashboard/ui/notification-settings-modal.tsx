@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AppButton, ContentModal } from '@/shared/ui'
+import { CmsButton, ContentModal } from '@/shared/ui'
 import './notification-settings-modal.css'
 
 type NotificationSettingValue = 'enabled' | 'disabled'
@@ -47,12 +47,12 @@ export function NotificationSettingsModal({ open, onCancel, onSave }: Notificati
       className="notification-settings-modal"
       footer={
         <>
-          <AppButton variant="cancel" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             닫기
-          </AppButton>
-          <AppButton variant="primary" size="large" onClick={handleSave}>
+          </CmsButton>
+          <CmsButton variant="primary" size="medium" onClick={handleSave}>
             설정
-          </AppButton>
+          </CmsButton>
         </>
       }
     >

@@ -3,10 +3,11 @@
  * 최대 406×500, 카테고리 필터 6개(한 줄), 알림 목록
  */
 
-import { Button, Empty, Typography } from 'antd'
+import { Empty, Typography } from 'antd'
 import { useState, useMemo } from 'react'
 import type { Notification, NotificationType } from '../api/notification-service'
 import type { DateValue } from '@/types'
+import { CmsButton } from '@/shared/ui'
 import './notification-dropdown.css'
 
 const { Text } = Typography
@@ -84,15 +85,15 @@ export function NotificationDropdown({
     <div className="notification-dropdown-panel">
       <div className="notification-dropdown-header">
         {CATEGORIES.map(({ key, label }) => (
-          <Button
+          <CmsButton
             key={key}
-            type={key === category ? 'primary' : 'default'}
+            variant={key === category ? 'primary' : 'default'}
             size="small"
             className={`notification-dropdown-category-btn ${key === category ? 'notification-dropdown-category-btn--active' : ''}`}
             onClick={() => setCategory(key)}
           >
             {label}
-          </Button>
+          </CmsButton>
         ))}
       </div>
       <div className="notification-dropdown-body">

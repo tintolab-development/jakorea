@@ -3,10 +3,11 @@
  * 프로그램별 답변 대기 / 답변 완료 / 전체 건수를 테이블로 표시
  */
 
-import { Card, Button, Table, Typography } from 'antd'
+import { Card, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { LoadingButton } from '@/shared/ui'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
 import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
@@ -140,9 +141,9 @@ export function CustomerInquiryStatusWidget() {
         </WidgetTitleWithHandle>
       }
       extra={
-        <Button type="link" size="small" onClick={handleMoreClick} className="widget-more-button">
+        <LoadingButton type="link" size="small" onClick={handleMoreClick} className="widget-more-button">
           더보기
-        </Button>
+        </LoadingButton>
       }
     >
       {isError ? (
