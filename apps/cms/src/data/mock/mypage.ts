@@ -4,7 +4,8 @@
  */
 
 import type { MyPageData, PrimaryStatus, UserHistory } from '../../types/domain'
-import { mockTodos, mockSchedules, mockApplications, mockProgramsMap, mockUsers } from './index'
+import { mockTodos, mockSchedules, mockApplications, mockProgramsMap } from './index'
+import { mockUsers } from './users'
 import dayjs from 'dayjs'
 
 const getDate = (daysAgo: number): string => {
