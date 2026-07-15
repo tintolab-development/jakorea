@@ -8,7 +8,6 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { useProgramStore } from '@/features/program/general/model/program-store'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import {
   UJAT_APPLICANT_ID_PARAM,
@@ -17,7 +16,6 @@ import {
   UJAT_INST_APP_ID_PARAM,
   UJAT_VOL_ADD_MEMBER_ID_PARAM,
 } from '@/features/program/ujat/lib/ujat-program-detail-url'
-import { getUjatPrograms } from '@/data/mock/program-schedule-categories'
 import {
   isResolvableUjatProgramId,
   resolveUjatProgramForDetail,
@@ -29,8 +27,13 @@ import {
 } from '@/features/program/ujat/lib/ujat-program-list-display'
 import {
   readUjatRegistrationLocalSaveRecords,
-  UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX,
 } from '@/features/program/ujat/lib/ujat-registration-local-save'
+import {
+  useProgramDetail,
+  usePrograms,
+  useUpdateProgram,
+} from '@/features/program/ujat/api/queries'
+import { getHttpStatus } from '@/features/program/ujat/api/errors'
 import type { Program } from '@/types/domain'
 import { FilterTableLayout, CmsButton } from '@/shared/ui'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
@@ -70,8 +73,6 @@ function isUjatProgramListPath(pathnameNormalized: string): boolean {
 const UJAT_PROGRESS_YEAR_ALL = '__all__' as const
 type UjatProgressYearFilter = typeof UJAT_PROGRESS_YEAR_ALL | number
 
-const ujatProgramIdSet = new Set(getUjatPrograms().map(p => p.id))
-
 function UjatProgramListPageContent() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -81,7 +82,10 @@ function UjatProgramListPageContent() {
   const isUjatProgramNewRegistrationQuery =
     isUjatProgramListPath(pNorm) && searchParams.has(PROGRAMS_UJAT_NEW_QUERY_KEY)
 
-  const { programs, loading, fetchPrograms } = useProgramStore()
+  const programsQuery = usePrograms()
+  const updateProgramMutation = useUpdateProgram()
+  const programs = useMemo(() => programsQuery.data ?? [], [programsQuery.data])
+  const loading = programsQuery.isFetching
 
   const { isWritingUserPreviewOpen, closeWritingUserPreview } = useTemplateWritingPreview()
 
@@ -100,11 +104,14 @@ function UjatProgramListPageContent() {
     setSearchParams(next, { replace: true })
   }, [closeWritingUserPreview, pNorm, searchParams, setSearchParams])
 
-  const handleUjatProgramRegistrationSaved = useCallback(() => {
-    void fetchPrograms()
+  const handleUjatProgramRegistrationSaved = useCallback((program: Program) => {
+    void programsQuery.refetch()
     setPendingDraftRecords(readUjatRegistrationLocalSaveRecords())
-    handleCloseUjatProgramRegistrationFullpage()
-  }, [fetchPrograms, handleCloseUjatProgramRegistrationFullpage])
+    closeWritingUserPreview()
+    navigate(getProgramAdminDetailUrlFromPathname(program.id, location.pathname), {
+      replace: true,
+    })
+  }, [closeWritingUserPreview, location.pathname, navigate, programsQuery])
 
   const userPreviewSyncParams = useMemo(
     () => ({ userPreview: searchParams.get('userPreview') ?? undefined }),
@@ -136,25 +143,25 @@ function UjatProgramListPageContent() {
   })
   const [appliedYear, setAppliedYear] = useState<UjatProgressYearFilter>(UJAT_PROGRESS_YEAR_ALL)
 
-  useEffect(() => {
-    void fetchPrograms()
-  }, [fetchPrograms])
-
   const programIdFromUrl = searchParams.get('programId')
   const ujatDetailModalOpen =
     Boolean(programIdFromUrl) && !searchParams.has(PROGRAMS_UJAT_NEW_QUERY_KEY)
-  const ujatDetailProgram = useMemo(() => {
+  const initialDetailProgram = useMemo(() => {
     if (!programIdFromUrl) return undefined
     return (
       programs.find(p => p.id === programIdFromUrl) ??
       resolveUjatProgramForDetail(programIdFromUrl)
     )
   }, [programIdFromUrl, programs])
+  const detailQuery = useProgramDetail(programIdFromUrl ?? undefined, initialDetailProgram)
+  const ujatDetailProgram = detailQuery.data ?? initialDetailProgram
 
   useEffect(() => {
     if (!programIdFromUrl) return
     if (isResolvableUjatProgramId(programIdFromUrl)) return
-    if (loading) return
+    if (loading || detailQuery.isFetching) return
+    if (detailQuery.isError && getHttpStatus(detailQuery.error) !== 404) return
+    if (ujatDetailProgram) return
     if (programs.some(p => p.id === programIdFromUrl)) return
     const next = new URLSearchParams(searchParams)
     next.delete('programId')
@@ -167,16 +174,19 @@ function UjatProgramListPageContent() {
     next.delete(UJAT_EDU_INST_TAB_PARAM)
     next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
     setSearchParams(next, { replace: true })
-  }, [programIdFromUrl, loading, programs, searchParams, setSearchParams])
+  }, [
+    programIdFromUrl,
+    loading,
+    detailQuery.isFetching,
+    detailQuery.isError,
+    detailQuery.error,
+    ujatDetailProgram,
+    programs,
+    searchParams,
+    setSearchParams,
+  ])
 
-  const ujatPrograms = useMemo(
-    () =>
-      programs.filter(
-        p =>
-          ujatProgramIdSet.has(p.id) || p.id.startsWith(UJAT_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
-      ),
-    [programs]
-  )
+  const ujatPrograms = programs
 
   const progressYearFieldOptions = useMemo(() => {
     const years = new Set<number>()
@@ -351,6 +361,10 @@ function UjatProgramListPageContent() {
         onClose={() => undefined}
         program={ujatDetailProgram ?? null}
         programIdHint={programIdFromUrl}
+        externalLoading={detailQuery.isFetching}
+        onUpdateProgram={(programId, program, patch) =>
+          updateProgramMutation.mutateAsync({ programId, program, patch })
+        }
       />
 
       <UjatProgramRegistrationFullpageModal

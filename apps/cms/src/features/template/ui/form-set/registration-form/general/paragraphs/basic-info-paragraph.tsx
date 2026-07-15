@@ -55,6 +55,11 @@ type ProgramRegistrationBasicInfoParagraphProps = {
   hideEducationPlace?: boolean
   /** true면 하단 테이블에 IPS 유형 행 추가 (교육받은 교사 등록 폼) */
   includeFooterIpsType?: boolean
+  /** controlled — 부모(editor)에서 등록 완료 스냅샷으로 전달 */
+  sponsorId?: string
+  onSponsorIdChange?: (sponsorId: string) => void
+  sponsorContactId?: string
+  onSponsorContactIdChange?: (contactId: string) => void
 }
 
 export function ProgramRegistrationBasicInfoParagraph({
@@ -65,6 +70,10 @@ export function ProgramRegistrationBasicInfoParagraph({
   onVolunteerChange,
   hideEducationPlace = false,
   includeFooterIpsType = false,
+  sponsorId: sponsorIdProp,
+  onSponsorIdChange,
+  sponsorContactId: sponsorContactIdProp,
+  onSponsorContactIdChange,
 }: ProgramRegistrationBasicInfoParagraphProps) {
   const [businessField, setBusinessField] = useState('')
   const [partnerInvolvement, setPartnerInvolvement] = useState<'yes' | 'no'>('yes')
@@ -76,9 +85,27 @@ export function ProgramRegistrationBasicInfoParagraph({
     [operationRange]
   )
 
-  const [sponsorId, setSponsorId] = useState<string>('')
-  /** 후원사 상세 담당자 행 `SponsorContactRow.id` (목 데이터; 추후 API 값으로 교체) */
-  const [managerContactId, setManagerContactId] = useState<string>('')
+  const [localSponsorId, setLocalSponsorId] = useState('')
+  const [localManagerContactId, setLocalManagerContactId] = useState('')
+  const isSponsorControlled = onSponsorIdChange != null
+  const sponsorId = isSponsorControlled ? (sponsorIdProp ?? '') : localSponsorId
+  const managerContactId = isSponsorControlled
+    ? (sponsorContactIdProp ?? '')
+    : localManagerContactId
+  const setSponsorId = (next: string) => {
+    if (isSponsorControlled) {
+      onSponsorIdChange(next)
+      return
+    }
+    setLocalSponsorId(next)
+  }
+  const setManagerContactId = (next: string) => {
+    if (isSponsorControlled) {
+      onSponsorContactIdChange?.(next)
+      return
+    }
+    setLocalManagerContactId(next)
+  }
   const [detailedProgramId, setDetailedProgramId] = useState<string>('')
   const [educationVenueKind, setEducationVenueKind] = useState<'inside' | 'outside' | 'other'>(
     'inside'

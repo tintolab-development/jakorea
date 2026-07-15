@@ -22,6 +22,7 @@ type LocalSaveFile = {
 export type UjatRegistrationLocalSaveRecord = {
   version: 1
   id: string
+  idempotencyKey?: string
   savedAt: string
   program: Program
   registrationDraft: WritingFormDraft
@@ -152,21 +153,57 @@ export function findUjatRegistrationLocalSaveProgramById(id: string): Program | 
 export function persistUjatRegistrationFormLocal(args: {
   draft: WritingFormDraft
   overlay: Record<string, unknown>
+  idempotencyKey?: string
 }): Program {
+  const prev = readUjatRegistrationLocalSaveRecords()
+  const existing = args.idempotencyKey
+    ? prev.find(record => record.idempotencyKey === args.idempotencyKey)
+    : undefined
+  if (existing) return existing.program
+
   const id = newLocalProgramId()
   const program = buildUjatProgramListRowFromRegistrationSnapshot({ id, overlay: args.overlay })
   const record: UjatRegistrationLocalSaveRecord = {
     version: 1,
     id,
+    idempotencyKey: args.idempotencyKey,
     savedAt: new Date().toISOString(),
     program,
     registrationDraft: cloneJson(args.draft),
     registrationOverlay: cloneJson(args.overlay),
   }
 
-  const prev = readUjatRegistrationLocalSaveRecords()
   const nextFile: LocalSaveFile = { version: 1, items: [...prev, record] }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(nextFile))
 
   return program
+}
+
+export function updateUjatRegistrationLocalProgram(
+  id: string,
+  patch: Partial<Program>
+): Program | undefined {
+  const records = readUjatRegistrationLocalSaveRecords()
+  const index = records.findIndex(record => record.id === id)
+  if (index < 0) return undefined
+
+  const current = records[index]
+  const program: Program = {
+    ...current.program,
+    ...patch,
+    id,
+    createdAt: current.program.createdAt,
+    updatedAt: new Date().toISOString(),
+  }
+  records[index] = { ...current, savedAt: program.updatedAt.toString(), program }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, items: records } satisfies LocalSaveFile))
+  return program
+}
+
+export function deleteUjatRegistrationLocalProgram(id: string): boolean {
+  const records = readUjatRegistrationLocalSaveRecords()
+  const next = records.filter(record => record.id !== id)
+  if (next.length === records.length) return false
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, items: next } satisfies LocalSaveFile))
+  return true
 }

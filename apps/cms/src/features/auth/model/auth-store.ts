@@ -24,6 +24,7 @@ import { clearPostsQueryCache } from '@/features/posts/api/clear-posts-query-cac
 import { clearSettlementQueryCache } from '@/features/settlement-management/api/clear-settlement-query-cache'
 import { clearMemberQueryCache } from '@/features/user/api/clear-member-query-cache'
 import { clearPerformanceQueryCache } from '@/features/education-record/api/clear-performance-query-cache'
+import { clearProgramQueryCache } from '@/features/program/shared/api/clear-query-cache'
 import { flushSocialPendingLinks } from '@/features/auth/social-auth/flush-pending-links'
 
 function elevateAdminToMaster(user: Omit<User, 'password'>): Omit<User, 'password'> {
@@ -262,6 +263,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearSettlementQueryCache()
       clearMemberQueryCache()
       clearPerformanceQueryCache()
+      clearProgramQueryCache()
       void flushSocialPendingLinks()
     },
 
@@ -296,6 +298,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearSettlementQueryCache()
       clearMemberQueryCache()
       clearPerformanceQueryCache()
+      clearProgramQueryCache()
       void flushSocialPendingLinks()
     },
 
@@ -343,6 +346,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       clearSettlementQueryCache()
       clearMemberQueryCache()
       clearPerformanceQueryCache()
+      clearProgramQueryCache()
     },
 
     checkAuth: async () => {

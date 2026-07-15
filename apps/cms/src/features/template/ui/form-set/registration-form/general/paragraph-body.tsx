@@ -91,6 +91,11 @@ export interface ProgramRegistrationParagraphBodyOptions {
   onTrainedTeachersTeacherTrainingEnabledChange: (checked: boolean) => void
   educationScheduleMode: ProgramRegistrationEducationScheduleMode
   onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
+  /** 일반 등록만 — 후원사 선택 (1사1교·교육받은 교사 미사용) */
+  sponsorId?: string
+  onSponsorIdChange?: (sponsorId: string) => void
+  sponsorContactId?: string
+  onSponsorContactIdChange?: (contactId: string) => void
 }
 
 export function renderProgramRegistrationParagraphBody(
@@ -122,6 +127,10 @@ export function renderProgramRegistrationParagraphBody(
           onOrganizationChange={options.onOrganizationChange}
           onTeacherInstructorChange={options.onTeacherInstructorChange}
           onVolunteerChange={options.onVolunteerChange}
+          sponsorId={options.sponsorId}
+          onSponsorIdChange={options.onSponsorIdChange}
+          sponsorContactId={options.sponsorContactId}
+          onSponsorContactIdChange={options.onSponsorContactIdChange}
         />
       )
     case PROGRAM_REGISTRATION_IDS.businessKpi:

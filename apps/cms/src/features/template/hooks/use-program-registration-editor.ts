@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type Dispatch,
   type SetStateAction,
@@ -44,6 +45,9 @@ import { patchInstitutionApplicationProgramBridge } from '@/features/program/gen
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { resolveProgramRegistrationCurriculumEditDescription } from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
+import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { persistGeneralProgramRegistration } from '@/features/program/general/lib/registration-local-save'
 import type { Program } from '@/types/domain'
 import {
@@ -99,6 +103,8 @@ function createDefaultRegistrationEditorState(
     scheduleCurriculumPreEducation: false,
     trainedTeachersTeacherTrainingEnabled: true,
     educationScheduleMode: getDefaultEducationScheduleMode(variant),
+    sponsorId: '',
+    sponsorContactId: '',
     activeParagraphId: null,
   }
 }
@@ -210,6 +216,11 @@ export function useProgramRegistrationEditor(
   const templateCode = editorOptions?.templateCode
   const { showAlert } = useCmsAlert()
   const usesTemplateDraftApi = templateCode != null && templateCode !== ''
+  const completionPromiseRef = useRef<Promise<void> | null>(null)
+
+  useEffect(() => {
+    if (!active) completionPromiseRef.current = null
+  }, [active])
   const seedParagraphIds = useMemo(
     () => getProgramRegistrationSeedParagraphIds(programRegistrationFormVariant),
     [programRegistrationFormVariant]
@@ -250,6 +261,8 @@ export function useProgramRegistrationEditor(
     getDefaultEducationScheduleMode(programRegistrationFormVariant)
   const [educationScheduleMode, setEducationScheduleMode] =
     useState<ProgramRegistrationEducationScheduleMode>(defaultEducationScheduleMode)
+  const [sponsorId, setSponsorId] = useState('')
+  const [sponsorContactId, setSponsorContactId] = useState('')
 
   const {
     openWritingUserPreview,
@@ -301,6 +314,8 @@ export function useProgramRegistrationEditor(
     setScheduleCurriculumPreEducation(state.scheduleCurriculumPreEducation)
     setTrainedTeachersTeacherTrainingEnabled(state.trainedTeachersTeacherTrainingEnabled)
     setEducationScheduleMode(state.educationScheduleMode)
+    setSponsorId(state.sponsorId ?? '')
+    setSponsorContactId(state.sponsorContactId ?? '')
   }, [])
 
   const resetRegistrationEditorToSeed = useCallback(() => {
@@ -594,6 +609,15 @@ export function useProgramRegistrationEditor(
     []
   )
 
+  const onSponsorIdChange = useCallback((next: string) => {
+    setSponsorId(next)
+    setSponsorContactId('')
+  }, [])
+
+  const onSponsorContactIdChange = useCallback((next: string) => {
+    setSponsorContactId(next)
+  }, [])
+
   const paragraphBodyOptions = useMemo(
     () =>
       buildProgramRegistrationParagraphBodyOptions({
@@ -635,6 +659,14 @@ export function useProgramRegistrationEditor(
         onTrainedTeachersTeacherTrainingEnabledChange,
         educationScheduleMode,
         onEducationScheduleModeChange,
+        ...(programRegistrationFormVariant === 'general'
+          ? {
+              sponsorId,
+              onSponsorIdChange,
+              sponsorContactId,
+              onSponsorContactIdChange,
+            }
+          : {}),
       }),
     [
       curriculumChartSessionCount,
@@ -672,6 +704,10 @@ export function useProgramRegistrationEditor(
       programRegistrationFormVariant,
       educationScheduleMode,
       onEducationScheduleModeChange,
+      sponsorId,
+      onSponsorIdChange,
+      sponsorContactId,
+      onSponsorContactIdChange,
     ]
   )
 
@@ -728,6 +764,8 @@ export function useProgramRegistrationEditor(
         scheduleCurriculumPreEducation,
         trainedTeachersTeacherTrainingEnabled,
         educationScheduleMode,
+        sponsorId,
+        sponsorContactId,
         activeParagraphId,
       }),
     })
@@ -746,6 +784,8 @@ export function useProgramRegistrationEditor(
     scheduleCurriculumGroupCount,
     scheduleCurriculumPreEducation,
     sessionRoundType,
+    sponsorContactId,
+    sponsorId,
     templateCode,
     trainedTeachersTeacherTrainingEnabled,
     usesTemplateDraftApi,
@@ -787,27 +827,47 @@ export function useProgramRegistrationEditor(
   ])
 
   /** 등록 완료 — 프로그램 생성 POST 1회 */
-  const handleCompleteRegistration = useCallback(async () => {
+  const handleCompleteRegistration = useCallback((): Promise<void> => {
+    if (completionPromiseRef.current) return completionPromiseRef.current
     if (!onRegistrationSaved) {
-      await handleSave()
-      return
+      return Promise.resolve(handleSave())
     }
-    try {
-      await persistTemplateDraftIfNeeded()
-      const createdProgram = await persistGeneralProgramRegistration({
-        draft,
-        participant,
-        programType,
-        variant: programRegistrationFormVariant,
-      })
-      onRegistrationSaved(createdProgram)
-    } catch (error) {
-      console.debug('programRegistrationEditor complete registration failed', error)
+    const isRemoteCreate =
+      (programRegistrationFormVariant === 'general' && shouldUseGeneralProgramsRemoteApi()) ||
+      (programRegistrationFormVariant === 'economy' && shouldUseCompanySchoolRemoteApi())
+    if (isRemoteCreate && !sponsorId.trim()) {
       showAlert({
         title: '등록 실패',
-        content: '프로그램 등록 중 오류가 발생했습니다. 다시 시도해 주세요.',
+        content: '후원사를 선택한 뒤 다시 등록해 주세요.',
       })
+      return Promise.resolve()
     }
+    const completion = (async () => {
+      try {
+        await persistTemplateDraftIfNeeded()
+        const createdProgram = await persistGeneralProgramRegistration({
+          draft,
+          participant,
+          programType,
+          variant: programRegistrationFormVariant,
+          sponsorId: sponsorId.trim() || undefined,
+        })
+        onRegistrationSaved(createdProgram)
+      } catch (error) {
+        console.debug('programRegistrationEditor complete registration failed', error)
+        showAlert({
+          title: '등록 실패',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '프로그램 등록 중 오류가 발생했습니다. 다시 시도해 주세요.'
+          ),
+        })
+      } finally {
+        completionPromiseRef.current = null
+      }
+    })()
+    completionPromiseRef.current = completion
+    return completion
   }, [
     draft,
     handleSave,
@@ -817,6 +877,7 @@ export function useProgramRegistrationEditor(
     programRegistrationFormVariant,
     programType,
     showAlert,
+    sponsorId,
   ])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {

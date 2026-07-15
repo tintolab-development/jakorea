@@ -39,6 +39,7 @@ export const REAL_API_MODULE_KEYS = [
   'performanceRecords',
   'formsSurveys',
   'programs',
+  'ujatPrograms',
   'applications',
   'programProgress',
 ] as const

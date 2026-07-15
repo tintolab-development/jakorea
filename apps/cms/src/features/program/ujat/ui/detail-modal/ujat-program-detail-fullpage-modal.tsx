@@ -12,6 +12,7 @@ import {
   makeBreadcrumbItem,
 } from '@/shared/lib/detail-fullpage-query-stack'
 import { useProgramDetail } from '@/pages/programs/use-program-detail'
+import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import { useProgramDetailEditForm } from '@/features/program/general/hooks/use-program-detail-edit-form'
 import { useProgramDetailInfoSave } from '@/features/program/general/hooks/use-program-detail-info-save'
 import { handleError } from '@/shared/utils/error-handler'
@@ -236,6 +237,13 @@ export interface UjatProgramDetailFullPageModalProps {
   program: Program | null
   /** URL의 programId — 목록에 아직 없을 때 상세 fetch용 */
   programIdHint?: string | null
+  externalLoading?: boolean
+  /** 유형별 API 계층을 사용하는 호출부의 상세 저장 핸들러 */
+  onUpdateProgram?: (
+    programId: string,
+    program: Program,
+    patch: Partial<Program>
+  ) => Promise<Program>
 }
 
 function defaultVolunteerTab(interview: boolean, half: 'h1' | 'h2'): string {
@@ -516,6 +524,8 @@ export function UjatProgramDetailFullPageModal({
   onClose,
   program,
   programIdHint = null,
+  externalLoading = false,
+  onUpdateProgram,
 }: UjatProgramDetailFullPageModalProps) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -524,13 +534,19 @@ export function UjatProgramDetailFullPageModal({
 
   const {
     program: detailProgram,
-    loading,
-    sponsorName,
+    loading: legacyLoading,
+    sponsorName: legacySponsorName,
     updateProgram,
-  } = useProgramDetail(open ? programId : undefined)
+  } = useProgramDetail(onUpdateProgram ? undefined : (open ? programId : undefined))
+  const externalSponsorName = useSponsorNameById(
+    program?.sponsorId,
+    Boolean(onUpdateProgram && program?.sponsorId)
+  )
+  const loading = onUpdateProgram ? externalLoading : legacyLoading
+  const sponsorName = onUpdateProgram ? externalSponsorName : legacySponsorName
 
   const displayProgram = useMemo(() => {
-    const base = detailProgram ?? program ?? null
+    const base = program ?? detailProgram ?? null
     return base ? resolveUjatProgramDisplayProgram(base) : null
   }, [detailProgram, program])
 
@@ -922,7 +938,11 @@ export function UjatProgramDetailFullPageModal({
           ? async draft => {
               try {
                 const { id: _id, createdAt: _c, ...patch } = draft
-                await updateProgram(draft.id, patch)
+                if (onUpdateProgram) {
+                  await onUpdateProgram(draft.id, draft, patch)
+                } else {
+                  await updateProgram(draft.id, patch)
+                }
                 const next = new URLSearchParams(searchParams)
                 next.delete(EDIT_PARAM)
                 if (programId) next.set('programId', programId)
@@ -1003,7 +1023,11 @@ export function UjatProgramDetailFullPageModal({
         ? async draft => {
             try {
               const { id: _id, createdAt: _c, ...patch } = draft
-              await updateProgram(draft.id, patch)
+                if (onUpdateProgram) {
+                  await onUpdateProgram(draft.id, draft, patch)
+                } else {
+                  await updateProgram(draft.id, patch)
+                }
               const next = new URLSearchParams(searchParams)
               next.delete(EDIT_PARAM)
               if (programId) next.set('programId', programId)
@@ -1031,7 +1055,11 @@ export function UjatProgramDetailFullPageModal({
         ? async draft => {
             try {
               const { id: _id, createdAt: _c, ...patch } = draft
-              await updateProgram(draft.id, patch)
+                if (onUpdateProgram) {
+                  await onUpdateProgram(draft.id, draft, patch)
+                } else {
+                  await updateProgram(draft.id, patch)
+                }
               const next = new URLSearchParams(searchParams)
               next.delete(EDIT_PARAM)
               if (programId) next.set('programId', programId)

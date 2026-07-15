@@ -42,6 +42,10 @@ export type ProgramRegistrationEditorState = {
   scheduleCurriculumPreEducation: boolean
   trainedTeachersTeacherTrainingEnabled: boolean
   educationScheduleMode: ProgramRegistrationEducationScheduleMode
+  /** 일반 등록 폼 기본 정보 — 후원사 (draft editorState 복원용) */
+  sponsorId?: string
+  /** 일반 등록 폼 기본 정보 — 후원사 담당자 */
+  sponsorContactId?: string
   activeParagraphId?: string | null
 }
 
@@ -133,6 +137,14 @@ export function applyProgramRegistrationEditorState(
         ? editorState.trainedTeachersTeacherTrainingEnabled
         : defaults.trainedTeachersTeacherTrainingEnabled,
     educationScheduleMode,
+    sponsorId:
+      typeof editorState.sponsorId === 'string' && editorState.sponsorId.trim()
+        ? editorState.sponsorId.trim()
+        : defaults.sponsorId,
+    sponsorContactId:
+      typeof editorState.sponsorContactId === 'string' && editorState.sponsorContactId.trim()
+        ? editorState.sponsorContactId.trim()
+        : defaults.sponsorContactId,
     activeParagraphId:
       typeof editorState.activeParagraphId === 'string' ? editorState.activeParagraphId : null,
   }
