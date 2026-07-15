@@ -4,6 +4,8 @@
 
 **마이그레이션 실행 가이드 (PHASE 0–4)**: [programs-api-migration-guide.md](./programs-api-migration-guide.md)  
 **백엔드 갭·미구현 목록**: [programs-api-backend-gaps.md](./programs-api-backend-gaps.md)  
+**등록 플로우 API 전체 목록 (BE 전달용)**: [programs-registration-flow-api-backend-handoff.md](./programs-registration-flow-api-backend-handoff.md)  
+**등록 완료 POST 핸드오프 (BE 전달용)**: [programs-create-api-backend-handoff.md](./programs-create-api-backend-handoff.md)  
 **상세 LNB 완료율 · Phase 5–10**: [programs-detail-api-conversion-status.md](./programs-detail-api-conversion-status.md)
 
 공통 가이드: [backend-handoff.md](./backend-handoff.md) · [api-routes-and-client.md](./api-routes-and-client.md)

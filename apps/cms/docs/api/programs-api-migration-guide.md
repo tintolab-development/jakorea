@@ -74,19 +74,20 @@ flowchart LR
 
 ---
 
-## 2차 트랙 — 신청·진행현황 (진행 중)
+## 2차 트랙 — 신청·진행현황 (1차 연동 완료 · 잔여 mock)
 
-상세 LNB별 완료율·잔여 Phase(5–10) SSOT: [programs-detail-api-conversion-status.md](./programs-detail-api-conversion-status.md)
+상세 LNB별 완료율·잔여 Phase(5–10) SSOT: [programs-detail-api-conversion-status.md](./programs-detail-api-conversion-status.md) (**≈ 55–60%**)
 
 - [x] `applications` · `programProgress` 모듈 키
 - [x] 기관/강사/개인 신청 목록 GET + 승인/반려 POST
-- [x] 진행현황 참여자 `GET .../participants`
+- [x] 진행현황 참여자 `GET .../participants` (개인/기관/강사/봉사)
 - [x] `serviceDetailJson` v1 nested 필드
-- [x] 봉사자 신청·면접 → **Phase 5** (목록·서류/최종 결과 remote; 면접 배정 mock)
+- [x] 봉사자 신청 → **Phase 5** (목록·서류/최종 결과 remote; 면접 배정·슬롯 mock)
 - [x] 참여 기관/강사/봉사 진행 목록 → **Phase 6**
 - [x] `GET .../navigation` LNB 서버화 → **Phase 7**
+- [x] lifecycle PATCH · detail error UI → **Phase 10** 일부
 - [ ] 출석·과제·중첩 상세 / 게시글·설문 고도화 → Phase 8–9 잔여
-- [ ] 담당자·신청경로·backend gaps → Phase 10 잔여
+- [ ] 담당자·신청경로·면접 슬롯·backend gaps → Phase 10 잔여
 
 ---
 
@@ -117,4 +118,5 @@ flowchart LR
 - [x] 권한 모달 confirmBulk* remote
 - [x] 빠른 승인/반려·행 드롭다운 remote (`remoteEnabled` 시)
 - [x] `applicationsLoading` 테이블/캘린더 스피너
-- [ ] 봉사자 신청 remote (클라이언트만 — 백엔드 연동 잔여)
+- [x] 봉사자 신청 list + document-result / final-result remote
+- [ ] 면접 슬롯·배정 remote (현재 mock)

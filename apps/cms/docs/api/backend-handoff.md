@@ -6,7 +6,7 @@ Swagger/OpenAPI 기반 실 API 연동 시 공통 설정·인증·응답 규칙�
 Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)  
 대시보드 1차 파일럿: [dashboard-api-integration.md](./dashboard-api-integration.md)  
 **템플릿 양식 (forms-surveys)**: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) · [PHASE별 마이그레이션](./forms-surveys-api-migration-guide.md) · [**백엔드 갭 목록**](./forms-surveys-api-backend-gaps.md) · [**신규 템플릿 생성 갭**](./template-create-api-backend-handoff.md)  
-**일반 프로그램 (programs)**: [programs-api-integration.md](./programs-api-integration.md) · [마이그레이션 가이드](./programs-api-migration-guide.md) · [백엔드 갭](./programs-api-backend-gaps.md) · [남은 작업](./programs-api-remaining-work.md) · [**상세 완료율 · Phase 5–10**](./programs-detail-api-conversion-status.md)
+**일반 프로그램 (programs)**: [programs-api-integration.md](./programs-api-integration.md) · [**등록 플로우 API 목록**](./programs-registration-flow-api-backend-handoff.md) · [**등록 완료 POST 핸드오프**](./programs-create-api-backend-handoff.md) · [마이그레이션 가이드](./programs-api-migration-guide.md) · [백엔드 갭](./programs-api-backend-gaps.md) · [남은 작업](./programs-api-remaining-work.md) · [**상세 완료율 · Phase 5–10**](./programs-detail-api-conversion-status.md)
 
 ---
 
