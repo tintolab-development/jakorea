@@ -1,15 +1,16 @@
-import type { ReactNode } from 'react'
 import type {
   WritingFormDraft,
   WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import {
   getVisibleParagraphDescription,
-  FormParagraphSectionDescription,
 } from '../paragraph/form-paragraph-section-description.js'
-import { resolveParagraphDescriptionSurface } from '@jakorea/form-schema/surface'
 import type { FormTemplateSurface, ParagraphBodyInteractionMode } from '@jakorea/form-schema/surface'
-import { ParagraphCard } from '../paragraph/paragraph-card.js'
+import {
+  ParagraphCard,
+  paragraphCardStaticHeading,
+} from '../paragraph/paragraph-card.js'
+import { resolveParagraphTitleRequiredMark } from '../lib/paragraph-required-mark.js'
 import { PreviewParagraphBody } from './preview-paragraph-body.js'
 import './form-template-renderer.css'
 
@@ -23,23 +24,24 @@ export type FormTemplateRendererProps = {
   className?: string
 }
 
-function renderParagraphTitle(paragraph: WritingFormParagraph, index: number): string {
-  const numbered = paragraph.participatesInTitleNumbering ? `${index + 1}. ` : ''
-  const title = paragraph.paragraphTitle?.trim() || '제목 없음'
-  return `${numbered}${title}`
-}
-
-function renderParagraphDescription(
+function buildParagraphEditableHeading(
   paragraph: WritingFormParagraph,
-  surface: FormTemplateSurface
-): ReactNode | null {
-  const visible = getVisibleParagraphDescription(paragraph.paragraphDescription)
-  if (visible == null) return null
-  return (
-    <FormParagraphSectionDescription surface={resolveParagraphDescriptionSurface(surface)}>
-      {visible}
-    </FormParagraphSectionDescription>
-  )
+  titleIndex: number,
+) {
+  const displayTitle = paragraph.paragraphTitle?.trim() || '제목 없음'
+  const visibleDescription = getVisibleParagraphDescription(paragraph.paragraphDescription)
+  const numberedPrefix = paragraph.participatesInTitleNumbering ? `${titleIndex + 1}. ` : null
+
+  return {
+    ...paragraphCardStaticHeading(displayTitle, {
+      required: resolveParagraphTitleRequiredMark(paragraph),
+    }),
+    titleLeading: numberedPrefix ? (
+      <span className="paragraph-input__leading">{numberedPrefix}</span>
+    ) : undefined,
+    descriptionValue: visibleDescription ?? '',
+    showDescription: visibleDescription != null,
+  }
 }
 
 export function FormTemplateRenderer({
@@ -56,24 +58,12 @@ export function FormTemplateRenderer({
       {draft.paragraphs.map(paragraph => {
         const usesNumber = paragraph.participatesInTitleNumbering
         const titleIndex = usesNumber ? numberedIndex++ : numberedIndex
-        const title = renderParagraphTitle(paragraph, titleIndex)
 
         return (
           <ParagraphCard
             key={paragraph.id}
             dataParagraphId={paragraph.id}
-            title={
-              <h3 className="paragraph-card__static-title">
-                {title}
-                {paragraph.requiredMark ? (
-                  <span className="paragraph-card__required" aria-hidden>
-                    {' '}
-                    *
-                  </span>
-                ) : null}
-              </h3>
-            }
-            description={renderParagraphDescription(paragraph, surface)}
+            editableHeading={buildParagraphEditableHeading(paragraph, titleIndex)}
           >
             <PreviewParagraphBody
               paragraph={paragraph}

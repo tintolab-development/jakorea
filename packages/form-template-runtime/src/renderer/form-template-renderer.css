@@ -26,15 +26,3 @@
   color: var(--default-BK, #3d3d3d);
   opacity: 0.6;
 }
-
-.paragraph-card__static-title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 140%;
-  color: var(--default-BK, #3d3d3d);
-}
-
-.paragraph-card__required {
-  color: #c32f4a;
-}

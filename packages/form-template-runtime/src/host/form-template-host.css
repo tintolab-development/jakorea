@@ -4,10 +4,6 @@
 
 .form-template-host {
   --detail-info-form-body-radius: 8px;
-  --default-BK: #3d3d3d;
-  --main-WT: #fff;
-  --table-line: #e0e0e0;
-  --JA-mint-01: #01a1af;
 
   font-family: Pretendard, system-ui, sans-serif;
   font-size: 14px;
