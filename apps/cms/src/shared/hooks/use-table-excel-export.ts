@@ -1,10 +1,14 @@
 /**
  * 테이블 엑셀 다운로드 공통 훅 — loading·빈 데이터·에러 alert 처리
+ *
+ * alert는 `cmsAlertModal`(imperative)을 쓴다.
+ * `FilterTableLayout`이 excelExport 없이도 이 훅을 항상 호출하므로,
+ * `useCmsAlert` 컨텍스트 의존으로 레이아웃 전체를 깨지 않는다.
  */
 
 import { useCallback, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
-import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { exportTableToExcel } from '@/shared/utils/table-export'
 
 export type TableExcelExporter<T extends object> = (
@@ -43,14 +47,13 @@ export function useTableExcelExport<T extends object>({
   errorAlertTitle = DEFAULT_ERROR_TITLE,
   errorAlertContent = DEFAULT_ERROR_CONTENT,
 }: UseTableExcelExportOptions<T>) {
-  const { showAlert } = useCmsAlert()
   const [isExporting, setIsExporting] = useState(false)
 
   const exportExcel = useCallback(async () => {
     if (isExporting) return
     if (data.length === 0) {
       if (alertOnEmpty) {
-        showAlert({ title: emptyAlertTitle, content: emptyAlertContent })
+        cmsAlertModal.show({ title: emptyAlertTitle, content: emptyAlertContent })
       }
       return
     }
@@ -59,7 +62,7 @@ export function useTableExcelExport<T extends object>({
       await exporter(columns, data, filename)
     } catch (error) {
       console.error('[useTableExcelExport] excel export failed', error)
-      showAlert({ title: errorAlertTitle, content: errorAlertContent })
+      cmsAlertModal.show({ title: errorAlertTitle, content: errorAlertContent })
     } finally {
       setIsExporting(false)
     }
@@ -74,7 +77,6 @@ export function useTableExcelExport<T extends object>({
     exporter,
     filename,
     isExporting,
-    showAlert,
   ])
 
   return { exportExcel, isExporting }

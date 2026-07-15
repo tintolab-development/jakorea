@@ -3,7 +3,7 @@
  * - 헤더: height 50px, padding 8px 30px, 배경 #47A9AD, 제목 + X 닫기
  * - 바디: padding 20px 30px 30px, flex column, gap 30px, 배경 #FFF
  * - X 클릭 또는 백그라운드(마스크) 클릭 시 닫힘
- * - size="large"(width 1400) 시 모달 전체 최대 높이 840px, 바디만 스크롤
+ * - 일반 모달은 전체 최대 높이 880px, 헤더·푸터 고정·바디만 스크롤
  */
 
 import { useId, type ReactNode } from 'react'
@@ -23,8 +23,8 @@ export interface TealHeaderModalProps {
   footer?: React.ReactNode
   /** 헤더 우측에 X 버튼 앞에 노출할 추가 내용 (예: 닫기 버튼) */
   headerExtra?: React.ReactNode
-  /** 기본 800, large 시 1400, full 시 뷰포트 풀페이지(좌우 인셋, CSS 참고) */
-  size?: 'default' | 'large' | 'full'
+  /** compact 600 / default 800 / medium 1000 / wide 1200 / large 1400 / full */
+  size?: ModalSize
   /** 커스텀 width (size보다 우선) */
   width?: number
   /** 모달 루트(ant-modal)에 붙는 추가 클래스 */
@@ -43,7 +43,16 @@ export interface TealHeaderModalProps {
   styles?: ModalProps['styles']
 }
 
-const SIZE_WIDTH = { default: 800, large: 1400, full: undefined }
+export type ModalSize = 'compact' | 'default' | 'medium' | 'wide' | 'large' | 'full'
+
+const SIZE_WIDTH: Record<ModalSize, number | undefined> = {
+  compact: 600,
+  default: 800,
+  medium: 1000,
+  wide: 1200,
+  large: 1400,
+  full: undefined,
+}
 
 export function TealHeaderModal({
   open,
@@ -65,13 +74,13 @@ export function TealHeaderModal({
   styles,
 }: TealHeaderModalProps) {
   const width = widthProp ?? SIZE_WIDTH[size]
-  const bodyScrollable = size === 'large' || size === 'full'
   const isFull = size === 'full'
+  const bodyScrollable = !isFull
   const titleId = useId()
   const className = [
     'teal-header-modal',
-    size === 'large' ? 'teal-header-modal--large' : '',
-    isFull ? 'teal-header-modal--full' : '',
+    `teal-header-modal--${size}`,
+    !isFull ? 'teal-header-modal--bounded' : '',
     hideHeader ? 'teal-header-modal--hide-header' : '',
     classNameProp ?? '',
   ]

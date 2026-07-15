@@ -10,6 +10,7 @@
 import type { ReactNode } from 'react'
 import type { ModalProps } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import type { ModalSize } from '@/shared/ui/teal-header-modal'
 import { renderContentModalDescription } from '@/shared/ui/content-modal-description'
 import './content-modal.css'
 
@@ -34,8 +35,8 @@ export interface ContentModalProps {
   children: ReactNode
   /** 푸터 영역. 전달 시 100% 너비 래퍼 안에서 우측 정렬됨 */
   footer?: React.ReactNode
-  /** 기본 800, large 시 1400 */
-  size?: 'default' | 'large'
+  /** compact 600 / default 800 / medium 1000 / wide 1200 / large 1400 */
+  size?: Exclude<ModalSize, 'full'>
   width?: number
   /** 모달 루트에 붙는 추가 클래스 (공통으로 content-modal 포함) */
   className?: string

@@ -11,13 +11,13 @@ import {
   type TeachingSettlementStatus,
 } from '@/data/mock/school-detail'
 import { StatusBadge } from '@/shared/components/status-badge'
-import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
+import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER } from '@/shared/constants/status'
-import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 
 const PROGRAM_STATUS_KEYS: TeachingProgramStatus[] = PROGRAM_ENROLLMENT_DISPLAY_STATUS_ORDER
 const SETTLEMENT_STATUS_KEYS: TeachingSettlementStatus[] = ['na', 'pending', 'partial', 'completed']
@@ -106,7 +106,9 @@ export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistor
             <StatusDropdownCell<TeachingSettlementStatus>
               status={record.settlementStatus}
               statusOptions={SETTLEMENT_STATUS_KEYS}
-              renderBadge={s => <SettlementStatusBadge status={s as SettlementStatusKey} />}
+              renderBadge={s => (
+                <InstructorPaymentStatusBadge status={s as InstructorSettlementUiStatus} />
+              )}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={s => handleSettlementStatusChange(record.id, s)}
               isOpen={openSettlementDropdownId === record.id}

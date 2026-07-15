@@ -16,8 +16,8 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 const CAL_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 import { CmsButton } from '@/shared/ui'
-import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
-import type { SettlementStatusKey } from '@/shared/components/settlement-status-badge'
+import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -245,7 +245,9 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
           <StatusDropdownCell<SettlementRowStatus>
             status={record.status}
             statusOptions={SETTLEMENT_ROW_STATUS_KEYS}
-            renderBadge={s => <SettlementStatusBadge status={s as SettlementStatusKey} />}
+            renderBadge={s => (
+              <InstructorPaymentStatusBadge status={s as InstructorSettlementUiStatus} />
+            )}
             isItemDisabled={(cur, opt) => cur === opt}
             onChange={s => handleStatusChange(record.id, s)}
             isOpen={openStatusDropdownId === record.id}

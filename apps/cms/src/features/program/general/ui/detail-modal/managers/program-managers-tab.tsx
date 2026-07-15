@@ -33,8 +33,6 @@ import {
   EditableStatusBadge,
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
 } from '@/shared/components'
 import { getProgramRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -228,10 +226,7 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
         key: 'role',
         width: 150,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME }),
-        onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME}`,
-        }),
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (role: ProgramRole, record: ProgramManagerRow) => (
           <StatusDropdownCell<ProgramRole>
             status={role}
@@ -242,7 +237,7 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            tagLayout="tag132"
+            style={{ width: 132, minWidth: 132, maxWidth: 132 }}
           />
         ),
       },

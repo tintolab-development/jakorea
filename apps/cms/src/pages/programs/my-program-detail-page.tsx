@@ -29,8 +29,9 @@ import {
   commonStatusStatusConfig,
   getCommonStatusLabel,
   getCommonStatusColor,
+  getStatusConfigAccentColor,
 } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import { StatusBadge } from '@/shared/components/status-badge'
 import { LAYOUT_CONSTANTS } from '@/shared/constants'
 import dayjs from 'dayjs'
 
@@ -106,13 +107,13 @@ export function MyProgramDetailPage() {
     try {
       if (favorite) {
         await removeFavoriteProgram(userId, id)
-        } else {
+      } else {
         await addFavoriteProgram(userId, id)
-        }
+      }
       setFavorite(!favorite)
     } catch (error) {
       console.error('관심 프로그램 토글 실패:', error)
-      }
+    }
   }
 
   const getProgramStatus = (program: MyProgram) => {
@@ -192,7 +193,16 @@ export function MyProgramDetailPage() {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
-        <StatusBadge status={status} statusConfig={commonStatusStatusConfig} />
+        <StatusBadge
+          domain="custom"
+          label={
+            commonStatusStatusConfig[status as keyof typeof commonStatusStatusConfig]?.label ??
+            status
+          }
+          accentColor={getStatusConfigAccentColor(
+            commonStatusStatusConfig[status as keyof typeof commonStatusStatusConfig]?.color
+          )}
+        />
       ),
     },
   ]

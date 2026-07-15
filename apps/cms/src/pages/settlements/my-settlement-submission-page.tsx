@@ -5,7 +5,8 @@
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Space, Button } from 'antd'
+import { Card, Space } from 'antd'
+import { CmsButton } from '@/shared/ui'
 import { ArrowLeftOutlined } from '@ant-design/icons'
 import { InstructorSettlementForm } from '@/features/settlement/ui/instructor-settlement-form'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
@@ -45,9 +46,9 @@ export function MySettlementSubmissionPage() {
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'flex-end' }}>
         <Space>
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/settlements/my')}>
+          <CmsButton variant="default" icon={<ArrowLeftOutlined />} onClick={() => navigate('/settlements/my')}>
             목록으로
-          </Button>
+          </CmsButton>
           {/* <h1 style={{ margin: 0 }}>정산 제출</h1> */}
         </Space>
       </Space>

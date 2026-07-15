@@ -7,13 +7,14 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Space, Card, Button, Table, Tabs, Select, Segmented, Modal, Descriptions } from 'antd'
+import { Space, Card, Table, Tabs, Select, Segmented, Modal, Descriptions } from 'antd'
+import { CmsButton, LoadingButton } from '@/shared/ui'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { PlusOutlined, CalendarOutlined, TableOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
-import { settlementStatusStatusConfig } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import { getStatusConfigAccentColor, settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
 import { SettlementSubmitModal } from '@/features/settlement/ui/settlement-submit-modal'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
 import { programService } from '@/entities/program/api/program-service'
@@ -146,7 +147,6 @@ export function MySettlementListPage() {
     })
   }
 
-
   const handleSearchChange = (value: string) => {
     setParams({
       search: value || undefined,
@@ -202,9 +202,9 @@ export function MySettlementListPage() {
       key: 'id',
       width: 200,
       render: (id: string, record: Settlement) => (
-        <Button type="link" onClick={() => handleViewSettlement(record)} style={{ padding: 0 }}>
+        <LoadingButton type="link" onClick={() => handleViewSettlement(record)} style={{ padding: 0 }}>
           {id}
-        </Button>
+        </LoadingButton>
       ),
     },
     {
@@ -213,7 +213,11 @@ export function MySettlementListPage() {
       key: 'status',
       width: 120,
       render: (status: SettlementStatus) => (
-        <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} />
+        <StatusBadge
+          domain="custom"
+          label={settlementStatusStatusConfig[status].label}
+          accentColor={getStatusConfigAccentColor(settlementStatusStatusConfig[status].color)}
+        />
       ),
     },
     {
@@ -286,9 +290,9 @@ export function MySettlementListPage() {
               },
             ]}
           />
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setSubmitModalOpen(true)}>
+          <CmsButton variant="primary" icon={<PlusOutlined />} onClick={() => setSubmitModalOpen(true)}>
             정산 제출
-          </Button>
+          </CmsButton>
         </Space>
       </Space>
 
@@ -349,7 +353,9 @@ export function MySettlementListPage() {
                   }))}
                 />
               </Space>
-              <Button onClick={() => clearParams()}>필터 초기화</Button>
+              <CmsButton variant="default" onClick={() => clearParams()}>
+                필터 초기화
+              </CmsButton>
             </Space>
           </Card>
           <Card>
@@ -406,8 +412,11 @@ export function MySettlementListPage() {
             <Descriptions.Item label="정산 ID">{selectedSettlement.id}</Descriptions.Item>
             <Descriptions.Item label="상태">
               <StatusBadge
-                status={selectedSettlement.status}
-                statusConfig={settlementStatusStatusConfig}
+                domain="custom"
+                label={settlementStatusStatusConfig[selectedSettlement.status].label}
+                accentColor={getStatusConfigAccentColor(
+                  settlementStatusStatusConfig[selectedSettlement.status].color
+                )}
               />
             </Descriptions.Item>
             <Descriptions.Item label="기간">{selectedSettlement.period}</Descriptions.Item>
@@ -418,8 +427,9 @@ export function MySettlementListPage() {
               {selectedSettlement.totalAmount.toLocaleString()}원
             </Descriptions.Item>
             <Descriptions.Item label="항목 요약">
-              {selectedSettlement.items.map(i => `${i.description}: ${i.amount.toLocaleString()}원`).join(' / ') ||
-                '-'}
+              {selectedSettlement.items
+                .map(i => `${i.description}: ${i.amount.toLocaleString()}원`)
+                .join(' / ') || '-'}
             </Descriptions.Item>
             {selectedSettlement.notes ? (
               <Descriptions.Item label="비고">{selectedSettlement.notes}</Descriptions.Item>

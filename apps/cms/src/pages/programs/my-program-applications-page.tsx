@@ -11,8 +11,11 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import { useProgramService } from '@/features/program/general/hooks/use-program-service'
-import { applicationStatusStatusConfig } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import {
+  applicationStatusStatusConfig,
+  getStatusConfigAccentColor,
+} from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
 import { applicationService } from '@/entities/application/api/application-service'
 import dayjs from 'dayjs'
 import type { Application, ApplicationStatus } from '@/types/domain'
@@ -147,7 +150,11 @@ export function MyProgramApplicationsPage() {
       key: 'status',
       width: 120,
       render: (status: ApplicationStatus) => (
-        <StatusBadge status={status} statusConfig={applicationStatusStatusConfig} />
+        <StatusBadge
+          domain="custom"
+          label={applicationStatusStatusConfig[status].label}
+          accentColor={getStatusConfigAccentColor(applicationStatusStatusConfig[status].color)}
+        />
       ),
     },
     {
@@ -244,8 +251,11 @@ export function MyProgramApplicationsPage() {
             </Descriptions.Item>
             <Descriptions.Item label="상태">
               <StatusBadge
-                status={selectedApplication.status}
-                statusConfig={applicationStatusStatusConfig}
+                domain="custom"
+                label={applicationStatusStatusConfig[selectedApplication.status].label}
+                accentColor={getStatusConfigAccentColor(
+                  applicationStatusStatusConfig[selectedApplication.status].color
+                )}
               />
             </Descriptions.Item>
             <Descriptions.Item label="신청일">

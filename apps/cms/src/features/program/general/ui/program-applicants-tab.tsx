@@ -5,7 +5,7 @@
 
 import { useMemo, useState, useCallback, useEffect } from 'react'
 import { Card, Table, Row, Col, Select } from 'antd'
-import { CmsButton, FilterSearchButton } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { useApplicantsTabParams, type ApplicantsFilters } from '../hooks/use-applicants-tab-params'
 import {
@@ -674,7 +674,15 @@ export function ProgramApplicantsTab({
                   </>
                 )}
                 <Col flex="none" className="program-applicants-tab__filter-col--btn">
-                  <FilterSearchButton onClick={handleSearch} />
+                  <CmsButton
+                    type="button"
+                    variant="primary"
+                    size="large"
+                    width={160}
+                    onClick={handleSearch}
+                  >
+                    조회
+                  </CmsButton>
                 </Col>
               </Row>
             </div>

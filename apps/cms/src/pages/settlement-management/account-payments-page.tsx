@@ -73,7 +73,7 @@ const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
 /** 계좌 지급 풀페이지 상세 — URL 동기화(뒤로가기로 목록 복귀) */
 const AP_DETAIL_ID = 'ap_detail'
 
-/** `FilterTableLayout` 툴바 — 구 `AppButton` filter-wide 최소 폭에 맞춤 */
+/** `FilterTableLayout` 툴바 — `CmsButton` size=large, width=auto에 최소 폭 180px 적용 */
 const ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE = { minWidth: 180 } as const
 
 /** 세 번째 요약 위젯 — 이체 예정일 구간 표기 `YY. MM. DD ~ YY. MM. DD` */

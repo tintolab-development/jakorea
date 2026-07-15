@@ -29,9 +29,9 @@ import {
   EMPTY_BASIC_FORM_VALUES,
   type SchoolDetailBasicFormValues,
 } from '../../../model/school-detail-basic-form-schema'
-import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
-import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
+import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
 import {
@@ -303,7 +303,7 @@ export function SchoolDetailModal({
         key: 'settlementStatus',
         width: 140,
         align: 'center',
-        render: (s: SettlementStatusKey) => <SettlementStatusBadge status={s} />,
+        render: (s: InstructorSettlementUiStatus) => <InstructorPaymentStatusBadge status={s} />,
       },
     ],
     []
@@ -398,7 +398,7 @@ export function SchoolDetailModal({
               align: 'center',
               render: (_: unknown, record: InstructorListFormInstructor) => {
                 const row = detail.instructors.find(i => i.id === record.id)
-                return row ? <SettlementStatusBadge status={row.settlementStatus} /> : null
+                return row ? <InstructorPaymentStatusBadge status={row.settlementStatus} /> : null
               },
             },
           ]

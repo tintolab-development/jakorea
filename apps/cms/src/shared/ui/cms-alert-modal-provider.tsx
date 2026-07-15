@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
-import { setCmsAlertModalListener } from './cms-alert-modal-api'
+import { cmsAlertModal, setCmsAlertModalListener } from './cms-alert-modal-api'
 import type { CmsAlertModalShowOptions } from './cms-alert-modal-api'
 import { AlertModal } from './alert-modal'
 
@@ -33,6 +33,12 @@ export type CmsAlertModalContextValue = {
 }
 
 const CmsAlertModalContext = createContext<CmsAlertModalContextValue | null>(null)
+
+/** Provider 밖·HMR Context 불일치 폴백 — 참조 안정화를 위해 모듈 상수 */
+const cmsAlertFallback: CmsAlertModalContextValue = {
+  showAlert: options => cmsAlertModal.show(options),
+  closeAlert: () => cmsAlertModal.close(),
+}
 
 export function CmsAlertModalProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AlertState>(initialState)
@@ -85,8 +91,7 @@ export function CmsAlertModalProvider({ children }: { children: ReactNode }) {
 
 export function useCmsAlert(): CmsAlertModalContextValue {
   const ctx = useContext(CmsAlertModalContext)
-  if (ctx == null) {
-    throw new Error('useCmsAlert는 CmsAlertModalProvider 안에서만 사용할 수 있습니다.')
-  }
-  return ctx
+  // Provider 밖·HMR로 Context 인스턴스가 어긋난 경우에도 레이아웃이 깨지지 않도록
+  // imperative API로 폴백 (미등록 시 cmsAlertModal.show가 DEV 경고 후 no-op)
+  return ctx ?? cmsAlertFallback
 }

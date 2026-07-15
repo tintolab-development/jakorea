@@ -13,8 +13,6 @@ import { CmsButton } from '@/shared/ui'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
 } from '@/shared/components'
 import { AssignmentPreviewModal } from './assignment-preview-modal'
 import type { Application } from '@/types/domain'
@@ -118,10 +116,7 @@ export function AssignmentSubmissionModal({
         key: 'role',
         align: 'center',
         width: 150,
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME }),
-        onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME}`,
-        }),
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (_: unknown, record: AssignmentSubmissionTableRow) => (
           <StatusDropdownCell<AssignmentTeamRoleKey>
             status={record.teamRole}
@@ -136,7 +131,7 @@ export function AssignmentSubmissionModal({
             isOpen={openTeamRoleDropdownRowId === record.id}
             onOpenChange={open => setOpenTeamRoleDropdownRowId(open ? record.id : null)}
             emptyPlaceholder="-"
-            tagLayout="tag132"
+            style={{ width: 132, minWidth: 132, maxWidth: 132 }}
           />
         ),
       },

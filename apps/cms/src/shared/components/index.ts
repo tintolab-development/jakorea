@@ -11,14 +11,6 @@ export type {
   PermissionModalNotifyTiming,
   PermissionModalVariant,
 } from './permission-modal'
-/** @deprecated `PermissionModal` 계열로 이전 */
-export {
-  PermissionRejectModal,
-  PermissionRejectModalMessage,
-  type PermissionRejectPayload,
-  type PermissionRejectModalProps,
-  type PermissionRejectNotifyTiming,
-} from './permission-modal'
 export { PermissionButton } from './permission-button'
 export type { PermissionButtonProps } from './permission-button'
 export { AppStatusBadge } from './app-status-badge'
@@ -43,8 +35,6 @@ export {
   STATUS_DROPDOWN_CELL_CLASSNAME,
   STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
   STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
   STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
   STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
 } from './status-dropdown-cell'
@@ -63,8 +53,6 @@ export type {
   ProgramProgressStatusTextProps,
   ProgramLifecycleEnrollmentStatusTextProps,
 } from './program-enrollment-status-text'
-export { SettlementStatusBadge } from './settlement-status-badge'
-export type { SettlementStatusKey } from './settlement-status-badge'
 export { ApprovalStatusBadge } from './approval-status-badge'
 export type { ApprovalStatusKey } from './approval-status-badge'
 export { PaymentOrderLineProcessingStatusBadge } from './payment-order-line-processing-status-badge'
@@ -74,7 +62,6 @@ export { SessionFormatBadge } from './session-format-badge'
 export type { SessionFormat } from './session-format-badge'
 export { ProgramCategoryBadge } from './program-category-badge'
 export type { ProgramCategory } from '@/types/domain'
-export { InterviewStatusBadge } from './interview-status-badge'
 export {
   CalendarSet,
   CALENDAR_FILTER_COLOR_CLASSES,

@@ -381,14 +381,3 @@ export function PermissionModal({
     </>
   )
 }
-
-/** @deprecated `PermissionModal` 사용 */
-export const PermissionRejectModal = PermissionModal
-/** @deprecated `PermissionModalMessage` 사용 */
-export const PermissionRejectModalMessage = PermissionModalMessage
-/** @deprecated `PermissionModalPayload` 사용 */
-export type PermissionRejectPayload = PermissionModalPayload
-/** @deprecated `PermissionModalNotifyTiming` 사용 */
-export type PermissionRejectNotifyTiming = PermissionModalNotifyTiming
-/** @deprecated `PermissionModalProps` 사용 */
-export type PermissionRejectModalProps = PermissionModalProps

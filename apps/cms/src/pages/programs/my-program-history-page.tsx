@@ -6,17 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import {
-  Card,
-  Descriptions,
-  Button,
-  Table,
-  Space,
-  Tabs,
-  Empty,
-  Spin,
-  Timeline,
-} from 'antd'
+import { Card, Descriptions, Button, Table, Space, Tabs, Empty, Spin, Timeline } from 'antd'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import {
   ArrowLeftOutlined,
@@ -30,8 +20,12 @@ import {
   type MyProgram,
 } from '@/entities/program/api/instructor-program-service'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
-import { commonStatusStatusConfig, settlementStatusStatusConfig } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import {
+  commonStatusStatusConfig,
+  getStatusConfigAccentColor,
+  settlementStatusStatusConfig,
+} from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
 import { mockApplications, mockMatchings } from '@/data/mock'
 import { useProgramService } from '@/features/program/general/hooks/use-program-service'
 import { schoolService } from '@/entities/school/api/school-service'
@@ -191,7 +185,11 @@ export function MyProgramHistoryPage() {
       key: 'status',
       width: 120,
       render: (status: Settlement['status']) => (
-        <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} />
+        <StatusBadge
+          domain="custom"
+          label={settlementStatusStatusConfig[status].label}
+          accentColor={getStatusConfigAccentColor(settlementStatusStatusConfig[status].color)}
+        />
       ),
     },
     {
@@ -299,7 +297,17 @@ export function MyProgramHistoryPage() {
                   dataIndex: 'status',
                   key: 'status',
                   render: (status: string) => (
-                    <StatusBadge status={status} statusConfig={commonStatusStatusConfig} />
+                    <StatusBadge
+                      domain="custom"
+                      label={
+                        commonStatusStatusConfig[status as keyof typeof commonStatusStatusConfig]
+                          ?.label ?? status
+                      }
+                      accentColor={getStatusConfigAccentColor(
+                        commonStatusStatusConfig[status as keyof typeof commonStatusStatusConfig]
+                          ?.color
+                      )}
+                    />
                   ),
                 },
               ]}

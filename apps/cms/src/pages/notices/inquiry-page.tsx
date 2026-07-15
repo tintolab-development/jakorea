@@ -15,12 +15,11 @@ import {
   Space,
   Empty,
   Tabs,
-  Button,
   Divider,
   Modal,
   Descriptions,
 } from 'antd'
-import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { CmsButton, LabeledSearchInput } from '@/shared/ui'
 import {
   PlusOutlined,
   ClockCircleOutlined,
@@ -86,14 +85,14 @@ export function InquiryPage() {
               답변드립니다.
             </Text>
           </div>
-          <Button
-            type="primary"
+          <CmsButton
+            variant="primary"
             icon={<PlusOutlined />}
             onClick={() => setWriteModalOpen(true)}
             size="large"
           >
             새 문의 작성
-          </Button>
+          </CmsButton>
         </div>
 
         {/* 검색 및 필터 */}
@@ -226,9 +225,9 @@ export function InquiryPage() {
         onCancel={() => setDetailModalOpen(false)}
         width={800}
         footer={[
-          <Button key="close" onClick={() => setDetailModalOpen(false)}>
+          <CmsButton key="close" variant="default" onClick={() => setDetailModalOpen(false)}>
             닫기
-          </Button>,
+          </CmsButton>,
         ]}
         centered
       >

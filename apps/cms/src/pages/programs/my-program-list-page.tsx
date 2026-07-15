@@ -6,7 +6,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Tag, Button, Table, Empty } from 'antd'
+import { Button, Table, Empty } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
@@ -24,8 +24,12 @@ import {
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
 import dayjs from 'dayjs'
-import { getCommonStatusLabel, getCommonStatusColor } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import {
+  getCommonStatusLabel,
+  getCommonStatusColor,
+  getStatusConfigAccentColor,
+} from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
 
 export function MyProgramListPage() {
   const { user } = useAuthStore()
@@ -131,9 +135,9 @@ export function MyProgramListPage() {
     try {
       if (isFavorite) {
         await removeFavoriteProgram(userId, programId)
-        } else {
+      } else {
         await addFavoriteProgram(userId, programId)
-        }
+      }
 
       // 상태 업데이트
       setFavorites(prev => {
@@ -147,7 +151,7 @@ export function MyProgramListPage() {
       })
     } catch (error) {
       console.error('관심 프로그램 토글 실패:', error)
-      }
+    }
   }
 
   const handleViewProgram = (program: MyProgram) => {
@@ -212,9 +216,13 @@ export function MyProgramListPage() {
       width: 120,
       render: (category: string) => (
         <StatusBadge
-          status={category as keyof typeof programCategoryStatusConfig}
-          statusConfig={programCategoryStatusConfig}
-          showIcon={false}
+          domain="custom"
+          label={
+            programCategoryStatusConfig[category as keyof typeof programCategoryStatusConfig].label
+          }
+          accentColor={getStatusConfigAccentColor(
+            programCategoryStatusConfig[category as keyof typeof programCategoryStatusConfig].color
+          )}
         />
       ),
     },
@@ -236,13 +244,19 @@ export function MyProgramListPage() {
         if (statusKey in programStatusStatusConfig) {
           return (
             <StatusBadge
-              status={statusKey as keyof typeof programStatusStatusConfig}
-              statusConfig={programStatusStatusConfig}
-              showIcon={false}
+              domain="custom"
+              label={programStatusStatusConfig[statusKey].label}
+              accentColor={getStatusConfigAccentColor(programStatusStatusConfig[statusKey].color)}
             />
           )
         }
-        return <Tag color={status.color}>{status.label}</Tag>
+        return (
+          <StatusBadge
+            domain="custom"
+            label={status.label}
+            accentColor={getStatusConfigAccentColor(status.color)}
+          />
+        )
       },
     },
     {

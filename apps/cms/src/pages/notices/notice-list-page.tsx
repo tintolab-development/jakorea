@@ -7,8 +7,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Card, List, Typography, Tag, Space, Empty, Tabs, Button, Divider, Modal } from 'antd'
-import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { Card, List, Typography, Tag, Space, Empty, Tabs, Divider, Modal } from 'antd'
+import { CmsButton, LoadingButton, LabeledSearchInput } from '@/shared/ui'
 import { CalendarOutlined, PushpinFilled, EyeOutlined, FileOutlined } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
@@ -197,9 +197,9 @@ export function NoticeListPage() {
         onCancel={() => setModalOpen(false)}
         width={800}
         footer={[
-          <Button key="close" type="primary" onClick={() => setModalOpen(false)}>
+          <CmsButton key="close" variant="primary" onClick={() => setModalOpen(false)}>
             확인
-          </Button>,
+          </CmsButton>,
         ]}
         centered
       >
@@ -242,9 +242,9 @@ export function NoticeListPage() {
                   }
                   styles={{ body: { padding: '8px 12px' } }}
                 >
-                  <Button type="link" icon={<FileOutlined />} style={{ padding: 0 }}>
+                  <LoadingButton type="link" icon={<FileOutlined />} style={{ padding: 0 }}>
                     [공지] {selectedNotice.category}_관련_서식.pdf (1.2MB)
-                  </Button>
+                  </LoadingButton>
                 </Card>
               </>
             )}

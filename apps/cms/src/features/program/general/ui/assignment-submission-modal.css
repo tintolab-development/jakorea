@@ -50,7 +50,7 @@
   opacity: 0.6;
 }
 
-/* 과제 제출 내역 — 팀 역할 태그 (StatusDropdownCell tag132 내부 span) */
+/* 과제 제출 내역 — 팀 역할 태그 (StatusDropdownCell style 지정 span) */
 .assignment-submission-modal__team-role-tag {
   box-sizing: border-box;
   display: flex;
@@ -94,8 +94,8 @@
   color: #464646;
 }
 
-/* tag132·tag160 트리거 안 태그: 닫힘·열림·호버 동일 치수 (공통 120px 규칙과 충돌 시에도 밀림 방지) */
-.assignment-submission-modal .status-dropdown-cell__status-trigger--tag-132 .assignment-submission-modal__team-role-tag,
+/* style 지정·tag160 트리거 안 태그: 닫힘·열림·호버 동일 치수 */
+.assignment-submission-modal .status-dropdown-cell__trigger--cell-style .assignment-submission-modal__team-role-tag,
 .assignment-submission-modal .status-dropdown-cell__status-trigger--tag-160 .assignment-submission-modal__team-role-tag {
   width: 132px !important;
   min-width: 132px !important;
@@ -118,19 +118,15 @@
 .assignment-submission-modal__table-outer
   .ant-table-thead
   > tr
-  > th.ant-table-cell.status-dropdown-cell__header--tag-132,
-.assignment-submission-modal__table-outer
-  .ant-table-thead
-  > tr
   > th.ant-table-cell.status-dropdown-cell__header--tag-160,
 .assignment-submission-modal__table-outer
   .ant-table-tbody
   > tr
-  > td.status-dropdown-cell__cell-status--tag-132,
+  > td.status-dropdown-cell__cell-status,
 .assignment-submission-modal__table-outer
   .ant-table-tbody
   > tr:hover
-  > td.status-dropdown-cell__cell-status--tag-132,
+  > td.status-dropdown-cell__cell-status,
 .assignment-submission-modal__table-outer
   .ant-table-tbody
   > tr
@@ -146,7 +142,7 @@
 }
 
 /* 트리거 박스(150px / 160px) 자체를 셀 안에서 고정 — 호버·행 호버 시에도 치수·위치 유지 */
-.assignment-submission-modal__table-outer .status-dropdown-cell__status-trigger--tag-132 {
+.assignment-submission-modal__table-outer .status-dropdown-cell__trigger--cell-style {
   display: inline-flex !important;
   box-sizing: border-box !important;
   width: 150px !important;
@@ -169,7 +165,7 @@
 }
 
 .assignment-submission-modal__table-outer
-  .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open) {
+  .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open) {
   border-color: transparent !important;
   box-shadow: none !important;
   background: transparent !important;
@@ -183,9 +179,9 @@
 }
 
 .assignment-submission-modal__table-outer
-  .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open):hover,
+  .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open):hover,
 .assignment-submission-modal__table-outer
-  .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open):focus-visible {
+  .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open):focus-visible {
   border-color: transparent !important;
   box-shadow: none !important;
   background: transparent !important;
@@ -203,7 +199,7 @@
 }
 
 .assignment-submission-modal__table-outer
-  .status-dropdown-cell__status-trigger--tag-132.status-dropdown-cell__status-trigger--open {
+  .status-dropdown-cell__trigger--cell-style.status-dropdown-cell__status-trigger--open {
   border-color: var(--JA-mint-01, #01a1af) !important;
   box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1) !important;
   background: #fff !important;

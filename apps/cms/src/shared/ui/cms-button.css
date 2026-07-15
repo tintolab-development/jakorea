@@ -31,12 +31,7 @@
   cursor: not-allowed;
   color: rgba(61, 61, 61, 0.35) !important;
   border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
-  background-color: #fff !important;
-  background-image: var(
-    --disabled-default-bg,
-    linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%)
-  ) !important;
-}
+  background-color: var(--color-bg-base) !important;
 
 .cms-button.ant-btn.cms-button--loading-only {
   gap: 0 !important;
@@ -106,14 +101,14 @@
 /* ----- variant (enabled) ----- */
 .cms-button.ant-btn.cms-button--primary:not(:disabled):not(.ant-btn-disabled) {
   border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
-  background: var(--color-mint-01, #01a1af) !important;
-  color: var(--main-WT, #fff) !important;
+  background: var(--color-mint-01) !important;
+  color: var(--default-WT, var(--color-bg-base)) !important;
 }
 
 .cms-button.ant-btn.cms-button--secondary:not(:disabled):not(.ant-btn-disabled) {
-  color: var(--color-mint-01, #01a1af) !important;
-  border-color: var(--color-mint-01, #01a1af) !important;
-  background-color: #fff !important;
+  color: var(--color-mint-01) !important;
+  border-color: var(--color-mint-01) !important;
+  background-color: var(--color-bg-base) !important;
   background-image: linear-gradient(
     0deg,
     rgba(1, 161, 175, 0.06) 0%,
@@ -123,14 +118,14 @@
 
 .cms-button.ant-btn.cms-button--default:not(:disabled):not(.ant-btn-disabled) {
   border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
-  background: var(--main-WT, #fff) !important;
-  color: var(--main-BK, #3d3d3d) !important;
+  background: var(--default-WT) !important;
+  color: var(--main-BK, var(--default-BK)) !important;
 }
 
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled) {
-  color: var(--color-red, #c32f4a) !important;
-  border-color: var(--color-red, #c32f4a) !important;
-  background-color: #fff !important;
+  color: var(--color-red) !important;
+  border-color: var(--color-red) !important;
+  background-color: var(--color-bg-base) !important;
   background-image: linear-gradient(
     0deg,
     rgba(195, 47, 74, 0.06) 0%,
@@ -143,17 +138,17 @@
 .cms-button.ant-btn.cms-button--primary:not(:disabled):not(.ant-btn-disabled):focus,
 .cms-button.ant-btn.cms-button--primary:not(:disabled):not(.ant-btn-disabled):active {
   border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
-  background: var(--color-mint-01, #01a1af) !important;
-  color: var(--main-WT, #fff) !important;
+  background: var(--color-mint-01) !important;
+  color: var(--default-WT) !important;
   box-shadow: none !important;
 }
 
 .cms-button.ant-btn.cms-button--secondary:not(:disabled):not(.ant-btn-disabled):hover,
 .cms-button.ant-btn.cms-button--secondary:not(:disabled):not(.ant-btn-disabled):focus,
 .cms-button.ant-btn.cms-button--secondary:not(:disabled):not(.ant-btn-disabled):active {
-  color: var(--color-mint-01, #01a1af) !important;
-  border-color: var(--color-mint-01, #01a1af) !important;
-  background-color: #fff !important;
+  color: var(--color-mint-01) !important;
+  border-color: var(--color-mint-01) !important;
+  background-color: var(--color-bg-base) !important;
   background-image: linear-gradient(
     0deg,
     rgba(1, 161, 175, 0.06) 0%,
@@ -166,17 +161,17 @@
 .cms-button.ant-btn.cms-button--default:not(:disabled):not(.ant-btn-disabled):focus,
 .cms-button.ant-btn.cms-button--default:not(:disabled):not(.ant-btn-disabled):active {
   border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
-  background: var(--main-WT, #fff) !important;
-  color: var(--main-BK, #3d3d3d) !important;
+  background: var(--default-WT) !important;
+  color: var(--main-BK, var(--default-BK)) !important;
   box-shadow: none !important;
 }
 
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled):hover,
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled):focus,
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled):active {
-  color: var(--color-red, #c32f4a) !important;
-  border-color: var(--color-red, #c32f4a) !important;
-  background-color: #fff !important;
+  color: var(--color-red) !important;
+  border-color: var(--color-red) !important;
+  background-color: var(--color-bg-base) !important;
   background-image: linear-gradient(
     0deg,
     rgba(195, 47, 74, 0.06) 0%,

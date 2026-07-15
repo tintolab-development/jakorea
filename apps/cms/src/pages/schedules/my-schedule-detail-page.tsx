@@ -6,9 +6,10 @@
 
 import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { Card, Space, Typography, Descriptions, Tag, Result, Spin, Alert } from 'antd'
+import { Badge, Card, Space, Typography, Descriptions, Tag, Result, Spin, Alert } from 'antd'
+import type { BadgeProps } from 'antd'
 import { SessionFormatBadge } from '@/shared/components/session-format-badge'
-import { StatusDisplay, SingleCTA } from '@/shared/ui'
+import { SingleCTA } from '@/shared/ui'
 import { mockSchedulesMap, mockProgramsMap, mockApplications } from '@/data/mock'
 import dayjs from 'dayjs'
 import type { Schedule } from '@/types/domain'
@@ -23,14 +24,16 @@ const scheduleStatusLabels: Record<ScheduleStatus | string, string> = {
   SCH_01: '일정이 예정되어 있습니다.',
   SCH_02: '현재 일정이 진행 중입니다.',
   SCH_03: '일정이 종료되었습니다.',
-  SCH_04: '일정이 취소되었습니다.' }
+  SCH_04: '일정이 취소되었습니다.',
+}
 
 // 일정 상태 색상
-const scheduleStatusColors: Record<ScheduleStatus | string, string> = {
+const scheduleStatusColors: Record<ScheduleStatus, BadgeProps['color']> = {
   SCH_01: 'blue',
   SCH_02: 'processing',
   SCH_03: 'success',
-  SCH_04: 'error' }
+  SCH_04: 'error',
+}
 
 export function MyScheduleDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -64,7 +67,8 @@ export function MyScheduleDetailPage() {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          minHeight: '400px' }}
+          minHeight: '400px',
+        }}
       >
         <Spin size="large" />
       </div>
@@ -128,11 +132,10 @@ export function MyScheduleDetailPage() {
         {/* 일정 상태 요약 영역 (최상단, 가장 강조) - Phase 5.6 */}
         <Card>
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-            <StatusDisplay
-              status={status}
-              statusLabels={scheduleStatusLabels}
-              statusColors={scheduleStatusColors}
-            />
+            <Space>
+              <Badge color={scheduleStatusColors[status]} />
+              <Text>{scheduleStatusLabels[status]}</Text>
+            </Space>
             {/* SCH_04(취소) 또는 변경 이슈가 있는 경우 reason_public 표시 - Phase 5.6 */}
             {(status as string) === 'SCH_04' && (
               <Alert

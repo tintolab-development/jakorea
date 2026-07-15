@@ -5,7 +5,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Descriptions, Tag, Button, Space, Spin } from 'antd'
+import { Card, Descriptions, Tag, Space, Spin } from 'antd'
+import { CmsButton } from '@/shared/ui'
 import {
   ArrowLeftOutlined,
   DownloadOutlined,
@@ -14,8 +15,8 @@ import {
 } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlementDetail } from '@/entities/settlement/api/instructor-settlement-service'
-import { settlementStatusStatusConfig } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import { getStatusConfigAccentColor, settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
 import { useProgramService } from '@/features/program/general/hooks/use-program-service'
 import { SettlementCalculationSummary } from '@/features/settlement/ui/settlement-calculation-summary'
 import { paymentStatementService } from '@/entities/settlement/api/payment-statement-service'
@@ -155,9 +156,9 @@ export function MySettlementDetailPage() {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Space style={{ width: '100%', justifyContent: 'flex-end', alignItems: 'center' }}>
           {/* <h1 style={{ margin: 0 }}>정산 상세</h1> */}
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/settlements/my')}>
+          <CmsButton variant="default" icon={<ArrowLeftOutlined />} onClick={() => navigate('/settlements/my')}>
             목록으로
-          </Button>
+          </CmsButton>
         </Space>
 
         {/* 지급조서 확인 섹션 */}
@@ -168,15 +169,15 @@ export function MySettlementDetailPage() {
               title="지급조서 확인"
               style={{ border: '2px solid #1890ff', background: '#f0f9ff' }}
               extra={
-                <Button
-                  type="primary"
+                <CmsButton
+                  variant="primary"
                   icon={<CheckCircleOutlined />}
                   onClick={handleConfirmPaymentStatement}
                   loading={confirming}
                   size="large"
                 >
                   지급조서 확인 완료
-                </Button>
+                </CmsButton>
               }
             >
               <Space direction="vertical" style={{ width: '100%' }}>
@@ -223,7 +224,13 @@ export function MySettlementDetailPage() {
           <Descriptions title="정산 정보" bordered column={2}>
             <Descriptions.Item label="정산 ID">{settlement.id}</Descriptions.Item>
             <Descriptions.Item label="상태">
-              <StatusBadge status={settlement.status} statusConfig={settlementStatusStatusConfig} />
+              <StatusBadge
+                domain="custom"
+                label={settlementStatusStatusConfig[settlement.status].label}
+                accentColor={getStatusConfigAccentColor(
+                  settlementStatusStatusConfig[settlement.status].color
+                )}
+              />
             </Descriptions.Item>
             <Descriptions.Item label="프로그램">
               {program ? (
@@ -288,24 +295,26 @@ export function MySettlementDetailPage() {
                       </div>
                     </Space>
                     <Space>
-                      <Button
+                      <CmsButton
+                        variant="default"
                         icon={<EyeOutlined />}
                         size="small"
                         onClick={() => {
                           // TODO: 파일 미리보기 API 연결
-                          }}
+                        }}
                       >
                         미리보기
-                      </Button>
-                      <Button
+                      </CmsButton>
+                      <CmsButton
+                        variant="default"
                         icon={<DownloadOutlined />}
                         size="small"
                         onClick={() => {
                           // TODO: 파일 다운로드 API 연결
-                          }}
+                        }}
                       >
                         다운로드
-                      </Button>
+                      </CmsButton>
                     </Space>
                   </Space>
                 </Card>

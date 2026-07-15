@@ -13,7 +13,6 @@ import {
   Typography,
   Space,
   Empty,
-  Button,
   Tabs,
   Tag,
   Badge,
@@ -22,7 +21,7 @@ import {
   Col,
   Tooltip,
 } from 'antd'
-import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
+import { CmsButton, LoadingButton, LabeledSearchInput } from '@/shared/ui'
 import {
   FileSearchOutlined,
   LikeOutlined,
@@ -97,14 +96,14 @@ export function FAQPage() {
             </h1>
             <Text type="secondary">{MESSAGES.info.faqDescription}</Text>
           </div>
-          <Button
-            type="primary"
+          <CmsButton
+            variant="primary"
             icon={<MessageOutlined />}
             onClick={() => navigate('/notices/inquiries')}
             size="large"
           >
             1:1 문의하기
-          </Button>
+          </CmsButton>
         </div>
 
         {/* 검색 섹션 */}
@@ -157,7 +156,7 @@ export function FAQPage() {
               description={
                 <Space direction="vertical">
                   <Text type="secondary">{MESSAGES.info.noSearchResults}</Text>
-                  <Button
+                  <LoadingButton
                     type="link"
                     onClick={() => {
                       setSearchInput('')
@@ -165,7 +164,7 @@ export function FAQPage() {
                     }}
                   >
                     전체 보기
-                  </Button>
+                  </LoadingButton>
                 </Space>
               }
               style={{ marginTop: 60 }}
@@ -236,14 +235,14 @@ export function FAQPage() {
                           style={{ color: '#8c8c8c', fontSize: LAYOUT_CONSTANTS.fontSizes.sm + 1 }}
                         >
                           <InfoCircleOutlined /> 추가 질문이 있으신가요?
-                          <Button
+                          <LoadingButton
                             type="link"
                             size="small"
                             onClick={() => navigate('/notices/inquiries')}
                             style={{ padding: 0 }}
                           >
                             상세 문의하기
-                          </Button>
+                          </LoadingButton>
                         </Space>
                       </Col>
                       <Col>
@@ -255,10 +254,10 @@ export function FAQPage() {
                             도움이 되었나요?
                           </Text>
                           <Tooltip title="도움됨">
-                            <Button size="small" icon={<LikeOutlined />} />
+                            <LoadingButton size="small" icon={<LikeOutlined />} />
                           </Tooltip>
                           <Tooltip title="도움 안됨">
-                            <Button size="small" icon={<DislikeOutlined />} />
+                            <LoadingButton size="small" icon={<DislikeOutlined />} />
                           </Tooltip>
                         </Space>
                       </Col>
@@ -275,15 +274,15 @@ export function FAQPage() {
           <Space direction="vertical" size="small">
             <Title level={5}>찾으시는 내용이 없나요?</Title>
             <Text type="secondary">JAKorea 운영팀에서 친절하게 답변해 드리겠습니다.</Text>
-            <Button
-              type="primary"
+            <CmsButton
+              variant="primary"
               ghost
               icon={<FileSearchOutlined />}
               style={{ marginTop: 12 }}
               onClick={() => navigate('/notices/inquiries')}
             >
               1:1 문의 게시판 바로가기
-            </Button>
+            </CmsButton>
           </Space>
         </Card>
       </Space>

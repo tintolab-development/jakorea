@@ -15,6 +15,17 @@
   margin-inline-end: 0;
 }
 
+/* Ant 기본 전환·스케일 애니메이션 제거 — 선택 시 즉시 반영 */
+.app-radio-group .ant-radio,
+.app-radio-group .ant-radio .ant-radio-inner,
+.app-radio-group .ant-radio .ant-radio-inner::after,
+.app-radio.ant-radio-wrapper .ant-radio,
+.app-radio.ant-radio-wrapper .ant-radio .ant-radio-inner,
+.app-radio.ant-radio-wrapper .ant-radio .ant-radio-inner::after {
+  transition: none !important;
+  animation: none !important;
+}
+
 /* ----- large (기본): 원 20px, 본문 16px, 원–텍스트 8px ----- */
 .app-radio-group--large.ant-radio-group {
   font-size: 16px;

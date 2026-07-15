@@ -6,7 +6,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Card, Table, Row, Col, Select } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
-import { CmsButton, FilterSearchButton } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import { ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -22,14 +22,14 @@ import {
 import {
   MOCK_PARTICIPATING_INSTRUCTORS,
   type ParticipatingInstructorRow,
-  type SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
 import {
   INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
   INSTRUCTOR_SETTLEMENT_STATUS_ORDER,
+  type InstructorSettlementUiStatus,
 } from '@/shared/constants/instructor-settlement-status'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
-import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
+import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { SegmentedTab } from '@/shared/ui'
 import { AddInstructorModal } from '../../add-instructor-modal'
@@ -222,7 +222,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
 
   const textbookStatusKeys = TEXTBOOK_STATUS_OPTION_KEYS
 
-  const settlementStatusKeys: SettlementStatusKey[] = useMemo(
+  const settlementStatusKeys: InstructorSettlementUiStatus[] = useMemo(
     () => [...INSTRUCTOR_SETTLEMENT_STATUS_ORDER],
     []
   )
@@ -380,12 +380,12 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         width: 160,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        render: (status: SettlementStatusKey, record: ParticipatingInstructorRow) => (
+        render: (status: InstructorSettlementUiStatus, record: ParticipatingInstructorRow) => (
           <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
-            <StatusDropdownCell<SettlementStatusKey>
+            <StatusDropdownCell<InstructorSettlementUiStatus>
               status={status}
               statusOptions={settlementStatusKeys}
-              renderBadge={s => <SettlementStatusBadge status={s} />}
+              renderBadge={s => <InstructorPaymentStatusBadge status={s} />}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={key => handleSettlementStatusChange(record.id, key)}
               isOpen={openSettlementDropdownInstructorId === record.id}
@@ -510,7 +510,15 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                   />
                 </Col>
                 <Col flex="none" className="program-progress-tab__filter-col--btn">
-                  <FilterSearchButton onClick={handleSearch} />
+                  <CmsButton
+                    type="button"
+                    variant="primary"
+                    size="large"
+                    width={160}
+                    onClick={handleSearch}
+                  >
+                    조회
+                  </CmsButton>
                 </Col>
               </Row>
             </div>
@@ -691,7 +699,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                   savedInstructors !== undefined
                     ? savedInstructors.map(inv => ({
                         ...inv,
-                        settlementStatus: 'awaiting_confirmation' as SettlementStatusKey,
+                        settlementStatus: 'awaiting_confirmation' as InstructorSettlementUiStatus,
                       }))
                     : getInstructorRowsForSchool(schoolName, instructorList)
                 return {

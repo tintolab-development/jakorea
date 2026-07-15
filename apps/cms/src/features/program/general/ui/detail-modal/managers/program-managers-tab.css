@@ -12,7 +12,7 @@
   min-width: 1282px;
 }
 
-/* 권한 배지 — StatusDropdownCell tag132 내부 132×33 */
+/* 권한 배지 — StatusDropdownCell style 지정 132×33 */
 .program-managers-tab__role-badge {
   box-sizing: border-box;
   display: inline-flex;
@@ -38,7 +38,7 @@
 
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
-  .status-dropdown-cell__status-trigger--tag-132
+  .status-dropdown-cell__trigger--cell-style
   .program-managers-tab__role-badge {
   width: 132px !important;
   min-width: 132px !important;
@@ -108,12 +108,12 @@
   .program-managers-tab__managers-table.cms-data-table
   .ant-table-tbody
   > tr
-  > td.status-dropdown-cell__cell-status--tag-132,
+  > td.status-dropdown-cell__cell-status,
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
   .ant-table-tbody
   > tr:hover
-  > td.status-dropdown-cell__cell-status--tag-132 {
+  > td.status-dropdown-cell__cell-status {
   padding-left: 0 !important;
   padding-right: 0 !important;
   text-align: center !important;
@@ -124,7 +124,7 @@
   .program-managers-tab__managers-table.cms-data-table
   .ant-table-tbody
   > tr
-  > td.status-dropdown-cell__cell-status--tag-132
+  > td.status-dropdown-cell__cell-status
   .ant-dropdown-trigger {
   display: inline-flex;
   justify-content: center;
@@ -136,21 +136,21 @@
   vertical-align: middle;
 }
 
-/* tag-132 트리거: 닫힘·호버·행 hover 동일 외곽 치수 유지 */
+/* style 지정 트리거: 닫힘·호버·행 hover 동일 외곽 치수 유지 */
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
-  .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open),
+  .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open),
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
-  .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open):hover,
+  .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open):hover,
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
-  .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open):focus-visible,
+  .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open):focus-visible,
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
   .ant-table-tbody
   > tr:hover
-  .status-dropdown-cell__status-trigger--tag-132:not(.status-dropdown-cell__status-trigger--open) {
+  .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open) {
   display: inline-flex !important;
   box-sizing: border-box !important;
   width: 150px !important;
@@ -178,12 +178,12 @@
   max-height: 54px !important;
 }
 
-/* 행 hover 시 열린 tag-132 트리거 민트 외곽·그림자 유지 (공통 규칙이 border 제거함) */
+/* 행 hover 시 열린 style 지정 트리거 민트 외곽·그림자 유지 */
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
   .ant-table-tbody
   > tr:hover
-  .status-dropdown-cell__status-trigger--tag-132.status-dropdown-cell__status-trigger--open {
+  .status-dropdown-cell__trigger--cell-style.status-dropdown-cell__status-trigger--open {
   border-color: var(--JA-mint-01, #01a1af) !important;
   box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1) !important;
   background: #fff !important;

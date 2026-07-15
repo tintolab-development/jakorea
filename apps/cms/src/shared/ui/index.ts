@@ -2,7 +2,6 @@
  * 공통 UI 컴포넌트 export
  */
 
-export { StatusDisplay } from './status-display'
 export { SingleCTA } from './single-cta'
 export { GuideAlert, GuideParagraph } from './guide-alert'
 export { EmptyState } from './empty-state'
@@ -44,13 +43,10 @@ export {
 export { InquiryModal } from './inquiry-modal'
 export { ProfileEditModal } from './profile-edit-modal'
 export {
-  RoleBadge,
-  RoleIcon,
   getRoleLabel,
-  getRoleColor,
   getAdminLevelLabel,
   getProgramRoleLabel,
-} from './role-badge'
+} from './role-labels'
 export { BaseDetailDrawer } from './base-detail-drawer'
 export type { BaseDetailDrawerProps, DrawerAction } from './base-detail-drawer'
 export { ListPageFilters } from './list-page-filters'
@@ -67,8 +63,6 @@ export { ListPageLayout } from '../components/list-page'
 export type { ListPageLayoutProps } from '../components/list-page'
 export { LabeledSearchInput } from './labeled-search-input'
 export type { LabeledSearchInputProps } from './labeled-search-input'
-export { StatusBadge } from './status-badge'
-export type { StatusBadgeProps, StatusConfig } from './status-badge'
 export { RecruitmentStatusBadge } from './recruitment-status-badge'
 export type { RecruitmentStatusBadgeProps, RecruitmentStatus } from './recruitment-status-badge'
 export { EditableCell } from './editable-cell'
@@ -79,7 +73,7 @@ export type { BreadcrumbItem } from '@/shared/config/menu-config'
 export { FileSelectField } from './file-select-field'
 export type { FileSelectFieldProps } from './file-select-field'
 export { TealHeaderModal } from './teal-header-modal'
-export type { TealHeaderModalProps } from './teal-header-modal'
+export type { ModalSize, TealHeaderModalProps } from './teal-header-modal'
 export { PlainHeaderModal } from './plain-header-modal'
 export type { PlainHeaderModalProps } from './plain-header-modal'
 export { ContentModal } from './content-modal'
@@ -98,7 +92,6 @@ export {
   DEFAULT_APP_DATE_PLACEHOLDER,
 } from './app-datepicker'
 export type { AppDatePickerProps, AppDateRangePickerProps } from './app-datepicker'
-export { AppButton, FilterSearchButton } from './app-button'
 export { LoadingButton } from './loading-button'
 export { CmsButton, CMS_ACTION_BUTTON_WIDTH } from './cms-button'
 export type { CmsButtonProps, CmsButtonVariant, CmsButtonSize } from './cms-button'
@@ -106,6 +99,17 @@ export { ExcelButton } from './excel-button'
 export type { ExcelButtonProps } from './excel-button'
 export { CmsInput } from './cms-input'
 export type { CmsInputProps, CmsInputSize } from './cms-input'
+export { CmsNumericInput } from './numeric-input'
+export type { CmsNumericInputProps } from './numeric-input'
+export type { NumericInputMode } from '../lib/numeric-input'
+export {
+  CmsDateTextInput,
+  DateTextInput,
+  isValidCalendarDate,
+  normalizeDateTextInputOnBlur,
+  sanitizeDateTextInput,
+} from './date-text-input'
+export type { CmsDateTextInputProps, DateTextInputProps } from './date-text-input'
 export { CmsInputIconClick } from './cms-input-iconclick'
 export { CmsTextArea } from './cms-textarea'
 export type { CmsTextAreaProps, CmsTextAreaSize } from './cms-textarea'
@@ -164,15 +168,3 @@ export { LogoutIcon, GoogleMarkIcon, ProfileAvatarIcon } from './icons'
 export type { LogoutIconProps, GoogleMarkIconProps, ProfileAvatarIconProps } from './icons'
 export { CrossTable } from './cross-table'
 export type { CrossTableProps, CrossTableRow } from './cross-table'
-
-export { CmsNumericInput } from './numeric-input'
-export type { CmsNumericInputProps } from './numeric-input'
-export type { NumericInputMode } from '../lib/numeric-input'
-export {
-  CmsDateTextInput,
-  DateTextInput,
-  isValidCalendarDate,
-  normalizeDateTextInputOnBlur,
-  sanitizeDateTextInput,
-} from './date-text-input'
-export type { CmsDateTextInputProps, DateTextInputProps } from './date-text-input'

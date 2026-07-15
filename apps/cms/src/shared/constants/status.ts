@@ -4,6 +4,7 @@
  */
 
 import { ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import type { ComponentType } from 'react'
 import type {
   ApplicationRejectionKind,
   ApplicationStatus,
@@ -14,6 +15,32 @@ import type {
 } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
 import type { Status } from '@/types'
+
+export interface StatusConfig {
+  label: string
+  color: string
+  icon?: ComponentType
+}
+
+const STATUS_CONFIG_ACCENT_COLORS: Record<string, string> = {
+  default: '#8c8c8c',
+  processing: '#1677ff',
+  success: '#52c41a',
+  error: '#ff4d4f',
+  warning: '#faad14',
+  blue: '#1677ff',
+  green: '#52c41a',
+  red: '#ff4d4f',
+  orange: '#fa8c16',
+  purple: '#722ed1',
+  cyan: '#13c2c2',
+  geekblue: '#2f54eb',
+}
+
+export function getStatusConfigAccentColor(color: string | undefined): string {
+  if (!color) return STATUS_CONFIG_ACCENT_COLORS.default
+  return STATUS_CONFIG_ACCENT_COLORS[color] ?? color
+}
 
 // 공통 상태 (Program, Matching 등에서 사용)
 export const commonStatusConfig = {
@@ -61,7 +88,7 @@ export const applicationStatusConfig = {
     rejected: CloseCircleOutlined,
     cancelled: CloseCircleOutlined,
     waiting: ClockCircleOutlined,
-  } as Record<ApplicationStatus, React.ComponentType>,
+  } as Record<ApplicationStatus, ComponentType>,
 }
 
 // 정산 상태
@@ -129,7 +156,7 @@ export function getCommonStatusColor(status: Status | string): string {
 }
 
 // 헬퍼 함수: 상태 아이콘 가져오기
-export function getApplicationStatusIcon(status: ApplicationStatus): React.ComponentType {
+export function getApplicationStatusIcon(status: ApplicationStatus): ComponentType {
   return applicationStatusConfig.icons[status]
 }
 
@@ -264,9 +291,12 @@ export const PROGRAM_RECRUITMENT_APPLICATION_COMPLETED_STATUSES = [
 export function getProgramRecruitmentApplicationTextTone(
   status: ProgramLifecycleStatus
 ): ProgramRecruitmentApplicationTextTone {
-  const scheduled = PROGRAM_RECRUITMENT_APPLICATION_SCHEDULED_STATUSES as readonly ProgramLifecycleStatus[]
-  const recruiting = PROGRAM_RECRUITMENT_APPLICATION_RECRUITING_STATUSES as readonly ProgramLifecycleStatus[]
-  const completed = PROGRAM_RECRUITMENT_APPLICATION_COMPLETED_STATUSES as readonly ProgramLifecycleStatus[]
+  const scheduled =
+    PROGRAM_RECRUITMENT_APPLICATION_SCHEDULED_STATUSES as readonly ProgramLifecycleStatus[]
+  const recruiting =
+    PROGRAM_RECRUITMENT_APPLICATION_RECRUITING_STATUSES as readonly ProgramLifecycleStatus[]
+  const completed =
+    PROGRAM_RECRUITMENT_APPLICATION_COMPLETED_STATUSES as readonly ProgramLifecycleStatus[]
   if (scheduled.includes(status)) return 'scheduled'
   if (recruiting.includes(status)) return 'recruiting'
   if (completed.includes(status)) return 'completed'
@@ -274,10 +304,10 @@ export function getProgramRecruitmentApplicationTextTone(
 }
 
 /** Canvas·차트 등에서 동일 색이 필요할 때 */
-export function getProgramRecruitmentApplicationTextColor(
-  status: ProgramLifecycleStatus
-): string {
-  return PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS[getProgramRecruitmentApplicationTextTone(status)]
+export function getProgramRecruitmentApplicationTextColor(status: ProgramLifecycleStatus): string {
+  return PROGRAM_RECRUITMENT_APPLICATION_TEXT_COLORS[
+    getProgramRecruitmentApplicationTextTone(status)
+  ]
 }
 
 export const PROGRAM_PROGRESS_PHASE_SCHEDULED_STATUSES: readonly ProgramLifecycleStatus[] = [
@@ -405,7 +435,9 @@ export function isProgramHistoryDeleteBlockedByDisplayStatus(
 export function getProgramEnrollmentDisplayColor(
   status: ProgramEnrollmentDisplayStatus | string
 ): string {
-  return programEnrollmentDisplayConfig.colors[status as ProgramEnrollmentDisplayStatus] || 'default'
+  return (
+    programEnrollmentDisplayConfig.colors[status as ProgramEnrollmentDisplayStatus] || 'default'
+  )
 }
 
 /** 회원 상세 탭 프로그램 진행 현황 — StatusBadge용 config */
@@ -471,12 +503,8 @@ export function getApplicationEnrollmentDisplayStatus(
 }
 
 /** 프로그램 라이프사이클이 종료 단계인지 (추론: 이 단계면 수강도 PROGRAM_ENDED로 볼 수 있음) */
-export function isProgramLifecycleEnded(
-  lifecycle: ProgramLifecycleStatus | undefined
-): boolean {
-  return (
-    lifecycle === 'education_completed' || lifecycle === 'document_processing_completed'
-  )
+export function isProgramLifecycleEnded(lifecycle: ProgramLifecycleStatus | undefined): boolean {
+  return lifecycle === 'education_completed' || lifecycle === 'document_processing_completed'
 }
 
 /**
@@ -599,7 +627,7 @@ export const reportStatusConfig = {
     reviewing: ClockCircleOutlined,
     approved: CheckCircleOutlined,
     rejected: CloseCircleOutlined,
-  } as Record<ReportStatus, React.ComponentType>,
+  } as Record<ReportStatus, ComponentType>,
 }
 
 export function getReportStatusLabel(status: ReportStatus | string): string {
@@ -609,9 +637,6 @@ export function getReportStatusLabel(status: ReportStatus | string): string {
 export function getReportStatusColor(status: ReportStatus | string): string {
   return reportStatusConfig.colors[status as ReportStatus] || 'default'
 }
-
-// StatusBadge용 config (StatusBadge 컴포넌트에서 직접 사용 가능)
-import type { StatusConfig } from '@/shared/ui/status-badge'
 
 // 공통 상태 StatusBadge용 config
 export const commonStatusStatusConfig: Record<Status, StatusConfig> = Object.fromEntries(
