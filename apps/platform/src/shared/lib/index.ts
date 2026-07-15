@@ -12,3 +12,4 @@ export {
   validateEmailId,
 } from './email-id'
 export type { EmailIdErrorCode, EmailIdValidationResult } from './email-id'
+export { buildYouTubeNocookieEmbedSrc, extractYouTubeVideoId } from './youtube'

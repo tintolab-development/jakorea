@@ -1,0 +1,20 @@
+---
+description: Platform TanStack Query 캐시 정책 포인터 (모노레포 공통 Rule/Skill)
+globs: apps/platform/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TanStack Query 캐시 (Platform)
+
+Platform은 CMS와 **동일한** 백엔드 응답 캐시 정책을 사용한다.
+
+- Rule: [`.cursor/rules/backend-response-cache-policy.mdc`](../../../../../.cursor/rules/backend-response-cache-policy.mdc)
+- Skill: [`.cursor/skills/tanstack-query-backend-cache/SKILL.md`](../../../../../.cursor/skills/tanstack-query-backend-cache/SKILL.md)
+
+## Platform 적용 요점
+
+- 현재 RQ 미도입이어도, API·query hook·auth 작업 시 위 문서를 따른다.
+- 도입 시 키 루트는 **`['platform', …]`** (CMS의 `['cms', …]`와 분리).
+- 싱글톤 `QueryClient` + Provider를 `apps/platform/src`에 두고, logout/계정 전환 시 `removeQueries({ queryKey: ['platform'] })` (또는 스코프별 제거).
+- CMS 키 팩토리·훅을 그대로 복사하지 않는다. 정책·패턴만 재사용한다.
+- `gcTime` 사용 (`cacheTime` 금지). 필터 없는 `invalidateQueries()` 금지.

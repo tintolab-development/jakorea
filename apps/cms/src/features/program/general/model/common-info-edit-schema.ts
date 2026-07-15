@@ -1005,6 +1005,8 @@ export function generalCommonInfoEditValuesToProgramPatch(
     generalProgramAudience: audienceKind,
     generalProgramEducationStructure: values.educationStructure,
     generalProgramSessionRound: values.sessionRound,
+    /** 후원사 관리 id = Program.sponsorId (목록/상세 API 탑레벨) */
+    sponsorId: values.sponsorManagementIds[0] ?? existing.sponsorId,
     managerName: manager?.name ?? existing.managerName,
     contactPhone: manager?.phone ?? existing.contactPhone,
     generalCommonInfo: {

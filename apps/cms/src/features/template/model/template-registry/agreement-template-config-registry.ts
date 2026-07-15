@@ -118,7 +118,13 @@ export function resolveAgreementWritingFormConfig(
   templateId: string | undefined | null
 ): AgreementWritingFormConfig | null {
   if (templateId == null || templateId.trim() === '') return null
-  const key = templateId.trim() as AgreementTemplateConfigKey
-  const factory = AGREEMENT_TEMPLATE_CONFIG_REGISTRY[key]
+  const code = templateId.trim()
+  const direct = AGREEMENT_TEMPLATE_CONFIG_REGISTRY[code as AgreementTemplateConfigKey]
+  if (direct != null) return direct()
+
+  const copyMatch = code.match(/^(.*)-copy-\d+$/)
+  const baseKey = copyMatch?.[1] as AgreementTemplateConfigKey | undefined
+  if (baseKey == null) return null
+  const factory = AGREEMENT_TEMPLATE_CONFIG_REGISTRY[baseKey]
   return factory != null ? factory() : null
 }

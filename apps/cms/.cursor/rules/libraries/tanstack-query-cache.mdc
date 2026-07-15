@@ -1,75 +1,81 @@
 ---
-description: TanStack Query 캐시·인증 경계 관리 (시니어 개발자 기준)
+description: CMS TanStack Query 캐시·인증 경계 (루트 공통 정책 보완)
 globs: apps/cms/src/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
 # TanStack Query 캐시 관리 (CMS)
 
-시니어 개발자 관점에서 React Query 캐시를 다룰 때 따른다.
+모노레포 공통 정책(필수):
+
+[`.cursor/rules/backend-response-cache-policy.mdc`](../../../../../.cursor/rules/backend-response-cache-policy.mdc)
+
+운영 워크플로·매트릭스·키/뮤테이션 가이드:
+
+[`.cursor/skills/tanstack-query-backend-cache/SKILL.md`](../../../../../.cursor/skills/tanstack-query-backend-cache/SKILL.md)
+
+이 파일은 **CMS 전용** 보완만 담는다. Platform은 동일 루트 Rule/Skill을 쓰되 키 루트는 `['platform', …]`.
 
 ## QueryClient
 
-- 싱글톤: [`apps/cms/src/shared/lib/query-client.ts`](apps/cms/src/shared/lib/query-client.ts)
-- Provider는 이 인스턴스만 사용. auth·feature에서 `removeQueries`/`invalidateQueries` 시 동일 client 참조.
+- 싱글톤: [`apps/cms/src/shared/lib/query-client.ts`](../../../src/shared/lib/query-client.ts)
+- Provider만 이 인스턴스 사용. auth·feature의 `removeQueries`/`invalidateQueries`도 동일 client.
 
-## Query key 규칙
+## Query key (CMS)
 
-1. **루트**: `['cms', …]` — 모듈별 하위 키 (`dashboardQueryKeys`, `shared/api/query-keys.ts`)
-2. **인증 경계 세그먼트 (대시보드)**: mock API vs 실 JWT 응답은 **같은 key에 넣지 않는다**
-   - `dashboardQueryKeys.scope(source)` — `source`는 `'remote' | 'mock'`
-   - 훅: `useDashboardQueryScope()` 로 scope 산출 (auth `token` 구독 필수)
-3. **필터·페이지**: `programIds`, `dateFrom`, `params` map 등 **요청 조건을 key에 포함**
-4. **Swagger 정렬**: 대시보드는 `get_admin_dashboard_*` 문자열을 key에 포함 ([`dashboard-query-keys.ts`](apps/cms/src/features/dashboard/api/dashboard-query-keys.ts))
+1. **루트**: `['cms', …]` — 신규 팩토리 필수. 레거시 `form-templates` / `general-programs*` / `users` 는 해당 도메인 수정 시 마이그레이션.
+2. **대시보드 인증 경계**: `dashboardQueryKeys.scope('remote' | 'mock')` + `useDashboardQueryScope()` (token 구독).
+3. **필터·페이지**: 요청 조건을 key에 포함.
+4. 팩토리만 사용 — 페이지에 문자열 배열 리터럴 금지.
 
-## enabled 규칙
+## enabled (대시보드)
 
 | 패턴 | enabled |
 |------|---------|
-| mock·remote 둘 다 queryFn 분기 | `baseEnabled` (보통 true) + **scope가 key에 포함** |
-| 실 API 전용 (preferences, notifications/count) | `useDashboardRemoteQueryEnabled(baseEnabled)` |
-| mock 전용 통계 등 | `baseEnabled` + scope `'mock'` (또는 remote 모듈 off) |
+| mock·remote 분기 | `baseEnabled` + scope in key |
+| 실 API 전용 | `useDashboardRemoteQueryEnabled(baseEnabled)` |
+| mock 전용 | `baseEnabled` + scope `'mock'` |
 
-`shouldUseDashboardRemoteApi()`만 queryFn 안에 두고 **key/enabled에 반영하지 않으면** MFA 직후·로그아웃 직후 stale 캐시가 노출될 수 있다.
+`shouldUseDashboardRemoteApi()`만 queryFn에 두고 key/enabled에 안 넣으면 MFA·로그아웃 직후 stale 노출 위험.
 
 ## 인증 경계 — 필수 정리
 
-다음 시점에 **반드시** 대시보드 캐시 제거:
+`logout` / `completeAdminAuth` / `applySocialAuthTokens` 에서 사용자 스코프 캐시 제거:
 
 ```ts
-import { clearDashboardQueryCache } from '@/features/dashboard/api/clear-dashboard-query-cache'
-
-// logout, completeAdminAuth (MFA 성공) 등
 clearDashboardQueryCache()
+clearLogsQueryCache()
+clearDataManagementQueryCache()
+clearPostsQueryCache()
+clearSettlementQueryCache()
+clearMemberQueryCache()
+clearPerformanceQueryCache()
+// 도메인 추가 시 clear 헬퍼도 auth-store에 반드시 연결
 ```
 
-`removeQueries({ queryKey: dashboardQueryKeys.all })` — remote/mock scope **모두** 제거.
+누락되기 쉬운 도메인: notifications, form-templates, general-programs / applications / progress, legacy `['users']`.
 
 ## Mutation 후 invalidate
 
-- 대시보드 preferences 저장: `dashboardQueryKeys.all` invalidate (위젯·옵션 목록 재조회)
-- 부분 invalidate 시에도 scope를 맞추거나 `all` 하위로 무효화
+- 필터 없는 `invalidateQueries()` 금지.
+- 대시보드 preferences: `dashboardQueryKeys.all`.
+- 가능하면 mutation 응답으로 detail `setQueryData` 후 list/count만 invalidate.
 
 ## retry·staleTime
 
-- 전역: `staleTime 60s`, `retry 1` ([`query-client.ts`](apps/cms/src/shared/lib/query-client.ts))
-- 대시보드 실 API 위젯: `retry: false` — 403/500을 stale mock/remote 데이터로 가리지 않음
-- 알림 count: `staleTime 30s` (나머지 대시보드 60s)
+- 전역·클래스별 값은 루트 정책 + skill matrix를 따른다.
+- 대시보드 실 API 위젯: `retry: false` 유지(403/500을 stale로 가리지 않음).
+- 알림 count: `staleTime 30s`.
 
 ## 금지
 
-- 로그아웃 후 이전 사용자 API 응답을 key 없이 재사용
-- mock fallback을 queryFn 실패 시 **조용히** 반환 (위젯은 `isError` UI)
-- 동일 endpoint라도 **의미 다른 캐시**를 한 key에 합침 (예: recruitments 목록 vs programOptions — 의도적 분리 시 문서화)
-
-## 알림 목록·count 분리
-
-- count: `GET /notifications/count` (React Query)
-- 목록 API 없을 때: remote 모드에서 mock 목록 fetch **금지** ([`use-notifications.ts`](apps/cms/src/features/dashboard/hooks/use-notifications.ts))
+- 로그아웃 후 이전 사용자 응답 재사용
+- mock fallback을 queryFn 실패 시 조용히 성공 데이터로 반환
+- 의미 다른 캐시를 한 key에 합침
 
 ## 신규 훅 체크리스트
 
-- [ ] `dashboardQueryKeys.*(scope)` 사용
-- [ ] `useDashboardQueryScope()` 또는 `useDashboardRemoteQueryEnabled()`
-- [ ] mutation 시 invalidate 범위 명시
-- [ ] 인증 전환 시 `clearDashboardQueryCache` 필요 여부 검토
+- [ ] `['cms', …]` 팩토리 사용
+- [ ] 클래스(A–G)에 맞는 staleTime/gcTime
+- [ ] mutation 동기화 범위 명시
+- [ ] 인증 전환 시 clear 헬퍼 연결 여부 검토

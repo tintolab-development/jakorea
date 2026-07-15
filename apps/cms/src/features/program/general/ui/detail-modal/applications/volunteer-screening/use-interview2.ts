@@ -20,6 +20,7 @@ import {
 import { sortGeneralVolunteerInterview2Applicants } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { mapGeneralVolunteerAssignedInterviewToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
 import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
+import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import {
   GENERAL_INTERVIEW2_BULK_PASS_TYPE_OPTIONS,
   type GeneralSecondInterviewScreeningStatus,
@@ -63,6 +64,12 @@ export function useGeneralVolunteerInterview2({
   }, [programId, subjectKind])
 
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() => loadRows())
+  const volunteerRemote = useGeneralVolunteerApplicationsRemote({
+    programId,
+    stage: 'interview2',
+    enabled: subjectKind === 'volunteer',
+    setList,
+  })
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerInterview2Filters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS,
   }))
@@ -91,6 +98,7 @@ export function useGeneralVolunteerInterview2({
   useGeneralInterview2EffectiveStatusTick(list)
 
   useEffect(() => {
+    if (volunteerRemote.remoteEnabled) return
     setList(loadRows())
     setPendingFilters({ ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS })
     setAppliedFilters({ ...DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS })
@@ -105,7 +113,7 @@ export function useGeneralVolunteerInterview2({
     setFailModalVolunteer(null)
     setPassCompleteVolunteerName(null)
     setFailCompleteVolunteer(null)
-  }, [loadRows])
+  }, [loadRows, volunteerRemote.remoteEnabled])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -148,10 +156,21 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const applySecondInterviewStatus = useCallback(
-    (ids: string[], status: GeneralSecondInterviewScreeningStatus) => {
+    async (ids: string[], status: GeneralSecondInterviewScreeningStatus, reason?: string) => {
+      if (
+        status === 'pass' ||
+        status === 'fail' ||
+        status === 'reserve1' ||
+        status === 'reserve2' ||
+        status === 'reserve3' ||
+        status === 'reserve4'
+      ) {
+        const remoteOk = await volunteerRemote.applyRemoteFinalResult(ids, status, reason)
+        if (remoteOk) return
+      }
       setList(prev => patchGeneralVolunteerSecondInterviewScreeningStatus(prev, ids, status))
     },
-    []
+    [volunteerRemote]
   )
 
   const openPassModal = useCallback((applicant: GeneralVolunteerApplicantRow) => {
@@ -181,10 +200,10 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const handlePassModalConfirm = useCallback(
-    (_payload: PermissionModalPayload) => {
+    async (_payload: PermissionModalPayload) => {
       if (!passModalVolunteer) return
       const volunteerName = passModalVolunteer.name
-      applySecondInterviewStatus([passModalVolunteer.id], 'pass')
+      await applySecondInterviewStatus([passModalVolunteer.id], 'pass')
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== passModalVolunteer.id))
       setPassModalVolunteer(null)
       setPassCompleteVolunteerName(volunteerName)
@@ -193,10 +212,10 @@ export function useGeneralVolunteerInterview2({
   )
 
   const handleFailModalConfirm = useCallback(
-    (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       if (!failModalVolunteer) return
       const { name, id } = failModalVolunteer
-      applySecondInterviewStatus([id], 'fail')
+      await applySecondInterviewStatus([id], 'fail', payload.reason)
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
       setFailModalVolunteer(null)
       setFailCompleteVolunteer({ name, reason: payload.reason })
@@ -225,10 +244,10 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const confirmBulkFail = useCallback(
-    (_payload: PermissionModalPayload) => {
+    async (_payload: PermissionModalPayload) => {
       const ids = selectedRowKeys.map(String)
       if (ids.length === 0) return
-      applySecondInterviewStatus(ids, 'fail')
+      await applySecondInterviewStatus(ids, 'fail')
       setSelectedRowKeys([])
       setBulkFailModalOpen(false)
       setBulkFailCompleteCount(ids.length)
@@ -253,9 +272,9 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const confirmBulkPass = useCallback(
-    (payload: GeneralInterview2BulkPassConfirmPayload) => {
+    async (payload: GeneralInterview2BulkPassConfirmPayload) => {
       const ids = selectedRowKeys.map(String)
-      applySecondInterviewStatus(ids, payload.passType)
+      await applySecondInterviewStatus(ids, payload.passType)
       const passTypeLabel =
         GENERAL_INTERVIEW2_BULK_PASS_TYPE_OPTIONS.find(option => option.value === payload.passType)
           ?.label ?? payload.passType
@@ -267,12 +286,14 @@ export function useGeneralVolunteerInterview2({
             : (payload.manualNotifyAt?.format('YYYY. MM. DD HH:mm') ?? '직접 설정')
       showAlert({
         title: '일괄 합격',
-        content: `선택한 ${ids.length}건이 ${passTypeLabel} 처리되었습니다. (알림: ${notifyLabel}, 목 데이터)`,
+        content: `선택한 ${ids.length}건이 ${passTypeLabel} 처리되었습니다. (알림: ${notifyLabel}${
+          volunteerRemote.remoteEnabled ? '' : ', 목 데이터'
+        })`,
       })
       setSelectedRowKeys([])
       setBulkPassModalOpen(false)
     },
-    [applySecondInterviewStatus, selectedRowKeys, showAlert]
+    [applySecondInterviewStatus, selectedRowKeys, showAlert, volunteerRemote.remoteEnabled]
   )
 
   const requestWithdrawActivity = useCallback((row: GeneralVolunteerApplicantRow) => {
@@ -401,5 +422,7 @@ export function useGeneralVolunteerInterview2({
     evaluationTarget,
     saveInterviewEvaluation,
     filterRowsSource: list,
+    applicationsLoading: volunteerRemote.applicationsLoading,
+    isRemoteDataSource: volunteerRemote.remoteEnabled,
   }
 }

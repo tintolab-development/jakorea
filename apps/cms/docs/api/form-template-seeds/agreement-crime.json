@@ -1,0 +1,20 @@
+{
+  "templateCode": "agreement-crime",
+  "formType": "WRITING",
+  "category": "AGREEMENT",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "none"
+    },
+    "paragraphs": []
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장",
+  "_note": "정적 A4 문서 + 파일 교체 UI. schemaJson paragraphs 빈 배열 허용."
+}

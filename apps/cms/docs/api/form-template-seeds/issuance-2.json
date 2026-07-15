@@ -1,0 +1,284 @@
+{
+  "templateCode": "issuance-2",
+  "templateName": "UJAT 교육계획서",
+  "formType": "ISSUANCE",
+  "category": "ISSUANCE",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "numeric"
+    },
+    "paragraphs": [
+      {
+        "id": "ujat-edu-plan-title",
+        "kind": "description",
+        "variant": "survey_title_with_period",
+        "requiredMark": true,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "surveyTitle": "JA KOREA 대학생경제교육봉사단(UJAT) 교육계획서",
+        "surveyDescription": "",
+        "periodMode": "custom",
+        "startPeriodMode": "immediate",
+        "endPeriodMode": "custom",
+        "startAt": null,
+        "endAt": null,
+        "endPeriodPresetLabel": "활동일 전주 목요일 (24:00)",
+        "showWritingPeriodOnForm": false
+      },
+      {
+        "id": "ujat-edu-plan-explanation-text",
+        "kind": "single_item",
+        "variant": "agreement_explanation_text",
+        "requiredMark": true,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "bodyPlaceholder": "텍스트를 작성해 주세요",
+        "bodyText": "",
+        "answerRequired": true
+      },
+      {
+        "id": "ujat-edu-plan-volunteer-info",
+        "kind": "single_item",
+        "variant": "user_info",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "봉사자 정보",
+        "paragraphDescription": "노출할 항목을 선택합니다. (실제 응답 시 자동 매핑)",
+        "participatesInTitleNumbering": true,
+        "userFields": [
+          {
+            "key": "name",
+            "label": "이름"
+          },
+          {
+            "key": "gender",
+            "label": "성별"
+          },
+          {
+            "key": "birthDate",
+            "label": "생년월일"
+          },
+          {
+            "key": "phone",
+            "label": "연락처"
+          },
+          {
+            "key": "email",
+            "label": "이메일"
+          },
+          {
+            "key": "addressRegion",
+            "label": "자택 주소(지번)"
+          },
+          {
+            "key": "addressDetail",
+            "label": "자택 주소(도로명)"
+          },
+          {
+            "key": "affiliation",
+            "label": "소속"
+          },
+          {
+            "key": "applicantType",
+            "label": "신청자 유형"
+          },
+          {
+            "key": "programName",
+            "label": "프로그램"
+          },
+          {
+            "key": "period",
+            "label": "활동 일정"
+          },
+          {
+            "key": "institutionName",
+            "label": "기관명"
+          },
+          {
+            "key": "institutionRegion",
+            "label": "기관 소재지"
+          },
+          {
+            "key": "educationTarget",
+            "label": "교육 대상"
+          },
+          {
+            "key": "educationGrade",
+            "label": "교육 학년"
+          },
+          {
+            "key": "teamName",
+            "label": "팀 명"
+          },
+          {
+            "key": "teamPartnerName",
+            "label": "팀원 명"
+          }
+        ],
+        "selectedUserFieldKeys": [
+          "name",
+          "gender",
+          "birthDate",
+          "phone",
+          "email",
+          "addressRegion",
+          "addressDetail",
+          "affiliation",
+          "applicantType",
+          "programName",
+          "period",
+          "institutionName",
+          "institutionRegion",
+          "educationTarget",
+          "educationGrade",
+          "teamName",
+          "teamPartnerName"
+        ]
+      },
+      {
+        "id": "ujat-edu-plan-session-1",
+        "kind": "single_item",
+        "variant": "session_plan_short_essay",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "1차시 교육 계획",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "showItemTitle": true,
+        "items": [
+          {
+            "id": "ujat-edu-plan-session-1-intro",
+            "label": "도입",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          },
+          {
+            "id": "ujat-edu-plan-session-1-body",
+            "label": "전개",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          },
+          {
+            "id": "ujat-edu-plan-session-1-outro",
+            "label": "마무리",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          }
+        ],
+        "bodyPlaceholder": "자유롭게 작성해 주세요",
+        "bodyText": ""
+      },
+      {
+        "id": "ujat-edu-plan-session-2",
+        "kind": "single_item",
+        "variant": "session_plan_short_essay",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "2차시 교육 계획",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "showItemTitle": true,
+        "items": [
+          {
+            "id": "ujat-edu-plan-session-2-intro",
+            "label": "도입",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          },
+          {
+            "id": "ujat-edu-plan-session-2-body",
+            "label": "전개",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          },
+          {
+            "id": "ujat-edu-plan-session-2-outro",
+            "label": "마무리",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          }
+        ],
+        "bodyPlaceholder": "자유롭게 작성해 주세요",
+        "bodyText": ""
+      },
+      {
+        "id": "ujat-edu-plan-session-3",
+        "kind": "single_item",
+        "variant": "session_plan_short_essay",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "3차시 교육 계획",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "showItemTitle": true,
+        "items": [
+          {
+            "id": "ujat-edu-plan-session-3-intro",
+            "label": "도입",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          },
+          {
+            "id": "ujat-edu-plan-session-3-body",
+            "label": "전개",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          },
+          {
+            "id": "ujat-edu-plan-session-3-outro",
+            "label": "마무리",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          }
+        ],
+        "bodyPlaceholder": "자유롭게 작성해 주세요",
+        "bodyText": ""
+      },
+      {
+        "id": "ujat-edu-plan-session-4",
+        "kind": "single_item",
+        "variant": "session_plan_short_essay",
+        "answerRequired": true,
+        "requiredMark": true,
+        "paragraphTitle": "4차시 교육 계획",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "showItemTitle": true,
+        "items": [
+          {
+            "id": "ujat-edu-plan-session-4-intro",
+            "label": "도입",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          },
+          {
+            "id": "ujat-edu-plan-session-4-body",
+            "label": "전개",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          },
+          {
+            "id": "ujat-edu-plan-session-4-outro",
+            "label": "마무리",
+            "placeholder": "자유롭게 작성해 주세요",
+            "bodyText": ""
+          }
+        ],
+        "bodyPlaceholder": "자유롭게 작성해 주세요",
+        "bodyText": ""
+      }
+    ]
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장",
+  "_feSubcategoryNote": "FE 목록 서브분류: REPORT (ISSUANCE_TEMPLATE_CODE_CATALOG). BE category enum은 ISSUANCE 단일 vs REPORT/DOCUMENT 분리 확인 필요.",
+  "_payload": "A"
+}

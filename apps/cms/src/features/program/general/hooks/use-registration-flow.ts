@@ -13,6 +13,7 @@ import { useProgramParticipantApplicationEditor } from '@/features/template/hook
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
 import { PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE } from '@/features/template/lib/program-registration-editor-state'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
+import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import {
@@ -32,7 +33,7 @@ import {
 } from '@/features/program/general/model/registration-flow'
 
 export type UseGeneralProgramRegistrationFlowOptions = {
-  onProgramRegistrationSaved?: () => void
+  onProgramRegistrationSaved?: (program?: Program) => void
   initialStep?: GeneralProgramRegistrationStepKey
   onStepChange?: (step: GeneralProgramRegistrationStepKey) => void
   registrationFormVariant?: ProgramRegistrationFormVariant
@@ -306,11 +307,11 @@ export function useGeneralProgramRegistrationFlow(
 
   const handleCompleteRegistration = useCallback(() => {
     if (isProgramStep) {
-      registrationVm.handleSave()
+      void registrationVm.handleCompleteRegistration()
       return
     }
     participantVm.handleSave()
-    registrationVm.handleSave()
+    void registrationVm.handleCompleteRegistration()
   }, [isProgramStep, registrationVm, participantVm])
 
   const hasRecruitmentPhase = visibleRecruitTabKeys.length > 0

@@ -4,13 +4,17 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useSearchParams, type SetURLSearchParams } from 'react-router-dom'
+import { useSearchParams, type SetURLSearchParams } from 'react-router-dom'
 import { Spin, Typography } from 'antd'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { useCmsAlert } from '@/shared/ui'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import type { DetailFullpageBreadcrumbItem } from '@/shared/ui/detail-fullpage-breadcrumb'
+import { buildSearchParams } from '@/shared/lib/detail-fullpage-query-stack'
 import { useGeneralProgramDetail } from '@/features/program/general/hooks/use-general-program-detail'
+import { useGeneralProgramNavigation } from '@/features/program/general/hooks/use-general-program-navigation'
+import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
+import { useUpdateGeneralProgram } from '@/features/program/general/hooks/use-update-general-program'
 import { useProgramStore } from '@/features/program/general/model/program-store'
 import type { Program } from '@/types/domain'
 import {
@@ -44,14 +48,18 @@ import {
 import {
   GENERAL_PROGRAM_DETAIL_EDIT_PARAM,
   GENERAL_PROGRAM_DETAIL_LNB_PARAM,
+  GENERAL_PROGRAM_DETAIL_QUERY_PARAMS,
+  GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM,
   GENERAL_PROGRAM_DETAIL_TAB_PARAM,
-  preserveGeneralProgramDetailProgramId,
+  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE,
+  GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
+  isParticipantRecruitmentPreviewOpen,
   readGeneralProgramDetailRoute,
-  shouldPatchGeneralProgramDetailUrl,
 } from '@/features/program/general/lib/general-program-detail-route'
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
 import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
 import { getGeneralCommonInfoEditValidationMessage } from '@/features/program/general/model/common-info-edit-schema'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
   canGeneralProgramCommonInfoEdit,
   canGeneralProgramRecruitmentInfoEdit,
@@ -60,6 +68,7 @@ import {
 } from '@/features/program/general/lib/common-info-edit-policy'
 import {
   applyGeneralProgramDetailSession,
+  clearGeneralProgramDetailSession,
   setGeneralProgramDetailSession,
 } from '@/features/program/general/lib/general-program-detail-session'
 import {
@@ -71,6 +80,10 @@ import { saveGeneralProgramDetailSnapshot } from '@/data/mock/general-programs'
 import { GeneralProgramDetailSidebar } from './detail-sidebar'
 import { GeneralProgramDetailCommonInfoView } from './info/common-info-view'
 import { GeneralProgramRecruitmentView } from './info/recruitment-view'
+import { ParticipantRecruitmentPreviewModal } from './info/participant-recruitment-preview-modal'
+import {
+  GENERAL_PROGRAM_DETAIL_FULLPAGE_MODAL_Z_INDEX,
+} from '@/features/program/general/lib/general-program-modal-z-index'
 import { GeneralProgramApplicationView } from './info/application-view'
 import { GeneralProgramApplicationTemplateEditModal } from './info/application-template-edit-modal'
 import {
@@ -424,26 +437,31 @@ export function GeneralProgramDetailFullPageModal({
   onClose,
   program,
   programIdHint = null,
-  searchParams: _searchParamsProp,
+  searchParams: searchParamsProp,
   setSearchParams: setSearchParamsProp,
 }: GeneralProgramDetailFullPageModalProps) {
-  const location = useLocation()
-  const [, internalSetSearchParams] = useSearchParams()
+  const [routerSearchParams, internalSetSearchParams] = useSearchParams()
+  const searchParams = searchParamsProp ?? routerSearchParams
   const setSearchParams = setSearchParamsProp ?? internalSetSearchParams
-  const locationSearchKey = location.search
+  const searchParamsKey = searchParams.toString()
+  const routerSearchParamsKey = routerSearchParams.toString()
   const programId =
-    program?.id ?? programIdHint ?? new URLSearchParams(locationSearchKey).get('programId') ?? undefined
+    program?.id ?? programIdHint ?? searchParams.get('programId') ?? undefined
 
   const { updateProgram, setSelectedProgram } = useProgramStore()
+  const remoteEnabled = useGeneralProgramsRemoteEnabled(open && Boolean(programId))
+  const updateGeneralProgramMutation = useUpdateGeneralProgram()
   const {
     program: detailProgram,
     loading,
+    error: detailError,
     sponsorName,
     canWrite,
   } = useGeneralProgramDetail(open ? programId : undefined, {
     initialProgram: program,
     enabled: open,
   })
+  const { disabledLnbKeys } = useGeneralProgramNavigation(open ? programId : undefined, open)
   const { showAlert } = useCmsAlert()
   const displayProgram = useMemo(() => {
     const base =
@@ -451,8 +469,34 @@ export function GeneralProgramDetailFullPageModal({
       program ??
       (programId ? (resolveGeneralProgramForDetail(programId) ?? null) : null)
     if (base == null) return null
+    if (remoteEnabled && detailProgram) return detailProgram
     return applyGeneralProgramDetailSession(base)
-  }, [detailProgram, program, programId])
+  }, [detailProgram, program, programId, remoteEnabled])
+
+  const persistGeneralProgramDraft = useCallback(
+    async (draft: Program) => {
+      if (remoteEnabled) {
+        await updateGeneralProgramMutation.mutateAsync({
+          programId: draft.id,
+          program: draft,
+        })
+        clearGeneralProgramDetailSession(draft.id)
+        setSelectedProgram(draft)
+        return
+      }
+
+      setGeneralProgramDetailSession(draft)
+      setSelectedProgram(draft)
+      saveGeneralProgramDetailSnapshot(draft)
+      try {
+        const { id: _id, createdAt: _c, ...patch } = draft
+        await updateProgram(draft.id, patch)
+      } catch {
+        // API·mockProgramsMap 미연동 일반 프로그램 — 세션·mock 스냅샷 유지
+      }
+    },
+    [remoteEnabled, setSelectedProgram, updateGeneralProgramMutation, updateProgram]
+  )
 
   const volunteerInterviewEnabled = displayProgram
     ? getGeneralVolunteerInterviewEnabled(displayProgram)
@@ -473,14 +517,28 @@ export function GeneralProgramDetailFullPageModal({
   )
   const surveyKeys = useMemo(() => surveyItems.map(s => s.key), [surveyItems])
   const showInstructorApplications = displayProgram
-    ? hasGeneralInstructorApplications(displayProgram)
+    ? hasGeneralInstructorApplications(displayProgram) &&
+      !disabledLnbKeys.has('instructor_applications')
     : false
   const showVolunteerApplications = displayProgram
-    ? hasGeneralVolunteerApplications(displayProgram)
+    ? hasGeneralVolunteerApplications(displayProgram) &&
+      !disabledLnbKeys.has('volunteer_applications')
     : false
   const showParticipantApplications = displayProgram
-    ? hasGeneralParticipantApplications(displayProgram)
+    ? hasGeneralParticipantApplications(displayProgram) &&
+      !disabledLnbKeys.has('institution_applications')
     : false
+  const progressMenuItemsFiltered = useMemo(
+    () =>
+      disabledLnbKeys.has('progress')
+        ? []
+        : progressMenuItems,
+    [disabledLnbKeys, progressMenuItems]
+  )
+  const surveyItemsFiltered = useMemo(
+    () => (disabledLnbKeys.has('survey') ? [] : surveyItems),
+    [disabledLnbKeys, surveyItems]
+  )
   const participantApplicationsLnbLabel = useMemo(
     () =>
       displayProgram
@@ -506,8 +564,8 @@ export function GeneralProgramDetailFullPageModal({
     if (!open) {
       return { lnb: 'info' as GeneralDetailLnbKey, tab: 'info' }
     }
-    return readGeneralProgramDetailRoute(new URLSearchParams(locationSearchKey))
-  }, [open, locationSearchKey])
+    return readGeneralProgramDetailRoute(searchParams)
+  }, [open, searchParamsKey, searchParams])
 
   const [optimisticDetailRoute, setOptimisticDetailRoute] = useState<{
     lnb: GeneralDetailLnbKey
@@ -530,45 +588,49 @@ export function GeneralProgramDetailFullPageModal({
 
   const activeLnb = optimisticDetailRoute?.lnb ?? urlDetailRoute.lnb
   const activeTab = optimisticDetailRoute?.tab ?? urlDetailRoute.tab
-  const detailSearchParams = useMemo(
-    () => new URLSearchParams(locationSearchKey),
-    [locationSearchKey]
-  )
-  const editTab = open ? detailSearchParams.get(EDIT_PARAM) : null
-  const schoolIdFromUrl = open ? detailSearchParams.get(SCHOOL_ID_PARAM) : null
+  const editTab = open ? searchParams.get(EDIT_PARAM) : null
+  const schoolIdFromUrl = open ? searchParams.get(SCHOOL_ID_PARAM) : null
   const activeSchoolTab = schoolIdFromUrl
-    ? parseSchoolTabFromSearch(detailSearchParams, displayProgram)
+    ? parseSchoolTabFromSearch(searchParams, displayProgram)
     : 'application'
-  const instructorIdFromUrl = open ? detailSearchParams.get(INSTRUCTOR_ID_PARAM) : null
+  const instructorIdFromUrl = open ? searchParams.get(INSTRUCTOR_ID_PARAM) : null
   const activeInstructorTab = instructorIdFromUrl
-    ? parseInstructorTabFromSearch(detailSearchParams)
+    ? parseInstructorTabFromSearch(searchParams)
     : 'application'
-  const volunteerIdFromUrl = open ? detailSearchParams.get(VOLUNTEER_ID_PARAM) : null
+  const volunteerIdFromUrl = open ? searchParams.get(VOLUNTEER_ID_PARAM) : null
   const activeVolunteerTab = volunteerIdFromUrl
-    ? parseVolunteerTabFromSearch(detailSearchParams)
+    ? parseVolunteerTabFromSearch(searchParams)
     : 'application'
-  const participantIdFromUrl = open ? detailSearchParams.get(PARTICIPANT_ID_PARAM) : null
+  const participantIdFromUrl = open ? searchParams.get(PARTICIPANT_ID_PARAM) : null
   const activeParticipantTab = participantIdFromUrl
-    ? parseParticipantTabFromSearch(detailSearchParams)
+    ? parseParticipantTabFromSearch(searchParams)
     : 'application'
 
   const isClosingRef = useRef(false)
+
+  const applyDetailSearchParams = useCallback(
+    (next: URLSearchParams, options?: { replace?: boolean }) => {
+      if (isClosingRef.current) return
+      setSearchParams(next, { replace: options?.replace ?? true })
+    },
+    [programId, setSearchParams]
+  )
 
   const setEditMode = useCallback(
     (tab: string | null) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          if (isClosingRef.current || !programId) return prev
           const next = new URLSearchParams(prev)
           if (tab) next.set(EDIT_PARAM, tab)
           else next.delete(EDIT_PARAM)
-          preserveGeneralProgramDetailProgramId(prev, next)
+          next.set('programId', programId)
           return next
         },
         { replace: true }
       )
     },
-    [setSearchParams]
+    [programId, setSearchParams]
   )
 
   const canEditCommonInfo = useMemo(
@@ -599,15 +661,7 @@ export function GeneralProgramDetailFullPageModal({
       program: displayProgram ?? null,
       onSaveEdit: displayProgram
         ? async draft => {
-            setGeneralProgramDetailSession(draft)
-            setSelectedProgram(draft)
-            saveGeneralProgramDetailSnapshot(draft)
-            try {
-              const { id: _id, createdAt: _c, ...patch } = draft
-              await updateProgram(draft.id, patch)
-            } catch {
-              // API·mockProgramsMap 미연동 일반 프로그램 — 세션·mock 스냅샷 유지
-            }
+            await persistGeneralProgramDraft(draft)
           }
         : undefined,
     })
@@ -647,53 +701,97 @@ export function GeneralProgramDetailFullPageModal({
   }, [open, editTab, displayProgram, activeLnb, activeTab, setEditMode])
 
   const handleInfoSave = useCallback(async () => {
-    const saved = await infoTriggerSave()
-    if (!saved) {
-      infoResetToProgram()
-      const message = getGeneralCommonInfoEditValidationMessage(infoForm.getValues())
-      if (message) {
-        void showAlert({ title: '입력 확인', content: message })
+    const result = await infoTriggerSave()
+    if (!result.ok) {
+      if (result.kind === 'validation') {
+        const message = getGeneralCommonInfoEditValidationMessage(infoForm.getValues())
+        void showAlert({
+          title: '입력 확인',
+          content: message ?? '입력값을 확인해 주세요.',
+        })
+      } else {
+        void showAlert({
+          title: '저장 실패',
+          content: getGeneralProgramApiErrorMessage(
+            result.error,
+            '저장 중 오류가 발생했습니다. 다시 시도해 주세요.'
+          ),
+        })
       }
+      return
     }
     setEditMode(null)
-  }, [infoForm, infoTriggerSave, infoResetToProgram, setEditMode, showAlert])
+  }, [infoForm, infoTriggerSave, setEditMode, showAlert])
 
-  const [recruitSubTab, setRecruitSubTab] = useState<GeneralRecruitTabKey>('institutions')
-
-  useEffect(() => {
-    setRecruitSubTab(prev =>
-      normalizeGeneralRecruitTab(prev, {
-        showInstructor: showInstructorApplications,
-        showVolunteer: showVolunteerApplications,
-      })
-    )
-  }, [showInstructorApplications, showVolunteerApplications])
+  const recruitSubTab = useMemo((): GeneralRecruitTabKey => {
+    if (activeLnb !== 'info' || activeTab !== 'recruitment') return 'institutions'
+    return normalizeGeneralRecruitTab(searchParams.get(GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM), {
+      showInstructor: showInstructorApplications,
+      showVolunteer: showVolunteerApplications,
+    })
+  }, [
+    activeLnb,
+    activeTab,
+    searchParamsKey,
+    showInstructorApplications,
+    showVolunteerApplications,
+  ])
 
   const handleRecruitSubTabChange = useCallback(
     (tab: GeneralRecruitTabKey) => {
-      setRecruitSubTab(tab)
       if (editTab) setEditMode(null)
+      setSearchParams(
+        prev => {
+          if (isClosingRef.current || !programId) return prev
+          const next = new URLSearchParams(prev)
+          next.set(GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM, tab)
+          if (tab !== 'institutions') {
+            next.delete(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM)
+          }
+          next.set('programId', programId)
+          return next
+        },
+        { replace: true }
+      )
     },
-    [editTab, setEditMode]
+    [editTab, programId, setEditMode, setSearchParams]
   )
 
-  const [applicationSubTab, setApplicationSubTab] =
-    useState<GeneralApplicationTabKey>('institutions')
+  const applicationSubTab = useMemo((): GeneralApplicationTabKey => {
+    if (activeLnb !== 'info' || activeTab !== 'application') return 'institutions'
+    return normalizeGeneralApplicationTab(
+      searchParams.get(GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM),
+      {
+        showInstructor: showInstructorApplications,
+        showVolunteer: showVolunteerApplications,
+      }
+    )
+  }, [
+    activeLnb,
+    activeTab,
+    searchParamsKey,
+    showInstructorApplications,
+    showVolunteerApplications,
+  ])
+
   const [applicationTemplateEditOpen, setApplicationTemplateEditOpen] = useState(false)
   const [applicationPreviewReloadKey, setApplicationPreviewReloadKey] = useState(0)
 
-  useEffect(() => {
-    setApplicationSubTab(prev =>
-      normalizeGeneralApplicationTab(prev, {
-        showInstructor: showInstructorApplications,
-        showVolunteer: showVolunteerApplications,
-      })
-    )
-  }, [showInstructorApplications, showVolunteerApplications])
-
-  const handleApplicationSubTabChange = useCallback((tab: GeneralApplicationTabKey) => {
-    setApplicationSubTab(tab)
-  }, [])
+  const handleApplicationSubTabChange = useCallback(
+    (tab: GeneralApplicationTabKey) => {
+      setSearchParams(
+        prev => {
+          if (isClosingRef.current || !programId) return prev
+          const next = new URLSearchParams(prev)
+          next.set(GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM, tab)
+          next.set('programId', programId)
+          return next
+        },
+        { replace: true }
+      )
+    },
+    [programId, setSearchParams]
+  )
 
   const handleApplicationEditForm = useCallback(() => {
     setApplicationTemplateEditOpen(true)
@@ -716,20 +814,7 @@ export function GeneralProgramDetailFullPageModal({
     !!displayProgram &&
     canEditRecruitmentInfo
 
-  const persistRecruitmentProgramDraft = useCallback(
-    async (draft: Program) => {
-      setGeneralProgramDetailSession(draft)
-      setSelectedProgram(draft)
-      saveGeneralProgramDetailSnapshot(draft)
-      try {
-        const { id: _id, createdAt: _c, ...patch } = draft
-        await updateProgram(draft.id, patch)
-      } catch {
-        // API·mockProgramsMap 미연동 일반 프로그램 — 세션·mock 스냅샷 유지
-      }
-    },
-    [setSelectedProgram, updateProgram]
-  )
+  const persistRecruitmentProgramDraft = persistGeneralProgramDraft
 
   const institutionsForm = useProgramDetailEditForm({
     program: displayProgram,
@@ -834,16 +919,14 @@ export function GeneralProgramDetailFullPageModal({
     let saved = false
     if (recruitSubTab === 'institutions') {
       saved = await institutionsTriggerSave()
-      if (!saved) institutionsResetToProgram()
     } else if (recruitSubTab === 'instructors') {
       saved = await instructorsTriggerSave()
-      if (!saved) instructorsResetToProgram()
     } else if (recruitSubTab === 'volunteers') {
       saved = await volunteersTriggerSave()
-      if (!saved) volunteersResetToProgram()
     }
     if (!saved) {
       void showAlert({ title: '입력 확인', content: '입력값을 확인해 주세요.' })
+      return
     }
     setEditMode(null)
   }, [
@@ -851,9 +934,6 @@ export function GeneralProgramDetailFullPageModal({
     institutionsTriggerSave,
     instructorsTriggerSave,
     volunteersTriggerSave,
-    institutionsResetToProgram,
-    instructorsResetToProgram,
-    volunteersResetToProgram,
     setEditMode,
     showAlert,
   ])
@@ -863,7 +943,7 @@ export function GeneralProgramDetailFullPageModal({
   const [volunteerApplicantDetailMeta, setVolunteerApplicantDetailMeta] =
     useState<GeneralVolunteerApplicantDetailMeta | null>(null)
 
-  const applicantIdFromUrl = open ? detailSearchParams.get(APPLICANT_ID_PARAM) : null
+  const applicantIdFromUrl = open ? searchParams.get(APPLICANT_ID_PARAM) : null
 
   const applicantDetailMeta = useMemo((): ApplicantDetailMeta => {
     if (!open || !programId) return null
@@ -887,7 +967,7 @@ export function GeneralProgramDetailFullPageModal({
     if (!programId || !displayProgramRef.current) return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        if (isClosingRef.current || !programId) return prev
         if (prev.get('programId') !== programId) return prev
         const normalized = normalizeGeneralDetailParams(
           programId,
@@ -908,11 +988,65 @@ export function GeneralProgramDetailFullPageModal({
     onClose()
   }, [onClose])
 
+  const participantRecruitmentPreviewOpenFromUrl = useMemo(
+    () => isParticipantRecruitmentPreviewOpen(routerSearchParams),
+    [routerSearchParamsKey, routerSearchParams]
+  )
+
+  const [participantRecruitmentPreviewOpenOptimistic, setParticipantRecruitmentPreviewOpenOptimistic] =
+    useState(false)
+
+  useEffect(() => {
+    if (!open) {
+      setParticipantRecruitmentPreviewOpenOptimistic(false)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!participantRecruitmentPreviewOpenFromUrl) {
+      setParticipantRecruitmentPreviewOpenOptimistic(false)
+    }
+  }, [participantRecruitmentPreviewOpenFromUrl])
+
+  const participantRecruitmentPreviewOpen =
+    open &&
+    displayProgram != null &&
+    (participantRecruitmentPreviewOpenFromUrl || participantRecruitmentPreviewOpenOptimistic)
+
+  const handleOpenParticipantRecruitmentPreview = useCallback(() => {
+    if (!programId) return
+    setParticipantRecruitmentPreviewOpenOptimistic(true)
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set('programId', programId)
+        next.set(
+          GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
+          GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE
+        )
+        return next
+      },
+      { replace: false }
+    )
+  }, [programId, setSearchParams])
+
+  const handleCloseParticipantRecruitmentPreview = useCallback(() => {
+    setParticipantRecruitmentPreviewOpenOptimistic(false)
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM)
+        return next
+      },
+      { replace: true }
+    )
+  }, [setSearchParams])
+
   const setSchoolId = useCallback(
     (id: string | null) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          if (isClosingRef.current || !programId) return prev
           const next = new URLSearchParams(prev)
           if (id) {
             next.set(SCHOOL_ID_PARAM, id)
@@ -927,7 +1061,7 @@ export function GeneralProgramDetailFullPageModal({
             next.delete(SCHOOL_ID_PARAM)
             next.delete(SCHOOL_TAB_PARAM)
           }
-          preserveGeneralProgramDetailProgramId(prev, next)
+          next.set('programId', programId)
           return next
         },
         { replace: id == null }
@@ -940,7 +1074,7 @@ export function GeneralProgramDetailFullPageModal({
     (id: string | null) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          if (isClosingRef.current || !programId) return prev
           const next = new URLSearchParams(prev)
           if (id) {
             next.set(INSTRUCTOR_ID_PARAM, id)
@@ -955,7 +1089,7 @@ export function GeneralProgramDetailFullPageModal({
             next.delete(INSTRUCTOR_ID_PARAM)
             next.delete(INSTRUCTOR_TAB_PARAM)
           }
-          preserveGeneralProgramDetailProgramId(prev, next)
+          next.set('programId', programId)
           return next
         },
         { replace: id == null }
@@ -968,7 +1102,7 @@ export function GeneralProgramDetailFullPageModal({
     (id: string | null) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          if (isClosingRef.current || !programId) return prev
           const next = new URLSearchParams(prev)
           if (id) {
             next.set(VOLUNTEER_ID_PARAM, id)
@@ -983,7 +1117,7 @@ export function GeneralProgramDetailFullPageModal({
             next.delete(VOLUNTEER_ID_PARAM)
             next.delete(VOLUNTEER_TAB_PARAM)
           }
-          preserveGeneralProgramDetailProgramId(prev, next)
+          next.set('programId', programId)
           return next
         },
         { replace: id == null }
@@ -996,7 +1130,7 @@ export function GeneralProgramDetailFullPageModal({
     (id: string | null) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          if (isClosingRef.current || !programId) return prev
           const next = new URLSearchParams(prev)
           if (id) {
             next.set(PARTICIPANT_ID_PARAM, id)
@@ -1011,7 +1145,7 @@ export function GeneralProgramDetailFullPageModal({
             next.delete(PARTICIPANT_ID_PARAM)
             next.delete(PARTICIPANT_TAB_PARAM)
           }
-          preserveGeneralProgramDetailProgramId(prev, next)
+          next.set('programId', programId)
           return next
         },
         { replace: id == null }
@@ -1024,13 +1158,13 @@ export function GeneralProgramDetailFullPageModal({
     (tab: ParticipatingInstitutionDetailTabKey) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          if (isClosingRef.current || !programId) return prev
           const next = new URLSearchParams(prev)
           next.set(
             SCHOOL_TAB_PARAM,
             normalizeParticipatingInstitutionDetailTab(tab, displayProgramRef.current)
           )
-          preserveGeneralProgramDetailProgramId(prev, next)
+          next.set('programId', programId)
           return next
         },
         { replace: true }
@@ -1043,10 +1177,10 @@ export function GeneralProgramDetailFullPageModal({
     (tab: InstructorDetailTabKey) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          if (isClosingRef.current || !programId) return prev
           const next = new URLSearchParams(prev)
           next.set(INSTRUCTOR_TAB_PARAM, tab)
-          preserveGeneralProgramDetailProgramId(prev, next)
+          next.set('programId', programId)
           return next
         },
         { replace: true }
@@ -1059,10 +1193,10 @@ export function GeneralProgramDetailFullPageModal({
     (tab: VolunteerDetailTabKey) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          if (isClosingRef.current || !programId) return prev
           const next = new URLSearchParams(prev)
           next.set(VOLUNTEER_TAB_PARAM, tab)
-          preserveGeneralProgramDetailProgramId(prev, next)
+          next.set('programId', programId)
           return next
         },
         { replace: true }
@@ -1075,10 +1209,10 @@ export function GeneralProgramDetailFullPageModal({
     (tab: ParticipantDetailTabKey) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          if (isClosingRef.current || !programId) return prev
           const next = new URLSearchParams(prev)
           next.set(PARTICIPANT_TAB_PARAM, tab)
-          preserveGeneralProgramDetailProgramId(prev, next)
+          next.set('programId', programId)
           return next
         },
         { replace: true }
@@ -1093,12 +1227,21 @@ export function GeneralProgramDetailFullPageModal({
       setOptimisticDetailRoute({ lnb, tab })
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          if (isClosingRef.current || !programId) return prev
           const next = new URLSearchParams(prev)
           next.set(GENERAL_PROGRAM_DETAIL_LNB_PARAM, lnb)
           next.set(GENERAL_PROGRAM_DETAIL_TAB_PARAM, tab)
-          preserveGeneralProgramDetailProgramId(prev, next)
+          next.set('programId', programId)
           next.delete(GENERAL_PROGRAM_DETAIL_EDIT_PARAM)
+
+          const isRecruitmentTab = lnb === 'info' && tab === 'recruitment'
+          const isApplicationTab = lnb === 'info' && tab === 'application'
+          if (!isRecruitmentTab && !isApplicationTab) {
+            next.delete(GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM)
+          }
+          if (!isRecruitmentTab) {
+            next.delete(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM)
+          }
 
           if (lnb !== 'progress') {
             for (const key of GENERAL_PROGRESS_NESTED_QUERY_PARAMS) next.delete(key)
@@ -1168,7 +1311,7 @@ export function GeneralProgramDetailFullPageModal({
     if (!open || !schoolIdFromUrl || !displayProgram) return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        if (isClosingRef.current || !programId) return prev
         const raw = prev.get(SCHOOL_TAB_PARAM)
         const normalized = parseSchoolTabFromSearch(prev, displayProgram)
         if (raw === normalized) return prev
@@ -1184,7 +1327,7 @@ export function GeneralProgramDetailFullPageModal({
     if (!open || !instructorIdFromUrl) return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        if (isClosingRef.current || !programId) return prev
         const raw = prev.get(INSTRUCTOR_TAB_PARAM)
         const normalized = parseInstructorTabFromSearch(prev)
         if (raw === normalized) return prev
@@ -1200,7 +1343,7 @@ export function GeneralProgramDetailFullPageModal({
     if (!open || !volunteerIdFromUrl) return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        if (isClosingRef.current || !programId) return prev
         const raw = prev.get(VOLUNTEER_TAB_PARAM)
         const normalized = parseVolunteerTabFromSearch(prev)
         if (raw === normalized) return prev
@@ -1216,7 +1359,7 @@ export function GeneralProgramDetailFullPageModal({
     if (!open || !participantIdFromUrl) return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        if (isClosingRef.current || !programId) return prev
         const raw = prev.get(PARTICIPANT_TAB_PARAM)
         const normalized = parseParticipantTabFromSearch(prev)
         if (raw === normalized) return prev
@@ -1233,7 +1376,7 @@ export function GeneralProgramDetailFullPageModal({
     if (activeLnb === 'progress' && activeTab === 'progress_instructors') return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        if (isClosingRef.current || !programId) return prev
         if (!prev.has(INSTRUCTOR_ID_PARAM)) return prev
         const next = new URLSearchParams(prev)
         next.delete(INSTRUCTOR_ID_PARAM)
@@ -1249,7 +1392,7 @@ export function GeneralProgramDetailFullPageModal({
     if (activeLnb === 'progress' && activeTab === 'progress_volunteers') return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        if (isClosingRef.current || !programId) return prev
         if (!prev.has(VOLUNTEER_ID_PARAM)) return prev
         const next = new URLSearchParams(prev)
         next.delete(VOLUNTEER_ID_PARAM)
@@ -1265,7 +1408,7 @@ export function GeneralProgramDetailFullPageModal({
     if (activeLnb === 'progress' && activeTab === 'progress_participants') return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+        if (isClosingRef.current || !programId) return prev
         if (!prev.has(PARTICIPANT_ID_PARAM)) return prev
         const next = new URLSearchParams(prev)
         next.delete(PARTICIPANT_ID_PARAM)
@@ -1324,7 +1467,16 @@ export function GeneralProgramDetailFullPageModal({
       },
     ]
 
-    if (!displayProgram) return items
+    if (!displayProgram || !programId) return items
+
+    const programParams = buildSearchParams(searchParams, {
+      delete: GENERAL_PROGRAM_DETAIL_QUERY_PARAMS,
+      set: {
+        programId,
+        [LNB_PARAM]: 'info',
+        [TAB_PARAM]: 'info',
+      },
+    })
 
     const lnbLabel = generalLnbBreadcrumbLabel(activeLnb, participantApplicationsLnbLabel)
     const childLabel = generalChildBreadcrumbLabel(
@@ -1341,11 +1493,28 @@ export function GeneralProgramDetailFullPageModal({
       surveyKeys,
       progressMenuItems
     )
-    const hasChildBreadcrumb = childLabel != null
+    const lnbParams = buildSearchParams(searchParams, {
+      delete: GENERAL_PROGRAM_DETAIL_QUERY_PARAMS,
+      set: {
+        programId,
+        [LNB_PARAM]: activeLnb,
+        [TAB_PARAM]: lnbTab,
+      },
+    })
+    const childParams = childLabel
+      ? buildSearchParams(searchParams, {
+          delete: GENERAL_PROGRAM_DETAIL_QUERY_PARAMS,
+          set: {
+            programId,
+            [LNB_PARAM]: activeLnb,
+            [TAB_PARAM]: activeTab,
+          },
+        })
+      : null
 
     items.push({
       label: resolveGeneralProgramDisplayTitle(displayProgram),
-      onClick: () => setLnbTab('info', 'info'),
+      onClick: () => applyDetailSearchParams(programParams, { replace: false }),
     })
 
     const hasParticipantApplicationDetail =
@@ -1362,7 +1531,7 @@ export function GeneralProgramDetailFullPageModal({
         hasParticipantApplicationDetail || hasVolunteerApplicationDetail
           ? {
               label: lnbLabel,
-              onClick: () => setLnbTab(activeLnb, lnbTab),
+              onClick: () => applyDetailSearchParams(lnbParams, { replace: false }),
             }
           : { label: lnbLabel }
       )
@@ -1373,23 +1542,23 @@ export function GeneralProgramDetailFullPageModal({
         (participantIdFromUrl && isIndividualProgram))
     ) {
       items.push(
-        childLabel && hasProgressNestedDetail
+        childParams && hasProgressNestedDetail
           ? {
               label: childLabel,
-              onClick: () => setLnbTab(activeLnb, activeTab),
+              onClick: () => applyDetailSearchParams(childParams, { replace: false }),
             }
           : { label: childLabel }
       )
     } else {
       items.push({
         label: lnbLabel,
-        onClick: () => setLnbTab(activeLnb, lnbTab),
+        onClick: () => applyDetailSearchParams(lnbParams, { replace: false }),
       })
       items.push(
-        hasChildBreadcrumb && (hasParticipantApplicationDetail || hasProgressNestedDetail)
+        childParams && (hasParticipantApplicationDetail || hasProgressNestedDetail)
           ? {
               label: childLabel,
-              onClick: () => setLnbTab(activeLnb, activeTab),
+              onClick: () => applyDetailSearchParams(childParams, { replace: false }),
             }
           : { label: childLabel }
       )
@@ -1439,6 +1608,7 @@ export function GeneralProgramDetailFullPageModal({
       <DetailFullPageModal
         open={open}
         onClose={handleModalClose}
+        zIndex={GENERAL_PROGRAM_DETAIL_FULLPAGE_MODAL_Z_INDEX}
         title={modalTitle}
         closeAriaLabel={
           schoolIdFromUrl ||
@@ -1463,8 +1633,8 @@ export function GeneralProgramDetailFullPageModal({
               showVolunteerApplications={showVolunteerApplications}
               participantInterviewEnabled={participantInterviewEnabled}
               volunteerInterviewEnabled={volunteerInterviewEnabled}
-              progressMenuItems={progressMenuItems}
-              surveyItems={surveyItems}
+              progressMenuItems={progressMenuItemsFiltered}
+              surveyItems={surveyItemsFiltered}
               onSelectChildTab={setLnbTab}
             />
           ) : null
@@ -1490,7 +1660,6 @@ export function GeneralProgramDetailFullPageModal({
             ) : activeLnb === 'info' && activeTab === 'recruitment' ? (
               <GeneralProgramRecruitmentView
                 program={displayProgram}
-                sponsorName={sponsorName}
                 activeRecruitTab={recruitSubTab}
                 onRecruitTabChange={handleRecruitSubTabChange}
                 showInstructorTab={showInstructorApplications}
@@ -1507,6 +1676,7 @@ export function GeneralProgramDetailFullPageModal({
                 registerVolunteersAdditionalHtml={registerVolunteersAdditionalHtml}
                 onEdit={handleRecruitmentEdit}
                 onSave={handleRecruitmentSave}
+                onOpenParticipantRecruitmentPreview={handleOpenParticipantRecruitmentPreview}
               />
             ) : activeLnb === 'info' && activeTab === 'application' ? (
               <GeneralProgramApplicationView
@@ -1650,6 +1820,10 @@ export function GeneralProgramDetailFullPageModal({
               />
             )}
           </div>
+        ) : detailError ? (
+          <Typography.Text type="danger">
+            프로그램 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+          </Typography.Text>
         ) : (
           <Typography.Text type="secondary">프로그램 정보를 찾을 수 없습니다.</Typography.Text>
         )}
@@ -1661,6 +1835,14 @@ export function GeneralProgramDetailFullPageModal({
           applicationTab={applicationSubTab}
           onClose={handleApplicationTemplateEditClose}
           onSaved={handleApplicationTemplateSaved}
+        />
+      ) : null}
+      {displayProgram ? (
+        <ParticipantRecruitmentPreviewModal
+          open={participantRecruitmentPreviewOpen}
+          onClose={handleCloseParticipantRecruitmentPreview}
+          program={displayProgram}
+          sponsorName={sponsorName}
         />
       ) : null}
       <ProgramDetailSponsorDetailOverlay />

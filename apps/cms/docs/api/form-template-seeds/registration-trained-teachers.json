@@ -1,0 +1,160 @@
+{
+  "templateCode": "registration-trained-teachers",
+  "formType": "WRITING",
+  "category": "REGISTRATION",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "numeric"
+    },
+    "paragraphs": [
+      {
+        "id": "program-registration-seed-basic-info",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "기본 정보",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-registration-seed-business-kpi",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "사업 KPI 목표",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-registration-seed-type-settings",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "프로그램 유형 설정",
+        "paragraphDescription": "프로그램의 운영 방식과 진행 구조를 설정합니다. 해당 설정에 따라 교육 일정 작성 방식이 달라집니다.",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-registration-seed-education-curriculum",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "교육 진행 (커리큘럼)",
+        "paragraphDescription": "차시 별 정보를 입력해 주세요",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-registration-seed-education-schedule-settings",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "교육 진행 일정 설정",
+        "paragraphDescription": "교육이 실행되는 일정을 설정해 주세요.",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      }
+    ]
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장"
+}

@@ -8,6 +8,7 @@
 - [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) — 엔드포인트·코드 위치
 - [forms-surveys-api-backend-gaps.md](./forms-surveys-api-backend-gaps.md) — 미구현 갭
 - [forms-surveys-api-migration-guide.md](./forms-surveys-api-migration-guide.md) — PHASE 0–6 마이그레이션
+- [issuance-form-api-follow-up.md](./issuance-form-api-follow-up.md) — 발급 양식 API 후속 (BE 시드·미완료)
 - [form-template-seeds/](./form-template-seeds/) — 대표 3종 시드 JSON 샘플
 
 **코드 SSOT**
@@ -464,20 +465,39 @@ SSOT: `issuance-form-tab.tsx` `issuanceRows` + `documentRows`.
 |------|--------------|----------|
 | `registration-general.json` | `registration-general` | `schemaJson` + `extensionJson.editorState` |
 | `application-participant-individual.json` | `application-participant-individual` | `schemaJson` |
+| 발급 14종 | `ISSUANCE_TEMPLATE_CODE_CATALOG` | [issuance-form-seeds-backend-handoff.md](./issuance-form-seeds-backend-handoff.md) |
 | `document-3-certificate.json` | `document-3` | `settingsJson` only |
+| `document-payment-order-issue.json` | `document-payment-order-issue` | `schemaJson` (발급 Payload A) |
 
 DB/API 저장 시 위 object를 **각각 JSON string으로 stringify**하여 `schemaJson` / `extensionJson` / `settingsJson` 컬럼에 넣습니다.
 
 ---
 
-## 부록 B. FE 구현 상태 (2026-07-08)
+## 부록 B. FE 구현 상태
 
-- [ ] `extensionJson` 파싱·저장 미구현 (`admin-form-templates-service.ts`)
-- [ ] PUT body `schemaJson` only (extensionJson/settingsJson 미전송)
-- [ ] 발급 양식 탭 API 미연동 (`issuance-form-tab.tsx` 하드코딩)
-- [ ] 인증서 `settingsJson` 저장 stub (`form-template-api.ts`)
-- [ ] 빈 `paragraphs: []` 시드 시 에디터 빈 화면 (`use-program-registration-editor.ts`)
-- [ ] POST `/draft` 엔드포인트 미구현 (제안안)
+> **2026-07-09 갱신:** 발급 양식 상세는 [issuance-form-api-follow-up.md](./issuance-form-api-follow-up.md) §1·§4 참고.
+
+### 작성 양식 (WRITING)
+
+- [x] `extensionJson` / `settingsJson` 파싱·저장 (`admin-form-templates-service.ts`)
+- [x] PUT body — `schemaJson` + 선택 `extensionJson` / `settingsJson`
+- [x] 28종 draft load/save (템플릿 관리 탭)
+- [x] API `paragraphs: []` 시드 보정 (`form-template-seed-registry.ts`)
+- [ ] POST `/draft` 전용 엔드포인트 (제안안 — 현행 PUT 사용)
+
+### 발급 양식 (ISSUANCE)
+
+- [x] 목록 GET + mock fallback (`use-issuance-form-sections.ts`)
+- [x] Payload A 6종 + Payload D 인증서 5종 load/save (11종)
+- [x] `schemaJson: null` + `settingsJson` only 로드
+- [x] 프로그램 실발급 PDF — 템플릿 `settingsJson` 반영
+- [ ] Payload E 3종 (`issuance-1`, `issuance-5`, `document-1`) save/load
+- [ ] BE 시드 JSON 11종 잔여 (P0 지급조서 2종 FE 시드 완료) — [issuance-form-api-follow-up.md §2.1](./issuance-form-api-follow-up.md)
+
+### 레거시·정리 대기
+
+- [ ] `form-template-api.ts` mock 저장 (→ API persist로 대체 완료, 파일 삭제 대기)
+- [ ] `form-tab.tsx` 개발용 모달 — `templateCode` 없이 저장 무음
 
 ---
 

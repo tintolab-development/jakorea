@@ -14,6 +14,10 @@ import {
   filterGeneralDocPassedApplicants,
   type GeneralVolunteerDocPassedFilters,
 } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
+import { assignGeneralVolunteerInterview } from '@/features/program/general/api/admin-applications-service'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { buildInterviewSlotTimesFromAssignPayload } from '@/features/program/general/lib/interview-slot-from-assign-payload'
 import {
   guardGeneralVolunteerAssignInterview,
   guardGeneralVolunteerWithdrawActivity,
@@ -63,6 +67,12 @@ export function useGeneralVolunteerDocPassed({
   }, [programId, subjectKind])
 
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() => loadRows())
+  const volunteerRemote = useGeneralVolunteerApplicationsRemote({
+    programId,
+    stage: 'docPassed',
+    enabled: subjectKind === 'volunteer',
+    setList,
+  })
   const [pendingFilters, setPendingFilters] = useState<GeneralVolunteerDocPassedFilters>(() => ({
     ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS,
   }))
@@ -76,11 +86,12 @@ export function useGeneralVolunteerDocPassed({
   assignFlowRef.current = assignFlow
 
   useEffect(() => {
+    if (volunteerRemote.remoteEnabled) return
     setList(loadRows())
     setPendingFilters({ ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS })
     setAppliedFilters({ ...DEFAULT_GENERAL_VOLUNTEER_DOC_PASSED_FILTERS })
     setViewMode('list')
-  }, [loadRows])
+  }, [loadRows, volunteerRemote.remoteEnabled])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
     setPendingFilters(prev => ({ ...prev, [key]: value }))
@@ -114,12 +125,39 @@ export function useGeneralVolunteerDocPassed({
   }, [])
 
   const confirmAssignInterview = useCallback(
-    (payload: GeneralInterviewAssignConfirmPayload) => {
+    async (payload: GeneralInterviewAssignConfirmPayload) => {
       const flow = assignFlowRef.current
       if (!flow || flow.type !== 'pick') return
 
       const { target } = flow
       const wasAssigned = target.interviewAssignmentStatus === 'assigned'
+
+      if (subjectKind === 'volunteer' && shouldUseGeneralApplicationsRemoteApi()) {
+        const slotTimes = buildInterviewSlotTimesFromAssignPayload(payload)
+        if (!slotTimes) {
+          showAlert({
+            title: '면접 배정 실패',
+            content: '면접 일시 형식을 확인할 수 없습니다. 다시 선택해 주세요.',
+          })
+          return
+        }
+        try {
+          await assignGeneralVolunteerInterview({
+            programId,
+            applicationId: target.id,
+            ...slotTimes,
+          })
+          await volunteerRemote.invalidateVolunteerApplications?.()
+        } catch (error) {
+          console.debug('volunteer interview assign remote failed', error)
+          showAlert({
+            title: '면접 배정 실패',
+            content: '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.',
+          })
+          return
+        }
+      }
+
       const assignedApplicant: GeneralVolunteerApplicantRow = {
         ...target,
         interviewAssignmentStatus: 'assigned',
@@ -144,7 +182,7 @@ export function useGeneralVolunteerDocPassed({
         payload,
       })
     },
-    [updateRow]
+    [programId, showAlert, subjectKind, updateRow, volunteerRemote]
   )
 
   const closeAssignCompleteModal = useCallback(() => {
@@ -214,5 +252,7 @@ export function useGeneralVolunteerDocPassed({
     handleViewCalendar,
     handleViewList,
     calendarEvents,
+    applicationsLoading: volunteerRemote.applicationsLoading,
+    isRemoteDataSource: volunteerRemote.remoteEnabled,
   }
 }

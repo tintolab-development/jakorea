@@ -7,6 +7,7 @@ import {
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CMS_MULTI_SELECT_TAG_COLORS } from '@/shared/ui/cms-select'
 import type { ApprovalStatusKey } from '@/shared/components/approval-status-badge'
+import { useCmsAlert } from '@/shared/ui'
 import {
   institutionFilterFields,
   instructorFilterFields,
@@ -76,6 +77,7 @@ import type {
 import type { InstructorLectureAssignItem } from '@/features/program/general/lib/instructor-lecture-assign-schedule'
 import type { Program } from '@/types/domain'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import { useGeneralProgramApplicationsRemoteSync } from '@/features/program/general/hooks/use-general-program-applications-remote-sync'
 
 export type InstructorApprovalTarget =
   | { id: string; name: string; step: 'assign' }
@@ -180,6 +182,98 @@ export function useApplicantsDetail({
     }
     return []
   })
+
+  const applicationsRemote = useGeneralProgramApplicationsRemoteSync({
+    programId,
+    menu,
+    usesProgramInstitutionApplications,
+    instructorColumnPreset,
+    individualScreeningStage,
+    setInstitutionList,
+    setInstructorList,
+    setIndividualList,
+  })
+  const { showAlert } = useCmsAlert()
+
+  const notifyRemoteDecisionFailure = useCallback(
+    (error: unknown) => {
+      console.debug('applications remote decision failed', error)
+      showAlert({
+        title: '처리 실패',
+        content: '신청 상태 변경 중 오류가 발생했습니다. 다시 시도해 주세요.',
+      })
+    },
+    [showAlert]
+  )
+
+  const applyRemoteInstitutionDecision = useCallback(
+    async (ids: string[], decision: 'approve' | 'reject', reason?: string) => {
+      if (!applicationsRemote.remoteEnabled) return false
+      try {
+        for (const id of ids) {
+          if (decision === 'approve') {
+            await applicationsRemote.approveOrganization(id)
+          } else {
+            await applicationsRemote.rejectOrganization(id, {
+              reason: reason?.trim() || '반려',
+            })
+          }
+        }
+        await applicationsRemote.invalidateApplications()
+        return true
+      } catch (error) {
+        notifyRemoteDecisionFailure(error)
+        return true
+      }
+    },
+    [applicationsRemote, notifyRemoteDecisionFailure]
+  )
+
+  const applyRemoteInstructorDecision = useCallback(
+    async (ids: string[], decision: 'approve' | 'reject', reason?: string) => {
+      if (!applicationsRemote.remoteEnabled) return false
+      try {
+        for (const id of ids) {
+          if (decision === 'approve') {
+            await applicationsRemote.approveInstructor(id)
+          } else {
+            await applicationsRemote.rejectInstructor(id, {
+              reason: reason?.trim() || '반려',
+            })
+          }
+        }
+        await applicationsRemote.invalidateApplications()
+        return true
+      } catch (error) {
+        notifyRemoteDecisionFailure(error)
+        return true
+      }
+    },
+    [applicationsRemote, notifyRemoteDecisionFailure]
+  )
+
+  const applyRemoteIndividualDecision = useCallback(
+    async (ids: string[], decision: 'approve' | 'reject', reason?: string) => {
+      if (!applicationsRemote.remoteEnabled) return false
+      try {
+        for (const id of ids) {
+          if (decision === 'approve') {
+            await applicationsRemote.approveIndividual(id)
+          } else {
+            await applicationsRemote.rejectIndividual(id, {
+              reason: reason?.trim() || '반려',
+            })
+          }
+        }
+        await applicationsRemote.invalidateApplications()
+        return true
+      } catch (error) {
+        notifyRemoteDecisionFailure(error)
+        return true
+      }
+    },
+    [applicationsRemote, notifyRemoteDecisionFailure]
+  )
 
   const rawTableData = useMemo((): ApplicantListRow[] => {
     if (menu === 'institutions') return institutionList
@@ -416,19 +510,33 @@ export function useApplicantsDetail({
   )
 
   const handleInstitutionApprovalStatusChange = useCallback(
-    (recordId: string, status: ApprovalStatusKey) => {
+    async (recordId: string, status: ApprovalStatusKey) => {
       const next = status as ApplicantApprovalStatusKey
+      if (next === 'approved' || next === 'rejected') {
+        const remoteOk = await applyRemoteInstitutionDecision(
+          [recordId],
+          next === 'approved' ? 'approve' : 'reject'
+        )
+        if (remoteOk) return
+      }
       setInstitutionList(prev =>
         prev.map(row => (row.id === recordId ? { ...row, approvalStatus: next } : row))
       )
       updateApplicantSchoolApprovalStatus(recordId, next)
     },
-    []
+    [applyRemoteInstitutionDecision]
   )
 
   const handleInstructorApprovalStatusChange = useCallback(
-    (recordId: string, status: ApprovalStatusKey) => {
+    async (recordId: string, status: ApprovalStatusKey) => {
       const next = status as ApplicantInstructorApprovalStatusKey
+      if (next === 'approved' || next === 'rejected') {
+        const remoteOk = await applyRemoteInstructorDecision(
+          [recordId],
+          next === 'approved' ? 'approve' : 'reject'
+        )
+        if (remoteOk) return
+      }
       setInstructorList(prev =>
         prev.map(row =>
           row.id === recordId ? patchApplicantInstructorForApprovalStatus(row, next) : row
@@ -436,7 +544,7 @@ export function useApplicantsDetail({
       )
       updateApplicantInstructorApprovalStatus(recordId, next)
     },
-    []
+    [applyRemoteInstructorDecision]
   )
 
   const getSessionLineParts = useCallback(
@@ -475,12 +583,16 @@ export function useApplicantsDetail({
 
   const individualColumns = useGeneralIndividualApplicantColumns(institutionApplicationBridge)
 
-  const handleBulkReject = () => {
+  const handleBulkReject = async () => {
     if (selectedRowKeys.length === 0) {
       return
     }
     const keys = selectedRowKeys as string[]
     if (menu === 'institutions') {
+      if (await applyRemoteInstitutionDecision(keys, 'reject')) {
+        setSelectedRowKeys([])
+        return
+      }
       setInstitutionList(prev =>
         prev.map(row =>
           keys.includes(row.id) ? { ...row, approvalStatus: 'rejected' as const } : row
@@ -488,6 +600,10 @@ export function useApplicantsDetail({
       )
       keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'rejected'))
     } else if (menu === 'individual-applications') {
+      if (await applyRemoteIndividualDecision(keys, 'reject')) {
+        setSelectedRowKeys([])
+        return
+      }
       setIndividualList(prev =>
         prev.map(row =>
           keys.includes(row.id) ? { ...row, approvalStatus: 'rejected' as const } : row
@@ -495,6 +611,10 @@ export function useApplicantsDetail({
       )
       keys.forEach(id => updateGeneralIndividualApplicantApprovalStatus(id, 'rejected'))
     } else if (menu === 'instructors') {
+      if (await applyRemoteInstructorDecision(keys, 'reject')) {
+        setSelectedRowKeys([])
+        return
+      }
       setInstructorList(prev =>
         prev.map(row =>
           keys.includes(row.id) ? patchApplicantInstructorForApprovalStatus(row, 'rejected') : row
@@ -526,11 +646,15 @@ export function useApplicantsDetail({
   })
 
   const confirmBulkInstructorReject = useCallback(
-    (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       if (selectedRowKeys.length === 0) {
         return
       }
       const keys = selectedRowKeys as string[]
+      if (await applyRemoteInstructorDecision(keys, 'reject', payload.reason)) {
+        setSelectedRowKeys([])
+        return
+      }
       const notifyOptions = toInstructorNotifyOptions(payload, payload.reason)
       setInstructorList(prev =>
         prev.map(row =>
@@ -544,15 +668,19 @@ export function useApplicantsDetail({
       )
       setSelectedRowKeys([])
     },
-    [selectedRowKeys]
+    [applyRemoteInstructorDecision, selectedRowKeys]
   )
 
   const confirmBulkInstructorApprove = useCallback(
-    (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       if (selectedRowKeys.length === 0) {
         return
       }
       const keys = selectedRowKeys as string[]
+      if (await applyRemoteInstructorDecision(keys, 'approve')) {
+        setSelectedRowKeys([])
+        return
+      }
       const notifyOptions = toInstructorNotifyOptions(payload)
       setInstructorList(prev =>
         prev.map(row =>
@@ -566,15 +694,19 @@ export function useApplicantsDetail({
       )
       setSelectedRowKeys([])
     },
-    [selectedRowKeys]
+    [applyRemoteInstructorDecision, selectedRowKeys]
   )
 
   const confirmBulkInstitutionReject = useCallback(
-    (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       if (selectedRowKeys.length === 0) {
         return
       }
       const keys = selectedRowKeys as string[]
+      if (await applyRemoteInstitutionDecision(keys, 'reject', payload.reason)) {
+        setSelectedRowKeys([])
+        return
+      }
       const notifyOptions = toInstitutionNotifyOptions(payload, payload.reason)
       setInstitutionList(prev =>
         prev.map(row =>
@@ -586,15 +718,19 @@ export function useApplicantsDetail({
       keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'rejected', notifyOptions))
       setSelectedRowKeys([])
     },
-    [selectedRowKeys]
+    [applyRemoteInstitutionDecision, selectedRowKeys]
   )
 
   const confirmBulkInstitutionApprove = useCallback(
-    (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       if (selectedRowKeys.length === 0) {
         return
       }
       const keys = selectedRowKeys as string[]
+      if (await applyRemoteInstitutionDecision(keys, 'approve')) {
+        setSelectedRowKeys([])
+        return
+      }
       const notifyOptions = toInstitutionNotifyOptions(payload)
       setInstitutionList(prev =>
         prev.map(row =>
@@ -606,7 +742,7 @@ export function useApplicantsDetail({
       keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'approved', notifyOptions))
       setSelectedRowKeys([])
     },
-    [selectedRowKeys]
+    [applyRemoteInstitutionDecision, selectedRowKeys]
   )
 
   const toParticipantNotifyOptions = (
@@ -619,11 +755,15 @@ export function useApplicantsDetail({
   })
 
   const confirmBulkParticipantReject = useCallback(
-    (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       if (selectedRowKeys.length === 0) {
         return
       }
       const keys = selectedRowKeys as string[]
+      if (await applyRemoteIndividualDecision(keys, 'reject', payload.reason)) {
+        setSelectedRowKeys([])
+        return
+      }
       const notifyOptions = toParticipantNotifyOptions(payload, payload.reason)
       setIndividualList(prev =>
         prev.map(row =>
@@ -637,15 +777,19 @@ export function useApplicantsDetail({
       )
       setSelectedRowKeys([])
     },
-    [selectedRowKeys]
+    [applyRemoteIndividualDecision, selectedRowKeys]
   )
 
   const confirmBulkParticipantApprove = useCallback(
-    (payload: PermissionModalPayload) => {
+    async (payload: PermissionModalPayload) => {
       if (selectedRowKeys.length === 0) {
         return
       }
       const keys = selectedRowKeys as string[]
+      if (await applyRemoteIndividualDecision(keys, 'approve')) {
+        setSelectedRowKeys([])
+        return
+      }
       const notifyOptions = toParticipantNotifyOptions(payload)
       setIndividualList(prev =>
         prev.map(row =>
@@ -659,15 +803,19 @@ export function useApplicantsDetail({
       )
       setSelectedRowKeys([])
     },
-    [selectedRowKeys]
+    [applyRemoteIndividualDecision, selectedRowKeys]
   )
 
-  const handleBulkApprove = () => {
+  const handleBulkApprove = async () => {
     if (selectedRowKeys.length === 0) {
       return
     }
     const keys = selectedRowKeys as string[]
     if (menu === 'institutions') {
+      if (await applyRemoteInstitutionDecision(keys, 'approve')) {
+        setSelectedRowKeys([])
+        return
+      }
       setInstitutionList(prev =>
         prev.map(row =>
           keys.includes(row.id) ? { ...row, approvalStatus: 'approved' as const } : row
@@ -675,6 +823,10 @@ export function useApplicantsDetail({
       )
       keys.forEach(id => updateApplicantSchoolApprovalStatus(id, 'approved'))
     } else if (menu === 'individual-applications') {
+      if (await applyRemoteIndividualDecision(keys, 'approve')) {
+        setSelectedRowKeys([])
+        return
+      }
       setIndividualList(prev =>
         prev.map(row =>
           keys.includes(row.id) ? { ...row, approvalStatus: 'approved' as const } : row
@@ -682,6 +834,10 @@ export function useApplicantsDetail({
       )
       keys.forEach(id => updateGeneralIndividualApplicantApprovalStatus(id, 'approved'))
     } else if (menu === 'instructors') {
+      if (await applyRemoteInstructorDecision(keys, 'approve')) {
+        setSelectedRowKeys([])
+        return
+      }
       setInstructorList(prev =>
         prev.map(row =>
           keys.includes(row.id) ? patchApplicantInstructorForApprovalStatus(row, 'approved') : row
@@ -860,5 +1016,6 @@ export function useApplicantsDetail({
     tableData,
     columns,
     tableScrollX,
+    applicationsLoading: applicationsRemote.applicationsLoading,
   }
 }

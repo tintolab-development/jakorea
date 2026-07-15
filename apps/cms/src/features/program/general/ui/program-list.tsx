@@ -58,6 +58,8 @@ export interface ProgramListProps {
   setSearchParams?: TableSearchSetSearchParams
   /** 상세 모달 등이 열려 있을 때 테이블 state→URL 동기화 비활성화 */
   disableUrlSync?: boolean
+  /** 조회(applySearch) 핸들러 등록 — 상세 닫을 때 목록 필터 URL flush용 */
+  onRegisterApplySearch?: (applySearch: () => void) => void
 }
 
 export function ProgramList({
@@ -79,6 +81,7 @@ export function ProgramList({
   searchParams: searchParamsProp,
   setSearchParams: setSearchParamsProp,
   disableUrlSync = false,
+  onRegisterApplySearch,
 }: ProgramListProps) {
   const [internalSearchParams, internalSetSearchParams] = useSearchParams()
   const searchParams = searchParamsProp ?? internalSearchParams
@@ -120,6 +123,10 @@ export function ProgramList({
     context: tableContext,
     disableUrlSync,
   })
+
+  useEffect(() => {
+    onRegisterApplySearch?.(handleSearch)
+  }, [handleSearch, onRegisterApplySearch])
 
   useEffect(() => {
     onDisplayCountChange?.(displayedCount, hasActiveFilters)

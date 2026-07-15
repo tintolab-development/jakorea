@@ -5,7 +5,8 @@ Swagger/OpenAPI 기반 실 API 연동 시 공통 설정·인증·응답 규칙�
 상세 클라이언트 규칙: [api-routes-and-client.md](./api-routes-and-client.md)  
 Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)  
 대시보드 1차 파일럿: [dashboard-api-integration.md](./dashboard-api-integration.md)  
-**템플릿 양식 (forms-surveys)**: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) · [PHASE별 마이그레이션](./forms-surveys-api-migration-guide.md) · [**백엔드 갭 목록**](./forms-surveys-api-backend-gaps.md)
+**템플릿 양식 (forms-surveys)**: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) · [PHASE별 마이그레이션](./forms-surveys-api-migration-guide.md) · [**백엔드 갭 목록**](./forms-surveys-api-backend-gaps.md) · [**신규 템플릿 생성 갭**](./template-create-api-backend-handoff.md)  
+**일반 프로그램 (programs)**: [programs-api-integration.md](./programs-api-integration.md) · [**등록 플로우 API 목록**](./programs-registration-flow-api-backend-handoff.md) · [**등록 완료 POST 핸드오프**](./programs-create-api-backend-handoff.md) · [마이그레이션 가이드](./programs-api-migration-guide.md) · [백엔드 갭](./programs-api-backend-gaps.md) · [남은 작업](./programs-api-remaining-work.md) · [**상세 완료율 · Phase 5–10**](./programs-detail-api-conversion-status.md)
 
 ---
 
@@ -13,8 +14,8 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 | 항목            | 값                                                                                |
 | --------------- | --------------------------------------------------------------------------------- |
-| Swagger UI      | `https://8eed-221-146-247-18.ngrok-free.app//swagger-ui/index.html`               |
-| OpenAPI JSON    | `https://8eed-221-146-247-18.ngrok-free.app//v3/api-docs`                         |
+| Swagger UI      | `https://29d0-183-102-114-192.ngrok-free.app//swagger-ui/index.html`              |
+| OpenAPI JSON    | `https://29d0-183-102-114-192.ngrok-free.app//v3/api-docs`                        |
 | 프론트 스냅샷   | [`apps/cms/openapi/backend.openapi.json`](../../openapi/backend.openapi.json)     |
 | 대시보드 subset | [`apps/cms/openapi/dashboard.openapi.json`](../../openapi/dashboard.openapi.json) |
 
@@ -28,8 +29,8 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 2. **프록시 모드(권장)**
 
 ```env
-VITE_API_SERVER=https://8eed-221-146-247-18.ngrok-free.app/
-VITE_REAL_API_MODULES=adminAuth,dashboard,logs,detailedPrograms,textbooks,sponsors,notices,faqs,inquiries,paymentOrders,accountPayments,settlementConfigs
+VITE_API_SERVER=https://29d0-183-102-114-192.ngrok-free.app/
+VITE_REAL_API_MODULES=adminAuth,dashboard,logs,detailedPrograms,textbooks,sponsors,notices,faqs,inquiries,paymentOrders,accountPayments,settlementConfigs,programs,applications,programProgress
 VITE_ADMIN_AUTH_API_PREFIX=/api/admin/auth
 VITE_AUTH_REFRESH_PATH=/api/auth/refresh
 ```
@@ -43,13 +44,13 @@ VITE_AUTH_REFRESH_PATH=/api/auth/refresh
 
 ## 인증
 
-| API             | 경로                                                                      |
-| --------------- | ------------------------------------------------------------------------- |
-| 관리자 로그인   | `POST /api/admin/auth/login`                                              |
-| MFA 검증        | `POST /api/admin/auth/mfa/verify`                                         |
+| API             | 경로                                                                                         |
+| --------------- | -------------------------------------------------------------------------------------------- |
+| 관리자 로그인   | `POST /api/admin/auth/login`                                                                 |
+| MFA 검증        | `POST /api/admin/auth/mfa/verify`                                                            |
 | MFA TOTP 등록   | `POST /api/admin/auth/mfa/enrollment` (`mfaMethod`, `enabled`, `challengeUuid`·`totpSecret`) |
-| 관리자 로그아웃 | `POST /api/admin/auth/logout` body: `{ refreshToken }` (Bearer + refresh) |
-| 관리자 refresh  | `POST /api/admin/auth/refresh` (`adminAuth` 활성 시 axios가 자동 사용)    |
+| 관리자 로그아웃 | `POST /api/admin/auth/logout` body: `{ refreshToken }` (Bearer + refresh)                    |
+| 관리자 refresh  | `POST /api/admin/auth/refresh` (`adminAuth` 활성 시 axios가 자동 사용)                       |
 
 **로그인 → MFA 흐름**
 
@@ -75,6 +76,30 @@ VITE_AUTH_REFRESH_PATH=/api/auth/refresh
 CMS는 `useAuthStore` 토큰 → [`axios-instance.ts`](../../src/shared/instance/axios-instance.ts) Bearer 자동 부착.
 
 **관리자 prefix 기본값:** [`api-paths.ts`](../../src/shared/config/api-paths.ts) → `/api/admin/auth`
+
+---
+
+## 일반 프로그램 (`programs` / `applications` / `programProgress`)
+
+상세 SSOT: [programs-api-integration.md](./programs-api-integration.md) · 갭: [programs-api-backend-gaps.md](./programs-api-backend-gaps.md) · 남은 작업: [programs-api-remaining-work.md](./programs-api-remaining-work.md)
+
+| 모듈 | env 키 | 주요 경로 |
+|------|--------|-----------|
+| 프로그램 CRUD | `programs` | `GET/POST/PATCH/DELETE /api/admin/programs` |
+| 신청 | `applications` (+ `programs`) | `.../applications/organizations|instructors|individuals` |
+| 진행현황 | `programProgress` (+ `programs`) | `.../progress/participants` 등 |
+
+**목록 query enum (프론트 매핑)**
+
+| CMS URL `status` | API `periodStatus` |
+|------------------|--------------------|
+| `scheduled` | `RECRUITING` |
+| `in_progress` | `IN_PROGRESS` |
+| `completed` | `COMPLETED` |
+
+고정: `programType=GENERAL`. Create body에는 `programType` 미포함(목록 query만).
+
+**Create/Update 1차 전송 필드**: `sponsorId`, `title`, `mainTitle`, `type`, `format`, `category`, `description`, 일정·상태·교육·모집·연락·`rounds[]` 등 — 어댑터 [`general-program-adapters.ts`](../../src/features/program/general/api/adapters/general-program-adapters.ts). CMS 전용 nested(`generalCommonInfo` 등)는 1차 omit.
 
 ---
 
@@ -117,7 +142,7 @@ CMS wiring: [`features/auth/social-auth/cms-client.ts`](../../src/features/auth/
 **환경 변수**
 
 ```env
-VITE_API_SERVER=https://8eed-221-146-247-18.ngrok-free.app/
+VITE_API_SERVER=https://29d0-183-102-114-192.ngrok-free.app/
 VITE_KAKAO_CLIENT_ID=
 VITE_NAVER_CLIENT_ID=
 VITE_GOOGLE_CLIENT_ID=
@@ -169,4 +194,4 @@ Swagger Authorize에 관리자 토큰 입력 후 호출.
 3. `pnpm --filter cms generate:api`
 4. dev 서버 재시작
 
-**Last updated:** 2026-06-22
+**Last updated:** 2026-07-10

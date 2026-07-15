@@ -1240,7 +1240,6 @@ export function ProgramDetailFullPageModal({
           {activeLnb === 'info' && isCompanySchoolRecruitmentInfoTab && (
             <GeneralProgramRecruitmentView
               program={displayProgram}
-              sponsorName={sponsorName}
               activeRecruitTab={activeCompanySchoolRecruitTab}
               onRecruitTabChange={handleCompanySchoolRecruitTabChange}
               showInstructorTab

@@ -30,6 +30,7 @@ import {
   ProgramsPage,
 } from '@/pages/programs'
 import { TestPage } from '@/pages/test'
+import { YoutubeEmbedPage } from '@/pages/youtube-embed'
 import { parseProgramRoute } from '@/features/program'
 import type { LayoutVariant } from '@/widgets/layout/layout-variant'
 
@@ -68,6 +69,7 @@ const staticRoutes: RouteConfig[] = [
   authRoute('/auth/social/error', <SocialErrorPage />),
   { path: '/mypage', element: <MypageHomePage />, layout: 'mypage' },
   { path: '/test', element: <TestPage />, layout: 'full' },
+  { path: '/dev/youtube', element: <YoutubeEmbedPage />, layout: 'full' },
 ]
 
 export const routes = staticRoutes

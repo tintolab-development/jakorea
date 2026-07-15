@@ -203,16 +203,20 @@ export interface GetTotpProvisioningOptions {
   qrDataUrl?: string
 }
 
+const TOTP_QR_SIZE = 220
+
 async function buildTotpProvisioningFromSecret(
   email: string,
   secret: string,
-  otpauthUri?: string,
-  qrDataUrl?: string
+  otpauthUri?: string
 ): Promise<TotpProvisioning> {
   const resolvedUri =
     otpauthUri ?? generateURI({ issuer: TOTP_ISSUER, label: email, secret })
-  const resolvedQr =
-    qrDataUrl ?? (await QRCode.toDataURL(resolvedUri, { margin: 2, width: 220 }))
+  // 백엔드 qrDataUrl은 여백·해상도가 제각각일 수 있어 URI 기준으로 항상 220×220 재생성
+  const resolvedQr = await QRCode.toDataURL(resolvedUri, {
+    margin: 0,
+    width: TOTP_QR_SIZE,
+  })
 
   return {
     otpauthUri: resolvedUri,
@@ -226,14 +230,18 @@ async function getRemoteTotpProvisioning(
   challengeUuid: string,
   preset?: Pick<GetTotpProvisioningOptions, 'totpSecret' | 'otpauthUri' | 'qrDataUrl'>
 ): Promise<TotpProvisioning> {
-  if (preset?.totpSecret || preset?.otpauthUri || preset?.qrDataUrl) {
+  if (preset?.totpSecret || preset?.otpauthUri) {
     const secret = preset.totpSecret ?? generateSecret()
-    return buildTotpProvisioningFromSecret(
-      email,
-      secret,
-      preset.otpauthUri,
-      preset.qrDataUrl
-    )
+    return buildTotpProvisioningFromSecret(email, secret, preset.otpauthUri)
+  }
+
+  // otpauthUri 없이 이미지만 온 경우 — 재생성 불가, 원본 사용(표시 크기는 CSS)
+  if (preset?.qrDataUrl) {
+    return {
+      otpauthUri: '',
+      qrDataUrl: preset.qrDataUrl,
+      manualSecret: '',
+    }
   }
 
   let setupResult = await fetchAdminMfaEnrollment({
@@ -254,12 +262,7 @@ async function getRemoteTotpProvisioning(
     secret = setupResult.totpSecret ?? secret
   }
 
-  return buildTotpProvisioningFromSecret(
-    email,
-    secret,
-    setupResult.otpauthUri,
-    setupResult.qrDataUrl
-  )
+  return buildTotpProvisioningFromSecret(email, secret, setupResult.otpauthUri)
 }
 
 /** Microsoft Authenticator 등 표준 앱용 TOTP QR·수동 키 */

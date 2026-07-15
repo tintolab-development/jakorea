@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
 import {
   FormCertificatePreview,
   FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS,
 } from '@/pages/templates/form-certificate-preview'
 import { useFormCertificatePdfDownload } from '@/pages/templates/use-form-certificate-pdf-download'
 import { useFormCertificatePreviewProps } from '@/pages/templates/use-form-certificate-preview-props'
-import { useFormTemplateCertificateModalState } from '@/pages/templates/use-form-template-certificate-modal-state'
 import {
   buildStudentCertificateFileName,
   buildStudentCertificateInitialStringValues,
   type StudentCertificateDownloadContext,
 } from '@/features/program/general/lib/build-student-certificate-issuance'
+import {
+  resolveStudentCertificateTemplateKey,
+  resolveStudentCertificateTemplateName,
+} from '@/features/program/general/lib/student-certificate-template'
 import '@/pages/templates/form-certificate-preview.css'
 
 export interface StudentCertificatePdfExportHostProps {
@@ -26,11 +30,17 @@ export function StudentCertificatePdfExportHost({
   const completedRef = useRef(false)
   const [captureMounted, setCaptureMounted] = useState(false)
 
-  const initialStringValues = useMemo(
+  const runtimeStringValues = useMemo(
     () => buildStudentCertificateInitialStringValues(context),
     [context]
   )
-  const modalState = useFormTemplateCertificateModalState(true, initialStringValues)
+  const modalState = useCertificateTemplateModalState({
+    open: true,
+    templateCode: resolveStudentCertificateTemplateKey(context.certificateKind),
+    fallbackTitleName: resolveStudentCertificateTemplateName(context.certificateKind),
+    runtimeStringValues,
+    runtimeStringOverrideKeys: ['participantInfo'],
+  })
   const { pdfExport: certificatePdfExportProps } = useFormCertificatePreviewProps(modalState)
 
   const buildPdfFilename = useCallback(

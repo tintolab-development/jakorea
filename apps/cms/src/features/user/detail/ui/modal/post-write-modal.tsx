@@ -12,6 +12,8 @@ import { FileSelectField } from '@/shared/ui/file-select-field'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import type { Program } from '@/types/domain'
 import { createProgramPost, addProgramFiles } from '@/data/mock'
+import { createGeneralProgramPost } from '@/features/program/general/api/admin-general-programs-service'
+import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { fileUploadService } from '@/entities/application/api/file-upload-service'
 import './post-write-modal.css'
 
@@ -136,20 +138,37 @@ export function PostWriteModal({
         files.length > 0
           ? await fileUploadService.uploadMultiple(files, 'document')
           : []
-      const newPost = createProgramPost({
-        programId,
-        schoolId: schoolId as import('@/types').UUID | undefined,
-        authorName,
-        content: trimmed,
-        audience: resolvePostWriteAudienceForSave(audience, program),
-        attachmentCount: uploadResults.length,
-      })
-      if (uploadResults.length > 0) {
-        addProgramFiles(programId, newPost.id, uploadResults.map(r => ({
-          fileName: r.fileName,
-          fileUrl: r.url,
-          fileSize: r.fileSize,
-        })))
+      const audienceForSave = resolvePostWriteAudienceForSave(audience, program)
+      const visibilityType = audienceForSave.includes('all')
+        ? 'ALL'
+        : audienceForSave.join(',').toUpperCase()
+
+      if (shouldUseGeneralProgramsRemoteApi()) {
+        await createGeneralProgramPost(programId, {
+          title: trimmed.slice(0, 40),
+          content: trimmed,
+          visibilityType,
+        })
+      } else {
+        const newPost = createProgramPost({
+          programId,
+          schoolId: schoolId as import('@/types').UUID | undefined,
+          authorName,
+          content: trimmed,
+          audience: audienceForSave,
+          attachmentCount: uploadResults.length,
+        })
+        if (uploadResults.length > 0) {
+          addProgramFiles(
+            programId,
+            newPost.id,
+            uploadResults.map(r => ({
+              fileName: r.fileName,
+              fileUrl: r.url,
+              fileSize: r.fileSize,
+            }))
+          )
+        }
       }
       resetForm(setAudience, setContent, setFiles)
       onSuccess?.()

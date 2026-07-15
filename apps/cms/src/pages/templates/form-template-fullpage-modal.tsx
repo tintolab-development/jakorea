@@ -1,4 +1,11 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  buildCertificateFormSettings,
+  EMPTY_CERTIFICATE_SCHEMA_DRAFT,
+} from '@/features/template/lib/certificate-form-settings'
+import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
+import { persistWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import {
   type TemplateCustomFieldDef,
@@ -15,17 +22,18 @@ import {
   FormCertificatePreview,
   FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS,
 } from './form-certificate-preview'
+import { FormCertificateEditScaleViewport } from './form-certificate-edit-scale-viewport'
 import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
-import { saveFormTemplateSettings } from './form-template-api'
 import { useFormCertificatePdfDownload } from './use-form-certificate-pdf-download'
 import { useFormCertificatePreviewProps } from './use-form-certificate-preview-props'
-import { useFormTemplateCertificateModalState } from './use-form-template-certificate-modal-state'
 import '@/features/template/ui/modal/template-preview-modal.css'
 
 export interface FormTemplateFullpageModalProps {
   open: boolean
   onClose: () => void
   title?: string
+  templateCode?: string
+  onSaveConfirmed?: () => void
   initialStringValues?: Record<string, string>
   issueDate?: Date
   buildFilenameTitle?: string
@@ -35,11 +43,21 @@ export function FormTemplateFullpageModal({
   open,
   onClose,
   title = '봉사활동인증서',
+  templateCode,
+  onSaveConfirmed,
   initialStringValues,
   issueDate,
   buildFilenameTitle,
 }: FormTemplateFullpageModalProps) {
-  const modalState = useFormTemplateCertificateModalState(open, initialStringValues)
+  const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+
+  const modalState = useCertificateTemplateModalState({
+    open,
+    templateCode,
+    fallbackTitleName: title,
+    prefillStringValues: initialStringValues,
+  })
+
   const {
     setOrgLogoFile,
     setOrgLogo02File,
@@ -52,6 +70,9 @@ export function FormTemplateFullpageModal({
     setStringPreviewValues,
     participantRowVisibility,
     setParticipantRowVisibility,
+    stringPreviewValues,
+    initialLogoPreviewUrls,
+    isTemplateSettingsLoaded,
   } = modalState
 
   const { interactive: certificatePreviewProps, pdfExport: certificatePdfExportProps } =
@@ -59,6 +80,11 @@ export function FormTemplateFullpageModal({
 
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
   const [certificatePreviewOpen, setCertificatePreviewOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open) setCertificatePreviewOpen(false)
+  }, [open])
+
   const buildPdfFilename = useCallback(
     () => generateFilename(buildFilenameTitle ?? title, 'pdf'),
     [buildFilenameTitle, title]
@@ -73,24 +99,45 @@ export function FormTemplateFullpageModal({
     setCertificatePreviewOpen(true)
   }, [])
 
-  const handleSave = useCallback(async () => {
-    try {
-      await saveFormTemplateSettings({
-        orgLogo: logoUploadResults.orgLogo,
-        orgLogo02: logoUploadResults.orgLogo02,
-        certificateBackground: logoUploadResults.certificateBackground,
-        chairmanSeal: logoUploadResults.chairmanSeal,
-      })
-    } catch {
-      // 무음 처리
-    }
-  }, [logoUploadResults])
+  const handleSave = useCallback(() => {
+    if (templateCode == null || templateCode === '') return
+
+    void (async () => {
+      try {
+        await persistWritingFormTemplateDraft({
+          templateId: templateCode,
+          draft: EMPTY_CERTIFICATE_SCHEMA_DRAFT,
+          settingsJson: buildCertificateFormSettings({
+            stringPreviewValues,
+            logoUploadResults,
+            participantRowVisibility,
+          }),
+        })
+        showSaveSuccess(onSaveConfirmed)
+      } catch (error) {
+        console.debug('certificateFormTemplate save failed', error)
+        showSaveFailure()
+      }
+    })()
+  }, [
+    logoUploadResults,
+    onSaveConfirmed,
+    participantRowVisibility,
+    showSaveFailure,
+    showSaveSuccess,
+    stringPreviewValues,
+    templateCode,
+  ])
+
+  const customFieldsFormKey = open
+    ? `form-template-fields-${title}-${templateCode ?? 'local'}-${isTemplateSettingsLoaded ? 'loaded' : 'pending'}`
+    : 'form-template-fields-closed'
 
   return (
     <>
     <FormCertificatePdfExportOverlay visible={isPdfDownloading} />
     <TealHeaderModal
-      open={certificatePreviewOpen}
+      open={open && certificatePreviewOpen}
       onCancel={() => setCertificatePreviewOpen(false)}
       title=""
       size="full"
@@ -150,7 +197,9 @@ export function FormTemplateFullpageModal({
       downloadDocumentLoading={isPdfDownloading}
       leftContent={
         <>
-          <FormCertificatePreview {...certificatePreviewProps} />
+          <FormCertificateEditScaleViewport>
+            <FormCertificatePreview {...certificatePreviewProps} />
+          </FormCertificateEditScaleViewport>
           <div className={FORM_CERTIFICATE_PREVIEW_PDF_EXPORT_ROOT_CLASS} aria-hidden>
             <FormCertificatePreview {...certificatePdfExportProps} canvasRef={pdfExportCanvasRef} />
           </div>
@@ -158,8 +207,9 @@ export function FormTemplateFullpageModal({
       }
       rightNavigation={
         <TemplateCustomFieldsForm
-          key={open ? `form-template-fields-${title}` : 'form-template-fields-closed'}
-          initialStringValues={initialStringValues}
+          key={customFieldsFormKey}
+          initialStringValues={stringPreviewValues}
+          initialLogoPreviewUrls={initialLogoPreviewUrls}
           selectedFieldName={activeFieldName}
           onFieldClick={field => setActiveFieldName(field?.name ?? null)}
           onSecondaryValueChange={(field: TemplateCustomFieldDef, value: string) => {

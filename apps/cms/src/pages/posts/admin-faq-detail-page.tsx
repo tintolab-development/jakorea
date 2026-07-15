@@ -5,6 +5,7 @@
 import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
+import { Spin } from 'antd'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useFaqDetailQuery } from '@/features/posts/hooks/use-faq-detail-query'
 import { useFaqMutations } from '@/features/posts/hooks/use-faq-mutations'
@@ -61,6 +62,20 @@ export function AdminFaqDetailPage() {
     if (!canWrite) return
     setEditModalOpen(true)
   }, [canWrite])
+
+  if (detailQuery.isLoading) {
+    return (
+      <div className="admin-faq-detail-page">
+        <div
+          className="page-content-loading page-content-loading--viewport"
+          role="status"
+          aria-label="FAQ 불러오는 중"
+        >
+          <Spin size="large" />
+        </div>
+      </div>
+    )
+  }
 
   if (!faq) {
     return (

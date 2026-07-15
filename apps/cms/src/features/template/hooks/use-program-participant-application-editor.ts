@@ -91,6 +91,11 @@ import {
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import {
+  applyParticipantApplicationEditorState,
+  buildParticipantApplicationEditorState,
+} from '@/features/template/lib/participant-application-editor-state'
+import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
 } from '@/features/template/lib/writing-form-template-local-save'
@@ -206,6 +211,13 @@ function useParticipantApplicationMiddleActions(
 export type { ProgramParticipantApplicationEditorVariant } from '@jakorea/form-schema/template-registry'
 
 export type UseProgramParticipantApplicationEditorOptions = {
+  /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
+  onTemplateDraftSaveConfirmed?: () => void
+  /**
+   * 템플릿 관리에서 복제·신규 code (`recruitment-volunteer-copy-01` 등).
+   * 있으면 seed variant id 대신 이 code로 draft 로드/저장.
+   */
+  templateCode?: string
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
   /** 프로그램 등록 마법사 — 참여자 유형이 학교/기관일 때만 모집 최대값 필드 노출 */
   participantOrganization?: boolean
@@ -227,6 +239,16 @@ export function useProgramParticipantApplicationEditor(
   variant: ProgramParticipantApplicationEditorVariant = 'individual',
   editorOptions?: UseProgramParticipantApplicationEditorOptions
 ) {
+  const onTemplateDraftSaveConfirmed = editorOptions?.onTemplateDraftSaveConfirmed
+  const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
+  const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+
+  const resolvePersistTemplateId = useCallback(() => {
+    const override = editorOptions?.templateCode?.trim()
+    if (override != null && override !== '') return override
+    return getTemplateIdForParticipantApplicationVariant(variant)
+  }, [editorOptions?.templateCode, variant])
+
   const seedParagraphIds = useMemo(() => {
     if (variant === 'institution') return PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'economy-application-institution')
@@ -323,58 +345,75 @@ export function useProgramParticipantApplicationEditor(
       setSingleItemListActiveItemId(null)
     }
 
-    if (variant === 'ujat-recruit-institution') {
-      const saved = loadUjatRecruitInstitutionTemplateSave()
-      if (saved) {
-        applyDraft(saved.draft)
-        replaceUjatRecruitInstitutionOverlay(saved.overlay ?? {})
-      } else {
-        resetUjatRecruitInstitutionOverlay()
-        applyDraft(createUjatRecruitFormInstitutionDraft())
-      }
-    } else if (variant === 'ujat-recruit-volunteer') {
-      const saved = loadUjatRecruitVolunteerTemplateSave()
-      if (saved) {
-        applyDraft(saved.draft)
-        replaceUjatRecruitVolunteerOverlay(saved.overlay ?? {})
-      } else {
-        resetUjatRecruitVolunteerOverlay()
-        applyDraft(createUjatRecruitFormVolunteerDraft())
-      }
-    } else {
-      const templateId = getTemplateIdForParticipantApplicationVariant(variant)
+    if (variant === 'ujat-recruit-institution' || variant === 'ujat-recruit-volunteer') {
+      const templateId = resolvePersistTemplateId()
       void loadWritingFormTemplateDraft(templateId).then(saved => {
         if (cancelled) return
         if (saved?.draft) {
           applyDraft(saved.draft)
-          const count = saved.editorState?.volunteerExceptionScheduleCount
-          if (typeof count === 'number' && Number.isFinite(count)) {
-            setVolunteerExceptionScheduleCount(Math.max(0, Math.floor(count)))
+          if (variant === 'ujat-recruit-institution') {
+            replaceUjatRecruitInstitutionOverlay(saved.overlay ?? {})
+          } else {
+            replaceUjatRecruitVolunteerOverlay(saved.overlay ?? {})
           }
-          const appType = saved.editorState?.ujatVolunteerApplicationType
-          if (appType === 'new' || appType === 'ujat-graduate') {
-            setUjatVolunteerApplicationType(appType)
+          return
+        }
+        const legacy =
+          variant === 'ujat-recruit-institution'
+            ? loadUjatRecruitInstitutionTemplateSave()
+            : loadUjatRecruitVolunteerTemplateSave()
+        if (legacy) {
+          applyDraft(legacy.draft)
+          if (variant === 'ujat-recruit-institution') {
+            replaceUjatRecruitInstitutionOverlay(legacy.overlay ?? {})
+          } else {
+            replaceUjatRecruitVolunteerOverlay(legacy.overlay ?? {})
           }
         } else {
-          applyDraft(createSeedDraft())
-          if (variant === 'ujat-application-volunteer') {
-            setUjatVolunteerApplicationType('ujat-graduate')
+          if (variant === 'ujat-recruit-institution') {
+            resetUjatRecruitInstitutionOverlay()
+            applyDraft(createUjatRecruitFormInstitutionDraft())
+          } else {
+            resetUjatRecruitVolunteerOverlay()
+            applyDraft(createUjatRecruitFormVolunteerDraft())
           }
+        }
+      })
+    } else {
+      const templateId = resolvePersistTemplateId()
+      void loadWritingFormTemplateDraft(templateId).then(saved => {
+        if (cancelled) return
+        if (saved?.draft) {
+          applyDraft(saved.draft)
+          applyParticipantApplicationEditorState({
+            variant,
+            editorState: saved.editorState,
+            setVolunteerExceptionScheduleCount,
+            setUjatVolunteerApplicationType,
+            setUjatGradeApplicationBlockIds,
+            setUjatApplicationGradeByBlockId,
+            setUjatGradeClassTimeBlockIds,
+          })
+          return
+        }
+        applyDraft(createSeedDraft())
+        if (variant === 'ujat-application-volunteer') {
+          setUjatVolunteerApplicationType('ujat-graduate')
+        }
+        if (variant === 'ujat-application-institution') {
+          setUjatGradeApplicationBlockIds([crypto.randomUUID()])
+          setUjatApplicationGradeByBlockId({})
+          setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
         }
       })
     }
 
-    if (variant === 'ujat-application-institution') {
-      setUjatGradeApplicationBlockIds([crypto.randomUUID()])
-      setUjatApplicationGradeByBlockId({})
-      setUjatGradeClassTimeBlockIds([crypto.randomUUID()])
-    }
     /* eslint-enable react-hooks/set-state-in-effect */
 
     return () => {
       cancelled = true
     }
-  }, [active, createSeedDraft, variant])
+  }, [active, createSeedDraft, resolvePersistTemplateId, variant])
 
   useEffect(() => {
     if (!active) {
@@ -764,38 +803,64 @@ export function useProgramParticipantApplicationEditor(
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    try {
-      if (variant === 'ujat-recruit-institution') {
-        persistUjatRecruitInstitutionTemplateSave({
-          draft,
-          overlay: { ...getUjatRecruitInstitutionOverlayRecord() },
-        })
-        return
+    void (async () => {
+      try {
+        const templateId = resolvePersistTemplateId()
+        if (variant === 'ujat-recruit-institution') {
+          const overlay = { ...getUjatRecruitInstitutionOverlayRecord() }
+          await persistWritingFormTemplateDraft({
+            templateId,
+            draft,
+            overlay,
+          })
+          persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
+        } else if (variant === 'ujat-recruit-volunteer') {
+          const overlay = { ...getUjatRecruitVolunteerOverlayRecord() }
+          await persistWritingFormTemplateDraft({
+            templateId,
+            draft,
+            overlay,
+          })
+          persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
+        } else {
+          const editorState = buildParticipantApplicationEditorState({
+            variant,
+            volunteerExceptionScheduleCount,
+            ujatVolunteerApplicationType,
+            ujatGradeApplicationBlockIds,
+            ujatApplicationGradeByBlockId,
+            ujatGradeClassTimeBlockIds,
+          })
+          await persistWritingFormTemplateDraft({
+            templateId,
+            draft,
+            editorState,
+          })
+        }
+        if (isTemplateManagementSave) {
+          showSaveSuccess(onTemplateDraftSaveConfirmed)
+        }
+      } catch (error) {
+        console.debug('programParticipantApplicationEditor save failed', error)
+        if (isTemplateManagementSave) {
+          showSaveFailure()
+        }
       }
-      if (variant === 'ujat-recruit-volunteer') {
-        persistUjatRecruitVolunteerTemplateSave({
-          draft,
-          overlay: { ...getUjatRecruitVolunteerOverlayRecord() },
-        })
-        return
-      }
-      const templateId = getTemplateIdForParticipantApplicationVariant(variant)
-      const editorState: Record<string, unknown> = {}
-      if (variant === 'volunteer' || variant === 'recruit-volunteer') {
-        editorState.volunteerExceptionScheduleCount = volunteerExceptionScheduleCount
-      }
-      if (variant === 'ujat-application-volunteer') {
-        editorState.ujatVolunteerApplicationType = ujatVolunteerApplicationType
-      }
-      void persistWritingFormTemplateDraft({
-        templateId,
-        draft,
-        editorState: Object.keys(editorState).length > 0 ? editorState : undefined,
-      })
-    } catch {
-      // API 연동 전 — localStorage 실패 시 무시
-    }
-  }, [draft, ujatVolunteerApplicationType, variant, volunteerExceptionScheduleCount])
+    })()
+  }, [
+    draft,
+    isTemplateManagementSave,
+    onTemplateDraftSaveConfirmed,
+    resolvePersistTemplateId,
+    showSaveFailure,
+    showSaveSuccess,
+    ujatApplicationGradeByBlockId,
+    ujatGradeApplicationBlockIds,
+    ujatGradeClassTimeBlockIds,
+    ujatVolunteerApplicationType,
+    variant,
+    volunteerExceptionScheduleCount,
+  ])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {
     setActiveParagraphId(paragraphId)

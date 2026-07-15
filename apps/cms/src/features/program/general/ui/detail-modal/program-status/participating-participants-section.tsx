@@ -13,7 +13,6 @@ import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import type { ParticipatingIndividualParticipantRow } from '@/data/mock/participating-individual-participants'
-import { findParticipatingIndividualParticipantById } from '@/data/mock/participating-individual-participants'
 import { participatingIndividualParticipantsFilterFields } from '@/features/program/general/lib/participating-individual-participants-filter-fields'
 import {
   filterParticipatingIndividualParticipants,
@@ -125,8 +124,8 @@ export function ParticipatingParticipantsSection({
 
   const selectedParticipantFromUrl = useMemo(() => {
     if (!participantIdFromUrl || !programId) return null
-    return findParticipatingIndividualParticipantById(programId, participantIdFromUrl)
-  }, [participantIdFromUrl, programId])
+    return participantList.find(row => row.id === participantIdFromUrl) ?? null
+  }, [participantIdFromUrl, programId, participantList])
 
   useEffect(() => {
     if (participantIdFromUrl && selectedParticipantFromUrl) {

@@ -2,7 +2,7 @@
  * 일반 프로그램 상세 — 모집 정보 탭 (참여자 / 강사 / 봉사자)
  */
 
-import { useCallback, useState, type ReactNode } from 'react'
+import { useCallback, type ReactNode } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
@@ -25,13 +25,11 @@ import { GeneralProgramParticipantRecruitmentInfoView } from './participant-recr
 import { GeneralProgramInstructorRecruitmentInfoView } from './instructor-recruitment-info-view'
 import { GeneralProgramVolunteerRecruitmentInfoView } from './volunteer-recruitment-info-view'
 import { GeneralProgramVolunteerInterviewScheduleSection } from './volunteer-interview-schedule-section'
-import { ParticipantRecruitmentPreviewModal } from './participant-recruitment-preview-modal'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './recruitment-view.css'
 
 export function GeneralProgramRecruitmentView({
   program,
-  sponsorName,
   activeRecruitTab,
   onRecruitTabChange,
   showInstructorTab,
@@ -49,9 +47,9 @@ export function GeneralProgramRecruitmentView({
   registerVolunteersAdditionalHtml,
   onEdit,
   onSave,
+  onOpenParticipantRecruitmentPreview,
 }: {
   program: Program
-  sponsorName?: string
   activeRecruitTab: GeneralRecruitTabKey
   onRecruitTabChange: (tab: GeneralRecruitTabKey) => void
   showInstructorTab: boolean
@@ -69,16 +67,12 @@ export function GeneralProgramRecruitmentView({
   registerVolunteersAdditionalHtml: (getter: () => string) => void
   onEdit: () => void
   onSave: () => void
+  /** 참여자 모집 사용자 미리보기 — URL·optimistic open은 상세 모달에서 처리 */
+  onOpenParticipantRecruitmentPreview?: () => void
 }) {
-  const [previewOpen, setPreviewOpen] = useState(false)
-
   const handleOpenPreview = useCallback(() => {
-    setPreviewOpen(true)
-  }, [])
-
-  const handleClosePreview = useCallback(() => {
-    setPreviewOpen(false)
-  }, [])
+    onOpenParticipantRecruitmentPreview?.()
+  }, [onOpenParticipantRecruitmentPreview])
 
   const isEditMode =
     (activeRecruitTab === 'institutions' && isEditModeInstitutions) ||
@@ -207,12 +201,6 @@ export function GeneralProgramRecruitmentView({
           <div className="detail-info-form--gap">{detail}</div>
         </div>
       </div>
-      <ParticipantRecruitmentPreviewModal
-        open={previewOpen}
-        onClose={handleClosePreview}
-        program={program}
-        sponsorName={sponsorName}
-      />
     </>
   )
 }

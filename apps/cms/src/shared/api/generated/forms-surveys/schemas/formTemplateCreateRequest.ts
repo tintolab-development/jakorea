@@ -13,4 +13,8 @@ export interface FormTemplateCreateRequest {
   category?: string;
   description?: string;
   useYn?: boolean;
+  versionLabel?: string;
+  schemaJson?: string;
+  extensionJson?: string;
+  settingsJson?: string;
 }

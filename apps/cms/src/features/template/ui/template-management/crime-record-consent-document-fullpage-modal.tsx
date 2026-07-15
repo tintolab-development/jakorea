@@ -1,11 +1,10 @@
 /**
- * 작성 양식 — 성범죄 경력 조회 동의서 상세: 정적 A4 이미지 미리보기 풀페이지 모달
- * TODO(api): 문서 변경 시 업로드 영속화
+ * 작성 양식 — 성범죄 경력조회 동의서 상세: 정적 A4 이미지 미리보기 풀페이지 모달
  */
 
 import { CloseOutlined, DownloadOutlined } from '@ant-design/icons'
-import { type ChangeEvent, useCallback, useEffect, useId, useRef, useState } from 'react'
-import crimeConsentDefaultImage from '@/assets/images/template/성범좌 경력 조회.png'
+import { type ChangeEvent, useCallback, useId, useRef } from 'react'
+import { useAgreementCrimeConsentDocumentEditor } from '@/features/template/hooks/use-agreement-crime-consent-document-editor'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { downloadBlob } from '@/shared/utils/file-download'
@@ -28,40 +27,23 @@ export function CrimeRecordConsentDocumentFullpageModal({
   onClose,
 }: CrimeRecordConsentDocumentFullpageModalProps) {
   const iconMaskId = `crime-consent-pen-mask-${useId().replace(/:/g, '')}`
-  const [displaySrc, setDisplaySrc] = useState<string>(crimeConsentDefaultImage)
-  const [replacementFileName, setReplacementFileName] = useState<string | null>(null)
-  const replaceObjectUrlRef = useRef<string | null>(null)
+  const { displaySrc, replacementFileName, handleImageFile } =
+    useAgreementCrimeConsentDocumentEditor(open)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (open) return
-    if (replaceObjectUrlRef.current) {
-      URL.revokeObjectURL(replaceObjectUrlRef.current)
-      replaceObjectUrlRef.current = null
-    }
-    setDisplaySrc(crimeConsentDefaultImage)
-    setReplacementFileName(null)
-  }, [open])
 
   const handlePickDocument = useCallback(() => {
     fileInputRef.current?.click()
   }, [])
 
-  const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    if (!file.type.startsWith('image/')) {
-      return
-    }
-    if (replaceObjectUrlRef.current) {
-      URL.revokeObjectURL(replaceObjectUrlRef.current)
-    }
-    const url = URL.createObjectURL(file)
-    replaceObjectUrlRef.current = url
-    setDisplaySrc(url)
-    setReplacementFileName(file.name)
-  }, [])
+  const handleFileChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      e.target.value = ''
+      if (!file || !file.type.startsWith('image/')) return
+      void handleImageFile(file)
+    },
+    [handleImageFile]
+  )
 
   const handleDownload = useCallback(async () => {
     try {

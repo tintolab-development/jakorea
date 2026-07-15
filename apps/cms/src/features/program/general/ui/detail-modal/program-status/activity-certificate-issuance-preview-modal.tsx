@@ -6,6 +6,8 @@ import {
   buildActivityCertificateFileName,
   buildActivityCertificateInitialStringValues,
 } from '@/features/program/general/lib/build-activity-certificate-issuance-preview'
+import { INSTRUCTOR_ACTIVITY_CERTIFICATE_TEMPLATE_CODE } from '@/features/template/lib/certificate-form-settings'
+import { useCertificateTemplateModalState } from '@/features/template/hooks/use-certificate-template-modal-state'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -17,7 +19,6 @@ import {
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { useFormCertificatePdfDownload } from '@/pages/templates/use-form-certificate-pdf-download'
 import { useFormCertificatePreviewProps } from '@/pages/templates/use-form-certificate-preview-props'
-import { useFormTemplateCertificateModalState } from '@/pages/templates/use-form-template-certificate-modal-state'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import '@/pages/templates/form-certificate-preview.css'
 import './activity-certificate-issuance-preview-modal.css'
@@ -38,12 +39,18 @@ export function ActivityCertificateIssuancePreviewModal({
   const { showAlert } = useCmsAlert()
   const pdfExportCanvasRef = useRef<HTMLDivElement>(null)
 
-  const initialStringValues = useMemo(
+  const runtimeStringValues = useMemo(
     () => buildActivityCertificateInitialStringValues(instructor, program),
     [instructor, program]
   )
 
-  const modalState = useFormTemplateCertificateModalState(open, initialStringValues)
+  const modalState = useCertificateTemplateModalState({
+    open,
+    templateCode: INSTRUCTOR_ACTIVITY_CERTIFICATE_TEMPLATE_CODE,
+    fallbackTitleName: ACTIVITY_CERTIFICATE_DOCUMENT_TITLE,
+    runtimeStringValues,
+    runtimeStringOverrideKeys: ['participantInfo'],
+  })
   const { pdfExport: certificatePdfExportProps } = useFormCertificatePreviewProps(modalState)
 
   const fileName = useMemo(

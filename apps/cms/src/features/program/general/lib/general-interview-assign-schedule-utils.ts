@@ -96,7 +96,11 @@ function buildParsedInterviewSchedule(
   }
 }
 
-/** TODO(api): 프로그램·기관별 면접 가능 일정 API 연동 */
+/**
+ * 면접 캘린더 가용 슬롯 표시.
+ * OpenAPI에 `GET …/interview-slots`가 없어 모집 표시 mock 기반 유지.
+ * 배정 mutation은 `assignGeneralVolunteerInterview`(slot create + assign)로 remote 연동.
+ */
 export function parseGeneralInterviewScheduleFromProgram(program: Program): ParsedInterviewSchedule {
   const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
   const rangeStart = dayjs('2026-03-01')

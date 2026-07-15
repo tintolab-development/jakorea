@@ -79,7 +79,7 @@ export interface ParticipatingVolunteersSectionProps {
 }
 
 export function ParticipatingVolunteersSection({
-  programId: _programId,
+  programId,
   program,
   volunteerIdFromUrl,
   volunteerTabFromUrl,
@@ -99,7 +99,7 @@ export function ParticipatingVolunteersSection({
     progressCalendarGranularity,
     setProgressCalendarGranularity,
   } = useParticipatingVolunteersParams()
-  const { volunteerList, addVolunteerFromMember } = useProgressVolunteerList()
+  const { volunteerList, addVolunteerFromMember } = useProgressVolunteerList(programId)
   const { sessionRows, approvedInstitutionOptions, registrations, saveRegistration } =
     useEmployeeVolunteerRegistration(program, MOCK_PARTICIPATING_SCHOOLS, volunteerList)
 

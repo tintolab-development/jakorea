@@ -222,3 +222,87 @@ export function resolveWritingFormCategory(
   }
   return undefined
 }
+
+export type IssuanceFormCategory = 'REPORT' | 'DOCUMENT'
+
+export interface IssuanceFormSectionCatalogEntry {
+  key: string
+  title: string
+  description: string
+  category: IssuanceFormCategory
+}
+
+export const ISSUANCE_FORM_SECTION_CATALOG: readonly IssuanceFormSectionCatalogEntry[] = [
+  {
+    key: 'issuance-report',
+    title: '보고 양식',
+    description: '모든 프로그램에 동일한 구조로 노출되는 양식입니다.',
+    category: 'REPORT',
+  },
+  {
+    key: 'issuance-document',
+    title: '서류 양식',
+    description: '모든 프로그램에 동일한 구조로 노출되는 양식입니다.',
+    category: 'DOCUMENT',
+  },
+] as const
+
+export interface IssuanceTemplateCodeCatalogEntry {
+  templateName: string
+  category: IssuanceFormCategory
+}
+
+/** 발급 양식 templateCode(SSOT) ↔ API category */
+export const ISSUANCE_TEMPLATE_CODE_CATALOG: Record<string, IssuanceTemplateCodeCatalogEntry> = {
+  'issuance-1': { templateName: 'UJAT 결과리포트', category: 'REPORT' },
+  'issuance-2': { templateName: 'UJAT 교육계획서', category: 'REPORT' },
+  'issuance-ujat-edu-journal': { templateName: 'UJAT 교육일지', category: 'REPORT' },
+  'issuance-3': { templateName: '강의보고서', category: 'REPORT' },
+  'issuance-4': { templateName: '정산 신청서', category: 'REPORT' },
+  'issuance-5': { templateName: '결과보고서', category: 'REPORT' },
+  'document-payment-order-issue': { templateName: '지급조서(발급용)', category: 'DOCUMENT' },
+  'document-payment-order-pre-consent': { templateName: '지급조서 사전 동의서', category: 'DOCUMENT' },
+  'document-1': { templateName: '지출증빙서류(필수폼)', category: 'DOCUMENT' },
+  'document-2': { templateName: '휴가 인증서', category: 'DOCUMENT' },
+  'document-3': { templateName: '수료증', category: 'DOCUMENT' },
+  'document-participation-certificate': { templateName: '참여인증서', category: 'DOCUMENT' },
+  'document-4': { templateName: '강사 활동 인증서', category: 'DOCUMENT' },
+  'document-5': { templateName: '봉사 활동 인증서', category: 'DOCUMENT' },
+}
+
+/**
+ * Payload D — `settingsJson` only (schemaJson null / empty paragraphs 허용).
+ * UI는 `settingsJson`만 소비한다. `schemaJson.paragraphs`로 그리지 않는다.
+ */
+export const CERTIFICATE_ISSUANCE_TEMPLATE_CODES = [
+  'document-2',
+  'document-3',
+  'document-participation-certificate',
+  'document-4',
+  'document-5',
+] as const
+
+export type CertificateIssuanceTemplateCode =
+  (typeof CERTIFICATE_ISSUANCE_TEMPLATE_CODES)[number]
+
+const CERTIFICATE_ISSUANCE_TEMPLATE_CODE_SET = new Set<string>(CERTIFICATE_ISSUANCE_TEMPLATE_CODES)
+
+export function isCertificateIssuanceTemplateCode(templateCode?: string): boolean {
+  if (templateCode == null || templateCode === '') return false
+  return CERTIFICATE_ISSUANCE_TEMPLATE_CODE_SET.has(templateCode)
+}
+
+export function resolveIssuanceFormCategory(
+  templateCode: string,
+  apiCategory?: string
+): IssuanceFormCategory | undefined {
+  const fromCatalog = ISSUANCE_TEMPLATE_CODE_CATALOG[templateCode]?.category
+  if (fromCatalog) return fromCatalog
+  if (apiCategory === 'REPORT' || apiCategory === 'DOCUMENT') {
+    return apiCategory
+  }
+  // BE 실응답 enum (formType=ISSUANCE 하위 분류)
+  if (apiCategory === 'ISSUANCE') return 'REPORT'
+  if (apiCategory === 'CERTIFICATE') return 'DOCUMENT'
+  return undefined
+}

@@ -45,10 +45,13 @@ export function MyProgramHistoryPage() {
   const { getByIdSync: getProgramByIdSync } = useProgramService()
   const [program, setProgram] = useState<MyProgram | null>(null)
   const [settlements, setSettlements] = useState<Settlement[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const loadProgram = useCallback(async () => {
-    if (!id || !user?.instructorId) return
+    if (!id || !user?.instructorId) {
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     try {
@@ -60,7 +63,7 @@ export function MyProgramHistoryPage() {
       setProgram(data)
     } catch (error) {
       console.error('프로그램 로드 실패:', error)
-      } finally {
+    } finally {
       setLoading(false)
     }
   }, [id, navigate, user?.instructorId])
@@ -79,15 +82,25 @@ export function MyProgramHistoryPage() {
   }, [id, user?.instructorId])
 
   useEffect(() => {
-    if (id && user?.instructorId) {
-      loadProgram()
-      loadSettlements()
+    if (!id) {
+      setLoading(false)
+      return
     }
+    if (user?.instructorId) {
+      void loadProgram()
+      void loadSettlements()
+      return
+    }
+    setLoading(false)
   }, [id, user?.instructorId, loadProgram, loadSettlements])
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
+      <div
+        className="page-content-loading page-content-loading--viewport"
+        role="status"
+        aria-label="프로그램 이력 불러오는 중"
+      >
         <Spin size="large" />
       </div>
     )

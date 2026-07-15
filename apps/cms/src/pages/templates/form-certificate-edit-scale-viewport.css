@@ -1,0 +1,14 @@
+.form-certificate-edit-scale-viewport {
+  width: 100%;
+  min-width: 0;
+}
+
+.form-certificate-edit-scale-viewport__clip {
+  overflow: hidden;
+  margin: 0;
+}
+
+.form-certificate-edit-scale-viewport__inner {
+  transform-origin: top left;
+  will-change: transform;
+}

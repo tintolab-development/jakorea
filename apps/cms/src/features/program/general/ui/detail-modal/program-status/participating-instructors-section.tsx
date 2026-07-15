@@ -234,6 +234,7 @@ export function ParticipatingInstructorsSection({
   } = useProgressInstructorList({
     appliedFilters: progressFilters,
     preferMock: true,
+    programId,
   })
 
   const [instructorConsentModalOpen, setInstructorConsentModalOpen] = useState(false)

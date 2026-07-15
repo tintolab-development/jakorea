@@ -61,10 +61,6 @@
       "description": "Members 관련 관리자 API"
     },
     {
-      "name": "기타 API",
-      "description": "학교 검색 공공 API 캐시/프록시 API"
-    },
-    {
       "name": "콘텐츠/고객지원",
       "description": "공지사항, FAQ, 문의, 고객지원 화면에서 사용하는 API입니다."
     },
@@ -121,16 +117,16 @@
       "description": "회원 SSO 로그인 표준 API"
     },
     {
-      "name": "기타 API",
-      "description": "신규 프론트 사용 금지: 정산 신청서 전환 전 데이터 보정/예외 처리 전용 API"
-    },
-    {
       "name": "인증/세션",
       "description": "로그인된 관리자 SSO 연결 세션 표준 API"
     },
     {
       "name": "기타 API",
       "description": "관리자 계정 등록, 삭제, 승인, 반려, 권한 유형, 권한 매트릭스 관리 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "홈페이지 일반 사용자 로그인/세션 API. 관리자 인증과 분리된 canonical surface입니다."
     },
     {
       "name": "기타 API",
@@ -227,6 +223,10 @@
     {
       "name": "로그 관리",
       "description": "개인정보 접근 로그, 파일 접근 로그, 시스템 이슈 로그, 이메일 발송 이력 조회 API입니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "홈페이지 회원가입에서 사용하는 학교·기관 검색 API"
     },
     {
       "name": "후원사",
@@ -4309,6 +4309,74 @@
           "member"
         ]
       },
+      "RefreshTokenRequest": {
+        "type": "object",
+        "description": "refresh token 기반 토큰 갱신/로그아웃 요청",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "refresh token. 예시는 sample token입니다.",
+            "example": "sample-refresh-token",
+            "maxLength": 4096,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "AuthTokenResponse": {
+        "type": "object",
+        "description": "인증 토큰 응답. 예시는 sample token이며 실제 운영 토큰을 문서에 남기지 않습니다.",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "API 인증에 사용할 access token",
+            "example": "sample-access-token"
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "access token 재발급에 사용할 refresh token",
+            "example": "sample-refresh-token"
+          },
+          "tokenType": {
+            "type": "string",
+            "description": "토큰 타입",
+            "example": "Bearer"
+          },
+          "expiresInSeconds": {
+            "type": "integer",
+            "format": "int64",
+            "description": "access token 만료까지 남은 초",
+            "example": 3600
+          }
+        }
+      },
+      "MemberLoginRequest": {
+        "type": "object",
+        "description": "회원 로그인 요청",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "회원 이메일",
+            "example": "member@example.com",
+            "maxLength": 254,
+            "minLength": 0
+          },
+          "password": {
+            "type": "string",
+            "description": "회원 비밀번호. Swagger 예시는 샘플 값이며 실제 비밀번호를 기록하지 않습니다.",
+            "example": "sample-password",
+            "maxLength": 200,
+            "minLength": 8
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
       "IdentityChallengeCreateRequest": {
         "type": "object",
         "properties": {
@@ -4548,33 +4616,6 @@
           "provider"
         ]
       },
-      "AuthTokenResponse": {
-        "type": "object",
-        "description": "인증 토큰 응답. 예시는 sample token이며 실제 운영 토큰을 문서에 남기지 않습니다.",
-        "properties": {
-          "accessToken": {
-            "type": "string",
-            "description": "API 인증에 사용할 access token",
-            "example": "sample-access-token"
-          },
-          "refreshToken": {
-            "type": "string",
-            "description": "access token 재발급에 사용할 refresh token",
-            "example": "sample-refresh-token"
-          },
-          "tokenType": {
-            "type": "string",
-            "description": "토큰 타입",
-            "example": "Bearer"
-          },
-          "expiresInSeconds": {
-            "type": "integer",
-            "format": "int64",
-            "description": "access token 만료까지 남은 초",
-            "example": 3600
-          }
-        }
-      },
       "SocialLoginSessionConsumeRequest": {
         "type": "object",
         "description": "소셜 로그인 callback 후 발급된 one-time login session token 소비 요청",
@@ -4617,22 +4658,6 @@
             "example": "회원 가입이 완료되었습니다."
           }
         }
-      },
-      "RefreshTokenRequest": {
-        "type": "object",
-        "description": "refresh token 기반 토큰 갱신/로그아웃 요청",
-        "properties": {
-          "refreshToken": {
-            "type": "string",
-            "description": "refresh token. 예시는 sample token입니다.",
-            "example": "sample-refresh-token",
-            "maxLength": 4096,
-            "minLength": 0
-          }
-        },
-        "required": [
-          "refreshToken"
-        ]
       },
       "PreRegisteredMemberMatchRequest": {
         "type": "object",
@@ -4758,31 +4783,6 @@
             "type": "boolean"
           }
         }
-      },
-      "MemberLoginRequest": {
-        "type": "object",
-        "description": "회원 로그인 요청",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "description": "회원 이메일",
-            "example": "member@example.com",
-            "maxLength": 254,
-            "minLength": 0
-          },
-          "password": {
-            "type": "string",
-            "description": "회원 비밀번호. Swagger 예시는 샘플 값이며 실제 비밀번호를 기록하지 않습니다.",
-            "example": "sample-password",
-            "maxLength": 200,
-            "minLength": 8
-          }
-        },
-        "required": [
-          "email",
-          "password"
-        ]
       },
       "GuardianConsentRequest": {
         "type": "object",
@@ -9827,6 +9827,18 @@
           },
           "useYn": {
             "type": "boolean"
+          },
+          "versionLabel": {
+            "type": "string"
+          },
+          "schemaJson": {
+            "type": "string"
+          },
+          "extensionJson": {
+            "type": "string"
+          },
+          "settingsJson": {
+            "type": "string"
           }
         }
       },
@@ -13986,65 +13998,6 @@
           }
         }
       },
-      "SchoolSearchItem": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "schoolName": {
-            "type": "string"
-          },
-          "organizationCategory": {
-            "type": "string"
-          },
-          "externalProvider": {
-            "type": "string"
-          },
-          "externalOrganizationCode": {
-            "type": "string"
-          },
-          "address": {
-            "type": "string"
-          },
-          "zipcode": {
-            "type": "string"
-          },
-          "regionSido": {
-            "type": "string"
-          },
-          "regionSigungu": {
-            "type": "string"
-          }
-        }
-      },
-      "SchoolSearchResponse": {
-        "type": "object",
-        "properties": {
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SchoolSearchItem"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "source": {
-            "type": "string"
-          }
-        }
-      },
       "PublicNoticeListItemResponse": {
         "type": "object",
         "description": "공개 공지사항 목록 항목",
@@ -14731,6 +14684,84 @@
           }
         }
       },
+      "HomepageOrganizationSearchItem": {
+        "type": "object",
+        "description": "홈페이지 학교·기관 검색 항목",
+        "properties": {
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "학교·기관 ID",
+            "example": 1001
+          },
+          "name": {
+            "type": "string",
+            "description": "학교·기관명",
+            "example": "서울중학교"
+          },
+          "organizationCategory": {
+            "type": "string",
+            "description": "학교·기관 분류",
+            "example": "SCHOOL"
+          },
+          "regionSido": {
+            "type": "string",
+            "description": "시도",
+            "example": "서울특별시"
+          },
+          "regionSigungu": {
+            "type": "string",
+            "description": "시군구",
+            "example": "강남구"
+          },
+          "zipcode": {
+            "type": "string",
+            "description": "우편번호",
+            "example": "06234"
+          },
+          "address": {
+            "type": "string",
+            "description": "기본 주소",
+            "example": "서울특별시 강남구 테헤란로 1"
+          }
+        }
+      },
+      "HomepageOrganizationSearchResponse": {
+        "type": "object",
+        "description": "홈페이지 학교·기관 검색 응답",
+        "properties": {
+          "content": {
+            "type": "array",
+            "description": "검색 결과 목록",
+            "items": {
+              "$ref": "#/components/schemas/HomepageOrganizationSearchItem"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "description": "현재 페이지 번호",
+            "example": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "description": "페이지 크기",
+            "example": 20
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64",
+            "description": "전체 검색 결과 수",
+            "example": 125
+          },
+          "source": {
+            "type": "string",
+            "description": "데이터 출처",
+            "example": "LOCAL_ORGANIZATION_CACHE"
+          }
+        }
+      },
       "SignupTermsAgreementPayload": {
         "type": "object",
         "description": "홈페이지 회원가입 약관 동의 요청 payload",
@@ -14959,6 +14990,63 @@
             "type": "string",
             "description": "화면 표시 메시지",
             "example": "사용 가능한 이메일입니다."
+          }
+        }
+      },
+      "HomepageMeResponse": {
+        "type": "object",
+        "description": "홈페이지 현재 로그인 회원 응답",
+        "properties": {
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "회원 ID",
+            "example": 12001
+          },
+          "memberUuid": {
+            "type": "string",
+            "description": "회원 UUID",
+            "example": "member-sample-uuid"
+          },
+          "email": {
+            "type": "string",
+            "description": "회원 이메일",
+            "example": "member@example.com"
+          },
+          "name": {
+            "type": "string",
+            "description": "회원 이름",
+            "example": "홍길동"
+          },
+          "status": {
+            "type": "string",
+            "description": "계정 상태",
+            "example": "ACTIVE"
+          },
+          "memberType": {
+            "type": "string",
+            "description": "회원가입 유형",
+            "example": "GENERAL"
+          },
+          "ageGroup": {
+            "type": "string",
+            "description": "나이 그룹",
+            "example": "OVER_14"
+          },
+          "teacher": {
+            "type": "boolean",
+            "description": "교사회원 여부",
+            "example": false
+          },
+          "identityVerified": {
+            "type": "boolean",
+            "description": "본인인증 완료 여부",
+            "example": true
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "마지막 로그인 시각"
           }
         }
       },
@@ -20763,6 +20851,76 @@
           },
           "reason": {
             "type": "string"
+          }
+        }
+      },
+      "FormTemplateLatestPayloadResponse": {
+        "type": "object",
+        "properties": {
+          "templateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateCode": {
+            "type": "string"
+          },
+          "templateName": {
+            "type": "string"
+          },
+          "formType": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "useYn": {
+            "type": "boolean"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "versionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "versionLabel": {
+            "type": "string"
+          },
+          "versionStatus": {
+            "type": "string"
+          },
+          "schemaJson": {
+            "type": "string"
+          },
+          "extensionJson": {
+            "type": "string"
+          },
+          "settingsJson": {
+            "type": "string"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "effectiveTo": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

@@ -4,10 +4,11 @@
  * 코드 스플리팅 적용: React.lazy를 사용한 동적 import
  */
 
-import { lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import { Navigate, createBrowserRouter, useLocation, useParams } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/app/components/protected-route'
+import { RouterLoadingFallback } from '@/app/router/loading-fallback'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import './router.css'
 
@@ -169,6 +170,7 @@ const PersonalInfoAccessHistoryPage = lazyLoad(
   () => import('@/pages/logs/personal-info-access-history-page')
 )
 const BugIssueHistoryPage = lazyLoad(() => import('@/pages/logs/bug-issue-history-page'))
+const DesignSystemPage = lazyLoad(() => import('@/pages/design-system/page'))
 
 function LegacyPostsRedirect({
   kind,
@@ -302,6 +304,15 @@ export const router = createBrowserRouter([
       <ProtectedRoute>
         <ParticipantRecruitmentUserFullPage />
       </ProtectedRoute>
+    ),
+  },
+  {
+    // 로그인·역할 없이 공개 접근 (쇼케이스/문서용)
+    path: '/design-system',
+    element: (
+      <Suspense fallback={<RouterLoadingFallback />}>
+        <DesignSystemPage />
+      </Suspense>
     ),
   },
   {

@@ -197,6 +197,7 @@ export function ApplicantList({
     tableData,
     columns,
     tableScrollX,
+    applicationsLoading,
   } = useApplicantsDetail({
     menu,
     onRegisterApplicantCloseHandler,
@@ -507,7 +508,7 @@ export function ApplicantList({
       setInstructorBulkRejectOpen(true)
       return
     }
-    handleBulkReject()
+    void handleBulkReject()
   }
 
   const handleBulkApproveClick = () => {
@@ -537,7 +538,7 @@ export function ApplicantList({
       setInstructorBulkApproveOpen(true)
       return
     }
-    handleBulkApprove()
+    void handleBulkApprove()
   }
 
   const usesInstitutionTableScroll =
@@ -1605,6 +1606,7 @@ export function ApplicantList({
                   >
                 }
                 dataSource={tableData}
+                loading={applicationsLoading}
                 className="cms-data-table cms-data-table--fluid"
                 onRow={record => ({
                   onClick: e => {
@@ -1648,7 +1650,7 @@ export function ApplicantList({
                     | GeneralIndividualApplicantRow[],
                   menu
                 )}
-                loading={false}
+                loading={applicationsLoading}
                 selectedRowKeys={selectedRowKeys}
                 onSelectionChange={setSelectedRowKeys}
                 onItemClick={item => {

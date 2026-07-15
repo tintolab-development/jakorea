@@ -23,6 +23,8 @@ export { PFSearchInput } from './pf-search-input'
 export type { PFSearchInputProps } from './pf-search-input'
 export { PFSearchFilter } from './pf-search-filter'
 export type { PFSearchFilterOption, PFSearchFilterProps } from './pf-search-filter'
+export { ScrollRevealYoutubeVideo } from './scroll-reveal-youtube-video'
+export type { ScrollRevealYoutubeVideoProps } from './scroll-reveal-youtube-video'
 export { PFStepProgress } from './pf-step-progress'
 export { PFTabs } from './pf-tabs'
 export type {

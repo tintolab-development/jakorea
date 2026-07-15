@@ -39,13 +39,16 @@ export function MyProgramDetailPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const [program, setProgram] = useState<MyProgram | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [favorite, setFavorite] = useState(false) // 찜하기 상태 (Mock)
   const [satisfactionModalOpen, setSatisfactionModalOpen] = useState(false)
 
   const loadProgram = useCallback(async () => {
     const userId = user?.instructorId || user?.id
-    if (!id || !userId) return
+    if (!id || !userId) {
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     try {
@@ -57,7 +60,7 @@ export function MyProgramDetailPage() {
       setProgram(data)
     } catch (error) {
       console.error('프로그램 로드 실패:', error)
-      } finally {
+    } finally {
       setLoading(false)
     }
   }, [id, navigate, user?.id, user?.instructorId])
@@ -77,10 +80,17 @@ export function MyProgramDetailPage() {
   )
 
   useEffect(() => {
-    if (id && user?.instructorId) {
-      loadProgram()
+    if (!id) {
+      setLoading(false)
+      return
     }
-  }, [id, user?.instructorId, loadProgram])
+    const userId = user?.instructorId || user?.id
+    if (userId) {
+      void loadProgram()
+      return
+    }
+    setLoading(false)
+  }, [id, user?.instructorId, user?.id, loadProgram])
 
   useEffect(() => {
     const userId = user?.instructorId || user?.id
@@ -133,7 +143,11 @@ export function MyProgramDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
+      <div
+        className="page-content-loading page-content-loading--viewport"
+        role="status"
+        aria-label="프로그램 불러오는 중"
+      >
         <Spin size="large" />
       </div>
     )

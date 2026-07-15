@@ -23,6 +23,11 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { useWritingFormMiddleParagraphActions } from '@/features/template/hooks/use-writing-form-middle-paragraph-actions'
+import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import {
+  loadWritingFormTemplateDraft,
+  persistWritingFormTemplateDraft,
+} from '@/features/template/lib/writing-form-template-local-save'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
@@ -67,6 +72,10 @@ export type AgreementWritingFormShellProps = {
   a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
   /** 단락 본문 옵션 */
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
+  /** forms-surveys draft API 연동 대상 templateCode */
+  templateCode?: string
+  /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
+  onTemplateDraftSaveConfirmed?: () => void
 }
 
 type AgreementShellUrlQuery = {
@@ -87,14 +96,20 @@ export function AgreementWritingFormShell({
   a4RenderMode,
   a4ParagraphGapPx,
   paragraphBodyOptions,
+  templateCode,
+  onTemplateDraftSaveConfirmed,
 }: AgreementWritingFormShellProps) {
-  const [draft, setDraft] = useState<WritingFormDraft>(() =>
-    typeof initialDraft === 'function' ? initialDraft() : initialDraft
-  )
+  const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+  const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
+
+  const resolveInitialDraft = useCallback((): WritingFormDraft => {
+    return typeof initialDraft === 'function' ? initialDraft() : initialDraft
+  }, [initialDraft])
+
+  const [draft, setDraft] = useState<WritingFormDraft>(() => resolveInitialDraft())
   const [activeParagraphId, setActiveParagraphId] = useState<string | null>(() => {
     if (defaultActiveParagraphId != null) return defaultActiveParagraphId
-    const d = typeof initialDraft === 'function' ? initialDraft() : initialDraft
-    return d.paragraphs[0]?.id ?? null
+    return resolveInitialDraft().paragraphs[0]?.id ?? null
   })
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const {
@@ -117,11 +132,29 @@ export function AgreementWritingFormShell({
   )
 
   useEffect(() => {
-    const nextDraft = typeof initialDraft === 'function' ? initialDraft() : initialDraft
-    setDraft(nextDraft)
-    setActiveParagraphId(defaultActiveParagraphId ?? nextDraft.paragraphs[0]?.id ?? null)
-    setSingleItemListActiveItemId(null)
-  }, [initialDraft, defaultActiveParagraphId])
+    const applyDraft = (nextDraft: WritingFormDraft) => {
+      setDraft(nextDraft)
+      setActiveParagraphId(defaultActiveParagraphId ?? nextDraft.paragraphs[0]?.id ?? null)
+      setSingleItemListActiveItemId(null)
+    }
+
+    if (templateCode != null && templateCode !== '') {
+      let cancelled = false
+      void loadWritingFormTemplateDraft(templateCode).then(saved => {
+        if (cancelled) return
+        if (saved?.draft) {
+          applyDraft(saved.draft)
+          return
+        }
+        applyDraft(resolveInitialDraft())
+      })
+      return () => {
+        cancelled = true
+      }
+    }
+
+    applyDraft(resolveInitialDraft())
+  }, [defaultActiveParagraphId, resolveInitialDraft, templateCode])
 
   const onReorderMiddle = useCallback((activeId: string, overId: string) => {
     setDraft(prev => ({
@@ -219,7 +252,31 @@ export function AgreementWritingFormShell({
   }, [setParams, openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    }, [])
+    if (templateCode == null || templateCode === '') return
+    void (async () => {
+      try {
+        await persistWritingFormTemplateDraft({
+          templateId: templateCode,
+          draft,
+        })
+        if (isTemplateManagementSave) {
+          showSaveSuccess(onTemplateDraftSaveConfirmed)
+        }
+      } catch (error) {
+        console.debug('agreementWritingFormShell save failed', error)
+        if (isTemplateManagementSave) {
+          showSaveFailure()
+        }
+      }
+    })()
+  }, [
+    draft,
+    isTemplateManagementSave,
+    onTemplateDraftSaveConfirmed,
+    showSaveFailure,
+    showSaveSuccess,
+    templateCode,
+  ])
 
   const handleSelectParagraph = useCallback((id: string) => {
     setActiveParagraphId(id)

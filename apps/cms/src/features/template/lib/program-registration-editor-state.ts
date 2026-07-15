@@ -5,7 +5,21 @@ import type {
   ProgramRegistrationType,
 } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 
+import {
+  shouldUseRemoteDraftApiForTemplateCode,
+} from '@/features/template/lib/form-template-remote-draft'
+
 export const PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE = 'registration-general' as const
+
+export {
+  REGISTRATION_GENERAL_USE_REMOTE_DRAFT_API,
+  shouldUseRemoteDraftApiForTemplateCode,
+} from '@/features/template/lib/form-template-remote-draft'
+
+/** @deprecated `shouldUseRemoteDraftApiForTemplateCode` 사용 */
+export function shouldUseRegistrationGeneralRemoteDraftApi(templateCode: string): boolean {
+  return shouldUseRemoteDraftApiForTemplateCode(templateCode)
+}
 
 export type ProgramRegistrationParticipantSelection = {
   individual: boolean

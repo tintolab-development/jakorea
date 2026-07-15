@@ -80,6 +80,7 @@ import {
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
 import { buildGeneralSurveyMockState } from './survey-mock'
+import { useGeneralProgramSurveys, useGeneralProgramSurveyResponses, useGeneralProgramSurveySummary } from '@/features/program/general/hooks/use-general-program-posts-surveys'
 import './survey-management.css'
 
 type CreateModalKind = 'survey' | 'satisfaction' | 'lecture'
@@ -118,9 +119,18 @@ function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: 
 
 export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurveyManagementViewProps) {
   const initialMock = useMemo(() => buildGeneralSurveyMockState(program), [program])
+  const { registeredSurveys: remoteRegisteredSurveys } = useGeneralProgramSurveys(program.id)
   const [registeredSurveys, setRegisteredSurveys] = useState(initialMock.registeredSurveys)
   const [activeRegisteredSurveyId, setActiveRegisteredSurveyId] = useState<string | null>(
     initialMock.activeRegisteredSurveyId
+  )
+  const { responses: remoteSurveyResponses } = useGeneralProgramSurveyResponses(
+    program.id,
+    activeRegisteredSurveyId ?? undefined
+  )
+  const { summary: remoteSurveySummary } = useGeneralProgramSurveySummary(
+    program.id,
+    activeRegisteredSurveyId ?? undefined
   )
   const [satisfactionSurveysByAudience, setSatisfactionSurveysByAudience] = useState(
     initialMock.satisfactionSurveysByAudience
@@ -178,6 +188,12 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   }, [program])
 
   useEffect(() => {
+    if (!remoteRegisteredSurveys || remoteRegisteredSurveys.length === 0) return
+    setRegisteredSurveys(remoteRegisteredSurveys)
+    setActiveRegisteredSurveyId(prev => prev ?? remoteRegisteredSurveys[0]?.id ?? null)
+  }, [remoteRegisteredSurveys])
+
+  useEffect(() => {
     if (!isGeneralSatisfactionSurveyNavTab(activeTab)) return
     setActiveSatisfactionAudience(prev =>
       resolveGeneralSatisfactionAudienceFromNavTab(activeTab, program, prev)
@@ -206,8 +222,33 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const showSatisfactionAudienceTabs =
     !isInstitutionTeacherOnlySatisfaction && satisfactionAudienceTabs.length > 0
   const activeSatisfactionSurvey = satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null
-  const pollResponses = useMemo(() => buildGeneralSurveyMockState(program).responses, [program])
+  // OpenAPI responses는 메타만 제공 — 문항 answers 미포함 시 mock 폴백 유지
+  const pollResponses = useMemo(() => {
+    if (remoteSurveyResponses && remoteSurveyResponses.length > 0) {
+      return remoteSurveyResponses.map(item => ({
+        respondentId: String(item.formResponseId ?? ''),
+        respondentName: `응답 ${item.formResponseId ?? ''}`,
+        addressRegion: '',
+        answers: {},
+      }))
+    }
+    return buildGeneralSurveyMockState(program).responses
+  }, [program, remoteSurveyResponses])
   const satisfactionResponses = pollResponses
+
+  useEffect(() => {
+    if (!remoteSurveyResponses || !activeRegisteredSurveyId) return
+    setRegisteredSurveys(prev =>
+      prev.map(survey =>
+        survey.id === activeRegisteredSurveyId
+          ? { ...survey, responseCount: remoteSurveyResponses.length }
+          : survey
+      )
+    )
+  }, [activeRegisteredSurveyId, remoteSurveyResponses])
+
+  // summary는 집계 UI 계약 확정 전 count 동기화용으로만 보유
+  void remoteSurveySummary
 
   useEffect(() => {
     if (lectureEvalSurvey == null) {

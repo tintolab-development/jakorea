@@ -4,6 +4,7 @@ export type FormTemplateVersionCacheEntry = {
   templateCode: string
   templateId: number
   templateVersionId?: number
+  latestVersionId?: number
   latestVersionNo?: number
 }
 
@@ -48,6 +49,7 @@ export function upsertFormTemplateVersionCacheFromListItems(
   items: Array<{
     templateCode?: string
     templateId?: number
+    latestVersionId?: number
     latestVersionNo?: number
   }>
 ): void {
@@ -56,10 +58,12 @@ export function upsertFormTemplateVersionCacheFromListItems(
     const templateCode = item.templateCode?.trim()
     if (templateCode == null || templateCode === '' || item.templateId == null) continue
     const existing = file.byTemplateCode[templateCode]
+    const latestVersionId = item.latestVersionId ?? existing?.latestVersionId
     file.byTemplateCode[templateCode] = {
       templateCode,
       templateId: item.templateId,
-      templateVersionId: existing?.templateVersionId,
+      templateVersionId: latestVersionId ?? existing?.templateVersionId,
+      latestVersionId,
       latestVersionNo: item.latestVersionNo ?? existing?.latestVersionNo,
     }
   }

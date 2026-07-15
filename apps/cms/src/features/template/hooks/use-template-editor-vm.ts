@@ -12,7 +12,6 @@ import {
   resolvePreviewHeaderTitle,
   type TemplateRegistryDefinition,
 } from '@/features/template/model/template-registry/template-registry'
-import { PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE } from '@/features/template/lib/program-registration-editor-state'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
 import { useProgramRegistrationEditor } from '@/features/template/hooks/use-program-registration-editor'
 import { useUjatProgramRegistrationEditor } from '@/features/template/ui/form-set/registration-form/UJAT'
@@ -24,6 +23,8 @@ export type TemplateEditorVmInput = {
   templateId: string | undefined
   templateName: string | undefined
   registryEntry: TemplateRegistryDefinition | undefined
+  /** 템플릿 draft 저장 확인 후 편집 모달 닫기 */
+  onTemplateDraftSaveConfirmed?: () => void
 }
 
 export function useTemplateEditorVm({
@@ -31,6 +32,7 @@ export function useTemplateEditorVm({
   templateId,
   templateName,
   registryEntry,
+  onTemplateDraftSaveConfirmed,
 }: TemplateEditorVmInput) {
   const entry = registryEntry ?? lookupTemplateRegistry(templateId)
 
@@ -50,16 +52,15 @@ export function useTemplateEditorVm({
       restrictCurriculumSessionStructure: true,
       programRegistrationFormVariant: entry?.registrationFormVariant ?? 'general',
       templateCode:
-        entry?.id === PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE ||
-        templateId === PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
-          ? PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
-          : undefined,
+        entry?.registrationEditor === 'general' ? (entry.id ?? templateId) : undefined,
+      onTemplateDraftSaveConfirmed,
     }
   )
 
   const ujatProgramRegistrationVm = useUjatProgramRegistrationEditor(
     isUjatProgramRegistration,
-    registrationPreviewTitle
+    registrationPreviewTitle,
+    { onTemplateDraftSaveConfirmed }
   )
 
   const participantPreviewTitle = resolvePreviewHeaderTitle(entry, templateName)
@@ -68,7 +69,11 @@ export function useTemplateEditorVm({
   const programParticipantApplicationVm = useProgramParticipantApplicationEditor(
     isParticipantApplication,
     participantPreviewTitle,
-    participantVariant
+    participantVariant,
+    {
+      onTemplateDraftSaveConfirmed,
+      templateCode: isParticipantApplication ? (entry?.id ?? templateId) : undefined,
+    }
   )
 
   const getSurveyListInitialDraft = useCallback((): WritingFormDraft => {
@@ -93,7 +98,8 @@ export function useTemplateEditorVm({
     getDefaultActiveParagraphId: getSurveyListDefaultParagraphId,
     previewHeaderTitle: resolvePreviewHeaderTitle(entry, templateName),
     editorKind: 'survey',
-    onSave: () => {},
+    templateCode: isWritingSurveyList ? (entry?.id ?? templateId) : undefined,
+    onTemplateDraftSaveConfirmed,
   })
 
   const surveyTableRowSelection = useTableRowSelectionState({

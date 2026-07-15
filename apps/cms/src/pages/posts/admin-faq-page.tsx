@@ -12,7 +12,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import type { AdminFaq } from '@/data/mock/admin-faqs'
@@ -58,6 +58,10 @@ function AdminFAQPage() {
   const listQuery = useFaqListQuery(searchParams, true)
   const { bulkDeleteMutation } = useFaqMutations()
   const rows = listQuery.data ?? []
+  const contentLoading = listQuery.isLoading
+  const contentError = listQuery.isError
+    ? getPostsApiErrorMessage(listQuery.error, 'FAQ 목록을 불러오지 못했습니다.')
+    : null
 
   const {
     categoryRows,
@@ -271,38 +275,48 @@ function AdminFAQPage() {
           data: tableData,
         }}
       >
-        <Table<AdminFaq>
-          rowKey="id"
-          className="cms-data-table admin-faq-list-page__table"
-          tableLayout="fixed"
-          scroll={{ x: FAQ_LIST_TABLE_SCROLL_X }}
-          columns={columns}
-          dataSource={tableData}
-          pagination={false}
-          onRow={record => ({
-            className: 'admin-faq-list-page__row--clickable',
-            onClick: (e: ReactMouseEvent) => {
-              const el = e.target as HTMLElement
-              if (
-                el.closest('.ant-checkbox-wrapper') ||
-                el.closest('.ant-table-selection-column')
-              ) {
-                return
-              }
-              navigate(`/admin/posts/faq/${record.id}`)
-            },
-          })}
-          rowSelection={
-            canWrite
-              ? {
-                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                  selectedRowKeys,
-                  onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
-                  preserveSelectedRowKeys: false,
+        {contentLoading ? (
+          <div className="page-content-loading page-content-loading--table-slot" role="status">
+            <Spin />
+          </div>
+        ) : contentError ? (
+          <div className="page-content-error" role="alert">
+            {contentError}
+          </div>
+        ) : (
+          <Table<AdminFaq>
+            rowKey="id"
+            className="cms-data-table admin-faq-list-page__table"
+            tableLayout="fixed"
+            scroll={{ x: FAQ_LIST_TABLE_SCROLL_X }}
+            columns={columns}
+            dataSource={tableData}
+            pagination={false}
+            onRow={record => ({
+              className: 'admin-faq-list-page__row--clickable',
+              onClick: (e: ReactMouseEvent) => {
+                const el = e.target as HTMLElement
+                if (
+                  el.closest('.ant-checkbox-wrapper') ||
+                  el.closest('.ant-table-selection-column')
+                ) {
+                  return
                 }
-              : undefined
-          }
-        />
+                navigate(`/admin/posts/faq/${record.id}`)
+              },
+            })}
+            rowSelection={
+              canWrite
+                ? {
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys,
+                    onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                    preserveSelectedRowKeys: false,
+                  }
+                : undefined
+            }
+          />
+        )}
       </FilterTableLayout>
     </div>
   )

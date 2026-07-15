@@ -1,0 +1,104 @@
+.section {
+  --reveal-radius: 18px;
+  --reveal-mask-width: clamp(320px, 72vw, 960px);
+  --reveal-mask-height: clamp(160px, 18vw, 280px);
+  --reveal-clip-inactive: inset(0 50% 0 50% round var(--reveal-radius));
+  --reveal-clip-active: inset(0 0 0 0 round var(--reveal-radius));
+  --reveal-duration: 3200ms;
+  --reveal-easing: cubic-bezier(0.22, 1, 0.36, 1);
+
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  padding: 120px 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  max-width: var(--reveal-mask-width);
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 20px;
+  text-align: center;
+  white-space: pre-line;
+  opacity: 0;
+  transform: translateY(50px);
+  transition:
+    opacity var(--reveal-duration) var(--reveal-easing),
+    transform var(--reveal-duration) var(--reveal-easing);
+}
+
+.mask {
+  position: relative;
+  width: var(--reveal-mask-width);
+  height: var(--reveal-mask-height);
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: var(--reveal-radius);
+  background: #000;
+  opacity: 0;
+  transform: scale(1);
+  clip-path: var(--reveal-clip-inactive);
+  transition:
+    clip-path var(--reveal-duration) var(--reveal-easing),
+    opacity var(--reveal-duration) var(--reveal-easing);
+}
+
+.iframeWrap {
+  position: absolute;
+  inset: 0;
+}
+
+.iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(90vw, 1100px);
+  aspect-ratio: 16 / 9;
+  height: auto;
+  min-height: 100%;
+  border: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.isInView .title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.isInView .mask {
+  opacity: 1;
+  clip-path: var(--reveal-clip-active);
+}
+
+.reducedMotion .title,
+.reducedMotion .mask {
+  opacity: 1;
+  transform: none;
+  clip-path: var(--reveal-clip-active);
+  transition: none;
+}
+
+@media (max-width: 767px) {
+  .section {
+    --reveal-radius: 16px;
+    --reveal-mask-width: calc(100vw - 40px);
+    --reveal-mask-height: clamp(180px, 52vw, 260px);
+    --reveal-clip-inactive: inset(0 50% 0 50% round var(--reveal-radius));
+    --reveal-duration: 2800ms;
+    padding: 96px 0;
+    gap: 32px;
+  }
+
+  .title {
+    padding-inline: 20px;
+  }
+}

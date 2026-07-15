@@ -11,6 +11,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
 import { GeneralProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/detail-fullpage-modal'
 import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
+import { useDeleteGeneralPrograms } from '@/features/program/general/hooks/use-delete-general-program'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
 import {
   isGeneralProgramId,
@@ -60,11 +61,16 @@ export function GeneralProgramListPageContent() {
     statusFilter,
     refetchPrograms,
     loading: listLoading,
+    isRemoteDataSource,
   } = useGeneralProgramListFilters()
+
+  const deleteGeneralProgramsMutation = useDeleteGeneralPrograms()
 
   const { handleBulkDelete } = useProgramListActions()
 
   const { isWritingUserPreviewOpen, closeWritingUserPreview } = useTemplateWritingPreview()
+
+  const [selectedProgramForDetail, setSelectedProgramForDetail] = useState<Program | null>(null)
 
   const handleCloseGeneralProgramRegistrationFullpage = useCallback(() => {
     if (!isGeneralProgramListPath(pNorm)) return
@@ -81,10 +87,35 @@ export function GeneralProgramListPageContent() {
     )
   }, [closeWritingUserPreview, pNorm, setSearchParams])
 
-  const handleGeneralProgramRegistrationSaved = useCallback(() => {
-    refetchPrograms()
-    handleCloseGeneralProgramRegistrationFullpage()
-  }, [handleCloseGeneralProgramRegistrationFullpage, refetchPrograms])
+  const handleGeneralProgramRegistrationSaved = useCallback(
+    (createdProgram?: Program) => {
+      refetchPrograms()
+      if (createdProgram) {
+        setSelectedProgramForDetail(createdProgram)
+        setSearchParams(
+          prev => {
+            const next = clearGeneralProgramDetailQueryParams(new URLSearchParams(prev))
+            next.delete(PROGRAMS_GENERAL_NEW_QUERY_KEY)
+            next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+            next.delete('userPreview')
+            next.set('programId', createdProgram.id)
+            next.set('lnb', 'info')
+            next.set('tab', 'info')
+            return next
+          },
+          { replace: true }
+        )
+        return
+      }
+      handleCloseGeneralProgramRegistrationFullpage()
+    },
+    [
+      handleCloseGeneralProgramRegistrationFullpage,
+      refetchPrograms,
+      setSearchParams,
+      setSelectedProgramForDetail,
+    ]
+  )
 
   const userPreviewSyncParams = useMemo(
     () => ({ userPreview: searchParams.get('userPreview') ?? undefined }),
@@ -143,7 +174,6 @@ export function GeneralProgramListPageContent() {
   }, [searchParams])
 
   const programIdFromUrl = searchParams.get('programId')
-  const [selectedProgramForDetail, setSelectedProgramForDetail] = useState<Program | null>(null)
 
   useEffect(() => {
     if (searchParams.has(PROGRAMS_GENERAL_NEW_QUERY_KEY)) {
@@ -168,7 +198,10 @@ export function GeneralProgramListPageContent() {
 
   const generalDetailProgram = selectedProgramForDetail
 
+  const applyListSearchRef = useRef<(() => void) | null>(null)
+
   const handleCloseFullPageModal = useCallback(() => {
+    applyListSearchRef.current?.()
     setSelectedProgramForDetail(null)
     setSearchParams(
       prev =>
@@ -210,8 +243,15 @@ export function GeneralProgramListPageContent() {
   }
 
   const handleProgramCreateClick = useCallback(() => {
-    navigate({ pathname: '/programs/general', search: '?new=1' })
-  }, [navigate])
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.set(PROGRAMS_GENERAL_NEW_QUERY_KEY, '1')
+        return next
+      },
+      { replace: false }
+    )
+  }, [setSearchParams])
 
   const handleView = (program: Program) => {
     if (!user || !isAuthenticated) {
@@ -225,8 +265,8 @@ export function GeneralProgramListPageContent() {
       prev => {
         const nextParams = new URLSearchParams(prev)
         nextParams.set('programId', program.id)
-        nextParams.set('lnb', 'info')
-        nextParams.set('tab', 'info')
+        if (!nextParams.get('lnb')) nextParams.set('lnb', 'info')
+        if (!nextParams.get('tab')) nextParams.set('tab', 'info')
         return nextParams
       },
       { replace: false }
@@ -303,6 +343,9 @@ export function GeneralProgramListPageContent() {
         searchParams={searchParams}
         setSearchParams={setSearchParams}
         disableUrlSync={generalDetailModalOpen}
+        onRegisterApplySearch={applySearch => {
+          applyListSearchRef.current = applySearch
+        }}
         onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
         selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
         showRowSelection={isScheduledFilter}
@@ -338,8 +381,16 @@ export function GeneralProgramListPageContent() {
         confirmText="삭제"
         cancelText="취소"
         danger
-        onConfirm={() => {
-          handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
+        onConfirm={async () => {
+          if (isRemoteDataSource) {
+            await deleteGeneralProgramsMutation.mutateAsync(
+              programsPendingBulkDelete.map(program => program.id)
+            )
+            refetchPrograms()
+          } else {
+            await handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
+          }
+          setSelectedRowKeys([])
           setBulkDeleteModalOpen(false)
           setProgramsPendingBulkDelete([])
         }}
