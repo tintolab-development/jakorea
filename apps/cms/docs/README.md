@@ -147,6 +147,8 @@
 | [forms-surveys-api-migration-guide.md](api/forms-surveys-api-migration-guide.md) | 템플릿 양식 API **PHASE별 마이그레이션 가이드** |
 | [forms-surveys-api-backend-gaps.md](api/forms-surveys-api-backend-gaps.md) | 템플릿 양식 **백엔드 갭·미구현 핸드오프** |
 | [template-create-api-backend-handoff.md](api/template-create-api-backend-handoff.md) | 템플릿 관리 **신규 템플릿 생성** API·로직 갭 (BE 전달용) |
+| [programs-ujat-api-backend-handoff.md](api/programs-ujat-api-backend-handoff.md) | UJAT 프로그램 CRUD 전환 계약·gate·잔여 API |
+| [programs-company-school-api-backend-handoff.md](api/programs-company-school-api-backend-handoff.md) | 1사1교 프로그램 CRUD 전환 계약·gate·잔여 API |
 | [api-spec-mock-detailed.md](api/api-spec-mock-detailed.md) | API 명세 상세 |
 | [api-spec-mock-extended.md](api/api-spec-mock-extended.md) | API 명세 확장 |
 
@@ -156,6 +158,10 @@
 
 | 문서 | 설명 |
 |------|------|
+| [cms-shared-ssot-migration.md](design-system/cms-shared-ssot-migration.md) | CMS shared SSOT·공통화 마이그레이션 로드맵 (Platform 제외) |
+| [dashboard-widget-catalog-audit.md](design-system/dashboard-widget-catalog-audit.md) | 대시보드 홈 위젯 DS 카탈로그·Not catalogued 추림 |
+| [css-override-audit.md](design-system/css-override-audit.md) | feature/shared CSS override 감사 (Phase 4) |
+| [numeric-input-ux-audit.md](design-system/numeric-input-ux-audit.md) | 숫자 입력 UX 감사 |
 | [add-instructor-modal-spec.md](design/add-instructor-modal-spec.md) | 강사 추가 모달 |
 | [applicant-instructor-detail-modal-spec.md](design/applicant-instructor-detail-modal-spec.md) | 지원 강사 상세 모달 |
 | [dashboard-program-progress-improvement.md](design/dashboard-program-progress-improvement.md) | 대시보드 프로그램 진행 개선 |
@@ -175,7 +181,7 @@
 |------|------|
 | [ia-members.md](members/ia-members.md) | IA 멤버 |
 | [CLEANUP_BENEFITS.md](claude-prompt/CLEANUP_BENEFITS.md) | 정리 이점 |
-| [CLEANUP_DEPRECATED_CODE.md](claude-prompt/CLEANUP_DEPRECATED_CODE.md) | Deprecated 코드 정리 |
+| [CLEANUP_DEPRECATED_CODE.md](claude-prompt/CLEANUP_DEPRECATED_CODE.md) | Deprecated 코드·Legacy UI 삭제 기록과 Current 대체 |
 | [POLICY_TO_AUDIT.md](claude-prompt/POLICY_TO_AUDIT.md) | 감사 정책 |
 
 ---
@@ -201,4 +207,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-04-21
+**마지막 업데이트**: 2026-07-15

@@ -90,7 +90,7 @@ VITE_REAL_API_MODULES=...,programs,applications,programProgress
 
 - 목록 필터 `lifecycleStatus` / `participantRecruitment` / 운영기간 → 클라이언트 필터 only
 - `serviceDetailJson` v1 — 모집 nested·설문 메뉴 등 일부만
-- create body에 `programType=GENERAL` 없음 (목록 query에만)
+- ~~create body에 `programType=GENERAL` 없음~~ → **FE 전송함** (`programType`, `business*`, `autoApplyDefaultFormBindings`)
 - 목록 `size: 500` 고정
 - ~~상세 remote 실패 시 `useGeneralProgramDetail`의 `error` UI 미연동~~ → **연동됨** (`detail-fullpage-modal`)
 

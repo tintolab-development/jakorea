@@ -6,6 +6,7 @@ OpenAPI에 경로가 이미 있더라도, **FE mock·등록 스냅샷·현재 �
 | 항목 | 값 |
 |------|-----|
 | **작성일** | 2026-07-15 |
+| **갱신** | 2026-07-15 — BE create 계약·FE 매퍼/`autoApply`/후원사 연동 반영 |
 | **대상 화면** | `/programs/general?new=1` → 공통정보 → (모집) → **신청정보** → 「프로그램 등록 완료」 |
 | **Method / Path** | `POST /api/admin/programs` |
 | **OpenAPI** | `operationId: createProgram` · schema `ProgramCreateRequest` → 응답 `ApiResponse` + `ProgramResponse`(또는 동등 detail) |
@@ -98,7 +99,7 @@ OpenAPI에 경로가 이미 있더라도, **FE mock·등록 스냅샷·현재 �
 
 | CMS `Program` 필드 | mock 스냅샷 값 (일반) | 비고 |
 |--------------------|----------------------|------|
-| `sponsorId` | mock sponsors 첫 id (`sponsor-1` 등) | 실제는 유효 후원사 id 필요 |
+| `sponsorId` | 기본정보 UI 선택값 (remote 필수) · 없으면 local mock 폴백 | BE 존재 검증 |
 | `title` / `mainTitle` | `신규 일반 프로그램 (YYYY-MM-DD HH:mm)` | 하드코드 |
 | `type` | `offline` | |
 | `format` | `workshop` | |
@@ -148,39 +149,43 @@ OpenAPI에 정의된 필드 중 **등록 완료 경로에서 실제로 채워질
 
 | 필드 | 등록 스냅샷 | 설명 |
 |------|:-----------:|------|
-| `sponsorId` | ★ | 후원사 id |
+| `sponsorId` | ★ | 후원사 id (UI 선택 · remote 필수) |
+| `programType` | ★ | create 전용 `GENERAL` |
 | `title` | ★ | 프로그램명 |
 | `mainTitle` | ★ | 없으면 FE가 `title` 복사 |
 | `type` | ★ | 예: `offline` |
 | `format` | ★ | 예: `workshop` |
 | `category` | ★ | 예: `school` |
 | `description` | ★ | |
-| `startDate` / `endDate` | ★ | ISO-8601. FE는 CMS `Program.startDate/endDate`를 그대로 전송 (사업 기간) |
+| `startDate` / `endDate` | ★ | ISO-8601 (사업 기간) |
+| `businessStartDate` / `businessEndDate` | ★ | create 전용 — `startDate`/`endDate` mirror |
 | `applicationStartDate` / `applicationEndDate` | ★ | ISO-8601 |
 | `status` | ★ | 예: `pending` |
-| `lifecycleStatus` | ★ | 예: `recruiting_students` (snake_case CMS enum) |
+| `lifecycleStatus` | ★ | 예: `recruiting_students` → BE `RECRUITING` |
 | `businessArea` | ★ | |
 | `targetLevel` | ★ | 단일. 다중은 `serviceDetailJson.targetLevels` |
-| `rounds` | ★ | `ProgramRoundRequest[]` |
+| `rounds` | ★ | `ProgramRoundRequest[]` → BE `program_schedule` |
 | `serviceDetailJson` | ★(내용 있을 때) | **JSON string** (이중 stringify 금지). §5 |
+| `autoApplyDefaultFormBindings` | ★ | create 전용 `true` — BE가 기본 form-bindings 적용 |
 | `instructors` | ○ | 스냅샷은 0 |
 | 기타 (`venue`, `contactEmail`, `recruitmentGuide`, `wagePolicies`, `schedules`, `adminAssignments`, `paymentItems`, …) | ○/미전송 | Create schema에는 있으나 등록 스냅샷은 대부분 미설정 |
 
-**Create body에 없는 것 (FE/BE 갭)**
+**Create body에 넣지 않는 것**
 
-| 항목 | 현재 | BE 요청 |
-|------|------|---------|
-| `programType` | 목록 query만 `programType=GENERAL` | Create 시 `GENERAL` 확정 필드 또는 서버 기본값 명시 |
-| `generalParticipantTypes` 등 nested | `serviceDetailJson`으로만 전달 | 저장 후 GET detail에서 **동일 문자열(또는 파싱 가능한 동등 JSON) 반환** |
-| 등록/모집/신청 **WritingFormDraft** | 별도 form-templates API | programs POST에 넣지 않음 |
+| 항목 | 처리 |
+|------|------|
+| `generalParticipantTypes` 등 nested | `serviceDetailJson`으로만 (BE round-trip 지원) |
+| 등록/모집/신청 **WritingFormDraft** | form-templates `PUT` (programs POST에 미포함) |
+| form-bindings apply | BE create 자동 — FE `…/default-form-bindings/apply` **미호출** |
 
-### 4.3 샘플 body (일반 프로그램 등록 완료 · 현재 FE에 가까운 예)
+### 4.3 샘플 body (일반 프로그램 등록 완료 · 현재 FE)
 
 날짜는 실행 시점에 따라 달라집니다. 구조 참고용입니다.
 
 ```json
 {
-  "sponsorId": "sponsor-1",
+  "sponsorId": "<선택된_후원사_id>",
+  "programType": "GENERAL",
   "title": "신규 일반 프로그램 (2026-07-15 14:30)",
   "mainTitle": "신규 일반 프로그램 (2026-07-15 14:30)",
   "type": "offline",
@@ -189,6 +194,8 @@ OpenAPI에 정의된 필드 중 **등록 완료 경로에서 실제로 채워질
   "description": "일반 프로그램 등록(임시 저장)",
   "startDate": "2026-04-01T00:00:00.000Z",
   "endDate": "2026-12-31T23:59:59.999Z",
+  "businessStartDate": "2026-04-01T00:00:00.000Z",
+  "businessEndDate": "2026-12-31T23:59:59.999Z",
   "applicationStartDate": "2026-07-15T00:00:00.000Z",
   "applicationEndDate": "2026-08-14T23:59:59.999Z",
   "status": "pending",
@@ -207,7 +214,8 @@ OpenAPI에 정의된 필드 중 **등록 완료 경로에서 실제로 채워질
       "deliveryType": "offline"
     }
   ],
-  "serviceDetailJson": "{\"schemaVersion\":1,\"generalParticipantTypes\":[\"school_institution\"],\"generalSurveyMenuKeys\":[\"survey\",\"satisfaction\",\"lecture_evaluation\"]}"
+  "serviceDetailJson": "{\"schemaVersion\":1,\"generalParticipantTypes\":[\"school_institution\"],\"generalSurveyMenuKeys\":[\"survey\",\"satisfaction\",\"lecture_evaluation\"]}",
+  "autoApplyDefaultFormBindings": true
 }
 ```
 
@@ -262,7 +270,7 @@ FE 성공 처리:
 | 목록/상세에 보이는 제목 (`title`/`mainTitle` 또는 list의 `nameKo`) | 목록 반영 |
 | `serviceDetailJson` round-trip (보냈으면 상세 GET에 유지) | 참여자 유형·설문 메뉴·교육구조 표시 |
 
-날짜 필드: OpenAPI 목록 예시는 `businessStartDate` date string, Create는 FE가 ISO datetime 전송 — **BE 파싱·저장 규칙 합의 필요**.
+날짜 필드: FE는 ISO datetime 전송. BE는 `startDate`/`endDate`·`business*`·`application*` ISO 허용 (합의 완료).
 
 ---
 
@@ -285,11 +293,11 @@ FE 성공 처리:
 | `volunteerApplicationStartDate` / `EndDate` | 봉사자 모집 기간 |
 | `resultAnnouncementDate` / `resultAnnouncementMethod` | 결과 발표 |
 
-**BE 요청**
+**BE (완료)**
 
-1. Create/Update 시 문자열을 **그대로 영속** (또는 동등 object 컬럼에 저장 후 GET 시 string으로 재직렬화)
-2. `schemaVersion` 모르는 값이면 FE는 nested를 무시하므로, v1은 유지·확장 시 버전 bump 합의
-3. 이중 JSON stringify(`"\"{...}\""`) 금지
+1. Create/Update 시 문자열 영속 · GET detail round-trip
+2. `schemaVersion` v1 유지·확장 시 bump 합의
+3. 이중 JSON stringify 금지
 
 ---
 
@@ -301,37 +309,29 @@ FE 성공 처리:
 |--------|-----|------|
 | 등록/모집/신청 WritingFormDraft | `PUT /api/admin/form-template-versions/{versionId}` (`schemaJson` 등) | 중간 저장·등록 완료 직전 draft persist |
 | 사용자(학교/개인) 실제 신청 제출 | Platform `…/form-bindings/…/responses` 등 | 프로그램 생성 **이후** |
-| 프로그램↔양식 바인딩 | `POST /api/admin/programs/{programId}/form-bindings` | 생성 후 (별도 연동) |
+| 프로그램↔양식 바인딩 | create 시 BE 자동 (`autoApplyDefaultFormBindings`) · FE apply **미호출** | 생성과 동일 트랜잭션/후처리 |
 | 게시글/설문 등록 | `POST …/posts`, surveys | 상세 운영 |
 
 양식 시드·draft 계약: [writing-form-seeds-backend-handoff.md](./writing-form-seeds-backend-handoff.md) · [form-template-json-contract.md](./form-template-json-contract.md).
 
 ---
 
-## 7. BE 확인·개발 요청 체크리스트
+## 7. BE·FE 계약 체크리스트
 
-OpenAPI상 `createProgram`은 「구현 완료」로 표기되어 있습니다. 아래는 **CMS 등록 완료 UX 기준 수용 조건**입니다.
+### P0 — 등록 완료 (BE 완료 · FE 연동)
 
-### P0 — 등록 완료 스모크
+- [x] Create `programType: "GENERAL"`
+- [x] `lifecycleStatus` → `RECRUITING`
+- [x] ISO datetime + `businessStartDate`/`businessEndDate`
+- [x] `sponsorId` 검증 · FE UI 선택값 전송
+- [x] `serviceDetailJson` round-trip
+- [x] `rounds[]` → schedule
+- [x] `autoApplyDefaultFormBindings: true`
+- [ ] 스테이징 수동 QA (JWT create → list → detail)
 
-- [ ] 관리자 JWT로 `POST /api/admin/programs` 성공 (200 + `data.id`)
-- [ ] 직후 `GET /api/admin/programs?programType=GENERAL` 목록에 노출
-- [ ] `GET /api/admin/programs/{id}` 상세에서 title·기간·rounds 확인
-- [ ] 생성 프로그램이 일반(`GENERAL`)으로 분류 (Create body에 type 필드가 없으면 **서버 기본값/추론 규칙** 문서화)
-- [ ] `lifecycleStatus` / `periodStatus` 매핑: FE `recruiting_students` ↔ 목록 `RECRUITING`
+### P2 — 등록 UX 고도화 (FE 후속)
 
-### P1 — nested · 날짜 · 후원사
-
-- [ ] `serviceDetailJson` create 저장 + detail GET round-trip
-- [ ] `sponsorId` 타입(UUID vs 숫자 string)과 존재하지 않는 id 시 400 메시지
-- [ ] `startDate`/`endDate` vs `businessStartDate`/`businessEndDate` 매핑 규칙
-- [ ] 날짜: ISO datetime 수신 허용 여부 (FE는 ISO 전송)
-
-### P2 — 등록 UX 고도화 (FE·BE 합의)
-
-- [ ] Create body에 `programType: "GENERAL"` 공식 필드
 - [ ] 폼 실제 입력값 → Create 필드 전량 매핑 (현재 FE는 스냅샷 하드코드 비중 큼)
-- [ ] 생성 시 form-bindings 일괄 생성 여부 (현재 FE 미호출)
 - [ ] 생성자 admin → OWNER `adminAssignments` 자동 부여 (mock `programService.create`는 유사 동작 있음)
 
 ---
@@ -343,8 +343,10 @@ OpenAPI상 `createProgram`은 「구현 완료」로 표기되어 있습니다. 
 | 1 | remote ON · 「프로그램 등록 완료」 | Network에 `POST /api/admin/programs` **정확히 1회** |
 | 2 | 등록 위저드 헤더 「저장」만 | programs POST **없음** |
 | 3 | 성공 | 목록에 행 추가 · URL `programId` · 상세 정보 탭 오픈 |
-| 4 | 실패 (4xx/5xx) | FE `showAlert` 등록 실패 · URL에 `new=1` 유지 (완료 전환 없음) |
+| 4 | 실패 (4xx/5xx) | FE `showAlert` + `getGeneralProgramApiErrorMessage` · `new=1` 유지 |
 | 5 | remote OFF | localStorage `general-local-*` 생성 · POST 없음 |
+| 6 | body | `programType=GENERAL`, `autoApplyDefaultFormBindings=true`, `business*`, 실 `sponsorId` |
+| 7 | form-bindings | BE 자동 · FE apply **미호출** |
 
 ---
 

@@ -87,59 +87,48 @@ FE 매핑: `mapGeneralProgramToCreateRequest` → `createAdminProgramRemote`.
 | `GET` | `/api/admin/sponsors` | `sponsors` | 후원사 목록 | ✅ | 공통정보 편집 wired |
 | `GET` | `/api/admin/sponsors/{sponsorId}/contacts` | `contacts` | 담당자 | ✅ | 공통정보 편집 wired |
 
-등록 완료 스냅샷은 현재 **mock sponsor 하드코드** 비중이 큼. Create의 `sponsorId`는 실제 유효 id여야 하므로 BE는 존재하지 않는 id에 **400 + 명확한 메시지**를 주세요.
+등록 완료 시 FE는 기본정보에서 선택한 **실 `sponsorId`** 를 Create body에 넣습니다. remote 시 미선택이면 POST 전 차단. 존재하지 않는 id는 BE **400** + FE 한글 안내.
 
 ---
 
-## 3. OpenAPI에 있으나 FE 미연동 · 역할 합의 필요
+## 3. OpenAPI에 있으나 등록 위저드에서 미호출 (합의 완료)
 
-아래는 Path가 이미 있습니다. 등록 UX에 **쓸지 / 서버가 create 시 자동 처리할지**를 BE·FE가 합의해야 합니다.
+| Method | Path | operationId | 역할 | FE |
+|--------|------|-------------|------|-----|
+| `POST` | `/api/admin/programs/drafts` | `saveDraft` | 프로그램 단위 draft | **미사용** — form-template draft만 |
+| `GET`/`PUT`/`DELETE` | `/api/admin/program-draft` | (draft CRUD) | 동일 | **미사용** |
+| `GET` | `/api/admin/programs/{programId}/default-form-bindings/preview` | `previewDefaultFormBindings` | preview | **미호출** |
+| `POST` | `/api/admin/programs/{programId}/default-form-bindings/apply` | `applyDefaultFormBindings` | 바인딩 일괄 | **미호출** — create 시 BE 자동 (`autoApplyDefaultFormBindings: true`) |
+| `POST` | `/api/admin/programs/{programId}/form-bindings` | `createFormBinding` | 단건 | **미호출** (등록 완료 경로) |
+| `GET` | `/api/admin/programs/code-preview` | `programCodePreview` | 코드 preview | 등록 UI 미사용 |
 
-| Method | Path | operationId | 의도된 역할 | FE | BE 확인 |
-|--------|------|-------------|-------------|----|---------|
-| `POST` | `/api/admin/programs/drafts` | `saveDraft` | 프로그램 단위 draft | **미사용** — FE는 form-template draft | [ ] form-template draft와 역할 분담 문서화 |
-| `GET`/`PUT`/`DELETE` | `/api/admin/program-draft` | (draft CRUD) | 동일 | **미사용** | [ ] 동일 |
-| `GET` | `/api/admin/programs/{programId}/default-form-bindings/preview` | `previewDefaultFormBindings` | 기본 양식 바인딩 preview | **미호출** | [ ] GENERAL 후보 목록 올바른지 |
-| `POST` | `/api/admin/programs/{programId}/default-form-bindings/apply` | `applyDefaultFormBindings` | 기본 바인딩 일괄 적용 | **미호출** | [ ] create 후 자동 적용 vs FE 호출 |
-| `POST` | `/api/admin/programs/{programId}/form-bindings` | `createFormBinding` | 바인딩 단건 | **미호출** | [ ] apply와 관계 |
-| `GET` | `/api/admin/programs/{programId}/form-bindings` | `formBindings` | 바인딩 목록 | 상세 트랙 | [ ] |
-| `GET` | `/api/admin/programs/code-preview` | `programCodePreview` | 코드 미리보기 | 등록 UI 미사용 | 선택 |
+**등록 UX (확정)**
 
-**권장 (등록 UX)**
-
-1. **중간 저장 SSOT**: 계속 `PUT …/form-template-versions/{versionId}` (현재 FE).
-2. **생성 후 양식 연결**: create 성공 후 서버가 `default-form-bindings/apply`와 동등 동작을 **자동** 수행하거나, FE가 apply를 1회 호출 — 둘 중 하나를 명시.
-3. programs `drafts` API는 위저드와 **병행하지 않음**을 문서화 (혼선 방지).
+1. **중간 저장 SSOT**: `PUT …/form-template-versions/{versionId}`
+2. **생성**: canonical `POST /api/admin/programs` 1회 (`programType=GENERAL`, `autoApplyDefaultFormBindings=true`)
+3. **form-bindings**: BE create 성공 후 자동 적용 — FE apply API 호출 없음
+4. programs draft API는 위저드와 병행하지 않음
 
 ---
 
-## 4. 계약 갭 · 미비 항목 (개발 체크리스트)
+## 4. 계약 상태 · 잔여 체크리스트
 
-### 4.1 P0 — Create 스모크
+### 4.1 P0 — Create 스모크 (BE 계약 완료 · FE 연동)
 
-- [ ] 관리자 JWT로 `POST /api/admin/programs` 성공 (200 + `data.id`)
-- [ ] 직후 `GET /api/admin/programs?programType=GENERAL` 목록에 노출
-- [ ] `GET /api/admin/programs/{id}` 에서 title·기간·rounds 확인
-- [ ] 생성 프로그램이 **일반(`GENERAL`)** 으로 분류  
-      - **갭**: `ProgramCreateRequest`에 `programType` 필드 **없음** (목록 query·`ProgramDraftSaveRequest`에만 존재)  
-      - → 서버 기본값/추론 규칙을 **문서화**하거나 Create body에 `programType: "GENERAL"` 공식 필드 추가
-- [ ] `lifecycleStatus` / `periodStatus` 매핑: FE `recruiting_students` ↔ 목록 `RECRUITING`
+- [x] Create body `programType: "GENERAL"` (FE `mapGeneralProgramToCreateRequest`)
+- [x] `lifecycleStatus=recruiting_students` → BE `period_status=RECRUITING`
+- [x] ISO datetime (`startDate`/`endDate`/`application*` + `businessStartDate`/`businessEndDate` mirror)
+- [x] `sponsorId` 검증 · `program_sponsor` 저장 (FE는 UI 선택값 전송)
+- [x] `serviceDetailJson` 저장/상세 round-trip
+- [x] `rounds[]` → `program_schedule`
+- [x] create 후 기본 form-bindings 자동 (`autoApplyDefaultFormBindings`)
+- [ ] 스테이징 수동 QA: JWT create → list(`programType=GENERAL`) → detail
 
-### 4.2 P1 — nested · 날짜 · 후원사
+### 4.2 P2 — FE 후속 (등록 UX 고도화)
 
-- [ ] `serviceDetailJson` create 저장 + detail GET **round-trip** (이중 stringify 금지)
-- [ ] nested 키 v1: `schemaVersion`, `generalParticipantTypes`, `generalSurveyMenuKeys`, (공통정보 저장 시) `generalCommonInfo` 등 — SSOT: `general-program-service-detail-json.ts`
-- [ ] `sponsorId` 타입(UUID vs 숫자 string) · 없는 id → 400 메시지
-- [ ] `startDate`/`endDate` vs `businessStartDate`/`businessEndDate` 매핑
-- [ ] 날짜: FE는 ISO-8601 datetime 전송 — 수신·파싱 허용
-
-### 4.3 P2 — 등록 UX 고도화
-
-- [ ] Create body에 `programType: "GENERAL"` 공식 필드
-- [ ] 생성 시 form-bindings 일괄 생성 (apply 자동 또는 FE 호출 계약)
-- [ ] 생성자 admin → OWNER `adminAssignments` 자동 부여 여부 명시
-- [ ] 폼 실입력값 → Create 필드 전량 매핑 (현재 FE 스냅샷 하드코드 비중 큼 — FE 후속 + BE 수용)
-- [ ] CMS만 쓰는 필드(`scheduleTimeEnabled`, `studentListRequired` 등) — Create schema에 없음 · 현재 미전송 · 필요 시 `serviceDetailJson` 또는 schema 확장
+- [ ] 폼 실입력값 → Create 필드 전량 매핑 (제목·운영기간·교육장 등 — 현재 스냅샷 하드코드 비중)
+- [ ] 생성자 admin → OWNER `adminAssignments` 자동 부여 여부(문서/동작 확인)
+- [ ] CMS 전용 필드(`scheduleTimeEnabled` 등) — 필요 시 `serviceDetailJson` 확장
 
 ---
 
@@ -147,26 +136,21 @@ FE 매핑: `mapGeneralProgramToCreateRequest` → `createAdminProgramRemote`.
 
 상세 샘플 body·필드표는 [programs-create-api-backend-handoff.md](./programs-create-api-backend-handoff.md) §4.
 
-### 5.1 등록 완료에서 채워질 수 있는 필드
+### 5.1 등록 완료에서 FE가 채우는 필드
 
 | 필드 | 비고 |
 |------|------|
-| `sponsorId`, `title`, `mainTitle`, `type`, `format`, `category`, `description` | ★ 스냅샷 |
-| `startDate`, `endDate`, `applicationStartDate`, `applicationEndDate` | ★ ISO |
+| `programType` | `GENERAL` (create 전용) |
+| `sponsorId`, `title`, `mainTitle`, `type`, `format`, `category`, `description` | ★ 스냅샷 (`sponsorId` = UI 선택) |
+| `startDate`, `endDate`, `businessStartDate`, `businessEndDate` | ★ ISO (business* = start/end mirror) |
+| `applicationStartDate`, `applicationEndDate` | ★ ISO |
 | `status`, `lifecycleStatus`, `businessArea`, `targetLevel` | ★ |
 | `rounds[]` | ★ `ProgramRoundRequest` |
 | `serviceDetailJson` | ★ CMS nested JSON **string** |
-| `instructors`, `venue`, `wagePolicies`, `schedules`, `adminAssignments`, … | Create schema에 있으나 등록 스냅샷은 대부분 미설정 |
+| `autoApplyDefaultFormBindings` | `true` |
+| WritingFormDraft | **미포함** — form-templates API |
 
-### 5.2 Create body에 없는 것
-
-| 항목 | 현재 | BE 요청 |
-|------|------|---------|
-| `programType` | 목록 query만 `GENERAL` | Create 필드 또는 서버 기본값 문서화 |
-| `generalParticipantTypes` 등 | `serviceDetailJson`으로만 | GET detail round-trip |
-| WritingFormDraft | form-templates API | programs POST에 넣지 않음 |
-
-### 5.3 FE가 응답에서 반드시 쓰는 것
+### 5.2 FE가 응답에서 반드시 쓰는 것
 
 | 필요 | 이유 |
 |------|------|
@@ -213,7 +197,8 @@ FE 매핑: `mapGeneralProgramToCreateRequest` → `createAdminProgramRemote`.
 | 3 | 성공 | 목록에 행 추가 · URL `programId` · 상세 정보 탭 |
 | 4 | 실패 4xx/5xx | 등록 실패 알림 · `new=1` 유지 |
 | 5 | remote OFF | localStorage `general-local-*` · POST 없음 |
-| 6 | (합의 후) form-bindings | create 직후 신청/모집 양식 바인딩 존재 또는 apply 성공 |
+| 6 | form-bindings | create 직후 기본 바인딩 존재 (BE 자동 · FE apply 호출 없음) |
+| 7 | body | `programType=GENERAL`, `autoApplyDefaultFormBindings=true`, `businessStartDate`, 실 `sponsorId` |
 
 ---
 
@@ -232,16 +217,14 @@ FE 매핑: `mapGeneralProgramToCreateRequest` → `createAdminProgramRemote`.
 
 ---
 
-## 10. 우선순위 요약 (BE)
+## 10. 우선순위 요약
 
-| 우선 | 할 일 |
-|------|--------|
-| **P0** | `POST /api/admin/programs` 스모크 + GENERAL 분류 + list/detail 반영 + lifecycle↔period 매핑 |
-| **P0** | form-template version PUT/GET · `registration-general` 등 시드 payload |
-| **P1** | `serviceDetailJson` round-trip · sponsorId · 날짜/business* 매핑 |
-| **P2** | Create `programType` · form-bindings apply(자동 또는 FE) · adminAssignments OWNER |
-| **합의** | programs draft API vs form-template draft — 위저드는 후자만 사용 |
+| 우선 | 상태 |
+|------|------|
+| **P0** Create canonical + GENERAL + lifecycle↔period + ISO + sponsor + serviceDetailJson + rounds→schedule + auto form-bindings | **BE 완료 · FE create 매퍼/후원사 연동 완료** |
+| **P0** 중간 저장 = form-template version PUT | **확정 · FE 유지** |
+| **P2** 폼 전량 → Create body · adminAssignments OWNER 문서화 | FE/BE 후속 |
 
 ---
 
-_문서 기준 OpenAPI: 2026-07-15 live `/v3/api-docs`. 스펙 drift 시 Swagger·`apps/cms/openapi/backend.openapi.json`과 재대조._
+_문서 기준 OpenAPI: 2026-07-15 live `/v3/api-docs` (갱신본). 스펙 drift 시 Swagger·`apps/cms/openapi/backend.openapi.json`과 재대조._

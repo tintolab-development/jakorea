@@ -102,7 +102,7 @@
 **파일 위치**:
 - `src/pages/programs/program-list-page.tsx`
 - `src/features/program/general/ui/program-detail-drawer.tsx` — handleApplicationClick 로그인 redirect (기존)
-- `src/features/program/general/ui/program-application-card.tsx` — applyRedirectPath, 로그인/회원가입 Link redirect (2026-01-26)
+- ~~`src/features/program/general/ui/program-application-card.tsx`~~ — applyRedirectPath 이력 (2026-01-26). **2026-07-15 고아 파일로 삭제** (호출부 없음)
 - `src/features/program/general/ui/program-basic-info-tab.tsx` — applyRedirectPath 전달 (2026-01-26)
 - `src/features/auth/hooks/use-register.ts` — redirectPath 지원, 가입 후 /login?redirect=… (2026-01-26)
 - `src/pages/auth/register-page.tsx` — redirect 쿼리 연동, 푸터 로그인 링크 redirect (2026-01-26)

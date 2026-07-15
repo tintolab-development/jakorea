@@ -8,6 +8,8 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 **템플릿 양식 (forms-surveys)**: [forms-surveys-api-integration.md](./forms-surveys-api-integration.md) · [PHASE별 마이그레이션](./forms-surveys-api-migration-guide.md) · [**백엔드 갭 목록**](./forms-surveys-api-backend-gaps.md) · [**신규 템플릿 생성 갭**](./template-create-api-backend-handoff.md)  
 **일반 프로그램 (programs)**: [programs-api-integration.md](./programs-api-integration.md) · [**등록 플로우 API 목록**](./programs-registration-flow-api-backend-handoff.md) · [**등록 완료 POST 핸드오프**](./programs-create-api-backend-handoff.md) · [마이그레이션 가이드](./programs-api-migration-guide.md) · [백엔드 갭](./programs-api-backend-gaps.md) · [남은 작업](./programs-api-remaining-work.md) · [**상세 완료율 · Phase 5–10**](./programs-detail-api-conversion-status.md)
 
+**프로그램 유형별 전환**: [**UJAT 백엔드 핸드오프**](./programs-ujat-api-backend-handoff.md) · [**1사1교 백엔드 핸드오프**](./programs-company-school-api-backend-handoff.md)
+
 ---
 
 ## Swagger / OpenAPI
@@ -97,7 +99,7 @@ CMS는 `useAuthStore` 토큰 → [`axios-instance.ts`](../../src/shared/instance
 | `in_progress` | `IN_PROGRESS` |
 | `completed` | `COMPLETED` |
 
-고정: `programType=GENERAL`. Create body에는 `programType` 미포함(목록 query만).
+고정: 목록 query `programType=GENERAL`. Create body에도 `programType: "GENERAL"` 전송 (`mapGeneralProgramToCreateRequest`).
 
 **Create/Update 1차 전송 필드**: `sponsorId`, `title`, `mainTitle`, `type`, `format`, `category`, `description`, 일정·상태·교육·모집·연락·`rounds[]` 등 — 어댑터 [`general-program-adapters.ts`](../../src/features/program/general/api/adapters/general-program-adapters.ts). CMS 전용 nested(`generalCommonInfo` 등)는 1차 omit.
 
