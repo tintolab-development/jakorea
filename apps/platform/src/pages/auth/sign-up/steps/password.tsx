@@ -23,11 +23,11 @@ export function PasswordStep({ signUp }: PasswordStepProps) {
             다른 곳에서 쓰지 않는 비밀번호를 추천해요.
           </>
         }
-        titleClassName={styles['password-title']}
-        descriptionClassName={styles['password-description']}
+        titleClassName={styles.passwordTitle}
+        descriptionClassName={styles.passwordDescription}
       />
 
-      <div className={styles['password-content']}>
+      <div className={styles.passwordContent}>
         <PFTextInput
           size="xlarge"
           label="비밀번호"

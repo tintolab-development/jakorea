@@ -20,7 +20,7 @@ export function FindEmailPage() {
         </div>
 
         <div className={styles.content}>
-          <div className={styles['identity-module']}>
+          <div className={styles.identityModule}>
             <PFText as="p" typo="bd-sm-rg" color="neutral-warm-500">
               통신사 본인인증 모듈 영역
               <br />
@@ -28,7 +28,7 @@ export function FindEmailPage() {
             </PFText>
           </div>
 
-          <PFButton size="xlarge" className={styles['submit-button']} onClick={handleFindEmail}>
+          <PFButton size="xlarge" className={styles.submitButton} onClick={handleFindEmail}>
             본인인증 후 이메일 찾기
           </PFButton>
         </div>

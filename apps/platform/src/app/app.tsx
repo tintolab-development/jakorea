@@ -1,12 +1,12 @@
 import { AppLayout } from '@/widgets/layout'
-import { routes } from './router'
+import { resolveRoute } from './router'
 
 export function App() {
   const currentPath = window.location.pathname
-  const currentRoute = routes.find((route) => route.path === currentPath) ?? routes[0]
+  const currentRoute = resolveRoute(currentPath)
 
   return (
-    <AppLayout>
+    <AppLayout layout={currentRoute.layout ?? 'default'}>
       {currentRoute.element}
     </AppLayout>
   )

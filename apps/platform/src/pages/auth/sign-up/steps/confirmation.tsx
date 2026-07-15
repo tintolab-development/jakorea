@@ -17,16 +17,16 @@ export function ConfirmationStep({ signUp }: ConfirmationStepProps) {
       <StepHeader
         title="입력한 정보를 확인해 주세요"
         description="내용이 맞다면 가입을 완료할게요."
-        titleClassName={styles['confirm-title']}
-        descriptionClassName={styles['confirm-description']}
+        titleClassName={styles.confirmTitle}
+        descriptionClassName={styles.confirmDescription}
       />
 
-      <div className={styles['confirm-review']}>
+      <div className={styles.confirmReview}>
         {confirmation.rows.map((row, index) => (
           <div
             className={[
-              styles['confirm-review-row'],
-              index === 0 ? styles['confirm-review-row-first'] : undefined,
+              styles.confirmReviewRow,
+              index === 0 ? styles.confirmReviewRowFirst : undefined,
             ]
               .filter(Boolean)
               .join(' ')}
@@ -35,11 +35,11 @@ export function ConfirmationStep({ signUp }: ConfirmationStepProps) {
             <PFText
               typo="bd-md-md"
               color="neutral-cool-500"
-              className={styles['confirm-review-label']}
+              className={styles.confirmReviewLabel}
             >
               {row.label}
             </PFText>
-            <PFText typo="bd-md-sb" color="black" className={styles['confirm-review-value']}>
+            <PFText typo="bd-md-sb" color="black" className={styles.confirmReviewValue}>
               {row.value}
             </PFText>
           </div>

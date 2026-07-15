@@ -1,10 +1,10 @@
-.address-modal-search-area {
+.addressModalSearchArea {
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
 }
 
-.address-modal-search-row {
+.addressModalSearchRow {
   display: grid;
   width: 100%;
   grid-template-columns: 1fr 160px;
@@ -12,19 +12,19 @@
   margin-top: var(--spacing-28);
 }
 
-.address-modal-main {
+.addressModalMain {
   display: flex;
   width: 100%;
   flex-direction: column;
 }
 
-.address-modal-main--active {
+.addressModalMainActive {
   min-height: 513px;
   flex: 1 0 auto;
   box-sizing: border-box;
 }
 
-.address-modal-body {
+.addressModalBody {
   display: flex;
   width: 100%;
   flex: 1 1 auto;
@@ -32,31 +32,31 @@
   min-height: 0;
 }
 
-.address-modal-tip {
+.addressModalTip {
   display: flex;
   width: 100%;
   flex-direction: column;
   margin-top: var(--spacing-28);
 }
 
-.address-modal-tip-lead {
+.addressModalTipLead {
   margin: var(--spacing-4) 0 0;
 }
 
-.address-modal-tip-list {
+.addressModalTipList {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-28);
   margin-top: var(--spacing-28);
 }
 
-.address-modal-tip-item {
+.addressModalTipItem {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
 }
 
-.address-suggest-overlay {
+.addressSuggestOverlay {
   position: absolute;
   top: calc(100% + var(--spacing-8));
   left: 0;
@@ -64,11 +64,11 @@
   z-index: 3;
 }
 
-.address-suggest-error {
+.addressSuggestError {
   padding: var(--spacing-12) var(--spacing-8);
 }
 
-.address-suggest-list {
+.addressSuggestList {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -87,7 +87,7 @@
   align-items: flex-start;
 }
 
-.address-suggest-item {
+.addressSuggestItem {
   width: 100%;
   display: flex;
   padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px);
@@ -97,11 +97,11 @@
   border-bottom: 1px solid var(--color-border-default);
 }
 
-.address-suggest-item:last-child {
+.addressSuggestItem:last-child {
   border-bottom: 0;
 }
 
-.address-suggest-button {
+.addressSuggestButton {
   display: block;
   width: 100%;
   padding: var(--spacing-12) var(--spacing-14);
@@ -120,16 +120,16 @@
   letter-spacing: -0.16px;
 }
 
-.address-suggest-button:hover {
+.addressSuggestButton:hover {
   background: var(--color-element-hover);
 }
 
-.address-suggest-hit {
+.addressSuggestHit {
   color: var(--color-primary-500);
   font-weight: 500;
 }
 
-.address-modal-results {
+.addressModalResults {
   display: flex;
   width: 100%;
   flex: 1;
@@ -138,7 +138,7 @@
   min-height: 0;
 }
 
-.address-result-notice {
+.addressResultNotice {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -147,12 +147,12 @@
   margin-top: var(--spacing-12);
 }
 
-.address-result-notice p {
+.addressResultNotice p {
   display: block;
   margin: 0;
 }
 
-.address-result-list {
+.addressResultList {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -169,7 +169,7 @@
   overflow-y: auto;
 }
 
-.address-result-button {
+.addressResultButton {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -182,24 +182,24 @@
   text-align: left;
 }
 
-.address-result-button:last-child {
+.addressResultButton:last-child {
   padding-bottom: 0;
   border-bottom: 0;
 }
 
-.address-result-zip {
+.addressResultZip {
   overflow: hidden;
   margin-bottom: var(--spacing-4);
   text-overflow: ellipsis;
 }
 
-.address-result-line {
+.addressResultLine {
   display: flex;
   align-items: center;
   gap: var(--spacing-8);
 }
 
-.address-result-tag {
+.addressResultTag {
   display: flex;
   width: 50px;
   align-items: center;
@@ -217,7 +217,7 @@
   letter-spacing: 0;
 }
 
-.address-pagination {
+.addressPagination {
   display: flex;
   width: 100%;
   justify-content: center;

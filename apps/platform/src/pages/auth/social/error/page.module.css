@@ -53,11 +53,11 @@
   gap: var(--spacing-12);
 }
 
-.action-button {
+.actionButton {
   width: 100%;
 }
 
-.social-section {
+.socialSection {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -66,27 +66,27 @@
   margin-top: var(--spacing-80);
 }
 
-.social-divider {
+.socialDivider {
   display: flex;
   width: 100%;
   align-items: center;
   gap: var(--spacing-16);
 }
 
-.social-divider-line {
+.socialDividerLine {
   height: 1px;
   flex: 1;
   background: var(--color-border-default);
 }
 
-.social-icons {
+.socialIcons {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-24);
 }
 
-.social-button {
+.socialButton {
   display: inline-flex;
   width: 54px;
   height: 54px;

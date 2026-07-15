@@ -13,6 +13,8 @@ export type PFArrowButtonVariant = 'primary' | 'secondary'
 export type PFArrowButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
   size?: PFArrowButtonSize
   variant?: PFArrowButtonVariant
+  /** 행 클릭 등 부모가 동작할 때 장식용 span으로 렌더 */
+  decorative?: boolean
 }
 
 const iconUrlMap = {
@@ -31,6 +33,7 @@ const iconUrlMap = {
 export function PFArrowButton({
   size = 'medium',
   variant = 'primary',
+  decorative = false,
   className,
   disabled = false,
   type = 'button',
@@ -49,9 +52,19 @@ export function PFArrowButton({
     .filter(Boolean)
     .join(' ')
 
+  const icon = <img className={styles.icon} src={iconUrl} alt="" aria-hidden="true" />
+
+  if (decorative) {
+    return (
+      <span className={buttonClassName} aria-hidden="true">
+        {icon}
+      </span>
+    )
+  }
+
   return (
     <button className={buttonClassName} type={type} disabled={disabled} {...props}>
-      <img className={styles.icon} src={iconUrl} alt="" aria-hidden="true" />
+      {icon}
     </button>
   )
 }

@@ -25,14 +25,14 @@
   margin-bottom: var(--spacing-48);
 }
 
-.member-type-cards {
+.memberTypeCards {
   display: flex;
   width: 100%;
   gap: var(--spacing-8);
   margin-bottom: var(--spacing-40);
 }
 
-.member-type-card {
+.memberTypeCard {
   display: flex;
   width: 236px;
   min-height: 277px;
@@ -48,33 +48,33 @@
   cursor: pointer;
 }
 
-.member-type-card-selected {
+.memberTypeCardSelected {
   border-color: var(--color-border-focus);
   background: var(--color-element-hover);
 }
 
-.member-type-image {
+.memberTypeImage {
   width: 64px;
   height: 64px;
   object-fit: contain;
 }
 
-.member-type-text {
+.memberTypeText {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-16);
 }
 
-.member-type-description {
+.memberTypeDescription {
   display: flex;
   flex-direction: column;
 }
 
-.member-type-description p {
+.memberTypeDescription p {
   margin: 0;
 }
 
-.member-type-description p:first-child {
+.memberTypeDescription p:first-child {
   margin-bottom: 10px;
 }
 
@@ -86,7 +86,7 @@
   margin-bottom: var(--spacing-40);
 }
 
-.step-content {
+.stepContent {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -94,25 +94,25 @@
   margin-bottom: var(--spacing-40);
 }
 
-.gender-field {
+.genderField {
   display: flex;
   width: 100%;
   flex-direction: column;
   gap: var(--spacing-8);
 }
 
-.field-label {
+.fieldLabel {
   padding-left: var(--spacing-8);
   color: var(--color-neutral-warm-600);
 }
 
-.gender-options {
+.genderOptions {
   display: flex;
   width: 100%;
   gap: var(--spacing-12);
 }
 
-.teacher-birth-guide {
+.teacherBirthGuide {
   display: flex;
   width: 100%;
   align-items: center;
@@ -124,7 +124,7 @@
   border-top: 1px solid rgba(61, 61, 61, 0.1);
 }
 
-.teacher-general-sign-up-link {
+.teacherGeneralSignUpLink {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
@@ -136,13 +136,13 @@
   cursor: pointer;
 }
 
-.teacher-general-sign-up-arrow {
+.teacherGeneralSignUpArrow {
   width: 13px;
   height: 12px;
   flex: 0 0 auto;
 }
 
-.identity-module {
+.identityModule {
   display: flex;
   align-self: stretch;
   flex-direction: column;
@@ -155,25 +155,25 @@
   text-align: center;
 }
 
-.identity-module p {
+.identityModule p {
   margin: 0;
 }
 
-.terms-title {
+.termsTitle {
   margin-top: var(--spacing-48);
   margin-bottom: var(--spacing-32);
 }
 
-.terms-description {
+.termsDescription {
   margin: 0;
   margin-bottom: var(--spacing-48);
 }
 
-.terms-content {
+.termsContent {
   width: 100%;
 }
 
-.all-agreement-button {
+.allAgreementButton {
   display: flex;
   width: 100%;
   align-items: center;
@@ -187,12 +187,12 @@
   text-align: left;
 }
 
-.all-agreement-button-checked {
+.allAgreementButtonChecked {
   background: var(--color-element-hover);
   color: var(--color-primary-600);
 }
 
-.agreement-list {
+.agreementList {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -200,7 +200,7 @@
   padding: 0 16px;
 }
 
-.agreement-item {
+.agreementItem {
   position: relative;
   display: grid;
   width: 100%;
@@ -209,7 +209,7 @@
   column-gap: 15px;
 }
 
-.agreement-check-button {
+.agreementCheckButton {
   display: flex;
   width: 100%;
   min-width: 0;
@@ -217,7 +217,7 @@
   text-align: left;
 }
 
-.agreement-text {
+.agreementText {
   display: flex;
   min-width: 0;
   flex: 1;
@@ -225,12 +225,12 @@
   gap: var(--spacing-8);
 }
 
-.agreement-text > :first-child {
+.agreementText > :first-child {
   flex-shrink: 0;
   white-space: nowrap;
 }
 
-.agreement-text > :last-child {
+.agreementText > :last-child {
   min-width: 0;
   flex: 1;
 }
@@ -243,7 +243,7 @@
   color: var(--color-neutral-cool-400);
 }
 
-.terms-view-button {
+.termsViewButton {
   flex-shrink: 0;
   align-self: center;
   padding: 0;
@@ -252,12 +252,12 @@
   color: var(--color-neutral-warm-400);
 }
 
-.agreement-guide {
+.agreementGuide {
   grid-column: 1 / -1;
   margin: var(--spacing-8) 0 0 78px;
 }
 
-.optional-guide {
+.optionalGuide {
   display: flex;
   align-self: stretch;
   align-items: center;
@@ -268,28 +268,28 @@
   text-align: center;
 }
 
-.terms-actions {
+.termsActions {
   display: flex;
   width: 100%;
   flex-direction: column;
   gap: var(--spacing-8);
 }
 
-.terms-actions + .terms-actions {
+.termsActions + .termsActions {
   gap: var(--spacing-8);
 }
 
-.guardian-confirm-title {
+.guardianConfirmTitle {
   margin-top: var(--spacing-48);
   margin-bottom: var(--spacing-16);
 }
 
-.guardian-confirm-description {
+.guardianConfirmDescription {
   margin: 0;
   margin-bottom: var(--spacing-48);
 }
 
-.guardian-confirm-content {
+.guardianConfirmContent {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -297,17 +297,17 @@
   margin-bottom: var(--spacing-40);
 }
 
-.email-title {
+.emailTitle {
   margin-top: var(--spacing-48);
   margin-bottom: var(--spacing-32);
 }
 
-.email-description {
+.emailDescription {
   margin: 0;
   margin-bottom: var(--spacing-64);
 }
 
-.email-content {
+.emailContent {
   display: grid;
   width: 100%;
   grid-template-columns: 1fr 120px;
@@ -316,21 +316,21 @@
   margin-bottom: var(--spacing-64);
 }
 
-.duplicate-check-button {
+.duplicateCheckButton {
   margin-top: 23px;
 }
 
-.password-title {
+.passwordTitle {
   margin-top: var(--spacing-48);
   margin-bottom: var(--spacing-24);
 }
 
-.password-description {
+.passwordDescription {
   margin: 0;
   margin-bottom: var(--spacing-48);
 }
 
-.password-content {
+.passwordContent {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -338,17 +338,17 @@
   margin-bottom: var(--spacing-40);
 }
 
-.profile-title {
+.profileTitle {
   margin-top: var(--spacing-48);
   margin-bottom: var(--spacing-24);
 }
 
-.profile-description {
+.profileDescription {
   margin: 0;
   margin-bottom: var(--spacing-48);
 }
 
-.profile-content {
+.profileContent {
   display: flex;
   width: 100%;
   flex-direction: column;
@@ -356,16 +356,16 @@
   margin-bottom: var(--spacing-40);
 }
 
-.school-status-field,
-.address-field,
-.grade-field {
+.schoolStatusField,
+.addressField,
+.gradeField {
   display: flex;
   width: 100%;
   flex-direction: column;
   gap: var(--spacing-8);
 }
 
-.grade-select-wrap {
+.gradeSelectWrap {
   position: relative;
   display: flex;
   width: 100%;
@@ -376,11 +376,11 @@
   background: var(--color-neutral-white);
 }
 
-.grade-select-wrap:focus-within {
+.gradeSelectWrap:focus-within {
   border-color: var(--color-border-focus);
 }
 
-.grade-select {
+.gradeSelect {
   width: 100%;
   height: 100%;
   padding: 0 var(--spacing-40) 0 14px;
@@ -398,12 +398,12 @@
   outline: 0;
 }
 
-.grade-select:invalid,
-.grade-select option[value=''] {
+.gradeSelect:invalid,
+.gradeSelect option[value=''] {
   color: var(--color-neutral-warm-500);
 }
 
-.grade-select-arrow {
+.gradeSelectArrow {
   position: absolute;
   right: 14px;
   width: 20px;
@@ -413,41 +413,41 @@
   pointer-events: none;
 }
 
-.school-status-options {
+.schoolStatusOptions {
   display: flex;
   width: 100%;
   gap: var(--spacing-12);
 }
 
-.inline-required-mark {
+.inlineRequiredMark {
   color: var(--color-red);
 }
 
-.address-search-row {
+.addressSearchRow {
   display: grid;
   width: 100%;
   grid-template-columns: 1fr 120px;
   gap: var(--spacing-12);
 }
 
-.confirm-title {
+.confirmTitle {
   margin-top: var(--spacing-48);
   margin-bottom: var(--spacing-16);
 }
 
-.confirm-description {
+.confirmDescription {
   margin: 0;
   margin-bottom: var(--spacing-48);
 }
 
-.confirm-review {
+.confirmReview {
   display: flex;
   width: 100%;
   flex-direction: column;
   margin-bottom: var(--spacing-40);
 }
 
-.confirm-review-row {
+.confirmReviewRow {
   display: flex;
   width: 100%;
   align-items: center;
@@ -456,31 +456,31 @@
   border-top: 1px solid var(--color-border-default);
 }
 
-.confirm-review-row-first {
+.confirmReviewRowFirst {
   border-top: 2px solid var(--color-primary-500);
 }
 
-.confirm-review-label {
+.confirmReviewLabel {
   overflow: hidden;
   width: 120px;
   flex: 0 0 120px;
   text-overflow: ellipsis;
 }
 
-.confirm-review-value {
+.confirmReviewValue {
   min-width: 0;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.step-message {
+.stepMessage {
   width: 100%;
   margin: calc(var(--spacing-24) * -1) 0 var(--spacing-24);
   padding-left: var(--spacing-8);
 }
 
-.sign-in-guide {
+.signInGuide {
   display: flex;
   width: 100%;
   align-items: center;
@@ -488,7 +488,7 @@
   gap: var(--spacing-12);
 }
 
-.sign-in-link {
+.signInLink {
   padding: 0;
   border: 0;
   background: transparent;

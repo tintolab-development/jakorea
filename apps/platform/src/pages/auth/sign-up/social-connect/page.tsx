@@ -37,7 +37,7 @@ const socialConnectItems: SocialConnectItem[] = [
 function StatusDot({ connected }: { connected: boolean }) {
   return (
     <svg
-      className={styles['status-dot']}
+      className={styles.statusDot}
       width="2"
       height="2"
       viewBox="0 0 2 2"
@@ -110,27 +110,27 @@ export function SignUpSocialConnectPage() {
           연결은 선택 사항이며, 나중에 마이페이지에서도 할 수 있어요.
         </PFText>
 
-        <div className={styles['social-connect-section']}>
-          <div className={styles['social-connect-divider']}>
-            <span className={styles['social-connect-divider-line']} />
+        <div className={styles.socialConnectSection}>
+          <div className={styles.socialConnectDivider}>
+            <span className={styles.socialConnectDividerLine} />
             <PFText typo="label-md" color="neutral-cool-500">
               연결할 소셜 계정을 선택해 주세요
             </PFText>
-            <span className={styles['social-connect-divider-line']} />
+            <span className={styles.socialConnectDividerLine} />
           </div>
 
-          <div className={styles['social-connect-list']}>
+          <div className={styles.socialConnectList}>
             {socialConnectItems.map(item => {
               const isConnected = connectedMap[item.provider]
 
               return (
-                <div className={styles['social-connect-row']} key={item.provider}>
-                  <div className={styles['social-connect-main']}>
-                    <span className={styles['social-connect-icon']}>{item.icon}</span>
+                <div className={styles.socialConnectRow} key={item.provider}>
+                  <div className={styles.socialConnectMain}>
+                    <span className={styles.socialConnectIcon}>{item.icon}</span>
                     <PFText
                       typo="bd-lg-sb"
                       color="black"
-                      className={styles['social-connect-name']}
+                      className={styles.socialConnectName}
                     >
                       {item.name}
                     </PFText>
@@ -138,7 +138,7 @@ export function SignUpSocialConnectPage() {
                     <PFText
                       typo="label-md"
                       color={isConnected ? 'primary-500' : 'neutral-cool-500'}
-                      className={styles['social-connect-status']}
+                      className={styles.socialConnectStatus}
                     >
                       {isConnected ? '연결됨' : '연결되지 않음'}
                     </PFText>

@@ -39,7 +39,7 @@
   box-shadow: var(--shadow-sm);
 }
 
-.card-content {
+.cardContent {
   display: flex;
   flex-direction: column;
   gap: 8px;

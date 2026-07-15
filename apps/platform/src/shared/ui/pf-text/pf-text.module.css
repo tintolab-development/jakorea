@@ -2,55 +2,55 @@
   display: inline;
 }
 
-.color-inherit {
+.colorInherit {
   color: inherit;
 }
 
-.color-black {
+.colorBlack {
   color: var(--color-neutral-black);
 }
 
-.color-white {
+.colorWhite {
   color: var(--color-neutral-white);
 }
 
-.color-neutral-cool-500 {
+.colorNeutralCool500 {
   color: var(--color-neutral-cool-500);
 }
 
-.color-neutral-cool-600 {
+.colorNeutralCool600 {
   color: var(--color-neutral-cool-600);
 }
 
-.color-neutral-warm-500 {
+.colorNeutralWarm500 {
   color: var(--color-neutral-warm-500);
 }
 
-.color-neutral-warm-600 {
+.colorNeutralWarm600 {
   color: var(--color-neutral-warm-600);
 }
 
-.color-primary-500 {
+.colorPrimary500 {
   color: var(--color-primary-500);
 }
 
-.color-primary-700 {
+.colorPrimary700 {
   color: var(--color-primary-700);
 }
 
-.color-primary-800 {
+.colorPrimary800 {
   color: var(--color-primary-800);
 }
 
-.color-error {
+.colorError {
   color: var(--color-status-error-default);
 }
 
-.color-success {
+.colorSuccess {
   color: var(--color-status-success-default);
 }
 
-.color-gradient-primary-01 {
+.colorGradientPrimary01 {
   background: var(--color-gradient-primary-01);
   background-clip: text;
   -webkit-background-clip: text;

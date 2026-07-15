@@ -11,6 +11,7 @@
 ## Architecture
 
 - [Project structure](./architecture/project-structure.md) — FSD-lite 레이어
+- [Image assets](./architecture/image-assets.mdc) — 정적 이미지 4계층 보관 규칙
 
 ## Auth
 

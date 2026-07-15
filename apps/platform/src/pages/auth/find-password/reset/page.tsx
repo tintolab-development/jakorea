@@ -32,7 +32,7 @@ export function FindPasswordResetPage() {
         </div>
 
         <div className={styles.content}>
-          <div className={styles['password-inputs-container']}>
+          <div className={styles.passwordInputsContainer}>
             <PFTextInput
               size="xlarge"
               label="새 비밀번호"

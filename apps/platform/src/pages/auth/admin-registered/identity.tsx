@@ -32,7 +32,7 @@ export function AdminRegisteredIdentityPage() {
         </div>
 
         <div className={sharedStyles.content}>
-          <div className={sharedStyles['identity-module']}>
+          <div className={sharedStyles.identityModule}>
             <PFText as="p" typo="bd-sm-rg" color="neutral-warm-500">
               통신사 본인인증 모듈 영역
               <br />

@@ -1,0 +1,79 @@
+.shell {
+  --mypage-header-height: var(--spacing-100);
+  --mypage-sidebar-width: 461px;
+  --mypage-background-height: 400px;
+  --mypage-hero-fade-length: 150px;
+
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+  background: var(--color-neutral-white);
+}
+
+.pageBackground {
+  position: absolute;
+  top: calc(-1 * var(--mypage-header-height));
+  inset-inline: 0;
+  z-index: 0;
+  width: 100%;
+  height: var(--mypage-background-height);
+  background-image: url('./image/background/mypage-background.svg');
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: cover;
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 calc(100% - var(--mypage-hero-fade-length)),
+    rgb(0 0 0 / 88%) calc(100% - var(--mypage-hero-fade-length) + 28px),
+    rgb(0 0 0 / 62%) calc(100% - var(--mypage-hero-fade-length) + 56px),
+    rgb(0 0 0 / 34%) calc(100% - var(--mypage-hero-fade-length) + 84px),
+    rgb(0 0 0 / 12%) calc(100% - var(--mypage-hero-fade-length) + 112px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 calc(100% - var(--mypage-hero-fade-length)),
+    rgb(0 0 0 / 88%) calc(100% - var(--mypage-hero-fade-length) + 28px),
+    rgb(0 0 0 / 62%) calc(100% - var(--mypage-hero-fade-length) + 56px),
+    rgb(0 0 0 / 34%) calc(100% - var(--mypage-hero-fade-length) + 84px),
+    rgb(0 0 0 / 12%) calc(100% - var(--mypage-hero-fade-length) + 112px),
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+}
+
+.sidebar {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: var(--mypage-sidebar-width);
+  padding: 251px 99px 70px 82px;
+  background: transparent;
+}
+
+.content {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding-top: 140px;
+  padding-right: var(--spacing-24);
+  padding-bottom: var(--spacing-72);
+  background: transparent;
+}
+
+.contentInner {
+  position: relative;
+  z-index: 1;
+}

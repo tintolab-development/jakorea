@@ -24,7 +24,7 @@ export function PfRichTextEditor({
   return (
     <RichTextEditor
       editor={editor}
-      className={[editorStyles['pf-rich-text-editor'], className].filter(Boolean).join(' ')}
+      className={[editorStyles.pfRichTextEditor, className].filter(Boolean).join(' ')}
       toolbar={toolbarNode}
       {...rest}
     />

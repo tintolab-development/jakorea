@@ -20,18 +20,18 @@ export function FilterBar({
       {onReset ? (
         <button
           type="button"
-          className={styles['reset-button']}
+          className={styles.resetButton}
           aria-label={resetAriaLabel}
           onClick={onReset}
         >
           <img
-            className={[styles['reset-icon'], styles['reset-icon-default']].join(' ')}
+            className={[styles.resetIcon, styles.resetIconDefault].join(' ')}
             src={refreshGrayUrl}
             alt=""
             aria-hidden="true"
           />
           <img
-            className={[styles['reset-icon'], styles['reset-icon-hover']].join(' ')}
+            className={[styles.resetIcon, styles.resetIconHover].join(' ')}
             src={refreshMintUrl}
             alt=""
             aria-hidden="true"

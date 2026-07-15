@@ -1,3 +1,4 @@
+import type { ProgramParticipantApplicationEditorVariant } from '@jakorea/form-schema/template-registry'
 import {
   useCallback,
   useEffect,
@@ -207,23 +208,7 @@ function useParticipantApplicationMiddleActions(
   )
 }
 
-export type ProgramParticipantApplicationEditorVariant =
-  | 'individual'
-  | 'institution'
-  | 'economy-application-institution'
-  | 'trained-teachers-application-institution'
-  | 'gemini-application-institution'
-  | 'gemini-application-instructor'
-  | 'ujat-application-institution'
-  | 'ujat-application-volunteer'
-  | 'applicant-recruit-institution'
-  | 'ujat-recruit-institution'
-  | 'applicant-recruit-individual'
-  | 'recruit-instructor'
-  | 'recruit-volunteer'
-  | 'ujat-recruit-volunteer'
-  | 'instructor'
-  | 'volunteer'
+export type { ProgramParticipantApplicationEditorVariant } from '@jakorea/form-schema/template-registry'
 
 export type UseProgramParticipantApplicationEditorOptions = {
   /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */

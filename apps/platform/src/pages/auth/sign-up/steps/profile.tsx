@@ -26,11 +26,11 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
             필요한 정보를 확인해요.
           </>
         }
-        titleClassName={styles['profile-title']}
-        descriptionClassName={styles['profile-description']}
+        titleClassName={styles.profileTitle}
+        descriptionClassName={styles.profileDescription}
       />
 
-      <div className={styles['profile-content']}>
+      <div className={styles.profileContent}>
         <PFTextInput size="xlarge" label="이름" value={MOCK_VERIFIED_NAME} required disabled />
         <PFTextInput
           size="xlarge"
@@ -40,12 +40,12 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
           disabled
         />
 
-        <div className={styles['school-status-field']}>
-          <PFText as="span" typo="label-md" color="inherit" className={styles['field-label']}>
+        <div className={styles.schoolStatusField}>
+          <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
             현재 학교에 재학 중이신가요?{' '}
-            <span className={styles['inline-required-mark']}>*</span>
+            <span className={styles.inlineRequiredMark}>*</span>
           </PFText>
-          <div className={styles['school-status-options']}>
+          <div className={styles.schoolStatusOptions}>
             <PFButton
               size="xlarge"
               variant="tertiary"
@@ -78,13 +78,13 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
               onValueChange={profile.setSchoolName}
             />
 
-            <div className={styles['grade-field']}>
-              <PFText as="span" typo="label-md" color="inherit" className={styles['field-label']}>
-                학년 <span className={styles['inline-required-mark']}>*</span>
+            <div className={styles.gradeField}>
+              <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+                학년 <span className={styles.inlineRequiredMark}>*</span>
               </PFText>
-              <div className={styles['grade-select-wrap']}>
+              <div className={styles.gradeSelectWrap}>
                 <select
-                  className={styles['grade-select']}
+                  className={styles.gradeSelect}
                   required
                   value={profile.grade}
                   onChange={event => profile.setGrade(event.target.value)}
@@ -99,7 +99,7 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
                   ))}
                 </select>
                 <img
-                  className={styles['grade-select-arrow']}
+                  className={styles.gradeSelectArrow}
                   src={chevronRightGrayUrl}
                   alt=""
                   aria-hidden="true"
@@ -109,11 +109,11 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
           </>
         ) : null}
 
-        <div className={styles['address-field']}>
-          <PFText as="span" typo="label-md" color="inherit" className={styles['field-label']}>
-            자택 주소 <span className={styles['inline-required-mark']}>*</span>
+        <div className={styles.addressField}>
+          <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+            자택 주소 <span className={styles.inlineRequiredMark}>*</span>
           </PFText>
-          <div className={styles['address-search-row']}>
+          <div className={styles.addressSearchRow}>
             <PFTextInput
               size="xlarge"
               placeholder="주소를 검색해 주세요"

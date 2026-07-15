@@ -7,7 +7,7 @@ type SignUpActionsProps = {
 }
 
 export function SignUpActions({ variant, children }: SignUpActionsProps) {
-  const className = variant === 'terms' ? styles['terms-actions'] : styles.actions
+  const className = variant === 'terms' ? styles.termsActions : styles.actions
 
   return <div className={className}>{children}</div>
 }

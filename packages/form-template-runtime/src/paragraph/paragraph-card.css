@@ -1,0 +1,260 @@
+/* 단락 카드 — FormEditor / 템플릿 미리보기 공통 */
+
+@import './form-paragraph-section-description.css';
+
+.paragraph-card {
+  position: relative;
+  display: flex;
+  padding: 20px;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  box-sizing: border-box;
+  /* 활성 시에만 보더가 생기면 레이아웃이 밀리므로 비활성은 투명 1px로 동일 외곽선 유지 */
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+}
+
+.paragraph-card__header {
+  /* padding-left: 8px; */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+}
+
+/* 드래그 핸들(타이틀 바로 왼쪽) + 타이틀 — 한 덩어리로 시작 정렬 */
+.paragraph-card__header-title-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.paragraph-card__header-title-row > .paragraph-card__title-block {
+  flex: 1 1 0%;
+  min-width: 0;
+  width: auto;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.paragraph-card__header-title-row > .paragraph-card__action-slot-wrap {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  min-width: 24px;
+  min-height: 0;
+}
+
+.paragraph-card__description-block {
+  margin-left: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 드래그 핸들(24px) + gap(8px) — 설명 시작선을 타이틀 텍스트와 맞춤 */
+.paragraph-card__header:has(.paragraph-card__header-title-row) .paragraph-card__description-block {
+  margin-left: 32px;
+  width: calc(100% - 32px);
+  max-width: calc(100% - 32px);
+}
+
+.paragraph-card__title-block {
+  width: 100%;
+}
+
+.paragraph-card__title-block--with-trailing {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.paragraph-card__title-main {
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.paragraph-card__title-trailing {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+}
+
+.paragraph-card__title-block .paragraph-input--view .paragraph-input__view-text,
+.paragraph-card__title-block .paragraph-input--view .paragraph-input__placeholder,
+.paragraph-card__title-main .paragraph-input--view .paragraph-input__view-text,
+.paragraph-card__title-main .paragraph-input--view .paragraph-input__placeholder {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paragraph-card__slot {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 16px;
+}
+
+.paragraph-card__footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.paragraph-card__toggles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.paragraph-card__actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+}
+
+.paragraph-card__drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #b4b4b4;
+  cursor: grab;
+}
+
+.paragraph-card__drag-handle .anticon {
+  font-size: 14px;
+}
+
+.paragraph-card__drag-handle--non-interactive {
+  cursor: default;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.paragraph-card__drag-handle--non-interactive:active {
+  cursor: default;
+}
+
+.paragraph-card__drag-handle:focus-visible {
+  outline: 2px solid var(--color-mint-01, #01a1af);
+  outline-offset: 1px;
+}
+
+.paragraph-card__drag-handle:active {
+  cursor: grabbing;
+}
+
+.paragraph-card--selectable {
+  cursor: pointer;
+}
+
+.paragraph-card--active {
+  border-radius: var(--16, 16px);
+  border-color: var(--color-mint-01, #01a1af);
+  background: var(--main-WT, #fff);
+}
+
+.paragraph-card__title-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.paragraph-card__title {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.paragraph-card--survey-title-with-period .paragraph-card__title {
+  font-size: 24px;
+}
+
+/* 설문 카드 등: 아웃라인 placeholder 문구 — ParagraphInput 기본 톤과 맞춤 */
+.paragraph-card__title.paragraph-card__title--placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* 카드 헤더 — `ParagraphInput`에 `titleClassName`으로 붙는 placeholder 톤 */
+.paragraph-card__title-block
+  .paragraph-input.paragraph-card__title--placeholder
+  .paragraph-input__view-text,
+.paragraph-card__title-block
+  .paragraph-input.paragraph-card__title--placeholder
+  .paragraph-input__placeholder {
+  color: var(--gray-85969-d, #85969d);
+  font-weight: 700;
+}
+
+.paragraph-card__title-block
+  .paragraph-input.paragraph-card__title--placeholder.paragraph-input--edit
+  .paragraph-input__shell
+  .ant-input::placeholder {
+  color: var(--gray-85969-d, #85969d);
+}
+
+.paragraph-card__required {
+  position: absolute;
+  left: -14px;
+  color: var(--color-red, #c32f4a);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+}
+
+.paragraph-card--survey-title-with-period .paragraph-card__description,
+.paragraph-card--survey-title-with-period .form-paragraph-section-description {
+  font-size: 18px;
+}

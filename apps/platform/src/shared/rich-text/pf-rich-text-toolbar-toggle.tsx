@@ -38,7 +38,7 @@ export function PfToolbarToggle({
       className={[
         styles.toggle,
         'rt-toolbar-icon-control',
-        active ? styles['toggle-active'] : '',
+        active ? styles.toggleActive : '',
       ]
         .filter(Boolean)
         .join(' ')}

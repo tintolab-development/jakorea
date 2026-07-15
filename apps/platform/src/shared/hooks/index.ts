@@ -1,4 +1,6 @@
 /** 공유 hooks barrel */
+export { useSearchFilters } from './use-search-filters'
+export type { SearchFilterBinding, UseSearchFiltersOptions } from './use-search-filters'
 export { useIntersectionObserver } from './use-intersection-observer'
 export { usePrefersReducedMotion } from './use-prefers-reduced-motion'
 export { useJusoAddressSearch } from '@jakorea/location/juso/react'

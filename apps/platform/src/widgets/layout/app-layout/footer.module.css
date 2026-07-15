@@ -3,12 +3,12 @@
   background: var(--color-neutral-white);
 }
 
-.navigation-area {
+.navigationArea {
   background: var(--color-neutral-cool-80);
 }
 
 .navigation,
-.content-area {
+.contentArea {
   width: 100%;
   max-width: var(--content-max-width);
   margin-inline: auto;
@@ -22,62 +22,62 @@
   min-height: var(--spacing-68);
 }
 
-.navigation-button {
+.navigationButton {
   padding: 0;
   border: 0;
   background: transparent;
   white-space: nowrap;
 }
 
-.content-area {
+.contentArea {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-24);
   padding: 60px 0;
 }
 
-.logo-area {
+.logoArea {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-80);
 }
 
-.ja-logo {
+.jaLogo {
   width: 195px;
   height: 60px;
 }
 
-.info-area {
+.infoArea {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
-.company-info-list {
+.companyInfoList {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-8) var(--spacing-20);
 }
 
-.company-info-list > * {
+.companyInfoList > * {
   white-space: nowrap;
 }
 
-.social-area {
+.socialArea {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-80);
 }
 
-.social-links {
+.socialLinks {
   display: flex;
   align-items: center;
   gap: 18px;
 }
 
-.social-link {
+.socialLink {
   display: inline-flex;
   width: var(--spacing-24);
   height: var(--spacing-24);
@@ -85,13 +85,13 @@
   justify-content: center;
 }
 
-.partner-logos {
+.partnerLogos {
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-48);
 }
 
-.partner-logo {
+.partnerLogo {
   width: auto;
   height: 60px;
 }

@@ -88,11 +88,11 @@ export function PFTextInput({
     <div className={[styles.root, className].filter(Boolean).join(' ')}>
       {label ? (
         <label className={styles.label} htmlFor={inputId}>
-          <PFText as="span" typo="label-md" color="inherit" className={styles['label-text']}>
+          <PFText as="span" typo="label-md" color="inherit" className={styles.labelText}>
             {label}
           </PFText>
           {required ? (
-            <span className={styles['required-mark']} aria-hidden="true">
+            <span className={styles.requiredMark} aria-hidden="true">
               *
             </span>
           ) : null}
@@ -112,12 +112,12 @@ export function PFTextInput({
         />
         {shouldShowClearButton ? (
           <button
-            className={styles['clear-button']}
+            className={styles.clearButton}
             type="button"
             aria-label="입력 내용 지우기"
             onClick={handleClear}
           >
-            <img className={styles['clear-icon']} src={cancelIconUrl} alt="" aria-hidden="true" />
+            <img className={styles.clearIcon} src={cancelIconUrl} alt="" aria-hidden="true" />
           </button>
         ) : null}
       </div>

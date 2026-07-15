@@ -81,7 +81,7 @@ export function SignInPage() {
         </div>
 
         <form className={styles.form} noValidate onSubmit={handleDevSignIn}>
-          <div className={styles['input-group']}>
+          <div className={styles.inputGroup}>
             <PFTextInput
               size="xlarge"
               label="이메일"
@@ -106,14 +106,14 @@ export function SignInPage() {
               onValueChange={setPassword}
             />
           </div>
-          <PFButton type="submit" size="xlarge" className={styles['submit-button']}>
+          <PFButton type="submit" size="xlarge" className={styles.submitButton}>
             로그인하기
           </PFButton>
         </form>
 
-        <div className={styles['account-links']}>
+        <div className={styles.accountLinks}>
           {accountLinkItems.map((item, index) => (
-            <div className={styles['account-link-item']} key={item.label}>
+            <div className={styles.accountLinkItem} key={item.label}>
               <PFButton
                 variant="text"
                 size="medium"
@@ -128,25 +128,25 @@ export function SignInPage() {
                 {item.label}
               </PFButton>
               {index < accountLinkItems.length - 1 ? (
-                <span className={styles['account-link-separator']} aria-hidden="true" />
+                <span className={styles.accountLinkSeparator} aria-hidden="true" />
               ) : null}
             </div>
           ))}
         </div>
 
-        <div className={styles['social-section']}>
-          <div className={styles['social-divider']}>
-            <span className={styles['social-divider-line']} />
+        <div className={styles.socialSection}>
+          <div className={styles.socialDivider}>
+            <span className={styles.socialDividerLine} />
             <PFText typo="caption-rg" color="neutral-cool-500">
               또는 소셜 로그인
             </PFText>
-            <span className={styles['social-divider-line']} />
+            <span className={styles.socialDividerLine} />
           </div>
 
-          <div className={styles['social-icons']}>
+          <div className={styles.socialIcons}>
             {socialLoginItems.map(({ label, icon }) => (
               <button
-                className={styles['social-button']}
+                className={styles.socialButton}
                 type="button"
                 aria-label={label}
                 key={label}

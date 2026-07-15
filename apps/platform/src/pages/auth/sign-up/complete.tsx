@@ -1,3 +1,4 @@
+import { MYPAGE_PATH } from '@/features/mypage'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './complete.module.css'
@@ -8,7 +9,7 @@ export function SignUpCompletePage() {
   }
 
   const handleGoMyPage = () => {
-    window.location.assign('/')
+    window.location.assign(MYPAGE_PATH)
   }
 
   const handleConnectSocial = () => {

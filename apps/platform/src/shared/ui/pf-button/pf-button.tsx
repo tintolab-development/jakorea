@@ -34,8 +34,8 @@ export function PFButton({
     styles.button,
     styles[size],
     styles[variant],
-    selected && variant === 'tertiary' ? styles['tertiary-selected'] : undefined,
-    selected && variant === 'text' ? styles['text-selected'] : undefined,
+    selected && variant === 'tertiary' ? styles.tertiarySelected : undefined,
+    selected && variant === 'text' ? styles.textSelected : undefined,
     sizeTypographyClassMap[size],
     className,
   ]

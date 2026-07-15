@@ -1,0 +1,42 @@
+.cards {
+  display: flex;
+  width: 1220px;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--spacing-16);
+}
+
+.card {
+  display: flex;
+  flex: 1 0 0;
+  align-self: stretch;
+  padding: var(--spacing-24) var(--spacing-16) var(--spacing-24) var(--spacing-24);
+  justify-content: space-between;
+  align-items: center;
+  border-radius: var(--radius-24);
+  border: 1px solid rgb(61 61 61 / 10%);
+  background: var(--color-neutral-white);
+  box-shadow: var(--shadow-card-lg);
+  min-width: 0;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  min-width: 0;
+}
+
+.label,
+.value {
+  margin: 0;
+  text-align: left;
+}
+
+.illustration {
+  flex-shrink: 0;
+  width: 91px;
+  height: 91px;
+  display: block;
+  object-fit: contain;
+}

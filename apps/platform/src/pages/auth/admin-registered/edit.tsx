@@ -91,12 +91,12 @@ export function AdminRegisteredEditPage() {
             disabled
           />
 
-          <div className={sharedStyles['school-status-field']}>
-            <PFText as="span" typo="label-md" color="inherit" className={sharedStyles['field-label']}>
+          <div className={sharedStyles.schoolStatusField}>
+            <PFText as="span" typo="label-md" color="inherit" className={sharedStyles.fieldLabel}>
               현재 학교에 재학 중이신가요?{' '}
-              <span className={sharedStyles['inline-required-mark']}>*</span>
+              <span className={sharedStyles.inlineRequiredMark}>*</span>
             </PFText>
-            <div className={sharedStyles['school-status-options']}>
+            <div className={sharedStyles.schoolStatusOptions}>
               <PFButton
                 size="xlarge"
                 variant="tertiary"
@@ -129,13 +129,13 @@ export function AdminRegisteredEditPage() {
                 onValueChange={setSchoolName}
               />
 
-              <div className={sharedStyles['grade-field']}>
-                <PFText as="span" typo="label-md" color="inherit" className={sharedStyles['field-label']}>
-                  학년 <span className={sharedStyles['inline-required-mark']}>*</span>
+              <div className={sharedStyles.gradeField}>
+                <PFText as="span" typo="label-md" color="inherit" className={sharedStyles.fieldLabel}>
+                  학년 <span className={sharedStyles.inlineRequiredMark}>*</span>
                 </PFText>
-                <div className={sharedStyles['grade-select-wrap']}>
+                <div className={sharedStyles.gradeSelectWrap}>
                   <select
-                    className={sharedStyles['grade-select']}
+                    className={sharedStyles.gradeSelect}
                     required
                     value={grade}
                     onChange={event => setGrade(event.target.value)}
@@ -150,7 +150,7 @@ export function AdminRegisteredEditPage() {
                     ))}
                   </select>
                   <img
-                    className={sharedStyles['grade-select-arrow']}
+                    className={sharedStyles.gradeSelectArrow}
                     src={chevronRightGrayUrl}
                     alt=""
                     aria-hidden="true"
@@ -160,11 +160,11 @@ export function AdminRegisteredEditPage() {
             </>
           ) : null}
 
-          <div className={sharedStyles['address-field']}>
-            <PFText as="span" typo="label-md" color="inherit" className={sharedStyles['field-label']}>
-              자택 주소 <span className={sharedStyles['inline-required-mark']}>*</span>
+          <div className={sharedStyles.addressField}>
+            <PFText as="span" typo="label-md" color="inherit" className={sharedStyles.fieldLabel}>
+              자택 주소 <span className={sharedStyles.inlineRequiredMark}>*</span>
             </PFText>
-            <div className={sharedStyles['address-search-row']}>
+            <div className={sharedStyles.addressSearchRow}>
               <PFTextInput
                 size="xlarge"
                 placeholder="주소를 검색해 주세요"
@@ -198,7 +198,7 @@ export function AdminRegisteredEditPage() {
           />
         </div>
 
-        <div className={sharedStyles['actions-terms']}>
+        <div className={sharedStyles.actionsTerms}>
           <PFButton size="xlarge" width="100%" disabled={!isValid} onClick={handleSubmit}>
             가입 정보 수정하기
           </PFButton>

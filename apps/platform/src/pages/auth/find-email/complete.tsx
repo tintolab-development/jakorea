@@ -26,7 +26,7 @@ export function FindEmailCompletePage() {
           </PFText>
         </div>
 
-        <div className={styles['email-box']} aria-label="찾은 이메일">
+        <div className={styles.emailBox} aria-label="찾은 이메일">
           <PFText typo="bd-lg-sb" color="black">
             {MOCK_MASKED_EMAIL}
           </PFText>

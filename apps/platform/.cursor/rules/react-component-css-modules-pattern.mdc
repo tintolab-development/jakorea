@@ -16,6 +16,7 @@ When creating or editing React components, follow this implementation pattern.
 - Avoid unnecessary wrapper divs.
 - Do not introduce new dependencies unless they are already used in the project or clearly necessary.
 - Use CSS Modules for all component-scoped styles.
+- **CSS Module class names: camelCase** (`heroTitle`, `sortOptionActive`). File names remain kebab-case.
 - Use TypeScript props interfaces or types for public component props.
 - **File/folder names: kebab-case.** Export names: PascalCase (`export function ExampleCard`).
 

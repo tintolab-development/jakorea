@@ -1,0 +1,67 @@
+.badge {
+  composes: root from '../pf-badge-base/pf-badge-base.module.css';
+}
+
+.large {
+  padding: 6px var(--spacing-12);
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.small {
+  height: 32px;
+  padding: 10px var(--spacing-12);
+  align-items: center;
+  gap: 6px;
+}
+
+.largeWithIcon {
+  height: 32px;
+  padding: 10px 16px 10px 12px;
+  align-items: center;
+  gap: var(--spacing-6);
+}
+
+.smallWithIcon {
+  height: 30px;
+  padding: 10px 14px 10px 10px;
+  align-items: center;
+  gap: var(--spacing-6);
+}
+
+.primary {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+}
+
+.secondary {
+  background: var(--color-element-default-blue);
+  color: var(--color-primary-700);
+}
+
+.closed {
+  background: var(--color-neutral-cool-400);
+  color: var(--color-neutral-white);
+}
+
+.iconPrimary {
+  background: var(--color-element-default-blue);
+  color: var(--color-primary-700);
+}
+
+.iconSecondary {
+  background: var(--color-element-default-gray);
+  color: var(--color-primary-700);
+}
+
+.iconSlot {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.label {
+  min-width: 0;
+}

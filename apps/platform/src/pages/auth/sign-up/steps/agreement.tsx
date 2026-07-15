@@ -23,18 +23,18 @@ export function AgreementStep({ signUp }: AgreementStepProps) {
           </>
         }
         description="필수 항목 동의는 가입을 위해 꼭 필요해요."
-        titleClassName={styles['terms-title']}
-        descriptionClassName={styles['terms-description']}
+        titleClassName={styles.termsTitle}
+        descriptionClassName={styles.termsDescription}
       />
 
-      <div className={styles['terms-content']}>
+      <div className={styles.termsContent}>
         <PFToggle
           variant="check-large"
           checked={agreement.isAllAgreed}
           onChange={() => agreement.toggleAll()}
           className={[
-            styles['all-agreement-button'],
-            agreement.isAllAgreed ? styles['all-agreement-button-checked'] : undefined,
+            styles.allAgreementButton,
+            agreement.isAllAgreed ? styles.allAgreementButtonChecked : undefined,
           ]
             .filter(Boolean)
             .join(' ')}
@@ -44,16 +44,16 @@ export function AgreementStep({ signUp }: AgreementStepProps) {
           </PFText>
         </PFToggle>
 
-        <div className={styles['agreement-list']}>
+        <div className={styles.agreementList}>
           {agreement.items.map(item => (
-            <div className={styles['agreement-item']} key={item.key}>
+            <div className={styles.agreementItem} key={item.key}>
               <PFToggle
                 variant="check-small"
                 checked={agreement.state[item.key]}
                 onChange={() => agreement.toggle(item.key)}
-                className={styles['agreement-check-button']}
+                className={styles.agreementCheckButton}
               >
-                <span className={styles['agreement-text']}>
+                <span className={styles.agreementText}>
                   <PFText
                     typo="bd-sm-md"
                     color="inherit"
@@ -66,7 +66,7 @@ export function AgreementStep({ signUp }: AgreementStepProps) {
                   </PFText>
                 </span>
               </PFToggle>
-              <button className={styles['terms-view-button']} type="button">
+              <button className={styles.termsViewButton} type="button">
                 <PFText typo="bd-sm-md" color="inherit">
                   보기
                 </PFText>
@@ -76,7 +76,7 @@ export function AgreementStep({ signUp }: AgreementStepProps) {
                   as="p"
                   typo="caption-rg"
                   color="error"
-                  className={styles['agreement-guide']}
+                  className={styles.agreementGuide}
                 >
                   {item.guide}
                 </PFText>
@@ -89,7 +89,7 @@ export function AgreementStep({ signUp }: AgreementStepProps) {
           as="p"
           typo="bd-sm-rg"
           color="neutral-warm-500"
-          className={styles['optional-guide']}
+          className={styles.optionalGuide}
         >
           선택 항목에 동의하지 않아도 회원가입은 가능해요.
         </PFText>

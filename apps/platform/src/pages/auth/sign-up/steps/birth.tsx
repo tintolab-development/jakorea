@@ -29,7 +29,7 @@ export function BirthStep({ signUp }: BirthStepProps) {
         descriptionClassName={styles.description}
       />
 
-      <div className={styles['step-content']}>
+      <div className={styles.stepContent}>
         <PFTextInput
           size="xlarge"
           label="생년월일"
@@ -39,16 +39,16 @@ export function BirthStep({ signUp }: BirthStepProps) {
           onValueChange={birth.setBirthDate}
         />
 
-        <div className={styles['gender-field']}>
+        <div className={styles.genderField}>
           <PFText
             as="span"
             typo="label-md"
             color="neutral-warm-500"
-            className={styles['field-label']}
+            className={styles.fieldLabel}
           >
             성별
           </PFText>
-          <div className={styles['gender-options']}>
+          <div className={styles.genderOptions}>
             <PFButton
               size="xlarge"
               variant="tertiary"
@@ -70,7 +70,7 @@ export function BirthStep({ signUp }: BirthStepProps) {
           </div>
 
           {isTeacherSignup ? (
-            <div className={styles['teacher-birth-guide']}>
+            <div className={styles.teacherBirthGuide}>
               <PFText as="p" typo="bd-sm-rg" color="primary-700">
                 교사회원은{' '}
                 <PFText as="span" typo="bd-sm-sb" color="primary-700">
@@ -79,7 +79,7 @@ export function BirthStep({ signUp }: BirthStepProps) {
                 만 가입할 수 있어요.
               </PFText>
               <button
-                className={styles['teacher-general-sign-up-link']}
+                className={styles.teacherGeneralSignUpLink}
                 type="button"
                 onClick={memberType.switchToGeneral}
               >
@@ -87,7 +87,7 @@ export function BirthStep({ signUp }: BirthStepProps) {
                   일반회원 가입하기
                 </PFText>
                 <img
-                  className={styles['teacher-general-sign-up-arrow']}
+                  className={styles.teacherGeneralSignUpArrow}
                   src={arrowRightUrl}
                   alt=""
                   aria-hidden="true"
@@ -99,7 +99,7 @@ export function BirthStep({ signUp }: BirthStepProps) {
       </div>
 
       {birth.message ? (
-        <PFText as="p" typo="bd-sm-rg" color="error" className={styles['step-message']}>
+        <PFText as="p" typo="bd-sm-rg" color="error" className={styles.stepMessage}>
           {birth.message}
         </PFText>
       ) : null}

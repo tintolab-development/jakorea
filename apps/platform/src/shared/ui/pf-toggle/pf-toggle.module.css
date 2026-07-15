@@ -14,12 +14,12 @@
   opacity: 0.5;
 }
 
-.check-large {
+.checkLarge {
   gap: var(--spacing-16);
   width: 100%;
 }
 
-.check-small {
+.checkSmall {
   width: 100%;
   min-width: 0;
   gap: var(--spacing-20);
@@ -30,12 +30,12 @@
   flex: 0 0 auto;
 }
 
-.icon-check-large {
+.iconCheckLarge {
   width: 24px;
   height: 24px;
 }
 
-.icon-check-small {
+.iconCheckSmall {
   width: 20px;
   height: 20px;
 }
@@ -55,7 +55,7 @@
   letter-spacing: 0;
 }
 
-.text-on {
+.textOn {
   color: var(--color-primary-500);
 }
 
