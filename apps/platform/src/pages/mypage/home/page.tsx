@@ -9,9 +9,8 @@ import {
   showInstructorApplyCta,
 } from '@/features/mypage'
 import { getDevAuthLoggedIn, getDevMemberProfile } from '@/shared/lib'
-import settingsIconUrl from '@/widgets/mypage-layout/image/icon/dashboard-black-24.svg'
+import { MypageLayout, mypageSettingsIconUrl } from '@/widgets/mypage-layout'
 import { PFText } from '@/shared/ui'
-import { MypageLayout } from '@/widgets/mypage-layout'
 import { ProgramStatCards } from './program-stat-cards'
 import { SchedulePlaceholder } from './schedule-placeholder'
 import styles from './page.module.css'
@@ -51,7 +50,7 @@ export function MypageHomePage() {
             >
               <img
                 className={styles.settingsIcon}
-                src={settingsIconUrl}
+                src={mypageSettingsIconUrl}
                 alt=""
                 aria-hidden="true"
               />

@@ -7,21 +7,21 @@
   position: relative;
   width: 100%;
   min-width: 0;
+  overflow: visible;
   background: var(--color-neutral-white);
 }
 
 .pageBackground {
   position: absolute;
   top: calc(-1 * var(--mypage-header-height));
-  left: 50%;
+  inset-inline: 0;
   z-index: 0;
-  width: 100vw;
+  width: 100%;
   height: var(--mypage-background-height);
-  transform: translateX(-50%);
   background-image: url('./image/background/mypage-background.svg');
   background-repeat: no-repeat;
   background-position: top center;
-  background-size: 100% var(--mypage-background-height);
+  background-size: cover;
   -webkit-mask-image: linear-gradient(
     180deg,
     #000 0%,

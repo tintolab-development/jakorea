@@ -17,5 +17,6 @@
 
 .mainMypage {
   composes: main;
+  align-items: stretch;
   overflow: visible;
 }
