@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { PermissionModal } from '@/shared/components/permission-modal'
+import { PermissionButton } from '@/shared/components/permission-button'
 import { ActionResultModal } from '@/shared/ui/action-result-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { PlainHeaderModal } from '@/shared/ui/plain-header-modal'
@@ -8,7 +9,6 @@ import { DsDemo, DsSection } from './section'
 
 export function ModalsExtendedSection() {
   const [approveOpen, setApproveOpen] = useState(false)
-  const [rejectOpen, setRejectOpen] = useState(false)
   const [tealOpen, setTealOpen] = useState(false)
   const [plainOpen, setPlainOpen] = useState(false)
   const [resultOpen, setResultOpen] = useState(false)
@@ -17,7 +17,7 @@ export function ModalsExtendedSection() {
     <DsSection
       id="modals-extended"
       title="Modals (extended)"
-      description="승인·반려·결과·헤더 셸 패턴입니다. 일반 폼·안내는 ContentModal을 우선하고, 아래는 특수한 경우에만 사용합니다."
+      description="권한 액션·결과·헤더 셸 패턴입니다. 승인·반려·취소 등 업무 흐름은 Modal processes에서 확인합니다."
     >
       <p className="ds-note">
         <code>TealHeaderModal</code>은 ContentModal의 기반 셸(커스텀 바디·푸터).{' '}
@@ -26,15 +26,14 @@ export function ModalsExtendedSection() {
         완료 결과 안내입니다.
       </p>
 
-      <DsDemo label="PermissionModal">
-        <div className="ds-demo__row ds-demo__row--fluid">
-          <CmsButton variant="primary" onClick={() => setApproveOpen(true)}>
-            approve
-          </CmsButton>
-          <CmsButton variant="delete" onClick={() => setRejectOpen(true)}>
-            reject
-          </CmsButton>
-        </div>
+      <DsDemo label="PermissionButton → PermissionModal">
+        <p className="ds-note" style={{ marginTop: 0 }}>
+          버튼은 현재 인증 컨텍스트의 역할·관리자 레벨을 확인합니다. 권한 통과 후 승인 모달을 여는
+          실제 조합입니다.
+        </p>
+        <PermissionButton type="primary" onClick={() => setApproveOpen(true)}>
+          권한 확인 후 승인
+        </PermissionButton>
       </DsDemo>
 
       <DsDemo label="Header shells">
@@ -56,6 +55,12 @@ export function ModalsExtendedSection() {
         </div>
       </DsDemo>
 
+      <p className="ds-note">
+        <strong>Not catalogued</strong> — 화면 상태와 API 의존성이 큰 도메인 모달은 전체 화면에서
+        확인합니다: <code>InquiryModal</code>, <code>ProfileEditModal</code>,{' '}
+        <code>TemplateFullpageModal</code>. 공통 셸의 사용법은 위 라이브 데모로 대표합니다.
+      </p>
+
       <PermissionModal
         open={approveOpen}
         onCancel={() => setApproveOpen(false)}
@@ -64,15 +69,6 @@ export function ModalsExtendedSection() {
         title="승인"
         message="선택한 항목을 **승인**합니다."
         showNotifyTiming={false}
-      />
-
-      <PermissionModal
-        open={rejectOpen}
-        onCancel={() => setRejectOpen(false)}
-        onConfirm={() => setRejectOpen(false)}
-        variant="reject"
-        title="반려"
-        message="선택한 항목을 **반려**합니다.\n사유를 입력해 주세요."
       />
 
       <TealHeaderModal

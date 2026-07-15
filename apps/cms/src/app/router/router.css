@@ -10,3 +10,10 @@
   background-color: var(--color-overlay-light-80);
   z-index: 100;
 }
+
+/* Layout 밖 공개 페이지용 — 헤더·콘텐츠 패딩을 빼지 않고 가시 뷰포트를 전부 채움 */
+.router-loading-fallback--full-viewport {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--color-bg-secondary);
+}

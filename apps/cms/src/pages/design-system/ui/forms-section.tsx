@@ -5,6 +5,8 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsDatePicker, CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsInputSearch } from '@/shared/ui/cms-input-search'
+import { CmsDateTextInput } from '@/shared/ui/date-text-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsSelectMultiple } from '@/shared/ui/cms-select-multiple'
@@ -38,6 +40,11 @@ export function FormsSection() {
   const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>(null)
   const [address, setAddress] = useState('')
   const [fileNames, setFileNames] = useState<string[]>([])
+  const [integer, setInteger] = useState('')
+  const [decimal, setDecimal] = useState('')
+  const [currency, setCurrency] = useState('')
+  const [numericText, setNumericText] = useState('00123')
+  const [dateText, setDateText] = useState('')
 
   return (
     <DsSection
@@ -75,6 +82,66 @@ export function FormsSection() {
             rows={3}
           />
         </div>
+      </DsDemo>
+
+      <DsDemo label="CmsNumericInput — integer / decimal / currency / numericText">
+        <div className="ds-demo__stack">
+          <CmsNumericInput
+            mode="integer"
+            min={0}
+            value={integer}
+            onValueChange={setInteger}
+            placeholder="수량 (0 이상의 정수)"
+            aria-label="정수 입력 예시"
+            width="100%"
+          />
+          <CmsNumericInput
+            mode="decimal"
+            min={0}
+            precision={1}
+            value={decimal}
+            onValueChange={setDecimal}
+            placeholder="거리 (소수점 첫째 자리)"
+            aria-label="소수 입력 예시"
+            width="100%"
+          />
+          <CmsNumericInput
+            mode="currency"
+            min={0}
+            value={currency}
+            onValueChange={setCurrency}
+            placeholder="금액"
+            aria-label="금액 입력 예시"
+            suffix="원"
+            width="100%"
+          />
+          <CmsNumericInput
+            mode="numericText"
+            value={numericText}
+            onValueChange={setNumericText}
+            placeholder="계좌번호 등 숫자형 식별자"
+            aria-label="숫자형 식별자 입력 예시"
+            width="100%"
+          />
+        </div>
+        <p className="ds-note">
+          금액은 화면에 쉼표를 표시하지만 값은 <code>{currency || '(빈 값)'}</code>으로 유지합니다.
+          숫자형 식별자는 <code>{numericText || '(빈 값)'}</code>처럼 선행 0을 보존합니다.
+        </p>
+      </DsDemo>
+
+      <DsDemo label="CmsDateTextInput — 직접 입력 날짜">
+        <CmsDateTextInput
+          value={dateText}
+          onValueChange={setDateText}
+          placeholder="YYYY.MM.DD"
+          aria-label="날짜 직접 입력 예시"
+          width="100%"
+        />
+        <p className="ds-note">
+          입력 중에는 한 자리 월·일을 유지하고, 완성된 유효 날짜만 blur 시 두 자리로
+          정규화합니다.
+        </p>
       </DsDemo>
 
       <DsDemo label="CmsSelect / CmsSelectMultiple">

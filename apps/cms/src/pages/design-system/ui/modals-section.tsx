@@ -12,6 +12,7 @@ import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import { DetailModalSidebar, type DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
+import type { ModalSize } from '@/shared/ui/teal-header-modal'
 import {
   ModalSpecTable,
   ModalSpecTableRadioCell,
@@ -41,10 +42,24 @@ const SIDEBAR_DEMO_ITEMS: DetailModalSidebarNavItem[] = [
   },
 ]
 
+type ContentModalSize = Exclude<ModalSize, 'full'>
+
+const MODAL_SIZE_TIERS: Array<{
+  size: ContentModalSize
+  width: number
+  usage: string
+}> = [
+  { size: 'compact', width: 600, usage: '안내·확인·삭제' },
+  { size: 'default', width: 800, usage: '기본 폼·설정' },
+  { size: 'medium', width: 1000, usage: '넓은 상세 폼' },
+  { size: 'wide', width: 1200, usage: '복합 편집·신규 규격' },
+  { size: 'large', width: 1400, usage: '미리보기·대형 표' },
+]
+
 export function ModalsSection() {
   const { showAlert } = useCmsAlert()
+  const [contentSize, setContentSize] = useState<ContentModalSize>('default')
   const [contentOpen, setContentOpen] = useState(false)
-  const [contentLargeOpen, setContentLargeOpen] = useState(false)
   const [cmsModalOneOpen, setCmsModalOneOpen] = useState(false)
   const [cmsModalTwoOpen, setCmsModalTwoOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -82,14 +97,24 @@ export function ModalsSection() {
         <code>cmsAlertModal</code>만 사용하세요.
       </p>
 
-      <DsDemo label="ContentModal">
+      <DsDemo label="ContentModal — width tiers">
+        <p className="ds-note" style={{ marginTop: 0 }}>
+          공통 폭은 600 / 800 / 1000 / 1200 / 1400px입니다. 모든 일반 모달은 전체 셸 기준 최대
+          880px이며, 콘텐츠가 넘치면 헤더·푸터를 고정하고 본문만 스크롤합니다.
+        </p>
         <div className="ds-demo__row ds-demo__row--fluid">
-          <CmsButton variant="primary" onClick={() => setContentOpen(true)}>
-            default (~800px)
-          </CmsButton>
-          <CmsButton variant="secondary" onClick={() => setContentLargeOpen(true)}>
-            size=&quot;large&quot; (~1400px)
-          </CmsButton>
+          {MODAL_SIZE_TIERS.map(({ size, width, usage }) => (
+            <CmsButton
+              key={size}
+              variant={size === 'default' ? 'primary' : 'secondary'}
+              onClick={() => {
+                setContentSize(size)
+                setContentOpen(true)
+              }}
+            >
+              {size} · {width}px · {usage}
+            </CmsButton>
+          ))}
         </div>
       </DsDemo>
 
@@ -176,8 +201,9 @@ export function ModalsSection() {
       <ContentModal
         open={contentOpen}
         onCancel={() => setContentOpen(false)}
-        title="컨텐츠 모달"
-        description="기본 size(default). description은 **볼드**와\n줄바꿈을 지원합니다."
+        title={`${contentSize} 컨텐츠 모달`}
+        size={contentSize}
+        description={`공식 폭 티어 **${MODAL_SIZE_TIERS.find(tier => tier.size === contentSize)?.width}px**.\n전체 셸 최대 높이는 880px입니다.`}
         footer={
           <>
             <CmsButton variant="secondary" onClick={() => setContentOpen(false)}>
@@ -189,26 +215,16 @@ export function ModalsSection() {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--color-text-body)' }}>
-          ContentModal은 TealHeaderModal을 감싼 표준 컨텐츠 모달입니다. 일반 폼·안내에 우선
-          사용합니다.
-        </p>
-      </ContentModal>
-
-      <ContentModal
-        open={contentLargeOpen}
-        onCancel={() => setContentLargeOpen(false)}
-        title="Large 컨텐츠 모달"
-        size="large"
-        footer={
-          <CmsButton variant="primary" onClick={() => setContentLargeOpen(false)}>
-            닫기
-          </CmsButton>
-        }
-      >
-        <p style={{ margin: 0, color: 'var(--color-text-body)' }}>
-          size=&quot;large&quot;는 넓은 표·폼에 사용합니다.
-        </p>
+        <div className="ds-modal-size-preview">
+          {(contentSize === 'large'
+            ? Array.from({ length: 18 }, (_, index) => `스크롤 확인용 콘텐츠 ${index + 1}`)
+            : ['작은 콘텐츠는 고정 높이 없이 자연 높이를 유지합니다.']
+          ).map(line => (
+            <div key={line} className="ds-modal-size-preview__row">
+              {line}
+            </div>
+          ))}
+        </div>
       </ContentModal>
 
       <CmsModal

@@ -9,6 +9,7 @@ import {
 } from '@/shared/components/status-dropdown-cell'
 import { ApprovalStatusBadge, type ApprovalStatusKey } from '@/shared/components/approval-status-badge'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { CrossTable } from '@/shared/ui/cross-table'
 import { DsDemo, DsSection } from './section'
 
 type DemoRow = {
@@ -27,6 +28,28 @@ const ALL_ROWS: DemoRow[] = [
 ]
 
 const STATUS_OPTIONS: ApprovalStatusKey[] = ['pending', 'approved', 'rejected', 'cancelled']
+
+const FLUID_COLUMNS: ColumnsType<DemoRow> = [
+  {
+    title: '프로그램명',
+    dataIndex: 'name',
+    key: 'name',
+    ellipsis: true,
+  },
+  {
+    title: '지역',
+    dataIndex: 'region',
+    key: 'region',
+    width: 120,
+  },
+  {
+    title: '상태',
+    dataIndex: 'status',
+    key: 'status',
+    width: 140,
+    render: (status: ApprovalStatusKey) => <ApprovalStatusBadge status={status} />,
+  },
+]
 
 function isInPeriod(dateStr: string, period: [Dayjs | null, Dayjs | null] | null | undefined) {
   if (period == null || (period[0] == null && period[1] == null)) return true
@@ -179,6 +202,59 @@ export function FiltersTablesSection() {
           />
         </FilterTableLayout>
       </DsDemo>
+
+      <DsDemo label="CrossTable — 행·열 교차 정보" className="ds-demo--table">
+        <CrossTable
+          corner="구분"
+          columnHeaders={['1회차', '2회차', '3회차']}
+          rows={[
+            { rowHeader: '교육 일자', cells: ['7월 21일', '7월 28일', '8월 4일'] },
+            { rowHeader: '교육 시간', cells: ['10:00–12:00', '10:00–12:00', '10:00–12:00'] },
+            { rowHeader: '참여 인원', cells: ['24명', '23명', '24명'] },
+          ]}
+          aria-label="프로그램 회차별 정보"
+        />
+      </DsDemo>
+
+      <DsDemo label="가로형 목록 표 — 기본 / 상세·모달 fluid" className="ds-demo--table">
+        <p className="ds-note" style={{ marginTop: 0 }}>
+          헤더 행과 다수 데이터 행은 Ant <code>Table</code> + <code>cms-data-table</code>을
+          사용합니다. 상세·모달처럼 콘텐츠 폭에 맞춰야 할 때만{' '}
+          <code>cms-data-table--fluid</code>를 추가합니다.
+        </p>
+        <div className="ds-table-comparison">
+          <div>
+            <p className="ds-demo__label">기본 목록 — 고정 폭·ellipsis</p>
+            <Table<DemoRow>
+              className="cms-data-table"
+              rowKey="id"
+              columns={FLUID_COLUMNS}
+              dataSource={ALL_ROWS.slice(0, 3)}
+              pagination={false}
+              size="middle"
+            />
+          </div>
+          <div>
+            <p className="ds-demo__label">상세·모달 — fluid / empty</p>
+            <Table<DemoRow>
+              className="cms-data-table cms-data-table--fluid"
+              rowKey="id"
+              columns={FLUID_COLUMNS}
+              dataSource={[]}
+              locale={{ emptyText: '데이터가 없습니다.' }}
+              pagination={false}
+              size="middle"
+            />
+          </div>
+        </div>
+      </DsDemo>
+
+      <p className="ds-note">
+        <strong>Not catalogued</strong> — CMS 전용 Pagination 래퍼는 없습니다. 목록 화면은 Ant
+        Table의 pagination 설정을 사용하므로 raw antd Pagination을 별도 컴포넌트처럼 카탈로그하지
+        않습니다. 키-값 정보는 <code>DetailInfoForm</code>, 행·열 교차 데이터만{' '}
+        <code>CrossTable</code>을 사용합니다.
+      </p>
     </DsSection>
   )
 }

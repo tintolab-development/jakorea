@@ -310,7 +310,7 @@ export const router = createBrowserRouter([
     // 로그인·역할 없이 공개 접근 (쇼케이스/문서용)
     path: '/design-system',
     element: (
-      <Suspense fallback={<RouterLoadingFallback />}>
+      <Suspense fallback={<RouterLoadingFallback fullViewport />}>
         <DesignSystemPage />
       </Suspense>
     ),

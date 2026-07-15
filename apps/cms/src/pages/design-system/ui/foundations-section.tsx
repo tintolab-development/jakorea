@@ -82,11 +82,12 @@ export function FoundationsSection() {
     <DsSection
       id="foundations"
       title="Foundations"
-      description="theme-provider.css의 CSS 변수. 새 스타일은 var(--color-*) / var(--spacing-*)를 우선하고 raw hex는 지양합니다."
+      description="토큰 SSOT는 theme-provider.css. Ant 테마 hex는 colors.ts / theme-provider.tsx와 동기화. 제품 룩 변경은 Phase 5에서 shared·토큰만."
     >
       <p className="ds-note">
-        Ant Design ConfigProvider의 colorPrimary(#01a1af)와 --color-brand-primary / --JA-mint-01이
-        동일한 브랜드 축입니다.
+        ConfigProvider colorPrimary는 <code>brandColorsHex.primary</code>와 같고, CSS는
+        --color-brand-primary → --JA-mint-01 / --color-mint-01 alias입니다. Platform·packages/ui와
+        무관합니다.
       </p>
 
       <DsDemo label="Brand">
