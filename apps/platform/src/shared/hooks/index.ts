@@ -1,4 +1,6 @@
 /** 공유 hooks barrel */
+export { useSearchFilters } from './use-search-filters'
+export type { SearchFilterBinding, UseSearchFiltersOptions } from './use-search-filters'
 export { useJusoAddressSearch } from '@jakorea/location/juso/react'
 export { useNeisSchoolSearch } from '@jakorea/location/neis/react'
 export type { JusoAddressItem, JusoAddressRow } from '@jakorea/location/juso'
