@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
+import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { programLifecycleStatusConfig } from '@/shared/constants/status'
 import {
@@ -110,6 +111,9 @@ export function useProgramListFilters(
     isInstructorRecruitmentRoute,
   ])
 
+  const companySchoolRemoteEnabled =
+    programType === 'company_school' && shouldUseCompanySchoolRemoteApi()
+
   const filteredPrograms = useMemo(() => {
     let filtered: Program[]
 
@@ -128,7 +132,12 @@ export function useProgramListFilters(
       filtered = filtered.filter(program => volunteerProgramIds.has(program.id))
     }
 
-    // 1사1교: 4단계 필터
+    // 1사1교 remote: API `periodStatus`가 이미 반영됨 — 클라이언트 날짜/lifecycle 재필터 금지 (일반 목록과 동일)
+    if (programType === 'company_school' && companySchoolRemoteEnabled) {
+      return filtered
+    }
+
+    // 1사1교 mock: overview status → 운영 기간/lifecycle 클라이언트 필터
     if (programType === 'company_school' && statusFilter) {
       const s = statusFilter as OverviewStatusFilter
       if (s === 'scheduled') {
@@ -201,7 +210,15 @@ export function useProgramListFilters(
     }
 
     return filtered
-  }, [programs, isUserRole, isAdmin, categoryTab, statusFilter, programType])
+  }, [
+    programs,
+    isUserRole,
+    isAdmin,
+    categoryTab,
+    statusFilter,
+    programType,
+    companySchoolRemoteEnabled,
+  ])
 
   const handleCategoryTabChange = (category: ProgramCategory | 'all') => {
     if (category === 'all') {

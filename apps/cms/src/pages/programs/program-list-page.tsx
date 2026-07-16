@@ -49,6 +49,9 @@ import {
   useDeleteCompanySchoolProgram,
   useUpdateCompanySchoolProgram,
 } from '@/features/program/1c-1s/api/hooks'
+import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
+import { companySchoolListParamsFromOverviewStatus } from '@/features/program/1c-1s/api/list-params'
+import type { OverviewStatusFilter } from './use-program-list-filters'
 
 const PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY = 'new'
 
@@ -65,7 +68,34 @@ function ProgramListPageContent() {
   const { user, isAuthenticated } = useAuthStore()
   const programStore = useProgramStore()
   const { programs, loading, fetchPrograms, selectedProgram, setSelectedProgram } = programStore
-  const companySchoolListQuery = useCompanySchoolPrograms({}, isCompanySchoolPath)
+  const companySchoolOverviewStatus = useMemo((): OverviewStatusFilter | null => {
+    const value = new URLSearchParams(location.search).get('status')
+    if (value === 'scheduled' || value === 'in_progress' || value === 'completed') return value
+    if (value === 'economy_scheduled') return 'scheduled'
+    if (value === 'economy_in_progress') return 'in_progress'
+    if (value === 'economy_completed') return 'completed'
+    return null
+  }, [location.search])
+  const companySchoolTableFilters = useMemo(() => {
+    const sp = new URLSearchParams(location.search)
+    const title = sp.get('title') ?? undefined
+    const yearRaw = sp.get('businessYear')
+    const businessYear =
+      yearRaw && /^\d{4}$/.test(yearRaw) ? Number.parseInt(yearRaw, 10) : undefined
+    return { title, businessYear }
+  }, [location.search])
+  const companySchoolListFilters = useMemo(
+    () =>
+      companySchoolListParamsFromOverviewStatus(
+        companySchoolOverviewStatus,
+        companySchoolTableFilters
+      ),
+    [companySchoolOverviewStatus, companySchoolTableFilters]
+  )
+  const companySchoolListQuery = useCompanySchoolPrograms(
+    companySchoolListFilters,
+    isCompanySchoolPath
+  )
   const companySchoolProgramSource = isCompanySchoolPath
     ? (companySchoolListQuery.data ?? [])
     : programs
@@ -170,14 +200,28 @@ function ProgramListPageContent() {
     useState<Program | null>(null)
   const [selectedProgramForFullPageModal, setSelectedProgramForFullPageModal] =
     useState<Program | null>(null)
+
+  const companySchoolProgramIdFromUrl = useMemo(() => {
+    if (!isCompanySchoolPath) return undefined
+    const pid = searchParams.get('programId')?.trim()
+    if (!pid || isUjatProgramId(pid)) return undefined
+    return pid
+  }, [isCompanySchoolPath, searchParams])
+
   const companySchoolDetailQuery = useCompanySchoolProgramDetail(
-    selectedProgramForFullPageModal?.id,
-    isCompanySchoolPath && Boolean(selectedProgramForFullPageModal)
+    companySchoolProgramIdFromUrl ?? selectedProgramForFullPageModal?.id,
+    isCompanySchoolPath &&
+      Boolean(companySchoolProgramIdFromUrl ?? selectedProgramForFullPageModal?.id)
   )
   const updateCompanySchoolMutation = useUpdateCompanySchoolProgram()
   const deleteCompanySchoolMutation = useDeleteCompanySchoolProgram()
   const companySchoolDetailProgram =
-    companySchoolDetailQuery.data ?? selectedProgramForFullPageModal
+    companySchoolDetailQuery.data ??
+    selectedProgramForFullPageModal ??
+    (companySchoolProgramIdFromUrl
+      ? filteredPrograms.find(p => p.id === companySchoolProgramIdFromUrl) ??
+        ({ id: companySchoolProgramIdFromUrl } as Program)
+      : null)
 
   // 4. Effects
   useEffect(() => {
@@ -246,15 +290,58 @@ function ProgramListPageContent() {
   useEffect(() => {
     if (!isFullPageModalPath) return
     const programIdFromUrl = searchParams.get('programId')
-    if (!programIdFromUrl) return
+    if (!programIdFromUrl) {
+      setSelectedProgramForFullPageModal(null)
+      return
+    }
     if (isUjatProgramId(programIdFromUrl)) return
+
+    // 1사1교: 목록·detail 캐시에 있으면 동기화. 없어도 URL id로 모달 오픈(아래 open 조건).
+    if (isCompanySchoolPath) {
+      const fromList = filteredPrograms.find(p => p.id === programIdFromUrl)
+      const fromDetail =
+        companySchoolDetailQuery.data?.id === programIdFromUrl
+          ? companySchoolDetailQuery.data
+          : null
+      const resolved = fromDetail ?? fromList ?? null
+      if (resolved) {
+        setSelectedProgramForFullPageModal(resolved)
+      }
+      return
+    }
+
     // 목록은 filteredPrograms(교육/경제 시 mock) 기준이므로 여기서 찾아야 새로고침 복원이 안정적임
     if (filteredPrograms.length === 0) return
     const program = filteredPrograms.find(p => p.id === programIdFromUrl)
     if (program) {
       setSelectedProgramForFullPageModal(program)
     }
-  }, [isFullPageModalPath, searchParams, filteredPrograms, setSelectedProgramForFullPageModal])
+  }, [
+    isFullPageModalPath,
+    isCompanySchoolPath,
+    searchParams,
+    filteredPrograms,
+    companySchoolDetailQuery.data,
+  ])
+
+  // 1사1교 remote: detail 확정 실패(404 등) 시 programId 쿼리 제거
+  useEffect(() => {
+    if (!isCompanySchoolPath || !companySchoolProgramIdFromUrl) return
+    if (!shouldUseCompanySchoolRemoteApi()) return
+    if (!companySchoolDetailQuery.isError || companySchoolDetailQuery.isFetching) return
+    const next = new URLSearchParams(searchParams)
+    if (!next.has('programId')) return
+    next.delete('programId')
+    setSearchParams(next, { replace: true })
+    setSelectedProgramForFullPageModal(null)
+  }, [
+    isCompanySchoolPath,
+    companySchoolProgramIdFromUrl,
+    companySchoolDetailQuery.isError,
+    companySchoolDetailQuery.isFetching,
+    searchParams,
+    setSearchParams,
+  ])
 
   // Phase 0.2.1: 로그인 후 redirect 파라미터 대응 (교육/경제 목록에서는 상세 페이지로 가지 않고 풀페이지 모달만 사용)
   useEffect(() => {
@@ -463,7 +550,7 @@ function ProgramListPageContent() {
       )}
       <CmsButton
         variant="secondary"
-        width={180}
+        size="large"
         icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
         onClick={handleViewModeToggle}
       >
@@ -473,7 +560,7 @@ function ProgramListPageContent() {
   )
 
   const programListToolbarActionsAfterExcel = (
-    <CmsButton width={180} onClick={handleProgramCreateClick}>
+    <CmsButton variant="primary" size="large" width={180} onClick={handleProgramCreateClick}>
       프로그램 신규 등록
     </CmsButton>
   )
@@ -511,11 +598,22 @@ function ProgramListPageContent() {
       </ProgramList>
 
       <ProgramDetailFullPageModal
-        open={!!selectedProgramForFullPageModal}
+        open={
+          isCompanySchoolPath
+            ? Boolean(companySchoolProgramIdFromUrl) || !!selectedProgramForFullPageModal
+            : !!selectedProgramForFullPageModal
+        }
         program={companySchoolDetailProgram}
         programVariant={isCompanySchoolPath ? 'company-school' : undefined}
         externalLoading={
-          isCompanySchoolPath ? companySchoolDetailQuery.isFetching : undefined
+          isCompanySchoolPath
+            ? companySchoolDetailQuery.isFetching && !companySchoolDetailProgram
+            : undefined
+        }
+        externalError={
+          isCompanySchoolPath
+            ? companySchoolDetailQuery.isError && !companySchoolDetailProgram
+            : undefined
         }
         onClose={handleCloseFullPageModal}
         onUpdateProgram={

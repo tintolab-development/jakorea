@@ -4,11 +4,11 @@
  * - 월간: 월 그리드 + 우측 일정 리스트 / 주간: 주간 그리드 셀 내 이벤트
  */
 
-import { Card, List, Empty, Popover } from 'antd'
+import { Card, List, Popover } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useState, useMemo, useRef, useLayoutEffect, Fragment, type ReactElement } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LoadingButton } from '@/shared/ui'
+import { LoadingButton, EmptyState } from '@/shared/ui'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import dayjs, { type Dayjs } from 'dayjs'
 import {
@@ -42,6 +42,8 @@ import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dash
 import { useDashboardProgramSchedules } from '../hooks/use-dashboard-program-schedules'
 import { useDashboardProgramOptions } from '../hooks/use-dashboard-program-options'
 import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
+import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
+import { useCompanySchoolPrograms } from '@/features/program/1c-1s/api/hooks'
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
 
@@ -421,14 +423,26 @@ export function ProgramScheduleWidget({
   const selectedMockProgramIds = useDashboardSettingsStore(s => s.widgetProgramIds[widgetKey])
 
   const useRemoteSchedules = shouldUseDashboardRemoteApi()
+  const useCompanySchoolProgramsRemote =
+    variant === 'company_school' && shouldUseCompanySchoolRemoteApi()
+  const companySchoolProgramsQuery = useCompanySchoolPrograms({}, useCompanySchoolProgramsRemote)
   const { data: remoteProgramOptions = [] } = useDashboardProgramOptions(widgetKey, useRemoteSchedules)
 
   const categoryProgramIdSet = useMemo(() => {
     if (useRemoteSchedules && remoteProgramOptions.length > 0) {
       return new Set(remoteProgramOptions.map(p => p.id))
     }
+    if (useCompanySchoolProgramsRemote && companySchoolProgramsQuery.data) {
+      return new Set(companySchoolProgramsQuery.data.map(p => p.id))
+    }
     return getCategoryProgramIdSet(variant)
-  }, [useRemoteSchedules, remoteProgramOptions, variant])
+  }, [
+    useRemoteSchedules,
+    remoteProgramOptions,
+    useCompanySchoolProgramsRemote,
+    companySchoolProgramsQuery.data,
+    variant,
+  ])
 
   const allowedProgramIdSet = useMemo(
     () => allowedIdsFromWidgetSelection(variant, selectedMockProgramIds),
@@ -439,8 +453,20 @@ export function ProgramScheduleWidget({
     if (useRemoteSchedules && remoteProgramOptions.length > 0) {
       return programsFromOptions(remoteProgramOptions, user)
     }
+    if (useCompanySchoolProgramsRemote && companySchoolProgramsQuery.data) {
+      const base = companySchoolProgramsQuery.data
+      if (!user || user.role !== 'ADMIN' || user.adminLevel === 'MASTER') return base
+      return filterProgramsByACL(base, user)
+    }
     return getProgramsForRecruitmentForUser(variant, user)
-  }, [useRemoteSchedules, remoteProgramOptions, variant, user])
+  }, [
+    useRemoteSchedules,
+    remoteProgramOptions,
+    useCompanySchoolProgramsRemote,
+    companySchoolProgramsQuery.data,
+    variant,
+    user,
+  ])
 
   const visibleDateRange = useMemo(() => {
     if (viewMode === 'week') {
@@ -892,11 +918,9 @@ export function ProgramScheduleWidget({
   const eventListSection = (
     <div className="program-schedule-widget__events">
       {selectedDateEvents.length === 0 ? (
-        <Empty
-          description="해당 날짜에 일정이 없습니다"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          className="program-schedule-widget__empty"
-        />
+        <div className="program-schedule-widget__empty">
+          <EmptyState description="해당 날짜에 일정이 없습니다" />
+        </div>
       ) : (
         <List
           dataSource={selectedDateEvents}
