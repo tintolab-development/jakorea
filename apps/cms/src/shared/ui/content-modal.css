@@ -1,11 +1,15 @@
 /**
  * 컨텐츠 모달 공통 레이아웃
- * 컨테이너 패딩, 헤더/바디/푸터 스타일, 푸터 버튼 영역 우측 정렬
+ * 셸(Figma): padding 26 30 34 · radius 12 · shadow 0 0 25px rgba(0,0,0,0.35)
+ * 푸터: margin-top 30 · 버튼 우측 · medium 120×40
  */
 
-/* 모달 컨테이너: padding top 28, bottom 34, horizontal 30 */
+/* 모달 컨테이너 */
 .content-modal.ant-modal .ant-modal-content {
-  padding: 28px 30px 34px;
+  padding: 26px 30px 34px 30px;
+  border-radius: var(--radius-12, 12px);
+  background: #fff;
+  box-shadow: var(--shadow-modal);
 }
 
 /* 헤더: 흰 배경, 타이틀 영역 높이 36px */
@@ -86,6 +90,22 @@
   align-items: center;
   gap: 10px;
   width: 100%;
+}
+
+/*
+ * 카드형 모달 푸터 CmsButton — Figma medium 120×40 고정
+ * size="large"|"small" · cms-button--action · 인라인 width 를 덮어씀.
+ * 의도적 가변 폭이 필요하면 `.cms-button--footer-auto` 로 제외.
+ */
+.content-modal__footer-actions .cms-button.ant-btn:not(.cms-button--footer-auto) {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  height: 40px !important;
+  padding: 6px 14px !important;
+  gap: 10px;
+  border-radius: var(--radius-6, 6px);
+  font-size: 14px;
 }
 
 /* description prop 본문 — 전 모달 공통 */

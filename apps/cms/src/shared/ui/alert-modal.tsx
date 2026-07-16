@@ -48,7 +48,7 @@ export function AlertModal({
       zIndex={zIndex}
       className="alert-modal"
       footer={
-        <CmsButton variant="secondary" size="medium" width={120} type="button" onClick={handleConfirm}>
+        <CmsButton variant="secondary" size="medium" type="button" onClick={handleConfirm}>
           {confirmLabel}
         </CmsButton>
       }

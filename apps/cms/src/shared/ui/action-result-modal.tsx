@@ -51,7 +51,7 @@ export function ActionResultModal({
       width={420}
       zIndex={zIndex}
       footer={
-        <CmsButton variant="secondary" width={70} type="button" onClick={onClose}>
+        <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
           {confirmLabel}
         </CmsButton>
       }

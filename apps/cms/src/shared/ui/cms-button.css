@@ -3,20 +3,25 @@
  * - variant: primary | secondary | default | delete
  * - size: large | medium | small
  * - hover 시 색·테두리 변화 없음
+ *
+ * Size (Figma):
+ *   large           140×44 · padding 6×16 · radius 8 · gap 6 · font 16/600/150%
+ *   large + icon    180×44 · padding 6×16×6×10 · row · gap 6
+ *   medium          120×40 · padding 6×14 · radius 6 · gap 10 · font 14/600/150%
+ *   small           100×32 · padding 6×12 · radius 6 · gap 4 · font 12/600/150%
+ * Secondary / Delete: border + gradient(6%) + #FFF
  */
 
 .cms-button.ant-btn {
   box-sizing: border-box;
   display: flex !important;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 6px;
   margin: 0;
-  padding: 0 16px !important;
-  border-radius: var(--8, 8px);
   text-align: center;
-  font-family: inherit;
+  font-family: Pretendard, sans-serif;
+  font-style: normal;
   font-weight: 600;
   line-height: 150%;
   cursor: pointer;
@@ -26,12 +31,22 @@
   box-shadow: none !important;
 }
 
+/* 아이콘+라벨은 가로 배치 */
+.cms-button.ant-btn.cms-button--has-icon {
+  flex-direction: row;
+}
+
 .cms-button.ant-btn.ant-btn-disabled,
 .cms-button.ant-btn:disabled {
   cursor: not-allowed;
   color: rgba(61, 61, 61, 0.35) !important;
   border: 1px solid var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
-  background-color: var(--color-bg-base) !important;
+  background-color: #fff !important;
+  background-image: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%)
+  ) !important;
+}
 
 .cms-button.ant-btn.cms-button--loading-only {
   gap: 0 !important;
@@ -43,31 +58,46 @@
 .cms-button.ant-btn.cms-button--large {
   width: 140px;
   height: 44px;
+  padding: 6px 16px !important;
+  gap: 6px;
+  border-radius: var(--radius-8, 8px);
   font-size: 16px;
 }
 
-/* 승인·반려·취소 등 관리 액션 — size·외부 오버라이드와 무관하게 폭 140 유지 */
+/* Large + 아이콘(캘린더·엑셀 등) — 180×44, 좌측 패딩 10 */
+.cms-button.ant-btn.cms-button--large.cms-button--has-icon {
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  padding: 6px 16px 6px 10px !important;
+  flex-direction: row;
+  gap: 6px;
+}
+
+/* 승인·반려 등 텍스트 액션 — 아이콘 유무와 무관하게 폭 140 · 패딩 대칭 */
 .cms-button.cms-button--action.ant-btn {
-  width: 140px;
-  min-width: 140px;
-  max-width: 140px;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  padding: 6px 16px !important;
 }
 
 .cms-button.ant-btn.cms-button--medium {
   width: 120px;
   height: 40px;
+  padding: 6px 14px !important;
+  gap: 10px;
+  border-radius: var(--radius-6, 6px);
   font-size: 14px;
 }
 
 .cms-button.ant-btn.cms-button--small {
   width: 100px;
   height: 32px;
-  font-size: 12px;
-}
-
-.cms-button.ant-btn.cms-button--medium.cms-button--has-icon,
-.cms-button.ant-btn.cms-button--small.cms-button--has-icon {
+  padding: 6px 12px !important;
   gap: 4px;
+  border-radius: var(--radius-6, 6px);
+  font-size: 12px;
 }
 
 .cms-button.ant-btn .cms-button__icon {
@@ -101,36 +131,36 @@
 /* ----- variant (enabled) ----- */
 .cms-button.ant-btn.cms-button--primary:not(:disabled):not(.ant-btn-disabled) {
   border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
-  background: var(--color-mint-01) !important;
-  color: var(--default-WT, var(--color-bg-base)) !important;
+  background: var(--color-mint-01, #01a1af) !important;
+  color: var(--default-WT, #fff) !important;
 }
 
 .cms-button.ant-btn.cms-button--secondary:not(:disabled):not(.ant-btn-disabled) {
-  color: var(--color-mint-01) !important;
-  border-color: var(--color-mint-01) !important;
-  background-color: var(--color-bg-base) !important;
-  background-image: linear-gradient(
-    0deg,
-    rgba(1, 161, 175, 0.06) 0%,
-    rgba(1, 161, 175, 0.06) 100%
-  ) !important;
+  color: var(--color-mint-01, #01a1af) !important;
+  border-color: var(--color-mint-01, #01a1af) !important;
+  background: linear-gradient(
+      0deg,
+      rgba(1, 161, 175, 0.06) 0%,
+      rgba(1, 161, 175, 0.06) 100%
+    ),
+    #fff !important;
 }
 
 .cms-button.ant-btn.cms-button--default:not(:disabled):not(.ant-btn-disabled) {
   border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
-  background: var(--default-WT) !important;
-  color: var(--main-BK, var(--default-BK)) !important;
+  background: var(--default-WT, #fff) !important;
+  color: var(--main-BK, #3d3d3d) !important;
 }
 
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled) {
-  color: var(--color-red) !important;
-  border-color: var(--color-red) !important;
-  background-color: var(--color-bg-base) !important;
-  background-image: linear-gradient(
-    0deg,
-    rgba(195, 47, 74, 0.06) 0%,
-    rgba(195, 47, 74, 0.06) 100%
-  ) !important;
+  color: var(--color-red, #c32f4a) !important;
+  border-color: var(--color-red, #c32f4a) !important;
+  background: linear-gradient(
+      0deg,
+      rgba(195, 47, 74, 0.06) 0%,
+      rgba(195, 47, 74, 0.06) 100%
+    ),
+    #fff !important;
 }
 
 /* hover / focus / active — 기본 상태와 동일 (시각 변화 없음) */
@@ -138,22 +168,22 @@
 .cms-button.ant-btn.cms-button--primary:not(:disabled):not(.ant-btn-disabled):focus,
 .cms-button.ant-btn.cms-button--primary:not(:disabled):not(.ant-btn-disabled):active {
   border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
-  background: var(--color-mint-01) !important;
-  color: var(--default-WT) !important;
+  background: var(--color-mint-01, #01a1af) !important;
+  color: var(--default-WT, #fff) !important;
   box-shadow: none !important;
 }
 
 .cms-button.ant-btn.cms-button--secondary:not(:disabled):not(.ant-btn-disabled):hover,
 .cms-button.ant-btn.cms-button--secondary:not(:disabled):not(.ant-btn-disabled):focus,
 .cms-button.ant-btn.cms-button--secondary:not(:disabled):not(.ant-btn-disabled):active {
-  color: var(--color-mint-01) !important;
-  border-color: var(--color-mint-01) !important;
-  background-color: var(--color-bg-base) !important;
-  background-image: linear-gradient(
-    0deg,
-    rgba(1, 161, 175, 0.06) 0%,
-    rgba(1, 161, 175, 0.06) 100%
-  ) !important;
+  color: var(--color-mint-01, #01a1af) !important;
+  border-color: var(--color-mint-01, #01a1af) !important;
+  background: linear-gradient(
+      0deg,
+      rgba(1, 161, 175, 0.06) 0%,
+      rgba(1, 161, 175, 0.06) 100%
+    ),
+    #fff !important;
   box-shadow: none !important;
 }
 
@@ -161,21 +191,21 @@
 .cms-button.ant-btn.cms-button--default:not(:disabled):not(.ant-btn-disabled):focus,
 .cms-button.ant-btn.cms-button--default:not(:disabled):not(.ant-btn-disabled):active {
   border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1)) !important;
-  background: var(--default-WT) !important;
-  color: var(--main-BK, var(--default-BK)) !important;
+  background: var(--default-WT, #fff) !important;
+  color: var(--main-BK, #3d3d3d) !important;
   box-shadow: none !important;
 }
 
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled):hover,
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled):focus,
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled):active {
-  color: var(--color-red) !important;
-  border-color: var(--color-red) !important;
-  background-color: var(--color-bg-base) !important;
-  background-image: linear-gradient(
-    0deg,
-    rgba(195, 47, 74, 0.06) 0%,
-    rgba(195, 47, 74, 0.06) 100%
-  ) !important;
+  color: var(--color-red, #c32f4a) !important;
+  border-color: var(--color-red, #c32f4a) !important;
+  background: linear-gradient(
+      0deg,
+      rgba(195, 47, 74, 0.06) 0%,
+      rgba(195, 47, 74, 0.06) 100%
+    ),
+    #fff !important;
   box-shadow: none !important;
 }

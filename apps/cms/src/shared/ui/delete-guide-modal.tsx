@@ -77,11 +77,12 @@ export function DeleteGuideModal({
       zIndex={zIndex}
       footer={
         <>
-          <CmsButton variant="secondary" type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
             취소
           </CmsButton>
           <CmsButton
             variant={confirmVariant}
+            size="medium"
             type="button"
             disabled={!canConfirm}
             onClick={() => {

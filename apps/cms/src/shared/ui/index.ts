@@ -74,8 +74,6 @@ export { FileSelectField } from './file-select-field'
 export type { FileSelectFieldProps } from './file-select-field'
 export { TealHeaderModal } from './teal-header-modal'
 export type { ModalSize, TealHeaderModalProps } from './teal-header-modal'
-export { PlainHeaderModal } from './plain-header-modal'
-export type { PlainHeaderModalProps } from './plain-header-modal'
 export { ContentModal } from './content-modal'
 export type { ContentModalProps } from './content-modal'
 export { ModalSpecTable, ModalSpecTableRow, ModalSpecTableRadioCell } from './modal-spec-table/modal-spec-table'
@@ -166,5 +164,35 @@ export type { CalendarMainEventInput } from '../components/calendar'
 export type { CalendarSetMainProps } from '../components/calendar'
 export { LogoutIcon, GoogleMarkIcon, ProfileAvatarIcon } from './icons'
 export type { LogoutIconProps, GoogleMarkIconProps, ProfileAvatarIconProps } from './icons'
+export {
+  AttachmentDownloadIcon,
+  AttachmentClipIcon,
+  FileDownloadRowIcon,
+  CommentEmojiToggleIcon,
+  CommentSendIcon,
+} from './icons'
+export type {
+  AttachmentDownloadIconProps,
+  AttachmentClipIconProps,
+  FileDownloadRowIconProps,
+} from './icons'
+export {
+  REACTION_EMOJI_ITEMS,
+  REACTION_EMOJI_TYPE_TO_INDEX,
+  getReactionEmojiItemByType,
+  ReactionEmojiPicker,
+  CommentList,
+  CommentComposer,
+  AttachmentDownloadList,
+} from './posts'
+export type {
+  ReactionEmojiItem,
+  ReactionEmojiPickerProps,
+  CommentListProps,
+  CommentListItem,
+  CommentComposerProps,
+  AttachmentDownloadListProps,
+  AttachmentDownloadItem,
+} from './posts'
 export { CrossTable } from './cross-table'
 export type { CrossTableProps, CrossTableRow } from './cross-table'

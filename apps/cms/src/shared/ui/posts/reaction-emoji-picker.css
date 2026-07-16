@@ -1,0 +1,56 @@
+.reaction-emoji-picker__panel {
+  box-sizing: border-box;
+  width: 528px;
+  height: 60px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--JA-mint-01, #01a1af);
+  background: #fff;
+  box-shadow:
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
+}
+
+.reaction-emoji-picker__bar {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.reaction-emoji-picker__bar-btn {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.reaction-emoji-picker__bar-btn:hover {
+  opacity: 0.88;
+}
+
+.reaction-emoji-picker__bar-btn:focus-visible {
+  outline: 2px solid var(--color-primary, #01a1af);
+  outline-offset: 2px;
+}

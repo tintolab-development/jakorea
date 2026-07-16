@@ -261,13 +261,14 @@
   --radius-4: 4px;
   --radius-6: 6px;
   --radius-8: 8px;
+  --radius-12: 12px;
   --radius-16: 16px;
 
   /* 그림자 */
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.03);
   --shadow-card-selected: 0 1px 4px rgba(0, 0, 0, 0.08);
   --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --shadow-modal: 0 4px 20px rgba(0, 0, 0, 0.15);
+  --shadow-modal: 0 0 25px 0 rgba(0, 0, 0, 0.35);
   --shadow-drag-overlay: 0 10px 28px
     color-mix(in srgb, var(--color-brand-primary) 22%, transparent);
   --color-bg-pending-light: #f8f2f3;

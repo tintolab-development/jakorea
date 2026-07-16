@@ -1,5 +1,5 @@
 /**
- * 엑셀 다운로드 공통 버튼 — `CmsButton` 고정 스펙 래퍼
+ * 엑셀 다운로드 공통 버튼 — Large + icon 180×44 (padding 6 16 6 10)
  */
 
 import { forwardRef } from 'react'
@@ -11,6 +11,7 @@ export type ExcelButtonProps = Omit<
   'variant' | 'size' | 'width' | 'icon' | 'children'
 >
 
+/** 테이블 상단 엑셀 — primary · large · has-icon → 180×44 */
 export const ExcelButton = forwardRef<HTMLButtonElement, ExcelButtonProps>(
   ({ type = 'button', className, ...rest }, ref) => (
     <CmsButton
@@ -18,7 +19,6 @@ export const ExcelButton = forwardRef<HTMLButtonElement, ExcelButtonProps>(
       type={type}
       variant="primary"
       size="large"
-      width={180}
       icon={<DownloadOutlined />}
       className={['excel-button', className].filter(Boolean).join(' ')}
       {...rest}

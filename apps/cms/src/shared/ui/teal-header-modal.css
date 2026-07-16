@@ -106,7 +106,7 @@
 }
 
 .teal-header-modal .ant-modal-content {
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-12, 12px);
   overflow: hidden;
   box-shadow: var(--shadow-modal);
   padding: 0;
@@ -289,9 +289,12 @@
   background: var(--color-bg-base);
 }
 
-/* 아이콘+라벨은 가로 한 줄(CmsButton·Ant Button 기본). column+고정 120×40은 아이콘을 위·텍스트를 아래로 밀고 잘림 유발 */
-.teal-header-modal__footer .ant-btn,
-.teal-header-modal__footer button {
+/*
+ * CmsButton이 아닌 Ant 기본 버튼만 레거시 120×40 스펙 적용.
+ * CmsButton은 size(large/medium/small) 스펙을 그대로 쓴다.
+ */
+.teal-header-modal__footer .ant-btn:not(.cms-button),
+.teal-header-modal__footer button:not(.cms-button) {
   display: inline-flex;
   flex-direction: row;
   justify-content: center;
@@ -304,9 +307,9 @@
   box-sizing: border-box;
 }
 
-/* 푸터 취소(기본) 버튼 배경: 연한 청록 + #FFF — Ant Design 오버라이드 예외 */
-.teal-header-modal__footer .ant-btn-default,
-.teal-header-modal__footer button:not([class*='primary']) {
+/* 푸터 취소(기본) 버튼 배경 — CmsButton variant 스타일은 건드리지 않음 */
+.teal-header-modal__footer .ant-btn-default:not(.cms-button),
+.teal-header-modal__footer button:not(.cms-button):not([class*='primary']) {
   background:
     linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
     var(--color-bg-base);
