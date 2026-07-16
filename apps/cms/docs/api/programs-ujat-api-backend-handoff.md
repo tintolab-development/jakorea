@@ -5,9 +5,12 @@ CMS `/programs/ujat`의 **프로그램 핵심 CRUD 전환 코드**를 기준으�
 | 항목 | 값 |
 |------|-----|
 | 작성일 | 2026-07-15 |
+| 갱신 | 2026-07-16 — OpenAPI `UJAT` enum 반영 반영 · 로드맵 Cat2 · blocker를 스테이징 round-trip으로 정정 |
 | 대상 | UJAT 프로그램 목록·상세·등록·수정·삭제 |
 | 제안 `programType` | `UJAT` |
-| 현재 운영 상태 | FE 연결 완료, **기본 OFF**, OpenAPI/BE 수용 확인 전 원격 활성화 금지 |
+| 로드맵 | [programs-api-conversion-roadmap.md](./programs-api-conversion-roadmap.md) — **Cat 2** |
+| 상세 FE SSOT | [programs-ujat-detail-api-conversion-status.md](./programs-ujat-detail-api-conversion-status.md) |
+| 현재 운영 상태 | FE 연결 완료, **기본 OFF**, 스테이징 BE 수용·round-trip 확인 전 원격 활성화 금지 |
 | 공통 등록 플로우 | [programs-registration-flow-api-backend-handoff.md](./programs-registration-flow-api-backend-handoff.md) — 공통 원칙만 참조하며 이 문서에 중복하지 않음 |
 
 > SSOT는 `src/features/program/ujat/api/*`, UJAT 등록 훅, 공통 `programs-api-client.ts`, 현재 `openapi/backend.openapi.json`입니다. 이 문서는 구현보다 앞선 희망 계약이 아니라 **현재 FE가 실제로 보내고 읽는 값**을 기록합니다.
@@ -57,30 +60,30 @@ CMS `/programs/ujat`의 **프로그램 핵심 CRUD 전환 코드**를 기준으�
 
 ---
 
-## 2. P0 blocker — `UJAT`가 OpenAPI enum 계약에 없음
+## 2. P0 blocker — 스테이징 `UJAT` 수용 · round-trip (OpenAPI enum은 FE 반영됨)
 
-FE는 목록 query와 create body에 문자열 **`UJAT`**를 강제로 보냅니다.
+FE는 목록 query와 create body에 문자열 **`UJAT`**를 보냅니다.
 
 - `toRemoteListParams`: `programType: 'UJAT'`
 - `toCreateRequest`: `programType: 'UJAT'`
 
-그러나 현재 OpenAPI의 다음 위치는 모두 `type: string`일 뿐 허용 enum을 선언하지 않습니다.
+**2026-07-16 갱신:** repository OpenAPI(`backend.openapi.json` 등)와 generated schema
+(`programCreateRequestProgramType` / `programResponseProgramType`)에 **`UJAT` enum이 포함**되어 있습니다.
+구버전 문서의 「OpenAPI가 `type: string`만이라 enum이 없다」는 서술은 **폐기**합니다.
 
-- `GET /api/admin/programs` query `programType`
-- `ProgramCreateRequest.programType`
-- programs list/detail response의 `programType`
+남은 P0는 **스테이징 백엔드 동작**입니다.
 
-따라서 코드 생성 결과도 `programType?: string`이며, **`UJAT`가 DB enum·validation·조회 필터·default binding 규칙에서 실제로 허용된다는 계약이 없습니다.** 문자열 타입이 있다는 사실은 수용 가능하다는 보장이 아닙니다.
+1. DB/domain이 `UJAT`를 수용하고 `GET list?programType=UJAT`가 정확히 필터하는지
+2. `POST` 저장 후 list/detail에서 같은 `programType`으로 round-trip
+3. `PATCH` 시 type·`serviceDetailJson`(incl. `registration`) 보존
+4. `autoApplyDefaultFormBindings=true`일 때 UJAT templateCode 집합·상·하반기 binding scope 적용
+5. create + default binding이 **한 트랜잭션**으로 성공/실패 (부분 성공 금지)
+6. 미지원 환경에서는 임의로 `GENERAL`로 저장하지 말고 400 구조화 오류 반환
 
-백엔드 필수 조치:
+이 조치와 스테이징 스모크(§7) 전에는 `ujatPrograms` gate를 켜지 않습니다.
 
-1. canonical program type enum에 `UJAT` 추가.
-2. OpenAPI query/create/response schema에 동일 enum 노출.
-3. `POST` 저장 후 `GET list?programType=UJAT`와 `GET detail`에서 같은 type으로 round-trip.
-4. `autoApplyDefaultFormBindings=true`일 때 UJAT templateCode 집합을 적용.
-5. 미지원 환경에서는 임의로 `GENERAL`로 저장하지 말고 400 구조화 오류 반환.
-
-이 조치와 스테이징 스모크 전에는 `ujatPrograms` gate를 켜지 않습니다.
+상세 FE Phase: [programs-ujat-detail-api-conversion-status.md](./programs-ujat-detail-api-conversion-status.md)  
+교육 지역 전용: [programs-ujat-education-regions-api-backend-handoff.md](./programs-ujat-education-regions-api-backend-handoff.md)
 
 ---
 
@@ -286,6 +289,8 @@ VITE_REAL_API_MODULES=adminAuth,formsSurveys,programs,ujatPrograms
 
 ### 8.1 교육 지역
 
+> **Cat 3 전용 SSOT:** [programs-ujat-education-regions-api-conversion-status.md](./programs-ujat-education-regions-api-conversion-status.md) · [programs-ujat-education-regions-api-backend-handoff.md](./programs-ujat-education-regions-api-backend-handoff.md)
+
 OpenAPI에는 다음 경로가 존재합니다.
 
 - `GET /api/admin/ujat/education-regions`
@@ -345,6 +350,7 @@ UJAT program
 백엔드:
 
 - [ ] `UJAT`를 canonical enum과 OpenAPI query/create/response에 추가
+- [x] OpenAPI/generated에 `UJAT` enum 반영 (2026-07-16 FE repo 기준) — **남은 건 스테이징 DB·validation·round-trip**
 - [ ] POST/PATCH가 `serviceDetailJson` opaque string을 손실 없이 round-trip
 - [ ] list가 `programType=UJAT`를 정확히 필터
 - [ ] create 응답과 detail 응답이 같은 `ProgramResponse` 의미를 제공

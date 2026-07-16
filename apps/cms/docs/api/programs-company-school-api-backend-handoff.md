@@ -5,12 +5,17 @@ CMS `/programs/company-school` 및 legacy 호환 경로 `/programs/economy-educa
 | 항목 | 값 |
 |------|-----|
 | 작성일 | 2026-07-15 |
+| 갱신 | 2026-07-16 — 로드맵 Cat1 · 코어 DoD 교차 링크 |
 | 대상 | 1사1교 프로그램 목록·상세·등록·수정·삭제 |
 | 제안 `programType` | `COMPANY_SCHOOL` |
+| 로드맵 | [programs-api-conversion-roadmap.md](./programs-api-conversion-roadmap.md) — **Cat 1** |
 | 현재 운영 상태 | FE 연결 완료, **기본 OFF**, OpenAPI/BE 수용 확인 전 원격 활성화 금지 |
 | 공통 등록 플로우 | [programs-registration-flow-api-backend-handoff.md](./programs-registration-flow-api-backend-handoff.md) — 공통 원칙만 링크하며 중복하지 않음 |
 
 > SSOT는 `src/features/program/1c-1s/api/*`, `general`의 `economy` 등록 분기, 공통 `programs-api-client.ts`, 현재 `openapi/backend.openapi.json`입니다. 1사1교는 학교/기관과 강사를 대상으로 하며 **봉사자가 없습니다.**
+
+**Cat1 코어 DoD (FE → Cat2 진입):** 스테이징 Phase 0–6 통과 + `VITE_COMPANY_SCHOOL_PROGRAMS_REMOTE_ENABLED=true` QA 가능.  
+상세 FE Phase SSOT: [programs-company-school-detail-api-conversion-status.md](./programs-company-school-detail-api-conversion-status.md)
 
 ---
 
@@ -56,33 +61,29 @@ CMS `/programs/company-school` 및 legacy 호환 경로 `/programs/economy-educa
 
 ---
 
-## 2. P0 blocker — `COMPANY_SCHOOL`이 OpenAPI enum 계약에 없음
+## 2. P0 — `COMPANY_SCHOOL` OpenAPI enum (FE schema 반영됨)
 
-FE 상수는 다음과 같이 고정돼 있습니다.
+FE 상수:
 
 ```text
 COMPANY_SCHOOL_PROGRAM_API_TYPE = "COMPANY_SCHOOL"
 ```
 
-이 값은 목록 query와 create body에 사용됩니다. 그러나 현재 OpenAPI의 `GET /api/admin/programs` query와 `ProgramCreateRequest.programType`은 `type: string`만 선언하고 허용 enum을 제공하지 않습니다. generated type도 `programType?: string`입니다.
+**2026-07-16 갱신:** repository OpenAPI(`backend.openapi.json` 등)와 generated schema
+(`programCreateRequestProgramType` / `programResponseProgramType`)에 `COMPANY_SCHOOL` enum이
+포함되어 있습니다. FE schema 재생성 완료 상태입니다.
 
-따라서 다음은 아직 보장되지 않습니다.
+스테이징에서 아직 확인할 백엔드 동작:
 
-- 백엔드 DB/domain enum이 `COMPANY_SCHOOL`을 수용
-- 저장 후 list filter가 이 값을 정확히 비교
-- detail/list response가 같은 type을 반환
-- default form binding이 1사1교 template set을 선택
-- GENERAL과 별도 정책/권한/집계로 격리
+- DB/domain이 `COMPANY_SCHOOL`을 수용하고 list filter가 정확히 비교하는지
+- create → list → detail round-trip 및 PATCH 시 type 보존
+- default form binding이 1사1교 template set을 선택하는지
+- 봉사자 리소스/필드 미생성
+- 미지원 시 GENERAL로 대체하지 않고 400
 
-백엔드 필수 조치:
+스테이징 round-trip 통과 전에는 `VITE_COMPANY_SCHOOL_PROGRAMS_REMOTE_ENABLED=true`를 운영에 켜지 않습니다.
 
-1. canonical program type enum에 `COMPANY_SCHOOL` 추가.
-2. query/create/response OpenAPI schema에 enum 반영.
-3. create → list(`programType=COMPANY_SCHOOL`) → detail round-trip 보장.
-4. 미지원 시 GENERAL로 대체 저장하지 말고 400 반환.
-5. 1사1교 default binding과 학교/강사 전용 정책을 type으로 분기.
-
-스테이징 수락 전에는 전용 opt-in env를 `true`로 설정하지 않습니다.
+상세 LNB FE 전환 SSOT: [programs-company-school-detail-api-conversion-status.md](./programs-company-school-detail-api-conversion-status.md)
 
 ---
 
@@ -255,15 +256,15 @@ parser도 위 값을 다시 강제하고 아래 봉사자 필드를 제거합니
 → 목록 refetch + 생성 id 상세로 이동
 ```
 
-중요한 현재 차이:
+등록 draft:
 
-- `useGeneralProgramRegistrationFlow`는 `economy` variant에 `templateCode`를 전달하지 않습니다.
-- 따라서 공통정보 `registration-economy`의 `persistTemplateDraftIfNeeded()`는 현재 **no-op**이며, 일반 프로그램의 `registration-general`처럼 version PUT이 보장되지 않습니다.
+- `useGeneralProgramRegistrationFlow`는 `economy` variant에 `templateCode=registration-economy`를 전달합니다.
+- `persistTemplateDraftIfNeeded()`는 `formsSurveys` 모듈 + JWT일 때 remote draft PUT을 수행합니다.
 - participant editor의 현재 탭 저장은 별도 editor에 위임되며 programs POST body에는 draft가 포함되지 않습니다.
 - FE는 `default-form-bindings/apply`나 단건 binding POST를 직접 호출하지 않습니다.
 - POST의 `autoApplyDefaultFormBindings=true`에 따라 백엔드가 published 1사1교 기본 binding을 적용해야 합니다.
 
-즉, gate를 켜기 전에 백엔드는 `registration-economy`, `application-economy` 및 학교/강사 모집 양식의 시드·기본 binding을 제공해야 하고, FE는 `registration-economy` remote draft 연결을 후속 보완해야 합니다.
+gate를 켜기 전에 백엔드는 `registration-economy`, `application-economy` 및 학교/강사 모집 양식의 시드·기본 binding을 제공해야 합니다.
 
 공통 등록 원칙과 form-template API는 [programs-registration-flow-api-backend-handoff.md](./programs-registration-flow-api-backend-handoff.md)를 참조합니다.
 
@@ -394,8 +395,8 @@ FE adapter가 보장하는 값:
 
 백엔드:
 
-- [ ] `COMPANY_SCHOOL`을 canonical enum과 OpenAPI query/create/response에 추가
-- [ ] list가 type을 정확히 필터하고 다른 프로그램을 섞지 않음
+- [x] `COMPANY_SCHOOL`을 OpenAPI query/create/response enum에 추가 (repo snapshot 2026-07-16)
+- [ ] list가 type을 정확히 필터하고 다른 프로그램을 섞지 않음 (스테이징)
 - [ ] POST/PATCH가 `serviceDetailJson`을 손실 없이 round-trip
 - [ ] PATCH에서 기존 `programType` 보존
 - [ ] create와 default bindings를 한 트랜잭션으로 처리
@@ -406,12 +407,11 @@ FE adapter가 보장하는 값:
 
 FE/QA:
 
-- [ ] 최신 `/v3/api-docs` 수집 및 generated schema 재생성
-- [ ] `programType`이 enum union으로 생성되는지 확인
+- [x] generated schema에 `COMPANY_SCHOOL` enum 확인
+- [x] `registration-economy` remote draft `templateCode` 연결
 - [ ] create → list → detail → PATCH → detail → DELETE 스테이징 스모크
 - [ ] 봉사자 0/undefined 불변성과 임금 표시 field snapshot diff
 - [ ] GENERAL/UJAT/Gemini 목록 격리 회귀
-- [ ] `registration-economy` remote draft 연결 여부를 별도 FE 작업으로 결정
 - [ ] 자동 binding이 published version만 참조하는지 확인
 - [ ] 모두 통과한 뒤에만 `VITE_COMPANY_SCHOOL_PROGRAMS_REMOTE_ENABLED=true`
 - [ ] 장애 시 opt-in env를 제거/false로 바꿔 즉시 mock/local로 롤백
