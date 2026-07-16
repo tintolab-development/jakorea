@@ -9,7 +9,7 @@
 import { useMemo, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import {
   getSchoolDetailStats,
@@ -121,12 +121,11 @@ export function SchoolDetailModal({
 
   return (
     <>
-      <TealHeaderModal
+      <ContentModal
         open={open}
         onCancel={onClose}
         title="학교(교사) 상세 정보"
         size="large"
-        width={1400}
         className="teal-header-modal--school-detail"
         footer={
           <CmsButton variant="secondary" size="large" onClick={onClose}>
@@ -221,7 +220,7 @@ export function SchoolDetailModal({
             pagination={false}
           />
         </section>
-      </TealHeaderModal>
+      </ContentModal>
 
       <TeacherDetailModal
         open={teacherDetailOpen}

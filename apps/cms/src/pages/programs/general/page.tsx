@@ -301,7 +301,7 @@ export function GeneralProgramListPageContent() {
       )}
       <CmsButton
         variant="secondary"
-        width={180}
+        size="large"
         icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
         onClick={handleViewModeToggle}
       >
@@ -311,7 +311,7 @@ export function GeneralProgramListPageContent() {
   )
 
   const programListToolbarActionsAfterExcel = (
-    <CmsButton width={180} onClick={handleProgramCreateClick}>
+    <CmsButton variant="primary" size="large" width={180} onClick={handleProgramCreateClick}>
       프로그램 신규 등록
     </CmsButton>
   )

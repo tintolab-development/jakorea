@@ -1,4 +1,4 @@
-import { NoticeAttachmentDownloadIcon } from '@/features/posts/ui/notice-attachment-download-icon'
+import { AttachmentDownloadIcon } from '@/shared/ui'
 
 export type ProgramAttendanceAbsenceReasonItem = {
   id: string
@@ -49,7 +49,7 @@ export function ProgramAttendanceAbsenceReasons({
                         className="program-attendance-absence-reasons__file"
                         onClick={() => onFileDownload?.(item)}
                       >
-                        <NoticeAttachmentDownloadIcon className="program-attendance-absence-reasons__file-icon" />
+                        <AttachmentDownloadIcon className="program-attendance-absence-reasons__file-icon" />
                         <span className="program-attendance-absence-reasons__file-name">
                           {item.fileName}
                         </span>

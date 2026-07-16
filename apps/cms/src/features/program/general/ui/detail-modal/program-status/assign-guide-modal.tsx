@@ -121,10 +121,10 @@ export function AssignGuideModal({
         width={800}
         footer={
           <>
-            <CmsButton variant="secondary" size="large" onClick={onCancel}>
+            <CmsButton variant="secondary" size="medium" onClick={onCancel}>
               취소
             </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={handleConfirm}>
+            <CmsButton variant="primary" size="medium" onClick={handleConfirm}>
               강사 배정
             </CmsButton>
           </>
@@ -188,10 +188,10 @@ export function AssignGuideModal({
         width={800}
         footer={
           <>
-            <CmsButton variant="secondary" size="large" onClick={() => setConfirmOpen(false)}>
+            <CmsButton variant="secondary" size="medium" onClick={() => setConfirmOpen(false)}>
               취소
             </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={handleFinalConfirm}>
+            <CmsButton variant="primary" size="medium" onClick={handleFinalConfirm}>
               강사 배정
             </CmsButton>
           </>

@@ -281,10 +281,10 @@ export function SchoolDetailAddInstructorAssignModal({
 
   const footer = (
     <>
-      <CmsButton variant="secondary" size="large" onClick={handleCancel}>
+      <CmsButton variant="secondary" size="medium" onClick={handleCancel}>
         취소
       </CmsButton>
-      <CmsButton variant="primary" size="large" onClick={() => form.submit()}>
+      <CmsButton variant="primary" size="medium" onClick={() => form.submit()}>
         강사 배정
       </CmsButton>
     </>

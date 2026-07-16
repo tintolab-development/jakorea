@@ -5,7 +5,7 @@
 
 import { useMemo, useState } from 'react'
 import { Tabs, Empty } from 'antd'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import {
   DeleteGuideModal,
@@ -119,12 +119,11 @@ export function TeacherDetailModal({
 
   return (
     <>
-      <TealHeaderModal
+      <ContentModal
         open={open}
         onCancel={onClose}
         title="교사 회원 상세 정보"
         size="large"
-        width={1400}
         className="teal-header-modal--teacher-detail"
         footer={
           <CmsButton variant="secondary" size="large" onClick={onClose}>
@@ -135,7 +134,7 @@ export function TeacherDetailModal({
         <div className="teacher-detail-modal__body">
           <Tabs defaultActiveKey="basic" items={tabItems} />
         </div>
-      </TealHeaderModal>
+      </ContentModal>
 
       <DeleteGuideModal
         open={withdrawConfirmOpen}

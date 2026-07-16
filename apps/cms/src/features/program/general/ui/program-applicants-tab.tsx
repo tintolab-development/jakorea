@@ -710,7 +710,7 @@ export function ProgramApplicantsTab({
                     선택 반려
                   </CmsButton>
                   <CmsButton
-                    variant="primary"
+                    variant="secondary"
                     size="large"
                     className="cms-button--action"
                     onClick={handleSchoolBulkApproveClick}
@@ -770,7 +770,7 @@ export function ProgramApplicantsTab({
                     선택 반려
                   </CmsButton>
                   <CmsButton
-                    variant="primary"
+                    variant="secondary"
                     size="large"
                     className="cms-button--action"
                     onClick={handleInstructorBulkApproveClick}

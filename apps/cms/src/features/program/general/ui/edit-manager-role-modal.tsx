@@ -5,8 +5,9 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Form, Input, Modal, Button } from 'antd'
+import { Form, Input } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { ActionResultModal } from '@/shared/ui/action-result-modal'
 import { CmsButton, CmsRadio } from '@/shared/ui'
 import type { ProgramRole } from '@/types/user'
 import { PROGRAM_ROLE_LABELS } from '@/data/mock/program-managers'
@@ -150,21 +151,13 @@ export function EditManagerRoleModal({
         </div>
       </ContentModal>
 
-      <Modal
-        title="설정 불가"
+      <ActionResultModal
         open={showOwnerLimitModal}
-        onCancel={() => setShowOwnerLimitModal(false)}
-        footer={
-          <Button type="primary" onClick={() => setShowOwnerLimitModal(false)}>
-            확인
-          </Button>
-        }
+        onClose={() => setShowOwnerLimitModal(false)}
+        title="설정 불가"
+        body={PROGRAM_PM_ROLE_LIMIT_MESSAGE}
         zIndex={1200}
-        centered
-        width={400}
-      >
-        {PROGRAM_PM_ROLE_LIMIT_MESSAGE}
-      </Modal>
+      />
     </>
   )
 }

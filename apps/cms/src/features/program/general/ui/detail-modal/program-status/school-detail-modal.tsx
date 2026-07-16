@@ -12,7 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, CmsRadio } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { ColumnsType } from 'antd/es/table'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { ContentModal } from '@/shared/ui/content-modal'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
   SchoolDetailForModal,
@@ -878,7 +878,7 @@ export function SchoolDetailModal({
 
   return (
     <>
-      <TealHeaderModal open={open} onCancel={onCancel} title={title} size="large" footer={footer}>
+      <ContentModal open={open} onCancel={onCancel} title={title} size="large" footer={footer}>
         <div className="school-detail-modal">
           <Tabs
             activeKey={activeTab}
@@ -931,7 +931,7 @@ export function SchoolDetailModal({
             )}
           />
         </div>
-      </TealHeaderModal>
+      </ContentModal>
       {cancelApprovalConfirmOpen && detail && onCancelApproval && (
         <DeleteGuideModal
           open={cancelApprovalConfirmOpen}

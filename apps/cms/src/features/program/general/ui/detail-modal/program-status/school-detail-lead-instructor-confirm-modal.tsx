@@ -40,10 +40,10 @@ export function SchoolDetailLeadInstructorConfirmModal({
       className="school-detail-lead-instructor-confirm-modal"
       footer={
         <div className="school-detail-lead-instructor-confirm-modal__footer">
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="large" onClick={onConfirm}>
+          <CmsButton variant="primary" size="medium" onClick={onConfirm}>
             변경
           </CmsButton>
         </div>

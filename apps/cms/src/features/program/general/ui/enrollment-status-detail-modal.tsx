@@ -7,7 +7,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Image } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -195,12 +195,11 @@ export function EnrollmentStatusDetailModal({
   if (!program) return null
 
   return (
-    <TealHeaderModal
+    <ContentModal
       open={open}
       onCancel={onCancel}
       title="수강 신청 학교 목록"
       size="large"
-      width={1400}
       className="teal-header-modal--enrollment-detail"
       footer={
         <CmsButton variant="secondary" size="large" onClick={onCancel}>
@@ -418,6 +417,6 @@ export function EnrollmentStatusDetailModal({
           </div>
         </section>
       </div>
-    </TealHeaderModal>
+    </ContentModal>
   )
 }

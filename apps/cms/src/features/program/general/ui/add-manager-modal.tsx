@@ -5,8 +5,9 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import { Form, Select, Modal, Button } from 'antd'
+import { Form, Select } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { ActionResultModal } from '@/shared/ui/action-result-modal'
 import { CmsButton, CmsRadio } from '@/shared/ui'
 import type { ProgramRole } from '@/types/user'
 import {
@@ -170,21 +171,13 @@ export function AddManagerModal({
         </div>
       </ContentModal>
 
-      <Modal
-        title="설정 불가"
+      <ActionResultModal
         open={showOwnerLimitModal}
-        onCancel={() => setShowOwnerLimitModal(false)}
-        footer={
-          <Button type="primary" onClick={() => setShowOwnerLimitModal(false)}>
-            확인
-          </Button>
-        }
+        onClose={() => setShowOwnerLimitModal(false)}
+        title="설정 불가"
+        body={PROGRAM_PM_ROLE_LIMIT_MESSAGE}
         zIndex={2010}
-        centered
-        width={400}
-      >
-        {PROGRAM_PM_ROLE_LIMIT_MESSAGE}
-      </Modal>
+      />
     </>
   )
 }

@@ -1,6 +1,6 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
-import { NoticeAttachmentDownloadIcon } from '@/features/posts/ui/notice-attachment-download-icon'
+import { AttachmentDownloadIcon } from '@/shared/ui'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
@@ -43,7 +43,7 @@ export function PreviousTermSection({
                     downloadFile(activity.certificateFileName, activity.certificateFileUrl)
                   }
                 >
-                  <NoticeAttachmentDownloadIcon className="previous-term-section__file-icon" />
+                  <AttachmentDownloadIcon className="previous-term-section__file-icon" />
                   <span className="previous-term-section__file-name">
                     {activity.certificateFileName}
                   </span>
