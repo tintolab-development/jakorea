@@ -1,7 +1,9 @@
 /**
- * UJAT 교육 지역 — 교육 지역 관리(localStorage) 순서·라벨을 CMS 전역에서 사용
+ * UJAT 교육 지역 — 교육 지역 관리(localStorage / remote snapshot) 순서·라벨을 CMS 전역에서 사용
  */
 
+import { getUjatEducationRegionsRemoteSnapshot } from '@/features/program/ujat/api/education-regions/service'
+import { shouldUseUjatEducationRegionsRemoteApi } from '@/features/program/ujat/api/education-regions/capabilities'
 import {
   readActiveUjatEducationRegionsOrdered,
   readUjatEducationRegions,
@@ -38,9 +40,25 @@ function mapDefaultRegions(): UjatEducationRegionOption[] {
   }))
 }
 
+function readActiveRowsOrdered() {
+  if (shouldUseUjatEducationRegionsRemoteApi()) {
+    const remote = getUjatEducationRegionsRemoteSnapshot()
+    if (remote) return remote.filter(row => row.active)
+  }
+  return readActiveUjatEducationRegionsOrdered()
+}
+
+function readAllRows() {
+  if (shouldUseUjatEducationRegionsRemoteApi()) {
+    const remote = getUjatEducationRegionsRemoteSnapshot()
+    if (remote) return remote
+  }
+  return readUjatEducationRegions()
+}
+
 /** 사용 중(active) 교육 지역 — 교육 지역 관리 sortOrder 순 */
 export function listUjatEducationRegionsActive(): UjatEducationRegionOption[] {
-  const rows = readActiveUjatEducationRegionsOrdered()
+  const rows = readActiveRowsOrdered()
   if (rows.length === 0) return mapDefaultRegions()
   return rows.map(row => ({ key: row.regionKey, label: row.name }))
 }
@@ -58,7 +76,7 @@ export function getUjatEducationRegionLabel(
   const fromActive = listUjatEducationRegionsActive().find(row => row.key === regionKey)
   if (fromActive) return fromActive.label
 
-  const fromAll = readUjatEducationRegions().find(row => row.regionKey === regionKey)
+  const fromAll = readAllRows().find(row => row.regionKey === regionKey)
   if (fromAll) return fromAll.name
 
   const fromDefault = UJAT_DEFAULT_EDUCATION_REGIONS.find(row => row.key === regionKey)
@@ -106,7 +124,7 @@ export function isUjatInstitutionApplicationRegionKey(
   value: string
 ): value is UjatInstitutionApplicationRegionKey {
   if (UJAT_DEFAULT_EDUCATION_REGIONS.some(row => row.key === value)) return true
-  return readUjatEducationRegions().some(row => row.regionKey === value)
+  return readAllRows().some(row => row.regionKey === value)
 }
 
 export function findUjatEducationRegionKeyByLabel(label: string): string | undefined {

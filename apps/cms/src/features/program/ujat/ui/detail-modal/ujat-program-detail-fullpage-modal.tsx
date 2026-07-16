@@ -238,6 +238,8 @@ export interface UjatProgramDetailFullPageModalProps {
   /** URL의 programId — 목록에 아직 없을 때 상세 fetch용 */
   programIdHint?: string | null
   externalLoading?: boolean
+  /** remote detail 실패 (로딩 종료·데이터 없음) */
+  externalError?: boolean
   /** 유형별 API 계층을 사용하는 호출부의 상세 저장 핸들러 */
   onUpdateProgram?: (
     programId: string,
@@ -525,6 +527,7 @@ export function UjatProgramDetailFullPageModal({
   program,
   programIdHint = null,
   externalLoading = false,
+  externalError = false,
   onUpdateProgram,
 }: UjatProgramDetailFullPageModalProps) {
   const navigate = useNavigate()
@@ -1805,6 +1808,10 @@ export function UjatProgramDetailFullPageModal({
         <div className="detail-fullpage-modal__loading">
           <Spin size="large" />
         </div>
+      ) : externalError && !displayProgram ? (
+        <Typography.Text type="danger">
+          프로그램 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+        </Typography.Text>
       ) : displayProgram ? (
         <>
           {activeLnb === 'info' && activeTab === 'info' && (

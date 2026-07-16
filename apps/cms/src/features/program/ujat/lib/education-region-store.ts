@@ -9,6 +9,10 @@ import type {
   UjatEducationRegionUpdateInput,
 } from '@/features/program/ujat/model/education-region.types'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
+import {
+  assertUjatEducationRegionNameAvailable,
+  normalizeUjatEducationRegionName,
+} from '@/features/program/ujat/lib/education-region-name'
 
 const STORAGE_KEY = 'cms.jakorea.ujatEducationRegions.v1'
 
@@ -91,7 +95,8 @@ export function readActiveUjatEducationRegionsOrdered(): UjatEducationRegion[] {
 
 export function createUjatEducationRegion(input: UjatEducationRegionCreateInput): UjatEducationRegion {
   const file = readFile()
-  const trimmed = input.name.trim()
+  const trimmed = normalizeUjatEducationRegionName(input.name)
+  assertUjatEducationRegionNameAvailable(file.items, trimmed)
   const now = new Date().toISOString()
   const regionKey = `custom_${Date.now()}`
   const next: UjatEducationRegion = {
@@ -116,10 +121,13 @@ export function updateUjatEducationRegion(
   const index = file.items.findIndex(row => row.id === id)
   if (index < 0) return undefined
   const current = file.items[index]
+  if (patch.name !== undefined) {
+    assertUjatEducationRegionNameAvailable(file.items, patch.name, { excludeId: id })
+  }
   const nextRow: UjatEducationRegion = {
     ...current,
     ...(patch.active !== undefined ? { active: patch.active } : null),
-    ...(patch.name !== undefined ? { name: patch.name.trim() } : null),
+    ...(patch.name !== undefined ? { name: normalizeUjatEducationRegionName(patch.name) } : null),
     ...(patch.sortOrder !== undefined ? { sortOrder: patch.sortOrder } : null),
   }
   const nextItems = [...file.items]

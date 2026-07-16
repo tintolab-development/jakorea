@@ -95,7 +95,7 @@ describe('UJAT API policy', () => {
       programType: 'UJAT',
       businessYear: 2026,
       page: 0,
-      size: 100,
+      size: 500,
     })
   })
 

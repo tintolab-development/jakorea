@@ -33,9 +33,11 @@ import {
   usePrograms,
   useUpdateProgram,
 } from '@/features/program/ujat/api/queries'
+import { shouldUseRemoteApi } from '@/features/program/ujat/api/capabilities'
 import { getHttpStatus } from '@/features/program/ujat/api/errors'
 import type { Program } from '@/types/domain'
 import { FilterTableLayout, CmsButton } from '@/shared/ui'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import {
@@ -77,15 +79,37 @@ function UjatProgramListPageContent() {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { showAlert } = useCmsAlert()
   const pNorm = location.pathname.replace(/\/$/, '') || '/'
 
   const isUjatProgramNewRegistrationQuery =
     isUjatProgramListPath(pNorm) && searchParams.has(PROGRAMS_UJAT_NEW_QUERY_KEY)
 
-  const programsQuery = usePrograms()
+  const ujatRemoteEnabled = shouldUseRemoteApi()
+  const [pendingFilters, setPendingFilters] = useState<{ progressYear: UjatProgressYearFilter }>({
+    progressYear: UJAT_PROGRESS_YEAR_ALL,
+  })
+  const [appliedYear, setAppliedYear] = useState<UjatProgressYearFilter>(UJAT_PROGRESS_YEAR_ALL)
+
+  const listParams = useMemo(
+    () => ({
+      businessYear: appliedYear === UJAT_PROGRESS_YEAR_ALL ? undefined : appliedYear,
+      size: 500 as const,
+    }),
+    [appliedYear]
+  )
+  const programsQuery = usePrograms(listParams)
   const updateProgramMutation = useUpdateProgram()
   const programs = useMemo(() => programsQuery.data ?? [], [programsQuery.data])
   const loading = programsQuery.isFetching
+
+  useEffect(() => {
+    if (!programsQuery.isError || programsQuery.isFetching) return
+    showAlert({
+      title: '목록 조회 실패',
+      content: 'UJAT 프로그램 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    })
+  }, [programsQuery.isError, programsQuery.isFetching, showAlert])
 
   const { isWritingUserPreviewOpen, closeWritingUserPreview } = useTemplateWritingPreview()
 
@@ -137,11 +161,6 @@ function UjatProgramListPageContent() {
     isWritingUserPreviewOpen,
     closeWritingUserPreview
   )
-
-  const [pendingFilters, setPendingFilters] = useState<{ progressYear: UjatProgressYearFilter }>({
-    progressYear: UJAT_PROGRESS_YEAR_ALL,
-  })
-  const [appliedYear, setAppliedYear] = useState<UjatProgressYearFilter>(UJAT_PROGRESS_YEAR_ALL)
 
   const programIdFromUrl = searchParams.get('programId')
   const ujatDetailModalOpen =
@@ -235,9 +254,10 @@ function UjatProgramListPageContent() {
     const sorted = [...ujatPrograms].sort(
       (a, b) => dayjs(b.startDate).valueOf() - dayjs(a.startDate).valueOf()
     )
-    if (appliedYear === UJAT_PROGRESS_YEAR_ALL) return sorted
+    // remote: API `businessYear`가 이미 반영됨 — 클라이언트 year 재필터 금지
+    if (ujatRemoteEnabled || appliedYear === UJAT_PROGRESS_YEAR_ALL) return sorted
     return sorted.filter(p => dayjs(p.startDate).year() === appliedYear)
-  }, [ujatPrograms, appliedYear])
+  }, [ujatPrograms, appliedYear, ujatRemoteEnabled])
 
   const columns = useMemo<ColumnsType<Program>>(
     () => [
@@ -361,7 +381,8 @@ function UjatProgramListPageContent() {
         onClose={() => undefined}
         program={ujatDetailProgram ?? null}
         programIdHint={programIdFromUrl}
-        externalLoading={detailQuery.isFetching}
+        externalLoading={detailQuery.isFetching && !ujatDetailProgram}
+        externalError={detailQuery.isError && !ujatDetailProgram}
         onUpdateProgram={(programId, program, patch) =>
           updateProgramMutation.mutateAsync({ programId, program, patch })
         }

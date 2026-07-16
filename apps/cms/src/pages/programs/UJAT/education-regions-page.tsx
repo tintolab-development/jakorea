@@ -8,14 +8,20 @@ import { FilterTableLayout, CmsButton, CmsInput, CmsRadio, CmsRadioGroup } from 
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { shouldUseUjatEducationRegionsRemoteApi } from '@/features/program/ujat/api/education-regions/capabilities'
 import {
-  UJAT_EDUCATION_REGIONS_CHANGED_EVENT,
-  createUjatEducationRegion,
-  deleteUjatEducationRegion,
-  readUjatEducationRegions,
-  reorderUjatEducationRegions,
-  updateUjatEducationRegion,
-} from '@/features/program/ujat/lib/education-region-store'
+  useCreateUjatEducationRegion,
+  useDeleteUjatEducationRegion,
+  useReorderUjatEducationRegions,
+  useUpdateUjatEducationRegion,
+  useUjatEducationRegionsList,
+} from '@/features/program/ujat/api/education-regions/hooks'
+import { UJAT_EDUCATION_REGIONS_CHANGED_EVENT } from '@/features/program/ujat/lib/education-region-store'
+import {
+  isUjatEducationRegionDuplicateNameError,
+  UJAT_EDUCATION_REGION_DUPLICATE_NAME_MESSAGE,
+} from '@/features/program/ujat/lib/education-region-name'
 import {
   filterUjatEducationRegions,
   formatUjatEducationRegionDateTime,
@@ -55,7 +61,15 @@ function coerceRadioBoolean(raw: unknown): boolean {
 }
 
 export default function UjatEducationRegionsPage() {
-  const [rows, setRows] = useState<UjatEducationRegion[]>(() => readUjatEducationRegions())
+  const { showAlert } = useCmsAlert()
+  const remoteEnabled = shouldUseUjatEducationRegionsRemoteApi()
+  const listQuery = useUjatEducationRegionsList()
+  const createMutation = useCreateUjatEducationRegion()
+  const updateMutation = useUpdateUjatEducationRegion()
+  const deleteMutation = useDeleteUjatEducationRegion()
+  const reorderMutation = useReorderUjatEducationRegions()
+
+  const [rows, setRows] = useState<UjatEducationRegion[]>([])
   const [pendingFilters, setPendingFilters] = useState<UjatEducationRegionFilters>(INITIAL_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<UjatEducationRegionFilters>(INITIAL_FILTERS)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -64,15 +78,26 @@ export default function UjatEducationRegionsPage() {
   const [deleteTarget, setDeleteTarget] = useState<UjatEducationRegion | null>(null)
   const [deleteBlockedTarget, setDeleteBlockedTarget] = useState<UjatEducationRegion | null>(null)
 
-  const reload = useCallback(() => {
-    setRows(readUjatEducationRegions())
-  }, [])
+  useEffect(() => {
+    if (listQuery.data) setRows(listQuery.data)
+  }, [listQuery.data])
 
   useEffect(() => {
-    const handler = () => reload()
+    if (!listQuery.isError || listQuery.isFetching) return
+    showAlert({
+      title: '목록 조회 실패',
+      content: '교육 지역 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    })
+  }, [listQuery.isError, listQuery.isFetching, showAlert])
+
+  useEffect(() => {
+    if (remoteEnabled) return
+    const handler = () => {
+      void listQuery.refetch()
+    }
     window.addEventListener(UJAT_EDUCATION_REGIONS_CHANGED_EVENT, handler)
     return () => window.removeEventListener(UJAT_EDUCATION_REGIONS_CHANGED_EVENT, handler)
-  }, [reload])
+  }, [listQuery, remoteEnabled])
 
   const filteredRows = useMemo(
     () => filterUjatEducationRegions(rows, appliedFilters),
@@ -89,7 +114,6 @@ export default function UjatEducationRegionsPage() {
           { label: '사용', value: 'active' },
           { label: '미사용', value: 'inactive' },
         ],
-        width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
         key: 'name',
@@ -131,37 +155,79 @@ export default function UjatEducationRegionsPage() {
   }, [])
 
   const saveEdit = useCallback(
-    (id: string) => {
+    async (id: string) => {
       if (!editDraft?.name.trim()) return
-      updateUjatEducationRegion(id, {
-        active: editDraft.active,
-        name: editDraft.name.trim(),
-      })
-      reload()
-      cancelEdit()
+      try {
+        await updateMutation.mutateAsync({
+          id,
+          patch: {
+            active: editDraft.active,
+            name: editDraft.name.trim(),
+          },
+        })
+        cancelEdit()
+      } catch (error) {
+        if (isUjatEducationRegionDuplicateNameError(error)) {
+          showAlert({
+            title: '등록 불가',
+            content: UJAT_EDUCATION_REGION_DUPLICATE_NAME_MESSAGE,
+          })
+          return
+        }
+        showAlert({
+          title: '저장 실패',
+          content: '교육 지역 수정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      }
     },
-    [cancelEdit, editDraft, reload]
+    [cancelEdit, editDraft, showAlert, updateMutation]
   )
 
   const handleReorder = useCallback(
     (reorderedVisible: UjatEducationRegion[]) => {
       if (editingId) return
       const visibleIds = reorderedVisible.map(row => row.id)
+      const hiddenIds = rows.filter(row => !visibleIds.includes(row.id)).map(row => row.id)
+      const orderedIds = [...visibleIds, ...hiddenIds]
       setRows(prev => {
-        const hiddenIds = prev.filter(row => !visibleIds.includes(row.id)).map(row => row.id)
-        return reorderUjatEducationRegions([...visibleIds, ...hiddenIds])
+        const byId = new Map(prev.map(row => [row.id, row]))
+        return orderedIds
+          .map(id => byId.get(id))
+          .filter((row): row is UjatEducationRegion => Boolean(row))
+          .map((row, index) => ({ ...row, sortOrder: index + 1 }))
+      })
+      void reorderMutation.mutateAsync(orderedIds).catch(() => {
+        showAlert({
+          title: '순서 변경 실패',
+          content: '교육 지역 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
+        })
+        void listQuery.refetch()
       })
     },
-    [editingId]
+    [editingId, listQuery, reorderMutation, rows, showAlert]
   )
 
   const handleRegister = useCallback(
-    (values: { active: boolean; name: string }) => {
-      createUjatEducationRegion(values)
-      reload()
-      setRegisterOpen(false)
+    async (values: { active: boolean; name: string }) => {
+      try {
+        await createMutation.mutateAsync(values)
+        setRegisterOpen(false)
+      } catch (error) {
+        if (isUjatEducationRegionDuplicateNameError(error)) {
+          showAlert({
+            title: '등록 불가',
+            content: UJAT_EDUCATION_REGION_DUPLICATE_NAME_MESSAGE,
+          })
+          return
+        }
+        showAlert({
+          title: '등록 실패',
+          content:
+            '교육 지역 등록에 실패했습니다. 백엔드 POST 지원 여부를 확인한 뒤 다시 시도해 주세요.',
+        })
+      }
     },
-    [reload]
+    [createMutation, showAlert]
   )
 
   const handleDeleteRequest = useCallback((row: UjatEducationRegion) => {
@@ -172,17 +238,27 @@ export default function UjatEducationRegionsPage() {
     setDeleteTarget(row)
   }, [])
 
-  const handleDeleteConfirm = useCallback(() => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return
-    const result = deleteUjatEducationRegion(deleteTarget.id)
+    const result = await deleteMutation.mutateAsync(deleteTarget.id)
     if (!result.ok && result.reason === 'has_usage') {
       setDeleteTarget(null)
       setDeleteBlockedTarget(deleteTarget)
       return
     }
-    reload()
+    if (!result.ok) {
+      showAlert({
+        title: '삭제 실패',
+        content:
+          result.reason === 'not_found'
+            ? '교육 지역을 찾을 수 없습니다.'
+            : '교육 지역 삭제에 실패했습니다. 백엔드 DELETE 지원 여부를 확인한 뒤 다시 시도해 주세요.',
+      })
+      setDeleteTarget(null)
+      return
+    }
     setDeleteTarget(null)
-  }, [deleteTarget, reload])
+  }, [deleteMutation, deleteTarget, showAlert])
 
   const columns = useMemo<ColumnsType<UjatEducationRegion>>(
     () => [
@@ -254,6 +330,7 @@ export default function UjatEducationRegionsPage() {
         width: TABLE_COLUMN_WIDTHS.name,
         align: 'center',
         ellipsis: true,
+        render: (value: string) => value?.trim() || '-',
       },
       {
         title: '등록일시',
@@ -276,6 +353,9 @@ export default function UjatEducationRegionsPage() {
                 variant="default"
                 size="medium"
                 width={100}
+                loading={
+                  deleteMutation.isPending && deleteTarget?.id === record.id
+                }
                 onClick={e => {
                   e.stopPropagation()
                   handleDeleteRequest(record)
@@ -287,11 +367,12 @@ export default function UjatEducationRegionsPage() {
                 variant="secondary"
                 size="medium"
                 width={100}
+                loading={isEditing ? updateMutation.isPending : false}
                 disabled={isEditing ? !editDraft.name.trim() : false}
                 onClick={e => {
                   e.stopPropagation()
                   if (isEditing) {
-                    saveEdit(record.id)
+                    void saveEdit(record.id)
                     return
                   }
                   startEdit(record)
@@ -304,15 +385,27 @@ export default function UjatEducationRegionsPage() {
         },
       },
     ],
-    [editDraft, editingId, handleDeleteRequest, saveEdit, startEdit]
+    [
+      deleteMutation.isPending,
+      deleteTarget?.id,
+      editDraft,
+      editingId,
+      handleDeleteRequest,
+      saveEdit,
+      startEdit,
+      updateMutation.isPending,
+    ]
   )
 
   const toolbarActions = (
-    <>
-      <CmsButton variant="secondary" width={160} onClick={() => setRegisterOpen(true)}>
-        교육 지역 등록
-      </CmsButton>
-    </>
+    <CmsButton
+      variant="secondary"
+      width={160}
+      loading={createMutation.isPending}
+      onClick={() => setRegisterOpen(true)}
+    >
+      교육 지역 등록
+    </CmsButton>
   )
 
   return (
@@ -334,6 +427,7 @@ export default function UjatEducationRegionsPage() {
         <UjatEducationRegionsSortableTable
           rows={filteredRows}
           columns={columns}
+          loading={listQuery.isFetching}
           onRowsReorder={handleReorder}
         />
       </FilterTableLayout>

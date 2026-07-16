@@ -12,6 +12,6 @@ export function toRemoteListParams(params: ListParams): AdminProgramsListQuery {
     ...params,
     programType: 'UJAT',
     page: params.page ?? 0,
-    size: params.size ?? 100,
+    size: params.size ?? 500,
   }
 }
