@@ -10,6 +10,7 @@ import {
 } from '@/features/template/lib/form-template-remote-draft'
 
 export const PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE = 'registration-general' as const
+export const PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE = 'registration-economy' as const
 
 export {
   REGISTRATION_GENERAL_USE_REMOTE_DRAFT_API,

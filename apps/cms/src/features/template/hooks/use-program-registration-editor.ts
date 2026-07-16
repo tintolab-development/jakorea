@@ -48,6 +48,7 @@ import { buildProgramRegistrationParagraphBodyOptions } from '@/features/templat
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { persistGeneralProgramRegistration } from '@/features/program/general/lib/registration-local-save'
 import type { Program } from '@/types/domain'
 import {
@@ -198,7 +199,7 @@ export type UseProgramRegistrationEditorOptions = {
   onRegistrationSaved?: (program?: Program) => void
   /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
   onTemplateDraftSaveConfirmed?: () => void
-  /** forms-surveys draft API 연동 대상 templateCode (현재 `registration-general`만) */
+  /** forms-surveys draft API 연동 대상 templateCode (`registration-general` · `registration-economy`) */
   templateCode?: string
 }
 
@@ -834,7 +835,9 @@ export function useProgramRegistrationEditor(
     }
     const isRemoteCreate =
       (programRegistrationFormVariant === 'general' && shouldUseGeneralProgramsRemoteApi()) ||
-      (programRegistrationFormVariant === 'economy' && shouldUseCompanySchoolRemoteApi())
+      (programRegistrationFormVariant === 'economy' && shouldUseCompanySchoolRemoteApi()) ||
+      (programRegistrationFormVariant === 'trainedTeachers' &&
+        shouldUseTrainedTeacherProgramsRemoteApi())
     if (isRemoteCreate && !sponsorId.trim()) {
       showAlert({
         title: '등록 실패',
