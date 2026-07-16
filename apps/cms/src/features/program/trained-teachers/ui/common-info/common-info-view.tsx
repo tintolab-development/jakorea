@@ -14,7 +14,8 @@
  *
  * 수정 모드: KPI 인풋·교육일지 라디오·차시/회차/일정 추가·삭제·교육 연수 토글·진행 그룹 구분 추가
  * (진행 그룹은 전 테이블 동시 적용).
- * mock 단계 — 저장 시 컴포넌트 로컬 오버레이에 반영 (API 연동 전).
+ * mock 단계 — remote OFF 시 컴포넌트 로컬 오버레이에 반영.
+ * remote ON 시 `onPersist` → `PATCH …/trained-teacher/detail`.
  */
 
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react'
@@ -1408,6 +1409,12 @@ export interface TrainedTeachersCommonInfoViewProps {
   isEditMode?: boolean
   onEdit?: () => void
   onSave?: () => void
+  /** remote 저장 — 제공 시 local overlay 대신 호출 */
+  onPersist?: (payload: {
+    educatedTeachers?: number
+    commonInfo: Partial<TrainedTeachersCommonInfo>
+  }) => Promise<void>
+  persistPending?: boolean
 }
 
 export function TrainedTeachersCommonInfoView({
@@ -1416,14 +1423,17 @@ export function TrainedTeachersCommonInfoView({
   isEditMode = false,
   onEdit,
   onSave,
+  onPersist,
+  persistPending = false,
 }: TrainedTeachersCommonInfoViewProps) {
   const baseCommonInfo = resolveGeneralProgramCommonInfo(program)
 
-  // mock 저장 오버레이 — 수정 저장 시 세션(마운트) 범위로 반영 (API 연동 전)
+  // mock 저장 오버레이 — onPersist 없을 때만 세션 범위로 반영
   const [savedOverride, setSavedOverride] = useState<{
     commonInfo: Partial<TrainedTeachersCommonInfo>
     educatedTeachers: number | undefined
   } | null>(null)
+  const [saving, setSaving] = useState(false)
 
   const commonInfo = useMemo<TrainedTeachersCommonInfo>(
     () => ({ ...baseCommonInfo, ...savedOverride?.commonInfo }),
@@ -1468,35 +1478,56 @@ export function TrainedTeachersCommonInfoView({
     setDraft(current => (current ? update(current) : current))
 
   const handleSave = () => {
-    if (draft) {
-      setSavedOverride({
-        educatedTeachers: draft.kpiEducatedTeachers,
-        commonInfo: {
-          kpi: {
-            finalParticipants: draft.kpiFinalParticipants ?? 0,
-            instructorCount: 0,
-            volunteerCount: 0,
-            finalSchools: draft.kpiFinalSchools ?? 0,
-            finalClasses: draft.kpiFinalClasses ?? 0,
-          },
-          educationJournalEnabled: draft.educationJournalEnabled,
-          teacherTrainingEnabled: draft.teacherTrainingEnabled,
-          curriculumSessions:
-            educationStructure === 'curriculum' ? draft.curriculumSessions : commonInfo.curriculumSessions,
-          scheduleDetails:
-            educationStructure === 'schedule'
-              ? draft.scheduleDetails.map((detail, index) => ({
-                  ...detail,
-                  progressTimeSummary:
-                    sessionRound === 'single'
-                      ? joinProgressGroups(draft.progressGroupsByDetail[index] ?? [''])
-                      : detail.progressTimeSummary,
-                }))
-              : commonInfo.scheduleDetails,
-        },
-      })
+    if (!draft) {
+      onSave?.()
+      return
     }
-    onSave?.()
+    const commonInfoPayload: Partial<TrainedTeachersCommonInfo> = {
+      kpi: {
+        finalParticipants: draft.kpiFinalParticipants ?? 0,
+        instructorCount: 0,
+        volunteerCount: 0,
+        finalSchools: draft.kpiFinalSchools ?? 0,
+        finalClasses: draft.kpiFinalClasses ?? 0,
+      },
+      educationJournalEnabled: draft.educationJournalEnabled,
+      teacherTrainingEnabled: draft.teacherTrainingEnabled,
+      curriculumSessions:
+        educationStructure === 'curriculum' ? draft.curriculumSessions : commonInfo.curriculumSessions,
+      scheduleDetails:
+        educationStructure === 'schedule'
+          ? draft.scheduleDetails.map((detail, index) => ({
+              ...detail,
+              progressTimeSummary:
+                sessionRound === 'single'
+                  ? joinProgressGroups(draft.progressGroupsByDetail[index] ?? [''])
+                  : detail.progressTimeSummary,
+            }))
+          : commonInfo.scheduleDetails,
+    }
+
+    const run = async () => {
+      if (onPersist) {
+        setSaving(true)
+        try {
+          await onPersist({
+            educatedTeachers: draft.kpiEducatedTeachers,
+            commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
+          })
+        } catch {
+          return
+        } finally {
+          setSaving(false)
+        }
+      } else {
+        setSavedOverride({
+          educatedTeachers: draft.kpiEducatedTeachers,
+          commonInfo: commonInfoPayload,
+        })
+      }
+      onSave?.()
+    }
+    void run()
   }
 
   return (
@@ -1505,6 +1536,7 @@ export function TrainedTeachersCommonInfoView({
         <CmsButton
           size="large"
           width={140}
+          loading={saving || persistPending}
           onClick={resolveProgramEditInfoClick(isEditMode, {
             onEnterEdit: onEdit ?? (() => {}),
             onSaveEdit: handleSave,

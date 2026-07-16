@@ -1,19 +1,21 @@
 import dayjs from 'dayjs'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import {
-  getTrainedTeachersPrograms,
-  invalidateTrainedTeachersProgramsCache,
-} from '@/data/mock/trained-teachers-programs'
 import type { Program } from '@/types/domain'
 import type { ProgramListView } from '@/features/program/general/ui/table/program-table-column-resolver'
 import type { ProgramListConfig } from '@/features/program/general/ui/program-list'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import { useTrainedTeacherPrograms } from '@/features/program/trained-teachers/api/hooks'
+import { trainedTeacherListParamsFromOverviewStatus } from '@/features/program/trained-teachers/api/list-params'
+import { invalidateTrainedTeachersProgramsCache } from '@/data/mock/trained-teachers-programs'
 
 export type TrainedTeachersOverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
 
 export interface TrainedTeachersListQueryParams extends Record<string, string | undefined> {
   programId?: string
   status?: TrainedTeachersOverviewStatusFilter
+  title?: string
+  businessYear?: string
 }
 
 const overviewStatusValues = ['scheduled', 'in_progress', 'completed'] as const
@@ -55,12 +57,7 @@ function matchesOverviewStatus(
 
 export function useTrainedTeachersProgramListFilters() {
   const { params, setParam } = useQueryParams<TrainedTeachersListQueryParams>()
-  const [listVersion, setListVersion] = useState(0)
-
-  const refetchPrograms = useCallback(() => {
-    invalidateTrainedTeachersProgramsCache()
-    setListVersion(version => version + 1)
-  }, [])
+  const remoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi()
 
   const statusFilter = useMemo<TrainedTeachersOverviewStatusFilter | null>(() => {
     const value = params.status
@@ -70,14 +67,41 @@ export function useTrainedTeachersProgramListFilters() {
     return null
   }, [params.status])
 
+  const tableFilters = useMemo(() => {
+    const title = params.title?.trim() || undefined
+    const yearRaw = params.businessYear
+    const businessYear =
+      yearRaw && /^\d{4}$/.test(yearRaw) ? Number.parseInt(yearRaw, 10) : undefined
+    return { title, businessYear }
+  }, [params.businessYear, params.title])
+
+  const listFilters = useMemo(
+    () => trainedTeacherListParamsFromOverviewStatus(statusFilter, tableFilters),
+    [statusFilter, tableFilters]
+  )
+
+  const listQuery = useTrainedTeacherPrograms(listFilters, true)
+
+  const refetchPrograms = useCallback(() => {
+    if (remoteEnabled) {
+      void listQuery.refetch()
+      return
+    }
+    invalidateTrainedTeachersProgramsCache()
+    void listQuery.refetch()
+  }, [listQuery, remoteEnabled])
+
   const filteredPrograms = useMemo(() => {
-    void listVersion
-    let programs = getTrainedTeachersPrograms()
+    const programs = listQuery.data ?? []
+    if (remoteEnabled) {
+      // periodStatus는 서버 필터 — 클라이언트 overview 재필터 스킵
+      return programs
+    }
     if (statusFilter != null) {
-      programs = programs.filter(program => matchesOverviewStatus(program, statusFilter))
+      return programs.filter(program => matchesOverviewStatus(program, statusFilter))
     }
     return programs
-  }, [listVersion, statusFilter])
+  }, [listQuery.data, remoteEnabled, statusFilter])
 
   const headerTitle = useMemo(() => {
     if (statusFilter === 'scheduled') return '예정 프로그램'
@@ -112,5 +136,7 @@ export function useTrainedTeachersProgramListFilters() {
     params,
     setParam,
     refetchPrograms,
+    listQuery,
+    remoteEnabled,
   }
 }

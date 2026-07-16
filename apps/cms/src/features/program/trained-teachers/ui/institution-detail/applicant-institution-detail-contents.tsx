@@ -105,6 +105,7 @@ export function TrainedTeachersApplicantInstitutionDetailContents({
     <TrainedTeachersEducationJournalSection
       institutionId={institution.id}
       institutionName={institution.schoolName}
+      programId={program?.id ?? institution.programId}
     />
   )
 

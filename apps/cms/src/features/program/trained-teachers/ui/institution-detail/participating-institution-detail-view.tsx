@@ -448,6 +448,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               variant="progress"
               institutionId={row.id}
               institutionName={mergedDetail.schoolName ?? row.schoolName}
+              programId={program?.id ?? row.programId}
             />
           </div>
         )}

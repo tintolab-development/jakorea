@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
-import { Empty, Table } from 'antd'
+import { Empty, Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
@@ -8,12 +8,19 @@ import { downloadFile } from '@/shared/lib/file-download'
 import {
   formatTrainedTeachersEducationJournalScheduleLabel,
   formatTrainedTeachersEducationJournalSubmittedDate,
-  getTrainedTeachersEducationJournals,
   type TrainedTeachersEducationJournalEntry,
 } from '@/data/mock/trained-teachers-institution-detail'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import {
+  useBulkDownloadTrainedTeacherEducationJournals,
+  useDownloadTrainedTeacherEducationJournal,
+  useTrainedTeacherEducationJournals,
+} from '@/features/program/trained-teachers/api/education-journals-hooks'
+import { listTrainedTeacherEducationJournals } from '@/features/program/trained-teachers/api/education-journals-service'
 import { TrainedTeachersEducationJournalViewModal } from './education-journal-view-modal'
 import './education-journal-section.css'
+import { useQuery } from '@tanstack/react-query'
 
 const VIEW_CELL_CLASSNAME = 'trained-teachers-education-journal-section__view-cell'
 const BULK_DOWNLOAD_GAP_MS = 400
@@ -63,10 +70,13 @@ function renderJournalFileLink(
 export function TrainedTeachersEducationJournalSection({
   institutionId,
   institutionName,
+  programId,
   variant = 'default',
 }: {
   institutionId: string
   institutionName?: string
+  /** remote list/download용 — 없으면 mock만 */
+  programId?: string
   variant?: TrainedTeachersEducationJournalSectionVariant
 }) {
   const isProgressVariant = variant === 'progress'
@@ -74,23 +84,70 @@ export function TrainedTeachersEducationJournalSection({
   const [viewerEntry, setViewerEntry] = useState<TrainedTeachersEducationJournalEntry | null>(null)
   const [isBulkDownloading, setIsBulkDownloading] = useState(false)
 
-  const entries = useMemo(
-    () => getTrainedTeachersEducationJournals(institutionId),
-    [institutionId]
+  const remoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi() && Boolean(programId)
+  const journalsQuery = useTrainedTeacherEducationJournals(
+    programId,
+    institutionId,
+    remoteEnabled
   )
+  const localJournalsQuery = useQuery({
+    queryKey: ['cms', 'programs', 'trained-teachers', 'education-journals-local', institutionId],
+    queryFn: () => listTrainedTeacherEducationJournals(programId ?? '', institutionId),
+    enabled: !remoteEnabled,
+    staleTime: Number.POSITIVE_INFINITY,
+  })
+
+  const downloadMutation = useDownloadTrainedTeacherEducationJournal(programId)
+  const bulkDownloadMutation = useBulkDownloadTrainedTeacherEducationJournals(
+    programId,
+    institutionId
+  )
+
+  const entries = useMemo(
+    () => (remoteEnabled ? journalsQuery.data : localJournalsQuery.data) ?? [],
+    [journalsQuery.data, localJournalsQuery.data, remoteEnabled]
+  )
+  const isLoading = remoteEnabled ? journalsQuery.isFetching : localJournalsQuery.isFetching
 
   const tableData = useMemo(
     () => entries.map((entry, index) => ({ ...entry, no: entries.length - index })),
     [entries]
   )
 
-  const handleDownloadEntry = useCallback((entry: TrainedTeachersEducationJournalEntry) => {
-    downloadFile(entry.fileName, entry.fileUrl)
-  }, [])
+  const handleDownloadEntry = useCallback(
+    (entry: TrainedTeachersEducationJournalEntry) => {
+      if (remoteEnabled && programId) {
+        void downloadMutation.mutateAsync(entry).catch(() => {
+          showAlert({
+            title: '다운로드 실패',
+            content: '교육일지 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          })
+        })
+        return
+      }
+      downloadFile(entry.fileName, entry.fileUrl)
+    },
+    [downloadMutation, programId, remoteEnabled, showAlert]
+  )
 
   const handleBulkDownload = useCallback(async () => {
     if (entries.length === 0) {
       showAlert({ title: '다운로드 안내', content: '다운로드할 교육일지가 없습니다.' })
+      return
+    }
+
+    if (remoteEnabled && programId) {
+      setIsBulkDownloading(true)
+      try {
+        await bulkDownloadMutation.mutateAsync(entries)
+      } catch {
+        showAlert({
+          title: '일괄 다운로드 실패',
+          content: '교육일지 일괄 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      } finally {
+        setIsBulkDownloading(false)
+      }
       return
     }
 
@@ -114,7 +171,14 @@ export function TrainedTeachersEducationJournalSection({
     } finally {
       setIsBulkDownloading(false)
     }
-  }, [entries, isProgressVariant, showAlert])
+  }, [
+    bulkDownloadMutation,
+    entries,
+    isProgressVariant,
+    programId,
+    remoteEnabled,
+    showAlert,
+  ])
 
   const defaultExcelColumns: ColumnsType<JournalTableRow> = useMemo(
     () => [
@@ -231,8 +295,8 @@ export function TrainedTeachersEducationJournalSection({
             size="large"
             width={200}
             icon={<DownloadOutlined />}
-            loading={isBulkDownloading}
-            disabled={isBulkDownloading}
+            loading={isBulkDownloading || bulkDownloadMutation.isPending}
+            disabled={isBulkDownloading || bulkDownloadMutation.isPending}
             onClick={() => void handleBulkDownload()}
           >
             교육일지 일괄 다운로드
@@ -241,7 +305,11 @@ export function TrainedTeachersEducationJournalSection({
         </div>
       </div>
 
-      {entries.length === 0 ? (
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
+          <Spin />
+        </div>
+      ) : entries.length === 0 ? (
         <Empty description="제출된 교육일지가 없습니다." />
       ) : (
         <Table

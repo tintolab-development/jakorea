@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ProgramStatusWidget } from '@/features/dashboard/ui/program-status-widget'
-import { useProgramStore } from '@/features/program/general/model/program-store'
 import { ProgramList } from '@/features/program/general/ui/program-list'
 import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal'
 import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
@@ -15,6 +14,7 @@ import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
 import { CmsButton, ConfirmModal } from '@/shared/ui'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   TemplateWritingPreviewProvider,
   useTemplateWritingPreview,
@@ -23,6 +23,12 @@ import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
 import { useProgramListActions } from '@/pages/programs/use-program-list-actions'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import {
+  useDeleteTrainedTeacherProgram,
+  useTrainedTeacherProgramDetail,
+  useUpdateTrainedTeacherProgram,
+} from '@/features/program/trained-teachers/api/hooks'
 import { useTrainedTeachersProgramListFilters } from '@/features/program/trained-teachers/hooks/use-list-filters'
 
 import '../program-list-page.css'
@@ -39,17 +45,26 @@ function isTrainedTeachersProgramListPath(pathname: string): boolean {
 }
 
 function TrainedTeachersProgramPageContent() {
+  const { showAlert } = useCmsAlert()
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const normalizedPath = location.pathname.replace(/\/$/, '') || '/'
+  const remoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi()
 
   const { user, isAuthenticated } = useAuthStore()
-  const { loading, fetchPrograms } = useProgramStore()
   const { handleBulkDelete } = useProgramListActions()
   const { isWritingUserPreviewOpen, closeWritingUserPreview } = useTemplateWritingPreview()
-  const { filteredPrograms, headerTitle, programListConfig, statusFilter, refetchPrograms } =
-    useTrainedTeachersProgramListFilters()
+  const {
+    filteredPrograms,
+    headerTitle,
+    programListConfig,
+    statusFilter,
+    refetchPrograms,
+    listQuery,
+  } = useTrainedTeachersProgramListFilters()
+  const updateMutation = useUpdateTrainedTeacherProgram()
+  const deleteMutation = useDeleteTrainedTeacherProgram()
 
   const [selectedProgramForFullPageModal, setSelectedProgramForFullPageModal] =
     useState<Program | null>(null)
@@ -70,9 +85,23 @@ function TrainedTeachersProgramPageContent() {
     viewModeFromUrl === 'list' || viewModeFromUrl === 'calendar' ? viewModeFromUrl : 'list'
   )
 
-  useEffect(() => {
-    void fetchPrograms()
-  }, [fetchPrograms])
+  const programIdFromUrl = useMemo(() => {
+    const pid = searchParams.get('programId')?.trim()
+    return pid || undefined
+  }, [searchParams])
+
+  const detailQuery = useTrainedTeacherProgramDetail(
+    programIdFromUrl ?? selectedProgramForFullPageModal?.id,
+    Boolean(programIdFromUrl ?? selectedProgramForFullPageModal?.id)
+  )
+
+  const detailProgram =
+    detailQuery.data ??
+    selectedProgramForFullPageModal ??
+    (programIdFromUrl
+      ? filteredPrograms.find(p => p.id === programIdFromUrl) ??
+        ({ id: programIdFromUrl } as Program)
+      : null)
 
   useEffect(() => {
     if (!isScheduledFilter) setSelectedRowKeys([])
@@ -86,13 +115,39 @@ function TrainedTeachersProgramPageContent() {
   }, [searchParams])
 
   useEffect(() => {
-    const programIdFromUrl = searchParams.get('programId')
     if (!programIdFromUrl) return
     if (searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)) return
+    if (detailQuery.data) {
+      setSelectedProgramForFullPageModal(detailQuery.data)
+      return
+    }
     if (filteredPrograms.length === 0) return
     const program = filteredPrograms.find(item => item.id === programIdFromUrl)
     if (program) setSelectedProgramForFullPageModal(program)
-  }, [filteredPrograms, searchParams])
+  }, [detailQuery.data, filteredPrograms, programIdFromUrl, searchParams])
+
+  useEffect(() => {
+    if (!listQuery.isError || listQuery.isFetching) return
+    showAlert({
+      title: '목록 조회 실패',
+      content: '교육받은 교사 프로그램 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    })
+  }, [listQuery.isError, listQuery.isFetching, showAlert])
+
+  useEffect(() => {
+    if (!remoteEnabled || !programIdFromUrl) return
+    if (!detailQuery.isError || detailQuery.isFetching) return
+    showAlert({
+      title: '상세 조회 실패',
+      content: '프로그램 상세를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    })
+  }, [
+    detailQuery.isError,
+    detailQuery.isFetching,
+    programIdFromUrl,
+    remoteEnabled,
+    showAlert,
+  ])
 
   const userPreviewSyncParams = useMemo(
     () => ({ userPreview: searchParams.get('userPreview') ?? undefined }),
@@ -135,9 +190,8 @@ function TrainedTeachersProgramPageContent() {
 
   const handleRegistrationSaved = useCallback(() => {
     refetchPrograms()
-    void fetchPrograms()
     handleCloseRegistrationFullpage()
-  }, [fetchPrograms, handleCloseRegistrationFullpage, refetchPrograms])
+  }, [handleCloseRegistrationFullpage, refetchPrograms])
 
   const handleProgramCreateClick = useCallback(() => {
     const next = new URLSearchParams(searchParams)
@@ -199,6 +253,39 @@ function TrainedTeachersProgramPageContent() {
     setBulkDeleteModalOpen(true)
   }, [filteredPrograms, selectedRowKeys])
 
+  const handleBulkDeleteConfirm = useCallback(async () => {
+    if (remoteEnabled) {
+      try {
+        for (const program of programsPendingBulkDelete) {
+          await deleteMutation.mutateAsync(program.id)
+        }
+        setSelectedRowKeys([])
+        refetchPrograms()
+      } catch {
+        showAlert({
+          title: '삭제 실패',
+          content: '선택한 프로그램 삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      }
+      setBulkDeleteModalOpen(false)
+      setProgramsPendingBulkDelete([])
+      return
+    }
+    handleBulkDelete(programsPendingBulkDelete, () => {
+      setSelectedRowKeys([])
+      refetchPrograms()
+    })
+    setBulkDeleteModalOpen(false)
+    setProgramsPendingBulkDelete([])
+  }, [
+    deleteMutation,
+    handleBulkDelete,
+    programsPendingBulkDelete,
+    refetchPrograms,
+    remoteEnabled,
+    showAlert,
+  ])
+
   const programListToolbarActions = (
     <div className="program-list-page__widget-header-actions">
       {isScheduledFilter && (
@@ -214,7 +301,7 @@ function TrainedTeachersProgramPageContent() {
       )}
       <CmsButton
         variant="secondary"
-        width={180}
+        size="large"
         icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
         onClick={handleViewModeToggle}
       >
@@ -224,7 +311,7 @@ function TrainedTeachersProgramPageContent() {
   )
 
   const programListToolbarActionsAfterExcel = (
-    <CmsButton width={180} onClick={handleProgramCreateClick}>
+    <CmsButton variant="primary" size="large" width={180} onClick={handleProgramCreateClick}>
       프로그램 신규 등록
     </CmsButton>
   )
@@ -244,7 +331,7 @@ function TrainedTeachersProgramPageContent() {
       </div>
       <ProgramList
         data={filteredPrograms}
-        loading={loading}
+        loading={listQuery.isFetching}
         headerTitle={headerTitle}
         onView={handleView}
         onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
@@ -261,9 +348,20 @@ function TrainedTeachersProgramPageContent() {
       </ProgramList>
 
       <ProgramDetailFullPageModal
-        open={Boolean(selectedProgramForFullPageModal)}
-        program={selectedProgramForFullPageModal}
+        open={Boolean(programIdFromUrl) || Boolean(selectedProgramForFullPageModal)}
+        program={detailProgram}
+        programVariant="trained-teachers"
+        externalLoading={detailQuery.isFetching && !detailProgram}
+        externalError={detailQuery.isError && !detailProgram}
         onClose={handleCloseFullPageModal}
+        onUpdateProgram={
+          remoteEnabled
+            ? async (programId, program, patch) => {
+                await updateMutation.mutateAsync({ programId, program, patch })
+                refetchPrograms()
+              }
+            : undefined
+        }
       />
 
       <GeneralProgramRegistrationFullpageModal
@@ -281,9 +379,7 @@ function TrainedTeachersProgramPageContent() {
         cancelText="취소"
         danger
         onConfirm={() => {
-          handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
-          setBulkDeleteModalOpen(false)
-          setProgramsPendingBulkDelete([])
+          void handleBulkDeleteConfirm()
         }}
         onCancel={() => {
           setBulkDeleteModalOpen(false)
