@@ -23,7 +23,7 @@ export function FaqFormModalFooter({
       {isEdit ? (
         <CmsButton
           variant="delete"
-          size="large"
+          size="medium"
           type="button"
           className="faq-form-modal__faq-delete"
           onClick={onRequestDelete}
@@ -33,10 +33,10 @@ export function FaqFormModalFooter({
         </CmsButton>
       ) : null}
       <div className="faq-form-modal__footer-actions-right">
-        <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
+        <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
           취소
         </CmsButton>
-        <CmsButton variant="primary" size="large" type="button" onClick={onSubmit} disabled={!canWrite}>
+        <CmsButton variant="primary" size="medium" type="button" onClick={onSubmit} disabled={!canWrite}>
           {submitLabel}
         </CmsButton>
       </div>

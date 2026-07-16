@@ -1,11 +1,11 @@
 /**
  * 준비중 페이지
- * 템플릿 관리, 게시글 관리, 보안 설정(로그 관리) 등 아직 구현되지 않은 기능에 대한 안내 페이지
  */
 
 import { useNavigate } from 'react-router-dom'
-import { Result, Button, Space } from 'antd'
+import { Result, Space } from 'antd'
 import { HomeOutlined, ArrowLeftOutlined } from '@ant-design/icons'
+import { CmsButton } from '@/shared/ui/cms-button'
 
 interface ComingSoonPageProps {
   title?: string
@@ -18,18 +18,10 @@ export function ComingSoonPage({
 }: ComingSoonPageProps) {
   const navigate = useNavigate()
 
-  const handleGoHome = () => {
-    navigate('/')
-  }
-
-  const handleGoBack = () => {
-    navigate(-1)
-  }
-
   return (
     <div
       style={{
-        minHeight: '100%', // 레이아웃 콘텐츠 영역의 전체 높이 활용
+        minHeight: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -42,12 +34,24 @@ export function ComingSoonPage({
         subTitle={description}
         extra={
           <Space>
-            <Button icon={<ArrowLeftOutlined />} onClick={handleGoBack}>
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              className="cms-button--footer-auto"
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate(-1)}
+            >
               이전 페이지
-            </Button>
-            <Button type="primary" icon={<HomeOutlined />} onClick={handleGoHome}>
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="medium"
+              className="cms-button--footer-auto"
+              icon={<HomeOutlined />}
+              onClick={() => navigate('/')}
+            >
               홈으로 이동
-            </Button>
+            </CmsButton>
           </Space>
         }
       />

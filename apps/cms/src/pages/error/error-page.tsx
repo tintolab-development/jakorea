@@ -1,12 +1,12 @@
 /**
  * 에러 페이지
- * 404, 403, 500 등 다양한 에러 코드 처리
  */
 
 import { useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Result, Button, Space } from 'antd'
+import { Result, Space } from 'antd'
 import { HomeOutlined, ReloadOutlined, ArrowLeftOutlined } from '@ant-design/icons'
+import { CmsButton } from '@/shared/ui/cms-button'
 
 export function ErrorPage() {
   const navigate = useNavigate()
@@ -56,22 +56,10 @@ export function ErrorPage() {
 
   const config = getErrorConfig()
 
-  const handleGoHome = () => {
-    navigate('/')
-  }
-
-  const handleGoBack = () => {
-    navigate(-1)
-  }
-
-  const handleReload = () => {
-    window.location.reload()
-  }
-
   return (
     <div
       style={{
-        minHeight: '100%', // 레이아웃 콘텐츠 영역의 전체 높이 활용
+        minHeight: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -84,15 +72,33 @@ export function ErrorPage() {
         subTitle={config.subTitle}
         extra={
           <Space>
-            <Button icon={<ArrowLeftOutlined />} onClick={handleGoBack}>
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              className="cms-button--footer-auto"
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate(-1)}
+            >
               이전 페이지
-            </Button>
-            <Button icon={<ReloadOutlined />} onClick={handleReload}>
+            </CmsButton>
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              className="cms-button--footer-auto"
+              icon={<ReloadOutlined />}
+              onClick={() => window.location.reload()}
+            >
               새로고침
-            </Button>
-            <Button type="primary" icon={<HomeOutlined />} onClick={handleGoHome}>
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="medium"
+              className="cms-button--footer-auto"
+              icon={<HomeOutlined />}
+              onClick={() => navigate('/')}
+            >
               홈으로 이동
-            </Button>
+            </CmsButton>
           </Space>
         }
       >

@@ -7,7 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { Spin } from 'antd'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
-import { NoticeAttachmentDownloadIcon } from '@/features/posts/ui/notice-attachment-download-icon'
+import { AttachmentDownloadIcon } from '@/shared/ui'
 import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { shouldUseNoticesRemoteApi } from '@/features/posts/api/notices/admin-notices-service'
 import { useNoticeDetailQuery } from '@/features/posts/hooks/use-notice-detail-query'
@@ -166,7 +166,7 @@ export function AdminNoticeDetailPage() {
                   >
                     <PaperClipOutlined aria-hidden />
                     <span>{item.name}</span>
-                    <NoticeAttachmentDownloadIcon />
+                    <AttachmentDownloadIcon />
                   </button>
                 </li>
               ))}

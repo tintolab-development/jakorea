@@ -72,12 +72,12 @@ export function NoticeDeleteConfirmModal({
       description={`${line1}\n${line2}`}
       footer={
         <>
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             취소
           </CmsButton>
           <CmsButton
             variant="delete"
-            size="large"
+            size="medium"
             className="notice-delete-confirm-modal__delete-btn"
             onClick={onConfirm}
           >

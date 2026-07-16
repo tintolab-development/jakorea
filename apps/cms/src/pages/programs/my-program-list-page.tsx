@@ -6,7 +6,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Button, Table, Empty } from 'antd'
+import { Table } from 'antd'
+import { EmptyState, LoadingButton } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { HeartOutlined, HeartFilled } from '@ant-design/icons'
@@ -199,13 +200,13 @@ export function MyProgramListPage() {
       fixed: 'left' as const,
       render: (title: string, record: MyProgram) => (
         <div>
-          <Button
+          <LoadingButton
             type="link"
             onClick={() => handleViewProgram(record)}
             style={{ padding: 0, fontWeight: 500 }}
           >
             {title}
-          </Button>
+          </LoadingButton>
         </div>
       ),
     },
@@ -290,7 +291,7 @@ export function MyProgramListPage() {
       width: 100,
       fixed: 'right' as const,
       render: (_, record) => (
-        <Button
+        <LoadingButton
           type="text"
           icon={
             favorites.has(record.id) ? (
@@ -309,7 +310,7 @@ export function MyProgramListPage() {
     return (
       <div>
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-        <Empty description="강사 정보가 없습니다." />
+        <EmptyState description="강사 정보가 없습니다." />
       </div>
     )
   }

@@ -3,11 +3,11 @@
  * Phase 5.2.4: 본인 정산 정보 - 월별 정산 관리
  */
 
-import { CmsRadio, LoadingButton } from '@/shared/ui'
+import { CmsRadio, LoadingButton, EmptyState } from '@/shared/ui'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Card, Space, Table, Tag, Select, Statistic, Empty } from 'antd'
+import { Card, Space, Table, Tag, Select, Statistic } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
@@ -261,7 +261,7 @@ export function MyMonthlySettlementPage() {
         {viewMode === 'list' && (
           <Card title={`${dayjs(selectedPeriod).format('YYYY년 MM월')} 정산 목록`}>
             {settlements.length === 0 ? (
-              <Empty description="해당 월의 정산 내역이 없습니다" />
+              <EmptyState description="해당 월의 정산 내역이 없습니다" />
             ) : (
               <Table
                 columns={columns}

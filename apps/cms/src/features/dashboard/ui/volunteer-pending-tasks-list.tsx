@@ -3,10 +3,10 @@
  * Phase: 봉사단 권한 마이그레이션
  */
 
-import { Card, List, Tag, Typography, Empty } from 'antd'
+import { Card, List, Tag, Typography } from 'antd'
 import { RightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { LoadingButton } from '@/shared/ui'
+import { LoadingButton, EmptyState } from '@/shared/ui'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import { formatDate } from '@/shared/utils'
 import dayjs from 'dayjs'
@@ -78,11 +78,9 @@ export function VolunteerPendingTasksList({
       style={{ height: '100%' }}
     >
       {reportTasks.length === 0 ? (
-        <Empty
-          description="대기 중인 보고서가 없습니다"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          style={{ padding: '20px 0' }}
-        />
+        <div style={{ padding: '20px 0' }}>
+          <EmptyState description="대기 중인 보고서가 없습니다" />
+        </div>
       ) : (
         <>
           <List dataSource={reportTasks.slice(0, 5)} renderItem={renderTaskItem} />

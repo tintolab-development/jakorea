@@ -3,11 +3,11 @@
  * Phase 5.2.1: 강사/봉사자 대시보드
  */
 
-import { Card, List, Tag, Typography, Empty } from 'antd'
+import { Card, List, Tag, Typography } from 'antd'
 import { CalendarOutlined, RightOutlined } from '@ant-design/icons'
 import type { Schedule } from '@/types'
 import { useNavigate } from 'react-router-dom'
-import { LoadingButton } from '@/shared/ui'
+import { LoadingButton, EmptyState } from '@/shared/ui'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import dayjs from 'dayjs'
 
@@ -70,11 +70,9 @@ export function UpcomingSchedulesList({
       style={{ height: '100%' }}
     >
       {displayedSchedules.length === 0 ? (
-        <Empty
-          description="예정된 일정이 없습니다"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          style={{ padding: '20px 0' }}
-        />
+        <div style={{ padding: '20px 0' }}>
+          <EmptyState description="예정된 일정이 없습니다" />
+        </div>
       ) : (
         <List
           dataSource={displayedSchedules}

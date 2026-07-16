@@ -4,7 +4,8 @@
  * 최근 신청/매칭/일정/정산을 시간순으로 통합 표시
  */
 
-import { Card, List, Tag, Space, Typography, Empty, Pagination } from 'antd'
+import { Card, List, Tag, Space, Typography, Pagination } from 'antd'
+import { EmptyState } from '@/shared/ui'
 import { useNavigate } from 'react-router-dom'
 import { useState, useMemo } from 'react'
 import {
@@ -286,7 +287,7 @@ export function UnifiedActivityFeed({ pageSize = 10 }: UnifiedActivityFeedProps)
           )}
         </>
       ) : (
-        <Empty description="최근 활동이 없습니다" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        <EmptyState description="최근 활동이 없습니다" />
       )}
     </Card>
   )

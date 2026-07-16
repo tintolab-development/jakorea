@@ -7,8 +7,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Space, Card, Table, Tabs, Select, Segmented, Modal, Descriptions } from 'antd'
-import { CmsButton, LoadingButton } from '@/shared/ui'
+import { Space, Card, Table, Tabs, Select, Segmented } from 'antd'
+import { CmsButton, LoadingButton, ContentModal } from '@/shared/ui'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { PlusOutlined, CalendarOutlined, TableOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -396,53 +397,85 @@ export function MySettlementListPage() {
         </Card>
       )}
 
-      <Modal
+      <ContentModal
         title="정산 상세"
         open={detailModalOpen}
         onCancel={() => {
           setDetailModalOpen(false)
           setSelectedSettlement(null)
         }}
-        footer={null}
         width={640}
-        destroyOnHidden
       >
-        {selectedSettlement && (
-          <Descriptions column={1} bordered size="small">
-            <Descriptions.Item label="정산 ID">{selectedSettlement.id}</Descriptions.Item>
-            <Descriptions.Item label="상태">
-              <StatusBadge
-                domain="custom"
-                label={settlementStatusStatusConfig[selectedSettlement.status].label}
-                accentColor={getStatusConfigAccentColor(
-                  settlementStatusStatusConfig[selectedSettlement.status].color
-                )}
+        {selectedSettlement ? (
+          <DetailInfoForm title="정산 상세" mode="view" hideHeader>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="정산 ID" view={selectedSettlement.id} fullRow />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="상태"
+                fullRow
+                view={
+                  <StatusBadge
+                    domain="custom"
+                    label={settlementStatusStatusConfig[selectedSettlement.status].label}
+                    accentColor={getStatusConfigAccentColor(
+                      settlementStatusStatusConfig[selectedSettlement.status].color
+                    )}
+                  />
+                }
               />
-            </Descriptions.Item>
-            <Descriptions.Item label="기간">{selectedSettlement.period}</Descriptions.Item>
-            <Descriptions.Item label="프로그램">
-              {programService.getByIdSync(selectedSettlement.programId)?.title ?? '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="정산 금액">
-              {selectedSettlement.totalAmount.toLocaleString()}원
-            </Descriptions.Item>
-            <Descriptions.Item label="항목 요약">
-              {selectedSettlement.items
-                .map(i => `${i.description}: ${i.amount.toLocaleString()}원`)
-                .join(' / ') || '-'}
-            </Descriptions.Item>
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="기간" view={selectedSettlement.period} fullRow />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="프로그램"
+                view={programService.getByIdSync(selectedSettlement.programId)?.title ?? '-'}
+                fullRow
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="정산 금액"
+                view={`${selectedSettlement.totalAmount.toLocaleString()}원`}
+                fullRow
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="항목 요약"
+                fullRow
+                view={
+                  selectedSettlement.items
+                    .map(i => `${i.description}: ${i.amount.toLocaleString()}원`)
+                    .join(' / ') || '-'
+                }
+              />
+            </DetailInfoForm.Row>
             {selectedSettlement.notes ? (
-              <Descriptions.Item label="비고">{selectedSettlement.notes}</Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="비고" view={selectedSettlement.notes} fullRow />
+              </DetailInfoForm.Row>
             ) : null}
-            <Descriptions.Item label="생성일">
-              {dayjs(selectedSettlement.createdAt).format('YYYY-MM-DD HH:mm')}
-            </Descriptions.Item>
-            <Descriptions.Item label="수정일">
-              {dayjs(selectedSettlement.updatedAt).format('YYYY-MM-DD HH:mm')}
-            </Descriptions.Item>
-          </Descriptions>
-        )}
-      </Modal>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="생성일"
+                view={dayjs(selectedSettlement.createdAt).format('YYYY-MM-DD HH:mm')}
+                fullRow
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="수정일"
+                view={dayjs(selectedSettlement.updatedAt).format('YYYY-MM-DD HH:mm')}
+                fullRow
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
+        ) : null}
+      </ContentModal>
 
       <SettlementSubmitModal
         open={submitModalOpen}

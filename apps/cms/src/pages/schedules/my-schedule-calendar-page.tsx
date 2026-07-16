@@ -5,8 +5,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Spin, Empty } from 'antd'
-import { Calendar, Badge } from 'antd'
+import { Card, Spin, Calendar, Badge } from 'antd'
+import { EmptyState } from '@/shared/ui'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -97,7 +97,7 @@ export function MyScheduleCalendarPage() {
     return (
       <div>
         <h1>본인 일정</h1>
-        <Empty description="강사 정보가 없습니다." />
+        <EmptyState description="강사 정보가 없습니다." />
       </div>
     )
   }

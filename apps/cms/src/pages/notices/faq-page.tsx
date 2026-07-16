@@ -12,7 +12,6 @@ import {
   Collapse,
   Typography,
   Space,
-  Empty,
   Tabs,
   Tag,
   Badge,
@@ -21,7 +20,7 @@ import {
   Col,
   Tooltip,
 } from 'antd'
-import { CmsButton, LoadingButton, LabeledSearchInput } from '@/shared/ui'
+import { CmsButton, LoadingButton, LabeledSearchInput, EmptyState } from '@/shared/ui'
 import {
   FileSearchOutlined,
   LikeOutlined,
@@ -151,24 +150,19 @@ export function FAQPage() {
         {/* FAQ 리스트 */}
         <div style={{ minHeight: 400 }}>
           {filteredFaqs.length === 0 ? (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={
-                <Space direction="vertical">
-                  <Text type="secondary">{MESSAGES.info.noSearchResults}</Text>
-                  <LoadingButton
-                    type="link"
-                    onClick={() => {
-                      setSearchInput('')
-                      handleCategoryChange('전체')
-                    }}
-                  >
-                    전체 보기
-                  </LoadingButton>
-                </Space>
-              }
-              style={{ marginTop: 60 }}
-            />
+            <div style={{ marginTop: 60 }}>
+              <EmptyState
+                description={MESSAGES.info.noSearchResults}
+                cta={{
+                  label: '전체 보기',
+                  onClick: () => {
+                    setSearchInput('')
+                    handleCategoryChange('전체')
+                  },
+                  type: 'default',
+                }}
+              />
+            </div>
           ) : (
             <Collapse
               accordion

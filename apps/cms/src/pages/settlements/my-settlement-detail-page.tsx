@@ -5,8 +5,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Descriptions, Tag, Space, Spin } from 'antd'
+import { Card, Tag, Space, Spin } from 'antd'
 import { CmsButton } from '@/shared/ui'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   ArrowLeftOutlined,
   DownloadOutlined,
@@ -185,16 +186,22 @@ export function MySettlementDetailPage() {
                   지급조서 내용을 확인하신 후, 아래 버튼을 클릭하여 확인 완료를 진행해주세요. 확인
                   완료 시 계좌로 지급이 진행됩니다.
                 </p>
-                <Descriptions column={2} size="small" bordered>
-                  <Descriptions.Item label="지급 금액">
-                    <strong style={{ fontSize: 16, color: '#1890ff' }}>
-                      {paymentStatement.totalAmount.toLocaleString('ko-KR')}원
-                    </strong>
-                  </Descriptions.Item>
-                  <Descriptions.Item label="지급조서 생성일">
-                    {dayjs(paymentStatement.generatedAt).format('YYYY-MM-DD HH:mm')}
-                  </Descriptions.Item>
-                </Descriptions>
+                <DetailInfoForm title="지급조서 요약" mode="view" hideHeader>
+                  <DetailInfoForm.Row type="double">
+                    <DetailInfoForm.Field
+                      label="지급 금액"
+                      view={
+                        <strong style={{ fontSize: 16, color: '#1890ff' }}>
+                          {paymentStatement.totalAmount.toLocaleString('ko-KR')}원
+                        </strong>
+                      }
+                    />
+                    <DetailInfoForm.Field
+                      label="지급조서 생성일"
+                      view={dayjs(paymentStatement.generatedAt).format('YYYY-MM-DD HH:mm')}
+                    />
+                  </DetailInfoForm.Row>
+                </DetailInfoForm>
               </Space>
             </Card>
           )}
@@ -221,47 +228,73 @@ export function MySettlementDetailPage() {
         )}
 
         <Card>
-          <Descriptions title="정산 정보" bordered column={2}>
-            <Descriptions.Item label="정산 ID">{settlement.id}</Descriptions.Item>
-            <Descriptions.Item label="상태">
-              <StatusBadge
-                domain="custom"
-                label={settlementStatusStatusConfig[settlement.status].label}
-                accentColor={getStatusConfigAccentColor(
-                  settlementStatusStatusConfig[settlement.status].color
-                )}
+          <DetailInfoForm title="정산 정보" mode="view">
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field label="정산 ID" view={settlement.id} />
+              <DetailInfoForm.Field
+                label="상태"
+                view={
+                  <StatusBadge
+                    domain="custom"
+                    label={settlementStatusStatusConfig[settlement.status].label}
+                    accentColor={getStatusConfigAccentColor(
+                      settlementStatusStatusConfig[settlement.status].color
+                    )}
+                  />
+                }
               />
-            </Descriptions.Item>
-            <Descriptions.Item label="프로그램">
-              {program ? (
-                program.title
-              ) : (
-                <Tag color="error">프로그램 정보 오류 (ID: {settlement.programId.slice(-8)})</Tag>
-              )}
-            </Descriptions.Item>
-            <Descriptions.Item label="기간">{settlement.period}</Descriptions.Item>
-            <Descriptions.Item label="총 정산 금액" span={2}>
-              <strong style={{ fontSize: 18, color: '#1890ff' }}>
-                {settlement.totalAmount.toLocaleString()}원
-              </strong>
-            </Descriptions.Item>
-            <Descriptions.Item label="생성일">
-              {dayjs(settlement.createdAt).format('YYYY-MM-DD HH:mm')}
-            </Descriptions.Item>
-            <Descriptions.Item label="수정일">
-              {dayjs(settlement.updatedAt).format('YYYY-MM-DD HH:mm')}
-            </Descriptions.Item>
-            {settlement.documentGeneratedAt && (
-              <Descriptions.Item label="문서 생성일">
-                {dayjs(settlement.documentGeneratedAt).format('YYYY-MM-DD HH:mm')}
-              </Descriptions.Item>
-            )}
-            {settlement.notes && (
-              <Descriptions.Item label="비고" span={2}>
-                {settlement.notes}
-              </Descriptions.Item>
-            )}
-          </Descriptions>
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="프로그램"
+                view={
+                  program ? (
+                    program.title
+                  ) : (
+                    <Tag color="error">
+                      프로그램 정보 오류 (ID: {settlement.programId.slice(-8)})
+                    </Tag>
+                  )
+                }
+              />
+              <DetailInfoForm.Field label="기간" view={settlement.period} />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="총 정산 금액"
+                fullRow
+                view={
+                  <strong style={{ fontSize: 18, color: '#1890ff' }}>
+                    {settlement.totalAmount.toLocaleString()}원
+                  </strong>
+                }
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="생성일"
+                view={dayjs(settlement.createdAt).format('YYYY-MM-DD HH:mm')}
+              />
+              <DetailInfoForm.Field
+                label="수정일"
+                view={dayjs(settlement.updatedAt).format('YYYY-MM-DD HH:mm')}
+              />
+            </DetailInfoForm.Row>
+            {settlement.documentGeneratedAt ? (
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="문서 생성일"
+                  fullRow
+                  view={dayjs(settlement.documentGeneratedAt).format('YYYY-MM-DD HH:mm')}
+                />
+              </DetailInfoForm.Row>
+            ) : null}
+            {settlement.notes ? (
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="비고" view={settlement.notes} fullRow />
+              </DetailInfoForm.Row>
+            ) : null}
+          </DetailInfoForm>
         </Card>
 
         {settlement.calculationResult ? (
@@ -270,13 +303,22 @@ export function MySettlementDetailPage() {
           </Card>
         ) : (
           <Card title="정산 항목">
-            <Descriptions bordered column={1}>
+            <DetailInfoForm title="정산 항목" mode="view" hideHeader>
               {settlement.items.map((item, index) => (
-                <Descriptions.Item key={index} label={item.type}>
-                  {item.amount.toLocaleString()}원{item.description && ` (${item.description})`}
-                </Descriptions.Item>
+                <DetailInfoForm.Row key={index} type="single">
+                  <DetailInfoForm.Field
+                    label={item.type}
+                    fullRow
+                    view={
+                      <>
+                        {item.amount.toLocaleString()}원
+                        {item.description ? ` (${item.description})` : null}
+                      </>
+                    }
+                  />
+                </DetailInfoForm.Row>
               ))}
-            </Descriptions>
+            </DetailInfoForm>
           </Card>
         )}
 

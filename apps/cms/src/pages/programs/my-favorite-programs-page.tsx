@@ -6,7 +6,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Select, Space, Card, Tag, Button, Table, Empty } from 'antd'
+import { Select, Space, Card, Tag, Table } from 'antd'
+import { CmsButton, EmptyState, LoadingButton } from '@/shared/ui'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import type { ColumnsType } from 'antd/es/table'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
@@ -170,7 +171,7 @@ export function MyFavoriteProgramsPage() {
       width: 100,
       fixed: 'right' as const,
       render: (_, record) => (
-        <Button
+        <LoadingButton
           type="text"
           danger
           icon={<HeartFilled style={{ color: '#ff4d4f' }} />}
@@ -180,7 +181,7 @@ export function MyFavoriteProgramsPage() {
           }}
         >
           해제
-        </Button>
+        </LoadingButton>
       ),
     },
   ]
@@ -189,7 +190,7 @@ export function MyFavoriteProgramsPage() {
     return (
       <div>
         <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-        <Empty description="로그인이 필요합니다." />
+        <EmptyState description="로그인이 필요합니다." />
       </div>
     )
   }
@@ -230,11 +231,12 @@ export function MyFavoriteProgramsPage() {
             <Option value="school">학교 프로그램</Option>
             <Option value="individual">개인 프로그램</Option>
           </Select>
-          <Button
+          <CmsButton
+            variant="default"
             onClick={() => setParams({ status: undefined, category: undefined, search: undefined })}
           >
             필터 초기화
-          </Button>
+          </CmsButton>
         </Space>
       </Card>
 
@@ -250,7 +252,7 @@ export function MyFavoriteProgramsPage() {
         }}
         scroll={{ x: 1200 }}
         locale={{
-          emptyText: <Empty description="관심 등록한 프로그램이 없습니다." />,
+          emptyText: <EmptyState description="관심 등록한 프로그램이 없습니다." />,
         }}
       />
     </div>

@@ -3,14 +3,15 @@
  * Phase: 관리자 홈 화면 - 알림 리스트 위젯 형식으로 변경
  */
 
-import { Modal, Typography, Empty, Space, Card } from 'antd'
+import { Typography, Space, Card } from 'antd'
 import {
   BellOutlined,
   DollarOutlined,
   FileTextOutlined,
   CalendarOutlined,
-  CheckCircleOutlined } from '@ant-design/icons'
-import { CmsButton, LoadingButton } from '@/shared/ui'
+  CheckCircleOutlined,
+} from '@ant-design/icons'
+import { CmsButton, LoadingButton, EmptyState, ContentModal } from '@/shared/ui'
 import type { Notification, NotificationType } from '../api/notification-service'
 
 const { Text, Title } = Typography
@@ -79,7 +80,8 @@ export function NotificationModal({
   onNotificationClick,
   onConfirm,
   onMarkAllAsRead,
-  onRefresh }: NotificationModalProps) {
+  onRefresh,
+}: NotificationModalProps) {
   // prop으로 전달된 unreadCount를 우선 사용, 없으면 notifications에서 계산
   const unreadCount =
     propUnreadCount !== undefined ? propUnreadCount : notifications.filter(n => !n.read).length
@@ -88,49 +90,50 @@ export function NotificationModal({
   const unreadNotifications = notifications.filter(n => !n.read)
 
   return (
-    <Modal
-      title={
+    <ContentModal
+      open={open}
+      onCancel={onClose}
+      title="알림"
+      titlePrefix={<BellOutlined style={{ color: '#000000', fontSize: 18 }} />}
+      titleContent={
         <Space>
-          <BellOutlined style={{ color: '#000000', fontSize: 18 }} />
           <Title level={4} style={{ margin: 0, color: '#000000' }}>
             알림
           </Title>
-          {unreadCount > 0 && (
+          {unreadCount > 0 ? (
             <Text type="secondary" style={{ fontSize: 14 }}>
               ({unreadCount}건)
             </Text>
-          )}
+          ) : null}
         </Space>
       }
-      open={open}
-      onCancel={onClose}
-      footer={[
-        onMarkAllAsRead && (
-          <LoadingButton key="mark-all" type="link" onClick={onMarkAllAsRead} disabled={unreadCount === 0}>
-            모두 읽음
-          </LoadingButton>
-        ),
-        <LoadingButton key="refresh" type="link" onClick={onRefresh}>
-          새로고침
-        </LoadingButton>,
-        <CmsButton key="close" variant="primary" onClick={onClose}>
-          닫기
-        </CmsButton>,
-      ].filter(Boolean)}
       width={900}
-      style={{ top: 20 }}
-      styles={{
+      modalStyles={{
         body: {
           maxHeight: 'calc(100vh - 200px)',
           overflowY: 'auto',
-          padding: '24px' } }}
+        },
+      }}
+      footer={
+        <>
+          {onMarkAllAsRead ? (
+            <LoadingButton type="link" onClick={onMarkAllAsRead} disabled={unreadCount === 0}>
+              모두 읽음
+            </LoadingButton>
+          ) : null}
+          <LoadingButton type="link" onClick={onRefresh}>
+            새로고침
+          </LoadingButton>
+          <CmsButton variant="primary" onClick={onClose}>
+            닫기
+          </CmsButton>
+        </>
+      }
     >
       {unreadNotifications.length === 0 ? (
-        <Empty
-          description="알림이 없습니다"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          style={{ padding: '40px 0' }}
-        />
+        <div style={{ padding: '40px 0' }}>
+          <EmptyState description="알림이 없습니다" />
+        </div>
       ) : (
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           {unreadNotifications.map(notification => (
@@ -141,8 +144,9 @@ export function NotificationModal({
                 backgroundColor: getNotificationBackgroundColor(notification.type),
                 border: 'none',
                 borderRadius: 8,
-                cursor: 'pointer' }}
-              bodyStyle={{ padding: '16px 20px' }}
+                cursor: 'pointer',
+              }}
+              styles={{ body: { padding: '16px 20px' } }}
               onClick={() => onNotificationClick(notification)}
             >
               <div
@@ -154,7 +158,8 @@ export function NotificationModal({
                       color: getNotificationIconColor(notification.type),
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center' }}
+                      justifyContent: 'center',
+                    }}
                   >
                     {getNotificationIcon(notification.type)}
                   </div>
@@ -168,7 +173,7 @@ export function NotificationModal({
                   </div>
                 </div>
                 <div onClick={e => e.stopPropagation()}>
-                  {onConfirm && (
+                  {onConfirm ? (
                     <CmsButton
                       variant="default"
                       size="small"
@@ -177,13 +182,13 @@ export function NotificationModal({
                     >
                       확인하기
                     </CmsButton>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </Card>
           ))}
         </Space>
       )}
-    </Modal>
+    </ContentModal>
   )
 }

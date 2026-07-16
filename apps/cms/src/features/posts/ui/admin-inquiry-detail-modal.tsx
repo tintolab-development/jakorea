@@ -71,7 +71,7 @@ export function AdminInquiryDetailModal({
     <>
       <CmsButton
         variant="delete"
-        size="large"
+        size="medium"
         onClick={handleDelete}
         disabled={!canWrite || !detail || inquiriesRemote}
         title={inquiriesRemote ? '문의 삭제 API가 제공되지 않습니다.' : undefined}
@@ -79,12 +79,12 @@ export function AdminInquiryDetailModal({
         문의삭제
       </CmsButton>
       <div className="admin-inquiry-detail-modal__footer-right">
-        <CmsButton variant="secondary" size="large" onClick={onCancel}>
+        <CmsButton variant="secondary" size="medium" onClick={onCancel}>
           취소
         </CmsButton>
         <CmsButton
           variant="primary"
-          size="large"
+          size="medium"
           onClick={handleReplySubmit}
           disabled={!canWrite || !detail || isAnswerRegistered || replyMutation.isPending}
         >

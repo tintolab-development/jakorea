@@ -4,7 +4,8 @@
  * Row 방식: 상태 태그 | 타이틀 | 타임스탬프
  */
 
-import { Card, Typography, Space, Empty, Tag } from 'antd'
+import { Card, Typography, Space, Tag } from 'antd'
+import { EmptyState } from '@/shared/ui'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { type Notification, type NotificationType } from '../api/notification-service'
@@ -104,7 +105,7 @@ export function NotificationWidget() {
     >
       {displayNotifications.length === 0 ? (
         <div className="notification-widget__empty">
-          <Empty description="새로운 알림이 없습니다" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <EmptyState description="새로운 알림이 없습니다" />
         </div>
       ) : (
         <div className="notification-widget__list">

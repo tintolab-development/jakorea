@@ -3,11 +3,11 @@
  * 최대 406×500, 카테고리 필터 6개(한 줄), 알림 목록
  */
 
-import { Empty, Typography } from 'antd'
+import { Typography } from 'antd'
 import { useState, useMemo } from 'react'
 import type { Notification, NotificationType } from '../api/notification-service'
 import type { DateValue } from '@/types'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, EmptyState } from '@/shared/ui'
 import './notification-dropdown.css'
 
 const { Text } = Typography
@@ -98,11 +98,9 @@ export function NotificationDropdown({
       </div>
       <div className="notification-dropdown-body">
         {filtered.length === 0 ? (
-          <Empty
-            description="알림이 없습니다"
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            className="notification-dropdown-empty"
-          />
+          <div className="notification-dropdown-empty">
+            <EmptyState description="알림이 없습니다" />
+          </div>
         ) : (
           <div className="notification-dropdown-list">
             {filtered.map(notification => (
