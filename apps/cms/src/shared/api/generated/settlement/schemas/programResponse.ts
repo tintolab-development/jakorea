@@ -6,11 +6,14 @@
  * OpenAPI spec version: v9
  */
 import type { ProgramAdminAssignmentResponse } from './programAdminAssignmentResponse';
+import type { ProgramResponseProgramType } from './programResponseProgramType';
 import type { ProgramRoundResponse } from './programRoundResponse';
 import type { ProgramScheduleResponse } from './programScheduleResponse';
 
 export interface ProgramResponse {
   id?: string;
+  /** 프로그램 유형 */
+  programType?: ProgramResponseProgramType;
   sponsorId?: string;
   title?: string;
   type?: string;

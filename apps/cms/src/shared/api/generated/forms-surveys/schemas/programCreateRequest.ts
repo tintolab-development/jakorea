@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
+import type { ProgramCreateRequestProgramType } from './programCreateRequestProgramType';
 import type { ProgramRoundRequest } from './programRoundRequest';
 import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
@@ -16,7 +17,8 @@ import type { ProgramWagePolicyRequest } from './programWagePolicyRequest';
  */
 export interface ProgramCreateRequest {
   sponsorId?: string;
-  programType?: string;
+  /** 프로그램 유형 */
+  programType?: ProgramCreateRequestProgramType;
   title?: string;
   type?: string;
   format?: string;

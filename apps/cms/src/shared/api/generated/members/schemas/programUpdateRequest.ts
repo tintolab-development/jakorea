@@ -23,6 +23,8 @@ export interface ProgramUpdateRequest {
   description?: string;
   startDate?: string;
   endDate?: string;
+  businessStartDate?: string;
+  businessEndDate?: string;
   applicationStartDate?: string;
   applicationEndDate?: string;
   status?: string;

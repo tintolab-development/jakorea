@@ -8244,7 +8244,22 @@
             "type": "string"
           },
           "programType": {
-            "type": "string"
+            "type": "string",
+            "description": "프로그램 유형",
+            "enum": [
+              "GENERAL",
+              "GENERAL_ORGANIZATION",
+              "GENERAL_INDIVIDUAL",
+              "COMPANY_SCHOOL",
+              "ONE_COMPANY_ONE_SCHOOL",
+              "TRAINED_TEACHER",
+              "GEMINI",
+              "GEMINI_TRAINING",
+              "UJAT",
+              "DGBONG",
+              "UJAT_DGBONG",
+              "VOLUNTEER"
+            ]
           },
           "title": {
             "type": "string"
@@ -14485,6 +14500,12 @@
           "endDate": {
             "type": "string"
           },
+          "businessStartDate": {
+            "type": "string"
+          },
+          "businessEndDate": {
+            "type": "string"
+          },
           "applicationStartDate": {
             "type": "string"
           },
@@ -14722,6 +14743,24 @@
         "properties": {
           "id": {
             "type": "string"
+          },
+          "programType": {
+            "type": "string",
+            "description": "프로그램 유형",
+            "enum": [
+              "GENERAL",
+              "GENERAL_ORGANIZATION",
+              "GENERAL_INDIVIDUAL",
+              "COMPANY_SCHOOL",
+              "ONE_COMPANY_ONE_SCHOOL",
+              "TRAINED_TEACHER",
+              "GEMINI",
+              "GEMINI_TRAINING",
+              "UJAT",
+              "DGBONG",
+              "UJAT_DGBONG",
+              "VOLUNTEER"
+            ]
           },
           "sponsorId": {
             "type": "string"
