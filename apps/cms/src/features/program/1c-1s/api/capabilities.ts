@@ -18,3 +18,26 @@ export function shouldUseCompanySchoolRemoteApi(): boolean {
     isCompanySchoolRemoteOptedIn()
   )
 }
+
+/** 1사1교 프로그램 + 신청(applications) 모듈 */
+export function shouldUseCompanySchoolApplicationsRemoteApi(): boolean {
+  return (
+    shouldUseCompanySchoolRemoteApi() &&
+    isRealApiModuleEnabled('applications') &&
+    hasRemoteAdminJwt()
+  )
+}
+
+/** 1사1교 프로그램 + 진행현황(programProgress) 모듈 */
+export function shouldUseCompanySchoolProgramProgressRemoteApi(): boolean {
+  return (
+    shouldUseCompanySchoolRemoteApi() &&
+    isRealApiModuleEnabled('programProgress') &&
+    hasRemoteAdminJwt()
+  )
+}
+
+/** posts / surveys / navigation — programs 코어 gate와 동일 */
+export function shouldUseCompanySchoolProgramsReadsRemoteApi(): boolean {
+  return shouldUseCompanySchoolRemoteApi()
+}
