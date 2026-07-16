@@ -11,6 +11,8 @@
         "lint:fix": "pnpm lint -- --fix",
         "typecheck": "turbo typecheck",
         "test": "turbo test",
+        "test:e2e": "pnpm --filter cms test:e2e",
+        "test:e2e:smoke": "pnpm --filter cms test:e2e:smoke",
         "clean": "turbo clean",
         "format": "prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --write",
         "format:check": "prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --check",
