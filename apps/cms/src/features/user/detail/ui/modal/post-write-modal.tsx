@@ -6,8 +6,8 @@
  */
 
 import { useState, useEffect, useMemo } from 'react'
-import { Checkbox, Input, Modal } from 'antd'
-import { CmsButton } from '@/shared/ui'
+import { Checkbox, Input } from 'antd'
+import { CmsButton, ContentModal } from '@/shared/ui'
 import { FileSelectField } from '@/shared/ui/file-select-field'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import type { Program } from '@/types/domain'
@@ -181,7 +181,7 @@ export function PostWriteModal({
   }
 
   return (
-    <Modal
+    <ContentModal
       open={open}
       onCancel={onCancel}
       title="게시글 등록"
@@ -189,18 +189,14 @@ export function PostWriteModal({
       className="post-write-modal"
       footer={
         <div className="post-write-modal__footer-actions">
-          <CmsButton variant="secondary" size="large" onClick={onCancel} disabled={loading}>
+          <CmsButton variant="secondary" size="medium" onClick={onCancel} disabled={loading}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="large" onClick={handleRegister} loading={loading}>
+          <CmsButton variant="primary" size="medium" onClick={handleRegister} loading={loading}>
             등록
           </CmsButton>
         </div>
       }
-      closable
-      destroyOnHidden
-      maskClosable
-      centered
     >
       <div className="post-write-modal__body">
         {/* 게시글 공개 범위 */}
@@ -251,6 +247,6 @@ export function PostWriteModal({
           </div>
         </div>
       </div>
-    </Modal>
+    </ContentModal>
   )
 }

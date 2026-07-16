@@ -5,7 +5,7 @@
  */
 
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, AttachmentClipIcon } from '@/shared/ui'
 import { Input, Dropdown, Popover, type MenuProps } from 'antd'
 import type { Program, ProgramPost, ProgramFile } from '@/types/domain'
 import {
@@ -229,38 +229,11 @@ function PostContentWithMore({ content }: { content: string }) {
   )
 }
 
-/** 게시글 첨부파일 아이콘 (클립) — mask id는 postId로 고유화 */
-function PostAttachmentIcon({ postId }: { postId: string }) {
-  const maskId = `post-attachment-${postId}`.replace(/:/g, '')
+/** 게시글 첨부파일 아이콘 (클립) */
+function PostAttachmentIcon() {
   return (
     <span className="enrollment-program-detail-modal__post-attachment-icon" aria-hidden>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        viewBox="0 0 20 20"
-        fill="none"
-        role="img"
-        aria-label="첨부파일"
-      >
-        <mask
-          id={maskId}
-          className="enrollment-program-detail-modal__post-attachment-mask"
-          maskUnits="userSpaceOnUse"
-          x="0"
-          y="0"
-          width="20"
-          height="20"
-        >
-          <rect width="20" height="20" fill="#D9D9D9" />
-        </mask>
-        <g mask={`url(#${maskId})`}>
-          <path
-            d="M12.1889 15.4212C11.4539 16.472 10.463 17.1104 9.21615 17.3362C7.96934 17.5623 6.82258 17.3093 5.77586 16.5771C4.72504 15.8421 4.09093 14.8495 3.87353 13.5993C3.65605 12.3491 3.91482 11.1987 4.64984 10.1479L8.71807 4.33169C9.24018 3.58525 9.94318 3.13208 10.8271 2.97219C11.7108 2.81222 12.5259 2.99329 13.2724 3.51541C14.0188 4.03752 14.4685 4.74113 14.6214 5.62623C14.7743 6.51134 14.5898 7.32711 14.0676 8.07355L10.2169 13.5787C9.91068 14.0166 9.49637 14.2835 8.97403 14.3794C8.45179 14.4755 7.97169 14.3703 7.53372 14.064C7.09587 13.7577 6.82963 13.3424 6.73503 12.8181C6.6405 12.2937 6.74784 11.8105 7.05705 11.3685L11.0295 5.68928L11.9997 6.36792L8.02728 12.0471C7.90601 12.2205 7.86217 12.4072 7.89576 12.6074C7.92936 12.8075 8.03284 12.9682 8.20622 13.0895C8.37949 13.2106 8.56588 13.2527 8.76539 13.2156C8.9649 13.1786 9.1253 13.0733 9.24657 12.9L13.1016 7.38865C13.429 6.90622 13.5457 6.38535 13.4515 5.82603C13.3573 5.26671 13.0714 4.81996 12.5936 4.48579C12.116 4.15169 11.5959 4.03617 11.0334 4.13923C10.4709 4.24239 10.0226 4.5328 9.68846 5.01044L5.62022 10.8266C5.06646 11.6041 4.87158 12.4583 5.03556 13.3894C5.19947 14.3205 5.67249 15.0596 6.45462 15.6067C7.22596 16.1463 8.07272 16.3303 8.99489 16.1588C9.91698 15.9874 10.6582 15.5153 11.2185 14.7425L15.4085 8.75227L16.3789 9.43102L12.1889 15.4212Z"
-            fill="#3D3D3D"
-          />
-        </g>
-      </svg>
+      <AttachmentClipIcon size={20} />
     </span>
   )
 }
@@ -423,7 +396,7 @@ export function EnrollmentProgramDetailPostsTab({
                 <div className="enrollment-program-detail-modal__post-meta">
                   {post.attachmentCount > 0 && (
                     <span className="enrollment-program-detail-modal__post-meta-item enrollment-program-detail-modal__post-meta-item--attachment">
-                      <PostAttachmentIcon postId={post.id} />
+                      <PostAttachmentIcon />
                       <span className="enrollment-program-detail-modal__post-attachment-label">
                         {post.attachmentCount}개의 첨부파일
                       </span>
