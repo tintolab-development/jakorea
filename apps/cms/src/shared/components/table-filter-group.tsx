@@ -252,6 +252,10 @@ export function TableFilterGroup({
   }, [filterRowFields, filters, onFilterChange])
 
   const colFlex = (field: FilterFieldConfig, defaultFlex: string, _rowFieldCount = 1) => {
+    // 라디오는 옵션 콘텐츠 허그 — 240px 등 명시 width로 Col을 키우면 다음 필터와 시각 갭이 과다
+    if (field.type === 'radio') {
+      return '0 0 auto'
+    }
     if (field.width != null) {
       if (isFilterFieldPctWidth(field)) {
         // 컨트롤 고정 폭(260px 등) — Col은 콘텐츠 너비, 필터 간 간격은 Row gap(12px)만 사용
@@ -264,6 +268,7 @@ export function TableFilterGroup({
   }
 
   const colClassName = (field: FilterFieldConfig) => {
+    if (field.type === 'radio') return undefined
     if (field.width == null) return undefined
     const parts = ['table-filter-group__col--explicit-width']
     if (isFilterFieldPctWidth(field)) {

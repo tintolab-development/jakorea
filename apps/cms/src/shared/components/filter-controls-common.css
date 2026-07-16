@@ -3,14 +3,15 @@
  *
  * ## 공통 규격 (FilterTableGroup · FilterTableLayout)
  * - 단일 검색·셀렉트: **240×44px** (`--filter-control-width` = `--filter-control-max-width` = 240px)
+ * - **radio**: 폭 고정 없음(콘텐츠 허그) · 옵션 gap 16px · 칸 사이는 --filter-field-gap 12px
  * - 분리형 dateRange·selectPair: 열 500px (2×240 + --filter-control-range-split-between 20px)
  * - addressRegion(기관 소재지): 열 235.5px (시/도·시/군/구 각 114.75px + 사이 gap 6px)
  * - 필터 칸 사이 gap: --filter-field-gap (12px)
  * - 레이블·컨트롤 gap: --filter-label-control-gap (6px)
  * - 조회 버튼: 160×44px (table-filter-group.css)
  *
- * FilterFieldConfig.width: 단일 필드는 `FILTER_CONTROL_MAX_WIDTH_PX`(240), 기간·이중셀렉트는
- * `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX`(500). `%` 폭은 행 전체 stretch — 목록 필터에 쓰지 않음.
+ * FilterFieldConfig.width: 단일 검색·셀렉트는 `FILTER_CONTROL_MAX_WIDTH_PX`(240), 기간·이중셀렉트는
+ * `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX`(500). **radio에는 width를 두지 않음.** `%` 폭은 행 전체 stretch — 목록 필터에 쓰지 않음.
  *
  * 상세: apps/cms/.cursor/rules/design/filter-area-layout.mdc
  */

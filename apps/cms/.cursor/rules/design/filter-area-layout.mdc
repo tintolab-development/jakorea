@@ -25,7 +25,8 @@ category: design
 
 ## FilterFieldConfig.width
 
-- **단일** `search` / `select` / `radio`: `width: FILTER_CONTROL_MAX_WIDTH_PX` (240)
+- **단일** `search` / `select`: `width: FILTER_CONTROL_MAX_WIDTH_PX` (240)
+- **`radio`**: 폭 지정하지 않음 — 옵션 콘텐츠 허그. Col·필드가 240으로 늘어나면 다음 필터와 시각 갭이 과다해짐(칸 사이는 `--filter-field-gap` 12px만)
 - **`dateRange`** (시작·종료 분리 UI): `width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (500)
 - **`selectPair`**: `width: FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` (500), 내부 gap 12px
 - **`addressRegion`**: `width: FILTER_ADDRESS_REGION_FIELD_WIDTH_PX` (235.5), 하위 각 114.75px · gap 6px
@@ -88,7 +89,8 @@ category: design
 
 - [ ] 검색·셀렉트 한 칸이 240px에서 멈추는지 (넓은 화면에서도 늘어나지 않음)
 - [ ] 칸 사이 12px · 조회 버튼과 필드 baseline 정렬
+- [ ] **`radio`**: Col/grid-cell이 콘텐츠 허그(240으로 안 늘어남) · 옵션 gap 16px · 다음 필터와 칸 갭 12px
 - [ ] dateRange 두 칸 합 500px 이내
 - [ ] addressRegion: 시/도·시/군/구 각 114.75px, 사이 6px, 열 합 235.5px
 
-**Last updated:** 2026-06-10
+**Last updated:** 2026-07-16

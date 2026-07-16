@@ -44,6 +44,14 @@
   box-sizing: border-box;
 }
 
+/* 라디오 grid-cell — 기본 240px 대신 콘텐츠 허그 (칸 사이 gap 12px) */
+.table-filter-group__grid-cell.table-filter-group__grid-cell--radio,
+.table-filter-group__grid-cell:has(> .table-filter-group__field--radio) {
+  min-width: 0;
+  width: max-content;
+  max-width: none;
+}
+
 .table-filter-group__grid-cell.table-filter-group__grid-cell--pct-width {
   min-width: 0;
   width: 100%;
@@ -218,6 +226,12 @@
   max-width: none;
 }
 
+/* 라디오 Col — 명시 width가 있어도 콘텐츠 허그(다음 필터와 --filter-field-gap 12px만 유지) */
+.table-filter-group__fields-inner.ant-row > .ant-col.table-filter-group__col--radio {
+  flex: 0 0 auto !important;
+  width: auto !important;
+}
+
 /* % Col — width prop은 레이아웃 힌트만, 실제 칸 폭은 컨트롤·field 래퍼 기준 */
 .table-filter-group__fields-inner.ant-row > .ant-col.table-filter-group__col--pct-width {
   min-width: 0;
@@ -266,8 +280,15 @@
 
 .table-filter-group__fields-inner .ant-col.table-filter-group__col--radio .table-filter-group__field {
   min-width: 0;
-  width: 100%;
-  max-width: 100%;
+  width: max-content;
+  max-width: none;
+}
+
+.table-filter-group__grid-cell.table-filter-group__grid-cell--radio .table-filter-group__field,
+.table-filter-group__grid-cell:has(> .table-filter-group__field--radio) .table-filter-group__field {
+  min-width: 0;
+  width: max-content;
+  max-width: none;
 }
 
 /* % Col — field 래퍼: 단일 필드 260px, pair·기간은 아래 전용 규칙 */
@@ -712,7 +733,8 @@
   box-sizing: border-box;
 }
 
-/* table-filter-group 라디오 — 44px 컨트롤 래퍼 안에서 가로 정렬 유지 */
+/* table-filter-group 라디오 — 시안 래퍼(44px · padding 0 16 0 4 · 옵션 gap 16).
+ * Col은 콘텐츠 허그. 칸 사이(사용 여부↔다음 필터)는 Row --filter-field-gap 12px */
 .table-filter-group__container
   .table-filter-group__field--radio
   .table-filter-group__radio-control
@@ -720,9 +742,14 @@
   display: inline-flex;
   align-items: center;
   flex-wrap: nowrap;
+  height: var(--filter-control-height, 44px);
   min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
+  max-width: none;
+  width: max-content;
+  padding: 0 16px 0 4px;
+  box-sizing: border-box;
+  gap: 16px;
+  overflow: visible;
 }
 
 .table-filter-group__container
@@ -895,6 +922,15 @@
   box-sizing: border-box;
 }
 
+.table-filter-group__fields-grid-row--merged-auto-fill
+  > .table-filter-group__grid-cell.table-filter-group__grid-cell--radio,
+.table-filter-group__fields-grid-row--merged-auto-fill
+  > .table-filter-group__grid-cell:has(> .table-filter-group__field--radio) {
+  width: max-content;
+  min-width: 0;
+  max-width: none;
+}
+
 /* 필터 전부 + 조회: 한 flex-wrap(문의일·조회도 상단과 동일 줄바꿈 규칙) */
 .table-filter-group__merged-inline-wrap {
   display: flex;
@@ -915,6 +951,15 @@
   max-width: var(--filter-control-max-width, 240px);
   min-width: var(--filter-control-max-width, 240px);
   box-sizing: border-box;
+}
+
+.table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell.table-filter-group__grid-cell--radio,
+.table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell:has(> .table-filter-group__field--radio) {
+  width: max-content;
+  min-width: 0;
+  max-width: none;
 }
 
 .table-filter-group__merged-inline-wrap

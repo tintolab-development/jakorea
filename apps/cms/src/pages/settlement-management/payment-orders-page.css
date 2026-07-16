@@ -116,8 +116,12 @@
 .payment-orders-page
   .payment-orders-page__filter-list-layout
   .table-filter-group__merged-inline-wrap
+  > .table-filter-group__grid-cell.table-filter-group__grid-cell--radio,
+.payment-orders-page
+  .payment-orders-page__filter-list-layout
+  .table-filter-group__merged-inline-wrap
   > .table-filter-group__grid-cell[data-filter-field-key='exposureMode'] {
-  width: auto;
+  width: max-content;
   min-width: 0;
   max-width: none;
 }

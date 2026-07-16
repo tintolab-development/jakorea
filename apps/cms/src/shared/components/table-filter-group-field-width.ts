@@ -51,6 +51,9 @@ export function resolveFilterFieldPairSegmentWidthCss(field: FilterFieldConfig):
 }
 
 export function buildFilterFieldWidthStyle(field: FilterFieldConfig): CSSProperties | undefined {
+  // 라디오는 콘텐츠 허그 — --filter-field-width로 Col/grid-cell을 키우지 않음
+  if (field.type === 'radio') return undefined
+
   const width = resolveFilterFieldWidthCss(field)
   if (width == null) return undefined
 
@@ -84,6 +87,10 @@ export function isFilterFieldPctWidth(field: FilterFieldConfig): boolean {
 
 export function filterFieldGridCellClassName(field: FilterFieldConfig): string {
   const parts = ['table-filter-group__grid-cell']
+  if (field.type === 'radio') {
+    parts.push('table-filter-group__grid-cell--radio')
+    return parts.join(' ')
+  }
   if (field.width != null) {
     parts.push('table-filter-group__grid-cell--explicit-width')
     if (isFilterFieldPctWidth(field)) {
