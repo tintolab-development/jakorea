@@ -7,6 +7,7 @@ import {
   DS_IMPACT_ADOPTION_ROWS,
   DS_IMPACT_AS_OF,
   DS_IMPACT_AUDIT_METHOD,
+  DS_IMPACT_COMMONIZATION_ROWS,
   DS_IMPACT_CONCLUSION,
   DS_IMPACT_COVERAGE_ROWS,
   DS_IMPACT_FOLLOWUPS,
@@ -95,6 +96,34 @@ export function ImpactAuditSection() {
                   </td>
                   <td>{row.basis}</td>
                   <td>{row.verdict}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="ds-demo">
+        <p className="ds-demo__label">공통화 가능 영역 (재추려 · 효과 순)</p>
+        <div className="ds-impact-table-wrap">
+          <table className="ds-impact-table">
+            <thead>
+              <tr>
+                <th>우선</th>
+                <th>영역</th>
+                <th>기회</th>
+                <th>효과</th>
+              </tr>
+            </thead>
+            <tbody>
+              {DS_IMPACT_COMMONIZATION_ROWS.map(row => (
+                <tr key={`${row.priority}-${row.area}`} className={toneClass(row.tone)}>
+                  <td>
+                    <span className="ds-impact-pill">{row.priority}</span>
+                  </td>
+                  <td>{row.area}</td>
+                  <td>{row.opportunity}</td>
+                  <td>{row.leverage}</td>
                 </tr>
               ))}
             </tbody>

@@ -79,9 +79,13 @@ export function ModalsSection() {
   return (
     <DsSection
       id="modals"
-      title="Modals (core)"
-      description="표준 오버레이는 ContentModal 계열, 상세는 DetailFullPageModal입니다. 피드백은 useCmsAlert / cmsAlertModal을 쓰고 antd message는 쓰지 않습니다."
+      title="ContentModal"
+      description="CMS 표준 카드형 모달입니다. Confirm·Alert·Permission·CmsModal 등이 이 셸 위에 올라갑니다. 풀페이지 상세는 DetailFullPageModal입니다."
     >
+      <p className="ds-note">
+        <strong>컴포넌트</strong> — <code>ContentModal</code> (<code>shared/ui/content-modal</code>).
+        내부 기반은 <code>TealHeaderModal</code>이나 화면에서는 ContentModal만 사용합니다.
+      </p>
       <p className="ds-note">
         <strong>선택 순서</strong> — 안내(1버튼)→{' '}
         <code>useCmsAlert</code> / <code>CmsModal</code> · 확인·취소→ <code>ConfirmModal</code> ·
@@ -96,6 +100,30 @@ export function ModalsSection() {
         페이지에 <code>AlertModal</code>을 직접 마운트하지 말고 <code>useCmsAlert</code> /{' '}
         <code>cmsAlertModal</code>만 사용하세요.
       </p>
+      <p className="ds-note">
+        카드형 모달 셸 — 기본 폭 800px · padding <code>26px 30px 34px</code> · radius 12 · shadow{' '}
+        <code>0 0 25px rgba(0,0,0,0.35)</code>. 푸터 버튼은{' '}
+        <code>size=&quot;medium&quot;</code>(120×40). 취소 <code>secondary</code> · 확인{' '}
+        <code>primary</code> / 삭제 <code>delete</code>. 상세는 <a href="#buttons">Buttons</a>{' '}
+        참고.
+      </p>
+
+      <DsDemo label="ContentModal — 기본 (800px)">
+        <p className="ds-note" style={{ marginTop: 0 }}>
+          표준 폼·설정 모달. 푸터 취소/확인은 medium.
+        </p>
+        <div className="ds-demo__row ds-demo__row--fluid">
+          <CmsButton
+            variant="primary"
+            onClick={() => {
+              setContentSize('default')
+              setContentOpen(true)
+            }}
+          >
+            ContentModal 열기
+          </CmsButton>
+        </div>
+      </DsDemo>
 
       <DsDemo label="ContentModal — width tiers">
         <p className="ds-note" style={{ marginTop: 0 }}>
@@ -206,10 +234,10 @@ export function ModalsSection() {
         description={`공식 폭 티어 **${MODAL_SIZE_TIERS.find(tier => tier.size === contentSize)?.width}px**.\n전체 셸 최대 높이는 880px입니다.`}
         footer={
           <>
-            <CmsButton variant="secondary" onClick={() => setContentOpen(false)}>
+            <CmsButton variant="secondary" size="medium" onClick={() => setContentOpen(false)}>
               취소
             </CmsButton>
-            <CmsButton variant="primary" onClick={() => setContentOpen(false)}>
+            <CmsButton variant="primary" size="medium" onClick={() => setContentOpen(false)}>
               확인
             </CmsButton>
           </>

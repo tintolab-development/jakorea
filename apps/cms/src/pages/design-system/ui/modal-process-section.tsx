@@ -77,8 +77,9 @@ export function ModalProcessSection() {
       description="승인·반려·취소·배정·삭제·불가·미리보기의 대표 활성 패턴입니다."
     >
       <p className="ds-note">
-        프로세스별 문구와 입력 필드는 달라도 셸·폭·높이·푸터 정렬은 공통 규격을 따릅니다. 아래
-        라이브 데모는 실제 공통 컴포넌트 API만 사용합니다.
+        프로세스별 문구와 입력 필드는 달라도 셸·폭·높이·푸터 정렬은 공통 규격을 따릅니다. 푸터
+        버튼은 medium(120×40) — <a href="#buttons">Buttons</a>. 아래 라이브 데모는 실제 공통
+        컴포넌트 API만 사용합니다.
       </p>
 
       <DsDemo label="프로세스별 대표 라이브 모달">

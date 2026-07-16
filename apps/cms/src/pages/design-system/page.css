@@ -305,7 +305,23 @@ body.ds-page-active {
   vertical-align: middle;
 }
 
-/* 긴 라벨 트리거 — CmsButton 고정 width(140/120/100) 대신 텍스트 맞춤 */
+.ds-modal-catalog-table {
+  font-size: var(--font-size-13);
+}
+
+.ds-modal-catalog-table th {
+  width: auto;
+  white-space: nowrap;
+}
+
+.ds-modal-catalog-table__path {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--color-text-muted, var(--color-text-secondary));
+  word-break: break-all;
+}
+
+/* 긴 라벨 트리거 — CmsButton 고정 width(140/180/120/100) 대신 텍스트 맞춤 */
 .ds-demo__row--fluid .cms-button.ant-btn {
   width: auto !important;
   min-width: fit-content;
@@ -321,6 +337,13 @@ body.ds-page-active {
   width: 100%;
   max-width: 480px;
   min-width: 0;
+}
+
+.ds-demo__hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted, #8c8c8c);
 }
 
 .ds-swatch-grid {

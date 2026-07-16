@@ -13,9 +13,11 @@ import { FeedbackSection } from './ui/feedback-section'
 import { FiltersTablesSection } from './ui/filters-tables-section'
 import { FormsExtrasSection } from './ui/forms-extras-section'
 import { FormsSection } from './ui/forms-section'
+import { PostsAttachmentsSection } from './ui/posts-attachments-section'
 import { FoundationsSection } from './ui/foundations-section'
 import { ImpactAuditSection } from './ui/impact-audit-section'
 import { EditorSection } from './ui/editor-section'
+import { ModalCatalogSection } from './ui/modal-catalog-section'
 import { ModalProcessSection } from './ui/modal-process-section'
 import { ModalsExtendedSection } from './ui/modals-extended-section'
 import { ModalsSection } from './ui/modals-section'
@@ -63,12 +65,14 @@ export function DesignSystemPage() {
           <ImpactAuditSection />
           <ButtonsSection />
           <FormsSection />
+          <PostsAttachmentsSection />
           <DetailFormsSection />
           <FormsExtrasSection />
           <EditorSection />
           <FiltersTablesSection />
           <DashboardSection />
           <ModalsSection />
+          <ModalCatalogSection />
           <ModalProcessSection />
           <ModalsExtendedSection />
           <CalendarSection />

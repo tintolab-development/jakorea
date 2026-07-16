@@ -5,14 +5,15 @@
  * - Cursor Canvas `cms-design-system-impact-audit.canvas.tsx` 는 동일 스냅샷을
  *   인라인으로 미러한다 (canvas는 repo import 불가). 수치 갱신 시 **둘 다** 맞출 것.
  *
- * 집계 방법: `apps/cms/src` 기준 ripgrep 파일 수. design-system·test/spec 제외.
- * raw Button 소비자 = antd Button import 파일 중 `shared/ui|shared/components` 제외.
+ * 집계 방법: `apps/cms/src` 기준 심볼 언급 파일 수. design-system·test/spec 제외.
+ * raw Button/Modal/Empty/Descriptions = antd import 파일 중 `shared/ui|shared/components` 제외.
+ * 재집계일: 2026-07-16 (Wave1–4 카드형 ContentModal · Teal full 커스텀 직접 사용 유지)
  */
 
-export const DS_IMPACT_AS_OF = '2026-07-15'
+export const DS_IMPACT_AS_OF = '2026-07-16'
 
 export const DS_IMPACT_AUDIT_METHOD =
-  'rg 파일 수 · apps/cms/src · excl /design-system/ · excl *.test|*.spec'
+  '심볼 파일 수 · apps/cms/src · excl /design-system/ · excl *.test|*.spec'
 
 export type DsImpactTone = 'success' | 'warning' | 'danger' | 'neutral'
 
@@ -30,19 +31,19 @@ export const DS_IMPACT_STATS: DsImpactStat[] = [
     tone: 'success',
   },
   {
-    value: '319',
+    value: '331',
     label: 'CmsButton 채택 파일',
     tone: 'success',
   },
   {
-    value: '42',
+    value: '33',
     label: '잔여 raw antd Button 소비자 (shared 래퍼 제외)',
     tone: 'warning',
   },
   {
-    value: 'High→Med',
-    label: '목록·모달·캘린더 High / Dashboard·Auth Medium / 도메인·my-* 잔여',
-    tone: 'warning',
+    value: 'Med',
+    label: '카드형 ContentModal 이관 완료 · Teal full 커스텀 직접 ~10 유지',
+    tone: 'success',
   },
 ]
 
@@ -59,58 +60,66 @@ export const DS_IMPACT_COVERAGE_ROWS: DsImpactCoverageRow[] = [
   {
     area: '관리 목록',
     coverage: 'High',
-    basis: 'FilterTableLayout 66 · cms-data-table 92 · CmsButton',
-    verdict: '공통 수정 가능',
+    basis: 'FilterTableLayout 66 · cms-data-table 91 · CmsButton',
+    verdict: '공통 수정 가능 · education-record FilterTableLayout 반영',
     tone: 'success',
   },
   {
     area: '상세 정보',
     coverage: 'High / Medium',
-    basis: 'DetailInfoForm 180 · 로컬 CSS·Descriptions 잔여',
-    verdict: '기본 구조는 가능',
+    basis: 'DetailInfoForm · Descriptions 잔여 10 (my-* Descriptions 이관)',
+    verdict: '기본 구조는 가능 · 강사·권한요청·정산 요약 후속',
     tone: 'warning',
   },
   {
     area: '모달',
     coverage: 'High',
-    basis: 'ContentModal 146 · TealHeader 24 · Confirm 48',
-    verdict: '공통 수정 가능',
+    basis:
+      'ContentModal 165 · Teal feature 직접 10(full 커스텀 유지) · antd Modal 15 · CmsModal 제품 0',
+    verdict: '카드형 표준 High · full 커스텀은 Teal/TemplateFullpage 유지',
     tone: 'success',
   },
   {
     area: '캘린더',
     coverage: 'High',
-    basis: 'CalendarMain 35 · SplitCard · Mini',
+    basis: 'CalendarMain 25 · SplitCard · Mini',
     verdict: '공통 수정 가능',
     tone: 'success',
   },
   {
     area: '프로그램 상세',
     coverage: 'Medium',
-    basis: '공유 셸 + 유형별 CSS/배지/탭',
+    basis: '공유 셸 + 유형별 CSS/배지/탭 · Teal 풀페이지/프리뷰 잔여',
     verdict: '유형별 검증 필요',
     tone: 'warning',
   },
   {
     area: 'Dashboard',
     coverage: 'Medium+',
-    basis:
-      '액션 Cms/LoadingButton · StatisticsCard(강사수 흡수) · 위젯 본체 Not catalogued · raw Empty 다수',
-    verdict: '패턴만 공통 · 본체는 홈 전용',
+    basis: 'EmptyState 31 · 대시보드·my-* Empty→EmptyState 이관 · 위젯 본체 Not catalogued',
+    verdict: 'Empty 공통화됨 · 위젯 본체는 홈 전용',
     tone: 'warning',
   },
   {
     area: 'Auth',
     coverage: 'Medium',
-    basis: 'LoadingButton 24 · CmsButton 2 · pages/auth mock·로그인 raw Button 잔여',
-    verdict: '폼 셸은 부분 반영',
+    basis: 'SessionWarning → ContentModal · MFA는 커스텀 셸 유지',
+    verdict: '세션 경고 이관 · MFA 후속 설계',
     tone: 'warning',
   },
   {
-    area: '본인 정산·사용자 공지',
+    area: '본인 정산·사용자 공지·my-*',
+    coverage: 'Medium / Low',
+    basis: 'notices·my-* Modal/Descriptions/Empty 이관 · notification ContentModal',
+    verdict: '본인 화면 Wave3 배치 반영 · 강사 pages 후속',
+    tone: 'warning',
+  },
+  {
+    area: '게시글·첨부·댓글',
     coverage: 'Medium',
-    basis: 'Phase 2 CmsButton 채택 · FilterTableLayout 미채택(정산)',
-    verdict: '버튼 공통화됨 · 셸 후속',
+    basis:
+      'FileSelectField · AttachmentDownload* · Comment*/Reaction · PostWrite ContentModal',
+    verdict: '프리미티브 Current · 셸 일부 이관',
     tone: 'warning',
   },
 ]
@@ -123,18 +132,86 @@ export type DsImpactAdoptionRow = {
 
 /** Current 채택 스냅샷 */
 export const DS_IMPACT_ADOPTION_ROWS: DsImpactAdoptionRow[] = [
-  { primitive: 'CmsButton', files: '319', note: '관리·프로그램·모달 주력' },
-  { primitive: 'LoadingButton', files: '44', note: 'Auth·link·대시보드 액션' },
-  { primitive: 'FilterTableLayout', files: '66', note: '목록 셸 · education-record 후속' },
-  { primitive: 'DetailInfoForm', files: '180', note: 'Descriptions 잔여 후속' },
-  { primitive: 'cms-data-table', files: '92', note: '클래스 기준' },
-  { primitive: 'ContentModal', files: '146', note: '표준 컨텐츠 모달' },
-  { primitive: 'TealHeaderModal', files: '24', note: '틸 헤더 변형' },
-  { primitive: 'ConfirmModal', files: '48', note: '확인/삭제 가이드' },
-  { primitive: 'CalendarMain', files: '35', note: '일정·스케줄' },
-  { primitive: 'EmptyState', files: '11', note: '대시보드 raw Empty 대비 낮음' },
-  { primitive: 'StatisticsCard', files: '8', note: 'instructor-count 흡수 포함' },
+  { primitive: 'CmsButton', files: '331', note: '관리·프로그램·모달·error·my-* 페이지' },
+  { primitive: 'LoadingButton', files: '48', note: 'Auth·link·대시보드 액션' },
+  { primitive: 'FilterTableLayout', files: '66', note: '목록 셸 · education-record 반영' },
+  { primitive: 'DetailInfoForm', files: '207', note: 'Descriptions 잔여 후속(강사·권한요청·정산)' },
+  { primitive: 'cms-data-table', files: '91', note: '클래스 기준' },
+  { primitive: 'ContentModal', files: '165', note: '표준 카드형 · Wave1–4 카드 이관 완료' },
+  { primitive: 'PermissionModal', files: '34', note: '승인/반려 · ContentModal 래퍼' },
+  { primitive: 'DeleteGuideModal', files: '29', note: '삭제 안내 · ContentModal 래퍼' },
+  { primitive: 'TealHeaderModal', files: '16', note: '내부 셸 · feature 직접 10은 full 커스텀 유지' },
+  { primitive: 'ConfirmModal', files: '12', note: '확인/취소' },
+  { primitive: 'DetailFullPageModal', files: '12', note: '풀페이지 상세' },
+  { primitive: 'ActionResultModal', files: '16', note: '작업 완료·설정 불가 안내' },
+  { primitive: 'useCmsAlert / cmsAlertModal', files: '85', note: 'AlertModal(ContentModal) API' },
+  { primitive: 'CalendarMain', files: '25', note: '일정·스케줄' },
+  { primitive: 'ExcelButton', files: '20', note: '목록 툴바 엑셀' },
+  { primitive: 'EmptyState', files: '31', note: '대시보드·notices·my-* Empty 이관 반영' },
+  { primitive: 'StatisticsCard', files: '6', note: 'instructor-count 흡수 포함' },
   { primitive: 'PendingActionCard', files: '4', note: '대기 카드 패턴' },
+  { primitive: 'FileSelectField', files: '9', note: '게시글·공지·출석·상세' },
+  {
+    primitive: 'AttachmentDownloadList/Icon',
+    files: '4 / 7',
+    note: '게시글 상세·공지·출석·이전 기수',
+  },
+  {
+    primitive: 'CommentList/Composer · ReactionEmoji',
+    files: '4',
+    note: 'PostDetailModal 소비 · #posts-attachments',
+  },
+]
+
+export type DsImpactCommonizationRow = {
+  priority: 'P0' | 'P1' | 'P2'
+  area: string
+  opportunity: string
+  leverage: string
+  tone: DsImpactTone
+}
+
+/**
+ * 공통화 가능 영역 (재추려 · 효과 순)
+ * — 삭제·강제 이관이 아니라 shared Current로 흡수할 후보
+ */
+export const DS_IMPACT_COMMONIZATION_ROWS: DsImpactCommonizationRow[] = [
+  {
+    priority: 'P0',
+    area: '모달 셸',
+    opportunity:
+      'TealHeader feature 직접 잔여 ~10: 전부 full·커스텀 크롬(미리보기·TemplateFullpage·UJAT 뷰어) — ContentModal/DetailFullPage 이관 부적합 · 카드형 이관 완료',
+    leverage: 'docs/design-system/wave4-teal-header-review-gate.md',
+    tone: 'warning',
+  },
+  {
+    priority: 'P1',
+    area: '모달 (antd 직접)',
+    opportunity: 'antd Modal 잔여 16 → ContentModal (강사 pages·application·MFA 제외)',
+    leverage: '카드형 패딩·푸터 SSOT',
+    tone: 'warning',
+  },
+  {
+    priority: 'P1',
+    area: '상세 폼',
+    opportunity: 'Descriptions 잔여 10 → DetailInfoForm (강사·권한요청·정산 요약)',
+    leverage: 'DetailInfoForm 축 확대',
+    tone: 'warning',
+  },
+  {
+    priority: 'P2',
+    area: '버튼',
+    opportunity: 'raw antd Button 33 → CmsButton (application·instructors·program)',
+    leverage: 'variant/size 락',
+    tone: 'neutral',
+  },
+  {
+    priority: 'P2',
+    area: '소수 모달',
+    opportunity: 'CmsModal 제품 소비자 0 · 컴포넌트 DS 잔존 · MFA 커스텀 셸 별도 설계',
+    leverage: '카드형 단일 진입점',
+    tone: 'neutral',
+  },
 ]
 
 export type DsImpactTouchpointRow = {
@@ -156,42 +233,42 @@ export const DS_IMPACT_TOUCHPOINT_ROWS: DsImpactTouchpointRow[] = [
   {
     touchpoint: 'cms-button.css',
     change: '버튼 variant·크기',
-    blast: 'CmsButton 319 + LoadingButton 44',
+    blast: 'CmsButton 331 + LoadingButton 48',
     risk: 'Critical',
     tone: 'danger',
   },
   {
     touchpoint: 'detail-info-form.css',
     change: '상세 격자·라벨·행 높이',
-    blast: 'DetailInfoForm ~180',
+    blast: 'DetailInfoForm ~207',
     risk: 'Critical',
     tone: 'danger',
   },
   {
     touchpoint: 'cms-data-table.css',
     change: '테이블 헤더·행·empty·pagination',
-    blast: 'cms-data-table ~92',
+    blast: 'cms-data-table ~91',
     risk: 'Critical',
     tone: 'danger',
   },
   {
     touchpoint: 'filter-table-layout.css',
     change: '목록 필터/툴바 구조',
-    blast: 'FilterTableLayout ~66',
+    blast: 'FilterTableLayout ~65',
     risk: 'High',
     tone: 'warning',
   },
   {
     touchpoint: 'content-modal / teal-header-modal',
-    change: '일반 모달 폭·높이·스크롤',
-    blast: 'Content 146 + Teal 24 + Confirm 48',
+    change: '카드형·내부 셸 폭·패딩·푸터',
+    blast: 'Content 165 + Teal 16 + Permission/DeleteGuide/Confirm',
     risk: 'High',
     tone: 'warning',
   },
   {
     touchpoint: 'calendar/styles/*',
     change: '월/주 셀·툴팁·split',
-    blast: 'CalendarMain ~35+',
+    blast: 'CalendarMain ~25+',
     risk: 'High',
     tone: 'warning',
   },
@@ -204,10 +281,17 @@ export const DS_IMPACT_TOUCHPOINT_ROWS: DsImpactTouchpointRow[] = [
   },
   {
     touchpoint: 'features/dashboard/ui/*',
-    change: '대시보드 위젯 본체',
+    change: '대시보드 위젯 본체 · Empty',
     blast: '홈(/)만 · DS는 패턴만',
     risk: 'Local',
     tone: 'neutral',
+  },
+  {
+    touchpoint: 'shared/ui/posts/* · attachment-download',
+    change: '댓글·이모지·첨부 다운로드 프리미티브',
+    blast: 'PostDetailModal · 공지/출석 첨부',
+    risk: 'Medium',
+    tone: 'warning',
   },
 ]
 
@@ -225,11 +309,17 @@ export const DS_IMPACT_PHASE_ROWS: DsImpactPhaseRow[] = [
   {
     phase: '3 목록·폼 셸',
     status: '부분',
-    note: 'admin-category·education-enrollment 완료 · education-record·DetailInfoForm 후속',
+    note: 'education-record FilterTableLayout · my-* Descriptions 이관 · 강사 Descriptions 후속',
     tone: 'warning',
   },
   { phase: '4 override 감사', status: '완료', note: 'css-override-audit.md', tone: 'success' },
   { phase: '5 공통 룩', status: '게이트만', note: '의도적 룩 변경 없음', tone: 'success' },
+  {
+    phase: '모달 통일',
+    status: '카드형 완료',
+    note: 'PlainHeader 삭제 · ContentModal 카드 이관 · Teal full 커스텀 직접 유지',
+    tone: 'success',
+  },
   {
     phase: 'Dashboard E',
     status: '완료',
@@ -239,14 +329,16 @@ export const DS_IMPACT_PHASE_ROWS: DsImpactPhaseRow[] = [
 ]
 
 export const DS_IMPACT_FOLLOWUPS: string[] = [
-  '대시보드 raw antd Empty → EmptyState (EmptyState 채택 11 vs raw Empty 다수)',
-  'education-record-list-page → FilterTableLayout 래핑 (TableFilterGroup 잔여 ~15)',
-  '강사 상세 등 Descriptions → DetailInfoForm (패리티·유형 회귀)',
-  '잔여 raw Button 소비자 ~42 (application·certificate·my-*·instructor pages 등)',
+  'P0 Wave4 카드형 ContentModal 이관 완료 · 잔여 Teal 직접 ~10은 full 커스텀 유지(이관 대상 아님)',
+  'P1 antd Modal 잔여 → ContentModal (강사 pages·application 등 · MFA 제외)',
+  'P1 Descriptions 잔여 → DetailInfoForm (instructor·permission-request·정산 요약)',
+  'P2 raw Button → CmsButton (application · instructors · program)',
+  'MFA 모달: ContentModal 단순 스왑 비권장 · 커스텀 셸 별도 설계',
+  'CmsModal: 제품 소비자 0 · DS 카탈로그만 잔존 (삭제 여부 별도 확인)',
 ]
 
 export const DS_IMPACT_CONCLUSION =
-  '디자인 시스템 페이지는 전역 스타일 원본이 아니다. 제품 룩 SSOT는 theme-provider + shared/* 이며, /design-system은 동일 Current를 검증한다. Phase 0–5 게이트와 저채택 축(정산·공지·Dashboard 액션·Auth) 버튼 채택은 반영됐다. 관리 목록·모달·캘린더는 공통 수정 가능성이 높고, 프로그램 유형 상세·Dashboard 위젯 본체·Auth 폼·my-* 잔여는 로컬/도메인 구현이 남아 일괄 반영되지 않는다.'
+  'Wave4 카드형: 학교 3 + 일반 프로그램 4 → ContentModal. TealHeader 직접 잔여 ~10은 전부 size=full+커스텀 크롬(미리보기·TemplateFullpage·UJAT 뷰어)이라 ContentModal/DetailFullPage로 맞추지 않음. Teal은 shared 내부 엔진으로 유지. Critical 룩은 Phase 5.'
 
 export const DS_IMPACT_NEXT =
-  '공통화 효과가 큰 순서는 토큰·shared 유지 → EmptyState/FilterTableLayout 후속 → DetailInfoForm 잔여. 공통 룩(Phase 5)은 채택률·체크리스트 충족 후에만 shared/토큰에서 조정한다.'
+  '다음: P1 antd Modal·Descriptions 호출부 이관. Teal full 커스텀은 유지. Phase 5 룩은 게이트 후.'

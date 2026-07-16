@@ -159,6 +159,7 @@
 | 문서 | 설명 |
 |------|------|
 | [cms-shared-ssot-migration.md](design-system/cms-shared-ssot-migration.md) | CMS shared SSOT·공통화 마이그레이션 로드맵 (Platform 제외) |
+| [wave4-teal-header-review-gate.md](design-system/wave4-teal-header-review-gate.md) | Wave4 TealHeader→ContentModal 카드 이관 게이트 (full 커스텀 유지) |
 | [dashboard-widget-catalog-audit.md](design-system/dashboard-widget-catalog-audit.md) | 대시보드 홈 위젯 DS 카탈로그·Not catalogued 추림 |
 | [css-override-audit.md](design-system/css-override-audit.md) | feature/shared CSS override 감사 (Phase 4) |
 | [numeric-input-ux-audit.md](design-system/numeric-input-ux-audit.md) | 숫자 입력 UX 감사 |
@@ -207,4 +208,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-07-15
+**마지막 업데이트**: 2026-07-16

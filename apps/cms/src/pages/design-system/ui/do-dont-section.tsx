@@ -20,7 +20,8 @@ export function DoDontSection() {
           <li>
             동등 Cms* 래퍼가 있으면 Ant Design 원시 컨트롤 대신 <code>CmsButton</code>,{' '}
             <code>CmsInput</code>, <code>CmsSelect</code> 등을 사용합니다. Auth는{' '}
-            <code>LoadingButton</code> 허용.
+            <code>LoadingButton</code> 허용. 테이블 상단은 large(140) / large+icon(180), 모달
+            푸터는 medium(120).
           </li>
           <li>
             목록은 <code>FilterTableLayout</code> + <code>TableFilterGroup</code> +{' '}

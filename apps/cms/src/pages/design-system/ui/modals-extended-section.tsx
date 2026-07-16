@@ -3,28 +3,40 @@ import { PermissionModal } from '@/shared/components/permission-modal'
 import { PermissionButton } from '@/shared/components/permission-button'
 import { ActionResultModal } from '@/shared/ui/action-result-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { PlainHeaderModal } from '@/shared/ui/plain-header-modal'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { ContentModal } from '@/shared/ui/content-modal'
 import { DsDemo, DsSection } from './section'
 
 export function ModalsExtendedSection() {
   const [approveOpen, setApproveOpen] = useState(false)
-  const [tealOpen, setTealOpen] = useState(false)
-  const [plainOpen, setPlainOpen] = useState(false)
+  const [contentOpen, setContentOpen] = useState(false)
   const [resultOpen, setResultOpen] = useState(false)
 
   return (
     <DsSection
       id="modals-extended"
       title="Modals (extended)"
-      description="권한 액션·결과·헤더 셸 패턴입니다. 승인·반려·취소 등 업무 흐름은 Modal processes에서 확인합니다."
+      description="권한 액션·결과 모달입니다. 표준 카드형은 ContentModal 섹션을 보세요."
     >
       <p className="ds-note">
-        <code>TealHeaderModal</code>은 ContentModal의 기반 셸(커스텀 바디·푸터).{' '}
-        <code>PlainHeaderModal</code>은 문서·내역처럼 흰 헤더가 필요할 때.{' '}
-        <code>PermissionModal</code>은 승인/반려 플로우, <code>ActionResultModal</code>은 등록·삭제
-        완료 결과 안내입니다.
+        표준 카드형 →{' '}
+        <a href="#modals">
+          <code>ContentModal</code>
+        </a>
+        . <code>TealHeaderModal</code>은 내부 기반 셸(단독 사용 비권장).{' '}
+        <code>PermissionModal</code> / <code>ActionResultModal</code>은 업무 플로우용입니다.
       </p>
+      <p className="ds-note">
+        카드형 셸 — 기본 800 · padding <code>26px 30px 34px</code> · radius 12 · shadow{' '}
+        <code>0 0 25px rgba(0,0,0,0.35)</code> · 푸터 medium 120×40 우측 정렬.
+      </p>
+
+      <DsDemo label="ContentModal">
+        <div className="ds-demo__row ds-demo__row--fluid">
+          <CmsButton variant="primary" onClick={() => setContentOpen(true)}>
+            ContentModal
+          </CmsButton>
+        </div>
+      </DsDemo>
 
       <DsDemo label="PermissionButton → PermissionModal">
         <p className="ds-note" style={{ marginTop: 0 }}>
@@ -34,17 +46,6 @@ export function ModalsExtendedSection() {
         <PermissionButton type="primary" onClick={() => setApproveOpen(true)}>
           권한 확인 후 승인
         </PermissionButton>
-      </DsDemo>
-
-      <DsDemo label="Header shells">
-        <div className="ds-demo__row ds-demo__row--fluid">
-          <CmsButton variant="secondary" onClick={() => setTealOpen(true)}>
-            TealHeaderModal
-          </CmsButton>
-          <CmsButton variant="default" onClick={() => setPlainOpen(true)}>
-            PlainHeaderModal
-          </CmsButton>
-        </div>
       </DsDemo>
 
       <DsDemo label="ActionResultModal">
@@ -58,7 +59,7 @@ export function ModalsExtendedSection() {
       <p className="ds-note">
         <strong>Not catalogued</strong> — 화면 상태와 API 의존성이 큰 도메인 모달은 전체 화면에서
         확인합니다: <code>InquiryModal</code>, <code>ProfileEditModal</code>,{' '}
-        <code>TemplateFullpageModal</code>. 공통 셸의 사용법은 위 라이브 데모로 대표합니다.
+        <code>TemplateFullpageModal</code>.
       </p>
 
       <PermissionModal
@@ -71,35 +72,34 @@ export function ModalsExtendedSection() {
         showNotifyTiming={false}
       />
 
-      <TealHeaderModal
-        open={tealOpen}
-        onCancel={() => setTealOpen(false)}
-        title="Teal 헤더 모달"
+      <ContentModal
+        open={contentOpen}
+        onCancel={() => setContentOpen(false)}
+        title="ContentModal"
+        description="표준 카드형 모달입니다. 폼·표·확인 UI의 기본 셸입니다."
         footer={
-          <CmsButton variant="primary" onClick={() => setTealOpen(false)}>
-            닫기
-          </CmsButton>
+          <>
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              type="button"
+              onClick={() => setContentOpen(false)}
+            >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="medium"
+              type="button"
+              onClick={() => setContentOpen(false)}
+            >
+              확인
+            </CmsButton>
+          </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--color-text-body)' }}>
-          ContentModal의 기반 셸입니다. 커스텀 푸터·바디가 필요할 때 직접 사용합니다.
-        </p>
-      </TealHeaderModal>
-
-      <PlainHeaderModal
-        open={plainOpen}
-        onCancel={() => setPlainOpen(false)}
-        title="Plain 헤더 모달"
-        footer={
-          <CmsButton variant="secondary" onClick={() => setPlainOpen(false)}>
-            닫기
-          </CmsButton>
-        }
-      >
-        <p style={{ margin: 0, color: 'var(--color-text-body)' }}>
-          청록 헤더 대신 흰 배경 헤더가 필요할 때 사용합니다.
-        </p>
-      </PlainHeaderModal>
+        <div />
+      </ContentModal>
 
       <ActionResultModal
         open={resultOpen}
