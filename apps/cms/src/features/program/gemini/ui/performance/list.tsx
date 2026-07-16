@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type ChangeEvent, type Key } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { Table } from 'antd'
+import { Alert, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { resolveFilterTableExcelFilename } from '@/shared/components/filter-table-excel-filename'
@@ -14,12 +14,16 @@ import {
   GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE,
   geminiPerformanceService,
 } from '../../api/performance-service'
-import { useGeminiPerformanceRows } from '../../hooks/use-gemini-performance-rows'
+import {
+  useGeminiPerformanceRows,
+  useGeminiPerformanceRowsQueryState,
+} from '../../hooks/use-gemini-performance-rows'
 import { GEMINI_PERFORMANCE_FILTER_FIELDS } from '../../model/performance/filter-fields'
 import type {
   GeminiPerformanceRow,
   GeminiPerformanceTrainingMethod,
 } from '../../model/performance/types'
+import type { GeminiTrainingReportImportRow } from '@/shared/api/generated/dashboard/schemas/geminiTrainingReportImportRow'
 import { UploadDuplicateModal } from './upload-duplicate-modal'
 import '@/pages/programs/program-list-page.css'
 import './list.css'
@@ -116,6 +120,7 @@ export function GeminiPerformanceList() {
   const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
   const allRows = useGeminiPerformanceRows()
+  const { remoteEnabled, isFetching, isError, refetch } = useGeminiPerformanceRowsQueryState()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
@@ -124,6 +129,9 @@ export function GeminiPerformanceList() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false)
   const [pendingImportRows, setPendingImportRows] = useState<GeminiPerformanceRow[]>([])
+  const [pendingRemoteImportRows, setPendingRemoteImportRows] = useState<
+    GeminiTrainingReportImportRow[] | undefined
+  >(undefined)
 
   const filteredRows = useMemo(
     () => filterRows(allRows, appliedFilters),
@@ -138,13 +146,13 @@ export function GeminiPerformanceList() {
   }, [showAlert])
 
   const handleBulkDeleteClick = useCallback(() => {
-    if (!canWrite) return
+    if (!canWrite || remoteEnabled) return
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
     setDeleteModalOpen(true)
-  }, [canWrite, selectedRowKeys.length, showNoSelectionAlert])
+  }, [canWrite, remoteEnabled, selectedRowKeys.length, showNoSelectionAlert])
 
   const handleConfirmDelete = useCallback(() => {
     geminiPerformanceService.delete(selectedRowKeys.map(key => String(key)))
@@ -157,6 +165,11 @@ export function GeminiPerformanceList() {
     fileInputRef.current?.click()
   }, [canWrite])
 
+  const clearPendingImport = useCallback(() => {
+    setPendingImportRows([])
+    setPendingRemoteImportRows(undefined)
+  }, [])
+
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0]
@@ -164,18 +177,22 @@ export function GeminiPerformanceList() {
       if (!file) return
 
       try {
-        const { importedRows, duplicateKeys } = await geminiPerformanceService.prepareImport(file)
+        const { importedRows, duplicateKeys, remoteImportRows } =
+          await geminiPerformanceService.prepareImport(file)
         if (duplicateKeys.length > 0) {
           setPendingImportRows(importedRows)
+          setPendingRemoteImportRows(remoteImportRows)
           setDuplicateModalOpen(true)
           return
         }
-        geminiPerformanceService.applyImport(importedRows, 'append')
+        await geminiPerformanceService.applyImport(importedRows, 'append', remoteImportRows)
       } catch (error) {
         const message =
           error instanceof Error && error.message === GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
             ? GEMINI_PERFORMANCE_INVALID_TEMPLATE_MESSAGE
-            : '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.'
+            : error instanceof Error
+              ? error.message
+              : '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.'
         showAlert({ title: '안내', content: message })
       }
     },
@@ -184,20 +201,52 @@ export function GeminiPerformanceList() {
 
   const handleDuplicateCancel = useCallback(() => {
     setDuplicateModalOpen(false)
-    setPendingImportRows([])
-  }, [])
+    clearPendingImport()
+  }, [clearPendingImport])
 
   const handleDuplicateOverwrite = useCallback(() => {
-    geminiPerformanceService.applyImport(pendingImportRows, 'overwrite')
-    setDuplicateModalOpen(false)
-    setPendingImportRows([])
-  }, [pendingImportRows])
+    void (async () => {
+      try {
+        await geminiPerformanceService.applyImport(
+          pendingImportRows,
+          'overwrite',
+          pendingRemoteImportRows
+        )
+        setDuplicateModalOpen(false)
+        clearPendingImport()
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content:
+            error instanceof Error
+              ? error.message
+              : '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+        })
+      }
+    })()
+  }, [clearPendingImport, pendingImportRows, pendingRemoteImportRows, showAlert])
 
   const handleDuplicateAppend = useCallback(() => {
-    geminiPerformanceService.applyImport(pendingImportRows, 'append')
-    setDuplicateModalOpen(false)
-    setPendingImportRows([])
-  }, [pendingImportRows])
+    void (async () => {
+      try {
+        await geminiPerformanceService.applyImport(
+          pendingImportRows,
+          'append',
+          pendingRemoteImportRows
+        )
+        setDuplicateModalOpen(false)
+        clearPendingImport()
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content:
+            error instanceof Error
+              ? error.message
+              : '파일 업로드에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+        })
+      }
+    })()
+  }, [clearPendingImport, pendingImportRows, pendingRemoteImportRows, showAlert])
 
   const columns: ColumnsType<GeminiPerformanceRow> = useMemo(
     () => [
@@ -296,8 +345,13 @@ export function GeminiPerformanceList() {
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
     columns,
     data: filteredRows,
-    filename: resolveFilterTableExcelFilename('전체 프로그램'),
+    filename: resolveFilterTableExcelFilename('Gemini 실적'),
   })
+
+  const showBulkDelete = canWrite && !remoteEnabled
+  const tableScrollX = remoteEnabled
+    ? TABLE_SCROLL_X - TABLE_COLUMN_WIDTHS.checkbox
+    : TABLE_SCROLL_X
 
   return (
     <div className="program-list-page">
@@ -308,6 +362,20 @@ export function GeminiPerformanceList() {
         hidden
         onChange={event => void handleFileChange(event)}
       />
+
+      {remoteEnabled && isError ? (
+        <Alert
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="실적 목록을 불러오지 못했습니다."
+          action={
+            <CmsButton variant="secondary" onClick={() => void refetch()}>
+              다시 시도
+            </CmsButton>
+          }
+        />
+      ) : null}
 
       <FilterTableLayout
         bordered={false}
@@ -345,9 +413,11 @@ export function GeminiPerformanceList() {
         description={`총 ${filteredRows.length.toLocaleString()}건`}
         actions={
           <>
-            <CmsButton variant="delete" disabled={!canWrite} onClick={handleBulkDeleteClick}>
-              선택 삭제
-            </CmsButton>
+            {showBulkDelete ? (
+              <CmsButton variant="delete" disabled={!canWrite} onClick={handleBulkDeleteClick}>
+                선택 삭제
+              </CmsButton>
+            ) : null}
             <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
             <CmsButton variant="primary" disabled={!canWrite} onClick={handleAddReportClick}>
               연수 보고서 등록
@@ -360,12 +430,13 @@ export function GeminiPerformanceList() {
           rowKey="id"
           className="cms-data-table gemini-performance-list__table"
           tableLayout="fixed"
-          scroll={{ x: TABLE_SCROLL_X }}
+          scroll={{ x: tableScrollX }}
           columns={columns}
           dataSource={filteredRows}
+          loading={remoteEnabled && isFetching}
           pagination={false}
           rowSelection={
-            canWrite
+            showBulkDelete
               ? {
                   columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
                   selectedRowKeys,
@@ -377,19 +448,20 @@ export function GeminiPerformanceList() {
         />
       </FilterTableLayout>
 
-      <DeleteGuideModal
-        open={deleteModalOpen}
-        title="선택 삭제"
-        lines={[
-          `선택한 ${selectedRowKeys.length}건의 연수 실적을 삭제하시겠습니까?`,
-          '삭제된 실적은 복구할 수 없습니다.',
-        ]}
-        confirmText="삭제"
-        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setDeleteModalOpen(false)}
-      />
-
+      {showBulkDelete ? (
+        <DeleteGuideModal
+          open={deleteModalOpen}
+          title="선택 삭제"
+          lines={[
+            `선택한 ${selectedRowKeys.length}건의 연수 실적을 삭제하시겠습니까?`,
+            '삭제된 실적은 복구할 수 없습니다.',
+          ]}
+          confirmText="삭제"
+          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteModalOpen(false)}
+        />
+      ) : null}
       <UploadDuplicateModal
         open={duplicateModalOpen}
         onCancel={handleDuplicateCancel}

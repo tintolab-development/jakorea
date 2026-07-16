@@ -4,7 +4,7 @@
 
 import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
 import dayjs from 'dayjs'
-import { Table } from 'antd'
+import { Alert, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -15,7 +15,10 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { CmsButton, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
 import { geminiRecruitmentService } from '../../api/recruitment-service'
-import { useGeminiRecruitmentRows } from '../../hooks/use-gemini-recruitment-rows'
+import {
+  useGeminiRecruitmentRows,
+  useGeminiRecruitmentRowsQueryState,
+} from '../../hooks/use-gemini-recruitment-rows'
 import { useToday } from '../../hooks/use-today'
 import { GEMINI_RECRUITMENT_FILTER_FIELDS } from '../../model/recruitment/filter-fields'
 import {
@@ -84,6 +87,7 @@ export function GeminiRecruitmentList() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const todayKey = useToday()
   const recruitmentRows = useGeminiRecruitmentRows()
+  const { remoteEnabled, isFetching, isError, refetch } = useGeminiRecruitmentRowsQueryState()
   const { openDetail } = useGeminiRecruitmentDetailUrl()
   const { openAdd } = useGeminiRecruitmentAddUrl()
 
@@ -109,14 +113,26 @@ export function GeminiRecruitmentList() {
     })
   }, [showAlert])
 
+  const showRemoteMutationUnavailable = useCallback(() => {
+    showAlert({
+      title: '안내',
+      content:
+        '모집 공고 등록/삭제 API가 아직 연동되지 않았습니다.\nOpenAPI mutation 추가 후 사용할 수 있습니다.',
+    })
+  }, [showAlert])
+
   const handleBulkDeleteClick = useCallback(() => {
     if (!canWrite) return
+    if (remoteEnabled) {
+      showRemoteMutationUnavailable()
+      return
+    }
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
     setDeleteModalOpen(true)
-  }, [canWrite, selectedRowKeys.length, showNoSelectionAlert])
+  }, [canWrite, remoteEnabled, selectedRowKeys.length, showNoSelectionAlert, showRemoteMutationUnavailable])
 
   const handleConfirmDelete = useCallback(() => {
     geminiRecruitmentService.delete(selectedRowKeys.map(key => String(key)))
@@ -126,8 +142,12 @@ export function GeminiRecruitmentList() {
 
   const handleAddRecruitment = useCallback(() => {
     if (!canWrite) return
+    if (remoteEnabled) {
+      showRemoteMutationUnavailable()
+      return
+    }
     openAdd()
-  }, [canWrite, openAdd])
+  }, [canWrite, openAdd, remoteEnabled, showRemoteMutationUnavailable])
 
   const columns: ColumnsType<GeminiRecruitmentRow> = useMemo(
     () => [
@@ -176,6 +196,19 @@ export function GeminiRecruitmentList() {
 
   return (
     <div className="program-list-page">
+      {remoteEnabled && isError ? (
+        <Alert
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="모집 공고 목록을 불러오지 못했습니다."
+          action={
+            <CmsButton variant="secondary" onClick={() => void refetch()}>
+              다시 시도
+            </CmsButton>
+          }
+        />
+      ) : null}
       <FilterTableLayout
         bordered={false}
         filterResponsiveWrap={false}
@@ -211,6 +244,7 @@ export function GeminiRecruitmentList() {
           scroll={{ x: RECRUITMENT_TABLE_SCROLL_X }}
           columns={columns}
           dataSource={tableData}
+          loading={remoteEnabled && isFetching}
           pagination={false}
           onRow={record => ({
             onClick: (e: MouseEvent<HTMLElement>) => {

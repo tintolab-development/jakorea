@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -12,6 +12,8 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
+import { shouldUseGeminiVisitingTrainingRemoteApi } from '../../api/visiting-training/capabilities'
+import { useGeminiOrganizationApplicationsQuery } from '../../api/visiting-training/hooks'
 import {
   getGeminiInstitutionApplicationRows,
   patchGeminiInstitutionApplicationApprovalStatus,
@@ -121,10 +123,19 @@ function buildBulkApproveMessageLines(count: number): string[] {
   ]
 }
 
-export function GeminiInstitutionApplicationTab() {
+export function GeminiInstitutionApplicationTab({
+  recruitmentId,
+}: {
+  recruitmentId?: string
+}) {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
+  const remoteEnabled = shouldUseGeminiVisitingTrainingRemoteApi()
+  const remoteQuery = useGeminiOrganizationApplicationsQuery(
+    recruitmentId,
+    remoteEnabled && Boolean(recruitmentId)
+  )
   const [rows, setRows] = useState(() => getGeminiInstitutionApplicationRows())
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
@@ -132,6 +143,16 @@ export function GeminiInstitutionApplicationTab() {
   const [openApprovalDropdownId, setOpenApprovalDropdownId] = useState<string | null>(null)
   const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
   const [bulkApproveOpen, setBulkApproveOpen] = useState(false)
+
+  useEffect(() => {
+    if (remoteEnabled && remoteQuery.data) {
+      setRows(remoteQuery.data)
+      return
+    }
+    if (!remoteEnabled) {
+      setRows(getGeminiInstitutionApplicationRows())
+    }
+  }, [remoteEnabled, remoteQuery.data])
 
   const filteredRows = useMemo(() => filterRows(rows, appliedFilters), [rows, appliedFilters])
 
@@ -155,8 +176,20 @@ export function GeminiInstitutionApplicationTab() {
   )
 
   const refreshRows = useCallback(() => {
+    if (remoteEnabled) {
+      void remoteQuery.refetch()
+      return
+    }
     setRows([...getGeminiInstitutionApplicationRows()])
-  }, [])
+  }, [remoteEnabled, remoteQuery])
+
+  const showRemoteMutationUnavailable = useCallback(() => {
+    showAlert({
+      title: '안내',
+      content:
+        '기관 신청 승인/반려 API가 아직 연동되지 않았습니다.\nOpenAPI mutation 추가 후 사용할 수 있습니다.',
+    })
+  }, [showAlert])
 
   const showNoSelectionAlert = useCallback(() => {
     showAlert({
@@ -167,25 +200,52 @@ export function GeminiInstitutionApplicationTab() {
 
   const handleBulkReject = useCallback(() => {
     if (!canWrite) return
+    if (remoteEnabled) {
+      showRemoteMutationUnavailable()
+      return
+    }
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
     if (rejectDisabled) return
     setBulkRejectOpen(true)
-  }, [canWrite, rejectDisabled, selectedRowKeys.length, showNoSelectionAlert])
+  }, [
+    canWrite,
+    rejectDisabled,
+    remoteEnabled,
+    selectedRowKeys.length,
+    showNoSelectionAlert,
+    showRemoteMutationUnavailable,
+  ])
 
   const handleBulkApprove = useCallback(() => {
     if (!canWrite) return
+    if (remoteEnabled) {
+      showRemoteMutationUnavailable()
+      return
+    }
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
     if (approveDisabled) return
     setBulkApproveOpen(true)
-  }, [approveDisabled, canWrite, selectedRowKeys.length, showNoSelectionAlert])
+  }, [
+    approveDisabled,
+    canWrite,
+    remoteEnabled,
+    selectedRowKeys.length,
+    showNoSelectionAlert,
+    showRemoteMutationUnavailable,
+  ])
 
   const confirmBulkReject = useCallback(() => {
+    if (remoteEnabled) {
+      showRemoteMutationUnavailable()
+      setBulkRejectOpen(false)
+      return
+    }
     const ids = selectedRows
       .filter(row => row.approvalStatus !== 'REJECTED')
       .map(row => row.id)
@@ -194,10 +254,14 @@ export function GeminiInstitutionApplicationTab() {
     refreshRows()
     setSelectedRowKeys([])
     setBulkRejectOpen(false)
-    // TODO: 참여 기관 신청 선택 반려 API 연동
-  }, [refreshRows, selectedRows])
+  }, [refreshRows, remoteEnabled, selectedRows, showRemoteMutationUnavailable])
 
   const confirmBulkApprove = useCallback(() => {
+    if (remoteEnabled) {
+      showRemoteMutationUnavailable()
+      setBulkApproveOpen(false)
+      return
+    }
     const ids = selectedRows
       .filter(row => row.approvalStatus !== 'APPROVED')
       .map(row => row.id)
@@ -206,18 +270,21 @@ export function GeminiInstitutionApplicationTab() {
     refreshRows()
     setSelectedRowKeys([])
     setBulkApproveOpen(false)
-    // TODO: 참여 기관 신청 선택 승인 API 연동
-  }, [refreshRows, selectedRows])
+  }, [refreshRows, remoteEnabled, selectedRows, showRemoteMutationUnavailable])
 
   const handleApprovalStatusChange = useCallback(
     (rowId: string, next: GeminiInstitutionApprovalStatus) => {
       if (!canWrite) return
+      if (remoteEnabled) {
+        showRemoteMutationUnavailable()
+        setOpenApprovalDropdownId(null)
+        return
+      }
       patchGeminiInstitutionApplicationApprovalStatus([rowId], next)
       refreshRows()
       setOpenApprovalDropdownId(null)
-      // TODO: 승인 현황 변경 API 연동
     },
-    [canWrite, refreshRows]
+    [canWrite, refreshRows, remoteEnabled, showRemoteMutationUnavailable]
   )
 
   const columns = useMemo<ColumnsType<GeminiInstitutionApplicationRow>>(
@@ -379,6 +446,7 @@ export function GeminiInstitutionApplicationTab() {
           scroll={{ x: TABLE_SCROLL_X }}
           columns={columns}
           dataSource={filteredRows}
+          loading={remoteEnabled && remoteQuery.isFetching}
           pagination={false}
           rowSelection={
             canWrite

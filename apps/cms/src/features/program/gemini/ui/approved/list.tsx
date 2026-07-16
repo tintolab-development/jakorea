@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { Table } from 'antd'
+import { Alert, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guide-modal'
@@ -24,7 +24,10 @@ import {
   resolveApprovedTrainingFilterDate,
   resolveApprovedTrainingStatus,
 } from '../../lib/approved/resolve-status'
-import { useGeminiApprovedTrainingRows } from '../../hooks/use-gemini-approved-training-rows'
+import {
+  useGeminiApprovedTrainingRows,
+  useGeminiApprovedTrainingRowsQueryState,
+} from '../../hooks/use-gemini-approved-training-rows'
 import { useToday } from '../../hooks/use-today'
 import {
   GEMINI_APPROVED_TRAINING_FILTER_FIELDS,
@@ -142,6 +145,7 @@ export function GeminiApprovedTrainingList() {
   const { openDetail } = useGeminiApprovedTrainingDetailUrl()
   const todayKey = useToday()
   const allRows = useGeminiApprovedTrainingRows()
+  const { remoteEnabled, isFetching, isError, refetch } = useGeminiApprovedTrainingRowsQueryState()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
@@ -164,14 +168,26 @@ export function GeminiApprovedTrainingList() {
     })
   }, [showAlert])
 
+  const showRemoteMutationUnavailable = useCallback(() => {
+    showAlert({
+      title: '안내',
+      content:
+        '승인 연수 삭제 API가 아직 연동되지 않았습니다.\nOpenAPI mutation 추가 후 사용할 수 있습니다.',
+    })
+  }, [showAlert])
+
   const handleBulkDeleteClick = useCallback(() => {
     if (!canWrite) return
+    if (remoteEnabled) {
+      showRemoteMutationUnavailable()
+      return
+    }
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
     setDeleteModalOpen(true)
-  }, [canWrite, selectedRowKeys.length, showNoSelectionAlert])
+  }, [canWrite, remoteEnabled, selectedRowKeys.length, showNoSelectionAlert, showRemoteMutationUnavailable])
 
   const handleConfirmDelete = useCallback(() => {
     geminiApprovedTrainingService.delete(selectedRowKeys.map(key => String(key)))
@@ -249,6 +265,19 @@ export function GeminiApprovedTrainingList() {
 
   return (
     <div className="program-list-page">
+      {remoteEnabled && isError ? (
+        <Alert
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="승인 연수 목록을 불러오지 못했습니다."
+          action={
+            <CmsButton variant="secondary" onClick={() => void refetch()}>
+              다시 시도
+            </CmsButton>
+          }
+        />
+      ) : null}
       <FilterTableLayout
         bordered={false}
         className="gemini-approved-training-list"
@@ -324,6 +353,7 @@ export function GeminiApprovedTrainingList() {
           scroll={{ x: TABLE_SCROLL_X }}
           columns={columns}
           dataSource={filteredRows}
+          loading={remoteEnabled && isFetching}
           pagination={false}
           onRow={record => ({
             onClick: (e: MouseEvent<HTMLElement>) => {

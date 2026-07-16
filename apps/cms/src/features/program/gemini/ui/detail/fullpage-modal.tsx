@@ -94,6 +94,8 @@ export function GeminiRecruitmentDetailFullPageModal({
     handleSave: handleInfoSave,
     editor: infoEditor,
     editorMinHeight: infoEditorMinHeight,
+    remoteEnabled: detailRemoteEnabled,
+    isDetailFetching,
   } = useGeminiRecruitmentInfoEdit(recruitmentId, todayKey)
 
   const previewSnapshot =
@@ -173,14 +175,27 @@ export function GeminiRecruitmentDetailFullPageModal({
     setPreviewOpen(true)
   }, [])
 
+  const handleInfoEditClick = useCallback(() => {
+    if (detailRemoteEnabled) {
+      showAlert({
+        title: '안내',
+        content:
+          '모집 정보 수정 API가 아직 연동되지 않았습니다.\nOpenAPI PATCH 추가 후 사용할 수 있습니다.',
+      })
+      return
+    }
+    handleInfoEdit()
+  }, [detailRemoteEnabled, handleInfoEdit, showAlert])
+
   const handleInfoSaveClick = useCallback(() => {
     if (!isEditModeInfo || infoDraft == null) return
+    if (detailRemoteEnabled) return
     handleInfoSave()
     showAlert({
       title: '안내',
       content: MESSAGES.success.saved,
     })
-  }, [handleInfoSave, infoDraft, isEditModeInfo, showAlert])
+  }, [detailRemoteEnabled, handleInfoSave, infoDraft, isEditModeInfo, showAlert])
 
   const open = Boolean(recruitmentId)
 
@@ -203,7 +218,9 @@ export function GeminiRecruitmentDetailFullPageModal({
           />
         }
       >
-        {!resolvedDetail ? (
+        {isDetailFetching && !resolvedDetail ? (
+          <Typography.Text type="secondary">모집 공고 정보를 불러오는 중…</Typography.Text>
+        ) : !resolvedDetail ? (
           <Typography.Text type="secondary">모집 공고 정보를 찾을 수 없습니다.</Typography.Text>
         ) : (
           <>
@@ -217,7 +234,7 @@ export function GeminiRecruitmentDetailFullPageModal({
                       size="large"
                       width={160}
                       onClick={resolveProgramEditInfoClick(isEditModeInfo, {
-                        onEnterEdit: handleInfoEdit,
+                        onEnterEdit: handleInfoEditClick,
                         onSaveEdit: handleInfoSaveClick,
                       })}
                     >
@@ -245,7 +262,7 @@ export function GeminiRecruitmentDetailFullPageModal({
                 />
               </>
             ) : activeLnb === 'institutions' ? (
-              <GeminiInstitutionApplicationTab />
+              <GeminiInstitutionApplicationTab recruitmentId={recruitmentId} />
             ) : (
               <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
                 <ProgramManagersTab programId={recruitmentId} />
