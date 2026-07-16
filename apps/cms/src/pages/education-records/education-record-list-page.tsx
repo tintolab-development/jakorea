@@ -1,17 +1,14 @@
 /**
  * 실적 관리 목록 페이지
- * - 데이터 탭: 공통 필터(TableFilterGroup) + 구분선 + 탭 nav + 본문
+ * - 데이터 탭: FilterTableLayout(필터) + 탭 nav + 본문
  * - 합계 탭: 필터 비노출, 탭 nav + 본문만 렌더
  * - 쿼리 파라미터: `?tab=data`(기본) / `?tab=summary`
- * - 실적 데이터 탭은 `useTablePage` 결과(antdColumns/tableData/displayedCount)를 prop 으로 수신
- * - 합계 탭은 공통 필터와 독립된(목업) 집계 뷰를 렌더
  */
 
 import { useCallback, useMemo } from 'react'
 import { Alert, Spin } from 'antd'
 import { useSearchParams } from 'react-router-dom'
-import { Divider } from '@/shared/components/divider'
-import { TableFilterGroup } from '@/shared/components/table-filter-group'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { createEducationRecordFilterFields } from '@/features/education-record/model/education-record-filter-fields'
 import { exportEducationRecordExcel } from '@/features/education-record/lib/education-record-export'
@@ -119,54 +116,47 @@ export function EducationRecordListPage() {
 
   return (
     <div className="education-record-list-page">
-      <div className="education-record-list-page__filter-card">
-        {isDataTab && remoteFilterNotice ? (
-          <Alert
-            type="info"
-            showIcon
-            message={remoteFilterNotice}
-            className="education-record-list-page__remote-notice"
-          />
-        ) : null}
+      {isDataTab && remoteFilterNotice ? (
+        <Alert
+          type="info"
+          showIcon
+          message={remoteFilterNotice}
+          className="education-record-list-page__remote-notice"
+        />
+      ) : null}
 
-        {isDataTab && listQuery.isError ? (
-          <Alert
-            type="error"
-            showIcon
-            message={MESSAGES.error.performanceRecordsLoadFailed}
-            className="education-record-list-page__remote-notice"
-          />
-        ) : null}
+      {isDataTab && listQuery.isError ? (
+        <Alert
+          type="error"
+          showIcon
+          message={MESSAGES.error.performanceRecordsLoadFailed}
+          className="education-record-list-page__remote-notice"
+        />
+      ) : null}
 
-        {isDataTab ? (
-          <>
-            <div className="education-record-list-page__filter">
-              <TableFilterGroup
-                fields={filterFields}
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                onSearch={handleSearch}
+      <FilterTableLayout
+        className="education-record-list-page__layout"
+        showFilter={isDataTab}
+        fields={filterFields}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onSearch={handleSearch}
+        showTitle={false}
+        hideExcelDownload
+        topNav={
+          <div className="education-record-list-page__top-nav">
+            <EducationRecordTabNav activeTab={activeKey} onTabChange={handleTabChange} />
+            <div className="education-record-list-page__top-nav-actions">
+              <ExcelButton
+                onClick={handleExportExcel}
+                loading={isExporting}
+                disabled={tableData.length === 0 || listQuery.isLoading}
+                style={{ height: 44 }}
               />
             </div>
-
-            <div className="education-record-list-page__divider">
-              <Divider />
-            </div>
-          </>
-        ) : null}
-
-        <div className="education-record-list-page__top-nav">
-          <EducationRecordTabNav activeTab={activeKey} onTabChange={handleTabChange} />
-          <div className="education-record-list-page__top-nav-actions">
-            <ExcelButton
-              onClick={handleExportExcel}
-              loading={isExporting}
-              disabled={tableData.length === 0 || listQuery.isLoading}
-              style={{ height: 44 }}
-            />
           </div>
-        </div>
-
+        }
+      >
         {listQuery.isLoading && isDataTab ? (
           <div className="education-record-list-page__loading">
             <Spin />
@@ -180,7 +170,7 @@ export function EducationRecordListPage() {
         ) : (
           <EducationRecordSummaryTab />
         )}
-      </div>
+      </FilterTableLayout>
     </div>
   )
 }
