@@ -18,7 +18,7 @@ import {
 import type { ProgressFilters } from './use-program-progress-params'
 import { fetchGeneralParticipatingInstructors } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 
 const INSTRUCTOR_LIST_STORAGE_KEY = 'cms-program-progress-instructors'
 
@@ -70,7 +70,7 @@ export function useProgressInstructorList({
   preferMock = false,
   programId,
 }: UseProgressInstructorListOptions) {
-  const remoteEnabled = shouldUseGeneralProgramProgressRemoteApi() && Boolean(programId)
+  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
   const remoteQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.instructors(programId ?? ''),
     queryFn: () => fetchGeneralParticipatingInstructors(programId!),

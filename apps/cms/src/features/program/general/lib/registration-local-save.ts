@@ -20,6 +20,7 @@ import type { ProgramRegistrationFormVariant } from '@/features/template/model/p
 import { createGeneralProgram } from '@/features/program/general/api/admin-general-programs-service'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { mockSponsors } from '@/data/mock/sponsors'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
@@ -364,7 +365,18 @@ export async function persistGeneralProgramRegistration(args: {
     return createCompanySchoolProgram(program)
   }
 
-  if (variant !== 'economy' && shouldUseGeneralProgramsRemoteApi()) {
+  if (variant === 'trainedTeachers' && shouldUseTrainedTeacherProgramsRemoteApi()) {
+    const { createTrainedTeacherProgram } = await import(
+      '@/features/program/trained-teachers/api/service'
+    )
+    return createTrainedTeacherProgram(program)
+  }
+
+  if (
+    variant !== 'economy' &&
+    variant !== 'trainedTeachers' &&
+    shouldUseGeneralProgramsRemoteApi()
+  ) {
     return createGeneralProgram(program)
   }
 

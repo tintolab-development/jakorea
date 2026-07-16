@@ -8,7 +8,7 @@ import {
   fetchGeneralProgramSurveys,
 } from '@/features/program/general/api/admin-general-programs-service'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
-import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
+import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import type { ProgramPost } from '@/types/domain'
 import type { ProgramPostListItemResponse } from '@/shared/api/generated/dashboard/schemas/programPostListItemResponse'
 import type { ProgramSurveyResponse } from '@/shared/api/generated/dashboard/schemas/programSurveyResponse'
@@ -47,7 +47,7 @@ function mapSurveyItem(dto: ProgramSurveyResponse, index: number): RegisteredSur
 }
 
 export function useGeneralProgramPosts(programId: string | undefined) {
-  const remoteEnabled = shouldUseGeneralProgramsRemoteApi() && Boolean(programId)
+  const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
   const queryClient = useQueryClient()
   const query = useQuery({
     queryKey: generalProgramQueryKeys.posts(programId ?? ''),
@@ -80,7 +80,7 @@ export function useGeneralProgramPosts(programId: string | undefined) {
 }
 
 export function useGeneralProgramSurveys(programId: string | undefined) {
-  const remoteEnabled = shouldUseGeneralProgramsRemoteApi() && Boolean(programId)
+  const remoteEnabled = useProgramsReadsRemoteEnabledForSurface(programId)
   const query = useQuery({
     queryKey: generalProgramQueryKeys.surveys(programId ?? ''),
     queryFn: () => fetchGeneralProgramSurveys(programId!),
@@ -106,8 +106,8 @@ export function useGeneralProgramSurveyResponses(
   programId: string | undefined,
   templateVersionId: string | undefined
 ) {
-  const remoteEnabled =
-    shouldUseGeneralProgramsRemoteApi() && Boolean(programId) && Boolean(templateVersionId)
+  const surfaceRemote = useProgramsReadsRemoteEnabledForSurface(programId)
+  const remoteEnabled = surfaceRemote && Boolean(templateVersionId)
   const query = useQuery({
     queryKey: generalProgramQueryKeys.surveyResponses(programId ?? '', templateVersionId ?? ''),
     queryFn: () => fetchGeneralProgramSurveyResponses(programId!, templateVersionId!),
@@ -127,8 +127,8 @@ export function useGeneralProgramSurveySummary(
   programId: string | undefined,
   templateVersionId: string | undefined
 ) {
-  const remoteEnabled =
-    shouldUseGeneralProgramsRemoteApi() && Boolean(programId) && Boolean(templateVersionId)
+  const surfaceRemote = useProgramsReadsRemoteEnabledForSurface(programId)
+  const remoteEnabled = surfaceRemote && Boolean(templateVersionId)
   const query = useQuery({
     queryKey: generalProgramQueryKeys.surveySummary(programId ?? '', templateVersionId ?? ''),
     queryFn: () => fetchGeneralProgramSurveySummary(programId!, templateVersionId!),

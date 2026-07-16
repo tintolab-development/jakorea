@@ -78,6 +78,8 @@ import type { InstructorLectureAssignItem } from '@/features/program/general/lib
 import type { Program } from '@/types/domain'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { useGeneralProgramApplicationsRemoteSync } from '@/features/program/general/hooks/use-general-program-applications-remote-sync'
+import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
 
 export type InstructorApprovalTarget =
   | { id: string; name: string; step: 'assign' }
@@ -183,6 +185,8 @@ export function useApplicantsDetail({
     return []
   })
 
+  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
+
   const applicationsRemote = useGeneralProgramApplicationsRemoteSync({
     programId,
     menu,
@@ -193,6 +197,17 @@ export function useApplicantsDetail({
     setInstructorList,
     setIndividualList,
   })
+  const trainedTeacherApplicationsRemote = useTrainedTeacherOrganizationApplicationsRemoteSync({
+    programId,
+    enabled:
+      isTrainedTeachersSurface &&
+      menu === 'institutions' &&
+      usesProgramInstitutionApplications,
+    setInstitutionList,
+  })
+  const institutionApplicationsRemote = isTrainedTeachersSurface
+    ? trainedTeacherApplicationsRemote
+    : applicationsRemote
   const { showAlert } = useCmsAlert()
 
   const notifyRemoteDecisionFailure = useCallback(
@@ -208,25 +223,25 @@ export function useApplicantsDetail({
 
   const applyRemoteInstitutionDecision = useCallback(
     async (ids: string[], decision: 'approve' | 'reject', reason?: string) => {
-      if (!applicationsRemote.remoteEnabled) return false
+      if (!institutionApplicationsRemote.remoteEnabled) return false
       try {
         for (const id of ids) {
           if (decision === 'approve') {
-            await applicationsRemote.approveOrganization(id)
+            await institutionApplicationsRemote.approveOrganization(id)
           } else {
-            await applicationsRemote.rejectOrganization(id, {
+            await institutionApplicationsRemote.rejectOrganization(id, {
               reason: reason?.trim() || '반려',
             })
           }
         }
-        await applicationsRemote.invalidateApplications()
+        await institutionApplicationsRemote.invalidateApplications()
         return true
       } catch (error) {
         notifyRemoteDecisionFailure(error)
         return true
       }
     },
-    [applicationsRemote, notifyRemoteDecisionFailure]
+    [institutionApplicationsRemote, notifyRemoteDecisionFailure]
   )
 
   const applyRemoteInstructorDecision = useCallback(
@@ -447,9 +462,19 @@ export function useApplicantsDetail({
 
   useEffect(() => {
     if (programId && usesProgramInstitutionApplications && menu === 'institutions') {
+      // remote sync가 목록을 채우면 덮어쓰지 않음
+      if (isTrainedTeachersSurface && trainedTeacherApplicationsRemote.remoteEnabled) return
+      if (!isTrainedTeachersSurface && applicationsRemote.remoteEnabled) return
       setInstitutionList(getGeneralInstitutionApplicationsForProgram(programId))
     }
-  }, [programId, usesProgramInstitutionApplications, menu])
+  }, [
+    programId,
+    usesProgramInstitutionApplications,
+    menu,
+    isTrainedTeachersSurface,
+    trainedTeacherApplicationsRemote.remoteEnabled,
+    applicationsRemote.remoteEnabled,
+  ])
 
   useEffect(() => {
     if (programId && menu === 'individual-applications') {
@@ -1016,6 +1041,8 @@ export function useApplicantsDetail({
     tableData,
     columns,
     tableScrollX,
-    applicationsLoading: applicationsRemote.applicationsLoading,
+    applicationsLoading:
+      applicationsRemote.applicationsLoading ||
+      trainedTeacherApplicationsRemote.applicationsLoading,
   }
 }

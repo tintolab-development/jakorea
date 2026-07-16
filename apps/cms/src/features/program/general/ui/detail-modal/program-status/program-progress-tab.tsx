@@ -50,6 +50,9 @@ import {
   STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
 } from '@/shared/components'
 import { Divider } from '@/shared/components/divider'
+import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { useTrainedTeacherPerformanceSummary } from '@/features/program/trained-teachers/api/performance-summary-hooks'
+import { TrainedTeachersPerformanceSummaryStrip } from '@/features/program/trained-teachers/ui/progress/performance-summary-strip'
 import './program-progress-tab.css'
 
 const PARTICIPATING_SCHOOL_TAB = 'schools'
@@ -111,8 +114,13 @@ interface ProgramProgressTabProps {
   programId: string
 }
 
-export function ProgramProgressTab({ programId: _programId }: ProgramProgressTabProps) {
+export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
   const { subTab, filters, setSubTab, setFilter } = useProgramProgressParams()
+  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
+  const performanceSummaryQuery = useTrainedTeacherPerformanceSummary(
+    programId,
+    isTrainedTeachersSurface
+  )
   const [openTextbookDropdownSchoolId, setOpenTextbookDropdownSchoolId] = useState<string | null>(
     null
   )
@@ -132,6 +140,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
   const schoolHook = useProgressSchoolList({
     appliedFilters,
     instructorList: instructorHook.instructorList,
+    programId,
   })
 
   const {
@@ -529,6 +538,12 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
           <>
             <Divider className="program-progress-tab__divider" />
             <div className="program-progress-tab__below-divider">
+              {isTrainedTeachersSurface ? (
+                <TrainedTeachersPerformanceSummaryStrip
+                  summary={performanceSummaryQuery.data}
+                  loading={performanceSummaryQuery.isFetching}
+                />
+              ) : null}
               <div className="program-progress-tab__table-header">
                 <div className="program-progress-tab__table-heading">
                   <span className="program-progress-tab__table-title">수강 참여 학교 목록</span>
@@ -711,7 +726,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
             : null
         }
         participatingRow={selectedSchoolForDetail}
-        programId={_programId}
+        programId={programId}
         onCancelApproval={handleSchoolApprovalCancel}
         onSaveBasicInfo={patch => {
           setSavedBasicPatches(prev => ({ ...prev, [patch.id]: patch }))

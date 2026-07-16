@@ -252,8 +252,10 @@ export function ProgramList({
                   <span className="table-title">{headerTitle}</span>
                   <span className="table-description">{`총 ${displayedCount.toLocaleString()}건`}</span>
                 </div>
-                {children}
-                {toolbarActionsAfterExcel}
+                <div className="table-header-actions--wrapper">
+                  {children}
+                  {toolbarActionsAfterExcel}
+                </div>
               </div>
             }
           />

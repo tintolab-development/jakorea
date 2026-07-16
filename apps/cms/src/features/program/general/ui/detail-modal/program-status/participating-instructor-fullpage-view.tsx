@@ -124,6 +124,8 @@ function renderWaitingTableEmpty() {
   )
 }
 
+/** TODO(api): 강사 중첩 탭 mutation — assignment/lecture-reports/settlement.
+ * 1사1교 정산은 100km·교통·숙박·wagePolicies/paymentItems 구조화 계약 후. */
 export const INSTRUCTOR_DETAIL_TAB_KEYS = [
   'application',
   'institutionAssignment',

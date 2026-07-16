@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   approveGeneralIndividualApplication,
@@ -12,7 +12,7 @@ import {
   rejectGeneralOrganizationApplication,
 } from '@/features/program/general/api/admin-applications-service'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { useApplicationsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
@@ -40,10 +40,7 @@ export function useGeneralProgramApplicationsRemoteSync({
   setIndividualList,
 }: UseGeneralProgramApplicationsRemoteSyncOptions) {
   const queryClient = useQueryClient()
-  const remoteEnabled = useMemo(
-    () => shouldUseGeneralApplicationsRemoteApi() && Boolean(programId),
-    [programId]
-  )
+  const remoteEnabled = useApplicationsRemoteEnabledForSurface(programId)
 
   const organizationQuery = useQuery({
     queryKey: generalApplicationsQueryKeys.organizationList(programId ?? ''),

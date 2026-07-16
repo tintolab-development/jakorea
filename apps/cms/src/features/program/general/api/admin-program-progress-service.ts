@@ -4,7 +4,7 @@ import {
   mapParticipantToParticipatingSchoolRow,
   mapParticipantToParticipatingVolunteerRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
-import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { shouldUseProgramProgressHttpRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import {
   fetchProgramParticipantsRemote,
   fetchScheduleAttendancesRemote,
@@ -29,9 +29,9 @@ import {
 } from '@/data/mock/participating-volunteers'
 
 function assertProgramProgressRemoteReady(): void {
-  if (!shouldUseGeneralProgramProgressRemoteApi()) {
+  if (!shouldUseProgramProgressHttpRemoteApi()) {
     throw new Error(
-      '일반 프로그램 진행현황 API가 활성화되지 않았습니다. programs·programProgress 모듈과 API 로그인을 확인해 주세요.'
+      '프로그램 진행현황 API가 활성화되지 않았습니다. programs(또는 1사1교 opt-in)·programProgress 모듈과 API 로그인을 확인해 주세요.'
     )
   }
 }
@@ -40,7 +40,7 @@ export async function fetchGeneralProgramParticipants(
   programId: string,
   params?: ProgramParticipantsListQuery
 ): Promise<ParticipatingIndividualParticipantRow[]> {
-  if (!shouldUseGeneralProgramProgressRemoteApi()) {
+  if (!shouldUseProgramProgressHttpRemoteApi()) {
     return getParticipatingIndividualParticipantsForProgram(programId)
   }
 
@@ -59,7 +59,7 @@ export async function fetchGeneralProgramParticipants(
 export async function fetchGeneralParticipatingInstitutions(
   programId: string
 ): Promise<ParticipatingSchoolRow[]> {
-  if (!shouldUseGeneralProgramProgressRemoteApi()) {
+  if (!shouldUseProgramProgressHttpRemoteApi()) {
     return getParticipatingSchoolsForProgram(programId)
   }
 
@@ -77,7 +77,7 @@ export async function fetchGeneralParticipatingInstitutions(
 export async function fetchGeneralParticipatingInstructors(
   programId: string
 ): Promise<ParticipatingInstructorRow[]> {
-  if (!shouldUseGeneralProgramProgressRemoteApi()) {
+  if (!shouldUseProgramProgressHttpRemoteApi()) {
     return [...MOCK_PARTICIPATING_INSTRUCTORS]
   }
 
@@ -95,7 +95,7 @@ export async function fetchGeneralParticipatingInstructors(
 export async function fetchGeneralParticipatingVolunteers(
   programId: string
 ): Promise<ParticipatingVolunteerRow[]> {
-  if (!shouldUseGeneralProgramProgressRemoteApi()) {
+  if (!shouldUseProgramProgressHttpRemoteApi()) {
     return [...MOCK_PARTICIPATING_VOLUNTEERS]
   }
 
@@ -111,7 +111,7 @@ export async function fetchGeneralParticipatingVolunteers(
 }
 
 export async function fetchGeneralScheduleAttendances(programId: string, scheduleId: string) {
-  if (!shouldUseGeneralProgramProgressRemoteApi()) return []
+  if (!shouldUseProgramProgressHttpRemoteApi()) return []
   assertProgramProgressRemoteReady()
   return fetchScheduleAttendancesRemote(programId, scheduleId)
 }
@@ -120,7 +120,7 @@ export async function saveGeneralScheduleAttendances(
   scheduleId: string,
   attendances: import('@/shared/api/generated/dashboard/schemas/attendanceItemRequest').AttendanceItemRequest[]
 ) {
-  if (!shouldUseGeneralProgramProgressRemoteApi()) return
+  if (!shouldUseProgramProgressHttpRemoteApi()) return
   assertProgramProgressRemoteReady()
   await putScheduleAttendancesRemote(scheduleId, { attendances })
 }

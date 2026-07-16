@@ -63,10 +63,13 @@ import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general
 import { getEconomyPrograms, getGeneralPrograms, getTrainedTeachersPrograms } from '@/data/mock'
 import { COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/general/lib/registration-local-save'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
+import { useUpdateTrainedTeacherProgramInfoDetail } from '@/features/program/trained-teachers/api/hooks'
 import { TrainedTeachersCommonInfoView } from '@/features/program/trained-teachers/ui/common-info/common-info-view'
 import { TrainedTeachersApplicationInfoView } from '@/features/program/trained-teachers/ui/application-info/application-info-view'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
+import { useGeneralProgramNavigation } from '@/features/program/general/hooks/use-general-program-navigation'
 import { TAB_KEYS, type TabKey, type LnbKey } from './program-detail-nav-types'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
 import {
@@ -91,8 +94,10 @@ export interface ProgramDetailFullPageModalProps {
   open: boolean
   onClose: () => void
   program: Program | null
-  programVariant?: 'company-school'
+  programVariant?: 'company-school' | 'trained-teachers'
   externalLoading?: boolean
+  /** remote detail 로드 실패 (empty-flash 전에 표시) */
+  externalError?: boolean
   onUpdateProgram?: (
     programId: string,
     program: Program,
@@ -213,6 +218,7 @@ export function ProgramDetailFullPageModal({
   program,
   programVariant,
   externalLoading = false,
+  externalError = false,
   onUpdateProgram,
 }: ProgramDetailFullPageModalProps) {
   const navigate = useNavigate()
@@ -245,10 +251,18 @@ export function ProgramDetailFullPageModal({
       isCompanySchoolDetailProgram(displayProgram),
     [displayProgram, programVariant]
   )
-  const isTrainedTeachersDetail = useMemo(
-    () => isTrainedTeachersDetailProgram(displayProgram),
-    [displayProgram]
+  const { disabledLnbKeys } = useGeneralProgramNavigation(
+    open && isCompanySchoolDetail ? programId : undefined,
+    open && isCompanySchoolDetail
   )
+  const isTrainedTeachersDetail = useMemo(
+    () =>
+      programVariant === 'trained-teachers' ||
+      isTrainedTeachersDetailProgram(displayProgram),
+    [displayProgram, programVariant]
+  )
+  const trainedTeacherRemoteEnabled = shouldUseTrainedTeacherProgramsRemoteApi()
+  const updateTrainedTeacherInfoDetailMutation = useUpdateTrainedTeacherProgramInfoDetail()
   const isOverviewProgramDetail = isCompanySchoolDetail || isTrainedTeachersDetail
   const initialEditResetKeyRef = useRef<string | null>(null)
   useLayoutEffect(() => {
@@ -637,6 +651,11 @@ export function ProgramDetailFullPageModal({
       }
 
       if (isCompanySchoolDetail) {
+        const hideApplicants = disabledLnbKeys.has('institution_applications')
+        const hideInstructorApps = disabledLnbKeys.has('instructor_applications')
+        const hideProgress = disabledLnbKeys.has('progress')
+        const hideSurvey = disabledLnbKeys.has('survey')
+        const hideManagers = disabledLnbKeys.has('managers')
         return [
           {
             key: 'info',
@@ -648,22 +667,32 @@ export function ProgramDetailFullPageModal({
               { key: 'instructors', label: '신청 정보' },
             ],
           },
-          { key: 'applicants', label: '기관 신청 목록', icon: <LnbIconApplicants /> },
-          {
-            key: 'applicant_instructors',
-            label: '강사 신청 목록',
-            icon: <LnbIconApplicants />,
-          },
-          {
-            key: 'progress',
-            label: '프로그램 진행 현황',
-            icon: <LnbIconProgress />,
-            children: [
-              { key: 'institutions', label: '참여 기관' },
-              { key: 'instructors', label: '참여 강사' },
-            ],
-          },
-          ...(surveyMenuItems.length > 0
+          ...(!hideApplicants
+            ? [{ key: 'applicants', label: '기관 신청 목록', icon: <LnbIconApplicants /> }]
+            : []),
+          ...(!hideInstructorApps
+            ? [
+                {
+                  key: 'applicant_instructors',
+                  label: '강사 신청 목록',
+                  icon: <LnbIconApplicants />,
+                },
+              ]
+            : []),
+          ...(!hideProgress
+            ? [
+                {
+                  key: 'progress',
+                  label: '프로그램 진행 현황',
+                  icon: <LnbIconProgress />,
+                  children: [
+                    { key: 'institutions', label: '참여 기관' },
+                    { key: 'instructors', label: '참여 강사' },
+                  ],
+                },
+              ]
+            : []),
+          ...(!hideSurvey && surveyMenuItems.length > 0
             ? [
                 {
                   key: 'survey',
@@ -676,7 +705,9 @@ export function ProgramDetailFullPageModal({
                 },
               ]
             : []),
-          { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> },
+          ...(!hideManagers
+            ? [{ key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> }]
+            : []),
         ]
       }
 
@@ -705,7 +736,7 @@ export function ProgramDetailFullPageModal({
         { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> },
       ]
     },
-    [isCompanySchoolDetail, isTrainedTeachersDetail, surveyMenuItems]
+    [disabledLnbKeys, isCompanySchoolDetail, isTrainedTeachersDetail, surveyMenuItems]
   )
 
   const sidebarExpandedGroups = useMemo(
@@ -1261,6 +1292,10 @@ export function ProgramDetailFullPageModal({
         <div className="detail-fullpage-modal__loading">
           <Spin size="large" />
         </div>
+      ) : externalError && !displayProgram ? (
+        <Typography.Text type="danger">
+          프로그램 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+        </Typography.Text>
       ) : displayProgram ? (
         <>
           {activeLnb === 'info' && isCompanySchoolRecruitmentInfoTab && (
@@ -1314,6 +1349,30 @@ export function ProgramDetailFullPageModal({
               isEditMode={isEditModeInfo}
               onEdit={handleInfoEdit}
               onSave={handleInfoExit}
+              persistPending={updateTrainedTeacherInfoDetailMutation.isPending}
+              onPersist={
+                trainedTeacherRemoteEnabled && displayProgram
+                  ? async payload => {
+                      try {
+                        await updateTrainedTeacherInfoDetailMutation.mutateAsync({
+                          programId: displayProgram.id,
+                          payload: {
+                            educatedTeachers: payload.educatedTeachers,
+                            commonInfo: {
+                              ...displayProgram.generalCommonInfo,
+                              ...payload.commonInfo,
+                            },
+                          },
+                        })
+                      } catch (error) {
+                        handleError(error, {
+                          context: 'programDetailFullpageModal.trainedTeacherInfoSave',
+                        })
+                        throw error
+                      }
+                    }
+                  : undefined
+              }
             />
           )}
 

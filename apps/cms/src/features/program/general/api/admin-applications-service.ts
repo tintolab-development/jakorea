@@ -7,7 +7,7 @@ import {
   mapOrganizationApplicationToApplicantSchoolRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
-import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { shouldUseApplicationsHttpRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import {
   approveIndividualApplicationRemote,
   approveInstructorApplicationRemote,
@@ -50,9 +50,9 @@ import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboa
 import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
 
 function assertApplicationsRemoteReady(): void {
-  if (!shouldUseGeneralApplicationsRemoteApi()) {
+  if (!shouldUseApplicationsHttpRemoteApi()) {
     throw new Error(
-      '일반 프로그램 신청 API가 활성화되지 않았습니다. programs·applications 모듈과 API 로그인을 확인해 주세요.'
+      '프로그램 신청 API가 활성화되지 않았습니다. programs(또는 1사1교 opt-in)·applications 모듈과 API 로그인을 확인해 주세요.'
     )
   }
 }
@@ -61,7 +61,7 @@ export async function fetchGeneralOrganizationApplications(
   programId: string,
   params?: ApplicationsListQuery
 ): Promise<ApplicantSchoolRow[]> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) {
+  if (!shouldUseApplicationsHttpRemoteApi()) {
     return getGeneralInstitutionApplicationsForProgram(programId)
   }
 
@@ -80,7 +80,7 @@ export async function fetchGeneralInstructorApplications(
   programId: string,
   params?: ApplicationsListQuery
 ): Promise<ApplicantInstructorRow[]> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) {
+  if (!shouldUseApplicationsHttpRemoteApi()) {
     return getApplicantInstructorsByProgramId(programId)
   }
 
@@ -99,7 +99,7 @@ export async function fetchGeneralIndividualApplications(
   programId: string,
   options?: { doc1?: boolean; query?: ApplicationsListQuery }
 ): Promise<GeneralIndividualApplicantRow[]> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) {
+  if (!shouldUseApplicationsHttpRemoteApi()) {
     if (options?.doc1) return getGeneralParticipantDoc1Applicants(programId)
     return getGeneralIndividualApplicationsForProgram(programId)
   }
@@ -119,7 +119,7 @@ export async function fetchGeneralVolunteerApplications(
   programId: string,
   params?: ApplicationsListQuery
 ): Promise<GeneralVolunteerApplicantRow[]> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) {
+  if (!shouldUseApplicationsHttpRemoteApi()) {
     return getGeneralVolunteerApplicants(programId)
   }
 
@@ -137,7 +137,7 @@ export async function fetchGeneralVolunteerApplications(
 export async function fetchGeneralVolunteerDoc1Applications(
   programId: string
 ): Promise<GeneralVolunteerApplicantRow[]> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) {
+  if (!shouldUseApplicationsHttpRemoteApi()) {
     return getGeneralVolunteerDoc1Applicants(programId)
   }
   const rows = await fetchGeneralVolunteerApplications(programId)
@@ -147,7 +147,7 @@ export async function fetchGeneralVolunteerDoc1Applications(
 export async function fetchGeneralVolunteerDocPassedApplications(
   programId: string
 ): Promise<GeneralVolunteerApplicantRow[]> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) {
+  if (!shouldUseApplicationsHttpRemoteApi()) {
     return getGeneralVolunteerDocPassedApplicants(programId)
   }
   const rows = await fetchGeneralVolunteerApplications(programId)
@@ -157,7 +157,7 @@ export async function fetchGeneralVolunteerDocPassedApplications(
 export async function fetchGeneralVolunteerInterview2Applications(
   programId: string
 ): Promise<GeneralVolunteerApplicantRow[]> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) {
+  if (!shouldUseApplicationsHttpRemoteApi()) {
     return getGeneralVolunteerInterview2Applicants(programId)
   }
   const rows = await fetchGeneralVolunteerApplications(programId)
@@ -165,7 +165,7 @@ export async function fetchGeneralVolunteerInterview2Applications(
 }
 
 export async function approveGeneralOrganizationApplication(applicationId: string): Promise<void> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) return
+  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await approveOrganizationApplicationRemote(applicationId)
 }
@@ -174,13 +174,13 @@ export async function rejectGeneralOrganizationApplication(
   applicationId: string,
   payload: ApplicationRejectRequest
 ): Promise<void> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) return
+  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await rejectOrganizationApplicationRemote(applicationId, payload)
 }
 
 export async function approveGeneralInstructorApplication(applicationId: string): Promise<void> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) return
+  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await approveInstructorApplicationRemote(applicationId)
 }
@@ -189,13 +189,13 @@ export async function rejectGeneralInstructorApplication(
   applicationId: string,
   payload: ApplicationRejectRequest
 ): Promise<void> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) return
+  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await rejectInstructorApplicationRemote(applicationId, payload)
 }
 
 export async function approveGeneralIndividualApplication(applicationId: string): Promise<void> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) return
+  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await approveIndividualApplicationRemote(applicationId)
 }
@@ -204,7 +204,7 @@ export async function rejectGeneralIndividualApplication(
   applicationId: string,
   payload: ApplicationRejectRequest
 ): Promise<void> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) return
+  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await rejectIndividualApplicationRemote(applicationId, payload)
 }
@@ -213,7 +213,7 @@ export async function submitGeneralVolunteerDocumentResult(
   applicationId: string,
   payload: DocumentResultRequest
 ): Promise<void> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) return
+  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await submitVolunteerDocumentResultRemote(applicationId, payload)
 }
@@ -222,7 +222,7 @@ export async function submitGeneralVolunteerFinalResult(
   applicationId: string,
   payload: VolunteerFinalResultRequest
 ): Promise<void> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) return
+  if (!shouldUseApplicationsHttpRemoteApi()) return
   assertApplicationsRemoteReady()
   await submitVolunteerFinalResultRemote(applicationId, payload)
 }
@@ -240,7 +240,7 @@ export async function assignGeneralVolunteerInterview(params: {
   endAt: string
   maxAssignCount?: number
 }): Promise<{ interviewSlotId?: number; interviewAssignmentId?: number }> {
-  if (!shouldUseGeneralApplicationsRemoteApi()) {
+  if (!shouldUseApplicationsHttpRemoteApi()) {
     return {}
   }
   assertApplicationsRemoteReady()

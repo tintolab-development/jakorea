@@ -22,7 +22,12 @@ import type {
 import type { ProgressFilters } from './use-program-progress-params'
 import { fetchGeneralParticipatingInstitutions } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import {
+  useIsTrainedTeachersProgramsSurface,
+  useProgramProgressRemoteEnabledForSurface,
+} from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { useTrainedTeacherParticipatingInstitutions } from '@/features/program/trained-teachers/api/education-journals-hooks'
+import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 
 export interface UseProgressSchoolListOptions {
   appliedFilters: ProgressFilters
@@ -35,20 +40,35 @@ export function useProgressSchoolList({
   instructorList,
   programId,
 }: UseProgressSchoolListOptions) {
-  const remoteEnabled = shouldUseGeneralProgramProgressRemoteApi() && Boolean(programId)
+  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
+  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
+  const ttRemoteEnabled =
+    isTrainedTeachersSurface &&
+    shouldUseTrainedTeacherProgramsRemoteApi() &&
+    Boolean(programId)
+
   const remoteQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.institutions(programId ?? ''),
     queryFn: () => fetchGeneralParticipatingInstitutions(programId!),
-    enabled: remoteEnabled,
+    enabled: remoteEnabled && !isTrainedTeachersSurface,
     staleTime: 30_000,
     retry: false,
   })
+
+  const ttParticipatingQuery = useTrainedTeacherParticipatingInstitutions(
+    programId,
+    ttRemoteEnabled
+  )
 
   const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>(() =>
     programId ? getParticipatingSchoolsForProgram(programId) : [...MOCK_PARTICIPATING_SCHOOLS]
   )
 
   useEffect(() => {
+    if (ttRemoteEnabled) {
+      if (ttParticipatingQuery.data) setSchoolList(ttParticipatingQuery.data)
+      return
+    }
     if (remoteEnabled) {
       if (remoteQuery.data) setSchoolList(remoteQuery.data)
       return
@@ -56,7 +76,13 @@ export function useProgressSchoolList({
     setSchoolList(
       programId ? getParticipatingSchoolsForProgram(programId) : [...MOCK_PARTICIPATING_SCHOOLS]
     )
-  }, [programId, remoteEnabled, remoteQuery.data])
+  }, [
+    programId,
+    remoteEnabled,
+    remoteQuery.data,
+    ttRemoteEnabled,
+    ttParticipatingQuery.data,
+  ])
 
   const [selectedSchoolRowKeys, setSelectedSchoolRowKeys] = useState<React.Key[]>([])
   const [selectedSchoolForDetail, setSelectedSchoolForDetail] =

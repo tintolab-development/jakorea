@@ -13,6 +13,7 @@ import {
 } from '@/features/program/general/api/general-program-list-filter-params'
 import {
   shouldUseGeneralProgramsRemoteApi,
+  shouldUseProgramsHttpRemoteApi,
 } from '@/features/program/general/api/general-programs-remote-capabilities'
 import {
   createAdminProgramRemote,
@@ -40,6 +41,14 @@ function assertGeneralProgramsRemoteReady(): void {
   if (!shouldUseGeneralProgramsRemoteApi()) {
     throw new Error(
       '일반 프로그램 API가 활성화되지 않았습니다. API 로그인 후 VITE_REAL_API_MODULES에 programs를 추가해 주세요.'
+    )
+  }
+}
+
+function assertProgramsHttpRemoteReady(): void {
+  if (!shouldUseProgramsHttpRemoteApi()) {
+    throw new Error(
+      '프로그램 API가 활성화되지 않았습니다. API 로그인 후 programs 모듈(및 1사1교 opt-in)을 확인해 주세요.'
     )
   }
 }
@@ -121,21 +130,21 @@ export async function deleteGeneralPrograms(programIds: string[]): Promise<void>
 }
 
 export async function fetchGeneralProgramNavigation(programId: string) {
-  if (!shouldUseGeneralProgramsRemoteApi()) return null
-  assertGeneralProgramsRemoteReady()
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
   return fetchAdminProgramNavigationRemote(programId)
 }
 
 export async function fetchGeneralProgramPosts(programId: string) {
-  if (!shouldUseGeneralProgramsRemoteApi()) return []
-  assertGeneralProgramsRemoteReady()
+  if (!shouldUseProgramsHttpRemoteApi()) return []
+  assertProgramsHttpRemoteReady()
   const page = await fetchAdminProgramPostsRemote(programId)
   return page.items ?? []
 }
 
 export async function fetchGeneralProgramSurveys(programId: string) {
-  if (!shouldUseGeneralProgramsRemoteApi()) return []
-  assertGeneralProgramsRemoteReady()
+  if (!shouldUseProgramsHttpRemoteApi()) return []
+  assertProgramsHttpRemoteReady()
   return fetchAdminProgramSurveysRemote(programId)
 }
 
@@ -147,8 +156,8 @@ export async function createGeneralProgramPost(
     visibilityType?: string
   }
 ) {
-  if (!shouldUseGeneralProgramsRemoteApi()) return null
-  assertGeneralProgramsRemoteReady()
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
   return createAdminProgramPostRemote(programId, {
     title: payload.title ?? payload.content.slice(0, 40),
     content: payload.content,
@@ -165,14 +174,14 @@ export async function updateGeneralProgramPost(
     visibilityType?: string
   }
 ) {
-  if (!shouldUseGeneralProgramsRemoteApi()) return null
-  assertGeneralProgramsRemoteReady()
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
   return updateAdminProgramPostRemote(programId, postId, payload)
 }
 
 export async function deleteGeneralProgramPost(programId: string, postId: string) {
-  if (!shouldUseGeneralProgramsRemoteApi()) return
-  assertGeneralProgramsRemoteReady()
+  if (!shouldUseProgramsHttpRemoteApi()) return
+  assertProgramsHttpRemoteReady()
   await deleteAdminProgramPostRemote(programId, postId)
 }
 
@@ -180,8 +189,8 @@ export async function fetchGeneralProgramSurveyResponses(
   programId: string,
   templateVersionId: string
 ) {
-  if (!shouldUseGeneralProgramsRemoteApi()) return []
-  assertGeneralProgramsRemoteReady()
+  if (!shouldUseProgramsHttpRemoteApi()) return []
+  assertProgramsHttpRemoteReady()
   return fetchAdminProgramSurveyResponsesRemote(programId, templateVersionId)
 }
 
@@ -189,8 +198,8 @@ export async function fetchGeneralProgramSurveySummary(
   programId: string,
   templateVersionId: string
 ) {
-  if (!shouldUseGeneralProgramsRemoteApi()) return []
-  assertGeneralProgramsRemoteReady()
+  if (!shouldUseProgramsHttpRemoteApi()) return []
+  assertProgramsHttpRemoteReady()
   return fetchAdminProgramSurveySummaryRemote(programId, templateVersionId)
 }
 

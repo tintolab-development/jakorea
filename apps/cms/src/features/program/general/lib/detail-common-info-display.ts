@@ -328,11 +328,12 @@ function buildCurriculumSessionsFromRounds(
   program: Program,
   variant: GeneralProgramVariant | null
 ): NonNullable<Program['generalCommonInfo']>['curriculumSessions'] {
+  const rounds = program.rounds ?? []
   const isMulti =
     variant?.educationStructure === 'curriculum' && variant.sessionRound === 'multi'
 
   if (isMulti) {
-    return program.rounds.map((r, i) => ({
+    return rounds.map((r, i) => ({
       sessionLabel: `${i + 1}회차`,
       title: '2',
       description:
@@ -344,7 +345,7 @@ function buildCurriculumSessionsFromRounds(
     }))
   }
 
-  return program.rounds.map((r, i) => ({
+  return rounds.map((r, i) => ({
     sessionLabel: `${i + 1}차시`,
     title: r.curriculum?.split('|')[0]?.trim() ?? `${i + 1}회차`,
     description: r.curriculum?.includes('|')

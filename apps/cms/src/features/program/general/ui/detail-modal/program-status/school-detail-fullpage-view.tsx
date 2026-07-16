@@ -324,6 +324,8 @@ export interface SchoolDetailFullpageViewProps {
   onCancelApproval?: (schoolId: string) => void
   /** 신청 정보 탭 교재 현황 태그 클릭 시 상태 변경 (참여 기관 목록·mock과 동기화) */
   onTextbookStatusChange?: (schoolId: string, status: TextbookStatusKey) => void
+  // TODO(api): 학교 중첩 상세(application/instructors/students/attendance/posts) mutation
+  // — participants·schedules·assignment BE 계약 후 remote. 1사1교는 과제·합반 제외.
 }
 
 export function GeneralParticipatingInstitutionDetailView(

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchGeneralScheduleAttendances } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
-import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import type { AttendanceItemResponse } from '@/shared/api/generated/dashboard/schemas/attendanceItemResponse'
 
 /**
@@ -12,8 +12,8 @@ export function useGeneralScheduleAttendances(
   programId: string | undefined,
   scheduleId: string | undefined
 ) {
-  const remoteEnabled =
-    shouldUseGeneralProgramProgressRemoteApi() && Boolean(programId) && Boolean(scheduleId)
+  const surfaceRemote = useProgramProgressRemoteEnabledForSurface(programId)
+  const remoteEnabled = surfaceRemote && Boolean(scheduleId)
 
   const query = useQuery({
     queryKey: generalProgramProgressQueryKeys.attendances(programId ?? '', scheduleId ?? ''),

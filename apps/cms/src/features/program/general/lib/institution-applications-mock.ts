@@ -3,11 +3,14 @@ import {
   MOCK_APPLICANT_INSTITUTIONS,
   type ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
+import { getTrainedTeacherRemoteIdSnapshot } from '@/features/program/trained-teachers/api/service'
+import { TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX } from '@/features/program/general/lib/registration-local-save'
 
 function isTrainedTeachersProgramId(programId: string): boolean {
   return (
     programId.startsWith('trained-teachers-prog-') ||
-    programId.startsWith('trained-teachers-local-')
+    programId.startsWith(TRAINED_TEACHERS_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX) ||
+    getTrainedTeacherRemoteIdSnapshot()?.has(programId) === true
   )
 }
 

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchGeneralProgramNavigation } from '@/features/program/general/api/admin-general-programs-service'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
-import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
+import { useProgramsReadsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import type { GeneralDetailLnbKey } from '@/features/program/general/lib/detail-url'
 
 const LNB_KEY_ALIASES: Record<string, GeneralDetailLnbKey> = {
@@ -21,7 +21,8 @@ const LNB_KEY_ALIASES: Record<string, GeneralDetailLnbKey> = {
 }
 
 export function useGeneralProgramNavigation(programId: string | undefined, enabled = true) {
-  const remoteEnabled = shouldUseGeneralProgramsRemoteApi() && Boolean(programId) && enabled
+  const surfaceRemote = useProgramsReadsRemoteEnabledForSurface(programId)
+  const remoteEnabled = surfaceRemote && enabled
 
   const query = useQuery({
     queryKey: generalProgramQueryKeys.navigation(programId ?? ''),

@@ -1572,7 +1572,6 @@ export function ApplicantList({
                   icon={<CalendarOutlined />}
                   variant="secondary"
                   size="large"
-                  style={{ minWidth: 180 }}
                   onClick={handleViewCalendar}
                 >
                   캘린더 뷰로 보기
@@ -1583,7 +1582,6 @@ export function ApplicantList({
                   variant="secondary"
                   icon={<UnorderedListOutlined />}
                   size="large"
-                  style={{ minWidth: 180 }}
                   onClick={() => setViewMode('table')}
                 >
                   리스트 뷰로 보기
