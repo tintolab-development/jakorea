@@ -40,6 +40,10 @@ export const REAL_API_MODULE_KEYS = [
   'formsSurveys',
   'programs',
   'ujatPrograms',
+  'ujatEducationRegions',
+  'trainedTeacherPrograms',
+  'geminiVisitingTraining',
+  'geminiPerformance',
   'applications',
   'programProgress',
 ] as const
