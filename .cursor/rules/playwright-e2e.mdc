@@ -18,6 +18,10 @@ globs:
 1. `apps/<app>/tests/e2e/` 기존 스펙·`pages/`·`fixtures/`를 먼저 확인한다.
 2. 반복 가능한 QA는 **커밋된 `@playwright/test` 스펙**이 기준이다.
 3. 탐색·디버깅에는 **Playwright MCP**를 쓰되, 중요 시나리오는 스펙으로 승격한다.
+4. CMS 스펙은 `@playwright/test` 대신 `tests/e2e/fixtures/test` 의 `test`/`expect` 를 import 한다.
+   - auto fixture가 `/api/*` 4xx/5xx 를 수집하고, 실패·백엔드 에러 시 터미널에
+     `========== E2E 백엔드 에러 로그 ==========` 를 출력한다.
+   - 최신 덤프: `apps/cms/test-results/e2e-error-log-latest.json`
 
 ## 로케이터·안정성
 

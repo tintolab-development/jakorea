@@ -1,6 +1,9 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../fixtures/test'
 
 test.describe('CMS application smoke', () => {
+  // 로그인 페이지 검증 — setup storageState(어드민 세션)를 쓰지 않음
+  test.use({ storageState: { cookies: [], origins: [] } })
+
   test('login page loads with core UI', async ({ page }) => {
     await page.goto('/login')
 
