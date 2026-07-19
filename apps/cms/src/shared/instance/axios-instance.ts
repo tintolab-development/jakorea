@@ -9,6 +9,7 @@
  */
 
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { recordBackendErrorForE2e } from '@/features/e2e-error-log/lib/record-from-axios-error'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
@@ -186,6 +187,9 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   response => response,
   async (error: AxiosError<TErrorResponse>) => {
+    // E2E/로컬: 백엔드 실패 상황·에러 코드를 Mock 로그에 기록 (/e2e-error-log)
+    recordBackendErrorForE2e(error)
+
     const { response, config } = error
 
     if (!response || !config) {

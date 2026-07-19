@@ -171,6 +171,7 @@ const PersonalInfoAccessHistoryPage = lazyLoad(
 )
 const BugIssueHistoryPage = lazyLoad(() => import('@/pages/logs/bug-issue-history-page'))
 const DesignSystemPage = lazyLoad(() => import('@/pages/design-system/page'))
+const E2eErrorLogPage = lazyLoad(() => import('@/pages/e2e-error-log/page'))
 
 function LegacyPostsRedirect({
   kind,
@@ -312,6 +313,15 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={<RouterLoadingFallback fullViewport />}>
         <DesignSystemPage />
+      </Suspense>
+    ),
+  },
+  {
+    // 로컬·E2E 디버그: 백엔드 에러 Mock 로그 (로그인 불필요)
+    path: '/e2e-error-log',
+    element: (
+      <Suspense fallback={<RouterLoadingFallback fullViewport />}>
+        <E2eErrorLogPage />
       </Suspense>
     ),
   },
