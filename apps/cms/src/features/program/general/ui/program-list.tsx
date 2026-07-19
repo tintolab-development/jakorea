@@ -2,13 +2,18 @@
  * CMS 프로그램 목록 (필터 카드 + 테이블/캘린더)
  */
 
-import { Table } from 'antd'
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Spin, Table } from 'antd'
+import { Suspense, lazy, useState, useEffect, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { TableSearchSetSearchParams } from '@/shared/hooks/use-table-search'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import './program-list.css'
-import { ProgramCalendarView } from './program-calendar-view'
+
+/** 캘린더 CSS는 캘린더 뷰일 때만 로드 — 목록만 거쳐도 대시보드 위젯 보더에 영향 주지 않음 */
+const ProgramCalendarView = lazy(async () => {
+  const mod = await import('./program-calendar-view')
+  return { default: mod.ProgramCalendarView }
+})
 import {
   programListFilterFields,
   resolveProgramListFilterFields,
@@ -241,24 +246,32 @@ export function ProgramList({
 
       {showCalendarView && viewMode === 'calendar' ? (
         <div className="program-list-calendar-view-container">
-          <ProgramCalendarView
-            items={table.getFilteredRowModel().rows.map(row => row.original)}
-            loading={loading}
-            onItemClick={onView}
-            view={listView}
-            toolbar={
-              <div className="table-header-actions">
-                <div className="table-header-title--wrapper">
-                  <span className="table-title">{headerTitle}</span>
-                  <span className="table-description">{`총 ${displayedCount.toLocaleString()}건`}</span>
-                </div>
-                <div className="table-header-actions--wrapper">
-                  {children}
-                  {toolbarActionsAfterExcel}
-                </div>
+          <Suspense
+            fallback={
+              <div className="page-content-loading" role="status">
+                <Spin size="large" />
               </div>
             }
-          />
+          >
+            <ProgramCalendarView
+              items={table.getFilteredRowModel().rows.map(row => row.original)}
+              loading={loading}
+              onItemClick={onView}
+              view={listView}
+              toolbar={
+                <div className="table-header-actions">
+                  <div className="table-header-title--wrapper">
+                    <span className="table-title">{headerTitle}</span>
+                    <span className="table-description">{`총 ${displayedCount.toLocaleString()}건`}</span>
+                  </div>
+                  <div className="table-header-actions--wrapper">
+                    {children}
+                    {toolbarActionsAfterExcel}
+                  </div>
+                </div>
+              }
+            />
+          </Suspense>
         </div>
       ) : null}
     </>

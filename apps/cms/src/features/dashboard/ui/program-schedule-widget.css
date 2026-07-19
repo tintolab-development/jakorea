@@ -146,9 +146,11 @@
   flex-direction: column;
   border-radius: var(--radius-8, 8px);
   background: var(--color-bg-base, #fff);
-  /* overflow+radius만 두면 remount/레이어 승격 시 외곽이 진한 보더처럼 보일 수 있음 */
-  overflow: hidden;
-  isolation: isolate;
+  /*
+   * overflow:hidden + radius 는 remount(뒤로가기) 시 외곽이 진한 프레임처럼 보일 수 있음.
+   * 격자 외곽은 셀 edge 보더 + corner radius로만 처리한다.
+   */
+  overflow: visible;
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
@@ -256,7 +258,8 @@
   vertical-align: unset;
 }
 
-.program-schedule-widget__body--month
+.program-schedule-widget.program-schedule-widget
+  .program-schedule-widget__body--month
   .program-schedule-widget__month-grid--cells
   .program-calendar-cell {
   display: flex;
@@ -275,9 +278,9 @@
   cursor: pointer;
   transition: background 0.2s;
   border: none;
-  /* 얕은 격자선 고정 — 타 페이지 CSS(antd #d9d9d9 등)가 덮지 않도록 */
-  border-right: 1px solid var(--color-border-light, #f0f0f0) !important;
-  border-bottom: 1px solid var(--color-border-light, #f0f0f0) !important;
+  /* 리터럴 고정 — 타 라우트 calendar.css / antd #d9d9d9 캐스케이드 차단 */
+  border-right: 1px solid #f0f0f0 !important;
+  border-bottom: 1px solid #f0f0f0 !important;
   overflow: hidden;
   overscroll-behavior: none;
 }
@@ -294,16 +297,18 @@
   background-color: #fafafa;
 }
 
-.program-schedule-widget__body--month
+.program-schedule-widget.program-schedule-widget
+  .program-schedule-widget__body--month
   .program-schedule-widget__month-grid-slot--edge-w
   .program-calendar-cell {
-  border-left: 1px solid var(--color-border-light, #f0f0f0) !important;
+  border-left: 1px solid #f0f0f0 !important;
 }
 
-.program-schedule-widget__body--month
+.program-schedule-widget.program-schedule-widget
+  .program-schedule-widget__body--month
   .program-schedule-widget__month-grid-slot--edge-t
   .program-calendar-cell {
-  border-top: 1px solid var(--color-border-light, #f0f0f0) !important;
+  border-top: 1px solid #f0f0f0 !important;
 }
 
 .program-schedule-widget__body--month
@@ -506,7 +511,7 @@
   padding: var(--spacing-16);
   box-sizing: border-box;
   /* 정상: 얕은 #f0f0f0. 다른 라우트에서 로드된 antd/도메인 CSS의 #d9 보더보다 우선 */
-  border: 1px solid var(--color-border-light, #f0f0f0) !important;
+  border: 1px solid #f0f0f0 !important;
   border-radius: var(--radius-8);
   outline: none !important;
   box-shadow: none !important;
@@ -590,9 +595,9 @@
   align-items: stretch;
 }
 
-.program-schedule-widget .program-calendar-week-cell {
-  border-right: 1px solid var(--color-border-light, #f0f0f0) !important;
-  border-bottom: 1px solid var(--color-border-light, #f0f0f0) !important;
+.program-schedule-widget.program-schedule-widget .program-calendar-week-cell {
+  border-right: 1px solid #f0f0f0 !important;
+  border-bottom: 1px solid #f0f0f0 !important;
   padding: 8px;
   display: flex;
   flex-direction: column;
@@ -606,12 +611,12 @@
   text-align: left;
 }
 
-.program-schedule-widget .program-calendar-week-cell:nth-child(7n + 1) {
-  border-left: 1px solid var(--color-border-light, #f0f0f0) !important;
+.program-schedule-widget.program-schedule-widget .program-calendar-week-cell:nth-child(7n + 1) {
+  border-left: 1px solid #f0f0f0 !important;
 }
 
-.program-schedule-widget .program-calendar-week-cell:nth-child(-n + 7) {
-  border-top: 1px solid var(--color-border-light, #f0f0f0) !important;
+.program-schedule-widget.program-schedule-widget .program-calendar-week-cell:nth-child(-n + 7) {
+  border-top: 1px solid #f0f0f0 !important;
 }
 
 .program-schedule-widget .program-calendar-week-cell:hover {
