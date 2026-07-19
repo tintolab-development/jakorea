@@ -145,6 +145,10 @@
 |------|------|
 | [programs-api-conversion-roadmap.md](api/programs-api-conversion-roadmap.md) | 프로그램 관리 **미전환 카테고리 순차 로드맵** (Cat1–6 SSOT) |
 | [programs-api-backend-gaps-consolidated.md](api/programs-api-backend-gaps-consolidated.md) | 프로그램 Cat1–6 **백엔드 통합 핸드오프** (API 부재·계약 미비·적용 가이드) |
+| [**e2e-backend-fixes-index.md**](api/e2e-backend-fixes-index.md) | **E2E 관측** 백엔드 수정 요청 인덱스 (programs · members · adminAuth) |
+| [e2e-programs-create-database-error-handoff.md](api/e2e-programs-create-database-error-handoff.md) | 일반 프로그램 등록 `DATABASE_ERROR` (P0) |
+| [e2e-members-pre-register-handoff.md](api/e2e-members-pre-register-handoff.md) | 회원 pre-register 500·role 갭 (P0) |
+| [e2e-admin-auth-mfa-concurrency-handoff.md](api/e2e-admin-auth-mfa-concurrency-handoff.md) | MFA 병렬 challenge (P2) |
 | [forms-surveys-api-integration.md](api/forms-surveys-api-integration.md) | 템플릿 양식 API 연동 명세 |
 | [forms-surveys-api-migration-guide.md](api/forms-surveys-api-migration-guide.md) | 템플릿 양식 API **PHASE별 마이그레이션 가이드** |
 | [forms-surveys-api-backend-gaps.md](api/forms-surveys-api-backend-gaps.md) | 템플릿 양식 **백엔드 갭·미구현 핸드오프** |
@@ -213,6 +217,7 @@
 
 | 문서 | 설명 |
 |------|------|
+| [e2e/playwright-flows.md](e2e/playwright-flows.md) | Playwright E2E 플로우별 headless / UI / headed 실행 스크립트 |
 | [test-accounts.md](test-accounts.md) | 테스트 계정 |
 | [INSTRUCTOR_SETTLEMENT_DATA_CHECK.md](check/INSTRUCTOR_SETTLEMENT_DATA_CHECK.md) | 강사 정산 데이터 점검 |
 | [LOGO_PATH_GUIDE.md](../public/logo/LOGO_PATH_GUIDE.md) | 로고 경로 가이드 |
@@ -230,4 +235,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-07-16
+**마지막 업데이트**: 2026-07-20
