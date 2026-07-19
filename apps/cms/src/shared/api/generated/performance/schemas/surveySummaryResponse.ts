@@ -11,8 +11,11 @@ export interface SurveySummaryResponse {
   questionId?: number;
   questionKey?: string;
   questionLabel?: string;
+  questionType?: string;
   targetType?: string;
   responseCount?: number;
+  totalResponseCount?: number;
   summaryJson?: string;
+  summarySource?: string;
   calculatedAt?: string;
 }

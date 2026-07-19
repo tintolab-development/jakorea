@@ -13,6 +13,8 @@ export interface ProgramDefaultFormBindingCandidateResponse {
   targetType?: string;
   targetRole?: string;
   targetScope?: string;
+  targetScopeId?: number;
+  targetScopeLabel?: string;
   required?: boolean;
   displayOrder?: number;
   templateId?: number;

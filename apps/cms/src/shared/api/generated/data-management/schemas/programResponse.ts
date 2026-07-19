@@ -9,6 +9,7 @@ import type { ProgramAdminAssignmentResponse } from './programAdminAssignmentRes
 import type { ProgramResponseProgramType } from './programResponseProgramType';
 import type { ProgramRoundResponse } from './programRoundResponse';
 import type { ProgramScheduleResponse } from './programScheduleResponse';
+import type { ProgramSettlementPolicyResponse } from './programSettlementPolicyResponse';
 
 export interface ProgramResponse {
   id?: string;
@@ -70,6 +71,7 @@ export interface ProgramResponse {
   attachmentFileNames?: string[];
   adminAssignments?: ProgramAdminAssignmentResponse[];
   schedules?: ProgramScheduleResponse[];
+  settlementPolicy?: ProgramSettlementPolicyResponse;
   createdAt?: string;
   updatedAt?: string;
 }

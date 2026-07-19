@@ -12,4 +12,7 @@ export interface ProgramSurveyResponse {
   templateName?: string;
   versionLabel?: string;
   responseCount?: number;
+  lastSubmittedAt?: string;
+  submittedCount?: number;
+  draftCount?: number;
 }

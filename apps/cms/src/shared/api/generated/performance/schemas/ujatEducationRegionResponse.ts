@@ -13,6 +13,7 @@ export interface UjatEducationRegionResponse {
   displayName?: string;
   displayOrder?: number;
   activeYn?: boolean;
+  hasUsageHistory?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -17,4 +17,7 @@ export interface ProgramScheduleResponse {
   address?: string;
   addressDetail?: string;
   maxParticipantCount?: number;
+  ujatPartnerAssignmentEligible?: boolean;
+  ujatPartnerAssignmentsPath?: string;
+  ujatPartnerRecommendationPath?: string;
 }

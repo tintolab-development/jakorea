@@ -13,9 +13,17 @@ export interface GeminiTrainingReportItem {
   instructorMemberId?: number;
   instructorName?: string;
   schoolOrOrganizationName?: string;
+  trainingLocation?: string;
   trainingDate?: string;
+  trainingStartTime?: string;
+  trainingEndTime?: string;
   trainingMinutes?: number;
   classCount?: number;
+  topic?: string;
+  assistantInstructorNames?: string;
+  assistantInstructorCount?: number;
+  deliveryType?: string;
+  participantCount?: number;
   calculatedAmount?: number;
   accountPaymentId?: number;
   status?: string;

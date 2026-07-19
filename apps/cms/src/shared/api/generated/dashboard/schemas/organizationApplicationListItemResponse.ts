@@ -24,4 +24,8 @@ export interface OrganizationApplicationListItemResponse {
   rejectedAt?: string;
   rejectReason?: string;
   availableActions?: string[];
+  defaultScheduleId?: number;
+  defaultScheduleName?: string;
+  ujatPartnerAssignmentsPath?: string;
+  ujatPartnerRecommendationPath?: string;
 }

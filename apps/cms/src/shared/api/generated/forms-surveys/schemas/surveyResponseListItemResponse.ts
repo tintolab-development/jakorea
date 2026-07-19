@@ -14,6 +14,12 @@ export interface SurveyResponseListItemResponse {
   contextType?: string;
   contextId?: number;
   responseStatus?: string;
+  submittedByMemberId?: number;
+  submittedByMemberName?: string;
+  submittedByAdminId?: number;
+  submittedByAdminName?: string;
+  answerCount?: number;
+  answerPreviewJson?: string;
   submittedAt?: string;
   createdAt?: string;
 }

@@ -27,4 +27,15 @@ export interface TrainedTeacherOrganizationApplicationResponse {
   createdAt?: string;
   updatedAt?: string;
   availableActions?: string[];
+  institutionName?: string;
+  schoolSido?: string;
+  schoolSigungu?: string;
+  organizationSido?: string;
+  organizationSigungu?: string;
+  regionSido?: string;
+  regionSigungu?: string;
+  regionName?: string;
+  requestedStudentCount?: number;
+  requestedClassCount?: number;
+  journalSubmitted?: boolean;
 }
