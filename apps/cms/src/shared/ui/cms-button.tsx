@@ -62,6 +62,7 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
       width != null ? { width: typeof width === 'number' ? `${width}px` : width } : undefined
 
     const antdSize = size === 'large' ? 'large' : size === 'small' ? 'small' : 'middle'
+    const isLoading = Boolean(loading)
 
     const cn = [
       'cms-button',
@@ -69,7 +70,7 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
       `cms-button--${variant}`,
       `cms-button--${size}`,
       hasIcon && 'cms-button--has-icon',
-      loading && 'cms-button--loading-only',
+      isLoading && 'cms-button--loading-only',
       className,
     ]
       .filter(Boolean)
@@ -77,6 +78,12 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
 
     const antType: ButtonProps['type'] =
       variant === 'primary' ? 'primary' : variant === 'delete' ? 'default' : 'default'
+
+    /**
+     * Ant DefaultLoadingIcon: `icon` 없으면 CSSMotion(width 애니메이션) →
+     * 스피너 absolute 중앙 정렬이 깨짐. 로딩 중 더미 icon으로 existIcon 경로 사용.
+     */
+    const antdIcon = isLoading ? <span className="cms-button__loading-slot" aria-hidden /> : undefined
 
     return (
       <Button
@@ -88,6 +95,7 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
         className={cn}
         disabled={disabled}
         loading={loading}
+        icon={antdIcon}
         style={{ outline: 'none', ...widthStyle, ...style }}
         {...rest}
       >

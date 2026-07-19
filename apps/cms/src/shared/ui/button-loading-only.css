@@ -4,6 +4,9 @@
  *
  * - 전역: 모든 antd `.ant-btn-loading`
  * - 명시적: `.btn-loading-only` (`LoadingButton`, `CmsButton`)
+ *
+ * Ant Design은 `icon` 없을 때 CSSMotion으로 loading-icon에
+ * inline width/opacity/transform을 넣는다 → absolute 중앙 정렬이 깨지므로 덮어쓴다.
  */
 
 /* ----- 전역 (raw antd Button 포함) ----- */
@@ -16,12 +19,18 @@
 }
 
 .ant-btn.ant-btn-loading .ant-btn-loading-icon {
-  position: absolute;
-  inset: 0;
+  position: absolute !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  opacity: 1 !important;
+  transform: none !important;
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  margin: 0 !important;
+  pointer-events: none;
 }
 
 /* ----- 명시적 래퍼 (LoadingButton, CmsButton) ----- */
@@ -41,12 +50,18 @@
 }
 
 .btn-loading-only.ant-btn-loading .ant-btn-loading-icon {
-  position: absolute;
-  inset: 0;
+  position: absolute !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  opacity: 1 !important;
+  transform: none !important;
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  margin: 0 !important;
+  pointer-events: none;
 }
 
 .btn-loading-only.ant-btn-loading {
