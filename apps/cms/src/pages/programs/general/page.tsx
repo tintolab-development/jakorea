@@ -30,6 +30,17 @@ import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 import { useGeneralProgramListFilters } from './use-general-program-list-filters'
 import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
 import { clearGeneralProgramDetailQueryParams } from '@/features/program/general/lib/general-program-detail-route'
+import {
+  clearRegistrationDraftForFreshStart,
+  peekRegistrationDraftNotice,
+  PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
+  REGISTRATION_DRAFT_MODE_FRESH,
+  REGISTRATION_DRAFT_MODE_QUERY_KEY,
+} from '@/features/program/shared/lib/registration-draft-notice'
+import {
+  RegistrationDraftNoticeModal,
+  type RegistrationDraftNoticeChoice,
+} from '@/features/program/shared/ui/registration/draft-notice-modal'
 
 import './general-program-list-page.css'
 
@@ -71,6 +82,27 @@ export function GeneralProgramListPageContent() {
   const { isWritingUserPreviewOpen, closeWritingUserPreview } = useTemplateWritingPreview()
 
   const [selectedProgramForDetail, setSelectedProgramForDetail] = useState<Program | null>(null)
+  const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
+  const [draftNoticeTitle, setDraftNoticeTitle] = useState('')
+
+  const openNewRegistration = useCallback(
+    (mode?: 'continue' | 'fresh') => {
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set(PROGRAMS_GENERAL_NEW_QUERY_KEY, '1')
+          if (mode === 'fresh') {
+            next.set(REGISTRATION_DRAFT_MODE_QUERY_KEY, REGISTRATION_DRAFT_MODE_FRESH)
+          } else {
+            next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+          }
+          return next
+        },
+        { replace: false }
+      )
+    },
+    [setSearchParams]
+  )
 
   const handleCloseGeneralProgramRegistrationFullpage = useCallback(() => {
     if (!isGeneralProgramListPath(pNorm)) return
@@ -80,6 +112,7 @@ export function GeneralProgramListPageContent() {
         const next = new URLSearchParams(prev)
         next.delete(PROGRAMS_GENERAL_NEW_QUERY_KEY)
         next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+        next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
         next.delete('userPreview')
         return next
       },
@@ -97,6 +130,7 @@ export function GeneralProgramListPageContent() {
             const next = clearGeneralProgramDetailQueryParams(new URLSearchParams(prev))
             next.delete(PROGRAMS_GENERAL_NEW_QUERY_KEY)
             next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+            next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
             next.delete('userPreview')
             next.set('programId', createdProgram.id)
             next.set('lnb', 'info')
@@ -243,15 +277,27 @@ export function GeneralProgramListPageContent() {
   }
 
   const handleProgramCreateClick = useCallback(() => {
-    setSearchParams(
-      prev => {
-        const next = new URLSearchParams(prev)
-        next.set(PROGRAMS_GENERAL_NEW_QUERY_KEY, '1')
-        return next
-      },
-      { replace: false }
-    )
-  }, [setSearchParams])
+    const draft = peekRegistrationDraftNotice(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
+    if (draft != null) {
+      setDraftNoticeTitle(draft.title)
+      setDraftNoticeOpen(true)
+      return
+    }
+    openNewRegistration()
+  }, [openNewRegistration])
+
+  const handleDraftNoticeConfirm = useCallback(
+    (choice: RegistrationDraftNoticeChoice) => {
+      setDraftNoticeOpen(false)
+      if (choice === 'fresh') {
+        clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE)
+        openNewRegistration('fresh')
+        return
+      }
+      openNewRegistration('continue')
+    },
+    [openNewRegistration]
+  )
 
   const handleView = (program: Program) => {
     if (!user || !isAuthenticated) {
@@ -372,6 +418,13 @@ export function GeneralProgramListPageContent() {
         open={isGeneralProgramNewRegistrationQuery}
         onClose={handleCloseGeneralProgramRegistrationFullpage}
         onProgramRegistrationSaved={handleGeneralProgramRegistrationSaved}
+      />
+
+      <RegistrationDraftNoticeModal
+        open={draftNoticeOpen}
+        draftTitle={draftNoticeTitle}
+        onConfirm={handleDraftNoticeConfirm}
+        onCancel={() => setDraftNoticeOpen(false)}
       />
 
       <ConfirmModal

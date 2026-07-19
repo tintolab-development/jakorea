@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { TEMPLATE_USER_PREVIEW_ACTIVE } from '@/features/template/lib/template-user-preview-url'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import type { TemplateFullpageModalFooterAction } from '@/features/template/ui/template-management/template-fullpage-modal'
+import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import {
   UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY,
   normalizeUjatProgramRegistrationStepKey,
@@ -11,6 +12,10 @@ import { useUjatProgramRegistrationFlow } from '@/features/program/ujat/hooks/us
 import { UjatProgramRegistrationBodyHeader } from '@/features/program/ujat/ui/registration/ujat-program-registration-body-header'
 import type { Program } from '@/types/domain'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  REGISTRATION_DRAFT_MODE_FRESH,
+  REGISTRATION_DRAFT_MODE_QUERY_KEY,
+} from '@/features/program/shared/lib/registration-draft-notice'
 
 const UJAT_REGISTRATION_MODAL_TITLE = 'UJAT 프로그램 등록'
 
@@ -27,6 +32,9 @@ export function UjatProgramRegistrationFullpageModal({
 }: UjatProgramRegistrationFullpageModalProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const { showAlert } = useCmsAlert()
+
+  const skipDraftRestore =
+    searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY) === REGISTRATION_DRAFT_MODE_FRESH
 
   const initialStep = useMemo(() => {
     const raw = searchParams.get(UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
@@ -54,11 +62,13 @@ export function UjatProgramRegistrationFullpageModal({
     initialStep,
     onProgramRegistrationSaved,
     onStepChange: syncStepToUrl,
+    skipDraftRestore,
   })
 
   const handleClose = useCallback(() => {
     const next = new URLSearchParams(searchParams)
     next.delete(UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+    next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
     next.delete('userPreview')
     setSearchParams(next, { replace: true })
     onClose()
@@ -140,9 +150,9 @@ export function UjatProgramRegistrationFullpageModal({
           onSelectStep={flow.selectStep}
         />
       }
-      footerActions={footerActions}
-      leftContent={flow.panels.leftContent}
-      rightNavigation={flow.panels.rightNavigation}
+      footerActions={flow.isDraftLoading ? undefined : footerActions}
+      leftContent={flow.isDraftLoading ? <FormDraftLoading /> : flow.panels.leftContent}
+      rightNavigation={flow.isDraftLoading ? null : flow.panels.rightNavigation}
     />
   )
 }

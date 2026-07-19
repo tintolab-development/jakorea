@@ -10,6 +10,17 @@ import { ProgramList } from '@/features/program/general/ui/program-list'
 import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal'
 import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
+import {
+  clearRegistrationDraftForFreshStart,
+  peekRegistrationDraftNotice,
+  PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE,
+  REGISTRATION_DRAFT_MODE_FRESH,
+  REGISTRATION_DRAFT_MODE_QUERY_KEY,
+} from '@/features/program/shared/lib/registration-draft-notice'
+import {
+  RegistrationDraftNoticeModal,
+  type RegistrationDraftNoticeChoice,
+} from '@/features/program/shared/ui/registration/draft-notice-modal'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { Program } from '@/types/domain'
@@ -72,6 +83,8 @@ function TrainedTeachersProgramPageContent() {
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
   const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
   const [, setHasListFilters] = useState(false)
+  const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
+  const [draftNoticeTitle, setDraftNoticeTitle] = useState('')
 
   const isTrainedTeachersRegistrationOpen =
     isTrainedTeachersProgramListPath(normalizedPath) &&
@@ -184,6 +197,7 @@ function TrainedTeachersProgramPageContent() {
     const next = new URLSearchParams(searchParams)
     next.delete(TRAINED_TEACHERS_NEW_QUERY_KEY)
     next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+    next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
     next.delete('userPreview')
     setSearchParams(next, { replace: true })
   }, [closeWritingUserPreview, normalizedPath, searchParams, setSearchParams])
@@ -193,15 +207,46 @@ function TrainedTeachersProgramPageContent() {
     handleCloseRegistrationFullpage()
   }, [handleCloseRegistrationFullpage, refetchPrograms])
 
+  const openNewRegistration = useCallback(
+    (mode?: 'continue' | 'fresh') => {
+      const next = new URLSearchParams(searchParams)
+      next.set(TRAINED_TEACHERS_NEW_QUERY_KEY, '1')
+      next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
+      next.delete('programId')
+      next.delete('lnb')
+      next.delete('tab')
+      if (mode === 'fresh') {
+        next.set(REGISTRATION_DRAFT_MODE_QUERY_KEY, REGISTRATION_DRAFT_MODE_FRESH)
+      } else {
+        next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+      }
+      setSearchParams(next, { replace: false })
+    },
+    [searchParams, setSearchParams]
+  )
+
   const handleProgramCreateClick = useCallback(() => {
-    const next = new URLSearchParams(searchParams)
-    next.set(TRAINED_TEACHERS_NEW_QUERY_KEY, '1')
-    next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
-    next.delete('programId')
-    next.delete('lnb')
-    next.delete('tab')
-    setSearchParams(next, { replace: false })
-  }, [searchParams, setSearchParams])
+    const draft = peekRegistrationDraftNotice(PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE)
+    if (draft != null) {
+      setDraftNoticeTitle(draft.title)
+      setDraftNoticeOpen(true)
+      return
+    }
+    openNewRegistration()
+  }, [openNewRegistration])
+
+  const handleDraftNoticeConfirm = useCallback(
+    (choice: RegistrationDraftNoticeChoice) => {
+      setDraftNoticeOpen(false)
+      if (choice === 'fresh') {
+        clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE)
+        openNewRegistration('fresh')
+        return
+      }
+      openNewRegistration('continue')
+    },
+    [openNewRegistration]
+  )
 
   const handleView = useCallback(
     (program: Program) => {
@@ -369,6 +414,13 @@ function TrainedTeachersProgramPageContent() {
         onClose={handleCloseRegistrationFullpage}
         onProgramRegistrationSaved={handleRegistrationSaved}
         registrationFormVariant="trainedTeachers"
+      />
+
+      <RegistrationDraftNoticeModal
+        open={draftNoticeOpen}
+        draftTitle={draftNoticeTitle}
+        onConfirm={handleDraftNoticeConfirm}
+        onCancel={() => setDraftNoticeOpen(false)}
       />
 
       <ConfirmModal

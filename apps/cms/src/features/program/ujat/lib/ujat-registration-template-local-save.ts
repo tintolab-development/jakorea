@@ -72,3 +72,18 @@ export function persistUjatRegistrationTemplateSave(args: {
     )
   }
 }
+
+/** 신규 등록 등 — UJAT legacy 템플릿 임시저장본 제거 */
+export function removeUjatRegistrationTemplateSave(): void {
+  const file = readFile()
+  if (!(UJAT_REGISTRATION_TEMPLATE_ID in file.byTemplateId)) return
+  delete file.byTemplateId[UJAT_REGISTRATION_TEMPLATE_ID]
+  writeFile(file)
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent(WRITING_FORM_TEMPLATE_SAVE_EVENT, {
+        detail: { templateId: UJAT_REGISTRATION_TEMPLATE_ID },
+      })
+    )
+  }
+}

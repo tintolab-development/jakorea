@@ -11,6 +11,11 @@ import {
 } from '@/features/program/general/model/registration-flow'
 import { useGeneralProgramRegistrationFlow } from '@/features/program/general/hooks/use-registration-flow'
 import { GeneralProgramRegistrationBodyHeader } from '@/features/program/general/ui/registration/registration-body-header'
+import {
+  REGISTRATION_DRAFT_MODE_FRESH,
+  REGISTRATION_DRAFT_MODE_QUERY_KEY,
+} from '@/features/program/shared/lib/registration-draft-notice'
+import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
@@ -30,6 +35,9 @@ export function GeneralProgramRegistrationFullpageModal({
   registrationFormVariant = 'general',
 }: GeneralProgramRegistrationFullpageModalProps) {
   const [searchParams, setSearchParams] = useSearchParams()
+
+  const skipDraftRestore =
+    searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY) === REGISTRATION_DRAFT_MODE_FRESH
 
   const initialStep = useMemo(() => {
     const raw = searchParams.get(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
@@ -58,11 +66,13 @@ export function GeneralProgramRegistrationFullpageModal({
     onProgramRegistrationSaved,
     onStepChange: syncStepToUrl,
     registrationFormVariant,
+    skipDraftRestore,
   })
 
   const handleClose = useCallback(() => {
     const next = new URLSearchParams(searchParams)
     next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+    next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
     next.delete('userPreview')
     setSearchParams(next, { replace: true })
     onClose()
@@ -168,8 +178,8 @@ export function GeneralProgramRegistrationFullpageModal({
         />
       }
       footerActions={footerActions}
-      leftContent={flow.panels.leftContent}
-      rightNavigation={flow.panels.rightNavigation}
+      leftContent={flow.isDraftLoading ? <FormDraftLoading /> : flow.panels.leftContent}
+      rightNavigation={flow.isDraftLoading ? null : flow.panels.rightNavigation}
     />
   )
 }

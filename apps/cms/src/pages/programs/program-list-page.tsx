@@ -33,6 +33,17 @@ import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail
 import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
 import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
 import {
+  clearRegistrationDraftForFreshStart,
+  peekRegistrationDraftNotice,
+  PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE,
+  REGISTRATION_DRAFT_MODE_FRESH,
+  REGISTRATION_DRAFT_MODE_QUERY_KEY,
+} from '@/features/program/shared/lib/registration-draft-notice'
+import {
+  RegistrationDraftNoticeModal,
+  type RegistrationDraftNoticeChoice,
+} from '@/features/program/shared/ui/registration/draft-notice-modal'
+import {
   TemplateWritingPreviewProvider,
   useTemplateWritingPreview,
 } from '@/features/template/context/template-writing-preview-context'
@@ -126,6 +137,8 @@ function ProgramListPageContent() {
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
   const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
   const [, setHasListFilters] = useState(false)
+  const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
+  const [draftNoticeTitle, setDraftNoticeTitle] = useState('')
   const handleDisplayCountChange = useCallback((_count: number, hasActiveFilters: boolean) => {
     setHasListFilters(hasActiveFilters)
   }, [])
@@ -414,9 +427,28 @@ function ProgramListPageContent() {
     const next = new URLSearchParams(searchParams)
     next.delete(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY)
     next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+    next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
     next.delete('userPreview')
     setSearchParams(next, { replace: true })
   }, [closeWritingUserPreview, searchParams, setSearchParams])
+
+  const openCompanySchoolRegistration = useCallback(
+    (mode?: 'continue' | 'fresh') => {
+      const next = new URLSearchParams(searchParams)
+      next.set(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY, '1')
+      next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
+      next.delete('programId')
+      next.delete('lnb')
+      next.delete('tab')
+      if (mode === 'fresh') {
+        next.set(REGISTRATION_DRAFT_MODE_QUERY_KEY, REGISTRATION_DRAFT_MODE_FRESH)
+      } else {
+        next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+      }
+      setSearchParams(next, { replace: false })
+    },
+    [searchParams, setSearchParams]
+  )
 
   const handleCompanySchoolRegistrationSaved = useCallback((program?: Program) => {
     void companySchoolListQuery.refetch()
@@ -439,13 +471,13 @@ function ProgramListPageContent() {
 
   const handleProgramCreateClick = () => {
     if (programType === 'company_school') {
-      const next = new URLSearchParams(searchParams)
-      next.set(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY, '1')
-      next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
-      next.delete('programId')
-      next.delete('lnb')
-      next.delete('tab')
-      setSearchParams(next, { replace: false })
+      const draft = peekRegistrationDraftNotice(PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE)
+      if (draft != null) {
+        setDraftNoticeTitle(draft.title)
+        setDraftNoticeOpen(true)
+        return
+      }
+      openCompanySchoolRegistration()
       return
     }
 
@@ -454,6 +486,19 @@ function ProgramListPageContent() {
       content: FEATURE_COMING_SOON_ALERT_MESSAGE,
     })
   }
+
+  const handleDraftNoticeConfirm = useCallback(
+    (choice: RegistrationDraftNoticeChoice) => {
+      setDraftNoticeOpen(false)
+      if (choice === 'fresh') {
+        clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE)
+        openCompanySchoolRegistration('fresh')
+        return
+      }
+      openCompanySchoolRegistration('continue')
+    },
+    [openCompanySchoolRegistration]
+  )
 
   // 예정 프로그램 필터 해제 시 선택 초기화
   useEffect(() => {
@@ -635,6 +680,13 @@ function ProgramListPageContent() {
         onClose={handleCloseCompanySchoolRegistrationFullpage}
         onProgramRegistrationSaved={handleCompanySchoolRegistrationSaved}
         registrationFormVariant="economy"
+      />
+
+      <RegistrationDraftNoticeModal
+        open={draftNoticeOpen}
+        draftTitle={draftNoticeTitle}
+        onConfirm={handleDraftNoticeConfirm}
+        onCancel={() => setDraftNoticeOpen(false)}
       />
 
       <ProgramListModals

@@ -29,6 +29,8 @@ export type UseUjatProgramRegistrationFlowOptions = {
   /** URL `ujatStep` 초기값 */
   initialStep?: UjatProgramRegistrationStepKey
   onStepChange?: (step: UjatProgramRegistrationStepKey) => void
+  /** true면 임시저장 복원 없이 시드로 시작 */
+  skipDraftRestore?: boolean
 }
 
 function createRegistrationIdempotencyKey(): string {
@@ -102,7 +104,9 @@ export function useUjatProgramRegistrationFlow(
   }, [activeStep])
 
   // 공통 정보 overlay는 모집·신청 단계로 이동한 뒤 완료할 때까지 유지되어야 한다.
-  const registrationVm = useUjatProgramRegistrationEditor(open, programTemplateName)
+  const registrationVm = useUjatProgramRegistrationEditor(open, programTemplateName, {
+    skipDraftRestore: options?.skipDraftRestore === true,
+  })
 
   const participantVm = useProgramParticipantApplicationEditor(
     open && isParticipantStep,
@@ -117,21 +121,28 @@ export function useUjatProgramRegistrationFlow(
   )
 
   const editorVm = useMemo((): TemplateEditorVm => {
-    const base = {
+    const isDraftLoading = isProgramStep
+      ? registrationVm.isDraftLoading
+      : isParticipantStep
+        ? participantVm.isDraftLoading
+        : false
+    return {
       registryEntry,
       isProgramRegistration: false,
       isUjatProgramRegistration: isProgramStep,
       isParticipantApplication: isParticipantStep,
       isWritingSurveyList: false,
+      isDraftLoading,
       programRegistrationVm: registrationVm,
       ujatProgramRegistrationVm: registrationVm,
       programParticipantApplicationVm: participantVm,
       surveyListEditor: registrationVm,
       surveyTableRowSelection: participantVm,
       handleSave: isProgramStep ? registrationVm.handleSave : participantVm.handleSave,
-    }
-    return base as unknown as TemplateEditorVm
+    } as unknown as TemplateEditorVm
   }, [registryEntry, isProgramStep, isParticipantStep, registrationVm, participantVm])
+
+  const isDraftLoading = editorVm.isDraftLoading === true
 
   const panels = useMemo(
     () =>
@@ -220,6 +231,7 @@ export function useUjatProgramRegistrationFlow(
     selectStep,
     goToPhase,
     panels,
+    isDraftLoading,
     handlePreview,
     handleSave,
     handleCompleteRegistration,

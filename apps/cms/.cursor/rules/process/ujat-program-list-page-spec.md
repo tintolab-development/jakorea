@@ -61,11 +61,13 @@ category: ui-spec
 | 동작 | 스펙 |
 |------|------|
 | 클릭 | `/programs/ujat?new=1` — UJAT 등록 폼 풀페이지 (`UjatProgramRegistrationFullpageModal`) |
-| 임시 저장 건 있음 | **임시저장 이력 안내** 모달 노출 후 사용자 확인 시 등록 화면 진입 |
-| 임시 저장 판별 | `readUjatRegistrationLocalSaveRecords()` — `cms.jakorea.ujatRegistrationLocalSaves.v1` |
+| 임시 저장 건 있음 | **임시저장 이력 안내** 모달 — 라디오(이어서 작성 / 신규 등록). 확인 버튼 라벨: 이어서 작성 선택 시 「이어서 작성」, 신규 등록 선택 시 「프로그램 등록」 |
+| 임시 저장 판별 | `peekRegistrationDraftNotice('registration-ujat')` — writing-form draft (`cms.jakorea.writingFormTemplateSaves.v1`) + legacy UJAT template save |
+| 신규 등록 선택 | 로컬 draft 삭제 후 `?new=1&registrationDraft=fresh` (시드로 시작) |
+| 이어서 작성 선택 | `?new=1` (기존 draft 복원) |
 
 - 템플릿 관리(`/templates/form-management`)로 **이동하지 않음**.
-- 안내 모달: 저장 건수·최근 저장 시각 요약, [신규 등록] / [취소].
+- 안내 모달: `RegistrationDraftNoticeModal` (공유) — draft 제목 박스 + 라디오 + [취소] / 동적 확인 버튼.
 
 ---
 

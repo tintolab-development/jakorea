@@ -26,8 +26,16 @@ import {
   formatUjatVolunteerHalfRecruitment,
 } from '@/features/program/ujat/lib/ujat-program-list-display'
 import {
-  readUjatRegistrationLocalSaveRecords,
-} from '@/features/program/ujat/lib/ujat-registration-local-save'
+  clearRegistrationDraftForFreshStart,
+  peekRegistrationDraftNotice,
+  PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE,
+  REGISTRATION_DRAFT_MODE_FRESH,
+  REGISTRATION_DRAFT_MODE_QUERY_KEY,
+} from '@/features/program/shared/lib/registration-draft-notice'
+import {
+  RegistrationDraftNoticeModal,
+  type RegistrationDraftNoticeChoice,
+} from '@/features/program/shared/ui/registration/draft-notice-modal'
 import {
   useProgramDetail,
   usePrograms,
@@ -46,7 +54,6 @@ import {
 } from '@/features/template/context/template-writing-preview-context'
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import { UjatProgramRegistrationFullpageModal } from '@/features/program/ujat/ui/registration/ujat-program-registration-fullpage-modal'
-import { UjatRegistrationDraftNoticeModal } from '@/features/program/ujat/ui/registration/registration-draft-notice-modal'
 import { UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/ujat/model/ujat-program-registration-flow'
 import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 import { UjatProgramDetailFullPageModal } from '@/features/program/ujat/ui/detail-modal/ujat-program-detail-fullpage-modal'
@@ -114,9 +121,7 @@ function UjatProgramListPageContent() {
   const { isWritingUserPreviewOpen, closeWritingUserPreview } = useTemplateWritingPreview()
 
   const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
-  const [pendingDraftRecords, setPendingDraftRecords] = useState(
-    () => readUjatRegistrationLocalSaveRecords()
-  )
+  const [draftNoticeTitle, setDraftNoticeTitle] = useState('')
 
   const handleCloseUjatProgramRegistrationFullpage = useCallback(() => {
     if (!isUjatProgramListPath(pNorm)) return
@@ -124,13 +129,13 @@ function UjatProgramListPageContent() {
     const next = new URLSearchParams(searchParams)
     next.delete(PROGRAMS_UJAT_NEW_QUERY_KEY)
     next.delete(UJAT_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+    next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
     next.delete('userPreview')
     setSearchParams(next, { replace: true })
   }, [closeWritingUserPreview, pNorm, searchParams, setSearchParams])
 
   const handleUjatProgramRegistrationSaved = useCallback((program: Program) => {
     void programsQuery.refetch()
-    setPendingDraftRecords(readUjatRegistrationLocalSaveRecords())
     closeWritingUserPreview()
     navigate(getProgramAdminDetailUrlFromPathname(program.id, location.pathname), {
       replace: true,
@@ -314,24 +319,39 @@ function UjatProgramListPageContent() {
     [filteredRows]
   )
 
-  const openNewRegistration = useCallback(() => {
-    navigate({ pathname: '/programs/ujat', search: '?new=1' })
-  }, [navigate])
+  const openNewRegistration = useCallback(
+    (mode?: 'continue' | 'fresh') => {
+      const search =
+        mode === 'fresh'
+          ? `?new=1&${REGISTRATION_DRAFT_MODE_QUERY_KEY}=${REGISTRATION_DRAFT_MODE_FRESH}`
+          : '?new=1'
+      navigate({ pathname: '/programs/ujat', search })
+    },
+    [navigate]
+  )
 
   const handleProgramCreateClick = useCallback(() => {
-    const records = readUjatRegistrationLocalSaveRecords()
-    setPendingDraftRecords(records)
-    if (records.length > 0) {
+    const draft = peekRegistrationDraftNotice(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
+    if (draft != null) {
+      setDraftNoticeTitle(draft.title)
       setDraftNoticeOpen(true)
       return
     }
     openNewRegistration()
   }, [openNewRegistration])
 
-  const handleDraftNoticeConfirm = useCallback(() => {
-    setDraftNoticeOpen(false)
-    openNewRegistration()
-  }, [openNewRegistration])
+  const handleDraftNoticeConfirm = useCallback(
+    (choice: RegistrationDraftNoticeChoice) => {
+      setDraftNoticeOpen(false)
+      if (choice === 'fresh') {
+        clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE)
+        openNewRegistration('fresh')
+        return
+      }
+      openNewRegistration('continue')
+    },
+    [openNewRegistration]
+  )
 
   const handleRowNavigate = useCallback(
     (program: Program) => {
@@ -394,9 +414,9 @@ function UjatProgramListPageContent() {
         onProgramRegistrationSaved={handleUjatProgramRegistrationSaved}
       />
 
-      <UjatRegistrationDraftNoticeModal
+      <RegistrationDraftNoticeModal
         open={draftNoticeOpen}
-        records={pendingDraftRecords}
+        draftTitle={draftNoticeTitle}
         onConfirm={handleDraftNoticeConfirm}
         onCancel={() => setDraftNoticeOpen(false)}
       />

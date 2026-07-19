@@ -15,6 +15,7 @@ import {
   PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE,
   PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
 } from '@/features/template/lib/program-registration-editor-state'
+import { PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE } from '@/features/program/shared/lib/registration-draft-notice'
 import type { ProgramRegistrationFormVariant } from '@/features/template/model/program-registration-draft'
 import type { Program } from '@/types/domain'
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
@@ -40,6 +41,8 @@ export type UseGeneralProgramRegistrationFlowOptions = {
   initialStep?: GeneralProgramRegistrationStepKey
   onStepChange?: (step: GeneralProgramRegistrationStepKey) => void
   registrationFormVariant?: ProgramRegistrationFormVariant
+  /** true면 임시저장 복원 없이 시드로 시작 */
+  skipDraftRestore?: boolean
 }
 
 function resolveStepTemplateName(templateId: string): string {
@@ -78,12 +81,15 @@ export function useGeneralProgramRegistrationFlow(
     {
       programRegistrationFormVariant: registrationFormVariant,
       onRegistrationSaved: options?.onProgramRegistrationSaved,
+      skipDraftRestore: options?.skipDraftRestore === true,
       templateCode:
         registrationFormVariant === 'general'
           ? PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE
           : registrationFormVariant === 'economy'
             ? PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE
-            : undefined,
+            : registrationFormVariant === 'trainedTeachers'
+              ? PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE
+              : undefined,
     }
   )
 
@@ -231,12 +237,18 @@ export function useGeneralProgramRegistrationFlow(
   )
 
   const editorVm = useMemo((): TemplateEditorVm => {
+    const isDraftLoading = isProgramStep
+      ? registrationVm.isDraftLoading
+      : isParticipantStep
+        ? participantVm.isDraftLoading
+        : false
     return {
       registryEntry,
       isProgramRegistration: isProgramStep,
       isUjatProgramRegistration: false,
       isParticipantApplication: isParticipantStep,
       isWritingSurveyList: false,
+      isDraftLoading,
       programRegistrationVm: registrationVm,
       ujatProgramRegistrationVm: registrationVm,
       programParticipantApplicationVm: participantVm,
@@ -245,6 +257,8 @@ export function useGeneralProgramRegistrationFlow(
       handleSave: isProgramStep ? registrationVm.handleSave : participantVm.handleSave,
     } as unknown as TemplateEditorVm
   }, [registryEntry, isProgramStep, isParticipantStep, registrationVm, participantVm])
+
+  const isDraftLoading = editorVm.isDraftLoading === true
 
   const panels = useMemo(
     () =>
@@ -329,6 +343,7 @@ export function useGeneralProgramRegistrationFlow(
     selectStep,
     goToPhase,
     panels,
+    isDraftLoading,
     handlePreview,
     handleSave,
     handleCompleteRegistration,

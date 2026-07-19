@@ -92,13 +92,17 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   variant: ProgramRegistrationFormVariant
   /** 일반 등록 UI에서 선택한 후원사. 없으면 local mock 폴백 */
   sponsorId?: string
+  /** 목록·생성 요청에 쓸 프로그램명. 없으면 자동 생성 */
+  title?: string
 }): Program {
   const now = new Date().toISOString()
   const y = dayjs().year()
   const isCompanySchool = args.variant === 'economy'
   const isTrainedTeachers = args.variant === 'trainedTeachers'
   const programLabel = isCompanySchool ? '1사1교' : isTrainedTeachers ? '교육받은 교사' : '일반'
-  const title = `신규 ${programLabel} 프로그램 (${dayjs().format('YYYY-MM-DD HH:mm')})`
+  const title =
+    args.title?.trim() ||
+    `신규 ${programLabel} 프로그램 (${dayjs().format('YYYY-MM-DD HH:mm:ss')})`
   const mainTitle = title
   const participantTypes: GeneralProgramParticipantType[] = isCompanySchool
     ? ['school_institution', 'teacher_instructor']
@@ -342,6 +346,7 @@ export async function persistGeneralProgramRegistration(args: {
   programType: ProgramRegistrationType
   variant?: ProgramRegistrationFormVariant
   sponsorId?: string
+  title?: string
 }): Promise<Program> {
   const variant = args.variant ?? 'general'
   const id =
@@ -356,6 +361,7 @@ export async function persistGeneralProgramRegistration(args: {
     programType: args.programType,
     variant,
     sponsorId: args.sponsorId,
+    title: args.title,
   })
 
   if (variant === 'economy' && shouldUseCompanySchoolRemoteApi()) {
