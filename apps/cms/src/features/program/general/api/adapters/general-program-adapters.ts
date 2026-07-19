@@ -272,6 +272,8 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreat
   const core = mapProgramCoreFieldsToRequest(program)
   return {
     ...core,
+    // OpenAPI `sponsorId`는 string — 숫자 id가 number로 직렬화되면 BE 검증/DB 오류 유발 가능
+    sponsorId: program.sponsorId != null ? String(program.sponsorId) : undefined,
     programType: 'GENERAL',
     businessStartDate: toRequestDate(program.startDate),
     businessEndDate: toRequestDate(program.endDate),
