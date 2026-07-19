@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Form, Space } from 'antd'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import { mockSchools } from '@/data/mock/schools'
@@ -45,6 +45,11 @@ interface AddUserIndividualProps {
   onSubmit: (request: CreateUserRequest) => Promise<void>
   onCancel: () => void
   loading?: boolean
+  /** ContentModal footer의 form= 연동용 */
+  formId?: string
+  /** true면 하단 닫기/신규 등록 버튼 미노출 (모달 footer로 분리) */
+  hideActions?: boolean
+  onCanSubmitChange?: (canSubmit: boolean) => void
 }
 
 const CONSENT_RADIO_OPTIONS = [
@@ -70,7 +75,14 @@ const INITIAL_VALUES: AddUserIndividualFormValues = {
   consentPortrait: 'agree',
   consentWithholdingTax: 'agree' }
 
-export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUserIndividualProps) {
+export function AddUserIndividual({
+  onSubmit,
+  onCancel,
+  loading = false,
+  formId,
+  hideActions = false,
+  onCanSubmitChange,
+}: AddUserIndividualProps) {
   const affiliationSchoolOptions = useMemo(() => buildAffiliationSchoolOptions(), [])
   const [form] = Form.useForm<AddUserIndividualFormValues>()
   const allValues = Form.useWatch([], form) as AddUserIndividualFormValues | undefined
@@ -85,6 +97,10 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
     Boolean(allValues?.contact?.trim()) &&
     Boolean(allValues?.email?.trim()) &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(allValues?.email?.trim() ?? '')
+
+  useEffect(() => {
+    onCanSubmitChange?.(canSubmit)
+  }, [canSubmit, onCanSubmitChange])
 
   const handleFinish = async (values: AddUserIndividualFormValues) => {
     const request: CreateUserRequest = {
@@ -104,6 +120,7 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
 
   return (
     <Form
+      id={formId}
       form={form}
       layout="vertical"
       initialValues={INITIAL_VALUES}
@@ -379,20 +396,22 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
         </DetailInfoForm>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
-        <CmsButton
-          variant="secondary"
-          size="medium"
-          type="button"
-          onClick={onCancel}
-          disabled={loading}
-        >
-          닫기
-        </CmsButton>
-        <CmsButton variant="primary" size="medium" type="submit" disabled={loading || !canSubmit}>
-          신규 등록
-        </CmsButton>
-      </div>
+      {!hideActions ? (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            닫기
+          </CmsButton>
+          <CmsButton variant="primary" size="medium" type="submit" disabled={loading || !canSubmit}>
+            신규 등록
+          </CmsButton>
+        </div>
+      ) : null}
     </Form>
   )
 }

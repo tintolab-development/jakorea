@@ -32,6 +32,8 @@ import {
 import { useInstructorRoleRequestMutations } from '@/features/user/api/hooks/use-instructor-role-request-mutations'
 import { useAdminApprovalRequestMutations } from '@/features/user/api/hooks/use-admin-approval-request-mutations'
 import { handleError } from '@/shared/utils/error-handler'
+import { resendInstructorRoleNotificationRemote } from '@/features/user/api/members-api-client'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import './permission-request-page.css'
 
 const INSTRUCTOR_PERMISSION_APPROVE_MODAL_Z = 1150
@@ -624,10 +626,37 @@ export function PermissionRequestListPage() {
   )
 
   const handlePermissionResendNotification = useCallback(
-    (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
+    async (ctx: { userId: string; permissionRole: UserDetailPermissionRole }) => {
+      if (ctx.permissionRole === 'instructor' && isInstructorRoleRequestsRemoteEnabled()) {
+        const requestId = instructorListRef.current?.getRequestIdForUser(ctx.userId)
+        if (requestId == null) {
+          handleError(new Error('알림 재발송할 권한 신청 ID를 찾지 못했습니다.'), {
+            context: 'permissionRequestList.resendNotification.missingRequestId',
+          })
+          return
+        }
+        try {
+          await resendInstructorRoleNotificationRemote(requestId)
+          updateMockUserById(ctx.userId, {
+            permissionNotificationResentAt: new Date().toISOString(),
+          })
+        } catch (error) {
+          handleError(error, {
+            defaultMessage: getMemberApiErrorMessage(error, '알림 재발송에 실패했습니다.'),
+          })
+        }
+        return
+      }
+
+      // 관리자 승인 알림 재발송 API는 Orval members subset에 없음 — 로컬 시각만 갱신
       updateMockUserById(ctx.userId, {
         permissionNotificationResentAt: new Date().toISOString(),
       })
+      if (ctx.permissionRole === 'admin') {
+        handleError(new Error('관리자 권한 알림 재발송 API는 아직 제공되지 않습니다.'), {
+          context: 'permissionRequestList.resendNotification.adminApiMissing',
+        })
+      }
     },
     []
   )

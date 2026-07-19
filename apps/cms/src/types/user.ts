@@ -53,6 +53,8 @@ export interface SchoolAffiliatedTeacherRow {
   joinedAt: DateValue
   /** 연결된 CMS 회원 id — 있으면 행 클릭 시 해당 회원 상세로 이동 */
   linkedUserId?: UUID
+  /** remote: `PATCH …/affiliated-teachers/{teacherMemberId}/employment-status` 용 */
+  teacherMemberId?: number
 }
 
 // ===== 사용자 인터페이스 =====

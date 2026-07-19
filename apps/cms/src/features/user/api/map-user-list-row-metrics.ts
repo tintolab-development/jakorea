@@ -1,13 +1,6 @@
 import type { UserListRowMetrics } from '@/types/user'
 import type { UserListRowMetrics as ApiUserListRowMetrics } from '@/shared/api/generated/members/schemas/userListRowMetrics'
-
-function mapAdminPermissionVariant(
-  raw?: string
-): UserListRowMetrics['adminPermissionVariant'] | undefined {
-  const v = raw?.trim().toLowerCase()
-  if (v === 'manager' || v === 'partner' || v === 'viewer') return v
-  return undefined
-}
+import { roleCodeToAdminPermissionVariant } from '@/features/user/api/admin-approval-role'
 
 export function mapApiUserListRowMetrics(
   metrics?: ApiUserListRowMetrics | null
@@ -45,7 +38,7 @@ export function mapApiUserListRowMetrics(
   if (metrics.managedProgramInProgressCount != null) {
     mapped.managedProgramInProgressCount = metrics.managedProgramInProgressCount
   }
-  const adminVariant = mapAdminPermissionVariant(metrics.adminPermissionVariant)
+  const adminVariant = roleCodeToAdminPermissionVariant(metrics.adminPermissionVariant)
   if (adminVariant) mapped.adminPermissionVariant = adminVariant
   if (metrics.employmentStatusLabel?.trim()) {
     mapped.employmentStatusLabel = metrics.employmentStatusLabel.trim()

@@ -113,6 +113,8 @@ export type MembersPermissionListHandle = {
   applyInstructorPermissionApproved: (userId: string) => void
   applyInstructorPermissionRejected: (userId: string) => void
   applyInstructorPermissionPending: (userId: string) => void
+  /** 상세 알림 재발송용 — userId → instructor requestId */
+  getRequestIdForUser: (userId: string) => number | undefined
   clearRowSelection: () => void
 }
 
@@ -245,6 +247,10 @@ export const MembersPermissionList = forwardRef<
         setRows(prev =>
           prev.map(r => (r.userId === userId ? { ...r, approvalStatus: 'PENDING' as const } : r))
         )
+      },
+      getRequestIdForUser: (userId: string) => {
+        const row = rowsRef.current.find(r => r.userId === userId)
+        return row?.requestId ?? row?.adminId
       },
       clearRowSelection: () => {
         selectedRowKeysRef.current = []
@@ -682,7 +688,7 @@ export const MembersPermissionList = forwardRef<
           open
           onCancel={() => setBulkApproveBlockedSelectedCount(null)}
           title="일괄 신청 승인 불가 안내"
-          width={480}
+          width={600}
           description={`선택한 **${bulkApproveBlockedSelectedCount}**명의 회원 중 승인 완료 혹은 신청 반려 상태인 회원이 있습니다.\n다시 확인 해주세요.`}
           footer={
             <CmsButton
@@ -704,7 +710,7 @@ export const MembersPermissionList = forwardRef<
           open
           onCancel={() => setBulkRejectBlockedSelectedCount(null)}
           title="일괄 신청 반려 불가 안내"
-          width={480}
+          width={600}
           description={`선택한 **${bulkRejectBlockedSelectedCount}**명의 회원 중 승인 완료 혹은 신청 반려 상태인 회원이 있습니다.\n다시 확인 해주세요.`}
           footer={
             <CmsButton

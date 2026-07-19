@@ -36,15 +36,24 @@ import {
 } from '@/features/user/api/map-member-role'
 import {
   createMemberCommentRemote,
+  changeAdminAccountRoleRemote,
+  createAdminAccountRemote,
   deleteMemberRemote,
+  fetchAdminsPageRemote,
+  fetchMemberCommentsRemote,
   fetchMemberDetailRemote,
   fetchMemberExternalIdentifiersRemote,
   fetchMemberInstructorProfileRemote,
   fetchMembersPageRemote,
   preRegisterMemberRemote,
   updateMemberBasicInfoRemote,
+  updateMemberCommentRemote,
 } from '@/features/user/api/members-api-client'
-import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
+import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
+import {
+  MEMBER_DETAIL_SCREEN_CODE,
+  resolveLatestMemberAdminCommentDetail,
+} from '@/features/user/api/map-member-comments'
 import {
   hasAdminCommentPatch,
   mapPatchUserBasicInfoToApiRequest,
@@ -283,10 +292,21 @@ async function patchUserBasicInfoRemote(
     if (hasAdminCommentPatch(patch)) {
       const comment = patch.adminComment?.trim()
       if (comment) {
-        await createMemberCommentRemote(memberId, {
+        const existingComments = await fetchMemberCommentsRemote(memberId, {
           screenCode: MEMBER_DETAIL_SCREEN_CODE,
-          comment,
-        })
+        }).catch(() => [])
+        const latest = resolveLatestMemberAdminCommentDetail(
+          existingComments,
+          MEMBER_DETAIL_SCREEN_CODE
+        )
+        if (latest?.commentId != null) {
+          await updateMemberCommentRemote(memberId, latest.commentId, { comment })
+        } else {
+          await createMemberCommentRemote(memberId, {
+            screenCode: MEMBER_DETAIL_SCREEN_CODE,
+            comment,
+          })
+        }
       }
     }
 
@@ -318,19 +338,56 @@ async function patchUserBasicInfoRemote(
   }
 }
 
+async function resolveAdminAccountIdForMemberUser(
+  user: Pick<User, 'id' | 'email'>
+): Promise<number> {
+  const email = user.email?.trim()
+  const page = await fetchAdminsPageRemote({
+    ...(email ? { keyword: email } : {}),
+    page: 0,
+    size: 50,
+  })
+  const items = page.items ?? []
+  const idToken = user.id.replace(/^(admin-|member-)/, '')
+  const match = items.find(item => {
+    if (email && item.email?.trim().toLowerCase() === email.toLowerCase()) return true
+    if (item.uuid && (item.uuid === user.id || item.uuid === idToken)) return true
+    return false
+  })
+  if (match?.id == null) {
+    throw new Error('관리자 계정(adminId)을 찾지 못해 권한 유형을 변경할 수 없습니다.')
+  }
+  return match.id
+}
+
+/**
+ * 관리자 목록·상세 권한 유형 드롭다운
+ * → `PATCH /api/admin/admin-accounts/{adminId}/role` (승인 플로우와 동일)
+ */
 async function patchAdminPermissionVariantRemote(
   userId: UUID,
   variant: AdminPermissionTagVariant
 ): Promise<Omit<User, 'password'>> {
-  const memberId = resolveMemberIdForApi(userId)
-  void memberId
   try {
-    const response = await updateMemberBasicInfoRemote(memberId, {
-      listMetrics: { adminPermissionVariant: variant },
+    const existing = await getUserById(userId)
+    if (!existing) {
+      throw new Error('사용자를 찾을 수 없습니다.')
+    }
+
+    const adminId = await resolveAdminAccountIdForMemberUser(existing)
+    const roleCode = adminPermissionFeeGradeToRoleCode(variant)
+    await changeAdminAccountRoleRemote(adminId, {
+      roleCode,
+      reason: `CMS 관리자 회원 권한 유형 변경 (${roleCode})`,
     })
-    return mergeUserFromApiResponse(userId, response, {
-      listMetrics: { adminPermissionVariant: variant },
-    })
+
+    return {
+      ...existing,
+      listMetrics: {
+        ...existing.listMetrics,
+        adminPermissionVariant: variant,
+      },
+    }
   } catch (error) {
     throw new Error(getMemberApiErrorMessage(error, '관리자 권한 유형 변경에 실패했습니다.'))
   }
@@ -559,6 +616,32 @@ export interface CreateUserRequest {
 export async function createUser(request: CreateUserRequest): Promise<Omit<User, 'password'>> {
   if (isMembersRemoteEnabled()) {
     try {
+      if (request.role === 'ADMIN') {
+        const created = await createAdminAccountRemote({
+          email: request.email.trim(),
+          name: request.name.trim(),
+          phone: request.phone?.trim(),
+          gender: request.gender?.trim(),
+          birthDate: request.birthDate?.trim(),
+          roleCode: 'VIEWER',
+          reason: 'CMS 관리자 회원 신규 등록',
+        })
+        const uuid = created.uuid?.trim()
+        return {
+          id: uuid ? `admin-${uuid}` : `admin-account-${created.id ?? Date.now()}`,
+          email: created.email?.trim() || request.email,
+          name: created.name?.trim() || request.name,
+          phone: request.phone,
+          role: 'ADMIN',
+          adminLevel: 'ADMIN',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          registeredByAdmin: true,
+          listMetrics: { adminPermissionVariant: 'viewer' },
+        }
+      }
+
       const body = mapCreateUserRequestToPreRegister(request)
       const created = await preRegisterMemberRemote(body)
       const memberId = created.memberId

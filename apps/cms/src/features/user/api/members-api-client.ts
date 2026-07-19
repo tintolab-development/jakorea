@@ -6,6 +6,8 @@ import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 import { customInstance } from '@/shared/api/orval-mutator'
 import type {
+  AdminAccountCreateRequest,
+  AdminAccountResponse,
   AdminAccountVerificationRequest,
   AdminPreRegisterMemberRequest,
   AdminRoleChangeRequest,
@@ -13,6 +15,7 @@ import type {
   AdminRolePermissionUpdateRequest,
   InstructorDetailResponse,
   InstructorRoleReviewRequest,
+  ListAdminsParams,
   ListInstructorRoleRequestsParams,
   ListMembersParams,
   MemberDetailResponse,
@@ -23,6 +26,7 @@ import type {
 } from '@/shared/api/generated/members/schemas'
 import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
 import type { AdminMemberCommentCreateRequest } from '@/shared/api/generated/members/schemas/adminMemberCommentCreateRequest'
+import type { AdminCommentUpdateRequest } from '@/shared/api/generated/members/schemas/adminCommentUpdateRequest'
 import type { AdminMemberDeleteRequest } from '@/shared/api/generated/members/schemas/adminMemberDeleteRequest'
 import type { AdminCommentResponse } from '@/shared/api/generated/members/schemas/adminCommentResponse'
 import type { UserResponse } from '@/shared/api/generated/members/schemas/userResponse'
@@ -73,6 +77,47 @@ export async function createMemberCommentRemote(
   body: AdminMemberCommentCreateRequest
 ): Promise<AdminCommentResponse> {
   return unwrapApiBody(await membersApi.createMemberComment(memberId, body))
+}
+
+export async function updateMemberCommentRemote(
+  memberId: number,
+  commentId: number,
+  body: AdminCommentUpdateRequest
+): Promise<AdminCommentResponse> {
+  return unwrapApiBody(await membersApi.updateMemberComment(memberId, commentId, body))
+}
+
+export async function deleteMemberCommentRemote(memberId: number, commentId: number): Promise<void> {
+  await membersApi.deleteMemberComment(memberId, commentId)
+}
+
+export async function updateAffiliatedTeacherEmploymentStatusRemote(
+  memberId: number,
+  teacherMemberId: number,
+  employmentStatus: string
+): Promise<SchoolAffiliatedTeacherRow> {
+  return unwrapApiBody(
+    await membersApi.updateAffiliatedTeacherEmploymentStatus(memberId, teacherMemberId, {
+      employmentStatus,
+    })
+  )
+}
+
+export async function deleteMemberAdminProgramRemote(
+  memberId: number,
+  programId: number
+): Promise<void> {
+  await membersApi.deleteAdminProgram(memberId, programId)
+}
+
+export async function resendInstructorRoleNotificationRemote(requestId: number): Promise<void> {
+  await membersApi.resendNotification(requestId)
+}
+
+export async function createAdminAccountRemote(
+  body: AdminAccountCreateRequest
+): Promise<AdminAccountResponse> {
+  return unwrapApiBody(await membersApi.createAdmin(body))
 }
 
 export async function fetchMemberApplicationsRemote(
@@ -197,6 +242,13 @@ export async function verifyAdminAccountRemote(
   body: AdminAccountVerificationRequest
 ) {
   await membersApi.verifyAdmin(adminId, body)
+}
+
+/** Swagger `listAdmins` — `GET /api/admin/admin-accounts` */
+export async function fetchAdminsPageRemote(
+  params?: ListAdminsParams
+): Promise<PageResponseAdminAccountListItemResponse> {
+  return unwrapApiBody(await membersApi.listAdmins(params))
 }
 
 export async function changeAdminAccountRoleRemote(

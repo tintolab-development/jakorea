@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { Space } from 'antd'
-import type { User } from '@/types/user'
+import { useQueryClient } from '@tanstack/react-query'
+import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { UserDetailStrategySectionConfig } from '@/features/user/detail/strategies'
 import {
@@ -30,7 +31,11 @@ import {
 } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { applyConsentRecordsToSchema } from '@/features/user/api/map-member-consent-records'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { updateAffiliatedTeacherEmploymentStatusRemote } from '@/features/user/api/members-api-client'
+import { memberQueryKeys } from '@/features/user/api/member-query-keys'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { MemberDetailMockDataBanner } from '@/features/user/detail/ui/member-detail-mock-data-banner'
+import { handleError } from '@/shared/utils/error-handler'
 
 export interface UserDetailFullpageBasicTabContentProps {
   mode: 'default' | 'permission'
@@ -71,6 +76,7 @@ export function UserDetailFullpageBasicTabContent({
   onPermissionResendNotification,
 }: UserDetailFullpageBasicTabContentProps) {
   const currentUser = useAuthStore(state => state.user)
+  const queryClient = useQueryClient()
   const membersRemote = isMembersRemoteEnabled()
   const adminMemberProfileFieldsEditableWhenEditing =
     user.role !== 'ADMIN' || canEditAdminMemberInfo(currentUser, user)
@@ -104,6 +110,35 @@ export function UserDetailFullpageBasicTabContent({
   const affiliatedTeacherRows = membersRemote
     ? affiliatedTeachers
     : (user.schoolInfo?.affiliatedTeachers ?? [])
+
+  const handleEmploymentStatusChange = useCallback(
+    async (teacherId: string, status: SchoolTeacherEmploymentStatus) => {
+      if (!membersRemote || user.memberId == null) return
+      const row = affiliatedTeacherRows.find(r => r.id === teacherId)
+      const teacherMemberId = row?.teacherMemberId
+      if (teacherMemberId == null) {
+        handleError(new Error('교사 memberId가 없어 재직 현황을 저장할 수 없습니다.'), {
+          context: 'userDetailBasicTab.employmentStatus.missingTeacherMemberId',
+        })
+        return
+      }
+      try {
+        await updateAffiliatedTeacherEmploymentStatusRemote(
+          user.memberId,
+          teacherMemberId,
+          status
+        )
+        await queryClient.invalidateQueries({
+          queryKey: memberQueryKeys.affiliatedTeachers(user.memberId),
+        })
+      } catch (error) {
+        handleError(error, {
+          defaultMessage: getMemberApiErrorMessage(error, '재직 현황 변경에 실패했습니다.'),
+        })
+      }
+    },
+    [membersRemote, user.memberId, affiliatedTeacherRows, queryClient]
+  )
 
   const remoteConsentRows = useMemo(() => {
     if (!membersRemote || !basicTab.showConsentAgreement) return undefined
@@ -176,13 +211,13 @@ export function UserDetailFullpageBasicTabContent({
           {membersRemote && teachersError ? (
             <MemberDetailMockDataBanner message="소속 교사 목록 API 조회에 실패했습니다. mock 데이터가 표시될 수 있습니다." />
           ) : null}
-          {membersRemote ? (
-            <MemberDetailMockDataBanner message="재직 현황 변경 API는 미제공으로 mock 동작이 유지됩니다." />
-          ) : null}
           <SchoolAffiliatedTeachersSection
             rows={affiliatedTeacherRows}
             personalInfoRevealed={personalInfoRevealed}
             onLinkedUserClick={onNavigateToLinkedUser}
+            onEmploymentStatusChange={
+              membersRemote ? handleEmploymentStatusChange : undefined
+            }
           />
         </>
       ) : null}

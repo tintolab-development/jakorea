@@ -1,7 +1,7 @@
 import {
   ADMIN_PERMISSION_TAG_LABEL,
-  type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
+import { roleCodeToAdminPermissionVariant } from '@/features/user/api/admin-approval-role'
 import type { AdminAccountListItemResponse } from '@/shared/api/generated/members/schemas'
 import type {
   MemberPermissionApplicationRow,
@@ -18,19 +18,11 @@ function mapAdminAccountStatus(status?: string): MemberPermissionApplicationStat
   return 'PENDING'
 }
 
-function roleCodeToPermissionVariant(roleCode?: string): AdminPermissionTagVariant | null {
-  const upper = (roleCode ?? '').trim().toUpperCase()
-  if (upper === 'MASTER') return 'manager'
-  if (upper === 'PM' || upper === 'PARTNER') return 'partner'
-  if (upper === 'VIEWER') return 'viewer'
-  return null
-}
-
 function applicationTypeLabelForAdminAccount(item: AdminAccountListItemResponse): string {
   const roleName = item.roleName?.trim()
   if (roleName) return roleName
 
-  const variant = roleCodeToPermissionVariant(item.roleCode)
+  const variant = roleCodeToAdminPermissionVariant(item.roleCode)
   if (variant) return ADMIN_PERMISSION_TAG_LABEL[variant]
 
   const status = mapAdminAccountStatus(item.status)

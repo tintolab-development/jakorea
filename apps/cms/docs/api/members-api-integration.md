@@ -203,7 +203,12 @@ subset path prefix (`scripts/filter-openapi-members.mjs`):
 |---------|-------------|--------------|
 | 기본정보 핵심 | `members` | `GET /api/admin/users/{memberId}` |
 | 기본정보 저장 | `members` | `PATCH /api/admin/users/{memberId}` (`updateMemberBasicInfo`) |
-| 관리자 권한 유형(드롭다운) | `members` | 동일 PATCH (`listMetrics.adminPermissionVariant`) |
+| 관리자 권한 유형(드롭다운) | `members` | `PATCH /api/admin/admin-accounts/{adminId}/role` (`changeAdminRole`, roleCode: MASTER/PARTNER/VIEWER). adminId는 이메일·uuid로 `GET /api/admin/admin-accounts`에서 해석 |
+| 관리자 신규 등록 | `members` | `POST /api/admin/admin-accounts` (`createAdmin`, 기본 roleCode=`VIEWER`). 학교·강사·일반은 기존 `pre-register` |
+| 소속 교사 재직 현황 | `members` | `PATCH …/affiliated-teachers/{teacherMemberId}/employment-status` |
+| 관리자 코멘트 저장 | `members` | 기존 코멘트 있으면 `PATCH …/comments/{commentId}`, 없으면 `POST …/comments` |
+| 담당 프로그램 이력 삭제 | `members` | `DELETE …/admin-programs/{programId}` |
+| 강사 권한 알림 재발송 | `instructorRoleRequests` \| `members` | `POST …/instructor-role-requests/{requestId}/resend-notification` |
 | 관리자 코멘트 | `members` | `GET/POST .../comments` (최신 1건 표시) |
 | 소속 교사 | `members` | `GET .../affiliated-teachers` |
 | 강사 프로필·이력서 일부 | `members` + INSTRUCTOR | `GET .../instructor-profile` (계좌·자격증 등 일부 mock) |

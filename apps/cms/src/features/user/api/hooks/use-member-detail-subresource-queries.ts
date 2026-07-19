@@ -20,6 +20,7 @@ import {
 import {
   MEMBER_DETAIL_SCREEN_CODE,
   resolveLatestMemberAdminComment,
+  resolveLatestMemberAdminCommentDetail,
 } from '@/features/user/api/map-member-comments'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
@@ -43,6 +44,7 @@ export function useMemberCommentsQuery(
       return {
         comments,
         latestComment: resolveLatestMemberAdminComment(comments, screenCode),
+        latestCommentDetail: resolveLatestMemberAdminCommentDetail(comments, screenCode),
       }
     },
     meta: {

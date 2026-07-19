@@ -17,7 +17,7 @@ import {
   UserDetailFullPageModal,
   USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
 } from '@/pages/users/user-detail-fullpage-modal'
-import { AddUserIndividual } from '@/features/user/shared/ui/add-user-individual'
+import { MemberRegisterModal } from '@/features/user/shared/ui/member-register-modal'
 import {
   AdminRegisterModal,
   type AdminRegisterModalFormValues,
@@ -45,7 +45,6 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { handleError } from '@/shared/utils/error-handler'
 import {
   ActionResultModal,
-  ContentModal,
   DeleteGuideModal,
   buildDeleteCompletedMessageBulk,
   buildDeleteCompletedMessageSingle,
@@ -168,11 +167,14 @@ export function UserListPage() {
   const {
     users: listUsers,
     total: listTotal,
-    isLoading: listLoading,
+    isFetching: listFetching,
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
   } = useInfiniteUserList(listQueryFilters)
+
+  /** 조회 버튼 — 무한스크롤 next page fetch는 제외 */
+  const filterSearchLoading = listFetching && !isFetchingNextPage
 
   // 무한 스크롤: 하단 센티넬이 보이면 다음 페이지 로드
   const { ref: loadMoreRef, inView } = useInView({ rootMargin: '200px', threshold: 0 })
@@ -822,7 +824,7 @@ export function UserListPage() {
         }
         onFilterChange={handleFilterChange}
         onSearch={applySearch}
-        loading={listLoading}
+        loading={filterSearchLoading}
         title={memberListPageTitle(resolvedMemberListKind)}
         description={`총 ${listTotal.toLocaleString()}건`}
         actions={
@@ -923,19 +925,12 @@ export function UserListPage() {
         detailCloseIntentRef={detailCloseIntentRef}
       />
 
-      <ContentModal
+      <MemberRegisterModal
         open={createModalOpen}
-        title="회원 신규 등록"
-        onCancel={closeCreateModal}
-        footer={null}
-        width={1400}
-      >
-        <AddUserIndividual
-          onSubmit={handleCreateUser}
-          onCancel={closeCreateModal}
-          loading={loading}
-        />
-      </ContentModal>
+        onClose={closeCreateModal}
+        onSubmit={handleCreateUser}
+        loading={loading}
+      />
 
       <SchoolRegisterModal
         open={schoolRegisterOpen}

@@ -1,0 +1,23 @@
+/**
+ * 회원 신규 등록 — 콘텐츠 높이에 맞추고, 뷰포트보다 길 때만 본문 스크롤
+ * (공통 --bounded 의 880px 캡이 짧은 오버플로·내부 스크롤을 만들므로 해제)
+ */
+
+.member-register-modal.teal-header-modal--bounded .ant-modal-content {
+  height: max-content;
+  max-height: calc(100dvh - 48px);
+}
+
+.member-register-modal.teal-header-modal--bounded .ant-modal-body {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.member-register-modal.teal-header-modal--bounded .teal-header-modal__body {
+  flex: 0 1 auto;
+  min-height: 0;
+  /* 콘텐츠가 뷰포트 안에 들어가면 스크롤바 없음 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

@@ -9,10 +9,32 @@ function mapEmploymentStatus(raw?: string): SchoolTeacherEmploymentStatus {
   return 'ACTIVE'
 }
 
+function resolveTeacherMemberId(row: ApiSchoolAffiliatedTeacherRow): number | undefined {
+  const extended = row as ApiSchoolAffiliatedTeacherRow & {
+    teacherMemberId?: number
+    memberId?: number
+  }
+  if (typeof extended.teacherMemberId === 'number' && Number.isFinite(extended.teacherMemberId)) {
+    return extended.teacherMemberId
+  }
+  if (typeof extended.memberId === 'number' && Number.isFinite(extended.memberId)) {
+    return extended.memberId
+  }
+  const fromId = Number(row.id)
+  if (Number.isFinite(fromId) && String(fromId) === String(row.id).trim()) {
+    return fromId
+  }
+  return undefined
+}
+
 export function mapAffiliatedTeacherRow(
   row: ApiSchoolAffiliatedTeacherRow
 ): SchoolAffiliatedTeacherRow {
-  const id = row.id?.trim() || row.linkedUserId?.trim() || `teacher-${crypto.randomUUID()}`
+  const teacherMemberId = resolveTeacherMemberId(row)
+  const id =
+    row.id?.trim() ||
+    row.linkedUserId?.trim() ||
+    (teacherMemberId != null ? String(teacherMemberId) : `teacher-${crypto.randomUUID()}`)
   return {
     id,
     name: row.name?.trim() || '-',
@@ -22,6 +44,7 @@ export function mapAffiliatedTeacherRow(
     employmentStatus: mapEmploymentStatus(row.employmentStatus),
     joinedAt: row.joinedAt ?? new Date().toISOString(),
     ...(row.linkedUserId?.trim() ? { linkedUserId: row.linkedUserId.trim() } : {}),
+    ...(teacherMemberId != null ? { teacherMemberId } : {}),
   }
 }
 
