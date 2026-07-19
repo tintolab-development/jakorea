@@ -8,7 +8,17 @@ import prettier from 'eslint-config-prettier'
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/.turbo/**', '**/node_modules/**']
+    ignores: [
+      '**/dist/**',
+      '**/.turbo/**',
+      '**/node_modules/**',
+      '**/playwright-report/**',
+      '**/test-results/**',
+      '**/blob-report/**',
+      '**/.playwright-mcp/**',
+      '**/playwright/.auth/**',
+      '**/tests/e2e/.auth/**',
+    ],
   },
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
