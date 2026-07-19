@@ -60,6 +60,9 @@ type ProgramRegistrationBasicInfoParagraphProps = {
   onSponsorIdChange?: (sponsorId: string) => void
   sponsorContactId?: string
   onSponsorContactIdChange?: (contactId: string) => void
+  /** controlled — 부모(editor)에서 등록 완료 스냅샷으로 전달 */
+  programTitleKo?: string
+  onProgramTitleKoChange?: (title: string) => void
 }
 
 export function ProgramRegistrationBasicInfoParagraph({
@@ -74,6 +77,8 @@ export function ProgramRegistrationBasicInfoParagraph({
   onSponsorIdChange,
   sponsorContactId: sponsorContactIdProp,
   onSponsorContactIdChange,
+  programTitleKo: programTitleKoProp,
+  onProgramTitleKoChange,
 }: ProgramRegistrationBasicInfoParagraphProps) {
   const [businessField, setBusinessField] = useState('')
   const [partnerInvolvement, setPartnerInvolvement] = useState<'yes' | 'no'>('yes')
@@ -87,11 +92,14 @@ export function ProgramRegistrationBasicInfoParagraph({
 
   const [localSponsorId, setLocalSponsorId] = useState('')
   const [localManagerContactId, setLocalManagerContactId] = useState('')
+  const [localProgramTitleKo, setLocalProgramTitleKo] = useState('')
   const isSponsorControlled = onSponsorIdChange != null
+  const isTitleControlled = onProgramTitleKoChange != null
   const sponsorId = isSponsorControlled ? (sponsorIdProp ?? '') : localSponsorId
   const managerContactId = isSponsorControlled
     ? (sponsorContactIdProp ?? '')
     : localManagerContactId
+  const programTitleKo = isTitleControlled ? (programTitleKoProp ?? '') : localProgramTitleKo
   const setSponsorId = (next: string) => {
     if (isSponsorControlled) {
       onSponsorIdChange(next)
@@ -105,6 +113,13 @@ export function ProgramRegistrationBasicInfoParagraph({
       return
     }
     setLocalManagerContactId(next)
+  }
+  const setProgramTitleKo = (next: string) => {
+    if (isTitleControlled) {
+      onProgramTitleKoChange(next)
+      return
+    }
+    setLocalProgramTitleKo(next)
   }
   const [detailedProgramId, setDetailedProgramId] = useState<string>('')
   const [educationVenueKind, setEducationVenueKind] = useState<'inside' | 'outside' | 'other'>(
@@ -165,6 +180,8 @@ export function ProgramRegistrationBasicInfoParagraph({
                 inputSize="medium"
                 placeholder="대표 프로그램명을 입력하세요"
                 width="100%"
+                value={programTitleKo}
+                onChange={e => setProgramTitleKo(e.target.value)}
               />
             }
             view="-"

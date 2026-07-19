@@ -23,6 +23,7 @@ import { resolveTemplateEditorPanels } from '@/features/template/ui/template-ren
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
+import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { useCmsAlert } from '@/shared/ui'
 
 export function GeneralProgramApplicationTemplateEditModal({
@@ -127,8 +128,8 @@ export function GeneralProgramApplicationTemplateEditModal({
       zIndex={1200}
       onPreview={vm.handlePreview}
       onSave={handleSave}
-      leftContent={panels.leftContent}
-      rightNavigation={panels.rightNavigation}
+      leftContent={vm.isDraftLoading ? <FormDraftLoading /> : panels.leftContent}
+      rightNavigation={vm.isDraftLoading ? null : panels.rightNavigation}
     />
   )
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import {
   loadWritingFormTemplateDraft,
@@ -32,6 +33,8 @@ export const UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE = 'registration-ujat' as co
 export type UseUjatProgramRegistrationEditorOptions = {
   /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
   onTemplateDraftSaveConfirmed?: () => void
+  /** true면 임시저장 복원 없이 시드로 시작 (신규 등록) */
+  skipDraftRestore?: boolean
 }
 
 export function useUjatProgramRegistrationEditor(
@@ -40,6 +43,7 @@ export function useUjatProgramRegistrationEditor(
   options?: UseUjatProgramRegistrationEditorOptions
 ) {
   const onTemplateDraftSaveConfirmed = options?.onTemplateDraftSaveConfirmed
+  const skipDraftRestore = options?.skipDraftRestore === true
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
   const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
 
@@ -50,47 +54,69 @@ export function useUjatProgramRegistrationEditor(
     isWritingUserPreviewOpen,
   } = useTemplateWritingPreview()
 
-  const [draft, setDraft] = useState<WritingFormDraft>(() =>
-    normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
-  )
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
-    () => normalizeWritingFormDraft(createUjatProgramRegistrationDraft()).paragraphs[0]?.id ?? null
-  )
+  const [draft, setDraft] = useState<WritingFormDraft>(() => EMPTY_WRITING_FORM_DRAFT)
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null)
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
+  const [isDraftLoading, setIsDraftLoading] = useState(() => active)
+
+  const resetToSeed = useCallback(() => {
+    resetUjatProgramRegistrationOverlay()
+    const next = normalizeWritingFormDraft(createUjatProgramRegistrationDraft())
+    setDraft(next)
+    setActiveParagraphId(next.paragraphs[0]?.id ?? null)
+    setSingleItemListActiveItemId(null)
+  }, [])
 
   useEffect(() => {
-    if (!active) return
+    if (!active) {
+      setIsDraftLoading(false)
+      return
+    }
 
     let cancelled = false
     resetUjatProgramRegistrationOverlay()
 
-    void loadWritingFormTemplateDraft(UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE).then(saved => {
-      if (cancelled) return
-      if (saved?.draft) {
-        if (saved.overlay && Object.keys(saved.overlay).length > 0) {
-          patchUjatProgramRegistrationOverlay(saved.overlay)
+    if (skipDraftRestore) {
+      setIsDraftLoading(false)
+      resetToSeed()
+      return
+    }
+
+    setIsDraftLoading(true)
+    setDraft(EMPTY_WRITING_FORM_DRAFT)
+    setActiveParagraphId(null)
+
+    void loadWritingFormTemplateDraft(UJAT_PROGRAM_REGISTRATION_TEMPLATE_CODE)
+      .then(saved => {
+        if (cancelled) return
+        if (saved?.draft) {
+          if (saved.overlay && Object.keys(saved.overlay).length > 0) {
+            patchUjatProgramRegistrationOverlay(saved.overlay)
+          }
+          const next = normalizeWritingFormDraft(saved.draft)
+          setDraft(next)
+          setActiveParagraphId(next.paragraphs[0]?.id ?? null)
+          setSingleItemListActiveItemId(null)
+          return
         }
-        const next = normalizeWritingFormDraft(saved.draft)
+
+        const legacy = loadUjatRegistrationTemplateSave()
+        if (legacy?.overlay && Object.keys(legacy.overlay).length > 0) {
+          patchUjatProgramRegistrationOverlay(legacy.overlay)
+        }
+        const next = normalizeWritingFormDraft(legacy?.draft ?? createUjatProgramRegistrationDraft())
         setDraft(next)
         setActiveParagraphId(next.paragraphs[0]?.id ?? null)
         setSingleItemListActiveItemId(null)
-        return
-      }
-
-      const legacy = loadUjatRegistrationTemplateSave()
-      if (legacy?.overlay && Object.keys(legacy.overlay).length > 0) {
-        patchUjatProgramRegistrationOverlay(legacy.overlay)
-      }
-      const next = normalizeWritingFormDraft(legacy?.draft ?? createUjatProgramRegistrationDraft())
-      setDraft(next)
-      setActiveParagraphId(next.paragraphs[0]?.id ?? null)
-      setSingleItemListActiveItemId(null)
-    })
+      })
+      .finally(() => {
+        if (!cancelled) setIsDraftLoading(false)
+      })
 
     return () => {
       cancelled = true
     }
-  }, [active])
+  }, [active, resetToSeed, skipDraftRestore])
 
   useEffect(() => {
     if (!active) {
@@ -234,6 +260,7 @@ export function useUjatProgramRegistrationEditor(
 
   return {
     draft,
+    isDraftLoading,
     activeParagraphId,
     singleItemListActiveItemId,
     structureLockedParagraphIds:

@@ -96,6 +96,9 @@ export interface ProgramRegistrationParagraphBodyOptions {
   onSponsorIdChange?: (sponsorId: string) => void
   sponsorContactId?: string
   onSponsorContactIdChange?: (contactId: string) => void
+  /** 일반 등록 — 대표 프로그램명(국문) → 생성·목록 title */
+  programTitleKo?: string
+  onProgramTitleKoChange?: (title: string) => void
 }
 
 export function renderProgramRegistrationParagraphBody(
@@ -131,6 +134,8 @@ export function renderProgramRegistrationParagraphBody(
           onSponsorIdChange={options.onSponsorIdChange}
           sponsorContactId={options.sponsorContactId}
           onSponsorContactIdChange={options.onSponsorContactIdChange}
+          programTitleKo={options.programTitleKo}
+          onProgramTitleKoChange={options.onProgramTitleKoChange}
         />
       )
     case PROGRAM_REGISTRATION_IDS.businessKpi:

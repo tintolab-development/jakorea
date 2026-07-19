@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import type { TemplateWritingUserPreviewSession } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import {
   loadWritingFormTemplateDraft,
@@ -58,6 +59,8 @@ export type FormEditorNavLine = { id: string; displayLine: string }
 export type WritingFormEditorWithUserPreviewResult = {
   headerTitle: string
   draft: WritingFormDraft
+  /** draft API(또는 시드) 로드 완료 전 */
+  isDraftLoading: boolean
   activeParagraphId: string | null
   singleItemListActiveItemId: string | null
   pinnedTop: FormEditorNavLine | null
@@ -103,13 +106,10 @@ export function useWritingFormEditorWithUserPreview(
     isWritingUserPreviewOpen,
   } = useTemplateWritingPreview()
 
-  const [draft, setDraft] = useState<WritingFormDraft>(() =>
-    normalizeWritingFormDraft(getInitialDraft())
-  )
+  const [draft, setDraft] = useState<WritingFormDraft>(() => EMPTY_WRITING_FORM_DRAFT)
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(() =>
-    getDefaultActiveParagraphId(normalizeWritingFormDraft(getInitialDraft()))
-  )
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null)
+  const [isDraftLoading, setIsDraftLoading] = useState(() => open)
 
   const applyDraftSnapshot = useCallback(
     (next: WritingFormDraft) => {
@@ -122,23 +122,34 @@ export function useWritingFormEditorWithUserPreview(
   )
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      setIsDraftLoading(false)
+      return
+    }
 
     if (templateCode != null && templateCode !== '') {
       let cancelled = false
-      void loadWritingFormTemplateDraft(templateCode).then(saved => {
-        if (cancelled) return
-        if (saved?.draft) {
-          applyDraftSnapshot(saved.draft)
-          return
-        }
-        applyDraftSnapshot(getInitialDraft())
-      })
+      setIsDraftLoading(true)
+      setDraft(EMPTY_WRITING_FORM_DRAFT)
+      setActiveParagraphId(null)
+      void loadWritingFormTemplateDraft(templateCode)
+        .then(saved => {
+          if (cancelled) return
+          if (saved?.draft) {
+            applyDraftSnapshot(saved.draft)
+            return
+          }
+          applyDraftSnapshot(getInitialDraft())
+        })
+        .finally(() => {
+          if (!cancelled) setIsDraftLoading(false)
+        })
       return () => {
         cancelled = true
       }
     }
 
+    setIsDraftLoading(false)
     applyDraftSnapshot(getInitialDraft())
   }, [open, applyDraftSnapshot, getInitialDraft, templateCode])
 
@@ -280,6 +291,7 @@ export function useWritingFormEditorWithUserPreview(
   return {
     headerTitle: previewHeaderTitle,
     draft,
+    isDraftLoading,
     activeParagraphId,
     singleItemListActiveItemId,
     pinnedTop,

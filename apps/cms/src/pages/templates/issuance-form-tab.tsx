@@ -40,6 +40,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
 import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
+import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import type {
   FormUpdateParagraph,
   RenderFormParagraphBodyOptions,
@@ -811,7 +812,17 @@ export function IssuanceFormTab() {
                   : false
         }
         leftContent={
-          isPaymentStatementIssuance ? (
+          (
+            isPaymentStatementIssuance
+              ? paymentStatementVm.isDraftLoading
+              : isPaymentStatementPreConsent
+                ? paymentStatementPreConsentVm.isDraftLoading
+                : isSettlementApplicationIssuance
+                  ? settlementVm.isDraftLoading
+                  : false
+          ) ? (
+            <FormDraftLoading />
+          ) : isPaymentStatementIssuance ? (
             <PaymentStatementIssuanceEditorLeftColumn vm={paymentStatementVm} />
           ) : isPaymentStatementPreConsent ? (
             <PaymentStatementPreConsentEditorLeftColumn vm={paymentStatementPreConsentVm} />

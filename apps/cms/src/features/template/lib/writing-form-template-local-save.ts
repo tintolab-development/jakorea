@@ -82,6 +82,19 @@ export function persistWritingFormTemplateSave(args: {
   }
 }
 
+/** 신규 등록 등 — 해당 templateId 임시저장본 제거 */
+export function removeWritingFormTemplateSave(templateId: string): void {
+  const file = readFile()
+  if (!(templateId in file.byTemplateId)) return
+  delete file.byTemplateId[templateId]
+  writeFile(file)
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent(WRITING_FORM_TEMPLATE_SAVE_EVENT, { detail: { templateId } })
+    )
+  }
+}
+
 /** localStorage 우선 저장 + formsSurveys API 동기화(활성 시 fire-and-forget) */
 export async function persistWritingFormTemplateDraft(args: {
   templateId: string

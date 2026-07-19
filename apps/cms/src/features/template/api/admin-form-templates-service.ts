@@ -107,7 +107,7 @@ export function getMockIssuanceFormSections(): TemplateSection[] {
 }
 
 async function resolveTemplateVersionId(templateCode: string): Promise<number | null> {
-  const cached = getFormTemplateVersionCacheEntry(templateCode)
+  let cached = getFormTemplateVersionCacheEntry(templateCode)
   if (cached?.templateVersionId != null) return cached.templateVersionId
   if (cached?.latestVersionId != null) {
     upsertFormTemplateVersionCacheEntry({
@@ -119,7 +119,28 @@ async function resolveTemplateVersionId(templateCode: string): Promise<number | 
     })
     return cached.latestVersionId
   }
-  if (cached?.templateId == null) return null
+
+  // 작성 양식 목록을 아직 안 본 경우 — 목록 조회로 캐시 워밍 후 재시도
+  if (cached?.templateId == null) {
+    try {
+      await getWritingFormSectionsRemote()
+    } catch {
+      return null
+    }
+    cached = getFormTemplateVersionCacheEntry(templateCode)
+    if (cached?.templateVersionId != null) return cached.templateVersionId
+    if (cached?.latestVersionId != null) {
+      upsertFormTemplateVersionCacheEntry({
+        templateCode,
+        templateId: cached.templateId,
+        templateVersionId: cached.latestVersionId,
+        latestVersionId: cached.latestVersionId,
+        latestVersionNo: cached.latestVersionNo,
+      })
+      return cached.latestVersionId
+    }
+    if (cached?.templateId == null) return null
+  }
 
   const versions = await fetchFormTemplateVersionsRemote(cached.templateId)
   const latest =

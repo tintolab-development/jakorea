@@ -56,6 +56,7 @@ import {
   buildProgramRegistrationEditorState,
   type ProgramRegistrationEditorState,
 } from '@/features/template/lib/program-registration-editor-state'
+import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
@@ -201,6 +202,8 @@ export type UseProgramRegistrationEditorOptions = {
   onTemplateDraftSaveConfirmed?: () => void
   /** forms-surveys draft API 연동 대상 templateCode (`registration-general` · `registration-economy`) */
   templateCode?: string
+  /** true면 임시저장 복원 없이 시드로 시작 (신규 등록) */
+  skipDraftRestore?: boolean
 }
 
 export function useProgramRegistrationEditor(
@@ -215,6 +218,7 @@ export function useProgramRegistrationEditor(
   const onRegistrationSaved = editorOptions?.onRegistrationSaved
   const onTemplateDraftSaveConfirmed = editorOptions?.onTemplateDraftSaveConfirmed
   const templateCode = editorOptions?.templateCode
+  const skipDraftRestore = editorOptions?.skipDraftRestore === true
   const { showAlert } = useCmsAlert()
   const usesTemplateDraftApi = templateCode != null && templateCode !== ''
   const completionPromiseRef = useRef<Promise<void> | null>(null)
@@ -227,14 +231,9 @@ export function useProgramRegistrationEditor(
     [programRegistrationFormVariant]
   )
 
-  const [draft, setDraft] = useState<WritingFormDraft>(() =>
-    normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant))
-  )
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
-    () =>
-      normalizeWritingFormDraft(createProgramRegistrationDraft(programRegistrationFormVariant))
-        .paragraphs[0]?.id ?? null
-  )
+  const [draft, setDraft] = useState<WritingFormDraft>(() => EMPTY_WRITING_FORM_DRAFT)
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null)
+  const [isDraftLoading, setIsDraftLoading] = useState(() => active)
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
   const [participant, setParticipant] = useState<ProgramRegistrationParticipantSelection>({
     individual: true,
@@ -264,6 +263,7 @@ export function useProgramRegistrationEditor(
     useState<ProgramRegistrationEducationScheduleMode>(defaultEducationScheduleMode)
   const [sponsorId, setSponsorId] = useState('')
   const [sponsorContactId, setSponsorContactId] = useState('')
+  const [programTitleKo, setProgramTitleKo] = useState('')
 
   const {
     openWritingUserPreview,
@@ -332,39 +332,57 @@ export function useProgramRegistrationEditor(
   }, [applyEditorStateSnapshot, programRegistrationFormVariant])
 
   useEffect(() => {
-    if (!active) return
+    if (!active) {
+      setIsDraftLoading(false)
+      return
+    }
+
+    if (skipDraftRestore) {
+      setIsDraftLoading(false)
+      resetRegistrationEditorToSeed()
+      return
+    }
 
     if (usesTemplateDraftApi && templateCode) {
       let cancelled = false
+      setIsDraftLoading(true)
+      setDraft(EMPTY_WRITING_FORM_DRAFT)
+      setActiveParagraphId(null)
       const defaults = createDefaultRegistrationEditorState(programRegistrationFormVariant)
 
-      void loadWritingFormTemplateDraft(templateCode).then(saved => {
-        if (cancelled) return
-        if (saved?.draft) {
-          const normalized = normalizeWritingFormDraft(saved.draft)
-          setDraft(normalized)
-          const restored = applyProgramRegistrationEditorState(saved.editorState, defaults)
-          applyEditorStateSnapshot(restored)
-          setActiveParagraphId(
-            restored.activeParagraphId ?? normalized.paragraphs[0]?.id ?? null
-          )
-          setSingleItemListActiveItemId(null)
-          return
-        }
-        resetRegistrationEditorToSeed()
-      })
+      void loadWritingFormTemplateDraft(templateCode)
+        .then(saved => {
+          if (cancelled) return
+          if (saved?.draft) {
+            const normalized = normalizeWritingFormDraft(saved.draft)
+            setDraft(normalized)
+            const restored = applyProgramRegistrationEditorState(saved.editorState, defaults)
+            applyEditorStateSnapshot(restored)
+            setActiveParagraphId(
+              restored.activeParagraphId ?? normalized.paragraphs[0]?.id ?? null
+            )
+            setSingleItemListActiveItemId(null)
+            return
+          }
+          resetRegistrationEditorToSeed()
+        })
+        .finally(() => {
+          if (!cancelled) setIsDraftLoading(false)
+        })
 
       return () => {
         cancelled = true
       }
     }
 
+    setIsDraftLoading(false)
     resetRegistrationEditorToSeed()
   }, [
     active,
     applyEditorStateSnapshot,
     programRegistrationFormVariant,
     resetRegistrationEditorToSeed,
+    skipDraftRestore,
     templateCode,
     usesTemplateDraftApi,
   ])
@@ -619,6 +637,10 @@ export function useProgramRegistrationEditor(
     setSponsorContactId(next)
   }, [])
 
+  const onProgramTitleKoChange = useCallback((next: string) => {
+    setProgramTitleKo(next)
+  }, [])
+
   const paragraphBodyOptions = useMemo(
     () =>
       buildProgramRegistrationParagraphBodyOptions({
@@ -666,6 +688,8 @@ export function useProgramRegistrationEditor(
               onSponsorIdChange,
               sponsorContactId,
               onSponsorContactIdChange,
+              programTitleKo,
+              onProgramTitleKoChange,
             }
           : {}),
       }),
@@ -709,6 +733,8 @@ export function useProgramRegistrationEditor(
       onSponsorIdChange,
       sponsorContactId,
       onSponsorContactIdChange,
+      programTitleKo,
+      onProgramTitleKoChange,
     ]
   )
 
@@ -854,6 +880,7 @@ export function useProgramRegistrationEditor(
           programType,
           variant: programRegistrationFormVariant,
           sponsorId: sponsorId.trim() || undefined,
+          title: programTitleKo.trim() || undefined,
         })
         onRegistrationSaved(createdProgram)
       } catch (error) {
@@ -878,6 +905,7 @@ export function useProgramRegistrationEditor(
     participant,
     persistTemplateDraftIfNeeded,
     programRegistrationFormVariant,
+    programTitleKo,
     programType,
     showAlert,
     sponsorId,
@@ -890,6 +918,7 @@ export function useProgramRegistrationEditor(
 
   return {
     draft,
+    isDraftLoading,
     activeParagraphId,
     singleItemListActiveItemId,
     structureLockedParagraphIds: seedParagraphIds,

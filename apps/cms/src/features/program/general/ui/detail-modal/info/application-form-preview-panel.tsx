@@ -19,9 +19,11 @@ import {
   WRITING_FORM_TEMPLATE_SAVE_EVENT,
 } from '@/features/template/lib/writing-form-template-local-save'
 import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
+import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
 import '@/features/template/ui/form-set/application-form/volunteer/program-application-form-volunteer.css'
+
 export function ApplicationFormPreviewPanel({
   program,
   applicationTab,
@@ -114,6 +116,14 @@ export function ApplicationFormPreviewPanel({
   )
 
   if (!active) return null
+
+  if (vm.isDraftLoading) {
+    return (
+      <div className="application-view__preview-panel application-view__preview-panel--loading">
+        <FormDraftLoading />
+      </div>
+    )
+  }
 
   return (
     <div className="application-view__preview-panel application-view__preview-panel--readonly">

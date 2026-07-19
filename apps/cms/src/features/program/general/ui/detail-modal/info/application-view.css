@@ -80,6 +80,19 @@
   min-width: 0;
 }
 
+/* draft 로딩: 미리보기 본문(회색) 영역 중앙에 스피너 */
+.application-view__preview-panel--loading {
+  flex: 1 1 auto;
+  align-items: stretch;
+  justify-content: center;
+  min-height: calc(100dvh - 280px);
+}
+
+.application-view__preview-panel--loading .form-draft-loading {
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+
 .application-view__preview-panel .form-editor-left {
   width: 100%;
   max-width: 1400px;

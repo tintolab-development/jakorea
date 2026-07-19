@@ -130,12 +130,30 @@ export function useTemplateEditorVm({
     ujatProgramRegistrationVm.handleSave,
   ])
 
+  const isDraftLoading = useMemo(() => {
+    if (isProgramRegistration) return programRegistrationVm.isDraftLoading
+    if (isUjatProgramRegistration) return ujatProgramRegistrationVm.isDraftLoading
+    if (isParticipantApplication) return programParticipantApplicationVm.isDraftLoading
+    if (isWritingSurveyList) return surveyListEditor.isDraftLoading
+    return false
+  }, [
+    isParticipantApplication,
+    isProgramRegistration,
+    isUjatProgramRegistration,
+    isWritingSurveyList,
+    programParticipantApplicationVm.isDraftLoading,
+    programRegistrationVm.isDraftLoading,
+    surveyListEditor.isDraftLoading,
+    ujatProgramRegistrationVm.isDraftLoading,
+  ])
+
   return {
     registryEntry: entry,
     isProgramRegistration,
     isUjatProgramRegistration,
     isParticipantApplication,
     isWritingSurveyList,
+    isDraftLoading,
     programRegistrationVm,
     ujatProgramRegistrationVm,
     programParticipantApplicationVm,

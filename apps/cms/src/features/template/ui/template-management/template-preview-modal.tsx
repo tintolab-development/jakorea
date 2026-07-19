@@ -6,6 +6,7 @@ import {
 import { TEMPLATE_FORM_MODAL_DESCRIPTION } from '@/features/template/model/template-registry/template-registry'
 import { resolveTemplateEditorPanels } from '@/features/template/ui/template-renderers/resolve-template-editor-panels'
 import type { TemplateRendererContext } from '@/features/template/ui/template-renderers/template-renderer-types'
+import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 
 export type TemplatePreviewModalProps = {
   open: boolean
@@ -36,6 +37,7 @@ export function TemplatePreviewModal({
     () => resolveTemplateEditorPanels(rendererContext),
     [rendererContext]
   )
+  const isDraftLoading = rendererContext.editorVm.isDraftLoading === true
 
   return (
     <TemplateFullpageModal
@@ -48,8 +50,8 @@ export function TemplatePreviewModal({
       onSave={onSave}
       registrationUserMode={registrationUserMode}
       footerAction={footerAction}
-      leftContent={panels.leftContent}
-      rightNavigation={panels.rightNavigation}
+      leftContent={isDraftLoading ? <FormDraftLoading /> : panels.leftContent}
+      rightNavigation={isDraftLoading ? null : panels.rightNavigation}
     />
   )
 }

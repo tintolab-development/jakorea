@@ -7,7 +7,8 @@ const DESIGN_H = 1682
 
 /**
  * 수료증·인증서 편집 좌측 미리보기 —
- * 절대좌표 캔버스(1208×1682)를 컨테이너 폭에 맞게 `transform: scale`로만 축소한다.
+ * 절대좌표 캔버스(1208×1682)를 컨테이너 폭에 맞게 `transform: scale`로 맞춘다.
+ * 좌측 열이 우측(380)과 32px 갭만 남기고 넓어지므로, 축소뿐 아니라 확대도 허용한다.
  * `max-width`로 캔버스만 줄이면 배경은 줄고 오버레이 px는 그대로라 레이아웃이 깨진다.
  */
 export function FormCertificateEditScaleViewport({ children }: { children: ReactNode }) {
@@ -21,7 +22,7 @@ export function FormCertificateEditScaleViewport({ children }: { children: React
     const update = () => {
       const w = el.clientWidth
       if (w <= 0) return
-      setScale(Math.min(1, w / DESIGN_W))
+      setScale(w / DESIGN_W)
     }
 
     update()

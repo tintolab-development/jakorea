@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
 import {
   loadWritingFormTemplateDraft,
@@ -40,11 +41,10 @@ export function usePaymentStatementIssuanceEditor(
     []
   )
 
-  const [draft, setDraft] = useState<WritingFormDraft>(() => getInitialDraft())
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
-    () => getInitialDraft().paragraphs[0]?.id ?? null
-  )
+  const [draft, setDraft] = useState<WritingFormDraft>(() => EMPTY_WRITING_FORM_DRAFT)
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null)
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
+  const [isDraftLoading, setIsDraftLoading] = useState(() => active)
 
   const applyDraftSnapshot = useCallback((next: WritingFormDraft) => {
     const normalized = normalizeWritingFormDraft(next)
@@ -61,23 +61,34 @@ export function usePaymentStatementIssuanceEditor(
   } = useTemplateWritingPreview()
 
   useEffect(() => {
-    if (!active) return
+    if (!active) {
+      setIsDraftLoading(false)
+      return
+    }
 
     if (templateCode != null && templateCode !== '') {
       let cancelled = false
-      void loadWritingFormTemplateDraft(templateCode).then(saved => {
-        if (cancelled) return
-        if (saved?.draft) {
-          applyDraftSnapshot(saved.draft)
-          return
-        }
-        applyDraftSnapshot(getInitialDraft())
-      })
+      setIsDraftLoading(true)
+      setDraft(EMPTY_WRITING_FORM_DRAFT)
+      setActiveParagraphId(null)
+      void loadWritingFormTemplateDraft(templateCode)
+        .then(saved => {
+          if (cancelled) return
+          if (saved?.draft) {
+            applyDraftSnapshot(saved.draft)
+            return
+          }
+          applyDraftSnapshot(getInitialDraft())
+        })
+        .finally(() => {
+          if (!cancelled) setIsDraftLoading(false)
+        })
       return () => {
         cancelled = true
       }
     }
 
+    setIsDraftLoading(false)
     applyDraftSnapshot(getInitialDraft())
   }, [active, applyDraftSnapshot, getInitialDraft, templateCode])
 
@@ -216,6 +227,7 @@ export function usePaymentStatementIssuanceEditor(
 
   return {
     draft,
+    isDraftLoading,
     activeParagraphId,
     singleItemListActiveItemId,
     structureLockedParagraphIds: PAYMENT_STATEMENT_SEED_PARAGRAPH_IDS,

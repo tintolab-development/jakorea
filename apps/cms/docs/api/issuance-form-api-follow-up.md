@@ -6,6 +6,8 @@
 
 - [form-template-json-contract.md](./form-template-json-contract.md) — JSON 계약 SSOT (§8 발급 14종)
 - [writing-form-seeds-backend-handoff.md](./writing-form-seeds-backend-handoff.md) — 작성 양식 시드 전달 (동일 패턴 참고)
+- [certificate-image-storage-handoff.md](./certificate-image-storage-handoff.md) — 인증서·수료증 이미지 저장 연동 계약
+- [form-template-draft-loading-handoff.md](./form-template-draft-loading-handoff.md) — draft mock→API 로딩·시드 id 일치
 - [forms-surveys-api-backend-gaps.md](./forms-surveys-api-backend-gaps.md) — API 갭 목록 (§8 발급 — **본 문서로 일부 대체**)
 - [forms-surveys-api-migration-guide.md](./forms-surveys-api-migration-guide.md) — PHASE 5 발급 양식
 
