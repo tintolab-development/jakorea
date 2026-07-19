@@ -69,7 +69,7 @@ export function AddParticipatingVolunteerModal({
       open={open}
       onCancel={handleCancel}
       title="봉사자 추가 등록"
-      width={560}
+      width={600}
       footer={footer}
       className="add-participating-volunteer-modal"
       description={

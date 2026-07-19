@@ -30,6 +30,7 @@ export function SessionWarningModal() {
       onCancel={extendSession}
       zIndex={SESSION_WARNING_Z_INDEX}
       title="세션 만료 경고"
+      width={600}
       titlePrefix={<ExclamationCircleOutlined style={{ color: '#faad14' }} />}
       footer={
         <>

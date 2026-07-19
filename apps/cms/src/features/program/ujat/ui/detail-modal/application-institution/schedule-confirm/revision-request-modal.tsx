@@ -43,7 +43,7 @@ export function UjatScheduleConfirmRevisionRequestModal({
       open={open}
       onCancel={handleCancel}
       title="수정 요청"
-      width={760}
+      width={800}
       className="ujat-schedule-confirm-revision-request-modal"
       wrapClassName="ujat-schedule-confirm-revision-request-modal-wrap"
       description={`**[${institutionName}]** 담당교사님에게 전달한 수정사항을 작성해 주세요.`}

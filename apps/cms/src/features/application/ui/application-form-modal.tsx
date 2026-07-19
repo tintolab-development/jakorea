@@ -70,7 +70,7 @@ export function ApplicationFormModal({
       open={open}
       onCancel={onClose}
       footer={null}
-      width={700}
+      width={800}
       destroyOnHidden
       zIndex={1001}
     >

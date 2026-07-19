@@ -83,7 +83,7 @@ export function PermissionRequestReviewModal({
       title="권한 요청 검토"
       onCancel={handleCancel}
       footer={null}
-      width={700}
+      width={800}
       destroyOnHidden
     >
       <Descriptions column={1} bordered style={{ marginBottom: 24 }}>

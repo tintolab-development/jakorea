@@ -34,7 +34,7 @@ export function DuplicateApplicationAlert({
       open={open}
       title={title}
       onCancel={onCancel}
-      width={500}
+      width={600}
       zIndex={1001}
       footer={
         <>

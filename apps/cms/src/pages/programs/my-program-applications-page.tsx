@@ -242,7 +242,7 @@ export function MyProgramApplicationsPage() {
           setDetailModalOpen(false)
           setSelectedApplication(null)
         }}
-        width={560}
+        width={600}
       >
         {selectedApplication ? (
           <DetailInfoForm title="신청 상세" mode="view" hideHeader>

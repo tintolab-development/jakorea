@@ -22,7 +22,7 @@ export function InstitutionDeleteBlockedModal({
       open={open}
       onCancel={onClose}
       title="학교 삭제 불가 안내"
-      width={480}
+      width={600}
       description={description}
       footer={
         <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>

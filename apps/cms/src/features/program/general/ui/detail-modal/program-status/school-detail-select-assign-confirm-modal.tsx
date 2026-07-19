@@ -7,7 +7,7 @@
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 
-const SELECT_ASSIGN_CONFIRM_MODAL_WIDTH = 560
+const SELECT_ASSIGN_CONFIRM_MODAL_WIDTH = 600
 
 export interface SchoolDetailSelectAssignConfirmModalProps {
   open: boolean

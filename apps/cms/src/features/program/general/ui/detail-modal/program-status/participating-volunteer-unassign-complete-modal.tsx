@@ -5,7 +5,7 @@
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 
-const UNASSIGN_COMPLETE_MODAL_WIDTH = 560
+const UNASSIGN_COMPLETE_MODAL_WIDTH = 600
 const UNASSIGN_COMPLETE_MODAL_Z_INDEX = 2500
 
 export interface ParticipatingVolunteerUnassignCompleteModalProps {

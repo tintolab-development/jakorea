@@ -21,7 +21,7 @@ export function UploadDuplicateModal({
       open={open}
       onCancel={onCancel}
       title="중복 데이터 안내"
-      width={520}
+      width={600}
       footer={
         <>
           <CmsButton variant="secondary" type="button" onClick={onCancel}>

@@ -93,7 +93,7 @@ export function EditManagerRoleModal({
         open={open}
         onCancel={handleCancel}
         title="담당자 권한 수정"
-        width={560}
+        width={600}
         footer={footer}
         className="edit-manager-role-modal"
       >

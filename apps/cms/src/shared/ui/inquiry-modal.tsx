@@ -55,7 +55,7 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
       open={open}
       title="문의하기"
       onCancel={handleCancel}
-      width={700}
+      width={800}
       footer={
         <>
           <CmsButton variant="secondary" size="medium" type="button" onClick={handleCancel}>

@@ -53,7 +53,7 @@ export function BugIssueDetailModal({ open, issueId, onClose }: BugIssueDetailMo
       open={open}
       onCancel={onClose}
       title="버그/이슈 상세"
-      width={720}
+      width={800}
       footer={
         <>
           <CmsButton variant="secondary" onClick={onClose}>

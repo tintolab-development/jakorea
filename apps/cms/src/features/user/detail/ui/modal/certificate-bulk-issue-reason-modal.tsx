@@ -77,7 +77,7 @@ export function CertificateBulkIssueReasonModal({
       onCancel={onCancel}
       title={`${certificateDocumentLabel} 발급 사유`}
       description={`${certificateDocumentLabel} 발급 사유를 선택해 주세요.\n선택한 사유는 발급 문서에 기입됩니다.`}
-      width={560}
+      width={600}
       footer={
         <>
           <CmsButton variant="secondary" size="medium" width={120} onClick={onCancel}>

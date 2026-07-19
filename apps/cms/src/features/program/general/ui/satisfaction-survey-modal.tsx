@@ -85,7 +85,7 @@ export function SatisfactionSurveyModal({
       }
       onCancel={handleCancel}
       footer={null}
-      width={700}
+      width={800}
       destroyOnHidden
     >
       {existingRecord && (

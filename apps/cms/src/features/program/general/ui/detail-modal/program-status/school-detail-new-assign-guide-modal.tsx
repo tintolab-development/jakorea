@@ -7,7 +7,7 @@
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 
-const NEW_ASSIGN_GUIDE_MODAL_WIDTH = 560
+const NEW_ASSIGN_GUIDE_MODAL_WIDTH = 600
 
 export type SchoolDetailNewAssignGuideVariant = 'confirm-assign' | 'guide-only'
 

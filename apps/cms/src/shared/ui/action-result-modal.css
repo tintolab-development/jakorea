@@ -1,0 +1,35 @@
+/**
+ * 작업 완료 안내 모달 — Figma (회원 삭제 완료 등)
+ * width 600 · padding 24 30 32 · 타이틀↔본문 12 · 본문↔확인 30 · height hug
+ */
+
+.action-result-modal.content-modal.ant-modal .ant-modal-content {
+  box-sizing: border-box;
+  width: 600px !important;
+  max-width: 600px;
+  padding: 24px 30px 32px 30px !important;
+}
+
+.action-result-modal.content-modal .teal-header-modal__body {
+  margin-top: 12px;
+  padding-top: 0 !important;
+  gap: 0;
+}
+
+.action-result-modal.content-modal .teal-header-modal__footer {
+  margin-top: 30px;
+}
+
+.action-result-modal__body {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.action-result-modal__body-name {
+  font-weight: 600;
+}

@@ -281,7 +281,7 @@ export function AdminCategoryPage() {
         open={isModalOpen}
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
-        width={500}
+        width={600}
         okText="저장"
         cancelText="취소"
         centered

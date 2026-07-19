@@ -427,7 +427,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         open={selectAssignConfirmOpen}
         onCancel={() => setSelectAssignConfirmOpen(false)}
         title="봉사 일정 배정 안내"
-        width={560}
+        width={600}
         footer={
           <>
             <CmsButton
@@ -460,7 +460,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
           setAddAssignWaitingRowId(null)
         }}
         title="추가 배정"
-        width={480}
+        width={600}
         footer={
           <>
             <CmsButton

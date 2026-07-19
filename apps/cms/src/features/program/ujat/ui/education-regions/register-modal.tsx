@@ -46,7 +46,7 @@ export function UjatEducationRegionRegisterModal({
       open={open}
       onCancel={onCancel}
       title="UJAT 교육 지역 신규 등록"
-      width={520}
+      width={600}
       footer={
         <>
           <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>

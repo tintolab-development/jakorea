@@ -113,7 +113,7 @@ export function AddManagerModal({
         open={open}
         onCancel={handleCancel}
         title="담당자 등록"
-        width={560}
+        width={600}
         footer={footer}
         className="add-manager-modal"
       >

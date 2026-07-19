@@ -54,7 +54,7 @@ export function DetailedProgramAddItemModal({
       open={open}
       onCancel={onCancel}
       title="항목 추가"
-      width={520}
+      width={600}
       footer={
         <>
           <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>

@@ -328,7 +328,7 @@ export function InstructorReportsPage() {
           setSelectedReport(null)
         }}
         footer={null}
-        width={640}
+        width={800}
         destroyOnHidden
       >
         {selectedReport && (

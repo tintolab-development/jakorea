@@ -404,7 +404,7 @@ export function MySettlementListPage() {
           setDetailModalOpen(false)
           setSelectedSettlement(null)
         }}
-        width={640}
+        width={800}
       >
         {selectedSettlement ? (
           <DetailInfoForm title="정산 상세" mode="view" hideHeader>

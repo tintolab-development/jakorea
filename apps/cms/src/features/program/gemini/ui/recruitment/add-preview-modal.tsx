@@ -70,7 +70,7 @@ export function GeminiRecruitmentAddPreviewModal({
       onCancel={onClose}
       title="공고 미리보기"
       size="large"
-      width={960}
+      width={1000}
       className="gemini-recruitment-add-preview-modal"
       footer={
         <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>

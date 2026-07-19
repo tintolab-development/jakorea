@@ -107,7 +107,7 @@ export function NotificationModal({
           ) : null}
         </Space>
       }
-      width={900}
+      width={800}
       modalStyles={{
         body: {
           maxHeight: 'calc(100vh - 200px)',

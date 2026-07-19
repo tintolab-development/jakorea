@@ -19,7 +19,7 @@ export function TrainedTeachersEducationJournalViewModal({
       open={open}
       onCancel={onClose}
       title="교육일지 보기"
-      width={720}
+      width={800}
       footer={
         <CmsButton variant="primary" size="large" width={120} onClick={onClose}>
           닫기

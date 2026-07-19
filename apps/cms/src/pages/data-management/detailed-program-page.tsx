@@ -379,7 +379,7 @@ export default function DetailedProgramPage() {
         open={deleteBlockedModalOpen}
         onCancel={() => setDeleteBlockedModalOpen(false)}
         title="세부 프로그램 삭제 불가 안내"
-        width={480}
+        width={600}
         description={
           deleteBlockedSelectedCount <= 1
             ? '해당 세부 프로그램은 실적 관리에서 사용 중입니다.\n사용 중인 세부 프로그램은 삭제할 수 없습니다.'

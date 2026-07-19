@@ -1202,7 +1202,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
         onCancel={closeAddressPopup}
         footer={null}
         title={null}
-        width={760}
+        width={800}
         className="add-instructor-modal__address-popup-modal"
         destroyOnHidden
       >

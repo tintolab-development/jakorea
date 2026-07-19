@@ -69,7 +69,7 @@ export function AddParticipatingInstructorModal({
       open={open}
       onCancel={handleCancel}
       title="강사 추가 등록"
-      width={560}
+      width={600}
       footer={footer}
       className="add-participating-instructor-modal"
       description={

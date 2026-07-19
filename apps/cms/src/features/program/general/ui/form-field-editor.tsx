@@ -216,7 +216,7 @@ export function FormFieldEditor({
       title="신청서 폼 필드 커스터마이징"
       open={open}
       onCancel={handleCancel}
-      width={900}
+      width={800}
       footer={[
         <CmsButton key="cancel" variant="secondary" size="large" onClick={handleCancel}>
           취소

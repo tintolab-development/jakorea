@@ -608,7 +608,7 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
           setDrawerOpen(false)
           setSelectedSettlement(null)
         }}
-        width={640}
+        width={800}
         zIndex={1001}
         destroyOnHidden
         footer={

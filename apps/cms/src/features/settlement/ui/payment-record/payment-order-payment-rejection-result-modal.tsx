@@ -35,7 +35,7 @@ export function PaymentOrderPaymentRejectionResultModal({
       open={canShow}
       onCancel={onClose}
       title="지급 반려"
-      width={520}
+      width={600}
       className="payment-order-payment-reject-result-modal"
       footer={
         <div className="payment-order-payment-reject-result__footer-actions">

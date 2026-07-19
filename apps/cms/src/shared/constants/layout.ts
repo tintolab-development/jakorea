@@ -18,11 +18,12 @@ export const LAYOUT_CONSTANTS = {
     status: 110,
     action: 72,
     date: 120,
+    /** DS TealHeaderModal size 토큰과 정렬 — compact/default/medium/wide/large */
     modal: {
-      small: 520,
-      medium: 720,
-      large: 960,
-      xlarge: 1100,
+      small: 600,
+      medium: 800,
+      large: 1000,
+      xlarge: 1200,
     },
   },
   fontSizes: {
