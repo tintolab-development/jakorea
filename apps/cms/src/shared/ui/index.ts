@@ -76,14 +76,14 @@ export { TealHeaderModal } from './teal-header-modal'
 export type { ModalSize, TealHeaderModalProps } from './teal-header-modal'
 export { ContentModal } from './content-modal'
 export type { ContentModalProps } from './content-modal'
-export { ModalSpecTable, ModalSpecTableRow, ModalSpecTableRadioCell } from './modal-spec-table/modal-spec-table'
+export { ModalSpecTable, ModalSpecTableRow, ModalSpecTableRadioCell } from './modal-spec-table'
 export type {
   ModalSpecTableProps,
   ModalSpecTableRowProps,
   ModalSpecTableLabelVariant,
   ModalSpecTableRadioCellProps,
   ModalSpecTableRadioOption,
-} from './modal-spec-table/modal-spec-table'
+} from './modal-spec-table'
 export {
   AppDatePicker,
   AppDateRangePicker,
@@ -115,6 +115,10 @@ export { CmsInputSearch } from './cms-input-search'
 export type { CmsInputSearchProps } from './cms-input-search'
 export { AddressSearch } from './address-search'
 export type { AddressSearchProps } from './address-search'
+export { SchoolSearch } from './school-search'
+export type { SchoolSearchProps, SchoolSearchSelection } from './school-search'
+export { CmsCompactPagination } from './cms-compact-pagination'
+export type { CmsCompactPaginationProps } from './cms-compact-pagination'
 export type { CmsControlSize } from './cms-control-size'
 export { CmsSelect, CMS_MULTI_SELECT_TAG_COLORS } from './cms-select'
 export type { CmsSelectProps } from './cms-select'

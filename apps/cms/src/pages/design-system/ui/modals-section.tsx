@@ -17,7 +17,7 @@ import {
   ModalSpecTable,
   ModalSpecTableRadioCell,
   ModalSpecTableRow,
-} from '@/shared/ui/modal-spec-table/modal-spec-table'
+} from '@/shared/ui/modal-spec-table'
 import { DsDemo, DsSection } from './section'
 
 const SIDEBAR_DEMO_ITEMS: DetailModalSidebarNavItem[] = [

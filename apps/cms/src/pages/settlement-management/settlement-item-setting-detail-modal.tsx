@@ -38,7 +38,7 @@ import {
   ModalSpecTableRadioCell,
   ModalSpecTableRow,
   type ModalSpecTableRadioOption,
-} from '@/shared/ui/modal-spec-table/modal-spec-table'
+} from '@/shared/ui/modal-spec-table'
 
 const BASIS_UNIT_OPTIONS_SIMPLE = [{ value: '전체', label: '전체' }]
 
