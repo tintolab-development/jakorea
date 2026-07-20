@@ -3,7 +3,6 @@
  * ContentModal footer 고정 + 본문만 스크롤 (관리자/강사 등록 모달과 동일 패턴)
  */
 
-import { useCallback, useState } from 'react'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import { AddUserIndividual } from '@/features/user/shared/ui/add-user-individual'
 import { CmsButton, ContentModal } from '@/shared/ui'
@@ -24,12 +23,6 @@ export function MemberRegisterModal({
   onSubmit,
   loading = false,
 }: MemberRegisterModalProps) {
-  const [canSubmit, setCanSubmit] = useState(false)
-
-  const handleCanSubmitChange = useCallback((next: boolean) => {
-    setCanSubmit(next)
-  }, [])
-
   return (
     <ContentModal
       open={open}
@@ -54,7 +47,7 @@ export function MemberRegisterModal({
             type="submit"
             form={FORM_ID}
             loading={loading}
-            disabled={loading || !canSubmit}
+            disabled={loading}
           >
             신규 등록
           </CmsButton>
@@ -67,7 +60,6 @@ export function MemberRegisterModal({
         onSubmit={onSubmit}
         onCancel={onClose}
         loading={loading}
-        onCanSubmitChange={handleCanSubmitChange}
       />
     </ContentModal>
   )

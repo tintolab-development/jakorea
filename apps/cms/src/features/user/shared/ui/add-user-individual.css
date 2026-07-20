@@ -29,8 +29,49 @@
   padding-block: 5px;
 }
 
-.add-user-individual__consent-actions {
+.add-user-individual__terms-consent-heading.detail-info-form > .detail-info-form__body {
+  border: none;
+  background: transparent;
+  overflow: visible;
+}
+
+.add-user-individual__terms-consent-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
+  min-width: 0;
+}
+
+.add-user-individual__terms-consent-form-stack > .detail-info-form {
+  width: 100%;
+  min-width: 0;
+}
+
+.add-user-individual__terms-consent-form-stack .detail-info-form__field-content--edit {
+  align-items: center;
+}
+
+.add-user-individual__consent-document {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+
+.add-user-individual__consent-status {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.add-user-individual__consent-sep {
+  flex-shrink: 0;
+  color: #d0d0d0;
+  font-weight: 400;
+  padding: 0 2px;
+  user-select: none;
 }
 
 .add-user-individual__actions {
