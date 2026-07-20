@@ -24,7 +24,6 @@ type ConsentValue = 'agree' | 'disagree'
 
 interface AddUserIndividualFormValues {
   name: string
-  englishName: string
   residentRegistrationFirst?: string
   residentRegistrationLast?: string
   affiliation?: string
@@ -59,7 +58,6 @@ const CONSENT_RADIO_OPTIONS = [
 
 const INITIAL_VALUES: AddUserIndividualFormValues = {
   name: '',
-  englishName: '',
   residentRegistrationFirst: '',
   residentRegistrationLast: '',
   affiliation: '',
@@ -73,7 +71,8 @@ const INITIAL_VALUES: AddUserIndividualFormValues = {
   consentPersonalInfo: 'agree',
   consentMarketing: 'agree',
   consentPortrait: 'agree',
-  consentWithholdingTax: 'agree' }
+  consentWithholdingTax: 'agree',
+}
 
 export function AddUserIndividual({
   onSubmit,
@@ -91,7 +90,6 @@ export function AddUserIndividual({
   const consentWithholdingTax = Form.useWatch('consentWithholdingTax', form)
   const canSubmit =
     Boolean(allValues?.name?.trim()) &&
-    Boolean(allValues?.englishName?.trim()) &&
     Boolean(allValues?.residentRegistrationFirst?.trim()) &&
     Boolean(allValues?.residentRegistrationLast?.trim()) &&
     Boolean(allValues?.contact?.trim()) &&
@@ -128,32 +126,14 @@ export function AddUserIndividual({
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
         <DetailInfoForm title="기본 정보" mode="edit">
-          <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
-              label="한글 성명"
+              label="성명"
               required
               view="-"
               edit={
-                <Form.Item
-                  name="name"
-                  noStyle
-                  rules={[{ required: true }]}
-                >
+                <Form.Item name="name" noStyle rules={[{ required: true }]}>
                   <CmsInput placeholder="한글 성명" inputSize="medium" width="100%" />
-                </Form.Item>
-              }
-            />
-            <DetailInfoForm.Field
-              label="영문 성명"
-              required
-              view="-"
-              edit={
-                <Form.Item
-                  name="englishName"
-                  noStyle
-                  rules={[{ required: true }]}
-                >
-                  <CmsInput placeholder="영문 성명" inputSize="medium" width="100%" />
                 </Form.Item>
               }
             />

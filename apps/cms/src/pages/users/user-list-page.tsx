@@ -641,13 +641,12 @@ export function UserListPage() {
       const emailTrim = values.email.trim()
       const email =
         emailTrim !== '' ? emailTrim : `instructor-${Date.now()}@instructor.jakorea.local`
-      const nameTrim = values.nameKo.trim()
+      const nameTrim = values.name.trim()
       const name = nameTrim !== '' ? nameTrim : '강사'
       await createUser({
         email,
         password: 'Temp1234!',
         name,
-        nameEn: values.nameEn.trim() || undefined,
         phone: values.contact.trim() || undefined,
         role: 'INSTRUCTOR',
         instructorInfo: {

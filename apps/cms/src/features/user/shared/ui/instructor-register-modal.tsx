@@ -114,8 +114,7 @@ type SimpleDatedRow = {
 }
 
 export type InstructorRegisterModalFormValues = {
-  nameKo: string
-  nameEn: string
+  name: string
   residentFront: string
   residentBack: string
   affiliationCategory: string
@@ -169,8 +168,7 @@ const EMPTY_SIMPLE_ROW: SimpleDatedRow = {
 }
 
 const INITIAL_VALUES: InstructorRegisterModalFormValues = {
-  nameKo: '',
-  nameEn: '',
+  name: '',
   residentFront: '',
   residentBack: '',
   affiliationCategory: '',
@@ -335,22 +333,13 @@ export function InstructorRegisterModal({
       >
         <div className="instructor-register-modal__stack">
           <DetailInfoForm title="기본 정보" mode="edit">
-            <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
-                label="한글 성명"
+                label="성명"
                 view="-"
                 edit={
-                  <Form.Item name="nameKo" noStyle>
+                  <Form.Item name="name" noStyle>
                     <CmsInput placeholder="한글 성명" inputSize="medium" width="100%" />
-                  </Form.Item>
-                }
-              />
-              <DetailInfoForm.Field
-                label="영문 성명"
-                view="-"
-                edit={
-                  <Form.Item name="nameEn" noStyle>
-                    <CmsInput placeholder="영문 성명" inputSize="medium" width="100%" />
                   </Form.Item>
                 }
               />
