@@ -57,7 +57,9 @@ function coerceRegistrationStepForVariant(
   flags: GeneralProgramRegistrationParticipantFlags,
   variant: ProgramRegistrationFormVariant
 ): GeneralProgramRegistrationStepKey {
-  const coercedStep = coerceGeneralProgramRegistrationStep(step, flags)
+  const recruitOptions =
+    variant === 'economy' ? ({ hideVolunteer: true } as const) : undefined
+  const coercedStep = coerceGeneralProgramRegistrationStep(step, flags, recruitOptions)
   if (variant !== 'trainedTeachers') return coercedStep
   if (coercedStep === 'program') return coercedStep
   return 'application-participant-school'
@@ -95,11 +97,18 @@ export function useGeneralProgramRegistrationFlow(
 
   const participantFlags: GeneralProgramRegistrationParticipantFlags = registrationVm.participant
 
+  const recruitTabVisibility = useMemo(
+    () => (isCompanySchoolRegistration ? { hideVolunteer: true as const } : undefined),
+    [isCompanySchoolRegistration]
+  )
+  /** 모집·신청 탭 공통 (1사1교 봉사자 숨김) */
+  const tabVisibility = recruitTabVisibility
+
   const [activeStep, setActiveStep] = useState<GeneralProgramRegistrationStepKey>(() => {
     const initial = options?.initialStep
     if (initial == null) return 'program'
     return coerceRegistrationStepForVariant(
-      normalizeGeneralProgramRegistrationStepKey(initial, participantFlags),
+      normalizeGeneralProgramRegistrationStepKey(initial, participantFlags, tabVisibility),
       participantFlags,
       registrationFormVariant
     )
@@ -110,26 +119,35 @@ export function useGeneralProgramRegistrationFlow(
     const fromUrl = options?.initialStep
     if (fromUrl == null) return
     const normalized = coerceRegistrationStepForVariant(
-      normalizeGeneralProgramRegistrationStepKey(fromUrl, participantFlags),
+      normalizeGeneralProgramRegistrationStepKey(fromUrl, participantFlags, tabVisibility),
       participantFlags,
       registrationFormVariant
     )
     if (normalized === activeStep) return
     setActiveStep(normalized)
-  }, [open, options?.initialStep, activeStep, participantFlags, registrationFormVariant])
+  }, [
+    open,
+    options?.initialStep,
+    activeStep,
+    participantFlags,
+    registrationFormVariant,
+    tabVisibility,
+  ])
 
   const visibleRecruitTabKeys = useMemo(
     () =>
-      isTrainedTeachersRegistration ? [] : getVisibleGeneralProgramRecruitTabKeys(participantFlags),
-    [isTrainedTeachersRegistration, participantFlags]
+      isTrainedTeachersRegistration
+        ? []
+        : getVisibleGeneralProgramRecruitTabKeys(participantFlags, tabVisibility),
+    [isTrainedTeachersRegistration, participantFlags, tabVisibility]
   )
 
   const visibleApplicationTabKeys = useMemo(
     (): GeneralProgramRegistrationApplicationTabKey[] =>
       isTrainedTeachersRegistration
         ? ['application-participant-school']
-        : getVisibleGeneralProgramApplicationTabKeys(participantFlags),
-    [isTrainedTeachersRegistration, participantFlags]
+        : getVisibleGeneralProgramApplicationTabKeys(participantFlags, tabVisibility),
+    [isTrainedTeachersRegistration, participantFlags, tabVisibility]
   )
 
   const coercedActiveStep = useMemo(
@@ -199,6 +217,18 @@ export function useGeneralProgramRegistrationFlow(
     participantVariant,
     {
       participantOrganization: participantFlags.organization,
+      /** 등록 위저드 신청 단계 — 기관 기본정보·강사/봉사자 일정 자동 반영 미리보기 */
+      programLinkedInstitutionApplicationForm:
+        participantVariant === 'institution' ||
+        participantVariant === 'economy-application-institution' ||
+        participantVariant === 'trained-teachers-application-institution',
+      programLinkedApplicationFormPreview:
+        participantVariant === 'institution' ||
+        participantVariant === 'individual' ||
+        participantVariant === 'instructor' ||
+        participantVariant === 'volunteer' ||
+        participantVariant === 'economy-application-institution' ||
+        participantVariant === 'trained-teachers-application-institution',
       applicantRecruitInstitutionLayoutVariant: isCompanySchoolRegistration ? 'economy' : undefined,
       applicantRecruitInstitutionDefaults: isCompanySchoolRegistration
         ? {
@@ -296,16 +326,16 @@ export function useGeneralProgramRegistrationFlow(
         return
       }
       if (nextPhase === 'recruitment') {
-        selectStep(getDefaultGeneralProgramRecruitStep(participantFlags))
+        selectStep(getDefaultGeneralProgramRecruitStep(participantFlags, tabVisibility))
         return
       }
       selectStep(
         isTrainedTeachersRegistration
           ? 'application-participant-school'
-          : getDefaultGeneralProgramApplicationStep(participantFlags)
+          : getDefaultGeneralProgramApplicationStep(participantFlags, tabVisibility)
       )
     },
-    [selectStep, participantFlags, isTrainedTeachersRegistration]
+    [selectStep, participantFlags, isTrainedTeachersRegistration, tabVisibility]
   )
 
   const handlePreview = useCallback(() => {
@@ -316,12 +346,20 @@ export function useGeneralProgramRegistrationFlow(
     participantVm.handlePreview()
   }, [isProgramStep, registrationVm, participantVm])
 
-  const handleSave = useCallback(() => {
+  const persistDraftSilent = useCallback(async () => {
     if (isProgramStep) {
-      registrationVm.handleSave()
+      await registrationVm.handleSave({ silent: true })
       return
     }
-    participantVm.handleSave()
+    await participantVm.handleSave({ silent: true })
+  }, [isProgramStep, registrationVm, participantVm])
+
+  const handleSave = useCallback(() => {
+    if (isProgramStep) {
+      void registrationVm.handleSave()
+      return
+    }
+    void participantVm.handleSave()
   }, [isProgramStep, registrationVm, participantVm])
 
   const handleCompleteRegistration = useCallback(() => {
@@ -329,8 +367,9 @@ export function useGeneralProgramRegistrationFlow(
       void registrationVm.handleCompleteRegistration()
       return
     }
-    participantVm.handleSave()
-    void registrationVm.handleCompleteRegistration()
+    void participantVm.handleSave({ silent: true }).finally(() => {
+      void registrationVm.handleCompleteRegistration()
+    })
   }, [isProgramStep, registrationVm, participantVm])
 
   const hasRecruitmentPhase = visibleRecruitTabKeys.length > 0
@@ -340,12 +379,14 @@ export function useGeneralProgramRegistrationFlow(
     activeStep: coercedActiveStep,
     phase,
     currentStepDef,
+    registrationTemplateId,
     selectStep,
     goToPhase,
     panels,
     isDraftLoading,
     handlePreview,
     handleSave,
+    persistDraftSilent,
     handleCompleteRegistration,
     registrationVm,
     participantVm,
