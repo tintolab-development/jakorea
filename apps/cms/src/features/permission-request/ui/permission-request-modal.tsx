@@ -97,7 +97,6 @@ export function PermissionRequestModal({
         <Form.Item
           label="요청 역할"
           name="requestedRole"
-          rules={[{ required: true }]}
         >
           <Select placeholder="역할을 선택하세요" options={roleOptions} />
         </Form.Item>
@@ -105,7 +104,6 @@ export function PermissionRequestModal({
         <Form.Item
           label="요청 사유"
           name="reason"
-          rules={[{ required: true }]}
         >
           <TextArea
             rows={4}

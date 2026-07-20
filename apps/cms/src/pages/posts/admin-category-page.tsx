@@ -287,7 +287,7 @@ export function AdminCategoryPage() {
         centered
       >
         <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
-          <Form.Item name="type" label="게시판 구분" rules={[{ required: true }]}>
+          <Form.Item name="type" label="게시판 구분">
             <Select>
               <Option value="NOTICE">공지사항</Option>
               <Option value="FAQ">FAQ</Option>
@@ -295,11 +295,11 @@ export function AdminCategoryPage() {
             </Select>
           </Form.Item>
 
-          <Form.Item name="name" label="카테고리명" rules={[{ required: true }]}>
+          <Form.Item name="name" label="카테고리명">
             <Input placeholder="예: 활동, 봉사시간, 시스템 등" />
           </Form.Item>
 
-          <Form.Item name="slug" label="슬러그 (Slug)" rules={[{ required: true }]}>
+          <Form.Item name="slug" label="슬러그 (Slug)">
             <Input placeholder="예: activity, volunteer-hours" />
           </Form.Item>
 
@@ -307,7 +307,6 @@ export function AdminCategoryPage() {
             <Form.Item
               name="order"
               label="노출 순서"
-              rules={[{ required: true }]}
               trigger="onValueChange"
               getValueFromEvent={(rawValue: string) =>
                 rawValue === '' ? undefined : Number(rawValue)

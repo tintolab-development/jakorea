@@ -364,7 +364,6 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
         <Form.Item
           label="프로그램/강의 선택"
           name="matchingId"
-          rules={[{ required: true }]}
         >
           <Select
             placeholder="프로그램을 선택하세요"
@@ -384,7 +383,6 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
             <Form.Item
               label="기간"
               name="period"
-              rules={[{ required: true }]}
             >
               <DatePicker
                 style={{ width: '100%' }}
@@ -438,10 +436,6 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                   <Form.Item
                     label="차시 수"
                     name="sessions"
-                    rules={[
-                      { required: true },
-                      { type: 'number', min: 1, max: 6 },
-                    ]}
                   >
                     <Select placeholder="차시 수를 선택하세요" disabled={submitting}>
                       {[1, 2, 3, 4, 5, 6].map(session => (
@@ -462,10 +456,6 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                     getValueFromEvent={(raw: string) =>
                       raw === '' ? undefined : Number(raw)
                     }
-                    rules={[
-                      { required: true },
-                      { type: 'number', min: 0 },
-                    ]}
                   >
                     <CmsNumericInput
                       mode="decimal"
@@ -488,7 +478,6 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                     getValueFromEvent={(raw: string) =>
                       raw === '' ? undefined : Number(raw)
                     }
-                    rules={[{ type: 'number', min: 0 }]}
                   >
                     <CmsNumericInput
                       mode="currency"
@@ -510,7 +499,6 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                     getValueFromEvent={(raw: string) =>
                       raw === '' ? undefined : Number(raw)
                     }
-                    rules={[{ type: 'number', min: 0 }]}
                   >
                     <CmsNumericInput
                       mode="currency"
@@ -630,12 +618,6 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                             getValueFromEvent={(raw: string) =>
                               raw === '' ? undefined : Number(raw)
                             }
-                            rules={[
-                              { required: true },
-                              {
-                                type: 'number',
-                                min: 1 },
-                            ]}
                             style={{ marginBottom: 0 }}
                           >
                             <CmsNumericInput
@@ -664,11 +646,6 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                             getValueFromEvent={(raw: string) =>
                               raw === '' ? undefined : Number(raw)
                             }
-                            rules={[
-                              {
-                                type: 'number',
-                                min: 0 },
-                            ]}
                             style={{ marginBottom: 0 }}
                           >
                             <CmsNumericInput

@@ -138,7 +138,6 @@ export function PermissionRequestReviewModal({
         <Form.Item
           label={action === 'approve' ? '승인 메모 (선택사항)' : '거부 사유'}
           name="reviewComment"
-          rules={action === 'reject' ? [{ required: true }] : []}
         >
           <TextArea
             rows={3}

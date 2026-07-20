@@ -170,7 +170,7 @@ export function DownloadOptionsModal({
       ) : null}
 
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
-        <Form.Item label="데이터 형식" name="maskingEnabled" rules={[{ required: true }]}>
+        <Form.Item label="데이터 형식" name="maskingEnabled">
           <CmsRadio.Group>
             <CmsRadio value={true}>마스킹 적용 (기본)</CmsRadio>
             <CmsRadio value={false} disabled={!allowOriginal}>
@@ -184,7 +184,6 @@ export function DownloadOptionsModal({
           <Form.Item
             label="다운로드 사유"
             name="reason"
-            rules={[{ required: true }]}
             tooltip="원본 데이터 다운로드는 권한 승인이 필요합니다"
             style={{ marginBottom: 0 }}
           >

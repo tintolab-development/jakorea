@@ -245,7 +245,6 @@ export function FormFieldEditor({
               <Form.Item
                 name="label"
                 label="필드명"
-                rules={[{ required: true }]}
               >
                 <Input placeholder="예: 참가 목적" />
               </Form.Item>
@@ -253,7 +252,6 @@ export function FormFieldEditor({
               <Form.Item
                 name="type"
                 label="필드 타입"
-                rules={[{ required: true }]}
               >
                 <Select options={fieldTypeOptions} />
               </Form.Item>
@@ -277,7 +275,6 @@ export function FormFieldEditor({
                       <Form.Item
                         name="options"
                         label="선택 옵션"
-                        rules={[{ required: true }]}
                         getValueFromEvent={e => {
                           const lines = e.target.value.split('\n').filter((l: string) => l.trim())
                           return lines.map((line: string, idx: number) => ({
