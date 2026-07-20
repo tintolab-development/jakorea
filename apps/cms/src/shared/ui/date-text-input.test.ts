@@ -7,6 +7,9 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import {
   DateTextInput,
+  birthDateFormValueToApi,
+  isBirthDateInputIncomplete,
+  isValidBirthDateFormValue,
   isValidCalendarDate,
   normalizeDateTextInputOnBlur,
   sanitizeDateTextInput,
@@ -21,6 +24,8 @@ describe('date text helpers', () => {
     expect(sanitizeDateTextInput('20260102')).toBe('2026.01.02')
     expect(sanitizeDateTextInput('2026.1.2')).toBe('2026.1.2')
     expect(sanitizeDateTextInput('２０２６．１．２')).toBe('2026.1.2')
+    expect(sanitizeDateTextInput('1990.011')).toBe('1990.01.1')
+    expect(sanitizeDateTextInput('1990.0115')).toBe('1990.01.15')
   })
 
   it('실제 달력 날짜를 검증한다', () => {
@@ -35,9 +40,37 @@ describe('date text helpers', () => {
     expect(normalizeDateTextInputOnBlur('2026.2')).toBe('2026.2')
     expect(normalizeDateTextInputOnBlur('2026.2.30')).toBe('2026.2.30')
   })
+
+  it('입력 중 생년월일은 incomplete로 본다', () => {
+    expect(isBirthDateInputIncomplete('1993.03')).toBe(true)
+    expect(isBirthDateInputIncomplete('1993.03.15')).toBe(false)
+    expect(isValidBirthDateFormValue('1993.03')).toBe(false)
+    expect(isValidBirthDateFormValue('1993.03.15')).toBe(true)
+    expect(birthDateFormValueToApi('1993.3.5')).toBe('1993-03-05')
+  })
 })
 
 describe('DateTextInput', () => {
+  it('월 입력 후 일자를 이어서 입력할 수 있다', () => {
+    const onValueChange = vi.fn()
+    render(
+      createElement(DateTextInput, {
+        'aria-label': '생년월일',
+        onValueChange,
+      })
+    )
+
+    const input = screen.getByRole('textbox', { name: '생년월일' })
+    fireEvent.change(input, { target: { value: '1990.01' } })
+    fireEvent.change(input, { target: { value: '1990.011' } })
+    expect(input).toHaveValue('1990.01.1')
+    expect(onValueChange).toHaveBeenLastCalledWith('1990.01.1')
+
+    fireEvent.change(input, { target: { value: '1990.0115' } })
+    expect(input).toHaveValue('1990.01.15')
+    expect(onValueChange).toHaveBeenLastCalledWith('1990.01.15')
+  })
+
   it('8자리 붙여넣기를 포맷하고 string value를 반환한다', () => {
     const onValueChange = vi.fn()
     render(

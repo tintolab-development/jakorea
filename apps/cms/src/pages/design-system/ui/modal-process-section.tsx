@@ -7,7 +7,7 @@ import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import {
   ModalSpecTable,
   ModalSpecTableRow,
-} from '@/shared/ui/modal-spec-table/modal-spec-table'
+} from '@/shared/ui/modal-spec-table'
 import { DsDemo, DsSection } from './section'
 
 type ProcessModal =

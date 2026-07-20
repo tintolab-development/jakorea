@@ -256,7 +256,6 @@ export function NoticeFormModal({
                 name="category"
                 label="카테고리"
                 className="notice-register-modal__filter-field notice-register-modal__filter-field--category"
-                rules={[{ required: true }]}
               >
                 <CmsSelect
                   placeholder="카테고리 선택"
@@ -269,7 +268,6 @@ export function NoticeFormModal({
                 name="visibility"
                 label="공개 여부"
                 className="notice-register-modal__filter-field"
-                rules={[{ required: true }]}
               >
                 <CmsRadioGroup
                   size="large"
@@ -283,7 +281,6 @@ export function NoticeFormModal({
                 name="pinTop"
                 label="상단 고정"
                 className="notice-register-modal__filter-field"
-                rules={[{ required: true }]}
               >
                 <CmsRadioGroup
                   size="large"
@@ -300,7 +297,6 @@ export function NoticeFormModal({
             name="title"
             label="제목"
             className="notice-register-modal__section"
-            rules={[{ required: true }]}
           >
             <CmsInput placeholder="제목을 입력해주세요" inputSize="large" width="100%" />
           </Form.Item>

@@ -11,6 +11,8 @@ export function mapCreateUserRequestToPreRegister(
   if (request.phone?.trim()) body.phone = request.phone.trim()
   if (request.gender?.trim()) body.gender = request.gender.trim()
   if (request.birthDate?.trim()) body.birthDate = request.birthDate.trim()
+  if (request.id1365?.trim()) body.external1365Id = request.id1365.trim()
+  if (request.affiliation?.trim()) body.organizationText = request.affiliation.trim()
 
   if (request.role === 'SCHOOL' && request.schoolInfo?.schoolName?.trim()) {
     body.organizationText = request.schoolInfo.schoolName.trim()

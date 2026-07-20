@@ -109,7 +109,6 @@ export function EditManagerRoleModal({
             <Form.Item
               name="role"
               label="권한 설정"
-              rules={[{ required: true }]}
               className="edit-manager-role-modal__field"
             >
               <CmsRadio.Group size="large" className="edit-manager-role-modal__role-radios">

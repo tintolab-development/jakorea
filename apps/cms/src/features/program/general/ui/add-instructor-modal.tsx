@@ -424,7 +424,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <Form.Item
                         name="nameKorean"
-                        rules={[{ required: true }]}
                         noStyle
                       >
                         <input
@@ -439,7 +438,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <Form.Item
                         name="nameEnglish"
-                        rules={[{ required: true }]}
                         noStyle
                       >
                         <input
@@ -458,10 +456,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         <Form.Item
                           name="residentRegistrationFirst"
                           trigger="onValueChange"
-                          rules={[
-                            { required: true },
-                            { len: 6 },
-                          ]}
                           noStyle
                         >
                           <CmsNumericInput
@@ -481,10 +475,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         <Form.Item
                           name="residentRegistrationLast"
                           trigger="onValueChange"
-                          rules={[
-                            { required: true },
-                            { len: 7 },
-                          ]}
                           noStyle
                         >
                           <CmsNumericInput
@@ -519,7 +509,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <Form.Item
                         name="contact"
-                        rules={[{ required: true }]}
                         noStyle
                       >
                         <input className="add-instructor-modal__table-input" placeholder="연락처" />
@@ -531,10 +520,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <Form.Item
                         name="email"
-                        rules={[
-                          { required: true },
-                          { type: 'email' },
-                        ]}
                         noStyle
                       >
                         <input
@@ -556,7 +541,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       <div className="add-instructor-modal__address-row">
                         <Form.Item
                           name="address"
-                          rules={[{ required: true }]}
                           noStyle
                         >
                           <AddressSearchInput
@@ -588,7 +572,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       colSpan={3}
                     >
                       <div className="add-instructor-modal__bank-account-row">
-                        <Form.Item name="bankName" rules={[{ required: true }]} noStyle>
+                        <Form.Item name="bankName" noStyle>
                           <NativeSelect
                             placeholder="은행명"
                             options={BANK_OPTIONS}
@@ -598,7 +582,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         <Form.Item
                           name="accountNumber"
                           trigger="onValueChange"
-                          rules={[{ required: true }]}
                           noStyle
                         >
                           <CmsNumericInput
@@ -609,7 +592,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                           />
                         </Form.Item>
                         <div className="add-instructor-modal__bank-account-divider" aria-hidden />
-                        <Form.Item name="accountHolder" rules={[{ required: true }]} noStyle>
+                        <Form.Item name="accountHolder" noStyle>
                           <input
                             className="add-instructor-modal__table-input add-instructor-modal__bank-account-input--holder"
                             placeholder="예금주명"

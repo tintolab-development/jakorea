@@ -76,7 +76,7 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
       }
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
-        <Form.Item label="문의 유형" name="category" rules={[{ required: true }]}>
+        <Form.Item label="문의 유형" name="category">
           <Select placeholder="문의 유형을 선택하세요">
             <Option value="활동">활동 관련 (배정, 일정 등)</Option>
             <Option value="봉사시간">봉사시간 관련 (1365 연계 등)</Option>
@@ -87,11 +87,11 @@ export function InquiryModal({ open, onCancel, onSuccess }: InquiryModalProps) {
           </Select>
         </Form.Item>
 
-        <Form.Item label="제목" name="title" rules={[{ required: true }]}>
+        <Form.Item label="제목" name="title">
           <Input placeholder="문의 제목을 입력하세요" />
         </Form.Item>
 
-        <Form.Item label="문의 내용" name="content" rules={[{ required: true }]}>
+        <Form.Item label="문의 내용" name="content">
           <TextArea
             rows={6}
             placeholder="문의 내용을 상세히 입력해주세요"

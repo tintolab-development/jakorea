@@ -85,6 +85,8 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 
 ## Process
 
+- **[약관 및 동의 정책](../../../.cursor/rules/terms-and-consent-policy.mdc)** — 필수/선택·동의서·유효기간·미동의 제한 (**alwaysApply**, 모노레포 공통)
+- **[회원 상세 · 등록 동의 UI](./process/member-detail-consent-agreement-cms.md)** — preset·필드 매핑·템플릿 id
 - **[프로그램 유형 간 간섭 방지](./process/program-type-isolation.mdc)** — 일반·UJAT·1사1교·Gemini UI/로직 격리, 공유 코드 변경 시 유저 확인 (**alwaysApply**)
 - [개발 프로세스](./process/development-process.md) - Phase별 개발 프로세스
 - [진행 상황 관리](./process/progress-management.md) - PROGRESS.md 기록 규칙

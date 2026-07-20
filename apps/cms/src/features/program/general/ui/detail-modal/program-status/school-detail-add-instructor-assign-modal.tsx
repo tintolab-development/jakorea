@@ -316,7 +316,6 @@ export function SchoolDetailAddInstructorAssignModal({
               <Form.Item
                 name="role"
                 label="대표 강사 지정"
-                rules={[{ required: true }]}
                 className="school-detail-add-instructor-assign-modal__field"
               >
                 <CmsRadio.Group
@@ -333,7 +332,6 @@ export function SchoolDetailAddInstructorAssignModal({
               <Form.Item
                 name="instructorId"
                 label="강사명"
-                rules={[{ required: true }]}
                 className="school-detail-add-instructor-assign-modal__field"
               >
                 <CmsSelect
@@ -352,17 +350,6 @@ export function SchoolDetailAddInstructorAssignModal({
               <Form.Item
                 name="sessionIds"
                 label="교육 배정일 선택"
-                rules={
-                  assignmentSessionOptions.length > 0
-                    ? [
-                        {
-                          validator: (_rule, value: string[] | undefined) =>
-                            value && value.length > 0
-                              ? Promise.resolve()
-                              : Promise.reject(new Error('교육 배정일을 선택해 주세요')) },
-                      ]
-                    : []
-                }
                 className="school-detail-add-instructor-assign-modal__field school-detail-add-instructor-assign-modal__field--sessions"
               >
                 <InstructorAssignSessionTags options={assignmentSessionOptions} />

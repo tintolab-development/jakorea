@@ -900,6 +900,7 @@ export function UserListPage() {
       >
         <UserList
           listKind={resolvedMemberListKind}
+          totalCount={listTotal}
           data={listUsers}
           loading={false}
           onView={handleView}

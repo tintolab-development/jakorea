@@ -135,7 +135,6 @@ export function SchoolRegisterModal({
                 <Form.Item
                   name="institutionName"
                   noStyle
-                  rules={[{ required: true }]}
                 >
                   <CmsInput placeholder="기관명" inputSize="medium" width="100%" />
                 </Form.Item>
@@ -162,7 +161,6 @@ export function SchoolRegisterModal({
                   <Form.Item
                     name="roadAddress"
                     noStyle
-                    rules={[{ required: true }]}
                   >
                     <AddressSearch
                       value={roadAddress}

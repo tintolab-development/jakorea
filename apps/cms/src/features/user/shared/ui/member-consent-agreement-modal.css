@@ -1,0 +1,51 @@
+.member-consent-agreement-modal .full-page-modal__topbar {
+  background: var(--color-mint-01, #01a1af);
+}
+
+.member-consent-agreement-modal .full-page-modal__title-text,
+.member-consent-agreement-modal .full-page-modal__close {
+  color: var(--main-WT, #fff);
+}
+
+.member-consent-agreement-modal__description {
+  font-size: 15px;
+}
+
+.member-consent-agreement-modal__actions {
+  gap: 8px;
+}
+
+.member-consent-agreement-modal__workspace {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 0 52px 32px;
+  box-sizing: border-box;
+}
+
+.member-consent-agreement-modal__form-panel {
+  width: min(920px, 100%);
+  margin: 0 auto;
+}
+
+.member-consent-agreement-modal__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  width: 100%;
+}
+
+.member-consent-agreement-modal__error {
+  margin: 40px 0;
+  color: var(--disabled-txt, #999);
+  text-align: center;
+}
+
+.member-consent-agreement-modal__form-panel .form-editor-left {
+  padding: 0;
+}

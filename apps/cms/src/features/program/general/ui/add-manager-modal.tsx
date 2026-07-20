@@ -129,7 +129,6 @@ export function AddManagerModal({
             <Form.Item
               name="role"
               label="권한 설정"
-              rules={[{ required: true }]}
               className="add-manager-modal__field"
             >
               <CmsRadio.Group className="add-manager-modal__role-radios" size="large">
@@ -150,7 +149,6 @@ export function AddManagerModal({
             <Form.Item
               name="managerPreset"
               label="담당자명"
-              rules={[{ required: true }]}
               className="add-manager-modal__field"
             >
               <Select

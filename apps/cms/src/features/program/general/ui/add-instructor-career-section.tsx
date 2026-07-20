@@ -129,7 +129,6 @@ export function CareerDetailSection() {
                     {fields.map((field, idx) => {
                       const isFirstItem = idx === 0
                       const showDelete = fields.length > 1 && !isFirstItem
-                      const careerRequired = true
                       return (
                         <tr key={field.key}>
                           <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--label add-instructor-modal__basic-table-cell--row-label">
@@ -142,11 +141,6 @@ export function CareerDetailSection() {
                               <Form.Item
                                 name={[field.name, 'companyName']}
                                 noStyle
-                                rules={
-                                  careerRequired
-                                    ? [{ required: true }]
-                                    : undefined
-                                }
                                 className="add-instructor-modal__career-input-wrap"
                               >
                                 <Input
@@ -160,11 +154,6 @@ export function CareerDetailSection() {
                               <Form.Item
                                 name={[field.name, 'role']}
                                 noStyle
-                                rules={
-                                  careerRequired
-                                    ? [{ required: true }]
-                                    : undefined
-                                }
                                 className="add-instructor-modal__career-input-wrap"
                               >
                                 <Input
@@ -178,11 +167,6 @@ export function CareerDetailSection() {
                               <Form.Item
                                 name={[field.name, 'startDate']}
                                 noStyle
-                                rules={
-                                  careerRequired
-                                    ? [{ required: true }]
-                                    : undefined
-                                }
                                 className="add-instructor-modal__career-input-wrap"
                               >
                                 <DatePicker
@@ -198,11 +182,6 @@ export function CareerDetailSection() {
                               <Form.Item
                                 name={[field.name, 'endDate']}
                                 noStyle
-                                rules={
-                                  careerRequired
-                                    ? [{ required: true }]
-                                    : undefined
-                                }
                                 className="add-instructor-modal__career-input-wrap"
                               >
                                 <DatePicker

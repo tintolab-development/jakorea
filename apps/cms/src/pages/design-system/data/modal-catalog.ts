@@ -189,7 +189,7 @@ export const MODAL_CATALOG_CONSOLIDATE: ModalCatalogEntry[] = [
 export const MODAL_CATALOG_HELPERS: ModalCatalogEntry[] = [
   {
     name: 'ModalSpecTable',
-    path: 'shared/ui/modal-spec-table',
+    path: 'shared/ui/modal-spec-table.tsx',
     usage: 'helper',
     filesApprox: 0,
     basedOn: 'ContentModal 본문',

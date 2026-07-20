@@ -51,6 +51,7 @@ export {
   readJusoApiUrlFromEnv,
   readNeisApiKeyFromEnv,
   getCmsJusoMissingKeyMessage,
+  getCmsNeisMissingKeyMessage,
 } from '@/shared/lib/location-env'
 export { useObjectUrlFromFile } from './use-object-url-from-file'
 export { useFormInputsWidth } from './use-form-inputs-width'

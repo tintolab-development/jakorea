@@ -22,6 +22,8 @@ export interface MemberListItemResponse {
   loginEnabled?: boolean
   preRegistered?: boolean
   registeredByAdmin?: boolean
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean
+  identityVerified?: boolean
   isActive?: boolean
   createdAt?: string
   updatedAt?: string

@@ -1,5 +1,5 @@
 import { type Locator, type Page, expect } from '@playwright/test'
-import { fillByPlaceholder } from './form-helpers'
+import { fillByPlaceholder, selectByPlaceholder } from './form-helpers'
 
 const MEMBER_NAME_PREFIX = '틴토랩'
 
@@ -259,6 +259,85 @@ export class MemberListCrudPage {
     await this.injectSchoolRoadAddress(fallbackAddress)
   }
 
+  /** Ant Design Form.setFieldsValue 로 소속 학교명 주입 (NEIS 키/검색 실패 폴백) */
+  private async injectAffiliationSchoolName(schoolName: string) {
+    await this.page.evaluate(name => {
+      const formEl = document.getElementById('cms-member-register-modal-form')
+      if (!formEl) throw new Error('회원 등록 폼을 찾지 못했습니다.')
+
+      type Fiber = {
+        memoizedProps?: { form?: { setFieldsValue?: (v: Record<string, unknown>) => void } }
+        pendingProps?: { form?: { setFieldsValue?: (v: Record<string, unknown>) => void } }
+        return?: Fiber | null
+      }
+
+      const fiberKey = Object.keys(formEl).find(k => k.startsWith('__reactFiber$'))
+      if (!fiberKey) throw new Error('React fiber 를 찾지 못했습니다.')
+
+      let fiber = (formEl as unknown as Record<string, Fiber>)[fiberKey] as Fiber | null
+      for (let i = 0; i < 50 && fiber; i += 1) {
+        const formInst =
+          fiber.memoizedProps?.form ?? fiber.pendingProps?.form
+        if (formInst && typeof formInst.setFieldsValue === 'function') {
+          formInst.setFieldsValue({ schoolName: name })
+          return
+        }
+        fiber = fiber.return ?? null
+      }
+      throw new Error('Ant Form 인스턴스를 찾지 못했습니다.')
+    }, schoolName)
+
+    await expect(
+      this.page
+        .getByRole('dialog')
+        .filter({ hasText: '회원 신규 등록' })
+        .locator(`input[value="${schoolName.replace(/"/g, '\\"')}"]`)
+        .first()
+    ).toBeVisible({ timeout: 5_000 })
+  }
+
+  /**
+   * 전체 회원 등록 — 소속 학교명.
+   * NEIS 키가 없거나 검색이 실패하면 Ant Form 에 직접 주입합니다.
+   */
+  private async fillAffiliationSchoolName(registerDialog: Locator) {
+    const fallbackSchoolName = '서울초등학교'
+
+    await registerDialog.getByPlaceholder('소속 학교명').click()
+    const schoolModal = this.page.getByRole('dialog').filter({ hasText: '학교 검색' })
+    await expect(schoolModal).toBeVisible({ timeout: 15_000 })
+
+    await selectByPlaceholder(this.page, '시/도', '서울특별시')
+    await schoolModal.getByPlaceholder('학교명을 입력해 주세요').fill('초등학교')
+    await schoolModal.getByRole('button', { name: '검색' }).click()
+
+    const firstSelectButton = schoolModal
+      .getByLabel('학교 검색 결과')
+      .getByRole('button', { name: '선택' })
+      .first()
+    const searchFailed = schoolModal.getByText(/NEIS API 키가 설정되지 않았습니다/)
+    const noResults = schoolModal.getByText('검색 결과가 없습니다.')
+
+    try {
+      await expect(firstSelectButton.or(searchFailed).or(noResults)).toBeVisible({
+        timeout: 15_000,
+      })
+      if (await firstSelectButton.isVisible().catch(() => false)) {
+        await firstSelectButton.click()
+        await expect(schoolModal).toBeHidden({ timeout: 15_000 })
+        return
+      }
+    } catch {
+      /* fall through — Form 직접 주입 */
+    }
+
+    await schoolModal.getByRole('button', { name: '닫기' }).click().catch(async () => {
+      await this.page.keyboard.press('Escape')
+    })
+    await expect(schoolModal).toBeHidden({ timeout: 15_000 })
+    await this.injectAffiliationSchoolName(fallbackSchoolName)
+  }
+
   /** Ant Design Form.setFieldsValue 로 도로명 주소 주입 (JUSO 키/검색 실패 폴백) */
   private async injectSchoolRoadAddress(address: string) {
     await this.page.evaluate(addr => {
@@ -302,11 +381,14 @@ export class MemberListCrudPage {
     const createResponsePromise = this.waitCreateOk()
 
     if (this.kind === 'all') {
-      await fillByPlaceholder(dialog, '한글 성명', this.memberName)
-      await fillByPlaceholder(dialog, '주민등록 앞 6자리', '900101')
-      await fillByPlaceholder(dialog, '주민등록 뒤 7자리', '1234567')
+      await fillByPlaceholder(dialog, '성명', this.memberName)
+      await fillByPlaceholder(dialog, '생년월일 8자리', this.birthDate)
+      await this.fillAffiliationSchoolName(dialog)
+      await dialog.getByText('학년').click()
+      await dialog.getByText('1학년').click()
       await fillByPlaceholder(dialog, '연락처', this.phone)
       await fillByPlaceholder(dialog, '이메일', this.email)
+      await fillByPlaceholder(dialog, '건물명, 도로명 또는 지번', '서울특별시 강서구 마곡중앙로 171')
     } else if (this.kind === 'institutions') {
       await fillByPlaceholder(dialog, '기관명', this.memberName)
       await this.fillSchoolRoadAddress(dialog)
