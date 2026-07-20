@@ -71,8 +71,9 @@ export function E2eTestLogPanel({ active }: Props) {
   )
   const tableWrapRef = useRef<HTMLDivElement>(null)
 
-  const reload = useCallback(async () => {
-    setLoading(true)
+  const reload = useCallback(async (options?: { showLoading?: boolean }) => {
+    const showLoading = options?.showLoading === true
+    if (showLoading) setLoading(true)
     try {
       const res = await e2eTestLogMockApi.list()
       setItems(res.data.items)
@@ -86,12 +87,13 @@ export function E2eTestLogPanel({ active }: Props) {
     } catch {
       setBanner({ type: 'error', text: '테스트 로그를 불러오지 못했습니다.' })
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }, [])
 
   useEffect(() => {
     if (!active) return
+    // 탭 전환·폴링은 버튼 loading 을 켜지 않음 (너비 시프트 방지)
     void reload()
     const timer = window.setInterval(() => {
       void reload()
@@ -139,7 +141,7 @@ export function E2eTestLogPanel({ active }: Props) {
     const res = await e2eTestLogMockApi.clear()
     setBanner({ type: 'success', text: `${res.data.cleared}건 삭제` })
     setVisibleCount(PAGE_CHUNK)
-    await reload()
+    await reload({ showLoading: true })
   }
 
   const statusChips = useMemo(
@@ -225,7 +227,11 @@ export function E2eTestLogPanel({ active }: Props) {
           POST payload·지표를 기록합니다.
         </Typography.Paragraph>
         <Space wrap>
-          <Button onClick={() => void reload()} loading={loading}>
+          <Button
+            className="e2e-error-log-page__refresh-btn"
+            onClick={() => void reload({ showLoading: true })}
+            loading={loading}
+          >
             새로고침
           </Button>
           <Button danger onClick={() => void handleClear()} disabled={items.length === 0}>

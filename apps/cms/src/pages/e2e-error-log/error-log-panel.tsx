@@ -46,8 +46,9 @@ export function E2eErrorLogPanel({ active }: Props) {
   } | null>(null)
   const tableWrapRef = useRef<HTMLDivElement>(null)
 
-  const reload = useCallback(async () => {
-    setLoading(true)
+  const reload = useCallback(async (options?: { showLoading?: boolean }) => {
+    const showLoading = options?.showLoading === true
+    if (showLoading) setLoading(true)
     try {
       const res = await e2eErrorLogMockApi.list()
       setItems(res.data.items)
@@ -60,12 +61,13 @@ export function E2eErrorLogPanel({ active }: Props) {
     } catch {
       setStatusBanner({ type: 'error', text: '로그를 불러오지 못했습니다.' })
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }, [])
 
   useEffect(() => {
     if (!active) return
+    // 탭 전환·폴링·storage 동기화는 버튼 loading 을 켜지 않음 (너비 시프트 방지)
     void reload()
     const onStorage = (event: StorageEvent) => {
       if (event.key === 'cms.jakorea.e2eErrorLogs.v1') {
@@ -134,7 +136,7 @@ export function E2eErrorLogPanel({ active }: Props) {
     const res = await e2eErrorLogMockApi.clear()
     setStatusBanner({ type: 'success', text: `${res.data.cleared}건 삭제` })
     setVisibleCount(PAGE_CHUNK)
-    await reload()
+    await reload({ showLoading: true })
   }
 
   const handleDownloadMd = () => {
@@ -249,7 +251,11 @@ export function E2eErrorLogPanel({ active }: Props) {
           >
             MD 다운로드
           </Button>
-          <Button onClick={() => void reload()} loading={loading}>
+          <Button
+            className="e2e-error-log-page__refresh-btn"
+            onClick={() => void reload({ showLoading: true })}
+            loading={loading}
+          >
             새로고침
           </Button>
           <Button danger onClick={() => void handleClear()} disabled={items.length === 0}>

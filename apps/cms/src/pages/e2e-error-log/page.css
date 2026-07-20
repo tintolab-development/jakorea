@@ -67,6 +67,11 @@
   margin-bottom: 12px;
 }
 
+/* loading 스피너가 붙어도 버튼 너비가 늘어나지 않도록 */
+.e2e-error-log-page__refresh-btn.ant-btn {
+  min-width: 6.5rem;
+}
+
 .e2e-error-log-page__summary {
   flex-shrink: 0;
   margin-bottom: 12px;
