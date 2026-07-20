@@ -54,7 +54,9 @@ import {
   GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE,
   GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
   isParticipantRecruitmentPreviewOpen,
+  preserveGeneralProgramDetailProgramId,
   readGeneralProgramDetailRoute,
+  shouldPatchGeneralProgramDetailUrl,
 } from '@/features/program/general/lib/general-program-detail-route'
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
 import { useGeneralProgramCommonInfoSave } from '@/features/program/general/hooks/use-common-info-save'
@@ -611,20 +613,26 @@ export function GeneralProgramDetailFullPageModal({
   const applyDetailSearchParams = useCallback(
     (next: URLSearchParams, options?: { replace?: boolean }) => {
       if (isClosingRef.current) return
-      setSearchParams(next, { replace: options?.replace ?? true })
+      setSearchParams(
+        prev => {
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
+          return next
+        },
+        { replace: options?.replace ?? true }
+      )
     },
-    [programId, setSearchParams]
+    [setSearchParams]
   )
 
   const setEditMode = useCallback(
     (tab: string | null) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !programId) return prev
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           if (tab) next.set(EDIT_PARAM, tab)
           else next.delete(EDIT_PARAM)
-          next.set('programId', programId)
+          preserveGeneralProgramDetailProgramId(prev, next)
           return next
         },
         { replace: true }
@@ -742,13 +750,13 @@ export function GeneralProgramDetailFullPageModal({
       if (editTab) setEditMode(null)
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !programId) return prev
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           next.set(GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM, tab)
           if (tab !== 'institutions') {
             next.delete(GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM)
           }
-          next.set('programId', programId)
+          preserveGeneralProgramDetailProgramId(prev, next)
           return next
         },
         { replace: true }
@@ -781,10 +789,10 @@ export function GeneralProgramDetailFullPageModal({
     (tab: GeneralApplicationTabKey) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !programId) return prev
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           next.set(GENERAL_PROGRAM_DETAIL_SUB_TAB_PARAM, tab)
-          next.set('programId', programId)
+          preserveGeneralProgramDetailProgramId(prev, next)
           return next
         },
         { replace: true }
@@ -967,7 +975,7 @@ export function GeneralProgramDetailFullPageModal({
     if (!programId || !displayProgramRef.current) return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !programId) return prev
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         if (prev.get('programId') !== programId) return prev
         const normalized = normalizeGeneralDetailParams(
           programId,
@@ -1018,8 +1026,9 @@ export function GeneralProgramDetailFullPageModal({
     setParticipantRecruitmentPreviewOpenOptimistic(true)
     setSearchParams(
       prev => {
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         const next = new URLSearchParams(prev)
-        next.set('programId', programId)
+        preserveGeneralProgramDetailProgramId(prev, next)
         next.set(
           GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_PARAM,
           GENERAL_PROGRAM_PARTICIPANT_RECRUITMENT_PREVIEW_ACTIVE
@@ -1046,7 +1055,7 @@ export function GeneralProgramDetailFullPageModal({
     (id: string | null) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !programId) return prev
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           if (id) {
             next.set(SCHOOL_ID_PARAM, id)
@@ -1061,7 +1070,7 @@ export function GeneralProgramDetailFullPageModal({
             next.delete(SCHOOL_ID_PARAM)
             next.delete(SCHOOL_TAB_PARAM)
           }
-          next.set('programId', programId)
+          preserveGeneralProgramDetailProgramId(prev, next)
           return next
         },
         { replace: id == null }
@@ -1074,7 +1083,7 @@ export function GeneralProgramDetailFullPageModal({
     (id: string | null) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !programId) return prev
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           if (id) {
             next.set(INSTRUCTOR_ID_PARAM, id)
@@ -1089,7 +1098,7 @@ export function GeneralProgramDetailFullPageModal({
             next.delete(INSTRUCTOR_ID_PARAM)
             next.delete(INSTRUCTOR_TAB_PARAM)
           }
-          next.set('programId', programId)
+          preserveGeneralProgramDetailProgramId(prev, next)
           return next
         },
         { replace: id == null }
@@ -1102,7 +1111,7 @@ export function GeneralProgramDetailFullPageModal({
     (id: string | null) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !programId) return prev
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           if (id) {
             next.set(VOLUNTEER_ID_PARAM, id)
@@ -1117,7 +1126,7 @@ export function GeneralProgramDetailFullPageModal({
             next.delete(VOLUNTEER_ID_PARAM)
             next.delete(VOLUNTEER_TAB_PARAM)
           }
-          next.set('programId', programId)
+          preserveGeneralProgramDetailProgramId(prev, next)
           return next
         },
         { replace: id == null }
@@ -1130,7 +1139,7 @@ export function GeneralProgramDetailFullPageModal({
     (id: string | null) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !programId) return prev
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           if (id) {
             next.set(PARTICIPANT_ID_PARAM, id)
@@ -1145,7 +1154,7 @@ export function GeneralProgramDetailFullPageModal({
             next.delete(PARTICIPANT_ID_PARAM)
             next.delete(PARTICIPANT_TAB_PARAM)
           }
-          next.set('programId', programId)
+          preserveGeneralProgramDetailProgramId(prev, next)
           return next
         },
         { replace: id == null }
@@ -1158,13 +1167,13 @@ export function GeneralProgramDetailFullPageModal({
     (tab: ParticipatingInstitutionDetailTabKey) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !programId) return prev
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           next.set(
             SCHOOL_TAB_PARAM,
             normalizeParticipatingInstitutionDetailTab(tab, displayProgramRef.current)
           )
-          next.set('programId', programId)
+          preserveGeneralProgramDetailProgramId(prev, next)
           return next
         },
         { replace: true }
@@ -1177,10 +1186,10 @@ export function GeneralProgramDetailFullPageModal({
     (tab: InstructorDetailTabKey) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !programId) return prev
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           next.set(INSTRUCTOR_TAB_PARAM, tab)
-          next.set('programId', programId)
+          preserveGeneralProgramDetailProgramId(prev, next)
           return next
         },
         { replace: true }
@@ -1193,10 +1202,10 @@ export function GeneralProgramDetailFullPageModal({
     (tab: VolunteerDetailTabKey) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !programId) return prev
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           next.set(VOLUNTEER_TAB_PARAM, tab)
-          next.set('programId', programId)
+          preserveGeneralProgramDetailProgramId(prev, next)
           return next
         },
         { replace: true }
@@ -1209,10 +1218,10 @@ export function GeneralProgramDetailFullPageModal({
     (tab: ParticipantDetailTabKey) => {
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !programId) return prev
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           next.set(PARTICIPANT_TAB_PARAM, tab)
-          next.set('programId', programId)
+          preserveGeneralProgramDetailProgramId(prev, next)
           return next
         },
         { replace: true }
@@ -1227,11 +1236,11 @@ export function GeneralProgramDetailFullPageModal({
       setOptimisticDetailRoute({ lnb, tab })
       setSearchParams(
         prev => {
-          if (isClosingRef.current || !programId) return prev
+          if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           next.set(GENERAL_PROGRAM_DETAIL_LNB_PARAM, lnb)
           next.set(GENERAL_PROGRAM_DETAIL_TAB_PARAM, tab)
-          next.set('programId', programId)
+          preserveGeneralProgramDetailProgramId(prev, next)
           next.delete(GENERAL_PROGRAM_DETAIL_EDIT_PARAM)
 
           const isRecruitmentTab = lnb === 'info' && tab === 'recruitment'
@@ -1311,7 +1320,7 @@ export function GeneralProgramDetailFullPageModal({
     if (!open || !schoolIdFromUrl || !displayProgram) return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !programId) return prev
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         const raw = prev.get(SCHOOL_TAB_PARAM)
         const normalized = parseSchoolTabFromSearch(prev, displayProgram)
         if (raw === normalized) return prev
@@ -1327,7 +1336,7 @@ export function GeneralProgramDetailFullPageModal({
     if (!open || !instructorIdFromUrl) return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !programId) return prev
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         const raw = prev.get(INSTRUCTOR_TAB_PARAM)
         const normalized = parseInstructorTabFromSearch(prev)
         if (raw === normalized) return prev
@@ -1343,7 +1352,7 @@ export function GeneralProgramDetailFullPageModal({
     if (!open || !volunteerIdFromUrl) return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !programId) return prev
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         const raw = prev.get(VOLUNTEER_TAB_PARAM)
         const normalized = parseVolunteerTabFromSearch(prev)
         if (raw === normalized) return prev
@@ -1359,7 +1368,7 @@ export function GeneralProgramDetailFullPageModal({
     if (!open || !participantIdFromUrl) return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !programId) return prev
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         const raw = prev.get(PARTICIPANT_TAB_PARAM)
         const normalized = parseParticipantTabFromSearch(prev)
         if (raw === normalized) return prev
@@ -1376,7 +1385,7 @@ export function GeneralProgramDetailFullPageModal({
     if (activeLnb === 'progress' && activeTab === 'progress_instructors') return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !programId) return prev
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         if (!prev.has(INSTRUCTOR_ID_PARAM)) return prev
         const next = new URLSearchParams(prev)
         next.delete(INSTRUCTOR_ID_PARAM)
@@ -1392,7 +1401,7 @@ export function GeneralProgramDetailFullPageModal({
     if (activeLnb === 'progress' && activeTab === 'progress_volunteers') return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !programId) return prev
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         if (!prev.has(VOLUNTEER_ID_PARAM)) return prev
         const next = new URLSearchParams(prev)
         next.delete(VOLUNTEER_ID_PARAM)
@@ -1408,7 +1417,7 @@ export function GeneralProgramDetailFullPageModal({
     if (activeLnb === 'progress' && activeTab === 'progress_participants') return
     setSearchParams(
       prev => {
-        if (isClosingRef.current || !programId) return prev
+        if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
         if (!prev.has(PARTICIPANT_ID_PARAM)) return prev
         const next = new URLSearchParams(prev)
         next.delete(PARTICIPANT_ID_PARAM)
