@@ -32,7 +32,7 @@ const KIND_UI: Record<MemberListCrudKind, KindUi> = {
     createModalTitle: '회원 신규 등록',
     createSubmitButton: '신규 등록',
     detailHeading: /회원 상세/,
-    nameEditLabel: '한글 성명',
+    nameEditLabel: '성명',
     deleteButton: '회원 삭제',
     deleteGuideTitle: '회원 삭제 안내',
     deleteConfirmButton: '회원 삭제',
@@ -62,7 +62,7 @@ const KIND_UI: Record<MemberListCrudKind, KindUi> = {
     createModalTitle: '강사 추가 등록',
     createSubmitButton: '추가 등록',
     detailHeading: /강사 상세/,
-    nameEditLabel: '한글 성명',
+    nameEditLabel: '성명',
     deleteButton: '강사 삭제',
     deleteGuideTitle: '강사 삭제 안내',
     deleteConfirmButton: '강사 삭제',
@@ -77,7 +77,7 @@ const KIND_UI: Record<MemberListCrudKind, KindUi> = {
     createModalTitle: '관리자 신규 등록',
     createSubmitButton: '신규 등록',
     detailHeading: /관리자 상세/,
-    nameEditLabel: '한글 성명',
+    nameEditLabel: '성명',
     // 목록 버튼은 «관리자 삭제», 확인 모달은 회원 도메인 카피 재사용
     deleteButton: '관리자 삭제',
     deleteGuideTitle: '회원 삭제 안내',
@@ -96,7 +96,6 @@ const KIND_UI: Record<MemberListCrudKind, KindUi> = {
 type MemberListCrudIdentity = {
   memberName: string
   memberNameUpdated: string
-  englishName: string
   email: string
   phone: string
   birthDate: string
@@ -107,7 +106,6 @@ export class MemberListCrudPage {
   readonly ui: KindUi
   readonly memberName: string
   readonly memberNameUpdated: string
-  readonly englishName: string
   readonly email: string
   readonly phone: string
   readonly birthDate: string
@@ -122,7 +120,6 @@ export class MemberListCrudPage {
     if (identity) {
       this.memberName = identity.memberName
       this.memberNameUpdated = identity.memberNameUpdated
-      this.englishName = identity.englishName
       this.email = identity.email
       this.phone = identity.phone
       this.birthDate = identity.birthDate
@@ -131,7 +128,6 @@ export class MemberListCrudPage {
     const stamp = Date.now()
     this.memberName = `${MEMBER_NAME_PREFIX}-${stamp}`
     this.memberNameUpdated = `${MEMBER_NAME_PREFIX}-수정-${stamp}`
-    this.englishName = `Tintolab ${stamp}`
     this.email = `tintolab.e2e.${kind}.${stamp}@jakorea.test`
     this.phone = '01012345678'
     this.birthDate = '19900101'
@@ -142,7 +138,6 @@ export class MemberListCrudPage {
     return new MemberListCrudPage(this.page, kind, {
       memberName: this.memberName,
       memberNameUpdated: this.memberNameUpdated,
-      englishName: this.englishName,
       email: this.email,
       phone: this.phone,
       birthDate: this.birthDate,
@@ -308,7 +303,6 @@ export class MemberListCrudPage {
 
     if (this.kind === 'all') {
       await fillByPlaceholder(dialog, '한글 성명', this.memberName)
-      await fillByPlaceholder(dialog, '영문 성명', this.englishName)
       await fillByPlaceholder(dialog, '주민등록 앞 6자리', '900101')
       await fillByPlaceholder(dialog, '주민등록 뒤 7자리', '1234567')
       await fillByPlaceholder(dialog, '연락처', this.phone)
@@ -319,7 +313,6 @@ export class MemberListCrudPage {
       await fillByPlaceholder(dialog, '상세 주소', 'E2E 테스트')
     } else if (this.kind === 'instructors') {
       await fillByPlaceholder(dialog, '한글 성명', this.memberName)
-      await fillByPlaceholder(dialog, '영문 성명', this.englishName)
       await fillByPlaceholder(dialog, '이메일', this.email)
     } else {
       await fillByPlaceholder(dialog, '한글 성명', this.memberName)
