@@ -10,7 +10,6 @@ export const USER_AFFILIATION_PIPE_SEP = ' | ' as const
 
 export type AdminProvisionedMemberBasicInfoDraft = {
   name: string
-  nameEn: string
   phone: string
   email: string
   detailAddress: string
@@ -114,7 +113,6 @@ function birthDateToInputValue(birthDate: User['birthDate']): string {
 
 const EMPTY_ADMIN_PROVISIONED_DRAFT: AdminProvisionedMemberBasicInfoDraft = {
   name: '',
-  nameEn: '',
   phone: '',
   email: '',
   detailAddress: '',
@@ -182,7 +180,6 @@ export function userToAdminProvisionedBasicDraft(
   )
   return {
     name: user.name ?? '',
-    nameEn: user.nameEn ?? '',
     phone: user.phone ?? '',
     email: user.email ?? '',
     detailAddress: user.detailAddress ?? '',
@@ -238,7 +235,6 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
   Pick<
     User,
     | 'name'
-    | 'nameEn'
     | 'phone'
     | 'email'
     | 'detailAddress'
@@ -257,7 +253,6 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
   const adminPermissionVariant = (draft.adminPermissionVariant ?? '').trim()
   return {
     name: draft.name.trim(),
-    nameEn: draft.nameEn.trim() || undefined,
     phone: draft.phone.trim() || undefined,
     email: draft.email.trim(),
     detailAddress: detailAddress || undefined,

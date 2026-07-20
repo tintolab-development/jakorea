@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { CmsInput, CmsSelect } from '@/shared/ui'
@@ -5,7 +6,6 @@ import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
-import { NameBlockField } from '../fields/name-block-field'
 import {
   affiliationAndInstructorCareerView,
   detailAddressView,
@@ -74,36 +74,38 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
     cmsMayEditBasicProfileFields,
   })
   const d = memberInfoDraft
+  const nameWithBadge = (nameNode: ReactNode) => (
+    <span className="user-basic-info-section__name-with-badge">
+      {nameNode}
+      {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
+        <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
+      ) : null}
+    </span>
+  )
 
   return (
     <>
-      <NameBlockField
-        rows={[
-          {
-            subLabel: '한글',
-            main: editing.canEditBasic ? (
-              <span className="user-basic-info-section__name-with-badge">
-                <CmsInput
-                  value={d?.name ?? ''}
-                  onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
-                  inputSize="medium"
-                  width="100%"
-                  aria-label="한글 성명"
-                />
-                {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
-                  <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
-                ) : null}
-              </span>
-            ) : (
-              <span className="user-basic-info-section__name-with-badge">
-                {user.name}
-                {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
-                  <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
-                ) : null}
-              </span>
-            ),
-            sideLabel: isInstructorPermissionDetail ? '권한 승인 현황' : '정산 현황',
-            side: isInstructorPermissionDetail ? (
+      <EditableRow type="double">
+        <EditableField
+          label="성명"
+          readOnlyDisplay={editing.isReadOnlyDisplay}
+          view={nameWithBadge(user.name)}
+          edit={nameWithBadge(
+            <CmsInput
+              value={d?.name ?? ''}
+              onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
+              inputSize="medium"
+              width="100%"
+              placeholder="한글 성명"
+              aria-label="성명"
+            />
+          )}
+        />
+        <EditableField
+          label={isInstructorPermissionDetail ? '권한 승인 현황' : '정산 현황'}
+          readOnlyDisplay
+          view={
+            isInstructorPermissionDetail ? (
               <PermissionApprovalStatusWithResend
                 user={user}
                 onPermissionResendNotification={onPermissionResendNotification}
@@ -111,50 +113,41 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
               />
             ) : (
               settlementStatusView(user)
-            ),
-          },
-          {
-            subLabel: '영문',
-            main: editing.canEditBasic ? (
-              <CmsInput
-                value={d?.nameEn ?? ''}
-                onChange={e => onMemberInfoDraftChange?.({ nameEn: e.target.value })}
+            )
+          }
+        />
+      </EditableRow>
+
+      <EditableRow type="single">
+        <EditableField
+          label="성별 및 생년월일"
+          readOnlyDisplay={editing.isReadOnlyDisplay}
+          view={genderBirthView(user)}
+          edit={
+            <span className="user-basic-info-section__inline-controls">
+              <CmsSelect
+                value={d?.gender || undefined}
+                onChange={v => onMemberInfoDraftChange?.({ gender: v != null ? String(v) : '' })}
+                options={GENDER_EDIT_OPTIONS}
+                placeholder="성별"
                 inputSize="medium"
-                width="100%"
-                placeholder="영문 성명"
+                width={120}
               />
-            ) : (
-              <span>{user.nameEn ?? '-'}</span>
-            ),
-            sideLabel: '성별 및 생년월일',
-            side: editing.canEditBasic ? (
-              <span className="user-basic-info-section__inline-controls">
-                <CmsSelect
-                  value={d?.gender || undefined}
-                  onChange={v => onMemberInfoDraftChange?.({ gender: v != null ? String(v) : '' })}
-                  options={GENDER_EDIT_OPTIONS}
-                  placeholder="성별"
-                  inputSize="medium"
-                  width={120}
-                />
-                <CmsDateTextInput
-                  value={(d?.birthDate ?? '').replace(/-/g, '.')}
-                  onValueChange={value =>
-                    onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
-                  }
-                  inputSize="medium"
-                  width={160}
-                  placeholder="YYYY-MM-DD"
-                  maxLength={10}
-                  aria-label="생년월일"
-                />
-              </span>
-            ) : (
-              genderBirthView(user)
-            ),
-          },
-        ]}
-      />
+              <CmsDateTextInput
+                value={(d?.birthDate ?? '').replace(/-/g, '.')}
+                onValueChange={value =>
+                  onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
+                }
+                inputSize="medium"
+                width={160}
+                placeholder="YYYY-MM-DD"
+                maxLength={10}
+                aria-label="생년월일"
+              />
+            </span>
+          }
+        />
+      </EditableRow>
 
       <ContactInfoFieldsRow
         user={user}

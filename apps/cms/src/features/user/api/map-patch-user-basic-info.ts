@@ -8,7 +8,6 @@ export function mapPatchUserBasicInfoToApiRequest(
   const body: AdminMemberBasicInfoUpdateRequest = {}
 
   if (patch.name !== undefined) body.name = patch.name
-  if (patch.nameEn !== undefined) body.nameEn = patch.nameEn
   if (patch.phone !== undefined) body.phone = patch.phone
   if (patch.email !== undefined) body.email = patch.email
   if (patch.detailAddress !== undefined) body.detailAddress = patch.detailAddress
