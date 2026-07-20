@@ -139,7 +139,7 @@ export interface GeneralProgramCommonInfoExtension {
   educationFormScheduleDetail?: GeneralProgramScheduleDetailKind
   participationScheduleDetail?: GeneralProgramScheduleDetailKind
   ipsScheduleDetail?: GeneralProgramScheduleDetailKind
-  /** 일정형 복수 + IPS 일정 별 상이 — 사전 교육 */
+  /** 교육 진행(커리큘럼·일정형) — 사전 교육 토글 */
   scheduleCurriculumPreEducation?: boolean
   curriculumSessions?: GeneralProgramCurriculumSessionRow[]
   /** 일정형 — 세부 일정 블록 */

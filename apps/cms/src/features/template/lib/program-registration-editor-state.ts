@@ -47,6 +47,8 @@ export type ProgramRegistrationEditorState = {
   sponsorId?: string
   /** 일반 등록 폼 기본 정보 — 후원사 담당자 */
   sponsorContactId?: string
+  /** 일반 등록 폼 기본 정보 — 프로그램 제목(국문) */
+  programTitleKo?: string
   activeParagraphId?: string | null
 }
 
@@ -146,6 +148,8 @@ export function applyProgramRegistrationEditorState(
       typeof editorState.sponsorContactId === 'string' && editorState.sponsorContactId.trim()
         ? editorState.sponsorContactId.trim()
         : defaults.sponsorContactId,
+    programTitleKo:
+      typeof editorState.programTitleKo === 'string' ? editorState.programTitleKo : defaults.programTitleKo,
     activeParagraphId:
       typeof editorState.activeParagraphId === 'string' ? editorState.activeParagraphId : null,
   }

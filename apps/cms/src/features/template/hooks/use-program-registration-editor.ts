@@ -107,6 +107,7 @@ function createDefaultRegistrationEditorState(
     educationScheduleMode: getDefaultEducationScheduleMode(variant),
     sponsorId: '',
     sponsorContactId: '',
+    programTitleKo: '',
     activeParagraphId: null,
   }
 }
@@ -317,6 +318,7 @@ export function useProgramRegistrationEditor(
     setEducationScheduleMode(state.educationScheduleMode)
     setSponsorId(state.sponsorId ?? '')
     setSponsorContactId(state.sponsorContactId ?? '')
+    setProgramTitleKo(state.programTitleKo ?? '')
   }, [])
 
   const resetRegistrationEditorToSeed = useCallback(() => {
@@ -690,6 +692,10 @@ export function useProgramRegistrationEditor(
               onSponsorContactIdChange,
               programTitleKo,
               onProgramTitleKoChange,
+              /** 교육 진행 일정 설정은 상세 수정 전용 — 등록 폼·미리보기에서 숨김 */
+              hiddenParagraphIds: new Set<string>([
+                PROGRAM_REGISTRATION_IDS.educationScheduleSettings,
+              ]),
             }
           : {}),
       }),
@@ -793,6 +799,7 @@ export function useProgramRegistrationEditor(
         educationScheduleMode,
         sponsorId,
         sponsorContactId,
+        programTitleKo,
         activeParagraphId,
       }),
     })
@@ -806,6 +813,7 @@ export function useProgramRegistrationEditor(
     ipsScheduleDetail,
     participant,
     participationScheduleDetail,
+    programTitleKo,
     programType,
     scheduleCurriculumDetailCount,
     scheduleCurriculumGroupCount,
@@ -819,39 +827,45 @@ export function useProgramRegistrationEditor(
   ])
 
   /** 중간 저장 — template draft만. 프로그램 POST는 handleCompleteRegistration에서만. */
-  const handleSave = useCallback(async () => {
-    try {
-      await persistTemplateDraftIfNeeded()
-      if (onRegistrationSaved) {
+  const handleSave = useCallback(
+    async (options?: { silent?: boolean }) => {
+      try {
+        await persistTemplateDraftIfNeeded()
+        if (options?.silent) return
+        if (onRegistrationSaved) {
+          if (usesTemplateDraftApi) {
+            showAlert({
+              title: '임시 저장',
+              content:
+                '작성 내용을 임시 저장하였습니다.\n임시 저장본은 가장 최근에 저장한 1개의 항목만 유지됩니다.',
+            })
+          }
+          return
+        }
         if (usesTemplateDraftApi) {
           showAlert({
             title: '저장',
-            content: '작성 중인 양식이 저장되었습니다.',
+            content: '양식이 저장되었습니다.',
+            onConfirm: onTemplateDraftSaveConfirmed,
           })
         }
-        return
-      }
-      if (usesTemplateDraftApi) {
+      } catch (error) {
+        console.debug('programRegistrationEditor save failed', error)
+        if (options?.silent) throw error
         showAlert({
-          title: '저장',
-          content: '양식이 저장되었습니다.',
-          onConfirm: onTemplateDraftSaveConfirmed,
+          title: '임시 저장 실패',
+          content: '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.',
         })
       }
-    } catch (error) {
-      console.debug('programRegistrationEditor save failed', error)
-      showAlert({
-        title: '저장 실패',
-        content: '양식 저장 중 오류가 발생했습니다. 다시 시도해 주세요.',
-      })
-    }
-  }, [
-    onRegistrationSaved,
-    onTemplateDraftSaveConfirmed,
-    persistTemplateDraftIfNeeded,
-    showAlert,
-    usesTemplateDraftApi,
-  ])
+    },
+    [
+      onRegistrationSaved,
+      onTemplateDraftSaveConfirmed,
+      persistTemplateDraftIfNeeded,
+      showAlert,
+      usesTemplateDraftApi,
+    ]
+  )
 
   /** 등록 완료 — 프로그램 생성 POST 1회 */
   const handleCompleteRegistration = useCallback((): Promise<void> => {
