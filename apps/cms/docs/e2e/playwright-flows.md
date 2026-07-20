@@ -14,10 +14,13 @@ pnpm --filter cms test:e2e:install
 - `playwright.config.ts`의 `webServer`가 `pnpm dev`를 기동합니다. 이미 떠 있으면 재사용합니다.
 - **인증**: `auth.setup.ts` 가 DEV **어드민 자동 입력** + MFA `000000` 으로 **1회** 로그인하고
   `tests/e2e/.auth/admin.json`(storageState)에 저장합니다. 이후 스펙은 이 세션을 재사용합니다.
-- 스펙은 `tests/e2e/fixtures/test` 를 import 합니다. 실패하거나 `/api/*` 4xx/5xx 가 있으면
-  터미널에 **E2E 백엔드 에러 로그**가 출력되고 `test-results/e2e-error-log-latest.json` 에 저장됩니다.
-  같은 로그는 DEV Mock API 스토어에도 남아 [`/e2e-error-log`](http://localhost:3000/e2e-error-log)에서
-  확인할 수 있습니다. (Vite 재시작 필요할 수 있음)
+- 스펙은 `tests/e2e/fixtures/test` 를 import 합니다.
+  - **테스트 로깅**: 모든 테스트의 시작/종료·소요시간·mutation POST payload가
+    `test-results/e2e-test-log-store.json` 에 남고
+    [`/e2e-error-log`](http://localhost:3000/e2e-error-log) «테스트 로깅» 탭에서 확인할 수 있습니다.
+  - **에러 로깅**: 실패하거나 `/api/*` 4xx/5xx 가 있으면 터미널에 출력되고
+    `test-results/e2e-error-log-latest.json` · [`/e2e-error-log?tab=error`](http://localhost:3000/e2e-error-log?tab=error)
+    «에러 로깅» 탭에 남습니다. (Vite 재시작 필요할 수 있음)
 
 백엔드 전달용으로 정리한 E2E 관측 이슈: [**e2e-backend-fixes-index.md**](../api/e2e-backend-fixes-index.md)
 
@@ -128,16 +131,21 @@ pnpm --filter cms exec playwright test --project=setup --debug
 | 스펙 | `tests/e2e/flows/programs/general-program-registration.spec.ts` |
 | POM | `tests/e2e/pages/general-program-registration.page.ts` |
 | 헬퍼 | `tests/e2e/pages/form-helpers.ts` |
-| 검증 | **저장된 세션** → LNB 일반 프로그램 → 신규 등록 → 공통/모집/신청 작성 → **실 API** 등록 완료 → 목록에 작성 프로그램 행 확인 |
+| 검증 | **1) 등록 완료** → **2) 목록에서 작성 프로그램 행 확인** (`describe.serial`) |
 
 참고: 등록은 `POST /api/admin/programs` **실 API만** 사용합니다(스텁 없음). 백엔드 오류 시 테스트가 실패합니다.  
-대표 프로그램명(국문)이 생성 `title`·목록에 반영됩니다.
+대표 프로그램명(국문)이 생성 `title`·목록에 반영됩니다.  
+POM은 기본 경로(개인·커리큘럼형·단일 회차)에서 공통·모집(참여자/강사/봉사자)·신청(참여자/강사/봉사자) 탭의 텍스트·셀렉트·날짜·라디오·체크박스·상세 textarea를 채웁니다.  
+스펙은 등록과 목록 확인을 **별도 test**로 나누며, 2단계는 1단계의 `programId`·제목을 이어받습니다.
 
-백엔드 에러(예: `DATABASE_ERROR`)가 나면 DEV에서 Mock API(`localStorage`)에 상황·에러 코드가 자동 기록됩니다.  
+백엔드 에러(예: `DATABASE_ERROR`)가 나면 DEV에서 Mock API에 상황·에러 코드가 자동 기록됩니다.  
 단, **Playwright 테스트 브라우저와 직접 연 Chrome의 localStorage는 분리**되어 있습니다.  
 실패 시 터미널에 `========== E2E 백엔드 에러 로그 ==========` 블록이 출력되고,  
 `apps/cms/test-results/e2e-error-log-latest.json` · HTML 리포트 attachment에도 남습니다.  
-공유 스토어(`e2e-error-log-store.json`)에도 기록되어 [`/e2e-error-log`](http://localhost:3000/e2e-error-log)에서 볼 수 있습니다.
+공유 스토어(`e2e-error-log-store.json`)에도 기록되어 [`/e2e-error-log?tab=error`](http://localhost:3000/e2e-error-log?tab=error)에서 볼 수 있습니다.
+
+테스트 진행·`POST /api/admin/programs` 등 mutation **payload**는 `e2e-test-log-store.json` /
+[`/e2e-error-log`](http://localhost:3000/e2e-error-log) «테스트 로깅» 탭에서 확인합니다.
 
 네트워크 캡처는 응답 body 파싱이 끝날 때까지 기다린 뒤 덤프하며, axios가 남긴 localStorage 건도 병합합니다.  
 (과거에는 teardown 타이밍 때문에 테스트에서 난 4xx/5xx보다 로그가 적게 남을 수 있었습니다.)

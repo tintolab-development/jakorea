@@ -69,7 +69,7 @@ export function installApiErrorCapture(page: Page): {
     const url = res.url()
     // Mock 로그 API 자체·정적 자산 제외
     if (!/\/api\//.test(url)) return
-    if (url.includes('/__dev__/e2e-error-logs')) return
+    if (url.includes('/__dev__/e2e-error-logs') || url.includes('/__dev__/e2e-test-logs')) return
 
     const task = (async () => {
       let bodyText = ''

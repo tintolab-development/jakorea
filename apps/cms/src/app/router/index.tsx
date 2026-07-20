@@ -317,7 +317,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    // 로컬·E2E 디버그: 백엔드 에러 Mock 로그 (로그인 불필요)
+    // 로컬·E2E 디버그: 테스트 진행·백엔드 에러 Mock 로그 (로그인 불필요, ?tab=error)
     path: '/e2e-error-log',
     element: (
       <Suspense fallback={<RouterLoadingFallback fullViewport />}>
