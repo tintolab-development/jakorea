@@ -21,6 +21,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - **[TableFilterGroup layout](./design/table-filter-group-layout.mdc)** — 260px·gap·responsive wrap·겹침 금지 패턴  
 - [Status dropdown cell](./coding/status-dropdown-cell.md) — `StatusDropdownCell`, tag layout  
 - [Custom hooks](./coding/custom-hooks.md)  
+- **[React hooks — early return 뒤 훅 금지](./coding/react-hooks-after-early-return.mdc)** — `Rendered more hooks…` 방지 (tsx/훅 편집 시)  
 - [Type safety & consistency](./coding/type-safety-and-consistency.md) — no deprecated APIs  
 - [Refactoring principles](./coding/refactoring-principles.md)  
 - [Template feature implementation](./coding/template-management.md) — `features/template`, `pages/templates`  

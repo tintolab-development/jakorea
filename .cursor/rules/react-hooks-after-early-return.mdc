@@ -1,0 +1,66 @@
+---
+description: React — early return 뒤에 훅 호출 금지 (Rendered more/fewer hooks 오류 방지)
+globs:
+  - "apps/**/*.{tsx,jsx}"
+  - "apps/**/hooks/**/*.{ts,tsx}"
+  - "packages/**/*.{tsx,jsx}"
+alwaysApply: false
+---
+
+# React hooks — early return / 조건부 훅 금지
+
+런타임 오류 `Rendered more hooks than during the previous render` / `Rendered fewer hooks…` 를 막기 위한 **필수** 규칙.
+
+## 금지 (안티패턴)
+
+같은 컴포넌트(또는 커스텀 훅) 안에서 **`return` / `if` 분기 뒤에** `useState` · `useEffect` · `useMemo` · `useCallback` · `useRef` · `useContext` · `useFieldArray` · 기타 `use*` 를 호출하지 않는다.
+
+```tsx
+// ❌ BAD — early return 이후 useEffect → 렌더마다 훅 개수 변동
+function CurriculumSection({ structure, sessions }) {
+  const { fields } = useFieldArray({ control, name: 'sessions' })
+  if (structure === 'schedule') return null
+  if (sessions.length === 0) return null
+
+  useEffect(() => { /* … */ }, […]) // 여기 도달할 때만 훅 호출됨
+  return <… />
+}
+```
+
+```tsx
+// ❌ BAD — 조건부로 훅 호출
+if (isEdit) {
+  useEffect(() => { … }, [])
+}
+```
+
+## 필수 (올바른 패턴)
+
+1. **모든 훅을 컴포넌트/훅 본문 최상단에서 무조건·동일 순서로** 호출한다.
+2. early `return null` 은 **훅 호출이 끝난 뒤**에만 둔다.
+3. 분기별 UI가 필요하면 훅은 부모에 두고, 자식 컴포넌트로 분리한다 (자식이 마운트될 때만 그 자식의 훅이 돈다 — 이건 허용).
+
+```tsx
+// ✅ GOOD — 훅 먼저, early return은 그 다음
+function CurriculumSection({ structure, sessions, isEdit }) {
+  const { fields } = useFieldArray({ control, name: 'sessions' })
+  useEffect(() => {
+    if (!isEdit) return
+    // …
+  }, [isEdit])
+
+  if (structure === 'schedule') return null
+  if (sessions.length === 0 && !isEdit) return null
+  return <… />
+}
+```
+
+## 작업 시 체크
+
+- 섹션 컴포넌트에 `return null` + `useEffect`/`useFieldArray` 를 추가·이동할 때, **훅이 return 위인지** 반드시 확인한다.
+- 리뷰/수정 대상에 early return이 있으면 그 **아래**에 `use*` 가 없는지 검색한다.
+
+## 관련
+
+- CMS: [custom-hooks.md](../../apps/cms/.cursor/rules/coding/custom-hooks.md) · [CMS 위임 규칙](../../apps/cms/.cursor/rules/coding/react-hooks-after-early-return.mdc)
+- ESLint: `react-hooks/rules-of-hooks` (비활성화하지 말 것)

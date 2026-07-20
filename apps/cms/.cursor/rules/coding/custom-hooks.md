@@ -24,10 +24,15 @@ Prefix with `use`. Name reflects behaviour (`useProgramList`, `useSettlementFilt
 
 - One giant hook that fetches, filters, paginates, and owns modal state — split.  
 - Hooks that only wrap a single `useState` with no logic — inline instead.
+- **`return` / 조건부 분기 뒤에 `useEffect`·`useFieldArray` 등 훅 호출** —  
+  `Rendered more hooks than during the previous render` 유발.  
+  → 모노레포 규칙: [react-hooks-after-early-return.mdc](../../../../../.cursor/rules/react-hooks-after-early-return.mdc)  
+  (훅은 항상 최상단·동일 순서, early `return null`은 훅 **이후**)
 
 ## Related
 
 - [refactoring-principles.md](./refactoring-principles.md)  
 - [component-patterns.md](./component-patterns.md)  
+- [react-hooks-after-early-return.mdc](./react-hooks-after-early-return.mdc)
 
-**Last updated:** 2026-04-21
+**Last updated:** 2026-07-20
