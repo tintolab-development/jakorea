@@ -284,6 +284,7 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
 .detail-info-form-inputs-wrapper-no-gap > .cms-select,
 .detail-info-form-inputs-wrapper-no-gap > .cms-input,
 .detail-info-form-inputs-wrapper-no-gap > .cms-input-search,
+.detail-info-form-inputs-wrapper-no-gap > .school-search__trigger-wrap,
 .detail-info-form-inputs-wrapper-no-gap > .cms-textarea,
 .detail-info-form-inputs-wrapper-no-gap > .cms-datepicker:not(.cms-datepicker--range-split),
 .detail-info-form-inputs-wrapper-no-gap > .paragraph-date-picker,
@@ -297,8 +298,9 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
   width: 100%;
 }
 
-/* CmsInputSearch는 래퍼 div가 flex 자식 — calc/퍼센트 width가 줄어들지 않도록 */
-.detail-info-form-inputs-wrapper-no-gap > .cms-input-search {
+/* CmsInputSearch / SchoolSearch는 래퍼가 flex 자식 — calc/퍼센트 width가 줄어들지 않도록 */
+.detail-info-form-inputs-wrapper-no-gap > .cms-input-search,
+.detail-info-form-inputs-wrapper-no-gap > .school-search__trigger-wrap {
   flex-shrink: 0;
 }
 
