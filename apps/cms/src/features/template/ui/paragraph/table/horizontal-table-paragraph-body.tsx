@@ -429,6 +429,7 @@ export function HorizontalTableParagraphBody({
   programApplicationFormInstructor,
   programApplicationFormVolunteer,
   programApplicationFormIndividual,
+  programLinkedInstitutionApplicationForm,
   paragraphInteractionMode = 'authoring',
 }: {
   paragraph: HorizontalTableParagraph
@@ -448,6 +449,8 @@ export function HorizontalTableParagraphBody({
   ujatProgramRegistration?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
+  /** 프로그램 상세·등록 위저드 연동 — 기관 신청 폼 자동 반영 UI 노출 */
+  programLinkedInstitutionApplicationForm?: boolean
   /** 1사1교 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormEconomyInstitution?: boolean
   /** 교육받은 교사 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
@@ -602,6 +605,9 @@ export function HorizontalTableParagraphBody({
         ? {
             enabled: programApplicationFormInstitution,
             readOnlyPreview: isFormPreviewReadonlyMode(paragraphInteractionMode),
+            isTemplateAuthoringMode:
+              paragraphInteractionMode === 'authoring' &&
+              programLinkedInstitutionApplicationForm !== true,
             paragraph: p,
             onParagraphChange: next => onChange(next),
           }

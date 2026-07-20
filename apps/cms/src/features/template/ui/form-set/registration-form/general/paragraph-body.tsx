@@ -21,7 +21,6 @@ import { ProgramRegistrationBasicInfoParagraph } from '@/features/template/ui/fo
 import { ProgramRegistrationBusinessKpiParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/business-kpi-paragraph'
 import { ProgramRegistrationEducationCurriculumParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-curriculum-paragraph'
 import { ProgramRegistrationEducationScheduleCurriculumParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-curriculum-paragraph'
-import { ProgramRegistrationEducationScheduleSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/education-schedule-settings-paragraph'
 import { ProgramRegistrationTypeSettingsParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/type-settings-paragraph'
 import { ProgramRegistrationWageInfoParagraph } from '@/features/template/ui/form-set/registration-form/general/paragraphs/wage-info-paragraph'
 
@@ -236,8 +235,9 @@ export function renderProgramRegistrationParagraphBody(
         />
       )
     case PROGRAM_REGISTRATION_IDS.educationScheduleSettings:
-      return options == null ? null : options.programRegistrationFormVariant ===
-        'trainedTeachers' ? (
+      /** 일반: 등록 폼 비노출(상세 수정만). 1사1교·교육받은 교사만 렌더 */
+      if (options == null || options.programRegistrationFormVariant === 'general') return null
+      return options.programRegistrationFormVariant === 'trainedTeachers' ? (
         <TrainedTeachersRegistrationEducationScheduleSettingsParagraph
           educationScheduleMode={options.educationScheduleMode}
           onEducationScheduleModeChange={options.onEducationScheduleModeChange}
@@ -247,12 +247,7 @@ export function renderProgramRegistrationParagraphBody(
           educationScheduleMode={options.educationScheduleMode}
           onEducationScheduleModeChange={options.onEducationScheduleModeChange}
         />
-      ) : (
-        <ProgramRegistrationEducationScheduleSettingsParagraph
-          educationScheduleMode={options.educationScheduleMode}
-          onEducationScheduleModeChange={options.onEducationScheduleModeChange}
-        />
-      )
+      ) : null
     default:
       return null
   }

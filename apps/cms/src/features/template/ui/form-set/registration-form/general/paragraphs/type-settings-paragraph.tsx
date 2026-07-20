@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type {
   ProgramRegistrationScheduleDetailKind,
@@ -112,6 +113,23 @@ export function ProgramRegistrationTypeSettingsParagraph({
   }
 
   const showParticipationMethod = !participantOrganization
+
+  /** 일정 공통·단일 회차 교육 형태 → 신청 폼 「희망 교육 형태」 노출 연동 */
+  useEffect(() => {
+    if (sessionRoundType === 'multi' && educationFormScheduleDetail === 'perSchedule') {
+      return
+    }
+    const form =
+      sessionRoundType === 'multi' ? multiCommonEducationForm : singleEducationForm
+    patchInstitutionApplicationProgramBridge({
+      showPreferredEducationForm: form === 'participant_selection',
+    })
+  }, [
+    sessionRoundType,
+    educationFormScheduleDetail,
+    singleEducationForm,
+    multiCommonEducationForm,
+  ])
 
   return (
     <>

@@ -1,6 +1,7 @@
 import { Fragment, useState, type ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
 import type { Dayjs } from 'dayjs'
+import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import type {
@@ -25,11 +26,6 @@ import {
   ProgramRegistrationIpsTypeFields,
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
-import {
-  EMPTY_PROGRAM_REGISTRATION_MULTI_ROUND_ASSIGNMENT,
-  ProgramRegistrationMultiRoundAssignmentFields,
-  type ProgramRegistrationMultiRoundAssignmentValue,
-} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-multi-round-assignment-fields'
 import { CurriculumAssignmentSettingView } from '@/features/template/ui/shared/curriculum-assignment-setting-view'
 import {
   formatEducationScheduleLineFromRange,
@@ -224,19 +220,12 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
   )
   const [educationFormByDetail, setEducationFormByDetail] = useState<Record<number, string>>({})
   const [participationByDetail, setParticipationByDetail] = useState<Record<number, string>>({})
-  const [singleRoundAssignment, setSingleRoundAssignment] =
-    useState<ProgramRegistrationMultiRoundAssignmentValue>(
-      EMPTY_PROGRAM_REGISTRATION_MULTI_ROUND_ASSIGNMENT
-    )
 
   const setIpsForDetail = (detailIndex: number, next: ProgramRegistrationIpsTypeValue) => {
     setIpsByDetailIndex(prev => ({ ...prev, [detailIndex]: next }))
   }
 
-  const ipsLockedForSchedulePreEducation =
-    sessionRoundType === 'multi' &&
-    ipsScheduleDetail === 'perSchedule' &&
-    scheduleCurriculumPreEducation
+  const ipsLockedForSchedulePreEducation = scheduleCurriculumPreEducation
 
   const ipsTypeValueForDetail = (detailIndex: number): ProgramRegistrationIpsTypeValue =>
     ipsLockedForSchedulePreEducation
@@ -254,7 +243,18 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     participationByDetail[detailIndex] ?? 'individual'
 
   const onEducationFormRadioChange = (detailIndex: number) => (e: RadioChangeEvent) => {
-    setEducationFormByDetail(prev => ({ ...prev, [detailIndex]: String(e.target.value) }))
+    const nextValue = String(e.target.value)
+    setEducationFormByDetail(prev => {
+      const next = { ...prev, [detailIndex]: nextValue }
+      if (educationFormScheduleDetail === 'perSchedule') {
+        patchInstitutionApplicationProgramBridge({
+          showPreferredEducationForm: Object.values(next).some(
+            value => value === 'participant_selection'
+          ),
+        })
+      }
+      return next
+    })
   }
 
   const onParticipationRadioChange = (detailIndex: number) => (e: RadioChangeEvent) => {
@@ -656,19 +656,6 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
 
   return (
     <>
-      {isSingleRound ? (
-        <DetailInfoForm
-          title="교육 진행 (일정형)"
-          hideHeader
-          mode="edit"
-          className="program-registration-paragraph"
-        >
-          <ProgramRegistrationMultiRoundAssignmentFields
-            value={singleRoundAssignment}
-            onChange={setSingleRoundAssignment}
-          />
-        </DetailInfoForm>
-      ) : null}
       {Array.from({ length: detailCount }, (_, i) => {
         const n = i + 1
         return (

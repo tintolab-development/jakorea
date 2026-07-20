@@ -153,6 +153,14 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       pr.participationScheduleDetail === 'perSchedule' &&
       pr.ipsScheduleDetail === 'perSchedule'
 
+    const preEducationToggle = (
+      <CmsToggle
+        label="사전 교육"
+        checked={pr.scheduleCurriculumPreEducation}
+        onChange={pr.onScheduleCurriculumPreEducationChange}
+      />
+    )
+
     if (isScheduleMultiAllPer) {
       return {
         ...heading,
@@ -163,11 +171,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
             onKeyDown={e => e.stopPropagation()}
             role="presentation"
           >
-            <CmsToggle
-              label="사전 교육"
-              checked={pr.scheduleCurriculumPreEducation}
-              onChange={pr.onScheduleCurriculumPreEducationChange}
-            />
+            {preEducationToggle}
             <CmsButton
               type="button"
               variant="secondary"
@@ -190,7 +194,13 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       return {
         ...heading,
         titleTrailing: (
-          <div className="program-registration-paragraph__card-title-actions">
+          <div
+            className="program-registration-paragraph__card-title-actions"
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
+            role="presentation"
+          >
+            {preEducationToggle}
             <CmsButton
               type="button"
               variant="secondary"
@@ -212,7 +222,13 @@ export function withProgramRegistrationCurriculumTitleTrailing(
     return {
       ...heading,
       titleTrailing: (
-        <div className="program-registration-paragraph__card-title-actions">
+        <div
+          className="program-registration-paragraph__card-title-actions"
+          onClick={e => e.stopPropagation()}
+          onKeyDown={e => e.stopPropagation()}
+          role="presentation"
+        >
+          {preEducationToggle}
           <CmsButton
             type="button"
             variant="secondary"
@@ -260,22 +276,34 @@ export function withProgramRegistrationCurriculumTitleTrailing(
   return {
     ...heading,
     titleTrailing: (
-      <CmsButton
-        type="button"
-        variant="secondary"
-        size="medium"
-        width={isMulti ? 160 : 180}
-        disabled={curriculumAddDisabled || curriculumChartSessionAtMax}
-        icon={<PlusOutlined aria-hidden />}
-        onClick={e => {
-          e.stopPropagation()
-          if (curriculumAddDisabled || curriculumChartSessionAtMax) return
-          if (isMulti) pr.onAddCurriculumSession()
-          else pr.onAddCurriculumChartSession()
-        }}
+      <div
+        className="program-registration-paragraph__card-title-actions"
+        onClick={e => e.stopPropagation()}
+        onKeyDown={e => e.stopPropagation()}
+        role="presentation"
       >
-        {isMulti ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
-      </CmsButton>
+        <CmsToggle
+          label="사전 교육"
+          checked={pr.scheduleCurriculumPreEducation}
+          onChange={pr.onScheduleCurriculumPreEducationChange}
+        />
+        <CmsButton
+          type="button"
+          variant="secondary"
+          size="medium"
+          width={isMulti ? 160 : 180}
+          disabled={curriculumAddDisabled || curriculumChartSessionAtMax}
+          icon={<PlusOutlined aria-hidden />}
+          onClick={e => {
+            e.stopPropagation()
+            if (curriculumAddDisabled || curriculumChartSessionAtMax) return
+            if (isMulti) pr.onAddCurriculumSession()
+            else pr.onAddCurriculumChartSession()
+          }}
+        >
+          {isMulti ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
+        </CmsButton>
+      </div>
     ),
   }
 }

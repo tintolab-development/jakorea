@@ -813,51 +813,51 @@ export function useProgramParticipantApplicationEditor(
     openWritingUserPreview(writingPreviewSession)
   }, [openWritingUserPreview, writingPreviewSession])
 
-  const handleSave = useCallback(() => {
-    void (async () => {
-      try {
-        const templateId = resolvePersistTemplateId()
-        if (variant === 'ujat-recruit-institution') {
-          const overlay = { ...getUjatRecruitInstitutionOverlayRecord() }
-          await persistWritingFormTemplateDraft({
-            templateId,
-            draft,
-            overlay,
-          })
-          persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
-        } else if (variant === 'ujat-recruit-volunteer') {
-          const overlay = { ...getUjatRecruitVolunteerOverlayRecord() }
-          await persistWritingFormTemplateDraft({
-            templateId,
-            draft,
-            overlay,
-          })
-          persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
-        } else {
-          const editorState = buildParticipantApplicationEditorState({
-            variant,
-            volunteerExceptionScheduleCount,
-            ujatVolunteerApplicationType,
-            ujatGradeApplicationBlockIds,
-            ujatApplicationGradeByBlockId,
-            ujatGradeClassTimeBlockIds,
-          })
-          await persistWritingFormTemplateDraft({
-            templateId,
-            draft,
-            editorState,
-          })
-        }
-        if (isTemplateManagementSave) {
-          showSaveSuccess(onTemplateDraftSaveConfirmed)
-        }
-      } catch (error) {
-        console.debug('programParticipantApplicationEditor save failed', error)
-        if (isTemplateManagementSave) {
-          showSaveFailure()
-        }
+  const handleSave = useCallback(async (options?: { silent?: boolean }) => {
+    try {
+      const templateId = resolvePersistTemplateId()
+      if (variant === 'ujat-recruit-institution') {
+        const overlay = { ...getUjatRecruitInstitutionOverlayRecord() }
+        await persistWritingFormTemplateDraft({
+          templateId,
+          draft,
+          overlay,
+        })
+        persistUjatRecruitInstitutionTemplateSave({ draft, overlay })
+      } else if (variant === 'ujat-recruit-volunteer') {
+        const overlay = { ...getUjatRecruitVolunteerOverlayRecord() }
+        await persistWritingFormTemplateDraft({
+          templateId,
+          draft,
+          overlay,
+        })
+        persistUjatRecruitVolunteerTemplateSave({ draft, overlay })
+      } else {
+        const editorState = buildParticipantApplicationEditorState({
+          variant,
+          volunteerExceptionScheduleCount,
+          ujatVolunteerApplicationType,
+          ujatGradeApplicationBlockIds,
+          ujatApplicationGradeByBlockId,
+          ujatGradeClassTimeBlockIds,
+        })
+        await persistWritingFormTemplateDraft({
+          templateId,
+          draft,
+          editorState,
+        })
       }
-    })()
+      if (options?.silent) return
+      if (isTemplateManagementSave) {
+        showSaveSuccess(onTemplateDraftSaveConfirmed)
+      }
+    } catch (error) {
+      console.debug('programParticipantApplicationEditor save failed', error)
+      if (options?.silent) throw error
+      if (isTemplateManagementSave) {
+        showSaveFailure()
+      }
+    }
   }, [
     draft,
     isTemplateManagementSave,

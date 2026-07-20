@@ -323,6 +323,9 @@ export function renderFormParagraphBody(
           programRegistration={options?.programRegistration}
           ujatProgramRegistration={options?.ujatProgramRegistration}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
+          programLinkedInstitutionApplicationForm={
+            options?.programLinkedInstitutionApplicationForm
+          }
           programApplicationFormEconomyInstitution={
             options?.programApplicationFormEconomyInstitution
           }

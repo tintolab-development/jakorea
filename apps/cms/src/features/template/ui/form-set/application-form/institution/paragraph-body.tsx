@@ -9,6 +9,8 @@ import { ProgramApplicationFormInstitutionSexOffenseConsentSubmissionParagraph }
 export type ProgramApplicationFormInstitutionBodyOptions = {
   enabled: boolean
   readOnlyPreview?: boolean
+  /** 템플릿 작성 모드 — 자동 반영 필드는 힌트만 표시 */
+  isTemplateAuthoringMode?: boolean
   paragraph?: HorizontalTableParagraph
   onParagraphChange?: (next: HorizontalTableParagraph) => void
 }
@@ -24,7 +26,11 @@ export function renderProgramApplicationFormInstitutionParagraphBody(
   if (!enabled) return null
   switch (paragraph.id) {
     case PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo:
-      return <ProgramApplicationFormInstitutionBasicInfoParagraph />
+      return (
+        <ProgramApplicationFormInstitutionBasicInfoParagraph
+          isTemplateAuthoringMode={resolvedOptions?.isTemplateAuthoringMode === true}
+        />
+      )
     case PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance:
       return (
         <ProgramApplicationFormInstitutionGuidanceParagraph

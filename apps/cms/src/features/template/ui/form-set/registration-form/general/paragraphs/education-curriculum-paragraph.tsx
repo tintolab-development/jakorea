@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
+import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type {
   ProgramRegistrationScheduleDetailKind,
@@ -213,10 +214,6 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   const [progressSessionByRound, setProgressSessionByRound] = useState<Record<number, string>>({})
   const [educationFormBySession, setEducationFormBySession] = useState<Record<number, string>>({})
   const [participationBySession, setParticipationBySession] = useState<Record<number, string>>({})
-  const [singleRoundAssignment, setSingleRoundAssignment] =
-    useState<ProgramRegistrationMultiRoundAssignmentValue>(
-      EMPTY_PROGRAM_REGISTRATION_MULTI_ROUND_ASSIGNMENT
-    )
   const [assignmentByRound, setAssignmentByRound] = useState<
     Record<number, ProgramRegistrationMultiRoundAssignmentValue>
   >({})
@@ -230,7 +227,18 @@ export function ProgramRegistrationEducationCurriculumParagraph({
 
   const onEducationFormRadioChange =
     (sessionIndex: number) => (e: RadioChangeEvent) => {
-      setEducationFormBySession(prev => ({ ...prev, [sessionIndex]: String(e.target.value) }))
+      const nextValue = String(e.target.value)
+      setEducationFormBySession(prev => {
+        const next = { ...prev, [sessionIndex]: nextValue }
+        if (educationFormScheduleDetail === 'perSchedule') {
+          patchInstitutionApplicationProgramBridge({
+            showPreferredEducationForm: Object.values(next).some(
+              value => value === 'participant_selection'
+            ),
+          })
+        }
+        return next
+      })
     }
 
   const onParticipationRadioChange = (sessionIndex: number) => (e: RadioChangeEvent) => {
@@ -277,17 +285,6 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     if (isSingleIpsPerChart) {
       return (
         <div className="program-registration-curriculum__sessions">
-          <DetailInfoForm
-            title="교육 진행 (커리큘럼)"
-            hideHeader
-            mode="edit"
-            className="program-registration-paragraph"
-          >
-            <ProgramRegistrationMultiRoundAssignmentFields
-              value={singleRoundAssignment}
-              onChange={setSingleRoundAssignment}
-            />
-          </DetailInfoForm>
           {Array.from({ length: curriculumChartSessionCount }, (_, i) => {
             const chartIndex = i + 1
             const ipsValue = ipsBySession[chartIndex] ?? { category: '', detail: '' }
@@ -322,17 +319,6 @@ export function ProgramRegistrationEducationCurriculumParagraph({
 
     return (
       <div className="program-registration-curriculum__sessions">
-        <DetailInfoForm
-          title="교육 진행 (커리큘럼)"
-          hideHeader
-          mode="edit"
-          className="program-registration-paragraph"
-        >
-          <ProgramRegistrationMultiRoundAssignmentFields
-            value={singleRoundAssignment}
-            onChange={setSingleRoundAssignment}
-          />
-        </DetailInfoForm>
         {Array.from({ length: curriculumChartSessionCount }, (_, i) => {
           const chartIndex = i + 1
           return (

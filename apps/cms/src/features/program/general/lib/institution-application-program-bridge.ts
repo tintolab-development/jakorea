@@ -4,6 +4,7 @@
  */
 
 import { useSyncExternalStore } from 'react'
+import { shouldShowInstitutionApplicationEducationFormatField } from '@/features/program/general/lib/institution-application-detail-edit-policy'
 import { shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph } from '@/features/program/general/lib/institution-application-form-visibility'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
@@ -30,11 +31,17 @@ export type InstitutionApplicationProgramBridge = {
   educationScheduleLines?: readonly string[]
   /** 기간 지정 — 신청 폼 희망 교육일 선택 가능 범위 */
   educationScheduleRange?: { start: string; end: string }
+  /**
+   * 등록 폼 교육 형태가 「참여자 선택」일 때 신청 폼 「희망 교육 형태」 노출.
+   * 등록 위저드·상세 resolve 모두 동일 플래그를 쓴다.
+   */
+  showPreferredEducationForm?: boolean
 }
 
 const DEFAULT_BRIDGE: InstitutionApplicationProgramBridge = {
   preEducationNoticeRequired: true,
   educationScheduleMode: 'date',
+  showPreferredEducationForm: false,
 }
 
 let bridgeState: InstitutionApplicationProgramBridge = { ...DEFAULT_BRIDGE }
@@ -86,7 +93,15 @@ export function resolveInstitutionApplicationProgramBridge(
     sessionRound: program?.generalProgramSessionRound,
     educationScheduleMode: commonInfo?.educationScheduleMode ?? 'date',
     educationScheduleLines: commonInfo?.educationScheduleLines,
+    showPreferredEducationForm: shouldShowInstitutionApplicationEducationFormatField(program),
   }
+}
+
+/** 신청 폼 「희망 교육 형태」 — 등록 교육 형태가 「참여자 선택」일 때만 */
+export function shouldShowInstitutionApplicationPreferredEducationForm(
+  bridge: InstitutionApplicationProgramBridge
+): boolean {
+  return bridge.showPreferredEducationForm === true
 }
 
 /** 사전 안내 「필요」일 때만 안내 사항 단락 노출 */
