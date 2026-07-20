@@ -37,14 +37,16 @@
   min-height: 0;
 }
 
-.e2e-error-log-page__tabs .ant-tabs-content,
-.e2e-error-log-page__tabs .ant-tabs-tabpane {
+.e2e-error-log-page__tabs .ant-tabs-content {
   height: 100%;
 }
 
-.e2e-error-log-page__tabs .ant-tabs-tabpane {
+/* 비활성 pane 은 Ant Design 기본(display:none)을 유지해야 탭 전환이 보인다.
+ * `.ant-tabs-tabpane { display:flex }` 는 숨김 스타일보다 특이도가 높아 양쪽이 동시에 노출됐다. */
+.e2e-error-log-page__tabs .ant-tabs-tabpane-active {
   display: flex;
   flex-direction: column;
+  height: 100%;
   min-height: 0;
 }
 
