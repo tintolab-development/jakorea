@@ -1,17 +1,17 @@
 /** 교육 진행 일정 열 고정 폭 */
 export const PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH = 360
 
-/** 교재 배송 현황 테이블 열 폭 (StatusDropdownCell 배지 폭과 별도) */
-export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH = 152
+/** 교재 배송 현황 테이블 열 폭 — tag100 트리거 116px (8 + 100 + 8) */
+export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH = 116
 
-/** 교재 배송 현황 StatusDropdownCell 배지·트리거·드롭다운 패널 폭 */
-export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_BADGE_WIDTH = 120
+/** 교재 배송 현황 StatusDropdownCell 배지 폭 (editable-status-badge 스펙) */
+export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_BADGE_WIDTH = 100
 
-/** StatusDropdownCell `style` — 배지 100×32 (tag100 레이아웃과 병행) */
+/** StatusDropdownCell `style` — 배지 100×32, max-width 200 (tag100 레이아웃과 병행) */
 export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE = {
   width: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_BADGE_WIDTH,
   minWidth: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_BADGE_WIDTH,
-  maxWidth: PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_BADGE_WIDTH,
+  maxWidth: 200,
   height: 32,
   minHeight: 32,
   maxHeight: 32,

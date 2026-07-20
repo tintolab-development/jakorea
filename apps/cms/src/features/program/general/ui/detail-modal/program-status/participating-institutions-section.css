@@ -171,7 +171,7 @@
 
 /*
  * 교재 배송 현황(StatusDropdownCell)
- * - 배지·패널 120×30 / 152px: column width + `PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE` + status-dropdown-cell.css `--sdcb-*`
+ * - 배지 100×32 / 열·트리거 116px: column width + `PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_DROPDOWN_STYLE` + status-dropdown-cell.css `--sdcb-*`
  * - 아래는 cms-data-table 행 패딩·드롭다운 열림 시 세로 흔들림만 막음 (공통 셀 패딩 0은 status-dropdown-cell.css)
  */
 .participating-institutions-section__table--textbook-dropdown.cms-data-table
@@ -199,9 +199,9 @@
   th.status-dropdown-cell__header--tag-100,
 .participating-institutions-section__table--textbook-dropdown.cms-data-table
   td.status-dropdown-cell__cell-status--tag-100 {
-  width: 152px !important;
-  min-width: 152px !important;
-  max-width: 152px !important;
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
   box-sizing: border-box !important;
   text-align: center !important;
   padding-left: 0 !important;
