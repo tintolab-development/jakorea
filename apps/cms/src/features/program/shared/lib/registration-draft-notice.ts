@@ -58,8 +58,53 @@ function titleFromOverlay(overlay: Record<string, unknown> | undefined): string 
   return null
 }
 
+function titleFromEditorState(editorState: Record<string, unknown> | undefined): string | null {
+  if (editorState == null) return null
+  for (const key of ['programTitleKo', 'title', 'programTitle'] as const) {
+    const raw = editorState[key]
+    if (typeof raw === 'string' && raw.trim()) return raw.trim()
+  }
+  return null
+}
+
 function resolveDraftTitle(record: WritingFormTemplateSaveRecord): string {
-  return titleFromOverlay(record.overlay) ?? FALLBACK_TITLE
+  return (
+    titleFromOverlay(record.overlay) ?? titleFromEditorState(record.editorState) ?? FALLBACK_TITLE
+  )
+}
+
+export type WritingFormDraftOverwriteInfo = {
+  templateId: string
+  title: string
+  savedAt: string
+}
+
+/**
+ * 「임시저장」 시 덮어쓰기 확인용 — templateId에 사용자 작성 draft가 있으면 정보 반환.
+ * 제목이 없으면 `titleFallbackTemplateIds`에서 제목을 보완한다.
+ */
+export function peekWritingFormDraftOverwrite(
+  templateId: string,
+  options?: { titleFallbackTemplateIds?: readonly string[] }
+): WritingFormDraftOverwriteInfo | null {
+  const saved = loadWritingFormTemplateSave(templateId)
+  if (saved == null || !hasUserDraftPayload(saved)) return null
+
+  let title = resolveDraftTitle(saved)
+  if (title === FALLBACK_TITLE && options?.titleFallbackTemplateIds) {
+    for (const fallbackId of options.titleFallbackTemplateIds) {
+      if (fallbackId === templateId) continue
+      const fallback = loadWritingFormTemplateSave(fallbackId)
+      if (fallback == null || !hasUserDraftPayload(fallback)) continue
+      const fallbackTitle = resolveDraftTitle(fallback)
+      if (fallbackTitle !== FALLBACK_TITLE) {
+        title = fallbackTitle
+        break
+      }
+    }
+  }
+
+  return { templateId, title, savedAt: saved.savedAt }
 }
 
 /**
