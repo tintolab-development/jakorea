@@ -139,6 +139,12 @@ export async function getUsers(filters?: {
   }
 
   // 비밀번호 제외하고 반환, participationHistory 계산
+  users.sort((a, b) => {
+    const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+    const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+    return bTime - aTime
+  })
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return users.map(({ password, ...user }) => {
     // 실제 참여이력 데이터에서 계산
@@ -611,6 +617,12 @@ export interface CreateUserRequest {
     isBusinessIncome: boolean
   }
   isActive?: boolean
+  id1365?: string
+  address?: string
+  detailAddress?: string
+  affiliation?: string
+  grade?: string
+  schoolEnrollmentStatus?: 'ENROLLED' | 'NOT_ENROLLED'
 }
 
 export async function createUser(request: CreateUserRequest): Promise<Omit<User, 'password'>> {
@@ -730,6 +742,20 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
   // 강사 정보 설정
   if (request.role === 'INSTRUCTOR' && request.instructorInfo) {
     newUser.instructorInfo = request.instructorInfo
+  }
+
+  if (request.id1365) {
+    newUser.id1365 = request.id1365
+  }
+
+  if (request.address || request.detailAddress) {
+    newUser.detailAddress = [request.address, request.detailAddress].filter(Boolean).join(' ').trim()
+  }
+
+  if (request.affiliation) {
+    newUser.affiliation = request.grade
+      ? `${request.affiliation} | ${request.grade}`
+      : request.affiliation
   }
 
   // 최신 등록 사용자가 목록 첫 페이지에 보이도록 앞에 추가

@@ -1,13 +1,41 @@
-.add-user-individual__consent-guide {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
+.add-user-individual__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
 
-.add-user-individual__consent-guide p {
-  margin: 0;
+.add-user-individual__section--basic .detail-info-form__field {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+}
+
+.add-user-individual__section--basic .detail-info-form__field-label,
+.add-user-individual__section--basic .detail-info-form__field-content {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  box-sizing: border-box;
+}
+
+.add-user-individual__section--terms .detail-info-form__field {
+  min-height: 50px;
+}
+
+.add-user-individual__section--terms .detail-info-form__field-label,
+.add-user-individual__section--terms .detail-info-form__field-content {
+  min-height: 50px;
+  box-sizing: border-box;
+  padding-block: 5px;
+}
+
+.add-user-individual__consent-actions {
+  width: 100%;
+}
+
+.add-user-individual__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
 }
