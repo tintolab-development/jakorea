@@ -1,0 +1,22 @@
+.participating-volunteer-fullpage-view .program-detail-fullpage-modal__info-tab {
+  gap: 0;
+}
+
+.participating-volunteer-fullpage-view__section-block {
+  width: 100%;
+}
+
+.participating-volunteer-fullpage-view__tab-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+}
+
+.participating-volunteer-application-info.general-volunteer-applicant-detail__body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}

@@ -11,6 +11,9 @@ import type {
   FormDocumentPreviewRenderMode,
 } from '@/features/template/lib/a4-document-preview'
 
+/** 양식 편집 풀페이지(`TemplateFullpageModal` 등) 위에 사용자 미리보기를 겹칠 때 */
+export const TEMPLATE_WRITING_USER_PREVIEW_Z_INDEX = 1300
+
 export type TemplateWritingPreviewLayout = 'default' | 'a4-document'
 
 /** `/templates` 등에서 공유하는 작성 양식 풀모달 미리보기 세션(API·파일명의 `UserPreview`는 URL `userPreview` 쿼리와 연동될 뿐, 제품 용어「사용자 모드」와 동일하지 않음 — `form-editor-modes.mdc`) */
@@ -25,6 +28,7 @@ export type TemplateWritingUserPreviewSession = {
   /** FormEditorLeftPanel — 단락 필수(*)·답변 필수 토글 등 숨김 */
   hideParagraphRequiredChrome?: boolean
   a4HiddenParagraphIds?: ReadonlySet<string>
+  a4PageBreakBeforeParagraphIds?: ReadonlySet<string>
   a4RenderMode?: FormDocumentPreviewRenderMode
   a4ParagraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
   /**
@@ -85,11 +89,12 @@ export function TemplateWritingPreviewProvider({ children }: { children: ReactNo
           draft={session.draft}
           updateParagraph={session.updateParagraph}
           editorKind={session.editorKind ?? 'survey'}
-          zIndex={session.zIndex}
+          zIndex={session.zIndex ?? TEMPLATE_WRITING_USER_PREVIEW_Z_INDEX}
           previewLayout={session.previewLayout}
           paragraphBodyOptions={session.paragraphBodyOptions}
           hideParagraphRequiredChrome={session.hideParagraphRequiredChrome}
           a4HiddenParagraphIds={session.a4HiddenParagraphIds}
+          a4PageBreakBeforeParagraphIds={session.a4PageBreakBeforeParagraphIds}
           a4RenderMode={session.a4RenderMode}
           a4ParagraphGapPx={session.a4ParagraphGapPx}
           focusedParagraphId={session.focusedParagraphId}

@@ -74,7 +74,7 @@ export function GeneralVolunteerApplicationsView({
           onVolunteerApplicantDetailMetaChange={handleVolunteerApplicantDetailMetaChange}
         />
       ) : screenTab === 'vol_interview2' ? (
-        <GeneralVolunteerInterview2Section {...sharedSectionProps} />
+        <GeneralVolunteerInterview2Section program={program} {...sharedSectionProps} />
       ) : (
         <GeneralVolunteerDocScreeningSection {...sharedSectionProps} />
       )}

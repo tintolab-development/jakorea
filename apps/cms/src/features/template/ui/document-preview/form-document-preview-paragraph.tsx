@@ -13,6 +13,7 @@ import type {
   UjatJournalEducationInfoParagraph,
   UserInfoParagraph,
   WritingFormParagraph,
+  FileAttachmentParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   isAgreementLockedSystemParagraph,
@@ -21,6 +22,7 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import type { FormDocumentPreviewRenderMode } from '@/features/template/lib/a4-document-preview'
 import { getDocumentPreviewParagraphViewModel } from '@/features/template/lib/a4-document-preview'
+import { resolveParagraphTitleRequiredMark } from '@/features/template/lib/paragraph-required-mark'
 import { getFormParagraphDisplayTitle } from '@/features/template/lib/form-title-numbering'
 import { ParagraphCard } from '@/features/template/ui/paragraph/shared/paragraph-card'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
@@ -41,6 +43,8 @@ import {
   UserInfoPreviewTable,
 } from '@/features/template/ui/paragraph/single-item/user-info'
 import { FileAttachment } from '@/features/template/ui/paragraph/single-item/file-attachment'
+import { DocumentEducationPhotosReadonly } from '@/features/template/ui/document-preview/document-education-photos-readonly'
+import { DocumentSessionPlanShortEssayReadonly } from '@/features/template/ui/document-preview/document-session-plan-short-essay-readonly'
 import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/single-item/lecture-report-program-progress'
 import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
@@ -80,6 +84,31 @@ function readOnlyTitleBlock(
         </FormParagraphSectionDescription>
       ) : undefined,
   }
+}
+
+function ContentOnlyParagraphHeader({
+  displayTitle,
+  description,
+  requiredMark,
+}: {
+  displayTitle: string
+  description?: string
+  requiredMark?: boolean
+}) {
+  const { title, description: descriptionNode } = readOnlyTitleBlock(displayTitle, description)
+  return (
+    <div className="form-document-preview-paragraph__content-header">
+      <div className="form-document-preview-paragraph__title-row">
+        {title}
+        {requiredMark ? (
+          <span className="form-document-preview-paragraph__required" aria-hidden>
+            *
+          </span>
+        ) : null}
+      </div>
+      {descriptionNode}
+    </div>
+  )
 }
 
 function DocumentMultipleChoiceReadonly({ paragraph }: { paragraph: MultipleChoiceParagraph }) {
@@ -179,6 +208,13 @@ function DocumentShortEssayReadonly({
           },
         ]
   const showItemTitle = items.length >= 2 ? true : (paragraph.showItemTitle ?? false)
+  if (renderMode === 'contentOnly' && paragraph.variant === 'session_plan_short_essay') {
+    return (
+      <DocumentSessionPlanShortEssayReadonly
+        paragraph={paragraph as SessionPlanShortEssayParagraph}
+      />
+    )
+  }
   if (renderMode === 'contentOnly') {
     return (
       <div className="form-editor-body form-document-text-input-blocks">
@@ -241,6 +277,13 @@ function renderBody(
   renderMode: FormDocumentPreviewRenderMode = 'card',
   showWritingPeriod = true
 ): ReactNode {
+  if (p.kind === 'single_item' && p.variant === 'file_attachment') {
+    if (renderMode === 'contentOnly') {
+      return <DocumentEducationPhotosReadonly paragraph={p as FileAttachmentParagraph} />
+    }
+    return <FileAttachment paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
+  }
+
   switch (p.variant) {
     case 'survey_title_with_period':
       return (
@@ -274,6 +317,9 @@ function renderBody(
           programApplicationFormEconomyInstitution={
             paragraphBodyOptions?.programApplicationFormEconomyInstitution
           }
+          programApplicationFormTrainedTeachersInstitution={
+            paragraphBodyOptions?.programApplicationFormTrainedTeachersInstitution
+          }
           programApplicationFormGeminiInstitution={
             paragraphBodyOptions?.programApplicationFormGeminiInstitution
           }
@@ -285,6 +331,12 @@ function renderBody(
           }
           applicantRecruitFormInstitution={paragraphBodyOptions?.applicantRecruitFormInstitution}
           showInstitutionApplicationLimits={paragraphBodyOptions?.showInstitutionApplicationLimits}
+          applicantRecruitInstitutionLayoutVariant={
+            paragraphBodyOptions?.applicantRecruitInstitutionLayoutVariant
+          }
+          applicantRecruitInstitutionDefaults={
+            paragraphBodyOptions?.applicantRecruitInstitutionDefaults
+          }
           applicantRecruitFormIndividual={paragraphBodyOptions?.applicantRecruitFormIndividual}
           programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
         />
@@ -428,8 +480,6 @@ function renderBody(
         />
       )
     }
-    case 'file_attachment':
-      return <FileAttachment paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
     case 'static_description_lines':
       if (p.kind !== 'description' || p.variant !== 'static_description_lines') return null
       return <StaticDescriptionLines paragraph={p} />
@@ -517,11 +567,15 @@ export function FormDocumentPreviewParagraph({
   )
 
   if (renderMode === 'contentOnly') {
+    const isFileAttachment =
+      paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment'
+
     return (
       <div
         className={[
           'form-document-preview-paragraph',
           'form-document-preview-paragraph--content-only',
+          isFileAttachment ? 'form-document-preview-paragraph--file-attachment' : '',
           viewModel.isClosing ? 'form-document-preview-paragraph--content-only-closing' : '',
           viewModel.isClosingSignature
             ? 'form-document-preview-paragraph--content-only-closing-signature'
@@ -535,9 +589,11 @@ export function FormDocumentPreviewParagraph({
         style={style}
       >
         {viewModel.showHeader ? (
-          <div className="form-document-preview-paragraph__content-header">
-            <div className="form-document-preview-paragraph__title-text">{viewModel.title}</div>
-          </div>
+          <ContentOnlyParagraphHeader
+            displayTitle={displayTitle}
+            description={viewModel.description}
+            requiredMark={resolveParagraphTitleRequiredMark(paragraph)}
+          />
         ) : null}
         <div className="form-document-preview-paragraph__content-slot">{body}</div>
       </div>

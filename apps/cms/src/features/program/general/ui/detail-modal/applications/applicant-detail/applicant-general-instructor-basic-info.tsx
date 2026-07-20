@@ -3,26 +3,19 @@
  * 스크린샷 시안: 기본 정보 + ApplicantInstructorResume(학력/경력/Q&A)
  */
 
-import type { ReactNode } from 'react'
-import { useCallback, useEffect, useState } from 'react'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import { StatusDropdownCell } from '@/shared/components'
-import type { SchoolTeacherEmploymentStatus } from '@/types/user'
+import { resolveInstructorAffiliationEmploymentStatus } from '@/features/program/general/lib/instructor-affiliation-employment-display'
 import {
-  SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
-  SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
-  SchoolTeacherEmploymentStatusBadge,
-} from '@/features/user/detail/lib/school-teacher-employment-status'
-import {
-  withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
+  withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
-import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import type { ApplicantInstructorEditDraft } from '@/features/program/general/lib/applicant-instructor-detail-edit'
+import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
 import {
   BusinessIncomeEditField,
   BusinessIncomeView,
@@ -31,69 +24,14 @@ import {
   LectureFeeBasisEditField,
   LectureFeeBasisView,
 } from './applicant-general-instructor-fee-fields'
+import {
+  AffiliationEmploymentStatusField,
+  formatAccountDisplayContent,
+  formatBirthDateAndAge,
+  HomeAddressDisplay,
+  InstructorBasicInfoDetailForm,
+} from './instructor-basic-info-detail-form'
 import './applicant-general-instructor-basic-info.css'
-
-const AFFILIATION_EMPLOYMENT_BADGE_CELL_STYLE = {
-  ...SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
-  maxWidth: 200,
-} as const
-
-function resolveAffiliationEmploymentStatus(
-  instructor: ApplicantInstructorRow
-): SchoolTeacherEmploymentStatus | null {
-  if (!instructor.affiliation?.trim()) return null
-  if (instructor.affiliationEmploymentStatus) {
-    return instructor.affiliationEmploymentStatus
-  }
-  if (instructor.affiliationIsCurrentlyEmployed) return 'ACTIVE'
-  return null
-}
-
-function AffiliationEmploymentStatusField({
-  instructorId,
-  instructor,
-}: {
-  instructorId: string
-  instructor: ApplicantInstructorRow
-}) {
-  const [employmentStatus, setEmploymentStatus] = useState<SchoolTeacherEmploymentStatus | null>(() =>
-    resolveAffiliationEmploymentStatus(instructor)
-  )
-  const [employmentDropdownOpen, setEmploymentDropdownOpen] = useState(false)
-
-  useEffect(() => {
-    setEmploymentStatus(resolveAffiliationEmploymentStatus(instructor))
-  }, [instructorId, instructor.affiliationEmploymentStatus, instructor.affiliationIsCurrentlyEmployed, instructor.affiliation])
-
-  const handleEmploymentStatusChange = useCallback((next: SchoolTeacherEmploymentStatus) => {
-    setEmploymentStatus(next)
-    setEmploymentDropdownOpen(false)
-  }, [])
-
-  if (employmentStatus == null) {
-    return null
-  }
-
-  return (
-    <span className="applicant-general-instructor-basic-info__employment-dropdown">
-      <StatusDropdownCell<SchoolTeacherEmploymentStatus>
-        status={employmentStatus}
-        statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
-        renderBadge={status => (
-          <SchoolTeacherEmploymentStatusBadge
-            status={status}
-            classNamePrefix="applicant-general-instructor-basic-info__employment-badge"
-          />
-        )}
-        isItemDisabled={(cur, opt) => cur === opt}
-        onChange={handleEmploymentStatusChange}
-        isOpen={employmentDropdownOpen}
-        onOpenChange={setEmploymentDropdownOpen}
-        style={AFFILIATION_EMPLOYMENT_BADGE_CELL_STYLE}
-      />
-    </span>
-  )
-}
 
 export interface ApplicantGeneralInstructorBasicInfoProps {
   instructor: ApplicantInstructorRow
@@ -103,133 +41,6 @@ export interface ApplicantGeneralInstructorBasicInfoProps {
   onDraftChange?: (partial: Partial<ApplicantInstructorEditDraft>) => void
   validationErrors?: Record<string, string>
   onResendNotificationClick?: () => void
-}
-
-function formatBirthDateAndAge(birthDate?: string, age?: number): string {
-  if (!birthDate && age == null) return '-'
-  const formatted = birthDate ? birthDate.split('.').join('. ') : ''
-  if (formatted && age != null) return `${formatted} (만 ${age}세)`
-  if (formatted) return formatted
-  if (age != null) return `만 ${age}세`
-  return '-'
-}
-
-function formatAccountDisplayContent(instructor: ApplicantInstructorRow, mask: boolean): ReactNode {
-  const bank = instructor.bankName ?? ''
-  const num = instructor.accountNumber ?? ''
-  const holder = instructor.accountHolder ?? ''
-  if (!bank && !num && !holder) return '-'
-  if (mask) {
-    const maskedNum = num ? MASKING_POLICY.accountNumber(num) : ''
-    const maskedHolder = holder ? MASKING_POLICY.accountHolderName(holder) : ''
-    const left = [bank, maskedNum].filter(Boolean).join(' ')
-    if (!maskedHolder) return left || '-'
-    if (!left) return maskedHolder
-    return withProgramDetailTdDivider([left, maskedHolder])
-  }
-  const left = [bank, num].filter(Boolean).join(' ')
-  if (!holder) return left || '-'
-  if (!left) return holder
-  return withProgramDetailTdDivider([left, holder])
-}
-
-function splitAddressAfterDong(address: string): { head: string; tail: string } | null {
-  const re = /(?:^|\s)([가-힣]{2,12}동)(?=\s|$)/u
-  const m = address.match(re)
-  if (!m) return null
-  const dong = m[1]
-  const i = address.indexOf(dong)
-  if (i === -1) return null
-  const end = i + dong.length
-  return { head: address.slice(0, end), tail: address.slice(end) }
-}
-
-function splitAddressAfterGu(address: string): { head: string; tail: string } | null {
-  const re = /(?:^|\s)([가-힣]{1,12}구)(?=\s|$)/u
-  const m = address.match(re)
-  if (!m) return null
-  const gu = m[1]
-  const i = address.indexOf(gu)
-  if (i === -1) return null
-  const end = i + gu.length
-  return { head: address.slice(0, end), tail: address.slice(end) }
-}
-
-function splitAddressForPrivacyBlur(address: string): { head: string; tail: string } | null {
-  return splitAddressAfterDong(address) ?? splitAddressAfterGu(address)
-}
-
-function HomeAddressDisplay({ address, mask }: { address: string | undefined; mask: boolean }) {
-  if (!address?.trim()) return <>-</>
-  if (!mask) return <>{address}</>
-
-  const split = splitAddressForPrivacyBlur(address)
-  if (!split) {
-    return (
-      <span className="applicant-general-instructor-basic-info__address-blur" aria-hidden="true">
-        {address}
-      </span>
-    )
-  }
-
-  const { head, tail } = split
-  if (!tail.trim()) {
-    return <>{head}</>
-  }
-
-  return (
-    <>
-      {head}
-      <span className="applicant-general-instructor-basic-info__address-blur" aria-hidden="true">
-        {tail}
-      </span>
-    </>
-  )
-}
-
-function TableRowTwoCols({
-  label1,
-  value1,
-  label2,
-  value2,
-}: {
-  label1: string
-  value1: ReactNode
-  label2: string
-  value2: ReactNode
-}) {
-  return (
-    <tr>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {label1}
-      </td>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-        {value1}
-      </td>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {label2}
-      </td>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value">
-        {value2}
-      </td>
-    </tr>
-  )
-}
-
-function TableRowFullWidth({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <tr>
-      <td className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--label">
-        {label}
-      </td>
-      <td
-        colSpan={3}
-        className="applicant-institution-basic-info__cell applicant-institution-basic-info__cell--value"
-      >
-        {value}
-      </td>
-    </tr>
-  )
 }
 
 function ProgramApprovalStatusValue({
@@ -282,9 +93,14 @@ export function ApplicantGeneralInstructorBasicInfo({
     formatBirthDateAndAge(instructor.birthDate, instructor.age),
   ])
 
+  const affiliationEmploymentStatus = resolveInstructorAffiliationEmploymentStatus(instructor)
   const affiliationEmploymentBadge =
-    resolveAffiliationEmploymentStatus(instructor) != null ? (
-      <AffiliationEmploymentStatusField instructorId={instructor.id} instructor={instructor} />
+    affiliationEmploymentStatus != null ? (
+      <AffiliationEmploymentStatusField
+        instructorId={instructor.id}
+        affiliation={instructor.affiliation}
+        employmentStatus={affiliationEmploymentStatus}
+      />
     ) : null
 
   const affiliationCell = instructor.affiliation?.trim() ? (
@@ -312,56 +128,48 @@ export function ApplicantGeneralInstructorBasicInfo({
       : instructor.email
     : '-'
 
-  const homeAddressDisplay = (
-    <HomeAddressDisplay address={instructor.address} mask={shouldMask} />
-  )
+  const evaluationGradeDisplay = formatJaEvaluationGradeCellDisplay(instructor.evaluationGrade)
 
-  const accountDisplay = formatAccountDisplayContent(instructor, shouldMask)
-
-  const evaluationGradeDisplay = instructor.evaluationGrade
-    ? `${instructor.evaluationGrade}등급`
-    : '-'
-
-  const instructorFeeGradeCell =
-    isEditMode && draft && onDraftChange ? (
-      <InstructorFeeGradeEditField
-        draft={draft}
-        onDraftChange={onDraftChange}
-        validationError={validationErrors?.instructorFeeGrade}
-      />
-    ) : (
-      <InstructorFeeGradeView instructor={instructor} />
-    )
-
-  const businessIncomeCell =
-    isEditMode && draft && onDraftChange ? (
-      <BusinessIncomeEditField draft={draft} onDraftChange={onDraftChange} />
-    ) : (
-      <BusinessIncomeView instructor={instructor} />
-    )
-
-  const lectureFeeBasisCell =
+  const lectureFeeView = <LectureFeeBasisView instructor={instructor} />
+  const lectureFeeEdit =
     isEditMode && draft && onDraftChange ? (
       <LectureFeeBasisEditField
         draft={draft}
         onDraftChange={onDraftChange}
         validationError={validationErrors?.lectureFeeAmount}
       />
-    ) : (
-      <LectureFeeBasisView instructor={instructor} />
-    )
+    ) : undefined
 
-  const colgroup = (
-    <colgroup>
-      <col style={{ width: '200px' }} />
-      <col />
-      <col style={{ width: '200px' }} />
-      <col />
-    </colgroup>
+  const statusRows = (
+    <>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="프로그램 승인 현황"
+          readOnlyDisplay
+          view={
+            <ProgramApprovalStatusValue
+              instructor={instructor}
+              onResendNotificationClick={onResendNotificationClick}
+            />
+          }
+        />
+        <DetailInfoForm.Field label="JA 평가 등급" readOnlyDisplay view={evaluationGradeDisplay} />
+      </DetailInfoForm.Row>
+      {showPostApprovalFields ? (
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="강의비 책정 기준"
+            fullRow
+            view={lectureFeeView}
+            edit={lectureFeeEdit}
+          />
+        </DetailInfoForm.Row>
+      ) : null}
+    </>
   )
 
   return (
-    <div className="applicant-general-instructor-basic-info applicant-institution-basic-info">
+    <div className="applicant-general-instructor-basic-info">
       {validationErrors?.form ? (
         <div className="applicant-general-instructor-basic-info__form-error">{validationErrors.form}</div>
       ) : null}
@@ -378,77 +186,35 @@ export function ApplicantGeneralInstructorBasicInfo({
           validationError={validationErrors?.adminComment}
         />
       ) : null}
-      <section className="applicant-institution-basic-info__section">
-        <h3 className="applicant-institution-basic-info__title">기본 정보</h3>
-        <div className="applicant-institution-basic-info__basic-info-fields">
-          <div className="applicant-general-instructor-basic-info__approval-block">
-            <div className="applicant-institution-basic-info__table-wrap">
-              <table className="applicant-institution-basic-info__table">
-                {colgroup}
-                <tbody>
-                  <TableRowTwoCols
-                    label1="프로그램 승인 현황"
-                    value1={<ProgramApprovalStatusValue instructor={instructor} onResendNotificationClick={onResendNotificationClick} />}
-                    label2="JA 평가 등급"
-                    value2={evaluationGradeDisplay}
-                  />
-                </tbody>
-              </table>
-            </div>
-            {showPostApprovalFields ? (
-              <div className="applicant-institution-basic-info__table-wrap applicant-general-instructor-basic-info__post-approval-wrap">
-                <table className="applicant-institution-basic-info__table applicant-general-instructor-basic-info__post-approval-table">
-                  {colgroup}
-                  <tbody>
-                    <TableRowFullWidth label="강의비 책정 기준" value={lectureFeeBasisCell} />
-                  </tbody>
-                </table>
-              </div>
-            ) : null}
-          </div>
-          <div className="applicant-institution-basic-info__table-wrap">
-            <table className="applicant-institution-basic-info__table">
-              {colgroup}
-              <tbody>
-                <TableRowTwoCols
-                  label1="성명"
-                  value1={nameCell}
-                  label2="성별 및 생년월일"
-                  value2={<ProgramDetailTdSegmentWrap>{genderBirthDisplay}</ProgramDetailTdSegmentWrap>}
-                />
-                <TableRowTwoCols
-                  label1="소속"
-                  value1={affiliationCell}
-                  label2="강사 경력"
-                  value2={lectureExperienceDisplay}
-                />
-                <TableRowTwoCols
-                  label1="연락처"
-                  value1={contactDisplay}
-                  label2="이메일"
-                  value2={emailDisplay}
-                />
-                <TableRowTwoCols
-                  label1="자택 주소지"
-                  value1={homeAddressDisplay}
-                  label2="정산 계좌 정보"
-                  value2={<ProgramDetailTdSegmentWrap>{accountDisplay}</ProgramDetailTdSegmentWrap>}
-                />
-                <TableRowTwoCols
-                  label1="강사비 등급"
-                  value1={instructorFeeGradeCell}
-                  label2="사업소득자 여부"
-                  value2={businessIncomeCell}
-                />
-                <TableRowFullWidth
-                  label="한 줄 소개"
-                  value={instructor.oneLineIntro?.trim() || '-'}
-                />
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+      <InstructorBasicInfoDetailForm
+        mode={isEditMode ? 'edit' : 'view'}
+        statusRows={statusRows}
+        profile={{
+          nameCell,
+          genderBirthDisplay,
+          affiliationCell,
+          lectureExperienceDisplay,
+          contactDisplay,
+          emailDisplay,
+          homeAddressDisplay: <HomeAddressDisplay address={instructor.address} mask={shouldMask} />,
+          accountDisplay: formatAccountDisplayContent(instructor, shouldMask),
+          instructorFeeGradeView: <InstructorFeeGradeView instructor={instructor} />,
+          instructorFeeGradeEdit:
+            isEditMode && draft && onDraftChange ? (
+              <InstructorFeeGradeEditField
+                draft={draft}
+                onDraftChange={onDraftChange}
+                validationError={validationErrors?.instructorFeeGrade}
+              />
+            ) : undefined,
+          businessIncomeView: <BusinessIncomeView instructor={instructor} />,
+          businessIncomeEdit:
+            isEditMode && draft && onDraftChange ? (
+              <BusinessIncomeEditField draft={draft} onDraftChange={onDraftChange} />
+            ) : undefined,
+          oneLineIntro: instructor.oneLineIntro?.trim() || '-',
+        }}
+      />
     </div>
   )
 }

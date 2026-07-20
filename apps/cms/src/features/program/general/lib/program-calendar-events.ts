@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import type { DateValue } from '@/types'
 import type { Program } from '@/types/domain'
-import type { CalendarMainEventInput } from '@/shared/components/calendar'
+import type { CalendarItem, CalendarMainEventInput } from '@/shared/components/calendar'
 
 export type GeneralProgramCalendarView = 'ALL' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED'
 
@@ -297,6 +297,21 @@ export function buildGeneralProgramCalendarEvents(
   return events.sort((a, b) => {
     const dateDiff = dayjs(a.startDate).valueOf() - dayjs(b.startDate).valueOf()
     if (dateDiff !== 0) return dateDiff
-    return a.programTitle.localeCompare(b.programTitle, 'ko')
+    return String(a.programTitle).localeCompare(String(b.programTitle), 'ko')
   })
+}
+
+export function getGeneralProgramCalendarEventFromCalendarItem(
+  item: CalendarItem
+): GeneralProgramCalendarEvent | null {
+  const original = item.original
+  if (
+    original != null &&
+    typeof original === 'object' &&
+    'scheduleContent' in original &&
+    'originalItem' in original
+  ) {
+    return original as GeneralProgramCalendarEvent
+  }
+  return null
 }

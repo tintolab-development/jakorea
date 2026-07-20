@@ -1,5 +1,5 @@
 /**
- * 일반 프로그램 봉사자 상세 — program-detail-info-tab / DetailInfoForm 테이블 토큰 정렬
+ * 일반 프로그램 봉사자 상세 — DetailInfoForm 레이아웃
  */
 
 .general-volunteer-applicant-detail {
@@ -47,27 +47,51 @@
   gap: 32px;
 }
 
-.general-volunteer-applicant-detail__subsection {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.general-volunteer-applicant-detail__subsection-title,
-.general-volunteer-applicant-essay-sections .info-section-title {
-  margin: 0;
-  padding: 0 8px;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 140%;
-}
-
-.general-volunteer-applicant-basic-info__tables {
+.general-volunteer-applicant-basic-info {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  min-width: 0;
+  --detail-info-label-w: 220px;
+}
+
+.general-volunteer-applicant-basic-info > .detail-info-form:first-child .detail-info-form__field-content {
+  justify-content: flex-start;
+}
+
+.general-volunteer-applicant-basic-info
+  .detail-info-form__field-content
+  .ujat-doc-screening-status-text {
+  text-align: left;
+}
+
+.general-volunteer-applicant-basic-info__id1365-cell {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-8, 8px);
+}
+
+.general-volunteer-applicant-basic-info .applicant-instructor-basic-info__name-badge {
+  margin-left: 8px;
+}
+
+.general-volunteer-applicant-essay-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.general-volunteer-applicant-essay-sections__item {
+  width: 100%;
+  min-width: 0;
+}
+
+.general-volunteer-applicant-manager-evaluation .detail-info-form__field-content {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
 }
 
 .general-volunteer-applicant-detail .program-detail-info-tab__table-wrapper {
@@ -196,30 +220,6 @@
   padding-bottom: 0 !important;
   text-align: left !important;
   vertical-align: middle;
-}
-
-.general-volunteer-applicant-manager-evaluation
-  .general-volunteer-applicant-detail__horizontal-value
-  .status-dropdown-cell__status-trigger.status-dropdown-cell__trigger--cell-style {
-  display: inline-flex;
-  box-sizing: border-box;
-  align-items: center;
-  justify-content: flex-start;
-  min-width: 116px;
-  max-width: 216px;
-  padding: 8px;
-}
-
-.general-volunteer-applicant-manager-evaluation
-  .general-volunteer-applicant-detail__horizontal-value
-  .ujat-manager-evaluation-badge.status-dropdown-cell__badge--cell-style {
-  display: flex !important;
-  height: 32px !important;
-  min-width: 100px !important;
-  max-width: 200px !important;
-  padding: 6px 12px !important;
-  flex: 0 0 auto !important;
-  box-sizing: border-box !important;
 }
 
 .general-volunteer-applicant-interview-availability__empty {

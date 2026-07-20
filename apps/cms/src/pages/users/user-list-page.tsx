@@ -5,6 +5,8 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
+import { Alert } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
@@ -15,7 +17,7 @@ import {
   UserDetailFullPageModal,
   USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
 } from '@/pages/users/user-detail-fullpage-modal'
-import { AddUserIndividual } from '@/features/user/shared/ui/add-user-individual'
+import { MemberRegisterModal } from '@/features/user/shared/ui/member-register-modal'
 import {
   AdminRegisterModal,
   type AdminRegisterModalFormValues,
@@ -43,7 +45,6 @@ import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { handleError } from '@/shared/utils/error-handler'
 import {
   ActionResultModal,
-  ContentModal,
   DeleteGuideModal,
   buildDeleteCompletedMessageBulk,
   buildDeleteCompletedMessageSingle,
@@ -72,6 +73,11 @@ import {
   type UserListQueryParams,
 } from './user-list-table.config'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
+import {
+  getUnsupportedMemberListFilterLabels,
+  isMembersRemoteEnabled,
+} from '@/features/user/api/member-remote-capabilities'
+import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 
 type UserListRow = Omit<User, 'password'>
 
@@ -153,14 +159,22 @@ export function UserListPage() {
 
   const listQueryFilters = useMemo(() => buildListQueryApiFilters(params), [params])
 
+  const unsupportedRemoteFilterLabels = useMemo(
+    () => (isMembersRemoteEnabled() ? getUnsupportedMemberListFilterLabels(listQueryFilters) : []),
+    [listQueryFilters]
+  )
+
   const {
     users: listUsers,
     total: listTotal,
-    isLoading: listLoading,
+    isFetching: listFetching,
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
   } = useInfiniteUserList(listQueryFilters)
+
+  /** 조회 버튼 — 무한스크롤 next page fetch는 제외 */
+  const filterSearchLoading = listFetching && !isFetchingNextPage
 
   // 무한 스크롤: 하단 센티넬이 보이면 다음 페이지 로드
   const { ref: loadMoreRef, inView } = useInView({ rootMargin: '200px', threshold: 0 })
@@ -257,6 +271,18 @@ export function UserListPage() {
    */
   const pendingOpenedUserIdRef = useRef<string | null>(null)
 
+  /**
+   * X 닫기 직후 `params.id`가 한 틱 남아 있으면 URL 복원 effect가 openDrawer를 다시 호출한다.
+   * 의도적 닫기 동안에는 복원을 막고, 다음 handleView에서만 해제한다.
+   */
+  const suppressDetailRestoreRef = useRef(false)
+  /** useUserDetailUrlSync가 닫기 직후 id·lnb를 URL에 다시 쓰지 않도록 */
+  const detailCloseIntentRef = useRef(false)
+  const drawerOpenRef = useRef(drawerOpen)
+  const drawerUserRef = useRef(drawerUser)
+  drawerOpenRef.current = drawerOpen
+  drawerUserRef.current = drawerUser
+
   /** 학교(SCHOOL) 상세 → 소속 교사 linkedUserId 진입 시, X 버튼으로 학교 상세로 되돌리기 */
   const schoolDetailReturnUserRef = useRef<Omit<User, 'password'> | null>(null)
 
@@ -298,6 +324,27 @@ export function UserListPage() {
     [resolvedMemberListKind]
   )
 
+  const userExcelColumns = useMemo<
+    ColumnsType<{ name: string; email: string; phone: string }>
+  >(
+    () => [
+      { title: '이름', dataIndex: 'name', key: 'name' },
+      { title: '이메일', dataIndex: 'email', key: 'email' },
+      { title: '전화번호', dataIndex: 'phone', key: 'phone' },
+    ],
+    []
+  )
+
+  const userExcelData = useMemo(
+    () =>
+      listUsers.map(user => ({
+        name: user.name,
+        email: user.email,
+        phone: user.phone ?? '',
+      })),
+    [listUsers]
+  )
+
   // URL에서 id가 빠지면(뒤로가기 등) 풀페이지·드로어를 같은 페인트 전에 닫음 — 안 닫히는 현상 방지
   useLayoutEffect(() => {
     const targetId = params.id?.trim()
@@ -326,13 +373,19 @@ export function UserListPage() {
     let cancelled = false
     const targetId = params.id?.trim()
 
-    if (!targetId) return
+    if (!targetId) {
+      return
+    }
+
+    if (suppressDetailRestoreRef.current) {
+      return
+    }
 
     if (pendingOpenedUserIdRef.current) {
       if (targetId === pendingOpenedUserIdRef.current) {
         pendingOpenedUserIdRef.current = null
       } else if (
-        drawerUser?.id === pendingOpenedUserIdRef.current &&
+        drawerUserRef.current?.id === pendingOpenedUserIdRef.current &&
         targetId !== pendingOpenedUserIdRef.current
       ) {
         return
@@ -343,10 +396,23 @@ export function UserListPage() {
       setSelectedUserId(targetId)
     }
 
-    if (drawerOpen && drawerUser?.id === targetId) return
+    if (drawerOpenRef.current && drawerUserRef.current?.id === targetId) return
 
     const listMatched = listUsers.find(u => u.id === targetId)
     if (listMatched) {
+      if (isMembersRemoteEnabled()) {
+        ;(async () => {
+          try {
+            await fetchUserById(targetId)
+            if (cancelled) return
+            const fetched = useUserStore.getState().usersById[targetId] ?? listMatched
+            openDrawer(fetched)
+          } catch {
+            if (!cancelled) openDrawer(listMatched)
+          }
+        })()
+        return
+      }
       openDrawer(listMatched)
       return
     }
@@ -376,10 +442,6 @@ export function UserListPage() {
     params.id,
     selectedUser,
     listUsers,
-    drawerOpen,
-    drawerUser,
-    closeDrawer,
-    clearSelectedUserId,
     setSelectedUserId,
     openDrawer,
     fetchUserById,
@@ -409,7 +471,11 @@ export function UserListPage() {
   }, [modalDetailUser, resolvedMemberListKind])
 
   const invalidateList = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
+    if (isMembersRemoteEnabled()) {
+      void queryClient.invalidateQueries({ queryKey: memberQueryKeys.all })
+      return
+    }
+    void queryClient.invalidateQueries({ queryKey: ['users', 'list'] })
   }, [queryClient])
 
   const handleMemberBasicInfoSaved = useCallback(
@@ -422,21 +488,35 @@ export function UserListPage() {
 
   // 사용자 상세 보기
   const handleView = useCallback(
-    (user: Omit<User, 'password'>, opts?: { replace?: boolean }) => {
+    async (user: Omit<User, 'password'>, opts?: { replace?: boolean }) => {
+      suppressDetailRestoreRef.current = false
+      detailCloseIntentRef.current = false
       pendingOpenedUserIdRef.current = user.id
       setDetailBridgeUser(user)
-      setSelectedUserId(user.id) // 스토어에 ID만 저장
-      openDrawer(user)
+      setSelectedUserId(user.id)
+
+      let displayUser = user
+      if (isMembersRemoteEnabled()) {
+        try {
+          await fetchUserById(user.id)
+          const fetched = useUserStore.getState().usersById[user.id]
+          if (fetched) displayUser = fetched
+        } catch (error) {
+          handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })
+        }
+      }
+
+      openDrawer(displayUser)
       setParams(
         {
-          id: user.id,
+          id: displayUser.id,
           lnb: 'detail-info',
           [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
         },
         { replace: opts?.replace ?? false }
       )
     },
-    [setSelectedUserId, openDrawer, setParams]
+    [setSelectedUserId, openDrawer, setParams, fetchUserById]
   )
 
   const handleNavigateToLinkedUser = useCallback(
@@ -469,21 +549,25 @@ export function UserListPage() {
 
   /** 모달·URL·복귀 스택까지 완전히 닫음 (탈퇴/삭제 플로우 등) */
   const flushUserDetailModal = useCallback(() => {
+    suppressDetailRestoreRef.current = true
+    detailCloseIntentRef.current = true
     pendingOpenedUserIdRef.current = null
     setDetailBridgeUser(null)
     schoolDetailReturnUserRef.current = null
     setDrawerUser(null)
     closeDrawer()
     clearSelectedUserId(null)
-    setParams(
-      {
-        id: undefined,
-        lnb: undefined,
-        [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete('id')
+        next.delete('lnb')
+        next.delete(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY)
+        return next
       },
       { replace: true }
     )
-  }, [closeDrawer, clearSelectedUserId, setParams, setDrawerUser])
+  }, [closeDrawer, clearSelectedUserId, setSearchParams, setDrawerUser])
 
   /** 풀페이지 X — 학교→교사 drill-down 중이면 학교 상세로, 아니면 목록으로 */
   const handleUserDetailModalClose = useCallback(() => {
@@ -537,10 +621,9 @@ export function UserListPage() {
         email: values.email.trim(),
         password: 'Temp1234!',
         name: values.name.trim(),
-        nameEn: values.nameEn?.trim() || undefined,
         phone: values.contact.trim(),
         gender: values.gender === 'male' ? '남성' : '여성',
-        birthDate: values.birthDate?.trim() || undefined,
+        birthDate: values.birthDate.trim(),
         role: 'ADMIN',
         adminLevel: 'ADMIN',
         isActive: true,
@@ -558,13 +641,12 @@ export function UserListPage() {
       const emailTrim = values.email.trim()
       const email =
         emailTrim !== '' ? emailTrim : `instructor-${Date.now()}@instructor.jakorea.local`
-      const nameTrim = values.nameKo.trim()
+      const nameTrim = values.name.trim()
       const name = nameTrim !== '' ? nameTrim : '강사'
       await createUser({
         email,
         password: 'Temp1234!',
         name,
-        nameEn: values.nameEn.trim() || undefined,
         phone: values.contact.trim() || undefined,
         role: 'INSTRUCTOR',
         instructorInfo: {
@@ -700,6 +782,15 @@ export function UserListPage() {
 
   return (
     <div>
+      {unsupportedRemoteFilterLabels.length > 0 ? (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message="실 API 모드에서는 일부 필터가 적용되지 않습니다"
+          description={`다음 필터는 백엔드 API 미지원으로 무시됩니다: ${unsupportedRemoteFilterLabels.join(', ')}`}
+        />
+      ) : null}
       <FilterTableLayout
         bordered={false}
         fields={userListFilterFields}
@@ -732,7 +823,7 @@ export function UserListPage() {
         }
         onFilterChange={handleFilterChange}
         onSearch={applySearch}
-        loading={listLoading}
+        loading={filterSearchLoading}
         title={memberListPageTitle(resolvedMemberListKind)}
         description={`총 ${listTotal.toLocaleString()}건`}
         actions={
@@ -802,9 +893,14 @@ export function UserListPage() {
             )}
           </>
         }
+        excelExport={{
+          columns: userExcelColumns,
+          data: userExcelData,
+        }}
       >
         <UserList
           listKind={resolvedMemberListKind}
+          totalCount={listTotal}
           data={listUsers}
           loading={false}
           onView={handleView}
@@ -826,21 +922,15 @@ export function UserListPage() {
         onWithdraw={canWrite && modalDetailUser ? handleWithdrawFromDetail : undefined}
         onNavigateToLinkedUser={handleNavigateToLinkedUser}
         onMemberBasicInfoSaved={handleMemberBasicInfoSaved}
+        detailCloseIntentRef={detailCloseIntentRef}
       />
 
-      <ContentModal
+      <MemberRegisterModal
         open={createModalOpen}
-        title="회원 신규 등록"
-        onCancel={closeCreateModal}
-        footer={null}
-        width={1400}
-      >
-        <AddUserIndividual
-          onSubmit={handleCreateUser}
-          onCancel={closeCreateModal}
-          loading={loading}
-        />
-      </ContentModal>
+        onClose={closeCreateModal}
+        onSubmit={handleCreateUser}
+        loading={loading}
+      />
 
       <SchoolRegisterModal
         open={schoolRegisterOpen}

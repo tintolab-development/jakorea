@@ -15,6 +15,8 @@ export type UseTablePageArgs<TData, TContext> = {
   searchParams: URLSearchParams
   setSearchParams: TableSearchSetSearchParams
   context: TContext
+  /** 풀페이지 상세 등 다른 쿼리와 테이블 URL 동기화 충돌 방지 */
+  disableUrlSync?: boolean
 }
 
 export type UseTablePageReturn<TData, TFilters, TContext> = {
@@ -43,7 +45,7 @@ export function useTablePage<
   config: TablePageConfig<TData, TFilters, TContext>,
   args: UseTablePageArgs<TData, TContext>
 ): UseTablePageReturn<TData, TFilters, TContext> {
-  const { data, searchParams, setSearchParams, context } = args
+  const { data, searchParams, setSearchParams, context, disableUrlSync = false } = args
 
   /** URLSearchParams 참조는 라우터마다 렌더마다 바뀔 수 있어, effect deps는 직렬화 문자열만 사용한다. */
   const searchParamsKey = searchParams.toString()
@@ -58,7 +60,12 @@ export function useTablePage<
     data: dataForTable,
     columns: config.columns.tanstack,
     filterKeys: config.columns.filterKeys,
+    disableUrlSync,
   })
+  const columnFiltersKey = useMemo(
+    () => JSON.stringify(columnFilters.map(filter => [filter.id, filter.value])),
+    [columnFilters]
+  )
 
   const [pendingFilters, setPendingFilters] = useState<TFilters>(config.filters.initialPending)
   const pendingFiltersRef = useRef(pendingFilters)
@@ -74,12 +81,12 @@ export function useTablePage<
     })
     // `table`·`searchParams` 참조는 렌더마다 바뀔 수 있어 deps에 넣지 않는다. URL 내용은 `searchParamsKey`로만 감지한다.
   // eslint-disable-next-line react-hooks/exhaustive-deps -- 위 주석
-  }, [columnFilters, config, context, searchParamsKey])
+  }, [columnFiltersKey, config, context, searchParamsKey])
 
   const hasActiveFilters = useMemo(
     () => config.filters.hasActiveFilters({ context, searchParams, columnFilters }),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- searchParams 참조는 searchParamsKey로 대체
-    [columnFilters, config, context, searchParamsKey]
+    [columnFiltersKey, config, context, searchParamsKey]
   )
 
   const searchSync = useMemo(() => config.getSearchSync(context), [config, context])
@@ -110,7 +117,7 @@ export function useTablePage<
     return { tableData: rows, displayedCount: nextDisplayedCount }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `table` 참조만으로는 row model 갱신을 감지하지 못함
   }, [
-    columnFilters,
+    columnFiltersKey,
     config,
     context,
     dataForTable,

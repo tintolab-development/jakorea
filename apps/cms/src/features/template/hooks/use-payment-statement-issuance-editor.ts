@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
+import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import {
+  loadWritingFormTemplateDraft,
+  persistWritingFormTemplateDraft,
+} from '@/features/template/lib/writing-form-template-local-save'
 import { usePaymentStatementIssuanceMiddleActions } from '@/features/template/hooks/use-payment-statement-issuance-middle-actions'
 import {
   createPaymentStatementIssuanceDraft,
@@ -21,14 +27,31 @@ import {
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
 import { PAYMENT_STATEMENT_ISSUANCE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-config'
 
-export function usePaymentStatementIssuanceEditor(active: boolean, previewHeaderTitle: string) {
-  const [draft, setDraft] = useState<WritingFormDraft>(() =>
-    normalizeWritingFormDraft(createPaymentStatementIssuanceDraft())
+export function usePaymentStatementIssuanceEditor(
+  active: boolean,
+  previewHeaderTitle: string,
+  templateCode?: string,
+  onTemplateDraftSaveConfirmed?: () => void
+) {
+  const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+  const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
+
+  const getInitialDraft = useCallback(
+    () => normalizeWritingFormDraft(createPaymentStatementIssuanceDraft()),
+    []
   )
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(
-    () => normalizeWritingFormDraft(createPaymentStatementIssuanceDraft()).paragraphs[0]?.id ?? null
-  )
+
+  const [draft, setDraft] = useState<WritingFormDraft>(() => EMPTY_WRITING_FORM_DRAFT)
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null)
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
+  const [isDraftLoading, setIsDraftLoading] = useState(() => active)
+
+  const applyDraftSnapshot = useCallback((next: WritingFormDraft) => {
+    const normalized = normalizeWritingFormDraft(next)
+    setDraft(normalized)
+    setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
+    setSingleItemListActiveItemId(null)
+  }, [])
 
   const {
     openWritingUserPreview,
@@ -38,12 +61,36 @@ export function usePaymentStatementIssuanceEditor(active: boolean, previewHeader
   } = useTemplateWritingPreview()
 
   useEffect(() => {
-    if (!active) return
-    const next = normalizeWritingFormDraft(createPaymentStatementIssuanceDraft())
-    setDraft(next)
-    setActiveParagraphId(next.paragraphs[0]?.id ?? null)
-    setSingleItemListActiveItemId(null)
-  }, [active])
+    if (!active) {
+      setIsDraftLoading(false)
+      return
+    }
+
+    if (templateCode != null && templateCode !== '') {
+      let cancelled = false
+      setIsDraftLoading(true)
+      setDraft(EMPTY_WRITING_FORM_DRAFT)
+      setActiveParagraphId(null)
+      void loadWritingFormTemplateDraft(templateCode)
+        .then(saved => {
+          if (cancelled) return
+          if (saved?.draft) {
+            applyDraftSnapshot(saved.draft)
+            return
+          }
+          applyDraftSnapshot(getInitialDraft())
+        })
+        .finally(() => {
+          if (!cancelled) setIsDraftLoading(false)
+        })
+      return () => {
+        cancelled = true
+      }
+    }
+
+    setIsDraftLoading(false)
+    applyDraftSnapshot(getInitialDraft())
+  }, [active, applyDraftSnapshot, getInitialDraft, templateCode])
 
   useEffect(() => {
     if (!active) closeWritingUserPreview()
@@ -147,7 +194,31 @@ export function usePaymentStatementIssuanceEditor(active: boolean, previewHeader
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    }, [])
+    if (templateCode == null || templateCode === '') return
+    void (async () => {
+      try {
+        await persistWritingFormTemplateDraft({
+          templateId: templateCode,
+          draft,
+        })
+        if (isTemplateManagementSave) {
+          showSaveSuccess(onTemplateDraftSaveConfirmed)
+        }
+      } catch (error) {
+        console.debug('paymentStatementIssuance save failed', error)
+        if (isTemplateManagementSave) {
+          showSaveFailure()
+        }
+      }
+    })()
+  }, [
+    draft,
+    isTemplateManagementSave,
+    onTemplateDraftSaveConfirmed,
+    showSaveFailure,
+    showSaveSuccess,
+    templateCode,
+  ])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {
     setActiveParagraphId(paragraphId)
@@ -156,6 +227,7 @@ export function usePaymentStatementIssuanceEditor(active: boolean, previewHeader
 
   return {
     draft,
+    isDraftLoading,
     activeParagraphId,
     singleItemListActiveItemId,
     structureLockedParagraphIds: PAYMENT_STATEMENT_SEED_PARAGRAPH_IDS,

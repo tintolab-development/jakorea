@@ -80,7 +80,7 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
     }
   },
   'agreement-portrait': () => {
-    const title = resolveRowTitle('agreement-portrait', '초상권 수집·이용 동의')
+    const title = resolveRowTitle('agreement-portrait', '초상권 수집·이용 동의서')
     return {
       initialDraft: createAgreementPortraitDraft,
       defaultActiveParagraphId: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.title,
@@ -118,7 +118,13 @@ export function resolveAgreementWritingFormConfig(
   templateId: string | undefined | null
 ): AgreementWritingFormConfig | null {
   if (templateId == null || templateId.trim() === '') return null
-  const key = templateId.trim() as AgreementTemplateConfigKey
-  const factory = AGREEMENT_TEMPLATE_CONFIG_REGISTRY[key]
+  const code = templateId.trim()
+  const direct = AGREEMENT_TEMPLATE_CONFIG_REGISTRY[code as AgreementTemplateConfigKey]
+  if (direct != null) return direct()
+
+  const copyMatch = code.match(/^(.*)-copy-\d+$/)
+  const baseKey = copyMatch?.[1] as AgreementTemplateConfigKey | undefined
+  if (baseKey == null) return null
+  const factory = AGREEMENT_TEMPLATE_CONFIG_REGISTRY[baseKey]
   return factory != null ? factory() : null
 }

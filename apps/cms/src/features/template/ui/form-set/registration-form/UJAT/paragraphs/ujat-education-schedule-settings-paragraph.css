@@ -14,6 +14,31 @@
   line-height: 150%;
 }
 
+.ujat-education-schedule-settings-program-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.ujat-education-schedule-settings-program-view__header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ujat-education-schedule-settings-program-view__title {
+  margin: 0;
+  padding: 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
+}
+
 .ujat-education-schedule-settings__range-picker {
   max-width: 420px;
 }

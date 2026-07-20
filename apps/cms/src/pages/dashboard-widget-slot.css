@@ -13,7 +13,8 @@
   border-radius: var(--radius-8);
 }
 
-/* 그랩(포인터 다운) 즉시 피드백: 드래그 활성화 전 구간의 체감 지연을 줄인다 */
+/* 그랩(포인터 다운) 즉시 피드백: 드래그 활성화 전 구간의 체감 지연을 줄인다.
+ * 라우트 이탈 후에도 클래스가 남지 않도록 sortable-widget-slot에서 window pointerup/blur로 제거 */
 .dashboard-widget-slot--grabbed {
   border: 1px solid var(--JA-mint-01, #01a1af);
   box-shadow: 0 6px 18px color-mix(in srgb, var(--JA-mint-01, #01a1af) 18%, transparent);

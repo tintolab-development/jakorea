@@ -10,6 +10,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import './payment-statement-basic-info-detail-form.css'
 
@@ -154,22 +155,24 @@ export function PaymentStatementBasicInfoDetailForm({
           view={textOrDash(residentNumber)}
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap payment-statement-basic-info-detail-form__resident">
-              <CmsInput
+              <CmsNumericInput
+                mode="numericText"
                 disabled={allAutofillLocked}
                 inputSize="large"
                 placeholder="주민등록 앞 6자리"
                 value={v.residentFront}
-                onChange={e => patch({ residentFront: e.target.value })}
+                onValueChange={value => patch({ residentFront: value })}
                 maxLength={6}
                 aria-label="주민등록번호 앞자리"
               />
               {rowDash}
-              <CmsInput
+              <CmsNumericInput
+                mode="numericText"
                 disabled={allAutofillLocked}
                 inputSize="large"
                 placeholder="주민등록 뒤 7자리"
                 value={v.residentBack}
-                onChange={e => patch({ residentBack: e.target.value })}
+                onValueChange={value => patch({ residentBack: value })}
                 maxLength={7}
                 aria-label="주민등록번호 뒷자리"
               />
@@ -258,12 +261,13 @@ export function PaymentStatementBasicInfoDetailForm({
                 width={200}
                 aria-label="은행명 (발급 시 자동 입력)"
               />
-              <CmsInput
+              <CmsNumericInput
+                mode="numericText"
                 disabled={allAutofillLocked}
                 inputSize="medium"
                 placeholder="계좌번호(숫자만)"
                 value={v.accountNumber}
-                onChange={e => patch({ accountNumber: e.target.value })}
+                onValueChange={value => patch({ accountNumber: value })}
                 width={200}
                 aria-label="계좌번호 (발급 시 자동 입력)"
               />

@@ -1,0 +1,5 @@
+export { SignUpPage } from './page'
+export { SignUpCompletePage } from './complete'
+export { SignUpSocialConnectPage } from './social-connect/page'
+export { SignUpSocialConnectCompletePage } from './social-connect/complete'
+export { SignUpSocialConnectErrorPage } from './social-connect/error'

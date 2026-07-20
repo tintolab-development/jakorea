@@ -1,0 +1,14 @@
+.registration-complete-success-modal.content-modal .teal-header-modal__body {
+  margin-top: 12px;
+  padding-top: 0 !important;
+}
+
+.registration-complete-success-modal__body {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}

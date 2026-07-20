@@ -1,0 +1,496 @@
+.page {
+  display: flex;
+  width: 100%;
+  min-height: 480px;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.container {
+  display: flex;
+  width: min(100%, var(--width-page-sm));
+  flex-direction: column;
+  align-items: flex-start;
+  padding-block: var(--spacing-100);
+}
+
+.title {
+  margin-top: var(--spacing-48);
+  margin-bottom: var(--spacing-16);
+}
+
+.description {
+  margin: 0;
+  margin-bottom: var(--spacing-48);
+}
+
+.memberTypeCards {
+  display: flex;
+  width: 100%;
+  gap: var(--spacing-8);
+  margin-bottom: var(--spacing-40);
+}
+
+.memberTypeCard {
+  display: flex;
+  width: 236px;
+  min-height: 277px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: var(--spacing-16);
+  padding: var(--spacing-24);
+  border: 2px solid transparent;
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+  text-align: left;
+  cursor: pointer;
+}
+
+.memberTypeCardSelected {
+  border-color: var(--color-border-focus);
+  background: var(--color-element-hover);
+}
+
+.memberTypeImage {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.memberTypeText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.memberTypeDescription {
+  display: flex;
+  flex-direction: column;
+}
+
+.memberTypeDescription p {
+  margin: 0;
+}
+
+.memberTypeDescription p:first-child {
+  margin-bottom: 10px;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  margin-bottom: var(--spacing-40);
+}
+
+.stepContent {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  margin-bottom: var(--spacing-40);
+}
+
+.genderField {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.fieldLabel {
+  padding-left: var(--spacing-8);
+  color: var(--color-neutral-warm-600);
+}
+
+.genderOptions {
+  display: flex;
+  width: 100%;
+  gap: var(--spacing-12);
+}
+
+.teacherBirthGuide {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  gap: 10px;
+  margin-top: var(--spacing-40);
+  padding: var(--spacing-8) 0 0 var(--spacing-8);
+  border-top: 1px solid rgba(61, 61, 61, 0.1);
+}
+
+.teacherGeneralSignUpLink {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-neutral-black);
+  cursor: pointer;
+}
+
+.teacherGeneralSignUpArrow {
+  width: 13px;
+  height: 12px;
+  flex: 0 0 auto;
+}
+
+.identityModule {
+  display: flex;
+  align-self: stretch;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-24);
+  border-radius: var(--radius-8);
+  background: var(--color-neutral-white-60);
+  text-align: center;
+}
+
+.identityModule p {
+  margin: 0;
+}
+
+.termsTitle {
+  margin-top: var(--spacing-48);
+  margin-bottom: var(--spacing-32);
+}
+
+.termsDescription {
+  margin: 0;
+  margin-bottom: var(--spacing-48);
+}
+
+.termsContent {
+  width: 100%;
+}
+
+.allAgreementButton {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--spacing-16);
+  margin-bottom: var(--spacing-24);
+  padding: var(--spacing-24);
+  border: 0;
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-cool-50);
+  color: var(--color-neutral-cool-700);
+  text-align: left;
+}
+
+.allAgreementButtonChecked {
+  background: var(--color-element-hover);
+  color: var(--color-primary-600);
+}
+
+.agreementList {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  padding: 0 16px;
+}
+
+.agreementItem {
+  position: relative;
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr max-content;
+  align-items: center;
+  column-gap: 15px;
+}
+
+.agreementCheckButton {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  text-align: left;
+}
+
+.agreementText {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+}
+
+.agreementText > :first-child {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.agreementText > :last-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.required {
+  color: var(--color-primary-500);
+}
+
+.optional {
+  color: var(--color-neutral-cool-400);
+}
+
+.termsViewButton {
+  flex-shrink: 0;
+  align-self: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-neutral-warm-400);
+}
+
+.agreementGuide {
+  grid-column: 1 / -1;
+  margin: var(--spacing-8) 0 0 78px;
+}
+
+.optionalGuide {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-8);
+  margin: var(--spacing-56) 0 var(--spacing-8);
+  padding: var(--spacing-8);
+  text-align: center;
+}
+
+.termsActions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.termsActions + .termsActions {
+  gap: var(--spacing-8);
+}
+
+.guardianConfirmTitle {
+  margin-top: var(--spacing-48);
+  margin-bottom: var(--spacing-16);
+}
+
+.guardianConfirmDescription {
+  margin: 0;
+  margin-bottom: var(--spacing-48);
+}
+
+.guardianConfirmContent {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  margin-bottom: var(--spacing-40);
+}
+
+.emailTitle {
+  margin-top: var(--spacing-48);
+  margin-bottom: var(--spacing-32);
+}
+
+.emailDescription {
+  margin: 0;
+  margin-bottom: var(--spacing-64);
+}
+
+.emailContent {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr 120px;
+  align-items: start;
+  gap: var(--spacing-12);
+  margin-bottom: var(--spacing-64);
+}
+
+.duplicateCheckButton {
+  margin-top: 23px;
+}
+
+.passwordTitle {
+  margin-top: var(--spacing-48);
+  margin-bottom: var(--spacing-24);
+}
+
+.passwordDescription {
+  margin: 0;
+  margin-bottom: var(--spacing-48);
+}
+
+.passwordContent {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  margin-bottom: var(--spacing-40);
+}
+
+.profileTitle {
+  margin-top: var(--spacing-48);
+  margin-bottom: var(--spacing-24);
+}
+
+.profileDescription {
+  margin: 0;
+  margin-bottom: var(--spacing-48);
+}
+
+.profileContent {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  margin-bottom: var(--spacing-40);
+}
+
+.schoolStatusField,
+.addressField,
+.gradeField {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.gradeSelectWrap {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 54px;
+  align-items: center;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+}
+
+.gradeSelectWrap:focus-within {
+  border-color: var(--color-border-focus);
+}
+
+.gradeSelect {
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--spacing-40) 0 14px;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  color: var(--color-neutral-black);
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  outline: 0;
+}
+
+.gradeSelect:invalid,
+.gradeSelect option[value=''] {
+  color: var(--color-neutral-warm-500);
+}
+
+.gradeSelectArrow {
+  position: absolute;
+  right: 14px;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  transform: rotate(90deg);
+  pointer-events: none;
+}
+
+.schoolStatusOptions {
+  display: flex;
+  width: 100%;
+  gap: var(--spacing-12);
+}
+
+.inlineRequiredMark {
+  color: var(--color-red);
+}
+
+.addressSearchRow {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr 120px;
+  gap: var(--spacing-12);
+}
+
+.confirmTitle {
+  margin-top: var(--spacing-48);
+  margin-bottom: var(--spacing-16);
+}
+
+.confirmDescription {
+  margin: 0;
+  margin-bottom: var(--spacing-48);
+}
+
+.confirmReview {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  margin-bottom: var(--spacing-40);
+}
+
+.confirmReviewRow {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--spacing-16);
+  padding: var(--spacing-16) var(--spacing-12);
+  border-top: 1px solid var(--color-border-default);
+}
+
+.confirmReviewRowFirst {
+  border-top: 2px solid var(--color-primary-500);
+}
+
+.confirmReviewLabel {
+  overflow: hidden;
+  width: 120px;
+  flex: 0 0 120px;
+  text-overflow: ellipsis;
+}
+
+.confirmReviewValue {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stepMessage {
+  width: 100%;
+  margin: calc(var(--spacing-24) * -1) 0 var(--spacing-24);
+  padding-left: var(--spacing-8);
+}
+
+.signInGuide {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-12);
+}
+
+.signInLink {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}

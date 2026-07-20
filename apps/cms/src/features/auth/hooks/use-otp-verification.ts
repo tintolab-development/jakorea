@@ -141,7 +141,9 @@ export function useOtpVerification(): UseOtpVerificationResult {
     }
 
     try {
-      const response = await verifyTotp(request.email, request.otpCode)
+      const response = await verifyTotp(request.email, request.otpCode, {
+        challengeUuid: request.challengeUuid,
+      })
 
       if (response.verified) {
         setFailedAttempts(0)

@@ -6,23 +6,14 @@
   box-sizing: border-box;
 }
 
-.general-volunteer-doc-passed__table-header.table-header-actions {
-  width: 100%;
-  min-width: 0;
-}
-
-.general-volunteer-doc-passed__table-actions.info-section-buttons--wrapper {
-  margin-left: auto;
-}
-
 /*
- * 필터 2필드(신청 봉사자명·면접일 배정 현황) + 조회 — 기관 프로그램 260px 칸 규격
+ * 필터 2필드(신청 봉사자명·면접일 배정 현황) + 조회 — 기관 프로그램 240px 칸 규격
  */
 .filter-table-layout.general-volunteer-doc-passed__filter-layout {
   --filter-field-gap: 12px;
   --table-filter-field-gap: 12px;
   --general-doc-passed-filter-col-width: min(
-    var(--filter-control-max-width, 260px),
+    var(--filter-control-max-width, 240px),
     calc((100% - var(--filter-field-gap)) / 2)
   );
   background: transparent;
@@ -77,7 +68,7 @@
 .filter-table-layout.general-volunteer-doc-passed__filter-layout
   .table-filter-group__fields-inner.ant-row
   > .ant-col
-  .unified-filter-card__field,
+  .table-filter-group__field,
 .filter-table-layout.general-volunteer-doc-passed__filter-layout
   .table-filter-group__fields-inner.ant-row
   > .ant-col
@@ -186,18 +177,4 @@
   opacity: 0.4;
   background: #fff !important;
   cursor: not-allowed;
-}
-
-.general-volunteer-doc-passed__calendar-container {
-  width: 100%;
-  min-width: 0;
-  overflow: visible;
-}
-
-.general-volunteer-doc-passed:has(.general-volunteer-doc-passed__calendar-container) {
-  overflow-x: visible;
-}
-
-.general-volunteer-doc-passed-calendar-list-item.ujat-volunteer-interview2-list-item {
-  width: 100%;
 }

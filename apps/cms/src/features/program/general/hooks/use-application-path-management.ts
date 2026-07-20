@@ -7,6 +7,11 @@ import type { ApplicationPath } from '@/types/domain'
 import type { ApplicationPathFormData } from '@/entities/application-path/model/schema'
 import { useApplicationPathStore } from '@/features/application-path/model/application-path-store'
 import { useProgramStore } from '@/features/program/general/model/program-store'
+import {
+  fetchGeneralProgramRemoteById,
+  updateGeneralProgram,
+} from '@/features/program/general/api/admin-general-programs-service'
+import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { handleError } from '@/shared/utils/error-handler'
 
 interface UseApplicationPathManagementProps {
@@ -38,24 +43,33 @@ export function useApplicationPathManagement({
     setApplicationPathModalOpen(true)
   }
 
+  const linkApplicationPathToProgram = async (applicationPathId: string) => {
+    if (shouldUseGeneralProgramsRemoteApi()) {
+      const current = await fetchGeneralProgramRemoteById(programId)
+      await updateGeneralProgram(
+        programId,
+        { ...current, applicationPathId },
+        { applicationPathId }
+      )
+      return
+    }
+    await updateProgram(programId, { applicationPathId })
+  }
+
   const handleSubmit = async (formData: ApplicationPathFormData) => {
     if (!isAdmin) return
     setFormLoading(true)
     try {
       if (editingApplicationPath) {
-        // 기존 신청 경로 수정
         const updated = await updatePath(editingApplicationPath.id, formData)
-        // 프로그램의 applicationPathId 업데이트
-        await updateProgram(programId, { applicationPathId: updated.id })
-        } else {
-        // 새 신청 경로 생성
+        await linkApplicationPathToProgram(updated.id)
+      } else {
         const newPath = await createPath({
           ...formData,
-          programId, // 현재 프로그램 ID로 고정
+          programId,
         })
-        // 프로그램의 applicationPathId 업데이트
-        await updateProgram(programId, { applicationPathId: newPath.id })
-        }
+        await linkApplicationPathToProgram(newPath.id)
+      }
       setApplicationPathModalOpen(false)
       setEditingApplicationPath(null)
     } catch (error) {

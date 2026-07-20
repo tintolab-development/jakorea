@@ -39,9 +39,9 @@ export const SHORTCUT_ITEMS: Array<{ id: string; label: string; path: string }> 
   { id: 'programs-detail', label: '세부 프로그램 관리', path: '/programs' },
   { id: 'performance', label: '실적 관리', path: '/education-records' },
   { id: 'email-history', label: '메일 발송 이력', path: DASHBOARD_HOME_PATH },
-  { id: 'file-download-history', label: '파일 다운로드 이력', path: DASHBOARD_HOME_PATH },
-  { id: 'privacy-query-history', label: '개인정보 조회 이력', path: DASHBOARD_HOME_PATH },
-  { id: 'bug-issue-history', label: '버그/이슈 이력', path: '/logs' },
+  { id: 'file-download-history', label: '파일 다운로드 이력', path: '/logs/file-download-history' },
+  { id: 'privacy-query-history', label: '개인정보 조회 이력', path: '/logs/personal-info-access-history' },
+  { id: 'bug-issue-history', label: '버그/이슈 이력', path: '/logs/bug-issue-history' },
 ]
 
 /** 위젯별 프로그램 설정용 위젯 키 (7개: 일정 4 + 기타) */

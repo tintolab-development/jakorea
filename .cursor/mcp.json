@@ -1,16 +1,8 @@
 {
   "mcpServers": {
-    "filesystem": {
+    "playwright": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/Users/tintolab/Desktop/arbeiten/jakorea"
-      ]
-    },
-    "git": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-git", "/Users/tintolab/Desktop/arbeiten/jakorea"]
+      "args": ["-y", "@playwright/mcp@latest"]
     }
   }
 }

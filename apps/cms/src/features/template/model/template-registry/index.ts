@@ -2,6 +2,7 @@ export {
   TEMPLATE_REGISTRY,
   TEMPLATE_FORM_MODAL_DESCRIPTION,
   lookupTemplateRegistry,
+  resolveBaseTemplateCodeForRegistry,
   isParticipantApplicationRegistryEntry,
   isRegistrationRegistryEntry,
   isSurveyRegistryEntry,

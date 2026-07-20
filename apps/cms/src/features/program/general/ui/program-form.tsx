@@ -22,12 +22,13 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { programSchema, type ProgramFormData } from '@/entities/program/model/schema'
 import type { Program } from '@/types/domain'
-import { mockSponsors } from '@/data/mock'
+import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { applicationPathService } from '@/entities/application-path/api/application-path-service'
 import { programService } from '@/entities/program/api/program-service'
 import { mockFileTemplates } from '@/data/mock/templates'
 import { getFormTemplateByProgramId, formTemplatesByProgramId } from '@/data/mock/form-templates'
 import type { FormFieldDef } from '@/types/form-template'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { FormFieldEditor } from './form-field-editor'
 import dayjs from 'dayjs'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
@@ -66,6 +67,7 @@ const statusOptions = [
 ]
 
 export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFormProps) {
+  const { options: sponsorOptions } = useSponsorSelectOptions(true)
   const [currentStep, setCurrentStep] = useState(0)
   const [customizeModalOpen, setCustomizeModalOpen] = useState(false)
 
@@ -121,7 +123,6 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
   }, [program])
 
   const {
-    register,
     handleSubmit,
     formState: { errors },
     setValue,
@@ -247,9 +248,9 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                 return label ? label.toLowerCase().includes(input.toLowerCase()) : false
               }}
             >
-              {mockSponsors.map(sponsor => (
-                <Option key={sponsor.id} value={sponsor.id}>
-                  {sponsor.name}
+              {sponsorOptions.map(sponsor => (
+                <Option key={sponsor.value} value={sponsor.value}>
+                  {sponsor.label}
                 </Option>
               ))}
             </Select>
@@ -584,13 +585,12 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
           {/* 교재 정보 자동 계산 (참가자 수 기반) */}
           <Card title="교재 정보 (자동 계산)" size="small" style={{ marginTop: 16 }}>
             <Form.Item label="총 참가자 수">
-              <Input
-                type="number"
+              <CmsNumericInput
+                mode="integer"
                 min={0}
-                value={watch('totalParticipants') ?? ''}
-                onChange={e => {
-                  const count = Number.parseInt(e.target.value, 10) || 0
-                  setValue('totalParticipants', count)
+                value={String(watch('totalParticipants') ?? '')}
+                onValueChange={value => {
+                  setValue('totalParticipants', value === '' ? undefined : Number(value))
                 }}
                 placeholder="참가자 수를 입력하면 교재 수량이 자동 계산됩니다"
               />
@@ -648,12 +648,17 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                 help={errors.rounds?.[index]?.roundNumber?.message}
                 required
               >
-                <Input
-                  type="number"
+                <CmsNumericInput
+                  mode="integer"
                   min={1}
-                  {...register(`rounds.${index}.roundNumber`, {
-                    valueAsNumber: true,
-                  })}
+                  value={String(watch(`rounds.${index}.roundNumber`) ?? '')}
+                  onValueChange={value =>
+                    setValue(
+                      `rounds.${index}.roundNumber`,
+                      value === '' ? Number.NaN : Number(value),
+                      { shouldDirty: true, shouldValidate: true }
+                    )
+                  }
                 />
               </Form.Item>
 
@@ -704,13 +709,17 @@ export function ProgramForm({ program, onSubmit, onCancel, loading }: ProgramFor
                 validateStatus={errors.rounds?.[index]?.capacity ? 'error' : ''}
                 help={errors.rounds?.[index]?.capacity?.message}
               >
-                <Input
-                  type="number"
+                <CmsNumericInput
+                  mode="integer"
                   min={1}
-                  {...register(`rounds.${index}.capacity`, {
-                    valueAsNumber: true,
-                    setValueAs: value => (value === '' ? undefined : Number(value)),
-                  })}
+                  value={String(watch(`rounds.${index}.capacity`) ?? '')}
+                  onValueChange={value =>
+                    setValue(
+                      `rounds.${index}.capacity`,
+                      value === '' ? undefined : Number(value),
+                      { shouldDirty: true, shouldValidate: true }
+                    )
+                  }
                 />
               </Form.Item>
 

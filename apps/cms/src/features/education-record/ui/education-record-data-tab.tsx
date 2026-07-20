@@ -7,7 +7,7 @@
 
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { Program } from '@/types/domain'
+import type { EducationRecordRow } from '@/features/education-record/model/education-record-types'
 import '@/shared/components/list-page/list-page-layout.css'
 import './education-record-data-tab.css'
 
@@ -25,8 +25,8 @@ const EDUCATION_RECORD_TABLE_SCROLL_Y =
   EDUCATION_RECORD_ROW_HEIGHT * EDUCATION_RECORD_MAX_VISIBLE_ROWS
 
 export type EducationRecordDataTabProps = {
-  antdColumns: ColumnsType<Program>
-  tableData: Program[]
+  antdColumns: ColumnsType<EducationRecordRow>
+  tableData: EducationRecordRow[]
   displayedCount: number
 }
 
@@ -47,7 +47,7 @@ export function EducationRecordDataTab({
       </div>
 
       <div className="list-page-layout__table-shell">
-        <Table<Program>
+        <Table<EducationRecordRow>
           rowKey="id"
           className="cms-data-table cms-data-table--skip-auto-no-col"
           columns={antdColumns}

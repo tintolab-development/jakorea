@@ -32,13 +32,19 @@ import {
   UserOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import { useMemo } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
-import { getMenuShortcutBadgeCounts } from '../api/admin-dashboard-service'
 import {
-  SHORTCUT_ITEMS,
-  isShortcutItemEnabled,
-  useDashboardSettingsStore,
-} from '../model/dashboard-settings-store'
+  getMenuShortcutBadgeCounts,
+  readDashboardShortcutBadge,
+  shouldUseDashboardRemoteApi,
+} from '../api/admin-dashboard-service'
+import { dashboardQueryKeys } from '../api/dashboard-query-keys'
+import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
+import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
+import { useDashboardShortcutBadges } from '../hooks/use-dashboard-shortcut-badges'
+import { resolveDashboardShortcutItems } from '../lib/resolve-dashboard-shortcut-items'
 import './menu-shortcut-widget.css'
 
 /** 배지 표시용: 99 초과 시 "99+" */
@@ -75,16 +81,34 @@ const SHORTCUT_ICON_MAP: Record<string, React.ReactNode> = {
 
 export function MenuShortcutWidget() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const shortcutEnabled = useDashboardSettingsStore(s => s.shortcutEnabled)
   const badgeCounts = useDashboardSettingsStore(s => s.shortcutBadgeCounts)
   const setShortcutBadgeCount = useDashboardSettingsStore(s => s.setShortcutBadgeCount)
+  const useRemoteShortcuts = shouldUseDashboardRemoteApi()
+  const { data: apiShortcuts } = useDashboardShortcuts(useRemoteShortcuts)
+  const { data: remoteBadgeCounts } = useDashboardShortcutBadges(useRemoteShortcuts)
 
-  const visibleItems = SHORTCUT_ITEMS.filter(item => isShortcutItemEnabled(shortcutEnabled, item.id))
+  const { mutate: markShortcutRead } = useMutation({
+    mutationFn: (shortcutId: string) => readDashboardShortcutBadge(shortcutId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.shortcutBadges('remote') })
+    },
+  })
+
+  const visibleItems = useMemo(
+    () => resolveDashboardShortcutItems(apiShortcuts, shortcutEnabled),
+    [apiShortcuts, shortcutEnabled]
+  )
+
+  const liveBadgeCounts = useMemo(() => {
+    if (useRemoteShortcuts) {
+      return remoteBadgeCounts ?? {}
+    }
+    return getMenuShortcutBadgeCounts()
+  }, [useRemoteShortcuts, remoteBadgeCounts])
 
   if (visibleItems.length === 0) return null
-
-  /** 목/API 집계. 스토어에 0이면 해당 메뉴는 읽음 처리로 배지 숨김 */
-  const liveBadgeCounts = getMenuShortcutBadgeCounts()
 
   return (
     <Card
@@ -99,14 +123,18 @@ export function MenuShortcutWidget() {
         <div className="menu-shortcut-widget__grid">
           {visibleItems.map(item => {
             const live = liveBadgeCounts[item.id] ?? 0
-            const count = badgeCounts[item.id] === 0 ? 0 : live
+            const count = useRemoteShortcuts ? live : badgeCounts[item.id] === 0 ? 0 : live
             return (
               <button
                 key={item.id}
                 type="button"
                 className="menu-shortcut-widget__item"
                 onClick={() => {
-                  setShortcutBadgeCount(item.id, 0)
+                  if (useRemoteShortcuts) {
+                    markShortcutRead(item.id)
+                  } else {
+                    setShortcutBadgeCount(item.id, 0)
+                  }
                   navigate(item.path)
                 }}
               >

@@ -239,20 +239,24 @@ export function PermissionModal({
             <div className="permission-modal__field">
               <span className="permission-modal__label">알림 발송</span>
               <CmsRadio.Group
-                style={{ marginTop: 12, paddingLeft: 8 }}
                 size="large"
                 value={notifyTiming}
                 onChange={e =>
                   handleNotifyTimingChange(e.target.value as PermissionModalNotifyTiming)
                 }
               >
-                <CmsRadio value="immediate">즉시</CmsRadio>
+                <CmsRadio value="immediate" size="large">
+                  즉시
+                </CmsRadio>
                 {notifyTimingOptions === 'three' ? (
-                  <CmsRadio value="on_announcement">발표일에 맞춰서</CmsRadio>
+                  <CmsRadio value="on_announcement" size="large">
+                    발표일에 맞춰서
+                  </CmsRadio>
                 ) : null}
                 <span ref={manualRadioAnchorRef} className="permission-modal__manual-anchor">
                   <CmsRadio
                     value="manual"
+                    size="large"
                     onClick={() => {
                       if (notifyTiming === 'manual') {
                         setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
@@ -304,20 +308,24 @@ export function PermissionModal({
             <div className="permission-modal__field">
               <span className="permission-modal__label">알림 발송</span>
               <CmsRadio.Group
-                style={{ marginTop: 12, paddingLeft: 8 }}
                 size="large"
                 value={notifyTiming}
                 onChange={e =>
                   handleNotifyTimingChange(e.target.value as PermissionModalNotifyTiming)
                 }
               >
-                <CmsRadio value="immediate">즉시</CmsRadio>
+                <CmsRadio value="immediate" size="large">
+                  즉시
+                </CmsRadio>
                 {notifyTimingOptions === 'three' ? (
-                  <CmsRadio value="on_announcement">발표일에 맞춰서</CmsRadio>
+                  <CmsRadio value="on_announcement" size="large">
+                    발표일에 맞춰서
+                  </CmsRadio>
                 ) : null}
                 <span ref={manualRadioAnchorRef} className="permission-modal__manual-anchor">
                   <CmsRadio
                     value="manual"
+                    size="large"
                     onClick={() => {
                       if (notifyTiming === 'manual') {
                         setManualNotifyAt(prev => prev ?? nowManualNotifyAt())
@@ -364,14 +372,3 @@ export function PermissionModal({
     </>
   )
 }
-
-/** @deprecated `PermissionModal` 사용 */
-export const PermissionRejectModal = PermissionModal
-/** @deprecated `PermissionModalMessage` 사용 */
-export const PermissionRejectModalMessage = PermissionModalMessage
-/** @deprecated `PermissionModalPayload` 사용 */
-export type PermissionRejectPayload = PermissionModalPayload
-/** @deprecated `PermissionModalNotifyTiming` 사용 */
-export type PermissionRejectNotifyTiming = PermissionModalNotifyTiming
-/** @deprecated `PermissionModalProps` 사용 */
-export type PermissionRejectModalProps = PermissionModalProps

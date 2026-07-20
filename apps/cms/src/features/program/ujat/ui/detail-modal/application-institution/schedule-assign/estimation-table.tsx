@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import '@/shared/ui/cross-table.css'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import type { UjatInstitutionEducationSemesterKey } from '../education-schedule'
 import type { UjatScheduleAssignRegionState } from './types'
 
@@ -70,7 +70,7 @@ export function UjatInstitutionScheduleAssignEstimationTable({
       mode="edit"
       description={
         <span className="ujat-schedule-assign-estimation__hint">
-          봉사단 교육 진행일 수는 예상 학급 수와 봉사단 수로 자동 계산됩니다.
+          봉사단 교육 일수는 모든 입력값이 작성되어야 계산됩니다.
         </span>
       }
     >
@@ -110,12 +110,14 @@ export function UjatInstitutionScheduleAssignEstimationTable({
                   rowSpan={SEMESTER_ROWS.length}
                   className="cross-table__cell cross-table__cell--data ujat-schedule-assign-estimation__max-cell"
                 >
-                  <CmsInput
+                  <CmsNumericInput
+                    mode="integer"
+                    min={0}
                     inputSize="large"
                     width="100%"
                     placeholder="예상 최대 학급 수를 입력하세요"
                     value={maxClassesPerDay}
-                    onChange={e => onMaxClassesPerDayChange(e.target.value)}
+                    onValueChange={onMaxClassesPerDayChange}
                   />
                 </td>
                 <td className="cross-table__cell cross-table__cell--data ujat-schedule-assign-estimation__after-max-cell">
@@ -127,13 +129,15 @@ export function UjatInstitutionScheduleAssignEstimationTable({
                   </ComputedCell>
                 </td>
                 <td className="cross-table__cell cross-table__cell--data">
-                  <CmsInput
+                  <CmsNumericInput
+                    mode="integer"
+                    min={0}
                     inputSize="large"
                     width="100%"
                     placeholder="예상 봉사단 인원을 입력하세요"
                     value={estimation[firstSemester.key].expectedVolunteerCount}
-                    onChange={e =>
-                      onExpectedVolunteerCountChange(firstSemester.key, e.target.value)
+                    onValueChange={value =>
+                      onExpectedVolunteerCountChange(firstSemester.key, value)
                     }
                   />
                 </td>
@@ -159,13 +163,15 @@ export function UjatInstitutionScheduleAssignEstimationTable({
                   </ComputedCell>
                 </td>
                 <td className="cross-table__cell cross-table__cell--data">
-                  <CmsInput
+                  <CmsNumericInput
+                    mode="integer"
+                    min={0}
                     inputSize="large"
                     width="100%"
                     placeholder="예상 봉사단 인원을 입력하세요"
                     value={estimation[secondSemester.key].expectedVolunteerCount}
-                    onChange={e =>
-                      onExpectedVolunteerCountChange(secondSemester.key, e.target.value)
+                    onValueChange={value =>
+                      onExpectedVolunteerCountChange(secondSemester.key, value)
                     }
                   />
                 </td>

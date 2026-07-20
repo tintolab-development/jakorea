@@ -4,6 +4,13 @@ import { MOCK_APPLICANT_INSTITUTIONS } from '@/data/mock/applicant-institutions'
 
 export const LONG_DISTANCE_THRESHOLD_KM = 60
 
+/** 캘린더 우측 목록 — 기관·자택 편도 거리 이하일 때 거리 태그 민트 테두리 */
+export const INSTRUCTOR_NEAR_DISTANCE_THRESHOLD_KM = 30
+
+export function isInstructorNearDistanceKm(distanceKm: number): boolean {
+  return distanceKm <= INSTRUCTOR_NEAR_DISTANCE_THRESHOLD_KM
+}
+
 const SCHOOL_BY_NAME = new Map<string, ApplicantSchoolRow>(
   MOCK_APPLICANT_INSTITUTIONS.map(s => [s.schoolName, s])
 )

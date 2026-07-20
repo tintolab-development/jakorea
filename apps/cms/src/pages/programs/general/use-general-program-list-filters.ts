@@ -1,75 +1,98 @@
 import { useCallback, useMemo, useState } from 'react'
-import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { getGeneralPrograms, invalidateGeneralProgramsCache } from '@/data/mock/general-programs'
-import type { Program } from '@/types/domain'
+import { useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
+import { invalidateGeneralProgramsCache } from '@/data/mock/general-programs'
+import {
+  fetchGeneralProgramsRemoteList,
+  getGeneralProgramsMockList,
+} from '@/features/program/general/api/admin-general-programs-service'
+import type { GeneralProgramListTableFilters } from '@/features/program/general/api/general-program-list-filter-params'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { useGeneralProgramsRemoteEnabled } from '@/features/program/general/hooks/use-general-programs-remote-enabled'
+import {
+  GENERAL_PROGRAM_OVERVIEW_STATUS_VALUES,
+  type GeneralProgramOverviewStatusFilter,
+} from '@/features/program/general/lib/list-status-filter'
 import type { ProgramListView } from '@/features/program/general/ui/table/program-table-column-resolver'
 import type { ProgramListConfig } from '@/features/program/general/ui/program-list'
+import { useQueryParams } from '@/shared/hooks/use-query-params'
 
-/** 일반 프로그램 목록 — 4카드 위젯 status 쿼리 */
-export type GeneralProgramOverviewStatusFilter = 'scheduled' | 'in_progress' | 'completed'
+export type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
 
 export interface GeneralProgramListQueryParams extends Record<string, string | undefined> {
   programId?: string
   status?: GeneralProgramOverviewStatusFilter | 'economy_scheduled' | 'economy_in_progress' | 'economy_completed'
 }
 
-const overviewStatusValues = ['scheduled', 'in_progress', 'completed'] as const
+function readTableFiltersFromSearchParams(
+  searchParams: URLSearchParams
+): GeneralProgramListTableFilters {
+  return {
+    title: searchParams.get('title') ?? undefined,
+    lifecycleStatus: searchParams.get('lifecycleStatus') ?? undefined,
+    targetLevel: searchParams.get('targetLevel') ?? undefined,
+    participantRecruitment: searchParams.get('participantRecruitment') ?? undefined,
+    operationStartDate: searchParams.get('operationStartDate') ?? undefined,
+    operationEndDate: searchParams.get('operationEndDate') ?? undefined,
+  }
+}
+
+function serializeTableFilters(filters: GeneralProgramListTableFilters): string {
+  return JSON.stringify(filters)
+}
 
 export function useGeneralProgramListFilters() {
   const { params, setParam } = useQueryParams<GeneralProgramListQueryParams>()
-  const [listVersion, setListVersion] = useState(0)
-
-  const refetchPrograms = useCallback(() => {
-    invalidateGeneralProgramsCache()
-    setListVersion(v => v + 1)
-  }, [])
+  const [searchParams] = useSearchParams()
+  const [mockListVersion, setMockListVersion] = useState(0)
+  const remoteEnabled = useGeneralProgramsRemoteEnabled()
 
   const statusFilter = useMemo<GeneralProgramOverviewStatusFilter | null>(() => {
     const value = params.status
-    if (value && (overviewStatusValues as readonly string[]).includes(value)) {
+    if (value && (GENERAL_PROGRAM_OVERVIEW_STATUS_VALUES as readonly string[]).includes(value)) {
       return value as GeneralProgramOverviewStatusFilter
     }
-    // 하위 호환: 기존 economy_* 쿼리 키
     if (value === 'economy_scheduled') return 'scheduled'
     if (value === 'economy_in_progress') return 'in_progress'
     if (value === 'economy_completed') return 'completed'
     return null
   }, [params.status])
 
+  const tableFilters = useMemo(
+    () => readTableFiltersFromSearchParams(searchParams),
+    [searchParams]
+  )
+  const tableFiltersKey = useMemo(() => serializeTableFilters(tableFilters), [tableFilters])
+
+  const remoteListQuery = useQuery({
+    queryKey: generalProgramQueryKeys.list(statusFilter, tableFiltersKey),
+    queryFn: () => fetchGeneralProgramsRemoteList(statusFilter, tableFilters),
+    enabled: remoteEnabled,
+    staleTime: 30_000,
+    retry: false,
+  })
+
   const filteredPrograms = useMemo(() => {
-    void listVersion
-    let filtered: Program[] = getGeneralPrograms()
-
-    if (statusFilter === 'scheduled') {
-      filtered = filtered.filter(program =>
-        [
-          'recruiting_students',
-          'recruiting_instructors',
-          'matching_completed',
-          'education_before_textbook',
-        ].includes(program.lifecycleStatus || '')
-      )
-    } else if (statusFilter === 'in_progress') {
-      filtered = filtered.filter(program =>
-        ['education_after_textbook', 'education_in_progress'].includes(
-          program.lifecycleStatus || ''
-        )
-      )
-    } else if (statusFilter === 'completed') {
-      filtered = filtered.filter(program =>
-        ['education_completed', 'document_processing_completed'].includes(
-          program.lifecycleStatus || ''
-        )
-      )
+    if (remoteEnabled) {
+      return remoteListQuery.data ?? []
     }
+    void mockListVersion
+    return getGeneralProgramsMockList(statusFilter)
+  }, [remoteEnabled, remoteListQuery.data, statusFilter, mockListVersion])
 
-    return filtered
-  }, [statusFilter, listVersion])
+  const refetchPrograms = useCallback(() => {
+    if (remoteEnabled) {
+      void remoteListQuery.refetch()
+      return
+    }
+    invalidateGeneralProgramsCache()
+    setMockListVersion(v => v + 1)
+  }, [remoteEnabled, remoteListQuery])
 
   const headerTitle = useMemo(() => {
-    if (statusFilter === 'scheduled') return '예정 프로그램'
+    if (statusFilter === 'scheduled') return '진행 예정 프로그램'
     if (statusFilter === 'in_progress') return '진행 중인 프로그램'
-    if (statusFilter === 'completed') return '완료 프로그램'
+    if (statusFilter === 'completed') return '진행 완료된 프로그램'
     return '전체 프로그램'
   }, [statusFilter])
 
@@ -98,5 +121,7 @@ export function useGeneralProgramListFilters() {
     params,
     setParam,
     refetchPrograms,
+    loading: remoteEnabled ? remoteListQuery.isFetching : false,
+    isRemoteDataSource: remoteEnabled,
   }
 }

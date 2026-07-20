@@ -31,7 +31,6 @@ export const applicantInstructorEditSchema = z
     businessIncomeEarnerStatus: z.enum(['해당', '해당 없음']),
   })
   .superRefine((data, ctx) => {
-    if (data.lectureFeeBasisType === 'program') return
     if (parseLectureFeeAmountDigits(data.lectureFeeAmount)) return
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -69,8 +68,7 @@ export function draftToInstructorSavePayload(
       parsed.lectureFeeBasisType === 'program'
         ? undefined
         : parsed.lectureFeeMeasure.trim() || undefined,
-    lectureFeeAmount:
-      parsed.lectureFeeBasisType === 'program' ? undefined : amountDigits || undefined,
+    lectureFeeAmount: amountDigits || undefined,
     lectureFeeBasisDisplay: buildLectureFeeBasisDisplay(
       parsed.lectureFeeBasisType,
       parsed.lectureFeeMeasure,

@@ -1,4 +1,5 @@
 import type { ProgramParticipantApplicationEditorViewModel } from '@/features/template/hooks/use-program-participant-application-editor'
+import '@/features/template/ui/form-set/application-form/volunteer/program-application-form-volunteer.css'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import {
@@ -34,6 +35,7 @@ export function ProgramApplicationFormVolunteerEditorLeftColumn({
         structureLockedParagraphIds: vm.structureLockedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormVolunteer: vm.programApplicationFormVolunteerOptions,
+        hiddenParagraphIds: vm.volunteerApplicationHiddenParagraphIds,
       }}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />

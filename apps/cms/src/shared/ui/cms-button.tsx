@@ -7,6 +7,7 @@ import { Button } from 'antd'
 import type { ButtonProps } from 'antd'
 import type { CSSProperties, ReactNode } from 'react'
 import './cms-button.css'
+import './button-loading-only.css'
 
 type CmsButtonPropsOmit =
   | 'size'
@@ -22,6 +23,9 @@ type CmsButtonPropsOmit =
 export type CmsButtonVariant = 'primary' | 'secondary' | 'default' | 'delete'
 
 export type CmsButtonSize = 'large' | 'medium' | 'small'
+
+/** 승인·반려·취소 등 CMS 관리 액션 버튼 공통 폭(px) */
+export const CMS_ACTION_BUTTON_WIDTH = 140
 
 export interface CmsButtonProps extends Omit<ButtonProps, CmsButtonPropsOmit> {
   variant?: CmsButtonVariant
@@ -48,6 +52,7 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
       style,
       disabled,
       type = 'button',
+      loading,
       ...rest
     },
     ref
@@ -57,12 +62,15 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
       width != null ? { width: typeof width === 'number' ? `${width}px` : width } : undefined
 
     const antdSize = size === 'large' ? 'large' : size === 'small' ? 'small' : 'middle'
+    const isLoading = Boolean(loading)
 
     const cn = [
       'cms-button',
+      'btn-loading-only',
       `cms-button--${variant}`,
       `cms-button--${size}`,
       hasIcon && 'cms-button--has-icon',
+      isLoading && 'cms-button--loading-only',
       className,
     ]
       .filter(Boolean)
@@ -70,6 +78,12 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
 
     const antType: ButtonProps['type'] =
       variant === 'primary' ? 'primary' : variant === 'delete' ? 'default' : 'default'
+
+    /**
+     * Ant DefaultLoadingIcon: `icon` 없으면 CSSMotion(width 애니메이션) →
+     * 스피너 absolute 중앙 정렬이 깨짐. 로딩 중 더미 icon으로 existIcon 경로 사용.
+     */
+    const antdIcon = isLoading ? <span className="cms-button__loading-slot" aria-hidden /> : undefined
 
     return (
       <Button
@@ -80,11 +94,17 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
         size={antdSize}
         className={cn}
         disabled={disabled}
+        loading={loading}
+        icon={antdIcon}
         style={{ outline: 'none', ...widthStyle, ...style }}
         {...rest}
       >
-        {hasIcon ? <span className="cms-button__icon">{icon}</span> : null}
-        {children != null ? <span className="cms-button__label">{children}</span> : null}
+        {children != null || hasIcon ? (
+          <span className="btn-loading-only__content">
+            {hasIcon ? <span className="cms-button__icon">{icon}</span> : null}
+            {children != null ? <span className="cms-button__label">{children}</span> : null}
+          </span>
+        ) : null}
       </Button>
     )
   }

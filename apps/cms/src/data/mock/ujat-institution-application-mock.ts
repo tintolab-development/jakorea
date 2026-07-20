@@ -1,4 +1,6 @@
-import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
+import {
+  getUjatEducationRegionLabel,
+} from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import type { UjatInstitutionApplicationDetail } from '@/features/program/ujat/ui/detail-modal/application-institution/detail/detail-types'
 import type {
@@ -102,9 +104,7 @@ function gradeValuesForGrade(gradeLabel: string, classCount: number): string[] {
 }
 
 function regionLabelForKey(regionKey: UjatInstitutionApplicationRegionKey): string {
-  return (
-    UJAT_INSTITUTION_APPLICATION_REGIONS.find(r => r.key === regionKey)?.label ?? regionKey
-  )
+  return getUjatEducationRegionLabel(regionKey, regionKey)
 }
 
 function preferredDatesFromSlots(
@@ -116,8 +116,8 @@ function preferredDatesFromSlots(
 }
 
 /**
- * 서울 5개 기관 — 목록·상세·임시 배정·임시 배정 기관 확인이 동일 fixture를 참조한다.
- * (임시 배정 현황 = `tempAssignmentStatus`, 일정 확인 현황 = `scheduleConfirmStatus`)
+ * 서울 기관 mock — 목록·상세·임시 배정·임시 배정 기관 확인이 동일 fixture를 참조한다.
+ * 임시 배정 기관 확인 리스트: `temp_assigned` 5건 × 일정 확인 현황 5종 각 1건(seoul-3~7).
  */
 const UJAT_INSTITUTION_SEOUL_FIXTURES: UjatInstitutionMockFixture[] = [
   {
@@ -244,7 +244,7 @@ const UJAT_INSTITUTION_SEOUL_FIXTURES: UjatInstitutionMockFixture[] = [
       scheduleSlots: buildScheduleSlots(['2026-04-17', '2026-05-08']),
       teacherName: '박민수',
     },
-    scheduleConfirmStatus: 'application_rejected',
+    scheduleConfirmStatus: 'revision_requested',
     scheduleAssignments: [
       {
         institutionId: 'seoul-4',
@@ -287,7 +287,14 @@ const UJAT_INSTITUTION_SEOUL_FIXTURES: UjatInstitutionMockFixture[] = [
         { gradeLabel: '6학년', classCount: 2 },
       ],
       totalClassCount: 9,
-      scheduleSlots: buildScheduleSlots(['2026-04-03', '2026-04-24', '2026-05-29']),
+      scheduleSlots: buildScheduleSlots([
+        '2026-04-03',
+        '2026-04-24',
+        '2026-05-29',
+        '2026-09-11',
+        '2026-10-16',
+        '2026-11-20',
+      ]),
       teacherName: '최지연',
     },
     scheduleConfirmStatus: 'institution_confirmed',
@@ -356,6 +363,118 @@ const UJAT_INSTITUTION_SEOUL_FIXTURES: UjatInstitutionMockFixture[] = [
       classTimeRows: DEFAULT_CLASS_TIME_ROWS,
     },
   },
+  {
+    row: {
+      id: 'seoul-6',
+      regionKey: 'seoul',
+      no: 6,
+      institutionName: '서울마천초등학교',
+      tempAssignmentStatus: 'temp_assigned',
+      gradeClassCounts: [
+        { gradeLabel: '2학년', classCount: 3 },
+        { gradeLabel: '4학년', classCount: 2 },
+      ],
+      totalClassCount: 5,
+      scheduleSlots: buildScheduleSlots(['2026-04-10', '2026-05-22']),
+      teacherName: '정하늘',
+    },
+    scheduleConfirmStatus: 'approval_completed',
+    confirmedDetailExtras: {
+      gradeTextbooks: {
+        '2학년': {
+          textbookName: '우리가족',
+          kitSummary: '2키트 (56권)',
+          deliveryStatus: 'before_shipping',
+        },
+        '4학년': {
+          textbookName: '우리마을',
+          kitSummary: '1키트 (28권)',
+          deliveryStatus: 'before_shipping',
+        },
+      },
+      guidanceNotes: {
+        searchDeviceGrade6: '-',
+        waitingArea: '본관 1층 교무실 옆 대기실 이용',
+        textbookDisposalLocation: '1층 분리수거함',
+        otherSpecialNotes: '-',
+        snackAvailability: '불가능',
+        sexOffenderCheck: '온라인 제출 | ID: haneul.jung | 검증번호: 880215',
+      },
+    },
+    scheduleAssignments: [
+      {
+        institutionId: 'seoul-6',
+        isoDate: '2026-04-10',
+        gradeValues: gradeValuesForGrade('2학년', 3),
+      },
+      {
+        institutionId: 'seoul-6',
+        isoDate: '2026-05-22',
+        gradeValues: gradeValuesForGrade('4학년', 2),
+      },
+    ],
+    detail: {
+      address: '서울특별시 송파구 마천로 45',
+      addressDetail: '본관 1층 교무실',
+      teacherContact: {
+        teacherName: '정하늘',
+        tel: '02-4033-8801',
+        mobile: '010-8821-3340',
+        email: 'haneul.jung@naver.com',
+      },
+      otherRequests: '-',
+      gradeBlocks: buildGradeBlocks([
+        { gradeLabel: '2학년', classCount: 3 },
+        { gradeLabel: '4학년', classCount: 2 },
+      ]),
+      classTimeRows: DEFAULT_CLASS_TIME_ROWS,
+    },
+  },
+  {
+    row: {
+      id: 'seoul-7',
+      regionKey: 'seoul',
+      no: 7,
+      institutionName: '서울강동초등학교',
+      tempAssignmentStatus: 'temp_assigned',
+      gradeClassCounts: [
+        { gradeLabel: '3학년', classCount: 4 },
+        { gradeLabel: '6학년', classCount: 2 },
+      ],
+      totalClassCount: 6,
+      scheduleSlots: buildScheduleSlots(['2026-05-01', '2026-06-05']),
+      teacherName: '한지민',
+    },
+    scheduleConfirmStatus: 'application_rejected',
+    scheduleAssignments: [
+      {
+        institutionId: 'seoul-7',
+        isoDate: '2026-05-01',
+        gradeValues: gradeValuesForGrade('3학년', 4),
+      },
+      {
+        institutionId: 'seoul-7',
+        isoDate: '2026-06-05',
+        gradeValues: gradeValuesForGrade('6학년', 2),
+      },
+    ],
+    detail: {
+      address: '서울특별시 강동구 상암로 12',
+      addressDetail: '행정실 2층',
+      teacherContact: {
+        teacherName: '한지민',
+        tel: '02-4812-5502',
+        mobile: '010-7712-9088',
+        email: 'jimin.han@gmail.com',
+      },
+      otherRequests: '오후 수업은 14:00 이후 가능합니다.',
+      gradeBlocks: buildGradeBlocks([
+        { gradeLabel: '3학년', classCount: 4 },
+        { gradeLabel: '6학년', classCount: 2 },
+      ]),
+      classTimeRows: DEFAULT_CLASS_TIME_ROWS,
+    },
+  },
 ]
 
 const UJAT_INSTITUTION_GWANGJU_FIXTURES: UjatInstitutionMockFixture[] = [
@@ -374,7 +493,7 @@ const UJAT_INSTITUTION_GWANGJU_FIXTURES: UjatInstitutionMockFixture[] = [
       scheduleSlots: buildScheduleSlots(['2026-04-03', '2026-04-17']),
       teacherName: '이길동',
     },
-    scheduleConfirmStatus: 'institution_confirmed',
+    scheduleConfirmStatus: 'institution_checking',
     scheduleAssignments: [
       {
         institutionId: 'gwangju-jinwol',

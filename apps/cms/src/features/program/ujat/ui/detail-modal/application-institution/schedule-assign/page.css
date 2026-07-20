@@ -195,7 +195,3 @@
   .cross-table__cell--column-header:nth-child(2) {
   border-right: 0;
 }
-
-.ujat-schedule-assign-estimation .ujat-schedule-assign-estimation__table .ujat-schedule-assign-estimation__after-max-cell {
-  border-left: 1px solid var(--table-line, #e0e0e0);
-}

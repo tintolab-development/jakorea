@@ -5,23 +5,51 @@
  * 실제 데이터: createProgramPost + fileUploadService 연동
  */
 
-import { useState, useEffect } from 'react'
-import { Checkbox, Input, Modal } from 'antd'
-import { CmsButton } from '@/shared/ui'
+import { useState, useEffect, useMemo } from 'react'
+import { Checkbox, Input } from 'antd'
+import { CmsButton, ContentModal } from '@/shared/ui'
 import { FileSelectField } from '@/shared/ui/file-select-field'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import type { Program } from '@/types/domain'
 import { createProgramPost, addProgramFiles } from '@/data/mock'
+import { createGeneralProgramPost } from '@/features/program/general/api/admin-general-programs-service'
+import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { fileUploadService } from '@/entities/application/api/file-upload-service'
 import './post-write-modal.css'
 
 const { TextArea } = Input
 
-const AUDIENCE_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: '담당교사', value: 'teacher' },
-  { label: '강사', value: 'instructor' },
-  { label: '봉사자', value: 'volunteer' },
-  { label: '학생', value: 'student' },
-]
+/** 게시글 등록 모달 전용 공개 범위 UI 키 */
+const POST_WRITE_AUDIENCE_KEYS = ['all', 'participant', 'instructor', 'volunteer'] as const
+type PostWriteAudienceKey = (typeof POST_WRITE_AUDIENCE_KEYS)[number]
+
+const DEFAULT_POST_WRITE_AUDIENCE: PostWriteAudienceKey[] = [...POST_WRITE_AUDIENCE_KEYS]
+
+function buildPostWriteAudienceOptions(program?: Program) {
+  const isIndividual = program ? isGeneralIndividualProgram(program) : false
+  const participantHint = isIndividual
+    ? '학생(개인 참여자)에게 공개'
+    : '담당교사(신청자)에게 공개'
+
+  return [
+    { label: '전체', value: 'all' as const },
+    { label: '참여자', value: 'participant' as const, title: participantHint },
+    { label: '강사', value: 'instructor' as const },
+    { label: '봉사자', value: 'volunteer' as const },
+  ]
+}
+
+/** 저장 시 participant → 기관: teacher / 개인: student */
+function resolvePostWriteAudienceForSave(
+  audience: PostWriteAudienceKey[],
+  program?: Program
+): string[] {
+  const isIndividual = program ? isGeneralIndividualProgram(program) : false
+  return audience.map(key => {
+    if (key === 'participant') return isIndividual ? 'student' : 'teacher'
+    return key
+  })
+}
 
 const MAX_FILE_SIZE = 15 * 1024 * 1024 // 15MB
 
@@ -38,6 +66,8 @@ export interface PostWriteModalProps {
   onCancel: () => void
   /** 프로그램 ID (필수, 등록 대상 프로그램) */
   programId: string
+  /** 참여자(참여자 체크) 매핑 — 기관/개인 구분용 */
+  program?: Program
   /** 참여기관(학교) ID — 있으면 해당 학교 전용 게시글 */
   schoolId?: string
   /** 작성자 표시명 (예: "JA KOREA 알림", "박○○ 담당교사님") */
@@ -47,11 +77,11 @@ export interface PostWriteModalProps {
 }
 
 function resetForm(
-  setAudience: (v: string[]) => void,
+  setAudience: (v: PostWriteAudienceKey[]) => void,
   setContent: (v: string) => void,
   setFiles: (v: File[]) => void
 ) {
-  setAudience(['all', 'teacher', 'instructor', 'volunteer', 'student'])
+  setAudience([...DEFAULT_POST_WRITE_AUDIENCE])
   setContent('')
   setFiles([])
 }
@@ -60,22 +90,18 @@ export function PostWriteModal({
   open,
   onCancel,
   programId,
+  program,
   schoolId,
   authorName,
   onSuccess,
 }: PostWriteModalProps) {
-  const [audience, setAudience] = useState<string[]>([
-    'all',
-    'teacher',
-    'instructor',
-    'volunteer',
-    'student',
-  ])
+  const [audience, setAudience] = useState<PostWriteAudienceKey[]>([...DEFAULT_POST_WRITE_AUDIENCE])
   const [content, setContent] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
 
   const fileNames = files.map(f => f.name)
+  const audienceOptions = useMemo(() => buildPostWriteAudienceOptions(program), [program])
 
   useEffect(() => {
     if (!open) resetForm(setAudience, setContent, setFiles)
@@ -112,20 +138,37 @@ export function PostWriteModal({
         files.length > 0
           ? await fileUploadService.uploadMultiple(files, 'document')
           : []
-      const newPost = createProgramPost({
-        programId,
-        schoolId: schoolId as import('@/types').UUID | undefined,
-        authorName,
-        content: trimmed,
-        audience,
-        attachmentCount: uploadResults.length,
-      })
-      if (uploadResults.length > 0) {
-        addProgramFiles(programId, newPost.id, uploadResults.map(r => ({
-          fileName: r.fileName,
-          fileUrl: r.url,
-          fileSize: r.fileSize,
-        })))
+      const audienceForSave = resolvePostWriteAudienceForSave(audience, program)
+      const visibilityType = audienceForSave.includes('all')
+        ? 'ALL'
+        : audienceForSave.join(',').toUpperCase()
+
+      if (shouldUseGeneralProgramsRemoteApi()) {
+        await createGeneralProgramPost(programId, {
+          title: trimmed.slice(0, 40),
+          content: trimmed,
+          visibilityType,
+        })
+      } else {
+        const newPost = createProgramPost({
+          programId,
+          schoolId: schoolId as import('@/types').UUID | undefined,
+          authorName,
+          content: trimmed,
+          audience: audienceForSave,
+          attachmentCount: uploadResults.length,
+        })
+        if (uploadResults.length > 0) {
+          addProgramFiles(
+            programId,
+            newPost.id,
+            uploadResults.map(r => ({
+              fileName: r.fileName,
+              fileUrl: r.url,
+              fileSize: r.fileSize,
+            }))
+          )
+        }
       }
       resetForm(setAudience, setContent, setFiles)
       onSuccess?.()
@@ -138,7 +181,7 @@ export function PostWriteModal({
   }
 
   return (
-    <Modal
+    <ContentModal
       open={open}
       onCancel={onCancel}
       title="게시글 등록"
@@ -146,18 +189,14 @@ export function PostWriteModal({
       className="post-write-modal"
       footer={
         <div className="post-write-modal__footer-actions">
-          <CmsButton variant="secondary" size="large" onClick={onCancel} disabled={loading}>
+          <CmsButton variant="secondary" size="medium" onClick={onCancel} disabled={loading}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="large" onClick={handleRegister} loading={loading}>
+          <CmsButton variant="primary" size="medium" onClick={handleRegister} loading={loading}>
             등록
           </CmsButton>
         </div>
       }
-      closable
-      destroyOnClose
-      maskClosable
-      centered
     >
       <div className="post-write-modal__body">
         {/* 게시글 공개 범위 */}
@@ -166,9 +205,9 @@ export function PostWriteModal({
             게시글 공개 범위 <span className="post-write-modal__required" aria-hidden>*</span>
           </label>
           <Checkbox.Group
-            options={AUDIENCE_OPTIONS}
+            options={audienceOptions}
             value={audience}
-            onChange={vals => setAudience(vals as string[])}
+            onChange={vals => setAudience(vals as PostWriteAudienceKey[])}
             className="post-write-modal__checkbox-group"
           />
         </div>
@@ -197,7 +236,6 @@ export function PostWriteModal({
                   onRemoveFile={handleRemoveFile}
                   uploading={loading}
                   buttonLabel="파일 선택"
-                  emptyPlaceholder="파일을 업로드 해주세요"
                   guideLines={[
                     `-  파일은 최대 15M까지 ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`,
                     '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
@@ -209,6 +247,6 @@ export function PostWriteModal({
           </div>
         </div>
       </div>
-    </Modal>
+    </ContentModal>
   )
 }

@@ -3,9 +3,10 @@
  * Phase 5.2.1: 강사/봉사자 대시보드
  */
 
-import { Card, List, Tag, Typography, Button, Empty, Tabs } from 'antd'
+import { Card, List, Tag, Typography, Tabs } from 'antd'
 import { RightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import { LoadingButton, EmptyState } from '@/shared/ui'
 import { WIDGET_MORE_ALERT_MESSAGE } from '@/shared/constants/widget-styles'
 import { formatDate } from '@/shared/utils'
 import dayjs from 'dayjs'
@@ -106,11 +107,9 @@ export function PendingTasksList({
           key="all"
         >
           {reportTasks.length === 0 && settlementTasks.length === 0 ? (
-            <Empty
-              description="대기 중인 작업이 없습니다"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              style={{ padding: '20px 0' }}
-            />
+            <div style={{ padding: '20px 0' }}>
+              <EmptyState description="대기 중인 작업이 없습니다" />
+            </div>
           ) : (
             <>
               {reportTasks.length > 0 && (
@@ -149,19 +148,17 @@ export function PendingTasksList({
           key="report"
         >
           {reportTasks.length === 0 ? (
-            <Empty
-              description="제출 대기 중인 보고서가 없습니다"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              style={{ padding: '20px 0' }}
-            />
+            <div style={{ padding: '20px 0' }}>
+              <EmptyState description="제출 대기 중인 보고서가 없습니다" />
+            </div>
           ) : (
             <>
               <List dataSource={reportTasks.slice(0, 5)} renderItem={renderTaskItem} />
               {reportTasks.length > 5 && (
                 <div style={{ textAlign: 'center', marginTop: 16 }}>
-                  <Button type="link" size="small" onClick={handleViewAll}>
+                  <LoadingButton type="link" size="small" onClick={handleViewAll}>
                     더보기 <RightOutlined />
-                  </Button>
+                  </LoadingButton>
                 </div>
               )}
             </>
@@ -181,11 +178,9 @@ export function PendingTasksList({
           key="settlement"
         >
           {settlementTasks.length === 0 ? (
-            <Empty
-              description="제출 대기 중인 정산이 없습니다"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              style={{ padding: '20px 0' }}
-            />
+            <div style={{ padding: '20px 0' }}>
+              <EmptyState description="제출 대기 중인 정산이 없습니다" />
+            </div>
           ) : (
             <>
               <List
@@ -200,9 +195,9 @@ export function PendingTasksList({
               />
               {settlementTasks.length > 5 && (
                 <div style={{ textAlign: 'center', marginTop: 16 }}>
-                  <Button type="link" size="small" onClick={handleViewAll}>
+                  <LoadingButton type="link" size="small" onClick={handleViewAll}>
                     더보기 <RightOutlined />
-                  </Button>
+                  </LoadingButton>
                 </div>
               )}
             </>

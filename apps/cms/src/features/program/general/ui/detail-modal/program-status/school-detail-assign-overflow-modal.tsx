@@ -47,7 +47,7 @@ export function SchoolDetailAssignOverflowModal({
       open={open}
       onCancel={onCancel}
       title="강사 배정 인원 초과 안내"
-      width={560}
+      width={600}
       footer={footer}
       className="school-detail-assign-overflow-modal"
     >

@@ -1,10 +1,11 @@
 import { Checkbox } from 'antd'
-import type { UjatSecondInterviewScreeningStatus } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import type { SecondInterviewScreeningEffectiveStatus } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
 import {
-  formatUjatInterview2ScoreLabel,
-  ujatInterview2ScreeningListBadgeLabel,
-  ujatInterview2ScreeningTone,
-} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-interview2-screening-ui'
+  formatSecondInterviewListScoreLabel,
+  resolveSecondInterviewScreeningListBadgeLabel,
+  resolveSecondInterviewScreeningTone,
+} from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-ui'
+import '@/features/program/shared/ui/volunteer-screening/second-interview-screening-tone.css'
 import './ujat-volunteer-interview2-list-item.css'
 
 export type CalendarVolunteerInterview2ListRow = {
@@ -13,7 +14,7 @@ export type CalendarVolunteerInterview2ListRow = {
   /** 캘린더 이벤트 id — 색상 조회 */
   eventId: string
   volunteerName: string
-  screeningStatus: UjatSecondInterviewScreeningStatus
+  screeningStatus: SecondInterviewScreeningEffectiveStatus
   slotLabel: string
   totalScore: number | null | undefined
 }
@@ -29,7 +30,7 @@ export function CalendarListItemContentVolunteerInterview2({
   checked,
   onToggle,
 }: CalendarListItemContentVolunteerInterview2Props) {
-  const tone = ujatInterview2ScreeningTone(row.screeningStatus)
+  const tone = resolveSecondInterviewScreeningTone(row.screeningStatus)
   return (
     <div className="ujat-volunteer-interview2-list-item">
       <div className="ujat-volunteer-interview2-list-item__body">
@@ -38,24 +39,27 @@ export function CalendarListItemContentVolunteerInterview2({
           <span className="ujat-volunteer-interview2-list-item__sep" aria-hidden>
             |
           </span>
-          <span
-            className={`ujat-volunteer-interview2-list-item__status-badge ujat-volunteer-interview2-list-item__status-badge--${tone}`}
-          >
-            {ujatInterview2ScreeningListBadgeLabel(row.screeningStatus)}
-          </span>
+          <span className="ujat-volunteer-interview2-list-item__slot">{row.slotLabel}</span>
         </div>
         <div className="ujat-volunteer-interview2-list-item__meta">
-          <span className="ujat-volunteer-interview2-list-item__meta-slot">{row.slotLabel}</span>
+          <span
+            className={[
+              'second-interview-screening-status-badge',
+              `second-interview-screening-tone--${tone}`,
+            ].join(' ')}
+          >
+            {resolveSecondInterviewScreeningListBadgeLabel(row.screeningStatus)}
+          </span>
           <span className="ujat-volunteer-interview2-list-item__sep" aria-hidden>
             |
           </span>
           <span className="ujat-volunteer-interview2-list-item__meta-score">
-            {formatUjatInterview2ScoreLabel(row.totalScore)}
+            {formatSecondInterviewListScoreLabel(row.screeningStatus, row.totalScore)}
           </span>
         </div>
       </div>
       <div
-        className="calendar-list-item__checkbox"
+        className="calendar-list-item__checkbox ujat-volunteer-interview2-list-item__checkbox"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >

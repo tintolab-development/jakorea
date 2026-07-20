@@ -3,11 +3,18 @@
  * @see form-editor.css (진입점)
  */
 
+/* 읽기 전용 미리보기 — 본문 컨트롤은 비활성 스타일 없이 유지, 단락 슬롯에서만 입력 차단 */
+.form-editor-left--paragraph-body-preview .paragraph-card__slot {
+  pointer-events: none;
+  cursor: default;
+}
+
 .form-editor-left {
   display: flex;
   flex-direction: column;
   gap: 32px;
   width: 100%;
+  max-width: var(--form-editor-paragraph-column-max-width, 1404px);
   min-height: 0;
   flex: 1 1 auto;
   overflow: auto;
@@ -229,6 +236,11 @@
   line-height: 150%;
   color: var(--main-BK, #3d3d3d);
   opacity: 0.6;
+}
+
+/* 잠금 안내 → 작성 시작일(제목형 기간 설정) — 20px */
+.form-editor-right-panel__form-items--after-structure-locked {
+  padding-top: 20px;
 }
 
 .form-editor-right-panel__structure-locked-hint-mark {

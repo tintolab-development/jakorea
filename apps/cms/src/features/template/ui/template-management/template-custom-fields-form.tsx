@@ -120,6 +120,8 @@ export interface TemplateCustomFieldsFormProps {
   /** 참여자 정보 — 행별 표시 여부(캔버스와 동기화). 길이는 `PARTICIPANT_INFO_ROW_COUNT` */
   participantRowVisibility?: boolean[]
   onParticipantRowVisibilityChange?: (index: number, checked: boolean) => void
+  /** API·템플릿에서 복원한 이미지 URL — 우측 썸네일 동기화 */
+  initialLogoPreviewUrls?: Record<string, string>
 }
 
 export function TemplateCustomFieldsForm({
@@ -132,6 +134,7 @@ export function TemplateCustomFieldsForm({
   onLogoUploadResult,
   participantRowVisibility,
   onParticipantRowVisibilityChange,
+  initialLogoPreviewUrls,
 }: TemplateCustomFieldsFormProps) {
   const [activeField, setActiveField] = useState<TemplateCustomFieldDef | null>(() => {
     if (selectedFieldName === undefined || selectedFieldName === null || selectedFieldName === '')
@@ -159,6 +162,24 @@ export function TemplateCustomFieldsForm({
   const [logoUploading, setLogoUploading] = useState(false)
   const logoPreviewUrlsRef = useRef<Record<string, string>>({})
   const logoFileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (initialStringValues == null) return
+    setValuesByField(prev => {
+      const merged = {
+        ...DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
+        ...prev,
+        ...initialStringValues,
+      }
+      merged.titleName = sliceTitleNameToMax(merged.titleName ?? '')
+      return merged
+    })
+  }, [initialStringValues])
+
+  useEffect(() => {
+    if (initialLogoPreviewUrls == null) return
+    setLogoPreviewUrlByField(prev => ({ ...prev, ...initialLogoPreviewUrls }))
+  }, [initialLogoPreviewUrls])
 
   useEffect(() => {
     logoPreviewUrlsRef.current = logoPreviewUrlByField

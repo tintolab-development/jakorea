@@ -25,7 +25,7 @@ export const UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = [
   {
     key: 'tempAssignmentStatus',
     type: 'select',
-    label: '임시 배정 현황',
+    label: '임시 배정 평가',
     placeholder: '전체',
     options: tempAssignmentOptions,
     width: '25%',

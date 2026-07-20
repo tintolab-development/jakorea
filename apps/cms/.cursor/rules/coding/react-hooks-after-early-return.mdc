@@ -1,0 +1,15 @@
+---
+description: CMS — early return 뒤 React 훅 호출 금지 (모노레포 규칙 위임)
+globs:
+  - "apps/cms/src/**/*.{tsx,jsx}"
+  - "apps/cms/src/**/hooks/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# React hooks order (CMS)
+
+모노레포 규칙을 따른다:
+
+→ **[.cursor/rules/react-hooks-after-early-return.mdc](../../../../../.cursor/rules/react-hooks-after-early-return.mdc)**
+
+요약: 같은 컴포넌트에서 early `return` **이후**에 `useEffect` / `useFieldArray` / 기타 `use*` 를 두지 않는다. 훅 전부 → 그다음 `return null`.

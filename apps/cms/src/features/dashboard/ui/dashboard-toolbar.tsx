@@ -2,7 +2,7 @@
  * 대시보드 상단 툴바 (인사말, 진행 프로젝트 수, 설정 버튼)
  */
 
-import { AppButton } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 
 function IconDashboardEdit() {
   return (
@@ -37,15 +37,17 @@ export function DashboardToolbar({
         <span className="dashboard-toolbar-description">진행 프로젝트 {activeProgramsCount}건</span>
       </div>
       <div className="dashboard-toolbar-right">
-        <AppButton
-          type="primary"
-          size="filter-wide"
+        <CmsButton
+          variant="primary"
+          size="large"
+          width="auto"
+          style={{ minWidth: 180, lineHeight: 1.2 }}
           className="dashboard-toolbar-settings-btn"
           icon={<IconDashboardEdit />}
           onClick={onOpenSettings}
         >
           대시보드 설정
-        </AppButton>
+        </CmsButton>
       </div>
     </div>
   )

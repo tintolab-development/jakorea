@@ -6,6 +6,16 @@
 
 import type { UUID, DateValue } from './index'
 
+export interface TermsAgreementRow {
+  termsType?: string
+  termsVersion?: string
+  required?: boolean
+  agreed?: boolean
+  agreedAt?: string
+  actorType?: string
+  sourceFlow?: string
+}
+
 // ===== 역할 정의 =====
 
 // 프론트 사용자 역할 (§2.1)
@@ -43,12 +53,16 @@ export interface SchoolAffiliatedTeacherRow {
   joinedAt: DateValue
   /** 연결된 CMS 회원 id — 있으면 행 클릭 시 해당 회원 상세로 이동 */
   linkedUserId?: UUID
+  /** remote: `PATCH …/affiliated-teachers/{teacherMemberId}/employment-status` 용 */
+  teacherMemberId?: number
 }
 
 // ===== 사용자 인터페이스 =====
 
 export interface User {
   id: UUID
+  /** 백엔드 회원 숫자 ID — remote API 연동 시 목록·상세에서 채움 */
+  memberId?: number
   email: string
   password: string // Mock 데이터용 (실제로는 해시된 값)
   name: string
@@ -63,6 +77,8 @@ export interface User {
   programRoles?: Record<string, ProgramRole>
 
   // 개인(참여자) 전용 (§2.1)
+  /** 1365 자원봉사 포털 ID — 회원 관리 등록 시 저장 */
+  id1365?: string
   // - 프로그램 신청(개인)
   // - 신청내역/진행상황 확인
   // - 일정 확인, 과제 제출
@@ -149,6 +165,16 @@ export interface User {
   gender?: string
   affiliation?: string
   socialAccounts?: string[]
+
+  /** 약관·동의 이력 — `/me` API 연동 시 채움 */
+  termsAgreements?: TermsAgreementRow[]
+
+  /** 강사 instructor-profile — 경력 텍스트 (remote) */
+  instructorCareerText?: string
+  /** 강사 instructor-profile — 자기소개 (remote) */
+  instructorSelfIntroduction?: string
+  /** 강사 instructor-profile — 승인 상태 (remote) */
+  instructorApprovalStatus?: string
 
   /**
    * 회원 목록 테이블 전용 지표 (API가 내려주면 표시, 없으면 '-' 또는 기존 필드로 추론)

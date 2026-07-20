@@ -30,22 +30,90 @@ import { useProgramListActions } from './use-program-list-actions'
 import { useSearchSync } from './use-search-sync'
 import { ProgramListModals } from './program-list-modals'
 import { ProgramDetailFullPageModal } from '@/features/program/general/ui/detail-modal/program-detail-fullpage-modal'
+import { GeneralProgramRegistrationFullpageModal } from '@/features/program/general/ui/registration/registration-fullpage-modal'
+import { GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY } from '@/features/program/general/model/registration-flow'
+import {
+  clearRegistrationDraftForFreshStart,
+  peekRegistrationDraftNotice,
+  PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE,
+  REGISTRATION_DRAFT_MODE_FRESH,
+  REGISTRATION_DRAFT_MODE_QUERY_KEY,
+} from '@/features/program/shared/lib/registration-draft-notice'
+import {
+  RegistrationDraftNoticeModal,
+  type RegistrationDraftNoticeChoice,
+} from '@/features/program/shared/ui/registration/draft-notice-modal'
+import {
+  TemplateWritingPreviewProvider,
+  useTemplateWritingPreview,
+} from '@/features/template/context/template-writing-preview-context'
+import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
+import type { SetQueryParamsOptions } from '@/shared/hooks/use-query-params'
 
 import './program-list-page.css'
-import { CmsButton, ConfirmModal } from '@/shared/ui'
+import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants'
+import { CmsButton, DeleteGuideModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  useCompanySchoolProgramDetail,
+  useCompanySchoolPrograms,
+  useDeleteCompanySchoolProgram,
+  useUpdateCompanySchoolProgram,
+} from '@/features/program/1c-1s/api/hooks'
+import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
+import { companySchoolListParamsFromOverviewStatus } from '@/features/program/1c-1s/api/list-params'
+import type { OverviewStatusFilter } from './use-program-list-filters'
 
-export function ProgramListPage() {
+const PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY = 'new'
+
+function ProgramListPageContent() {
   const { showAlert } = useCmsAlert()
   const navigate = useNavigate()
   const location = useLocation()
+  const pNorm = location.pathname.replace(/\/$/, '') || '/'
+  const isCompanySchoolPath =
+    pNorm === '/programs/company-school' ||
+    pNorm.startsWith('/programs/company-school/') ||
+    pNorm === '/programs/economy-education' ||
+    pNorm.startsWith('/programs/economy-education/')
   const { user, isAuthenticated } = useAuthStore()
   const programStore = useProgramStore()
   const { programs, loading, fetchPrograms, selectedProgram, setSelectedProgram } = programStore
+  const companySchoolOverviewStatus = useMemo((): OverviewStatusFilter | null => {
+    const value = new URLSearchParams(location.search).get('status')
+    if (value === 'scheduled' || value === 'in_progress' || value === 'completed') return value
+    if (value === 'economy_scheduled') return 'scheduled'
+    if (value === 'economy_in_progress') return 'in_progress'
+    if (value === 'economy_completed') return 'completed'
+    return null
+  }, [location.search])
+  const companySchoolTableFilters = useMemo(() => {
+    const sp = new URLSearchParams(location.search)
+    const title = sp.get('title') ?? undefined
+    const yearRaw = sp.get('businessYear')
+    const businessYear =
+      yearRaw && /^\d{4}$/.test(yearRaw) ? Number.parseInt(yearRaw, 10) : undefined
+    return { title, businessYear }
+  }, [location.search])
+  const companySchoolListFilters = useMemo(
+    () =>
+      companySchoolListParamsFromOverviewStatus(
+        companySchoolOverviewStatus,
+        companySchoolTableFilters
+      ),
+    [companySchoolOverviewStatus, companySchoolTableFilters]
+  )
+  const companySchoolListQuery = useCompanySchoolPrograms(
+    companySchoolListFilters,
+    isCompanySchoolPath
+  )
+  const companySchoolProgramSource = isCompanySchoolPath
+    ? (companySchoolListQuery.data ?? [])
+    : programs
 
   // 1. Logic Hooks
   const { programType, statusFilter, filteredPrograms, params, setParam } = useProgramListFilters(
-    programs,
+    companySchoolProgramSource,
     user
   )
 
@@ -62,12 +130,15 @@ export function ProgramListPage() {
   } = useProgramListActions()
 
   const { searchParams, setSearchParams } = useSearchSync()
+  const { isWritingUserPreviewOpen, closeWritingUserPreview } = useTemplateWritingPreview()
 
   // 2. Local State
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false)
   const [programsPendingBulkDelete, setProgramsPendingBulkDelete] = useState<Program[]>([])
   const [, setHasListFilters] = useState(false)
+  const [draftNoticeOpen, setDraftNoticeOpen] = useState(false)
+  const [draftNoticeTitle, setDraftNoticeTitle] = useState('')
   const handleDisplayCountChange = useCallback((_count: number, hasActiveFilters: boolean) => {
     setHasListFilters(hasActiveFilters)
   }, [])
@@ -107,7 +178,10 @@ export function ProgramListPage() {
     viewModeFromUrl === 'list' || viewModeFromUrl === 'calendar' ? viewModeFromUrl : 'list'
   )
 
-  const pNorm = location.pathname.replace(/\/$/, '') || '/'
+  const isCompanySchoolRegistrationOpen =
+    programType === 'company_school' &&
+    (pNorm === '/programs/company-school' || pNorm === '/programs/economy-education') &&
+    searchParams.has(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY)
   const isRecruitmentRoute =
     pNorm === '/programs/education/student-recruitment' ||
     pNorm === '/programs/education/instructor-recruitment' ||
@@ -140,10 +214,33 @@ export function ProgramListPage() {
   const [selectedProgramForFullPageModal, setSelectedProgramForFullPageModal] =
     useState<Program | null>(null)
 
+  const companySchoolProgramIdFromUrl = useMemo(() => {
+    if (!isCompanySchoolPath) return undefined
+    const pid = searchParams.get('programId')?.trim()
+    if (!pid || isUjatProgramId(pid)) return undefined
+    return pid
+  }, [isCompanySchoolPath, searchParams])
+
+  const companySchoolDetailQuery = useCompanySchoolProgramDetail(
+    companySchoolProgramIdFromUrl ?? selectedProgramForFullPageModal?.id,
+    isCompanySchoolPath &&
+      Boolean(companySchoolProgramIdFromUrl ?? selectedProgramForFullPageModal?.id)
+  )
+  const updateCompanySchoolMutation = useUpdateCompanySchoolProgram()
+  const deleteCompanySchoolMutation = useDeleteCompanySchoolProgram()
+  const companySchoolDetailProgram =
+    companySchoolDetailQuery.data ??
+    selectedProgramForFullPageModal ??
+    (companySchoolProgramIdFromUrl
+      ? filteredPrograms.find(p => p.id === companySchoolProgramIdFromUrl) ??
+        ({ id: companySchoolProgramIdFromUrl } as Program)
+      : null)
+
   // 4. Effects
   useEffect(() => {
+    if (isCompanySchoolPath) return
     fetchPrograms()
-  }, [fetchPrograms])
+  }, [fetchPrograms, isCompanySchoolPath])
 
   useEffect(() => {
     const urlViewMode = searchParams.get('viewMode') as 'list' | 'calendar' | null
@@ -164,7 +261,10 @@ export function ProgramListPage() {
 
   // 풀페이지 모달 ↔ 쿼리 파라미터(programId) 연동
   const isFullPageModalPath =
-    pNorm === '/programs' || pNorm === '/programs/education'
+    pNorm === '/programs' ||
+    pNorm === '/programs/education' ||
+    pNorm === '/programs/economy-education' ||
+    pNorm === '/programs/company-school'
 
   useEffect(() => {
     if (!isFullPageModalPath) return
@@ -175,18 +275,86 @@ export function ProgramListPage() {
     navigate(buildUjatProgramDetailUrl(pid, ujatLnb, tab), { replace: true })
   }, [isFullPageModalPath, navigate, searchParams])
 
+  const userPreviewSyncParams = useMemo(
+    () => ({ userPreview: searchParams.get('userPreview') ?? undefined }),
+    [searchParams]
+  )
+
+  const setUserPreviewSyncParams = useCallback(
+    (updates: { userPreview?: string }, options?: SetQueryParamsOptions) => {
+      const next = new URLSearchParams(searchParams)
+      if (updates.userPreview === undefined || updates.userPreview === '') {
+        next.delete('userPreview')
+      } else {
+        next.set('userPreview', updates.userPreview)
+      }
+      setSearchParams(next, { replace: options?.replace ?? true })
+    },
+    [searchParams, setSearchParams]
+  )
+
+  useWritingUserPreviewUrlAuxiliarySync(
+    userPreviewSyncParams,
+    setUserPreviewSyncParams,
+    isWritingUserPreviewOpen,
+    closeWritingUserPreview
+  )
+
   useEffect(() => {
     if (!isFullPageModalPath) return
     const programIdFromUrl = searchParams.get('programId')
-    if (!programIdFromUrl) return
+    if (!programIdFromUrl) {
+      setSelectedProgramForFullPageModal(null)
+      return
+    }
     if (isUjatProgramId(programIdFromUrl)) return
+
+    // 1사1교: 목록·detail 캐시에 있으면 동기화. 없어도 URL id로 모달 오픈(아래 open 조건).
+    if (isCompanySchoolPath) {
+      const fromList = filteredPrograms.find(p => p.id === programIdFromUrl)
+      const fromDetail =
+        companySchoolDetailQuery.data?.id === programIdFromUrl
+          ? companySchoolDetailQuery.data
+          : null
+      const resolved = fromDetail ?? fromList ?? null
+      if (resolved) {
+        setSelectedProgramForFullPageModal(resolved)
+      }
+      return
+    }
+
     // 목록은 filteredPrograms(교육/경제 시 mock) 기준이므로 여기서 찾아야 새로고침 복원이 안정적임
     if (filteredPrograms.length === 0) return
     const program = filteredPrograms.find(p => p.id === programIdFromUrl)
     if (program) {
       setSelectedProgramForFullPageModal(program)
     }
-  }, [isFullPageModalPath, searchParams, filteredPrograms, setSelectedProgramForFullPageModal])
+  }, [
+    isFullPageModalPath,
+    isCompanySchoolPath,
+    searchParams,
+    filteredPrograms,
+    companySchoolDetailQuery.data,
+  ])
+
+  // 1사1교 remote: detail 확정 실패(404 등) 시 programId 쿼리 제거
+  useEffect(() => {
+    if (!isCompanySchoolPath || !companySchoolProgramIdFromUrl) return
+    if (!shouldUseCompanySchoolRemoteApi()) return
+    if (!companySchoolDetailQuery.isError || companySchoolDetailQuery.isFetching) return
+    const next = new URLSearchParams(searchParams)
+    if (!next.has('programId')) return
+    next.delete('programId')
+    setSearchParams(next, { replace: true })
+    setSelectedProgramForFullPageModal(null)
+  }, [
+    isCompanySchoolPath,
+    companySchoolProgramIdFromUrl,
+    companySchoolDetailQuery.isError,
+    companySchoolDetailQuery.isFetching,
+    searchParams,
+    setSearchParams,
+  ])
 
   // Phase 0.2.1: 로그인 후 redirect 파라미터 대응 (교육/경제 목록에서는 상세 페이지로 가지 않고 풀페이지 모달만 사용)
   useEffect(() => {
@@ -254,12 +422,83 @@ export function ProgramListPage() {
     setBulkDeleteModalOpen(true)
   }
 
+  const handleCloseCompanySchoolRegistrationFullpage = useCallback(() => {
+    closeWritingUserPreview()
+    const next = new URLSearchParams(searchParams)
+    next.delete(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY)
+    next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
+    next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+    next.delete('userPreview')
+    setSearchParams(next, { replace: true })
+  }, [closeWritingUserPreview, searchParams, setSearchParams])
+
+  const openCompanySchoolRegistration = useCallback(
+    (mode?: 'continue' | 'fresh') => {
+      const next = new URLSearchParams(searchParams)
+      next.set(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY, '1')
+      next.set(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY, 'program')
+      next.delete('programId')
+      next.delete('lnb')
+      next.delete('tab')
+      if (mode === 'fresh') {
+        next.set(REGISTRATION_DRAFT_MODE_QUERY_KEY, REGISTRATION_DRAFT_MODE_FRESH)
+      } else {
+        next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+      }
+      setSearchParams(next, { replace: false })
+    },
+    [searchParams, setSearchParams]
+  )
+
+  const handleCompanySchoolRegistrationSaved = useCallback((program?: Program) => {
+    void companySchoolListQuery.refetch()
+    closeWritingUserPreview()
+    if (!program) {
+      handleCloseCompanySchoolRegistrationFullpage()
+      return
+    }
+    setSelectedProgramForFullPageModal(program)
+    navigate(getProgramAdminDetailUrlFromPathname(program.id, location.pathname), {
+      replace: true,
+    })
+  }, [
+    closeWritingUserPreview,
+    companySchoolListQuery,
+    handleCloseCompanySchoolRegistrationFullpage,
+    location.pathname,
+    navigate,
+  ])
+
   const handleProgramCreateClick = () => {
+    if (programType === 'company_school') {
+      const draft = peekRegistrationDraftNotice(PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE)
+      if (draft != null) {
+        setDraftNoticeTitle(draft.title)
+        setDraftNoticeOpen(true)
+        return
+      }
+      openCompanySchoolRegistration()
+      return
+    }
+
     showAlert({
       title: '안내',
       content: FEATURE_COMING_SOON_ALERT_MESSAGE,
     })
   }
+
+  const handleDraftNoticeConfirm = useCallback(
+    (choice: RegistrationDraftNoticeChoice) => {
+      setDraftNoticeOpen(false)
+      if (choice === 'fresh') {
+        clearRegistrationDraftForFreshStart(PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE)
+        openCompanySchoolRegistration('fresh')
+        return
+      }
+      openCompanySchoolRegistration('continue')
+    },
+    [openCompanySchoolRegistration]
+  )
 
   // 예정 프로그램 필터 해제 시 선택 초기화
   useEffect(() => {
@@ -296,6 +535,13 @@ export function ProgramListPage() {
       setSelectedProgramForFullPageModal(program)
       const nextParams = new URLSearchParams(searchParams)
       nextParams.set('programId', program.id)
+      if (
+        programType === 'company_school' &&
+        (statusFilter === 'in_progress' || statusFilter === 'completed')
+      ) {
+        nextParams.set('lnb', 'applicants')
+        nextParams.set('tab', 'institutions')
+      }
       setSearchParams(nextParams, { replace: false })
       return
     }
@@ -349,16 +595,19 @@ export function ProgramListPage() {
       )}
       <CmsButton
         variant="secondary"
-        width={180}
+        size="large"
         icon={viewMode === 'list' ? <CalendarOutlined /> : <UnorderedListOutlined />}
         onClick={handleViewModeToggle}
       >
         {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
       </CmsButton>
-      <CmsButton width={180} onClick={handleProgramCreateClick}>
-        프로그램 신규 등록
-      </CmsButton>
     </div>
+  )
+
+  const programListToolbarActionsAfterExcel = (
+    <CmsButton variant="primary" size="large" width={180} onClick={handleProgramCreateClick}>
+      프로그램 신규 등록
+    </CmsButton>
   )
 
   return (
@@ -366,6 +615,7 @@ export function ProgramListPage() {
       className={[
         'program-list-page',
         programType === 'company_school' ? 'program-list-page--overview' : '',
+        isScheduledFilter ? 'program-list-page--scheduled-filters' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -376,7 +626,7 @@ export function ProgramListPage() {
       </div>
       <ProgramList
         data={filteredPrograms}
-        loading={loading}
+        loading={isCompanySchoolPath ? companySchoolListQuery.isFetching : loading}
         headerTitle={headerTitle}
         onView={handleView}
         onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
@@ -387,14 +637,56 @@ export function ProgramListPage() {
         tableVariant={programType === 'company_school' ? 'overview' : 'general'}
         config={programListConfig}
         onDisplayCountChange={handleDisplayCountChange}
+        toolbarActionsAfterExcel={programListToolbarActionsAfterExcel}
       >
         {programListToolbarActions}
       </ProgramList>
 
       <ProgramDetailFullPageModal
-        open={!!selectedProgramForFullPageModal}
-        program={selectedProgramForFullPageModal}
+        open={
+          isCompanySchoolPath
+            ? Boolean(companySchoolProgramIdFromUrl) || !!selectedProgramForFullPageModal
+            : !!selectedProgramForFullPageModal
+        }
+        program={companySchoolDetailProgram}
+        programVariant={isCompanySchoolPath ? 'company-school' : undefined}
+        externalLoading={
+          isCompanySchoolPath
+            ? companySchoolDetailQuery.isFetching && !companySchoolDetailProgram
+            : undefined
+        }
+        externalError={
+          isCompanySchoolPath
+            ? companySchoolDetailQuery.isError && !companySchoolDetailProgram
+            : undefined
+        }
         onClose={handleCloseFullPageModal}
+        onUpdateProgram={
+          isCompanySchoolPath
+            ? async (programId, program, patch) => {
+                await updateCompanySchoolMutation.mutateAsync({
+                  programId,
+                  program,
+                  patch,
+                })
+                void companySchoolListQuery.refetch()
+              }
+            : undefined
+        }
+      />
+
+      <GeneralProgramRegistrationFullpageModal
+        open={isCompanySchoolRegistrationOpen}
+        onClose={handleCloseCompanySchoolRegistrationFullpage}
+        onProgramRegistrationSaved={handleCompanySchoolRegistrationSaved}
+        registrationFormVariant="economy"
+      />
+
+      <RegistrationDraftNoticeModal
+        open={draftNoticeOpen}
+        draftTitle={draftNoticeTitle}
+        onConfirm={handleDraftNoticeConfirm}
+        onCancel={() => setDraftNoticeOpen(false)}
       />
 
       <ProgramListModals
@@ -448,17 +740,39 @@ export function ProgramListPage() {
         onCancelInstructorModal={() => setSelectedProgramForInstructorModal(null)}
       />
 
-      <ConfirmModal
+      <DeleteGuideModal
         open={bulkDeleteModalOpen}
         title="선택 삭제"
-        content={`선택한 ${programsPendingBulkDelete.length}건을 삭제하시겠습니까?`}
+        lines={[
+          `선택한 ${programsPendingBulkDelete.length}건의 프로그램을 삭제하시겠습니까?`,
+          '삭제된 프로그램은 복구할 수 없습니다.',
+        ]}
         confirmText="삭제"
-        cancelText="취소"
-        danger
+        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
         onConfirm={() => {
-          handleBulkDelete(programsPendingBulkDelete, () => setSelectedRowKeys([]))
-          setBulkDeleteModalOpen(false)
-          setProgramsPendingBulkDelete([])
+          void (async () => {
+            try {
+              if (isCompanySchoolPath) {
+                for (const program of programsPendingBulkDelete) {
+                  await deleteCompanySchoolMutation.mutateAsync(program.id)
+                }
+                await companySchoolListQuery.refetch()
+                setSelectedRowKeys([])
+              } else {
+                await handleBulkDelete(programsPendingBulkDelete, () =>
+                  setSelectedRowKeys([])
+                )
+              }
+              setBulkDeleteModalOpen(false)
+              setProgramsPendingBulkDelete([])
+            } catch (error) {
+              console.debug('program bulk delete failed', error)
+              showAlert({
+                title: '삭제 실패',
+                content: '선택한 프로그램을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+              })
+            }
+          })()
         }}
         onCancel={() => {
           setBulkDeleteModalOpen(false)
@@ -466,6 +780,14 @@ export function ProgramListPage() {
         }}
       />
     </div>
+  )
+}
+
+export function ProgramListPage() {
+  return (
+    <TemplateWritingPreviewProvider>
+      <ProgramListPageContent />
+    </TemplateWritingPreviewProvider>
   )
 }
 

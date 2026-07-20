@@ -102,9 +102,17 @@
   color: var(--main-BK, #3d3d3d);
 }
 
-.cms-datepicker .ant-picker.cms-datepicker__picker .ant-picker-input > input::placeholder {
+/* placeholder — `cms-input__inner .ant-input::placeholder` 와 동일 (15px·Pretendard) */
+.cms-datepicker .ant-picker.cms-datepicker__picker .ant-picker-input > input::placeholder,
+.cms-datepicker__segment .ant-picker.cms-datepicker__picker .ant-picker-input > input::placeholder {
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 15px;
+  font-style: normal;
   font-weight: 500;
+  line-height: 150%;
 }
 
 .cms-datepicker--disabled .ant-picker.cms-datepicker__picker .ant-picker-input > input,
@@ -122,37 +130,25 @@
   font-size: 14px;
 }
 
-/* 단일: 사이즈별 입력 글자 크기 */
+/* 단일: 사이즈별 입력 값 글자 크기 (placeholder는 위 공통 15px) */
 .cms-datepicker--large:not(.cms-datepicker--range-split)
   .ant-picker.cms-datepicker__picker
   .ant-picker-input
-  > input,
-.cms-datepicker--large:not(.cms-datepicker--range-split)
-  .ant-picker.cms-datepicker__picker
-  .ant-picker-input
-  > input::placeholder {
+  > input {
   font-size: 16px;
 }
 
 .cms-datepicker--medium:not(.cms-datepicker--range-split)
   .ant-picker.cms-datepicker__picker
   .ant-picker-input
-  > input,
-.cms-datepicker--medium:not(.cms-datepicker--range-split)
-  .ant-picker.cms-datepicker__picker
-  .ant-picker-input
-  > input::placeholder {
+  > input {
   font-size: 15px;
 }
 
 .cms-datepicker--small:not(.cms-datepicker--range-split)
   .ant-picker.cms-datepicker__picker
   .ant-picker-input
-  > input,
-.cms-datepicker--small:not(.cms-datepicker--range-split)
-  .ant-picker.cms-datepicker__picker
-  .ant-picker-input
-  > input::placeholder {
+  > input {
   font-size: 14px;
 }
 
@@ -254,11 +250,6 @@
   line-height: 150%;
 }
 
-.cms-datepicker__segment .ant-picker.cms-datepicker__picker .ant-picker-input > input::placeholder {
-  color: var(--gray-85969-d, #85969d);
-  font-weight: 500;
-}
-
 .cms-datepicker__segment--disabled .ant-picker.cms-datepicker__picker .ant-picker-input > input,
 .cms-datepicker__segment--disabled .ant-picker.cms-datepicker__picker .ant-picker-input > input::placeholder {
   color: var(--disabled-txt, rgba(61, 61, 61, 0.5)) !important;
@@ -269,12 +260,7 @@
   .cms-datepicker__segment
   .ant-picker.cms-datepicker__picker
   .ant-picker-input
-  > input,
-.cms-datepicker--range-split.cms-datepicker--large
-  .cms-datepicker__segment
-  .ant-picker.cms-datepicker__picker
-  .ant-picker-input
-  > input::placeholder {
+  > input {
   font-size: 16px;
 }
 
@@ -282,12 +268,7 @@
   .cms-datepicker__segment
   .ant-picker.cms-datepicker__picker
   .ant-picker-input
-  > input,
-.cms-datepicker--range-split.cms-datepicker--medium
-  .cms-datepicker__segment
-  .ant-picker.cms-datepicker__picker
-  .ant-picker-input
-  > input::placeholder {
+  > input {
   font-size: 15px;
 }
 
@@ -295,12 +276,7 @@
   .cms-datepicker__segment
   .ant-picker.cms-datepicker__picker
   .ant-picker-input
-  > input,
-.cms-datepicker--range-split.cms-datepicker--small
-  .cms-datepicker__segment
-  .ant-picker.cms-datepicker__picker
-  .ant-picker-input
-  > input::placeholder {
+  > input {
   font-size: 14px;
 }
 

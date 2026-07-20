@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
 import { UjatInstitutionApplicationRegionTabs } from './region-tabs'
@@ -20,8 +21,9 @@ export function UjatInstitutionApplicationList({
 }: {
   onOpenDetail: (row: UjatInstitutionApplicationRow) => void
 }) {
-  const [activeRegion, setActiveRegion] =
-    useState<UjatInstitutionApplicationRegionKey>('seoul')
+  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
+    getDefaultUjatEducationRegionKey
+  )
   const {
     pendingFilters,
     handleFilterChange,
@@ -36,9 +38,9 @@ export function UjatInstitutionApplicationList({
     handleBulkApplicationReject,
     handleBulkTempReject,
     handleBulkTempAssign,
-    pendingBulkModalAction,
-    closeBulkActionModal,
-    confirmBulkActionModal,
+    pendingApplicationRejectModal,
+    closeApplicationRejectModal,
+    confirmApplicationRejectModal,
     selectedApplications,
     resetRegionState,
   } = useUjatInstitutionApplicationList(activeRegion)
@@ -76,7 +78,8 @@ export function UjatInstitutionApplicationList({
               type="button"
               variant="delete"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkApplicationReject}
             >
               선택 신청 반려
@@ -85,7 +88,8 @@ export function UjatInstitutionApplicationList({
               type="button"
               variant="delete"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkTempReject}
             >
               선택 임시 반려
@@ -94,7 +98,8 @@ export function UjatInstitutionApplicationList({
               type="button"
               variant="secondary"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkTempAssign}
             >
               선택 임시 배정
@@ -124,6 +129,10 @@ export function UjatInstitutionApplicationList({
             )}
           </div>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         {viewMode === 'table' ? (
           <div className="ujat-institution-application-list__table-wrap">
@@ -159,6 +168,7 @@ export function UjatInstitutionApplicationList({
             rows={tableData}
             selectedRowKeys={selectedRowKeys}
             onSelectionChange={setSelectedRowKeys}
+            onOpenDetail={onOpenDetail}
           />
         )}
       </FilterTableLayout>
@@ -166,15 +176,15 @@ export function UjatInstitutionApplicationList({
         <div className="ujat-institution-application-list__page-bottom-spacer" aria-hidden />
       ) : null}
 
-      {pendingBulkModalAction ? (
+      {pendingApplicationRejectModal ? (
         <UjatInstitutionApplicationActionModal
           open
-          action={pendingBulkModalAction}
+          action="application_reject"
           variant={selectedApplications.length === 1 ? 'single' : 'bulk'}
           institutionName={selectedApplications[0]?.institutionName}
           selectionCount={selectedApplications.length}
-          onCancel={closeBulkActionModal}
-          onConfirm={() => confirmBulkActionModal()}
+          onCancel={closeApplicationRejectModal}
+          onConfirm={() => confirmApplicationRejectModal()}
         />
       ) : null}
     </div>

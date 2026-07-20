@@ -1,0 +1,1 @@
+export { RequiredPage } from './page'

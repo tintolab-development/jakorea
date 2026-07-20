@@ -7,6 +7,7 @@ import type { PaymentOrderAdminInstructorDetail } from '@/data/mock/payment-orde
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { formatWon } from './payment-order-detail-fullpage-shared'
 import { renderAggregateStatus } from './payment-order-detail-aggregate-status'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
@@ -115,7 +116,10 @@ export function PaymentOrderInstructorBasicInfo({
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field label="자택 주소" view={addressDisplay} />
-            <DetailInfoForm.Field label="정산 계좌 정보" view={<span>{accountDisplay}</span>} />
+            <DetailInfoForm.Field
+              label="정산 계좌 정보"
+              view={renderDetailInfoPipeSeparated(accountDisplay)}
+            />
           </DetailInfoForm.Row>
         </DetailInfoForm>
 

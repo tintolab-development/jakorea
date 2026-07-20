@@ -5,10 +5,8 @@
 import dayjs from 'dayjs'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 import {
-  formatLectureFeeAmountInput,
   INSTRUCTOR_FEE_APPROVAL_BASIS_OPTIONS,
   LECTURE_FEE_PAYMENT_CRITERIA_OPTIONS,
-  parseLectureFeeAmountDigits,
 } from '@/features/program/general/lib/applicant-instructor-lecture-fee-basis'
 import {
   useInstructorFeeApprovalModal,
@@ -18,7 +16,7 @@ import type { ApplicantInstructorLectureFeeBasisType } from '@/data/mock/applica
 import { DateTimePickerPopover } from '@/shared/components/date-time-picker-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import './instructor-fee-approval-modal.css'
@@ -157,16 +155,14 @@ export function InstructorFeeApprovalModal({
                   getPopupContainer={() => document.body}
                 />
                 <div className="instructor-fee-approval-modal__amount-field">
-                  <CmsInput
+                  <CmsNumericInput
+                    mode="currency"
                     className="instructor-fee-approval-modal__amount-input"
                     inputSize="large"
                     width="100%"
                     placeholder="강사비를 입력해 주세요"
-                    value={formatLectureFeeAmountInput(lectureFeeAmount)}
-                    onChange={e =>
-                      setLectureFeeAmount(parseLectureFeeAmountDigits(e.target.value))
-                    }
-                    inputMode="numeric"
+                    value={lectureFeeAmount}
+                    onValueChange={setLectureFeeAmount}
                   />
                   <span className="instructor-fee-approval-modal__amount-unit">원</span>
                 </div>

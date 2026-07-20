@@ -1,6 +1,6 @@
 import { getUserById, getUsers } from '@/entities/user/api/user-service'
 import { USER_AFFILIATION_PIPE_SEP } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
-import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
+import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
 import type { User } from '@/types/user'
@@ -12,9 +12,7 @@ import type {
 import { UJAT_EDU_PROGRESS_VOLUNTEER_GRADE_OPTIONS } from './types'
 
 function regionLabelForKey(regionKey: UjatInstitutionApplicationRegionKey): string {
-  return (
-    UJAT_INSTITUTION_APPLICATION_REGIONS.find(r => r.key === regionKey)?.label ?? regionKey
-  )
+  return getUjatEducationRegionLabel(regionKey, regionKey)
 }
 
 function parseRegionKeyFromAddress(address: string | undefined): UjatInstitutionApplicationRegionKey {

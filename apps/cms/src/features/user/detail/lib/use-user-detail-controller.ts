@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, type MutableRefObject } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
@@ -20,6 +20,7 @@ import {
 } from './user-detail-fullpage-helpers'
 import { buildUserDetailSidebarItems } from '../ui/detail-info/user-detail-fullpage-sidebar-items'
 import { useUserDetailApplications } from './use-user-detail-applications'
+import { useMemberProgramHistoryQuery } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { useUserDetailUrlSync } from './use-user-detail-url-sync'
 import type { UseUserDetailModalsResult } from './use-user-detail-modals'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
@@ -57,8 +58,13 @@ import {
 } from '@/features/user/detail/ui/user-basic-info-section'
 import { handleError } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { useQueryClient } from '@tanstack/react-query'
+import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
+import {
+  isMembersRemoteEnabled,
+} from '@/features/user/api/member-remote-capabilities'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
 
@@ -79,6 +85,7 @@ export interface UseUserDetailControllerParams {
     patch: PatchUserBasicInfoInput
   ) => Promise<Omit<User, 'password'>>
   onMemberBasicInfoSaved?: (user: Omit<User, 'password'>) => void
+  detailCloseIntentRef?: MutableRefObject<boolean>
 }
 
 export function useUserDetailController({
@@ -91,14 +98,24 @@ export function useUserDetailController({
   modals,
   patchMemberBasicInfo,
   onMemberBasicInfoSaved,
+  detailCloseIntentRef,
 }: UseUserDetailControllerParams) {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const currentUser = useAuthStore(state => state.user)
+  const queryClient = useQueryClient()
 
   const [tabState, setTabState] = useState<TabState>({ lnb: 'detail-info' })
   const { applications, enrollmentApplications, applicationsLoading, refetchApplications } =
     useUserDetailApplications(open, displayUser)
+
+  const membersRemote = isMembersRemoteEnabled()
+  const { data: programHistoryData, isLoading: programHistoryLoading } =
+    useMemberProgramHistoryQuery(
+      displayUser?.memberId,
+      displayUser?.id,
+      open && membersRemote
+    )
 
   const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
   const [volunteerHistoriesLoading, setVolunteerHistoriesLoading] = useState(false)
@@ -120,6 +137,7 @@ export function useUserDetailController({
     setSearchParams,
     setTabState,
     programsChildQueryKey,
+    detailCloseIntentRef,
   })
 
   const resolvePersonalInfoAccessItem = useCallback(
@@ -137,7 +155,11 @@ export function useUserDetailController({
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolvePersonalInfoAccessItem,
-    resetDeps: [open, displayUser?.id],
+    resolveMemberId: () => {
+      if (displayUser?.memberId != null) return String(displayUser.memberId)
+      return displayUser?.id
+    },
+    resetDeps: [open, displayUser?.id, displayUser?.memberId],
     controlMode: 'hideWhenRevealed',
     modalZIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
   })
@@ -163,6 +185,12 @@ export function useUserDetailController({
   }, [displayUser?.id])
 
   useEffect(() => {
+    if (membersRemote) {
+      setVolunteerHistories(programHistoryData?.volunteerHistories ?? [])
+      setVolunteerHistoriesLoading(programHistoryLoading)
+      return
+    }
+
     if (open && displayUser) {
       setVolunteerHistoriesLoading(true)
       try {
@@ -180,7 +208,7 @@ export function useUserDetailController({
     } else {
       setVolunteerHistories([])
     }
-  }, [open, displayUser])
+  }, [open, displayUser, membersRemote, programHistoryData, programHistoryLoading])
 
   const handleProgressStatusChange = useCallback(
     async (app: Application, displayStatus: ProgramEnrollmentDisplayStatus) => {
@@ -387,6 +415,11 @@ export function useUserDetailController({
         patch = draftToBasicInfoPatch(basicInfoDraft)
       }
       const updated = await patchMemberBasicInfo(displayUser.id, patch)
+      if (membersRemote && displayUser.memberId != null) {
+        void queryClient.invalidateQueries({
+          queryKey: [...memberQueryKeys.all, 'comments', displayUser.memberId],
+        })
+      }
       setBasicInfoEditing(false)
       setBasicInfoDraft(null)
       onMemberBasicInfoSaved?.(updated)
@@ -401,6 +434,8 @@ export function useUserDetailController({
     patchMemberBasicInfo,
     onMemberBasicInfoSaved,
     currentUser,
+    membersRemote,
+    queryClient,
   ])
 
   const updateBasicInfoDraft = useCallback((partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => {

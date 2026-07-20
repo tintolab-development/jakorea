@@ -1,4 +1,8 @@
 import { CmsButton } from '@/shared/ui'
+import {
+  PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  resolveProgramEditInfoClick,
+} from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   UJAT_RECRUIT_TAB_KEYS,
@@ -31,11 +35,18 @@ export function UjatProgramRecruitmentTabsRow({
         label: UJAT_RECRUIT_TAB_LABELS[key],
       }))}
       trailing={
-        canEdit || isEditMode ? (
-          <CmsButton onClick={isEditMode ? onSave : onEdit}>
-            {isEditMode ? '정보 저장' : '정보 수정'}
-          </CmsButton>
-        ) : null
+        <CmsButton
+          variant="secondary"
+          size="large"
+          width={140}
+          disabled={!canEdit && !isEditMode}
+          onClick={resolveProgramEditInfoClick(isEditMode, {
+            onEnterEdit: onEdit,
+            onSaveEdit: onSave,
+          })}
+        >
+          {PROGRAM_EDIT_INFO_BUTTON_LABEL}
+        </CmsButton>
       }
     />
   )

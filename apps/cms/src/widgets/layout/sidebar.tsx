@@ -26,8 +26,7 @@ export function Sidebar() {
 
     // ADMIN: 프로그램 관리 그룹 (/programs/education, /programs/:id 등)
     const isGeminiProgramScope =
-      user?.role === 'ADMIN' &&
-      (path === '/education-records' || path.startsWith('/programs/gemini'))
+      user?.role === 'ADMIN' && path.startsWith('/programs/gemini')
     const isProgramMgmt =
       user?.role === 'ADMIN' &&
       ((path.startsWith('/programs') &&
@@ -42,8 +41,8 @@ export function Sidebar() {
       keys.push('gemini-program-group')
     }
 
-    if (user?.role === 'ADMIN' && path.startsWith('/templates')) {
-      keys.push('templates-group')
+    if (user?.role === 'ADMIN' && path.startsWith('/message-management')) {
+      keys.push('message-management-group')
     }
 
     if (
@@ -77,6 +76,10 @@ export function Sidebar() {
 
     if (user?.role === 'ADMIN' && path.startsWith('/logs')) {
       keys.push('logs-group')
+    }
+
+    if (user?.role === 'ADMIN' && path.startsWith('/admin/notifications')) {
+      keys.push('notification-messages-group')
     }
 
     if (path.startsWith('/settlement-management')) {
@@ -116,6 +119,7 @@ export function Sidebar() {
       'volunteer',
       'general',
       'company-school',
+      'trained-teachers',
       'ujat',
       'gemini',
       'education',

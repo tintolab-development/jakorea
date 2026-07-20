@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
+import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import {
   applyInfoEditDraft,
   detailToInfoEditDraft,
@@ -8,6 +9,8 @@ import {
 } from '../model/recruitment/info-edit-draft'
 import type { GeminiRecruitmentDetail } from '../model/recruitment/detail-types'
 import { getRecruitmentDetailById, patchRecruitmentDetail } from '../model/recruitment/detail-mock'
+import { shouldUseGeminiVisitingTrainingRemoteApi } from '../api/visiting-training/capabilities'
+import { useGeminiRecruitmentDetailQuery } from '../api/visiting-training/hooks'
 import {
   GEMINI_RECRUITMENT_EDIT_INFO_VALUE,
   GEMINI_RECRUITMENT_EDIT_PARAM,
@@ -24,11 +27,23 @@ export function useGeminiRecruitmentInfoEdit(
   const activeLnb = parseGeminiRecruitmentDetailLnb(searchParams.get(GEMINI_RECRUITMENT_LNB_PARAM))
   const editTab = searchParams.get(GEMINI_RECRUITMENT_EDIT_PARAM)
   const [detailVersion, setDetailVersion] = useState(0)
+  const remoteEnabled = shouldUseGeminiVisitingTrainingRemoteApi()
+  const remoteDetailQuery = useGeminiRecruitmentDetailQuery(
+    recruitmentId ?? undefined,
+    remoteEnabled && Boolean(recruitmentId)
+  )
 
   const detail = useMemo(() => {
     if (!recruitmentId) return null
+    if (remoteEnabled) return remoteDetailQuery.data ?? null
     return getRecruitmentDetailById(recruitmentId, dayjs(todayKey))
-  }, [recruitmentId, todayKey, detailVersion])
+  }, [
+    recruitmentId,
+    todayKey,
+    detailVersion,
+    remoteEnabled,
+    remoteDetailQuery.data,
+  ])
 
   const isEditMode =
     Boolean(recruitmentId) &&
@@ -54,6 +69,20 @@ export function useGeminiRecruitmentInfoEdit(
     resetDraftFromDetail()
   }, [isEditMode, resetDraftFromDetail])
 
+  const additionalContentSource =
+    isEditMode && draft != null
+      ? draft.additionalContentMarkdown
+      : detail?.additionalContentMarkdown ?? ''
+
+  const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
+    isEditMode && detail != null,
+    additionalContentSource,
+    `gemini-recruitment-info-edit-${recruitmentId ?? 'none'}-${isEditMode ? 'edit' : 'view'}`,
+    {
+      placeholder: '내용을 작성하세요',
+    }
+  )
+
   const setEditMode = useCallback(
     (enabled: boolean) => {
       setSearchParams(
@@ -77,25 +106,27 @@ export function useGeminiRecruitmentInfoEdit(
 
   const handleEdit = useCallback(() => {
     if (detail == null) return
+    if (remoteEnabled) return
     resetDraftFromDetail()
     setEditMode(true)
-  }, [detail, resetDraftFromDetail, setEditMode])
+  }, [detail, remoteEnabled, resetDraftFromDetail, setEditMode])
 
   const handleSave = useCallback(() => {
     if (detail == null || draft == null) return
-    const nextDetail = applyInfoEditDraft(detail, draft)
+    if (remoteEnabled) return
+    const nextDraft: GeminiRecruitmentInfoEditDraft = {
+      ...draft,
+      additionalContentMarkdown: getMarkdown() || draft.additionalContentMarkdown,
+    }
+    const nextDetail = applyInfoEditDraft(detail, nextDraft)
     patchRecruitmentDetail(detail.id, {
+      ...nextDraft,
       title: nextDetail.title,
-      applicationPeriodStart: nextDetail.applicationPeriodStart,
-      applicationPeriodEnd: nextDetail.applicationPeriodEnd,
-      trainingRequestPeriodStart: nextDetail.trainingRequestPeriodStart,
-      trainingRequestPeriodEnd: nextDetail.trainingRequestPeriodEnd,
-      minStudentCount: nextDetail.minStudentCount,
       updatedAt: nextDetail.updatedAt,
     })
     setEditMode(false)
     setDetailVersion(v => v + 1)
-  }, [detail, draft, setEditMode])
+  }, [detail, draft, getMarkdown, remoteEnabled, setEditMode])
 
   const patchDraft = useCallback((patch: Partial<GeminiRecruitmentInfoEditDraft>) => {
     setDraft(prev => (prev == null ? prev : { ...prev, ...patch }))
@@ -115,5 +146,10 @@ export function useGeminiRecruitmentInfoEdit(
     patchDraft,
     handleEdit,
     handleSave,
+    editor,
+    editorMinHeight,
+    remoteEnabled,
+    isDetailFetching: remoteEnabled ? remoteDetailQuery.isFetching : false,
+    isDetailError: remoteEnabled ? remoteDetailQuery.isError : false,
   }
 }

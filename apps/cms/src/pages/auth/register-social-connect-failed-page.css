@@ -1,0 +1,79 @@
+/**
+ * 회원가입 후 소셜 계정 연결 실패 페이지 스타일
+ * auth-shell은 AuthPageShell에서 로드
+ */
+
+@import './register-complete-page.css';
+
+.auth-card.auth-card--register-social-connect-failed {
+  height: auto;
+  min-height: 580px;
+  padding: 60px 0;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.register-social-connect-failed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  width: 100%;
+  padding: 0 72px;
+  box-sizing: border-box;
+}
+
+.register-social-connect-failed__icon {
+  width: 70px;
+  height: 70px;
+  flex-shrink: 0;
+  display: block;
+  margin-top: 40px;
+}
+
+.register-social-connect-failed__title {
+  margin: 40px 0 0;
+  color: var(--Color-netural-black, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 144%;
+  letter-spacing: -0.6px;
+}
+
+.register-social-connect-failed__description {
+  margin: 12px 0 0;
+  color: var(--Color-netural-cool-500, #85969d);
+  text-align: center;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+}
+
+.register-social-connect-failed__actions {
+  margin-top: 40px;
+  width: 100%;
+}
+
+.register-social-connect-failed__actions .auth-submit-btn,
+.register-social-connect-failed__actions .auth-secondary-btn {
+  display: flex;
+  height: 52px;
+  padding: 6px 16px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  align-self: stretch;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .register-social-connect-failed {
+    padding: 0 24px;
+  }
+}

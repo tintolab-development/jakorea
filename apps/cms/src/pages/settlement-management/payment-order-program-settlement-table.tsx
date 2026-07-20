@@ -7,8 +7,8 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Dayjs } from 'dayjs'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
-import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
 import {
   StatusDropdownCell,
@@ -243,84 +243,73 @@ export function PaymentOrderProgramSettlementTable({
         selectedCount={selectedRowKeys.length}
         onConfirm={handleBatchConfirm}
       />
-      <div className="payment-order-program-status-detail__filters">
-        <UnifiedFilterCard
-          bordered={false}
-          cardStyle={{ marginBottom: 0 }}
-          fields={[
-            {
-              key: 'instructorName',
-              type: 'search',
-              label: '강사명',
-              placeholder: '강사명을 입력하세요',
-              flex: '1 1 0',
-            },
-            {
-              key: 'institutionName',
-              type: 'search',
-              label: '참여 기관명',
-              placeholder: '기관명을 입력하세요',
-              flex: '1 1 0',
-            },
-            {
-              key: 'status',
-              type: 'select',
-              label: '지급조서 처리 현황',
-              placeholder: '전체',
-              options: lineStatusSelectOptions.filter(o => o.value !== 'all'),
-              allowClear: true,
-              flex: '1 1 0',
-            },
-            {
-              key: 'dateRange',
-              type: 'dateRange',
-              label: '기간',
-              flex: '1 1 0',
-            },
-          ]}
-          filters={{
-            instructorName: draftInstructorName,
-            institutionName: draftInstitutionName,
-            status: draftStatus === 'all' ? undefined : draftStatus,
-            dateRange: draftDateRange,
-          }}
-          onFilterChange={(key, value) => {
-            if (key === 'instructorName') {
-              setDraftInstructorName(value as string)
-              return
-            }
-            if (key === 'institutionName') {
-              setDraftInstitutionName(value as string)
-              return
-            }
-            if (key === 'status') {
-              setDraftStatus((value == null || value === '' ? 'all' : value) as AppliedLineStatus)
-              return
-            }
-            if (key === 'dateRange') {
-              setDraftDateRange(value as [Dayjs, Dayjs] | null)
-            }
-          }}
-          onSearch={handleSearch}
-        />
-      </div>
-
-      <div className="participating-institutions-section__divider payment-order-program-status-detail__section-divider" />
-
-      <div className="payment-order-program-status-detail__below-divider participating-institutions-section__below-divider">
-        <div className="table-header-actions">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">
-              강사 별 정산 목록
-            </span>
-            <span className="table-description">
-              총 {filteredRows.length}건
-            </span>
-          </div>
-          <div className="info-section-buttons--wrapper">
+      <FilterTableLayout
+        className="payment-order-program-status-detail__filters"
+        bordered={false}
+        hideExcelDownload
+        fields={[
+          {
+            key: 'instructorName',
+            type: 'search',
+            label: '강사명',
+            placeholder: '강사명을 입력하세요',
+            flex: '1 1 0',
+          },
+          {
+            key: 'institutionName',
+            type: 'search',
+            label: '참여 기관명',
+            placeholder: '기관명을 입력하세요',
+            flex: '1 1 0',
+          },
+          {
+            key: 'status',
+            type: 'select',
+            label: '지급조서 처리 현황',
+            placeholder: '전체',
+            options: lineStatusSelectOptions.filter(o => o.value !== 'all'),
+            allowClear: true,
+            flex: '1 1 0',
+          },
+          {
+            key: 'dateRange',
+            type: 'dateRange',
+            label: '기간',
+            flex: '1 1 0',
+          },
+        ]}
+        filters={{
+          instructorName: draftInstructorName,
+          institutionName: draftInstitutionName,
+          status: draftStatus === 'all' ? undefined : draftStatus,
+          dateRange: draftDateRange,
+        }}
+        onFilterChange={(key, value) => {
+          if (key === 'instructorName') {
+            setDraftInstructorName(value as string)
+            return
+          }
+          if (key === 'institutionName') {
+            setDraftInstitutionName(value as string)
+            return
+          }
+          if (key === 'status') {
+            setDraftStatus((value == null || value === '' ? 'all' : value) as AppliedLineStatus)
+            return
+          }
+          if (key === 'dateRange') {
+            setDraftDateRange(value as [Dayjs, Dayjs] | null)
+          }
+        }}
+        onSearch={handleSearch}
+        title="강사 별 정산 목록"
+        description={`총 ${filteredRows.length}건`}
+        actions={
+          <>
             <CmsButton
               variant="secondary"
-              size="large" style={{ minWidth: 180 }}
+              size="large"
+              style={{ minWidth: 180 }}
               disabled={selectedRowKeys.length === 0}
               onClick={() => {
                 if (selectedRowKeys.length === 0) return
@@ -331,15 +320,16 @@ export function PaymentOrderProgramSettlementTable({
             </CmsButton>
             <CmsButton
               variant="primary"
-              size="large" style={{ minWidth: 180 }}
+              size="large"
+              style={{ minWidth: 180 }}
               icon={<DownloadOutlined />}
               onClick={() => {}}
             >
               지급조서 발급
             </CmsButton>
-          </div>
-        </div>
-
+          </>
+        }
+      >
         <div className="payment-order-program-status-detail__table-wrap participating-institutions-section__table-wrap">
           <Table<PaymentOrderAdminProgramDetailInstructorRow>
             className="cms-data-table cms-data-table--fluid"
@@ -353,7 +343,7 @@ export function PaymentOrderProgramSettlementTable({
             }}
           />
         </div>
-      </div>
+      </FilterTableLayout>
     </>
   )
 }

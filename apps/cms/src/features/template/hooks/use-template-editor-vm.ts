@@ -23,6 +23,8 @@ export type TemplateEditorVmInput = {
   templateId: string | undefined
   templateName: string | undefined
   registryEntry: TemplateRegistryDefinition | undefined
+  /** 템플릿 draft 저장 확인 후 편집 모달 닫기 */
+  onTemplateDraftSaveConfirmed?: () => void
 }
 
 export function useTemplateEditorVm({
@@ -30,6 +32,7 @@ export function useTemplateEditorVm({
   templateId,
   templateName,
   registryEntry,
+  onTemplateDraftSaveConfirmed,
 }: TemplateEditorVmInput) {
   const entry = registryEntry ?? lookupTemplateRegistry(templateId)
 
@@ -48,12 +51,16 @@ export function useTemplateEditorVm({
     {
       restrictCurriculumSessionStructure: true,
       programRegistrationFormVariant: entry?.registrationFormVariant ?? 'general',
+      templateCode:
+        entry?.registrationEditor === 'general' ? (entry.id ?? templateId) : undefined,
+      onTemplateDraftSaveConfirmed,
     }
   )
 
   const ujatProgramRegistrationVm = useUjatProgramRegistrationEditor(
     isUjatProgramRegistration,
-    registrationPreviewTitle
+    registrationPreviewTitle,
+    { onTemplateDraftSaveConfirmed }
   )
 
   const participantPreviewTitle = resolvePreviewHeaderTitle(entry, templateName)
@@ -62,7 +69,11 @@ export function useTemplateEditorVm({
   const programParticipantApplicationVm = useProgramParticipantApplicationEditor(
     isParticipantApplication,
     participantPreviewTitle,
-    participantVariant
+    participantVariant,
+    {
+      onTemplateDraftSaveConfirmed,
+      templateCode: isParticipantApplication ? (entry?.id ?? templateId) : undefined,
+    }
   )
 
   const getSurveyListInitialDraft = useCallback((): WritingFormDraft => {
@@ -87,7 +98,8 @@ export function useTemplateEditorVm({
     getDefaultActiveParagraphId: getSurveyListDefaultParagraphId,
     previewHeaderTitle: resolvePreviewHeaderTitle(entry, templateName),
     editorKind: 'survey',
-    onSave: () => {},
+    templateCode: isWritingSurveyList ? (entry?.id ?? templateId) : undefined,
+    onTemplateDraftSaveConfirmed,
   })
 
   const surveyTableRowSelection = useTableRowSelectionState({
@@ -118,12 +130,30 @@ export function useTemplateEditorVm({
     ujatProgramRegistrationVm.handleSave,
   ])
 
+  const isDraftLoading = useMemo(() => {
+    if (isProgramRegistration) return programRegistrationVm.isDraftLoading
+    if (isUjatProgramRegistration) return ujatProgramRegistrationVm.isDraftLoading
+    if (isParticipantApplication) return programParticipantApplicationVm.isDraftLoading
+    if (isWritingSurveyList) return surveyListEditor.isDraftLoading
+    return false
+  }, [
+    isParticipantApplication,
+    isProgramRegistration,
+    isUjatProgramRegistration,
+    isWritingSurveyList,
+    programParticipantApplicationVm.isDraftLoading,
+    programRegistrationVm.isDraftLoading,
+    surveyListEditor.isDraftLoading,
+    ujatProgramRegistrationVm.isDraftLoading,
+  ])
+
   return {
     registryEntry: entry,
     isProgramRegistration,
     isUjatProgramRegistration,
     isParticipantApplication,
     isWritingSurveyList,
+    isDraftLoading,
     programRegistrationVm,
     ujatProgramRegistrationVm,
     programParticipantApplicationVm,

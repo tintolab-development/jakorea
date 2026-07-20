@@ -1,49 +1,64 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Form, Space } from 'antd'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
-import { mockSchools } from '@/data/mock/schools'
+import { individualAffiliationGradeSelectOptions } from '@/features/user/detail/ui/user-basic-info/sections/constants'
 import {
   AddressSearch,
   CmsButton,
   CmsInput,
-  CmsInputSearch,
   CmsRadioGroup,
-  CmsSelect } from '@/shared/ui'
+  CmsSelect,
+  SchoolSearch,
+} from '@/shared/ui'
+import { CmsDateTextInput, isValidBirthDateFormValue, birthDateFormValueToApi, isBirthDateInputIncomplete } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import './add-user-individual.css'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
-
-/** 신규 등록 소속 검색용 — `mockSchools` 학교명 (추후 API 연동 시 제거) */
-function buildAffiliationSchoolOptions(): readonly string[] {
-  const names = mockSchools.map(s => s.name.trim()).filter(Boolean)
-  return [...new Set(names)].sort((a, b) => a.localeCompare(b, 'ko'))
-}
+import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import type { MemberConsentFieldKey } from '@/features/user/shared/lib/member-consent-template-map'
+import {
+  isAgreementMemberConsentField,
+  isMemberCrimeConsentField,
+  resolveMemberConsentTemplateEntry,
+} from '@/features/user/shared/lib/member-consent-template-map'
+import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
+import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
+import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
+import './add-user-individual.css'
 
 type ConsentValue = 'agree' | 'disagree'
+type GenderValue = 'male' | 'female'
+type SchoolEnrollmentStatus = 'enrolled' | 'not_enrolled'
 
 interface AddUserIndividualFormValues {
   name: string
-  englishName: string
-  residentRegistrationFirst?: string
-  residentRegistrationLast?: string
-  affiliation?: string
-  contact?: string
+  gender: GenderValue
+  birthDate: string
+  schoolEnrollmentStatus: SchoolEnrollmentStatus
+  schoolName: string
+  grade: string
+  affiliationOrganization: string
+  contact: string
   email: string
-  memberType: 'individual'
-  volunteerId?: string
   address: string
-  detailAddress?: string
-  oneLineIntro?: string
+  detailAddress: string
+  volunteerId: string
+  consentTermsOfService: ConsentValue
   consentPersonalInfo: ConsentValue
   consentMarketing: ConsentValue
   consentPortrait: ConsentValue
   consentWithholdingTax: ConsentValue
+  consentFacilitatorPledge: ConsentValue
+  consentAdministrativeJoint: ConsentValue
+  consentSexOffenseCheck: ConsentValue
 }
 
 interface AddUserIndividualProps {
   onSubmit: (request: CreateUserRequest) => Promise<void>
   onCancel: () => void
   loading?: boolean
+  formId?: string
+  hideActions?: boolean
 }
 
 const CONSENT_RADIO_OPTIONS = [
@@ -51,172 +66,335 @@ const CONSENT_RADIO_OPTIONS = [
   { label: '미동의', value: 'disagree' },
 ]
 
+const TERMS_CONSENT_DESCRIPTION =
+  '*미동의 시 서비스 가입 및 프로그램 참여에 제한이 있을 수 있습니다.'
+
+const TERMS_CONSENT_LABEL_WIDTH = 220 as const
+
+function ConsentDocumentFieldEdit({
+  value,
+  onWrite,
+}: {
+  value: ConsentValue
+  onWrite: () => void
+}) {
+  return (
+    <span className="add-user-individual__consent-document">
+      <span className="add-user-individual__consent-status">
+        {value === 'agree' ? '동의' : '미동의'}
+      </span>
+      <span className="add-user-individual__consent-sep" aria-hidden>
+        |
+      </span>
+      <CmsButton variant="secondary" size="medium" type="button" onClick={onWrite}>
+        동의서 작성
+      </CmsButton>
+    </span>
+  )
+}
+
+const GENDER_OPTIONS = [
+  { label: '남', value: 'male' },
+  { label: '여', value: 'female' },
+]
+
+const SCHOOL_ENROLLMENT_OPTIONS = [
+  { label: '재학 중', value: 'enrolled' },
+  { label: '해당 없음', value: 'not_enrolled' },
+]
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const FORM_ITEM_STYLE = { marginBottom: 0, width: '100%' } as const
+
 const INITIAL_VALUES: AddUserIndividualFormValues = {
   name: '',
-  englishName: '',
-  residentRegistrationFirst: '',
-  residentRegistrationLast: '',
-  affiliation: '',
+  gender: 'male',
+  birthDate: '',
+  schoolEnrollmentStatus: 'enrolled',
+  schoolName: '',
+  grade: '',
+  affiliationOrganization: '',
   contact: '',
   email: '',
-  memberType: 'individual',
-  volunteerId: '',
   address: '',
   detailAddress: '',
-  oneLineIntro: '',
+  volunteerId: '',
+  consentTermsOfService: 'agree',
   consentPersonalInfo: 'agree',
-  consentMarketing: 'agree',
-  consentPortrait: 'agree',
-  consentWithholdingTax: 'agree' }
+  consentMarketing: 'disagree',
+  consentPortrait: 'disagree',
+  consentWithholdingTax: 'disagree',
+  consentFacilitatorPledge: 'disagree',
+  consentAdministrativeJoint: 'disagree',
+  consentSexOffenseCheck: 'disagree',
+}
 
-export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUserIndividualProps) {
-  const affiliationSchoolOptions = useMemo(() => buildAffiliationSchoolOptions(), [])
+function collectMemberRegisterValidationMessages(
+  values: AddUserIndividualFormValues
+): string[] {
+  const messages: string[] = []
+
+  if (!values.name?.trim()) {
+    messages.push('성명을 입력해 주세요.')
+  }
+
+  const birthDate = values.birthDate?.trim()
+  if (!birthDate || isBirthDateInputIncomplete(birthDate)) {
+    messages.push('생년월일을 입력해 주세요.')
+  } else if (!isValidBirthDateFormValue(birthDate)) {
+    messages.push('올바른 생년월일을 입력해 주세요.')
+  }
+
+  if (values.schoolEnrollmentStatus === 'enrolled') {
+    if (!values.schoolName?.trim()) {
+      messages.push('소속 학교명을 입력해 주세요.')
+    }
+    if (!values.grade?.trim()) {
+      messages.push('학년을 선택해 주세요.')
+    }
+  }
+
+  const contact = values.contact?.trim()
+  if (!contact) {
+    messages.push('연락처를 입력해 주세요.')
+  } else if (!KOREAN_PHONE_REGEX.test(contact)) {
+    messages.push('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')
+  }
+
+  const email = values.email?.trim()
+  if (!email) {
+    messages.push('이메일을 입력해 주세요.')
+  } else if (!EMAIL_PATTERN.test(email)) {
+    messages.push('올바른 이메일 형식이 아닙니다')
+  }
+
+  if (!values.address?.trim()) {
+    messages.push('주소를 검색해 주세요.')
+  }
+
+  if (values.consentTermsOfService !== 'agree') {
+    messages.push('서비스 이용약관에 동의해 주세요.')
+  }
+  if (values.consentPersonalInfo !== 'agree') {
+    messages.push('개인정보 수집·이용에 동의해 주세요.')
+  }
+
+  return messages
+}
+
+const MEMBER_REGISTER_MULTIPLE_VALIDATION_THRESHOLD = 2
+const MEMBER_REGISTER_MULTIPLE_VALIDATION_MESSAGE = '필수 항목을 모두 입력해 주세요.'
+
+export function AddUserIndividual({
+  onSubmit,
+  onCancel,
+  loading = false,
+  formId,
+  hideActions = false,
+}: AddUserIndividualProps) {
+  const { showAlert } = useCmsAlert()
   const [form] = Form.useForm<AddUserIndividualFormValues>()
+  const [activeConsentField, setActiveConsentField] = useState<MemberConsentFieldKey | null>(null)
   const allValues = Form.useWatch([], form) as AddUserIndividualFormValues | undefined
   const address = Form.useWatch('address', form) ?? ''
-  const consentPortrait = Form.useWatch('consentPortrait', form)
-  const consentWithholdingTax = Form.useWatch('consentWithholdingTax', form)
-  const canSubmit =
-    Boolean(allValues?.name?.trim()) &&
-    Boolean(allValues?.englishName?.trim()) &&
-    Boolean(allValues?.residentRegistrationFirst?.trim()) &&
-    Boolean(allValues?.residentRegistrationLast?.trim()) &&
-    Boolean(allValues?.contact?.trim()) &&
-    Boolean(allValues?.email?.trim()) &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(allValues?.email?.trim() ?? '')
+  const schoolName = Form.useWatch('schoolName', form) ?? ''
+  const memberName = Form.useWatch('name', form) ?? ''
+  const memberGrade = Form.useWatch('grade', form) ?? ''
+  const affiliationOrganization = Form.useWatch('affiliationOrganization', form) ?? ''
+  const schoolEnrollmentStatus =
+    Form.useWatch('schoolEnrollmentStatus', form) ?? INITIAL_VALUES.schoolEnrollmentStatus
+  const isEnrolled = schoolEnrollmentStatus === 'enrolled'
+
+  const memberConsentContext = useMemo((): MemberConsentMemberContext => {
+    return {
+      name: memberName,
+      schoolEnrollmentStatus,
+      schoolName,
+      grade: memberGrade,
+      affiliationOrganization,
+    }
+  }, [affiliationOrganization, memberGrade, memberName, schoolEnrollmentStatus, schoolName])
+
+  const activeConsentEntry =
+    activeConsentField != null ? resolveMemberConsentTemplateEntry(activeConsentField) : null
+
+  const handleConsentWrite = (fieldKey: MemberConsentFieldKey) => {
+    setActiveConsentField(fieldKey)
+  }
+
+  const handleConsentModalClose = () => {
+    setActiveConsentField(null)
+  }
+
+  const handleConsentComplete = (fieldKey: MemberConsentFieldKey) => {
+    form.setFieldValue(fieldKey, 'agree')
+    setActiveConsentField(null)
+  }
 
   const handleFinish = async (values: AddUserIndividualFormValues) => {
+    const enrolled = values.schoolEnrollmentStatus === 'enrolled'
+    const affiliation = enrolled
+      ? values.schoolName.trim()
+      : values.affiliationOrganization.trim() || undefined
+
     const request: CreateUserRequest = {
       email: values.email.trim(),
       password: 'Temp1234!',
       name: values.name.trim(),
-      phone: values.contact?.trim() || undefined,
+      phone: values.contact.trim(),
+      gender: values.gender === 'male' ? '남성' : '여성',
+      birthDate: birthDateFormValueToApi(values.birthDate),
       role: 'INDIVIDUAL',
-      isActive: true }
+      isActive: true,
+      id1365: values.volunteerId.trim() || undefined,
+      address: values.address.trim(),
+      detailAddress: values.detailAddress.trim() || undefined,
+      schoolEnrollmentStatus: enrolled ? 'ENROLLED' : 'NOT_ENROLLED',
+      affiliation,
+      grade: enrolled ? values.grade.trim() : undefined,
+    }
     await onSubmit(request)
     form.resetFields()
+    setActiveConsentField(null)
   }
 
-  const handleConsentDraft = () => {
-    window.alert('준비 중입니다')
+  const handleSubmitAttempt = (values: AddUserIndividualFormValues) => {
+    const messages = collectMemberRegisterValidationMessages(values)
+    if (messages.length > 0) {
+      showAlert({
+        title: '안내',
+        content:
+          messages.length >= MEMBER_REGISTER_MULTIPLE_VALIDATION_THRESHOLD
+            ? MEMBER_REGISTER_MULTIPLE_VALIDATION_MESSAGE
+            : messages[0],
+      })
+      return
+    }
+    void handleFinish(values)
   }
+
+  useEffect(() => {
+    if (schoolEnrollmentStatus === 'not_enrolled') {
+      form.setFieldsValue({ schoolName: '', grade: '' })
+      return
+    }
+    form.setFieldsValue({ affiliationOrganization: '' })
+  }, [form, schoolEnrollmentStatus])
 
   return (
+    <>
     <Form
+      id={formId}
       form={form}
       layout="vertical"
       initialValues={INITIAL_VALUES}
-      onFinish={values => void handleFinish(values)}
+      requiredMark={false}
+      onFinish={handleSubmitAttempt}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-        <DetailInfoForm title="기본 정보" mode="edit">
+      <div className="add-user-individual__sections">
+        <DetailInfoForm
+          title="기본 정보"
+          mode="edit"
+          className="add-user-individual__section add-user-individual__section--basic"
+        >
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
-              label="한글 성명"
+              label="성명"
               required
+              labelWidth={200}
               view="-"
               edit={
-                <Form.Item
-                  name="name"
-                  noStyle
-                  rules={[{ required: true }]}
-                >
-                  <CmsInput placeholder="한글 성명" inputSize="medium" width="100%" />
+                <Form.Item name="name" style={FORM_ITEM_STYLE}>
+                  <CmsInput placeholder="성명" inputSize="medium" width="100%" />
                 </Form.Item>
               }
             />
             <DetailInfoForm.Field
-              label="영문 성명"
+              label="성별 및 생년월일"
               required
+              labelWidth={200}
               view="-"
               edit={
-                <Form.Item
-                  name="englishName"
-                  noStyle
-                  rules={[{ required: true }]}
-                >
-                  <CmsInput placeholder="영문 성명" inputSize="medium" width="100%" />
-                </Form.Item>
+                <span className="detail-info-form-inputs-wrapper-no-gap">
+                  <Form.Item name="gender" noStyle>
+                    <CmsRadioGroup options={GENDER_OPTIONS} size="large" />
+                  </Form.Item>
+                  <DetailInfoForm.InputsSeparator />
+                  <Form.Item
+                    name="birthDate"
+                    style={{ ...FORM_ITEM_STYLE, flex: '1 1 0', minWidth: 0 }}
+                    trigger="onValueChange"
+                  >
+                    <CmsDateTextInput
+                      placeholder="YYYY.MM.DD"
+                      maxLength={10}
+                      inputSize="medium"
+                      width="100%"
+                    />
+                  </Form.Item>
+                </span>
               }
             />
           </DetailInfoForm.Row>
+
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
-              label="주민등록 번호"
+              label="현재 학교 재학 여부"
               required
+              labelWidth={200}
               view="-"
               edit={
-                <Space.Compact style={{ width: '100%', alignItems: 'center' }}>
-                  <Form.Item
-                    name="residentRegistrationFirst"
-                    noStyle
-                    rules={[{ required: true }]}
-                  >
-                    <CmsInput
-                      placeholder="주민등록 앞 6자리"
-                      maxLength={6}
-                      inputSize="medium"
-                      width="100%"
-                    />
-                  </Form.Item>
-                  <div style={{ margin: '0 8px', height: '100%' }}>-</div>
-                  <Form.Item
-                    name="residentRegistrationLast"
-                    noStyle
-                    rules={[{ required: true }]}
-                  >
-                    <CmsInput
-                      placeholder="주민등록 뒤 7자리"
-                      maxLength={7}
-                      inputSize="medium"
-                      width="100%"
-                    />
-                  </Form.Item>
-                </Space.Compact>
+                <Form.Item name="schoolEnrollmentStatus" noStyle>
+                  <CmsRadioGroup options={SCHOOL_ENROLLMENT_OPTIONS} size="large" />
+                </Form.Item>
               }
             />
             <DetailInfoForm.Field
               label="소속"
+              required={isEnrolled}
+              labelWidth={200}
               view="-"
               edit={
-                <div className="detail-info-form-inputs-wrapper-no-gap">
-                  <Form.Item name="affiliation" noStyle>
-                    <CmsInputSearch
-                      options={affiliationSchoolOptions}
-                      placeholder="학교명"
-                      inputSize="medium"
-                      width={FORM_INPUTS_2_WIDTHS[0]}
-                    />
+                isEnrolled ? (
+                  <div className="detail-info-form-inputs-wrapper-no-gap">
+                    <Form.Item name="schoolName" noStyle>
+                      <SchoolSearch
+                        value={schoolName}
+                        onChange={nextSchoolName =>
+                          form.setFieldValue('schoolName', nextSchoolName)
+                        }
+                        placeholder="소속 학교명"
+                        inputSize="medium"
+                        width={FORM_INPUTS_2_WIDTHS[0]}
+                      />
+                    </Form.Item>
+                    <DetailInfoForm.InputsSeparator />
+                    <Form.Item name="grade" noStyle>
+                      <CmsSelect
+                        placeholder="학년"
+                        inputSize="medium"
+                        width={FORM_INPUTS_2_WIDTHS[1]}
+                        options={individualAffiliationGradeSelectOptions(allValues?.grade)}
+                      />
+                    </Form.Item>
+                  </div>
+                ) : (
+                  <Form.Item name="affiliationOrganization" noStyle>
+                    <CmsInput placeholder="소속 기관" inputSize="medium" width="100%" />
                   </Form.Item>
-                  <DetailInfoForm.InputsSeparator />
-                  <CmsSelect
-                    placeholder="학년"
-                    inputSize="medium"
-                    width={FORM_INPUTS_2_WIDTHS[1]}
-                    options={[
-                      { label: '1학년', value: '1학년' },
-                      { label: '2학년', value: '2학년' },
-                      { label: '3학년', value: '3학년' },
-                      { label: '4학년', value: '4학년' },
-                      { label: '5학년', value: '5학년' },
-                      { label: '6학년', value: '6학년' },
-                    ]}
-                  />
-                </div>
+                )
               }
             />
           </DetailInfoForm.Row>
+
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="연락처"
               required
+              labelWidth={200}
               view="-"
               edit={
-                <Form.Item
-                  name="contact"
-                  noStyle
-                  rules={[{ required: true }]}
-                >
+                <Form.Item name="contact" style={FORM_ITEM_STYLE}>
                   <CmsInput placeholder="연락처" inputSize="medium" width="100%" />
                 </Form.Item>
               }
@@ -224,44 +402,26 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
             <DetailInfoForm.Field
               label="이메일"
               required
+              labelWidth={200}
               view="-"
               edit={
-                <Form.Item
-                  name="email"
-                  noStyle
-                  rules={[
-                    { required: true },
-                    { type: 'email' },
-                  ]}
-                >
+                <Form.Item name="email" style={FORM_ITEM_STYLE}>
                   <CmsInput placeholder="이메일" inputSize="medium" width="100%" />
                 </Form.Item>
               }
             />
           </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="1365 ID"
-              fullRow
-              view="-"
-              edit={
-                <Form.Item name="volunteerId" noStyle>
-                  <CmsInput placeholder="1365 ID" inputSize="medium" width="100%" />
-                </Form.Item>
-              }
-            />
-          </DetailInfoForm.Row>
+
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="자택 주소지"
+              required
               fullRow
+              labelWidth={200}
               view="-"
               edit={
                 <Space.Compact style={{ width: '100%' }}>
-                  <Form.Item
-                    name="address"
-                    noStyle
-                  >
+                  <Form.Item name="address" noStyle>
                     <AddressSearch
                       value={address}
                       onChange={nextAddress => form.setFieldValue('address', nextAddress)}
@@ -276,14 +436,16 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
               }
             />
           </DetailInfoForm.Row>
+
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
-              label="한 줄 소개"
+              label="1365 ID"
               fullRow
+              labelWidth={200}
               view="-"
               edit={
-                <Form.Item name="oneLineIntro" noStyle>
-                  <CmsInput placeholder="자유롭게 작성해주세요" inputSize="medium" width="100%" />
+                <Form.Item name="volunteerId" noStyle>
+                  <CmsInput placeholder="1365 ID" inputSize="medium" width={200} />
                 </Form.Item>
               }
             />
@@ -291,103 +453,184 @@ export function AddUserIndividual({ onSubmit, onCancel, loading = false }: AddUs
         </DetailInfoForm>
 
         <DetailInfoForm
-          title="정보 제공 동의"
+          title="약관 및 동의"
           mode="edit"
-          description="*미동의 시 프로그램 신청 및 활동에 제한이 있을 수 있습니다."
+          className="add-user-individual__section add-user-individual__section--terms add-user-individual__terms-consent-heading"
+          description={TERMS_CONSENT_DESCRIPTION}
         >
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field
-              label="개인정보 수집 동의"
-              view="-"
-              edit={
-                <Form.Item name="consentPersonalInfo" noStyle>
-                  <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} />
-                </Form.Item>
-              }
-            />
-            <DetailInfoForm.Field
-              label="마케팅 제공 동의"
-              view="-"
-              edit={
-                <Form.Item name="consentMarketing" noStyle>
-                  <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} />
-                </Form.Item>
-              }
-            />
-          </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="초상권 수집·이용 동의"
-              fullRow
-              view="-"
-              edit={
-                <Space align="start" size={12}>
-                  <Form.Item name="consentPortrait" noStyle>
-                    <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} />
-                  </Form.Item>
-                  <DetailInfoForm.InputsSeparator />
-                  <CmsButton
-                    variant="secondary"
-                    size="medium"
-                    type="button"
-                    disabled={consentPortrait !== 'agree'}
-                    onClick={handleConsentDraft}
-                  >
-                    동의서 작성
-                  </CmsButton>
-                  <div className="add-user-individual__consent-guide">
-                    <p>- 작성 버튼을 눌러 동의서를 작성 및 제출해주세요.</p>
-                    <p>- 제출까지 완료되어야 동의된 것으로 간주됩니다.</p>
-                  </div>
-                </Space>
-              }
-            />
-          </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="지급조서 작성 동의"
-              fullRow
-              view="-"
-              edit={
-                <Space align="start" size={12}>
-                  <Form.Item name="consentWithholdingTax" noStyle>
-                    <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} />
-                  </Form.Item>
-                  <DetailInfoForm.InputsSeparator />
-                  <CmsButton
-                    variant="secondary"
-                    size="medium"
-                    type="button"
-                    disabled={consentWithholdingTax !== 'agree'}
-                    onClick={handleConsentDraft}
-                  >
-                    동의서 작성
-                  </CmsButton>
-                  <div className="add-user-individual__consent-guide">
-                    <p>- 작성 버튼을 눌러 동의서를 작성 및 제출해주세요.</p>
-                    <p>- 제출까지 완료되어야 동의된 것으로 간주됩니다.</p>
-                  </div>
-                </Space>
-              }
-            />
-          </DetailInfoForm.Row>
+          <div className="add-user-individual__terms-consent-form-stack">
+            <DetailInfoForm
+              title="약관 및 동의"
+              hideHeader
+              mode="edit"
+              className="add-user-individual__terms-consent-block"
+            >
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field
+                  label="서비스 이용약관"
+                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                  view="-"
+                  edit={
+                    <Form.Item name="consentTermsOfService" noStyle>
+                      <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="large" />
+                    </Form.Item>
+                  }
+                />
+                <DetailInfoForm.Field
+                  label="개인정보 수집·이용 동의"
+                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                  view="-"
+                  edit={
+                    <Form.Item name="consentPersonalInfo" noStyle>
+                      <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="large" />
+                    </Form.Item>
+                  }
+                />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field
+                  label="마케팅 제공 동의"
+                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                  view="-"
+                  edit={
+                    <Form.Item name="consentMarketing" noStyle>
+                      <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="large" />
+                    </Form.Item>
+                  }
+                />
+                <DetailInfoForm.Field
+                  label="초상권 수집·이용 동의"
+                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                  view="-"
+                  edit={
+                    <>
+                      <Form.Item name="consentPortrait" hidden preserve />
+                      <ConsentDocumentFieldEdit
+                        value={allValues?.consentPortrait ?? INITIAL_VALUES.consentPortrait}
+                        onWrite={() => handleConsentWrite('consentPortrait')}
+                      />
+                    </>
+                  }
+                />
+              </DetailInfoForm.Row>
+            </DetailInfoForm>
+
+            <DetailInfoForm
+              title="약관 및 동의"
+              hideHeader
+              mode="edit"
+              className="add-user-individual__terms-consent-block"
+            >
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field
+                  label="지급조서 사전 동의서"
+                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                  view="-"
+                  edit={
+                    <>
+                      <Form.Item name="consentWithholdingTax" hidden preserve />
+                      <ConsentDocumentFieldEdit
+                        value={allValues?.consentWithholdingTax ?? INITIAL_VALUES.consentWithholdingTax}
+                        onWrite={() => handleConsentWrite('consentWithholdingTax')}
+                      />
+                    </>
+                  }
+                />
+                <DetailInfoForm.Field
+                  label="교육진행자 서약서"
+                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                  view="-"
+                  edit={
+                    <>
+                      <Form.Item name="consentFacilitatorPledge" hidden preserve />
+                      <ConsentDocumentFieldEdit
+                        value={
+                          allValues?.consentFacilitatorPledge ?? INITIAL_VALUES.consentFacilitatorPledge
+                        }
+                        onWrite={() => handleConsentWrite('consentFacilitatorPledge')}
+                      />
+                    </>
+                  }
+                />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field
+                  label="행정정보 공동이용 사전동의서"
+                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                  view="-"
+                  edit={
+                    <>
+                      <Form.Item name="consentAdministrativeJoint" hidden preserve />
+                      <ConsentDocumentFieldEdit
+                        value={
+                          allValues?.consentAdministrativeJoint ??
+                          INITIAL_VALUES.consentAdministrativeJoint
+                        }
+                        onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
+                      />
+                    </>
+                  }
+                />
+                <DetailInfoForm.Field
+                  label="성범죄 경력 조회 동의서"
+                  labelWidth={TERMS_CONSENT_LABEL_WIDTH}
+                  view="-"
+                  edit={
+                    <>
+                      <Form.Item name="consentSexOffenseCheck" hidden preserve />
+                      <ConsentDocumentFieldEdit
+                        value={
+                          allValues?.consentSexOffenseCheck ?? INITIAL_VALUES.consentSexOffenseCheck
+                        }
+                        onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
+                      />
+                    </>
+                  }
+                />
+              </DetailInfoForm.Row>
+            </DetailInfoForm>
+          </div>
         </DetailInfoForm>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 24 }}>
-        <CmsButton
-          variant="secondary"
-          size="medium"
-          type="button"
-          onClick={onCancel}
-          disabled={loading}
-        >
-          닫기
-        </CmsButton>
-        <CmsButton variant="primary" size="medium" type="submit" disabled={loading || !canSubmit}>
-          신규 등록
-        </CmsButton>
-      </div>
+      {!hideActions ? (
+        <div className="add-user-individual__actions">
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            닫기
+          </CmsButton>
+          <CmsButton variant="primary" size="medium" type="submit" disabled={loading}>
+            신규 등록
+          </CmsButton>
+        </div>
+      ) : null}
     </Form>
+
+    {activeConsentField != null &&
+    activeConsentEntry != null &&
+    isAgreementMemberConsentField(activeConsentField) ? (
+      <MemberConsentAgreementModal
+        open
+        templateId={activeConsentEntry.templateId}
+        modalTitle={activeConsentEntry.modalTitle}
+        memberContext={memberConsentContext}
+        onClose={handleConsentModalClose}
+        onComplete={() => handleConsentComplete(activeConsentField)}
+      />
+    ) : null}
+
+    {activeConsentField != null && isMemberCrimeConsentField(activeConsentField) ? (
+      <MemberConsentCrimeModal
+        open
+        onClose={handleConsentModalClose}
+        onComplete={() => handleConsentComplete(activeConsentField)}
+      />
+    ) : null}
+    </>
   )
 }

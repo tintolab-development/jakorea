@@ -10,6 +10,8 @@ export type UjatAssignmentReportStatus =
 export type UjatAssignmentReportState = {
   status: UjatAssignmentReportStatus
   submittedDateLabel?: string
+  /** 피드백 전달 후 봉사자가 아직 수정 제출하지 않은 상태의 피드백 작성일 */
+  feedbackDeliveredDateLabel?: string
 }
 
 export type UjatAssignmentSubmissionStatusKey =
@@ -53,6 +55,8 @@ export type UjatAssignmentVolunteerRow = {
   plan: UjatAssignmentReportState
   log: UjatAssignmentReportState
   isDropout: boolean
+  /** 활동 포기자라도 해당 교육일에 진행 이력이 있으면 노출 */
+  hasProgressHistory?: boolean
 }
 
 export type UjatAssignmentSessionGroup = {

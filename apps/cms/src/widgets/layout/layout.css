@@ -31,7 +31,18 @@
   /* 헤더 높이를 제외한 전체 높이 */
 }
 
+/* calendar-set — layout-content 가로·세로 스크롤 + sticky 기준 (프로그램 목록·FilterTableLayout 캘린더 공통) */
+.layout-content:has(.calendar-set),
+.layout-content:has(.calendar-split-card-layout) {
+  overflow-x: auto;
+}
+
 .layout-content.layout-content--templates {
   --cms-layout-content-padding-top: 16px;
   padding-top: 16px;
+}
+
+.layout-content-outlet {
+  width: 100%;
+  min-width: 0;
 }

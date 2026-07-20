@@ -12,20 +12,46 @@ export function isGeneralProgramSchoolInstitutionTarget(program: Program): boole
 import {
   formatDateOnly,
   formatDateRange,
+  formatTargetLevelsLabel,
   getParticipantRecruitmentLifecycle,
-  TARGET_LEVEL_LABEL,
+  resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
   GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
 } from '@/features/program/general/lib/detail-common-info-display'
+import {
+  resolveInstitutionApplicationProgramBridge,
+  shouldShowInstitutionApplicationMaxScheduleFields,
+  shouldShowInstitutionApplicationMaxSessionsPerDayField,
+} from '@/features/program/general/lib/institution-application-program-bridge'
+import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+
+export function resolveParticipantRecruitmentInterviewEnabled(
+  program: Program,
+  editInterviewValue?: 'yes' | 'no'
+): boolean {
+  if (editInterviewValue === 'yes') return true
+  if (editInterviewValue === 'no') return false
+  const interviewEnabled =
+    program.generalParticipantInterviewEnabled ??
+    program.generalCommonInfo?.participantRecruitmentInfo?.interviewEnabled
+  return interviewEnabled === true
+}
 
 export type GeneralProgramParticipantRecruitmentDisplay = {
+  /** 개인 프로그램 — 면접 유무 표시 (없으면 undefined) */
+  interviewEnabledLabel?: string
   announcementPublishedLabel: string
   preEducationNoticeLabel: string
   certificateIssuanceLabel: string
   studentListLabel: string
   showInstitutionApplicationLimits: boolean
+  /** 날짜 선택(기간) + 해당 프로그램 유형일 때만 */
+  showMaxScheduleCountField: boolean
+  /** 커리큘럼형 + 복수 회차 + 날짜 선택(기간)일 때만 */
+  showMaxSessionsPerDayField: boolean
   maxClassLabel: string
   maxInstructorsLabel: string
   maxSessionsPerDayLabel: string
@@ -36,6 +62,11 @@ export type GeneralProgramParticipantRecruitmentDisplay = {
   targetLabel: string
   targetDetailLabel: string
   recruitmentPeriodLabel: string
+  documentPassAnnouncementDate?: string | Date
+  documentPassAnnouncementMethod?: string
+  interviewStartDate?: string | Date
+  interviewEndDate?: string | Date
+  interviewMethod?: string
   finalAnnouncementLabel: string
   contactOrganizationName: string
   contactPhone: string
@@ -83,16 +114,23 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
   const lifecycle = getParticipantRecruitmentLifecycle(program, options)
 
   const showInstitutionApplicationLimits = isGeneralProgramSchoolInstitutionTarget(program)
+  const bridge = resolveInstitutionApplicationProgramBridge(program)
+  const showMaxScheduleCountField =
+    showInstitutionApplicationLimits &&
+    shouldShowInstitutionApplicationMaxScheduleFields(bridge)
+  const showMaxSessionsPerDayField =
+    showInstitutionApplicationLimits &&
+    shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)
 
   if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID) {
     return {
       ...JOB담_PARTICIPANT_RECRUITMENT_MOCK,
       showInstitutionApplicationLimits: true,
+      showMaxScheduleCountField,
+      showMaxSessionsPerDayField,
       recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '참여자 모집 중',
       recruitmentStatusLifecycle: lifecycle ?? 'recruiting_students',
-      targetLabel: program.targetLevel
-        ? (TARGET_LEVEL_LABEL[program.targetLevel] ?? program.targetLevel)
-        : '고등학교',
+      targetLabel: formatTargetLevelsLabel(resolveProgramTargetLevels(program)) || '고등학교',
       targetDetailLabel: program.district ?? '특성화고등학교 3학년',
       notes: JOB담_PARTICIPANT_RECRUITMENT_MOCK.notes,
     }
@@ -122,7 +160,26 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
         ? '제공'
         : '미제공'
 
+  const interviewEnabled =
+    program.generalParticipantInterviewEnabled ??
+    info?.interviewEnabled ??
+    undefined
+  const interviewEnabledLabel = isGeneralIndividualProgram(program)
+    ? interviewEnabled === true
+      ? '필요'
+      : interviewEnabled === false
+        ? '불필요'
+        : '-'
+    : undefined
+
+  const documentPassAnnouncementDate = program.documentPassAnnouncementDate
+  const documentPassAnnouncementMethod = program.documentPassAnnouncementMethod
+  const interviewStartDate = program.interviewStartDate
+  const interviewEndDate = program.interviewEndDate
+  const interviewMethod = program.interviewMethod
+
   return {
+    interviewEnabledLabel,
     announcementPublishedLabel: needOrNotLabel(
       info?.announcementPublished,
       '게시',
@@ -131,11 +188,10 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     preEducationNoticeLabel: needOrNotLabel(info?.preEducationNoticeRequired),
     certificateIssuanceLabel,
     showInstitutionApplicationLimits,
+    showMaxScheduleCountField,
+    showMaxSessionsPerDayField,
     studentListLabel,
-    maxClassLabel: countLabel(
-      info?.maxClassCount ?? program.rounds?.[0]?.classCount,
-      '개'
-    ),
+    maxClassLabel: countLabel(resolveProgramParticipantMaxClassCount(program), '개'),
     maxInstructorsLabel: countLabel(info?.maxAssignableInstructors, '명'),
     maxSessionsPerDayLabel: countLabel(info?.maxSessionsPerDay, '차시'),
     maxScheduleCountLabel: countLabel(info?.maxScheduleCount, '개'),
@@ -143,13 +199,16 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
       info?.operationPeriodLabel ?? formatDateRange(program.startDate, program.endDate),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
-    targetLabel: program.targetLevel
-      ? (TARGET_LEVEL_LABEL[program.targetLevel] ?? program.targetLevel)
-      : '-',
+    targetLabel: formatTargetLevelsLabel(resolveProgramTargetLevels(program)),
     targetDetailLabel: program.district ?? '-',
     recruitmentPeriodLabel:
       info?.recruitmentPeriodLabel ??
       formatDateRange(program.applicationStartDate, program.applicationEndDate),
+    documentPassAnnouncementDate,
+    documentPassAnnouncementMethod,
+    interviewStartDate,
+    interviewEndDate,
+    interviewMethod,
     finalAnnouncementLabel,
     contactOrganizationName:
       info?.contactOrganizationName ?? common?.sponsorDisplayName ?? 'JA Korea',

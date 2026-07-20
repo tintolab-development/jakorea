@@ -16,7 +16,11 @@ import {
   SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
   SchoolTeacherEmploymentStatusBadge,
 } from '@/features/user/detail/lib/school-teacher-employment-status'
-import { StatusDropdownCell, STATUS_DROPDOWN_CELL_CLASSNAME } from '@/shared/components'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+} from '@/shared/components'
 import './school-affiliated-teachers-section.css'
 
 export interface SchoolAffiliatedTeachersSectionProps {
@@ -33,8 +37,6 @@ export interface SchoolAffiliatedTeachersSectionProps {
     status: SchoolTeacherEmploymentStatus
   ) => void | Promise<void>
 }
-
-const EMPLOYMENT_BADGE_CELL_STYLE = SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE
 
 function isCheckboxClickTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false
@@ -128,9 +130,11 @@ export function SchoolAffiliatedTeachersSection({
         title: '재직 현황',
         dataIndex: 'employmentStatus',
         key: 'employmentStatus',
-        width: 118,
+        width: 116,
         align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+        }),
         render: (_: unknown, record: Row) => (
           <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
             <StatusDropdownCell<SchoolTeacherEmploymentStatus>
@@ -141,7 +145,8 @@ export function SchoolAffiliatedTeachersSection({
               onChange={next => handleEmploymentStatusChange(record.id, next)}
               isOpen={openEmploymentDropdownId === record.id}
               onOpenChange={open => setOpenEmploymentDropdownId(open ? record.id : null)}
-              style={EMPLOYMENT_BADGE_CELL_STYLE}
+              style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
+              tagLayout="tag100"
             />
           </div>
         ),

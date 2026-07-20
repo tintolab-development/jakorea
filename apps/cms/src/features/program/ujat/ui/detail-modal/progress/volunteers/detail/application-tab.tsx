@@ -1,5 +1,6 @@
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { UjatVolunteerApplicantEssaySections } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-applicant-essay-sections'
+import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
+import { EssaySections } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/applicant/essay-sections'
 import type { UjatEducationProgressVolunteerDetail } from './detail-mock'
 import { UjatEducationProgressVolunteerDetailBasicInfo } from './detail-basic-info'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
@@ -7,35 +8,33 @@ import './detail.css'
 
 export function UjatEducationProgressVolunteerApplicationTab({
   detail,
+  adminComment,
   maskSensitive,
   isEditing = false,
   preferredRegionDraft,
   onPreferredRegionDraftChange,
+  isAdminCommentEditing = false,
+  adminCommentDraft = '',
+  onAdminCommentDraftChange,
 }: {
   detail: UjatEducationProgressVolunteerDetail
+  adminComment: string
   maskSensitive: boolean
   isEditing?: boolean
   preferredRegionDraft?: UjatVolunteerPreferredRegion
   onPreferredRegionDraftChange?: (next: UjatVolunteerPreferredRegion) => void
+  isAdminCommentEditing?: boolean
+  adminCommentDraft?: string
+  onAdminCommentDraftChange?: (next: string) => void
 }) {
-  const adminCommentTrimmed = detail.adminComment.trim()
-
   return (
     <div className="ujat-education-progress-volunteer-detail__application">
-      <div className="program-detail-fullpage-modal__info-tab-block">
-        <h3 className="program-detail-info-tab__section-title">관리자 코멘트</h3>
-        <div
-          className={`ujat-education-progress-volunteer-detail__admin-comment-box ${
-            !adminCommentTrimmed
-              ? 'ujat-education-progress-volunteer-detail__admin-comment-box--empty'
-              : ''
-          }`}
-          role="region"
-          aria-label="관리자 코멘트"
-        >
-          {adminCommentTrimmed ? detail.adminComment : '작성된 코멘트가 없습니다.'}
-        </div>
-      </div>
+      <ApplicantAdminCommentSection
+        adminComment={adminComment}
+        mode={isAdminCommentEditing ? 'edit' : 'view'}
+        draftValue={adminCommentDraft}
+        onDraftChange={isAdminCommentEditing ? onAdminCommentDraftChange : undefined}
+      />
 
       <UjatEducationProgressVolunteerDetailBasicInfo
         applicant={detail.applicant}
@@ -45,7 +44,7 @@ export function UjatEducationProgressVolunteerApplicationTab({
         onPreferredRegionDraftChange={onPreferredRegionDraftChange}
       />
 
-      <UjatVolunteerApplicantEssaySections applicant={detail.applicant} />
+      <EssaySections applicant={detail.applicant} />
     </div>
   )
 }

@@ -1,0 +1,38 @@
+/**
+ * CMS Figma 에디터 chrome — node 5714-10743
+ * 본문·툴바 패딩·보더는 @jakorea/rich-text/styles/editor.css + 툴바 CSS와 함께 적용.
+ */
+.cms-rich-text-editor {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  --rt-body-min-height: 200px;
+  --rt-border: var(--table-line, #e0e0e0);
+  --rt-radius: 8px;
+  --rt-toolbar-border: var(--table-line, #e0e0e0);
+  --rt-toolbar-bg: var(--main-WT, #fff);
+  --rt-background: var(--main-WT, #fff);
+  --rt-body-padding: 16px;
+  --rt-placeholder-color: var(--text-placeholder, #999);
+  --rt-content-color: var(--default-BK, #3d3d3d);
+}
+
+/* 부모가 height를 지정할 때 본문이 남은 영역을 채우도록 */
+.cms-rich-text-editor.rich-text-editor[style*='height'],
+.notice-register-modal__editor-host .cms-rich-text-editor,
+.program-detail-info-tab__editor-host .cms-rich-text-editor,
+.gemini-recruitment-add-form__card--training .notice-register-modal__editor-host .cms-rich-text-editor {
+  min-height: 0;
+}
+
+.notice-register-modal__editor-host .cms-rich-text-editor .rich-text-editor__body,
+.program-detail-info-tab__editor-host .cms-rich-text-editor .rich-text-editor__body,
+.gemini-recruitment-add-form__card--training
+  .notice-register-modal__editor-host
+  .cms-rich-text-editor
+  .rich-text-editor__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+}

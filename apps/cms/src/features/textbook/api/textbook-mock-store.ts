@@ -1,8 +1,10 @@
-import type { TextbookEducationTarget } from '@/features/textbook/model/textbook-education-targets'
+import {
+  normalizeEducationStages,
+  summarizeEducationStages,
+} from '@/features/textbook/lib/textbook-education-stages'
 import type {
   TextbookCreateInput,
   TextbookEducationStage,
-  TextbookEducationStageKey,
   TextbookRow,
 } from '@/features/textbook/model/textbook.types'
 
@@ -231,150 +233,6 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
   },
 ]
 
-const EDUCATION_STAGE_META: Array<{
-  key: TextbookEducationStageKey
-  label: string
-  hasGrades: boolean
-}> = [
-  { key: 'kindergarten', label: '유아', hasGrades: false },
-  { key: 'elementary', label: '초등학교', hasGrades: true },
-  { key: 'middle', label: '중학교', hasGrades: true },
-  { key: 'high', label: '고등학교', hasGrades: true },
-  { key: 'university', label: '대학교', hasGrades: false },
-]
-
-const GRADE_LABELS = ['1학년', '2학년', '3학년', '4학년', '5학년', '6학년'] as const
-const KINDERGARTEN_LABELS = ['유아', '유치원생'] as const
-
-function toEducationStageKey(target: string): TextbookEducationStageKey | null {
-  switch (target) {
-    case '유아':
-      return 'kindergarten'
-    case '초등학교':
-      return 'elementary'
-    case '중학교':
-      return 'middle'
-    case '고등학교':
-      return 'high'
-    case '대학교':
-      return 'university'
-    default:
-      return null
-  }
-}
-
-function buildEducationStages(target: string, grade: string): TextbookEducationStage[] {
-  const selectedStageKey = toEducationStageKey(target)
-
-  return EDUCATION_STAGE_META.map(stage => {
-    const selected = stage.key === selectedStageKey
-    if (!stage.hasGrades) {
-      return {
-        key: stage.key,
-        label: stage.label,
-        selected,
-      }
-    }
-
-    return {
-      key: stage.key,
-      label: stage.label,
-      selected,
-      grades: GRADE_LABELS.map(label => ({
-        label,
-        selected: selected && (grade === '전학년' || grade === label),
-      })),
-    }
-  })
-}
-
-function cloneStages(stages: TextbookEducationStage[] | undefined): TextbookEducationStage[] | null {
-  if (!stages || stages.length === 0) return null
-  return stages.map(stage => ({
-    ...stage,
-    grades: stage.grades?.map(grade => ({ ...grade })),
-  }))
-}
-
-function normalizeEducationStages(
-  stages: TextbookEducationStage[] | undefined,
-  fallbackTarget: string,
-  fallbackGrade: string
-): TextbookEducationStage[] {
-  const base = buildEducationStages(fallbackTarget, fallbackGrade)
-  const incoming = cloneStages(stages)
-  if (!incoming) return base
-
-  const incomingMap = new Map(incoming.map(stage => [stage.key, stage]))
-  return base.map(stage => {
-    const matched = incomingMap.get(stage.key)
-    if (!matched) return stage
-    if (stage.key === 'kindergarten') {
-      const matchedGrades = KINDERGARTEN_LABELS.map(label => ({
-        label,
-        selected: Boolean(matched.grades?.find(item => item.label === label)?.selected),
-      }))
-      const hasSelected = matchedGrades.some(grade => grade.selected)
-      return {
-        ...stage,
-        selected: Boolean(matched.selected || hasSelected),
-        grades: matchedGrades,
-      }
-    }
-    return {
-      ...stage,
-      selected: Boolean(matched.selected),
-      grades: stage.grades?.map(grade => {
-        const matchedGrade = matched.grades?.find(item => item.label === grade.label)
-        return { ...grade, selected: Boolean(matchedGrade?.selected) }
-      }),
-    }
-  })
-}
-
-function summarizeFromStages(stages: TextbookEducationStage[]): {
-  target: TextbookEducationTarget
-  grade: string
-} {
-  const selectedStage =
-    stages.find(stage => stage.selected || (stage.grades ?? []).some(grade => grade.selected)) ??
-    stages[0]
-
-  if (!selectedStage) {
-    return { target: '초등학교', grade: '전학년' }
-  }
-
-  const selectedGrades = selectedStage.grades?.filter(grade => grade.selected).map(grade => grade.label) ?? []
-  const grade =
-    selectedGrades.length === 1 &&
-    selectedStage.key !== 'kindergarten' &&
-    selectedStage.key !== 'university'
-      ? selectedGrades[0]
-      : '전학년'
-
-  return {
-    target: fromEducationStageKey(selectedStage.key),
-    grade,
-  }
-}
-
-function fromEducationStageKey(key: TextbookEducationStageKey): TextbookEducationTarget {
-  switch (key) {
-    case 'kindergarten':
-      return '유아'
-    case 'elementary':
-      return '초등학교'
-    case 'middle':
-      return '중학교'
-    case 'high':
-      return '고등학교'
-    case 'university':
-      return '대학교'
-    default:
-      return '초등학교'
-  }
-}
-
 function withDetailFields(
   row: Omit<TextbookRow, 'textbookNameEn' | 'educationStages'> & {
     textbookNameEn?: string
@@ -382,22 +240,15 @@ function withDetailFields(
   }
 ): TextbookRow {
   const normalizedStages = normalizeEducationStages(row.educationStages, row.educationTarget, row.grade)
-  const summary = summarizeFromStages(normalizedStages)
+  const summary = summarizeEducationStages(normalizedStages)
   return {
     ...row,
-    educationTarget: summary.target,
+    educationTarget: summary.educationTarget,
     grade: summary.grade,
     textbookNameEn: (row as Partial<TextbookRow>).textbookNameEn?.trim() || row.textbookName,
     educationStages: normalizedStages.map(stage => ({
       ...stage,
-      grades:
-        stage.grades?.map(grade => ({ ...grade })) ??
-        (stage.key === 'kindergarten'
-          ? KINDERGARTEN_LABELS.map(label => ({
-              label,
-              selected: stage.selected,
-            }))
-          : undefined),
+      grades: stage.grades?.map(grade => ({ ...grade })),
     })),
   }
 }

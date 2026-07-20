@@ -31,6 +31,7 @@ import { createPaymentStatementPreConsentDraft } from '@/features/template/model
 import {
   getSettlementApplicationA4ParagraphGap,
   SETTLEMENT_APPLICATION_A4_HIDDEN_PARAGRAPH_IDS } from '@/features/template/model/settlement-application-issuance-a4-preview'
+import { createLectureReportIssuanceA4Preview } from '@/features/template/model/lecture-report-issuance-a4-preview'
 import {
   createUjatEducationIssuanceA4Preview,
 } from '@/features/template/model/ujat-education-issuance-a4-preview'
@@ -39,6 +40,7 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
 import { FormDocumentPreviewBody } from '@/features/template/ui/document-preview'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
+import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import type {
   FormUpdateParagraph,
   RenderFormParagraphBodyOptions,
@@ -82,20 +84,29 @@ import {
 import { useWritingUserPreviewUrlAuxiliarySync } from '@/features/template/hooks/use-writing-user-preview-url-auxiliary-sync'
 import {
   createContentOnlyA4PreviewOptions,
-  isCertificateIssuanceTemplateName,
+  isCertificateIssuanceTemplate,
   shouldUseA4PreviewForIssuanceTemplate } from '@/features/template/lib/a4-preview-template-options'
 import { FormCertificatePdfExportOverlay } from './form-certificate-pdf-export-overlay'
 import { FormTemplateFullpageModal } from './form-template-fullpage-modal'
 import './form-test-single-item-fullpage-modal.css'
 import { handleError } from '@/shared/utils/error-handler'
-
-const PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME = '지급조서(발급용)'
-const PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME = '지급조서 사전 동의서'
-const PAYMENT_STATEMENT_PRE_CONSENT_ROW_KEY = 'document-payment-order-pre-consent'
-const SETTLEMENT_APPLICATION_TEMPLATE_NAME = '정산 신청서'
-const UJAT_EDUCATION_PLAN_TEMPLATE_NAME = 'UJAT 교육계획서'
-const UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME = 'UJAT 교육일지'
-const LECTURE_REPORT_TEMPLATE_NAME = '강의보고서'
+import { useIssuanceFormSections } from '@/features/template/hooks/use-issuance-form-sections'
+import {
+  findIssuanceTemplateRowById,
+  LECTURE_REPORT_TEMPLATE_CODE,
+  LECTURE_REPORT_TEMPLATE_NAME,
+  PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_CODE,
+  PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME,
+  PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_CODE,
+  PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME,
+  SETTLEMENT_APPLICATION_TEMPLATE_CODE,
+  SETTLEMENT_APPLICATION_TEMPLATE_NAME,
+  type IssuanceTemplateRow,
+  UJAT_EDUCATION_JOURNAL_TEMPLATE_CODE,
+  UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME,
+  UJAT_EDUCATION_PLAN_TEMPLATE_CODE,
+  UJAT_EDUCATION_PLAN_TEMPLATE_NAME,
+} from '@/features/template/model/issuance-form.schema'
 
 const UJAT_STRUCTURED_ISSUANCE_HIDDEN_DRAG_HANDLES: Record<
   UjatEducationIssuanceVariant,
@@ -138,117 +149,11 @@ type IssuanceFormTabQuery = {
   userPreview?: string
 }
 
-interface IssuanceTemplateRow {
-  key: string
-  no: number
-  templateName: string
-  creator: string
-  createdAt: string
-  updatedAt: string
-}
-
-const issuanceRows: IssuanceTemplateRow[] = [
-  {
-    key: 'issuance-1',
-    no: 1,
-    templateName: 'UJAT 결과리포트',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'issuance-2',
-    no: 2,
-    templateName: 'UJAT 교육계획서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'issuance-ujat-edu-journal',
-    no: 3,
-    templateName: 'UJAT 교육일지',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'issuance-3',
-    no: 4,
-    templateName: '강의보고서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'issuance-4',
-    no: 5,
-    templateName: '정산 신청서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'issuance-5',
-    no: 6,
-    templateName: '결과보고서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-]
-
-const documentRows: IssuanceTemplateRow[] = [
-  {
-    key: 'document-payment-order-issue',
-    no: 1,
-    templateName: PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME,
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: PAYMENT_STATEMENT_PRE_CONSENT_ROW_KEY,
-    no: 2,
-    templateName: PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME,
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'document-1',
-    no: 3,
-    templateName: '지출증빙서류(필수폼)',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'document-2',
-    no: 4,
-    templateName: '휴가 인증서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'document-3',
-    no: 5,
-    templateName: '수료증',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'document-4',
-    no: 6,
-    templateName: '강사 활동 인증서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-  {
-    key: 'document-5',
-    no: 7,
-    templateName: '봉사 활동 인증서',
-    creator: '시스템 생성',
-    createdAt: '2025. 09. 15',
-    updatedAt: '-' },
-]
-
-const issuanceRowsByKey = new Map<string, IssuanceTemplateRow>(
-  [...issuanceRows, ...documentRows].map(row => [row.key, row])
-)
-
 export function IssuanceFormTab() {
+  const { sections: issuanceSections, isLoading: isIssuanceSectionsLoading } =
+    useIssuanceFormSections()
+  const reportSection = issuanceSections.find(section => section.key === 'issuance-report')
+  const documentSection = issuanceSections.find(section => section.key === 'issuance-document')
   const {
     openWritingUserPreview,
     closeWritingUserPreview,
@@ -262,51 +167,78 @@ export function IssuanceFormTab() {
   )
   const isPreviewOpen = params.mode === 'edit'
   const [selectedTemplate, setSelectedTemplate] = useState<IssuanceTemplateRow | null>(null)
+  const closeTemplatePreview = useCallback(() => {
+    // URL보다 먼저 비워 일반/인증서 모달 전환 레이스·잔여 mask를 막음
+    setSelectedTemplate(null)
+    setParams({ mode: undefined, id: undefined, userPreview: undefined })
+  }, [setParams])
 
   const isPaymentStatementIssuance =
+    selectedTemplate?.id === PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_CODE ||
     selectedTemplate?.templateName === PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME
   const isPaymentStatementPreConsent =
-    selectedTemplate?.key === PAYMENT_STATEMENT_PRE_CONSENT_ROW_KEY ||
+    selectedTemplate?.id === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_CODE ||
     selectedTemplate?.templateName === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME
-  const isUjatEducationPlan = selectedTemplate?.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
-  const isUjatEducationJournal = selectedTemplate?.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
+  const isUjatEducationPlan =
+    selectedTemplate?.id === UJAT_EDUCATION_PLAN_TEMPLATE_CODE ||
+    selectedTemplate?.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
+  const isUjatEducationJournal =
+    selectedTemplate?.id === UJAT_EDUCATION_JOURNAL_TEMPLATE_CODE ||
+    selectedTemplate?.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
   const ujatStructuredIssuanceVariant: UjatEducationIssuanceVariant | null = isUjatEducationPlan
     ? 'plan'
     : isUjatEducationJournal
       ? 'journal'
       : null
   const isUjatStructuredIssuance = ujatStructuredIssuanceVariant != null
-  const isLectureReportIssuance = selectedTemplate?.templateName === LECTURE_REPORT_TEMPLATE_NAME
+  const isLectureReportIssuance =
+    selectedTemplate?.id === LECTURE_REPORT_TEMPLATE_CODE ||
+    selectedTemplate?.templateName === LECTURE_REPORT_TEMPLATE_NAME
   const isSettlementApplicationIssuance =
+    selectedTemplate?.id === SETTLEMENT_APPLICATION_TEMPLATE_CODE ||
     selectedTemplate?.templateName === SETTLEMENT_APPLICATION_TEMPLATE_NAME
   const isCertificateIssuance =
-    selectedTemplate != null && isCertificateIssuanceTemplateName(selectedTemplate.templateName)
+    selectedTemplate != null &&
+    isCertificateIssuanceTemplate({
+      templateCode: selectedTemplate.id,
+      templateName: selectedTemplate.templateName,
+    })
   const certificateInitialStringValues = useMemo(() => {
     if (!isCertificateIssuance || selectedTemplate == null) return undefined
     return {
       ...DEFAULT_TEMPLATE_CUSTOM_FIELD_STRING_VALUES,
       titleName: selectedTemplate.templateName }
   }, [isCertificateIssuance, selectedTemplate])
-  const certificateIssueDate = useMemo(() => new Date(), [selectedTemplate?.key])
+  const certificateIssueDate = useMemo(() => new Date(), [selectedTemplate?.id])
 
   const paymentStatementVm = usePaymentStatementIssuanceEditor(
     isPreviewOpen && isPaymentStatementIssuance,
-    selectedTemplate?.templateName ?? PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME
+    selectedTemplate?.templateName ?? PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME,
+    isPaymentStatementIssuance ? selectedTemplate?.id : undefined,
+    closeTemplatePreview
   )
   const paymentStatementPreConsentVm = usePaymentStatementPreConsentEditor(
     isPreviewOpen && isPaymentStatementPreConsent,
-    selectedTemplate?.templateName ?? PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME
+    selectedTemplate?.templateName ?? PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME,
+    isPaymentStatementPreConsent ? selectedTemplate?.id : undefined,
+    closeTemplatePreview
   )
   const ujatStructuredIssuanceVm = useUjatEducationIssuanceEditor(
     Boolean(isPreviewOpen && !isCertificateIssuance && isUjatStructuredIssuance),
-    ujatStructuredIssuanceVariant ?? 'plan'
+    ujatStructuredIssuanceVariant ?? 'plan',
+    isUjatStructuredIssuance ? selectedTemplate?.id : undefined,
+    closeTemplatePreview
   )
   const lectureReportVm = useLectureReportIssuanceEditor(
-    Boolean(isPreviewOpen && !isCertificateIssuance && isLectureReportIssuance)
+    Boolean(isPreviewOpen && !isCertificateIssuance && isLectureReportIssuance),
+    isLectureReportIssuance ? selectedTemplate?.id : undefined,
+    closeTemplatePreview
   )
   const settlementVm = useSettlementApplicationIssuanceEditor(
     Boolean(isPreviewOpen && !isCertificateIssuance && isSettlementApplicationIssuance),
-    selectedTemplate?.templateName ?? SETTLEMENT_APPLICATION_TEMPLATE_NAME
+    selectedTemplate?.templateName ?? SETTLEMENT_APPLICATION_TEMPLATE_NAME,
+    isSettlementApplicationIssuance ? selectedTemplate?.id : undefined,
+    closeTemplatePreview
   )
   const paymentStatementPdfHostRef = useRef<HTMLDivElement>(null)
   const [paymentStatementPdfLoading, setPaymentStatementPdfLoading] = useState(false)
@@ -394,33 +326,111 @@ export function IssuanceFormTab() {
     renderMode: 'contentOnly',
     paragraphGapPx: getSettlementApplicationA4ParagraphGap })
 
+  const lectureReportA4Preview = useMemo(() => createLectureReportIssuanceA4Preview(), [])
+  const lectureReportPdfHostRef = useRef<HTMLDivElement>(null)
+  const [lectureReportPdfLoading, setLectureReportPdfLoading] = useState(false)
+  const lectureReportPreviewParagraphs = useMemo(
+    () =>
+      getA4PreviewParagraphs(
+        lectureReportVm.draft.paragraphs,
+        lectureReportA4Preview.a4HiddenParagraphIds
+      ),
+    [lectureReportVm.draft.paragraphs, lectureReportA4Preview.a4HiddenParagraphIds]
+  )
+  const lectureReportA4Title = useMemo(
+    () =>
+      getA4DocumentTitle(
+        lectureReportVm.draft,
+        selectedTemplate?.templateName ?? LECTURE_REPORT_TEMPLATE_NAME
+      ),
+    [lectureReportVm.draft, selectedTemplate?.templateName]
+  )
+  const {
+    pages: lectureReportPdfPages,
+    overflowParagraphIds: lectureReportPdfOverflowParagraphIds,
+    measureLayer: lectureReportPdfMeasureLayer,
+  } = useA4ParagraphPages({
+    allParagraphs: lectureReportPreviewParagraphs,
+    titleNumbering: lectureReportVm.draft.formSettings.titleNumbering,
+    editorKind: 'survey',
+    enabled: isPreviewOpen && isLectureReportIssuance,
+    paragraphBodyOptions: lectureReportA4Preview.paragraphBodyOptions,
+    renderMode: lectureReportA4Preview.a4RenderMode,
+    paragraphGapPx: lectureReportA4Preview.a4ParagraphGapPx,
+    pageBreakBeforeParagraphIds: lectureReportA4Preview.a4PageBreakBeforeParagraphIds,
+  })
+
+  const ujatStructuredA4Preview = useMemo(
+    () =>
+      createUjatEducationIssuanceA4Preview({
+        variant: ujatStructuredIssuanceVariant ?? 'plan',
+        ...(ujatStructuredIssuanceVariant === 'journal'
+          ? { journalInstitutionName: UJAT_JOURNAL_EDUCATION_INFO_SAMPLE_INSTITUTION_NAME }
+          : {}),
+      }),
+    [ujatStructuredIssuanceVariant]
+  )
+  const ujatStructuredPdfHostRef = useRef<HTMLDivElement>(null)
+  const [ujatStructuredPdfLoading, setUjatStructuredPdfLoading] = useState(false)
+  const ujatStructuredPreviewParagraphs = useMemo(
+    () =>
+      getA4PreviewParagraphs(
+        ujatStructuredIssuanceVm.draft.paragraphs,
+        ujatStructuredA4Preview.a4HiddenParagraphIds
+      ),
+    [ujatStructuredIssuanceVm.draft.paragraphs, ujatStructuredA4Preview.a4HiddenParagraphIds]
+  )
+  const ujatStructuredA4Title = useMemo(
+    () =>
+      getA4DocumentTitle(
+        ujatStructuredIssuanceVm.draft,
+        selectedTemplate?.templateName ??
+          (ujatStructuredIssuanceVariant === 'journal'
+            ? UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
+            : UJAT_EDUCATION_PLAN_TEMPLATE_NAME)
+      ),
+    [ujatStructuredIssuanceVm.draft, selectedTemplate?.templateName, ujatStructuredIssuanceVariant]
+  )
+  const {
+    pages: ujatStructuredPdfPages,
+    overflowParagraphIds: ujatStructuredPdfOverflowParagraphIds,
+    measureLayer: ujatStructuredPdfMeasureLayer,
+  } = useA4ParagraphPages({
+    allParagraphs: ujatStructuredPreviewParagraphs,
+    titleNumbering: ujatStructuredIssuanceVm.draft.formSettings.titleNumbering,
+    editorKind: 'survey',
+    enabled: isPreviewOpen && isUjatStructuredIssuance,
+    paragraphBodyOptions: ujatStructuredA4Preview.paragraphBodyOptions,
+    renderMode: ujatStructuredA4Preview.a4PreviewOptions.a4RenderMode ?? 'contentOnly',
+    paragraphGapPx: ujatStructuredA4Preview.a4ParagraphGapPx,
+  })
+
   const openTemplatePreview = useCallback(
     (row: IssuanceTemplateRow) => {
+      // URL sync(useEffect) 전에 동기 설정 — isPreviewOpen만 true인 한 프레임에
+      // 일반 TemplateFullpageModal이 먼저 열려 mask가 쌓이는 것을 방지
+      setSelectedTemplate(row)
       setParams(
-        { mode: 'edit', id: row.key, userPreview: undefined },
+        { mode: 'edit', id: row.id, userPreview: undefined },
         { replace: false }
       )
     },
     [setParams]
   )
 
-  const closeTemplatePreview = useCallback(() => {
-    setParams({ mode: undefined, id: undefined, userPreview: undefined })
-  }, [setParams])
-
   useEffect(() => {
     if (params.mode !== 'edit' || params.id == null || params.id === '') {
       setSelectedTemplate(null)
       return
     }
-    const row = issuanceRowsByKey.get(params.id)
+    const row = findIssuanceTemplateRowById(params.id, issuanceSections)
     if (row != null) {
       setSelectedTemplate(row)
       return
     }
     setParams({ mode: undefined, id: undefined, userPreview: undefined })
     setSelectedTemplate(null)
-  }, [params.mode, params.id, setParams])
+  }, [params.mode, params.id, setParams, issuanceSections])
 
   const issuanceColumns: ColumnsType<IssuanceTemplateRow> = [
     { title: 'No.', dataIndex: 'no', key: 'no', width: 88, align: 'center' },
@@ -481,7 +491,10 @@ export function IssuanceFormTab() {
   const noopUpdateParagraph: FormUpdateParagraph = () => {}
   const handleOpenUserPreview = useCallback(() => {
     if (selectedTemplate == null) return
-    const useA4Preview = shouldUseA4PreviewForIssuanceTemplate(selectedTemplate.templateName)
+    const useA4Preview = shouldUseA4PreviewForIssuanceTemplate({
+      templateCode: selectedTemplate.id,
+      templateName: selectedTemplate.templateName,
+    })
     const isUjatPlanPreview = selectedTemplate.templateName === UJAT_EDUCATION_PLAN_TEMPLATE_NAME
     const isJournalPreview = selectedTemplate.templateName === UJAT_EDUCATION_JOURNAL_TEMPLATE_NAME
     const ujatPreviewVariant: UjatEducationIssuanceVariant | null = isUjatPlanPreview
@@ -492,7 +505,7 @@ export function IssuanceFormTab() {
     const isSettlementPreview =
       selectedTemplate.templateName === SETTLEMENT_APPLICATION_TEMPLATE_NAME
     const isPreConsentPreview =
-      selectedTemplate.key === PAYMENT_STATEMENT_PRE_CONSENT_ROW_KEY ||
+      selectedTemplate.id === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_CODE ||
       selectedTemplate.templateName === PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME
     const ujatA4Preview =
       ujatPreviewVariant != null
@@ -668,45 +681,83 @@ export function IssuanceFormTab() {
     }
   }, [settlementA4Title])
 
+  const handleDownloadLectureReportDocument = useCallback(async () => {
+    const root = lectureReportPdfHostRef.current
+    if (root == null) return
+    setLectureReportPdfLoading(true)
+    try {
+      const pageEls = collectFormDocumentPdfPageElements(root)
+      await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(lectureReportA4Title))
+    } catch (e) {
+      handleError(e, { context: 'issuanceFormTab.downloadLectureReportPdf' })
+    } finally {
+      setLectureReportPdfLoading(false)
+    }
+  }, [lectureReportA4Title])
+
+  const handleDownloadUjatStructuredDocument = useCallback(async () => {
+    const root = ujatStructuredPdfHostRef.current
+    if (root == null) return
+    setUjatStructuredPdfLoading(true)
+    try {
+      const pageEls = collectFormDocumentPdfPageElements(root)
+      await downloadFormDocumentPdfFromPageElements(pageEls, safePdfFileName(ujatStructuredA4Title))
+    } catch (e) {
+      handleError(e, { context: 'issuanceFormTab.downloadUjatStructuredPdf' })
+    } finally {
+      setUjatStructuredPdfLoading(false)
+    }
+  }, [ujatStructuredA4Title])
+
   return (
     <>
       <FormCertificatePdfExportOverlay
         visible={
           paymentStatementPdfLoading ||
           paymentStatementPreConsentPdfLoading ||
-          settlementPdfLoading
+          settlementPdfLoading ||
+          lectureReportPdfLoading ||
+          ujatStructuredPdfLoading
         }
       />
       {isPreviewOpen && isPaymentStatementIssuance ? paymentStatementPdfMeasureLayer : null}
       {isPreviewOpen && isPaymentStatementPreConsent ? paymentStatementPreConsentPdfMeasureLayer : null}
       {isPreviewOpen && isSettlementApplicationIssuance ? settlementPdfMeasureLayer : null}
+      {isPreviewOpen && isLectureReportIssuance ? lectureReportPdfMeasureLayer : null}
+      {isPreviewOpen && isUjatStructuredIssuance ? ujatStructuredPdfMeasureLayer : null}
       <div className="template-form-tab__content">
-        <TemplateListCard
-          title="보고 양식"
-          description="모든 프로그램에 동일한 구조로 노출되는 양식입니다."
-          headerInline
-        >
-          <Table
-            className="cms-data-table"
-            rowKey="key"
-            columns={issuanceColumns}
-            dataSource={issuanceRows}
-            pagination={false}
-          />
-        </TemplateListCard>
-        <TemplateListCard
-          title="서류 양식"
-          description="모든 프로그램에 동일한 구조로 노출되는 양식입니다."
-          headerInline
-        >
-          <Table
-            className="cms-data-table"
-            rowKey="key"
-            columns={issuanceColumns}
-            dataSource={documentRows}
-            pagination={false}
-          />
-        </TemplateListCard>
+        {isIssuanceSectionsLoading ? (
+          <p className="template-form-tab__loading">양식 목록을 불러오는 중입니다.</p>
+        ) : (
+          <>
+            <TemplateListCard
+              title={reportSection?.title ?? '보고 양식'}
+              description={reportSection?.description ?? ''}
+              headerInline
+            >
+              <Table
+                className="cms-data-table"
+                rowKey="key"
+                columns={issuanceColumns}
+                dataSource={reportSection?.rows ?? []}
+                pagination={false}
+              />
+            </TemplateListCard>
+            <TemplateListCard
+              title={documentSection?.title ?? '서류 양식'}
+              description={documentSection?.description ?? ''}
+              headerInline
+            >
+              <Table
+                className="cms-data-table"
+                rowKey="key"
+                columns={issuanceColumns}
+                dataSource={documentSection?.rows ?? []}
+                pagination={false}
+              />
+            </TemplateListCard>
+          </>
+        )}
       </div>
 
       <TemplateFullpageModal
@@ -715,7 +766,7 @@ export function IssuanceFormTab() {
             ? 'form-test-single-item-fullpage-modal'
             : undefined
         }
-        open={isPreviewOpen && !isCertificateIssuance}
+        open={isPreviewOpen && selectedTemplate != null && !isCertificateIssuance}
         onClose={closeTemplatePreview}
         title={selectedTemplate?.templateName ?? '발급 양식 미리보기'}
         description="* 해당 폼은 기존 항목의 삭제가 불가하며, 수정에 제한이 있습니다."
@@ -741,7 +792,11 @@ export function IssuanceFormTab() {
               ? () => void handleDownloadPaymentStatementPreConsentDocument()
             : isSettlementApplicationIssuance
               ? () => void handleDownloadSettlementApplicationDocument()
-              : undefined
+              : isLectureReportIssuance
+                ? () => void handleDownloadLectureReportDocument()
+                : isUjatStructuredIssuance
+                  ? () => void handleDownloadUjatStructuredDocument()
+                  : undefined
         }
         downloadDocumentLoading={
           isPaymentStatementIssuance
@@ -750,10 +805,24 @@ export function IssuanceFormTab() {
               ? paymentStatementPreConsentPdfLoading
             : isSettlementApplicationIssuance
               ? settlementPdfLoading
-              : false
+              : isLectureReportIssuance
+                ? lectureReportPdfLoading
+                : isUjatStructuredIssuance
+                  ? ujatStructuredPdfLoading
+                  : false
         }
         leftContent={
-          isPaymentStatementIssuance ? (
+          (
+            isPaymentStatementIssuance
+              ? paymentStatementVm.isDraftLoading
+              : isPaymentStatementPreConsent
+                ? paymentStatementPreConsentVm.isDraftLoading
+                : isSettlementApplicationIssuance
+                  ? settlementVm.isDraftLoading
+                  : false
+          ) ? (
+            <FormDraftLoading />
+          ) : isPaymentStatementIssuance ? (
             <PaymentStatementIssuanceEditorLeftColumn vm={paymentStatementVm} />
           ) : isPaymentStatementPreConsent ? (
             <PaymentStatementPreConsentEditorLeftColumn vm={paymentStatementPreConsentVm} />
@@ -775,7 +844,6 @@ export function IssuanceFormTab() {
               hideDragHandleForParagraphIds={
                 UJAT_STRUCTURED_ISSUANCE_HIDDEN_DRAG_HANDLES[ujatStructuredIssuanceVariant ?? 'plan']
               }
-              hideParagraphRequiredChrome
               headingDescriptionExtraClassName="paragraph-input-explanation-title"
               paragraphBodyOptions={
                 ujatStructuredIssuanceVariant === 'journal'
@@ -799,7 +867,6 @@ export function IssuanceFormTab() {
               middleParagraphActions={lectureReportVm.middleParagraphActions}
               structureLockedParagraphIds={lectureReportVm.structureLockedParagraphIds}
               hideDragHandleForParagraphIds={LECTURE_REPORT_HIDDEN_DRAG_HANDLE_IDS}
-              hideParagraphRequiredChrome
               headingDescriptionExtraClassName="paragraph-input-explanation-title"
             />
           ) : (
@@ -891,6 +958,8 @@ export function IssuanceFormTab() {
         open={isPreviewOpen && isCertificateIssuance}
         onClose={closeTemplatePreview}
         title={selectedTemplate?.templateName ?? '인증서'}
+        templateCode={isCertificateIssuance ? selectedTemplate?.id : undefined}
+        onSaveConfirmed={closeTemplatePreview}
         initialStringValues={certificateInitialStringValues}
         issueDate={certificateIssueDate}
         buildFilenameTitle={selectedTemplate?.templateName}
@@ -1000,6 +1069,80 @@ export function IssuanceFormTab() {
                   paragraphBodyOptions={SETTLEMENT_APPLICATION_ISSUANCE_PARAGRAPH_BODY_OPTIONS}
                   renderMode="contentOnly"
                   paragraphGapPx={getSettlementApplicationA4ParagraphGap}
+                />
+              </div>
+            </A4DocumentPageLayout>
+          ))}
+        </div>
+      ) : null}
+      {isPreviewOpen && isLectureReportIssuance ? (
+        <div
+          ref={lectureReportPdfHostRef}
+          style={{
+            position: 'fixed',
+            left: -20000,
+            top: 0,
+            width: 1464,
+            display: 'flex',
+            flexDirection: 'column',
+            pointerEvents: 'none',
+            zIndex: -1 }}
+          aria-hidden="true"
+        >
+          {lectureReportPdfPages.map((pageParagraphs, pageIndex) => (
+            <A4DocumentPageLayout
+              key={pageIndex}
+              title={lectureReportA4Title}
+              pageIndex={pageIndex}
+              pdfCapture
+            >
+              <div style={{ width: '100%', paddingBottom: 16, boxSizing: 'border-box' }}>
+                <FormDocumentPreviewBody
+                  paragraphs={pageParagraphs}
+                  allParagraphs={lectureReportPreviewParagraphs}
+                  titleNumbering={lectureReportVm.draft.formSettings.titleNumbering}
+                  editorKind="survey"
+                  overflowParagraphIds={lectureReportPdfOverflowParagraphIds}
+                  paragraphBodyOptions={lectureReportA4Preview.paragraphBodyOptions}
+                  renderMode={lectureReportA4Preview.a4RenderMode}
+                  paragraphGapPx={lectureReportA4Preview.a4ParagraphGapPx}
+                />
+              </div>
+            </A4DocumentPageLayout>
+          ))}
+        </div>
+      ) : null}
+      {isPreviewOpen && isUjatStructuredIssuance ? (
+        <div
+          ref={ujatStructuredPdfHostRef}
+          style={{
+            position: 'fixed',
+            left: -20000,
+            top: 0,
+            width: 1464,
+            display: 'flex',
+            flexDirection: 'column',
+            pointerEvents: 'none',
+            zIndex: -1 }}
+          aria-hidden="true"
+        >
+          {ujatStructuredPdfPages.map((pageParagraphs, pageIndex) => (
+            <A4DocumentPageLayout
+              key={pageIndex}
+              title={ujatStructuredA4Title}
+              pageIndex={pageIndex}
+              pdfCapture
+            >
+              <div style={{ width: '100%', paddingBottom: 16, boxSizing: 'border-box' }}>
+                <FormDocumentPreviewBody
+                  paragraphs={pageParagraphs}
+                  allParagraphs={ujatStructuredPreviewParagraphs}
+                  titleNumbering={ujatStructuredIssuanceVm.draft.formSettings.titleNumbering}
+                  editorKind="survey"
+                  overflowParagraphIds={ujatStructuredPdfOverflowParagraphIds}
+                  paragraphBodyOptions={ujatStructuredA4Preview.paragraphBodyOptions}
+                  renderMode={ujatStructuredA4Preview.a4PreviewOptions.a4RenderMode ?? 'contentOnly'}
+                  paragraphGapPx={ujatStructuredA4Preview.a4ParagraphGapPx}
                 />
               </div>
             </A4DocumentPageLayout>

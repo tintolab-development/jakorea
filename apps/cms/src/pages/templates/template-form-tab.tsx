@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
-import { writingSections } from '@/features/template/model/template.schema'
 import type { TemplateRow } from '@/features/template/model/template.schema'
+import { useWritingFormSections } from '@/features/template/hooks/use-writing-form-sections'
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
   lookupTemplateRegistry,
@@ -38,6 +38,7 @@ type TemplateFormTabQuery = {
 
 export default function TemplateFormTab() {
   const { params, setParams } = useQueryParams<TemplateFormTabQuery>()
+  const { sections: writingSections, isLoading: isWritingSectionsLoading } = useWritingFormSections()
   const isPreviewOpen = params.mode === 'edit'
   const { closeWritingUserPreview, isWritingUserPreviewOpen } = useTemplateWritingPreview()
 
@@ -85,13 +86,23 @@ export default function TemplateFormTab() {
       return
     }
     const normalizedId = params.id.trim()
-    const row = findWritingTemplateRowByDefinitionId(normalizedId)
+    const row = findWritingTemplateRowByDefinitionId(normalizedId, writingSections)
     if (row) {
       openTemplatePreview(row)
       return
     }
-    closeTemplatePreview()
-  }, [params.mode, params.id, closeTemplatePreview, openTemplatePreview])
+    // 신규 create/copy 직후 목록 반영 전에도 에디터 진입 가능하도록 임시 row 사용
+    openTemplatePreview({
+      id: normalizedId,
+      templateName: normalizedId,
+      variant: 'default',
+      key: `pending-${normalizedId}`,
+      no: 0,
+      creator: '-',
+      createdAt: '-',
+      updatedAt: '-',
+    })
+  }, [params.mode, params.id, closeTemplatePreview, openTemplatePreview, writingSections])
 
   const rightNavigationConfig = useMemo(
     () => buildRightNavigationConfig(orderedLeftContentConfig),
@@ -103,6 +114,7 @@ export default function TemplateFormTab() {
     templateId,
     templateName: selectedTemplate?.templateName,
     registryEntry,
+    onTemplateDraftSaveConfirmed: handleCloseTemplatePreview,
   })
 
   const { handlePreview } = useTemplatePreviewController({
@@ -174,6 +186,8 @@ export default function TemplateFormTab() {
     return (
       <AgreementWritingFormShell
         {...agreementWritingFormConfig}
+        templateCode={params.id?.trim()}
+        onTemplateDraftSaveConfirmed={handleCloseTemplatePreview}
         onClose={handleCloseTemplatePreview}
       />
     )
@@ -182,15 +196,19 @@ export default function TemplateFormTab() {
   return (
     <>
       <div className="template-form-tab__content">
-        {writingSections.map(section => (
-          <TemplateListCard
-            key={section.key}
-            title={section.title}
-            description={section.description}
-          >
-            <TemplateTable rows={section.rows} onPreview={handleOpenTemplatePreview} />
-          </TemplateListCard>
-        ))}
+        {isWritingSectionsLoading ? (
+          <p className="template-form-tab__loading">양식 목록을 불러오는 중입니다.</p>
+        ) : (
+          writingSections.map(section => (
+            <TemplateListCard
+              key={section.key}
+              title={section.title}
+              description={section.description}
+            >
+              <TemplateTable rows={section.rows} onPreview={handleOpenTemplatePreview} />
+            </TemplateListCard>
+          ))
+        )}
       </div>
 
       <CrimeRecordConsentDocumentFullpageModal

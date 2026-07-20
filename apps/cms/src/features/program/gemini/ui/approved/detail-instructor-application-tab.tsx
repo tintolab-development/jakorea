@@ -6,7 +6,7 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import {
   buildGeminiInstructorApproveMessageLines,
@@ -329,11 +329,21 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
       description={`총 ${filteredRows.length.toLocaleString()}건`}
       actions={
         canWrite ? (
-          <CmsButton variant="secondary" size="medium" onClick={handleBulkApprove}>
+          <CmsButton
+            variant="secondary"
+            size="large"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            onClick={handleBulkApprove}
+          >
             {approveButtonLabel}
           </CmsButton>
         ) : null
       }
+      excelExport={{
+        columns,
+        data: filteredRows,
+      }}
     >
       <Table<GeminiInstructorApplicationRow>
         rowKey="id"

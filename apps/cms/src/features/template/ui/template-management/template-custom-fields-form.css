@@ -292,9 +292,8 @@
 }
 
 /*
- * AppButton cancel + large 기반 — 시안(120×40, padding 6px 16px).
- * 로딩 시 Ant가 .ant-btn-icon을 넣으며 app-button.css의 :has(.ant-btn-icon) 규칙이
- * flex-direction을 row로 덮어써, idle(column)과 loading(row) 사이 세로 점프가 났음 → 항상 row로 통일.
+ * CmsButton secondary + large 기반 — 시안(120×40, padding 6px 16px).
+ * 로딩 시 Ant가 .ant-btn-icon을 추가하므로 idle/loading 사이 정렬 변화가 없도록 항상 row로 통일.
  */
 .template-custom-fields-form__logo-file-btn.cms-button.cms-button--secondary.ant-btn-default {
   box-sizing: border-box;

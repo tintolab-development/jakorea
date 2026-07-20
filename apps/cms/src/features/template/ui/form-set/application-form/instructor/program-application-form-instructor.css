@@ -8,6 +8,16 @@
   min-width: 0;
 }
 
+/* DetailInfoForm 값 칸 — edit/view 슬롯 flex 오버라이드 후에도 업로드 버튼이 보이도록 */
+.detail-info-form__field-content--edit > .program-application-form-instructor__file-cell,
+.detail-info-form__field-content--view > .program-application-form-instructor__file-cell {
+  display: flex;
+  margin-block: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+}
+
 .program-application-form-instructor__file-cell
   .program-application-form-instructor__file-upload-trigger.paragraph-file-upload {
   width: auto;
@@ -49,6 +59,10 @@
   width: 100%;
 }
 
+.program-application-form-instructor__available-schedule--readonly-preview {
+  pointer-events: none;
+}
+
 .program-application-form-instructor__available-schedule-top {
   display: flex;
   gap: 20px;
@@ -60,41 +74,51 @@
   flex: 1 1 0;
   min-width: 0;
   align-self: flex-start;
-  display: flex;
-  flex-direction: column;
   box-sizing: border-box;
+  display: grid;
+  padding: 16px;
+  row-gap: 12px;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
   min-height: var(--program-reg-schedule-calendar-height, auto);
   max-height: var(--program-reg-schedule-calendar-height, none);
   overflow: hidden;
 }
 
 .program-application-form-instructor__schedule-side .program-application-form-instructor__session-grid {
-  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   width: 100%;
   max-width: none;
 }
 
+.program-application-form-instructor__schedule-side .program-application-schedule-template-hint {
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
+}
+
 .program-application-form-instructor__schedule-side .schedule-setting-blocked {
-  flex: 1 1 auto;
   min-height: 0;
 }
 
 .program-application-form-instructor__calendar-wrap {
-  width: 360px !important;
+  flex: 0 0 360px;
+  flex-shrink: 0;
+  width: 360px;
   min-width: 360px;
   max-width: 360px;
 }
 
 .program-application-form-instructor__session-grid {
-  flex: 1;
-  min-width: 0;
   display: grid;
-  width: 100%;
-  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, 310px);
+  column-gap: 12px;
+  row-gap: 12px;
   align-content: start;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .program-application-form-instructor__session-grid-empty {
@@ -113,9 +137,10 @@
   flex-direction: column;
   align-items: stretch;
   gap: 2px;
-  min-width: 0;
-  width: 100%;
-  max-width: 100%;
+  box-sizing: border-box;
+  width: 310px;
+  max-width: 310px;
+  min-width: 310px;
   min-height: auto;
   height: auto;
   padding: 12px 14px;
@@ -201,13 +226,4 @@
   vertical-align: middle;
   word-break: keep-all;
   overflow-wrap: anywhere;
-}
-
-/* 강의 진행 불가 일정 — 날짜 단독(일정 선택) paragraph-date-picker 트리거 폭 (에디터·미리보기 공통, 단락 id 스코프) */
-.paragraph-card[data-paragraph-id='program-instructor-application-seed-unavailable-dates']
-  .paragraph-date-picker.form-editor-vertical-table__dt-paragraph-date-picker.form-editor-vertical-table__dt-picker--full {
-  width: 260px !important;
-  max-width: 260px !important;
-  min-width: 260px !important;
-  flex: 0 0 260px;
 }

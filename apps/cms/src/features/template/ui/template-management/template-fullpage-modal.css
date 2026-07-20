@@ -2,6 +2,14 @@
   --full-page-modal-padding-x: 52px;
   --full-page-modal-padding-top: 32px;
   --full-page-modal-padding-bottom: 52px;
+  /* 1920 = pad(52) + left(1404) + gap(32) + right(380) + pad(52) */
+  --full-page-modal-layout-max-width: 1920px;
+  --full-page-modal-left-column-width: 1404px;
+  --full-page-modal-contents-gap: 32px;
+  --full-page-modal-right-column-width: 380px;
+  --full-page-modal-contents-max-width: calc(
+    var(--full-page-modal-layout-max-width) - 2 * var(--full-page-modal-padding-x)
+  );
 }
 
 .full-page-modal .teal-header-modal__body {
@@ -153,7 +161,8 @@
      패딩까지 덮어써서 하단 패딩이 안 보이는 문제 방지 */
   padding: var(--full-page-modal-padding-top) var(--full-page-modal-padding-x) 0;
   flex-direction: column;
-  align-items: stretch;
+  /* 좌 52px body 패딩 기준 — 콘텐츠 밴드를 가운데로 밀지 않음 */
+  align-items: flex-start;
   gap: 16px;
   background: #f4f6f6;
   overflow-y: auto;
@@ -170,8 +179,10 @@
 
 .full-page-modal__body-header {
   display: flex;
+  align-self: flex-start;
   width: 100%;
-  max-width: none;
+  max-width: var(--full-page-modal-contents-max-width);
+  margin-inline: 0;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
@@ -206,17 +217,49 @@
 .full-page-modal__contents {
   display: flex;
   flex: 0 0 auto;
+  align-self: flex-start;
   min-height: auto;
   width: 100%;
-  max-width: none;
+  max-width: var(--full-page-modal-contents-max-width);
+  margin-inline: 0;
   align-items: stretch;
-  gap: 20px;
+  gap: var(--full-page-modal-contents-gap);
   box-sizing: border-box;
+}
+
+/* draft 로딩: 2열 대신 본문 전체에서 스피너 가로·세로 중앙 */
+.full-page-modal__contents:has(.form-draft-loading) {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+}
+
+.full-page-modal__contents:has(.form-draft-loading) .full-page-modal__left {
+  max-width: none;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+
+.full-page-modal__contents:has(.form-draft-loading) .full-page-modal__right-wrap {
+  display: none;
+}
+
+.full-page-modal__left > .form-draft-loading {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100%;
 }
 
 .full-page-modal__left {
   flex: 1 1 auto;
   min-width: 0;
+  max-width: min(
+    var(--full-page-modal-left-column-width),
+    calc(100% - var(--full-page-modal-right-column-width) - var(--full-page-modal-contents-gap))
+  );
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -224,6 +267,9 @@
 
 .full-page-modal .form-editor-left {
   flex: none;
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
   overflow: visible;
   scrollbar-gutter: auto;
   padding-right: 0;
@@ -233,8 +279,8 @@
   display: flex;
   flex-direction: column;
   align-self: stretch;
-  width: 380px;
-  flex: 0 0 380px;
+  width: var(--full-page-modal-right-column-width);
+  flex: 0 0 var(--full-page-modal-right-column-width);
   min-height: 0;
 }
 
@@ -359,41 +405,63 @@
    핵심 구조:
    ┌ body (overflow-y: auto, flex column)
    │  ├ body-header
-   │  ├ contents (flex: 0 0 auto → 자연 높이 유지, 축소 금지)
-   │  │   ├ left  (image bg 1682px → 행 높이 확정)
-   │  │   └ right-wrap (동일 1682px, right + form 이 꽉 채움)
+   │  ├ contents (flex: left 가변 + gap 32 + right 380)
+   │  │   ├ left  (폭에 맞춰 미리보기 scale → 행 높이 확정)
+   │  │   └ right-wrap (좌측과 동일 높이, right + form 이 꽉 채움)
    │  └ body-bottom 52px 스페이서 ← 스크롤 끝에서 보임
    ————————————————————————————————————————————————— */
 
-/* contents: flex 축소 금지 → 자연 높이(1682px)대로, body 스크롤 유발 */
+/*
+ * 인증서·수료증: 기본 flex 레이아웃 유지
+ * left(가변) + gap(32) + right(380) — 좌측이 남는 폭을 채워 우측과 32px 갭만 남김
+ * 미리보기 스케일은 FormCertificateEditScaleViewport가 좌측 폭에 맞춤
+ */
 .form-template-fullpage-modal .full-page-modal__contents {
-  display: grid;
-  grid-template-columns: min(1208px, 100%) 1fr;
-  /* auto: 이미지 실제 높이(1682px)가 행 높이를 결정 */
-  grid-template-rows: auto;
-  gap: 32px;
-  align-items: stretch;
-  /* flex: 0 0 auto → 부모(body)가 min-height:0으로 축소시키지 못하게 */
+  display: flex;
   flex: 0 0 auto;
+  align-items: stretch;
+  gap: var(--full-page-modal-contents-gap);
   min-height: auto;
+}
+
+.form-template-fullpage-modal .full-page-modal__contents:has(.form-draft-loading) {
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
 }
 
 .form-template-fullpage-modal .full-page-modal__left {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   min-width: 0;
+  max-width: min(
+    var(--full-page-modal-left-column-width),
+    calc(100% - var(--full-page-modal-right-column-width) - var(--full-page-modal-contents-gap))
+  );
+}
+
+.form-template-fullpage-modal .full-page-modal__contents:has(.form-draft-loading) .full-page-modal__left {
+  max-width: none;
+  width: 100%;
+}
+
+.form-template-fullpage-modal .full-page-modal__contents:has(.form-draft-loading) .full-page-modal__right-wrap {
+  display: none;
 }
 
 .form-template-fullpage-modal .form-certificate-preview {
   width: 100%;
 }
 
-/* 우측: 그리드 셀 높이(= 이미지 bg 1682px)를 그대로 채움 */
 .form-template-fullpage-modal .full-page-modal__right-wrap {
   display: flex;
   flex-direction: column;
+  flex: 0 0 var(--full-page-modal-right-column-width);
+  width: var(--full-page-modal-right-column-width);
   min-width: 0;
-  width: 100%;
   align-self: stretch;
 }
 
@@ -440,12 +508,15 @@
 /* 하단 CTA — 양식 최하단 단락 아래 32px, 본문 스크롤 흐름(고정 float 없음) */
 .full-page-modal--registration-user-mode .full-page-modal__footer-cta {
   flex-shrink: 0;
+  align-self: flex-start;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
   width: 100%;
+  max-width: var(--full-page-modal-contents-max-width);
+  margin-inline: 0;
   margin-top: 32px;
   box-sizing: border-box;
 }

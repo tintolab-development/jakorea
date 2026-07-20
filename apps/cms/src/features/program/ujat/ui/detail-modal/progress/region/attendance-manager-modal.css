@@ -74,58 +74,20 @@
   margin-top: 16px;
 }
 
-.ujat-region-attendance-manager-modal__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border: 1px solid var(--gray-200, #e8e8e8);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.ujat-region-attendance-manager-modal__slot {
-  display: flex;
-  min-height: 48px;
-  border-bottom: 1px solid var(--gray-200, #e8e8e8);
-}
-
-.ujat-region-attendance-manager-modal__slot:nth-child(odd) {
-  border-right: 1px solid var(--gray-200, #e8e8e8);
-}
-
-.ujat-region-attendance-manager-modal__slot:nth-last-child(-n + 2) {
-  border-bottom: none;
-}
-
-.ujat-region-attendance-manager-modal__label {
-  flex: 0 0 168px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 16px;
-  background: var(--gray-50, #f7f7f7);
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-  border-right: 1px solid var(--gray-200, #e8e8e8);
-  box-sizing: border-box;
-}
-
-.ujat-region-attendance-manager-modal__select-wrap {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  padding: 6px 12px;
-  background: #fff;
-  box-sizing: border-box;
-}
-
-.ujat-region-attendance-manager-modal__select-wrap .cms-select {
+.ujat-region-attendance-manager-modal__form {
   width: 100%;
+}
+
+.ujat-region-attendance-manager-modal__form .detail-info-form__field-content--edit {
+  padding: 6px 12px;
+}
+
+.ujat-region-attendance-manager-modal__form .detail-info-form__field-content--edit > * {
+  width: 100%;
+}
+
+.ujat-region-attendance-manager-modal__row--single-item > .detail-info-form__field {
+  flex: 0 0 50%;
 }
 
 .ujat-region-attendance-manager-modal__footer {

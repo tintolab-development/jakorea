@@ -1,15 +1,17 @@
 /**
  * 컨텐츠 모달 (공통 레이아웃)
- * - 컨테이너 padding: top 28, bottom 34, horizontal 30
+ * - 컨테이너 padding: top 26, bottom 34, horizontal 30
  * - 헤더: 보더 없음, padding 제거, 타이틀 24px Bold
  * - 바디: padding 제거. description prop이 있으면 타이틀–디스크립션 간격 16px(content-modal.css)
  * - 푸터: 상단 디바이더 없음, margin-top 30px, 버튼 래퍼 100% + 우측 정렬
+ * - 셸: radius 12 · shadow 0 0 25px rgba(0,0,0,0.35)
  * 다른 모달에서 이 컴포넌트를 위주로 사용할 수 있도록 공통화함.
  */
 
 import type { ReactNode } from 'react'
 import type { ModalProps } from 'antd'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import type { ModalSize } from '@/shared/ui/teal-header-modal'
 import { renderContentModalDescription } from '@/shared/ui/content-modal-description'
 import './content-modal.css'
 
@@ -34,8 +36,8 @@ export interface ContentModalProps {
   children: ReactNode
   /** 푸터 영역. 전달 시 100% 너비 래퍼 안에서 우측 정렬됨 */
   footer?: React.ReactNode
-  /** 기본 800, large 시 1400 */
-  size?: 'default' | 'large'
+  /** compact 600 / default 800 / medium 1000 / wide 1200 / large 1400 */
+  size?: Exclude<ModalSize, 'full'>
   width?: number
   /** 모달 루트에 붙는 추가 클래스 (공통으로 content-modal 포함) */
   className?: string

@@ -36,7 +36,7 @@ export function UserPersonalInfoRevealConfirmModal({
       open
       onCancel={onCancel}
       title="개인정보 상세보기"
-      width={520}
+      width={600}
       zIndex={zIndex}
       footer={
         <>

@@ -40,6 +40,10 @@
 /* 본문 타이포 16px 통일 (PermissionModal 기본 라벨 14px 보정) */
 .instructor-bulk-approve-modal.permission-modal .permission-modal__message,
 .instructor-bulk-reject-modal.permission-modal .permission-modal__message,
+.participant-approve-modal.permission-modal .permission-modal__message,
+.participant-reject-modal.permission-modal .permission-modal__message,
+.participant-cancel-approval-modal.permission-modal .permission-modal__message,
+.participant-cancel-reject-modal.permission-modal .permission-modal__message,
 .applicant-notification-resend-modal.permission-modal .permission-modal__message,
 .instructor-cancel-reject-modal.permission-modal .permission-modal__message {
   font-size: 16px;

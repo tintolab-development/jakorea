@@ -1,13 +1,18 @@
-import { useCallback, type MouseEvent } from 'react'
+import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
-import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import { buildGeneralVolunteerDocPassedFilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import {
+  screeningDocPassedListTitle,
+  type ScreeningSubjectKind,
+} from '@/features/program/general/lib/screening-subject-kind'
+import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
+import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import {
   useGeneralVolunteerApplicantDetail,
   type GeneralVolunteerApplicantDetailMetaChangeHandler,
@@ -15,24 +20,33 @@ import {
 import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import { GeneralVolunteerInterviewAssignModals } from './general-volunteer-interview-assign-modals'
 import { GeneralVolunteerDocPassedCalendarView } from './general-volunteer-doc-passed-calendar-view'
+import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
 import { useGeneralVolunteerDocPassed } from './use-doc-passed'
-import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './doc-passed-section.css'
 import './volunteer-screening.css'
 
-const FILTER_ROWS = buildGeneralVolunteerDocPassedFilterRows()
-
 export function GeneralVolunteerDocPassedSection({
   program,
+  subjectKind = 'volunteer',
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: {
   program: Program
+  subjectKind?: ScreeningSubjectKind
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
   const programId = program.id
+  const filterRows = useMemo(
+    () => buildGeneralVolunteerDocPassedFilterRows(subjectKind),
+    [subjectKind]
+  )
+  const listTitle = screeningDocPassedListTitle(subjectKind)
+  const activityWithdrawScheduleOptions = useMemo(
+    () => getGeneralVolunteerActivityWithdrawScheduleOptions(program),
+    [program]
+  )
 
   const {
     list,
@@ -55,12 +69,13 @@ export function GeneralVolunteerDocPassedSection({
     cancelWithdrawActivity,
     confirmWithdrawActivity,
     withdrawTarget,
-  } = useGeneralVolunteerDocPassed({ programId })
+  } = useGeneralVolunteerDocPassed({ programId, subjectKind })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
     programId,
     list,
     variant: 'doc_passed',
+    subjectKind,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange,
   })
@@ -85,17 +100,14 @@ export function GeneralVolunteerDocPassedSection({
     [openApplicantDetail]
   )
 
-  const withdrawConfirmModal = withdrawTarget ? (
-    <ConfirmModal
-      open
-      title="활동 포기"
-      content={`${withdrawTarget.name} 봉사자를 활동 포기 처리하시겠습니까?`}
-      confirmText="활동 포기"
-      danger
-      onConfirm={confirmWithdrawActivity}
+  const withdrawConfirmModal = (
+    <ActivityWithdrawScheduleModal
+      open={withdrawTarget != null}
+      scheduleOptions={activityWithdrawScheduleOptions}
       onCancel={cancelWithdrawActivity}
+      onConfirm={confirmWithdrawActivity}
     />
-  ) : null
+  )
 
   const assignModals = (
     <GeneralVolunteerInterviewAssignModals
@@ -134,6 +146,30 @@ export function GeneralVolunteerDocPassedSection({
     )
 
   if (selectedApplicant) {
+    if (subjectKind === 'participant') {
+      return (
+        <>
+          <GeneralParticipantApplicantDetailView
+            program={program}
+            applicantId={selectedApplicant.id}
+            screeningStage="doc_passed"
+            onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
+            onApplicantDetailMetaChange={meta => {
+              if (!meta) {
+                onVolunteerApplicantDetailMetaChange?.(null)
+                return
+              }
+              onVolunteerApplicantDetailMetaChange?.({
+                title: meta.title,
+                breadcrumbLabel: meta.breadcrumbLabel,
+              })
+            }}
+          />
+          {assignModals}
+        </>
+      )
+    }
+
     return (
       <>
         <GeneralVolunteerApplicantDetailView
@@ -149,29 +185,30 @@ export function GeneralVolunteerDocPassedSection({
   }
 
   return (
-    <div className="general-volunteer-doc-passed applicant-details">
+    <div
+      className={[
+        'general-volunteer-doc-passed applicant-details',
+        viewMode === 'calendar' ? 'general-program-detail--calendar-view' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <FilterTableLayout
         bordered={false}
+        contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         className="general-volunteer-doc-passed__filter-layout applicant-details__filter-table-layout"
-        rows={FILTER_ROWS}
+        rows={filterRows}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
+        title={listTitle}
+        description={`${count.toLocaleString()}건`}
+        actions={viewToggleButton}
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
-        <div className="table-header-actions general-volunteer-doc-passed__table-header">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">
-              봉사자 1차 서류 합격자 목록
-            </span>
-            <span className="table-description">
-              {count.toLocaleString()}건
-            </span>
-          </div>
-          <div className="info-section-buttons--wrapper general-volunteer-doc-passed__table-actions">
-            {viewToggleButton}
-          </div>
-        </div>
-
         {viewMode === 'list' ? (
           <div className="general-volunteer-doc-passed__table-wrap">
             <Table<GeneralVolunteerApplicantRow>
@@ -204,6 +241,9 @@ export function GeneralVolunteerDocPassedSection({
           </div>
         )}
       </FilterTableLayout>
+      {viewMode === 'calendar' ? (
+        <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />
+      ) : null}
       {withdrawConfirmModal}
       {assignModals}
     </div>

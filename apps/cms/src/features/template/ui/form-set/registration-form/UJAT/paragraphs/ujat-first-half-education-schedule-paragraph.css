@@ -2,15 +2,11 @@
  * UJAT 상반기 교육 일정 단락 — 서브블록·진행 일정 행 레이아웃
  */
 
-/* ■ 사전 교육 등 서브섹션 타이틀 */
-.ujat-first-half-schedule__subheading {
-  margin-bottom: 4px;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
+/* ■ 사전 교육 등 서브섹션 타이틀 — 공통: ujat-half-education-schedule.css */
+
+.ujat-first-half-schedule__block + .ujat-half-education-schedule__block,
+.ujat-half-education-schedule__block + .ujat-half-education-schedule__block {
+  margin-top: 0;
 }
 
 .ujat-first-half-schedule__schedule-rows {

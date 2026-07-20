@@ -32,8 +32,10 @@ Keep **one** generic cell; inject options/rules via props. Add thin domain wrapp
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
+  STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
 } from '@/shared/components'
 ```
 
@@ -49,7 +51,8 @@ import {
 | `onChange` | If omitted → read-only badge |
 | `isUpdating` | Disable + spinner while saving |
 | `isOpen` / `onOpenChange` | Single open dropdown per table (`openId === rowId`) |
-| `tagLayout` | `'default'` or `'tag132'` (fixed 132×33 + mint active ring) |
+| `tagLayout` | `'default'`, `'tag100'`, `'tag160'`, `'paymentOrderLine'`; 새 도메인은 기본값 우선 |
+| `style` | 도메인별 배지 폭·패널 폭이 필요할 때 generic 크기를 주입 |
 
 ---
 
@@ -61,7 +64,11 @@ Use **`onCell`** for `td` classes (not only `column.className`), e.g.:
 onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
 ```
 
-For **`tag132`**: add `STATUS_DROPDOWN_CELL_TAG_132_CLASSNAME` on body cells and `STATUS_DROPDOWN_CELL_TAG_132_HEADER_CLASSNAME` via `onHeaderCell` on `th`. Column **`width: 150`** matches shared CSS.
+For **`tag100`** (재직·권한·교재배송·서류평가): add `STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME` on body cells and `STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME` via `onHeaderCell`. Column **`width: 116`** matches shared CSS. Use `EditableStatusBadge` in `renderBadge`.
+
+For a 132×33 badge in a 160px column, use **`tag160`** with `STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME` and `STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME`. Do not restore the removed `tag132` option or constants.
+
+새 도메인 상태는 우선 `tagLayout="default"`와 `style`로 크기를 주입한다. `paymentOrderLine`처럼 명확한 공통 계약이 있을 때만 전용 layout을 추가한다.
 
 Do **not** rebuild raw Ant `Dropdown` for the same pattern—extend `StatusDropdownCell`.
 
@@ -69,8 +76,8 @@ Do **not** rebuild raw Ant `Dropdown` for the same pattern—extend `StatusDropd
 
 ## Related CSS
 
-Shared styles live in `status-dropdown-cell.css` (tag layout, mint wrapper). Keep domain-specific badge class names on the badge root as required by design.
+Shared styles live in `status-dropdown-cell.css`. Keep domain-specific badge class names on the badge root as required by design.
 
 ---
 
-**Last updated:** 2026-04-21
+**Last updated:** 2026-07-15

@@ -6,17 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import {
-  Card,
-  Descriptions,
-  Button,
-  Table,
-  Space,
-  Tabs,
-  Empty,
-  Spin,
-  Timeline,
-} from 'antd'
+import { Card, Table, Space, Tabs, Spin, Timeline } from 'antd'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import {
   ArrowLeftOutlined,
@@ -30,11 +20,17 @@ import {
   type MyProgram,
 } from '@/entities/program/api/instructor-program-service'
 import { getMySettlements } from '@/entities/settlement/api/instructor-settlement-service'
-import { commonStatusStatusConfig, settlementStatusStatusConfig } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import {
+  commonStatusStatusConfig,
+  getStatusConfigAccentColor,
+  settlementStatusStatusConfig,
+} from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
 import { mockApplications, mockMatchings } from '@/data/mock'
 import { useProgramService } from '@/features/program/general/hooks/use-program-service'
 import { schoolService } from '@/entities/school/api/school-service'
+import { CmsButton, EmptyState, LoadingButton } from '@/shared/ui'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import dayjs from 'dayjs'
 import type { Settlement } from '@/types/domain'
 
@@ -45,10 +41,13 @@ export function MyProgramHistoryPage() {
   const { getByIdSync: getProgramByIdSync } = useProgramService()
   const [program, setProgram] = useState<MyProgram | null>(null)
   const [settlements, setSettlements] = useState<Settlement[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const loadProgram = useCallback(async () => {
-    if (!id || !user?.instructorId) return
+    if (!id || !user?.instructorId) {
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     try {
@@ -60,7 +59,7 @@ export function MyProgramHistoryPage() {
       setProgram(data)
     } catch (error) {
       console.error('프로그램 로드 실패:', error)
-      } finally {
+    } finally {
       setLoading(false)
     }
   }, [id, navigate, user?.instructorId])
@@ -79,15 +78,25 @@ export function MyProgramHistoryPage() {
   }, [id, user?.instructorId])
 
   useEffect(() => {
-    if (id && user?.instructorId) {
-      loadProgram()
-      loadSettlements()
+    if (!id) {
+      setLoading(false)
+      return
     }
+    if (user?.instructorId) {
+      void loadProgram()
+      void loadSettlements()
+      return
+    }
+    setLoading(false)
   }, [id, user?.instructorId, loadProgram, loadSettlements])
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
+      <div
+        className="page-content-loading page-content-loading--viewport"
+        role="status"
+        aria-label="프로그램 이력 불러오는 중"
+      >
         <Spin size="large" />
       </div>
     )
@@ -96,14 +105,15 @@ export function MyProgramHistoryPage() {
   if (!program) {
     return (
       <div>
-        <Button
+        <CmsButton
+          variant="default"
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate(`/programs/my/active/${id}`)}
           style={{ marginBottom: 16 }}
         >
           목록으로
-        </Button>
-        <Empty description="프로그램 정보를 찾을 수 없습니다." />
+        </CmsButton>
+        <EmptyState description="프로그램 정보를 찾을 수 없습니다." />
       </div>
     )
   }
@@ -163,13 +173,13 @@ export function MyProgramHistoryPage() {
       key: 'id',
       width: 200,
       render: (id: string) => (
-        <Button
+        <LoadingButton
           type="link"
           onClick={() => navigate(`/settlements/my/${id}`)}
           style={{ padding: 0 }}
         >
           {id}
-        </Button>
+        </LoadingButton>
       ),
     },
     {
@@ -178,7 +188,11 @@ export function MyProgramHistoryPage() {
       key: 'status',
       width: 120,
       render: (status: Settlement['status']) => (
-        <StatusBadge status={status} statusConfig={settlementStatusStatusConfig} />
+        <StatusBadge
+          domain="custom"
+          label={settlementStatusStatusConfig[status].label}
+          accentColor={getStatusConfigAccentColor(settlementStatusStatusConfig[status].color)}
+        />
       ),
     },
     {
@@ -247,7 +261,7 @@ export function MyProgramHistoryPage() {
               pagination={false}
             />
           ) : (
-            <Empty description="정산 이력이 없습니다." />
+            <EmptyState description="정산 이력이 없습니다." />
           )}
         </Card>
       ),
@@ -286,7 +300,17 @@ export function MyProgramHistoryPage() {
                   dataIndex: 'status',
                   key: 'status',
                   render: (status: string) => (
-                    <StatusBadge status={status} statusConfig={commonStatusStatusConfig} />
+                    <StatusBadge
+                      domain="custom"
+                      label={
+                        commonStatusStatusConfig[status as keyof typeof commonStatusStatusConfig]
+                          ?.label ?? status
+                      }
+                      accentColor={getStatusConfigAccentColor(
+                        commonStatusStatusConfig[status as keyof typeof commonStatusStatusConfig]
+                          ?.color
+                      )}
+                    />
                   ),
                 },
               ]}
@@ -295,7 +319,7 @@ export function MyProgramHistoryPage() {
               pagination={false}
             />
           ) : (
-            <Empty description="등록된 일정이 없습니다." />
+            <EmptyState description="등록된 일정이 없습니다." />
           )}
         </Card>
       ),
@@ -305,29 +329,44 @@ export function MyProgramHistoryPage() {
   return (
     <div>
       <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(`/programs/my/active/${id}`)}>
+        <CmsButton
+          variant="default"
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate(`/programs/my/active/${id}`)}
+        >
           프로그램 상세로
-        </Button>
+        </CmsButton>
       </Space>
 
       <Card title={program.title} style={{ marginBottom: 16 }}>
-        <Descriptions bordered column={{ xs: 1, sm: 2, lg: 3 }}>
-          <Descriptions.Item label="상태">
-            <ProgramCategoryBadge category={program.category} />
-          </Descriptions.Item>
-          <Descriptions.Item label="매칭일">
-            {dayjs(program.matchedAt).format('YYYY-MM-DD')}
-          </Descriptions.Item>
-          <Descriptions.Item label="진행 기간">
-            {dayjs(program.startDate).format('YYYY-MM-DD')} ~{' '}
-            {dayjs(program.endDate).format('YYYY-MM-DD')}
-          </Descriptions.Item>
-          {fullProgram?.schoolId && (
-            <Descriptions.Item label="학교명">
-              {schoolService.getByIdSync(fullProgram.schoolId)?.name || '-'}
-            </Descriptions.Item>
-          )}
-        </Descriptions>
+        <DetailInfoForm title="프로그램 정보" mode="view" hideHeader>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="상태"
+              view={<ProgramCategoryBadge category={program.category} />}
+            />
+            <DetailInfoForm.Field
+              label="매칭일"
+              view={dayjs(program.matchedAt).format('YYYY-MM-DD')}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="진행 기간"
+              fullRow
+              view={`${dayjs(program.startDate).format('YYYY-MM-DD')} ~ ${dayjs(program.endDate).format('YYYY-MM-DD')}`}
+            />
+          </DetailInfoForm.Row>
+          {fullProgram?.schoolId ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="학교명"
+                fullRow
+                view={schoolService.getByIdSync(fullProgram.schoolId)?.name || '-'}
+              />
+            </DetailInfoForm.Row>
+          ) : null}
+        </DetailInfoForm>
       </Card>
 
       <Card>

@@ -291,6 +291,7 @@ export const MOCK_APPLICANT_INSTITUTIONS: ApplicantSchoolRow[] = (() => {
     row.desiredEducationPeriod = '26.04.20(월)~26.04.27(월)'
     row.detail = { ...APPLICANT_SCHOOL_1_DETAIL }
     row.sessions = APPLICANT_SCHOOL_1_SESSIONS
+    row.assignedInstructorNames = '김강사1, 이강사2, 박강사3'
   }
   const rowJinwol4 = list.find(s => s.id === 'applicant-school-5')
   if (rowJinwol4) {
@@ -334,6 +335,58 @@ export const MOCK_APPLICANT_INSTITUTIONS: ApplicantSchoolRow[] = (() => {
     row2.participationRejectionReason = '인원 초과'
     row2.approvalNotificationSentAt = '2024.01.15 09:15:42'
   }
+
+  list.push(
+    {
+      id: 'trained-teachers-applicant-pending',
+      no: 2,
+      schoolName: '진월초등학교',
+      region: '광주광역시 남구 광복마을4길 40',
+      educationGrade: '5학년',
+      classCount: 4,
+      studentCount: 124,
+      teacherName: '이길동',
+      contact: '062-1234-0000',
+      appliedAt: '2026.01.12',
+      approvalStatus: 'pending',
+      programId: 'trained-teachers-prog-001',
+      detail: {
+        addressDetail: '1층 교무실 이길동 선생님 앞',
+        educationType: '온/오프라인',
+        teacherInfo:
+          '담당 교사 : 이길동 | Tel : 062-1234-0000 | M : 010-1234-0000 | E-mail : tinto@naver.com',
+        applicationReason: '아이들의 경제감각 성장에 큰 도움이 될 것 같아 신청합니다!',
+        otherRequests: '혹시 다른 학년도 동일하게 추가 신청이 가능할까요?',
+      },
+    },
+    {
+      id: 'trained-teachers-applicant-approved',
+      no: 1,
+      schoolName: '진월초등학교',
+      region: '광주광역시 남구 광복마을4길 40',
+      educationGrade: '5학년',
+      classCount: 4,
+      studentCount: 124,
+      teacherName: '이길동',
+      contact: '062-1234-0000',
+      appliedAt: '2026.01.10',
+      approvalStatus: 'approved',
+      approvalNotificationSentAt: '2026.01.16 10:00:00',
+      programId: 'trained-teachers-prog-001',
+      adminComment: '교재 배송 일정 확인 후 연락 예정',
+      detail: {
+        addressDetail: '1층 교무실 이길동 선생님 앞',
+        educationType: '온/오프라인',
+        textbookName: '성공하는 경제생활',
+        textbookId: 'TB-110',
+        teacherInfo:
+          '담당 교사 : 이길동 | Tel : 062-1234-0000 | M : 010-1234-0000 | E-mail : tinto@naver.com',
+        applicationReason: '아이들의 경제감각 성장에 큰 도움이 될 것 같아 신청합니다!',
+        otherRequests: '혹시 다른 학년도 동일하게 추가 신청이 가능할까요?',
+      },
+    }
+  )
+
   return list
 })()
 
@@ -515,6 +568,9 @@ export interface ApplicantInstitutionDetailSavePayload {
   textbookName: string
   combinedClassApplication: '신청' | '미신청'
   combinedClassPartnerApplicantIds: string[]
+  teacherName?: string
+  contact?: string
+  teacherInfo?: string
 }
 
 function buildCombinedClassDetailFields(
@@ -551,12 +607,30 @@ function applyDetailSaveToRow(
     educationGrade: payload.educationGrade,
     classCount: payload.classCount,
     studentCount: payload.studentCount,
+    teacherName: payload.teacherName ?? row.teacherName,
+    contact: payload.contact ?? row.contact,
     adminComment: adminTrimmed ? adminTrimmed : undefined,
     detail: {
       ...row.detail,
       ...detailPatch,
+      teacherInfo: payload.teacherInfo ?? row.detail?.teacherInfo,
+      applicationReason: payload.applicationReason ?? row.detail?.applicationReason,
+      otherRequests: payload.otherRequests ?? row.detail?.otherRequests,
     },
   }
+}
+
+/** 단일 기관 신청 관리자 코멘트 갱신 (mock) */
+export function patchApplicantInstitutionAdminComment(
+  schoolId: string,
+  adminComment: string
+): ApplicantSchoolRow | null {
+  const row = MOCK_APPLICANT_INSTITUTIONS.find(s => s.id === schoolId)
+  if (!row) return null
+
+  const adminTrimmed = adminComment.trim()
+  row.adminComment = adminTrimmed ? adminTrimmed : undefined
+  return { ...row }
 }
 
 /** 단일 기관 신청 상세 필드 갱신 (mock) */

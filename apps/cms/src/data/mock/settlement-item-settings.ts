@@ -24,6 +24,8 @@ export type SettlementItemSettingCategoryKind = 'wage' | 'payment' | 'deduction'
 
 export interface SettlementItemSettingRow {
   id: string
+  /** API 항목 id (remote 전용) */
+  apiItemId?: number
   title: string
   description: string
   iconKey: SettlementItemSettingIconKey

@@ -1,0 +1,15 @@
+/* 탭 ↔ 필터 간격 — Gemini 찾아가는 연수·템플릿 목록과 동일 */
+.kakao-alimtalk-page__tabs.cms-text-tabs .cms-text-tabs__row {
+  padding-left: 20px;
+  padding-bottom: 16px;
+}
+
+.kakao-alimtalk-page__tabs .cms-text-tabs__trailing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification-coming-soon-tab-panel {
+  padding: 48px 24px;
+}

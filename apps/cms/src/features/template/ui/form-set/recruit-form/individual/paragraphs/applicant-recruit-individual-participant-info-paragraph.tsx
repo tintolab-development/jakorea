@@ -59,6 +59,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
   )
 
   const [finalAnnounceDate, setFinalAnnounceDate] = useState<Dayjs | null>(null)
+  const [targetLevels, setTargetLevels] = useState<string[]>([])
 
   return (
     <>
@@ -136,10 +137,14 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
             label="교육 대상"
             edit={
               <CmsSelect
+                mode="multiple"
                 inputSize="medium"
                 width={240}
-                placeholder="전체"
+                withAllOption={false}
+                placeholder="교육 대상을 선택하세요"
                 options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                value={targetLevels}
+                onChange={v => setTargetLevels(Array.isArray(v) ? v.map(String) : [])}
               />
             }
             view="-"

@@ -54,13 +54,30 @@
   justify-content: center;
 }
 
-.date-time-picker-popover__calendar-mini.calendar-mini {
+.date-time-picker-popover__calendar-mini {
   box-shadow: none;
   max-height: none;
   width: 300px;
   min-height: 312px;
-  padding: 0 !important;
+  padding: 0;
   box-sizing: border-box;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* CalendarMini shell — 팝오버 외곽·열 구분선만 프레임; nested shell·antd 패널 border 제거 */
+.date-time-picker-popover__calendar-mini .calendar-mini {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.date-time-picker-popover__calendar-mini .ant-picker-calendar,
+.date-time-picker-popover__calendar-mini .ant-picker-calendar .ant-picker-panel,
+.date-time-picker-popover__calendar-mini .ant-picker-panel .ant-picker-body {
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .date-time-picker-popover--with-time {
@@ -339,7 +356,7 @@
 }
 
 .date-time-picker-time-selects__wrap--invalid.cms-select {
-  border-color: #ff4d4f !important;
+  border-color: var(--color-settlement) !important;
   background: rgba(255, 77, 79, 0.08) !important;
   box-shadow: none !important;
 }

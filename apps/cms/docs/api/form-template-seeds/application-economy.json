@@ -1,0 +1,342 @@
+{
+  "templateCode": "application-economy",
+  "formType": "WRITING",
+  "category": "APPLICATION",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "none"
+    },
+    "paragraphs": [
+      {
+        "id": "program-application-economy-seed-personal-info",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "개인정보 수집·이용",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "field",
+        "columnHeaders": [
+          "수집 항목",
+          "수집·이용 목적",
+          "보유기간"
+        ],
+        "dataRows": [
+          [
+            "",
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          }
+        ],
+        "fieldDataRows": [
+          [
+            {
+              "kind": "text",
+              "value": "이름, 기관명, 기관 소재지, 개인 연락처, 이메일"
+            },
+            {
+              "kind": "text",
+              "value": "1사1교 프로그램 신청 접수 및 교육 운영에 필요한 정보 안내"
+            },
+            {
+              "kind": "text",
+              "value": "- 이용 기간: 해당 프로그램이 진행되는 기간\n- 보유 기간: 프로그램 종료로부터 1년 보관 후 폐기"
+            }
+          ]
+        ],
+        "bottomText": "위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.",
+        "showBottomText": true,
+        "showBottomConsent": true,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-economy-seed-third-party",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "개인정보 제3자 정보 제공·이용 동의",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "field",
+        "columnHeaders": [
+          "제공받는 곳",
+          "수집 항목",
+          "수집·이용 목적",
+          "제공받는 자의 보유기간"
+        ],
+        "dataRows": [
+          [
+            "",
+            "",
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [
+          {
+            "kind": "subjective",
+            "placeholder": "제공받는 곳을 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          }
+        ],
+        "fieldDataRows": [
+          [
+            {
+              "kind": "subjective",
+              "value": ""
+            },
+            {
+              "kind": "text",
+              "value": "이름, 학교명, 학교주소, 개인 연락처, e-mail"
+            },
+            {
+              "kind": "text",
+              "value": "JA 프로그램의 참가자 선발 및\n프로그램 진행에 필요한 정보 안내"
+            },
+            {
+              "kind": "text",
+              "value": "5년"
+            }
+          ]
+        ],
+        "bottomText": "위의 개인정보 제3자 정보 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 해당 프로그램에 참여가 불가합니다.",
+        "showBottomText": true,
+        "showBottomConsent": true,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-economy-seed-basic-info",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "기본 정보",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-economy-seed-guidance",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "안내 사항",
+        "paragraphDescription": "강사님들에게 제공 또는 요청할 사전 정보를 작성해 주세요.",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-economy-seed-sex-offense-consent-submission",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "성범죄 경력 조회 동의서 제출 요청",
+        "paragraphDescription": "강사님들의 성범죄 경력 조회 동의서 제출이 필요하신 경우, 동의서 제출을 요청해 주세요. 미요청 시 전달되지 않습니다.",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-economy-seed-sex-offense-consent-inquiry",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "성범죄 경력 조회 동의서 조회 방식",
+        "paragraphDescription": "성범죄 경력 조회 동의서의 조회 방식을 선택해 주세요. 범죄경력회보서의 온라인 제출을 희망하는 경우, 기관 ID와 검증번호를 함께 전달해 주세요.\nJA 시스템 내에서 확인 선택 시, 프로그램 및 배정 정보와 함께 JA 홈페이지 상세에서 동의서 확인이 가능합니다. (조회 동의서만 제공하며, 실제 조회는 별도로 진행해 주셔야 합니다.)",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-economy-seed-lesson-reply",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "결연 금융 회사명",
+        "paragraphDescription": "*결연 확인 방법*\n1. 금융감독원 e-금융교육센터 홈페이지(www.fss.or.kr/edu) 접속\n2. 메인화면 [1사1교 금융교육] 클릭\n3. 1사1교 금융교육 프로그램 안내페이지에서 하단의 [결연현황 조회] 클릭\n4. [학교명]에 소속 학교 검색 후 결연된 금융사 확인",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-economy-seed-education-experience",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "전년도 1사1교 경제금융교육 진행 여부",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "program-application-economy-seed-preferred-schedule",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "진행 희망 교육 일정",
+        "paragraphDescription": "교육을 희망하는 날짜와 진행 차시를 2지망까지 작성해 주세요. 수업은 1일, 최대 2차시까지 운영됩니다. (2차시는 연강으로만 진행 가능합니다. ex. 2교시 시작 시 3교시까지 진행)",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      }
+    ]
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장"
+}

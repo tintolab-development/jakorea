@@ -7,7 +7,7 @@ import {
   toInterviewAssignModalApplicant,
   toInterviewAssignModalApplicants,
 } from '@/features/program/general/lib/interview-assign-applicant-adapter'
-import { UjatVolunteerInterviewAssignModal } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-interview-assign-modal'
+import { UjatVolunteerInterviewAssignModal } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/modal'
 
 export type GeneralInterviewAssignNotifyTiming = 'immediate' | 'manual'
 

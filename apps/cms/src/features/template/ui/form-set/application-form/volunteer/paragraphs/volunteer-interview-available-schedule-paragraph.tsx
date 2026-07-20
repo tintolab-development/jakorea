@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { VolunteerInterviewScheduleEditSeed } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
-import { InstructorAvailableScheduleParagraph } from '@/features/template/ui/form-set/application-form/instructor/paragraphs/instructor-available-schedule-paragraph'
+import { createDefaultUnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
+import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
+import { VolunteerInterviewApplicantScheduleParagraph } from '@/features/template/ui/form-set/application-form/volunteer/paragraphs/volunteer-interview-applicant-schedule-paragraph'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
@@ -57,11 +59,13 @@ function VolunteerInterviewScheduleBlock({
   title,
   type,
   commonScheduleSeed,
+  onCommonExclusionChange,
 }: {
   /** 예외 일정이 있을 때만 공통 블록에 전달 */
   title?: string
   type: 'common' | 'exception'
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
+  onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
 }) {
   const seed = type === 'common' ? commonScheduleSeed : undefined
   const initialTimeRange = useMemo(
@@ -80,6 +84,17 @@ function VolunteerInterviewScheduleBlock({
   const [appliedUnavailableDates, setAppliedUnavailableDates] = useState<string[]>(
     () => seed?.appliedUnavailableDates ?? []
   )
+  const [exclusionState, setExclusionState] = useState<UnavailableDatesExclusionState>(() => {
+    if (seed) {
+      return {
+        excludeNone: seed.excludeNone,
+        excludeSaturday: seed.excludeSaturday,
+        excludeSunday: seed.excludeSunday,
+        excludeHoliday: seed.excludeHoliday,
+      }
+    }
+    return createDefaultUnavailableDatesExclusionState()
+  })
   const seedSlotsAppliedRef = useRef(false)
   const interviewTimeSlots = useMemo(
     () => buildInterviewTimeSlots(interviewTimeRange, timeUnit),
@@ -105,6 +120,18 @@ function VolunteerInterviewScheduleBlock({
       return []
     })
   }, [interviewTimeSlots, seed])
+
+  const handleExclusionChange = (state: UnavailableDatesExclusionState) => {
+    setExclusionState(state)
+    if (type === 'common') {
+      onCommonExclusionChange?.(state)
+    }
+  }
+
+  useEffect(() => {
+    if (type !== 'common') return
+    onCommonExclusionChange?.(exclusionState)
+  }, [exclusionState, onCommonExclusionChange, type])
 
   const toggleTimeSlot = (slotKey: string) => {
     setSelectedSlotKeys(prev =>
@@ -132,9 +159,12 @@ function VolunteerInterviewScheduleBlock({
                   modalUnavailableDescriptionSecond="선택된 날짜는 면접 일정으로 신청할 수 없습니다."
                   appliedDates={appliedUnavailableDates}
                   onApplyDatesChange={setAppliedUnavailableDates}
+                  exclusionState={exclusionState}
+                  onExclusionChange={handleExclusionChange}
                   defaultExcludeSaturday={seed?.excludeSaturday}
                   defaultExcludeSunday={seed?.excludeSunday}
                   defaultExcludeHoliday={seed?.excludeHoliday}
+                  defaultExcludeNone={seed?.excludeNone}
                 />
               }
               view="-"
@@ -224,11 +254,13 @@ function VolunteerInterviewScheduleTemplateUi({
   exceptionBlockKeys,
   onRemoveExceptionBlock,
   commonScheduleSeed,
+  onCommonExclusionChange,
 }: {
   exceptionScheduleCount?: number
   exceptionBlockKeys?: number[]
   onRemoveExceptionBlock?: (key: number) => void
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
+  onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
 }) {
   const [internalBlockKeys, setInternalBlockKeys] = useState<number[]>([])
 
@@ -266,6 +298,7 @@ function VolunteerInterviewScheduleTemplateUi({
         title={hasExceptionSchedules ? '■ 공통 진행 일정' : undefined}
         type="common"
         commonScheduleSeed={commonScheduleSeed}
+        onCommonExclusionChange={onCommonExclusionChange}
       />
       {blockKeys.map((key, index) => (
         <div key={key} className="volunteer-interview-available-schedule__exception-row">
@@ -292,27 +325,37 @@ function VolunteerInterviewScheduleTemplateUi({
 /** 봉사자 신청 폼 — 면접 진행 가능 일정 */
 export function VolunteerInterviewAvailableScheduleParagraph({
   isTemplateAuthoringMode = false,
+  readOnlyPreview = false,
   exceptionScheduleCount = 0,
   exceptionBlockKeys,
   onRemoveExceptionBlock,
   commonScheduleSeed,
+  onCommonExclusionChange,
 }: {
   isTemplateAuthoringMode?: boolean
+  readOnlyPreview?: boolean
   exceptionScheduleCount?: number
   exceptionBlockKeys?: number[]
   onRemoveExceptionBlock?: (key: number) => void
   commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
+  onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
 }) {
-  if (isTemplateAuthoringMode) {
+  if (isTemplateAuthoringMode && !readOnlyPreview) {
     return (
       <VolunteerInterviewScheduleTemplateUi
         exceptionScheduleCount={exceptionScheduleCount}
         exceptionBlockKeys={exceptionBlockKeys}
         onRemoveExceptionBlock={onRemoveExceptionBlock}
         commonScheduleSeed={commonScheduleSeed}
+        onCommonExclusionChange={onCommonExclusionChange}
       />
     )
   }
 
-  return <InstructorAvailableScheduleParagraph summaryFieldLabel="면접 진행 가능일" />
+  return (
+    <VolunteerInterviewApplicantScheduleParagraph
+      commonScheduleSeed={commonScheduleSeed}
+      readOnlyPreview={readOnlyPreview}
+    />
+  )
 }

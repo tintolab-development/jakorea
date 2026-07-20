@@ -2,6 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import type { TemplateWritingUserPreviewSession } from '@/features/template/context/template-writing-preview-context'
 import { getFormNavDisplayLine } from '@/features/template/lib/form-title-numbering'
+import { EMPTY_WRITING_FORM_DRAFT } from '@/features/template/lib/empty-writing-form-draft'
+import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
+import {
+  loadWritingFormTemplateDraft,
+  persistWritingFormTemplateDraft,
+} from '@/features/template/lib/writing-form-template-local-save'
 import type { FormEditorKind } from '@/features/template/model/writing-form-draft.schema'
 import {
   getWritingFormHeadMiddlePinnedTail,
@@ -20,7 +26,7 @@ import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/para
 export type UseWritingFormEditorWithUserPreviewOptions = {
   /** 편집 UI(풀페이지 등) 열림 */
   open: boolean
-  /** `open`이 true로 전환될 때마다 초안을 다시 만든다 */
+  /** `open`이 true로 전환될 때마다 초안을 다시 만든다 (API 미사용 시) */
   getInitialDraft: () => WritingFormDraft
   /** 리셋 직후 선택할 단락 id */
   getDefaultActiveParagraphId: (draft: WritingFormDraft) => string | null
@@ -36,9 +42,15 @@ export type UseWritingFormEditorWithUserPreviewOptions = {
     | 'previewLayout'
     | 'hideParagraphRequiredChrome'
     | 'a4HiddenParagraphIds'
+    | 'a4PageBreakBeforeParagraphIds'
     | 'a4RenderMode'
     | 'a4ParagraphGapPx'
   >
+  /** forms-surveys draft API 연동 대상 templateCode */
+  templateCode?: string
+  /** 템플릿 관리 저장 확인 후 (편집 모달 닫기·목록 복귀) */
+  onTemplateDraftSaveConfirmed?: () => void
+  /** @deprecated templateCode 기반 저장 사용. templateCode 없을 때만 호출 */
   onSave?: () => void
 }
 
@@ -47,6 +59,8 @@ export type FormEditorNavLine = { id: string; displayLine: string }
 export type WritingFormEditorWithUserPreviewResult = {
   headerTitle: string
   draft: WritingFormDraft
+  /** draft API(또는 시드) 로드 완료 전 */
+  isDraftLoading: boolean
   activeParagraphId: string | null
   singleItemListActiveItemId: string | null
   pinnedTop: FormEditorNavLine | null
@@ -77,8 +91,13 @@ export function useWritingFormEditorWithUserPreview(
     previewZIndex,
     previewParagraphBodyOptions,
     a4PreviewOptions,
+    templateCode,
+    onTemplateDraftSaveConfirmed,
     onSave,
   } = options
+
+  const { showSaveSuccess, showSaveFailure } = useFormTemplateSaveFeedback()
+  const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
 
   const {
     openWritingUserPreview,
@@ -87,21 +106,52 @@ export function useWritingFormEditorWithUserPreview(
     isWritingUserPreviewOpen,
   } = useTemplateWritingPreview()
 
-  const [draft, setDraft] = useState<WritingFormDraft>(() =>
-    normalizeWritingFormDraft(getInitialDraft())
-  )
+  const [draft, setDraft] = useState<WritingFormDraft>(() => EMPTY_WRITING_FORM_DRAFT)
   const [singleItemListActiveItemId, setSingleItemListActiveItemId] = useState<string | null>(null)
-  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(() =>
-    getDefaultActiveParagraphId(normalizeWritingFormDraft(getInitialDraft()))
+  const [activeParagraphId, setActiveParagraphId] = useState<string | null>(null)
+  const [isDraftLoading, setIsDraftLoading] = useState(() => open)
+
+  const applyDraftSnapshot = useCallback(
+    (next: WritingFormDraft) => {
+      const normalized = normalizeWritingFormDraft(next)
+      setDraft(normalized)
+      setActiveParagraphId(getDefaultActiveParagraphId(normalized))
+      setSingleItemListActiveItemId(null)
+    },
+    [getDefaultActiveParagraphId]
   )
 
   useEffect(() => {
-    if (!open) return
-    const next = normalizeWritingFormDraft(getInitialDraft())
-    setDraft(next)
-    setActiveParagraphId(getDefaultActiveParagraphId(next))
-    setSingleItemListActiveItemId(null)
-  }, [open, getInitialDraft, getDefaultActiveParagraphId])
+    if (!open) {
+      setIsDraftLoading(false)
+      return
+    }
+
+    if (templateCode != null && templateCode !== '') {
+      let cancelled = false
+      setIsDraftLoading(true)
+      setDraft(EMPTY_WRITING_FORM_DRAFT)
+      setActiveParagraphId(null)
+      void loadWritingFormTemplateDraft(templateCode)
+        .then(saved => {
+          if (cancelled) return
+          if (saved?.draft) {
+            applyDraftSnapshot(saved.draft)
+            return
+          }
+          applyDraftSnapshot(getInitialDraft())
+        })
+        .finally(() => {
+          if (!cancelled) setIsDraftLoading(false)
+        })
+      return () => {
+        cancelled = true
+      }
+    }
+
+    setIsDraftLoading(false)
+    applyDraftSnapshot(getInitialDraft())
+  }, [open, applyDraftSnapshot, getInitialDraft, templateCode])
 
   useEffect(() => {
     if (!open) closeWritingUserPreview()
@@ -133,6 +183,7 @@ export function useWritingFormEditorWithUserPreview(
       previewLayout: a4PreviewOptions?.previewLayout,
       hideParagraphRequiredChrome: a4PreviewOptions?.hideParagraphRequiredChrome,
       a4HiddenParagraphIds: a4PreviewOptions?.a4HiddenParagraphIds,
+      a4PageBreakBeforeParagraphIds: a4PreviewOptions?.a4PageBreakBeforeParagraphIds,
       a4RenderMode: a4PreviewOptions?.a4RenderMode,
       a4ParagraphGapPx: a4PreviewOptions?.a4ParagraphGapPx,
       focusedParagraphId: activeParagraphId,
@@ -197,8 +248,35 @@ export function useWritingFormEditorWithUserPreview(
   }, [openWritingUserPreview, writingPreviewSession])
 
   const handleSave = useCallback(() => {
-    onSave?.()
-  }, [onSave])
+    if (templateCode == null || templateCode === '') {
+      onSave?.()
+      return
+    }
+    void (async () => {
+      try {
+        await persistWritingFormTemplateDraft({
+          templateId: templateCode,
+          draft,
+        })
+        if (isTemplateManagementSave) {
+          showSaveSuccess(onTemplateDraftSaveConfirmed)
+        }
+      } catch (error) {
+        console.debug('writingFormEditor save failed', error)
+        if (isTemplateManagementSave) {
+          showSaveFailure()
+        }
+      }
+    })()
+  }, [
+    draft,
+    isTemplateManagementSave,
+    onSave,
+    onTemplateDraftSaveConfirmed,
+    showSaveFailure,
+    showSaveSuccess,
+    templateCode,
+  ])
 
   const onSelectSingleItemListItem = useCallback((paragraphId: string, itemId: string | null) => {
     setActiveParagraphId(paragraphId)
@@ -213,6 +291,7 @@ export function useWritingFormEditorWithUserPreview(
   return {
     headerTitle: previewHeaderTitle,
     draft,
+    isDraftLoading,
     activeParagraphId,
     singleItemListActiveItemId,
     pinnedTop,

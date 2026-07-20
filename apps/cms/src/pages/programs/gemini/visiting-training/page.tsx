@@ -1,6 +1,6 @@
 /**
  * 프로그램 관리 > Gemini 프로그램 > 찾아가는 연수
- * 레이아웃: 회원 관리 > 권한 승인 — 탭 + FilterTableLayout(모집 공고 탭)
+ * 레이아웃: 정산 관리 > 계좌 지급 확인 — 탭(행 패딩 없음) + FilterTableLayout
  */
 
 import { useCallback } from 'react'

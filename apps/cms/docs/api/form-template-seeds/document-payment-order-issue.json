@@ -1,0 +1,674 @@
+{
+  "templateCode": "document-payment-order-issue",
+  "templateName": "지급조서(발급용)",
+  "formType": "ISSUANCE",
+  "category": "ISSUANCE",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "numeric"
+    },
+    "paragraphs": [
+      {
+        "id": "payment-statement-seed-title",
+        "kind": "description",
+        "variant": "survey_title_with_period",
+        "requiredMark": true,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "surveyTitle": "JA KOREA 지급조서",
+        "surveyDescription": "",
+        "periodMode": "immediate",
+        "startAt": null,
+        "endAt": null,
+        "showWritingPeriodOnForm": false,
+        "startPeriodMode": "immediate",
+        "endPeriodMode": "immediate",
+        "endPeriodPresetLabel": null
+      },
+      {
+        "id": "payment-statement-seed-table-basic",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "지급조서",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [
+          {
+            "kind": "text",
+            "placeholder": "성명"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          }
+        ],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "cellColumnFields": [
+          [
+            {
+              "kind": "text",
+              "placeholder": "성명"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "영문 성명"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "주민등록번호"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "소속"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "자택 주소"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "정산 계좌 정보"
+            },
+            {
+              "kind": "text",
+              "placeholder": "은행 · 계좌번호 · 예금주"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "지급 목적"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            }
+          ]
+        ],
+        "idTypeWithInput": null
+      },
+      {
+        "id": "payment-statement-seed-table-calc-info",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "강의비 산출 정보",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "항목",
+          "내용"
+        ],
+        "dataRows": [
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ],
+          [
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [
+          {
+            "kind": "text",
+            "placeholder": "강사료 유형"
+          },
+          {
+            "kind": "text",
+            "placeholder": "텍스트를 입력해 주세요"
+          }
+        ],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "cellColumnFields": [
+          [
+            {
+              "kind": "text",
+              "placeholder": "강사료 유형"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "강사료 책정"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "사업소득자 여부"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "교육 진행 차시"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "지급 항목 여부"
+            },
+            {
+              "kind": "text",
+              "placeholder": "교통비 · 숙박비 등"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "총 학생 수"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "총 강의료"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            }
+          ]
+        ],
+        "idTypeWithInput": null
+      },
+      {
+        "id": "payment-statement-seed-table-calc-lines",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "강의비 산출 내역",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "참여 기관명",
+          "강의 진행 일자",
+          "지급/공제",
+          "구분",
+          "항목명",
+          "금액"
+        ],
+        "dataRows": [
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [
+          {
+            "kind": "text",
+            "placeholder": "○○고등학교"
+          },
+          {
+            "kind": "text",
+            "placeholder": "2025-09-01"
+          },
+          {
+            "kind": "text",
+            "placeholder": "지급"
+          },
+          {
+            "kind": "text",
+            "placeholder": "강사료"
+          },
+          {
+            "kind": "text",
+            "placeholder": "강사료"
+          },
+          {
+            "kind": "text",
+            "placeholder": "500,000"
+          }
+        ],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "cellColumnFields": [
+          [
+            {
+              "kind": "text",
+              "placeholder": "○○고등학교"
+            },
+            {
+              "kind": "text",
+              "placeholder": "2025-09-01"
+            },
+            {
+              "kind": "text",
+              "placeholder": "지급"
+            },
+            {
+              "kind": "text",
+              "placeholder": "강사료"
+            },
+            {
+              "kind": "text",
+              "placeholder": "강사료"
+            },
+            {
+              "kind": "text",
+              "placeholder": "500,000"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "○○고등학교"
+            },
+            {
+              "kind": "text",
+              "placeholder": "2025-09-02"
+            },
+            {
+              "kind": "text",
+              "placeholder": "지급"
+            },
+            {
+              "kind": "text",
+              "placeholder": "비목"
+            },
+            {
+              "kind": "text",
+              "placeholder": "교통비"
+            },
+            {
+              "kind": "text",
+              "placeholder": "50,000"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "○○고등학교"
+            },
+            {
+              "kind": "text",
+              "placeholder": "2025-09-03"
+            },
+            {
+              "kind": "text",
+              "placeholder": "지급"
+            },
+            {
+              "kind": "text",
+              "placeholder": "비목"
+            },
+            {
+              "kind": "text",
+              "placeholder": "숙박비"
+            },
+            {
+              "kind": "text",
+              "placeholder": "100,000"
+            }
+          ],
+          [
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            },
+            {
+              "kind": "text",
+              "placeholder": "텍스트를 입력해 주세요"
+            },
+            {
+              "kind": "text",
+              "placeholder": "합계"
+            },
+            {
+              "kind": "text",
+              "placeholder": "강사료+교통비+숙박비-원천징수"
+            },
+            {
+              "kind": "text",
+              "placeholder": "650,000"
+            }
+          ]
+        ],
+        "idTypeWithInput": null
+      },
+      {
+        "id": "payment-statement-seed-table-work-log",
+        "kind": "single_item",
+        "variant": "horizontal_table",
+        "requiredMark": true,
+        "paragraphTitle": "근무일지",
+        "paragraphDescription": "설명 입력",
+        "participatesInTitleNumbering": true,
+        "tableFlavor": "text",
+        "columnHeaders": [
+          "날짜",
+          "근무자(인)",
+          "확인자(인)",
+          "날짜",
+          "근무자(인)",
+          "확인자(인)"
+        ],
+        "dataRows": [
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          [
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        ],
+        "columnFields": [],
+        "fieldDataRows": [],
+        "bottomText": "",
+        "showBottomText": false,
+        "showBottomConsent": false,
+        "bottomConsent": "agree",
+        "answerRequired": true,
+        "idTypeWithInput": null
+      },
+      {
+        "id": "payment-statement-seed-closing-date",
+        "kind": "description",
+        "variant": "closing",
+        "requiredMark": false,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "body": "2026년 07월 15일"
+      },
+      {
+        "id": "payment-statement-seed-closing-signature",
+        "kind": "description",
+        "variant": "closing",
+        "requiredMark": false,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "body": "사단법인 JA KOREA 회장 이은형"
+      }
+    ]
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장",
+  "_feSubcategoryNote": "FE 목록 서브분류: DOCUMENT (ISSUANCE_TEMPLATE_CODE_CATALOG). BE category enum은 ISSUANCE 단일 vs REPORT/DOCUMENT 분리 확인 필요.",
+  "_payload": "A"
+}

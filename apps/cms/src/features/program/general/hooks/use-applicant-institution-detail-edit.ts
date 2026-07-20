@@ -3,16 +3,31 @@ import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
 import { patchApplicantInstitutionDetailWithCombinedClass } from '@/data/mock/applicant-institutions'
 import type { Program } from '@/types/domain'
 import {
+  isCombinedClassProgramEligible,
+  resolveCombinedClassApplyRadioDisabled,
+} from '@/features/program/general/lib/combined-class-edit-policy'
+import {
   draftToSavePayload,
   parseApplicantInstitutionEditDraft,
   rowToEditDraft,
   type ApplicantInstitutionEditDraft,
 } from '@/features/program/general/lib/applicant-institution-detail-edit'
 import {
+  formatInstitutionApplicationGradeDisplay,
+  getInstitutionAffiliatedTeacherOptions,
+  shouldShowInstitutionApplicationEducationFormatField,
+  type InstitutionAffiliatedTeacherOption,
+} from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import {
   filterTextbooksForApplicant,
   resolveTextbookOptionLabel,
 } from '@/features/program/general/lib/filter-textbooks-for-applicant'
 import { getSameSchoolApplicantGrades } from '@/features/program/general/lib/get-same-school-applicant-grades'
+import {
+  buildInstitutionClassCountOptions,
+  resolveProgramParticipantMaxClassCount,
+} from '@/features/template/lib/participant-recruitment-institution-limits'
+import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 
 export interface TextbookSelectOption {
   value: string
@@ -43,6 +58,8 @@ export function useApplicantInstitutionDetailEdit({
   const [draft, setDraft] = useState<ApplicantInstitutionEditDraft | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
+  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
+
   const resetEditState = useCallback(() => {
     setIsEditing(false)
     setDraft(null)
@@ -55,24 +72,13 @@ export function useApplicantInstitutionDetailEdit({
   }, [institution?.id, resetEditState])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const enterEdit = useCallback(() => {
-    if (!institution) return
-    setDraft(rowToEditDraft(institution))
-    setValidationErrors({})
-    setIsEditing(true)
-  }, [institution])
-
-  const cancelEdit = useCallback(() => {
-    resetEditState()
-  }, [resetEditState])
-
-  const updateDraft = useCallback((partial: Partial<ApplicantInstitutionEditDraft>) => {
-    setDraft(prev => (prev ? { ...prev, ...partial } : prev))
-    setValidationErrors({})
-  }, [])
+  const isCombinedClassProgramEligibleFlag = useMemo(
+    () => isCombinedClassProgramEligible(program),
+    [program]
+  )
 
   const sameSchoolGradeOptions = useMemo((): SameSchoolGradeOption[] => {
-    if (!institution || !program?.id) return []
+    if (!institution || !program?.id || !isCombinedClassProgramEligibleFlag) return []
     return getSameSchoolApplicantGrades(
       institutionList,
       program.id,
@@ -83,39 +89,95 @@ export function useApplicantInstitutionDetailEdit({
       label: row.educationGrade,
       educationGrade: row.educationGrade,
     }))
-  }, [institution, institutionList, program])
+  }, [institution, institutionList, isCombinedClassProgramEligibleFlag, program?.id])
 
-  const canApplyCombinedClass = sameSchoolGradeOptions.length >= 1
+  const isCombinedClassApplyRadioDisabled = resolveCombinedClassApplyRadioDisabled(
+    sameSchoolGradeOptions
+  )
+
+  const showEducationFormatField = useMemo(
+    () => shouldShowInstitutionApplicationEducationFormatField(program),
+    [program]
+  )
+
+  const classCountOptions = useMemo(
+    () => buildInstitutionClassCountOptions(resolveProgramParticipantMaxClassCount(program)),
+    [program]
+  )
+
+  const teacherOptions = useMemo((): InstitutionAffiliatedTeacherOption[] => {
+    if (!institution) return []
+    const currentName = isEditing ? draft?.teacherName : institution.teacherName
+    return getInstitutionAffiliatedTeacherOptions(institution.schoolName, currentName)
+  }, [draft?.teacherName, institution, isEditing])
+
+  /** @deprecated sameSchoolGradeOptions.length >= 1 && isCombinedClassProgramEligibleFlag */
+  const canApplyCombinedClass =
+    isCombinedClassProgramEligibleFlag && !isCombinedClassApplyRadioDisabled
+
+  const enterEdit = useCallback(() => {
+    if (!institution) return
+    let nextDraft = rowToEditDraft(institution)
+    if (!isCombinedClassProgramEligibleFlag) {
+      nextDraft = {
+        ...nextDraft,
+        combinedClassApplication: '미신청',
+        combinedClassPartnerApplicantIds: [],
+      }
+    }
+    setDraft(nextDraft)
+    setValidationErrors({})
+    setIsEditing(true)
+  }, [institution, isCombinedClassProgramEligibleFlag])
+
+  const cancelEdit = useCallback(() => {
+    resetEditState()
+  }, [resetEditState])
+
+  const updateDraft = useCallback((partial: Partial<ApplicantInstitutionEditDraft>) => {
+    setDraft(prev => (prev ? { ...prev, ...partial } : prev))
+    setValidationErrors({})
+  }, [])
 
   const textbookOptions = useMemo((): TextbookSelectOption[] => {
-    if (!program || !institution?.educationGrade) return []
-    return filterTextbooksForApplicant(program, institution.educationGrade).map(row => ({
+    if (!program) return []
+    const gradeSource =
+      isEditing && draft?.educationGrade
+        ? formatInstitutionApplicationGradeDisplay(draft.educationGrade)
+        : institution?.educationGrade
+    if (!gradeSource) return []
+    return filterTextbooksForApplicant(program, gradeSource, textbookCatalog).map(row => ({
       value: row.id,
       label: resolveTextbookOptionLabel(row),
       textbookName: row.textbookName,
     }))
-  }, [institution?.educationGrade, program])
+  }, [draft?.educationGrade, institution?.educationGrade, isEditing, program, textbookCatalog])
 
   const saveEdit = useCallback((): boolean => {
     if (!institution || !draft) return false
 
     const normalizedDraft: ApplicantInstitutionEditDraft = {
       ...draft,
-      combinedClassApplication:
-        canApplyCombinedClass ? draft.combinedClassApplication : '미신청',
+      combinedClassApplication: isCombinedClassProgramEligibleFlag
+        ? draft.combinedClassApplication
+        : '미신청',
       combinedClassPartnerApplicantIds:
-        canApplyCombinedClass && draft.combinedClassApplication === '신청'
+        isCombinedClassProgramEligibleFlag && draft.combinedClassApplication === '신청'
           ? draft.combinedClassPartnerApplicantIds
           : [],
     }
 
-    const parsed = parseApplicantInstitutionEditDraft(normalizedDraft)
+    const parsed = parseApplicantInstitutionEditDraft(normalizedDraft, {
+      showEducationFormatField,
+    })
     if (!parsed.success) {
       setValidationErrors(parsed.errors)
       return false
     }
 
-    const payload = draftToSavePayload(normalizedDraft, institution)
+    const payload = draftToSavePayload(normalizedDraft, institution, {
+      showEducationFormatField,
+    })
     if (!payload) {
       setValidationErrors({ form: '저장할 수 없습니다. 입력값을 확인해 주세요.' })
       return false
@@ -130,7 +192,7 @@ export function useApplicantInstitutionDetailEdit({
     onSaved(updatedRows)
     resetEditState()
     return true
-  }, [canApplyCombinedClass, draft, institution, onSaved, resetEditState])
+  }, [draft, institution, isCombinedClassProgramEligibleFlag, onSaved, resetEditState, showEducationFormatField])
 
   return {
     isEditing,
@@ -138,7 +200,12 @@ export function useApplicantInstitutionDetailEdit({
     validationErrors,
     textbookOptions,
     sameSchoolGradeOptions,
+    classCountOptions,
+    teacherOptions,
+    showEducationFormatField,
     canApplyCombinedClass,
+    isCombinedClassProgramEligible: isCombinedClassProgramEligibleFlag,
+    isCombinedClassApplyRadioDisabled,
     isCombinedClassApplyDisabled: !canApplyCombinedClass,
     enterEdit,
     cancelEdit,

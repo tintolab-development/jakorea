@@ -228,7 +228,7 @@ export function UjatAssignmentDocumentViewerModal({
         닫기
       </CmsButton>
       <CmsButton
-        variant={submittedFeedback != null ? 'default' : 'primary'}
+        variant="primary"
         size="medium"
         width={120}
         onClick={handleFeedbackButtonClick}

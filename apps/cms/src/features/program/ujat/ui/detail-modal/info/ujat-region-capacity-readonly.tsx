@@ -75,7 +75,7 @@ export function UjatRegionCapacityReadonly({
   semesters?: readonly UjatRegionCapacitySemesterBlock[]
 }) {
   return (
-    <div className="ujat-program-detail-common-info-view__section ujat-region-capacity-readonly">
+    <div className="program-detail-fullpage-modal__info-tab-block ujat-region-capacity-readonly">
       <h2 className="detail-info-form__title ujat-region-capacity-readonly__title">
         지역 별 교육 진행 가능 학급 수
       </h2>

@@ -1,0 +1,22 @@
+.ujat-doc-screening-status-text {
+  display: inline-block;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.ujat-doc-screening-status-text--pending {
+  color: var(--color-green);
+}
+
+.ujat-doc-screening-status-text--pass {
+  color: var(--main-BK, #3d3d3d);
+}
+
+.ujat-doc-screening-status-text--fail {
+  color: #c32f4a;
+}

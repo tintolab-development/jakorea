@@ -8,6 +8,7 @@ export type SurveyNoResponseStateProps = {
   deleteButtonLabel: string
   previewButtonLabel: string
   canDelete: boolean
+  embedded?: boolean
   onDeleteClick: () => void
   onOpenTemplatePreview: () => void
 }
@@ -18,22 +19,27 @@ export function SurveyNoResponseState({
   deleteButtonLabel,
   previewButtonLabel,
   canDelete,
+  embedded = false,
   onDeleteClick,
   onOpenTemplatePreview,
 }: SurveyNoResponseStateProps) {
+  const rootClassName = embedded
+    ? 'survey-management-status-state'
+    : 'program-detail-fullpage-modal__info-tab survey-management-status-state'
+
   return (
-    <div className="program-detail-fullpage-modal__info-tab ujat-survey-registered-empty-state">
-      <div className="ujat-survey-registered-empty-state__content">
-        <span className="ujat-survey-registered-empty-state__icon" aria-hidden>
+    <div className={rootClassName}>
+      <div className="survey-management-status-state__content">
+        <span className="survey-management-status-state__icon" aria-hidden>
           <SurveyEmptyIcon maskId="survey-registered-empty-icon-mask" />
         </span>
-        <div className="ujat-survey-registered-empty-state__texts">
-          <p className="ujat-survey-registered-empty-state__title">{title}</p>
-          <p className="ujat-survey-registered-empty-state__description">{description}</p>
+        <div className="survey-management-status-state__texts">
+          <p className="survey-management-status-state__title">{title}</p>
+          <p className="survey-management-status-state__description">{description}</p>
         </div>
-        <div className="ujat-survey-registered-empty-state__actions">
+        <div className="survey-management-status-state__actions">
           <CmsButton
-            className="ujat-survey-registered-empty-state__delete-button"
+            className="survey-management-status-state__delete-button"
             variant="delete"
             width={140}
             disabled={!canDelete}
@@ -42,7 +48,7 @@ export function SurveyNoResponseState({
             {deleteButtonLabel}
           </CmsButton>
           <CmsButton
-            className="ujat-survey-registered-empty-state__preview-button"
+            className="survey-management-status-state__preview-button"
             width={180}
             onClick={onOpenTemplatePreview}
           >

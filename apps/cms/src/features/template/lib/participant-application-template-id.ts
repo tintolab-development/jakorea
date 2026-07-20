@@ -10,6 +10,8 @@ export function getTemplateIdForParticipantApplicationVariant(
       return 'application-participant-individual'
     case 'economy-application-institution':
       return 'application-economy'
+    case 'trained-teachers-application-institution':
+      return 'application-trained-teachers'
     case 'gemini-application-institution':
       return 'application-gemini-visiting-training-school'
     case 'gemini-application-instructor':

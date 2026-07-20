@@ -3,9 +3,10 @@
  * 신청/매칭/정산 대기 카드에서 재사용
  */
 
-import { Card, Statistic, Button } from 'antd'
+import { Card, Statistic } from 'antd'
 import { ArrowRightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import { LoadingButton } from '@/shared/ui'
 
 export interface PendingActionCardProps {
   title: string
@@ -48,7 +49,7 @@ export function PendingActionCard({
         }}
       />
       {value > 0 && (
-        <Button
+        <LoadingButton
           type="link"
           icon={<ArrowRightOutlined />}
           onClick={(e) => {
@@ -58,7 +59,7 @@ export function PendingActionCard({
           style={{ padding: 0, marginTop: 8 }}
         >
           처리하기
-        </Button>
+        </LoadingButton>
       )}
     </Card>
   )

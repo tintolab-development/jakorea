@@ -2,13 +2,32 @@
 .calendar-week--time-grid {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  flex: 1 0 auto;
+  flex-shrink: 0;
+  align-self: flex-start;
+  align-items: flex-start;
   min-height: 0;
+  width: max(100%, var(--calendar-week-time-grid-min-width));
+  min-width: var(--calendar-week-time-grid-min-width);
+  max-width: none;
   gap: 0;
+  box-sizing: border-box;
+  --calendar-week-grid-line: var(--table-line, #e0e0e0);
   --calendar-week-hour-px: 56px;
   --calendar-week-total-px: calc(24 * var(--calendar-week-hour-px));
-  --calendar-week-gutter-width: 112px;
+  --calendar-week-gutter-width: 72px;
   --calendar-week-gutter-gap: 20px;
+  --calendar-week-columns-min-width: calc(var(--calendar-cell-min-width, 116px) * 7);
+  --calendar-week-time-grid-min-width: calc(
+    var(--calendar-week-gutter-width) + var(--calendar-week-gutter-gap) +
+      var(--calendar-week-columns-min-width)
+  );
+}
+
+.calendar-week--time-grid > .calendar-week-time-grid__header-row,
+.calendar-week--time-grid > .calendar-week-time-grid__shell {
+  width: 100%;
+  min-width: inherit;
 }
 
 .calendar-week-time-grid__header-row {
@@ -18,7 +37,11 @@
     var(--calendar-week-gutter-gap)
     repeat(7, minmax(var(--calendar-cell-min-width, 116px), 1fr));
   align-items: stretch;
-  min-width: 0;
+  min-width: var(--calendar-week-time-grid-min-width);
+  width: 100%;
+  max-width: none;
+  flex-shrink: 0;
+  min-height: var(--calendar-week-time-grid-header-min-height, 40px);
   box-sizing: border-box;
 }
 
@@ -30,11 +53,40 @@
   box-sizing: border-box;
 }
 
-.calendar-week-time-grid__header-row .calendar-week-time-grid__header-day:first-of-type {
-  grid-column-start: 3;
+/* 본문 column과 동일한 9트랙 배치 (corner=1, gap=2, days=3~9) */
+.calendar-week-time-grid__header-row .calendar-week-time-grid__header-day:nth-child(2) {
+  grid-column: 3;
+}
+
+.calendar-week-time-grid__header-row .calendar-week-time-grid__header-day:nth-child(3) {
+  grid-column: 4;
+}
+
+.calendar-week-time-grid__header-row .calendar-week-time-grid__header-day:nth-child(4) {
+  grid-column: 5;
+}
+
+.calendar-week-time-grid__header-row .calendar-week-time-grid__header-day:nth-child(5) {
+  grid-column: 6;
+}
+
+.calendar-week-time-grid__header-row .calendar-week-time-grid__header-day:nth-child(6) {
+  grid-column: 7;
+}
+
+.calendar-week-time-grid__header-row .calendar-week-time-grid__header-day:nth-child(7) {
+  grid-column: 8;
+}
+
+.calendar-week-time-grid__header-row .calendar-week-time-grid__header-day:nth-child(8) {
+  grid-column: 9;
 }
 
 .calendar-week-time-grid__header-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--calendar-cell-min-width, 116px);
   color: var(--gray-85969-d, #85969d);
   text-align: center;
   font-size: 16px;
@@ -44,6 +96,9 @@
   background: transparent;
   border: none;
   white-space: nowrap;
+  cursor: pointer;
+  padding: 0 4px;
+  box-sizing: border-box;
 }
 
 .calendar-week-time-grid__header-day--selected {
@@ -51,31 +106,49 @@
   font-weight: 600;
 }
 
-.calendar-week-time-grid__scroll {
-  flex: 0 0 auto;
-  width: 100%;
-  min-height: var(--calendar-week-total-px, 1296px);
-  max-height: none;
-  overflow: visible;
-  border: none;
-  box-sizing: border-box;
-}
-
 .calendar-week-time-grid__shell {
   display: grid;
+  /* 헤더 행과 동일 9트랙 — 요일 열 min 116px · fr 분배 일치 */
   grid-template-columns:
     var(--calendar-week-gutter-width)
     var(--calendar-week-gutter-gap)
-    minmax(0, 1fr);
+    repeat(7, minmax(var(--calendar-cell-min-width, 116px), 1fr));
   align-items: stretch;
-  min-width: min(0, 100%);
+  flex: 0 0 auto;
+  min-width: var(--calendar-week-time-grid-min-width);
+  width: 100%;
+  max-width: none;
+  flex-shrink: 0;
   height: var(--calendar-week-total-px, 1296px);
   min-height: var(--calendar-week-total-px, 1296px);
+  max-height: none;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+/* 시간 가로선 — gutter·gap(col 1~2) 제외, 요일 격자(col 3~)만 */
+.calendar-week-time-grid__shell::after {
+  content: '';
+  grid-column: 3 / -1;
+  grid-row: 1;
+  align-self: stretch;
+  pointer-events: none;
+  z-index: 0;
+  box-sizing: border-box;
+  border-top: 1px solid var(--calendar-week-grid-line);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--calendar-week-hour-px, 56px) - 1px),
+    var(--calendar-week-grid-line) calc(var(--calendar-week-hour-px, 56px) - 1px),
+    var(--calendar-week-grid-line) var(--calendar-week-hour-px, 56px)
+  );
 }
 
 .calendar-week-time-grid__gutter {
   grid-column: 1;
   position: relative;
+  z-index: 1;
   align-self: stretch;
   min-height: 0;
   width: var(--calendar-week-gutter-width);
@@ -84,18 +157,11 @@
   box-sizing: border-box;
   border: none;
   background: var(--color-bg-base, #fff);
+  overflow: visible;
 }
 
 .calendar-week-time-grid__columns {
-  grid-column: 3;
-  display: flex;
-  align-self: stretch;
-  width: 100%;
-  min-width: 0;
-  min-height: 0;
-  border-right: 1px solid #e0e0e0;
-  border-bottom: 1px solid #e0e0e0;
-  box-sizing: border-box;
+  display: contents;
 }
 
 .calendar-week-time-grid__gutter-cell {
@@ -105,28 +171,27 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 4px;
   min-width: 0;
   box-sizing: border-box;
-  padding: 0 8px 0 4px;
+  padding: 0;
   border: none;
   transform: translateY(-50%);
   pointer-events: none;
 }
 
+/* 0시 라벨 — translateY(-50%) 시 상단 절반이 gutter 밖으로 나가 잘림 */
 .calendar-week-time-grid__gutter-cell--first {
-  transform: translateY(-50%);
-  padding-top: 0;
+  transform: translateY(0);
 }
 
 .calendar-week-time-grid__gutter-period {
   width: auto;
-  max-width: 54px;
   flex-shrink: 0;
   box-sizing: border-box;
   color: rgba(61, 61, 61, 0.5);
-  text-align: center;
+  text-align: left;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 12px;
   font-style: normal;
@@ -138,7 +203,7 @@
 .calendar-week-time-grid__gutter-hour {
   flex: 0 1 auto;
   min-width: 0;
-  text-align: right;
+  text-align: left;
   color: #3d3d3d;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 16px;
@@ -155,22 +220,50 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0;
-  flex: 1 0 0;
+  grid-row: 1;
   align-self: stretch;
   min-width: 0;
+  width: 100%;
+  position: relative;
+  z-index: 1;
   box-sizing: border-box;
-  border-top: 1px solid #e0e0e0;
-  border-right: 1px solid #e0e0e0;
+  border-right: 1px solid var(--calendar-week-grid-line);
   cursor: pointer;
-  background: var(--color-bg-base, #fff);
+  background: transparent;
 }
 
-.calendar-week-time-grid__column:last-child {
-  border-right: none;
+.calendar-week-time-grid__column:nth-child(1) {
+  grid-column: 3;
 }
+
+.calendar-week-time-grid__column:nth-child(2) {
+  grid-column: 4;
+}
+
+.calendar-week-time-grid__column:nth-child(3) {
+  grid-column: 5;
+}
+
+.calendar-week-time-grid__column:nth-child(4) {
+  grid-column: 6;
+}
+
+.calendar-week-time-grid__column:nth-child(5) {
+  grid-column: 7;
+}
+
+.calendar-week-time-grid__column:nth-child(6) {
+  grid-column: 8;
+}
+
+.calendar-week-time-grid__column:nth-child(7) {
+  grid-column: 9;
+}
+
+/* 마지막 요일 열 우측 보더 유지 — shell border-right 제거·clip 시 잘림 방지 */
 
 .calendar-week-time-grid__columns .calendar-week-time-grid__column:first-child {
-  border-left: 1px solid #e0e0e0;
+  border-left: 1px solid var(--calendar-week-grid-line);
 }
 
 .calendar-week-time-grid__column-inner {
@@ -181,13 +274,6 @@
   min-height: 0;
   box-sizing: border-box;
   width: 100%;
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent calc(var(--calendar-week-hour-px, 54px) - 1px),
-    #f0f0f0 calc(var(--calendar-week-hour-px, 54px) - 1px),
-    #f0f0f0 var(--calendar-week-hour-px, 54px)
-  );
 }
 
 .calendar-week--time-grid .calendar-week-time-grid__event.calendar-event {

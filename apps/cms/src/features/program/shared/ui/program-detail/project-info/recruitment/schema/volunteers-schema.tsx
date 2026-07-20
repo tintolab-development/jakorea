@@ -5,6 +5,7 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import {
   formatDateRange,
   INTERVIEW_METHOD_OPTIONS,
+  parseVolunteerTargetsSelectValue,
   VOLUNTEER_TARGET_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { SectionSchema } from '@/features/program/shared/model/recruitment-schema'
@@ -84,14 +85,19 @@ export function createVolunteersSchema({
             edit:
               isEdit && form ? (
                 <Controller
-                  name="volunteerTarget"
+                  name="volunteerTargets"
                   control={form.control}
                   render={({ field }) => (
                     <CmsSelect
-                      value={field.value ?? undefined}
-                      options={VOLUNTEER_TARGET_OPTIONS}
-                      onChange={v => field.onChange(v == null || v === '' ? undefined : v)}
-                      placeholder="모집 대상 선택"
+                      mode="multiple"
+                      inputSize="medium"
+                      width={240}
+                      withAllOption={false}
+                      value={field.value ?? []}
+                      options={[...VOLUNTEER_TARGET_OPTIONS]}
+                      onChange={v => field.onChange(parseVolunteerTargetsSelectValue(v))}
+                      placeholder="모집 대상을 선택하세요"
+                      className="program-detail-info-tab__target-select"
                     />
                   )}
                 />
@@ -107,7 +113,14 @@ export function createVolunteersSchema({
                   name="volunteerTargetDetail"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsInput {...field} value={field.value ?? ''} placeholder="모집 대상 상세" />
+                    <CmsInput
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder="모집 대상 상세"
+                      inputSize="medium"
+                      width="100%"
+                      className="program-detail-info-tab__district-input"
+                    />
                   )}
                 />
               ) : undefined,

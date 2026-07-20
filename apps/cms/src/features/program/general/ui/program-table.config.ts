@@ -16,9 +16,15 @@ import type { ProgramListProgramMode } from '../model/program-list-program-mode'
 import {
   isProgramProgressPhaseFilter,
   programMatchesProgressPhase,
+  resolveProgramListAudienceFilterValue,
+  resolveProgramListParticipantTypeFilterValue,
   type ProgramProgressPhaseFilter,
 } from './constants/program-list-constants'
-import { resolveEducationColumns, type ProgramListView } from './table/program-table-column-resolver'
+import {
+  resolveEducationColumns,
+  type ProgramListColumnPreset,
+  type ProgramListView,
+} from './table/program-table-column-resolver'
 
 dayjs.extend(isSameOrBefore)
 dayjs.extend(isSameOrAfter)
@@ -30,6 +36,7 @@ export type ProgramTableContext = {
   view: ProgramListView
   tableType?: 'student' | 'instructor'
   effectiveLifecycleStatus?: ProgramLifecycleStatus | null
+  columnPreset?: ProgramListColumnPreset
 }
 
 const tanstackColumns: ColumnDef<Program>[] = [
@@ -125,6 +132,7 @@ export function getProgramTablePageConfig(
           isOverviewListPage: ctx.mode === 'overview',
           programMode: ctx.mode,
           listView: ctx.mode === 'overview' ? ctx.view : undefined,
+          columnPreset: ctx.columnPreset,
         })
       },
     },
@@ -137,6 +145,7 @@ export function getProgramTablePageConfig(
         businessArea: undefined,
         targetLevel: undefined,
         type: undefined,
+        participantType: undefined,
         participantRecruitment: undefined,
         applicationStartDate: null,
         applicationEndDate: null,
@@ -153,6 +162,7 @@ export function getProgramTablePageConfig(
               ? (lifecycleRaw as ProgramProgressPhaseFilter)
               : undefined
           const targetLevelFilter = searchParams.get('targetLevel') || undefined
+          const participantTypeFilter = searchParams.get('participantType') || undefined
           const participantRaw = searchParams.get('participantRecruitment') || ''
           const participantFromUrl = participantRecruitmentFilterValues.has(participantRaw)
             ? participantRaw
@@ -165,6 +175,7 @@ export function getProgramTablePageConfig(
               prev.title !== titleFromUrl ||
               prev.lifecycleStatus !== lifecycleFromUrl ||
               prev.targetLevel !== targetLevelFilter ||
+              prev.participantType !== participantTypeFilter ||
               prev.participantRecruitment !== participantFromUrl ||
               prev.operationStartDate?.format('YYYY-MM-DD') !== operationStartDateStr ||
               prev.operationEndDate?.format('YYYY-MM-DD') !== operationEndDateStr
@@ -176,6 +187,7 @@ export function getProgramTablePageConfig(
               title: titleFromUrl,
               lifecycleStatus: lifecycleFromUrl,
               targetLevel: targetLevelFilter,
+              participantType: participantTypeFilter,
               participantRecruitment: participantFromUrl,
               operationStartDate: operationStartDateStr
                 ? dayjs(operationStartDateStr).isValid()
@@ -258,17 +270,13 @@ export function getProgramTablePageConfig(
       hasActiveFilters: ({ context: ctx, searchParams, columnFilters }) => {
         if (ctx.mode === 'overview') {
           const isScheduled = ctx.view === 'SCHEDULED'
-          const isInProgress = ctx.view === 'IN_PROGRESS'
           const title = searchParams.get('title') || ''
           const lifecycleRaw = searchParams.get('lifecycleStatus') || ''
           const hasLifecycleFilter =
-            !isScheduled &&
-            !isInProgress &&
-            lifecycleRaw !== '' &&
-            isProgramProgressPhaseFilter(lifecycleRaw)
-          const hasOperationPeriod = Boolean(
-            searchParams.get('operationStartDate') && searchParams.get('operationEndDate')
-          )
+            ctx.view === 'ALL' && lifecycleRaw !== '' && isProgramProgressPhaseFilter(lifecycleRaw)
+          const hasOperationPeriod =
+            isScheduled &&
+            Boolean(searchParams.get('operationStartDate') && searchParams.get('operationEndDate'))
           const hasColumnFilter = columnFilters.some(
             f => f.value != null && String(f.value).trim() !== ''
           )
@@ -276,6 +284,7 @@ export function getProgramTablePageConfig(
             hasColumnFilter ||
               title.trim() !== '' ||
               hasLifecycleFilter ||
+              Boolean(searchParams.get('participantType')) ||
               hasOperationPeriod
           )
         }
@@ -316,6 +325,7 @@ export function getProgramTablePageConfig(
           ctx.mode === 'overview' &&
           (key === 'targetLevel' ||
             key === 'lifecycleStatus' ||
+            key === 'participantType' ||
             key === 'participantRecruitment')
         ) {
           return {
@@ -347,18 +357,21 @@ export function getProgramTablePageConfig(
         'applicationEndDate'
       )
 
-      const filteredData = filterByOperationAndApplicationPeriods(
-        data,
-        operationPeriodRange,
-        applicationPeriodRange
-      )
+      const filteredData =
+        ctx.mode === 'overview'
+          ? filterByOperationAndApplicationPeriods(
+              data,
+              ctx.view === 'SCHEDULED' ? operationPeriodRange : null,
+              null
+            )
+          : filterByOperationAndApplicationPeriods(data, operationPeriodRange, applicationPeriodRange)
 
       if (ctx.mode !== 'overview') {
         return { dataForTable: filteredData, filteredData }
       }
 
-      /** 전체·완료 탭에서만「프로그램 진행 현황」필터 사용 */
-      const applyLifecycleFromUrl = ctx.view !== 'SCHEDULED' && ctx.view !== 'IN_PROGRESS'
+      /** 전체 탭에서만「프로그램 진행 현황」필터 사용 */
+      const applyLifecycleFromUrl = ctx.view === 'ALL'
 
       const title = searchParams.get('title') || ''
       const lifecycleRaw = searchParams.get('lifecycleStatus') || ''
@@ -367,6 +380,7 @@ export function getProgramTablePageConfig(
           ? lifecycleRaw
           : null
       const targetLevelFilter = searchParams.get('targetLevel') || ''
+      const participantTypeFilter = searchParams.get('participantType') || ''
 
       let result = filteredData
       if (title.trim()) {
@@ -382,6 +396,14 @@ export function getProgramTablePageConfig(
       }
       if (lifecyclePhaseFilter && applyLifecycleFromUrl) {
         result = result.filter(p => programMatchesProgressPhase(p, lifecyclePhaseFilter))
+      }
+      if (participantTypeFilter) {
+        result = result.filter(p => {
+          if (applyLifecycleFromUrl) {
+            return resolveProgramListAudienceFilterValue(p) === participantTypeFilter
+          }
+          return resolveProgramListParticipantTypeFilterValue(p) === participantTypeFilter
+        })
       }
       if (targetLevelFilter) {
         result = result.filter(p => p.targetLevel === targetLevelFilter)

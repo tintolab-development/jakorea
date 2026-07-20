@@ -7,12 +7,12 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Image } from 'antd'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
-import { sponsorService } from '@/entities/sponsor/api/sponsor-service'
+import { useSponsorNameById } from '@/features/sponsor/hooks/use-sponsor-name-by-id'
 import {
   formatDateOnly,
   formatDateRange,
@@ -42,6 +42,11 @@ import {
 } from '@/shared/components/status-dropdown-cell'
 import { ApplicantInstructorDetailModal } from './applicant-instructor-detail-modal'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
+import {
+  withProgramDetailTdDivider,
+  ProgramDetailTdSegmentWrap,
+  renderDetailInfoPipeSeparated,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import './instructor-recruitment-detail-modal.css'
 
 export interface InstructorRecruitmentDetailModalProps {
@@ -69,9 +74,7 @@ export function InstructorRecruitmentDetailModal({
   const [selectedInstructor, setSelectedInstructor] = useState<ApplicantInstructorRow | null>(null)
   const [openApprovalDropdownId, setOpenApprovalDropdownId] = useState<string | null>(null)
 
-  const sponsorName = program?.sponsorId
-    ? sponsorService.getByIdSync(program.sponsorId)?.name
-    : undefined
+  const sponsorName = useSponsorNameById(program?.sponsorId, open)
   const instructorCount = program?.instructors ?? 0
   const instructorCapacity = program?.instructorCapacity
   const instructorRecruitmentStatus = program ? getInstructorRecruitmentStatus(program) : null
@@ -179,12 +182,11 @@ export function InstructorRecruitmentDetailModal({
   if (!program) return null
 
   return (
-    <TealHeaderModal
+    <ContentModal
       open={open}
       onCancel={onCancel}
       title="교육 신청 강사 목록"
       size="large"
-      width={1400}
       className="teal-header-modal--instructor-recruitment-detail"
       footer={
         <CmsButton variant="secondary" size="large" onClick={onCancel}>
@@ -280,14 +282,25 @@ export function InstructorRecruitmentDetailModal({
                       <td>{sponsorName ?? '-'}</td>
                       <th>후원사 담당자</th>
                       <td>
-                        {program.managerName ? `${program.managerName} | 010-1234-5678` : '-'}
+                        {program.managerName ? (
+                          <ProgramDetailTdSegmentWrap>
+                            {withProgramDetailTdDivider([
+                              program.managerName,
+                              '010-1234-5678',
+                            ])}
+                          </ProgramDetailTdSegmentWrap>
+                        ) : (
+                          '-'
+                        )}
                       </td>
                     </tr>
                     <tr className="instructor-recruitment-detail-modal__info-table-row-full">
                       <th>문의처</th>
                       <td colSpan={3}>
                         {program.contactPhone || program.contactEmail
-                          ? `문의처 : JA Korea | Tel: ${program.contactPhone ?? '-'} | E-mail: ${program.contactEmail ?? '-'}`
+                          ? renderDetailInfoPipeSeparated(
+                              `문의처 : JA Korea | Tel: ${program.contactPhone ?? '-'} | E-mail: ${program.contactEmail ?? '-'}`
+                            )
                           : '-'}
                       </td>
                     </tr>
@@ -342,7 +355,9 @@ export function InstructorRecruitmentDetailModal({
                   <th>1차 서류 합격자 발표</th>
                   <td>
                     {program.documentPassAnnouncementDate
-                      ? `${formatDateOnly(program.documentPassAnnouncementDate)} | ${program.documentPassAnnouncementMethod ?? '-'}`
+                      ? renderDetailInfoPipeSeparated(
+                          `${formatDateOnly(program.documentPassAnnouncementDate)} | ${program.documentPassAnnouncementMethod ?? '-'}`
+                        )
                       : '-'}
                   </td>
                 </tr>
@@ -350,13 +365,17 @@ export function InstructorRecruitmentDetailModal({
                   <th>2차 면접 심사</th>
                   <td>
                     {program.interviewStartDate && program.interviewEndDate
-                      ? `${formatDateRange(program.interviewStartDate, program.interviewEndDate)} | ${program.interviewMethod ?? '-'}`
+                      ? renderDetailInfoPipeSeparated(
+                          `${formatDateRange(program.interviewStartDate, program.interviewEndDate)} | ${program.interviewMethod ?? '-'}`
+                        )
                       : '-'}
                   </td>
                   <th>최종 합격자 발표</th>
                   <td>
                     {program.finalPassAnnouncementDate
-                      ? `${formatDateOnly(program.finalPassAnnouncementDate)} | ${program.finalPassAnnouncementMethod ?? '-'}`
+                      ? renderDetailInfoPipeSeparated(
+                          `${formatDateOnly(program.finalPassAnnouncementDate)} | ${program.finalPassAnnouncementMethod ?? '-'}`
+                        )
                       : '-'}
                   </td>
                 </tr>
@@ -407,6 +426,6 @@ export function InstructorRecruitmentDetailModal({
         instructor={selectedInstructor}
         showApprovalButtons={false}
       />
-    </TealHeaderModal>
+    </ContentModal>
   )
 }

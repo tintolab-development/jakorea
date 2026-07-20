@@ -7,15 +7,17 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   MOCK_PARTICIPATING_INSTRUCTORS,
-  SETTLEMENT_STATUS_LABELS,
   type SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
+import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
+import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import {
   getAssignedInstructorDisplayRows,
   getInstructorRowsForSchool,
   getWaitingInstructorRows,
   type AssignedInstructorDisplayRowMock,
 } from '@/features/program/general/lib/school-detail-mock'
+import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/general/lib/waiting-instructor-assignment'
 import { INSTRUCTOR_ROLE_LABELS, type InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
 import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-role-tag.css'
 import '@/features/program/general/ui/detail-modal/program-status/instructor-assignment-status-text.css'
@@ -25,10 +27,8 @@ const MOCK_REQUIRED_INSTRUCTORS = 4
 
 type WaitingRow = ReturnType<typeof getWaitingInstructorRows>[number]
 
-const ASSIGNMENT_STATUS_LABELS: Record<WaitingRow['assignmentStatus'], string> = {
-  waiting: '배정 대기',
-  cancelled: '배정 취소',
-  assigned: '배정 완료',
+function TdDivider() {
+  return <span className="school-detail-fullpage-view__td-divider" aria-hidden />
 }
 
 export interface ApplicantInstitutionInstructorAssignTabProps {
@@ -44,7 +44,7 @@ export function ApplicantInstitutionInstructorAssignTab({
   }, [schoolName])
 
   const waitingRows = useMemo(
-    () => getWaitingInstructorRows(schoolName, MOCK_PARTICIPATING_INSTRUCTORS),
+    () => getWaitingInstructorRows(schoolName, MOCK_PARTICIPATING_INSTRUCTORS, MOCK_PARTICIPATING_SCHOOLS),
     [schoolName]
   )
 
@@ -115,11 +115,7 @@ export function ApplicantInstitutionInstructorAssignTab({
         width: 120,
         align: 'center',
         render: (status: SettlementStatusKey) => (
-          <span
-            className={`school-detail-fullpage-view__settlement-text school-detail-fullpage-view__settlement-text--${status}`}
-          >
-            {SETTLEMENT_STATUS_LABELS[status]}
-          </span>
+          <InstructorSettlementStatusText status={status} />
         ),
       },
     ],
@@ -131,7 +127,7 @@ export function ApplicantInstitutionInstructorAssignTab({
       { title: 'No.', dataIndex: 'no', key: 'no', width: 64, align: 'center' },
       { title: '강사명', dataIndex: 'instructorName', key: 'instructorName', width: 100 },
       {
-        title: '자택 주소',
+        title: '자택 주소지',
         dataIndex: 'homeAddress',
         key: 'homeAddress',
         width: 160,
@@ -146,6 +142,33 @@ export function ApplicantInstitutionInstructorAssignTab({
         render: (v: string | undefined) => v ?? '-',
       },
       {
+        title: '교육 진행 희망 일정',
+        dataIndex: 'hopeDate',
+        key: 'hopeDate',
+        width: 300,
+        align: 'center',
+        render: (v: string | undefined, record: WaitingRow) => {
+          const date = v ?? '-'
+          const time = record.hopeTime ?? '-'
+          const session = record.hopeSession
+          if (date === '-' && time === '-') return '-'
+          const dateTime =
+            date !== '-' && time !== '-'
+              ? `${date} ${time}`
+              : date !== '-'
+                ? date
+                : time
+          if (!session) return dateTime
+          return (
+            <span className="school-detail-fullpage-view__assigned-datetime-cell">
+              <span>{dateTime}</span>
+              <TdDivider />
+              <span>{session}</span>
+            </span>
+          )
+        },
+      },
+      {
         title: '배정 현황',
         dataIndex: 'assignmentStatus',
         key: 'assignmentStatus',
@@ -155,32 +178,9 @@ export function ApplicantInstitutionInstructorAssignTab({
           <span
             className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${status}`}
           >
-            {ASSIGNMENT_STATUS_LABELS[status]}
+            {WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS[status]}
           </span>
         ),
-      },
-      {
-        title: '교육 희망 날짜',
-        dataIndex: 'hopeDate',
-        key: 'hopeDate',
-        width: 140,
-        align: 'center',
-        render: (v: string | undefined) => v ?? '-',
-      },
-      {
-        title: '교육 희망 수업 시간',
-        dataIndex: 'hopeTime',
-        key: 'hopeTime',
-        width: 180,
-        render: (v: string | undefined) => v ?? '-',
-      },
-      {
-        title: '교육 희망 차시',
-        dataIndex: 'hopeSession',
-        key: 'hopeSession',
-        width: 120,
-        align: 'center',
-        render: (v: string | undefined) => v ?? '-',
       },
     ],
     []
@@ -252,8 +252,8 @@ export function ApplicantInstitutionInstructorAssignTab({
               columns={waitingColumns}
               dataSource={waitingRows}
               rowClassName={record =>
-                record.assignmentStatus === 'assigned'
-                  ? 'school-detail-fullpage-view__waiting-row--assigned'
+                record.assignmentStatus === 'unavailable'
+                  ? 'school-detail-fullpage-view__waiting-row--unavailable'
                   : ''
               }
             />

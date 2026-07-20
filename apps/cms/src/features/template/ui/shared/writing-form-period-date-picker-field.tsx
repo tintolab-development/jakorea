@@ -24,6 +24,10 @@ type WritingFormPeriodDatePickerFieldProps = {
   onCommitRange: (range: [Dayjs, Dayjs]) => void
   onCommitSingleDay: (d: Dayjs) => void
   placeholder?: string
+  /** 제목형 작성 기간 — 시작/종료 240×44 듀얼 트리거(스크린샷 시안) */
+  dualPeriodTrigger?: boolean
+  dualStartPlaceholder?: string
+  dualEndPlaceholder?: string
 }
 
 /**
@@ -40,6 +44,9 @@ export function WritingFormPeriodDatePickerField({
   onCommitRange,
   onCommitSingleDay,
   placeholder,
+  dualPeriodTrigger = false,
+  dualStartPlaceholder = '바로 시작',
+  dualEndPlaceholder = '마감 없음',
 }: WritingFormPeriodDatePickerFieldProps) {
   return (
     <ParagraphDatePicker
@@ -54,6 +61,10 @@ export function WritingFormPeriodDatePickerField({
       preferPeriodModeInPopover
       appliedSurfaceRange={appliedSurfaceRange}
       appliedSurfaceWithTime={appliedSurfaceWithTime}
+      suppressAutoTodayWhenEmpty={dualPeriodTrigger}
+      dualPeriodTrigger={dualPeriodTrigger}
+      dualStartPlaceholder={dualStartPlaceholder}
+      dualEndPlaceholder={dualEndPlaceholder}
       onRangeChange={onCommitRange}
       onChange={d => {
         if (d) onCommitSingleDay(d)

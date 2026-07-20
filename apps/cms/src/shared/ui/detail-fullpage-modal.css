@@ -227,30 +227,35 @@
 .detail-fullpage-modal__content:has(
     .instructor-payment-tab__calendar-view-container--no-inner-scroll
   ),
-.detail-fullpage-modal__content:has(.ujat-institution-application-calendar-view--page-scroll),
-.detail-fullpage-modal__content:has(.participating-institutions-calendar-view--page-scroll) {
+.detail-fullpage-modal__content:has(.calendar-set--page-scroll) {
   overflow-x: clip;
-  /*
-   * UJAT 캘린더: 하단 52px는 list `__page-bottom-spacer` 블록으로만 둠.
-   * __content padding-bottom 과 겹치지 않게 0.
-   */
   padding-bottom: 0;
 }
 
-.detail-fullpage-modal__main:has(.participating-institutions-calendar-view--page-scroll) {
-  overflow-x: clip;
+/*
+ * split-card 캘린더 — grid min-width(852+280)는 __main 가로 스크롤로 처리.
+ * __content clip은 초과 폭을 잘라 7:3이 깨지므로 visible 유지(세로 sticky는 __main 기준).
+ */
+.detail-fullpage-modal__content:has(.calendar-split-card-layout--page-scroll) {
+  overflow-x: visible;
+  padding-bottom: 0;
+}
+
+/*
+ * 캘린더 grid min-width(메인 852px + 우 280px) 초과 시 가로 스크롤 — scrollport는 __main.
+ * __content만 clip(sticky 조상 방지), __main은 auto(program-list layout-content와 동일).
+ */
+.detail-fullpage-modal__main:has(.calendar-set--page-scroll),
+.detail-fullpage-modal__main:has(.calendar-split-card-layout--page-scroll) {
+  overflow-x: auto;
 }
 
 @supports not (overflow-x: clip) {
   .detail-fullpage-modal__content:has(
       .instructor-payment-tab__calendar-view-container--no-inner-scroll
     ),
-  .detail-fullpage-modal__content:has(.ujat-institution-application-calendar-view--page-scroll),
-  .detail-fullpage-modal__content:has(.participating-institutions-calendar-view--page-scroll) {
-    overflow-x: visible;
-  }
-
-  .detail-fullpage-modal__main:has(.participating-institutions-calendar-view--page-scroll) {
+  .detail-fullpage-modal__content:has(.calendar-set--page-scroll),
+  .detail-fullpage-modal__content:has(.calendar-split-card-layout--page-scroll) {
     overflow-x: visible;
   }
 }
@@ -596,37 +601,41 @@
 }
 
 /**
- * UnifiedFilterCard: `FilterFieldConfig.width`(% 등) 사용 시 Col 래퍼만 넓어지는 문제 방지.
- * `table-filter-group`의 pct-width Col과 동일 토큰(`--filter-control-max-width` 등)으로 래퍼 상한 정렬.
+ * TableFilterGroup: `FilterFieldConfig.width`(% 등) 사용 시 Col 래퍼만 넓어지는 문제 방지.
+ * pct-width Col과 동일 토큰(`--filter-control-max-width` 등)으로 래퍼 상한 정렬.
  */
 .detail-fullpage-modal
-  .unified-filter-card__fields-inner
-  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio) {
-  max-width: min(100%, var(--filter-control-max-width, 260px));
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--explicit-width:not(.table-filter-group__col--radio):not(
+    .table-filter-group__col--pct-width
+  ) {
+  max-width: min(100%, var(--filter-control-max-width, 240px));
   box-sizing: border-box;
 }
 
 .detail-fullpage-modal
-  .unified-filter-card__fields-inner
-  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):has(
-    .app-datepicker--range-split
-  ) {
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--explicit-width:not(.table-filter-group__col--radio):not(
+    .table-filter-group__col--pct-width
+  ):has(.cms-datepicker--range-split) {
   max-width: min(
     100%,
     calc(
-      2 * var(--filter-control-max-width, 260px) + var(--filter-control-range-split-between, 20px)
+      2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
     )
   );
 }
 
 .detail-fullpage-modal
-  .unified-filter-card__fields-inner
-  > .ant-col.unified-filter-card__col--explicit-width:not(.unified-filter-card__col--radio):has(
-    .unified-filter-card__address-region-selects
-  ) {
+  .table-filter-group__fields-inner.ant-row
+  > .ant-col.table-filter-group__col--explicit-width:not(.table-filter-group__col--radio):not(
+    .table-filter-group__col--pct-width
+  ):has(.table-filter-group__address-region-selects) {
   max-width: min(
     100%,
-    calc(2 * var(--filter-control-max-width, 260px) + var(--filter-field-gap, 12px))
+    calc(
+      2 * var(--filter-address-region-segment-width, 114.75px) + var(--filter-address-region-pair-gap, 6px)
+    )
   );
 }
 

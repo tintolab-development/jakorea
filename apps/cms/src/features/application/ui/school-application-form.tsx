@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Form, Input, InputNumber, Button, Space, Upload, Alert } from 'antd'
+import { Form, Input, Button, Space, Upload, Alert } from 'antd'
 import { UploadOutlined, DownloadOutlined } from '@ant-design/icons'
 import { downloadBlob } from '@/shared/utils/file-download'
 import { schoolApplicationSchema, type SchoolApplicationFormData } from '@/entities/application/model/schema'
@@ -16,6 +16,7 @@ import type { Program, Application } from '@/types/domain'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import type { UploadFile } from 'antd/es/upload/interface'
 import { MESSAGES } from '@/shared/constants'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { fieldValidationHelp, handleError, unknownErrorText } from '@/shared/utils/error-handler'
 
 const { TextArea } = Input
@@ -174,11 +175,13 @@ export function SchoolApplicationForm({
       </Form.Item>
 
       <Form.Item label="학급 수" validateStatus={errors.classCount ? 'error' : ''} help={fieldValidationHelp(errors.classCount)}>
-        <InputNumber
+        <CmsNumericInput
+          mode="integer"
           min={1}
+          value={String(watch('classCount') ?? '')}
           placeholder="학급 수를 입력해주세요"
           style={{ width: '100%' }}
-          onChange={value => setValue('classCount', value as number)}
+          onValueChange={value => setValue('classCount', value === '' ? undefined : Number(value))}
         />
       </Form.Item>
 
@@ -187,11 +190,15 @@ export function SchoolApplicationForm({
         validateStatus={errors.studentsPerClass ? 'error' : ''}
         help={fieldValidationHelp(errors.studentsPerClass)}
       >
-        <InputNumber
+        <CmsNumericInput
+          mode="integer"
           min={1}
+          value={String(watch('studentsPerClass') ?? '')}
           placeholder="학급별 인원을 입력해주세요"
           style={{ width: '100%' }}
-          onChange={value => setValue('studentsPerClass', value as number)}
+          onValueChange={value =>
+            setValue('studentsPerClass', value === '' ? undefined : Number(value))
+          }
         />
       </Form.Item>
 

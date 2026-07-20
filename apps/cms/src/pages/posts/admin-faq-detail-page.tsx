@@ -1,19 +1,20 @@
 /**
  * 게시글 관리 — FAQ 상세 (관리자)
- * 레이아웃·마크업은 공지 상세(admin-notice-detail-page)와 동일 스펙, 본문은 RichTextViewer
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
-import { getAdminFaqById } from '@/features/posts/api/admin-faq-mock-store'
-import { deleteFaq } from '@/features/posts/api/admin-faq-service'
+import { Spin } from 'antd'
+import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
+import { useFaqDetailQuery } from '@/features/posts/hooks/use-faq-detail-query'
+import { useFaqMutations } from '@/features/posts/hooks/use-faq-mutations'
 import { FaqFormModal } from '@/features/posts/ui/faq-form-modal'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { RichTextViewer } from '@/shared/rich-text'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { CmsButton } from '@/shared/ui'
+import { ActionResultModal, CmsButton } from '@/shared/ui'
 import './admin-faq-delete-btn.css'
 import './admin-faq-detail-page.css'
 
@@ -24,16 +25,16 @@ export function AdminFaqDetailPage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
+  const detailQuery = useFaqDetailQuery(id)
+  const { deleteMutation } = useFaqMutations()
 
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  /** mock 스토어 갱신 후 동일 id 재조회용 */
-  const [storeTick, setStoreTick] = useState(0)
+  const [actionResultOpen, setActionResultOpen] = useState(false)
+  const [actionResultTitle, setActionResultTitle] = useState('')
+  const [actionResultMessage, setActionResultMessage] = useState('')
 
-  const faq = useMemo(() => {
-    void storeTick
-    return id ? getAdminFaqById(id) : undefined
-  }, [id, storeTick])
+  const faq = detailQuery.data
 
   const goList = useCallback(() => {
     navigate(ADMIN_FAQ_LIST_PATH)
@@ -47,18 +48,34 @@ export function AdminFaqDetailPage() {
   const handleConfirmDelete = useCallback(async () => {
     if (!id) return
     try {
-      await deleteFaq(id)
+      await deleteMutation.mutateAsync(id)
       setDeleteConfirmOpen(false)
       goList()
     } catch (error) {
-      console.debug('adminFaqDetailPage delete failed', error)
+      setActionResultTitle('FAQ 삭제 실패')
+      setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
+      setActionResultOpen(true)
     }
-  }, [id, goList])
+  }, [deleteMutation, goList, id])
 
   const handleEdit = useCallback(() => {
     if (!canWrite) return
     setEditModalOpen(true)
   }, [canWrite])
+
+  if (detailQuery.isLoading) {
+    return (
+      <div className="admin-faq-detail-page">
+        <div
+          className="page-content-loading page-content-loading--viewport"
+          role="status"
+          aria-label="FAQ 불러오는 중"
+        >
+          <Spin size="large" />
+        </div>
+      </div>
+    )
+  }
 
   if (!faq) {
     return (
@@ -86,19 +103,21 @@ export function AdminFaqDetailPage() {
         onConfirm={handleConfirmDelete}
         preset="faq"
         title="FAQ 삭제"
-        line1="해당 FAQ를 삭제하시겠습니까?"
-        line2="삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?"
       />
-      {faq ? (
-        <FaqFormModal
-          open={editModalOpen}
-          mode="edit"
-          faq={faq}
-          onCancel={() => setEditModalOpen(false)}
-          onSuccess={() => setStoreTick(t => t + 1)}
-          onDeleted={goList}
-        />
-      ) : null}
+      <FaqFormModal
+        open={editModalOpen}
+        mode="edit"
+        faq={faq}
+        onCancel={() => setEditModalOpen(false)}
+        onSuccess={() => setEditModalOpen(false)}
+        onDeleted={goList}
+      />
+      <ActionResultModal
+        open={actionResultOpen}
+        title={actionResultTitle}
+        body={actionResultMessage}
+        onClose={() => setActionResultOpen(false)}
+      />
       <div className="admin-faq-detail-page__inner">
         <div className="admin-faq-detail-page__card">
           <div className="admin-faq-detail-page__top-row">
@@ -111,35 +130,25 @@ export function AdminFaqDetailPage() {
             >
               {isPublic ? '공개' : '비공개'}
             </span>
-            <span className="admin-faq-detail-page__category">{faq.category}</span>
           </div>
           <h1 className="admin-faq-detail-page__title">{faq.question}</h1>
           <div className="admin-faq-detail-page__meta">
-            <span className="admin-faq-detail-page__meta-text">{dateStr}</span>
-            <span className="admin-faq-detail-page__meta-divider" aria-hidden />
-            <span className="admin-faq-detail-page__meta-text">{faq.author}</span>
+            <span>{faq.category}</span>
+            <span>{faq.author}</span>
+            <span>{dateStr}</span>
           </div>
-          <hr className="admin-faq-detail-page__section-divider" aria-hidden />
           <div className="admin-faq-detail-page__body">
-            <RichTextViewer markdown={faq.answer} />
+            <RichTextViewer content={faq.answer} />
           </div>
-        </div>
-        <div className="admin-faq-detail-page__actions">
-          <CmsButton variant="secondary" size="medium" onClick={goList}>
-            목록
-          </CmsButton>
-          <div className="admin-faq-detail-page__actions-right">
-            <CmsButton
-              variant="delete"
-              size="medium"
-              className="admin-faq-delete-btn"
-              onClick={handleDelete}
-              disabled={!canWrite}
-            >
-              삭제
+          <div className="admin-faq-detail-page__actions">
+            <CmsButton variant="secondary" size="medium" onClick={goList}>
+              목록
             </CmsButton>
             <CmsButton variant="primary" size="medium" onClick={handleEdit} disabled={!canWrite}>
               수정
+            </CmsButton>
+            <CmsButton variant="delete" size="medium" onClick={handleDelete} disabled={!canWrite}>
+              삭제
             </CmsButton>
           </div>
         </div>
@@ -147,5 +156,3 @@ export function AdminFaqDetailPage() {
     </div>
   )
 }
-
-export default AdminFaqDetailPage

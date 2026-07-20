@@ -35,6 +35,7 @@ import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/
 import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
 import { renderProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/institution/paragraph-body'
 import { renderEconomyProgramApplicationParagraphBody } from '@/features/template/ui/form-set/application-form/1c-1s/paragraph-body'
+import { renderTrainedTeachersProgramApplicationParagraphBody } from '@/features/template/ui/form-set/application-form/trained-teachers/paragraph-body'
 import { renderGeminiVisitingTrainingApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-institution/paragraph-body'
 import { renderGeminiVisitingTrainingApplicationFormInstructorParagraphBody } from '@/features/template/ui/form-set/application-form/gemini-instructor/paragraph-body'
 import { renderUjatProgramApplicationFormInstitutionParagraphBody } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraph-body'
@@ -50,6 +51,7 @@ import {
   renderProgramApplicationFormVolunteerParagraphBody,
   type ProgramApplicationFormVolunteerBodyOptions,
 } from '@/features/template/ui/form-set/application-form/volunteer/paragraph-body'
+import { renderProgramApplicationFormIndividualParagraphBody } from '@/features/template/ui/form-set/application-form/individual/paragraph-body'
 import {
   renderProgramRegistrationParagraphBody,
   type ProgramRegistrationParagraphBodyOptions,
@@ -60,6 +62,7 @@ import type {
   UjatProgramApplicationGradeInfoParagraphOptions,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-program-application-institution-body-options'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
+import { isFormPreviewReadonlyMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
 import { IdTypeWithInputBody } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -406,6 +409,7 @@ export function HorizontalTableParagraphBody({
   ujatProgramRegistration,
   programApplicationFormInstitution,
   programApplicationFormEconomyInstitution,
+  programApplicationFormTrainedTeachersInstitution,
   programApplicationFormGeminiInstitution,
   programApplicationFormGeminiInstructor,
   ujatProgramApplicationFormInstitution,
@@ -414,6 +418,8 @@ export function HorizontalTableParagraphBody({
   ujatProgramApplicationGradeClassTime,
   applicantRecruitFormInstitution,
   showInstitutionApplicationLimits,
+  applicantRecruitInstitutionLayoutVariant,
+  applicantRecruitInstitutionDefaults,
   ujatRecruitFormInstitution,
   applicantRecruitFormIndividual,
   recruitFormInstructor,
@@ -422,6 +428,8 @@ export function HorizontalTableParagraphBody({
   ujatRecruitParagraphProps,
   programApplicationFormInstructor,
   programApplicationFormVolunteer,
+  programApplicationFormIndividual,
+  programLinkedInstitutionApplicationForm,
   paragraphInteractionMode = 'authoring',
 }: {
   paragraph: HorizontalTableParagraph
@@ -441,9 +449,13 @@ export function HorizontalTableParagraphBody({
   ujatProgramRegistration?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormInstitution?: boolean
+  /** 프로그램 상세·등록 위저드 연동 — 기관 신청 폼 자동 반영 UI 노출 */
+  programLinkedInstitutionApplicationForm?: boolean
   /** 1사1교 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   programApplicationFormEconomyInstitution?: boolean
-  /** Gemini 찾아가는 연수 학교 신청 폼 시드 단락 — 전용 본문 */
+  /** 교육받은 교사 프로그램 참여자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
+  programApplicationFormTrainedTeachersInstitution?: boolean
+  /** Gemini 찾아가는 연수 참여 기관 신청 폼 시드 단락 — 전용 본문 */
   programApplicationFormGeminiInstitution?: boolean
   /** Gemini 찾아가는 연수 강사 신청 폼 시드 단락 — 전용 본문 */
   programApplicationFormGeminiInstructor?: boolean
@@ -456,6 +468,8 @@ export function HorizontalTableParagraphBody({
   /** 프로그램 참여자 모집 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
   applicantRecruitFormInstitution?: boolean
   showInstitutionApplicationLimits?: boolean
+  applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
+  applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
   /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
@@ -469,6 +483,8 @@ export function HorizontalTableParagraphBody({
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
   programApplicationFormInstructor?: ProgramApplicationFormInstructorBodyOptions
   programApplicationFormVolunteer?: ProgramApplicationFormVolunteerBodyOptions
+  /** 프로그램 참여자 신청 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
+  programApplicationFormIndividual?: boolean
   paragraphInteractionMode?: ParagraphBodyInteractionMode
 }) {
   const p = useMemo(() => normalizeHorizontalTableParagraph(paragraph), [paragraph])
@@ -523,7 +539,11 @@ export function HorizontalTableParagraphBody({
   const applicantRecruitFormInstitutionBody = renderApplicantRecruitFormInstitutionParagraphBody(
     p,
     applicantRecruitFormInstitution,
-    { showInstitutionApplicationLimits }
+    {
+      showInstitutionApplicationLimits,
+      layoutVariant: applicantRecruitInstitutionLayoutVariant,
+      defaults: applicantRecruitInstitutionDefaults,
+    }
   )
   if (applicantRecruitFormInstitutionBody != null) return applicantRecruitFormInstitutionBody
 
@@ -549,7 +569,16 @@ export function HorizontalTableParagraphBody({
   const ujatRecruitFormVolunteerBody = renderUjatRecruitFormVolunteerParagraphBody(
     p,
     ujatRecruitFormVolunteer,
-    ujatRecruitParagraphProps
+    {
+      ...ujatRecruitParagraphProps,
+      exceptionScheduleCount: programApplicationFormVolunteer?.exceptionScheduleCount ?? 0,
+    },
+    programApplicationFormVolunteer?.enabled
+      ? {
+          commonScheduleSeed: programApplicationFormVolunteer.commonScheduleSeed,
+          onCommonExclusionChange: programApplicationFormVolunteer.onCommonExclusionChange,
+        }
+      : undefined
   )
   if (ujatRecruitFormVolunteerBody != null) return ujatRecruitFormVolunteerBody
 
@@ -570,7 +599,20 @@ export function HorizontalTableParagraphBody({
     return programApplicationFormGeminiInstructorBody
 
   const programApplicationFormInstitutionBody =
-    renderProgramApplicationFormInstitutionParagraphBody(p, programApplicationFormInstitution)
+    renderProgramApplicationFormInstitutionParagraphBody(
+      p,
+      programApplicationFormInstitution
+        ? {
+            enabled: programApplicationFormInstitution,
+            readOnlyPreview: isFormPreviewReadonlyMode(paragraphInteractionMode),
+            isTemplateAuthoringMode:
+              paragraphInteractionMode === 'authoring' &&
+              programLinkedInstitutionApplicationForm !== true,
+            paragraph: p,
+            onParagraphChange: next => onChange(next),
+          }
+        : undefined
+    )
   if (programApplicationFormInstitutionBody != null) return programApplicationFormInstitutionBody
 
   const economyProgramApplicationBody = renderEconomyProgramApplicationParagraphBody(
@@ -579,6 +621,16 @@ export function HorizontalTableParagraphBody({
     paragraphInteractionMode === 'authoring'
   )
   if (economyProgramApplicationBody != null) return economyProgramApplicationBody
+
+  const trainedTeachersProgramApplicationBody =
+    renderTrainedTeachersProgramApplicationParagraphBody(
+      p,
+      programApplicationFormTrainedTeachersInstitution,
+      paragraphInteractionMode === 'authoring',
+      isFormPreviewReadonlyMode(paragraphInteractionMode)
+    )
+  if (trainedTeachersProgramApplicationBody != null)
+    return trainedTeachersProgramApplicationBody
 
   const ujatProgramApplicationFormInstitutionBody =
     renderUjatProgramApplicationFormInstitutionParagraphBody(
@@ -607,6 +659,12 @@ export function HorizontalTableParagraphBody({
     programApplicationFormVolunteer
   )
   if (programApplicationFormVolunteerBody != null) return programApplicationFormVolunteerBody
+
+  const programApplicationFormIndividualBody = renderProgramApplicationFormIndividualParagraphBody(
+    p,
+    programApplicationFormIndividual
+  )
+  if (programApplicationFormIndividualBody != null) return programApplicationFormIndividualBody
 
   const paymentStatementBody = renderPaymentStatementIssuanceParagraphBody({
     paragraph: p,

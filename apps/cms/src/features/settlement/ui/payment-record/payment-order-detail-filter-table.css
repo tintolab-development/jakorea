@@ -2,23 +2,6 @@
  * 지급 현황 상세 — 필터·구분선·목록 테이블 래퍼·산출 내역 버튼
  * (`PaymentOrderDetailFilterTable` — mode program / instructor 공통)
  */
-.payment-order-detail-filter-table__filters .unified-filter-card .ant-card-body {
-  padding: 0 !important;
-}
-
-/* 필터 ↔ 목록 사이: 공용 Divider + 상·하 각 32px (`filter-table-layout__divider` 와 동일) */
-.payment-order-detail-filter-table__section-divider-wrap {
-  padding: 32px 0;
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-/* 구분선 아래 블록: participating 공통 `margin-top: 32px` 는 위 래퍼 패딩과 중복되므로 제거 */
-.payment-order-detail-filter-table .payment-order-detail-filter-table__below-divider.participating-institutions-section__below-divider {
-  margin-top: 0;
-}
-
 /* 강사 별 / 프로그램 별 정산 목록: 본문·헤더 셀 가운데 정렬 (내부 flex·문구 포함) */
 .payment-order-detail-filter-table
   .cms-data-table.ant-table-wrapper
@@ -41,6 +24,18 @@
 
 .payment-order-detail-filter-table .payment-order-lecture-date-session-cell .program-detail-td-segment-wrap {
   justify-content: center;
+}
+
+/*
+ * 산출 내역 「상세 보기」: CmsButton은 display:flex(블록)라 text-align만으로는
+ * 셀 가운데 정렬이 안 됨 → 고정 폭 + margin auto
+ */
+.payment-order-detail-filter-table
+  .payment-order-detail-filter-table__breakdown-btn--140x40.cms-button.cms-button--large.ant-btn,
+.payment-order-detail-filter-table
+  .payment-order-detail-filter-table__breakdown-btn--180.cms-button.cms-button--large.ant-btn {
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 /* 프로그램 별 정산 목록(강사 상세): 산출 내역 상세 보기 140×40 */

@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Form } from 'antd'
 import type { FormInstance } from 'antd/es/form'
-import { getFaqCategorySelectOptions } from '@/features/posts/api/admin-faq-category-mock-store'
-import { createFaq, deleteFaq, updateFaq } from '@/features/posts/api/admin-faq-service'
+import { createFaq, deleteFaq, updateFaq } from '@/features/posts/api/faqs/admin-faqs-service'
+import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
+import { useFaqCategoriesQuery } from '@/features/posts/hooks/use-faq-categories-query'
 import type {
   FaqFormFieldValues,
   FaqFormModalProps } from '@/features/posts/model/faq-form-types'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { handleError, unknownErrorText } from '@/shared/utils/error-handler'
+import { handleError } from '@/shared/utils/error-handler'
 
 export type UseFaqFormModalResult = {
   form: FormInstance<FaqFormFieldValues>
@@ -65,7 +66,11 @@ export function useFaqFormModal({
     }
   }, [open])
 
-  const categoryOptions = useMemo(() => getFaqCategorySelectOptions(), [open])
+  const categoriesQuery = useFaqCategoriesQuery(open)
+  const categoryOptions = useMemo(
+    () => (categoriesQuery.data ?? []).map(row => ({ label: row.name, value: row.name })),
+    [categoriesQuery.data]
+  )
 
   const handleSubmit = useCallback(async () => {
     if (!canWrite) return
@@ -103,13 +108,10 @@ export function useFaqFormModal({
       if (err && typeof err === 'object' && 'errorFields' in err) {
         return
       }
-      const msg =
-        err instanceof Error
-          ? unknownErrorText(err, '오류가 발생했습니다.') === 'NOT_FOUND'
-            ? 'FAQ를 찾을 수 없습니다.'
-            : unknownErrorText(err, '오류가 발생했습니다.')
-          : '요청에 실패했습니다.'
-      handleError(err, { context: 'useFaqFormModal.handleSubmit', defaultMessage: msg })
+      handleError(err, {
+        context: 'useFaqFormModal.handleSubmit',
+        defaultMessage: getPostsApiErrorMessage(err, '저장에 실패했습니다.'),
+      })
     }
   }, [canWrite, form, isEdit, faq, onCancel, onSuccess, user?.name])
 
@@ -126,7 +128,10 @@ export function useFaqFormModal({
       onDeleted?.()
       onCancel()
     } catch (err) {
-      handleError(err, { context: 'useFaqFormModal.handleConfirmDelete' })
+      handleError(err, {
+        context: 'useFaqFormModal.handleConfirmDelete',
+        defaultMessage: getPostsApiErrorMessage(err, '삭제에 실패했습니다.'),
+      })
     }
   }, [faq, onCancel, onDeleted])
 

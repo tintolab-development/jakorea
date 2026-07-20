@@ -10,7 +10,10 @@ import {
   type GeneralApplicationTabKey,
 } from '@/features/program/general/lib/application-tabs'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
-import { useProgramParticipantApplicationEditor } from '@/features/template/hooks/use-program-participant-application-editor'
+import {
+  useProgramParticipantApplicationEditor,
+  type ProgramParticipantApplicationEditorVariant,
+} from '@/features/template/hooks/use-program-participant-application-editor'
 import {
   lookupTemplateRegistry,
   resolvePreviewHeaderTitle,
@@ -20,25 +23,29 @@ import { resolveTemplateEditorPanels } from '@/features/template/ui/template-ren
 import type { TemplateEditorVm } from '@/features/template/ui/template-renderers/template-renderer-types'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
+import { FormDraftLoading } from '@/features/template/ui/form-draft-loading'
 import { useCmsAlert } from '@/shared/ui'
 
 export function GeneralProgramApplicationTemplateEditModal({
   open,
   program,
   applicationTab,
+  variantOverride,
   onClose,
   onSaved,
 }: {
   open: boolean
   program: Program
   applicationTab: GeneralApplicationTabKey
+  /** 프로그램 유형 전용 신청 폼 variant (예: 교육받은 교사). 미지정 시 일반 프로그램 탭 기준 해석 */
+  variantOverride?: ProgramParticipantApplicationEditorVariant
   onClose: () => void
   onSaved?: () => void
 }) {
   const { showAlert } = useCmsAlert()
   const variant = useMemo(
-    () => resolveGeneralApplicationEditorVariant(program, applicationTab),
-    [program, applicationTab]
+    () => variantOverride ?? resolveGeneralApplicationEditorVariant(program, applicationTab),
+    [variantOverride, program, applicationTab]
   )
   const templateName = useMemo(() => resolveGeneralApplicationTemplateName(variant), [variant])
   const definitionId = useMemo(
@@ -56,7 +63,7 @@ export function GeneralProgramApplicationTemplateEditModal({
       resetInstitutionApplicationProgramBridge()
       return
     }
-    if (variant !== 'institution') return
+    if (variant !== 'institution' && variant !== 'trained-teachers-application-institution') return
     patchInstitutionApplicationProgramBridge(resolveInstitutionApplicationProgramBridge(program))
     return () => {
       resetInstitutionApplicationProgramBridge()
@@ -65,6 +72,13 @@ export function GeneralProgramApplicationTemplateEditModal({
 
   const vm = useProgramParticipantApplicationEditor(open, templateName, variant, {
     participantOrganization: variant === 'institution',
+    programLinkedInstitutionApplicationForm: variant === 'institution',
+    program,
+    programLinkedApplicationFormPreview:
+      variant === 'institution' ||
+      variant === 'instructor' ||
+      variant === 'volunteer' ||
+      variant === 'trained-teachers-application-institution',
   })
 
   const editorVm = useMemo((): TemplateEditorVm => {
@@ -114,8 +128,8 @@ export function GeneralProgramApplicationTemplateEditModal({
       zIndex={1200}
       onPreview={vm.handlePreview}
       onSave={handleSave}
-      leftContent={panels.leftContent}
-      rightNavigation={panels.rightNavigation}
+      leftContent={vm.isDraftLoading ? <FormDraftLoading /> : panels.leftContent}
+      rightNavigation={vm.isDraftLoading ? null : panels.rightNavigation}
     />
   )
 }

@@ -44,7 +44,32 @@ function createInitialRegionState(): UjatScheduleAssignRegionState {
   }
 }
 
-const regionState = new Map<UjatInstitutionApplicationRegionKey, UjatScheduleAssignRegionState>()
+function cloneRegionState(state: UjatScheduleAssignRegionState): UjatScheduleAssignRegionState {
+  return {
+    maxClassesPerDay: state.maxClassesPerDay,
+    estimation: {
+      h1: { ...state.estimation.h1 },
+      h2: { ...state.estimation.h2 },
+    },
+    days: Object.fromEntries(
+      Object.entries(state.days).map(([isoDate, day]) => [
+        isoDate,
+        {
+          ...day,
+          rows: day.rows.map(row => ({
+            ...row,
+            gradeValues: [...row.gradeValues],
+          })),
+        },
+      ])
+    ),
+  }
+}
+
+/** 저장된 임시 배정 — 일정표 미리보기·엑셀 다운로드에 반영 */
+const savedRegionState = new Map<UjatInstitutionApplicationRegionKey, UjatScheduleAssignRegionState>()
+/** 편집 중인 임시 배정 — 저장 전까지 미리보기에 미반영 */
+const draftRegionState = new Map<UjatInstitutionApplicationRegionKey, UjatScheduleAssignRegionState>()
 let scheduleAssignMockSeeded = false
 
 function applyScheduleAssignMockSeed(regionKey: UjatInstitutionApplicationRegionKey): void {
@@ -71,7 +96,8 @@ function applyScheduleAssignMockSeed(regionKey: UjatInstitutionApplicationRegion
     day.rows = [...filledRows, createEmptyRow()]
   }
 
-  regionState.set(regionKey, state)
+  savedRegionState.set(regionKey, state)
+  draftRegionState.delete(regionKey)
 }
 
 function ensureScheduleAssignMockSeeded(): void {
@@ -84,23 +110,55 @@ function ensureScheduleAssignMockSeeded(): void {
   }
 }
 
-export function getUjatScheduleAssignRegionState(
+function ensureSavedRegionState(
   regionKey: UjatInstitutionApplicationRegionKey
 ): UjatScheduleAssignRegionState {
   ensureScheduleAssignMockSeeded()
-  let state = regionState.get(regionKey)
+  let state = savedRegionState.get(regionKey)
   if (!state) {
     state = createInitialRegionState()
-    regionState.set(regionKey, state)
+    savedRegionState.set(regionKey, state)
   }
   return state
 }
 
-export function updateUjatScheduleAssignRegionState(
+function ensureDraftRegionState(
+  regionKey: UjatInstitutionApplicationRegionKey
+): UjatScheduleAssignRegionState {
+  let draft = draftRegionState.get(regionKey)
+  if (!draft) {
+    draft = cloneRegionState(ensureSavedRegionState(regionKey))
+    draftRegionState.set(regionKey, draft)
+  }
+  return draft
+}
+
+/** 저장된 임시 배정 — 미리보기·엑셀 */
+export function getUjatScheduleAssignRegionState(
+  regionKey: UjatInstitutionApplicationRegionKey
+): UjatScheduleAssignRegionState {
+  return ensureSavedRegionState(regionKey)
+}
+
+/** 편집 중 임시 배정 */
+export function getUjatScheduleAssignDraftRegionState(
+  regionKey: UjatInstitutionApplicationRegionKey
+): UjatScheduleAssignRegionState {
+  return ensureDraftRegionState(regionKey)
+}
+
+export function updateUjatScheduleAssignDraftRegionState(
   regionKey: UjatInstitutionApplicationRegionKey,
   next: UjatScheduleAssignRegionState
 ): void {
-  regionState.set(regionKey, next)
+  draftRegionState.set(regionKey, next)
+}
+
+export function commitUjatScheduleAssignDraft(
+  regionKey: UjatInstitutionApplicationRegionKey
+): void {
+  const draft = ensureDraftRegionState(regionKey)
+  savedRegionState.set(regionKey, cloneRegionState(draft))
 }
 
 export function patchUjatScheduleAssignDay(
@@ -108,9 +166,9 @@ export function patchUjatScheduleAssignDay(
   isoDate: string,
   patch: (day: UjatScheduleAssignDayState) => UjatScheduleAssignDayState
 ): void {
-  const current = getUjatScheduleAssignRegionState(regionKey)
+  const current = ensureDraftRegionState(regionKey)
   const day = current.days[isoDate] ?? createInitialDayState(isoDate)
-  updateUjatScheduleAssignRegionState(regionKey, {
+  updateUjatScheduleAssignDraftRegionState(regionKey, {
     ...current,
     days: {
       ...current.days,
@@ -124,8 +182,8 @@ export function patchUjatScheduleAssignEstimation(
   semester: UjatInstitutionEducationSemesterKey,
   patch: Partial<UjatScheduleAssignRegionState['estimation']['h1']>
 ): void {
-  const current = getUjatScheduleAssignRegionState(regionKey)
-  updateUjatScheduleAssignRegionState(regionKey, {
+  const current = ensureDraftRegionState(regionKey)
+  updateUjatScheduleAssignDraftRegionState(regionKey, {
     ...current,
     estimation: {
       ...current.estimation,
@@ -138,8 +196,8 @@ export function patchUjatScheduleAssignMaxClassesPerDay(
   regionKey: UjatInstitutionApplicationRegionKey,
   value: string
 ): void {
-  const current = getUjatScheduleAssignRegionState(regionKey)
-  updateUjatScheduleAssignRegionState(regionKey, {
+  const current = ensureDraftRegionState(regionKey)
+  updateUjatScheduleAssignDraftRegionState(regionKey, {
     ...current,
     maxClassesPerDay: value,
   })

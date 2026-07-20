@@ -5,21 +5,16 @@ Use these for consistent user-facing patterns across CMS.
 
 ---
 
-## 1. `StatusDisplay` (`@/shared/ui/status-display`)
+## Design System 분류
 
-Sentence-level status with optional Badge. Pass `status`, `statusLabels`, optional `statusColors`, `showBadge`.
+- **Current:** 신규 화면 사용 가능. `Cms*`, `CmsButton`, `LoadingButton`, `EditableStatusBadge`, `AppStatusBadge`, 도메인 `*StatusBadge`, `InstructorPaymentStatusBadge`, `PermissionModal`, `StatusDropdownCell`, `DetailInfoForm`, `CrossTable`.
+- **Not catalogued:** 호출 0 고아, 상위 컴포넌트 내부 조각, 화면 의존성이 큰 도메인 모달·전체 화면, 공용 구현이 없는 UI.
 
-```tsx
-<StatusDisplay
-  status={application.status}
-  statusLabels={{ submitted: 'Application received.', reviewing: 'Under review.' }}
-  statusColors={{ submitted: 'default', reviewing: 'processing' }}
-/>
-```
+삭제된 `StatusBadge`/`StatusDisplay` (`shared/ui`), `AppButton`/`FilterSearchButton`, `SettlementStatusBadge`, `PermissionRejectModal`, `AuthLoadingButton` 및 `StatusDropdownCell tagLayout="tag132"`는 사용 가능한 API로 취급하거나 재도입하지 않는다.
 
 ---
 
-## 2. `SingleCTA` (`@/shared/ui/single-cta`)
+## 1. `SingleCTA` (`@/shared/ui/single-cta`)
 
 One primary action: **`targetUrl` or `onClick` required** (not neither).
 
@@ -30,7 +25,7 @@ One primary action: **`targetUrl` or `onClick` required** (not neither).
 
 ---
 
-## 3. `GuideMessage` / `GuideParagraph`
+## 2. `GuideMessage` / `GuideParagraph`
 
 Fixed guidance from server — **no paraphrasing**; preserve order for `GuideParagraph`.
 
@@ -41,25 +36,25 @@ Fixed guidance from server — **no paraphrasing**; preserve order for `GuidePar
 
 ---
 
-## 4. `ResultScreen`
+## 3. `ResultScreen`
 
 Completion / outcome pages: `status`, `title`, optional `subTitle`, `description`, `guideMessages`, `cta`.
 
 ---
 
-## 5. `EmptyState`
+## 4. `EmptyState`
 
 Empty lists with optional CTA (`description`, optional `cta`).
 
 ---
 
-## 6. `StatusTimeline`
+## 5. `StatusTimeline`
 
 Show history of status steps with `items` + `statusLabels` / `statusColors`.
 
 ---
 
-## 7. `CrossTable` (`@/shared/ui/cross-table`)
+## 6. `CrossTable` (`@/shared/ui/cross-table`)
 
 행·열 헤더가 교차하는 가변 격자(예: 학년 × 교시). **인라인 matrix `<table>` 금지** — [cross-table.md](../design/cross-table.md).
 
@@ -75,9 +70,16 @@ Show history of status steps with `items` + `statusLabels` / `statusColors`.
 
 ---
 
+## 7. `DetailInfoForm` 다블록 기본 정보
+
+상태 블록 + 프로필 블록 등 **연속 격자**는 Form 2개(`title` / `hideHeader`) + `applicant-instructor-basic-info` 래퍼.  
+로컬 gap·border CSS 추가 금지. → [detail-info-form-layout.mdc](../design/detail-info-form-layout.mdc)
+
+---
+
 ## Common compositions
 
-- **Status + next action:** `StatusDisplay` + conditional `SingleCTA` from API `nextAction`.  
+- **Status + next action:** Current domain status badge + conditional `SingleCTA`.
 - **Result:** `ResultScreen` with success/error and optional CTA.  
 - **Empty:** `EmptyState` + CTA to create or navigate.
 
@@ -91,4 +93,4 @@ Show history of status steps with `items` + `statusLabels` / `statusColors`.
 
 See [refactoring-principles.md](./refactoring-principles.md), [custom-hooks.md](./custom-hooks.md).
 
-**Last updated:** 2026-05-19
+**Last updated:** 2026-07-15

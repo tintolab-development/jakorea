@@ -2,21 +2,44 @@
  * 일반 프로그램 상세 — 공통 정보 표시 mock/파생
  */
 
-import type { Program } from '@/types/domain'
-import { getGeneralSurveyMenuItems } from '@/features/program/general/lib/detail-meta'
+import type {
+  GeneralProgramParticipantType,
+  GeneralProgramScheduleDetailRow,
+  Program,
+  ProgramCategory,
+} from '@/types/domain'
+import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
+import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
 import {
-  GENERAL_PROGRAM_EDUCATION_STRUCTURE_LABELS,
-  GENERAL_PROGRAM_SESSION_ROUND_LABELS,
   buildGeneralProgramVariantTitle,
   resolveGeneralProgramVariantFromProgram,
   type GeneralProgramVariant,
 } from '@/features/program/general/lib/variant'
 import { TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS } from '@/features/template/lib/template-form-select-options'
-import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
+import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
+import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 
 const PARTICIPANT_LABEL_BY_VALUE = Object.fromEntries(
   TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.map(o => [o.value, o.label])
 ) as Record<string, string>
+
+const CATEGORY_TO_PARTICIPANT: Record<ProgramCategory, GeneralProgramParticipantType> = {
+  school: 'school_institution',
+  individual: 'individual',
+  instructor: 'teacher_instructor',
+  volunteer: 'volunteer',
+}
+
+/** 교육 진행 예정일 — 유형 mock 공통 기본 일정 (날짜 지정 형식) */
+export const DEFAULT_GENERAL_EDUCATION_SCHEDULE_LINES_MOCK = [
+  '26년 4월 20일(월) 09:30 ~ 12:20',
+  '26년 4월 27일(월) 13:00 ~ 15:50',
+] as const
+
+function resolveParticipantTypes(program: Program): GeneralProgramParticipantType[] {
+  if (program.generalParticipantTypes?.length) return [...program.generalParticipantTypes]
+  return [CATEGORY_TO_PARTICIPANT[program.category]]
+}
 
 /** 기관_커리큘럼형_단일 회차 유형 mock id */
 export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID =
@@ -92,7 +115,7 @@ export const GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_COMMON_INFO_MOCK: NonNullable<
     { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 250,000원' },
   ],
   paymentItems: '교통비(일반), 숙박비(일반), 자원봉사자 활동비',
-  deductionItems: '일용근로자 원천징수세액',
+  deductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
   kpi: {
     finalParticipants: 30,
     instructorCount: 80,
@@ -128,6 +151,7 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
         '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
     },
   ],
+  educationScheduleMode: 'period',
   educationScheduleLines: [
     '26년 4월 20일(월) 9:30 ~ 12:20',
     '26년 4월 27일(월) 13:00 ~ 15:50',
@@ -138,7 +162,7 @@ export const GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_COMMON_INFO_MOCK: NonNullable
     { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 250,000원' },
   ],
   paymentItems: '교통비(일반), 숙박비(일반), 자원봉사자 활동비',
-  deductionItems: '일용근로자 원천징수세액',
+  deductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
   kpi: {
     finalParticipants: 30,
     instructorCount: 80,
@@ -304,11 +328,12 @@ function buildCurriculumSessionsFromRounds(
   program: Program,
   variant: GeneralProgramVariant | null
 ): NonNullable<Program['generalCommonInfo']>['curriculumSessions'] {
+  const rounds = program.rounds ?? []
   const isMulti =
     variant?.educationStructure === 'curriculum' && variant.sessionRound === 'multi'
 
   if (isMulti) {
-    return program.rounds.map((r, i) => ({
+    return rounds.map((r, i) => ({
       sessionLabel: `${i + 1}회차`,
       title: '2',
       description:
@@ -320,7 +345,7 @@ function buildCurriculumSessionsFromRounds(
     }))
   }
 
-  return program.rounds.map((r, i) => ({
+  return rounds.map((r, i) => ({
     sessionLabel: `${i + 1}차시`,
     title: r.curriculum?.split('|')[0]?.trim() ?? `${i + 1}회차`,
     description: r.curriculum?.includes('|')
@@ -339,7 +364,7 @@ export function resolveGeneralProgramListTitle(program: Program): string {
 }
 
 export function formatGeneralParticipantTypesSummary(program: Program): string {
-  return getGeneralParticipantTypes(program)
+  return resolveParticipantTypes(program)
     .map(t => {
       if (t === 'teacher_instructor') return '강사'
       return PARTICIPANT_LABEL_BY_VALUE[t] ?? t
@@ -348,9 +373,54 @@ export function formatGeneralParticipantTypesSummary(program: Program): string {
 }
 
 export function formatGeneralSurveyItemsSummary(program: Program): string {
-  const items = getGeneralSurveyMenuItems(program)
-  if (items.length === 0) return '-'
-  return items.map(i => i.label).join(', ')
+  const keys = normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? [])
+  if (keys.length === 0) return '-'
+  return keys.map(key => PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[key]).join(', ')
+}
+
+/** 일정형 세부 일정 표시명 — name → scheduleLabel → 세부 일정 NN */
+export function resolveScheduleDetailDisplayName(
+  detail: Pick<GeneralProgramScheduleDetailRow, 'name' | 'scheduleLabel'> | undefined,
+  index: number
+): string {
+  const name = detail?.name?.trim()
+  if (name) return name
+  const scheduleLabel = detail?.scheduleLabel?.trim()
+  if (scheduleLabel) return scheduleLabel
+  return `세부 일정 ${String(index + 1).padStart(2, '0')}`
+}
+
+/** 일정형 실적·조회 — scheduleDetails 일정명을 세부 프로그램명으로 합친다 */
+export function resolveScheduleTypeDetailedProgramNameFromDetails(
+  scheduleDetails: Array<Pick<GeneralProgramScheduleDetailRow, 'name' | 'scheduleLabel'>> | undefined
+): string {
+  const details = scheduleDetails ?? []
+  if (details.length === 0) return '해당없음'
+  return details.map((detail, index) => resolveScheduleDetailDisplayName(detail, index)).join(', ')
+}
+
+/** 공통 정보 — 세부 프로그램명 조회 표시 */
+export function resolveGeneralProgramDetailedProgramNameDisplay(
+  program: Program,
+  commonInfo: NonNullable<Program['generalCommonInfo']>
+): string {
+  const { educationStructure } = resolveEffectiveGeneralProgramTypeFields({
+    generalProgramAudience: program.generalProgramAudience,
+    generalProgramEducationStructure: program.generalProgramEducationStructure,
+    generalProgramSessionRound: program.generalProgramSessionRound,
+    curriculumSessions: commonInfo.curriculumSessions,
+  })
+
+  if (educationStructure === 'schedule') {
+    return resolveScheduleTypeDetailedProgramNameFromDetails(commonInfo.scheduleDetails)
+  }
+
+  return (
+    commonInfo.detailedProgramName?.trim() ||
+    program.textbookName?.trim() ||
+    program.teamDivision?.trim() ||
+    '-'
+  )
 }
 
 export function resolveGeneralProgramCommonInfo(
@@ -379,12 +449,6 @@ export function resolveGeneralProgramCommonInfo(
   }
 
   const variant = resolveGeneralProgramVariantFromProgram(program)
-  const educationStructure = variant
-    ? GENERAL_PROGRAM_EDUCATION_STRUCTURE_LABELS[variant.educationStructure]
-    : '커리큘럼형'
-  const sessionRound = variant
-    ? GENERAL_PROGRAM_SESSION_ROUND_LABELS[variant.sessionRound]
-    : '단일 회차'
 
   return {
     detailedProgramName: program.textbookName ?? program.teamDivision,
@@ -395,12 +459,13 @@ export function resolveGeneralProgramCommonInfo(
         ? undefined
         : buildCurriculumSessionsFromRounds(program, variant),
     scheduleDetails: variant?.educationStructure === 'schedule' ? [] : undefined,
-    educationScheduleLines: [`${educationStructure} · ${sessionRound} (일정 mock)`],
+    educationScheduleMode: 'date',
+    educationScheduleLines: [...DEFAULT_GENERAL_EDUCATION_SCHEDULE_LINES_MOCK],
     wageGradeRows: [
       { grade: '3급 강사비', pricing: '1시간 당 | 기본 : 240,000원' },
     ],
     paymentItems: '교통비 (1사1교), 숙박비, 자원봉사자 활동비',
-    deductionItems: '사업소득 3.3%, 기타 소득 8.8%',
+    deductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
     kpi: {
       finalParticipants: program.approvedStudentCount ?? 30,
       instructorCount: program.instructors ?? 80,

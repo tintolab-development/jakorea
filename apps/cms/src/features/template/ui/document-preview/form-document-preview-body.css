@@ -1,4 +1,5 @@
 @import '../shared/form-paragraph-section-description.css';
+@import './document-education-photos-readonly.css';
 
 .form-document-preview-body {
   display: flex;
@@ -37,6 +38,44 @@
   flex-direction: column;
   gap: 4px;
   margin-bottom: 8px;
+}
+
+.form-document-preview-paragraph__title-row {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
+  min-width: 0;
+  padding-left: 8px;
+}
+
+.form-document-preview-paragraph__required {
+  margin-left: 2px;
+  color: var(--color-red, #c32f4a);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+}
+
+.form-document-preview-paragraph--file-attachment {
+  min-height: 300px;
+}
+
+.form-document-preview-paragraph--file-attachment .form-document-preview-paragraph__content-slot {
+  min-height: 280px;
+}
+
+.form-document-preview-paragraph--file-attachment .form-document-preview-paragraph__title-text {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.form-document-preview-paragraph--file-attachment
+  .form-document-preview-paragraph__description-text {
+  padding-left: 8px;
 }
 
 .form-document-preview-paragraph__content-slot {
@@ -263,4 +302,33 @@
 
 .form-document-preview-body--ujat-education .form-document-short-essay-table thead + tbody tr:last-child > * {
   border-bottom: 0;
+}
+
+/* 강의보고서 A4 미리보기·PDF — 입력값(프로그램명·기관명·서술 등) 공통 타이포 */
+.form-document-preview-body--lecture-report .form-document-preview-paragraph__body-text,
+.form-document-preview-body--lecture-report .document-session-plan-short-essay-readonly__text,
+.form-document-preview-body--lecture-report .form-document-short-essay-table td,
+.form-document-preview-body--lecture-report .form-document-text-input-table td,
+.form-document-preview-body--lecture-report
+  .form-editor-vertical-table__cell-input-shell--body
+  .ant-input,
+.form-document-preview-body--lecture-report
+  .form-editor-vertical-table__cell-input-shell--body
+  .ant-input:disabled,
+.form-document-preview-body--lecture-report .lecture-report-prog-info__session-input.ant-input,
+.form-document-preview-body--lecture-report .lecture-report-prog-info__session-input.ant-input:disabled,
+.form-document-preview-body--lecture-report
+  .form-editor-vertical-table__field-box.ant-picker
+  .ant-picker-input
+  > input,
+.form-document-preview-body--lecture-report
+  .form-editor-vertical-table__field-box.ant-picker.ant-picker-disabled
+  .ant-picker-input
+  > input {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }

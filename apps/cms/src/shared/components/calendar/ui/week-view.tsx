@@ -48,15 +48,21 @@ function readStartEndFromUnknown(original: unknown): { startTime?: string; endTi
   const st = o.startTime
   const et = o.endTime
   return {
-    startTime: typeof st === 'string' ? st : undefined,
-    endTime: typeof et === 'string' ? et : undefined,
+    startTime: typeof st === 'string' && st.trim() ? st.trim() : undefined,
+    endTime: typeof et === 'string' && et.trim() ? et.trim() : undefined,
   }
+}
+
+/** `CalendarMainEventInput` 등 이벤트 래퍼에 시각 필드가 있으면 그 값만 사용(없으면 종일) */
+function hasEventLevelTimeFields(original: unknown): boolean {
+  if (original == null || typeof original !== 'object') return false
+  return 'startTime' in original || 'endTime' in original
 }
 
 /** `CalendarItem.original` 또는 중첩 `originalItem`에서 주간 격자용 시각 */
 function readTimesFromCalendarItem(item: CalendarItem): { startTime?: string; endTime?: string } {
   const direct = readStartEndFromUnknown(item.original)
-  if (direct.startTime) return direct
+  if (hasEventLevelTimeFields(item.original)) return direct
   if (
     item.original != null &&
     typeof item.original === 'object' &&
@@ -260,9 +266,8 @@ export function WeekView({
           )
         })}
       </div>
-      <div className="calendar-week-time-grid__scroll">
-        <div className="calendar-week-time-grid__shell">
-          <div className="calendar-week-time-grid__gutter">
+      <div className="calendar-week-time-grid__shell">
+        <div className="calendar-week-time-grid__gutter">
             {WEEK_TIME_GRID_HOUR_ROWS.map((row, hourIdx) => (
               <div
                 key={`week-gutter-${hourIdx}`}
@@ -295,13 +300,14 @@ export function WeekView({
                 )
 
                 const fullDayPreview =
-                  eventsConfig.previewTooltipContent != null
+                  dayEvents.length > 0 && eventsConfig.previewTooltipContent != null
                     ? buildEventsPreview(
                         dayEvents,
                         resolvedDayColors,
                         eventsConfig.previewTooltipContent
                       )
                     : null
+                const fullDayPreviewEnabled = dayEvents.length > 0 && fullDayPreview != null
 
                 return (
                   <div
@@ -311,7 +317,7 @@ export function WeekView({
                     onClick={() => onSelectDate(date)}
                   >
                     <CalendarPreviewTooltip
-                      enabled={fullDayPreview != null}
+                      enabled={fullDayPreviewEnabled}
                       content={fullDayPreview}
                       tooltipOverlayClassName={tooltipOverlayClassName}
                     >
@@ -476,7 +482,6 @@ export function WeekView({
                 </div>
               )
             })}
-          </div>
         </div>
       </div>
     </div>

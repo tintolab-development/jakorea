@@ -10,10 +10,9 @@ import {
 } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
-import { NameBlockField } from '../fields/name-block-field'
 import { ContactInfoFieldsRow } from './shared'
 import type { BasicInfoSectionContext } from './types'
-import { affiliationAndGradeView, detailAddressView, genderBirthView, socialLine } from '../display'
+import { affiliationAndGradeView, detailAddressView, genderBirthView, socialView } from '../display'
 import { formatDate } from '@/shared/utils'
 
 export function SchoolTeacherMetaSection(ctx: BasicInfoSectionContext) {
@@ -21,7 +20,7 @@ export function SchoolTeacherMetaSection(ctx: BasicInfoSectionContext) {
   return (
     <EditableRow type="double">
       <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
-      <EditableField label="연동된 소셜 계정" readOnlyDisplay view={<span>{socialLine(user)}</span>} />
+      <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
     </EditableRow>
   )
 }
@@ -56,12 +55,7 @@ function SchoolTeacherEmploymentStatusField({
       <StatusDropdownCell<SchoolTeacherEmploymentStatus>
       status={employmentStatus}
       statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
-      renderBadge={status => (
-        <SchoolTeacherEmploymentStatusBadge
-          status={status}
-          classNamePrefix="user-basic-info-section__teacher-employment-badge"
-        />
-      )}
+      renderBadge={status => <SchoolTeacherEmploymentStatusBadge status={status} />}
       isItemDisabled={(cur, opt) => cur === opt}
       onChange={handleEmploymentStatusChange}
       isOpen={employmentDropdownOpen}
@@ -76,34 +70,33 @@ export function SchoolTeacherSection(ctx: BasicInfoSectionContext) {
   const { user, scheduleChangeCount, personalInfoRevealed } = ctx
   return (
     <>
-      <NameBlockField
-        rows={[
-          {
-            subLabel: '한글',
-            main: (
-              <span className="user-basic-info-section__name-with-badge">
-                {user.name}
-                {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
-                  <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
-                ) : null}
-              </span>
-            ),
-            sideLabel: '재직 현황',
-            side: (
-              <SchoolTeacherEmploymentStatusField
-                userId={user.id}
-                employmentStatusLabel={user.listMetrics?.employmentStatusLabel}
-              />
-            ),
-          },
-          {
-            subLabel: '영문',
-            main: <span>{user.nameEn ?? '-'}</span>,
-            sideLabel: '성별 및 생년월일',
-            side: genderBirthView(user),
-          },
-        ]}
-      />
+      <EditableRow type="double">
+        <EditableField
+          label="성명"
+          readOnlyDisplay
+          view={
+            <span className="user-basic-info-section__name-with-badge">
+              {user.name}
+              {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
+                <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
+              ) : null}
+            </span>
+          }
+        />
+        <EditableField
+          label="재직 현황"
+          readOnlyDisplay
+          view={
+            <SchoolTeacherEmploymentStatusField
+              userId={user.id}
+              employmentStatusLabel={user.listMetrics?.employmentStatusLabel}
+            />
+          }
+        />
+      </EditableRow>
+      <EditableRow type="single">
+        <EditableField label="성별 및 생년월일" readOnlyDisplay view={genderBirthView(user)} />
+      </EditableRow>
       <ContactInfoFieldsRow
         user={user}
         personalInfoRevealed={personalInfoRevealed}

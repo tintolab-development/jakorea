@@ -3,6 +3,8 @@
  */
 
 .filter-table-layout {
+  /* 테이블 툴바 액션 버튼 간격 — 필터 칸 gap(--filter-field-gap)과 분리 */
+  --filter-table-toolbar-actions-gap: 8px;
   width: 100%;
   min-width: 0;
   background: var(--color-bg-base);
@@ -18,7 +20,7 @@
   min-width: 0;
 }
 
-.filter-table-layout .unified-filter-card {
+.filter-table-layout .table-filter-group {
   margin-bottom: 0 !important;
   padding: 0 !important;
 }
@@ -71,6 +73,7 @@
   align-items: baseline;
   flex-wrap: wrap;
   gap: 10px;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -92,9 +95,36 @@
 .filter-table-layout__toolbar-actions {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--filter-table-toolbar-actions-gap);
+  flex: 0 0 auto;
+  min-width: 0;
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.filter-table-layout__toolbar-actions-slot {
+  display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: var(--filter-field-gap, var(--spacing-12, 12px));
-  flex-shrink: 0;
+  justify-content: flex-end;
+  gap: var(--filter-table-toolbar-actions-gap);
+  min-width: 0;
+}
+
+/* actions를 div 등으로 감싼 화면 — 페이지별 gap(12px 등) 덮어써 8px 통일 */
+.filter-table-layout__toolbar-actions-slot > :is(div, span) {
+  gap: var(--filter-table-toolbar-actions-gap);
+}
+
+.filter-table-layout__toolbar-actions-slot .info-section-buttons--wrapper,
+.filter-table-layout__toolbar-actions-slot [class*='toolbar-actions'],
+.filter-table-layout__toolbar-actions-slot [class$='__actions'] {
+  gap: var(--filter-table-toolbar-actions-gap);
+}
+
+.filter-table-layout__toolbar-excel {
+  flex: 0 0 auto;
 }
 
 .filter-table-layout__title {
@@ -119,7 +149,127 @@
   min-width: 0;
 }
 
+/* split-card 주간 캘린더가 테이블 슬롯에 있을 때(봉사자 면접 등) — min-width·가로 스크롤은 __main·scroll-host */
+.filter-table-layout:has(.calendar-split-card-layout .calendar-week--time-grid) {
+  overflow: visible;
+}
+
+.filter-table-layout:has(.calendar-split-card-layout .calendar-week--time-grid) .filter-table-layout__table {
+  overflow: visible;
+  min-width: var(--calendar-split-card-min-width-week);
+  flex-shrink: 0;
+}
+
 /* 필터 미노출: 툴바가 카드 상단부터 오도록 상단 여백만 보정 */
 .filter-table-layout.filter-table-layout--without-filter .filter-table-layout__toolbar {
   margin-top: 0;
+}
+
+/*
+ * FilterTableLayout 기본 responsive wrap — 필드만 flex-wrap, 조회는 우측 shell(필드 입력란과 baseline 정렬)
+ */
+.filter-table-layout.filter-table-layout--filter-responsive-wrap .table-filter-group__container {
+  align-items: flex-end;
+}
+
+.filter-table-layout.filter-table-layout--filter-responsive-wrap
+  .table-filter-group__fields-container--multi-row-responsive {
+  container-type: inline-size;
+  container-name: filter-table-layout-fields;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/*
+ * 캘린더 본문 — FilterTableLayout 카드 안 `calendar-set`.
+ * 프로그램 목록 캘린더(program-list-calendar-view-container)와 동일:
+ * - sticky·가로 스크롤은 layout-content(:has(.calendar-set)) — __calendar-body overflow 금지
+ * - scroll 맨 위: grid align-items:start + calendar-layout shell 정렬
+ * - scroll 중: 3열=좌·우 sticky / 2열=메인·우 sticky (calendar-layout.css)
+ */
+.filter-table-layout.filter-table-layout--calendar-view {
+  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  /* 풀페이지 모달 안 — FilterTableLayout 기본 카드(shell-shadow·padding) 제거 */
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.filter-table-layout.filter-table-layout--calendar-view .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.filter-table-layout.filter-table-layout--calendar-view .filter-table-layout__table {
+  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.filter-table-layout__calendar-body {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.filter-table-layout__calendar-body .calendar-set-scroll-host {
+  margin-top: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.filter-table-layout__calendar-body
+  .calendar-set-scroll-host:has(.calendar-week--time-grid) {
+  min-width: var(--calendar-split-card-min-width-week);
+  flex-shrink: 0;
+}
+
+.filter-table-layout__calendar-body
+  .calendar-split-card-layout:has(.calendar-week--time-grid) {
+  min-width: var(--calendar-split-card-min-width-week);
+  flex-shrink: 0;
+}
+
+.filter-table-layout__calendar-body .calendar-set {
+  margin-top: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  --calendar-set-sticky-top: calc(16px + var(--cms-layout-content-padding-top, 0px));
+}
+
+/* split-card — grid track min(852+280) 유지, 좁을 때는 modal __main 가로 스크롤 */
+.filter-table-layout__calendar-body .calendar-split-card-layout {
+  margin-top: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* FilterTableLayout 안 split-card page-scroll — sticky top만 (레이아웃은 `calendar-split-card-layout.css`) */
+.filter-table-layout__calendar-body .calendar-split-card-layout--page-scroll {
+  --calendar-set-sticky-top: 16px;
+}
+
+/* 2열 — grid-area 명시 */
+.filter-table-layout__calendar-body .calendar-set:not(:has(.calendar-sub-left)) {
+  grid-template-areas: 'main sub-right';
+}
+
+.filter-table-layout__calendar-body
+  .calendar-set:not(:has(.calendar-sub-left))
+  > .calendar-main-container {
+  grid-area: main;
+}
+
+.filter-table-layout__calendar-body
+  .calendar-set:not(:has(.calendar-sub-left))
+  > .calendar-sub-right-list {
+  grid-area: sub-right;
 }

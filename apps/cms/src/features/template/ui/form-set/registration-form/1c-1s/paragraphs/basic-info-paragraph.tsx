@@ -7,7 +7,8 @@ import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
-import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
+import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
+import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -16,17 +17,13 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
-import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
-import type { SponsorManagementRow } from '@/features/sponsor/model/sponsor-management.types'
 import {
   TEMPLATE_FORM_BUSINESS_AREA_OPTIONS,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
   TEMPLATE_FORM_IP_OWNED_OPTIONS,
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
-  TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS,
   withDetailedProgramNoneOption,
 } from '@/features/template/lib/template-form-select-options'
-import { type ProgramRegistrationIpsTypeValue } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import { PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS } from '../../general/paragraphs/program-registration-ips-options'
@@ -50,18 +47,9 @@ const DETAILED_PROGRAM_MAIN_OPTION = {
   label: '1사1교 경제금융교육',
 } as const
 
-const BUSINESS_FIELD_FIXED_VALUE = 'economy_finance'
+const IPS_PREPARE_DEFAULT = 'prepare'
 
-const IPS_PREPARE_FIXED: ProgramRegistrationIpsTypeValue = {
-  category: 'prepare',
-  detail: 'none',
-}
-
-function participantTypeLabel(
-  value: (typeof TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS)[number]['value']
-) {
-  return TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS.find(o => o.value === value)?.label ?? value
-}
+const BUSINESS_FIELD_DEFAULT = 'economy_finance'
 
 const educationCourseSelectOptions = [
   { value: ALL_VALUE, label: '전체' },
@@ -72,16 +60,22 @@ export type OneCOneSRegistrationBasicInfoParagraphProps = {
   participant: ProgramRegistrationParticipantState
   onIndividualChange: (checked: boolean) => void
   onOrganizationChange: (checked: boolean) => void
+  onTeacherInstructorChange: (checked: boolean) => void
 }
 
 export function OneCOneSRegistrationBasicInfoParagraph({
   participant,
-  onIndividualChange,
+  onIndividualChange: _onIndividualChange,
   onOrganizationChange,
+  onTeacherInstructorChange,
 }: OneCOneSRegistrationBasicInfoParagraphProps) {
+  const [repKo, setRepKo] = useState(REP_KO)
+  const [repEn, setRepEn] = useState(REP_EN)
+  const [businessField, setBusinessField] = useState(BUSINESS_FIELD_DEFAULT)
+  const [ipOwned, setIpOwned] = useState('ja')
+  const [courseDeliveredBy, setCourseDeliveredBy] = useState('ja')
+  const [ipsCategory, setIpsCategory] = useState(IPS_PREPARE_DEFAULT)
   const [partnerInvolvement, setPartnerInvolvement] = useState<'yes' | 'no'>('no')
-  const [teacherChecked, setTeacherChecked] = useState(true)
-  const [volunteerChecked, setVolunteerChecked] = useState(false)
   const [educationCourse, setEducationCourse] = useState(ALL_VALUE)
   const [operationAnchorDate, setOperationAnchorDate] = useState<Dayjs | null>(dayjs())
   const [operationRange, setOperationRange] = useState<[Dayjs, Dayjs] | null>(null)
@@ -103,32 +97,27 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     setSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
   }
 
-  const sponsorOptions = useMemo(
-    () => [
-      { value: ALL_VALUE, label: '전체' },
-      ...mockSponsorManagementListRows.map(s => ({ value: s.id, label: s.name })),
-    ],
-    []
+  const { options: sponsorApiOptions } = useSponsorSelectOptions()
+  const contactsQuery = useSponsorContactsQuery(
+    sponsorId === ALL_VALUE ? null : sponsorId,
+    sponsorId !== ALL_VALUE && Boolean(sponsorId)
   )
 
-  const selectedSponsor = useMemo<SponsorManagementRow | null>(
-    () =>
-      sponsorId === ALL_VALUE
-        ? null
-        : (mockSponsorManagementListRows.find(s => s.id === sponsorId) ?? null),
-    [sponsorId]
+  const sponsorOptions = useMemo(
+    () => [{ value: ALL_VALUE, label: '전체' }, ...sponsorApiOptions],
+    [sponsorApiOptions]
   )
 
   const managerOptions = useMemo(() => {
     if (sponsorId === ALL_VALUE) {
       return [{ value: ALL_VALUE, label: '전체' }]
     }
-    if (!selectedSponsor) return []
-    return getSponsorDetailContactsNormalized(selectedSponsor).map(c => ({
+    if (!sponsorId) return []
+    return (contactsQuery.data ?? []).map(c => ({
       value: c.id,
       label: c.name,
     }))
-  }, [selectedSponsor, sponsorId])
+  }, [contactsQuery.data, sponsorId])
 
   const detailedProgramOptions = useMemo(
     () => [
@@ -158,8 +147,8 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <CmsInput
                 inputSize="medium"
-                disabled
-                value={REP_KO}
+                value={repKo}
+                onChange={e => setRepKo(e.target.value)}
                 placeholder="대표 프로그램명을 입력하세요"
                 width="100%"
               />
@@ -171,8 +160,8 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <CmsInput
                 inputSize="medium"
-                disabled
-                value={REP_EN}
+                value={repEn}
+                onChange={e => setRepEn(e.target.value)}
                 placeholder="대표 프로그램명을 입력하세요"
                 width="100%"
               />
@@ -198,7 +187,6 @@ export function OneCOneSRegistrationBasicInfoParagraph({
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
                   withAllOption={false}
-                  disabled
                   inputSize="medium"
                   placeholder="세부 프로그램명을 선택하세요"
                   width="100%"
@@ -250,36 +238,25 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             label="참여자 유형"
             edit={
               <div className="detail-info-form-inputs-wrapper">
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={participant.individual}
-                  disabled={participant.organization}
-                  onChange={e => onIndividualChange(e.target.checked)}
-                >
-                  {participantTypeLabel('individual')}
+                <CmsCheckbox checkboxSize="large" checked={false} disabled>
+                  개인
                 </CmsCheckbox>
                 <CmsCheckbox
                   checkboxSize="large"
                   checked={participant.organization}
-                  disabled={participant.individual}
                   onChange={e => onOrganizationChange(e.target.checked)}
                 >
-                  {participantTypeLabel('school_institution')}
+                  학교/기관
                 </CmsCheckbox>
                 <CmsCheckbox
                   checkboxSize="large"
-                  checked={teacherChecked}
-                  onChange={e => setTeacherChecked(e.target.checked)}
+                  checked={participant.teacherInstructor === true}
+                  onChange={e => onTeacherInstructorChange(e.target.checked)}
                 >
-                  {participantTypeLabel('teacher_instructor')}
+                  강사
                 </CmsCheckbox>
-                <CmsCheckbox
-                  checkboxSize="large"
-                  checked={volunteerChecked}
-                  disabled
-                  onChange={e => setVolunteerChecked(e.target.checked)}
-                >
-                  {participantTypeLabel('volunteer')}
+                <CmsCheckbox checkboxSize="large" checked={false} disabled>
+                  봉사자
                 </CmsCheckbox>
               </div>
             }
@@ -292,10 +269,11 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="medium"
-                  disabled
+                  placeholder="사업 분야를 선택하세요"
                   width={240}
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
-                  value={BUSINESS_FIELD_FIXED_VALUE}
+                  value={businessField}
+                  onChange={v => setBusinessField(String(v ?? ''))}
                 />
               </div>
             }
@@ -366,8 +344,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
         </DetailInfoForm.Row>
       </DetailInfoForm>
 
-      {/* ── 하단: 교육 과정 · IP · Course · Partner · IPS ── */}
-      <DetailInfoForm title="교육 과정 · IP · Course · Partner · IPS" hideHeader mode="edit">
+      <DetailInfoForm title="" hideHeader mode="edit">
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="교육 과정"
@@ -393,10 +370,11 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="medium"
-                  disabled
+                  placeholder="전체"
                   width={240}
                   options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
-                  value="ja"
+                  value={ipOwned}
+                  onChange={v => setIpOwned(String(v ?? ''))}
                 />
               </div>
             }
@@ -411,10 +389,11 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="medium"
-                  disabled
+                  placeholder="전체"
                   width={240}
                   options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
-                  value="ja"
+                  value={courseDeliveredBy}
+                  onChange={v => setCourseDeliveredBy(String(v ?? ''))}
                 />
               </div>
             }
@@ -446,9 +425,8 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 placeholder="IPS 유형을 선택하세요"
                 width={240}
                 options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
-                value={IPS_PREPARE_FIXED.category}
-                onChange={() => {}}
-                disabled
+                value={ipsCategory}
+                onChange={v => setIpsCategory(String(v ?? ''))}
               />
             }
             view="-"

@@ -6,11 +6,15 @@ import { useEffect, useLayoutEffect, useMemo } from 'react'
 import { useForm, type UseFormReturn } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { Program } from '@/types/domain'
+import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
 import {
   generalProgramCommonInfoEditSchema,
   programToGeneralCommonInfoEditValues,
+  resolveSponsorManagementIds,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
+import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
+import { useSponsorOptionsQuery } from '@/features/sponsor/hooks/use-sponsor-options-query'
 
 export interface UseGeneralProgramCommonInfoEditFormOptions {
   program: Program | null
@@ -29,7 +33,7 @@ const EMPTY_DEFAULTS: GeneralProgramCommonInfoEditFormValues = {
   participantTeacherInstructor: false,
   participantVolunteer: false,
   businessArea: '',
-  sponsorManagementId: '',
+  sponsorManagementIds: [],
   sponsorManagerContactId: '',
   venueKind: 'inside',
   venueDetail: '',
@@ -49,7 +53,7 @@ const EMPTY_DEFAULTS: GeneralProgramCommonInfoEditFormValues = {
   wageGrade2Amount: '',
   wageGrade3Amount: '',
   wagePaymentItemIds: [],
-  wageDeductionItems: '',
+  wageDeductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
   educationStructure: 'curriculum',
   sessionRound: 'single',
   educationForm: 'online',
@@ -71,10 +75,24 @@ export function useGeneralProgramCommonInfoEditForm({
   program,
   isEditMode,
 }: UseGeneralProgramCommonInfoEditFormOptions): UseFormReturn<GeneralProgramCommonInfoEditFormValues> {
+  const sponsorsQuery = useSponsorOptionsQuery(Boolean(program))
+  const interimSponsorContext = useMemo(
+    () => ({
+      sponsors: sponsorsQuery.data ?? [],
+      contactsBySponsorId: {},
+    }),
+    [sponsorsQuery.data]
+  )
+  const initialSponsorIds = useMemo(
+    () => (program ? resolveSponsorManagementIds(program, interimSponsorContext) : []),
+    [interimSponsorContext, program]
+  )
+  const sponsorContext = useGeneralProgramSponsorEditContext(initialSponsorIds)
+
   const defaultValues = useMemo(() => {
-    if (program) return programToGeneralCommonInfoEditValues(program)
+    if (program) return programToGeneralCommonInfoEditValues(program, sponsorContext)
     return EMPTY_DEFAULTS
-  }, [program])
+  }, [program, sponsorContext])
 
   const form = useForm<GeneralProgramCommonInfoEditFormValues>({
     resolver: zodResolver(generalProgramCommonInfoEditSchema),
@@ -86,15 +104,15 @@ export function useGeneralProgramCommonInfoEditForm({
 
   useEffect(() => {
     if (program) {
-      reset(programToGeneralCommonInfoEditValues(program), { keepDefaultValues: false })
+      reset(programToGeneralCommonInfoEditValues(program, sponsorContext), { keepDefaultValues: false })
     }
-  }, [program, reset])
+  }, [program, reset, sponsorContext])
 
   useLayoutEffect(() => {
     if (isEditMode && program) {
-      reset(programToGeneralCommonInfoEditValues(program), { keepDefaultValues: false })
+      reset(programToGeneralCommonInfoEditValues(program, sponsorContext), { keepDefaultValues: false })
     }
-  }, [isEditMode, program, reset])
+  }, [isEditMode, program, reset, sponsorContext])
 
   return form
 }

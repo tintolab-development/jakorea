@@ -1,8 +1,9 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
+import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
 import {
   updateApplicantSchoolApprovalStatus,
   patchApplicantSchoolForApprovalStatus,
@@ -23,13 +24,35 @@ import {
 } from '@/data/mock/applicant-instructors'
 import {
   updateGeneralIndividualApplicantApprovalStatus,
+  updateGeneralIndividualApplicantCancelApproval,
+  updateGeneralIndividualApplicantCancelRejection,
   patchGeneralIndividualApplicantForApprovalStatus,
   patchGeneralIndividualApplicantForNotificationResend,
   updateGeneralIndividualApplicantNotificationResend,
   type GeneralIndividualApplicantRow,
 } from '@/data/mock/general-individual-applications-mock'
+import { patchParticipantForCancelApproval } from '@/features/program/general/lib/participant-cancel-approval'
+import {
+  patchParticipantForCancelRejection,
+  toParticipantCancelRejectionNotifyOptions,
+  type ParticipantCancelRejectionConfirmPayload,
+} from '@/features/program/general/lib/participant-cancel-rejection'
+import {
+  ParticipantApproveModal,
+  ParticipantApprovalCompleteModal,
+  ParticipantRejectModal,
+  ParticipantRejectCompleteModal,
+  ParticipantBulkApproveModal,
+  ParticipantBulkApproveCompleteModal,
+  ParticipantBulkRejectModal,
+  ParticipantBulkRejectCompleteModal,
+  ParticipantCancelApprovalModal,
+  ParticipantCancelApprovalCompleteModal,
+  ParticipantCancelRejectModal,
+  ParticipantCancelRejectCompleteModal,
+} from '@/features/program/shared/ui/detail-modal/components/participant-application-flow-modals'
 import type { Program } from '@/types/domain'
-import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import { buildGeneralParticipantDoc1FilterRows } from '@/features/program/general/lib/participant-doc-screening-filter-fields'
 import { ApplicantCalendarView } from './applicant-calendar-view'
 import { mapApplicantDataToCalendarEvents } from './applicant-calendar-events'
 import { ApplicantsDetailContents, type ApplicantType } from './applicants-detail-contents'
@@ -40,6 +63,7 @@ import {
   InstructorApprovalCompleteModal,
 } from '@/features/program/shared/ui/detail-modal/components/instructor-approval-complete-modal'
 import { InstructorLectureAssignModal } from '@/features/program/shared/ui/detail-modal/components/instructor-lecture-assign-modal'
+import { getGeneralParticipantInterviewEnabled } from '@/features/program/general/lib/detail-meta'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import {
   resolveApplicantNotificationResendSentAt,
@@ -49,7 +73,10 @@ import {
 } from '@/features/program/general/lib/applicant-notification-resend'
 import { ApplicantNotificationResendModal } from '@/features/program/shared/ui/detail-modal/components/applicant-notification-resend-modal'
 import { patchInstructorForCancelApproval } from '@/features/program/general/lib/instructor-cancel-approval'
-import { patchInstructorForCancelRejection, toInstructorCancelRejectionNotifyOptions } from '@/features/program/general/lib/instructor-cancel-rejection'
+import {
+  patchInstructorForCancelRejection,
+  toInstructorCancelRejectionNotifyOptions,
+} from '@/features/program/general/lib/instructor-cancel-rejection'
 import { InstructorCancelApprovalCompleteModal } from '@/features/program/shared/ui/detail-modal/components/instructor-cancel-approval-complete-modal'
 import { InstructorCancelApprovalModal } from '@/features/program/shared/ui/detail-modal/components/instructor-cancel-approval-modal'
 import { InstructorCancelRejectCompleteModal } from '@/features/program/shared/ui/detail-modal/components/instructor-cancel-reject-complete-modal'
@@ -111,6 +138,8 @@ export interface ApplicantListProps {
   /** 일반 프로그램 상세: 신규 UI / legacy 구분 */
   detailVariant?: 'legacy' | 'general'
   onApplicantDetailMetaChange?: (meta: ApplicantDetailMeta) => void
+  /** 개인 참여자 면접 1차 서류 심사 탭 */
+  individualScreeningStage?: 'doc1'
 }
 
 export function ApplicantList({
@@ -125,7 +154,9 @@ export function ApplicantList({
   onRegisterApplicantCloseHandler,
   detailVariant = 'legacy',
   onApplicantDetailMetaChange,
+  individualScreeningStage,
 }: ApplicantListProps) {
+  const { showAlert } = useCmsAlert()
   const {
     applicantsCalendarGranularity,
     setApplicantsCalendarGranularity,
@@ -133,6 +164,7 @@ export function ApplicantList({
     fields,
     institutionList,
     instructorList,
+    individualList,
     setInstitutionList,
     setInstructorList,
     setIndividualList,
@@ -152,6 +184,8 @@ export function ApplicantList({
     confirmBulkInstructorApprove,
     confirmBulkInstitutionReject,
     confirmBulkInstitutionApprove,
+    confirmBulkParticipantReject,
+    confirmBulkParticipantApprove,
     handleCancelApproval,
     handleCancelApprovalInstructor,
     handleCancelRejectInstructor,
@@ -163,6 +197,7 @@ export function ApplicantList({
     tableData,
     columns,
     tableScrollX,
+    applicationsLoading,
   } = useApplicantsDetail({
     menu,
     onRegisterApplicantCloseHandler,
@@ -174,6 +209,8 @@ export function ApplicantList({
     sessionLinePreset,
     programId,
     detailVariant,
+    program,
+    individualScreeningStage,
   })
 
   const institutionTableWrapRef = useRef<HTMLDivElement>(null)
@@ -258,12 +295,71 @@ export function ApplicantList({
   const [institutionCancelRejectComplete, setInstitutionCancelRejectComplete] = useState<{
     schoolName: string
   } | null>(null)
+  const [participantBulkApproveOpen, setParticipantBulkApproveOpen] = useState(false)
+  const [participantBulkApproveCompleteCount, setParticipantBulkApproveCompleteCount] = useState<
+    number | null
+  >(null)
+  const [participantBulkRejectOpen, setParticipantBulkRejectOpen] = useState(false)
+  const [participantBulkRejectCompleteCount, setParticipantBulkRejectCompleteCount] = useState<
+    number | null
+  >(null)
+  const [participantApproveTarget, setParticipantApproveTarget] = useState<{
+    id: string
+    name: string
+  } | null>(null)
+  const [participantApprovalComplete, setParticipantApprovalComplete] = useState<{
+    participantName: string
+  } | null>(null)
+  const [participantRejectTarget, setParticipantRejectTarget] = useState<{
+    id: string
+    name: string
+  } | null>(null)
+  const [participantRejectComplete, setParticipantRejectComplete] = useState<{
+    participantName: string
+    rejectionReason: string
+  } | null>(null)
+  const [participantCancelApprovalTarget, setParticipantCancelApprovalTarget] = useState<{
+    id: string
+    name: string
+  } | null>(null)
+  const [participantCancelApprovalComplete, setParticipantCancelApprovalComplete] = useState<{
+    participantName: string
+    cancellationReason: string
+  } | null>(null)
+  const [participantCancelRejectTarget, setParticipantCancelRejectTarget] = useState<{
+    id: string
+    name: string
+  } | null>(null)
+  const [participantCancelRejectComplete, setParticipantCancelRejectComplete] = useState<{
+    participantName: string
+  } | null>(null)
 
   const useGeneralInstructorBulkActionModal =
     menu === 'instructors' && instructorColumnPreset === 'general-detail'
 
   const useGeneralInstitutionActionModal =
-    menu === 'institutions' && institutionColumnPreset === 'general-detail'
+    menu === 'institutions' &&
+    (institutionColumnPreset === 'general-detail' || institutionColumnPreset === 'company-school')
+  const useGeneralInstitutionCalendarVariant = useGeneralInstitutionActionModal
+
+  const useGeneralParticipantActionModal =
+    menu === 'individual-applications' && detailVariant === 'general'
+
+  /** 개인 참여자 — 면접 불필요 시 캘린더 우측 목록 상단 multi select 미노출 */
+  const showCalendarEntityFilter =
+    menu !== 'individual-applications' ||
+    !program ||
+    getGeneralParticipantInterviewEnabled(program)
+
+  /** 1차 서류 심사 탭 — 리스트뷰만 (봉사자 doc1과 동일) */
+  const isIndividualDoc1Screening =
+    menu === 'individual-applications' && individualScreeningStage === 'doc1'
+  const individualDoc1FilterRows = useMemo(
+    () => (isIndividualDoc1Screening ? buildGeneralParticipantDoc1FilterRows() : undefined),
+    [isIndividualDoc1Screening]
+  )
+  const displayViewMode = isIndividualDoc1Screening ? 'table' : viewMode
+  const showIndividualCalendarToggle = !isIndividualDoc1Screening
 
   const useOrganizationInstructorAssignFlow =
     menu === 'instructors' &&
@@ -286,7 +382,9 @@ export function ApplicantList({
     if (!instructorApprovalTarget) return null
     return (
       instructorList.find(row => row.id === instructorApprovalTarget.id) ??
-      (selectedItem && 'instructorName' in selectedItem && selectedItem.id === instructorApprovalTarget.id
+      (selectedItem &&
+      'instructorName' in selectedItem &&
+      selectedItem.id === instructorApprovalTarget.id
         ? (selectedItem as ApplicantInstructorRow)
         : null)
     )
@@ -340,34 +438,107 @@ export function ApplicantList({
     )
   }, [institutionCancelRejectTarget, institutionList, selectedItem])
 
+  const participantCancelApprovalParticipant = useMemo(() => {
+    if (!participantCancelApprovalTarget) return null
+    return (
+      individualList.find(row => row.id === participantCancelApprovalTarget.id) ??
+      (selectedItem &&
+      'applicantName' in selectedItem &&
+      selectedItem.id === participantCancelApprovalTarget.id
+        ? (selectedItem as GeneralIndividualApplicantRow)
+        : null)
+    )
+  }, [participantCancelApprovalTarget, individualList, selectedItem])
+
+  const participantCancelRejectParticipant = useMemo(() => {
+    if (!participantCancelRejectTarget) return null
+    return (
+      individualList.find(row => row.id === participantCancelRejectTarget.id) ??
+      (selectedItem &&
+      'applicantName' in selectedItem &&
+      selectedItem.id === participantCancelRejectTarget.id
+        ? (selectedItem as GeneralIndividualApplicantRow)
+        : null)
+    )
+  }, [participantCancelRejectTarget, individualList, selectedItem])
+
+  const showNoSelectionAlert = useCallback(() => {
+    showAlert({
+      title: '항목 선택 안내',
+      content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+    })
+  }, [showAlert])
+
+  const resolveSingleSelectedIndividual = useCallback((): GeneralIndividualApplicantRow | null => {
+    if (selectedRowKeys.length !== 1) return null
+    const id = String(selectedRowKeys[0])
+    return individualList.find(row => row.id === id) ?? null
+  }, [selectedRowKeys, individualList])
+
+  const resolveSingleSelectedInstitution = useCallback((): ApplicantSchoolRow | null => {
+    if (selectedRowKeys.length !== 1) return null
+    const id = String(selectedRowKeys[0])
+    return institutionList.find(row => row.id === id) ?? null
+  }, [selectedRowKeys, institutionList])
+
   const handleBulkRejectClick = () => {
     if (selectedRowKeys.length === 0) {
+      showNoSelectionAlert()
       return
     }
     if (useGeneralInstitutionActionModal) {
+      const single = resolveSingleSelectedInstitution()
+      if (single) {
+        setInstitutionRejectTarget({ id: single.id, name: single.schoolName })
+        return
+      }
       setInstitutionBulkRejectOpen(true)
+      return
+    }
+    if (useGeneralParticipantActionModal) {
+      const single = resolveSingleSelectedIndividual()
+      if (single) {
+        setParticipantRejectTarget({ id: single.id, name: single.applicantName })
+        return
+      }
+      setParticipantBulkRejectOpen(true)
       return
     }
     if (useGeneralInstructorBulkActionModal) {
       setInstructorBulkRejectOpen(true)
       return
     }
-    handleBulkReject()
+    void handleBulkReject()
   }
 
   const handleBulkApproveClick = () => {
     if (selectedRowKeys.length === 0) {
+      showNoSelectionAlert()
       return
     }
     if (useGeneralInstitutionActionModal) {
+      const single = resolveSingleSelectedInstitution()
+      if (single) {
+        setInstitutionApproveTarget({ id: single.id, name: single.schoolName })
+        return
+      }
       setInstitutionBulkApproveOpen(true)
+      return
+    }
+    if (useGeneralParticipantActionModal) {
+      const single = resolveSingleSelectedIndividual()
+      if (single) {
+        setParticipantApproveTarget({ id: single.id, name: single.applicantName })
+        return
+      }
+      setParticipantBulkApproveOpen(true)
       return
     }
     if (useGeneralInstructorBulkActionModal) {
       setInstructorBulkApproveOpen(true)
       return
     }
-    handleBulkApprove()
+    void handleBulkApprove()
   }
 
   const usesInstitutionTableScroll =
@@ -376,10 +547,10 @@ export function ApplicantList({
     (menu === 'instructors' && instructorColumnPreset === 'general-detail')
 
   useLayoutEffect(() => {
-    if (!usesInstitutionTableScroll || viewMode !== 'table' || selectedItem) return
+    if (!usesInstitutionTableScroll || displayViewMode !== 'table' || selectedItem) return
     const el = institutionTableWrapRef.current
     if (!el) return
-    const minW = 1280
+    const minW = institutionColumnPreset === 'company-school' ? 1600 : 1280
     const update = () => {
       const w = el.getBoundingClientRect().width
       setInstitutionTableScrollX(Math.max(minW, Math.floor(w)))
@@ -388,21 +559,12 @@ export function ApplicantList({
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [usesInstitutionTableScroll, viewMode, selectedItem])
+  }, [usesInstitutionTableScroll, displayViewMode, selectedItem])
 
   const tableHorizontalScrollX = usesInstitutionTableScroll ? institutionTableScrollX : tableScrollX
 
-  const isGeneralInstructorCalendar =
-    menu === 'instructors' &&
-    instructorColumnPreset === 'general-detail' &&
-    viewMode === 'calendar' &&
-    !selectedItem
-
-  const isGeneralInstitutionCalendar =
-    menu === 'institutions' &&
-    institutionColumnPreset === 'general-detail' &&
-    viewMode === 'calendar' &&
-    !selectedItem
+  const isGeneralProgramCalendarView =
+    detailVariant === 'general' && displayViewMode === 'calendar' && !selectedItem
 
   const showInstitutionDetail =
     selectedItem != null && menu === 'institutions' && 'schoolName' in selectedItem
@@ -463,7 +625,9 @@ export function ApplicantList({
 
   return (
     <div
-      className={`applicant-details${isGeneralInstructorCalendar || isGeneralInstitutionCalendar ? ' applicant-details--instructor-calendar' : ''}`}
+      className={`applicant-details${
+        isGeneralProgramCalendarView ? ' general-program-detail--calendar-view' : ''
+      }`}
     >
       {showInstitutionDetail ? (
         <ApplicantsDetailContents
@@ -474,9 +638,7 @@ export function ApplicantList({
           institutionList={institutionList}
           onInstitutionDetailSaved={rows => {
             const updatedById = new Map(rows.map(row => [row.id, row]))
-            setInstitutionList(prev =>
-              prev.map(row => updatedById.get(row.id) ?? row)
-            )
+            setInstitutionList(prev => prev.map(row => updatedById.get(row.id) ?? row))
             const current = selectedItem as ApplicantSchoolRow
             const nextSelected = updatedById.get(current.id)
             if (nextSelected) {
@@ -542,23 +704,67 @@ export function ApplicantList({
           program={program}
           onBack={() => setSelectedItem(null)}
           onApprove={id => {
+            const row = selectedItem
+            if (
+              row &&
+              'applicantName' in row &&
+              row.id === id &&
+              useGeneralParticipantActionModal
+            ) {
+              setParticipantApproveTarget({ id, name: row.applicantName })
+              return
+            }
             setIndividualList(prev =>
-              prev.map(row =>
-                row.id === id ? patchGeneralIndividualApplicantForApprovalStatus(row, 'approved') : row
+              prev.map(r =>
+                r.id === id ? patchGeneralIndividualApplicantForApprovalStatus(r, 'approved') : r
               )
             )
             updateGeneralIndividualApplicantApprovalStatus(id, 'approved')
           }}
           onReject={id => {
+            const row = selectedItem
+            if (
+              row &&
+              'applicantName' in row &&
+              row.id === id &&
+              useGeneralParticipantActionModal
+            ) {
+              setParticipantRejectTarget({ id, name: row.applicantName })
+              return
+            }
             setIndividualList(prev =>
-              prev.map(row =>
-                row.id === id ? patchGeneralIndividualApplicantForApprovalStatus(row, 'rejected') : row
+              prev.map(r =>
+                r.id === id ? patchGeneralIndividualApplicantForApprovalStatus(r, 'rejected') : r
               )
             )
             updateGeneralIndividualApplicantApprovalStatus(id, 'rejected')
           }}
-          onCancelApproval={handleCancelApprovalIndividual}
-          onCancelReject={handleCancelRejectIndividual}
+          onCancelApproval={id => {
+            const row = selectedItem
+            if (
+              row &&
+              'applicantName' in row &&
+              row.id === id &&
+              useGeneralParticipantActionModal
+            ) {
+              setParticipantCancelApprovalTarget({ id, name: row.applicantName })
+              return
+            }
+            handleCancelApprovalIndividual(id)
+          }}
+          onCancelReject={id => {
+            const row = selectedItem
+            if (
+              row &&
+              'applicantName' in row &&
+              row.id === id &&
+              useGeneralParticipantActionModal
+            ) {
+              setParticipantCancelRejectTarget({ id, name: row.applicantName })
+              return
+            }
+            handleCancelRejectIndividual(id)
+          }}
           onResendNotification={handleOpenNotificationResend}
           onIndividualDetailSaved={row => {
             setIndividualList(prev => prev.map(item => (item.id === row.id ? row : item)))
@@ -567,6 +773,7 @@ export function ApplicantList({
               setSelectedItem(row)
             }
           }}
+          individualScreeningStage={individualScreeningStage === 'doc1' ? 'doc1' : 'main'}
         />
       ) : showInstructorDetail ? (
         <ApplicantsDetailContents
@@ -724,9 +931,7 @@ export function ApplicantList({
           updateApplicantSchoolApprovalStatus(id, 'approved', notifyOptions)
           setInstitutionApprovalComplete({
             schoolName: name,
-            assignedInstructorCount: countAssignedInstructors(
-              patchedRow?.assignedInstructorNames
-            ),
+            assignedInstructorCount: countAssignedInstructors(patchedRow?.assignedInstructorNames),
           })
         }}
       />
@@ -844,6 +1049,204 @@ export function ApplicantList({
         schoolName={institutionCancelRejectComplete?.schoolName ?? ''}
         onClose={() => setInstitutionCancelRejectComplete(null)}
       />
+      <ParticipantBulkRejectModal
+        open={participantBulkRejectOpen}
+        selectionCount={selectedRowKeys.length}
+        onCancel={() => setParticipantBulkRejectOpen(false)}
+        onConfirm={payload => {
+          const rejectedCount = selectedRowKeys.length
+          confirmBulkParticipantReject(payload)
+          setParticipantBulkRejectOpen(false)
+          setParticipantBulkRejectCompleteCount(rejectedCount)
+        }}
+      />
+      <ParticipantBulkRejectCompleteModal
+        open={participantBulkRejectCompleteCount != null}
+        selectionCount={participantBulkRejectCompleteCount ?? 0}
+        onClose={() => setParticipantBulkRejectCompleteCount(null)}
+      />
+      <ParticipantBulkApproveModal
+        open={participantBulkApproveOpen}
+        selectionCount={selectedRowKeys.length}
+        onCancel={() => setParticipantBulkApproveOpen(false)}
+        onConfirm={payload => {
+          const approvedCount = selectedRowKeys.length
+          confirmBulkParticipantApprove(payload)
+          setParticipantBulkApproveOpen(false)
+          setParticipantBulkApproveCompleteCount(approvedCount)
+        }}
+      />
+      <ParticipantBulkApproveCompleteModal
+        open={participantBulkApproveCompleteCount != null}
+        selectionCount={participantBulkApproveCompleteCount ?? 0}
+        onClose={() => setParticipantBulkApproveCompleteCount(null)}
+      />
+      <ParticipantApproveModal
+        open={participantApproveTarget != null}
+        participantName={participantApproveTarget?.name ?? ''}
+        onCancel={() => setParticipantApproveTarget(null)}
+        onConfirm={payload => {
+          if (!participantApproveTarget) return
+          const { id, name } = participantApproveTarget
+          const notifyOptions = {
+            notifyTiming: payload.notifyTiming,
+            manualNotifyAt: payload.manualNotifyAt,
+          }
+          setParticipantApproveTarget(null)
+          const sourceRow =
+            individualList.find(row => row.id === id) ??
+            (selectedItem && 'applicantName' in selectedItem && selectedItem.id === id
+              ? (selectedItem as GeneralIndividualApplicantRow)
+              : null)
+          const patchedRow = sourceRow
+            ? patchGeneralIndividualApplicantForApprovalStatus(sourceRow, 'approved', notifyOptions)
+            : null
+          setIndividualList(prev => {
+            const next = prev.map(row => (row.id === id && patchedRow ? patchedRow : row))
+            const updated = next.find(row => row.id === id)
+            const current = selectedItem
+            if (
+              updated &&
+              current &&
+              'applicantName' in current &&
+              current.id === id
+            ) {
+              setSelectedItem(updated)
+            }
+            return next
+          })
+          updateGeneralIndividualApplicantApprovalStatus(id, 'approved', notifyOptions)
+          setParticipantApprovalComplete({ participantName: name })
+        }}
+      />
+      <ParticipantApprovalCompleteModal
+        open={participantApprovalComplete != null}
+        participantName={participantApprovalComplete?.participantName ?? ''}
+        onClose={() => setParticipantApprovalComplete(null)}
+      />
+      <ParticipantRejectModal
+        open={participantRejectTarget != null}
+        participantName={participantRejectTarget?.name ?? ''}
+        onCancel={() => setParticipantRejectTarget(null)}
+        onConfirm={payload => {
+          if (!participantRejectTarget) return
+          const { id, name } = participantRejectTarget
+          const notifyOptions = {
+            notifyTiming: payload.notifyTiming,
+            manualNotifyAt: payload.manualNotifyAt,
+            rejectionReason: payload.reason,
+          }
+          setParticipantRejectTarget(null)
+          setIndividualList(prev => {
+            const next = prev.map(row =>
+              row.id === id
+                ? patchGeneralIndividualApplicantForApprovalStatus(row, 'rejected', notifyOptions)
+                : row
+            )
+            const updated = next.find(row => row.id === id)
+            const current = selectedItem
+            if (
+              updated &&
+              current &&
+              'applicantName' in current &&
+              current.id === id
+            ) {
+              setSelectedItem(updated)
+            }
+            return next
+          })
+          updateGeneralIndividualApplicantApprovalStatus(id, 'rejected', notifyOptions)
+          setParticipantRejectComplete({
+            participantName: name,
+            rejectionReason: payload.reason,
+          })
+        }}
+      />
+      <ParticipantRejectCompleteModal
+        open={participantRejectComplete != null}
+        participantName={participantRejectComplete?.participantName ?? ''}
+        rejectionReason={participantRejectComplete?.rejectionReason ?? ''}
+        onClose={() => setParticipantRejectComplete(null)}
+      />
+      <ParticipantCancelApprovalModal
+        open={participantCancelApprovalTarget != null}
+        participant={participantCancelApprovalParticipant}
+        onCancel={() => setParticipantCancelApprovalTarget(null)}
+        onConfirm={payload => {
+          if (!participantCancelApprovalTarget) return
+          const { id, name } = participantCancelApprovalTarget
+          const notifyOptions = {
+            notifyTiming: payload.notifyTiming,
+            manualNotifyAt: payload.manualNotifyAt,
+            rejectionReason: payload.reason,
+          }
+          setParticipantCancelApprovalTarget(null)
+          setIndividualList(prev => {
+            const next = prev.map(row =>
+              row.id === id ? patchParticipantForCancelApproval(row, notifyOptions) : row
+            )
+            const updated = next.find(row => row.id === id)
+            const current = selectedItem
+            if (
+              updated &&
+              current &&
+              'applicantName' in current &&
+              current.id === id
+            ) {
+              setSelectedItem(updated)
+            }
+            return next
+          })
+          updateGeneralIndividualApplicantCancelApproval(id, notifyOptions)
+          setParticipantCancelApprovalComplete({
+            participantName: name,
+            cancellationReason: payload.reason,
+          })
+        }}
+      />
+      <ParticipantCancelApprovalCompleteModal
+        open={participantCancelApprovalComplete != null}
+        participantName={participantCancelApprovalComplete?.participantName ?? ''}
+        cancellationReason={participantCancelApprovalComplete?.cancellationReason ?? ''}
+        onClose={() => setParticipantCancelApprovalComplete(null)}
+      />
+      <ParticipantCancelRejectModal
+        open={participantCancelRejectTarget != null}
+        participant={participantCancelRejectParticipant}
+        onCancel={() => setParticipantCancelRejectTarget(null)}
+        onConfirm={(payload: ParticipantCancelRejectionConfirmPayload) => {
+          if (!participantCancelRejectTarget) return
+          const { id, name } = participantCancelRejectTarget
+          const notifyOptions =
+            payload.variant === 'alreadySent'
+              ? toParticipantCancelRejectionNotifyOptions(payload)
+              : undefined
+          setParticipantCancelRejectTarget(null)
+          setIndividualList(prev => {
+            const next = prev.map(row =>
+              row.id === id ? patchParticipantForCancelRejection(row, notifyOptions) : row
+            )
+            const updated = next.find(row => row.id === id)
+            const current = selectedItem
+            if (
+              updated &&
+              current &&
+              'applicantName' in current &&
+              current.id === id
+            ) {
+              setSelectedItem(updated)
+            }
+            return next
+          })
+          updateGeneralIndividualApplicantCancelRejection(id, notifyOptions)
+          setParticipantCancelRejectComplete({ participantName: name })
+        }}
+      />
+      <ParticipantCancelRejectCompleteModal
+        open={participantCancelRejectComplete != null}
+        participantName={participantCancelRejectComplete?.participantName ?? ''}
+        onClose={() => setParticipantCancelRejectComplete(null)}
+      />
       <InstructorRejectModal
         open={instructorRejectTarget != null}
         instructorName={instructorRejectTarget?.name ?? ''}
@@ -865,12 +1268,7 @@ export function ApplicantList({
             )
             const updated = next.find(row => row.id === id)
             const current = selectedItem
-            if (
-              updated &&
-              current &&
-              'instructorName' in current &&
-              current.id === id
-            ) {
+            if (updated && current && 'instructorName' in current && current.id === id) {
               setSelectedItem(updated)
             }
             return next
@@ -907,12 +1305,7 @@ export function ApplicantList({
             )
             const updated = next.find(row => row.id === id)
             const current = selectedItem
-            if (
-              updated &&
-              current &&
-              'instructorName' in current &&
-              current.id === id
-            ) {
+            if (updated && current && 'instructorName' in current && current.id === id) {
               setSelectedItem(updated)
             }
             return next
@@ -948,12 +1341,7 @@ export function ApplicantList({
             )
             const updated = next.find(row => row.id === id)
             const current = selectedItem
-            if (
-              updated &&
-              current &&
-              'instructorName' in current &&
-              current.id === id
-            ) {
+            if (updated && current && 'instructorName' in current && current.id === id) {
               setSelectedItem(updated)
             }
             return next
@@ -989,12 +1377,7 @@ export function ApplicantList({
               )
               const updated = next.find(row => row.id === id)
               const current = selectedItem
-              if (
-                updated &&
-                current &&
-                'instructorName' in current &&
-                current.id === id
-              ) {
+              if (updated && current && 'instructorName' in current && current.id === id) {
                 setSelectedItem(updated)
               }
               return next
@@ -1021,7 +1404,9 @@ export function ApplicantList({
 
           setIndividualList(prev => {
             const next = prev.map(row =>
-              row.id === id ? patchGeneralIndividualApplicantForNotificationResend(row, sentAt) : row
+              row.id === id
+                ? patchGeneralIndividualApplicantForNotificationResend(row, sentAt)
+                : row
             )
             const updated = next.find(row => row.id === id)
             const current = selectedItem
@@ -1087,7 +1472,11 @@ export function ApplicantList({
           setInstructorList(prev => {
             const next = prev.map(row => {
               if (row.id !== id) return row
-              const approved = patchApplicantInstructorForApprovalStatus(row, 'approved', notifyOptions)
+              const approved = patchApplicantInstructorForApprovalStatus(
+                row,
+                'approved',
+                notifyOptions
+              )
               const withFee = {
                 ...approved,
                 lectureFeeBasisType: detail.lectureFeeBasisType,
@@ -1117,12 +1506,7 @@ export function ApplicantList({
             })
             const updated = next.find(row => row.id === id)
             const current = selectedItem
-            if (
-              updated &&
-              current &&
-              'instructorName' in current &&
-              current.id === id
-            ) {
+            if (updated && current && 'instructorName' in current && current.id === id) {
               setSelectedItem(updated)
             }
             return next
@@ -1141,15 +1525,23 @@ export function ApplicantList({
         onClose={() => setInstructorApprovalComplete(null)}
       />
       {!selectedItem && menu ? (
+        <>
         <FilterTableLayout
           key={
             menu === 'instructors' && instructorColumnPreset === 'general-detail'
               ? `applicant-filter-${viewMode}`
               : 'applicant-filter'
           }
-          className="applicant-details__filter-table-layout"
+          className={
+            isIndividualDoc1Screening
+              ? 'applicant-details__filter-table-layout general-participant-doc1-screening__filter-layout'
+              : 'applicant-details__filter-table-layout'
+          }
           bordered={false}
-          fields={fields}
+          contentVariant={displayViewMode === 'calendar' ? 'calendar' : 'table'}
+          fields={isIndividualDoc1Screening ? undefined : fields}
+          rows={individualDoc1FilterRows}
+          filterResponsiveWrap={isIndividualDoc1Screening ? false : undefined}
           filters={pendingFilters}
           onFilterChange={handleFilterChange}
           onSearch={handleSearch}
@@ -1157,29 +1549,39 @@ export function ApplicantList({
           description={`${tableData.length}건`}
           actions={
             <div style={{ display: 'flex', gap: '8px' }}>
-              <CmsButton variant="delete" size="large" width={160} onClick={handleBulkRejectClick}>
+              <CmsButton
+                variant="delete"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                onClick={handleBulkRejectClick}
+              >
                 선택 반려
               </CmsButton>
-              <CmsButton variant="secondary" size="large" width={160} onClick={handleBulkApproveClick}>
+              <CmsButton
+                variant="secondary"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                onClick={handleBulkApproveClick}
+              >
                 선택 승인
               </CmsButton>
-              {viewMode === 'table' && (
+              {showIndividualCalendarToggle && displayViewMode === 'table' && (
                 <CmsButton
                   icon={<CalendarOutlined />}
                   variant="secondary"
                   size="large"
-                  style={{ minWidth: 180 }}
                   onClick={handleViewCalendar}
                 >
                   캘린더 뷰로 보기
                 </CmsButton>
               )}
-              {viewMode === 'calendar' && (
+              {showIndividualCalendarToggle && displayViewMode === 'calendar' && (
                 <CmsButton
                   variant="secondary"
                   icon={<UnorderedListOutlined />}
                   size="large"
-                  style={{ minWidth: 180 }}
                   onClick={() => setViewMode('table')}
                 >
                   리스트 뷰로 보기
@@ -1187,8 +1589,12 @@ export function ApplicantList({
               )}
             </div>
           }
+          excelExport={{
+            columns,
+            data: tableData,
+          }}
         >
-          {viewMode === 'table' ? (
+          {displayViewMode === 'table' ? (
             <div ref={usesInstitutionTableScroll ? institutionTableWrapRef : undefined}>
               <Table<ApplicantSchoolRow | ApplicantInstructorRow | GeneralIndividualApplicantRow>
                 rowKey="id"
@@ -1198,6 +1604,7 @@ export function ApplicantList({
                   >
                 }
                 dataSource={tableData}
+                loading={applicationsLoading}
                 className="cms-data-table cms-data-table--fluid"
                 onRow={record => ({
                   onClick: e => {
@@ -1231,8 +1638,9 @@ export function ApplicantList({
               />
             </div>
           ) : (
-            <div className="applicant-calendar-view-container">
+            <div className="applicant-details__calendar-wrap">
               <ApplicantCalendarView
+                useSplitCardPageScroll={detailVariant === 'general'}
                 events={mapApplicantDataToCalendarEvents(
                   tableData as
                     | ApplicantSchoolRow[]
@@ -1240,26 +1648,33 @@ export function ApplicantList({
                     | GeneralIndividualApplicantRow[],
                   menu
                 )}
-                loading={false}
+                loading={applicationsLoading}
                 selectedRowKeys={selectedRowKeys}
                 onSelectionChange={setSelectedRowKeys}
                 onItemClick={item => {
                   setSelectedItem(item)
                 }}
                 menu={menu}
+                showEntityFilter={showCalendarEntityFilter}
                 calendarGranularity={applicantsCalendarGranularity}
                 onCalendarGranularityChange={setApplicantsCalendarGranularity}
                 calendarVariant={
                   instructorColumnPreset === 'general-detail' && menu === 'instructors'
                     ? 'general-instructor'
-                    : institutionColumnPreset === 'general-detail' && menu === 'institutions'
+                    : useGeneralInstitutionCalendarVariant
                       ? 'general-institution'
-                      : 'default'
+                      : menu === 'individual-applications' && !showCalendarEntityFilter
+                        ? 'general-individual'
+                        : 'default'
                 }
               />
             </div>
           )}
         </FilterTableLayout>
+        {isGeneralProgramCalendarView ? (
+          <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />
+        ) : null}
+        </>
       ) : null}
     </div>
   )

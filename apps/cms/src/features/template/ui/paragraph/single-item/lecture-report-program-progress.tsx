@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import type { LectureReportProgramProgressParagraph } from '@/features/template/model/writing-form-draft.schema'
 import '@/features/template/ui/paragraph/table/vertical-table-paragraph-body.css'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import './lecture-report-program-progress.css'
 
 dayjs.extend(customParseFormat)
@@ -242,11 +243,14 @@ export function LectureReportProgramProgress({
                   </div>
                   <span className="lecture-report-prog-info__divider" role="presentation" />
                   <div className="lecture-report-prog-info__count-wrap">
-                    <Input
+                    <CmsNumericInput
+                      mode="integer"
+                      min={0}
                       className="lecture-report-prog-info__session-input"
-                      variant="borderless"
+                      inputSize="medium"
+                      width="100%"
                       value={paragraph.studentCount}
-                      onChange={e => patch({ studentCount: e.target.value })}
+                      onValueChange={value => patch({ studentCount: value })}
                       disabled={!isEditMode}
                       placeholder="총 인원"
                     />

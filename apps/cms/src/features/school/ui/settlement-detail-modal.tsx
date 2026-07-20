@@ -4,11 +4,12 @@
  */
 
 import { useState } from 'react'
-import { Input, Modal } from 'antd'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import { CmsButton } from '@/shared/ui'
-import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
-import type { SettlementDetail } from '@/data/mock/school-detail'
+import { Input } from 'antd'
+import { ContentModal } from '@/shared/ui/content-modal'
+import { ActionResultModal } from '@/shared/ui/action-result-modal'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { SETTLEMENT_ROW_STATUS_LABELS, type SettlementDetail } from '@/data/mock/school-detail'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import './settlement-detail-modal.css'
 
 export interface BankInfo {
@@ -55,18 +56,25 @@ export function SettlementDetailModal({
 
   return (
     <>
-    <TealHeaderModal
+    <ContentModal
       open={open}
       onCancel={onClose}
       title="프로그램 정산 내역 상세"
-      width={1400}
+      size="large"
       className="teal-header-modal--settlement-detail"
       footer={
         <>
           <CmsButton variant="secondary" size="large" onClick={onClose}>
             닫기
           </CmsButton>
-          <CmsButton variant="delete" size="large" onClick={() => setRejectOpen(true)} disabled={detail.status === 'completed'}>
+          <CmsButton
+            variant="delete"
+            size="large"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            onClick={() => setRejectOpen(true)}
+            disabled={detail.status === 'completed'}
+          >
             지급 신청 반려
           </CmsButton>
           <CmsButton variant="primary" size="large" onClick={() => setPaymentOpen(true)} disabled={detail.status === 'completed'}>
@@ -88,7 +96,11 @@ export function SettlementDetailModal({
                 <div className="settlement-detail__info-split">
                   <div className="settlement-detail__info-split-cell">
                     <span className="settlement-detail__info-split-label">강의 진행일 및 시간</span>
-                    <span className="settlement-detail__info-split-value">{detail.lectureDate} | {detail.lectureDuration}</span>
+                    <span className="settlement-detail__info-split-value">
+                      {renderDetailInfoPipeSeparated(
+                        `${detail.lectureDate} | ${detail.lectureDuration}`
+                      )}
+                    </span>
                   </div>
                   <div className="settlement-detail__info-split-cell">
                     <span className="settlement-detail__info-split-label">강의 진행 시간</span>
@@ -107,7 +119,7 @@ export function SettlementDetailModal({
                   <div className="settlement-detail__info-split-cell">
                     <span className="settlement-detail__info-split-label">정산 상태</span>
                     <span className="settlement-detail__info-split-value">
-                      <SettlementStatusBadge status={detail.status} />
+                      {SETTLEMENT_ROW_STATUS_LABELS[detail.status]}
                     </span>
                   </div>
                 </div>
@@ -194,9 +206,9 @@ export function SettlementDetailModal({
           </table>
         </div>
       </div>
-    </TealHeaderModal>
+    </ContentModal>
 
-    <TealHeaderModal
+    <ContentModal
       open={rejectOpen}
       onCancel={() => { setRejectOpen(false); setRejectReason('') }}
       title="지급 신청 반려"
@@ -229,37 +241,22 @@ export function SettlementDetailModal({
           className="settlement-reject__input"
         />
       </div>
-    </TealHeaderModal>
+    </ContentModal>
 
-    <Modal
+    <ActionResultModal
       open={confirmOpen}
-      onCancel={() => setConfirmOpen(false)}
-      closable={false}
-      footer={null}
-      width={600}
-      className="settlement-reject-confirm"
-      centered
-      destroyOnClose
-    >
-      <div className="settlement-reject-confirm__content">
-        <h2 className="settlement-reject-confirm__title">지급 반려 안내</h2>
-        <div className="settlement-reject-confirm__body">
-          <p className="settlement-reject-confirm__line">
-            <strong>[{teacherName}]</strong> 강사님의 강의료 지급이 반려되었습니다.
-          </p>
-          <p className="settlement-reject-confirm__line">
-            (사유 : {confirmedReason})
-          </p>
-        </div>
-        <div className="settlement-reject-confirm__footer">
-          <CmsButton variant="secondary" size="large" onClick={() => setConfirmOpen(false)}>
-            확인
-          </CmsButton>
-        </div>
-      </div>
-    </Modal>
+      onClose={() => setConfirmOpen(false)}
+      title="지급 반려 안내"
+      body={
+        <>
+          <strong>[{teacherName}]</strong> 강사님의 강의료 지급이 반려되었습니다.
+          <br />
+          (사유 : {confirmedReason})
+        </>
+      }
+    />
 
-    <TealHeaderModal
+    <ContentModal
       open={paymentOpen}
       onCancel={() => setPaymentOpen(false)}
       title="강의료 지급"
@@ -317,30 +314,18 @@ export function SettlementDetailModal({
           <p>입금이 완료되면 아래의 <strong>[입금 완료]</strong> 버튼을 눌러주세요.</p>
         </div>
       </div>
-    </TealHeaderModal>
+    </ContentModal>
 
-    <Modal
+    <ActionResultModal
       open={paymentConfirmOpen}
-      onCancel={() => setPaymentConfirmOpen(false)}
-      closable={false}
-      footer={null}
-      width={600}
-      className="settlement-payment-confirm"
-      centered
-      destroyOnClose
-    >
-      <div className="settlement-payment-confirm__content">
-        <h2 className="settlement-payment-confirm__title">강의료 지급 안내</h2>
-        <p className="settlement-payment-confirm__desc">
+      onClose={() => setPaymentConfirmOpen(false)}
+      title="강의료 지급 안내"
+      body={
+        <>
           <strong>[{teacherName}]</strong> 강사님의 강의료 지급을 완료 처리하였습니다.
-        </p>
-        <div className="settlement-payment-confirm__footer">
-          <CmsButton variant="secondary" size="large" onClick={() => setPaymentConfirmOpen(false)}>
-            확인
-          </CmsButton>
-        </div>
-      </div>
-    </Modal>
+        </>
+      }
+    />
     </>
   )
 }

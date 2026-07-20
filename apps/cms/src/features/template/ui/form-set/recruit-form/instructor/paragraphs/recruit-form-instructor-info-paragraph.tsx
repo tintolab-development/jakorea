@@ -1,8 +1,8 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import type { Dayjs } from 'dayjs'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import { INSTRUCTOR_TARGET_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
-import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -36,7 +36,7 @@ function InquiryContactColumn({ label, placeholder }: { label: string; placehold
 export function RecruitFormInstructorInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
     useState<ParticipantRecruitmentAnnouncementPublishedValue>('published')
-  const [recruitTarget, setRecruitTarget] = useState<string>('adult')
+  const [recruitTargets, setRecruitTargets] = useState<string[]>(['성인'])
   const [programAnchor, setProgramAnchor] = useState<Dayjs | null>(null)
   const [programRange, setProgramRange] = useState<[Dayjs, Dayjs] | null>(null)
   const programRangeWithTime = useMemo(
@@ -110,12 +110,14 @@ export function RecruitFormInstructorInfoParagraph() {
           label="모집 대상"
           edit={
             <CmsSelect
+              mode="multiple"
               inputSize="medium"
               width={240}
-              value={recruitTarget}
-              onChange={next => setRecruitTarget(String(next ?? ''))}
-              placeholder="전체"
-              options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+              withAllOption={false}
+              placeholder="모집 대상을 선택하세요"
+              options={[...INSTRUCTOR_TARGET_OPTIONS]}
+              value={recruitTargets}
+              onChange={v => setRecruitTargets(Array.isArray(v) ? v.map(String) : [])}
             />
           }
           view="-"

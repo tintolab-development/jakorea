@@ -9,7 +9,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Form, Input, DatePicker, Modal, Pagination } from 'antd'
 import type { InputHTMLAttributes } from 'react'
 import { useForm, type Path } from 'react-hook-form'
-import { readJusoConfmKeyFromEnv, useJusoAddressSearch, type JusoAddressItem } from '@/shared/hooks'
+import {
+  getCmsJusoMissingKeyMessage,
+  readJusoApiUrlFromEnv,
+  readJusoConfmKeyFromEnv,
+  useJusoAddressSearch,
+  type JusoAddressItem,
+} from '@/shared/hooks'
 
 /** 주소 검색용: 아이콘 + 네이티브 input 한 묶음 220×40, Form.Item value/onChange는 input에 전달 */
 interface AddressSearchInputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -47,7 +53,7 @@ function AddressSearchInput({ onSearchClick, ...props }: AddressSearchInputProps
   )
 }
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CmsRadio } from '@/shared/ui'
+import { CmsButton, CmsNumericInput, CmsRadio } from '@/shared/ui'
 import type {
   ParticipatingInstructorRow,
   SettlementStatusKey } from '@/data/mock/participating-instructors'
@@ -260,7 +266,10 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
     search: searchAddress,
     reset: resetAddressSearch } = useJusoAddressSearch({
     confmKey: readJusoConfmKeyFromEnv(),
-    countPerPage: ADDRESS_SEARCH_COUNT_PER_PAGE })
+    countPerPage: ADDRESS_SEARCH_COUNT_PER_PAGE,
+    apiUrl: readJusoApiUrlFromEnv(),
+    missingKeyMessage: getCmsJusoMissingKeyMessage(),
+  })
   const jaKoreaExperiences = Form.useWatch('jaKoreaExperiences', form) ?? []
   const qualifications = Form.useWatch('qualifications', form) ?? []
   const awards = Form.useWatch('awards', form) ?? []
@@ -415,7 +424,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <Form.Item
                         name="nameKorean"
-                        rules={[{ required: true }]}
                         noStyle
                       >
                         <input
@@ -430,7 +438,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <Form.Item
                         name="nameEnglish"
-                        rules={[{ required: true }]}
                         noStyle
                       >
                         <input
@@ -448,14 +455,13 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       <div className="add-instructor-modal__resident-registration-row">
                         <Form.Item
                           name="residentRegistrationFirst"
-                          rules={[
-                            { required: true },
-                            { len: 6 },
-                          ]}
+                          trigger="onValueChange"
                           noStyle
                         >
-                          <input
-                            className="add-instructor-modal__table-input add-instructor-modal__resident-registration-input"
+                          <CmsNumericInput
+                            mode="numericText"
+                            inputSize="medium"
+                            width={164.5}
                             placeholder="주민등록 앞 6자리"
                             maxLength={6}
                           />
@@ -468,14 +474,13 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                         </span>
                         <Form.Item
                           name="residentRegistrationLast"
-                          rules={[
-                            { required: true },
-                            { len: 7 },
-                          ]}
+                          trigger="onValueChange"
                           noStyle
                         >
-                          <input
-                            className="add-instructor-modal__table-input add-instructor-modal__resident-registration-input"
+                          <CmsNumericInput
+                            mode="numericText"
+                            inputSize="medium"
+                            width={164.5}
                             placeholder="주민등록 뒤 7자리"
                             maxLength={7}
                           />
@@ -504,7 +509,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <Form.Item
                         name="contact"
-                        rules={[{ required: true }]}
                         noStyle
                       >
                         <input className="add-instructor-modal__table-input" placeholder="연락처" />
@@ -516,10 +520,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                     <td className="add-instructor-modal__basic-table-cell add-instructor-modal__basic-table-cell--input">
                       <Form.Item
                         name="email"
-                        rules={[
-                          { required: true },
-                          { type: 'email' },
-                        ]}
                         noStyle
                       >
                         <input
@@ -541,7 +541,6 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       <div className="add-instructor-modal__address-row">
                         <Form.Item
                           name="address"
-                          rules={[{ required: true }]}
                           noStyle
                         >
                           <AddressSearchInput
@@ -573,21 +572,27 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       colSpan={3}
                     >
                       <div className="add-instructor-modal__bank-account-row">
-                        <Form.Item name="bankName" rules={[{ required: true }]} noStyle>
+                        <Form.Item name="bankName" noStyle>
                           <NativeSelect
                             placeholder="은행명"
                             options={BANK_OPTIONS}
                             className="add-instructor-modal__table-input add-instructor-modal__bank-account-select"
                           />
                         </Form.Item>
-                        <Form.Item name="accountNumber" rules={[{ required: true }]} noStyle>
-                          <input
-                            className="add-instructor-modal__table-input add-instructor-modal__bank-account-input--number"
+                        <Form.Item
+                          name="accountNumber"
+                          trigger="onValueChange"
+                          noStyle
+                        >
+                          <CmsNumericInput
+                            mode="numericText"
+                            inputSize="medium"
+                            width={160}
                             placeholder="계좌번호(숫자만)"
                           />
                         </Form.Item>
                         <div className="add-instructor-modal__bank-account-divider" aria-hidden />
-                        <Form.Item name="accountHolder" rules={[{ required: true }]} noStyle>
+                        <Form.Item name="accountHolder" noStyle>
                           <input
                             className="add-instructor-modal__table-input add-instructor-modal__bank-account-input--holder"
                             placeholder="예금주명"
@@ -1180,7 +1185,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
         onCancel={closeAddressPopup}
         footer={null}
         title={null}
-        width={760}
+        width={800}
         className="add-instructor-modal__address-popup-modal"
         destroyOnHidden
       >
@@ -1311,7 +1316,7 @@ export function buildInstructorRowFromForm(
     classCount: 0,
     studentCount: 0,
     lectureRound: '진행 전',
-    settlementStatus: 'pending' as SettlementStatusKey,
+    settlementStatus: 'awaiting_confirmation' as SettlementStatusKey,
     teacherName: '-',
     educationLevel,
     educationSchoolName,

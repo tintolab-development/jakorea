@@ -4,9 +4,14 @@ import type {
   ApplicantSchoolRow,
 } from '@/data/mock/applicant-institutions'
 import {
+  formatInstitutionApplicationGradeDisplay,
+  formatInstitutionTeacherInfoForDetail,
+} from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import {
   buildInstitutionApplicationEditFieldsFromApplicantDetail,
   type InstitutionApplicationDetailEditFields,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
+import { parsePositiveIntInput } from '@/features/template/lib/participant-recruitment-institution-limits'
 
 export type CombinedClassApplicationStatus = '신청' | '미신청'
 
@@ -20,6 +25,9 @@ export interface ApplicantInstitutionEditDraft
 }
 
 const applicationFieldsSchema = z.object({
+  educationGrade: z.string().min(1, '신청 학년을 선택해 주세요.'),
+  classCount: z.string().min(1, '신청 학급 수를 선택해 주세요.'),
+  studentCount: z.string().min(1, '총 학생 수를 입력해 주세요.'),
   addressDetail: z.string(),
   educationFormat: z.string(),
   applicationReason: z.string(),
@@ -30,37 +38,57 @@ const applicationFieldsSchema = z.object({
   mealProvided: z.boolean(),
   mealNotice: z.string(),
   parkingInfo: z.string(),
-  teacherName: z.string(),
+  teacherName: z.string().min(1, '담당 교사를 선택해 주세요.'),
   teacherPhone: z.string(),
   teacherMobile: z.string(),
   teacherEmail: z.string(),
 })
 
-export const applicantInstitutionEditSchema = z
-  .object({
-    adminComment: z.string(),
-    textbookId: z.string().min(1, '교재명을 선택해 주세요.'),
-    textbookName: z.string().min(1, '교재명을 선택해 주세요.'),
-    combinedClassApplication: z.enum(['신청', '미신청']),
-    combinedClassPartnerApplicantIds: z.array(z.string()),
-  })
-  .merge(applicationFieldsSchema)
-  .superRefine((data, ctx) => {
-    if (data.combinedClassApplication === '신청' && data.combinedClassPartnerApplicantIds.length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: '합반 신청 시 대상 학년을 1개 이상 선택해 주세요.',
-        path: ['combinedClassPartnerApplicantIds'],
-      })
-    }
-    if (data.waitingRoomAvailable && !data.waitingRoomLocation.trim()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: '대기 장소를 입력해 주세요.',
-        path: ['waitingRoomLocation'],
-      })
-    }
-  })
+export interface ApplicantInstitutionEditValidationOptions {
+  showEducationFormatField?: boolean
+}
+
+export function createApplicantInstitutionEditSchema(
+  options: ApplicantInstitutionEditValidationOptions = {}
+) {
+  return z
+    .object({
+      adminComment: z.string(),
+      textbookId: z.string().min(1, '교재명을 선택해 주세요.'),
+      textbookName: z.string().min(1, '교재명을 선택해 주세요.'),
+      combinedClassApplication: z.enum(['신청', '미신청']),
+      combinedClassPartnerApplicantIds: z.array(z.string()),
+    })
+    .merge(applicationFieldsSchema)
+    .superRefine((data, ctx) => {
+      if (
+        data.combinedClassApplication === '신청' &&
+        data.combinedClassPartnerApplicantIds.length === 0
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '합반 신청 시 대상 학년을 1개 이상 선택해 주세요.',
+          path: ['combinedClassPartnerApplicantIds'],
+        })
+      }
+      if (parsePositiveIntInput(data.studentCount) == null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '총 학생 수를 숫자로 입력해 주세요.',
+          path: ['studentCount'],
+        })
+      }
+      if (options.showEducationFormatField && !data.educationFormat.trim()) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '희망 교육 형태를 선택해 주세요.',
+          path: ['educationFormat'],
+        })
+      }
+    })
+}
+
+export const applicantInstitutionEditSchema = createApplicantInstitutionEditSchema()
 
 export type ApplicantInstitutionEditFormValues = z.infer<typeof applicantInstitutionEditSchema>
 
@@ -80,42 +108,42 @@ export function rowToEditDraft(row: ApplicantSchoolRow): ApplicantInstitutionEdi
   }
 }
 
-function formatApplicantMealInfo(mealProvided: boolean, mealNotice: string): string {
-  if (!mealProvided) return '불가'
-  const notice = mealNotice.trim()
-  return notice ? `가능 | ${notice}` : '가능'
-}
-
-function formatApplicantWaitingGuide(available: boolean, location: string): string {
-  if (!available) return '없음'
-  return location.trim()
-}
-
 export function draftToSavePayload(
   draft: ApplicantInstitutionEditDraft,
-  row: ApplicantSchoolRow
+  row: ApplicantSchoolRow,
+  options: ApplicantInstitutionEditValidationOptions = {}
 ): ApplicantInstitutionDetailSavePayload | null {
-  const parsed = applicantInstitutionEditSchema.safeParse(draft)
+  const schema = createApplicantInstitutionEditSchema(options)
+  const parsed = schema.safeParse(draft)
   if (!parsed.success) return null
 
   const adminTrimmed = parsed.data.adminComment.trim()
+  const classCount = parsePositiveIntInput(parsed.data.classCount)
+  const studentCount = parsePositiveIntInput(parsed.data.studentCount)
+  if (classCount == null || studentCount == null) return null
+
+  const teacherInfo = formatInstitutionTeacherInfoForDetail({
+    teacherName: parsed.data.teacherName,
+    teacherPhone: parsed.data.teacherPhone,
+    teacherMobile: parsed.data.teacherMobile,
+    teacherEmail: parsed.data.teacherEmail,
+  })
 
   return {
     adminComment: adminTrimmed || undefined,
-    educationGrade: row.educationGrade,
-    classCount: row.classCount,
-    studentCount: row.studentCount,
+    educationGrade: formatInstitutionApplicationGradeDisplay(parsed.data.educationGrade),
+    classCount,
+    studentCount,
     addressDetail: parsed.data.addressDetail.trim() || undefined,
-    educationType: parsed.data.educationFormat.trim() || undefined,
-    applicationReason: parsed.data.applicationReason.trim() || undefined,
-    otherRequests: parsed.data.otherRequests.trim() || undefined,
-    computerInSpace: parsed.data.computerInRoom.trim() || undefined,
-    waitingPlaceGuide: formatApplicantWaitingGuide(
-      parsed.data.waitingRoomAvailable,
-      parsed.data.waitingRoomLocation
-    ),
-    mealInfo: formatApplicantMealInfo(parsed.data.mealProvided, parsed.data.mealNotice),
-    otherSpecialNotes: parsed.data.parkingInfo.trim() || undefined,
+    educationType: options.showEducationFormatField
+      ? parsed.data.educationFormat.trim() || undefined
+      : row.detail?.educationType,
+    applicationReason: row.detail?.applicationReason,
+    otherRequests: row.detail?.otherRequests,
+    computerInSpace: row.detail?.computerInSpace,
+    waitingPlaceGuide: row.detail?.waitingPlaceGuide ?? row.detail?.waitingRoom,
+    mealInfo: row.detail?.mealInfo,
+    otherSpecialNotes: row.detail?.otherSpecialNotes ?? row.detail?.parkingInfo,
     textbookId: parsed.data.textbookId,
     textbookName: parsed.data.textbookName,
     combinedClassApplication: parsed.data.combinedClassApplication,
@@ -123,13 +151,20 @@ export function draftToSavePayload(
       parsed.data.combinedClassApplication === '신청'
         ? parsed.data.combinedClassPartnerApplicantIds
         : [],
+    teacherName: parsed.data.teacherName.trim(),
+    contact: parsed.data.teacherPhone.trim() || undefined,
+    teacherInfo,
   }
 }
 
 export function parseApplicantInstitutionEditDraft(
-  draft: ApplicantInstitutionEditDraft
-): { success: true; data: ApplicantInstitutionEditFormValues } | { success: false; errors: Record<string, string> } {
-  const result = applicantInstitutionEditSchema.safeParse(draft)
+  draft: ApplicantInstitutionEditDraft,
+  options: ApplicantInstitutionEditValidationOptions = {}
+):
+  | { success: true; data: ApplicantInstitutionEditFormValues }
+  | { success: false; errors: Record<string, string> } {
+  const schema = createApplicantInstitutionEditSchema(options)
+  const result = schema.safeParse(draft)
 
   if (result.success) {
     return { success: true, data: result.data }

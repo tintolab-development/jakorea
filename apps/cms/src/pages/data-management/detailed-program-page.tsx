@@ -3,7 +3,9 @@ import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
-import { mockDetailedProgramManagementListRows } from '@/data/mock/detailed-program-management-list'
+import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
+import { useDetailedProgramListQuery } from '@/features/detailed-program/hooks/use-detailed-program-list-query'
+import { useDetailedProgramMutations } from '@/features/detailed-program/hooks/use-detailed-program-mutations'
 import { detailedProgramManagementFilterFields } from '@/features/detailed-program/model/detailed-program-management-filter-fields'
 import { detailedProgramManagementTablePageConfig } from '@/features/detailed-program/model/detailed-program-management-table.config'
 import type {
@@ -36,18 +38,6 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 
-function nextDetailedProgramId(rows: DetailedProgramManagementRow[]): string {
-  let max = 0
-  for (const r of rows) {
-    const m = /^dp-(\d+)$/.exec(r.id)
-    if (m) {
-      const n = Number(m[1])
-      if (!Number.isNaN(n) && n > max) max = n
-    }
-  }
-  return `dp-${max + 1}`
-}
-
 const USAGE_SELECT_OPTIONS = [
   { label: '사용', value: 'true' },
   { label: '미사용', value: 'false' },
@@ -66,13 +56,13 @@ function coerceRadioBoolean(raw: unknown): boolean {
 }
 
 export default function DetailedProgramPage() {
-  const { user } = useAuthStore()
-  const canWrite = canPerformWriteAction(user)
+  const canWrite = canPerformWriteAction(useAuthStore(s => s.user))
   const [searchParams, setSearchParams] = useSearchParams()
-
-  const [rows, setRows] = useState<DetailedProgramManagementRow[]>(() =>
-    mockDetailedProgramManagementListRows.map(r => ({ ...r }))
+  const listQuery = useDetailedProgramListQuery(searchParams, true)
+  const { createMutation, updateMutation, deleteMutation } = useDetailedProgramMutations(
+    searchParams.toString()
   )
+  const rows = listQuery.data ?? []
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [isEditMode, setIsEditMode] = useState(false)
   const [draftById, setDraftById] = useState<Record<string, DetailedProgramDraft>>({})
@@ -121,7 +111,7 @@ export default function DetailedProgramPage() {
     setStagedDeleteIds([])
   }, [])
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     const drafts = draftByIdRef.current
     const staged = new Set(stagedDeleteIds)
     const emptyNameId = Object.entries(drafts).find(([id, d]) => !staged.has(id) && !d.name.trim())
@@ -129,21 +119,38 @@ export default function DetailedProgramPage() {
       return
     }
 
-    setRows(prev => {
-      const surviving = prev.filter(row => !staged.has(row.id))
-      return surviving.map(row => {
+    try {
+      if (staged.size > 0) {
+        await deleteMutation.mutateAsync(Array.from(staged))
+      }
+      for (const row of rows) {
+        if (staged.has(row.id)) continue
         const d = drafts[row.id]
-        if (!d) return row
-        return {
-          ...row,
-          name: d.name.trim(),
-          active: coerceRadioBoolean(d.active),
+        if (!d) continue
+        const nextName = d.name.trim()
+        const nextActive = coerceRadioBoolean(d.active)
+        if (row.name !== nextName || row.active !== nextActive) {
+          await updateMutation.mutateAsync({
+            id: row.id,
+            input: { name: nextName, active: nextActive },
+          })
         }
-      })
-    })
-    exitEditMode()
-    setSelectedRowKeys([])
-  }, [exitEditMode, stagedDeleteIds])
+      }
+      exitEditMode()
+      setSelectedRowKeys([])
+    } catch (error) {
+      const axiosErr = error as { response?: { status?: number } }
+      if (axiosErr.response?.status === 409) {
+        setDeleteBlockedSelectedCount(staged.size || 1)
+        setDeleteBlockedModalOpen(true)
+        return
+      }
+      console.debug(
+        'detailedProgramPage save failed',
+        getDataManagementApiErrorMessage(error, '저장에 실패했습니다.')
+      )
+    }
+  }, [deleteMutation, exitEditMode, rows, stagedDeleteIds, updateMutation])
 
   const handleBulkDelete = useCallback(() => {
     if (!canWrite || selectedRowKeys.length === 0) return
@@ -152,13 +159,6 @@ export default function DetailedProgramPage() {
     const selectedRows = rows.filter(r => selectedIds.includes(r.id))
 
     if (isEditMode) {
-      const blockedEdit = selectedRows.filter(r => r.inUse)
-      if (blockedEdit.length > 0) {
-        setDeleteBlockedSelectedCount(selectedRows.length)
-        setDeleteBlockedModalOpen(true)
-        return
-      }
-
       const idsToStage = selectedRows.map(r => r.id)
       setStagedDeleteIds(prev => [...new Set([...prev, ...idsToStage])])
       setDraftById(prev => {
@@ -170,13 +170,6 @@ export default function DetailedProgramPage() {
         return next
       })
       setSelectedRowKeys([])
-      return
-    }
-
-    const blocked = selectedRows.filter(r => r.inUse)
-    if (blocked.length > 0) {
-      setDeleteBlockedSelectedCount(selectedRows.length)
-      setDeleteBlockedModalOpen(true)
       return
     }
 
@@ -197,22 +190,19 @@ export default function DetailedProgramPage() {
   }, [canWrite])
 
   const handleAddItemSubmit = useCallback(
-    (values: DetailedProgramAddItemValues) => {
+    async (values: DetailedProgramAddItemValues) => {
       if (!canWrite) return
-      const registrant = user?.name?.trim() || '시스템'
-      const now = new Date().toISOString()
-      const row: DetailedProgramManagementRow = {
-        id: nextDetailedProgramId(rows),
-        name: values.name,
-        active: values.active,
-        createdBy: registrant,
-        createdAt: now,
-        inUse: false,
+      try {
+        await createMutation.mutateAsync({ name: values.name, active: values.active })
+        setAddItemModalOpen(false)
+      } catch (error) {
+        console.debug(
+          'detailedProgramPage create failed',
+          getDataManagementApiErrorMessage(error, '등록에 실패했습니다.')
+        )
       }
-      setRows(prev => [row, ...prev])
-      setAddItemModalOpen(false)
     },
-    [canWrite, rows, user?.name]
+    [canWrite, createMutation]
   )
 
   const updateDraft = useCallback((id: string, patch: Partial<DetailedProgramDraft>) => {
@@ -354,6 +344,10 @@ export default function DetailedProgramPage() {
             </CmsButton>
           </>
         }
+        excelExport={{
+          columns,
+          data: tableDisplayData,
+        }}
       >
         <Table<DetailedProgramManagementRow>
           rowKey="id"
@@ -385,7 +379,7 @@ export default function DetailedProgramPage() {
         open={deleteBlockedModalOpen}
         onCancel={() => setDeleteBlockedModalOpen(false)}
         title="세부 프로그램 삭제 불가 안내"
-        width={480}
+        width={600}
         description={
           deleteBlockedSelectedCount <= 1
             ? '해당 세부 프로그램은 실적 관리에서 사용 중입니다.\n사용 중인 세부 프로그램은 삭제할 수 없습니다.'
@@ -413,13 +407,27 @@ export default function DetailedProgramPage() {
         requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
         confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
         onCancel={() => setViewDeleteModalOpen(false)}
-        onConfirm={() => {
-          const removeIds = new Set(viewDeletePendingIdsRef.current)
-          setRows(prev => prev.filter(r => !removeIds.has(r.id)))
-          setSelectedRowKeys([])
-          setViewDeleteModalOpen(false)
-          setViewDeleteModalLines([])
-          viewDeletePendingIdsRef.current = []
+        onConfirm={async () => {
+          const ids = [...viewDeletePendingIdsRef.current]
+          try {
+            await deleteMutation.mutateAsync(ids)
+            setSelectedRowKeys([])
+            setViewDeleteModalOpen(false)
+            setViewDeleteModalLines([])
+            viewDeletePendingIdsRef.current = []
+          } catch (error) {
+            const axiosErr = error as { response?: { status?: number } }
+            if (axiosErr.response?.status === 409) {
+              setViewDeleteModalOpen(false)
+              setDeleteBlockedSelectedCount(ids.length)
+              setDeleteBlockedModalOpen(true)
+              return
+            }
+            console.debug(
+              'detailedProgramPage delete failed',
+              getDataManagementApiErrorMessage(error, '삭제에 실패했습니다.')
+            )
+          }
         }}
       />
     </div>

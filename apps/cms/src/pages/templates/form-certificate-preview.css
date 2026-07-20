@@ -501,9 +501,9 @@
  * 디자인 캔버스 1208×1682px → 표시 너비 var(--template-preview-content-max-width)
  */
 .form-certificate-user-preview-modal.template-preview-modal {
-  --template-preview-paragraph-column-max: 1254px;
-  --template-preview-content-max-width: 1404px;
-  --template-preview-notice-text-width: 1254px;
+  --template-preview-paragraph-column-max: 1400px;
+  --template-preview-content-max-width: 1550px;
+  --template-preview-notice-text-width: 1400px;
   --template-preview-notice-to-a4-gap: 16px;
   --template-preview-a4-design-page-width: 1208px;
   --template-preview-a4-display-width: var(--template-preview-content-max-width, 1404px);
@@ -518,7 +518,7 @@
 }
 
 .form-certificate-user-preview-modal .template-preview-modal__notice-text-wrap {
-  width: var(--template-preview-notice-text-width, 1254px);
+  width: var(--template-preview-notice-text-width, 1400px);
   flex: 0 0 auto;
 }
 

@@ -60,7 +60,7 @@ export function useUjatScheduleConfirmColumns(): ColumnsType<UjatScheduleConfirm
         ),
       },
       {
-        title: '교육 진행 확정 일정',
+        title: '교육 진행 일정',
         dataIndex: 'confirmedScheduleDisplay',
         key: 'confirmedScheduleDisplay',
         width: COL.confirmedSchedule,

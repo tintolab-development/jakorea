@@ -84,7 +84,7 @@ function formatLnbCaseTitle(row: number, config: LnbMatrixConfig): string {
       ? '설문 없음'
       : config.surveyMode === 'single'
         ? '설문 있음(하위 1항목)'
-        : '설문 있음(하위 3항목)'
+        : '설문 있음(하위 4항목)'
   return `【LNB·${row}】${instructorLabel} · ${volunteerLabel} · ${surveyLabel}`
 }
 
@@ -235,6 +235,37 @@ type GeneralProgramSeed = Omit<Program, 'id' | 'rounds' | 'createdAt' | 'updated
   updatedAt?: string
 }
 
+/** 일반 프로그램(개인) — 상세 수정 모드 QA용 진행 예정 상태 */
+const INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE =
+  'planned' as ProgramLifecycleStatus
+
+function isIndividualGeneralProgramSeed(seed: {
+  generalProgramAudience?: GeneralProgramAudienceKind
+  generalParticipantTypes?: GeneralProgramParticipantType[]
+}): boolean {
+  if (seed.generalProgramAudience === 'individual') return true
+  const types = seed.generalParticipantTypes ?? []
+  return types.includes('individual') && !types.includes('school_institution')
+}
+
+function applyIndividualGeneralProgramScheduledState<T extends GeneralProgramSeed>(seed: T): T {
+  if (!isIndividualGeneralProgramSeed(seed)) return seed
+  return {
+    ...seed,
+    status: 'pending',
+    lifecycleStatus: INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
+  }
+}
+
+function applyIndividualGeneralProgramScheduledProgram(program: Program): Program {
+  if (!isIndividualGeneralProgramSeed(program)) return program
+  return {
+    ...program,
+    status: 'pending',
+    lifecycleStatus: INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
+  }
+}
+
 /** 기존 목록·캘린더용 — `【예정·캘린더】` 등 접두 + 고정 일정으로 탭별 QA 구분 */
 const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
   {
@@ -275,12 +306,13 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     applicationStartDate: calendarDemoIso(2026, 5, 10),
     applicationEndDate: calendarDemoIso(2026, 6, 10, true),
     status: 'pending',
-    lifecycleStatus: 'recruiting_instructors' as ProgramLifecycleStatus,
+    lifecycleStatus: INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
     businessArea: '경제금융',
     targetLevel: 'college' as TargetLevel,
     approvedStudentCount: 0,
     scheduleTimeEnabled: false,
     generalParticipantTypes: ['individual', 'teacher_instructor'],
+    generalParticipantInterviewEnabled: true,
     generalSurveyMenuKeys: [...SURVEY_MENU_FULL],
     generalProgramAudience: 'individual',
     generalProgramEducationStructure: 'schedule',
@@ -337,22 +369,21 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     applicationEndDate: calendarDemoIso(2026, 4, 15, true),
     volunteerApplicationStartDate: calendarDemoIso(2026, 4, 20),
     volunteerApplicationEndDate: calendarDemoIso(2026, 5, 5, true),
-    status: 'active',
-    lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
+    status: 'pending',
+    lifecycleStatus: INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
     businessArea: '진로취업',
     targetLevel: 'high' as TargetLevel,
-    approvedStudentCount: 24,
+    approvedStudentCount: 0,
     generalVolunteers: 8,
-    staffVolunteers: 4,
-    participatingSchoolCount: 10,
-    participatingStudentCount: 320,
     scheduleTimeEnabled: true,
     generalParticipantTypes: ['individual', 'volunteer'],
+    generalParticipantInterviewEnabled: true,
     generalVolunteerInterviewEnabled: true,
     interviewStartDate: calendarDemoIso(2026, 5, 8),
     interviewEndDate: calendarDemoIso(2026, 5, 12, true),
     interviewMethod: '대면 면접',
     generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
+    generalProgramAudience: 'individual',
     generalProgramEducationStructure: 'schedule',
     generalProgramSessionRound: 'single',
     generalCommonInfo: CALENDAR_DEMO_IN_PROGRESS_B_COMMON_INFO,
@@ -433,14 +464,18 @@ const REALISTIC_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     endDate: calendarDemoIso(2026, 5, 28, true),
     applicationStartDate: calendarDemoIso(2025, 11, 15),
     applicationEndDate: calendarDemoIso(2026, 1, 10, true),
-    status: 'completed',
-    lifecycleStatus: 'document_processing_completed' as ProgramLifecycleStatus,
+    status: 'pending',
+    lifecycleStatus: INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
     businessArea: '진로취업',
     targetLevel: 'college' as TargetLevel,
-    approvedStudentCount: 22,
+    approvedStudentCount: 0,
     scheduleTimeEnabled: false,
     generalParticipantTypes: ['individual', 'volunteer'],
+    generalParticipantInterviewEnabled: false,
     generalVolunteerInterviewEnabled: false,
+    generalProgramAudience: 'individual',
+    generalProgramEducationStructure: 'schedule',
+    generalProgramSessionRound: 'single',
     generalSurveyMenuKeys: ['survey'],
   },
 ]
@@ -454,12 +489,12 @@ const FULL_LNB_PARTICIPANT_TYPES = {
 const TYPE_VARIANT_LIFECYCLE: ProgramLifecycleStatus[] = [
   'recruiting_students',
   'recruiting_instructors',
+  INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
+  INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
   'education_after_textbook',
   'education_after_textbook',
-  'education_after_textbook',
-  'education_after_textbook',
-  'education_completed',
-  'document_processing_completed',
+  INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
+  INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
 ]
 
 function isOrgScheduleSingleVariant(variant: GeneralProgramVariant): boolean {
@@ -666,6 +701,7 @@ function buildTypeVariantSeed(
     lifecycleStatus
   )
   const isScheduled = ['recruiting_students', 'recruiting_instructors'].includes(lifecycleStatus)
+  const isIndividualAudience = variant.audience === 'individual'
 
   return {
     id,
@@ -693,6 +729,24 @@ function buildTypeVariantSeed(
     generalParticipantTypes: [
       ...FULL_LNB_PARTICIPANT_TYPES[variant.audience],
     ] as GeneralProgramParticipantType[],
+    ...(isIndividualAudience
+      ? {
+          generalParticipantInterviewEnabled: true,
+          generalCommonInfo: {
+            ...(variant.educationStructure === 'schedule'
+              ? {
+                  scheduleDetails: [
+                    {
+                      scheduleLabel: '세부 일정 01',
+                      name: '1차 교육',
+                      participationMethodLabel: '팀',
+                    },
+                  ],
+                }
+              : {}),
+          },
+        }
+      : {}),
     generalVolunteerInterviewEnabled: true,
     interviewStartDate: getDate(48),
     interviewEndDate: getDate(38),
@@ -998,6 +1052,18 @@ import { readGeneralRegistrationLocalSavePrograms } from '@/features/program/gen
 
 let generalProgramsCache: Program[] | null = null
 
+/** 상세 화면 저장 — 시드 mock 위에 병합 (API 연동 전) */
+const generalProgramDetailSaves = new Map<string, Program>()
+
+export function saveGeneralProgramDetailSnapshot(program: Program): void {
+  generalProgramDetailSaves.set(program.id, JSON.parse(JSON.stringify(program)) as Program)
+  invalidateGeneralProgramsCache()
+}
+
+function applyGeneralProgramDetailSaves(programs: Program[]): Program[] {
+  return programs.map(program => generalProgramDetailSaves.get(program.id) ?? program)
+}
+
 export function invalidateGeneralProgramsCache(): void {
   generalProgramsCache = null
 }
@@ -1017,7 +1083,7 @@ export function getGeneralPrograms(): Program[] {
       createdAt: seedCreatedAt,
       updatedAt: seedUpdatedAt,
       ...rest
-    } = seed
+    } = applyIndividualGeneralProgramScheduledState(seed)
     const createdAt = seedCreatedAt ?? getDate(30)
     const updatedAt = seedUpdatedAt ?? createdAt
     const timeFields =
@@ -1041,10 +1107,10 @@ export function getGeneralPrograms(): Program[] {
     } as Program
   })
 
-  const local = readGeneralRegistrationLocalSavePrograms().filter(
-    lp => !seeded.some(s => s.id === lp.id)
-  )
-  generalProgramsCache = [...seeded, ...local]
+  const local = readGeneralRegistrationLocalSavePrograms()
+    .filter(lp => !seeded.some(s => s.id === lp.id))
+    .map(applyIndividualGeneralProgramScheduledProgram)
+  generalProgramsCache = applyGeneralProgramDetailSaves([...seeded, ...local])
 
   return generalProgramsCache
 }
@@ -1068,6 +1134,16 @@ export function isGeneralTypeVariantMockProgramId(programId: string): boolean {
  * - `generalParticipantTypes`에 `volunteer` 포함 시 LNB 노출
  * - `generalVolunteerInterviewEnabled === true`(또는 면접 일정) 시 2depth 메뉴
  */
+/** 개인 참여자 신청 LNB QA용 프로그램 id */
+export const GENERAL_PARTICIPANT_APPLICATION_QA = {
+  /** 개인 + 면접 2depth */
+  individualWithInterview2Depth: 'general-prog-scheduled-2',
+  /** 개인 + 봉사 + 참여자·봉사 면접 2depth */
+  individualWithBothInterviews: 'general-prog-in-progress-2',
+  /** 개인 + 면접 없음 */
+  individualNoInterview: 'general-prog-completed-2',
+} as const
+
 export const GENERAL_VOLUNTEER_APPLICATION_QA = {
   /** 개인 + 봉사 + 면접 2depth */
   individualWithInterview2Depth: 'general-prog-in-progress-2',

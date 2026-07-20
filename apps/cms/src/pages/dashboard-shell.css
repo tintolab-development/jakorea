@@ -27,9 +27,15 @@
   border: none !important;
 }
 .dashboard-widget-row-wrapper .ant-card:focus,
-.dashboard-widget-row-wrapper .ant-card:focus-visible {
+.dashboard-widget-row-wrapper .ant-card:focus-visible,
+.dashboard-widget-row-wrapper .ant-card:focus-within {
   outline: none !important;
   box-shadow: none !important;
+}
+/* grabbed가 아닌 슬롯은 외곽 보더를 두지 않음 (라우트 복귀 시 antd/잔여 보더 방지) */
+.dashboard-widget-row-wrapper .dashboard-widget-slot:not(.dashboard-widget-slot--grabbed) {
+  border: none;
+  box-shadow: none;
 }
 
 .dashboard-toolbar {

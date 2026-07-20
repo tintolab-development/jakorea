@@ -13,12 +13,12 @@ import type {
 } from '@/data/mock/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
 import type { PaymentOrderCalculationStatementCommitPayload } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
+import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { PaymentOrderBatchConfirmModal } from './payment-order-batch-confirm-modal'
-import { Divider } from '@/shared/components/divider'
 import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
 import { CmsButton } from '@/shared/ui'
-import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
 import {
   usePaymentOrderDetailLinesController,
   type PaymentOrderDetailLineRow,
@@ -27,7 +27,10 @@ import './payment-order-detail-filter-table.css'
 
 export type { PaymentOrderDetailLineRow }
 
-export type PaymentOrderDetailFilterTableProps =
+export type PaymentOrderDetailFilterTableProps = {
+  paymentOrdersRemote?: boolean
+  detailContextQuery?: PaymentOrdersDetailContextQueryResult
+} & (
   | {
       mode: 'program'
       programRow: PaymentOrderAdminProgramRow
@@ -50,6 +53,7 @@ export type PaymentOrderDetailFilterTableProps =
         sink: (payload: PaymentOrderCalculationStatementCommitPayload) => void
       ) => void
     }
+)
 
 export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTableProps) {
   const {
@@ -86,36 +90,22 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
         selectedCount={paymentStatementIssueBlocked.selectedCount}
         layout="detailFullpage"
       />
-      <div className={filterClassName}>
-        <UnifiedFilterCard
-          bordered={false}
-          cardStyle={{ marginBottom: 0 }}
-          fields={filterFields}
-          filters={filterFilters}
-          onFilterChange={onFilterCardChange}
-          onSearch={handleSearch}
-        />
-      </div>
-
-      <div
-        className="payment-order-detail-filter-table__section-divider-wrap"
-        aria-hidden
-      >
-        <Divider />
-      </div>
-
-      <div className="payment-order-detail-filter-table__below-divider participating-institutions-section__below-divider">
-        <div className="table-header-actions">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">{sectionTitle}</span>
-            <span className="table-description">
-              총 {filteredRows.length}건
-            </span>
-          </div>
-          <div className="info-section-buttons--wrapper">
+      <FilterTableLayout
+        className={filterClassName}
+        bordered={false}
+        hideExcelDownload
+        fields={filterFields}
+        filters={filterFilters}
+        onFilterChange={onFilterCardChange}
+        onSearch={handleSearch}
+        title={sectionTitle}
+        description={`총 ${filteredRows.length}건`}
+        actions={
+          <>
             <CmsButton
               variant="secondary"
-              size="large" width={160}
+              size="large"
+              width={160}
               disabled={selectedRowKeys.length === 0}
               onClick={() => {
                 if (selectedRowKeys.length === 0) return
@@ -126,16 +116,17 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
             </CmsButton>
             <CmsButton
               variant="primary"
-              size="large" style={{ minWidth: 180 }}
+              size="large"
+              style={{ minWidth: 180 }}
               icon={<DownloadOutlined />}
               disabled={selectedRowKeys.length === 0}
               onClick={handlePaymentStatementIssue}
             >
               지급조서 발급
             </CmsButton>
-          </div>
-        </div>
-
+          </>
+        }
+      >
         <Table<PaymentOrderDetailLineRow>
           className="cms-data-table"
           rowKey="id"
@@ -148,7 +139,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
             onChange: keys => setSelectedRowKeys(keys),
           }}
         />
-      </div>
+      </FilterTableLayout>
     </div>
   )
 }

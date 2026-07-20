@@ -22,19 +22,37 @@ export interface UseA4ParagraphPagesArgs {
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
   renderMode?: FormDocumentPreviewRenderMode
   paragraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
+  /** 해당 id 단락 직전에서 항상 새 A4 페이지 시작 (교육 사진 등) */
+  pageBreakBeforeParagraphIds?: ReadonlySet<string>
 }
 
 export interface UseA4ParagraphPagesResult {
   pages: WritingFormParagraph[][]
   overflowParagraphIds: ReadonlySet<string>
+  /** 단락 높이 측정·페이지 분할이 현재 paragraphs/config 기준으로 완료됐는지 */
+  pagesReady: boolean
   measureLayer: ReactNode
+}
+
+function resolveParagraphGap(
+  paragraph: WritingFormParagraph,
+  pageParagraphs: WritingFormParagraph[],
+  paragraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
+): number {
+  if (pageParagraphs.length === 0) return 0
+  if (typeof paragraphGapPx === 'number') return paragraphGapPx
+  return (
+    paragraphGapPx?.(paragraph, pageParagraphs.length, pageParagraphs) ??
+    A4_DOCUMENT_PARAGRAPH_GAP_PX
+  )
 }
 
 function packParagraphsByHeights(
   allParagraphs: WritingFormParagraph[],
   heights: Map<string, number>,
   enabled: boolean,
-  paragraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
+  paragraphGapPx?: number | FormDocumentPreviewParagraphGapResolver,
+  pageBreakBeforeParagraphIds?: ReadonlySet<string>
 ): { pages: WritingFormParagraph[][]; overflow: Set<string> } {
   if (!enabled || allParagraphs.length === 0) {
     return { pages: [allParagraphs], overflow: new Set() }
@@ -64,15 +82,17 @@ function packParagraphsByHeights(
     if (h > maxH) {
       overflow.add(p.id)
     }
-    const gap =
-      page.length > 0
-        ? typeof paragraphGapPx === 'number'
-          ? paragraphGapPx
-          : paragraphGapPx?.(p, page.length, page) ?? A4_DOCUMENT_PARAGRAPH_GAP_PX
-        : 0
-    if (page.length > 0 && used + gap + h > maxH) {
+
+    if (pageBreakBeforeParagraphIds?.has(p.id) && page.length > 0) {
       flushPage()
     }
+
+    let gap = resolveParagraphGap(p, page, paragraphGapPx)
+    if (page.length > 0 && used + gap + h > maxH) {
+      flushPage()
+      gap = resolveParagraphGap(p, page, paragraphGapPx)
+    }
+
     page.push(p)
     used += gap + h
   }
@@ -94,6 +114,7 @@ export function useA4ParagraphPages({
   paragraphBodyOptions,
   renderMode = 'card',
   paragraphGapPx,
+  pageBreakBeforeParagraphIds,
 }: UseA4ParagraphPagesArgs): UseA4ParagraphPagesResult {
   const paragraphIdsKey = useMemo(() => allParagraphs.map(p => p.id).join('\0'), [allParagraphs])
   const paginationConfigKey = useMemo(() => {
@@ -103,8 +124,17 @@ export function useA4ParagraphPages({
         : typeof paragraphGapPx === 'number'
           ? `n:${paragraphGapPx}`
           : 'resolver'
-    return `${renderMode}|${gapKind}|${paragraphBodyOptions?.documentPreviewClassName ?? ''}`
-  }, [paragraphBodyOptions?.documentPreviewClassName, paragraphGapPx, renderMode])
+    const breakIds =
+      pageBreakBeforeParagraphIds == null || pageBreakBeforeParagraphIds.size === 0
+        ? ''
+        : [...pageBreakBeforeParagraphIds].sort().join('\0')
+    return `${renderMode}|${gapKind}|${breakIds}|${paragraphBodyOptions?.documentPreviewClassName ?? ''}`
+  }, [
+    paragraphBodyOptions?.documentPreviewClassName,
+    pageBreakBeforeParagraphIds,
+    paragraphGapPx,
+    renderMode,
+  ])
   const packedCacheKey = `${paragraphIdsKey}|${paginationConfigKey}`
 
   const [packed, setPacked] = useState<{
@@ -112,7 +142,16 @@ export function useA4ParagraphPages({
     overflowIds: ReadonlySet<string>
     cacheKey: string
   } | null>(null)
-  const measureRootRef = useRef<HTMLDivElement>(null)
+  const measureRootRef = useRef<HTMLDivElement | null>(null)
+  const [measureRootMounted, setMeasureRootMounted] = useState(false)
+
+  const handleMeasureRootRef = useCallback((node: HTMLDivElement | null) => {
+    measureRootRef.current = node
+    setMeasureRootMounted(node != null)
+  }, [])
+
+  const pagesReady =
+    !enabled || (packed != null && packed.cacheKey === packedCacheKey && packed.pages.length > 0)
 
   const pages = useMemo(() => {
     if (!enabled) {
@@ -121,7 +160,8 @@ export function useA4ParagraphPages({
     if (packed != null && packed.cacheKey === packedCacheKey && packed.pages.length > 0) {
       return packed.pages
     }
-    return [allParagraphs]
+    // 측정 전 [allParagraphs]를 1페이지로 그리면 overflow:hidden A4 뷰포트에서 하단 단락(교육 사진 등)이 잘림
+    return [[]]
   }, [enabled, allParagraphs, packed, packedCacheKey])
 
   const overflowParagraphIds = useMemo(() => {
@@ -138,25 +178,31 @@ export function useA4ParagraphPages({
     root.querySelectorAll('[data-paragraph-id]').forEach(node => {
       const id = node.getAttribute('data-paragraph-id')
       if (id == null || id === '') return
-      next.set(id, (node as HTMLElement).offsetHeight)
+      const el = node as HTMLElement
+      next.set(id, Math.max(el.offsetHeight, el.scrollHeight))
     })
     const { pages: nextPages, overflow } = packParagraphsByHeights(
       allParagraphs,
       next,
       enabled,
-      paragraphGapPx
+      paragraphGapPx,
+      pageBreakBeforeParagraphIds
     )
     setPacked({
       pages: nextPages,
       overflowIds: overflow,
       cacheKey: `${allParagraphs.map(p => p.id).join('\0')}|${paginationConfigKey}`,
     })
-  }, [allParagraphs, enabled, paragraphGapPx, paginationConfigKey])
+  }, [allParagraphs, enabled, pageBreakBeforeParagraphIds, paragraphGapPx, paginationConfigKey])
 
   useLayoutEffect(() => {
     if (!enabled) {
+      setPacked(null)
+      setMeasureRootMounted(false)
       return
     }
+    if (!measureRootMounted || measureRootRef.current == null) return
+
     let cancelled = false
     const tick = () => {
       if (cancelled) return
@@ -173,6 +219,7 @@ export function useA4ParagraphPages({
   }, [
     allParagraphs,
     enabled,
+    measureRootMounted,
     runMeasure,
     titleNumbering,
     editorKind,
@@ -183,7 +230,7 @@ export function useA4ParagraphPages({
   const measureLayer = useMemo(
     () => (
       <div
-        ref={measureRootRef}
+        ref={handleMeasureRootRef}
         aria-hidden={true}
         className="use-a4-paragraph-pages__measure-root"
         style={{
@@ -207,8 +254,16 @@ export function useA4ParagraphPages({
         />
       </div>
     ),
-    [allParagraphs, titleNumbering, editorKind, paragraphBodyOptions, renderMode, paragraphGapPx]
+    [
+      allParagraphs,
+      titleNumbering,
+      editorKind,
+      paragraphBodyOptions,
+      renderMode,
+      paragraphGapPx,
+      handleMeasureRootRef,
+    ]
   )
 
-  return { pages, overflowParagraphIds, measureLayer }
+  return { pages, overflowParagraphIds, pagesReady, measureLayer }
 }

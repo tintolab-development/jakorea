@@ -3,9 +3,9 @@ import { Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
+import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../list/region-tabs'
-import { UJAT_SCHEDULE_CONFIRM_FILTER_FIELDS } from './filter-fields'
 import { UJAT_SCHEDULE_CONFIRM_TABLE_MIN_SCROLL_X } from './columns'
 import { UjatInstitutionScheduleConfirmCalendarView } from './calendar-view'
 import { useUjatScheduleConfirmList } from './use-schedule-confirm-list'
@@ -17,10 +17,12 @@ export function UjatInstitutionScheduleConfirmList({
 }: {
   onOpenDetail: (row: UjatScheduleConfirmRow) => void
 }) {
-  const [activeRegion, setActiveRegion] =
-    useState<UjatInstitutionApplicationRegionKey>('seoul')
+  const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
+    getDefaultUjatEducationRegionKey
+  )
   const {
     pendingFilters,
+    filterFields,
     handleFilterChange,
     handleSearch,
     tableData,
@@ -44,7 +46,7 @@ export function UjatInstitutionScheduleConfirmList({
       <FilterTableLayout
         className="ujat-schedule-confirm-list__filter-layout"
         bordered={false}
-        fields={UJAT_SCHEDULE_CONFIRM_FILTER_FIELDS}
+        fields={filterFields}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
@@ -77,6 +79,10 @@ export function UjatInstitutionScheduleConfirmList({
             )}
           </div>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         {viewMode === 'table' ? (
           <div className="ujat-schedule-confirm-list__table-wrap">
@@ -95,7 +101,10 @@ export function UjatInstitutionScheduleConfirmList({
             />
           </div>
         ) : (
-          <UjatInstitutionScheduleConfirmCalendarView rows={tableData} />
+          <UjatInstitutionScheduleConfirmCalendarView
+            rows={tableData}
+            onOpenDetail={onOpenDetail}
+          />
         )}
       </FilterTableLayout>
       {viewMode === 'calendar' ? (

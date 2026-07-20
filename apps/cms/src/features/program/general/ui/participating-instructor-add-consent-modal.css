@@ -1,0 +1,60 @@
+/**
+ * 참여 강사 추가 등록 — 개인정보 동의 모달
+ * UJAT 봉사자 추가 등록 폼의 draft-paragraph(가로표) 레이아웃 재사용
+ */
+
+.content-modal.participating-instructor-add-consent-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 26px 30px 34px;
+}
+
+.participating-instructor-add-consent-modal.ant-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.participating-instructor-add-consent-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  justify-content: flex-end;
+  padding-top: 0;
+  margin-top: var(--spacing-30);
+  gap: var(--spacing-12);
+}
+
+.participating-instructor-add-consent-modal__scroll {
+  width: 100%;
+  max-height: min(72vh, 720px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.participating-instructor-add-consent-modal__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+}
+
+.participating-instructor-add-consent-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.participating-instructor-add-consent-modal__template-block {
+  width: 100%;
+  min-width: 0;
+}
+
+.participating-instructor-add-consent-modal__template-block .form-editor-horizontal-table-wrap {
+  width: 100%;
+}

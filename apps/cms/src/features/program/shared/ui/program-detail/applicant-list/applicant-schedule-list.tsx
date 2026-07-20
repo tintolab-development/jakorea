@@ -37,6 +37,7 @@ interface ApplicantScheduleListProps {
   getColorForEvent?: (event: any) => ScheduleColorPair
   /** 일반 프로그램 강사 캘린더 — 승인 배지·preferredSchool 회차 */
   showApprovalStatus?: boolean
+  toolbar?: React.ReactNode
 }
 
 const SCHOOL_BY_NAME = new Map<string, ApplicantSchoolRow>(
@@ -105,6 +106,7 @@ export function ApplicantScheduleList({
   onEventClick,
   getColorForEvent,
   showApprovalStatus = false,
+  toolbar,
 }: ApplicantScheduleListProps) {
   const resolveSessionSummary = (
     instructor: ApplicantInstructorRow,
@@ -125,18 +127,7 @@ export function ApplicantScheduleList({
     }
   }
 
-  return (
-    <div
-      className={
-        events.length === 0
-          ? 'calendar-list applicant-schedule-list calendar-list--empty'
-          : 'calendar-list applicant-schedule-list'
-      }
-    >
-      {events.length === 0 ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
-      ) : (
-        events.map(event => {
+  const listItems = events.map(event => {
             const color = getColorForEvent?.(event)
             const originalItem = event.originalItem
             const institutionRows = originalItem?.calendarInstitutionInstructors as
@@ -343,8 +334,43 @@ export function ApplicantScheduleList({
                 </div>
               </div>
             )
-        })
-      )}
+  })
+
+  if (!toolbar) {
+    return (
+      <div
+        className={
+          events.length === 0
+            ? 'calendar-list applicant-schedule-list calendar-list--empty'
+            : 'calendar-list applicant-schedule-list'
+        }
+      >
+        {events.length === 0 ? (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+        ) : (
+          listItems
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="calendar-list applicant-schedule-list calendar-list--with-toolbar">
+      <div className="calendar-list__toolbar">{toolbar}</div>
+      <div
+        className={[
+          'calendar-list__items',
+          events.length === 0 ? 'calendar-list__items--empty' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {events.length === 0 ? (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+        ) : (
+          listItems
+        )}
+      </div>
     </div>
   )
 }

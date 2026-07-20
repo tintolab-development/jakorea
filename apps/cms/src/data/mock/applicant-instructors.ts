@@ -4,7 +4,7 @@
  */
 
 import type { Dayjs } from 'dayjs'
-import type { SchoolTeacherEmploymentStatus } from '@/types/user'
+import type { InstructorMemberProfile, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { getGeneralProgramById } from '@/data/mock/general-programs'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { INDIVIDUAL_LECTURE_ASSIGN_DEMO_SLOT_KEYS } from '@/features/program/general/lib/individual-lecture-assign-demo'
@@ -79,9 +79,11 @@ export interface ApplicantInstructorRow {
   evaluationGrade?: string
   /** 강사비 등급 (예: 3급 강사비) — JA 평가 등급과 별도 */
   instructorFeeGradeLabel?: string
+  /** 강사 회원 유형 — 교사 겸직(instructor_dual)일 때만 소속 재직 현황 태그 노출 */
+  instructorMemberProfile?: InstructorMemberProfile
   /** 소속 재직 여부 — affiliationEmploymentStatus 미지정 시 general 상세 배지 fallback */
   affiliationIsCurrentlyEmployed?: boolean
-  /** 소속 재직 현황 — general 상세 소속 td 내 변경 가능 배지 */
+  /** 소속 재직 현황 — general 상세 소속 td 내 변경 가능 배지 (교사 겸직 전용) */
   affiliationEmploymentStatus?: SchoolTeacherEmploymentStatus
   /** JA 강의 경력 (신규|1년 미만|1~3년|3년 이상 등) */
   teachingExperience?: string
@@ -151,7 +153,7 @@ export interface ApplicantInstructorRow {
   lectureFeeBasisDisplay?: string
   /** 강의비 책정 기준 — 유형 */
   lectureFeeBasisType?: ApplicantInstructorLectureFeeBasisType
-  /** 강의비 책정 기준 — 단위 (예: 1회 기준) */
+  /** 강의비 책정 기준 — 단위 (예: 출강 1회당) */
   lectureFeeMeasure?: string
   /** 강의비 책정 기준 — 금액(숫자만) */
   lectureFeeAmount?: string
@@ -177,6 +179,12 @@ const AFFILIATION_SCHOOLS = [
 ]
 
 const INSTRUCTOR_FEE_GRADE_LABELS = ['1급 강사비', '2급 강사비', '3급 강사비'] as const
+
+const INSTRUCTOR_MEMBER_PROFILES: InstructorMemberProfile[] = [
+  'instructor_dual',
+  'instructor_only',
+  'school_teacher',
+]
 
 const INSTRUCTOR_NAMES = [
   '김서연',
@@ -522,14 +530,17 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       status === 'rejected' ? (i % 2 === 1 ? 'immediate' : 'on_announcement') : undefined
     const lectureFeeBasisType: ApplicantInstructorLectureFeeBasisType | undefined =
       status === 'approved' ? 'special_lecture' : undefined
-    const lectureFeeMeasure = status === 'approved' ? '1회 기준' : undefined
+    const lectureFeeMeasure = status === 'approved' ? '출강 1회당' : undefined
     const lectureFeeAmount = status === 'approved' ? '915000' : undefined
     const lectureFeeBasisDisplay =
-      status === 'approved' ? '특강 강사비 | 1회 기준 | 915,000원' : undefined
+      status === 'approved' ? '특강 강사비 | 출강 1회당 | 915,000원' : undefined
     const businessIncomeEarnerStatus = '해당 없음'
     const affiliation = AFFILIATION_SCHOOLS[i % AFFILIATION_SCHOOLS.length]
+    const instructorMemberProfile = INSTRUCTOR_MEMBER_PROFILES[i % INSTRUCTOR_MEMBER_PROFILES.length]
     const affiliationEmploymentStatus: SchoolTeacherEmploymentStatus | undefined =
-      affiliation !== '개인' && affiliation !== '삼성전자'
+      instructorMemberProfile === 'instructor_dual' &&
+      affiliation !== '개인' &&
+      affiliation !== '삼성전자'
         ? (['ACTIVE', 'ON_LEAVE', 'TRANSFERRED'] as const)[i % 3]
         : undefined
     const affiliationIsCurrentlyEmployed = affiliationEmploymentStatus === 'ACTIVE'
@@ -540,6 +551,19 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
         : status === 'rejected' && rejectionNotifyTiming === 'immediate'
           ? formatApprovalNotificationSentAt()
           : undefined
+    const assignedLectures =
+      status === 'approved' && i % 11 === 5
+        ? [
+            {
+              slotKey: '2026-01-09|assign-school-gangseo|1',
+              dateKey: '2026-01-09',
+              schoolId: 'assign-school-gangseo',
+              schoolName: '강서초등학교',
+              sessionLabel: '1차시',
+              timeRange: '09:20 ~ 11:20',
+            },
+          ]
+        : undefined
     const resumeSample = getResumeSample(i)
     const evaluationGrades = ['A', 'B', 'C']
     const teachingExperiences = ['신규', '1년 미만', '1~3년', '3년 이상']
@@ -555,7 +579,7 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       gender: GENDERS[i % GENDERS.length],
       militaryStatus: MILITARY_STATUSES[i % MILITARY_STATUSES.length],
       lectureExperienceYears: 1 + (i % 10),
-      evaluationGrade: evaluationGrades[i % evaluationGrades.length],
+      evaluationGrade: i % 4 === 0 ? undefined : evaluationGrades[i % evaluationGrades.length],
       teachingExperience: teachingExperiences[i % teachingExperiences.length],
       educationLevel: EDUCATION_LEVELS[eduIdx],
       educationSchoolName: EDUCATION_SCHOOLS[eduIdx % EDUCATION_SCHOOLS.length],
@@ -564,6 +588,7 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       address: ADDRESSES[i % ADDRESSES.length],
       appliedAt: `2026.01.${(10 + (i % 20)).toString().padStart(2, '0')}`,
       affiliation,
+      instructorMemberProfile,
       affiliationIsCurrentlyEmployed,
       affiliationEmploymentStatus,
       instructorFeeGradeLabel,
@@ -586,6 +611,7 @@ function buildMockList(count: number): ApplicantInstructorRow[] {
       lectureFeeAmount,
       businessIncomeEarnerStatus,
       approvalNotificationSentAt,
+      assignedLectures,
       ...resumeSample,
     })
   }
@@ -641,9 +667,9 @@ const INDIVIDUAL_PROGRAM_DEMO_INSTRUCTORS: ApplicantInstructorRow[] = [
     schoolName: '-',
     evaluationGrade: 'B',
     instructorFeeGradeLabel: '2급 강사비',
-    lectureFeeBasisDisplay: '특강 강사비 | 1회 기준 | 915,000원',
+    lectureFeeBasisDisplay: '특강 강사비 | 출강 1회당 | 915,000원',
     lectureFeeBasisType: 'special_lecture',
-    lectureFeeMeasure: '1회 기준',
+    lectureFeeMeasure: '출강 1회당',
     lectureFeeAmount: '915000',
     businessIncomeEarnerStatus: '해당 없음',
     approvalNotificationSentAt: '2026.04.02 10:00:00',
@@ -725,10 +751,10 @@ export function patchApplicantInstructorForApprovalStatus(
       ...row,
       approvalStatus,
       lectureFeeBasisType: row.lectureFeeBasisType ?? 'special_lecture',
-      lectureFeeMeasure: row.lectureFeeMeasure ?? '1회 기준',
+      lectureFeeMeasure: row.lectureFeeMeasure ?? '출강 1회당',
       lectureFeeAmount: row.lectureFeeAmount ?? '915000',
       lectureFeeBasisDisplay:
-        row.lectureFeeBasisDisplay ?? '특강 강사비 | 1회 기준 | 915,000원',
+        row.lectureFeeBasisDisplay ?? '특강 강사비 | 출강 1회당 | 915,000원',
       businessIncomeEarnerStatus: row.businessIncomeEarnerStatus ?? '해당 없음',
       approvalNotifyTiming: notifyOptions?.notifyTiming,
       approvalNotificationSentAt:

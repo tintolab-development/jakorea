@@ -18,6 +18,23 @@ export function PipeSeparatedValues({ parts }: { parts: ReactNode[] }) {
   )
 }
 
+export function renderCriminalRecordCheckRequest(value: string) {
+  const parts = value
+    .split('|')
+    .map(part => part.trim())
+    .filter(Boolean)
+
+  if (parts.length <= 1) return value || '-'
+
+  return (
+    <PipeSeparatedValues
+      parts={parts.map(part => (
+        <span key={part}>{part}</span>
+      ))}
+    />
+  )
+}
+
 function classTimePeriodsEqual(
   a: UjatInstitutionApplicationClassTimeRowDetail['periods'],
   b: UjatInstitutionApplicationClassTimeRowDetail['periods']

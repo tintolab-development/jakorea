@@ -1,0 +1,50 @@
+.participating-volunteer-assignment-section {
+  width: 100%;
+}
+
+.participating-volunteer-assignment-section .school-detail-fullpage-view__instructor-section + .school-detail-fullpage-view__instructor-section {
+  margin-top: 32px;
+}
+
+/* 테이블 영역 개별 스크롤 — 최대 높이 365px */
+.participating-volunteer-assignment-section
+  .participating-volunteer-assignment-section__table-scroll:has(.cms-data-table) {
+  max-height: 365px;
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: #fff;
+}
+
+/* cms-data-table 외곽 보더(.ant-table-container)와 래퍼 보더 중복 방지 */
+.participating-volunteer-assignment-section
+  .participating-volunteer-assignment-section__table-scroll:has(.cms-data-table)
+  .cms-data-table
+  .ant-table-container {
+  border: none;
+  border-radius: 0;
+}
+
+.participating-volunteer-assignment-section
+  .participating-volunteer-assignment-section__table-scroll:has(.cms-data-table)
+  .ant-table-thead
+  > tr
+  > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--table-header-bg, #fafafa);
+}
+
+.participating-volunteer-assignment-section
+  .participating-volunteer-assignment-section__table-scroll:has(
+    .school-detail-fullpage-view__instructor-list-empty
+  ) {
+  max-height: none;
+  overflow: visible;
+}
+
+.participating-volunteer-assignment-section .participating-institutions-section__session-more {
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+}

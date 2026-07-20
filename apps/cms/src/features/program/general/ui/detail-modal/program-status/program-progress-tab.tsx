@@ -6,7 +6,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Card, Table, Row, Col, Select } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
-import { CmsButton, FilterSearchButton } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import { ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -15,17 +15,21 @@ import {
 } from '../../../hooks/use-program-progress-params'
 import {
   TEXTBOOK_STATUS_LABELS,
+  TEXTBOOK_STATUS_OPTION_KEYS,
   type ParticipatingSchoolRow,
   type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
 import {
   MOCK_PARTICIPATING_INSTRUCTORS,
-  SETTLEMENT_STATUS_LABELS,
   type ParticipatingInstructorRow,
-  type SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
+import {
+  INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
+  INSTRUCTOR_SETTLEMENT_STATUS_ORDER,
+  type InstructorSettlementUiStatus,
+} from '@/shared/constants/instructor-settlement-status'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
-import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
+import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { SegmentedTab } from '@/shared/ui'
 import { AddInstructorModal } from '../../add-instructor-modal'
@@ -43,8 +47,12 @@ import { useProgressInstructorList } from '../../../hooks/use-progress-instructo
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-} from '@/shared/components/status-dropdown-cell'
+  STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
+} from '@/shared/components'
 import { Divider } from '@/shared/components/divider'
+import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import { useTrainedTeacherPerformanceSummary } from '@/features/program/trained-teachers/api/performance-summary-hooks'
+import { TrainedTeachersPerformanceSummaryStrip } from '@/features/program/trained-teachers/ui/progress/performance-summary-strip'
 import './program-progress-tab.css'
 
 const PARTICIPATING_SCHOOL_TAB = 'schools'
@@ -91,25 +99,28 @@ const LECTURE_ROUND_OPTIONS = [
 
 const TEXTBOOK_OPTIONS = [
   { label: '전체', value: 'all' },
-  { label: TEXTBOOK_STATUS_LABELS.preparing, value: 'preparing' },
-  { label: TEXTBOOK_STATUS_LABELS.shipping, value: 'shipping' },
-  { label: TEXTBOOK_STATUS_LABELS.delivered, value: 'delivered' },
+  ...TEXTBOOK_STATUS_OPTION_KEYS.map(key => ({
+    label: TEXTBOOK_STATUS_LABELS[key],
+    value: key,
+  })),
 ]
 
-const SETTLEMENT_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: SETTLEMENT_STATUS_LABELS.pending, value: 'pending' },
-  { label: SETTLEMENT_STATUS_LABELS.partial, value: 'partial' },
-  { label: SETTLEMENT_STATUS_LABELS.completed, value: 'completed' },
-  { label: SETTLEMENT_STATUS_LABELS.na, value: 'na' },
-]
+const SETTLEMENT_OPTIONS = INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+}))
 
 interface ProgramProgressTabProps {
   programId: string
 }
 
-export function ProgramProgressTab({ programId: _programId }: ProgramProgressTabProps) {
+export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
   const { subTab, filters, setSubTab, setFilter } = useProgramProgressParams()
+  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
+  const performanceSummaryQuery = useTrainedTeacherPerformanceSummary(
+    programId,
+    isTrainedTeachersSurface
+  )
   const [openTextbookDropdownSchoolId, setOpenTextbookDropdownSchoolId] = useState<string | null>(
     null
   )
@@ -129,6 +140,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
   const schoolHook = useProgressSchoolList({
     appliedFilters,
     instructorList: instructorHook.instructorList,
+    programId,
   })
 
   const {
@@ -217,13 +229,10 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
     }
   }
 
-  const textbookStatusKeys: TextbookStatusKey[] = useMemo(
-    () => Object.keys(TEXTBOOK_STATUS_LABELS) as TextbookStatusKey[],
-    []
-  )
+  const textbookStatusKeys = TEXTBOOK_STATUS_OPTION_KEYS
 
-  const settlementStatusKeys: SettlementStatusKey[] = useMemo(
-    () => Object.keys(SETTLEMENT_STATUS_LABELS) as SettlementStatusKey[],
+  const settlementStatusKeys: InstructorSettlementUiStatus[] = useMemo(
+    () => [...INSTRUCTOR_SETTLEMENT_STATUS_ORDER],
     []
   )
 
@@ -280,9 +289,11 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         title: '교재 현황',
         dataIndex: 'textbookStatus',
         key: 'textbookStatus',
-        width: 140,
+        width: 116,
         align: 'center',
-        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
+        onCell: () => ({
+          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
+        }),
         render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => (
           <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
             <StatusDropdownCell<TextbookStatusKey>
@@ -293,6 +304,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
               onChange={key => handleTextbookStatusChange(record.id, key)}
               isOpen={openTextbookDropdownSchoolId === record.id}
               onOpenChange={open => setOpenTextbookDropdownSchoolId(open ? record.id : null)}
+              tagLayout="tag100"
             />
           </div>
         ),
@@ -377,12 +389,12 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
         width: 160,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
-        render: (status: SettlementStatusKey, record: ParticipatingInstructorRow) => (
+        render: (status: InstructorSettlementUiStatus, record: ParticipatingInstructorRow) => (
           <div onClick={e => e.stopPropagation()} style={{ display: 'inline-block' }}>
-            <StatusDropdownCell<SettlementStatusKey>
+            <StatusDropdownCell<InstructorSettlementUiStatus>
               status={status}
               statusOptions={settlementStatusKeys}
-              renderBadge={s => <SettlementStatusBadge status={s} />}
+              renderBadge={s => <InstructorPaymentStatusBadge status={s} />}
               isItemDisabled={(cur, opt) => cur === opt}
               onChange={key => handleSettlementStatusChange(record.id, key)}
               isOpen={openSettlementDropdownInstructorId === record.id}
@@ -507,7 +519,15 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                   />
                 </Col>
                 <Col flex="none" className="program-progress-tab__filter-col--btn">
-                  <FilterSearchButton onClick={handleSearch} />
+                  <CmsButton
+                    type="button"
+                    variant="primary"
+                    size="large"
+                    width={160}
+                    onClick={handleSearch}
+                  >
+                    조회
+                  </CmsButton>
                 </Col>
               </Row>
             </div>
@@ -518,6 +538,12 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
           <>
             <Divider className="program-progress-tab__divider" />
             <div className="program-progress-tab__below-divider">
+              {isTrainedTeachersSurface ? (
+                <TrainedTeachersPerformanceSummaryStrip
+                  summary={performanceSummaryQuery.data}
+                  loading={performanceSummaryQuery.isFetching}
+                />
+              ) : null}
               <div className="program-progress-tab__table-header">
                 <div className="program-progress-tab__table-heading">
                   <span className="program-progress-tab__table-title">수강 참여 학교 목록</span>
@@ -688,7 +714,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
                   savedInstructors !== undefined
                     ? savedInstructors.map(inv => ({
                         ...inv,
-                        settlementStatus: 'pending' as SettlementStatusKey,
+                        settlementStatus: 'awaiting_confirmation' as InstructorSettlementUiStatus,
                       }))
                     : getInstructorRowsForSchool(schoolName, instructorList)
                 return {
@@ -700,6 +726,7 @@ export function ProgramProgressTab({ programId: _programId }: ProgramProgressTab
             : null
         }
         participatingRow={selectedSchoolForDetail}
+        programId={programId}
         onCancelApproval={handleSchoolApprovalCancel}
         onSaveBasicInfo={patch => {
           setSavedBasicPatches(prev => ({ ...prev, [patch.id]: patch }))

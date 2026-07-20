@@ -1,15 +1,19 @@
 /**
  * 학생 추가 등록 모달
  * 프로그램 상세 풀페이지 모달 > 프로그램 진행현황 > 참여기관 > 학생 추가 클릭 시 노출
- * 스펙: 제목 "학생 추가 등록", 설명 문구, 필수 학생명/성별/생년월일/학급, 선택 연락처/이메일, 취소/등록 버튼
+ * 스펙: 제목 "학생 추가 등록", 설명 문구, 필수 학생명/성별/생년월일/학급, 선택 연락처/이메일/비고, 취소/등록 버튼
  */
 
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { STUDENT_GRADE_CLASS_OPTIONS } from '@/features/program/general/lib/student-list-filter-fields'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsInput, CmsRadioGroup, CmsSelect } from '@/shared/ui'
+import {
+  CmsDateTextInput,
+  isValidCalendarDate,
+  sanitizeDateTextInput,
+} from '@/shared/ui/date-text-input'
 import {
   addStudentFormSchema,
   type AddStudentFormValues,
@@ -27,13 +31,21 @@ export interface AddStudentModalProps {
   open: boolean
   onCancel: () => void
   onAdd: (values: AddStudentFormValues) => void
+  /** 미전달 시 옵션 없음 — 상위에서 `buildStudentGradeClassOptions(classCount)` 전달 */
+  gradeClassOptions?: Array<{ label: string; value: string }>
 }
 
-export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps) {
+export function AddStudentModal({
+  open,
+  onCancel,
+  onAdd,
+  gradeClassOptions = [],
+}: AddStudentModalProps) {
   const {
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<AddStudentFormValues>({
     resolver: zodResolver(addStudentFormSchema),
@@ -47,6 +59,14 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
   }, [open, reset])
 
   const onSubmit = (values: AddStudentFormValues) => {
+    if (!isValidCalendarDate(sanitizeDateTextInput(values.birthDate))) {
+      setError('birthDate', {
+        type: 'validate',
+        message: '생년월일 8자리를 입력해주세요',
+      })
+      return
+    }
+
     onAdd(values)
     onCancel()
   }
@@ -131,17 +151,16 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
               name="birthDate"
               control={control}
               render={({ field }) => (
-                <CmsInput
-                  {...field}
+                <CmsDateTextInput
                   value={field.value ?? ''}
+                  onValueChange={value => field.onChange(value.replace(/\D/g, '').slice(0, 8))}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
                   inputSize="medium"
                   width="100%"
                   placeholder="생년월일 8자리를 입력하세요"
-                  maxLength={8}
-                  inputMode="numeric"
-                  onChange={e => {
-                    field.onChange(e.target.value.replace(/\D/g, '').slice(0, 8))
-                  }}
+                  maxLength={10}
                 />
               )}
             />
@@ -165,7 +184,8 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
                   width="100%"
                   withAllOption={false}
                   placeholder="학급을 선택하세요"
-                  options={STUDENT_GRADE_CLASS_OPTIONS}
+                  options={gradeClassOptions}
+                  disabled={gradeClassOptions.length === 0}
                 />
               )}
             />
@@ -211,6 +231,26 @@ export function AddStudentModal({ open, onCancel, onAdd }: AddStudentModalProps)
             />
             {errors.email && (
               <span className="add-student-modal__error">{fieldValidationHelp(errors.email)}</span>
+            )}
+          </div>
+
+          <div className="add-student-modal__field">
+            <label className="add-student-modal__label">비고</label>
+            <Controller
+              name="notes"
+              control={control}
+              render={({ field }) => (
+                <CmsInput
+                  {...field}
+                  value={field.value ?? ''}
+                  inputSize="medium"
+                  width="100%"
+                  placeholder="비고를 입력하세요"
+                />
+              )}
+            />
+            {errors.notes && (
+              <span className="add-student-modal__error">{fieldValidationHelp(errors.notes)}</span>
             )}
           </div>
         </form>

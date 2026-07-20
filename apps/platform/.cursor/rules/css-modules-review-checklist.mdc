@@ -1,0 +1,49 @@
+---
+description: Review checklist for CSS Modules responsive frontend changes
+globs:
+  - "src/**/*.module.css"
+  - "src/**/*.module.scss"
+alwaysApply: false
+---
+
+# CSS Modules Responsive Review Checklist
+
+Use this checklist when reviewing CSS Modules and responsive UI changes.
+
+## Responsiveness
+
+- Mobile-first default styles are present.
+- Tablet and desktop media queries only add complexity when needed.
+- Common widths are considered: 360px, 390px, 768px, 1024px, 1280px.
+- Fixed widths are replaced with fluid alternatives where possible.
+- Layout does not create horizontal scrolling.
+
+## CSS Quality
+
+- Class names use **camelCase** (not kebab-case); TSX uses `styles.className` dot access.
+- Class names describe role or structure.
+- Repeated spacing uses parent `gap` where possible.
+- CSS variables are used for repeated design values.
+- Selectors are shallow and easy to override.
+- `!important` is avoided.
+- Global selectors are avoided unless intentionally using `:global()`.
+
+## Layout Safety
+
+- Flex and grid children that contain long text use `min-width: 0` where needed.
+- Images use `display: block`, `max-width` or `width: 100%`, and correct `object-fit`.
+- Cards and media areas use `aspect-ratio` instead of fragile fixed heights when possible.
+
+## Accessibility
+
+- Focus-visible styles exist for interactive elements.
+- Touch targets are large enough.
+- Text remains readable on mobile.
+- Visual order does not break meaningful reading order.
+
+## Maintainability
+
+- CSS Module file is scoped to the component.
+- Component does not rely on fragile DOM depth selectors.
+- Responsive behavior is documented through clear class structure, not comments only.
+- No unrelated style changes are included.

@@ -1,12 +1,16 @@
 /**
  * 프로그램 상세 - 담당자 정보 탭
- * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록/개인정보 상세보기
+ * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록
+ *
+ * TODO(api): OpenAPI 담당자 CRUD 확정 후 일반·1사1교 모두 remote 연동.
+ * 1사1교는 program-type-isolation — shared 기본값을 바꾸지 말고 surface/variant로 분기.
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Table } from 'antd'
+import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
-import { UnifiedFilterCard, type FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
 import {
@@ -18,7 +22,10 @@ import {
   PROGRAM_ROLE_LABELS,
   type ProgramManagerRow,
 } from '@/data/mock/program-managers'
-import { canAddProgramPm, canSetProgramManagerRole } from '@/entities/program/lib/program-pm-role-policy'
+import {
+  canAddProgramPm,
+  canSetProgramManagerRole,
+} from '@/entities/program/lib/program-pm-role-policy'
 import {
   AddManagerModal,
   buildManagerRowFromForm,
@@ -26,15 +33,12 @@ import {
 } from '../../add-manager-modal'
 import { ManagerDeleteGuideModal } from '../../manager-delete-guide-modal'
 import {
+  EditableStatusBadge,
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME,
-  STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME,
-} from '@/shared/components/status-dropdown-cell'
-import { MASKING_POLICY } from '@/shared/constants/download-policy'
+} from '@/shared/components'
+import { getProgramRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
-import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import './program-managers-tab.css'
 
 const ROLE_OPTIONS = [
@@ -48,9 +52,10 @@ const TABLE_ROLE_ORDER: ProgramRole[] = ['OWNER', 'PARTNER', 'ASSISTANT']
 
 interface ProgramManagersTabProps {
   programId: string
+  maskSensitive?: boolean
 }
 
-export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
+export function ProgramManagersTab({ programId, maskSensitive = false }: ProgramManagersTabProps) {
   const { filters, setFilters } = useProgramManagersParams()
   const [pendingFilters, setPendingFilters] = useState<ProgramManagersFilters>(() => ({
     ...filters,
@@ -70,7 +75,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         type: 'search',
         label: '담당자명',
         placeholder: '담당자명을 입력하세요',
-        width: 240,
       },
       {
         key: 'role',
@@ -78,12 +82,11 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         label: '권한',
         placeholder: '전체',
         options: ROLE_OPTIONS,
-        width: 240,
       },
     ]
   }, [])
 
-  const unifiedFilterCardValues = useMemo(
+  const filterValues = useMemo(
     () => ({
       managerName: pendingFilters.managerName,
       role: pendingFilters.role === 'all' ? undefined : pendingFilters.role,
@@ -91,7 +94,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     [pendingFilters]
   )
 
-  const handleUnifiedFilterChange = (key: string, value: unknown) => {
+  const handleFilterChange = (key: string, value: unknown) => {
     if (key === 'managerName') {
       setPendingFilters(prev => ({ ...prev, managerName: String(value ?? '') }))
       return
@@ -100,7 +103,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     setPendingFilters(prev => ({ ...prev, role: v }))
   }
 
-  const handleUnifiedFilterSearch = () => {
+  const handleFilterSearch = () => {
     setFilters({
       managerName: pendingFilters.managerName,
       role: pendingFilters.role,
@@ -138,21 +141,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     })
     return [...list].sort((a, b) => b.no - a.no)
   }, [managerList, appliedFilters])
-
-  const resolveProgramManagerPersonalInfoAccessItem = useCallback(() => {
-    if (selectedRowKeys.length !== 1) return '담당자 목록'
-    return managerList.find(row => row.id === String(selectedRowKeys[0]))?.name ?? '담당자 목록'
-  }, [managerList, selectedRowKeys])
-
-  const {
-    personalInfoRevealed,
-    onPrivacyControlClick: handleProgramManagersPrivacyClick,
-    confirmModal: personalInfoRevealModal,
-  } = usePersonalInfoReveal({
-    resolveAccessItem: resolveProgramManagerPersonalInfoAccessItem,
-    resetDeps: [programId],
-    controlMode: 'toggleRemask',
-  })
 
   const handleDeleteClick = () => {
     if (selectedRowKeys.length === 0) {
@@ -217,14 +205,13 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
   )
 
   const renderRoleBadge = useCallback((r: ProgramRole) => {
-    const label = PROGRAM_ROLE_LABELS[r]
-    const mod =
-      r === 'OWNER'
-        ? 'program-managers-tab__role-badge--owner'
-        : r === 'PARTNER'
-          ? 'program-managers-tab__role-badge--partner'
-          : 'program-managers-tab__role-badge--assistant'
-    return <span className={`program-managers-tab__role-badge ${mod}`}>{label}</span>
+    return (
+      <EditableStatusBadge
+        label={PROGRAM_ROLE_LABELS[r]}
+        tone={getProgramRoleBadgeTone(r)}
+        className="program-managers-tab__role-badge"
+      />
+    )
   }, [])
 
   const columns: ColumnsType<ProgramManagerRow> = useMemo(
@@ -234,19 +221,15 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         title: '담당자명',
         dataIndex: 'name',
         key: 'name',
-        width: 246,
         align: 'center',
       },
       {
         title: '권한',
         dataIndex: 'role',
         key: 'role',
-        width: 160,
+        width: 150,
         align: 'center',
-        onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME }),
-        onCell: () => ({
-          className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME}`,
-        }),
+        onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (role: ProgramRole, record: ProgramManagerRow) => (
           <StatusDropdownCell<ProgramRole>
             status={role}
@@ -257,7 +240,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            tagLayout="tag160"
+            style={{ width: 132, minWidth: 132, maxWidth: 132 }}
           />
         ),
       },
@@ -270,7 +253,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         render: (phone: string) => {
           const value = phone?.trim()
           if (!value) return '-'
-          return personalInfoRevealed ? value : MASKING_POLICY.phone(value)
+          return maskSensitive ? MASKING_POLICY.phone(value) : value
         },
       },
       {
@@ -283,7 +266,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         render: (email: string) => {
           const value = email?.trim()
           if (!value) return '-'
-          return personalInfoRevealed ? value : MASKING_POLICY.email(value)
+          return maskSensitive ? MASKING_POLICY.email(value) : value
         },
       },
       {
@@ -296,50 +279,36 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
     ],
     [
       handleTableRoleChange,
+      maskSensitive,
       openRoleDropdownId,
       renderRoleBadge,
       roleItemDisabled,
-      personalInfoRevealed,
     ]
   )
 
   return (
     <div className="program-managers-tab">
-      <div className="program-managers-tab__top">
-        <UnifiedFilterCard
-          bordered={false}
-          cardStyle={{ marginBottom: 0 }}
-          fields={managerFilterFields}
-          filters={unifiedFilterCardValues}
-          onFilterChange={handleUnifiedFilterChange}
-          onSearch={handleUnifiedFilterSearch}
-        />
-      </div>
-
-      <div className="program-managers-tab__divider" />
-      <div className="program-managers-tab__below-divider">
-        <div className="program-managers-tab__table-header">
-          <div className="program-managers-tab__table-heading">
-            <span className="program-managers-tab__table-title">담당자 목록</span>
-            <span className="program-managers-tab__table-description">
-              {filteredManagers.length}건
-            </span>
-          </div>
-          <div className="program-managers-tab__table-actions">
-            <CmsButton variant="delete" size="large" width={160} onClick={handleDeleteClick}>
+      <FilterTableLayout
+        className="program-managers-tab__filter-layout"
+        bordered={false}
+        hideExcelDownload
+        fields={managerFilterFields}
+        filters={filterValues}
+        onFilterChange={handleFilterChange}
+        onSearch={handleFilterSearch}
+        title="담당자 목록"
+        description={`${filteredManagers.length}건`}
+        actions={
+          <>
+            <CmsButton variant="delete" size="large" onClick={handleDeleteClick}>
               담당자 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" width={160} onClick={() => setAddModalOpen(true)}>
+            <CmsButton variant="primary" size="large" onClick={() => setAddModalOpen(true)}>
               담당자 등록
             </CmsButton>
-            <PersonalInfoRevealButton
-              labelMode="toggle"
-              revealed={personalInfoRevealed}
-              style={{ minWidth: 180 }}
-              onClick={handleProgramManagersPrivacyClick}
-            />
-          </div>
-        </div>
+          </>
+        }
+      >
         <Table<ProgramManagerRow>
           className="cms-data-table cms-data-table--fluid program-managers-tab__managers-table"
           rowKey="id"
@@ -352,7 +321,7 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
           columns={columns}
           dataSource={filteredManagers}
         />
-      </div>
+      </FilterTableLayout>
 
       <AddManagerModal
         open={addModalOpen}
@@ -367,7 +336,6 @@ export function ProgramManagersTab({ programId }: ProgramManagersTabProps) {
         managerNames={managerNamesToDelete}
         onConfirm={handleDeleteConfirm}
       />
-      {personalInfoRevealModal}
     </div>
   )
 }

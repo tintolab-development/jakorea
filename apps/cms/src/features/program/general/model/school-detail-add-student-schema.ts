@@ -1,6 +1,6 @@
 /**
  * 학생 등록 모달 폼 스키마
- * 필수: 학생명, 성별, 생년월일(8자리), 학급 / 선택: 연락처, 이메일 (react-hook-form)
+ * 필수: 학생명, 성별, 생년월일(8자리), 학급 / 선택: 연락처, 이메일, 비고 (react-hook-form)
  */
 
 import { z } from 'zod'
@@ -40,6 +40,10 @@ export const addStudentFormSchema = z.object({
     v => !v || v === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
     '올바른 이메일 형식을 입력해주세요'
   ),
+  notes: z.union([
+    z.string().trim().max(200, '비고는 200자 이내로 입력해주세요'),
+    z.literal(''),
+  ]),
 })
 
 export type AddStudentFormValues = z.infer<typeof addStudentFormSchema>
@@ -50,5 +54,6 @@ export const DEFAULT_ADD_STUDENT_FORM_VALUES: AddStudentFormValues = {
   birthDate: '',
   contact: '',
   email: '',
+  notes: '',
   gradeClass: '',
 }

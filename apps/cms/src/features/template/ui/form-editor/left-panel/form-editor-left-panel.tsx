@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import {
   DndContext,
   PointerSensor,
@@ -57,6 +58,19 @@ export function FormEditorLeftPanel({
       paragraphBodyOptions?.structureLockedParagraphIds ?? structureLockedParagraphIds,
   }
 
+  const hiddenParagraphIds = mergedParagraphBodyOptions.hiddenParagraphIds
+  const displayParagraphs = useMemo(() => {
+    if (hiddenParagraphIds == null || hiddenParagraphIds.size === 0) return paragraphs
+    return paragraphs.filter(paragraph => !hiddenParagraphIds.has(paragraph.id))
+  }, [paragraphs, hiddenParagraphIds])
+
+  const formEditorLeftClassName = [
+    'form-editor-left',
+    paragraphInteractionMode === 'preview' && 'form-editor-left--paragraph-body-preview',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 2 } }))
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
@@ -65,12 +79,15 @@ export function FormEditorLeftPanel({
   }
 
   if (layout === 'three') {
-    if (editorKind === 'horizontal_table' && paragraphsAreOnlyTableLayoutParagraphs(paragraphs)) {
-      const middle = paragraphs
+    if (
+      editorKind === 'horizontal_table' &&
+      paragraphsAreOnlyTableLayoutParagraphs(displayParagraphs)
+    ) {
+      const middle = displayParagraphs
       const sortableIds = middle.map(p => p.id)
       if (middle.length < 1) return null
       return (
-        <div className="form-editor-left">
+        <div className={formEditorLeftClassName}>
           {showEditorChrome ? (
             <DndContext
               sensors={sensors}
@@ -83,7 +100,7 @@ export function FormEditorLeftPanel({
                   <SortableMiddleFormCard
                     key={p.id}
                     paragraph={p}
-                    paragraphs={paragraphs}
+                    paragraphs={displayParagraphs}
                     titleNumbering={titleNumbering}
                     selectedCardId={selectedCardId}
                     onSelectCard={onSelectCard}
@@ -113,7 +130,7 @@ export function FormEditorLeftPanel({
               <PinnedFormCard
                 key={p.id}
                 paragraph={p}
-                paragraphs={paragraphs}
+                paragraphs={displayParagraphs}
                 titleNumbering={titleNumbering}
                 selectedCardId={selectedCardId}
                 onSelectCard={onSelectCard}
@@ -141,13 +158,13 @@ export function FormEditorLeftPanel({
       )
     }
 
-    const tail = paragraphs[paragraphs.length - 1]
-    const middle = paragraphs.slice(0, -1)
+    const tail = displayParagraphs[displayParagraphs.length - 1]
+    const middle = displayParagraphs.slice(0, -1)
     const sortableIds = middle.map(p => p.id)
     if (!tail || middle.length < 1) return null
 
     return (
-      <div className="form-editor-left">
+      <div className={formEditorLeftClassName}>
         {showEditorChrome ? (
           <DndContext
             sensors={sensors}
@@ -160,7 +177,7 @@ export function FormEditorLeftPanel({
                 <SortableMiddleFormCard
                   key={p.id}
                   paragraph={p}
-                  paragraphs={paragraphs}
+                  paragraphs={displayParagraphs}
                   titleNumbering={titleNumbering}
                   selectedCardId={selectedCardId}
                   onSelectCard={onSelectCard}
@@ -190,7 +207,7 @@ export function FormEditorLeftPanel({
             <PinnedFormCard
               key={p.id}
               paragraph={p}
-              paragraphs={paragraphs}
+              paragraphs={displayParagraphs}
               titleNumbering={titleNumbering}
               selectedCardId={selectedCardId}
               onSelectCard={onSelectCard}
@@ -214,7 +231,7 @@ export function FormEditorLeftPanel({
         )}
         <PinnedFormCard
           paragraph={tail}
-          paragraphs={paragraphs}
+          paragraphs={displayParagraphs}
           titleNumbering={titleNumbering}
           selectedCardId={selectedCardId}
           onSelectCard={onSelectCard}
@@ -238,7 +255,7 @@ export function FormEditorLeftPanel({
     )
   }
 
-  const split = getWritingFormHeadMiddlePinnedTail(paragraphs)
+  const split = getWritingFormHeadMiddlePinnedTail(displayParagraphs)
   if (split == null) return null
   const { head, middle, pinnedTail } = split
   const pinnedSystemRows = pinnedTail.filter(isAgreementLockedSystemParagraph)
@@ -248,10 +265,10 @@ export function FormEditorLeftPanel({
   if (middle.length < 1) return null
 
   return (
-    <div className="form-editor-left">
+    <div className={formEditorLeftClassName}>
       <PinnedFormCard
         paragraph={head}
-        paragraphs={paragraphs}
+        paragraphs={displayParagraphs}
         titleNumbering={titleNumbering}
         selectedCardId={selectedCardId}
         onSelectCard={onSelectCard}
@@ -283,7 +300,7 @@ export function FormEditorLeftPanel({
               <SortableMiddleFormCard
                 key={p.id}
                 paragraph={p}
-                paragraphs={paragraphs}
+                paragraphs={displayParagraphs}
                 titleNumbering={titleNumbering}
                 selectedCardId={selectedCardId}
                 onSelectCard={onSelectCard}
@@ -313,7 +330,7 @@ export function FormEditorLeftPanel({
           <PinnedFormCard
             key={p.id}
             paragraph={p}
-            paragraphs={paragraphs}
+            paragraphs={displayParagraphs}
             titleNumbering={titleNumbering}
             selectedCardId={selectedCardId}
             onSelectCard={onSelectCard}
@@ -339,7 +356,7 @@ export function FormEditorLeftPanel({
         <PinnedFormCard
           key={p.id}
           paragraph={p}
-          paragraphs={paragraphs}
+          paragraphs={displayParagraphs}
           titleNumbering={titleNumbering}
           selectedCardId={selectedCardId}
           onSelectCard={onSelectCard}

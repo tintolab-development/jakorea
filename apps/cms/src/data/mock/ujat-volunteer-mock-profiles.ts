@@ -13,7 +13,10 @@ import type {
   UjatVolunteerPreferredRegion,
   UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
+import {
+  findUjatEducationRegionKeyByLabel,
+  getUjatEducationRegionLabel,
+} from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
 import type {
@@ -35,6 +38,13 @@ export type UjatVolunteerMockProfileId =
   | 'jung-haeun'
   | 'han-jiwoo'
 
+export type UjatVolunteerMockPreviousUjatActivity = {
+  term: string
+  year: string
+  certificateFileName: string
+  certificateFileUrl?: string
+}
+
 export type UjatVolunteerMockProfile = {
   id: UjatVolunteerMockProfileId
   name: string
@@ -50,6 +60,7 @@ export type UjatVolunteerMockProfile = {
   universityName: string
   major: string
   applicationRoute: string
+  applicationRouteOther?: string
   hasEducationExperience: boolean
   applicationType: UjatVolunteerApplicationType
   essayIntro: string
@@ -70,6 +81,8 @@ export type UjatVolunteerMockProfile = {
   assignedInterviewTime?: string
   totalScore?: number | null
   interviewEvaluationRemark?: string
+  /** UJAT 수료자 봉사자 — 이전 활동 기수·수료증 */
+  previousUjatActivity?: UjatVolunteerMockPreviousUjatActivity
 }
 
 const PARK_TINTO_INTERVIEW_AVAILABILITY: UjatVolunteerMockInterviewAvailabilityDay[] = [
@@ -251,6 +264,11 @@ export const UJAT_VOLUNTEER_MOCK_PROFILES: readonly UjatVolunteerMockProfile[] =
     applicationRoute: '올콘',
     hasEducationExperience: true,
     applicationType: 'ujat-graduate',
+    previousUjatActivity: {
+      term: '30',
+      year: '2023',
+      certificateFileName: '최준호_UJAT 30기 수료증.jpg',
+    },
     essayIntro: '',
     essayEducationExperience: '',
     essayNecessity: '',
@@ -302,7 +320,10 @@ export const UJAT_VOLUNTEER_MOCK_PROFILES: readonly UjatVolunteerMockProfile[] =
     managerAEvaluation: 'neutral',
     managerBEvaluation: 'fail',
     interviewAssignmentStatus: 'withdrawn',
-    interviewAvailability: [],
+    interviewAvailability: [
+      { dateLabel: '26. 03. 18(화)', slots: ['10:00 ~ 10:30', '16:00 ~ 16:30'] },
+      { dateLabel: '26. 03. 21(금)', slots: ['09:00 ~ 09:30'] },
+    ],
   },
   {
     id: 'han-jiwoo',
@@ -319,6 +340,7 @@ export const UJAT_VOLUNTEER_MOCK_PROFILES: readonly UjatVolunteerMockProfile[] =
     universityName: '**대학교',
     major: '통계학과 전공',
     applicationRoute: '기타',
+    applicationRouteOther: 'JA Korea 홈페이지 검색',
     hasEducationExperience: true,
     applicationType: 'new',
     essayIntro:
@@ -336,7 +358,10 @@ export const UJAT_VOLUNTEER_MOCK_PROFILES: readonly UjatVolunteerMockProfile[] =
     managerAEvaluation: 'fail',
     managerBEvaluation: 'neutral',
     interviewAssignmentStatus: 'withdrawn',
-    interviewAvailability: [],
+    interviewAvailability: [
+      { dateLabel: '26. 03. 19(수)', slots: ['14:00 ~ 14:30', '15:00 ~ 15:30'] },
+      { dateLabel: '26. 03. 22(토)', slots: ['09:00 ~ 09:30', '11:00 ~ 11:30'] },
+    ],
   },
 ] as const
 
@@ -356,8 +381,8 @@ const preferredRegionPatches = new Map<
 function regionKeyFromPreferredRegionLabel(
   label: UjatVolunteerPreferredRegion
 ): UjatInstitutionApplicationRegionKey {
-  const found = UJAT_INSTITUTION_APPLICATION_REGIONS.find(r => r.label === label)
-  return found?.key ?? 'seoul'
+  const key = findUjatEducationRegionKeyByLabel(label)
+  return (key ?? 'seoul') as UjatInstitutionApplicationRegionKey
 }
 
 function resolveVolunteerMockProfile(profile: UjatVolunteerMockProfile): UjatVolunteerMockProfile {
@@ -395,9 +420,7 @@ export function getUjatVolunteerMockProfileByName(name: string): UjatVolunteerMo
 export function regionLabelForVolunteerProfile(
   regionKey: UjatInstitutionApplicationRegionKey
 ): UjatVolunteerPreferredRegion {
-  const label =
-    UJAT_INSTITUTION_APPLICATION_REGIONS.find(r => r.key === regionKey)?.label ?? '서울'
-  return label as UjatVolunteerPreferredRegion
+  return getUjatEducationRegionLabel(regionKey, '서울')
 }
 
 export function buildUjatVolunteerApplicantId(

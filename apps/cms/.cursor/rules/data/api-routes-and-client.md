@@ -31,6 +31,10 @@ category: data
 
 ## TanStack Query 키 (API와 연동)
 
+> 공통 캐시 정책(CMS+Platform): [backend-response-cache-policy.mdc](../../../../../.cursor/rules/backend-response-cache-policy.mdc)  
+> 워크플로: [tanstack-query-backend-cache/SKILL.md](../../../../../.cursor/skills/tanstack-query-backend-cache/SKILL.md)  
+> CMS 보완: [tanstack-query-cache.mdc](../libraries/tanstack-query-cache.mdc)
+
 - **팩토리 단일 출처:** `queryKey`는 문자열 배열을 페이지에 직접 흩뿌리지 말고, `cmsQueryKeys` 또는 `features/<도메인>/api/*-query-keys.ts`의 **함수**로만 조합. `@/shared/api`에서 `cmsQueryKeys` re-export.
 - **루트 접두:** 신규 키 트리는 `['cms', …]`로 시작해 대시보드 `dashboardQueryKeys` 등과 충돌·중복 탐색을 줄인다.
 - **리소스 정체성:** `queryKey`에 **캐시를 구분하는 입력만** 넣는다 (예: `programId`, 필터 해시). mock→실 전환 시 **같은 리소스면 같은 키**를 유지하고, `queryFn` 안에서만 `isRealApiModuleEnabled` / fetcher vs mock을 갈라 **키는 바꾸지 않는다** (데이터 형이 달라 캐시를 버려야 할 때만 버전 접미사 `v2` 등을 도입).

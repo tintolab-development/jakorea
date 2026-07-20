@@ -1,6 +1,8 @@
 /**
- * 도메인별 색상 Variation CSS 변수
- * 브랜드 컬러 기반 색상 시스템
+ * CMS 디자인 토큰 SSOT (`:root`)
+ * 브랜드·도메인 hex의 TS 미러: `@/shared/constants/colors` (brandColorsHex / domainColorsHex).
+ * Ant ConfigProvider: `theme-provider.tsx` 가 동일 hex를 참조.
+ * Platform·packages/ui와 무관 — CMS 앱 전용.
  * 메인 컬러: #01A1AF, 서브 컬러: #296075, #22404B
  */
 
@@ -101,10 +103,10 @@
   --color-filter-purple: #8c56b2;
   --color-filter-green: #4caf50;
 
-  /* 프로그램 관련 색상 variation (메인 컬러 사용) */
-  --color-program: #01a1af;
+  /* 프로그램 관련 색상 variation (브랜드 토큰 alias — 값 동일) */
+  --color-program: var(--color-brand-primary);
   --color-program-light: #e6f7f9;
-  --color-program-dark: #296075;
+  --color-program-dark: var(--color-brand-secondary-1);
 
   /* 학교 관련 색상 variation (밝은 청록) */
   --color-school: #13c2c2;
@@ -142,11 +144,11 @@
   --color-settlement-dark: #cf1322;
 
   /* 텍스트 색상 */
-  --color-text-heading: #22404b;
+  --color-text-heading: var(--color-brand-secondary-2);
   --color-text-body: #595959;
   --color-text-secondary: #8c8c8c;
-  --color-link: #01a1af;
-  --color-link-hover: #296075;
+  --color-link: var(--color-brand-primary);
+  --color-link-hover: var(--color-brand-secondary-1);
 
   /* 배경 색상 */
   --color-bg-base: #ffffff;
@@ -156,9 +158,10 @@
   --color-bg-accent-hover: #d4f1f4;
   --color-bg-hover: #f0f0f0;
 
-  --JA-mint-01: #01a1af;
-  --color-mint-01: var(--JA-mint-01, #01a1af);
-  --JA-mint-02: #296075;
+  /* JA mint aliases → brand (구 선택자 호환, 값 단일화) */
+  --JA-mint-01: var(--color-brand-primary);
+  --color-mint-01: var(--color-brand-primary);
+  --JA-mint-02: var(--color-brand-secondary-1);
 
   /* UI 컴포넌트 색상 */
   --color-ui-more-button: #3d3d3d;
@@ -172,7 +175,7 @@
   --color-input-placeholder: #85969d;
   --color-border-subtle: #d9d9d9;
   --color-border-skeleton: #e8e8e8;
-  --color-required-mark: #ff4d4f;
+  --color-required-mark: var(--color-settlement);
   --color-text-disabled: rgba(0, 0, 0, 0.25);
   --color-border-input-hover: rgba(0, 0, 0, 0.15);
   --color-border-input-strong: rgba(0, 0, 0, 0.25);
@@ -225,6 +228,7 @@
   /* 기본 색상 토큰 (Figma 디자인 시스템) */
   --default-BK: #3d3d3d;
   --default-WT: #ffffff;
+  --main-WT: var(--default-WT);
   /** 테이블·상세 폼 필드 라벨(th) 배경 */
   --BG-header: linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff;
 
@@ -257,15 +261,16 @@
   --radius-4: 4px;
   --radius-6: 6px;
   --radius-8: 8px;
+  --radius-12: 12px;
   --radius-16: 16px;
 
   /* 그림자 */
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.03);
   --shadow-card-selected: 0 1px 4px rgba(0, 0, 0, 0.08);
   --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --shadow-modal: 0 4px 20px rgba(0, 0, 0, 0.15);
+  --shadow-modal: 0 0 25px 0 rgba(0, 0, 0, 0.35);
   --shadow-drag-overlay: 0 10px 28px
-    color-mix(in srgb, var(--JA-mint-01, #01a1af) 22%, transparent);
+    color-mix(in srgb, var(--color-brand-primary) 22%, transparent);
   --color-bg-pending-light: #f8f2f3;
   --color-bg-answered-light: #e3f4f9;
   --color-bg-neutral: #f7f7f7;
@@ -283,7 +288,7 @@
   --color-tab-active: #4ad4cc;
 
   /* 모달·헤더 등 (기존 시안 유지) */
-  --color-modal-header: var(--JA-mint-01, #01a1af);
+  --color-modal-header: var(--color-brand-primary);
   --color-modal-header-hover: #3d9599;
   --color-focus-teal-ring: rgba(71, 169, 173, 0.2);
   --color-overlay-light: rgba(255, 255, 255, 0.2);
@@ -292,7 +297,7 @@
   --color-overlay-dark-06: rgba(0, 0, 0, 0.06);
   --spacing-30: 30px;
   --spacing-50: 50px;
-  --max-height-modal-scroll: 840px;
+  --max-height-modal-scroll: 880px;
 
   /* 모집 상태 배지 */
   --color-badge-recruiting-bg: #ebf5f9;
@@ -309,6 +314,23 @@
   --color-blue: #017eaf;
   --color-red: #c32f4a;
   --color-bg-green: linear-gradient(0deg, rgba(30, 140, 41, 0.06) 0%, rgba(30, 140, 41, 0.06) 100%), #fff;
+  --color-bg-red: linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%), #fff;
+  --main-BK: var(--default-BK);
+
+  /* 편집 가능 상태 배지 톤 (재직·권한·교재배송·서류평가) */
+  --editable-badge-blue-border: rgba(1, 126, 175, 0.1);
+  --editable-badge-blue-bg: #e6f2f7;
+  --editable-badge-blue-text: var(--color-blue);
+  --editable-badge-gray-border: rgba(61, 61, 61, 0.1);
+  --editable-badge-gray-bg: #f2f3f5;
+  --editable-badge-gray-text: var(--main-BK);
+  --editable-badge-green-border: rgba(30, 140, 41, 0.1);
+  --editable-badge-green-bg: #e9f3ea;
+  --editable-badge-green-text: var(--color-green);
+  --editable-badge-green-overlay-bg: var(--color-bg-green);
+  --editable-badge-red-border: rgba(195, 47, 74, 0.1);
+  --editable-badge-red-bg: var(--color-bg-red);
+  --editable-badge-red-text: var(--color-red);
 
   /**
    * 지급 조서 라인 처리 현황 · 동계열 UI
@@ -350,7 +372,7 @@
   --shadow-header: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   /* 작업 중 추가되는 색상 (추후 정리) */
-  --table-line: #e0e0e0;
+  --table-line: var(--color-border);
   --status-hover-bg:
     linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%), #fff;
 }

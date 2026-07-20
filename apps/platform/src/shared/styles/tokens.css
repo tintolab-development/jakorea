@@ -1,0 +1,46 @@
+@font-face {
+  font-family: 'Pretendard';
+  src: url('/fonts/PretendardVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Breakpoints (use in media queries; mobile is default) */
+  --bp-tablet: 768px;
+  --bp-desktop: 1024px;
+  --bp-wide: 1280px;
+
+  /* Layout */
+  --content-max-width: 1280px;
+  --content-shell-max-width: 1440px;
+  --content-outer-max-width: var(--content-shell-max-width);
+  --content-padding-block: var(--spacing-100);
+  --page-padding-x: 16px;
+  --page-padding-y: 24px;
+  --section-gap: 16px;
+
+  /* Typography */
+  --font-family-base: 'Pretendard', system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Noto Sans KR', sans-serif;
+  --font-size-body: 16px;
+  --font-size-small: 14px;
+  --line-height-body: 1.5;
+
+  /* Radius & shadow */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 6%);
+  --shadow-card-sm: 0 2px 10px 0 rgba(19, 59, 75, 0.03), 0 4px 27px 0 rgba(13, 35, 44, 0.05);
+  --shadow-card-lg: 0 0 9px 4px rgba(41, 96, 118, 0.02), 0 20px 42px 0 rgba(30, 71, 75, 0.05);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --page-padding-x: 32px;
+    --page-padding-y: 48px;
+    --section-gap: 24px;
+  }
+}

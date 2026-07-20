@@ -6,6 +6,10 @@ export {
   GeneralParticipatingInstitutionDetailView,
   type GeneralParticipatingInstitutionDetailViewProps,
   GENERAL_PARTICIPATING_INSTITUTION_DETAIL_TAB_KEYS,
-  normalizeGeneralParticipatingInstitutionDetailTab,
+  normalizeParticipatingInstitutionDetailTab as normalizeGeneralParticipatingInstitutionDetailTab,
   type GeneralParticipatingInstitutionDetailTabKey,
+  type SchoolDetailTabKey,
+  normalizeParticipatingInstitutionDetailTab,
 } from './school-detail-fullpage-view'
+
+export type { ParticipatingInstitutionDetailTabKey } from '../../../lib/participating-institution-detail-tabs'

@@ -1,6 +1,10 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
-import type { GeminiRecruitmentStatus } from '../../model/recruitment/types'
+import type {
+  GeminiRecruitmentDisplayStatus,
+  GeminiRecruitmentPeriodStatus,
+  GeminiRecruitmentRow,
+} from '../../model/recruitment/types'
 
 /** 사용자 페이지 게시 상태 — 종료 시 삭제 vs 종료 표기는 API·운영 정책 확정 후 연동 */
 export type GeminiRecruitmentUserPagePublicationState = 'unpublished' | 'published' | 'ended'
@@ -15,7 +19,7 @@ export function resolveRecruitmentStatus(
   applicationPeriodStart: string,
   applicationPeriodEnd: string,
   referenceDate: Dayjs | string = dayjs()
-): GeminiRecruitmentStatus {
+): GeminiRecruitmentPeriodStatus {
   const today = (typeof referenceDate === 'string' ? dayjs(referenceDate) : referenceDate).startOf(
     'day'
   )
@@ -35,9 +39,22 @@ export function resolveRecruitmentStatus(
   return 'IN_PROGRESS'
 }
 
+/** 목록·필터용 — 임시저장 행은 기간과 무관하게 DRAFT */
+export function resolveRecruitmentDisplayStatus(
+  row: Pick<GeminiRecruitmentRow, 'isDraft' | 'applicationPeriodStart' | 'applicationPeriodEnd'>,
+  referenceDate: Dayjs | string = dayjs()
+): GeminiRecruitmentDisplayStatus {
+  if (row.isDraft) return 'DRAFT'
+  return resolveRecruitmentStatus(
+    row.applicationPeriodStart,
+    row.applicationPeriodEnd,
+    referenceDate
+  )
+}
+
 /** UJAT 프로그램 상세 — `StatusBadge domain="programEnrollment" variant="text"` 와 동일 토큰 */
 export function geminiRecruitmentStatusToEnrollmentDisplay(
-  status: GeminiRecruitmentStatus
+  status: GeminiRecruitmentPeriodStatus
 ): ProgramEnrollmentDisplayStatus {
   switch (status) {
     case 'SCHEDULED':
@@ -51,9 +68,22 @@ export function geminiRecruitmentStatusToEnrollmentDisplay(
 
 /** CMS 목록 상태에 대응하는 사용자 페이지 게시 상태(mock·파생용) */
 export function resolveRecruitmentUserPagePublicationState(
-  status: GeminiRecruitmentStatus
+  status: GeminiRecruitmentPeriodStatus
 ): GeminiRecruitmentUserPagePublicationState {
   if (status === 'IN_PROGRESS') return 'published'
   if (status === 'ENDED') return 'ended'
   return 'unpublished'
+}
+
+export function resolveRecruitmentUserPagePublicationLabel(
+  state: GeminiRecruitmentUserPagePublicationState
+): string {
+  switch (state) {
+    case 'published':
+      return '게시 중'
+    case 'ended':
+      return '종료'
+    case 'unpublished':
+      return '미게시'
+  }
 }

@@ -4,6 +4,8 @@ export type CmsAlertModalShowOptions = {
   width?: number
   confirmLabel?: string
   zIndex?: number
+  /** 확인 버튼 클릭 시 (모달 닫기 전에 호출) */
+  onConfirm?: () => void
 }
 
 type CmsAlertModalListener = {

@@ -84,6 +84,10 @@ export type SponsorProgramHistoryPanelProps = UseProgramHistoryFilterReturn & {
   columns: ColumnsType<SponsorProgramHistoryRow>
   canWrite: boolean
   onRemoveProgramHistories: (ids: string[]) => void
+  /** 실 API 모드 — 삭제 API 없음 */
+  deleteDisabled?: boolean
+  totalCount?: number
+  loading?: boolean
 }
 
 /**
@@ -99,6 +103,9 @@ export function SponsorProgramHistoryPanel({
   columns,
   canWrite,
   onRemoveProgramHistories,
+  deleteDisabled = false,
+  totalCount,
+  loading = false,
 }: SponsorProgramHistoryPanelProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteBlockedModalOpen, setDeleteBlockedModalOpen] = useState(false)
@@ -125,9 +132,9 @@ export function SponsorProgramHistoryPanel({
   }, [canWrite, selectedKeys, setSelectedKeys])
 
   const handleDeleteProgramHistory = useCallback((): void => {
-    if (!canWrite || selectedKeys.length === 0) return
+    if (!canWrite || selectedKeys.length === 0 || deleteDisabled) return
     setDeleteModalOpen(true)
-  }, [canWrite, selectedKeys.length])
+  }, [canWrite, deleteDisabled, selectedKeys.length])
 
   const handleDeleteCancel = useCallback((): void => {
     setDeleteModalOpen(false)
@@ -191,22 +198,28 @@ export function SponsorProgramHistoryPanel({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="프로그램 진행 이력"
-        description={`총 ${filteredRows.length.toLocaleString()}건`}
+        description={`총 ${(totalCount ?? filteredRows.length).toLocaleString()}건`}
         actions={
           <CmsButton
             variant="delete"
             onClick={handleDeleteProgramHistory}
-            disabled={!canWrite || selectedKeys.length === 0}
+            disabled={!canWrite || selectedKeys.length === 0 || deleteDisabled}
+            title={deleteDisabled ? '실 API 연동 시 프로그램 진행 이력 삭제는 지원되지 않습니다.' : undefined}
           >
             이력 삭제
           </CmsButton>
         }
+        excelExport={{
+          columns,
+          data: filteredRows,
+        }}
       >
         <Table<SponsorProgramHistoryRow>
           rowKey="id"
           className="cms-data-table"
           columns={columns}
           dataSource={filteredRows}
+          loading={loading}
           pagination={false}
           scroll={{ x: 'max-content' }}
           rowSelection={rowSelection}

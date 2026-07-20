@@ -9,7 +9,6 @@ import { updateGeneralIndividualApplicantTeamRole } from '@/data/mock/general-in
 import { assignmentTeamRoleTagClassName } from '@/features/program/general/lib/assignment-team-role-tag'
 import { ASSIGNMENT_TEAM_ROLE_LABELS } from '@/features/program/general/model/school-detail-types'
 import '@/features/program/general/ui/assignment-submission-modal.css'
-import './individual-basic-info.css'
 
 export type GeneralIndividualTeamRoleKey = NonNullable<GeneralIndividualApplicantDetail['teamRole']>
 
@@ -34,25 +33,23 @@ export function GeneralIndividualTeamRoleDropdown({
   }
 
   return (
-    <div className="individual-basic-info__team-role-cell">
-      <StatusDropdownCell<GeneralIndividualTeamRoleKey>
-        status={role}
-        statusOptions={TEAM_ROLE_OPTIONS}
-        renderBadge={r => (
-          <span className={assignmentTeamRoleTagClassName(r)}>
-            {ASSIGNMENT_TEAM_ROLE_LABELS[r]}
-          </span>
-        )}
-        isItemDisabled={(cur, opt) => cur === opt}
-        onChange={newRole => {
-          setRole(newRole)
-          updateGeneralIndividualApplicantTeamRole(applicantId, newRole)
-        }}
-        isOpen={isOpen}
-        onOpenChange={setIsOpen}
-        emptyPlaceholder="-"
-        tagLayout="tag132"
-      />
-    </div>
+    <StatusDropdownCell<GeneralIndividualTeamRoleKey>
+      status={role}
+      statusOptions={TEAM_ROLE_OPTIONS}
+      renderBadge={r => (
+        <span className={assignmentTeamRoleTagClassName(r)}>
+          {ASSIGNMENT_TEAM_ROLE_LABELS[r]}
+        </span>
+      )}
+      isItemDisabled={(cur, opt) => cur === opt}
+      onChange={newRole => {
+        setRole(newRole)
+        updateGeneralIndividualApplicantTeamRole(applicantId, newRole)
+      }}
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      emptyPlaceholder="-"
+      style={{ width: 132, minWidth: 132, maxWidth: 132 }}
+    />
   )
 }

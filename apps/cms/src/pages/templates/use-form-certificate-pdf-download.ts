@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import { generatePdfBlobFromHtmlElement } from '@/shared/utils/certificate-pdf-generator'
 import { downloadBlob } from '@/shared/utils/file-download'
+import { waitForCertificatePreviewCaptureReady } from './wait-for-certificate-preview-capture-ready'
 
 export interface UseFormCertificatePdfDownloadOptions {
   /** html2canvas 대상 — 흰색 캔버스 노드만 넘기면 회색 바깥 래퍼는 PDF에 포함되지 않음 */
@@ -31,12 +32,10 @@ export function useFormCertificatePdfDownload({
     isGeneratingRef.current = true
     setIsDownloading(true)
     try {
-      await new Promise<void>(resolve => {
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-      })
+      await waitForCertificatePreviewCaptureReady(el)
       const blob = await generatePdfBlobFromHtmlElement(el)
       downloadBlob(blob, buildFilename())
-      } catch (error) {
+    } catch (error) {
       console.debug('formCertificatePdfDownload failed', error)
     } finally {
       isGeneratingRef.current = false

@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
+import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
+import type { GeminiRecruitmentEducationForm } from '../lib/recruitment/add-form-options'
 import {
+  createDefaultGeminiRecruitmentAddFormSnapshot,
   loadGeminiRecruitmentAddDraft,
+  normalizeGeminiRecruitmentAddFormSnapshot,
   type GeminiRecruitmentAddFormSnapshot,
 } from '../lib/recruitment/add-local-save'
 
@@ -34,9 +38,12 @@ function periodToIso(dates: [Dayjs | null, Dayjs | null] | null): {
   }
 }
 
-function applySnapshot(snapshot: GeminiRecruitmentAddFormSnapshot) {
+function snapshotToFormState(snapshot: GeminiRecruitmentAddFormSnapshot) {
   return {
-    title: snapshot.title ?? '',
+    title: snapshot.title,
+    announcementPublished: snapshot.announcementPublished,
+    educationTargetLevels: snapshot.educationTargetLevels,
+    educationTargetDetail: snapshot.educationTargetDetail,
     applicationPeriod: toPeriodTuple(
       snapshot.applicationPeriodStart,
       snapshot.applicationPeriodEnd
@@ -49,13 +56,35 @@ function applySnapshot(snapshot: GeminiRecruitmentAddFormSnapshot) {
       typeof snapshot.minStudentCount === 'number' && Number.isFinite(snapshot.minStudentCount)
         ? snapshot.minStudentCount
         : undefined,
-    trainingContentMarkdown: snapshot.trainingContentMarkdown ?? '',
+    educationForm: snapshot.educationForm,
+    inquiryContactName: snapshot.inquiryContactName,
+    inquiryTel: snapshot.inquiryTel,
+    inquiryEmail: snapshot.inquiryEmail,
+    notesNotApplicable: snapshot.notesNotApplicable,
+    notes: snapshot.notes,
+    thumbnailFileName: snapshot.thumbnailFileName,
+    programDescription: snapshot.programDescription,
+    recruitmentGuide: snapshot.recruitmentGuide,
+    applicationMethod: snapshot.applicationMethod,
+    learningSupportContent: snapshot.learningSupportContent,
+    additionalContentMarkdown: snapshot.additionalContentMarkdown,
+    attachmentFileNames: snapshot.attachmentFileNames,
+    institutionSectionDescription: snapshot.institutionSectionDescription,
+    detailSectionDescription: snapshot.detailSectionDescription,
   }
+}
+
+function isPeriodComplete(dates: [Dayjs | null, Dayjs | null] | null): boolean {
+  return dates?.[0] != null && dates[1] != null
 }
 
 export function useGeminiRecruitmentAddForm(open: boolean) {
   const [hydrated, setHydrated] = useState(false)
   const [title, setTitle] = useState('')
+  const [announcementPublished, setAnnouncementPublished] =
+    useState<ParticipantRecruitmentAnnouncementPublishedValue>('published')
+  const [educationTargetLevels, setEducationTargetLevels] = useState<string[]>([])
+  const [educationTargetDetail, setEducationTargetDetail] = useState('')
   const [applicationPeriod, setApplicationPeriod] = useState<[Dayjs | null, Dayjs | null] | null>(
     null
   )
@@ -63,7 +92,50 @@ export function useGeminiRecruitmentAddForm(open: boolean) {
     [Dayjs | null, Dayjs | null] | null
   >(null)
   const [minStudentCount, setMinStudentCount] = useState<number | undefined>(undefined)
-  const [trainingContentMarkdown, setTrainingContentMarkdown] = useState('')
+  const [educationForm, setEducationForm] = useState<GeminiRecruitmentEducationForm>('online')
+  const [inquiryContactName, setInquiryContactName] = useState('')
+  const [inquiryTel, setInquiryTel] = useState('')
+  const [inquiryEmail, setInquiryEmail] = useState('')
+  const [notesNotApplicable, setNotesNotApplicable] = useState(false)
+  const [notes, setNotes] = useState('')
+  const [thumbnailFileName, setThumbnailFileName] = useState<string | null>(null)
+  const [programDescription, setProgramDescription] = useState('')
+  const [recruitmentGuide, setRecruitmentGuide] = useState('')
+  const [applicationMethod, setApplicationMethod] = useState('')
+  const [learningSupportContent, setLearningSupportContent] = useState('')
+  const [additionalContentMarkdown, setAdditionalContentMarkdown] = useState('')
+  const [attachmentFileNames, setAttachmentFileNames] = useState<string[]>([])
+  const [institutionSectionDescription, setInstitutionSectionDescription] = useState('')
+  const [detailSectionDescription, setDetailSectionDescription] = useState('')
+
+  const baselineRef = useRef<string>('')
+
+  const applyFormState = useCallback((snapshot: GeminiRecruitmentAddFormSnapshot) => {
+    const next = snapshotToFormState(snapshot)
+    setTitle(next.title)
+    setAnnouncementPublished(next.announcementPublished)
+    setEducationTargetLevels(next.educationTargetLevels)
+    setEducationTargetDetail(next.educationTargetDetail)
+    setApplicationPeriod(next.applicationPeriod)
+    setTrainingRequestPeriod(next.trainingRequestPeriod)
+    setMinStudentCount(next.minStudentCount)
+    setEducationForm(next.educationForm)
+    setInquiryContactName(next.inquiryContactName)
+    setInquiryTel(next.inquiryTel)
+    setInquiryEmail(next.inquiryEmail)
+    setNotesNotApplicable(next.notesNotApplicable)
+    setNotes(next.notes)
+    setThumbnailFileName(next.thumbnailFileName)
+    setProgramDescription(next.programDescription)
+    setRecruitmentGuide(next.recruitmentGuide)
+    setApplicationMethod(next.applicationMethod)
+    setLearningSupportContent(next.learningSupportContent)
+    setAdditionalContentMarkdown(next.additionalContentMarkdown)
+    setAttachmentFileNames(next.attachmentFileNames)
+    setInstitutionSectionDescription(next.institutionSectionDescription)
+    setDetailSectionDescription(next.detailSectionDescription)
+    baselineRef.current = JSON.stringify(normalizeGeminiRecruitmentAddFormSnapshot(snapshot))
+  }, [])
 
   useEffect(() => {
     if (!open) {
@@ -73,29 +145,20 @@ export function useGeminiRecruitmentAddForm(open: boolean) {
 
     const saved = loadGeminiRecruitmentAddDraft()
     if (saved?.form) {
-      const next = applySnapshot(saved.form)
-      setTitle(next.title)
-      setApplicationPeriod(next.applicationPeriod)
-      setTrainingRequestPeriod(next.trainingRequestPeriod)
-      setMinStudentCount(next.minStudentCount)
-      setTrainingContentMarkdown(next.trainingContentMarkdown)
+      applyFormState(saved.form)
     } else {
-      setTitle('')
-      setApplicationPeriod(null)
-      setTrainingRequestPeriod(null)
-      setMinStudentCount(undefined)
-      setTrainingContentMarkdown('')
+      applyFormState(createDefaultGeminiRecruitmentAddFormSnapshot())
     }
     setHydrated(true)
-  }, [open])
+  }, [applyFormState, open])
 
   const editorOpen = open && hydrated
   const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
     editorOpen,
-    trainingContentMarkdown,
+    additionalContentMarkdown,
     `${WYSIWYG_RESET_KEY}-${hydrated ? 'ready' : 'pending'}`,
     {
-      placeholder: '모집 내용을 입력해 주세요. (ex. 연수 모집 절차, 연수 내용 등)',
+      placeholder: '내용을 작성하세요',
     }
   )
 
@@ -107,35 +170,134 @@ export function useGeminiRecruitmentAddForm(open: boolean) {
   const buildSaveSnapshot = useCallback((): GeminiRecruitmentAddFormSnapshot => {
     const application = periodToIso(applicationPeriod)
     const trainingRequest = periodToIso(trainingRequestPeriod)
-    return {
+    return normalizeGeminiRecruitmentAddFormSnapshot({
       title,
+      announcementPublished,
+      educationTargetLevels,
+      educationTargetDetail,
       applicationPeriodStart: application.start,
       applicationPeriodEnd: application.end,
       trainingRequestPeriodStart: trainingRequest.start,
       trainingRequestPeriodEnd: trainingRequest.end,
       minStudentCount: minStudentCount ?? null,
-      trainingContentMarkdown: getMarkdown(),
-    }
+      educationForm,
+      inquiryContactName,
+      inquiryTel,
+      inquiryEmail,
+      notesNotApplicable,
+      notes,
+      thumbnailFileName,
+      programDescription,
+      recruitmentGuide,
+      applicationMethod,
+      learningSupportContent,
+      additionalContentMarkdown: getMarkdown(),
+      attachmentFileNames,
+      institutionSectionDescription,
+      detailSectionDescription,
+    })
+  }, [
+    announcementPublished,
+    applicationMethod,
+    applicationPeriod,
+    attachmentFileNames,
+    educationForm,
+    educationTargetDetail,
+    educationTargetLevels,
+    getMarkdown,
+    inquiryContactName,
+    inquiryEmail,
+    inquiryTel,
+    learningSupportContent,
+    minStudentCount,
+    notes,
+    notesNotApplicable,
+    programDescription,
+    recruitmentGuide,
+    institutionSectionDescription,
+    detailSectionDescription,
+    thumbnailFileName,
+    title,
+    trainingRequestPeriod,
+  ])
+
+  const isDirty = useMemo(() => {
+    if (!hydrated) return false
+    return JSON.stringify(buildSaveSnapshot()) !== baselineRef.current
+  }, [buildSaveSnapshot, hydrated])
+
+  const isRegisterReady = useMemo(() => {
+    if (!hydrated) return false
+    const count = minStudentCount ?? 0
+    return (
+      title.trim().length > 0 &&
+      isPeriodComplete(applicationPeriod) &&
+      isPeriodComplete(trainingRequestPeriod) &&
+      count >= 1 &&
+      (educationForm === 'online' || educationForm === 'offline')
+    )
   }, [
     applicationPeriod,
-    getMarkdown,
+    educationForm,
+    hydrated,
     minStudentCount,
     title,
     trainingRequestPeriod,
   ])
 
+  const markSavedBaseline = useCallback(() => {
+    baselineRef.current = JSON.stringify(buildSaveSnapshot())
+  }, [buildSaveSnapshot])
+
   return {
     hydrated,
     title,
     setTitle,
+    announcementPublished,
+    setAnnouncementPublished,
+    educationTargetLevels,
+    setEducationTargetLevels,
+    educationTargetDetail,
+    setEducationTargetDetail,
     applicationPeriod,
     setApplicationPeriod,
     trainingRequestPeriod,
     setTrainingRequestPeriod,
     minStudentCount,
     handleMinStudentCountChange,
+    educationForm,
+    setEducationForm,
+    inquiryContactName,
+    setInquiryContactName,
+    inquiryTel,
+    setInquiryTel,
+    inquiryEmail,
+    setInquiryEmail,
+    notesNotApplicable,
+    setNotesNotApplicable,
+    notes,
+    setNotes,
+    thumbnailFileName,
+    setThumbnailFileName,
+    programDescription,
+    setProgramDescription,
+    recruitmentGuide,
+    setRecruitmentGuide,
+    applicationMethod,
+    setApplicationMethod,
+    learningSupportContent,
+    setLearningSupportContent,
+    attachmentFileNames,
+    setAttachmentFileNames,
+    institutionSectionDescription,
+    setInstitutionSectionDescription,
+    detailSectionDescription,
+    setDetailSectionDescription,
     editor,
     editorMinHeight,
     buildSaveSnapshot,
+    isDirty,
+    isRegisterReady,
+    markSavedBaseline,
   }
 }

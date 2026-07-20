@@ -9,7 +9,10 @@
  */
 
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { recordBackendErrorForE2e } from '@/features/e2e-error-log/lib/record-from-axios-error'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
+import { adminAuthPaths } from '@/shared/config/api-paths'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import axios, {
   type AxiosError,
   type AxiosRequestHeaders,
@@ -45,8 +48,11 @@ type RetryableRequest = InternalAxiosRequestConfig & {
 
 export { getApiBaseUrl, isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
-/** 기본 `/api/auth/refresh`; 덮어쓰려면 `VITE_AUTH_REFRESH_PATH` */
+/** adminAuth 실 API 사용 시 `/api/admin/auth/refresh`; 그 외 `VITE_AUTH_REFRESH_PATH` 또는 `/api/auth/refresh` */
 function getRefreshPath(): string {
+  if (isRealApiModuleEnabled('adminAuth')) {
+    return adminAuthPaths.refresh()
+  }
   const fromEnv = import.meta.env.VITE_AUTH_REFRESH_PATH?.trim()
   const path = fromEnv || '/api/auth/refresh'
   return path.startsWith('/') ? path : `/${path}`
@@ -118,12 +124,38 @@ function parseAccessTokenFromRefreshBody(payload: unknown): string | null {
   }
   if (payload && typeof payload === 'object') {
     const o = payload as Record<string, unknown>
-    for (const key of ['accessToken', 'token', 'data'] as const) {
+    if (o.success === true && o.data && typeof o.data === 'object') {
+      return parseAccessTokenFromRefreshBody(o.data)
+    }
+    for (const key of ['accessToken', 'token'] as const) {
       const v = o[key]
       if (typeof v === 'string' && v.length > 0) return v
     }
   }
   return null
+}
+
+function parseRefreshTokenFromRefreshBody(payload: unknown): string | null {
+  if (payload && typeof payload === 'object') {
+    const o = payload as Record<string, unknown>
+    if (o.success === true && o.data && typeof o.data === 'object') {
+      return parseRefreshTokenFromRefreshBody(o.data)
+    }
+    const v = o.refreshToken
+    if (typeof v === 'string' && v.length > 0) return v
+  }
+  return null
+}
+
+function parseExpiresInFromRefreshBody(payload: unknown): number | undefined {
+  if (payload && typeof payload === 'object') {
+    const o = payload as Record<string, unknown>
+    if (o.success === true && o.data && typeof o.data === 'object') {
+      return parseExpiresInFromRefreshBody(o.data)
+    }
+    if (typeof o.expiresInSeconds === 'number') return o.expiresInSeconds
+  }
+  return undefined
 }
 
 function handleAuthFailure() {
@@ -155,6 +187,9 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   response => response,
   async (error: AxiosError<TErrorResponse>) => {
+    // E2E/로컬: 백엔드 실패 상황·에러 코드를 Mock 로그에 기록 (/e2e-error-log)
+    recordBackendErrorForE2e(error)
+
     const { response, config } = error
 
     if (!response || !config) {
@@ -207,12 +242,23 @@ axiosClient.interceptors.response.use(
     try {
       const res = await postAuthenticationRefreshToken(refreshToken)
       const newAccessToken = parseAccessTokenFromRefreshBody(res.data)
+      const newRefreshToken = parseRefreshTokenFromRefreshBody(res.data)
+      const expiresInSeconds = parseExpiresInFromRefreshBody(res.data)
 
       if (!newAccessToken) {
         throw new Error('Invalid refresh response: missing access token')
       }
 
-      persistAccessToken(newAccessToken)
+      const expiresAtIso =
+        expiresInSeconds && expiresInSeconds > 0
+          ? new Date(Date.now() + expiresInSeconds * 1000).toISOString()
+          : undefined
+
+      persistAccessToken(newAccessToken, expiresAtIso)
+
+      if (newRefreshToken && typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, newRefreshToken)
+      }
       processQueue(newAccessToken)
       isRefreshing = false
 

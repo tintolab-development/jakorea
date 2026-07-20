@@ -6,6 +6,7 @@
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import type { TextbookStatusKey } from '@/data/mock/participating-schools'
 import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import type { StudentPortraitConsentSubmission } from '../lib/student-portrait-consent'
 
 export type InstructorRoleKey = 'lead' | 'assistant'
 
@@ -81,6 +82,14 @@ export interface SchoolDetailForModal {
   programProgressLabel?: string
   /** 프로그램 진행 현황(7단계) — `ProgramEnrollmentStatusText`용 */
   programProgressStatus?: ProgramEnrollmentDisplayStatus
+  /** 활동 포기 처리 여부 */
+  activityWithdrawn?: boolean
+  /** 활동 포기 기준 교육 일정 키 (`buildParticipatingSchoolSessionKey`) */
+  activityWithdrawStopSessionKey?: string
+  /** 활동 포기 기준 교육 일정 표시 라벨 */
+  activityWithdrawStopScheduleLabel?: string
+  /** 프로그램 참여 신청일 — 수료증/참여인증서 발급 가능 기한(3년) 산정 기준 */
+  participationAppliedAt?: string
   instructors: SchoolDetailInstructorRow[]
 }
 
@@ -105,6 +114,10 @@ export interface SchoolDetailStudentRow {
   email?: string
   /** 강의 출석: "출석수/총회차" (예: "0/4") */
   lectureAttendance?: string
+  /** 교사 제출 초상권 동의서 (`agreement-portrait` 연동) */
+  portraitConsentSubmission?: StudentPortraitConsentSubmission | null
+  /** 학생 만족도조사 제출 완료 여부 (프로그램에 만족도 조사가 있을 때 수료 판별에 사용) */
+  satisfactionSurveyCompleted?: boolean
   /** 과제 제출 내역 있음 여부 */
   hasAssignmentSubmission?: boolean
   notes?: string
@@ -120,6 +133,7 @@ export interface StudentListFormStudent {
   gradeClass: string
   contact: string
   email: string
+  notes: string
   lectureAttendance?: string
 }
 
@@ -146,7 +160,7 @@ export const INSTRUCTOR_ROLE_LABELS: Record<InstructorRoleKey, string> = {
 }
 
 /** 강의 출석 내역 모달: 회차별 출석 상태 (명세: docs/design/lecture-attendance-modal-spec.md) */
-export type LectureAttendanceStatusKey = 'attended' | 'absent' | 'not_held'
+export type LectureAttendanceStatusKey = 'attended' | 'absent' | 'late' | 'not_held'
 
 export interface LectureAttendanceSession {
   roundNumber: number
@@ -160,8 +174,9 @@ export interface LectureAttendanceDetail {
 }
 
 export const LECTURE_ATTENDANCE_STATUS_LABELS: Record<LectureAttendanceStatusKey, string> = {
-  attended: '출석 완료',
+  attended: '출석',
   absent: '결석',
+  late: '지각',
   not_held: '강의 미진행',
 }
 
@@ -225,4 +240,56 @@ export const ASSIGNMENT_SUBMISSION_ROW_STATUS_LABELS: Record<
   not_submitted: '미제출',
   scheduled: '진행 예정',
   none: '-',
+}
+
+/** 학교 상세 > 출석 관리 탭 — 회차별 출결 상태 */
+export type SchoolSessionAttendanceStatusKey = 'present' | 'absent' | 'late'
+
+export const SCHOOL_SESSION_ATTENDANCE_STATUS_LABELS: Record<
+  SchoolSessionAttendanceStatusKey,
+  string
+> = {
+  present: '출석',
+  absent: '결석',
+  late: '지각',
+}
+
+export const SCHOOL_ATTENDANCE_FILTER_ALL = 'all'
+
+export interface SchoolDetailAttendanceFilters {
+  educationSchedule: string
+  studentName: string
+  studentGender: string
+  studentClass: string
+  attendanceStatus: string
+}
+
+export interface SchoolDetailAttendanceStudentRow {
+  id: string
+  no: number
+  name: string
+  gender?: StudentGenderKey
+  birthDate?: string
+  gradeClass: string
+  contact?: string
+  email?: string
+  status: SchoolSessionAttendanceStatusKey
+}
+
+export interface SchoolDetailAttendanceSessionGroup {
+  id: string
+  round: number
+  /** 필터 Select value (ISO date 또는 session id) */
+  filterValue: string
+  /** 회차/일정 선행 라벨 (커리큘럼: 1회차·1차시, 일정형: 일정명) */
+  sessionLeadLabel: string
+  /** 회차 헤더 — table-title (예: 1회차 : 2026. 01. 09(금)) */
+  headerTitle: string
+  /** 회차 헤더 — 16px 메타 앞段 (예: 2시간 (대면)) */
+  headerScheduleSummary: string
+  /** 회차 헤더 — 16px 메타 뒷段 (예: 1교시 … ~ 2교시 …) */
+  headerPeriodRangeLabel: string
+  /** 엑셀·전체 문자열 (예: 1회차 : … 2시간 (대면) | 1교시 …) */
+  headerPrefix: string
+  students: SchoolDetailAttendanceStudentRow[]
 }

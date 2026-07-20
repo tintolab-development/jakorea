@@ -12,12 +12,9 @@
   align-items: center !important;
 }
 
-/* 후원 상태(StatusDropdownCell) 트리거의 고정 패딩/높이가 행 높이를 밀지 않도록 동일 높이로 맞춤 */
+/* 후원 상태(tag100): 57px 필드 행 안에서 트리거·배지 수직 중앙 */
 .sponsor-detail-basic-info__status-row
   .detail-info-form__field-content
-  .status-dropdown-cell__status-trigger {
-  min-height: 57px !important;
-  height: 57px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
+  .status-dropdown-cell__status-trigger--tag-100 {
+  vertical-align: middle;
 }

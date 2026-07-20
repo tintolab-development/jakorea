@@ -2,26 +2,6 @@
  * 프로그램 리스트 스타일
  */
 
-/* 캘린더 날짜 셀에 보더 추가 - 구분 명확화 (정산 캘린더 참고) */
-.ant-picker-calendar-date {
-  border: 1px solid var(--color-border-light);
-}
-
-/* 호버 시 보더 강조 */
-.ant-picker-calendar-date:hover {
-  border-color: var(--color-border-input);
-}
-
-/* 선택된 날짜 보더 강조 */
-.ant-picker-calendar-date-selected {
-  border-color: var(--color-input-focus);
-}
-
-/* 오늘 날짜 보더 강조 */
-.ant-picker-calendar-date-today {
-  border-color: var(--color-brand-primary);
-}
-
 /* 뷰 전환 탭 스타일 (정산 캘린더 참고) */
 .program-view-toggle {
   display: inline-flex;
@@ -71,42 +51,6 @@
   background: var(--color-bg-base);
   box-shadow: var(--shadow-brand-active);
 }
-.program-list-calendar-view-container {
-  width: 100%;
-}
-
-/* 월간: 중앙 메인 캘린더 카드 하단 32px */
-.program-list-calendar-view-container:not(:has(.calendar-week--time-grid))
-  .calendar-main-container
-  .calendar-main {
-  margin-bottom: var(--spacing-32);
-}
-
-/*
- * 주간(시간 격자): 24시간 격자 전체 높이를 카드·페이지에 펼침(내부 스크롤 없음).
- * 우측 743px 고정 높이 해제.
- */
-.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-set {
-  min-height: 0;
-}
-
-.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-sub-right-list {
-  height: auto;
-  max-height: none;
-}
-
-.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-main-container .calendar-main {
-  margin-bottom: 0;
-  padding-bottom: var(--spacing-32);
-  box-sizing: border-box;
-  overflow: visible;
-}
-
-.program-list-calendar-view-container:has(.calendar-week--time-grid) .calendar-week-time-grid__scroll {
-  min-height: var(--calendar-week-total-px, 1296px);
-  max-height: none;
-  overflow: visible;
-}
 
 /* 필터 + tableButtonSection + 테이블 공통 배경 컨테이너 */
 .program-list-content-wrapper {
@@ -117,147 +61,9 @@
   box-shadow: 0 0 16px 0 var(--shadow-card-soft);
 }
 
-.program-list-content-wrapper .unified-filter-card {
+.program-list-content-wrapper .filter-table-layout,
+.program-list-content-wrapper .table-filter-group {
   margin-bottom: var(--spacing-16);
-}
-
-/* 프로그램 목록(4탭 위젯): 필터~디바이더 (카드 인라인 marginBottom 제거해 과한 간격 방지) */
-.program-list-content-wrapper--program-list-overview.filter-list-layout .unified-filter-card {
-  margin-bottom: 0 !important;
-}
-
-/*
- * 예정 프로그램 필터 4열(프로그램명·유형·대상·사업 운영 기간):
- * 필드 간 margin 12px × 3 을 제외한 나머지를 동일 flex로 분배.
- * DatePicker/Select 전역 min-width가 한 칸만 넓어 보이는 현상 방지.
- */
-.program-list-content-wrapper--program-list-scheduled-filters
-  .unified-filter-card__fields-inner.ant-row
-  > .ant-col.unified-filter-card__col--explicit-width,
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner.ant-row
-  > .ant-col.table-filter-group__col--pct-width {
-  flex: 1 1 0 !important;
-  min-width: 0 !important;
-  max-width: none !important;
-}
-
-.program-list-content-wrapper--program-list-scheduled-filters
-  .unified-filter-card__fields-inner
-  > .ant-col
-  .unified-filter-card__field,
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner
-  > .ant-col
-  .unified-filter-card__field {
-  min-width: 0;
-  width: 100%;
-  max-width: 100%;
-}
-
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner
-  > .ant-col.table-filter-group__col--pct-width
-  .unified-filter-card__field,
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner
-  > .ant-col.table-filter-group__col--pct-width
-  .unified-filter-card__field--select,
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner
-  > .ant-col.table-filter-group__col--pct-width
-  .labeled-search-input,
-.program-list-content-wrapper--program-list-scheduled-filters
-  .unified-filter-card__fields-inner
-  .labeled-search-input,
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner
-  > .ant-col.table-filter-group__col--pct-width
-  .labeled-search-input__input,
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner
-  > .ant-col.table-filter-group__col--pct-width
-  .labeled-search-input
-  .cms-input,
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner
-  > .ant-col.table-filter-group__col--pct-width
-  .labeled-search-input
-  .ant-input-affix-wrapper,
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner
-  > .ant-col.table-filter-group__col--pct-width
-  .cms-select,
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner
-  > .ant-col.table-filter-group__col--pct-width
-  .ant-select,
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner
-  > .ant-col.table-filter-group__col--pct-width
-  .cms-datepicker,
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner
-  > .ant-col.table-filter-group__col--pct-width
-  .cms-datepicker.cms-datepicker--range-split,
-.program-list-content-wrapper--program-list-scheduled-filters
-  .unified-filter-card__fields-inner
-  .labeled-search-input__input,
-.program-list-content-wrapper--program-list-scheduled-filters
-  .unified-filter-card__fields-inner
-  .labeled-search-input
-  .cms-input,
-.program-list-content-wrapper--program-list-scheduled-filters
-  .unified-filter-card__fields-inner
-  .cms-select,
-.program-list-content-wrapper--program-list-scheduled-filters
-  .unified-filter-card__fields-inner
-  .ant-select,
-.program-list-content-wrapper--program-list-scheduled-filters
-  .unified-filter-card__fields-inner
-  .app-datepicker,
-.program-list-content-wrapper--program-list-scheduled-filters
-  .unified-filter-card__fields-inner
-  .app-datepicker
-  > .ant-picker-range,
-.program-list-content-wrapper--program-list-scheduled-filters
-  .unified-filter-card__fields-inner
-  .ant-picker-range,
-.program-list-content-wrapper--program-list-scheduled-filters
-  .unified-filter-card__fields-inner
-  .app-datepicker.app-datepicker--range-split {
-  min-width: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box;
-}
-
-.program-list-content-wrapper--program-list-scheduled-filters
-  .unified-filter-card__fields-inner
-  .app-datepicker--range-split
-  .app-datepicker__segment,
-.program-list-page--overview.program-list-page--scheduled-filters
-  .filter-table-layout__filter
-  .table-filter-group__fields-inner
-  > .ant-col.table-filter-group__col--pct-width
-  .cms-datepicker--range-split
-  .cms-datepicker__segment {
-  flex: 1 1 0 !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  width: auto;
 }
 
 .program-list-content-wrapper--program-list-overview
@@ -751,36 +557,44 @@
   color: var(--color-brand-primary-hover);
 }
 
-/* 프로그램 목록(4탭 위젯) 목록 — 기본 1470px(레거시). 예정 위젯+사업 운영 기간 열: 1300px(68+420+320+160×3). 「전체 프로그램」: 1330px. 행 선택 시 +68px */
+/* 프로그램 목록(4탭 위젯) 목록 — 요청 min-width 합계 기준. 행 선택 시 +68px */
 .program-list-table-wrapper--program-list-overview {
   --table-selection-column-width: 68px;
-  --program-list-table-min-width: 1470px;
+  --program-list-table-min-width: 1554px;
 }
 
-/* 예정 위젯(사업 운영 기간 열): 프로그램명 열 600px — 전체·진행·완료 탭과 동일 */
 .program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-period-columns {
-  --program-list-table-min-width: 1300px;
+  --program-list-table-min-width: 1554px;
 }
 
 .program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-all-programs {
-  --program-list-table-min-width: 1330px;
+  --program-list-table-min-width: 1414px;
 }
 
 .program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-overview-selection {
-  --program-list-table-min-width: 1538px;
+  --program-list-table-min-width: 1622px;
 }
 
 .program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-period-columns.program-list-table-wrapper--program-list-overview-selection {
-  --program-list-table-min-width: 1368px;
+  --program-list-table-min-width: 1622px;
 }
 
 .program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-all-programs.program-list-table-wrapper--program-list-overview-selection {
-  --program-list-table-min-width: 1398px;
+  --program-list-table-min-width: 1482px;
 }
 
 .program-list-card--program-list-overview .cms-data-table--program-list-overview .ant-table {
   width: 100% !important;
   min-width: var(--program-list-table-min-width, 1470px);
+}
+
+.program-list-card--program-list-overview
+  .cms-data-table--program-list-overview
+  .ant-table-container
+  table {
+  width: 100% !important;
+  min-width: var(--program-list-table-min-width, 1470px);
+  table-layout: auto !important;
 }
 
 .program-list-card--program-list-overview .cms-data-table--program-list-overview .ant-table-container {
@@ -836,15 +650,15 @@
 /* 컬럼 최소 너비(시안) — resolver width와 동기화, 좁은 뷰포트는 테이블 가로 스크롤 */
 .program-list-page--overview .filter-table-layout__table .program-list-table__col-title,
 .program-list-card--program-list-overview .program-list-table__col-title {
-  min-width: 600px;
+  min-width: 690px;
 }
 
 .program-list-card--program-list-overview .program-list-table__col-no {
-  min-width: 80px;
+  min-width: 64px;
 }
 
 .program-list-card--program-list-overview.program-list-card--program-list-period-columns .program-list-table__col-title {
-  min-width: 600px;
+  min-width: 690px;
 }
 
 .program-list-card--program-list-overview .program-list-table__col-period {
@@ -856,38 +670,21 @@
 }
 
 .program-list-card--program-list-overview .program-list-table__col-recruitment,
+.program-list-card--program-list-overview .program-list-table__col-instructor-recruit,
 .program-list-card--program-list-overview .program-list-table__col-category,
 .program-list-card--program-list-overview .program-list-table__col-target {
   min-width: 160px;
 }
 
-/* 4탭 목록 · 「진행 중」「완료」 — 8열 고정 px, 합 1412px (+행 선택 시 1492px) */
+/* 4탭 목록 · 「진행 중」「완료」 — 요청 min-width 합계 1554px (+행 선택 시 1622px) */
 .program-list-table-wrapper--program-list-in-progress,
 .program-list-table-wrapper--program-list-completed {
-  --program-list-table-min-width: 1412px;
+  --program-list-table-min-width: 1554px;
 }
 
 .program-list-table-wrapper--program-list-in-progress.program-list-table-wrapper--program-list-overview-selection,
 .program-list-table-wrapper--program-list-completed.program-list-table-wrapper--program-list-overview-selection {
-  --program-list-table-min-width: 1492px;
-}
-
-.program-list-card--program-list-overview.program-list-card--program-list-in-progress
-  .program-list-table__col-title,
-.program-list-card--program-list-overview.program-list-card--program-list-completed
-  .program-list-table__col-title {
-  min-width: 420px;
-}
-
-.program-list-card--program-list-overview.program-list-card--program-list-in-progress
-  .program-list-table__col-recruitment,
-.program-list-card--program-list-overview.program-list-card--program-list-in-progress
-  .program-list-table__col-instructor-recruit,
-.program-list-card--program-list-overview.program-list-card--program-list-completed
-  .program-list-table__col-recruitment,
-.program-list-card--program-list-overview.program-list-card--program-list-completed
-  .program-list-table__col-instructor-recruit {
-  min-width: 168px;
+  --program-list-table-min-width: 1622px;
 }
 
 .program-list-card--program-list-overview.program-list-card--program-list-in-progress
@@ -898,18 +695,7 @@
   .program-list-table__col-school-count,
 .program-list-card--program-list-overview.program-list-card--program-list-completed
   .program-list-table__col-student-count {
-  min-width: 150px;
-}
-
-.program-list-card--program-list-overview.program-list-card--program-list-in-progress
-  .program-list-table__col-category,
-.program-list-card--program-list-overview.program-list-card--program-list-in-progress
-  .program-list-table__col-target,
-.program-list-card--program-list-overview.program-list-card--program-list-completed
-  .program-list-table__col-category,
-.program-list-card--program-list-overview.program-list-card--program-list-completed
-  .program-list-table__col-target {
-  min-width: 138px;
+  min-width: 160px;
 }
 
 /* 프로그램 진행 현황 열: 셀 기준 말줄임(배지 max-width 100%와 함께 동작) */

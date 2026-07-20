@@ -7,6 +7,7 @@ import {
   formatDateRange,
   INSTRUCTOR_TARGET_OPTIONS,
   INTERVIEW_METHOD_OPTIONS,
+  parseInstructorTargetsSelectValue,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { SectionSchema } from '@/features/program/shared/model/recruitment-schema'
 import {
@@ -87,13 +88,19 @@ export function createInstructorsSchema({
             edit:
               isEdit && form ? (
                 <Controller
-                  name="instructorTarget"
+                  name="instructorTargets"
                   control={form.control}
                   render={({ field }) => (
                     <CmsSelect
-                      {...field}
-                      value={field.value ?? '성인'}
-                      options={INSTRUCTOR_TARGET_OPTIONS}
+                      mode="multiple"
+                      inputSize="medium"
+                      width={240}
+                      withAllOption={false}
+                      value={field.value ?? []}
+                      options={[...INSTRUCTOR_TARGET_OPTIONS]}
+                      onChange={v => field.onChange(parseInstructorTargetsSelectValue(v))}
+                      placeholder="모집 대상을 선택하세요"
+                      className="program-detail-info-tab__target-select"
                     />
                   )}
                 />
@@ -109,7 +116,14 @@ export function createInstructorsSchema({
                   name="instructorTargetDetail"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsInput {...field} value={field.value ?? ''} placeholder="모집 대상 상세" />
+                    <CmsInput
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder="모집 대상 상세"
+                      inputSize="medium"
+                      width="100%"
+                      className="program-detail-info-tab__district-input"
+                    />
                   )}
                 />
               ) : undefined,

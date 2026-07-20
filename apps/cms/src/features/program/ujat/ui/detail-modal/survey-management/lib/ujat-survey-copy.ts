@@ -18,6 +18,21 @@ export const UJAT_SURVEY_POLL_ACTION_LABELS = {
   preview: '설문 양식 보기',
 } as const
 
+/** 설문조사 공유 링크 복사 후 토스트 — 문장 단위 개행 */
+export const UJAT_SURVEY_POLL_SHARE_TOAST_COPY = {
+  line1: '설문 참여 링크가 복사되었습니다.',
+  line2: '참여 대상에게 복사된 링크를 공유해 주세요.',
+} as const
+
+export const UJAT_SURVEY_POLL_DOWNLOAD_MODAL_COPY = {
+  title: '설문조사 결과 다운로드',
+  description: '다운로드할 파일 형식을 선택해 주세요.',
+  excelLabel: '엑셀',
+  pdfLabel: 'PDF',
+  cancelButton: '취소',
+  downloadButton: '다운로드',
+} as const
+
 export const UJAT_SATISFACTION_EMPTY_COPY = {
   title: '아직 등록된 만족도조사가 없습니다.',
   description: '만족도조사 등록 버튼을 눌러 설문 내용을 추가해 주세요.',
@@ -35,6 +50,21 @@ export const UJAT_SATISFACTION_ACTION_LABELS = {
   share: '만족도조사 공유',
   download: '만족도조사 결과 다운로드',
   preview: '설문 양식 보기',
+} as const
+
+/** 만족도조사 공유 링크 복사 후 토스트 */
+export const UJAT_SATISFACTION_SHARE_TOAST_COPY = {
+  line1: '만족도조사 참여 링크가 복사되었습니다.',
+  line2: '참여 대상에게 복사된 링크를 공유해 주세요.',
+} as const
+
+export const UJAT_SATISFACTION_DOWNLOAD_MODAL_COPY = {
+  title: '만족도조사 결과 다운로드',
+  description: '다운로드할 파일 형식을 선택해 주세요.',
+  excelLabel: '엑셀',
+  pdfLabel: 'PDF',
+  cancelButton: '취소',
+  downloadButton: '다운로드',
 } as const
 
 export const UJAT_LECTURE_EVAL_EMPTY_COPY = {
@@ -73,4 +103,13 @@ export const UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY = {
   description: '강의평가를 등록하시겠습니까?\n등록 시 해당 프로그램에 강의평가 설문이 노출됩니다.',
   cancelButton: '취소',
   confirmButton: '신규 등록',
+} as const
+
+export const UJAT_LECTURE_EVAL_DOWNLOAD_MODAL_COPY = {
+  title: '강의 평가 결과 다운로드',
+  description: '다운로드할 파일 형식을 선택해 주세요.',
+  excelLabel: '엑셀',
+  pdfLabel: 'PDF',
+  cancelButton: '취소',
+  downloadButton: '다운로드',
 } as const

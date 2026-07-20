@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { UJAT_INSTITUTION_APPLICATION_REGIONS } from '../../application-institution/list/regions'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import {
   formatSummaryCellValue,
   regionValuesInOrder,
@@ -34,6 +34,8 @@ export function UjatEducationProgressSummaryRegionHeader({
 }: {
   categoryColSpan?: number
 }) {
+  const { regions } = useUjatEducationRegions()
+
   return (
     <thead>
       <tr>
@@ -42,7 +44,7 @@ export function UjatEducationProgressSummaryRegionHeader({
             구분
           </UjatEducationProgressSummaryCategoryCellInner>
         </th>
-        {UJAT_INSTITUTION_APPLICATION_REGIONS.map(region => (
+        {regions.map(region => (
           <th key={region.key} className={COLUMN_HEADER} scope="col">
             {region.label}
           </th>
@@ -64,12 +66,13 @@ export function UjatEducationProgressSummaryRegionDataCells({
   emphasizeTotal?: boolean
   regionDataClassName?: string
 }) {
+  const { regions } = useUjatEducationRegions()
   const regionValues = regionValuesInOrder(row)
   const regionCellClassName = [DATA, regionDataClassName].filter(Boolean).join(' ')
   return (
     <>
       {regionValues.map((value, index) => (
-        <td key={UJAT_INSTITUTION_APPLICATION_REGIONS[index]!.key} className={regionCellClassName}>
+        <td key={regions[index]?.key ?? index} className={regionCellClassName}>
           {formatSummaryCellValue(value)}
         </td>
       ))}
@@ -95,6 +98,7 @@ export function UjatEducationProgressSummaryMatrixShell({
   labelColCount?: 1 | 2
   children: ReactNode
 }) {
+  const { regions } = useUjatEducationRegions()
   const shellClassName = [
     'cross-table',
     'ujat-edu-progress-summary__matrix',
@@ -113,7 +117,7 @@ export function UjatEducationProgressSummaryMatrixShell({
           ) : (
             <col className="cross-table__label-col" />
           )}
-          {UJAT_INSTITUTION_APPLICATION_REGIONS.map(region => (
+          {regions.map(region => (
             <col key={region.key} className="ujat-edu-progress-summary__region-col" />
           ))}
           <col className="ujat-edu-progress-summary__total-col" />

@@ -8,7 +8,7 @@ import { useState, useEffect, Fragment, type ReactNode } from 'react'
 import { Select } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { UserOutlined } from '@ant-design/icons'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsRadio } from '@/shared/ui'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
@@ -812,11 +812,11 @@ export function ApplicantInstructorDetailModal({
 
   return (
     <>
-      <TealHeaderModal
+      <ContentModal
         open={open}
         onCancel={onCancel}
         title={title}
-        width={1400}
+        size="large"
         className="applicant-instructor-detail-modal__root"
         footer={footer}
       >
@@ -834,7 +834,7 @@ export function ApplicantInstructorDetailModal({
             {activeTab === TAB_RESUME ? resumeTabContent : basicTabContent}
           </div>
         </div>
-      </TealHeaderModal>
+      </ContentModal>
 
       {confirmType === 'reject' && (
         <DeleteGuideModal

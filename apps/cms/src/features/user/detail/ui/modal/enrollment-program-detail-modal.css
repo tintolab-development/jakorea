@@ -461,9 +461,14 @@
     box-shadow 0.15s ease;
 }
 
-/* 선택 상태는 기본 보더 유지 */
 .enrollment-program-detail-modal__post-card--selected {
-  border-color: #d4d4d4;
+  border-radius: 10px;
+  border: 1px solid var(--JA-mint-01, #01A1AF);
+  background: var(--default-WT, #FFF);
+  box-shadow:
+    inset 0 0 0 1px var(--JA-mint-01, #01A1AF),
+    0 0 4px 0 rgba(0, 136, 148, 0.06),
+    0 4px 12px 0 rgba(0, 136, 148, 0.14);
 }
 
 .enrollment-program-detail-modal__post-card {

@@ -249,7 +249,7 @@
 }
 
 .ujat-lecture-eval-form__scroll .form-editor-left {
-  max-width: 1254px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 24px;
   gap: 16px;
@@ -262,7 +262,7 @@
 }
 
 .ujat-lecture-eval-form__submit-button.cms-button.ant-btn.cms-button--large {
-  max-width: 1254px;
+  max-width: 1400px;
   margin: 0 auto;
   display: block;
 }

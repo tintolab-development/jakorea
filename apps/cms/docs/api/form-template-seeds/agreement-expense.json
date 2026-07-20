@@ -1,0 +1,179 @@
+{
+  "templateCode": "agreement-expense",
+  "formType": "WRITING",
+  "category": "AGREEMENT",
+  "schemaJson": {
+    "schemaVersion": 1,
+    "formSettings": {
+      "titleNumbering": "numeric"
+    },
+    "paragraphs": [
+      {
+        "id": "agreement-expense-pledge-title",
+        "kind": "description",
+        "variant": "survey_title_with_period",
+        "requiredMark": true,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "surveyTitle": "JA Korea 교육진행자 서약서(안)",
+        "surveyDescription": "",
+        "periodMode": "immediate",
+        "startAt": null,
+        "endAt": null,
+        "showWritingPeriodOnForm": false
+      },
+      {
+        "id": "agreement-expense-pledge-intro",
+        "kind": "single_item",
+        "variant": "agreement_explanation_text",
+        "requiredMark": false,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "bodyPlaceholder": "한 줄 안내를 입력해 주세요",
+        "bodyText": "본인은 JA Korea의 교육사업에 참여함에 있어, 다음 사항을 준수할 것을 서약합니다.",
+        "answerRequired": false
+      },
+      {
+        "id": "agreement-expense-pledge-clause-1",
+        "kind": "single_item",
+        "variant": "multiple_choice",
+        "requiredMark": true,
+        "paragraphTitle": "아동·청소년 보호와 성범죄 예방",
+        "paragraphDescription": "교육 대상이 아동·청소년인 경우, 관련 법령과 윤리 기준을 준수하며, 모든 수강생이 안전하고 존중받는 환경에서 학습할 수 있도록 최선을 다하겠습니다.",
+        "participatesInTitleNumbering": true,
+        "answerRequired": true,
+        "allowMultiple": false,
+        "items": [
+          {
+            "id": "pledge-mc-1-agree",
+            "label": "동의"
+          },
+          {
+            "id": "pledge-mc-1-disagree",
+            "label": "동의하지 않음"
+          }
+        ],
+        "selectedPreviewSingleId": null,
+        "selectedPreviewMultipleIds": []
+      },
+      {
+        "id": "agreement-expense-pledge-clause-2",
+        "kind": "single_item",
+        "variant": "multiple_choice",
+        "requiredMark": true,
+        "paragraphTitle": "종교적 정치적 중립성 유지",
+        "paragraphDescription": "교육 내용 및 발언에 있어 종교적·정치적으로 편향이나 특정 종교·이념·정당을 지지·비판하는 내용을 포함하지 않겠습니다.",
+        "participatesInTitleNumbering": true,
+        "answerRequired": true,
+        "allowMultiple": false,
+        "items": [
+          {
+            "id": "pledge-mc-2-agree",
+            "label": "동의"
+          },
+          {
+            "id": "pledge-mc-2-disagree",
+            "label": "동의하지 않음"
+          }
+        ],
+        "selectedPreviewSingleId": null,
+        "selectedPreviewMultipleIds": []
+      },
+      {
+        "id": "agreement-expense-pledge-clause-3",
+        "kind": "single_item",
+        "variant": "multiple_choice",
+        "requiredMark": true,
+        "paragraphTitle": "개인정보 보호",
+        "paragraphDescription": "교육과정 중 알게 된 관련인의 개인정보를 외부에 유출하거나 무단으로 사용하지 않겠습니다.",
+        "participatesInTitleNumbering": true,
+        "answerRequired": true,
+        "allowMultiple": false,
+        "items": [
+          {
+            "id": "pledge-mc-3-agree",
+            "label": "동의"
+          },
+          {
+            "id": "pledge-mc-3-disagree",
+            "label": "동의하지 않음"
+          }
+        ],
+        "selectedPreviewSingleId": null,
+        "selectedPreviewMultipleIds": []
+      },
+      {
+        "id": "agreement-expense-pledge-clause-4",
+        "kind": "single_item",
+        "variant": "multiple_choice",
+        "requiredMark": true,
+        "paragraphTitle": "품위 유지 및 성실한 교육 수행",
+        "paragraphDescription": "교육 강사로서 사회적 물의를 일으키지 않으며, 성실하고 책임감 있게 교육 활동에 임하겠습니다.",
+        "participatesInTitleNumbering": true,
+        "answerRequired": true,
+        "allowMultiple": false,
+        "items": [
+          {
+            "id": "pledge-mc-4-agree",
+            "label": "동의"
+          },
+          {
+            "id": "pledge-mc-4-disagree",
+            "label": "동의하지 않음"
+          }
+        ],
+        "selectedPreviewSingleId": null,
+        "selectedPreviewMultipleIds": []
+      },
+      {
+        "id": "agreement-expense-pledge-violation-closing",
+        "kind": "description",
+        "variant": "closing",
+        "requiredMark": false,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "body": "본 서약을 위반할 경우, 재단의 교육사업과 관련한 강사 자격이 제한되거나 향후 활동에 불이익이 있을 수 있음을 인지하고 이에 동의합니다."
+      },
+      {
+        "id": "agreement-expense-pledge-system-date",
+        "kind": "description",
+        "variant": "system",
+        "systemPreset": "agreement_date",
+        "requiredMark": false,
+        "paragraphTitle": "날짜 유형",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false
+      },
+      {
+        "id": "agreement-expense-pledge-system-signature",
+        "kind": "description",
+        "variant": "system",
+        "systemPreset": "agreement_signature",
+        "requiredMark": false,
+        "paragraphTitle": "서명란 유형",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false
+      },
+      {
+        "id": "agreement-expense-pledge-closing",
+        "kind": "description",
+        "variant": "closing",
+        "requiredMark": false,
+        "paragraphTitle": "",
+        "paragraphDescription": "",
+        "participatesInTitleNumbering": false,
+        "body": "내용을 자세히 검토하신 후 동의 여부를 결정하여 주시기 바랍니다."
+      }
+    ]
+  },
+  "extensionJson": {
+    "overlay": {},
+    "editorState": {},
+    "uiState": {}
+  },
+  "settingsJson": null,
+  "_apiStorageNote": "DB/API에는 schemaJson, extensionJson, settingsJson 각각을 JSON.stringify한 string으로 저장"
+}

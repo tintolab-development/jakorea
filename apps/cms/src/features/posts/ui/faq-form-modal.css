@@ -167,14 +167,14 @@
 }
 
 /**
- * FAQ 수정 모달 — 좌측「FAQ 삭제」라벨 (admin-faq-delete-btn.css 스펙과 동일, large+antd 이김)
+ * FAQ 수정 모달 — 좌측「FAQ 삭제」라벨
  */
-.faq-form-modal .faq-form-modal__faq-delete.cms-button.cms-button--delete.cms-button--large.ant-btn {
+.faq-form-modal .faq-form-modal__faq-delete.cms-button.cms-button--delete.cms-button--medium.ant-btn {
   text-align: center;
 }
 
 .faq-form-modal
-  .faq-form-modal__faq-delete.cms-button.cms-button--delete.cms-button--large.ant-btn
+  .faq-form-modal__faq-delete.cms-button.cms-button--delete.cms-button--medium.ant-btn
   .cms-button__label {
   text-align: center !important;
   font-family: Pretendard, var(--font-family-primary, sans-serif) !important;

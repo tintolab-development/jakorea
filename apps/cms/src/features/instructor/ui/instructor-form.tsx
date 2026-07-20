@@ -10,6 +10,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { instructorSchema, type InstructorFormData } from '@/entities/instructor/model/schema'
 import type { Instructor } from '@/types/domain'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
 
 const { Option } = Select
@@ -252,14 +253,14 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
           name="rating"
           control={control}
           render={({ field }) => (
-            <Input
-              type="number"
+            <CmsNumericInput
+              mode="decimal"
               min={0}
               max={5}
-              step={0.1}
-              {...field}
-              value={field.value ?? ''}
-              onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+              precision={1}
+              value={field.value == null ? '' : String(field.value)}
+              onBlur={field.onBlur}
+              onValueChange={value => field.onChange(value === '' ? undefined : Number(value))}
             />
           )}
         />
@@ -293,7 +294,15 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
         <Controller
           name="bankAccount"
           control={control}
-          render={({ field }) => <Input {...field} placeholder="'-' 없이 숫자만 입력" />}
+          render={({ field }) => (
+            <CmsNumericInput
+              mode="numericText"
+              value={field.value ?? ''}
+              onBlur={field.onBlur}
+              onValueChange={field.onChange}
+              placeholder="'-' 없이 숫자만 입력"
+            />
+          )}
         />
       </Form.Item>
 

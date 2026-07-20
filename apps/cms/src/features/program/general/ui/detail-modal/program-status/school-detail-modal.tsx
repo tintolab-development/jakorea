@@ -9,10 +9,11 @@ import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Tabs, Descriptions, Table, Input } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CmsButton, CmsRadio } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, CmsRadio } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { ColumnsType } from 'antd/es/table'
-import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
+import { ContentModal } from '@/shared/ui/content-modal'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type {
   SchoolDetailForModal,
   SchoolDetailInstructorRow,
@@ -28,30 +29,28 @@ import {
   EMPTY_BASIC_FORM_VALUES,
   type SchoolDetailBasicFormValues,
 } from '../../../model/school-detail-basic-form-schema'
-import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
-import { SettlementStatusBadge } from '@/shared/components/settlement-status-badge'
+import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
 import {
   TEXTBOOK_STATUS_LABELS,
+  TEXTBOOK_STATUS_OPTION_KEYS,
   type ParticipatingSchoolRow,
-  type TextbookStatusKey,
 } from '@/data/mock/participating-schools'
 import {
-  MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS,
-  mapParticipatingSessionsToInstructorAssignOptions,
-} from '../../../lib/instructor-assign-session-options'
-import {
   SchoolDetailAddInstructorAssignModal,
-  type AddInstructorAssignOption,
 } from './school-detail-add-instructor-assign-modal'
+import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
+import { buildProgramApprovedInstructorAssignOptions } from '../../../lib/school-add-instructor-assign'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
 import {
   DeleteGuideModal,
   buildSchoolCancelApprovalMessageLines,
 } from '../../manager-delete-guide-modal'
-import './instructor-assignment-role-tag.css'
+import { EditableStatusBadge } from '@/shared/components'
+import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import './school-detail-modal.css'
 
 const { TextArea } = Input
@@ -88,6 +87,8 @@ export interface SchoolDetailModalProps {
   onSaveInstructorInfo?: (schoolId: string, instructors: InstructorListFormInstructor[]) => void
   /** 진행현황: 참여 학교 목록 행 — 승인 취소 노출·회차 완료 비활성 판단 (onCancelApproval과 함께 전달) */
   participatingRow?: ParticipatingSchoolRow | null
+  /** 프로그램 id — 추가 배정 시 승인된 강사 목록 조회용 */
+  programId?: string
   /** 승인 취소 확인 후 호출 (프로그램 승인 현황 → 승인 취소) */
   onCancelApproval?: (schoolId: string) => void
 }
@@ -101,6 +102,7 @@ export function SchoolDetailModal({
   onSaveBasicInfo,
   onSaveInstructorInfo,
   participatingRow,
+  programId = '',
   onCancelApproval,
 }: SchoolDetailModalProps) {
   const [unsavedCloseConfirmOpen, setUnsavedCloseConfirmOpen] = useState(false)
@@ -126,6 +128,12 @@ export function SchoolDetailModal({
   const [isBasicEditMode, setIsBasicEditMode] = useState(false)
   const [isInstructorEditMode, setIsInstructorEditMode] = useState(false)
   const [addInstructorAssignModalOpen, setAddInstructorAssignModalOpen] = useState(false)
+  const [assignCompleteModal, setAssignCompleteModal] = useState<{
+    instructorName: string
+    schoolName: string
+    currentCount: number
+    showApprovalAlarmSection: boolean
+  } | null>(null)
   const [cancelApprovalConfirmOpen, setCancelApprovalConfirmOpen] = useState(false)
 
   const defaultBasicValues = useMemo<SchoolDetailBasicFormValues>(
@@ -214,28 +222,20 @@ export function SchoolDetailModal({
     setIsInstructorEditMode(false)
   }
 
-  /** 추가 배정 모달: 선택 가능한 강사 옵션 (이미 이 학교에 배정된 강사 제외) */
-  const addInstructorAssignOptions = useMemo((): AddInstructorAssignOption[] => {
-    if (!detail) return []
-    const assignedIds = new Set(detail.instructors.map(i => i.id))
-    return MOCK_PARTICIPATING_INSTRUCTORS.filter(r => !assignedIds.has(r.id)).map(r => ({
-      value: r.id,
-      label: r.instructorName,
-      contact: r.contact,
-      email: r.email,
-      initialApproval: r.initialApproval ?? true,
-    }))
-  }, [detail])
+  const assignedInstructorNames = useMemo(
+    () => detail?.instructors.map(i => i.instructorName) ?? [],
+    [detail?.instructors]
+  )
 
-  const addInstructorAssignSessionOptions = useMemo(() => {
-    const fromSessions = mapParticipatingSessionsToInstructorAssignOptions(participatingRow?.sessions)
-    return fromSessions.length > 0 ? fromSessions : MOCK_INSTRUCTOR_ASSIGN_SESSION_OPTIONS
-  }, [participatingRow?.sessions])
+  const addInstructorAssignOptions = useMemo(() => {
+    if (!programId) return []
+    return buildProgramApprovedInstructorAssignOptions(programId, assignedInstructorNames)
+  }, [programId, assignedInstructorNames])
 
   const handleAddInstructorAssign = (
     instructorId: string,
     role: InstructorRoleKey,
-    option: AddInstructorAssignOption,
+    option: (typeof addInstructorAssignOptions)[number],
     _meta?: { isNewApproval?: boolean; sessionIds?: string[] }
   ) => {
     if (!detail) return
@@ -258,6 +258,12 @@ export function SchoolDetailModal({
       setInstructorValue('instructors', newList)
     }
     setAddInstructorAssignModalOpen(false)
+    setAssignCompleteModal({
+      instructorName: option.label,
+      schoolName: detail.schoolName,
+      currentCount: newList.length,
+      showApprovalAlarmSection: _meta?.isNewApproval ?? false,
+    })
   }
 
   const instructorColumns: ColumnsType<SchoolDetailInstructorRow> = useMemo(
@@ -269,15 +275,10 @@ export function SchoolDetailModal({
         width: 100,
         align: 'center',
         render: (r: InstructorRoleKey) => (
-          <span
-            className={
-              r === 'lead'
-                ? 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--lead'
-                : 'school-detail-fullpage-view__role-tag school-detail-fullpage-view__role-tag--assistant'
-            }
-          >
-            {INSTRUCTOR_ROLE_LABELS[r]}
-          </span>
+          <EditableStatusBadge
+            label={INSTRUCTOR_ROLE_LABELS[r]}
+            tone={getInstructorRoleBadgeTone(r)}
+          />
         ),
       },
       {
@@ -302,7 +303,7 @@ export function SchoolDetailModal({
         key: 'settlementStatus',
         width: 140,
         align: 'center',
-        render: (s: SettlementStatusKey) => <SettlementStatusBadge status={s} />,
+        render: (s: InstructorSettlementUiStatus) => <InstructorPaymentStatusBadge status={s} />,
       },
     ],
     []
@@ -397,7 +398,7 @@ export function SchoolDetailModal({
               align: 'center',
               render: (_: unknown, record: InstructorListFormInstructor) => {
                 const row = detail.instructors.find(i => i.id === record.id)
-                return row ? <SettlementStatusBadge status={row.settlementStatus} /> : null
+                return row ? <InstructorPaymentStatusBadge status={row.settlementStatus} /> : null
               },
             },
           ]
@@ -407,18 +408,24 @@ export function SchoolDetailModal({
 
   if (!detail) return null
 
-  const mealDisplay = detail.mealProvided ? `제공 | ${detail.mealNotice ?? ''}` : '미제공'
-  const teacherDisplay = [
-    detail.teacherName && `문의처 : ${detail.teacherName}`,
-    detail.teacherPhone && `Tel: ${detail.teacherPhone}`,
-    detail.teacherEmail && `E-mail: ${detail.teacherEmail}`,
-  ]
-    .filter(Boolean)
-    .join(' | ')
-  const classDisplay = `${detail.classCount}개 학급 | 총 ${detail.studentCount}명`
+  const mealDisplay = detail.mealProvided
+    ? renderDetailInfoPipeSeparated(`제공 | ${detail.mealNotice ?? ''}`)
+    : '미제공'
+  const teacherDisplay = renderDetailInfoPipeSeparated(
+    [
+      detail.teacherName && `문의처 : ${detail.teacherName}`,
+      detail.teacherPhone && `Tel: ${detail.teacherPhone}`,
+      detail.teacherEmail && `E-mail: ${detail.teacherEmail}`,
+    ]
+      .filter(Boolean)
+      .join(' | ') || undefined
+  )
+  const classDisplay = renderDetailInfoPipeSeparated(
+    `${detail.classCount}개 학급 | 총 ${detail.studentCount}명`
+  )
   const waitingDisplay =
     detail.waitingRoomAvailable && detail.waitingRoomLocation
-      ? `있음 | ${detail.waitingRoomLocation}`
+      ? renderDetailInfoPipeSeparated(`있음 | ${detail.waitingRoomLocation}`)
       : '없음'
 
   /* 기획 시안 순서(school-detail-modal-view-edit-comparison.md): 1행 참여학교명|지역, 2행 대상학년|학급수, 3행 진행장소|대기실, 풀폭 식사·담당교사 */
@@ -461,11 +468,10 @@ export function SchoolDetailModal({
   /** 수정 모드 시 강의·교재 정보: 교재 현황만 라디오로 선택 가능 */
   function getLectureItemsEditMode(form: ReturnType<typeof useForm<SchoolDetailBasicFormValues>>) {
     const { control } = form
-    const textbookStatusOptions: { label: string; value: TextbookStatusKey }[] = [
-      { label: TEXTBOOK_STATUS_LABELS.preparing, value: 'preparing' },
-      { label: TEXTBOOK_STATUS_LABELS.shipping, value: 'shipping' },
-      { label: TEXTBOOK_STATUS_LABELS.delivered, value: 'delivered' },
-    ]
+    const textbookStatusOptions = TEXTBOOK_STATUS_OPTION_KEYS.map(value => ({
+      label: TEXTBOOK_STATUS_LABELS[value],
+      value,
+    }))
     const d = detail!
     return [
       { key: 'lectureRound', label: '강의 진행 회차', children: d.lectureRound },
@@ -850,6 +856,10 @@ export function SchoolDetailModal({
         <SchoolDetailStudentListSection
           schoolId={detail.id}
           studentCount={detail.studentCount}
+          classCount={detail.classCount}
+          schoolName={detail.schoolName ?? ''}
+          educationGrade={detail.educationGrade ?? ''}
+          participationAppliedAt={detail.participationAppliedAt}
           onSaveEdit={() => {}}
         />
       ) : null,
@@ -868,7 +878,7 @@ export function SchoolDetailModal({
 
   return (
     <>
-      <TealHeaderModal open={open} onCancel={onCancel} title={title} size="large" footer={footer}>
+      <ContentModal open={open} onCancel={onCancel} title={title} size="large" footer={footer}>
         <div className="school-detail-modal">
           <Tabs
             activeKey={activeTab}
@@ -881,10 +891,22 @@ export function SchoolDetailModal({
                   <DefaultTabBar {...tabBarProps} className="school-detail-modal__tabs-nav" />
                   {isApplicant && activeTab !== TAB_STUDENTS && (
                     <div className="school-detail-modal__top-actions school-detail-modal__basic-actions school-detail-modal__basic-actions--approval">
-                      <CmsButton variant="delete" size="large" width={160} onClick={() => {}}>
+                      <CmsButton
+                        variant="delete"
+                        size="large"
+                        className="cms-button--action"
+                        width={CMS_ACTION_BUTTON_WIDTH}
+                        onClick={() => {}}
+                      >
                         반려
                       </CmsButton>
-                      <CmsButton variant="primary" size="large" width={160} onClick={() => {}}>
+                      <CmsButton
+                        variant="primary"
+                        size="large"
+                        className="cms-button--action"
+                        width={CMS_ACTION_BUTTON_WIDTH}
+                        onClick={() => {}}
+                      >
                         승인
                       </CmsButton>
                     </div>
@@ -893,7 +915,9 @@ export function SchoolDetailModal({
                     <div className="school-detail-modal__top-actions school-detail-modal__basic-actions">
                       <CmsButton
                         variant="delete"
-                        size="large" width={160}
+                        size="large"
+                        className="cms-button--action"
+                        width={CMS_ACTION_BUTTON_WIDTH}
                         disabled={isCancelApprovalDisabled}
                         title={cancelApprovalDisabledReason ?? undefined}
                         onClick={() => setCancelApprovalConfirmOpen(true)}
@@ -907,7 +931,7 @@ export function SchoolDetailModal({
             )}
           />
         </div>
-      </TealHeaderModal>
+      </ContentModal>
       {cancelApprovalConfirmOpen && detail && onCancelApproval && (
         <DeleteGuideModal
           open={cancelApprovalConfirmOpen}
@@ -928,15 +952,28 @@ export function SchoolDetailModal({
       <SchoolDetailAddInstructorAssignModal
         open={addInstructorAssignModalOpen}
         onCancel={() => setAddInstructorAssignModalOpen(false)}
+        programId={programId}
+        schoolId={participatingRow?.id ?? detail?.id ?? ''}
         schoolName={detail?.schoolName ?? ''}
+        schoolSessions={participatingRow?.sessions}
+        participatingInstructorList={MOCK_PARTICIPATING_INSTRUCTORS}
+        assignedInstructorNames={assignedInstructorNames}
         instructorOptions={addInstructorAssignOptions}
-        assignmentSessionOptions={addInstructorAssignSessionOptions}
         currentLeadInstructorName={
           detail?.instructors.find(i => i.role === 'lead')?.instructorName ?? null
         }
         currentAssignedCount={detail?.instructors.length ?? 0}
         requiredInstructorCount={4}
         onAdd={handleAddInstructorAssign}
+      />
+      <SchoolDetailAssignCompleteModal
+        open={assignCompleteModal != null}
+        onClose={() => setAssignCompleteModal(null)}
+        instructorName={assignCompleteModal?.instructorName ?? ''}
+        schoolName={assignCompleteModal?.schoolName ?? ''}
+        currentCount={assignCompleteModal?.currentCount ?? 0}
+        requiredCount={4}
+        showApprovalAlarmSection={assignCompleteModal?.showApprovalAlarmSection ?? false}
       />
       <ConfirmModal
         open={unsavedCloseConfirmOpen}

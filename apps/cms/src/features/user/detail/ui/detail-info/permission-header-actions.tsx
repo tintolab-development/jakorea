@@ -1,4 +1,4 @@
-import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import type { PermissionHeaderActionsProps } from './user-detail-fullpage-header-actions'
 
@@ -35,6 +35,8 @@ export function PermissionHeaderActions({
         <>
           <CmsButton
             variant="delete"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
             onClick={() => {
               onPermissionReject?.({ userId: displayUser.id, permissionRole })
             }}
@@ -43,6 +45,8 @@ export function PermissionHeaderActions({
           </CmsButton>
           <CmsButton
             variant="secondary"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
             onClick={() => {
               onPermissionApprove?.({ userId: displayUser.id, permissionRole })
             }}
@@ -54,6 +58,8 @@ export function PermissionHeaderActions({
       {approvalStatus === 'REJECTED' ? (
         <CmsButton
           variant="delete"
+          className="cms-button--action"
+          width={CMS_ACTION_BUTTON_WIDTH}
           onClick={() => {
             onPermissionResetToPending?.({
               userId: displayUser.id,
@@ -68,6 +74,8 @@ export function PermissionHeaderActions({
       {approvalStatus === 'APPROVED' ? (
         <CmsButton
           variant="delete"
+          className="cms-button--action"
+          width={CMS_ACTION_BUTTON_WIDTH}
           onClick={() => {
             onPermissionResetToPending?.({
               userId: displayUser.id,

@@ -3,6 +3,10 @@ import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import type { Program } from '@/types/domain'
 import type { SchoolDetailForModal } from '@/features/program/general/model/school-detail-types'
 import {
+  isCombinedClassProgramEligible,
+  resolveCombinedClassApplyRadioDisabled,
+} from '@/features/program/general/lib/combined-class-edit-policy'
+import {
   detailToParticipatingInstitutionEditDraft,
   parseParticipatingInstitutionEditDraft,
   participatingInstitutionEditDraftToDetailPatch,
@@ -23,6 +27,17 @@ import {
 } from '@/features/program/general/lib/participating-institution-textbook'
 import { getSameSchoolParticipatingGrades } from '@/features/program/general/lib/get-same-school-participating-grades'
 import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
+import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
+
+function isCompanySchoolProgram(program: Program): boolean {
+  return (
+    program.id.startsWith('economy-prog-') ||
+    program.id.startsWith('company-school-prog-') ||
+    program.id.startsWith('company-school-local-') ||
+    program.mainTitle?.includes('1사1교') === true ||
+    program.title.includes('1사1교')
+  )
+}
 
 export interface SameSchoolParticipatingGradeOption {
   value: string
@@ -51,7 +66,19 @@ export function useParticipatingInstitutionDetailEdit({
   > | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
-  const usesTextbook = useMemo(() => programUsesTextbook(program), [program])
+  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
+
+  const isCompanySchool = useMemo(() => isCompanySchoolProgram(program), [program])
+
+  const usesTextbook = useMemo(
+    () => isCompanySchool || programUsesTextbook(program, textbookCatalog),
+    [isCompanySchool, program, textbookCatalog]
+  )
+
+  const isCombinedClassProgramEligibleFlag = useMemo(
+    () => isCombinedClassProgramEligible(program),
+    [program]
+  )
 
   const textbookDisplay = useMemo(
     () =>
@@ -64,6 +91,7 @@ export function useParticipatingInstitutionDetailEdit({
         textbookGrade: detail.textbookGrade,
         textbookKits: detail.textbookKits,
         textbookQuantity: detail.textbookQuantity,
+        catalog: textbookCatalog,
       }),
     [
       detail.textbookGrade,
@@ -74,6 +102,7 @@ export function useParticipatingInstitutionDetailEdit({
       program,
       row.educationGrade,
       row.studentCount,
+      textbookCatalog,
     ]
   )
 
@@ -81,10 +110,11 @@ export function useParticipatingInstitutionDetailEdit({
     if (!usesTextbook) return []
 
     const rows =
-      draft?.combinedClassApplication === '신청' ||
-      toCombinedClassApplicationStatus(detail.combinedClassApplication) === '신청'
-        ? filterTextbooksForCombinedClassEdit(program)
-        : filterTextbooksForApplicant(program, row.educationGrade)
+      !isCompanySchool &&
+      (draft?.combinedClassApplication === '신청' ||
+        toCombinedClassApplicationStatus(detail.combinedClassApplication) === '신청')
+        ? filterTextbooksForCombinedClassEdit(program, textbookCatalog)
+        : filterTextbooksForApplicant(program, row.educationGrade, textbookCatalog)
 
     return rows.map(textbookRow => ({
       value: textbookRow.id,
@@ -94,14 +124,19 @@ export function useParticipatingInstitutionDetailEdit({
   }, [
     detail.combinedClassApplication,
     draft?.combinedClassApplication,
+    isCompanySchool,
     program,
     row.educationGrade,
     usesTextbook,
+    textbookCatalog,
   ])
 
-  const canEditTextbook = usesTextbook && draft?.combinedClassApplication === '신청'
+  const canEditTextbook =
+    usesTextbook &&
+    (isCompanySchool ? row.approvalStatus === 'approved' : draft?.combinedClassApplication === '신청')
 
   const sameSchoolGradeOptions = useMemo((): SameSchoolParticipatingGradeOption[] => {
+    if (!isCombinedClassProgramEligibleFlag) return []
     return getSameSchoolParticipatingGrades(
       participatingSchoolList,
       row.schoolName,
@@ -111,9 +146,15 @@ export function useParticipatingInstitutionDetailEdit({
       label: participatingRow.educationGrade,
       educationGrade: participatingRow.educationGrade,
     }))
-  }, [participatingSchoolList, row.id, row.schoolName])
+  }, [isCombinedClassProgramEligibleFlag, participatingSchoolList, row.id, row.schoolName])
 
-  const canApplyCombinedClass = sameSchoolGradeOptions.length >= 1
+  const isCombinedClassApplyRadioDisabled = resolveCombinedClassApplyRadioDisabled(
+    sameSchoolGradeOptions
+  )
+
+  /** @deprecated isCombinedClassProgramEligibleFlag && !isCombinedClassApplyRadioDisabled */
+  const canApplyCombinedClass =
+    isCombinedClassProgramEligibleFlag && !isCombinedClassApplyRadioDisabled
 
   const resetEditState = useCallback(() => {
     setIsEditing(false)
@@ -137,7 +178,7 @@ export function useParticipatingInstitutionDetailEdit({
       textbookIdFallback,
       textbookDisplay.textbookGrade
     )
-    if (!canApplyCombinedClass) {
+    if (!isCombinedClassProgramEligibleFlag) {
       nextDraft = {
         ...nextDraft,
         combinedClassApplication: '미신청',
@@ -148,8 +189,8 @@ export function useParticipatingInstitutionDetailEdit({
     setValidationErrors({})
     setIsEditing(true)
   }, [
-    canApplyCombinedClass,
     detail,
+    isCombinedClassProgramEligibleFlag,
     textbookDisplay.textbookGrade,
     textbookDisplay.textbookId,
     textbookOptions,
@@ -166,7 +207,7 @@ export function useParticipatingInstitutionDetailEdit({
         const next = { ...prev, ...partial }
         if (partial.textbookId != null && usesTextbook) {
           const selected = textbookOptions.find(option => option.value === partial.textbookId)
-          const storeRow = filterTextbooksForCombinedClassEdit(program).find(
+          const storeRow = filterTextbooksForCombinedClassEdit(program, textbookCatalog).find(
             rowItem => rowItem.id === partial.textbookId
           )
           if (selected && storeRow) {
@@ -189,7 +230,7 @@ export function useParticipatingInstitutionDetailEdit({
       })
       setValidationErrors({})
     },
-    [program, row.studentCount, textbookOptions, usesTextbook]
+    [program, row.studentCount, textbookCatalog, textbookOptions, usesTextbook]
   )
 
   const saveEdit = useCallback((): boolean => {
@@ -197,9 +238,11 @@ export function useParticipatingInstitutionDetailEdit({
 
     const normalizedDraft = {
       ...draft,
-      combinedClassApplication: canApplyCombinedClass ? draft.combinedClassApplication : '미신청',
+      combinedClassApplication: isCombinedClassProgramEligibleFlag
+        ? draft.combinedClassApplication
+        : '미신청',
       combinedClassPartnerSchoolIds:
-        canApplyCombinedClass && draft.combinedClassApplication === '신청'
+        isCombinedClassProgramEligibleFlag && draft.combinedClassApplication === '신청'
           ? draft.combinedClassPartnerSchoolIds
           : [],
     }
@@ -218,6 +261,8 @@ export function useParticipatingInstitutionDetailEdit({
       program,
       studentCount: row.studentCount,
       requiresTextbook: usesTextbook,
+      allowTextbookSelectionWithoutCombinedClass: isCompanySchool,
+      catalog: textbookCatalog,
     })
     if (Object.keys(patch).length === 0) {
       setValidationErrors({ form: '저장할 수 없습니다. 입력값을 확인해 주세요.' })
@@ -228,14 +273,16 @@ export function useParticipatingInstitutionDetailEdit({
     resetEditState()
     return true
   }, [
-    canApplyCombinedClass,
     detail.id,
     draft,
+    isCombinedClassProgramEligibleFlag,
     onSaveBasicInfo,
     participatingSchoolList,
     program,
     resetEditState,
     row.studentCount,
+    isCompanySchool,
+    textbookCatalog,
     usesTextbook,
   ])
 
@@ -252,6 +299,8 @@ export function useParticipatingInstitutionDetailEdit({
       : false,
     sameSchoolGradeOptions,
     canApplyCombinedClass,
+    isCombinedClassProgramEligible: isCombinedClassProgramEligibleFlag,
+    isCombinedClassApplyRadioDisabled,
     enterEdit,
     cancelEdit,
     saveEdit,

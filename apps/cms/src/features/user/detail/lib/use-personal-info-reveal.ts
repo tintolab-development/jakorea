@@ -10,8 +10,16 @@ import {
   type ReactNode,
   type SetStateAction,
 } from 'react'
+import { shouldUseLogsRemoteApi } from '@/features/logs/api/admin-logs-service'
+import {
+  fetchMemberPrivacyUnmask,
+  PrivacyUnmaskApiError,
+} from '@/features/logs/api/privacy-unmask-fetcher'
+import { logsQueryKeys } from '@/features/logs/api/logs-query-keys'
 import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/modal/user-personal-info-reveal-confirm-modal'
+import { queryClient } from '@/shared/lib/query-client'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 
 export type PersonalInfoRevealControlMode =
   | 'toggleRemask'
@@ -20,6 +28,8 @@ export type PersonalInfoRevealControlMode =
 
 export interface UsePersonalInfoRevealOptions {
   resolveAccessItem: () => string
+  /** 실 API unmask 시 회원 ID (없으면 mock tracker만 사용) */
+  resolveMemberId?: () => string | undefined
   resetDeps: DependencyList
   controlMode: PersonalInfoRevealControlMode
   modalZIndex?: number
@@ -40,8 +50,34 @@ export interface UsePersonalInfoRevealResult {
  * 개인정보 상세보기 확인 모달 + 열람 로깅 + 마스킹 상태를 한곳에서 관리합니다.
  * (JSX 대신 createElement — `.ts` 확장자에서도 esbuild가 파싱 가능)
  */
+async function revealPersonalInfoWithAudit(
+  resolveAccessItem: () => string,
+  resolveMemberId: (() => string | undefined) | undefined,
+  reason: string
+): Promise<boolean> {
+  const memberId = resolveMemberId?.()?.trim()
+  if (shouldUseLogsRemoteApi() && memberId) {
+    try {
+      await fetchMemberPrivacyUnmask(memberId, reason)
+      void queryClient.invalidateQueries({ queryKey: logsQueryKeys.all })
+      return true
+    } catch (error) {
+      const message =
+        error instanceof PrivacyUnmaskApiError
+          ? error.message
+          : '개인정보 원문 조회에 실패했습니다.'
+      cmsAlertModal.show({ title: '열람 실패', content: message })
+      return false
+    }
+  }
+
+  trackPersonalInfoAccess(resolveAccessItem(), reason)
+  return true
+}
+
 export function usePersonalInfoReveal({
   resolveAccessItem,
+  resolveMemberId,
   resetDeps,
   controlMode,
   modalZIndex,
@@ -62,11 +98,13 @@ export function usePersonalInfoReveal({
 
   const submitPersonalInfoReveal = useCallback(
     (reason: string) => {
-      trackPersonalInfoAccess(resolveAccessItem(), reason)
-      setPersonalInfoRevealed(true)
-      setConfirmOpen(false)
+      void revealPersonalInfoWithAudit(resolveAccessItem, resolveMemberId, reason).then(ok => {
+        if (!ok) return
+        setPersonalInfoRevealed(true)
+        setConfirmOpen(false)
+      })
     },
-    [resolveAccessItem]
+    [resolveAccessItem, resolveMemberId]
   )
 
   const openPersonalInfoRevealConfirm = useCallback(() => {
@@ -117,6 +155,7 @@ export function usePersonalInfoReveal({
 
 export interface UsePersonalInfoRevealByRowOptions {
   resolveAccessItem: (rowId: string) => string
+  resolveMemberId?: (rowId: string) => string | undefined
   resetDeps: DependencyList
 }
 
@@ -132,6 +171,7 @@ export interface UsePersonalInfoRevealByRowResult {
  */
 export function usePersonalInfoRevealByRow({
   resolveAccessItem,
+  resolveMemberId,
   resetDeps,
 }: UsePersonalInfoRevealByRowOptions): UsePersonalInfoRevealByRowResult {
   const [privacyRevealedByRowId, setPrivacyRevealedByRowId] = useState<Record<string, boolean>>({})
@@ -151,11 +191,17 @@ export function usePersonalInfoRevealByRow({
     (reason: string) => {
       if (pendingConfirmRowId == null) return
       const id = pendingConfirmRowId
-      trackPersonalInfoAccess(resolveAccessItem(id), reason)
-      setPrivacyRevealedByRowId(prev => ({ ...prev, [id]: true }))
-      setPendingConfirmRowId(null)
+      void revealPersonalInfoWithAudit(
+        () => resolveAccessItem(id),
+        () => resolveMemberId?.(id),
+        reason
+      ).then(ok => {
+        if (!ok) return
+        setPrivacyRevealedByRowId(prev => ({ ...prev, [id]: true }))
+        setPendingConfirmRowId(null)
+      })
     },
-    [pendingConfirmRowId, resolveAccessItem]
+    [pendingConfirmRowId, resolveAccessItem, resolveMemberId]
   )
 
   const handleToggleListPrivacyMask = useCallback(

@@ -18,6 +18,7 @@ export const UJAT_EDUCATION_PROGRESS_TEXTBOOK_STATUS_LABELS: Record<TextbookStat
   preparing: '배송전',
   shipping: '배송 중',
   delivered: '배송완료',
+  not_applicable: '해당 없음',
 }
 
 export type UjatEducationProgressInstitutionTextbookSupply = {

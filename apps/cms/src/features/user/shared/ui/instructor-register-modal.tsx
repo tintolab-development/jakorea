@@ -14,6 +14,7 @@ import {
   CmsCheckbox,
   CmsDatePicker,
   CmsInput,
+  CmsNumericInput,
   CmsRadioGroup,
   CmsSelect,
   ContentModal,
@@ -113,8 +114,7 @@ type SimpleDatedRow = {
 }
 
 export type InstructorRegisterModalFormValues = {
-  nameKo: string
-  nameEn: string
+  name: string
   residentFront: string
   residentBack: string
   affiliationCategory: string
@@ -168,8 +168,7 @@ const EMPTY_SIMPLE_ROW: SimpleDatedRow = {
 }
 
 const INITIAL_VALUES: InstructorRegisterModalFormValues = {
-  nameKo: '',
-  nameEn: '',
+  name: '',
   residentFront: '',
   residentBack: '',
   affiliationCategory: '',
@@ -334,22 +333,13 @@ export function InstructorRegisterModal({
       >
         <div className="instructor-register-modal__stack">
           <DetailInfoForm title="기본 정보" mode="edit">
-            <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
-                label="한글 성명"
+                label="성명"
                 view="-"
                 edit={
-                  <Form.Item name="nameKo" noStyle>
+                  <Form.Item name="name" noStyle>
                     <CmsInput placeholder="한글 성명" inputSize="medium" width="100%" />
-                  </Form.Item>
-                }
-              />
-              <DetailInfoForm.Field
-                label="영문 성명"
-                view="-"
-                edit={
-                  <Form.Item name="nameEn" noStyle>
-                    <CmsInput placeholder="영문 성명" inputSize="medium" width="100%" />
                   </Form.Item>
                 }
               />
@@ -360,8 +350,9 @@ export function InstructorRegisterModal({
                 view="-"
                 edit={
                   <Space.Compact style={{ width: '100%', alignItems: 'center' }}>
-                    <Form.Item name="residentFront" noStyle>
-                      <CmsInput
+                    <Form.Item name="residentFront" trigger="onValueChange" noStyle>
+                      <CmsNumericInput
+                        mode="numericText"
                         placeholder="주민등록 앞 6자리"
                         maxLength={6}
                         inputSize="medium"
@@ -371,8 +362,9 @@ export function InstructorRegisterModal({
                     <span className="instructor-register-modal__hyphen" aria-hidden>
                       -
                     </span>
-                    <Form.Item name="residentBack" noStyle>
-                      <CmsInput
+                    <Form.Item name="residentBack" trigger="onValueChange" noStyle>
+                      <CmsNumericInput
+                        mode="numericText"
                         placeholder="주민등록 뒤 7자리"
                         maxLength={7}
                         inputSize="medium"
@@ -468,8 +460,13 @@ export function InstructorRegisterModal({
                       />
                     </Form.Item>
                     <DetailInfoForm.InputsSeparator />
-                    <Form.Item name="accountNumber" noStyle>
-                      <CmsInput placeholder="계좌번호(숫자만)" inputSize="medium" width="34%" />
+                    <Form.Item name="accountNumber" trigger="onValueChange" noStyle>
+                      <CmsNumericInput
+                        mode="numericText"
+                        placeholder="계좌번호(숫자만)"
+                        inputSize="medium"
+                        width="34%"
+                      />
                     </Form.Item>
                     <DetailInfoForm.InputsSeparator />
                     <Form.Item name="accountHolder" noStyle>

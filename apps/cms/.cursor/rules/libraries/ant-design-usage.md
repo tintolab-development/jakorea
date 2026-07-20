@@ -16,6 +16,15 @@ CMS copy is **Korean**; locale wiring follows project defaults.
 import { Button, Card, Form, Input, Table } from 'antd'
 ```
 
+## Button `loading`
+
+**`loading` 시 텍스트·아이콘 없이 스피너만** 표시한다. 전역 CSS(`button-loading-only.css`)가 raw `Button`에도 적용된다.
+
+- CMS 스타일 버튼: `CmsButton`, `ExcelButton`
+- antd 기본 스타일·auth 폼: `LoadingButton` (`@/shared/ui/loading-button`)
+- 삭제된 `AppButton` / `FilterSearchButton` / `AuthLoadingButton`은 사용 가능한 wrapper나 alias가 아니다.
+- 상세: [button-loading-only.mdc](../design/button-loading-only.mdc)
+
 ## `CmsCheckbox`
 
 For admin forms, prefer **`CmsCheckbox` / `CmsCheckbox.Group`** from `@/shared/ui/cms-checkbox` instead of raw Ant `Checkbox`.
@@ -66,4 +75,4 @@ Center modals to the **viewport** — [modal-viewport-centering.md](../design/mo
 - [admin-notice-form-modal-spec.md](../process/admin-notice-form-modal-spec.md)  
 - [cms-alert-modal.md](./cms-alert-modal.md)  
 
-**Last updated:** 2026-05-15
+**Last updated:** 2026-07-15

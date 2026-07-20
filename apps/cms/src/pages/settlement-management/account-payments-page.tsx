@@ -18,11 +18,16 @@ import {
   type AccountPaymentRow,
   type AccountPaymentTransferStatus,
 } from '@/data/mock/account-payments-list'
+import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import { useAccountPaymentsListQuery } from '@/features/settlement-management/hooks/use-account-payments-list-query'
+import { useMarkAccountPaymentPaidMutation } from '@/features/settlement-management/hooks/use-account-payment-mutations'
+import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import { ACCOUNT_PAYMENT_AGGREGATE_STATUSES } from '@/shared/constants/payment-order-aggregate-status'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui/cms-button'
 import '@/features/program/general/ui/detail-modal/program-status/program-status-participating-shared.css'
 import '@/features/program/general/ui/detail-modal/program-status/program-progress-tab.css'
+import './payment-orders-page.css'
 import './account-payments-page.css'
 import { AccountPaymentsCalendarView } from './account-payments-calendar-view'
 import {
@@ -68,7 +73,7 @@ const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
 /** 계좌 지급 풀페이지 상세 — URL 동기화(뒤로가기로 목록 복귀) */
 const AP_DETAIL_ID = 'ap_detail'
 
-/** `FilterTableLayout` 툴바 — 구 `AppButton` filter-wide 최소 폭에 맞춤 */
+/** `FilterTableLayout` 툴바 — `CmsButton` size=large, width=auto에 최소 폭 180px 적용 */
 const ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE = { minWidth: 180 } as const
 
 /** 세 번째 요약 위젯 — 이체 예정일 구간 표기 `YY. MM. DD ~ YY. MM. DD` */
@@ -197,18 +202,17 @@ export default function AccountPaymentsPage() {
   const [accountFormIssueBlockedSelectedCount, setAccountFormIssueBlockedSelectedCount] =
     useState(0)
   const [accountPaymentCompleteSuccessOpen, setAccountPaymentCompleteSuccessOpen] = useState(false)
-  /** mock 배열을 직접 수정하지 않도록 복사본 유지 — 계좌 지급 완료 시 상태 반영 */
-  const [accountPaymentRows, setAccountPaymentRows] = useState<AccountPaymentRow[]>(() =>
-    mockAccountPaymentRows
-      .filter(isPaymentOrderStatementConfirmedForAccountPayments)
-      .map(r => ({ ...r }))
+  /** mock 배열을 직접 수정하지 않도록 복사본 유지 — 계좌 지급 완료 시 상태 반영 (mock 전용) */
+  const [mockAccountPaymentRowsState, setMockAccountPaymentRowsState] = useState<AccountPaymentRow[]>(
+    () =>
+      mockAccountPaymentRows
+        .filter(isPaymentOrderStatementConfirmedForAccountPayments)
+        .map(r => ({ ...r }))
   )
 
-  const accountPaymentDetailRow = useMemo(() => {
-    const id = searchParams.get(AP_DETAIL_ID)?.trim()
-    if (!id) return null
-    return accountPaymentRows.find(r => r.id === id) ?? null
-  }, [searchParams, accountPaymentRows])
+  const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
+  const markPaidMutation = useMarkAccountPaymentPaidMutation()
+
   const accountFilterFields = useMemo((): FilterFieldConfig[] => {
     const colWidth = '25%'
     return [
@@ -283,6 +287,28 @@ export default function AccountPaymentsPage() {
       ].join('|'),
     [applied]
   )
+
+  const accountPaymentsListQuery = useAccountPaymentsListQuery(
+    appliedResetKey,
+    accountPaymentsRemote
+  )
+
+  const accountPaymentRows = useMemo(() => {
+    if (accountPaymentsRemote) {
+      return accountPaymentsListQuery.data ?? []
+    }
+    return mockAccountPaymentRowsState
+  }, [
+    accountPaymentsRemote,
+    accountPaymentsListQuery.data,
+    mockAccountPaymentRowsState,
+  ])
+
+  const accountPaymentDetailRow = useMemo(() => {
+    const id = searchParams.get(AP_DETAIL_ID)?.trim()
+    if (!id) return null
+    return accountPaymentRows.find(r => r.id === id) ?? null
+  }, [searchParams, accountPaymentRows])
 
   const filteredRows = useMemo(
     () => filterRows(accountPaymentRows, applied),
@@ -500,11 +526,33 @@ export default function AccountPaymentsPage() {
     [setSearchParams]
   )
 
-  const handleAccountPaymentCompletedForRow = useCallback((rowId: string) => {
-    setAccountPaymentRows(prev =>
-      prev.map(r => (r.id === rowId ? { ...r, accountPaymentStatus: 'account_paid' as const } : r))
-    )
-  }, [])
+  const handleAccountPaymentCompletedForRow = useCallback(
+    (rowId: string) => {
+      const target = accountPaymentRows.find(r => r.id === rowId)
+      if (!target) return
+
+      if (accountPaymentsRemote) {
+        const paymentId = target.accountPaymentId
+        if (paymentId == null) {
+          window.alert('지급 완료 API에 필요한 accountPaymentId가 없습니다.')
+          return
+        }
+        void markPaidMutation
+          .mutateAsync([paymentId])
+          .catch(error => {
+            window.alert(getSettlementApiErrorMessage(error, '계좌 지급 완료 처리에 실패했습니다.'))
+          })
+        return
+      }
+
+      setMockAccountPaymentRowsState(prev =>
+        prev.map(r =>
+          r.id === rowId ? { ...r, accountPaymentStatus: 'account_paid' as const } : r
+        )
+      )
+    },
+    [accountPaymentRows, accountPaymentsRemote, markPaidMutation]
+  )
 
   const closeAccountPaymentConfirmModal = useCallback(() => {
     setAccountPayConfirmSelection(null)
@@ -602,14 +650,42 @@ export default function AccountPaymentsPage() {
       closeAccountPaymentConfirmModal()
       return
     }
+
+    if (accountPaymentsRemote) {
+      const paymentIds = selection
+        .map(r => r.accountPaymentId)
+        .filter((id): id is number => id != null)
+      if (paymentIds.length === 0) {
+        window.alert('지급 완료 API에 필요한 accountPaymentId가 없습니다.')
+        return
+      }
+      void markPaidMutation
+        .mutateAsync(paymentIds)
+        .then(() => {
+          const ids = new Set(selection.map(r => r.id))
+          setSelectedRowKeys(prev => prev.filter(k => !ids.has(String(k))))
+          closeAccountPaymentConfirmModal()
+          setAccountPaymentCompleteSuccessOpen(true)
+        })
+        .catch(error => {
+          window.alert(getSettlementApiErrorMessage(error, '계좌 지급 완료 처리에 실패했습니다.'))
+        })
+      return
+    }
+
     const ids = new Set(selection.map(r => r.id))
-    setAccountPaymentRows(prev =>
+    setMockAccountPaymentRowsState(prev =>
       prev.map(r => (ids.has(r.id) ? { ...r, accountPaymentStatus: 'account_paid' as const } : r))
     )
     setSelectedRowKeys(prev => prev.filter(k => !ids.has(String(k))))
     closeAccountPaymentConfirmModal()
     setAccountPaymentCompleteSuccessOpen(true)
-  }, [accountPayConfirmSelection, closeAccountPaymentConfirmModal])
+  }, [
+    accountPayConfirmSelection,
+    accountPaymentsRemote,
+    closeAccountPaymentConfirmModal,
+    markPaidMutation,
+  ])
 
   const closeAccountPaymentCompleteSuccess = useCallback(() => {
     setAccountPaymentCompleteSuccessOpen(false)
@@ -624,6 +700,8 @@ export default function AccountPaymentsPage() {
     setIssuedFormPreviewRows(completed)
     setBulkTransferPreviewOpen(true)
   }, [filteredRows])
+
+  const filterLayoutClassName = 'account-payments-page__filter-table'
 
   return (
     <div className="payment-orders-page account-payments-page">
@@ -661,9 +739,13 @@ export default function AccountPaymentsPage() {
           </span>
           <div className="account-payments-page__card-amount-row">
             <span className="account-payments-page__card-amount-num">
-              {MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET.toLocaleString('ko-KR')}
+              {accountPaymentsRemote
+                ? '—'
+                : MOCK_ACCOUNT_PAYMENT_ANNUAL_BUDGET.toLocaleString('ko-KR')}
             </span>
-            <span className="account-payments-page__card-amount-won">원</span>
+            {!accountPaymentsRemote && (
+              <span className="account-payments-page__card-amount-won">원</span>
+            )}
           </div>
         </div>
         <div className="account-payments-page__summary-card">
@@ -705,20 +787,33 @@ export default function AccountPaymentsPage() {
       </div>
 
       <div className="payment-orders-page__content-wrapper">
-        {viewMode === 'list' ? (
-          <FilterTableLayout
-            className="account-payments-page__filter-table"
-            bordered={false}
-            cardStyle={{ marginBottom: 0 }}
-            fields={accountFilterFields}
-            filters={unifiedFilterValues}
-            onFilterChange={handleUnifiedFilterChange}
-            onSearch={handleSearch}
-            title="계좌 지급 대상 목록"
-            description={`총 ${total}건`}
-            actions={accountPaymentsFilterTableActions}
-          >
-            <Table<AccountPaymentRow>
+        <FilterTableLayout
+          className={filterLayoutClassName}
+          contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
+          bordered={false}
+          cardStyle={{ marginBottom: 0 }}
+          fields={accountFilterFields}
+          filters={unifiedFilterValues}
+          onFilterChange={handleUnifiedFilterChange}
+          onSearch={handleSearch}
+          title={viewMode === 'list' ? '계좌 지급 대상 목록' : '예정 프로그램'}
+          description={`총 ${total}건`}
+          actions={accountPaymentsFilterTableActions}
+          hideExcelDownload
+        >
+          {viewMode === 'list' ? (
+            accountPaymentsRemote && accountPaymentsListQuery.isLoading ? (
+              <div className="page-content-loading page-content-loading--table-slot" role="status">
+                <Spin />
+              </div>
+            ) : accountPaymentsRemote && accountPaymentsListQuery.isError ? (
+              <div className="page-content-error" role="alert">
+                {accountPaymentsListQuery.error instanceof Error
+                  ? accountPaymentsListQuery.error.message
+                  : '목록을 불러오지 못했습니다.'}
+              </div>
+            ) : (
+              <Table<AccountPaymentRow>
               className="cms-data-table"
               rowKey="id"
               columns={columns}
@@ -734,18 +829,18 @@ export default function AccountPaymentsPage() {
                 },
               })}
             />
-          </FilterTableLayout>
-        ) : (
-          <div className="account-payments-page__calendar-without-card">
-            <div className="table-header-actions account-payments-page__calendar-toolbar">
-              <div className="table-header-title--wrapper">
-                <span className="table-title">예정 프로그램</span>
-                <span className="table-description">{`총 ${total}건`}</span>
-              </div>
-              <div className="account-payments-page__calendar-toolbar-actions">
-                {accountPaymentsFilterTableActions}
-              </div>
+            )
+          ) : accountPaymentsRemote && accountPaymentsListQuery.isLoading ? (
+            <div className="page-content-loading page-content-loading--table-slot" role="status">
+              <Spin />
             </div>
+          ) : accountPaymentsRemote && accountPaymentsListQuery.isError ? (
+            <div className="page-content-error" role="alert">
+              {accountPaymentsListQuery.error instanceof Error
+                ? accountPaymentsListQuery.error.message
+                : '목록을 불러오지 못했습니다.'}
+            </div>
+          ) : (
             <AccountPaymentsCalendarView
               key={appliedResetKey}
               rows={filteredRows}
@@ -753,8 +848,8 @@ export default function AccountPaymentsPage() {
               onSelectionChange={setSelectedRowKeys}
               onAccountPaymentRowClick={openAccountPaymentDetail}
             />
-          </div>
-        )}
+          )}
+        </FilterTableLayout>
       </div>
 
       <AccountPaymentConfirmationModal

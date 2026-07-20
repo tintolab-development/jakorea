@@ -1,19 +1,45 @@
 import { useCallback, useMemo, useState, type Key, type MouseEvent } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { Table } from 'antd'
+import { Alert, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { DELETE_GUIDE_TYPED_CONFIRM_VALUE } from '@/shared/constants/delete-guide-modal'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
-import { GEMINI_APPROVED_TRAINING_FILTER_FIELDS } from '../../model/approved/filter-fields'
-import { GEMINI_APPROVED_TRAINING_MOCK_ROWS } from '../../model/approved/mock'
+import { CmsButton, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
+import { geminiApprovedTrainingService } from '../../api/approved-training-service'
+import {
+  buildApprovedTrainingExcelRows,
+  GEMINI_APPROVED_TRAINING_EXCEL_COLUMNS,
+} from '../../lib/approved/build-excel-export'
+import {
+  approvedTrainingStatusModifier,
+  formatInstructorDisplay,
+  formatRegionDisplay,
+  formatStatusLabel,
+  formatTrainingDatetimeDisplay,
+} from '../../lib/approved/format-display'
+import {
+  resolveApprovedTrainingFilterDate,
+  resolveApprovedTrainingStatus,
+} from '../../lib/approved/resolve-status'
+import {
+  useGeminiApprovedTrainingRows,
+  useGeminiApprovedTrainingRowsQueryState,
+} from '../../hooks/use-gemini-approved-training-rows'
+import { useToday } from '../../hooks/use-today'
+import {
+  GEMINI_APPROVED_TRAINING_FILTER_FIELDS,
+  GEMINI_APPROVED_TRAINING_TRAILING_FILTER_KEYS,
+} from '../../model/approved/filter-fields'
 import type {
   GeminiApprovedTrainingRow,
   GeminiApprovedTrainingStatus,
 } from '../../model/approved/types'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { useGeminiApprovedTrainingDetailUrl } from './detail-fullpage-modal'
+import '@/pages/programs/program-list-page.css'
 import './list.css'
 
 type PendingFilters = {
@@ -24,13 +50,6 @@ type PendingFilters = {
   officialDocumentRequired: 'ALL' | 'Y' | 'N'
   trainingDateRange: [Dayjs | null, Dayjs | null] | null
 }
-
-const STATUS_LABEL: Record<GeminiApprovedTrainingStatus, string> = {
-  SCHEDULED: '프로그램 진행 예정',
-  IN_PROGRESS: '프로그램 진행 중',
-  ENDED: '프로그램 진행 종료',
-}
-const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 const COL = {
   no: TABLE_COLUMN_WIDTHS.index,
@@ -66,22 +85,29 @@ const INITIAL_PENDING_FILTERS: PendingFilters = {
 
 function statusText(status: GeminiApprovedTrainingStatus) {
   const base = 'gemini-approved-training-list__status'
-  const modifier =
-    status === 'SCHEDULED'
-      ? `${base}--scheduled`
-      : status === 'IN_PROGRESS'
-        ? `${base}--in-progress`
-        : `${base}--ended`
-  return <span className={`${base} ${modifier}`}>{STATUS_LABEL[status]}</span>
+  const modifier = `${base}--${approvedTrainingStatusModifier(status)}`
+  return <span className={`${base} ${modifier}`}>{formatStatusLabel(status)}</span>
 }
 
-function formatTrainingDatetime(row: GeminiApprovedTrainingRow): string {
-  const x = dayjs(row.trainingDate)
-  return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]}) | ${row.trainingTimeText}`
+function instructorNameText(name: string) {
+  if (name === '미지정') {
+    return (
+      <span className="gemini-approved-training-list__instructor gemini-approved-training-list__instructor--unassigned">
+        {name}
+      </span>
+    )
+  }
+  return name
 }
 
-function filterRows(rows: GeminiApprovedTrainingRow[], filters: PendingFilters) {
+function filterRows(
+  rows: GeminiApprovedTrainingRow[],
+  filters: PendingFilters,
+  todayKey: string
+) {
   const institutionNameQ = filters.institutionName.trim().toLowerCase()
+  const referenceDate = dayjs(todayKey)
+
   return rows.filter(row => {
     if (institutionNameQ && !row.institutionName.toLowerCase().includes(institutionNameQ)) {
       return false
@@ -92,7 +118,8 @@ function filterRows(rows: GeminiApprovedTrainingRow[], filters: PendingFilters) 
     if (filters.institutionSigungu && row.institutionSigungu !== filters.institutionSigungu) {
       return false
     }
-    if (filters.status !== 'ALL' && row.status !== filters.status) {
+    const derivedStatus = resolveApprovedTrainingStatus(row, referenceDate)
+    if (filters.status !== 'ALL' && derivedStatus !== filters.status) {
       return false
     }
     if (filters.officialDocumentRequired !== 'ALL') {
@@ -100,10 +127,10 @@ function filterRows(rows: GeminiApprovedTrainingRow[], filters: PendingFilters) 
       if (row.officialDocumentRequired !== required) return false
     }
     if (filters.trainingDateRange?.[0] && filters.trainingDateRange[1]) {
-      const rowDate = dayjs(row.trainingDate)
+      const rowDate = dayjs(resolveApprovedTrainingFilterDate(row))
       const from = filters.trainingDateRange[0].startOf('day')
       const to = filters.trainingDateRange[1].endOf('day')
-      if (rowDate.isBefore(from) || rowDate.isAfter(to)) {
+      if (!rowDate.isValid() || rowDate.isBefore(from) || rowDate.isAfter(to)) {
         return false
       }
     }
@@ -116,13 +143,22 @@ export function GeminiApprovedTrainingList() {
   const canWrite = canPerformWriteAction(user)
   const { showAlert } = useCmsAlert()
   const { openDetail } = useGeminiApprovedTrainingDetailUrl()
+  const todayKey = useToday()
+  const allRows = useGeminiApprovedTrainingRows()
+  const { remoteEnabled, isFetching, isError, refetch } = useGeminiApprovedTrainingRowsQueryState()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
   const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(INITIAL_PENDING_FILTERS)
 
   const filteredRows = useMemo(
-    () => filterRows(GEMINI_APPROVED_TRAINING_MOCK_ROWS, appliedFilters),
-    [appliedFilters]
+    () => filterRows(allRows, appliedFilters, todayKey),
+    [allRows, appliedFilters, todayKey]
+  )
+
+  const excelRows = useMemo(
+    () => buildApprovedTrainingExcelRows(filteredRows, todayKey),
+    [filteredRows, todayKey]
   )
 
   const showNoSelectionAlert = useCallback(() => {
@@ -132,14 +168,32 @@ export function GeminiApprovedTrainingList() {
     })
   }, [showAlert])
 
-  const handleBulkDelete = useCallback(() => {
+  const showRemoteMutationUnavailable = useCallback(() => {
+    showAlert({
+      title: '안내',
+      content:
+        '승인 연수 삭제 API가 아직 연동되지 않았습니다.\nOpenAPI mutation 추가 후 사용할 수 있습니다.',
+    })
+  }, [showAlert])
+
+  const handleBulkDeleteClick = useCallback(() => {
     if (!canWrite) return
+    if (remoteEnabled) {
+      showRemoteMutationUnavailable()
+      return
+    }
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
-    // TODO: 승인 연수 선택 삭제 확인 모달·API 연동
-  }, [canWrite, selectedRowKeys.length, showNoSelectionAlert])
+    setDeleteModalOpen(true)
+  }, [canWrite, remoteEnabled, selectedRowKeys.length, showNoSelectionAlert, showRemoteMutationUnavailable])
+
+  const handleConfirmDelete = useCallback(() => {
+    geminiApprovedTrainingService.delete(selectedRowKeys.map(key => String(key)))
+    setSelectedRowKeys([])
+    setDeleteModalOpen(false)
+  }, [selectedRowKeys])
 
   const columns: ColumnsType<GeminiApprovedTrainingRow> = useMemo(
     () => [
@@ -162,22 +216,26 @@ export function GeminiApprovedTrainingList() {
         key: 'region',
         width: COL.region,
         align: 'center',
-        render: (_: unknown, row) => `${row.institutionSido} ${row.institutionSigungu}`,
+        render: (_: unknown, row) => formatRegionDisplay(row),
       },
       {
         title: '진행 현황',
-        dataIndex: 'status',
         key: 'status',
         width: COL.status,
         align: 'center',
-        render: (status: GeminiApprovedTrainingStatus) => statusText(status),
+        render: (_: unknown, row) =>
+          statusText(resolveApprovedTrainingStatus(row, dayjs(todayKey))),
       },
       {
         title: '연수일시',
         key: 'trainingDatetime',
         width: COL.trainingDatetime,
         align: 'center',
-        render: (_: unknown, row) => formatTrainingDatetime(row),
+        render: (_: unknown, row) => (
+          <div className="gemini-approved-training-list__training-datetime-cell">
+            {renderProgramDetailPipeSeparated(formatTrainingDatetimeDisplay(row))}
+          </div>
+        ),
       },
       {
         title: '수강 인원',
@@ -189,10 +247,10 @@ export function GeminiApprovedTrainingList() {
       },
       {
         title: '강사',
-        dataIndex: 'instructorName',
         key: 'instructorName',
         width: COL.instructorName,
         align: 'center',
+        render: (_: unknown, row) => instructorNameText(formatInstructorDisplay(row)),
       },
       {
         title: '기관 담당자명',
@@ -202,96 +260,133 @@ export function GeminiApprovedTrainingList() {
         align: 'center',
       },
     ],
-    []
+    [todayKey]
   )
 
   return (
-    <FilterTableLayout
-      bordered={false}
-      fields={GEMINI_APPROVED_TRAINING_FILTER_FIELDS}
-      filters={pendingFilters}
-      onFilterChange={(key, value) => {
-        if (key === 'institutionSido') {
+    <div className="program-list-page">
+      {remoteEnabled && isError ? (
+        <Alert
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="승인 연수 목록을 불러오지 못했습니다."
+          action={
+            <CmsButton variant="secondary" onClick={() => void refetch()}>
+              다시 시도
+            </CmsButton>
+          }
+        />
+      ) : null}
+      <FilterTableLayout
+        bordered={false}
+        className="gemini-approved-training-list"
+        filterResponsiveWrap={false}
+        multiRowGridMode="responsive"
+        multiRowResponsiveLayout="merged-auto-fill"
+        mergedAutoFillTrailingFieldKeys={GEMINI_APPROVED_TRAINING_TRAILING_FILTER_KEYS}
+        fields={GEMINI_APPROVED_TRAINING_FILTER_FIELDS}
+        filters={pendingFilters}
+        onFilterChange={(key, value) => {
+          if (key === 'institutionSido') {
+            setPendingFilters(prev => ({
+              ...prev,
+              institutionSido: value == null ? '' : String(value),
+              institutionSigungu: '',
+            }))
+            return
+          }
+          if (key === 'institutionSigungu') {
+            setPendingFilters(prev => ({
+              ...prev,
+              institutionSigungu: value == null ? '' : String(value),
+            }))
+            return
+          }
+          if (key === 'status') {
+            setPendingFilters(prev => ({
+              ...prev,
+              status: (value == null ? 'ALL' : String(value)) as PendingFilters['status'],
+            }))
+            return
+          }
+          if (key === 'officialDocumentRequired') {
+            setPendingFilters(prev => ({
+              ...prev,
+              officialDocumentRequired: (value == null
+                ? 'ALL'
+                : String(value)) as PendingFilters['officialDocumentRequired'],
+            }))
+            return
+          }
+          if (key === 'trainingDateRange') {
+            setPendingFilters(prev => ({
+              ...prev,
+              trainingDateRange: value as [Dayjs | null, Dayjs | null] | null,
+            }))
+            return
+          }
           setPendingFilters(prev => ({
             ...prev,
-            institutionSido: value == null ? '' : String(value),
-            institutionSigungu: '',
+            [key]: value == null ? '' : String(value),
           }))
-          return
+        }}
+        onSearch={() => setAppliedFilters(pendingFilters)}
+        title="전체 승인 연수"
+        description={`총 ${filteredRows.length.toLocaleString()}건`}
+        actions={
+          <>
+            <CmsButton variant="delete" disabled={!canWrite} onClick={handleBulkDeleteClick}>
+              선택 삭제
+            </CmsButton>
+          </>
         }
-        if (key === 'institutionSigungu') {
-          setPendingFilters(prev => ({
-            ...prev,
-            institutionSigungu: value == null ? '' : String(value),
-          }))
-          return
-        }
-        if (key === 'status') {
-          setPendingFilters(prev => ({
-            ...prev,
-            status: (value == null ? 'ALL' : String(value)) as PendingFilters['status'],
-          }))
-          return
-        }
-        if (key === 'officialDocumentRequired') {
-          setPendingFilters(prev => ({
-            ...prev,
-            officialDocumentRequired: (value == null
-              ? 'ALL'
-              : String(value)) as PendingFilters['officialDocumentRequired'],
-          }))
-          return
-        }
-        if (key === 'trainingDateRange') {
-          setPendingFilters(prev => ({
-            ...prev,
-            trainingDateRange: value as [Dayjs | null, Dayjs | null] | null,
-          }))
-          return
-        }
-        setPendingFilters(prev => ({
-          ...prev,
-          [key]: value == null ? '' : String(value),
-        }))
-      }}
-      onSearch={() => setAppliedFilters(pendingFilters)}
-      title="전체 승인 연수"
-      description={`총 ${filteredRows.length.toLocaleString()}건`}
-      actions={
-        <>
-          <CmsButton variant="delete" disabled={!canWrite} onClick={handleBulkDelete}>
-            선택 삭제
-          </CmsButton>
-          <CmsButton variant="secondary">엑셀 다운로드</CmsButton>
-        </>
-      }
-    >
-      <Table<GeminiApprovedTrainingRow>
-        rowKey="id"
-        className="cms-data-table gemini-approved-training-list__table"
-        tableLayout="fixed"
-        scroll={{ x: TABLE_SCROLL_X }}
-        columns={columns}
-        dataSource={filteredRows}
-        pagination={false}
-        onRow={record => ({
-          onClick: (e: MouseEvent<HTMLElement>) => {
-            if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
-            openDetail(record.id)
-          },
-          style: { cursor: 'pointer' },
-        })}
-        rowSelection={
-          canWrite
-            ? {
-                columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                selectedRowKeys,
-                onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
-                preserveSelectedRowKeys: false,
-              }
-            : undefined
-        }
+        excelExport={{
+          columns: GEMINI_APPROVED_TRAINING_EXCEL_COLUMNS,
+          data: excelRows,
+        }}
+      >
+        <Table<GeminiApprovedTrainingRow>
+          rowKey="id"
+          className="cms-data-table gemini-approved-training-list__table"
+          tableLayout="fixed"
+          scroll={{ x: TABLE_SCROLL_X }}
+          columns={columns}
+          dataSource={filteredRows}
+          loading={remoteEnabled && isFetching}
+          pagination={false}
+          onRow={record => ({
+            onClick: (e: MouseEvent<HTMLElement>) => {
+              if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
+              openDetail(record.id)
+            },
+            style: { cursor: 'pointer' },
+          })}
+          rowSelection={
+            canWrite
+              ? {
+                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                  selectedRowKeys,
+                  onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                  preserveSelectedRowKeys: false,
+                }
+              : undefined
+          }
+        />
+      </FilterTableLayout>
+
+      <DeleteGuideModal
+        open={deleteModalOpen}
+        title="선택 삭제"
+        lines={[
+          `선택한 ${selectedRowKeys.length}건의 승인 연수를 삭제하시겠습니까?`,
+          '삭제된 승인 연수는 복구할 수 없습니다.',
+        ]}
+        confirmText="삭제"
+        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteModalOpen(false)}
       />
-    </FilterTableLayout>
+    </div>
   )
 }

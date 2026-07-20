@@ -5,7 +5,7 @@
 
 import { useMemo, useState, useCallback, useEffect } from 'react'
 import { Card, Table, Row, Col, Select } from 'antd'
-import { CmsButton, FilterSearchButton } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { useApplicantsTabParams, type ApplicantsFilters } from '../hooks/use-applicants-tab-params'
 import {
@@ -37,7 +37,10 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-import './program-applicants-tab.css'
+import {
+  withProgramDetailTdDivider,
+  ProgramDetailTdSegmentWrap,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 
 const SUB_TAB_SCHOOLS = 'schools'
 const SUB_TAB_INSTRUCTORS = 'instructors'
@@ -467,8 +470,11 @@ export function ProgramApplicantsTab({
         width: 200,
         align: 'center',
         ellipsis: true,
-        render: (_: unknown, row: ApplicantInstructorRow) =>
-          `${row.educationLevel} | ${row.educationSchoolName}`,
+        render: (_: unknown, row: ApplicantInstructorRow) => (
+          <ProgramDetailTdSegmentWrap>
+            {withProgramDetailTdDivider([row.educationLevel, row.educationSchoolName])}
+          </ProgramDetailTdSegmentWrap>
+        ),
       },
       {
         title: '연락처',
@@ -668,7 +674,15 @@ export function ProgramApplicantsTab({
                   </>
                 )}
                 <Col flex="none" className="program-applicants-tab__filter-col--btn">
-                  <FilterSearchButton onClick={handleSearch} />
+                  <CmsButton
+                    type="button"
+                    variant="primary"
+                    size="large"
+                    width={160}
+                    onClick={handleSearch}
+                  >
+                    조회
+                  </CmsButton>
                 </Col>
               </Row>
             </div>
@@ -687,10 +701,20 @@ export function ProgramApplicantsTab({
                   </span>
                 </div>
                 <div className="program-applicants-tab__table-actions">
-                  <CmsButton variant="delete" size="large" onClick={handleSchoolBulkRejectClick}>
+                  <CmsButton
+                    variant="delete"
+                    size="large"
+                    className="cms-button--action"
+                    onClick={handleSchoolBulkRejectClick}
+                  >
                     선택 반려
                   </CmsButton>
-                  <CmsButton variant="primary" size="large" onClick={handleSchoolBulkApproveClick}>
+                  <CmsButton
+                    variant="secondary"
+                    size="large"
+                    className="cms-button--action"
+                    onClick={handleSchoolBulkApproveClick}
+                  >
                     선택 승인
                   </CmsButton>
                 </div>
@@ -740,13 +764,15 @@ export function ProgramApplicantsTab({
                   <CmsButton
                     variant="delete"
                     size="large"
+                    className="cms-button--action"
                     onClick={handleInstructorBulkRejectClick}
                   >
                     선택 반려
                   </CmsButton>
                   <CmsButton
-                    variant="primary"
+                    variant="secondary"
                     size="large"
+                    className="cms-button--action"
                     onClick={handleInstructorBulkApproveClick}
                   >
                     선택 승인

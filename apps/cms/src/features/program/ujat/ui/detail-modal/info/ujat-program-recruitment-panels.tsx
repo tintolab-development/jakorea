@@ -7,12 +7,10 @@ import { UJAT_RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/ujat-
 import { renderUjatRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/paragraph-body'
 import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
 import { getUjatRecruitInstitutionDraft, getUjatRecruitVolunteerDraft } from './ujat-recruit-template-draft'
-import {
-  type UjatRecruitParagraphProps,
-  resolveUjatRecruitParagraphMode,
-} from './ujat-recruit-paragraph-props'
-import type { UjatRecruitTabKey } from './ujat-program-detail-recruitment-tabs'
-import { volunteerHalfFromRecruitTab, volunteerRecruitInfoSectionTitle } from './ujat-program-detail-recruitment-tabs'
+import type { UjatRecruitParagraphProps } from './ujat-recruit-paragraph-props'
+import { resolveUjatRecruitParagraphMode } from './ujat-recruit-paragraph-props'
+import { volunteerHalfFromRecruitTab, volunteerRecruitInfoSectionTitle, type UjatRecruitTabKey } from './ujat-program-detail-recruitment-tabs'
+import { resolveUjatRecruitDisplayProgram } from '@/features/program/ujat/lib/ujat-recruit-display-program'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './ujat-program-recruitment.css'
 
@@ -75,16 +73,17 @@ export function UjatProgramRecruitmentPanels({
   registerVolunteersAdditionalHtml?: (getter: () => string) => void
 }) {
   const volunteerHalf = volunteerHalfFromRecruitTab(activeRecruitTab)
+  const recruitDisplayProgram = resolveUjatRecruitDisplayProgram(program)
 
   if (activeRecruitTab === 'recruit_participant') {
     const draft = getUjatRecruitInstitutionDraft()
     const baseOptions = {
       mode: resolveUjatRecruitParagraphMode({
         mode: isEditMode ? 'edit' : 'view',
-        program,
+        program: recruitDisplayProgram,
         form: institutionsForm,
       }),
-      program,
+      program: recruitDisplayProgram,
       sponsorName,
       form: institutionsForm,
       onRegisterGetAdditionalContentHtml: registerInstitutionsAdditionalHtml,
@@ -109,10 +108,10 @@ export function UjatProgramRecruitmentPanels({
   const baseOptions = {
     mode: resolveUjatRecruitParagraphMode({
       mode: isEditMode ? 'edit' : 'view',
-      program,
+      program: recruitDisplayProgram,
       form: volunteersForm,
     }),
-    program,
+    program: recruitDisplayProgram,
     sponsorName,
     form: volunteersForm,
     volunteerHalf: volunteerHalf ?? 'h1',

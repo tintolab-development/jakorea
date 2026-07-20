@@ -1,0 +1,63 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 45%);
+}
+
+.panel {
+  display: flex;
+  width: var(--width-popup-sm, 440px);
+  min-width: 0;
+  min-height: 200px;
+  max-width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-28);
+  padding: var(--spacing-28);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-24);
+  background: var(--color-neutral-white);
+  box-shadow:
+    0 0 12px 3px rgb(14 42 53 / 8%),
+    0 14px 23px 0 rgb(14 42 53 / 10%);
+  outline: none;
+}
+
+.content {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  min-height: 0;
+}
+
+.title {
+  width: 100%;
+  margin: 0 0 var(--spacing-4);
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.description {
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.confirmButton {
+  flex-shrink: 0;
+  width: 100%;
+  margin: 0;
+}

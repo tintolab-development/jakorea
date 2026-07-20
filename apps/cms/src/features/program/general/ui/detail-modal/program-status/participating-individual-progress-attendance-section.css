@@ -1,0 +1,12 @@
+.participating-individual-progress-attendance-section
+  .school-detail-attendance-session__table-wrap
+  .participating-individual-progress-attendance-table
+  table.ant-table {
+  table-layout: fixed !important;
+  width: max-content !important;
+  min-width: 100%;
+}
+
+.participating-individual-progress-attendance-table .ant-table-tbody > tr:hover > td {
+  background: color-mix(in srgb, var(--color-mint-01, #01a1af) 6%, #fff) !important;
+}

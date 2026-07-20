@@ -131,33 +131,51 @@
   text-align: center;
 }
 
-.ujat-assignment-feedback-modal__write-body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.ujat-assignment-feedback-modal__form {
+  margin-top: 30px;
 }
 
-.ujat-assignment-feedback-modal__guide {
-  font-size: 13px;
-  color: #666;
-  line-height: 1.6;
-  margin: 0;
+.ujat-assignment-feedback-modal__form .detail-info-form__field {
+  --detail-info-label-w: 120px !important;
+  min-height: 124px;
 }
 
-.ujat-assignment-feedback-modal__view-body {
-  padding: 4px 0;
+.ujat-assignment-feedback-modal__form--view .detail-info-form__field {
+  min-height: 52px;
+}
+
+.ujat-assignment-feedback-modal__form--view .detail-info-form__field-content {
+  padding: 12px 16px;
+}
+
+.ujat-assignment-feedback-modal__form .detail-info-form__field-content--edit {
+  padding: 12px 16px;
+  align-items: stretch;
+}
+
+.ujat-assignment-feedback-modal__form .detail-info-form__field-content--edit > * {
+  width: 100%;
+  margin-block: 0;
+  align-items: stretch;
+}
+
+.ujat-assignment-feedback-modal__textarea,
+.ujat-assignment-feedback-modal__textarea .cms-textarea__control {
+  width: 100%;
 }
 
 .ujat-assignment-feedback-modal__feedback-content {
-  font-size: 14px;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 500;
   color: #3d3d3d;
-  line-height: 1.7;
+  line-height: 150%;
   white-space: pre-wrap;
-  background: #f9f9f9;
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
-  padding: 16px 20px;
-  min-height: 120px;
+}
+
+.ujat-assignment-feedback-modal__form:not(.ujat-assignment-feedback-modal__form--view)
+  .ujat-assignment-feedback-modal__feedback-content {
+  min-height: 96px;
 }
 
 .ujat-doc-viewer-modal__pdf-host {

@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
+import type { VolunteerInterviewScheduleEditSeed } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
 import type { UjatRecruitParagraphProps } from '@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props'
+import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { UJAT_RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
 import { UjatRecruitVolunteerDetailInfoParagraph } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraphs/ujat-recruit-volunteer-detail-info-paragraph'
 import { UjatRecruitVolunteerInfoParagraph } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraphs/ujat-recruit-volunteer-info-paragraph'
@@ -10,7 +12,11 @@ import { UjatRecruitVolunteerInterviewScheduleParagraph } from '@/features/templ
 export function renderUjatRecruitFormVolunteerParagraphBody(
   paragraph: HorizontalTableParagraph,
   enabled: boolean | undefined,
-  options?: UjatRecruitParagraphProps
+  options?: UjatRecruitParagraphProps,
+  volunteerTemplateOptions?: {
+    commonScheduleSeed?: VolunteerInterviewScheduleEditSeed
+    onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
+  }
 ): ReactNode | null {
   if (!enabled) return null
   switch (paragraph.id) {
@@ -22,6 +28,8 @@ export function renderUjatRecruitFormVolunteerParagraphBody(
       return (
         <UjatRecruitVolunteerInterviewScheduleParagraph
           exceptionScheduleCount={options?.exceptionScheduleCount ?? 0}
+          commonScheduleSeed={volunteerTemplateOptions?.commonScheduleSeed}
+          onCommonExclusionChange={volunteerTemplateOptions?.onCommonExclusionChange}
           {...options}
         />
       )

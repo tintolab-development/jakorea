@@ -1,0 +1,206 @@
+.schoolModalRegionRow {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-12);
+  margin-top: var(--spacing-28);
+}
+
+.schoolModalSearchRow {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr 160px;
+  gap: var(--spacing-12);
+  margin: var(--spacing-12) 0 var(--spacing-28) 0;
+}
+
+.schoolModalSearchRowActive {
+  margin-bottom: var(--spacing-12);
+}
+
+.schoolModalGuide {
+  padding-left: var(--spacing-8);
+}
+
+.schoolModalMain {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
+.schoolModalMainActive {
+  min-height: 513px;
+}
+
+.schoolModalResults {
+  display: flex;
+  width: 100%;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  min-height: 0;
+}
+
+.schoolResultStatus {
+  padding-left: var(--spacing-8);
+}
+
+.schoolResultNotice {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding-left: var(--spacing-8);
+}
+
+.schoolResultNotice p {
+  display: block;
+  margin: 0;
+}
+
+.schoolResultList {
+  display: flex;
+  width: 100%;
+  flex: 0 0 auto;
+  flex-direction: column;
+  margin: 0;
+  padding: var(--spacing-16) var(--spacing-20);
+  list-style: none;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+  max-height: 464px;
+  overflow-y: auto;
+}
+
+.schoolResultItem {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--spacing-12);
+  padding: var(--spacing-16) 0;
+  border-bottom: 1px solid rgb(61 61 61 / 10%);
+}
+.schoolResultItem:first-child {
+  padding-top: 0;
+}
+.schoolResultItem:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.schoolResultContent {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.schoolResultName {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schoolResultAddressRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  min-width: 0;
+}
+
+.schoolResultTag {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2) var(--spacing-8);
+  border-radius: var(--radius-4);
+  background: var(--color-neutral-cool-50);
+  color: var(--color-neutral-cool-700);
+  font-family: var(--font-family-base);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+.schoolResultAddress {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schoolResultSelectButton {
+  height: 60px;
+}
+
+.schoolResultHit {
+  color: var(--color-primary-500);
+}
+
+.schoolPagination {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--spacing-16);
+}
+
+.schoolModalSelectWrap {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 54px;
+  align-items: center;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+}
+
+.schoolModalSelectWrap:focus-within {
+  border-color: var(--color-border-focus);
+}
+
+.schoolModalSelectWrapDisabled {
+  background: var(--color-neutral-warm-100);
+}
+
+.schoolModalSelect {
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--spacing-40) 0 14px;
+  border: 0;
+  appearance: none;
+  background: transparent;
+  color: var(--color-neutral-black);
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  outline: 0;
+}
+
+.schoolModalSelect:disabled {
+  color: var(--color-neutral-warm-500);
+  cursor: not-allowed;
+}
+
+.schoolModalSelect option[value=''] {
+  color: var(--color-neutral-warm-500);
+}
+
+.schoolModalSelectArrow {
+  position: absolute;
+  right: 14px;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  transform: rotate(90deg);
+  pointer-events: none;
+}

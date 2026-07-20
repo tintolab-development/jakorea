@@ -3,10 +3,11 @@
  * Phase 0.1.3 수정: 회원가입 시 OAuth 연동
  */
 
-import { Button, Space } from 'antd'
+import { Space } from 'antd'
 import { useState } from 'react'
 import type { SocialProvider } from '@/entities/user/api/auth-service'
 import { GoogleMarkIcon } from '@/shared/ui/icons'
+import { LoadingButton } from '@/shared/ui/loading-button'
 import './social-register-form.css'
 
 interface SocialRegisterFormProps {
@@ -103,7 +104,7 @@ export function SocialRegisterForm({ onSocialRegister, disabled }: SocialRegiste
   return (
     <div className="social-register-form">
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-        <Button
+        <LoadingButton
           type="primary"
           block
           style={kakaoButtonStyle}
@@ -115,9 +116,9 @@ export function SocialRegisterForm({ onSocialRegister, disabled }: SocialRegiste
           }
         >
           카카오로 가입하기
-        </Button>
+        </LoadingButton>
 
-        <Button
+        <LoadingButton
           type="primary"
           block
           style={naverButtonStyle}
@@ -129,9 +130,9 @@ export function SocialRegisterForm({ onSocialRegister, disabled }: SocialRegiste
           }
         >
           네이버로 가입하기
-        </Button>
+        </LoadingButton>
 
-        <Button
+        <LoadingButton
           type="default"
           block
           className="social-register-google-btn"
@@ -142,7 +143,7 @@ export function SocialRegisterForm({ onSocialRegister, disabled }: SocialRegiste
           icon={<GoogleMarkIcon />}
         >
           Google로 가입하기
-        </Button>
+        </LoadingButton>
       </Space>
 
       <div style={{ marginTop: '16px', textAlign: 'center' }}>

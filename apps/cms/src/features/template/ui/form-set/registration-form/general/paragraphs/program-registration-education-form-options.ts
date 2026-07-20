@@ -13,13 +13,21 @@ const PROGRAM_REGISTRATION_EDUCATION_FORM_BASE: ProgramRegistrationEducationForm
 const PROGRAM_REGISTRATION_EDUCATION_FORM_PARTICIPANT_SELECTION: ProgramRegistrationEducationFormOption =
   { value: 'participant_selection', label: '참여자 선택' }
 
+export type ProgramRegistrationEducationFormOptionsContext = 'common' | 'perScheduleBlock'
+
 /**
  * 참여자 유형이 학교/기관(`participantOrganization`)일 때만 「참여자 선택」 항목을 붙인다.
  * 개인만 선택된 경우는 기본 3개 옵션만.
+ *
+ * `perScheduleBlock` — 회차/세부 일정 블록 내 교육 형태: 일정 별 상이 설정 시「참여자 선택」제외.
  */
 export function getProgramRegistrationEducationFormOptions(
-  participantOrganization: boolean
+  participantOrganization: boolean,
+  options?: { context?: ProgramRegistrationEducationFormOptionsContext }
 ): ProgramRegistrationEducationFormOption[] {
-  if (!participantOrganization) return [...PROGRAM_REGISTRATION_EDUCATION_FORM_BASE]
+  const context = options?.context ?? 'common'
+  if (!participantOrganization || context === 'perScheduleBlock') {
+    return [...PROGRAM_REGISTRATION_EDUCATION_FORM_BASE]
+  }
   return [...PROGRAM_REGISTRATION_EDUCATION_FORM_BASE, PROGRAM_REGISTRATION_EDUCATION_FORM_PARTICIPANT_SELECTION]
 }

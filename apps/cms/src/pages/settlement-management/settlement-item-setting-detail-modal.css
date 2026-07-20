@@ -21,6 +21,95 @@
   border-radius: 8px;
 }
 
+/*
+ * ModalSpecTable 산정 기준 인풋 — 이 모달에서만 medium(40px)·좌측 정렬 통일.
+ * CmsInput 기본 large(240×44)와 modal-spec-table 래퍼(40px) 충돌로 표 그리드가 깨지는 문제 방지.
+ */
+.settlement-item-setting-detail-modal .modal-spec-table__field-row {
+  flex: none;
+  width: 100%;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__label--basis + .modal-spec-table__cell {
+  align-items: center;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__input-wrap {
+  flex: 0 0 auto;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  overflow: hidden;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__input-wrap > .cms-input {
+  display: inline-flex;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  vertical-align: middle;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__input-wrap .cms-input__control {
+  box-sizing: border-box;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 0 12px 0 14px;
+}
+
+.settlement-item-setting-detail-modal
+  .modal-spec-table__input-wrap:not(.modal-spec-table__input-wrap--w160)
+  .cms-input__control {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  flex: 0 0 120px !important;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__input-wrap--w160 .cms-input__control {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  flex: 0 0 160px !important;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__input-wrap .cms-input__inner {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__input-wrap .ant-input-affix-wrapper {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  box-sizing: border-box;
+}
+
+.settlement-item-setting-detail-modal
+  .modal-spec-table__input-wrap
+  .ant-input-affix-wrapper
+  > .ant-input {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__suffix-text {
+  flex: 0 0 auto;
+}
+
 /* 교통비: 산정 행 인풋·셀렉트·라디오 한 줄 세로 중앙 정렬 */
 .settlement-item-setting-detail-modal--transport .settlement-item-setting-detail-modal__basis-row {
   align-items: center;
@@ -86,56 +175,6 @@
   .settlement-item-setting-detail-modal__basis-hours.ant-input-affix-wrapper
   > .ant-input {
   height: 100%;
-}
-
-/* 교통비: ModalSpecTable 산정 기준 단위 — 거리 숫자 인풋 120px */
-.settlement-item-setting-detail-modal--transport
-  .modal-spec-table__input-wrap--transport-km
-  .cms-input__control {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-  flex: 0 0 120px !important;
-}
-
-/* 숙박비: 산정 기준 단위(일) 숫자 인풋 120px */
-.settlement-item-setting-detail-modal--lodging
-  .modal-spec-table__input-wrap--lodging-basis-days
-  .cms-input__control {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-  flex: 0 0 120px !important;
-}
-
-/* 식사비: 산정 기준 단위(시간) 숫자 인풋 120px */
-.settlement-item-setting-detail-modal--meal
-  .modal-spec-table__input-wrap--meal-basis-hours
-  .cms-input__control {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-  flex: 0 0 120px !important;
-}
-
-/* 자원봉사자 활동비: 산정 기준 단위(시간) 숫자 인풋 120px */
-.settlement-item-setting-detail-modal--volunteer-activity
-  .modal-spec-table__input-wrap--volunteer-activity-basis-hours
-  .cms-input__control {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-  flex: 0 0 120px !important;
-}
-
-/* 회의참석비: 산정 기준 단위(시간) 숫자 인풋 120px */
-.settlement-item-setting-detail-modal--meeting-attendance
-  .modal-spec-table__input-wrap--meeting-attendance-hours
-  .cms-input__control {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-  flex: 0 0 120px !important;
 }
 
 .settlement-item-setting-detail-modal.content-modal.ant-modal .ant-modal-body {

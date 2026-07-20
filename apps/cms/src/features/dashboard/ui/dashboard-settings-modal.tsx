@@ -5,9 +5,10 @@
  * ContentModal(흰 헤더), 800×720px, 바디 스크롤
  */
 
-import { Checkbox, Collapse } from 'antd'
+import { Checkbox, Collapse, Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react'
+import { useQueries } from '@tanstack/react-query'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getDashboardWidgetsForUser, type DashboardWidgetType } from '@/shared/config/dashboard-config'
 import {
@@ -15,16 +16,16 @@ import {
   SHORTCUT_ITEMS,
   WIDGET_PROGRAM_KEYS,
   isShortcutItemEnabled,
+  DASHBOARD_HOME_PATH,
 } from '../model/dashboard-settings-store'
-import {
-  mockPrograms,
-  getGeneralEducationPrograms,
-  getCompanySchoolPrograms,
-  getUjatPrograms,
-  getGeminiPrograms,
-} from '@/data/mock'
+import { useSaveDashboardPreferences } from '../hooks/use-dashboard-preferences'
+import { getDashboardProgramOptions } from '../api/admin-dashboard-service'
+import { useDashboardQueryScope } from '../hooks/use-dashboard-query-scope'
+import { getMockDashboardProgramOptions } from '../api/dashboard-program-options-mock'
+import { dashboardQueryKeys } from '../api/dashboard-query-keys'
+import { useDashboardShortcuts } from '../hooks/use-dashboard-shortcuts'
 import './dashboard-settings-modal.css'
-import { AppButton } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 
 export interface DashboardSettingsModalProps {
   open: boolean
@@ -49,28 +50,25 @@ function buildProgramTitleGroups(
   return order.map(title => ({ title, ids: byTitle.get(title)! }))
 }
 
-function getProgramRowsForWidget(widgetKey: string): { id: string; title: string }[] {
-  if (widgetKey === 'program-schedule-general-widget') {
-    return getGeneralEducationPrograms().map(p => ({ id: p.id, title: p.title }))
-  }
-  if (widgetKey === 'program-schedule-company-school-widget') {
-    return getCompanySchoolPrograms().map(p => ({ id: p.id, title: p.title }))
-  }
-  if (widgetKey === 'program-schedule-ujat-widget') {
-    return getUjatPrograms().map(p => ({ id: p.id, title: p.title }))
-  }
-  if (widgetKey === 'program-schedule-gemini-widget') {
-    return getGeminiPrograms().map(p => ({ id: p.id, title: p.title }))
-  }
-  return mockPrograms.map(p => ({ id: p.id, title: p.title }))
+function getProgramRowsForWidget(
+  catalog: Record<string, { id: string; title: string }[]>,
+  widgetKey: string
+): { id: string; title: string }[] {
+  return catalog[widgetKey] ?? []
 }
 
-function getProgramTitleGroupsForWidget(widgetKey: string) {
-  return buildProgramTitleGroups(getProgramRowsForWidget(widgetKey))
+function getProgramTitleGroupsForWidget(
+  catalog: Record<string, { id: string; title: string }[]>,
+  widgetKey: string
+) {
+  return buildProgramTitleGroups(getProgramRowsForWidget(catalog, widgetKey))
 }
 
-function getAllProgramIdsForWidget(widgetKey: string): string[] {
-  return getProgramRowsForWidget(widgetKey).map(p => p.id)
+function getAllProgramIdsForWidget(
+  catalog: Record<string, { id: string; title: string }[]>,
+  widgetKey: string
+): string[] {
+  return getProgramRowsForWidget(catalog, widgetKey).map(p => p.id)
 }
 
 function cloneWidgetProgramIds(src: Record<string, string[]>): Record<string, string[]> {
@@ -83,12 +81,15 @@ type UnifiedProgramRow = {
   idsByWidget: Record<string, string[]>
 }
 
-function buildUnifiedProgramRows(visibleWidgetKeys: readonly string[]): UnifiedProgramRow[] {
+function buildUnifiedProgramRows(
+  visibleWidgetKeys: readonly string[],
+  catalog: Record<string, { id: string; title: string }[]>
+): UnifiedProgramRow[] {
   const titleOrder: string[] = []
   const byTitle = new Map<string, Record<string, string[]>>()
 
   for (const widgetKey of visibleWidgetKeys) {
-    for (const group of getProgramTitleGroupsForWidget(widgetKey)) {
+    for (const group of getProgramTitleGroupsForWidget(catalog, widgetKey)) {
       if (!byTitle.has(group.title)) {
         titleOrder.push(group.title)
         byTitle.set(group.title, {})
@@ -112,9 +113,10 @@ function widgetKeysForProgramRow(row: UnifiedProgramRow, visibleWidgetKeys: read
 function ensureGroupOffWidget(
   widgetKey: string,
   groupIds: string[],
-  state: Record<string, string[]>
+  state: Record<string, string[]>,
+  catalog: Record<string, { id: string; title: string }[]>
 ): string[] {
-  const allProgramIds = getAllProgramIdsForWidget(widgetKey)
+  const allProgramIds = getAllProgramIdsForWidget(catalog, widgetKey)
   const currentIds = state[widgetKey] ?? []
   if (currentIds.length === 0) {
     return allProgramIds.filter(id => !groupIds.includes(id))
@@ -126,9 +128,10 @@ function ensureGroupOffWidget(
 function ensureGroupOnWidget(
   widgetKey: string,
   groupIds: string[],
-  state: Record<string, string[]>
+  state: Record<string, string[]>,
+  catalog: Record<string, { id: string; title: string }[]>
 ): string[] {
-  const allProgramIds = getAllProgramIdsForWidget(widgetKey)
+  const allProgramIds = getAllProgramIdsForWidget(catalog, widgetKey)
   const currentIds = state[widgetKey] ?? []
   if (currentIds.length === 0) {
     return []
@@ -144,6 +147,10 @@ function ensureGroupOnWidget(
 
 export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModalProps) {
   const user = useAuthStore(s => s.user)
+  const { mutate: persistPreferences } = useSaveDashboardPreferences()
+  const queryScope = useDashboardQueryScope()
+  const useRemote = queryScope === 'remote'
+  const { data: apiShortcuts } = useDashboardShortcuts(open && useRemote)
 
   const visibleWidgetEntries = useMemo(() => {
     const widgets = getDashboardWidgetsForUser(user ?? null)
@@ -161,15 +168,66 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     []
   )
 
-  const unifiedRows = useMemo(
-    () => buildUnifiedProgramRows(visibleWidgetKeys),
-    [visibleWidgetKeys]
-  )
+  const programOptionQueries = useQueries({
+    queries: visibleWidgetKeys.map(widgetKey => ({
+      queryKey: dashboardQueryKeys.programOptions(queryScope, widgetKey),
+      queryFn: () => getDashboardProgramOptions(widgetKey),
+      enabled: open && useRemote,
+      staleTime: 60_000,
+      retry: false,
+    })),
+  })
+
+  const programsCatalogLoading =
+    useRemote &&
+    visibleWidgetKeys.length > 0 &&
+    (programOptionQueries.length < visibleWidgetKeys.length ||
+      programOptionQueries.some(q => q.isPending || q.isFetching))
+
+  const programCatalog = useMemo(() => {
+    if (!useRemote) {
+      const catalog: Record<string, { id: string; title: string }[]> = {}
+      visibleWidgetKeys.forEach(widgetKey => {
+        catalog[widgetKey] = getMockDashboardProgramOptions(widgetKey)
+      })
+      return catalog
+    }
+
+    if (programsCatalogLoading) {
+      return null
+    }
+
+    const catalog: Record<string, { id: string; title: string }[]> = {}
+    visibleWidgetKeys.forEach((widgetKey, index) => {
+      const query = programOptionQueries[index]
+      catalog[widgetKey] =
+        query?.isSuccess && query.data ? query.data : getMockDashboardProgramOptions(widgetKey)
+    })
+    return catalog
+  }, [visibleWidgetKeys, useRemote, programsCatalogLoading, programOptionQueries])
+
+  const shortcutCatalogItems = useMemo(() => {
+    if (!useRemote || !apiShortcuts?.length) {
+      return SHORTCUT_ITEMS
+    }
+    const localById = new Map(SHORTCUT_ITEMS.map(item => [item.id, item]))
+    return apiShortcuts.map(item => ({
+      id: item.id,
+      label: item.label || localById.get(item.id)?.label || item.id,
+      path: item.path || localById.get(item.id)?.path || DASHBOARD_HOME_PATH,
+    }))
+  }, [useRemote, apiShortcuts])
+
+  const unifiedRows = useMemo(() => {
+    if (!programCatalog) return []
+    return buildUnifiedProgramRows(visibleWidgetKeys, programCatalog)
+  }, [visibleWidgetKeys, programCatalog])
 
   /** 스토어에 반영 전 편집본 — 적용 전까지 대시보드 위젯은 변경되지 않음 */
   const [draftShortcutEnabled, setDraftShortcutEnabled] = useState<Record<string, boolean> | null>(
     null
   )
+  const [programCollapseActiveKey, setProgramCollapseActiveKey] = useState<string[]>([])
   const [draftWidgetProgramIds, setDraftWidgetProgramIds] = useState<Record<
     string,
     string[]
@@ -179,12 +237,18 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     if (!open) {
       setDraftShortcutEnabled(null)
       setDraftWidgetProgramIds(null)
+      setProgramCollapseActiveKey([])
       return
     }
     const s = useDashboardSettingsStore.getState()
     setDraftShortcutEnabled({ ...s.shortcutEnabled })
     setDraftWidgetProgramIds(cloneWidgetProgramIds(s.widgetProgramIds))
   }, [open])
+
+  useLayoutEffect(() => {
+    if (!open || programsCatalogLoading || unifiedRows.length === 0) return
+    setProgramCollapseActiveKey(prev => (prev.length === 0 ? [unifiedRows[0]!.title] : prev))
+  }, [open, programsCatalogLoading, unifiedRows])
 
   const shortcutEnabled =
     draftShortcutEnabled ?? useDashboardSettingsStore.getState().shortcutEnabled
@@ -203,21 +267,21 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
     setDraftShortcutEnabled(prev => {
       const base = prev ?? { ...useDashboardSettingsStore.getState().shortcutEnabled }
       const next = { ...base }
-      for (const item of SHORTCUT_ITEMS) {
+      for (const item of shortcutCatalogItems) {
         next[item.id] = enabled
       }
       return next
     })
-  }, [])
+  }, [shortcutCatalogItems])
 
   const shortcutAllEnabled = useMemo(
-    () => SHORTCUT_ITEMS.every(item => isShortcutItemEnabled(shortcutEnabled, item.id)),
-    [shortcutEnabled]
+    () => shortcutCatalogItems.every(item => isShortcutItemEnabled(shortcutEnabled, item.id)),
+    [shortcutCatalogItems, shortcutEnabled]
   )
   const shortcutAllIndeterminate = useMemo(() => {
-    const anyOn = SHORTCUT_ITEMS.some(item => isShortcutItemEnabled(shortcutEnabled, item.id))
+    const anyOn = shortcutCatalogItems.some(item => isShortcutItemEnabled(shortcutEnabled, item.id))
     return anyOn && !shortcutAllEnabled
-  }, [shortcutAllEnabled, shortcutEnabled])
+  }, [shortcutAllEnabled, shortcutCatalogItems, shortcutEnabled])
 
   const setDraftWidgetProgramIdsForKey = useCallback((widgetKey: string, programIds: string[]) => {
     setDraftWidgetProgramIds(prev => {
@@ -238,7 +302,8 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
 
   const handleTitleGroupToggle = useCallback(
     (widgetKey: string, groupIds: string[]) => {
-      const allProgramIds = getAllProgramIdsForWidget(widgetKey)
+      if (!programCatalog) return
+      const allProgramIds = getAllProgramIdsForWidget(programCatalog, widgetKey)
       const currentIds = widgetProgramIds[widgetKey] ?? []
       const groupOn = groupIds.every(id => currentIds.includes(id))
 
@@ -260,7 +325,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
       const allSelected = allProgramIds.every(id => next.includes(id))
       setDraftWidgetProgramIdsForKey(widgetKey, allSelected ? [] : next)
     },
-    [widgetProgramIds, setDraftWidgetProgramIdsForKey]
+    [widgetProgramIds, setDraftWidgetProgramIdsForKey, programCatalog]
   )
 
   const isMasterRowSelected = useCallback(
@@ -284,6 +349,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
 
   const handleMasterRowToggle = useCallback(
     (row: UnifiedProgramRow, turnOn: boolean) => {
+      if (!programCatalog) return
       setDraftWidgetProgramIds(prev => {
         const base =
           prev ?? cloneWidgetProgramIds(useDashboardSettingsStore.getState().widgetProgramIds)
@@ -291,12 +357,14 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
         const keys = widgetKeysForProgramRow(row, visibleWidgetKeys)
         for (const wk of keys) {
           const gids = row.idsByWidget[wk]!
-          next[wk] = turnOn ? ensureGroupOnWidget(wk, gids, next) : ensureGroupOffWidget(wk, gids, next)
+          next[wk] = turnOn
+            ? ensureGroupOnWidget(wk, gids, next, programCatalog)
+            : ensureGroupOffWidget(wk, gids, next, programCatalog)
         }
         return next
       })
     },
-    [visibleWidgetKeys]
+    [visibleWidgetKeys, programCatalog]
   )
 
   const handleApply = useCallback(() => {
@@ -307,21 +375,22 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
       shortcutEnabled: { ...nextShortcut },
       widgetProgramIds: cloneWidgetProgramIds(nextWidgetIds),
     })
+    if (useRemote) {
+      persistPreferences(undefined)
+    }
     onCancel()
-  }, [draftShortcutEnabled, draftWidgetProgramIds, onCancel])
+  }, [draftShortcutEnabled, draftWidgetProgramIds, onCancel, persistPreferences])
 
   const footer = (
     <>
-      <AppButton variant="cancel" onClick={onCancel}>
+      <CmsButton variant="secondary" size="small" onClick={onCancel}>
         닫기
-      </AppButton>
-      <AppButton variant="primary" onClick={handleApply}>
+      </CmsButton>
+      <CmsButton variant="primary" size="small" onClick={handleApply}>
         설정
-      </AppButton>
+      </CmsButton>
     </>
   )
-
-  const collapseDefaultKey = unifiedRows[0]?.title
 
   return (
     <ContentModal
@@ -343,7 +412,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
             >
               전체 선택
             </Checkbox>
-            {SHORTCUT_ITEMS.map(item => (
+            {shortcutCatalogItems.map(item => (
               <Checkbox
                 key={item.id}
                 checked={isShortcutItemEnabled(shortcutEnabled, item.id)}
@@ -357,14 +426,21 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
 
         <section className="dashboard-settings-modal__section">
           <div className="dashboard-settings-modal__section-title">위젯 별 프로그램 설정</div>
-          {visibleWidgetEntries.length === 0 || unifiedRows.length === 0 ? (
+          {programsCatalogLoading ? (
+            <div className="dashboard-settings-modal__program-loading">
+              <Spin />
+            </div>
+          ) : visibleWidgetEntries.length === 0 || unifiedRows.length === 0 ? (
             <div className="dashboard-settings-modal__program-empty">
               이 계정의 대시보드에서 설정할 프로그램 위젯이 없습니다.
             </div>
           ) : (
             <Collapse
               bordered={false}
-              defaultActiveKey={collapseDefaultKey}
+              activeKey={programCollapseActiveKey}
+              onChange={keys =>
+                setProgramCollapseActiveKey(Array.isArray(keys) ? keys : keys ? [keys] : [])
+              }
               expandIconPosition="end"
               expandIcon={({ isActive }) => (
                 <span

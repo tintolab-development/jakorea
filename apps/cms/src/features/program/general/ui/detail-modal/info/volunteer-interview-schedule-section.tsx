@@ -10,6 +10,7 @@ import {
   resolveGeneralProgramVolunteerInterviewScheduleEditSeed,
 } from '@/features/program/general/lib/volunteer-interview-schedule-display'
 import { resolveGeneralProgramVolunteerRecruitmentDisplay } from '@/features/program/general/lib/volunteer-recruitment-display'
+import type { UnavailableDatesExclusionState } from '@/features/template/ui/form-set/shared/unavailable-dates-exclusion'
 import { RecruitFormVolunteerInterviewScheduleParagraph } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraphs/recruit-form-volunteer-interview-schedule-paragraph'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -25,14 +26,17 @@ function UnavailableDatesReadRow({
   recurring: string
   specific: string
 }) {
-  if (!recurring.trim() && !specific.trim()) return <>-</>
-  if (!specific.trim()) return <>{recurring}</>
-  if (!recurring.trim()) return <>{specific}</>
+  const recurringTrim = recurring.trim()
+  const specificTrim = specific.trim()
+
+  if (!recurringTrim && !specificTrim) return <>진행 불가일 없음</>
+  if (!specificTrim) return <>{recurringTrim || '진행 불가일 없음'}</>
+  if (!recurringTrim) return <>{specificTrim}</>
   return (
     <div className="program-detail-info-tab__contact-inline">
-      <span>{recurring}</span>
+      <span>{recurringTrim}</span>
       <DetailInfoForm.InputsSeparator />
-      <span>{specific}</span>
+      <span>{specificTrim}</span>
     </div>
   )
 }
@@ -43,12 +47,14 @@ function GeneralProgramVolunteerInterviewScheduleView({
   exceptionBlockKeys,
   onRemoveExceptionBlock,
   commonScheduleSeed,
+  onCommonExclusionChange,
 }: {
   display: GeneralProgramVolunteerInterviewScheduleDisplay
   isEdit: boolean
   exceptionBlockKeys: number[]
   onRemoveExceptionBlock: (key: number) => void
   commonScheduleSeed?: ReturnType<typeof resolveGeneralProgramVolunteerInterviewScheduleEditSeed>
+  onCommonExclusionChange?: (state: UnavailableDatesExclusionState) => void
 }) {
   if (isEdit) {
     return (
@@ -56,6 +62,7 @@ function GeneralProgramVolunteerInterviewScheduleView({
         exceptionBlockKeys={exceptionBlockKeys}
         onRemoveExceptionBlock={onRemoveExceptionBlock}
         commonScheduleSeed={commonScheduleSeed}
+        onCommonExclusionChange={onCommonExclusionChange}
       />
     )
   }
@@ -102,6 +109,9 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
   const recruitmentDisplay = resolveGeneralProgramVolunteerRecruitmentDisplay(program)
   const interviewEnabledField = form?.watch('volunteerRecruitmentInterviewEnabled')
   const [exceptionBlockKeys, setExceptionBlockKeys] = useState<number[]>([])
+  const [exceptionScheduleAddDisabled, setExceptionScheduleAddDisabled] = useState(
+    () => editSeed?.excludeNone ?? false
+  )
   const showInterviewSchedule =
     isEdit && form
       ? interviewEnabledField === 'yes'
@@ -128,6 +138,7 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
                 variant="secondary"
                 size="medium"
                 width={160}
+                disabled={exceptionScheduleAddDisabled}
                 icon={<PlusOutlined aria-hidden />}
                 onClick={() => setExceptionBlockKeys(prev => [...prev, Date.now()])}
               >
@@ -145,6 +156,7 @@ export function GeneralProgramVolunteerInterviewScheduleSection({
           setExceptionBlockKeys(prev => prev.filter(blockKey => blockKey !== key))
         }
         commonScheduleSeed={editSeed}
+        onCommonExclusionChange={state => setExceptionScheduleAddDisabled(state.excludeNone)}
       />
     </section>
   )

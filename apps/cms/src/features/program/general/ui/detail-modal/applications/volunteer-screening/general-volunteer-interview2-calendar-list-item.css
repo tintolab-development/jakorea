@@ -1,0 +1,75 @@
+.general-volunteer-interview2-calendar-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.general-volunteer-interview2-calendar-list-item__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.general-volunteer-interview2-calendar-list-item__title-row,
+.general-volunteer-interview2-calendar-list-item__meta-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  gap: 0;
+}
+
+.general-volunteer-interview2-calendar-list-item__name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.general-volunteer-interview2-calendar-list-item__slot {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.general-volunteer-interview2-calendar-list-item__sep {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 21px;
+  justify-content: center;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.35;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 150%;
+  user-select: none;
+}
+
+.general-volunteer-interview2-calendar-list-item__score {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 140%;
+  opacity: 0.6;
+}

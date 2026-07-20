@@ -1,0 +1,59 @@
+import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
+import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
+
+/** 관리자 코멘트는 POST comments API로 분리 — PATCH body에서 제외 */
+export function mapPatchUserBasicInfoToApiRequest(
+  patch: PatchUserBasicInfoInput
+): AdminMemberBasicInfoUpdateRequest {
+  const body: AdminMemberBasicInfoUpdateRequest = {}
+
+  if (patch.name !== undefined) body.name = patch.name
+  if (patch.phone !== undefined) body.phone = patch.phone
+  if (patch.email !== undefined) body.email = patch.email
+  if (patch.detailAddress !== undefined) body.detailAddress = patch.detailAddress
+  if (patch.affiliation !== undefined) body.affiliation = patch.affiliation
+  if (patch.gender !== undefined) body.gender = patch.gender
+  if (patch.birthDate !== undefined) {
+    body.birthDate =
+      typeof patch.birthDate === 'string'
+        ? patch.birthDate
+        : patch.birthDate != null
+          ? new Date(patch.birthDate).toISOString().slice(0, 10)
+          : undefined
+  }
+  if (patch.socialAccounts !== undefined) body.socialAccounts = patch.socialAccounts
+  if (patch.listMetrics != null) {
+    body.listMetrics = { ...patch.listMetrics }
+  }
+  if (patch.schoolInfo != null) {
+    body.schoolInfo = {
+      ...(patch.schoolInfo.schoolName !== undefined
+        ? { schoolName: patch.schoolInfo.schoolName }
+        : {}),
+      ...(patch.schoolInfo.address !== undefined ? { address: patch.schoolInfo.address } : {}),
+      ...(patch.schoolInfo.position !== undefined ? { position: patch.schoolInfo.position } : {}),
+    }
+  }
+  if (patch.instructorInfo != null) {
+    body.instructorInfo = {
+      ...(patch.instructorInfo.bankName !== undefined
+        ? { bankName: patch.instructorInfo.bankName }
+        : {}),
+      ...(patch.instructorInfo.accountNumber !== undefined
+        ? { accountNumber: patch.instructorInfo.accountNumber }
+        : {}),
+      ...(patch.instructorInfo.accountHolder !== undefined
+        ? { accountHolder: patch.instructorInfo.accountHolder }
+        : {}),
+      ...(patch.instructorInfo.isBusinessIncome !== undefined
+        ? { isBusinessIncome: patch.instructorInfo.isBusinessIncome }
+        : {}),
+    }
+  }
+
+  return body
+}
+
+export function hasAdminCommentPatch(patch: PatchUserBasicInfoInput): boolean {
+  return Object.prototype.hasOwnProperty.call(patch, 'adminComment')
+}

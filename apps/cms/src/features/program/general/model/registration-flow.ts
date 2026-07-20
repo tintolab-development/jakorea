@@ -39,11 +39,19 @@ export const GENERAL_PROGRAM_RECRUIT_TAB_KEYS = [
 export type GeneralProgramRecruitTabKey = (typeof GENERAL_PROGRAM_RECRUIT_TAB_KEYS)[number]
 
 export const GENERAL_PROGRAM_RECRUIT_TAB_LABELS: Record<GeneralProgramRecruitTabKey, string> = {
-  'recruit-participant-school': '참여자 모집',
-  'recruit-participant-individual': '참여자 모집',
-  'recruit-instructor': '강사 모집',
-  'recruit-volunteer': '봉사자 모집',
+  'recruit-participant-school': '참여자 모집 정보',
+  'recruit-participant-individual': '참여자 모집 정보',
+  'recruit-instructor': '강사 모집 정보',
+  'recruit-volunteer': '봉사자 모집 정보',
 }
+
+/** 모집·신청 탭 가시성 — 1사1교 등 봉사자 없는 유형은 `hideVolunteer` */
+export type GeneralProgramRegistrationTabVisibilityOptions = {
+  hideVolunteer?: boolean
+}
+
+/** @deprecated `GeneralProgramRegistrationTabVisibilityOptions` 사용 */
+export type GeneralProgramRecruitTabVisibilityOptions = GeneralProgramRegistrationTabVisibilityOptions
 
 export const GENERAL_PROGRAM_REGISTRATION_APPLICATION_TAB_KEYS = [
   'application-participant-school',
@@ -59,10 +67,10 @@ export const GENERAL_PROGRAM_REGISTRATION_APPLICATION_TAB_LABELS: Record<
   GeneralProgramRegistrationApplicationTabKey,
   string
 > = {
-  'application-participant-school': '참여자 신청',
-  'application-participant-individual': '참여자 신청',
-  'application-instructor': '강사 신청',
-  'application-volunteer': '봉사자 신청',
+  'application-participant-school': '참여자 신청 정보',
+  'application-participant-individual': '참여자 신청 정보',
+  'application-instructor': '강사 신청 정보',
+  'application-volunteer': '봉사자 신청 정보',
 }
 
 /** 공통정보 「참여자 유형」 체크박스와 동일 */
@@ -73,79 +81,95 @@ export type GeneralProgramRegistrationParticipantFlags = {
   volunteer: boolean
 }
 
+function hasRecruitAudience(flags: GeneralProgramRegistrationParticipantFlags): boolean {
+  return flags.organization || flags.individual
+}
+
 function isRecruitStepVisible(
   key: GeneralProgramRecruitTabKey,
-  flags: GeneralProgramRegistrationParticipantFlags
+  flags: GeneralProgramRegistrationParticipantFlags,
+  options?: GeneralProgramRegistrationTabVisibilityOptions
 ): boolean {
   if (key === 'recruit-participant-school') return flags.organization
   if (key === 'recruit-participant-individual') return flags.individual
-  if (key === 'recruit-instructor') return flags.teacherInstructor
-  return flags.volunteer
+  // 등록 모집 단계: 참여자(개인/기관) 선택 시 강사·봉사자 모집 정보 탭을 함께 노출
+  if (key === 'recruit-instructor') return hasRecruitAudience(flags)
+  if (options?.hideVolunteer === true) return false
+  return hasRecruitAudience(flags)
 }
 
 function isApplicationStepVisible(
   key: GeneralProgramRegistrationApplicationTabKey,
-  flags: GeneralProgramRegistrationParticipantFlags
+  flags: GeneralProgramRegistrationParticipantFlags,
+  options?: GeneralProgramRegistrationTabVisibilityOptions
 ): boolean {
   if (key === 'application-participant-school') return flags.organization
   if (key === 'application-participant-individual') return flags.individual
-  if (key === 'application-instructor') return flags.teacherInstructor
-  return flags.volunteer
+  // 등록 3단계(신청): 참여자(개인/기관) 선택 시 강사·봉사자 신청 정보 탭을 함께 노출
+  if (key === 'application-instructor') return hasRecruitAudience(flags)
+  if (options?.hideVolunteer === true) return false
+  return hasRecruitAudience(flags)
 }
 
 export function getVisibleGeneralProgramRecruitTabKeys(
-  flags: GeneralProgramRegistrationParticipantFlags
+  flags: GeneralProgramRegistrationParticipantFlags,
+  options?: GeneralProgramRegistrationTabVisibilityOptions
 ): GeneralProgramRecruitTabKey[] {
-  return GENERAL_PROGRAM_RECRUIT_TAB_KEYS.filter(key => isRecruitStepVisible(key, flags))
+  return GENERAL_PROGRAM_RECRUIT_TAB_KEYS.filter(key => isRecruitStepVisible(key, flags, options))
 }
 
 export function getVisibleGeneralProgramApplicationTabKeys(
-  flags: GeneralProgramRegistrationParticipantFlags
+  flags: GeneralProgramRegistrationParticipantFlags,
+  options?: GeneralProgramRegistrationTabVisibilityOptions
 ): GeneralProgramRegistrationApplicationTabKey[] {
   return GENERAL_PROGRAM_REGISTRATION_APPLICATION_TAB_KEYS.filter(key =>
-    isApplicationStepVisible(key, flags)
+    isApplicationStepVisible(key, flags, options)
   )
 }
 
 export function isGeneralProgramRegistrationStepVisible(
   step: GeneralProgramRegistrationStepKey,
-  flags: GeneralProgramRegistrationParticipantFlags
+  flags: GeneralProgramRegistrationParticipantFlags,
+  options?: GeneralProgramRegistrationTabVisibilityOptions
 ): boolean {
   if (step === 'program') return true
   const recruitTab = STEP_TO_RECRUIT_TAB[step]
-  if (recruitTab != null) return isRecruitStepVisible(recruitTab, flags)
+  if (recruitTab != null) return isRecruitStepVisible(recruitTab, flags, options)
   const applicationKey = step as GeneralProgramRegistrationApplicationTabKey
   if (
     (GENERAL_PROGRAM_REGISTRATION_APPLICATION_TAB_KEYS as readonly string[]).includes(applicationKey)
   ) {
-    return isApplicationStepVisible(applicationKey, flags)
+    return isApplicationStepVisible(applicationKey, flags, options)
   }
   return false
 }
 
 export function getDefaultGeneralProgramRecruitStep(
-  flags: GeneralProgramRegistrationParticipantFlags
+  flags: GeneralProgramRegistrationParticipantFlags,
+  options?: GeneralProgramRegistrationTabVisibilityOptions
 ): GeneralProgramRegistrationStepKey {
-  const tab = getVisibleGeneralProgramRecruitTabKeys(flags)[0]
+  const tab = getVisibleGeneralProgramRecruitTabKeys(flags, options)[0]
   return tab != null ? registrationStepFromRecruitTab(tab) : 'program'
 }
 
 export function getDefaultGeneralProgramApplicationStep(
-  flags: GeneralProgramRegistrationParticipantFlags
+  flags: GeneralProgramRegistrationParticipantFlags,
+  options?: GeneralProgramRegistrationTabVisibilityOptions
 ): GeneralProgramRegistrationStepKey {
-  const tab = getVisibleGeneralProgramApplicationTabKeys(flags)[0]
+  const tab = getVisibleGeneralProgramApplicationTabKeys(flags, options)[0]
   return tab ?? 'program'
 }
 
 export function coerceGeneralProgramRegistrationStep(
   step: GeneralProgramRegistrationStepKey,
-  flags: GeneralProgramRegistrationParticipantFlags
+  flags: GeneralProgramRegistrationParticipantFlags,
+  options?: GeneralProgramRegistrationTabVisibilityOptions
 ): GeneralProgramRegistrationStepKey {
   if (step === 'program') return step
-  if (isGeneralProgramRegistrationStepVisible(step, flags)) return step
+  if (isGeneralProgramRegistrationStepVisible(step, flags, options)) return step
   const phase = getGeneralProgramRegistrationPhase(step)
-  if (phase === 'recruitment') return getDefaultGeneralProgramRecruitStep(flags)
-  if (phase === 'application') return getDefaultGeneralProgramApplicationStep(flags)
+  if (phase === 'recruitment') return getDefaultGeneralProgramRecruitStep(flags, options)
+  if (phase === 'application') return getDefaultGeneralProgramApplicationStep(flags, options)
   return 'program'
 }
 
@@ -239,11 +263,12 @@ export function isGeneralProgramRegistrationStepKey(
 
 export function normalizeGeneralProgramRegistrationStepKey(
   value: string | null | undefined,
-  flags?: GeneralProgramRegistrationParticipantFlags
+  flags?: GeneralProgramRegistrationParticipantFlags,
+  options?: GeneralProgramRecruitTabVisibilityOptions
 ): GeneralProgramRegistrationStepKey {
   if (!isGeneralProgramRegistrationStepKey(value)) return 'program'
   if (flags == null) return value
-  return coerceGeneralProgramRegistrationStep(value, flags)
+  return coerceGeneralProgramRegistrationStep(value, flags, options)
 }
 
 export function getGeneralProgramRegistrationPhase(

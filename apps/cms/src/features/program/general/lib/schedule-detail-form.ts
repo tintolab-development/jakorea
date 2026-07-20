@@ -40,6 +40,37 @@ export function isScheduleMultiAllPerSchedule(
   )
 }
 
+/** 일정형 — 교육·IPS 모두 일정 별 상이면 세부 일정 블록에 교육 형태+IPS를 같은 행에 노출 */
+export function isScheduleEducationAndIpsBothPerSchedule(
+  educationFormScheduleDetail: GeneralProgramScheduleDetailKind,
+  ipsScheduleDetail: GeneralProgramScheduleDetailKind
+): boolean {
+  return (
+    educationFormScheduleDetail === 'perSchedule' && ipsScheduleDetail === 'perSchedule'
+  )
+}
+
+/** 일정형 복수 — 세부 일정 블록 내 과제·교육·IPS 배치 플랜 */
+export type ScheduleDetailPerBlockLayoutPlan =
+  | 'none'
+  | 'assignment_with_education'
+  | 'assignment_with_ips'
+  | 'assignment_education_then_ips'
+
+export function getScheduleDetailPerBlockLayoutPlan(
+  sessionRound: GeneralProgramSessionRoundKind,
+  educationFormScheduleDetail: GeneralProgramScheduleDetailKind,
+  ipsScheduleDetail: GeneralProgramScheduleDetailKind
+): ScheduleDetailPerBlockLayoutPlan {
+  if (sessionRound !== 'multi') return 'none'
+  const eduPer = educationFormScheduleDetail === 'perSchedule'
+  const ipsPer = ipsScheduleDetail === 'perSchedule'
+  if (eduPer && ipsPer) return 'assignment_education_then_ips'
+  if (eduPer) return 'assignment_with_education'
+  if (ipsPer) return 'assignment_with_ips'
+  return 'none'
+}
+
 /** 유형 설정 — 단일/복수 분기 (커리큘럼·일정형 공통) */
 export function isGeneralProgramMultiRoundForTypeSettings(input: {
   educationStructure: GeneralProgramEducationStructure
@@ -98,7 +129,7 @@ export function buildDefaultScheduleDetailsForEdit(input: {
     : 'sub'
   const groupCount =
     input.sessionRound === 'multi' ? 1 : Math.max(1, input.scheduleGroupCount)
-  return [0, 1].map(i => createEmptyScheduleDetailBlock(i, { blockKind, groupCount }))
+  return [0].map(i => createEmptyScheduleDetailBlock(i, { blockKind, groupCount }))
 }
 
 export function relabelScheduleDetailFormRowsByKind(
@@ -125,7 +156,7 @@ export function buildDefaultCurriculumSessionsForEdit(
   ipsDetail: string
 }> {
   if (sessionRound === 'multi') {
-    return [1, 2].map(n => ({
+    return [1].map(n => ({
       sessionLabel: `${n}회차`,
       title: '1',
       description: '',
@@ -136,7 +167,7 @@ export function buildDefaultCurriculumSessionsForEdit(
       ipsDetail: 'none',
     }))
   }
-  return [1, 2].map(n => ({
+  return [1].map(n => ({
     sessionLabel: `${n}차시`,
     title: '',
     description: '',

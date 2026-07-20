@@ -20,6 +20,7 @@ type SurveyRegisteredActionsProps = {
   labels: SurveyRegisteredActionLabels
   layout?: 'poll' | 'satisfaction'
   showAddButton?: boolean
+  showShareButton?: boolean
   onShareClick: () => void
   onAddClick?: () => void
   onOpenTemplatePreview: () => void
@@ -35,31 +36,34 @@ export function SurveyRegisteredActions({
   labels,
   layout = 'poll',
   showAddButton = true,
+  showShareButton = true,
   onShareClick,
   onAddClick,
   onOpenTemplatePreview,
   onDownloadClick,
 }: SurveyRegisteredActionsProps) {
-  const hasResponses = survey.responseCount > 0
+  const showProgressHeaderActions = survey.status !== 'before_start'
   const downloadEnabled = canDownloadSurveyResults(survey)
   const rootClassName =
     layout === 'satisfaction'
-      ? 'ujat-survey-registered-actions ujat-survey-registered-actions--satisfaction'
-      : 'ujat-survey-registered-actions'
+      ? 'survey-management-registered-actions survey-management-registered-actions--satisfaction'
+      : 'survey-management-registered-actions'
 
-  if (!hasResponses) {
+  if (!showProgressHeaderActions) {
     return (
       <div className={rootClassName}>
-        <CmsButton
-          className="ujat-survey-registered-actions__share-button"
-          width={layout === 'satisfaction' ? undefined : 160}
-          onClick={onShareClick}
-        >
-          {labels.share}
-        </CmsButton>
+        {showShareButton ? (
+          <CmsButton
+            className="survey-management-registered-actions__share-button"
+            width={layout === 'satisfaction' ? 180 : 160}
+            onClick={onShareClick}
+          >
+            {labels.share}
+          </CmsButton>
+        ) : null}
         {showAddButton && onAddClick != null && labels.add != null ? (
           <CmsButton
-            className="ujat-survey-registered-actions__add-button"
+            className="survey-management-registered-actions__add-button"
             width={160}
             onClick={onAddClick}
           >
@@ -73,7 +77,7 @@ export function SurveyRegisteredActions({
   return (
     <div className={rootClassName}>
       <CmsButton
-        className="ujat-survey-registered-actions__download-button cms-button--no-label-ellipsis"
+        className="survey-management-registered-actions__download-button cms-button--no-label-ellipsis"
         variant="secondary"
         size="large"
         width="auto"
@@ -84,23 +88,25 @@ export function SurveyRegisteredActions({
         {labels.download}
       </CmsButton>
       <CmsButton
-        className="ujat-survey-registered-actions__preview-button"
+        className="survey-management-registered-actions__preview-button"
         variant="secondary"
         size="large"
         onClick={onOpenTemplatePreview}
       >
         {labels.preview}
       </CmsButton>
-      <CmsButton
-        className="ujat-survey-registered-actions__share-button"
-        width={layout === 'satisfaction' ? undefined : 160}
-        onClick={onShareClick}
-      >
-        {labels.share}
-      </CmsButton>
+      {showShareButton ? (
+        <CmsButton
+          className="survey-management-registered-actions__share-button"
+          width={layout === 'satisfaction' ? 180 : 160}
+          onClick={onShareClick}
+        >
+          {labels.share}
+        </CmsButton>
+      ) : null}
       {showAddButton && onAddClick != null && labels.add != null ? (
         <CmsButton
-          className="ujat-survey-registered-actions__add-button"
+          className="survey-management-registered-actions__add-button"
           width={160}
           onClick={onAddClick}
         >

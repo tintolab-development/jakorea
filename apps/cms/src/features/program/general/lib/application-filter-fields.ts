@@ -1,9 +1,14 @@
-import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { APPROVAL_STATUS_LABELS } from '@/shared/components/textbook-status-badge'
 import {
-  INSTITUTION_SIDO_FILTER_OPTIONS,
-  getInstitutionSigunguSelectOptions,
-} from '@/shared/config/institution-address-region-data'
+  createHomeAddressRegionFilterField,
+  createInstitutionAddressRegionFilterField,
+} from '@/shared/config/institution-address-region-filter-field'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
+import {
+  INSTRUCTOR_JA_EVALUATION_GRADE_FILTER_OPTIONS,
+  INSTRUCTOR_JA_EXPERIENCE_FILTER_OPTIONS,
+} from '@/features/program/general/lib/instructor-application-filter-options'
 
 const GRADE_OPTIONS = [
   { label: '전체', value: 'all' },
@@ -23,14 +28,7 @@ const APPROVAL_STATUS_OPTIONS = [
 ]
 
 /** 시안 — 검색·셀렉트(신청 학년·프로그램 승인 현황 등) */
-const GENERAL_APPLICATION_FILTER_CONTROL_WIDTH = 260
-/** 시안 — 자택/기관 주소 시·도·시/군/구 각 셀렉트 */
-const GENERAL_APPLICATION_FILTER_ADDRESS_SEGMENT_WIDTH = 120
-/** 시·도 ↔ 시/군/구 사이 간격(칸 내부) */
-const GENERAL_APPLICATION_FILTER_ADDRESS_PAIR_GAP = 12
-const GENERAL_APPLICATION_FILTER_ADDRESS_REGION_WIDTH =
-  GENERAL_APPLICATION_FILTER_ADDRESS_SEGMENT_WIDTH * 2 +
-  GENERAL_APPLICATION_FILTER_ADDRESS_PAIR_GAP
+const GENERAL_APPLICATION_FILTER_CONTROL_WIDTH = FILTER_CONTROL_MAX_WIDTH_PX
 
 const GENERAL_APPLICATION_FILTER_SELECT_FIELD_STYLE = {
   width: GENERAL_APPLICATION_FILTER_CONTROL_WIDTH,
@@ -45,20 +43,7 @@ export const generalOrganizationApplicationFilterFields: FilterFieldConfig[] = [
     placeholder: '신청 기관명을 입력하세요',
     width: GENERAL_APPLICATION_FILTER_CONTROL_WIDTH,
   },
-  {
-    key: 'institutionAddress',
-    type: 'addressRegion',
-    label: '기관 소재지',
-    width: GENERAL_APPLICATION_FILTER_ADDRESS_REGION_WIDTH,
-    addressRegion: {
-      sidoKey: 'institutionSido',
-      sigunguKey: 'institutionSigungu',
-      sidoOptions: INSTITUTION_SIDO_FILTER_OPTIONS,
-      getSigunguOptions: getInstitutionSigunguSelectOptions,
-      sidoPlaceholder: '시/도',
-      sigunguPlaceholder: '시/군/구',
-    },
-  },
+  createInstitutionAddressRegionFilterField(),
   {
     key: 'approvalStatus',
     type: 'select',
@@ -111,20 +96,7 @@ export const generalIndividualApplicationFilterFields: FilterFieldConfig[] = [
     style: GENERAL_APPLICATION_FILTER_SELECT_FIELD_STYLE,
     options: GRADE_OPTIONS,
   },
-  {
-    key: 'homeAddress',
-    type: 'addressRegion',
-    label: '자택 주소지',
-    width: GENERAL_APPLICATION_FILTER_ADDRESS_REGION_WIDTH,
-    addressRegion: {
-      sidoKey: 'homeSido',
-      sigunguKey: 'homeSigungu',
-      sidoOptions: INSTITUTION_SIDO_FILTER_OPTIONS,
-      getSigunguOptions: getInstitutionSigunguSelectOptions,
-      sidoPlaceholder: '시/도',
-      sigunguPlaceholder: '시/군/구',
-    },
-  },
+  createHomeAddressRegionFilterField({ label: '자택 주소지' }),
   {
     key: 'approvalStatus',
     type: 'select',
@@ -136,22 +108,9 @@ export const generalIndividualApplicationFilterFields: FilterFieldConfig[] = [
   },
 ]
 
-const INSTRUCTOR_EXPERIENCE_YEARS_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: '1년', value: '1' },
-  { label: '2년', value: '2' },
-  { label: '3년', value: '3' },
-  { label: '4년', value: '4' },
-  { label: '5년', value: '5' },
-  { label: '6년 이상', value: '6+' },
-]
+const INSTRUCTOR_EXPERIENCE_YEARS_OPTIONS = INSTRUCTOR_JA_EXPERIENCE_FILTER_OPTIONS
 
-const INSTRUCTOR_EVALUATION_GRADE_OPTIONS = [
-  { label: '전체', value: 'all' },
-  { label: 'A등급', value: 'A' },
-  { label: 'B등급', value: 'B' },
-  { label: 'C등급', value: 'C' },
-]
+const INSTRUCTOR_EVALUATION_GRADE_OPTIONS = [...INSTRUCTOR_JA_EVALUATION_GRADE_FILTER_OPTIONS]
 
 /** 일반 프로그램 상세 — 강사 신청 목록 필터 (스크린샷 라벨) */
 export const generalInstructorApplicationFilterFields: FilterFieldConfig[] = [
@@ -162,20 +121,7 @@ export const generalInstructorApplicationFilterFields: FilterFieldConfig[] = [
     placeholder: '강사명을 입력하세요',
     width: GENERAL_APPLICATION_FILTER_CONTROL_WIDTH,
   },
-  {
-    key: 'homeAddress',
-    type: 'addressRegion',
-    label: '자택 소재지',
-    width: GENERAL_APPLICATION_FILTER_ADDRESS_REGION_WIDTH,
-    addressRegion: {
-      sidoKey: 'homeSido',
-      sigunguKey: 'homeSigungu',
-      sidoOptions: INSTITUTION_SIDO_FILTER_OPTIONS,
-      getSigunguOptions: getInstitutionSigunguSelectOptions,
-      sidoPlaceholder: '시/도',
-      sigunguPlaceholder: '시/군/구',
-    },
-  },
+  createHomeAddressRegionFilterField({ label: '자택 소재지' }),
   {
     key: 'experienceYears',
     type: 'select',
@@ -214,20 +160,7 @@ export const generalInstructorCalendarFilterFields: FilterFieldConfig[] = [
     placeholder: '신청 기관명을 입력하세요',
     width: GENERAL_APPLICATION_FILTER_CONTROL_WIDTH,
   },
-  {
-    key: 'homeAddress',
-    type: 'addressRegion',
-    label: '자택 소재지',
-    width: GENERAL_APPLICATION_FILTER_ADDRESS_REGION_WIDTH,
-    addressRegion: {
-      sidoKey: 'homeSido',
-      sigunguKey: 'homeSigungu',
-      sidoOptions: INSTITUTION_SIDO_FILTER_OPTIONS,
-      getSigunguOptions: getInstitutionSigunguSelectOptions,
-      sidoPlaceholder: '시/도',
-      sigunguPlaceholder: '시/군/구',
-    },
-  },
+  createHomeAddressRegionFilterField({ label: '자택 소재지' }),
   {
     key: 'approvalStatus',
     type: 'select',

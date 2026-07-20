@@ -85,7 +85,7 @@ export function SatisfactionSurveyModal({
       }
       onCancel={handleCancel}
       footer={null}
-      width={700}
+      width={800}
       destroyOnHidden
     >
       {existingRecord && (
@@ -99,7 +99,6 @@ export function SatisfactionSurveyModal({
         <Form.Item
           label="프로그램 만족도"
           name="programRating"
-          rules={[{ required: true }]}
         >
           <Rate allowClear />
         </Form.Item>
@@ -107,7 +106,6 @@ export function SatisfactionSurveyModal({
         <Form.Item
           label="내용 만족도"
           name="contentRating"
-          rules={[{ required: true }]}
         >
           <Rate allowClear />
         </Form.Item>
@@ -115,7 +113,6 @@ export function SatisfactionSurveyModal({
         <Form.Item
           label="강사 만족도"
           name="instructorRating"
-          rules={[{ required: true }]}
         >
           <Rate allowClear />
         </Form.Item>
@@ -123,7 +120,6 @@ export function SatisfactionSurveyModal({
         <Form.Item
           label="종합 만족도"
           name="overallRating"
-          rules={[{ required: true }]}
         >
           <Rate allowClear />
         </Form.Item>

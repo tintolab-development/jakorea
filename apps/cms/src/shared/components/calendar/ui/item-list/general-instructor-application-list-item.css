@@ -1,0 +1,104 @@
+/* 행 shell·hover·패딩·테두리는 `.calendar-list-item` (`calendar-sub-right.css`) */
+.general-instructor-application-list-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.general-instructor-application-list-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.general-instructor-application-list-item__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 3px;
+}
+
+.general-instructor-application-list-item__school {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.general-instructor-application-list-item__divider {
+  width: 1px;
+  height: 13px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+}
+
+.general-instructor-application-list-item__session {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 10px;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.6;
+}
+
+.general-instructor-application-list-item__instructor {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.general-instructor-application-list-item__round {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.general-instructor-application-list-item__tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.general-instructor-application-list-item__tag {
+  display: flex;
+  flex: 0 0 auto;
+  padding: 3px 8px 2px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--default-WT, #fff);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.general-instructor-application-list-item__tag--mint {
+  border-color: var(--JA-mint-01, #01a1af);
+}

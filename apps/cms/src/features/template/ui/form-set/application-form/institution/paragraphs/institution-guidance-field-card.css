@@ -1,0 +1,81 @@
+.institution-guidance-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.institution-guidance-field-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: var(--8, 8px);
+  overflow: hidden;
+  background: var(--main-WT, #fff);
+  border: 1px solid var(--gray-e-7-ebef, #e7ebef);
+}
+
+.institution-guidance-field-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35em;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  background:
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    var(--main-WT, #fff);
+}
+
+.institution-guidance-field-card__label-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35em;
+  width: 100%;
+  min-width: 0;
+}
+
+.institution-guidance-field-card__title {
+  flex-shrink: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.institution-guidance-field-card__description {
+  flex: 1 1 12rem;
+  min-width: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%; /* 19.6px */
+  opacity: 0.6;
+}
+
+.institution-guidance-field-card__body {
+  padding: 12px 16px;
+  box-sizing: border-box;
+  background: var(--main-WT, #fff);
+}
+
+.institution-guidance-field-card .cms-textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.institution-guidance-field-card .cms-textarea__control {
+  background: var(--main-WT, #fff);
+}

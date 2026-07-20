@@ -156,7 +156,6 @@ export function TemplateListPage() {
           )}
         </>
       )}
-      {/* 자식 라우트(`form-management` 등)는 반드시 Outlet으로만 마운트 — 인라인 중복 시 Provider 밖에서 렌더될 수 있음(RR7) */}
       <Outlet />
     </>
   )

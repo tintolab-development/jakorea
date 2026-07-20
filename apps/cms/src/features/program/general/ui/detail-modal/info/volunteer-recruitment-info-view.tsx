@@ -9,6 +9,7 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import {
   INTERVIEW_METHOD_OPTIONS,
+  parseVolunteerTargetsSelectValue,
   VOLUNTEER_TARGET_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
@@ -24,7 +25,10 @@ import {
   ProgramDetailInterviewReadRow,
 } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
-import { resolveGeneralProgramVolunteerRecruitmentDisplay } from '@/features/program/general/lib/volunteer-recruitment-display'
+import {
+  resolveGeneralProgramVolunteerRecruitmentDisplay,
+  resolveVolunteerRecruitmentInterviewEnabled,
+} from '@/features/program/general/lib/volunteer-recruitment-display'
 import dayjs from 'dayjs'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './volunteer-recruitment-info-view.css'
@@ -64,6 +68,197 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
   )
 
   const contactOrg = display.contactOrganizationName
+  const editInterviewValue = form?.watch('volunteerRecruitmentInterviewEnabled')
+  const interviewEnabled = resolveVolunteerRecruitmentInterviewEnabled(
+    program,
+    isEdit && form ? editInterviewValue : undefined
+  )
+
+  const recruitmentPeriodField = (
+    <DetailInfoForm.Field
+      label="봉사자 모집 기간"
+      fullRow={!interviewEnabled}
+      view={display.recruitmentPeriodLabel}
+      edit={
+        isEdit && form ? (
+          <Controller
+            name="volunteerApplicationStartDate"
+            control={form.control}
+            render={({ field }) => (
+              <ParagraphDatePicker
+                mode="range"
+                value={[
+                  toDayjs(field.value as string | Date | undefined),
+                  toDayjs(form.watch('volunteerApplicationEndDate') as string | Date | undefined),
+                ]}
+                onChange={([start, end]) => {
+                  field.onChange(start ? start.toISOString() : undefined)
+                  form.setValue(
+                    'volunteerApplicationEndDate',
+                    end ? end.toISOString() : undefined
+                  )
+                }}
+                placeholder={['모집 시작일', '모집 종료일']}
+                width="100%"
+                style={{ width: '100%' }}
+              />
+            )}
+          />
+        ) : undefined
+      }
+    />
+  )
+
+  const documentPassField = (
+    <DetailInfoForm.Field
+      label="1차 서류 합격자 발표"
+      view={
+        <ProgramDetailDateMethodReadRow
+          dateIso={display.documentPassAnnouncementDate}
+          method={display.documentPassAnnouncementMethod}
+        />
+      }
+      edit={
+        isEdit && form ? (
+          <div className="program-detail-info-tab__result-row">
+            <Controller
+              name="documentPassAnnouncementDate"
+              control={form.control}
+              render={({ field }) => (
+                <ParagraphDatePicker
+                  mode="single"
+                  presetMode="date"
+                  customizable={false}
+                  value={toDayjs(field.value)}
+                  onChange={d => field.onChange(d ? d.toISOString() : undefined)}
+                  placeholder="합격자 발표일"
+                  width={190}
+                />
+              )}
+            />
+            <DetailInfoForm.InputsSeparator />
+            <Controller
+              name="documentPassAnnouncementMethod"
+              control={form.control}
+              render={({ field }) => (
+                <CmsInput
+                  {...field}
+                  value={field.value ?? ''}
+                  placeholder="발표 방법 안내"
+                  inputSize="medium"
+                  width="100%"
+                  className="program-detail-info-tab__result-method-input"
+                />
+              )}
+            />
+          </div>
+        ) : undefined
+      }
+    />
+  )
+
+  const interviewPeriodField = (
+    <DetailInfoForm.Field
+      label="2차 면접 기간"
+      view={
+        <ProgramDetailInterviewReadRow
+          start={display.interviewStartDate}
+          end={display.interviewEndDate}
+          method={display.interviewMethod}
+        />
+      }
+      edit={
+        isEdit && form ? (
+          <div className="program-detail-info-tab__result-row">
+            <Controller
+              name="interviewStartDate"
+              control={form.control}
+              render={({ field }) => (
+                <ParagraphDatePicker
+                  mode="range"
+                  value={[
+                    toDayjs(field.value as string | Date | undefined),
+                    toDayjs(form.watch('interviewEndDate') as string | Date | undefined),
+                  ]}
+                  onChange={([start, end]) => {
+                    field.onChange(start ? start.toISOString() : undefined)
+                    form.setValue('interviewEndDate', end ? end.toISOString() : undefined)
+                  }}
+                  placeholder={['면접 시작일', '면접 종료일']}
+                  width="100%"
+                  style={{ width: '100%', flex: '1 1 0', minWidth: 0 }}
+                />
+              )}
+            />
+            <DetailInfoForm.InputsSeparator />
+            <Controller
+              name="interviewMethod"
+              control={form.control}
+              render={({ field }) => (
+                <CmsSelect
+                  inputSize="medium"
+                  width={140}
+                  value={field.value ?? undefined}
+                  options={INTERVIEW_METHOD_OPTIONS}
+                  onChange={v => field.onChange(v ?? undefined)}
+                  placeholder="면접 유형"
+                />
+              )}
+            />
+          </div>
+        ) : undefined
+      }
+    />
+  )
+
+  const finalPassField = (
+    <DetailInfoForm.Field
+      label="최종 합격자 발표"
+      fullRow={!interviewEnabled}
+      view={
+        <ProgramDetailDateMethodReadRow
+          dateIso={display.finalPassAnnouncementDate}
+          method={display.finalPassAnnouncementMethod}
+        />
+      }
+      edit={
+        isEdit && form ? (
+          <div className="program-detail-info-tab__result-row">
+            <Controller
+              name="finalPassAnnouncementDate"
+              control={form.control}
+              render={({ field }) => (
+                <ParagraphDatePicker
+                  mode="single"
+                  presetMode="date"
+                  customizable={false}
+                  value={toDayjs(field.value)}
+                  onChange={d => field.onChange(d ? d.toISOString() : undefined)}
+                  placeholder="합격자 발표일"
+                  width={190}
+                />
+              )}
+            />
+            <DetailInfoForm.InputsSeparator />
+            <Controller
+              name="finalPassAnnouncementMethod"
+              control={form.control}
+              render={({ field }) => (
+                <CmsInput
+                  {...field}
+                  value={field.value ?? ''}
+                  placeholder="발표 방법 안내"
+                  inputSize="medium"
+                  width="100%"
+                  className="program-detail-info-tab__result-method-input"
+                />
+              )}
+            />
+          </div>
+        ) : undefined
+      }
+    />
+  )
 
   return (
     <section className="volunteer-recruitment-info-view" aria-label="봉사자 모집 정보">
@@ -172,16 +367,18 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
               edit={
                 isEdit && form ? (
                   <Controller
-                    name="volunteerTarget"
+                    name="volunteerTargets"
                     control={form.control}
                     render={({ field }) => (
                       <CmsSelect
+                        mode="multiple"
                         inputSize="medium"
                         width={240}
-                        value={field.value ?? '대학(원)생'}
-                        options={VOLUNTEER_TARGET_OPTIONS}
-                        onChange={v => field.onChange(v ?? '대학(원)생')}
-                        placeholder="전체"
+                        withAllOption={false}
+                        value={field.value ?? []}
+                        options={[...VOLUNTEER_TARGET_OPTIONS]}
+                        onChange={v => field.onChange(parseVolunteerTargetsSelectValue(v))}
+                        placeholder="모집 대상을 선택하세요"
                         className="program-detail-info-tab__target-select"
                       />
                     )}
@@ -203,6 +400,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                         value={field.value ?? ''}
                         placeholder="상세 모집 대상을 입력하세요"
                         inputSize="medium"
+                        width="100%"
                         className="program-detail-info-tab__district-input"
                       />
                     )}
@@ -212,188 +410,23 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
             />
           </DetailInfoForm.Row>
 
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field
-              label="봉사자 모집 기간"
-              view={display.recruitmentPeriodLabel}
-              edit={
-                isEdit && form ? (
-                  <Controller
-                    name="volunteerApplicationStartDate"
-                    control={form.control}
-                    render={({ field }) => (
-                      <ParagraphDatePicker
-                        mode="range"
-                        value={[
-                          toDayjs(field.value as string | Date | undefined),
-                          toDayjs(
-                            form.watch('volunteerApplicationEndDate') as string | Date | undefined
-                          ),
-                        ]}
-                        onChange={([start, end]) => {
-                          field.onChange(start ? start.toISOString() : undefined)
-                          form.setValue(
-                            'volunteerApplicationEndDate',
-                            end ? end.toISOString() : undefined
-                          )
-                        }}
-                        placeholder={['모집 시작일', '모집 종료일']}
-                        width="100%"
-                        style={{ width: '100%' }}
-                      />
-                    )}
-                  />
-                ) : undefined
-              }
-            />
-            <DetailInfoForm.Field
-              label="1차 서류 합격자 발표"
-              view={
-                <ProgramDetailDateMethodReadRow
-                  dateIso={display.documentPassAnnouncementDate}
-                  method={display.documentPassAnnouncementMethod}
-                />
-              }
-              edit={
-                isEdit && form ? (
-                  <div className="program-detail-info-tab__result-row">
-                    <Controller
-                      name="documentPassAnnouncementDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <ParagraphDatePicker
-                          mode="single"
-                          presetMode="date"
-                          customizable={false}
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                          placeholder="합격자 발표일"
-                          width={190}
-                        />
-                      )}
-                    />
-                    <DetailInfoForm.InputsSeparator />
-                    <Controller
-                      name="documentPassAnnouncementMethod"
-                      control={form.control}
-                      render={({ field }) => (
-                        <CmsInput
-                          {...field}
-                          value={field.value ?? ''}
-                          placeholder="발표 방법 안내"
-                          inputSize="medium"
-                          width="100%"
-                          className="program-detail-info-tab__result-method-input"
-                        />
-                      )}
-                    />
-                  </div>
-                ) : undefined
-              }
-            />
-          </DetailInfoForm.Row>
-
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field
-              label="2차 면접 기간"
-              view={
-                <ProgramDetailInterviewReadRow
-                  start={display.interviewStartDate}
-                  end={display.interviewEndDate}
-                  method={display.interviewMethod}
-                />
-              }
-              edit={
-                isEdit && form ? (
-                  <div className="program-detail-info-tab__result-row">
-                    <Controller
-                      name="interviewStartDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <ParagraphDatePicker
-                          mode="range"
-                          value={[
-                            toDayjs(field.value as string | Date | undefined),
-                            toDayjs(form.watch('interviewEndDate') as string | Date | undefined),
-                          ]}
-                          onChange={([start, end]) => {
-                            field.onChange(start ? start.toISOString() : undefined)
-                            form.setValue(
-                              'interviewEndDate',
-                              end ? end.toISOString() : undefined
-                            )
-                          }}
-                          placeholder={['면접 시작일', '면접 종료일']}
-                          width="100%"
-                          style={{ width: '100%', flex: '1 1 0', minWidth: 0 }}
-                        />
-                      )}
-                    />
-                    <DetailInfoForm.InputsSeparator />
-                    <Controller
-                      name="interviewMethod"
-                      control={form.control}
-                      render={({ field }) => (
-                        <CmsSelect
-                          inputSize="medium"
-                          width={140}
-                          value={field.value ?? undefined}
-                          options={INTERVIEW_METHOD_OPTIONS}
-                          onChange={v => field.onChange(v ?? undefined)}
-                          placeholder="면접 유형"
-                        />
-                      )}
-                    />
-                  </div>
-                ) : undefined
-              }
-            />
-            <DetailInfoForm.Field
-              label="최종 합격자 발표"
-              view={
-                <ProgramDetailDateMethodReadRow
-                  dateIso={display.finalPassAnnouncementDate}
-                  method={display.finalPassAnnouncementMethod}
-                />
-              }
-              edit={
-                isEdit && form ? (
-                  <div className="program-detail-info-tab__result-row">
-                    <Controller
-                      name="finalPassAnnouncementDate"
-                      control={form.control}
-                      render={({ field }) => (
-                        <ParagraphDatePicker
-                          mode="single"
-                          presetMode="date"
-                          customizable={false}
-                          value={toDayjs(field.value)}
-                          onChange={d => field.onChange(d ? d.toISOString() : undefined)}
-                          placeholder="합격자 발표일"
-                          width={190}
-                        />
-                      )}
-                    />
-                    <DetailInfoForm.InputsSeparator />
-                    <Controller
-                      name="finalPassAnnouncementMethod"
-                      control={form.control}
-                      render={({ field }) => (
-                        <CmsInput
-                          {...field}
-                          value={field.value ?? ''}
-                          placeholder="발표 방법 안내"
-                          inputSize="medium"
-                          width="100%"
-                          className="program-detail-info-tab__result-method-input"
-                        />
-                      )}
-                    />
-                  </div>
-                ) : undefined
-              }
-            />
-          </DetailInfoForm.Row>
+          {interviewEnabled ? (
+            <>
+              <DetailInfoForm.Row type="double">
+                {recruitmentPeriodField}
+                {documentPassField}
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="double">
+                {interviewPeriodField}
+                {finalPassField}
+              </DetailInfoForm.Row>
+            </>
+          ) : (
+            <DetailInfoForm.Row type="double">
+              {recruitmentPeriodField}
+              {finalPassField}
+            </DetailInfoForm.Row>
+          )}
 
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field

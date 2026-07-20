@@ -176,5 +176,6 @@ UI·페이지는 mock/실 분기를 두지 않는다.
 ## 장기 (선택)
 
 - OpenAPI 스펙에서 **클라이언트 코드 생성**(`openapi-typescript`, Orval 등)하면 경로·타입 중복을 더 줄일 수 있음. 도입 시 이 문서의 “경로 단일 출처”는 생성물 + 얇은 래퍼로 조정.
+- **Orval 운영 (대시보드 1차 적용됨):** [orval-codegen.md](./orval-codegen.md), [backend-handoff.md](./backend-handoff.md), [dashboard-api-integration.md](./dashboard-api-integration.md)
 
-**Last updated:** 2026-05-11
+**Last updated:** 2026-06-12

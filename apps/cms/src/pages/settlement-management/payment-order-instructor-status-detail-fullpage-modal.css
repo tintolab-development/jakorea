@@ -15,7 +15,7 @@
   margin-bottom: 48px;
 }
 
-/* 기본 정보 제목과 개인정보 버튼 한 줄 (native `<button>` — AppButton htmlType=button, size=filter → 160×44) */
+/* 기본 정보 제목과 개인정보 버튼 한 줄 (PersonalInfoRevealButton 내부 CmsButton size=large, width=160 → 160×44) */
 .payment-order-instructor-status-detail__basic-header {
   display: flex;
   align-items: center;

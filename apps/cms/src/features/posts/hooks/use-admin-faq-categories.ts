@@ -1,30 +1,31 @@
-/**
- * FAQ 카테고리 목록 — mock 저장소와 React 상태 동기화
- */
-
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import {
-  listFaqCategoryRows,
-  replaceFaqCategoryRows,
-} from '@/features/posts/api/admin-faq-category-mock-store'
+  useFaqCategoriesQuery,
+  useFaqCategoryMutations,
+} from '@/features/posts/hooks/use-faq-categories-query'
 import type { FaqCategoryRow } from '@/features/posts/model/admin-faq-management.types'
+
+export type FaqCategoryRemoteActions = {
+  onCreate: (name: string) => Promise<void>
+  onUpdate: (id: string, name: string) => Promise<void>
+  onDelete: (id: string) => Promise<void>
+}
 
 export type UseAdminFaqCategoriesResult = {
   categoryRows: FaqCategoryRow[]
   allowedCategoryLabels: readonly string[]
   allowedCategorySet: ReadonlySet<string>
-  replaceCategories: (next: FaqCategoryRow[]) => void
+  remoteActions: FaqCategoryRemoteActions
 }
 
 export function useAdminFaqCategories(): UseAdminFaqCategoriesResult {
-  const [categoryRows, setCategoryRows] = useState<FaqCategoryRow[]>(() =>
-    listFaqCategoryRows()
-  )
+  const categoriesQuery = useFaqCategoriesQuery()
+  const { createMutation, updateMutation, deleteMutation } = useFaqCategoryMutations()
 
-  const replaceCategories = useCallback((next: FaqCategoryRow[]) => {
-    replaceFaqCategoryRows(next)
-    setCategoryRows(listFaqCategoryRows())
-  }, [])
+  const categoryRows = useMemo<FaqCategoryRow[]>(
+    () => (categoriesQuery.data ?? []).map(row => ({ id: row.id, name: row.name })),
+    [categoriesQuery.data]
+  )
 
   const allowedCategoryLabels = useMemo(
     () => categoryRows.map(r => r.name),
@@ -36,10 +37,31 @@ export function useAdminFaqCategories(): UseAdminFaqCategoriesResult {
     [allowedCategoryLabels]
   )
 
+  const onCreate = useCallback(
+    async (name: string) => {
+      await createMutation.mutateAsync(name)
+    },
+    [createMutation]
+  )
+
+  const onUpdate = useCallback(
+    async (id: string, name: string) => {
+      await updateMutation.mutateAsync({ id, name })
+    },
+    [updateMutation]
+  )
+
+  const onDelete = useCallback(
+    async (id: string) => {
+      await deleteMutation.mutateAsync(id)
+    },
+    [deleteMutation]
+  )
+
   return {
     categoryRows,
     allowedCategoryLabels,
     allowedCategorySet,
-    replaceCategories,
+    remoteActions: { onCreate, onUpdate, onDelete },
   }
 }

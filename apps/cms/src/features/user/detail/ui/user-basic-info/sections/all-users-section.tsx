@@ -1,11 +1,12 @@
+import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput, CmsSelect } from '@/shared/ui'
+import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import { affiliationLine, detailAddressView, formatGenderBirthLine } from '../display'
+import { affiliationView, detailAddressView, genderBirthView } from '../display'
 import { useBasicInfoEditing } from '../use-basic-info-editing'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
-import { NameBlockField } from '../fields/name-block-field'
 import { ContactInfoFieldsRow, FullWidthAddressEdit, Id1365View } from './shared'
 import {
   GENDER_EDIT_OPTIONS,
@@ -14,7 +15,7 @@ import {
 } from './constants'
 import type { BasicInfoSectionContext } from './types'
 import { formatDate } from '@/shared/utils'
-import { socialLine } from '../display'
+import { socialView } from '../display'
 
 export function AllUsersSection(ctx: BasicInfoSectionContext) {
   const {
@@ -34,81 +35,75 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
     cmsMayEditBasicProfileFields,
   })
   const d = memberInfoDraft
+  const nameWithBadge = (nameNode: ReactNode) => (
+    <span className="user-basic-info-section__name-with-badge">
+      {nameNode}
+      {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
+        <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
+      ) : null}
+    </span>
+  )
 
   return (
     <>
-      <NameBlockField
-        rows={[
-          {
-            subLabel: '한글',
-            main: editing.canEditBasic ? (
-              <span className="user-basic-info-section__name-with-badge">
-                <CmsInput
-                  value={d?.name ?? ''}
-                  onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
-                  inputSize="medium"
-                  width="100%"
-                  aria-label="한글 성명"
-                />
-                {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
-                  <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
-                ) : null}
-              </span>
-            ) : (
-              <span className="user-basic-info-section__name-with-badge">
-                {user.name}
-                {scheduleChangeCount != null && scheduleChangeCount > 0 ? (
-                  <ScheduleChangeHistoryBadge count={scheduleChangeCount} />
-                ) : null}
-              </span>
-            ),
-            sideLabel: '1365 ID',
-            side: (
-              <Id1365View
-                personalInfoRevealed={personalInfoRevealed}
-                externalId1365={externalId1365}
-              />
-            ),
-          },
-          {
-            subLabel: '영문',
-            main: editing.canEditBasic ? (
-              <CmsInput
-                value={d?.nameEn ?? ''}
-                onChange={e => onMemberInfoDraftChange?.({ nameEn: e.target.value })}
+      <EditableRow type="double">
+        <EditableField
+          label="성명"
+          readOnlyDisplay={editing.isReadOnlyDisplay}
+          view={nameWithBadge(user.name)}
+          edit={nameWithBadge(
+            <CmsInput
+              value={d?.name ?? ''}
+              onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
+              inputSize="medium"
+              width="100%"
+              placeholder="한글 성명"
+              aria-label="성명"
+            />
+          )}
+        />
+        <EditableField
+          label="1365 ID"
+          readOnlyDisplay
+          view={
+            <Id1365View
+              personalInfoRevealed={personalInfoRevealed}
+              externalId1365={externalId1365}
+            />
+          }
+        />
+      </EditableRow>
+
+      <EditableRow type="single">
+        <EditableField
+          label="성별 및 생년월일"
+          readOnlyDisplay={editing.isReadOnlyDisplay}
+          view={genderBirthView(user)}
+          edit={
+            <span className="user-basic-info-section__inline-controls">
+              <CmsSelect
+                value={d?.gender || undefined}
+                onChange={v => onMemberInfoDraftChange?.({ gender: v != null ? String(v) : '' })}
+                options={GENDER_EDIT_OPTIONS}
+                placeholder="성별"
                 inputSize="medium"
-                width="100%"
-                placeholder="영문 성명"
+                width={120}
               />
-            ) : (
-              <span>{user.nameEn ?? '-'}</span>
-            ),
-            sideLabel: '성별 및 생년월일',
-            side: editing.canEditBasic ? (
-              <span className="user-basic-info-section__inline-controls">
-                <CmsSelect
-                  value={d?.gender || undefined}
-                  onChange={v => onMemberInfoDraftChange?.({ gender: v != null ? String(v) : '' })}
-                  options={GENDER_EDIT_OPTIONS}
-                  placeholder="성별"
-                  inputSize="medium"
-                  width={120}
-                />
-                <CmsInput
-                  value={d?.birthDate ?? ''}
-                  onChange={e => onMemberInfoDraftChange?.({ birthDate: e.target.value })}
-                  inputSize="medium"
-                  width={160}
-                  placeholder="YYYY-MM-DD"
-                  aria-label="생년월일"
-                />
-              </span>
-            ) : (
-              <span>{formatGenderBirthLine(user)}</span>
-            ),
-          },
-        ]}
-      />
+              <CmsDateTextInput
+                value={(d?.birthDate ?? '').replace(/-/g, '.')}
+                onValueChange={value =>
+                  onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
+                }
+                inputSize="medium"
+                width={160}
+                placeholder="YYYY-MM-DD"
+                maxLength={10}
+                aria-label="생년월일"
+              />
+            </span>
+          }
+        />
+      </EditableRow>
 
       <ContactInfoFieldsRow
         user={user}
@@ -138,7 +133,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
         <EditableField
           label="소속"
           readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={<span>{affiliationLine(user)}</span>}
+          view={affiliationView(user)}
           edit={
             <span className="detail-info-form-inputs-wrapper-no-gap">
               <CmsInput
@@ -168,7 +163,7 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
 
       <EditableRow type="double">
         <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
-        <EditableField label="연동된 소셜 계정" readOnlyDisplay view={<span>{socialLine(user)}</span>} />
+        <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
       </EditableRow>
     </>
   )

@@ -13,10 +13,18 @@ import './certificate-bulk-issue-reason-modal.css'
 
 const REASON_OPTIONS = [
   { value: 'institution_submission', label: '기관 제출용' },
-  { value: 'company_submission', label: '회사 제출용' },
-  { value: 'school_submission', label: '학교 제출용' },
-  { value: 'financial_institution_submission', label: '금융기관 제출용' },
+  { value: 'education_completion_proof', label: '교육 이수 증빙용' },
+  { value: 'personal_archive', label: '개인 보관용' },
 ]
+
+export type CertificateIssueReasonValue =
+  | 'institution_submission'
+  | 'education_completion_proof'
+  | 'personal_archive'
+
+export function getCertificateIssueReasonLabel(value: string): string | undefined {
+  return REASON_OPTIONS.find(option => option.value === value)?.label
+}
 
 export interface CertificateBulkIssueReasonModalProps {
   open: boolean
@@ -25,6 +33,8 @@ export interface CertificateBulkIssueReasonModalProps {
   applicationIds: readonly string[]
   /** 제목·설명에 들어가는 발급 문서명 (기본: 수료증/참여인증서) */
   certificateDocumentLabel?: string
+  /** 지정 시 발급 클릭 후 사유와 함께 호출 (미지정 시 준비 중 안내) */
+  onIssue?: (reason: CertificateIssueReasonValue, reasonLabel: string) => void
 }
 
 export function CertificateBulkIssueReasonModal({
@@ -32,6 +42,7 @@ export function CertificateBulkIssueReasonModal({
   onCancel,
   applicationIds,
   certificateDocumentLabel = '수료증/참여인증서',
+  onIssue,
 }: CertificateBulkIssueReasonModalProps) {
   void applicationIds
   const { showAlert } = useCmsAlert()
@@ -46,6 +57,16 @@ export function CertificateBulkIssueReasonModal({
       showAlert({ title: '안내', content: CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE })
       return
     }
+    const reasonLabel = getCertificateIssueReasonLabel(reason)
+    if (reasonLabel == null) {
+      showAlert({ title: '안내', content: CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE })
+      return
+    }
+    if (onIssue != null) {
+      onIssue(reason as CertificateIssueReasonValue, reasonLabel)
+      onCancel()
+      return
+    }
     onCancel()
     showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
   }
@@ -56,7 +77,7 @@ export function CertificateBulkIssueReasonModal({
       onCancel={onCancel}
       title={`${certificateDocumentLabel} 발급 사유`}
       description={`${certificateDocumentLabel} 발급 사유를 선택해 주세요.\n선택한 사유는 발급 문서에 기입됩니다.`}
-      width={560}
+      width={600}
       footer={
         <>
           <CmsButton variant="secondary" size="medium" width={120} onClick={onCancel}>

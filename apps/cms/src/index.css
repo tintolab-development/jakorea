@@ -3,6 +3,9 @@
 @import './shared/ui/ant-table-rows.css';
 @import './shared/ui/cms-data-table.css';
 @import './shared/ui/ant-table-selection-checkbox.css';
+@import './features/program/shared/ui/program-attendance-detail.css';
+@import './shared/ui/button-loading-only.css';
+@import './shared/ui/page-content-loading.css';
 
 /* 토큰 정의는 theme-provider.css에서 로드됨 (ThemeProvider import) */
 :root {
@@ -172,6 +175,14 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
   font-weight: 700;
   line-height: 140%; /* 28px */
   padding: 0 10px 0 8px;
+  padding-right: 0;
+}
+
+.table-description--black {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
 }
 
 .table-description {
@@ -184,10 +195,25 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
   opacity: 0.6;
 }
 
+.table-header-actions--wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .info-section-buttons--wrapper {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+/* table-header-actions: 버튼 그룹 전체를 우측에 붙이고, 엑셀은 그룹 내 마지막 */
+.table-header-actions .info-section-buttons--wrapper {
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .info-section-wrapper {
@@ -258,6 +284,7 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
 .detail-info-form-inputs-wrapper-no-gap > .cms-select,
 .detail-info-form-inputs-wrapper-no-gap > .cms-input,
 .detail-info-form-inputs-wrapper-no-gap > .cms-input-search,
+.detail-info-form-inputs-wrapper-no-gap > .school-search__trigger-wrap,
 .detail-info-form-inputs-wrapper-no-gap > .cms-textarea,
 .detail-info-form-inputs-wrapper-no-gap > .cms-datepicker:not(.cms-datepicker--range-split),
 .detail-info-form-inputs-wrapper-no-gap > .paragraph-date-picker,
@@ -271,8 +298,9 @@ table:not(.ant-picker-content) tr[class*='Clickable']:hover:not(.ant-table-row-s
   width: 100%;
 }
 
-/* CmsInputSearch는 래퍼 div가 flex 자식 — calc/퍼센트 width가 줄어들지 않도록 */
-.detail-info-form-inputs-wrapper-no-gap > .cms-input-search {
+/* CmsInputSearch / SchoolSearch는 래퍼가 flex 자식 — calc/퍼센트 width가 줄어들지 않도록 */
+.detail-info-form-inputs-wrapper-no-gap > .cms-input-search,
+.detail-info-form-inputs-wrapper-no-gap > .school-search__trigger-wrap {
   flex-shrink: 0;
 }
 

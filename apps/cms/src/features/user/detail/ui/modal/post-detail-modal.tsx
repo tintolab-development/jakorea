@@ -7,7 +7,13 @@ import { useState, useMemo, useEffect, useId } from 'react'
 import { flushSync } from 'react-dom'
 import { Popover } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import {
+  CmsButton,
+  AttachmentDownloadList,
+  CommentList,
+  CommentComposer,
+  getReactionEmojiItemByType,
+} from '@/shared/ui'
 import type { ProgramPost, ProgramFile, ProgramPostReactionUser } from '@/types/domain'
 import dayjs from 'dayjs'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
@@ -25,8 +31,8 @@ import {
 } from '@/data/mock'
 import { downloadFile } from '@/shared/lib/file-download'
 import { truncateDisplayNameForList } from '@/shared/lib/truncate-display-name'
-import { POST_DETAIL_EMOJI_BAR_ITEMS } from '../post-detail-emoji-bar-icons'
 import { PostReadStatusPopoverContent } from '../post-read-status-popover'
+import { formatProgramPostAudienceBadgeLabel } from '../../lib/post-audience-display'
 import './post-detail-modal.css'
 
 function formatKoDate(date: string | Date): string {
@@ -34,25 +40,6 @@ function formatKoDate(date: string | Date): string {
   const ampm = d.hour() < 12 ? '오전' : '오후'
   const hour = d.hour() % 12 || 12
   return d.format(`YYYY년 M월 D일 ${ampm} ${hour}:mm`)
-}
-
-const REACTION_EMOJI_TYPE_TO_INDEX: Record<string, number> = {
-  smile: 0,
-  laugh: 1,
-  loveFace: 2,
-  surprised: 3,
-  cry: 4,
-  angry: 5,
-  scream: 6,
-  heart: 7,
-  clap: 8,
-  thumbsUp: 9,
-  check: 10,
-}
-
-function getEmojiItemByType(emojiType: string) {
-  const idx = REACTION_EMOJI_TYPE_TO_INDEX[emojiType]
-  return idx == null ? null : POST_DETAIL_EMOJI_BAR_ITEMS[idx]
 }
 
 // ── 아이콘 ───────────────────────────────────────────
@@ -102,80 +89,6 @@ function CommentIcon() {
   )
 }
 
-function ClipIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden>
-      <path d="M12.189 15.421C11.454 16.472 10.463 17.11 9.216 17.336C7.969 17.562 6.823 17.309 5.776 16.577C4.725 15.842 4.091 14.85 3.874 13.599C3.656 12.349 3.915 11.199 4.65 10.148L8.718 4.332C9.24 3.585 9.943 3.132 10.827 2.972C11.711 2.812 12.526 2.993 13.272 3.515C14.019 4.038 14.469 4.741 14.621 5.626C14.774 6.511 14.59 7.327 14.068 8.074L10.217 13.579C9.911 14.017 9.496 14.284 8.974 14.379C8.452 14.476 7.972 14.37 7.534 14.064C7.096 13.758 6.83 13.342 6.735 12.818C6.641 12.294 6.748 11.81 7.057 11.369L11.03 5.689L12 6.368L8.027 12.047C7.906 12.221 7.862 12.407 7.896 12.607C7.929 12.808 8.033 12.968 8.206 13.09C8.379 13.211 8.566 13.253 8.765 13.216C8.965 13.179 9.125 13.073 9.247 12.9L13.102 7.389C13.429 6.906 13.546 6.385 13.452 5.826C13.357 5.267 13.071 4.82 12.594 4.486C12.116 4.152 11.596 4.036 11.033 4.139C10.471 4.242 10.023 4.533 9.689 5.01L5.62 10.827C5.066 11.604 4.872 12.458 5.036 13.389C5.2 14.321 5.672 15.06 6.455 15.607C7.226 16.146 8.073 16.33 8.995 16.159C9.917 15.987 10.658 15.515 11.219 14.743L15.409 8.752L16.379 9.431L12.189 15.421Z" fill="currentColor"/>
-    </svg>
-  )
-}
-
-function DownloadIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden>
-      <path d="M10 13.333L6.25 9.583L7.188 8.625L9.375 10.812V3.333H10.625V10.812L12.812 8.625L13.75 9.583L10 13.333ZM5 16.667C4.655 16.667 4.36 16.545 4.115 16.302C3.872 16.057 3.75 15.762 3.75 15.417V12.917H5V15.417H15V12.917H16.25V15.417C16.25 15.762 16.128 16.057 15.885 16.302C15.64 16.545 15.345 16.667 15 16.667H5Z" fill="currentColor"/>
-    </svg>
-  )
-}
-
-function EmojiIcon({ active }: { active?: boolean }) {
-  const emojiOpenMaskId = useId().replace(/:/g, '')
-  if (active) {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden>
-        <mask id={emojiOpenMaskId} style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="30" height="30">
-          <rect width="30" height="30" fill="#D9D9D9" />
-        </mask>
-        <g mask={`url(#${emojiOpenMaskId})`}>
-          <path
-            d="M19.2575 13.5097C19.7125 13.5097 20.0982 13.3504 20.4147 13.0319C20.7311 12.7135 20.8894 12.327 20.8894 11.8722C20.8894 11.4174 20.7302 11.0318 20.4119 10.7153C20.0935 10.3986 19.7069 10.2403 19.2519 10.2403C18.7971 10.2403 18.4115 10.3996 18.095 10.7181C17.7785 11.0365 17.6203 11.423 17.6203 11.8778C17.6203 12.3326 17.7795 12.7182 18.0978 13.0347C18.4161 13.3514 18.8027 13.5097 19.2575 13.5097ZM10.7481 13.5097C11.2029 13.5097 11.5885 13.3504 11.905 13.0319C12.2215 12.7135 12.3797 12.327 12.3797 11.8722C12.3797 11.4174 12.2205 11.0318 11.9022 10.7153C11.5839 10.3986 11.1973 10.2403 10.7425 10.2403C10.2875 10.2403 9.90177 10.3996 9.58531 10.7181C9.26886 11.0365 9.11063 11.423 9.11063 11.8778C9.11063 12.3326 9.26979 12.7182 9.58813 13.0347C9.90646 13.3514 10.2931 13.5097 10.7481 13.5097ZM18.5769 20.3953C19.6571 19.6653 20.4535 18.7002 20.9662 17.5H19.3125C18.8542 18.2708 18.2448 18.8802 17.4844 19.3281C16.724 19.776 15.8958 20 15 20C14.1042 20 13.276 19.776 12.5156 19.3281C11.7552 18.8802 11.1458 18.2708 10.6875 17.5H9.03375C9.54646 18.7002 10.3429 19.6653 11.4231 20.3953C12.5033 21.1253 13.6956 21.4903 15 21.4903C16.3044 21.4903 17.4967 21.1253 18.5769 20.3953ZM10.3706 25.94C8.92542 25.3167 7.66833 24.4707 6.59937 23.4022C5.53042 22.3336 4.68406 21.0771 4.06031 19.6325C3.43677 18.1879 3.125 16.6445 3.125 15.0022C3.125 13.3597 3.43667 11.8158 4.06 10.3706C4.68333 8.92542 5.52927 7.66833 6.59781 6.59937C7.66635 5.53042 8.92292 4.68406 10.3675 4.06031C11.8121 3.43677 13.3555 3.125 14.9978 3.125C16.6403 3.125 18.1842 3.43667 19.6294 4.06C21.0746 4.68333 22.3317 5.52927 23.4006 6.59781C24.4696 7.66635 25.3159 8.92292 25.9397 10.3675C26.5632 11.8121 26.875 13.3555 26.875 14.9978C26.875 16.6403 26.5633 18.1842 25.94 19.6294C25.3167 21.0746 24.4707 22.3317 23.4022 23.4006C22.3336 24.4696 21.0771 25.3159 19.6325 25.9397C18.1879 26.5632 16.6445 26.875 15.0022 26.875C13.3597 26.875 11.8158 26.5633 10.3706 25.94Z"
-            fill="#01A1AF"
-          />
-        </g>
-      </svg>
-    )
-  }
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden>
-      <g opacity="0.5">
-        <mask id="mask-emoji-inactive" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="30" height="30">
-          <rect width="30" height="30" fill="#D9D9D9"/>
-        </mask>
-        <g mask="url(#mask-emoji-inactive)">
-          <path d="M19.2575 13.5097C19.7125 13.5097 20.0982 13.3504 20.4147 13.0319C20.7311 12.7135 20.8894 12.327 20.8894 11.8722C20.8894 11.4174 20.7302 11.0318 20.4119 10.7153C20.0935 10.3986 19.7069 10.2403 19.2519 10.2403C18.7971 10.2403 18.4115 10.3996 18.095 10.7181C17.7785 11.0365 17.6203 11.423 17.6203 11.8778C17.6203 12.3326 17.7795 12.7182 18.0978 13.0347C18.4161 13.3514 18.8027 13.5097 19.2575 13.5097ZM10.7481 13.5097C11.2029 13.5097 11.5885 13.3504 11.905 13.0319C12.2215 12.7135 12.3797 12.327 12.3797 11.8722C12.3797 11.4174 12.2205 11.0318 11.9022 10.7153C11.5839 10.3986 11.1973 10.2403 10.7425 10.2403C10.2875 10.2403 9.90177 10.3996 9.58531 10.7181C9.26886 11.0365 9.11063 11.423 9.11063 11.8778C9.11063 12.3326 9.26979 12.7182 9.58813 13.0347C9.90646 13.3514 10.2931 13.5097 10.7481 13.5097ZM18.5769 20.3953C19.6571 19.6653 20.4535 18.7002 20.9662 17.5H19.3125C18.8542 18.2708 18.2448 18.8802 17.4844 19.3281C16.724 19.776 15.8958 20 15 20C14.1042 20 13.276 19.776 12.5156 19.3281C11.7552 18.8802 11.1458 18.2708 10.6875 17.5H9.03375C9.54646 18.7002 10.3429 19.6653 11.4231 20.3953C12.5033 21.1253 13.6956 21.4903 15 21.4903C16.3044 21.4903 17.4967 21.1253 18.5769 20.3953ZM10.3706 25.94C8.92542 25.3167 7.66833 24.4707 6.59937 23.4022C5.53042 22.3336 4.68406 21.0771 4.06031 19.6325C3.43677 18.1879 3.125 16.6445 3.125 15.0022C3.125 13.3597 3.43667 11.8158 4.06 10.3706C4.68333 8.92542 5.52927 7.66833 6.59781 6.59937C7.66635 5.53042 8.92292 4.68406 10.3675 4.06031C11.8121 3.43677 13.3555 3.125 14.9978 3.125C16.6403 3.125 18.1842 3.43667 19.6294 4.06C21.0746 4.68333 22.3317 5.52927 23.4006 6.59781C24.4696 7.66635 25.3159 8.92292 25.9397 10.3675C26.5632 11.8121 26.875 13.3555 26.875 14.9978C26.875 16.6403 26.5633 18.1842 25.94 19.6294C25.3167 21.0746 24.4707 22.3317 23.4022 23.4006C22.3336 24.4696 21.0771 25.3159 19.6325 25.9397C18.1879 26.5632 16.6445 26.875 15.0022 26.875C13.3597 26.875 11.8158 26.5633 10.3706 25.94ZM22.0938 22.0938C24.0312 20.1562 25 17.7917 25 15C25 12.2083 24.0312 9.84375 22.0938 7.90625C20.1562 5.96875 17.7917 5 15 5C12.2083 5 9.84375 5.96875 7.90625 7.90625C5.96875 9.84375 5 12.2083 5 15C5 17.7917 5.96875 20.1562 7.90625 22.0938C9.84375 24.0312 12.2083 25 15 25C17.7917 25 20.1562 24.0312 22.0938 22.0938Z" fill="#3D3D3D"/>
-        </g>
-      </g>
-    </svg>
-  )
-}
-
-function SendIcon({ active }: { active?: boolean }) {
-  if (active) {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden>
-        <mask id="mask-send-active" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="30" height="30">
-          <rect width="30" height="30" fill="#D9D9D9"/>
-        </mask>
-        <g mask="url(#mask-send-active)">
-          <path d="M4.375 24.0625V17.0913L13.0288 15L4.375 12.9088V5.9375L25.8894 15L4.375 24.0625Z" fill="#01A1AF"/>
-        </g>
-      </svg>
-    )
-  }
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden>
-      <g opacity="0.5">
-        <mask id="mask-send-inactive" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="30" height="30">
-          <rect width="30" height="30" fill="#D9D9D9"/>
-        </mask>
-        <g mask="url(#mask-send-inactive)">
-          <path d="M4.375 24.0625V5.9375L25.8894 15L4.375 24.0625ZM6.25 21.25L21.0625 15L6.25 8.75V13.3653L13.0288 15L6.25 16.6347V21.25Z" fill="#3D3D3D"/>
-        </g>
-      </g>
-    </svg>
-  )
-}
-
 // ── 컴포넌트 ─────────────────────────────────────────
 
 export interface PostDetailModalProps {
@@ -211,7 +124,6 @@ export function PostDetailModal({
   commentAuthorRoleLabel,
   onPostStatsChanged,
 }: PostDetailModalProps) {
-  const emojiBtnClipId = useId().replace(/:/g, '')
   const reactionClipBaseId = useId().replace(/:/g, '')
   const eyeIconMaskId = useId().replace(/:/g, '')
   const [commentInput, setCommentInput] = useState('')
@@ -222,7 +134,6 @@ export function PostDetailModal({
   const [selectedEmojiIndex, setSelectedEmojiIndex] = useState<number | null>(null)
   const [commentsVersion, setCommentsVersion] = useState(0)
   const [reactionsVersion, setReactionsVersion] = useState(0)
-  const sendActive = commentInput.trim().length > 0 || selectedEmojiIndex != null
 
   const comments = useMemo(
     () => (post ? getCommentsByPostId(post.id) : []),
@@ -313,7 +224,7 @@ export function PostDetailModal({
     setCommentInput('')
     setSelectedEmojiIndex(null)
     onPostStatsChanged?.()
-    }
+  }
 
   if (!post) return null
 
@@ -322,6 +233,7 @@ export function PostDetailModal({
     post.postType === 'notice' ? '[공지사항]' :
     post.postType === 'schedule' ? '[일정 알림]' :
     null
+  const audienceBadgeLabel = formatProgramPostAudienceBadgeLabel(post.audience)
 
   return (
     <ContentModal
@@ -343,10 +255,11 @@ export function PostDetailModal({
             {/* ── 게시글 카드 (본문만) ── */}
             <div className="post-detail-modal__card">
               <div className="post-detail-modal__card-header">
-                <ProfileAvatarIcon className="post-detail-modal__avatar" />
-                <div className="post-detail-modal__author-info">
-                  <span className="post-detail-modal__author-name">{post.authorName}</span>
-                  <div className="post-detail-modal__author-meta">
+                <div className="post-detail-modal__card-header-main">
+                  <ProfileAvatarIcon className="post-detail-modal__avatar" />
+                  <div className="post-detail-modal__author-info">
+                    <span className="post-detail-modal__author-name">{post.authorName}</span>
+                    <div className="post-detail-modal__author-meta">
                     <span className="post-detail-modal__date">{dateStr}</span>
                     <span className="post-detail-modal__meta-divider">|</span>
                     <Popover
@@ -395,7 +308,7 @@ export function PostDetailModal({
                             aria-label="이모지별 반응 수"
                           >
                             {reactions.slice(0, 5).map((reaction, i) => {
-                              const item = getEmojiItemByType(reaction.emojiType)
+                              const item = getReactionEmojiItemByType(reaction.emojiType)
                               if (!item) return null
                               const clipId = `${reactionClipBaseId}-header-${i}`
                               return (
@@ -420,7 +333,7 @@ export function PostDetailModal({
                           </div>
                           <div className="post-detail-modal__reaction-popup-body">
                             {reactionUsers.map((row, index) => {
-                              const item = getEmojiItemByType(row.emojiType)
+                              const item = getReactionEmojiItemByType(row.emojiType)
                               if (!item) return null
                               const clipId = `${reactionClipBaseId}-row-${index}`
                               const isOwnRow = reactionRowIsCurrentUser(
@@ -484,6 +397,8 @@ export function PostDetailModal({
                     </span>
                   </div>
                 </div>
+                </div>
+                <span className="post-detail-modal__audience-badge">{audienceBadgeLabel}</span>
               </div>
 
               <div className="post-detail-modal__content">
@@ -493,124 +408,37 @@ export function PostDetailModal({
                 {post.content}
               </div>
 
-              {/* 첨부파일: 본문 카드 하단, 스크린샷 스펙 */}
-              {files.length > 0 && (
-                <div className="post-detail-modal__attachments">
-                  <div className="post-detail-modal__attachments-header">
-                    <span className="post-detail-modal__attachments-icon">
-                      <ClipIcon />
-                    </span>
-                    <span>{files.length}개의 첨부파일</span>
-                  </div>
-                  <div className="post-detail-modal__file-list">
-                    {files.map(file => (
-                      <button
-                        key={file.id}
-                        type="button"
-                        className="post-detail-modal__file-item"
-                        onClick={() => downloadFile(file.fileName, file.fileUrl)}
-                      >
-                        <span className="post-detail-modal__file-item-icon">
-                          <DownloadIcon />
-                        </span>
-                        <span className="post-detail-modal__file-item-name">{file.fileName}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <AttachmentDownloadList
+                items={files.map(file => ({
+                  id: file.id,
+                  fileName: file.fileName,
+                  fileUrl: file.fileUrl,
+                }))}
+                onDownload={item => downloadFile(item.fileName, item.fileUrl)}
+              />
             </div>
           </div>
         </div>
 
         {/* ── 댓글 카드 (전체 너비) ── */}
         <div className="post-detail-modal__comments-card">
-          {comments.map(comment => (
-            <div key={comment.id} className="post-detail-modal__comment">
-              <ProfileAvatarIcon className="post-detail-modal__avatar" />
-              <div className="post-detail-modal__comment-body">
-                <div className="post-detail-modal__comment-header">
-                  <span className="post-detail-modal__comment-author">{comment.authorName}</span>
-                  <span className="post-detail-modal__comment-date">
-                    {formatKoDate(comment.createdAt)}
-                  </span>
-                </div>
-                <p className="post-detail-modal__comment-content">{comment.content}</p>
-              </div>
-            </div>
-          ))}
-
-          <div className="post-detail-modal__comment-input-row">
-            <ProfileAvatarIcon className="post-detail-modal__avatar" />
-            <input
-              className="post-detail-modal__comment-input"
-              placeholder="댓글을 남겨보세요"
-              value={commentInput}
-              onChange={e => setCommentInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-                  e.preventDefault()
-                  handleSubmitComment()
-                }
-              }}
-            />
-            <button
-              type="button"
-              className={[
-                'post-detail-modal__comment-btn',
-                emojiActive && 'post-detail-modal__comment-btn--emoji-picker-open',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              aria-label="이모티콘"
-              aria-expanded={emojiActive}
-              onClick={() => setEmojiActive(prev => !prev)}
-            >
-              {selectedEmojiIndex != null ? (
-                <span className="post-detail-modal__emoji-btn-preview" aria-hidden>
-                  {POST_DETAIL_EMOJI_BAR_ITEMS[selectedEmojiIndex].renderIcon(
-                    `${emojiBtnClipId}-sel`
-                  )}
-                </span>
-              ) : (
-                <EmojiIcon active={emojiActive} />
-              )}
-            </button>
-            {emojiActive && (
-              <div className="post-detail-modal__emoji-popover-inline">
-                <div className="post-detail-modal__emoji-picker-panel">
-                  <div
-                    className="post-detail-modal__emoji-bar"
-                    role="toolbar"
-                    aria-label="이모티콘 선택"
-                  >
-                    {POST_DETAIL_EMOJI_BAR_ITEMS.map((item, index) => {
-                      const clipId = `post-detail-emoji-clip-${index}`
-                      return (
-                        <button
-                          key={item.label}
-                          type="button"
-                          className="post-detail-modal__emoji-bar-btn"
-                          aria-label={item.label}
-                          onClick={() => handleEmojiSelect(index)}
-                        >
-                          {item.renderIcon(clipId)}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-            <button
-              type="button"
-              className="post-detail-modal__comment-btn"
-              aria-label="댓글 전송"
-              onClick={handleSubmitComment}
-            >
-              <SendIcon active={sendActive} />
-            </button>
-          </div>
+          <CommentList
+            items={comments.map(comment => ({
+              id: comment.id,
+              authorName: comment.authorName,
+              createdAtLabel: formatKoDate(comment.createdAt),
+              content: comment.content,
+            }))}
+          />
+          <CommentComposer
+            value={commentInput}
+            onChange={setCommentInput}
+            onSubmit={handleSubmitComment}
+            emojiPickerOpen={emojiActive}
+            onEmojiToggle={() => setEmojiActive(prev => !prev)}
+            selectedEmojiIndex={selectedEmojiIndex}
+            onEmojiSelect={handleEmojiSelect}
+          />
         </div>
 
       </div>

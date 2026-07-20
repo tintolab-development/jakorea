@@ -137,6 +137,8 @@ export const UJAT_APPLICANT_ID_PARAM = 'applicantId'
 
 /** UJAT 봉사자 지원자 상세 딥링크 */
 export type UjatVolunteerApplicantDetailTab =
+  | 'vh1_all'
+  | 'vh2_all'
   | 'vh1_doc1'
   | 'vh2_doc1'
   | 'vh1_doc_passed'
@@ -145,6 +147,8 @@ export type UjatVolunteerApplicantDetailTab =
   | 'vh2_interview2'
 
 const UJAT_VOLUNTEER_APPLICANT_DETAIL_TABS: readonly UjatVolunteerApplicantDetailTab[] = [
+  'vh1_all',
+  'vh2_all',
   'vh1_doc1',
   'vh2_doc1',
   'vh1_doc_passed',

@@ -4,9 +4,10 @@
  * Phase 3: 성능 최적화 (데이터 중앙화)
  */
 
-import { Alert, Space, Button } from 'antd'
+import { Alert, Space } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { DollarOutlined, FileTextOutlined, CalendarOutlined } from '@ant-design/icons'
+import { CmsButton } from '@/shared/ui'
 import { useDashboardData } from '../model/use-dashboard-data'
 
 interface PendingActionsAlertProps {
@@ -79,9 +80,9 @@ export function PendingActionsAlert({ onNavigate }: PendingActionsAlertProps) {
           description={alert.description}
           icon={alert.icon}
           action={
-            <Button size="small" onClick={() => handleNavigate(alert.path)}>
+            <CmsButton variant="default" size="small" onClick={() => handleNavigate(alert.path)}>
               확인하기
-            </Button>
+            </CmsButton>
           }
           showIcon
           closable

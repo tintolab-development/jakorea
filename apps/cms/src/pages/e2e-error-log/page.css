@@ -1,0 +1,197 @@
+.e2e-error-log-page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  max-height: 100vh;
+  padding: 24px 28px 20px;
+  overflow: hidden;
+  background: #f5f6f8;
+  color: #1f2328;
+}
+
+.e2e-error-log-page__header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.e2e-error-log-page__tabs {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.e2e-error-log-page__tabs > .ant-tabs-nav {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+
+.e2e-error-log-page__tabs > .ant-tabs-content-holder {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.e2e-error-log-page__tabs .ant-tabs-content {
+  height: 100%;
+}
+
+/* 비활성 pane 은 Ant Design 기본(display:none)을 유지해야 탭 전환이 보인다.
+ * `.ant-tabs-tabpane { display:flex }` 는 숨김 스타일보다 특이도가 높아 양쪽이 동시에 노출됐다. */
+.e2e-error-log-page__tabs .ant-tabs-tabpane-active {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.e2e-error-log-page__panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.e2e-error-log-page__panel-toolbar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* loading 스피너가 붙어도 버튼 너비가 늘어나지 않도록 */
+.e2e-error-log-page__refresh-btn.ant-btn {
+  min-width: 6.5rem;
+}
+
+.e2e-error-log-page__summary {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.e2e-error-log-page__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.e2e-error-log-page__list-meta {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+
+.e2e-error-log-page__table-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.e2e-error-log-page__table {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+}
+
+.e2e-error-log-page__table .ant-spin-nested-loading,
+.e2e-error-log-page__table .ant-spin-container,
+.e2e-error-log-page__table .ant-table,
+.e2e-error-log-page__table .ant-table-container,
+.e2e-error-log-page__table .ant-table-content {
+  width: 100%;
+}
+
+.e2e-error-log-page__table .ant-table-content > table,
+.e2e-error-log-page__table .ant-table-body > table,
+.e2e-error-log-page__table .ant-table-header table {
+  width: 100% !important;
+  table-layout: fixed;
+}
+
+/* 헤더·본문 열 정렬 유지 */
+.e2e-error-log-page__table .ant-table {
+  font-size: 13px;
+}
+
+.e2e-error-log-page__table .ant-table-thead > tr > th,
+.e2e-error-log-page__table .ant-table-tbody > tr > td {
+  padding: 10px 12px;
+  vertical-align: middle;
+}
+
+.e2e-error-log-page__table .ant-table-cell-ellipsis {
+  overflow: hidden;
+}
+
+.e2e-error-log-page__mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+}
+
+.e2e-error-log-page__code-tag {
+  max-width: 100%;
+  margin-inline-end: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.e2e-error-log-page__detail {
+  display: grid;
+  gap: 12px;
+  max-width: 100%;
+}
+
+.e2e-error-log-page__detail pre {
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  max-height: 240px;
+  overflow: auto;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Alert 가 세로를 과도하게 차지하지 않도록 */
+.e2e-error-log-page > .ant-alert {
+  flex-shrink: 0;
+  margin-bottom: 12px !important;
+}
+
+@media (max-width: 768px) {
+  .e2e-error-log-page {
+    height: auto;
+    max-height: none;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  .e2e-error-log-page__header {
+    flex-direction: column;
+  }
+
+  .e2e-error-log-page__table-wrap {
+    min-height: 360px;
+  }
+}

@@ -16,8 +16,8 @@ import { schoolService } from '@/entities/school/api/school-service'
 import { mockLectureActivities } from '@/data/mock'
 import { mockApplications } from '@/data/mock'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
-import { reportStatusStatusConfig } from '@/shared/constants/status'
-import { StatusBadge } from '@/shared/ui/status-badge'
+import { getStatusConfigAccentColor, reportStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
 import { getReportTypeLabel, getReportTypeColor } from '@/shared/constants/domain-status'
 import dayjs from 'dayjs'
 import type { Schedule, Report } from '@/types/domain'
@@ -135,7 +135,8 @@ export function InstructorReportsPage() {
         if (report) {
           if (report.status === 'approved') status = 'APPROVED'
           else if (report.status === 'rejected') status = 'REJECTED'
-          else if (report.status === 'submitted' || report.status === 'reviewing') status = 'SUBMITTED'
+          else if (report.status === 'submitted' || report.status === 'reviewing')
+            status = 'SUBMITTED'
         }
 
         return {
@@ -327,8 +328,8 @@ export function InstructorReportsPage() {
           setSelectedReport(null)
         }}
         footer={null}
-        width={640}
-        destroyOnClose
+        width={800}
+        destroyOnHidden
       >
         {selectedReport && (
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -341,8 +342,11 @@ export function InstructorReportsPage() {
               </Descriptions.Item>
               <Descriptions.Item label="상태">
                 <StatusBadge
-                  status={selectedReport.status}
-                  statusConfig={reportStatusStatusConfig}
+                  domain="custom"
+                  label={reportStatusStatusConfig[selectedReport.status].label}
+                  accentColor={getStatusConfigAccentColor(
+                    reportStatusStatusConfig[selectedReport.status].color
+                  )}
                 />
               </Descriptions.Item>
               {selectedReport.programId && (
@@ -359,7 +363,9 @@ export function InstructorReportsPage() {
                 </Descriptions.Item>
               ) : null}
               {selectedReport.reviewNotes ? (
-                <Descriptions.Item label="검토 사유">{selectedReport.reviewNotes}</Descriptions.Item>
+                <Descriptions.Item label="검토 사유">
+                  {selectedReport.reviewNotes}
+                </Descriptions.Item>
               ) : null}
             </Descriptions>
             <Descriptions title="보고서 내용" bordered column={1} size="small">

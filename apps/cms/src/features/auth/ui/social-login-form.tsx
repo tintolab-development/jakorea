@@ -3,11 +3,14 @@
  * Phase 0.1.3: 간편인증 로그인
  */
 
-import { Button, Space } from 'antd'
+import { Space } from 'antd'
 import { useState } from 'react'
 import type { SocialProvider } from '@/entities/user/api/auth-service'
+import { SocialAuthApiError } from '@jakorea/social-auth'
 import { GoogleMarkIcon } from '@/shared/ui/icons'
-import { buildOAuthAuthorizeUrl } from '@/features/auth/lib/oauth-client'
+import { handleError } from '@/shared/utils/error-handler'
+import { LoadingButton } from '@/shared/ui/loading-button'
+import { cmsSocialAuthClient } from '@/features/auth/social-auth/cms-client'
 import './social-login-form.css'
 
 // interface SocialLoginFormProps {
@@ -66,10 +69,13 @@ export function SocialLoginForm() {
   const handleSocialLogin = async (provider: SocialProvider) => {
     setLoading(provider)
     try {
-      const authorizeUrl = buildOAuthAuthorizeUrl(provider)
+      const authorizeUrl = await cmsSocialAuthClient.startLogin({ provider, intent: 'login' })
+      if (!authorizeUrl?.trim()) {
+        throw new SocialAuthApiError('INVALID_RESPONSE', '소셜 로그인 URL을 받지 못했습니다.')
+      }
       window.location.href = authorizeUrl
     } catch (error: unknown) {
-      console.debug('socialLoginForm redirect failed', error)
+      handleError(error, { context: 'socialLoginForm.redirect' })
     } finally {
       setLoading(null)
     }
@@ -78,7 +84,7 @@ export function SocialLoginForm() {
   return (
     <div className="social-login-form">
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-        <Button
+        <LoadingButton
           type="primary"
           block
           style={kakaoButtonStyle}
@@ -88,9 +94,9 @@ export function SocialLoginForm() {
           icon={<span style={{ fontSize: '20px' }}>K</span>}
         >
           카카오로 시작하기
-        </Button>
+        </LoadingButton>
 
-        <Button
+        <LoadingButton
           type="primary"
           block
           style={naverButtonStyle}
@@ -100,9 +106,9 @@ export function SocialLoginForm() {
           icon={<span style={{ fontSize: '20px', fontWeight: 'bold' }}>N</span>}
         >
           네이버로 시작하기
-        </Button>
+        </LoadingButton>
 
-        <Button
+        <LoadingButton
           type="default"
           block
           className="social-login-google-btn"
@@ -113,7 +119,7 @@ export function SocialLoginForm() {
           icon={<GoogleMarkIcon />}
         >
           Google로 시작하기
-        </Button>
+        </LoadingButton>
       </Space>
 
     </div>

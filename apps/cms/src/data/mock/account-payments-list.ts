@@ -30,6 +30,9 @@ export const ACCOUNT_PAYMENT_STATUS_LABELS: Record<AccountPaymentTransferStatus,
 
 export interface AccountPaymentRow {
   id: string
+  /** API accountPaymentId */
+  accountPaymentId?: number
+  settlementId?: number
   no: number
   instructorName: string
   programName: string
@@ -43,6 +46,10 @@ export interface AccountPaymentRow {
    * 계좌 지급 확인 화면에서 이체 예정일 필터·세 번째 요약 카드(구간 내 지급예정 금액 합) 집계에 사용.
    */
   transferScheduledDate: string
+  /** API 목록 — 정산 계좌 (상세·지급 확인 모달) */
+  bankName?: string
+  maskedAccountNo?: string
+  accountHolder?: string
   /**
    * 지급조서(강사·프로그램 라인) 처리 현황 — `confirmed` = 지급조서 확인 완료.
    * 계좌 지급 확인 화면에는 이 값이 `confirmed`인 건만 노출(목·API 가정).

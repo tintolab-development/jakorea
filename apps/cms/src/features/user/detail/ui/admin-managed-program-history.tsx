@@ -11,12 +11,20 @@ import {
   type MouseEvent,
 } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
+import { Table, Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program, TargetLevel } from '@/types/domain'
 import type { User } from '@/types/user'
 import { programService } from '@/entities/program/api/program-service'
 import { mockPrograms } from '@/data/mock'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { useMemberAdminProgramsQuery } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
+import { deleteMemberAdminProgramRemote } from '@/features/user/api/members-api-client'
+import { memberQueryKeys } from '@/features/user/api/member-query-keys'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import { MemberDetailMockDataBanner } from '@/features/user/detail/ui/member-detail-mock-data-banner'
+import { handleError } from '@/shared/utils/error-handler'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   getEnrollmentDisplayStatusFromProgramLifecycle,
   getProgramLifecycleLabel,
@@ -26,7 +34,7 @@ import { StatusBadge } from '@/shared/components/status-badge'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { adminManagedProgramTablePageConfig } from './admin-managed-program-table.config'
-import type { FilterFieldConfig } from '@/shared/ui/unified-filter-card'
+import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
@@ -114,7 +122,15 @@ export interface AdminManagedProgramHistoryProps {
 
 export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryProps) {
   const [searchParams, setSearchParams] = useSearchParams()
-  const sourcePrograms = useMemo(() => resolveManagedPrograms(user), [user])
+  const queryClient = useQueryClient()
+  const membersRemote = isMembersRemoteEnabled()
+  const { data: remotePrograms = [], isLoading: remoteProgramsLoading } =
+    useMemberAdminProgramsQuery(user.memberId, membersRemote)
+
+  const sourcePrograms = useMemo(() => {
+    if (membersRemote) return remotePrograms
+    return resolveManagedPrograms(user)
+  }, [membersRemote, remotePrograms, user])
 
   const [localPrograms, setLocalPrograms] = useState<Program[]>(() => sourcePrograms)
   useEffect(() => {
@@ -231,7 +247,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
     setDeleteModalOpen(false)
   }, [])
 
-  const handleDeleteConfirm = useCallback((): void => {
+  const handleDeleteConfirm = useCallback(async (): Promise<void> => {
     const hasInProgress = selectedPrograms.some(p =>
       isProgramHistoryDeleteBlockedByDisplayStatus(
         getEnrollmentDisplayStatusFromProgramLifecycle(p.lifecycleStatus)
@@ -244,10 +260,33 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
     }
 
     const idSet = new Set(selectedRowKeys.map(k => String(k)))
-    setLocalPrograms(prev => prev.filter(p => !idSet.has(p.id)))
+
+    if (membersRemote && user.memberId != null) {
+      try {
+        for (const program of selectedPrograms) {
+          const programId = Number(program.id)
+          if (!Number.isFinite(programId)) {
+            throw new Error(`프로그램 ID를 해석할 수 없습니다: ${program.id}`)
+          }
+          await deleteMemberAdminProgramRemote(user.memberId, programId)
+        }
+        await queryClient.invalidateQueries({
+          queryKey: memberQueryKeys.adminPrograms(user.memberId),
+        })
+      } catch (error) {
+        handleError(error, {
+          defaultMessage: getMemberApiErrorMessage(error, '담당 프로그램 이력 삭제에 실패했습니다.'),
+        })
+        setDeleteModalOpen(false)
+        return
+      }
+    } else {
+      setLocalPrograms(prev => prev.filter(p => !idSet.has(p.id)))
+    }
+
     setSelectedRowKeys([])
     setDeleteModalOpen(false)
-  }, [selectedPrograms, selectedRowKeys])
+  }, [selectedPrograms, selectedRowKeys, membersRemote, user.memberId, queryClient])
 
   const columns: ColumnsType<Program> = useMemo(
     () => [
@@ -333,6 +372,9 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
 
   return (
     <>
+      {membersRemote && !user.memberId ? (
+        <MemberDetailMockDataBanner message="회원 memberId가 없어 담당 프로그램 이력 삭제 API를 호출할 수 없습니다." />
+      ) : null}
       <FilterTableLayout
         bordered={false}
         fields={filterFields}
@@ -356,8 +398,13 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
             이력 삭제
           </CmsButton>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
-        <Table<Program>
+        <Spin spinning={membersRemote && remoteProgramsLoading}>
+          <Table<Program>
           rowSelection={{
             columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             selectedRowKeys,
@@ -371,6 +418,7 @@ export function AdminManagedProgramHistory({ user }: AdminManagedProgramHistoryP
           className="cms-data-table cms-data-table--fluid"
           onRow={adminManagedProgramTableOnRow}
         />
+        </Spin>
       </FilterTableLayout>
       {deleteModalOpen && deleteGuide && (
         <DeleteGuideModal

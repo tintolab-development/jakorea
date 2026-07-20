@@ -8,13 +8,5 @@ export type { ProgramRegistrationBusinessKpiParagraphProps }
 export function ProgramRegistrationBusinessKpiParagraph(
   props: ProgramRegistrationBusinessKpiParagraphProps = {}
 ) {
-  return (
-    <SharedProgramRegistrationBusinessKpiParagraph
-      {...props}
-      dispatchedSchoolDisabled
-      dispatchedSchoolPlaceholder="해당 없음"
-      dispatchedClassDisabled
-      dispatchedClassPlaceholder="해당 없음"
-    />
-  )
+  return <SharedProgramRegistrationBusinessKpiParagraph {...props} />
 }

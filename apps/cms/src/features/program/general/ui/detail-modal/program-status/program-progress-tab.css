@@ -304,7 +304,7 @@
   box-shadow: var(--shadow-focus-teal) !important;
 }
 
-/* 조회 AppButton: 필터 영역 시안 border-radius 8px */
+/* 조회 CmsButton(size=large, width=160): 필터 영역 시안 border-radius 8px */
 .program-progress-tab__filter-col--btn .cms-button {
   border-radius: var(--radius-8);
 }

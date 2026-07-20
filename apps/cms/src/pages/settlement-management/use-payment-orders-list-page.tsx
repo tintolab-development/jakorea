@@ -2,19 +2,14 @@
  * 정산 관리 > 지급조서 확인 목록 — URL·필터·테이블 데이터·상세 모달 상태
  */
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactElement,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { flushSync } from 'react-dom'
 import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
 import type { FilterFieldConfig } from '@/shared/components/table-filter-group'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import type { ViewModeToggleOption } from '@/shared/components/view-mode'
@@ -25,6 +20,13 @@ import {
   type PaymentOrderAdminInstructorRow,
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
+import {
+  calendarRangeFromFilter,
+  mapCalendarItemsToPaymentOrderEvents,
+} from '@/features/settlement-management/api/calendar/map-calendar-items-to-events'
+import { useSettlementCalendarQuery } from '@/features/settlement-management/hooks/use-settlement-calendar-query'
+import { usePaymentOrdersListQuery } from '@/features/settlement-management/hooks/use-payment-orders-list-query'
+import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
 import {
   PaymentOrdersCalendarView,
   PaymentOrdersTable,
@@ -67,6 +69,7 @@ const PENDING_PAYMENT_ITEM_FILTER_OPTIONS: {
 /** 풀페이지 상세 — `replace: false`로 열어 뒤로가기 시 목록 복귀 */
 const PO_DETAIL_TYPE = 'po_detail'
 const PO_DETAIL_NO = 'po_detail_no'
+const PO_DETAIL_KEY = 'po_detail_key'
 
 function formatWon(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`
@@ -122,29 +125,69 @@ export function usePaymentOrdersListPage() {
     [searchParams]
   )
 
+  const paymentOrdersRemote = shouldUseSettlementRemote('paymentOrders')
+  const searchParamsKey = searchParams.toString()
+  const remoteListQuery = usePaymentOrdersListQuery(searchParamsKey, paymentOrdersRemote)
+
+  const calendarRange = useMemo(
+    () => calendarRangeFromFilter(appliedFromUrl.dateRange, dayjs()),
+    [appliedFromUrl.dateRange]
+  )
+
+  const remoteCalendarQuery = useSettlementCalendarQuery(
+    calendarRange.fromDate,
+    calendarRange.toDate,
+    paymentOrdersRemote && viewMode === 'calendar'
+  )
+
+  const sourceProgramRows = useMemo(() => {
+    if (paymentOrdersRemote) {
+      return remoteListQuery.data?.programRows ?? []
+    }
+    return mockPaymentOrderAdminProgramList
+  }, [paymentOrdersRemote, remoteListQuery.data?.programRows])
+
+  const sourceInstructorRows = useMemo(() => {
+    if (paymentOrdersRemote) {
+      return remoteListQuery.data?.instructorRows ?? []
+    }
+    return mockPaymentOrderAdminInstructorList
+  }, [paymentOrdersRemote, remoteListQuery.data?.instructorRows])
+
   const listProgram = useMemo(
-    () => filterPaymentProgramRows(mockPaymentOrderAdminProgramList, appliedFromUrl),
-    [appliedFromUrl]
+    () => filterPaymentProgramRows(sourceProgramRows, appliedFromUrl),
+    [sourceProgramRows, appliedFromUrl]
   )
   const listInstructor = useMemo(
-    () => filterPaymentInstructorRows(mockPaymentOrderAdminInstructorList, appliedFromUrl),
-    [appliedFromUrl]
+    () => filterPaymentInstructorRows(sourceInstructorRows, appliedFromUrl),
+    [sourceInstructorRows, appliedFromUrl]
   )
 
   const detailState = useMemo((): PaymentOrdersDetailState => {
     const t = searchParams.get(PO_DETAIL_TYPE)
+    const keyRaw = searchParams.get(PO_DETAIL_KEY)
     const noRaw = searchParams.get(PO_DETAIL_NO)
     if (t !== 'program' && t !== 'instructor') return null
+
+    if (keyRaw) {
+      if (t === 'program') {
+        const data = sourceProgramRows.find(r => r.aggregateKey === keyRaw)
+        return data != null ? { type: 'program' as const, data } : null
+      }
+      const data = sourceInstructorRows.find(r => r.aggregateKey === keyRaw)
+      return data != null ? { type: 'instructor' as const, data } : null
+    }
+
     if (noRaw == null || noRaw === '') return null
     const no = Number(noRaw)
     if (!Number.isFinite(no)) return null
     if (t === 'program') {
-      const data = mockPaymentOrderAdminProgramList.find(r => r.no === no)
+      const data = sourceProgramRows.find(r => r.no === no)
       return data != null ? { type: 'program' as const, data } : null
     }
-    const data = mockPaymentOrderAdminInstructorList.find(r => r.no === no)
+    const data = sourceInstructorRows.find(r => r.no === no)
     return data != null ? { type: 'instructor' as const, data } : null
-  }, [searchParams])
+  }, [searchParams, sourceProgramRows, sourceInstructorRows])
 
   const detailExposureFromUrl = useMemo((): ExposureMode | null => {
     const t = searchParams.get(PO_DETAIL_TYPE)
@@ -152,6 +195,24 @@ export function usePaymentOrdersListPage() {
   }, [searchParams])
 
   const resolvedExposureMode: ExposureMode = detailExposureFromUrl ?? exposureMode
+
+  const calendarEventsOverride = useMemo(() => {
+    if (!paymentOrdersRemote || viewMode !== 'calendar') return undefined
+    const items = remoteCalendarQuery.data ?? []
+    return mapCalendarItemsToPaymentOrderEvents(
+      items,
+      resolvedExposureMode,
+      sourceProgramRows,
+      sourceInstructorRows
+    )
+  }, [
+    paymentOrdersRemote,
+    viewMode,
+    remoteCalendarQuery.data,
+    resolvedExposureMode,
+    sourceProgramRows,
+    sourceInstructorRows,
+  ])
 
   const isProgram = resolvedExposureMode === 'program'
   const rowsForTable = useMemo(
@@ -183,12 +244,16 @@ export function usePaymentOrdersListPage() {
   })
 
   const closeDetail = useCallback(() => {
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev)
-      next.delete(PO_DETAIL_TYPE)
-      next.delete(PO_DETAIL_NO)
-      return next
-    }, { replace: true })
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.delete(PO_DETAIL_TYPE)
+          next.delete(PO_DETAIL_NO)
+          next.delete(PO_DETAIL_KEY)
+          return next
+        },
+        { replace: true }
+      )
   }, [setSearchParams])
 
   const openPaymentOrderDetail = useCallback(
@@ -197,12 +262,21 @@ export function usePaymentOrdersListPage() {
       data: PaymentOrderAdminProgramRow | PaymentOrderAdminInstructorRow
     ) => {
       setExposureMode(type)
-      setSearchParams(prev => {
-        const next = new URLSearchParams(prev)
-        next.set(PO_DETAIL_TYPE, type)
-        next.set(PO_DETAIL_NO, String(data.no))
-        return next
-      }, { replace: false })
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set(PO_DETAIL_TYPE, type)
+          if (data.aggregateKey) {
+            next.set(PO_DETAIL_KEY, data.aggregateKey)
+            next.delete(PO_DETAIL_NO)
+          } else {
+            next.set(PO_DETAIL_NO, String(data.no))
+            next.delete(PO_DETAIL_KEY)
+          }
+          return next
+        },
+        { replace: false }
+      )
     },
     [setSearchParams]
   )
@@ -319,14 +393,12 @@ export function usePaymentOrdersListPage() {
           type: 'search',
           label: '프로그램명',
           placeholder: '프로그램명을 입력하세요',
-          width: '25%',
         }
       : {
           key: 'instructorName',
           type: 'search',
           label: '강사명',
           placeholder: '강사명을 입력하세요',
-          width: '25%',
         }
 
     return [
@@ -338,7 +410,6 @@ export function usePaymentOrdersListPage() {
           { label: '프로그램별', value: 'program' },
           { label: '강사별', value: 'instructor' },
         ],
-        width: '16%',
       },
       nameFilter,
       {
@@ -348,76 +419,75 @@ export function usePaymentOrdersListPage() {
         placeholder: '전체',
         options: PENDING_PAYMENT_ITEM_FILTER_OPTIONS,
         allowClear: true,
-        width: '25%',
       },
       {
         key: 'dateRange',
         type: 'dateRange',
         label: '기간',
-        width: '34%',
         dateRangeOneMonthFromStart: true,
       },
     ]
   }, [isProgram])
 
-  const renderHeader = useCallback(
-    (_mode: PaymentOrdersPageViewMode): ReactElement => {
-      return (
-        <div className="table-header-actions">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">
-              {isProgram ? '프로그램 별 정산 목록' : '강사 별 정산 목록'}
-            </span>
-            <span className="table-description">총 {total}건</span>
-          </div>
-        </div>
-      )
-    },
-    [isProgram, total]
-  )
+  const listTitle = isProgram ? '프로그램 별 정산 목록' : '강사 별 정산 목록'
+
+  const paymentOrdersExcelExport = useMemo((): FilterTableExcelExportConfig => {
+    if (isProgram) {
+      return { columns: programColumns, data: listProgram }
+    }
+    return { columns: instructorColumns, data: listInstructor }
+  }, [isProgram, programColumns, instructorColumns, listProgram, listInstructor])
 
   const renderContent = useCallback(
     (mode: PaymentOrdersPageViewMode): ReactElement =>
       mode === 'calendar' ? (
-        <PaymentOrdersCalendarView
-          key={`${appliedResetKey}-${resolvedExposureMode}`}
-          exposure={resolvedExposureMode}
-          programRows={listProgram}
-          instructorRows={listInstructor}
-          filterDateRange={appliedFromUrl.dateRange}
-          onFilterDateRangeApply={applyDateRangeFromCalendar}
-          onPaymentStatusDetailClick={payload => {
-            if (payload.exposure === 'program') {
-              openPaymentOrderDetail('program', payload.row)
-            } else {
-              openPaymentOrderDetail('instructor', payload.row)
-            }
-          }}
-        />
-      ) : isProgram ? (
-        <PaymentOrdersTable<PaymentOrderAdminProgramRow>
-          key="payment-orders-program"
-          rowKey="no"
-          columns={programColumns}
-          dataSource={listProgram}
-          scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM }}
-          onRowClick={record => openPaymentOrderDetail('program', record)}
-        />
+        <div className="participating-institutions-section__calendar-wrap">
+          <PaymentOrdersCalendarView
+            key={`${appliedResetKey}-${resolvedExposureMode}`}
+            exposure={resolvedExposureMode}
+            programRows={listProgram}
+            instructorRows={listInstructor}
+            eventsOverride={calendarEventsOverride}
+            filterDateRange={appliedFromUrl.dateRange}
+            onFilterDateRangeApply={applyDateRangeFromCalendar}
+            onPaymentStatusDetailClick={payload => {
+              if (payload.exposure === 'program') {
+                openPaymentOrderDetail('program', payload.row)
+              } else {
+                openPaymentOrderDetail('instructor', payload.row)
+              }
+            }}
+          />
+        </div>
       ) : (
-        <PaymentOrdersTable<PaymentOrderAdminInstructorRow>
-          key="payment-orders-instructor"
-          rowKey="no"
-          columns={instructorColumns}
-          dataSource={listInstructor}
-          scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR }}
-          onRowClick={record => openPaymentOrderDetail('instructor', record)}
-        />
+        <div className="participating-institutions-section__table-wrap list-page-layout__table-shell">
+          {isProgram ? (
+            <PaymentOrdersTable<PaymentOrderAdminProgramRow>
+              key="payment-orders-program"
+              rowKey="no"
+              columns={programColumns}
+              dataSource={listProgram}
+              scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_PROGRAM }}
+              onRowClick={record => openPaymentOrderDetail('program', record)}
+            />
+          ) : (
+            <PaymentOrdersTable<PaymentOrderAdminInstructorRow>
+              key="payment-orders-instructor"
+              rowKey="no"
+              columns={instructorColumns}
+              dataSource={listInstructor}
+              scroll={{ x: PAYMENT_ORDERS_LIST_SCROLL_X_INSTRUCTOR }}
+              onRowClick={record => openPaymentOrderDetail('instructor', record)}
+            />
+          )}
+        </div>
       ),
     [
       appliedResetKey,
       resolvedExposureMode,
       listProgram,
       listInstructor,
+      calendarEventsOverride,
       appliedFromUrl.dateRange,
       applyDateRangeFromCalendar,
       isProgram,
@@ -439,7 +509,12 @@ export function usePaymentOrdersListPage() {
     handleFilterChange,
     paymentOrdersFilterFields,
     paymentOrdersViewModeOptions,
-    renderHeader,
+    listTitle,
+    total,
+    paymentOrdersExcelExport,
     renderContent,
+    paymentOrdersRemote,
+    remoteListQuery,
+    remoteCalendarQuery,
   }
 }

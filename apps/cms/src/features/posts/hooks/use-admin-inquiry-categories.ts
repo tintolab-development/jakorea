@@ -1,30 +1,26 @@
-/**
- * 문의 카테고리 목록 — mock 저장소와 React 상태 동기화
- */
-
-import { useCallback, useMemo, useState } from 'react'
-import {
-  listInquiryCategoryRows,
-  replaceInquiryCategoryRows,
-} from '@/features/posts/api/admin-inquiry-category-mock-store'
-import type { InquiryCategoryRow } from '@/features/posts/model/admin-inquiry-management.types'
+import { useMemo } from 'react'
+import type { AdminInquiryRow, InquiryCategoryRow } from '@/features/posts/model/admin-inquiry-management.types'
 
 export type UseAdminInquiryCategoriesResult = {
   categoryRows: InquiryCategoryRow[]
   allowedCategoryLabels: readonly string[]
   allowedCategorySet: ReadonlySet<string>
-  replaceCategories: (next: InquiryCategoryRow[]) => void
 }
 
-export function useAdminInquiryCategories(): UseAdminInquiryCategoriesResult {
-  const [categoryRows, setCategoryRows] = useState<InquiryCategoryRow[]>(() =>
-    listInquiryCategoryRows()
-  )
-
-  const replaceCategories = useCallback((next: InquiryCategoryRow[]) => {
-    replaceInquiryCategoryRows(next)
-    setCategoryRows(listInquiryCategoryRows())
-  }, [])
+export function useAdminInquiryCategories(
+  inquiryRows: readonly AdminInquiryRow[] = []
+): UseAdminInquiryCategoriesResult {
+  const categoryRows = useMemo<InquiryCategoryRow[]>(() => {
+    const labels = new Set<string>()
+    for (const row of inquiryRows) {
+      const label = row.category.trim()
+      if (label) labels.add(label)
+    }
+    return [...labels].sort().map((name, index) => ({
+      id: `inq-cat-${index}`,
+      name,
+    }))
+  }, [inquiryRows])
 
   const allowedCategoryLabels = useMemo(
     () => categoryRows.map(r => r.name),
@@ -40,6 +36,5 @@ export function useAdminInquiryCategories(): UseAdminInquiryCategoriesResult {
     categoryRows,
     allowedCategoryLabels,
     allowedCategorySet,
-    replaceCategories,
   }
 }

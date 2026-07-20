@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCreateProgram } from '@/features/program/ujat/api/queries'
+import type { Program } from '@/types/domain'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
   lookupTemplateRegistry,
@@ -23,10 +25,16 @@ import {
 
 export type UseUjatProgramRegistrationFlowOptions = {
   /** 1단계(프로그램 등록) 저장 성공 후 — 목록 갱신·모달 닫기 등 */
-  onProgramRegistrationSaved?: () => void
+  onProgramRegistrationSaved?: (program: Program) => void
   /** URL `ujatStep` 초기값 */
   initialStep?: UjatProgramRegistrationStepKey
   onStepChange?: (step: UjatProgramRegistrationStepKey) => void
+  /** true면 임시저장 복원 없이 시드로 시작 */
+  skipDraftRestore?: boolean
+}
+
+function createRegistrationIdempotencyKey(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
 function resolveStepTemplateName(templateId: string): string {
@@ -44,6 +52,15 @@ export function useUjatProgramRegistrationFlow(
     const initial = options?.initialStep
     return initial != null ? normalizeUjatProgramRegistrationStepKey(initial) : 'program'
   })
+  const createProgramMutation = useCreateProgram()
+  const completionPromiseRef = useRef<Promise<Program> | null>(null)
+  const idempotencyKeyRef = useRef(createRegistrationIdempotencyKey())
+
+  useEffect(() => {
+    if (open) return
+    completionPromiseRef.current = null
+    idempotencyKeyRef.current = createRegistrationIdempotencyKey()
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -86,8 +103,9 @@ export function useUjatProgramRegistrationFlow(
     }
   }, [activeStep])
 
-  const registrationVm = useUjatProgramRegistrationEditor(open && isProgramStep, programTemplateName, {
-    onRegistrationSaved: options?.onProgramRegistrationSaved,
+  // 공통 정보 overlay는 모집·신청 단계로 이동한 뒤 완료할 때까지 유지되어야 한다.
+  const registrationVm = useUjatProgramRegistrationEditor(open, programTemplateName, {
+    skipDraftRestore: options?.skipDraftRestore === true,
   })
 
   const participantVm = useProgramParticipantApplicationEditor(
@@ -103,21 +121,28 @@ export function useUjatProgramRegistrationFlow(
   )
 
   const editorVm = useMemo((): TemplateEditorVm => {
-    const base = {
+    const isDraftLoading = isProgramStep
+      ? registrationVm.isDraftLoading
+      : isParticipantStep
+        ? participantVm.isDraftLoading
+        : false
+    return {
       registryEntry,
       isProgramRegistration: false,
       isUjatProgramRegistration: isProgramStep,
       isParticipantApplication: isParticipantStep,
       isWritingSurveyList: false,
+      isDraftLoading,
       programRegistrationVm: registrationVm,
       ujatProgramRegistrationVm: registrationVm,
       programParticipantApplicationVm: participantVm,
       surveyListEditor: registrationVm,
       surveyTableRowSelection: participantVm,
       handleSave: isProgramStep ? registrationVm.handleSave : participantVm.handleSave,
-    }
-    return base as unknown as TemplateEditorVm
+    } as unknown as TemplateEditorVm
   }, [registryEntry, isProgramStep, isParticipantStep, registrationVm, participantVm])
+
+  const isDraftLoading = editorVm.isDraftLoading === true
 
   const panels = useMemo(
     () =>
@@ -175,13 +200,29 @@ export function useUjatProgramRegistrationFlow(
   }, [isProgramStep, registrationVm, participantVm])
 
   const handleCompleteRegistration = useCallback(() => {
-    if (isProgramStep) {
-      registrationVm.handleSave()
-      return
-    }
+    if (completionPromiseRef.current) return completionPromiseRef.current
+
     participantVm.handleSave()
-    // TODO(api): 프로그램 등록 완료 API 연동 후 모달 닫기·목록 갱신
-  }, [isProgramStep, registrationVm, participantVm])
+    const completion = registrationVm
+      .persistDraft()
+      .then(snapshot =>
+        createProgramMutation.mutateAsync({
+          ...snapshot,
+          idempotencyKey: idempotencyKeyRef.current,
+        })
+      )
+      .then(program => {
+        options?.onProgramRegistrationSaved?.(program)
+        return program
+      })
+      .catch(error => {
+        completionPromiseRef.current = null
+        throw error
+      })
+
+    completionPromiseRef.current = completion
+    return completion
+  }, [createProgramMutation, options, participantVm, registrationVm])
 
   return {
     activeStep,
@@ -190,10 +231,12 @@ export function useUjatProgramRegistrationFlow(
     selectStep,
     goToPhase,
     panels,
+    isDraftLoading,
     handlePreview,
     handleSave,
     handleCompleteRegistration,
     registrationVm,
     participantVm,
+    isCompletingRegistration: createProgramMutation.isPending,
   }
 }

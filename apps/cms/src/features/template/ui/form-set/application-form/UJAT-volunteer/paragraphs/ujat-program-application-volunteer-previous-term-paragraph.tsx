@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 
 const CERTIFICATE_GUIDE_LINES = [
@@ -24,19 +25,20 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph() {
           fullRow
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
-              <CmsInput
+              <CmsNumericInput
+                mode="numericText"
                 inputSize="medium"
                 width="100%"
-                style={{ flex: '1 1 0', minWidth: 0 }}
+                style={{ flex: '3 1 0', minWidth: 0 }}
                 placeholder="활동 기수"
                 value={term}
-                onChange={e => setTerm(e.target.value)}
+                onValueChange={setTerm}
               />
               <DetailInfoForm.InputsSeparator />
               <CmsInput
                 inputSize="medium"
                 width="100%"
-                style={{ flex: '1 1 0', minWidth: 0 }}
+                style={{ flex: '7 1 0', minWidth: 0 }}
                 placeholder="활동 년도"
                 value={year}
                 onChange={e => setYear(e.target.value)}

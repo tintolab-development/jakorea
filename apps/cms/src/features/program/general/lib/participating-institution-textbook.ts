@@ -41,7 +41,8 @@ export function calculateParticipatingTextbookKitQuantity(
   return { textbookKits, textbookQuantity }
 }
 
-function listUsedTextbooksForProgram(program: Program): TextbookRow[] {
+function listUsedTextbooksForProgram(program: Program, catalog?: TextbookRow[]): TextbookRow[] {
+  if (catalog) return catalog
   const educationTarget = resolveProgramEducationTarget(program)
   return listTextbooksFromStore().filter(row => {
     if (row.useStatus !== 'USED') return false
@@ -51,24 +52,33 @@ function listUsedTextbooksForProgram(program: Program): TextbookRow[] {
   })
 }
 
+/** 사업 분야·교육 대상에 맞는 사용 중 교재가 카탈로그에 있는지 (일정형 여부 무관) */
+export function programHasTextbookCatalog(program: Program, catalog?: TextbookRow[]): boolean {
+  return dedupeTextbooksByName(listUsedTextbooksForProgram(program, catalog)).length > 0
+}
+
 /** 교재 카탈로그·일정형이 아닌 일반 프로그램에 교재 정보 노출 여부 */
-export function programUsesTextbook(program: Program): boolean {
+export function programUsesTextbook(program: Program, catalog?: TextbookRow[]): boolean {
   if (isGeneralProgramScheduleType(program)) return false
-  return dedupeTextbooksByName(listUsedTextbooksForProgram(program)).length > 0
+  return programHasTextbookCatalog(program, catalog)
 }
 
 /** 사업 분야·교육 학년에 맞는 기본 교재 (첫 매칭) */
 export function resolveTextbookForEducationGrade(
   program: Program,
-  educationGrade: string
+  educationGrade: string,
+  catalog?: TextbookRow[]
 ): TextbookRow | null {
-  const matches = filterTextbooksForApplicant(program, educationGrade)
+  const matches = filterTextbooksForApplicant(program, educationGrade, catalog)
   return matches[0] ?? null
 }
 
 /** 합반 수정: 사업 분야·교육 대상 동일, 교재 학년만 다른 옵션 */
-export function filterTextbooksForCombinedClassEdit(program: Program): TextbookRow[] {
-  return dedupeTextbooksByName(listUsedTextbooksForProgram(program))
+export function filterTextbooksForCombinedClassEdit(
+  program: Program,
+  catalog?: TextbookRow[]
+): TextbookRow[] {
+  return dedupeTextbooksByName(listUsedTextbooksForProgram(program, catalog))
 }
 
 /** 선택 교재의 학년 라벨 (실적 취합·표시용) */
@@ -119,6 +129,7 @@ export function resolveParticipatingInstitutionTextbookDisplay(params: {
   textbookGrade?: string
   textbookKits?: number
   textbookQuantity?: number
+  catalog?: TextbookRow[]
 }): {
   textbookId?: string
   textbookName: string
@@ -126,18 +137,22 @@ export function resolveParticipatingInstitutionTextbookDisplay(params: {
   textbookKits: number
   textbookQuantity: number
 } {
-  const auto = resolveTextbookForEducationGrade(params.program, params.educationGrade)
+  const auto = resolveTextbookForEducationGrade(
+    params.program,
+    params.educationGrade,
+    params.catalog
+  )
   const kitsFromCount = calculateParticipatingTextbookKitQuantity(
     params.program,
     params.studentCount
   )
 
+  const catalogSource = params.catalog ?? listTextbooksFromStore()
+
   if (params.textbookId || params.textbookName?.trim()) {
     const storeRow = params.textbookId
-      ? listTextbooksFromStore().find(row => row.id === params.textbookId)
-      : listTextbooksFromStore().find(
-          row => row.textbookName.trim() === params.textbookName?.trim()
-        )
+      ? catalogSource.find(row => row.id === params.textbookId)
+      : catalogSource.find(row => row.textbookName.trim() === params.textbookName?.trim())
     const grade =
       params.textbookGrade?.trim() ||
       (storeRow ? resolveTextbookGradeLabel(storeRow) : params.educationGrade)

@@ -3,6 +3,7 @@ import './ujat-program-application-grade-info-paragraph.css'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 
 const GRADE_OPTIONS = Array.from({ length: 6 }, (_, i) => ({
@@ -50,13 +51,13 @@ function GradeApplicationBlock({
                 options={GRADE_OPTIONS}
               />
               <DetailInfoForm.InputsSeparator />
-              <CmsInput
+              <CmsNumericInput
                 inputSize="medium"
                 width={120}
                 placeholder="총 학급 수"
-                type="number"
+                mode="integer"
                 value={classCountInput}
-                onChange={e => setClassCountInput(e.target.value)}
+                onValueChange={setClassCountInput}
               />
               <span>학급</span>
             </div>

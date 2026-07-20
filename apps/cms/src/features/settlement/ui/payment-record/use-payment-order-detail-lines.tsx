@@ -6,6 +6,14 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import {
+  buildInstructorDetailFromSettlements,
+  buildProgramDetailFromSettlements,
+} from '@/features/settlement-management/api/payment-orders/map-settlement-detail'
+import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
+import { useConfirmPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
+import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
+import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
+import {
   getMockPaymentOrderInstructorDetail,
   getMockPaymentOrderProgramDetail,
   type PaymentOrderAdminInstructorDetailProgramRow,
@@ -14,6 +22,8 @@ import {
   type PaymentOrderAdminProgramRow,
 } from '@/data/mock/payment-order-admin-list'
 import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payment-order-aggregate-status'
+
+type DetailContextQuery = PaymentOrdersDetailContextQueryResult
 import {
   deriveAggregateFromLines,
   formatWon,
@@ -60,29 +70,36 @@ function filterDetailRows(
   })
 }
 
-export type UsePaymentOrderDetailLinesControllerArgs =
-  | {
-      mode: 'program'
-      programRow: PaymentOrderAdminProgramRow
-      isOpen: boolean
-      listPageDateRange: [Dayjs, Dayjs] | null
-      onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
-      onOpenCalculationStatement: (row: PaymentOrderAdminProgramDetailInstructorRow) => void
-      registerStatementCommitSink?: (
-        sink: (payload: PaymentOrderCalculationStatementCommitPayload) => void
-      ) => void
-    }
-  | {
-      mode: 'instructor'
-      instructorRow: PaymentOrderAdminInstructorRow
-      isOpen: boolean
-      listPageDateRange: [Dayjs, Dayjs] | null
-      onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
-      onOpenCalculationStatement: (row: PaymentOrderAdminInstructorDetailProgramRow) => void
-      registerStatementCommitSink?: (
-        sink: (payload: PaymentOrderCalculationStatementCommitPayload) => void
-      ) => void
-    }
+type RemoteDetailProps = {
+  paymentOrdersRemote?: boolean
+  detailContextQuery?: DetailContextQuery
+}
+
+export type UsePaymentOrderDetailLinesControllerArgs = RemoteDetailProps &
+  (
+    | {
+        mode: 'program'
+        programRow: PaymentOrderAdminProgramRow
+        isOpen: boolean
+        listPageDateRange: [Dayjs, Dayjs] | null
+        onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
+        onOpenCalculationStatement: (row: PaymentOrderAdminProgramDetailInstructorRow) => void
+        registerStatementCommitSink?: (
+          sink: (payload: PaymentOrderCalculationStatementCommitPayload) => void
+        ) => void
+      }
+    | {
+        mode: 'instructor'
+        instructorRow: PaymentOrderAdminInstructorRow
+        isOpen: boolean
+        listPageDateRange: [Dayjs, Dayjs] | null
+        onAggregateChange: (status: PaymentOrderDetailAggregateStatus) => void
+        onOpenCalculationStatement: (row: PaymentOrderAdminInstructorDetailProgramRow) => void
+        registerStatementCommitSink?: (
+          sink: (payload: PaymentOrderCalculationStatementCommitPayload) => void
+        ) => void
+      }
+  )
 
 export function usePaymentOrderDetailLinesController(
   args: UsePaymentOrderDetailLinesControllerArgs
@@ -94,9 +111,15 @@ export function usePaymentOrderDetailLinesController(
     onAggregateChange,
     onOpenCalculationStatement,
     registerStatementCommitSink,
+    paymentOrdersRemote = shouldUseSettlementRemote('paymentOrders'),
+    detailContextQuery,
   } = args
 
+  const confirmMutation = useConfirmPaymentStatementMutation()
+
   const contextRowNo = mode === 'program' ? args.programRow.no : args.instructorRow.no
+  const contextAggregateKey =
+    mode === 'program' ? args.programRow.aggregateKey : args.instructorRow.aggregateKey
 
   const [draftKeyword, setDraftKeyword] = useState('')
   const [draftInstitutionName, setDraftInstitutionName] = useState('')
@@ -143,14 +166,30 @@ export function usePaymentOrderDetailLinesController(
     setPaymentStatementIssueBlocked({ open: false, variant: 'single', selectedCount: 0 })
 
     if (mode === 'program') {
-      const d = getMockPaymentOrderProgramDetail(args.programRow)
-      setRowsState(d.instructorRows.map(r => ({ ...r })))
+      if (paymentOrdersRemote && detailContextQuery?.data) {
+        const d = buildProgramDetailFromSettlements(
+          args.programRow,
+          detailContextQuery.data.items ?? [],
+          detailContextQuery.data.statements ?? []
+        )
+        setRowsState(d.instructorRows.map(r => ({ ...r })))
+      } else {
+        const d = getMockPaymentOrderProgramDetail(args.programRow)
+        setRowsState(d.instructorRows.map(r => ({ ...r })))
+      }
+    } else if (paymentOrdersRemote && detailContextQuery?.data) {
+      const d = buildInstructorDetailFromSettlements(
+        args.instructorRow,
+        detailContextQuery.data.items ?? [],
+        detailContextQuery.data.statements ?? []
+      )
+      setRowsState(d.programRows.map(r => ({ ...r })))
     } else {
       const d = getMockPaymentOrderInstructorDetail(args.instructorRow)
       setRowsState(d.programRows.map(r => ({ ...r })))
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- contextRowNo로 행 식별; 동일 no면 객체 참조 변경만으로는 재초기화하지 않음
-  }, [isOpen, mode, contextRowNo, listPageDateRange])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- contextRowNo·aggregateKey로 행 식별
+  }, [isOpen, mode, contextRowNo, contextAggregateKey, listPageDateRange, paymentOrdersRemote, detailContextQuery?.data])
 
   useEffect(() => {
     onAggregateChange(deriveAggregateFromLines(rowsState.map(r => r.processingStatus)))
@@ -206,6 +245,43 @@ export function usePaymentOrderDetailLinesController(
   const handleBatchConfirm = useCallback(
     (scheduledDate: Dayjs) => {
       const iso = scheduledDate.format('YYYY-MM-DD')
+
+      if (paymentOrdersRemote) {
+        const selected = rowsState.filter(r => selectedRowKeys.includes(r.id))
+        const statementIds = selected
+          .map(r => r.statementId)
+          .filter((id): id is number => id != null)
+
+        if (statementIds.length === 0) {
+          window.alert('지급조서 확인 API에 필요한 statementId가 없습니다.')
+          return
+        }
+
+        void confirmMutation
+          .mutateAsync(statementIds)
+          .then(() => {
+            setRowsState(prev =>
+              prev.map(row =>
+                selectedRowKeys.includes(row.id)
+                  ? {
+                      ...row,
+                      processingStatus: 'confirmed' as const,
+                      lectureFeePaymentScheduledDate: iso,
+                    }
+                  : row
+              )
+            )
+            setBatchConfirmOpen(false)
+            setSelectedRowKeys([])
+          })
+          .catch(error => {
+            window.alert(
+              getSettlementApiErrorMessage(error, '지급조서 일괄 확인에 실패했습니다.')
+            )
+          })
+        return
+      }
+
       setRowsState(prev =>
         prev.map(row =>
           selectedRowKeys.includes(row.id)
@@ -220,7 +296,7 @@ export function usePaymentOrderDetailLinesController(
       setBatchConfirmOpen(false)
       setSelectedRowKeys([])
     },
-    [selectedRowKeys]
+    [selectedRowKeys, paymentOrdersRemote, rowsState, confirmMutation]
   )
 
   const filteredRows = useMemo(

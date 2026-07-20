@@ -1,0 +1,25 @@
+.survey-results-download-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.survey-results-download-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.survey-results-download-modal__label {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.survey-results-download-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

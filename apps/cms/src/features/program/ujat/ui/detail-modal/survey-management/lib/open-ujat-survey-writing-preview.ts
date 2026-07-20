@@ -13,7 +13,7 @@ export function buildSurveyPreviewDraft(templateId: string, templateName?: strin
 
 export function buildUjatSurveyWritingPreviewSession(
   templateId: string,
-  onEditForm: () => void
+  onEditForm?: () => void
 ): TemplateWritingUserPreviewSession | null {
   const row = findWritingTemplateRowByDefinitionId(templateId)
   if (row == null) return null
@@ -25,6 +25,6 @@ export function buildUjatSurveyWritingPreviewSession(
     updateParagraph: () => {},
     headerTitle: resolvePreviewHeaderTitle(entry, row.templateName),
     editorKind: 'survey',
-    onEditForm,
+    ...(onEditForm != null ? { onEditForm } : {}),
   }
 }

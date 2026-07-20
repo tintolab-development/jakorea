@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState, useMemo } from 'react'
+import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
 import { Modal, Drawer } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
@@ -137,6 +138,43 @@ export function InstructorListPage() {
     }
   )
 
+  const instructorExcelColumns = useMemo<
+    ColumnsType<{
+      name: string
+      email: string
+      phone: string
+      pillar: string
+      specialty: string
+      status: string
+      createdAt: string
+    }>
+  >(
+    () => [
+      { title: '이름', dataIndex: 'name', key: 'name' },
+      { title: '이메일', dataIndex: 'email', key: 'email' },
+      { title: '연락처', dataIndex: 'phone', key: 'phone' },
+      { title: '강사단', dataIndex: 'pillar', key: 'pillar' },
+      { title: '전문분야', dataIndex: 'specialty', key: 'specialty' },
+      { title: '상태', dataIndex: 'status', key: 'status' },
+      { title: '등록일', dataIndex: 'createdAt', key: 'createdAt' },
+    ],
+    []
+  )
+
+  const instructorExcelData = useMemo(
+    () =>
+      filteredInstructors.map(instructor => ({
+        name: instructor.name,
+        email: instructor.contactEmail ?? '',
+        phone: instructor.contactPhone ?? '',
+        pillar: instructor.instructorType ?? '',
+        specialty: instructor.specialty?.join(', ') ?? '',
+        status: 'ACTIVE',
+        createdAt: String(instructor.createdAt ?? ''),
+      })),
+    [filteredInstructors]
+  )
+
   const handleNewClick = () => {
     openFormModal()
   }
@@ -239,6 +277,10 @@ export function InstructorListPage() {
             강사 등록
           </PermissionButton>
         }
+        excelExport={{
+          columns: instructorExcelColumns,
+          data: instructorExcelData,
+        }}
       >
         <div className="program-list-content-wrapper__table">
           <InstructorList data={filteredInstructors} loading={loading} onView={handleView} />
@@ -271,7 +313,7 @@ export function InstructorListPage() {
         onCancel={handleFormCancel}
         footer={null}
         width={LAYOUT_CONSTANTS.widths.modal.medium}
-        destroyOnClose
+        destroyOnHidden
       >
         <InstructorForm
           key={editingInstructor?.id || 'new'}

@@ -47,13 +47,12 @@ export function ConfirmModal({
       className="confirm-modal"
       footer={
         <>
-          <CmsButton variant="secondary" size="medium" width={120} type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
             {cancelText}
           </CmsButton>
           <CmsButton
             variant={danger ? 'delete' : 'primary'}
             size="medium"
-            width={120}
             type="button"
             onClick={onConfirm}
           >

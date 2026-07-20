@@ -20,7 +20,7 @@ import {
 } from './assignment-types'
 import { UjatAssignmentDocumentViewerModal } from '../../assignments/document-viewer/ujat-assignment-document-viewer-modal'
 import type { UjatDocumentViewerTarget } from '../../assignments/document-viewer/ujat-document-viewer-types'
-import { UJAT_ATTENDANCE_STATUS_LABEL } from '../../attendance/types'
+import { ProgramAttendanceStatusText } from '@/features/program/shared/ui/program-attendance-status-text'
 import './assignment.css'
 
 const PLAN_LOG_CELL_CLASSNAME = 'ujat-volunteer-assignment-table__plan-log-cell'
@@ -82,20 +82,20 @@ function renderClass(classDisplay: UjatVolunteerClassDisplay) {
 
 function renderAttendance(attendance: UjatVolunteerAttendanceDisplay) {
   if (attendance.kind === 'dash') {
-    return <span className="ujat-volunteer-assignment-table__dash">-</span>
+    return <ProgramAttendanceStatusText kind="dash" label="-" />
   }
   if (attendance.kind === 'late') {
     return (
-      <span className="ujat-volunteer-assignment-table__attendance-late">
-        지각 ({attendance.time})
-      </span>
+      <ProgramAttendanceStatusText
+        kind="late"
+        label="지각"
+        lateTime={attendance.time}
+      />
     )
   }
   if (attendance.kind === 'excused_absence') {
     return (
-      <span className="ujat-volunteer-assignment-table__attendance-excused">
-        {UJAT_ATTENDANCE_STATUS_LABEL.excused_absence}
-      </span>
+      <ProgramAttendanceStatusText kind="excused_absence" label="사유 불참" />
     )
   }
   if (attendance.kind === 'absence') {

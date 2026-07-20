@@ -8,10 +8,10 @@ import { DetailFullpageModalLnbArrowDown } from '@/shared/ui/detail-fullpage-mod
 import type { UjatSurveyMenuItem } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import type { UjatDetailLnbKey } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { LnbIconManagers, LnbIconProjectInfo } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
-import { UJAT_INSTITUTION_APP_CHILD_ROWS } from './application-institution/tabs'
+import { UJAT_INSTITUTION_APP_CHILD_ROWS, UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL } from './application-institution/tabs'
 import { UjatLnbInstitutionApplicationIcon } from './application-institution/lnb-icon'
 import { UjatLnbSurveyManagementIcon } from './survey-management/ujat-lnb-survey-management-icon'
-import { UjatLnbVolunteerHandshakeIcon } from './application-volunteer/ujat-lnb-volunteer-handshake-icon'
+import { LnbVolunteerHandshakeIcon } from './application-volunteer/lnb-icon'
 import {
   UjatLnbEducationBookIcon,
   UjatLnbEducationSummaryClipboardIcon,
@@ -214,7 +214,7 @@ export function UjatProgramDetailSidebar({
           </div>
         </li>
 
-        {/* 기관 신청 목록 */}
+        {/* 참여 기관 신청 목록 */}
         <li>
           <button
             type="button"
@@ -224,7 +224,9 @@ export function UjatProgramDetailSidebar({
             <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
               <UjatLnbInstitutionApplicationIcon />
             </span>
-            <span className="detail-fullpage-modal__lnb-item-label">기관 신청 목록</span>
+            <span className="detail-fullpage-modal__lnb-item-label">
+              {UJAT_INSTITUTION_APPLICATIONS_LNB_LABEL}
+            </span>
             <DetailFullpageModalLnbArrowDown
               className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('institution_applications') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
             />
@@ -259,41 +261,45 @@ export function UjatProgramDetailSidebar({
           ] as const
         ).map(({ top, half, label }) => {
           const prefix = volunteerTabPrefix(half)
-          const childRows = interviewEnabled
-            ? (
-                [
-                  { tab: `${prefix}_doc1`, childLabel: '1차 서류 심사 대상자' },
-                  { tab: `${prefix}_doc_passed`, childLabel: '1차 서류 합격자' },
-                  { tab: `${prefix}_interview2`, childLabel: '2차 면접 대상자' },
-                ] as const
-              ).map(row => (
-                <li key={row.tab}>
-                  <button
-                    type="button"
-                    className={`detail-fullpage-modal__lnb-child ujat-detail-lnb__vol-half-child ${activeLnb === top && activeTab === row.tab ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
-                    onClick={() => handleSelectChildTab(top, row.tab)}
-                  >
-                    <span className="detail-fullpage-modal__lnb-child-dot" />
-                    <span className="detail-fullpage-modal__lnb-child-label" data-text={row.childLabel}>
-                      {row.childLabel}
-                    </span>
-                  </button>
-                </li>
-              ))
-            : (
-                <li key={`${prefix}_all`}>
-                  <button
-                    type="button"
-                    className={`detail-fullpage-modal__lnb-child ujat-detail-lnb__vol-half-child ${activeLnb === top && activeTab === `${prefix}_all` ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
-                    onClick={() => handleSelectChildTab(top, `${prefix}_all`)}
-                  >
-                    <span className="detail-fullpage-modal__lnb-child-dot" />
-                    <span className="detail-fullpage-modal__lnb-child-label" data-text="신청자 목록">
-                      신청자 목록
-                    </span>
-                  </button>
-                </li>
-              )
+          const allTab = `${prefix}_all`
+
+          if (!interviewEnabled) {
+            return (
+              <li key={top}>
+                <button
+                  type="button"
+                  className={`detail-fullpage-modal__lnb-item ${activeLnb === top ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
+                  onClick={() => handleSelectChildTab(top, allTab)}
+                >
+                  <span className="detail-fullpage-modal__lnb-item-icon">
+                    <LnbVolunteerHandshakeIcon />
+                  </span>
+                  <span className="detail-fullpage-modal__lnb-item-label">{label}</span>
+                </button>
+              </li>
+            )
+          }
+
+          const childRows = (
+            [
+              { tab: `${prefix}_doc1`, childLabel: '1차 서류 심사 대상자' },
+              { tab: `${prefix}_doc_passed`, childLabel: '1차 서류 합격자' },
+              { tab: `${prefix}_interview2`, childLabel: '2차 면접 대상자' },
+            ] as const
+          ).map(row => (
+            <li key={row.tab}>
+              <button
+                type="button"
+                className={`detail-fullpage-modal__lnb-child ujat-detail-lnb__vol-half-child ${activeLnb === top && activeTab === row.tab ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
+                onClick={() => handleSelectChildTab(top, row.tab)}
+              >
+                <span className="detail-fullpage-modal__lnb-child-dot" />
+                <span className="detail-fullpage-modal__lnb-child-label" data-text={row.childLabel}>
+                  {row.childLabel}
+                </span>
+              </button>
+            </li>
+          ))
 
           return (
             <li key={top}>
@@ -303,7 +309,7 @@ export function UjatProgramDetailSidebar({
                 onClick={() => toggleTopBody(top)}
               >
                 <span className="detail-fullpage-modal__lnb-item-icon">
-                  <UjatLnbVolunteerHandshakeIcon />
+                  <LnbVolunteerHandshakeIcon />
                 </span>
                 <span className="detail-fullpage-modal__lnb-item-label">{label}</span>
                 <DetailFullpageModalLnbArrowDown
@@ -382,43 +388,44 @@ export function UjatProgramDetailSidebar({
           </button>
         </li>
 
-        {/* 설문 관리 */}
-        <li>
-          <button
-            type="button"
-            className={`detail-fullpage-modal__lnb-item ${activeLnb === 'survey' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
-            onClick={() => toggleTopBody('survey')}
-          >
-            <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
-              <UjatLnbSurveyManagementIcon />
-            </span>
-            <span className="detail-fullpage-modal__lnb-item-label">설문 관리</span>
-            <DetailFullpageModalLnbArrowDown
-              className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('survey') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
-            />
-          </button>
-          <div
-            className={childrenWrapClass(isTopBodyOpen('survey'))}
-            aria-hidden={!isTopBodyOpen('survey')}
-          >
-            <ul className="detail-fullpage-modal__lnb-children">
-              {surveyItems.map(item => (
-                <li key={item.key}>
-                  <button
-                    type="button"
-                    className={`detail-fullpage-modal__lnb-child ${activeLnb === 'survey' && activeTab === item.key ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
-                    onClick={() => handleSelectChildTab('survey', item.key)}
-                  >
-                    <span className="detail-fullpage-modal__lnb-child-dot" />
-                    <span className="detail-fullpage-modal__lnb-child-label" data-text={item.label}>
-                      {item.label}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </li>
+        {surveyItems.length > 0 ? (
+          <li>
+            <button
+              type="button"
+              className={`detail-fullpage-modal__lnb-item ${activeLnb === 'survey' ? 'detail-fullpage-modal__lnb-item--active' : ''}`}
+              onClick={() => toggleTopBody('survey')}
+            >
+              <span className="detail-fullpage-modal__lnb-item-icon" aria-hidden>
+                <UjatLnbSurveyManagementIcon />
+              </span>
+              <span className="detail-fullpage-modal__lnb-item-label">설문 관리</span>
+              <DetailFullpageModalLnbArrowDown
+                className={`detail-fullpage-modal__lnb-item-arrow ${isTopBodyOpen('survey') ? 'detail-fullpage-modal__lnb-item-arrow--expanded' : ''}`}
+              />
+            </button>
+            <div
+              className={childrenWrapClass(isTopBodyOpen('survey'))}
+              aria-hidden={!isTopBodyOpen('survey')}
+            >
+              <ul className="detail-fullpage-modal__lnb-children">
+                {surveyItems.map(item => (
+                  <li key={item.key}>
+                    <button
+                      type="button"
+                      className={`detail-fullpage-modal__lnb-child ${activeLnb === 'survey' && activeTab === item.key ? 'detail-fullpage-modal__lnb-child--active' : ''}`}
+                      onClick={() => handleSelectChildTab('survey', item.key)}
+                    >
+                      <span className="detail-fullpage-modal__lnb-child-dot" />
+                      <span className="detail-fullpage-modal__lnb-child-label" data-text={item.label}>
+                        {item.label}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </li>
+        ) : null}
 
         {/* 담당자 정보 */}
         <li>

@@ -40,6 +40,19 @@
   padding: 0 !important;
 }
 
+.lecture-report-prog-info__session-input.cms-input {
+  width: 100%;
+}
+
+.lecture-report-prog-info__session-input.cms-input .cms-input__control {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
 .lecture-report-prog-info__divider {
   width: 1px;
   height: 13px;

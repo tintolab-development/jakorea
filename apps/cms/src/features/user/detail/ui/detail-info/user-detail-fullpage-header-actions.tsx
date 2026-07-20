@@ -24,6 +24,10 @@ import {
 } from '@/features/user/detail/ui/user-basic-info-section'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import {
+  isMemberBasicInfoPatchRemoteEnabled,
+  isMembersRemoteEnabled,
+} from '@/features/user/api/member-remote-capabilities'
 
 export type UserDetailPermissionRole = 'instructor' | 'admin'
 
@@ -101,7 +105,11 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
     basicBodyKey === 'instructor' ||
     (basicBodyKey === 'admin' && isCmsAdminUser(currentUser))
 
-  const showInlineEditStart = !pageShell.basicInfoEditing && canInlineEdit
+  const remoteBasicInfoSaveBlocked =
+    isMembersRemoteEnabled() && !isMemberBasicInfoPatchRemoteEnabled()
+
+  const showInlineEditStart =
+    !pageShell.basicInfoEditing && canInlineEdit && !remoteBasicInfoSaveBlocked
 
   const showInlineEditControls = pageShell.basicInfoEditing && canInlineEdit
 
@@ -146,7 +154,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
         labelMode="stickyReveal"
         revealed={personalInfoRevealed}
         cmsVariant={personalInfoButton.variant}
-        cmsSize="large"
+        cmsSize="medium"
         width={160}
         onClick={personalInfoButton.onClick}
       />

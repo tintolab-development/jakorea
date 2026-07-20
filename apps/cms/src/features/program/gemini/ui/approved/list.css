@@ -1,4 +1,16 @@
+.gemini-approved-training-list__training-datetime-cell {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.gemini-approved-training-list__training-datetime-cell .program-detail-td-segment-wrap {
+  justify-content: center;
+}
+
 .gemini-approved-training-list__status {
+  display: inline-block;
+  text-align: center;
   font-family: Pretendard, var(--font-family-primary), sans-serif;
   font-size: 16px;
   font-style: normal;
@@ -14,7 +26,23 @@
   color: var(--color-blue, #017eaf);
 }
 
-.gemini-approved-training-list__status--ended {
-  color: var(--color-red, #c32f4a);
+.gemini-approved-training-list__status--completed {
+  color: var(--main-BK, #3d3d3d);
 }
 
+.gemini-approved-training-list__status--not-conducted {
+  color: var(--main-BK, #3d3d3d);
+  opacity: 0.5;
+}
+
+.gemini-approved-training-list__instructor--unassigned {
+  overflow: hidden;
+  color: var(--gray-85969-d, #85969d);
+  text-align: center;
+  text-overflow: ellipsis;
+  font-family: Pretendard, var(--font-family-primary), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}

@@ -1,8 +1,8 @@
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { TemplateFullpageModal } from '@/features/template/ui/template-management/template-fullpage-modal'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { useCmsAlert } from '@/shared/ui'
+import { geminiRecruitmentService } from '../../api/recruitment-service'
 import { useGeminiRecruitmentAddForm } from '../../hooks/use-gemini-recruitment-add-form'
 import { persistGeminiRecruitmentAddDraft } from '../../lib/recruitment/add-local-save'
 import {
@@ -14,7 +14,10 @@ import {
   GEMINI_RECRUITMENT_ID_PARAM,
   GEMINI_RECRUITMENT_LNB_PARAM,
 } from '../../lib/recruitment/detail-url'
+import { GeminiRecruitmentAddCloseConfirmModal } from './add-close-confirm-modal'
 import { GeminiRecruitmentAddForm } from './add-form'
+import { GeminiRecruitmentAddFormSidebar } from './add-form-sidebar'
+import { GeminiRecruitmentAddPreviewModal } from './add-preview-modal'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import '@/features/template/ui/modal/template-preview-modal.css'
 import './add-fullpage-modal.css'
@@ -27,6 +30,8 @@ const DRAFT_SAVE_SUCCESS_MESSAGE =
 const DRAFT_SAVE_FAILURE_MESSAGE =
   '임시 저장에 실패했습니다.\n브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.'
 
+const REGISTER_SUCCESS_MESSAGE = '모집 공고가 등록되었습니다.'
+
 export function GeminiRecruitmentAddFullpageModal({
   open,
   onClose,
@@ -36,10 +41,19 @@ export function GeminiRecruitmentAddFullpageModal({
 }) {
   const { showAlert } = useCmsAlert()
   const form = useGeminiRecruitmentAddForm(open)
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewSnapshot, setPreviewSnapshot] = useState<ReturnType<
+    typeof form.buildSaveSnapshot
+  > | null>(null)
 
   const handleDraftSave = useCallback(() => {
     if (!form.hydrated) return
-    const ok = persistGeminiRecruitmentAddDraft(form.buildSaveSnapshot())
+    const snapshot = form.buildSaveSnapshot()
+    const ok = persistGeminiRecruitmentAddDraft(snapshot)
+    if (ok) {
+      form.markSavedBaseline()
+    }
     showAlert({
       title: '안내',
       content: ok ? DRAFT_SAVE_SUCCESS_MESSAGE : DRAFT_SAVE_FAILURE_MESSAGE,
@@ -47,39 +61,66 @@ export function GeminiRecruitmentAddFullpageModal({
   }, [form, showAlert])
 
   const handleRegister = useCallback(() => {
-    // TODO(api): 모집 공고 등록 API 연동 — 성공 시 removeGeminiRecruitmentAddDraft()
+    if (!form.hydrated || !form.isRegisterReady) return
+    const snapshot = form.buildSaveSnapshot()
+    geminiRecruitmentService.register(snapshot)
     showAlert({
-      title: '준비 중',
-      content: FEATURE_COMING_SOON_ALERT_MESSAGE,
+      title: '안내',
+      content: REGISTER_SUCCESS_MESSAGE,
     })
-  }, [showAlert])
+    onClose()
+  }, [form, onClose, showAlert])
+
+  const handleRequestClose = useCallback(() => {
+    if (form.isDirty) {
+      setCloseConfirmOpen(true)
+      return
+    }
+    onClose()
+  }, [form.isDirty, onClose])
+
+  const handleConfirmClose = useCallback(() => {
+    setCloseConfirmOpen(false)
+    onClose()
+  }, [onClose])
+
+  const handlePreview = useCallback(() => {
+    if (!form.hydrated) return
+    setPreviewSnapshot(form.buildSaveSnapshot())
+    setPreviewOpen(true)
+  }, [form])
 
   return (
-    <TemplateFullpageModal
-      className="gemini-recruitment-add-fullpage-modal template-preview-modal--form-layout"
-      open={open}
-      onClose={onClose}
-      title={ADD_MODAL_TITLE}
-      titleReadOnly
-      templateTabType="writing"
-      registrationUserMode
-      onPreview={() => {}}
-      onSave={handleDraftSave}
-      bodyHeaderLeading={
-        <div className="gemini-recruitment-add-fullpage-modal__header-actions">
-          <CmsButton type="button" variant="secondary" size="large" onClick={handleDraftSave}>
-            임시저장
-          </CmsButton>
-          <CmsButton type="button" size="large" onClick={handleRegister}>
-            프로그램 등록
-          </CmsButton>
-        </div>
-      }
-      leftContent={<GeminiRecruitmentAddForm form={form} onCancel={onClose} />}
-      rightNavigation={
-        <span className="gemini-recruitment-add-fullpage-modal__nav-placeholder" aria-hidden />
-      }
-    />
+    <>
+      <TemplateFullpageModal
+        className="gemini-recruitment-add-fullpage-modal template-preview-modal--form-layout"
+        open={open}
+        onClose={handleRequestClose}
+        title={ADD_MODAL_TITLE}
+        titleReadOnly
+        templateTabType="writing"
+        registrationUserMode
+        onPreview={handlePreview}
+        onSave={handleDraftSave}
+        leftContent={<GeminiRecruitmentAddForm form={form} />}
+        rightNavigation={<GeminiRecruitmentAddFormSidebar />}
+        footerAction={{
+          label: '프로그램 등록 완료',
+          disabled: !form.isRegisterReady,
+          onClick: handleRegister,
+        }}
+      />
+      <GeminiRecruitmentAddCloseConfirmModal
+        open={closeConfirmOpen}
+        onConfirm={handleConfirmClose}
+        onCancel={() => setCloseConfirmOpen(false)}
+      />
+      <GeminiRecruitmentAddPreviewModal
+        open={previewOpen}
+        snapshot={previewSnapshot}
+        onClose={() => setPreviewOpen(false)}
+      />
+    </>
   )
 }
 

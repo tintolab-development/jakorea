@@ -22,6 +22,8 @@ export function renderRecruitFormVolunteerParagraphBody(
       return (
         <RecruitFormVolunteerInterviewScheduleParagraph
           exceptionScheduleCount={volunteerOptions?.exceptionScheduleCount ?? 0}
+          commonScheduleSeed={volunteerOptions?.commonScheduleSeed}
+          onCommonExclusionChange={volunteerOptions?.onCommonExclusionChange}
         />
       )
     default:

@@ -10,28 +10,14 @@
   min-width: 0;
 }
 
-.education-record-list-page__filter-card {
-  width: 100%;
-  min-width: 0;
-  background: var(--color-bg-base, #fff);
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 16px 0 var(--shadow-card-soft);
-  margin-bottom: var(--spacing-24, 24px);
+.education-record-list-page__remote-notice {
+  margin-bottom: 16px;
 }
 
-.education-record-list-page__filter {
-  width: 100%;
-  min-width: 0;
-}
-
-.education-record-list-page__filter .unified-filter-card {
-  margin-bottom: 0 !important;
-  padding: 0 !important;
-}
-
-.education-record-list-page__divider {
-  padding: 32px 0;
+.education-record-list-page__loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
 }
 
 .education-record-list-page__top-nav {
@@ -41,7 +27,6 @@
   gap: var(--spacing-12, 12px);
   width: 100%;
   min-width: 0;
-  margin-bottom: var(--spacing-16, 16px);
 }
 
 .education-record-list-page__top-nav-actions {

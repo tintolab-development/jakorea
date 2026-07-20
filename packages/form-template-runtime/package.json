@@ -1,0 +1,44 @@
+{
+  "name": "@jakorea/form-template-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-css.mjs",
+    "dev": "tsc -w -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@jakorea/form-schema": "workspace:*"
+  },
+  "peerDependencies": {
+    "@ant-design/icons": "^5.5.1",
+    "antd": "^5.22.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@ant-design/icons": "^5.5.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "antd": "^5.22.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "~5.9.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles": {
+      "import": "./dist/host/form-template-host.css"
+    },
+    "./detail-info-form.css": {
+      "import": "./dist/detail-info-form/detail-info-form.css"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ContentModal, CmsButton, CmsCheckbox } from '@/shared/ui'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
 import type { EducationProgressHalfKey } from '../../tabs'
@@ -355,17 +355,17 @@ export function UjatEducationProgressChangeClassModal({
                         options={NEW_GRADE_OPTIONS}
                         aria-label="변경 학년"
                       />
-                      <CmsInput
+                      <CmsNumericInput
+                        mode="numericText"
                         inputSize="medium"
                         width="100%"
                         placeholder="학급"
                         value={row.newClassNo}
                         disabled={isNewClassDisabled}
-                        onChange={event => {
-                          const digits = event.target.value.replace(/\D/g, '')
+                        onValueChange={value => {
                           setRows(prev =>
                             prev.map(item =>
-                              item.id === row.id ? { ...item, newClassNo: digits } : item
+                              item.id === row.id ? { ...item, newClassNo: value } : item
                             )
                           )
                           setFormError(null)

@@ -15,7 +15,7 @@ export function PaymentOrderPaymentConfirmationResultModal({
       open={open}
       onCancel={onClose}
       title="지급조서 확인 완료"
-      width={520}
+      width={600}
       footer={
         <div className="payment-order-payment-confirm-result__footer-actions">
           <CmsButton variant="secondary" size="medium" onClick={onClose}>

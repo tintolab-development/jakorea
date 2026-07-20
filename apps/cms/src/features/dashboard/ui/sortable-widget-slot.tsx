@@ -226,7 +226,7 @@ export function SortableWidgetSlot({
 
   const handleGrabPointerDown = useCallback(() => {
     setGrabbedClass(true)
-  }, [])
+  }, [setGrabbedClass])
 
   const handleGrabPointerUp = useCallback(() => {
     setGrabbedClass(false)
@@ -237,6 +237,21 @@ export function SortableWidgetSlot({
     setGrabbedClass(false)
   }, [isDragging, setGrabbedClass])
 
+  /* 포인터업이 핸들 밖에서 끝나거나(다른 페이지로 이동 등) grabbed 보더가 남지 않도록 */
+  useEffect(() => {
+    const clear = () => setGrabbedClass(false)
+    window.addEventListener('pointerup', clear)
+    window.addEventListener('pointercancel', clear)
+    window.addEventListener('blur', clear)
+    document.addEventListener('visibilitychange', clear)
+    return () => {
+      window.removeEventListener('pointerup', clear)
+      window.removeEventListener('pointercancel', clear)
+      window.removeEventListener('blur', clear)
+      document.removeEventListener('visibilitychange', clear)
+      setGrabbedClass(false)
+    }
+  }, [setGrabbedClass])
   // noScaleRectSortingStrategy에서 scaleX/scaleY=1로 고정되므로 그대로 사용
   // flex-basis/max-width transition: span 변경(너비 리사이즈) 시 부드러운 애니메이션
   const resizeTransition = onResizeWidth

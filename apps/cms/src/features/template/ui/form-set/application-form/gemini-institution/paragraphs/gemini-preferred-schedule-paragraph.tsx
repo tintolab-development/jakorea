@@ -7,6 +7,7 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
+import './gemini-preferred-schedule-paragraph.css'
 
 const SESSION_OPTIONS = [
   { value: '1', label: '1차시' },
@@ -18,11 +19,12 @@ const SESSION_OPTIONS = [
 type ScheduleRowState = {
   date: Dayjs | null
   session: string | undefined
-  timeRange: [Dayjs, Dayjs] | null
+  start: Dayjs | null
+  end: Dayjs | null
 }
 
 function emptyRow(): ScheduleRowState {
-  return { date: null, session: undefined, timeRange: null }
+  return { date: null, session: undefined, start: null, end: null }
 }
 
 type PreferenceScheduleFieldsProps = {
@@ -41,10 +43,13 @@ function PreferenceScheduleFields({ row, onPatch }: PreferenceScheduleFieldsProp
             presetMode="date"
             customizable={false}
             suppressAutoTodayWhenEmpty
-            placeholder="일자 선택"
+            placeholder="희망 교육 날짜를 선택하세요"
             value={row.date}
             onChange={next => onPatch({ date: next })}
-            width="100%"
+            inputSize="medium"
+            width={240}
+            className="gemini-preferred-schedule-paragraph__date-picker"
+            style={{ flex: '0 0 240px', width: 240, gap: 6 }}
           />
         }
         view="-"
@@ -52,13 +57,10 @@ function PreferenceScheduleFields({ row, onPatch }: PreferenceScheduleFieldsProp
       <DetailInfoForm.Field
         label="희망 교육 시간"
         edit={
-          <div
-            className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
-            style={{ alignItems: 'center', flexWrap: 'wrap', gap: 8 }}
-          >
+          <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap gemini-preferred-schedule-paragraph__time-inputs">
             <CmsSelect
               inputSize="medium"
-              width={160}
+              width={120}
               withAllOption={false}
               placeholder="희망 차시"
               value={row.session}
@@ -67,11 +69,20 @@ function PreferenceScheduleFields({ row, onPatch }: PreferenceScheduleFieldsProp
             />
             <DetailInfoForm.InputsSeparator />
             <ParagraphTimePicker
-              endTimeAlwaysOn
-              placeholder="시간 선택"
-              width={220}
-              value={row.timeRange?.[0] ?? null}
-              onTimeRangeChange={range => onPatch({ timeRange: range })}
+              value={row.start}
+              onChange={next => onPatch({ start: next, end: next == null ? null : row.end })}
+              placeholder="수업 시작"
+              width={168}
+              showEndTimeToggle={false}
+            />
+            <span className="gemini-preferred-schedule-paragraph__tilde">~</span>
+            <ParagraphTimePicker
+              value={row.end}
+              onChange={next => onPatch({ end: next })}
+              placeholder="수업 종료"
+              width={168}
+              showEndTimeToggle={false}
+              disabled={row.start == null}
             />
           </div>
         }
@@ -153,7 +164,7 @@ function PreferenceBlockWithSideDelete({
   )
 }
 
-/** Gemini 찾아가는 연수 학교 신청 — 진행 희망 교육 일정(1~3지망, 지망별 독립 DetailInfoForm) */
+/** Gemini 찾아가는 연수 참여 기관 신청 — 진행 희망 교육 일정(1~3지망, 지망별 독립 DetailInfoForm) */
 export function GeminiVisitingTrainingPreferredScheduleParagraph() {
   const [first, setFirst] = useState(() => emptyRow())
   const [second, setSecond] = useState(() => emptyRow())

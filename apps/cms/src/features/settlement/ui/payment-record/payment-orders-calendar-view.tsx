@@ -29,7 +29,6 @@ import {
 } from '@/shared/components/calendar'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import '@/shared/components/calendar/styles/calendar.css'
-import '@/shared/components/program-calendar.css'
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -128,7 +127,7 @@ function paymentOrderStatusShortLabelFromUiStatus(status: InstructorSettlementUi
 /** 지급조서 확인 캘린더 한정: tooltip 상태 문구 축약 */
 function renderPaymentOrdersEventsTooltipContent({ events: dayEvents }: { events: CalendarItem[] }) {
   return (
-    <div className="program-calendar-schedule-panel">
+    <div className="settlement-preview-tooltip">
       {dayEvents.map(ev => {
         const row = settlementRowFromCalendarItem(ev)
         const colors = paymentOrderCalendarStatusColorPair(row.status)
@@ -141,8 +140,8 @@ function renderPaymentOrdersEventsTooltipContent({ events: dayEvents }: { events
               <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
                 {paymentOrderStatusShortLabelFromUiStatus(row.status)}
               </span>
-              <span className="program-calendar-schedule-panel__text">
-                <span className="program-calendar-schedule-panel__sep">|</span> +
+              <span className="settlement-preview-tooltip__text">
+                <span className="settlement-preview-tooltip__sep">|</span> +
                 {row.scheduledAmount.toLocaleString()}원
               </span>
             </div>
@@ -345,6 +344,8 @@ export interface PaymentOrdersCalendarViewProps {
   exposure: PaymentOrdersCalendarExposure
   programRows: PaymentOrderAdminProgramRow[]
   instructorRows: PaymentOrderAdminInstructorRow[]
+  /** API 캘린더 이벤트 — 있으면 mock 집계 대신 사용 */
+  eventsOverride?: PaymentOrderCalendarEvent[]
   /** URL·조회에 적용된 기간(실제 출강일). 없으면 데이터 앵커 월을 표시 */
   filterDateRange: [Dayjs, Dayjs] | null
   /** 캘린더 헤더 네비·날짜 선택 시 기간 필터·URL과 동일하게 맞출 때 호출 */
@@ -397,17 +398,21 @@ export function PaymentOrdersCalendarView({
   exposure,
   programRows,
   instructorRows,
+  eventsOverride,
   filterDateRange,
   onFilterDateRangeApply,
   onPaymentStatusDetailClick,
 }: PaymentOrdersCalendarViewProps) {
   const events = useMemo(() => {
+    if (eventsOverride) {
+      return filterEventsByDateRange(eventsOverride, filterDateRange)
+    }
     const raw =
       exposure === 'program'
         ? eventsFromPrograms(programRows)
         : eventsFromInstructors(instructorRows)
     return filterEventsByDateRange(raw, filterDateRange)
-  }, [exposure, programRows, instructorRows, filterDateRange])
+  }, [eventsOverride, exposure, programRows, instructorRows, filterDateRange])
 
   const eventById = useMemo(() => new Map(events.map(e => [e.id, e] as const)), [events])
 
@@ -555,21 +560,21 @@ export function PaymentOrdersCalendarView({
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
-        previewTooltipContent={renderPaymentOrdersEventsTooltipContent}
+          previewTooltipContent={renderPaymentOrdersEventsTooltipContent}
           tooltipOverlayClassName="payment-orders-calendar-tooltip-overlay"
         />
       </div>
       <div className="calendar-sub-right-list">
         <CalendarSubRightSettlementList
-          key={`${exposure}-${selectedDate.format('YYYY-MM-DD')}`}
-          selectedDate={selectedDate}
-          rows={uniqueSettlementRows}
-          selectedRowKeys={selectedRowKeys}
-          onSelectionChange={setSelectedRowKeys}
-          onRowClick={handleSettlementRowClick}
-          resolveRowColors={resolveSettlementRowColors}
-          resolveBadgeLabel={resolveSettlementBadgeLabel}
-        />
+            key={`${exposure}-${selectedDate.format('YYYY-MM-DD')}`}
+            selectedDate={selectedDate}
+            rows={uniqueSettlementRows}
+            selectedRowKeys={selectedRowKeys}
+            onSelectionChange={setSelectedRowKeys}
+            onRowClick={handleSettlementRowClick}
+            resolveRowColors={resolveSettlementRowColors}
+            resolveBadgeLabel={resolveSettlementBadgeLabel}
+          />
       </div>
     </div>
   )

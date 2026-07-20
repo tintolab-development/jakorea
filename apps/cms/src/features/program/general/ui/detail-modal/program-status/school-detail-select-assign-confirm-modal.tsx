@@ -7,7 +7,7 @@
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 
-const SELECT_ASSIGN_CONFIRM_MODAL_WIDTH = 560
+const SELECT_ASSIGN_CONFIRM_MODAL_WIDTH = 600
 
 export interface SchoolDetailSelectAssignConfirmModalProps {
   open: boolean
@@ -65,10 +65,10 @@ export function SchoolDetailSelectAssignConfirmModal({
       )}
       footer={
         <>
-          <CmsButton variant="secondary" size="large" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="large" onClick={onConfirm}>
+          <CmsButton variant="primary" size="medium" onClick={onConfirm}>
             강사 배정
           </CmsButton>
         </>

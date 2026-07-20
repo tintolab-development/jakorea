@@ -1,0 +1,73 @@
+.program-attendance-correction-modal__content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.program-attendance-correction-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.program-attendance-correction-modal__label {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.program-attendance-correction-modal__status-row {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 10px;
+}
+
+.program-attendance-correction-modal__time-picker {
+  width: 100%;
+}
+
+.program-attendance-correction-modal__reason-table-wrap {
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.program-attendance-correction-modal__reason-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.program-attendance-correction-modal__reason-table th,
+.program-attendance-correction-modal__reason-table td {
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  padding: 10px 16px;
+  vertical-align: middle;
+}
+
+.program-attendance-correction-modal__reason-table tr > *:last-child {
+  border-right: none;
+}
+
+.program-attendance-correction-modal__reason-table tbody tr:last-child > * {
+  border-bottom: none;
+}
+
+.program-attendance-correction-modal__reason-table th {
+  background: #f5f6f7;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.program-attendance-correction-modal__footer {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  gap: 10px;
+}

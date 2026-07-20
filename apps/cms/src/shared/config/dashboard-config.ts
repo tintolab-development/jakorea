@@ -42,6 +42,7 @@ export type DashboardWidgetType =
   | 'menu-shortcut-widget' // 메뉴 바로가기 위젯
   | 'recruitment-status-widget' // 모집 신청 현황 위젯
   | 'kpi-achievement-widget' // 사업 별 KPI 대비 달성률 위젯
+  | 'log-alerts-widget' // MASTER 전용 로그 알림
 
 /** 슬롯 인라인 height(px). colSpan(12=50%, 24=100%)별. 미지정 시 SortableWidgetSlot·meta.height 규칙 */
 export type DashboardWidgetSlotHeightPx = Partial<Record<12 | 24, number>>
@@ -112,6 +113,16 @@ export function buildAdminDashboardWidgets(scheduleKinds: ProgramScheduleKind[])
   ]
 }
 
+function appendMasterLogAlertsWidget(
+  widgets: DashboardWidgetConfig[]
+): DashboardWidgetConfig[] {
+  const maxOrder = widgets.reduce((max, w) => Math.max(max, w.order ?? 0), 0)
+  return [
+    ...widgets,
+    { type: 'log-alerts-widget', colSpan: 24, order: maxOrder + 1, height: 338 },
+  ]
+}
+
 /**
  * 로그인 사용자 기준 대시보드 위젯 (관리자는 ACL로 프로그램 일정 위젯 유형 필터)
  */
@@ -123,7 +134,10 @@ export function getDashboardWidgetsForUser(user: Omit<User, 'password'> | null):
     return getDashboardWidgetsByRole(user.role)
   }
   const kinds = getProgramScheduleKindsForAdminUser(user)
-  return buildAdminDashboardWidgets(kinds).sort((a, b) => (a.order || 0) - (b.order || 0))
+  const widgets = buildAdminDashboardWidgets(kinds)
+  const withLogAlerts =
+    user.adminLevel === 'MASTER' ? appendMasterLogAlertsWidget(widgets) : widgets
+  return withLogAlerts.sort((a, b) => (a.order || 0) - (b.order || 0))
 }
 
 /**

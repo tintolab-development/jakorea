@@ -4,10 +4,15 @@
  */
 
 import { useSyncExternalStore } from 'react'
+import { shouldShowInstitutionApplicationEducationFormatField } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import { shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph } from '@/features/program/general/lib/institution-application-form-visibility'
+import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/program-application-form-institution-draft'
+import { resolveProgramParticipantMaxClassCount } from '@/features/template/lib/participant-recruitment-institution-limits'
 import type {
   GeneralProgramEducationStructure,
   GeneralProgramSessionRoundKind,
+  Program,
 } from '@/types/domain'
 
 export type InstitutionApplicationEducationScheduleMode = 'date' | 'period'
@@ -22,11 +27,21 @@ export type InstitutionApplicationProgramBridge = {
   sessionRound?: GeneralProgramSessionRoundKind
   /** `period` = 등록·공통정보 「기간 지정」(기획: 날짜 선택(기간)) */
   educationScheduleMode?: InstitutionApplicationEducationScheduleMode
+  /** 날짜 지정 등 — 신청 폼 고정 일정 선택지 (프로그램 등록 교육 진행 예정일) */
+  educationScheduleLines?: readonly string[]
+  /** 기간 지정 — 신청 폼 희망 교육일 선택 가능 범위 */
+  educationScheduleRange?: { start: string; end: string }
+  /**
+   * 등록 폼 교육 형태가 「참여자 선택」일 때 신청 폼 「희망 교육 형태」 노출.
+   * 등록 위저드·상세 resolve 모두 동일 플래그를 쓴다.
+   */
+  showPreferredEducationForm?: boolean
 }
 
 const DEFAULT_BRIDGE: InstitutionApplicationProgramBridge = {
   preEducationNoticeRequired: true,
   educationScheduleMode: 'date',
+  showPreferredEducationForm: false,
 }
 
 let bridgeState: InstitutionApplicationProgramBridge = { ...DEFAULT_BRIDGE }
@@ -64,32 +79,29 @@ export function resetInstitutionApplicationProgramBridge(): void {
 }
 
 export function resolveInstitutionApplicationProgramBridge(
-  program?: {
-    generalProgramEducationStructure?: GeneralProgramEducationStructure
-    generalProgramSessionRound?: GeneralProgramSessionRoundKind
-    generalCommonInfo?: {
-      participantRecruitmentInfo?: {
-        preEducationNoticeRequired?: boolean
-        maxAssignableInstructors?: number
-        maxClassCount?: number
-        maxScheduleCount?: number
-        maxSessionsPerDay?: number
-      }
-      educationScheduleMode?: InstitutionApplicationEducationScheduleMode
-    }
-  } | null
+  program?: Program | null
 ): InstitutionApplicationProgramBridge {
-  const info = program?.generalCommonInfo?.participantRecruitmentInfo
+  const commonInfo = program ? resolveGeneralProgramCommonInfo(program) : undefined
+  const info = commonInfo?.participantRecruitmentInfo
   return {
     preEducationNoticeRequired: info?.preEducationNoticeRequired ?? true,
     maxAssignableInstructors: info?.maxAssignableInstructors,
-    maxClassCount: info?.maxClassCount,
+    maxClassCount: resolveProgramParticipantMaxClassCount(program),
     maxScheduleCount: info?.maxScheduleCount,
     maxSessionsPerDay: info?.maxSessionsPerDay,
     educationStructure: program?.generalProgramEducationStructure,
     sessionRound: program?.generalProgramSessionRound,
-    educationScheduleMode: program?.generalCommonInfo?.educationScheduleMode ?? 'date',
+    educationScheduleMode: commonInfo?.educationScheduleMode ?? 'date',
+    educationScheduleLines: commonInfo?.educationScheduleLines,
+    showPreferredEducationForm: shouldShowInstitutionApplicationEducationFormatField(program),
   }
+}
+
+/** 신청 폼 「희망 교육 형태」 — 등록 교육 형태가 「참여자 선택」일 때만 */
+export function shouldShowInstitutionApplicationPreferredEducationForm(
+  bridge: InstitutionApplicationProgramBridge
+): boolean {
+  return bridge.showPreferredEducationForm === true
 }
 
 /** 사전 안내 「필요」일 때만 안내 사항 단락 노출 */
@@ -129,19 +141,38 @@ export function shouldShowInstitutionApplicationMaxSessionsPerDayField(
 export function shouldShowInstitutionApplicationPreferredScheduleParagraph(
   bridge: InstitutionApplicationProgramBridge
 ): boolean {
+  if (!shouldShowInstitutionApplicationScheduleParagraph(bridge)) {
+    return false
+  }
   return (
     shouldShowInstitutionApplicationMaxScheduleFields(bridge) ||
     shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)
   )
 }
 
+/** 진행 희망 교육 일정 단락 카드 노출 — 일정형 + 복수 회차는 숨김 */
+export function shouldShowInstitutionApplicationScheduleParagraph(
+  bridge: InstitutionApplicationProgramBridge
+): boolean {
+  return !(
+    bridge.educationStructure === 'schedule' && bridge.sessionRound === 'multi'
+  )
+}
+
 export function getInstitutionApplicationFormHiddenParagraphIds(
   bridge: InstitutionApplicationProgramBridge
 ): ReadonlySet<string> | undefined {
-  if (shouldShowInstitutionApplicationGuidanceParagraph(bridge)) {
-    return undefined
+  const hidden = new Set<string>()
+  if (!shouldShowInstitutionApplicationGuidanceParagraph(bridge)) {
+    hidden.add(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance)
   }
-  return new Set([PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.guidance])
+  if (!shouldShowInstitutionApplicationScheduleParagraph(bridge)) {
+    hidden.add(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice)
+  }
+  if (!shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph()) {
+    hidden.add(PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod)
+  }
+  return hidden.size > 0 ? hidden : undefined
 }
 
 export function useInstitutionApplicationProgramBridge(): InstitutionApplicationProgramBridge {

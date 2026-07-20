@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/rich-text --filter @jakorea/location --filter @jakorea/domain --filter @jakorea/form-schema --filter @jakorea/form-template-runtime build",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint . --max-warnings=-1",
@@ -11,8 +12,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.5.1",
+    "@jakorea/domain": "workspace:*",
+    "@jakorea/form-schema": "workspace:*",
+    "@jakorea/form-template-runtime": "workspace:*",
+    "@jakorea/location": "workspace:*",
+    "@jakorea/rich-text": "workspace:*",
     "@jakorea/ui": "workspace:*",
     "@jakorea/utils": "workspace:*",
+    "@tiptap/core": "^3.25.0",
+    "@tiptap/pm": "^3.25.0",
+    "@tiptap/react": "^3.25.0",
+    "antd": "^5.28.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

@@ -1,0 +1,24 @@
+/**
+ * 캘린더 카드 shell — 2가지 변형 (단일 토큰 소스)
+ *
+ * 1. stroke (기본) — 프로그램 목록 외 모든 캘린더
+ * 2. shadow — 프로그램 목록 캘린더뷰만 (`.calendar-set--shell-shadow`)
+ *
+ * 적용 대상: `.calendar-main` · `.calendar-mini` · `.calendar-search` · `.calendar-list` · split-card shell
+ */
+
+.calendar-set,
+.calendar-split-card-layout {
+  --calendar-shell-radius: 12px;
+  --calendar-shell-border: 1px solid #d4d4d4;
+  --calendar-shell-shadow: none;
+  --calendar-mini-shell-radius: 12px;
+}
+
+/* 프로그램 목록 캘린더뷰 — 미니·메인·검색·우측 목록 모두 shadow shell */
+.calendar-set--shell-shadow {
+  --calendar-shell-radius: 16px;
+  --calendar-shell-border: none;
+  --calendar-shell-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  --calendar-mini-shell-radius: 12px;
+}

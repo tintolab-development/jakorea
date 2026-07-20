@@ -26,6 +26,14 @@ export interface MfaState {
   isLocked: boolean
   /** 잠금 해제 시간 */
   lockUntil: string | null
+  /** 실 API MFA challenge (adminAuth) */
+  challengeUuid?: string
+  mfaMethod?: string
+  challengeExpiresAt?: string
+  /** 로그인 challenge·setup 응답에 포함된 TOTP 시크릿(최초 등록) */
+  totpSecret?: string
+  otpauthUri?: string
+  qrDataUrl?: string
 }
 
 /** TOTP 등록/QR 프로비저닝 결과 (Mock) */
@@ -73,8 +81,9 @@ export interface OtpVerifyResponse {
   lockUntil: string | null
 }
 
-/** TOTP 검증 요청 (이메일로 Mock 시크릿 조회) */
+/** TOTP 검증 요청 (이메일로 Mock 시크릿 조회 · 실 API는 challengeUuid) */
 export interface TotpVerifyRequest {
   email: string
   otpCode: string
+  challengeUuid?: string
 }

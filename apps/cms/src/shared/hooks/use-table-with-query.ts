@@ -41,6 +41,8 @@ export interface UseTableWithQueryOptions<TData> {
    * 예: { 'status': 'lifecycleStatus' } - status 쿼리를 lifecycleStatus 필터로 매핑
    */
   queryParamMapping?: Record<string, string>
+  /** true면 테이블 state→URL 동기화를 끔 (풀페이지 상세 programId 등 다른 쿼리와 충돌 방지) */
+  disableUrlSync?: boolean
   tableOptions?: Omit<
     TableOptions<TData>,
     | 'data'
@@ -68,9 +70,10 @@ export interface UseTableWithQueryReturn<TData> {
 export function useTableWithQuery<TData>({
   data,
   columns,
-  filterKeys = [],
+  filterKeys: filterKeysInput = [],
   defaultPageSize = 10,
-  queryParamMapping = {},
+  queryParamMapping: queryParamMappingInput = {},
+  disableUrlSync = false,
   tableOptions = {},
 }: UseTableWithQueryOptions<TData>): UseTableWithQueryReturn<TData> {
   type QueryParams = Record<string, string | undefined> & {
@@ -88,6 +91,16 @@ export function useTableWithQuery<TData>({
 
   // 초기 마운트 여부 추적
   const isMounted = useRef(false)
+
+  const filterKeysKey = filterKeysInput.join('\u0000')
+  const filterKeys = useMemo(() => filterKeysInput, [filterKeysKey])
+  const queryParamMappingKey = JSON.stringify(
+    Object.entries(queryParamMappingInput).sort(([a], [b]) => a.localeCompare(b))
+  )
+  const queryParamMapping = useMemo(
+    () => queryParamMappingInput,
+    [queryParamMappingKey]
+  )
 
   const safeParseInt = (value: string | undefined, fallback: number) => {
     if (!value) return fallback
@@ -234,6 +247,7 @@ export function useTableWithQuery<TData>({
    */
   useEffect(() => {
     if (!isMounted.current) return
+    if (disableUrlSync) return
 
     // URL -> state 동기화로 인해 변경된 state라면 1회 소비하고 종료
     if (isUpdatingFromParamsRef.current) {
@@ -290,6 +304,7 @@ export function useTableWithQuery<TData>({
     defaultPageSize,
     makeKey,
     queryParamMapping,
+    disableUrlSync,
   ])
 
   // 테이블 인스턴스

@@ -143,7 +143,7 @@ export function ParagraphDatePickerPopover({
       >
         <div className="date-time-picker-popover__body">
           <div className="date-time-picker-popover__calendar">
-            <div className="calendar-mini date-time-picker-popover__calendar-mini">
+            <div className="date-time-picker-popover__calendar-mini">
               <CalendarMini
                 currentMonth={calendarMonth}
                 selectedDate={

@@ -4,6 +4,7 @@ import { ParagraphCustomFieldsFormShell, ParagraphCustomFieldsSection } from '@/
 import { ParagraphMetaSection } from '@/features/template/ui/form-editor/right-panel/sections/paragraph-meta-section'
 import { ParagraphSettingsSection } from '@/features/template/ui/form-editor/right-panel/sections/paragraph-settings-section'
 import { StructureLockedParagraphSection } from '@/features/template/ui/form-editor/right-panel/sections/structure-locked-section'
+import { isTitleWithPeriodParagraph } from '@/features/template/lib/title-with-period-settings'
 import { useActiveParagraphState } from '@/features/template/ui/form-editor/right-panel/hooks/use-active-paragraph'
 import { useParagraphConversion } from '@/features/template/ui/form-editor/right-panel/hooks/use-paragraph-conversion'
 import { useShortEssayEditorState } from '@/features/template/ui/form-editor/right-panel/hooks/use-short-essay-state'
@@ -71,6 +72,7 @@ export function FormEditorRightPanel({
     useShortEssayEditorState({ active, singleItemListActiveItemId })
 
   if (active != null && structureLockedActive) {
+    const titleWithPeriodLocked = isTitleWithPeriodParagraph(active)
     return (
       <div className="form-editor-right-panel">
         {showTitleNumbering ? (
@@ -79,7 +81,17 @@ export function FormEditorRightPanel({
             onChange={onTitleNumberingChange}
           />
         ) : null}
-        {hideParagraphKindOutline ? null : <StructureLockedParagraphSection paragraph={active} />}
+        {titleWithPeriodLocked || !hideParagraphKindOutline ? (
+          <StructureLockedParagraphSection paragraph={active} />
+        ) : null}
+        {titleWithPeriodLocked ? (
+          <ParagraphCustomFieldsFormShell
+            active={active}
+            className="form-editor-right-panel__form-items--after-structure-locked"
+          >
+            <ParagraphSettingsSection active={active} updateParagraph={updateParagraph} />
+          </ParagraphCustomFieldsFormShell>
+        ) : null}
       </div>
     )
   }

@@ -5,10 +5,22 @@
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import {
   formatDateRange,
+  formatVolunteerTargetsLabel,
   getVolunteerRecruitmentStatus,
+  resolveProgramVolunteerTargets,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
 import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
+import { getGeneralVolunteerInterviewEnabled } from '@/features/program/general/lib/detail-meta'
+
+export function resolveVolunteerRecruitmentInterviewEnabled(
+  program: Program,
+  editInterviewValue?: 'yes' | 'no'
+): boolean {
+  if (editInterviewValue === 'yes') return true
+  if (editInterviewValue === 'no') return false
+  return getGeneralVolunteerInterviewEnabled(program)
+}
 
 const VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE: Record<
   'scheduled' | 'recruiting' | 'closed',
@@ -117,7 +129,7 @@ export function resolveGeneralProgramVolunteerRecruitmentDisplay(
       info?.operationPeriodLabel ?? formatDateRange(program.startDate, program.endDate),
     recruitmentStatusLabel: lifecycle ? getProgramLifecycleLabel(lifecycle) : '-',
     recruitmentStatusLifecycle: lifecycle,
-    volunteerTargetLabel: program.volunteerTarget ?? '대학(원)생',
+    volunteerTargetLabel: formatVolunteerTargetsLabel(resolveProgramVolunteerTargets(program)),
     volunteerTargetDetailLabel: program.volunteerTargetDetail ?? '-',
     recruitmentPeriodLabel: resolveVolunteerPeriod(program, common),
     documentPassAnnouncementDate: program.documentPassAnnouncementDate,

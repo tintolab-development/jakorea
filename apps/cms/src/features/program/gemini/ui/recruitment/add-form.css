@@ -1,24 +1,105 @@
 .gemini-recruitment-add-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   width: 100%;
+  max-width: 100%;
+  align-self: stretch;
 }
 
 .gemini-recruitment-add-form__card.paragraph-card {
   border-color: transparent;
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+  box-sizing: border-box;
 }
 
-.gemini-recruitment-add-form__training-form .detail-info-form__body {
+.gemini-recruitment-add-form__card--institution .paragraph-card__slot {
+  margin-top: 20px;
+}
+
+.gemini-recruitment-add-form__card--institution .paragraph-card__description-block {
+  margin-top: 4px;
+}
+
+.gemini-recruitment-add-form__card--detail {
+  display: flex;
+  flex-direction: column;
+  min-height: 480px;
+}
+
+.gemini-recruitment-add-form__card--detail .paragraph-card__slot {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 20px;
+}
+
+.gemini-recruitment-add-form__detail-form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.gemini-recruitment-add-form__detail-form .detail-info-form__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
   padding: 0;
 }
 
-.gemini-recruitment-add-form__editor {
-  width: 100%;
+.gemini-recruitment-add-form__card--detail .notice-register-modal__section--editor {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 280px;
+  margin-bottom: 0;
+  flex-shrink: 1;
 }
 
-.gemini-recruitment-add-form__footer {
+.gemini-recruitment-add-form__editor {
   display: flex;
-  justify-content: flex-start;
-  padding-top: 16px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+
+.gemini-recruitment-add-form__card--detail .notice-register-modal__editor-host {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  flex-shrink: 1;
+}
+
+.gemini-recruitment-add-form__card--detail .notice-register-modal__editor-host .rich-text-editor {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.gemini-recruitment-add-form__card--detail .rich-text-editor__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+}
+
+.gemini-recruitment-add-form__card--detail .paragraph-card__description-block {
+  margin-top: 4px;
+}
+
+.gemini-recruitment-add-form__card--detail .paragraph-input--description {
+  color: var(--color-text-secondary, #767676);
+  font-size: 14px;
+  line-height: 1.5;
 }

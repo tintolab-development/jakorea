@@ -6,13 +6,19 @@ import type { ParticipatingSchoolSession } from '@/data/mock/participating-schoo
 
 export interface InstructorAssignSessionOption {
   id: string
+  /** 날짜 라벨 (예: 26년 4월 20일(월)) — dateLabel 미지정 시 scheduleLabel 전체 표시 */
+  dateLabel?: string
+  /** 진행 시간 (예: 09:30 ~ 12:20) */
+  timeLabel?: string
   /** 예: 26년 4월 20일(월) 09:30 ~ 12:20 */
   scheduleLabel: string
   /** 예: 2차시 */
   sessionRoundLabel: string
   /** 예: 3명 */
   capacityLabel: string
-  /** 진행 완료 등 선택 불가(회색 태그) */
+  dateKey?: string
+  slotKey?: string
+  /** 진행 완료·강사 일정 불가·타 기관 동일일 배정 등 선택 불가 */
   disabled?: boolean
 }
 
@@ -96,6 +102,8 @@ export function mapParticipatingSessionsToInstructorAssignOptions(
     const timeRange = normalizeTimeRangeDisplay(s.timeRange)
     return {
       id: `session-${s.round}-${s.date}-${s.timeRange}`,
+      dateLabel,
+      timeLabel: timeRange,
       scheduleLabel: `${dateLabel} ${timeRange}`,
       sessionRoundLabel: `${s.round}차시`,
       capacityLabel: mockCapacityLabel(idx + s.round),

@@ -9,6 +9,11 @@
   gap: var(--spacing-12);
 }
 
+/* 첨부 없음 — 파일명 영역 미노출, 버튼 상단 여백 제거 */
+.file-select-field--empty {
+  gap: 0;
+}
+
 /* 숨겨진 file input */
 .file-select-field__input {
   position: absolute;
@@ -35,11 +40,6 @@
 
 .file-select-field__name {
   font-size: var(--font-size-16);
-  color: var(--color-text-primary);
-}
-
-/* 파일 없을 때 파일명 자리 플레이스홀더 — 업로드된 파일명과 동일한 텍스트 색상 */
-.file-select-field__name--placeholder {
   color: var(--color-text-primary);
 }
 

@@ -4,16 +4,21 @@
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   MOCK_PARTICIPATING_INSTRUCTORS,
   type ParticipatingInstructorRow,
   type SettlementStatusKey,
 } from '@/data/mock/participating-instructors'
+import { buildParticipatingInstructorRowFromMember } from '../lib/participating-instructor-member-candidates'
 import {
   buildInstructorRowFromForm,
   type AddInstructorFormValues,
 } from '../ui/add-instructor-modal'
 import type { ProgressFilters } from './use-program-progress-params'
+import { fetchGeneralParticipatingInstructors } from '@/features/program/general/api/admin-program-progress-service'
+import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 
 const INSTRUCTOR_LIST_STORAGE_KEY = 'cms-program-progress-instructors'
 
@@ -48,6 +53,7 @@ export interface UseProgressInstructorListOptions {
   appliedFilters: ProgressFilters
   /** true면 localStorage 대신 항상 MOCK_PARTICIPATING_INSTRUCTORS 사용(저장 안 함). 풀페이지 참여 강사 섹션용 */
   preferMock?: boolean
+  programId?: string
 }
 
 /** localStorage에서 로드한 행에 상세·이력서 등 확장 필드가 없을 수 있으므로 mock과 id 기준으로 병합 */
@@ -62,13 +68,29 @@ function mergeWithMock(list: ParticipatingInstructorRow[]): ParticipatingInstruc
 export function useProgressInstructorList({
   appliedFilters,
   preferMock = false,
+  programId,
 }: UseProgressInstructorListOptions) {
+  const remoteEnabled = useProgramProgressRemoteEnabledForSurface(programId)
+  const remoteQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.instructors(programId ?? ''),
+    queryFn: () => fetchGeneralParticipatingInstructors(programId!),
+    enabled: remoteEnabled,
+    staleTime: 30_000,
+    retry: false,
+  })
+
   const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>(() => {
     if (preferMock) return [...MOCK_PARTICIPATING_INSTRUCTORS]
     const stored = loadInstructorListFromStorage()
     const list = stored ?? [...MOCK_PARTICIPATING_INSTRUCTORS]
     return stored ? mergeWithMock(list) : list
   })
+
+  useEffect(() => {
+    if (!remoteEnabled) return
+    if (remoteQuery.data) setInstructorList(remoteQuery.data)
+  }, [remoteEnabled, remoteQuery.data])
+
   const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])
   const [selectedInstructorForDetail, setSelectedInstructorForDetail] =
     useState<ParticipatingInstructorRow | null>(null)
@@ -77,8 +99,9 @@ export function useProgressInstructorList({
   const [instructorDeleteGuideOpen, setInstructorDeleteGuideOpen] = useState(false)
 
   useEffect(() => {
-    if (!preferMock) saveInstructorListToStorage(instructorList)
-  }, [instructorList, preferMock])
+    if (preferMock || remoteEnabled) return
+    saveInstructorListToStorage(instructorList)
+  }, [instructorList, preferMock, remoteEnabled])
 
   const filteredInstructors = useMemo(() => {
     return instructorList.filter(row => {
@@ -125,7 +148,20 @@ export function useProgressInstructorList({
       const nextId = `instructor-new-${Date.now()}`
       const newRow = buildInstructorRowFromForm(values, nextNo, nextId)
       setInstructorList(prev => [newRow, ...prev])
-      },
+    },
+    [instructorList]
+  )
+
+  const handleAddInstructorByMemberId = useCallback(
+    async (memberId: string): Promise<boolean> => {
+      const nextNo =
+        instructorList.length > 0 ? Math.max(...instructorList.map(r => r.no)) + 1 : 1
+      const nextId = `instructor-added-${memberId}-${Date.now()}`
+      const newRow = await buildParticipatingInstructorRowFromMember(memberId, nextNo, nextId)
+      if (!newRow) return false
+      setInstructorList(prev => [newRow, ...prev])
+      return true
+    },
     [instructorList]
   )
 
@@ -168,8 +204,11 @@ export function useProgressInstructorList({
     filteredInstructors,
     instructorNamesToDelete,
     handleAddInstructor,
+    handleAddInstructorByMemberId,
     handleSettlementStatusChange,
     handleInstructorDeleteClick,
     handleInstructorDeleteConfirm,
+    applicationsLoading: remoteEnabled ? remoteQuery.isFetching : false,
+    isRemoteDataSource: remoteEnabled,
   }
 }

@@ -8,41 +8,47 @@ import { lazy, Suspense } from 'react'
 import { Navigate, createBrowserRouter, useLocation, useParams } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/app/components/protected-route'
-import { Spin } from 'antd'
+import { RouterLoadingFallback } from '@/app/router/loading-fallback'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import './router.css'
 
-// 로딩 컴포넌트 - 화면 중앙 정렬
-const LoadingFallback = () => (
-  <div className="router-loading-fallback">
-    <Spin size="large" />
-  </div>
-)
-
 // Lazy loading wrapper - named export를 default export로 변환
-// 타입 복잡도를 줄이기 위해 import 함수는 느슨하게 any로 처리
+// Suspense 경계는 Layout 콘텐츠 영역에서 통합 처리
 const lazyLoad = <T extends React.ComponentType<any>>(importFunc: () => Promise<any>) => {
-  const LazyComponent = lazy(async () => {
+  return lazy(async () => {
     const module = await importFunc()
-    // default export를 우선 사용, 없으면 첫 번째 named export 사용
     const Component = (module.default || Object.values(module)[0]) as T
     if (!Component) {
       throw new Error('Failed to load component: No export found')
     }
     return { default: Component }
   })
-  return (props: any) => (
-    <Suspense fallback={<LoadingFallback />}>
-      <LazyComponent {...props} />
-    </Suspense>
-  )
 }
+
+const ParticipantRecruitmentUserFullPage = lazyLoad(
+  () => import('@/pages/programs/general/participant-recruitment-user-full-page')
+)
 
 // 인증 관련 페이지 (즉시 로드)
 import { LoginPage } from '@/pages/auth/login-page'
 import { RegisterPage } from '@/pages/auth/register-page'
+import { RegisterCompletePage } from '@/pages/auth/register-complete-page'
+import { RegisterSocialConnectCompletePage } from '@/pages/auth/register-social-connect-complete-page'
+import { RegisterSocialConnectFailedPage } from '@/pages/auth/register-social-connect-failed-page'
+import { RegisterSocialConnectPage } from '@/pages/auth/register-social-connect-page'
+import { SocialConnectCompletePage } from '@/pages/auth/social-connect-complete-page'
+import { RegisterIdentityCallbackPage } from '@/pages/auth/register-identity-callback-page'
+import { RegisterIdentityMockNicePage } from '@/pages/auth/register-identity-mock-nice-page'
+import { FindEmailPage } from '@/pages/auth/find-email-page'
+import { FindEmailIdentityCallbackPage } from '@/pages/auth/find-email-identity-callback-page'
+import { FindEmailIdentityMockNicePage } from '@/pages/auth/find-email-identity-mock-nice-page'
+import { FindPasswordPage } from '@/pages/auth/find-password-page'
+import { FindPasswordIdentityCallbackPage } from '@/pages/auth/find-password-identity-callback-page'
+import { FindPasswordIdentityMockNicePage } from '@/pages/auth/find-password-identity-mock-nice-page'
 import { MfaPage } from '@/pages/auth/mfa-page'
 import { OAuthCallbackPage } from '@/pages/auth/oauth-callback-page'
+import { LoginSocialCompletePage } from '@/pages/auth/login-social-complete-page'
+import { RegisterSocialSignupCallbackPage } from '@/pages/auth/register-social-signup-callback-page'
 import { ForbiddenPage } from '@/pages/error/forbidden-page'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
 
@@ -63,9 +69,9 @@ function ProgramsSubpathRedirect({ toBase }: { toBase: string }) {
 }
 import TemplatesFormManagementOutlet from '@/pages/templates/templates-form-management-outlet'
 import { TemplatesRouteLayout } from '@/pages/templates/templates-route-layout'
-import {
-  RedirectLegacyTemplatesProgramForms,
-} from '@/features/template/template-route-redirects'
+import { GeneralProgramListRouteShell } from '@/pages/programs/general/general-program-list-route-shell'
+import { RedirectLegacyTemplatesProgramForms } from '@/features/template/template-route-redirects'
+import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
 
 // 대시보드 (즉시 로드 - 첫 화면)
 import { IndexPage } from '@/pages/home/index-page'
@@ -86,11 +92,19 @@ const SponsorDataPage = lazyLoad(() => import('@/pages/data-management/sponsor-p
 const TextbookPage = lazyLoad(() => import('@/pages/data-management/textbook-page'))
 const DetailedProgramPage = lazyLoad(() => import('@/pages/data-management/detailed-program-page'))
 const ProgramListPage = lazyLoad(() => import('@/pages/programs/program-list-page'))
-const GeneralProgramListPage = lazyLoad(() => import('@/pages/programs/general/page'))
 const ProgramFormPage = lazyLoad(() => import('@/pages/programs/program-form-page'))
 const UjatProgramListPage = lazyLoad(() => import('@/pages/programs/UJAT/page'))
+const UjatEducationRegionsPage = lazyLoad(
+  () => import('@/pages/programs/UJAT/education-regions-page')
+)
+const TrainedTeachersProgramPage = lazyLoad(
+  () => import('@/pages/programs/trained-teachers/page')
+)
 const GeminiVisitingTrainingPage = lazyLoad(
   () => import('@/pages/programs/gemini/visiting-training/page')
+)
+const GeminiPerformancePage = lazyLoad(
+  () => import('@/pages/programs/gemini/performance/page')
 )
 const ProgramApplicationPage = lazyLoad(() => import('@/pages/programs/program-application-page'))
 const ProgramApplicationCompletePage = lazyLoad(
@@ -129,7 +143,9 @@ const EducationRecordListPage = lazyLoad(
 )
 const UserListPage = lazyLoad(() => import('@/pages/users/user-list-page'))
 const ErrorPage = lazyLoad(() => import('@/pages/error/error-page'))
-const TemplateListPage = lazyLoad(() => import('@/pages/templates/template-list-page'))
+const TemplateListPage = lazyLoad(() =>
+  import('@/pages/templates/template-list-page').then(m => ({ default: m.TemplateListPage }))
+)
 const FormTestTableComponentsPage = lazyLoad(
   () => import('@/pages/templates/form-test-table-components-page')
 )
@@ -145,6 +161,7 @@ const PermissionCustomizationPage = lazyLoad(
 const PermissionRequestListPage = lazyLoad(
   () => import('@/pages/admin/permission-request-list-page')
 )
+const KakaoAlimtalkPage = lazyLoad(() => import('@/pages/notifications/kakao-alimtalk-page'))
 const SchoolMyLearningPage = lazyLoad(() => import('@/pages/surveys/school-my-learning-page'))
 const FAQPage = lazyLoad(() => import('@/pages/notices/faq-page'))
 const InquiryPage = lazyLoad(() => import('@/pages/notices/inquiry-page'))
@@ -153,6 +170,8 @@ const PersonalInfoAccessHistoryPage = lazyLoad(
   () => import('@/pages/logs/personal-info-access-history-page')
 )
 const BugIssueHistoryPage = lazyLoad(() => import('@/pages/logs/bug-issue-history-page'))
+const DesignSystemPage = lazyLoad(() => import('@/pages/design-system/page'))
+const E2eErrorLogPage = lazyLoad(() => import('@/pages/e2e-error-log/page'))
 
 function LegacyPostsRedirect({
   kind,
@@ -188,8 +207,68 @@ export const router = createBrowserRouter([
     element: <RegisterPage />,
   },
   {
+    path: '/register/complete',
+    element: <RegisterCompletePage />,
+  },
+  {
+    path: '/register/social-connect',
+    element: <RegisterSocialConnectPage />,
+  },
+  {
+    path: '/register/social-connect/complete',
+    element: <RegisterSocialConnectCompletePage />,
+  },
+  {
+    path: '/register/social-connect/failed',
+    element: <RegisterSocialConnectFailedPage />,
+  },
+  {
+    path: '/social-connect/complete',
+    element: <SocialConnectCompletePage />,
+  },
+  {
+    path: '/register/social-connect/callback',
+    element: <RegisterSocialSignupCallbackPage />,
+  },
+  {
+    path: '/register/identity/callback',
+    element: <RegisterIdentityCallbackPage />,
+  },
+  {
+    path: '/register/identity/mock',
+    element: <RegisterIdentityMockNicePage />,
+  },
+  {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/login/social/complete',
+    element: <LoginSocialCompletePage />,
+  },
+  {
+    path: '/find-email',
+    element: <FindEmailPage />,
+  },
+  {
+    path: '/find-email/identity/callback',
+    element: <FindEmailIdentityCallbackPage />,
+  },
+  {
+    path: '/find-email/identity/mock',
+    element: <FindEmailIdentityMockNicePage />,
+  },
+  {
+    path: '/find-password',
+    element: <FindPasswordPage />,
+  },
+  {
+    path: '/find-password/identity/callback',
+    element: <FindPasswordIdentityCallbackPage />,
+  },
+  {
+    path: '/find-password/identity/mock',
+    element: <FindPasswordIdentityMockNicePage />,
   },
   {
     path: '/auth/mfa',
@@ -210,6 +289,41 @@ export const router = createBrowserRouter([
   {
     path: '/oauth/naver',
     element: <OAuthCallbackPage provider="naver" />,
+  },
+  {
+    path: '/preview/programs/general/participant-recruitment',
+    element: (
+      <Navigate
+        to={`/preview/programs/general/${GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID}/participant-recruitment`}
+        replace
+      />
+    ),
+  },
+  {
+    path: '/preview/programs/general/:programId/participant-recruitment',
+    element: (
+      <ProtectedRoute>
+        <ParticipantRecruitmentUserFullPage />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    // 로그인·역할 없이 공개 접근 (쇼케이스/문서용)
+    path: '/design-system',
+    element: (
+      <Suspense fallback={<RouterLoadingFallback fullViewport />}>
+        <DesignSystemPage />
+      </Suspense>
+    ),
+  },
+  {
+    // 로컬·E2E 디버그: 테스트 진행·백엔드 에러 Mock 로그 (로그인 불필요, ?tab=error)
+    path: '/e2e-error-log',
+    element: (
+      <Suspense fallback={<RouterLoadingFallback fullViewport />}>
+        <E2eErrorLogPage />
+      </Suspense>
+    ),
   },
   {
     path: '/',
@@ -261,15 +375,54 @@ export const router = createBrowserRouter([
         element: <DetailedProgramPage />,
       },
       {
+        path: 'message-management',
+        children: [
+          { index: true, element: <Navigate to="alimtalk" replace /> },
+          {
+            path: 'alimtalk',
+            element: (
+              <ComingSoonPage
+                title="알림톡 관리"
+                description="알림톡 관리 기능은 현재 준비 중입니다."
+              />
+            ),
+          },
+          {
+            path: 'mail',
+            element: (
+              <ComingSoonPage
+                title="메일 관리"
+                description="메일 관리 기능은 현재 준비 중입니다."
+              />
+            ),
+          },
+          {
+            path: 'sms',
+            element: (
+              <ComingSoonPage
+                title="문자 관리"
+                description="문자 관리 기능은 현재 준비 중입니다."
+              />
+            ),
+          },
+        ],
+      },
+      {
         path: 'programs',
         children: [
           { index: true, element: <ProgramListPage /> },
-          { path: 'general', element: <GeneralProgramListPage /> },
+          { path: 'general', element: <GeneralProgramListRouteShell /> },
           { path: 'general/*', element: <ProgramListPage /> },
           { path: 'company-school', element: <ProgramListPage /> },
           { path: 'company-school/*', element: <ProgramListPage /> },
+          { path: 'trained-teachers', element: <TrainedTeachersProgramPage /> },
+          { path: 'trained-teachers/*', element: <TrainedTeachersProgramPage /> },
+          { path: 'ujat/regions', element: <UjatEducationRegionsPage /> },
+          { path: 'ujat/regions/*', element: <UjatEducationRegionsPage /> },
           { path: 'ujat', element: <UjatProgramListPage /> },
           { path: 'ujat/*', element: <UjatProgramListPage /> },
+          { path: 'gemini/performance', element: <GeminiPerformancePage /> },
+          { path: 'gemini/performance/*', element: <GeminiPerformancePage /> },
           { path: 'gemini/visiting-training', element: <GeminiVisitingTrainingPage /> },
           { path: 'gemini/visiting-training/*', element: <GeminiVisitingTrainingPage /> },
           { path: 'gemini', element: programCategoryPreparing },
@@ -550,6 +703,34 @@ export const router = createBrowserRouter([
                 <PermissionRequestListPage />
               </ProtectedRoute>
             ),
+          },
+          {
+            path: 'notifications',
+            children: [
+              {
+                index: true,
+                element: <Navigate to="/admin/notifications/kakao-alimtalk" replace />,
+              },
+              {
+                path: 'kakao-alimtalk',
+                element: (
+                  <ProtectedRoute requiredRoles={['ADMIN']}>
+                    <KakaoAlimtalkPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: 'mail-sms',
+                element: (
+                  <ProtectedRoute requiredRoles={['ADMIN']}>
+                    <ComingSoonPage
+                      title="메일&문자 관리 준비 중"
+                      description="메일 및 문자 발송 관리 기능은 현재 준비 중입니다."
+                    />
+                  </ProtectedRoute>
+                ),
+              },
+            ],
           },
           {
             path: 'logs',

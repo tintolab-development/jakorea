@@ -9,14 +9,27 @@
   white-space: nowrap;
 }
 
+/* 기관 확인 중 — green */
 .ujat-schedule-confirm-status-badge--institution_checking {
   color: var(--color-green, #1e8c29);
 }
 
+/* 기관 확인 완료 — teal blue */
 .ujat-schedule-confirm-status-badge--institution_confirmed {
+  color: var(--color-mint-01, #01a1af);
+}
+
+/* 승인 완료 — dark gray */
+.ujat-schedule-confirm-status-badge--approval_completed {
   color: var(--main-BK, #3d3d3d);
 }
 
+/* 수정 요청 — purple */
+.ujat-schedule-confirm-status-badge--revision_requested {
+  color: var(--color-purple, #8457ce);
+}
+
+/* 신청 반려 — red */
 .ujat-schedule-confirm-status-badge--application_rejected {
-  color: #c32f4a;
+  color: var(--color-red, #c32f4a);
 }

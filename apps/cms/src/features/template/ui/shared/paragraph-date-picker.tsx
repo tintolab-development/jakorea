@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode, RefObject } from 'react'
+import type { CSSProperties, KeyboardEvent, ReactNode, RefObject } from 'react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 
 function cn(...parts: Array<string | false | null | undefined>): string {
@@ -133,6 +133,12 @@ interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
    * 기본 false — 기존 단일 날짜형은 null이면 오늘로 동기화.
    */
   suppressAutoTodayWhenEmpty?: boolean
+  /** `presetMode: 'period'` — 제목형 작성 기간 듀얼 트리거(시작 ~ 종료) */
+  dualPeriodTrigger?: boolean
+  dualStartPlaceholder?: string
+  dualEndPlaceholder?: string
+  /** value·surface 비어 있을 때 트리거에 일반 텍스트로 표시(예: 상대 종료 규칙) */
+  presetDisplayText?: string
   /** 모달(포털) 열림·닫힘 — 테이블 행 포커스 등 상위 동기화용 */
   onOpenChange?: (open: boolean) => void
 }
@@ -144,6 +150,12 @@ export type ParagraphDatePickerProps =
 function toWidthStyle(width: number | string | undefined): CSSProperties | undefined {
   if (width == null) return undefined
   return { width: typeof width === 'number' ? `${width}px` : width }
+}
+
+function formatDualPeriodCellText(d: Dayjs, withTime: boolean): string {
+  const date = formatAppDatepickerDisplay(d)
+  if (withTime) return `${date} (${formatTriggerClock(d)})`
+  return date
 }
 
 interface ParagraphDatePickerSingleInnerProps {
@@ -162,6 +174,10 @@ interface ParagraphDatePickerSingleInnerProps {
   appliedSurfaceWithTime?: boolean
   preferPeriodModeInPopover?: boolean
   suppressAutoTodayWhenEmpty?: boolean
+  dualPeriodTrigger?: boolean
+  dualStartPlaceholder?: string
+  dualEndPlaceholder?: string
+  presetDisplayText?: string
   onOpenChange?: (open: boolean) => void
 }
 
@@ -181,6 +197,10 @@ function ParagraphDatePickerSingleInner({
   appliedSurfaceWithTime = false,
   preferPeriodModeInPopover = false,
   suppressAutoTodayWhenEmpty = false,
+  dualPeriodTrigger = false,
+  dualStartPlaceholder = '바로 시작',
+  dualEndPlaceholder = '마감 없음',
+  presetDisplayText,
   onOpenChange,
 }: ParagraphDatePickerSingleInnerProps) {
   const triggerRef = useRef<HTMLDivElement>(null)
@@ -244,6 +264,15 @@ function ParagraphDatePickerSingleInner({
 
   const hasExternalSurfaceControl = appliedSurfaceRange !== undefined
 
+  /** 교육 진행 일정 등 — 추가 후 부모가 value를 null로 비우면 트리거 표면도 초기화 */
+  useEffect(() => {
+    if (value != null) return
+    if (!suppressAutoTodayWhenEmpty) return
+    if (hasExternalSurfaceControl) return
+    setSurfaceRange(null)
+    setSurfaceAppliedWithTime(false)
+  }, [value, suppressAutoTodayWhenEmpty, hasExternalSurfaceControl])
+
   const appliedSurfaceSyncKey = useMemo(() => {
     if (!hasExternalSurfaceControl) return 'uncontrolled'
     if (appliedSurfaceRange == null) return 'none'
@@ -297,7 +326,13 @@ function ParagraphDatePickerSingleInner({
     surfaceAppliedWithTime
   )
   const triggerIsEmpty = triggerDisplayText == null
-  const triggerAriaLabel = triggerIsEmpty ? effectivePlaceholder : triggerDisplayText
+  const presetDisplay = presetDisplayText?.trim()
+  const showPresetAsFilled = triggerIsEmpty && Boolean(presetDisplay)
+  const triggerAriaLabel = showPresetAsFilled
+    ? presetDisplay!
+    : triggerIsEmpty
+      ? effectivePlaceholder
+      : triggerDisplayText
 
   const handleOpen = () => {
     if (disabled) return
@@ -397,11 +432,24 @@ function ParagraphDatePickerSingleInner({
         setSurfaceAppliedWithTime(false)
       }
     } else if (timeOn) {
-      onChange(buildTime(draft, parseNum(singleHour, 12), parseNum(singleMinute, 0), singleMer))
+      const applied = buildTime(
+        draft,
+        parseNum(singleHour, 12),
+        parseNum(singleMinute, 0),
+        singleMer
+      )
+      onChange(applied)
+      if (presetMode === 'schedule' && onRangeChange) {
+        onRangeChange([applied, applied.add(1, 'hour')])
+      }
       setSurfaceRange(null)
       setSurfaceAppliedWithTime(true)
     } else {
       onChange(draft)
+      if (presetMode === 'schedule' && onRangeChange) {
+        const day = draft.startOf('day')
+        onRangeChange([day, day])
+      }
       setSurfaceRange(null)
       setSurfaceAppliedWithTime(false)
     }
@@ -430,46 +478,90 @@ function ParagraphDatePickerSingleInner({
   const widthStyle = toWidthStyle(width)
   const triggerWidthStyle = customizable && surfaceRange != null ? { width: '500px' } : widthStyle
 
+  const useDualPeriodTrigger = dualPeriodTrigger && presetMode === 'period'
+  const dualStartText =
+    surfaceRange != null
+      ? formatDualPeriodCellText(surfaceRange[0], surfaceAppliedWithTime)
+      : dualStartPlaceholder
+  const dualEndText =
+    surfaceRange != null
+      ? formatDualPeriodCellText(surfaceRange[1], surfaceAppliedWithTime)
+      : dualEndPlaceholder
+  const dualTriggerAriaLabel = `${dualStartText} ~ ${dualEndText}`
+
+  const triggerShellProps = {
+    ref: triggerRef,
+    role: 'button' as const,
+    tabIndex: disabled ? -1 : 0,
+    'aria-disabled': disabled,
+    'aria-haspopup': 'dialog' as const,
+    'aria-expanded': open,
+    'aria-controls': open ? panelId : undefined,
+    onClick: () => {
+      if (disabled) return
+      handleOpen()
+    },
+    onKeyDown: (event: KeyboardEvent) => {
+      if (disabled) return
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        handleOpen()
+      }
+    },
+  }
 
   return (
     <>
-      <div
-        ref={triggerRef}
-        role="button"
-        tabIndex={disabled ? -1 : 0}
-        className={cn(
-          'paragraph-date-picker__trigger',
-          `paragraph-date-picker__trigger--${inputSize}`,
-          disabled && 'paragraph-date-picker__trigger--disabled'
-        )}
-        style={{ ...triggerWidthStyle }}
-        aria-disabled={disabled}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls={open ? panelId : undefined}
-        aria-label={triggerAriaLabel}
-        onClick={() => {
-          if (disabled) return
-          handleOpen()
-        }}
-        onKeyDown={event => {
-          if (disabled) return
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            handleOpen()
-          }
-        }}
-      >
-        <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
-        <span
+      {useDualPeriodTrigger ? (
+        <div
+          {...triggerShellProps}
           className={cn(
-            'paragraph-date-picker__trigger-text',
-            triggerIsEmpty && 'paragraph-date-picker__trigger-text--placeholder'
+            'paragraph-date-picker__trigger',
+            'paragraph-date-picker__trigger--dual-shell',
+            disabled && 'paragraph-date-picker__trigger--disabled'
           )}
+          aria-label={dualTriggerAriaLabel}
         >
-          {triggerIsEmpty ? effectivePlaceholder : triggerDisplayText}
-        </span>
-      </div>
+          <div className="paragraph-date-picker__trigger-dual-row">
+            <div className="paragraph-date-picker__trigger-dual-cell">
+              <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+              <span className="paragraph-date-picker__trigger-dual-text">{dualStartText}</span>
+            </div>
+            <span className="paragraph-date-picker__trigger-dual-wave" aria-hidden>
+              ~
+            </span>
+            <div className="paragraph-date-picker__trigger-dual-cell">
+              <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+              <span className="paragraph-date-picker__trigger-dual-text">{dualEndText}</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          {...triggerShellProps}
+          className={cn(
+            'paragraph-date-picker__trigger',
+            `paragraph-date-picker__trigger--${inputSize}`,
+            disabled && 'paragraph-date-picker__trigger--disabled'
+          )}
+          style={{ ...triggerWidthStyle }}
+          aria-label={triggerAriaLabel}
+        >
+          <CalendarOutlined className="paragraph-date-picker__trigger-icon" aria-hidden />
+          <span
+            className={cn(
+              'paragraph-date-picker__trigger-text',
+              triggerIsEmpty && !showPresetAsFilled && 'paragraph-date-picker__trigger-text--placeholder'
+            )}
+          >
+            {showPresetAsFilled
+              ? presetDisplay
+              : triggerIsEmpty
+                ? effectivePlaceholder
+                : triggerDisplayText}
+          </span>
+        </div>
+      )}
       <ParagraphDatePickerPopover
         open={open}
         onClose={() => setOpen(false)}
@@ -697,6 +789,10 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           appliedSurfaceWithTime={props.appliedSurfaceWithTime}
           preferPeriodModeInPopover={props.preferPeriodModeInPopover ?? false}
           suppressAutoTodayWhenEmpty={Boolean(props.suppressAutoTodayWhenEmpty)}
+          dualPeriodTrigger={props.dualPeriodTrigger}
+          dualStartPlaceholder={props.dualStartPlaceholder}
+          dualEndPlaceholder={props.dualEndPlaceholder}
+          presetDisplayText={props.presetDisplayText}
           onOpenChange={props.mode === 'single' ? props.onOpenChange : undefined}
         />
       )}

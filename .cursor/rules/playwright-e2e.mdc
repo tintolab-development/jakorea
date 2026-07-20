@@ -1,0 +1,49 @@
+---
+description: Playwright E2E 테스트 및 QA 자동화 규칙 (CMS 기준, 모노레포 공통 원칙)
+alwaysApply: false
+globs:
+  - apps/**/tests/e2e/**
+  - apps/**/playwright.config.ts
+---
+
+# Playwright E2E & QA
+
+## 범위
+
+- E2E 설정·테스트는 **대상 앱 패키지**에 둔다. 현재 CMS: `apps/cms/tests/e2e/`, `apps/cms/playwright.config.ts`.
+- Platform·LMS 등 다른 앱 E2E는 해당 `apps/<app>/`에 동일 패턴으로 추가한다. 루트에 중복 `@playwright/test`를 설치하지 않는다.
+
+## 작업 전
+
+1. `apps/<app>/tests/e2e/` 기존 스펙·`pages/`·`fixtures/`를 먼저 확인한다.
+2. 반복 가능한 QA는 **커밋된 `@playwright/test` 스펙**이 기준이다.
+3. 탐색·디버깅에는 **Playwright MCP**를 쓰되, 중요 시나리오는 스펙으로 승격한다.
+4. CMS 스펙은 `@playwright/test` 대신 `tests/e2e/fixtures/test` 의 `test`/`expect` 를 import 한다.
+   - auto fixture가 `/api/*` 4xx/5xx 를 수집하고, 실패·백엔드 에러 시 터미널에
+     `========== E2E 백엔드 에러 로그 ==========` 를 출력한다.
+   - 최신 덤프: `apps/cms/test-results/e2e-error-log-latest.json`
+
+## 로케이터·안정성
+
+- `getByRole`, `getByLabel`, `getByText`, `getByTestId` 우선.
+- 생성 CSS 클래스·`nth-child`·XPath는 최후 수단.
+- `waitForTimeout` 금지. `expect`·`locator` auto-wait 사용.
+- 테스트 간 순서 의존 금지. 각 테스트는 독립적으로 실행 가능해야 한다.
+- assertion을 통과시키기 위해 검증을 약화하지 않는다. 실패 시 trace·스크린샷·콘솔·네트워크를 먼저 확인한다.
+
+## 데이터·인증
+
+- 가능하면 API·fixture로 테스트 데이터를 준비한다. UI만으로 긴 셋업을 반복하지 않는다.
+- 인증 상태 재사용이 필요하면 `playwright/.auth/` 패턴을 검토한다 (Git 제외).
+- 비밀·실제 계정 정보를 스펙·env 예시·MCP 설정에 넣지 않는다.
+
+## 실행
+
+- 가장 좁은 범위부터: `pnpm --filter cms test:e2e:smoke` → 전체 `test:e2e`.
+- 패키지 매니저는 **pnpm workspace** (`pnpm --filter <app>`)를 따른다.
+- `E2E_BASE_URL` 미설정 시 CMS 로컬 기본값: `http://localhost:3000` (Vite `server.port`).
+
+## MCP
+
+- 프로젝트 MCP: `.cursor/mcp.json`의 `playwright` 서버 (`@playwright/mcp`).
+- 설정 변경 후 Cursor **창 리로드** 또는 MCP 서버 재시작이 필요할 수 있다.

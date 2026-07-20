@@ -35,9 +35,9 @@
 ### 2.3 스타일 토큰 (디자이너)
 
 - **색상·간격·타이포**: [styling-tokens.md](../../../.cursor/rules/design/styling-tokens.md) 준수. `var(--color-*)`, `var(--spacing-*)`, `var(--font-size-*)` 등만 사용.
-- **버튼**: [AppButton](../../../src/shared/ui/app-button.tsx) 재사용.
+- **버튼**: [CmsButton](../../../src/shared/ui/cms-button.tsx) 재사용.
   - **조회**: `variant="primary"`, `size="large"`.
-  - **삭제**: `variant="danger"`, `size="large"`, `dangerFillOnHover` (기존 진행 현황 탭 삭제 버튼과 동일).
+  - **삭제**: `variant="delete"`, `size="large"` (기존 진행 현황 탭 삭제 버튼과 동일).
   - **등록**: `variant="primary"`, `size="large"` (청록 채움).
 - **필터 레이블/인풋**: 진행 현황 탭의 `program-progress-tab__filter-field`, `program-progress-tab__filter-label` 또는 [LabeledSearchInput](../../../src/shared/ui/labeled-search-input.tsx) 패턴 사용. 담당자명은 검색 인풋(placeholder "전체"), 권한은 Select(placeholder "전체").
 
@@ -84,7 +84,7 @@
 | 이메일   | string      | 텍스트               |                                                                    |
 | 등록일시 | datetime    | "YYYY.MM.DD HH:mm"   | 예: 2026.02.10 09:15                                               |
 
-- **권한 변경**: 권한 열 `StatusDropdownCell` 인라인 배지만 사용 (별도 관리 컬럼 없음).
+- **권한 변경**: 권한 열 `StatusDropdownCell` + `EditableStatusBadge` 인라인 배지만 사용 (별도 관리 컬럼 없음). 레이아웃은 generic `style` 또는 `tagLayout="default"`를 기본으로 한다.
 
 - **행 스타일**: 기존 테이블과 동일(헤더 배경 #fafafa, 셀 구분선, 세로 중앙 정렬). [table-management.md](../../../.cursor/rules/tables/table-management.md) 참고.
 
@@ -143,7 +143,7 @@
 - [ ] **Card, 필터 행, 조회 버튼, 테이블 상단 "담당자 목록 N건" + 삭제/등록**: `ProgramProgressTab` 및 `program-progress-tab.css` 스타일 참고. 필요 시 `program-managers-tab.css` 신규 생성.
 - [ ] **필터**: 담당자명 — `LabeledSearchInput` 또는 동일 스타일 Input(placeholder "전체"). 권한 — Select(전체 + PM + 파트너 + 보조).
 - [ ] **테이블**: Ant Design Table, rowSelection, columns 위 4.2 기준. **권한** 컬럼은 텍스트 또는 기존 뱃지 패턴 적용(필요 시 ProgramRole 전용 작은 뱃지).
-- [ ] **버튼**: AppButton — 조회(primary), 삭제(danger, dangerFillOnHover), 등록(primary), 권한 수정(viewDetails).
+- [ ] **버튼**: CmsButton — 조회(primary), 삭제(delete), 등록(primary), 권한 수정(secondary 또는 default).
 
 ### 8.3 모달
 
@@ -183,5 +183,6 @@
 
 ---
 
-**문서 버전**: 1.0  
-**마지막 업데이트**: 2026-02-11
+**문서 버전**: 1.1
+
+**마지막 업데이트**: 2026-07-15

@@ -1,0 +1,103 @@
+/**
+ * 참여 봉사자 추가 등록 — 신청 폼 모달
+ */
+
+.content-modal.participating-volunteer-add-registration-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 26px 30px 34px;
+}
+
+.participating-volunteer-add-registration-modal.ant-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.participating-volunteer-add-registration-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  justify-content: flex-end;
+  padding-top: 0;
+  margin-top: var(--spacing-30);
+  gap: var(--spacing-12);
+}
+
+.participating-volunteer-add-registration-modal__scroll {
+  width: 100%;
+  max-height: min(72vh, 720px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.participating-volunteer-add-registration-modal__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+}
+
+.participating-volunteer-add-registration-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.participating-volunteer-add-registration-modal__template-block {
+  width: 100%;
+  min-width: 0;
+}
+
+.participating-volunteer-add-registration-modal__template-block .form-editor-horizontal-table-wrap {
+  width: 100%;
+}
+
+.participating-volunteer-add-registration-modal__section--basic-info {
+  gap: 10px;
+}
+
+.participating-volunteer-add-registration-modal__basic-info-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* DetailInfoForm — `detail-info-form__body` 기본 border만 사용(이중 border 방지) */
+
+.participating-volunteer-add-registration-modal__section--basic-info
+  .detail-info-form-inputs-wrapper-no-gap
+  > .cms-input {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  width: 100% !important;
+}
+
+/* 객관식(단일항목) — DetailInfoForm 없이 라디오 가로 정렬 */
+.participating-volunteer-add-registration-modal__section--multiple-choice-horizontal
+  .multiple-choice-body {
+  border: none;
+  padding: 0;
+}
+
+.participating-volunteer-add-registration-modal__section--multiple-choice-horizontal
+  .multiple-choice-radio-group.app-radio-group {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  width: auto;
+}
+
+.participating-volunteer-add-registration-modal__section--multiple-choice-horizontal
+  .multiple-choice-row {
+  padding: 0;
+}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CmsButton, ContentModal } from '@/shared/ui'
+import { CmsButton, CmsNumericInput, ContentModal } from '@/shared/ui'
 import './textbook-kit-quantity-modal.css'
 
 const KIT_LEVELS = [
@@ -13,14 +13,15 @@ const KIT_LEVELS = [
 type KitLevelKey = (typeof KIT_LEVELS)[number]['key']
 export type TextbookKitQuantityValues = Record<KitLevelKey, string>
 
-const createDefaultQuantities = (): TextbookKitQuantityValues =>
-  KIT_LEVELS.reduce(
-    (acc, level) => {
-      acc[level.key] = level.defaultValue
-      return acc
-    },
-    {} as TextbookKitQuantityValues
-  )
+export const DEFAULT_KIT_QUANTITIES: TextbookKitQuantityValues = KIT_LEVELS.reduce(
+  (acc, level) => {
+    acc[level.key] = level.defaultValue
+    return acc
+  },
+  {} as TextbookKitQuantityValues
+)
+
+const createDefaultQuantities = (): TextbookKitQuantityValues => ({ ...DEFAULT_KIT_QUANTITIES })
 
 export interface TextbookKitQuantityModalProps {
   open: boolean
@@ -70,14 +71,12 @@ export function TextbookKitQuantityModal({
           <div className="textbook-kit-quantity-modal__row" key={level.key}>
             <div className="textbook-kit-quantity-modal__th">{level.label}</div>
             <div className="textbook-kit-quantity-modal__td">
-              <input
+              <CmsNumericInput
                 className="textbook-kit-quantity-modal__input"
-                type="number"
-                inputMode="numeric"
+                mode="integer"
                 min={0}
                 value={quantities[level.key]}
-                onChange={event => {
-                  const nextValue = event.target.value.replace(/[^\d]/g, '')
+                onValueChange={nextValue => {
                   setQuantities(prev => ({ ...prev, [level.key]: nextValue }))
                 }}
               />

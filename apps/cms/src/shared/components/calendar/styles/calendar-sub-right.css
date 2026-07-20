@@ -6,19 +6,21 @@
   max-width: none;
   box-sizing: border-box;
   background: var(--color-bg-base);
-  border-radius: 16px;
-  border: 1px solid var(--color-border-light);
+  border-radius: var(--calendar-shell-radius, 12px);
+  border: var(--calendar-shell-border, 1px solid #d4d4d4);
+  box-shadow: var(--calendar-shell-shadow, none);
   /* 상단: Empty 아이콘 클리핑 방지 + 리스트 스크롤 시 첫 줄 여유 */
   padding: 20px var(--spacing-16) var(--spacing-16);
   scroll-padding-top: 20px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  --calendar-sub-right-list-item-gap: 12px;
   gap: 6px;
   overflow-y: auto;
   /*
-   * 3열 shell: border만 (calendar-search와 동일). box-shadow는 부모 overflow:hidden과
-   * 겹치면 모서리에 이중 선처럼 보임 — calendar-common.md 회귀 방지.
+   * shell 변형: `calendar-shell-variant.css` — stroke(기본) / shadow(프로그램 목록).
+   * border·shadow 동시 적용 금지 — calendar-common.md 회귀 방지.
    */
 }
 
@@ -30,7 +32,7 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  padding: 10px 20px;
+  padding: 10px;
   border: 1px solid #f0f0f0;
   background: #fcfcfc;
   cursor: pointer;
@@ -161,6 +163,45 @@
 }
 
 .calendar-list--empty .ant-empty {
+  margin: 0;
+  text-align: center;
+}
+
+/* 멀티셀렉트 등 — `.calendar-list` 카드 shell 안 상단 고정 */
+.calendar-list__toolbar {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+  min-width: 0;
+  width: 100%;
+}
+
+.calendar-list--with-toolbar {
+  overflow: hidden;
+}
+
+/* 툴바 없이 `.calendar-list-item`을 직접 자식으로 둔 리스트(2차 면접 등) */
+.calendar-list:not(.calendar-list--with-toolbar):not(.calendar-list--empty) {
+  gap: var(--calendar-sub-right-list-item-gap);
+}
+
+.calendar-list__items {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--calendar-sub-right-list-item-gap);
+  scroll-padding-top: 4px;
+}
+
+.calendar-list__items--empty {
+  justify-content: center;
+  align-items: center;
+}
+
+.calendar-list__items--empty .ant-empty {
   margin: 0;
   text-align: center;
 }

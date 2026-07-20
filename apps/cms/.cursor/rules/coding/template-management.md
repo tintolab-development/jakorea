@@ -59,5 +59,6 @@ Prefer **`CmsCheckbox` / `CmsCheckbox.Group`** from `@/shared/ui/cms-checkbox` w
 - [ujat-program-detail-recruitment-tabs.md](../process/ujat-program-detail-recruitment-tabs.md) — UJAT 상세 모집 정보 3탭·템플릿 모집 폼 동기화  
 - [list-page composition](./list-page-composition.mdc) — list pages elsewhere  
 - [Form editor modes (view / edit / write)](../template/form-editor-modes.mdc) — 배포 양식·설명글 단락 (write 없음)
+- [URL-driven modal open](../template/url-driven-modal-open.mdc) — `mode=edit` + `selectedTemplate` 동기화·mask 잔여 방지
 
-**Last updated:** 2026-05-19
+**Last updated:** 2026-07-10

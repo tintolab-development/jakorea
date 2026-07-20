@@ -7,8 +7,11 @@
 import type { CSSProperties } from 'react'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { programEnrollmentDisplayConfig } from '@/shared/constants/status'
-import type { SettlementStatusKey } from '@/data/mock/participating-instructors'
-import { SETTLEMENT_STATUS_LABELS } from '@/data/mock/participating-instructors'
+import {
+  INSTRUCTOR_SETTLEMENT_STATUS_BADGE_CLASS,
+  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
+  type InstructorSettlementUiStatus,
+} from '@/shared/constants/instructor-settlement-status'
 import './status-badge.css'
 
 export type StatusBadgeVariant = 'text' | 'badge'
@@ -26,7 +29,7 @@ type StatusBadgeProgramEnrollmentProps = {
 
 type StatusBadgeSettlementProps = {
   domain: 'settlement'
-  status: SettlementStatusKey
+  status: InstructorSettlementUiStatus
   variant?: StatusBadgeVariant
   className?: string
 }
@@ -62,8 +65,8 @@ export function StatusBadge(props: StatusBadgeProps) {
   }
 
   if (props.domain === 'settlement') {
-    const label = SETTLEMENT_STATUS_LABELS[props.status]
-    const mod = `status-badge--settlement-${props.status}`
+    const label = INSTRUCTOR_SETTLEMENT_STATUS_LABELS[props.status]
+    const mod = INSTRUCTOR_SETTLEMENT_STATUS_BADGE_CLASS[props.status]
     return (
       <span
         role="status"

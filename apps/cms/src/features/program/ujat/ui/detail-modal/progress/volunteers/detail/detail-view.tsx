@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
+import type { Program } from '@/types/domain'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
+import {
+  PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  resolveProgramEditInfoClick,
+} from '@/features/program/shared/lib/program-edit-info-button'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
@@ -15,6 +19,16 @@ import {
   UJAT_EDU_PROGRESS_VOLUNTEER_DETAIL_TAB_LABELS,
   type UjatEducationProgressVolunteerDetailTab,
 } from '@/features/program/ujat/lib/ujat-program-detail-url'
+import { ParticipatingVolunteerActivityCertificatePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-activity-certificate-preview-modal'
+import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
+import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
+import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
+import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
+import { StudentCertificatePdfExportHost } from '@/features/program/general/ui/detail-modal/program-status/student-certificate-pdf-export-host'
+import {
+  buildActivityCertificateVolunteerFromUjatDetail,
+  buildStudentCertificateContextFromUjatVolunteer,
+} from '../activity-certificate'
 import type { UjatEducationProgressVolunteerDetail } from './detail-mock'
 import { UjatEducationProgressVolunteerApplicationTab } from './application-tab'
 import {
@@ -24,7 +38,6 @@ import {
 import { getVolunteerActivityWithdrawScheduleOptions } from './assignment-mock'
 import {
   UjatEducationProgressVolunteerAssignmentProgressTab,
-  type UjatVolunteerAssignmentProgressTabHandle,
 } from './assignment-progress-tab'
 import './detail.css'
 
@@ -33,11 +46,13 @@ const TAB_KEYS = Object.keys(
 ) as UjatEducationProgressVolunteerDetailTab[]
 
 export function UjatEducationProgressVolunteerDetailView({
+  program,
   detail,
   activeTab,
   onSelectTab,
   onDetailSaved,
 }: {
+  program: Program
   detail: UjatEducationProgressVolunteerDetail
   activeTab: UjatEducationProgressVolunteerDetailTab
   onSelectTab: (tab: UjatEducationProgressVolunteerDetailTab) => void
@@ -48,16 +63,30 @@ export function UjatEducationProgressVolunteerDetailView({
   const [preferredRegionDraft, setPreferredRegionDraft] = useState<UjatVolunteerPreferredRegion>(
     detail.applicant.preferredRegion
   )
-  const assignmentProgressTabRef = useRef<UjatVolunteerAssignmentProgressTabHandle>(null)
+  const [adminComment, setAdminComment] = useState(detail.adminComment)
+  const [adminCommentDraft, setAdminCommentDraft] = useState(detail.adminComment)
+  const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
+  const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
+  const [studentCertificateIssueModalOpen, setStudentCertificateIssueModalOpen] = useState(false)
+  const [studentCertificateExportContext, setStudentCertificateExportContext] =
+    useState<StudentCertificateDownloadContext | null>(null)
+  const [studentCertificateExportActive, setStudentCertificateExportActive] = useState(false)
   const [withdrawnScheduleRowIds, setWithdrawnScheduleRowIds] = useState<string[]>([])
 
   useEffect(() => {
     setIsEditing(false)
     setPreferredRegionDraft(detail.applicant.preferredRegion)
+    setAdminComment(detail.adminComment)
+    setAdminCommentDraft(detail.adminComment)
+    setIsAdminCommentEditing(false)
     setActivityWithdrawModalOpen(false)
+    setActivityCertPreviewOpen(false)
+    setStudentCertificateIssueModalOpen(false)
+    setStudentCertificateExportContext(null)
+    setStudentCertificateExportActive(false)
     setWithdrawnScheduleRowIds([])
-  }, [detail.volunteerId, detail.applicant.preferredRegion])
+  }, [detail.volunteerId, detail.applicant.preferredRegion, detail.adminComment])
 
   const activityWithdrawScheduleOptions = useMemo(
     () =>
@@ -115,20 +144,12 @@ export function UjatEducationProgressVolunteerDetailView({
     []
   )
 
-  const showComingSoon = () => {
-    showAlert({
-      title: '안내',
-      content: FEATURE_COMING_SOON_ALERT_MESSAGE,
-    })
+  const handleEnterEdit = () => {
+    setPreferredRegionDraft(detail.applicant.preferredRegion)
+    setIsEditing(true)
   }
 
-  const handleToggleEdit = () => {
-    if (!isEditing) {
-      setPreferredRegionDraft(detail.applicant.preferredRegion)
-      setIsEditing(true)
-      return
-    }
-
+  const handleSaveEdit = () => {
     const profileId = parseEducationProgressVolunteerProfileId(detail.volunteerId)
     if (profileId) {
       patchUjatVolunteerMockProfilePreferredRegion(profileId, preferredRegionDraft)
@@ -141,6 +162,55 @@ export function UjatEducationProgressVolunteerDetailView({
       content: '희망 교육 활동 지역이 저장되었습니다.',
     })
   }
+
+  const handleAdminCommentButtonClick = useCallback(() => {
+    if (!isAdminCommentEditing) {
+      setAdminCommentDraft(adminComment)
+      setIsAdminCommentEditing(true)
+      return
+    }
+
+    setAdminComment(adminCommentDraft)
+    setIsAdminCommentEditing(false)
+    showAlert({
+      title: '코멘트 저장',
+      content: '관리자 코멘트가 저장되었습니다.',
+    })
+  }, [adminComment, adminCommentDraft, isAdminCommentEditing, showAlert])
+
+  const activityCertificateVolunteer = useMemo(
+    () => buildActivityCertificateVolunteerFromUjatDetail(detail),
+    [detail]
+  )
+
+  const handleStudentCertificateIssueConfirm = useCallback(
+    (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      setStudentCertificateExportContext(
+        buildStudentCertificateContextFromUjatVolunteer({
+          detail,
+          program,
+          issuanceReasonLabel: reasonLabel,
+        })
+      )
+      setStudentCertificateExportActive(true)
+    },
+    [detail, program]
+  )
+
+  const handleStudentCertificateExportComplete = useCallback(
+    (success: boolean) => {
+      setStudentCertificateExportContext(null)
+      setStudentCertificateExportActive(false)
+
+      if (!success) {
+        showAlert({
+          title: '안내',
+          content: '수료증/참여인증서 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      }
+    },
+    [showAlert]
+  )
 
   const applicationHeaderActions = (
     <>
@@ -160,7 +230,7 @@ export function UjatEducationProgressVolunteerDetailView({
         size="large"
         width={180}
         icon={<DownloadOutlined />}
-        onClick={showComingSoon}
+        onClick={() => setActivityCertPreviewOpen(true)}
       >
         활동인증서 발급
       </CmsButton>
@@ -170,18 +240,31 @@ export function UjatEducationProgressVolunteerDetailView({
         size="large"
         width={210}
         icon={<DownloadOutlined />}
-        onClick={showComingSoon}
+        disabled={studentCertificateExportActive}
+        onClick={() => setStudentCertificateIssueModalOpen(true)}
       >
         수료증/참여인증서 발급
       </CmsButton>
       <CmsButton
         type="button"
-        variant="primary"
+        variant="secondary"
         size="large"
         width={140}
-        onClick={handleToggleEdit}
+        onClick={resolveProgramEditInfoClick(isEditing, {
+          onEnterEdit: handleEnterEdit,
+          onSaveEdit: handleSaveEdit,
+        })}
       >
-        {isEditing ? '정보 저장' : '정보 수정'}
+        {PROGRAM_EDIT_INFO_BUTTON_LABEL}
+      </CmsButton>
+      <CmsButton
+        type="button"
+        variant="primary"
+        size="large"
+        width={160}
+        onClick={handleAdminCommentButtonClick}
+      >
+        {isAdminCommentEditing ? '코멘트 저장' : '코멘트 작성'}
       </CmsButton>
       <PersonalInfoRevealButton
         labelMode="stickyReveal"
@@ -192,43 +275,10 @@ export function UjatEducationProgressVolunteerDetailView({
     </>
   )
 
-  const assignmentHeaderActions = (
-    <>
-      <CmsButton
-        type="button"
-        variant="delete"
-        size="large"
-        width={140}
-        onClick={() => assignmentProgressTabRef.current?.openCancelModal()}
-      >
-        배정 취소
-      </CmsButton>
-      <CmsButton
-        type="button"
-        variant="secondary"
-        size="large"
-        width={160}
-        onClick={() => assignmentProgressTabRef.current?.openAttendanceCorrectionModal()}
-      >
-        출결 정정
-      </CmsButton>
-      <CmsButton
-        type="button"
-        variant="primary"
-        size="large"
-        width={210}
-        onClick={() => assignmentProgressTabRef.current?.openAssignModal()}
-      >
-        파트너 및 교육 배정
-      </CmsButton>
-    </>
-  )
-
-  const headerActions = (
-    <div className="program-detail-fullpage-modal__header-actions">
-      {activeTab === 'application' ? applicationHeaderActions : assignmentHeaderActions}
-    </div>
-  )
+  const headerActions =
+    activeTab === 'application' ? (
+      <div className="program-detail-fullpage-modal__header-actions">{applicationHeaderActions}</div>
+    ) : undefined
 
   return (
     <div className="ujat-education-progress-volunteer-detail">
@@ -246,14 +296,17 @@ export function UjatEducationProgressVolunteerDetailView({
         {activeTab === 'application' ? (
           <UjatEducationProgressVolunteerApplicationTab
             detail={detail}
+            adminComment={adminComment}
             maskSensitive={maskSensitive}
             isEditing={isEditing}
             preferredRegionDraft={preferredRegionDraft}
             onPreferredRegionDraftChange={setPreferredRegionDraft}
+            isAdminCommentEditing={isAdminCommentEditing}
+            adminCommentDraft={adminCommentDraft}
+            onAdminCommentDraftChange={setAdminCommentDraft}
           />
         ) : (
           <UjatEducationProgressVolunteerAssignmentProgressTab
-            ref={assignmentProgressTabRef}
             volunteerId={detail.volunteerId}
             volunteerName={detail.applicant.name}
             withdrawnScheduleRowIds={withdrawnScheduleRowIds}
@@ -270,6 +323,26 @@ export function UjatEducationProgressVolunteerDetailView({
         onCancel={handleCancelActivityWithdraw}
         onConfirm={handleConfirmActivityWithdraw}
       />
+      <ParticipatingVolunteerActivityCertificatePreviewModal
+        open={activityCertPreviewOpen}
+        onClose={() => setActivityCertPreviewOpen(false)}
+        volunteer={activityCertificateVolunteer}
+        program={program}
+      />
+      <CertificateBulkIssueReasonModal
+        open={studentCertificateIssueModalOpen}
+        onCancel={() => setStudentCertificateIssueModalOpen(false)}
+        applicationIds={[detail.volunteerId]}
+        onIssue={handleStudentCertificateIssueConfirm}
+      />
+      <FormCertificatePdfExportOverlay visible={studentCertificateExportActive} />
+      {studentCertificateExportContext != null ? (
+        <StudentCertificatePdfExportHost
+          key={`${studentCertificateExportContext.student.id}-${studentCertificateExportContext.certificateKind}-${studentCertificateExportContext.issuanceReasonLabel}`}
+          context={studentCertificateExportContext}
+          onComplete={handleStudentCertificateExportComplete}
+        />
+      ) : null}
     </div>
   )
 }

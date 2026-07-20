@@ -1,0 +1,132 @@
+/* 역할 열 — tag100(100×32 배지) 기준 중앙 정렬, 개인·팀 행 동일 치수 */
+.participating-individual-participant-assignment-section__table-outer
+  .assignment-submission-modal__team-role-tag {
+  box-sizing: border-box;
+  display: inline-flex;
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 6px 10px;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.participating-individual-participant-assignment-section__role-static {
+  box-sizing: border-box;
+  display: inline-flex;
+  width: 116px;
+  min-width: 116px;
+  max-width: 116px;
+  justify-content: center;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.participating-individual-participant-assignment-section__table-outer
+  .cms-data-table.cms-data-table--fluid
+  table.ant-table {
+  table-layout: fixed !important;
+  width: 100%;
+}
+
+.participating-individual-participant-assignment-section__table-outer
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.status-dropdown-cell__header--tag-100,
+.participating-individual-participant-assignment-section__table-outer
+  .ant-table-tbody
+  > tr
+  > td.status-dropdown-cell__cell-status--tag-100,
+.participating-individual-participant-assignment-section__table-outer
+  .ant-table-tbody
+  > tr:hover
+  > td.status-dropdown-cell__cell-status--tag-100 {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.participating-individual-participant-assignment-section__table-outer
+  .status-dropdown-cell__status-trigger--tag-100 {
+  display: inline-flex !important;
+  box-sizing: border-box !important;
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  padding: 8px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+.participating-individual-participant-assignment-section__table-outer
+  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open) {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.participating-individual-participant-assignment-section__table-outer
+  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover,
+.participating-individual-participant-assignment-section__table-outer
+  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):focus-visible {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  outline: none !important;
+}
+
+.participating-individual-participant-assignment-section__table-outer
+  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  border-color: var(--JA-mint-01, #01a1af) !important;
+  box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1) !important;
+  background: #fff !important;
+}
+
+/* 제출 파일·링크 — #0070e7 (전역 --color-link는 #01a1af 민트) */
+.participating-individual-participant-assignment-section__table-outer
+  a.participating-individual-participant-assignment-section__submission-link,
+.participating-individual-participant-assignment-section__table-outer
+  button.participating-individual-participant-assignment-section__submission-link {
+  display: inline-block;
+  box-sizing: border-box;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+  color: #0070e7;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+  text-underline-offset: auto;
+  text-underline-position: from-font;
+}
+
+.participating-individual-participant-assignment-section__table-outer
+  a.participating-individual-participant-assignment-section__submission-link:hover,
+.participating-individual-participant-assignment-section__table-outer
+  button.participating-individual-participant-assignment-section__submission-link:hover {
+  color: #005bb5;
+  border-color: transparent;
+}

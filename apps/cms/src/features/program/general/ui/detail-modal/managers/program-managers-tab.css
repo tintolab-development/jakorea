@@ -1,108 +1,51 @@
 /**
  * 프로그램 상세 - 담당자 정보 탭
- * 상단 필터: UnifiedFilterCard · StatusDropdownCell(권한) · 테이블
+ * FilterTableLayout · StatusDropdownCell(권한) · 테이블
  */
 
 .program-managers-tab {
   width: 100%;
 }
 
-.program-managers-tab__top {
-  margin-bottom: 0;
-  width: 100%;
-}
-
-/* 필터: 콘텐츠 폭 기준 — 50% flex 분배 대신 explicit width col */
-.program-managers-tab .unified-filter-card {
-  --filter-select-min-width: 0px;
-}
-
-.program-managers-tab .unified-filter-card .ant-card-body {
-  padding: 0;
-}
-
-.program-managers-tab .unified-filter-card__fields-inner .ant-col {
-  min-width: 0;
-}
-
-.program-managers-tab
-  .unified-filter-card--single-row
-  .unified-filter-card__fields-inner
-  .ant-col
-  .unified-filter-card__field--select,
-.program-managers-tab
-  .unified-filter-card--single-row
-  .unified-filter-card__fields-inner
-  .ant-col
-  .ant-select,
-.program-managers-tab
-  .unified-filter-card--single-row
-  .unified-filter-card__fields-inner
-  .ant-col
-  .cms-select,
-.program-managers-tab .unified-filter-card--single-row .labeled-search-input__input,
-.program-managers-tab .unified-filter-card--single-row .labeled-search-input .cms-input {
-  min-width: 0 !important;
-}
-
-.program-managers-tab__divider {
-  height: 0;
-  border: none;
-  border-top: 1px solid var(--color-border-light);
-  margin: 32px 0 0;
-}
-
-.program-managers-tab__below-divider {
-  padding-top: 0;
-  margin-top: 0;
-}
-
-.program-managers-tab__table-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-16);
-  gap: var(--spacing-12);
-  flex-wrap: wrap;
-}
-
-.program-managers-tab__table-heading {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--spacing-8);
-}
-
-.program-managers-tab__table-title {
-  color: var(--color-text-heading);
-  font-size: 20px;
-  font-weight: var(--font-weight-700);
-  line-height: 1.4;
-}
-
-.program-managers-tab__table-description {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%; /* 24px */
-  opacity: 0.6;
-}
-
-.program-managers-tab__table-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-8);
-  flex-wrap: wrap;
-}
-
-.program-managers-tab__table {
-  margin-top: 0;
-}
-
-/* 컬럼 width 합 68+80+246+160+246+246+246 = 1292 */
+/* 컬럼 width 합 68+80+246+150+246+246+246 = 1282 */
 .program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid .ant-table-container {
-  min-width: 1292px;
+  min-width: 1282px;
+}
+
+/* 권한 배지 — StatusDropdownCell style 지정 132×33 */
+.program-managers-tab__role-badge {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: row;
+  width: 132px;
+  min-width: 132px;
+  max-width: 132px;
+  height: 33px;
+  min-height: 33px;
+  max-height: 33px;
+  padding: 6px 10px;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 4px;
+  border-width: 1px;
+  border-style: solid;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .status-dropdown-cell__trigger--cell-style
+  .program-managers-tab__role-badge {
+  width: 132px !important;
+  min-width: 132px !important;
+  max-width: 132px !important;
+  height: 33px !important;
+  min-height: 33px !important;
+  max-height: 33px !important;
 }
 
 .program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid {
@@ -160,48 +103,88 @@
   overflow: visible;
 }
 
-/* 권한 열 트리거 수평 고정 */
+/* 권한 열: cms-data-table 기본 좌우 padding(16px) 제거 — 150px 트리거가 셀을 넘어 연락처 열을 밀지 않도록 */
 .program-managers-tab
   .program-managers-tab__managers-table.cms-data-table
-  td.status-dropdown-cell__cell-status--tag-160
-  .status-dropdown-cell__status-trigger--tag-160 {
-  margin-inline: auto;
+  .ant-table-tbody
+  > tr
+  > td.status-dropdown-cell__cell-status,
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  > td.status-dropdown-cell__cell-status {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
 }
 
-/* 권한 태그 (테이블·드롭다운 공통) */
-.program-managers-tab__role-badge {
-  display: flex;
-  box-sizing: border-box;
-  width: 132px;
-  min-width: 132px;
-  max-width: 132px;
-  height: 33px;
-  min-height: 33px;
-  max-height: 33px;
-  padding: 6px 10px;
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.status-dropdown-cell__cell-status
+  .ant-dropdown-trigger {
+  display: inline-flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  border-radius: 4px;
-  text-align: center;
-  font-family: Pretendard;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 600;
-  line-height: 150%; /* 21px */
-  transition: none !important;
+  width: 100%;
+  max-width: 150px;
+  margin-inline: auto;
+  box-sizing: border-box;
+  vertical-align: middle;
 }
 
-.program-managers-tab__role-badge--owner {
-  border: 1px solid rgba(1, 126, 175, 0.06);
-  background: #e6f2f7;
-  color: #017eaf;
+/* style 지정 트리거: 닫힘·호버·행 hover 동일 외곽 치수 유지 */
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open),
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open):hover,
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open):focus-visible,
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__trigger--cell-style:not(.status-dropdown-cell__status-trigger--open) {
+  display: inline-flex !important;
+  box-sizing: border-box !important;
+  width: 150px !important;
+  min-width: 150px !important;
+  max-width: 150px !important;
+  padding: 8px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  outline: none !important;
 }
 
-.program-managers-tab__role-badge--partner,
-.program-managers-tab__role-badge--assistant {
-  color: #464646;
-  border: 1px solid rgba(126, 138, 150, 0.06);
-  background: #f2f3f5;
+/* 드롭다운 열림 시 행 높이 고정 — UI shifting 방지 */
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+}
+
+/* 행 hover 시 열린 style 지정 트리거 민트 외곽·그림자 유지 */
+.program-managers-tab
+  .program-managers-tab__managers-table.cms-data-table
+  .ant-table-tbody
+  > tr:hover
+  .status-dropdown-cell__trigger--cell-style.status-dropdown-cell__status-trigger--open {
+  border-color: var(--JA-mint-01, #01a1af) !important;
+  box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1) !important;
+  background: #fff !important;
 }

@@ -6,13 +6,28 @@
 
 import { CmsRadio } from '@/shared/ui'
 import { useEffect, useState, useMemo } from 'react'
-import { Card, Descriptions, Tag, Space, Button, Table, Tabs, Badge, Select, Collapse, Statistic, Row, Col, Modal,  } from 'antd'
+import {
+  Card,
+  Descriptions,
+  Tag,
+  Space,
+  Button,
+  Table,
+  Tabs,
+  Badge,
+  Select,
+  Collapse,
+  Statistic,
+  Row,
+  Col,
+  Modal,
+} from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { Instructor } from '@/types/domain'
 import type { Settlement, Matching, Program } from '@/types/domain'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
-import { StatusBadge } from '@/shared/ui/status-badge'
-import { settlementStatusStatusConfig } from '@/shared/constants/status'
+import { StatusBadge } from '@/shared/components/status-badge'
+import { getStatusConfigAccentColor, settlementStatusStatusConfig } from '@/shared/constants/status'
 import { SettlementCalendar } from '@/features/settlement/ui/settlement-calendar'
 import { programService } from '@/entities/program/api/program-service'
 import { mockMatchings, mockSchedules } from '@/data/mock'
@@ -593,9 +608,9 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
           setDrawerOpen(false)
           setSelectedSettlement(null)
         }}
-        width={640}
+        width={800}
         zIndex={1001}
-        destroyOnClose
+        destroyOnHidden
         footer={
           <Space>
             <Button
@@ -624,8 +639,11 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
             <Descriptions.Item label="정산 ID">{selectedSettlement.id}</Descriptions.Item>
             <Descriptions.Item label="상태">
               <StatusBadge
-                status={selectedSettlement.status}
-                statusConfig={settlementStatusStatusConfig}
+                domain="custom"
+                label={settlementStatusStatusConfig[selectedSettlement.status].label}
+                accentColor={getStatusConfigAccentColor(
+                  settlementStatusStatusConfig[selectedSettlement.status].color
+                )}
               />
             </Descriptions.Item>
             <Descriptions.Item label="기간">{selectedSettlement.period}</Descriptions.Item>

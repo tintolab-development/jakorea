@@ -1,17 +1,22 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import {
+  SECOND_INTERVIEW_SCREENING_STATUS_LABELS,
+  SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
+} from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
+import {
+  screeningApplicantNameLabel,
+  screeningApplicantNamePlaceholder,
+  type ScreeningSubjectKind,
+} from './screening-subject-kind'
+import {
   GENERAL_DOCUMENT_SCREENING_STATUS_LABELS,
   GENERAL_INTERVIEW_ASSIGNMENT_STATUS_LABELS,
   GENERAL_MANAGER_EVALUATION_LABELS,
   GENERAL_MANAGER_EVALUATION_ORDER,
-  GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS,
-  GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
-  GENERAL_VOLUNTEER_APPLICATION_TYPE_LABELS,
   type GeneralDocumentScreeningStatus,
   type GeneralInterviewAssignmentStatus,
   type GeneralManagerEvaluation,
   type GeneralSecondInterviewScreeningStatus,
-  type GeneralVolunteerApplicationType,
 } from './volunteer-screening-constants'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import {
@@ -25,14 +30,10 @@ const FILTER_WIDTH = 260
 
 const selectStyle = { width: FILTER_WIDTH } as const
 
-const applicationTypeOptions = [
+const jaVolunteerExperienceOptions = [
   { label: '전체', value: ALL },
-  ...(
-    Object.entries(GENERAL_VOLUNTEER_APPLICATION_TYPE_LABELS) as [
-      GeneralVolunteerApplicationType,
-      string,
-    ][]
-  ).map(([value, label]) => ({ label, value })),
+  { label: '있음', value: 'yes' },
+  { label: '없음', value: 'no' },
 ]
 
 const managerEvaluationOptions = [
@@ -65,9 +66,9 @@ const interviewAssignmentOptions = [
 
 const secondInterviewStatusOptions = [
   { label: '전체', value: ALL },
-  ...GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_ORDER.map(
+  ...SECOND_INTERVIEW_SCREENING_STATUS_ORDER.map(
     (value: GeneralSecondInterviewScreeningStatus) => ({
-      label: GENERAL_SECOND_INTERVIEW_SCREENING_STATUS_LABELS[value],
+      label: SECOND_INTERVIEW_SCREENING_STATUS_LABELS[value],
       value,
     })
   ),
@@ -91,7 +92,7 @@ export const GENERAL_VOLUNTEER_FILTER_ALL = ALL
 /** 1차 서류 심사 대상자 — 기관 프로그램 5필터(1행) */
 export type GeneralVolunteerDoc1Filters = {
   volunteerName: string
-  applicationType: string
+  jaVolunteerExperience: string
   managerAEvaluation: string
   managerBEvaluation: string
   documentScreeningStatus: string
@@ -99,7 +100,7 @@ export type GeneralVolunteerDoc1Filters = {
 
 export const DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS: GeneralVolunteerDoc1Filters = {
   volunteerName: '',
-  applicationType: ALL,
+  jaVolunteerExperience: ALL,
   managerAEvaluation: ALL,
   managerBEvaluation: ALL,
   documentScreeningStatus: ALL,
@@ -151,11 +152,11 @@ export function buildGeneralVolunteerDoc1FilterRows(): FilterFieldConfig[][] {
         placeholder: '봉사자명을 입력하세요',
       }),
       buildGeneralFilterField({
-        key: 'applicationType',
+        key: 'jaVolunteerExperience',
         type: 'select',
-        label: '지원 형태',
+        label: 'JA 봉사 프로그램 진행 경험',
         placeholder: '전체',
-        options: applicationTypeOptions,
+        options: jaVolunteerExperienceOptions,
       }),
       buildGeneralFilterField({
         key: 'managerAEvaluation',
@@ -189,12 +190,8 @@ export function filterGeneralDoc1Applicants(
   const nameQ = filters.volunteerName.trim().toLowerCase()
   return rows.filter(row => {
     if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
-    if (
-      filters.applicationType !== GENERAL_VOLUNTEER_FILTER_ALL &&
-      row.applicationType !== filters.applicationType
-    ) {
-      return false
-    }
+    if (filters.jaVolunteerExperience === 'yes' && !row.hasJaVolunteerExperience) return false
+    if (filters.jaVolunteerExperience === 'no' && row.hasJaVolunteerExperience) return false
     if (
       filters.managerAEvaluation !== GENERAL_VOLUNTEER_FILTER_ALL &&
       row.managerAEvaluation !== filters.managerAEvaluation
@@ -217,14 +214,16 @@ export function filterGeneralDoc1Applicants(
   })
 }
 
-export function buildGeneralVolunteerDocPassedFilterRows(): FilterFieldConfig[][] {
+export function buildGeneralVolunteerDocPassedFilterRows(
+  subjectKind: ScreeningSubjectKind = 'volunteer'
+): FilterFieldConfig[][] {
   return [
     [
       buildGeneralFilterField({
         key: 'volunteerName',
         type: 'search',
-        label: '신청 봉사자명',
-        placeholder: '봉사자명을 입력하세요',
+        label: screeningApplicantNameLabel(subjectKind),
+        placeholder: screeningApplicantNamePlaceholder(subjectKind),
       }),
       buildGeneralFilterField({
         key: 'interviewAssignmentStatus',
@@ -254,7 +253,8 @@ export function buildGeneralVolunteerInterview2TimeOptions(rows: GeneralVoluntee
 }
 
 export function buildGeneralVolunteerInterview2FilterRows(
-  rows: GeneralVolunteerApplicantRow[]
+  rows: GeneralVolunteerApplicantRow[],
+  subjectKind: ScreeningSubjectKind = 'volunteer'
 ): FilterFieldConfig[][] {
   const dateOptions = buildGeneralVolunteerInterview2DateOptions(rows)
   const timeOptions = buildGeneralVolunteerInterview2TimeOptions(rows)
@@ -264,8 +264,8 @@ export function buildGeneralVolunteerInterview2FilterRows(
       buildGeneralFilterField({
         key: 'volunteerName',
         type: 'search',
-        label: '신청 봉사자명',
-        placeholder: '봉사자명을 입력하세요',
+        label: screeningApplicantNameLabel(subjectKind),
+        placeholder: screeningApplicantNamePlaceholder(subjectKind),
       }),
       buildGeneralFilterField({
         key: 'interviewDate',
@@ -285,6 +285,46 @@ export function buildGeneralVolunteerInterview2FilterRows(
         key: 'totalScore',
         type: 'select',
         label: '점수 종합',
+        placeholder: '전체',
+        options: interview2ScoreOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'secondInterviewScreeningStatus',
+        type: 'select',
+        label: '2차 면접 심사 현황',
+        placeholder: '전체',
+        options: secondInterviewStatusOptions,
+      }),
+    ],
+  ]
+}
+
+/** 2차 면접 대상자 캘린더 뷰 — 면접일 필드 제외, 점수 라벨 '점수 총합' */
+export function buildGeneralVolunteerInterview2CalendarFilterRows(
+  rows: GeneralVolunteerApplicantRow[],
+  subjectKind: ScreeningSubjectKind = 'volunteer'
+): FilterFieldConfig[][] {
+  const timeOptions = buildGeneralVolunteerInterview2TimeOptions(rows)
+
+  return [
+    [
+      buildGeneralFilterField({
+        key: 'volunteerName',
+        type: 'search',
+        label: screeningApplicantNameLabel(subjectKind),
+        placeholder: screeningApplicantNamePlaceholder(subjectKind),
+      }),
+      buildGeneralFilterField({
+        key: 'interviewTime',
+        type: 'select',
+        label: '면접 시간',
+        placeholder: '전체',
+        options: timeOptions,
+      }),
+      buildGeneralFilterField({
+        key: 'totalScore',
+        type: 'select',
+        label: '점수 총합',
         placeholder: '전체',
         options: interview2ScoreOptions,
       }),
@@ -327,14 +367,17 @@ export function filterGeneralDocPassedApplicants(
   })
 }
 
-export function filterGeneralInterview2Applicants(
+function filterGeneralInterview2ApplicantsBySharedFields(
   rows: GeneralVolunteerApplicantRow[],
-  filters: GeneralVolunteerInterview2Filters
+  filters: GeneralVolunteerInterview2Filters,
+  options?: { includeInterviewDate?: boolean }
 ): GeneralVolunteerApplicantRow[] {
+  const includeInterviewDate = options?.includeInterviewDate ?? true
   const nameQ = filters.volunteerName.trim().toLowerCase()
   return rows.filter(row => {
     if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
     if (
+      includeInterviewDate &&
       filters.interviewDate !== GENERAL_VOLUNTEER_FILTER_ALL &&
       row.assignedInterviewDateLabel !== filters.interviewDate
     ) {
@@ -359,5 +402,23 @@ export function filterGeneralInterview2Applicants(
       if (effectiveStatus !== filters.secondInterviewScreeningStatus) return false
     }
     return true
+  })
+}
+
+export function filterGeneralInterview2Applicants(
+  rows: GeneralVolunteerApplicantRow[],
+  filters: GeneralVolunteerInterview2Filters
+): GeneralVolunteerApplicantRow[] {
+  return filterGeneralInterview2ApplicantsBySharedFields(rows, filters, {
+    includeInterviewDate: true,
+  })
+}
+
+export function filterGeneralInterview2CalendarApplicants(
+  rows: GeneralVolunteerApplicantRow[],
+  filters: GeneralVolunteerInterview2Filters
+): GeneralVolunteerApplicantRow[] {
+  return filterGeneralInterview2ApplicantsBySharedFields(rows, filters, {
+    includeInterviewDate: false,
   })
 }

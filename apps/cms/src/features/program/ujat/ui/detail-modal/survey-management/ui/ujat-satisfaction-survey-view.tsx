@@ -1,3 +1,4 @@
+import type { RefObject } from 'react'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
   UJAT_SATISFACTION_ACTION_LABELS,
@@ -11,6 +12,7 @@ import {
   type UjatSatisfactionAudienceKey,
   type UjatSatisfactionSurveyByAudience,
 } from '../lib/ujat-satisfaction-survey'
+import type { UjatSurveyPollRawResponse } from '@/data/mock/ujat-survey-poll-responses-mock'
 import { UjatSurveyEmptyState } from './ujat-survey-empty-state'
 import { UjatSurveyNoResponseState } from './ujat-survey-no-response-state'
 import { UjatSurveyPollResultsView } from './ujat-survey-poll-results-view'
@@ -25,6 +27,8 @@ export type UjatSatisfactionSurveyViewProps = {
   onDeleteClick: () => void
   onOpenTemplatePreview: () => void
   onDownloadClick: () => void
+  resultsExportRef?: RefObject<HTMLDivElement | null>
+  resultsResponses?: UjatSurveyPollRawResponse[]
 }
 
 export function UjatSatisfactionSurveyView({
@@ -36,6 +40,8 @@ export function UjatSatisfactionSurveyView({
   onDeleteClick,
   onOpenTemplatePreview,
   onDownloadClick,
+  resultsExportRef,
+  resultsResponses,
 }: UjatSatisfactionSurveyViewProps) {
   const audienceTabs = getSatisfactionAudienceTabs()
   const activeSurvey: UjatRegisteredSurvey | undefined = surveysByAudience[activeAudience]
@@ -86,22 +92,27 @@ export function UjatSatisfactionSurveyView({
         items={audienceTabs.map(tab => ({ key: tab.key, label: tab.label }))}
         trailing={trailingActions}
       />
-      {activeSurvey.responseCount === 0 ? (
+      {activeSurvey.status === 'before_start' ? (
         <UjatSurveyNoResponseState
           title={getSatisfactionNoResponseTitle(activeAudience)}
           description={UJAT_SATISFACTION_NO_RESPONSE_COPY.description}
           deleteButtonLabel={UJAT_SATISFACTION_NO_RESPONSE_COPY.deleteButton}
           previewButtonLabel={UJAT_SATISFACTION_NO_RESPONSE_COPY.previewButton}
           canDelete={activeSurvey.status === 'before_start'}
+          embedded
           onDeleteClick={onDeleteClick}
           onOpenTemplatePreview={onOpenTemplatePreview}
         />
       ) : (
-        <UjatSurveyPollResultsView
-          templateId={activeSurvey.templateId}
-          responseCount={activeSurvey.responseCount}
-          participantTotal={activeSurvey.participantTotal}
-        />
+        <div ref={resultsExportRef}>
+          <UjatSurveyPollResultsView
+            templateId={activeSurvey.templateId}
+            responseCount={activeSurvey.responseCount}
+            participantTotal={activeSurvey.participantTotal}
+            responses={resultsResponses}
+            pdfTitle="만족도조사 결과"
+          />
+        </div>
       )}
     </div>
   )

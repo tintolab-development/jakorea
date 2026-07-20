@@ -126,16 +126,20 @@ export interface GeneralProgramCommonInfoExtension {
   sponsorManagerLine?: string
   /** 교육 장소 상세 (기관 안/밖 뒤 `|` 구분) */
   venueDetail?: string
-  /** 후원사 표시명 mock — `sponsorId` resolve 전 스크린샷·데모용 */
+  /** 후원사 표시명 mock — `sponsorId` resolve 전 스크린샷·데모용 (복수 시 `, ` 구분) */
   sponsorDisplayName?: string
-  /** 후원사 관리 목록 id — `/sponsor?sponsorId=` 링크용 */
+  /** 후원사 관리 목록 id — `/sponsor?sponsorId=` 링크용 (레거시·주 후원사) */
   sponsorManagementId?: string
+  /** 후원사 관리 목록 id — 다중 선택 */
+  sponsorManagementIds?: string[]
   educationFormLabel?: string
+  /** 참여 방식 — 개인 대상 · 일정 공통 (등록 폼·상세 조회 mock) */
+  participationMethod?: 'individual' | 'team'
   ipsTypeSummary?: string
   educationFormScheduleDetail?: GeneralProgramScheduleDetailKind
   participationScheduleDetail?: GeneralProgramScheduleDetailKind
   ipsScheduleDetail?: GeneralProgramScheduleDetailKind
-  /** 일정형 복수 + IPS 일정 별 상이 — 사전 교육 */
+  /** 교육 진행(커리큘럼·일정형) — 사전 교육 토글 */
   scheduleCurriculumPreEducation?: boolean
   curriculumSessions?: GeneralProgramCurriculumSessionRow[]
   /** 일정형 — 세부 일정 블록 */
@@ -161,6 +165,10 @@ export interface GeneralProgramCommonInfoExtension {
   volunteerInterviewScheduleInfo?: GeneralProgramVolunteerInterviewScheduleInfo
   /** 교육 진행 일정 설정 — `date` 날짜 지정 · `period` 기간 지정(기획: 날짜 선택(기간)) */
   educationScheduleMode?: 'date' | 'period'
+  /** 교육받은 교사 — 교육일지 설정 (있음/없음) */
+  educationJournalEnabled?: boolean
+  /** 교육받은 교사 — 교육 연수 토글. ON이면 첫 진행 항목 타이틀·일정명이 교육 연수로 치환(IPS Prepare 고정) */
+  teacherTrainingEnabled?: boolean
   /** 일반 프로그램 캘린더 — 설문조사 시작/종료 등 */
   calendarSurveySchedules?: GeneralProgramCalendarScheduleRow[]
   /** 일반 프로그램 캘린더 — 과제 제출 마감 등 */
@@ -183,6 +191,10 @@ export interface GeneralProgramParticipantRecruitmentInfo {
   recruitmentPeriodLabel?: string
   finalAnnouncementLabel?: string
   contactOrganizationName?: string
+  /** 개인 참여자 모집 — 면접 유무 (등록 양식·상세 mock) */
+  interviewEnabled?: boolean
+  /** 비고 해당 없음 — true면 공고 비노출·관리자 상세에는 '-' */
+  notesNotApplicable?: boolean
 }
 
 /** 일반 프로그램 — 강사 모집 정보 (프로그램 등록 강사 모집 양식 필드) */
@@ -197,6 +209,10 @@ export interface GeneralProgramInstructorRecruitmentInfo {
 /** 일반 프로그램 — 봉사자 모집 정보 (프로그램 등록 봉사자 모집 양식 필드) */
 export interface GeneralProgramVolunteerRecruitmentInfo {
   announcementPublished?: boolean
+  /** UJAT 하반기 — 모집 공고 노출 시점 (`start-day` | `one-day-before` | `one-week-before`) */
+  noticeExposureTiming?: string
+  /** 비고 해당 없음 — true면 공고 비노출·관리자 상세에는 '-' */
+  notesNotApplicable?: boolean
   /** 표시용 — 운영·모집 기간 (요일 포함) */
   operationPeriodLabel?: string
   recruitmentPeriodLabel?: string
@@ -255,16 +271,14 @@ export type ProgramLifecycleStatus =
   | 'participant_instructor_recruitment_completed' // 참여자&교육자 모집 완료
 
 /**
- * UJAT 프로그램 진행 현황 (7단계) — 모집 신청 현황(`ProgramLifecycleStatus`)과 별도
+ * UJAT 프로그램 진행 현황 (목록 5종) — 모집 신청 현황(`ProgramLifecycleStatus`)과 별도
  */
 export type UjatProgramProgressStatus =
-  | 'WAITING_RESULT' // 신청 및 대기 중
-  | 'DOCUMENT_PASS' // 1차 서류 합격
   | 'EDUCATION_SCHEDULED' // 프로그램 진행 예정
+  | 'PARTICIPANT_RECRUITING' // 참여자 모집 중
+  | 'VOLUNTEER_RECRUITING' // 봉사자 모집 중
   | 'EDUCATION_IN_PROGRESS' // 프로그램 진행 중
   | 'PROGRAM_ENDED' // 프로그램 진행 완료
-  | 'INTERVIEW_FAILED' // 면접 불합격
-  | 'REJECTED' // 신청 반려
 
 // 프로그램
 export interface Program {
@@ -282,8 +296,12 @@ export interface Program {
   applicationEndDate?: DateValue // 신청 종료일
   status: Status
   lifecycleStatus?: ProgramLifecycleStatus // 모집 신청 현황(참여자·강사·봉사자 모집 등)
-  /** UJAT 전용 프로그램 진행 현황(7단계) */
+  /** UJAT 전용 프로그램 진행 현황(목록 5종) */
   ujatProgressStatus?: UjatProgramProgressStatus
+  /** UJAT 목록 — 상반기 봉사자 모집 인원(현재) */
+  ujatFirstHalfVolunteerCount?: number
+  /** UJAT 목록 — 하반기 봉사자 모집 인원(현재) */
+  ujatSecondHalfVolunteerCount?: number
   settlementRuleId?: UUID // 정산 규칙 참조
   applicationPathId?: UUID // 신청 경로 참조 (V3 Phase 7)
   // 엑셀 데이터 기반 추가 필드 - 기본 교육실적 정보
@@ -295,7 +313,9 @@ export interface Program {
   schoolId?: UUID // 학교명 (기관) - Application을 통해 연결
   district?: string // 시군구 - School.region에서 추출
   ips?: IPSClassification // IPS 분류 (Prepare/Succeed/Inspire)
-  targetLevel?: TargetLevel // 대상 구분 (초/중/고/대학생/성인)
+  targetLevel?: TargetLevel // 대상 구분 (초/중/고/대학생/성인) — 목록·레거시 호환용(첫 번째 값)
+  /** 교육 대상 다중 선택 (모집 정보) */
+  targetLevels?: TargetLevel[]
   institutionType?: InstitutionType // 기관 구분 (학교 안/밖)
   // 프로그램 설정 정보
   ipOwned?: string // IP Owned (기본값: "JA")
@@ -362,15 +382,19 @@ export interface Program {
   /** 최종 합격자 발표 */
   finalPassAnnouncementDate?: DateValue
   finalPassAnnouncementMethod?: string
-  /** 강사 모집 대상 (강사 정보 탭) */
+  /** 강사 모집 대상 (강사 정보 탭) — 레거시 단일/쉼표 구분 문자열 */
   instructorTarget?: string
+  /** 강사 모집 대상 다중 선택 */
+  instructorTargets?: string[]
   /** 강사 모집 대상 상세 */
   instructorTargetDetail?: string
   /** 봉사자 모집 기간 */
   volunteerApplicationStartDate?: DateValue
   volunteerApplicationEndDate?: DateValue
-  /** 봉사자 모집 대상 (봉사자 정보 탭) */
+  /** 봉사자 모집 대상 (봉사자 정보 탭) — 레거시 단일/쉼표 구분 문자열 */
   volunteerTarget?: string
+  /** 봉사자 모집 대상 다중 선택 */
+  volunteerTargets?: string[]
   /** 봉사자 모집 대상 상세 */
   volunteerTargetDetail?: string
   /** 지원 방법 (강사/봉사자 상세정보 탭) */
@@ -386,6 +410,8 @@ export interface Program {
   generalParticipantTypes?: GeneralProgramParticipantType[]
   /** 일반 프로그램 — 봉사자 선발 시 면접 단계 LNB 노출 여부 */
   generalVolunteerInterviewEnabled?: boolean
+  /** 일반 프로그램 — 개인 참여자 선발 시 면접 단계 LNB 노출 여부 */
+  generalParticipantInterviewEnabled?: boolean
   /** 일반 프로그램 — 설문 관리 LNB 2뎁스 키 */
   generalSurveyMenuKeys?: GeneralProgramSurveyMenuKey[]
   /** 일반 프로그램 유형 — 대분류 (기관/개인) */
@@ -820,6 +846,8 @@ export interface UserHistory {
   finalStatus: FinalStatus
   /** CMS 봉사·참여 이력 목록 필터/표시용 (API 연동 시) */
   managerName?: string
+  /** API program-history 응답 programName (programService 폴백 전) */
+  programName?: string
   // 강사인 경우
   paymentStatus?: PaymentStatus
   paymentAmount?: number
@@ -887,6 +915,8 @@ export interface ProgramPost {
   attachmentCount: number
   /** 게시글 상태 태그 (예: [공지사항], [일정 알림]) */
   postType?: 'notice' | 'schedule'
+  /** 공개 범위 (all, teacher, student, instructor, volunteer) */
+  audience?: string[]
   publishedAt: DateValue
   createdAt: DateValue
   updatedAt: DateValue

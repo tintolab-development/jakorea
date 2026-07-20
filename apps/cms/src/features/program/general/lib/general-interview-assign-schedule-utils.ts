@@ -8,7 +8,7 @@ import {
   parseInterviewDisplayDateLabel,
   type InterviewAssignSlot,
   type ParsedInterviewSchedule,
-} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-interview-assign-schedule-utils'
+} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 
 export type { InterviewAssignSlot, ParsedInterviewSchedule }
 
@@ -44,6 +44,7 @@ function buildParsedInterviewSchedule(
 ): ParsedInterviewSchedule {
   const commonSlots = parseTimeSlotsString(source.availableTimeSlots)
   const unavailableKeys = parseUnavailableDateLabels(source.specificUnavailableDates)
+  const blockSaturday = source.recurringUnavailable.includes('토요일')
   const blockSunday = source.recurringUnavailable.includes('일요일')
   const includeHolidays = source.recurringUnavailable.includes('공휴일')
   const holidayDateKeys = includeHolidays ? getMockHolidayDateKeys() : new Set<string>()
@@ -54,10 +55,11 @@ function buildParsedInterviewSchedule(
   let cursor = rangeStart.startOf('day')
   while (!cursor.isAfter(rangeEnd, 'day')) {
     const dateKey = cursor.format('YYYY-MM-DD')
+    const isSaturday = blockSaturday && cursor.day() === 6
     const isSunday = blockSunday && cursor.day() === 0
     const isUnavailable = unavailableKeys.has(dateKey)
 
-    if (!isSunday && !isUnavailable && commonSlots.length > 0) {
+    if (!isSaturday && !isSunday && !isUnavailable && commonSlots.length > 0) {
       const slots: InterviewAssignSlot[] = commonSlots.map(timeRange => ({
         key: `${dateKey}|${timeRange}`,
         timeRange,
@@ -76,6 +78,7 @@ function buildParsedInterviewSchedule(
     }
 
     const dateKey = date.format('YYYY-MM-DD')
+    if (blockSaturday && date.day() === 6) return true
     if (blockSunday && date.day() === 0) return true
     if (unavailableKeys.has(dateKey)) return true
 
@@ -93,7 +96,11 @@ function buildParsedInterviewSchedule(
   }
 }
 
-/** TODO(api): 프로그램·기관별 면접 가능 일정 API 연동 */
+/**
+ * 면접 캘린더 가용 슬롯 표시.
+ * OpenAPI에 `GET …/interview-slots`가 없어 모집 표시 mock 기반 유지.
+ * 배정 mutation은 `assignGeneralVolunteerInterview`(slot create + assign)로 remote 연동.
+ */
 export function parseGeneralInterviewScheduleFromProgram(program: Program): ParsedInterviewSchedule {
   const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
   const rangeStart = dayjs('2026-03-01')

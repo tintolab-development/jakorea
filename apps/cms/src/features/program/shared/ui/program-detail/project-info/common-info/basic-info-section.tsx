@@ -7,18 +7,28 @@
  * - 수정 모드: react-hook-form Controller, 기존 프로그램 값이 default로 채워짐
  */
 
-import { useEffect } from 'react'
+
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { Controller } from 'react-hook-form'
-import { useSponsorStore } from '@/features/sponsor/model/sponsor-store'
+import { useSponsorSelectOptions } from '@/features/sponsor/hooks/use-sponsor-options-query'
+import { useSponsorContactsQuery } from '@/features/sponsor/hooks/use-sponsor-contacts-query'
 import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { UseFormReturn } from 'react-hook-form'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ProgramDetailSponsorLink } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-link'
+import { mockSponsorManagementListRows } from '@/data/mock/sponsor-management-list'
+import { getSponsorDetailContactsNormalized } from '@/features/sponsor/lib/get-sponsor-detail-contacts'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import {
+  PROGRAM_REGISTRATION_SURVEY_ITEM_IDS,
+  PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
+} from '@/features/template/lib/program-registration-survey-items'
 import {
   formatDate,
   formatDateRange,
@@ -49,10 +59,83 @@ export interface BasicInfoSectionProps {
   isEditMode?: boolean
   /** 수정 모드일 때만 전달, react-hook-form 인스턴스 */
   form?: UseFormReturn<ProgramDetailEditFormValues>
+  /**
+   * 1사1교 레이아웃 강제 (교육받은 교사 등 파생 유형 전용 opt-in).
+   * 미지정 시 기존 id/타이틀 기반 판별 유지 — 다른 유형 동작 불변.
+   */
+  forceCompanySchoolLayout?: boolean
 }
 
 const toDayjs = (d: string | Date | undefined) => (d ? dayjs(d) : null)
 const toIso = (d: Dayjs | null) => (d ? d.toISOString() : '')
+
+const GENERAL_PARTICIPANT_TYPE_LABELS: Record<string, string> = {
+  individual: '개인',
+  school_institution: '학교/기관',
+  teacher_instructor: '강사',
+  volunteer: '봉사자',
+}
+
+const PARTNER_INVOLVEMENT_SELECT_OPTIONS = [
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' },
+]
+
+function isCompanySchoolProgram(program: Program): boolean {
+  return (
+    program.id.startsWith('economy-prog-') ||
+    program.id.startsWith('company-school-prog-') ||
+    program.id.startsWith('company-school-local-') ||
+    program.mainTitle?.includes('1사1교') === true ||
+    program.title.includes('1사1교')
+  )
+}
+
+function formatCompanySchoolParticipantTypes(program: Program): string {
+  const labels = (program.generalParticipantTypes ?? [])
+    .map(type => GENERAL_PARTICIPANT_TYPE_LABELS[type] ?? type)
+    .filter(Boolean)
+  if (labels.length > 0) return labels.join(', ')
+  return '학교/기관, 강사'
+}
+
+function formatCompanySchoolSurveyItems(program: Program): string {
+  const keys = new Set<string>(program.generalSurveyMenuKeys ?? [])
+  const labels: string[] = []
+  if (keys.has('survey')) labels.push('설문조사')
+  if (
+    keys.has('satisfaction') ||
+    keys.has('student_satisfaction') ||
+    keys.has('teacher_satisfaction')
+  ) {
+    labels.push('만족도조사')
+  }
+  if (keys.has('lecture_evaluation')) labels.push('강의평가')
+  return labels.length > 0 ? labels.join(', ') : '-'
+}
+
+function formatCompanySchoolVenue(program: Program): string {
+  const kindLabel =
+    program.institutionType === 'inside_school'
+      ? '기관 안'
+      : program.institutionType === 'outside_school'
+        ? '기관 밖'
+        : '기관 안'
+  const detail = program.generalCommonInfo?.venueDetail?.trim() || '-'
+  return `${kindLabel} | ${detail}`
+}
+
+function optionLabel(
+  options: readonly { value: string; label: string }[],
+  value: string | undefined | null
+): string {
+  if (!value) return '-'
+  return options.find(option => option.value === value)?.label ?? value
+}
+
+function dateRangeUsesClockTime(range: [Dayjs, Dayjs]): boolean {
+  return range.some(d => d.hour() !== 0 || d.minute() !== 0 || d.second() !== 0)
+}
 
 export function BasicInfoSection({
   program,
@@ -62,14 +145,13 @@ export function BasicInfoSection({
   lifecycleStatus,
   isEditMode = false,
   form,
+  forceCompanySchoolLayout = false,
 }: BasicInfoSectionProps) {
-  const { sponsors, fetchSponsors } = useSponsorStore()
-
-  useEffect(() => {
-    fetchSponsors()
-  }, [fetchSponsors])
-
   const isFormEdit = isEditMode && form
+  const { options: sponsorOptions } = useSponsorSelectOptions(Boolean(isFormEdit || program.sponsorId))
+  const watchedSponsorId = isFormEdit ? form?.watch('sponsorId') : program.sponsorId
+  const contactsQuery = useSponsorContactsQuery(watchedSponsorId, Boolean(isFormEdit))
+  const managers = contactsQuery.data ?? []
   const categoryLabel = CATEGORY_LABEL[program.category] ?? program.category ?? '-'
 
   /* 공통 정보 탭 기본 정보 */
@@ -97,7 +179,499 @@ export function BasicInfoSection({
       formState: { errors: {} },
       watch: () => undefined,
       setValue: () => undefined,
+      getValues: () => undefined,
     } as unknown as UseFormReturn<ProgramDetailEditFormValues>)
+
+  if (forceCompanySchoolLayout || isCompanySchoolProgram(program)) {
+    const commonInfo = program.generalCommonInfo
+    const announcementTitle = commonInfo?.announcementTitle ?? program.title
+    const detailedProgramName =
+      commonInfo?.detailedProgramName ?? program.textbookName ?? program.title ?? '-'
+    const educationProcessLabel = optionLabel(EDUCATION_PROCESS_OPTIONS, program.educationProcess)
+    const ipOwnedLabel = optionLabel(IP_OWNED_OPTIONS, program.ipOwned ?? 'JA')
+    const courseDeliveredByLabel = optionLabel(
+      COURSE_DELIVERED_BY_OPTIONS,
+      program.courseDeliveredBy ?? 'JA'
+    )
+    const ipsLabel = optionLabel(IPS_OPTIONS, program.ips ?? 'Prepare')
+    const selectedSponsorManagementIds = commonInfoFormEdit
+      ? (commonInfoForm.watch('sponsorManagementIds') ?? [])
+      : (commonInfo?.sponsorManagementIds ?? [])
+    const selectedSponsorManagementRows = selectedSponsorManagementIds
+      .map(id => mockSponsorManagementListRows.find(row => row.id === id))
+      .filter((row): row is NonNullable<typeof row> => row != null)
+    const sponsorManagementOptions = mockSponsorManagementListRows.map(row => ({
+      value: row.id,
+      label: row.name,
+    }))
+    const sponsorManagerOptions = selectedSponsorManagementRows.flatMap(sponsor =>
+      getSponsorDetailContactsNormalized(sponsor).map(contact => ({
+        value: `${sponsor.id}:${contact.id}`,
+        label:
+          selectedSponsorManagementRows.length > 1
+            ? `${sponsor.name} · ${contact.position ? `${contact.position} ` : ''}${contact.name}`
+            : contact.position
+              ? `${contact.position} ${contact.name}`
+              : contact.name,
+        sponsorId: sponsor.id,
+        contactId: contact.id,
+        name: contact.name,
+        phone: contact.phone,
+      }))
+    )
+
+    return (
+      <div className="project-info-basic-info-section__company-school-forms">
+        <DetailInfoForm title="기본 정보" mode="view">
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="최초 등록일"
+              view={
+                <>
+                  {formatDate(program.createdAt)}
+                  <DetailInfoForm.InputsSeparator />
+                  {createdByName ?? '-'}
+                </>
+              }
+            />
+            <DetailInfoForm.Field
+              label="마지막 수정일"
+              view={
+                <>
+                  {formatDate(program.updatedAt)}
+                  <DetailInfoForm.InputsSeparator />
+                  {updatedByName ?? '-'}
+                </>
+              }
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+
+        <DetailInfoForm title="기본 정보" hideHeader mode={commonInfoFormEdit ? 'edit' : 'view'}>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="대표 프로그램명 (국문)"
+              view={program.mainTitle ?? '-'}
+              edit={
+                <Controller
+                  name="mainTitle"
+                  control={commonInfoForm.control}
+                  render={({ field }) => (
+                    <CmsInput
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder="대표 프로그램명을 입력하세요"
+                      width="100%"
+                    />
+                  )}
+                />
+              }
+            />
+            <DetailInfoForm.Field
+              label="대표 프로그램명 (영문)"
+              view={program.titleEn ?? '-'}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="공고용 프로그램명"
+              view={announcementTitle}
+              edit={
+                <Controller
+                  name="title"
+                  control={commonInfoForm.control}
+                  render={({ field }) => (
+                    <CmsInput
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder="공고용 프로그램명을 입력하세요"
+                      width="100%"
+                    />
+                  )}
+                />
+              }
+            />
+            <DetailInfoForm.Field
+              label="세부 프로그램명"
+              view={detailedProgramName}
+              edit={
+                <Controller
+                  name="title"
+                  control={commonInfoForm.control}
+                  render={({ field }) => (
+                    <CmsInput
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder="세부 프로그램명을 입력하세요"
+                      width="100%"
+                    />
+                  )}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="사업 운영 기간"
+              view={formatDateRange(program.startDate, program.endDate)}
+              edit={
+                <Controller
+                  name="startDate"
+                  control={commonInfoForm.control}
+                  render={({ field }) => {
+                    const start = toDayjs(field.value)
+                    const end = toDayjs(commonInfoForm.watch('endDate'))
+                    const operationRange = start && end ? ([start, end] as [Dayjs, Dayjs]) : null
+                    const operationRangeWithTime =
+                      operationRange != null ? dateRangeUsesClockTime(operationRange) : false
+
+                    return (
+                      <div className="detail-info-form-inputs-wrapper-no-gap">
+                        <ParagraphDatePicker
+                          mode="single"
+                          presetMode="period"
+                          value={start ?? null}
+                          width="100%"
+                          placeholder="사업 운영 기간을 선택하세요"
+                          preferPeriodModeInPopover
+                          appliedSurfaceRange={operationRange}
+                          appliedSurfaceWithTime={operationRangeWithTime}
+                          onRangeChange={range => {
+                            field.onChange(toIso(range[0]))
+                            commonInfoForm.setValue('endDate', toIso(range[1]), {
+                              shouldValidate: true,
+                              shouldDirty: true,
+                            })
+                          }}
+                          onChange={next => {
+                            if (next == null) return
+                            field.onChange(toIso(next))
+                          }}
+                        />
+                      </div>
+                    )
+                  }}
+                />
+              }
+            />
+            <DetailInfoForm.Field
+              label="프로그램 진행 현황"
+              view={lifecycleStatus ? <ProgramProgressReadonlyCell status={lifecycleStatus} /> : '-'}
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="참여자 유형"
+              view={formatCompanySchoolParticipantTypes(program)}
+            />
+            <DetailInfoForm.Field
+              label="사업 분야"
+              view={program.businessArea ?? '-'}
+              edit={
+                <Controller
+                  name="businessArea"
+                  control={commonInfoForm.control}
+                  render={({ field }) => (
+                    <CmsSelect
+                      value={field.value ?? undefined}
+                      options={BUSINESS_AREA_OPTIONS}
+                      onChange={v => field.onChange(v ?? undefined)}
+                      width="100%"
+                    />
+                  )}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="후원사"
+              view={
+                selectedSponsorManagementRows.length > 0 ? (
+                  <>
+                    {selectedSponsorManagementRows.map((row, index) => (
+                      <span key={row.id}>
+                        {index > 0 ? ', ' : null}
+                        <ProgramDetailSponsorLink
+                          name={row.name}
+                          sponsorId={program.sponsorId}
+                          sponsorName={row.name}
+                          sponsorManagementId={row.id}
+                        />
+                      </span>
+                    ))}
+                  </>
+                ) : sponsorName ? (
+                  <ProgramDetailSponsorLink
+                    name={sponsorName}
+                    sponsorId={program.sponsorId}
+                    sponsorName={sponsorName}
+                  />
+                ) : '-'
+              }
+              edit={
+                <Controller
+                  name="sponsorManagementIds"
+                  control={commonInfoForm.control}
+                  render={({ field }) => (
+                    <CmsSelect
+                      mode="multiple"
+                      withAllOption={false}
+                      placeholder="후원사를 선택하세요"
+                      width="100%"
+                      showSearch
+                      optionFilterProp="label"
+                      options={sponsorManagementOptions}
+                      value={field.value ?? []}
+                      onChange={next => {
+                        field.onChange(Array.isArray(next) ? next.map(String) : [])
+                        commonInfoForm.setValue('sponsorManagerContactId', undefined)
+                      }}
+                    />
+                  )}
+                />
+              }
+            />
+            <DetailInfoForm.Field
+              label="후원사 담당자"
+              view={
+                program.managerName || program.contactPhone ? (
+                  <>
+                    {program.managerName ?? ''}
+                    {program.managerName && program.contactPhone ? (
+                      <DetailInfoForm.InputsSeparator />
+                    ) : null}
+                    {program.contactPhone ? <span>{program.contactPhone}</span> : null}
+                  </>
+                ) : (
+                  '-'
+                )
+              }
+              edit={
+                <Controller
+                  name="sponsorManagerContactId"
+                  control={commonInfoForm.control}
+                  render={({ field }) => (
+                    <CmsSelect
+                      withAllOption={false}
+                      placeholder="후원사 담당자를 선택하세요"
+                      width="100%"
+                      options={sponsorManagerOptions}
+                      value={field.value ?? undefined}
+                      disabled={sponsorManagerOptions.length === 0}
+                      onChange={next => {
+                        const value = next == null ? undefined : String(next)
+                        field.onChange(value)
+                        const selected = sponsorManagerOptions.find(option => option.value === value)
+                        commonInfoForm.setValue('managerName', selected?.name ?? '')
+                        commonInfoForm.setValue('contactPhone', selected?.phone)
+                      }}
+                    />
+                  )}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="교육 장소"
+              fullRow
+              view={renderDetailInfoPipeSeparated(formatCompanySchoolVenue(program))}
+              edit={
+                <div className="detail-info-form-inputs-wrapper">
+                  <Controller
+                    name="venueKind"
+                    control={commonInfoForm.control}
+                    render={({ field }) => (
+                      <CmsRadio.Group
+                        size="large"
+                        value={field.value ?? 'inside'}
+                        onChange={event => field.onChange(event.target.value)}
+                      >
+                        <CmsRadio value="inside">기관 안</CmsRadio>
+                        <CmsRadio value="outside">기관 밖</CmsRadio>
+                        <CmsRadio value="other">기타(직접입력)</CmsRadio>
+                      </CmsRadio.Group>
+                    )}
+                  />
+                  <DetailInfoForm.InputsSeparator />
+                  <Controller
+                    name="venueDetail"
+                    control={commonInfoForm.control}
+                    render={({ field }) => (
+                      <CmsInput
+                        inputSize="medium"
+                        placeholder="교육이 진행될 상세 장소를 입력해 주세요"
+                        width="100%"
+                        style={{ flex: '1 1 0', minWidth: 0 }}
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                      />
+                    )}
+                  />
+                </div>
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="설문 진행 항목"
+              fullRow
+              view={formatCompanySchoolSurveyItems(program)}
+              edit={
+                <div className="detail-info-form-inputs-wrapper">
+                  {PROGRAM_REGISTRATION_SURVEY_ITEM_IDS.map(id => (
+                    <Controller
+                      key={id}
+                      name={
+                        id === 'survey'
+                          ? 'surveySurvey'
+                          : id === 'satisfaction'
+                            ? 'surveySatisfaction'
+                            : 'surveyLectureEvaluation'
+                      }
+                      control={commonInfoForm.control}
+                      render={({ field }) => (
+                        <CmsCheckbox
+                          checkboxSize="large"
+                          checked={Boolean(field.value)}
+                          onChange={e => field.onChange(e.target.checked)}
+                        >
+                          {PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS[id]}
+                        </CmsCheckbox>
+                      )}
+                    />
+                  ))}
+                </div>
+              }
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+
+        <DetailInfoForm title="기본 정보 — 교육 과정" hideHeader mode={commonInfoFormEdit ? 'edit' : 'view'}>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="교육 과정"
+              view={educationProcessLabel}
+              edit={
+                <Controller
+                  name="educationProcess"
+                  control={commonInfoForm.control}
+                  render={({ field }) => (
+                    <CmsSelect
+                      withAllOption={false}
+                      placeholder="교육 과정을 선택하세요"
+                      width="100%"
+                      options={[...EDUCATION_PROCESS_OPTIONS]}
+                      value={field.value ?? undefined}
+                      onChange={next => field.onChange(next == null ? undefined : String(next))}
+                    />
+                  )}
+                />
+              }
+            />
+            <DetailInfoForm.Field
+              label="IP Owned"
+              view={ipOwnedLabel}
+              edit={
+                <Controller
+                  name="ipOwned"
+                  control={commonInfoForm.control}
+                  render={({ field }) => (
+                    <CmsSelect
+                      withAllOption={false}
+                      placeholder="IP Owned를 선택하세요"
+                      width="100%"
+                      options={[...IP_OWNED_OPTIONS]}
+                      value={field.value ?? 'JA'}
+                      onChange={next => field.onChange(next == null ? undefined : String(next))}
+                    />
+                  )}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="Course Delivered By"
+              view={courseDeliveredByLabel}
+              edit={
+                <Controller
+                  name="courseDeliveredBy"
+                  control={commonInfoForm.control}
+                  render={({ field }) => (
+                    <CmsSelect
+                      withAllOption={false}
+                      placeholder="Course Delivered By를 선택하세요"
+                      width="100%"
+                      options={[...COURSE_DELIVERED_BY_OPTIONS]}
+                      value={field.value ?? 'JA'}
+                      onChange={next =>
+                        field.onChange(
+                          next === 'JA' || next === 'Jointly' || next === 'Partner'
+                            ? next
+                            : undefined
+                        )
+                      }
+                    />
+                  )}
+                />
+              }
+            />
+            <DetailInfoForm.Field
+              label="Partner Involvement"
+              view={partnerLabel}
+              edit={
+                <Controller
+                  name="partnerInvolvement"
+                  control={commonInfoForm.control}
+                  render={({ field }) => (
+                    <CmsSelect
+                      withAllOption={false}
+                      placeholder="Partner Involvement를 선택하세요"
+                      width="100%"
+                      options={PARTNER_INVOLVEMENT_SELECT_OPTIONS}
+                      value={field.value ? 'yes' : 'no'}
+                      onChange={next => field.onChange(next === 'yes')}
+                    />
+                  )}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="IPS 유형"
+              fullRow
+              view={ipsLabel}
+              edit={
+                <Controller
+                  name="ips"
+                  control={commonInfoForm.control}
+                  render={({ field }) => (
+                    <CmsSelect
+                      withAllOption={false}
+                      placeholder="IPS 유형을 선택하세요"
+                      width="100%"
+                      options={[...IPS_OPTIONS]}
+                      value={field.value ?? 'Prepare'}
+                      onChange={next =>
+                        field.onChange(
+                          next === 'Prepare' || next === 'Succeed' || next === 'Inspire'
+                            ? next
+                            : 'Prepare'
+                        )
+                      }
+                    />
+                  )}
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
+      </div>
+    )
+  }
 
   return (
     <DetailInfoForm title="기본 정보" mode={commonInfoFormEdit ? 'edit' : 'view'}>
@@ -267,7 +841,7 @@ export function BasicInfoSection({
                     placeholder="후원사 선택"
                     showSearch
                     optionFilterProp="label"
-                    options={sponsors.map(s => ({ value: s.id, label: s.name }))}
+                    options={sponsorOptions}
                     onChange={v => field.onChange(v ?? '')}
                     width={'100%'}
                     status={commonInfoForm.formState.errors.sponsorId ? 'error' : undefined}
@@ -296,9 +870,6 @@ export function BasicInfoSection({
           edit={
             <div>
               {(() => {
-                const sponsorId = commonInfoForm.watch('sponsorId')
-                const selectedSponsor = sponsors.find(s => s.id === sponsorId)
-                const managers = selectedSponsor?.managers ?? []
                 return (
                   <>
                     <div className="detail-info-form-inputs-wrapper">

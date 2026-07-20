@@ -1,5 +1,5 @@
 import type { GeneralInterviewAssignConfirmPayload } from './general-volunteer-interview-assign-modal'
-import { UjatVolunteerInterviewAssignCompleteModal } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/ujat-volunteer-interview-assign-complete-modal'
+import { UjatVolunteerInterviewAssignCompleteModal } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/complete-modal'
 
 export type GeneralVolunteerInterviewAssignCompleteModalProps = {
   open: boolean

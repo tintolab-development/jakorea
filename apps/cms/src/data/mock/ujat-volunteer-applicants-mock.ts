@@ -12,20 +12,22 @@ import {
   type UjatVolunteerMockProfile,
 } from '@/data/mock/ujat-volunteer-mock-profiles'
 import {
+  getUjatEducationRegionSortOrderMap,
+  getUjatVolunteerPreferredRegionLabels,
+} from '@/features/program/ujat/lib/ujat-education-regions'
+import {
   UJAT_VOLUNTEER_APPLICATION_TYPE_LABELS,
   UJAT_VOLUNTEER_GRADE_OPTIONS,
-  UJAT_VOLUNTEER_PREFERRED_REGIONS,
-  UJAT_VOLUNTEER_REGION_SORT_ORDER,
   type UjatDocumentScreeningStatus,
   type UjatInterviewAssignmentStatus,
   type UjatManagerEvaluation,
   type UjatSecondInterviewScreeningStatus,
-  UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER,
   type UjatVolunteerApplicationType,
   type UjatVolunteerGrade,
   type UjatVolunteerPreferredRegion,
   type UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import { SECOND_INTERVIEW_SCREENING_STATUS_ORDER } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
 
 export type {
   UjatDocumentScreeningStatus,
@@ -78,6 +80,8 @@ export interface UjatVolunteerApplicantRow {
   universityName: string
   major: string
   applicationRoute: string
+  /** 지원 경로가 기타일 때 직접 입력값 */
+  applicationRouteOther?: string
   scheduleChangeCancelCount: number
   interviewAvailability: UjatVolunteerInterviewAvailabilityDay[]
   previousUjatActivity?: UjatVolunteerPreviousUjatActivity
@@ -158,6 +162,12 @@ export function buildUjatVolunteerApplicantRowFromProfile(
   const mobile = profile.mobile.replace(/\s/g, '')
   const preferredRegion = regionLabelForVolunteerProfile(profile.regionKey)
   const interviewSlotCount = countVolunteerProfileInterviewSlots(profile.interviewAvailability)
+  const applicationType: UjatVolunteerApplicationType = profile.hasEducationExperience
+    ? 'ujat-graduate'
+    : 'new'
+  const previousUjatActivity =
+    profile.previousUjatActivity ??
+    (profile.hasEducationExperience ? buildMockPreviousUjatActivity(no, profile.name) : undefined)
 
   return {
     id: buildUjatVolunteerApplicantId(programId, half, profile.id),
@@ -170,11 +180,12 @@ export function buildUjatVolunteerApplicantRowFromProfile(
     contactRaw: mobile,
     emailRaw: profile.email,
     hasEducationExperience: profile.hasEducationExperience,
-    applicationType: profile.applicationType,
-    essayIntro: profile.essayIntro,
-    essayEducationExperience: profile.essayEducationExperience,
-    essayNecessity: profile.essayNecessity,
-    essayJaExperience: profile.essayJaExperience,
+    applicationType,
+    essayIntro: applicationType === 'ujat-graduate' ? '' : profile.essayIntro,
+    essayEducationExperience:
+      applicationType === 'ujat-graduate' ? '' : profile.essayEducationExperience,
+    essayNecessity: applicationType === 'ujat-graduate' ? '' : profile.essayNecessity,
+    essayJaExperience: applicationType === 'ujat-graduate' ? '' : profile.essayJaExperience,
     managerAEvaluation: profile.managerAEvaluation,
     managerBEvaluation: profile.managerBEvaluation,
     documentScreeningStatus: profile.documentScreeningStatus,
@@ -189,12 +200,23 @@ export function buildUjatVolunteerApplicantRowFromProfile(
     universityName: profile.universityName,
     major: profile.major,
     applicationRoute: profile.applicationRoute,
+    applicationRouteOther: profile.applicationRouteOther,
     scheduleChangeCancelCount: profile.scheduleChangeCancelCount,
     interviewAvailability: profile.interviewAvailability.map(day => ({
       dateLabel: day.dateLabel,
       slots: [...day.slots],
     })),
     interviewAssignmentStatus: profile.interviewAssignmentStatus,
+    ...(previousUjatActivity
+      ? {
+          previousUjatActivity: {
+            term: previousUjatActivity.term,
+            year: previousUjatActivity.year,
+            certificateFileName: previousUjatActivity.certificateFileName,
+            certificateFileUrl: previousUjatActivity.certificateFileUrl,
+          },
+        }
+      : {}),
     ...(profile.interviewAssignmentStatus === 'assigned'
       ? {
           assignedInterviewDateLabel: profile.assignedInterviewDateLabel,
@@ -228,6 +250,8 @@ function buildAssignedInterviewFields(
   | 'assignedInterviewDateLabel'
   | 'assignedInterviewTime'
   | 'secondInterviewScreeningStatus'
+  | 'managerAScore'
+  | 'managerBScore'
   | 'totalScore'
 > {
   const firstDay = interviewAvailability[0]
@@ -236,17 +260,20 @@ function buildAssignedInterviewFields(
     firstDay?.dateLabel ?? INTERVIEW_DATE_LABELS[seed % INTERVIEW_DATE_LABELS.length]
   const time = firstSlot ?? INTERVIEW_TIME_SLOTS[seed % INTERVIEW_TIME_SLOTS.length]
   const status =
-    UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER[
-      seed % UJAT_SECOND_INTERVIEW_SCREENING_STATUS_ORDER.length
+    SECOND_INTERVIEW_SCREENING_STATUS_ORDER[
+      seed % SECOND_INTERVIEW_SCREENING_STATUS_ORDER.length
     ]
   const scoreSeed = seed % 11
-  const totalScore =
-    scoreSeed === 0 ? null : scoreSeed <= 7 ? 70 + scoreSeed * 3 : 90 + (scoreSeed - 7)
+  const totalScore = scoreSeed === 0 ? null : scoreSeed
+  const managerAScore = totalScore == null ? null : Math.min(5, Math.ceil(totalScore / 2))
+  const managerBScore = totalScore == null || managerAScore == null ? null : totalScore - managerAScore
 
   return {
     assignedInterviewDateLabel: dateLabel,
     assignedInterviewTime: time,
     secondInterviewScreeningStatus: status,
+    managerAScore,
+    managerBScore,
     totalScore,
   }
 }
@@ -263,11 +290,10 @@ function resolveInterviewAssignmentStatus(
   return 'assigned'
 }
 
-function buildPreviousUjatActivity(
+function buildMockPreviousUjatActivity(
   seed: number,
   name: string
-): UjatVolunteerPreviousUjatActivity | undefined {
-  if (seed % 4 !== 0) return undefined
+): UjatVolunteerPreviousUjatActivity {
   const term = String(28 + (seed % 5))
   const year = String(2019 + (seed % 6))
   return {
@@ -329,9 +355,13 @@ function buildRow(
   const name = pool.length > 0 ? pool[index % pool.length] : NAMES[index % NAMES.length]
   const grade = UJAT_VOLUNTEER_GRADE_OPTIONS[seed % UJAT_VOLUNTEER_GRADE_OPTIONS.length]
   const preferredRegion =
-    UJAT_VOLUNTEER_PREFERRED_REGIONS[seed % UJAT_VOLUNTEER_PREFERRED_REGIONS.length]
+    getUjatVolunteerPreferredRegionLabels()[
+      seed % Math.max(getUjatVolunteerPreferredRegionLabels().length, 1)
+    ] ?? getUjatVolunteerPreferredRegionLabels()[0] ?? '서울'
   const hasEducationExperience = seed % 3 !== 0
-  const applicationType: UjatVolunteerApplicationType = seed % 4 === 0 ? 'ujat-graduate' : 'new'
+  const applicationType: UjatVolunteerApplicationType = hasEducationExperience
+    ? 'ujat-graduate'
+    : 'new'
   const documentScreeningStatus: UjatDocumentScreeningStatus =
     seed % 4 === 0 ? 'fail' : seed % 4 === 1 ? 'pending' : 'pass'
   const interviewAssignmentStatus = resolveInterviewAssignmentStatus(seed, documentScreeningStatus)
@@ -348,6 +378,12 @@ function buildRow(
   const birthDay = String(1 + (seed % 28)).padStart(2, '0')
   const birthDate = `${birthYear}.${birthMonth}.${birthDay}`
   const age = 2026 - birthYear
+
+  const routeIndex = seed % (APPLICATION_ROUTES.length + 1)
+  const applicationRoute =
+    routeIndex < APPLICATION_ROUTES.length ? APPLICATION_ROUTES[routeIndex] : '기타'
+  const applicationRouteOther =
+    applicationRoute === '기타' ? 'JA Korea 홈페이지 검색' : undefined
 
   const row: UjatVolunteerApplicantRow = {
     id: `ujat-vol-${half}-${programId}-${index}`,
@@ -378,12 +414,13 @@ function buildRow(
     age,
     universityName: UNIVERSITIES[seed % UNIVERSITIES.length],
     major: seed % 2 === 0 ? '경영학과 전공' : '회계학과 전공, 경영학과 복수전공',
-    applicationRoute: APPLICATION_ROUTES[seed % APPLICATION_ROUTES.length],
+    applicationRoute,
+    applicationRouteOther,
     scheduleChangeCancelCount: seed % 5 === 0 ? 1 : 0,
     interviewAvailability,
     interviewAssignmentStatus,
     previousUjatActivity:
-      applicationType === 'ujat-graduate' ? buildPreviousUjatActivity(seed, name) : undefined,
+      applicationType === 'ujat-graduate' ? buildMockPreviousUjatActivity(seed, name) : undefined,
     ...(interviewAssignmentStatus === 'assigned'
       ? buildAssignedInterviewFields(seed, interviewAvailability)
       : {}),
@@ -454,23 +491,28 @@ export function sortUjatVolunteerApplicants(
     if (a.interviewSlotCount !== b.interviewSlotCount) {
       return a.interviewSlotCount - b.interviewSlotCount
     }
-    const ra = UJAT_VOLUNTEER_REGION_SORT_ORDER[a.preferredRegion] ?? 99
-    const rb = UJAT_VOLUNTEER_REGION_SORT_ORDER[b.preferredRegion] ?? 99
+    const order = getUjatEducationRegionSortOrderMap()
+    const ra = order[a.preferredRegion] ?? 99
+    const rb = order[b.preferredRegion] ?? 99
     if (ra !== rb) return ra - rb
     return a.no - b.no
   })
 }
 
-/** 1차 서류 합격자 목록 — 면접 가능 일정 수 오름차순 */
+/** 1차 서류 합격자 목록 — 활동 포기는 최하단, 나머지는 면접 가능 일정 수·지역 순 */
 export function sortUjatVolunteerDocPassedApplicants(
   rows: UjatVolunteerApplicantRow[]
 ): UjatVolunteerApplicantRow[] {
   return [...rows].sort((a, b) => {
+    const aWithdrawn = a.interviewAssignmentStatus === 'withdrawn'
+    const bWithdrawn = b.interviewAssignmentStatus === 'withdrawn'
+    if (aWithdrawn !== bWithdrawn) return aWithdrawn ? 1 : -1
     if (a.interviewSlotCount !== b.interviewSlotCount) {
       return a.interviewSlotCount - b.interviewSlotCount
     }
-    const ra = UJAT_VOLUNTEER_REGION_SORT_ORDER[a.preferredRegion] ?? 99
-    const rb = UJAT_VOLUNTEER_REGION_SORT_ORDER[b.preferredRegion] ?? 99
+    const order = getUjatEducationRegionSortOrderMap()
+    const ra = order[a.preferredRegion] ?? 99
+    const rb = order[b.preferredRegion] ?? 99
     if (ra !== rb) return ra - rb
     return a.no - b.no
   })
@@ -481,23 +523,28 @@ export function getUjatVolunteerDocPassedApplicants(
   half: UjatVolunteerRecruitHalf
 ): UjatVolunteerApplicantRow[] {
   return sortUjatVolunteerDocPassedApplicants(
-    getUjatVolunteerApplicants(programId, half).filter(
-      row => row.documentScreeningStatus === 'pass'
-    )
+    getUjatVolunteerApplicants(programId, half).filter(row => row.documentScreeningStatus === 'pass')
   )
 }
 
 export function sortUjatVolunteerInterview2Applicants(
   rows: UjatVolunteerApplicantRow[]
 ): UjatVolunteerApplicantRow[] {
+  const regionOrder = getUjatEducationRegionSortOrderMap()
+
   return [...rows].sort((a, b) => {
-    const dateA = a.assignedInterviewDateLabel ?? ''
-    const dateB = b.assignedInterviewDateLabel ?? ''
-    if (dateA !== dateB) return dateA.localeCompare(dateB)
-    const timeA = a.assignedInterviewTime ?? ''
-    const timeB = b.assignedInterviewTime ?? ''
-    if (timeA !== timeB) return timeA.localeCompare(timeB)
-    return b.no - a.no
+    const scoreA = a.totalScore ?? null
+    const scoreB = b.totalScore ?? null
+
+    if (scoreA == null && scoreB != null) return 1
+    if (scoreA != null && scoreB == null) return -1
+    if (scoreA != null && scoreB != null && scoreA !== scoreB) return scoreB - scoreA
+
+    const regionA = regionOrder[a.preferredRegion] ?? 99
+    const regionB = regionOrder[b.preferredRegion] ?? 99
+    if (regionA !== regionB) return regionA - regionB
+
+    return a.no - b.no
   })
 }
 
@@ -538,7 +585,7 @@ function computeInterviewTotalScore(
   managerBScore: number | null
 ): number | null {
   if (managerAScore == null || managerBScore == null) return null
-  return Math.round((managerAScore + managerBScore) / 2)
+  return managerAScore + managerBScore
 }
 
 export function patchUjatVolunteerInterviewEvaluation(

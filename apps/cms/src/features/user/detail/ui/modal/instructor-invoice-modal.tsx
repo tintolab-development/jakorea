@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
-import { PlainHeaderModal } from '@/shared/ui/plain-header-modal'
-import { CmsButton } from '@/shared/ui/cms-button'
+import { ContentModal } from '@/shared/ui/content-modal'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   getInstructorSettlementInvoiceStatusPresentation,
@@ -95,7 +95,7 @@ export function InstructorInvoiceModal({
   return (
     <>
       {open && data && paymentStatementPresentation ? (
-        <PlainHeaderModal
+        <ContentModal
           open={open}
           onCancel={onClose}
           title="산출 내역서"
@@ -103,7 +103,7 @@ export function InstructorInvoiceModal({
           className="instructor-invoice-modal"
           footer={
             <div className="instructor-invoice-modal__modal-footer">
-              <CmsButton variant="default" size="medium" onClick={onClose}>
+              <CmsButton variant="secondary" size="medium" onClick={onClose}>
                 닫기
               </CmsButton>
             </div>
@@ -184,6 +184,8 @@ export function InstructorInvoiceModal({
                   <CmsButton
                     variant="delete"
                     size="large"
+                    className="cms-button--action"
+                    width={CMS_ACTION_BUTTON_WIDTH}
                     onClick={() => setPaymentRejectOpen(true)}
                   >
                     신청 반려
@@ -192,6 +194,8 @@ export function InstructorInvoiceModal({
                     <CmsButton
                       variant="primary"
                       size="large"
+                      className="cms-button--action"
+                      width={CMS_ACTION_BUTTON_WIDTH}
                       onClick={() => setPaymentConfirmOpen(true)}
                     >
                       확인 처리
@@ -304,7 +308,7 @@ export function InstructorInvoiceModal({
               </table>
             </div>
           </section>
-        </PlainHeaderModal>
+        </ContentModal>
       ) : null}
 
       <PaymentOrderPaymentConfirmationModal

@@ -18,6 +18,8 @@ export type WritingFormTemplateSaveRecord = {
   overlay?: Record<string, unknown>
   /** 훅 로컬 state(프로그램 등록 참여 대상 등) */
   editorState?: Record<string, unknown>
+  /** agreement-crime 등 settingsJson 기반 양식 */
+  settingsJson?: Record<string, unknown>
 }
 type LocalSaveFile = {
   version: 1
@@ -51,13 +53,16 @@ export function loadWritingFormTemplateSave(
     ...record,
     draft: normalizeWritingFormDraft(record.draft),
     overlay: record.overlay ? cloneJson(record.overlay) : undefined,
-    editorState: record.editorState ? cloneJson(record.editorState) : undefined }
+    editorState: record.editorState ? cloneJson(record.editorState) : undefined,
+    settingsJson: record.settingsJson ? cloneJson(record.settingsJson) : undefined,
+  }
 }
 export function persistWritingFormTemplateSave(args: {
   templateId: string
   draft: WritingFormDraft
   overlay?: Record<string, unknown>
   editorState?: Record<string, unknown>
+  settingsJson?: Record<string, unknown>
 }): void {
   const file = readFile()
   file.byTemplateId[args.templateId] = {
@@ -66,11 +71,56 @@ export function persistWritingFormTemplateSave(args: {
     savedAt: new Date().toISOString(),
     draft: cloneJson(normalizeWritingFormDraft(args.draft)),
     overlay: args.overlay != null ? cloneJson(args.overlay) : undefined,
-    editorState: args.editorState != null ? cloneJson(args.editorState) : undefined }
+    editorState: args.editorState != null ? cloneJson(args.editorState) : undefined,
+    settingsJson: args.settingsJson != null ? cloneJson(args.settingsJson) : undefined,
+  }
   writeFile(file)
   if (typeof window !== 'undefined') {
     window.dispatchEvent(
       new CustomEvent(WRITING_FORM_TEMPLATE_SAVE_EVENT, { detail: { templateId: args.templateId } })
     )
   }
+}
+
+/** 신규 등록 등 — 해당 templateId 임시저장본 제거 */
+export function removeWritingFormTemplateSave(templateId: string): void {
+  const file = readFile()
+  if (!(templateId in file.byTemplateId)) return
+  delete file.byTemplateId[templateId]
+  writeFile(file)
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent(WRITING_FORM_TEMPLATE_SAVE_EVENT, { detail: { templateId } })
+    )
+  }
+}
+
+/** localStorage 우선 저장 + formsSurveys API 동기화(활성 시 fire-and-forget) */
+export async function persistWritingFormTemplateDraft(args: {
+  templateId: string
+  draft: WritingFormDraft
+  overlay?: Record<string, unknown>
+  editorState?: Record<string, unknown>
+  settingsJson?: Record<string, unknown>
+}): Promise<void> {
+  const { saveFormTemplateVersionDraft } = await import(
+    '@/features/template/api/admin-form-templates-service'
+  )
+  await saveFormTemplateVersionDraft({
+    templateCode: args.templateId,
+    draft: args.draft,
+    overlay: args.overlay,
+    editorState: args.editorState,
+    settingsJson: args.settingsJson,
+  })
+}
+
+/** API draft 우선, 실패·미활성 시 localStorage */
+export async function loadWritingFormTemplateDraft(
+  templateId: string
+): Promise<WritingFormTemplateSaveRecord | null> {
+  const { loadFormTemplateVersionDraft } = await import(
+    '@/features/template/api/admin-form-templates-service'
+  )
+  return loadFormTemplateVersionDraft(templateId)
 }

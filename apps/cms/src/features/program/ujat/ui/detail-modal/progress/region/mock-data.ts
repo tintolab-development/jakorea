@@ -1,7 +1,5 @@
-import {
-  UJAT_INSTITUTION_APPLICATION_REGIONS,
-  type UjatInstitutionApplicationRegionKey,
-} from '../../application-institution/list/regions'
+import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
+import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import type {
   RegionAssignmentCell,
   RegionAssignmentColumn,
@@ -52,6 +50,13 @@ function normalizeVolunteerRowCells(
       row.withdrawnFromColumnIndex != null &&
       index >= row.withdrawnFromColumnIndex
     ) {
+      if (cell.kind === 'assigned') {
+        return {
+          ...cell,
+          isAttendanceManager: false,
+          isInvalidAssignment: true,
+        }
+      }
       return empty
     }
     return cell
@@ -310,8 +315,7 @@ function buildGenericColumns(regionKey: UjatInstitutionApplicationRegionKey): Re
 export function buildInitialRegionAssignmentTableData(
   regionKey: UjatInstitutionApplicationRegionKey
 ): RegionAssignmentTableData {
-  const regionLabel =
-    UJAT_INSTITUTION_APPLICATION_REGIONS.find(r => r.key === regionKey)?.label ?? regionKey
+  const regionLabel = getUjatEducationRegionLabel(regionKey, regionKey)
 
   if (regionKey === 'seoul') {
     const columns = SEOUL_COLUMNS

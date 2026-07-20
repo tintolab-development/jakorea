@@ -16,6 +16,8 @@ export interface AlertModalProps {
   /** 기본값 확인 */
   confirmLabel?: string
   zIndex?: number
+  /** 확인 버튼 클릭 시 (닫기 전 호출) */
+  onConfirm?: () => void
 }
 
 /**
@@ -30,7 +32,13 @@ export function AlertModal({
   width = DEFAULT_WIDTH,
   confirmLabel = '확인',
   zIndex = CMS_ALERT_MODAL_Z_INDEX,
+  onConfirm,
 }: AlertModalProps) {
+  const handleConfirm = () => {
+    onConfirm?.()
+    onClose()
+  }
+
   return (
     <ContentModal
       open={open}
@@ -40,7 +48,7 @@ export function AlertModal({
       zIndex={zIndex}
       className="alert-modal"
       footer={
-        <CmsButton variant="secondary" size="medium" width={120} type="button" onClick={onClose}>
+        <CmsButton variant="secondary" size="medium" type="button" onClick={handleConfirm}>
           {confirmLabel}
         </CmsButton>
       }

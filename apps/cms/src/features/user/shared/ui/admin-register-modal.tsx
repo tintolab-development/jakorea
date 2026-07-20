@@ -1,7 +1,14 @@
 import { useEffect } from 'react'
 import { Form } from 'antd'
 import { CmsButton, CmsInput, CmsRadioGroup, ContentModal } from '@/shared/ui'
+import {
+  CmsDateTextInput,
+  birthDateFormValueToApi,
+  isValidBirthDateFormValue,
+} from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
+import './admin-register-modal.css'
 
 const FORM_ID = 'cms-admin-register-modal-form'
 
@@ -10,13 +17,14 @@ type GenderValue = 'male' | 'female'
 
 export interface AdminRegisterModalFormValues {
   name: string
-  nameEn?: string
   gender: GenderValue
-  birthDate?: string
+  birthDate: string
   contact: string
   email: string
+  consentTermsOfService: ConsentValue
   consentPersonalInfo: ConsentValue
   consentMarketing: ConsentValue
+  consentMfaSetup: ConsentValue
 }
 
 export interface AdminRegisterModalProps {
@@ -38,13 +46,53 @@ const GENDER_OPTIONS = [
 
 const INITIAL_VALUES: AdminRegisterModalFormValues = {
   name: '',
-  nameEn: '',
   gender: 'male',
   birthDate: '',
   contact: '',
   email: '',
+  consentTermsOfService: 'agree',
   consentPersonalInfo: 'agree',
-  consentMarketing: 'agree',
+  consentMarketing: 'disagree',
+  consentMfaSetup: 'agree',
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const FORM_ITEM_STYLE = { marginBottom: 0, width: '100%' } as const
+
+function normalizeSubmitValues(
+  values: AdminRegisterModalFormValues
+): AdminRegisterModalFormValues {
+  return {
+    ...values,
+    name: values.name.trim(),
+    birthDate: birthDateFormValueToApi(values.birthDate),
+    contact: values.contact.trim(),
+    email: values.email.trim(),
+  }
+}
+
+function canSubmitAdminRegisterForm(values: AdminRegisterModalFormValues | undefined): boolean {
+  if (!values) {
+    return false
+  }
+
+  const name = values.name?.trim()
+  const contact = values.contact?.trim()
+  const email = values.email?.trim()
+  const birthDate = values.birthDate?.trim()
+
+  return Boolean(
+    name &&
+      birthDate &&
+      isValidBirthDateFormValue(birthDate) &&
+      contact &&
+      KOREAN_PHONE_REGEX.test(contact) &&
+      email &&
+      EMAIL_PATTERN.test(email) &&
+      values.consentTermsOfService === 'agree' &&
+      values.consentPersonalInfo === 'agree'
+  )
 }
 
 export function AdminRegisterModal({
@@ -54,8 +102,8 @@ export function AdminRegisterModal({
   loading = false,
 }: AdminRegisterModalProps) {
   const [form] = Form.useForm<AdminRegisterModalFormValues>()
-  const nameValue = Form.useWatch('name', form)
-  const isSubmitDisabled = loading || !nameValue?.trim()
+  const watchedValues = Form.useWatch([], form) as AdminRegisterModalFormValues | undefined
+  const isSubmitDisabled = loading || !canSubmitAdminRegisterForm(watchedValues)
 
   useEffect(() => {
     if (open) {
@@ -69,17 +117,15 @@ export function AdminRegisterModal({
   }
 
   const handleFinish = async (values: AdminRegisterModalFormValues) => {
-    if (onSubmit) {
-      await onSubmit({
-        ...values,
-        name: values.name.trim(),
-        nameEn: values.nameEn?.trim(),
-        birthDate: values.birthDate?.trim(),
-        contact: values.contact.trim(),
-        email: values.email.trim(),
-      })
+    try {
+      if (onSubmit) {
+        await onSubmit(normalizeSubmitValues(values))
+      }
+      form.resetFields()
+      onClose()
+    } catch {
+      /* onSubmit 실패 시 모달 유지 — 부모에서 메시지 처리 */
     }
-    handleClose()
   }
 
   return (
@@ -96,8 +142,8 @@ export function AdminRegisterModal({
           <CmsButton
             variant="primary"
             size="medium"
-            type="button"
-            onClick={() => form.submit()}
+            type="submit"
+            form={FORM_ID}
             loading={loading}
             disabled={isSubmitDisabled}
           >
@@ -114,64 +160,65 @@ export function AdminRegisterModal({
         requiredMark={false}
         onFinish={values => void handleFinish(values)}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-          <DetailInfoForm title="기본 정보" mode="edit">
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.NameBlock
-                rows={[
-                  {
-                    subLabel: '한글 *',
-                    main: (
-                      <Form.Item
-                        name="name"
-                        required
-                        noStyle
-                        rules={[{ required: true }]}
-                      >
-                        <CmsInput placeholder="한글 성명" inputSize="medium" width="100%" />
-                      </Form.Item>
-                    ),
-                    sideLabel: '성별',
-                    side: (
-                      <Form.Item name="gender" noStyle>
-                        <CmsRadioGroup options={GENDER_OPTIONS} size="medium" />
-                      </Form.Item>
-                    ),
-                  },
-                  {
-                    subLabel: '영문',
-                    main: (
-                      <Form.Item name="nameEn" noStyle>
-                        <CmsInput placeholder="영문 성명" inputSize="medium" width="100%" />
-                      </Form.Item>
-                    ),
-                    sideLabel: '생년월일',
-                    side: (
-                      <Form.Item
-                        name="birthDate"
-                        noStyle
-                      >
-                        <CmsInput
-                          placeholder="생년월일 8자리"
-                          maxLength={8}
-                          inputSize="medium"
-                          width="100%"
-                        />
-                      </Form.Item>
-                    ),
-                  },
-                ]}
+        <div className="admin-register-modal__sections">
+          <DetailInfoForm
+            title="기본 정보"
+            mode="edit"
+            className="admin-register-modal__section admin-register-modal__section--basic"
+          >
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="성명"
+                required
+                labelWidth={200}
+                view="-"
+                edit={
+                  <Form.Item
+                    name="name"
+                    style={FORM_ITEM_STYLE}
+                  >
+                    <CmsInput placeholder="한글 성명" inputSize="medium" width="100%" />
+                  </Form.Item>
+                }
+              />
+              <DetailInfoForm.Field
+                label="성별 및 생년월일"
+                required
+                labelWidth={200}
+                view="-"
+                edit={
+                  <span className="detail-info-form-inputs-wrapper-no-gap">
+                    <Form.Item name="gender" noStyle>
+                      <CmsRadioGroup options={GENDER_OPTIONS} size="medium" />
+                    </Form.Item>
+                    <DetailInfoForm.InputsSeparator />
+                    <Form.Item
+                      name="birthDate"
+                      style={{ ...FORM_ITEM_STYLE, flex: '1 1 0', minWidth: 0 }}
+                      trigger="onValueChange"
+                    >
+                      <CmsDateTextInput
+                        placeholder="YYYY.MM.DD"
+                        maxLength={10}
+                        inputSize="medium"
+                        width="100%"
+                      />
+                    </Form.Item>
+                  </span>
+                }
               />
             </DetailInfoForm.Row>
 
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="연락처"
+                required
+                labelWidth={200}
                 view="-"
                 edit={
                   <Form.Item
                     name="contact"
-                    noStyle
+                    style={FORM_ITEM_STYLE}
                   >
                     <CmsInput placeholder="연락처" inputSize="medium" width="100%" />
                   </Form.Item>
@@ -179,11 +226,13 @@ export function AdminRegisterModal({
               />
               <DetailInfoForm.Field
                 label="이메일"
+                required
+                labelWidth={200}
                 view="-"
                 edit={
                   <Form.Item
                     name="email"
-                    noStyle
+                    style={FORM_ITEM_STYLE}
                   >
                     <CmsInput placeholder="이메일" inputSize="medium" width="100%" />
                   </Form.Item>
@@ -193,25 +242,56 @@ export function AdminRegisterModal({
           </DetailInfoForm>
 
           <DetailInfoForm
-            title="정보 제공 동의"
+            title="약관 및 동의"
             mode="edit"
-            description="*미동의 시 프로그램 신청 및 활동에 제한이 있을 수 있습니다."
+            className="admin-register-modal__section admin-register-modal__section--terms"
+            description="* 미동의 시 서비스 가입 및 관리자 활동에 제한이 있을 수 있습니다."
           >
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
-                label="개인정보 수집 동의"
+                label="서비스 이용약관"
+                labelWidth={220}
                 view="-"
                 edit={
-                  <Form.Item name="consentPersonalInfo" noStyle>
+                  <Form.Item
+                    name="consentTermsOfService"
+                    style={FORM_ITEM_STYLE}
+                  >
                     <CmsRadioGroup options={CONSENT_OPTIONS} size="medium" />
                   </Form.Item>
                 }
               />
               <DetailInfoForm.Field
+                label="개인정보 수집·이용 동의"
+                labelWidth={220}
+                view="-"
+                edit={
+                  <Form.Item
+                    name="consentPersonalInfo"
+                    style={FORM_ITEM_STYLE}
+                  >
+                    <CmsRadioGroup options={CONSENT_OPTIONS} size="medium" />
+                  </Form.Item>
+                }
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
                 label="마케팅 제공 동의"
+                labelWidth={220}
                 view="-"
                 edit={
                   <Form.Item name="consentMarketing" noStyle>
+                    <CmsRadioGroup options={CONSENT_OPTIONS} size="medium" />
+                  </Form.Item>
+                }
+              />
+              <DetailInfoForm.Field
+                label="2단계 인증(MFA) 설정 동의"
+                labelWidth={220}
+                view="-"
+                edit={
+                  <Form.Item name="consentMfaSetup" noStyle>
                     <CmsRadioGroup options={CONSENT_OPTIONS} size="medium" />
                   </Form.Item>
                 }

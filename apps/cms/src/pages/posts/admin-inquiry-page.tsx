@@ -4,18 +4,19 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key, type MouseEvent } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
-import { Table } from 'antd'
+import { useSearchParams } from 'react-router-dom'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import { deleteAdminInquiries, listAdminInquiries } from '@/features/posts/api/admin-inquiry-mock-store'
+import { shouldUseInquiriesRemoteApi } from '@/features/posts/api/inquiries/admin-inquiries-service'
+import { getPostsApiErrorMessage } from '@/features/posts/api/get-posts-api-error'
 import { useAdminInquiryCategories } from '@/features/posts/hooks/use-admin-inquiry-categories'
+import { useInquiryListQuery } from '@/features/posts/hooks/use-inquiry-list-query'
 import { buildAdminInquiryFilterRows } from '@/features/posts/model/admin-inquiry-management-filter-fields'
 import { adminInquiryManagementTablePageConfig } from '@/features/posts/model/admin-inquiry-management-table.config'
 import type {
   AdminInquiryRow,
   AdminInquiryTableContext,
-  InquiryCategoryRow,
 } from '@/features/posts/model/admin-inquiry-management.types'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
@@ -31,49 +32,46 @@ import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './admin-inquiry-page.css'
 
-const ADMIN_INQUIRIES_LIST_PATH = '/admin/posts/inquiries'
+const INQUIRY_LIST_COL_WIDTH = {
+  no: TABLE_COLUMN_WIDTHS.index,
+  status: 108,
+  category: 108,
+  programName: 140,
+  title: 360,
+  memberName: 112,
+  createdAt: 176,
+  assignee: 100,
+  answeredAt: 176,
+} as const
 
-/** No. 열 80px, 나머지 데이터 9열 균등 폭 */
-const NO_COL_WIDTH = TABLE_COLUMN_WIDTHS.index
-const DATA_COL_WIDTH = 112
 const INQUIRY_LIST_TABLE_SCROLL_X =
-  TABLE_COLUMN_WIDTHS.checkbox + NO_COL_WIDTH + DATA_COL_WIDTH * 9
+  TABLE_COLUMN_WIDTHS.checkbox +
+  INQUIRY_LIST_COL_WIDTH.no +
+  INQUIRY_LIST_COL_WIDTH.status +
+  INQUIRY_LIST_COL_WIDTH.category +
+  INQUIRY_LIST_COL_WIDTH.programName +
+  INQUIRY_LIST_COL_WIDTH.title +
+  INQUIRY_LIST_COL_WIDTH.memberName +
+  INQUIRY_LIST_COL_WIDTH.createdAt +
+  INQUIRY_LIST_COL_WIDTH.assignee +
+  INQUIRY_LIST_COL_WIDTH.answeredAt
 
 export function AdminInquiryPage() {
   const { user } = useAuthStore()
   const canWrite = canPerformWriteAction(user)
-  const location = useLocation()
+  const inquiriesRemote = shouldUseInquiriesRemoteApi()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const [rows, setRows] = useState<AdminInquiryRow[]>(() => listAdminInquiries())
+  const listQuery = useInquiryListQuery(searchParams, true)
+  const rows = listQuery.data ?? []
+  const contentLoading = listQuery.isLoading
+  const contentError = listQuery.isError
+    ? getPostsApiErrorMessage(listQuery.error, '문의 목록을 불러오지 못했습니다.')
+    : null
 
-  const syncRowsFromStore = useCallback(() => {
-    setRows(listAdminInquiries())
-  }, [])
-
-  useEffect(() => {
-    if (location.pathname === ADMIN_INQUIRIES_LIST_PATH) {
-      // mock 저장소와 목록 동기화 — 상세 복귀 등(공지 목록과 동일)
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- pathname 변경 시 스토어 재로드
-      syncRowsFromStore()
-    }
-  }, [location.pathname, syncRowsFromStore])
-
-  const {
-    categoryRows,
-    allowedCategoryLabels,
-    allowedCategorySet,
-    replaceCategories: replaceInquiryCategories,
-  } = useAdminInquiryCategories()
+  const { categoryRows, allowedCategoryLabels, allowedCategorySet } =
+    useAdminInquiryCategories(rows)
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
-
-  const handleInquiryCategoriesChange = useCallback(
-    (next: InquiryCategoryRow[]) => {
-      replaceInquiryCategories(next)
-      syncRowsFromStore()
-    },
-    [replaceInquiryCategories, syncRowsFromStore]
-  )
 
   const tablePageContext: AdminInquiryTableContext = useMemo(
     () => ({
@@ -116,7 +114,7 @@ export function AdminInquiryPage() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [detailInquiryId, setDetailInquiryId] = useState<string | null>(null)
   const [singleDeleteConfirmOpen, setSingleDeleteConfirmOpen] = useState(false)
-  const [singleDeleteInquiryId, setSingleDeleteInquiryId] = useState<string | null>(null)
+  const [, setSingleDeleteInquiryId] = useState<string | null>(null)
 
   const closeDetailModal = useCallback(() => {
     setDetailOpen(false)
@@ -134,16 +132,8 @@ export function AdminInquiryPage() {
   }, [canWrite, selectedRowKeys.length])
 
   const handleConfirmBulkDelete = useCallback(() => {
-    const ids = selectedRowKeys.map(k => String(k))
-    if (ids.length === 0) {
-      setBulkDeleteConfirmOpen(false)
-      return
-    }
-    deleteAdminInquiries(ids)
-    setRows(listAdminInquiries())
-    setSelectedRowKeys([])
     setBulkDeleteConfirmOpen(false)
-  }, [selectedRowKeys])
+  }, [])
 
   const handleDetailDeleteRequest = useCallback((id: string) => {
     setSingleDeleteInquiryId(id)
@@ -151,24 +141,17 @@ export function AdminInquiryPage() {
   }, [])
 
   const handleConfirmSingleDelete = useCallback(() => {
-    if (singleDeleteInquiryId == null) {
-      setSingleDeleteConfirmOpen(false)
-      return
-    }
-    deleteAdminInquiries([singleDeleteInquiryId])
-    setRows(listAdminInquiries())
-    setSelectedRowKeys(prev => prev.filter(k => String(k) !== singleDeleteInquiryId))
     setSingleDeleteConfirmOpen(false)
     setSingleDeleteInquiryId(null)
     closeDetailModal()
-  }, [closeDetailModal, singleDeleteInquiryId])
+  }, [closeDetailModal])
 
   const columns: ColumnsType<AdminInquiryRow> = useMemo(
     () => [
       {
         title: 'No.',
         key: 'no',
-        width: NO_COL_WIDTH,
+        width: INQUIRY_LIST_COL_WIDTH.no,
         align: 'center',
         className: 'admin-inquiry-page__col-no',
         onHeaderCell: () => ({ className: 'admin-inquiry-page__col-no' }),
@@ -178,7 +161,7 @@ export function AdminInquiryPage() {
       {
         title: '답변 현황',
         key: 'status',
-        width: DATA_COL_WIDTH,
+        width: INQUIRY_LIST_COL_WIDTH.status,
         align: 'center',
         render: (_: unknown, row: AdminInquiryRow) =>
           row.status === 'PENDING' ? (
@@ -195,7 +178,7 @@ export function AdminInquiryPage() {
         title: '카테고리',
         dataIndex: 'category',
         key: 'category',
-        width: DATA_COL_WIDTH,
+        width: INQUIRY_LIST_COL_WIDTH.category,
         align: 'center',
         ellipsis: true,
         render: (v: string) => (v == null || v === '' ? '-' : v),
@@ -204,7 +187,7 @@ export function AdminInquiryPage() {
         title: '프로그램명',
         dataIndex: 'programName',
         key: 'programName',
-        width: DATA_COL_WIDTH,
+        width: INQUIRY_LIST_COL_WIDTH.programName,
         align: 'center',
         ellipsis: true,
         render: (v: string | null) => (v == null || v === '' ? '-' : v),
@@ -213,18 +196,18 @@ export function AdminInquiryPage() {
         title: '제목',
         dataIndex: 'title',
         key: 'title',
-        width: DATA_COL_WIDTH,
-        align: 'left',
+        width: INQUIRY_LIST_COL_WIDTH.title,
+        align: 'center',
         ellipsis: { showTitle: true },
         onHeaderCell: () => ({ className: 'admin-inquiry-page__cell--title' }),
         onCell: () => ({ className: 'admin-inquiry-page__cell--title' }),
         render: (text: string) => (text == null || text === '' ? '-' : text),
       },
       {
-        title: '문의 회원',
+        title: '문의 회원명',
         dataIndex: 'memberName',
         key: 'memberName',
-        width: DATA_COL_WIDTH,
+        width: INQUIRY_LIST_COL_WIDTH.memberName,
         align: 'center',
         ellipsis: true,
         render: (v: string) => (v == null || v === '' ? '-' : v),
@@ -233,7 +216,7 @@ export function AdminInquiryPage() {
         title: '문의 일시',
         dataIndex: 'createdAt',
         key: 'createdAt',
-        width: DATA_COL_WIDTH,
+        width: INQUIRY_LIST_COL_WIDTH.createdAt,
         align: 'center',
         ellipsis: { showTitle: true },
         onHeaderCell: () => ({ className: 'admin-inquiry-page__col-datetime' }),
@@ -245,10 +228,10 @@ export function AdminInquiryPage() {
         ),
       },
       {
-        title: '담당자',
+        title: '담당자명',
         dataIndex: 'assignee',
         key: 'assignee',
-        width: DATA_COL_WIDTH,
+        width: INQUIRY_LIST_COL_WIDTH.assignee,
         align: 'center',
         ellipsis: true,
         render: (v: string | null) => (v == null || v === '' ? '-' : v),
@@ -257,7 +240,7 @@ export function AdminInquiryPage() {
         title: '답변 일시',
         dataIndex: 'answeredAt',
         key: 'answeredAt',
-        width: DATA_COL_WIDTH,
+        width: INQUIRY_LIST_COL_WIDTH.answeredAt,
         align: 'center',
         ellipsis: { showTitle: true },
         onHeaderCell: () => ({ className: 'admin-inquiry-page__col-datetime' }),
@@ -283,7 +266,9 @@ export function AdminInquiryPage() {
         open={detailOpen}
         inquiryId={detailInquiryId}
         onCancel={closeDetailModal}
-        onSuccess={syncRowsFromStore}
+        onSuccess={() => {
+          void listQuery.refetch()
+        }}
         onDeleteClick={handleDetailDeleteRequest}
         canWrite={canWrite}
       />
@@ -315,14 +300,12 @@ export function AdminInquiryPage() {
         open={categoryModalOpen}
         onCancel={() => setCategoryModalOpen(false)}
         categories={categoryRows}
-        onCategoriesChange={handleInquiryCategoriesChange}
+        onCategoriesChange={() => {}}
         inquiries={rows}
       />
       <FilterTableLayout
         bordered={false}
-        multiRowGridMode="responsive"
-        multiRowResponsiveLayout="merged-auto-fill"
-        mergedAutoFillInlineSearch
+        className="admin-inquiry-page__filter-layout"
         rows={filterRowsConfig}
         filters={{
           status: pendingFilters.status,
@@ -342,48 +325,68 @@ export function AdminInquiryPage() {
             <CmsButton
               variant="delete"
               onClick={handleBulkDelete}
-              disabled={!canWrite || selectedRowKeys.length === 0}
+              disabled={!canWrite || selectedRowKeys.length === 0 || inquiriesRemote}
+              title={inquiriesRemote ? '문의 삭제 API가 제공되지 않습니다.' : undefined}
             >
               문의삭제
             </CmsButton>
-            <CmsButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>
+            <CmsButton
+              variant="secondary"
+              onClick={() => setCategoryModalOpen(true)}
+              disabled={inquiriesRemote}
+              title={inquiriesRemote ? '문의 카테고리 API가 제공되지 않습니다.' : undefined}
+            >
               카테고리 관리
             </CmsButton>
           </>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
-        <Table<AdminInquiryRow>
-          rowKey="id"
-          className="cms-data-table admin-inquiry-page__table"
-          tableLayout="fixed"
-          scroll={{ x: INQUIRY_LIST_TABLE_SCROLL_X }}
-          columns={columns}
-          dataSource={tableData}
-          pagination={false}
-          onRow={record => ({
-            className: 'admin-inquiry-page__row--clickable',
-            onClick: (e: MouseEvent) => {
-              const el = e.target as HTMLElement
-              if (
-                el.closest('.ant-checkbox-wrapper') ||
-                el.closest('.ant-table-selection-column')
-              ) {
-                return
-              }
-              openDetailModal(record.id)
-            },
-          })}
-          rowSelection={
-            canWrite
-              ? {
-                  columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
-                  selectedRowKeys,
-                  onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
-                  preserveSelectedRowKeys: false,
+        {contentLoading ? (
+          <div className="page-content-loading page-content-loading--table-slot" role="status">
+            <Spin />
+          </div>
+        ) : contentError ? (
+          <div className="page-content-error" role="alert">
+            {contentError}
+          </div>
+        ) : (
+          <Table<AdminInquiryRow>
+            rowKey="id"
+            className="cms-data-table admin-inquiry-page__table"
+            tableLayout="fixed"
+            scroll={{ x: INQUIRY_LIST_TABLE_SCROLL_X }}
+            columns={columns}
+            dataSource={tableData}
+            pagination={false}
+            onRow={record => ({
+              className: 'admin-inquiry-page__row--clickable',
+              onClick: (e: MouseEvent) => {
+                const el = e.target as HTMLElement
+                if (
+                  el.closest('.ant-checkbox-wrapper') ||
+                  el.closest('.ant-table-selection-column')
+                ) {
+                  return
                 }
-              : undefined
-          }
-        />
+                openDetailModal(record.id)
+              },
+            })}
+            rowSelection={
+              canWrite
+                ? {
+                    columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+                    selectedRowKeys,
+                    onChange: keys => setSelectedRowKeys(keys.map(k => String(k))),
+                    preserveSelectedRowKeys: false,
+                  }
+                : undefined
+            }
+          />
+        )}
       </FilterTableLayout>
     </div>
   )

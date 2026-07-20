@@ -1,4 +1,4 @@
-import type { GeminiApprovedTrainingStatus } from './types'
+export type GeminiApprovedTrainingEmploymentStatus = 'ACTIVE' | 'LEAVE' | 'TRANSFER'
 
 export type GeminiApprovedTrainingInstructorInfo = {
   name: string
@@ -11,8 +11,8 @@ export type GeminiApprovedTrainingInstructorInfo = {
 
 export type GeminiApprovedTrainingDetail = {
   id: string
+  recruitmentTitle: string
   institutionName: string
-  status: GeminiApprovedTrainingStatus
   trainingDate: string
   trainingTimeText: string
   studentCount: number
@@ -20,18 +20,30 @@ export type GeminiApprovedTrainingDetail = {
   completedRecruitmentCount: number
   institutionAddress: string
   joinedAt: string
-  connectedSocialAccount: string
+  managerMemberId?: string
   managerNameKo: string
-  managerNameEn: string
+  managerScheduleChangeCount: number
+  managerGender: string
   managerBirthDate: string
+  managerEmploymentStatus: GeminiApprovedTrainingEmploymentStatus
   managerContact: string
   managerEmail: string
-  managerHomeAddress: string
   managerSchool: string
-  managerGrade: string
+  managerHomeAddress: string
+  managerLectureExperience: string
+  managerAccountBank: string
+  managerAccountNumber: string
+  managerAccountHolder: string
+  managerInstructorFeeGrade: string
+  managerBusinessIncomeLabel: string
+  managerOneLineIntro: string
   managerPosition: string
   managerSubject: string
   instructor: GeminiApprovedTrainingInstructorInfo
   officialDocumentType: string
   officialDocumentRequiredInfo: string
+  trainingContent: string
+  instructorAssigned: boolean
+  lastPreferredDate: string
+  officialDocumentRequired: boolean
 }

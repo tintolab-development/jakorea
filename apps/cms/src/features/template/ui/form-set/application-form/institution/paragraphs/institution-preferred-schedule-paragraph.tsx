@@ -12,7 +12,7 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
@@ -118,15 +118,15 @@ function ScheduleTimeRow({
             className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
             style={{ alignItems: 'center', flexWrap: 'wrap', gap: 8, width: '100%' }}
           >
-            <CmsInput
+            <CmsNumericInput
               inputSize="medium"
               width={120}
               placeholder="수업 진행 교시"
               value={classPeriod ?? ''}
-              inputMode="numeric"
-              onChange={event =>
+              mode="integer"
+              onValueChange={value =>
                 onPatch({
-                  classPeriod: event.target.value.trim() === '' ? undefined : event.target.value,
+                  classPeriod: value === '' ? undefined : value,
                   start,
                   end,
                 })
@@ -136,7 +136,9 @@ function ScheduleTimeRow({
             <DetailInfoForm.InputsSeparator />
             <ParagraphTimePicker
               value={start}
-              onTimeRangeChange={range => onPatch({ classPeriod, start: range[0], end: range[1] })}
+              onTimeRangeChange={range =>
+                onPatch({ classPeriod, start: range[0], end: range[1] })
+              }
               placeholder="시간을 선택해 주세요"
               width={240}
               endTimeAlwaysOn
@@ -234,7 +236,11 @@ function ScheduleBlock({
 }
 
 /** 일반 프로그램 참여자 신청(학교·기관) — 희망 교육 일정 (모집 설정 상한·유형 연동) */
-export function ProgramApplicationFormInstitutionPreferredScheduleParagraph() {
+export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
+  readOnlyPreview = false,
+}: {
+  readOnlyPreview?: boolean
+}) {
   const bridge = useInstitutionApplicationProgramBridge()
   const maxBlocks = clampInstitutionScheduleBlockCount(bridge.maxScheduleCount)
   const showSessionSelect = shouldShowInstitutionApplicationMaxSessionsPerDayField(bridge)
@@ -281,7 +287,7 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph() {
           sessionOptions={sessionOptions}
           showSessionSelect={showSessionSelect}
           deleteAction={
-            index > 0 ? (
+            !readOnlyPreview && index > 0 ? (
               <ItemDeleteButton
                 className="item-delete-button"
                 aria-label={`${index + 1}지망 삭제`}
@@ -294,7 +300,7 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph() {
           }
         />
       ))}
-      {displayBlocks.length < maxBlocks ? (
+      {readOnlyPreview || displayBlocks.length >= maxBlocks ? null : (
         <button
           type="button"
           className="form-editor-template-field-hint-text"
@@ -303,7 +309,7 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph() {
         >
           + 희망 일정 추가 (최대 {maxBlocks}개)
         </button>
-      ) : null}
+      )}
     </div>
   )
 }

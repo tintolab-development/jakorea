@@ -57,6 +57,25 @@
   margin-top: 0;
 }
 
+.project-info-basic-info-section__company-school-forms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.project-info-company-school-curriculum > .detail-info-form__body {
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+}
+
+.project-info-detail__hidden-tabs-info-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--spacing-16);
+}
+
 /* 기본 정보 테이블 — 라벨: #F9F9F9·가운데정렬·굵게, 값: 흰색·좌정렬, 구분선 #E0E0E0 */
 .program-detail-info-tab__table {
   width: 100%;
@@ -375,7 +394,7 @@
   align-items: center;
 }
 
-/* FileSelectField는 AppButton 사용 — 구버전 __btn 선택자 대신 실제 버튼에 적용 */
+/* FileSelectField는 CmsButton 사용 — 구버전 __btn 선택자 대신 실제 버튼에 적용 */
 .program-detail-info-tab__file-select .file-select-field__actions .cms-button {
   width: 120px;
   min-width: 120px;
@@ -648,6 +667,23 @@
   flex: 1 1 auto;
   width: 100%;
   min-width: 0;
+}
+
+/* 모집 정보 — 비고(수정): CmsInput 기본 240px 대신 값 셀 가로 100% */
+.detail-info-form__field-content--edit > .cms-input.program-detail-info-tab__notes-input {
+  flex: 1 1 auto;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detail-info-form__field-content--edit
+  > .cms-input.program-detail-info-tab__notes-input
+  .cms-input__control {
+  width: 100% !important;
+  min-width: 0;
+  max-width: none;
 }
 
 .program-detail-info-tab__result-row > .paragraph-date-picker {

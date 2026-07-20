@@ -1,5 +1,6 @@
 /**
  * 게시글 관리 - 카테고리 관리 페이지 (관리자용)
+ * FilterTableLayout + cms-data-table + CmsButton (CMS shared SSOT Phase 3)
  */
 
 import { useState, useMemo } from 'react'
@@ -8,21 +9,22 @@ import {
   Table,
   Tag,
   Space,
-  Button,
   Input,
   Select,
-  Card,
   Typography,
   Popconfirm,
   Tooltip,
   Modal,
   Form,
-  InputNumber,
-  Switch } from 'antd'
+  Switch,
+} from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { PlusOutlined, EditOutlined, DeleteOutlined, BarsOutlined } from '@ant-design/icons'
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { PAGE_HEADER_STYLE } from '@/shared/constants/page-styles'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { CmsButton, LoadingButton } from '@/shared/ui'
 
 const { Text } = Typography
 const { Option } = Select
@@ -45,7 +47,8 @@ const mockCategories: PostCategory[] = [
     slug: 'important',
     order: 1,
     isActive: true,
-    postCount: 2 },
+    postCount: 2,
+  },
   {
     id: '2',
     type: 'NOTICE',
@@ -53,7 +56,8 @@ const mockCategories: PostCategory[] = [
     slug: 'notice',
     order: 2,
     isActive: true,
-    postCount: 15 },
+    postCount: 15,
+  },
   {
     id: '3',
     type: 'NOTICE',
@@ -61,7 +65,8 @@ const mockCategories: PostCategory[] = [
     slug: 'settlement',
     order: 3,
     isActive: true,
-    postCount: 8 },
+    postCount: 8,
+  },
   { id: '4', type: 'FAQ', name: '활동', slug: 'activity', order: 1, isActive: true, postCount: 12 },
   {
     id: '5',
@@ -70,7 +75,8 @@ const mockCategories: PostCategory[] = [
     slug: 'volunteer-hours',
     order: 2,
     isActive: true,
-    postCount: 5 },
+    postCount: 5,
+  },
   {
     id: '6',
     type: 'INQUIRY',
@@ -78,7 +84,8 @@ const mockCategories: PostCategory[] = [
     slug: 'system',
     order: 1,
     isActive: true,
-    postCount: 20 },
+    postCount: 20,
+  },
   { id: '7', type: 'INQUIRY', name: '기타', slug: 'etc', order: 2, isActive: true, postCount: 10 },
 ]
 
@@ -91,10 +98,8 @@ export function AdminCategoryPage() {
 
   const categoryName = getCategoryNameByPath(location.pathname, 2) || '카테고리'
 
-  // 필터 상태
   const [typeFilter, setTypeFilter] = useState<string>('all')
 
-  // 필터링된 데이터
   const filteredData = useMemo(() => {
     return data
       .filter(item => {
@@ -107,12 +112,10 @@ export function AdminCategoryPage() {
       })
   }, [data, typeFilter])
 
-  // 삭제 핸들러
   const handleDelete = (id: string) => {
     setData(prev => prev.filter(item => item.id !== id))
-    }
+  }
 
-  // 등록/수정 모달 열기
   const showModal = (category?: PostCategory) => {
     if (category) {
       setEditingCategory(category)
@@ -123,25 +126,26 @@ export function AdminCategoryPage() {
       form.setFieldsValue({
         type: typeFilter === 'all' ? 'NOTICE' : typeFilter,
         isActive: true,
-        order: 1 })
+        order: 1,
+      })
     }
     setIsModalOpen(true)
   }
 
-  // 등록/수정 저장
   const handleSave = async () => {
     try {
       const values = await form.validateFields()
       const newCategory: PostCategory = {
         id: editingCategory?.id || `cat-${Date.now()}`,
         ...values,
-        postCount: editingCategory?.postCount || 0 }
+        postCount: editingCategory?.postCount || 0,
+      }
 
       if (editingCategory) {
         setData(prev => prev.map(item => (item.id === editingCategory.id ? newCategory : item)))
-        } else {
+      } else {
         setData(prev => [...prev, newCategory])
-        }
+      }
       setIsModalOpen(false)
     } catch (error) {
       console.error('Validate Failed:', error)
@@ -158,32 +162,38 @@ export function AdminCategoryPage() {
         const config = {
           NOTICE: { color: 'blue', label: '공지사항' },
           FAQ: { color: 'green', label: 'FAQ' },
-          INQUIRY: { color: 'orange', label: '문의하기' } }[type as 'NOTICE' | 'FAQ' | 'INQUIRY']
+          INQUIRY: { color: 'orange', label: '문의하기' },
+        }[type as 'NOTICE' | 'FAQ' | 'INQUIRY']
         return <Tag color={config.color}>{config.label}</Tag>
-      } },
+      },
+    },
     {
       title: '카테고리명',
       dataIndex: 'name',
       key: 'name',
-      render: (text: string) => <Text strong>{text}</Text> },
+      render: (text: string) => <Text strong>{text}</Text>,
+    },
     {
       title: '슬러그(Slug)',
       dataIndex: 'slug',
       key: 'slug',
-      width: 150 },
+      width: 150,
+    },
     {
       title: '순서',
       dataIndex: 'order',
       key: 'order',
       width: 80,
-      align: 'center' as const },
+      align: 'center' as const,
+    },
     {
       title: '게시글 수',
       dataIndex: 'postCount',
       key: 'postCount',
       width: 100,
       align: 'right' as const,
-      render: (count: number) => <Text type="secondary">{count}건</Text> },
+      render: (count: number) => <Text type="secondary">{count}건</Text>,
+    },
     {
       title: '사용 여부',
       dataIndex: 'isActive',
@@ -192,7 +202,8 @@ export function AdminCategoryPage() {
       align: 'center' as const,
       render: (isActive: boolean) => (
         <Tag color={isActive ? 'success' : 'default'}>{isActive ? '사용' : '미사용'}</Tag>
-      ) },
+      ),
+    },
     {
       title: '관리',
       key: 'action',
@@ -201,7 +212,7 @@ export function AdminCategoryPage() {
       render: (_, record) => (
         <Space>
           <Tooltip title="수정">
-            <Button type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
+            <LoadingButton type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
           </Tooltip>
           <Popconfirm
             title="카테고리 삭제"
@@ -212,35 +223,50 @@ export function AdminCategoryPage() {
             okButtonProps={{ danger: true }}
           >
             <Tooltip title="삭제">
-              <Button type="text" danger icon={<DeleteOutlined />} />
+              <LoadingButton type="text" danger icon={<DeleteOutlined />} />
             </Tooltip>
           </Popconfirm>
         </Space>
-      ) },
+      ),
+    },
   ]
 
   return (
     <div style={{ padding: '24px' }}>
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={PAGE_HEADER_STYLE}>{categoryName}</h1>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
+      <h1 style={{ ...PAGE_HEADER_STYLE, marginBottom: 16 }}>{categoryName}</h1>
+
+      <FilterTableLayout
+        bordered={false}
+        fields={[
+          {
+            key: 'type',
+            label: '게시판 구분',
+            type: 'select',
+            placeholder: '전체 게시판',
+            options: [
+              { label: '전체 게시판', value: 'all' },
+              { label: '공지사항', value: 'NOTICE' },
+              { label: 'FAQ', value: 'FAQ' },
+              { label: '문의하기', value: 'INQUIRY' },
+            ],
+          },
+        ]}
+        filters={{ type: typeFilter }}
+        onFilterChange={(key, value) => {
+          if (key === 'type') {
+            setTypeFilter(value == null || value === '' ? 'all' : String(value))
+          }
+        }}
+        onSearch={() => undefined}
+        title="카테고리 목록"
+        description={`총 ${filteredData.length.toLocaleString()}건`}
+        hideExcelDownload
+        actions={
+          <CmsButton variant="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
             카테고리 추가
-          </Button>
-        </div>
-
-        <Card size="small">
-          <Space>
-            <BarsOutlined /> <Text strong>게시판 구분 필터:</Text>
-            <Select defaultValue="all" style={{ width: 150 }} onChange={setTypeFilter}>
-              <Option value="all">전체 게시판</Option>
-              <Option value="NOTICE">공지사항</Option>
-              <Option value="FAQ">FAQ</Option>
-              <Option value="INQUIRY">문의하기</Option>
-            </Select>
-          </Space>
-        </Card>
-
+          </CmsButton>
+        }
+      >
         <Table
           className="cms-data-table cms-data-table--skip-auto-no-col"
           columns={columns}
@@ -248,25 +274,20 @@ export function AdminCategoryPage() {
           rowKey="id"
           pagination={false}
         />
-      </Space>
+      </FilterTableLayout>
 
-      {/* 카테고리 등록/수정 모달 */}
       <Modal
         title={editingCategory ? '카테고리 수정' : '카테고리 등록'}
         open={isModalOpen}
         onOk={handleSave}
         onCancel={() => setIsModalOpen(false)}
-        width={500}
+        width={600}
         okText="저장"
         cancelText="취소"
         centered
       >
         <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
-          <Form.Item
-            name="type"
-            label="게시판 구분"
-            rules={[{ required: true }]}
-          >
+          <Form.Item name="type" label="게시판 구분">
             <Select>
               <Option value="NOTICE">공지사항</Option>
               <Option value="FAQ">FAQ</Option>
@@ -274,19 +295,11 @@ export function AdminCategoryPage() {
             </Select>
           </Form.Item>
 
-          <Form.Item
-            name="name"
-            label="카테고리명"
-            rules={[{ required: true }]}
-          >
+          <Form.Item name="name" label="카테고리명">
             <Input placeholder="예: 활동, 봉사시간, 시스템 등" />
           </Form.Item>
 
-          <Form.Item
-            name="slug"
-            label="슬러그 (Slug)"
-            rules={[{ required: true }]}
-          >
+          <Form.Item name="slug" label="슬러그 (Slug)">
             <Input placeholder="예: activity, volunteer-hours" />
           </Form.Item>
 
@@ -294,9 +307,15 @@ export function AdminCategoryPage() {
             <Form.Item
               name="order"
               label="노출 순서"
-              rules={[{ required: true }]}
+              trigger="onValueChange"
+              getValueFromEvent={(rawValue: string) =>
+                rawValue === '' ? undefined : Number(rawValue)
+              }
+              getValueProps={(value: number | undefined) => ({
+                value: value == null ? '' : String(value),
+              })}
             >
-              <InputNumber min={1} style={{ width: '100%' }} />
+              <CmsNumericInput mode="integer" min={1} width="100%" />
             </Form.Item>
             <Form.Item name="isActive" label="사용 여부" valuePropName="checked">
               <Switch checkedChildren="사용" unCheckedChildren="미사용" />

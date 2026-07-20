@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
+import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type {
   ProgramRegistrationScheduleDetailKind,
@@ -27,6 +28,7 @@ type ProgramRegistrationEducationCurriculumParagraphProps = {
   /** 참여자 유형 학교/기관 — 교육 형태에 「참여자 선택」 포함 */
   participantOrganization: boolean
   curriculumSessionCount: number
+  onDeleteCurriculumSession: (roundIndex: number) => void
   /** 단일 회차 + IPS 일정 별 상이 — 차시 블록 개수 (그 외에는 무시) */
   curriculumChartSessionCount: number
   onDeleteCurriculumChartSession: (chartIndex: number) => void
@@ -199,6 +201,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   sessionRoundType,
   participantOrganization,
   curriculumSessionCount,
+  onDeleteCurriculumSession,
   curriculumChartSessionCount,
   onDeleteCurriculumChartSession,
   educationFormScheduleDetail,
@@ -224,7 +227,18 @@ export function ProgramRegistrationEducationCurriculumParagraph({
 
   const onEducationFormRadioChange =
     (sessionIndex: number) => (e: RadioChangeEvent) => {
-      setEducationFormBySession(prev => ({ ...prev, [sessionIndex]: String(e.target.value) }))
+      const nextValue = String(e.target.value)
+      setEducationFormBySession(prev => {
+        const next = { ...prev, [sessionIndex]: nextValue }
+        if (educationFormScheduleDetail === 'perSchedule') {
+          patchInstitutionApplicationProgramBridge({
+            showPreferredEducationForm: Object.values(next).some(
+              value => value === 'participant_selection'
+            ),
+          })
+        }
+        return next
+      })
     }
 
   const onParticipationRadioChange = (sessionIndex: number) => (e: RadioChangeEvent) => {
@@ -249,6 +263,21 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     setParticipationBySession(prev => reindexSessionRecordAfterDelete(prev, chartIndex))
     onDeleteCurriculumChartSession(chartIndex)
   }
+
+  const handleDeleteRoundSession = (roundIndex: number) => {
+    if (roundIndex <= 1) return
+    setIpsBySession(prev => reindexSessionRecordAfterDelete(prev, roundIndex))
+    setEducationFormBySession(prev => reindexSessionRecordAfterDelete(prev, roundIndex))
+    setParticipationBySession(prev => reindexSessionRecordAfterDelete(prev, roundIndex))
+    setProgressSessionByRound(prev => reindexSessionRecordAfterDelete(prev, roundIndex))
+    setAssignmentByRound(prev => reindexSessionRecordAfterDelete(prev, roundIndex))
+    onDeleteCurriculumSession(roundIndex)
+  }
+
+  const perScheduleEducationFormOptions = getProgramRegistrationEducationFormOptions(
+    participantOrganization,
+    { context: 'perScheduleBlock' }
+  )
 
   if (sessionRoundType === 'single') {
     const isSingleIpsPerChart = ipsScheduleDetail === 'perSchedule'
@@ -312,8 +341,8 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     ipsScheduleDetail
   )
 
-  const renderEducationFormPerScheduleRow = (roundIndex: number) => (
-    <DetailInfoForm.Row type="double">
+  const renderEducationFormPerScheduleRow = (roundIndex: number) => {
+    const educationField = (
       <DetailInfoForm.Field
         label="교육 형태"
         edit={
@@ -322,7 +351,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
             value={educationFormForSession(roundIndex)}
             onChange={onEducationFormRadioChange(roundIndex)}
           >
-            {getProgramRegistrationEducationFormOptions(participantOrganization).map(opt => (
+            {perScheduleEducationFormOptions.map(opt => (
               <CmsRadio key={opt.value} value={opt.value}>
                 {opt.label}
               </CmsRadio>
@@ -331,19 +360,33 @@ export function ProgramRegistrationEducationCurriculumParagraph({
         }
         view="-"
       />
-      <DetailInfoForm.Field
-        label="IPS 유형"
-        fullRow
-        edit={
-          <ProgramRegistrationIpsTypeFields
-            value={ipsBySession[roundIndex] ?? { category: '', detail: '' }}
-            onChange={(next: ProgramRegistrationIpsTypeValue) => setSessionIps(roundIndex, next)}
+    )
+
+    if (ipsScheduleDetail === 'perSchedule') {
+      return (
+        <DetailInfoForm.Row type="double">
+          {educationField}
+          <DetailInfoForm.Field
+            label="IPS 유형"
+            edit={
+              <ProgramRegistrationIpsTypeFields
+                layout="inline"
+                value={ipsBySession[roundIndex] ?? { category: '', detail: '' }}
+                onChange={(next: ProgramRegistrationIpsTypeValue) => setSessionIps(roundIndex, next)}
+              />
+            }
+            view="-"
           />
-        }
-        view="-"
-      />
-    </DetailInfoForm.Row>
-  )
+        </DetailInfoForm.Row>
+      )
+    }
+
+    return (
+      <DetailInfoForm.Row type="single">
+        {educationField}
+      </DetailInfoForm.Row>
+    )
+  }
 
   const renderMultiRoundPlanExtraRows = (roundIndex: number): ReactNode => {
     if (educationFormScheduleDetail === 'perSchedule') {
@@ -452,20 +495,37 @@ export function ProgramRegistrationEducationCurriculumParagraph({
         return (
           <div key={roundIndex} className="program-registration-curriculum__session-block">
             <div className="program-registration-curriculum__session-heading">■ {roundIndex}회차</div>
-            <DetailInfoForm title="교육 진행 (커리큘럼)" hideHeader mode="edit" className="program-registration-paragraph">
-              <ProgramRegistrationMultiRoundClassRow
-                roundIndex={roundIndex}
-                progressSession={progressSession}
-                onProgressSessionChange={value =>
-                  setProgressSessionByRound(prev => ({ ...prev, [roundIndex]: value }))
-                }
-              />
-              <ProgramRegistrationMultiRoundAssignmentFields
-                value={assignmentForRound(roundIndex)}
-                onChange={next => setAssignmentForRound(roundIndex, next)}
-              />
-              {renderMultiRoundPlanExtraRows(roundIndex)}
-            </DetailInfoForm>
+            <div className="program-registration-curriculum__session-row">
+              <DetailInfoForm
+                title="교육 진행 (커리큘럼)"
+                hideHeader
+                mode="edit"
+                className="program-registration-paragraph"
+              >
+                <ProgramRegistrationMultiRoundClassRow
+                  roundIndex={roundIndex}
+                  progressSession={progressSession}
+                  onProgressSessionChange={value =>
+                    setProgressSessionByRound(prev => ({ ...prev, [roundIndex]: value }))
+                  }
+                />
+                <ProgramRegistrationMultiRoundAssignmentFields
+                  value={assignmentForRound(roundIndex)}
+                  onChange={next => setAssignmentForRound(roundIndex, next)}
+                />
+                {renderMultiRoundPlanExtraRows(roundIndex)}
+              </DetailInfoForm>
+              {roundIndex > 1 ? (
+                <ItemDeleteButton
+                  className="item-delete-button program-registration-curriculum__session-delete"
+                  aria-label={`${roundIndex}회차 삭제`}
+                  onClick={event => {
+                    event.stopPropagation()
+                    handleDeleteRoundSession(roundIndex)
+                  }}
+                />
+              ) : null}
+            </div>
           </div>
         )
       })}

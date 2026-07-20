@@ -2,10 +2,8 @@ import type { ReactNode } from 'react'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import { formatUjatVolunteerApplicationType } from '@/data/mock/ujat-volunteer-applicants-mock'
-import {
-  UJAT_VOLUNTEER_PREFERRED_REGIONS,
-  type UjatVolunteerPreferredRegion,
-} from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
+import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
@@ -74,11 +72,6 @@ function formatUniversityDisplay(universityName: string, maskSensitive: boolean)
   return `**${universityName}`
 }
 
-const PREFERRED_REGION_SELECT_OPTIONS = UJAT_VOLUNTEER_PREFERRED_REGIONS.map(region => ({
-  label: region,
-  value: region,
-}))
-
 export function UjatEducationProgressVolunteerDetailBasicInfo({
   applicant,
   maskSensitive,
@@ -92,6 +85,12 @@ export function UjatEducationProgressVolunteerDetailBasicInfo({
   preferredRegionDraft?: UjatVolunteerPreferredRegion
   onPreferredRegionDraftChange?: (next: UjatVolunteerPreferredRegion) => void
 }) {
+  const { labels: preferredRegionLabels } = useUjatEducationRegions()
+  const preferredRegionSelectOptions = preferredRegionLabels.map(region => ({
+    label: region,
+    value: region,
+  }))
+
   const contactDisplay = maskSensitive ? applicant.contact : applicant.contactRaw
   const emailDisplay = maskSensitive ? applicant.email : applicant.emailRaw
   const universityDisplay = formatUniversityDisplay(applicant.universityName, maskSensitive)
@@ -148,7 +147,7 @@ export function UjatEducationProgressVolunteerDetailBasicInfo({
           onChange={value =>
             onPreferredRegionDraftChange?.(String(value) as UjatVolunteerPreferredRegion)
           }
-          options={PREFERRED_REGION_SELECT_OPTIONS}
+          options={preferredRegionSelectOptions}
           aria-label="희망 교육 활동 지역"
         />
       ) : (

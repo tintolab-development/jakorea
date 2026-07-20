@@ -6,11 +6,14 @@
  * 데이터 소스: 현재는 `@/data/mock/*` 기반(로컬 목). API 연동 시 이 모듈에서 분기·어댑터만 교체.
  */
 
+import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
 import { mockPrograms, mockProgramsMap } from '@/data/mock/programs'
 import { getEducationPrograms } from '@/data/mock/education-programs'
 import { getCompanySchoolPrograms, getCompanySchoolProgramById } from '@/data/mock/economy-programs'
 import { getGeneralPrograms } from '@/data/mock/general-programs'
+import { getTrainedTeachersPrograms } from '@/data/mock/trained-teachers-programs'
+import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { getVolunteerPrograms } from '@/data/mock/volunteer-programs'
 import { mockApplications } from '@/data/mock/applications'
 import { mockMatchings } from '@/data/mock/matchings'
@@ -18,13 +21,55 @@ import { mockSettlements } from '@/data/mock/settlements'
 import { MOCK_APPLICANT_INSTITUTIONS } from '@/data/mock/applicant-institutions'
 import { MOCK_APPLICANT_INSTRUCTORS } from '@/data/mock/applicant-instructors'
 import { mockInquiries } from '@/data/mock/inquiries'
+import { mockInstructors } from '@/data/mock/instructors'
 import { mockPermissionRequests } from '@/data/mock/permission-requests'
 import {
   mockPaymentOrderAdminProgramList,
   mockPaymentOrderAdminInstructorList,
 } from '@/data/mock/payment-order-admin-list'
 import { mockAccountPaymentRows } from '@/data/mock/account-payments-list'
-import { SHORTCUT_ITEMS } from '@/features/dashboard/model/dashboard-settings-store'
+import { SHORTCUT_ITEMS, DASHBOARD_HOME_PATH } from '@/features/dashboard/model/dashboard-settings-store'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
+import {
+  fetchDashboardHomeRemote,
+  fetchDashboardKpiProgressRemote,
+  fetchDashboardNotificationCountRemote,
+  fetchDashboardProgramInquiriesRemote,
+  fetchDashboardProgramSchedulesRemote,
+  fetchDashboardRecruitmentsRemote,
+  fetchDashboardShortcutsRemote,
+  fetchDashboardShortcutBadgesRemote,
+  readDashboardShortcutBadgeRemote,
+  fetchAdminNotificationsRemote,
+  markAdminNotificationReadRemote,
+  markAllAdminNotificationsReadRemote,
+  hideAdminNotificationRemote,
+  toDashboardQueryParams,
+} from '@/features/dashboard/api/dashboard-api-client'
+import {
+  mapDashboardHomeResponse,
+  mapKpiProgressListResponse,
+  mapProgramInquiryListResponse,
+  mapProgramOptionsFromRecruitmentList,
+  mapProgramScheduleListResponse,
+  mapRecruitmentListResponse,
+  type DashboardHomeSummary,
+  type DashboardProgramOption,
+  type DashboardScheduleEventDto,
+  type ProgramInquiryRow,
+} from '@/features/dashboard/api/adapters/dashboard-adapters'
+import { mapNotificationInboxPage } from '@/features/dashboard/api/adapters/notification-adapters'
+import type { Notification } from '@/features/dashboard/api/notification-service'
+import { getMockDashboardProgramOptions } from '@/features/dashboard/api/dashboard-program-options-mock'
+import { getDashboardProgramTypeParamForWidget } from '@/features/dashboard/lib/dashboard-widget-program-type'
+
+export type { DashboardHomeSummary, ProgramInquiryRow, DashboardScheduleEventDto, DashboardProgramOption }
+
+/** dashboard 실 API — 유효 JWT 없으면 mock fallback (403 방지) */
+export function shouldUseDashboardRemoteApi(): boolean {
+  return isRealApiModuleEnabled('dashboard') && hasRemoteAdminJwt()
+}
 
 export interface ProgramProgressSummary {
   total: number
@@ -73,6 +118,19 @@ export type ProgramEconomyStages = ProgramOverviewStages
 
 export type ProgramProgressStagesResult = ProgramProgressStages | ProgramOverviewStages
 
+function resolveCompanySchoolOperationPhase(
+  program: Program
+): 'scheduled' | 'in_progress' | 'completed' | null {
+  const start = dayjs(program.startDate)
+  const end = dayjs(program.endDate)
+  if (!start.isValid() || !end.isValid()) return null
+
+  const today = dayjs().startOf('day')
+  if (today.isBefore(start.startOf('day'))) return 'scheduled'
+  if (today.isBefore(end.startOf('day'))) return 'in_progress'
+  return 'completed'
+}
+
 export interface PendingActionCounts {
   pendingApplications: number
   pendingMatchings: number
@@ -86,7 +144,8 @@ export interface KpiMetric {
   key: KpiMetricKey
   label: string
   description: string
-  achieved: number
+  /** null = API 미제공(달성 실적 없음) */
+  achieved: number | null
   target: number
 }
 
@@ -155,13 +214,21 @@ export async function getProgramProgressSummary(): Promise<ProgramProgressSummar
  * - programType 'company_school' | 'general' 시 4카드(예정/진행/완료) 집계
  */
 export async function getProgramProgressStages(options?: {
-  programType?: 'education' | 'company_school' | 'general' | 'volunteer' | 'all'
+  programType?: 'education' | 'company_school' | 'general' | 'trained_teachers' | 'volunteer' | 'all'
 }): Promise<ProgramProgressStagesResult> {
   await new Promise(resolve => setTimeout(resolve, 300))
 
-  if (options?.programType === 'company_school' || options?.programType === 'general') {
+  if (
+    options?.programType === 'company_school' ||
+    options?.programType === 'general' ||
+    options?.programType === 'trained_teachers'
+  ) {
     const programs =
-      options.programType === 'general' ? getGeneralPrograms() : getCompanySchoolPrograms()
+      options.programType === 'general'
+        ? getGeneralPrograms()
+        : options.programType === 'trained_teachers'
+          ? getTrainedTeachersPrograms()
+          : getCompanySchoolPrograms()
     const stages = {
       scheduled: 0,
       inProgress: 0,
@@ -169,6 +236,31 @@ export async function getProgramProgressStages(options?: {
     }
 
     programs.forEach(program => {
+      if (options.programType === 'company_school' || options.programType === 'trained_teachers') {
+        const operationPhase = resolveCompanySchoolOperationPhase(program)
+        if (operationPhase === 'scheduled') stages.scheduled++
+        else if (operationPhase === 'in_progress') stages.inProgress++
+        else if (operationPhase === 'completed') stages.completed++
+        else {
+          const status = program.lifecycleStatus || ''
+          if (
+            [
+              'recruiting_students',
+              'recruiting_instructors',
+              'matching_completed',
+              'education_before_textbook',
+            ].includes(status)
+          ) {
+            stages.scheduled++
+          } else if (status === 'education_after_textbook' || status === 'education_in_progress') {
+            stages.inProgress++
+          } else if (['education_completed', 'document_processing_completed'].includes(status)) {
+            stages.completed++
+          }
+        }
+        return
+      }
+
       const status = program.lifecycleStatus || ''
       if (
         [
@@ -319,6 +411,17 @@ export async function getProgramProgressStagesByProgramId(
 export async function getRecruitmentStatusList(options?: {
   programIds?: string[]
 }): Promise<Program[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
+    const dto = await fetchDashboardRecruitmentsRemote({ params: queryParams })
+    return mapRecruitmentListResponse(dto)
+  }
+  return getRecruitmentStatusListFromMock(options)
+}
+
+async function getRecruitmentStatusListFromMock(options?: {
+  programIds?: string[]
+}): Promise<Program[]> {
   await new Promise(resolve => setTimeout(resolve, 200))
   const programs = getEducationPrograms()
   if (options?.programIds && options.programIds.length > 0) {
@@ -361,13 +464,14 @@ const KPI_LABELS: Record<KpiMetricKey, { label: string; description: string }> =
 }
 
 /** 사업 KPI 목표·위젯 공통: 달성/목표 수치 (patternIndex로 목록 간 변주) */
-function buildKpiMetricsForPattern(patternIndex: number): KpiMetric[] {
+function buildKpiMetricsForPattern(patternIndex: number, program?: Program): KpiMetric[] {
+  const isIndividual = program != null && isGeneralIndividualProgram(program)
   const achievedParticipants = patternIndex % 3 === 0 ? 100 : 80
   const targetParticipants = 100
-  const achievedSchools = 100
-  const targetSchools = 100
-  const achievedClasses = patternIndex % 2 === 0 ? 100 : 80
-  const targetClasses = 100
+  const achievedSchools = isIndividual ? 0 : 100
+  const targetSchools = isIndividual ? 0 : 100
+  const achievedClasses = isIndividual ? 0 : patternIndex % 2 === 0 ? 100 : 80
+  const targetClasses = isIndividual ? 0 : 100
 
   return [
     {
@@ -394,22 +498,41 @@ function buildKpiMetricsForPattern(patternIndex: number): KpiMetric[] {
   ]
 }
 
+function isCompanySchoolKpiProgram(programOrId: Program | string): boolean {
+  const id = typeof programOrId === 'string' ? programOrId : programOrId.id
+  const title = typeof programOrId === 'string' ? '' : (programOrId.mainTitle ?? programOrId.title)
+  return (
+    id.startsWith('economy-prog-') ||
+    id.startsWith('company-school-prog-') ||
+    id.startsWith('company-school-local-') ||
+    title.includes('1사1교')
+  )
+}
+
 function buildProgramKpiItemFromProgram(program: Program, patternIndex: number): ProgramKpiItem {
+  const isCompanySchool = isCompanySchoolKpiProgram(program)
   return {
     programId: program.id,
     programTitle: program.title ?? '',
-    kpis: buildKpiMetricsForPattern(patternIndex),
-    educationInstructorTargets: { instructors: 80, volunteers: 80 },
+    kpis: buildKpiMetricsForPattern(patternIndex, program),
+    educationInstructorTargets: {
+      instructors: isCompanySchool ? (program.instructors ?? program.instructorCapacity ?? 0) : 80,
+      volunteers: isCompanySchool ? 0 : 80,
+    },
   }
 }
 
 /** 상세 모달 등: id만 알 때 — 목 KPI로 항상 행이 채워지도록 */
 function buildDefaultProgramKpiItem(programId: string, title: string): ProgramKpiItem {
+  const isCompanySchool = isCompanySchoolKpiProgram(programId) || title.includes('1사1교')
   return {
     programId,
     programTitle: title,
     kpis: buildKpiMetricsForPattern(0),
-    educationInstructorTargets: { instructors: 80, volunteers: 80 },
+    educationInstructorTargets: {
+      instructors: isCompanySchool ? 0 : 80,
+      volunteers: isCompanySchool ? 0 : 80,
+    },
   }
 }
 
@@ -418,6 +541,17 @@ function buildDefaultProgramKpiItem(programId: string, title: string): ProgramKp
  * programIds 있으면 해당 id마다 1건씩 반환(교육 목록에 없어도 mockPrograms·기본값으로 채움)
  */
 export async function getKpiAchievementList(options?: {
+  programIds?: string[]
+}): Promise<ProgramKpiItem[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
+    const dto = await fetchDashboardKpiProgressRemote({ params: queryParams })
+    return mapKpiProgressListResponse(dto)
+  }
+  return getKpiAchievementListFromMock(options)
+}
+
+async function getKpiAchievementListFromMock(options?: {
   programIds?: string[]
 }): Promise<ProgramKpiItem[]> {
   await new Promise(resolve => setTimeout(resolve, 200))
@@ -579,4 +713,189 @@ export function getMenuShortcutBadgeCounts(): Record<string, number> {
     out[item.id] = mapped[item.id] ?? 0
   }
   return out
+}
+
+/** Swagger: GET /api/admin/dashboard/home */
+export async function getDashboardHomeSummary(): Promise<DashboardHomeSummary> {
+  if (shouldUseDashboardRemoteApi()) {
+    const dto = await fetchDashboardHomeRemote()
+    return mapDashboardHomeResponse(dto)
+  }
+  await new Promise(resolve => setTimeout(resolve, 150))
+  return {
+    version: 'mock',
+    programCount: mockPrograms.length,
+    memberCount: mockInstructors.length,
+    unreadNotificationCount: 0,
+  }
+}
+
+/** Swagger: GET /api/admin/dashboard/notifications/count */
+export async function getDashboardNotificationCount(): Promise<number> {
+  if (shouldUseDashboardRemoteApi()) {
+    const dto = await fetchDashboardNotificationCountRemote()
+    return dto.unreadCount ?? 0
+  }
+  return 0
+}
+
+/** Swagger: GET /api/admin/dashboard/program-inquiries */
+export async function getProgramInquiryStatusList(options?: {
+  programIds?: string[]
+}): Promise<ProgramInquiryRow[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const queryParams = toDashboardQueryParams({ programIds: options?.programIds })
+    const dto = await fetchDashboardProgramInquiriesRemote({ params: queryParams })
+    return mapProgramInquiryListResponse(dto)
+  }
+  return getProgramInquiryStatusListFromMock()
+}
+
+function getProgramInquiryStatusListFromMock(): ProgramInquiryRow[] {
+  const grouped = new Map<string, { pending: number; answered: number; total: number }>()
+  for (const inquiry of mockInquiries) {
+    const programName = inquiry.category
+    const bucket = grouped.get(programName) ?? { pending: 0, answered: 0, total: 0 }
+    bucket.total += 1
+    if (inquiry.status === 'PENDING') bucket.pending += 1
+    else bucket.answered += 1
+    grouped.set(programName, bucket)
+  }
+  return [...grouped.entries()].map(([programName, counts], index) => ({
+    key: String(index + 1),
+    programName,
+    ...counts,
+  }))
+}
+
+/** Swagger: GET /api/admin/dashboard/program-schedules */
+export async function getDashboardScheduleEvents(options?: {
+  programIds?: string[]
+  dateFrom?: string
+  dateTo?: string
+  programType?: string
+}): Promise<DashboardScheduleEventDto[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const extra: Record<string, string> = {}
+    if (options?.dateFrom) extra.dateFrom = options.dateFrom
+    if (options?.dateTo) extra.dateTo = options.dateTo
+    if (options?.programType) extra.programType = options.programType
+    const queryParams = toDashboardQueryParams({
+      programIds: options?.programIds,
+      extra,
+    })
+    const dto = await fetchDashboardProgramSchedulesRemote({ params: queryParams })
+    return mapProgramScheduleListResponse(dto)
+  }
+  return []
+}
+
+/** Swagger: GET /api/admin/dashboard/recruitments — 위젯별 프로그램 선택 옵션 */
+export async function getDashboardProgramOptions(widgetKey: string): Promise<DashboardProgramOption[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const programType = getDashboardProgramTypeParamForWidget(widgetKey)
+    const extra = programType ? { programType } : undefined
+    const queryParams = toDashboardQueryParams({ extra })
+    const dto = await fetchDashboardRecruitmentsRemote({ params: queryParams })
+    return mapProgramOptionsFromRecruitmentList(dto)
+  }
+  return getMockDashboardProgramOptions(widgetKey)
+}
+
+export interface DashboardShortcutItem {
+  id: string
+  label: string
+  path: string
+  iconKey?: string
+  useYn: boolean
+}
+
+/** Swagger: GET /api/admin/dashboard/shortcuts */
+export async function getDashboardShortcuts(): Promise<DashboardShortcutItem[]> {
+  if (shouldUseDashboardRemoteApi()) {
+    const dto = await fetchDashboardShortcutsRemote()
+    const items = dto.items ?? []
+    return items
+      .filter(item => item.shortcutKey)
+      .map(item => ({
+        id: item.shortcutKey!,
+        label: item.shortcutName ?? item.shortcutKey!,
+        path: item.targetUrl ?? DASHBOARD_HOME_PATH,
+        iconKey: item.iconKey,
+        useYn: item.useYn !== false,
+      }))
+  }
+  return SHORTCUT_ITEMS.map(item => ({
+    id: item.id,
+    label: item.label,
+    path: item.path,
+    useYn: true,
+  }))
+}
+
+export interface DashboardLogAlertItem {
+  id: string
+  actionType: string
+  targetType: string
+  targetId?: number
+  adminId?: number
+  accessedAt: string
+}
+
+/** 백엔드 v9 스펙에서 GET /api/admin/dashboard/log-alerts 제거됨 — 위젯은 빈 목록 유지 */
+export async function getDashboardLogAlerts(): Promise<DashboardLogAlertItem[]> {
+  return []
+}
+
+/** Swagger: GET /api/me/dashboard-shortcut-badges */
+export async function getDashboardShortcutBadges(): Promise<Record<string, number>> {
+  if (shouldUseDashboardRemoteApi()) {
+    const dto = await fetchDashboardShortcutBadgesRemote()
+    return { ...(dto.counts ?? {}) }
+  }
+  return getMenuShortcutBadgeCounts()
+}
+
+/** Swagger: POST /api/me/dashboard-shortcut-badges/{shortcutId}/read */
+export async function readDashboardShortcutBadge(shortcutId: string): Promise<void> {
+  if (!shouldUseDashboardRemoteApi()) return
+  await readDashboardShortcutBadgeRemote(shortcutId, {
+    shortcutId,
+    readAt: new Date().toISOString(),
+  })
+}
+
+/** Swagger: GET /api/admin/notifications */
+export async function getAdminNotifications(options?: {
+  page?: number
+  size?: number
+  unreadOnly?: boolean
+}): Promise<Notification[]> {
+  if (!shouldUseDashboardRemoteApi()) {
+    return []
+  }
+  const dto = await fetchAdminNotificationsRemote({
+    page: options?.page ?? 0,
+    size: options?.size ?? 20,
+    unreadOnly: options?.unreadOnly,
+  })
+  return mapNotificationInboxPage(dto.items)
+}
+
+/** Swagger: PATCH /api/admin/notifications/{recipientId}/read */
+export async function markAdminNotificationAsRead(recipientId: string): Promise<void> {
+  if (!shouldUseDashboardRemoteApi()) return
+  await markAdminNotificationReadRemote(recipientId)
+}
+
+/** Swagger: PATCH /api/admin/notifications/read-all */
+export async function markAllAdminNotificationsAsRead(): Promise<void> {
+  if (!shouldUseDashboardRemoteApi()) return
+  await markAllAdminNotificationsReadRemote()
+}
+
+/** Swagger: PATCH /api/admin/notifications/{recipientId}/hidden */
+export async function hideAdminNotification(recipientId: string): Promise<void> {
+  if (!shouldUseDashboardRemoteApi()) return
+  await hideAdminNotificationRemote(recipientId)
 }

@@ -1,6 +1,7 @@
 import { Controller, type UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { parseTargetLevelsSelectValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { detailInfoFormSectionTitleHeaderProps } from '@/features/template/lib/writing-form-paragraph-description'
 import {
@@ -74,12 +75,21 @@ export function UjatRecruitParticipantInfoProgramEdit({
         <DetailInfoForm.Field
           label="교육 대상"
           edit={
-            <CmsSelect
-              disabled
-              inputSize="medium"
-              width={240}
-              value={program.targetLevel ?? 'elementary'}
-              options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+            <Controller
+              name="targetLevels"
+              control={form.control}
+              render={({ field }) => (
+                <CmsSelect
+                  mode="multiple"
+                  inputSize="medium"
+                  width={240}
+                  withAllOption={false}
+                  value={field.value ?? []}
+                  options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
+                  onChange={v => field.onChange(parseTargetLevelsSelectValue(v))}
+                  placeholder="교육 대상을 선택하세요"
+                />
+              )}
             />
           }
           view="-"

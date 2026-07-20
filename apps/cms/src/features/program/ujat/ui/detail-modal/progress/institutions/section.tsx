@@ -99,6 +99,10 @@ export function UjatEducationProgressInstitutionsSection({
             )}
           </div>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
         {viewMode === 'table' ? (
           <div

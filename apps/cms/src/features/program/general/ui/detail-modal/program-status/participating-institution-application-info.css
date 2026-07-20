@@ -43,17 +43,19 @@
 }
 
 .participating-institution-application-info__session-status {
+  font-family: 'Pretendard', sans-serif;
   font-size: 16px;
-  font-weight: 600;
-  line-height: 140%;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 24px */
 }
 
 .participating-institution-application-info__session-status--completed {
-  color: var(--color-green, #1e8c29);
+  color: var(--color-blue, #017eaf);
 }
 
 .participating-institution-application-info__session-status--pending {
-  color: var(--main-BK, #3d3d3d);
+  color: var(--color-green, #1e8c29);
 }
 
 .participating-institution-application-info__session-status--not_planned {

@@ -4,7 +4,7 @@
 
 import dayjs from 'dayjs'
 import type { DateValue } from '@/types'
-import type { Program, ProgramLifecycleStatus } from '@/types/domain'
+import type { Program, ProgramLifecycleStatus, TargetLevel } from '@/types/domain'
 import {
   getProgramLifecycleLabel,
   PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER,
@@ -78,18 +78,47 @@ export function getRecruitmentStatusValue(program: Program): 'scheduled' | 'recr
   return v ?? 'scheduled'
 }
 
-export const RECRUITMENT_RADIO_OPTIONS = [
-  { value: 'scheduled', label: '모집 예정' },
-  { value: 'recruiting', label: '모집 중' },
-  { value: 'closed', label: '모집 마감' },
-]
+import { RECRUITMENT_STATUS_OPTIONS } from '@jakorea/domain/recruitment/recruitment-status'
+
+export const RECRUITMENT_RADIO_OPTIONS = RECRUITMENT_STATUS_OPTIONS
 
 /** 강사 모집 대상 옵션 (강사 정보 탭) */
 export const INSTRUCTOR_TARGET_OPTIONS = [
   { value: '성인', label: '성인' },
   { value: '대학생', label: '대학생' },
   { value: '기타', label: '기타' },
-]
+] as const
+
+const INSTRUCTOR_TARGET_VALUES = new Set<string>(
+  INSTRUCTOR_TARGET_OPTIONS.map(option => option.value)
+)
+
+export function resolveProgramInstructorTargets(program: {
+  instructorTargets?: string[]
+  instructorTarget?: string
+}): string[] {
+  if (program.instructorTargets?.length) return program.instructorTargets
+  const raw = program.instructorTarget?.trim()
+  if (!raw) return []
+  const parts = raw
+    .split(/[,，·]/)
+    .map(part => part.trim())
+    .filter(Boolean)
+  const valid = parts.filter(part => INSTRUCTOR_TARGET_VALUES.has(part))
+  if (valid.length > 0) return valid
+  return [raw]
+}
+
+export function formatInstructorTargetsLabel(targets: string[]): string {
+  if (targets.length === 0) return '-'
+  return targets.join(', ')
+}
+
+export function parseInstructorTargetsSelectValue(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const targets = value.map(String).filter(item => INSTRUCTOR_TARGET_VALUES.has(item))
+  return targets.length > 0 ? targets : undefined
+}
 
 /** 2차 면접 심사 방법 옵션 */
 export const INTERVIEW_METHOD_OPTIONS = [
@@ -113,6 +142,33 @@ export function getInstructorRecruitmentStatus(
   if (status === 'recruiting_instructors') return 'recruiting'
   if (status === 'planned' || status === 'recruiting_students') return 'scheduled'
   return 'closed'
+}
+
+/** 봉사자 모집 현황 → lifecycle 키 (봉사자 모집 정보 탭) */
+export const VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE: Record<
+  'scheduled' | 'recruiting' | 'closed',
+  ProgramLifecycleStatus
+> = {
+  scheduled: 'volunteer_recruitment_planned',
+  recruiting: 'recruiting_volunteers',
+  closed: 'document_processing_completed',
+}
+
+/** 봉사자 모집 기간 기준 lifecycle (수정 모드 폼 날짜 연동) */
+export function getVolunteerRecruitmentLifecycle(
+  program: Program,
+  overrides?: Pick<Program, 'volunteerApplicationStartDate' | 'volunteerApplicationEndDate'>
+): ProgramLifecycleStatus | null {
+  const effective = overrides ? { ...program, ...overrides } : program
+  const start = effective.volunteerApplicationStartDate ?? effective.applicationStartDate
+  const end = effective.volunteerApplicationEndDate ?? effective.applicationEndDate
+  if (!start || !end) {
+    const status = getVolunteerRecruitmentStatus(program)
+    return status != null ? VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[status] : null
+  }
+  const s = getRecruitmentStatus({ ...effective, applicationStartDate: start, applicationEndDate: end })
+  if (s == null) return null
+  return VOLUNTEER_RECRUITMENT_STATUS_TO_LIFECYCLE[s]
 }
 
 /** 봉사자 모집 현황: lifecycleStatus를 모집 예정/모집 중/모집 마감 세 가지로 매핑 */
@@ -161,7 +217,38 @@ export const VOLUNTEER_TARGET_OPTIONS = [
   { value: '대학(원)생', label: '대학(원)생' },
   { value: '일반인', label: '일반인' },
   { value: '기타', label: '기타' },
-]
+] as const
+
+const VOLUNTEER_TARGET_VALUES = new Set<string>(
+  VOLUNTEER_TARGET_OPTIONS.map(option => option.value)
+)
+
+export function resolveProgramVolunteerTargets(program: {
+  volunteerTargets?: string[]
+  volunteerTarget?: string
+}): string[] {
+  if (program.volunteerTargets?.length) return program.volunteerTargets
+  const raw = program.volunteerTarget?.trim()
+  if (!raw) return []
+  const parts = raw
+    .split(/[,，·]/)
+    .map(part => part.trim())
+    .filter(Boolean)
+  const valid = parts.filter(part => VOLUNTEER_TARGET_VALUES.has(part))
+  if (valid.length > 0) return valid
+  return [raw]
+}
+
+export function formatVolunteerTargetsLabel(targets: string[]): string {
+  if (targets.length === 0) return '-'
+  return targets.join(', ')
+}
+
+export function parseVolunteerTargetsSelectValue(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const targets = value.map(String).filter(item => VOLUNTEER_TARGET_VALUES.has(item))
+  return targets.length > 0 ? targets : undefined
+}
 
 export const TARGET_LEVEL_LABEL: Record<string, string> = {
   elementary: '초등학교',
@@ -169,6 +256,39 @@ export const TARGET_LEVEL_LABEL: Record<string, string> = {
   high: '고등학교',
   university: '대학(원)생',
   adult: '성인',
+}
+
+const TARGET_LEVEL_VALUES = new Set<string>([
+  'elementary',
+  'middle',
+  'high',
+  'university',
+  'adult',
+])
+
+export function resolveProgramTargetLevels(program: {
+  targetLevels?: TargetLevel[]
+  targetLevel?: TargetLevel
+}): TargetLevel[] {
+  if (program.targetLevels?.length) return program.targetLevels
+  if (program.targetLevel) return [program.targetLevel]
+  return []
+}
+
+export function formatTargetLevelsLabel(
+  levels: TargetLevel[],
+  labels: Record<string, string> = TARGET_LEVEL_LABEL
+): string {
+  if (levels.length === 0) return '-'
+  return levels.map(level => labels[level] ?? level).join(', ')
+}
+
+export function parseTargetLevelsSelectValue(value: unknown): TargetLevel[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const levels = value
+    .map(String)
+    .filter((item): item is TargetLevel => TARGET_LEVEL_VALUES.has(item))
+  return levels.length > 0 ? levels : undefined
 }
 
 export const LIFECYCLE_OPTIONS = PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER.map(status => ({

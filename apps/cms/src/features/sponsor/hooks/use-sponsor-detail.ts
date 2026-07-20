@@ -1,6 +1,8 @@
 import type React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { buildSponsorManagementDetailView } from '@/data/mock/sponsor-management-detail'
+import { updateSponsorBasicInfo } from '@/features/sponsor/api/admin-sponsors-service'
+import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
+import { useSponsorDetailQuery } from '@/features/sponsor/hooks/use-sponsor-detail-query'
 import type {
   SponsorContactRow,
   SponsorManagementDetailView,
@@ -17,17 +19,17 @@ export interface UseSponsorDetailReturn {
   setBasicInfo: React.Dispatch<React.SetStateAction<BasicInfoEditState | null>>
   contacts: SponsorContactRow[]
   setContacts: React.Dispatch<React.SetStateAction<SponsorContactRow[]>>
-  /** 상세 내 편집 가능한 프로그램 진행 이력(목 데이터 로컬 복사본) */
   programHistories: SponsorProgramHistoryRow[]
   removeProgramHistoryRows: (ids: string[]) => void
   isEditingBasicInfo: boolean
   handleBasicInfoChange: (updater: (prev: BasicInfoEditState) => BasicInfoEditState) => void
   handleToggleBasicInfoEdit: (canWrite: boolean) => void
+  programHistoryDeleteDisabled: boolean
+  refetchDetail: () => Promise<unknown>
+  isLoading: boolean
+  isError: boolean
 }
 
-/**
- * Builds editable basic-info state from a sponsor detail view (uses {@link splitAddress}).
- */
 export function buildBasicInfoEditStateFromDetail(
   detail: SponsorManagementDetailView
 ): BasicInfoEditState {
@@ -45,18 +47,33 @@ export function buildBasicInfoEditStateFromDetail(
   }
 }
 
-/**
- * Derives mock detail from `sponsor` and keeps `basicInfo` / `contacts` in sync with that snapshot.
- */
+function sponsorRowToPlaceholderDetail(sponsor: SponsorManagementRow): SponsorManagementDetailView {
+  return {
+    ...sponsor,
+    nameDisplayKo: sponsor.name,
+    nameDisplayEn: sponsor.nameEn ?? '',
+    businessNumber: '',
+    executives: '',
+    address: '',
+    contacts: [],
+    programHistories: [],
+  }
+}
+
 export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetailReturn {
-  const detail = useMemo(() => buildSponsorManagementDetailView(sponsor), [sponsor])
+  const detailQuery = useSponsorDetailQuery(sponsor.id, true)
+
+  const detail = useMemo((): SponsorManagementDetailView => {
+    if (detailQuery.data) return detailQuery.data
+    return sponsorRowToPlaceholderDetail(sponsor)
+  }, [detailQuery.data, sponsor])
 
   const [contacts, setContacts] = useState<SponsorContactRow[]>([])
   const [programHistories, setProgramHistories] = useState<SponsorProgramHistoryRow[]>([])
   const [basicInfo, setBasicInfo] = useState<BasicInfoEditState | null>(null)
   const [isEditingBasicInfo, setIsEditingBasicInfo] = useState(false)
 
-  /* eslint-disable react-hooks/set-state-in-effect -- `detail` 스냅샷으로 편집용 로컬 상태 동기화(목 데이터) */
+  /* eslint-disable react-hooks/set-state-in-effect -- detail 스냅샷으로 편집용 로컬 상태 동기화 */
   useEffect(() => {
     setContacts(normalizeSponsorContactsSingleLead(detail.contacts.map(contact => ({ ...contact }))))
     setProgramHistories(detail.programHistories.map(row => ({ ...row })))
@@ -65,9 +82,8 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
   }, [detail])
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const removeProgramHistoryRows = useCallback((ids: string[]): void => {
-    const idSet = new Set(ids)
-    setProgramHistories(prev => prev.filter(row => !idSet.has(row.id)))
+  const removeProgramHistoryRows = useCallback((_ids: string[]): void => {
+    // API에 삭제 엔드포인트 없음 — no-op
   }, [])
 
   const handleBasicInfoChange = useCallback(
@@ -78,16 +94,26 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
   )
 
   const handleToggleBasicInfoEdit = useCallback(
-    (canWrite: boolean): void => {
+    async (canWrite: boolean): Promise<void> => {
       if (!canWrite || !basicInfo) return
       if (isEditingBasicInfo) {
+        try {
+          await updateSponsorBasicInfo(sponsor.id, basicInfo, detail)
+          await detailQuery.refetch()
+        } catch (error) {
+          console.debug(
+            'sponsorDetail basicInfo save failed',
+            getDataManagementApiErrorMessage(error, '기본 정보 저장에 실패했습니다.')
+          )
+          return
+        }
         setIsEditingBasicInfo(false)
         return
       }
       setBasicInfo(buildBasicInfoEditStateFromDetail(detail))
       setIsEditingBasicInfo(true)
     },
-    [basicInfo, detail, isEditingBasicInfo]
+    [basicInfo, detail, detailQuery, isEditingBasicInfo, sponsor.id]
   )
 
   return {
@@ -101,5 +127,9 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
     isEditingBasicInfo,
     handleBasicInfoChange,
     handleToggleBasicInfoEdit,
+    programHistoryDeleteDisabled: true,
+    refetchDetail: () => detailQuery.refetch(),
+    isLoading: detailQuery.isLoading,
+    isError: detailQuery.isError,
   }
 }

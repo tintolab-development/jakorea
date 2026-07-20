@@ -3,7 +3,14 @@
  * 참여 강사진 목록 (필터: 교육 학년, 강의 진행 회차, 정산 현황, 교사/강사명)
  */
 
-export type SettlementStatusKey = 'pending' | 'partial' | 'completed' | 'na' | 'reviewing' | 'rejected'
+import type { ApplicantInstructorLectureFeeBasisType } from '@/data/mock/applicant-instructors'
+import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
+import { INSTRUCTOR_SETTLEMENT_STATUS_LABELS } from '@/shared/constants/instructor-settlement-status'
+import type { SchoolTeacherEmploymentStatus, InstructorMemberProfile } from '@/types/user'
+import type { ParticipatingInstructorDetailSavePayload } from '@/features/program/general/lib/participating-instructor-detail-edit'
+
+/** @deprecated `InstructorSettlementUiStatus` 사용 — 하위 호환용 alias */
+export type SettlementStatusKey = InstructorSettlementUiStatus
 
 /** 참여 강사 상세 모달·강사 이력서 탭용 (ApplicantInstructorRow와 동일 구조) */
 export interface ParticipatingInstructorCareerDetail {
@@ -43,7 +50,7 @@ export interface ParticipatingInstructorRow {
   classCount: number
   studentCount: number
   lectureRound: string
-  settlementStatus: SettlementStatusKey
+  settlementStatus: InstructorSettlementUiStatus
   teacherName: string
   /** 참여 강사 상세 모달(기본 정보 탭)용 */
   contact?: string
@@ -90,18 +97,63 @@ export interface ParticipatingInstructorRow {
   /** 기본 정보 하단 — 강의비 책정 기준(유형·금액, 셀 내 디바이더로 구분) */
   lectureFeeCategory?: string
   lectureFeeAmount?: string
+  /** 강의비 책정 기준 — 유형·지급 기준·표시 문자열 (강사 신청 상세와 동일 구조) */
+  lectureFeeBasisType?: ApplicantInstructorLectureFeeBasisType
+  lectureFeeMeasure?: string
+  lectureFeeBasisDisplay?: string
   /** 사업소득자 여부 표시 문구 */
   businessIncomeEarnerStatus?: string
+  /** 참여 강사 상세 — 관리자 코멘트 */
+  adminComment?: string
+  /** 참여 강사 상세 — 일정 변경&취소 이력 횟수 */
+  scheduleChangeCancelCount?: number
+  /** 참여 강사 상세 — 소속(학교 등) */
+  affiliation?: string
+  /** 강사 회원 유형 — 교사 겸직(instructor_dual)일 때만 소속 재직 현황 태그 노출 */
+  instructorMemberProfile?: InstructorMemberProfile
+  /** 참여 강사 상세 — 소속 재직 현황 배지 (교사 겸직 전용) */
+  affiliationEmploymentStatus?: SchoolTeacherEmploymentStatus
+  /** 참여 강사 상세 — 강사비 등급 라벨 */
+  instructorFeeGradeLabel?: string
+  /** 강사가 일정 불가로 선택한 교육일 (YYYY-MM-DD) — 추가 배정 모달 일정 비활성용 */
+  unavailableEducationDateKeys?: string[]
+  /** 활동 포기 처리 여부 (기관 사유) */
+  activityWithdrawn?: boolean
+  /** 활동 포기 사유 — 현재 CMS는 `institution`(기관 사유)만 지원 */
+  activityWithdrawReason?: ParticipatingInstructorActivityWithdrawReason
+  /** 활동 중단일 일정 id */
+  activityWithdrawStopScheduleId?: string
+  /** 활동 중단일 표시 라벨 */
+  activityWithdrawStopScheduleLabel?: string
+  /**
+   * 실적 집계에 포함할 교육 일정 id 목록.
+   * 활동 중단일까지 포함·이후 일정 제외 — API 연동 시 performance aggregation 기준.
+   */
+  performanceIncludedScheduleIds?: string[]
 }
 
-export const SETTLEMENT_STATUS_LABELS: Record<SettlementStatusKey, string> = {
-  pending: '정산 대기',
-  partial: '일부 정산 완료',
-  completed: '정산 완료',
-  na: '해당 없음',
-  reviewing: '내역 검토 중',
-  rejected: '지급 반려',
+export type ParticipatingInstructorActivityWithdrawReason = 'institution'
+
+export type ParticipatingInstructorEducationScheduleProgress =
+  | 'scheduled'
+  | 'in_progress'
+  | 'completed'
+
+export interface ParticipatingInstructorEducationScheduleRow {
+  id: string
+  scheduleLabel: string
+  progress: ParticipatingInstructorEducationScheduleProgress
 }
+
+export interface ParticipatingInstructorActivityWithdrawSavePayload {
+  reason: ParticipatingInstructorActivityWithdrawReason
+  stopScheduleId?: string
+  stopScheduleLabel?: string
+  performanceIncludedScheduleIds: string[]
+}
+
+/** @deprecated `INSTRUCTOR_SETTLEMENT_STATUS_LABELS` 사용 */
+export const SETTLEMENT_STATUS_LABELS = INSTRUCTOR_SETTLEMENT_STATUS_LABELS
 
 const INSTRUCTOR_NAMES = [
   '김서연',
@@ -193,7 +245,16 @@ const TEACHER_NAMES = [
   '조아람',
 ]
 
-const settlementStatuses: SettlementStatusKey[] = ['pending', 'partial', 'completed', 'na']
+const settlementStatuses: InstructorSettlementUiStatus[] = [
+  'payment_statement_reapplication',
+  'awaiting_confirmation',
+  'partial_confirmation',
+  'payment_statement_verified',
+  'account_paid',
+  'none',
+  'application_rejected',
+  'payment_correction_requested',
+]
 
 const EDUCATION_LEVELS = [
   '4년제 졸업',
@@ -238,31 +299,50 @@ function getDetailExtension(
     | 'freeWriting4'
     | 'lectureFeeCategory'
     | 'lectureFeeAmount'
+    | 'lectureFeeBasisType'
+    | 'lectureFeeMeasure'
+    | 'lectureFeeBasisDisplay'
     | 'businessIncomeEarnerStatus'
+    | 'affiliation'
+    | 'instructorMemberProfile'
+    | 'affiliationEmploymentStatus'
+    | 'instructorFeeGradeLabel'
+    | 'scheduleChangeCancelCount'
+    | 'unavailableEducationDateKeys'
   >
 > {
   if (index > 1) return {}
   const birthYear = 1988 + (index % 5)
-  const birthDate = `${birthYear}.07.14`
   const age = new Date().getFullYear() - birthYear
   if (index === 0) {
     return {
       contact: '010-2847-5913',
-      email: 'instructor0@example.com',
-      address: '서울특별시 강서구',
+      email: 'tiinto@naver.com',
+      address: '서울특별시 강서구 화곡동 123-45',
       nameHanja: '金서연',
       nameEnglish: 'Kim Seoyeon',
-      birthDate,
-      age,
+      birthDate: '1990.09.15',
+      age: 35,
       gender: GENDERS[0],
       militaryStatus: MILITARY_STATUSES[0],
       bankName: '농협',
       accountNumber: '352-1846-9203-71',
       accountHolder: INSTRUCTOR_NAMES[0],
-      oneLineIntro: '담당 교사분은 물론, 아이들과도 적극적인 소통으로 재미있고 활기차게 강의를 이끌어가는 스타일입니다.',
+      oneLineIntro: '담당 교사분은 물론, 아이들과도 적극적인 소통으로 재미있고 활기차게 강의를 이끌어가는 스타일입니다^^',
       educationLevel: EDUCATION_LEVELS[0],
       educationSchoolName: EDUCATION_SCHOOLS[0],
       lectureExperienceYears: 3,
+      affiliation: '진월초등학교',
+      instructorMemberProfile: 'instructor_dual',
+      affiliationEmploymentStatus: 'ACTIVE',
+      instructorFeeGradeLabel: '3급 강사비',
+      scheduleChangeCancelCount: 1,
+      lectureFeeCategory: '프로그램 기준',
+      lectureFeeBasisType: 'program',
+      lectureFeeMeasure: '출강 1회당',
+      lectureFeeBasisDisplay: '프로그램 기준',
+      lectureFeeAmount: '240,000원',
+      businessIncomeEarnerStatus: '해당 없음',
       careerDetails: [
         { companyName: '한솔교육', role: '학습지 방문 교육', startDate: '2024.02', isCurrent: true },
         { companyName: '대교 눈높이학원', role: '초등학생 수학 강의', startDate: '2023.01', endDate: '2024.01' },
@@ -280,15 +360,13 @@ function getDetailExtension(
       freeWriting2: '청소년 경제 교육은 미래 세대의 재정적 독립과 의사결정 능력을 키우는 데 중요합니다. 본인은 실생활 사례를 활용한 참여형 수업으로 흥미를 높이려 노력합니다.',
       freeWriting3: '청소년과 소통할 때 가장 중요한 것은 경청과 공감입니다. 일방적 설명보다 질문을 유도하고, 학생들이 스스로 답을 찾도록 돕는 것을 실천하고 있습니다.',
       freeWriting4: '수업 중 참여도가 낮았을 때, 짝 활동과 퀴즈 형식으로 분위기를 전환한 적이 있습니다. 그 결과 학생들의 참여가 늘었고, 이후에도 같은 방식을 적용하고 있습니다.',
-      lectureFeeCategory: '특강 강사비',
-      lectureFeeAmount: '915,000원',
-      businessIncomeEarnerStatus: '해당 없음',
     }
   }
   return {
     contact: '010-3156-8274',
     email: 'instructor1@example.com',
     address: '경기도 수원시',
+    unavailableEducationDateKeys: ['2026-01-16'],
     nameHanja: '李준혁',
     nameEnglish: 'Lee Junhyuk',
     birthDate: `${birthYear}.03.07`,
@@ -317,16 +395,20 @@ function getDetailExtension(
     freeWriting2: '경제 교육을 통해 청소년이 합리적 선택을 할 수 있는 기반이 마련된다고 생각합니다.',
     freeWriting3: '신뢰를 바탕으로 한 소통을 중요시하며, 수업 전후로 학생들과 짧은 대화 시간을 갖고 있습니다.',
     freeWriting4: '-',
-    lectureFeeCategory: '정규 강의',
-    lectureFeeAmount: '680,000원',
+    lectureFeeCategory: '특강 강사비',
+    lectureFeeBasisType: 'special_lecture',
+    lectureFeeMeasure: '출강 1회당',
+    lectureFeeBasisDisplay: '특강 강사비 | 출강 1회당 | 680,000원',
+    lectureFeeAmount: '680000',
     businessIncomeEarnerStatus: '해당',
   }
 }
 
-function buildMockList(count: number): ParticipatingInstructorRow[] {
+/** 정산 현황 8종 각 1건 — 스크린샷·상태별 색상 확인용 */
+function buildMockList(): ParticipatingInstructorRow[] {
+  const count = settlementStatuses.length
   const rows: ParticipatingInstructorRow[] = []
   for (let i = 0; i < count; i++) {
-    const statusIdx = i % settlementStatuses.length
     const extension = getDetailExtension(i)
     const region = REGIONS[i % REGIONS.length]
     const jaGrade = JA_EVALUATION_GRADES[i % JA_EVALUATION_GRADES.length]
@@ -341,7 +423,7 @@ function buildMockList(count: number): ParticipatingInstructorRow[] {
       classCount: 2 + (i % 4),
       studentCount: 40 + (i % 85),
       lectureRound: LECTURE_ROUNDS[i % LECTURE_ROUNDS.length],
-      settlementStatus: settlementStatuses[statusIdx],
+      settlementStatus: i === 0 ? 'payment_statement_verified' : settlementStatuses[i],
       teacherName: TEACHER_NAMES[i % TEACHER_NAMES.length],
       /** 일부 강사는 최초 승인 미완료(신규 배정 안내 모달 테스트용) */
       initialApproval: i % 4 !== 2,
@@ -358,4 +440,76 @@ function buildMockList(count: number): ParticipatingInstructorRow[] {
   return rows
 }
 
-export const MOCK_PARTICIPATING_INSTRUCTORS: ParticipatingInstructorRow[] = buildMockList(72)
+export const MOCK_PARTICIPATING_INSTRUCTORS: ParticipatingInstructorRow[] = buildMockList()
+
+const DEFAULT_PARTICIPATING_INSTRUCTOR_EDUCATION_SCHEDULES: ParticipatingInstructorEducationScheduleRow[] =
+  [
+    { id: 'pi-sched-1', scheduleLabel: '2025. 04. 03(목)', progress: 'completed' },
+    { id: 'pi-sched-2', scheduleLabel: '2025. 04. 10(목)', progress: 'completed' },
+    { id: 'pi-sched-3', scheduleLabel: '2025. 04. 17(목)', progress: 'scheduled' },
+    { id: 'pi-sched-4', scheduleLabel: '2025. 04. 24(목)', progress: 'scheduled' },
+  ]
+
+/** 강사별 교육 일정 mock — 활동 포기·실적 반영 기준 테스트용 */
+const PARTICIPATING_INSTRUCTOR_EDUCATION_SCHEDULES: Record<
+  string,
+  ParticipatingInstructorEducationScheduleRow[]
+> = {
+  'instructor-1': DEFAULT_PARTICIPATING_INSTRUCTOR_EDUCATION_SCHEDULES,
+  'instructor-2': DEFAULT_PARTICIPATING_INSTRUCTOR_EDUCATION_SCHEDULES.map(row => ({ ...row })),
+}
+
+export function getParticipatingInstructorEducationSchedules(
+  instructorId: string
+): ParticipatingInstructorEducationScheduleRow[] {
+  return PARTICIPATING_INSTRUCTOR_EDUCATION_SCHEDULES[instructorId] ?? []
+}
+
+export function patchParticipatingInstructorDetail(
+  id: string,
+  payload: ParticipatingInstructorDetailSavePayload
+): ParticipatingInstructorRow | null {
+  const index = MOCK_PARTICIPATING_INSTRUCTORS.findIndex(row => row.id === id)
+  if (index === -1) return null
+
+  const row = MOCK_PARTICIPATING_INSTRUCTORS[index]!
+  const amountDisplay =
+    payload.lectureFeeAmount != null
+      ? `${Number.parseInt(payload.lectureFeeAmount, 10).toLocaleString('ko-KR')}원`
+      : undefined
+
+  const next: ParticipatingInstructorRow = {
+    ...row,
+    lectureFeeBasisType: payload.lectureFeeBasisType,
+    lectureFeeMeasure: payload.lectureFeeMeasure,
+    lectureFeeAmount: amountDisplay,
+    lectureFeeBasisDisplay: payload.lectureFeeBasisDisplay,
+    lectureFeeCategory: payload.lectureFeeCategory,
+    instructorFeeGradeLabel: payload.instructorFeeGradeLabel,
+    businessIncomeEarnerStatus: payload.businessIncomeEarnerStatus,
+  }
+
+  MOCK_PARTICIPATING_INSTRUCTORS[index] = next
+  return { ...next }
+}
+
+export function patchParticipatingInstructorActivityWithdraw(
+  id: string,
+  payload: ParticipatingInstructorActivityWithdrawSavePayload
+): ParticipatingInstructorRow | null {
+  const index = MOCK_PARTICIPATING_INSTRUCTORS.findIndex(row => row.id === id)
+  if (index === -1) return null
+
+  const row = MOCK_PARTICIPATING_INSTRUCTORS[index]!
+  const next: ParticipatingInstructorRow = {
+    ...row,
+    activityWithdrawn: true,
+    activityWithdrawReason: payload.reason,
+    activityWithdrawStopScheduleId: payload.stopScheduleId,
+    activityWithdrawStopScheduleLabel: payload.stopScheduleLabel,
+    performanceIncludedScheduleIds: payload.performanceIncludedScheduleIds,
+  }
+
+  MOCK_PARTICIPATING_INSTRUCTORS[index] = next
+  return { ...next }
+}

@@ -1,0 +1,175 @@
+/**
+ * 타이포그래피 유틸리티 네이밍 규칙
+ *
+ * 형식: typo-{분류}-{크기}-{굵기}
+ * 예시: typo-bd-md-sb
+ *   bd: 분류 (body)
+ *   md: 크기 (medium)
+ *   sb: 굵기 (semibold)
+ *
+ * 분류: hd (heading), hl (headline), bd (body), label, caption
+ * 크기: lg (large), md (medium), sm (small)
+ * 굵기: rg (regular), md (medium), sb (semibold), bd (bold)
+ */
+
+.typo-page-title {
+  font-family: var(--font-family-base);
+  font-size: 60px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: -0.6px;
+}
+
+.typo-hd-lg {
+  font-family: var(--font-family-base);
+  font-size: 38px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 144%;
+  letter-spacing: -0.76px;
+}
+
+.typo-hd-md {
+  font-family: var(--font-family-base);
+  font-size: 34px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 144%;
+  letter-spacing: -0.68px;
+}
+
+.typo-hd-sm {
+  font-family: var(--font-family-base);
+  font-size: 30px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 144%;
+  letter-spacing: 0;
+}
+
+.typo-hl-lg {
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.24px;
+}
+
+.typo-hl-sm {
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+}
+
+.typo-bd-lg-rg {
+  font-family: var(--font-family-base);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.18px;
+}
+
+.typo-bd-lg-sb {
+  font-family: var(--font-family-base);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.18px;
+}
+
+.typo-bd-md-rg {
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+.typo-bd-md-md {
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+.typo-bd-md-sb {
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+.typo-bd-md-bd {
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+.typo-bd-sm-rg {
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 160%;
+  letter-spacing: 0;
+}
+
+.typo-bd-sm-md {
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+  letter-spacing: 0;
+}
+
+.typo-bd-sm-sb {
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 160%;
+  letter-spacing: 0;
+}
+
+.typo-label-md {
+  font-family: var(--font-family-base);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+.typo-caption-rg {
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+.typo-caption-sb {
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 140%;
+  letter-spacing: 0;
+}

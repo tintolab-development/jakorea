@@ -1,0 +1,120 @@
+.general-volunteer-doc-passed-calendar-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.general-volunteer-doc-passed-calendar-list-item__title-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  gap: 0;
+}
+
+.general-volunteer-doc-passed-calendar-list-item__tag-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.general-volunteer-doc-passed-calendar-list-item__name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.general-volunteer-doc-passed-calendar-list-item__sep {
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 21px;
+  justify-content: center;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.35;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 150%;
+  user-select: none;
+}
+
+.general-volunteer-doc-passed-calendar-list-item__day-slots {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.general-volunteer-doc-passed-calendar-list-item__status-badge {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  display: inline-flex;
+  min-width: 68px;
+  height: 26px;
+  padding: 5px 12px 4px;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--6, 6px);
+  background: var(--main-WT, #fff);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.general-volunteer-doc-passed-calendar-list-item__status-badge--waiting {
+  border: 1px solid var(--color-green, #1e8c29);
+  color: var(--color-green, #1e8c29);
+}
+
+.general-volunteer-doc-passed-calendar-list-item__status-badge--assigned {
+  border: 1px solid rgba(61, 61, 61, 0.8);
+  color: rgba(61, 61, 61, 0.8);
+}
+
+.general-volunteer-doc-passed-calendar-list-item__status-badge--withdrawn {
+  border: 1px solid var(--color-red, #c32f4a);
+  color: var(--color-red, #c32f4a);
+}
+
+.general-volunteer-doc-passed-calendar-list-item__schedule-badge {
+  box-sizing: border-box;
+  flex: 0 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  padding: 3px 8px 2px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--6, 6px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--default-WT, #fff);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}

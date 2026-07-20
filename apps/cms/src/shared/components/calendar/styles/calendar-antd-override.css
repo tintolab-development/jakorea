@@ -32,9 +32,11 @@
   flex-direction: column;
   align-items: stretch;
   width: 100%;
-  min-width: var(--calendar-cell-min-width, 116px);
+  min-width: 0;
+  max-width: 100%;
   min-height: var(--calendar-cell-min-height, 124px);
-  height: auto;
+  height: var(--calendar-cell-min-height, 124px);
+  max-height: var(--calendar-cell-min-height, 124px);
   box-sizing: border-box;
 }
 
@@ -51,7 +53,8 @@
   table-layout: fixed;
   width: 100%;
   min-width: calc(var(--calendar-cell-min-width, 116px) * 7);
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .calendar-main .ant-picker-content thead th,
@@ -61,7 +64,7 @@
 }
 
 .calendar-main .ant-picker-content tbody tr {
-  height: auto;
+  height: var(--calendar-cell-min-height, 124px);
 }
 
 .calendar-main .ant-picker-calendar-mini .ant-picker-content {
@@ -75,8 +78,12 @@
   max-height: none;
 }
 
-/* 월간 뷰: 요일 행 (SUN, MON, …) — thead에는 padding이 먹지 않으므로 th에 적용 */
-.calendar-main .ant-picker-calendar-mini .ant-picker-content thead th {
+/* 월간 뷰: 요일 행 (SUN, MON, …) — CalendarMain 공통 (3열·split-card 동일) */
+.calendar-main
+  .ant-picker-calendar-mini
+  .ant-picker-content
+  thead
+  th {
   padding: 12px 0 8px 0;
   color: var(--gray-85969-d, #85969d);
   text-align: center;

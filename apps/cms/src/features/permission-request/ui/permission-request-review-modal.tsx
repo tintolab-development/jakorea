@@ -83,7 +83,7 @@ export function PermissionRequestReviewModal({
       title="권한 요청 검토"
       onCancel={handleCancel}
       footer={null}
-      width={700}
+      width={800}
       destroyOnHidden
     >
       <Descriptions column={1} bordered style={{ marginBottom: 24 }}>
@@ -138,7 +138,6 @@ export function PermissionRequestReviewModal({
         <Form.Item
           label={action === 'approve' ? '승인 메모 (선택사항)' : '거부 사유'}
           name="reviewComment"
-          rules={action === 'reject' ? [{ required: true }] : []}
         >
           <TextArea
             rows={3}

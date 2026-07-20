@@ -1,35 +1,43 @@
+@import '@/features/program/general/ui/program-list.css';
+
 .program-list-widget-container,
 .program-progress-widget-container {
   margin-bottom: 24px;
   width: 100%;
 }
 
-/* 경제 교육: 상단 진행 위젯과 하단 필터/목록 래퍼 사이 — 가로 디바이더 기준 위·아래 각 32px */
-.program-list-page--program-list-overview > .program-progress-widget-container {
+/* 4탭 위젯 + 필터/목록: 상단 위젯 ↔ 하단 FilterTableLayout 사이 32px (overview 클래스 별칭 통일) */
+.program-list-page--program-list-overview > .program-progress-widget-container,
+.program-list-page--overview > .program-progress-widget-container {
   margin-bottom: 0;
 }
 
 .program-list-page--program-list-overview
   .program-progress-widget-container
+  .program-progress-widget-container,
+.program-list-page--overview
+  .program-progress-widget-container
   .program-progress-widget-container {
   margin-bottom: 0;
 }
 
-.program-list-page--program-list-overview .program-progress-widget__bottom-divider {
+.program-list-page--program-list-overview .program-progress-widget__bottom-divider,
+.program-list-page--overview .program-progress-widget__bottom-divider {
   margin-top: var(--spacing-32);
   margin-bottom: var(--spacing-32);
 }
 
-.program-list-page--program-list-overview .program-progress-widget__divider-vertical--wrapper {
+.program-list-page--program-list-overview .program-progress-widget__divider-vertical--wrapper,
+.program-list-page--overview .program-progress-widget__divider-vertical--wrapper {
   margin-left: 0;
   margin-right: 0;
 }
 
-/* 위젯 상단 액션 영역: 검색바 300×44 반응형, 버튼 160×44 (AppButton size=filter) */
+/* 위젯 상단 액션 영역: 검색바 300×44 반응형, CmsButton은 호출부별 140/180×44 */
 .program-list-page__widget-header-actions {
   display: flex;
   align-items: center;
-  gap: var(--spacing-12);
+  gap: var(--filter-table-toolbar-actions-gap, 8px);
   flex-wrap: wrap;
 }
 
@@ -62,7 +70,7 @@
 
 @media (max-width: 992px) {
   .program-list-page__widget-header-actions .labeled-search-input {
-    width: 260px;
+    width: 240px;
   }
 }
 
@@ -88,8 +96,9 @@
   padding: 0 20px 0 8px;
 }
 
-/* 경제 교육: 테이블 영역 상단 「총 N건」 디스크립션 공통 타이포 */
-.program-list-page--program-list-overview .program-list-page__filter-info-count {
+/* overview 목록: 테이블 영역 상단 「총 N건」 디스크립션 공통 타이포 */
+.program-list-page--program-list-overview .program-list-page__filter-info-count,
+.program-list-page--overview .program-list-page__filter-info-count {
   color: var(--default-BK, #3d3d3d);
   text-align: center;
   font-family: Pretendard, var(--font-family-primary, 'Pretendard', sans-serif);

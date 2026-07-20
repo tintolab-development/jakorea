@@ -29,7 +29,6 @@ import {
 } from '@/shared/components/calendar'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 import '@/shared/components/calendar/styles/calendar.css'
-import '@/shared/components/program-calendar.css'
 
 function pickAnchorDate(rows: AccountPaymentRow[]): Dayjs {
   if (rows.length === 0) return dayjs()
@@ -64,7 +63,7 @@ function accountPaymentStatusShortLabel(status: AccountPaymentRow['accountPaymen
 
 function renderAccountPaymentEventsTooltipContent({ events: dayEvents }: { events: CalendarItem[] }) {
   return (
-    <div className="program-calendar-schedule-panel">
+    <div className="settlement-preview-tooltip">
       {dayEvents.map(ev => {
         const row = settlementRowFromCalendarItem(ev)
         const colors = settlementEventStatusColorPair(row.status)
@@ -79,8 +78,8 @@ function renderAccountPaymentEventsTooltipContent({ events: dayEvents }: { event
               <span style={{ color: colors.text, fontWeight: 700, fontSize: '14px' }}>
                 {accountPaymentStatusShortLabel(accountStatus)}
               </span>
-              <span className="program-calendar-schedule-panel__text">
-                <span className="program-calendar-schedule-panel__sep">|</span> +
+              <span className="settlement-preview-tooltip__text">
+                <span className="settlement-preview-tooltip__sep">|</span> +
                 {row.scheduledAmount.toLocaleString()}원
               </span>
             </div>
@@ -321,15 +320,13 @@ export function AccountPaymentsCalendarView({
   return (
     <div className="calendar-set">
       <div className="calendar-sub-left">
-        <div className="calendar-mini">
-          <CalendarMini
-            currentMonth={miniCurrentMonth}
-            selectedDate={miniSelectedDate}
-            onMonthChange={onMiniMonthChange}
-            onSelectDate={onMiniSelectDate}
-            programDates={programDates}
-          />
-        </div>
+        <CalendarMini
+          currentMonth={miniCurrentMonth}
+          selectedDate={miniSelectedDate}
+          onMonthChange={onMiniMonthChange}
+          onSelectDate={onMiniSelectDate}
+          programDates={programDates}
+        />
         <CalendarSearch
           keyword={calendarSearchKeyword}
           options={programFilterOptions}
@@ -339,23 +336,25 @@ export function AccountPaymentsCalendarView({
           onOptionToggle={handleProgramFilterChange}
         />
       </div>
-      <CalendarMain
-        mode="month"
-        hideModeToggle
-        onModeChange={() => {}}
-        events={calendarMainEvents}
-        currentMonth={currentMonth}
-        selectedDate={selectedDate}
-        onSelectDate={onSelectDate}
-        onMonthChange={onMonthChange}
-        onTodayClick={onTodayClick}
-        selectedRowKeys={selectedRowKeys}
-        overrideEventColorMap={overrideEventColorMap}
-        eventsTooltipScope="full-day"
-        eventsTooltipTrigger="cell"
-        formatEventsOverflowText={n => `외 ${n}개의 항목`}
-        previewTooltipContent={renderAccountPaymentEventsTooltipContent}
-      />
+      <div className="calendar-main-container">
+        <CalendarMain
+          mode="month"
+          hideModeToggle
+          onModeChange={() => {}}
+          events={calendarMainEvents}
+          currentMonth={currentMonth}
+          selectedDate={selectedDate}
+          onSelectDate={onSelectDate}
+          onMonthChange={onMonthChange}
+          onTodayClick={onTodayClick}
+          selectedRowKeys={selectedRowKeys}
+          overrideEventColorMap={overrideEventColorMap}
+          eventsTooltipScope="full-day"
+          eventsTooltipTrigger="cell"
+          formatEventsOverflowText={n => `외 ${n}개의 항목`}
+          previewTooltipContent={renderAccountPaymentEventsTooltipContent}
+        />
+      </div>
       <div className="calendar-sub-right-list">
         <CalendarSubRightSettlementList
           key={selectedDate.format('YYYY-MM-DD')}

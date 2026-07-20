@@ -5,6 +5,8 @@ import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-inst
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import type { UserDetailProgramsChildKey } from '../lib/user-detail-fullpage-helpers'
 import { ProgramsViewRenderer } from './user-programs-view-renderer'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { MemberDetailMockDataBanner } from '@/features/user/detail/ui/member-detail-mock-data-banner'
 
 export type EnrollmentMode = 'TABLE' | 'STUDENT_HISTORY' | 'SCHOOL_PARTICIPATION'
 
@@ -54,6 +56,9 @@ export function UserProgramsSection(props: UserProgramsSectionProps) {
 
   return (
     <div className="user-detail-fullpage-modal__programs">
+      {isMembersRemoteEnabled() ? (
+        <MemberDetailMockDataBanner message="진행상태 변경·강의보고/출석/과제 모달·수료증 일괄 발급은 API 미제공으로 mock 동작이 유지됩니다." />
+      ) : null}
       <ProgramsViewRenderer {...props} showCertificateBulkIssue={showCertificateBulkIssue} />
     </div>
   )

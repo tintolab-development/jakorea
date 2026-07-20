@@ -2,15 +2,20 @@ import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
+import { screeningApplicantNameLabel, type ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
 import { GeneralInterviewAssignmentStatusText } from './status-text'
 
 const CENTER_CELL_CLASS = 'general-volunteer-doc-passed__center-cell'
 
 export function useGeneralVolunteerDocPassedColumns({
   onAssignInterview,
+  subjectKind = 'volunteer',
 }: {
   onAssignInterview: (row: GeneralVolunteerApplicantRow) => void
+  subjectKind?: ScreeningSubjectKind
 }): ColumnsType<GeneralVolunteerApplicantRow> {
+  const applicantNameTitle = screeningApplicantNameLabel(subjectKind)
+
   return useMemo(
     (): ColumnsType<GeneralVolunteerApplicantRow> => [
       {
@@ -22,7 +27,7 @@ export function useGeneralVolunteerDocPassedColumns({
         className: CENTER_CELL_CLASS,
       },
       {
-        title: '신청 봉사자명',
+        title: applicantNameTitle,
         dataIndex: 'name',
         key: 'name',
         width: 140,
@@ -94,6 +99,6 @@ export function useGeneralVolunteerDocPassedColumns({
         },
       },
     ],
-    [onAssignInterview]
+    [applicantNameTitle, onAssignInterview]
   )
 }

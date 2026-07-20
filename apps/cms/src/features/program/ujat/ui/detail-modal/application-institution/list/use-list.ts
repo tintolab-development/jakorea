@@ -14,11 +14,16 @@ import {
 } from './types'
 import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { useUjatInstitutionApplicationColumns } from './columns'
-import type { UjatInstitutionApplicationRejectModalAction } from './action-modal'
 import {
   getUjatInstitutionTempAssignCompleteContent,
+  getUjatInstitutionTempRejectCompleteContent,
   UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
+  UJAT_INSTITUTION_TEMP_REJECT_ALERT_TITLE,
 } from './temp-assign-complete'
+import {
+  checkUjatRegionClassCapacityExceeded,
+  getUjatRegionClassCapacityExceededAlertContent,
+} from '@/features/program/ujat/lib/ujat-region-capacity-institution-assign'
 
 function filterRows(
   rows: UjatInstitutionApplicationRow[],
@@ -59,8 +64,7 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
   )
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
-  const [pendingBulkModalAction, setPendingBulkModalAction] =
-    useState<UjatInstitutionApplicationRejectModalAction | null>(null)
+  const [pendingApplicationRejectModal, setPendingApplicationRejectModal] = useState(false)
 
   const allRows = useMemo(() => {
     void dataVersion
@@ -113,24 +117,28 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
     [selectedRowKeys, showNoSelectionAlert]
   )
 
-  const openBulkActionModal = useCallback(
-    (action: UjatInstitutionApplicationRejectModalAction) => {
-      if (selectedRowKeys.length === 0) {
-        showNoSelectionAlert()
-        return
-      }
-      setPendingBulkModalAction(action)
-    },
-    [selectedRowKeys.length, showNoSelectionAlert]
-  )
-
   const handleBulkApplicationReject = useCallback(() => {
-    openBulkActionModal('application_reject')
-  }, [openBulkActionModal])
+    if (selectedRowKeys.length === 0) {
+      showNoSelectionAlert()
+      return
+    }
+    setPendingApplicationRejectModal(true)
+  }, [selectedRowKeys.length, showNoSelectionAlert])
 
   const handleBulkTempReject = useCallback(() => {
-    openBulkActionModal('temp_reject')
-  }, [openBulkActionModal])
+    const ids = selectedRowKeys.map(String)
+    if (ids.length === 0) {
+      showNoSelectionAlert()
+      return
+    }
+    patchUjatInstitutionApplicationRows(ids, 'temp_rejected')
+    setDataVersion(v => v + 1)
+    setSelectedRowKeys([])
+    showAlert({
+      title: UJAT_INSTITUTION_TEMP_REJECT_ALERT_TITLE,
+      content: getUjatInstitutionTempRejectCompleteContent(ids.length),
+    })
+  }, [selectedRowKeys, showNoSelectionAlert, showAlert])
 
   const handleBulkTempAssign = useCallback(() => {
     const ids = selectedRowKeys.map(String)
@@ -139,28 +147,42 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
       return
     }
     const count = ids.length
+    const rowsAfterAssign = allRows.map(row =>
+      ids.includes(row.id) ? { ...row, tempAssignmentStatus: 'temp_assigned' as const } : row
+    )
     patchUjatInstitutionApplicationRows(ids, 'temp_assigned')
     setDataVersion(v => v + 1)
     setSelectedRowKeys([])
+
+    const capacityCheck = checkUjatRegionClassCapacityExceeded({
+      regionKey,
+      rowsAfterAssign,
+    })
+
+    const completeContent = getUjatInstitutionTempAssignCompleteContent(count)
+    const content =
+      capacityCheck.exceeded && capacityCheck.maxClassCount != null
+        ? `${completeContent}\n\n${getUjatRegionClassCapacityExceededAlertContent({
+            regionLabel: capacityCheck.regionLabel,
+            maxClassCount: capacityCheck.maxClassCount,
+            totalAfterAssign: capacityCheck.totalAfterAssign,
+          })}`
+        : completeContent
+
     showAlert({
       title: UJAT_INSTITUTION_TEMP_ASSIGN_ALERT_TITLE,
-      content: getUjatInstitutionTempAssignCompleteContent(count),
+      content,
     })
-  }, [selectedRowKeys, showNoSelectionAlert, showAlert])
+  }, [allRows, regionKey, selectedRowKeys, showNoSelectionAlert, showAlert])
 
-  const closeBulkActionModal = useCallback(() => {
-    setPendingBulkModalAction(null)
+  const closeApplicationRejectModal = useCallback(() => {
+    setPendingApplicationRejectModal(false)
   }, [])
 
-  const confirmBulkActionModal = useCallback(() => {
-    if (!pendingBulkModalAction) return
-    const statusMap = {
-      application_reject: 'application_rejected',
-      temp_reject: 'temp_rejected',
-    } as const
-    patchSelectedStatus(statusMap[pendingBulkModalAction])
-    setPendingBulkModalAction(null)
-  }, [pendingBulkModalAction, patchSelectedStatus])
+  const confirmApplicationRejectModal = useCallback(() => {
+    patchSelectedStatus('application_rejected')
+    setPendingApplicationRejectModal(false)
+  }, [patchSelectedStatus])
 
   const resetRegionState = useCallback(() => {
     setPendingFilters({ ...EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS })
@@ -187,9 +209,9 @@ export function useUjatInstitutionApplicationList(regionKey: UjatInstitutionAppl
     handleBulkApplicationReject,
     handleBulkTempReject,
     handleBulkTempAssign,
-    pendingBulkModalAction,
-    closeBulkActionModal,
-    confirmBulkActionModal,
+    pendingApplicationRejectModal,
+    closeApplicationRejectModal,
+    confirmApplicationRejectModal,
     selectedApplications,
     resetRegionState,
     refreshData,

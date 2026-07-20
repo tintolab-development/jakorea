@@ -1,0 +1,68 @@
+.page {
+  display: flex;
+  width: 100%;
+  min-height: 480px;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  display: flex;
+  width: min(100%, 480px);
+  flex-direction: column;
+  align-items: center;
+  padding-block: var(--spacing-100);
+}
+
+.intro {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.illustration {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+}
+
+.title {
+  margin: var(--spacing-24) 0 0;
+}
+
+.description {
+  margin: var(--spacing-16) 0 0;
+}
+
+.infoBox {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--spacing-56);
+  padding: var(--spacing-24);
+  border-radius: var(--radius-16);
+  background: rgba(231, 235, 239, 0.6);
+  text-align: center;
+}
+
+.infoBox p {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  margin-top: var(--spacing-56);
+}
+
+.actionsGroup {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  margin-top: var(--spacing-56);
+}

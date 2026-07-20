@@ -8,6 +8,8 @@ export type DetailFullpageBreadcrumbTarget = {
 export type DetailFullpageBreadcrumbItem = {
   label: string
   to?: DetailFullpageBreadcrumbTarget
+  /** `to`보다 우선 — 풀페이지 상세 닫기 등 라우터 밖 동작 */
+  onClick?: () => void
 }
 
 interface DetailFullpageBreadcrumbProps {
@@ -44,7 +46,16 @@ export function DetailFullpageBreadcrumb({
       {items.map((item, index) => {
         const isLast = index === items.length - 1
         const content =
-          item.to && !isLast ? (
+          item.onClick && !isLast ? (
+            <button
+              type="button"
+              className="detail-fullpage-breadcrumb__button"
+              onClick={item.onClick}
+              title={item.label}
+            >
+              {item.label}
+            </button>
+          ) : item.to && !isLast ? (
             <button
               type="button"
               className="detail-fullpage-breadcrumb__button"

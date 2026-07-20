@@ -3,10 +3,10 @@
  * Phase 4.1.1: 사용자 인증 시스템
  */
 
-import type { LoginRequest, LoginResponse, ProgramRole, User } from '@/types/user'
+import type { LoginRequest, LoginResponse, User } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
-import type { AdminLoginMeta, AdminLoginSuccessData } from '@/features/auth/model/admin-login-api.types'
 import { fetchAdminLogin } from '@/features/auth/api/admin-login-fetcher'
+import type { AdminMfaChallengeResponse } from '@/features/auth/model/admin-login-api.types'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
@@ -18,45 +18,57 @@ export interface LoginOptions {
 }
 import { validateLogin, getUserByPhone, mockUsers } from '@/data/mock/users'
 import { createTotpMfaState } from '@/data/mock/mfa'
+import { SocialAccountNotLinkedError } from '@/features/auth/errors/social-account-not-linked-error'
+import { AdminLoginApprovalPendingError } from '@/features/auth/errors/admin-login-approval-pending-error'
 
 /** 실 API 세션 토큰 접두사 — `validateToken`·auth-store 갱신 시 mock JWT 와 구분 */
 export const CMS_REMOTE_SESSION_PREFIX = 'cms-remote-'
 
-function parseProgramRole(role: string): ProgramRole {
-  if (role === 'OWNER' || role === 'PARTNER' || role === 'ASSISTANT') {
-    return role
+/** MFA 완료 후 저장된 실 JWT(accessToken) 여부 — mock·pending 세션 제외 */
+export function hasRemoteAdminJwt(): boolean {
+  if (typeof window === 'undefined') return false
+  const token = localStorage.getItem('auth_token')
+  if (!token || token.startsWith('mock-jwt-token-') || token.startsWith(CMS_REMOTE_SESSION_PREFIX)) {
+    return false
   }
-  return 'OWNER'
+  return token.split('.').length >= 3
 }
 
-function mapRemoteAdminLoginToLoginResponse(
-  data: AdminLoginSuccessData,
-  meta?: AdminLoginMeta
-): LoginResponse {
+function buildPendingAdminUser(email: string): Omit<User, 'password'> {
   const now = new Date().toISOString()
-  const serverTime = meta?.serverTime
-  const expiresAt =
-    serverTime !== undefined
-      ? new Date(new Date(serverTime).getTime() + 24 * 60 * 60 * 1000).toISOString()
-      : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-
-  const user: Omit<User, 'password'> = {
-    id: data.userId,
-    email: data.userEmail,
-    name: data.userName,
+  return {
+    id: `pending-admin-${email}`,
+    email,
+    name: email.split('@')[0] ?? '관리자',
     role: 'ADMIN',
     isActive: true,
-    createdAt: serverTime ?? now,
-    updatedAt: serverTime ?? now,
-    lastLoginAt: serverTime ?? now,
-    programRoles: {
-      [data.programId]: parseProgramRole(data.role),
-    },
+    createdAt: now,
+    updatedAt: now,
+    lastLoginAt: now,
+    programRoles: {},
   }
+}
 
-  const token = `${CMS_REMOTE_SESSION_PREFIX}${data.userId}-${Date.now()}`
-
-  return { user, token, expiresAt }
+function buildMfaStateFromChallenge(
+  email: string,
+  challenge: AdminMfaChallengeResponse
+): MfaState {
+  return {
+    method: 'totp',
+    isRequired: true,
+    isVerified: false,
+    accountLabel: email,
+    lastSentAt: null,
+    failedAttempts: 0,
+    isLocked: false,
+    lockUntil: null,
+    challengeUuid: challenge.challengeUuid,
+    mfaMethod: challenge.mfaMethod,
+    challengeExpiresAt: challenge.expiresAt,
+    totpSecret: challenge.totpSecret,
+    otpauthUri: challenge.otpauthUri,
+    qrDataUrl: challenge.qrDataUrl,
+  }
 }
 
 async function loginWithRemoteApi(
@@ -68,8 +80,17 @@ async function loginWithRemoteApi(
     )
   }
 
-  const { data, meta } = await fetchAdminLogin(request)
-  return mapRemoteAdminLoginToLoginResponse(data, meta)
+  const challenge = await fetchAdminLogin(request)
+  const user = buildPendingAdminUser(request.email)
+  const mfaState = buildMfaStateFromChallenge(request.email, challenge)
+
+  return {
+    user,
+    token: '',
+    expiresAt: challenge.expiresAt,
+    requiresMfa: true,
+    mfaState,
+  }
 }
 
 async function loginWithMock(
@@ -85,6 +106,10 @@ async function loginWithMock(
 
   if (!user) {
     throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.')
+  }
+
+  if (user.role === 'ADMIN' && user.permissionApprovalStatus === 'PENDING') {
+    throw new AdminLoginApprovalPendingError()
   }
 
   const requiresMfa = user.role === 'ADMIN'
@@ -143,19 +168,28 @@ export async function login(
  * 토큰 검증
  */
 export async function validateToken(token: string): Promise<Omit<User, 'password'> | null> {
-  // Mock: 토큰에서 사용자 ID 추출
   await new Promise(resolve => setTimeout(resolve, 100))
 
+  if (typeof window === 'undefined') return null
+  const userStr = localStorage.getItem('auth_user')
+  if (!userStr) return null
+
+  let user: Omit<User, 'password'> | null = null
+  try {
+    user = JSON.parse(userStr) as Omit<User, 'password'>
+  } catch {
+    return null
+  }
+
+  if (!user?.isActive) return null
+
+  // 실 JWT(accessToken) — mock 접두사가 아니면 localStorage 사용자 신뢰
+  if (!token.startsWith('mock-jwt-token-') && !token.startsWith(CMS_REMOTE_SESSION_PREFIX)) {
+    return user
+  }
+
   if (token.startsWith(CMS_REMOTE_SESSION_PREFIX)) {
-    if (typeof window === 'undefined') return null
-    const userStr = localStorage.getItem('auth_user')
-    if (!userStr) return null
-    try {
-      const user = JSON.parse(userStr) as Omit<User, 'password'>
-      return user?.isActive ? user : null
-    } catch {
-      return null
-    }
+    return user
   }
 
   const match = token.match(/mock-jwt-token-(.+?)-/)
@@ -164,14 +198,14 @@ export async function validateToken(token: string): Promise<Omit<User, 'password
   }
 
   const userId = match[1]
-  const user = mockUsers.find(u => u.id === userId)
+  const mockUser = mockUsers.find(u => u.id === userId)
 
-  if (!user || !user.isActive) {
+  if (!mockUser || !mockUser.isActive) {
     return null
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, ...userWithoutPassword } = user
+  const { password, ...userWithoutPassword } = mockUser
   return userWithoutPassword
 }
 
@@ -281,19 +315,10 @@ export async function loginWithSocial(
   const socialId = `${provider}-${socialToken}`
 
   // 기존 매핑 확인
-  let userId = socialUserMap.get(socialId)
+  const userId = socialUserMap.get(socialId)
 
   if (!userId) {
-    // 새 사용자 생성 또는 기존 사용자 매칭 (Mock)
-    // 여기서는 첫 번째 개인 사용자를 매칭 (실제로는 소셜 정보로 사용자 찾기)
-    const existingUser = mockUsers.find(u => u.role === 'INDIVIDUAL' && u.isActive)
-
-    if (existingUser) {
-      userId = existingUser.id
-      socialUserMap.set(socialId, userId)
-    } else {
-      throw new Error('소셜 로그인에 실패했습니다. 계정이 없습니다.')
-    }
+    throw new SocialAccountNotLinkedError()
   }
 
   const user = mockUsers.find(u => u.id === userId)

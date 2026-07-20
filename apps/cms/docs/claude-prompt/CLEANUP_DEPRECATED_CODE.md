@@ -29,7 +29,21 @@ Phase 0.1.1에서 추가한 하위 호환성 코드(`@deprecated` 타입/함수)
 ### 4. 타입 정의 정리
 - `apps/cms/src/types/user.ts`에서 deprecated 타입/필드 제거
 - `apps/cms/src/shared/utils/permissions.ts`에서 deprecated 함수 제거
-- `apps/cms/src/shared/ui/role-badge.tsx`에서 deprecated 함수 제거
+- `apps/cms/src/shared/ui/role-labels.ts` — 역할 라벨 헬퍼만 유지 (`getRoleLabel` 등). 구 `role-badge.tsx` UI(`RoleBadge`/`RoleIcon`)는 삭제됨
+
+### 5. Legacy UI 삭제 완료 기록
+
+다음 API는 호환 alias를 포함해 삭제되었으므로 사용 가능한 컴포넌트로 안내하거나 복원하지 않습니다.
+
+| 삭제 항목 | Current 대체 |
+|----------|--------------|
+| `StatusBadge` / `StatusDisplay` (`shared/ui`) | `EditableStatusBadge`, `AppStatusBadge`, Current domain `*StatusBadge` |
+| `AppButton` / `FilterSearchButton` | `CmsButton` |
+| `SettlementStatusBadge` | `InstructorPaymentStatusBadge` |
+| `PermissionRejectModal` aliases | `PermissionModal` |
+| `AuthLoadingButton` | `LoadingButton` |
+| `StatusDropdownCell tagLayout="tag132"` | generic `style` 또는 `tagLayout="default"` |
+| `/design-system#legacy` 카탈로그 | Current `/design-system` 분류만 유지 |
 
 ## 작업 지침
 
@@ -62,6 +76,7 @@ Phase 0.1.1에서 추가한 하위 호환성 코드(`@deprecated` 타입/함수)
 - **타입 안전성 유지**: 모든 변경 후 TypeScript 컴파일 확인
 - **기능 보존**: 마이그레이션 후 동일한 기능이 작동해야 함
 - **하위 호환성 제거**: deprecated 코드는 완전히 제거 (별칭 유지 안 함)
+- **Legacy UI 재도입 금지**: 삭제 완료 기록의 이름·alias·`tag132` 옵션을 새 코드나 문서 예시에 추가하지 않음
 
 ### 예외 처리
 - Mock 데이터는 하위 호환성을 위해 일부 유지 가능 (테스트용)
@@ -74,6 +89,7 @@ Phase 0.1.1에서 추가한 하위 호환성 코드(`@deprecated` 타입/함수)
 - [ ] `AdminRole`, `AdminProgramRole` 타입 사용처 없음
 - [ ] deprecated 함수 호출 없음
 - [ ] deprecated 필드 접근 없음
+- [ ] 삭제된 Legacy UI import·alias·`tag132` 사용 없음
 - [ ] 모든 테스트 계정 정상 작동
 
 ## 예상 작업 시간

@@ -34,6 +34,7 @@ export function EconomyProgramApplicationEditorLeftColumn({
         structureLockedParagraphIds: vm.structureLockedParagraphIds,
         structureLockedAuthoringChoicePreview: true,
         programApplicationFormEconomyInstitution: true,
+        hiddenParagraphIds: vm.economyApplicationHiddenParagraphIds,
       }}
       headingDescriptionExtraClassName="paragraph-input-explanation-title"
     />

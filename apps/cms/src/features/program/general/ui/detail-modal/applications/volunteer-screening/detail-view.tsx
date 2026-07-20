@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from 'react'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
-import { CmsButton } from '@/shared/ui'
+import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { GeneralVolunteerApplicantBasicInfo } from './basic-info'
@@ -17,8 +18,10 @@ export type GeneralVolunteerApplicantDetailVariant = 'doc_screening' | 'doc_pass
 type DocScreeningDetailProps = {
   variant?: 'doc_screening'
   applicant: GeneralVolunteerApplicantRow
-  onDocumentReject: () => void
-  onDocumentApprove: () => void
+  onDocumentReject?: () => void
+  onDocumentApprove?: () => void
+  onCancelDocumentApproval?: () => void
+  onCancelDocumentRejection?: () => void
   openManagerDropdown: { rowId: string; manager: 'A' | 'B' } | null
   setOpenManagerDropdown: (value: { rowId: string; manager: 'A' | 'B' } | null) => void
   onManagerAEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
@@ -61,6 +64,12 @@ function isInterview2Props(
 export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerApplicantDetailViewProps) {
   const { applicant } = props
 
+  const interview2StatusTickRows = useMemo(
+    () => (props.variant === 'interview2' ? [applicant] : []),
+    [applicant, props.variant]
+  )
+  useGeneralInterview2EffectiveStatusTick(interview2StatusTickRows)
+
   const resolveAccessItem = useCallback(
     () => `${applicant.name} 봉사자 신청 정보`,
     [applicant.name]
@@ -93,7 +102,8 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
               type="button"
               variant="delete"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={onWithdrawActivity}
             >
               활동 포기
@@ -102,7 +112,8 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
               type="button"
               variant="delete"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={onInterviewFail}
             >
               면접 불합격
@@ -111,7 +122,8 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
               type="button"
               variant="secondary"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={onInterviewPass}
             >
               면접 합격
@@ -120,7 +132,8 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
               type="button"
               variant="primary"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={onOpenInterviewEvaluation}
             >
               면접 평가
@@ -162,7 +175,8 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
               type="button"
               variant="delete"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={onWithdrawActivity}
             >
               활동 포기
@@ -171,7 +185,8 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
               type="button"
               variant="secondary"
               size="large"
-              width={160}
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={onAssignInterview}
             >
               {assignInterviewLabel}
@@ -205,22 +220,69 @@ export function GeneralVolunteerApplicantDetailView(props: GeneralVolunteerAppli
   const {
     onDocumentReject,
     onDocumentApprove,
+    onCancelDocumentApproval,
+    onCancelDocumentRejection,
     openManagerDropdown,
     setOpenManagerDropdown,
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
   } = props
 
+  const isDocumentPassed = applicant.documentScreeningStatus === 'pass'
+  const isDocumentFailed = applicant.documentScreeningStatus === 'fail'
+
   return (
     <div className="general-volunteer-applicant-detail">
       <div className="general-volunteer-applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
-          <CmsButton type="button" variant="delete" size="large" width={160} onClick={onDocumentReject}>
-            서류 반려
-          </CmsButton>
-          <CmsButton type="button" variant="secondary" size="large" width={160} onClick={onDocumentApprove}>
-            서류 승인
-          </CmsButton>
+          {isDocumentPassed ? (
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
+              onClick={onCancelDocumentApproval}
+            >
+              승인 취소
+            </CmsButton>
+          ) : null}
+          {isDocumentFailed ? (
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
+              onClick={onCancelDocumentRejection}
+            >
+              반려 취소
+            </CmsButton>
+          ) : null}
+          {!isDocumentPassed && !isDocumentFailed ? (
+            <>
+              <CmsButton
+                type="button"
+                variant="delete"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                onClick={onDocumentReject}
+              >
+                서류 반려
+              </CmsButton>
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="large"
+                className="cms-button--action"
+                width={CMS_ACTION_BUTTON_WIDTH}
+                onClick={onDocumentApprove}
+              >
+                서류 승인
+              </CmsButton>
+            </>
+          ) : null}
           <PersonalInfoRevealButton
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}

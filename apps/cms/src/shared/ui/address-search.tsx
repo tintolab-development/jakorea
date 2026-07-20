@@ -3,11 +3,17 @@
  * @see useJusoAddressSearch — `VITE_ADDRESS_API_KEY` 또는 `VITE_JUSO_CONFM_KEY`, 선택 `VITE_JUSO_ADDRESS_API_URL`
  */
 
-import { Fragment, useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Flex, Pagination } from 'antd'
-import { readJusoConfmKeyFromEnv, useJusoAddressSearch, type JusoAddressItem } from '@/shared/hooks'
+import {
+  getCmsJusoMissingKeyMessage,
+  readJusoApiUrlFromEnv,
+  readJusoConfmKeyFromEnv,
+  useJusoAddressSearch,
+  type JusoAddressItem,
+} from '@/shared/hooks'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -17,6 +23,11 @@ import './address-search.css'
 const MODAL_SEARCH_PLACEHOLDER = '예) 마곡중앙로 171, 분당 주공, 백현동'
 
 const LIVE_SEARCH_DEBOUNCE_MS = 280
+const RESULT_LIST_SCROLL_END_THRESHOLD = 4
+
+function isResultListScrolledToEnd(el: HTMLElement): boolean {
+  return el.scrollHeight - el.scrollTop - el.clientHeight <= RESULT_LIST_SCROLL_END_THRESHOLD
+}
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -50,16 +61,20 @@ function suggestionPrimaryLine(item: JusoAddressItem): string {
 const ADDRESS_TIPS: { label: string; example: string }[] = [
   {
     label: '도로명 + 건물번호',
-    example: '예) 마곡중앙로 171, 제주 첨단로 242' },
+    example: '예) 마곡중앙로 171, 제주 첨단로 242',
+  },
   {
     label: '지역명(동/리) + 번지',
-    example: '예) 백현동 532, 제주 영평동 2181' },
+    example: '예) 백현동 532, 제주 영평동 2181',
+  },
   {
     label: '지역명(동/리) + 건물명(아파트명)',
-    example: '예) 분당 주공, 연수동 주공3차' },
+    example: '예) 분당 주공, 연수동 주공3차',
+  },
   {
     label: '사서함명 + 번호',
-    example: '예) 분당우체국사서함 1~100' },
+    example: '예) 분당우체국사서함 1~100',
+  },
 ]
 
 export interface AddressSearchProps extends Pick<
@@ -84,20 +99,26 @@ export function AddressSearch({
   disabled,
   className,
   confmKey: confmKeyProp,
-  onSelect }: AddressSearchProps) {
+  onSelect,
+}: AddressSearchProps) {
   const [open, setOpen] = useState(false)
   const [keyword, setKeyword] = useState('')
   const [page, setPage] = useState(1)
   const [hasQueried, setHasQueried] = useState(false)
   /** [검색] 후 카드에서 「영문보기」 펼침 키 */
   const [expandedEngKey, setExpandedEngKey] = useState<string | null>(null)
+  const resultListRef = useRef<HTMLUListElement>(null)
+  const [resultListAtEnd, setResultListAtEnd] = useState(false)
 
   const confmKey = confmKeyProp ?? readJusoConfmKeyFromEnv()
   const countPerPage = 10
 
   const { addresses, totalCount, loading, error, search, reset } = useJusoAddressSearch({
     confmKey,
-    countPerPage })
+    countPerPage,
+    apiUrl: readJusoApiUrlFromEnv(),
+    missingKeyMessage: getCmsJusoMissingKeyMessage(),
+  })
 
   const closeModal = useCallback(() => {
     setOpen(false)
@@ -147,13 +168,83 @@ export function AddressSearch({
     closeModal()
   }
 
+  const syncResultListScrollEnd = useCallback(() => {
+    const el = resultListRef.current
+    if (!el) {
+      setResultListAtEnd(false)
+      return
+    }
+    setResultListAtEnd(isResultListScrolledToEnd(el))
+  }, [])
+
+  const handleResultListScroll = useCallback(() => {
+    syncResultListScrollEnd()
+  }, [syncResultListScrollEnd])
+
   const showSuggestList = addresses.length > 0
   const trimmedKeyword = keyword.trim()
   const effectiveHasQueried = hasQueried && trimmedKeyword.length > 0
   const showNoResultsMessage = effectiveHasQueried && !loading && !error && addresses.length === 0
   const showTip = trimmedKeyword.length === 0
 
-  const showManyResultsNotice = !error && trimmedKeyword.length > 0 && totalCount >= 10
+  /** 검색결과 11건 이상일 때만 「검색결과가 많습니다」 안내 */
+  const showManyResultsNotice = effectiveHasQueried && !error && !loading && totalCount >= 11
+  /** 4건 이상: 모달 max 800px · 3건 이하: compact 469 + 목록 333px */
+  const isResultsTall = effectiveHasQueried && showSuggestList && !loading && totalCount >= 4
+  /** 검색결과 3건 이하: 목록 max 333px */
+  const isSparseResults =
+    effectiveHasQueried && showSuggestList && !loading && totalCount > 0 && totalCount <= 3
+  const modalClassName = [
+    'address-search-modal',
+    isResultsTall ? 'address-search-modal--results-tall' : 'address-search-modal--compact',
+    effectiveHasQueried && showSuggestList ? 'address-search-modal--show-results' : '',
+    isSparseResults ? 'address-search-modal--sparse-results' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  /** 3건 이하: 즉시 · 4건+: 목록 스크롤 끝 */
+  const showPagination =
+    effectiveHasQueried &&
+    showSuggestList &&
+    !loading &&
+    !error &&
+    (isSparseResults || resultListAtEnd)
+
+  useEffect(() => {
+    if (!open || !effectiveHasQueried || !showSuggestList) {
+      setResultListAtEnd(false)
+      return
+    }
+
+    const el = resultListRef.current
+    if (!el) return
+
+    const raf = requestAnimationFrame(() => syncResultListScrollEnd())
+    const ro = new ResizeObserver(() => syncResultListScrollEnd())
+    ro.observe(el)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+    }
+  }, [
+    open,
+    effectiveHasQueried,
+    showSuggestList,
+    addresses,
+    expandedEngKey,
+    isResultsTall,
+    syncResultListScrollEnd,
+  ])
+
+  useEffect(() => {
+    const el = resultListRef.current
+    if (el) {
+      el.scrollTop = 0
+    }
+    setResultListAtEnd(false)
+  }, [page, keyword, effectiveHasQueried])
 
   return (
     <>
@@ -182,7 +273,7 @@ export function AddressSearch({
         onCancel={closeModal}
         title="주소 검색"
         width={600}
-        className="address-search-modal"
+        className={modalClassName}
       >
         <div className="address-search__body">
           <Flex className="address-search__search-row" gap={10} align="center">
@@ -201,12 +292,35 @@ export function AddressSearch({
                 inputSize="medium"
                 width="100%"
               />
+              {showSuggestList && !effectiveHasQueried ? (
+                <ul
+                  className="address-search__suggest-list"
+                  role="listbox"
+                  aria-label="주소 자동완성"
+                >
+                  {addresses.map(item => {
+                    const line = suggestionPrimaryLine(item)
+                    const key = `${item.roadAddr}-${item.zipNo}-${item.jibunAddr}-${line}`
+                    return (
+                      <li key={key} className="address-search__suggest-item">
+                        <button
+                          type="button"
+                          className="address-search__suggest-btn"
+                          role="option"
+                          onClick={() => handleSelect(item)}
+                        >
+                          {highlightKeyword(line, keyword)}
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              ) : null}
             </span>
             <CmsButton
               type="button"
               variant="primary"
               size="medium"
-              className="address-search__search-btn"
               onClick={() => void runSearch(1)}
             >
               검색
@@ -233,12 +347,21 @@ export function AddressSearch({
           </section>
 
           <div
-            className={`address-search__results${
-              !error && !trimmedKeyword && !showSuggestList ? ' address-search__results--idle' : ''
-            }`}
+            className={[
+              'address-search__results',
+              !error && !trimmedKeyword && !showSuggestList && !showNoResultsMessage
+                ? 'address-search__results--idle'
+                : '',
+              effectiveHasQueried && (showSuggestList || showNoResultsMessage)
+                ? 'address-search__results--queried'
+                : '',
+              showNoResultsMessage ? 'address-search__results--no-results' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
           >
             {error ? (
-              <div className="address-search__result-empty">주소 검색에 실패했습니다.</div>
+              <div className="address-search__result-error">주소 검색에 실패했습니다.</div>
             ) : (
               <>
                 {showManyResultsNotice ? (
@@ -247,10 +370,7 @@ export function AddressSearch({
                       <strong className="address-search__many-results-em">
                         검색결과가 많습니다.
                       </strong>
-                      <span className="address-search__many-results-text">
-                        {' '}
-                        검색어에 아래와 같은 조합을 이용하시면 더욱 정확한 결과가 검색됩니다.
-                      </span>
+                      검색어에 아래와 같은 조합을 이용하시면 더욱 정확한 결과가 검색됩니다.
                     </p>
                     <p className="address-search__many-results-line2">
                       {`'도로명+건물번호', '지역명+지번', '지역명+건물명(아파트명)', '사서함명+번호'`}
@@ -258,7 +378,12 @@ export function AddressSearch({
                   </div>
                 ) : null}
                 {showSuggestList && effectiveHasQueried ? (
-                  <ul className="address-search__result-card-list" aria-label="주소 검색 결과">
+                  <ul
+                    ref={resultListRef}
+                    className="address-search__result-card-list"
+                    aria-label="주소 검색 결과"
+                    onScroll={handleResultListScroll}
+                  >
                     {addresses.map(item => {
                       const cardKey = `${item.zipNo}-${item.roadAddr}-${item.jibunAddr}`
                       const engOpen = expandedEngKey === cardKey
@@ -329,33 +454,22 @@ export function AddressSearch({
                     })}
                   </ul>
                 ) : null}
-                {showSuggestList && !effectiveHasQueried ? (
-                  <ul
-                    className="address-search__suggest-list"
-                    role="listbox"
-                    aria-label="주소 자동완성"
-                  >
-                    {addresses.map(item => {
-                      const line = suggestionPrimaryLine(item)
-                      const key = `${item.roadAddr}-${item.zipNo}-${item.jibunAddr}-${line}`
-                      return (
-                        <li key={key} className="address-search__suggest-item">
-                          <button
-                            type="button"
-                            className="address-search__suggest-btn"
-                            onClick={() => handleSelect(item)}
-                          >
-                            {highlightKeyword(line, keyword)}
-                          </button>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                ) : null}
                 {showNoResultsMessage ? (
-                  <div className="address-search__result-empty">검색 결과가 없습니다.</div>
+                  <>
+                    <div className="address-search__search-hint-notice" role="status">
+                      <p className="address-search__search-hint-line1">
+                        검색어에 아래와 같은 조합을 이용하시면 더욱 정확한 결과가 검색됩니다.
+                      </p>
+                      <p className="address-search__search-hint-line2">
+                        {`'도로명+건물번호', '지역명+지번', '지역명+건물명(아파트명)', '사서함명+번호'`}
+                      </p>
+                    </div>
+                    <div className="address-search__result-empty" role="status">
+                      {'검색 결과가 없습니다.\n검색어를 확인한 후 다시 시도해 주세요.'}
+                    </div>
+                  </>
                 ) : null}
-                {effectiveHasQueried && totalCount > countPerPage && showSuggestList ? (
+                {showPagination ? (
                   <div className="address-search__pagination">
                     <Pagination
                       size="small"

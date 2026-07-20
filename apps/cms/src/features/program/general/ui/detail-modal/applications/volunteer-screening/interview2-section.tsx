@@ -1,10 +1,18 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Table } from 'antd'
+import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton } from '@/shared/ui'
-import { ConfirmModal } from '@/shared/ui/confirm-modal'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
-import { buildGeneralVolunteerInterview2FilterRows } from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import {
+  buildGeneralVolunteerInterview2CalendarFilterRows,
+  buildGeneralVolunteerInterview2FilterRows,
+} from '@/features/program/general/lib/volunteer-doc-screening-filter-fields'
+import {
+  screeningInterview2ListTitle,
+  type ScreeningSubjectKind,
+} from '@/features/program/general/lib/screening-subject-kind'
 import { GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X } from './interview2-columns'
 import {
   useGeneralVolunteerApplicantDetail,
@@ -12,20 +20,37 @@ import {
 } from './use-detail'
 import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import { GeneralVolunteerInterviewEvaluationModal } from './interview-evaluation-modal'
+import { GeneralVolunteerInterview2BulkFailCompleteModal } from './general-volunteer-interview2-bulk-fail-complete-modal'
+import { GeneralVolunteerInterview2BulkFailModal } from './general-volunteer-interview2-bulk-fail-modal'
 import { GeneralVolunteerInterview2BulkPassModal } from './general-volunteer-interview2-bulk-pass-modal'
+import { GeneralVolunteerInterview2FailCompleteModal } from './general-volunteer-interview2-fail-complete-modal'
+import { GeneralVolunteerInterview2FailModal } from './general-volunteer-interview2-fail-modal'
+import { GeneralVolunteerInterview2PassCompleteModal } from './general-volunteer-interview2-pass-complete-modal'
+import { GeneralVolunteerInterview2PassModal } from './general-volunteer-interview2-pass-modal'
+import { GeneralVolunteerInterview2CalendarView } from './general-volunteer-interview2-calendar-view'
+import { GeneralParticipantApplicantDetailView } from '../participant-screening/participant-applicant-detail-view'
 import { useGeneralVolunteerInterview2 } from './use-interview2'
+import { getGeneralVolunteerActivityWithdrawScheduleOptions } from '@/features/program/general/lib/general-volunteer-activity-withdraw'
+import { ActivityWithdrawScheduleModal } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import './volunteer-screening.css'
 import './interview2-section.css'
 
 export function GeneralVolunteerInterview2Section({
+  program,
   programId,
+  subjectKind = 'volunteer',
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: {
+  program: Program
   programId: string
+  subjectKind?: ScreeningSubjectKind
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
 }) {
+  const listTitle = screeningInterview2ListTitle(subjectKind)
+
   const {
     list,
     pendingFilters,
@@ -34,6 +59,10 @@ export function GeneralVolunteerInterview2Section({
     tableData,
     columns,
     count,
+    viewMode,
+    handleViewCalendar,
+    handleViewList,
+    calendarEvents,
     selectedRowKeys,
     setSelectedRowKeys,
     handleBulkFail,
@@ -42,30 +71,53 @@ export function GeneralVolunteerInterview2Section({
     closeBulkPassModal,
     confirmBulkPass,
     bulkPassCount,
+    bulkFailModalOpen,
+    closeBulkFailModal,
+    confirmBulkFail,
+    bulkFailCount,
+    bulkFailCompleteCount,
+    closeBulkFailCompleteModal,
+    passModalVolunteer,
+    failModalVolunteer,
+    closePassModal,
+    closeFailModal,
+    handlePassModalConfirm,
+    handleFailModalConfirm,
+    passCompleteVolunteerName,
+    failCompleteVolunteer,
+    closePassCompleteModal,
+    closeFailCompleteModal,
     requestWithdrawActivity,
     cancelWithdrawActivity,
     confirmWithdrawActivity,
     withdrawTarget,
     requestInterview2Pass,
     requestInterview2Fail,
-    interview2Confirm,
-    closeInterview2Confirm,
     openEvaluationModal,
     closeEvaluationModal,
     evaluationTarget,
     saveInterviewEvaluation,
     filterRowsSource,
-  } = useGeneralVolunteerInterview2({ programId })
+  } = useGeneralVolunteerInterview2({ programId, subjectKind })
+
+  const activityWithdrawScheduleOptions = useMemo(
+    () => getGeneralVolunteerActivityWithdrawScheduleOptions(program),
+    [program]
+  )
 
   const filterRows = useMemo(
-    () => buildGeneralVolunteerInterview2FilterRows(filterRowsSource),
-    [filterRowsSource]
+    () =>
+      viewMode === 'calendar'
+        ? buildGeneralVolunteerInterview2CalendarFilterRows(filterRowsSource, subjectKind)
+        : buildGeneralVolunteerInterview2FilterRows(filterRowsSource, subjectKind),
+    [filterRowsSource, subjectKind, viewMode]
   )
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
     programId,
     list,
     variant: 'interview2',
+    subjectKind,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange,
   })
@@ -107,34 +159,14 @@ export function GeneralVolunteerInterview2Section({
     openEvaluationModal(selectedApplicant)
   }, [openEvaluationModal, selectedApplicant])
 
-  const interview2ConfirmModal =
-    interview2Confirm != null ? (
-      <ConfirmModal
-        open
-        title={interview2Confirm.title}
-        content={interview2Confirm.content}
-        confirmText={interview2Confirm.confirmText}
-        cancelText="취소"
-        danger={interview2Confirm.danger}
-        onConfirm={() => {
-          interview2Confirm.onConfirm()
-          closeInterview2Confirm()
-        }}
-        onCancel={closeInterview2Confirm}
-      />
-    ) : null
-
-  const withdrawConfirmModal = withdrawTarget ? (
-    <ConfirmModal
-      open
-      title="활동 포기"
-      content={`${withdrawTarget.name} 봉사자를 활동 포기 처리하시겠습니까?`}
-      confirmText="활동 포기"
-      danger
-      onConfirm={confirmWithdrawActivity}
+  const withdrawConfirmModal = (
+    <ActivityWithdrawScheduleModal
+      open={withdrawTarget != null}
+      scheduleOptions={activityWithdrawScheduleOptions}
       onCancel={cancelWithdrawActivity}
+      onConfirm={confirmWithdrawActivity}
     />
-  ) : null
+  )
 
   const evaluationModal =
     evaluationTarget != null ? (
@@ -155,7 +187,87 @@ export function GeneralVolunteerInterview2Section({
     />
   )
 
+  const bulkFailModal = (
+    <GeneralVolunteerInterview2BulkFailModal
+      open={bulkFailModalOpen}
+      selectionCount={bulkFailCount}
+      onCancel={closeBulkFailModal}
+      onConfirm={confirmBulkFail}
+    />
+  )
+
+  const passFailModals = (
+    <>
+      <GeneralVolunteerInterview2PassModal
+        open={passModalVolunteer != null}
+        volunteerName={passModalVolunteer?.name ?? ''}
+        onCancel={closePassModal}
+        onConfirm={handlePassModalConfirm}
+      />
+      <GeneralVolunteerInterview2FailModal
+        open={failModalVolunteer != null}
+        volunteerName={failModalVolunteer?.name ?? ''}
+        onCancel={closeFailModal}
+        onConfirm={handleFailModalConfirm}
+      />
+    </>
+  )
+
+  const bulkFailCompleteModal = (
+    <GeneralVolunteerInterview2BulkFailCompleteModal
+      open={bulkFailCompleteCount != null}
+      selectionCount={bulkFailCompleteCount ?? 0}
+      onClose={closeBulkFailCompleteModal}
+    />
+  )
+
+  const completeModals = (
+    <>
+      <GeneralVolunteerInterview2PassCompleteModal
+        open={passCompleteVolunteerName != null}
+        volunteerName={passCompleteVolunteerName ?? ''}
+        onClose={closePassCompleteModal}
+      />
+      <GeneralVolunteerInterview2FailCompleteModal
+        open={failCompleteVolunteer != null}
+        volunteerName={failCompleteVolunteer?.name ?? ''}
+        failReason={failCompleteVolunteer?.reason ?? ''}
+        onClose={closeFailCompleteModal}
+      />
+      {bulkFailCompleteModal}
+    </>
+  )
+
   if (selectedApplicant) {
+    if (subjectKind === 'participant') {
+      return (
+        <>
+          <GeneralParticipantApplicantDetailView
+            program={program}
+            applicantId={selectedApplicant.id}
+            screeningStage="interview2"
+            onRegisterApplicantCloseHandler={onRegisterApplicantCloseHandler}
+            onApplicantDetailMetaChange={meta => {
+              if (!meta) {
+                onVolunteerApplicantDetailMetaChange?.(null)
+                return
+              }
+              onVolunteerApplicantDetailMetaChange?.({
+                title: meta.title,
+                breadcrumbLabel: meta.breadcrumbLabel,
+              })
+            }}
+          />
+          {passFailModals}
+          {withdrawConfirmModal}
+          {evaluationModal}
+          {bulkPassModal}
+          {bulkFailModal}
+          {completeModals}
+        </>
+      )
+    }
+
     return (
       <>
         <GeneralVolunteerApplicantDetailView
@@ -166,68 +278,133 @@ export function GeneralVolunteerInterview2Section({
           onInterviewPass={handleDetailInterviewPass}
           onOpenInterviewEvaluation={handleDetailOpenEvaluation}
         />
-        {interview2ConfirmModal}
+        {passFailModals}
         {withdrawConfirmModal}
         {evaluationModal}
         {bulkPassModal}
+        {bulkFailModal}
+        {completeModals}
       </>
     )
   }
 
   return (
-    <div className="general-volunteer-interview2 applicant-details">
-      {interview2ConfirmModal}
+    <div
+      className={[
+        'general-volunteer-interview2 applicant-details',
+        viewMode === 'calendar' ? 'general-program-detail--calendar-view' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {passFailModals}
       {withdrawConfirmModal}
       {evaluationModal}
       {bulkPassModal}
+      {bulkFailModal}
+      {completeModals}
       <FilterTableLayout
         bordered={false}
-        className="general-volunteer-interview2__filter-layout"
+        contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
+        className="general-volunteer-interview2__filter-layout applicant-details__filter-table-layout"
         rows={filterRows}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title={
           <div className="general-volunteer-interview2__toolbar-main">
-            <span className="general-volunteer-interview2__toolbar-title">
-              봉사자 2차 면접 대상자 목록
-            </span>
+            <span className="general-volunteer-interview2__toolbar-title">{listTitle}</span>
             <span className="general-volunteer-interview2__toolbar-count">{count}건</span>
           </div>
         }
         actions={
-          <div className="general-volunteer-screening__actions">
-            <CmsButton type="button" variant="delete" size="large" width={160} onClick={handleBulkFail}>
+          <div className="general-volunteer-interview2__actions">
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="large"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
+              onClick={handleBulkFail}
+            >
               선택 불합격
             </CmsButton>
-            <CmsButton type="button" variant="secondary" size="large" width={160} onClick={handleBulkPass}>
+            <CmsButton
+              type="button"
+              variant="secondary"
+              size="large"
+              className="cms-button--action"
+              width={CMS_ACTION_BUTTON_WIDTH}
+              onClick={handleBulkPass}
+            >
               선택 합격
             </CmsButton>
+            {viewMode === 'list' ? (
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="large"
+                style={{ minWidth: 180 }}
+                icon={<CalendarOutlined />}
+                onClick={handleViewCalendar}
+              >
+                캘린더 뷰로 보기
+              </CmsButton>
+            ) : (
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="large"
+                style={{ minWidth: 180 }}
+                icon={<UnorderedListOutlined />}
+                onClick={handleViewList}
+              >
+                리스트 뷰로 보기
+              </CmsButton>
+            )}
           </div>
         }
+        excelExport={{
+          columns,
+          data: tableData,
+        }}
       >
-        <div className="general-volunteer-interview2__table-wrap">
-          <Table<GeneralVolunteerApplicantRow>
-            rowKey="id"
-            className="cms-data-table cms-data-table--fluid clickable-table"
-            columns={columns}
-            dataSource={tableData}
-            pagination={false}
-            tableLayout="fixed"
-            scroll={{ x: GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X }}
-            rowSelection={{
-              selectedRowKeys,
-              onChange: keys => setSelectedRowKeys(keys),
-            }}
-            onRow={record => ({
-              onClick: e => handleRowClick(record, e),
-              style: {
-                cursor: record.interviewAssignmentStatus === 'withdrawn' ? 'default' : 'pointer',
-              },
-            })}
-          />
-        </div>
+        {viewMode === 'list' ? (
+          <div className="general-volunteer-interview2__table-wrap">
+            <Table<GeneralVolunteerApplicantRow>
+              rowKey="id"
+              className="cms-data-table cms-data-table--fluid clickable-table"
+              columns={columns}
+              dataSource={tableData}
+              pagination={false}
+              tableLayout="fixed"
+              scroll={{ x: GENERAL_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X }}
+              rowSelection={{
+                selectedRowKeys,
+                onChange: keys => setSelectedRowKeys(keys),
+              }}
+              onRow={record => ({
+                onClick: e => handleRowClick(record, e),
+                style: {
+                  cursor: record.interviewAssignmentStatus === 'withdrawn' ? 'default' : 'pointer',
+                },
+              })}
+            />
+          </div>
+        ) : (
+          <div className="general-volunteer-interview2__calendar-container">
+            <GeneralVolunteerInterview2CalendarView
+              events={calendarEvents}
+              selectedRowKeys={selectedRowKeys}
+              onSelectionChange={setSelectedRowKeys}
+              onItemClick={openApplicantDetail}
+            />
+          </div>
+        )}
       </FilterTableLayout>
+      {viewMode === 'calendar' ? (
+        <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />
+      ) : null}
     </div>
   )
 }

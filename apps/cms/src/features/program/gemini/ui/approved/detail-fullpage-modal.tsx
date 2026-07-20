@@ -1,27 +1,31 @@
-import { useCallback } from 'react'
-import dayjs from 'dayjs'
+import { useCallback, useMemo } from 'react'
 import { Typography } from 'antd'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
 import { DetailModalSidebar } from '@/shared/ui/detail-modal-sidebar'
 import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import {
   LnbIconApplicants,
+  LnbIconManagers,
   LnbIconProjectInfo,
 } from '@/features/program/general/ui/detail-modal/program-detail-lnb-icons'
+import { useToday } from '../../hooks/use-today'
 import { GEMINI_RECRUITMENT_ADD_PARAM } from '../../lib/recruitment/add-url'
 import {
   GEMINI_RECRUITMENT_EDIT_PARAM,
   GEMINI_RECRUITMENT_ID_PARAM,
   GEMINI_RECRUITMENT_LNB_PARAM,
 } from '../../lib/recruitment/detail-url'
+import { buildGeminiApprovedTrainingBreadcrumbItems } from '../../lib/approved/detail-breadcrumb'
 import {
   GEMINI_APPROVED_TRAINING_ID_PARAM,
   GEMINI_APPROVED_TRAINING_LNB_PARAM,
   parseGeminiApprovedTrainingDetailLnb,
   type GeminiApprovedTrainingDetailLnbKey,
 } from '../../lib/approved/detail-url'
+import { formatTrainingDatetimeDisplay } from '../../lib/approved/format-display'
 import { getGeminiApprovedTrainingDetail } from '../../model/approved/detail-mock'
 import { GeminiApprovedTrainingDetailInstructorApplicationTab } from './detail-instructor-application-tab'
 import { GeminiApprovedTrainingDetailProgramInfoTab } from './detail-program-info-tab'
@@ -31,14 +35,8 @@ import '../detail/fullpage-modal.css'
 const SIDEBAR_ITEMS: DetailModalSidebarNavItem[] = [
   { key: 'info', label: '프로그램 정보', icon: <LnbIconProjectInfo /> },
   { key: 'instructors', label: '강사 신청 목록', icon: <LnbIconApplicants /> },
+  { key: 'managers', label: '담당자 정보', icon: <LnbIconManagers /> },
 ]
-
-const KO_DOW = ['일', '월', '화', '수', '목', '금', '토'] as const
-
-function formatTitleDate(rawDate: string): string {
-  const x = dayjs(rawDate)
-  return `${x.format('YYYY. MM. DD')}(${KO_DOW[x.day()]})`
-}
 
 export function GeminiApprovedTrainingDetailFullPageModal({
   approvedTrainingId,
@@ -47,12 +45,29 @@ export function GeminiApprovedTrainingDetailFullPageModal({
   approvedTrainingId: string
   onClose: () => void
 }) {
-  const { showAlert } = useCmsAlert()
+  const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeLnb = parseGeminiApprovedTrainingDetailLnb(
     searchParams.get(GEMINI_APPROVED_TRAINING_LNB_PARAM)
   )
+  const todayKey = useToday()
   const detail = getGeminiApprovedTrainingDetail(approvedTrainingId)
+
+  const detailTitle = detail
+    ? detail.instructorAssigned
+      ? `${detail.institutionName} (${formatTrainingDatetimeDisplay(detail)})`
+      : detail.institutionName
+    : '승인 연수 상세'
+
+  const headerBreadcrumbItems = useMemo(() => {
+    return buildGeminiApprovedTrainingBreadcrumbItems({
+      pathname: location.pathname,
+      searchParams,
+      approvedTrainingId,
+      recruitmentTitle: detail?.recruitmentTitle ?? '승인 연수 상세',
+      activeLnb,
+    })
+  }, [activeLnb, approvedTrainingId, detail?.recruitmentTitle, location.pathname, searchParams])
 
   const setActiveLnb = useCallback(
     (lnb: GeminiApprovedTrainingDetailLnbKey) => {
@@ -74,59 +89,48 @@ export function GeminiApprovedTrainingDetailFullPageModal({
 
   const handleSidebarSelectTop = useCallback(
     (key: string) => {
-      if (key === 'info' || key === 'instructors') {
+      if (key === 'info' || key === 'instructors' || key === 'managers') {
         setActiveLnb(key)
       }
     },
     [setActiveLnb]
   )
 
-  const handlePrivateInfoClick = useCallback(() => {
-    showAlert({
-      title: '안내',
-      content: '개인정보 상세보기 기능은 준비 중입니다.',
-    })
-  }, [showAlert])
-
   return (
     <DetailFullPageModal
       open={Boolean(approvedTrainingId)}
       onClose={onClose}
-      title={
-        detail ? `${detail.institutionName} (${formatTitleDate(detail.trainingDate)})` : '승인 연수 상세'
-      }
+      title={detailTitle}
+      headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className="program-detail-fullpage-modal gemini-recruitment-detail-fullpage-modal"
       sidebar={
-        <DetailModalSidebar
-          navAriaLabel="승인 연수 상세 메뉴"
-          items={SIDEBAR_ITEMS}
-          activeKey={activeLnb}
-          expandedGroupKeys={[]}
-          onSelectTop={handleSidebarSelectTop}
-          onSelectChild={() => undefined}
-        />
-      }
-    >
-      {!detail ? (
-        <Typography.Text type="secondary">승인 연수 정보를 찾을 수 없습니다.</Typography.Text>
-      ) : (
-        <>
-          {activeLnb === 'info' ? (
-            <>
-              <div className="gemini-recruitment-detail__header-actions program-detail-fullpage-modal__header-actions">
-                <CmsButton variant="primary" size="large" onClick={handlePrivateInfoClick}>
-                  개인정보 상세보기
-                </CmsButton>
+          <DetailModalSidebar
+            navAriaLabel="승인 연수 상세 메뉴"
+            items={SIDEBAR_ITEMS}
+            activeKey={activeLnb}
+            expandedGroupKeys={[]}
+            onSelectTop={handleSidebarSelectTop}
+            onSelectChild={() => undefined}
+          />
+        }
+      >
+        {!detail ? (
+          <Typography.Text type="secondary">승인 연수 정보를 찾을 수 없습니다.</Typography.Text>
+        ) : (
+          <>
+            {activeLnb === 'info' ? (
+              <GeminiApprovedTrainingDetailProgramInfoTab detail={detail} todayKey={todayKey} />
+            ) : activeLnb === 'instructors' ? (
+              <GeminiApprovedTrainingDetailInstructorApplicationTab
+                approvedTrainingId={approvedTrainingId}
+              />
+            ) : (
+              <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
+                <ProgramManagersTab programId={approvedTrainingId} maskSensitive />
               </div>
-              <GeminiApprovedTrainingDetailProgramInfoTab detail={detail} />
-            </>
-          ) : (
-            <GeminiApprovedTrainingDetailInstructorApplicationTab
-              approvedTrainingId={approvedTrainingId}
-            />
-          )}
-        </>
-      )}
+            )}
+          </>
+        )}
     </DetailFullPageModal>
   )
 }

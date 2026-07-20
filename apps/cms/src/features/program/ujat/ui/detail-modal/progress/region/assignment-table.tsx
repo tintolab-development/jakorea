@@ -86,8 +86,9 @@ export function RegionAssignmentTable({ data }: { data: RegionAssignmentTableDat
                 </th>
                 {row.cells.slice(0, columns.length).map((cell, cellIndex) => {
                   const column = columns[cellIndex]
-                  const isBlockedEmpty =
-                    cell.kind === 'empty' && (cell.blockedEmpty || column?.isBlockedDate)
+                  const isBlockedCell =
+                    column?.isBlockedDate ||
+                    (cell.kind === 'empty' && cell.blockedEmpty)
 
                   return (
                     <td
@@ -96,7 +97,7 @@ export function RegionAssignmentTable({ data }: { data: RegionAssignmentTableDat
                         'cross-table__cell',
                         'cross-table__cell--data',
                         'ujat-region-assignment-table__data-cell',
-                        isBlockedEmpty ? 'ujat-region-assignment-table__data-cell--blocked' : '',
+                        isBlockedCell ? 'ujat-region-assignment-table__data-cell--blocked' : '',
                       ]
                         .filter(Boolean)
                         .join(' ')}

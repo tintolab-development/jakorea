@@ -15,8 +15,18 @@ import {
 } from '@/features/program/general/lib/registration-local-save'
 import { PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS } from '@/features/template/lib/program-registration-survey-items'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
+import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
+import type { GeneralProgressTabKey } from '@/features/program/general/lib/progress-tabs'
+import {
+  programHasGeneralSatisfactionSurvey,
+  GENERAL_SATISFACTION_NAV_TAB,
+} from '@/features/program/general/lib/survey-audience'
 
-export type GeneralSurveyMenuItem = { key: GeneralProgramSurveyMenuKey; label: string }
+export type GeneralSurveyNavKey = GeneralProgramSurveyMenuKey | typeof GENERAL_SATISFACTION_NAV_TAB
+
+export type GeneralSurveyMenuItem = { key: GeneralSurveyNavKey; label: string }
+
+export type GeneralProgressMenuItem = { tab: GeneralProgressTabKey; label: string }
 
 const SURVEY_MENU_LABELS: Record<GeneralProgramSurveyMenuKey, string> =
   PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS
@@ -28,7 +38,8 @@ const CATEGORY_TO_PARTICIPANT: Record<ProgramCategory, GeneralProgramParticipant
   volunteer: 'volunteer',
 }
 
-export function isGeneralProgramId(programId: string): boolean {
+export function isGeneralProgramId(programId: string, knownPrograms?: readonly Program[]): boolean {
+  if (knownPrograms?.some(p => p.id === programId)) return true
   return (
     getGeneralPrograms().some(p => p.id === programId) ||
     programId.startsWith(GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX)
@@ -45,14 +56,26 @@ export function getGeneralParticipantTypes(program: Program): GeneralProgramPart
 }
 
 export function hasGeneralInstructorApplications(program: Program): boolean {
-  const types = getGeneralParticipantTypes(program)
-  if (types.includes('teacher_instructor')) return true
-  /** 기관(학교) 신청 프로그램은 기관 신청 목록과 함께 강사 신청 목록 LNB 노출 */
-  return types.includes('school_institution')
+  return getGeneralParticipantTypes(program).includes('teacher_instructor')
 }
 
 export function hasGeneralVolunteerApplications(program: Program): boolean {
   return getGeneralParticipantTypes(program).includes('volunteer')
+}
+
+/** 참여자(개인)·기관 신청 목록 LNB — school_institution 또는 individual 포함 시 */
+export function hasGeneralParticipantApplications(program: Program): boolean {
+  const types = getGeneralParticipantTypes(program)
+  return types.includes('individual') || types.includes('school_institution')
+}
+
+/** true면 개인 참여자 신청 LNB에 면접 단계 2뎁스 노출 */
+export function getGeneralParticipantInterviewEnabled(program: Program): boolean {
+  if (!isGeneralIndividualProgram(program)) return false
+  if (program.generalParticipantInterviewEnabled != null) {
+    return program.generalParticipantInterviewEnabled
+  }
+  return program.generalCommonInfo?.participantRecruitmentInfo?.interviewEnabled === true
 }
 
 /** true면 봉사자 신청 LNB에 면접 단계 2뎁스 노출 */
@@ -68,8 +91,20 @@ export function getGeneralVolunteerInterviewEnabled(program: Program): boolean {
 }
 
 export function getGeneralSurveyMenuItems(program: Program): GeneralSurveyMenuItem[] {
-  const keys = program.generalSurveyMenuKeys ?? []
-  return keys.map(key => ({ key, label: SURVEY_MENU_LABELS[key] }))
+  const keys = normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys ?? [])
+  const items: GeneralSurveyMenuItem[] = []
+
+  if (keys.includes('survey')) {
+    items.push({ key: 'survey', label: SURVEY_MENU_LABELS.survey })
+  }
+  if (programHasGeneralSatisfactionSurvey(program)) {
+    items.push({ key: GENERAL_SATISFACTION_NAV_TAB, label: '만족도조사' })
+  }
+  if (keys.includes('lecture_evaluation')) {
+    items.push({ key: 'lecture_evaluation', label: SURVEY_MENU_LABELS.lecture_evaluation })
+  }
+
+  return items
 }
 
 /** LNB·breadcrumb — 기관 대분류 프로그램 */
@@ -83,4 +118,39 @@ export function getGeneralParticipantApplicationsLnbLabel(program: Program): str
   return isGeneralIndividualProgram(program)
     ? GENERAL_PARTICIPANT_APPLICATIONS_LNB_LABEL
     : GENERAL_ORGANIZATION_APPLICATIONS_LNB_LABEL
+}
+
+/** 프로그램 진행 현황 LNB 2depth — 참여자 유형·개인 대분류에 따라 항목 구성 */
+export function getGeneralProgressMenuItems(program: Program): GeneralProgressMenuItem[] {
+  const types = getGeneralParticipantTypes(program)
+  const isIndividual = isGeneralIndividualProgram(program)
+  const items: GeneralProgressMenuItem[] = []
+
+  if (types.includes('school_institution') && !isIndividual) {
+    items.push({
+      tab: 'progress_participants',
+      label: '참여 기관',
+    })
+  }
+  if (types.includes('individual') && isIndividual) {
+    items.push({
+      tab: 'progress_participants',
+      label: '참여자',
+    })
+  }
+  if (types.includes('teacher_instructor')) {
+    items.push({ tab: 'progress_instructors', label: '참여 강사' })
+  }
+  if (types.includes('volunteer')) {
+    items.push({ tab: 'progress_volunteers', label: '참여 봉사자' })
+  }
+  if (isIndividual) {
+    items.push(
+      { tab: 'progress_attendance', label: '출석 관리' },
+      { tab: 'progress_assignments', label: '과제 관리' },
+      { tab: 'progress_posts', label: '게시글' }
+    )
+  }
+
+  return items
 }

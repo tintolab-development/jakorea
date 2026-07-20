@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Divider, Table } from 'antd'
+import { Alert, Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   CalendarOutlined,
@@ -11,6 +11,7 @@ import {
 import dayjs from 'dayjs'
 import { Button } from 'antd'
 import { TableFilterGroup, type FilterFieldConfig } from '@/shared/components/table-filter-group'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { CmsButton } from '@/shared/ui/cms-button'
 import {
   getInstructorSettlementRows,
@@ -18,10 +19,15 @@ import {
   summarizeSettlementRows,
   rowsToCalendarEvents,
   INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
-  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
   type InstructorSettlementListRow,
-  type InstructorSettlementUiStatus,
 } from '@/data/mock/instructor-member-settlements'
+import { useMemberInstructorSettlementsQuery } from '@/features/user/api/instructor-member-settlements-remote'
+import { mapSettlementsToInstructorMemberRows } from '@/features/user/api/map-settlement-to-instructor-member-row'
+import {
+  isMemberInstructorSettlementsRemoteEnabled,
+  isMembersRemoteEnabled,
+} from '@/features/user/api/member-remote-capabilities'
+import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { InstructorInvoiceModal } from './modal/instructor-invoice-modal'
 import { InstructorPaymentStatementBlockedModal } from './modal/instructor-payment-statement-blocked-modal'
 import {
@@ -30,7 +36,13 @@ import {
 } from './instructor-settlement-calendar'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-list.css'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import '@/shared/components/filter-table-layout.css'
 import './instructor-payment-tab.css'
+
+const SETTLEMENT_STATUS_OPTIONS = INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+}))
 
 const FILTER_FIELDS: FilterFieldConfig[] = [
   {
@@ -38,45 +50,36 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     type: 'search',
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
-    width: 260,
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'institutionName',
     type: 'search',
     label: '참여 기관명',
     placeholder: '기관명을 입력하세요',
-    width: 260,
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'settlementStatus',
     type: 'select',
     label: '정산 현황',
     placeholder: '전체',
-    options: INSTRUCTOR_SETTLEMENT_FILTER_STATUS_OPTIONS,
+    options: SETTLEMENT_STATUS_OPTIONS,
     allowClear: true,
-    width: 260,
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
 ]
-
-/** 테이블 정산 현황 열 — 텍스트 색만 (status-badge.css instructor-settlement 톤과 동일) */
-const SETTLEMENT_TABLE_STATUS_CLASS: Record<InstructorSettlementUiStatus, string> = {
-  awaiting_confirmation: 'instructor-payment-tab__settlement-text--awaiting',
-  partial_confirmation: 'instructor-payment-tab__settlement-text--partial',
-  payment_statement_verified: 'instructor-payment-tab__settlement-text--statement-verified',
-  account_paid: 'instructor-payment-tab__settlement-text--account-paid',
-  none: 'instructor-payment-tab__settlement-text--na',
-  application_rejected: 'instructor-payment-tab__settlement-text--rejected',
-  payment_correction_requested: 'instructor-payment-tab__settlement-text--correction',
-}
 
 export interface InstructorPaymentTabProps {
   instructorUserId: string
   instructorName: string
+  instructorMemberId?: number
 }
 
 export function InstructorPaymentTab({
   instructorUserId,
   instructorName: _instructorName,
+  instructorMemberId,
 }: InstructorPaymentTabProps) {
   const [pendingFilters, setPendingFilters] = useState<Record<string, unknown>>({
     programName: '',
@@ -99,7 +102,24 @@ export function InstructorPaymentTab({
     selectedCount: number
   }>({ open: false, variant: 'single', selectedCount: 0 })
 
-  const baseRows = useMemo(() => getInstructorSettlementRows(instructorUserId), [instructorUserId])
+  const settlementsRemote = isMemberInstructorSettlementsRemoteEnabled()
+  const membersRemote = isMembersRemoteEnabled()
+  const showMockSettlementBanner = membersRemote && !settlementsRemote
+
+  const { data: remoteSettlementItems = [], isLoading: settlementsLoading } =
+    useMemberInstructorSettlementsQuery(instructorMemberId, settlementsRemote)
+
+  const baseRows = useMemo(() => {
+    if (settlementsRemote && instructorMemberId != null) {
+      return mapSettlementsToInstructorMemberRows(remoteSettlementItems)
+    }
+    return getInstructorSettlementRows(instructorUserId)
+  }, [
+    settlementsRemote,
+    instructorMemberId,
+    remoteSettlementItems,
+    instructorUserId,
+  ])
   const effectiveRows = useMemo(
     () =>
       baseRows.map(row => {
@@ -202,11 +222,7 @@ export function InstructorPaymentTab({
         minWidth: 180,
         render: (status: InstructorSettlementListRow['status']) => (
           <div className="instructor-payment-tab__settlement-status-cell">
-            <span
-              className={`instructor-payment-tab__settlement-text ${SETTLEMENT_TABLE_STATUS_CLASS[status]}`}
-            >
-              {INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status]}
-            </span>
+            <InstructorSettlementStatusText status={status} />
           </div>
         ),
       },
@@ -255,6 +271,15 @@ export function InstructorPaymentTab({
         .filter(Boolean)
         .join(' ')}
     >
+      {showMockSettlementBanner ? (
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message="정산 API 모듈(paymentOrders 또는 accountPayments)이 비활성화되어 mock 정산 데이터를 표시합니다."
+        />
+      ) : null}
+      <Spin spinning={settlementsRemote && settlementsLoading}>
       <TableFilterGroup
         fields={FILTER_FIELDS}
         filters={pendingFilters}
@@ -267,15 +292,13 @@ export function InstructorPaymentTab({
         onSearch={handleSearch}
         bordered={false}
         cardStyle={{
-          padding: '0 34px',
+          padding: 0,
           marginBottom: 0,
           background: 'transparent',
         }}
       />
 
-      <div className="instructor-payment-tab__divider-wrapper">
-        <Divider style={{ margin: 0 }} />
-      </div>
+      <div className="filter-table-layout__divider" role="separator" aria-hidden />
 
       <div className="instructor-payment-tab__toolbar">
         <div className="instructor-payment-tab__month-nav">
@@ -429,6 +452,7 @@ export function InstructorPaymentTab({
         variant={paymentStatementBlockedModal.variant}
         selectedCount={paymentStatementBlockedModal.selectedCount}
       />
+      </Spin>
     </div>
   )
 }

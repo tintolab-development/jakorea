@@ -11,6 +11,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useNotifications } from '@/features/dashboard/hooks/use-notifications'
+import { useDashboardNotificationCount } from '@/features/dashboard/hooks/use-dashboard-notification-count'
+import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
 import { getRoleLabel, AppBreadcrumb, ProfileEditModal } from '@/shared/ui'
 import { useBreadcrumb } from '@/shared/hooks'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
@@ -31,7 +33,16 @@ export function MainHeader() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout, checkAuth } = useAuthStore()
-  const { notifications, unreadCount, markAsRead, removeNotification } = useNotifications()
+  const useRemoteNotificationCount = user?.role === 'ADMIN' && shouldUseDashboardRemoteApi()
+  const { data: remoteUnreadCount = 0 } = useDashboardNotificationCount(useRemoteNotificationCount)
+  const {
+    notifications: headerNotifications,
+    unreadCount: listUnreadCount,
+    markAsRead,
+    removeNotification,
+  } = useNotifications()
+  const unreadCount = useRemoteNotificationCount ? remoteUnreadCount : listUnreadCount
+  const dropdownNotifications = headerNotifications
   const { items: breadcrumbItems } = useBreadcrumb()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false)
@@ -252,10 +263,10 @@ export function MainHeader() {
               trigger={['click']}
               placement="bottomRight"
               overlayStyle={{ overflow: 'visible' }}
-              dropdownRender={() => (
+              popupRender={() => (
                 <div className="main-header-notification-dropdown">
                   <NotificationDropdown
-                    notifications={notifications}
+                    notifications={dropdownNotifications}
                     unreadCount={unreadCount}
                     onNotificationClick={handleNotificationClick}
                     onConfirm={handleConfirm}
@@ -313,7 +324,7 @@ export function MainHeader() {
                 onOpenChange={setAccountDropdownOpen}
                 trigger={['click']}
                 placement="bottomRight"
-                dropdownRender={() => (
+                popupRender={() => (
                   <div className="main-header-account-dropdown">
                     <button
                       type="button"

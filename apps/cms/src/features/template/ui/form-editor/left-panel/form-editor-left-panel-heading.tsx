@@ -3,6 +3,7 @@ import type { ParagraphCardEditableHeading } from '@/features/template/ui/templa
 import { getFormParagraphTitleNumberPrefix } from '@/features/template/lib/form-title-numbering'
 import {
   isAgreementLockedSystemParagraph,
+  LECTURE_REPORT_SEED_PARAGRAPH_IDS,
   type FormEditorKind,
   type FormTitleNumberingStyle,
   type HorizontalTableParagraph,
@@ -34,8 +35,6 @@ import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
 import { UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
-import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS } from '@/features/template/model/program-application-form-instructor-draft'
-import { PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
 import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@/features/template/model/recruit-form-volunteer-draft'
 import {
@@ -64,10 +63,7 @@ export function withoutPlaceholderDescriptionInPreview<
   if (!heading || !hideInPreview) return heading
   if (heading.showDescription === false) return heading
   const trimmedDescription = heading.descriptionValue?.trim() ?? ''
-  if (
-    trimmedDescription.length === 0 ||
-    HIDDEN_PREVIEW_DESCRIPTION_TEXTS.has(trimmedDescription)
-  ) {
+  if (trimmedDescription.length === 0 || HIDDEN_PREVIEW_DESCRIPTION_TEXTS.has(trimmedDescription)) {
     return { ...heading, showDescription: false }
   }
   return heading
@@ -91,7 +87,8 @@ function usesPlaceholderDescriptionValue(paragraphId: string): boolean {
     RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
-    UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(paragraphId)
+    UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    LECTURE_REPORT_SEED_PARAGRAPH_IDS.has(paragraphId)
   )
 }
 
@@ -110,12 +107,59 @@ export function withProgramRegistrationCurriculumTitleTrailing(
   if (paragraph.id !== PROGRAM_REGISTRATION_IDS.educationCurriculum || pr == null) {
     return heading
   }
+  if (pr.programRegistrationFormVariant === 'economy') {
+    return heading
+  }
+  if (pr.programRegistrationFormVariant === 'trainedTeachers') {
+    const curriculumChartSessionAtMax =
+      pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
+    return {
+      ...heading,
+      titleTrailing: (
+        <div
+          className="program-registration-paragraph__card-title-actions"
+          onClick={e => e.stopPropagation()}
+          onKeyDown={e => e.stopPropagation()}
+          role="presentation"
+        >
+          <CmsToggle
+            label="교육 연수"
+            checked={pr.trainedTeachersTeacherTrainingEnabled}
+            onChange={pr.onTrainedTeachersTeacherTrainingEnabledChange}
+          />
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="medium"
+            width={160}
+            disabled={curriculumChartSessionAtMax}
+            icon={<PlusOutlined aria-hidden />}
+            onClick={e => {
+              e.stopPropagation()
+              if (curriculumChartSessionAtMax) return
+              pr.onAddCurriculumChartSession()
+            }}
+          >
+            강의 진행 차시 추가
+          </CmsButton>
+        </div>
+      ),
+    }
+  }
   if (pr.programType === 'schedule') {
     const isScheduleMultiAllPer =
       pr.sessionRoundType === 'multi' &&
       pr.educationFormScheduleDetail === 'perSchedule' &&
       pr.participationScheduleDetail === 'perSchedule' &&
       pr.ipsScheduleDetail === 'perSchedule'
+
+    const preEducationToggle = (
+      <CmsToggle
+        label="사전 교육"
+        checked={pr.scheduleCurriculumPreEducation}
+        onChange={pr.onScheduleCurriculumPreEducationChange}
+      />
+    )
 
     if (isScheduleMultiAllPer) {
       return {
@@ -127,11 +171,7 @@ export function withProgramRegistrationCurriculumTitleTrailing(
             onKeyDown={e => e.stopPropagation()}
             role="presentation"
           >
-            <CmsToggle
-              label="사전 교육"
-              checked={pr.scheduleCurriculumPreEducation}
-              onChange={pr.onScheduleCurriculumPreEducationChange}
-            />
+            {preEducationToggle}
             <CmsButton
               type="button"
               variant="secondary"
@@ -154,7 +194,13 @@ export function withProgramRegistrationCurriculumTitleTrailing(
       return {
         ...heading,
         titleTrailing: (
-          <div className="program-registration-paragraph__card-title-actions">
+          <div
+            className="program-registration-paragraph__card-title-actions"
+            onClick={e => e.stopPropagation()}
+            onKeyDown={e => e.stopPropagation()}
+            role="presentation"
+          >
+            {preEducationToggle}
             <CmsButton
               type="button"
               variant="secondary"
@@ -176,7 +222,13 @@ export function withProgramRegistrationCurriculumTitleTrailing(
     return {
       ...heading,
       titleTrailing: (
-        <div className="program-registration-paragraph__card-title-actions">
+        <div
+          className="program-registration-paragraph__card-title-actions"
+          onClick={e => e.stopPropagation()}
+          onKeyDown={e => e.stopPropagation()}
+          role="presentation"
+        >
+          {preEducationToggle}
           <CmsButton
             type="button"
             variant="secondary"
@@ -220,27 +272,38 @@ export function withProgramRegistrationCurriculumTitleTrailing(
   const isMulti = pr.sessionRoundType === 'multi'
   const curriculumAddDisabled = pr.restrictCurriculumSessionStructure === true
   const curriculumChartSessionAtMax =
-    !isMulti &&
-    pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
+    !isMulti && pr.curriculumChartSessionCount >= GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT
   return {
     ...heading,
     titleTrailing: (
-      <CmsButton
-        type="button"
-        variant="secondary"
-        size="medium"
-        width={isMulti ? 160 : 180}
-        disabled={curriculumAddDisabled || curriculumChartSessionAtMax}
-        icon={<PlusOutlined aria-hidden />}
-        onClick={e => {
-          e.stopPropagation()
-          if (curriculumAddDisabled || curriculumChartSessionAtMax) return
-          if (isMulti) pr.onAddCurriculumSession()
-          else pr.onAddCurriculumChartSession()
-        }}
+      <div
+        className="program-registration-paragraph__card-title-actions"
+        onClick={e => e.stopPropagation()}
+        onKeyDown={e => e.stopPropagation()}
+        role="presentation"
       >
-        {isMulti ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
-      </CmsButton>
+        <CmsToggle
+          label="사전 교육"
+          checked={pr.scheduleCurriculumPreEducation}
+          onChange={pr.onScheduleCurriculumPreEducationChange}
+        />
+        <CmsButton
+          type="button"
+          variant="secondary"
+          size="medium"
+          width={isMulti ? 160 : 180}
+          disabled={curriculumAddDisabled || curriculumChartSessionAtMax}
+          icon={<PlusOutlined aria-hidden />}
+          onClick={e => {
+            e.stopPropagation()
+            if (curriculumAddDisabled || curriculumChartSessionAtMax) return
+            if (isMulti) pr.onAddCurriculumSession()
+            else pr.onAddCurriculumChartSession()
+          }}
+        >
+          {isMulti ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
+        </CmsButton>
+      </div>
     ),
   }
 }
@@ -319,48 +382,6 @@ export function withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrai
   }
 }
 
-/** 프로그램 강사 신청 폼 — 강의 불가 일정 단락: 카드 제목 줄 우측「강의 불가 일자 추가」 */
-export function withProgramApplicationFormInstructorTitleTrailing(
-  heading: ParagraphCardEditableHeading,
-  paragraph: WritingFormParagraph,
-  paragraphBodyOptions?: RenderFormParagraphBodyOptions
-): ParagraphCardEditableHeading {
-  const opts = paragraphBodyOptions?.programApplicationFormInstructor
-  if (
-    paragraph.id !== PROGRAM_APPLICATION_FORM_INSTRUCTOR_IDS.unavailableDates ||
-    opts?.enabled !== true
-  ) {
-    return heading
-  }
-  return {
-    ...heading,
-    titleTrailing: (
-      <div
-        className="program-registration-paragraph__card-title-actions"
-        onClick={e => e.stopPropagation()}
-        onKeyDown={e => e.stopPropagation()}
-        role="presentation"
-      >
-        <CmsButton
-          type="button"
-          variant="secondary"
-          size="medium"
-          width={180}
-          disabled={opts.disableUnavailableDateRowAddButton === true}
-          icon={<PlusOutlined aria-hidden />}
-          onClick={e => {
-            e.stopPropagation()
-            if (opts.disableUnavailableDateRowAddButton === true) return
-            opts.onAddUnavailableDateRow()
-          }}
-        >
-          강의 불가 일자 추가
-        </CmsButton>
-      </div>
-    ),
-  }
-}
-
 /** 프로그램 봉사자 신청 폼 — 면접 진행 가능 일정 단락: 카드 제목 줄 우측「예외 일정 추가」 */
 export function withProgramApplicationFormVolunteerTitleTrailing(
   heading: ParagraphCardEditableHeading,
@@ -368,12 +389,11 @@ export function withProgramApplicationFormVolunteerTitleTrailing(
   paragraphBodyOptions?: RenderFormParagraphBodyOptions
 ): ParagraphCardEditableHeading {
   const opts = paragraphBodyOptions?.programApplicationFormVolunteer
-  const isVolunteerInterviewSchedule =
-    paragraph.id === PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule ||
+  const isRecruitVolunteerInterviewSchedule =
     paragraph.id === RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule ||
     paragraph.id === UJAT_RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule
 
-  if (!isVolunteerInterviewSchedule || opts?.enabled !== true) {
+  if (!isRecruitVolunteerInterviewSchedule || opts?.enabled !== true) {
     return heading
   }
 
@@ -391,6 +411,7 @@ export function withProgramApplicationFormVolunteerTitleTrailing(
           variant="secondary"
           size="medium"
           width={160}
+          disabled={opts?.exceptionScheduleAddDisabled}
           icon={<PlusOutlined aria-hidden />}
           onClick={e => {
             e.stopPropagation()
@@ -463,12 +484,21 @@ export function paragraphEditableHeading(
   if (locked) {
     if (paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period') {
       const p = paragraph as TitleWithPeriodParagraph
+      const lectureReportLockedHeaderEditable =
+        isSelected && LECTURE_REPORT_SEED_PARAGRAPH_IDS.has(p.id)
       return {
-        isEditMode: false,
-        titleIsEditMode: false,
-        descriptionIsEditMode: false,
+        isEditMode: lectureReportLockedHeaderEditable,
+        titleIsEditMode: lectureReportLockedHeaderEditable,
+        descriptionIsEditMode: lectureReportLockedHeaderEditable,
         titleValue: p.surveyTitle,
-        onTitleChange: () => {},
+        onTitleChange: lectureReportLockedHeaderEditable
+          ? (next: string) =>
+              updateParagraph(p.id, cur =>
+                cur.kind === 'description' && cur.variant === 'survey_title_with_period'
+                  ? { ...cur, surveyTitle: next }
+                  : cur
+              )
+          : () => {},
         titlePlaceholder: titleWithPeriodPlaceholder(editorKind),
         titleRequired: p.requiredMark,
         titleClassName: [
@@ -479,7 +509,14 @@ export function paragraphEditableHeading(
           .join(' '),
         titleLeading: prefix,
         descriptionValue: p.surveyDescription,
-        onDescriptionChange: () => {},
+        onDescriptionChange: lectureReportLockedHeaderEditable
+          ? (next: string) =>
+              updateParagraph(p.id, cur =>
+                cur.kind === 'description' && cur.variant === 'survey_title_with_period'
+                  ? { ...cur, surveyDescription: next }
+                  : cur
+              )
+          : () => {},
         descriptionPlaceholder: '설명 입력',
         descriptionClassName: descCls('paragraph-input-explanation-title'),
       }
@@ -539,27 +576,30 @@ export function paragraphEditableHeading(
         isSelected &&
         p.variant === 'horizontal_table' &&
         editorKind === 'horizontal_table'
+      const lectureReportLockedHeaderEditable =
+        isSelected && LECTURE_REPORT_SEED_PARAGRAPH_IDS.has(p.id)
       const lockedDescriptionEditable =
-        horizontalLockedHeaderEditable &&
-        (PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS.has(p.id) ||
-          PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
-          PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS.has(p.id) ||
-          PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
-          PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
-          UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
-          UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
-          GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
-          GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
-          APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS.has(p.id) ||
-          APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
-          RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
-          RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
-          UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
-          UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
-          PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS.has(p.id) ||
-          UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(p.id))
-      const titleIsEditMode = horizontalLockedHeaderEditable
-      /* 잠금 시드: 기본은 설명 편집 불가, 일부 등록/신청 폼 시드만 예외로 허용 */
+        (horizontalLockedHeaderEditable &&
+          (PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            PROGRAM_APPLICATION_FORM_ECONOMY_SEED_PARAGRAPH_IDS.has(p.id) ||
+            PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
+            PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
+            UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
+            GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
+            APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS.has(p.id) ||
+            APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
+            RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
+            UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
+            PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS.has(p.id) ||
+            UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(p.id))) ||
+        lectureReportLockedHeaderEditable
+      const titleIsEditMode = horizontalLockedHeaderEditable || lectureReportLockedHeaderEditable
+      /* 잠금 시드: 기본은 설명 편집 불가, 일부 등록/신청·강의보고서 발급 폼 시드만 예외로 허용 */
       const descriptionIsEditMode = lockedDescriptionEditable
       return {
         isEditMode: false,

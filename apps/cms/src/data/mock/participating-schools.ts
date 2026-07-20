@@ -3,7 +3,7 @@
  * 수강 참여 학교 목록 (필터: 지역, 교육 학년, 강의 진행 회차, 교재 현황, 교사/강사명)
  */
 
-export type TextbookStatusKey = 'preparing' | 'shipping' | 'delivered'
+export type TextbookStatusKey = 'preparing' | 'shipping' | 'delivered' | 'not_applicable'
 
 /** 참여 기관 승인/반려 상태 (선택 승인·선택 반려·승인 취소 연동) */
 export type ParticipatingSchoolApprovalStatusKey = 'pending' | 'rejected' | 'approved' | 'cancelled'
@@ -40,13 +40,24 @@ export interface ParticipatingSchoolRow {
   instructors: string
   /** 강의 회차 별 교육 진행 날짜 및 시간 (참여 기관 페이지 컬럼용) */
   sessions?: ParticipatingSchoolSession[]
+  /** 프로그램 ID (교육받은 교사 등 프로그램별 참여 기관 필터용) */
+  programId?: string
 }
 
 export const TEXTBOOK_STATUS_LABELS: Record<TextbookStatusKey, string> = {
-  preparing: '배송 전',
-  shipping: '배송 중',
-  delivered: '배송 완료',
+  preparing: '교재 배송 전',
+  shipping: '교재 배송 중',
+  delivered: '교재 배송 완료',
+  not_applicable: '해당 없음',
 }
+
+/** StatusDropdownCell·필터 셀렉트 등 옵션 순서 */
+export const TEXTBOOK_STATUS_OPTION_KEYS: TextbookStatusKey[] = [
+  'preparing',
+  'shipping',
+  'delivered',
+  'not_applicable',
+]
 
 const LECTURE_ROUND_LABEL = '진행 전'
 
@@ -218,5 +229,39 @@ function buildParticipatingSchoolsByTextbookStatus(): ParticipatingSchoolRow[] {
   }))
 }
 
-export const MOCK_PARTICIPATING_SCHOOLS: ParticipatingSchoolRow[] =
-  buildParticipatingSchoolsByTextbookStatus()
+const TRAINED_TEACHERS_PARTICIPATING_SCHOOLS: ParticipatingSchoolRow[] = [
+  {
+    id: 'trained-teachers-participating-jinwol',
+    no: 1,
+    schoolName: '진월초등학교',
+    region: '광주광역시 남구 광복마을4길 40',
+    educationGrade: '5학년',
+    classCount: 4,
+    studentCount: 124,
+    lectureRound: '진행 전',
+    textbookStatus: 'preparing',
+    approvalStatus: 'approved',
+    teacherName: '이길동',
+    instructors: '최지원 외 3명',
+    programId: 'trained-teachers-prog-001',
+    sessions: [
+      demoParticipatingSchoolSession(1, '2026.04.20', '월', '09:00~09:40'),
+      demoParticipatingSchoolSession(2, '2026.04.27', '월', '09:00~10:30'),
+    ],
+  },
+]
+
+export const MOCK_PARTICIPATING_SCHOOLS: ParticipatingSchoolRow[] = [
+  ...buildParticipatingSchoolsByTextbookStatus(),
+  ...TRAINED_TEACHERS_PARTICIPATING_SCHOOLS,
+]
+
+export function getParticipatingSchoolsForProgram(programId: string): ParticipatingSchoolRow[] {
+  const isTrainedTeachers =
+    programId.startsWith('trained-teachers-prog-') ||
+    programId.startsWith('trained-teachers-local-')
+  if (isTrainedTeachers) {
+    return MOCK_PARTICIPATING_SCHOOLS.filter(row => row.programId === programId)
+  }
+  return MOCK_PARTICIPATING_SCHOOLS.filter(row => row.programId == null)
+}

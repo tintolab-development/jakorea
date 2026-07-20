@@ -7,6 +7,7 @@ import { CMS_MULTI_SELECT_TAG_COLORS } from '@/shared/ui'
 import {
   CalendarMain,
   CalendarSubRightList,
+  type CalendarInstitutionApplicationListRow,
   type CalendarItem,
 } from '@/shared/components/calendar'
 import {
@@ -82,8 +83,10 @@ function renderScheduleConfirmPreviewTooltipContent({
 
 export function UjatInstitutionScheduleConfirmCalendarView({
   rows,
+  onOpenDetail,
 }: {
   rows: UjatScheduleConfirmRow[]
+  onOpenDetail?: (row: UjatScheduleConfirmRow) => void
 }) {
   const events = useMemo(() => buildUjatScheduleConfirmCalendarEvents(rows), [rows])
   const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
@@ -164,24 +167,35 @@ export function UjatInstitutionScheduleConfirmCalendarView({
     setCurrentMonth(today.startOf('month'))
   }, [])
 
+  const handleListRowClick = useCallback(
+    (listRow: CalendarInstitutionApplicationListRow) => {
+      if (!onOpenDetail) return
+      const fullRow = rows.find(row => row.id === listRow.id)
+      if (fullRow) onOpenDetail(fullRow)
+    },
+    [onOpenDetail, rows]
+  )
+
   return (
-    <div className="ujat-institution-application-calendar-view ujat-institution-application-calendar-view--page-scroll">
-      <CalendarMain
-        mode="month"
-        hideModeToggle
-        onModeChange={() => {}}
-        events={events}
-        currentMonth={currentMonth}
-        selectedDate={selectedDate}
-        onSelectDate={handleDateSelect}
-        onMonthChange={handleMonthChange}
-        onTodayClick={handleTodayClick}
-        selectedRowKeys={[]}
-        eventsTooltipScope="full-day"
-        eventsTooltipTrigger="cell"
-        formatEventsOverflowText={n => `외 ${n}개의 항목`}
-        previewTooltipContent={renderScheduleConfirmPreviewTooltipContent}
-      />
+    <div className="calendar-set calendar-set--page-scroll">
+      <div className="calendar-main-container">
+        <CalendarMain
+          mode="month"
+          hideModeToggle
+          onModeChange={() => {}}
+          events={events}
+          currentMonth={currentMonth}
+          selectedDate={selectedDate}
+          onSelectDate={handleDateSelect}
+          onMonthChange={handleMonthChange}
+          onTodayClick={handleTodayClick}
+          selectedRowKeys={[]}
+          eventsTooltipScope="full-day"
+          eventsTooltipTrigger="cell"
+          formatEventsOverflowText={n => `외 ${n}개의 항목`}
+          previewTooltipContent={renderScheduleConfirmPreviewTooltipContent}
+        />
+      </div>
 
       <div className="calendar-sub-right-list">
         <CalendarSubRightList
@@ -190,6 +204,7 @@ export function UjatInstitutionScheduleConfirmCalendarView({
           rows={listRows}
           selectedRowKeys={[]}
           onSelectionChange={() => {}}
+          onRowClick={onOpenDetail ? handleListRowClick : undefined}
           resolveRowColors={resolveRowColors}
         />
       </div>

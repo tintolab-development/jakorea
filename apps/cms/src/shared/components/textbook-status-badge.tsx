@@ -1,7 +1,7 @@
 /**
  * 교재 현황 / 결재 현황 배지 컴포넌트
- * 프로그램 진행현황(교재 현황), 신청자 목록(결재 현황) 등에서 재사용
- * 배경색·텍스트색만 다르고 동일 UI (border-radius 6px, 14px 600)
+ * textbook variant: EditableStatusBadge (100×32)
+ * approval·payment-order-line: AppStatusBadge (기존 스펙 유지)
  */
 
 import { Tag } from 'antd'
@@ -18,6 +18,8 @@ import {
   PAYMENT_ORDER_STATUS_LIST_BORDER,
   PAYMENT_ORDER_STATUS_LIST_TEXT_COLOR,
 } from '@/shared/constants/payment-order-status-list-colors'
+import { getTextbookStatusBadgeTone } from '@/shared/constants/editable-status-badge-tones'
+import { EditableStatusBadge } from './editable-status-badge'
 import './app-status-badge.css'
 import './textbook-status-badge.css'
 
@@ -56,6 +58,18 @@ export function TextbookStatusBadge(props: TextbookStatusBadgeProps) {
   const variant = props.variant ?? 'textbook'
   const { status, className, style: userStyle } = props
   const label = getLabel(props)
+
+  if (variant === 'textbook') {
+    return (
+      <EditableStatusBadge
+        label={label}
+        tone={getTextbookStatusBadgeTone(status as TextbookStatusKey)}
+        className={className}
+        style={userStyle}
+      />
+    )
+  }
+
   const isPaymentOrderLineVariant =
     variant === 'payment-order-line' || variant === 'payment-order-line-detail'
   const variantClass = isPaymentOrderLineVariant ? ' textbook-status-badge--payment-order-line' : ''

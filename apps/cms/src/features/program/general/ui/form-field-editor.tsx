@@ -17,6 +17,7 @@ import {
   Switch,
   Card } from 'antd'
 import { CmsButton } from '@/shared/ui'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import {
   PlusOutlined,
   EditOutlined,
@@ -215,7 +216,7 @@ export function FormFieldEditor({
       title="신청서 폼 필드 커스터마이징"
       open={open}
       onCancel={handleCancel}
-      width={900}
+      width={800}
       footer={[
         <CmsButton key="cancel" variant="secondary" size="large" onClick={handleCancel}>
           취소
@@ -244,7 +245,6 @@ export function FormFieldEditor({
               <Form.Item
                 name="label"
                 label="필드명"
-                rules={[{ required: true }]}
               >
                 <Input placeholder="예: 참가 목적" />
               </Form.Item>
@@ -252,7 +252,6 @@ export function FormFieldEditor({
               <Form.Item
                 name="type"
                 label="필드 타입"
-                rules={[{ required: true }]}
               >
                 <Select options={fieldTypeOptions} />
               </Form.Item>
@@ -276,7 +275,6 @@ export function FormFieldEditor({
                       <Form.Item
                         name="options"
                         label="선택 옵션"
-                        rules={[{ required: true }]}
                         getValueFromEvent={e => {
                           const lines = e.target.value.split('\n').filter((l: string) => l.trim())
                           return lines.map((line: string, idx: number) => ({
@@ -305,15 +303,15 @@ export function FormFieldEditor({
                         <Form.Item
                           name="fileMaxSize"
                           label="최대 파일 크기 (MB)"
-                          getValueFromEvent={e => {
-                            const value = e.target.value
+                          trigger="onValueChange"
+                          getValueFromEvent={(value: string) => {
                             return value ? Number(value) * 1024 * 1024 : undefined
                           }}
                           getValueProps={value => {
                             return { value: value ? (value / (1024 * 1024)).toString() : '' }
                           }}
                         >
-                          <Input type="number" placeholder="5" />
+                          <CmsNumericInput mode="decimal" placeholder="5" />
                         </Form.Item>
                       </>
                     )

@@ -22,7 +22,7 @@ import {
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { MESSAGES } from '@/shared/constants'
 import { handleError } from '@/shared/utils/error-handler'
-import { UnifiedFilterCard } from '@/shared/ui/unified-filter-card'
+import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import './instructor-list-page.css'
 
 
@@ -113,7 +113,9 @@ export function InstructorListPage() {
 
   return (
     <div>
-      <UnifiedFilterCard
+      <FilterTableLayout
+        showTitle={false}
+        hideExcelDownload
         fields={[
           {
             key: 'search',
@@ -162,9 +164,9 @@ export function InstructorListPage() {
         }}
         onSearch={handleSearch}
         loading={loading}
-      />
-
-      <InstructorList data={instructors} loading={loading} currentUser={user} />
+      >
+        <InstructorList data={instructors} loading={loading} currentUser={user} />
+      </FilterTableLayout>
     </div>
   )
 }

@@ -1,49 +1,31 @@
 /**
- * 찾아가는 연수 모집 공고 추가 — 템플릿 authoring preview(form-layout)와 동일
- * 청록 헤더 · 회색 본문 · 단락 중앙 정렬 · 우측 네비 없음
+ * Gemini 찾아가는 연수 모집 공고 추가 — 템플릿 authoring preview(form-layout)와 동일
+ * 청록 헤더 · 회색 본문 · 단락 중앙 정렬 · 우측 커스텀 필드 네비
  */
 
-.gemini-recruitment-add-fullpage-modal .full-page-modal__actions {
-  display: none;
-}
-
-.gemini-recruitment-add-fullpage-modal .full-page-modal__body-header-leading {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.gemini-recruitment-add-fullpage-modal__header-actions {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  width: 100%;
+.gemini-recruitment-add-fullpage-modal {
+  --template-preview-paragraph-column-max: 1404px;
 }
 
 .gemini-recruitment-add-fullpage-modal .full-page-modal__body {
-  align-items: center;
-}
-
-.gemini-recruitment-add-fullpage-modal .full-page-modal__contents {
-  display: block;
-  width: 100%;
-  max-width: var(--template-preview-paragraph-column-max, 1254px);
-}
-
-.gemini-recruitment-add-fullpage-modal .full-page-modal__right-wrap {
-  display: none;
+  align-items: flex-start;
 }
 
 .gemini-recruitment-add-fullpage-modal .full-page-modal__left {
+  flex: 1 1 auto;
   width: 100%;
-  max-width: var(--template-preview-paragraph-column-max, 1254px);
-  margin: 0 auto;
+  max-width: min(
+    var(--full-page-modal-left-column-width, 1404px),
+    calc(100% - var(--full-page-modal-right-column-width, 380px) - var(--full-page-modal-contents-gap, 32px))
+  );
+  margin: 0;
+}
+
+.gemini-recruitment-add-fullpage-modal .full-page-modal__right-wrap {
+  display: flex;
+  flex-shrink: 0;
 }
 
 .gemini-recruitment-add-fullpage-modal .gemini-recruitment-add-form {
-  gap: 16px;
-}
-
-.gemini-recruitment-add-fullpage-modal__nav-placeholder {
-  display: none;
+  gap: 20px;
 }

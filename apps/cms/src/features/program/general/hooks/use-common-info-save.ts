@@ -10,6 +10,13 @@ import {
   programToGeneralCommonInfoEditValues,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
+import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { useGeneralProgramSponsorEditContext } from '@/features/program/general/hooks/use-general-program-sponsor-edit-context'
+
+export type GeneralProgramCommonInfoSaveResult =
+  | { ok: true }
+  | { ok: false; kind: 'validation' }
+  | { ok: false; kind: 'api'; error: unknown }
 
 export interface UseGeneralProgramCommonInfoSaveOptions {
   form: UseFormReturn<GeneralProgramCommonInfoEditFormValues>
@@ -23,34 +30,46 @@ export function useGeneralProgramCommonInfoSave({
   onSaveEdit,
 }: UseGeneralProgramCommonInfoSaveOptions) {
   const savingRef = useRef(false)
+  const watchedSponsorIds = form.watch('sponsorManagementIds') ?? []
+  const sponsorContext = useGeneralProgramSponsorEditContext(watchedSponsorIds)
 
-  const triggerSave = useCallback(async () => {
-    if (savingRef.current || !onSaveEdit || !program) return
+  const triggerSave = useCallback(async (): Promise<GeneralProgramCommonInfoSaveResult> => {
+    if (savingRef.current || !onSaveEdit || !program) {
+      return { ok: false, kind: 'validation' }
+    }
     savingRef.current = true
     try {
       const isValid = await form.trigger()
-      if (!isValid) return
+      if (!isValid) return { ok: false, kind: 'validation' }
       const values = form.getValues()
-      const patch = generalCommonInfoEditValuesToProgramPatch(values, program)
+      const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
+      const resolvedCommon = resolveGeneralProgramCommonInfo(program)
       const draftToSave: Program = {
         ...program,
         ...patch,
+        updatedAt: new Date().toISOString(),
         generalCommonInfo: {
+          ...resolvedCommon,
           ...program.generalCommonInfo,
           ...patch.generalCommonInfo,
         },
       }
       await onSaveEdit(draftToSave)
+      return { ok: true }
+    } catch (error) {
+      return { ok: false, kind: 'api', error }
     } finally {
       savingRef.current = false
     }
-  }, [form, program, onSaveEdit])
+  }, [form, program, onSaveEdit, sponsorContext])
 
   const resetToProgram = useCallback(() => {
     if (program) {
-      form.reset(programToGeneralCommonInfoEditValues(program), { keepDefaultValues: false })
+      form.reset(programToGeneralCommonInfoEditValues(program, sponsorContext), {
+        keepDefaultValues: false,
+      })
     }
-  }, [form, program])
+  }, [form, program, sponsorContext])
 
   return { triggerSave, resetToProgram }
 }

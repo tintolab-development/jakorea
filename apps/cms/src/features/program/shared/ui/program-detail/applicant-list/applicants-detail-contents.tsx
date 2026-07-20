@@ -1,17 +1,25 @@
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Space, Empty, Table } from 'antd'
+import { Space, Empty } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
-import { CmsButton, type CmsButtonVariant } from '@/shared/ui'
-import type { ApplicantSchoolRow } from '@/data/mock/applicant-institutions'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, type CmsButtonVariant } from '@/shared/ui'
+import {
+  patchApplicantInstitutionAdminComment,
+  type ApplicantSchoolRow,
+} from '@/data/mock/applicant-institutions'
 import { useApplicantInstitutionDetailEdit } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
-import type { GeneralIndividualApplicantRow } from '@/data/mock/general-individual-applications-mock'
+import {
+  patchGeneralIndividualApplicantDetail,
+  patchGeneralIndividualApplicantManagerEvaluation,
+  type GeneralIndividualApplicantRow,
+} from '@/data/mock/general-individual-applications-mock'
+import type { IndividualApplicantScreeningStage } from '@/features/program/general/lib/individual-application-visibility'
+import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
 import { ApplicantGeneralInstitutionBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info'
@@ -23,9 +31,13 @@ import {
   PersonalInfoRevealButton,
   PERSONAL_INFO_REVEAL_BUTTON_LABEL,
 } from '@/features/user/detail/ui/personal-info-reveal-button'
-import { SchoolDetailStudentListSection } from '@/features/program/general/ui/detail-modal/program-status/school-detail-student-list-section'
-import { ApplicantInstitutionInstructorAssignTab } from './applicant-institution-instructor-assign-tab'
 import './applicants-detail-contents.css'
+import {
+  PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  resolveProgramEditInfoClick,
+} from '@/features/program/shared/lib/program-edit-info-button'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { TrainedTeachersApplicantInstitutionDetailContents } from '@/features/program/trained-teachers/ui/institution-detail/applicant-institution-detail-contents'
 
 export type ApplicantType =
   | 'institutions'
@@ -37,24 +49,23 @@ export type ApplicantDetailVariant = 'legacy' | 'general'
 
 const DETAIL_TAB_PARAM = 'detailTab'
 
-/** 신청 강사 상세 — 탭 라벨·쿼리 키 */
-const INSTRUCTOR_DETAIL_TAB_LABELS = {
-  application: '신청 정보',
-  institutionAssignment: '기관 배정 현황',
-} as const
+function isCompanySchoolProgram(program: Program | null | undefined): boolean {
+  return (
+    program?.id.startsWith('economy-prog-') === true ||
+    program?.id.startsWith('company-school-prog-') === true ||
+    program?.id.startsWith('company-school-local-') === true ||
+    program?.mainTitle?.includes('1사1교') === true ||
+    program?.title.includes('1사1교') === true
+  )
+}
 
 function parseDetailTabFromSearch(
   searchParams: URLSearchParams,
   type: ApplicantType,
-  detailVariant: ApplicantDetailVariant
+  _detailVariant: ApplicantDetailVariant
 ): string {
   const t = searchParams.get(DETAIL_TAB_PARAM)
   if (type === 'institutions') {
-    if (detailVariant === 'general') {
-      if (t === 'students') return 'students'
-      return 'info'
-    }
-    /** legacy: 학생 명단·강사 배정 현황 탭 비활성화 중 — 선택 가능한 탭은 기본 정보 뿐 */
     return 'info'
   }
   if (type === 'individual-applications') {
@@ -80,6 +91,7 @@ type ApplicantHeaderActionItem = {
   onClick?: () => void
   /** 기본 `filter` — 개인정보 상세보기 등은 `filter-wide` */
   size?: 'filter' | 'filter-wide'
+  width?: number
 }
 
 function ApplicantHeaderActionsExtra({
@@ -99,7 +111,7 @@ function ApplicantHeaderActionsExtra({
             revealed={personalInfoRevealed}
             cmsVariant={a.variant}
             cmsSize="large"
-            width={a.size === 'filter-wide' ? 180 : 160}
+            width={a.width ?? (a.size === 'filter-wide' ? 180 : CMS_ACTION_BUTTON_WIDTH)}
             disabled={a.disabled}
             onClick={a.onClick ?? (() => {})}
           />
@@ -108,7 +120,8 @@ function ApplicantHeaderActionsExtra({
             key={a.key}
             variant={a.variant}
             size="large"
-            width={a.size === 'filter-wide' ? 180 : 160}
+            className="cms-button--action"
+            width={a.width ?? (a.size === 'filter-wide' ? 180 : CMS_ACTION_BUTTON_WIDTH)}
             disabled={a.disabled}
             title={a.title}
             onClick={a.onClick}
@@ -141,64 +154,72 @@ function headerBtnCancelApproval(
     key: 'cancel-approval',
     variant: 'delete',
     label: '승인 취소',
+    width: CMS_ACTION_BUTTON_WIDTH,
     disabled: cancelApprovalState.disabled,
     title: cancelApprovalState.reason ?? undefined,
     onClick: cancelApprovalState.disabled ? undefined : () => onCancelApproval?.(applicantId),
   }
 }
 
+function headerBtnEditInfo(
+  onEnterEdit: () => void,
+  onSaveEdit: () => void,
+  isEditing: boolean,
+  disabled = false
+): ApplicantHeaderActionItem {
+  return {
+    key: 'edit-info',
+    variant: 'secondary',
+    label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
+    width: CMS_ACTION_BUTTON_WIDTH,
+    disabled,
+    onClick: disabled
+      ? undefined
+      : resolveProgramEditInfoClick(isEditing, {
+          onEnterEdit: onEnterEdit,
+          onSaveEdit: onSaveEdit,
+        }),
+  }
+}
+
 function headerBtnEditInfoDisabled(): ApplicantHeaderActionItem {
   return {
     key: 'edit-info',
-    variant: 'primary',
-    label: '정보 수정',
+    variant: 'secondary',
+    label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
+    width: CMS_ACTION_BUTTON_WIDTH,
     disabled: true,
   }
 }
 
-function headerBtnInstitutionEditInfo(onClick: () => void): ApplicantHeaderActionItem {
-  return {
-    key: 'edit-info',
-    variant: 'primary',
-    label: '정보 수정',
-    onClick,
-  }
-}
-
-function headerBtnInstitutionSaveInfo(onClick: () => void): ApplicantHeaderActionItem {
-  return {
-    key: 'edit-info',
-    variant: 'primary',
-    label: '정보 저장',
-    onClick,
-  }
-}
-
-function headerBtnIndividualEditInfo(onClick: () => void): ApplicantHeaderActionItem {
-  return {
-    key: 'edit-info',
-    variant: 'primary',
-    label: '정보 수정',
-    onClick,
-  }
-}
-
-function headerBtnIndividualSaveInfo(onClick: () => void): ApplicantHeaderActionItem {
-  return {
-    key: 'edit-info',
-    variant: 'primary',
-    label: '정보 저장',
-    onClick,
-  }
-}
-
-/** 승인 완료 강사 — 정보 수정(기능 미구현, 클릭 시 안내) */
 function headerBtnEditInfoPreparing(): ApplicantHeaderActionItem {
   return {
     key: 'edit-info',
-    variant: 'primary',
-    label: '정보 수정',
+    variant: 'secondary',
+    label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
+    width: CMS_ACTION_BUTTON_WIDTH,
     onClick: () => window.alert('준비중'),
+  }
+}
+
+function headerBtnWriteComment(onClick: () => void, disabled = false): ApplicantHeaderActionItem {
+  return {
+    key: 'write-comment',
+    variant: 'primary',
+    label: '코멘트 작성',
+    width: CMS_ACTION_BUTTON_WIDTH,
+    disabled,
+    onClick: disabled ? undefined : onClick,
+  }
+}
+
+function headerBtnSaveComment(onClick: () => void): ApplicantHeaderActionItem {
+  return {
+    key: 'write-comment',
+    variant: 'primary',
+    label: '코멘트 저장',
+    width: CMS_ACTION_BUTTON_WIDTH,
+    onClick,
   }
 }
 
@@ -210,6 +231,7 @@ function headerBtnCancelReject(
     key: 'cancel-reject',
     variant: 'delete',
     label: '반려 취소',
+    width: CMS_ACTION_BUTTON_WIDTH,
     disabled: !onCancelReject,
     onClick: () => onCancelReject?.(applicantId),
   }
@@ -226,12 +248,14 @@ function headerBtnsPendingParticipation(
       key: 'reject',
       variant: 'delete',
       label: '참여 반려',
+      width: CMS_ACTION_BUTTON_WIDTH,
       onClick: () => onReject(applicantId),
     },
     {
       key: 'approve',
       variant: 'secondary',
       label: '참여 승인',
+      width: CMS_ACTION_BUTTON_WIDTH,
       onClick: () => onApprove(applicantId),
     },
     headerBtnPrivacy(onRevealPersonalInfo),
@@ -267,6 +291,10 @@ function resolveApplicantHeaderItems(params: {
   isEditingInstructorDetail?: boolean
   onEnterInstructorEdit?: () => void
   onSaveInstructorEdit?: () => void
+  isAdminCommentWriteEnabled?: boolean
+  isEditingAdminComment?: boolean
+  onEnterAdminCommentEdit?: () => void
+  onSaveAdminCommentEdit?: () => void
 }): ApplicantHeaderActionItem[] | null {
   const {
     applicantId,
@@ -297,43 +325,72 @@ function resolveApplicantHeaderItems(params: {
     isEditingInstructorDetail = false,
     onEnterInstructorEdit,
     onSaveInstructorEdit,
+    isAdminCommentWriteEnabled = false,
+    isEditingAdminComment = false,
+    onEnterAdminCommentEdit,
+    onSaveAdminCommentEdit,
   } = params
 
   if (isApprovedInstitution) {
     const editButton =
       isGeneralInstitutionEditEnabled && onEnterInstitutionEdit && onSaveInstitutionEdit
-        ? isEditingInstitutionDetail
-          ? headerBtnInstitutionSaveInfo(onSaveInstitutionEdit)
-          : headerBtnInstitutionEditInfo(onEnterInstitutionEdit)
+        ? headerBtnEditInfo(
+            onEnterInstitutionEdit,
+            onSaveInstitutionEdit,
+            isEditingInstitutionDetail,
+            isEditingAdminComment
+          )
         : headerBtnEditInfoDisabled()
 
-    return [
+    const items: ApplicantHeaderActionItem[] = [
       headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState),
       editButton,
-      headerBtnPrivacy(onRevealPersonalInfo),
     ]
+
+    if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit && onSaveAdminCommentEdit) {
+      items.push(
+        isEditingAdminComment
+          ? headerBtnSaveComment(onSaveAdminCommentEdit)
+          : headerBtnWriteComment(onEnterAdminCommentEdit, isEditingInstitutionDetail)
+      )
+    }
+
+    items.push(headerBtnPrivacy(onRevealPersonalInfo))
+    return items
   }
 
   if (isApprovedIndividual) {
     const editButton =
       isGeneralIndividualEditEnabled && onEnterIndividualEdit && onSaveIndividualEdit
-        ? isEditingIndividualDetail
-          ? headerBtnIndividualSaveInfo(onSaveIndividualEdit)
-          : headerBtnIndividualEditInfo(onEnterIndividualEdit)
+        ? headerBtnEditInfo(
+            onEnterIndividualEdit,
+            onSaveIndividualEdit,
+            isEditingIndividualDetail,
+            isEditingAdminComment
+          )
         : headerBtnEditInfoDisabled()
 
-    return [
-      headerBtnCancelApproval(applicantId, onCancelApproval, cancelApprovalState),
-      editButton,
-      headerBtnPrivacy(onRevealPersonalInfo),
-    ]
+    const items: ApplicantHeaderActionItem[] = [editButton]
+
+    if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit && onSaveAdminCommentEdit) {
+      items.push(
+        isEditingAdminComment
+          ? headerBtnSaveComment(onSaveAdminCommentEdit)
+          : headerBtnWriteComment(onEnterAdminCommentEdit, isEditingIndividualDetail)
+      )
+    }
+
+    items.push(headerBtnPrivacy(onRevealPersonalInfo))
+    return items
   }
   if (isApprovedInstructor) {
     const editButton =
       isGeneralInstructorEditEnabled && onEnterInstructorEdit && onSaveInstructorEdit
-        ? isEditingInstructorDetail
-          ? headerBtnIndividualSaveInfo(onSaveInstructorEdit)
-          : headerBtnIndividualEditInfo(onEnterInstructorEdit)
+        ? headerBtnEditInfo(
+            onEnterInstructorEdit,
+            onSaveInstructorEdit,
+            isEditingInstructorDetail
+          )
         : headerBtnEditInfoPreparing()
 
     return [
@@ -376,6 +433,8 @@ interface ApplicantsDetailContentsProps {
   onCancelReject?: (id: string) => void
   /** 승인·반려 상태에서 알림 재발송 클릭 시 호출 */
   onResendNotification?: () => void
+  /** 개인 면접 심사 탭 — 상세 섹션 분기 */
+  individualScreeningStage?: IndividualApplicantScreeningStage
 }
 
 export function ApplicantsDetailContents({
@@ -393,8 +452,22 @@ export function ApplicantsDetailContents({
   onCancelApproval,
   onCancelReject,
   onResendNotification,
+  individualScreeningStage = 'main',
 }: ApplicantsDetailContentsProps) {
   const [searchParams, setSearchParams] = useSearchParams()
+  const [openManagerDropdown, setOpenManagerDropdown] = useState<{
+    rowId: string
+    manager: 'A' | 'B'
+  } | null>(null)
+  const [isIndividualAdminCommentEditing, setIsIndividualAdminCommentEditing] = useState(false)
+  const [individualAdminCommentDraft, setIndividualAdminCommentDraft] = useState('')
+  const [individualAdminCommentError, setIndividualAdminCommentError] = useState<string | undefined>()
+
+  const isInstitution = type === 'institutions'
+  const isInstructor = type === 'instructors'
+  const isVolunteer = type === 'volunteers'
+  const isIndividual = type === 'individual-applications'
+  const isGeneralDetail = detailVariant === 'general'
 
   const activeTab = useMemo(
     () => parseDetailTabFromSearch(searchParams, type, detailVariant),
@@ -415,12 +488,6 @@ export function ApplicantsDetailContents({
     },
     [searchParams, setSearchParams, type]
   )
-
-  const isInstitution = type === 'institutions'
-  const isInstructor = type === 'instructors'
-  const isVolunteer = type === 'volunteers'
-  const isIndividual = type === 'individual-applications'
-  const isGeneralDetail = detailVariant === 'general'
 
   const institutionData = isInstitution ? (data as ApplicantSchoolRow) : null
   const instructorData = isInstructor ? (data as ApplicantInstructorRow) : null
@@ -461,12 +528,100 @@ export function ApplicantsDetailContents({
     },
   })
 
+  const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
+  const [adminCommentDraft, setAdminCommentDraft] = useState('')
+  const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
+
+  /* eslint-disable react-hooks/set-state-in-effect -- 기관 변경 시 코멘트 편집 상태 초기화 */
+  useEffect(() => {
+    setIsAdminCommentEditing(false)
+    setAdminCommentDraft('')
+    setAdminCommentError(undefined)
+  }, [applicantId, institutionData?.adminComment])
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const handleAdminCommentEditEnter = useCallback(() => {
+    if (institutionDetailEdit.isEditing) return
+    setAdminCommentDraft(institutionData?.adminComment ?? '')
+    setAdminCommentError(undefined)
+    setIsAdminCommentEditing(true)
+  }, [institutionDetailEdit.isEditing, institutionData?.adminComment])
+
+  const handleAdminCommentSave = useCallback(() => {
+    if (!institutionData) return
+    const updated = patchApplicantInstitutionAdminComment(institutionData.id, adminCommentDraft)
+    if (!updated) {
+      setAdminCommentError('저장에 실패했습니다.')
+      return
+    }
+    onInstitutionDetailSaved?.([updated])
+    setIsAdminCommentEditing(false)
+    setAdminCommentError(undefined)
+  }, [adminCommentDraft, institutionData, onInstitutionDetailSaved])
+
+  const handleAdminCommentDraftChange = useCallback((value: string) => {
+    setAdminCommentDraft(value)
+    setAdminCommentError(undefined)
+  }, [])
+
   const individualDetailEdit = useApplicantIndividualDetailEdit({
     applicant: isGeneralIndividualEditEnabled ? individualData : null,
+    program,
     onSaved: row => {
       onIndividualDetailSaved?.(row)
     },
   })
+
+  /* eslint-disable react-hooks/set-state-in-effect -- 개인 신청자 변경 시 코멘트·평가 UI 초기화 */
+  useEffect(() => {
+    setIsIndividualAdminCommentEditing(false)
+    setIndividualAdminCommentDraft('')
+    setIndividualAdminCommentError(undefined)
+    setOpenManagerDropdown(null)
+  }, [applicantId, individualData?.adminComment])
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const handleIndividualAdminCommentEditEnter = useCallback(() => {
+    if (individualDetailEdit.isEditing) return
+    setIndividualAdminCommentDraft(individualData?.adminComment ?? '')
+    setIndividualAdminCommentError(undefined)
+    setIsIndividualAdminCommentEditing(true)
+  }, [individualDetailEdit.isEditing, individualData?.adminComment])
+
+  const handleIndividualAdminCommentSave = useCallback(() => {
+    if (!individualData) return
+    const updated = patchGeneralIndividualApplicantDetail(individualData.id, {
+      adminComment: individualAdminCommentDraft,
+    })
+    if (!updated) {
+      setIndividualAdminCommentError('저장에 실패했습니다.')
+      return
+    }
+    onIndividualDetailSaved?.(updated)
+    setIsIndividualAdminCommentEditing(false)
+    setIndividualAdminCommentError(undefined)
+  }, [individualAdminCommentDraft, individualData, onIndividualDetailSaved])
+
+  const handleIndividualAdminCommentDraftChange = useCallback((value: string) => {
+    setIndividualAdminCommentDraft(value)
+    setIndividualAdminCommentError(undefined)
+  }, [])
+
+  const handleManagerAEvaluationChange = useCallback(
+    (id: string, evaluation: GeneralManagerEvaluation) => {
+      const updated = patchGeneralIndividualApplicantManagerEvaluation(id, 'A', evaluation)
+      if (updated) onIndividualDetailSaved?.(updated)
+    },
+    [onIndividualDetailSaved]
+  )
+
+  const handleManagerBEvaluationChange = useCallback(
+    (id: string, evaluation: GeneralManagerEvaluation) => {
+      const updated = patchGeneralIndividualApplicantManagerEvaluation(id, 'B', evaluation)
+      if (updated) onIndividualDetailSaved?.(updated)
+    },
+    [onIndividualDetailSaved]
+  )
 
   const instructorDetailEdit = useApplicantInstructorDetailEdit({
     instructor: isGeneralInstructorEditEnabled ? instructorData : null,
@@ -481,27 +636,39 @@ export function ApplicantsDetailContents({
     return undefined
   }, [institutionData?.sessions, individualData?.sessions])
 
-  const cancelApprovalState = useMemo(
-    () =>
-      resolveApplicantCancelApprovalState({
-        program,
-        approvalStatus:
-          institutionData?.approvalStatus ??
-          individualData?.approvalStatus ??
-          instructorData?.approvalStatus ??
-          'pending',
-        sessions: cancelApprovalSessions,
-        hasCancelHandler: Boolean(onCancelApproval),
-      }),
-    [
+  const cancelApprovalState = useMemo(() => {
+    const resolved = resolveApplicantCancelApprovalState({
       program,
-      institutionData?.approvalStatus,
-      individualData?.approvalStatus,
-      instructorData?.approvalStatus,
-      cancelApprovalSessions,
-      onCancelApproval,
-    ]
-  )
+      approvalStatus:
+        institutionData?.approvalStatus ??
+        individualData?.approvalStatus ??
+        instructorData?.approvalStatus ??
+        'pending',
+      sessions: cancelApprovalSessions,
+      hasCancelHandler: Boolean(onCancelApproval),
+    })
+
+    // 일반 프로그램 — 기관 신청 상세: 승인 완료 시 승인 취소 항상 가능 (모달에서 사유·알림 처리)
+    if (
+      isGeneralDetail &&
+      isInstitution &&
+      institutionData?.approvalStatus === 'approved' &&
+      onCancelApproval
+    ) {
+      return { disabled: false, reason: null }
+    }
+
+    return resolved
+  }, [
+    program,
+    institutionData?.approvalStatus,
+    individualData?.approvalStatus,
+    instructorData?.approvalStatus,
+    cancelApprovalSessions,
+    onCancelApproval,
+    isGeneralDetail,
+    isInstitution,
+  ])
 
   const resolveApplicantPersonalInfoAccessItem = useCallback(() => {
     if (isInstitution) return institutionData?.schoolName ?? '신청 기관 정보'
@@ -561,6 +728,15 @@ export function ApplicantsDetailContents({
       onSaveInstructorEdit: () => {
         instructorDetailEdit.saveEdit()
       },
+      isAdminCommentWriteEnabled:
+        isGeneralInstitutionEditEnabled || isGeneralIndividualEditEnabled,
+      isEditingAdminComment: isAdminCommentEditing || isIndividualAdminCommentEditing,
+      onEnterAdminCommentEdit: isApprovedIndividual
+        ? handleIndividualAdminCommentEditEnter
+        : handleAdminCommentEditEnter,
+      onSaveAdminCommentEdit: isApprovedIndividual
+        ? handleIndividualAdminCommentSave
+        : handleAdminCommentSave,
     })
     if (!items) return null
     return <ApplicantHeaderActionsExtra items={items} personalInfoRevealed={personalInfoRevealed} />
@@ -594,42 +770,117 @@ export function ApplicantsDetailContents({
     onCancelApproval,
     onCancelReject,
     personalInfoRevealed,
+    isAdminCommentEditing,
+    isIndividualAdminCommentEditing,
+    handleAdminCommentEditEnter,
+    handleAdminCommentSave,
+    handleIndividualAdminCommentEditEnter,
+    handleIndividualAdminCommentSave,
   ])
 
-  const tabBarExtraContent = useMemo(() => {
-    if (isInstructor) {
-      if (activeTab === 'application') return headerExtraContent
-      return null
+  const tabBarExtraContent = headerExtraContent
+
+  const institutionInfoPanel = useMemo(() => {
+    if (!isInstitution || !institutionData) return null
+    const d = institutionData
+    /** 1사1교·교육받은 교사 — 합반 신청 케이스 없음(신청 불가) */
+    const isCombinedClassHidden =
+      isCompanySchoolProgram(program) || isTrainedTeachersDetailProgram(program ?? null)
+    if (isGeneralDetail) {
+      return (
+        <ApplicantGeneralInstitutionBasicInfo
+          institution={d}
+          detail={d.detail}
+          program={program}
+          maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
+          mode={institutionDetailEdit.isEditing ? 'edit' : 'view'}
+          draft={institutionDetailEdit.draft ?? undefined}
+          onDraftChange={institutionDetailEdit.updateDraft}
+          textbookOptions={institutionDetailEdit.textbookOptions}
+          sameSchoolGradeOptions={institutionDetailEdit.sameSchoolGradeOptions}
+          classCountOptions={institutionDetailEdit.classCountOptions}
+          teacherOptions={institutionDetailEdit.teacherOptions}
+          showEducationFormatField={institutionDetailEdit.showEducationFormatField}
+          isCombinedClassProgramEligible={institutionDetailEdit.isCombinedClassProgramEligible}
+          isCombinedClassApplyRadioDisabled={institutionDetailEdit.isCombinedClassApplyRadioDisabled}
+          hideCombinedClass={isCombinedClassHidden}
+          validationErrors={institutionDetailEdit.validationErrors}
+          onResendNotificationClick={onResendNotification}
+          isAdminCommentEditing={isAdminCommentEditing}
+          adminCommentDraft={adminCommentDraft}
+          onAdminCommentDraftChange={handleAdminCommentDraftChange}
+          adminCommentError={adminCommentError}
+        />
+      )
     }
-    return headerExtraContent
-  }, [isInstructor, activeTab, headerExtraContent])
+    return (
+      <ApplicantInstitutionBasicInfo
+        institution={d}
+        detail={d.detail}
+        maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
+      />
+    )
+  }, [
+    isInstitution,
+    institutionData,
+    isGeneralDetail,
+    personalInfoRevealed,
+    program,
+    institutionDetailEdit.isEditing,
+    institutionDetailEdit.draft,
+    institutionDetailEdit.updateDraft,
+    institutionDetailEdit.textbookOptions,
+    institutionDetailEdit.sameSchoolGradeOptions,
+    institutionDetailEdit.isCombinedClassProgramEligible,
+    institutionDetailEdit.isCombinedClassApplyRadioDisabled,
+    institutionDetailEdit.validationErrors,
+    onResendNotification,
+    isAdminCommentEditing,
+    adminCommentDraft,
+    handleAdminCommentDraftChange,
+    adminCommentError,
+  ])
 
-  const institutionTabDefs = useMemo(
-    () =>
-      isGeneralDetail && isInstitution
-        ? [
-            { key: 'info', label: '신청 정보' },
-            { key: 'students', label: '학생 명단', disabled: true },
-          ]
-        : [
-            { key: 'info', label: '기본 정보' },
-            { key: 'students', label: '학생 명단', disabled: true },
-            { key: 'assign', label: '강사 배정 현황', disabled: true },
-          ],
-    [isGeneralDetail, isInstitution]
-  )
-
-  const instructorTabDefs = useMemo(
-    () => [
-      { key: 'application', label: INSTRUCTOR_DETAIL_TAB_LABELS.application },
-      {
-        key: 'institutionAssignment',
-        label: INSTRUCTOR_DETAIL_TAB_LABELS.institutionAssignment,
-        disabled: true,
-      },
-    ],
-    []
-  )
+  const instructorInfoPanel = useMemo(() => {
+    if (!isInstructor || !instructorData) return null
+    const d = instructorData
+    if (isGeneralDetail) {
+      return (
+        <div className="applicant-info-section applicant-info-section--instructor">
+          <ApplicantGeneralInstructorBasicInfo
+            instructor={d}
+            maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
+            mode={instructorDetailEdit.isEditing ? 'edit' : 'view'}
+            draft={instructorDetailEdit.draft ?? undefined}
+            onDraftChange={instructorDetailEdit.updateDraft}
+            validationErrors={instructorDetailEdit.validationErrors}
+            onResendNotificationClick={onResendNotification}
+          />
+          <ApplicantInstructorResume instructor={d} />
+        </div>
+      )
+    }
+    return (
+      <div className="applicant-info-section applicant-info-section--instructor">
+        <ApplicantInstructorBasicInfo
+          instructor={d}
+          maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
+          onResendNotificationClick={onResendNotification}
+        />
+        <ApplicantInstructorResume instructor={d} />
+      </div>
+    )
+  }, [
+    isInstructor,
+    instructorData,
+    isGeneralDetail,
+    personalInfoRevealed,
+    instructorDetailEdit.isEditing,
+    instructorDetailEdit.draft,
+    instructorDetailEdit.updateDraft,
+    instructorDetailEdit.validationErrors,
+    onResendNotification,
+  ])
 
   const tabPanel = useMemo(() => {
     if (isVolunteer) {
@@ -639,170 +890,89 @@ export function ApplicantsDetailContents({
         </div>
       )
     }
-    if (isInstitution && institutionData) {
-      const d = institutionData
-      if (activeTab === 'info') {
-        if (isGeneralDetail) {
-          return (
-            <ApplicantGeneralInstitutionBasicInfo
-              institution={d}
-              detail={d.detail}
-              maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
-              mode={institutionDetailEdit.isEditing ? 'edit' : 'view'}
-              draft={institutionDetailEdit.draft ?? undefined}
-              onDraftChange={institutionDetailEdit.updateDraft}
-              textbookOptions={institutionDetailEdit.textbookOptions}
-              sameSchoolGradeOptions={institutionDetailEdit.sameSchoolGradeOptions}
-              canApplyCombinedClass={institutionDetailEdit.canApplyCombinedClass}
-              validationErrors={institutionDetailEdit.validationErrors}
-              onResendNotificationClick={onResendNotification}
-            />
-          )
-        }
-        return (
-          <ApplicantInstitutionBasicInfo
-            institution={d}
-            detail={d.detail}
-            maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
-          />
-        )
-      }
-      if (activeTab === 'students') {
-        return (
-          <div className="extra-tab-content applicant-contents__student-list-tab">
-            <SchoolDetailStudentListSection
-              schoolId={d.id}
-              studentCount={d.studentCount}
-              readOnly={false}
-              onViewDetail={() => {}}
-              onSaveEdit={() => {}}
-            />
-          </div>
-        )
-      }
-      if (activeTab === 'assign') {
-        return <ApplicantInstitutionInstructorAssignTab schoolName={d.schoolName} />
-      }
-      return null
+    if (isInstitution) {
+      return institutionInfoPanel
     }
     if (isIndividual && individualData) {
       return (
         <ApplicantGeneralIndividualBasicInfo
           applicant={individualData}
+          program={program}
           maskSensitive={!personalInfoRevealed && individualData.approvalStatus !== 'approved'}
           mode={individualDetailEdit.isEditing ? 'edit' : 'view'}
           draft={individualDetailEdit.draft ?? undefined}
           onDraftChange={individualDetailEdit.updateDraft}
           validationErrors={individualDetailEdit.validationErrors}
           onResendNotificationClick={onResendNotification}
+          screeningStage={individualScreeningStage}
+          textbookOptions={individualDetailEdit.textbookOptions}
+          isAdminCommentEditing={isIndividualAdminCommentEditing}
+          adminCommentDraft={individualAdminCommentDraft}
+          onAdminCommentDraftChange={handleIndividualAdminCommentDraftChange}
+          adminCommentError={individualAdminCommentError}
+          openManagerDropdown={openManagerDropdown}
+          setOpenManagerDropdown={setOpenManagerDropdown}
+          onManagerAEvaluationChange={handleManagerAEvaluationChange}
+          onManagerBEvaluationChange={handleManagerBEvaluationChange}
         />
       )
     }
-    if (isInstructor && instructorData) {
-      const d = instructorData
-      if (activeTab === 'application') {
-        if (isGeneralDetail) {
-          return (
-            <div className="applicant-info-section applicant-info-section--instructor">
-              <ApplicantGeneralInstructorBasicInfo
-                instructor={d}
-                maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
-                mode={instructorDetailEdit.isEditing ? 'edit' : 'view'}
-                draft={instructorDetailEdit.draft ?? undefined}
-                onDraftChange={instructorDetailEdit.updateDraft}
-                validationErrors={instructorDetailEdit.validationErrors}
-                onResendNotificationClick={onResendNotification}
-              />
-              <ApplicantInstructorResume instructor={d} />
-            </div>
-          )
-        }
-        return (
-          <div className="applicant-info-section applicant-info-section--instructor">
-            <ApplicantInstructorBasicInfo
-              instructor={d}
-              maskSensitive={!personalInfoRevealed && d.approvalStatus !== 'approved'}
-              onResendNotificationClick={onResendNotification}
-            />
-            <ApplicantInstructorResume instructor={d} />
-          </div>
-        )
-      }
-      if (activeTab === 'institutionAssignment') {
-        const assignedSchoolDisplay =
-          d.assignedSchoolName || d.preferredSchools?.[0]?.schoolName || d.schoolName || '-'
-        const assignmentColumns: ColumnsType<{
-          key: string
-          schoolName: string
-          lectureRound: string
-        }> = [
-          { title: '배정 기관', dataIndex: 'schoolName', key: 'schoolName' },
-          {
-            title: '교육 예정 현황',
-            dataIndex: 'lectureRound',
-            key: 'lectureRound',
-            width: 140,
-          },
-        ]
-        return (
-          <div className="extra-tab-content applicant-contents__instructor-assignment-tab">
-            <Table
-              className="cms-data-table cms-data-table--skip-auto-no-col"
-              columns={assignmentColumns}
-              dataSource={[
-                {
-                  key: '1',
-                  schoolName: assignedSchoolDisplay,
-                  lectureRound: '-',
-                },
-              ]}
-              pagination={false}
-              rowKey="key"
-              size="middle"
-            />
-          </div>
-        )
-      }
-      return null
+    if (isInstructor) {
+      return instructorInfoPanel
     }
     return null
   }, [
-    activeTab,
-    institutionData,
+    institutionInfoPanel,
     individualData,
-    instructorData,
+    instructorInfoPanel,
     isInstitution,
     isIndividual,
     isInstructor,
     isVolunteer,
-    isGeneralDetail,
     personalInfoRevealed,
-    institutionDetailEdit.isEditing,
-    institutionDetailEdit.draft,
-    institutionDetailEdit.updateDraft,
-    institutionDetailEdit.textbookOptions,
-    institutionDetailEdit.sameSchoolGradeOptions,
-    institutionDetailEdit.canApplyCombinedClass,
-    institutionDetailEdit.validationErrors,
     individualDetailEdit.isEditing,
     individualDetailEdit.draft,
     individualDetailEdit.updateDraft,
     individualDetailEdit.validationErrors,
-    instructorDetailEdit.isEditing,
-    instructorDetailEdit.draft,
-    instructorDetailEdit.updateDraft,
-    instructorDetailEdit.validationErrors,
+    individualDetailEdit.textbookOptions,
+    onResendNotification,
+    program,
+    individualScreeningStage,
+    isIndividualAdminCommentEditing,
+    individualAdminCommentDraft,
+    handleIndividualAdminCommentDraftChange,
+    individualAdminCommentError,
+    openManagerDropdown,
+    handleManagerAEvaluationChange,
+    handleManagerBEvaluationChange,
   ])
 
-  const tabDefs = isVolunteer
-    ? [{ key: 'info', label: '기본 정보' }]
-    : isIndividual
-      ? []
-      : isInstitution
-        ? institutionTabDefs
-        : instructorTabDefs
+  const tabDefs = isVolunteer ? [{ key: 'info', label: '기본 정보' }] : []
 
-  if (isIndividual) {
+  if (
+    isInstitution &&
+    isGeneralDetail &&
+    isTrainedTeachersDetailProgram(program ?? null) &&
+    institutionData
+  ) {
+    return (
+      <TrainedTeachersApplicantInstitutionDetailContents
+        institution={institutionData}
+        program={program}
+        personalInfoRevealed={personalInfoRevealed}
+        headerExtraContent={headerExtraContent}
+        personalInfoRevealModal={personalInfoRevealModal}
+        institutionDetailEdit={institutionDetailEdit}
+        onResendNotification={onResendNotification}
+        isAdminCommentEditing={isAdminCommentEditing}
+        adminCommentDraft={adminCommentDraft}
+        onAdminCommentDraftChange={handleAdminCommentDraftChange}
+        adminCommentError={adminCommentError}
+      />
+    )
+  }
+
+  if (isIndividual || isInstitution || isInstructor) {
     return (
       <div className="applicant-contents">
         {headerExtraContent ? (
