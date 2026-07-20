@@ -59,14 +59,17 @@ function baseProgram(
 }
 
 export function mapTrainedTeacherListItemToProgram(dto: AdminProgramListItemDto): Program {
-  const title = dto.nameKo?.trim() || '제목 없음'
+  const title =
+    dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
   return baseProgram({
     id: dto.id == null ? '' : String(dto.id),
     title,
-    mainTitle: title,
-    startDate: dto.businessStartDate,
-    endDate: dto.businessEndDate,
-    lifecycleStatus: lifecycleStatusFromPeriodStatus(dto.periodStatus),
+    mainTitle: dto.mainTitle?.trim() || title,
+    startDate: dto.businessStartDate ?? dto.startDate,
+    endDate: dto.businessEndDate ?? dto.endDate,
+    lifecycleStatus: dto.periodStatus
+      ? lifecycleStatusFromPeriodStatus(dto.periodStatus)
+      : ((dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ?? 'recruiting_students'),
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
     participatingSchoolCount: dto.organizationApplicationCount,
     createdAt: dto.createdAt,

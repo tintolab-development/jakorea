@@ -55,6 +55,21 @@ describe('general-program-adapters', () => {
     expect(program.startDate).toBe('2026-03-01')
   })
 
+  it('prefers title/mainTitle when list item has no nameKo (actual BE list shape)', () => {
+    const program = mapAdminProgramListItemToProgram({
+      id: '8c495543-4a17-45ff-9d1a-4483a4ac955c',
+      title: '테스트(mrssl5qf)',
+      mainTitle: '테스트(mrssl5qf)',
+      lifecycleStatus: 'recruiting_students',
+      startDate: '2026-04-01T00:00:00Z',
+      endDate: '2026-12-31T00:00:00Z',
+    })
+
+    expect(program.title).toBe('테스트(mrssl5qf)')
+    expect(program.mainTitle).toBe('테스트(mrssl5qf)')
+    expect(program.lifecycleStatus).toBe('recruiting_students')
+  })
+
   it('filters overview status like mock list', () => {
     const programs = [
       mapAdminProgramListItemToProgram({ id: 1, nameKo: 'A', periodStatus: 'RECRUITING' }),

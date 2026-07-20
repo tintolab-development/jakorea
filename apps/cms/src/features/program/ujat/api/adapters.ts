@@ -51,13 +51,14 @@ function baseProgram(partial: Partial<Program> & Pick<Program, 'id' | 'title'>):
 }
 
 export function fromListItem(dto: AdminProgramListItemDto): Program {
-  const title = dto.nameKo?.trim() || '제목 없음'
+  const title =
+    dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
   return baseProgram({
     id: idOf(dto.id ?? dto.uuid),
     title,
-    mainTitle: title,
-    startDate: dto.businessStartDate,
-    endDate: dto.businessEndDate,
+    mainTitle: dto.mainTitle?.trim() || title,
+    startDate: dto.businessStartDate ?? dto.startDate,
+    endDate: dto.businessEndDate ?? dto.endDate,
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
     participatingSchoolCount: dto.organizationApplicationCount,
     instructors: dto.instructorApplicantCount,

@@ -19,10 +19,17 @@ export interface AdminProgramListItemDto {
   deliveryType?: string
   draftStatus?: string
   periodStatus?: string
+  /** OpenAPI 예시 필드 — 일부 BE는 미설정 */
   nameKo?: string
+  /** 실제 목록 응답에서 주로 사용 (ProgramResponse와 동일) */
+  title?: string
+  mainTitle?: string
+  lifecycleStatus?: string
   businessYear?: number
   businessStartDate?: string
   businessEndDate?: string
+  startDate?: string
+  endDate?: string
   organizationApplicationCount?: number
   approvedOrganizationApplicationCount?: number
   instructorApplicantCount?: number

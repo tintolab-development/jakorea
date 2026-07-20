@@ -68,16 +68,20 @@ function baseProgramDefaults(partial: Partial<Program> & Pick<Program, 'id' | 't
 }
 
 export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): Program {
-  const title = dto.nameKo?.trim() || '제목 없음'
+  // 목록 OpenAPI 예시는 nameKo, 실제 BE 응답은 title/mainTitle을 내려준다.
+  const title =
+    dto.nameKo?.trim() || dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
   const lifecycleStatus =
-    mapPeriodStatusToLifecycle(dto.periodStatus) ?? ('recruiting_students' as ProgramLifecycleStatus)
+    mapPeriodStatusToLifecycle(dto.periodStatus) ??
+    (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
+    ('recruiting_students' as ProgramLifecycleStatus)
 
   return baseProgramDefaults({
-    id: toProgramId(dto.id),
+    id: toProgramId(dto.id ?? dto.uuid),
     title,
-    mainTitle: title,
-    startDate: dto.businessStartDate ?? undefined,
-    endDate: dto.businessEndDate ?? undefined,
+    mainTitle: dto.mainTitle?.trim() || title,
+    startDate: dto.businessStartDate ?? dto.startDate ?? undefined,
+    endDate: dto.businessEndDate ?? dto.endDate ?? undefined,
     lifecycleStatus,
     approvedStudentCount: dto.approvedOrganizationApplicationCount ?? dto.applicantCount,
     instructors: dto.instructorApplicantCount,
@@ -87,7 +91,12 @@ export function mapAdminProgramListItemToProgram(dto: AdminProgramListItemDto): 
 }
 
 export function mapAdminProgramDetailToProgram(dto: ProgramResponse): Program {
-  const title = dto.title?.trim() || dto.mainTitle?.trim() || '제목 없음'
+  const dtoWithNameKo = dto as ProgramResponse & { nameKo?: string }
+  const title =
+    dto.title?.trim() ||
+    dto.mainTitle?.trim() ||
+    dtoWithNameKo.nameKo?.trim() ||
+    '제목 없음'
   const id = toProgramId(dto.id)
   const now = new Date().toISOString()
   const serviceDetail = parseGeneralProgramServiceDetailJson(dto.serviceDetailJson)
