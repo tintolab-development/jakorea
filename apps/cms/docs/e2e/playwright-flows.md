@@ -177,6 +177,29 @@ pnpm --filter cms exec playwright test tests/e2e/flows/programs --project=chromi
 
 ---
 
+## 3b. 프로그램 — 일반 프로그램 수정
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `tests/e2e/flows/programs/general-program-edit.spec.ts` |
+| POM | `tests/e2e/pages/general-program-edit.page.ts` |
+| 헬퍼 | `tests/e2e/pages/form-helpers.ts` |
+| 대상 | BE 시드 **`[수정 가능] 일반 프로그램 더미`** (신규 등록 없음) |
+| 검증 | **1) 더미 열기** → **2) 공통 정보 수정** → **3) 모집 정보 수정** → **4) 상세·목록 확인** (`describe.serial`) |
+
+전제: 더미가 목록에 있고, lifecycle이 **프로그램 진행 예정**이며 **사업 시작일 이전**이어야 「정보 수정」이 가능합니다.  
+대표 프로그램명(국문)은 시드 식별용으로 **변경하지 않습니다**. 영문·공고용명·장소·KPI·임금·모집 탭 필드 등을 갱신한 뒤 `PATCH /api/admin/programs/{id}` 성공을 기다립니다.  
+모집 정보는 참여자 / 강사 / 봉사자 서브탭마다 수정·저장합니다.
+
+실행은 등록과 동일하게 `tests/e2e/flows/programs` 전체를 돌립니다.
+
+```bash
+pnpm --filter cms test:e2e:programs
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/general-program-edit.spec.ts --project=chromium
+```
+
+---
+
 ## 4. 회원 — 회원 목록 CRUD (권한 관리 제외)
 
 회원 관리 → **회원 목록** 하위만 대상입니다. **회원 권한 관리**(권한 승인·관리자 권한 설정)는 제외합니다.
