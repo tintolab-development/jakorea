@@ -363,30 +363,79 @@ async function resolveAdminAccountIdForMemberUser(
 /**
  * 관리자 목록·상세 권한 유형 드롭다운
  * → `PATCH /api/admin/admin-accounts/{adminId}/role` (승인 플로우와 동일)
+ *
+ * 관리자 목록 행 id 가 member 상세에 없는 경우(admin account id만 존재)에도
+ * adminId 로 role PATCH 가 가능하도록 getUserById 실패를 허용한다.
  */
 async function patchAdminPermissionVariantRemote(
   userId: UUID,
   variant: AdminPermissionTagVariant
 ): Promise<Omit<User, 'password'>> {
   try {
-    const existing = await getUserById(userId)
-    if (!existing) {
-      throw new Error('사용자를 찾을 수 없습니다.')
+    let existing: Omit<User, 'password'> | null = null
+    try {
+      existing = await getUserById(userId)
+    } catch {
+      existing = null
     }
 
-    const adminId = await resolveAdminAccountIdForMemberUser(existing)
+    let adminId: number
+    if (existing) {
+      adminId = await resolveAdminAccountIdForMemberUser(existing)
+    } else {
+      // 목록 행이 member 상세에 없어도, id 레지스트리·숫자 id 로 admin account PATCH 시도
+      let registeredId: number | null = null
+      try {
+        registeredId = resolveMemberIdForApi(userId)
+      } catch {
+        registeredId = null
+      }
+      const raw = String(userId).replace(/^(admin-|member-|admin-account-)/, '')
+      const numeric = Number(raw)
+      if (registeredId != null && registeredId > 0) {
+        adminId = registeredId
+      } else if (Number.isFinite(numeric) && numeric > 0) {
+        adminId = Math.trunc(numeric)
+      } else {
+        const page = await fetchAdminsPageRemote({ page: 0, size: 100 })
+        const match = (page.items ?? []).find(item => {
+          const uuid = item.uuid?.trim()
+          if (!uuid) return false
+          return uuid === userId || uuid === raw || `admin-${uuid}` === userId
+        })
+        if (match?.id == null) {
+          throw new Error('관리자 계정(adminId)을 찾지 못해 권한 유형을 변경할 수 없습니다.')
+        }
+        adminId = match.id
+      }
+    }
+
     const roleCode = adminPermissionFeeGradeToRoleCode(variant)
     await changeAdminAccountRoleRemote(adminId, {
       roleCode,
       reason: `CMS 관리자 회원 권한 유형 변경 (${roleCode})`,
     })
 
+    if (existing) {
+      return {
+        ...existing,
+        listMetrics: {
+          ...existing.listMetrics,
+          adminPermissionVariant: variant,
+        },
+      }
+    }
+
+    const now = new Date().toISOString()
     return {
-      ...existing,
-      listMetrics: {
-        ...existing.listMetrics,
-        adminPermissionVariant: variant,
-      },
+      id: userId,
+      email: '-',
+      name: '-',
+      role: 'ADMIN',
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+      listMetrics: { adminPermissionVariant: variant },
     }
   } catch (error) {
     throw new Error(getMemberApiErrorMessage(error, '관리자 권한 유형 변경에 실패했습니다.'))

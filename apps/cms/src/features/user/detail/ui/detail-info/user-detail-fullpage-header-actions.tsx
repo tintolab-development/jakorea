@@ -154,7 +154,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
         labelMode="stickyReveal"
         revealed={personalInfoRevealed}
         cmsVariant={personalInfoButton.variant}
-        cmsSize="large"
+        cmsSize="medium"
         width={160}
         onClick={personalInfoButton.onClick}
       />

@@ -67,7 +67,7 @@ export class AdminPermissionTypePage {
     const patchPromise = this.page.waitForResponse(
       res =>
         res.request().method() === 'PATCH' &&
-        /\/api\/admin\/admin-accounts\/\d+\/role\/?$/.test(new URL(res.url()).pathname),
+        /\/api\/admin\/admin-accounts\/[^/]+\/role\/?$/.test(new URL(res.url()).pathname),
       { timeout: 60_000 }
     )
 
