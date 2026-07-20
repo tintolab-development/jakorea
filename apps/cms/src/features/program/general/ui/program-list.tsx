@@ -26,6 +26,8 @@ import type {
 } from './table/program-table-column-resolver'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { FilterTableLayout } from '@/shared/ui'
+import { ExcelButton } from '@/shared/ui/excel-button'
+import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { getProgramTablePageConfig, type ProgramTableContext } from './program-table.config'
 
@@ -114,13 +116,13 @@ export function ProgramList({
   )
 
   const {
-    table,
     pendingFilters,
     applySearch: handleSearch,
     hasActiveFilters,
     displayedCount,
     antdColumns,
     handleFilterChange,
+    tableData,
   } = useTablePage(tableConfig, {
     data,
     searchParams,
@@ -195,6 +197,19 @@ export function ProgramList({
     return programListFilterFields
   }, [tableContext.mode, listView])
 
+  /**
+   * useTablePage.tableData를 사용한다.
+   * TanStack `table` 인스턴스 참조는 data 갱신 후에도 동일할 수 있어,
+   * `getFilteredRowModel()`을 `[table]`만으로 메모하면 새로고침 직후 빈 목록이 고착된다.
+   */
+  const filteredRows = tableData
+
+  const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
+    columns: antdColumns,
+    data: filteredRows,
+    filename: headerTitle ?? '프로그램 목록',
+  })
+
   return (
     <>
       {viewMode === 'list' ? (
@@ -215,7 +230,7 @@ export function ProgramList({
           className={filterTableLayoutClassName}
           excelExport={{
             columns: antdColumns,
-            data: table.getFilteredRowModel().rows.map(row => row.original),
+            data: filteredRows,
           }}
         >
           <Table
@@ -229,7 +244,7 @@ export function ProgramList({
                   }
                 : undefined
             }
-            dataSource={table.getFilteredRowModel().rows.map(row => row.original)}
+            dataSource={filteredRows}
             columns={antdColumns}
             rowKey="id"
             loading={loading}
@@ -254,7 +269,7 @@ export function ProgramList({
             }
           >
             <ProgramCalendarView
-              items={table.getFilteredRowModel().rows.map(row => row.original)}
+              items={filteredRows}
               loading={loading}
               onItemClick={onView}
               view={listView}
@@ -266,6 +281,7 @@ export function ProgramList({
                   </div>
                   <div className="table-header-actions--wrapper">
                     {children}
+                    <ExcelButton onClick={exportExcel} loading={isExcelExporting} />
                     {toolbarActionsAfterExcel}
                   </div>
                 </div>
