@@ -9,14 +9,17 @@ import type { ColumnsType } from 'antd/es/table'
 import '@/features/program/general/ui/program-list.css'
 import './admin-permission-tag.css'
 import './user-list.css'
-import type { User, UserRole } from '@/types/user'
+import type { User } from '@/types/user'
 import {
   ADMIN_PERMISSION_TAG_LABEL,
   type AdminPermissionTagVariant,
   getAdminPermissionVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
-import { getRoleLabel } from '@/shared/ui'
-import { formatDate } from '@/shared/utils'
+import { formatDateDot } from '@/shared/utils'
+import {
+  getAllMemberListRoleTypeLabel,
+  getMemberSignupTypeLabel,
+} from '@/features/user/shared/lib/member-list-display'
 import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
@@ -41,6 +44,8 @@ interface UserListProps {
   selectedRowKeys?: React.Key[]
   onSelectionChange?: (keys: React.Key[]) => void
   pagination?: boolean
+  /** 회원 목록 — 가입일 내림차순 기준 No. 역순 (맨 아래 = 1) */
+  totalCount?: number
   /** URL `kind`와 동일 — 컬럼 세트 결정 */
   listKind?: MemberListKind
   onAdminPermissionChange?: (ctx: {
@@ -48,13 +53,6 @@ interface UserListProps {
     nextPermission: AdminPermissionTagVariant
   }) => Promise<void> | void
   adminPermissionChangeLoadingUserId?: string | null
-}
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  INDIVIDUAL: '개인',
-  SCHOOL: '학교(교사)',
-  INSTRUCTOR: '강사',
-  ADMIN: '관리자',
 }
 
 function maskedPhone(phone: string | undefined): string {
@@ -154,6 +152,21 @@ function AdminPermissionDropdownCell({
   )
 }
 
+function createNoColumn(reverseFromTotal?: number): ColumnsType<Row>[0] {
+  return {
+    title: 'No.',
+    key: 'no',
+    width: 80,
+    align: 'center',
+    render: (_: unknown, __: Row, index: number) => {
+      if (reverseFromTotal != null && reverseFromTotal > 0) {
+        return reverseFromTotal - index
+      }
+      return index + 1
+    },
+  }
+}
+
 function columnsForKind(
   kind: MemberListKind,
   options?: {
@@ -164,15 +177,10 @@ function columnsForKind(
     adminPermissionChangeLoadingUserId?: string | null
     openAdminPermissionDropdownUserId?: string | null
     setOpenAdminPermissionDropdownUserId?: (id: string | null) => void
+    totalCount?: number
   }
 ): ColumnsType<Row> {
-  const noCol: ColumnsType<Row>[0] = {
-    title: 'No.',
-    key: 'no',
-    width: 80,
-    align: 'center',
-    render: (_: unknown, __: Row, index: number) => index + 1,
-  }
+  const noCol = createNoColumn(options?.totalCount)
 
   if (kind === 'institutions') {
     return [
@@ -213,7 +221,7 @@ function columnsForKind(
         key: 'createdAt',
         width: 200,
         align: 'center',
-        render: (d: string) => formatDate(new Date(d)),
+        render: (d: string) => formatDateDot(d),
       },
     ]
   }
@@ -271,7 +279,7 @@ function columnsForKind(
         dataIndex: 'createdAt',
         key: 'createdAt',
         align: 'center',
-        render: (d: string) => formatDate(new Date(d)),
+        render: (d: string) => formatDateDot(d),
       },
     ]
   }
@@ -336,7 +344,7 @@ function columnsForKind(
         dataIndex: 'createdAt',
         key: 'createdAt',
         align: 'center',
-        render: (d: string) => formatDate(new Date(d)),
+        render: (d: string) => formatDateDot(d),
       },
     ]
   }
@@ -367,18 +375,22 @@ function columnsForKind(
     },
     {
       title: '회원 유형',
-      dataIndex: 'role',
       key: 'role',
       align: 'center',
-      render: (role: UserRole, record: Row) =>
-        ROLE_LABELS[role] ?? getRoleLabel(role, record.adminLevel),
+      render: (_: unknown, record: Row) => getAllMemberListRoleTypeLabel(record),
+    },
+    {
+      title: '가입 유형',
+      key: 'signupType',
+      align: 'center',
+      render: (_: unknown, record: Row) => getMemberSignupTypeLabel(record),
     },
     {
       title: '가입일',
       dataIndex: 'createdAt',
       key: 'createdAt',
       align: 'center',
-      render: (d: string) => formatDate(new Date(d)),
+      render: (d: string) => formatDateDot(d),
     },
   ]
 }
@@ -391,6 +403,7 @@ export function UserList({
   onSelectionChange,
   pagination = true,
   listKind = DEFAULT_MEMBER_LIST_KIND,
+  totalCount,
   onAdminPermissionChange,
   adminPermissionChangeLoadingUserId,
 }: UserListProps) {
@@ -404,9 +417,11 @@ export function UserList({
         adminPermissionChangeLoadingUserId,
         openAdminPermissionDropdownUserId,
         setOpenAdminPermissionDropdownUserId,
+        totalCount,
       }),
     [
       listKind,
+      totalCount,
       onAdminPermissionChange,
       adminPermissionChangeLoadingUserId,
       openAdminPermissionDropdownUserId,

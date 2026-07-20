@@ -74,6 +74,9 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
     createdAt: item.createdAt ?? now,
     updatedAt: item.updatedAt ?? now,
     registeredByAdmin: Boolean(item.registeredByAdmin ?? item.preRegistered),
+    identitySelfSignupCompletedAfterAdminRegistration: Boolean(
+      item.identitySelfSignupCompletedAfterAdminRegistration ?? item.identityVerified
+    ),
     id1365: item.external1365Id?.trim() || undefined,
     ...(item.affiliation?.trim() ? { affiliation: item.affiliation.trim() } : {}),
     ...(item.affiliatedSchoolUserId?.trim()

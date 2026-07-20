@@ -2,7 +2,17 @@
  * 날짜 포맷팅 유틸리티
  */
 
+import dayjs from 'dayjs'
+
 const defaultLocale = 'ko-KR'
+
+/** 목록 등 날짜(시간 제외) 표시 — 예: 2025.09.15 */
+export function formatDateDot(value: Date | string | number | null | undefined): string {
+  if (value == null || value === '') return '-'
+  const parsed = dayjs(value)
+  if (!parsed.isValid()) return '-'
+  return parsed.format('YYYY.MM.DD')
+}
 
 export function formatDate(value: Date | string | number, options: Intl.DateTimeFormatOptions = {}) {
   const date = value instanceof Date ? value : new Date(value)
