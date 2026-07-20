@@ -103,6 +103,9 @@ export type { NumericInputMode } from '../lib/numeric-input'
 export {
   CmsDateTextInput,
   DateTextInput,
+  birthDateFormValueToApi,
+  isBirthDateInputIncomplete,
+  isValidBirthDateFormValue,
   isValidCalendarDate,
   normalizeDateTextInputOnBlur,
   sanitizeDateTextInput,

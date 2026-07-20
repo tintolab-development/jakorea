@@ -71,8 +71,15 @@ export function sanitizeDateTextInput(value: string): string {
   const year = (parts[0] ?? '').slice(0, 4)
   if (parts.length === 1) return year
 
-  const month = (parts[1] ?? '').slice(0, 2)
-  if (parts.length === 2) return `${year}.${month}`
+  const monthRaw = parts[1] ?? ''
+  const month = monthRaw.slice(0, 2)
+  if (parts.length === 2) {
+    const dayOverflow = monthRaw.slice(2)
+    if (dayOverflow) {
+      return `${year}.${month}.${dayOverflow.slice(0, 2)}`
+    }
+    return `${year}.${month}`
+  }
 
   const day = (parts[2] ?? '').slice(0, 2)
   return `${year}.${month}.${day}`
@@ -84,6 +91,25 @@ export function normalizeDateTextInputOnBlur(value: string): string {
   if (!parts || !isValidCalendarDate(sanitized)) return sanitized
 
   return `${parts.year}.${parts.month.padStart(2, '0')}.${parts.day.padStart(2, '0')}`
+}
+
+/** 입력 중(8자리 미만) 여부 — validator에서 조기 에러 방지 */
+export function isBirthDateInputIncomplete(value: string): boolean {
+  return value.replace(/\D/g, '').length < 8
+}
+
+/** 폼·submit용 — 완성된 YYYY.MM.DD 달력 날짜 */
+export function isValidBirthDateFormValue(value: string | undefined): boolean {
+  const trimmed = value?.trim()
+  if (!trimmed || isBirthDateInputIncomplete(trimmed)) return false
+  return isValidCalendarDate(trimmed)
+}
+
+/** API 전송용 YYYY-MM-DD */
+export function birthDateFormValueToApi(value: string): string {
+  const normalized = normalizeDateTextInputOnBlur(value.trim())
+  if (!isValidCalendarDate(normalized)) return value.trim()
+  return normalized.replace(/\./g, '-')
 }
 
 export interface CmsDateTextInputProps
