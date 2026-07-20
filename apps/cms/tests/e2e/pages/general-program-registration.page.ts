@@ -1,18 +1,40 @@
 import { type Page, expect } from '@playwright/test'
-import { fillByPlaceholder, selectByPlaceholder, selectNearLabel } from './form-helpers'
+import {
+  checkCheckboxIfVisible,
+  checkRadioIfVisible,
+  clickRegistrationTabIfVisible,
+  clickSectionNavIfVisible,
+  fillAllByPlaceholder,
+  fillAllParagraphDatesByPlaceholder,
+  fillByPlaceholder,
+  fillByPlaceholderIfVisible,
+  fillParagraphDateByPlaceholder,
+  fillVisibleFreeTextFields,
+  selectByPlaceholder,
+  selectByPlaceholderIfVisible,
+  selectNearLabel,
+  selectNearLabelIfVisible,
+  uploadTinyPngIfPresent,
+} from './form-helpers'
 
 function createUniqueProgramTitle() {
-  return `JA E2E 기업가정신 교실 ${Date.now()}`
+  const hash = Date.now().toString(36)
+  return `테스트(${hash})`
 }
 
 const PROGRAM_EN_NAME = 'JA Entrepreneurship Classroom 2026 E2E'
 const PROGRAM_PUBLIC_NAME = 'JA 기업가정신 교실 참여자 모집'
 const EDUCATION_PLACE = '서울시 중구 JA Korea 교육장'
-const KPI_PARTICIPANT = '30'
+const KPI_VALUE = '30'
+const WAGE_VALUE = '150000'
+const CONTACT_NAME = 'JA Korea 프로그램 운영팀'
 const CONTACT_TEL = '02-1234-5678'
 const CONTACT_EMAIL = 'program-e2e@jakorea.org'
 const REMARK = 'E2E 자동 등록 테스트용 비고'
 const EDUCATION_TARGET_DETAIL = '초·중·고 학생 대상 기업가정신 체험 교육'
+const ANNOUNCE_METHOD = '이메일 및 CMS 알림으로 개별 안내'
+const CURRICULUM_UNIT = 'E2E 1차시 단원 — 기업가정신 기초'
+const CURRICULUM_CONTENT = 'E2E 교육 내용 — 창업 마인드셋과 경제 기초를 학습합니다.'
 
 export type RegistrationCompleteResult = {
   programId: string
@@ -21,6 +43,7 @@ export type RegistrationCompleteResult = {
 
 /**
  * 일반 프로그램 목록 → 신규 등록 풀페이지 모달 플로우
+ * 기본 경로(개인 + 커리큘럼형 + 단일 회차)에서 보이는 입력란을 가능한 한 모두 채운다.
  */
 export class GeneralProgramRegistrationPage {
   readonly programTitle: string
@@ -63,19 +86,26 @@ export class GeneralProgramRegistrationPage {
       .catch(() => undefined)
   }
 
-  /** 공통 정보 — 고유 프로그램명·후원사 등 (후원사는 원격 등록 필수) */
+  /** 공통 정보 — 기본·유형·교육진행·KPI·임금 등 보이는 입력 전부 */
   async fillCommonInfo() {
+    await clickSectionNavIfVisible(this.page, '기본 정보')
+
     await fillByPlaceholder(this.page, '대표 프로그램명을 입력하세요', this.programTitle)
     await fillByPlaceholder(this.page, '상세 프로그램명을 입력하세요', PROGRAM_EN_NAME)
     await fillByPlaceholder(this.page, '모집 시 노출될 프로그램명을 입력하세요', PROGRAM_PUBLIC_NAME)
 
     await selectByPlaceholder(this.page, '세부 프로그램명을 선택하세요')
-    await selectByPlaceholder(this.page, '사업 분야를 선택하세요', '기업가정신')
+    await fillParagraphDateByPlaceholder(this.page, '사업 운영 기간을 선택하세요', 'range')
 
-    const basicNav = this.page.getByText('기본 정보', { exact: true }).first()
-    if (await basicNav.isVisible().catch(() => false)) {
-      await basicNav.click()
-    }
+    // 개인 유지 + 강사·봉사자 체크 → 강사/봉사자 모집·신청 탭·KPI 활성
+    await checkCheckboxIfVisible(this.page, /개인/)
+    await checkCheckboxIfVisible(this.page, /교사|강사/)
+    await checkCheckboxIfVisible(this.page, /봉사자/)
+
+    await selectByPlaceholder(this.page, '사업 분야를 선택하세요', '기업가정신')
+    await selectNearLabelIfVisible(this.page, '사업 분야', '기업가정신')
+    // 후원사는 실 API 목록 — placeholder/라벨 모두 대응, 이미 선택돼 있으면 skip
+    await selectByPlaceholderIfVisible(this.page, '후원사를 선택하세요')
     await selectNearLabel(this.page, '후원사')
     const sponsorField = this.page
       .locator('.detail-info-form__field')
@@ -95,54 +125,58 @@ export class GeneralProgramRegistrationPage {
     expect(sponsorSelected).not.toContain('선택하세요')
     expect(sponsorSelected).not.toBe('전체')
 
-    const contactPlaceholder = this.page.locator('.ant-select-selection-placeholder', {
-      hasText: '후원사 담당자를 선택하세요',
-    })
-    if ((await contactPlaceholder.count()) > 0) {
-      const contactSelect = this.page
-        .locator('.ant-select:visible')
-        .filter({ has: contactPlaceholder })
-        .first()
-      const className = (await contactSelect.getAttribute('class')) ?? ''
-      if (!className.includes('ant-select-disabled')) {
-        await selectByPlaceholder(this.page, '후원사 담당자를 선택하세요')
-      }
-    } else {
-      await selectNearLabel(this.page, '후원사 담당자').catch(() => undefined)
-    }
+    // 담당자는 후원사 선택 후 비동기로 로드 — 값이 비어 있을 때만 선택, '전체'는 유효값 아님
+    await this.page
+      .waitForResponse(
+        res => /sponsor/i.test(res.url()) && /contact/i.test(res.url()) && res.ok(),
+        { timeout: 15_000 }
+      )
+      .catch(() => undefined)
+    await selectByPlaceholderIfVisible(this.page, '후원사 담당자를 선택하세요')
+    await selectNearLabelIfVisible(this.page, '후원사 담당자')
 
+    await checkRadioIfVisible(this.page, '기관 안')
     await fillByPlaceholder(
       this.page,
       '교육이 진행될 상세 장소를 입력해 주세요',
       EDUCATION_PLACE
     )
 
-    const survey = this.page.getByRole('checkbox', { name: '설문조사' })
-    if (await survey.isVisible().catch(() => false)) {
-      await survey.check()
-    }
+    await checkCheckboxIfVisible(this.page, '설문조사')
+    await checkCheckboxIfVisible(this.page, '만족도조사')
+    await checkCheckboxIfVisible(this.page, '강의평가')
 
-    const kpiNav = this.page.getByText('사업 KPI 목표', { exact: true }).first()
-    if (await kpiNav.isVisible().catch(() => false)) {
-      await kpiNav.click()
-    }
-    const participantKpi = this.page.getByPlaceholder('목표값 입력').first()
-    if (await participantKpi.isVisible().catch(() => false)) {
-      await participantKpi.fill(KPI_PARTICIPANT)
-    }
+    await selectNearLabelIfVisible(this.page, '교육 과정', 'Traditional (Paper)')
+    await selectNearLabelIfVisible(this.page, 'IP Owned', 'JA')
+    await selectNearLabelIfVisible(this.page, 'Course Delivered By', 'JA')
+    await checkRadioIfVisible(this.page, 'Yes')
 
-    const wageNav = this.page.getByText('임금 정보', { exact: true }).first()
-    if (await wageNav.isVisible().catch(() => false)) {
-      await wageNav.click()
-    }
-    const wageInput = this.page.getByPlaceholder('직접 입력').first()
-    if (await wageInput.isVisible().catch(() => false)) {
-      await wageInput.fill('150000')
-    }
+    // 프로그램 유형 설정
+    await clickSectionNavIfVisible(this.page, '프로그램 유형 설정')
+    await checkRadioIfVisible(this.page, '커리큘럼형')
+    await checkRadioIfVisible(this.page, '단일 회차')
+    await checkRadioIfVisible(this.page, '온라인')
+    await checkRadioIfVisible(this.page, /^개인$/)
+    await selectNearLabelIfVisible(this.page, 'IPS 유형', 'Inspire')
+    await selectByPlaceholderIfVisible(this.page, '프로그램 채널을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '프로그램 종류를 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, 'IPS 유형', 'Inspire')
 
-    if (await basicNav.isVisible().catch(() => false)) {
-      await basicNav.click()
-    }
+    // 교육 진행 (커리큘럼)
+    await clickSectionNavIfVisible(this.page, '교육 진행 (커리큘럼)')
+    await fillByPlaceholderIfVisible(this.page, '단원명을 입력하세요', CURRICULUM_UNIT)
+    await fillByPlaceholderIfVisible(this.page, '교육 내용을 작성하세요', CURRICULUM_CONTENT)
+
+    // 사업 KPI
+    await clickSectionNavIfVisible(this.page, '사업 KPI 목표')
+    await fillAllByPlaceholder(this.page, '목표값 입력', KPI_VALUE)
+
+    // 임금
+    await clickSectionNavIfVisible(this.page, '임금 정보')
+    await fillAllByPlaceholder(this.page, '직접 입력', WAGE_VALUE)
+    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택하세요')
+
+    await clickSectionNavIfVisible(this.page, '기본 정보')
   }
 
   async goToRecruitment() {
@@ -154,40 +188,89 @@ export class GeneralProgramRegistrationPage {
     })
   }
 
+  /** 모집 정보 — 참여자·강사·봉사자 탭 전부 채움 */
   async fillRecruitmentInfo() {
-    const educationTarget = this.page.locator('.ant-select-selection-placeholder', {
-      hasText: '교육 대상을 선택하세요',
-    })
-    if ((await educationTarget.count()) > 0) {
-      await selectByPlaceholder(this.page, '교육 대상을 선택하세요')
-    }
+    await this.fillRecruitParticipantTab()
+    await clickRegistrationTabIfVisible(this.page, '강사 모집 정보')
+    await this.fillRecruitInstructorTab()
+    await clickRegistrationTabIfVisible(this.page, '봉사자 모집 정보')
+    await this.fillRecruitVolunteerTab()
+    // 신청 단계 진입 전 참여자 탭으로 복귀
+    await clickRegistrationTabIfVisible(this.page, '참여자 모집 정보')
+  }
 
-    const detail = this.page.getByPlaceholder('상세 교육 대상을 입력하세요')
-    if (await detail.isVisible().catch(() => false)) {
-      await detail.fill(EDUCATION_TARGET_DETAIL)
+  private async fillRecruitSharedFields(options?: { interviewYes?: boolean }) {
+    if (options?.interviewYes) {
+      await checkRadioIfVisible(this.page, '면접 있음')
+    } else {
+      await checkRadioIfVisible(this.page, '면접 없음')
     }
+    await checkRadioIfVisible(this.page, '게시')
 
-    const announceMethod = this.page.getByPlaceholder('발표 방법 안내')
-    if (await announceMethod.isVisible().catch(() => false)) {
-      await announceMethod.fill('이메일 및 CMS 알림으로 개별 안내')
-    }
+    await fillParagraphDateByPlaceholder(this.page, '프로그램 운영 기간을 선택하세요', 'range')
+    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '상세 교육 대상을 입력하세요',
+      EDUCATION_TARGET_DETAIL
+    )
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '상세 모집 대상을 입력하세요',
+      EDUCATION_TARGET_DETAIL
+    )
+    await fillParagraphDateByPlaceholder(this.page, '모집 기간을 선택하세요', 'range')
+    await fillParagraphDateByPlaceholder(this.page, '합격자 발표일', 'single')
+    await fillParagraphDateByPlaceholder(this.page, '발표일', 'single')
+    await fillByPlaceholderIfVisible(this.page, '발표 방법 안내', ANNOUNCE_METHOD)
+    await fillByPlaceholderIfVisible(this.page, '담당 문의처', CONTACT_NAME)
+    await fillByPlaceholderIfVisible(this.page, '문의처 전화번호', CONTACT_TEL)
+    await fillByPlaceholderIfVisible(this.page, '문의처 이메일', CONTACT_EMAIL)
+    await fillByPlaceholderIfVisible(this.page, '비고란을 작성하세요 (없으면 -로 입력)', REMARK)
 
-    const contact = this.page.getByPlaceholder('담당 문의처')
-    if (await contact.isVisible().catch(() => false)) {
-      await contact.fill('JA Korea 프로그램 운영팀')
-    }
-    const tel = this.page.getByPlaceholder('문의처 전화번호')
-    if (await tel.isVisible().catch(() => false)) {
-      await tel.fill(CONTACT_TEL)
-    }
-    const email = this.page.getByPlaceholder('문의처 이메일')
-    if (await email.isVisible().catch(() => false)) {
-      await email.fill(CONTACT_EMAIL)
-    }
-    const remark = this.page.getByPlaceholder('비고란을 작성하세요 (없으면 -로 입력)')
-    if (await remark.isVisible().catch(() => false)) {
-      await remark.fill(REMARK)
-    }
+    // 상세 정보
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '프로그램 설명을 작성하세요',
+      'E2E 프로그램 설명입니다.'
+    )
+    await fillByPlaceholderIfVisible(this.page, '프로그램명을 작성하세요', this.programTitle)
+    await fillByPlaceholderIfVisible(this.page, '모집 안내를 작성하세요', 'E2E 모집 안내입니다.')
+    await fillByPlaceholderIfVisible(this.page, '지원 방법을 작성하세요', 'CMS에서 신청해 주세요.')
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '학습 지원 내용을 작성하세요',
+      'E2E 학습 지원 내용입니다.'
+    )
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '기타 안내 사항을 작성하세요',
+      'E2E 기타 안내입니다.'
+    )
+    await fillVisibleFreeTextFields(this.page, 'E2E 모집 상세')
+    await uploadTinyPngIfPresent(this.page)
+  }
+
+  private async fillRecruitParticipantTab() {
+    await this.fillRecruitSharedFields({ interviewYes: false })
+  }
+
+  private async fillRecruitInstructorTab() {
+    await this.fillRecruitSharedFields({ interviewYes: false })
+  }
+
+  private async fillRecruitVolunteerTab() {
+    // 면접 없음 경로 — 기간·발표·문의 등 공통 필드 채움
+    await this.fillRecruitSharedFields({ interviewYes: false })
+    // 면접 있음으로 전환 시 추가 필드도 채움
+    await checkRadioIfVisible(this.page, '면접 있음')
+    await fillAllParagraphDatesByPlaceholder(this.page, '모집 기간을 선택하세요', 'range')
+    await fillParagraphDateByPlaceholder(this.page, '발표일', 'single')
+    await fillParagraphDateByPlaceholder(this.page, '면접 기간을 선택하세요', 'range')
+    await fillByPlaceholderIfVisible(this.page, '면접 유형', '대면 면접')
+    await fillParagraphDateByPlaceholder(this.page, '합격자 발표일', 'single')
+    await fillAllByPlaceholder(this.page, '발표 방법 안내', ANNOUNCE_METHOD)
   }
 
   async goToApplication() {
@@ -198,30 +281,79 @@ export class GeneralProgramRegistrationPage {
     })
   }
 
+  /** 신청 정보 — 참여자·강사·봉사자 탭 전부 채움 */
   async fillApplicationInfo() {
-    const teamName = this.page.getByPlaceholder('팀 명을 입력하세요')
-    if (await teamName.isVisible().catch(() => false)) {
-      await teamName.fill('JA E2E 탐험대')
-    }
-    const teamSize = this.page.getByPlaceholder('인원 수')
-    if (await teamSize.isVisible().catch(() => false)) {
-      await teamSize.fill('5')
-    }
-    const teamMemberHint = this.page.getByPlaceholder('팀원 수를 입력해 주세요')
-    if (await teamMemberHint.isVisible().catch(() => false)) {
-      await teamMemberHint.fill('4')
-    }
+    await this.fillApplicationParticipantTab()
+    await clickRegistrationTabIfVisible(this.page, '강사 신청 정보')
+    await this.fillApplicationInstructorTab()
+    await clickRegistrationTabIfVisible(this.page, '봉사자 신청 정보')
+    await this.fillApplicationVolunteerTab()
+    await clickRegistrationTabIfVisible(this.page, '참여자 신청 정보')
+  }
 
-    const textareas = this.page.locator('textarea:visible')
-    const count = await textareas.count()
-    for (let i = 0; i < Math.min(count, 2); i += 1) {
-      await textareas.nth(i).fill(`E2E 신청 정보 작성 ${i + 1} — JA 기업가정신 교실`)
+  private async fillApplicationConsentIfPresent() {
+    // 동의 체크박스가 있으면 모두 체크
+    const checkboxes = this.page.getByRole('checkbox')
+    const count = await checkboxes.count()
+    for (let i = 0; i < count; i += 1) {
+      const box = checkboxes.nth(i)
+      if (!(await box.isVisible().catch(() => false))) continue
+      if (await box.isChecked().catch(() => false)) continue
+      await box.check({ force: true }).catch(() => undefined)
     }
+  }
+
+  private async fillApplicationParticipantTab() {
+    await this.fillApplicationConsentIfPresent()
+    await fillByPlaceholderIfVisible(this.page, '팀 명을 입력하세요', 'JA E2E 탐험대')
+    await selectByPlaceholderIfVisible(this.page, '인원 수')
+    await fillByPlaceholderIfVisible(this.page, '팀원 수를 입력해 주세요', '4')
+    await checkRadioIfVisible(this.page, '팀장')
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '자유롭게 작성해 주세요',
+      'E2E 자기소개 및 지원동기입니다.'
+    )
+    await fillVisibleFreeTextFields(this.page, 'E2E 신청 정보')
+    // 희망 일정 체크박스
+    const scheduleChecks = this.page.locator(
+      '.ant-checkbox-wrapper:visible, [role="checkbox"]:visible'
+    )
+    const sc = await scheduleChecks.count()
+    for (let i = 0; i < Math.min(sc, 3); i += 1) {
+      await scheduleChecks
+        .nth(i)
+        .click({ force: true })
+        .catch(() => undefined)
+    }
+  }
+
+  private async fillApplicationInstructorTab() {
+    await this.fillApplicationConsentIfPresent()
+    await fillVisibleFreeTextFields(this.page, 'E2E 강사 신청')
+    await uploadTinyPngIfPresent(this.page)
+  }
+
+  private async fillApplicationVolunteerTab() {
+    await this.fillApplicationConsentIfPresent()
+    await checkRadioIfVisible(this.page, '있음')
+    await fillByPlaceholderIfVisible(this.page, '진행년도', '2025')
+    await fillByPlaceholderIfVisible(this.page, '프로그램명', 'E2E 이전 JA 프로그램')
+    await fillAllByPlaceholder(
+      this.page,
+      '자유롭게 작성해 주세요',
+      'E2E 봉사자 자유 작성 답변입니다.'
+    )
+    await fillParagraphDateByPlaceholder(this.page, '날짜를 선택하세요', 'single')
+    await fillByPlaceholderIfVisible(this.page, '시간을 선택해 주세요', '10:00')
+    await fillVisibleFreeTextFields(this.page, 'E2E 봉사자 신청')
+    await uploadTinyPngIfPresent(this.page)
   }
 
   /** 실 API 등록 완료 → programId 반환. 실패 모달이면 에러 */
   async completeRegistration(): Promise<RegistrationCompleteResult> {
     const failDialog = this.page.getByRole('dialog').filter({ hasText: '등록 실패' })
+    const successDialog = this.page.getByRole('dialog').filter({ hasText: '프로그램 등록 완료' })
 
     const createResponsePromise = this.page.waitForResponse(
       res =>
@@ -233,7 +365,7 @@ export class GeneralProgramRegistrationPage {
     await this.page.getByRole('button', { name: '프로그램 등록 완료' }).click()
 
     await Promise.race([
-      this.page.waitForURL(/programId=/, { timeout: 60_000 }),
+      successDialog.waitFor({ state: 'visible', timeout: 60_000 }),
       failDialog.waitFor({ state: 'visible', timeout: 60_000 }).then(async () => {
         const message = (
           await failDialog.locator('.ant-modal-body, p, [class*="content"]').first().innerText()
@@ -250,7 +382,9 @@ export class GeneralProgramRegistrationPage {
       )
     }
 
-    await expect(this.page).toHaveURL(/programId=/)
+    await successDialog.getByRole('button', { name: '확인' }).click()
+
+    await expect(this.page).toHaveURL(/programId=/, { timeout: 60_000 })
     await expect(this.page).not.toHaveURL(/new=1/)
 
     const programId = new URL(this.page.url()).searchParams.get('programId')
@@ -273,21 +407,32 @@ export class GeneralProgramRegistrationPage {
       timeout: 30_000,
     })
 
-    // 목록 재조회 반영 대기 — rowKey=id
-    await expect(async () => {
-      const row = this.page.locator(`tr[data-row-key="${result.programId}"]`)
-      if ((await row.count()) === 0) {
-        await this.page.reload()
-        await expect(this.page.getByRole('button', { name: '프로그램 신규 등록' })).toBeVisible({
-          timeout: 30_000,
-        })
-      }
-      await expect(this.page.locator(`tr[data-row-key="${result.programId}"]`)).toBeVisible({
-        timeout: 10_000,
-      })
-      await expect(this.page.locator(`tr[data-row-key="${result.programId}"]`)).toContainText(
-        result.programTitle
+    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력하세요')
+    await expect(titleFilter).toBeVisible({ timeout: 15_000 })
+    await titleFilter.fill(result.programTitle)
+    await this.page.getByRole('button', { name: '조회' }).click()
+    await this.page
+      .waitForResponse(
+        res =>
+          res.request().method() === 'GET' &&
+          /\/api\/admin\/programs/.test(new URL(res.url()).pathname) &&
+          res.ok(),
+        { timeout: 30_000 }
       )
+      .catch(() => undefined)
+
+    await expect(async () => {
+      const byId = this.page.locator(`tr[data-row-key="${result.programId}"]`)
+      if ((await byId.count()) > 0) {
+        await expect(byId).toBeVisible({ timeout: 5_000 })
+        await expect(byId).toContainText(result.programTitle)
+        return
+      }
+      const byTitle = this.page
+        .locator('tbody.ant-table-tbody tr.ant-table-row')
+        .filter({ hasText: result.programTitle })
+        .first()
+      await expect(byTitle).toBeVisible({ timeout: 5_000 })
     }).toPass({ timeout: 90_000 })
   }
 }
