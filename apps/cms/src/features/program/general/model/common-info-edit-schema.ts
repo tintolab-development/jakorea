@@ -16,7 +16,11 @@ import {
   resolveGeneralProgramCommonInfo,
   resolveScheduleTypeDetailedProgramNameFromDetails,
 } from '@/features/program/general/lib/detail-common-info-display'
-import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
+import {
+  programPaymentItemLabelsFromIds,
+  resolveProgramPaymentItemIdsFromLabels,
+  resolveProgramWageDeductionLabel,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import {
   isGeneralIndividualParticipantSelection,
@@ -39,7 +43,6 @@ import {
   PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS,
   PROGRAM_REGISTRATION_IP_OWNED_OPTIONS,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
-import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
 import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
   type ProgramRegistrationSurveyItemId,
@@ -548,21 +551,11 @@ function buildWageGradePricing(amount: string | undefined): string {
 }
 
 function resolvePaymentItemIds(paymentItems: string | undefined): string[] {
-  if (!paymentItems?.trim()) return []
-  const labels = paymentItems.split(',').map(s => s.trim()).filter(Boolean)
-  const options = getTemplateRegistrationPaymentItemOptions()
-  return labels
-    .map(label => options.find(o => o.label === label || label.includes(String(o.label)))?.value)
-    .filter((v): v is string => Boolean(v))
+  return resolveProgramPaymentItemIdsFromLabels(paymentItems)
 }
 
 function paymentItemLabelsFromIds(ids: string[] | undefined): string {
-  if (!ids?.length) return ''
-  const options = getTemplateRegistrationPaymentItemOptions()
-  return ids
-    .map(id => options.find(o => o.value === id)?.label)
-    .filter(Boolean)
-    .join(', ')
+  return programPaymentItemLabelsFromIds(ids)
 }
 
 function educationFormLabelFromValue(value: string | undefined): string {
@@ -787,7 +780,9 @@ function resolveWageFromProgram(program: Program): Pick<
     wageGrade2Amount: parseWageGradeAmount(byGrade[WAGE_GRADE_LABELS[1]]),
     wageGrade3Amount: parseWageGradeAmount(byGrade[WAGE_GRADE_LABELS[2]]),
     wagePaymentItemIds: resolvePaymentItemIds(commonInfo.paymentItems),
-    wageDeductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
+    wageDeductionItems: resolveProgramWageDeductionLabel(
+      resolvePaymentItemIds(commonInfo.paymentItems)
+    ),
   }
 }
 
@@ -1039,8 +1034,10 @@ export function generalCommonInfoEditValuesToProgramPatch(
         sessionLabel: s.sessionLabel,
         title: s.title,
         description: s.description,
-        assignmentEnabled: s.assignmentEnabled,
-        assignmentPeriod: s.assignmentPeriod,
+        assignmentEnabled:
+          values.sessionRound === 'single' ? false : (s.assignmentEnabled ?? false),
+        assignmentPeriod:
+          values.sessionRound === 'single' ? undefined : s.assignmentPeriod,
         educationFormLabel:
           values.educationFormScheduleDetail === 'perSchedule' && s.educationForm
             ? educationFormLabelFromValue(s.educationForm)
@@ -1055,10 +1052,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
               ? buildSessionIpsTypeSummary('prepare', 'none')
               : undefined,
       })),
-      scheduleCurriculumPreEducation:
-        values.educationStructure === 'schedule'
-          ? values.scheduleCurriculumPreEducation ?? false
-          : existingCommon.scheduleCurriculumPreEducation,
+      scheduleCurriculumPreEducation: values.scheduleCurriculumPreEducation ?? false,
       scheduleDetails:
         values.educationStructure === 'schedule'
           ? (relabeledScheduleDetails ?? []).map(d => {
@@ -1070,8 +1064,12 @@ export function generalCommonInfoEditValuesToProgramPatch(
                 return {
                   ...row,
                   scheduleDateLabel: d.scheduleDate?.trim() || undefined,
-                  assignmentEnabled: d.assignmentEnabled,
-                  assignmentPeriod: d.assignmentPeriod?.trim() || undefined,
+                  assignmentEnabled:
+                    values.sessionRound === 'single' ? false : d.assignmentEnabled,
+                  assignmentPeriod:
+                    values.sessionRound === 'single'
+                      ? undefined
+                      : d.assignmentPeriod?.trim() || undefined,
                 }
               }
               return {
@@ -1099,7 +1097,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
       educationScheduleLines: [...values.educationScheduleLines],
       wageGradeRows,
       paymentItems: paymentItemLabelsFromIds(values.wagePaymentItemIds) || existingCommon.paymentItems,
-      deductionItems: GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL,
+      deductionItems: resolveProgramWageDeductionLabel(values.wagePaymentItemIds),
       kpi: {
         finalParticipants: values.kpiFinalParticipants ?? existingCommon.kpi?.finalParticipants ?? 0,
         instructorCount: values.kpiInstructorCount ?? existingCommon.kpi?.instructorCount ?? 0,

@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
-import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
-import { GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL } from '@/features/program/general/lib/wage-info-constants'
+import {
+  getProgramWagePaymentItemOptions,
+  normalizeProgramPaymentItemSelection,
+  resolveProgramWageDeductionLabel,
+} from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
@@ -15,7 +18,8 @@ const WAGE_GRADE_ROWS = [
 export function ProgramRegistrationWageInfoParagraph() {
   const [paymentItemValues, setPaymentItemValues] = useState<string[]>([])
 
-  const paymentItemOptions = useMemo(() => getTemplateRegistrationPaymentItemOptions(), [])
+  const paymentItemOptions = useMemo(() => getProgramWagePaymentItemOptions(), [])
+  const deductionLabel = resolveProgramWageDeductionLabel(paymentItemValues)
 
   return (
     <DetailInfoForm title="임금 정보" hideHeader mode="edit" className="program-registration-paragraph">
@@ -52,7 +56,11 @@ export function ProgramRegistrationWageInfoParagraph() {
                 mode="multiple"
                 withAllOption={false}
                 value={paymentItemValues}
-                onChange={next => setPaymentItemValues(next as string[])}
+                onChange={next =>
+                  setPaymentItemValues(prev =>
+                    normalizeProgramPaymentItemSelection(next as string[], prev)
+                  )
+                }
                 options={paymentItemOptions}
                 placeholder="지급 항목을 선택하세요"
                 style={{ width: '100%', minWidth: 0 }}
@@ -61,7 +69,7 @@ export function ProgramRegistrationWageInfoParagraph() {
           }
           view="-"
         />
-        <DetailInfoForm.Field label="공제 항목" view={GENERAL_PROGRAM_WAGE_DEDUCTION_ITEMS_LABEL} />
+        <DetailInfoForm.Field label="공제 항목" view={deductionLabel} />
       </DetailInfoForm.Row>
     </DetailInfoForm>
   )
