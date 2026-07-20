@@ -104,6 +104,70 @@ export const programParticipantTypeOptions = [
   { value: 'volunteer', label: '봉사자' },
 ]
 
+/** 「전체 프로그램」필터 — 대분류(학교/기관·개인)만 */
+export const programListAudienceFilterOptions = [
+  { value: 'school', label: '학교/기관' },
+  { value: 'individual', label: '개인' },
+] as const
+
+/** 예정·진행·완료 탭 필터 — 참여자 유형 전체 */
+export const programListParticipantTypeFilterOptions = [
+  { value: 'school', label: '학교/기관' },
+  { value: 'individual', label: '개인' },
+  { value: 'instructor', label: '강사' },
+  { value: 'volunteer', label: '봉사자' },
+] as const
+
+export type ProgramListAudienceFilterValue =
+  (typeof programListAudienceFilterOptions)[number]['value']
+
+export type ProgramListParticipantTypeFilterValue =
+  (typeof programListParticipantTypeFilterOptions)[number]['value']
+
+/** 목록 행·필터용 참여자 유형(대분류) — 전체 탭 */
+export function resolveProgramListAudienceFilterValue(
+  program: {
+    generalProgramAudience?: 'individual' | 'organization'
+    generalParticipantTypes?: string[]
+  }
+): ProgramListAudienceFilterValue {
+  if (program.generalProgramAudience === 'individual') return 'individual'
+  if (program.generalProgramAudience === 'organization') return 'school'
+  const types = program.generalParticipantTypes ?? []
+  if (types.includes('individual') && !types.includes('school_institution')) {
+    return 'individual'
+  }
+  return 'school'
+}
+
+/** 목록 행·필터용 참여자 유형 — 예정·진행·완료 (category 우선) */
+export function resolveProgramListParticipantTypeFilterValue(program: {
+  category?: string
+  generalProgramAudience?: 'individual' | 'organization'
+  generalParticipantTypes?: string[]
+}): ProgramListParticipantTypeFilterValue {
+  if (program.category === 'instructor') return 'instructor'
+  if (program.category === 'volunteer') return 'volunteer'
+  if (program.category === 'individual') return 'individual'
+  if (program.category === 'school') return 'school'
+  return resolveProgramListAudienceFilterValue(program)
+}
+
+/** 프로그램 목록 참여자 유형 표기 (필터 옵션과 동일) */
+export function getProgramParticipantTypeLabel(value: string | undefined): string {
+  if (value == null || value === '') return '-'
+  const hit = programParticipantTypeOptions.find(o => o.value === value)
+  return hit?.label ?? value
+}
+
+export function getProgramListAudienceFilterLabel(value: string | undefined): string {
+  if (value == null || value === '') return '-'
+  const hit = programListParticipantTypeFilterOptions.find(o => o.value === value)
+  if (hit) return hit.label
+  const audienceHit = programListAudienceFilterOptions.find(o => o.value === value)
+  return audienceHit?.label ?? getProgramParticipantTypeLabel(value)
+}
+
 /** 프로그램 목록 필터: 교육 대상 */
 export const programListTargetLevelOptions = [
   { value: 'elementary', label: '초등학생' },
@@ -112,13 +176,6 @@ export const programListTargetLevelOptions = [
   { value: 'college', label: '대학생' },
   { value: 'adult', label: '성인' },
 ]
-
-/** 프로그램 목록 참여자 유형 표기 (필터 옵션과 동일) */
-export function getProgramParticipantTypeLabel(value: string | undefined): string {
-  if (value == null || value === '') return '-'
-  const hit = programParticipantTypeOptions.find(o => o.value === value)
-  return hit?.label ?? value
-}
 
 /** 프로그램 목록 교육 대상 표기 (필터 옵션과 동일, `초등` 등 단축 라벨과 구분) */
 export function getProgramListTargetLevelLabel(value: string | undefined): string {

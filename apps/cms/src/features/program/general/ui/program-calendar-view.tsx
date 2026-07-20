@@ -14,7 +14,6 @@ import {
   renderGeneralProgramCalendarPreviewTooltipContent,
 } from '@/shared/components/calendar'
 import { useCalendarNavigationState } from '@/shared/components/calendar/lib/use-calendar-navigation-state'
-import { useCalendarMiniState } from '@/shared/components/calendar/lib/use-calendar-mini-state'
 import {
   SCHEDULE_COLORS,
   buildResolvedScheduleColorMapForPrograms,
@@ -130,12 +129,6 @@ export function ProgramCalendarView({
     onModeChange,
   } = useCalendarNavigationState('month')
   const {
-    selectedDate: miniSelectedDate,
-    currentMonth: miniCurrentMonth,
-    onSelectDate: handleMiniDateSelect,
-    onMonthChange: handleMiniMonthChange,
-  } = useCalendarMiniState()
-  const {
     calendarSearchKeyword,
     programFilterOptions,
     effectiveProgramSelection,
@@ -143,6 +136,20 @@ export function ProgramCalendarView({
     handleProgramFilterChange,
     onKeywordChange,
   } = useProgramCalendarFilter(items)
+
+  const handleMiniDateSelect = useCallback(
+    (date: dayjs.Dayjs) => {
+      handleMainDateSelect(date)
+    },
+    [handleMainDateSelect]
+  )
+
+  const handleMiniMonthChange = useCallback(
+    (month: dayjs.Dayjs) => {
+      handleMainMonthChange(month)
+    },
+    [handleMainMonthChange]
+  )
 
   const events = useMemo(
     () => buildGeneralProgramCalendarEvents(filteredPrograms, view),
@@ -194,8 +201,8 @@ export function ProgramCalendarView({
       {toolbar ? <div className="calendar-set__toolbar">{toolbar}</div> : null}
       <div className="calendar-sub-left">
         <CalendarMini
-          currentMonth={miniCurrentMonth}
-          selectedDate={miniSelectedDate}
+          currentMonth={currentMonth}
+          selectedDate={selectedDate}
           onMonthChange={handleMiniMonthChange}
           onSelectDate={handleMiniDateSelect}
           programDates={eventDateSet}

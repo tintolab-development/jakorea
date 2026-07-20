@@ -6,6 +6,8 @@ import {
   businessAreaOptions,
   targetLevelOptions,
   programListTargetLevelOptions,
+  programListAudienceFilterOptions,
+  programListParticipantTypeFilterOptions,
 } from '../constants/program-list-constants'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -13,8 +15,8 @@ import {
 } from '@/shared/components/table-filter-group-field-width'
 
 /**
- * 「전체 프로그램」「완료 프로그램」위젯 탭
- * 프로그램명 / 진행 현황 / 교육 대상
+ * 「전체 프로그램」위젯 탭
+ * 프로그램명 / 진행 현황 / 참여자 유형 / 교육 대상
  */
 export const programListOverviewFilterFields = [
   {
@@ -33,6 +35,14 @@ export const programListOverviewFilterFields = [
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
+    key: 'participantType',
+    type: 'select' as const,
+    label: '참여자 유형',
+    placeholder: '전체',
+    options: [...programListAudienceFilterOptions],
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
+  },
+  {
     key: 'targetLevel',
     type: 'select' as const,
     label: '교육 대상',
@@ -42,13 +52,21 @@ export const programListOverviewFilterFields = [
   },
 ]
 
-/** 「예정 프로그램」위젯 탭 */
+/** 「예정 프로그램」위젯 탭 — 프로그램명 / 참여자 유형 / 교육 대상 / 사업 운영 기간 */
 export const programListScheduledFilterFields = [
   {
     key: 'title',
     type: 'search' as const,
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
+  },
+  {
+    key: 'participantType',
+    type: 'select' as const,
+    label: '참여자 유형',
+    placeholder: '전체',
+    options: [...programListParticipantTypeFilterOptions],
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
@@ -67,13 +85,21 @@ export const programListScheduledFilterFields = [
   },
 ]
 
-/** 「진행 중인 프로그램」위젯 탭 */
+/** 「진행 중인 프로그램」「완료 프로그램」위젯 탭 — 프로그램명 / 참여자 유형 / 교육 대상 */
 export const programListInProgressFilterFields = [
   {
     key: 'title',
     type: 'search' as const,
     label: '프로그램명',
     placeholder: '프로그램명을 입력하세요',
+    width: FILTER_CONTROL_MAX_WIDTH_PX,
+  },
+  {
+    key: 'participantType',
+    type: 'select' as const,
+    label: '참여자 유형',
+    placeholder: '전체',
+    options: [...programListParticipantTypeFilterOptions],
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {

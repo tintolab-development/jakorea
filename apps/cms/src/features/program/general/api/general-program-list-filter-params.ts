@@ -1,5 +1,9 @@
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
 import type { AdminProgramsListQuery } from '@/features/program/general/api/programs-api-client'
+import {
+  isProgramProgressPhaseFilter,
+  programMatchesProgressPhase,
+} from '@/features/program/general/ui/constants/program-list-constants'
 import type { Program } from '@/types/domain'
 import dayjs from 'dayjs'
 
@@ -69,8 +73,14 @@ export function clientFilterGeneralPrograms(
   tableFilters: GeneralProgramListTableFilters
 ): Program[] {
   return programs.filter(program => {
-    if (tableFilters.lifecycleStatus && program.lifecycleStatus !== tableFilters.lifecycleStatus) {
-      return false
+    if (tableFilters.lifecycleStatus) {
+      // overview URL의 lifecycleStatus는 진행 단계(scheduled|in_progress|completed)다.
+      // Program.lifecycleStatus(모집/교육 세부 상태)와 문자열 일치 비교하면 전부 탈락한다.
+      if (isProgramProgressPhaseFilter(tableFilters.lifecycleStatus)) {
+        if (!programMatchesProgressPhase(program, tableFilters.lifecycleStatus)) return false
+      } else if (program.lifecycleStatus !== tableFilters.lifecycleStatus) {
+        return false
+      }
     }
     if (tableFilters.targetLevel) {
       const levels = program.targetLevels?.length

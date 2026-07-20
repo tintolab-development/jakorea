@@ -45,4 +45,22 @@ describe('general-program-list-filter-params', () => {
       clientFilterGeneralPrograms(programs, { targetLevel: 'elementary' })
     ).toHaveLength(1)
   })
+
+  it('treats overview lifecycleStatus as progress phase, not exact lifecycle match', () => {
+    const programs = [
+      baseProgram,
+      {
+        ...baseProgram,
+        id: '2',
+        lifecycleStatus: 'education_in_progress' as const,
+      },
+    ]
+
+    expect(
+      clientFilterGeneralPrograms(programs, { lifecycleStatus: 'scheduled' })
+    ).toEqual([baseProgram])
+    expect(
+      clientFilterGeneralPrograms(programs, { lifecycleStatus: 'in_progress' })
+    ).toHaveLength(1)
+  })
 })

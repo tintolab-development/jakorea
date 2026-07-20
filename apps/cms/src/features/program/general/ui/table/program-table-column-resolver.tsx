@@ -11,7 +11,7 @@ import {
   instructorRecruitmentTableColumns,
   capacityTableColumnsEducation,
 } from '../constants/program-list-columns'
-import { categoryOptions, getProgramListTargetLevelLabel } from '../constants/program-list-constants'
+import { categoryOptions, getProgramListTargetLevelLabel, getProgramListAudienceFilterLabel, resolveProgramListAudienceFilterValue, resolveProgramListParticipantTypeFilterValue } from '../constants/program-list-constants'
 import type { Program, ProgramCategory, TargetLevel } from '@/types/domain'
 import type { ProgramListProgramMode } from '../../model/program-list-program-mode'
 
@@ -52,8 +52,37 @@ function participantCountRender(_: unknown, record: Program) {
 function instructorRecruitRender(_: unknown, record: Program) {
   const cap = record.instructorCapacity
   const current = record.instructors ?? 0
+  if (cap == null && current === 0 && !hasInstructorParticipantType(record)) return '-'
   if (cap !== undefined) return `${current} / ${cap}`
   return `${current}`
+}
+
+function volunteerRecruitRender(_: unknown, record: Program) {
+  const current = record.generalVolunteers ?? 0
+  const cap = record.generalCommonInfo?.kpi?.volunteerCount
+  if (cap == null && current === 0 && !hasVolunteerParticipantType(record)) return '-'
+  if (cap !== undefined) return `${current} / ${cap}`
+  return `${current}`
+}
+
+function hasInstructorParticipantType(record: Program): boolean {
+  return (
+    record.category === 'instructor' ||
+    (record.generalParticipantTypes ?? []).includes('teacher_instructor')
+  )
+}
+
+function hasVolunteerParticipantType(record: Program): boolean {
+  return (
+    record.category === 'volunteer' ||
+    (record.generalParticipantTypes ?? []).includes('volunteer')
+  )
+}
+
+function participantTypeColumnRender(_: unknown, record: Program) {
+  return getProgramListAudienceFilterLabel(
+    resolveProgramListParticipantTypeFilterValue(record)
+  )
 }
 
 export function resolveProgramListTableView(params: {
@@ -117,12 +146,13 @@ function createProgramListAllColumns() {
       render: participantCountRender,
     },
     {
-      title: '강사 모집 인원',
-      key: 'instructorRecruitment',
-      minWidth: WIDTH_RECRUITMENT_COUNT,
+      title: '참여자 유형',
+      key: 'participantType',
+      minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
-      className: 'program-list-table__col-instructor-recruit',
-      render: instructorRecruitRender,
+      className: 'program-list-table__col-participant-type',
+      render: (_: unknown, record: Program) =>
+        getProgramListAudienceFilterLabel(resolveProgramListAudienceFilterValue(record)),
     },
     {
       title: '교육 대상',
@@ -166,12 +196,12 @@ function createProgramListScheduledColumns() {
       render: participantCountRender,
     },
     {
-      title: '강사 모집 인원',
-      key: 'instructorRecruitment',
-      minWidth: WIDTH_RECRUITMENT_COUNT,
+      title: '참여자 유형',
+      key: 'participantType',
+      minWidth: WIDTH_TARGET_LEVEL,
       align: 'center' as const,
-      className: 'program-list-table__col-instructor-recruit',
-      render: instructorRecruitRender,
+      className: 'program-list-table__col-participant-type',
+      render: participantTypeColumnRender,
     },
     {
       title: '교육 대상',
@@ -231,13 +261,23 @@ function createProgramListInProgressColumns() {
       render: instructorRecruitRender,
     },
     {
+      title: '봉사자 모집 인원',
+      key: 'volunteerRecruitment',
+      minWidth: WIDTH_RECRUITMENT_COUNT,
+      align: 'center' as const,
+      className: 'program-list-table__col-volunteer-recruit',
+      render: volunteerRecruitRender,
+    },
+    {
       title: '총 참여 학교 수',
       key: 'participatingSchoolCount',
       minWidth: WIDTH_PARTICIPATION_COUNT,
       align: 'center' as const,
       className: 'program-list-table__col-school-count',
       render: (_: unknown, record: Program) =>
-        record.participatingSchoolCount != null ? String(record.participatingSchoolCount) : '-',
+        record.participatingSchoolCount != null
+          ? `${record.participatingSchoolCount}개`
+          : '-',
     },
     {
       title: '총 참여 학생 수',
@@ -246,7 +286,17 @@ function createProgramListInProgressColumns() {
       align: 'center' as const,
       className: 'program-list-table__col-student-count',
       render: (_: unknown, record: Program) =>
-        record.participatingStudentCount != null ? String(record.participatingStudentCount) : '-',
+        record.participatingStudentCount != null
+          ? `${record.participatingStudentCount}명`
+          : '-',
+    },
+    {
+      title: '참여자 유형',
+      key: 'participantType',
+      minWidth: WIDTH_TARGET_LEVEL,
+      align: 'center' as const,
+      className: 'program-list-table__col-participant-type',
+      render: participantTypeColumnRender,
     },
     {
       title: '교육 대상',

@@ -14,6 +14,7 @@ export interface ProgramListPendingFilters extends Record<string, unknown> {
   businessArea: string | undefined
   targetLevel: string | undefined
   type: string | undefined
+  participantType: string | undefined
   participantRecruitment: string | undefined
   applicationStartDate: Dayjs | null
   applicationEndDate: Dayjs | null
@@ -52,6 +53,11 @@ export const programListOverviewParamConfig = [
     kind: 'param' as const,
     filterKey: 'targetLevel' as const,
     paramKey: 'targetLevel',
+  },
+  {
+    kind: 'param' as const,
+    filterKey: 'participantType' as const,
+    paramKey: 'participantType',
   },
   {
     kind: 'param' as const,

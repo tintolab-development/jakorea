@@ -16,6 +16,8 @@ import type { ProgramListProgramMode } from '../model/program-list-program-mode'
 import {
   isProgramProgressPhaseFilter,
   programMatchesProgressPhase,
+  resolveProgramListAudienceFilterValue,
+  resolveProgramListParticipantTypeFilterValue,
   type ProgramProgressPhaseFilter,
 } from './constants/program-list-constants'
 import {
@@ -143,6 +145,7 @@ export function getProgramTablePageConfig(
         businessArea: undefined,
         targetLevel: undefined,
         type: undefined,
+        participantType: undefined,
         participantRecruitment: undefined,
         applicationStartDate: null,
         applicationEndDate: null,
@@ -159,6 +162,7 @@ export function getProgramTablePageConfig(
               ? (lifecycleRaw as ProgramProgressPhaseFilter)
               : undefined
           const targetLevelFilter = searchParams.get('targetLevel') || undefined
+          const participantTypeFilter = searchParams.get('participantType') || undefined
           const participantRaw = searchParams.get('participantRecruitment') || ''
           const participantFromUrl = participantRecruitmentFilterValues.has(participantRaw)
             ? participantRaw
@@ -171,6 +175,7 @@ export function getProgramTablePageConfig(
               prev.title !== titleFromUrl ||
               prev.lifecycleStatus !== lifecycleFromUrl ||
               prev.targetLevel !== targetLevelFilter ||
+              prev.participantType !== participantTypeFilter ||
               prev.participantRecruitment !== participantFromUrl ||
               prev.operationStartDate?.format('YYYY-MM-DD') !== operationStartDateStr ||
               prev.operationEndDate?.format('YYYY-MM-DD') !== operationEndDateStr
@@ -182,6 +187,7 @@ export function getProgramTablePageConfig(
               title: titleFromUrl,
               lifecycleStatus: lifecycleFromUrl,
               targetLevel: targetLevelFilter,
+              participantType: participantTypeFilter,
               participantRecruitment: participantFromUrl,
               operationStartDate: operationStartDateStr
                 ? dayjs(operationStartDateStr).isValid()
@@ -278,6 +284,7 @@ export function getProgramTablePageConfig(
             hasColumnFilter ||
               title.trim() !== '' ||
               hasLifecycleFilter ||
+              Boolean(searchParams.get('participantType')) ||
               hasOperationPeriod
           )
         }
@@ -318,6 +325,7 @@ export function getProgramTablePageConfig(
           ctx.mode === 'overview' &&
           (key === 'targetLevel' ||
             key === 'lifecycleStatus' ||
+            key === 'participantType' ||
             key === 'participantRecruitment')
         ) {
           return {
@@ -372,6 +380,7 @@ export function getProgramTablePageConfig(
           ? lifecycleRaw
           : null
       const targetLevelFilter = searchParams.get('targetLevel') || ''
+      const participantTypeFilter = searchParams.get('participantType') || ''
 
       let result = filteredData
       if (title.trim()) {
@@ -387,6 +396,14 @@ export function getProgramTablePageConfig(
       }
       if (lifecyclePhaseFilter && applyLifecycleFromUrl) {
         result = result.filter(p => programMatchesProgressPhase(p, lifecyclePhaseFilter))
+      }
+      if (participantTypeFilter) {
+        result = result.filter(p => {
+          if (applyLifecycleFromUrl) {
+            return resolveProgramListAudienceFilterValue(p) === participantTypeFilter
+          }
+          return resolveProgramListParticipantTypeFilterValue(p) === participantTypeFilter
+        })
       }
       if (targetLevelFilter) {
         result = result.filter(p => p.targetLevel === targetLevelFilter)

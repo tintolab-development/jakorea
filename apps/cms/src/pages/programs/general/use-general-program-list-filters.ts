@@ -90,9 +90,9 @@ export function useGeneralProgramListFilters() {
   }, [remoteEnabled, remoteListQuery])
 
   const headerTitle = useMemo(() => {
-    if (statusFilter === 'scheduled') return '예정 프로그램'
+    if (statusFilter === 'scheduled') return '진행 예정 프로그램'
     if (statusFilter === 'in_progress') return '진행 중인 프로그램'
-    if (statusFilter === 'completed') return '완료 프로그램'
+    if (statusFilter === 'completed') return '진행 완료된 프로그램'
     return '전체 프로그램'
   }, [statusFilter])
 

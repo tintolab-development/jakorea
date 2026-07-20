@@ -227,10 +227,21 @@ export function GeneralProgramListPageContent() {
     if (resolved) setSelectedProgramForDetail(resolved)
   }, [searchParams, filteredPrograms])
 
+  // UJAT/Gemini와 동일 — open은 URL(programId)이 SSOT (state가 아니어야 뒤로가기와 동기화)
   const generalDetailModalOpen =
-    selectedProgramForDetail != null && !searchParams.has(PROGRAMS_GENERAL_NEW_QUERY_KEY)
+    Boolean(programIdFromUrl) && !searchParams.has(PROGRAMS_GENERAL_NEW_QUERY_KEY)
 
-  const generalDetailProgram = selectedProgramForDetail
+  const generalDetailProgram = useMemo(() => {
+    if (!programIdFromUrl) return null
+    if (selectedProgramForDetail?.id === programIdFromUrl) {
+      return selectedProgramForDetail
+    }
+    return (
+      filteredPrograms.find(p => p.id === programIdFromUrl) ??
+      resolveGeneralProgramForDetail(programIdFromUrl) ??
+      null
+    )
+  }, [programIdFromUrl, selectedProgramForDetail, filteredPrograms])
 
   const applyListSearchRef = useRef<(() => void) | null>(null)
 

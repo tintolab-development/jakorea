@@ -10,6 +10,7 @@ interface PendingFilters {
   businessArea: string | undefined
   targetLevel: string | undefined
   type: string | undefined
+  participantType: string | undefined
   /** 모집 예정 | 모집 중 | 모집 마감 (`getRecruitmentStatus`) */
   participantRecruitment: string | undefined
   operationStartDate: Dayjs | null
@@ -35,6 +36,7 @@ export function buildProgramListFilters(
   if (programMode === 'overview' && overviewScheduledLayout) {
     return {
       title: pendingFilters.title,
+      participantType: pendingFilters.participantType,
       targetLevel: pendingFilters.targetLevel,
       operationPeriod:
         pendingFilters.operationStartDate && pendingFilters.operationEndDate
@@ -47,6 +49,7 @@ export function buildProgramListFilters(
     return {
       title: pendingFilters.title,
       lifecycleStatus: pendingFilters.lifecycleStatus,
+      participantType: pendingFilters.participantType,
       targetLevel: pendingFilters.targetLevel,
     }
   }
