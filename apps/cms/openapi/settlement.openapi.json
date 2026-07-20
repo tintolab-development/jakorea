@@ -6564,6 +6564,160 @@
           }
         }
       },
+      "ProgramMaterialAssignmentItemRequest": {
+        "type": "object",
+        "properties": {
+          "textbookId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kitId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kitVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "targetLevel": {
+            "type": "string"
+          },
+          "booksPerKitSnapshot": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "studentCountBasis": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "calculatedKitCount": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "autoMatchedYn": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ProgramMaterialAssignmentRequest": {
+        "type": "object",
+        "properties": {
+          "noneYn": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramMaterialAssignmentItemRequest"
+            }
+          }
+        }
+      },
+      "ApiResponseProgramMaterialAssignmentResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/ProgramMaterialAssignmentResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "ProgramMaterialAssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "noneYn": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramMaterialResponse"
+            }
+          }
+        }
+      },
+      "ProgramMaterialResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "textbookId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "textbookNameKo": {
+            "type": "string"
+          },
+          "textbookNameEn": {
+            "type": "string"
+          },
+          "kitId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kitName": {
+            "type": "string"
+          },
+          "kitVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "targetLevel": {
+            "type": "string"
+          },
+          "booksPerKitSnapshot": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "studentCountBasis": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "calculatedKitCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "autoMatchedYn": {
+            "type": "boolean"
+          },
+          "deliveryStatusTag": {
+            "type": "string"
+          }
+        }
+      },
       "KpiTargetUpsertRequest": {
         "type": "object",
         "properties": {
@@ -22847,6 +23001,92 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "ApiResponseListProgramMaterialCandidateResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "items": {
+              "$ref": "#/components/schemas/ProgramMaterialCandidateResponse"
+            }
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "ProgramMaterialCandidateResponse": {
+        "type": "object",
+        "properties": {
+          "textbookId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "textbookNameKo": {
+            "type": "string"
+          },
+          "textbookNameEn": {
+            "type": "string"
+          },
+          "businessArea": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "targetGradeRange": {
+            "type": "string"
+          },
+          "kitId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kitName": {
+            "type": "string"
+          },
+          "kitVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "versionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "targetLevel": {
+            "type": "string"
+          },
+          "bookCountPerKit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recommendedYn": {
+            "type": "boolean"
+          },
+          "recommendationReason": {
+            "type": "string"
           }
         }
       },
