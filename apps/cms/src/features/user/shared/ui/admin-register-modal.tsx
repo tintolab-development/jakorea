@@ -196,6 +196,7 @@ export function AdminRegisterModal({
                       name="birthDate"
                       style={{ ...FORM_ITEM_STYLE, flex: '1 1 0', minWidth: 0 }}
                       trigger="onValueChange"
+                      getValueFromEvent={(value: string) => value}
                     >
                       <CmsDateTextInput
                         placeholder="YYYY.MM.DD"
