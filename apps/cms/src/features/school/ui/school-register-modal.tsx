@@ -1,23 +1,19 @@
 /**
  * 학교 신규 등록 모달
- * - 스크린샷 스펙: 흰 헤더·진한 제목·우측 닫기(X) → `ContentModal`(공통 콘텐츠 모달)
- * - 본문: `DetailInfoForm` 격자 + `CmsInput` / `CmsSelect` / `AddressSearch` / `CmsButton`
- * - 기관 소재지: `Space.Compact` + `DetailInfoForm.InputsSeparator`(주소 검색 | 상세)
+ * - 기관명: NEIS 학교 검색 (`SchoolSearch`)
+ * - 기관 소재지: 학교 선택 시 도로명 주소 자동 반영 + 상세 주소 입력
  */
 
 import { useEffect, useMemo } from 'react'
 import { Form, Space } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
-import { AddressSearch, CmsButton, CmsInput, CmsSelect, ContentModal } from '@/shared/ui'
+import { CmsButton, CmsInput, ContentModal, SchoolSearch } from '@/shared/ui'
+import type { SchoolSearchSelection } from '@/shared/ui'
 
 const FORM_ID = 'cms-school-register-modal-form'
 
-/** 기관 유형 미선택(필터 UI의 「전체」와 동일) */
-export const SCHOOL_REGISTER_INSTITUTION_TYPE_ALL = 'ALL' as const
-
 export type SchoolRegisterModalFormValues = {
   institutionName: string
-  institutionType?: string
   roadAddress: string
   detailAddress?: string
 }
@@ -30,41 +26,29 @@ export interface SchoolRegisterModalProps {
   loading?: boolean
 }
 
-const INSTITUTION_TYPE_OPTIONS = [
-  { label: '전체', value: SCHOOL_REGISTER_INSTITUTION_TYPE_ALL },
-  { label: '유아/유치원생', value: 'preschool' },
-  { label: '초등학교', value: 'elementary' },
-  { label: '중학교', value: 'middle' },
-  { label: '고등학교', value: 'high' },
-  { label: '대학교', value: 'university' },
-]
-
 const INITIAL_VALUES: SchoolRegisterModalFormValues = {
   institutionName: '',
-  institutionType: SCHOOL_REGISTER_INSTITUTION_TYPE_ALL,
   roadAddress: '',
-  detailAddress: '' }
+  detailAddress: '',
+}
 
 function normalizeSubmitValues(
   values: SchoolRegisterModalFormValues
 ): SchoolRegisterModalFormValues {
-  const institutionType =
-    !values.institutionType || values.institutionType === SCHOOL_REGISTER_INSTITUTION_TYPE_ALL
-      ? undefined
-      : values.institutionType
   return {
     ...values,
     institutionName: values.institutionName.trim(),
-    institutionType,
     roadAddress: values.roadAddress.trim(),
-    detailAddress: values.detailAddress?.trim() }
+    detailAddress: values.detailAddress?.trim(),
+  }
 }
 
 export function SchoolRegisterModal({
   open,
   onClose,
   onSubmit,
-  loading = false }: SchoolRegisterModalProps) {
+  loading = false,
+}: SchoolRegisterModalProps) {
   const [form] = Form.useForm<SchoolRegisterModalFormValues>()
   const institutionName = Form.useWatch('institutionName', form) ?? ''
   const roadAddress = Form.useWatch('roadAddress', form) ?? ''
@@ -79,6 +63,14 @@ export function SchoolRegisterModal({
       form.setFieldsValue(INITIAL_VALUES)
     }
   }, [open, form])
+
+  const handleSchoolSelect = (school: SchoolSearchSelection) => {
+    form.setFieldsValue({
+      institutionName: school.schulNm.trim(),
+      roadAddress: school.orgRdnma.trim(),
+      detailAddress: '',
+    })
+  }
 
   const handleFinish = async (values: SchoolRegisterModalFormValues) => {
     try {
@@ -97,7 +89,7 @@ export function SchoolRegisterModal({
       open={open}
       onCancel={onClose}
       title="학교 신규 등록"
-      width={1000}
+      width={800}
       className="school-register-modal"
       footer={
         <>
@@ -126,26 +118,23 @@ export function SchoolRegisterModal({
         onFinish={values => void handleFinish(values)}
       >
         <DetailInfoForm title="기본 정보" mode="edit">
-          <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="기관명"
               required
               view="-"
               edit={
-                <Form.Item
-                  name="institutionName"
-                  noStyle
-                >
-                  <CmsInput placeholder="기관명" inputSize="medium" width="100%" />
-                </Form.Item>
-              }
-            />
-            <DetailInfoForm.Field
-              label="기관 유형"
-              view="-"
-              edit={
-                <Form.Item name="institutionType" noStyle>
-                  <CmsSelect inputSize="medium" width="100%" options={INSTITUTION_TYPE_OPTIONS} />
+                <Form.Item name="institutionName" noStyle>
+                  <SchoolSearch
+                    value={institutionName}
+                    onChange={nextInstitutionName =>
+                      form.setFieldValue('institutionName', nextInstitutionName)
+                    }
+                    onSelect={handleSchoolSelect}
+                    placeholder="기관명"
+                    inputSize="medium"
+                    width="100%"
+                  />
                 </Form.Item>
               }
             />
@@ -158,13 +147,11 @@ export function SchoolRegisterModal({
               view="-"
               edit={
                 <Space.Compact style={{ width: '100%' }}>
-                  <Form.Item
-                    name="roadAddress"
-                    noStyle
-                  >
-                    <AddressSearch
+                  <Form.Item name="roadAddress" noStyle>
+                    <CmsInput
                       value={roadAddress}
-                      onChange={next => form.setFieldValue('roadAddress', next)}
+                      readOnly
+                      disabled={!roadAddress.trim()}
                       placeholder="건물명, 도로명 또는 지번"
                       inputSize="medium"
                       width="100%"
@@ -172,7 +159,12 @@ export function SchoolRegisterModal({
                   </Form.Item>
                   <DetailInfoForm.InputsSeparator />
                   <Form.Item name="detailAddress" noStyle>
-                    <CmsInput placeholder="상세 주소" inputSize="medium" width="100%" />
+                    <CmsInput
+                      placeholder="상세 주소"
+                      inputSize="medium"
+                      width="100%"
+                      disabled={!roadAddress.trim()}
+                    />
                   </Form.Item>
                 </Space.Compact>
               }

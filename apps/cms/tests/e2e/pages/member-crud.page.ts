@@ -220,43 +220,46 @@ export class MemberListCrudPage {
   }
 
   /**
-   * 학교 등록 — 도로명 주소.
-   * 행안부 JUSO 키가 없거나 검색이 실패하면 Ant Form 에 직접 주입합니다.
+   * 학교 등록 — 기관명 NEIS 검색 후 소재지 자동 반영.
+   * NEIS 키가 없거나 검색이 실패하면 Ant Form 에 직접 주입합니다.
    */
-  private async fillSchoolRoadAddress(registerDialog: Locator) {
+  private async fillSchoolInstitutionViaSearch(registerDialog: Locator) {
+    const fallbackSchoolName = '서울초등학교'
     const fallbackAddress = '서울특별시 강서구 마곡중앙로 171'
 
-    await registerDialog.getByPlaceholder('건물명, 도로명 또는 지번').click()
-    const addressModal = this.page.getByRole('dialog').filter({ hasText: '주소 검색' })
-    await expect(addressModal).toBeVisible({ timeout: 15_000 })
-    await addressModal
-      .getByPlaceholder('예) 마곡중앙로 171, 분당 주공, 백현동')
-      .fill('마곡중앙로 171')
-    await addressModal.getByRole('button', { name: '검색' }).click()
+    await registerDialog.getByPlaceholder('기관명').click()
+    const schoolModal = this.page.getByRole('dialog').filter({ hasText: '학교 검색' })
+    await expect(schoolModal).toBeVisible({ timeout: 15_000 })
 
-    const firstResult = addressModal
-      .getByLabel('주소 검색 결과')
-      .locator('.address-search__result-card-body')
+    await selectByPlaceholder(this.page, '시/도', '서울특별시')
+    await schoolModal.getByPlaceholder('학교명을 입력해 주세요').fill('초등학교')
+    await schoolModal.getByRole('button', { name: '검색' }).click()
+
+    const firstSelectButton = schoolModal
+      .getByLabel('학교 검색 결과')
+      .getByRole('button', { name: '선택' })
       .first()
-    const searchFailed = addressModal.getByText('주소 검색에 실패했습니다.')
-    const noResults = addressModal.getByText('검색 결과가 없습니다.')
+    const searchFailed = schoolModal.getByText(/NEIS API 키가 설정되지 않았습니다/)
+    const noResults = schoolModal.getByText('검색 결과가 없습니다.')
 
     try {
-      await expect(firstResult.or(searchFailed).or(noResults)).toBeVisible({ timeout: 15_000 })
-      if (await firstResult.isVisible().catch(() => false)) {
-        await firstResult.click()
-        await expect(addressModal).toBeHidden({ timeout: 15_000 })
+      await expect(firstSelectButton.or(searchFailed).or(noResults)).toBeVisible({
+        timeout: 15_000,
+      })
+      if (await firstSelectButton.isVisible().catch(() => false)) {
+        await firstSelectButton.click()
+        await expect(schoolModal).toBeHidden({ timeout: 15_000 })
         return
       }
     } catch {
       /* fall through — Form 직접 주입 */
     }
 
-    await addressModal.getByRole('button', { name: '닫기' }).click().catch(async () => {
+    await schoolModal.getByRole('button', { name: '닫기' }).click().catch(async () => {
       await this.page.keyboard.press('Escape')
     })
-    await expect(addressModal).toBeHidden({ timeout: 15_000 })
-    await this.injectSchoolRoadAddress(fallbackAddress)
+    await expect(schoolModal).toBeHidden({ timeout: 15_000 })
+    await this.injectSchoolRegisterFields(fallbackSchoolName, fallbackAddress)
   }
 
   /** Ant Design Form.setFieldsValue 로 소속 학교명 주입 (NEIS 키/검색 실패 폴백) */
@@ -338,41 +341,43 @@ export class MemberListCrudPage {
     await this.injectAffiliationSchoolName(fallbackSchoolName)
   }
 
-  /** Ant Design Form.setFieldsValue 로 도로명 주소 주입 (JUSO 키/검색 실패 폴백) */
-  private async injectSchoolRoadAddress(address: string) {
-    await this.page.evaluate(addr => {
-      const formEl = document.getElementById('cms-school-register-modal-form')
-      if (!formEl) throw new Error('학교 등록 폼을 찾지 못했습니다.')
+  /** Ant Design Form.setFieldsValue 로 기관명·도로명 주소 주입 (NEIS 키/검색 실패 폴백) */
+  private async injectSchoolRegisterFields(institutionName: string, roadAddress: string) {
+    await this.page.evaluate(
+      ({ institutionName: name, roadAddress: address }) => {
+        const formEl = document.getElementById('cms-school-register-modal-form')
+        if (!formEl) throw new Error('학교 등록 폼을 찾지 못했습니다.')
 
-      type Fiber = {
-        memoizedProps?: { form?: { setFieldsValue?: (v: Record<string, unknown>) => void } }
-        pendingProps?: { form?: { setFieldsValue?: (v: Record<string, unknown>) => void } }
-        return?: Fiber | null
-      }
-
-      const fiberKey = Object.keys(formEl).find(k => k.startsWith('__reactFiber$'))
-      if (!fiberKey) throw new Error('React fiber 를 찾지 못했습니다.')
-
-      let fiber = (formEl as unknown as Record<string, Fiber>)[fiberKey] as Fiber | null
-      for (let i = 0; i < 50 && fiber; i += 1) {
-        const formInst =
-          fiber.memoizedProps?.form ?? fiber.pendingProps?.form
-        if (formInst && typeof formInst.setFieldsValue === 'function') {
-          formInst.setFieldsValue({ roadAddress: addr })
-          return
+        type Fiber = {
+          memoizedProps?: { form?: { setFieldsValue?: (v: Record<string, unknown>) => void } }
+          pendingProps?: { form?: { setFieldsValue?: (v: Record<string, unknown>) => void } }
+          return?: Fiber | null
         }
-        fiber = fiber.return ?? null
-      }
-      throw new Error('Ant Form 인스턴스를 찾지 못했습니다.')
-    }, address)
 
-    await expect(
-      this.page
-        .getByRole('dialog')
-        .filter({ hasText: '학교 신규 등록' })
-        .locator(`input[value="${address.replace(/"/g, '\\"')}"]`)
-        .first()
-    ).toBeVisible({ timeout: 5_000 })
+        const fiberKey = Object.keys(formEl).find(k => k.startsWith('__reactFiber$'))
+        if (!fiberKey) throw new Error('React fiber 를 찾지 못했습니다.')
+
+        let fiber = (formEl as unknown as Record<string, Fiber>)[fiberKey] as Fiber | null
+        for (let i = 0; i < 50 && fiber; i += 1) {
+          const formInst = fiber.memoizedProps?.form ?? fiber.pendingProps?.form
+          if (formInst && typeof formInst.setFieldsValue === 'function') {
+            formInst.setFieldsValue({ institutionName: name, roadAddress: address })
+            return
+          }
+          fiber = fiber.return ?? null
+        }
+        throw new Error('Ant Form 인스턴스를 찾지 못했습니다.')
+      },
+      { institutionName, roadAddress }
+    )
+
+    const dialog = this.page.getByRole('dialog').filter({ hasText: '학교 신규 등록' })
+    await expect(dialog.locator(`input[value="${institutionName.replace(/"/g, '\\"')}"]`).first()).toBeVisible({
+      timeout: 5_000,
+    })
+    await expect(dialog.locator(`input[value="${roadAddress.replace(/"/g, '\\"')}"]`).first()).toBeVisible({
+      timeout: 5_000,
+    })
   }
 
   /** Create — kind별 필수 필드 입력 후 등록 (실 API) */
@@ -390,8 +395,7 @@ export class MemberListCrudPage {
       await fillByPlaceholder(dialog, '이메일', this.email)
       await fillByPlaceholder(dialog, '건물명, 도로명 또는 지번', '서울특별시 강서구 마곡중앙로 171')
     } else if (this.kind === 'institutions') {
-      await fillByPlaceholder(dialog, '기관명', this.memberName)
-      await this.fillSchoolRoadAddress(dialog)
+      await this.fillSchoolInstitutionViaSearch(dialog)
       await fillByPlaceholder(dialog, '상세 주소', 'E2E 테스트')
     } else if (this.kind === 'instructors') {
       await fillByPlaceholder(dialog, '한글 성명', this.memberName)
