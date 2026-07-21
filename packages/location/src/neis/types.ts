@@ -34,6 +34,8 @@ export interface NeisSchoolItem {
 export interface SearchNeisSchoolsOptions {
   apiKey: string
   keyword: string
+  /** NEIS 시도교육청 코드 — 지정 시 해당 시·도 범위로 1차 검색 */
+  atptOfcdcScCode?: string
   page?: number
   pageSize?: number
   missingKeyMessage?: string
@@ -46,15 +48,18 @@ export interface SearchNeisSchoolsResult {
 
 export interface UseNeisSchoolSearchOptions {
   apiKey: string
-  pageSize?: number
+  /** NEIS API 요청당 건수 — 전체 결과 수집 시 배치 크기. 기본 100 */
+  fetchPageSize?: number
   missingKeyMessage?: string
 }
 
 export interface UseNeisSchoolSearchReturn {
   schools: NeisSchoolItem[]
+  /** NEIS API 기준 검색 건수 (시·도·키워드 조건, 시/군/구 필터 전) */
   totalCount: number
   loading: boolean
   error: Error | null
-  search: (keyword: string, page?: number) => Promise<NeisSchoolItem[]>
+  /** @param sido UI 시/도 선택값 — NEIS `ATPT_OFCDC_SC_CODE`로 변환해 API 1차 필터에 사용 */
+  search: (keyword: string, sido?: string) => Promise<NeisSchoolItem[]>
   reset: () => void
 }

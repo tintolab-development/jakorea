@@ -17,6 +17,16 @@ import type { BasicInfoSectionContext } from './types'
 import { formatDate } from '@/shared/utils'
 import { socialView } from '../display'
 
+export function AllUsersMetaSection(ctx: BasicInfoSectionContext) {
+  const { user } = ctx
+  return (
+    <EditableRow type="double">
+      <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
+      <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
+    </EditableRow>
+  )
+}
+
 export function AllUsersSection(ctx: BasicInfoSectionContext) {
   const {
     user,
@@ -161,10 +171,6 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
         />
       </EditableRow>
 
-      <EditableRow type="double">
-        <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
-        <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
-      </EditableRow>
     </>
   )
 }

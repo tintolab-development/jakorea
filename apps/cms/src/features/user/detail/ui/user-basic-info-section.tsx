@@ -19,6 +19,7 @@ import {
   type UserBasicInfoEntrySource,
 } from './user-basic-info/entry-resolver'
 import type { UserBasicInfoExternalId1365 } from './user-basic-info/sections/types'
+import { GuardianSection } from './user-basic-info/sections/guardian-section'
 import './user-basic-info-section.css'
 import '@/features/user/shared/ui/admin-permission-tag.css'
 
@@ -120,6 +121,7 @@ export function UserBasicInfoSection({
           mode={detailInfoFormMode}
           shared={sectionContext}
         />
+        <GuardianSection user={user} personalInfoRevealed={personalInfoRevealed} />
       </div>
     </div>
   )

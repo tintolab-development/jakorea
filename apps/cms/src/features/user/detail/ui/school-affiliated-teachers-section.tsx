@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { SchoolAffiliatedTeacherRow, SchoolTeacherEmploymentStatus } from '@/types/user'
+import type { AffiliatedTeacherLinkTarget, SchoolAffiliatedTeacherRow, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { CmsButton } from '@/shared/ui'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
@@ -30,7 +30,7 @@ export interface SchoolAffiliatedTeachersSectionProps {
   /** 선택 교사 일괄 탈퇴 — 미지정 시 안내만 표시 */
   onWithdrawSelected?: (teacherIds: string[]) => void
   /** `linkedUserId`가 있는 행 클릭 시 해당 CMS 회원 상세로 이동 */
-  onLinkedUserClick?: (linkedUserId: string) => void
+  onLinkedUserClick?: (target: AffiliatedTeacherLinkTarget) => void
   /** 재직 현황 변경 시 (API 연동 시 저장 로직 연결) */
   onEmploymentStatusChange?: (
     teacherId: string,
@@ -168,10 +168,16 @@ export function SchoolAffiliatedTeachersSection({
   }
 
   const handleRowClick = (record: Row) => {
-    if (!record.linkedUserId) {
-      return
-    }
-    onLinkedUserClick?.(record.linkedUserId)
+    const targetId =
+      record.linkedUserId?.trim() ||
+      (record.teacherMemberId != null ? String(record.teacherMemberId) : '')
+    if (!targetId) return
+    onLinkedUserClick?.({
+      userId: targetId,
+      teacherMemberId: record.teacherMemberId,
+      name: record.name,
+      assignedGrade: record.assignedGrade,
+    })
   }
 
   return (
@@ -215,7 +221,7 @@ export function SchoolAffiliatedTeachersSection({
                   handleRowClick(record)
                 },
                 style:
-                  record.linkedUserId && onLinkedUserClick
+                  (record.linkedUserId || record.teacherMemberId != null) && onLinkedUserClick
                     ? { cursor: 'pointer' }
                     : undefined,
               })}

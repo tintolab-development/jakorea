@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
   resolveProgramEditInfoClick,
@@ -238,7 +238,7 @@ export function UjatEducationProgressVolunteerDetailView({
         type="button"
         variant="secondary"
         size="large"
-        width={210}
+        width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
         icon={<DownloadOutlined />}
         disabled={studentCertificateExportActive}
         onClick={() => setStudentCertificateIssueModalOpen(true)}

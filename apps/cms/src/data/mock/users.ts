@@ -798,11 +798,20 @@ const mockIndividuals: User[] = [
     createdAt: generatePastDate(30),
     updatedAt: generatePastDate(7),
     phone: '010-3333-4444',
-    birthDate: '2005-07-22',
+    birthDate: '2015-09-15',
     gender: '남성',
     detailAddress: '광주광역시 북구 오룡동 77',
-    affiliation: 'OO대학교 | 2학년',
+    affiliation: 'OO초등학교 | 4학년',
     socialAccounts: ['구글'],
+    under14: true,
+    guardianConsentRequired: true,
+    guardianInfo: {
+      guardianName: '한보호',
+      relation: '부',
+      phone: '010-5555-6666',
+      consentStatus: 'AGREED',
+      consentedAt: generatePastDate(30),
+    },
   },
 ]
 

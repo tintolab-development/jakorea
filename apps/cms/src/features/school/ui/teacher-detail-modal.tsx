@@ -12,8 +12,8 @@ import {
   buildMemberWithdrawMessageLines,
 } from '@/features/program/general/ui/manager-delete-guide-modal'
 import {
-  DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
-  DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
 import {
   getTeacherDetail,
@@ -142,10 +142,10 @@ export function TeacherDetailModal({
         onConfirm={handleWithdrawConfirm}
         title="회원 탈퇴 안내"
         lines={withdrawLines}
-        confirmText="삭제"
+        confirmText="탈퇴"
         confirmVariant="delete"
-        requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
-        confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+        requiredConfirmInput={WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE}
+        confirmInputPlaceholder={WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
       />
     </>
   )

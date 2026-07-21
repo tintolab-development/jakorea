@@ -129,6 +129,15 @@ const INITIAL_VALUES: AddUserIndividualFormValues = {
   consentSexOffenseCheck: 'disagree',
 }
 
+function isUnder14BirthDate(value: string, today = new Date()): boolean {
+  const apiValue = birthDateFormValueToApi(value)
+  const [year, month, day] = apiValue.split('-').map(Number)
+  const birthDate = new Date(year, month - 1, day)
+  const fourteenthBirthday = new Date(year + 14, month - 1, day)
+
+  return !Number.isNaN(birthDate.getTime()) && fourteenthBirthday > today
+}
+
 function collectMemberRegisterValidationMessages(
   values: AddUserIndividualFormValues
 ): string[] {
@@ -143,6 +152,8 @@ function collectMemberRegisterValidationMessages(
     messages.push('생년월일을 입력해 주세요.')
   } else if (!isValidBirthDateFormValue(birthDate)) {
     messages.push('올바른 생년월일을 입력해 주세요.')
+  } else if (isUnder14BirthDate(birthDate)) {
+    messages.push('만 14세 미만 회원은 관리자가 직접 등록할 수 없습니다.')
   }
 
   if (values.schoolEnrollmentStatus === 'enrolled') {
@@ -324,6 +335,7 @@ export function AddUserIndividual({
                     name="birthDate"
                     style={{ ...FORM_ITEM_STYLE, flex: '1 1 0', minWidth: 0 }}
                     trigger="onValueChange"
+                    getValueFromEvent={(value: string) => value}
                   >
                     <CmsDateTextInput
                       placeholder="YYYY.MM.DD"

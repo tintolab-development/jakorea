@@ -6,10 +6,13 @@ import {
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
 import { LectureAttendanceModal } from '@/features/program/general/ui/lecture-attendance-modal'
 import { AssignmentSubmissionModal } from '@/features/program/general/ui/assignment-submission-modal'
 import { InstructorPermissionRevokeModal } from '@/features/user/detail/ui/modal/instructor-permission-revoke-modal'
+import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 import { InstitutionDeleteBlockedModal } from '@/features/user/shared/ui/institution-delete-blocked-modal'
 
@@ -26,6 +29,13 @@ export function UserDetailFullpageModalsStack() {
     instructorPermissionRevokeOpen,
     onCloseInstructorPermissionRevoke,
     onConfirmInstructorPermissionRevoke,
+    basicInfoEditing,
+    basicInfoEditScope,
+    basicInfoDraft,
+    basicInfoSaveLoading,
+    onCancelBasicInfoEdit,
+    onSaveBasicInfoEdit,
+    onBasicInfoDraftChange,
   } = useUserDetailFullpageShell()
 
   const { sections } = derived
@@ -50,10 +60,18 @@ export function UserDetailFullpageModalsStack() {
                 })
               : buildMemberWithdrawMessageLines({ displayName: displayUser.name })
           }
-          confirmText="삭제"
+          confirmText={sections.withdraw.isSchoolDelete ? '학교 삭제' : '탈퇴'}
           confirmVariant="delete"
-          requiredConfirmInput={DELETE_GUIDE_TYPED_CONFIRM_VALUE}
-          confirmInputPlaceholder={DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER}
+          requiredConfirmInput={
+            sections.withdraw.isSchoolDelete
+              ? DELETE_GUIDE_TYPED_CONFIRM_VALUE
+              : WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE
+          }
+          confirmInputPlaceholder={
+            sections.withdraw.isSchoolDelete
+              ? DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER
+              : WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER
+          }
         />
       )}
       <InstructorPermissionRevokeModal
@@ -61,6 +79,16 @@ export function UserDetailFullpageModalsStack() {
         instructorName={displayUser.name}
         onCancel={onCloseInstructorPermissionRevoke}
         onConfirm={onConfirmInstructorPermissionRevoke}
+      />
+      <MemberAdminCommentModal
+        open={basicInfoEditing && basicInfoEditScope === 'comment'}
+        value={basicInfoDraft?.adminComment ?? ''}
+        loading={basicInfoSaveLoading}
+        onChange={value => onBasicInfoDraftChange({ adminComment: value })}
+        onCancel={onCancelBasicInfoEdit}
+        onConfirm={() => {
+          void onSaveBasicInfoEdit()
+        }}
       />
 
       <LectureAttendanceModal

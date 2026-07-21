@@ -27,6 +27,9 @@ export type CmsButtonSize = 'large' | 'medium' | 'small'
 /** 승인·반려·취소 등 CMS 관리 액션 버튼 공통 폭(px) */
 export const CMS_ACTION_BUTTON_WIDTH = 140
 
+/** 「수료증/참여인증서 발급」 버튼 공통 폭(px) */
+export const CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH = 210
+
 export interface CmsButtonProps extends Omit<ButtonProps, CmsButtonPropsOmit> {
   variant?: CmsButtonVariant
   size?: CmsButtonSize

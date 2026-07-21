@@ -30,6 +30,7 @@ import {
 import { mapMemberListItems } from '@/features/user/api/map-member-list-item'
 import { mapMemberDetailToUser } from '@/features/user/api/map-member-detail-to-user'
 import { mapCreateUserRequestToPreRegister } from '@/features/user/api/map-pre-register-request'
+import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import {
   mapIsActiveToMemberStatus,
   mapUserRoleToApiRole,
@@ -548,10 +549,13 @@ function snapshotUserWithoutPassword(userId: UUID): Omit<User, 'password'> | nul
   }
 }
 
-export async function getUserById(userId: UUID): Promise<Omit<User, 'password'> | null> {
+export async function getUserById(
+  userId: UUID,
+  options?: { memberId?: number }
+): Promise<Omit<User, 'password'> | null> {
   if (isMembersRemoteEnabled()) {
     try {
-      const memberId = resolveMemberIdForApi(userId)
+      const memberId = resolveMemberIdForApi(userId, options)
       const detail = await fetchMemberDetailRemote(memberId)
       const isInstructor = (detail.roles ?? []).some(
         r => String(r).toUpperCase() === 'INSTRUCTOR'
@@ -682,8 +686,8 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
           email: request.email.trim(),
           name: request.name.trim(),
           phone: request.phone?.trim(),
-          gender: request.gender?.trim(),
-          birthDate: request.birthDate?.trim(),
+          gender: toApiGender(request.gender),
+          birthDate: toApiBirthDate(request.birthDate),
           roleCode: 'VIEWER',
           reason: 'CMS 관리자 회원 신규 등록',
         })

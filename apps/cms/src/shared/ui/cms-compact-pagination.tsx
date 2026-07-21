@@ -47,7 +47,7 @@ export function CmsCompactPagination({
   className,
   ariaLabel = '페이지네이션',
 }: CmsCompactPaginationProps) {
-  if (totalPages <= 1) return null
+  if (totalPages <= 0) return null
 
   const isFirstPage = currentPage <= 1
   const isLastPage = currentPage >= totalPages

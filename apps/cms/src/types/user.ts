@@ -16,6 +16,14 @@ export interface TermsAgreementRow {
   sourceFlow?: string
 }
 
+export interface UserGuardianInfo {
+  guardianName?: string
+  relation?: string
+  phone?: string
+  consentStatus?: string
+  consentedAt?: string
+}
+
 // ===== 역할 정의 =====
 
 // 프론트 사용자 역할 (§2.1)
@@ -55,6 +63,14 @@ export interface SchoolAffiliatedTeacherRow {
   linkedUserId?: UUID
   /** remote: `PATCH …/affiliated-teachers/{teacherMemberId}/employment-status` 용 */
   teacherMemberId?: number
+}
+
+/** 학교 상세 소속 교사 행 → 교사 상세 drill-down */
+export interface AffiliatedTeacherLinkTarget {
+  userId: string
+  teacherMemberId?: number
+  name?: string
+  assignedGrade?: string
 }
 
 // ===== 사용자 인터페이스 =====
@@ -165,6 +181,11 @@ export interface User {
   gender?: string
   affiliation?: string
   socialAccounts?: string[]
+  /** 플랫폼 가입 시 서버가 판정한 만 14세 미만 여부 */
+  under14?: boolean
+  guardianConsentRequired?: boolean
+  /** 만 14세 미만 플랫폼 가입자의 법정대리인 인증 정보 */
+  guardianInfo?: UserGuardianInfo
 
   /** 약관·동의 이력 — `/me` API 연동 시 채움 */
   termsAgreements?: TermsAgreementRow[]

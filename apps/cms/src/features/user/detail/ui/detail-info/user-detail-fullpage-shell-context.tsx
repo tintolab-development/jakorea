@@ -1,12 +1,13 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
-import type { User } from '@/types/user'
+import type { AffiliatedTeacherLinkTarget, User } from '@/types/user'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { TabState } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import type { UseUserDetailModalsResult } from '@/features/user/detail/lib/use-user-detail-modals'
 import type { UserBasicInfoEntrySource } from '@/features/user/detail/ui/user-basic-info-section'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
+import type { BasicInfoEditScope } from '@/features/user/detail/lib/use-user-detail-controller'
 import type { UserDetailFullpageDerived } from '@/features/user/detail/lib/use-user-detail-fullpage-derived'
 import type { InstructorPermissionRevokeNotifyTiming } from '@/features/user/detail/lib/use-user-detail-controller'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
@@ -23,7 +24,7 @@ export interface UserDetailFullpageShellValue {
   personalInfoRevealed: boolean
   instructorResumeApplicantRow: ApplicantInstructorRow | null
   basicInfoEntrySource?: UserBasicInfoEntrySource
-  onNavigateToLinkedUser?: (userId: string) => void
+  onNavigateToLinkedUser?: (target: AffiliatedTeacherLinkTarget) => void
   modals: UseUserDetailModalsResult
   withdrawConfirmOpen: boolean
   /** 학교(기관) 상세 — 소속 교사가 있을 때 삭제 시도 시 목록과 동일한 불가 안내 */
@@ -39,12 +40,14 @@ export interface UserDetailFullpageShellValue {
   onWithdrawModalCancel: () => void
   onWithdrawModalConfirm: () => void
   basicInfoEditing: boolean
+  basicInfoEditScope: BasicInfoEditScope
   basicInfoDraft: AdminProvisionedMemberBasicInfoDraft | null
   basicInfoSaveLoading: boolean
   /** 관리자 상세 — 뷰 모드에서 권한 유형만 즉시 저장 중 */
   adminPermissionVariantPatching: boolean
   instructorPermissionRevokeOpen: boolean
   onStartBasicInfoEdit: () => void
+  onStartAdminCommentEdit: () => void
   onCancelBasicInfoEdit: () => void
   onSaveBasicInfoEdit: () => void | Promise<void>
   onBasicInfoDraftChange: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void

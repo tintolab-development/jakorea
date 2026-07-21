@@ -10,7 +10,7 @@ import type { StudentListFilterParams } from '../../../hooks/use-student-list-fi
 import { CheckOutlined, DownloadOutlined } from '@ant-design/icons'
 import { Table } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
-import { CmsButton, CmsInput, CmsRadio, CmsSelect, FilterTableLayout, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsRadio, CmsSelect, FilterTableLayout, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -553,7 +553,7 @@ export function SchoolDetailStudentListSection({
       <CmsButton
         variant="secondary"
         size="large"
-        width={215}
+        width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
         icon={<DownloadOutlined />}
         className="school-detail-student-list-section__btn-outline"
         disabled={certificateExportActive}

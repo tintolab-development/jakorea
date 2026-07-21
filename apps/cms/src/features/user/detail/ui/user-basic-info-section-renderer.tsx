@@ -4,7 +4,10 @@ import {
   type BasicInfoLayoutResolved,
 } from './user-basic-info-layout-resolver'
 import type { BasicInfoSectionContext } from './user-basic-info/sections/types'
-import { AllUsersSection } from './user-basic-info/sections/all-users-section'
+import {
+  AllUsersMetaSection,
+  AllUsersSection,
+} from './user-basic-info/sections/all-users-section'
 import { InstitutionSection } from './user-basic-info/sections/institution-section'
 import {
   SchoolTeacherMetaSection,
@@ -27,7 +30,9 @@ export function renderResolvedBasicInfoSections({
     return {
       meta:
         metaSection === BasicInfoSectionTypes.META ? (
-          resolution.instructorSectionVariant === 'school_teacher' ? (
+          resolution.splitSectionVariant === 'all_users' ? (
+            <AllUsersMetaSection {...shared} />
+          ) : resolution.splitSectionVariant === 'school_teacher' ? (
             <SchoolTeacherMetaSection {...shared} />
           ) : (
             <InstructorMetaSection {...shared} />
@@ -35,7 +40,9 @@ export function renderResolvedBasicInfoSections({
         ) : null,
       profile:
         profileSection === BasicInfoSectionTypes.PROFILE ? (
-          resolution.instructorSectionVariant === 'school_teacher' ? (
+          resolution.splitSectionVariant === 'all_users' ? (
+            <AllUsersSection {...shared} />
+          ) : resolution.splitSectionVariant === 'school_teacher' ? (
             <SchoolTeacherSection {...shared} />
           ) : (
             <InstructorSection {...shared} />
