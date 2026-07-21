@@ -7,7 +7,7 @@ import { detailEmailDisplay, detailPhoneDisplay } from '../display'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
 
-const ID1365_NOT_REGISTERED_LABEL = '등록되지 않음'
+const ID1365_NOT_REGISTERED_LABEL = '-'
 
 function resolve1365DisplayText(
   personalInfoRevealed: boolean,
@@ -36,7 +36,6 @@ export function Id1365View({
   return (
     <span className="user-basic-info-section__id1365-cell">
       <span>{label1365}</span>
-      <DetailInfoForm.InputsSeparator />
       {externalId1365?.onOpen ? (
         <CmsButton size="medium" onClick={externalId1365.onOpen}>
           1365 바로가기

@@ -36,7 +36,14 @@ export function BasicInfoLayoutRenderer({
         <DetailInfoForm
           title="기본 정보 — 성명·연락처 등"
           hideHeader
-          className="user-basic-info-section user-basic-info-section--school-teacher-profile-card"
+          className={[
+            'user-basic-info-section',
+            resolution.splitSectionVariant === 'school_teacher'
+              ? 'user-basic-info-section--school-teacher-profile-card'
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
           mode={mode}
         >
           {rendered.profile ?? null}
