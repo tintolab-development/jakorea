@@ -3,7 +3,7 @@
  * @see useNeisSchoolSearch — `VITE_NEIS_API_KEY`
  */
 
-import { Fragment, useCallback, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Flex, Table } from 'antd'
@@ -87,9 +87,8 @@ export function SchoolSearch({
   const sigunguOptions = getSigunguOptions(sido)
   const trimmedKeyword = keyword.trim()
 
-  const { schools, totalCount, loading, error, search, reset } = useNeisSchoolSearch({
+  const { schools, loading, error, search, reset } = useNeisSchoolSearch({
     apiKey,
-    pageSize: SCHOOL_SEARCH_PAGE_SIZE,
     missingKeyMessage: getCmsNeisMissingKeyMessage(),
   })
 
@@ -98,9 +97,25 @@ export function SchoolSearch({
     [schools, sido, sigungu]
   )
 
-  const hasResults = filteredSchools.length > 0
+  const filteredTotalCount = filteredSchools.length
+  const totalPages = Math.max(1, Math.ceil(filteredTotalCount / SCHOOL_SEARCH_PAGE_SIZE))
+  const pagedFilteredSchools = useMemo(
+    () =>
+      filteredSchools.slice(
+        (currentPage - 1) * SCHOOL_SEARCH_PAGE_SIZE,
+        currentPage * SCHOOL_SEARCH_PAGE_SIZE
+      ),
+    [filteredSchools, currentPage]
+  )
+
+  const hasResults = filteredTotalCount > 0
   const canSearch = Boolean(sido && trimmedKeyword)
-  const totalPages = Math.max(1, Math.ceil(totalCount / SCHOOL_SEARCH_PAGE_SIZE))
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
 
   const closeModal = useCallback(() => {
     setOpen(false)
@@ -135,12 +150,16 @@ export function SchoolSearch({
     if (!canSearch || loading) return
     setHasSearched(true)
     setCurrentPage(1)
-    void search(trimmedKeyword, 1)
+    void search(trimmedKeyword, sido)
   }
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
-    void search(trimmedKeyword, page)
+  }
+
+  const handleSigunguChange = (next: string) => {
+    setSigungu(next)
+    setCurrentPage(1)
   }
 
   const handleSelect = (school: NeisSchoolItem) => {
@@ -245,7 +264,7 @@ export function SchoolSearch({
               placeholder="시/군/구"
               value={sigungu || undefined}
               options={sigunguOptions}
-              onChange={setSigungu}
+              onChange={handleSigunguChange}
               inputSize="medium"
               width={140}
               disabled={!sido}
@@ -314,7 +333,7 @@ export function SchoolSearch({
                     <Table
                       className="cms-data-table cms-data-table--skip-auto-no-col school-search__table"
                       columns={columns}
-                      dataSource={filteredSchools}
+                      dataSource={pagedFilteredSchools}
                       rowKey={schoolResultKey}
                       pagination={false}
                       size="small"

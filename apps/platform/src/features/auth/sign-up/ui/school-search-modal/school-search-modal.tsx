@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { filterNeisSchoolsByRegion, type NeisSchoolItem } from '@jakorea/location/neis'
 import { getSidoOptions, getSigunguOptions } from '@jakorea/location/sido-sigungu'
 import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
@@ -79,9 +79,8 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
   const [hasSearched, setHasSearched] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
 
-  const { schools, totalCount, loading, error, search, reset } = useNeisSchoolSearch({
+  const { schools, loading, error, search, reset } = useNeisSchoolSearch({
     apiKey: readNeisApiKeyFromEnv(),
-    pageSize: SCHOOL_SEARCH_PAGE_SIZE,
     missingKeyMessage: getPlatformNeisMissingKeyMessage(),
   })
 
@@ -91,9 +90,24 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
     () => filterNeisSchoolsByRegion(schools, sido, sigungu),
     [schools, sido, sigungu]
   )
-  const totalPages = Math.max(1, Math.ceil(totalCount / SCHOOL_SEARCH_PAGE_SIZE))
-  const hasResults = filteredSchools.length > 0
+  const filteredTotalCount = filteredSchools.length
+  const totalPages = Math.max(1, Math.ceil(filteredTotalCount / SCHOOL_SEARCH_PAGE_SIZE))
+  const pagedFilteredSchools = useMemo(
+    () =>
+      filteredSchools.slice(
+        (currentPage - 1) * SCHOOL_SEARCH_PAGE_SIZE,
+        currentPage * SCHOOL_SEARCH_PAGE_SIZE
+      ),
+    [filteredSchools, currentPage]
+  )
+  const hasResults = filteredTotalCount > 0
   const canSearch = Boolean(sido && trimmedKeyword)
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
 
   const handleClose = useCallback(() => {
     setSido('')
@@ -120,12 +134,16 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
 
     setHasSearched(true)
     setCurrentPage(1)
-    void search(trimmedKeyword, 1)
+    void search(trimmedKeyword, sido)
   }
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
-    void search(trimmedKeyword, page)
+  }
+
+  const handleSigunguChange = (value: string) => {
+    setSigungu(value)
+    setCurrentPage(1)
   }
 
   const handleSelect = (school: NeisSchoolItem) => {
@@ -155,7 +173,7 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
             value={sigungu}
             options={sigunguOptions}
             disabled={!sido}
-            onChange={setSigungu}
+            onChange={handleSigunguChange}
           />
         </div>
 
@@ -230,7 +248,7 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
             {hasResults ? (
               <>
                 <ul className={styles.schoolResultList} aria-label="학교 검색 결과">
-                  {filteredSchools.map((school: NeisSchoolItem) => (
+                  {pagedFilteredSchools.map((school: NeisSchoolItem) => (
                     <li key={schoolResultKey(school)} className={styles.schoolResultItem}>
                       <div className={styles.schoolResultContent}>
                         <PFText
@@ -268,17 +286,15 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
                     </li>
                   ))}
                 </ul>
-                {totalCount > SCHOOL_SEARCH_PAGE_SIZE ? (
-                  <div className={styles.schoolPagination}>
-                    <PFPagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      variant="compact"
-                      size="small"
-                      onPageChange={handlePageChange}
-                    />
-                  </div>
-                ) : null}
+                <div className={styles.schoolPagination}>
+                  <PFPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    variant="compact"
+                    size="small"
+                    onPageChange={handlePageChange}
+                  />
+                </div>
               </>
             ) : null}
           </div>
