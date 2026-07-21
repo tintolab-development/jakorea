@@ -12,6 +12,8 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 **프로그램 유형별 전환**: [**UJAT 백엔드 핸드오프**](./programs-ujat-api-backend-handoff.md) · [**1사1교 백엔드 핸드오프**](./programs-company-school-api-backend-handoff.md)
 
+**테이블 일괄삭제 (CMS 전수)**: [**cms-table-bulk-delete-api-backend-handoff.md**](./cms-table-bulk-delete-api-backend-handoff.md) · **일괄승인**: [**cms-table-bulk-approve-api-backend-handoff.md**](./cms-table-bulk-approve-api-backend-handoff.md) · **일괄다운로드**: [**cms-table-bulk-download-api-backend-handoff.md**](./cms-table-bulk-download-api-backend-handoff.md)
+
 ---
 
 ## Swagger / OpenAPI

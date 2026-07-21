@@ -33,7 +33,7 @@ Phase **7–10**은 본 문서 **잔여 백로그**로 남기며, Cat2와 **병�
 | **0** BE/OpenAPI | **FE schema 완료 · 스테이징 QA 대기** | `COMPANY_SCHOOL` enum generated. create→list→detail→PATCH→DELETE는 **관리자 JWT로 스테이징 스모크 후** opt-in |
 | **1** 코어 CRUD | **FE 완료 · gate ON** | list/detail/create/update/delete + bulk delete · **URL `programId` deep-link detail** |
 | **2** info LNB | **FE 완료(하이브리드)** | PATCH 저장 · lifecycle · `registration-economy` draft · detail error UI |
-| **3** 목록·대시보드 | **FE 완료(하이브리드)** | overview status → API `periodStatus` · **remote 시 클라이언트 재필터 스킵** · title/`businessYear` list query · 일정 위젯 |
+| **3** 목록·대시보드 | **FE 완료(하이브리드)** | overview status → API `periodStatus` · **remote 시 클라이언트 재필터 스킵** · **상단 4카드 = list `totalElements`** · title/`businessYear` list query · 일정 위젯 |
 | **4** 기관 신청 | **FE 완료(하이브리드)** | surface gate + organization approve/reject |
 | **5** 강사 신청 | **FE 완료(하이브리드)** | instructor approve/reject (동일 applications 모듈) |
 | **6** 진행 목록·nav | **FE 완료(하이브리드)** | ORGANIZATION/INSTRUCTOR participants · navigation (volunteer 제외) |
@@ -47,6 +47,7 @@ Phase **7–10**은 본 문서 **잔여 백로그**로 남기며, Cat2와 **병�
 ### FE Phase 1–6 보완 (2026-07-16)
 
 - [x] remote ON 시 overview status **이중 필터 제거** (`use-program-list-filters.ts`)
+- [x] 상단 4카드 건수 = 목록과 동일 소스 (`fetchCompanySchoolOverviewStages` / `periodStatus`별 `totalElements`)
 - [x] `programId` deep-link → `useCompanySchoolProgramDetail` 직접 enable (`program-list-page.tsx`)
 - [x] 테이블 `title` / `businessYear` → list API params
 - [ ] 스테이징 JWT round-trip + `VITE_COMPANY_SCHOOL_PROGRAMS_REMOTE_ENABLED=true` QA (→ Cat2 진입)

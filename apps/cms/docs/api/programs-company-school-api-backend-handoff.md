@@ -94,6 +94,7 @@ COMPANY_SCHOOL_PROGRAM_API_TYPE = "COMPANY_SCHOOL"
 | Method | Path | FE 요청 | FE가 사용하는 응답 |
 |--------|------|---------|--------------------|
 | `GET` | `/api/admin/programs` | `programType=COMPANY_SCHOOL`, 선택 `keyword`, `periodStatus`, `businessYear`, 고정 `page=0`, `size=500` | page `{ items, page, size, totalElements, totalPages }` |
+| `GET` | `/api/admin/programs` (상단 4카드) | 동일 + `size=1`, `periodStatus`별 4회 병렬 (`생략`/`RECRUITING`/`IN_PROGRESS`/`COMPLETED`) | `totalElements`만 사용 |
 | `GET` | `/api/admin/programs/{programId}` | encoded id | `ProgramResponse`, `rounds`, `serviceDetailJson` |
 | `POST` | `/api/admin/programs` | `ProgramCreateRequest`, §4 참조 | 생성된 `ProgramResponse`, 안정적 id 필수 |
 | `PATCH` | `/api/admin/programs/{programId}` | 기존 program + patch를 merge한 `ProgramUpdateRequest` | 갱신된 `ProgramResponse` |
