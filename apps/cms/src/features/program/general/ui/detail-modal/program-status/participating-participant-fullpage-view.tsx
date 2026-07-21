@@ -11,7 +11,7 @@ import {
   patchGeneralIndividualApplicantDetail,
   type GeneralIndividualApplicantRow,
 } from '@/data/mock/general-individual-applications-mock'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -324,7 +324,7 @@ export function ParticipatingParticipantFullpageView({
               <CmsButton
                 variant="secondary"
                 size="large"
-                width={220}
+                width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
                 icon={<DownloadOutlined />}
                 disabled={
                   certificateExportActive ||
