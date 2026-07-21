@@ -5,13 +5,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Button, Space, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { DownloadOutlined } from '@ant-design/icons'
+import { CopyOutlined, DownloadOutlined } from '@ant-design/icons'
 import { e2eErrorLogMockApi } from '@/features/e2e-error-log/api/e2e-error-log-mock-api'
 import {
   buildE2eErrorLogMdFilename,
   formatE2eErrorLogMarkdown,
 } from '@/features/e2e-error-log/lib/format-e2e-error-log-markdown'
 import type { E2eErrorLogEntry } from '@/features/e2e-error-log/model/types'
+import { CopyablePre } from './copyable-pre'
 
 const PAGE_CHUNK = 30
 const TABLE_BODY_MIN_Y = 240
@@ -153,6 +154,19 @@ export function E2eErrorLogPanel({ active }: Props) {
     })
   }
 
+  const handleCopyMd = async () => {
+    if (items.length === 0) {
+      setStatusBanner({ type: 'warning', text: '복사할 로그가 없습니다.' })
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(formatE2eErrorLogMarkdown(items))
+      setStatusBanner({ type: 'success', text: `${items.length}건 Markdown 복사됨` })
+    } catch {
+      setStatusBanner({ type: 'error', text: '복사에 실패했습니다.' })
+    }
+  }
+
   const columns: ColumnsType<E2eErrorLogEntry> = [
     {
       title: '발생 시각',
@@ -245,6 +259,13 @@ export function E2eErrorLogPanel({ active }: Props) {
         </Typography.Paragraph>
         <Space wrap>
           <Button
+            icon={<CopyOutlined />}
+            onClick={() => void handleCopyMd()}
+            disabled={items.length === 0}
+          >
+            MD 복사
+          </Button>
+          <Button
             icon={<DownloadOutlined />}
             onClick={handleDownloadMd}
             disabled={items.length === 0}
@@ -335,39 +356,16 @@ export function E2eErrorLogPanel({ active }: Props) {
             columnWidth: 48,
             expandedRowRender: row => (
               <div className="e2e-error-log-page__detail">
-                <div>
-                  <Typography.Text type="secondary">상황</Typography.Text>
-                  <pre>{row.situation}</pre>
-                </div>
-                <div>
-                  <Typography.Text type="secondary">요청</Typography.Text>
-                  <pre>{`${row.method} ${row.requestPath}`}</pre>
-                </div>
-                <div>
-                  <Typography.Text type="secondary">메시지</Typography.Text>
-                  <pre>{row.message || '—'}</pre>
-                </div>
-                {row.traceId ? (
-                  <div>
-                    <Typography.Text type="secondary">traceId</Typography.Text>
-                    <pre>{row.traceId}</pre>
-                  </div>
-                ) : null}
-                <div>
-                  <Typography.Text type="secondary">route</Typography.Text>
-                  <pre>{row.route || '—'}</pre>
-                </div>
+                <CopyablePre label="상황" text={row.situation} />
+                <CopyablePre label="요청" text={`${row.method} ${row.requestPath}`} />
+                <CopyablePre label="메시지" text={row.message || '—'} />
+                {row.traceId ? <CopyablePre label="traceId" text={row.traceId} /> : null}
+                <CopyablePre label="route" text={row.route || '—'} />
                 {row.requestBodyPreview ? (
-                  <div>
-                    <Typography.Text type="secondary">request body</Typography.Text>
-                    <pre>{row.requestBodyPreview}</pre>
-                  </div>
+                  <CopyablePre label="request body" text={row.requestBodyPreview} />
                 ) : null}
                 {row.responseBodyPreview ? (
-                  <div>
-                    <Typography.Text type="secondary">response body</Typography.Text>
-                    <pre>{row.responseBodyPreview}</pre>
-                  </div>
+                  <CopyablePre label="response body" text={row.responseBodyPreview} />
                 ) : null}
               </div>
             ),
