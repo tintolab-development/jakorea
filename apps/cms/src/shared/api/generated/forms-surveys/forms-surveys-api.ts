@@ -258,7 +258,7 @@ const submitBinding = (
  * @summary 프로그램 조회
  */
 const formBindings = (
-    programId: number,
+    programId: string,
  options?: SecondParameter<typeof customInstance<ProgramFormBindingResponse[]>>,) => {
       return customInstance<ProgramFormBindingResponse[]>(
       {url: `/api/admin/programs/${programId}/form-bindings`, method: 'GET'
@@ -312,7 +312,7 @@ const formBindings = (
  * @summary POST /api/admin/programs/{programId}/form-bindings
  */
 const createFormBinding = (
-    programId: number,
+    programId: string,
     programFormBindingRequest: ProgramFormBindingRequest,
  options?: SecondParameter<typeof customInstance<ProgramFormBindingResponse>>,) => {
       return customInstance<ProgramFormBindingResponse>(
@@ -761,7 +761,7 @@ const submitResponse = (
  * @summary 프로그램 삭제
  */
 const deactivateFormBinding = (
-    programId: number,
+    programId: string,
     bindingId: number,
  options?: SecondParameter<typeof customInstance<ProgramFormBindingResponse>>,) => {
       return customInstance<ProgramFormBindingResponse>(
@@ -816,7 +816,7 @@ const deactivateFormBinding = (
  * @summary 프로그램 부분 수정
  */
 const updateFormBinding = (
-    programId: number,
+    programId: string,
     bindingId: number,
     programFormBindingRequest: ProgramFormBindingRequest,
  options?: SecondParameter<typeof customInstance<ProgramFormBindingResponse>>,) => {

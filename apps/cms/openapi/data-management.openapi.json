@@ -66,6 +66,10 @@
     },
     {
       "name": "기타 API",
+      "description": "CMS 공통 선택/검색결과 Excel 호환 CSV export API"
+    },
+    {
+      "name": "기타 API",
       "description": "일반 사용자 홈페이지 회원가입 API. CMS 관리자 API와 분리된 public surface입니다."
     },
     {
@@ -7302,6 +7306,9 @@
           "businessEndDate": {
             "type": "string"
           },
+          "businessPeriod": {
+            "$ref": "#/components/schemas/ProgramPeriodRequest"
+          },
           "applicationStartDate": {
             "type": "string"
           },
@@ -7482,6 +7489,17 @@
           },
           "autoApplyDefaultFormBindings": {
             "type": "boolean"
+          }
+        }
+      },
+      "ProgramPeriodRequest": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
           }
         }
       },
@@ -8757,6 +8775,39 @@
           "scheduleId"
         ]
       },
+      "MemberPiiAnonymizeRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "PrivacyEnforcementMutationResponse": {
+        "type": "object",
+        "properties": {
+          "requestedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "affectedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "type": "string"
+          },
+          "processedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "PrivacyExportFileCreateRequest": {
         "type": "object",
         "description": "서버 생성 개인정보 export 파일 등록 요청. 백엔드가 임시 export 파일을 생성/보관하는 경우에만 사용합니다.",
@@ -9290,6 +9341,27 @@
             "format": "date-time"
           }
         }
+      },
+      "ReconsentRequiredRequest": {
+        "type": "object",
+        "properties": {
+          "consentIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5
+          }
+        },
+        "required": [
+          "consentIds",
+          "reason"
+        ]
       },
       "PerformanceRuleUpsertRequest": {
         "type": "object",
@@ -11073,6 +11145,16 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "businessEndDate": {
+            "type": "string"
+          },
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "businessStartDate": {
+            "type": "string"
           }
         }
       },
@@ -11159,6 +11241,12 @@
             "type": "string"
           },
           "ujatPartnerRecommendationPath": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string"
+          },
+          "endDate": {
             "type": "string"
           }
         }
@@ -12076,6 +12164,105 @@
             "type": "string",
             "format": "date-time",
             "description": "첨부 생성 시각"
+          }
+        }
+      },
+      "CommonExportRequest": {
+        "type": "object",
+        "properties": {
+          "exportType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selectedIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 5000,
+            "minItems": 0
+          },
+          "query": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "exportType"
+        ]
+      },
+      "ApiResponseCommonExportJobResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/CommonExportJobResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "CommonExportJobResponse": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "exportType": {
+            "type": "string"
+          },
+          "exportMode": {
+            "type": "string"
+          },
+          "jobStatus": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "selectedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "privacyIncludedYn": {
+            "type": "boolean"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "downloadPath": {
+            "type": "string"
           }
         }
       },
@@ -14016,6 +14203,9 @@
           },
           "businessEndDate": {
             "type": "string"
+          },
+          "businessPeriod": {
+            "$ref": "#/components/schemas/ProgramPeriodRequest"
           },
           "applicationStartDate": {
             "type": "string"
@@ -20371,6 +20561,39 @@
           }
         }
       },
+      "RetentionEnforcementSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "expiredConsentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expiringWithin30DaysCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "withdrawalPiiCandidateCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dormantCandidateCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "taxSettlementHoldCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "certificateRetentionCandidateCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "RawPrivacyAccessAuditSummaryResponse": {
         "type": "object",
         "properties": {
@@ -20500,6 +20723,74 @@
           "dormantWithdrawalDueAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "ConsentExpiryCandidateQuery": {
+        "type": "object",
+        "properties": {
+          "daysAhead": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 1095,
+            "minimum": 1
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 1000,
+            "minimum": 1
+          },
+          "consentType": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          }
+        }
+      },
+      "ConsentExpiryCandidateResponse": {
+        "type": "object",
+        "properties": {
+          "consentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberEmailMasked": {
+            "type": "string"
+          },
+          "consentType": {
+            "type": "string"
+          },
+          "consentDomain": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "version": {
+            "type": "string"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retentionPolicyCode": {
+            "type": "string"
+          },
+          "requiredAction": {
+            "type": "string"
           }
         }
       },
