@@ -62,5 +62,6 @@ function CurriculumSection({ structure, sessions, isEdit }) {
 
 ## 관련
 
+- 컴포넌트를 함수로 호출 금지 (`Should have a queue`): [react-component-render-as-jsx.mdc](./react-component-render-as-jsx.mdc)
 - CMS: [custom-hooks.md](../../apps/cms/.cursor/rules/coding/custom-hooks.md) · [CMS 위임 규칙](../../apps/cms/.cursor/rules/coding/react-hooks-after-early-return.mdc)
 - ESLint: `react-hooks/rules-of-hooks` (비활성화하지 말 것)
