@@ -58,8 +58,12 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
     ref
   ) => {
     const hasIcon = icon != null
+    const resolvedWidth = width == null ? undefined : typeof width === 'number' ? `${width}px` : width
+    /** size 기본 width·has-icon min-width를 덮어쓰도록 width/min/max 함께 지정 */
     const widthStyle: CSSProperties | undefined =
-      width != null ? { width: typeof width === 'number' ? `${width}px` : width } : undefined
+      resolvedWidth != null
+        ? { width: resolvedWidth, minWidth: resolvedWidth, maxWidth: resolvedWidth }
+        : undefined
 
     const antdSize = size === 'large' ? 'large' : size === 'small' ? 'small' : 'middle'
     const isLoading = Boolean(loading)
