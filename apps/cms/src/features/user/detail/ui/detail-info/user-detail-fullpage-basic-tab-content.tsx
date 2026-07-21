@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { Space } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
-import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
+import type { User, AffiliatedTeacherLinkTarget, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { UserDetailStrategySectionConfig } from '@/features/user/detail/strategies'
 import {
@@ -45,7 +45,7 @@ export interface UserDetailFullpageBasicTabContentProps {
   basicInfoEntrySource?: UserBasicInfoEntrySource
   personalInfoRevealed: boolean
   instructorResumeApplicantRow: ApplicantInstructorRow | null
-  onNavigateToLinkedUser?: (userId: string) => void
+  onNavigateToLinkedUser?: (target: AffiliatedTeacherLinkTarget) => void
   memberInfoEditing?: boolean
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void

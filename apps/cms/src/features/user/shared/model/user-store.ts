@@ -65,7 +65,10 @@ interface UserStore {
 
   // Actions
   fetchUsers: (filters?: UserFilters) => Promise<void>
-  fetchUserById: (userId: UserId) => Promise<void>
+  fetchUserById: (
+    userId: UserId,
+    options?: { memberId?: number }
+  ) => Promise<UserWithoutPassword | null>
   createUser: (request: CreateUserRequest) => Promise<UserWithoutPassword>
   deleteUser: (userId: UserId) => Promise<void>
   changeUserRole: (
@@ -202,26 +205,32 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 
-  fetchUserById: async userId => {
+  fetchUserById: async (userId, options) => {
     set({ loading: true, error: null })
     try {
-      const user = await getUserById(userId)
+      const user = await getUserById(userId, options)
       if (!user) {
         set({ loading: false })
-        return
+        return null
       }
 
-      // usersById에 추가/업데이트
+      // usersById에 추가/업데이트 — 요청 키·canonical id 모두 저장
       const state = get()
+      const nextUsersById = {
+        ...state.usersById,
+        [userId]: user,
+        ...(user.id !== userId ? { [user.id]: user } : {}),
+      }
+      const nextUserIds = state.userIds.includes(user.id)
+        ? state.userIds
+        : [...state.userIds, user.id]
+
       set({
-        usersById: {
-          ...state.usersById,
-          [userId]: user,
-        },
-        // userIds에 없으면 추가
-        userIds: state.userIds.includes(userId) ? state.userIds : [...state.userIds, userId],
+        usersById: nextUsersById,
+        userIds: nextUserIds,
         loading: false,
       })
+      return user
     } catch (err) {
       const error = err instanceof Error ? err : new Error('사용자 정보를 불러오는데 실패했습니다.')
       set({ error, loading: false })

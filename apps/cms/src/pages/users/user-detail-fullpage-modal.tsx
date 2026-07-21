@@ -25,7 +25,7 @@ import {
   type UserDetailFullpageShellValue,
 } from '@/features/user/detail/ui/detail-info/user-detail-fullpage-shell-context'
 import { UserDetailFullpageTabPanels } from '@/features/user/detail/ui/detail-info/user-detail-fullpage-tab-panels'
-import type { User } from '@/types/user'
+import type { User, AffiliatedTeacherLinkTarget } from '@/types/user'
 import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import { useUserStore } from '@/features/user/shared/model/user-store'
 import { useUserDetailController } from '@/features/user/detail/lib/use-user-detail-controller'
@@ -67,7 +67,7 @@ export interface UserDetailFullPageModalProps {
     userId: string
     permissionRole: UserDetailPermissionRole
   }) => void
-  onNavigateToLinkedUser?: (userId: string) => void
+  onNavigateToLinkedUser?: (target: AffiliatedTeacherLinkTarget) => void
   /** 저장 후 목록·드로어 등 상위가 동일 회원 객체를 갱신할 때 */
   onMemberBasicInfoSaved?: (user: Omit<User, 'password'>) => void
   /** 목록 상세 닫기 중 URL 동기화 차단 */

@@ -1,5 +1,6 @@
 import type { SchoolAffiliatedTeacherRow as ApiSchoolAffiliatedTeacherRow } from '@/shared/api/generated/members/schemas/schoolAffiliatedTeacherRow'
 import type { SchoolAffiliatedTeacherRow, SchoolTeacherEmploymentStatus } from '@/types/user'
+import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
 
 function mapEmploymentStatus(raw?: string): SchoolTeacherEmploymentStatus {
   const v = raw?.trim().toUpperCase()
@@ -24,6 +25,10 @@ function resolveTeacherMemberId(row: ApiSchoolAffiliatedTeacherRow): number | un
   if (Number.isFinite(fromId) && String(fromId) === String(row.id).trim()) {
     return fromId
   }
+  const fromLinked = Number(row.linkedUserId)
+  if (Number.isFinite(fromLinked) && String(fromLinked) === String(row.linkedUserId).trim()) {
+    return fromLinked
+  }
   return undefined
 }
 
@@ -31,9 +36,21 @@ export function mapAffiliatedTeacherRow(
   row: ApiSchoolAffiliatedTeacherRow
 ): SchoolAffiliatedTeacherRow {
   const teacherMemberId = resolveTeacherMemberId(row)
+  const linkedFromApi = row.linkedUserId?.trim() || undefined
+  const rowId = row.id?.trim() || undefined
+  /** API가 linkedUserId를 생략해도 teacherMemberId/id로 상세 이동 가능하도록 보정 */
+  const linkedUserId =
+    linkedFromApi ||
+    (teacherMemberId != null ? String(teacherMemberId) : undefined) ||
+    rowId
+
+  if (linkedUserId && teacherMemberId != null) {
+    registerMemberIdMapping(linkedUserId, teacherMemberId)
+  }
+
   const id =
-    row.id?.trim() ||
-    row.linkedUserId?.trim() ||
+    rowId ||
+    linkedUserId ||
     (teacherMemberId != null ? String(teacherMemberId) : `teacher-${crypto.randomUUID()}`)
   return {
     id,
@@ -43,7 +60,7 @@ export function mapAffiliatedTeacherRow(
     email: row.email?.trim() || '-',
     employmentStatus: mapEmploymentStatus(row.employmentStatus),
     joinedAt: row.joinedAt ?? new Date().toISOString(),
-    ...(row.linkedUserId?.trim() ? { linkedUserId: row.linkedUserId.trim() } : {}),
+    ...(linkedUserId ? { linkedUserId } : {}),
     ...(teacherMemberId != null ? { teacherMemberId } : {}),
   }
 }

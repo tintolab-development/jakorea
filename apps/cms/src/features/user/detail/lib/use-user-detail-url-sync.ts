@@ -52,6 +52,12 @@ export function useUserDetailUrlSync(params: {
       return
     }
 
+    const urlId = searchParams.get('id')?.trim()
+    // URL id와 displayUser가 어긋나면(뒤로가기·drill-down 직후) lnb sync로 history를 덮어쓰지 않는다.
+    if (urlId && displayUser.id && urlId !== displayUser.id) {
+      return
+    }
+
     const transitionedIntoOpen = !detailUrlSyncSeenOpenRef.current
     detailUrlSyncSeenOpenRef.current = true
 
@@ -60,7 +66,6 @@ export function useUserDetailUrlSync(params: {
       return
     }
 
-    const urlId = searchParams.get('id')?.trim()
     if (!urlId && displayUser.id) {
       if (!transitionedIntoOpen) {
         return
@@ -68,7 +73,8 @@ export function useUserDetailUrlSync(params: {
     }
 
     const sp = new URLSearchParams(searchParams)
-    if (displayUser.id) {
+    // URL id가 이미 있으면 부모(목록 drill-down)가 설정한 id를 유지한다.
+    if (displayUser.id && !urlId) {
       sp.set('id', displayUser.id)
     }
 
@@ -117,7 +123,7 @@ export function useUserDetailUrlSync(params: {
       urlDirty = true
     }
 
-    if (displayUser.id && searchParams.get('id') !== displayUser.id) {
+    if (!urlId && displayUser.id) {
       urlDirty = true
     }
 

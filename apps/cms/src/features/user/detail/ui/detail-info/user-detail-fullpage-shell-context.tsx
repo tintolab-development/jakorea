@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
-import type { User } from '@/types/user'
+import type { AffiliatedTeacherLinkTarget, User } from '@/types/user'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { TabState } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
 import type { UseUserDetailModalsResult } from '@/features/user/detail/lib/use-user-detail-modals'
@@ -24,7 +24,7 @@ export interface UserDetailFullpageShellValue {
   personalInfoRevealed: boolean
   instructorResumeApplicantRow: ApplicantInstructorRow | null
   basicInfoEntrySource?: UserBasicInfoEntrySource
-  onNavigateToLinkedUser?: (userId: string) => void
+  onNavigateToLinkedUser?: (target: AffiliatedTeacherLinkTarget) => void
   modals: UseUserDetailModalsResult
   withdrawConfirmOpen: boolean
   /** 학교(기관) 상세 — 소속 교사가 있을 때 삭제 시도 시 목록과 동일한 불가 안내 */

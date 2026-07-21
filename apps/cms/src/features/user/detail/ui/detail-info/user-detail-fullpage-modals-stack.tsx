@@ -60,7 +60,7 @@ export function UserDetailFullpageModalsStack() {
                 })
               : buildMemberWithdrawMessageLines({ displayName: displayUser.name })
           }
-          confirmText={sections.withdraw.isSchoolDelete ? '삭제' : '탈퇴'}
+          confirmText={sections.withdraw.isSchoolDelete ? '학교 삭제' : '탈퇴'}
           confirmVariant="delete"
           requiredConfirmInput={
             sections.withdraw.isSchoolDelete
