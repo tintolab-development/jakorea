@@ -14,8 +14,8 @@
 
 .cms-button.ant-btn {
   box-sizing: border-box;
-  display: flex !important;
-  flex-direction: column;
+  display: inline-flex !important;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
   margin: 0;
@@ -46,12 +46,6 @@
     --disabled-default-bg,
     linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%)
   ) !important;
-}
-
-.cms-button.ant-btn.cms-button--loading-only {
-  /* Ant loading-icon이 형제로 붙을 때 column이면 스피너가 위로 밀림 */
-  flex-direction: row !important;
-  gap: 0 !important;
 }
 
 /* spinner 오버레이는 `button-loading-only.css` */
@@ -108,11 +102,6 @@
   align-items: center;
   justify-content: center;
   line-height: 0;
-}
-
-/* Ant existIcon 경로용 더미 — 레이아웃에 영향 없음 */
-.cms-button.ant-btn .cms-button__loading-slot {
-  display: none;
 }
 
 .cms-button.ant-btn .cms-button__label {

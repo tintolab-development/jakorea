@@ -67,3 +67,31 @@
 .btn-loading-only.ant-btn-loading {
   gap: 0 !important;
 }
+
+/* ----- 로딩 종료 후 잔여 DOM — 텍스트 하단 밀림 방지 ----- */
+.ant-btn:not(.ant-btn-loading) .ant-btn-loading-icon {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none;
+}
+
+.ant-btn:not(.ant-btn-loading) > .ant-btn-icon:empty {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.ant-btn.ant-btn-loading,
+.ant-btn.btn-loading-only.ant-btn-loading,
+.ant-btn.cms-button.ant-btn-loading {
+  align-items: center;
+  justify-content: center;
+}
