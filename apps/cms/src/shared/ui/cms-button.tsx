@@ -61,8 +61,15 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
     ref
   ) => {
     const hasIcon = icon != null
+    const resolvedWidth = typeof width === 'number' ? `${width}px` : width
     const widthStyle: CSSProperties | undefined =
-      width != null ? { width: typeof width === 'number' ? `${width}px` : width } : undefined
+      resolvedWidth != null
+        ? {
+            width: resolvedWidth,
+            minWidth: resolvedWidth,
+            maxWidth: resolvedWidth,
+          }
+        : undefined
 
     const antdSize = size === 'large' ? 'large' : size === 'small' ? 'small' : 'middle'
 
