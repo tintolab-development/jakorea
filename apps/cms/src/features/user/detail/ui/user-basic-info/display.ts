@@ -1,10 +1,11 @@
 import { createElement, type ReactNode } from 'react'
 import type { User } from '@/types/user'
 import type { DateValue } from '@/types'
-import { formatDate } from '@/shared/utils'
+import { formatDateDot } from '@/shared/utils'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { getMemberPermissionInstructorApplicationTypeLabel } from '@/features/user/permission-management/lib/member-permission-instructor-application-type'
 import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 
 function ageFromBirthDate(birthDate: DateValue | undefined): number | null {
   if (!birthDate) return null
@@ -14,9 +15,9 @@ function ageFromBirthDate(birthDate: DateValue | undefined): number | null {
 }
 
 export function formatGenderBirthLine(user: Omit<User, 'password'>): string {
-  const gender = user.gender ?? '-'
+  const gender = toDisplayGender(user.gender)
   if (!user.birthDate) return `${gender} | -`
-  const d = formatDate(user.birthDate)
+  const d = formatDateDot(user.birthDate)
   const age = ageFromBirthDate(user.birthDate)
   const agePart = age != null ? ` (만 ${age}세)` : ''
   return `${gender} | ${d}${agePart}`
@@ -69,11 +70,11 @@ export function inlineSegmentsWithDividers(
 
 /** 성별 및 생년월일 td — 문자 `|` 대신 TdDivider, gap 12px */
 export function genderBirthView(user: Omit<User, 'password'>): ReactNode {
-  const gender = user.gender ?? '-'
+  const gender = toDisplayGender(user.gender)
   if (!user.birthDate) {
     return inlineSegmentsWithDivider([gender, '-'])
   }
-  const d = formatDate(user.birthDate)
+  const d = formatDateDot(user.birthDate)
   const age = ageFromBirthDate(user.birthDate)
   const agePart = age != null ? ` (만 ${age}세)` : ''
   return inlineSegmentsWithDivider([gender, `${d}${agePart}`])
