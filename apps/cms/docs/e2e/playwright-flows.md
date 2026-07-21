@@ -151,28 +151,30 @@ POM은 기본 경로(개인·커리큘럼형·단일 회차)에서 공통·모�
 (과거에는 teardown 타이밍 때문에 테스트에서 난 4xx/5xx보다 로그가 적게 남을 수 있었습니다.)
 
 
+등록·수정·상세는 **각각 별도 스크립트**로 실행합니다. 한 번에 묶지 않습니다.
+
 ### 일반 (headless)
 
 ```bash
-pnpm --filter cms test:e2e:programs
+pnpm --filter cms test:e2e:programs:registration
 ```
 
 ### UI로 확인
 
 ```bash
-pnpm --filter cms test:e2e:programs:ui
+pnpm --filter cms test:e2e:programs:registration:ui
 ```
 
 ### headed
 
 ```bash
-pnpm --filter cms test:e2e:programs:headed
+pnpm --filter cms test:e2e:programs:registration:headed
 ```
 
 ### debug
 
 ```bash
-pnpm --filter cms exec playwright test tests/e2e/flows/programs --project=chromium --debug
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/general-program-registration.spec.ts --project=chromium --debug
 ```
 
 ---
@@ -185,17 +187,57 @@ pnpm --filter cms exec playwright test tests/e2e/flows/programs --project=chromi
 | POM | `tests/e2e/pages/general-program-edit.page.ts` |
 | 헬퍼 | `tests/e2e/pages/form-helpers.ts` |
 | 대상 | BE 시드 **`[수정 가능] 일반 프로그램 더미`** (신규 등록 없음) |
-| 검증 | **1) 더미 열기** → **2) 공통 정보 수정** → **3) 모집 정보 수정** → **4) 상세·목록 확인** (`describe.serial`) |
+| 검증 | **1) 더미 열기** → **2) 공통 정보 수정** → **3) 모집 정보 수정** → **4) 신청 정보 양식 수정** → **5) 상세·목록 확인** (`describe.serial`) |
 
 전제: 더미가 목록에 있고, lifecycle이 **프로그램 진행 예정**이며 **사업 시작일 이전**이어야 「정보 수정」이 가능합니다.  
 대표 프로그램명(국문)은 시드 식별용으로 **변경하지 않습니다**. 영문·공고용명·장소·KPI·임금·모집 탭 필드 등을 갱신한 뒤 `PATCH /api/admin/programs/{id}` 성공을 기다립니다.  
 모집 정보는 참여자 / 강사 / 봉사자 서브탭마다 수정·저장합니다.
 
-실행은 등록과 동일하게 `tests/e2e/flows/programs` 전체를 돌립니다.
+등록 스펙과 **별도 실행**합니다 (`test:e2e:programs:edit`).
+
+### 일반 (headless)
 
 ```bash
-pnpm --filter cms test:e2e:programs
-pnpm --filter cms exec playwright test tests/e2e/flows/programs/general-program-edit.spec.ts --project=chromium
+pnpm --filter cms test:e2e:programs:edit
+```
+
+### UI로 확인
+
+```bash
+pnpm --filter cms test:e2e:programs:edit:ui
+```
+
+### headed
+
+```bash
+pnpm --filter cms test:e2e:programs:edit:headed
+```
+
+### debug
+
+```bash
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/general-program-edit.spec.ts --project=chromium --debug
+```
+
+---
+
+## 3c. 프로그램 — 일반 프로그램 상세 (LNB smoke · 신청 · 진행 · 설문)
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `tests/e2e/flows/programs/detail/*.spec.ts` |
+| POM | `general-program-detail.page.ts` · `general-program-applications.page.ts` · `general-program-seed-titles.ts` |
+| 시드 | CASE-10 FULL LNB 우선, 없으면 `[수정 가능] 일반 프로그램 더미` |
+| 검증 | **smoke** LNB/탭/딥링크 → **신청 목록** 승인(행 있을 때) → **진행** 탭 로드 → **설문·담당자** 로드 · variant title |
+
+신청 정보 **양식 수정**은 수정 스펙(3b) 5단계에서 커버합니다 (`양식 수정` → form-template 저장, PATCH programs 아님).
+
+신청 목록에 BE 시드 행이 없으면 해당 케이스는 목록 로드만 통과하고 annotation으로 사유를 남깁니다.
+
+```bash
+pnpm --filter cms test:e2e:programs:detail
+pnpm --filter cms test:e2e:programs:detail:ui
+pnpm --filter cms test:e2e:programs:detail:headed
 ```
 
 ---
@@ -263,7 +305,9 @@ pnpm --filter cms exec playwright test tests/e2e/flows/members --project=chromiu
 |--------|----------|-----|--------|
 | 스모크 | `test:e2e:smoke` | `test:e2e:smoke:ui` | `test:e2e:smoke:headed` |
 | 인증 | `test:e2e:auth` | `test:e2e:auth:ui` | `test:e2e:auth:headed` |
-| 일반 프로그램 등록 | `test:e2e:programs` | `test:e2e:programs:ui` | `test:e2e:programs:headed` |
+| 일반 프로그램 등록 | `test:e2e:programs:registration` | `test:e2e:programs:registration:ui` | `test:e2e:programs:registration:headed` |
+| 일반 프로그램 수정 | `test:e2e:programs:edit` | `test:e2e:programs:edit:ui` | `test:e2e:programs:edit:headed` |
+| 일반 프로그램 상세 | `test:e2e:programs:detail` | `test:e2e:programs:detail:ui` | `test:e2e:programs:detail:headed` |
 | 회원 목록 CRUD (4 kind, 권한 관리 제외) | `test:e2e:members` | `test:e2e:members:ui` | `test:e2e:members:headed` |
 | 전체 | `test:e2e` | `test:e2e:ui` | `test:e2e:headed` |
 
@@ -273,7 +317,8 @@ pnpm --filter cms exec playwright test tests/e2e/flows/members --project=chromiu
 
 ```bash
 pnpm --filter cms test:e2e:auth:ui
-pnpm --filter cms test:e2e:programs:ui
+pnpm --filter cms test:e2e:programs:registration:ui
+pnpm --filter cms test:e2e:programs:edit:ui
 pnpm --filter cms test:e2e:members:ui
 ```
 
@@ -317,13 +362,14 @@ apps/cms/tests/e2e/
 ├── smoke/                          # 비로그인 로그인 페이지 로드
 ├── flows/
 │   ├── auth/                       # 세션 복원 → 대시보드
-│   ├── programs/                   # 일반 프로그램 등록 (세션 재사용)
+│   ├── programs/                   # 일반 프로그램 등록·수정
+│   │   └── detail/                 # 상세 LNB smoke·신청·진행·설문
 │   └── members/                    # 회원 목록 CRUD (세션 재사용)
 ├── fixtures/                       # 공통 test (백엔드 에러 로그 자동 덤프)
-├── helpers/                        # API 에러 캡처·덤프 · auth-paths
+├── helpers/                        # API 에러 캡처·덤프 · auth-paths · with-authenticated-page
 └── pages/                          # Page Object · form helpers
 ```
 
 규칙: 모노레포 `.cursor/rules/playwright-e2e.mdc`
 
-**Last updated:** 2026-07-20
+**Last updated:** 2026-07-21
