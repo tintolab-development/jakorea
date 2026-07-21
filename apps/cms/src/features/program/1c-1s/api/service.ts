@@ -14,6 +14,7 @@ import {
 } from '@/features/program/general/api/programs-api-client'
 import type { Program } from '@/types/domain'
 import {
+  COMPANY_SCHOOL_PROGRAM_API_TYPE,
   mapCompanySchoolDetailToProgram,
   mapCompanySchoolListItemToProgram,
   mapCompanySchoolToCreateRequest,
@@ -21,6 +22,10 @@ import {
 } from './adapters'
 import { shouldUseCompanySchoolRemoteApi } from './capabilities'
 import { companySchoolListParams, type CompanySchoolListFilters } from './list-params'
+import {
+  countCompanySchoolOverviewStages,
+  type CompanySchoolOverviewStageCounts,
+} from '@/features/program/1c-1s/lib/overview-stage-counts'
 
 function assertRemoteReady(): void {
   if (shouldUseCompanySchoolRemoteApi()) return
@@ -44,6 +49,40 @@ export async function listCompanySchoolPrograms(
   assertRemoteReady()
   const page = await fetchAdminProgramsRemote(companySchoolListParams(filters))
   return (page.items ?? []).map(mapCompanySchoolListItemToProgram)
+}
+
+/**
+ * 상단 4카드 건수.
+ * remote: GET /programs?programType=COMPANY_SCHOOL&periodStatus=* 의 totalElements
+ * mock: 운영 기간·lifecycle 버킷 집계 (목록 overview 필터와 동일)
+ *
+ * 별도 count API 불필요 — 기존 목록 API로 충분. (500건 초과 시 totalElements가 SSOT)
+ */
+export async function fetchCompanySchoolOverviewStages(): Promise<CompanySchoolOverviewStageCounts> {
+  if (!shouldUseCompanySchoolRemoteApi()) {
+    return countCompanySchoolOverviewStages(getCompanySchoolMockList())
+  }
+
+  assertRemoteReady()
+
+  const base = {
+    programType: COMPANY_SCHOOL_PROGRAM_API_TYPE,
+    page: 0,
+    size: 1,
+  } as const
+  const [all, scheduled, inProgress, completed] = await Promise.all([
+    fetchAdminProgramsRemote({ ...base }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'RECRUITING' }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'IN_PROGRESS' }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'COMPLETED' }),
+  ])
+
+  return {
+    total: all.totalElements ?? all.items?.length ?? 0,
+    scheduled: scheduled.totalElements ?? scheduled.items?.length ?? 0,
+    inProgress: inProgress.totalElements ?? inProgress.items?.length ?? 0,
+    completed: completed.totalElements ?? completed.items?.length ?? 0,
+  }
 }
 
 export async function getCompanySchoolProgram(programId: string): Promise<Program> {

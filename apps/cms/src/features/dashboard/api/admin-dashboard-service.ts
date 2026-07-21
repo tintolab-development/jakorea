@@ -12,6 +12,8 @@ import { mockPrograms, mockProgramsMap } from '@/data/mock/programs'
 import { getEducationPrograms } from '@/data/mock/education-programs'
 import { getCompanySchoolPrograms, getCompanySchoolProgramById } from '@/data/mock/economy-programs'
 import { getGeneralPrograms } from '@/data/mock/general-programs'
+import { countGeneralProgramOverviewStages } from '@/features/program/general/lib/overview-stage-counts'
+import { countCompanySchoolOverviewStages } from '@/features/program/1c-1s/lib/overview-stage-counts'
 import { getTrainedTeachersPrograms } from '@/data/mock/trained-teachers-programs'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { getVolunteerPrograms } from '@/data/mock/volunteer-programs'
@@ -229,6 +231,15 @@ export async function getProgramProgressStages(options?: {
         : options.programType === 'trained_teachers'
           ? getTrainedTeachersPrograms()
           : getCompanySchoolPrograms()
+
+    if (options.programType === 'general') {
+      return countGeneralProgramOverviewStages(programs)
+    }
+
+    if (options.programType === 'company_school') {
+      return countCompanySchoolOverviewStages(programs)
+    }
+
     const stages = {
       scheduled: 0,
       inProgress: 0,
@@ -236,45 +247,26 @@ export async function getProgramProgressStages(options?: {
     }
 
     programs.forEach(program => {
-      if (options.programType === 'company_school' || options.programType === 'trained_teachers') {
-        const operationPhase = resolveCompanySchoolOperationPhase(program)
-        if (operationPhase === 'scheduled') stages.scheduled++
-        else if (operationPhase === 'in_progress') stages.inProgress++
-        else if (operationPhase === 'completed') stages.completed++
-        else {
-          const status = program.lifecycleStatus || ''
-          if (
-            [
-              'recruiting_students',
-              'recruiting_instructors',
-              'matching_completed',
-              'education_before_textbook',
-            ].includes(status)
-          ) {
-            stages.scheduled++
-          } else if (status === 'education_after_textbook' || status === 'education_in_progress') {
-            stages.inProgress++
-          } else if (['education_completed', 'document_processing_completed'].includes(status)) {
-            stages.completed++
-          }
+      const operationPhase = resolveCompanySchoolOperationPhase(program)
+      if (operationPhase === 'scheduled') stages.scheduled++
+      else if (operationPhase === 'in_progress') stages.inProgress++
+      else if (operationPhase === 'completed') stages.completed++
+      else {
+        const status = program.lifecycleStatus || ''
+        if (
+          [
+            'recruiting_students',
+            'recruiting_instructors',
+            'matching_completed',
+            'education_before_textbook',
+          ].includes(status)
+        ) {
+          stages.scheduled++
+        } else if (status === 'education_after_textbook' || status === 'education_in_progress') {
+          stages.inProgress++
+        } else if (['education_completed', 'document_processing_completed'].includes(status)) {
+          stages.completed++
         }
-        return
-      }
-
-      const status = program.lifecycleStatus || ''
-      if (
-        [
-          'recruiting_students',
-          'recruiting_instructors',
-          'matching_completed',
-          'education_before_textbook',
-        ].includes(status)
-      ) {
-        stages.scheduled++
-      } else if (status === 'education_after_textbook' || status === 'education_in_progress') {
-        stages.inProgress++
-      } else if (['education_completed', 'document_processing_completed'].includes(status)) {
-        stages.completed++
       }
     })
 

@@ -7,10 +7,23 @@ import { companySchoolQueryKeys } from './query-keys'
 import {
   createCompanySchoolProgram,
   deleteCompanySchoolProgram,
+  fetchCompanySchoolOverviewStages,
   getCompanySchoolProgram,
   listCompanySchoolPrograms,
   updateCompanySchoolProgram,
 } from './service'
+
+/** 1사1교 목록 상단 4카드 건수 (목록과 동일 데이터 소스) */
+export function useCompanySchoolOverviewStages(enabled = true) {
+  const remoteEnabled = shouldUseCompanySchoolRemoteApi()
+  return useQuery({
+    queryKey: companySchoolQueryKeys.overviewStages(),
+    queryFn: fetchCompanySchoolOverviewStages,
+    enabled,
+    staleTime: remoteEnabled ? 30_000 : 0,
+    retry: shouldRetryCompanySchoolQuery,
+  })
+}
 
 function filtersKey(filters: CompanySchoolListFilters, remoteEnabled: boolean): string {
   return JSON.stringify({ source: remoteEnabled ? 'remote' : 'mock', ...filters })
@@ -51,7 +64,7 @@ export function useCreateCompanySchoolProgram() {
     retry: false,
     onSuccess: program => {
       queryClient.setQueryData(companySchoolQueryKeys.detail(program.id), program)
-      void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.lists() })
+      void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.all })
     },
   })
 }
@@ -72,7 +85,7 @@ export function useUpdateCompanySchoolProgram() {
     retry: false,
     onSuccess: program => {
       queryClient.setQueryData(companySchoolQueryKeys.detail(program.id), program)
-      void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.lists() })
+      void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.all })
     },
   })
 }
@@ -85,7 +98,7 @@ export function useDeleteCompanySchoolProgram() {
     retry: false,
     onSuccess: (_data, programId) => {
       queryClient.removeQueries({ queryKey: companySchoolQueryKeys.detail(programId) })
-      void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.lists() })
+      void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.all })
     },
   })
 }

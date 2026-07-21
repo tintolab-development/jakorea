@@ -32,6 +32,10 @@ import {
 } from '@/features/program/general/api/programs-api-client'
 import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
+import {
+  countGeneralProgramOverviewStages,
+  type GeneralProgramOverviewStageCounts,
+} from '@/features/program/general/lib/overview-stage-counts'
 import { programService } from '@/entities/program/api/program-service'
 import type { Program } from '@/types/domain'
 
@@ -74,8 +78,38 @@ export async function fetchGeneralProgramsRemoteList(
   )
 
   const programs = (page.items ?? []).map(mapAdminProgramListItemToProgram)
-  const overviewFiltered = filterGeneralProgramsByOverviewStatus(programs, statusFilter)
-  return clientFilterGeneralPrograms(overviewFiltered, tableFilters)
+  // periodStatus는 서버 필터 — trained-teachers/1사1교와 같이 클라이언트 overview 재필터 스킵
+  return clientFilterGeneralPrograms(programs, tableFilters)
+}
+
+/**
+ * 상단 4카드 건수.
+ * remote: GET /programs?periodStatus=* 의 totalElements (목록과 동일 periodStatus 계약)
+ * mock: lifecycle 버킷 집계 (목록 filterGeneralProgramsByOverviewStatus 와 동일)
+ *
+ * 별도 count API 불필요 — 기존 목록 API로 충분. (500건 초과 시 totalElements가 SSOT)
+ */
+export async function fetchGeneralProgramOverviewStages(): Promise<GeneralProgramOverviewStageCounts> {
+  if (!shouldUseGeneralProgramsRemoteApi()) {
+    return countGeneralProgramOverviewStages(getGeneralPrograms())
+  }
+
+  assertGeneralProgramsRemoteReady()
+
+  const base = { programType: GENERAL_PROGRAM_API_TYPE, page: 0, size: 1 } as const
+  const [all, scheduled, inProgress, completed] = await Promise.all([
+    fetchAdminProgramsRemote({ ...base }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'RECRUITING' }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'IN_PROGRESS' }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'COMPLETED' }),
+  ])
+
+  return {
+    total: all.totalElements ?? all.items?.length ?? 0,
+    scheduled: scheduled.totalElements ?? scheduled.items?.length ?? 0,
+    inProgress: inProgress.totalElements ?? inProgress.items?.length ?? 0,
+    completed: completed.totalElements ?? completed.items?.length ?? 0,
+  }
 }
 
 export async function fetchGeneralProgramRemoteById(programId: string): Promise<Program> {
