@@ -2,7 +2,8 @@
  * 프로그램 상세 - 담당자 정보 탭
  * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록
  *
- * TODO(api): OpenAPI 담당자 CRUD 확정 후 일반·1사1교 모두 remote 연동.
+ * TODO(api): OpenAPI 담당자 CRUD 엔드포인트 확정 후 remote 연동.
+ * 현재 백엔드 담당자 API가 없어 mock(`getMockProgramManagers`) 유지. mock 파일은 삭제하지 않음.
  * 1사1교는 program-type-isolation — shared 기본값을 바꾸지 말고 surface/variant로 분기.
  */
 

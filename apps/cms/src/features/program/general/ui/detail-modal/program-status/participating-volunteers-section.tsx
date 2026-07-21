@@ -40,10 +40,12 @@ import {
 } from '../../register-employee-volunteer-modal'
 import { useEmployeeVolunteerRegistration } from '../../../hooks/use-employee-volunteer-registration'
 import { useProgressVolunteerList } from '../../../hooks/use-progress-volunteer-list'
-import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
+import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
+import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
 import type { ParticipatingSchoolSession } from '@/data/mock/participating-schools'
 import type { Program } from '@/types/domain'
 import { useParticipatingVolunteersParams } from '../../../hooks/use-participating-volunteers-params'
+import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
 import {
   filterParticipatingVolunteers,
   formatParticipatingVolunteerAssignedInstitutions,
@@ -100,8 +102,33 @@ export function ParticipatingVolunteersSection({
     setProgressCalendarGranularity,
   } = useParticipatingVolunteersParams()
   const { volunteerList, addVolunteerFromMember } = useProgressVolunteerList(programId)
+
+  const schoolFilters: ProgressFilters = useMemo(
+    () => ({
+      schoolName: '',
+      region: 'all',
+      institutionSido: '',
+      institutionSigungu: '',
+      educationGrade: 'all',
+      lectureRound: 'all',
+      textbookStatus: 'all',
+      settlementStatus: 'all',
+      teacherName: '',
+    }),
+    []
+  )
+  const { instructorList } = useProgressInstructorList({
+    appliedFilters: schoolFilters,
+    programId,
+  })
+  const { schoolList: schoolRows } = useProgressSchoolList({
+    appliedFilters: schoolFilters,
+    instructorList,
+    programId,
+  })
+
   const { sessionRows, approvedInstitutionOptions, registrations, saveRegistration } =
-    useEmployeeVolunteerRegistration(program, MOCK_PARTICIPATING_SCHOOLS, volunteerList)
+    useEmployeeVolunteerRegistration(program, schoolRows, volunteerList)
 
   const [pendingFilters, setPendingFilters] = useState<ParticipatingVolunteersFilters>(() => ({
     ...filters,
@@ -153,18 +180,18 @@ export function ParticipatingVolunteersSection({
   )
 
   const volunteerCalendarEvents = useMemo(
-    () => buildParticipatingVolunteerCalendarEvents(MOCK_PARTICIPATING_SCHOOLS, filteredVolunteers),
-    [filteredVolunteers]
+    () => buildParticipatingVolunteerCalendarEvents(schoolRows, filteredVolunteers),
+    [filteredVolunteers, schoolRows]
   )
 
   const schoolNameToScheduleColor = useMemo(() => {
-    const sorted = Array.from(new Set(MOCK_PARTICIPATING_SCHOOLS.map(s => s.schoolName))).sort()
+    const sorted = Array.from(new Set(schoolRows.map(s => s.schoolName))).sort()
     const map = new Map<string, (typeof SCHEDULE_COLORS)[number]>()
     sorted.forEach((name, i) => {
       map.set(name, SCHEDULE_COLORS[i % SCHEDULE_COLORS.length])
     })
     return map
-  }, [])
+  }, [schoolRows])
 
   const schoolNamesOnCalendarDate = useMemo(
     () => getSchoolNamesForDateFromVolunteerEvents(volunteerCalendarEvents, calendarSelectedDate),
@@ -556,7 +583,7 @@ export function ParticipatingVolunteersSection({
         ) : (
           <div className="participating-institutions-section__calendar-wrap">
             <ParticipatingInstitutionsCalendarView
-              schools={MOCK_PARTICIPATING_SCHOOLS}
+              schools={schoolRows}
               selectedRowKeys={[]}
               onSelectionChange={() => {}}
               onSchoolClick={() => {}}

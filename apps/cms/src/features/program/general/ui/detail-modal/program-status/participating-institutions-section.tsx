@@ -91,7 +91,7 @@ export interface ParticipatingInstitutionsSectionProps {
 }
 
 export function ParticipatingInstitutionsSection({
-  programId: _programId,
+  programId,
   program,
   schoolIdFromUrl,
   schoolTabFromUrl,
@@ -194,11 +194,15 @@ export function ParticipatingInstitutionsSection({
     [appliedFilters]
   )
 
-  const instructorHook = useProgressInstructorList({ appliedFilters: progressFilters })
+  const resolvedProgramId = programId ?? program?.id
+  const instructorHook = useProgressInstructorList({
+    appliedFilters: progressFilters,
+    programId: resolvedProgramId,
+  })
   const schoolHook = useProgressSchoolList({
     appliedFilters: progressFilters,
     instructorList: instructorHook.instructorList,
-    programId: program?.id,
+    programId: resolvedProgramId,
   })
 
   const {
@@ -608,6 +612,8 @@ export function ParticipatingInstitutionsSection({
             setSavedInstructorPatches(prev => ({ ...prev, [schoolId]: instructors }))
           }}
           participatingRow={selectedSchoolForDetail}
+          programId={resolvedProgramId}
+          participatingInstructorList={instructorHook.instructorList}
           onCancelApproval={handleSchoolApprovalCancel}
         />
       )}

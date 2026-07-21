@@ -119,15 +119,20 @@ function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: 
 
 export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurveyManagementViewProps) {
   const initialMock = useMemo(() => buildGeneralSurveyMockState(program), [program])
-  const { registeredSurveys: remoteRegisteredSurveys } = useGeneralProgramSurveys(program.id)
-  const [registeredSurveys, setRegisteredSurveys] = useState(initialMock.registeredSurveys)
-  const [activeRegisteredSurveyId, setActiveRegisteredSurveyId] = useState<string | null>(
-    initialMock.activeRegisteredSurveyId
+  const {
+    registeredSurveys: remoteRegisteredSurveys,
+    isRemoteDataSource: surveysRemote,
+  } = useGeneralProgramSurveys(program.id)
+  const [registeredSurveys, setRegisteredSurveys] = useState(() =>
+    surveysRemote ? [] : initialMock.registeredSurveys
   )
-  const { responses: remoteSurveyResponses } = useGeneralProgramSurveyResponses(
-    program.id,
-    activeRegisteredSurveyId ?? undefined
+  const [activeRegisteredSurveyId, setActiveRegisteredSurveyId] = useState<string | null>(() =>
+    surveysRemote ? null : initialMock.activeRegisteredSurveyId
   )
+  const {
+    responses: remoteSurveyResponses,
+    isRemoteDataSource: responsesRemote,
+  } = useGeneralProgramSurveyResponses(program.id, activeRegisteredSurveyId ?? undefined)
   const { summary: remoteSurveySummary } = useGeneralProgramSurveySummary(
     program.id,
     activeRegisteredSurveyId ?? undefined
@@ -174,6 +179,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const { showAlert } = useCmsAlert()
 
   useEffect(() => {
+    // remote ON이면 mock으로 덮어쓰지 않음 — remote 목록 effect가 채움
+    if (surveysRemote) return
     const next = buildGeneralSurveyMockState(program)
     setRegisteredSurveys(next.registeredSurveys)
     setActiveRegisteredSurveyId(next.activeRegisteredSurveyId)
@@ -185,13 +192,18 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     setLectureEvalFormDraft(null)
     setLectureEvalResponses([])
     setActiveLectureEvalTab('eval')
-  }, [program])
+  }, [program, surveysRemote])
 
   useEffect(() => {
-    if (!remoteRegisteredSurveys || remoteRegisteredSurveys.length === 0) return
+    if (!surveysRemote) return
+    if (!remoteRegisteredSurveys) return
     setRegisteredSurveys(remoteRegisteredSurveys)
-    setActiveRegisteredSurveyId(prev => prev ?? remoteRegisteredSurveys[0]?.id ?? null)
-  }, [remoteRegisteredSurveys])
+    setActiveRegisteredSurveyId(prev =>
+      prev && remoteRegisteredSurveys.some(s => s.id === prev)
+        ? prev
+        : (remoteRegisteredSurveys[0]?.id ?? null)
+    )
+  }, [remoteRegisteredSurveys, surveysRemote])
 
   useEffect(() => {
     if (!isGeneralSatisfactionSurveyNavTab(activeTab)) return
@@ -222,10 +234,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const showSatisfactionAudienceTabs =
     !isInstitutionTeacherOnlySatisfaction && satisfactionAudienceTabs.length > 0
   const activeSatisfactionSurvey = satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null
-  // OpenAPI responses는 메타만 제공 — 문항 answers 미포함 시 mock 폴백 유지
+  // remote ON: API 응답만 사용(문항 answers 미포함 시 빈 answers). OFF일 때만 mock.
   const pollResponses = useMemo(() => {
-    if (remoteSurveyResponses && remoteSurveyResponses.length > 0) {
-      return remoteSurveyResponses.map(item => ({
+    if (responsesRemote) {
+      return (remoteSurveyResponses ?? []).map(item => ({
         respondentId: String(item.formResponseId ?? ''),
         respondentName: `응답 ${item.formResponseId ?? ''}`,
         addressRegion: '',
@@ -233,7 +245,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       }))
     }
     return buildGeneralSurveyMockState(program).responses
-  }, [program, remoteSurveyResponses])
+  }, [program, remoteSurveyResponses, responsesRemote])
   const satisfactionResponses = pollResponses
 
   useEffect(() => {

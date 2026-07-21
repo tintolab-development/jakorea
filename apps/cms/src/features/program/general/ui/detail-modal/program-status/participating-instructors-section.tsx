@@ -44,6 +44,7 @@ import {
 } from '../../../hooks/use-participating-instructors-params'
 import type { ProgressFilters } from '../../../hooks/use-program-progress-params'
 import { useProgressInstructorList } from '../../../hooks/use-progress-instructor-list'
+import { useProgressSchoolList } from '../../../hooks/use-progress-school-list'
 import { AddParticipatingInstructorModal } from '../../add-participating-instructor-modal'
 import { ParticipatingInstructorAddConsentModal } from '../../participating-instructor-add-consent-modal'
 import {
@@ -57,7 +58,6 @@ import {
   type InstructorSettlementUiStatus,
 } from '@/shared/constants/instructor-settlement-status'
 import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
-import { MOCK_PARTICIPATING_SCHOOLS } from '@/data/mock/participating-schools'
 import type { ParticipatingSchoolRow } from '@/data/mock/participating-schools'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
 import {
@@ -134,15 +134,60 @@ export function ParticipatingInstructorsSection({
     () => (programId ? getScheduleColorPair(programId) : SCHEDULE_COLORS[0]),
     [programId]
   )
+
+  const progressFilters: ProgressFilters = useMemo(
+    () => ({
+      schoolName: '',
+      region: 'all',
+      institutionSido: '',
+      institutionSigungu: '',
+      educationGrade: 'all',
+      lectureRound: 'all',
+      textbookStatus: 'all',
+      settlementStatus: appliedFilters.settlementStatus || 'all',
+      teacherName: appliedFilters.instructorName,
+    }),
+    [appliedFilters.settlementStatus, appliedFilters.instructorName]
+  )
+
+  const {
+    instructorList,
+    filteredInstructors: baseFiltered,
+    selectedInstructorRowKeys,
+    setSelectedInstructorRowKeys,
+    addInstructorModalOpen,
+    setAddInstructorModalOpen,
+    handleAddInstructorByMemberId,
+    isRemoteDataSource: instructorsRemote,
+  } = useProgressInstructorList({
+    appliedFilters: progressFilters,
+    programId,
+  })
+
+  const { schoolList: schoolRows } = useProgressSchoolList({
+    appliedFilters: progressFilters,
+    instructorList,
+    programId,
+  })
+
+  /** remote ON이면 mock 상세 필드로 덮어쓰지 않음 */
+  const resolveInstructorRow = useCallback(
+    (row: ParticipatingInstructorRow): ParticipatingInstructorRow => {
+      if (instructorsRemote) return row
+      return mergeParticipatingInstructorRow(row)
+    },
+    [instructorsRemote]
+  )
+
   /** 좌측 캘린더 학교 일정 태그와 동일: 참여 학교명 가나다순 → SCHEDULE_COLORS 순환 */
   const schoolNameToScheduleColor = useMemo(() => {
-    const sorted = Array.from(new Set(MOCK_PARTICIPATING_SCHOOLS.map(s => s.schoolName))).sort()
+    const sorted = Array.from(new Set(schoolRows.map(s => s.schoolName))).sort()
     const map = new Map<string, ScheduleColorPair>()
     sorted.forEach((name, i) => {
       map.set(name, SCHEDULE_COLORS[i % SCHEDULE_COLORS.length])
     })
     return map
-  }, [])
+  }, [schoolRows])
   const [pendingFilters, setPendingFilters] = useState<ParticipatingInstructorsFilters>(() => ({
     ...filters,
   }))
@@ -207,35 +252,6 @@ export function ParticipatingInstructorsSection({
   const handleFilterSearch = () => {
     applyFilters(pendingFilters)
   }
-
-  const progressFilters: ProgressFilters = useMemo(
-    () => ({
-      schoolName: '',
-      region: 'all',
-      institutionSido: '',
-      institutionSigungu: '',
-      educationGrade: 'all',
-      lectureRound: 'all',
-      textbookStatus: 'all',
-      settlementStatus: appliedFilters.settlementStatus || 'all',
-      teacherName: appliedFilters.instructorName,
-    }),
-    [appliedFilters.settlementStatus, appliedFilters.instructorName]
-  )
-
-  const {
-    instructorList,
-    filteredInstructors: baseFiltered,
-    selectedInstructorRowKeys,
-    setSelectedInstructorRowKeys,
-    addInstructorModalOpen,
-    setAddInstructorModalOpen,
-    handleAddInstructorByMemberId,
-  } = useProgressInstructorList({
-    appliedFilters: progressFilters,
-    preferMock: true,
-    programId,
-  })
 
   const [instructorConsentModalOpen, setInstructorConsentModalOpen] = useState(false)
   const [pendingInstructorMemberId, setPendingInstructorMemberId] = useState<string | null>(null)
@@ -309,15 +325,15 @@ export function ParticipatingInstructorsSection({
       return
     }
 
-    setActivityCertPreviewInstructor(mergeParticipatingInstructorRow(selectedRow))
+    setActivityCertPreviewInstructor(resolveInstructorRow(selectedRow))
     setActivityCertPreviewOpen(true)
-  }, [filteredInstructors, selectedInstructorRowKeys, showAlert])
+  }, [filteredInstructors, resolveInstructorRow, selectedInstructorRowKeys, showAlert])
 
   const selectedInstructorFromUrl = useMemo(() => {
     if (!instructorIdFromUrl) return null
     const row = instructorList.find(r => r.id === instructorIdFromUrl)
-    return row ? mergeParticipatingInstructorRow(row) : null
-  }, [instructorIdFromUrl, instructorList])
+    return row ? resolveInstructorRow(row) : null
+  }, [instructorIdFromUrl, instructorList, resolveInstructorRow])
 
   useEffect(() => {
     if (!instructorIdFromUrl || !onClearInstructorId) return
@@ -342,8 +358,8 @@ export function ParticipatingInstructorsSection({
   ])
 
   const schoolNamesOnCalendarDate = useMemo(
-    () => getSchoolNamesForDate(MOCK_PARTICIPATING_SCHOOLS, calendarSelectedDate),
-    [calendarSelectedDate]
+    () => getSchoolNamesForDate(schoolRows, calendarSelectedDate),
+    [calendarSelectedDate, schoolRows]
   )
 
   /** 캘린더에서 선택한 날짜에 교육이 있는 학교에 배정된 강사만 우측 카드에 표시 */
@@ -382,8 +398,8 @@ export function ParticipatingInstructorsSection({
 
   const instructorCalendarEvents = useMemo(
     () =>
-      buildParticipatingInstructorCalendarEvents(MOCK_PARTICIPATING_SCHOOLS, filteredInstructors),
-    [filteredInstructors]
+      buildParticipatingInstructorCalendarEvents(schoolRows, filteredInstructors),
+    [filteredInstructors, schoolRows]
   )
 
   const registeredInstructorNames = useMemo(
@@ -422,7 +438,7 @@ export function ParticipatingInstructorsSection({
           row.address ? MASKING_POLICY.address(row.address) : row.region
         ),
         assignedInstitutions: formatParticipatingInstructorAssignedInstitutions(
-          getParticipatingInstructorAssignedSchoolNames(row, MOCK_PARTICIPATING_SCHOOLS, instructorList)
+          getParticipatingInstructorAssignedSchoolNames(row, schoolRows, instructorList)
         ),
         lectureExperienceYears:
           row.lectureExperienceYears != null ? `${row.lectureExperienceYears}년` : '-',
@@ -495,7 +511,7 @@ export function ParticipatingInstructorsSection({
           formatParticipatingInstructorAssignedInstitutions(
             getParticipatingInstructorAssignedSchoolNames(
               record,
-              MOCK_PARTICIPATING_SCHOOLS,
+              schoolRows,
               instructorList
             )
           ),
@@ -561,7 +577,7 @@ export function ParticipatingInstructorsSection({
           activeTab={instructorTabFromUrl ?? undefined}
           onTabChange={onInstructorTabChange}
           onClearInstructorId={onClearInstructorId ?? (() => {})}
-          schoolRows={MOCK_PARTICIPATING_SCHOOLS}
+          schoolRows={schoolRows}
           instructorList={instructorList}
         />
         <AddParticipatingInstructorModal
@@ -680,7 +696,7 @@ export function ParticipatingInstructorsSection({
         ) : (
           <div className="participating-institutions-section__calendar-wrap">
             <ParticipatingInstitutionsCalendarView
-              schools={MOCK_PARTICIPATING_SCHOOLS}
+              schools={schoolRows}
               customEvents={instructorCalendarEvents}
               renderMonthEventContent={renderParticipatingInstructorCalendarMonthEventContent}
               selectedRowKeys={[]}

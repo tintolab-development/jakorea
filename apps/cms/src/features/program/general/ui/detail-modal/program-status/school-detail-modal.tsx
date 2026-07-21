@@ -34,6 +34,7 @@ import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { MOCK_PARTICIPATING_INSTRUCTORS } from '@/data/mock/participating-instructors'
+import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
 import {
   TEXTBOOK_STATUS_LABELS,
   TEXTBOOK_STATUS_OPTION_KEYS,
@@ -89,6 +90,8 @@ export interface SchoolDetailModalProps {
   participatingRow?: ParticipatingSchoolRow | null
   /** 프로그램 id — 추가 배정 시 승인된 강사 목록 조회용 */
   programId?: string
+  /** 진행현황 참여 강사 목록(API). 미전달 시 mock 폴백 */
+  participatingInstructorList?: ParticipatingInstructorRow[]
   /** 승인 취소 확인 후 호출 (프로그램 승인 현황 → 승인 취소) */
   onCancelApproval?: (schoolId: string) => void
 }
@@ -103,6 +106,7 @@ export function SchoolDetailModal({
   onSaveInstructorInfo,
   participatingRow,
   programId = '',
+  participatingInstructorList = MOCK_PARTICIPATING_INSTRUCTORS,
   onCancelApproval,
 }: SchoolDetailModalProps) {
   const [unsavedCloseConfirmOpen, setUnsavedCloseConfirmOpen] = useState(false)
@@ -956,7 +960,7 @@ export function SchoolDetailModal({
         schoolId={participatingRow?.id ?? detail?.id ?? ''}
         schoolName={detail?.schoolName ?? ''}
         schoolSessions={participatingRow?.sessions}
-        participatingInstructorList={MOCK_PARTICIPATING_INSTRUCTORS}
+        participatingInstructorList={participatingInstructorList}
         assignedInstructorNames={assignedInstructorNames}
         instructorOptions={addInstructorAssignOptions}
         currentLeadInstructorName={
