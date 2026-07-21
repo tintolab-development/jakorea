@@ -6,6 +6,8 @@ import {
 import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
+  WITHDRAW_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
 import { LectureAttendanceModal } from '@/features/program/general/ui/lecture-attendance-modal'
 import { AssignmentSubmissionModal } from '@/features/program/general/ui/assignment-submission-modal'
@@ -26,6 +28,13 @@ export function UserDetailFullpageModalsStack() {
     instructorPermissionRevokeOpen,
     onCloseInstructorPermissionRevoke,
     onConfirmInstructorPermissionRevoke,
+    basicInfoEditing,
+    basicInfoEditScope,
+    basicInfoDraft,
+    basicInfoSaveLoading,
+    onCancelBasicInfoEdit,
+    onSaveBasicInfoEdit,
+    onBasicInfoDraftChange,
   } = useUserDetailFullpageShell()
 
   const { sections } = derived

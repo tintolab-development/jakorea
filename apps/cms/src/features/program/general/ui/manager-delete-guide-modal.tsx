@@ -171,8 +171,8 @@ export function buildMemberWithdrawMessageLines(params: { displayName: string } 
   if (!name) return []
   return [
     `[${name}] 회원을 탈퇴 처리하시겠습니까?`,
-    '탈퇴 처리 시 등록 및 관련된 정보는 모두 삭제됩니다.',
-    '삭제된 목록 및 정보는 되돌릴 수 없습니다. 정말 삭제하시겠습니까?',
+    '탈퇴 처리 시 등록 및 관련된 정보는 모두 탈퇴됩니다.',
+    '탈퇴된 목록 및 정보는 되돌릴 수 없습니다. 정말 탈퇴하시겠습니까?',
   ]
 }
 
