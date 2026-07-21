@@ -1,5 +1,5 @@
 /**
- * 회원 상세 — 정보 제공 동의 (DetailInfoForm)
+ * 회원 상세 — 약관 및 동의 (DetailInfoForm)
  */
 
 import { Spin } from 'antd'
@@ -31,7 +31,7 @@ export interface UserConsentAgreementSectionProps {
   remoteConsentLoading?: boolean
 }
 
-const DEFAULT_CAPTION = '*미동의 시 프로그램 신청 및 활동에 제한이 있을 수 있습니다.'
+const DEFAULT_CAPTION = '*미동의 시 서비스 가입 및 프로그램 참여에 제한이 있을 수 있습니다.'
 
 export function resolveUserConsentAgreementPreset(
   user: Pick<User, 'role' | 'instructorMemberProfile' | 'affiliatedSchoolUserId'>
@@ -47,14 +47,12 @@ export function resolveUserConsentAgreementPreset(
   return 'individual'
 }
 
-const SAMPLE_CONSENT = '동의 | 2026.01.15 09:15:42'
 const SAMPLE_AGREED_AT_DISPLAY = '2026.01.15 09:15:42'
 
 const CONSENT_LABEL_WIDTH = 240 as const
 
-/** 단일 필드 값 — 샘플 텍스트 또는 동의서 행 */
+/** 단일 필드 값 — 동의 상태 또는 동의서 행 */
 export type ConsentFieldValueSchema =
-  | { type: 'sample_consent' }
   | {
       type: 'remote_consent'
       agreed: boolean
@@ -82,215 +80,104 @@ export interface ConsentRowSchema {
 
 export type ConsentPresetSchema = Record<UserConsentAgreementPreset, ConsentRowSchema[]>
 
-const CONSENT_ROW_DOUBLE_SAMPLE: ConsentRowSchema = {
+const TERMS_AND_PRIVACY_ROW: ConsentRowSchema = {
   rowType: 'double',
   fields: [
     {
-      label: '개인정보 수집 동의',
+      label: '서비스 이용약관',
       labelWidth: CONSENT_LABEL_WIDTH,
-      value: { type: 'sample_consent' },
+      value: {
+        type: 'remote_consent',
+        agreed: true,
+        agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+      },
     },
+    {
+      label: '개인정보 수집·이용 동의',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: {
+        type: 'remote_consent',
+        agreed: true,
+        agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+      },
+    },
+  ],
+}
+
+const MARKETING_AND_PORTRAIT_ROW: ConsentRowSchema = {
+  rowType: 'double',
+  fields: [
     {
       label: '마케팅 제공 동의',
       labelWidth: CONSENT_LABEL_WIDTH,
-      value: { type: 'sample_consent' },
+      value: {
+        type: 'remote_consent',
+        agreed: false,
+        agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+      },
+    },
+    {
+      label: '초상권 수집·이용 동의',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: {
+        type: 'document',
+        agreed: true,
+        agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+      },
     },
   ],
 }
 
-const CONSENT_ROWS_INDIVIDUAL_LIKE: ConsentRowSchema[] = [
-  CONSENT_ROW_DOUBLE_SAMPLE,
-  {
-    rowType: 'double',
-    fields: [
-      {
-        label: '초상권 수집·이용 동의',
-        labelWidth: CONSENT_LABEL_WIDTH,
-        value: {
-          type: 'document',
-          agreed: true,
-          agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
-        },
-      },
-      {
-        label: '지급조서 작성 동의',
-        labelWidth: CONSENT_LABEL_WIDTH,
-        value: { type: 'document', agreed: false },
-      },
-    ],
-  },
-]
-
-const DOCUMENT_AGREED: ConsentFieldValueSchema = {
-  type: 'document',
-  agreed: true,
-  agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+const PAYMENT_AND_EDUCATOR_ROW: ConsentRowSchema = {
+  rowType: 'double',
+  fields: [
+    {
+      label: '지급조서 사전 동의서',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: { type: 'document', agreed: false },
+    },
+    {
+      label: '교육진행자 서약서',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: { type: 'document', agreed: false },
+    },
+  ],
 }
+
+const ADMIN_AND_CRIME_ROW: ConsentRowSchema = {
+  rowType: 'double',
+  fields: [
+    {
+      label: '행정정보 공동이용 사전동의서',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: { type: 'document', agreed: false },
+    },
+    {
+      label: '성범죄 경력 조회 동의서',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: { type: 'document', agreed: false },
+    },
+  ],
+}
+
+/** 회원 상세 약관·동의 — 스크린샷 기준 8항목(2열×4행) */
+const CONSENT_ROWS_FULL: ConsentRowSchema[] = [
+  TERMS_AND_PRIVACY_ROW,
+  MARKETING_AND_PORTRAIT_ROW,
+  PAYMENT_AND_EDUCATOR_ROW,
+  ADMIN_AND_CRIME_ROW,
+]
 
 /** 프리셋별 행·필드 구조 (표시 데이터와 분리) */
 export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
-  admin: [CONSENT_ROW_DOUBLE_SAMPLE],
-  individual: CONSENT_ROWS_INDIVIDUAL_LIKE,
-  school_teacher: CONSENT_ROWS_INDIVIDUAL_LIKE,
-  instructor_dual: [
-    CONSENT_ROW_DOUBLE_SAMPLE,
-    {
-      rowType: 'single',
-      fields: [
-        {
-          label: '지급조서 작성 동의',
-          labelWidth: CONSENT_LABEL_WIDTH,
-          fullRow: true,
-          value: DOCUMENT_AGREED,
-        },
-      ],
-    },
-    {
-      rowType: 'single',
-      fields: [
-        {
-          label: '성범죄 경력조회 동의',
-          labelWidth: CONSENT_LABEL_WIDTH,
-          fullRow: true,
-          value: DOCUMENT_AGREED,
-        },
-      ],
-    },
-    {
-      rowType: 'single',
-      fields: [
-        {
-          label: '행정정보 공동이용 사전 동의',
-          labelWidth: CONSENT_LABEL_WIDTH,
-          fullRow: true,
-          value: DOCUMENT_AGREED,
-        },
-      ],
-    },
-    {
-      rowType: 'single',
-      fields: [
-        {
-          label: '교육진행자 동의 서약',
-          labelWidth: CONSENT_LABEL_WIDTH,
-          fullRow: true,
-          value: DOCUMENT_AGREED,
-        },
-      ],
-    },
-  ],
-  instructor_only: [
-    CONSENT_ROW_DOUBLE_SAMPLE,
-    {
-      rowType: 'double',
-      fields: [
-        {
-          label: '초상권 수집·이용 동의',
-          labelWidth: CONSENT_LABEL_WIDTH,
-          value: DOCUMENT_AGREED,
-        },
-        {
-          label: '지급조서 작성 동의',
-          labelWidth: CONSENT_LABEL_WIDTH,
-          value: DOCUMENT_AGREED,
-        },
-      ],
-    },
-    {
-      rowType: 'double',
-      fields: [
-        {
-          label: '성범죄 경력조회 동의',
-          labelWidth: CONSENT_LABEL_WIDTH,
-          value: DOCUMENT_AGREED,
-        },
-        {
-          label: '행정정보 공동이용 사전 동의',
-          labelWidth: CONSENT_LABEL_WIDTH,
-          value: DOCUMENT_AGREED,
-        },
-      ],
-    },
-    {
-      rowType: 'double',
-      fields: [
-        {
-          label: '교육진행자 동의 서약',
-          labelWidth: CONSENT_LABEL_WIDTH,
-          value: DOCUMENT_AGREED,
-        },
-        {
-          label: '',
-          labelWidth: CONSENT_LABEL_WIDTH,
-          value: { type: 'empty_half' },
-        },
-      ],
-    },
-  ],
+  admin: CONSENT_ROWS_FULL,
+  individual: CONSENT_ROWS_FULL,
+  school_teacher: CONSENT_ROWS_FULL,
+  instructor_dual: CONSENT_ROWS_FULL,
+  instructor_only: CONSENT_ROWS_FULL,
 }
 
-export const CONSENT_ROWS_PERMISSION_INSTRUCTOR: ConsentRowSchema[] = [
-  {
-    rowType: 'double',
-    fields: [
-      {
-        label: '개인정보 수집 동의',
-        labelWidth: CONSENT_LABEL_WIDTH,
-        value: DOCUMENT_AGREED,
-      },
-      {
-        label: '마케팅 제공 동의',
-        labelWidth: CONSENT_LABEL_WIDTH,
-        value: DOCUMENT_AGREED,
-      },
-    ],
-  },
-  {
-    rowType: 'double',
-    fields: [
-      {
-        label: '초상권 수집·이용 동의',
-        labelWidth: CONSENT_LABEL_WIDTH,
-        value: DOCUMENT_AGREED,
-      },
-      {
-        label: '지급조서 작성 동의',
-        labelWidth: CONSENT_LABEL_WIDTH,
-        value: DOCUMENT_AGREED,
-      },
-    ],
-  },
-  {
-    rowType: 'double',
-    fields: [
-      {
-        label: '성범죄 경력조회 동의',
-        labelWidth: CONSENT_LABEL_WIDTH,
-        value: DOCUMENT_AGREED,
-      },
-      {
-        label: '행정정보 공동이용 사전 동의',
-        labelWidth: CONSENT_LABEL_WIDTH,
-        value: DOCUMENT_AGREED,
-      },
-    ],
-  },
-  {
-    rowType: 'double',
-    fields: [
-      {
-        label: '교육진행자 동의 서약',
-        labelWidth: CONSENT_LABEL_WIDTH,
-        value: DOCUMENT_AGREED,
-      },
-      {
-        label: '',
-        labelWidth: CONSENT_LABEL_WIDTH,
-        value: { type: 'empty_half' },
-      },
-    ],
-  },
-]
+export const CONSENT_ROWS_PERMISSION_INSTRUCTOR: ConsentRowSchema[] = CONSENT_ROWS_FULL
 
 export interface ConsentRenderCtx {
   openDocument: () => void
@@ -315,7 +202,7 @@ function ConsentValueDisplay({ value }: { value: ReactNode }) {
   )
 }
 
-/** 초상권·지급조서 등 동의서 제출형 항목 — 동의 시 [동의서 보기]+일시, 미동의 시 비활성 [동의서 미제출] */
+/** 초상권·지급조서 등 동의서 제출형 항목 — 동의 시 보기+일시, 미동의 시 비활성 보기 */
 function ConsentDocumentRow({
   agreed,
   agreedAtDisplay,
@@ -354,7 +241,7 @@ function ConsentDocumentRow({
         </>
       ) : (
         <CmsButton variant="default" size="medium" width={120} disabled>
-          동의서 미제출
+          동의서 보기
         </CmsButton>
       )}
     </span>
@@ -371,15 +258,11 @@ function consentFieldContent(value: ReactNode) {
 
 function resolveConsentFieldView(value: ConsentFieldValueSchema, ctx: ConsentRenderCtx): ReactNode {
   switch (value.type) {
-    case 'sample_consent':
-      return consentFieldContent(SAMPLE_CONSENT)
     case 'remote_consent': {
-      if (!value.agreed) {
-        return consentFieldContent('미동의')
-      }
+      const status = value.agreed ? '동의' : '미동의'
       const text = value.agreedAtDisplay
-        ? `동의 | ${value.agreedAtDisplay}`
-        : '동의'
+        ? `${status} | ${value.agreedAtDisplay}`
+        : status
       return consentFieldContent(text)
     }
     case 'document':
@@ -463,18 +346,31 @@ export function UserConsentAgreementSection({
       ? CONSENT_ROWS_PERMISSION_INSTRUCTOR
       : CONSENT_PRESET_SCHEMA[preset]
   const schema = remoteConsentRows ?? baseSchema
+  const upperRows = schema.slice(0, 2)
+  const lowerRows = schema.slice(2)
   const ctx: ConsentRenderCtx = { openDocument: doc }
 
   return (
     <div className="user-consent-agreement-section">
       <Spin spinning={remoteConsentLoading}>
-        <DetailInfoForm
-          title="정보 제공 동의"
-          description={effectiveCaption}
-          className="user-consent-agreement-section__form"
-        >
-          {schema.map((row, rowIndex) => renderConsentRow(row, ctx, rowIndex))}
-        </DetailInfoForm>
+        <div className="user-consent-agreement-section__forms">
+          <DetailInfoForm
+            title="약관 및 동의"
+            description={effectiveCaption}
+            className="user-consent-agreement-section__form"
+          >
+            {upperRows.map((row, rowIndex) => renderConsentRow(row, ctx, rowIndex))}
+          </DetailInfoForm>
+          {lowerRows.length > 0 ? (
+            <DetailInfoForm
+              title="약관 및 동의 상세"
+              hideHeader
+              className="user-consent-agreement-section__form"
+            >
+              {lowerRows.map((row, rowIndex) => renderConsentRow(row, ctx, rowIndex + 2))}
+            </DetailInfoForm>
+          ) : null}
+        </div>
       </Spin>
     </div>
   )
