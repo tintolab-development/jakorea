@@ -24,6 +24,7 @@ export function UserDetailFullpageTabPanels() {
     onOpenAssignmentSubmission,
     onOpenEnrollmentProgramDetail,
     basicInfoEditing,
+    basicInfoEditScope,
     basicInfoDraft,
     onBasicInfoDraftChange,
     adminPermissionVariantPatching,
@@ -45,7 +46,7 @@ export function UserDetailFullpageTabPanels() {
           personalInfoRevealed={personalInfoRevealed}
           instructorResumeApplicantRow={instructorResumeApplicantRow}
           onNavigateToLinkedUser={onNavigateToLinkedUser}
-          memberInfoEditing={basicInfoEditing}
+          memberInfoEditing={basicInfoEditing && basicInfoEditScope === 'profile'}
           memberInfoDraft={basicInfoDraft}
           onMemberInfoDraftChange={onBasicInfoDraftChange}
           adminPermissionVariantPatching={adminPermissionVariantPatching}

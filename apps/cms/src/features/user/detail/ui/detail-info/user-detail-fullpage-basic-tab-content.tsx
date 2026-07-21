@@ -164,13 +164,6 @@ export function UserDetailFullpageBasicTabContent({
           ) : null}
           <UserDetailAdminCommentSection
             user={userForAdminComment}
-            memberInfoEditing={memberInfoEditing}
-            adminCommentDraft={memberInfoDraft?.adminComment}
-            onAdminCommentChange={
-              memberInfoEditing && onMemberInfoDraftChange
-                ? value => onMemberInfoDraftChange({ adminComment: value })
-                : undefined
-            }
           />
         </>
       ) : null}

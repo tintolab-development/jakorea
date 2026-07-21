@@ -31,16 +31,14 @@ import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import {
   canAccessAdminCommentInAdminDetail,
   canEditAdminMemberInfo,
-  isMasterAdminUser,
   shouldShowCmsMemberInfoEditButton,
+  shouldShowAdminCommentSectionForViewer,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import {
   getAdminPermissionVariant,
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import {
-  draftToAdminCommentAndInstructorFeePatch,
-  draftToAdminMemberRestrictedPatch,
   draftToAdminProvisionedInstructorBasicInfoPatch,
   draftToBasicInfoPatch,
   draftToSchoolAdminCommentOnlyPatch,
@@ -67,6 +65,8 @@ import {
 } from '@/features/user/api/member-remote-capabilities'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
+
+export type BasicInfoEditScope = 'none' | 'profile' | 'comment'
 
 export type InstructorPermissionRevokeNotifyTiming = 'immediate' | 'manual'
 
@@ -122,6 +122,7 @@ export function useUserDetailController({
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
   const [institutionDeleteBlockedOpen, setInstitutionDeleteBlockedOpen] = useState(false)
   const [basicInfoEditing, setBasicInfoEditing] = useState(false)
+  const [basicInfoEditScope, setBasicInfoEditScope] = useState<BasicInfoEditScope>('none')
   const [basicInfoDraft, setBasicInfoDraft] = useState<AdminProvisionedMemberBasicInfoDraft | null>(
     null
   )
@@ -167,6 +168,7 @@ export function useUserDetailController({
   useEffect(() => {
     if (!open) {
       setBasicInfoEditing(false)
+      setBasicInfoEditScope('none')
       setBasicInfoDraft(null)
       setBasicInfoSaveLoading(false)
       setAdminPermissionVariantPatching(false)
@@ -177,6 +179,7 @@ export function useUserDetailController({
 
   useEffect(() => {
     setBasicInfoEditing(false)
+    setBasicInfoEditScope('none')
     setBasicInfoDraft(null)
     setBasicInfoSaveLoading(false)
     setAdminPermissionVariantPatching(false)
@@ -289,131 +292,122 @@ export function useUserDetailController({
     }
   }, [displayUser, onWithdraw])
 
-  const startBasicInfoEdit = useCallback(() => {
-    if (!displayUser) return
-    const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
-    const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)
-
-    if (displayUser.role === 'SCHOOL' && bodyKey === 'institution') {
-      if (shouldShowCmsMemberInfoEditButton(displayUser)) {
-        setBasicInfoDraft(userToSchoolInstitutionEditDraft(displayUser))
-      } else {
-        setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
-      }
-      setBasicInfoEditing(true)
-      setTabState({ lnb: 'detail-info' })
-      setSearchParams(
-        prev => {
-          const nextParams = new URLSearchParams(prev)
-          if (displayUser.id) nextParams.set('id', displayUser.id)
-          nextParams.set('lnb', 'detail-info')
-          nextParams.delete(programsChildQueryKey)
-          return nextParams
-        },
-        { replace: true }
-      )
-      return
-    }
-
-    if (displayUser.role === 'INSTRUCTOR' && bodyKey === 'instructor') {
-      if (shouldShowCmsMemberInfoEditButton(displayUser)) {
-        setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
-      } else {
-        setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
-      }
-      setBasicInfoEditing(true)
-      setTabState({ lnb: 'detail-info' })
-      setSearchParams(
-        prev => {
-          const nextParams = new URLSearchParams(prev)
-          if (displayUser.id) nextParams.set('id', displayUser.id)
-          nextParams.set('lnb', 'detail-info')
-          nextParams.delete(programsChildQueryKey)
-          return nextParams
-        },
-        { replace: true }
-      )
-      return
-    }
-
-    if (bodyKey === 'admin') {
-      if (!canAccessAdminCommentInAdminDetail(currentUser)) return
-      if (canEditAdminMemberInfo(currentUser, displayUser)) {
-        setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
-      } else {
-        setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
-      }
-      setBasicInfoEditing(true)
-      setTabState({ lnb: 'detail-info' })
-      setSearchParams(
-        prev => {
-          const nextParams = new URLSearchParams(prev)
-          if (displayUser.id) nextParams.set('id', displayUser.id)
-          nextParams.set('lnb', 'detail-info')
-          nextParams.delete(programsChildQueryKey)
-          return nextParams
-        },
-        { replace: true }
-      )
-      return
-    }
-
-    if (bodyKey !== 'all_users') return
-    if (shouldShowCmsMemberInfoEditButton(displayUser)) {
-      setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
-    } else {
-      setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
-    }
-    setBasicInfoEditing(true)
+  const focusDetailInfoTab = useCallback(() => {
     setTabState({ lnb: 'detail-info' })
     setSearchParams(
       prev => {
         const nextParams = new URLSearchParams(prev)
-        if (displayUser.id) nextParams.set('id', displayUser.id)
+        if (displayUser?.id) nextParams.set('id', displayUser.id)
         nextParams.set('lnb', 'detail-info')
         nextParams.delete(programsChildQueryKey)
         return nextParams
       },
       { replace: true }
     )
+  }, [displayUser?.id, programsChildQueryKey, setSearchParams])
+
+  const startBasicInfoEdit = useCallback(() => {
+    if (!displayUser) return
+    if (!shouldShowCmsMemberInfoEditButton(displayUser)) return
+
+    const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
+    const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)
+
+    if (displayUser.role === 'SCHOOL' && bodyKey === 'institution') {
+      setBasicInfoDraft(userToSchoolInstitutionEditDraft(displayUser))
+      setBasicInfoEditScope('profile')
+      setBasicInfoEditing(true)
+      focusDetailInfoTab()
+      return
+    }
+
+    if (displayUser.role === 'INSTRUCTOR' && bodyKey === 'instructor') {
+      setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
+      setBasicInfoEditScope('profile')
+      setBasicInfoEditing(true)
+      focusDetailInfoTab()
+      return
+    }
+
+    if (bodyKey === 'admin') {
+      if (!canEditAdminMemberInfo(currentUser, displayUser)) return
+      setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
+      setBasicInfoEditScope('profile')
+      setBasicInfoEditing(true)
+      focusDetailInfoTab()
+      return
+    }
+
+    if (bodyKey !== 'all_users') return
+    setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
+    setBasicInfoEditScope('profile')
+    setBasicInfoEditing(true)
+    focusDetailInfoTab()
   }, [
     displayUser,
     basicInfoEntrySource,
     searchParams,
-    programsChildQueryKey,
-    setSearchParams,
+    currentUser,
+    focusDetailInfoTab,
   ])
+
+  const startAdminCommentEdit = useCallback(() => {
+    if (!displayUser) return
+    if (!shouldShowAdminCommentSectionForViewer(currentUser, displayUser)) return
+
+    const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
+    const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)
+
+    if (bodyKey === 'admin' && !canAccessAdminCommentInAdminDetail(currentUser)) return
+    if (
+      bodyKey !== 'all_users' &&
+      bodyKey !== 'institution' &&
+      bodyKey !== 'instructor' &&
+      bodyKey !== 'admin'
+    ) {
+      return
+    }
+
+    setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
+    setBasicInfoEditScope('comment')
+    setBasicInfoEditing(true)
+    focusDetailInfoTab()
+  }, [displayUser, basicInfoEntrySource, searchParams, currentUser, focusDetailInfoTab])
 
   const cancelBasicInfoEdit = useCallback(() => {
     setBasicInfoEditing(false)
+    setBasicInfoEditScope('none')
     setBasicInfoDraft(null)
   }, [])
 
   const saveBasicInfoEdit = useCallback(async () => {
     if (!displayUser || !basicInfoDraft || !patchMemberBasicInfo) return
-    if (displayUser.role === 'ADMIN' && !canAccessAdminCommentInAdminDetail(currentUser)) return
+    if (basicInfoEditScope === 'comment' && displayUser.role === 'ADMIN') {
+      if (!canAccessAdminCommentInAdminDetail(currentUser)) return
+    }
+    if (basicInfoEditScope === 'profile' && displayUser.role === 'ADMIN') {
+      if (!canEditAdminMemberInfo(currentUser, displayUser)) return
+    }
     setBasicInfoSaveLoading(true)
     try {
       let patch: PatchUserBasicInfoInput
-      if (!shouldShowCmsMemberInfoEditButton(displayUser)) {
-        patch =
-          displayUser.role === 'INSTRUCTOR'
-            ? draftToAdminCommentAndInstructorFeePatch(basicInfoDraft)
-            : displayUser.role === 'ADMIN'
-              ? draftToAdminMemberRestrictedPatch(basicInfoDraft)
-              : draftToSchoolAdminCommentOnlyPatch(basicInfoDraft)
+      if (basicInfoEditScope === 'comment') {
+        patch = draftToSchoolAdminCommentOnlyPatch(basicInfoDraft)
       } else if (displayUser.role === 'SCHOOL') {
         patch = draftToSchoolInstitutionBasicInfoPatch(basicInfoDraft)
       } else if (displayUser.role === 'INSTRUCTOR') {
         patch = draftToAdminProvisionedInstructorBasicInfoPatch(basicInfoDraft)
       } else if (displayUser.role === 'ADMIN') {
-        patch =
-          isMasterAdminUser(currentUser) && shouldShowCmsMemberInfoEditButton(displayUser)
-            ? draftToBasicInfoPatch(basicInfoDraft)
-            : draftToAdminMemberRestrictedPatch(basicInfoDraft)
+        patch = draftToBasicInfoPatch(basicInfoDraft)
       } else {
         patch = draftToBasicInfoPatch(basicInfoDraft)
       }
+
+      if (basicInfoEditScope === 'profile' && Object.prototype.hasOwnProperty.call(patch, 'adminComment')) {
+        const { adminComment: _adminComment, ...patchWithoutComment } = patch
+        patch = patchWithoutComment
+      }
+
       const updated = await patchMemberBasicInfo(displayUser.id, patch)
       if (membersRemote && displayUser.memberId != null) {
         void queryClient.invalidateQueries({
@@ -421,9 +415,10 @@ export function useUserDetailController({
         })
       }
       setBasicInfoEditing(false)
+      setBasicInfoEditScope('none')
       setBasicInfoDraft(null)
       onMemberBasicInfoSaved?.(updated)
-      } catch (error) {
+    } catch (error) {
       handleError(error, { defaultMessage: '회원 정보 저장에 실패했습니다.' })
     } finally {
       setBasicInfoSaveLoading(false)
@@ -431,6 +426,7 @@ export function useUserDetailController({
   }, [
     displayUser,
     basicInfoDraft,
+    basicInfoEditScope,
     patchMemberBasicInfo,
     onMemberBasicInfoSaved,
     currentUser,
@@ -618,6 +614,7 @@ export function useUserDetailController({
       personalInfoRevealed,
       personalInfoRevealConfirmOpen,
       basicInfoEditing,
+      basicInfoEditScope,
       basicInfoDraft,
       basicInfoSaveLoading,
       adminPermissionVariantPatching,
@@ -642,6 +639,7 @@ export function useUserDetailController({
       closePersonalInfoRevealConfirm,
       submitPersonalInfoReveal,
       startBasicInfoEdit,
+      startAdminCommentEdit,
       cancelBasicInfoEdit,
       saveBasicInfoEdit,
       updateBasicInfoDraft,
