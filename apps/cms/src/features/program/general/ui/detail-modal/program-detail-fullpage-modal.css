@@ -163,6 +163,12 @@
   max-width: 100%;
 }
 
+/* 참여 기관 상세 — 바깥 info-tab 추가 하단 패딩 제거 (content 52px만 사용) */
+.program-detail-fullpage-modal__info-tab:has(.school-detail-fullpage-view),
+.program-detail-fullpage-modal__info-tab:has(.ujat-education-progress-institution-detail) {
+  padding-bottom: 0;
+}
+
 /* 참여자 정보 탭: 항목별 갭 32px (공통 정보 탭과 동일하게 margin-top) */
 .program-detail-fullpage-modal__info-tab-block {
   margin-top: 32px;

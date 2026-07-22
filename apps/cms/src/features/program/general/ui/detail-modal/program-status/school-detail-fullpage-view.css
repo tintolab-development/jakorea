@@ -5,7 +5,17 @@
 
 @import '../../../../shared/ui/program-detail/project-info/project-info-form-shared.css';
 
-/* 교육기관 상세: 탭 행 패딩 제거, 하단만 32px */
+/* 교육기관 상세: 탭 행 패딩 제거 — 본문 하단은 content 패딩 52px */
+.school-detail-fullpage-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.school-detail-fullpage-view__tabs-row {
+  flex-shrink: 0;
+}
+
 /* 관리자 코멘트: 기본 정보 상단. 시안 1546×64 기준, padding 20/24, 폭 반응형 */
 .school-detail-fullpage-view__admin-comment-box {
   width: 100%;
@@ -111,29 +121,40 @@
   padding-right: 0;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-}
-
-/* 게시글 탭: 2컬럼이 content 영역 높이를 채우도록 */
-.school-detail-fullpage-view__posts-tab-wrap {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
   width: 100%;
 }
 
+/*
+ * 게시글 탭 높이:
+ * - detail-fullpage-modal__content 가 이미 padding-bottom: 52px
+ * - 헤더(~108px) + 탭 행(padding 포함 ~80px) ≈ 188px → 패널이 content 안쪽을 채움
+ * - min-height 로 절대 접히지 않게 함
+ */
+.school-detail-fullpage-view__posts-tab-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: calc(100dvh - 188px - var(--detail-fullpage-padding-bottom, 52px));
+  min-height: 480px;
+  box-sizing: border-box;
+}
+
 .school-detail-fullpage-view__posts-tab-wrap .enrollment-program-detail-modal__posts-tab {
-  flex: 1;
-  min-height: 0;
-  height: auto;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
   max-height: none;
+  align-self: stretch;
 }
 
 .school-detail-fullpage-view__posts-tab-wrap
+  .enrollment-program-detail-modal__posts-tab-column--left,
+.school-detail-fullpage-view__posts-tab-wrap
   .enrollment-program-detail-modal__posts-tab-column--right {
-  height: auto;
   align-self: stretch;
+  height: auto;
+  min-height: 100%;
 }
 
 /* 교재명 행: 교재명·수량·상태(태그/드롭다운) 한 줄 정렬 — StatusDropdown 트리거가 block처럼 줄바꿈되지 않도록 */
