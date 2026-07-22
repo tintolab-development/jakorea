@@ -186,8 +186,8 @@ export class GeneralProgramRegistrationPage {
 
     await selectByPlaceholder(this.page, '사업 분야를 선택하세요', '기업가정신')
     await selectNearLabelIfVisible(this.page, '사업 분야', '기업가정신')
-    await selectByPlaceholderIfVisible(this.page, '후원사를 선택하세요')
-    await selectNearLabel(this.page, '후원사')
+    // draft UI에만 후원사가 보이고 editor sponsorId가 비어 있는 경우 대비 — 항상 강제 재선택
+    await selectNearLabel(this.page, '후원사', undefined, { force: true })
     const sponsorField = this.page
       .locator('.detail-info-form__field')
       .filter({
@@ -212,7 +212,6 @@ export class GeneralProgramRegistrationPage {
         { timeout: 15_000 }
       )
       .catch(() => undefined)
-    await selectByPlaceholderIfVisible(this.page, '후원사 담당자를 선택하세요')
     await selectNearLabelIfVisible(this.page, '후원사 담당자')
 
     await checkRadioIfVisible(this.page, '기관 안')

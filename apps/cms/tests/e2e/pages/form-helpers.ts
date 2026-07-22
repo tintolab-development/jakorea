@@ -183,13 +183,43 @@ async function openSelectDropdown(page: Page, select: Locator) {
 async function selectOnLocator(
   page: Page,
   select: Locator,
-  optionLabel?: string
+  optionLabel?: string,
+  options?: { force?: boolean }
 ) {
+  const force = options?.force === true
   const current = await getSelectSelectedText(select)
-  if (optionLabel) {
-    if (current === optionLabel || current.includes(optionLabel)) return
-  } else if (!isEmptySelectValue(current)) {
-    return
+  if (!force) {
+    if (optionLabel) {
+      if (current === optionLabel || current.includes(optionLabel)) return
+    } else if (!isEmptySelectValue(current)) {
+      return
+    }
+  }
+
+  // force: UI만 선택되어 있고 React state가 비는 경우 — 다른 옵션을 한 번 골라 onChange를 유발한 뒤 목표 선택
+  if (force && !isEmptySelectValue(current)) {
+    const dropdown = await openSelectDropdown(page, select)
+    const optionNodes = dropdown.locator(
+      '.ant-select-item-option:not(.ant-select-item-option-disabled)'
+    )
+    const count = await optionNodes.count()
+    if (count >= 2) {
+      let alternateIdx = -1
+      for (let i = 0; i < count; i += 1) {
+        const text = (await optionNodes.nth(i).innerText()).trim()
+        if (!text || isEmptySelectValue(text)) continue
+        if (text === current || current.includes(text) || text.includes(current)) continue
+        alternateIdx = i
+        break
+      }
+      if (alternateIdx >= 0) {
+        await optionNodes.nth(alternateIdx).scrollIntoViewIfNeeded().catch(() => undefined)
+        await optionNodes.nth(alternateIdx).click({ force: true })
+        await expect(page.locator('.ant-select-dropdown:visible'))
+          .toHaveCount(0, { timeout: 5_000 })
+          .catch(() => undefined)
+      }
+    }
   }
 
   const dropdown = await openSelectDropdown(page, select)
@@ -271,7 +301,12 @@ export async function selectByPlaceholderIfVisible(
 }
 
 /** 라벨 근처 Select (placeholder가 이미 값으로 바뀐 경우 대비). CmsSelect multiple UI 포함. */
-export async function selectNearLabel(page: Page, label: string, optionLabel?: string) {
+export async function selectNearLabel(
+  page: Page,
+  label: string,
+  optionLabel?: string,
+  options?: { force?: boolean }
+) {
   await expect(async () => {
     const field = detailInfoField(page, label)
     await expect(field).toBeVisible()
@@ -284,7 +319,7 @@ export async function selectNearLabel(page: Page, label: string, optionLabel?: s
 
     const select = field.locator('.ant-select').first()
     await expect(select).toBeVisible()
-    await selectOnLocator(page, select, optionLabel)
+    await selectOnLocator(page, select, optionLabel, options)
 
     // 필드 기준 Locator는 선택 후에도 안정적 — 실제 값 반영을 확인
     await expect(async () => {

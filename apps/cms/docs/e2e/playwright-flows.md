@@ -187,11 +187,12 @@ pnpm --filter cms exec playwright test tests/e2e/flows/programs/general-program-
 | POM | `tests/e2e/pages/general-program-edit.page.ts` |
 | 헬퍼 | `tests/e2e/pages/form-helpers.ts` |
 | 대상 | BE 시드 **`[수정 가능] 일반 프로그램 더미`** (신규 등록 없음) |
-| 검증 | **1) 더미 열기** → **2) 공통 정보 수정** → **3) 모집 정보 수정** → **4) 신청 정보 양식 수정** → **5) 상세·목록 확인** (`describe.serial`) |
+| 검증 | **1) 더미 열기** → **2) 공통** → **3) 모집** → **4) 신청 양식** → **5) 상세·목록** → **6) 진행 현황 참여 기관·강사·봉사자 mock 목록** (`describe.serial`) |
 
 전제: 더미가 목록에 있고, lifecycle이 **프로그램 진행 예정**이며 **사업 시작일 이전**이어야 「정보 수정」이 가능합니다.  
 대표 프로그램명(국문)은 시드 식별용으로 **변경하지 않습니다**. 영문·공고용명·장소·KPI·임금·모집 탭 필드 등을 갱신한 뒤 `PATCH /api/admin/programs/{id}` 성공을 기다립니다.  
-모집 정보는 참여자 / 강사 / 봉사자 서브탭마다 수정·저장합니다.
+모집 정보는 참여자 / 강사 / 봉사자 서브탭마다 수정·저장합니다.  
+**6)** 진행 현황 목록은 `programProgress` remote가 비어 있으면 FE mock 폴백(기관·강사·봉사자)으로 건수·행을 확인합니다.
 
 등록 스펙과 **별도 실행**합니다 (`test:e2e:programs:edit`).
 

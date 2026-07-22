@@ -9,7 +9,7 @@ import {
 import { expectAuthenticatedShell } from '../../helpers/authenticated-shell'
 
 /**
- * 일반 프로그램 수정 E2E — 공통/모집/신청 정보 단계 분리
+ * 일반 프로그램 수정 E2E — 공통/모집/신청 정보 + 진행 현황 mock 목록
  *
  * 대상: BE 시드 `[수정 가능] 일반 프로그램 더미` (신규 등록 없음)
  * 1) 더미 열기
@@ -17,6 +17,7 @@ import { expectAuthenticatedShell } from '../../helpers/authenticated-shell'
  * 3) 모집 정보(참여자·강사·봉사자) 수정·저장 → 탭별 필드 일치 확인
  * 4) 신청 정보 양식 수정·저장 (form-template PUT)
  * 5) 상세·목록 재검증 (공통·모집 필드 재대조)
+ * 6) 진행 현황 참여 기관·강사·봉사자 목록(API 빈 응답 시 FE mock 폴백)
  *
  * `serial` — 이후 단계가 programId·수정 스냅샷에 의존합니다.
  *
@@ -116,5 +117,18 @@ test.describe.serial('일반 프로그램 수정', () => {
     }
     await editPage.expectApplicationPreviewVisible()
     await editPage.expectDummyVisibleInList(programId)
+  })
+
+  test('6) 진행 현황 참여 기관·강사·봉사자 mock 목록', async ({ page }) => {
+    test.setTimeout(180_000)
+
+    expect(opened, '1) 더미 열기 결과가 필요합니다').toBeDefined()
+    const { programId } = opened!
+
+    editPage = new GeneralProgramEditPage(page)
+    await page.goto(`/programs/general?programId=${programId}&lnb=progress&tab=progress_participants`)
+    await expectAuthenticatedShell(page)
+
+    await editPage.expectProgressParticipantMockLists(programId)
   })
 })

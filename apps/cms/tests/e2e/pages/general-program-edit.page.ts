@@ -863,6 +863,65 @@ export class GeneralProgramEditPage {
   }
 
   /**
+   * 프로그램 진행 현황 — 참여 기관/강사/봉사자 목록에 mock(또는 remote) 행이 보이는지 확인.
+   * API 전환기: remote 빈 응답이면 FE mock 폴백이 채워 줘야 함.
+   */
+  async expectProgressParticipantMockLists(programId: string) {
+    const detail = this.detail
+    let verified = 0
+
+    if (await detail.tryGotoLnb(programId, 'progress', 'progress_participants')) {
+      await this.expectProgressListHasRows([
+        '교육 참여 기관 목록',
+        '참여자 목록',
+        '교육 참여 참여자 목록',
+      ])
+      verified += 1
+    }
+
+    if (await detail.tryGotoLnb(programId, 'progress', 'progress_instructors')) {
+      await this.expectProgressListHasRows(['교육 참여 강사 목록'])
+      verified += 1
+    }
+
+    if (await detail.tryGotoLnb(programId, 'progress', 'progress_volunteers')) {
+      await this.expectProgressListHasRows(['참여 봉사자 목록'])
+      verified += 1
+    }
+
+    expect(
+      verified,
+      '진행 현황 LNB(참여 기관·강사·봉사자) 중 하나 이상에서 mock 목록을 확인해야 합니다'
+    ).toBeGreaterThan(0)
+  }
+
+  /** FilterTableLayout 제목 후보 중 보이는 것의 건수·행 확인 (`0건` 불가) */
+  private async expectProgressListHasRows(listTitles: string[]) {
+    let title = this.page.getByText(listTitles[0]!, { exact: true }).first()
+    let found = false
+    for (const listTitle of listTitles) {
+      const candidate = this.page.getByText(listTitle, { exact: true }).first()
+      if ((await candidate.count()) > 0 && (await candidate.isVisible().catch(() => false))) {
+        title = candidate
+        found = true
+        break
+      }
+    }
+    expect(found, `목록 제목을 찾을 수 없습니다: ${listTitles.join(' | ')}`).toBe(true)
+
+    const layout = title.locator(
+      'xpath=ancestor::*[contains(@class,"filter-table-layout")][1]'
+    )
+    const countLabel = layout.getByText(/\d+건/).first()
+    await expect(countLabel).toBeVisible({ timeout: 30_000 })
+    const countText = (await countLabel.innerText()).trim()
+    expect(countText, '건수가 0이면 mock 폴백이 동작하지 않습니다').not.toBe('0건')
+
+    const rows = layout.locator('tbody.ant-table-tbody tr.ant-table-row')
+    await expect(rows.first()).toBeVisible({ timeout: 30_000 })
+  }
+
+  /**
    * 라벨 근처 ParagraphDatePicker — 이미 값이 있어도 다시 열어 미래 날짜를 고른다.
    * (placeholder 기반 헬퍼는 값이 채워지면 트리거를 못 찾음)
    */
