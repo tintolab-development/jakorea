@@ -45,6 +45,7 @@ import {
 import { ProgramLifecycleEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 
 function ProgramProgressReadonlyCell({ status }: { status: ProgramLifecycleStatus }) {
   return <ProgramLifecycleEnrollmentStatusText lifecycleStatus={status} />
@@ -80,16 +81,6 @@ const PARTNER_INVOLVEMENT_SELECT_OPTIONS = [
   { value: 'yes', label: 'Yes' },
   { value: 'no', label: 'No' },
 ]
-
-function isCompanySchoolProgram(program: Program): boolean {
-  return (
-    program.id.startsWith('economy-prog-') ||
-    program.id.startsWith('company-school-prog-') ||
-    program.id.startsWith('company-school-local-') ||
-    program.mainTitle?.includes('1사1교') === true ||
-    program.title.includes('1사1교')
-  )
-}
 
 function formatCompanySchoolParticipantTypes(program: Program): string {
   const labels = (program.generalParticipantTypes ?? [])

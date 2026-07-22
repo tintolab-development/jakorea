@@ -43,20 +43,11 @@ import {
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 
 type DetailForm = UseFormReturn<ProgramDetailEditFormValues>
 
 type RecruitmentDetailTabKey = Exclude<TabKey, 'info'>
-
-function isCompanySchoolProjectInfoProgram(program: Program): boolean {
-  return (
-    program.id.startsWith('economy-prog-') ||
-    program.id.startsWith('company-school-prog-') ||
-    program.id.startsWith('company-school-local-') ||
-    program.mainTitle?.includes('1사1교') === true ||
-    program.title.includes('1사1교')
-  )
-}
 
 function ProjectRecruitmentTabsContent({
   activeTab,
@@ -356,7 +347,7 @@ export function ProjectInfoDetailPanels({
               />
               <ProgramKpiTargetSection // 사업 KPI 목표
                 programId={program.id}
-                showVolunteerKpi={!isCompanySchoolProjectInfoProgram(program)}
+                showVolunteerKpi={!isCompanySchoolProgram(program)}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
               />
