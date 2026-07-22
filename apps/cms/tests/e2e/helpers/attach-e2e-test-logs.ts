@@ -209,6 +209,55 @@ async function postToDevMockApi(
   }
 }
 
+export type E2eTestLogNoteInput = {
+  /** 예: edit:unchanged-fields / edit:changed-fields */
+  phase: string
+  message: string
+  /** 펼침 상세 — JSON/텍스트 (requestPayload 슬롯에 표시) */
+  detail?: string
+}
+
+/**
+ * 테스트 중간에 note 항목을 `/e2e-error-log` 테스트 로깅 탭에 남깁니다.
+ * (수정 E2E의 변경·미수정 필드 목록 등)
+ */
+export async function recordE2eTestLogNotes(args: {
+  page: Page
+  title: string
+  titlePath?: string[]
+  file?: string
+  notes: E2eTestLogNoteInput[]
+}): Promise<void> {
+  const { page, title, notes } = args
+  if (notes.length === 0) return
+
+  let baseURL = 'http://localhost:3000'
+  try {
+    baseURL = new URL(page.url()).origin
+  } catch {
+    // keep default
+  }
+
+  const titlePath = args.titlePath ?? title.split(/\s*›\s*/)
+  const occurredAt = new Date().toISOString()
+  const entries = notes.map(note => ({
+    id: newId('pw-note'),
+    occurredAt,
+    status: 'note' as const,
+    title,
+    titlePath,
+    file: args.file,
+    phase: note.phase,
+    message: note.message,
+    requestPayload: note.detail ? preview(tryPrettyJson(note.detail), PAYLOAD_MAX) : undefined,
+  }))
+
+  const synced = await postToDevMockApi(baseURL, entries)
+  if (!synced) {
+    appendEntries(entries)
+  }
+}
+
 /**
  * 테스트 시작·종료·API mutation payload를 공유 스토어·Mock API에 남깁니다.
  */

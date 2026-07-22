@@ -27,6 +27,8 @@ function statusColor(status: string): string {
       return 'processing'
     case 'api':
       return 'blue'
+    case 'note':
+      return 'gold'
     default:
       return 'default'
   }
@@ -225,7 +227,7 @@ export function E2eTestLogPanel({ active }: Props) {
       <div className="e2e-error-log-page__panel-toolbar">
         <Typography.Paragraph type="secondary" style={{ marginBottom: 0, flex: 1 }}>
           DEV Mock API(<code>/__dev__/e2e-test-logs</code>) · Playwright가 테스트 시작/종료·mutation
-          POST payload·지표를 기록합니다.
+          POST payload·지표·수정 시 변경/미수정 필드 note를 기록합니다.
         </Typography.Paragraph>
         <Space wrap>
           <Button
@@ -304,6 +306,7 @@ export function E2eTestLogPanel({ active }: Props) {
               <div className="e2e-error-log-page__detail">
                 <CopyablePre label="테스트" text={row.title} />
                 {row.phase ? <CopyablePre label="단계" text={row.phase} /> : null}
+                {row.message ? <CopyablePre label="메시지" text={row.message} /> : null}
                 {row.method || row.requestPath ? (
                   <CopyablePre
                     label="요청"
@@ -311,7 +314,10 @@ export function E2eTestLogPanel({ active }: Props) {
                   />
                 ) : null}
                 {row.requestPayload ? (
-                  <CopyablePre label="request payload" text={row.requestPayload} />
+                  <CopyablePre
+                    label={row.status === 'note' ? '상세' : 'request payload'}
+                    text={row.requestPayload}
+                  />
                 ) : null}
                 {row.responsePreview ? (
                   <CopyablePre label="response" text={row.responsePreview} />

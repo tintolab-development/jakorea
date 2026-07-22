@@ -1,4 +1,5 @@
 import { type Page, expect } from '@playwright/test'
+import { recordE2eTestLogNotes } from '../helpers/attach-e2e-test-logs'
 import {
   checkCheckboxIfVisible,
   checkRadioIfVisible,
@@ -42,6 +43,31 @@ const EDIT_LEARNING_SUPPORT = `E2E 수정 학습 지원 내용입니다. ${EDIT_
 const EDIT_ETC_GUIDE = `E2E 수정 기타 안내입니다. ${EDIT_MARKER}`
 const EDIT_BUSINESS_AREA = '기업가정신'
 const EDIT_IPS_TYPE = 'Inspire'
+
+type FieldLogItem = {
+  label: string
+  reason?: string
+  value?: string | null
+}
+
+const EDIT_LOG_TITLE_PREFIX = 'flows/programs/general-program-edit.spec.ts › 일반 프로그램 수정'
+
+/** 공통 정보 — 테스트가 의도적으로 건드리지 않는 필드 */
+const COMMON_INTENTIONALLY_UNCHANGED: FieldLogItem[] = [
+  {
+    label: '대표 프로그램명 (국문)',
+    reason: '시드 식별용(`[수정 가능] 일반 프로그램 더미`) — 의도적 미수정',
+    value: EDITABLE_DUMMY_TITLE,
+  },
+]
+
+/** 모집 정보 — 의도적 미수정 / readOnly */
+const RECRUIT_INTENTIONALLY_UNCHANGED: FieldLogItem[] = [
+  {
+    label: '담당 문의처',
+    reason: '후원사명 파생 readOnly — Tel/E-mail만 수정',
+  },
+]
 
 /** 공통 정보 수정 직후 캡처 — 조회 모드 필드 대조용 */
 export type CommonInfoEditedSnapshot = {
@@ -240,6 +266,11 @@ export class GeneralProgramEditPage {
       ipsType: EDIT_IPS_TYPE,
       venueKind: '기관 밖',
     }
+
+    await this.logEditFieldNotes('2) 공통 정보 수정', {
+      changed: this.snapshotToChangedFields(this.commonEdited),
+      unchanged: await this.mergeUnchangedWithDomReadOnly(COMMON_INTENTIONALLY_UNCHANGED),
+    })
   }
 
   async saveCommonInfo(programId: string) {
@@ -272,6 +303,21 @@ export class GeneralProgramEditPage {
     await this.updateApplicationFormTab(/참여(자| 기관) 신청 정보/)
     await this.updateApplicationFormTab('강사 신청 정보')
     await this.updateApplicationFormTab('봉사자 신청 정보')
+
+    await this.logEditFieldNotes('4) 신청 정보 양식 수정', {
+      changed: [
+        {
+          label: '양식 저장(PUT form-template)',
+          reason: '양식 수정 모달을 열어 저장만 수행 — 문항/필드 값은 변경하지 않음',
+        },
+      ],
+      unchanged: [
+        {
+          label: '신청 양식 문항·필드 전체',
+          reason: '내용 미수정(열기→저장만). 참여자/강사/봉사자 탭 공통',
+        },
+      ],
+    })
   }
 
   private async updateApplicationFormTab(tabLabel: string | RegExp) {
@@ -409,6 +455,11 @@ export class GeneralProgramEditPage {
       etcGuide: EDIT_ETC_GUIDE,
       operationPeriod: await readDateTriggerNearLabel(this.page, '프로그램 운영 기간'),
     }
+
+    await this.logEditFieldNotes(`3) 모집 정보 수정 › ${tabLabel}`, {
+      changed: this.recruitmentSnapshotToChangedFields(snapshot),
+      unchanged: await this.mergeUnchangedWithDomReadOnly(RECRUIT_INTENTIONALLY_UNCHANGED),
+    })
 
     await this.clickInfoEditSave(programId)
     await expect(this.page).not.toHaveURL(new RegExp(`edit=${editParam}`), { timeout: 30_000 })
@@ -626,30 +677,30 @@ export class GeneralProgramEditPage {
 
     const titleFilter = this.page.getByPlaceholder('프로그램명을 입력하세요')
     await expect(titleFilter).toBeVisible({ timeout: 15_000 })
-    await titleFilter.fill(EDITABLE_DUMMY_TITLE)
 
-    const listResponsePromise = this.page.waitForResponse(
-      res =>
-        res.request().method() === 'GET' &&
-        /\/api\/admin\/programs/.test(new URL(res.url()).pathname),
-      { timeout: 30_000 }
-    )
-    await this.page.getByRole('button', { name: '조회' }).click()
-
-    const listResponse = await listResponsePromise
-    if (!listResponse.ok()) {
-      const body = await listResponse.text().catch(() => '')
-      throw new Error(
-        [
-          `프로그램 목록 API 실패(백엔드): HTTP ${listResponse.status()}`,
-          listResponse.url(),
-          body.slice(0, 300) || '(empty body)',
-          `— 「${EDITABLE_DUMMY_TITLE}」 행을 확인할 수 없습니다.`,
-        ].join('\n')
-      )
-    }
-
+    // openByTitle 과 동일 — 일시적 BE 5xx/빈 body 에 재조회 (첫 실패로 즉시 throw 하지 않음)
     await expect(async () => {
+      await titleFilter.fill(EDITABLE_DUMMY_TITLE)
+      const listWait = this.page.waitForResponse(
+        res =>
+          res.request().method() === 'GET' &&
+          /\/api\/admin\/programs/.test(new URL(res.url()).pathname),
+        { timeout: 30_000 }
+      )
+      await this.page.getByRole('button', { name: '조회' }).click()
+      const listResponse = await listWait
+      if (!listResponse.ok()) {
+        const body = await listResponse.text().catch(() => '')
+        throw new Error(
+          [
+            `프로그램 목록 API 실패(백엔드): HTTP ${listResponse.status()}`,
+            listResponse.url(),
+            body.slice(0, 300) || '(empty body)',
+            `— 「${EDITABLE_DUMMY_TITLE}」 행을 확인할 수 없습니다.`,
+          ].join('\n')
+        )
+      }
+
       if (programId) {
         const byId = this.page.locator(`tr[data-row-key="${programId}"]`)
         if ((await byId.count()) > 0) {
@@ -663,7 +714,7 @@ export class GeneralProgramEditPage {
         .filter({ hasText: EDITABLE_DUMMY_TITLE })
         .first()
       await expect(byTitle).toBeVisible({ timeout: 5_000 })
-    }).toPass({ timeout: 60_000 })
+    }).toPass({ timeout: 90_000 })
   }
 
   private async clickInfoEditSave(programId: string) {
@@ -699,6 +750,116 @@ export class GeneralProgramEditPage {
         throw new Error(`프로그램 수정 실패: ${message || '(메시지 없음)'}`)
       }),
     ])
+  }
+
+  private snapshotToChangedFields(snapshot: CommonInfoEditedSnapshot): FieldLogItem[] {
+    return [
+      { label: '대표 프로그램명 (영문)', value: snapshot.titleEn },
+      { label: '공고용 프로그램명', value: snapshot.publicName },
+      { label: '세부 프로그램명', value: snapshot.detailedProgramName },
+      { label: '사업 운영 기간', value: snapshot.operationPeriod },
+      { label: '사업 분야', value: snapshot.businessArea },
+      { label: '후원사', value: snapshot.sponsorName },
+      { label: '후원사 담당자', value: snapshot.sponsorManager },
+      { label: '교육 장소 유형', value: snapshot.venueKind },
+      { label: '교육 장소', value: snapshot.educationPlace },
+      { label: '교육 진행 구조', value: snapshot.educationStructure },
+      { label: '수업 회차 유형', value: snapshot.sessionRound },
+      { label: '교육 형태', value: snapshot.educationForm },
+      { label: '참여 방식', value: snapshot.participationMethod },
+      { label: 'IPS 유형', value: snapshot.ipsType },
+      { label: '커리큘럼 단원', value: snapshot.curriculumUnit },
+      { label: '커리큘럼 교육 내용', value: snapshot.curriculumContent },
+      { label: '사업 KPI 목표값', value: snapshot.kpiValue },
+      { label: '임금 직접 입력', value: snapshot.wageValue },
+    ]
+  }
+
+  private recruitmentSnapshotToChangedFields(
+    snapshot: RecruitmentEditedSnapshot
+  ): FieldLogItem[] {
+    return [
+      { label: `${snapshot.tabLabel} · 상세 교육/모집 대상`, value: snapshot.targetDetail },
+      { label: `${snapshot.tabLabel} · 프로그램 운영 기간`, value: snapshot.operationPeriod },
+      { label: `${snapshot.tabLabel} · 발표 방법`, value: snapshot.announceMethod },
+      { label: `${snapshot.tabLabel} · 문의처 전화`, value: snapshot.contactTel },
+      { label: `${snapshot.tabLabel} · 문의처 이메일`, value: snapshot.contactEmail },
+      { label: `${snapshot.tabLabel} · 비고`, value: snapshot.remark },
+      { label: `${snapshot.tabLabel} · 프로그램 설명`, value: snapshot.description },
+      { label: `${snapshot.tabLabel} · 모집 안내`, value: snapshot.recruitGuide },
+      { label: `${snapshot.tabLabel} · 지원 방법`, value: snapshot.applicationMethod },
+      { label: `${snapshot.tabLabel} · 학습 지원`, value: snapshot.learningSupport },
+      { label: `${snapshot.tabLabel} · 기타 안내`, value: snapshot.etcGuide },
+    ]
+  }
+
+  /** DOM에서 readOnly/disabled 입력 필드 라벨을 모아 미수정 목록에 합칩니다. */
+  private async mergeUnchangedWithDomReadOnly(
+    intentional: FieldLogItem[]
+  ): Promise<FieldLogItem[]> {
+    const byLabel = new Map<string, FieldLogItem>()
+    for (const item of intentional) {
+      byLabel.set(item.label, item)
+    }
+
+    const readOnlyLabels = await this.page
+      .locator('.detail-info-form__field')
+      .evaluateAll(nodes => {
+        const labels: string[] = []
+        for (const node of nodes) {
+          const el = node as HTMLElement
+          if (el.offsetParent === null) continue
+          const label =
+            el.querySelector('.detail-info-form__field-label-text')?.textContent?.trim() ?? ''
+          if (!label) continue
+          const locked =
+            el.querySelector(
+              'input[readonly], input[disabled], textarea[readonly], textarea[disabled], .ant-input-disabled, .ant-select-disabled, [aria-disabled="true"]'
+            ) != null
+          if (locked) labels.push(label)
+        }
+        return labels
+      })
+      .catch(() => [] as string[])
+
+    for (const label of readOnlyLabels) {
+      if (byLabel.has(label)) continue
+      byLabel.set(label, {
+        label,
+        reason: '화면상 readOnly/disabled — E2E에서 값을 바꾸지 않음',
+      })
+    }
+
+    return [...byLabel.values()]
+  }
+
+  private async logEditFieldNotes(
+    stepTitle: string,
+    fields: { changed: FieldLogItem[]; unchanged: FieldLogItem[] }
+  ) {
+    const title = `${EDIT_LOG_TITLE_PREFIX} › ${stepTitle}`
+    await recordE2eTestLogNotes({
+      page: this.page,
+      title,
+      titlePath: [
+        'flows/programs/general-program-edit.spec.ts',
+        '일반 프로그램 수정',
+        stepTitle,
+      ],
+      file: 'tests/e2e/flows/programs/general-program-edit.spec.ts',
+      notes: [
+        {
+          phase: 'edit:changed-fields',
+          message: `변경 필드 ${fields.changed.length}건`,
+          detail: JSON.stringify(fields.changed, null, 2),
+        },
+        {
+          phase: 'edit:unchanged-fields',
+          message: `미수정 필드 ${fields.unchanged.length}건`,
+          detail: JSON.stringify(fields.unchanged, null, 2),
+        },
+      ],
+    })
   }
 
   /**

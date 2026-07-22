@@ -11,6 +11,8 @@ export type E2eTestLogStatus =
   | 'timedOut'
   | 'interrupted'
   | 'api'
+  /** 수동 기록 — 변경/미수정 필드 목록 등 */
+  | 'note'
 
 export type E2eTestLogMetrics = {
   /** 2xx/3xx API 응답 수 */
