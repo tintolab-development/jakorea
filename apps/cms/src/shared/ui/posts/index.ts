@@ -23,3 +23,10 @@ export type {
   AttachmentDownloadListProps,
   AttachmentDownloadItem,
 } from './attachment-download-list'
+
+export { ReactionUserList } from './reaction-user-list'
+export type {
+  ReactionUserListProps,
+  ReactionUserListRow,
+  ReactionUserListSummaryItem,
+} from './reaction-user-list'

@@ -157,8 +157,8 @@ export const DS_IMPACT_ADOPTION_ROWS: DsImpactAdoptionRow[] = [
     note: '게시글 상세·공지·출석·이전 기수',
   },
   {
-    primitive: 'CommentList/Composer · ReactionEmoji',
-    files: '4',
+    primitive: 'CommentList/Composer · ReactionEmoji · ReactionUserList',
+    files: '4+',
     note: 'PostDetailModal 소비 · #posts-attachments',
   },
 ]

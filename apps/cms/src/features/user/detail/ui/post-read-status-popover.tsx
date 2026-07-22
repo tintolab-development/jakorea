@@ -98,17 +98,24 @@ export function PostReadStatusPopoverContent({
                 <button
                   type="button"
                   className="post-read-status-popup__action-btn"
-                  disabled={selectedUnreadIds.length === 0}
-                  onClick={() => window.alert('준비 중입니다.')}
+                  disabled={unreadRows.length === 0}
+                  onClick={() => {
+                    if (selectedUnreadIds.length === unreadRows.length) {
+                      setSelectedUnreadIds([])
+                      return
+                    }
+                    setSelectedUnreadIds(unreadRows.map(row => row.id))
+                  }}
                 >
-                  선택 발송
+                  전체 선택
                 </button>
                 <button
                   type="button"
                   className="post-read-status-popup__action-btn post-read-status-popup__action-btn--primary"
+                  disabled={selectedUnreadIds.length === 0}
                   onClick={() => window.alert('준비 중입니다.')}
                 >
-                  전체 발송
+                  알림 발송
                 </button>
               </div>
             ) : null}
