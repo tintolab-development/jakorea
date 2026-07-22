@@ -3,7 +3,7 @@
  * 페이지는 이 진입점만 사용합니다.
  */
 
-export { useDashboardData } from './model/use-dashboard-data'
+export { useDashboardData, useActiveProgramCount } from './model/use-dashboard-data'
 export {
   useDashboardWidgetOrderStore,
   buildDefaultDisplayItemIds,

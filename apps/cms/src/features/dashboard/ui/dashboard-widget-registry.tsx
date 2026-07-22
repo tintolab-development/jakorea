@@ -1,40 +1,147 @@
 /**
  * 대시보드 위젯 id → 렌더 함수 레지스트리 (switch 대체)
+ * 위젯 컴포넌트는 lazy — 홈 초기 번들에 캘린더·문의·KPI 등을 넣지 않음.
  */
 
+import { lazy } from 'react'
 import type { DashboardWidgetType } from '@/shared/config/dashboard-config'
+import {
+  MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX,
+  PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX,
+} from '@/shared/config/dashboard-config'
 import { DashboardWidgetSkeleton } from '@/features/dashboard/ui/dashboard-widget-skeleton'
+import { LazyWidget } from '@/features/dashboard/ui/lazy-widget'
 import type { OverallStatistics } from '@/features/dashboard/api/statistics-service'
 import type { InstructorActivitySummary } from '@/features/dashboard/api/instructor-activity-service'
-import { PendingActionsAlert } from '@/features/dashboard/ui/pending-actions-alert'
-import { OverallStatisticsCards } from '@/features/dashboard/ui/overall-statistics-cards'
-import { MonthlySettlementCard } from '@/features/dashboard/ui/monthly-settlement-card'
-import { MonthlyApplicationCard } from '@/features/dashboard/ui/monthly-application-card'
-import { ActiveProgramCard } from '@/features/dashboard/ui/active-program-card'
-import { UnifiedActivityFeed } from '@/features/dashboard/ui/unified-activity-feed'
-import { MyActivitySummary } from '@/features/dashboard/ui/my-activity-summary'
-import { MyVolunteerActivitySummary } from '@/features/dashboard/ui/my-volunteer-activity-summary'
-import { MyApplicationSummary } from '@/features/dashboard/ui/my-application-summary'
-import { UpcomingSchedulesList } from '@/features/dashboard/ui/upcoming-schedules-list'
-import { PendingTasksList } from '@/features/dashboard/ui/pending-tasks-list'
-import { VolunteerPendingTasksList } from '@/features/dashboard/ui/volunteer-pending-tasks-list'
-import { OverallProgramProgressCard } from '@/features/dashboard/ui/overall-program-progress-card'
-import { ProgramProgressTabsTable } from '@/features/dashboard/ui/program-progress-tabs-table'
-import { PendingApplicationsCard } from '@/features/dashboard/ui/pending-applications-card'
-import { PendingMatchingsCard } from '@/features/dashboard/ui/pending-matchings-card'
-import { PendingSettlementsCard } from '@/features/dashboard/ui/pending-settlements-card'
-import { PendingActionsRow } from '@/features/dashboard/ui/pending-actions-row'
-import { NotificationWidget } from '@/features/dashboard/ui/notification-widget'
-import { CustomerInquiryStatusWidget } from '@/features/dashboard/ui/customer-inquiry-status-widget'
 import type { User } from '@/types/user'
-import { PROGRAM_SCHEDULE_WIDGET_KEYS } from '@/data/mock'
-import { ProgramScheduleWidget } from '@/features/dashboard/ui/program-schedule-widget'
-import { MenuShortcutWidget } from '@/features/dashboard/ui/menu-shortcut-widget'
-import { RecruitmentStatusWidget } from '@/features/dashboard/ui/recruitment-status-widget'
-import { KpiAchievementWidget } from '@/features/dashboard/ui/kpi-achievement-widget'
-import { LogAlertsWidget } from '@/features/dashboard/ui/log-alerts-widget'
 import { StatisticsCard } from '@/features/dashboard/ui/statistics-card'
 import { UserOutlined } from '@ant-design/icons'
+
+const PendingActionsAlert = lazy(() =>
+  import('@/features/dashboard/ui/pending-actions-alert').then(m => ({
+    default: m.PendingActionsAlert,
+  }))
+)
+const OverallStatisticsCards = lazy(() =>
+  import('@/features/dashboard/ui/overall-statistics-cards').then(m => ({
+    default: m.OverallStatisticsCards,
+  }))
+)
+const MonthlySettlementCard = lazy(() =>
+  import('@/features/dashboard/ui/monthly-settlement-card').then(m => ({
+    default: m.MonthlySettlementCard,
+  }))
+)
+const MonthlyApplicationCard = lazy(() =>
+  import('@/features/dashboard/ui/monthly-application-card').then(m => ({
+    default: m.MonthlyApplicationCard,
+  }))
+)
+const ActiveProgramCard = lazy(() =>
+  import('@/features/dashboard/ui/active-program-card').then(m => ({
+    default: m.ActiveProgramCard,
+  }))
+)
+const UnifiedActivityFeed = lazy(() =>
+  import('@/features/dashboard/ui/unified-activity-feed').then(m => ({
+    default: m.UnifiedActivityFeed,
+  }))
+)
+const MyActivitySummary = lazy(() =>
+  import('@/features/dashboard/ui/my-activity-summary').then(m => ({
+    default: m.MyActivitySummary,
+  }))
+)
+const MyVolunteerActivitySummary = lazy(() =>
+  import('@/features/dashboard/ui/my-volunteer-activity-summary').then(m => ({
+    default: m.MyVolunteerActivitySummary,
+  }))
+)
+const MyApplicationSummary = lazy(() =>
+  import('@/features/dashboard/ui/my-application-summary').then(m => ({
+    default: m.MyApplicationSummary,
+  }))
+)
+const UpcomingSchedulesList = lazy(() =>
+  import('@/features/dashboard/ui/upcoming-schedules-list').then(m => ({
+    default: m.UpcomingSchedulesList,
+  }))
+)
+const PendingTasksList = lazy(() =>
+  import('@/features/dashboard/ui/pending-tasks-list').then(m => ({
+    default: m.PendingTasksList,
+  }))
+)
+const VolunteerPendingTasksList = lazy(() =>
+  import('@/features/dashboard/ui/volunteer-pending-tasks-list').then(m => ({
+    default: m.VolunteerPendingTasksList,
+  }))
+)
+const OverallProgramProgressCard = lazy(() =>
+  import('@/features/dashboard/ui/overall-program-progress-card').then(m => ({
+    default: m.OverallProgramProgressCard,
+  }))
+)
+const ProgramProgressTabsTable = lazy(() =>
+  import('@/features/dashboard/ui/program-progress-tabs-table').then(m => ({
+    default: m.ProgramProgressTabsTable,
+  }))
+)
+const PendingApplicationsCard = lazy(() =>
+  import('@/features/dashboard/ui/pending-applications-card').then(m => ({
+    default: m.PendingApplicationsCard,
+  }))
+)
+const PendingMatchingsCard = lazy(() =>
+  import('@/features/dashboard/ui/pending-matchings-card').then(m => ({
+    default: m.PendingMatchingsCard,
+  }))
+)
+const PendingSettlementsCard = lazy(() =>
+  import('@/features/dashboard/ui/pending-settlements-card').then(m => ({
+    default: m.PendingSettlementsCard,
+  }))
+)
+const PendingActionsRow = lazy(() =>
+  import('@/features/dashboard/ui/pending-actions-row').then(m => ({
+    default: m.PendingActionsRow,
+  }))
+)
+const NotificationWidget = lazy(() =>
+  import('@/features/dashboard/ui/notification-widget').then(m => ({
+    default: m.NotificationWidget,
+  }))
+)
+const CustomerInquiryStatusWidget = lazy(() =>
+  import('@/features/dashboard/ui/customer-inquiry-status-widget').then(m => ({
+    default: m.CustomerInquiryStatusWidget,
+  }))
+)
+const ProgramScheduleWidget = lazy(() =>
+  import('@/features/dashboard/ui/program-schedule-widget').then(m => ({
+    default: m.ProgramScheduleWidget,
+  }))
+)
+const MenuShortcutWidget = lazy(() =>
+  import('@/features/dashboard/ui/menu-shortcut-widget').then(m => ({
+    default: m.MenuShortcutWidget,
+  }))
+)
+const RecruitmentStatusWidget = lazy(() =>
+  import('@/features/dashboard/ui/recruitment-status-widget').then(m => ({
+    default: m.RecruitmentStatusWidget,
+  }))
+)
+const KpiAchievementWidget = lazy(() =>
+  import('@/features/dashboard/ui/kpi-achievement-widget').then(m => ({
+    default: m.KpiAchievementWidget,
+  }))
+)
+const LogAlertsWidget = lazy(() =>
+  import('@/features/dashboard/ui/log-alerts-widget').then(m => ({
+    default: m.LogAlertsWidget,
+  }))
+)
 
 export interface DashboardWidgetRenderProps {
   overallStatistics: OverallStatistics | null
@@ -53,7 +160,9 @@ function renderOverallStatisticsCards(p: DashboardWidgetRenderProps) {
     return <DashboardWidgetSkeleton loading={p.statisticsLoading} height={150} />
   }
   return (
-    <OverallStatisticsCards statistics={p.overallStatistics} loading={p.statisticsLoading} />
+    <LazyWidget height={150}>
+      <OverallStatisticsCards statistics={p.overallStatistics} loading={p.statisticsLoading} />
+    </LazyWidget>
   )
 }
 
@@ -74,10 +183,12 @@ function renderUpcomingSchedulesList(p: DashboardWidgetRenderProps) {
     return <DashboardWidgetSkeleton loading={p.instructorActivityLoading} />
   }
   return (
-    <UpcomingSchedulesList
-      schedules={p.instructorActivity.schedules.upcoming}
-      loading={p.instructorActivityLoading}
-    />
+    <LazyWidget>
+      <UpcomingSchedulesList
+        schedules={p.instructorActivity.schedules.upcoming}
+        loading={p.instructorActivityLoading}
+      />
+    </LazyWidget>
   )
 }
 
@@ -86,12 +197,14 @@ function renderPendingTasksList(p: DashboardWidgetRenderProps) {
     return <DashboardWidgetSkeleton loading={p.instructorActivityLoading} />
   }
   return (
-    <PendingTasksList
-      reportPending={p.instructorActivity.pendingTasks.reportPending}
-      settlementPending={p.instructorActivity.pendingTasks.settlementPending}
-      settlementTasks={p.instructorActivity.pendingTasks.settlementTasks}
-      loading={p.instructorActivityLoading}
-    />
+    <LazyWidget>
+      <PendingTasksList
+        reportPending={p.instructorActivity.pendingTasks.reportPending}
+        settlementPending={p.instructorActivity.pendingTasks.settlementPending}
+        settlementTasks={p.instructorActivity.pendingTasks.settlementTasks}
+        loading={p.instructorActivityLoading}
+      />
+    </LazyWidget>
   )
 }
 
@@ -100,75 +213,167 @@ function renderVolunteerPendingTasksList(p: DashboardWidgetRenderProps) {
     return <DashboardWidgetSkeleton loading={p.instructorActivityLoading} />
   }
   return (
-    <VolunteerPendingTasksList
-      reportPending={p.instructorActivity.pendingTasks.reportPending}
-      reportTasks={[]}
-      loading={p.instructorActivityLoading}
-    />
+    <LazyWidget>
+      <VolunteerPendingTasksList
+        reportPending={p.instructorActivity.pendingTasks.reportPending}
+        reportTasks={[]}
+        loading={p.instructorActivityLoading}
+      />
+    </LazyWidget>
   )
 }
 
 /** 구현된 위젯만 등록. 미등록 id는 DashboardWidgetRenderer에서 null */
-export const DASHBOARD_WIDGET_REGISTRY: Partial<Record<DashboardWidgetType, DashboardWidgetRenderFn>> = {
-  'pending-actions-alert': () => <PendingActionsAlert />,
+export const DASHBOARD_WIDGET_REGISTRY: Partial<
+  Record<DashboardWidgetType, DashboardWidgetRenderFn>
+> = {
+  'pending-actions-alert': () => (
+    <LazyWidget>
+      <PendingActionsAlert />
+    </LazyWidget>
+  ),
   'overall-statistics-cards': renderOverallStatisticsCards,
-  'overall-program-progress-card': () => <OverallProgramProgressCard />,
-  'program-progress-tabs-table': () => <ProgramProgressTabsTable />,
-  'pending-actions-row': () => <PendingActionsRow />,
-  'pending-applications-card': () => <PendingApplicationsCard />,
-  'pending-matchings-card': () => <PendingMatchingsCard />,
-  'pending-settlements-card': () => <PendingSettlementsCard />,
-  'monthly-settlement-card': () => <MonthlySettlementCard />,
-  'monthly-application-card': () => <MonthlyApplicationCard />,
-  'active-program-card': () => <ActiveProgramCard />,
+  'overall-program-progress-card': () => (
+    <LazyWidget>
+      <OverallProgramProgressCard />
+    </LazyWidget>
+  ),
+  'program-progress-tabs-table': () => (
+    <LazyWidget>
+      <ProgramProgressTabsTable />
+    </LazyWidget>
+  ),
+  'pending-actions-row': () => (
+    <LazyWidget>
+      <PendingActionsRow />
+    </LazyWidget>
+  ),
+  'pending-applications-card': () => (
+    <LazyWidget>
+      <PendingApplicationsCard />
+    </LazyWidget>
+  ),
+  'pending-matchings-card': () => (
+    <LazyWidget>
+      <PendingMatchingsCard />
+    </LazyWidget>
+  ),
+  'pending-settlements-card': () => (
+    <LazyWidget>
+      <PendingSettlementsCard />
+    </LazyWidget>
+  ),
+  'monthly-settlement-card': () => (
+    <LazyWidget>
+      <MonthlySettlementCard />
+    </LazyWidget>
+  ),
+  'monthly-application-card': () => (
+    <LazyWidget>
+      <MonthlyApplicationCard />
+    </LazyWidget>
+  ),
+  'active-program-card': () => (
+    <LazyWidget>
+      <ActiveProgramCard />
+    </LazyWidget>
+  ),
   'instructor-count-card': renderInstructorCountCard,
-  'unified-activity-feed': () => <UnifiedActivityFeed pageSize={10} />,
-  'my-activity-summary': () => <MyActivitySummary />,
-  'my-volunteer-activity-summary': () => <MyVolunteerActivitySummary />,
-  'my-application-summary': () => <MyApplicationSummary />,
+  'unified-activity-feed': () => (
+    <LazyWidget>
+      <UnifiedActivityFeed pageSize={10} />
+    </LazyWidget>
+  ),
+  'my-activity-summary': () => (
+    <LazyWidget>
+      <MyActivitySummary />
+    </LazyWidget>
+  ),
+  'my-volunteer-activity-summary': () => (
+    <LazyWidget>
+      <MyVolunteerActivitySummary />
+    </LazyWidget>
+  ),
+  'my-application-summary': () => (
+    <LazyWidget>
+      <MyApplicationSummary />
+    </LazyWidget>
+  ),
   'upcoming-schedules-list': renderUpcomingSchedulesList,
   'pending-tasks-list': renderPendingTasksList,
   'volunteer-pending-tasks-list': renderVolunteerPendingTasksList,
-  'notification-widget': () => <NotificationWidget />,
-  'customer-inquiry-status-widget': () => <CustomerInquiryStatusWidget />,
+  'notification-widget': () => (
+    <LazyWidget>
+      <NotificationWidget />
+    </LazyWidget>
+  ),
+  'customer-inquiry-status-widget': () => (
+    <LazyWidget height={338}>
+      <CustomerInquiryStatusWidget />
+    </LazyWidget>
+  ),
   'program-schedule-general-widget': p => (
-    <ProgramScheduleWidget
-      variant="general"
-      widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.general}
-      title="일반 프로그램 일정"
-      viewAllPath="/programs/general"
-      user={p.user}
-    />
+    <LazyWidget height={PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX}>
+      <ProgramScheduleWidget
+        variant="general"
+        widgetKey="program-schedule-general-widget"
+        title="일반 프로그램 일정"
+        viewAllPath="/programs/general"
+        user={p.user}
+      />
+    </LazyWidget>
   ),
   'program-schedule-company-school-widget': p => (
-    <ProgramScheduleWidget
-      variant="company_school"
-      widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.company_school}
-      title="1사1교 프로그램 일정"
-      viewAllPath="/programs/company-school"
-      user={p.user}
-    />
+    <LazyWidget height={PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX}>
+      <ProgramScheduleWidget
+        variant="company_school"
+        widgetKey="program-schedule-company-school-widget"
+        title="1사1교 프로그램 일정"
+        viewAllPath="/programs/company-school"
+        user={p.user}
+      />
+    </LazyWidget>
   ),
   'program-schedule-ujat-widget': p => (
-    <ProgramScheduleWidget
-      variant="ujat"
-      widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.ujat}
-      title="UJAT 프로그램 일정"
-      viewAllPath="/programs/ujat"
-      user={p.user}
-    />
+    <LazyWidget height={PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX}>
+      <ProgramScheduleWidget
+        variant="ujat"
+        widgetKey="program-schedule-ujat-widget"
+        title="UJAT 프로그램 일정"
+        viewAllPath="/programs/ujat"
+        user={p.user}
+      />
+    </LazyWidget>
   ),
   'program-schedule-gemini-widget': p => (
-    <ProgramScheduleWidget
-      variant="gemini"
-      widgetKey={PROGRAM_SCHEDULE_WIDGET_KEYS.gemini}
-      title="Gemini 프로그램 일정"
-      viewAllPath="/programs/gemini"
-      user={p.user}
-    />
+    <LazyWidget height={PROGRAM_SCHEDULE_SLOT_HEIGHT_FULL_PX}>
+      <ProgramScheduleWidget
+        variant="gemini"
+        widgetKey="program-schedule-gemini-widget"
+        title="Gemini 프로그램 일정"
+        viewAllPath="/programs/gemini"
+        user={p.user}
+      />
+    </LazyWidget>
   ),
-  'menu-shortcut-widget': () => <MenuShortcutWidget />,
-  'recruitment-status-widget': () => <RecruitmentStatusWidget />,
-  'kpi-achievement-widget': () => <KpiAchievementWidget />,
-  'log-alerts-widget': () => <LogAlertsWidget />,
+  'menu-shortcut-widget': () => (
+    <LazyWidget height={MENU_SHORTCUT_SLOT_HEIGHT_FULL_PX}>
+      <MenuShortcutWidget />
+    </LazyWidget>
+  ),
+  'recruitment-status-widget': () => (
+    <LazyWidget height={340}>
+      <RecruitmentStatusWidget />
+    </LazyWidget>
+  ),
+  'kpi-achievement-widget': () => (
+    <LazyWidget>
+      <KpiAchievementWidget />
+    </LazyWidget>
+  ),
+  'log-alerts-widget': () => (
+    <LazyWidget height={338}>
+      <LogAlertsWidget />
+    </LazyWidget>
+  ),
 }

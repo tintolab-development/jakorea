@@ -7,7 +7,7 @@ import type { User, UserRole } from '@/types/user'
 import {
   type ProgramScheduleKind,
   getProgramScheduleKindsForAdminUser,
-} from '@/data/mock'
+} from '@/data/mock/program-schedule-categories'
 
 /**
  * 대시보드 위젯 타입
