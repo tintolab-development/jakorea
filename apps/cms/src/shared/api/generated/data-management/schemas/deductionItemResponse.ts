@@ -15,6 +15,4 @@ export interface DeductionItemResponse {
   iconKey?: string;
   emojiOverride?: string;
   layout?: string;
-  description?: string;
-  detailJson?: string;
 }

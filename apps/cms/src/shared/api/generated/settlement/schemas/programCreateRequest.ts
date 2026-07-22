@@ -32,6 +32,8 @@ export interface ProgramCreateRequest {
   businessPeriod?: ProgramPeriodRequest;
   applicationStartDate?: string;
   applicationEndDate?: string;
+  status?: string;
+  lifecycleStatus?: string;
   businessArea?: string;
   titleEn?: string;
   mainTitle?: string;
