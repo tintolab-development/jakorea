@@ -16,6 +16,33 @@ import {
   serializeGeneralProgramServiceDetailJson,
 } from '@/features/program/general/lib/general-program-service-detail-json'
 
+/**
+ * BE `applicationTargetMode` — OpenAPI codegen에 아직 없음.
+ * CMS `generalProgramAudience`(기관/개인)와 대응. BOTH는 BE 허용값이나 CMS 대분류는 상호 배타.
+ */
+export type ProgramApplicationTargetMode = 'ORGANIZATION' | 'INDIVIDUAL' | 'BOTH'
+
+export type ProgramWriteRequestBody = (ProgramCreateRequest | ProgramUpdateRequest) & {
+  applicationTargetMode?: ProgramApplicationTargetMode
+}
+
+export function mapAudienceToApplicationTargetMode(
+  audience: Program['generalProgramAudience'],
+  participantTypes?: Program['generalParticipantTypes']
+): ProgramApplicationTargetMode {
+  if (audience === 'individual') return 'INDIVIDUAL'
+  if (audience === 'organization') return 'ORGANIZATION'
+
+  const types = participantTypes ?? []
+  const hasIndividual = types.includes('individual')
+  const hasOrg = types.includes('school_institution')
+  if (hasIndividual && hasOrg) return 'BOTH'
+  if (hasIndividual) return 'INDIVIDUAL'
+  if (hasOrg) return 'ORGANIZATION'
+  // 미설정 시 공통정보 폼 기본값(organization)과 동일
+  return 'ORGANIZATION'
+}
+
 const DEFAULT_SPONSOR_ID = 'sponsor-default'
 const DEFAULT_ROUNDS: Program['rounds'] = []
 
@@ -214,9 +241,7 @@ function mapProgramRoundsToRequest(program: Program): ProgramCreateRequest['roun
   }))
 }
 
-function mapProgramCoreFieldsToRequest(
-  program: Program
-): ProgramCreateRequest & ProgramUpdateRequest {
+function mapProgramCoreFieldsToRequest(program: Program): ProgramWriteRequestBody {
   const targetLevel = program.targetLevels?.[0] ?? program.targetLevel
 
   return {
@@ -230,8 +255,6 @@ function mapProgramCoreFieldsToRequest(
     endDate: toRequestDate(program.endDate),
     applicationStartDate: toRequestDate(program.applicationStartDate),
     applicationEndDate: toRequestDate(program.applicationEndDate),
-    status: program.status,
-    lifecycleStatus: program.lifecycleStatus,
     businessArea: program.businessArea,
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
@@ -274,10 +297,14 @@ function mapProgramCoreFieldsToRequest(
     attachmentFileNames: program.attachmentFileNames,
     rounds: mapProgramRoundsToRequest(program),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
+    applicationTargetMode: mapAudienceToApplicationTargetMode(
+      program.generalProgramAudience,
+      program.generalParticipantTypes
+    ),
   }
 }
 
-export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreateRequest {
+export function mapGeneralProgramToCreateRequest(program: Program): ProgramWriteRequestBody {
   const core = mapProgramCoreFieldsToRequest(program)
   return {
     ...core,
@@ -293,7 +320,7 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreat
 export function mapGeneralProgramToUpdateRequest(
   program: Program,
   patch?: Partial<Program>
-): ProgramUpdateRequest {
+): ProgramWriteRequestBody {
   const merged = patch ? { ...program, ...patch } : program
   return mapProgramCoreFieldsToRequest(merged)
 }
