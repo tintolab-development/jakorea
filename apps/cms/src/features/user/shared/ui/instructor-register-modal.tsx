@@ -1,7 +1,7 @@
 /**
  * 강사 회원 관리 — 강사 추가 등록 모달
  * - `ContentModal` + `DetailInfoForm` + CMS 입력 컴포넌트 (회원 신규 등록·학교 등록 모달과 동일 계열)
- * - 필드 검증 규칙·제출 버튼 비활성 조건은 두지 않음(요청 사양)
+ * - 제출 버튼은 항상 활성(loading 제외). 필수값 미충족 시 alert
  */
 
 import { useEffect } from 'react'
@@ -24,7 +24,13 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FreeWriteItemsSection } from '@/shared/components/free-write-items-section'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
-import { CmsDateTextInput } from '@/shared/ui/date-text-input'
+import {
+  CmsDateTextInput,
+  isBirthDateInputIncomplete,
+  isValidBirthDateFormValue,
+} from '@/shared/ui/date-text-input'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
 import {
   SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL,
   SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
@@ -264,12 +270,62 @@ export interface InstructorRegisterModalProps {
   loading?: boolean
 }
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const INSTRUCTOR_REGISTER_MULTIPLE_VALIDATION_THRESHOLD = 2
+const INSTRUCTOR_REGISTER_MULTIPLE_VALIDATION_MESSAGE = '필수 항목을 모두 입력해 주세요.'
+
+function collectInstructorRegisterValidationMessages(
+  values: InstructorRegisterModalFormValues
+): string[] {
+  const messages: string[] = []
+
+  if (!values.name?.trim()) {
+    messages.push('성명을 입력해 주세요.')
+  }
+
+  const birthDate = values.birthDate?.trim()
+  if (!birthDate || isBirthDateInputIncomplete(birthDate)) {
+    messages.push('생년월일을 입력해 주세요.')
+  } else if (!isValidBirthDateFormValue(birthDate)) {
+    messages.push('올바른 생년월일을 입력해 주세요.')
+  }
+
+  const contact = values.contact?.trim()
+  if (!contact) {
+    messages.push('연락처를 입력해 주세요.')
+  } else if (!KOREAN_PHONE_REGEX.test(contact)) {
+    messages.push('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')
+  }
+
+  const email = values.email?.trim()
+  if (!email) {
+    messages.push('이메일을 입력해 주세요.')
+  } else if (!EMAIL_PATTERN.test(email)) {
+    messages.push('올바른 이메일 형식이 아닙니다')
+  }
+
+  if (values.memberType === 'school_teacher' && !values.schoolName?.trim()) {
+    messages.push('소속 학교명을 입력해 주세요.')
+  }
+
+  if (values.consentTermsOfService !== 'agree') {
+    messages.push('서비스 이용약관에 동의해 주세요.')
+  }
+  if (values.consentPersonal !== 'agree') {
+    messages.push('개인정보 수집·이용에 동의해 주세요.')
+  }
+
+  return messages
+}
+
 export function InstructorRegisterModal({
   open,
   onClose,
   onSubmit,
   loading = false,
 }: InstructorRegisterModalProps) {
+  const { showAlert } = useCmsAlert()
   const [form] = Form.useForm<InstructorRegisterModalFormValues>()
   const homeAddress = Form.useWatch('homeAddress', form) ?? ''
   const memberType = Form.useWatch('memberType', form) ?? 'general'
@@ -314,6 +370,21 @@ export function InstructorRegisterModal({
     }
   }
 
+  const handleSubmitAttempt = (values: InstructorRegisterModalFormValues) => {
+    const messages = collectInstructorRegisterValidationMessages(values)
+    if (messages.length > 0) {
+      showAlert({
+        title: '안내',
+        content:
+          messages.length >= INSTRUCTOR_REGISTER_MULTIPLE_VALIDATION_THRESHOLD
+            ? INSTRUCTOR_REGISTER_MULTIPLE_VALIDATION_MESSAGE
+            : messages[0],
+      })
+      return
+    }
+    void handleFinish(values)
+  }
+
   return (
     <ContentModal
       open={open}
@@ -332,7 +403,14 @@ export function InstructorRegisterModal({
           >
             닫기
           </CmsButton>
-          <CmsButton variant="primary" size="medium" type="submit" form={FORM_ID} loading={loading}>
+          <CmsButton
+            variant="primary"
+            size="medium"
+            type="submit"
+            form={FORM_ID}
+            loading={loading}
+            disabled={loading}
+          >
             신규 등록
           </CmsButton>
         </>
@@ -344,7 +422,7 @@ export function InstructorRegisterModal({
         layout="vertical"
         initialValues={INITIAL_VALUES}
         requiredMark={false}
-        onFinish={values => void handleFinish(values)}
+        onFinish={handleSubmitAttempt}
       >
         <div className="instructor-register-modal__stack">
           <DetailInfoForm

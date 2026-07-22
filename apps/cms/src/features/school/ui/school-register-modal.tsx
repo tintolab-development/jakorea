@@ -4,11 +4,12 @@
  * - 기관 소재지: 학교 선택 시 도로명 주소 자동 반영 + 상세 주소 입력
  */
 
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { Form, Space } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { CmsButton, CmsInput, ContentModal, SchoolSearch } from '@/shared/ui'
 import type { SchoolSearchSelection } from '@/shared/ui'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 
 const FORM_ID = 'cms-school-register-modal-form'
 
@@ -32,6 +33,9 @@ const INITIAL_VALUES: SchoolRegisterModalFormValues = {
   detailAddress: '',
 }
 
+const SCHOOL_REGISTER_MULTIPLE_VALIDATION_THRESHOLD = 2
+const SCHOOL_REGISTER_MULTIPLE_VALIDATION_MESSAGE = '필수 항목을 모두 입력해 주세요.'
+
 function normalizeSubmitValues(
   values: SchoolRegisterModalFormValues
 ): SchoolRegisterModalFormValues {
@@ -43,20 +47,31 @@ function normalizeSubmitValues(
   }
 }
 
+function collectSchoolRegisterValidationMessages(
+  values: SchoolRegisterModalFormValues
+): string[] {
+  const messages: string[] = []
+
+  if (!values.institutionName?.trim()) {
+    messages.push('기관명을 검색해 주세요.')
+  }
+  if (!values.roadAddress?.trim()) {
+    messages.push('기관 소재지를 입력해 주세요.')
+  }
+
+  return messages
+}
+
 export function SchoolRegisterModal({
   open,
   onClose,
   onSubmit,
   loading = false,
 }: SchoolRegisterModalProps) {
+  const { showAlert } = useCmsAlert()
   const [form] = Form.useForm<SchoolRegisterModalFormValues>()
   const institutionName = Form.useWatch('institutionName', form) ?? ''
   const roadAddress = Form.useWatch('roadAddress', form) ?? ''
-
-  const canSubmit = useMemo(
-    () => Boolean(institutionName.trim()) && Boolean(roadAddress.trim()),
-    [institutionName, roadAddress]
-  )
 
   useEffect(() => {
     if (open) {
@@ -84,6 +99,21 @@ export function SchoolRegisterModal({
     }
   }
 
+  const handleSubmitAttempt = (values: SchoolRegisterModalFormValues) => {
+    const messages = collectSchoolRegisterValidationMessages(values)
+    if (messages.length > 0) {
+      showAlert({
+        title: '안내',
+        content:
+          messages.length >= SCHOOL_REGISTER_MULTIPLE_VALIDATION_THRESHOLD
+            ? SCHOOL_REGISTER_MULTIPLE_VALIDATION_MESSAGE
+            : messages[0],
+      })
+      return
+    }
+    void handleFinish(values)
+  }
+
   return (
     <ContentModal
       open={open}
@@ -102,7 +132,7 @@ export function SchoolRegisterModal({
             type="submit"
             form={FORM_ID}
             loading={loading}
-            disabled={!canSubmit || loading}
+            disabled={loading}
           >
             신규 등록
           </CmsButton>
@@ -115,7 +145,7 @@ export function SchoolRegisterModal({
         layout="vertical"
         initialValues={INITIAL_VALUES}
         requiredMark={false}
-        onFinish={values => void handleFinish(values)}
+        onFinish={handleSubmitAttempt}
       >
         <DetailInfoForm title="기본 정보" mode="edit">
           <DetailInfoForm.Row type="single">
