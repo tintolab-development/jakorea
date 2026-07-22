@@ -241,7 +241,13 @@ export function ParticipatingInstructorFullpageView({
   schoolRows = MOCK_PARTICIPATING_SCHOOLS,
   instructorList = MOCK_PARTICIPATING_INSTRUCTORS,
 }: ParticipatingInstructorFullpageViewProps) {
-  const [internalTab, setInternalTab] = useState<InstructorDetailTabKey>('application')
+  /**
+   * URL(`instructorTab`)이 source of truth이지만, setSearchParams 반영 전·props 지연 시
+   * 탭 UI/본문이 안 바뀌는 문제가 있어 로컬 탭을 먼저 갱신한 뒤 URL과 동기화한다.
+   */
+  const [uiTab, setUiTab] = useState<InstructorDetailTabKey>(
+    () => activeTabFromUrl ?? 'application'
+  )
   const [assignedSchools, setAssignedSchools] = useState<InstructorAssignedSchoolRow[]>([])
   const [waitingSchools, setWaitingSchools] = useState<InstructorWaitingSchoolRow[]>([])
   const [selectedAssignedSchoolKeys, setSelectedAssignedSchoolKeys] = useState<Key[]>([])
@@ -311,13 +317,18 @@ export function ParticipatingInstructorFullpageView({
     controlMode: 'toggleRemask',
   })
 
-  const activeTab =
-    activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
-  const effectiveTab = activeTab
-  const setActiveTab = (key: InstructorDetailTabKey) => {
-    if (onTabChange) onTabChange(key)
-    else setInternalTab(key)
-  }
+  useEffect(() => {
+    setUiTab(activeTabFromUrl ?? 'application')
+  }, [d.id, activeTabFromUrl])
+
+  const effectiveTab = uiTab
+  const setActiveTab = useCallback(
+    (key: InstructorDetailTabKey) => {
+      setUiTab(key)
+      onTabChange?.(key)
+    },
+    [onTabChange]
+  )
 
   useEffect(() => {
     const assigned = buildInitialAssignedSchoolRows(d, schoolRows, instructorList)

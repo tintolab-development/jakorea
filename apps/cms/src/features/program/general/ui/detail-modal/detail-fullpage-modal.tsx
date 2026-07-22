@@ -596,9 +596,10 @@ export function GeneralProgramDetailFullPageModal({
     ? parseSchoolTabFromSearch(searchParams, displayProgram)
     : 'application'
   const instructorIdFromUrl = open ? searchParams.get(INSTRUCTOR_ID_PARAM) : null
-  const activeInstructorTab = instructorIdFromUrl
-    ? parseInstructorTabFromSearch(searchParams)
-    : 'application'
+  const activeInstructorTab = useMemo(() => {
+    if (!instructorIdFromUrl) return 'application' as const
+    return parseInstructorTabFromSearch(searchParams)
+  }, [instructorIdFromUrl, searchParams, searchParamsKey])
   const volunteerIdFromUrl = open ? searchParams.get(VOLUNTEER_ID_PARAM) : null
   const activeVolunteerTab = volunteerIdFromUrl
     ? parseVolunteerTabFromSearch(searchParams)
@@ -1086,8 +1087,14 @@ export function GeneralProgramDetailFullPageModal({
           if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           if (id) {
+            const prevId = prev.get(INSTRUCTOR_ID_PARAM)
             next.set(INSTRUCTOR_ID_PARAM, id)
-            next.set(INSTRUCTOR_TAB_PARAM, 'application')
+            // 동일 강사 재진입 시 중첩 탭(instructorTab)을 application으로 덮어쓰지 않음
+            if (prevId !== id) {
+              next.set(INSTRUCTOR_TAB_PARAM, 'application')
+            } else if (!prev.get(INSTRUCTOR_TAB_PARAM)) {
+              next.set(INSTRUCTOR_TAB_PARAM, 'application')
+            }
             next.delete(SCHOOL_ID_PARAM)
             next.delete(SCHOOL_TAB_PARAM)
             next.delete(VOLUNTEER_ID_PARAM)
@@ -1299,6 +1306,22 @@ export function GeneralProgramDetailFullPageModal({
   const [instructorDetailTitle, setInstructorDetailTitle] = useState<string | null>(null)
   const [volunteerDetailTitle, setVolunteerDetailTitle] = useState<string | null>(null)
   const [participantDetailTitle, setParticipantDetailTitle] = useState<string | null>(null)
+
+  const handleInstructorRowClick = useCallback(
+    (row: { id: string }) => {
+      setInstructorId(row.id)
+    },
+    [setInstructorId]
+  )
+  const handleClearInstructorId = useCallback(() => {
+    setInstructorId(null)
+  }, [setInstructorId])
+  const handleInstructorDetailOpen = useCallback((name: string) => {
+    setInstructorDetailTitle(name)
+  }, [])
+  const handleInstructorDetailClose = useCallback(() => {
+    setInstructorDetailTitle(null)
+  }, [])
 
   useEffect(() => {
     if (!schoolIdFromUrl) setSchoolDetailTitle(null)
@@ -1782,10 +1805,10 @@ export function GeneralProgramDetailFullPageModal({
                   instructorIdFromUrl={instructorIdFromUrl}
                   instructorTabFromUrl={activeInstructorTab}
                   onInstructorTabChange={setInstructorTab}
-                  onInstructorRowClick={row => setInstructorId(row.id)}
-                  onClearInstructorId={() => setInstructorId(null)}
-                  onInstructorDetailOpen={name => setInstructorDetailTitle(name)}
-                  onInstructorDetailClose={() => setInstructorDetailTitle(null)}
+                  onInstructorRowClick={handleInstructorRowClick}
+                  onClearInstructorId={handleClearInstructorId}
+                  onInstructorDetailOpen={handleInstructorDetailOpen}
+                  onInstructorDetailClose={handleInstructorDetailClose}
                 />
               </div>
             ) : activeLnb === 'progress' && activeTab === 'progress_volunteers' ? (
