@@ -37,6 +37,14 @@ function resolveScheduleAnchorDate(slots: readonly InstructorAvailableScheduleSl
   return dayjs(sorted[0]!.dateKey)
 }
 
+/** overlay는 JSON 왕복 시 Dayjs → ISO string이 되므로 저장도 ISO로 통일 */
+function coerceOverlayDayjs(value: Dayjs | string | null | undefined, fallback: Dayjs): Dayjs {
+  if (value == null) return fallback
+  if (dayjs.isDayjs(value)) return value.isValid() ? value : fallback
+  const parsed = dayjs(value)
+  return parsed.isValid() ? parsed : fallback
+}
+
 /** 스크린: `강서초등학교 : 26년 3월 9일 (9:20 ~ 12:00)` — 교시 없이 시각만 */
 function slotDisplaySegment(slot: InstructorAvailableScheduleSlot): string {
   const d = dayjs(slot.dateKey)
@@ -59,14 +67,17 @@ export function InstructorAvailableScheduleParagraph({
 }) {
   const scheduleSlots = scheduleSlotsProp ?? EMPTY_SCHEDULE_SLOTS
   const scheduleSlotsSyncKey = getScheduleSlotsSyncKey(scheduleSlots)
-  const [currentMonth, setCurrentMonth] = useGeneralApplicationOverlayKv<Dayjs>(
+  const scheduleAnchor = resolveScheduleAnchorDate(scheduleSlots)
+  const [currentMonthIso, setCurrentMonthIso] = useGeneralApplicationOverlayKv<string>(
     'application.instructor.currentMonth',
-    resolveScheduleAnchorDate(scheduleSlots).startOf('month')
+    scheduleAnchor.startOf('month').toISOString()
   )
-  const [selectedDate, setSelectedDate] = useGeneralApplicationOverlayKv<Dayjs>(
+  const [selectedDateIso, setSelectedDateIso] = useGeneralApplicationOverlayKv<string>(
     'application.instructor.selectedDate',
-    resolveScheduleAnchorDate(scheduleSlots)
+    scheduleAnchor.toISOString()
   )
+  const currentMonth = coerceOverlayDayjs(currentMonthIso, scheduleAnchor.startOf('month'))
+  const selectedDate = coerceOverlayDayjs(selectedDateIso, scheduleAnchor)
   const [selectedSlotIds] = useGeneralApplicationOverlayKv<string[]>(
     'application.instructor.selectedSlotIds',
     []
@@ -74,10 +85,10 @@ export function InstructorAvailableScheduleParagraph({
 
   useEffect(() => {
     const anchor = resolveScheduleAnchorDate(scheduleSlots)
-    setCurrentMonth(anchor.startOf('month'))
-    setSelectedDate(anchor)
+    setCurrentMonthIso(anchor.startOf('month').toISOString())
+    setSelectedDateIso(anchor.toISOString())
     updateGeneralApplicationOverlayKey<string[]>('application.instructor.selectedSlotIds', () => [])
-  }, [scheduleSlotsSyncKey, setCurrentMonth, setSelectedDate])
+  }, [scheduleSlotsSyncKey, setCurrentMonthIso, setSelectedDateIso])
 
   const scheduleTopRef = useRef<HTMLDivElement>(null)
   const calendarWrapRef = useRef<HTMLDivElement>(null)
@@ -125,7 +136,7 @@ export function InstructorAvailableScheduleParagraph({
       else next.push(slotId)
       return next
     })
-    setSelectedDate(dayjs(dateKey))
+    setSelectedDateIso(dayjs(dateKey).toISOString())
   }
 
   return (
@@ -145,10 +156,8 @@ export function InstructorAvailableScheduleParagraph({
           <ParagraphCalendarMini
             currentMonth={currentMonth}
             selectedDate={selectedDate}
-            onMonthChange={setCurrentMonth}
-            onSelectDate={date => {
-              setSelectedDate(date)
-            }}
+            onMonthChange={date => setCurrentMonthIso(date.toISOString())}
+            onSelectDate={date => setSelectedDateIso(date.toISOString())}
             programDates={programDates}
           />
         </div>

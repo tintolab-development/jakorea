@@ -62,7 +62,12 @@ import {
   persistWritingFormTemplateDraft,
 } from '@/features/template/lib/writing-form-template-local-save'
 import {
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
   getProgramRegistrationOverlayRecord,
+  patchProgramRegistrationOverlay,
+  readGeneralRegistrationOverlaySponsorContactId,
+  readGeneralRegistrationOverlaySponsorId,
   replaceProgramRegistrationOverlay,
   resetProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
@@ -321,8 +326,19 @@ export function useProgramRegistrationEditor(
     setScheduleCurriculumPreEducation(state.scheduleCurriculumPreEducation)
     setTrainedTeachersTeacherTrainingEnabled(state.trainedTeachersTeacherTrainingEnabled)
     setEducationScheduleMode(state.educationScheduleMode)
-    setSponsorId(state.sponsorId ?? '')
-    setSponsorContactId(state.sponsorContactId ?? '')
+    // editorState에 없고 overlay에만 남은 후원사(이전 이중 저장·number id 등)를 보강
+    const resolvedSponsorId =
+      (state.sponsorId ?? '').trim() || readGeneralRegistrationOverlaySponsorId()
+    const resolvedContactId =
+      (state.sponsorContactId ?? '').trim() || readGeneralRegistrationOverlaySponsorContactId()
+    setSponsorId(resolvedSponsorId)
+    setSponsorContactId(resolvedContactId)
+    if (resolvedSponsorId) {
+      patchProgramRegistrationOverlay({
+        [GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY]: resolvedSponsorId,
+        [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]: resolvedContactId,
+      })
+    }
     setProgramTitleKo(state.programTitleKo ?? '')
   }, [])
 
@@ -645,10 +661,17 @@ export function useProgramRegistrationEditor(
   const onSponsorIdChange = useCallback((next: string) => {
     setSponsorId(next)
     setSponsorContactId('')
+    patchProgramRegistrationOverlay({
+      [GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY]: next,
+      [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]: '',
+    })
   }, [])
 
   const onSponsorContactIdChange = useCallback((next: string) => {
     setSponsorContactId(next)
+    patchProgramRegistrationOverlay({
+      [GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]: next,
+    })
   }, [])
 
   const onProgramTitleKoChange = useCallback((next: string) => {
@@ -792,6 +815,10 @@ export function useProgramRegistrationEditor(
 
   const persistTemplateDraftIfNeeded = useCallback(async () => {
     if (!usesTemplateDraftApi || !templateCode) return
+    const resolvedSponsorId =
+      sponsorId.trim() || readGeneralRegistrationOverlaySponsorId()
+    const resolvedContactId =
+      sponsorContactId.trim() || readGeneralRegistrationOverlaySponsorContactId()
     await persistWritingFormTemplateDraft({
       templateId: templateCode,
       draft,
@@ -810,8 +837,8 @@ export function useProgramRegistrationEditor(
         scheduleCurriculumPreEducation,
         trainedTeachersTeacherTrainingEnabled,
         educationScheduleMode,
-        sponsorId,
-        sponsorContactId,
+        sponsorId: resolvedSponsorId,
+        sponsorContactId: resolvedContactId,
         programTitleKo,
         activeParagraphId,
       }),
@@ -891,12 +918,18 @@ export function useProgramRegistrationEditor(
       (programRegistrationFormVariant === 'economy' && shouldUseCompanySchoolRemoteApi()) ||
       (programRegistrationFormVariant === 'trainedTeachers' &&
         shouldUseTrainedTeacherProgramsRemoteApi())
-    if (isRemoteCreate && !sponsorId.trim()) {
+    // React state가 비어도 overlay에 남은 선택을 사용 (스텝 전환·draft 복원 불일치 대비)
+    const resolvedSponsorId =
+      sponsorId.trim() || readGeneralRegistrationOverlaySponsorId()
+    if (isRemoteCreate && !resolvedSponsorId) {
       showAlert({
         title: '등록 실패',
         content: '후원사를 선택한 뒤 다시 등록해 주세요.',
       })
       return Promise.resolve()
+    }
+    if (resolvedSponsorId && resolvedSponsorId !== sponsorId.trim()) {
+      setSponsorId(resolvedSponsorId)
     }
     const completion = (async () => {
       try {
@@ -906,7 +939,7 @@ export function useProgramRegistrationEditor(
           participant,
           programType,
           variant: programRegistrationFormVariant,
-          sponsorId: sponsorId.trim() || undefined,
+          sponsorId: resolvedSponsorId || undefined,
           title: programTitleKo.trim() || undefined,
         })
         resetProgramRegistrationOverlay()

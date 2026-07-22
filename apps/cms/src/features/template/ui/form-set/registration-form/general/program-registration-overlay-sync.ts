@@ -5,9 +5,31 @@ import { useCallback, useSyncExternalStore } from 'react'
  * 로컬 state로만 관리될 때, 스텝 전환(언마운트)과 풀페이지·미리보기 이중 마운트에서
  * 입력값이 갈라지지 않도록 동일 키를 공유한다.
  */
+
+/** 일반 등록 기본정보 — controlled editor state와 동기화하는 overlay 키 */
+export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY =
+  'generalRegistration.basicInfo.localSponsorId' as const
+export const GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY =
+  'generalRegistration.basicInfo.localManagerContactId' as const
+
 let overlayState: Record<string, unknown> = {}
 let overlayVersion = 0
 const overlayListeners = new Set<() => void>()
+
+/** overlay에 남은 후원사 id (controlled state가 비었을 때 완료·복원 fallback) */
+export function readGeneralRegistrationOverlaySponsorId(): string {
+  const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY]
+  if (typeof raw === 'string' && raw.trim()) return raw.trim()
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
+  return ''
+}
+
+export function readGeneralRegistrationOverlaySponsorContactId(): string {
+  const raw = overlayState[GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY]
+  if (typeof raw === 'string' && raw.trim()) return raw.trim()
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
+  return ''
+}
 
 function emitOverlay() {
   overlayVersion += 1

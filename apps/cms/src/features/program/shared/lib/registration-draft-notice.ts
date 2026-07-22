@@ -137,12 +137,47 @@ export function peekRegistrationDraftNotice(
   return null
 }
 
-/** 신규 등록 선택 시 — 로컬 임시저장본 제거 (원격은 다음 임시저장 시 덮어씀) */
+/** 신규 등록 선택 시 — 로컬 임시저장본 제거 + 원격 draft best-effort 초기화 */
 export function clearRegistrationDraftForFreshStart(
   templateCode: ProgramRegistrationDraftTemplateCode
 ): void {
   removeWritingFormTemplateSave(templateCode)
   if (templateCode === PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE) {
     removeUjatRegistrationTemplateSave()
+    return
+  }
+  // 원격 draft가 남으면 다음 등록 시 API 복원으로 후원사 등이 어긋날 수 있음
+  void clearRemoteRegistrationDraftBestEffort(templateCode)
+}
+
+async function clearRemoteRegistrationDraftBestEffort(
+  templateCode: Exclude<
+    ProgramRegistrationDraftTemplateCode,
+    typeof PROGRAM_REGISTRATION_UJAT_TEMPLATE_CODE
+  >
+): Promise<void> {
+  try {
+    const { createProgramRegistrationDraft } = await import(
+      '@/features/template/model/program-registration-draft'
+    )
+    const { persistWritingFormTemplateDraft } = await import(
+      '@/features/template/lib/writing-form-template-local-save'
+    )
+    const variant =
+      templateCode === PROGRAM_REGISTRATION_ECONOMY_TEMPLATE_CODE
+        ? 'economy'
+        : templateCode === PROGRAM_REGISTRATION_TRAINED_TEACHERS_TEMPLATE_CODE
+          ? 'trainedTeachers'
+          : 'general'
+    await persistWritingFormTemplateDraft({
+      templateId: templateCode,
+      draft: createProgramRegistrationDraft(variant),
+      overlay: {},
+      editorState: {},
+    })
+    // persist가 local에도 쓰므로 다시 제거 — peek는 local만 본다
+    removeWritingFormTemplateSave(templateCode)
+  } catch {
+    // 원격 초기화 실패해도 로컬은 이미 비움 — 다음 저장 시 덮어씀
   }
 }

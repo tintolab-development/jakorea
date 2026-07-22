@@ -34,7 +34,12 @@ import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
   type ProgramRegistrationSurveyItemId,
 } from '@/features/template/lib/program-registration-survey-items'
-import { useProgramRegistrationOverlayKv, updateProgramRegistrationOverlayKey } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
+  GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
+  useProgramRegistrationOverlayKv,
+  updateProgramRegistrationOverlayKey,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './program-registration-paragraph.css'
 
@@ -121,11 +126,11 @@ export function ProgramRegistrationBasicInfoParagraph({
   )
 
   const [localSponsorId, setLocalSponsorId] = useProgramRegistrationOverlayKv(
-    'generalRegistration.basicInfo.localSponsorId',
+    GENERAL_REGISTRATION_OVERLAY_SPONSOR_ID_KEY,
     ''
   )
   const [localManagerContactId, setLocalManagerContactId] = useProgramRegistrationOverlayKv(
-    'generalRegistration.basicInfo.localManagerContactId',
+    GENERAL_REGISTRATION_OVERLAY_SPONSOR_CONTACT_ID_KEY,
     ''
   )
   const [localProgramTitleKo, setLocalProgramTitleKo] = useProgramRegistrationOverlayKv(
@@ -148,18 +153,19 @@ export function ProgramRegistrationBasicInfoParagraph({
     : localManagerContactId
   const programTitleKo = isTitleControlled ? (programTitleKoProp ?? '') : localProgramTitleKo
   const setSponsorId = (next: string) => {
+    // controlled이어도 overlay에 같이 남겨 스텝 전환·draft 복원 시 editor state와 어긋나지 않게 한다
+    setLocalSponsorId(next)
     if (isSponsorControlled) {
       onSponsorIdChange(next)
       return
     }
-    setLocalSponsorId(next)
   }
   const setManagerContactId = (next: string) => {
+    setLocalManagerContactId(next)
     if (isSponsorControlled) {
       onSponsorContactIdChange?.(next)
       return
     }
-    setLocalManagerContactId(next)
   }
   const setProgramTitleKo = (next: string) => {
     if (isTitleControlled) {

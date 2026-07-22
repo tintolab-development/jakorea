@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef } from 'react'
+import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { VolunteerInterviewScheduleEditSeed } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
 import {
@@ -37,6 +38,14 @@ function formatDateSummaryLabel(dateKey: string): string {
   const d = dayjs(dateKey)
   const yShort = d.year() % 100
   return `${yShort}년 ${d.month() + 1}월 ${d.date()}일`
+}
+
+/** overlay는 JSON 왕복 시 Dayjs → ISO string이 되므로 저장도 ISO로 통일 */
+function coerceOverlayDayjs(value: Dayjs | string | null | undefined, fallback: Dayjs): Dayjs {
+  if (value == null) return fallback
+  if (dayjs.isDayjs(value)) return value.isValid() ? value : fallback
+  const parsed = dayjs(value)
+  return parsed.isValid() ? parsed : fallback
 }
 
 function buildGroupedSummaryEntries(
@@ -79,14 +88,17 @@ export function VolunteerInterviewApplicantScheduleParagraph({
     return first ? dayjs(first) : parsedSchedule.scheduleMonth
   }
 
-  const [currentMonth, setCurrentMonth] = useGeneralApplicationOverlayKv(
+  const defaultSelectedDate = computeDefaultSelectedDate()
+  const [currentMonthIso, setCurrentMonthIso] = useGeneralApplicationOverlayKv(
     'application.volunteer.applicant.currentMonth',
-    parsedSchedule.scheduleMonth
+    parsedSchedule.scheduleMonth.toISOString()
   )
-  const [selectedDate, setSelectedDate] = useGeneralApplicationOverlayKv(
+  const [selectedDateIso, setSelectedDateIso] = useGeneralApplicationOverlayKv(
     'application.volunteer.applicant.selectedDate',
-    computeDefaultSelectedDate()
+    defaultSelectedDate.toISOString()
   )
+  const currentMonth = coerceOverlayDayjs(currentMonthIso, parsedSchedule.scheduleMonth)
+  const selectedDate = coerceOverlayDayjs(selectedDateIso, defaultSelectedDate)
   const [selectedSlots] = useGeneralApplicationOverlayKv<SelectedSlot[]>(
     'application.volunteer.applicant.selectedSlots',
     []
@@ -101,11 +113,11 @@ export function VolunteerInterviewApplicantScheduleParagraph({
   const slotsForSelectedDay = parsedSchedule.slotsForDate(selectedDateKey)
 
   useEffect(() => {
-    setCurrentMonth(parsedSchedule.scheduleMonth)
+    setCurrentMonthIso(parsedSchedule.scheduleMonth.toISOString())
     const first = [...parsedSchedule.clickableDateKeys].sort()[0]
-    setSelectedDate(first ? dayjs(first) : parsedSchedule.scheduleMonth)
+    setSelectedDateIso((first ? dayjs(first) : parsedSchedule.scheduleMonth).toISOString())
     updateGeneralApplicationOverlayKey<SelectedSlot[]>('application.volunteer.applicant.selectedSlots', () => [])
-  }, [seed, setCurrentMonth, setSelectedDate])
+  }, [seed, setCurrentMonthIso, setSelectedDateIso])
 
   const toggleSlot = (slotKey: string, label: string, enabled: boolean) => {
     if (readOnlyPreview || !enabled) return
@@ -160,8 +172,8 @@ export function VolunteerInterviewApplicantScheduleParagraph({
           <ParagraphCalendarMini
             currentMonth={currentMonth}
             selectedDate={selectedDate}
-            onMonthChange={setCurrentMonth}
-            onSelectDate={setSelectedDate}
+            onMonthChange={date => setCurrentMonthIso(date.toISOString())}
+            onSelectDate={date => setSelectedDateIso(date.toISOString())}
             programDates={adminAvailableDateKeys}
             disabledDate={parsedSchedule.disabledDate}
           />

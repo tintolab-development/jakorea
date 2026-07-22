@@ -73,6 +73,13 @@ function readNumber(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : fallback
 }
 
+/** draft/API extensionJson에서 id가 number로 올 수 있음 */
+function readOptionalIdString(value: unknown, fallback?: string): string | undefined {
+  if (typeof value === 'string' && value.trim()) return value.trim()
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return fallback
+}
+
 function readScheduleDetailKind(
   value: unknown,
   fallback: ProgramRegistrationScheduleDetailKind
@@ -140,14 +147,11 @@ export function applyProgramRegistrationEditorState(
         ? editorState.trainedTeachersTeacherTrainingEnabled
         : defaults.trainedTeachersTeacherTrainingEnabled,
     educationScheduleMode,
-    sponsorId:
-      typeof editorState.sponsorId === 'string' && editorState.sponsorId.trim()
-        ? editorState.sponsorId.trim()
-        : defaults.sponsorId,
-    sponsorContactId:
-      typeof editorState.sponsorContactId === 'string' && editorState.sponsorContactId.trim()
-        ? editorState.sponsorContactId.trim()
-        : defaults.sponsorContactId,
+    sponsorId: readOptionalIdString(editorState.sponsorId, defaults.sponsorId),
+    sponsorContactId: readOptionalIdString(
+      editorState.sponsorContactId,
+      defaults.sponsorContactId
+    ),
     programTitleKo:
       typeof editorState.programTitleKo === 'string' ? editorState.programTitleKo : defaults.programTitleKo,
     activeParagraphId:
