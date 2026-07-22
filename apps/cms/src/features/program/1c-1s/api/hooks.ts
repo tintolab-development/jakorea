@@ -7,6 +7,7 @@ import { companySchoolQueryKeys } from './query-keys'
 import {
   createCompanySchoolProgram,
   deleteCompanySchoolProgram,
+  deleteCompanySchoolPrograms,
   fetchCompanySchoolOverviewStages,
   getCompanySchoolProgram,
   listCompanySchoolPrograms,
@@ -98,6 +99,21 @@ export function useDeleteCompanySchoolProgram() {
     retry: false,
     onSuccess: (_data, programId) => {
       queryClient.removeQueries({ queryKey: companySchoolQueryKeys.detail(programId) })
+      void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.all })
+    },
+  })
+}
+
+export function useDeleteCompanySchoolPrograms() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationKey: [...companySchoolQueryKeys.all, 'mutation', 'bulk-delete'] as const,
+    mutationFn: deleteCompanySchoolPrograms,
+    retry: false,
+    onSuccess: (_data, programIds) => {
+      for (const programId of programIds) {
+        queryClient.removeQueries({ queryKey: companySchoolQueryKeys.detail(programId) })
+      }
       void queryClient.invalidateQueries({ queryKey: companySchoolQueryKeys.all })
     },
   })

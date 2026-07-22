@@ -36,7 +36,7 @@ import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-det
 import { useProgramListActions } from '@/pages/programs/use-program-list-actions'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import {
-  useDeleteTrainedTeacherProgram,
+  useDeleteTrainedTeacherPrograms,
   useTrainedTeacherProgramDetail,
   useUpdateTrainedTeacherProgram,
 } from '@/features/program/trained-teachers/api/hooks'
@@ -75,7 +75,7 @@ function TrainedTeachersProgramPageContent() {
     listQuery,
   } = useTrainedTeachersProgramListFilters()
   const updateMutation = useUpdateTrainedTeacherProgram()
-  const deleteMutation = useDeleteTrainedTeacherProgram()
+  const deleteProgramsMutation = useDeleteTrainedTeacherPrograms()
 
   const [selectedProgramForFullPageModal, setSelectedProgramForFullPageModal] =
     useState<Program | null>(null)
@@ -301,9 +301,9 @@ function TrainedTeachersProgramPageContent() {
   const handleBulkDeleteConfirm = useCallback(async () => {
     if (remoteEnabled) {
       try {
-        for (const program of programsPendingBulkDelete) {
-          await deleteMutation.mutateAsync(program.id)
-        }
+        await deleteProgramsMutation.mutateAsync(
+          programsPendingBulkDelete.map(program => program.id)
+        )
         setSelectedRowKeys([])
         refetchPrograms()
       } catch {
@@ -323,7 +323,7 @@ function TrainedTeachersProgramPageContent() {
     setBulkDeleteModalOpen(false)
     setProgramsPendingBulkDelete([])
   }, [
-    deleteMutation,
+    deleteProgramsMutation,
     handleBulkDelete,
     programsPendingBulkDelete,
     refetchPrograms,

@@ -16,6 +16,7 @@ import {
   shouldUseProgramsHttpRemoteApi,
 } from '@/features/program/general/api/general-programs-remote-capabilities'
 import {
+  bulkDeleteAdminProgramsRemote,
   createAdminProgramRemote,
   createAdminProgramPostRemote,
   deleteAdminProgramRemote,
@@ -158,9 +159,17 @@ export async function deleteGeneralProgram(programId: string): Promise<void> {
 }
 
 export async function deleteGeneralPrograms(programIds: string[]): Promise<void> {
-  for (const programId of programIds) {
-    await deleteGeneralProgram(programId)
+  if (programIds.length === 0) return
+
+  if (!shouldUseGeneralProgramsRemoteApi()) {
+    for (const programId of programIds) {
+      await deleteGeneralProgram(programId)
+    }
+    return
   }
+
+  assertGeneralProgramsRemoteReady()
+  await bulkDeleteAdminProgramsRemote(programIds)
 }
 
 export async function fetchGeneralProgramNavigation(programId: string) {

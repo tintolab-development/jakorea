@@ -6,6 +6,7 @@ import {
   updateCompanySchoolRegistrationLocalSaveProgram,
 } from '@/features/program/general/lib/registration-local-save'
 import {
+  bulkDeleteAdminProgramsRemote,
   createAdminProgramRemote,
   deleteAdminProgramRemote,
   fetchAdminProgramByIdRemote,
@@ -149,4 +150,18 @@ export async function deleteCompanySchoolProgram(programId: string): Promise<voi
   }
   assertRemoteReady()
   await deleteAdminProgramRemote(programId)
+}
+
+export async function deleteCompanySchoolPrograms(programIds: string[]): Promise<void> {
+  if (programIds.length === 0) return
+
+  if (!shouldUseCompanySchoolRemoteApi()) {
+    for (const programId of programIds) {
+      await deleteCompanySchoolProgram(programId)
+    }
+    return
+  }
+
+  assertRemoteReady()
+  await bulkDeleteAdminProgramsRemote(programIds)
 }

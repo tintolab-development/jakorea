@@ -1,5 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
+import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { ProgramResponse } from '@/shared/api/generated/logs/schemas/programResponse'
 
 export type AdminProgramsListQuery = {
@@ -68,7 +69,10 @@ export async function fetchAdminProgramByIdRemote(programId: string): Promise<Pr
 }
 
 export async function createAdminProgramRemote(
-  payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest
+  payload: import('@/shared/api/generated/dashboard/schemas/programCreateRequest').ProgramCreateRequest & {
+    /** OpenAPI 미반영 — BE 필수. ORGANIZATION | INDIVIDUAL | BOTH */
+    applicationTargetMode?: 'ORGANIZATION' | 'INDIVIDUAL' | 'BOTH'
+  }
 ): Promise<ProgramResponse> {
   return unwrapApiBody<ProgramResponse>(
     await customInstance({
@@ -81,7 +85,9 @@ export async function createAdminProgramRemote(
 
 export async function updateAdminProgramRemote(
   programId: string,
-  payload: import('@/shared/api/generated/dashboard/schemas/programUpdateRequest').ProgramUpdateRequest
+  payload: import('@/shared/api/generated/dashboard/schemas/programUpdateRequest').ProgramUpdateRequest & {
+    applicationTargetMode?: 'ORGANIZATION' | 'INDIVIDUAL' | 'BOTH'
+  }
 ): Promise<ProgramResponse> {
   return unwrapApiBody<ProgramResponse>(
     await customInstance({
@@ -97,6 +103,44 @@ export async function deleteAdminProgramRemote(programId: string): Promise<void>
     url: `/api/admin/programs/${encodeURIComponent(programId)}`,
     method: 'DELETE',
   })
+}
+
+const PROGRAM_BULK_DELETE_MAX = 100
+
+function toBulkProgramNumericIds(programIds: string[]): number[] {
+  const ids: number[] = []
+  for (const programId of programIds) {
+    const parsed = Number(programId)
+    if (!Number.isFinite(parsed)) {
+      throw new Error(`프로그램 일괄 삭제 ID가 유효하지 않습니다: ${programId}`)
+    }
+    ids.push(parsed)
+  }
+  return [...new Set(ids)]
+}
+
+/** POST /api/admin/programs/bulk-delete — OpenAPI BulkIdsRequest (max 100) */
+export async function bulkDeleteAdminProgramsRemote(programIds: string[]): Promise<void> {
+  const ids = toBulkProgramNumericIds(programIds)
+  if (ids.length === 0) return
+
+  for (let offset = 0; offset < ids.length; offset += PROGRAM_BULK_DELETE_MAX) {
+    const chunk = ids.slice(offset, offset + PROGRAM_BULK_DELETE_MAX)
+    const result = await unwrapApiBody<BulkActionResponse>(
+      await customInstance({
+        url: '/api/admin/programs/bulk-delete',
+        method: 'POST',
+        data: { ids: chunk },
+      })
+    )
+    if ((result.failureCount ?? 0) > 0) {
+      const firstFailure = result.failures?.[0]
+      throw new Error(
+        firstFailure?.message?.trim() ||
+          `선택한 프로그램 중 ${result.failureCount}건을 삭제하지 못했습니다.`
+      )
+    }
+  }
 }
 
 export async function fetchAdminProgramNavigationRemote(
