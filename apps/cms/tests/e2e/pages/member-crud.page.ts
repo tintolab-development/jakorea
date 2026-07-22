@@ -398,7 +398,7 @@ export class MemberListCrudPage {
       await this.fillSchoolInstitutionViaSearch(dialog)
       await fillByPlaceholder(dialog, '상세 주소', 'E2E 테스트')
     } else if (this.kind === 'instructors') {
-      await fillByPlaceholder(dialog, '한글 성명', this.memberName)
+      await fillByPlaceholder(dialog, '성명', this.memberName)
       await fillByPlaceholder(dialog, '이메일', this.email)
     } else {
       await fillByPlaceholder(dialog, '한글 성명', this.memberName)

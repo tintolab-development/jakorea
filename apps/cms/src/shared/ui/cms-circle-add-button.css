@@ -1,0 +1,28 @@
+.cms-circle-add-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.cms-circle-add-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.cms-circle-add-button:focus-visible {
+  outline: 2px solid var(--color-mint-01, #01a1af);
+  outline-offset: 2px;
+}
+
+.cms-circle-add-button svg {
+  display: block;
+}

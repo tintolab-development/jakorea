@@ -11,7 +11,9 @@ export type FreeWriteItemConfig = {
 
 export type FreeWriteItemsSectionProps = {
   title?: string
-  /** 상단 안내 문구 (예: 분량·형식 안내) */
+  /** 타이틀 옆 필수 `*` */
+  required?: boolean
+  /** 타이틀과 같은 행에 노출되는 안내 문구 */
   description?: ReactNode
   items: readonly FreeWriteItemConfig[]
   placeholder?: string
@@ -21,6 +23,7 @@ export type FreeWriteItemsSectionProps = {
 
 export function FreeWriteItemsSection({
   title = '자유 작성 항목',
+  required = false,
   description,
   items,
   placeholder = '자유롭게 작성해주세요',
@@ -35,13 +38,18 @@ export function FreeWriteItemsSection({
       <header className="free-write-items-section__header">
         <h2 id={titleId} className="free-write-items-section__title">
           {title}
+          {required ? (
+            <span className="free-write-items-section__required" aria-hidden>
+              *
+            </span>
+          ) : null}
         </h2>
         {description != null && description !== '' ? (
-          <div className="free-write-items-section__description">{description}</div>
+          <p className="free-write-items-section__description">{description}</p>
         ) : null}
       </header>
       <div className="free-write-items-section__list" role="list">
-        {items.map((item) => (
+        {items.map(item => (
           <article key={String(item.name)} className="free-write-items-section__card" role="listitem">
             <div className="free-write-items-section__card-header">{item.label}</div>
             <div className="free-write-items-section__card-body">
