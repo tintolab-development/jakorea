@@ -1,10 +1,14 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import {
   shouldShowInstitutionApplicationGuidanceParagraph,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { INSTITUTION_GUIDANCE_FIELDS } from '@/features/template/lib/institution-guidance-field-definitions'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
+import {
+  useGeneralApplicationOverlayKv,
+  updateGeneralApplicationOverlayKey,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { InstitutionGuidanceFieldCard } from '@/features/template/ui/form-set/application-form/institution/paragraphs/institution-guidance-field-card'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
@@ -47,8 +51,20 @@ function ProgramApplicationFormInstitutionGuidanceParagraphBody({
   paragraph?: HorizontalTableParagraph
   onParagraphChange?: (next: HorizontalTableParagraph) => void
 }) {
-  const [localAnswers, setLocalAnswers] = useState(createInitialGuidanceAnswers)
+  const [localAnswers] = useGeneralApplicationOverlayKv<Record<string, string>>(
+    'application.institution.guidanceAnswers',
+    {}
+  )
   const usesParagraphState = paragraph != null && onParagraphChange != null
+
+  // Initialize with empty answers on first render
+  useEffect(() => {
+    if (Object.keys(localAnswers).length === 0) {
+      updateGeneralApplicationOverlayKey<Record<string, string>>('application.institution.guidanceAnswers', () =>
+        createInitialGuidanceAnswers()
+      )
+    }
+  }, [localAnswers])
 
   const readAnswer = useCallback(
     (fieldIndex: number, fieldId: string) => {
@@ -66,8 +82,8 @@ function ProgramApplicationFormInstitutionGuidanceParagraphBody({
         onParagraphChange(writeGuidanceAnswerToParagraph(paragraph, fieldIndex, value))
         return
       }
-      setLocalAnswers(current => ({
-        ...current,
+      updateGeneralApplicationOverlayKey<Record<string, string>>('application.institution.guidanceAnswers', prev => ({
+        ...(prev ?? {}),
         [fieldId]: value,
       }))
     },

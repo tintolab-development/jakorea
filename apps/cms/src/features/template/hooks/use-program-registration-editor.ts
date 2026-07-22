@@ -61,6 +61,11 @@ import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
 } from '@/features/template/lib/writing-form-template-local-save'
+import {
+  getProgramRegistrationOverlayRecord,
+  replaceProgramRegistrationOverlay,
+  resetProgramRegistrationOverlay,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { useCmsAlert } from '@/shared/ui'
 
 export type ProgramRegistrationParticipantSelection = {
@@ -322,6 +327,7 @@ export function useProgramRegistrationEditor(
   }, [])
 
   const resetRegistrationEditorToSeed = useCallback(() => {
+    resetProgramRegistrationOverlay()
     const next = normalizeWritingFormDraft(
       createProgramRegistrationDraft(programRegistrationFormVariant)
     )
@@ -338,6 +344,8 @@ export function useProgramRegistrationEditor(
       setIsDraftLoading(false)
       return
     }
+
+    resetProgramRegistrationOverlay()
 
     if (skipDraftRestore) {
       setIsDraftLoading(false)
@@ -356,6 +364,7 @@ export function useProgramRegistrationEditor(
         .then(saved => {
           if (cancelled) return
           if (saved?.draft) {
+            replaceProgramRegistrationOverlay(saved.overlay ?? {})
             const normalized = normalizeWritingFormDraft(saved.draft)
             setDraft(normalized)
             const restored = applyProgramRegistrationEditorState(saved.editorState, defaults)
@@ -390,7 +399,10 @@ export function useProgramRegistrationEditor(
   ])
 
   useEffect(() => {
-    if (!active) closeWritingUserPreview()
+    if (!active) {
+      resetProgramRegistrationOverlay()
+      closeWritingUserPreview()
+    }
   }, [active, closeWritingUserPreview])
 
   const updateParagraph = useCallback(
@@ -783,6 +795,7 @@ export function useProgramRegistrationEditor(
     await persistWritingFormTemplateDraft({
       templateId: templateCode,
       draft,
+      overlay: { ...getProgramRegistrationOverlayRecord() },
       editorState: buildProgramRegistrationEditorState({
         participant,
         programType,
@@ -896,6 +909,7 @@ export function useProgramRegistrationEditor(
           sponsorId: sponsorId.trim() || undefined,
           title: programTitleKo.trim() || undefined,
         })
+        resetProgramRegistrationOverlay()
         onRegistrationSaved(createdProgram)
       } catch (error) {
         console.debug('programRegistrationEditor complete registration failed', error)

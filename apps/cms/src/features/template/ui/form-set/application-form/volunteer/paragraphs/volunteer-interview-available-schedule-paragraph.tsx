@@ -12,6 +12,10 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { UnavailableDatesBulkExclusionsRow } from '@/features/template/ui/form-set/shared/unavailable-dates-bulk-exclusions-row'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
+import {
+  useGeneralApplicationOverlayKv,
+  updateGeneralApplicationOverlayKey,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import './volunteer-interview-available-schedule-paragraph.css'
 
 type InterviewTimeUnit = '15' | '30' | '60'
@@ -72,29 +76,41 @@ function VolunteerInterviewScheduleBlock({
     () => (seed ? buildDayjsTimeRange(seed.interviewTimeRange) : null),
     [seed]
   )
-  const [exceptionDate, setExceptionDate] = useState<Dayjs | null>(null)
-  const [interviewTime, setInterviewTime] = useState<Dayjs | null>(
-    () => initialTimeRange?.[0] ?? null
+  const [exceptionDate, setExceptionDate] = useGeneralApplicationOverlayKv<Dayjs | null>(
+    'application.volunteer.interview.exceptionDate',
+    null
   )
-  const [interviewTimeRange, setInterviewTimeRange] = useState<[Dayjs, Dayjs] | null>(
-    () => initialTimeRange
+  const [interviewTime, setInterviewTime] = useGeneralApplicationOverlayKv<Dayjs | null>(
+    'application.volunteer.interview.interviewTime',
+    initialTimeRange?.[0] ?? null
   )
-  const [timeUnit, setTimeUnit] = useState<InterviewTimeUnit>(() => seed?.timeUnit ?? '30')
-  const [selectedSlotKeys, setSelectedSlotKeys] = useState<string[]>([])
-  const [appliedUnavailableDates, setAppliedUnavailableDates] = useState<string[]>(
-    () => seed?.appliedUnavailableDates ?? []
+  const [interviewTimeRange, setInterviewTimeRange] = useGeneralApplicationOverlayKv<[Dayjs, Dayjs] | null>(
+    'application.volunteer.interview.interviewTimeRange',
+    initialTimeRange
   )
-  const [exclusionState, setExclusionState] = useState<UnavailableDatesExclusionState>(() => {
-    if (seed) {
-      return {
-        excludeNone: seed.excludeNone,
-        excludeSaturday: seed.excludeSaturday,
-        excludeSunday: seed.excludeSunday,
-        excludeHoliday: seed.excludeHoliday,
-      }
-    }
-    return createDefaultUnavailableDatesExclusionState()
-  })
+  const [timeUnit, setTimeUnit] = useGeneralApplicationOverlayKv<InterviewTimeUnit>(
+    'application.volunteer.interview.timeUnit',
+    seed?.timeUnit ?? '30'
+  )
+  const [selectedSlotKeys] = useGeneralApplicationOverlayKv<string[]>(
+    'application.volunteer.interview.selectedSlotKeys',
+    []
+  )
+  const [appliedUnavailableDates, setAppliedUnavailableDates] = useGeneralApplicationOverlayKv<string[]>(
+    'application.volunteer.interview.appliedUnavailableDates',
+    seed?.appliedUnavailableDates ?? []
+  )
+  const [exclusionState, setExclusionState] = useGeneralApplicationOverlayKv<UnavailableDatesExclusionState>(
+    'application.volunteer.interview.exclusionState',
+    seed
+      ? {
+          excludeNone: seed.excludeNone,
+          excludeSaturday: seed.excludeSaturday,
+          excludeSunday: seed.excludeSunday,
+          excludeHoliday: seed.excludeHoliday,
+        }
+      : createDefaultUnavailableDatesExclusionState()
+  )
   const seedSlotsAppliedRef = useRef(false)
   const interviewTimeSlots = useMemo(
     () => buildInterviewTimeSlots(interviewTimeRange, timeUnit),
@@ -102,9 +118,10 @@ function VolunteerInterviewScheduleBlock({
   )
 
   useEffect(() => {
-    setSelectedSlotKeys(prev => {
+    updateGeneralApplicationOverlayKey<string[]>('application.volunteer.interview.selectedSlotKeys', () => {
       const availableKeys = new Set(interviewTimeSlots.map(slot => slot.key))
-      const filtered = prev.filter(key => availableKeys.has(key))
+      const currentSlots = selectedSlotKeys ?? []
+      const filtered = currentSlots.filter(key => availableKeys.has(key))
       if (filtered.length > 0 || interviewTimeSlots.length === 0) return filtered
 
       if (seed && !seedSlotsAppliedRef.current) {
@@ -116,10 +133,10 @@ function VolunteerInterviewScheduleBlock({
         }
       }
 
-      if (!seed) return [interviewTimeSlots[0].key]
+      if (!seed) return [interviewTimeSlots[0]?.key ?? '']
       return []
     })
-  }, [interviewTimeSlots, seed])
+  }, [interviewTimeSlots, seed, selectedSlotKeys])
 
   const handleExclusionChange = (state: UnavailableDatesExclusionState) => {
     setExclusionState(state)
@@ -134,8 +151,8 @@ function VolunteerInterviewScheduleBlock({
   }, [exclusionState, onCommonExclusionChange, type])
 
   const toggleTimeSlot = (slotKey: string) => {
-    setSelectedSlotKeys(prev =>
-      prev.includes(slotKey) ? prev.filter(key => key !== slotKey) : [...prev, slotKey]
+    updateGeneralApplicationOverlayKey<string[]>('application.volunteer.interview.selectedSlotKeys', prev =>
+      (prev ?? []).includes(slotKey) ? (prev ?? []).filter(key => key !== slotKey) : [...(prev ?? []), slotKey]
     )
   }
 

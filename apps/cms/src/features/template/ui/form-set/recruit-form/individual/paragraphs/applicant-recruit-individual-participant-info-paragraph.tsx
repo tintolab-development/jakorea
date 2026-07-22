@@ -1,10 +1,12 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useMemo, type CSSProperties } from 'react'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
+import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
+import { useGeneralRecruitOverlayKv } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -19,6 +21,8 @@ const INTERVIEW_OPTIONS = [
 ] as const
 
 const MAX_SUFFIX_CLASS = 'detail-info-form-inputs-wrapper-no-gap'
+
+type RangeSeal = { start: string; end: string } | null
 
 const inquiryColumnStyle: CSSProperties = {
   display: 'flex',
@@ -41,25 +45,83 @@ function InquiryContactColumn({ label, placeholder }: { label: string; placehold
 /** 프로그램 참여자 모집 폼 (개인) — 참여자 모집 정보 */
 export function ApplicantRecruitIndividualParticipantInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
-    useState<ParticipantRecruitmentAnnouncementPublishedValue>('published')
-  const [interviewRequired, setInterviewRequired] = useState<string>('no')
+    useGeneralRecruitOverlayKv<ParticipantRecruitmentAnnouncementPublishedValue>(
+      'recruit.individual.announcementPublished',
+      'published'
+    )
+  const [interviewRequired, setInterviewRequired] = useGeneralRecruitOverlayKv<string>(
+    'recruit.individual.interviewRequired',
+    'no'
+  )
 
-  const [programAnchor, setProgramAnchor] = useState<Dayjs | null>(null)
-  const [programRange, setProgramRange] = useState<[Dayjs, Dayjs] | null>(null)
+  const [programAnchorIso, setProgramAnchorIso] = useGeneralRecruitOverlayKv<string | null>(
+    'recruit.individual.programAnchorIso',
+    null
+  )
+  const [programRangeSeal, setProgramRangeSeal] = useGeneralRecruitOverlayKv<RangeSeal>(
+    'recruit.individual.programRangeSeal',
+    null
+  )
+  const programAnchor = programAnchorIso ? dayjs(programAnchorIso) : null
+  const setProgramAnchor = (next: Dayjs | null) => {
+    setProgramAnchorIso(next == null ? null : next.toISOString())
+  }
+  const programRange: [Dayjs, Dayjs] | null = useMemo(() => {
+    if (programRangeSeal == null) return null
+    return [dayjs(programRangeSeal.start), dayjs(programRangeSeal.end)]
+  }, [programRangeSeal])
+  const setProgramRange = (next: [Dayjs, Dayjs] | null) => {
+    if (next == null) {
+      setProgramRangeSeal(null)
+      return
+    }
+    setProgramRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
+  }
   const programRangeWithTime = useMemo(
     () => (programRange == null ? false : dateRangeUsesClockTime(programRange[0], programRange[1])),
     [programRange]
   )
 
-  const [recruitAnchor, setRecruitAnchor] = useState<Dayjs | null>(null)
-  const [recruitRange, setRecruitRange] = useState<[Dayjs, Dayjs] | null>(null)
+  const [recruitAnchorIso, setRecruitAnchorIso] = useGeneralRecruitOverlayKv<string | null>(
+    'recruit.individual.recruitAnchorIso',
+    null
+  )
+  const [recruitRangeSeal, setRecruitRangeSeal] = useGeneralRecruitOverlayKv<RangeSeal>(
+    'recruit.individual.recruitRangeSeal',
+    null
+  )
+  const recruitAnchor = recruitAnchorIso ? dayjs(recruitAnchorIso) : null
+  const setRecruitAnchor = (next: Dayjs | null) => {
+    setRecruitAnchorIso(next == null ? null : next.toISOString())
+  }
+  const recruitRange: [Dayjs, Dayjs] | null = useMemo(() => {
+    if (recruitRangeSeal == null) return null
+    return [dayjs(recruitRangeSeal.start), dayjs(recruitRangeSeal.end)]
+  }, [recruitRangeSeal])
+  const setRecruitRange = (next: [Dayjs, Dayjs] | null) => {
+    if (next == null) {
+      setRecruitRangeSeal(null)
+      return
+    }
+    setRecruitRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
+  }
   const recruitRangeWithTime = useMemo(
     () => (recruitRange == null ? false : dateRangeUsesClockTime(recruitRange[0], recruitRange[1])),
     [recruitRange]
   )
 
-  const [finalAnnounceDate, setFinalAnnounceDate] = useState<Dayjs | null>(null)
-  const [targetLevels, setTargetLevels] = useState<string[]>([])
+  const [finalAnnounceIso, setFinalAnnounceIso] = useGeneralRecruitOverlayKv<string | null>(
+    'recruit.individual.finalAnnounceIso',
+    null
+  )
+  const finalAnnounceDate = finalAnnounceIso ? dayjs(finalAnnounceIso) : null
+  const setFinalAnnounceDate = (next: Dayjs | null) => {
+    setFinalAnnounceIso(next == null ? null : next.toISOString())
+  }
+  const [targetLevels, setTargetLevels] = useGeneralRecruitOverlayKv<string[]>(
+    'recruit.individual.targetLevels',
+    []
+  )
 
   return (
     <>

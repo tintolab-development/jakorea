@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
@@ -34,10 +34,13 @@ import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
   type ProgramRegistrationSurveyItemId,
 } from '@/features/template/lib/program-registration-survey-items'
+import { useProgramRegistrationOverlayKv, updateProgramRegistrationOverlayKey } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './program-registration-paragraph.css'
 
 const PROGRAM_PROGRESS_STATIC_HINT = '일정에 따라 진행 현황이 자동으로 반영됩니다.'
+
+type OperationRangeSeal = { start: string; end: string } | null
 
 function participantTypeLabel(
   value: (typeof TEMPLATE_FORM_PARTICIPANT_TYPE_OPTIONS)[number]['value']
@@ -80,19 +83,63 @@ export function ProgramRegistrationBasicInfoParagraph({
   programTitleKo: programTitleKoProp,
   onProgramTitleKoChange,
 }: ProgramRegistrationBasicInfoParagraphProps) {
-  const [businessField, setBusinessField] = useState('')
-  const [partnerInvolvement, setPartnerInvolvement] = useState<'yes' | 'no'>('yes')
-  const [operationAnchorDate, setOperationAnchorDate] = useState<Dayjs | null>(dayjs())
-  const [operationRange, setOperationRange] = useState<[Dayjs, Dayjs] | null>(null)
+  const [businessField, setBusinessField] = useProgramRegistrationOverlayKv(
+    'generalRegistration.basicInfo.businessField',
+    ''
+  )
+  const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<
+    'yes' | 'no'
+  >('generalRegistration.basicInfo.partnerInvolvement', 'yes')
+  
+  const [operationAnchorIso, setOperationAnchorIso] = useProgramRegistrationOverlayKv<
+    string | null
+  >('generalRegistration.basicInfo.operationAnchorIso', dayjs().startOf('day').toISOString())
+  const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
+  const setOperationAnchorDate = (next: Dayjs | null) => {
+    setOperationAnchorIso(next == null ? null : next.toISOString())
+  }
+
+  const [operationRangeSeal, setOperationRangeSeal] = useProgramRegistrationOverlayKv<
+    OperationRangeSeal
+  >('generalRegistration.basicInfo.operationRangeSeal', null)
+  const operationRange: [Dayjs, Dayjs] | null = useMemo(() => {
+    if (operationRangeSeal == null) return null
+    return [dayjs(operationRangeSeal.start), dayjs(operationRangeSeal.end)]
+  }, [operationRangeSeal])
+  const setOperationRange = (next: [Dayjs, Dayjs] | null) => {
+    if (next == null) {
+      setOperationRangeSeal(null)
+      return
+    }
+    setOperationRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
+  }
+  
   const operationRangeWithTime = useMemo(
     () =>
       operationRange == null ? false : dateRangeUsesClockTime(operationRange[0], operationRange[1]),
     [operationRange]
   )
 
-  const [localSponsorId, setLocalSponsorId] = useState('')
-  const [localManagerContactId, setLocalManagerContactId] = useState('')
-  const [localProgramTitleKo, setLocalProgramTitleKo] = useState('')
+  const [localSponsorId, setLocalSponsorId] = useProgramRegistrationOverlayKv(
+    'generalRegistration.basicInfo.localSponsorId',
+    ''
+  )
+  const [localManagerContactId, setLocalManagerContactId] = useProgramRegistrationOverlayKv(
+    'generalRegistration.basicInfo.localManagerContactId',
+    ''
+  )
+  const [localProgramTitleKo, setLocalProgramTitleKo] = useProgramRegistrationOverlayKv(
+    'generalRegistration.basicInfo.localProgramTitleKo',
+    ''
+  )
+  const [programTitleEn, setProgramTitleEn] = useProgramRegistrationOverlayKv(
+    'generalRegistration.basicInfo.programTitleEn',
+    ''
+  )
+  const [publicProgramTitle, setPublicProgramTitle] = useProgramRegistrationOverlayKv(
+    'generalRegistration.basicInfo.publicProgramTitle',
+    ''
+  )
   const isSponsorControlled = onSponsorIdChange != null
   const isTitleControlled = onProgramTitleKoChange != null
   const sponsorId = isSponsorControlled ? (sponsorIdProp ?? '') : localSponsorId
@@ -121,24 +168,45 @@ export function ProgramRegistrationBasicInfoParagraph({
     }
     setLocalProgramTitleKo(next)
   }
-  const [detailedProgramId, setDetailedProgramId] = useState<string>('')
-  const [educationVenueKind, setEducationVenueKind] = useState<'inside' | 'outside' | 'other'>(
-    'inside'
+  
+  const [detailedProgramId, setDetailedProgramId] = useProgramRegistrationOverlayKv<string>(
+    'generalRegistration.basicInfo.detailedProgramId',
+    ''
   )
-  const [educationVenueDetail, setEducationVenueDetail] = useState('')
-  const [educationCourse, setEducationCourse] = useState('')
-  const [ipOwned, setIpOwned] = useState('')
-  const [courseDeliveredBy, setCourseDeliveredBy] = useState('')
-  const [footerIpsType, setFooterIpsType] = useState<ProgramRegistrationIpsTypeValue>({
+  const [educationVenueKind, setEducationVenueKind] = useProgramRegistrationOverlayKv<
+    'inside' | 'outside' | 'other'
+  >('generalRegistration.basicInfo.educationVenueKind', 'inside')
+  const [educationVenueDetail, setEducationVenueDetail] = useProgramRegistrationOverlayKv(
+    'generalRegistration.basicInfo.educationVenueDetail',
+    ''
+  )
+  const [educationCourse, setEducationCourse] = useProgramRegistrationOverlayKv(
+    'generalRegistration.basicInfo.educationCourse',
+    ''
+  )
+  const [ipOwned, setIpOwned] = useProgramRegistrationOverlayKv(
+    'generalRegistration.basicInfo.ipOwned',
+    ''
+  )
+  const [courseDeliveredBy, setCourseDeliveredBy] = useProgramRegistrationOverlayKv(
+    'generalRegistration.basicInfo.courseDeliveredBy',
+    ''
+  )
+  const [footerIpsType, setFooterIpsType] = useProgramRegistrationOverlayKv<
+    ProgramRegistrationIpsTypeValue
+  >('generalRegistration.basicInfo.footerIpsType', {
     category: '',
     detail: '',
   })
-  const [surveyItems, setSurveyItems] = useState<Record<ProgramRegistrationSurveyItemId, boolean>>(
-    initialProgramRegistrationSurveyItems
-  )
+  const [surveyItems] = useProgramRegistrationOverlayKv<
+    Record<ProgramRegistrationSurveyItemId, boolean>
+  >('generalRegistration.basicInfo.surveyItems', initialProgramRegistrationSurveyItems())
 
   const toggleSurveyItem = (id: ProgramRegistrationSurveyItemId) => (e: CheckboxChangeEvent) => {
-    setSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
+    updateProgramRegistrationOverlayKey<Record<ProgramRegistrationSurveyItemId, boolean>>(
+      'generalRegistration.basicInfo.surveyItems',
+      prev => ({ ...(prev ?? initialProgramRegistrationSurveyItems()), [id]: e.target.checked })
+    )
   }
 
   /** `/sponsor` 후원사 관리 목록 API */
@@ -193,6 +261,8 @@ export function ProgramRegistrationBasicInfoParagraph({
                 inputSize="medium"
                 placeholder="상세 프로그램명을 입력하세요"
                 width="100%"
+                value={programTitleEn}
+                onChange={e => setProgramTitleEn(e.target.value)}
               />
             }
             view="-"
@@ -206,6 +276,8 @@ export function ProgramRegistrationBasicInfoParagraph({
                 inputSize="medium"
                 placeholder="모집 시 노출될 프로그램명을 입력하세요"
                 width="100%"
+                value={publicProgramTitle}
+                onChange={e => setPublicProgramTitle(e.target.value)}
               />
             }
             view="-"

@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import {
   shouldShowInstitutionApplicationPreferredEducationForm,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { buildInstitutionClassCountOptions } from '@/features/template/lib/participant-recruitment-institution-limits'
+import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
@@ -53,13 +54,26 @@ export function ProgramApplicationFormInstitutionBasicInfoParagraph({
   const showPreferredEducationForm =
     shouldShowInstitutionApplicationPreferredEducationForm(bridge)
 
-  const [applicationGrade, setApplicationGrade] = useState<string>('')
-  const [classCount, setClassCount] = useState<string>('')
-  const [educationForm, setEducationForm] = useState<string>(
+  const [applicationGrade, setApplicationGrade] = useGeneralApplicationOverlayKv<string>(
+    'application.institution.applicationGrade',
+    ''
+  )
+  const [classCount, setClassCount] = useGeneralApplicationOverlayKv<string>(
+    'application.institution.classCount',
+    ''
+  )
+  const [educationForm, setEducationForm] = useGeneralApplicationOverlayKv<string>(
+    'application.institution.educationForm',
     EDUCATION_FORM_OPTIONS[0]?.value ?? 'online'
   )
-  const [teacherMobile, setTeacherMobile] = useState<string>(PREVIEW_AUTO_USER_INFO_SAMPLE.mobile)
-  const [teacherEmail, setTeacherEmail] = useState<string>(PREVIEW_AUTO_USER_INFO_SAMPLE.email)
+  const [teacherMobile, setTeacherMobile] = useGeneralApplicationOverlayKv<string>(
+    'application.institution.teacherMobile',
+    PREVIEW_AUTO_USER_INFO_SAMPLE.mobile
+  )
+  const [teacherEmail, setTeacherEmail] = useGeneralApplicationOverlayKv<string>(
+    'application.institution.teacherEmail',
+    PREVIEW_AUTO_USER_INFO_SAMPLE.email
+  )
 
   useEffect(() => {
     if (classCount === '') return

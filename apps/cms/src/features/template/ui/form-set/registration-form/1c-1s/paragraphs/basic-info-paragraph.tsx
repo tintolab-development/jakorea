@@ -2,7 +2,7 @@
  * 1사 1교 프로그램 등록 폼 — 기본 정보
  * (상단: 일반 프로그램 정보 / 하단: 교육 과정·IP·Partner·IPS — 스크린 구성 기준)
  */
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
@@ -33,6 +33,7 @@ import {
   PROGRAM_REGISTRATION_SURVEY_ITEM_LABELS,
   type ProgramRegistrationSurveyItemId,
 } from '@/features/template/lib/program-registration-survey-items'
+import { useProgramRegistrationOverlayKv, updateProgramRegistrationOverlayKey } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 
 const REP_KO = '1사1교 경제금융교육'
 const REP_EN = '1 Company 1 School Economics and Finance Education'
@@ -50,6 +51,8 @@ const DETAILED_PROGRAM_MAIN_OPTION = {
 const IPS_PREPARE_DEFAULT = 'prepare'
 
 const BUSINESS_FIELD_DEFAULT = 'economy_finance'
+
+type OperationRangeSeal = { start: string; end: string } | null
 
 const educationCourseSelectOptions = [
   { value: ALL_VALUE, label: '전체' },
@@ -69,32 +72,86 @@ export function OneCOneSRegistrationBasicInfoParagraph({
   onOrganizationChange,
   onTeacherInstructorChange,
 }: OneCOneSRegistrationBasicInfoParagraphProps) {
-  const [repKo, setRepKo] = useState(REP_KO)
-  const [repEn, setRepEn] = useState(REP_EN)
-  const [businessField, setBusinessField] = useState(BUSINESS_FIELD_DEFAULT)
-  const [ipOwned, setIpOwned] = useState('ja')
-  const [courseDeliveredBy, setCourseDeliveredBy] = useState('ja')
-  const [ipsCategory, setIpsCategory] = useState(IPS_PREPARE_DEFAULT)
-  const [partnerInvolvement, setPartnerInvolvement] = useState<'yes' | 'no'>('no')
-  const [educationCourse, setEducationCourse] = useState(ALL_VALUE)
-  const [operationAnchorDate, setOperationAnchorDate] = useState<Dayjs | null>(dayjs())
-  const [operationRange, setOperationRange] = useState<[Dayjs, Dayjs] | null>(null)
+  const [repKo, setRepKo] = useProgramRegistrationOverlayKv('economyRegistration.basicInfo.repKo', REP_KO)
+  const [repEn, setRepEn] = useProgramRegistrationOverlayKv('economyRegistration.basicInfo.repEn', REP_EN)
+  const [businessField, setBusinessField] = useProgramRegistrationOverlayKv(
+    'economyRegistration.basicInfo.businessField',
+    BUSINESS_FIELD_DEFAULT
+  )
+  const [ipOwned, setIpOwned] = useProgramRegistrationOverlayKv('economyRegistration.basicInfo.ipOwned', 'ja')
+  const [courseDeliveredBy, setCourseDeliveredBy] = useProgramRegistrationOverlayKv(
+    'economyRegistration.basicInfo.courseDeliveredBy',
+    'ja'
+  )
+  const [ipsCategory, setIpsCategory] = useProgramRegistrationOverlayKv(
+    'economyRegistration.basicInfo.ipsCategory',
+    IPS_PREPARE_DEFAULT
+  )
+  const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<'yes' | 'no'>(
+    'economyRegistration.basicInfo.partnerInvolvement',
+    'no'
+  )
+  const [educationCourse, setEducationCourse] = useProgramRegistrationOverlayKv(
+    'economyRegistration.basicInfo.educationCourse',
+    ALL_VALUE
+  )
+  
+  const [operationAnchorIso, setOperationAnchorIso] = useProgramRegistrationOverlayKv<string | null>(
+    'economyRegistration.basicInfo.operationAnchorIso',
+    null
+  )
+  const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
+  const setOperationAnchorDate = (next: Dayjs | null) => {
+    setOperationAnchorIso(next == null ? null : next.toISOString())
+  }
+
+  const [operationRangeSeal, setOperationRangeSeal] = useProgramRegistrationOverlayKv<OperationRangeSeal>(
+    'economyRegistration.basicInfo.operationRangeSeal',
+    null
+  )
+  const operationRange: [Dayjs, Dayjs] | null = useMemo(() => {
+    if (operationRangeSeal == null) return null
+    return [dayjs(operationRangeSeal.start), dayjs(operationRangeSeal.end)]
+  }, [operationRangeSeal])
+  const setOperationRange = (next: [Dayjs, Dayjs] | null) => {
+    if (next == null) {
+      setOperationRangeSeal(null)
+      return
+    }
+    setOperationRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
+  }
+  
   const operationRangeWithTime = useMemo(
     () =>
       operationRange == null ? false : dateRangeUsesClockTime(operationRange[0], operationRange[1]),
     [operationRange]
   )
 
-  const [sponsorId, setSponsorId] = useState<string>(ALL_VALUE)
-  const [managerContactId, setManagerContactId] = useState<string>(ALL_VALUE)
-  const [detailedProgramId, setDetailedProgramId] = useState<string>(DETAILED_PROGRAM_MAIN_VALUE)
+  const [sponsorId, setSponsorId] = useProgramRegistrationOverlayKv<string>(
+    'economyRegistration.basicInfo.sponsorId',
+    ALL_VALUE
+  )
+  const [managerContactId, setManagerContactId] = useProgramRegistrationOverlayKv<string>(
+    'economyRegistration.basicInfo.managerContactId',
+    ALL_VALUE
+  )
+  const [detailedProgramId, setDetailedProgramId] = useProgramRegistrationOverlayKv<string>(
+    'economyRegistration.basicInfo.detailedProgramId',
+    DETAILED_PROGRAM_MAIN_VALUE
+  )
 
-  const [surveyItems, setSurveyItems] = useState<
+  const [surveyItems] = useProgramRegistrationOverlayKv<
     Record<ProgramRegistrationSurveyItemId, boolean>
-  >(() => initialProgramRegistrationSurveyItems(true))
+  >('economyRegistration.basicInfo.surveyItems', initialProgramRegistrationSurveyItems(true))
 
   const toggleSurveyItem = (id: ProgramRegistrationSurveyItemId) => (e: CheckboxChangeEvent) => {
-    setSurveyItems(prev => ({ ...prev, [id]: e.target.checked }))
+    updateProgramRegistrationOverlayKey<Record<ProgramRegistrationSurveyItemId, boolean>>(
+      'economyRegistration.basicInfo.surveyItems',
+      prev => ({
+        ...(prev ?? initialProgramRegistrationSurveyItems(true)),
+        [id]: e.target.checked,
+      })
+    )
   }
 
   const { options: sponsorApiOptions } = useSponsorSelectOptions()

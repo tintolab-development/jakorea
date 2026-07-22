@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
@@ -21,6 +21,7 @@ import {
   ProgramRegistrationMultiRoundAssignmentFields,
   type ProgramRegistrationMultiRoundAssignmentValue,
 } from './program-registration-multi-round-assignment-fields'
+import { useProgramRegistrationOverlayKv, updateProgramRegistrationOverlayKey } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import './program-registration-paragraph.css'
 
 type ProgramRegistrationEducationCurriculumParagraphProps = {
@@ -208,15 +209,25 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   participationScheduleDetail,
   ipsScheduleDetail,
 }: ProgramRegistrationEducationCurriculumParagraphProps) {
-  const [ipsBySession, setIpsBySession] = useState<Record<number, ProgramRegistrationIpsTypeValue>>(
-    {}
-  )
-  const [progressSessionByRound, setProgressSessionByRound] = useState<Record<number, string>>({})
-  const [educationFormBySession, setEducationFormBySession] = useState<Record<number, string>>({})
-  const [participationBySession, setParticipationBySession] = useState<Record<number, string>>({})
-  const [assignmentByRound, setAssignmentByRound] = useState<
+  const [ipsBySession] = useProgramRegistrationOverlayKv<
+    Record<number, ProgramRegistrationIpsTypeValue>
+  >('generalRegistration.educationCurriculum.ipsBySession', {})
+  
+  const [progressSessionByRound] = useProgramRegistrationOverlayKv<
+    Record<number, string>
+  >('generalRegistration.educationCurriculum.progressSessionByRound', {})
+  
+  const [educationFormBySession] = useProgramRegistrationOverlayKv<
+    Record<number, string>
+  >('generalRegistration.educationCurriculum.educationFormBySession', {})
+  
+  const [participationBySession] = useProgramRegistrationOverlayKv<
+    Record<number, string>
+  >('generalRegistration.educationCurriculum.participationBySession', {})
+  
+  const [assignmentByRound] = useProgramRegistrationOverlayKv<
     Record<number, ProgramRegistrationMultiRoundAssignmentValue>
-  >({})
+  >('generalRegistration.educationCurriculum.assignmentByRound', {})
 
   const educationFormForSession = (sessionIndex: number) =>
     educationFormBySession[sessionIndex] ?? 'online'
@@ -228,49 +239,85 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   const onEducationFormRadioChange =
     (sessionIndex: number) => (e: RadioChangeEvent) => {
       const nextValue = String(e.target.value)
-      setEducationFormBySession(prev => {
-        const next = { ...prev, [sessionIndex]: nextValue }
-        if (educationFormScheduleDetail === 'perSchedule') {
-          patchInstitutionApplicationProgramBridge({
-            showPreferredEducationForm: Object.values(next).some(
-              value => value === 'participant_selection'
-            ),
-          })
+      updateProgramRegistrationOverlayKey<Record<number, string>>(
+        'generalRegistration.educationCurriculum.educationFormBySession',
+        prev => {
+          const next = { ...(prev ?? {}), [sessionIndex]: nextValue }
+          if (educationFormScheduleDetail === 'perSchedule') {
+            patchInstitutionApplicationProgramBridge({
+              showPreferredEducationForm: Object.values(next).some(
+                value => value === 'participant_selection'
+              ),
+            })
+          }
+          return next
         }
-        return next
-      })
+      )
     }
 
   const onParticipationRadioChange = (sessionIndex: number) => (e: RadioChangeEvent) => {
-    setParticipationBySession(prev => ({ ...prev, [sessionIndex]: String(e.target.value) }))
+    updateProgramRegistrationOverlayKey<Record<number, string>>(
+      'generalRegistration.educationCurriculum.participationBySession',
+      prev => ({ ...(prev ?? {}), [sessionIndex]: String(e.target.value) })
+    )
   }
 
   const setSessionIps = (sessionIndex: number, next: ProgramRegistrationIpsTypeValue) => {
-    setIpsBySession(prev => ({ ...prev, [sessionIndex]: next }))
+    updateProgramRegistrationOverlayKey<Record<number, ProgramRegistrationIpsTypeValue>>(
+      'generalRegistration.educationCurriculum.ipsBySession',
+      prev => ({ ...(prev ?? {}), [sessionIndex]: next })
+    )
   }
 
   const setAssignmentForRound = (
     roundIndex: number,
     next: ProgramRegistrationMultiRoundAssignmentValue
   ) => {
-    setAssignmentByRound(prev => ({ ...prev, [roundIndex]: next }))
+    updateProgramRegistrationOverlayKey<Record<number, ProgramRegistrationMultiRoundAssignmentValue>>(
+      'generalRegistration.educationCurriculum.assignmentByRound',
+      prev => ({ ...(prev ?? {}), [roundIndex]: next })
+    )
   }
 
   const handleDeleteChartSession = (chartIndex: number) => {
     if (chartIndex <= 1) return
-    setIpsBySession(prev => reindexSessionRecordAfterDelete(prev, chartIndex))
-    setEducationFormBySession(prev => reindexSessionRecordAfterDelete(prev, chartIndex))
-    setParticipationBySession(prev => reindexSessionRecordAfterDelete(prev, chartIndex))
+    updateProgramRegistrationOverlayKey<Record<number, ProgramRegistrationIpsTypeValue>>(
+      'generalRegistration.educationCurriculum.ipsBySession',
+      prev => reindexSessionRecordAfterDelete(prev ?? {}, chartIndex)
+    )
+    updateProgramRegistrationOverlayKey<Record<number, string>>(
+      'generalRegistration.educationCurriculum.educationFormBySession',
+      prev => reindexSessionRecordAfterDelete(prev ?? {}, chartIndex)
+    )
+    updateProgramRegistrationOverlayKey<Record<number, string>>(
+      'generalRegistration.educationCurriculum.participationBySession',
+      prev => reindexSessionRecordAfterDelete(prev ?? {}, chartIndex)
+    )
     onDeleteCurriculumChartSession(chartIndex)
   }
 
   const handleDeleteRoundSession = (roundIndex: number) => {
     if (roundIndex <= 1) return
-    setIpsBySession(prev => reindexSessionRecordAfterDelete(prev, roundIndex))
-    setEducationFormBySession(prev => reindexSessionRecordAfterDelete(prev, roundIndex))
-    setParticipationBySession(prev => reindexSessionRecordAfterDelete(prev, roundIndex))
-    setProgressSessionByRound(prev => reindexSessionRecordAfterDelete(prev, roundIndex))
-    setAssignmentByRound(prev => reindexSessionRecordAfterDelete(prev, roundIndex))
+    updateProgramRegistrationOverlayKey<Record<number, ProgramRegistrationIpsTypeValue>>(
+      'generalRegistration.educationCurriculum.ipsBySession',
+      prev => reindexSessionRecordAfterDelete(prev ?? {}, roundIndex)
+    )
+    updateProgramRegistrationOverlayKey<Record<number, string>>(
+      'generalRegistration.educationCurriculum.educationFormBySession',
+      prev => reindexSessionRecordAfterDelete(prev ?? {}, roundIndex)
+    )
+    updateProgramRegistrationOverlayKey<Record<number, string>>(
+      'generalRegistration.educationCurriculum.participationBySession',
+      prev => reindexSessionRecordAfterDelete(prev ?? {}, roundIndex)
+    )
+    updateProgramRegistrationOverlayKey<Record<number, string>>(
+      'generalRegistration.educationCurriculum.progressSessionByRound',
+      prev => reindexSessionRecordAfterDelete(prev ?? {}, roundIndex)
+    )
+    updateProgramRegistrationOverlayKey<Record<number, ProgramRegistrationMultiRoundAssignmentValue>>(
+      'generalRegistration.educationCurriculum.assignmentByRound',
+      prev => reindexSessionRecordAfterDelete(prev ?? {}, roundIndex)
+    )
     onDeleteCurriculumSession(roundIndex)
   }
 
@@ -506,7 +553,10 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                   roundIndex={roundIndex}
                   progressSession={progressSession}
                   onProgressSessionChange={value =>
-                    setProgressSessionByRound(prev => ({ ...prev, [roundIndex]: value }))
+                    updateProgramRegistrationOverlayKey<Record<number, string>>(
+                      'generalRegistration.educationCurriculum.progressSessionByRound',
+                      prev => ({ ...(prev ?? {}), [roundIndex]: value })
+                    )
                   }
                 />
                 <ProgramRegistrationMultiRoundAssignmentFields

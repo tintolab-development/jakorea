@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -23,10 +23,22 @@ const inlineChoiceStyle = { display: 'flex', flexWrap: 'wrap' as const, gap: 16 
 
 /** 프로그램 참여자 신청 폼 (개인·팀) — 팀 정보 단락 */
 export function ProgramApplicationFormIndividualTeamInfoParagraph() {
-  const [teamName, setTeamName] = useState('')
-  const [memberCountSelect, setMemberCountSelect] = useState<string>('')
-  const [customMemberCount, setCustomMemberCount] = useState('')
-  const [teamRole, setTeamRole] = useState<string>(TEAM_ROLE_OPTIONS[0]?.value ?? 'leader')
+  const [teamName, setTeamName] = useGeneralApplicationOverlayKv<string>(
+    'application.individual.teamInfo.teamName',
+    ''
+  )
+  const [memberCountSelect, setMemberCountSelect] = useGeneralApplicationOverlayKv<string>(
+    'application.individual.teamInfo.memberCountSelect',
+    ''
+  )
+  const [customMemberCount, setCustomMemberCount] = useGeneralApplicationOverlayKv<string>(
+    'application.individual.teamInfo.customMemberCount',
+    ''
+  )
+  const [teamRole, setTeamRole] = useGeneralApplicationOverlayKv<string>(
+    'application.individual.teamInfo.teamRole',
+    TEAM_ROLE_OPTIONS[0]?.value ?? 'leader'
+  )
 
   return (
     <DetailInfoForm title="팀 정보" hideHeader mode="edit">

@@ -1,6 +1,7 @@
-import { Fragment, useState, type ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
 import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
@@ -31,6 +32,7 @@ import {
   formatEducationScheduleLineFromRange,
   parseEducationScheduleLineToRange,
 } from '@/features/template/lib/format-education-schedule-line'
+import { useProgramRegistrationOverlayKv, updateProgramRegistrationOverlayKey } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import './program-registration-paragraph.css'
 
 type ScheduleEventAssignmentValue = {
@@ -54,6 +56,11 @@ function reindexDetailRecordAfterDelete<T>(
     else if (index > deletedIndex) next[index - 1] = value
   }
   return next
+}
+
+/** Convert stored ISO string dates back to Dayjs objects for display/editing */
+function scheduleDateFromIso(iso: string | null | undefined): Dayjs | null {
+  return iso ? dayjs(iso) : null
 }
 
 function ScheduleDetailAssignmentInputs({
@@ -208,21 +215,35 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     ipsScheduleDetail
   )
 
-  const [ipsByDetailIndex, setIpsByDetailIndex] = useState<
+  const [ipsByDetailIndex] = useProgramRegistrationOverlayKv<
     Record<number, ProgramRegistrationIpsTypeValue>
-  >({})
-  const [scheduleDateByDetail, setScheduleDateByDetail] = useState<Record<number, Dayjs | null>>({})
-  const [assignmentByDetail, setAssignmentByDetail] = useState<
+  >('generalRegistration.educationScheduleCurriculum.ipsByDetailIndex', {})
+  
+  const [scheduleDateByDetail] = useProgramRegistrationOverlayKv<
+    Record<number, string | null>
+  >('generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso', {})
+  
+  const [assignmentByDetail] = useProgramRegistrationOverlayKv<
     Record<number, ScheduleEventAssignmentValue>
-  >({})
-  const [groupTimeByDetail, setGroupTimeByDetail] = useState<Record<number, Array<Dayjs | null>>>(
-    {}
-  )
-  const [educationFormByDetail, setEducationFormByDetail] = useState<Record<number, string>>({})
-  const [participationByDetail, setParticipationByDetail] = useState<Record<number, string>>({})
+  >('generalRegistration.educationScheduleCurriculum.assignmentByDetail', {})
+  
+  const [groupTimeByDetail] = useProgramRegistrationOverlayKv<
+    Record<number, Array<string | null>>
+  >('generalRegistration.educationScheduleCurriculum.groupTimeByDetailIso', {})
+  
+  const [educationFormByDetail] = useProgramRegistrationOverlayKv<
+    Record<number, string>
+  >('generalRegistration.educationScheduleCurriculum.educationFormByDetail', {})
+  
+  const [participationByDetail] = useProgramRegistrationOverlayKv<
+    Record<number, string>
+  >('generalRegistration.educationScheduleCurriculum.participationByDetail', {})
 
   const setIpsForDetail = (detailIndex: number, next: ProgramRegistrationIpsTypeValue) => {
-    setIpsByDetailIndex(prev => ({ ...prev, [detailIndex]: next }))
+    updateProgramRegistrationOverlayKey<Record<number, ProgramRegistrationIpsTypeValue>>(
+      'generalRegistration.educationScheduleCurriculum.ipsByDetailIndex',
+      prev => ({ ...(prev ?? {}), [detailIndex]: next })
+    )
   }
 
   const ipsLockedForSchedulePreEducation = scheduleCurriculumPreEducation
@@ -244,54 +265,87 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
 
   const onEducationFormRadioChange = (detailIndex: number) => (e: RadioChangeEvent) => {
     const nextValue = String(e.target.value)
-    setEducationFormByDetail(prev => {
-      const next = { ...prev, [detailIndex]: nextValue }
-      if (educationFormScheduleDetail === 'perSchedule') {
-        patchInstitutionApplicationProgramBridge({
-          showPreferredEducationForm: Object.values(next).some(
-            value => value === 'participant_selection'
-          ),
-        })
+    updateProgramRegistrationOverlayKey<Record<number, string>>(
+      'generalRegistration.educationScheduleCurriculum.educationFormByDetail',
+      prev => {
+        const next = { ...(prev ?? {}), [detailIndex]: nextValue }
+        if (educationFormScheduleDetail === 'perSchedule') {
+          patchInstitutionApplicationProgramBridge({
+            showPreferredEducationForm: Object.values(next).some(
+              value => value === 'participant_selection'
+            ),
+          })
+        }
+        return next
       }
-      return next
-    })
+    )
   }
 
   const onParticipationRadioChange = (detailIndex: number) => (e: RadioChangeEvent) => {
-    setParticipationByDetail(prev => ({ ...prev, [detailIndex]: String(e.target.value) }))
+    updateProgramRegistrationOverlayKey<Record<number, string>>(
+      'generalRegistration.educationScheduleCurriculum.participationByDetail',
+      prev => ({ ...(prev ?? {}), [detailIndex]: String(e.target.value) })
+    )
   }
 
-  const groupTimeValue = (detailIndex: number, groupIndex: number) =>
-    groupTimeByDetail[detailIndex]?.[groupIndex] ?? null
+  const groupTimeValue = (detailIndex: number, groupIndex: number) => {
+    const isoTimes = groupTimeByDetail[detailIndex]
+    return isoTimes ? (isoTimes[groupIndex] ? dayjs(isoTimes[groupIndex]) : null) : null
+  }
 
   const setGroupTime = (detailIndex: number, groupIndex: number, value: Dayjs | null) => {
-    setGroupTimeByDetail(prev => {
-      const nextValues = [...(prev[detailIndex] ?? [])]
-      nextValues[groupIndex] = value
-      return { ...prev, [detailIndex]: nextValues }
-    })
+    updateProgramRegistrationOverlayKey<Record<number, Array<string | null>>>(
+      'generalRegistration.educationScheduleCurriculum.groupTimeByDetailIso',
+      prev => {
+        const base = prev ?? {}
+        const nextValues = [...(base[detailIndex] ?? [])]
+        while (nextValues.length <= groupIndex) nextValues.push(null)
+        nextValues[groupIndex] = value == null ? null : value.toISOString()
+        return { ...base, [detailIndex]: nextValues }
+      }
+    )
   }
 
   const deleteScheduleGroup = (groupIndex: number) => {
-    setGroupTimeByDetail(prev =>
-      Object.fromEntries(
-        Object.entries(prev).map(([detailIndex, values]) => [
-          detailIndex,
-          values.filter((_, index) => index !== groupIndex),
-        ])
-      )
+    updateProgramRegistrationOverlayKey<Record<number, Array<string | null>>>(
+      'generalRegistration.educationScheduleCurriculum.groupTimeByDetailIso',
+      prev =>
+        Object.fromEntries(
+          Object.entries(prev ?? {}).map(([detailIndex, values]) => [
+            detailIndex,
+            values.filter((_, index) => index !== groupIndex),
+          ])
+        )
     )
     onDeleteScheduleCurriculumGroup(groupIndex)
   }
 
   const handleDeleteScheduleDetail = (detailIndex: number) => {
     if (detailIndex <= 1) return
-    setIpsByDetailIndex(prev => reindexDetailRecordAfterDelete(prev, detailIndex))
-    setScheduleDateByDetail(prev => reindexDetailRecordAfterDelete(prev, detailIndex))
-    setAssignmentByDetail(prev => reindexDetailRecordAfterDelete(prev, detailIndex))
-    setGroupTimeByDetail(prev => reindexDetailRecordAfterDelete(prev, detailIndex))
-    setEducationFormByDetail(prev => reindexDetailRecordAfterDelete(prev, detailIndex))
-    setParticipationByDetail(prev => reindexDetailRecordAfterDelete(prev, detailIndex))
+    updateProgramRegistrationOverlayKey(
+      'generalRegistration.educationScheduleCurriculum.ipsByDetailIndex',
+      prev => reindexDetailRecordAfterDelete((prev as Record<number, ProgramRegistrationIpsTypeValue>) ?? {}, detailIndex)
+    )
+    updateProgramRegistrationOverlayKey(
+      'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso',
+      prev => reindexDetailRecordAfterDelete((prev as Record<number, string | null>) ?? {}, detailIndex)
+    )
+    updateProgramRegistrationOverlayKey(
+      'generalRegistration.educationScheduleCurriculum.assignmentByDetail',
+      prev => reindexDetailRecordAfterDelete((prev as Record<number, ScheduleEventAssignmentValue>) ?? {}, detailIndex)
+    )
+    updateProgramRegistrationOverlayKey(
+      'generalRegistration.educationScheduleCurriculum.groupTimeByDetailIso',
+      prev => reindexDetailRecordAfterDelete((prev as Record<number, Array<string | null>>) ?? {}, detailIndex)
+    )
+    updateProgramRegistrationOverlayKey(
+      'generalRegistration.educationScheduleCurriculum.educationFormByDetail',
+      prev => reindexDetailRecordAfterDelete((prev as Record<number, string>) ?? {}, detailIndex)
+    )
+    updateProgramRegistrationOverlayKey(
+      'generalRegistration.educationScheduleCurriculum.participationByDetail',
+      prev => reindexDetailRecordAfterDelete((prev as Record<number, string>) ?? {}, detailIndex)
+    )
     onDeleteScheduleCurriculumDetail(detailIndex)
   }
 
@@ -326,7 +380,10 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     assignmentByDetail[detailIndex] ?? EMPTY_SCHEDULE_EVENT_ASSIGNMENT
 
   const setAssignmentForDetail = (detailIndex: number, next: ScheduleEventAssignmentValue) => {
-    setAssignmentByDetail(prev => ({ ...prev, [detailIndex]: next }))
+    updateProgramRegistrationOverlayKey<Record<number, ScheduleEventAssignmentValue>>(
+      'generalRegistration.educationScheduleCurriculum.assignmentByDetail',
+      prev => ({ ...(prev ?? {}), [detailIndex]: next })
+    )
   }
 
   const renderEducationFormField = (detailIndex: number) => (
@@ -572,7 +629,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
       <>
         {Array.from({ length: detailCount }, (_, i) => {
           const n = i + 1
-          const scheduleDate = scheduleDateByDetail[n] ?? null
+          const scheduleDate = scheduleDateFromIso(scheduleDateByDetail[n])
           const assignment = assignmentByDetail[n] ?? EMPTY_SCHEDULE_EVENT_ASSIGNMENT
           return (
             <div key={n} className="program-registration-schedule-curriculum__block">
@@ -613,7 +670,13 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
                             suppressAutoTodayWhenEmpty
                             value={scheduleDate}
                             onChange={next =>
-                              setScheduleDateByDetail(prev => ({ ...prev, [n]: next }))
+                              updateProgramRegistrationOverlayKey<Record<number, string | null>>(
+                                'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso',
+                                prev => ({
+                                  ...(prev ?? {}),
+                                  [n]: next == null ? null : next.toISOString(),
+                                })
+                              )
                             }
                             width="100%"
                             placeholder="일정을 선택하세요"

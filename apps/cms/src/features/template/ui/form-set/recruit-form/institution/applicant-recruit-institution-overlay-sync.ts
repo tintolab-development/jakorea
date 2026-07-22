@@ -6,6 +6,16 @@ export const APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
   maxClassCount: 'recruit.maxClassCount',
   maxScheduleCount: 'recruit.maxScheduleCount',
   maxSessionsPerDay: 'recruit.maxSessionsPerDay',
+  announcementPublished: 'recruit.announcementPublished',
+  preguidanceRequired: 'recruit.preguidanceRequired',
+  studentListRequired: 'recruit.studentListRequired',
+  certificateProvided: 'recruit.certificateProvided',
+  programAnchorIso: 'recruit.programAnchorIso',
+  programRangeSeal: 'recruit.programRangeSeal',
+  recruitAnchorIso: 'recruit.recruitAnchorIso',
+  recruitRangeSeal: 'recruit.recruitRangeSeal',
+  finalAnnounceIso: 'recruit.finalAnnounceIso',
+  targetLevels: 'recruit.targetLevels',
 } as const
 
 export type ApplicantRecruitInstitutionLimitsOverlay = {
@@ -13,6 +23,19 @@ export type ApplicantRecruitInstitutionLimitsOverlay = {
   maxClassCount?: number
   maxScheduleCount?: number
   maxSessionsPerDay?: number
+}
+
+export type ApplicantRecruitInstitutionOverlay = ApplicantRecruitInstitutionLimitsOverlay & {
+  announcementPublished?: string
+  preguidanceRequired?: string
+  studentListRequired?: string
+  certificateProvided?: string
+  programAnchorIso?: string | null
+  programRangeSeal?: { start: string; end: string } | null
+  recruitAnchorIso?: string | null
+  recruitRangeSeal?: { start: string; end: string } | null
+  finalAnnounceIso?: string | null
+  targetLevels?: string[]
 }
 
 let overlayState: Record<string, unknown> = {}
@@ -54,6 +77,12 @@ function syncOverlayLimitsToBridge(record: Record<string, unknown>): void {
 
 export function patchApplicantRecruitInstitutionOverlay(partial: Record<string, unknown>): void {
   overlayState = { ...overlayState, ...partial }
+  syncOverlayLimitsToBridge(overlayState)
+  emitOverlay()
+}
+
+export function replaceApplicantRecruitInstitutionOverlay(next: Record<string, unknown>): void {
+  overlayState = { ...next }
   syncOverlayLimitsToBridge(overlayState)
   emitOverlay()
 }

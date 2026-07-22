@@ -1,5 +1,5 @@
 import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { InstructorAvailableScheduleSlot } from '@/features/program/general/lib/instructor-application-available-schedule'
@@ -13,6 +13,10 @@ import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/
 import { extractClockTimeRangeForScheduleSummary } from '@/features/template/lib/extract-clock-time-range-for-schedule-summary'
 import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
+import {
+  useGeneralApplicationOverlayKv,
+  updateGeneralApplicationOverlayKey,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 
 const EMPTY_SCHEDULE_SLOTS: readonly InstructorAvailableScheduleSlot[] = []
 
@@ -55,18 +59,25 @@ export function InstructorAvailableScheduleParagraph({
 }) {
   const scheduleSlots = scheduleSlotsProp ?? EMPTY_SCHEDULE_SLOTS
   const scheduleSlotsSyncKey = getScheduleSlotsSyncKey(scheduleSlots)
-  const [currentMonth, setCurrentMonth] = useState(() =>
+  const [currentMonth, setCurrentMonth] = useGeneralApplicationOverlayKv<Dayjs>(
+    'application.instructor.currentMonth',
     resolveScheduleAnchorDate(scheduleSlots).startOf('month')
   )
-  const [selectedDate, setSelectedDate] = useState(() => resolveScheduleAnchorDate(scheduleSlots))
-  const [selectedSlotIds, setSelectedSlotIds] = useState<Set<string>>(() => new Set())
+  const [selectedDate, setSelectedDate] = useGeneralApplicationOverlayKv<Dayjs>(
+    'application.instructor.selectedDate',
+    resolveScheduleAnchorDate(scheduleSlots)
+  )
+  const [selectedSlotIds] = useGeneralApplicationOverlayKv<string[]>(
+    'application.instructor.selectedSlotIds',
+    []
+  )
 
   useEffect(() => {
     const anchor = resolveScheduleAnchorDate(scheduleSlots)
     setCurrentMonth(anchor.startOf('month'))
     setSelectedDate(anchor)
-    setSelectedSlotIds(new Set())
-  }, [scheduleSlotsSyncKey])
+    updateGeneralApplicationOverlayKey<string[]>('application.instructor.selectedSlotIds', () => [])
+  }, [scheduleSlotsSyncKey, setCurrentMonth, setSelectedDate])
 
   const scheduleTopRef = useRef<HTMLDivElement>(null)
   const calendarWrapRef = useRef<HTMLDivElement>(null)
@@ -83,7 +94,7 @@ export function InstructorAvailableScheduleParagraph({
   }, [scheduleSlots, selectedDate])
 
   const selectedSlotsOrdered = useMemo(
-    () => scheduleSlots.filter(s => selectedSlotIds.has(s.id)),
+    () => scheduleSlots.filter(s => selectedSlotIds.includes(s.id)),
     [scheduleSlots, selectedSlotIds]
   )
 
@@ -107,10 +118,11 @@ export function InstructorAvailableScheduleParagraph({
 
   const toggleSlot = (slotId: string, dateKey: string) => {
     if (readOnlyPreview) return
-    setSelectedSlotIds(prev => {
-      const next = new Set(prev)
-      if (next.has(slotId)) next.delete(slotId)
-      else next.add(slotId)
+    updateGeneralApplicationOverlayKey<string[]>('application.instructor.selectedSlotIds', prev => {
+      const next = [...(prev ?? [])]
+      const idx = next.indexOf(slotId)
+      if (idx >= 0) next.splice(idx, 1)
+      else next.push(slotId)
       return next
     })
     setSelectedDate(dayjs(dateKey))
@@ -156,7 +168,7 @@ export function InstructorAvailableScheduleParagraph({
                 </div>
               ) : (
                 slotsForSelectedCalendarDay.map(slot => {
-                  const active = selectedSlotIds.has(slot.id)
+                  const active = selectedSlotIds.includes(slot.id)
                   return (
                     <ParagraphChip
                       key={slot.id}

@@ -1,8 +1,8 @@
 import '@/features/template/ui/form-set/application-form/instructor/program-application-form-instructor.css'
 import '@/features/template/ui/shared/paragraph-file-upload.css'
-import { useState } from 'react'
 import { FilePdfOutlined } from '@ant-design/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 
 const MOCK_AGENCY_LINE = 'ID : tinto  |  검증번호 : 940412'
@@ -16,7 +16,10 @@ export function InstructorCrimeRecordParagraph({
   isTemplateAuthoringMode?: boolean
   readOnlyPreview?: boolean
 }) {
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [uploadedFile, setUploadedFile] = useGeneralApplicationOverlayKv<File | null>(
+    'application.instructor.crimeRecordFile',
+    null
+  )
   const readOnly = isTemplateAuthoringMode || readOnlyPreview
 
   const fileUploadCell = (
