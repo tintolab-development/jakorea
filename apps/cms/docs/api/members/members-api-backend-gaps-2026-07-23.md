@@ -3,8 +3,8 @@
 프론트 CMS 회원 관리 LNB 3화면 API 연동 후 확인된 **미존재 API·구조 불일치** 목록입니다.  
 OpenAPI 기준: `openapi/backend.openapi.json` (v9)
 
-연동 명세: [members-api-integration.md](./members-api-integration.md)  
-회원 상세 미존재 endpoint 전용: [members-api-detail-missing-endpoints-handoff.md](./members-api-detail-missing-endpoints-handoff.md)
+연동 명세: [members-api-integration-2026-07-23.md](./members-api-integration-2026-07-23.md)  
+회원 상세 미존재 endpoint 전용: [members-api-detail-missing-endpoints-handoff-2026-06-26.md](./members-api-detail-missing-endpoints-handoff-2026-06-26.md)
 
 ---
 
@@ -235,6 +235,8 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9)
 
 ## 부록 — 사전 등록(`pre-register`) 필드 갭
 
+> **2026-07-23:** 관리자 등록은 `POST /api/admin/admin-accounts` (pre-register 아님). 개인·학교·강사는 **역할별 등록·상세 path 분리**가 canonical — [members-api-backend-handoff-2026-07-23.md](./members-api-backend-handoff-2026-07-23.md) §M-P0-1.
+
 | UI 등록 모달 | `AdminPreRegisterMemberRequest` | 비고 |
 |--------------|----------------------------------|------|
 | 비밀번호 | **없음** | 사전 등록 후 본인 가입 플로우 가정 |
@@ -251,3 +253,4 @@ OpenAPI 기준: `openapi/backend.openapi.json` (v9)
 | 2026-06-12 | 회원 관리 mock→API Phase 0~5 프론트 연동 기준 초안 |
 | 2026-06-12 | 상세 하위 탭 Phase A~C — consent/external-id/정산 연동, #9 확장, #13~#15 추가 |
 | 2026-06-26 | 회원 상세 mock→API 전환 — 기본정보 PATCH, 코멘트, 소속 교사, 신청/참여/관리자 프로그램 이력 |
+| 2026-07-23 | 부록 pre-register — admin-accounts 분리·B안 path 분리 handoff 링크 |

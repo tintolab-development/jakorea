@@ -5,8 +5,8 @@ CMS **회원 상세 풀페이지**(`SCR_MEMBER`, `user-detail-fullpage-modal`) �
 
 - 작성 기준일: 2026-06-26
 - 프론트 remote 조건: `VITE_REAL_API_MODULES`에 `members` 포함
-- 연동 명세: [members-api-integration.md](./members-api-integration.md)
-- 기타 갭( DTO 필드·목록 필터 등): [members-api-backend-gaps.md](./members-api-backend-gaps.md)
+- 연동 명세: [members-api-integration-2026-07-23.md](./members-api-integration-2026-07-23.md)
+- 기타 갭( DTO 필드·목록 필터 등): [members-api-backend-gaps-2026-07-23.md](./members-api-backend-gaps-2026-07-23.md)
 
 ---
 
