@@ -3,9 +3,8 @@ import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE, schoolGradeOptions } from '@/f
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
 import { AddressSearchModal } from '@/features/auth/sign-up/ui/address-search-modal'
-import { SignUpActions } from '../layout/actions'
 import { SignUpLayout } from '../layout/shell'
-import { StepHeader } from '../layout/step-header'
+import { SignUpStepLayout } from '../layout/sign-up-step-layout'
 import styles from '../wizard.module.css'
 
 type ProfileStepProps = {
@@ -17,7 +16,7 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
 
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
-      <StepHeader
+      <SignUpStepLayout
         title="회원 정보를 입력해 주세요"
         description={
           <>
@@ -26,11 +25,24 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
             필요한 정보를 확인해요.
           </>
         }
-        titleClassName={styles.profileTitle}
-        descriptionClassName={styles.profileDescription}
-      />
-
-      <div className={styles.profileContent}>
+        actionsVariant="terms"
+        actions={
+          <>
+            <PFButton
+              size="xlarge"
+              width="100%"
+              disabled={!profile.isValid}
+              onClick={profile.continue}
+            >
+              가입 정보 확인하기
+            </PFButton>
+            <PFButton size="xlarge" variant="tertiary" width="100%" onClick={step.goPrevious}>
+              이전
+            </PFButton>
+          </>
+        }
+      >
+        <div className={styles.profileContent}>
         <PFTextInput size="xlarge" label="이름" value={MOCK_VERIFIED_NAME} required disabled />
         <PFTextInput
           size="xlarge"
@@ -145,21 +157,8 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
           value={profile.volunteerId}
           onValueChange={profile.setVolunteerId}
         />
-      </div>
-
-      <SignUpActions variant="terms">
-        <PFButton
-          size="xlarge"
-          width="100%"
-          disabled={!profile.isValid}
-          onClick={profile.continue}
-        >
-          가입 정보 확인하기
-        </PFButton>
-        <PFButton size="xlarge" variant="tertiary" width="100%" onClick={step.goPrevious}>
-          이전
-        </PFButton>
-      </SignUpActions>
+        </div>
+      </SignUpStepLayout>
 
       <AddressSearchModal
         open={profile.isAddressModalOpen}

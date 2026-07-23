@@ -26,6 +26,7 @@ export {
 export {
   buildConfirmationRows,
   calculateInternationalAge,
+  formatBirthDateInput,
   formatHomeAddress,
   getGenderLabel,
   getMemberTypeLabel,
