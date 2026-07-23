@@ -492,7 +492,7 @@ function buildKpiMetricsForPattern(patternIndex: number, program?: Program): Kpi
 
 function isCompanySchoolKpiProgram(programOrId: Program | string): boolean {
   const id = typeof programOrId === 'string' ? programOrId : programOrId.id
-  const title = typeof programOrId === 'string' ? '' : (programOrId.mainTitle ?? programOrId.title)
+  const title = typeof programOrId === 'string' ? '' : (programOrId.mainTitle ?? programOrId.title ?? '')
   return (
     id.startsWith('economy-prog-') ||
     id.startsWith('company-school-prog-') ||

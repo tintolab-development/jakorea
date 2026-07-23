@@ -1,7 +1,7 @@
 /** 교육 진행 일정 열 고정 폭 */
 export const PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH = 360
 
-/** 교재 배송 현황 테이블 열 폭 — tag100 트리거 116px (8 + 100 + 8) */
+/** 교재 배송 현황 테이블 열 폭 — tag100 트리거 116px (1 + 7 + 100 + 7 + 1, border-box) */
 export const PARTICIPATING_INSTITUTIONS_TEXTBOOK_STATUS_COLUMN_WIDTH = 116
 
 /** 교재 배송 현황 StatusDropdownCell 배지 폭 (editable-status-badge 스펙) */

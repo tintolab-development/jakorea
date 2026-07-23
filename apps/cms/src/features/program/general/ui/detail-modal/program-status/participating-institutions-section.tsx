@@ -54,20 +54,11 @@ import {
   buildParticipatingSchoolPreferredScheduleLines,
   formatParticipatingSchoolSessionLine,
 } from '../../../lib/participating-school-session-display'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import './participating-institutions-section.css'
 
 function formatSessionLine(s: ParticipatingSchoolSession): string {
   return formatParticipatingSchoolSessionLine(s)
-}
-
-function isCompanySchoolProgram(program: Program | null | undefined): boolean {
-  return (
-    program?.id.startsWith('economy-prog-') === true ||
-    program?.id.startsWith('company-school-prog-') === true ||
-    program?.id.startsWith('company-school-local-') === true ||
-    program?.mainTitle?.includes('1사1교') === true ||
-    program?.title.includes('1사1교') === true
-  )
 }
 
 export interface ParticipatingInstitutionsSectionProps {
@@ -247,7 +238,8 @@ export function ParticipatingInstitutionsSection({
     setViewMode('list')
   }
 
-  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
+  const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
+    useProgramTextbookCatalog(program)
 
   const isCompanySchool = isCompanySchoolProgram(program)
   const programBridge = useMemo(
@@ -255,7 +247,9 @@ export function ParticipatingInstitutionsSection({
     [program]
   )
   const maxClassCount = isCompanySchool ? programBridge.maxClassCount : undefined
-  const showTextbookFeatures = program ? programUsesTextbook(program, textbookCatalog) : true
+  const showTextbookFeatures = program
+    ? isTextbookCatalogLoading || programUsesTextbook(program, textbookCatalog)
+    : true
   const showTextbookStatusColumn = isCompanySchool || showTextbookFeatures
 
   const filterFields = useMemo(
