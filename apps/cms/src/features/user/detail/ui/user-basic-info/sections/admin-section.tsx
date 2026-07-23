@@ -90,6 +90,7 @@ export function AdminSection(ctx: BasicInfoSectionContext) {
           isOpen={adminPermissionOpen}
           onOpenChange={setAdminPermissionOpen}
           tagLayout="tag160"
+          chrome="hug"
           emptyPlaceholder="-"
         />
       ) : (

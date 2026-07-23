@@ -9,6 +9,13 @@
   padding: 0;
 }
 
+/* 내부 content 가 program-detail __content(flex:1)를 재사용해도 세로로 늘어나지 않게 */
+.participating-instructor-fullpage-view .program-detail-fullpage-modal__content {
+  flex: 0 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
 .participating-instructor-fullpage-view__posts-tab-wrap {
   display: flex;
   flex-direction: column;

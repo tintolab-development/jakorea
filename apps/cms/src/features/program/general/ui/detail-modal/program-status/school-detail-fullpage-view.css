@@ -5,11 +5,14 @@
 
 @import '../../../../shared/ui/program-detail/project-info/project-info-form-shared.css';
 
-/* 교육기관 상세: 탭 행 패딩 제거 — 본문 하단은 content 패딩 52px */
+/* 교육기관 상세: 본문 하단은 content 패딩 52px — flex 체인은 게시글 탭에만 */
 .school-detail-fullpage-view {
+  width: 100%;
+}
+
+.school-detail-fullpage-view:has(.school-detail-fullpage-view__posts-tab-wrap) {
   display: flex;
   flex-direction: column;
-  width: 100%;
 }
 
 .school-detail-fullpage-view__tabs-row {
@@ -53,8 +56,14 @@
 
 /*
  * 기본 정보 상단 테이블 — 교재명 행(StatusDropdownCell): 54px 고정
- * Ant Table(참여 기관 목록)과 동일 — td 상하 패딩 0 + 트리거 ~49px, 메뉴는 body 포털
+ * Ant Table(참여 기관 목록)과 동일 — td 상하 패딩 0 + 트리거, 메뉴는 body 포털
+ * overflow:clip — hidden 스크롤포트로 인한 열림 시 가로 밀림 방지
  */
+.school-detail-fullpage-view__basic-info-tables
+  .school-detail-fullpage-view__basic-info-table-wrap:first-child {
+  overflow: clip;
+}
+
 .school-detail-fullpage-view__basic-info-tables
   .school-detail-fullpage-view__basic-info-table-wrap:first-child
   tbody
@@ -78,7 +87,8 @@
   padding-top: 0;
   padding-bottom: 0;
   vertical-align: middle;
-  overflow: visible;
+  /* clip: visible 이면 열림 크롬이 표 min-content 를 키워 우측 테두리가 밀림 */
+  overflow: clip;
   box-sizing: border-box;
 }
 
@@ -119,9 +129,13 @@
 .school-detail-fullpage-view__content {
   padding-left: 0;
   padding-right: 0;
+  width: 100%;
+}
+
+.school-detail-fullpage-view:has(.school-detail-fullpage-view__posts-tab-wrap)
+  .school-detail-fullpage-view__content {
   display: flex;
   flex-direction: column;
-  width: 100%;
 }
 
 /*
@@ -306,8 +320,9 @@
   gap: 32px;
 }
 
-/* 테이블 헤더(타이틀 영역)와 테이블 간 gap 16px */
+/* 테이블 헤더(타이틀 영역)와 테이블 간 gap 16px — height:100% 전역 규칙으로 세로 팽창 방지 */
 .school-detail-fullpage-view__instructor-tab .table-header-actions {
+  height: auto;
   margin-bottom: var(--spacing-16);
 }
 

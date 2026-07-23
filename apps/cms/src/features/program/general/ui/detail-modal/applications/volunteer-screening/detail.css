@@ -139,7 +139,7 @@
 .general-volunteer-applicant-detail .general-volunteer-applicant-detail__grid-table-wrap {
   border: 1px solid var(--general-volunteer-detail-table-line);
   border-radius: 6px;
-  overflow: hidden;
+  overflow: clip;
   background: var(--general-volunteer-detail-value-bg);
 }
 

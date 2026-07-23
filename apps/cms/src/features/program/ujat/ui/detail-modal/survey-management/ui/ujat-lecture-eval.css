@@ -12,8 +12,13 @@
 
 .ujat-lecture-eval-survey__download-trailing.cms-button.ant-btn.cms-button--no-label-ellipsis {
   width: max-content !important;
+  min-width: fit-content;
   max-width: none;
+  height: 44px;
   flex-shrink: 0;
+  padding: 6px 16px 6px 10px !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .ujat-lecture-eval-survey__download-trailing.cms-button .cms-button__label {

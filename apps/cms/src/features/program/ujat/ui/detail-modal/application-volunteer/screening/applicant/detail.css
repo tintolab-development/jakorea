@@ -134,7 +134,7 @@
 .applicant-detail .applicant-detail__grid-table-wrap {
   border: 1px solid var(--ujat-volunteer-detail-table-line);
   border-radius: 6px;
-  overflow: hidden;
+  overflow: clip;
   background: var(--ujat-volunteer-detail-value-bg);
 }
 

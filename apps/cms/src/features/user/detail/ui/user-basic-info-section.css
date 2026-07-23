@@ -50,29 +50,7 @@
   flex-shrink: 0;
 }
 
-.user-basic-info-section--school-teacher-profile-card
-  .user-basic-info-section__teacher-employment-dropdown
-  .status-dropdown-cell__status-trigger {
-  box-sizing: border-box;
-  width: auto;
-  min-width: 0;
-  max-width: none;
-  height: 32px;
-  min-height: 32px;
-  max-height: 32px;
-  padding: 0;
-  gap: 0;
-}
-
-.user-basic-info-section--school-teacher-profile-card
-  .user-basic-info-section__teacher-employment-dropdown
-  .status-dropdown-cell__status-trigger--open {
-  height: 32px;
-  min-height: 32px;
-  max-height: 32px;
-  padding: 0;
-}
-
+/* 트리거 패딩·크롬은 StatusDropdownCell chrome="hug" */
 .user-basic-info-section--school-teacher-profile-card
   .user-basic-info-section__teacher-employment-dropdown
   .user-basic-info-section__teacher-employment-badge.app-status-badge,

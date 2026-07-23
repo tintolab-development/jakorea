@@ -80,6 +80,7 @@ export function useGeneralVolunteerApplicantDetail({
   }, [clearApplicantIdFromUrl, programId])
 
   useEffect(() => {
+    // TODO: 모달 X는 바깥 닫기로 통일됨. 등록 핸들러가 호출되지 않으면 제거 검토.
     if (!onRegisterApplicantCloseHandler) return
     const handler = () => {
       if (!selectedApplicantRef.current) return false

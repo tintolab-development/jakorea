@@ -43,6 +43,7 @@ export function GeneralVolunteerApplicantManagerEvaluationSection({
                   setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'A' } : null)
                 }
                 tagLayout="tag100"
+                chrome="hug"
               />
             }
           />
@@ -63,6 +64,7 @@ export function GeneralVolunteerApplicantManagerEvaluationSection({
                   setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'B' } : null)
                 }
                 tagLayout="tag100"
+                chrome="hug"
               />
             }
           />
