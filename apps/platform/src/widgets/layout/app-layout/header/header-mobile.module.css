@@ -2,7 +2,6 @@
   display: flex;
   box-sizing: border-box;
   width: 100%;
-  min-width: 375px;
   height: 56px;
   padding: 0 10px 0 16px;
   justify-content: space-between;
@@ -11,7 +10,7 @@
   background: var(--color-neutral-white);
 }
 
-@media (min-width: 1080px) {
+@media (--bp-pc-up) {
   .header {
     display: none;
   }

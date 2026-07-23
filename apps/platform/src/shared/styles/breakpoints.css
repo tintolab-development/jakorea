@@ -1,0 +1,13 @@
+/**
+ * Platform breakpoint definitions (canonical).
+ * Used by postcss-custom-media (vite.config) — reference in CSS as @media (--bp-pc-up) { … }
+ *
+ * Sync with :root --bp-* in tokens.css and shared/lib/breakpoints.ts
+ */
+@custom-media --bp-mobile-only (max-width: 520px);
+@custom-media --bp-tablet-up (min-width: 521px);
+@custom-media --bp-tablet-only (min-width: 521px) and (max-width: 1079px);
+@custom-media --bp-below-pc (max-width: 1079px);
+@custom-media --bp-pc-up (min-width: 1080px);
+@custom-media --bp-pc-compact (min-width: 1080px) and (max-width: 1359px);
+@custom-media --bp-header-full-up (min-width: 1360px);

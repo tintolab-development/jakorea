@@ -12,4 +12,6 @@ export {
   validateEmailId,
 } from './email-id'
 export type { EmailIdErrorCode, EmailIdValidationResult } from './email-id'
+export { platformBreakpoints, platformMediaQueries } from './breakpoints'
+export type { PlatformBreakpointKey } from './breakpoints'
 export { buildYouTubeNocookieEmbedSrc, extractYouTubeVideoId } from './youtube'
