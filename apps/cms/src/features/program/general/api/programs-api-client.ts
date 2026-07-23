@@ -315,3 +315,148 @@ export async function fetchAdminProgramSurveySummaryRemote(
   if (Array.isArray(body)) return body
   return body.items ?? []
 }
+
+/** GET /api/admin/programs/{programId}/surveys/{templateVersionId}/responses/{formResponseId} */
+export async function fetchAdminProgramSurveyResponseDetailRemote(
+  programId: string,
+  templateVersionId: string,
+  formResponseId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/surveyResponseDetailResponse').SurveyResponseDetailResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/surveys/${encodeURIComponent(templateVersionId)}/responses/${encodeURIComponent(formResponseId)}`,
+      method: 'GET',
+    })
+  )
+}
+
+/** GET /api/admin/programs/{programId}/form-bindings */
+export async function fetchAdminProgramFormBindingsRemote(
+  programId: string
+): Promise<
+  import('@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse').ProgramFormBindingResponse[]
+> {
+  const body = await unwrapApiBody<
+    | import('@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse').ProgramFormBindingResponse[]
+    | {
+        items?: import('@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse').ProgramFormBindingResponse[]
+      }
+  >(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/form-bindings`,
+      method: 'GET',
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.items ?? []
+}
+
+/** POST /api/admin/programs/{programId}/form-bindings */
+export async function createAdminProgramFormBindingRemote(
+  programId: string,
+  payload: import('@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest').ProgramFormBindingRequest
+): Promise<
+  import('@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse').ProgramFormBindingResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/form-bindings`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/** DELETE /api/admin/programs/{programId}/form-bindings/{bindingId} */
+export async function deleteAdminProgramFormBindingRemote(
+  programId: string,
+  bindingId: string
+): Promise<void> {
+  await customInstance({
+    url: `/api/admin/programs/${encodeURIComponent(programId)}/form-bindings/${encodeURIComponent(bindingId)}`,
+    method: 'DELETE',
+  })
+}
+
+/** GET /api/admin/programs/{programId}/managers */
+export async function fetchAdminProgramManagersRemote(
+  programId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programManagerResponse').ProgramManagerResponse[]
+> {
+  const body = await unwrapApiBody<
+    | import('@/shared/api/generated/dashboard/schemas/programManagerResponse').ProgramManagerResponse[]
+    | {
+        items?: import('@/shared/api/generated/dashboard/schemas/programManagerResponse').ProgramManagerResponse[]
+      }
+  >(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/managers`,
+      method: 'GET',
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.items ?? []
+}
+
+/** POST /api/admin/programs/{programId}/managers */
+export async function addAdminProgramManagerRemote(
+  programId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/programAdminAssignmentRequest').ProgramAdminAssignmentRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programManagerResponse').ProgramManagerResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/managers`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/** PATCH /api/admin/programs/{programId}/managers/{assignmentId} */
+export async function updateAdminProgramManagerRemote(
+  programId: string,
+  assignmentId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/programManagerUpdateRequest').ProgramManagerUpdateRequest
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/programManagerResponse').ProgramManagerResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/managers/${encodeURIComponent(assignmentId)}`,
+      method: 'PATCH',
+      data: payload,
+    })
+  )
+}
+
+/** DELETE /api/admin/programs/{programId}/managers/{assignmentId} */
+export async function deleteAdminProgramManagerRemote(
+  programId: string,
+  assignmentId: string
+): Promise<void> {
+  await customInstance({
+    url: `/api/admin/programs/${encodeURIComponent(programId)}/managers/${encodeURIComponent(assignmentId)}`,
+    method: 'DELETE',
+  })
+}
+
+/** POST /api/admin/form-responses/submit — 강의평가 등 관리자 응답 제출 */
+export async function submitAdminFormResponseRemote(
+  payload: import('@/shared/api/generated/forms-surveys/schemas/formResponseCreateRequest').FormResponseCreateRequest
+): Promise<
+  import('@/shared/api/generated/forms-surveys/schemas/formResponseResponse').FormResponseResponse
+> {
+  return unwrapApiBody(
+    await customInstance({
+      url: '/api/admin/form-responses/submit',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: payload,
+    })
+  )
+}

@@ -66,7 +66,7 @@ export function isCompanySchoolProgram(program: Program): boolean {
     program.id.startsWith('company-school-prog-') ||
     program.id.startsWith('company-school-local-') ||
     program.mainTitle?.includes('1사1교') === true ||
-    program.title.includes('1사1교')
+    program.title?.includes('1사1교') === true
   )
 }
 

@@ -9,9 +9,26 @@ export const generalProgramQueryKeys = {
   navigation: (programId: string) =>
     [...generalProgramQueryKeys.all, 'navigation', programId] as const,
   posts: (programId: string) => [...generalProgramQueryKeys.all, 'posts', programId] as const,
+  managers: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'managers', programId] as const,
+  managerCandidates: () => [...generalProgramQueryKeys.all, 'manager-candidates'] as const,
   surveys: (programId: string) => [...generalProgramQueryKeys.all, 'surveys', programId] as const,
+  formBindings: (programId: string) =>
+    [...generalProgramQueryKeys.all, 'form-bindings', programId] as const,
   surveyResponses: (programId: string, templateVersionId: string) =>
     [...generalProgramQueryKeys.all, 'survey-responses', programId, templateVersionId] as const,
+  surveyResponseDetail: (
+    programId: string,
+    templateVersionId: string,
+    formResponseId: string
+  ) =>
+    [
+      ...generalProgramQueryKeys.all,
+      'survey-response-detail',
+      programId,
+      templateVersionId,
+      formResponseId,
+    ] as const,
   surveySummary: (programId: string, templateVersionId: string) =>
     [...generalProgramQueryKeys.all, 'survey-summary', programId, templateVersionId] as const,
   mutations: {

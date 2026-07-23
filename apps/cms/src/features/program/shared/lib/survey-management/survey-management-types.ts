@@ -7,6 +7,8 @@ export type RegisteredSurvey = {
   status: SurveyProgressStatus
   responseCount: number
   participantTotal: number
+  /** remote form-binding id — 삭제 시 사용 */
+  bindingId?: string
 }
 
 export type SurveyPollRawResponse = {

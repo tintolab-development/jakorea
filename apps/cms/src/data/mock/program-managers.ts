@@ -14,6 +14,10 @@ export interface ProgramManagerRow {
   phone: string
   email: string
   registeredAt: string
+  /** remote assignment의 adminId (mock에는 없음) */
+  adminId?: number
+  /** remote 삭제 가능 여부 — false면 선택·삭제 비활성 */
+  removableYn?: boolean
 }
 
 /** UI 표시용 권한 라벨 (시안: PM / 파트너 / 뷰어) */
