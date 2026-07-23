@@ -5,6 +5,7 @@ import {
 import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamation.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './notice.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 function AdminRegisteredFirstLoginNotice() {
   const handleChangePassword = () => {
@@ -13,7 +14,7 @@ function AdminRegisteredFirstLoginNotice() {
 
   return (
     <>
-      <PFText as="p" typo="bd-lg-rg" color="primary-800" className={styles.description}>
+      <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
         현재 비밀번호는 가입된 이메일 주소와 동일합니다.
         <br />
         안전한 이용을 위해 본인인증 후 비밀번호를 변경해 주세요.
@@ -39,7 +40,7 @@ function AdminRegisteredSignUpNotice() {
 
   return (
     <>
-      <PFText as="p" typo="bd-lg-rg" color="primary-800" className={styles.description}>
+      <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
         안전한 이용을 위해 본인인증 후 비밀번호를 변경해 주세요.
       </PFText>
 
@@ -67,8 +68,7 @@ export function AdminRegisteredNoticePage() {
   const isSignUpEntry = isAdminRegisteredSignUpEntry()
 
   return (
-    <section className={styles.page}>
-      <div className={styles.container}>
+    <section>
         <div className={styles.intro}>
           <img
             className={styles.illustration}
@@ -76,12 +76,11 @@ export function AdminRegisteredNoticePage() {
             alt=""
             aria-hidden="true"
           />
-          <PFText as="h1" typo="hd-md" color="black" className={styles.title}>
+          <PFText as="h1" typo="hd-md" color="black" className={authPageCopyClass('title')}>
             관리자가 등록한 계정이에요.
           </PFText>
           {isSignUpEntry ? <AdminRegisteredSignUpNotice /> : <AdminRegisteredFirstLoginNotice />}
         </div>
-      </div>
     </section>
   )
 }

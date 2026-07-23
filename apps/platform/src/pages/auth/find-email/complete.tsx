@@ -1,6 +1,7 @@
 import illustSearchUrl from '@/shared/assets/illustration/illust-search.png'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './complete.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 const MOCK_MASKED_EMAIL = 'Ja****@gmail.com'
 
@@ -14,14 +15,13 @@ export function FindEmailCompletePage() {
   }
 
   return (
-    <section className={styles.page}>
-      <div className={styles.container}>
+    <section>
         <div className={styles.intro}>
           <img className={styles.illustration} src={illustSearchUrl} alt="" aria-hidden="true" />
-          <PFText as="h1" typo="hd-md" color="black" className={styles.title}>
+          <PFText as="h1" typo="hd-md" color="black" className={authPageCopyClass('title')}>
             가입한 이메일을 찾았어요
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={styles.description}>
+          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
             아래 이메일로 로그인할 수 있어요.
           </PFText>
         </div>
@@ -40,7 +40,6 @@ export function FindEmailCompletePage() {
             비밀번호 재설정하기
           </PFButton>
         </div>
-      </div>
     </section>
   )
 }

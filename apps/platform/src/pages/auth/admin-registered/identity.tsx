@@ -1,6 +1,7 @@
 import { requireAdminRegisteredWizardState } from '@/features/auth/admin-registered'
 import { PFButton, PFText } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 export function AdminRegisteredIdentityPage() {
   const wizardState = requireAdminRegisteredWizardState()
@@ -19,13 +20,12 @@ export function AdminRegisteredIdentityPage() {
   }
 
   return (
-    <section className={sharedStyles.page}>
-      <div className={sharedStyles.container}>
+    <section>
         <div className={sharedStyles.header}>
-          <PFText as="h1" typo="hd-sm" color="black" className={sharedStyles.title}>
+          <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
             본인인증을 진행해 주세요
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={sharedStyles.description}>
+          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
             안전하게 가입하기 위해 휴대폰 본인인증이 필요해요. 인증 결과는 생년월일과 함께
             확인하며, 회원가입 절차에만 사용돼요.
           </PFText>
@@ -49,7 +49,6 @@ export function AdminRegisteredIdentityPage() {
             이전으로
           </PFButton>
         </div>
-      </div>
     </section>
   )
 }

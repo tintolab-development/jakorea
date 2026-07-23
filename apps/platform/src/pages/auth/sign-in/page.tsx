@@ -4,6 +4,8 @@ import {
   isMockAdminRegisteredFirstLogin,
   setAdminRegisteredPasswordChangeRequired,
 } from '@/features/auth/admin-registered'
+import { useMediaQuery } from '@/shared/hooks'
+import { platformMediaQueries, setDevAuthLoggedIn, validateEmailId } from '@/shared/lib'
 import {
   GoogleSocialLoginIcon,
   KakaoSocialLoginIcon,
@@ -12,8 +14,8 @@ import {
   PFText,
   PFTextInput,
 } from '@/shared/ui'
-import { setDevAuthLoggedIn, validateEmailId } from '@/shared/lib'
 import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import styles from './page.module.css'
 
 const accountLinkItems: Array<{ label: string; href?: string }> = [
@@ -32,6 +34,7 @@ export function SignInPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
+  const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
 
   const handleEmailChange = (value: string) => {
     setEmail(value)
@@ -68,14 +71,13 @@ export function SignInPage() {
   }
 
   return (
-    <section className={styles.page}>
-      <div className={styles.container}>
+    <section>
         <div className={styles.intro}>
           <img className={styles.illustration} src={illustPeopleUrl} alt="" aria-hidden="true" />
-          <PFText as="div" typo="hd-lg" color="gradient-primary-01" className={styles.title}>
+          <PFText as="div" typo="hd-lg" color="gradient-primary-01" className={authPageCopyClass('title')}>
             다시 만나서 반가워요
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="primary-700">
+          <PFText as="p" typo="bd-lg-rg" color="primary-700" className={authPageCopyClass('description')}>
             이메일과 비밀번호로 로그인 해주세요.
           </PFText>
         </div>
@@ -116,7 +118,7 @@ export function SignInPage() {
             <div className={styles.accountLinkItem} key={item.label}>
               <PFButton
                 variant="text"
-                size="medium"
+                size={isBelowPc ? 'small' : 'medium'}
                 onClick={
                   item.href
                     ? () => {
@@ -157,7 +159,6 @@ export function SignInPage() {
             ))}
           </div>
         </div>
-      </div>
     </section>
   )
 }

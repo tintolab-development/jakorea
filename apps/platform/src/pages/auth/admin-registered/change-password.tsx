@@ -5,6 +5,7 @@ import {
 } from '@/features/auth/admin-registered'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 const PASSWORD_HELP_TEXT = '영문, 숫자, 특수문자를 조합해 8자 이상 입력해 주세요.'
 
@@ -55,13 +56,12 @@ export function AdminRegisteredChangePasswordPage() {
   }
 
   return (
-    <section className={sharedStyles.page}>
-      <div className={sharedStyles.container}>
+    <section>
         <div className={sharedStyles.header}>
-          <PFText as="h1" typo="hd-sm" color="black" className={sharedStyles.title}>
+          <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
             비밀번호를 변경해 주세요.
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={sharedStyles.description}>
+          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
             안전한 계정 이용을 위해 주기적으로 변경해 주세요.
           </PFText>
         </div>
@@ -122,7 +122,6 @@ export function AdminRegisteredChangePasswordPage() {
         <PFButton size="xlarge" width="100%" onClick={handleSubmit}>
           비밀번호 변경하기
         </PFButton>
-      </div>
     </section>
   )
 }

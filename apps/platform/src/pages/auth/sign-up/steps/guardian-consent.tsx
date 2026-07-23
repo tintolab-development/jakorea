@@ -2,6 +2,7 @@ import type { UseSignUpReturn } from '@/features/auth/sign-up'
 import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamation.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './guardian-consent.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 type GuardianConsentStepProps = {
   signUp: UseSignUpReturn
@@ -11,8 +12,7 @@ export function GuardianConsentStep({ signUp }: GuardianConsentStepProps) {
   const { birth } = signUp
 
   return (
-    <section className={styles.page}>
-      <div className={styles.container}>
+    <section>
         <div className={styles.intro}>
           <img
             className={styles.illustration}
@@ -20,10 +20,10 @@ export function GuardianConsentStep({ signUp }: GuardianConsentStepProps) {
             alt=""
             aria-hidden="true"
           />
-          <PFText as="div" typo="hd-md" color="black" className={styles.title}>
+          <PFText as="div" typo="hd-md" color="black" className={authPageCopyClass('title')}>
             보호자님의 확인이 필요해요
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="neutral-cool-500" className={styles.description}>
+          <PFText as="p" typo="bd-lg-rg" color="neutral-cool-500" className={authPageCopyClass('description')}>
             만 14세 미만 회원은 안전한 서비스 이용을 위해
             <br />
             보호자 동의가 필요해요.
@@ -38,7 +38,6 @@ export function GuardianConsentStep({ signUp }: GuardianConsentStepProps) {
             보호자 동의 받기
           </PFButton>
         </div>
-      </div>
     </section>
   )
 }

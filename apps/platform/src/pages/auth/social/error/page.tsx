@@ -7,6 +7,7 @@ import {
 } from '@/shared/ui'
 import illustSquareUrl from '@/shared/assets/illustration/illust-square.svg'
 import styles from './page.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 const socialLoginItems = [
   { label: 'Google 로그인', icon: <GoogleSocialLoginIcon /> },
@@ -28,14 +29,13 @@ export function SocialErrorPage() {
   }
 
   return (
-    <section className={styles.page}>
-      <div className={styles.container}>
+    <section>
         <div className={styles.intro}>
           <img className={styles.illustration} src={illustSquareUrl} alt="" aria-hidden="true" />
-          <PFText as="div" typo="hd-md" color="black" className={styles.title}>
+          <PFText as="div" typo="hd-md" color="black" className={authPageCopyClass('title')}>
             연결된 소셜 계정이 없어요
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="primary-700">
+          <PFText as="p" typo="bd-lg-rg" color="primary-700" className={authPageCopyClass('description')}>
             이 소셜 계정과 연결된 JA Korea 계정을 찾을 수 없어요.
           </PFText>
         </div>
@@ -85,7 +85,6 @@ export function SocialErrorPage() {
             ))}
           </div>
         </div>
-      </div>
     </section>
   )
 }

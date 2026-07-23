@@ -4,6 +4,7 @@ import {
 } from '@/features/auth/admin-registered'
 import { PFButton, PFText } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 export function AdminRegisteredConfirmPage() {
   const wizardState = requireAdminRegisteredWizardState()
@@ -28,13 +29,12 @@ export function AdminRegisteredConfirmPage() {
   }
 
   return (
-    <section className={sharedStyles.page}>
-      <div className={sharedStyles.container}>
+    <section>
         <div className={sharedStyles.header}>
-          <PFText as="h1" typo="hd-sm" color="black" className={sharedStyles.title}>
+          <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
             가입된 정보를 확인해 주세요
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={sharedStyles.description}>
+          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
             변경된 내용이 있다면 정보를 수정해 주세요
           </PFText>
         </div>
@@ -75,7 +75,6 @@ export function AdminRegisteredConfirmPage() {
             이전
           </PFButton>
         </div>
-      </div>
     </section>
   )
 }
