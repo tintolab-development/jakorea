@@ -66,10 +66,6 @@
     },
     {
       "name": "기타 API",
-      "description": "CMS 공통 선택/검색결과 Excel 호환 CSV export API"
-    },
-    {
-      "name": "기타 API",
       "description": "일반 사용자 홈페이지 회원가입 API. CMS 관리자 API와 분리된 public surface입니다."
     },
     {
@@ -91,6 +87,10 @@
     {
       "name": "관리자 운영 기능",
       "description": "관리자 CMS 운영 화면에서 사용하는 통합 기능 API입니다. 대시보드 개인화 설정, 운영 현황, 화면용 편의 기능을 포함합니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "CMS 공통 선택/검색결과 데이터 API. 엑셀 파일 생성은 프론트엔드가 담당하며 기존 CSV 작업 API는 호환용입니다."
     },
     {
       "name": "정산",
@@ -243,6 +243,10 @@
     {
       "name": "시스템 진단/운영 검증",
       "description": "시스템 상태, 릴리즈 준비도, provider 리허설, 오류 코드 카탈로그 등 운영 확인 API입니다."
+    },
+    {
+      "name": "신청/프로그램 워크플로우",
+      "description": "프로그램 신청 현황 및 상태별 사용 가능 액션 조회 API"
     },
     {
       "name": "기타 API",
@@ -419,6 +423,53 @@
         }
       }
     },
+    "/api/admin/inquiries/bulk-delete": {
+      "post": {
+        "tags": [
+          "콘텐츠/고객지원"
+        ],
+        "summary": "POST /api/admin/inquiries/bulk-delete",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/inquiries/bulk-delete\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/inquiries/bulk-delete`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: INQUIRY_WRITE 권한 필요\n- 접근 범위: GLOBAL 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Frontend bulk API handoff implemented with max 100 and partial-success contract",
+        "operationId": "bulkDelete_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkIdsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseBulkActionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/content/notices": {
       "get": {
         "tags": [
@@ -509,6 +560,53 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseNoticeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/content/notices/bulk-delete": {
+      "post": {
+        "tags": [
+          "CMS 콘텐츠"
+        ],
+        "summary": "POST /api/admin/content/notices/bulk-delete",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/content/notices/bulk-delete\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/content/notices/bulk-delete`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: BOARD_WRITE 권한 필요\n- 접근 범위: GLOBAL 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NONE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Frontend bulk API handoff implemented with max 100 and partial-success contract",
+        "operationId": "bulkDeleteNotices",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkIdsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseBulkActionResponse"
                 }
               }
             }
@@ -733,6 +831,53 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResponseFaqResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/admin/content/faqs/bulk-delete": {
+      "post": {
+        "tags": [
+          "CMS 콘텐츠"
+        ],
+        "summary": "POST /api/admin/content/faqs/bulk-delete",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/content/faqs/bulk-delete\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/content/faqs/bulk-delete`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: BOARD_WRITE 권한 필요\n- 접근 범위: GLOBAL 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NONE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Frontend bulk API handoff implemented with max 100 and partial-success contract",
+        "operationId": "bulkDeleteFaqs",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkIdsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseBulkActionResponse"
                 }
               }
             }
@@ -1546,6 +1691,50 @@
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "콘텐츠/고객지원"
+        ],
+        "summary": "관리자 삭제",
+        "description": "### 이 API가 하는 일\n- 관리자 삭제\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `DELETE /api/admin/inquiries/{inquiryId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: INQUIRY_WRITE 권한 필요\n- 접근 범위: GLOBAL 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Frontend bulk API handoff implemented with max 100 and partial-success contract",
+        "operationId": "deleteInquiry",
+        "parameters": [
+          {
+            "name": "inquiryId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseVoid"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
       }
     }
   },
@@ -2028,6 +2217,12 @@
           },
           "layout": {
             "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "detailJson": {
+            "type": "string"
           }
         }
       },
@@ -2063,6 +2258,12 @@
           "maxLimitWon": {
             "type": "integer",
             "format": "int64"
+          },
+          "description": {
+            "type": "string"
+          },
+          "detailJson": {
+            "type": "string"
           }
         }
       },
@@ -2181,6 +2382,18 @@
             "items": {
               "type": "string"
             }
+          },
+          "remarkLines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "detailJson": {
+            "type": "string"
           },
           "rateItems": {
             "type": "array",
@@ -4968,27 +5181,21 @@
           }
         }
       },
-      "VolunteerFinalResultRequest": {
+      "ApplicationGiveUpRequest": {
         "type": "object",
-        "description": "봉사자 최종 결과 처리 요청",
+        "description": "신청 포기 처리 요청",
         "properties": {
-          "result": {
-            "type": "string",
-            "description": "최종 결과. 예: PASS, FAIL, RESERVE",
-            "example": "PASS"
-          },
-          "reserveRank": {
-            "type": "integer",
-            "format": "int32",
-            "description": "예비 합격 순위. 결과가 RESERVE일 때 사용합니다.",
-            "example": 1
-          },
           "reason": {
             "type": "string",
-            "description": "최종 결과 처리 사유",
-            "example": "면접 평가 기준 충족"
+            "description": "포기 사유. 상태 이력에 저장됩니다.",
+            "example": "개인 일정으로 참여 불가",
+            "maxLength": 500,
+            "minLength": 2
           }
-        }
+        },
+        "required": [
+          "reason"
+        ]
       },
       "ApplicationDecisionResponse": {
         "type": "object",
@@ -5022,13 +5229,172 @@
           }
         }
       },
-      "DocumentResultRequest": {
+      "VolunteerFinalResultRequest": {
         "type": "object",
+        "description": "봉사자 최종 결과 처리 요청",
         "properties": {
           "result": {
-            "type": "string"
+            "type": "string",
+            "description": "최종 결과. PASS/APPROVED, FAIL/REJECTED, RESERVE",
+            "enum": [
+              "PASS",
+              "FAIL",
+              "RESERVE"
+            ],
+            "example": "PASS"
+          },
+          "reserveRank": {
+            "type": "integer",
+            "format": "int32",
+            "description": "예비 합격 순위. RESERVE일 때 1~4 필수",
+            "example": 1,
+            "maximum": 4,
+            "minimum": 1
           },
           "reason": {
+            "type": "string",
+            "description": "최종 결과 처리 사유. FAIL인 경우 필수",
+            "example": "면접 평가 기준 미충족",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "DocumentResultRequest": {
+        "type": "object",
+        "description": "봉사자 서류 결과 처리 요청",
+        "properties": {
+          "result": {
+            "type": "string",
+            "description": "서류 결과. PASS/DOCUMENT_PASSED 또는 FAIL/REJECTED",
+            "enum": [
+              "PASS",
+              "FAIL"
+            ],
+            "example": "PASS"
+          },
+          "reason": {
+            "type": "string",
+            "description": "반려 사유. FAIL인 경우 필수",
+            "example": "지원 요건 미충족",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "BulkResultRequest": {
+        "type": "object",
+        "description": "다건 선발 결과 처리 요청",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "result": {
+            "type": "string",
+            "description": "업무 API가 허용하는 결과값. 봉사자 서류: PASS/FAIL, 최종: PASS/FAIL",
+            "example": "PASS",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "reserveRank": {
+            "type": "integer",
+            "format": "int32",
+            "description": "예비 합격 순위. 다건 요청에서는 모든 대상에 동일 순위를 적용하지 않으므로 현재 미지원"
+          }
+        },
+        "required": [
+          "ids",
+          "result"
+        ]
+      },
+      "ApiResponseBulkActionResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/BulkActionResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "BulkActionResponse": {
+        "type": "object",
+        "description": "다건 처리 결과",
+        "properties": {
+          "requestedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "successCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failureCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "successIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "failures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BulkFailure"
+            }
+          }
+        }
+      },
+      "BulkFailure": {
+        "type": "object",
+        "description": "개별 실패 정보",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
             "type": "string"
           }
         }
@@ -5288,6 +5654,37 @@
           }
         }
       },
+      "BulkDecisionRequest": {
+        "type": "object",
+        "description": "다건 승인·반려 요청",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "description": "처리 대상 ID",
+            "example": [
+              101,
+              102,
+              103
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "reason": {
+            "type": "string",
+            "description": "반려·불합격 사유. 승인 요청에서는 생략합니다.",
+            "example": "필수 서류 미제출",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "ids"
+        ]
+      },
       "UjatEducationRegionCreateRequest": {
         "type": "object",
         "properties": {
@@ -5424,6 +5821,30 @@
             "type": "string"
           }
         }
+      },
+      "BulkIdsRequest": {
+        "type": "object",
+        "description": "다건 처리 대상 ID 요청",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "description": "처리 대상 ID. 중복 ID는 허용하지 않습니다.",
+            "example": [
+              101,
+              102,
+              103
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "ids"
+        ]
       },
       "TermsDocumentUpsertRequest": {
         "type": "object",
@@ -6470,12 +6891,6 @@
             "type": "string"
           },
           "applicationEndDate": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "lifecycleStatus": {
             "type": "string"
           },
           "businessArea": {
@@ -9624,6 +10039,42 @@
           "reason"
         ]
       },
+      "InstructorRoleBulkReviewRequest": {
+        "type": "object",
+        "description": "강사 권한 신청 일괄 승인·반려 요청",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "activityType": {
+            "type": "string"
+          },
+          "feeGrade": {
+            "type": "string"
+          },
+          "jaGrade": {
+            "type": "string"
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "ids",
+          "reason"
+        ]
+      },
       "InstructorFeePolicyUpsertRequest": {
         "type": "object",
         "properties": {
@@ -10303,12 +10754,12 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessEndDate": {
-            "type": "string"
-          },
           "businessYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "businessEndDate": {
+            "type": "string"
           },
           "businessStartDate": {
             "type": "string"
@@ -11423,6 +11874,74 @@
           }
         }
       },
+      "ApiResponseCommonExportDataResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/CommonExportDataResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "CommonExportDataResponse": {
+        "type": "object",
+        "properties": {
+          "exportType": {
+            "type": "string"
+          },
+          "exportMode": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "rowCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "privacyIncludedYn": {
+            "type": "boolean"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "auditLogId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "DetailedProgramRequest": {
         "type": "object",
         "properties": {
@@ -12375,31 +12894,6 @@
           }
         }
       },
-      "InterviewAssignmentRequest": {
-        "type": "object",
-        "properties": {
-          "interviewSlotId": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ApplicationGiveUpRequest": {
-        "type": "object",
-        "description": "신청 포기 처리 요청",
-        "properties": {
-          "reason": {
-            "type": "string",
-            "description": "포기 사유. 상태 이력에 저장됩니다.",
-            "example": "개인 일정으로 참여 불가",
-            "maxLength": 500,
-            "minLength": 2
-          }
-        },
-        "required": [
-          "reason"
-        ]
-      },
       "AdminPermissionRequestNotificationResponse": {
         "type": "object",
         "properties": {
@@ -12524,6 +13018,35 @@
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
           }
         }
+      },
+      "AdminApprovalBulkDecisionRequest": {
+        "type": "object",
+        "description": "관리자 승인 대기 계정 일괄 승인·반려 요청",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "roleCode": {
+            "type": "string"
+          },
+          "requestedRoleCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ids"
+        ]
       },
       "AdminAccountCreateRequest": {
         "type": "object",
@@ -13370,12 +13893,6 @@
           "applicationEndDate": {
             "type": "string"
           },
-          "status": {
-            "type": "string"
-          },
-          "lifecycleStatus": {
-            "type": "string"
-          },
           "businessArea": {
             "type": "string"
           },
@@ -13541,6 +14058,13 @@
           },
           "serviceDetailJson": {
             "type": "string"
+          },
+          "clearFields": {
+            "type": "array",
+            "description": "PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

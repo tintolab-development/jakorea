@@ -66,10 +66,6 @@
     },
     {
       "name": "기타 API",
-      "description": "CMS 공통 선택/검색결과 Excel 호환 CSV export API"
-    },
-    {
-      "name": "기타 API",
       "description": "일반 사용자 홈페이지 회원가입 API. CMS 관리자 API와 분리된 public surface입니다."
     },
     {
@@ -91,6 +87,10 @@
     {
       "name": "관리자 운영 기능",
       "description": "관리자 CMS 운영 화면에서 사용하는 통합 기능 API입니다. 대시보드 개인화 설정, 운영 현황, 화면용 편의 기능을 포함합니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "CMS 공통 선택/검색결과 데이터 API. 엑셀 파일 생성은 프론트엔드가 담당하며 기존 CSV 작업 API는 호환용입니다."
     },
     {
       "name": "정산",
@@ -243,6 +243,10 @@
     {
       "name": "시스템 진단/운영 검증",
       "description": "시스템 상태, 릴리즈 준비도, provider 리허설, 오류 코드 카탈로그 등 운영 확인 API입니다."
+    },
+    {
+      "name": "신청/프로그램 워크플로우",
+      "description": "프로그램 신청 현황 및 상태별 사용 가능 액션 조회 API"
     },
     {
       "name": "기타 API",
@@ -1039,6 +1043,12 @@
           },
           "layout": {
             "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "detailJson": {
+            "type": "string"
           }
         }
       },
@@ -1074,6 +1084,12 @@
           "maxLimitWon": {
             "type": "integer",
             "format": "int64"
+          },
+          "description": {
+            "type": "string"
+          },
+          "detailJson": {
+            "type": "string"
           }
         }
       },
@@ -1192,6 +1208,18 @@
             "items": {
               "type": "string"
             }
+          },
+          "remarkLines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "detailJson": {
+            "type": "string"
           },
           "rateItems": {
             "type": "array",
@@ -3979,27 +4007,21 @@
           }
         }
       },
-      "VolunteerFinalResultRequest": {
+      "ApplicationGiveUpRequest": {
         "type": "object",
-        "description": "봉사자 최종 결과 처리 요청",
+        "description": "신청 포기 처리 요청",
         "properties": {
-          "result": {
-            "type": "string",
-            "description": "최종 결과. 예: PASS, FAIL, RESERVE",
-            "example": "PASS"
-          },
-          "reserveRank": {
-            "type": "integer",
-            "format": "int32",
-            "description": "예비 합격 순위. 결과가 RESERVE일 때 사용합니다.",
-            "example": 1
-          },
           "reason": {
             "type": "string",
-            "description": "최종 결과 처리 사유",
-            "example": "면접 평가 기준 충족"
+            "description": "포기 사유. 상태 이력에 저장됩니다.",
+            "example": "개인 일정으로 참여 불가",
+            "maxLength": 500,
+            "minLength": 2
           }
-        }
+        },
+        "required": [
+          "reason"
+        ]
       },
       "ApplicationDecisionResponse": {
         "type": "object",
@@ -4033,13 +4055,172 @@
           }
         }
       },
-      "DocumentResultRequest": {
+      "VolunteerFinalResultRequest": {
         "type": "object",
+        "description": "봉사자 최종 결과 처리 요청",
         "properties": {
           "result": {
-            "type": "string"
+            "type": "string",
+            "description": "최종 결과. PASS/APPROVED, FAIL/REJECTED, RESERVE",
+            "enum": [
+              "PASS",
+              "FAIL",
+              "RESERVE"
+            ],
+            "example": "PASS"
+          },
+          "reserveRank": {
+            "type": "integer",
+            "format": "int32",
+            "description": "예비 합격 순위. RESERVE일 때 1~4 필수",
+            "example": 1,
+            "maximum": 4,
+            "minimum": 1
           },
           "reason": {
+            "type": "string",
+            "description": "최종 결과 처리 사유. FAIL인 경우 필수",
+            "example": "면접 평가 기준 미충족",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "DocumentResultRequest": {
+        "type": "object",
+        "description": "봉사자 서류 결과 처리 요청",
+        "properties": {
+          "result": {
+            "type": "string",
+            "description": "서류 결과. PASS/DOCUMENT_PASSED 또는 FAIL/REJECTED",
+            "enum": [
+              "PASS",
+              "FAIL"
+            ],
+            "example": "PASS"
+          },
+          "reason": {
+            "type": "string",
+            "description": "반려 사유. FAIL인 경우 필수",
+            "example": "지원 요건 미충족",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "BulkResultRequest": {
+        "type": "object",
+        "description": "다건 선발 결과 처리 요청",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "result": {
+            "type": "string",
+            "description": "업무 API가 허용하는 결과값. 봉사자 서류: PASS/FAIL, 최종: PASS/FAIL",
+            "example": "PASS",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "reserveRank": {
+            "type": "integer",
+            "format": "int32",
+            "description": "예비 합격 순위. 다건 요청에서는 모든 대상에 동일 순위를 적용하지 않으므로 현재 미지원"
+          }
+        },
+        "required": [
+          "ids",
+          "result"
+        ]
+      },
+      "ApiResponseBulkActionResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/BulkActionResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "BulkActionResponse": {
+        "type": "object",
+        "description": "다건 처리 결과",
+        "properties": {
+          "requestedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "successCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failureCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "successIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "failures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BulkFailure"
+            }
+          }
+        }
+      },
+      "BulkFailure": {
+        "type": "object",
+        "description": "개별 실패 정보",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
             "type": "string"
           }
         }
@@ -4299,6 +4480,37 @@
           }
         }
       },
+      "BulkDecisionRequest": {
+        "type": "object",
+        "description": "다건 승인·반려 요청",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "description": "처리 대상 ID",
+            "example": [
+              101,
+              102,
+              103
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "reason": {
+            "type": "string",
+            "description": "반려·불합격 사유. 승인 요청에서는 생략합니다.",
+            "example": "필수 서류 미제출",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "ids"
+        ]
+      },
       "UjatEducationRegionCreateRequest": {
         "type": "object",
         "properties": {
@@ -4435,6 +4647,30 @@
             "type": "string"
           }
         }
+      },
+      "BulkIdsRequest": {
+        "type": "object",
+        "description": "다건 처리 대상 ID 요청",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "description": "처리 대상 ID. 중복 ID는 허용하지 않습니다.",
+            "example": [
+              101,
+              102,
+              103
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "ids"
+        ]
       },
       "TermsDocumentUpsertRequest": {
         "type": "object",
@@ -5481,12 +5717,6 @@
             "type": "string"
           },
           "applicationEndDate": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "lifecycleStatus": {
             "type": "string"
           },
           "businessArea": {
@@ -8635,6 +8865,42 @@
           "reason"
         ]
       },
+      "InstructorRoleBulkReviewRequest": {
+        "type": "object",
+        "description": "강사 권한 신청 일괄 승인·반려 요청",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "activityType": {
+            "type": "string"
+          },
+          "feeGrade": {
+            "type": "string"
+          },
+          "jaGrade": {
+            "type": "string"
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "ids",
+          "reason"
+        ]
+      },
       "InstructorFeePolicyUpsertRequest": {
         "type": "object",
         "properties": {
@@ -9314,12 +9580,12 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessEndDate": {
-            "type": "string"
-          },
           "businessYear": {
             "type": "integer",
             "format": "int32"
+          },
+          "businessEndDate": {
+            "type": "string"
           },
           "businessStartDate": {
             "type": "string"
@@ -10434,6 +10700,74 @@
           }
         }
       },
+      "ApiResponseCommonExportDataResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/CommonExportDataResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "CommonExportDataResponse": {
+        "type": "object",
+        "properties": {
+          "exportType": {
+            "type": "string"
+          },
+          "exportMode": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            }
+          },
+          "rowCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "privacyIncludedYn": {
+            "type": "boolean"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "auditLogId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "DetailedProgramRequest": {
         "type": "object",
         "properties": {
@@ -11386,31 +11720,6 @@
           }
         }
       },
-      "InterviewAssignmentRequest": {
-        "type": "object",
-        "properties": {
-          "interviewSlotId": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "ApplicationGiveUpRequest": {
-        "type": "object",
-        "description": "신청 포기 처리 요청",
-        "properties": {
-          "reason": {
-            "type": "string",
-            "description": "포기 사유. 상태 이력에 저장됩니다.",
-            "example": "개인 일정으로 참여 불가",
-            "maxLength": 500,
-            "minLength": 2
-          }
-        },
-        "required": [
-          "reason"
-        ]
-      },
       "AdminPermissionRequestNotificationResponse": {
         "type": "object",
         "properties": {
@@ -11535,6 +11844,35 @@
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
           }
         }
+      },
+      "AdminApprovalBulkDecisionRequest": {
+        "type": "object",
+        "description": "관리자 승인 대기 계정 일괄 승인·반려 요청",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "roleCode": {
+            "type": "string"
+          },
+          "requestedRoleCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ids"
+        ]
       },
       "AdminAccountCreateRequest": {
         "type": "object",
@@ -12381,12 +12719,6 @@
           "applicationEndDate": {
             "type": "string"
           },
-          "status": {
-            "type": "string"
-          },
-          "lifecycleStatus": {
-            "type": "string"
-          },
           "businessArea": {
             "type": "string"
           },
@@ -12552,6 +12884,13 @@
           },
           "serviceDetailJson": {
             "type": "string"
+          },
+          "clearFields": {
+            "type": "array",
+            "description": "PATCH에서 명시적으로 null로 초기화할 필드 목록. 생략/null은 기존 값 유지",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

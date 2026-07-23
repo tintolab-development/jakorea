@@ -15,8 +15,11 @@ export interface BulkResultRequest {
      * @maxItems 100
      */
   ids: number[];
-  /** PASS, FAIL, APPROVED, REJECTED 중 업무 API가 허용하는 값 */
-  result?: string;
+  /**
+     * 업무 API가 허용하는 결과값. 봉사자 서류: PASS/FAIL, 최종: PASS/FAIL
+     * @minLength 1
+     */
+  result: string;
   /**
      * @minLength 0
      * @maxLength 500
