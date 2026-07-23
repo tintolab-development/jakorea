@@ -31,8 +31,8 @@ export function DetailFormsSection() {
     >
       <p className="ds-note">
         <code>mode=&quot;view&quot; | &quot;edit&quot;</code>는 Root에 두고 Field의 <code>view</code>/
-        <code>edit</code> 슬롯이 전환됩니다. 상위에 이미 제목이 있으면 <code>hideHeader</code>를
-        사용합니다.
+        <code>edit</code> 슬롯이 전환됩니다. 수정 슬롯 인풋은 <code>inputSize=&quot;medium&quot;</code>
+        (40px). 상위에 이미 제목이 있으면 <code>hideHeader</code>를 사용합니다.
       </p>
 
       <DsDemo label="view / edit">
@@ -67,14 +67,24 @@ export function DetailFormsSection() {
               required
               view={name}
               edit={
-                <CmsInput value={name} onChange={e => setName(e.target.value)} width="100%" />
+                <CmsInput
+                  inputSize="medium"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  width="100%"
+                />
               }
             />
             <DetailInfoForm.Field
               label="이메일"
               view={email}
               edit={
-                <CmsInput value={email} onChange={e => setEmail(e.target.value)} width="100%" />
+                <CmsInput
+                  inputSize="medium"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  width="100%"
+                />
               }
             />
           </DetailInfoForm.Row>
@@ -84,7 +94,12 @@ export function DetailFormsSection() {
               fullRow
               view={memo}
               edit={
-                <CmsInput value={memo} onChange={e => setMemo(e.target.value)} width="100%" />
+                <CmsInput
+                  inputSize="medium"
+                  value={memo}
+                  onChange={e => setMemo(e.target.value)}
+                  width="100%"
+                />
               }
             />
           </DetailInfoForm.Row>

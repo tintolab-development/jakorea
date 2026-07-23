@@ -5,6 +5,7 @@ import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrol
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { useCmsAlert } from '@/shared/ui'
+import { PROGRAM_EDIT_INFO_BUTTON_PROPS } from '@/features/program/shared/lib/program-edit-info-button'
 import type { UjatEducationProgressInstitutionDetailTab } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import {
   UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TAB_LABELS,
@@ -243,9 +244,7 @@ export function UjatEducationProgressInstitutionDetailView({
             </CmsButton>
             <CmsButton
               type="button"
-              variant="secondary"
-              size="large"
-              width={160}
+              {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
               onClick={handleApplicationInfoButtonClick}
             >
               {isApplicationInfoEditing ? '정보 저장' : '정보 수정'}

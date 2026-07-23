@@ -121,7 +121,28 @@
 }
 
 .cms-button.ant-btn.cms-button--no-label-ellipsis.cms-button--large {
-  width: auto;
+  width: max-content;
+  min-width: fit-content;
+  max-width: none;
+}
+
+/* 긴 라벨 + 아이콘 — large+icon 패딩(6 16 6 10)·세로 중앙 유지 */
+.cms-button.ant-btn.cms-button--no-label-ellipsis.cms-button--large.cms-button--has-icon {
+  padding: 6px 16px 6px 10px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 비주얼 아이콘은 children(`cms-button__icon`) — 비로딩 시 antd icon 슬롯(잔여)은 레이아웃에서 제외 */
+.cms-button.ant-btn:not(.ant-btn-loading) > .ant-btn-icon {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none;
 }
 
 /* ----- variant (enabled) ----- */

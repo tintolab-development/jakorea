@@ -26,6 +26,7 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
@@ -124,7 +125,8 @@ function renderWaitingTableEmpty() {
   )
 }
 
-/** TODO(api): 강사 중첩 탭 mutation — assignment/lecture-reports/settlement.
+/** TODO(api): 강사 중첩 탭 mutation 잔여 — institutionAssignment·settlement.
+ * lectureReports: GET list hybrid (`useProgramLectureReports`).
  * 1사1교 정산은 100km·교통·숙박·wagePolicies/paymentItems 구조화 계약 후. */
 export const INSTRUCTOR_DETAIL_TAB_KEYS = [
   'application',
@@ -160,7 +162,7 @@ function isCompanySchoolProgram(program: Program): boolean {
     program.id.startsWith('company-school-prog-') ||
     program.id.startsWith('company-school-local-') ||
     program.mainTitle?.includes('1사1교') === true ||
-    program.title.includes('1사1교')
+    program.title?.includes('1사1교') === true
   )
 }
 
@@ -1020,9 +1022,7 @@ export function ParticipatingInstructorFullpageView({
                 활동인증서 발급
               </CmsButton>
               <CmsButton
-                variant="secondary"
-                size="large"
-                width={140}
+                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
                 disabled={isAdminCommentEditing}
                 onClick={resolveProgramEditInfoClick(applicationInfoEdit.isEditing, {
                   onEnterEdit: applicationInfoEdit.enterEdit,

@@ -33,6 +33,7 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { BasicInfoSection } from '@/features/program/shared/ui/program-detail/project-info/common-info/basic-info-section'
@@ -1534,8 +1535,7 @@ export function TrainedTeachersCommonInfoView({
     <div className="trained-teachers-common-info program-detail-fullpage-modal__info-tab">
       <div className="trained-teachers-common-info__header">
         <CmsButton
-          size="large"
-          width={140}
+          {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
           loading={saving || persistPending}
           onClick={resolveProgramEditInfoClick(isEditMode, {
             onEnterEdit: onEdit ?? (() => {}),

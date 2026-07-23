@@ -100,6 +100,7 @@ import { programDetailInstitutionsEditSchema } from '@/features/program/shared/m
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -1144,6 +1145,7 @@ export function UjatProgramDetailFullPageModal({
     }
   }, [activeRecruitTab, institutionsTriggerSave, volunteersTriggerSave, setEditMode])
 
+  // TODO: X는 바깥 모달 닫기로 통일됨. breadcrumb/목록 복귀 외 용도가 없으면 등록부 제거 검토.
   const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
   const registerVolunteerFromMemberRef = useRef<(memberId: string) => void>(() => {})
   const [volunteerApplicantDetailMeta, setVolunteerApplicantDetailMeta] =
@@ -1646,44 +1648,6 @@ export function UjatProgramDetailFullPageModal({
     [closeVolAddRegistration]
   )
 
-  const handleHeaderCloseClick = useCallback(() => {
-    if (volAddMemberId) {
-      closeVolAddRegistration()
-      return
-    }
-    if (institutionDetailId) {
-      setInstitutionApplicationId(null)
-      return
-    }
-    if (eduInstitutionDetailId) {
-      setEduInstitutionId(null)
-      return
-    }
-    if (eduVolunteerDetailId) {
-      setEduVolunteerId(null)
-      return
-    }
-    if (
-      isUjatVolunteerApplicantDetailRoute(activeLnb, activeTab) &&
-      volunteerApplicantCloseHandlerRef.current?.()
-    ) {
-      return
-    }
-    handleClose()
-  }, [
-    institutionDetailId,
-    setInstitutionApplicationId,
-    eduInstitutionDetailId,
-    setEduInstitutionId,
-    eduVolunteerDetailId,
-    setEduVolunteerId,
-    activeLnb,
-    activeTab,
-    volAddMemberId,
-    closeVolAddRegistration,
-    handleClose,
-  ])
-
   if (!open) return null
 
   const programTitle = displayProgram?.title ?? '프로그램 상세'
@@ -1780,17 +1744,9 @@ export function UjatProgramDetailFullPageModal({
     <DetailFullPageModal
       open={open}
       onClose={handleClose}
-      onHeaderClose={handleHeaderCloseClick}
       title={title}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
-      closeAriaLabel={
-        volAddMemberId ||
-        institutionDetailId ||
-        eduInstitutionDetailId ||
-        eduVolunteerDetailId
-          ? '목록으로'
-          : '닫기'
-      }
+      closeAriaLabel="닫기"
       className="program-detail-fullpage-modal ujat-program-detail-fullpage-modal"
       sidebar={
         programId ? (
@@ -1819,9 +1775,7 @@ export function UjatProgramDetailFullPageModal({
               <div className="ujat-detail-modal__info-header">
                 <div className="program-detail-fullpage-modal__header-actions">
                   <CmsButton
-                    variant="secondary"
-                    size="large"
-                    width={140}
+                    {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
                     disabled={!canEditInfo && !isEditModeInfo}
                     onClick={resolveProgramEditInfoClick(isEditModeInfo, {
                       onEnterEdit: handleInfoEdit,

@@ -40,6 +40,7 @@ import './project-info-form-shared.css'
 import { CmsButton } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -180,9 +181,7 @@ function ProjectInfoDetailTabsRow({
 }) {
   const editInfoButton = (isEditing: boolean, onSave: () => void) => (
     <CmsButton
-      variant="secondary"
-      size="large"
-      width={140}
+      {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
       onClick={resolveProgramEditInfoClick(isEditing, {
         onEnterEdit: onInfoEdit,
         onSaveEdit: onSave,
@@ -236,8 +235,7 @@ function ProjectInfoHiddenTabsInfoActions({
   return (
     <div className="project-info-detail__hidden-tabs-info-actions">
       <CmsButton
-        size="large"
-        width={140}
+        {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
         onClick={resolveProgramEditInfoClick(isEditModeInfo, {
           onEnterEdit: onInfoEdit,
           onSaveEdit: onInfoSave,

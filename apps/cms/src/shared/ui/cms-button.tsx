@@ -62,11 +62,26 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
   ) => {
     const hasIcon = icon != null
     const resolvedWidth = width == null ? undefined : typeof width === 'number' ? `${width}px` : width
-    /** size 기본 width·has-icon min-width를 덮어쓰도록 width/min/max 함께 지정 */
+    /**
+     * 고정 폭: width/min/max를 동일 값으로 덮어 size·has-icon 기본 min-width를 깬다.
+     * fluid(`auto`/`max-content`/`fit-content`): max-content 기준으로 긴 라벨이 잘리지 않게 한다.
+     * (`auto`에 min=max=auto를 넣으면 has-icon 180 고정·정렬이 깨질 수 있음)
+     */
+    const isFluidWidth =
+      resolvedWidth === 'auto' ||
+      resolvedWidth === 'max-content' ||
+      resolvedWidth === 'fit-content' ||
+      resolvedWidth === 'min-content'
     const widthStyle: CSSProperties | undefined =
-      resolvedWidth != null
-        ? { width: resolvedWidth, minWidth: resolvedWidth, maxWidth: resolvedWidth }
-        : undefined
+      resolvedWidth == null
+        ? undefined
+        : isFluidWidth
+          ? {
+              width: resolvedWidth === 'auto' ? 'max-content' : resolvedWidth,
+              minWidth: 'fit-content',
+              maxWidth: 'none',
+            }
+          : { width: resolvedWidth, minWidth: resolvedWidth, maxWidth: resolvedWidth }
 
     const antdSize = size === 'large' ? 'large' : size === 'small' ? 'small' : 'middle'
     const isLoading = Boolean(loading)

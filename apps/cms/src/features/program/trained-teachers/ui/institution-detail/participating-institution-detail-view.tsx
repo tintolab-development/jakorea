@@ -9,6 +9,7 @@ import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
@@ -21,6 +22,7 @@ import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollm
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import {
   StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components'
 import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/data/mock/participating-schools'
 import type { TextbookStatusKey } from '@/data/mock/participating-schools'
@@ -227,16 +229,18 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
 
   const textbookStatusCell =
     onTextbookStatusChange != null ? (
-      <StatusDropdownCell<TextbookStatusKey>
-        status={mergedDetail.textbookStatus}
-        statusOptions={TEXTBOOK_STATUS_OPTION_KEYS}
-        renderBadge={s => <TextbookStatusBadge status={s} />}
-        isItemDisabled={(cur, opt) => cur === opt}
-        onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
-        isOpen={textbookStatusDropdownOpen}
-        onOpenChange={setTextbookStatusDropdownOpen}
-        tagLayout="tag100"
-      />
+      <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
+        <StatusDropdownCell<TextbookStatusKey>
+          status={mergedDetail.textbookStatus}
+          statusOptions={TEXTBOOK_STATUS_OPTION_KEYS}
+          renderBadge={s => <TextbookStatusBadge status={s} />}
+          isItemDisabled={(cur, opt) => cur === opt}
+          onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
+          isOpen={textbookStatusDropdownOpen}
+          onOpenChange={setTextbookStatusDropdownOpen}
+          tagLayout="tag100"
+        />
+      </span>
     ) : (
       <TextbookStatusBadge status={mergedDetail.textbookStatus} />
     )
@@ -319,9 +323,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                 활동 포기
               </CmsButton>
               <CmsButton
-                variant="secondary"
-                size="large"
-                width={140}
+                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
                 disabled={isAdminCommentEditing}
                 onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
                   onEnterEdit: enterApplicationInfoEdit,
