@@ -1,5 +1,5 @@
 .shell {
-  --mypage-header-height: var(--spacing-100);
+  --mypage-header-height: var(--app-header-height);
   --mypage-sidebar-width: 461px;
   --mypage-background-height: 400px;
   --mypage-hero-fade-length: 150px;

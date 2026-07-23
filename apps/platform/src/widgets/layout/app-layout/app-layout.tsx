@@ -4,7 +4,7 @@ import type { LayoutVariant } from '@/widgets/layout/layout-variant'
 import { ContentShell } from '@/widgets/layout/content-shell'
 import styles from './app-layout.module.css'
 import { Footer } from './footer'
-import { Header } from './header'
+import { Header } from './header/header'
 
 type AppLayoutProps = {
   children: ReactNode
