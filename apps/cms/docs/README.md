@@ -146,8 +146,8 @@
 | [programs-api-conversion-roadmap.md](api/programs-api-conversion-roadmap.md) | 프로그램 관리 **미전환 카테고리 순차 로드맵** (Cat1–6 SSOT) |
 | [programs-api-backend-gaps-consolidated.md](api/programs-api-backend-gaps-consolidated.md) | 프로그램 Cat1–6 **백엔드 통합 핸드오프** (API 부재·계약 미비·적용 가이드) |
 | [**e2e-backend-fixes-index.md**](api/e2e-backend-fixes-index.md) | **E2E 관측** 백엔드 수정 요청 인덱스 (programs · members · adminAuth) |
+| [**members/**](api/members/README.md) | **회원 관리 API** — handoff · 연동 · E2E pre-register · gaps · 상세 미존 endpoint |
 | [e2e-programs-create-database-error-handoff.md](api/e2e-programs-create-database-error-handoff.md) | 일반 프로그램 등록 `DATABASE_ERROR` (P0) |
-| [e2e-members-pre-register-handoff.md](api/e2e-members-pre-register-handoff.md) | 회원 pre-register 500·role 갭 (P0) |
 | [e2e-admin-auth-mfa-concurrency-handoff.md](api/e2e-admin-auth-mfa-concurrency-handoff.md) | MFA 병렬 challenge (P2) |
 | [forms-surveys-api-integration.md](api/forms-surveys-api-integration.md) | 템플릿 양식 API 연동 명세 |
 | [forms-surveys-api-migration-guide.md](api/forms-surveys-api-migration-guide.md) | 템플릿 양식 API **PHASE별 마이그레이션 가이드** |

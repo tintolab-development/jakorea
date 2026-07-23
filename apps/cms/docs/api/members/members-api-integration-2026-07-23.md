@@ -2,9 +2,11 @@
 
 LNB 「회원 관리」 3화면(회원 목록·권한 승인·권한 설정)과 Swagger API 매핑입니다.
 
-- 공통 가이드: [backend-handoff.md](./backend-handoff.md) · [api-routes-and-client.md](./api-routes-and-client.md)
-- 백엔드 갭·스펙 불일치: [members-api-backend-gaps.md](./members-api-backend-gaps.md)
-- 회원 상세 미존재 API (백엔드 전달용): [members-api-detail-missing-endpoints-handoff.md](./members-api-detail-missing-endpoints-handoff.md)
+- 공통 가이드: [backend-handoff.md](../backend-handoff.md) · [api-routes-and-client.md](../api-routes-and-client.md)
+- 문서 목록: [members/README.md](./README.md)
+- 백엔드 갭·스펙 불일치: [members-api-backend-gaps-2026-07-23.md](./members-api-backend-gaps-2026-07-23.md)
+- 회원 상세 미존재 API (백엔드 전달용): [members-api-detail-missing-endpoints-handoff-2026-06-26.md](./members-api-detail-missing-endpoints-handoff-2026-06-26.md)
+- 백엔드 전달 종합 (등록·상세 path 분리 · **마스킹 §M-P1-5**): [members-api-backend-handoff-2026-07-23.md](./members-api-backend-handoff-2026-07-23.md)
 - OpenAPI 기준: `openapi/backend.openapi.json` (v9) · subset: `openapi/members.openapi.json`
 
 ---
@@ -14,12 +16,12 @@ LNB 「회원 관리」 3화면(회원 목록·권한 승인·권한 설정)과 
 | 화면 | 라우트 | remote 조건 | 데이터 소스 |
 |------|--------|-------------|-------------|
 | 회원 목록 | `/users/list?kind=*` | `members` | `GET /api/users` |
-| 회원 상세 (기본정보) | 풀페이지 모달 | `members` | `GET /api/users/{memberId}` (+ instructor-profile, external-identifiers) |
+| 회원 상세 (기본정보) | 풀페이지 모달 | `members` | `GET /api/admin/users/{memberId}` (+ instructor-profile, external-identifiers). **BE 확정안:** 역할별 상세 path — handoff §M-P0-1 |
 | 회원 상세 (동의) | 기본정보 탭 | `members` | `GET .../consent-records` |
 | 회원 상세 (이력·신청) | 프로그램 이력 탭 | `members` | **mock 유지** + 안내 배너 |
 | 회원 상세 (강사 정산) | 정산 현황 탭 | `members` + (`paymentOrders` 또는 `accountPayments`) | `GET /api/settlements?instructorMemberId=` |
 | 회원 상세 (강사 정산 mock) | 동일 | `members` only | mock + 「정산 API 미활성」 배너 |
-| 회원 등록·삭제 | 목록 액션·모달 | `members` | `pre-register` / `delete` |
+| 회원 등록·삭제 | 목록 액션·모달 | `members` | 관리자: `POST /api/admin/admin-accounts` · 개인·학교·강사: **임시** 단일 `pre-register` → **역할별 path 분리 예정** · `delete` |
 | 권한 승인 — 강사 | `/admin/permission-requests` | `instructorRoleRequests` | `instructor-role-requests` |
 | 권한 승인 — 관리자 | 동일 | — | **mock 유지** + 안내 배너 |
 | 권한 설정 | `/admin/settings/permissions` | `adminPermissions` | `admin-roles` + PUT |
@@ -60,7 +62,7 @@ MFA 완료 후 유효 JWT가 있어야 합니다 (`hasRemoteAdminJwt()`). 권한
 
 ## 모듈 키
 
-등록 위치: [`src/shared/config/real-api-modules.ts`](../../src/shared/config/real-api-modules.ts)
+등록 위치: [`src/shared/config/real-api-modules.ts`](../../../src/shared/config/real-api-modules.ts)
 
 | 키 | 담당 화면 | 분기 함수 |
 |----|-----------|-----------|
@@ -183,7 +185,7 @@ subset path prefix (`scripts/filter-openapi-members.mjs`):
 - 관리자 권한 variant (`adminPermissionVariant`)
 - 순수 강사만 (`instructorListPureOnly`)
 
-상세: [members-api-backend-gaps.md](./members-api-backend-gaps.md) #5.
+상세: [members-api-backend-gaps-2026-07-23.md](./members-api-backend-gaps-2026-07-23.md) #5.
 
 ### 식별자
 
@@ -204,7 +206,8 @@ subset path prefix (`scripts/filter-openapi-members.mjs`):
 | 기본정보 핵심 | `members` | `GET /api/admin/users/{memberId}` |
 | 기본정보 저장 | `members` | `PATCH /api/admin/users/{memberId}` (`updateMemberBasicInfo`) |
 | 관리자 권한 유형(드롭다운) | `members` | `PATCH /api/admin/admin-accounts/{adminId}/role` (`changeAdminRole`, roleCode: MASTER/PARTNER/VIEWER). adminId는 이메일·uuid로 `GET /api/admin/admin-accounts`에서 해석 |
-| 관리자 신규 등록 | `members` | `POST /api/admin/admin-accounts` (`createAdmin`, 기본 roleCode=`VIEWER`). 학교·강사·일반은 기존 `pre-register` |
+| 관리자 신규 등록 | `members` | `POST /api/admin/admin-accounts` (`createAdmin`, 기본 roleCode=`VIEWER`) — **pre-register 미사용** |
+| 개인·학교·강사 신규 등록 | `members` | **현행:** `POST /api/admin/users/pre-register` · **BE canonical:** 역할별 등록 path — handoff §M-P0-1 |
 | 소속 교사 재직 현황 | `members` | `PATCH …/affiliated-teachers/{teacherMemberId}/employment-status` |
 | 관리자 코멘트 저장 | `members` | 기존 코멘트 있으면 `PATCH …/comments/{commentId}`, 없으면 `POST …/comments` |
 | 담당 프로그램 이력 삭제 | `members` | `DELETE …/admin-programs/{programId}` |
@@ -254,12 +257,24 @@ subset path prefix (`scripts/filter-openapi-members.mjs`):
 
 ## 회원 등록·삭제
 
+### 등록 API (2026-07-23 정책)
+
+| CMS 모달 | Method | Path (현행 FE) | Path (BE canonical · handoff §M-P0-1) |
+|----------|--------|----------------|----------------------------------------|
+| 관리자 신규 등록 | POST | `/api/admin/admin-accounts` | 동일 (`createAdmin`) |
+| 회원 신규 등록 (개인) | POST | `/api/admin/users/pre-register` | `…/pre-register/individual` (또는 `…/members/individual`) |
+| 학교 신규 등록 | POST | 동일 단일 pre-register | `…/pre-register/school` |
+| 강사 추가 등록 | POST | 동일 단일 pre-register | `…/pre-register/instructor` |
+
+단일 `pre-register`에 `role`만 추가하는 방안은 **canonical 아님**. 상세 GET도 역할별 path/DTO 분리 예정.
+
 | Method | Path | UI |
 |--------|------|-----|
-| POST | `/api/users/pre-register` | 개인·기관·강사·관리자 등록 모달 |
-| POST | `/api/users/{memberId}/delete` | 목록/상세 삭제 |
+| POST | `/api/admin/users/{memberId}/delete` | 목록/상세 삭제 |
 
-### 사전 등록 필드 매핑
+### 사전 등록 필드 매핑 (현행 단일 `AdminPreRegisterMemberRequest`)
+
+개인·학교·강사 모달 공통 mapper: `map-pre-register-request.ts`. kind별 전용 스키마·mapper는 **분리 path 확정 후** 전환.
 
 | UI (`CreateUserRequest`) | API (`AdminPreRegisterMemberRequest`) |
 |--------------------------|---------------------------------------|
@@ -270,6 +285,7 @@ subset path prefix (`scripts/filter-openapi-members.mjs`):
 | `birthDate` | `birthDate` |
 | `schoolInfo.schoolName` | `organizationText` + `name` |
 | 강사 소개 | `oneLineIntro` (일부) |
+| `role` (화면별) | **전송 안 됨** (스키마·path 분리로 해소 예정) |
 | `password` | **없음** (사전 등록 후 본인 가입 플로우) |
 
 삭제 body: `{ reason: string }` — 최소 5자. 미전달 시 기본값 `CMS 관리자 회원 삭제`.
@@ -296,7 +312,7 @@ subset path prefix (`scripts/filter-openapi-members.mjs`):
 ### 관리자 탭
 
 API 없음 — `mockMemberPermissionApplicationsAdmin` + 상단 안내 배너.  
-갭: [members-api-backend-gaps.md](./members-api-backend-gaps.md) #3.
+갭: [members-api-backend-gaps-2026-07-23.md](./members-api-backend-gaps-2026-07-23.md) #3.
 
 ---
 
@@ -334,8 +350,9 @@ UI: `AdminPermissionsRemotePanel` — `domain`별 체크박스 + 저장 버튼.
 |-----|------------------|
 | `GET /api/users` | `MEMBER_READ` |
 | `GET /api/users/{memberId}` | `MEMBER_READ` |
-| `POST /api/users/pre-register` | `MEMBER_CREATE` |
-| `POST /api/users/{memberId}/delete` | `MEMBER_WRITE` (추정) |
+| `POST /api/admin/users/pre-register` (및 역할별 등록 path) | `MEMBER_CREATE` |
+| `POST /api/admin/admin-accounts` | 관리자 생성 (admin-accounts 권한) |
+| `POST /api/admin/users/{memberId}/delete` | `MEMBER_WRITE` (추정) |
 | `GET /api/instructor-role-requests` | 강사 권한 워크플로 read |
 | `POST .../approve`, `.../reject` | write |
 | `GET/PUT /api/admin/admin-roles/{roleCode}/permissions` | 마스터 관리자 |
@@ -354,7 +371,7 @@ UI: `AdminPermissionsRemotePanel` — `domain`별 체크박스 + 저장 버튼.
 - [ ] 이력·신청·코멘트·소속교사 mock 안내 배너
 - [ ] 개인정보 마스킹 해제 (`memberId` + `logs` 모듈)
 - [ ] remote 시 「정보 수정」 버튼 미노출
-- [ ] 사전 등록 4종 모달 → 목록 갱신
+- [ ] 사전 등록 4종 모달 → 목록 갱신 (관리자: createAdmin · 개인·학교·강사: pre-register)
 - [ ] 회원 삭제
 - [ ] 강사 권한 승인/반려 (단건·일괄)
 - [ ] 관리자 탭 mock 안내 배너
@@ -370,3 +387,4 @@ UI: `AdminPermissionsRemotePanel` — `domain`별 체크박스 + 저장 버튼.
 | 2026-06-12 | Phase 0~5 구현 — mock 분기·mapper·hooks·문서 초안 |
 | 2026-06-12 | `.env` 모듈 키 활성화, 상세 재조회·memberId unmask 반영, 연동 상태 표 추가 |
 | 2026-06-12 | 상세 하위 탭 Phase A~C — consent/external-id/instructor-profile/정산 탭 연동, mock 배너·갭 문서 보강 |
+| 2026-07-23 | 관리자 등록 `admin-accounts` 분리 · 개인·학교·강사 등록·상세 **path 분리(B안)** · handoff **§M-P1-5 마스킹** 와 정렬 |

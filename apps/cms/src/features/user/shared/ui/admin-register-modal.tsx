@@ -4,10 +4,12 @@ import { CmsButton, CmsInput, CmsRadioGroup, ContentModal } from '@/shared/ui'
 import {
   CmsDateTextInput,
   birthDateFormValueToApi,
+  isBirthDateInputIncomplete,
   isValidBirthDateFormValue,
 } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import './admin-register-modal.css'
 
 const FORM_ID = 'cms-admin-register-modal-form'
@@ -72,28 +74,48 @@ function normalizeSubmitValues(
   }
 }
 
-function canSubmitAdminRegisterForm(values: AdminRegisterModalFormValues | undefined): boolean {
-  if (!values) {
-    return false
+function collectAdminRegisterValidationMessages(
+  values: AdminRegisterModalFormValues
+): string[] {
+  const messages: string[] = []
+
+  if (!values.name?.trim()) {
+    messages.push('성명을 입력해 주세요.')
   }
 
-  const name = values.name?.trim()
-  const contact = values.contact?.trim()
-  const email = values.email?.trim()
   const birthDate = values.birthDate?.trim()
+  if (!birthDate || isBirthDateInputIncomplete(birthDate)) {
+    messages.push('생년월일을 입력해 주세요.')
+  } else if (!isValidBirthDateFormValue(birthDate)) {
+    messages.push('올바른 생년월일을 입력해 주세요.')
+  }
 
-  return Boolean(
-    name &&
-      birthDate &&
-      isValidBirthDateFormValue(birthDate) &&
-      contact &&
-      KOREAN_PHONE_REGEX.test(contact) &&
-      email &&
-      EMAIL_PATTERN.test(email) &&
-      values.consentTermsOfService === 'agree' &&
-      values.consentPersonalInfo === 'agree'
-  )
+  const contact = values.contact?.trim()
+  if (!contact) {
+    messages.push('연락처를 입력해 주세요.')
+  } else if (!KOREAN_PHONE_REGEX.test(contact)) {
+    messages.push('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')
+  }
+
+  const email = values.email?.trim()
+  if (!email) {
+    messages.push('이메일을 입력해 주세요.')
+  } else if (!EMAIL_PATTERN.test(email)) {
+    messages.push('올바른 이메일 형식이 아닙니다')
+  }
+
+  if (values.consentTermsOfService !== 'agree') {
+    messages.push('서비스 이용약관에 동의해 주세요.')
+  }
+  if (values.consentPersonalInfo !== 'agree') {
+    messages.push('개인정보 수집·이용에 동의해 주세요.')
+  }
+
+  return messages
 }
+
+const ADMIN_REGISTER_MULTIPLE_VALIDATION_THRESHOLD = 2
+const ADMIN_REGISTER_MULTIPLE_VALIDATION_MESSAGE = '필수 항목을 모두 입력해 주세요.'
 
 export function AdminRegisterModal({
   open,
@@ -101,9 +123,8 @@ export function AdminRegisterModal({
   onSubmit,
   loading = false,
 }: AdminRegisterModalProps) {
+  const { showAlert } = useCmsAlert()
   const [form] = Form.useForm<AdminRegisterModalFormValues>()
-  const watchedValues = Form.useWatch([], form) as AdminRegisterModalFormValues | undefined
-  const isSubmitDisabled = loading || !canSubmitAdminRegisterForm(watchedValues)
 
   useEffect(() => {
     if (open) {
@@ -128,6 +149,21 @@ export function AdminRegisterModal({
     }
   }
 
+  const handleSubmitAttempt = (values: AdminRegisterModalFormValues) => {
+    const messages = collectAdminRegisterValidationMessages(values)
+    if (messages.length > 0) {
+      showAlert({
+        title: '안내',
+        content:
+          messages.length >= ADMIN_REGISTER_MULTIPLE_VALIDATION_THRESHOLD
+            ? ADMIN_REGISTER_MULTIPLE_VALIDATION_MESSAGE
+            : messages[0],
+      })
+      return
+    }
+    void handleFinish(values)
+  }
+
   return (
     <ContentModal
       open={open}
@@ -145,7 +181,7 @@ export function AdminRegisterModal({
             type="submit"
             form={FORM_ID}
             loading={loading}
-            disabled={isSubmitDisabled}
+            disabled={loading}
           >
             신규 등록
           </CmsButton>
@@ -158,7 +194,7 @@ export function AdminRegisterModal({
         layout="vertical"
         initialValues={INITIAL_VALUES}
         requiredMark={false}
-        onFinish={values => void handleFinish(values)}
+        onFinish={handleSubmitAttempt}
       >
         <div className="admin-register-modal__sections">
           <DetailInfoForm

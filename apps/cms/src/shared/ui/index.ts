@@ -97,6 +97,8 @@ export {
   CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH,
 } from './cms-button'
 export type { CmsButtonProps, CmsButtonVariant, CmsButtonSize } from './cms-button'
+export { CmsCircleAddButton } from './cms-circle-add-button'
+export type { CmsCircleAddButtonProps } from './cms-circle-add-button'
 export { ExcelButton } from './excel-button'
 export type { ExcelButtonProps } from './excel-button'
 export { CmsInput } from './cms-input'

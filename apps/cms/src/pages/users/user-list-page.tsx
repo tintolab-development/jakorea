@@ -79,6 +79,7 @@ import {
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
 import { applyAffiliatedTeacherLinkToUser } from '@/features/user/api/apply-affiliated-teacher-link'
+import { SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { buildSchoolDeleteMessageLines } from '@/features/program/general/ui/manager-delete-guide-modal'
 
 type UserListRow = Omit<User, 'password'>
@@ -732,12 +733,34 @@ export function UserListPage() {
         emailTrim !== '' ? emailTrim : `instructor-${Date.now()}@instructor.jakorea.local`
       const nameTrim = values.name.trim()
       const name = nameTrim !== '' ? nameTrim : '강사'
+      const birthDigits = values.birthDate.replace(/\D/g, '')
+      const birthDate =
+        birthDigits.length === 8
+          ? `${birthDigits.slice(0, 4)}-${birthDigits.slice(4, 6)}-${birthDigits.slice(6, 8)}`
+          : undefined
+      const affiliationParts =
+        values.memberType === 'school_teacher'
+          ? [
+              values.schoolName.trim(),
+              values.employmentStatus
+                ? SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL[values.employmentStatus]
+                : '',
+            ].filter(Boolean)
+          : [
+              values.instructorCareer.trim(),
+              values.affiliationNone ? '' : values.affiliationName.trim(),
+            ].filter(Boolean)
       await createUser({
         email,
         password: 'Temp1234!',
         name,
         phone: values.contact.trim() || undefined,
+        gender: values.gender === 'male' ? '남성' : '여성',
+        birthDate,
         role: 'INSTRUCTOR',
+        address: values.homeAddress.trim() || undefined,
+        detailAddress: values.homeAddressDetail.trim() || undefined,
+        affiliation: affiliationParts.length > 0 ? affiliationParts.join(' | ') : undefined,
         instructorInfo: {
           bankName: values.bankName.trim(),
           accountNumber: values.accountNumber.trim(),

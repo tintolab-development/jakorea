@@ -1,55 +1,23 @@
 import { useState } from 'react'
-import { isProgramsPath, PROGRAMS_PATH } from '@/features/program'
-import { MYPAGE_PATH } from '@/features/mypage'
-import { getDevAuthLoggedIn } from '@/shared/lib'
 import { PFText } from '@/shared/ui'
 import logoUrl from '@/shared/assets/brand/ja-logo.svg'
-import logOutIconUrl from './image/icon/log-out.svg'
-import notificationsIconUrl from './image/icon/notifications.svg'
-import personIconUrl from './image/icon/person.svg'
-import styles from './header.module.css'
+import {
+  getActiveNavigationItem,
+  getLoggedInActionRoute,
+  guestUserActionRoutes,
+  loggedInActions,
+  navigationItemRoutes,
+  navigationItems,
+} from './header-config'
+import styles from './header-desktop.module.css'
 
-type HeaderProps = {
+type HeaderDesktopProps = {
   isLoggedIn?: boolean
   onLogout?: () => void
   transparent?: boolean
 }
 
-const navigationItems = ['JA Korea', '임팩트', '교육 소개', '참여하기', '후원하기']
-const navigationItemRoutes: Partial<Record<string, string>> = {
-  참여하기: PROGRAMS_PATH,
-  후원하기: '/auth/required?redirect=/support',
-}
-const guestUserActionRoutes: Record<string, string> = {
-  회원가입: '/auth/sign-up',
-  로그인: '/auth/sign-in',
-}
-const loggedInActions = [
-  { label: '알림확인', iconUrl: notificationsIconUrl },
-  { label: '마이페이지', iconUrl: personIconUrl },
-  { label: '로그아웃', iconUrl: logOutIconUrl },
-]
-const loggedInActionRoutes: Partial<Record<string, string>> = {
-  마이페이지: MYPAGE_PATH,
-}
-
-function getLoggedInActionRoute(label: string) {
-  if (label === '마이페이지' && !getDevAuthLoggedIn()) {
-    return `/auth/required?redirect=${encodeURIComponent(MYPAGE_PATH)}`
-  }
-
-  return loggedInActionRoutes[label]
-}
-
-function getActiveNavigationItem(pathname: string) {
-  if (isProgramsPath(pathname)) {
-    return '참여하기'
-  }
-
-  return 'JA Korea'
-}
-
-export function Header({ isLoggedIn = false, onLogout, transparent = false }: HeaderProps) {
+export function HeaderDesktop({ isLoggedIn = false, onLogout, transparent = false }: HeaderDesktopProps) {
   const [activeNavigationItem, setActiveNavigationItem] = useState(() =>
     getActiveNavigationItem(window.location.pathname)
   )
