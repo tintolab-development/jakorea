@@ -3,6 +3,7 @@ import checkOffLargeUrl from '@/shared/assets/icons/check-off-large.svg'
 import checkOffSmallUrl from '@/shared/assets/icons/check-off-small.svg'
 import checkOnLargeUrl from '@/shared/assets/icons/check-on-large.svg'
 import checkOnSmallUrl from '@/shared/assets/icons/check-on-small.svg'
+import { PFText } from '../pf-text/pf-text'
 import styles from './pf-toggle.module.css'
 
 export type PFToggleVariant = 'check-large' | 'check-small' | 'text'
@@ -27,6 +28,11 @@ type PFToggleTextProps = PFToggleBaseProps & {
 }
 
 export type PFToggleProps = PFToggleCheckProps | PFToggleTextProps
+
+const variantClassNameMap = {
+  'check-large': styles.checkLarge,
+  'check-small': styles.checkSmall,
+} as const
 
 const iconMap = {
   'check-large': {
@@ -54,8 +60,7 @@ export function PFToggle(props: PFToggleProps) {
 
   const toggleClassName = [
     styles.toggle,
-    styles[variant],
-    variant === 'text' && checked ? styles.textOn : undefined,
+    variant !== 'text' ? variantClassNameMap[variant] : undefined,
     className,
   ]
     .filter(Boolean)
@@ -80,7 +85,13 @@ export function PFToggle(props: PFToggleProps) {
       {...rest}
     >
       {variant === 'text' ? (
-        <span className={styles.label}>{label}</span>
+        <PFText
+          typo="bd-sm-md"
+          color={checked ? 'primary-500' : 'inherit'}
+          className={[styles.label, checked ? undefined : styles.labelMuted].filter(Boolean).join(' ')}
+        >
+          {label}
+        </PFText>
       ) : (
         <>
           <img
