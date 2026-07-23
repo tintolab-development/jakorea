@@ -1,5 +1,6 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import type { Program } from '@/types/domain'
+import type { GeneralInterviewSlotListItem } from '@/features/program/general/api/admin-applications-service'
 import { resolveGeneralProgramVolunteerInterviewScheduleDisplay } from '@/features/program/general/lib/volunteer-interview-schedule-display'
 import {
   formatDisplayTimeRange,
@@ -96,10 +97,77 @@ function buildParsedInterviewSchedule(
   }
 }
 
+function timeRangeFromIso(startAt: string, endAt: string): string | null {
+  const start = dayjs(startAt)
+  const end = dayjs(endAt)
+  if (!start.isValid() || !end.isValid()) return null
+  return normalizeTimeRangeKey(`${start.format('HH:mm')} ~ ${end.format('HH:mm')}`)
+}
+
 /**
- * 면접 캘린더 가용 슬롯 표시.
- * OpenAPI에 `GET …/interview-slots`가 없어 모집 표시 mock 기반 유지.
- * 배정 mutation은 `assignGeneralVolunteerInterview`(slot create + assign)로 remote 연동.
+ * remote 면접 슬롯 목록 → 배정 캘린더 스케줄.
+ * 슬롯이 비면 empty(클릭 불가) — empty-flash 방지용으로 호출부에서 loading 가드.
+ */
+export function parseGeneralInterviewScheduleFromRemoteSlots(
+  slots: GeneralInterviewSlotListItem[]
+): ParsedInterviewSchedule {
+  const slotsByDateKey = new Map<string, InterviewAssignSlot[]>()
+  const clickableDateKeys = new Set<string>()
+
+  let minDate: Dayjs | null = null
+  let maxDate: Dayjs | null = null
+
+  for (const slot of slots) {
+    const dateKey = dayjs(slot.slotDate).isValid()
+      ? dayjs(slot.slotDate).format('YYYY-MM-DD')
+      : slot.slotDate
+    const timeRange = timeRangeFromIso(slot.startAt, slot.endAt)
+    if (!timeRange || !dateKey) continue
+
+    const daySlots = slotsByDateKey.get(dateKey) ?? []
+    const key = `${dateKey}|${timeRange}`
+    if (!daySlots.some(existing => existing.key === key)) {
+      daySlots.push({
+        key,
+        timeRange,
+        displayTimeRange: formatDisplayTimeRange(timeRange),
+      })
+      slotsByDateKey.set(dateKey, daySlots)
+    }
+    clickableDateKeys.add(dateKey)
+
+    const d = dayjs(dateKey)
+    if (d.isValid()) {
+      if (!minDate || d.isBefore(minDate, 'day')) minDate = d
+      if (!maxDate || d.isAfter(maxDate, 'day')) maxDate = d
+    }
+  }
+
+  const rangeStart = (minDate ?? dayjs()).startOf('month')
+  const rangeEnd = (maxDate ?? dayjs()).endOf('month')
+
+  const disabledDate = (date: Dayjs) => {
+    if (date.isBefore(rangeStart, 'month') || date.isAfter(rangeEnd, 'month')) {
+      return false
+    }
+    return !clickableDateKeys.has(date.format('YYYY-MM-DD'))
+  }
+
+  return {
+    slotsByDateKey,
+    clickableDateKeys,
+    holidayDateKeys: new Set<string>(),
+    disabledDate,
+    rangeStart,
+    rangeEnd,
+    scheduleMonth: rangeStart.startOf('month'),
+  }
+}
+
+/**
+ * 면접 캘린더 가용 슬롯 표시 (remote OFF / GET 실패 폴백).
+ * remote ON은 `parseGeneralInterviewScheduleFromRemoteSlots` + `listGeneralInterviewSlots`.
+ * 배정 mutation은 `assignGeneralVolunteerInterview`(slot create + assign).
  */
 export function parseGeneralInterviewScheduleFromProgram(program: Program): ParsedInterviewSchedule {
   const display = resolveGeneralProgramVolunteerInterviewScheduleDisplay(program)
