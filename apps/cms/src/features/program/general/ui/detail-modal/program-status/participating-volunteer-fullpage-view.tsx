@@ -56,7 +56,13 @@ export function ParticipatingVolunteerFullpageView({
   onClearVolunteerId: _onClearVolunteerId,
 }: ParticipatingVolunteerFullpageViewProps) {
   const { showAlert } = useCmsAlert()
-  const [internalTab, setInternalTab] = useState<VolunteerDetailTabKey>('application')
+  /**
+   * URL(`volunteerTab`)이 source of truth이지만, setSearchParams 반영 전·props 지연 시
+   * 탭 UI/본문이 안 바뀌는 문제가 있어 로컬 탭을 먼저 갱신한 뒤 URL과 동기화한다.
+   */
+  const [uiTab, setUiTab] = useState<VolunteerDetailTabKey>(
+    () => activeTabFromUrl ?? 'application'
+  )
   const [volunteerPatches, setVolunteerPatches] = useState<Partial<ParticipatingVolunteerRow>>({})
   const [savedAdminComment, setSavedAdminComment] = useState('')
   const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
@@ -90,12 +96,18 @@ export function ParticipatingVolunteerFullpageView({
     controlMode: 'headerStickyNoop',
   })
 
-  const activeTab =
-    activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
-  const setActiveTab = (key: VolunteerDetailTabKey) => {
-    if (onTabChange) onTabChange(key)
-    else setInternalTab(key)
-  }
+  useEffect(() => {
+    setUiTab(activeTabFromUrl ?? 'application')
+  }, [mergedVolunteer.id, activeTabFromUrl])
+
+  const activeTab = uiTab
+  const setActiveTab = useCallback(
+    (key: VolunteerDetailTabKey) => {
+      setUiTab(key)
+      onTabChange?.(key)
+    },
+    [onTabChange]
+  )
 
   useEffect(() => {
     setSavedAdminComment(initialVolunteer.adminComment ?? '')

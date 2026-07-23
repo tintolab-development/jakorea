@@ -11,6 +11,11 @@ import {
   type ApplicantIndividualEditDraft,
 } from '@/features/program/general/lib/applicant-individual-detail-edit'
 
+/**
+ * 신청자 상세 편집 — mock patch 유지.
+ * BE에 admin application detail PATCH body 계약이 없어 remote 전환 제외 (Phase 16 gaps).
+ */
+
 export interface UseApplicantIndividualDetailEditParams {
   applicant: GeneralIndividualApplicantRow | null
   program?: Program | null

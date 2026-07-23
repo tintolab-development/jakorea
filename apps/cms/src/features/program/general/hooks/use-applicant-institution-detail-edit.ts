@@ -29,6 +29,10 @@ import {
 } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program-textbook-catalog'
 
+/**
+ * 기관 신청자 상세 편집 — mock patch 유지 (admin application detail PATCH 계약 없음 · P2-6).
+ */
+
 export interface TextbookSelectOption {
   value: string
   label: string

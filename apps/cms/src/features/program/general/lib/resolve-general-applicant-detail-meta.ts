@@ -6,6 +6,7 @@ import {
 } from '@/data/mock/general-individual-applications-mock'
 import { getApplicantInstructorsByProgramId } from '@/data/mock/applicant-instructors'
 import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications-mock'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import type { GeneralDetailLnbKey } from '@/features/program/general/lib/detail-url'
 import { resolveGeneralParticipantApplicantDetailTitle } from '@/features/program/general/lib/screening-subject-kind'
 import type { ApplicantDetailMeta } from '@/features/program/shared/ui/program-detail/applicant-list/use-applicants-detail'
@@ -26,7 +27,11 @@ function findIndividualApplicant(
   return rows.find(row => row.id === applicantId) ?? null
 }
 
-/** URL applicantId + LNB/tab에서 신청 상세 breadcrumb·모달 제목용 meta를 파생한다. */
+/**
+ * URL applicantId + LNB/tab에서 신청 상세 breadcrumb·모달 제목용 meta를 파생한다.
+ * remote ON일 때는 mock id 조회를 하지 않는다 — 목록 행 기준 meta는
+ * `useApplicantsDetail` → `onApplicantDetailMetaChange` 로 전달한다.
+ */
 export function resolveGeneralApplicantDetailMetaFromUrl(params: {
   programId: string
   activeLnb: GeneralDetailLnbKey
@@ -35,6 +40,10 @@ export function resolveGeneralApplicantDetailMetaFromUrl(params: {
 }): ApplicantDetailMeta {
   const { programId, activeLnb, activeTab, applicantId } = params
   if (!applicantId) return null
+
+  if (shouldUseGeneralApplicationsRemoteApi()) {
+    return null
+  }
 
   if (activeLnb === 'instructor_applications') {
     const instructor = getApplicantInstructorsByProgramId(programId).find(

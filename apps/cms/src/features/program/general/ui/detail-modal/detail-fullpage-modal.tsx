@@ -46,6 +46,7 @@ import {
   type GeneralDetailLnbKey,
 } from '@/features/program/general/lib/detail-url'
 import {
+  clearGeneralProgramDetailQueryParams,
   GENERAL_PROGRAM_DETAIL_EDIT_PARAM,
   GENERAL_PROGRAM_DETAIL_LNB_PARAM,
   GENERAL_PROGRAM_DETAIL_QUERY_PARAMS,
@@ -601,9 +602,10 @@ export function GeneralProgramDetailFullPageModal({
     return parseInstructorTabFromSearch(searchParams)
   }, [instructorIdFromUrl, searchParams, searchParamsKey])
   const volunteerIdFromUrl = open ? searchParams.get(VOLUNTEER_ID_PARAM) : null
-  const activeVolunteerTab = volunteerIdFromUrl
-    ? parseVolunteerTabFromSearch(searchParams)
-    : 'application'
+  const activeVolunteerTab = useMemo(() => {
+    if (!volunteerIdFromUrl) return 'application' as const
+    return parseVolunteerTabFromSearch(searchParams)
+  }, [volunteerIdFromUrl, searchParams, searchParamsKey])
   const participantIdFromUrl = open ? searchParams.get(PARTICIPANT_ID_PARAM) : null
   const activeParticipantTab = participantIdFromUrl
     ? parseParticipantTabFromSearch(searchParams)
@@ -947,14 +949,17 @@ export function GeneralProgramDetailFullPageModal({
     showAlert,
   ])
 
+  // TODO: X는 바깥 모달 닫기로 통일됨. breadcrumb/목록 복귀 외 용도가 없으면 등록부 제거 검토.
   const applicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
   const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
   const [volunteerApplicantDetailMeta, setVolunteerApplicantDetailMeta] =
     useState<GeneralVolunteerApplicantDetailMeta | null>(null)
+  const [listApplicantDetailMeta, setListApplicantDetailMeta] =
+    useState<ApplicantDetailMeta>(null)
 
   const applicantIdFromUrl = open ? searchParams.get(APPLICANT_ID_PARAM) : null
 
-  const applicantDetailMeta = useMemo((): ApplicantDetailMeta => {
+  const applicantDetailMetaFromUrl = useMemo((): ApplicantDetailMeta => {
     if (!open || !programId) return null
     return resolveGeneralApplicantDetailMetaFromUrl({
       programId,
@@ -963,6 +968,9 @@ export function GeneralProgramDetailFullPageModal({
       applicantId: applicantIdFromUrl,
     })
   }, [open, programId, activeLnb, activeTab, applicantIdFromUrl])
+
+  /** remote 목록 행 meta 우선, mock URL 해석은 폴백 */
+  const applicantDetailMeta = listApplicantDetailMeta ?? applicantDetailMetaFromUrl
 
   const displayProgramRef = useRef(displayProgram)
   displayProgramRef.current = displayProgram
@@ -994,8 +1002,17 @@ export function GeneralProgramDetailFullPageModal({
   const handleRequestClose = useCallback(() => {
     isClosingRef.current = true
     setOptimisticDetailRoute(null)
+    // 부모 onClose와 별도로 상세 쿼리를 즉시 제거 — applySearch 등 클로저 레이스로
+    // programId가 남는 경우에도 모달이 닫히도록 한다.
+    setSearchParams(
+      prev => {
+        if (!prev.get('programId')) return prev
+        return clearGeneralProgramDetailQueryParams(new URLSearchParams(prev))
+      },
+      { replace: true }
+    )
     onClose()
-  }, [onClose])
+  }, [onClose, setSearchParams])
 
   const participantRecruitmentPreviewOpenFromUrl = useMemo(
     () => isParticipantRecruitmentPreviewOpen(routerSearchParams),
@@ -1121,8 +1138,16 @@ export function GeneralProgramDetailFullPageModal({
           if (isClosingRef.current || !shouldPatchGeneralProgramDetailUrl(prev)) return prev
           const next = new URLSearchParams(prev)
           if (id) {
+            const prevId = prev.get(VOLUNTEER_ID_PARAM)
+            next.set(LNB_PARAM, 'progress')
+            next.set(TAB_PARAM, 'progress_volunteers')
             next.set(VOLUNTEER_ID_PARAM, id)
-            next.set(VOLUNTEER_TAB_PARAM, 'application')
+            // 동일 봉사자 재진입 시 중첩 탭(volunteerTab)을 application으로 덮어쓰지 않음
+            if (prevId !== id) {
+              next.set(VOLUNTEER_TAB_PARAM, 'application')
+            } else if (!prev.get(VOLUNTEER_TAB_PARAM)) {
+              next.set(VOLUNTEER_TAB_PARAM, 'application')
+            }
             next.delete(SCHOOL_ID_PARAM)
             next.delete(SCHOOL_TAB_PARAM)
             next.delete(INSTRUCTOR_ID_PARAM)
@@ -1323,6 +1348,22 @@ export function GeneralProgramDetailFullPageModal({
     setInstructorDetailTitle(null)
   }, [])
 
+  const handleVolunteerRowClick = useCallback(
+    (row: { id: string }) => {
+      setVolunteerId(row.id)
+    },
+    [setVolunteerId]
+  )
+  const handleClearVolunteerId = useCallback(() => {
+    setVolunteerId(null)
+  }, [setVolunteerId])
+  const handleVolunteerDetailOpen = useCallback((name: string) => {
+    setVolunteerDetailTitle(name)
+  }, [])
+  const handleVolunteerDetailClose = useCallback(() => {
+    setVolunteerDetailTitle(null)
+  }, [])
+
   useEffect(() => {
     if (!schoolIdFromUrl) setSchoolDetailTitle(null)
   }, [schoolIdFromUrl])
@@ -1450,35 +1491,6 @@ export function GeneralProgramDetailFullPageModal({
       { replace: true }
     )
   }, [open, activeLnb, activeTab, participantIdFromUrl, setSearchParams])
-
-  const handleModalClose = useCallback(() => {
-    if (activeLnb === 'progress' && schoolIdFromUrl) {
-      setSchoolId(null)
-      return
-    }
-    if (activeLnb === 'progress' && instructorIdFromUrl) {
-      setInstructorId(null)
-      return
-    }
-    if (activeLnb === 'progress' && volunteerIdFromUrl) {
-      setVolunteerId(null)
-      return
-    }
-    if (activeLnb === 'progress' && participantIdFromUrl) {
-      setParticipantId(null)
-      return
-    }
-    if (
-      (activeLnb === 'institution_applications' || activeLnb === 'instructor_applications') &&
-      applicantCloseHandlerRef.current?.()
-    ) {
-      return
-    }
-    if (activeLnb === 'volunteer_applications' && volunteerApplicantCloseHandlerRef.current?.()) {
-      return
-    }
-    handleRequestClose()
-  }, [activeLnb, schoolIdFromUrl, instructorIdFromUrl, volunteerIdFromUrl, participantIdFromUrl, setSchoolId, setInstructorId, setVolunteerId, setParticipantId, handleRequestClose])
 
   const progressNestedDetailLabel =
     activeLnb === 'progress' && schoolIdFromUrl && schoolDetailTitle
@@ -1639,19 +1651,10 @@ export function GeneralProgramDetailFullPageModal({
     <>
       <DetailFullPageModal
         open={open}
-        onClose={handleModalClose}
+        onClose={handleRequestClose}
         zIndex={GENERAL_PROGRAM_DETAIL_FULLPAGE_MODAL_Z_INDEX}
         title={modalTitle}
-        closeAriaLabel={
-          schoolIdFromUrl ||
-          instructorIdFromUrl ||
-          volunteerIdFromUrl ||
-          participantIdFromUrl ||
-          (volunteerApplicantDetailMeta != null &&
-            isGeneralVolunteerApplicantDetailRoute(activeLnb, activeTab))
-            ? '목록으로'
-            : undefined
-        }
+        closeAriaLabel="닫기"
         headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
         className="program-detail-fullpage-modal general-detail-fullpage-modal program-detail-fullpage-modal--program-list-overview"
         sidebar={
@@ -1737,6 +1740,7 @@ export function GeneralProgramDetailFullPageModal({
                   onRegisterApplicantCloseHandler={fn => {
                     applicantCloseHandlerRef.current = fn
                   }}
+                  onApplicantDetailMetaChange={setListApplicantDetailMeta}
                 />
               </div>
             ) : activeLnb === 'instructor_applications' ? (
@@ -1746,6 +1750,7 @@ export function GeneralProgramDetailFullPageModal({
                   onRegisterApplicantCloseHandler={fn => {
                     applicantCloseHandlerRef.current = fn
                   }}
+                  onApplicantDetailMetaChange={setListApplicantDetailMeta}
                 />
               </div>
             ) : activeLnb === 'progress' && activeTab === 'progress_participants' ? (
@@ -1819,10 +1824,10 @@ export function GeneralProgramDetailFullPageModal({
                   volunteerIdFromUrl={volunteerIdFromUrl}
                   volunteerTabFromUrl={activeVolunteerTab}
                   onVolunteerTabChange={setVolunteerTab}
-                  onVolunteerRowClick={row => setVolunteerId(row.id)}
-                  onClearVolunteerId={() => setVolunteerId(null)}
-                  onVolunteerDetailOpen={name => setVolunteerDetailTitle(name)}
-                  onVolunteerDetailClose={() => setVolunteerDetailTitle(null)}
+                  onVolunteerRowClick={handleVolunteerRowClick}
+                  onClearVolunteerId={handleClearVolunteerId}
+                  onVolunteerDetailOpen={handleVolunteerDetailOpen}
+                  onVolunteerDetailClose={handleVolunteerDetailClose}
                 />
               </div>
             ) : activeLnb === 'volunteer_applications' ? (

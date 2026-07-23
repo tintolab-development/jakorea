@@ -89,7 +89,12 @@ export function useGeneralProgramApplicationsRemoteSync({
   return {
     remoteEnabled,
     applicationsLoading:
-      organizationQuery.isFetching || instructorQuery.isFetching || individualQuery.isFetching,
+      (organizationQuery.isEnabled &&
+        (organizationQuery.isPending || organizationQuery.isFetching)) ||
+      (instructorQuery.isEnabled &&
+        (instructorQuery.isPending || instructorQuery.isFetching)) ||
+      (individualQuery.isEnabled &&
+        (individualQuery.isPending || individualQuery.isFetching)),
     approveOrganization: approveGeneralOrganizationApplication,
     rejectOrganization: rejectGeneralOrganizationApplication,
     approveInstructor: approveGeneralInstructorApplication,
