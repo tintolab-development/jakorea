@@ -9,7 +9,7 @@ CMS `/programs/general` mock → `programs` API 전환 시 백엔드 확인·요
 상세 완료율 · Phase 5–10: [programs-detail-api-conversion-status.md](./programs-detail-api-conversion-status.md)
 
 **작성일**: 2026-07-09  
-**갱신**: 2026-07-15 (OpenAPI fetch 후 상세 잔여 FE 블로커 정리)
+**갱신**: 2026-07-23 (Phase 11–16 FE · interview-slots GET hand-wrap · attendance dashboard schedules · managers hybrid · lecture-eval submit)
 
 ---
 
@@ -75,11 +75,12 @@ CMS `/programs/general` mock → `programs` API 전환 시 백엔드 확인·요
 | 기관/강사/개인/봉사자 신청 목록·결정 | hybrid | `applications` (+ `programs`) |
 | 진행 참여자 목록 (개인/기관/강사/봉사) | hybrid | `programProgress` (+ `programs`) |
 | navigation / posts·surveys **목록** | hybrid | `programs` |
-| 면접 슬롯·배정 | POST만 OpenAPI — **목록 GET 없음**. FE는 배정 시 slot create+assign | `applications` |
-| 출석 | schedule 단위 GET/PUT·bulk 있음. **프로그램 schedules 목록 GET 없음** → UI 세션 매핑 블로커 | `programProgress` |
-| 과제(homework) | 회원 assignment-submissions만. **프로그램 단위 과제 세션 API 없음** | — |
-| 담당자 CRUD | **OpenAPI path 없음** | — |
-| 신청경로 CRUD | **OpenAPI path 없음** (`applicationPathId` 필드만 프로그램 PATCH) | — |
+| 면접 슬롯·배정 | POST OpenAPI + **GET FE hand-wrap** (미등재 시 mock 폴백). 배정은 slot create+assign | `applications` |
+| 출석 | schedule GET/PUT + **dashboard program-schedules 우회**로 세션 목록. 전용 `…/schedules` 권장(P2-2) | `programProgress` |
+| 과제(homework) | 회원 assignment-submissions만. **프로그램 단위 과제 세션 API 없음** → FE mock 유지 | — |
+| 담당자 CRUD | **FE hybrid 완료** (`…/managers` OpenAPI 있음) | `programs` |
+| 신청경로 CRUD | **OpenAPI path 없음** (`applicationPathId` 필드만 프로그램 PATCH) · path 메타 mock | — |
+| 신청자 상세 편집 PATCH | approve/reject만 · **detail body PATCH 없음** → FE mock 유지 | — |
 
 **활성화 예시**
 
@@ -95,13 +96,14 @@ VITE_REAL_API_MODULES=...,programs,applications,programProgress
 
 BE `/v3/api-docs` 스냅샷: `apps/cms/openapi/backend.openapi.json` (475 paths).
 
-| 우선 | 요청 | 이유 |
-|------|------|------|
-| P2-1 | `GET /api/admin/programs/{programId}/interview-slots` (+ 기간 필터) | 면접 캘린더·가용 슬롯 표시. 현재 POST create만 있어 배정 시 ad-hoc 생성 |
-| P2-2 | `GET /api/admin/programs/{programId}/schedules` (또는 execution schedules list) | 출석/과제 UI 세션 목록. 없으면 attendance GET/PUT을 CMS 화면에 묶기 어려움 |
-| P2-3 | 프로그램 담당자 CRUD (`…/managers` 또는 동등) | `program-managers-tab` 전면 mock |
-| P2-4 | 신청경로 리소스 CRUD 또는 프로그램 nested | path store mock. `applicationPathId` PATCH만으로는 메타 편집 불가 |
-| P2-5 | 프로그램 단위 과제(세션·제출) admin API | 진행 과제 탭. 회원 `assignment-submissions`만으로는 부족 |
+| 우선 | 요청 | 이유 | FE 상태 (2026-07-23) |
+|------|------|------|----------------------|
+| P2-1 | `GET /api/admin/programs/{programId}/interview-slots` (+ 기간 필터) OpenAPI 등재 | 면접 캘린더. FE hand-wrap 시도 중, 미등재 시 mock | **부분** |
+| P2-2 | `GET /api/admin/programs/{programId}/schedules` | 출석 세션 정식 path. 현재 dashboard schedules 우회 | **우회 hybrid** |
+| P2-3 | ~~프로그램 담당자 CRUD~~ | OpenAPI `…/managers` + FE hybrid | **완료** |
+| P2-4 | 신청경로 리소스 CRUD 또는 프로그램 nested | path store mock. `applicationPathId` PATCH만 | **잔여** |
+| P2-5 | 프로그램 단위 과제(세션·제출) admin API | 진행 과제 탭 mock 유지 | **잔여** |
+| P2-6 | admin application detail PATCH | 신청자 상세 편집 mock | **잔여** |
 
 **이미 OpenAPI에 있어 FE hand-wrap 대상 (이번 전환)**
 

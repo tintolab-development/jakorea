@@ -11,11 +11,13 @@ CMS `/programs/company-school` 및 legacy 호환 경로 `/programs/economy-educa
 | 로드맵 | [programs-api-conversion-roadmap.md](./programs-api-conversion-roadmap.md) — **Cat 1** |
 | 현재 운영 상태 | FE 연결 완료, **기본 OFF**, OpenAPI/BE 수용 확인 전 원격 활성화 금지 |
 | 공통 등록 플로우 | [programs-registration-flow-api-backend-handoff.md](./programs-registration-flow-api-backend-handoff.md) — 공통 원칙만 링크하며 중복하지 않음 |
+| **더미 시드 (목록·상세 CASE)** | [company-school-program-dummy-seed-backend-request.md](./company-school-program-dummy-seed-backend-request.md) |
 
 > SSOT는 `src/features/program/1c-1s/api/*`, `general`의 `economy` 등록 분기, 공통 `programs-api-client.ts`, 현재 `openapi/backend.openapi.json`입니다. 1사1교는 학교/기관과 강사를 대상으로 하며 **봉사자가 없습니다.**
 
 **Cat1 코어 DoD (FE → Cat2 진입):** 스테이징 Phase 0–6 통과 + `VITE_COMPANY_SCHOOL_PROGRAMS_REMOTE_ENABLED=true` QA 가능.  
-상세 FE Phase SSOT: [programs-company-school-detail-api-conversion-status.md](./programs-company-school-detail-api-conversion-status.md)
+상세 FE Phase SSOT: [programs-company-school-detail-api-conversion-status.md](./programs-company-school-detail-api-conversion-status.md)  
+목록·상세 LNB 검증용 BE 더미: [company-school-program-dummy-seed-backend-request.md](./company-school-program-dummy-seed-backend-request.md)
 
 ---
 

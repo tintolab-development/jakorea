@@ -4,7 +4,7 @@
 **대상**: CMS `/programs/company-school` (legacy `/programs/economy-education`) 풀페이지 상세  
 **범위**: `1c-1s/**` + `general`의 `company-school`/`economy` 분기 — 봉사자·과제·합반 제외  
 **로드맵**: [programs-api-conversion-roadmap.md](./programs-api-conversion-roadmap.md) — **Cat 1**  
-**관련**: [programs-company-school-api-backend-handoff.md](./programs-company-school-api-backend-handoff.md) · 일반 상세 [programs-detail-api-conversion-status.md](./programs-detail-api-conversion-status.md)
+**관련**: [programs-company-school-api-backend-handoff.md](./programs-company-school-api-backend-handoff.md) · [**더미 시드**](./company-school-program-dummy-seed-backend-request.md) · 일반 상세 [programs-detail-api-conversion-status.md](./programs-detail-api-conversion-status.md)
 
 ---
 

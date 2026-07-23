@@ -1,7 +1,7 @@
 # 일반 프로그램 상세 — API 전환 완료율 · Phase 계획
 
 **작성일**: 2026-07-13  
-**갱신**: 2026-07-15 (§1·§3·§4를 §0·코드와 동기화)  
+**갱신**: 2026-07-23 (Phase 11–16 잔여 로드맵 · progress 강제 mock 해제 · managers/survey SSOT 정합)  
 **대상**: CMS `/programs/general?programId=…` 풀페이지 상세 모달 (일반 프로그램만)  
 **범위**: `apps/cms/src/features/program/general/**` — UJAT · 1사1교 · Gemini 간섭 금지  
 **관련 문서**: [programs-api-integration.md](./programs-api-integration.md) · [programs-api-migration-guide.md](./programs-api-migration-guide.md) · [programs-api-remaining-work.md](./programs-api-remaining-work.md) · [programs-api-backend-gaps.md](./programs-api-backend-gaps.md)
@@ -16,14 +16,15 @@
 
 | Phase | 상태 | 구현 요약 |
 |-------|------|-----------|
-| **5** 봉사자 신청 | **완료(하이브리드)** | list GET + document-result / final-result · **면접 배정 POST**(slot create+assign) · 슬롯 목록 GET 없어 캘린더 표시는 mock |
-| **6** 진행 목록 | **완료(하이브리드)** | `participants?participantType=` ORGANIZATION/INSTRUCTOR/VOLUNTEER |
+| **5** 봉사자 신청 | **완료(하이브리드)** | list GET + document-result / final-result · 면접 배정 POST · **슬롯 GET hand-wrap**(실패 시 mock) |
+| **6** 진행 목록 | **완료(하이브리드)** | `FORCE_PROGRAM_PROGRESS_MOCK=false` — `participants?participantType=` 실호출 |
 | **7** navigation | **완료(하이브리드)** | `GET …/navigation` → disabled LNB 필터, 실패 시 meta fallback |
-| **8** 게시글 | **부분** | posts 목록 GET + **작성 POST** · 출석 client/hook(스케줄 목록 BE 갭) · 중첩 상세 mock |
-| **9** 설문 | **부분** | surveys GET · **responses/summary GET**(메타·count) · 만족도 문항 answers는 mock |
-| **10** polish | **부분** | lifecycle PATCH · detail error UI · **applicationPathId remote PATCH** · 담당자·path CRUD·서버 필터 gaps 잔여 |
+| **8** 게시글 | **부분** | posts 목록 GET + **작성 POST·invalidate** · 출석 dashboard schedules hybrid · 과제 mock(P2-5) |
+| **9** 설문 | **하이브리드** | surveys + form-bindings · responses(+detail) · summary · **강의평가 제출** `form-responses/submit` |
+| **10** polish | **부분** | lifecycle · managers hybrid · applicationPathId PATCH · path CRUD·상세편집 gaps |
+| **11–16** | **실행됨(부분 DoD)** | 11 mock 해제+SSOT · 12 slots GET · 13 posts invalidate · 14 attendance · 15 lecture-reports/posts · 16 lecture submit+gaps |
 
-**추정 상세 완료율 ≈ 60–65%** (LNB 균등 — 출석 UI/담당자·면접 슬롯 GET·설문 answers 미완 반영)
+**추정 상세 완료율 ≈ 70–75%** (LNB 균등 — 출석 UI 완전 연동·과제·중첩 mutation·면접 GET OpenAPI·신청경로 CRUD 잔여)
 
 ---
 
@@ -39,18 +40,18 @@
 | `info` | 프로그램 정보 | **~85%** | Remote CRUD + lifecycle + 공통정보 `serviceDetailJson`(교육 구조·sponsorId 동기화). 신청경로 CRUD·BE JSON 영속 확인 잔여 |
 | `institution_applications` | 기관·참여자 신청 | **~80%** | GET + approve/reject remote. 면접 일정 TODO |
 | `instructor_applications` | 강사 신청 | **~85%** | GET + approve/reject remote |
-| `volunteer_applications` | 봉사자 신청 | **~70%** | list + document-result / final-result. 면접 배정·슬롯 mock |
-| `progress` | 프로그램 진행 현황 | **~40%** | 개인/기관/강사/봉사 **목록** hybrid. 출석·과제·중첩 상세 mock · posts 목록 partial |
-| `survey` | 설문 관리 | **~25%** | surveys GET → 등록 설문 병합. 만족도/강의평가·응답 mock |
-| `managers` | 담당자 정보 | **0%** | `getMockProgramManagers` |
+| `volunteer_applications` | 봉사자 신청 | **~80%** | list + document-result / final-result · 면접 배정 POST · 슬롯 GET hand-wrap |
+| `progress` | 프로그램 진행 현황 | **~65%** | 참여자 4목록 · posts 작성 · 출석 schedules hybrid · lecture-reports 목록. 과제·중첩 mutation 잔여 |
+| `survey` | 설문 관리 | **~80%** | surveys/form-bindings/responses hybrid · 강의평가 제출 remote 시도. satisfaction-modal 잔여 |
+| `managers` | 담당자 정보 | **~95%** | `…/managers` CRUD hybrid (remote OFF mock 폴백) |
 
-**상세 전체(LNB 균등) ≈ 55–60%**
+**상세 전체(LNB 균등) ≈ 70–75%**
 
 | 구분 | 완료율 | 비고 |
 |------|--------|------|
 | 1차 CRUD (목록·상세·등록) PHASE 0–4 | **100%** (범위 내) | 상세 LNB 완료율과 **분리** |
-| 상세 LNB 표면 | **≈ 55–60%** | §0·본 표 기준 |
-| 2차 트랙(신청·진행) | **1차 연동 완료 · 잔여 mock** | 신청(봉사자 포함)·진행 목록·navigation 완료. 출석/과제/중첩·담당자·면접 슬롯·설문 응답 잔여 |
+| 상세 LNB 표면 | **≈ 70–75%** | §0·본 표 기준 |
+| 2차 트랙(신청·진행) | **목록 연동 · 중첩/출석·과제 잔여** | 면접 슬롯 GET OpenAPI 미등재 · 과제 admin API 갭 |
 
 ### Remote 게이트
 
@@ -81,11 +82,9 @@ flowchart TB
     SurveyList[survey_등록목록]
   end
   subgraph todo [미전환_mock]
-    ProgEtc[출석_과제_중첩상세]
-    SurveyResp[만족도_응답]
-    Slot[면접_슬롯]
-    Path[신청경로]
-    Mgr[managers]
+    ProgEtc[출석완전연동_과제_중첩상세]
+    Slot[면접_슬롯_GET_OpenAPI]
+    Path[신청경로_CRUD]
   end
   Info --> InstApp
   InstApp --> VolApp
@@ -172,9 +171,9 @@ flowchart TB
 | `progress_participants` (기관) | `participating-institutions-section.tsx` | `use-progress-school-list` | `participating-schools` | `…/participants` (`ORGANIZATION`) | **hybrid** |
 | `progress_instructors` | `participating-instructors-section.tsx` | `use-progress-instructor-list` | participating-instructors | `…/participants` (`INSTRUCTOR`) | **hybrid** |
 | `progress_volunteers` | `participating-volunteers-section.tsx` | `use-progress-volunteer-list` | `MOCK_PARTICIPATING_VOLUNTEERS` | `…/participants` (`VOLUNTEER`) | **hybrid** |
-| `progress_attendance` | `participating-individual-progress-attendance-section.tsx` | attendance hooks | `*-attendance-mock` | — | **mock** |
-| `progress_assignments` | `participating-individual-progress-assignment-section.tsx` | assignment hooks | assignment mock | — | **mock** |
-| `progress_posts` | `program-progress-posts-section.tsx` | `use-general-program-posts-surveys` → `postsOverride` | `getProgramPostsByProgramId` | `GET …/posts` | **partial** (목록 GET) |
+| `progress_attendance` | `participating-individual-progress-attendance-section.tsx` | attendance + dashboard schedules | `*-attendance-mock` | attendances GET/PUT · dashboard schedules | **partial** (세션 옵션 remote 시도) |
+| `progress_assignments` | `participating-individual-progress-assignment-section.tsx` | assignment hooks | assignment mock | — (P2-5) | **mock** |
+| `progress_posts` | `program-progress-posts-section.tsx` | `useGeneralProgramPosts` + invalidate | `getProgramPostsByProgramId` | `GET/POST …/posts` | **hybrid** (목록+작성) |
 
 **중첩 풀페이지 상세 (대부분 mock 데이터 층)**
 
@@ -185,18 +184,18 @@ flowchart TB
 | 봉사자 | volunteer detail | application / assignment |
 | 참여자 | participant detail | application / attendance / assignments — 목록만 remote 가능 |
 
-### 3.6 `lnb=survey` — 설문 (~25%)
+### 3.6 `lnb=survey` — 설문 (~75%)
 
 | 탭 | UI | mock | OpenAPI | FE 상태 |
 |----|-----|------|---------|---------|
-| `survey` (등록 설문) | `survey-management-view.tsx` + `use-general-program-posts-surveys` | `survey-mock.ts` | `GET …/surveys` | **partial** (목록 병합) |
-| `satisfaction` / `lecture_evaluation` · 응답 | 동일 | `general-survey-poll-responses-mock` | `…/responses`, `…/summary` | **mock** |
+| `survey` (등록 설문) | `survey-management-view.tsx` + `use-general-program-posts-surveys` | `survey-mock.ts` (remote OFF) | `GET …/surveys` · `…/responses` · `…/summary` · `form-bindings` CRUD | **hybrid** |
+| `satisfaction` / `lecture_evaluation` | 동일 | remote OFF mock | form-bindings 분류(템플릿 ID) + responses | **hybrid** (제출 mutation 제외) |
 
-### 3.7 `lnb=managers` — 담당자 (0%)
+### 3.7 `lnb=managers` — 담당자 (~95%)
 
 | 화면 | UI | mock | 설계 | FE 상태 |
 |------|-----|------|------|---------|
-| 목록·등록·삭제·권한 | `program-managers-tab.tsx` | `getMockProgramManagers` (`@/data/mock/program-managers`) | [program-managers-tab-spec.md](../design/program-managers-tab-spec.md) | **mock** |
+| 목록·등록·삭제·권한 | `program-managers-tab.tsx` · `use-program-managers` | remote OFF만 `getMockProgramManagers` | [program-managers-tab-spec.md](../design/program-managers-tab-spec.md) | **hybrid** |
 
 ---
 
@@ -211,6 +210,9 @@ flowchart TB
 | GET | `…/navigation` | LNB·탭 가용성 |
 | GET | `…/posts` | 진행 게시글 **목록** |
 | GET | `…/surveys` | 등록 설문 **목록** 병합 |
+| GET | `…/surveys/{templateVersionId}/responses` (+ detail) | 응답 목록·answers |
+| GET | `…/surveys/{templateVersionId}/summary` | 집계 count 보조 |
+| GET/POST/DELETE | `…/form-bindings` | 설문/만족도/강의평가 등록·삭제·분류 |
 | GET | `…/organization-applications` | 기관 신청 |
 | GET | `…/instructor-applications` | 강사 신청 |
 | GET | `…/individual-applications` | 개인 신청 |
@@ -225,16 +227,13 @@ flowchart TB
 
 | Path / 영역 | 비고 | 목표 Phase |
 |-------------|------|------------|
-| `…/interview-slots` | 면접 일정 — UI mock 유지 | 5 후속 / 10 |
-| `…/posts` 작성·comments / reactions / reads | 목록만 wired · STAGING_VERIFY | 8 |
-| `…/surveys` responses / summary | 등록 목록만 wired | 9 |
-| 출석·과제 세션 | OpenAPI/계약 확정 후 | 8 |
-| `…/lecture-reports` | 강사 상세 | 8 |
-| `…/schedules` · `schedule-change-histories` | 일정 | 10 |
-| `…/form-bindings` · `recruitments` · `kpi-target` | 정보/운영 | 10 |
-| `…/complete` · `completion-readiness` | 완료 처리 | 10 |
-| 담당자 CRUD | 계약 미확정 · UI mock | 10 |
-| 신청경로 | UI mock | 10 |
+| `…/interview-slots` | **POST wired** · **GET FE hand-wrap 시도**(OpenAPI 미등재 → 실패 시 mock) | 12 |
+| `…/posts` 작성·comments / reactions / reads | 작성+목록 hybrid · comments/reactions 잔여 | 13 / 13b |
+| 출석·과제 세션 | attendance client + dashboard schedules 보조 · 과제 P2-5 | 14 |
+| `…/lecture-reports` | **FE list hand-wrap** | 15 |
+| `…/schedules` · `schedule-change-histories` | dashboard `program-schedules` 보조 사용 · program schedules list 갭 | 14 |
+| 담당자 CRUD | **FE hybrid wired** | 11 |
+| 신청경로 | path CRUD 갭 · `applicationPathId` PATCH만 | 16 |
 
 (교육받은 교사 `trained-teacher/*` 경로는 **일반 상세 비범위**.)
 
@@ -436,37 +435,38 @@ flowchart LR
 
 | 항목 | 내용 |
 |------|------|
-| **모듈** | `formsSurveys` 또는 programs `…/surveys` (계약 확정 후 택일) |
+| **모듈** | `programs` (+ form-bindings; 템플릿 ID 캐시는 `formsSurveys`) |
 | **목표** | 설문 / 만족도 / 강의평가 탭 remote |
-| **현재** | **부분** — `GET …/surveys` → 등록 설문 목록 병합. 만족도/강의평가·응답 mock |
+| **현재** | **하이브리드** — surveys + form-bindings · responses(+detail answers) · summary count · 등록/삭제 · 만족도/강의평가 목록·응답 hydrate |
 
 **작업**
 
-1. ~~`GET …/surveys` client + `use-general-program-posts-surveys`~~ — **부분 완료**
-2. `…/summary`, `…/responses` + adapter — **잔여**
-3. `survey-management-view.tsx` — 만족도/강의평가 mock 분기 해소 — **잔여**
-4. 만족도 모달 `TODO(api)` 해소 — **잔여**
+1. ~~`GET …/surveys` client + `use-general-program-posts-surveys`~~
+2. ~~`…/summary`, `…/responses`(+detail) + adapter~~
+3. ~~`survey-management-view.tsx` — 만족도/강의평가 form-bindings hydrate~~
+4. 만족도 모달 `satisfaction-survey-modal.tsx` `TODO(api)` — **잔여(별도 화면)**
+5. 강의평가 **응답 제출** member API — **잔여**
 
 **터치 파일**
 
 - `ui/detail-modal/survey-management/*`
 - `hooks/use-general-program-posts-surveys.ts`
-- `lib/survey-audience.ts`
-- `api/admin-general-programs-service.ts` (`fetchGeneralProgramSurveys`)
+- `api/adapters/program-survey-adapters.ts`
+- `api/programs-api-client.ts` / `admin-general-programs-service.ts`
 
 **DoD**
 
 - [x] 등록 설문 목록 GET hybrid
-- [ ] 만족도/강의평가·responses/summary remote
-- [ ] UJAT 설문 재사용 UI 기본값 불변 (응답 연동 시 재확인)
+- [x] 만족도/강의평가·responses/summary remote (제출 mutation 제외)
+- [x] UJAT 설문 재사용 UI 기본값 불변 (shared `SurveyPollResultsView` fallback 유지)
 
 **수동 QA**
 
-- [ ] summary 수치 · responses 테이블
+- [ ] summary 수치 · responses 차트/엑셀
 - [ ] remote OFF mock
+- [ ] form-bindings 등록/삭제
 
-**BE 의존**: templateVersionId · audience 매핑 (`survey-audience`)
-
+**BE 의존**: templateVersionId · audience는 FE 템플릿 ID 매칭 (`survey-audience`) — BE numeric id 불일치 시 formType enum 보강 요청
 ---
 
 ### Phase 10 — 담당자 · 운영 polish · backend gaps
