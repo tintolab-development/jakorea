@@ -102,7 +102,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
   }, [hasSearched, keyword, open, search, trimmedKeyword])
 
   return (
-    <PFModal open={open} title="주소 검색" onClose={handleClose}>
+    <PFModal open={open} title="주소 검색" onClose={handleClose} mobilePlacement="bottom">
       <div
         className={[
           styles.addressModalMain,
@@ -130,7 +130,11 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
                 }
               }}
             />
-            <PFButton size="xlarge" width="160px" onClick={handleSearch}>
+            <PFButton
+              size="xlarge"
+              className={styles.addressModalSearchButton}
+              onClick={handleSearch}
+            >
               검색
             </PFButton>
           </div>
