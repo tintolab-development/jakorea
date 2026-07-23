@@ -243,11 +243,11 @@ export function GeneralProgramListPageContent() {
     )
   }, [programIdFromUrl, selectedProgramForDetail, filteredPrograms])
 
-  const applyListSearchRef = useRef<(() => void) | null>(null)
-
   const handleCloseFullPageModal = useCallback(() => {
-    applyListSearchRef.current?.()
     setSelectedProgramForDetail(null)
+    // 모달 open 중에는 목록 필터 UI가 가려져 pending 변경이 없다.
+    // applySearch를 함께 호출하면 RR setSearchParams 클로저가 programId를
+    // 다시 실어 모달이 안 닫히는 레이스가 난다 — 상세 쿼리만 제거한다.
     setSearchParams(
       prev =>
         clearGeneralProgramDetailQueryParams(clearSponsorDetailQueryStack(new URLSearchParams(prev))),
@@ -400,9 +400,6 @@ export function GeneralProgramListPageContent() {
         searchParams={searchParams}
         setSearchParams={setSearchParams}
         disableUrlSync={generalDetailModalOpen}
-        onRegisterApplySearch={applySearch => {
-          applyListSearchRef.current = applySearch
-        }}
         onSelectionChange={isScheduledFilter ? setSelectedRowKeys : undefined}
         selectedRowKeys={isScheduledFilter ? selectedRowKeys : undefined}
         showRowSelection={isScheduledFilter}

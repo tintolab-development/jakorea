@@ -77,3 +77,34 @@ export async function bulkUpsertProgramAttendancesRemote(
     })
   )
 }
+
+/** GET /api/admin/dashboard/program-schedules — 프로그램 일정 목록(출석 세션 옵션용). P2-2 전용 schedules list 대체. */
+export async function fetchProgramSchedulesViaDashboardRemote(
+  programId: string
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse').DashboardProgramScheduleResponse[]
+> {
+  const { fetchDashboardProgramSchedulesRemote, toDashboardQueryParams } = await import(
+    '@/features/dashboard/api/dashboard-api-client'
+  )
+  const body = await fetchDashboardProgramSchedulesRemote({
+    params: toDashboardQueryParams({ programIds: [programId] }),
+  })
+  return body.items ?? []
+}
+
+/** GET /api/admin/programs/{programId}/lecture-reports */
+export async function fetchProgramLectureReportsRemote(
+  programId: string,
+  params?: { page?: number; size?: number }
+): Promise<unknown[]> {
+  const body = await unwrapApiBody<unknown[] | { items?: unknown[] }>(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/lecture-reports`,
+      method: 'GET',
+      params,
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.items ?? []
+}

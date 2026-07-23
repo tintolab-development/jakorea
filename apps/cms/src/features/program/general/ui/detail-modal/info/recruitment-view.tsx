@@ -9,6 +9,7 @@ import type { ProgramDetailEditFormValues } from '@/features/program/shared/mode
 import { CmsButton } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -170,9 +171,7 @@ export function GeneralProgramRecruitmentView({
               <div className="recruitment-view__header-actions">
                 {canWrite || isEditMode ? (
                   <CmsButton
-                    variant="primary"
-                    size="large"
-                    width={140}
+                    {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
                     onClick={resolveProgramEditInfoClick(isEditMode, {
                       onEnterEdit: onEdit,
                       onSaveEdit: onSave,

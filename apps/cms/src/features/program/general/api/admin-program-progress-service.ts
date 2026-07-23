@@ -7,6 +7,7 @@ import {
 import { shouldUseProgramProgressHttpRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import {
   fetchProgramParticipantsRemote,
+  fetchProgramSchedulesViaDashboardRemote,
   fetchScheduleAttendancesRemote,
   putScheduleAttendancesRemote,
   type ProgramParticipantsListQuery,
@@ -28,6 +29,17 @@ import {
   type ParticipatingVolunteerRow,
 } from '@/data/mock/participating-volunteers'
 
+/**
+ * 진행현황 participants / attendances.
+ * remote 게이트: programs(+1사1교/TT opt-in) · programProgress + JWT.
+ * mock 폴백: 게이트 OFF 시만.
+ */
+const FORCE_PROGRAM_PROGRESS_MOCK = false
+
+function useProgramProgressMock(): boolean {
+  return FORCE_PROGRAM_PROGRESS_MOCK || !shouldUseProgramProgressHttpRemoteApi()
+}
+
 function assertProgramProgressRemoteReady(): void {
   if (!shouldUseProgramProgressHttpRemoteApi()) {
     throw new Error(
@@ -40,7 +52,7 @@ export async function fetchGeneralProgramParticipants(
   programId: string,
   params?: ProgramParticipantsListQuery
 ): Promise<ParticipatingIndividualParticipantRow[]> {
-  if (!shouldUseProgramProgressHttpRemoteApi()) {
+  if (useProgramProgressMock()) {
     return getParticipatingIndividualParticipantsForProgram(programId)
   }
 
@@ -59,7 +71,7 @@ export async function fetchGeneralProgramParticipants(
 export async function fetchGeneralParticipatingInstitutions(
   programId: string
 ): Promise<ParticipatingSchoolRow[]> {
-  if (!shouldUseProgramProgressHttpRemoteApi()) {
+  if (useProgramProgressMock()) {
     return getParticipatingSchoolsForProgram(programId)
   }
 
@@ -77,7 +89,7 @@ export async function fetchGeneralParticipatingInstitutions(
 export async function fetchGeneralParticipatingInstructors(
   programId: string
 ): Promise<ParticipatingInstructorRow[]> {
-  if (!shouldUseProgramProgressHttpRemoteApi()) {
+  if (useProgramProgressMock()) {
     return [...MOCK_PARTICIPATING_INSTRUCTORS]
   }
 
@@ -95,7 +107,7 @@ export async function fetchGeneralParticipatingInstructors(
 export async function fetchGeneralParticipatingVolunteers(
   programId: string
 ): Promise<ParticipatingVolunteerRow[]> {
-  if (!shouldUseProgramProgressHttpRemoteApi()) {
+  if (useProgramProgressMock()) {
     return [...MOCK_PARTICIPATING_VOLUNTEERS]
   }
 
@@ -111,7 +123,7 @@ export async function fetchGeneralParticipatingVolunteers(
 }
 
 export async function fetchGeneralScheduleAttendances(programId: string, scheduleId: string) {
-  if (!shouldUseProgramProgressHttpRemoteApi()) return []
+  if (useProgramProgressMock()) return []
   assertProgramProgressRemoteReady()
   return fetchScheduleAttendancesRemote(programId, scheduleId)
 }
@@ -120,7 +132,68 @@ export async function saveGeneralScheduleAttendances(
   scheduleId: string,
   attendances: import('@/shared/api/generated/dashboard/schemas/attendanceItemRequest').AttendanceItemRequest[]
 ) {
-  if (!shouldUseProgramProgressHttpRemoteApi()) return
+  if (useProgramProgressMock()) return
   assertProgramProgressRemoteReady()
   await putScheduleAttendancesRemote(scheduleId, { attendances })
+}
+
+/**
+ * remote ON: dashboard program-schedules + schedule attendances + participants (P2-2 우회).
+ * remote OFF / 실패: null → 호출부 mock.
+ */
+export async function fetchGeneralProgressAttendanceBundle(programId: string): Promise<{
+  schedules: import('@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse').DashboardProgramScheduleResponse[]
+  participants: import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse[]
+  attendancesByScheduleId: Record<
+    string,
+    import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
+  >
+} | null> {
+  if (useProgramProgressMock()) return null
+  assertProgramProgressRemoteReady()
+  try {
+    const [schedules, participantsPage] = await Promise.all([
+      fetchProgramSchedulesViaDashboardRemote(programId),
+      fetchProgramParticipantsRemote(programId, { page: 0, size: 500 }),
+    ])
+    const attendancesByScheduleId: Record<
+      string,
+      import('@/shared/api/generated/dashboard/schemas/attendanceItemResponse').AttendanceItemResponse[]
+    > = {}
+    await Promise.all(
+      schedules
+        .filter(s => s.scheduleId != null)
+        .map(async s => {
+          const scheduleId = String(s.scheduleId)
+          try {
+            attendancesByScheduleId[scheduleId] = await fetchScheduleAttendancesRemote(
+              programId,
+              scheduleId
+            )
+          } catch {
+            attendancesByScheduleId[scheduleId] = []
+          }
+        })
+    )
+    return {
+      schedules,
+      participants: participantsPage.items ?? [],
+      attendancesByScheduleId,
+    }
+  } catch {
+    return null
+  }
+}
+
+export async function fetchGeneralProgramLectureReports(programId: string): Promise<unknown[] | null> {
+  if (useProgramProgressMock()) return null
+  assertProgramProgressRemoteReady()
+  try {
+    const { fetchProgramLectureReportsRemote } = await import(
+      '@/features/program/general/api/program-progress-api-client'
+    )
+    return await fetchProgramLectureReportsRemote(programId, { page: 0, size: 200 })
+  } catch {
+    return null
+  }
 }

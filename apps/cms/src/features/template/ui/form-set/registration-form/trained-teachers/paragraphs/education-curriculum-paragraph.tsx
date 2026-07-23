@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -9,6 +9,7 @@ import {
   ProgramRegistrationIpsTypeFields,
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
+import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 type TrainedTeachersRegistrationEducationCurriculumParagraphProps = {
@@ -18,9 +19,22 @@ type TrainedTeachersRegistrationEducationCurriculumParagraphProps = {
 }
 
 function TrainedTeachersTeacherTrainingTable() {
-  const [trainingSchedule, setTrainingSchedule] = useState<Dayjs | null>(null)
-  const [trainingEducationForm, setTrainingEducationForm] = useState('online')
-  const [trainingIpsType, setTrainingIpsType] = useState<ProgramRegistrationIpsTypeValue>({
+  const [trainingScheduleIso, setTrainingScheduleIso] = useProgramRegistrationOverlayKv<string | null>(
+    'trainedTeachersRegistration.educationCurriculum.trainingScheduleIso',
+    null
+  )
+  const trainingSchedule = trainingScheduleIso ? dayjs(trainingScheduleIso) : null
+  const setTrainingSchedule = (next: Dayjs | null) => {
+    setTrainingScheduleIso(next == null ? null : next.toISOString())
+  }
+
+  const [trainingEducationForm, setTrainingEducationForm] = useProgramRegistrationOverlayKv(
+    'trainedTeachersRegistration.educationCurriculum.trainingEducationForm',
+    'online'
+  )
+  const [trainingIpsType, setTrainingIpsType] = useProgramRegistrationOverlayKv<
+    ProgramRegistrationIpsTypeValue
+  >('trainedTeachersRegistration.educationCurriculum.trainingIpsType', {
     category: 'prepare',
     detail: 'none',
   })
@@ -186,7 +200,9 @@ export function TrainedTeachersRegistrationEducationCurriculumParagraph({
   curriculumSessionCount,
   onDeleteCurriculumSession,
 }: TrainedTeachersRegistrationEducationCurriculumParagraphProps) {
-  const [educationJournalEnabled, setEducationJournalEnabled] = useState<'yes' | 'no'>('yes')
+  const [educationJournalEnabled, setEducationJournalEnabled] = useProgramRegistrationOverlayKv<
+    'yes' | 'no'
+  >('trainedTeachersRegistration.educationCurriculum.educationJournalEnabled', 'yes')
 
   return (
     <div className="program-registration-curriculum__sessions">

@@ -248,8 +248,18 @@ export function ProgramList({
             columns={antdColumns}
             rowKey="id"
             loading={loading}
-            scroll={isOverviewTable ? { x: 'max-content' } : undefined}
-            tableLayout={isOverviewTable ? 'auto' : undefined}
+            scroll={
+              isOverviewTable && listView !== 'SCHEDULED'
+                ? { x: 'max-content' }
+                : undefined
+            }
+            tableLayout={
+              isOverviewTable
+                ? listView === 'SCHEDULED'
+                  ? 'fixed'
+                  : 'auto'
+                : undefined
+            }
             onRow={record => ({
               onClick: () => onView(record),
               style: { cursor: 'pointer' },

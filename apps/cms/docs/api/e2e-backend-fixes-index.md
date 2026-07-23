@@ -27,7 +27,7 @@ CMS Playwright E2E · `/e2e-error-log` · 회원 관리 연동에서 **관측·�
 
 ```bash
 # 일반 프로그램 등록 (DATABASE_ERROR 재현)
-pnpm --filter cms test:e2e:programs
+pnpm --filter cms test:e2e:programs:registration
 
 # 회원 목록 CRUD · 권한 유형 변경
 pnpm --filter cms test:e2e:members

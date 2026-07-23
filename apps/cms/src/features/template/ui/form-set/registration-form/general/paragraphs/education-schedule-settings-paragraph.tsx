@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { formatEducationScheduleLineFromRange } from '@/features/template/lib/format-education-schedule-line'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import {
@@ -8,25 +9,57 @@ import {
 } from '@/features/template/ui/shared/education-schedule-preview-lines'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import {
+  updateProgramRegistrationOverlayKey,
+  useProgramRegistrationOverlayKv,
+} from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import './program-registration-paragraph.css'
+
+type EducationScheduleSettingsProps = {
+  educationScheduleMode: ProgramRegistrationEducationScheduleMode
+  onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
+  /** Overlay key prefix (e.g., 'generalRegistration.educationScheduleSettings') */
+  overlayKeyPrefix?: string
+}
 
 export function ProgramRegistrationEducationScheduleSettingsParagraph({
   educationScheduleMode,
   onEducationScheduleModeChange,
-}: {
-  educationScheduleMode: ProgramRegistrationEducationScheduleMode
-  onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
-}) {
+  overlayKeyPrefix = 'generalRegistration.educationScheduleSettings',
+}: EducationScheduleSettingsProps) {
   const scheduleMode = educationScheduleMode
-  const [singleDate, setSingleDate] = useState<Dayjs | null>(null)
-  const [periodDate, setPeriodDate] = useState<Dayjs | null>(null)
-  const [scheduleLines, setScheduleLines] = useState<string[]>([])
+  const [singleDateIso, setSingleDateIso] = useProgramRegistrationOverlayKv<string | null>(
+    `${overlayKeyPrefix}.singleDateIso`,
+    null
+  )
+  const [periodDateIso, setPeriodDateIso] = useProgramRegistrationOverlayKv<string | null>(
+    `${overlayKeyPrefix}.periodDateIso`,
+    null
+  )
+  const [scheduleLines] = useProgramRegistrationOverlayKv<string[]>(
+    `${overlayKeyPrefix}.scheduleLines`,
+    []
+  )
 
-  const appendLineIfNew = useCallback((line: string) => {
-    const trimmed = line.trim()
-    if (!trimmed) return
-    setScheduleLines(prev => (prev.includes(trimmed) ? prev : [...prev, trimmed]))
-  }, [])
+  const singleDate = singleDateIso ? dayjs(singleDateIso) : null
+  const setSingleDate = (d: Dayjs | null) => setSingleDateIso(d ? d.toISOString() : null)
+
+  const periodDate = periodDateIso ? dayjs(periodDateIso) : null
+  const setPeriodDate = (d: Dayjs | null) => setPeriodDateIso(d ? d.toISOString() : null)
+
+  const scheduleLinesKey = `${overlayKeyPrefix}.scheduleLines`
+
+  const appendLineIfNew = useCallback(
+    (line: string) => {
+      const trimmed = line.trim()
+      if (!trimmed) return
+      updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev => {
+        const current = prev ?? []
+        return current.includes(trimmed) ? current : [...current, trimmed]
+      })
+    },
+    [scheduleLinesKey]
+  )
 
   const handleScheduleRangeApply = useCallback(
     (range: [Dayjs, Dayjs]) => {
@@ -37,9 +70,14 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
     [appendLineIfNew]
   )
 
-  const removeLine = useCallback((index: number) => {
-    setScheduleLines(prev => prev.filter((_, i) => i !== index))
-  }, [])
+  const removeLine = useCallback(
+    (index: number) => {
+      updateProgramRegistrationOverlayKey<string[]>(scheduleLinesKey, prev =>
+        (prev ?? []).filter((_, i) => i !== index)
+      )
+    },
+    [scheduleLinesKey]
+  )
 
   useEffect(() => {
     if (scheduleMode !== 'date') return

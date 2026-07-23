@@ -35,7 +35,7 @@ function isCompanySchoolProgram(program: Program): boolean {
     program.id.startsWith('company-school-prog-') ||
     program.id.startsWith('company-school-local-') ||
     program.mainTitle?.includes('1사1교') === true ||
-    program.title.includes('1사1교')
+    program.title?.includes('1사1교') === true
   )
 }
 
@@ -66,13 +66,18 @@ export function useParticipatingInstitutionDetailEdit({
   > | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
-  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
+  const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
+    useProgramTextbookCatalog(program)
 
   const isCompanySchool = useMemo(() => isCompanySchoolProgram(program), [program])
 
+  /** 카탈로그 로딩 중에는 필드를 숨기지 않음(새로고침 플래시 방지) */
   const usesTextbook = useMemo(
-    () => isCompanySchool || programUsesTextbook(program, textbookCatalog),
-    [isCompanySchool, program, textbookCatalog]
+    () =>
+      isCompanySchool ||
+      isTextbookCatalogLoading ||
+      programUsesTextbook(program, textbookCatalog),
+    [isCompanySchool, isTextbookCatalogLoading, program, textbookCatalog]
   )
 
   const isCombinedClassProgramEligibleFlag = useMemo(

@@ -7,6 +7,7 @@ import { trainedTeacherQueryKeys } from './query-keys'
 import {
   createTrainedTeacherProgram,
   deleteTrainedTeacherProgram,
+  deleteTrainedTeacherPrograms,
   getTrainedTeacherProgram,
   listTrainedTeacherPrograms,
   updateTrainedTeacherProgram,
@@ -87,6 +88,21 @@ export function useDeleteTrainedTeacherProgram() {
     retry: false,
     onSuccess: (_data, programId) => {
       queryClient.removeQueries({ queryKey: trainedTeacherQueryKeys.detail(programId) })
+      void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
+    },
+  })
+}
+
+export function useDeleteTrainedTeacherPrograms() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationKey: [...trainedTeacherQueryKeys.all, 'mutation', 'bulk-delete'] as const,
+    mutationFn: deleteTrainedTeacherPrograms,
+    retry: false,
+    onSuccess: (_data, programIds) => {
+      for (const programId of programIds) {
+        queryClient.removeQueries({ queryKey: trainedTeacherQueryKeys.detail(programId) })
+      }
       void queryClient.invalidateQueries({ queryKey: trainedTeacherQueryKeys.lists() })
     },
   })

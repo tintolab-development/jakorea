@@ -61,17 +61,30 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
     ref
   ) => {
     const hasIcon = icon != null
-    const resolvedWidth = typeof width === 'number' ? `${width}px` : width
+    const resolvedWidth = width == null ? undefined : typeof width === 'number' ? `${width}px` : width
+    /**
+     * 고정 폭: width/min/max를 동일 값으로 덮어 size·has-icon 기본 min-width를 깬다.
+     * fluid(`auto`/`max-content`/`fit-content`): max-content 기준으로 긴 라벨이 잘리지 않게 한다.
+     * (`auto`에 min=max=auto를 넣으면 has-icon 180 고정·정렬이 깨질 수 있음)
+     */
+    const isFluidWidth =
+      resolvedWidth === 'auto' ||
+      resolvedWidth === 'max-content' ||
+      resolvedWidth === 'fit-content' ||
+      resolvedWidth === 'min-content'
     const widthStyle: CSSProperties | undefined =
-      resolvedWidth != null
-        ? {
-            width: resolvedWidth,
-            minWidth: resolvedWidth,
-            maxWidth: resolvedWidth,
-          }
-        : undefined
+      resolvedWidth == null
+        ? undefined
+        : isFluidWidth
+          ? {
+              width: resolvedWidth === 'auto' ? 'max-content' : resolvedWidth,
+              minWidth: 'fit-content',
+              maxWidth: 'none',
+            }
+          : { width: resolvedWidth, minWidth: resolvedWidth, maxWidth: resolvedWidth }
 
     const antdSize = size === 'large' ? 'large' : size === 'small' ? 'small' : 'middle'
+    const isLoading = Boolean(loading)
 
     const cn = [
       'cms-button',
@@ -79,6 +92,7 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
       `cms-button--${variant}`,
       `cms-button--${size}`,
       hasIcon && 'cms-button--has-icon',
+      isLoading && 'cms-button--loading-only',
       className,
     ]
       .filter(Boolean)
@@ -86,6 +100,12 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
 
     const antType: ButtonProps['type'] =
       variant === 'primary' ? 'primary' : variant === 'delete' ? 'default' : 'default'
+
+    /**
+     * Ant DefaultLoadingIcon: `icon` 없으면 CSSMotion(width 애니메이션) →
+     * 스피너 absolute 중앙 정렬이 깨짐. 로딩 중 더미 icon으로 existIcon 경로 사용.
+     */
+    const antdIcon = isLoading ? <span className="cms-button__loading-slot" aria-hidden /> : undefined
 
     return (
       <Button
@@ -97,6 +117,7 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
         className={cn}
         disabled={disabled}
         loading={loading}
+        icon={antdIcon}
         style={{ outline: 'none', ...widthStyle, ...style }}
         {...rest}
       >

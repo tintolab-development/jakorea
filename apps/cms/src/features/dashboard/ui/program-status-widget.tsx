@@ -14,6 +14,8 @@ import {
   type ProgramOverviewStages,
 } from '../api/admin-dashboard-service'
 import { useProgramStore } from '@/features/program/general/model/program-store'
+import { useGeneralProgramOverviewStages } from '@/features/program/general/hooks/use-general-program-overview-stages'
+import { useCompanySchoolOverviewStages } from '@/features/program/1c-1s/api/hooks'
 import {
   PROGRAM_PROGRESS_STAGE_LABELS,
   PROGRAM_PROGRESS_STAGE_ORDER,
@@ -30,7 +32,6 @@ import {
   type ProgressStageItem,
 } from '@/features/dashboard/ui/progress-stages-widget'
 import './program-status-widget.css'
-
 /** `/programs/general` 루트 — 4카드(예정/진행/완료) 목록 */
 const isGeneralProgramListRoot = (pathname: string) => {
   const p = pathname.replace(/\/$/, '') || '/'
@@ -118,14 +119,19 @@ export function ProgramStatusWidget({
 
   const programs = useProgramStore(state =>
     programType === 'education' ||
-    programType === 'company_school' ||
-    programType === 'general' ||
     programType === 'trained_teachers'
       ? state.programs
       : EMPTY_PROGRAMS
   )
 
+  const generalOverviewQuery = useGeneralProgramOverviewStages(programType === 'general')
+  const companySchoolOverviewQuery = useCompanySchoolOverviewStages(
+    programType === 'company_school'
+  )
+
   useEffect(() => {
+    if (programType === 'general' || programType === 'company_school') return
+
     const loadData = async () => {
       setLoading(true)
       try {
@@ -144,6 +150,60 @@ export function ProgramStatusWidget({
     }
     loadData()
   }, [programType, programs])
+
+  useEffect(() => {
+    if (programType !== 'general') return
+    if (generalOverviewQuery.isError) {
+      handleError(generalOverviewQuery.error, {
+        defaultMessage: MESSAGES.error.programProgressLoadFailed,
+      })
+      setProgress(null)
+      return
+    }
+    if (!generalOverviewQuery.data) {
+      setProgress(null)
+      return
+    }
+    const d = generalOverviewQuery.data
+    setProgress({
+      total: d.total,
+      scheduled: d.scheduled,
+      inProgress: d.inProgress,
+      completed: d.completed,
+    } satisfies ProgramOverviewStages)
+  }, [
+    programType,
+    generalOverviewQuery.data,
+    generalOverviewQuery.isError,
+    generalOverviewQuery.error,
+  ])
+
+  useEffect(() => {
+    if (programType !== 'company_school') return
+    if (companySchoolOverviewQuery.isError) {
+      handleError(companySchoolOverviewQuery.error, {
+        defaultMessage: MESSAGES.error.programProgressLoadFailed,
+      })
+      setProgress(null)
+      return
+    }
+    if (!companySchoolOverviewQuery.data) {
+      setProgress(null)
+      return
+    }
+    const d = companySchoolOverviewQuery.data
+    setProgress({
+      total: d.total,
+      scheduled: d.scheduled,
+      inProgress: d.inProgress,
+      completed: d.completed,
+    } satisfies ProgramOverviewStages)
+  }, [
+    programType,
+    companySchoolOverviewQuery.data,
+    companySchoolOverviewQuery.isError,
+    companySchoolOverviewQuery.error,
+  ])
 
   const stages = useMemo((): ProgressStageItem[] => {
     if (!progress) return []
@@ -313,7 +373,13 @@ export function ProgramStatusWidget({
       showDividerAfterFirstCard={false}
       showBottomDivider
       onStageClick={handleStageClick}
-      loading={loading}
+      loading={
+        programType === 'general'
+          ? generalOverviewQuery.isFetching
+          : programType === 'company_school'
+            ? companySchoolOverviewQuery.isFetching
+            : loading
+      }
       loadingCardCount={
         programType === 'company_school' ||
         programType === 'general' ||

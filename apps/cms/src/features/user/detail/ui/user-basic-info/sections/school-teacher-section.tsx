@@ -61,6 +61,7 @@ function SchoolTeacherEmploymentStatusField({
       isOpen={employmentDropdownOpen}
       onOpenChange={setEmploymentDropdownOpen}
       style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
+      chrome="hug"
     />
     </span>
   )

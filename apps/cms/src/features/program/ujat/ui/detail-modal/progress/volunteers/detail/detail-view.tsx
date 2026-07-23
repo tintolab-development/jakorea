@@ -5,6 +5,7 @@ import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { CmsButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -247,9 +248,7 @@ export function UjatEducationProgressVolunteerDetailView({
       </CmsButton>
       <CmsButton
         type="button"
-        variant="secondary"
-        size="large"
-        width={140}
+        {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
         onClick={resolveProgramEditInfoClick(isEditing, {
           onEnterEdit: handleEnterEdit,
           onSaveEdit: handleSaveEdit,

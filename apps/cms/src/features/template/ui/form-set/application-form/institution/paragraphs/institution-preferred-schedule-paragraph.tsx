@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
 import {
   buildInstitutionSessionCountOptions,
@@ -8,6 +8,10 @@ import {
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  useGeneralApplicationOverlayKv,
+  updateGeneralApplicationOverlayKey,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
@@ -249,28 +253,43 @@ export function ProgramApplicationFormInstitutionPreferredScheduleParagraph({
     [bridge.maxSessionsPerDay]
   )
 
-  const [blocks, setBlocks] = useState<ScheduleBlockState[]>(() =>
-    Array.from({ length: 1 }, () => createEmptyBlockState())
+  const [blocks] = useGeneralApplicationOverlayKv<ScheduleBlockState[]>(
+    'application.institution.preferredSchedules',
+    []
   )
+
+  // Initialize with single empty block on first render
+  useMemo(() => {
+    if (blocks.length === 0) {
+      updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.institution.preferredSchedules', () =>
+        Array.from({ length: 1 }, () => createEmptyBlockState())
+      )
+    }
+  }, [blocks.length])
 
   const visibleBlockCount = Math.min(Math.max(blocks.length, 1), maxBlocks)
   const displayBlocks = blocks.slice(0, visibleBlockCount)
 
   const patchBlock = (index: number, patch: Partial<ScheduleBlockState>) => {
-    setBlocks(prev => prev.map((b, i) => (i === index ? { ...b, ...patch } : b)))
+    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.institution.preferredSchedules', prev => {
+      const current = (prev ?? []) as ScheduleBlockState[]
+      return current.map((b, i) => (i === index ? { ...b, ...patch } : b))
+    })
   }
 
   const removeBlock = (index: number) => {
-    setBlocks(prev => {
-      if (prev.length <= 1) return [createEmptyBlockState()]
-      return prev.filter((_, i) => i !== index)
+    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.institution.preferredSchedules', prev => {
+      const current = (prev ?? []) as ScheduleBlockState[]
+      if (current.length <= 1) return [createEmptyBlockState()]
+      return current.filter((_, i) => i !== index)
     })
   }
 
   const addBlock = () => {
-    setBlocks(prev =>
-      prev.length >= maxBlocks ? prev : [...prev, createEmptyBlockState()]
-    )
+    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.institution.preferredSchedules', prev => {
+      const current = (prev ?? []) as ScheduleBlockState[]
+      return current.length >= maxBlocks ? current : [...current, createEmptyBlockState()]
+    })
   }
 
   return (

@@ -74,4 +74,7 @@ export interface ProgramResponse {
   settlementPolicy?: ProgramSettlementPolicyResponse;
   createdAt?: string;
   updatedAt?: string;
+  businessYear?: number;
+  businessEndDate?: string;
+  businessStartDate?: string;
 }

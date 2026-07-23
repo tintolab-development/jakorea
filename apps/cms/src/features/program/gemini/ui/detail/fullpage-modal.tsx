@@ -13,6 +13,7 @@ import type { DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { MESSAGES } from '@/shared/constants/messages'
@@ -230,9 +231,7 @@ export function GeminiRecruitmentDetailFullPageModal({
                   {canWrite ? (
                     <CmsButton
                       type="button"
-                      variant="secondary"
-                      size="large"
-                      width={160}
+                      {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
                       onClick={resolveProgramEditInfoClick(isEditModeInfo, {
                         onEnterEdit: handleInfoEditClick,
                         onSaveEdit: handleInfoSaveClick,

@@ -89,7 +89,8 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     appliedAt: dto.submittedAt,
     schoolName: '',
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
-    instructorFeeGradeLabel: dto.instructorFeeGradeSnapshot,
+    instructorFeeGradeLabel: dto.instructorFeeGradeSnapshot?.trim() || undefined,
+    rejectionReason: dto.rejectReason?.trim() || undefined,
   }
 }
 

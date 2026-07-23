@@ -1,8 +1,14 @@
 import { useMemo } from 'react'
+import { Spin } from 'antd'
 import type { Dayjs } from 'dayjs'
 import type { Program } from '@/types/domain'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
-import { parseGeneralInterviewScheduleFromProgram } from '@/features/program/general/lib/general-interview-assign-schedule-utils'
+import { shouldUseApplicationsHttpRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import { useGeneralInterviewSlots } from '@/features/program/general/hooks/use-general-interview-slots'
+import {
+  parseGeneralInterviewScheduleFromProgram,
+  parseGeneralInterviewScheduleFromRemoteSlots,
+} from '@/features/program/general/lib/general-interview-assign-schedule-utils'
 import {
   toInterviewAssignModalApplicant,
   toInterviewAssignModalApplicants,
@@ -38,7 +44,15 @@ export function GeneralVolunteerInterviewAssignModal({
   onCancel,
   onConfirm,
 }: GeneralVolunteerInterviewAssignModalProps) {
-  const schedule = useMemo(() => parseGeneralInterviewScheduleFromProgram(program), [program])
+  const remote = shouldUseApplicationsHttpRemoteApi()
+  const slotsQuery = useGeneralInterviewSlots(program.id, open)
+
+  const schedule = useMemo(() => {
+    if (remote && slotsQuery.data != null) {
+      return parseGeneralInterviewScheduleFromRemoteSlots(slotsQuery.data)
+    }
+    return parseGeneralInterviewScheduleFromProgram(program)
+  }, [program, remote, slotsQuery.data])
 
   const modalApplicant = useMemo(
     () =>
@@ -48,16 +62,30 @@ export function GeneralVolunteerInterviewAssignModal({
     [applicant, mode]
   )
 
+  const waitingRemoteSlots = remote && open && slotsQuery.isLoading
+
   return (
-    <UjatVolunteerInterviewAssignModal
-      open={open}
-      applicant={modalApplicant}
-      programId={program.id}
-      allApplicants={toInterviewAssignModalApplicants(allApplicants)}
-      mode={mode}
-      schedule={schedule}
-      onCancel={onCancel}
-      onConfirm={onConfirm}
-    />
+    <>
+      {waitingRemoteSlots ? (
+        <div
+          className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/45"
+          role="status"
+          aria-live="polite"
+        >
+          <Spin size="large" tip="면접 일정을 불러오는 중…" />
+        </div>
+      ) : (
+        <UjatVolunteerInterviewAssignModal
+          open={open}
+          applicant={modalApplicant}
+          programId={program.id}
+          allApplicants={toInterviewAssignModalApplicants(allApplicants)}
+          mode={mode}
+          schedule={schedule}
+          onCancel={onCancel}
+          onConfirm={onConfirm}
+        />
+      )}
+    </>
   )
 }

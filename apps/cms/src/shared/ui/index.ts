@@ -194,6 +194,7 @@ export {
   REACTION_EMOJI_TYPE_TO_INDEX,
   getReactionEmojiItemByType,
   ReactionEmojiPicker,
+  ReactionUserList,
   CommentList,
   CommentComposer,
   AttachmentDownloadList,
@@ -201,6 +202,9 @@ export {
 export type {
   ReactionEmojiItem,
   ReactionEmojiPickerProps,
+  ReactionUserListProps,
+  ReactionUserListRow,
+  ReactionUserListSummaryItem,
   CommentListProps,
   CommentListItem,
   CommentComposerProps,

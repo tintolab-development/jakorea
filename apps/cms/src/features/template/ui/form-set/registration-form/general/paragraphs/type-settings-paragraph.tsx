@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type {
@@ -14,6 +14,7 @@ import {
   type ProgramRegistrationIpsTypeValue,
 } from './program-registration-ips-type-fields'
 import { getProgramRegistrationEducationFormOptions } from './program-registration-education-form-options'
+import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import './program-registration-paragraph.css'
 
 const PROGRAM_REGISTRATION_MULTI_COMMON_PARTICIPATION_OPTIONS = [
@@ -98,15 +99,30 @@ export function ProgramRegistrationTypeSettingsParagraph({
   ipsScheduleDetail,
   onIpsScheduleDetailChange,
 }: ProgramRegistrationTypeSettingsParagraphProps) {
-  const [ipsType, setIpsType] = useState<ProgramRegistrationIpsTypeValue>({
-    category: '',
-    detail: '',
-  })
-  const [multiCommonEducationForm, setMultiCommonEducationForm] = useState<string>('')
-  const [multiCommonParticipation, setMultiCommonParticipation] = useState<string>('')
+  const [ipsType, setIpsType] = useProgramRegistrationOverlayKv<ProgramRegistrationIpsTypeValue>(
+    'generalRegistration.typeSettings.ipsType',
+    {
+      category: '',
+      detail: '',
+    }
+  )
+  const [multiCommonEducationForm, setMultiCommonEducationForm] = useProgramRegistrationOverlayKv(
+    'generalRegistration.typeSettings.multiCommonEducationForm',
+    ''
+  )
+  const [multiCommonParticipation, setMultiCommonParticipation] = useProgramRegistrationOverlayKv(
+    'generalRegistration.typeSettings.multiCommonParticipation',
+    ''
+  )
   /** 단일 회차 — 교육 형태·참여 방식 (교육 진행 구조는 별도 고정) */
-  const [singleEducationForm, setSingleEducationForm] = useState('online')
-  const [singleParticipation, setSingleParticipation] = useState('individual')
+  const [singleEducationForm, setSingleEducationForm] = useProgramRegistrationOverlayKv(
+    'generalRegistration.typeSettings.singleEducationForm',
+    'online'
+  )
+  const [singleParticipation, setSingleParticipation] = useProgramRegistrationOverlayKv(
+    'generalRegistration.typeSettings.singleParticipation',
+    'individual'
+  )
 
   const handleSessionRoundChange = (e: RadioChangeEvent) => {
     onSessionRoundTypeChange(e.target.value as ProgramRegistrationSessionRoundType)

@@ -16,4 +16,6 @@ export interface PaymentItemResponse {
   emojiOverride?: string;
   layout?: string;
   maxLimitWon?: number;
+  description?: string;
+  detailJson?: string;
 }

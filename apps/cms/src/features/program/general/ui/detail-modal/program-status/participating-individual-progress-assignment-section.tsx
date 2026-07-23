@@ -7,6 +7,7 @@ import './school-detail-attendance-section.css'
 import './participating-individual-progress-assignment-section.css'
 
 export function ParticipatingIndividualProgressAssignmentSection({ program }: { program: Program }) {
+  // P2-5: 프로그램 단위 과제 admin API 없음 — mock 유지 (원격 전환 제외).
   const {
     pendingFilters,
     appliedFilters,

@@ -2,12 +2,13 @@
  * 1사 1교 프로그램 등록 폼 — 임금 정보
  * (강사비 | 강사 장거리비 2열 × 3행 + 지급/공제 1행 — 스크린 구성)
  */
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { getTemplateRegistrationPaymentItemOptions } from '@/features/template/lib/template-registration-payment-item-options'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsNumericInput } from '@/shared/ui/numeric-input'
+import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 const DEDUCTION_VIEW = '일용근로자 원천징수세액'
@@ -16,21 +17,75 @@ const DEDUCTION_VIEW = '일용근로자 원천징수세액'
 const PAYMENT_ID_TRANSPORT_1C1S = 'p-2'
 const PAYMENT_ID_LODGING_1C1S = 'p-7'
 
-function hourlyFeeEdit(maxText: string) {
+const WAGE_FEE_ROWS = [
+  {
+    feeLabel: '1급 강사비',
+    distanceLabel: '1급 강사 장거리비',
+    feeKey: 'economyRegistration.wageInfo.grade1Fee',
+    distanceKey: 'economyRegistration.wageInfo.grade1DistanceFee',
+    maxText: '최대 500,000원',
+    max: 500_000,
+  },
+  {
+    feeLabel: '2급 강사비',
+    distanceLabel: '2급 강사 장거리비',
+    feeKey: 'economyRegistration.wageInfo.grade2Fee',
+    distanceKey: 'economyRegistration.wageInfo.grade2DistanceFee',
+    maxText: '최대 400,000원',
+    max: 400_000,
+  },
+  {
+    feeLabel: '3급 강사비',
+    distanceLabel: '3급 강사 장거리비',
+    feeKey: 'economyRegistration.wageInfo.grade3Fee',
+    distanceKey: 'economyRegistration.wageInfo.grade3DistanceFee',
+    maxText: '최대 300,000원',
+    max: 300_000,
+  },
+] as const
+
+function HourlyFeeInput({
+  overlayKey,
+  max,
+  maxText,
+}: {
+  overlayKey: string
+  max: number
+  maxText: string
+}) {
+  const [value, setValue] = useProgramRegistrationOverlayKv<number | null>(overlayKey, null)
   return (
     <div className="detail-info-form-inputs-wrapper">
       <span className="detail-info-form--text">1시간 당</span>
-      <CmsInput inputSize="medium" placeholder="직접 입력" width={120} />
+      <CmsNumericInput
+        mode="currency"
+        min={0}
+        max={max}
+        allowNegative={false}
+        inputSize="medium"
+        placeholder="직접 입력"
+        width={120}
+        value={value == null ? '' : String(value)}
+        onValueChange={raw => {
+          const trimmed = raw.trim()
+          if (!trimmed) {
+            setValue(null)
+            return
+          }
+          const n = Number(trimmed.replace(/,/g, ''))
+          setValue(Number.isFinite(n) ? n : null)
+        }}
+      />
       <span className="detail-info-form--text">원 ({maxText})</span>
     </div>
   )
 }
 
 export function OneCOneSRegistrationWageInfoParagraph() {
-  const [paymentItemValues, setPaymentItemValues] = useState<string[]>([
-    PAYMENT_ID_TRANSPORT_1C1S,
-    PAYMENT_ID_LODGING_1C1S,
-  ])
+  const [paymentItemValues, setPaymentItemValues] = useProgramRegistrationOverlayKv<string[]>(
+    'economyRegistration.wageInfo.paymentItemValues',
+    [PAYMENT_ID_TRANSPORT_1C1S, PAYMENT_ID_LODGING_1C1S]
+  )
 
   const paymentItemOptions = useMemo((): CmsSelectMultipleOption[] => {
     return getTemplateRegistrationPaymentItemOptions().map(opt => {
@@ -46,42 +101,22 @@ export function OneCOneSRegistrationWageInfoParagraph() {
 
   return (
     <DetailInfoForm title="임금 정보" hideHeader mode="edit" className="program-registration-paragraph">
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="1급 강사비"
-          edit={hourlyFeeEdit('최대 500,000원')}
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label="1급 강사 장거리비"
-          edit={hourlyFeeEdit('최대 500,000원')}
-          view="-"
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="2급 강사비"
-          edit={hourlyFeeEdit('최대 400,000원')}
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label="2급 강사 장거리비"
-          edit={hourlyFeeEdit('최대 400,000원')}
-          view="-"
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="3급 강사비"
-          edit={hourlyFeeEdit('최대 300,000원')}
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label="3급 강사 장거리비"
-          edit={hourlyFeeEdit('최대 300,000원')}
-          view="-"
-        />
-      </DetailInfoForm.Row>
+      {WAGE_FEE_ROWS.map(row => (
+        <DetailInfoForm.Row key={row.feeLabel} type="double">
+          <DetailInfoForm.Field
+            label={row.feeLabel}
+            edit={<HourlyFeeInput overlayKey={row.feeKey} max={row.max} maxText={row.maxText} />}
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label={row.distanceLabel}
+            edit={
+              <HourlyFeeInput overlayKey={row.distanceKey} max={row.max} maxText={row.maxText} />
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+      ))}
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="지급 항목"

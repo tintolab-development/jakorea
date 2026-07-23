@@ -10,3 +10,8 @@
 .participating-individual-progress-attendance-table .ant-table-tbody > tr:hover > td {
   background: color-mix(in srgb, var(--color-mint-01, #01a1af) 6%, #fff) !important;
 }
+
+/* 성별·생년월일 / 소속·학년 — pipe 세그먼트 wrap이 block flex라 td text-align이 안 먹음 */
+.participating-individual-progress-attendance-table .program-detail-td-segment-wrap {
+  justify-content: center;
+}

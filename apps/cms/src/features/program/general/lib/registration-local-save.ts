@@ -76,6 +76,15 @@ function participantTypesFromState(
   return types.length > 0 ? types : ['school_institution']
 }
 
+function audienceFromParticipant(
+  participant: ProgramRegistrationParticipantState
+): Program['generalProgramAudience'] {
+  if (participant.individual && !participant.organization) return 'individual'
+  if (participant.organization && !participant.individual) return 'organization'
+  // 둘 다/둘 다 아님 → 미설정. applicationTargetMode 는 participantTypes 로 보정
+  return undefined
+}
+
 function primaryCategoryFromParticipant(
   participant: ProgramRegistrationParticipantState
 ): ProgramCategory {
@@ -165,6 +174,11 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     startTime: '09:00',
     endTime: '18:00',
     studentListRequired: isCompanySchool ? 'not_required' : 'required',
+    generalProgramAudience: isCompanySchool || isTrainedTeachers
+      ? 'organization'
+      : audienceFromParticipant(args.participant),
+    generalProgramEducationStructure:
+      isCompanySchool || isTrainedTeachers ? 'curriculum' : args.programType,
     generalCommonInfo: isCompanySchool || isTrainedTeachers
       ? {
           educationScheduleMode: 'period',

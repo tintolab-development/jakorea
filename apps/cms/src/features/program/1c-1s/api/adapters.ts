@@ -191,8 +191,6 @@ export function mapCompanySchoolToUpdateRequest(
     endDate: toDate(merged.endDate),
     applicationStartDate: toDate(merged.applicationStartDate),
     applicationEndDate: toDate(merged.applicationEndDate),
-    status: merged.status,
-    lifecycleStatus: merged.lifecycleStatus,
     businessArea: merged.businessArea,
     titleEn: merged.titleEn,
     mainTitle: merged.mainTitle ?? merged.title,

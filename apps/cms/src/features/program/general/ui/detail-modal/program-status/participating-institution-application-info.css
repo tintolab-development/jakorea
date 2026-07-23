@@ -10,7 +10,15 @@
   margin-top: 0;
 }
 
-/* 교재 배송 드롭다운 행 — 참여 기관 목록 테이블과 동일 54px */
+/*
+ * 교재 배송 StatusDropdown 행:
+ * - 인라인 배지: STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME (116×48 고정 셸)
+ * - 표 래퍼 width/max-width/min-width:0 — 열림 시 overview 표만 가로로 커지던 회귀 차단
+ */
+.participating-institution-application-info__table-wrap--overview {
+  contain: inline-size;
+}
+
 .participating-institution-application-info__table-wrap--overview
   tbody
   > tr:has(.status-dropdown-cell__status-trigger) {
@@ -26,15 +34,25 @@
   padding-top: 0;
   padding-bottom: 0;
   vertical-align: middle;
-  overflow: visible;
+  overflow: clip;
 }
 
 .participating-institution-application-info__textbook-value {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 12px;
+  gap: 0;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: clip;
+}
+
+.participating-institution-application-info__textbook-value .program-detail-td-segment-wrap {
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  overflow: clip;
 }
 
 .participating-institution-application-info__schedule-empty {

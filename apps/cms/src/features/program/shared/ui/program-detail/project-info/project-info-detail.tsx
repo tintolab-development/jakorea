@@ -40,23 +40,15 @@ import './project-info-form-shared.css'
 import { CmsButton } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 
 type DetailForm = UseFormReturn<ProgramDetailEditFormValues>
 
 type RecruitmentDetailTabKey = Exclude<TabKey, 'info'>
-
-function isCompanySchoolProjectInfoProgram(program: Program): boolean {
-  return (
-    program.id.startsWith('economy-prog-') ||
-    program.id.startsWith('company-school-prog-') ||
-    program.id.startsWith('company-school-local-') ||
-    program.mainTitle?.includes('1사1교') === true ||
-    program.title.includes('1사1교')
-  )
-}
 
 function ProjectRecruitmentTabsContent({
   activeTab,
@@ -189,9 +181,7 @@ function ProjectInfoDetailTabsRow({
 }) {
   const editInfoButton = (isEditing: boolean, onSave: () => void) => (
     <CmsButton
-      variant="secondary"
-      size="large"
-      width={140}
+      {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
       onClick={resolveProgramEditInfoClick(isEditing, {
         onEnterEdit: onInfoEdit,
         onSaveEdit: onSave,
@@ -245,8 +235,7 @@ function ProjectInfoHiddenTabsInfoActions({
   return (
     <div className="project-info-detail__hidden-tabs-info-actions">
       <CmsButton
-        size="large"
-        width={140}
+        {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
         onClick={resolveProgramEditInfoClick(isEditModeInfo, {
           onEnterEdit: onInfoEdit,
           onSaveEdit: onInfoSave,
@@ -356,7 +345,7 @@ export function ProjectInfoDetailPanels({
               />
               <ProgramKpiTargetSection // 사업 KPI 목표
                 programId={program.id}
-                showVolunteerKpi={!isCompanySchoolProjectInfoProgram(program)}
+                showVolunteerKpi={!isCompanySchoolProgram(program)}
                 isEditMode={isEditModeInfo}
                 form={isEditModeInfo ? infoForm : undefined}
               />

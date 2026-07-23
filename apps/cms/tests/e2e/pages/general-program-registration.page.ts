@@ -9,6 +9,7 @@ import {
   fillByPlaceholder,
   fillByPlaceholderIfVisible,
   fillParagraphDateByPlaceholder,
+  fillParagraphTimeIfVisible,
   fillVisibleFreeTextFields,
   selectByPlaceholder,
   selectByPlaceholderIfVisible,
@@ -17,9 +18,69 @@ import {
   uploadTinyPngIfPresent,
 } from './form-helpers'
 
-function createUniqueProgramTitle() {
+/** 등록 폼 8종 — 대분류(audience) × 중분류(structure) × 소분류(session) */
+export type RegistrationCase = {
+  audience: 'organization' | 'individual'
+  structure: 'curriculum' | 'schedule'
+  session: 'single' | 'multi'
+  /** 제목·테스트명용 짧은 라벨 */
+  label: string
+}
+
+export const REGISTRATION_CASES: readonly RegistrationCase[] = [
+  {
+    audience: 'organization',
+    structure: 'curriculum',
+    session: 'single',
+    label: '기관_커리큘럼형_단일',
+  },
+  {
+    audience: 'organization',
+    structure: 'curriculum',
+    session: 'multi',
+    label: '기관_커리큘럼형_복수',
+  },
+  {
+    audience: 'individual',
+    structure: 'curriculum',
+    session: 'single',
+    label: '개인_커리큘럼형_단일',
+  },
+  {
+    audience: 'individual',
+    structure: 'curriculum',
+    session: 'multi',
+    label: '개인_커리큘럼형_복수',
+  },
+  {
+    audience: 'organization',
+    structure: 'schedule',
+    session: 'single',
+    label: '기관_일정형_단일',
+  },
+  {
+    audience: 'organization',
+    structure: 'schedule',
+    session: 'multi',
+    label: '기관_일정형_복수',
+  },
+  {
+    audience: 'individual',
+    structure: 'schedule',
+    session: 'single',
+    label: '개인_일정형_단일',
+  },
+  {
+    audience: 'individual',
+    structure: 'schedule',
+    session: 'multi',
+    label: '개인_일정형_복수',
+  },
+] as const
+
+function createUniqueProgramTitle(caseLabel: string) {
   const hash = Date.now().toString(36)
-  return `테스트(${hash})`
+  return `Playwright 테스트(${caseLabel})·${hash}`
 }
 
 const PROGRAM_EN_NAME = 'JA Entrepreneurship Classroom 2026 E2E'
@@ -35,21 +96,36 @@ const EDUCATION_TARGET_DETAIL = '초·중·고 학생 대상 기업가정신 체
 const ANNOUNCE_METHOD = '이메일 및 CMS 알림으로 개별 안내'
 const CURRICULUM_UNIT = 'E2E 1차시 단원 — 기업가정신 기초'
 const CURRICULUM_CONTENT = 'E2E 교육 내용 — 창업 마인드셋과 경제 기초를 학습합니다.'
+const SCHEDULE_DETAIL_NAME = 'E2E 세부 일정 — 오리엔테이션'
 
 export type RegistrationCompleteResult = {
   programId: string
   programTitle: string
+  caseLabel: string
+}
+
+async function clickButtonIfVisible(page: Page, name: string | RegExp) {
+  const button = page.getByRole('button', { name }).first()
+  if ((await button.count()) === 0) return
+  if (!(await button.isVisible().catch(() => false))) return
+  if (await button.isDisabled().catch(() => true)) return
+  await button.click()
 }
 
 /**
  * 일반 프로그램 목록 → 신규 등록 풀페이지 모달 플로우
- * 기본 경로(개인 + 커리큘럼형 + 단일 회차)에서 보이는 입력란을 가능한 한 모두 채운다.
+ * `REGISTRATION_CASES` 8종(기관/개인 × 커리큘럼/일정 × 단일/복수)을 variant로 채운다.
  */
 export class GeneralProgramRegistrationPage {
   readonly programTitle: string
+  readonly regCase: RegistrationCase
 
-  constructor(private readonly page: Page) {
-    this.programTitle = createUniqueProgramTitle()
+  constructor(
+    private readonly page: Page,
+    regCase: RegistrationCase
+  ) {
+    this.regCase = regCase
+    this.programTitle = createUniqueProgramTitle(regCase.label)
   }
 
   /** 대시보드에서 LNB: 프로그램 관리 → 일반 프로그램 */
@@ -86,8 +162,10 @@ export class GeneralProgramRegistrationPage {
       .catch(() => undefined)
   }
 
-  /** 공통 정보 — 기본·유형·교육진행·KPI·임금 등 보이는 입력 전부 */
+  /** 공통 정보 — 케이스별 대·중·소분류 + 보이는 입력 채움 */
   async fillCommonInfo() {
+    const { audience, structure, session } = this.regCase
+
     await clickSectionNavIfVisible(this.page, '기본 정보')
 
     await fillByPlaceholder(this.page, '대표 프로그램명을 입력하세요', this.programTitle)
@@ -97,16 +175,19 @@ export class GeneralProgramRegistrationPage {
     await selectByPlaceholder(this.page, '세부 프로그램명을 선택하세요')
     await fillParagraphDateByPlaceholder(this.page, '사업 운영 기간을 선택하세요', 'range')
 
-    // 개인 유지 + 강사·봉사자 체크 → 강사/봉사자 모집·신청 탭·KPI 활성
-    await checkCheckboxIfVisible(this.page, /개인/)
-    await checkCheckboxIfVisible(this.page, /교사|강사/)
-    await checkCheckboxIfVisible(this.page, /봉사자/)
+    // 대분류 — 개인/학교·기관 상호 배타 + 강사·봉사자
+    if (audience === 'organization') {
+      await checkCheckboxIfVisible(this.page, '학교/기관')
+    } else {
+      await checkCheckboxIfVisible(this.page, /^개인$/)
+    }
+    await checkCheckboxIfVisible(this.page, '교사/강사')
+    await checkCheckboxIfVisible(this.page, '봉사자')
 
     await selectByPlaceholder(this.page, '사업 분야를 선택하세요', '기업가정신')
     await selectNearLabelIfVisible(this.page, '사업 분야', '기업가정신')
-    // 후원사는 실 API 목록 — placeholder/라벨 모두 대응, 이미 선택돼 있으면 skip
-    await selectByPlaceholderIfVisible(this.page, '후원사를 선택하세요')
-    await selectNearLabel(this.page, '후원사')
+    // draft UI에만 후원사가 보이고 editor sponsorId가 비어 있는 경우 대비 — 항상 강제 재선택
+    await selectNearLabel(this.page, '후원사', undefined, { force: true })
     const sponsorField = this.page
       .locator('.detail-info-form__field')
       .filter({
@@ -125,14 +206,12 @@ export class GeneralProgramRegistrationPage {
     expect(sponsorSelected).not.toContain('선택하세요')
     expect(sponsorSelected).not.toBe('전체')
 
-    // 담당자는 후원사 선택 후 비동기로 로드 — 값이 비어 있을 때만 선택, '전체'는 유효값 아님
     await this.page
       .waitForResponse(
         res => /sponsor/i.test(res.url()) && /contact/i.test(res.url()) && res.ok(),
         { timeout: 15_000 }
       )
       .catch(() => undefined)
-    await selectByPlaceholderIfVisible(this.page, '후원사 담당자를 선택하세요')
     await selectNearLabelIfVisible(this.page, '후원사 담당자')
 
     await checkRadioIfVisible(this.page, '기관 안')
@@ -151,32 +230,81 @@ export class GeneralProgramRegistrationPage {
     await selectNearLabelIfVisible(this.page, 'Course Delivered By', 'JA')
     await checkRadioIfVisible(this.page, 'Yes')
 
-    // 프로그램 유형 설정
+    // 중·소분류 — 프로그램 유형 설정
     await clickSectionNavIfVisible(this.page, '프로그램 유형 설정')
-    await checkRadioIfVisible(this.page, '커리큘럼형')
-    await checkRadioIfVisible(this.page, '단일 회차')
-    await checkRadioIfVisible(this.page, '온라인')
-    await checkRadioIfVisible(this.page, /^개인$/)
+    await checkRadioIfVisible(
+      this.page,
+      structure === 'curriculum' ? '커리큘럼형' : '일정형'
+    )
+    await checkRadioIfVisible(this.page, session === 'single' ? '단일 회차' : '복수 회차')
+
+    // 유형 전환 후 교육 진행 섹션이 바뀔 때까지 대기
+    const educationSectionTitle =
+      structure === 'curriculum' ? '교육 진행 (커리큘럼)' : '교육 진행 (일정형)'
+    await expect(this.page.getByText(educationSectionTitle, { exact: true }).first()).toBeVisible({
+      timeout: 15_000,
+    })
+
+    if (session === 'single') {
+      await checkRadioIfVisible(this.page, '온라인')
+      // 참여 방식 — 개인 대분류일 때만 노출
+      await checkRadioIfVisible(this.page, /^개인$/)
+    } else {
+      await checkRadioIfVisible(this.page, '일정 공통')
+      await selectByPlaceholderIfVisible(this.page, '교육 형태', '온라인')
+      await selectByPlaceholderIfVisible(this.page, '참여 방식', '개인')
+    }
     await selectNearLabelIfVisible(this.page, 'IPS 유형', 'Inspire')
     await selectByPlaceholderIfVisible(this.page, '프로그램 채널을 선택하세요')
     await selectByPlaceholderIfVisible(this.page, '프로그램 종류를 선택하세요')
     await selectByPlaceholderIfVisible(this.page, 'IPS 유형', 'Inspire')
 
-    // 교육 진행 (커리큘럼)
-    await clickSectionNavIfVisible(this.page, '교육 진행 (커리큘럼)')
-    await fillByPlaceholderIfVisible(this.page, '단원명을 입력하세요', CURRICULUM_UNIT)
-    await fillByPlaceholderIfVisible(this.page, '교육 내용을 작성하세요', CURRICULUM_CONTENT)
+    await this.fillEducationProgress()
 
-    // 사업 KPI
+    await clickSectionNavIfVisible(this.page, '교육 진행 일정 설정')
+    await checkRadioIfVisible(this.page, '날짜 지정')
+    await fillParagraphDateByPlaceholder(this.page, '일정을 선택하세요', 'single')
+    await fillParagraphDateByPlaceholder(this.page, '날짜를 선택하세요', 'single')
+    await fillParagraphDateByPlaceholder(this.page, '기간을 선택하세요', 'range')
+
     await clickSectionNavIfVisible(this.page, '사업 KPI 목표')
     await fillAllByPlaceholder(this.page, '목표값 입력', KPI_VALUE)
 
-    // 임금
     await clickSectionNavIfVisible(this.page, '임금 정보')
     await fillAllByPlaceholder(this.page, '직접 입력', WAGE_VALUE)
     await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택하세요')
 
     await clickSectionNavIfVisible(this.page, '기본 정보')
+  }
+
+  private async fillEducationProgress() {
+    const { structure, session } = this.regCase
+
+    if (structure === 'curriculum') {
+      await clickSectionNavIfVisible(this.page, '교육 진행 (커리큘럼)')
+      if (session === 'multi') {
+        await clickButtonIfVisible(this.page, '강의 진행 회차 추가')
+      }
+      await fillAllByPlaceholder(this.page, '단원명을 입력하세요', CURRICULUM_UNIT)
+      await fillAllByPlaceholder(this.page, '교육 내용을 작성하세요', CURRICULUM_CONTENT)
+      return
+    }
+
+    await clickSectionNavIfVisible(this.page, '교육 진행 (일정형)')
+    if (session === 'multi') {
+      await clickButtonIfVisible(this.page, /강의 세부 일정 추가|강의 행사 일정 추가/)
+    }
+    await fillAllByPlaceholder(this.page, '세부 일정명을 작성하세요', SCHEDULE_DETAIL_NAME)
+    await fillAllByPlaceholder(this.page, '행사 일정명을 작성하세요', SCHEDULE_DETAIL_NAME)
+    await fillParagraphDateByPlaceholder(this.page, '일정을 선택하세요', 'single')
+    // 진행 시간 — ParagraphTimePicker(버튼 트리거)
+    const timeTriggers = this.page
+      .locator('.paragraph-time-picker__trigger:visible')
+      .filter({ hasText: '시간 선택' })
+    const timeCount = await timeTriggers.count()
+    for (let i = 0; i < Math.min(timeCount, 4); i += 1) {
+      await fillParagraphTimeIfVisible(this.page, '시간 선택')
+    }
   }
 
   async goToRecruitment() {
@@ -195,7 +323,6 @@ export class GeneralProgramRegistrationPage {
     await this.fillRecruitInstructorTab()
     await clickRegistrationTabIfVisible(this.page, '봉사자 모집 정보')
     await this.fillRecruitVolunteerTab()
-    // 신청 단계 진입 전 참여자 탭으로 복귀
     await clickRegistrationTabIfVisible(this.page, '참여자 모집 정보')
   }
 
@@ -229,7 +356,6 @@ export class GeneralProgramRegistrationPage {
     await fillByPlaceholderIfVisible(this.page, '문의처 이메일', CONTACT_EMAIL)
     await fillByPlaceholderIfVisible(this.page, '비고란을 작성하세요 (없으면 -로 입력)', REMARK)
 
-    // 상세 정보
     await fillByPlaceholderIfVisible(
       this.page,
       '프로그램 설명을 작성하세요',
@@ -261,9 +387,7 @@ export class GeneralProgramRegistrationPage {
   }
 
   private async fillRecruitVolunteerTab() {
-    // 면접 없음 경로 — 기간·발표·문의 등 공통 필드 채움
     await this.fillRecruitSharedFields({ interviewYes: false })
-    // 면접 있음으로 전환 시 추가 필드도 채움
     await checkRadioIfVisible(this.page, '면접 있음')
     await fillAllParagraphDatesByPlaceholder(this.page, '모집 기간을 선택하세요', 'range')
     await fillParagraphDateByPlaceholder(this.page, '발표일', 'single')
@@ -292,7 +416,6 @@ export class GeneralProgramRegistrationPage {
   }
 
   private async fillApplicationConsentIfPresent() {
-    // 동의 체크박스가 있으면 모두 체크
     const checkboxes = this.page.getByRole('checkbox')
     const count = await checkboxes.count()
     for (let i = 0; i < count; i += 1) {
@@ -315,7 +438,6 @@ export class GeneralProgramRegistrationPage {
       'E2E 자기소개 및 지원동기입니다.'
     )
     await fillVisibleFreeTextFields(this.page, 'E2E 신청 정보')
-    // 희망 일정 체크박스
     const scheduleChecks = this.page.locator(
       '.ant-checkbox-wrapper:visible, [role="checkbox"]:visible'
     )
@@ -352,29 +474,41 @@ export class GeneralProgramRegistrationPage {
 
   /** 실 API 등록 완료 → programId 반환. 실패 모달이면 에러 */
   async completeRegistration(): Promise<RegistrationCompleteResult> {
-    const failDialog = this.page.getByRole('dialog').filter({ hasText: '등록 실패' })
-    const successDialog = this.page.getByRole('dialog').filter({ hasText: '프로그램 등록 완료' })
+    const failDialog = this.page.getByRole('dialog').filter({ hasText: /등록 실패/ })
+    // 풀페이지 모달 footer 「프로그램 등록 완료」 버튼과 구분
+    const successDialog = this.page
+      .getByRole('dialog')
+      .filter({ hasText: '신규 프로그램 등록이 완료되었습니다.' })
 
-    const createResponsePromise = this.page.waitForResponse(
-      res =>
-        res.request().method() === 'POST' &&
-        /\/api\/admin\/programs\/?$/.test(new URL(res.url()).pathname),
-      { timeout: 60_000 }
-    )
-
-    await this.page.getByRole('button', { name: '프로그램 등록 완료' }).click()
-
-    await Promise.race([
-      successDialog.waitFor({ state: 'visible', timeout: 60_000 }),
-      failDialog.waitFor({ state: 'visible', timeout: 60_000 }).then(async () => {
+    // POST가 안 나가고 실패 모달만 뜨는 경우(템플릿 draft 500 등)도 잡기 위해 race
+    const outcomePromise = Promise.race([
+      this.page
+        .waitForResponse(
+          res =>
+            res.request().method() === 'POST' &&
+            /\/api\/admin\/programs\/?$/.test(new URL(res.url()).pathname),
+          { timeout: 90_000 }
+        )
+        .then(res => ({ kind: 'response' as const, res })),
+      failDialog.waitFor({ state: 'visible', timeout: 90_000 }).then(async () => {
         const message = (
-          await failDialog.locator('.ant-modal-body, p, [class*="content"]').first().innerText()
+          await failDialog
+            .locator('.alert-modal__content, .ant-modal-body p, .ant-modal-body')
+            .first()
+            .innerText()
         ).trim()
-        throw new Error(`프로그램 등록 실패(실 API): ${message || '(메시지 없음)'}`)
+        return { kind: 'fail' as const, message }
       }),
     ])
 
-    const createResponse = await createResponsePromise
+    await this.page.getByRole('button', { name: '프로그램 등록 완료' }).click()
+
+    const outcome = await outcomePromise
+    if (outcome.kind === 'fail') {
+      throw new Error(`프로그램 등록 실패(실 API): ${outcome.message || '(메시지 없음)'}`)
+    }
+
+    const createResponse = outcome.res
     if (!createResponse.ok()) {
       const body = await createResponse.text().catch(() => '')
       throw new Error(
@@ -382,6 +516,7 @@ export class GeneralProgramRegistrationPage {
       )
     }
 
+    await expect(successDialog).toBeVisible({ timeout: 30_000 })
     await successDialog.getByRole('button', { name: '확인' }).click()
 
     await expect(this.page).toHaveURL(/programId=/, { timeout: 60_000 })
@@ -392,7 +527,11 @@ export class GeneralProgramRegistrationPage {
       throw new Error('등록 후 URL에 programId 가 없습니다.')
     }
 
-    return { programId, programTitle: this.programTitle }
+    return {
+      programId,
+      programTitle: this.programTitle,
+      caseLabel: this.regCase.label,
+    }
   }
 
   /** 상세 모달 닫고 목록으로 — 작성한 프로그램 행 존재 확인 */

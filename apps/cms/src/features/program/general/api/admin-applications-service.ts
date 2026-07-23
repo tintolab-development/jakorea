@@ -18,6 +18,7 @@ import {
   fetchInstructorApplicationsRemote,
   fetchOrganizationApplicationsRemote,
   fetchVolunteerApplicationsRemote,
+  listInterviewSlotsRemote,
   rejectIndividualApplicationRemote,
   rejectInstructorApplicationRemote,
   rejectOrganizationApplicationRemote,
@@ -229,7 +230,7 @@ export async function submitGeneralVolunteerFinalResult(
 
 /**
  * remote ON: 면접 슬롯 생성 후 봉사자 신청에 배정.
- * OpenAPI에 슬롯 목록 GET이 없어 배정 시 ad-hoc create.
+ * 슬롯 목록은 `listGeneralInterviewSlots` (GET hand-wrap, OpenAPI P2-1 미등재 시 mock 폴백).
  * remote OFF: no-op (호출부에서 로컬 row patch만).
  */
 export async function assignGeneralVolunteerInterview(params: {
@@ -279,4 +280,42 @@ export function mapSecondInterviewStatusToFinalResultPayload(
   if (status === 'fail') return { result: 'FAIL', reason }
   const rank = Number(status.replace('reserve', '')) as 1 | 2 | 3 | 4
   return { result: 'RESERVE', reserveRank: rank, reason }
+}
+
+export type GeneralInterviewSlotListItem = {
+  interviewSlotId: number
+  slotDate: string
+  startAt: string
+  endAt: string
+  maxAssignCount: number
+  assignedCount: number
+  exceptionSlot: boolean
+}
+
+/**
+ * remote ON: GET interview-slots (OpenAPI 미등재 hand-wrap). 404/실패 시 null → 호출부 mock.
+ * remote OFF: null (호출부 mock).
+ */
+export async function listGeneralInterviewSlots(
+  programId: string,
+  range?: { from?: string; to?: string }
+): Promise<GeneralInterviewSlotListItem[] | null> {
+  if (!shouldUseApplicationsHttpRemoteApi()) return null
+  assertApplicationsRemoteReady()
+  try {
+    const rows = await listInterviewSlotsRemote(programId, range)
+    return rows
+      .filter((row) => row.interviewSlotId != null && row.slotDate && row.startAt && row.endAt)
+      .map((row) => ({
+        interviewSlotId: row.interviewSlotId as number,
+        slotDate: row.slotDate as string,
+        startAt: row.startAt as string,
+        endAt: row.endAt as string,
+        maxAssignCount: row.maxAssignCount ?? 1,
+        assignedCount: row.currentAssignCount ?? 0,
+        exceptionSlot: row.exceptionSlot ?? false,
+      }))
+  } catch {
+    return null
+  }
 }

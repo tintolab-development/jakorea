@@ -20,6 +20,94 @@ async function getSelectSelectedText(select: Locator): Promise<string> {
   return (await item.innerText()).trim()
 }
 
+async function getCmsMultiSelectedText(field: Locator): Promise<string> {
+  const text = field.locator('.cms-select-multi__trigger-text').first()
+  if ((await text.count()) === 0) return ''
+  return (await text.innerText()).trim()
+}
+
+/** CmsSelect `mode="multiple"` — Popover + 체크박스 UI */
+async function selectCmsMultiOnField(
+  page: Page,
+  field: Locator,
+  optionLabel?: string
+) {
+  const trigger = field.locator('.cms-select-multi__trigger').first()
+  await expect(trigger).toBeVisible({ timeout: 10_000 })
+
+  const current = await getCmsMultiSelectedText(field)
+  if (optionLabel) {
+    if (current === optionLabel || current.includes(optionLabel)) return
+  } else if (!isEmptySelectValue(current)) {
+    return
+  }
+
+  await trigger.scrollIntoViewIfNeeded()
+  await trigger.click()
+
+  const panel = page.locator('.cms-select-multi__panel').last()
+  await expect(panel).toBeVisible({ timeout: 10_000 })
+
+  const rows = panel.locator('.cms-select-multi__row')
+  await expect(rows.first()).toBeVisible({ timeout: 10_000 })
+
+  let row: Locator
+  if (optionLabel) {
+    const exact = rows.filter({
+      has: page.locator('.cms-select-multi__label-pill', {
+        hasText: new RegExp(`^${escapeRegExp(optionLabel)}$`),
+      }),
+    })
+    row =
+      (await exact.count()) > 0
+        ? exact.first()
+        : rows.filter({ hasText: optionLabel }).first()
+  } else {
+    row = rows.first()
+    const count = await rows.count()
+    for (let i = 0; i < count; i += 1) {
+      const candidate = rows.nth(i)
+      const checked = await candidate
+        .locator('.ant-checkbox-checked')
+        .count()
+        .then(n => n > 0)
+        .catch(() => false)
+      if (checked) continue
+      const text = (
+        await candidate.locator('.cms-select-multi__label-pill').innerText()
+      ).trim()
+      if (text && !isEmptySelectValue(text)) {
+        row = candidate
+        break
+      }
+    }
+  }
+
+  await expect(row).toBeVisible({ timeout: 5_000 })
+  const alreadyChecked = await row
+    .locator('.ant-checkbox-checked')
+    .count()
+    .then(n => n > 0)
+    .catch(() => false)
+  if (!alreadyChecked) {
+    await row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first().click()
+  }
+
+  // Popover 닫기 — Escape는 풀페이지 모달까지 닫을 수 있어 트리거 재클릭
+  if (await panel.isVisible().catch(() => false)) {
+    await trigger.click({ force: true }).catch(() => undefined)
+  }
+
+  await expect(async () => {
+    const after = await getCmsMultiSelectedText(field)
+    if (optionLabel) {
+      expect(after === optionLabel || after.includes(optionLabel)).toBeTruthy()
+    } else {
+      expect(isEmptySelectValue(after)).toBeFalsy()
+    }
+  }).toPass({ timeout: 5_000 })
+}
+
 async function isSelectOpen(select: Locator): Promise<boolean> {
   return select.evaluate(el => el.classList.contains('ant-select-open')).catch(() => false)
 }
@@ -76,22 +164,62 @@ async function openSelectDropdown(page: Page, select: Locator) {
 
   const dropdown = page.locator('.ant-select-dropdown:visible').last()
   await expect(dropdown).toBeVisible({ timeout: 5_000 })
-  await expect(
-    dropdown.locator('.ant-select-item-option:not(.ant-select-item-option-disabled)').first()
-  ).toBeAttached({ timeout: 10_000 })
+
+  const options = dropdown.locator(
+    '.ant-select-item-option:not(.ant-select-item-option-disabled)'
+  )
+  const empty = dropdown.getByText(/No data|데이터 없음|검색 결과 없음/)
+  await expect(async () => {
+    if ((await options.count()) > 0) return
+    if ((await empty.count()) > 0) {
+      throw new Error('Select 드롭다운에 선택 가능한 옵션이 없습니다 (No data).')
+    }
+    throw new Error('Select 드롭다운 옵션 로딩 대기 중')
+  }).toPass({ timeout: 10_000 })
+
   return dropdown
 }
 
 async function selectOnLocator(
   page: Page,
   select: Locator,
-  optionLabel?: string
+  optionLabel?: string,
+  options?: { force?: boolean }
 ) {
+  const force = options?.force === true
   const current = await getSelectSelectedText(select)
-  if (optionLabel) {
-    if (current === optionLabel || current.includes(optionLabel)) return
-  } else if (!isEmptySelectValue(current)) {
-    return
+  if (!force) {
+    if (optionLabel) {
+      if (current === optionLabel || current.includes(optionLabel)) return
+    } else if (!isEmptySelectValue(current)) {
+      return
+    }
+  }
+
+  // force: UI만 선택되어 있고 React state가 비는 경우 — 다른 옵션을 한 번 골라 onChange를 유발한 뒤 목표 선택
+  if (force && !isEmptySelectValue(current)) {
+    const dropdown = await openSelectDropdown(page, select)
+    const optionNodes = dropdown.locator(
+      '.ant-select-item-option:not(.ant-select-item-option-disabled)'
+    )
+    const count = await optionNodes.count()
+    if (count >= 2) {
+      let alternateIdx = -1
+      for (let i = 0; i < count; i += 1) {
+        const text = (await optionNodes.nth(i).innerText()).trim()
+        if (!text || isEmptySelectValue(text)) continue
+        if (text === current || current.includes(text) || text.includes(current)) continue
+        alternateIdx = i
+        break
+      }
+      if (alternateIdx >= 0) {
+        await optionNodes.nth(alternateIdx).scrollIntoViewIfNeeded().catch(() => undefined)
+        await optionNodes.nth(alternateIdx).click({ force: true })
+        await expect(page.locator('.ant-select-dropdown:visible'))
+          .toHaveCount(0, { timeout: 5_000 })
+          .catch(() => undefined)
+      }
+    }
   }
 
   const dropdown = await openSelectDropdown(page, select)
@@ -172,21 +300,26 @@ export async function selectByPlaceholderIfVisible(
   await selectByPlaceholder(page, placeholder, optionLabel)
 }
 
-/** 라벨 근처 Select (placeholder가 이미 값으로 바뀐 경우 대비) */
-export async function selectNearLabel(page: Page, label: string, optionLabel?: string) {
+/** 라벨 근처 Select (placeholder가 이미 값으로 바뀐 경우 대비). CmsSelect multiple UI 포함. */
+export async function selectNearLabel(
+  page: Page,
+  label: string,
+  optionLabel?: string,
+  options?: { force?: boolean }
+) {
   await expect(async () => {
-    const field = page
-      .locator('.detail-info-form__field')
-      .filter({
-        has: page.locator('.detail-info-form__field-label-text', {
-          hasText: new RegExp(`^${escapeRegExp(label)}$`),
-        }),
-      })
-      .first()
+    const field = detailInfoField(page, label)
     await expect(field).toBeVisible()
+
+    const multiTrigger = field.locator('.cms-select-multi__trigger').first()
+    if ((await multiTrigger.count()) > 0 && (await multiTrigger.isVisible().catch(() => false))) {
+      await selectCmsMultiOnField(page, field, optionLabel)
+      return
+    }
+
     const select = field.locator('.ant-select').first()
     await expect(select).toBeVisible()
-    await selectOnLocator(page, select, optionLabel)
+    await selectOnLocator(page, select, optionLabel, options)
 
     // 필드 기준 Locator는 선택 후에도 안정적 — 실제 값 반영을 확인
     await expect(async () => {
@@ -233,6 +366,8 @@ export async function fillByPlaceholderIfVisible(
   if ((await input.count()) === 0) return
   if (!(await input.isVisible().catch(() => false))) return
   if (await input.isDisabled().catch(() => true)) return
+  // 후원사 연동 등 readOnly 자동입력 필드는 skip
+  if (await input.evaluate(el => (el as HTMLInputElement).readOnly).catch(() => true)) return
   await input.fill(value)
 }
 
@@ -248,6 +383,7 @@ export async function fillAllByPlaceholder(
     const input = inputs.nth(i)
     if (!(await input.isVisible().catch(() => false))) continue
     if (await input.isDisabled().catch(() => true)) continue
+    if (await input.evaluate(el => (el as HTMLInputElement).readOnly).catch(() => true)) continue
     await input.fill(value)
   }
 }
@@ -288,7 +424,8 @@ export async function fillParagraphDateByPlaceholder(
   await trigger.scrollIntoViewIfNeeded()
   await trigger.click()
 
-  const dialog = page.getByRole('dialog', { name: '날짜 선택' })
+  // `날짜 선택` (ParagraphDatePicker) · `날짜·시간 선택` (DateTimePicker)
+  const dialog = page.getByRole('dialog', { name: /날짜/ })
   await expect(dialog).toBeVisible({ timeout: 10_000 })
 
   const days = dialog.locator(
@@ -296,11 +433,32 @@ export async function fillParagraphDateByPlaceholder(
   )
   await expect(days.first()).toBeVisible({ timeout: 5_000 })
   const dayCount = await days.count()
-  await days.nth(0).click()
+  await days.nth(0).click({ force: true })
   if (mode === 'range' && dayCount > 1) {
-    await days.nth(Math.min(4, dayCount - 1)).click()
+    await days.nth(Math.min(4, dayCount - 1)).click({ force: true })
   }
 
+  await dialog.getByRole('button', { name: '설정' }).click()
+  await expect(dialog).toBeHidden({ timeout: 10_000 })
+}
+
+/** ParagraphTimePicker — placeholder 트리거 클릭 후 「설정」 */
+export async function fillParagraphTimeIfVisible(
+  page: Page,
+  placeholder = '시간 선택'
+) {
+  const trigger = page
+    .locator('.paragraph-time-picker__trigger:visible')
+    .filter({ hasText: placeholder })
+    .first()
+  if ((await trigger.count()) === 0) return
+  if (!(await trigger.isVisible().catch(() => false))) return
+
+  await trigger.scrollIntoViewIfNeeded()
+  await trigger.click()
+
+  const dialog = page.getByRole('dialog', { name: '시간 설정' })
+  await expect(dialog).toBeVisible({ timeout: 10_000 })
   await dialog.getByRole('button', { name: '설정' }).click()
   await expect(dialog).toBeHidden({ timeout: 10_000 })
 }
@@ -382,3 +540,74 @@ export async function uploadTinyPngIfPresent(page: Page) {
       .catch(() => undefined)
   }
 }
+
+/** DetailInfoForm 필드 로케이터 (라벨 exact) */
+export function detailInfoField(page: Page, label: string): Locator {
+  return page
+    .locator('.detail-info-form__field')
+    .filter({
+      has: page.locator('.detail-info-form__field-label-text', {
+        hasText: new RegExp(`^${escapeRegExp(label)}$`),
+      }),
+    })
+    .first()
+}
+
+/** 편집 중 Select 선택값 텍스트 (없으면 null). CmsSelect multiple 트리거 텍스트 포함. */
+export async function readSelectTextNearLabel(page: Page, label: string): Promise<string | null> {
+  const field = detailInfoField(page, label)
+  if ((await field.count()) === 0) return null
+  if (!(await field.isVisible().catch(() => false))) return null
+
+  const multi = field.locator('.cms-select-multi__trigger-text').first()
+  if ((await multi.count()) > 0) {
+    const text = (await multi.innerText()).trim()
+    return isEmptySelectValue(text) ? null : text
+  }
+
+  const text = await getSelectSelectedText(field.locator('.ant-select').first())
+  return isEmptySelectValue(text) ? null : text
+}
+
+/** 편집 중 ParagraphDatePicker 트리거 표시 텍스트 */
+export async function readDateTriggerNearLabel(page: Page, label: string): Promise<string | null> {
+  const field = detailInfoField(page, label)
+  if ((await field.count()) === 0) return null
+  if (!(await field.isVisible().catch(() => false))) return null
+  const trigger = field.locator('.paragraph-date-picker__trigger').first()
+  if ((await trigger.count()) === 0) return null
+  const text = (await trigger.innerText()).trim()
+  return text.length > 0 ? text.replace(/\s+/g, ' ') : null
+}
+
+/**
+ * 조회(view) 모드에서 라벨 옆 필드 내용이 expected를 포함하는지 확인.
+ * 필드가 없거나 보이지 않으면 skip (시드/유형에 따라 섹션 생략 가능).
+ */
+export async function expectDetailInfoFieldContains(
+  page: Page,
+  label: string,
+  expected: string | RegExp,
+  options?: { required?: boolean; timeout?: number }
+) {
+  const field = detailInfoField(page, label)
+  const required = options?.required ?? true
+  const timeout = options?.timeout ?? 15_000
+
+  if ((await field.count()) === 0 || !(await field.isVisible().catch(() => false))) {
+    if (required) {
+      throw new Error(`상세 필드 없음: "${label}"`)
+    }
+    return
+  }
+
+  const content = field.locator('.detail-info-form__field-content').first()
+  await expect(content).toBeVisible({ timeout })
+
+  if (typeof expected === 'string') {
+    await expect(content).toContainText(expected, { timeout })
+  } else {
+    await expect(content).toContainText(expected, { timeout })
+  }
+}
+

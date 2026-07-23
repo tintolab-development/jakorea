@@ -22,10 +22,20 @@ export const generalProgramProgressQueryKeys = {
     [...generalProgramProgressQueryKeys.all, 'volunteers', programId] as const,
   attendances: (programId: string, scheduleId: string) =>
     [...generalProgramProgressQueryKeys.all, 'attendances', programId, scheduleId] as const,
+  schedules: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'schedules', programId] as const,
+  lectureReports: (programId: string) =>
+    [...generalProgramProgressQueryKeys.all, 'lecture-reports', programId] as const,
   posts: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'posts', programId] as const,
   surveys: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'surveys', programId] as const,
   navigation: (programId: string) =>
     [...generalProgramProgressQueryKeys.all, 'navigation', programId] as const,
+}
+
+export const generalInterviewSlotsQueryKeys = {
+  all: ['general-interview-slots'] as const,
+  list: (programId: string, from?: string, to?: string) =>
+    [...generalInterviewSlotsQueryKeys.all, programId, from ?? '', to ?? ''] as const,
 }

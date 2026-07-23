@@ -51,13 +51,21 @@
 
 | URL / 테이블 필터 | API query | 비고 |
 |-------------------|-----------|------|
-| `status=scheduled` | `periodStatus=RECRUITING` | 위젯 4카드 |
+| `status=scheduled` | `periodStatus=RECRUITING` | 위젯 4카드 · 목록 동일 |
 | `status=in_progress` | `periodStatus=IN_PROGRESS` | |
 | `status=completed` | `periodStatus=COMPLETED` | |
 | `title` | `keyword` | |
 | `programType` (고정) | `GENERAL` | 일반 프로그램만 |
 | `lifecycleStatus`, `targetLevel`, `participantRecruitment`, `operationStartDate`/`operationEndDate` | — | 클라이언트 보조 필터 (`general-program-list-filter-params.ts`) |
 
+### 상단 4카드 건수
+
+| 모드 | 집계 |
+|------|------|
+| remote | `GET /api/admin/programs?programType=GENERAL&periodStatus=…&size=1` 의 `totalElements` (전체는 periodStatus 생략) |
+| mock | `filterGeneralProgramsByOverviewStatus` lifecycle 버킷 |
+
+별도 count API는 **불필요**. `totalElements`가 목록과 동일 SSOT. (BE가 periodStatus·totalElements를 틀리게 주면 위젯·목록이 함께 틀어짐)
 ---
 
 ## 쿼리 파라미터 계약

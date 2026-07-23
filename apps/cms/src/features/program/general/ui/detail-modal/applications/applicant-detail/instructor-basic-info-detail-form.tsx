@@ -151,6 +151,7 @@ export function AffiliationEmploymentStatusField({
         isOpen={employmentDropdownOpen}
         onOpenChange={setEmploymentDropdownOpen}
         style={AFFILIATION_EMPLOYMENT_BADGE_CELL_STYLE}
+        chrome="hug"
       />
     </span>
   )

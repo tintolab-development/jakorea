@@ -11,7 +11,7 @@ export function useSponsorOptionsQuery(enabled = true) {
     queryFn: getSponsorOptionsList,
     enabled: remoteEnabled,
     staleTime: 60_000,
-    retry: false,
+    retry: 1,
   })
 }
 

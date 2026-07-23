@@ -117,6 +117,21 @@ import {
   resetUjatRecruitVolunteerOverlay,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import {
+  getApplicantRecruitInstitutionOverlayRecord,
+  replaceApplicantRecruitInstitutionOverlay,
+  resetApplicantRecruitInstitutionOverlay,
+} from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import {
+  getGeneralRecruitOverlayRecord,
+  replaceGeneralRecruitOverlay,
+  resetGeneralRecruitOverlay,
+} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  getGeneralApplicationOverlayRecord,
+  replaceGeneralApplicationOverlay,
+  resetGeneralApplicationOverlay,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import {
   shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph,
   useInstitutionApplicationFormVisibilityVersion,
 } from '@/features/program/general/lib/institution-application-form-visibility'
@@ -232,6 +247,70 @@ export type UseProgramParticipantApplicationEditorOptions = {
   programLinkedApplicationFormPreview?: boolean
   applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
+}
+
+function isApplicantRecruitInstitutionVariant(
+  variant: ProgramParticipantApplicationEditorVariant
+): boolean {
+  return variant === 'applicant-recruit-institution'
+}
+
+function isGeneralRecruitOverlayVariant(
+  variant: ProgramParticipantApplicationEditorVariant
+): boolean {
+  return (
+    variant === 'applicant-recruit-individual' ||
+    variant === 'recruit-instructor' ||
+    variant === 'recruit-volunteer'
+  )
+}
+
+function isGeneralApplicationOverlayVariant(
+  variant: ProgramParticipantApplicationEditorVariant
+): boolean {
+  return (
+    variant === 'institution' ||
+    variant === 'individual' ||
+    variant === 'instructor' ||
+    variant === 'volunteer' ||
+    variant === 'economy-application-institution' ||
+    variant === 'trained-teachers-application-institution'
+  )
+}
+
+function restoreParticipantOverlayForVariant(
+  variant: ProgramParticipantApplicationEditorVariant,
+  overlay: Record<string, unknown> | undefined
+): void {
+  if (isApplicantRecruitInstitutionVariant(variant)) {
+    if (overlay) replaceApplicantRecruitInstitutionOverlay(overlay)
+    else resetApplicantRecruitInstitutionOverlay()
+    return
+  }
+  if (isGeneralRecruitOverlayVariant(variant)) {
+    if (overlay) replaceGeneralRecruitOverlay(overlay)
+    else resetGeneralRecruitOverlay()
+    return
+  }
+  if (isGeneralApplicationOverlayVariant(variant)) {
+    if (overlay) replaceGeneralApplicationOverlay(overlay)
+    else resetGeneralApplicationOverlay()
+  }
+}
+
+function collectParticipantOverlayForVariant(
+  variant: ProgramParticipantApplicationEditorVariant
+): Record<string, unknown> | undefined {
+  if (isApplicantRecruitInstitutionVariant(variant)) {
+    return { ...getApplicantRecruitInstitutionOverlayRecord() }
+  }
+  if (isGeneralRecruitOverlayVariant(variant)) {
+    return { ...getGeneralRecruitOverlayRecord() }
+  }
+  if (isGeneralApplicationOverlayVariant(variant)) {
+    return { ...getGeneralApplicationOverlayRecord() }
+  }
+  return undefined
 }
 
 export function useProgramParticipantApplicationEditor(
@@ -395,6 +474,7 @@ export function useProgramParticipantApplicationEditor(
           if (cancelled) return
           if (saved?.draft) {
             applyDraft(saved.draft)
+            restoreParticipantOverlayForVariant(variant, saved.overlay)
             applyParticipantApplicationEditorState({
               variant,
               editorState: saved.editorState,
@@ -406,6 +486,7 @@ export function useProgramParticipantApplicationEditor(
             })
             return
           }
+          restoreParticipantOverlayForVariant(variant, undefined)
           applyDraft(createSeedDraft())
           if (variant === 'ujat-application-volunteer') {
             setUjatVolunteerApplicationType('ujat-graduate')
@@ -841,10 +922,12 @@ export function useProgramParticipantApplicationEditor(
           ujatApplicationGradeByBlockId,
           ujatGradeClassTimeBlockIds,
         })
+        const overlay = collectParticipantOverlayForVariant(variant)
         await persistWritingFormTemplateDraft({
           templateId,
           draft,
           editorState,
+          ...(overlay != null ? { overlay } : {}),
         })
       }
       if (options?.silent) return

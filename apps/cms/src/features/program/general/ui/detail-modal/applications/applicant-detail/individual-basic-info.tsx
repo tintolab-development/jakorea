@@ -73,7 +73,6 @@ export interface ApplicantGeneralIndividualBasicInfoProps {
   isAdminCommentEditing?: boolean
   adminCommentDraft?: string
   onAdminCommentDraftChange?: (value: string) => void
-  adminCommentError?: string
   openManagerDropdown?: { rowId: string; manager: 'A' | 'B' } | null
   setOpenManagerDropdown?: (value: { rowId: string; manager: 'A' | 'B' } | null) => void
   onManagerAEvaluationChange?: (id: string, evaluation: GeneralManagerEvaluation) => void
@@ -453,7 +452,6 @@ export function ApplicantGeneralIndividualBasicInfo({
   isAdminCommentEditing = false,
   adminCommentDraft = '',
   onAdminCommentDraftChange,
-  adminCommentError,
   openManagerDropdown = null,
   setOpenManagerDropdown,
   onManagerAEvaluationChange,
@@ -464,11 +462,12 @@ export function ApplicantGeneralIndividualBasicInfo({
   const shouldMask = maskSensitive && applicant.approvalStatus !== 'approved'
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const showAdminComment = isProgressContext || applicant.approvalStatus === 'approved'
-  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
+  const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
+    useProgramTextbookCatalog(program)
   const showTextbookField =
     screeningStage === 'main' &&
     applicant.approvalStatus === 'approved' &&
-    individualApplicantUsesTextbook(program, textbookCatalog)
+    (isTextbookCatalogLoading || individualApplicantUsesTextbook(program, textbookCatalog))
 
   const showTeamSection = shouldShowIndividualApplicantTeamSection(program, detail)
   const showManagerEvaluation = shouldShowIndividualManagerEvaluationSection(
@@ -855,7 +854,7 @@ export function ApplicantGeneralIndividualBasicInfo({
                 ? value => onDraftChange({ adminComment: value })
                 : undefined
           }
-          validationError={adminCommentError ?? validationErrors?.adminComment}
+          validationError={validationErrors?.adminComment}
         />
       ) : null}
 

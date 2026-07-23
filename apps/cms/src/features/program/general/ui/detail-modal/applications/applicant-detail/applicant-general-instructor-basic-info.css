@@ -20,30 +20,7 @@
   flex-shrink: 0;
 }
 
-.applicant-general-instructor-basic-info__employment-dropdown
-  .status-dropdown-cell__status-trigger {
-  box-sizing: border-box;
-  width: auto;
-  min-width: 0;
-  max-width: none;
-  height: 32px;
-  min-height: 32px;
-  max-height: 32px;
-  padding: 0;
-  gap: 0;
-  overflow: visible;
-}
-
-.applicant-general-instructor-basic-info__employment-dropdown
-  .status-dropdown-cell__status-trigger--open {
-  height: 32px;
-  min-height: 32px;
-  max-height: 32px;
-  padding: 0 !important;
-  overflow: visible;
-}
-
-/* 소속 행 — 배지 활성화(드롭다운 열림) 시에도 행 높이 고정 */
+/* 트리거 패딩·크롬은 StatusDropdownCell chrome="hug" — 열림 시 행 높이만 고정 */
 .applicant-general-instructor-basic-info
   .detail-info-form__field:has(.applicant-general-instructor-basic-info__employment-dropdown),
 .applicant-general-instructor-basic-info

@@ -71,6 +71,7 @@ export function SponsorBasicInfoSection({
         isOpen={isSponsorshipStatusDropdownOpen}
         onOpenChange={setIsSponsorshipStatusDropdownOpen}
         tagLayout="tag100"
+        chrome="hug"
       />
     ) : (
       <SponsorSponsorshipStatusBadge status={value.sponsorshipStatus ?? 'active'} />

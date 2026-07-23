@@ -9,7 +9,7 @@ JSON 계약 SSOT: [form-template-json-contract.md](./form-template-json-contract
 **신규 템플릿 생성 전용**: [template-create-api-backend-handoff.md](./template-create-api-backend-handoff.md)
 
 **작성일**: 2026-07-01  
-**Swagger 서버 스냅샷**: `https://29d0-183-102-114-192.ngrok-free.app/`
+**Swagger 서버 스냅샷**: `https://6920-221-146-247-18.ngrok-free.app//`
 
 ---
 
@@ -213,35 +213,35 @@ JSON 계약 SSOT: [form-template-json-contract.md](./form-template-json-contract
 
 ### 8. 발급 양식(ISSUANCE) 시드 — **FE 연동 완료, BE 시드 대기**
 
-|                          |                                                                           |
-| ------------------------ | ------------------------------------------------------------------------- |
-| **화면**                 | `/templates/form-management` 발급 양식 탭 (`issuance-form-tab.tsx`)       |
-| **FE 상태 (2026-07-10)** | 목록 GET + 11종 load/save + 프로그램 실발급 `settingsJson` 연동 **완료**  |
+|                          |                                                                                               |
+| ------------------------ | --------------------------------------------------------------------------------------------- |
+| **화면**                 | `/templates/form-management` 발급 양식 탭 (`issuance-form-tab.tsx`)                           |
+| **FE 상태 (2026-07-10)** | 목록 GET + 11종 load/save + 프로그램 실발급 `settingsJson` 연동 **완료**                      |
 | **갭 유형**              | **BE DB 시드 등록 대기**. FE 시드 JSON: P0 지급조서 2종 + `document-3` 완료, 잔여 10종 미작성 |
-| **상세**                 | [issuance-form-api-follow-up.md](./issuance-form-api-follow-up.md) §2·§3.2 |
+| **상세**                 | [issuance-form-api-follow-up.md](./issuance-form-api-follow-up.md) §2·§3.2                    |
 
 **FE 시드 JSON (완료)**
 
-| templateCode | 파일 |
-|--------------|------|
-| `document-payment-order-issue` | [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json) |
+| templateCode                         | 파일                                                                                                     |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `document-payment-order-issue`       | [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json)             |
 | `document-payment-order-pre-consent` | [document-payment-order-pre-consent.json](./form-template-seeds/document-payment-order-pre-consent.json) |
-| `document-3` | [document-3-certificate.json](./form-template-seeds/document-3-certificate.json) |
+| `document-3`                         | [document-3-certificate.json](./form-template-seeds/document-3-certificate.json)                         |
 
 **발급 templateCode (FE SSOT — BE 합의 필요)**
 
-| FE key (임시)                        | templateName                          |
-| ------------------------------------ | ------------------------------------- |
-| `issuance-1`                         | UJAT 결과리포트                       |
-| `issuance-2`                         | UJAT 교육계획서                       |
-| `issuance-ujat-edu-journal`          | UJAT 교육일지                         |
-| `issuance-3`                         | 강의보고서                            |
-| `issuance-4`                         | 정산 신청서                           |
-| `issuance-5`                         | 결과보고서                            |
-| `document-payment-order-issue`       | 지급조서(발급)                        |
-| `document-payment-order-pre-consent` | 지급조서 사전 동의서                  |
-| `document-3`                         | 수료증                                |
-| `document-participation-certificate` | 참여인증서                            |
+| FE key (임시)                        | templateName                                       |
+| ------------------------------------ | -------------------------------------------------- |
+| `issuance-1`                         | UJAT 결과리포트                                    |
+| `issuance-2`                         | UJAT 교육계획서                                    |
+| `issuance-ujat-edu-journal`          | UJAT 교육일지                                      |
+| `issuance-3`                         | 강의보고서                                         |
+| `issuance-4`                         | 정산 신청서                                        |
+| `issuance-5`                         | 결과보고서                                         |
+| `document-payment-order-issue`       | 지급조서(발급)                                     |
+| `document-payment-order-pre-consent` | 지급조서 사전 동의서                               |
+| `document-3`                         | 수료증                                             |
+| `document-participation-certificate` | 참여인증서                                         |
 | …                                    | (전체 14종: `issuance-form-api-follow-up.md` §2.1) |
 
 ---

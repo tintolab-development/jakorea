@@ -1,5 +1,7 @@
 /**
- * 공지 카테고리 관리 모달 — ContentModal 600×502, 테이블 열/행 시안
+ * 공지 카테고리 관리 모달 — ContentModal 600×502
+ * 셸 패딩(Figma): 상 26 · 좌우 30 · 하 34
+ * 내부 갭: 타이틀↔테이블 30 · 테이블↔푸터 30
  */
 
 /*
@@ -45,45 +47,41 @@
   max-height: calc(100dvh - 48px);
 }
 
+/*
+ * Figma: 600 × Hug(콘텐츠 ~502). 셸 패딩·푸터 갭은 ContentModal 공통.
+ * 고정 height 금지 — body flex:1이면 테이블↔푸터 사이 빈 띠가 생김.
+ */
 .content-modal.notice-category-management-modal.ant-modal .ant-modal-content {
   box-sizing: border-box;
   width: 600px;
-  height: 502px;
-  max-height: min(502px, 100vh);
-  padding: 28px 30px 34px;
+  height: auto;
+  max-height: min(502px, calc(100vh - 48px));
+  max-height: min(502px, calc(100dvh - 48px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .content-modal.notice-category-management-modal .ant-modal-body {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* 타이틀「카테고리 관리」↔ 테이블 간격 30px (content-modal 기본 body padding 0) */
-/* 세로 스크롤은 `__table-scroll` 한 곳 — 목록·등록 행이 함께 움직임 */
+/* 타이틀 ↔ 테이블 30px (description 없는 테이블형 ContentModal) */
 .content-modal.notice-category-management-modal .teal-header-modal__body {
-  /* flex:1이면 본인 영역이 늘어나고, 테이블·스크롤 래퍼 flex:1이었을 때 아래에 빈 띠가 잡힘 */
   flex: 0 1 auto;
   min-height: 0;
   overflow: hidden;
   align-items: stretch;
   padding-top: 30px;
-  padding-left: 0;
-  padding-right: 0;
-  padding-bottom: 0;
+  gap: 0;
   box-sizing: border-box;
 }
 
-/* 테이블 ↔ 푸터 버튼(닫기·카테고리 추가) 간격 30px */
 .content-modal.notice-category-management-modal .teal-header-modal__footer {
-  flex-shrink: 0;
-  margin-top: 30px;
-  padding: 0;
   justify-content: flex-end;
 }
 
@@ -208,9 +206,15 @@
   align-items: center;
 }
 
+/* 행 액션(수정/삭제/취소/등록) — medium 패딩 유지 */
 .notice-category-management-modal__action-btn.cms-button.ant-btn {
-  border-radius: 6px;
-  min-width: 0;
+  box-sizing: border-box !important;
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+  height: 40px !important;
+  padding: 6px 14px !important;
+  border-radius: 6px !important;
   flex-shrink: 0;
 }
 

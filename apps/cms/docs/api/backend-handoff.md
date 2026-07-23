@@ -12,7 +12,9 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 **회원 관리 (members)**: [members/README.md](./members/README.md) · [**백엔드 handoff**](./members/members-api-backend-handoff-2026-07-23.md) · [FE 연동 명세](./members/members-api-integration-2026-07-23.md)
 
-**프로그램 유형별 전환**: [**UJAT 백엔드 핸드오프**](./programs-ujat-api-backend-handoff.md) · [**1사1교 백엔드 핸드오프**](./programs-company-school-api-backend-handoff.md)
+**프로그램 유형별 전환**: [**UJAT 백엔드 핸드오프**](./programs-ujat-api-backend-handoff.md) · [**1사1교 백엔드 핸드오프**](./programs-company-school-api-backend-handoff.md) · [**1사1교 더미 시드**](./company-school-program-dummy-seed-backend-request.md) · [**일반 프로그램 더미 시드**](./general-program-dummy-seed-backend-request.md)
+
+**테이블 일괄삭제 (CMS 전수)**: [**cms-table-bulk-delete-api-backend-handoff.md**](./cms-table-bulk-delete-api-backend-handoff.md) · **일괄승인**: [**cms-table-bulk-approve-api-backend-handoff.md**](./cms-table-bulk-approve-api-backend-handoff.md) · **일괄다운로드**: [**cms-table-bulk-download-api-backend-handoff.md**](./cms-table-bulk-download-api-backend-handoff.md)
 
 ---
 
@@ -20,8 +22,8 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 | 항목            | 값                                                                                |
 | --------------- | --------------------------------------------------------------------------------- |
-| Swagger UI      | `https://29d0-183-102-114-192.ngrok-free.app//swagger-ui/index.html`              |
-| OpenAPI JSON    | `https://29d0-183-102-114-192.ngrok-free.app//v3/api-docs`                        |
+| Swagger UI      | `https://6920-221-146-247-18.ngrok-free.app///swagger-ui/index.html`              |
+| OpenAPI JSON    | `https://6920-221-146-247-18.ngrok-free.app///v3/api-docs`                        |
 | 프론트 스냅샷   | [`apps/cms/openapi/backend.openapi.json`](../../openapi/backend.openapi.json)     |
 | 대시보드 subset | [`apps/cms/openapi/dashboard.openapi.json`](../../openapi/dashboard.openapi.json) |
 
@@ -35,7 +37,7 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 2. **프록시 모드(권장)**
 
 ```env
-VITE_API_SERVER=https://29d0-183-102-114-192.ngrok-free.app/
+VITE_API_SERVER=https://6920-221-146-247-18.ngrok-free.app//
 VITE_REAL_API_MODULES=adminAuth,dashboard,logs,detailedPrograms,textbooks,sponsors,notices,faqs,inquiries,paymentOrders,accountPayments,settlementConfigs,programs,applications,programProgress
 VITE_ADMIN_AUTH_API_PREFIX=/api/admin/auth
 VITE_AUTH_REFRESH_PATH=/api/auth/refresh
@@ -89,19 +91,19 @@ CMS는 `useAuthStore` 토큰 → [`axios-instance.ts`](../../src/shared/instance
 
 상세 SSOT: [programs-api-integration.md](./programs-api-integration.md) · 갭: [programs-api-backend-gaps.md](./programs-api-backend-gaps.md) · 남은 작업: [programs-api-remaining-work.md](./programs-api-remaining-work.md)
 
-| 모듈 | env 키 | 주요 경로 |
-|------|--------|-----------|
-| 프로그램 CRUD | `programs` | `GET/POST/PATCH/DELETE /api/admin/programs` |
-| 신청 | `applications` (+ `programs`) | `.../applications/organizations|instructors|individuals` |
-| 진행현황 | `programProgress` (+ `programs`) | `.../progress/participants` 등 |
+| 모듈          | env 키                           | 주요 경로                                   |
+| ------------- | -------------------------------- | ------------------------------------------- | ----------- | ------------ |
+| 프로그램 CRUD | `programs`                       | `GET/POST/PATCH/DELETE /api/admin/programs` |
+| 신청          | `applications` (+ `programs`)    | `.../applications/organizations             | instructors | individuals` |
+| 진행현황      | `programProgress` (+ `programs`) | `.../progress/participants` 등              |
 
 **목록 query enum (프론트 매핑)**
 
 | CMS URL `status` | API `periodStatus` |
-|------------------|--------------------|
-| `scheduled` | `RECRUITING` |
-| `in_progress` | `IN_PROGRESS` |
-| `completed` | `COMPLETED` |
+| ---------------- | ------------------ |
+| `scheduled`      | `RECRUITING`       |
+| `in_progress`    | `IN_PROGRESS`      |
+| `completed`      | `COMPLETED`        |
 
 고정: 목록 query `programType=GENERAL`. Create body에도 `programType: "GENERAL"` 전송 (`mapGeneralProgramToCreateRequest`).
 
@@ -148,7 +150,7 @@ CMS wiring: [`features/auth/social-auth/cms-client.ts`](../../src/features/auth/
 **환경 변수**
 
 ```env
-VITE_API_SERVER=https://29d0-183-102-114-192.ngrok-free.app/
+VITE_API_SERVER=https://6920-221-146-247-18.ngrok-free.app//
 VITE_KAKAO_CLIENT_ID=
 VITE_NAVER_CLIENT_ID=
 VITE_GOOGLE_CLIENT_ID=

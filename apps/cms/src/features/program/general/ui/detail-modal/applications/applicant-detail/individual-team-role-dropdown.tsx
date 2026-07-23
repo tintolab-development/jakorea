@@ -50,6 +50,7 @@ export function GeneralIndividualTeamRoleDropdown({
       onOpenChange={setIsOpen}
       emptyPlaceholder="-"
       style={{ width: 132, minWidth: 132, maxWidth: 132 }}
+      chrome="hug"
     />
   )
 }

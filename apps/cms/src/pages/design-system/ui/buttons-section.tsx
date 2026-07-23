@@ -21,7 +21,7 @@ export function ButtonsSection() {
         등).
         <br />
         <strong>Variant</strong> — primary(솔리드) · secondary(민트 아웃라인) · default(회색) ·
-        delete(레드 아웃라인).
+        delete(레드 아웃라인). 「정보 수정」은 <code>secondary</code> + <code>large</code>(140).
         <br />
         <strong>용도</strong> — 테이블 상단 액션=large · 모달 푸터=medium ·{' '}
         <code>cms-button--action</code>은 텍스트 액션 폭 140 고정.

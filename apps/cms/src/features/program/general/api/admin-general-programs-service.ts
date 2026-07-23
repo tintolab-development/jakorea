@@ -15,23 +15,40 @@ import {
   shouldUseGeneralProgramsRemoteApi,
   shouldUseProgramsHttpRemoteApi,
 } from '@/features/program/general/api/general-programs-remote-capabilities'
+import { mapProgramManagerResponsesToRows } from '@/features/program/general/api/adapters/program-managers-adapters'
 import {
+  addAdminProgramManagerRemote,
+  bulkDeleteAdminProgramsRemote,
+  createAdminProgramFormBindingRemote,
   createAdminProgramRemote,
   createAdminProgramPostRemote,
+  deleteAdminProgramFormBindingRemote,
+  deleteAdminProgramManagerRemote,
   deleteAdminProgramRemote,
   deleteAdminProgramPostRemote,
   fetchAdminProgramByIdRemote,
+  fetchAdminProgramFormBindingsRemote,
+  fetchAdminProgramManagersRemote,
   fetchAdminProgramNavigationRemote,
   fetchAdminProgramPostsRemote,
   fetchAdminProgramsRemote,
+  fetchAdminProgramSurveyResponseDetailRemote,
   fetchAdminProgramSurveyResponsesRemote,
   fetchAdminProgramSurveySummaryRemote,
   fetchAdminProgramSurveysRemote,
+  submitAdminFormResponseRemote,
+  updateAdminProgramManagerRemote,
   updateAdminProgramRemote,
   updateAdminProgramPostRemote,
 } from '@/features/program/general/api/programs-api-client'
+import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import { resolveGeneralProgramForDetail } from '@/features/program/general/lib/detail-meta'
+import type { ProgramRole } from '@/types/user'
 import type { GeneralProgramOverviewStatusFilter } from '@/features/program/general/lib/list-status-filter'
+import {
+  countGeneralProgramOverviewStages,
+  type GeneralProgramOverviewStageCounts,
+} from '@/features/program/general/lib/overview-stage-counts'
 import { programService } from '@/entities/program/api/program-service'
 import type { Program } from '@/types/domain'
 
@@ -74,8 +91,38 @@ export async function fetchGeneralProgramsRemoteList(
   )
 
   const programs = (page.items ?? []).map(mapAdminProgramListItemToProgram)
-  const overviewFiltered = filterGeneralProgramsByOverviewStatus(programs, statusFilter)
-  return clientFilterGeneralPrograms(overviewFiltered, tableFilters)
+  // periodStatus는 서버 필터 — trained-teachers/1사1교와 같이 클라이언트 overview 재필터 스킵
+  return clientFilterGeneralPrograms(programs, tableFilters)
+}
+
+/**
+ * 상단 4카드 건수.
+ * remote: GET /programs?periodStatus=* 의 totalElements (목록과 동일 periodStatus 계약)
+ * mock: lifecycle 버킷 집계 (목록 filterGeneralProgramsByOverviewStatus 와 동일)
+ *
+ * 별도 count API 불필요 — 기존 목록 API로 충분. (500건 초과 시 totalElements가 SSOT)
+ */
+export async function fetchGeneralProgramOverviewStages(): Promise<GeneralProgramOverviewStageCounts> {
+  if (!shouldUseGeneralProgramsRemoteApi()) {
+    return countGeneralProgramOverviewStages(getGeneralPrograms())
+  }
+
+  assertGeneralProgramsRemoteReady()
+
+  const base = { programType: GENERAL_PROGRAM_API_TYPE, page: 0, size: 1 } as const
+  const [all, scheduled, inProgress, completed] = await Promise.all([
+    fetchAdminProgramsRemote({ ...base }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'RECRUITING' }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'IN_PROGRESS' }),
+    fetchAdminProgramsRemote({ ...base, periodStatus: 'COMPLETED' }),
+  ])
+
+  return {
+    total: all.totalElements ?? all.items?.length ?? 0,
+    scheduled: scheduled.totalElements ?? scheduled.items?.length ?? 0,
+    inProgress: inProgress.totalElements ?? inProgress.items?.length ?? 0,
+    completed: completed.totalElements ?? completed.items?.length ?? 0,
+  }
 }
 
 export async function fetchGeneralProgramRemoteById(programId: string): Promise<Program> {
@@ -124,9 +171,17 @@ export async function deleteGeneralProgram(programId: string): Promise<void> {
 }
 
 export async function deleteGeneralPrograms(programIds: string[]): Promise<void> {
-  for (const programId of programIds) {
-    await deleteGeneralProgram(programId)
+  if (programIds.length === 0) return
+
+  if (!shouldUseGeneralProgramsRemoteApi()) {
+    for (const programId of programIds) {
+      await deleteGeneralProgram(programId)
+    }
+    return
   }
+
+  assertGeneralProgramsRemoteReady()
+  await bulkDeleteAdminProgramsRemote(programIds)
 }
 
 export async function fetchGeneralProgramNavigation(programId: string) {
@@ -201,6 +256,85 @@ export async function fetchGeneralProgramSurveySummary(
   if (!shouldUseProgramsHttpRemoteApi()) return []
   assertProgramsHttpRemoteReady()
   return fetchAdminProgramSurveySummaryRemote(programId, templateVersionId)
+}
+
+export async function fetchGeneralProgramSurveyResponseDetail(
+  programId: string,
+  templateVersionId: string,
+  formResponseId: string
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return fetchAdminProgramSurveyResponseDetailRemote(
+    programId,
+    templateVersionId,
+    formResponseId
+  )
+}
+
+export async function fetchGeneralProgramFormBindings(programId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return []
+  assertProgramsHttpRemoteReady()
+  return fetchAdminProgramFormBindingsRemote(programId)
+}
+
+export async function createGeneralProgramFormBinding(
+  programId: string,
+  payload: ProgramFormBindingRequest
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return createAdminProgramFormBindingRemote(programId, payload)
+}
+
+export async function deleteGeneralProgramFormBinding(programId: string, bindingId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return
+  assertProgramsHttpRemoteReady()
+  await deleteAdminProgramFormBindingRemote(programId, bindingId)
+}
+
+/** 강의평가 등 관리자 form response 제출. remote OFF면 null. */
+export async function submitGeneralProgramFormResponse(
+  payload: import('@/shared/api/generated/forms-surveys/schemas/formResponseCreateRequest').FormResponseCreateRequest
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return submitAdminFormResponseRemote(payload)
+}
+
+export async function fetchGeneralProgramManagers(programId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return []
+  assertProgramsHttpRemoteReady()
+  const items = await fetchAdminProgramManagersRemote(programId)
+  return mapProgramManagerResponsesToRows(items)
+}
+
+export async function addGeneralProgramManager(
+  programId: string,
+  payload: { adminId: number; role: ProgramRole }
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return addAdminProgramManagerRemote(programId, {
+    adminId: payload.adminId,
+    role: payload.role,
+  })
+}
+
+export async function updateGeneralProgramManager(
+  programId: string,
+  assignmentId: string,
+  payload: { role?: ProgramRole; adminId?: number }
+) {
+  if (!shouldUseProgramsHttpRemoteApi()) return null
+  assertProgramsHttpRemoteReady()
+  return updateAdminProgramManagerRemote(programId, assignmentId, payload)
+}
+
+export async function deleteGeneralProgramManager(programId: string, assignmentId: string) {
+  if (!shouldUseProgramsHttpRemoteApi()) return
+  assertProgramsHttpRemoteReady()
+  await deleteAdminProgramManagerRemote(programId, assignmentId)
 }
 
 export { GENERAL_PROGRAM_API_TYPE }

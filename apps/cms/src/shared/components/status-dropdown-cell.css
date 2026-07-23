@@ -2,6 +2,7 @@
  * 테이블용 상태 드롭다운 셀 공통 스타일
  * 디자인 스펙: 외곽 트리거 136px (padding 8 + 태그 120 + padding 8), 태그 radius 4px,
  * 활성 시 민트 border + 그림자, 드롭다운 패널 136px·#D4D4D4 border
+ * tag-100: 외곽 116px (1 + 7 + 100 + 7 + 1, border-box)
  * 지급 조서 라인: 외곽 176px (8 + 태그 160 + 8), 패널·메뉴 padding·gap 8px 동일
  */
 
@@ -220,6 +221,10 @@
   padding-right: 0 !important;
 }
 
+/*
+ * tag-100: border-box 116px = 1px border + 7px pad + 100 배지 + 7px pad + 1px
+ * 닫힘·열림 패딩을 동일하게 유지 — open 때만 7px로 바꾸면 배지/행이 가로로 밀림
+ */
 .status-dropdown-cell__status-trigger--tag-100 {
   box-sizing: border-box;
   display: inline-flex;
@@ -227,7 +232,7 @@
   width: 116px;
   min-width: 116px;
   max-width: 116px;
-  padding: 8px;
+  padding: 7px;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
@@ -257,7 +262,6 @@
   width: 116px !important;
   min-width: 116px !important;
   max-width: 116px !important;
-  /* border-box 116px 안에 100px 배지: 1px border + 7px pad + 100 + 7px pad + 1px */
   padding: 7px !important;
   justify-content: center !important;
   align-items: center !important;
@@ -868,11 +872,13 @@
   min-height: 33px;
 }
 
-/* 드롭다운 패널 (tag-160·payment-order-line는 위 전용 블록 — 여기 136px 규칙이 덮어쓰면 태그가 메뉴에 끼어 보임) */
+/* 드롭다운 패널 (tag-160·payment-order-line·hug는 위/아래 전용 블록 — 여기 136px 규칙이 덮어쓰면 태그가 메뉴에 끼어 보임) */
 .status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
     .status-dropdown-cell__dropdown-overlay--tag-160
   ):not(
     .status-dropdown-cell__dropdown-overlay--payment-order-line
+  ):not(
+    .status-dropdown-cell__dropdown-overlay--hug
   ) {
   width: 136px !important;
   min-width: 136px !important;
@@ -883,6 +889,8 @@
     .status-dropdown-cell__dropdown-overlay--tag-160
   ):not(
     .status-dropdown-cell__dropdown-overlay--payment-order-line
+  ):not(
+    .status-dropdown-cell__dropdown-overlay--hug
   )
   .ant-dropdown-menu {
   box-sizing: border-box;
@@ -904,6 +912,8 @@
     .status-dropdown-cell__dropdown-overlay--tag-160
   ):not(
     .status-dropdown-cell__dropdown-overlay--payment-order-line
+  ):not(
+    .status-dropdown-cell__dropdown-overlay--hug
   )
   .ant-dropdown-menu-item {
   margin: 0;
@@ -922,6 +932,8 @@
     .status-dropdown-cell__dropdown-overlay--tag-160
   ):not(
     .status-dropdown-cell__dropdown-overlay--payment-order-line
+  ):not(
+    .status-dropdown-cell__dropdown-overlay--hug
   )
   .ant-dropdown-menu-item:last-child {
   margin-bottom: 0;
@@ -931,6 +943,8 @@
     .status-dropdown-cell__dropdown-overlay--tag-160
   ):not(
     .status-dropdown-cell__dropdown-overlay--payment-order-line
+  ):not(
+    .status-dropdown-cell__dropdown-overlay--hug
   )
   .ant-dropdown-menu-item:hover {
   background: transparent !important;
@@ -1002,4 +1016,125 @@
   background: #f2f3f5 !important;
   color: #464646 !important;
   border: 1px solid rgba(126, 138, 150, 0.06) !important;
+}
+
+/*
+ * chrome="hug" — 파일 최하단에 두어 tag100/default 고정폭을 덮어씀
+ * 트리거·오버레이 모두 배지(max-content)에 밀착. 닫힘/열림 박스 모델 동일(투명 1px border 유지).
+ */
+.status-dropdown-cell__status-trigger--hug,
+.status-dropdown-cell__status-trigger--hug.status-dropdown-cell__status-trigger--open,
+.status-dropdown-cell__status-trigger--hug.status-dropdown-cell__trigger--cell-style,
+.status-dropdown-cell__status-trigger--hug.status-dropdown-cell__trigger--cell-style.status-dropdown-cell__status-trigger--open {
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  width: max-content !important;
+  min-width: max-content !important;
+  max-width: max-content !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  justify-content: center !important;
+  align-items: center !important;
+  overflow: visible !important;
+  flex-shrink: 0;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: transparent !important;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.status-dropdown-cell__status-trigger--hug.status-dropdown-cell__status-trigger--open {
+  background: #fff !important;
+  border-color: var(--color-brand-primary, var(--JA-mint-01, #01a1af)) !important;
+  box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1);
+}
+
+/* hug 패널: tag100(116px) 고정폭을 쓰지 않음 — 배지 폭에 맞춤(트리거와 좌우 정렬) */
+.status-dropdown-cell__dropdown-overlay--hug {
+  width: max-content !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+.status-dropdown-cell__dropdown-overlay--hug .ant-dropdown-menu {
+  box-sizing: border-box;
+  width: max-content !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  border-radius: 6px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1);
+  /* 좌우 0 — 패널 외곽 ≈ 배지 100px + 메뉴 border(트리거 hug와 동일) */
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dropdown-cell__dropdown-overlay--hug .ant-dropdown-menu-item {
+  margin: 0;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border-radius: 6px;
+  background: transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-dropdown-cell__dropdown-overlay--hug .ant-dropdown-menu-item:hover {
+  background: transparent !important;
+}
+
+.status-dropdown-cell__dropdown-overlay--hug .status-dropdown-cell__dropdown-item {
+  width: max-content;
+}
+
+/*
+ * 인라인 tag100 셸 — 교재명 행 등.
+ * 닫힘/열림 모두 레이아웃 기여 = 116×48 고정. 조상 flex/table 이 min-content 로 커지는 것을 차단.
+ */
+.status-dropdown-cell__inline-tag100 {
+  display: inline-flex;
+  box-sizing: border-box;
+  width: 116px;
+  min-width: 116px;
+  max-width: 116px;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+  flex: 0 0 116px;
+  justify-content: center;
+  align-items: center;
+  vertical-align: middle;
+  position: relative;
+  overflow: visible;
+}
+
+.status-dropdown-cell__inline-tag100 .ant-dropdown-trigger,
+.status-dropdown-cell__inline-tag100 .status-dropdown-cell__status-trigger--tag-100,
+.status-dropdown-cell__inline-tag100
+  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  box-sizing: border-box !important;
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  padding: 7px !important;
+  margin: 0 !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* 셸 안 트리거 그림자는 레이아웃/페인트 overflow 유발 — 패널 그림자로 충분 */
+.status-dropdown-cell__inline-tag100 .status-dropdown-cell__status-trigger--open {
+  box-shadow: none !important;
 }

@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -48,10 +48,22 @@ export function TrainedTeachersProgramApplicationBasicInfoParagraph({
 }: {
   isTemplateAuthoringMode?: boolean
 }) {
-  const [applicationGrade, setApplicationGrade] = useState<string>('')
-  const [classCount, setClassCount] = useState<string>('')
-  const [educationFormat, setEducationFormat] = useState<string>('online')
-  const [educationPlace, setEducationPlace] = useState<string>('inside')
+  const [applicationGrade, setApplicationGrade] = useGeneralApplicationOverlayKv<string>(
+    'application.trainedTeachers.basicInfo.applicationGrade',
+    ''
+  )
+  const [classCount, setClassCount] = useGeneralApplicationOverlayKv<string>(
+    'application.trainedTeachers.basicInfo.classCount',
+    ''
+  )
+  const [educationFormat, setEducationFormat] = useGeneralApplicationOverlayKv<string>(
+    'application.trainedTeachers.basicInfo.educationFormat',
+    'online'
+  )
+  const [educationPlace, setEducationPlace] = useGeneralApplicationOverlayKv<string>(
+    'application.trainedTeachers.basicInfo.educationPlace',
+    'inside'
+  )
 
   return (
     <DetailInfoForm title="기본 정보" hideHeader mode="edit">

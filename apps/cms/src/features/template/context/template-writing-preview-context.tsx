@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type Context,
+  type ReactNode,
+} from 'react'
 import type { FormEditorKind } from '@/features/template/model/writing-form-draft.schema'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import { TemplatePreviewModal } from '@/features/template/ui/modal/template-preview-modal'
@@ -48,7 +56,18 @@ export type TemplateWritingPreviewContextValue = {
   isWritingUserPreviewOpen: boolean
 }
 
-const TemplateWritingPreviewContext = createContext<TemplateWritingPreviewContextValue | null>(null)
+/**
+ * HMR 시 createContext 가 새 인스턴스가 되면 Provider(구)와 hook(신)이 어긋나
+ * `must be used within TemplateWritingPreviewProvider` 가 난다. hot.data 로 유지.
+ */
+const TemplateWritingPreviewContext =
+  (import.meta.hot?.data.templateWritingPreviewContext as
+    | Context<TemplateWritingPreviewContextValue | null>
+    | undefined) ?? createContext<TemplateWritingPreviewContextValue | null>(null)
+
+if (import.meta.hot) {
+  import.meta.hot.data.templateWritingPreviewContext = TemplateWritingPreviewContext
+}
 
 export function TemplateWritingPreviewProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)

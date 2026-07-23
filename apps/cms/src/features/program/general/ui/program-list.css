@@ -564,7 +564,8 @@
 }
 
 .program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-period-columns {
-  --program-list-table-min-width: 1554px;
+  /* 예정: 컨테이너 폭에 맞춤 (고정 1554px 합계는 가로 스크롤 유발) */
+  --program-list-table-min-width: 0px;
 }
 
 .program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-all-programs {
@@ -576,7 +577,7 @@
 }
 
 .program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-period-columns.program-list-table-wrapper--program-list-overview-selection {
-  --program-list-table-min-width: 1622px;
+  --program-list-table-min-width: 0px;
 }
 
 .program-list-table-wrapper--program-list-overview.program-list-table-wrapper--program-list-all-programs.program-list-table-wrapper--program-list-overview-selection {
@@ -657,8 +658,46 @@
   min-width: 64px;
 }
 
-.program-list-card--program-list-overview.program-list-card--program-list-period-columns .program-list-table__col-title {
-  min-width: 690px;
+.program-list-page--overview
+  .program-list-card--program-list-period-columns
+  .program-list-table__col-title,
+.program-list-card--program-list-overview.program-list-card--program-list-period-columns
+  .program-list-table__col-title {
+  min-width: 0;
+}
+
+/* 예정 프로그램: 뷰포트 안에 맞춤 — 가로 스크롤 없음, 프로그램명은 ellipsis */
+.program-list-card--program-list-overview.program-list-card--program-list-period-columns
+  .cms-data-table--program-list-overview {
+  overflow-x: hidden;
+}
+
+.program-list-card--program-list-overview.program-list-card--program-list-period-columns
+  .cms-data-table--program-list-overview
+  .ant-table,
+.program-list-card--program-list-overview.program-list-card--program-list-period-columns
+  .cms-data-table--program-list-overview
+  .ant-table-container
+  table {
+  width: 100% !important;
+  min-width: 0 !important;
+  table-layout: fixed !important;
+}
+
+.program-list-card--program-list-overview.program-list-card--program-list-period-columns
+  .program-list-table__col-period {
+  min-width: 0;
+  width: 320px;
+}
+
+.program-list-card--program-list-overview.program-list-card--program-list-period-columns
+  .program-list-table__col-recruitment,
+.program-list-card--program-list-overview.program-list-card--program-list-period-columns
+  .program-list-table__col-participant-type,
+.program-list-card--program-list-overview.program-list-card--program-list-period-columns
+  .program-list-table__col-target {
+  min-width: 0;
+  width: 160px;
 }
 
 .program-list-card--program-list-overview .program-list-table__col-period {

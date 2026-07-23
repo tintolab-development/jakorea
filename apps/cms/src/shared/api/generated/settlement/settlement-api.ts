@@ -67,7 +67,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
- * - 프론트 조회 키: `get_admin_settlement-configs_current`
+ * - 프론트 조회 키: `get_admin_settlements_config_active`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: PROVIDER_PENDING
  * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
@@ -855,7 +855,7 @@ const approveCorrection = (
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
- * - 프론트 조회 키: `patch_admin_account-payments_paymentId_paid`
+ * - 프론트 조회 키: `patch_admin_settlements_account-payments_accountPaymentId_paid`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: PROVIDER_PENDING
  * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
@@ -1964,8 +1964,8 @@ const listSettlementAggregates = (
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
- * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
- * - 프론트 조회 키: `get_admin_settlements_account-payments`
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (canonical account payment list endpoint; mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_account-payments`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: PROVIDER_PENDING
  * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요

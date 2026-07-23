@@ -1,4 +1,5 @@
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { Spin } from 'antd'
 import type { Program } from '@/types/domain'
 import { useParticipatingIndividualProgressAttendance } from '@/features/program/general/hooks/use-participating-individual-progress-attendance'
 import { ParticipatingIndividualProgressAttendanceSessionPanel } from './participating-individual-progress-attendance-session-panel'
@@ -16,7 +17,16 @@ export function ParticipatingIndividualProgressAttendanceSection({ program }: { 
     sessionGroups,
     saveSessionParticipant,
     getSessionParticipants,
+    loading,
   } = useParticipatingIndividualProgressAttendance(program)
+
+  if (loading) {
+    return (
+      <div className="participating-individual-progress-attendance-section school-detail-attendance-section flex min-h-[200px] items-center justify-center">
+        <Spin size="large" />
+      </div>
+    )
+  }
 
   return (
     <div className="participating-individual-progress-attendance-section school-detail-attendance-section">

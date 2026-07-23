@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
@@ -18,21 +18,11 @@ import {
   type LectureReportPreviewContext,
 } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
 import { downloadLectureReportPdfFiles } from '@/features/program/general/lib/download-lecture-reports-bulk-pdf'
+import { useProgramLectureReports } from '@/features/program/general/hooks/use-program-lecture-reports'
+import type { ParticipatingInstructorLectureReportRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { LectureReportBulkPdfExportHost } from './lecture-report-bulk-pdf-export-host'
 import { LectureReportIssuancePreviewModal } from './lecture-report-issuance-preview-modal'
-
-interface ParticipatingInstructorLectureReportRow {
-  id: string
-  no: number
-  schoolName: string
-  educationGrade: string
-  educationScheduleLabel: string
-  submissionPeriodLabel: string
-  lectureProgressLabel: '진행 완료' | '진행 예정'
-  submissionStatusLabel: '제출 완료' | '미제출' | '진행 예정'
-  canViewReport: boolean
-}
 
 function buildParticipatingInstructorLectureReportRows(): ParticipatingInstructorLectureReportRow[] {
   return [
@@ -125,7 +115,11 @@ export function ParticipatingInstructorLectureReportsSection({
   program,
 }: ParticipatingInstructorLectureReportsSectionProps) {
   const { showAlert } = useCmsAlert()
-  const rows = useMemo(() => buildParticipatingInstructorLectureReportRows(), [])
+  const lectureReports = useProgramLectureReports(program?.id)
+  const mockRows = useMemo(() => buildParticipatingInstructorLectureReportRows(), [])
+  const rows = lectureReports.isRemoteDataSource && lectureReports.rows != null
+    ? lectureReports.rows
+    : mockRows
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewContext, setPreviewContext] = useState<LectureReportPreviewContext | null>(null)
   const [bulkExportQueue, setBulkExportQueue] = useState<LectureReportPreviewContext[]>([])
@@ -331,15 +325,21 @@ export function ParticipatingInstructorLectureReportsSection({
         </div>
       </div>
       <div className="participating-institutions-section__table-wrap">
-        <Table<ParticipatingInstructorLectureReportRow>
-          className="participating-institutions-section__table cms-data-table"
-          rowKey="id"
-          size="middle"
-          pagination={false}
-          scroll={{ x: 1280 }}
-          columns={columns}
-          dataSource={rows}
-        />
+        {lectureReports.loading ? (
+          <div className="flex min-h-[160px] items-center justify-center py-8">
+            <Spin size="large" />
+          </div>
+        ) : (
+          <Table<ParticipatingInstructorLectureReportRow>
+            className="participating-institutions-section__table cms-data-table"
+            rowKey="id"
+            size="middle"
+            pagination={false}
+            scroll={{ x: 1280 }}
+            columns={columns}
+            dataSource={rows}
+          />
+        )}
       </div>
       <LectureReportIssuancePreviewModal
         open={previewOpen}

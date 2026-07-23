@@ -57,7 +57,7 @@ import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   useCompanySchoolProgramDetail,
   useCompanySchoolPrograms,
-  useDeleteCompanySchoolProgram,
+  useDeleteCompanySchoolPrograms,
   useUpdateCompanySchoolProgram,
 } from '@/features/program/1c-1s/api/hooks'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
@@ -227,7 +227,7 @@ function ProgramListPageContent() {
       Boolean(companySchoolProgramIdFromUrl ?? selectedProgramForFullPageModal?.id)
   )
   const updateCompanySchoolMutation = useUpdateCompanySchoolProgram()
-  const deleteCompanySchoolMutation = useDeleteCompanySchoolProgram()
+  const deleteCompanySchoolProgramsMutation = useDeleteCompanySchoolPrograms()
   const companySchoolDetailProgram =
     companySchoolDetailQuery.data ??
     selectedProgramForFullPageModal ??
@@ -753,9 +753,9 @@ function ProgramListPageContent() {
           void (async () => {
             try {
               if (isCompanySchoolPath) {
-                for (const program of programsPendingBulkDelete) {
-                  await deleteCompanySchoolMutation.mutateAsync(program.id)
-                }
+                await deleteCompanySchoolProgramsMutation.mutateAsync(
+                  programsPendingBulkDelete.map(program => program.id)
+                )
                 await companySchoolListQuery.refetch()
                 setSelectedRowKeys([])
               } else {

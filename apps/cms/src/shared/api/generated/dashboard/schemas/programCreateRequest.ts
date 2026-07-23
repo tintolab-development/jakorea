@@ -7,6 +7,7 @@
  */
 import type { ProgramAdminAssignmentRequest } from './programAdminAssignmentRequest';
 import type { ProgramCreateRequestProgramType } from './programCreateRequestProgramType';
+import type { ProgramPeriodRequest } from './programPeriodRequest';
 import type { ProgramRoundRequest } from './programRoundRequest';
 import type { ProgramScheduleRequest } from './programScheduleRequest';
 import type { ProgramSettlementPaymentItemRequest } from './programSettlementPaymentItemRequest';
@@ -28,10 +29,9 @@ export interface ProgramCreateRequest {
   endDate?: string;
   businessStartDate?: string;
   businessEndDate?: string;
+  businessPeriod?: ProgramPeriodRequest;
   applicationStartDate?: string;
   applicationEndDate?: string;
-  status?: string;
-  lifecycleStatus?: string;
   businessArea?: string;
   titleEn?: string;
   mainTitle?: string;
