@@ -9,6 +9,13 @@ import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { ApprovalStatusBadge, type ApprovalStatusKey } from '@/shared/components/approval-status-badge'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import {
+  ProgramDetailTdDivider,
+  renderDetailInfoPipeSeparated,
+  renderProgramDetailPipeSeparated,
+  withProgramDetailTdDivider,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CrossTable } from '@/shared/ui/cross-table'
@@ -22,6 +29,13 @@ type DemoRow = {
   createdAt: string
 }
 
+type TdDividerDemoRow = {
+  id: string
+  schedule: string
+  contact: string
+  segments: string[]
+}
+
 const ALL_ROWS: DemoRow[] = [
   { id: '1', name: '서울 강남 프로그램', region: '서울', status: 'approved', createdAt: '2026-03-01' },
   { id: '2', name: '부산 해운대 프로그램', region: '부산', status: 'pending', createdAt: '2026-04-15' },
@@ -30,6 +44,42 @@ const ALL_ROWS: DemoRow[] = [
 ]
 
 const STATUS_OPTIONS: ApprovalStatusKey[] = ['pending', 'approved', 'rejected', 'cancelled']
+
+const TD_DIVIDER_DEMO_ROWS: TdDividerDemoRow[] = [
+  {
+    id: 'td-1',
+    schedule: '2026. 01. 05(월) 09:20 ~ 11:20 | 1회차',
+    contact: 'OO팀 이순신 책임 | 010-1234-5678',
+    segments: ['서울', '1차시', '09:20 ~ 11:20'],
+  },
+  {
+    id: 'td-2',
+    schedule: '2026. 01. 12(월) 09:20 ~ 11:20 | 2회차',
+    contact: '마케팅팀 김담당 | 010-9876-5432',
+    segments: ['부산', '2차시', '13:00 ~ 15:00'],
+  },
+]
+
+const TD_DIVIDER_COLUMNS: ColumnsType<TdDividerDemoRow> = [
+  {
+    title: '교육 진행 일정',
+    dataIndex: 'schedule',
+    key: 'schedule',
+    render: (value: string) => renderProgramDetailPipeSeparated(value),
+  },
+  {
+    title: '후원사 담당자',
+    dataIndex: 'contact',
+    key: 'contact',
+    render: (value: string) => renderProgramDetailPipeSeparated(value),
+  },
+  {
+    title: '세그먼트 배열',
+    dataIndex: 'segments',
+    key: 'segments',
+    render: (segments: string[]) => withProgramDetailTdDivider(segments),
+  },
+]
 
 const FLUID_COLUMNS: ColumnsType<DemoRow> = [
   {
@@ -143,7 +193,7 @@ export function FiltersTablesSection() {
     <DsSection
       id="filters-tables"
       title="Filters & Tables"
-      description="목록 페이지 표준 스택: FilterTableLayout → TableFilterGroup → Ant Table + cms-data-table."
+      description="목록 페이지 표준 스택: FilterTableLayout → TableFilterGroup → Ant Table + cms-data-table. 셀 인라인 구분은 ProgramDetailTdDivider 계열."
     >
       <p className="ds-note">
         필터 컨트롤 기본 폭 240×44, 조회 버튼 160×44. UnifiedFilterCard는 사용하지 않습니다.
@@ -230,6 +280,57 @@ export function FiltersTablesSection() {
           ]}
           aria-label="프로그램 회차별 정보"
         />
+      </DsDemo>
+
+      <DsDemo label="테이블 td 인라인 디바이더 — ProgramDetailTdDivider" className="ds-demo--table">
+        <p className="ds-note" style={{ marginTop: 0 }}>
+          mock·포맷터가 <code> | </code>로 이어 붙인 문자열은 화면에 문자를 그대로 두지 않습니다.
+          테이블 셀은 <code>renderProgramDetailPipeSeparated</code> /{' '}
+          <code>withProgramDetailTdDivider</code>, DetailInfoForm 값 셀은{' '}
+          <code>renderDetailInfoPipeSeparated</code>(또는 <code>DetailInfoForm.InputsSeparator</code>)를
+          사용합니다. 단일 구분선은 <code>ProgramDetailTdDivider</code>(1×13, BK 50%, 양옆 12px).
+        </p>
+        <Table<TdDividerDemoRow>
+          className="cms-data-table cms-data-table--fluid"
+          rowKey="id"
+          columns={TD_DIVIDER_COLUMNS}
+          dataSource={TD_DIVIDER_DEMO_ROWS}
+          pagination={false}
+          size="middle"
+        />
+        <div className="ds-coverage-grid ds-coverage-grid--forms" style={{ marginTop: 16 }}>
+          <DetailInfoForm title="DetailInfoForm 값 셀" mode="view" hideHeader>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="후원사 담당자"
+                fullRow
+                view={renderDetailInfoPipeSeparated('OO팀 이순신 책임 | 010-1234-5678')}
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="직접 조합"
+                fullRow
+                view={
+                  <>
+                    <span>서울</span>
+                    <ProgramDetailTdDivider />
+                    <span>1차시</span>
+                    <ProgramDetailTdDivider />
+                    <span>09:20 ~ 11:20</span>
+                  </>
+                }
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
+          <div>
+            <p className="ds-demo__label">Don&apos;t — 리터럴 파이프</p>
+            <p className="ds-note" style={{ marginTop: 0 }}>
+              <code>view=&quot;이름 | 연락처&quot;</code>, JSX에 문자 <code>|</code>를 직접 넣기, 테이블{' '}
+              <code>dataIndex</code>만으로 <code> | </code> 문자열을 노출하지 마세요.
+            </p>
+          </div>
+        </div>
       </DsDemo>
 
       <DsDemo label="가로형 목록 표 — 기본 / 상세·모달 fluid" className="ds-demo--table">
