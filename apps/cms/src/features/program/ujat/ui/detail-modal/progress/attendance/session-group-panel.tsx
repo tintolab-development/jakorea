@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { UjatInlineDividedSegments } from '@/features/program/ujat/ui/detail-modal/shared/ujat-inline-divided-segments'
 import {
   cloneAttendanceVolunteerRows,
   filterVisibleAttendanceVolunteers,
@@ -26,7 +27,9 @@ export function UjatAttendanceSessionGroupHeader({
     <div className="table-header-title--wrapper">
       <span className="table-title">{session.dateLabel}</span>
       <span className="table-description--black">
-        {session.institutionName} | {session.district} | {session.timeRange}
+        <UjatInlineDividedSegments
+          segments={[session.institutionName, session.district, session.timeRange]}
+        />
       </span>
       <span className="table-description">총 {totalCount}건</span>
     </div>

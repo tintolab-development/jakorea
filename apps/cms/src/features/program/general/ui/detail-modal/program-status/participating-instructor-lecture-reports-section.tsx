@@ -23,6 +23,7 @@ import type { ParticipatingInstructorLectureReportRow } from '@/features/program
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { LectureReportBulkPdfExportHost } from './lecture-report-bulk-pdf-export-host'
 import { LectureReportIssuancePreviewModal } from './lecture-report-issuance-preview-modal'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
 function buildParticipatingInstructorLectureReportRows(): ParticipatingInstructorLectureReportRow[] {
   return [
@@ -241,6 +242,7 @@ export function ParticipatingInstructorLectureReportsSection({
         key: 'educationScheduleLabel',
         align: 'center',
         width: 320,
+        render: (label: string) => renderProgramDetailPipeSeparated(label),
       },
       {
         title: '강의보고서 제출 기간',

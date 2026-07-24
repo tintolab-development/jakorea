@@ -17,6 +17,7 @@ import {
 } from '@/data/mock'
 import { PostReadStatusPopoverContent } from './post-read-status-popover'
 import { downloadFile } from '@/shared/lib/file-download'
+import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 import dayjs from 'dayjs'
 
 export interface EnrollmentProgramDetailPostsTabProps {
@@ -517,7 +518,12 @@ export function EnrollmentProgramDetailPostsTab({
                   </div>
                   <div className="enrollment-program-detail-modal__file-meta">
                     {formatFileDate(file.uploadedAt)}
-                    {file.fileSize != null ? ` | ${formatFileSize(file.fileSize)}` : ''}
+                    {file.fileSize != null ? (
+                      <>
+                        <DetailInfoFormTdDivider />
+                        {formatFileSize(file.fileSize)}
+                      </>
+                    ) : null}
                   </div>
                 </div>
                 <Dropdown

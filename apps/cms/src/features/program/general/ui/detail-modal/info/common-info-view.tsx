@@ -669,7 +669,11 @@ function BasicInfoSection({
           />
           <DetailInfoForm.Field
             label="후원사 담당자"
-            view={commonInfo.sponsorManagerLine?.trim() || program.managerName || '-'}
+            view={
+              <PipeSeparatedInlineView
+                text={commonInfo.sponsorManagerLine?.trim() || program.managerName || '-'}
+              />
+            }
             edit={
               <Controller
                 name="sponsorManagerContactId"

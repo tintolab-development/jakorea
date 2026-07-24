@@ -6,6 +6,7 @@ import type { Application } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import './lecture-report-submission-history-modal.css'
 
 interface LectureReportSubmissionHistoryModalProps {
@@ -94,6 +95,7 @@ export function LectureReportSubmissionHistoryModal({
         key: 'educationDateLabel',
         align: 'center',
         width: 300,
+        render: (label: string) => renderProgramDetailPipeSeparated(label),
       },
       {
         title: '강의보고서 제출 기간',
