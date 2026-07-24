@@ -1,8 +1,11 @@
 {
   "mcpServers": {
     "playwright": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"]
+      "command": "/Users/tintolab/.nvm/versions/node/v20.19.5/bin/npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "env": {
+        "PATH": "/Users/tintolab/.nvm/versions/node/v20.19.5/bin:/usr/bin:/bin"
+      }
     }
   }
 }
