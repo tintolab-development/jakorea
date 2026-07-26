@@ -45,4 +45,7 @@
   --width-popup-sm: 440px;
   --width-popup-md: 600px;
   --width-popup-lg: 960px;
+
+  /* auth layout (login / sign-up / find-* ) */
+  --auth-page-padding-x: var(--spacing-20);
 }

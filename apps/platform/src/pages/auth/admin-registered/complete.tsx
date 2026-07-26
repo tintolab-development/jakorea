@@ -5,6 +5,7 @@ import { setDevAuthLoggedIn } from '@/shared/lib'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 export function AdminRegisteredCompletePage() {
   useEffect(() => {
@@ -25,8 +26,7 @@ export function AdminRegisteredCompletePage() {
   }
 
   return (
-    <section className={sharedStyles.page}>
-      <div className={sharedStyles.container}>
+    <section>
         <div className={sharedStyles.completeIntro}>
           <img
             className={sharedStyles.completeIllustration}
@@ -34,14 +34,14 @@ export function AdminRegisteredCompletePage() {
             alt=""
             aria-hidden="true"
           />
-          <PFText as="h1" typo="hd-md" color="black" className={sharedStyles.completeTitle}>
+          <PFText as="h1" typo="hd-md" color="black" className={authPageCopyClass('title', sharedStyles.completeTitle)}>
             확인이 완료되었어요!
           </PFText>
           <PFText
             as="p"
             typo="bd-lg-rg"
             color="primary-800"
-            className={sharedStyles.completeDescription}
+            className={authPageCopyClass('description', sharedStyles.completeDescription)}
           >
             JA Korea의 다양한 프로그램과 소식을 확인해 보세요.
           </PFText>
@@ -58,7 +58,6 @@ export function AdminRegisteredCompletePage() {
             소셜계정 연결하기
           </PFButton>
         </div>
-      </div>
     </section>
   )
 }

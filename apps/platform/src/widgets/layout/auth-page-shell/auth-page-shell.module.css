@@ -1,0 +1,25 @@
+.page {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 480px;
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--auth-page-padding-x);
+}
+
+.container {
+  display: flex;
+  width: 100%;
+  max-width: var(--width-page-sm);
+  flex-direction: column;
+  align-items: stretch;
+  padding-block: var(--spacing-100);
+}
+
+@media (--bp-below-pc) {
+  .container {
+    padding-top: var(--spacing-40);
+    padding-bottom: var(--spacing-56);
+  }
+}

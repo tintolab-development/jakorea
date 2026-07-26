@@ -1,6 +1,7 @@
 import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamation.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './error.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 const SOCIAL_CONNECT_PATH = '/auth/sign-up/social-connect'
 const SIGN_IN_PATH = '/auth/sign-in'
@@ -30,8 +31,7 @@ export function SignUpSocialConnectErrorPage() {
   }
 
   return (
-    <section className={styles.page}>
-      <div className={styles.container}>
+    <section>
         <div className={styles.intro}>
           <img
             className={styles.illustration}
@@ -39,7 +39,7 @@ export function SignUpSocialConnectErrorPage() {
             alt=""
             aria-hidden="true"
           />
-          <PFText as="div" typo="hd-md" color="black" className={styles.title}>
+          <PFText as="div" typo="hd-md" color="black" className={authPageCopyClass('title')}>
             {isAlreadyLinked ? (
               <>
                 이 소셜 계정은 이미 다른
@@ -50,7 +50,7 @@ export function SignUpSocialConnectErrorPage() {
               '소셜 계정을 연결하지 못했어요'
             )}
           </PFText>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.description}>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={authPageCopyClass('description')}>
             {isAlreadyLinked
               ? '다른 소셜 계정을 사용하거나 기존 계정으로 로그인해 주세요.'
               : '잠시후 다시 시도해 주세요.'}
@@ -73,7 +73,6 @@ export function SignUpSocialConnectErrorPage() {
             </PFButton>
           )}
         </div>
-      </div>
     </section>
   )
 }

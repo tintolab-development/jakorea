@@ -3,13 +3,14 @@ import {
   isBirthStepValid,
   validateBirthStep,
 } from '@/features/auth/sign-up/identity/identity.logic'
-import type { GenderType } from '@/features/auth/sign-up'
+import { formatBirthDateInput, type GenderType } from '@/features/auth/sign-up'
 import {
   requireAdminRegisteredWizardState,
   updateAdminRegisteredWizardState,
 } from '@/features/auth/admin-registered'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import styles from './birth.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 export function AdminRegisteredBirthPage() {
   const wizardState = requireAdminRegisteredWizardState()
@@ -50,7 +51,7 @@ export function AdminRegisteredBirthPage() {
   }
 
   const handleBirthDateChange = (value: string) => {
-    setBirthDate(value)
+    setBirthDate(formatBirthDateInput(value))
     setMessage('')
   }
 
@@ -60,13 +61,12 @@ export function AdminRegisteredBirthPage() {
   }
 
   return (
-    <section className={styles.page}>
-      <div className={styles.container}>
+    <section>
         <div className={styles.header}>
-          <PFText as="h1" typo="hd-sm" color="black" className={styles.title}>
+          <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
             생년월일과 성별을 알려주세요
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={styles.description}>
+          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
             나이에 맞는 가입 절차를 안내하기 위해 필요해요.
             <br />
             다음 단계에서 본인인증 정보와 함께 확인할 수 있어요.
@@ -79,6 +79,9 @@ export function AdminRegisteredBirthPage() {
             label="생년월일"
             placeholder="YYYY.MM.DD"
             required
+            inputMode="numeric"
+            maxLength={10}
+            autoComplete="bday"
             value={birthDate}
             onValueChange={handleBirthDateChange}
           />
@@ -129,7 +132,6 @@ export function AdminRegisteredBirthPage() {
             이전으로
           </PFButton>
         </div>
-      </div>
     </section>
   )
 }

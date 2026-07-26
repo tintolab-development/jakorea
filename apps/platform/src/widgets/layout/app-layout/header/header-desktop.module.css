@@ -6,7 +6,7 @@
   background: var(--color-neutral-white);
 }
 
-@media (min-width: 1080px) {
+@media (--bp-pc-up) {
   .header {
     display: block;
   }
@@ -31,7 +31,7 @@
   padding-inline: var(--spacing-60);
 }
 
-@media (min-width: 1080px) and (max-width: 1359px) {
+@media (--bp-pc-compact) {
   .inner {
     column-gap: var(--spacing-24);
     padding-inline: var(--spacing-24);

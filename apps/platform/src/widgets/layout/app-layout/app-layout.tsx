@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { getDevAuthLoggedIn, setDevAuthLoggedIn } from '@/shared/lib'
 import type { LayoutVariant } from '@/widgets/layout/layout-variant'
+import { AuthPageShell } from '@/widgets/layout/auth-page-shell'
 import { ContentShell } from '@/widgets/layout/content-shell'
 import styles from './app-layout.module.css'
 import { Footer } from './footer'
@@ -14,6 +15,7 @@ type AppLayoutProps = {
 export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(getDevAuthLoggedIn)
   const isMypage = layout === 'mypage'
+  const isAuth = layout === 'auth'
   const useContentShell = layout === 'default'
 
   const handleLogout = () => {
@@ -22,12 +24,18 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
     window.location.assign('/')
   }
 
+  const mainContent = useContentShell ? (
+    <ContentShell>{children}</ContentShell>
+  ) : isAuth ? (
+    <AuthPageShell>{children}</AuthPageShell>
+  ) : (
+    children
+  )
+
   return (
     <div className={styles.layout}>
       <Header isLoggedIn={isLoggedIn} onLogout={handleLogout} transparent={isMypage} />
-      <main className={isMypage ? styles.mainMypage : styles.main}>
-        {useContentShell ? <ContentShell>{children}</ContentShell> : children}
-      </main>
+      <main className={isMypage ? styles.mainMypage : styles.main}>{mainContent}</main>
       <Footer />
     </div>
   )

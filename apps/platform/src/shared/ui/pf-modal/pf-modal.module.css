@@ -32,6 +32,7 @@
 .title {
   overflow: hidden;
   max-width: 100%;
+  padding-right: var(--spacing-32);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -53,4 +54,53 @@
 .closeIcon {
   width: 17px;
   height: 17px;
+}
+
+.handle {
+  display: none;
+}
+
+@media (--bp-below-pc) {
+  .panel .title {
+    font-size: 20px;
+    letter-spacing: -0.2px;
+  }
+
+  .backdropBottomSheetMobile {
+    align-items: flex-end;
+    justify-content: stretch;
+    padding: 0;
+  }
+
+  .panelBottomSheetMobile {
+    width: 100%;
+    max-width: 100%;
+    max-height: min(90vh, 100%);
+    min-height: 0;
+    overflow: auto;
+    padding: 0 var(--spacing-28) var(--spacing-28);
+    border: 0;
+    border-radius: var(--radius-24) var(--radius-24) 0 0;
+    box-shadow: 0 -4px 24px 0 rgb(14 42 53 / 12%);
+  }
+
+  .panelBottomSheetMobile .handle {
+    display: block;
+    width: 40px;
+    height: 4px;
+    flex: 0 0 auto;
+    align-self: center;
+    margin: var(--spacing-20) 0 var(--spacing-28);
+    border-radius: 999px;
+    background: var(--color-neutral-cool-200);
+  }
+
+  .panelBottomSheetMobile .closeButton {
+    top: calc(var(--spacing-20) + 4px + var(--spacing-28));
+    right: var(--spacing-28);
+  }
+
+  .panelBottomSheetMobile .title {
+    width: 100%;
+  }
 }

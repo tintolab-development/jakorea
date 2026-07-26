@@ -50,7 +50,6 @@
     "filter:openapi:notifications": "node scripts/filter-openapi-notifications.mjs",
     "filter:openapi:performance": "node scripts/filter-openapi-performance.mjs",
     "filter:openapi:forms-surveys": "node scripts/filter-openapi-forms-surveys.mjs",
-    "package:members-be-handoff": "node scripts/package-members-be-handoff.mjs",
     "generate:api": "pnpm filter:openapi:dashboard && pnpm filter:openapi:logs && pnpm filter:openapi:data-management && pnpm filter:openapi:posts && pnpm filter:openapi:settlement && pnpm filter:openapi:members && pnpm filter:openapi:notifications && pnpm filter:openapi:performance && pnpm filter:openapi:forms-surveys && orval --config orval.config.ts",
     "generate:api:watch": "orval --config orval.config.ts --watch openapi/dashboard.openapi.json"
   },

@@ -18,7 +18,7 @@ import {
   MOCK_VERIFIED_NAME,
   MOCK_VERIFIED_PHONE,
 } from '../lib/constants'
-import { buildConfirmationRows } from '../lib/utils'
+import { buildConfirmationRows, formatBirthDateInput } from '../lib/utils'
 import {
   agreementItems,
   createInitialAgreementState,
@@ -254,7 +254,7 @@ export function useSignUp() {
   }
 
   const handleBirthDateChange = (value: string) => {
-    setBirthDate(value)
+    setBirthDate(formatBirthDateInput(value))
     setStepTwoMessage('')
     setRequiresGuardianConsent(false)
     setIsUnderAgeSignup(false)

@@ -1,26 +1,20 @@
 import type { ReactNode } from 'react'
 import { PFText } from '@/shared/ui'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 type StepHeaderProps = {
   title: ReactNode
   description?: ReactNode
-  titleClassName?: string
-  descriptionClassName?: string
 }
 
-export function StepHeader({
-  title,
-  description,
-  titleClassName,
-  descriptionClassName,
-}: StepHeaderProps) {
+export function StepHeader({ title, description }: StepHeaderProps) {
   return (
     <>
-      <PFText as="div" typo="hd-sm" color="black" className={titleClassName}>
+      <PFText as="div" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
         {title}
       </PFText>
       {description ? (
-        <PFText as="p" typo="bd-lg-rg" color="primary-800" className={descriptionClassName}>
+        <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
           {description}
         </PFText>
       ) : null}

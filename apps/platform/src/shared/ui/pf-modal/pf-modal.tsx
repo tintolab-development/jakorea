@@ -4,11 +4,15 @@ import closeIconUrl from './icons/close.svg'
 import { PFText } from '../pf-text'
 import styles from './pf-modal.module.css'
 
+type PFModalMobilePlacement = 'center' | 'bottom'
+
 type PFModalProps = {
   open: boolean
   onClose: () => void
   title?: ReactNode
   width?: CSSProperties['width']
+  /** PC 미만에서 패널 배치. `bottom`이면 바텀시트 형태로 표시 */
+  mobilePlacement?: PFModalMobilePlacement
   ariaLabelledBy?: string
   ariaDescribedBy?: string
   closeOnBackdropClick?: boolean
@@ -21,6 +25,7 @@ export function PFModal({
   onClose,
   title,
   width,
+  mobilePlacement = 'center',
   ariaLabelledBy,
   ariaDescribedBy,
   closeOnBackdropClick = true,
@@ -30,6 +35,7 @@ export function PFModal({
   const fallbackTitleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
   const titleId = ariaLabelledBy ?? (title ? fallbackTitleId : undefined)
+  const isBottomSheetMobile = mobilePlacement === 'bottom'
 
   useEffect(() => {
     if (!open) return
@@ -56,7 +62,12 @@ export function PFModal({
 
   return createPortal(
     <div
-      className={styles.backdrop}
+      className={[
+        styles.backdrop,
+        isBottomSheetMobile ? styles.backdropBottomSheetMobile : undefined,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       onMouseDown={event => {
         if (!closeOnBackdropClick) return
         if (event.target === event.currentTarget) {
@@ -71,9 +82,18 @@ export function PFModal({
         aria-labelledby={titleId}
         aria-describedby={ariaDescribedBy}
         tabIndex={-1}
-        className={[styles.panel, className].filter(Boolean).join(' ')}
+        className={[
+          styles.panel,
+          isBottomSheetMobile ? styles.panelBottomSheetMobile : undefined,
+          className,
+        ]
+          .filter(Boolean)
+          .join(' ')}
         style={width ? { width } : undefined}
       >
+        {isBottomSheetMobile ? (
+          <div className={styles.handle} aria-hidden="true" />
+        ) : null}
         <button className={styles.closeButton} type="button" aria-label="닫기" onClick={onClose}>
           <img className={styles.closeIcon} src={closeIconUrl} alt="" aria-hidden="true" />
         </button>
