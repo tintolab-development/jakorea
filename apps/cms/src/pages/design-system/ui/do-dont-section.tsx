@@ -35,6 +35,12 @@ export function DoDontSection() {
             <code>cms-data-table</code>, 행·열 교차표만 <code>CrossTable</code>을 사용합니다.
           </li>
           <li>
+            테이블·상세 값 셀의 인라인 구분은 리터럴 <code> | </code>가 아니라{' '}
+            <code>ProgramDetailTdDivider</code> / <code>renderProgramDetailPipeSeparated</code> /{' '}
+            <code>renderDetailInfoPipeSeparated</code>를 사용합니다 (
+            <a href="#filters-tables">Filters &amp; Tables</a>).
+          </li>
+          <li>
             캘린더는 <code>CalendarMain</code> + <code>CalendarSplitCardLayout</code>(+{' '}
             <code>CalendarMini</code>) 조합을 표준으로 둡니다. <code>CalendarSet</code>은 실사용이
             없습니다.
@@ -95,6 +101,10 @@ export function DoDontSection() {
             공식 size 티어나 fullpage 셸을 선택합니다.
           </li>
           <li>필터 칸을 flex-grow로 늘리지 말고 규격 폭(240×44) · 조회 160×44를 지킵니다.</li>
+          <li>
+            세그먼트 구분자로 문자 <code>|</code>를 JSX·view 문자열에 직접 넣지 마세요. 데이터
+            직렬화만 <code> | </code>로 두고 렌더에서 디바이더 헬퍼로 바꿉니다.
+          </li>
           <li>
             이 페이지에서 새 디자인 토큰을 창설하거나 <code>packages/ui</code>를 도입하지 않습니다 —
             CMS <code>shared/ui</code>가 소스 오브 트루스입니다. 공통 룩 변경(Phase 5)은 채택·회귀

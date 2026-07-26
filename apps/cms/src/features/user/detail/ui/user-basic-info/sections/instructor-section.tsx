@@ -10,7 +10,7 @@ import {
   affiliationAndInstructorCareerView,
   detailAddressView,
   genderBirthView,
-  highestEducationLine,
+  highestEducationView,
   instructorApplicationTypeLine,
   instructorBankView,
   instructorFeeGradeLine,
@@ -207,7 +207,7 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         <EditableField
           label="최종 학력"
           readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={<span>{highestEducationLine(user)}</span>}
+          view={highestEducationView(user)}
           edit={<CmsInput value={d?.highestEducationLevel ?? ''} onChange={e => onMemberInfoDraftChange?.({ highestEducationLevel: e.target.value })} inputSize="medium" width="100%" placeholder="최종 학력" />}
         />
         <EditableField

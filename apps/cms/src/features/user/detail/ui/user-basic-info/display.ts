@@ -34,13 +34,28 @@ export function affiliationLine(user: Omit<User, 'password'>): string {
 
 /** 소속 td — 문자 `|` 대신 TdDivider, gap 12px */
 export function affiliationView(user: Omit<User, 'password'>): ReactNode {
-  if (user.affiliation) return user.affiliation
+  if (user.affiliation) {
+    return pipeSeparatedInlineView(user.affiliation)
+  }
   if (user.schoolInfo) {
     const { schoolName, position } = user.schoolInfo
     if (position) return inlineSegmentsWithDivider([schoolName, position])
     return schoolName
   }
   return '-'
+}
+
+/** `A | B` 직렬화 문자열 → TdDivider 세그먼트 */
+function pipeSeparatedInlineView(text: string | undefined | null): ReactNode {
+  const trimmed = text?.trim()
+  if (!trimmed || trimmed === '-') return '-'
+  const parts = trimmed
+    .split(/\s*\|\s*/)
+    .map(part => part.trim())
+    .filter(Boolean)
+  if (parts.length === 0) return '-'
+  if (parts.length === 1) return parts[0]
+  return inlineSegmentsWithDividers(parts)
 }
 
 function inlineSegmentsWithDivider(
@@ -156,6 +171,11 @@ export function affiliationAndInstructorCareerView(user: Omit<User, 'password'>)
 export function highestEducationLine(user: Omit<User, 'password'>): string {
   const t = user.listMetrics?.highestEducationLabel?.trim()
   return t && t.length > 0 ? t : '-'
+}
+
+/** 최종학력 td — 문자 `|` 대신 TdDivider */
+export function highestEducationView(user: Omit<User, 'password'>): ReactNode {
+  return pipeSeparatedInlineView(highestEducationLine(user))
 }
 
 export function jaEvaluationGradeLine(user: Omit<User, 'password'>): string {
