@@ -6,12 +6,13 @@ import {
 } from '@/features/auth/admin-registered'
 import { MYPAGE_PATH } from '@/features/mypage'
 import type { PlatformMemberProfile } from '@/features/mypage'
-import { MOCK_DUPLICATE_EMAIL, MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from '@/features/auth/sign-up'
 import {
-  PfRichTextEditor,
-  RichTextViewer,
-  useRichTextEditor,
-} from '@/shared/rich-text'
+  MOCK_DUPLICATE_EMAIL,
+  MOCK_VERIFIED_NAME,
+  MOCK_VERIFIED_PHONE,
+} from '@/features/auth/sign-up'
+import { AddressSearchModal } from '@/features/auth/sign-up/ui/address-search-modal'
+import { PfRichTextEditor, RichTextViewer, useRichTextEditor } from '@/shared/rich-text'
 import {
   PFCategoryBadge,
   PFAlertModal,
@@ -219,9 +220,7 @@ const authGuideSections: { title: string; scenarios: readonly AuthGuideScenario[
       },
       {
         title: '정상 플로우',
-        steps: [
-          '그 외 유효한 이메일 → reset (새 비밀번호 2필드) → complete → sign-in',
-        ],
+        steps: ['그 외 유효한 이메일 → reset (새 비밀번호 2필드) → complete → sign-in'],
         href: '/auth/find-password',
         buttonLabel: '비밀번호 찾기',
       },
@@ -289,8 +288,10 @@ export function TestPage() {
   const [richTextHtmlPreview, setRichTextHtmlPreview] = useState('')
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [devMemberProfile, setDevMemberProfileState] = useState<PlatformMemberProfile>(
-    () => getDevMemberProfile()
+  const [isAddressSearchModalOpen, setIsAddressSearchModalOpen] = useState(false)
+  const [selectedAddress, setSelectedAddress] = useState('')
+  const [devMemberProfile, setDevMemberProfileState] = useState<PlatformMemberProfile>(() =>
+    getDevMemberProfile()
   )
   const [devIsLoggedIn, setDevIsLoggedInState] = useState(() => getDevAuthLoggedIn())
 
@@ -488,7 +489,13 @@ export function TestPage() {
                     size={size}
                     iconVariant={iconVariant}
                     icon={
-                      <img src={searchMintIconUrl} alt="" width={16} height={16} aria-hidden="true" />
+                      <img
+                        src={searchMintIconUrl}
+                        alt=""
+                        width={16}
+                        height={16}
+                        aria-hidden="true"
+                      />
                     }
                   >
                     카테고리
@@ -623,7 +630,7 @@ export function TestPage() {
           <PFToggle
             variant="text"
             checked={!toggleText}
-            onChange={(checked) => setToggleText(!checked)}
+            onChange={checked => setToggleText(!checked)}
             offLabel="오름차순"
             onLabel="내림차순"
           />
@@ -736,9 +743,7 @@ export function TestPage() {
           SearchListLayout
         </PFText>
         <SearchListLayout
-          search={
-            <PFSearchInput value={layoutSearchQuery} onValueChange={setLayoutSearchQuery} />
-          }
+          search={<PFSearchInput value={layoutSearchQuery} onValueChange={setLayoutSearchQuery} />}
           filters={
             <>
               <PFSearchFilter
@@ -769,7 +774,7 @@ export function TestPage() {
           toolbarTitle="총 32개 프로그램"
           sort={
             <>
-              {layoutSortOptions.map((option) => (
+              {layoutSortOptions.map(option => (
                 <button
                   key={option.key}
                   type="button"
@@ -802,6 +807,25 @@ export function TestPage() {
           <PFButton variant="secondary" onClick={() => setIsModalOpen(true)}>
             PFModal 열기
           </PFButton>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          AddressSearchModal
+        </PFText>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          회원가입 프로필 등과 동일한 주소 검색 모달입니다. PC는 중앙, 1080 미만은 바텀시트입니다.
+        </PFText>
+        <div className={styles.modalStack}>
+          <PFButton variant="secondary" onClick={() => setIsAddressSearchModalOpen(true)}>
+            주소 검색 모달 열기
+          </PFButton>
+          {selectedAddress ? (
+            <PFText as="p" typo="bd-sm-md" color="black">
+              선택 주소: {selectedAddress}
+            </PFText>
+          ) : null}
         </div>
       </div>
 
@@ -878,8 +902,8 @@ export function TestPage() {
         </PFText>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
           API 연동 전 인증 관련 화면의 mock 동작·분기 조건·테스트 데이터입니다. 이메일 ID는
-          shared/lib/email-id 정책(형식·길이·금칙어·소문자 정규화)을 따르며, 관리자 등록 회원은
-          최초 로그인과 회원가입에서 서로 다른 안내 UI로 분기합니다.
+          shared/lib/email-id 정책(형식·길이·금칙어·소문자 정규화)을 따르며, 관리자 등록 회원은 최초
+          로그인과 회원가입에서 서로 다른 안내 UI로 분기합니다.
         </PFText>
 
         <div className={styles.guideBlock}>
@@ -978,6 +1002,12 @@ export function TestPage() {
           PFModal은 X 버튼과 자유로운 children 콘텐츠를 가진 작업용 모달입니다.
         </PFText>
       </PFModal>
+
+      <AddressSearchModal
+        open={isAddressSearchModalOpen}
+        onClose={() => setIsAddressSearchModalOpen(false)}
+        onSelect={setSelectedAddress}
+      />
 
       <PFAlertModal
         open={isAlertModalOpen}
