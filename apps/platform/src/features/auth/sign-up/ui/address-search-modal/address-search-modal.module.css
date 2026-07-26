@@ -252,7 +252,7 @@
   }
 
   .addressResultList {
-    margin-top: var(--spacing-28);
+    margin-top: var(--spacing-16);
     max-height: min(474px, 50vh);
   }
 }

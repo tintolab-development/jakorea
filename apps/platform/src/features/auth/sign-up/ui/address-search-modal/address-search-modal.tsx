@@ -48,8 +48,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
   const trimmedKeyword = keyword.trim()
   const totalPages = Math.max(1, Math.ceil(totalCount / RESULT_COUNT_PER_PAGE))
   const hasAddressResults = addresses.length > 0
-  const suggestOverlayError =
-    error && !isKeywordTooShortError(error.message) ? error.message : null
+  const suggestOverlayError = error && !isKeywordTooShortError(error.message) ? error.message : null
   const showSuggestOverlay =
     !hasSearched && trimmedKeyword.length > 0 && Boolean(suggestOverlayError || hasAddressResults)
 
@@ -102,7 +101,14 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
   }, [hasSearched, keyword, open, search, trimmedKeyword])
 
   return (
-    <PFModal open={open} title="주소 검색" onClose={handleClose} mobilePlacement="bottom">
+    <PFModal
+      open={open}
+      title="주소 검색"
+      onClose={handleClose}
+      mobilePlacement="bottom"
+      closeOnBackdropClick={false}
+      closeOnEscape={false}
+    >
       <div
         className={[
           styles.addressModalMain,
@@ -178,12 +184,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
               <PFText as="div" typo="bd-lg-sb" color="black">
                 Tip
               </PFText>
-              <PFText
-                as="p"
-                typo="bd-sm-md"
-                color="black"
-                className={styles.addressModalTipLead}
-              >
+              <PFText as="p" typo="bd-sm-md" color="black" className={styles.addressModalTipLead}>
                 아래와 같은 조합으로 검색을 하시면 더욱 정확한 결과가 검색됩니다.
               </PFText>
               <div className={styles.addressModalTipList}>

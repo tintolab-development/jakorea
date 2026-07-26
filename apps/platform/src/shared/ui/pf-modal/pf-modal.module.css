@@ -1,12 +1,20 @@
 .backdrop {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 1000;
   display: flex;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   align-items: center;
   justify-content: center;
   padding: 16px;
   background: rgb(0 0 0 / 45%);
+  box-sizing: border-box;
 }
 
 .panel {
@@ -31,7 +39,9 @@
 
 .title {
   overflow: hidden;
+  flex: 0 0 auto;
   max-width: 100%;
+  min-height: 1.5em;
   padding-right: var(--spacing-32);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -39,21 +49,25 @@
 
 .closeButton {
   position: absolute;
-  top: var(--spacing-28);
-  right: var(--spacing-28);
+  top: calc(var(--spacing-28) - 10px);
+  right: calc(var(--spacing-28) - 10px);
+  z-index: 10;
   display: inline-flex;
-  width: 24px;
-  height: 24px;
+  width: 44px;
+  height: 44px;
   align-items: center;
   justify-content: center;
   padding: 0;
   border: 0;
   background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
 }
 
 .closeIcon {
   width: 17px;
   height: 17px;
+  pointer-events: none;
 }
 
 .handle {
@@ -67,8 +81,8 @@
   }
 
   .backdropBottomSheetMobile {
-    align-items: flex-end;
-    justify-content: stretch;
+    align-items: stretch;
+    justify-content: flex-end;
     padding: 0;
   }
 
@@ -76,7 +90,9 @@
     width: 100%;
     max-width: 100%;
     max-height: min(90vh, 100%);
+    max-height: min(90dvh, 100%);
     min-height: 0;
+    margin-top: auto;
     overflow: auto;
     padding: 0 var(--spacing-28) var(--spacing-28);
     border: 0;
@@ -96,11 +112,13 @@
   }
 
   .panelBottomSheetMobile .closeButton {
-    top: calc(var(--spacing-20) + 4px + var(--spacing-28));
-    right: var(--spacing-28);
+    top: calc(var(--spacing-20) + 4px + var(--spacing-28) - 10px);
+    right: calc(var(--spacing-28) - 10px);
   }
 
   .panelBottomSheetMobile .title {
     width: 100%;
+    flex: 0 0 auto;
+    color: var(--color-neutral-black);
   }
 }
