@@ -98,3 +98,21 @@
   background: transparent;
   color: var(--color-neutral-warm-400);
 }
+
+@media (--bp-below-pc) {
+  .button.small {
+    font-size: 11px;
+  }
+
+  .button.medium {
+    font-size: 12px;
+  }
+
+  .button.large {
+    font-size: 14px;
+  }
+
+  .button.xlarge {
+    font-size: 16px;
+  }
+}
