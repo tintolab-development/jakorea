@@ -1,5 +1,5 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
@@ -98,6 +98,7 @@ export function GeneralVolunteerInterview2Section({
     evaluationTarget,
     saveInterviewEvaluation,
     filterRowsSource,
+    applicationsLoading,
   } = useGeneralVolunteerInterview2({ programId, subjectKind })
 
   const activityWithdrawScheduleOptions = useMemo(
@@ -285,6 +286,14 @@ export function GeneralVolunteerInterview2Section({
         {bulkFailModal}
         {completeModals}
       </>
+    )
+  }
+
+  if (applicationsLoading && list.length === 0) {
+    return (
+      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+        <Spin size="large" />
+      </div>
     )
   }
 

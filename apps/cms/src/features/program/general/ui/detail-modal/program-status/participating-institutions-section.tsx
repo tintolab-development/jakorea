@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState, useEffect, useRef, useLayoutEffect } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { CmsButton, FilterTableLayout } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
@@ -211,6 +211,7 @@ export function ParticipatingInstitutionsSection({
     setSavedInstructorPatches,
     getInstructorRowsForSchool,
     getInstructorDisplayForSchool,
+    applicationsLoading,
   } = schoolHook
 
   /** URL schoolId로 선택된 학교 행 (인라인 상세 뷰용) */
@@ -419,6 +420,14 @@ export function ParticipatingInstitutionsSection({
       showTextbookStatusColumn,
     ]
   )
+
+  if (applicationsLoading && schoolList.length === 0) {
+    return (
+      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+        <Spin size="large" />
+      </div>
+    )
+  }
 
   if (selectedRowFromUrl && program) {
     const baseDetail = getSchoolDetailByRow(selectedRowFromUrl)

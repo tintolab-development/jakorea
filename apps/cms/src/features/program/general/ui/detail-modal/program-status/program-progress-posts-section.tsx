@@ -10,7 +10,7 @@ export function ProgramProgressPostsSection({ program }: { program: Program }) {
 
   if (loading && isRemoteDataSource && posts == null) {
     return (
-      <div className="program-progress-posts-section program-progress-posts-section--loading">
+      <div className="program-progress-posts-section program-progress-posts-section--loading" role="status">
         <Spin size="large" />
       </div>
     )

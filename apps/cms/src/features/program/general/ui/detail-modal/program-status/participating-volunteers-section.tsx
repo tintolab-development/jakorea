@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { Table } from 'antd'
+import { Table, Spin } from 'antd'
 import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -101,7 +101,8 @@ export function ParticipatingVolunteersSection({
     progressCalendarGranularity,
     setProgressCalendarGranularity,
   } = useParticipatingVolunteersParams()
-  const { volunteerList, addVolunteerFromMember } = useProgressVolunteerList(programId)
+  const { volunteerList, addVolunteerFromMember, applicationsLoading } =
+    useProgressVolunteerList(programId)
 
   const schoolFilters: ProgressFilters = useMemo(
     () => ({
@@ -441,6 +442,14 @@ export function ParticipatingVolunteersSection({
       },
     ]
   }, [])
+
+  if (applicationsLoading && volunteerList.length === 0) {
+    return (
+      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+        <Spin size="large" />
+      </div>
+    )
+  }
 
   if (selectedVolunteerFromUrl && program) {
     return (

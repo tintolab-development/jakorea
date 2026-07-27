@@ -26,7 +26,7 @@ export function useProgressIndividualParticipantList(programId: string | undefin
 
   return {
     participantList,
-    loading: remoteEnabled ? remoteQuery.isFetching : false,
+    loading: remoteEnabled ? remoteQuery.isFetching && remoteQuery.data === undefined : false,
     isRemoteDataSource: remoteEnabled,
   }
 }

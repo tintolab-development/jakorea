@@ -66,7 +66,14 @@ export function useGeneralVolunteerDocPassed({
     return getGeneralVolunteerDocPassedApplicants(programId)
   }, [programId, subjectKind])
 
-  const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() => loadRows())
+  // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
+  const remoteSeed =
+    subjectKind === 'volunteer' &&
+    shouldUseGeneralApplicationsRemoteApi() &&
+    Boolean(programId)
+  const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() =>
+    remoteSeed ? [] : loadRows()
+  )
   const volunteerRemote = useGeneralVolunteerApplicationsRemote({
     programId,
     stage: 'docPassed',

@@ -7,6 +7,13 @@
   box-sizing: border-box;
 }
 
+.program-progress-posts-section--loading {
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  height: auto;
+}
+
 .program-progress-posts-section .enrollment-program-detail-modal__posts-tab {
   flex: 1 1 auto;
   width: 100%;
