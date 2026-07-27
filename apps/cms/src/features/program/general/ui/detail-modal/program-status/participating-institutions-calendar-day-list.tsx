@@ -2,7 +2,7 @@
  * 참여 기관 캘린더 우측 — 선택일 기관 목록 (학교명 + 지역 | 학년 | 회차·시간)
  */
 
-import { Empty } from 'antd'
+import { EmptyState } from '@/shared/ui'
 import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
@@ -128,7 +128,7 @@ export function ParticipatingInstitutionsCalendarDayList({
       }
     >
       {sortedEvents.length === 0 ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+        <EmptyState description="해당 날짜에 일정이 없습니다" />
       ) : (
         sortedEvents.map(ev => {
           const { row, sessionsOnDate, educationGrade } = ev.originalItem

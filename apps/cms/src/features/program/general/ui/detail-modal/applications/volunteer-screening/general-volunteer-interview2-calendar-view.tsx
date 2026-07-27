@@ -3,7 +3,7 @@
  */
 
 import { useMemo, useCallback, type Key } from 'react'
-import { Empty } from 'antd'
+import { EmptyState } from '@/shared/ui'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -70,7 +70,7 @@ function GeneralVolunteerInterview2CalendarRightList({
   return (
     <div className={rows.length === 0 ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
       {rows.length === 0 ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+        <EmptyState description="해당 날짜에 일정이 없습니다" />
       ) : (
         rows.map(row => {
           const colors = resolveRowColors?.(row) ?? SCHEDULE_COLORS[0]

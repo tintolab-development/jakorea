@@ -6,8 +6,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Card, Button, Space, Table, Tag, Empty, Spin } from 'antd'
+import { Card, Button, Space, Table, Tag, Spin } from 'antd'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
+import { EmptyState } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { CheckCircleOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -208,7 +209,7 @@ export function ProgramSatisfactionPage() {
 
       <Card>
         {programs.length === 0 ? (
-          <Empty description="만족도 조사를 작성할 수 있는 완료된 프로그램이 없습니다." />
+          <EmptyState description="만족도 조사를 작성할 수 있는 완료된 프로그램이 없습니다." />
         ) : (
           <Table
             columns={columns}

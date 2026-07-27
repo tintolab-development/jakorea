@@ -5,7 +5,8 @@
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import { useEffect, useMemo } from 'react'
-import { Form, Input, Select, Button, Space } from 'antd'
+import { Form, Input, Select, Space } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { instructorSchema, type InstructorFormData } from '@/entities/instructor/model/schema'
@@ -316,10 +317,12 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
 
       <Form.Item>
         <Space>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <CmsButton type="submit" loading={loading}>
             {instructor ? '수정' : '등록'}
-          </Button>
-          <Button onClick={onCancel}>취소</Button>
+          </CmsButton>
+          <CmsButton variant="secondary" onClick={onCancel}>
+            취소
+          </CmsButton>
         </Space>
       </Form.Item>
     </Form>

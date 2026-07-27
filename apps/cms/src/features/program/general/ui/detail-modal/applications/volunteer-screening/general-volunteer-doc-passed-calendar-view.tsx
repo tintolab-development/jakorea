@@ -7,7 +7,7 @@ import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import { Empty } from 'antd'
+import { EmptyState } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import type { GeneralVolunteerInterviewCalendarEvent } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
 import {
@@ -65,7 +65,7 @@ function GeneralVolunteerDocPassedCalendarRightList({
   return (
     <div className={rows.length === 0 ? 'calendar-list calendar-list--empty' : 'calendar-list'}>
       {rows.length === 0 ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+        <EmptyState description="해당 날짜에 일정이 없습니다" />
       ) : (
         rows.map(row => {
           const colors = resolveRowColors?.(row) ?? SCHEDULE_COLORS[0]

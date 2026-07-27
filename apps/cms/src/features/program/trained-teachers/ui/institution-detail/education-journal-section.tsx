@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
-import { Empty, Spin, Table } from 'antd'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, EmptyState, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { downloadFile } from '@/shared/lib/file-download'
 import {
@@ -310,7 +310,7 @@ export function TrainedTeachersEducationJournalSection({
           <Spin />
         </div>
       ) : entries.length === 0 ? (
-        <Empty description="제출된 교육일지가 없습니다." />
+        <EmptyState description="제출된 교육일지가 없습니다." />
       ) : (
         <Table
           rowKey="id"

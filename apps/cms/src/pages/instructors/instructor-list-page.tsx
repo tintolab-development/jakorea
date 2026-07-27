@@ -9,7 +9,9 @@
 import { useEffect, useState, useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { useSearchParams } from 'react-router-dom'
-import { Modal, Drawer } from 'antd'
+import { Drawer } from 'antd'
+import { ContentModal } from '@/shared/ui'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { PlusOutlined } from '@ant-design/icons'
 import { InstructorList } from '@/features/instructor/ui/instructor-list'
 import { InstructorForm } from '@/features/instructor/ui/instructor-form'
@@ -307,13 +309,11 @@ export function InstructorListPage() {
         )}
       </Drawer>
 
-      <Modal
+      <ContentModal
         open={formModalOpen}
         title={isEditingMode ? '강사 수정' : '강사 등록'}
         onCancel={handleFormCancel}
-        footer={null}
         width={LAYOUT_CONSTANTS.widths.modal.medium}
-        destroyOnHidden
       >
         <InstructorForm
           key={editingInstructor?.id || 'new'}
@@ -322,30 +322,27 @@ export function InstructorListPage() {
           onCancel={handleFormCancel}
           loading={formLoading}
         />
-      </Modal>
+      </ContentModal>
 
-      <Modal
+      <ConfirmModal
         open={deleteModalOpen}
         title="강사 삭제 확인"
-        onOk={handleDeleteConfirm}
+        content={
+          deletingInstructor
+            ? `정말로 다음 강사를 삭제하시겠습니까?\n\n${
+                'name' in deletingInstructor && deletingInstructor.name
+                  ? deletingInstructor.name
+                  : '이 강사'
+              }`
+            : ''
+        }
+        onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
-        confirmLoading={deleteLoading}
-        okText="삭제"
+        confirmText="삭제"
         cancelText="취소"
-        okButtonProps={{ danger: true }}
-      >
-        {deletingInstructor && (
-          <>
-            <p>정말로 다음 강사를 삭제하시겠습니까?</p>
-            <p style={{ fontWeight: 'bold', margin: '16px 0' }}>
-              {'name' in deletingInstructor && deletingInstructor.name
-                ? deletingInstructor.name
-                : '이 강사'}
-            </p>
-            <p style={{ color: '#ff4d4f', fontSize: '12px' }}>삭제된 강사는 복구할 수 없습니다.</p>
-          </>
-        )}
-      </Modal>
+        danger
+        warningMessage="삭제된 강사는 복구할 수 없습니다."
+      />
     </div>
   )
 }

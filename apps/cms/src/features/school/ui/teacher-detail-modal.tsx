@@ -4,9 +4,9 @@
  */
 
 import { useMemo, useState } from 'react'
-import { Tabs, Empty } from 'antd'
+import { Tabs } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, EmptyState } from '@/shared/ui'
 import {
   DeleteGuideModal,
   buildMemberWithdrawMessageLines,
@@ -79,7 +79,7 @@ export function TeacherDetailModal({
       label: '프로그램 수강 이력',
       children: (
         <div className="teacher-detail-modal__tab-placeholder">
-          <Empty description="프로그램 수강 이력이 없습니다." />
+          <EmptyState description="프로그램 수강 이력이 없습니다." />
         </div>
       ),
     },
@@ -110,7 +110,7 @@ export function TeacherDetailModal({
         label: '정산 현황',
         children: (
           <div className="teacher-detail-modal__tab-placeholder">
-            <Empty description="정산 현황 정보가 없습니다." />
+            <EmptyState description="정산 현황 정보가 없습니다." />
           </div>
         ),
       }]),

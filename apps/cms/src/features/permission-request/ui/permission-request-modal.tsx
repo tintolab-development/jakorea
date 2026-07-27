@@ -4,7 +4,8 @@
  * 시니어 개발자 관점: 컴포넌트 분리
  */
 
-import { Modal, Form, Input, DatePicker, Select, Button, Space } from 'antd'
+import { Form, Input, DatePicker, Select, Space } from 'antd'
+import { CmsButton, ContentModal } from '@/shared/ui'
 import { usePermissionRequest } from '../hooks/use-permission-request'
 import type { ProgramRole, PermissionAction } from '@/types/permission-request'
 import type { UUID } from '@/types'
@@ -76,16 +77,26 @@ export function PermissionRequestModal({
     DOWNLOAD: '다운로드',
     EDIT: '수정' }
 
+  const footer = (
+    <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+      <CmsButton variant="default" onClick={handleCancel} disabled={submitting}>
+        취소
+      </CmsButton>
+      <CmsButton type="submit" form="permission-request-form" loading={submitting}>
+        요청 제출
+      </CmsButton>
+    </Space>
+  )
+
   return (
-    <Modal
+    <ContentModal
       open={open}
       title="권한 요청"
       onCancel={handleCancel}
-      footer={null}
-      width={600}
-      destroyOnHidden
+      footer={footer}
+      size="compact"
     >
-      <Form form={form} layout="vertical" onFinish={handleSubmit}>
+      <Form id="permission-request-form" form={form} layout="vertical" onFinish={handleSubmit}>
         <Form.Item label="프로그램">
           <Input value={programName} disabled />
         </Form.Item>
@@ -124,18 +135,7 @@ export function PermissionRequestModal({
             disabledDate={current => current && current < dayjs().startOf('day')}
           />
         </Form.Item>
-
-        <Form.Item>
-          <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button onClick={handleCancel} disabled={submitting}>
-              취소
-            </Button>
-            <Button type="primary" htmlType="submit" loading={submitting}>
-              요청 제출
-            </Button>
-          </Space>
-        </Form.Item>
       </Form>
-    </Modal>
+    </ContentModal>
   )
 }

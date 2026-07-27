@@ -4,7 +4,8 @@
  */
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
-import { Form, Input, Select, Button, Space, Table, Upload, Alert, DatePicker } from 'antd'
+import { Form, Input, Select, Space, Table, Upload, Alert, DatePicker, Button } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import { Controller, useForm, useFieldArray, type SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -341,10 +342,12 @@ export function InstructorSettlementForm({
 
       <Form.Item>
         <Space>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <CmsButton type="submit" loading={loading}>
             {settlement ? '수정' : '제출'}
-          </Button>
-          <Button onClick={onCancel}>취소</Button>
+          </CmsButton>
+          <CmsButton variant="secondary" onClick={onCancel}>
+            취소
+          </CmsButton>
         </Space>
       </Form.Item>
     </Form>

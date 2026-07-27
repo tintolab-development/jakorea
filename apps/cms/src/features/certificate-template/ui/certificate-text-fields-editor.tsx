@@ -4,6 +4,7 @@
 
 import { useState, useCallback } from 'react'
 import { Input, InputNumber, Button, Space, ColorPicker, Select } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { CertificateTextField } from '@/types/template'
 
@@ -78,9 +79,11 @@ export function CertificateTextFieldsEditor({
                 disabled={disabled}
                 style={{ flex: 1 }}
               />
-              <Button
+              <CmsButton
+                variant="delete"
+                size="small"
+                width="auto"
                 icon={<DeleteOutlined />}
-                danger
                 onClick={() => handleRemoveField(field.id)}
                 disabled={disabled}
               />

@@ -6,7 +6,8 @@
 
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Form, Input, Button, Space, Upload, Alert } from 'antd'
+import { Form, Input, Space, Upload, Alert, Button } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { UploadOutlined } from '@ant-design/icons'
 import { instructorApplicationSchema, type InstructorApplicationFormData } from '@/entities/application/model/schema'
 import type { Program } from '@/types/domain'
@@ -180,10 +181,12 @@ export function InstructorApplicationForm({
 
       <Form.Item>
         <Space>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <CmsButton type="submit" loading={loading}>
             신청하기
-          </Button>
-          <Button onClick={onCancel}>취소</Button>
+          </CmsButton>
+          <CmsButton variant="secondary" onClick={onCancel}>
+            취소
+          </CmsButton>
         </Space>
       </Form.Item>
     </Form>
