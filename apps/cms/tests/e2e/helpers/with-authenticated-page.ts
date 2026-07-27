@@ -15,6 +15,6 @@ export async function withAuthenticatedPage<T>(
   try {
     return await run(page)
   } finally {
-    await context.close()
+    await context.close().catch(() => undefined)
   }
 }

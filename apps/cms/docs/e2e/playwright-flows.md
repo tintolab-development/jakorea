@@ -228,17 +228,203 @@ pnpm --filter cms exec playwright test tests/e2e/flows/programs/general-program-
 |------|------|
 | 스펙 | `tests/e2e/flows/programs/detail/*.spec.ts` |
 | POM | `general-program-detail.page.ts` · `general-program-applications.page.ts` · `general-program-seed-titles.ts` |
-| 시드 | CASE-10 FULL LNB 우선, 없으면 `[수정 가능] 일반 프로그램 더미` |
-| 검증 | **smoke** LNB/탭/딥링크 → **신청 목록** 승인(행 있을 때) → **진행** 탭 로드 → **설문·담당자** 로드 · variant title |
+| 시드 | CASE-10 FULL LNB 우선, 없으면 `[수정 가능] 일반 프로그램 더미` · P0~P2 CASE title (`P0_SEED_TITLES` 등) |
+| 검증 | **smoke** LNB/탭/딥링크 → **신청** 승인·Phase2 심화 → **진행** Phase3 기관/개인 → **설문** Phase4 audience · **P0 variant LNB** |
 
 신청 정보 **양식 수정**은 수정 스펙(3b) 5단계에서 커버합니다 (`양식 수정` → form-template 저장, PATCH programs 아님).
 
-신청 목록에 BE 시드 행이 없으면 해당 케이스는 목록 로드만 통과하고 annotation으로 사유를 남깁니다.
+신청 목록에 BE 시드 행이 없으면 해당 케이스는 목록 로드만 통과하고 annotation으로 사유를 남깁니다.  
+P0~P2 CASE title이 목록에 없으면 `test.skip`합니다.
+
+### Phase별 스펙
+
+| Phase | 스펙 | 시드 의존 | 검증 요약 |
+|-------|------|-----------|-----------|
+| **1** P0 LNB 잠금 | `detail/general-program-variant-lnb.spec.ts` | CASE-01~09 (`P0_SEED_TITLES` + FE `【유형·N】` alias) | 기관↔개인 LNB on/off · multi 회차 · CASE-06 희망일정 숨김 · CASE-09 IPS |
+| **2** 신청 심화 | `detail/general-program-applications.spec.ts` | FULL LNB / CASE-03 / CASE-21 | 필터·상세·봉사 2depth·면접 배정 모달 · 면접 on/off |
+| **3** 진행 | `detail/general-program-progress.spec.ts` | FULL LNB + CASE-01/03 | 기관 목록·상세 탭 · 개인 출석/과제/게시글 · 참여자 상세 |
+| **4** 설문 audience | `detail/general-program-survey-managers.spec.ts` | CASE-10/13/14 · CASE-19/20/24 | none/single/full · 만족도 참여자/교사·학생/봉사자 |
+| smoke | `detail/general-program-detail-smoke.spec.ts` | FULL LNB → 수정 더미 | 딥링크·탭 URL |
+
+시드 title SSOT: `tests/e2e/pages/general-program-seed-titles.ts` · BE 문서 [`general-program-dummy-seed-backend-request.md`](../api/general-program-dummy-seed-backend-request.md) §1·§9.
 
 ```bash
 pnpm --filter cms test:e2e:programs:detail
 pnpm --filter cms test:e2e:programs:detail:ui
 pnpm --filter cms test:e2e:programs:detail:headed
+
+# Phase 단위
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/detail/general-program-variant-lnb.spec.ts --project=chromium
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/detail/general-program-applications.spec.ts --project=chromium
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/detail/general-program-progress.spec.ts --project=chromium
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/detail/general-program-survey-managers.spec.ts --project=chromium
+```
+
+---
+
+## 3d. 프로그램 — 1사1교 프로그램 신규 등록
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `tests/e2e/flows/programs/company-school-registration.spec.ts` |
+| POM | `tests/e2e/pages/company-school-registration.page.ts` |
+| 헬퍼 | `tests/e2e/pages/form-helpers.ts` |
+| 라우트 | `/programs/company-school` (`registrationFormVariant=economy`) |
+| 검증 | **1) 등록 완료** → **2) 목록 확인** (`describe.serial`) |
+
+고정 축: **학교/기관 × 커리큘럼형 × 단일 회차** · **봉사자 탭 없음**.  
+제목: `Playwright 1사1교 테스트·{hash}` (일반 `Playwright 테스트(…)`와 충돌 방지).  
+등록은 `POST /api/admin/programs` **실 API만** 사용합니다. 모달 타이틀은 `1사1교 프로그램 등록`.
+
+등록·수정은 **각각 별도 스크립트**로 실행합니다.
+
+### 일반 (headless)
+
+```bash
+pnpm --filter cms test:e2e:programs:company-school:registration
+```
+
+### UI로 확인
+
+```bash
+pnpm --filter cms test:e2e:programs:company-school:registration:ui
+```
+
+### headed
+
+```bash
+pnpm --filter cms test:e2e:programs:company-school:registration:headed
+```
+
+### debug
+
+```bash
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/company-school-registration.spec.ts --project=chromium --debug
+```
+
+---
+
+## 3e. 프로그램 — 1사1교 상세 풀페이지 수정
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `tests/e2e/flows/programs/company-school-edit.spec.ts` |
+| POM | `company-school-edit.page.ts` · `company-school-detail.page.ts` · `company-school-seed-titles.ts` |
+| 대상 | BE 시드 **`[수정 가능] 1사1교 프로그램 더미`** (CS-EDIT · 신규 등록 없음) |
+| 검증 | **1) 더미 열기** → **2) 공통** → **3) 모집 학교** → **4) 모집 강사** → **5) 신청 학교** → **6) 신청 강사** → **7) 상세·목록** → **8) 진행 현황(학교·강사)** (`describe.serial`) |
+
+전제: 더미가 목록에 있고, lifecycle이 **프로그램 진행 예정**이며 **사업 시작일 이전**이어야 「정보 수정」이 가능합니다.  
+대표 프로그램명(국문)은 시드 식별용으로 **변경하지 않습니다**.  
+모집·신청은 **학교/기관·강사만** — 봉사자 탭 부재를 assert합니다.  
+시드 레시피: [`company-school-program-dummy-seed-backend-request.md`](../api/company-school-program-dummy-seed-backend-request.md) §5b CS-EDIT.
+
+등록 스펙과 **별도 실행**합니다 (`test:e2e:programs:company-school:edit`).
+
+### 일반 (headless)
+
+```bash
+pnpm --filter cms test:e2e:programs:company-school:edit
+```
+
+### UI로 확인
+
+```bash
+pnpm --filter cms test:e2e:programs:company-school:edit:ui
+```
+
+### headed
+
+```bash
+pnpm --filter cms test:e2e:programs:company-school:edit:headed
+```
+
+### debug
+
+```bash
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/company-school-edit.spec.ts --project=chromium --debug
+```
+
+---
+
+## 3f. 프로그램 — UJAT 교육 지역 관리 CRUD
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `tests/e2e/flows/programs/ujat-education-regions-crud.spec.ts` |
+| POM | `tests/e2e/pages/ujat-education-regions.page.ts` |
+| 대상 | `/programs/ujat/regions` |
+| 검증 | **1) 목록 진입** → **2) 등록(C)+중복명** → **3) 조회·필터(R)** → **4) 인라인 수정(U)** → **5) 순서 변경** → **6) 삭제(D)** (`describe.serial`) |
+
+전제: auth.setup 세션 · `VITE_REAL_API_MODULES`에 `ujatEducationRegions`(권장).  
+이름은 `Playwright 교육지역·{timestamp}` 고유명으로 생성·삭제하며 **기본 마스터(서울 등)는 수정·삭제하지 않습니다.**  
+POST/DELETE는 Cat3 Option A — BE 미지원 시 해당 단계가 실패합니다.
+
+일반·1사1교 스펙과 **별도 실행**합니다 (`test:e2e:programs:ujat:regions`).
+
+### 일반 (headless)
+
+```bash
+pnpm --filter cms test:e2e:programs:ujat:regions
+```
+
+### UI로 확인
+
+```bash
+pnpm --filter cms test:e2e:programs:ujat:regions:ui
+```
+
+### headed
+
+```bash
+pnpm --filter cms test:e2e:programs:ujat:regions:headed
+```
+
+### debug
+
+```bash
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/ujat-education-regions-crud.spec.ts --project=chromium --debug
+```
+
+---
+
+## 3g. 프로그램 — UJAT 상세 풀페이지 수정
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `tests/e2e/flows/programs/ujat-program-edit.spec.ts` |
+| POM | `ujat-program-edit.page.ts` · `ujat-program-seed-titles.ts` |
+| 대상 | BE 시드 **`[수정 가능] UJAT 프로그램 더미`** (신규 등록 없음) |
+| 검증 | **1) 더미 열기** → **2) 공통** → **3) 모집(참여자·상/하반기 봉사자)** → **4) 신청 목록 셸** → **5) 상세·목록** → **6) 진행 상반기 참여 기관 셸** (`describe.serial`) |
+
+전제: 더미가 `/programs/ujat` 목록에 있고 「정보 수정」이 가능해야 합니다. 없으면 1단계에서 `test.skip` 후 후속 단계도 skip합니다.  
+대표 프로그램명(국문)은 시드 식별용으로 **변경하지 않습니다.**  
+UJAT 상세 LNB에는 일반 프로그램의 「신청 정보 양식 수정」탭이 없어 **4)는 기관·봉사자 신청 목록 셸**만 검증합니다.  
+모집 서브탭: `recruit_participant` / `recruit_volunteer_h1` / `recruit_volunteer_h2` (강사 탭 없음).
+
+일반·1사1교 수정 스펙과 **별도 실행**합니다 (`test:e2e:programs:ujat:edit`).
+
+### 일반 (headless)
+
+```bash
+pnpm --filter cms test:e2e:programs:ujat:edit
+```
+
+### UI로 확인
+
+```bash
+pnpm --filter cms test:e2e:programs:ujat:edit:ui
+```
+
+### headed
+
+```bash
+pnpm --filter cms test:e2e:programs:ujat:edit:headed
+```
+
+### debug
+
+```bash
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/ujat-program-edit.spec.ts --project=chromium --debug
 ```
 
 ---
@@ -309,6 +495,8 @@ pnpm --filter cms exec playwright test tests/e2e/flows/members --project=chromiu
 | 일반 프로그램 등록 | `test:e2e:programs:registration` | `test:e2e:programs:registration:ui` | `test:e2e:programs:registration:headed` |
 | 일반 프로그램 수정 | `test:e2e:programs:edit` | `test:e2e:programs:edit:ui` | `test:e2e:programs:edit:headed` |
 | 일반 프로그램 상세 | `test:e2e:programs:detail` | `test:e2e:programs:detail:ui` | `test:e2e:programs:detail:headed` |
+| UJAT 교육 지역 CRUD | `test:e2e:programs:ujat:regions` | `test:e2e:programs:ujat:regions:ui` | `test:e2e:programs:ujat:regions:headed` |
+| UJAT 상세 풀페이지 수정 | `test:e2e:programs:ujat:edit` | `test:e2e:programs:ujat:edit:ui` | `test:e2e:programs:ujat:edit:headed` |
 | 회원 목록 CRUD (4 kind, 권한 관리 제외) | `test:e2e:members` | `test:e2e:members:ui` | `test:e2e:members:headed` |
 | 전체 | `test:e2e` | `test:e2e:ui` | `test:e2e:headed` |
 
@@ -363,14 +551,18 @@ apps/cms/tests/e2e/
 ├── smoke/                          # 비로그인 로그인 페이지 로드
 ├── flows/
 │   ├── auth/                       # 세션 복원 → 대시보드
-│   ├── programs/                   # 일반 프로그램 등록·수정
-│   │   └── detail/                 # 상세 LNB smoke·신청·진행·설문
+│   ├── programs/                   # 일반·1사1교·UJAT 프로그램 등록·수정·교육지역
+│   │   ├── general-program-*.spec.ts
+│   │   ├── company-school-*.spec.ts
+│   │   ├── ujat-education-regions-crud.spec.ts
+│   │   ├── ujat-program-edit.spec.ts
+│   │   └── detail/                 # 일반 상세 LNB smoke·신청·진행·설문
 │   └── members/                    # 회원 목록 CRUD (세션 재사용)
 ├── fixtures/                       # 공통 test (백엔드 에러 로그 자동 덤프)
 ├── helpers/                        # API 에러 캡처·덤프 · auth-paths · with-authenticated-page
-└── pages/                          # Page Object · form helpers
+└── pages/                          # Page Object · form helpers · seed titles
 ```
 
 규칙: 모노레포 `.cursor/rules/playwright-e2e.mdc`
 
-**Last updated:** 2026-07-21
+**Last updated:** 2026-07-27

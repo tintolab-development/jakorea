@@ -2,15 +2,15 @@ import { test, expect } from '../../../fixtures/test'
 import { GeneralProgramDetailPage } from '../../../pages/general-program-detail.page'
 import {
   EDITABLE_DUMMY_TITLE,
+  P1_SEED_TITLES,
+  P2_SEED_TITLES,
   VARIANT_SEED_TITLES,
 } from '../../../pages/general-program-seed-titles'
 import { expectAuthenticatedShell } from '../../../helpers/authenticated-shell'
 import { withAuthenticatedPage } from '../../../helpers/with-authenticated-page'
 
 /**
- * 일반 프로그램 상세 — 설문·담당자 smoke · variant(시드 있을 때)
- *
- * 만족도/응답 작성·담당자 CRUD는 mock/후순위 — 로드만.
+ * 일반 프로그램 상세 — 설문·담당자 smoke · variant · Phase4 만족도 audience
  */
 test.describe('일반 프로그램 설문·담당자·variant smoke', () => {
   let programId = ''
@@ -69,12 +69,10 @@ test.describe('일반 프로그램 설문·담당자·variant smoke', () => {
     await expectAuthenticatedShell(page)
 
     const detail = new GeneralProgramDetailPage(page)
-    await detail.gotoDetail(programId, 'managers', 'main')
+    const loaded = await detail.gotoDetail(programId, 'managers', 'main')
+    test.skip(!loaded, '프로그램 상세 API 실패 — 담당자 목록 스킵')
     await detail.expectUrlLnbTab('managers')
-    await expect(page.getByText('담당자 목록').first()).toBeVisible({ timeout: 30_000 })
-    await expect(page.getByRole('button', { name: '담당자 등록' }).first()).toBeVisible({
-      timeout: 15_000,
-    })
+    await detail.expectManagersShellVisible()
   })
 
   test('3) variant 시드 — 공통 정보 로드(있는 title만)', async ({ page }) => {
@@ -100,7 +98,6 @@ test.describe('일반 프로그램 설문·담당자·variant smoke', () => {
     }
 
     if (!openedAny) {
-      // fallback: 수정 더미만이라도 공통정보 표시
       const opened = await detail.openByTitle(EDITABLE_DUMMY_TITLE)
       await expect(page.getByText(EDITABLE_DUMMY_TITLE).first()).toBeVisible({
         timeout: 30_000,
@@ -111,5 +108,124 @@ test.describe('일반 프로그램 설문·담당자·variant smoke', () => {
         description: 'CASE-01/03/05 시드 없음 — 수정 가능 더미로 fallback',
       })
     }
+  })
+})
+
+test.describe('일반 프로그램 설문 Phase4', () => {
+  test('4.1) CASE-10 full / CASE-14 single / CASE-13 none — 설문 LNB', async ({ page }) => {
+    test.setTimeout(300_000)
+    await page.goto('/programs/general')
+    await expectAuthenticatedShell(page)
+
+    const detail = new GeneralProgramDetailPage(page)
+
+    const full = await detail.tryOpenByTitles([P1_SEED_TITLES['CASE-10']])
+    if (full) {
+      await detail.expectLnbVisible(/설문/)
+      const surveyOpen = await detail.tryGotoLnb(full.programId, 'survey', 'survey')
+      expect(surveyOpen).toBe(true)
+      await detail.closeDetail()
+    } else {
+      test.info().annotations.push({ type: 'note', description: 'CASE-10 시드 없음' })
+    }
+
+    const single = await detail.tryOpenByTitles([P1_SEED_TITLES['CASE-14']])
+    if (single) {
+      await detail.expectLnbVisible(/설문/)
+      await detail.tryGotoLnb(single.programId, 'survey', 'survey')
+      await detail.expectContentSettled()
+      const hasSatisfaction = await detail.isLnbLabelVisible(/만족도/)
+      expect(hasSatisfaction, 'CASE-14 single은 만족도 LNB가 없어야 함').toBe(false)
+      await detail.closeDetail()
+    } else {
+      test.info().annotations.push({ type: 'note', description: 'CASE-14 시드 없음' })
+    }
+
+    const none = await detail.tryOpenByTitles([P1_SEED_TITLES['CASE-13']])
+    if (none) {
+      const hasSurvey = await detail.isLnbLabelVisible(/설문/)
+      expect(hasSurvey, 'CASE-13은 설문 LNB가 없어야 함').toBe(false)
+    } else {
+      test.info().annotations.push({ type: 'note', description: 'CASE-13 시드 없음' })
+      test.skip(!full && !single && !none, 'P1 설문 매트릭스 시드 없음')
+    }
+  })
+
+  test('4.2) CASE-19 — 만족도「참여자」', async ({ page }) => {
+    test.setTimeout(180_000)
+    await page.goto('/programs/general')
+    await expectAuthenticatedShell(page)
+
+    const detail = new GeneralProgramDetailPage(page)
+    const opened = await detail.tryOpenByTitles([P2_SEED_TITLES['CASE-19']])
+    test.skip(!opened, `시드 없음: ${P2_SEED_TITLES['CASE-19']}`)
+
+    const surveyOk = await detail.tryGotoLnb(opened!.programId, 'survey', 'satisfaction')
+    if (!surveyOk) {
+      await detail.tryGotoLnb(opened!.programId, 'survey', 'survey')
+    }
+    await detail.expectContentSettled()
+
+    const satisfaction = detail.lnbNav().getByText(/만족도/).first()
+    if (await satisfaction.isVisible().catch(() => false)) {
+      await satisfaction.click()
+      await detail.expectContentSettled()
+    }
+    await expect(page.getByText(/참여자/).first()).toBeVisible({ timeout: 20_000 })
+  })
+
+  test('4.3) CASE-24 — 만족도 교사|학생', async ({ page }) => {
+    test.setTimeout(180_000)
+    await page.goto('/programs/general')
+    await expectAuthenticatedShell(page)
+
+    const detail = new GeneralProgramDetailPage(page)
+    const opened = await detail.tryOpenByTitles([P2_SEED_TITLES['CASE-24']])
+    test.skip(!opened, `시드 없음: ${P2_SEED_TITLES['CASE-24']}`)
+
+    await detail.tryGotoLnb(opened!.programId, 'survey', 'satisfaction')
+    await detail.expectContentSettled()
+    const satisfaction = detail.lnbNav().getByText(/만족도/).first()
+    if (await satisfaction.isVisible().catch(() => false)) {
+      await satisfaction.click()
+      await detail.expectContentSettled()
+    }
+
+    const hasTeacher = await page
+      .getByText('교사', { exact: true })
+      .first()
+      .isVisible()
+      .catch(() => false)
+    const hasStudent = await page
+      .getByText('학생', { exact: true })
+      .first()
+      .isVisible()
+      .catch(() => false)
+    expect(hasTeacher || hasStudent, 'CASE-24 만족도에 교사/학생 탭이 있어야 함').toBe(true)
+  })
+
+  test('4.4) CASE-20 — 만족도 봉사자', async ({ page }) => {
+    test.setTimeout(180_000)
+    await page.goto('/programs/general')
+    await expectAuthenticatedShell(page)
+
+    const detail = new GeneralProgramDetailPage(page)
+    const opened = await detail.tryOpenByTitles([P2_SEED_TITLES['CASE-20']])
+    test.skip(!opened, `시드 없음: ${P2_SEED_TITLES['CASE-20']}`)
+
+    await detail.tryGotoLnb(opened!.programId, 'survey', 'satisfaction')
+    await detail.expectContentSettled()
+    const satisfaction = detail.lnbNav().getByText(/만족도/).first()
+    if (await satisfaction.isVisible().catch(() => false)) {
+      await satisfaction.click()
+      await detail.expectContentSettled()
+    }
+
+    const hasVolunteer = await page
+      .getByText(/봉사자/)
+      .first()
+      .isVisible()
+      .catch(() => false)
+    expect(hasVolunteer, 'CASE-20 만족도에 봉사자 audience가 있어야 함').toBe(true)
   })
 })

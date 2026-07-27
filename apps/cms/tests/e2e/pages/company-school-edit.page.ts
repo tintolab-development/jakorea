@@ -15,33 +15,32 @@ import {
   selectByPlaceholderIfVisible,
   selectNearLabelIfVisible,
 } from './form-helpers'
-import { GeneralProgramDetailPage } from './general-program-detail.page'
-import { EDITABLE_DUMMY_TITLE } from './general-program-seed-titles'
+import { CompanySchoolDetailPage } from './company-school-detail.page'
+import { EDITABLE_COMPANY_SCHOOL_DUMMY_TITLE } from './company-school-seed-titles'
 
-export { EDITABLE_DUMMY_TITLE }
+export { EDITABLE_COMPANY_SCHOOL_DUMMY_TITLE }
 
-/** 상세에서 수정 여부를 눈으로 확인할 수 있도록 텍스트 값에 붙이는 표식 */
+const LIST_PATH = '/programs/company-school'
 const EDIT_MARKER = '(수정이력)'
 
-const EDIT_EN_NAME = `JA Editable Dummy Program E2E ${EDIT_MARKER}`
-const EDIT_PUBLIC_NAME = `E2E 수정용 공고 프로그램명 ${EDIT_MARKER}`
-const EDIT_EDUCATION_PLACE = `서울시 중구 JA Korea E2E 수정 교육장 ${EDIT_MARKER}`
+const EDIT_EN_NAME = `JA Company School Editable E2E ${EDIT_MARKER}`
+const EDIT_PUBLIC_NAME = `E2E 1사1교 수정용 공고명 ${EDIT_MARKER}`
+const EDIT_EDUCATION_PLACE = `서울시 중구 JA Korea 1사1교 E2E 교육장 ${EDIT_MARKER}`
 const EDIT_KPI_VALUE = '41'
 const EDIT_WAGE_VALUE = '160000'
-const EDIT_CONTACT_NAME = `JA Korea E2E 수정 운영팀 ${EDIT_MARKER}`
 const EDIT_CONTACT_TEL = '02-9876-5432'
-const EDIT_CONTACT_EMAIL = 'program-edit-e2e@jakorea.org'
-const EDIT_REMARK = `E2E 자동 수정 테스트용 비고 ${EDIT_MARKER}`
-const EDIT_TARGET_DETAIL = `E2E 수정 — 초·중·고 학생 대상 ${EDIT_MARKER}`
-const EDIT_ANNOUNCE_METHOD = `E2E 수정 — 이메일 및 CMS 알림 ${EDIT_MARKER}`
-const EDIT_CURRICULUM_UNIT = `E2E 수정 1차시 단원 ${EDIT_MARKER}`
-const EDIT_CURRICULUM_CONTENT = `E2E 수정 교육 내용 — 창업 마인드셋 ${EDIT_MARKER}`
-const EDIT_DESCRIPTION = `E2E 수정 프로그램 설명입니다. ${EDIT_MARKER}`
-const EDIT_RECRUIT_GUIDE = `E2E 수정 모집 안내입니다. ${EDIT_MARKER}`
-const EDIT_APPLICATION_METHOD = `E2E 수정 — CMS에서 신청해 주세요. ${EDIT_MARKER}`
-const EDIT_LEARNING_SUPPORT = `E2E 수정 학습 지원 내용입니다. ${EDIT_MARKER}`
-const EDIT_ETC_GUIDE = `E2E 수정 기타 안내입니다. ${EDIT_MARKER}`
-const EDIT_BUSINESS_AREA = '기업가정신'
+const EDIT_CONTACT_EMAIL = 'company-school-edit-e2e@jakorea.org'
+const EDIT_REMARK = `E2E 1사1교 자동 수정 테스트용 비고 ${EDIT_MARKER}`
+const EDIT_TARGET_DETAIL = `E2E 1사1교 수정 — 초·중·고 학교 대상 ${EDIT_MARKER}`
+const EDIT_ANNOUNCE_METHOD = `E2E 1사1교 수정 — 이메일 및 CMS 알림 ${EDIT_MARKER}`
+const EDIT_CURRICULUM_UNIT = `E2E 1사1교 수정 1차시 단원 ${EDIT_MARKER}`
+const EDIT_CURRICULUM_CONTENT = `E2E 1사1교 수정 교육 내용 ${EDIT_MARKER}`
+const EDIT_DESCRIPTION = `E2E 1사1교 수정 프로그램 설명입니다. ${EDIT_MARKER}`
+const EDIT_RECRUIT_GUIDE = `E2E 1사1교 수정 모집 안내입니다. ${EDIT_MARKER}`
+const EDIT_APPLICATION_METHOD = `E2E 1사1교 수정 — CMS에서 신청해 주세요. ${EDIT_MARKER}`
+const EDIT_LEARNING_SUPPORT = `E2E 1사1교 수정 학습 지원 내용입니다. ${EDIT_MARKER}`
+const EDIT_ETC_GUIDE = `E2E 1사1교 수정 기타 안내입니다. ${EDIT_MARKER}`
+const EDIT_BUSINESS_AREA = '경제금융'
 const EDIT_IPS_TYPE = 'Inspire'
 
 type FieldLogItem = {
@@ -50,18 +49,17 @@ type FieldLogItem = {
   value?: string | null
 }
 
-const EDIT_LOG_TITLE_PREFIX = 'flows/programs/general-program-edit.spec.ts › 일반 프로그램 수정'
+const EDIT_LOG_TITLE_PREFIX =
+  'flows/programs/company-school-edit.spec.ts › 1사1교 프로그램 수정'
 
-/** 공통 정보 — 테스트가 의도적으로 건드리지 않는 필드 */
 const COMMON_INTENTIONALLY_UNCHANGED: FieldLogItem[] = [
   {
     label: '대표 프로그램명 (국문)',
-    reason: '시드 식별용(`[수정 가능] 일반 프로그램 더미`) — 의도적 미수정',
-    value: EDITABLE_DUMMY_TITLE,
+    reason: '시드 식별용(`[수정 가능] 1사1교 프로그램 더미`) — 의도적 미수정',
+    value: EDITABLE_COMPANY_SCHOOL_DUMMY_TITLE,
   },
 ]
 
-/** 모집 정보 — 의도적 미수정 / readOnly */
 const RECRUIT_INTENTIONALLY_UNCHANGED: FieldLogItem[] = [
   {
     label: '담당 문의처',
@@ -69,8 +67,7 @@ const RECRUIT_INTENTIONALLY_UNCHANGED: FieldLogItem[] = [
   },
 ]
 
-/** 공통 정보 수정 직후 캡처 — 조회 모드 필드 대조용 */
-export type CommonInfoEditedSnapshot = {
+export type CompanySchoolCommonInfoEditedSnapshot = {
   titleEn: string
   publicName: string
   educationPlace: string
@@ -91,12 +88,10 @@ export type CommonInfoEditedSnapshot = {
   venueKind: string
 }
 
-/** 모집 정보 탭 수정 직후 캡처 */
-export type RecruitmentEditedSnapshot = {
+export type CompanySchoolRecruitmentEditedSnapshot = {
   tabLabel: string
   targetDetail: string
   announceMethod: string
-  contactName: string
   contactTel: string
   contactEmail: string
   remark: string
@@ -108,35 +103,35 @@ export type RecruitmentEditedSnapshot = {
   operationPeriod: string | null
 }
 
-export type EditableDummyOpenResult = {
+export type CompanySchoolEditableDummyOpenResult = {
   programId: string
   programTitle: string
 }
 
 /**
- * 일반 프로그램 상세 — `[수정 가능] 일반 프로그램 더미` 공통/모집/신청 정보 수정 플로우
+ * 1사1교 상세 — `[수정 가능] 1사1교 프로그램 더미` 공통/모집/신청 수정
+ * 학교·강사만 (봉사자 탭 없음)
  */
-export class GeneralProgramEditPage {
+export class CompanySchoolEditPage {
   private readonly page: Page
-  private readonly detail: GeneralProgramDetailPage
-  private commonEdited: CommonInfoEditedSnapshot | null = null
-  private recruitmentEdited: RecruitmentEditedSnapshot[] = []
+  private readonly detail: CompanySchoolDetailPage
+  private commonEdited: CompanySchoolCommonInfoEditedSnapshot | null = null
+  private recruitmentEdited: CompanySchoolRecruitmentEditedSnapshot[] = []
 
   constructor(page: Page) {
     this.page = page
-    this.detail = new GeneralProgramDetailPage(page)
+    this.detail = new CompanySchoolDetailPage(page)
   }
 
-  getCommonEditedSnapshot(): CommonInfoEditedSnapshot | null {
+  getCommonEditedSnapshot(): CompanySchoolCommonInfoEditedSnapshot | null {
     return this.commonEdited
   }
 
-  getRecruitmentEditedSnapshots(): readonly RecruitmentEditedSnapshot[] {
+  getRecruitmentEditedSnapshots(): readonly CompanySchoolRecruitmentEditedSnapshot[] {
     return this.recruitmentEdited
   }
 
-  /** 목록에서 더미 프로그램 필터·행 클릭 → 상세 진입 */
-  async openEditableDummy(): Promise<EditableDummyOpenResult> {
+  async openEditableDummy(): Promise<CompanySchoolEditableDummyOpenResult> {
     const opened = await this.detail.openEditableDummy()
     await expect(this.page.getByRole('button', { name: '정보 수정' }).first()).toBeVisible({
       timeout: 60_000,
@@ -170,14 +165,9 @@ export class GeneralProgramEditPage {
     ).toBeVisible({ timeout: 15_000 })
   }
 
-  /**
-   * 공통 정보 — 대표명(국문) 제외하고 수정 가능 필드 갱신.
-   * 사업 운영 기간은 미래로 맞춰 수정 정책(시작일 이전)을 유지한다.
-   */
   async updateCommonInfo() {
     await clickSectionNavIfVisible(this.page, '기본 정보')
 
-    // 대표명(국문)은 시드 식별용 — 변경하지 않음
     await fillByPlaceholderIfVisible(
       this.page,
       '대표 프로그램명(영문)을 입력하세요',
@@ -192,9 +182,9 @@ export class GeneralProgramEditPage {
     await selectByPlaceholderIfVisible(this.page, '세부 프로그램명을 선택하세요')
     await this.fillDateNearLabel('사업 운영 기간', 'range', { preferFutureMonth: true })
 
-    await checkCheckboxIfVisible(this.page, /개인/)
+    await checkCheckboxIfVisible(this.page, /학교|기관/)
     await checkCheckboxIfVisible(this.page, /교사|강사/)
-    await checkCheckboxIfVisible(this.page, /봉사자/)
+    // 봉사자 체크 금지
 
     await selectNearLabelIfVisible(this.page, '사업 분야', EDIT_BUSINESS_AREA)
     await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택하세요', EDIT_BUSINESS_AREA)
@@ -297,29 +287,40 @@ export class GeneralProgramEditPage {
     })
   }
 
-  /**
-   * 신청 정보 — 서브탭별 양식 수정 모달 열어 저장.
-   * 저장은 form-template version PUT (PATCH programs 아님).
-   */
-  async updateAllApplicationTabs() {
-    await this.updateApplicationFormTab(/참여(자| 기관) 신청 정보/)
-    await this.updateApplicationFormTab('강사 신청 정보')
-    await this.updateApplicationFormTab('봉사자 신청 정보')
+  async expectVolunteerRecruitTabAbsent() {
+    const volunteerTab = this.page.getByRole('tab', { name: '봉사자 모집 정보' })
+    const volunteerBtn = this.page.getByRole('button', { name: '봉사자 모집 정보' })
+    await expect(volunteerTab.or(volunteerBtn)).toHaveCount(0)
+  }
 
-    await this.logEditFieldNotes('4) 신청 정보 양식 수정', {
-      changed: [
-        {
-          label: '양식 저장(PUT form-template)',
-          reason: '양식 수정 모달을 열어 저장만 수행 — 문항/필드 값은 변경하지 않음',
-        },
-      ],
-      unchanged: [
-        {
-          label: '신청 양식 문항·필드 전체',
-          reason: '내용 미수정(열기→저장만). 참여자/강사/봉사자 탭 공통',
-        },
-      ],
-    })
+  async expectVolunteerApplicationTabAbsent() {
+    const volunteerTab = this.page.getByRole('tab', { name: '봉사자 신청 정보' })
+    const volunteerBtn = this.page.getByRole('button', { name: '봉사자 신청 정보' })
+    await expect(volunteerTab.or(volunteerBtn)).toHaveCount(0)
+  }
+
+  /** 학교/기관(참여자) 모집 탭만 수정 */
+  async updateSchoolRecruitmentTab(programId: string) {
+    await this.updateRecruitmentTab(programId, '참여자 모집 정보', 'institutions', () =>
+      this.fillRecruitSchoolFields()
+    )
+  }
+
+  /** 강사 모집 탭만 수정 + 봉사자 탭 부재 */
+  async updateInstructorRecruitmentTab(programId: string) {
+    await this.expectVolunteerRecruitTabAbsent()
+    await this.updateRecruitmentTab(programId, '강사 모집 정보', 'instructors', () =>
+      this.fillRecruitInstructorFields()
+    )
+  }
+
+  async updateSchoolApplicationFormTab() {
+    await this.updateApplicationFormTab(/참여(자| 기관) 신청 정보/)
+  }
+
+  async updateInstructorApplicationFormTab() {
+    await this.expectVolunteerApplicationTabAbsent()
+    await this.updateApplicationFormTab('강사 신청 정보')
   }
 
   private async updateApplicationFormTab(tabLabel: string | RegExp) {
@@ -368,7 +369,6 @@ export class GeneralProgramEditPage {
       .catch(() => undefined)
 
     await saveButton.click()
-
     await putPromise
 
     const savedAlert = this.page.getByRole('dialog').filter({ hasText: '양식이 저장되었습니다.' })
@@ -394,24 +394,10 @@ export class GeneralProgramEditPage {
     ).toBeVisible({ timeout: 15_000 })
   }
 
-  /** 참여자·강사·봉사자 각 탭: 수정 진입 → 채움 → 저장 → 조회 필드 대조 */
-  async updateAllRecruitmentTabs(programId: string) {
-    this.recruitmentEdited = []
-    await this.updateRecruitmentTab(programId, '참여자 모집 정보', 'institutions', () =>
-      this.fillRecruitParticipantFields()
-    )
-    await this.updateRecruitmentTab(programId, '강사 모집 정보', 'instructors', () =>
-      this.fillRecruitInstructorFields()
-    )
-    await this.updateRecruitmentTab(programId, '봉사자 모집 정보', 'volunteers', () =>
-      this.fillRecruitVolunteerFields()
-    )
-  }
-
   private async updateRecruitmentTab(
     programId: string,
     tabLabel: string,
-    editParam: 'institutions' | 'instructors' | 'volunteers',
+    editParam: 'institutions' | 'instructors',
     fill: () => Promise<void>
   ) {
     const tab = this.page.getByRole('tab', { name: tabLabel }).first()
@@ -420,7 +406,7 @@ export class GeneralProgramEditPage {
       ((await tab.count()) > 0 && (await tab.isVisible().catch(() => false))) ||
       ((await tabButton.count()) > 0 && (await tabButton.isVisible().catch(() => false)))
     if (!tabVisible) {
-      return
+      throw new Error(`모집 탭이 없습니다: ${tabLabel}`)
     }
 
     await clickRegistrationTabIfVisible(this.page, tabLabel)
@@ -442,11 +428,10 @@ export class GeneralProgramEditPage {
     await expect(this.page).toHaveURL(new RegExp(`edit=${editParam}`), { timeout: 15_000 })
     await fill()
 
-    const snapshot: RecruitmentEditedSnapshot = {
+    const snapshot: CompanySchoolRecruitmentEditedSnapshot = {
       tabLabel,
       targetDetail: EDIT_TARGET_DETAIL,
       announceMethod: EDIT_ANNOUNCE_METHOD,
-      contactName: EDIT_CONTACT_NAME,
       contactTel: EDIT_CONTACT_TEL,
       contactEmail: EDIT_CONTACT_EMAIL,
       remark: EDIT_REMARK,
@@ -458,7 +443,7 @@ export class GeneralProgramEditPage {
       operationPeriod: await readDateTriggerNearLabel(this.page, '프로그램 운영 기간'),
     }
 
-    await this.logEditFieldNotes(`3) 모집 정보 수정 › ${tabLabel}`, {
+    await this.logEditFieldNotes(`모집 정보 수정 › ${tabLabel}`, {
       changed: this.recruitmentSnapshotToChangedFields(snapshot),
       unchanged: await this.mergeUnchangedWithDomReadOnly(RECRUIT_INTENTIONALLY_UNCHANGED),
     })
@@ -470,12 +455,8 @@ export class GeneralProgramEditPage {
     await this.expectRecruitmentTabFieldsMatch(snapshot)
   }
 
-  private async fillRecruitSharedFields(options?: { interviewYes?: boolean }) {
-    if (options?.interviewYes) {
-      await checkRadioIfVisible(this.page, '면접 있음')
-    } else {
-      await checkRadioIfVisible(this.page, '면접 없음')
-    }
+  private async fillRecruitSharedFields() {
+    await checkRadioIfVisible(this.page, '면접 없음')
     await checkRadioIfVisible(this.page, '게시')
 
     await this.fillDateNearLabel('프로그램 운영 기간', 'range', { preferFutureMonth: true })
@@ -488,9 +469,7 @@ export class GeneralProgramEditPage {
 
     await this.fillDateNearLabel('참여자 모집 기간', 'range', { preferFutureMonth: true })
     await this.fillDateNearLabel('강사 모집 기간', 'range', { preferFutureMonth: true })
-    await this.fillDateNearLabel('봉사자 모집 기간', 'range', { preferFutureMonth: true })
     await fillParagraphDateByPlaceholder(this.page, '모집 시작일', 'range')
-    // 발표일은 모집 기간보다 뒤여야 함 — 이미 값이 있어도 미래로 재설정
     await this.fillDateNearLabel('최종 합격자 발표', 'single', {
       preferFutureMonth: true,
       futureMonthClicks: 3,
@@ -502,7 +481,6 @@ export class GeneralProgramEditPage {
     await fillParagraphDateByPlaceholder(this.page, '합격자 발표일', 'single')
     await fillParagraphDateByPlaceholder(this.page, '발표일', 'single')
     await fillByPlaceholderIfVisible(this.page, '발표 방법 안내', EDIT_ANNOUNCE_METHOD)
-    // 「담당 문의처」는 후원사명 파생 readOnly — Tel/E-mail만 수정
     await fillByPlaceholderIfVisible(this.page, '문의처 전화번호', EDIT_CONTACT_TEL)
     await fillByPlaceholderIfVisible(this.page, '문의처 이메일', EDIT_CONTACT_EMAIL)
     await fillByPlaceholderIfVisible(
@@ -524,40 +502,26 @@ export class GeneralProgramEditPage {
       EDIT_LEARNING_SUPPORT
     )
     await fillByPlaceholderIfVisible(this.page, '기타 안내 사항을 작성하세요', EDIT_ETC_GUIDE)
-    await fillVisibleFreeTextFields(this.page, `E2E 수정 모집 ${EDIT_MARKER}`)
+    await fillVisibleFreeTextFields(this.page, `E2E 1사1교 수정 모집 ${EDIT_MARKER}`)
   }
 
-  private async fillRecruitParticipantFields() {
+  private async fillRecruitSchoolFields() {
     await fillAllByPlaceholder(this.page, '최대값 입력', '5')
-    await this.fillRecruitSharedFields({ interviewYes: false })
+    await this.fillRecruitSharedFields()
   }
 
   private async fillRecruitInstructorFields() {
-    await this.fillRecruitSharedFields({ interviewYes: false })
+    await this.fillRecruitSharedFields()
   }
 
-  private async fillRecruitVolunteerFields() {
-    await this.fillRecruitSharedFields({ interviewYes: false })
-    await checkRadioIfVisible(this.page, '면접 있음')
-    await fillParagraphDateByPlaceholder(this.page, '모집 시작일', 'range')
-    await fillParagraphDateByPlaceholder(this.page, '발표일', 'single')
-    await fillParagraphDateByPlaceholder(this.page, '면접 시작일', 'range')
-    await fillByPlaceholderIfVisible(this.page, '면접 유형', '대면 면접')
-    await fillParagraphDateByPlaceholder(this.page, '합격자 발표일', 'single')
-    await fillAllByPlaceholder(this.page, '발표 방법 안내', EDIT_ANNOUNCE_METHOD)
-  }
-
-  /**
-   * 공통 정보 조회 모드 — 수정 시 넣은 값이 각 필드 라벨 옆 내용과 일치하는지 확인.
-   */
-  async expectCommonInfoUpdated(snapshot?: CommonInfoEditedSnapshot | null) {
+  async expectCommonInfoUpdated(snapshot?: CompanySchoolCommonInfoEditedSnapshot | null) {
     const s = snapshot ?? this.commonEdited
     await this.ensureCommonInfoTab()
 
     await expectDetailInfoFieldContains(
       this.page,
       '대표 프로그램명 (국문)',
-      EDITABLE_DUMMY_TITLE
+      EDITABLE_COMPANY_SCHOOL_DUMMY_TITLE
     )
 
     if (!s) {
@@ -579,17 +543,14 @@ export class GeneralProgramEditPage {
         await expectDetailInfoFieldContains(this.page, '사업 운영 기간', periodHint)
       }
     }
-    await expectDetailInfoFieldContains(this.page, '참여자 유형', /개인/)
+    await expectDetailInfoFieldContains(this.page, '참여자 유형', /학교|기관/)
     await expectDetailInfoFieldContains(this.page, '참여자 유형', /강사|교사/)
-    await expectDetailInfoFieldContains(this.page, '참여자 유형', /봉사/)
     await expectDetailInfoFieldContains(this.page, '사업 분야', s.businessArea)
     if (s.sponsorName) {
-      // multiple UI는 "A, B, C" — 조회는 동일 이름·콤마 구분. 첫 이름만으로도 충분
       const sponsorHint = s.sponsorName.split(',')[0]?.trim() || s.sponsorName
       await expectDetailInfoFieldContains(this.page, '후원사', sponsorHint)
     }
     if (s.sponsorManager) {
-      // 편집 Select: "후원사 · 직책 이름" / 조회: "직책 이름 | 연락처"
       const afterSponsor = s.sponsorManager.includes('·')
         ? s.sponsorManager.split('·').pop()!.trim()
         : s.sponsorManager
@@ -600,13 +561,15 @@ export class GeneralProgramEditPage {
     }
     await expectDetailInfoFieldContains(this.page, '교육 장소', s.venueKind)
     await expectDetailInfoFieldContains(this.page, '교육 장소', s.educationPlace)
-    await expectDetailInfoFieldContains(this.page, '설문 진행 항목', /설문/, { required: false })
 
     await clickSectionNavIfVisible(this.page, '프로그램 유형 설정')
-    await expectDetailInfoFieldContains(this.page, '교육 진행 구조', s.educationStructure)
-    await expectDetailInfoFieldContains(this.page, '수업 회차 유형', s.sessionRound)
-    await expectDetailInfoFieldContains(this.page, '교육 형태', s.educationForm)
-    await expectDetailInfoFieldContains(this.page, '참여 방식', s.participationMethod, {
+    await expectDetailInfoFieldContains(this.page, '교육 진행 구조', s.educationStructure, {
+      required: false,
+    })
+    await expectDetailInfoFieldContains(this.page, '수업 회차 유형', s.sessionRound, {
+      required: false,
+    })
+    await expectDetailInfoFieldContains(this.page, '교육 형태', s.educationForm, {
       required: false,
     })
     await expectDetailInfoFieldContains(this.page, 'IPS 유형', s.ipsType, { required: false })
@@ -629,8 +592,7 @@ export class GeneralProgramEditPage {
     await expectDetailInfoFieldContains(this.page, '1급 강사비', wagePattern, { required: false })
   }
 
-  /** 모집 탭 조회 모드 — 해당 탭에서 수정한 문의·비고·상세 등 필드 대조 */
-  async expectRecruitmentTabFieldsMatch(snapshot: RecruitmentEditedSnapshot) {
+  async expectRecruitmentTabFieldsMatch(snapshot: CompanySchoolRecruitmentEditedSnapshot) {
     await clickRegistrationTabIfVisible(this.page, snapshot.tabLabel)
     await expect(this.page.getByRole('button', { name: '정보 수정' }).first()).toBeVisible({
       timeout: 15_000,
@@ -657,8 +619,9 @@ export class GeneralProgramEditPage {
     await expect(this.page.getByText(EDIT_MARKER).first()).toBeVisible({ timeout: 15_000 })
   }
 
-  /** 수정했던 모든 모집 탭을 다시 열어 필드 일치 재확인 */
-  async expectAllRecruitmentInfoUpdated(snapshots?: readonly RecruitmentEditedSnapshot[]) {
+  async expectAllRecruitmentInfoUpdated(
+    snapshots?: readonly CompanySchoolRecruitmentEditedSnapshot[]
+  ) {
     const list = snapshots ?? this.recruitmentEdited
     await this.goToRecruitmentTab()
     for (const snap of list) {
@@ -672,7 +635,7 @@ export class GeneralProgramEditPage {
       await closeButton.click()
     }
 
-    await this.page.goto('/programs/general')
+    await this.page.goto(LIST_PATH)
     await expect(this.page.getByRole('button', { name: '프로그램 신규 등록' })).toBeVisible({
       timeout: 30_000,
     })
@@ -680,9 +643,8 @@ export class GeneralProgramEditPage {
     const titleFilter = this.page.getByPlaceholder('프로그램명을 입력하세요')
     await expect(titleFilter).toBeVisible({ timeout: 15_000 })
 
-    // openByTitle 과 동일 — 일시적 BE 5xx/빈 body 에 재조회 (첫 실패로 즉시 throw 하지 않음)
     await expect(async () => {
-      await titleFilter.fill(EDITABLE_DUMMY_TITLE)
+      await titleFilter.fill(EDITABLE_COMPANY_SCHOOL_DUMMY_TITLE)
       const listWait = this.page.waitForResponse(
         res =>
           res.request().method() === 'GET' &&
@@ -698,7 +660,7 @@ export class GeneralProgramEditPage {
             `프로그램 목록 API 실패(백엔드): HTTP ${listResponse.status()}`,
             listResponse.url(),
             body.slice(0, 300) || '(empty body)',
-            `— 「${EDITABLE_DUMMY_TITLE}」 행을 확인할 수 없습니다.`,
+            `— 「${EDITABLE_COMPANY_SCHOOL_DUMMY_TITLE}」 행을 확인할 수 없습니다.`,
           ].join('\n')
         )
       }
@@ -707,16 +669,137 @@ export class GeneralProgramEditPage {
         const byId = this.page.locator(`tr[data-row-key="${programId}"]`)
         if ((await byId.count()) > 0) {
           await expect(byId).toBeVisible({ timeout: 5_000 })
-          await expect(byId).toContainText(EDITABLE_DUMMY_TITLE)
+          await expect(byId).toContainText(EDITABLE_COMPANY_SCHOOL_DUMMY_TITLE)
           return
         }
       }
       const byTitle = this.page
         .locator('tbody.ant-table-tbody tr.ant-table-row')
-        .filter({ hasText: EDITABLE_DUMMY_TITLE })
+        .filter({ hasText: EDITABLE_COMPANY_SCHOOL_DUMMY_TITLE })
         .first()
       await expect(byTitle).toBeVisible({ timeout: 5_000 })
     }).toPass({ timeout: 90_000 })
+  }
+
+  /**
+   * 진행 현황 — 참여 기관·강사만 (봉사자 탭 부재)
+   */
+  async expectProgressParticipantMockLists(programId: string) {
+    const tabs: { tab: string; titles: string[] }[] = [
+      {
+        tab: 'progress_participants',
+        titles: [
+          '교육 참여 기관 목록',
+          '교육 참여자 목록',
+          '참여자 목록',
+          '교육 참여 참여자 목록',
+        ],
+      },
+      { tab: 'progress_instructors', titles: ['교육 참여 강사 목록'] },
+    ]
+
+    let verified = 0
+    const skipped: string[] = []
+
+    for (const { tab, titles } of tabs) {
+      const opened = await this.tryOpenProgressTab(programId, tab)
+      if (!opened) {
+        skipped.push(`${tab}: LNB/상세 진입 실패`)
+        continue
+      }
+      const ok = await this.tryExpectProgressListVisible(titles)
+      if (ok) {
+        verified += 1
+      } else {
+        skipped.push(`${tab}: 목록 제목 없음 (${titles.join(' | ')})`)
+      }
+    }
+
+    // 봉사자 progress LNB는 없어야 함 (딥링크 프로브는 리다이렉트 때문에 생략)
+    await this.detail.expectLnbHidden('참여 봉사자')
+    await this.detail.expectLnbHidden('봉사자')
+
+    expect(
+      verified,
+      `진행 현황 목록을 하나 이상 확인해야 합니다. skipped=[${skipped.join('; ')}]`
+    ).toBeGreaterThan(0)
+  }
+
+  private async tryOpenProgressTab(programId: string, tab: string): Promise<boolean> {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const opened = await this.detail.tryGotoLnb(programId, 'progress', tab)
+      if (!opened) continue
+      if (await this.isProgramDetailLoadFailed()) {
+        if (attempt === 0) continue
+        return false
+      }
+      return true
+    }
+    return false
+  }
+
+  private async isProgramDetailLoadFailed(): Promise<boolean> {
+    const error = this.page.getByText('프로그램 정보를 불러오지 못했습니다')
+    return (await error.isVisible().catch(() => false)) === true
+  }
+
+  private async tryExpectProgressListVisible(listTitles: string[]): Promise<boolean> {
+    const modalContent = this.page.locator('.detail-fullpage-modal__content').first()
+    await expect(modalContent).toBeVisible({ timeout: 15_000 }).catch(() => undefined)
+    await expect(modalContent.locator('.filter-table-layout__title').first())
+      .toBeVisible({ timeout: 15_000 })
+      .catch(() => undefined)
+
+    let layout = modalContent.locator('.filter-table-layout').first()
+    let found = false
+    const normalize = (value: string) => value.replace(/\s+/g, '')
+    for (const listTitle of listTitles) {
+      const candidate = modalContent
+        .locator('.filter-table-layout')
+        .filter({
+          has: this.page.locator('.filter-table-layout__title', { hasText: listTitle }),
+        })
+        .first()
+      if ((await candidate.count()) === 0) continue
+      if (!(await candidate.isVisible().catch(() => false))) continue
+      const titleText = (
+        await candidate.locator('.filter-table-layout__title').first().innerText()
+      ).trim()
+      if (!normalize(titleText).includes(normalize(listTitle))) continue
+      layout = candidate
+      found = true
+      break
+    }
+    if (!found) {
+      const fallbackLayout = modalContent
+        .locator('.filter-table-layout')
+        .filter({ has: this.page.locator('.filter-table-layout__title') })
+        .first()
+      if ((await fallbackLayout.count()) === 0) return false
+      if (!(await fallbackLayout.isVisible().catch(() => false))) return false
+      const fallbackTitle = (
+        await fallbackLayout.locator('.filter-table-layout__title').first().innerText()
+      ).trim()
+      if (!fallbackTitle.includes('목록') && !fallbackTitle.includes('참여')) return false
+      layout = fallbackLayout
+    }
+
+    await expect(layout).toBeVisible({ timeout: 30_000 })
+
+    const countLabel = layout.locator('.filter-table-layout__description').first()
+    await expect(countLabel).toBeVisible({ timeout: 30_000 })
+    const countText = (await countLabel.innerText()).trim()
+
+    if (countText === '0건') {
+      await expect(
+        layout.locator('.ant-empty, .ant-table-placeholder, .ant-table').first()
+      ).toBeVisible({ timeout: 30_000 })
+      return true
+    }
+
+    const rows = layout.locator('tbody.ant-table-tbody tr.ant-table-row')
+    await expect(rows.first()).toBeVisible({ timeout: 30_000 })
+    return true
   }
 
   private async clickInfoEditSave(programId: string) {
@@ -754,7 +837,9 @@ export class GeneralProgramEditPage {
     ])
   }
 
-  private snapshotToChangedFields(snapshot: CommonInfoEditedSnapshot): FieldLogItem[] {
+  private snapshotToChangedFields(
+    snapshot: CompanySchoolCommonInfoEditedSnapshot
+  ): FieldLogItem[] {
     return [
       { label: '대표 프로그램명 (영문)', value: snapshot.titleEn },
       { label: '공고용 프로그램명', value: snapshot.publicName },
@@ -778,7 +863,7 @@ export class GeneralProgramEditPage {
   }
 
   private recruitmentSnapshotToChangedFields(
-    snapshot: RecruitmentEditedSnapshot
+    snapshot: CompanySchoolRecruitmentEditedSnapshot
   ): FieldLogItem[] {
     return [
       { label: `${snapshot.tabLabel} · 상세 교육/모집 대상`, value: snapshot.targetDetail },
@@ -795,7 +880,6 @@ export class GeneralProgramEditPage {
     ]
   }
 
-  /** DOM에서 readOnly/disabled 입력 필드 라벨을 모아 미수정 목록에 합칩니다. */
   private async mergeUnchangedWithDomReadOnly(
     intentional: FieldLogItem[]
   ): Promise<FieldLogItem[]> {
@@ -817,8 +901,7 @@ export class GeneralProgramEditPage {
           const labelEl = el.querySelector('.detail-info-form__field-label-text') as
             | { textContent?: string | null }
             | null
-          const label =
-            labelEl?.textContent?.trim() ?? ''
+          const label = labelEl?.textContent?.trim() ?? ''
           if (!label) continue
           const locked =
             el.querySelector(
@@ -850,11 +933,11 @@ export class GeneralProgramEditPage {
       page: this.page,
       title,
       titlePath: [
-        'flows/programs/general-program-edit.spec.ts',
-        '일반 프로그램 수정',
+        'flows/programs/company-school-edit.spec.ts',
+        '1사1교 프로그램 수정',
         stepTitle,
       ],
-      file: 'tests/e2e/flows/programs/general-program-edit.spec.ts',
+      file: 'tests/e2e/flows/programs/company-school-edit.spec.ts',
       notes: [
         {
           phase: 'edit:changed-fields',
@@ -870,138 +953,6 @@ export class GeneralProgramEditPage {
     })
   }
 
-  /**
-   * 프로그램 진행 현황 — 참여 기관·참여자 / 강사 / 봉사자 목록 셸이 보이는지 확인.
-   * 공통 정보에서 참여 방식=개인이면 `교육 참여자 목록`, 기관이면 `교육 참여 기관 목록`.
-   * remote ON + 빈 시드면 0건일 수 있음(의도적 mock 미폴백) — 제목·테이블 셸만 필수.
-   * 탭 전환 중 상세 로드 실패(BE 5xx)면 해당 탭만 스킵 — 하나 이상 확인되면 통과.
-   */
-  async expectProgressParticipantMockLists(programId: string) {
-    const tabs: { tab: string; titles: string[] }[] = [
-      {
-        tab: 'progress_participants',
-        titles: [
-          '교육 참여 기관 목록',
-          '교육 참여자 목록',
-          '참여자 목록',
-          '교육 참여 참여자 목록',
-        ],
-      },
-      { tab: 'progress_instructors', titles: ['교육 참여 강사 목록'] },
-      { tab: 'progress_volunteers', titles: ['참여 봉사자 목록'] },
-    ]
-
-    let verified = 0
-    const skipped: string[] = []
-
-    for (const { tab, titles } of tabs) {
-      const opened = await this.tryOpenProgressTab(programId, tab)
-      if (!opened) {
-        skipped.push(`${tab}: LNB/상세 진입 실패`)
-        continue
-      }
-      const ok = await this.tryExpectProgressListVisible(titles)
-      if (ok) {
-        verified += 1
-      } else {
-        skipped.push(`${tab}: 목록 제목 없음 (${titles.join(' | ')})`)
-      }
-    }
-
-    expect(
-      verified,
-      `진행 현황 목록을 하나 이상 확인해야 합니다. skipped=[${skipped.join('; ')}]`
-    ).toBeGreaterThan(0)
-  }
-
-  /** 진행 현황 탭 딥링크 — 상세 로드 실패 시 1회 재시도 */
-  private async tryOpenProgressTab(programId: string, tab: string): Promise<boolean> {
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      const opened = await this.detail.tryGotoLnb(programId, 'progress', tab)
-      if (!opened) continue
-      if (await this.isProgramDetailLoadFailed()) {
-        if (attempt === 0) continue
-        return false
-      }
-      return true
-    }
-    return false
-  }
-
-  private async isProgramDetailLoadFailed(): Promise<boolean> {
-    const error = this.page.getByText('프로그램 정보를 불러오지 못했습니다')
-    return (await error.isVisible().catch(() => false)) === true
-  }
-
-  /**
-   * FilterTableLayout 제목 후보 중 보이는 것과 목록 셸 확인.
-   * 건수가 0이 아니면 행도 확인한다. 제목을 못 찾으면 false.
-   */
-  private async tryExpectProgressListVisible(listTitles: string[]): Promise<boolean> {
-    // 탭 전환 직후 제목 렌더 대기 (없으면 바로 false)
-    const modalContent = this.page.locator('.detail-fullpage-modal__content').first()
-    await expect(modalContent).toBeVisible({ timeout: 15_000 }).catch(() => undefined)
-    await expect(modalContent.locator('.filter-table-layout__title').first())
-      .toBeVisible({ timeout: 15_000 })
-      .catch(() => undefined)
-
-    let layout = modalContent.locator('.filter-table-layout').first()
-    let found = false
-    const normalize = (value: string) => value.replace(/\s+/g, '')
-    for (const listTitle of listTitles) {
-      const candidate = modalContent
-        .locator('.filter-table-layout')
-        .filter({
-          has: this.page.locator('.filter-table-layout__title', { hasText: listTitle }),
-        })
-        .first()
-      if ((await candidate.count()) === 0) continue
-      if (!(await candidate.isVisible().catch(() => false))) continue
-      const titleText = (
-        await candidate.locator('.filter-table-layout__title').first().innerText()
-      ).trim()
-      if (!normalize(titleText).includes(normalize(listTitle))) continue
-      layout = candidate
-      found = true
-      break
-    }
-    if (!found) {
-      // 카피가 바뀌어도 모달 내 단일 목록 셸이면 통과 (예: 참여자/참여기관 명칭 변경)
-      const fallbackLayout = modalContent
-        .locator('.filter-table-layout')
-        .filter({ has: this.page.locator('.filter-table-layout__title') })
-        .first()
-      if ((await fallbackLayout.count()) === 0) return false
-      if (!(await fallbackLayout.isVisible().catch(() => false))) return false
-      const fallbackTitle = (
-        await fallbackLayout.locator('.filter-table-layout__title').first().innerText()
-      ).trim()
-      if (!fallbackTitle.includes('목록') && !fallbackTitle.includes('참여')) return false
-      layout = fallbackLayout
-    }
-
-    await expect(layout).toBeVisible({ timeout: 30_000 })
-
-    const countLabel = layout.locator('.filter-table-layout__description').first()
-    await expect(countLabel).toBeVisible({ timeout: 30_000 })
-    const countText = (await countLabel.innerText()).trim()
-
-    if (countText === '0건') {
-      await expect(
-        layout.locator('.ant-empty, .ant-table-placeholder, .ant-table').first()
-      ).toBeVisible({ timeout: 30_000 })
-      return true
-    }
-
-    const rows = layout.locator('tbody.ant-table-tbody tr.ant-table-row')
-    await expect(rows.first()).toBeVisible({ timeout: 30_000 })
-    return true
-  }
-
-  /**
-   * 라벨 근처 ParagraphDatePicker — 이미 값이 있어도 다시 열어 미래 날짜를 고른다.
-   * (placeholder 기반 헬퍼는 값이 채워지면 트리거를 못 찾음)
-   */
   private async fillDateNearLabel(
     label: string,
     mode: 'single' | 'range',
@@ -1044,7 +995,6 @@ export class GeneralProgramEditPage {
     )
     await expect(days.first()).toBeVisible({ timeout: 5_000 })
     const dayCount = await days.count()
-    // single(발표일)은 월말 쪽, range(모집)는 그보다 앞선 구간을 고른다
     const startIdx =
       mode === 'single'
         ? Math.max(dayCount - 2, 0)
