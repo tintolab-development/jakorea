@@ -92,7 +92,8 @@ describe('general-program-adapters', () => {
     expect(create.type).toBe('offline')
     expect(create.targetLevel).toBe('elementary')
     expect(create.rounds).toHaveLength(1)
-    expect(create.programType).toBe('GENERAL')
+    // audience 미설정 → ORGANIZATION → GENERAL_ORGANIZATION
+    expect(create.programType).toBe('GENERAL_ORGANIZATION')
     expect(create.businessStartDate).toBe('2026-04-01T00:00:00.000Z')
     expect(create.businessEndDate).toBe('2026-12-31T00:00:00.000Z')
     expect(create.autoApplyDefaultFormBindings).toBe(true)
@@ -110,9 +111,21 @@ describe('general-program-adapters', () => {
     expect(
       mapGeneralProgramToCreateRequest({
         ...sampleProgram,
+        generalProgramAudience: 'individual',
+      }).programType
+    ).toBe('GENERAL_INDIVIDUAL')
+    expect(
+      mapGeneralProgramToCreateRequest({
+        ...sampleProgram,
         generalProgramAudience: 'organization',
       }).applicationTargetMode
     ).toBe('ORGANIZATION')
+    expect(
+      mapGeneralProgramToCreateRequest({
+        ...sampleProgram,
+        generalProgramAudience: 'organization',
+      }).programType
+    ).toBe('GENERAL_ORGANIZATION')
   })
 
   it('derives applicationTargetMode from generalParticipantTypes when audience missing', () => {
@@ -125,9 +138,21 @@ describe('general-program-adapters', () => {
     expect(
       mapGeneralProgramToCreateRequest({
         ...sampleProgram,
+        generalParticipantTypes: ['individual', 'teacher_instructor'],
+      }).programType
+    ).toBe('GENERAL_INDIVIDUAL')
+    expect(
+      mapGeneralProgramToCreateRequest({
+        ...sampleProgram,
         generalParticipantTypes: ['individual', 'school_institution'],
       }).applicationTargetMode
     ).toBe('BOTH')
+    expect(
+      mapGeneralProgramToCreateRequest({
+        ...sampleProgram,
+        generalParticipantTypes: ['individual', 'school_institution'],
+      }).programType
+    ).toBe('GENERAL')
   })
 
   it('does not put create-only fields on update request', () => {

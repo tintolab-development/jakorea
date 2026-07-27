@@ -88,6 +88,9 @@ function audienceFromParticipant(
 function primaryCategoryFromParticipant(
   participant: ProgramRegistrationParticipantState
 ): ProgramCategory {
+  // 대분류(개인/기관)가 category 1순위 — 강사·봉사는 generalParticipantTypes 로 표현
+  if (participant.individual && !participant.organization) return 'individual'
+  if (participant.organization && !participant.individual) return 'school'
   if (participant.organization) return 'school'
   if (participant.teacherInstructor) return 'instructor'
   if (participant.volunteer) return 'volunteer'
