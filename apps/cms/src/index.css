@@ -13,10 +13,10 @@
   line-height: var(--line-height-normal, 1.5);
   font-weight: var(--font-weight-regular, 400);
 
-  color-scheme: light dark;
-  /* 다크 스킴: 토큰 미정의 — 추후 theme-provider.css에 --color-text-inverse, --color-bg-inverse 등 추가 권장 */
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* CMS는 라이트 전용 — Vite 템플릿 light/dark 잔여가 하단 캔버스·오버스크롤 색을 흔들지 않게 고정 */
+  color-scheme: light;
+  color: var(--color-text-heading, #22404b);
+  background-color: var(--color-bg-tertiary, #f5f5f5);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -34,41 +34,47 @@ a:hover {
   color: var(--color-link-hover);
 }
 
-/* 모달 등으로 document 스크롤이 잠길 때 스크롤바 소멸로 인한 가로 레이아웃 시프트 완화 */
+/*
+ * 모달 등으로 document 스크롤이 잠길 때 스크롤바 소멸로 인한 가로 레이아웃 시프트 완화.
+ * html/body/#root 배경·높이를 동일하게 채워 뷰포트 하단 틈에 이질 색(브랜드 민트 등)이
+ * 비치지 않도록 한다. (첫 페인트·소프트 내비 후 새로고침하면 사라지던 하단 띠 대응)
+ */
 html {
   scrollbar-gutter: stable;
+  height: 100%;
+  background-color: var(--color-bg-tertiary, #f5f5f5);
 }
 
 body {
   margin: 0;
+  min-height: 100%;
   min-height: 100vh;
-  background-color: var(--color-bg-tertiary);
+  min-height: 100dvh;
+  background-color: var(--color-bg-tertiary, #f5f5f5);
   font-family:
     var(--font-family-primary, system-ui),
     -apple-system,
     sans-serif;
 }
 
+#root {
+  min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--color-bg-tertiary, #f5f5f5);
+}
+
+/* antd App 래퍼도 동일하게 채워 하단 투명 틈을 남기지 않음 */
+#root > .ant-app {
+  min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--color-bg-tertiary, #f5f5f5);
+}
+
 h1 {
   font-size: 3.2em;
   line-height: var(--line-height-tight, 1.1);
-}
-
-button {
-  border-radius: var(--radius-8);
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: var(--font-weight-500, 500);
-  font-family: inherit;
-  /* 다크 스킴: 토큰 미정의 — 추후 --color-bg-button-dark 등 추가 권장 */
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-
-button:hover {
-  border-color: var(--color-link);
 }
 
 /* 마우스 클릭 포커스는 링 숨김, 키보드(:focus-visible)만 표시 */
@@ -79,21 +85,6 @@ button:focus {
 button:focus-visible {
   /* 접근성 포커스 링: 픽셀 값 유지 (예외) */
   outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: var(--color-text-heading);
-    background-color: var(--color-bg-base);
-  }
-
-  a:hover {
-    color: var(--color-link-hover);
-  }
-
-  button {
-    background-color: var(--color-bg-secondary);
-  }
 }
 
 /* Alert 컴포넌트 버튼 정렬 */
