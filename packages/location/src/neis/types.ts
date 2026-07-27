@@ -8,6 +8,7 @@ export interface NeisSchoolRow {
   SCHUL_KND_SC_NM?: string
   LCTN_SC_NM?: string
   ORG_RDNMA?: string
+  ORG_RDNZC?: string
   ORG_FAX?: string
   ORG_TELNO?: string
   HMPG_ADRES?: string
@@ -26,6 +27,7 @@ export interface NeisSchoolItem {
   atptOfcdcScNm: string
   lctnScNm: string
   orgRdnma: string
+  orgRdnzc: string
   orgTelno: string
   hmpgAdres: string
   foasMemrd: string

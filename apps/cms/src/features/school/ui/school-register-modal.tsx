@@ -2,13 +2,14 @@
  * 학교 신규 등록 모달
  * - 기관명: NEIS 학교 검색 (`SchoolSearch`)
  * - 기관 소재지: 학교 선택 시 도로명 주소 자동 반영 + 상세 주소 입력
+ * - 선택 시 NEIS 코드·검색 지역(시/도·시/군/구)을 함께 보관해 등록 API에 전달
  */
 
 import { useEffect } from 'react'
 import { Form, Space } from 'antd'
 import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info-form'
 import { CmsButton, CmsInput, ContentModal, SchoolSearch } from '@/shared/ui'
-import type { SchoolSearchSelection } from '@/shared/ui'
+import type { SchoolSearchSelection, SchoolSearchSelectMeta } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 
 const FORM_ID = 'cms-school-register-modal-form'
@@ -17,6 +18,10 @@ export type SchoolRegisterModalFormValues = {
   institutionName: string
   roadAddress: string
   detailAddress?: string
+  neisCode?: string
+  regionSido?: string
+  regionSigungu?: string
+  zipCode?: string
 }
 
 export interface SchoolRegisterModalProps {
@@ -31,6 +36,10 @@ const INITIAL_VALUES: SchoolRegisterModalFormValues = {
   institutionName: '',
   roadAddress: '',
   detailAddress: '',
+  neisCode: '',
+  regionSido: '',
+  regionSigungu: '',
+  zipCode: '',
 }
 
 const SCHOOL_REGISTER_MULTIPLE_VALIDATION_THRESHOLD = 2
@@ -44,6 +53,10 @@ function normalizeSubmitValues(
     institutionName: values.institutionName.trim(),
     roadAddress: values.roadAddress.trim(),
     detailAddress: values.detailAddress?.trim(),
+    neisCode: values.neisCode?.trim() || undefined,
+    regionSido: values.regionSido?.trim() || undefined,
+    regionSigungu: values.regionSigungu?.trim() || undefined,
+    zipCode: values.zipCode?.trim() || undefined,
   }
 }
 
@@ -79,11 +92,18 @@ export function SchoolRegisterModal({
     }
   }, [open, form])
 
-  const handleSchoolSelect = (school: SchoolSearchSelection) => {
+  const handleSchoolSelect = (
+    school: SchoolSearchSelection,
+    meta: SchoolSearchSelectMeta
+  ) => {
     form.setFieldsValue({
       institutionName: school.schulNm.trim(),
       roadAddress: school.orgRdnma.trim(),
       detailAddress: '',
+      neisCode: school.sdSchulCode.trim(),
+      regionSido: meta.regionSido,
+      regionSigungu: meta.regionSigungu,
+      zipCode: school.orgRdnzc.trim(),
     })
   }
 
@@ -147,6 +167,18 @@ export function SchoolRegisterModal({
         requiredMark={false}
         onFinish={handleSubmitAttempt}
       >
+        <Form.Item name="neisCode" hidden>
+          <input type="hidden" />
+        </Form.Item>
+        <Form.Item name="regionSido" hidden>
+          <input type="hidden" />
+        </Form.Item>
+        <Form.Item name="regionSigungu" hidden>
+          <input type="hidden" />
+        </Form.Item>
+        <Form.Item name="zipCode" hidden>
+          <input type="hidden" />
+        </Form.Item>
         <DetailInfoForm title="기본 정보" mode="edit">
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field

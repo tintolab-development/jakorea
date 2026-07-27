@@ -52,6 +52,12 @@ function schoolResultKey(school: NeisSchoolItem) {
 
 export type SchoolSearchSelection = NeisSchoolItem
 
+/** 검색 시 선택한 시/도·시/군/구 (서버 `regionSido`/`regionSigungu`용) */
+export type SchoolSearchSelectMeta = {
+  regionSido: string
+  regionSigungu: string
+}
+
 export interface SchoolSearchProps extends Pick<
   CmsInputProps,
   'inputSize' | 'width' | 'disabled' | 'className'
@@ -62,7 +68,7 @@ export interface SchoolSearchProps extends Pick<
   placeholder?: string
   /** NEIS API 키 — 미지정 시 `VITE_NEIS_API_KEY` */
   apiKey?: string
-  onSelect?: (item: SchoolSearchSelection) => void
+  onSelect?: (item: SchoolSearchSelection, meta: SchoolSearchSelectMeta) => void
 }
 
 export function SchoolSearch({
@@ -164,7 +170,10 @@ export function SchoolSearch({
 
   const handleSelect = (school: NeisSchoolItem) => {
     onChange(school.schulNm)
-    onSelect?.(school)
+    onSelect?.(school, {
+      regionSido: sido.trim(),
+      regionSigungu: sigungu.trim(),
+    })
     closeModal()
   }
 

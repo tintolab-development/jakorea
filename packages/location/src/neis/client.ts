@@ -43,6 +43,7 @@ function mapRowToItem(row: NeisSchoolRow): NeisSchoolItem {
     atptOfcdcScNm: row.ATPT_OFCDC_SC_NM ?? '',
     lctnScNm: row.LCTN_SC_NM ?? '',
     orgRdnma: row.ORG_RDNMA ?? '',
+    orgRdnzc: row.ORG_RDNZC ?? '',
     orgTelno: row.ORG_TELNO ?? '',
     hmpgAdres: row.HMPG_ADRES ?? '',
     foasMemrd: row.FOAS_MEMRD ?? '',

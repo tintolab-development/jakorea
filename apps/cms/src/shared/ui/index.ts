@@ -125,7 +125,11 @@ export type { CmsInputSearchProps } from './cms-input-search'
 export { AddressSearch } from './address-search'
 export type { AddressSearchProps } from './address-search'
 export { SchoolSearch } from './school-search'
-export type { SchoolSearchProps, SchoolSearchSelection } from './school-search'
+export type {
+  SchoolSearchProps,
+  SchoolSearchSelection,
+  SchoolSearchSelectMeta,
+} from './school-search'
 export { CmsCompactPagination } from './cms-compact-pagination'
 export type { CmsCompactPaginationProps } from './cms-compact-pagination'
 export type { CmsControlSize } from './cms-control-size'
