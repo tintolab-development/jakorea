@@ -118,25 +118,44 @@ function VolunteerInterviewScheduleBlock({
   )
 
   useEffect(() => {
-    updateGeneralApplicationOverlayKey<string[]>('application.volunteer.interview.selectedSlotKeys', () => {
-      const availableKeys = new Set(interviewTimeSlots.map(slot => slot.key))
-      const currentSlots = selectedSlotKeys ?? []
-      const filtered = currentSlots.filter(key => availableKeys.has(key))
-      if (filtered.length > 0 || interviewTimeSlots.length === 0) return filtered
+    updateGeneralApplicationOverlayKey<string[]>(
+      'application.volunteer.interview.selectedSlotKeys',
+      prev => {
+        const availableKeys = new Set(interviewTimeSlots.map(slot => slot.key))
+        const currentSlots = prev ?? []
+        const filtered = currentSlots.filter(key => availableKeys.has(key))
 
-      if (seed && !seedSlotsAppliedRef.current) {
-        const labelSet = new Set(seed.selectedTimeSlotLabels)
-        const keys = interviewTimeSlots.filter(slot => labelSet.has(slot.label)).map(slot => slot.key)
-        if (keys.length > 0) {
-          seedSlotsAppliedRef.current = true
-          return keys
+        let next: string[]
+        if (filtered.length > 0 || interviewTimeSlots.length === 0) {
+          next = filtered
+        } else if (seed && !seedSlotsAppliedRef.current) {
+          const labelSet = new Set(seed.selectedTimeSlotLabels)
+          const keys = interviewTimeSlots
+            .filter(slot => labelSet.has(slot.label))
+            .map(slot => slot.key)
+          if (keys.length > 0) {
+            seedSlotsAppliedRef.current = true
+            next = keys
+          } else {
+            next = []
+          }
+        } else if (!seed) {
+          next = [interviewTimeSlots[0]?.key ?? '']
+        } else {
+          next = []
         }
-      }
 
-      if (!seed) return [interviewTimeSlots[0]?.key ?? '']
-      return []
-    })
-  }, [interviewTimeSlots, seed, selectedSlotKeys])
+        if (
+          prev != null &&
+          prev.length === next.length &&
+          prev.every((key, index) => key === next[index])
+        ) {
+          return prev
+        }
+        return next
+      }
+    )
+  }, [interviewTimeSlots, seed])
 
   const handleExclusionChange = (state: UnavailableDatesExclusionState) => {
     setExclusionState(state)
