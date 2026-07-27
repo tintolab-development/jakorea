@@ -8,6 +8,8 @@
 
 export interface AdminAccountResponse {
   id?: number;
+  adminAccountId?: number;
+  memberId?: number;
   uuid?: string;
   email?: string;
   name?: string;

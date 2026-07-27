@@ -7,12 +7,12 @@
  */
 
 /**
- * 관리자 신규 등록 요청. MASTER 관리자가 직접 등록하는 관리자 계정은 즉시 ACTIVE 상태가 되며, 초기 비밀번호는 이메일 주소와 동일하게 저장됩니다.
+ * MASTER 관리자가 즉시 ACTIVE 상태로 등록하는 관리자 신규 등록 요청입니다.
  */
 export interface AdminAccountCreateRequest {
-  /** 관리자 로그인 이메일. 초기 비밀번호도 이 이메일 값과 동일하게 설정됩니다. */
+  /** 관리자 로그인 이메일 */
   email?: string;
-  /** 사용하지 않습니다. 관리자 신규 등록 초기 비밀번호는 항상 email 값으로 설정됩니다. */
+  /** 초기 임시 비밀번호. 이메일 주소와 달라야 하며 비밀번호 정책을 충족해야 합니다. */
   rawPassword?: string;
   name?: string;
   phone?: string;

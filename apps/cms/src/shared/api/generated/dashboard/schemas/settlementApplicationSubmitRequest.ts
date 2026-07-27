@@ -5,8 +5,10 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { SettlementApplicationRequestedItemRequest } from './settlementApplicationRequestedItemRequest';
 
 export interface SettlementApplicationSubmitRequest {
   formResponseId?: number;
   attachmentFileIds?: number[];
+  requestedItems?: SettlementApplicationRequestedItemRequest[];
 }

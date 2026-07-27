@@ -54,6 +54,8 @@ export interface UserResponse {
   guardianInfo?: GuardianInfo;
   termsAgreements?: TermsAgreementRow[];
   actionState?: UserDetailActionState;
+  adminAccountId?: number;
+  roleCode?: string;
   memberId?: number;
   uuid?: string;
   status?: string;

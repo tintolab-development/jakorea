@@ -16,4 +16,5 @@ export interface AdminPreRegisterMemberRequest {
   organizationText?: string;
   oneLineIntro?: string;
   external1365Id?: string;
+  role?: string;
 }

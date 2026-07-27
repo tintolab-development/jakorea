@@ -10,6 +10,7 @@ export interface VerificationChallengeResponse {
   sessionId?: number;
   provider?: string;
   providerTxId?: string;
+  statusToken?: string;
   status?: string;
   expiresAt?: string;
 }
