@@ -1,5 +1,8 @@
 import type { InstructorDetailResponse } from '@/shared/api/generated/members/schemas'
+import type { IndividualMemberDetailResponse } from '@/shared/api/generated/members/schemas'
+import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type { MemberDetailResponse } from '@/shared/api/generated/members/schemas'
+import type { SchoolMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type { UserResponse } from '@/shared/api/generated/members/schemas'
 import type { User } from '@/types/user'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
@@ -86,47 +89,133 @@ export function mapMemberDetailToUser(
   }
 
   if (role === 'INSTRUCTOR' && instructorProfile) {
-    user.instructorInfo = {
-      bankName: '',
-      accountNumber: '',
-      accountHolder: detail.name?.trim() ?? '',
-      isBusinessIncome: Boolean(instructorProfile.businessIncomeYn),
-    }
-    const oneLine = instructorProfile.oneLineIntro?.trim()
-    const selfIntro = instructorProfile.selfIntroduction?.trim()
-    if (oneLine) {
-      user.bio = oneLine
-    } else if (selfIntro) {
-      user.bio = selfIntro
-    }
-    if (instructorProfile.homeAddress?.trim()) {
-      user.detailAddress = instructorProfile.homeAddress.trim()
-    }
-    if (instructorProfile.careerText?.trim()) {
-      user.instructorCareerText = instructorProfile.careerText.trim()
-    }
-    if (selfIntro) {
-      user.instructorSelfIntroduction = selfIntro
-    }
-    const activityTypes = (instructorProfile.activityTypes ?? []).filter(Boolean)
-    if (activityTypes.length > 0) {
-      user.affiliation = activityTypes.join(', ')
-    }
-    user.listMetrics = {
-      ...user.listMetrics,
-      instructorFeeGradeLabel:
-        instructorProfile.defaultFeeGrade?.trim() || user.listMetrics?.instructorFeeGradeLabel,
-      jaEvaluationGrade:
-        instructorProfile.defaultJaGrade?.trim() || user.listMetrics?.jaEvaluationGrade,
-      highestEducationLabel:
-        instructorProfile.educationLevel?.trim() || user.listMetrics?.highestEducationLabel,
-      instructorCareerSummaryLabel:
-        instructorProfile.careerText?.trim() || user.listMetrics?.instructorCareerSummaryLabel,
-    }
-    if (instructorProfile.status?.trim()) {
-      user.instructorApprovalStatus = instructorProfile.status.trim()
-    }
+    applyInstructorProfile(user, instructorProfile, detail.name)
   }
 
+  return user
+}
+
+function applyInstructorProfile(
+  user: Omit<User, 'password'>,
+  instructorProfile: InstructorDetailResponse,
+  memberName?: string | null
+) {
+  user.instructorInfo = {
+    bankName: '',
+    accountNumber: '',
+    accountHolder: memberName?.trim() ?? '',
+    isBusinessIncome: Boolean(instructorProfile.businessIncomeYn),
+  }
+  const oneLine = instructorProfile.oneLineIntro?.trim()
+  const selfIntro = instructorProfile.selfIntroduction?.trim()
+  if (oneLine) {
+    user.bio = oneLine
+  } else if (selfIntro) {
+    user.bio = selfIntro
+  }
+  if (instructorProfile.homeAddress?.trim()) {
+    user.detailAddress = instructorProfile.homeAddress.trim()
+  }
+  if (instructorProfile.careerText?.trim()) {
+    user.instructorCareerText = instructorProfile.careerText.trim()
+  }
+  if (selfIntro) {
+    user.instructorSelfIntroduction = selfIntro
+  }
+  const activityTypes = (instructorProfile.activityTypes ?? []).filter(Boolean)
+  if (activityTypes.length > 0) {
+    user.affiliation = activityTypes.join(', ')
+  }
+  user.listMetrics = {
+    ...user.listMetrics,
+    instructorFeeGradeLabel:
+      instructorProfile.defaultFeeGrade?.trim() || user.listMetrics?.instructorFeeGradeLabel,
+    jaEvaluationGrade:
+      instructorProfile.defaultJaGrade?.trim() || user.listMetrics?.jaEvaluationGrade,
+    highestEducationLabel:
+      instructorProfile.educationLevel?.trim() || user.listMetrics?.highestEducationLabel,
+    instructorCareerSummaryLabel:
+      instructorProfile.careerText?.trim() || user.listMetrics?.instructorCareerSummaryLabel,
+  }
+  if (instructorProfile.status?.trim()) {
+    user.instructorApprovalStatus = instructorProfile.status.trim()
+  }
+}
+
+export function mapIndividualMemberDetailToUser(
+  detail: IndividualMemberDetailResponse,
+  options?: { fallbackRole?: User['role'] }
+): Omit<User, 'password'> {
+  const member = detail.member
+  if (!member) {
+    throw new Error('개인 회원 상세 응답에 member가 없습니다.')
+  }
+  const user = mapMemberDetailToUser(member, null, {
+    fallbackRole: options?.fallbackRole ?? 'INDIVIDUAL',
+  })
+  const addressLine = [detail.address?.trim(), detail.addressDetail?.trim()]
+    .filter(Boolean)
+    .join(' ')
+  if (addressLine) user.detailAddress = addressLine
+  if (detail.schoolName?.trim()) {
+    user.affiliation = detail.enrollmentStatus?.trim()
+      ? `${detail.schoolName.trim()} | ${detail.enrollmentStatus.trim()}`
+      : detail.schoolName.trim()
+  }
+  return user
+}
+
+export function mapSchoolMemberDetailToUser(
+  detail: SchoolMemberDetailResponse,
+  options?: { fallbackRole?: User['role'] }
+): Omit<User, 'password'> {
+  const member = detail.member
+  if (!member) {
+    throw new Error('학교 회원 상세 응답에 member가 없습니다.')
+  }
+  const user = mapMemberDetailToUser(member, null, {
+    fallbackRole: options?.fallbackRole ?? 'SCHOOL',
+  })
+  const schoolName = detail.organizationName?.trim() || user.schoolInfo?.schoolName || user.name
+  const address = [detail.address?.trim(), detail.addressDetail?.trim()].filter(Boolean).join(' ')
+  user.role = 'SCHOOL'
+  user.schoolInfo = {
+    schoolName,
+    address,
+    ...(detail.position?.trim() ? { position: detail.position.trim() } : {}),
+  }
+  user.name = schoolName
+  return user
+}
+
+export function mapInstructorMemberDetailToUser(
+  detail: InstructorMemberDetailResponse,
+  options?: { fallbackRole?: User['role'] }
+): Omit<User, 'password'> {
+  const member = detail.member
+  if (!member) {
+    throw new Error('강사 회원 상세 응답에 member가 없습니다.')
+  }
+  const profile = detail.instructorProfile ?? null
+  const user = mapMemberDetailToUser(member, profile, {
+    fallbackRole: options?.fallbackRole ?? 'INSTRUCTOR',
+  })
+  user.role = 'INSTRUCTOR'
+  if (!user.instructorInfo) {
+    user.instructorInfo = {
+      bankName: detail.bankName?.trim() ?? '',
+      accountNumber: detail.accountNumber?.trim() ?? '',
+      accountHolder: detail.accountHolder?.trim() ?? member.name?.trim() ?? '',
+      isBusinessIncome: Boolean(profile?.businessIncomeYn),
+    }
+  } else {
+    if (detail.bankName?.trim()) user.instructorInfo.bankName = detail.bankName.trim()
+    if (detail.accountNumber?.trim()) {
+      user.instructorInfo.accountNumber = detail.accountNumber.trim()
+    }
+    if (detail.accountHolder?.trim()) {
+      user.instructorInfo.accountHolder = detail.accountHolder.trim()
+    }
+  }
   return user
 }

@@ -1,7 +1,22 @@
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
-import type { AdminPreRegisterMemberRequest } from '@/shared/api/generated/members/schemas'
+import type {
+  AdminPreRegisterIndividualRequest,
+  AdminPreRegisterInstructorRequest,
+  AdminPreRegisterMemberRequest,
+  AdminPreRegisterSchoolRequest,
+} from '@/shared/api/generated/members/schemas'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 
+function baseIdentity(request: CreateUserRequest) {
+  const email = request.email.trim()
+  const name = request.name.trim()
+  const phone = request.phone?.trim() || undefined
+  const gender = toApiGender(request.gender)
+  const birthDate = toApiBirthDate(request.birthDate)
+  return { email, name, phone, gender, birthDate }
+}
+
+/** @deprecated 단일 pre-register — 역할별 mapper 사용 권장 */
 export function mapCreateUserRequestToPreRegister(
   request: CreateUserRequest
 ): AdminPreRegisterMemberRequest {
@@ -29,5 +44,84 @@ export function mapCreateUserRequestToPreRegister(
     body.oneLineIntro = request.instructorInfo.accountHolder?.trim() || undefined
   }
 
+  return body
+}
+
+export function mapCreateUserRequestToPreRegisterIndividual(
+  request: CreateUserRequest
+): AdminPreRegisterIndividualRequest {
+  const { email, name, phone, gender, birthDate } = baseIdentity(request)
+  const body: AdminPreRegisterIndividualRequest = { email, name }
+  if (phone) body.phone = phone
+  if (gender) body.gender = gender
+  if (birthDate) body.birthDate = birthDate
+  if (request.address?.trim()) body.address = request.address.trim()
+  if (request.detailAddress?.trim()) body.addressDetail = request.detailAddress.trim()
+  if (request.affiliation?.trim()) body.schoolName = request.affiliation.trim()
+  if (request.schoolEnrollmentStatus) {
+    body.enrollmentStatus = request.schoolEnrollmentStatus
+  }
+  if (request.id1365?.trim()) body.external1365Id = request.id1365.trim()
+  return body
+}
+
+export function mapCreateUserRequestToPreRegisterSchool(
+  request: CreateUserRequest
+): AdminPreRegisterSchoolRequest {
+  const { email, name, phone, gender, birthDate } = baseIdentity(request)
+  const organizationName =
+    request.schoolInfo?.schoolName?.trim() || request.name.trim()
+  const address = request.schoolInfo?.address?.trim() || request.address?.trim() || ''
+  const body: AdminPreRegisterSchoolRequest = {
+    email,
+    name: organizationName || name,
+    organizationName,
+    address,
+  }
+  if (phone) body.phone = phone
+  if (gender) body.gender = gender
+  if (birthDate) body.birthDate = birthDate
+  if (request.detailAddress?.trim()) body.addressDetail = request.detailAddress.trim()
+  if (request.schoolInfo?.position?.trim()) body.position = request.schoolInfo.position.trim()
+  if (request.neisCode?.trim()) body.neisCode = request.neisCode.trim()
+  if (request.regionSido?.trim()) body.regionSido = request.regionSido.trim()
+  if (request.regionSigungu?.trim()) body.regionSigungu = request.regionSigungu.trim()
+  if (request.zipCode?.trim()) body.zipCode = request.zipCode.trim()
+  return body
+}
+
+export function mapCreateUserRequestToPreRegisterInstructor(
+  request: CreateUserRequest
+): AdminPreRegisterInstructorRequest {
+  const { email, name, phone, gender, birthDate } = baseIdentity(request)
+  const body: AdminPreRegisterInstructorRequest = { email, name }
+  if (phone) body.phone = phone
+  if (gender) body.gender = gender
+  if (birthDate) body.birthDate = birthDate
+  if (request.instructorType?.trim()) body.instructorType = request.instructorType.trim()
+  if (request.address?.trim()) body.homeAddress = request.address.trim()
+  if (request.detailAddress?.trim()) body.homeAddressDetail = request.detailAddress.trim()
+  if (request.oneLineIntro?.trim()) body.oneLineIntro = request.oneLineIntro.trim()
+  if (request.careerText?.trim()) body.careerText = request.careerText.trim()
+  if (request.selfIntroduction?.trim()) body.selfIntroduction = request.selfIntroduction.trim()
+  if (request.id1365?.trim()) body.external1365Id = request.id1365.trim()
+  if (request.instructorInfo) {
+    const bankName = request.instructorInfo.bankName?.trim()
+    const accountNumber = request.instructorInfo.accountNumber?.trim()
+    const accountHolder = request.instructorInfo.accountHolder?.trim()
+    if (bankName) body.bankName = bankName
+    if (accountNumber) body.accountNumber = accountNumber
+    if (accountHolder) body.accountHolder = accountHolder
+    body.businessIncome = request.instructorInfo.isBusinessIncome
+    if (bankName) {
+      body.bankAccounts = [
+        {
+          bankName,
+          ...(accountNumber ? { accountNumber } : {}),
+          ...(accountHolder ? { accountHolder } : {}),
+        },
+      ]
+    }
+  }
   return body
 }

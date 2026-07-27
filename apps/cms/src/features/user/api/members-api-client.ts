@@ -9,11 +9,17 @@ import type {
   AdminAccountCreateRequest,
   AdminAccountResponse,
   AdminAccountVerificationRequest,
+  AdminPreRegisterIndividualRequest,
+  AdminPreRegisterInstructorRequest,
   AdminPreRegisterMemberRequest,
+  AdminPreRegisterSchoolRequest,
+  AdminPrivacyUnmaskRequest,
   AdminRoleChangeRequest,
   AdminRolePermissionMatrixResponse,
   AdminRolePermissionUpdateRequest,
+  IndividualMemberDetailResponse,
   InstructorDetailResponse,
+  InstructorMemberDetailResponse,
   InstructorRoleReviewRequest,
   ListAdminsParams,
   ListInstructorRoleRequestsParams,
@@ -23,6 +29,7 @@ import type {
   PageResponse,
   PageResponseAdminAccountListItemResponse,
   PageResponseInstructorRoleRequestListItemResponse,
+  SchoolMemberDetailResponse,
 } from '@/shared/api/generated/members/schemas'
 import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
 import type { AdminMemberCommentCreateRequest } from '@/shared/api/generated/members/schemas/adminMemberCommentCreateRequest'
@@ -53,8 +60,27 @@ export async function fetchMembersPageRemote(params: ListMembersParams): Promise
   return unwrapApiBody(await membersApi.listMembers(params))
 }
 
+/** @deprecated 역할별 상세 API 사용 권장 */
 export async function fetchMemberDetailRemote(memberId: number): Promise<MemberDetailResponse> {
   return unwrapApiBody(await membersApi.getMemberDetail(memberIdParam(memberId)))
+}
+
+export async function fetchIndividualMemberDetailRemote(
+  memberId: number
+): Promise<IndividualMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.getIndividualMemberDetail(memberId))
+}
+
+export async function fetchSchoolMemberDetailRemote(
+  memberId: number
+): Promise<SchoolMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.getSchoolMemberDetail(memberId))
+}
+
+export async function fetchInstructorMemberDetailRemote(
+  memberId: number
+): Promise<InstructorMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.getInstructorMemberDetail(memberId))
 }
 
 export async function updateMemberBasicInfoRemote(
@@ -168,10 +194,51 @@ export async function fetchMemberExternalIdentifiersRemote(
   return Array.isArray(data) ? data : []
 }
 
+/** @deprecated 역할별 pre-register 사용 권장 */
 export async function preRegisterMemberRemote(
   body: AdminPreRegisterMemberRequest
 ): Promise<MemberWorkflowResponse> {
   return unwrapApiBody(await membersApi.preRegister(body))
+}
+
+export async function preRegisterIndividualRemote(
+  body: AdminPreRegisterIndividualRequest
+): Promise<MemberWorkflowResponse> {
+  return unwrapApiBody(await membersApi.preRegisterIndividual(body))
+}
+
+export async function preRegisterSchoolRemote(
+  body: AdminPreRegisterSchoolRequest
+): Promise<MemberWorkflowResponse> {
+  return unwrapApiBody(await membersApi.preRegisterSchool(body))
+}
+
+export async function preRegisterInstructorRemote(
+  body: AdminPreRegisterInstructorRequest
+): Promise<MemberWorkflowResponse> {
+  return unwrapApiBody(await membersApi.preRegisterInstructor(body))
+}
+
+export async function unmaskIndividualMemberPrivacyRemote(
+  memberId: number,
+  body: AdminPrivacyUnmaskRequest
+): Promise<IndividualMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.unmaskIndividualMemberPrivacy(memberId, body))
+}
+
+export async function unmaskInstructorMemberPrivacyRemote(
+  memberId: number,
+  body: AdminPrivacyUnmaskRequest
+): Promise<InstructorMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.unmaskInstructorMemberPrivacy(memberId, body))
+}
+
+/** SCHOOL 전용 unmask path 없음 — legacy member unmask */
+export async function unmaskMemberPrivacyRemote(
+  memberId: number,
+  body: AdminPrivacyUnmaskRequest
+): Promise<MemberDetailResponse> {
+  return unwrapApiBody(await membersApi.unmaskMemberPrivacy(memberId, body))
 }
 
 export async function deleteMemberRemote(memberId: number, body: AdminMemberDeleteRequest) {

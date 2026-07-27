@@ -427,7 +427,10 @@ export function UserListPage() {
       if (isMembersRemoteEnabled()) {
         ;(async () => {
           try {
-            await fetchUserById(targetId, { memberId: seedUser.memberId })
+            await fetchUserById(targetId, {
+              memberId: seedUser.memberId,
+              role: seedUser.role,
+            })
             if (cancelled) return
             const fetched = useUserStore.getState().usersById[targetId] ?? seedUser
             openDrawer(mergeListUserWithFetchedDetail(seedUser, fetched))
@@ -551,6 +554,7 @@ export function UserListPage() {
         try {
           const fetched = await fetchUserById(user.id, {
             memberId: user.memberId,
+            role: user.role,
           })
           if (fetched) {
             displayUser = mergeListUserWithFetchedDetail(user, fetched)
@@ -580,7 +584,10 @@ export function UserListPage() {
       pendingOpenedUserIdRef.current = userId
 
       try {
-        const fetched = await fetchUserById(userId, { memberId: teacherMemberId })
+        const fetched = await fetchUserById(userId, {
+          memberId: teacherMemberId,
+          role: 'INSTRUCTOR',
+        })
         if (!fetched) {
           pendingOpenedUserIdRef.current = null
           if (schoolReturn) schoolDetailReturnUserRef.current = null
@@ -696,6 +703,10 @@ export function UserListPage() {
           schoolName: values.institutionName.trim(),
           address,
         },
+        neisCode: values.neisCode,
+        regionSido: values.regionSido,
+        regionSigungu: values.regionSigungu,
+        zipCode: values.zipCode,
         isActive: true,
       })
       invalidateList()
@@ -761,6 +772,11 @@ export function UserListPage() {
         address: values.homeAddress.trim() || undefined,
         detailAddress: values.homeAddressDetail.trim() || undefined,
         affiliation: affiliationParts.length > 0 ? affiliationParts.join(' | ') : undefined,
+        instructorType:
+          values.memberType === 'school_teacher' ? 'SCHOOL_TEACHER' : 'GENERAL',
+        oneLineIntro: values.oneLineIntro.trim() || undefined,
+        careerText: values.instructorCareer.trim() || undefined,
+        selfIntroduction: values.freeWrite1.trim() || undefined,
         instructorInfo: {
           bankName: values.bankName.trim(),
           accountNumber: values.accountNumber.trim(),

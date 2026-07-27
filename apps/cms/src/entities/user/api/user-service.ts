@@ -28,12 +28,22 @@ import {
   stripUnsupportedMemberListFilters,
 } from '@/features/user/api/member-remote-capabilities'
 import { mapMemberListItems } from '@/features/user/api/map-member-list-item'
-import { mapMemberDetailToUser } from '@/features/user/api/map-member-detail-to-user'
-import { mapCreateUserRequestToPreRegister } from '@/features/user/api/map-pre-register-request'
+import {
+  mapIndividualMemberDetailToUser,
+  mapInstructorMemberDetailToUser,
+  mapMemberDetailToUser,
+  mapSchoolMemberDetailToUser,
+} from '@/features/user/api/map-member-detail-to-user'
+import {
+  mapCreateUserRequestToPreRegisterIndividual,
+  mapCreateUserRequestToPreRegisterInstructor,
+  mapCreateUserRequestToPreRegisterSchool,
+} from '@/features/user/api/map-pre-register-request'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import {
   mapIsActiveToMemberStatus,
   mapUserRoleToApiRole,
+  resolvePrimaryUserRole,
 } from '@/features/user/api/map-member-role'
 import {
   createMemberCommentRemote,
@@ -41,12 +51,16 @@ import {
   createAdminAccountRemote,
   deleteMemberRemote,
   fetchAdminsPageRemote,
+  fetchIndividualMemberDetailRemote,
+  fetchInstructorMemberDetailRemote,
   fetchMemberCommentsRemote,
   fetchMemberDetailRemote,
   fetchMemberExternalIdentifiersRemote,
-  fetchMemberInstructorProfileRemote,
   fetchMembersPageRemote,
-  preRegisterMemberRemote,
+  fetchSchoolMemberDetailRemote,
+  preRegisterIndividualRemote,
+  preRegisterInstructorRemote,
+  preRegisterSchoolRemote,
   updateMemberBasicInfoRemote,
   updateMemberCommentRemote,
 } from '@/features/user/api/members-api-client'
@@ -551,29 +565,73 @@ function snapshotUserWithoutPassword(userId: UUID): Omit<User, 'password'> | nul
 
 export async function getUserById(
   userId: UUID,
-  options?: { memberId?: number }
+  options?: { memberId?: number; role?: UserRole }
 ): Promise<Omit<User, 'password'> | null> {
   if (isMembersRemoteEnabled()) {
     try {
       const memberId = resolveMemberIdForApi(userId, options)
+      let role = options?.role
+
+      if (!role) {
+        const legacy = await fetchMemberDetailRemote(memberId)
+        role = resolvePrimaryUserRole(legacy.roles)
+        if (role !== 'SCHOOL' && role !== 'INSTRUCTOR' && role !== 'INDIVIDUAL') {
+          const externalIdentifiers = await fetchMemberExternalIdentifiersRemote(memberId).catch(
+            () => []
+          )
+          const user = mapMemberDetailToUser(legacy, null)
+          const id1365 = resolve1365IdFromExternalIdentifiers(
+            externalIdentifiers,
+            legacy.external1365Id
+          )
+          if (id1365) user.id1365 = id1365
+          return user
+        }
+      }
+
+      if (role === 'SCHOOL') {
+        const detail = await fetchSchoolMemberDetailRemote(memberId)
+        return mapSchoolMemberDetailToUser(detail, { fallbackRole: 'SCHOOL' })
+      }
+
+      if (role === 'INSTRUCTOR') {
+        const [detail, externalIdentifiers] = await Promise.all([
+          fetchInstructorMemberDetailRemote(memberId),
+          fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
+        ])
+        const user = mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
+        const id1365 = resolve1365IdFromExternalIdentifiers(
+          externalIdentifiers,
+          detail.member?.external1365Id
+        )
+        if (id1365) user.id1365 = id1365
+        return user
+      }
+
+      if (role === 'INDIVIDUAL') {
+        const [detail, externalIdentifiers] = await Promise.all([
+          fetchIndividualMemberDetailRemote(memberId),
+          fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
+        ])
+        const user = mapIndividualMemberDetailToUser(detail, { fallbackRole: 'INDIVIDUAL' })
+        const id1365 = resolve1365IdFromExternalIdentifiers(
+          externalIdentifiers,
+          detail.member?.external1365Id
+        )
+        if (id1365) user.id1365 = id1365
+        return user
+      }
+
       const detail = await fetchMemberDetailRemote(memberId)
-      const isInstructor = (detail.roles ?? []).some(
-        r => String(r).toUpperCase() === 'INSTRUCTOR'
+      const externalIdentifiers = await fetchMemberExternalIdentifiersRemote(memberId).catch(
+        () => []
       )
-      const [instructorProfile, externalIdentifiers] = await Promise.all([
-        isInstructor
-          ? fetchMemberInstructorProfileRemote(memberId).catch(() => null)
-          : Promise.resolve(null),
-        fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
-      ])
-      const user = mapMemberDetailToUser(detail, instructorProfile)
+      const user = mapMemberDetailToUser(detail, null, { fallbackRole: role })
       const id1365 = resolve1365IdFromExternalIdentifiers(
         externalIdentifiers,
         detail.external1365Id
       )
-      if (id1365) {
-        user.id1365 = id1365
-      }
+      if (id1365) user.id1365 = id1365
       return user
     } catch (error) {
       throw new Error(getMemberApiErrorMessage(error, '회원 상세를 불러오지 못했습니다.'))
@@ -676,6 +734,38 @@ export interface CreateUserRequest {
   affiliation?: string
   grade?: string
   schoolEnrollmentStatus?: 'ENROLLED' | 'NOT_ENROLLED'
+  neisCode?: string
+  regionSido?: string
+  regionSigungu?: string
+  zipCode?: string
+  instructorType?: string
+  oneLineIntro?: string
+  careerText?: string
+  selfIntroduction?: string
+}
+
+async function fetchCreatedMemberAsUser(
+  memberId: number,
+  role: UserRole
+): Promise<Omit<User, 'password'>> {
+  if (role === 'SCHOOL') {
+    return mapSchoolMemberDetailToUser(await fetchSchoolMemberDetailRemote(memberId), {
+      fallbackRole: 'SCHOOL',
+    })
+  }
+  if (role === 'INSTRUCTOR') {
+    return mapInstructorMemberDetailToUser(await fetchInstructorMemberDetailRemote(memberId), {
+      fallbackRole: 'INSTRUCTOR',
+    })
+  }
+  if (role === 'INDIVIDUAL') {
+    return mapIndividualMemberDetailToUser(await fetchIndividualMemberDetailRemote(memberId), {
+      fallbackRole: 'INDIVIDUAL',
+    })
+  }
+  return mapMemberDetailToUser(await fetchMemberDetailRemote(memberId), null, {
+    fallbackRole: role,
+  })
 }
 
 export async function createUser(request: CreateUserRequest): Promise<Omit<User, 'password'>> {
@@ -707,12 +797,20 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
         }
       }
 
-      const body = mapCreateUserRequestToPreRegister(request)
-      const created = await preRegisterMemberRemote(body)
+      const created =
+        request.role === 'SCHOOL'
+          ? await preRegisterSchoolRemote(mapCreateUserRequestToPreRegisterSchool(request))
+          : request.role === 'INSTRUCTOR'
+            ? await preRegisterInstructorRemote(
+                mapCreateUserRequestToPreRegisterInstructor(request)
+              )
+            : await preRegisterIndividualRemote(
+                mapCreateUserRequestToPreRegisterIndividual(request)
+              )
+
       const memberId = created.memberId
       if (memberId != null && !Number.isNaN(memberId)) {
-        const detail = await fetchMemberDetailRemote(memberId)
-        return mapMemberDetailToUser(detail, null)
+        return await fetchCreatedMemberAsUser(memberId, request.role)
       }
       if (created.memberUuid?.trim()) {
         return {

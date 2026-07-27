@@ -166,7 +166,10 @@ export class MemberListCrudPage {
         if (this.kind === 'admins') {
           return /\/api\/admin\/admin-accounts\/?$/.test(pathname)
         }
-        return /\/api\/admin\/users\/pre-register\/?$/.test(pathname)
+        return (
+          /\/api\/admin\/users\/pre-register\/(individual|school|instructor)\/?$/.test(pathname) ||
+          /\/api\/admin\/users\/pre-register\/?$/.test(pathname)
+        )
       },
       { timeout: 60_000 }
     )

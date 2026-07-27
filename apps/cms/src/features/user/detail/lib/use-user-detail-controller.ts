@@ -160,7 +160,8 @@ export function useUserDetailController({
       if (displayUser?.memberId != null) return String(displayUser.memberId)
       return displayUser?.id
     },
-    resetDeps: [open, displayUser?.id, displayUser?.memberId],
+    resolveMemberRole: () => displayUser?.role,
+    resetDeps: [open, displayUser?.id, displayUser?.memberId, displayUser?.role],
     controlMode: 'hideWhenRevealed',
     modalZIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
   })
