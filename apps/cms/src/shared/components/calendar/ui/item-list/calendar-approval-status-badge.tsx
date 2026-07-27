@@ -11,7 +11,7 @@ export function CalendarApprovalStatusBadge({ status }: { status: ApprovalStatus
 
   return (
     <span
-      className="calendar-approval-status-badge"
+      className="calendar-outline-status-badge calendar-approval-status-badge"
       style={{
         color: colors.text,
         borderColor: colors.border,

@@ -244,8 +244,9 @@ parser도 위 값을 다시 강제하고 아래 봉사자 필드를 제거합니
 | 단계 | templateCode |
 |------|--------------|
 | 프로그램 공통정보 | `registration-economy` |
+| 학교/기관 모집 | `recruitment-economy` |
 | 학교/기관 신청 | `application-economy` |
-| 학교/강사 모집 | 일반 등록 flow의 해당 모집 template를 재사용하며 participant flag로 학교·강사만 노출 |
+| 강사 모집 | `recruitment-instructor` (공통) — participant flag로 학교·강사만 노출 |
 
 실제 완료 순서:
 
@@ -267,7 +268,7 @@ parser도 위 값을 다시 강제하고 아래 봉사자 필드를 제거합니
 - FE는 `default-form-bindings/apply`나 단건 binding POST를 직접 호출하지 않습니다.
 - POST의 `autoApplyDefaultFormBindings=true`에 따라 백엔드가 published 1사1교 기본 binding을 적용해야 합니다.
 
-gate를 켜기 전에 백엔드는 `registration-economy`, `application-economy` 및 학교/강사 모집 양식의 시드·기본 binding을 제공해야 합니다.
+gate를 켜기 전에 백엔드는 `registration-economy`, `recruitment-economy`, `application-economy` 및 강사 모집 양식의 시드·기본 binding을 제공해야 합니다.
 
 공통 등록 원칙과 form-template API는 [programs-registration-flow-api-backend-handoff.md](./programs-registration-flow-api-backend-handoff.md)를 참조합니다.
 

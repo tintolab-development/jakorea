@@ -22,9 +22,15 @@ import {
  */
 export type ProgramApplicationTargetMode = 'ORGANIZATION' | 'INDIVIDUAL' | 'BOTH'
 
-export type ProgramWriteRequestBody = (ProgramCreateRequest | ProgramUpdateRequest) & {
+export type ProgramCreateRequestBody = ProgramCreateRequest & {
   applicationTargetMode?: ProgramApplicationTargetMode
 }
+
+export type ProgramUpdateRequestBody = ProgramUpdateRequest & {
+  applicationTargetMode?: ProgramApplicationTargetMode
+}
+
+export type ProgramWriteRequestBody = ProgramCreateRequestBody | ProgramUpdateRequestBody
 
 export function mapAudienceToApplicationTargetMode(
   audience: Program['generalProgramAudience'],
@@ -41,6 +47,20 @@ export function mapAudienceToApplicationTargetMode(
   if (hasOrg) return 'ORGANIZATION'
   // 미설정 시 공통정보 폼 기본값(organization)과 동일
   return 'ORGANIZATION'
+}
+
+/**
+ * OpenAPI `programType` — 기관/개인 대분류에 맞춰 GENERAL_* 를 보낸다.
+ * BE는 `GENERAL` + `applicationTargetMode=INDIVIDUAL` 조합을 거부하는 경우가 있음.
+ */
+export function resolveGeneralProgramCreateProgramType(
+  audience: Program['generalProgramAudience'],
+  participantTypes?: Program['generalParticipantTypes']
+): 'GENERAL' | 'GENERAL_ORGANIZATION' | 'GENERAL_INDIVIDUAL' {
+  const mode = mapAudienceToApplicationTargetMode(audience, participantTypes)
+  if (mode === 'INDIVIDUAL') return 'GENERAL_INDIVIDUAL'
+  if (mode === 'ORGANIZATION') return 'GENERAL_ORGANIZATION'
+  return 'GENERAL'
 }
 
 const DEFAULT_SPONSOR_ID = 'sponsor-default'
@@ -241,8 +261,12 @@ function mapProgramRoundsToRequest(program: Program): ProgramCreateRequest['roun
   }))
 }
 
-function mapProgramCoreFieldsToRequest(program: Program): ProgramWriteRequestBody {
+function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBody {
   const targetLevel = program.targetLevels?.[0] ?? program.targetLevel
+  const applicationTargetMode = mapAudienceToApplicationTargetMode(
+    program.generalProgramAudience,
+    program.generalParticipantTypes
+  )
 
   return {
     sponsorId: program.sponsorId,
@@ -295,22 +319,23 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramWriteRequestBod
     recruitmentGuide: program.recruitmentGuide,
     learningSupportContent: program.learningSupportContent,
     attachmentFileNames: program.attachmentFileNames,
+    // BE 필수 — serviceDetailJson 앞쪽에 둬 로깅·디버깅 시 잘리지 않게
+    applicationTargetMode,
     rounds: mapProgramRoundsToRequest(program),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
-    applicationTargetMode: mapAudienceToApplicationTargetMode(
-      program.generalProgramAudience,
-      program.generalParticipantTypes
-    ),
   }
 }
 
-export function mapGeneralProgramToCreateRequest(program: Program): ProgramWriteRequestBody {
+export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreateRequestBody {
   const core = mapProgramCoreFieldsToRequest(program)
   return {
     ...core,
     // OpenAPI `sponsorId`는 string — 숫자 id가 number로 직렬화되면 BE 검증/DB 오류 유발 가능
     sponsorId: program.sponsorId != null ? String(program.sponsorId) : undefined,
-    programType: 'GENERAL',
+    programType: resolveGeneralProgramCreateProgramType(
+      program.generalProgramAudience,
+      program.generalParticipantTypes
+    ),
     businessStartDate: toRequestDate(program.startDate),
     businessEndDate: toRequestDate(program.endDate),
     autoApplyDefaultFormBindings: true,
@@ -320,7 +345,7 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramWrite
 export function mapGeneralProgramToUpdateRequest(
   program: Program,
   patch?: Partial<Program>
-): ProgramWriteRequestBody {
+): ProgramUpdateRequestBody {
   const merged = patch ? { ...program, ...patch } : program
   return mapProgramCoreFieldsToRequest(merged)
 }

@@ -140,6 +140,10 @@ export type RenderFormParagraphBodyOptions = {
   showInstitutionApplicationLimits?: boolean
   applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
+  /** 1사1교_참여 기관 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  economyRecruitFormInstitution?: boolean
+  /** 교육받은 교사_참여 기관 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  trainedTeachersRecruitFormInstitution?: boolean
   /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
@@ -148,6 +152,8 @@ export type RenderFormParagraphBodyOptions = {
   recruitFormInstructor?: boolean
   /** 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   recruitFormVolunteer?: boolean
+  /** Gemini 찾아가는 연수 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  geminiRecruitForm?: boolean
   /** UJAT 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormVolunteer?: boolean
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
@@ -344,10 +350,15 @@ export function renderFormParagraphBody(
             options?.applicantRecruitInstitutionLayoutVariant
           }
           applicantRecruitInstitutionDefaults={options?.applicantRecruitInstitutionDefaults}
+          economyRecruitFormInstitution={options?.economyRecruitFormInstitution}
+          trainedTeachersRecruitFormInstitution={
+            options?.trainedTeachersRecruitFormInstitution
+          }
           ujatRecruitFormInstitution={options?.ujatRecruitFormInstitution}
           applicantRecruitFormIndividual={options?.applicantRecruitFormIndividual}
           recruitFormInstructor={options?.recruitFormInstructor}
           recruitFormVolunteer={options?.recruitFormVolunteer}
+          geminiRecruitForm={options?.geminiRecruitForm}
           ujatRecruitFormVolunteer={options?.ujatRecruitFormVolunteer}
           ujatRecruitParagraphProps={options?.ujatRecruitParagraphProps}
           programApplicationFormInstructor={

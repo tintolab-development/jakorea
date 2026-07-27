@@ -118,9 +118,12 @@ export function ParticipatingInstructorLectureReportsSection({
   const { showAlert } = useCmsAlert()
   const lectureReports = useProgramLectureReports(program?.id)
   const mockRows = useMemo(() => buildParticipatingInstructorLectureReportRows(), [])
-  const rows = lectureReports.isRemoteDataSource && lectureReports.rows != null
-    ? lectureReports.rows
-    : mockRows
+  // remote loading 중에는 mock을 쓰지 않음 (건수·테이블 플래시 방지). 실패/OFF만 mock 폴백.
+  const rows = lectureReports.loading
+    ? []
+    : lectureReports.isRemoteDataSource && lectureReports.rows != null
+      ? lectureReports.rows
+      : mockRows
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewContext, setPreviewContext] = useState<LectureReportPreviewContext | null>(null)
   const [bulkExportQueue, setBulkExportQueue] = useState<LectureReportPreviewContext[]>([])
@@ -304,6 +307,16 @@ export function ParticipatingInstructorLectureReportsSection({
     [handleOpenPreview]
   )
 
+  if (lectureReports.loading) {
+    return (
+      <div className="school-detail-fullpage-view__instructor-section">
+        <div className="flex min-h-[160px] items-center justify-center py-8" role="status">
+          <Spin size="large" />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="school-detail-fullpage-view__instructor-section">
       <FormCertificatePdfExportOverlay visible={bulkExportActive} />
@@ -327,21 +340,15 @@ export function ParticipatingInstructorLectureReportsSection({
         </div>
       </div>
       <div className="participating-institutions-section__table-wrap">
-        {lectureReports.loading ? (
-          <div className="flex min-h-[160px] items-center justify-center py-8">
-            <Spin size="large" />
-          </div>
-        ) : (
-          <Table<ParticipatingInstructorLectureReportRow>
-            className="participating-institutions-section__table cms-data-table"
-            rowKey="id"
-            size="middle"
-            pagination={false}
-            scroll={{ x: 1280 }}
-            columns={columns}
-            dataSource={rows}
-          />
-        )}
+        <Table<ParticipatingInstructorLectureReportRow>
+          className="participating-institutions-section__table cms-data-table"
+          rowKey="id"
+          size="middle"
+          pagination={false}
+          scroll={{ x: 1280 }}
+          columns={columns}
+          dataSource={rows}
+        />
       </div>
       <LectureReportIssuancePreviewModal
         open={previewOpen}

@@ -5,7 +5,8 @@
 /* eslint-disable react-hooks/incompatible-library -- React Hook Form watch 사용 */
 
 import React from 'react'
-import { Form, Select, Input, Button, Space, Switch } from 'antd'
+import { Form, Select, Input, Space, Switch } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { applicationPathSchema, type ApplicationPathFormData } from '@/entities/application-path/model/schema'
@@ -157,10 +158,12 @@ export function ApplicationPathForm({
 
       <Form.Item>
         <Space>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <CmsButton type="submit" loading={loading}>
             {path ? '수정' : '등록'}
-          </Button>
-          <Button onClick={onCancel}>취소</Button>
+          </CmsButton>
+          <CmsButton variant="secondary" onClick={onCancel}>
+            취소
+          </CmsButton>
         </Space>
       </Form.Item>
     </Form>

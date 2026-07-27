@@ -1,5 +1,6 @@
 {
   "templateCode": "recruitment-instructor",
+  "templateName": "공통_강사 모집 폼",
   "formType": "WRITING",
   "category": "RECRUITMENT",
   "schemaJson": {

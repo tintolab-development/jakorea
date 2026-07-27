@@ -337,7 +337,12 @@ function renderBody(
           applicantRecruitInstitutionDefaults={
             paragraphBodyOptions?.applicantRecruitInstitutionDefaults
           }
+          economyRecruitFormInstitution={paragraphBodyOptions?.economyRecruitFormInstitution}
+          trainedTeachersRecruitFormInstitution={
+            paragraphBodyOptions?.trainedTeachersRecruitFormInstitution
+          }
           applicantRecruitFormIndividual={paragraphBodyOptions?.applicantRecruitFormIndividual}
+          geminiRecruitForm={paragraphBodyOptions?.geminiRecruitForm}
           programApplicationFormInstructor={paragraphBodyOptions?.programApplicationFormInstructor}
         />
       )

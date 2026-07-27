@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react'
-import { Button } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { SafetyOutlined } from '@ant-design/icons'
 import { PermissionRequestModal } from './permission-request-modal'
 import type { PermissionAction } from '@/types/permission-request'
@@ -28,12 +28,9 @@ export function PermissionRequestButton({
 
   return (
     <>
-      <Button
-        icon={<SafetyOutlined />}
-        onClick={() => setModalOpen(true)}
-      >
+      <CmsButton variant="secondary" icon={<SafetyOutlined />} onClick={() => setModalOpen(true)}>
         권한 요청
-      </Button>
+      </CmsButton>
 
       <PermissionRequestModal
         open={modalOpen}

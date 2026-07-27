@@ -20,6 +20,7 @@ import {
 import { sortGeneralVolunteerInterview2Applicants } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { mapGeneralVolunteerAssignedInterviewToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
 import { useGeneralInterview2EffectiveStatusTick } from '@/features/program/general/hooks/use-general-interview2-effective-status-tick'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import {
   GENERAL_INTERVIEW2_BULK_PASS_TYPE_OPTIONS,
@@ -63,7 +64,14 @@ export function useGeneralVolunteerInterview2({
     )
   }, [programId, subjectKind])
 
-  const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() => loadRows())
+  // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
+  const remoteSeed =
+    subjectKind === 'volunteer' &&
+    shouldUseGeneralApplicationsRemoteApi() &&
+    Boolean(programId)
+  const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() =>
+    remoteSeed ? [] : loadRows()
+  )
   const volunteerRemote = useGeneralVolunteerApplicationsRemote({
     programId,
     stage: 'interview2',

@@ -1,5 +1,6 @@
 {
   "templateCode": "agreement-portrait",
+  "templateName": "초상권 수집/이용 동의",
   "formType": "WRITING",
   "category": "AGREEMENT",
   "schemaJson": {

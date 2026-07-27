@@ -3,8 +3,8 @@
  * Phase 4.3: 모집 종료 후 추가 배정 (FR-F02)
  */
 
-import { CmsRadio } from '@/shared/ui'
-import { Modal, Form, Select, Input, Space } from 'antd'
+import { CmsRadio, ContentModal, CmsButton } from '@/shared/ui'
+import { Form, Select, Input, Space } from 'antd'
 import { useForm, Controller } from 'react-hook-form'
 import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -182,16 +182,24 @@ export function ManualAssignmentModal({
     onCancel()
   }
 
+  const footer = (
+    <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+      <CmsButton variant="secondary" onClick={handleCancel} disabled={loading}>
+        취소
+      </CmsButton>
+      <CmsButton variant="primary" onClick={handleSubmit(onSubmit)} loading={loading}>
+        배정하기
+      </CmsButton>
+    </Space>
+  )
+
   return (
-    <Modal
+    <ContentModal
       title="추가 배정"
       open={open}
-      onOk={handleSubmit(onSubmit)}
       onCancel={handleCancel}
-      okText="배정하기"
-      cancelText="취소"
-      confirmLoading={loading}
-      width={600}
+      footer={footer}
+      size="compact"
     >
       <Form layout="vertical">
         {!fixedProgramId && (
@@ -305,6 +313,6 @@ export function ManualAssignmentModal({
           <TextArea {...register('notes')} placeholder="비고를 입력해주세요 (선택사항)" rows={3} />
         </Form.Item>
       </Form>
-    </Modal>
+    </ContentModal>
   )
 }

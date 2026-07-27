@@ -106,12 +106,14 @@ export function useGeneralProgramPosts(programId: string | undefined) {
 
   const posts = useMemo(() => {
     if (!remoteEnabled || !programId) return null
-    return (query.data ?? []).map(item => mapPostListItem(item, programId))
+    // 로딩 중에는 []가 아니라 null — empty→API 플래시·스피너 스킵 방지
+    if (query.data === undefined) return null
+    return query.data.map(item => mapPostListItem(item, programId))
   }, [programId, query.data, remoteEnabled])
 
   return {
     posts,
-    loading: remoteEnabled ? query.isFetching : false,
+    loading: remoteEnabled ? query.isFetching && query.data === undefined : false,
     isRemoteDataSource: remoteEnabled && !query.isError,
     invalidatePosts: async () => {
       if (!programId) return

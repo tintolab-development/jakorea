@@ -219,7 +219,9 @@ export function useProgressInstructorList({
     handleSettlementStatusChange,
     handleInstructorDeleteClick,
     handleInstructorDeleteConfirm,
-    applicationsLoading: remoteEnabled ? remoteQuery.isFetching : false,
+    applicationsLoading: remoteEnabled
+      ? remoteQuery.isFetching && remoteQuery.data === undefined
+      : false,
     isRemoteDataSource: remoteEnabled,
   }
 }

@@ -98,6 +98,18 @@ const CURRICULUM_UNIT = 'E2E 1차시 단원 — 기업가정신 기초'
 const CURRICULUM_CONTENT = 'E2E 교육 내용 — 창업 마인드셋과 경제 기초를 학습합니다.'
 const SCHEDULE_DETAIL_NAME = 'E2E 세부 일정 — 오리엔테이션'
 
+/** 사업/프로그램 운영(시작) 기간 — 현재일 기준 +2개월 (수정 가능 정책 유지) */
+const OPERATION_MONTH_OFFSET = 2
+/** 모집·참여 기간 — 시작기간 기준 1개월 전 (= 현재일 +1개월) */
+const RECRUIT_MONTH_OFFSET = 1
+const OPERATION_DATE_OPTS = { futureMonthClicks: OPERATION_MONTH_OFFSET } as const
+const RECRUIT_DATE_OPTS = { futureMonthClicks: RECRUIT_MONTH_OFFSET } as const
+/** 발표일 — 모집(+1) 이후·운영(+2) 이전 */
+const ANNOUNCE_DATE_OPTS = {
+  futureMonthClicks: RECRUIT_MONTH_OFFSET,
+  preferLaterDays: true,
+} as const
+
 export type RegistrationCompleteResult = {
   programId: string
   programTitle: string
@@ -173,7 +185,12 @@ export class GeneralProgramRegistrationPage {
     await fillByPlaceholder(this.page, '모집 시 노출될 프로그램명을 입력하세요', PROGRAM_PUBLIC_NAME)
 
     await selectByPlaceholder(this.page, '세부 프로그램명을 선택하세요')
-    await fillParagraphDateByPlaceholder(this.page, '사업 운영 기간을 선택하세요', 'range')
+    await fillParagraphDateByPlaceholder(
+      this.page,
+      '사업 운영 기간을 선택하세요',
+      'range',
+      OPERATION_DATE_OPTS
+    )
 
     // 대분류 — 개인/학교·기관 상호 배타 + 강사·봉사자
     if (audience === 'organization') {
@@ -186,8 +203,9 @@ export class GeneralProgramRegistrationPage {
 
     await selectByPlaceholder(this.page, '사업 분야를 선택하세요', '기업가정신')
     await selectNearLabelIfVisible(this.page, '사업 분야', '기업가정신')
-    // draft UI에만 후원사가 보이고 editor sponsorId가 비어 있는 경우 대비 — 항상 강제 재선택
-    await selectNearLabel(this.page, '후원사', undefined, { force: true })
+    // 복원된 정상 후원사를 임의의 다른 옵션으로 바꾸지 않는다.
+    // 값이 없을 때만 첫 번째 선택 가능한 후원사를 고른다.
+    await selectNearLabel(this.page, '후원사')
     const sponsorField = this.page
       .locator('.detail-info-form__field')
       .filter({
@@ -206,12 +224,6 @@ export class GeneralProgramRegistrationPage {
     expect(sponsorSelected).not.toContain('선택하세요')
     expect(sponsorSelected).not.toBe('전체')
 
-    await this.page
-      .waitForResponse(
-        res => /sponsor/i.test(res.url()) && /contact/i.test(res.url()) && res.ok(),
-        { timeout: 15_000 }
-      )
-      .catch(() => undefined)
     await selectNearLabelIfVisible(this.page, '후원사 담당자')
 
     await checkRadioIfVisible(this.page, '기관 안')
@@ -263,9 +275,25 @@ export class GeneralProgramRegistrationPage {
 
     await clickSectionNavIfVisible(this.page, '교육 진행 일정 설정')
     await checkRadioIfVisible(this.page, '날짜 지정')
-    await fillParagraphDateByPlaceholder(this.page, '일정을 선택하세요', 'single')
-    await fillParagraphDateByPlaceholder(this.page, '날짜를 선택하세요', 'single')
-    await fillParagraphDateByPlaceholder(this.page, '기간을 선택하세요', 'range')
+    // 교육 진행 일정 — 운영(시작) 기간(+2개월)과 맞춤
+    await fillParagraphDateByPlaceholder(
+      this.page,
+      '일정을 선택하세요',
+      'single',
+      OPERATION_DATE_OPTS
+    )
+    await fillParagraphDateByPlaceholder(
+      this.page,
+      '날짜를 선택하세요',
+      'single',
+      OPERATION_DATE_OPTS
+    )
+    await fillParagraphDateByPlaceholder(
+      this.page,
+      '기간을 선택하세요',
+      'range',
+      OPERATION_DATE_OPTS
+    )
 
     await clickSectionNavIfVisible(this.page, '사업 KPI 목표')
     await fillAllByPlaceholder(this.page, '목표값 입력', KPI_VALUE)
@@ -296,7 +324,12 @@ export class GeneralProgramRegistrationPage {
     }
     await fillAllByPlaceholder(this.page, '세부 일정명을 작성하세요', SCHEDULE_DETAIL_NAME)
     await fillAllByPlaceholder(this.page, '행사 일정명을 작성하세요', SCHEDULE_DETAIL_NAME)
-    await fillParagraphDateByPlaceholder(this.page, '일정을 선택하세요', 'single')
+    await fillParagraphDateByPlaceholder(
+      this.page,
+      '일정을 선택하세요',
+      'single',
+      OPERATION_DATE_OPTS
+    )
     // 진행 시간 — ParagraphTimePicker(버튼 트리거)
     const timeTriggers = this.page
       .locator('.paragraph-time-picker__trigger:visible')
@@ -334,7 +367,12 @@ export class GeneralProgramRegistrationPage {
     }
     await checkRadioIfVisible(this.page, '게시')
 
-    await fillParagraphDateByPlaceholder(this.page, '프로그램 운영 기간을 선택하세요', 'range')
+    await fillParagraphDateByPlaceholder(
+      this.page,
+      '프로그램 운영 기간을 선택하세요',
+      'range',
+      OPERATION_DATE_OPTS
+    )
     await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
     await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
     await fillByPlaceholderIfVisible(
@@ -347,9 +385,19 @@ export class GeneralProgramRegistrationPage {
       '상세 모집 대상을 입력하세요',
       EDUCATION_TARGET_DETAIL
     )
-    await fillParagraphDateByPlaceholder(this.page, '모집 기간을 선택하세요', 'range')
-    await fillParagraphDateByPlaceholder(this.page, '합격자 발표일', 'single')
-    await fillParagraphDateByPlaceholder(this.page, '발표일', 'single')
+    await fillParagraphDateByPlaceholder(
+      this.page,
+      '모집 기간을 선택하세요',
+      'range',
+      RECRUIT_DATE_OPTS
+    )
+    await fillParagraphDateByPlaceholder(
+      this.page,
+      '합격자 발표일',
+      'single',
+      ANNOUNCE_DATE_OPTS
+    )
+    await fillParagraphDateByPlaceholder(this.page, '발표일', 'single', ANNOUNCE_DATE_OPTS)
     await fillByPlaceholderIfVisible(this.page, '발표 방법 안내', ANNOUNCE_METHOD)
     await fillByPlaceholderIfVisible(this.page, '담당 문의처', CONTACT_NAME)
     await fillByPlaceholderIfVisible(this.page, '문의처 전화번호', CONTACT_TEL)
@@ -387,13 +435,28 @@ export class GeneralProgramRegistrationPage {
   }
 
   private async fillRecruitVolunteerTab() {
-    await this.fillRecruitSharedFields({ interviewYes: false })
-    await checkRadioIfVisible(this.page, '면접 있음')
-    await fillAllParagraphDatesByPlaceholder(this.page, '모집 기간을 선택하세요', 'range')
-    await fillParagraphDateByPlaceholder(this.page, '발표일', 'single')
-    await fillParagraphDateByPlaceholder(this.page, '면접 기간을 선택하세요', 'range')
+    // 면접 유무 전환 시 봉사자 모집 폼이 재구성되므로, 먼저 「면접 있음」을 선택한 뒤 채운다.
+    await this.fillRecruitSharedFields({ interviewYes: true })
+    await fillAllParagraphDatesByPlaceholder(
+      this.page,
+      '모집 기간을 선택하세요',
+      'range',
+      RECRUIT_DATE_OPTS
+    )
+    await fillParagraphDateByPlaceholder(this.page, '발표일', 'single', ANNOUNCE_DATE_OPTS)
+    await fillParagraphDateByPlaceholder(
+      this.page,
+      '면접 기간을 선택하세요',
+      'range',
+      RECRUIT_DATE_OPTS
+    )
     await fillByPlaceholderIfVisible(this.page, '면접 유형', '대면 면접')
-    await fillParagraphDateByPlaceholder(this.page, '합격자 발표일', 'single')
+    await fillParagraphDateByPlaceholder(
+      this.page,
+      '합격자 발표일',
+      'single',
+      ANNOUNCE_DATE_OPTS
+    )
     await fillAllByPlaceholder(this.page, '발표 방법 안내', ANNOUNCE_METHOD)
   }
 
@@ -438,16 +501,6 @@ export class GeneralProgramRegistrationPage {
       'E2E 자기소개 및 지원동기입니다.'
     )
     await fillVisibleFreeTextFields(this.page, 'E2E 신청 정보')
-    const scheduleChecks = this.page.locator(
-      '.ant-checkbox-wrapper:visible, [role="checkbox"]:visible'
-    )
-    const sc = await scheduleChecks.count()
-    for (let i = 0; i < Math.min(sc, 3); i += 1) {
-      await scheduleChecks
-        .nth(i)
-        .click({ force: true })
-        .catch(() => undefined)
-    }
   }
 
   private async fillApplicationInstructorTab() {
@@ -466,8 +519,13 @@ export class GeneralProgramRegistrationPage {
       '자유롭게 작성해 주세요',
       'E2E 봉사자 자유 작성 답변입니다.'
     )
-    await fillParagraphDateByPlaceholder(this.page, '날짜를 선택하세요', 'single')
-    await fillByPlaceholderIfVisible(this.page, '시간을 선택해 주세요', '10:00')
+    await fillParagraphDateByPlaceholder(
+      this.page,
+      '날짜를 선택하세요',
+      'single',
+      RECRUIT_DATE_OPTS
+    )
+    await fillParagraphTimeIfVisible(this.page, '시간을 선택해 주세요')
     await fillVisibleFreeTextFields(this.page, 'E2E 봉사자 신청')
     await uploadTinyPngIfPresent(this.page)
   }

@@ -6,14 +6,16 @@
  */
 
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { Tabs, Descriptions, Table, Input } from 'antd'
+import { Tabs, Table, Input } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, CmsRadio } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal } from '@/shared/ui/content-modal'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import type {
   SchoolDetailForModal,
   SchoolDetailInstructorRow,
@@ -442,238 +444,34 @@ export function SchoolDetailModal({
     ) : (
       detail.schoolName
     )
-  const basicInfoItems = [
-    { key: 'schoolName', label: '참여 학교명', children: schoolNameCell },
-    { key: 'region', label: '지역', children: detail.region },
-    { key: 'educationGrade', label: '대상 학년', children: detail.educationGrade },
-    { key: 'classCount', label: '학급 수 및 전체 인원', children: classDisplay },
-    { key: 'venue', label: '진행 장소', children: detail.venue ?? '-' },
-    { key: 'waitingRoom', label: '대기실 여부 및 위치', children: waitingDisplay },
-    { key: 'meal', label: '식사 제공 여부 및 안내', children: mealDisplay, span: 2 },
-    { key: 'teacher', label: '담당 교사', children: teacherDisplay || '-', span: 2 },
-  ]
 
-  /* 디자이너 시안 순서: 강의 진행 회차·교재 현황 | 교재명·교재 준비 수량 */
-  const lectureItems = [
-    { key: 'lectureRound', label: '강의 진행 회차', children: detail.lectureRound },
-    {
-      key: 'textbookStatus',
-      label: '교재 현황',
-      children: <TextbookStatusBadge status={detail.textbookStatus} />,
-    },
-    { key: 'textbookName', label: '교재명', children: detail.textbookName ?? '-' },
-    {
-      key: 'textbookQuantity',
-      label: '교재 준비 수량',
-      children: detail.textbookQuantity != null ? `${detail.textbookQuantity}권` : '-',
-    },
-  ]
+  const basicInfoFormMode = isBasicEditMode ? 'edit' : 'view'
+  const { control: basicControl } = basicInfoForm
+  const textbookStatusOptions = TEXTBOOK_STATUS_OPTION_KEYS.map(value => ({
+    label: TEXTBOOK_STATUS_LABELS[value],
+    value,
+  }))
 
-  /** 수정 모드 시 강의·교재 정보: 교재 현황만 라디오로 선택 가능 */
-  function getLectureItemsEditMode(form: ReturnType<typeof useForm<SchoolDetailBasicFormValues>>) {
-    const { control } = form
-    const textbookStatusOptions = TEXTBOOK_STATUS_OPTION_KEYS.map(value => ({
-      label: TEXTBOOK_STATUS_LABELS[value],
-      value,
-    }))
-    const d = detail!
-    return [
-      { key: 'lectureRound', label: '강의 진행 회차', children: d.lectureRound },
-      {
-        key: 'textbookStatus',
-        label: '교재 현황',
-        children: (
-          <Controller
-            name="textbookStatus"
-            control={control}
-            render={({ field }) => (
-              <CmsRadio.Group
-                {...field}
-                options={textbookStatusOptions}
-                onChange={e => field.onChange(e.target.value)}
-                className="school-detail-modal__textbook-status-radios"
-              />
-            )}
-          />
-        ),
-      },
-      { key: 'textbookName', label: '교재명', children: d.textbookName ?? '-' },
-      {
-        key: 'textbookQuantity',
-        label: '교재 준비 수량',
-        children: d.textbookQuantity != null ? `${d.textbookQuantity}권` : '-',
-      },
-    ]
-  }
-
-  /**
-   * 수정 모드 기본 정보: 기획 시안과 동일한 필드 순서 (1행 참여학교명|지역, 2행 대상학년|학급수, 3행 진행장소|대기실, 풀폭 식사·담당교사)
-   */
-  function getBasicInfoEditModeItems(
-    form: ReturnType<typeof useForm<SchoolDetailBasicFormValues>>
-  ) {
-    const editableItems = basicInfoEditableItems(form)
-    const byKey = (key: string) => editableItems.find(item => item.key === key)!
-    return [
-      { key: 'schoolName', label: '참여 학교명', children: schoolNameCell },
-      { key: 'region', label: '지역', children: detail?.region },
-      { key: 'educationGrade', label: '대상 학년', children: detail?.educationGrade },
-      { key: 'classCount', label: '학급 수 및 전체 인원', children: classDisplay },
-      byKey('venue'),
-      byKey('waitingRoom'),
-      byKey('meal'),
-      byKey('teacher'),
-    ]
-  }
-
-  /** 수정 가능 필드만: 진행 장소, 대기실 여부 및 위치, 식사 제공 여부 및 안내, 담당 교사 */
-  function basicInfoEditableItems(form: ReturnType<typeof useForm<SchoolDetailBasicFormValues>>) {
-    const { control } = form
-    return [
-      {
-        key: 'venue',
-        label: '진행 장소',
-        children: (
-          <Controller
-            name="venue"
-            control={control}
-            render={({ field }) => (
-              <Input {...field} className="school-detail-modal__form-input" allowClear />
-            )}
-          />
-        ),
-      },
-      {
-        key: 'waitingRoom',
-        label: '대기실 여부 및 위치',
-        children: (
-          <Controller
-            name="waitingRoomAvailable"
-            control={control}
-            render={({ field: radioField }) => (
-              <Controller
-                name="waitingRoomLocation"
-                control={control}
-                render={({ field: locField }) => (
-                  <div
-                    className="school-detail-modal__form-row-with-divider"
-                    role="radiogroup"
-                    aria-label="대기실 여부 및 위치"
-                  >
-                    <CmsRadio.Group
-                      {...radioField}
-                      onChange={e => radioField.onChange(e.target.value)}
-                      options={[
-                        { label: '있음', value: true },
-                        { label: '없음', value: false },
-                      ]}
-                    />
-                    {radioField.value && (
-                      <>
-                        <span className="school-detail-modal__divider-v" aria-hidden />
-                        <Input
-                          {...locField}
-                          placeholder="위치 입력"
-                          className="school-detail-modal__form-input school-detail-modal__form-input--flex"
-                          allowClear
-                        />
-                      </>
-                    )}
-                  </div>
-                )}
-              />
-            )}
-          />
-        ),
-      },
-      {
-        key: 'meal',
-        label: '식사 제공 여부 및 안내',
-        span: 2,
-        children: (
-          <Controller
-            name="mealProvided"
-            control={control}
-            render={({ field: radioField }) => (
-              <Controller
-                name="mealNotice"
-                control={control}
-                render={({ field: noticeField }) => (
-                  <div
-                    className="school-detail-modal__form-row-with-divider school-detail-modal__form-row-with-divider--textarea"
-                    role="radiogroup"
-                    aria-label="식사 제공 여부 및 안내"
-                  >
-                    <CmsRadio.Group
-                      {...radioField}
-                      onChange={e => radioField.onChange(e.target.value)}
-                      options={[
-                        { label: '제공', value: true },
-                        { label: '미제공', value: false },
-                      ]}
-                    />
-                    {radioField.value && (
-                      <>
-                        <span className="school-detail-modal__divider-v" aria-hidden />
-                        <TextArea
-                          {...noticeField}
-                          placeholder="식사 안내 문구"
-                          rows={1}
-                          className="school-detail-modal__form-textarea"
-                          allowClear
-                        />
-                      </>
-                    )}
-                  </div>
-                )}
-              />
-            )}
-          />
-        ),
-      },
-      {
-        key: 'teacher',
-        label: '담당 교사',
-        span: 2,
-        children: (
-          <div className="school-detail-modal__form-teacher">
-            <div className="school-detail-modal__form-teacher-segment">
-              <span className="school-detail-modal__form-teacher-label">문의처</span>
-              <Controller
-                name="teacherName"
-                control={control}
-                render={({ field }) => (
-                  <Input {...field} className="school-detail-modal__form-input" allowClear />
-                )}
-              />
-            </div>
-            <span className="school-detail-modal__divider-v" aria-hidden />
-            <div className="school-detail-modal__form-teacher-segment">
-              <span className="school-detail-modal__form-teacher-label">Tel</span>
-              <Controller
-                name="teacherPhone"
-                control={control}
-                render={({ field }) => (
-                  <Input {...field} className="school-detail-modal__form-input" allowClear />
-                )}
-              />
-            </div>
-            <span className="school-detail-modal__divider-v" aria-hidden />
-            <div className="school-detail-modal__form-teacher-segment">
-              <span className="school-detail-modal__form-teacher-label">E-mail</span>
-              <Controller
-                name="teacherEmail"
-                control={control}
-                render={({ field }) => (
-                  <Input {...field} className="school-detail-modal__form-input" allowClear />
-                )}
-              />
-            </div>
-          </div>
-        ),
-      },
-    ]
-  }
+  const basicInfoTitleTrailing = !isApplicant ? (
+    isBasicEditMode ? (
+      <div className="school-detail-modal__basic-actions">
+        <CmsButton variant="secondary" size="medium" onClick={handleBasicCancel}>
+          취소
+        </CmsButton>
+        <CmsButton
+          variant="primary"
+          size="medium"
+          onClick={basicInfoForm.handleSubmit(handleBasicSave)}
+        >
+          저장
+        </CmsButton>
+      </div>
+    ) : (
+      <CmsButton variant="secondary" size="medium" onClick={handleBasicEditStart}>
+        수정
+      </CmsButton>
+    )
+  ) : null
 
   const handleClose = () => {
     const basicDirty = isBasicEditMode && basicInfoForm.formState.isDirty
@@ -697,76 +495,233 @@ export function SchoolDetailModal({
       label: '기본 정보',
       children: (
         <div className="school-detail-modal__basic">
-          <div className="school-detail-modal__basic-top">
-            <div className="school-detail-modal__basic-header-row">
-              <span className="school-detail-modal__section-title">기본 정보</span>
-              <span className="school-detail-modal__notice">
-                학교 담당자(교사) 및 관리자만 작성/수정이 가능합니다.
-              </span>
-            </div>
-            {!isApplicant && isBasicEditMode ? (
-              <div className="school-detail-modal__basic-actions">
-                <CmsButton variant="secondary" size="medium" onClick={handleBasicCancel}>
-                  취소
-                </CmsButton>
-                <CmsButton
-                  variant="primary"
-                  size="medium"
-                  onClick={basicInfoForm.handleSubmit(handleBasicSave)}
-                >
-                  저장
-                </CmsButton>
-              </div>
-            ) : !isApplicant ? (
-              <CmsButton variant="secondary" size="medium" onClick={handleBasicEditStart}>
-                수정
-              </CmsButton>
+          <div className="applicant-instructor-basic-info">
+            <DetailInfoForm
+              title="기본 정보"
+              description="학교 담당자(교사) 및 관리자만 작성/수정이 가능합니다."
+              titleTrailing={basicInfoTitleTrailing}
+              mode={basicInfoFormMode}
+            >
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field label="참여 학교명" view={schoolNameCell} readOnlyDisplay />
+                <DetailInfoForm.Field label="지역" view={detail.region} readOnlyDisplay />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field
+                  label="대상 학년"
+                  view={detail.educationGrade}
+                  readOnlyDisplay
+                />
+                <DetailInfoForm.Field
+                  label="학급 수 및 전체 인원"
+                  view={classDisplay}
+                  readOnlyDisplay
+                />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field
+                  label="진행 장소"
+                  view={detail.venue ?? '-'}
+                  edit={
+                    <Controller
+                      name="venue"
+                      control={basicControl}
+                      render={({ field }) => (
+                        <Input {...field} className="school-detail-modal__form-input" allowClear />
+                      )}
+                    />
+                  }
+                />
+                <DetailInfoForm.Field
+                  label="대기실 여부 및 위치"
+                  view={waitingDisplay}
+                  edit={
+                    <Controller
+                      name="waitingRoomAvailable"
+                      control={basicControl}
+                      render={({ field: radioField }) => (
+                        <Controller
+                          name="waitingRoomLocation"
+                          control={basicControl}
+                          render={({ field: locField }) => (
+                            <div
+                              className="school-detail-modal__form-row-with-divider"
+                              role="radiogroup"
+                              aria-label="대기실 여부 및 위치"
+                            >
+                              <CmsRadio.Group
+                                {...radioField}
+                                onChange={e => radioField.onChange(e.target.value)}
+                                options={[
+                                  { label: '있음', value: true },
+                                  { label: '없음', value: false },
+                                ]}
+                              />
+                              {radioField.value ? (
+                                <>
+                                  <span className="school-detail-modal__divider-v" aria-hidden />
+                                  <Input
+                                    {...locField}
+                                    placeholder="위치 입력"
+                                    className="school-detail-modal__form-input school-detail-modal__form-input--flex"
+                                    allowClear
+                                  />
+                                </>
+                              ) : null}
+                            </div>
+                          )}
+                        />
+                      )}
+                    />
+                  }
+                />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="식사 제공 여부 및 안내"
+                  fullRow
+                  view={mealDisplay}
+                  edit={
+                    <Controller
+                      name="mealProvided"
+                      control={basicControl}
+                      render={({ field: radioField }) => (
+                        <Controller
+                          name="mealNotice"
+                          control={basicControl}
+                          render={({ field: noticeField }) => (
+                            <div
+                              className="school-detail-modal__form-row-with-divider school-detail-modal__form-row-with-divider--textarea"
+                              role="radiogroup"
+                              aria-label="식사 제공 여부 및 안내"
+                            >
+                              <CmsRadio.Group
+                                {...radioField}
+                                onChange={e => radioField.onChange(e.target.value)}
+                                options={[
+                                  { label: '제공', value: true },
+                                  { label: '미제공', value: false },
+                                ]}
+                              />
+                              {radioField.value ? (
+                                <>
+                                  <span className="school-detail-modal__divider-v" aria-hidden />
+                                  <TextArea
+                                    {...noticeField}
+                                    placeholder="식사 안내 문구"
+                                    rows={1}
+                                    className="school-detail-modal__form-textarea"
+                                    allowClear
+                                  />
+                                </>
+                              ) : null}
+                            </div>
+                          )}
+                        />
+                      )}
+                    />
+                  }
+                />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="담당 교사"
+                  fullRow
+                  view={teacherDisplay || '-'}
+                  edit={
+                    <div className="school-detail-modal__form-teacher">
+                      <div className="school-detail-modal__form-teacher-segment">
+                        <span className="school-detail-modal__form-teacher-label">문의처</span>
+                        <Controller
+                          name="teacherName"
+                          control={basicControl}
+                          render={({ field }) => (
+                            <Input
+                              {...field}
+                              className="school-detail-modal__form-input"
+                              allowClear
+                            />
+                          )}
+                        />
+                      </div>
+                      <span className="school-detail-modal__divider-v" aria-hidden />
+                      <div className="school-detail-modal__form-teacher-segment">
+                        <span className="school-detail-modal__form-teacher-label">Tel</span>
+                        <Controller
+                          name="teacherPhone"
+                          control={basicControl}
+                          render={({ field }) => (
+                            <Input
+                              {...field}
+                              className="school-detail-modal__form-input"
+                              allowClear
+                            />
+                          )}
+                        />
+                      </div>
+                      <span className="school-detail-modal__divider-v" aria-hidden />
+                      <div className="school-detail-modal__form-teacher-segment">
+                        <span className="school-detail-modal__form-teacher-label">E-mail</span>
+                        <Controller
+                          name="teacherEmail"
+                          control={basicControl}
+                          render={({ field }) => (
+                            <Input
+                              {...field}
+                              className="school-detail-modal__form-input"
+                              allowClear
+                            />
+                          )}
+                        />
+                      </div>
+                    </div>
+                  }
+                />
+              </DetailInfoForm.Row>
+            </DetailInfoForm>
+            {!isApplicant ? (
+              <DetailInfoForm title="강의 및 교재 정보" hideHeader mode={basicInfoFormMode}>
+                <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Field
+                    label="강의 진행 회차"
+                    view={detail.lectureRound}
+                    readOnlyDisplay
+                  />
+                  <DetailInfoForm.Field
+                    label="교재 현황"
+                    view={<TextbookStatusBadge status={detail.textbookStatus} />}
+                    edit={
+                      <Controller
+                        name="textbookStatus"
+                        control={basicControl}
+                        render={({ field }) => (
+                          <CmsRadio.Group
+                            {...field}
+                            options={textbookStatusOptions}
+                            onChange={e => field.onChange(e.target.value)}
+                            className="school-detail-modal__textbook-status-radios"
+                          />
+                        )}
+                      />
+                    }
+                  />
+                </DetailInfoForm.Row>
+                <DetailInfoForm.Row type="double">
+                  <DetailInfoForm.Field
+                    label="교재명"
+                    view={detail.textbookName ?? '-'}
+                    readOnlyDisplay
+                  />
+                  <DetailInfoForm.Field
+                    label="교재 준비 수량"
+                    view={
+                      detail.textbookQuantity != null ? `${detail.textbookQuantity}권` : '-'
+                    }
+                    readOnlyDisplay
+                  />
+                </DetailInfoForm.Row>
+              </DetailInfoForm>
             ) : null}
-          </div>
-          <div className="school-detail-modal__descriptions-wrap">
-            {isBasicEditMode ? (
-              <>
-                <Descriptions
-                  column={2}
-                  bordered
-                  size="middle"
-                  className="school-detail-modal__descriptions"
-                  labelStyle={{ background: '#EDF0F2' }}
-                  items={getBasicInfoEditModeItems(basicInfoForm)}
-                />
-                {!isApplicant && (
-                  <Descriptions
-                    column={2}
-                    bordered
-                    size="middle"
-                    className="school-detail-modal__descriptions"
-                    labelStyle={{ background: '#EDF0F2' }}
-                    items={getLectureItemsEditMode(basicInfoForm)}
-                  />
-                )}
-              </>
-            ) : (
-              <>
-                <Descriptions
-                  column={2}
-                  bordered
-                  size="middle"
-                  className="school-detail-modal__descriptions"
-                  labelStyle={{ background: '#EDF0F2' }}
-                  items={basicInfoItems}
-                />
-                {!isApplicant && (
-                  <Descriptions
-                    column={2}
-                    bordered
-                    size="middle"
-                    className="school-detail-modal__descriptions"
-                    labelStyle={{ background: '#EDF0F2' }}
-                    items={lectureItems}
-                  />
-                )}
-              </>
-            )}
           </div>
           {!isApplicant && (
             <div className="school-detail-modal__instructor-section">

@@ -1,5 +1,6 @@
 {
   "templateCode": "survey-admin",
+  "templateName": "강의평가 (관리자용)",
   "formType": "WRITING",
   "category": "SURVEY",
   "schemaJson": {

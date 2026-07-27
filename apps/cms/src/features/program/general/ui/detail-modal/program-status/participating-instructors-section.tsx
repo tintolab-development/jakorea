@@ -6,7 +6,7 @@
 import { useCallback, useMemo, useState, useEffect, useRef, type CSSProperties } from 'react'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { Table, Checkbox } from 'antd'
+import { Table, Checkbox, Spin } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined, DownloadOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
@@ -159,6 +159,7 @@ export function ParticipatingInstructorsSection({
     setAddInstructorModalOpen,
     handleAddInstructorByMemberId,
     isRemoteDataSource: instructorsRemote,
+    applicationsLoading: instructorsLoading,
   } = useProgressInstructorList({
     appliedFilters: progressFilters,
     programId,
@@ -567,6 +568,14 @@ export function ParticipatingInstructorsSection({
     ],
     [instructorList]
   )
+
+  if (instructorsLoading && instructorList.length === 0) {
+    return (
+      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+        <Spin size="large" />
+      </div>
+    )
+  }
 
   if (selectedInstructorFromUrl && program) {
     return (

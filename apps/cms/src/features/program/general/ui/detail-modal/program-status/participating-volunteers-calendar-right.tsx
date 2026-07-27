@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useMemo } from 'react'
-import { Empty } from 'antd'
+import { EmptyState } from '@/shared/ui'
 import type { ParticipatingVolunteerCalendarEvent } from '@/features/program/general/lib/build-participating-volunteer-calendar-events'
 import { formatInstitutionRegionForCalendarListDisplay } from '@/shared/lib/format-institution-region-display'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
@@ -121,7 +121,7 @@ export function ParticipatingVolunteersCalendarRight({
           .join(' ')}
       >
         {isEmpty ? (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+          <EmptyState description="해당 날짜에 일정이 없습니다" />
         ) : (
           listRows.map(row => {
             const colors = getColorForSchool(row.schoolName) ?? SCHEDULE_COLORS[0]

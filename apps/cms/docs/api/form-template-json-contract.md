@@ -340,16 +340,19 @@ Body: `FormTemplateVersionUpdateRequest`
 
 공통 단락 구조: `kind: single_item`, `variant: horizontal_table`, `tableFlavor: text`.
 
-### 7.2 RECRUITMENT (6)
+### 7.2 RECRUITMENT (9)
 
 | templateCode | templateName | Payload | 시드 factory |
 |--------------|--------------|---------|--------------|
 | `recruitment-participant-school` | 프로그램 참여자 모집 폼 (학교) | **A** (+ overlay local) | `createApplicantRecruitFormInstitutionDraft()` |
+| `recruitment-economy` | 1사1교_참여 기관 모집 폼 | **A** | `createEconomyRecruitFormInstitutionDraft()` |
 | `recruitment-participant-individual` | 프로그램 참여자 모집 폼 (개인) | **A** | `createApplicantRecruitFormIndividualDraft()` |
 | `recruitment-instructor` | 프로그램 강사 모집 폼 | **A** | `createRecruitFormInstructorDraft()` |
 | `recruitment-volunteer` | 프로그램 봉사자 모집 폼 | **A** | `createRecruitFormVolunteerDraft()` |
 | `recruitment-ujat-school` | UJAT 프로그램 학교 모집 폼 | **C** | `createUjatRecruitFormInstitutionDraft()` |
 | `recruitment-ujat-volunteer` | UJAT 프로그램 봉사자 모집 폼 | **C** | `createUjatRecruitFormVolunteerDraft()` |
+| `recruitment-gemini-visiting-training` | Gemini_찾아가는 연수 모집 폼 | **A** | `createGeminiVisitingTrainingRecruitFormDraft()` |
+| `recruitment-trained-teachers` | 교육받은 교사_참여 기관 모집 폼 | **A** | `createTrainedTeachersRecruitFormInstitutionDraft()` |
 
 ### 7.3 APPLICATION (11)
 

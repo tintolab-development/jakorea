@@ -119,7 +119,7 @@ export function useGeneralVolunteerApplicationsRemote({
 
   return {
     remoteEnabled,
-    applicationsLoading: remoteEnabled ? query.isFetching : false,
+    applicationsLoading: remoteEnabled ? query.isFetching && query.data === undefined : false,
     applyRemoteDocumentResult,
     applyRemoteFinalResult,
     invalidateVolunteerApplications,

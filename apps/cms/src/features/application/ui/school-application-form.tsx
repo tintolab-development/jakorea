@@ -8,7 +8,8 @@
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Form, Input, Button, Space, Upload, Alert } from 'antd'
+import { Form, Input, Space, Upload, Alert, Button } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { UploadOutlined, DownloadOutlined } from '@ant-design/icons'
 import { downloadBlob } from '@/shared/utils/file-download'
 import { schoolApplicationSchema, type SchoolApplicationFormData } from '@/entities/application/model/schema'
@@ -262,10 +263,12 @@ export function SchoolApplicationForm({
 
       <Form.Item>
         <Space>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <CmsButton type="submit" loading={loading}>
             {isEditMode ? '수정하기' : '신청하기'}
-          </Button>
-          <Button onClick={onCancel}>취소</Button>
+          </CmsButton>
+          <CmsButton variant="secondary" onClick={onCancel}>
+            취소
+          </CmsButton>
         </Space>
       </Form.Item>
     </Form>

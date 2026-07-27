@@ -1,23 +1,9 @@
+@import './calendar-outline-status-badge.css';
+
 .institution-application-status-badge {
-  box-sizing: border-box;
-  display: inline-flex;
-  width: 68px;
-  height: 26px;
-  padding: 5px 12px 4px;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  border-radius: var(--6, 6px);
-  border: 1px solid currentColor;
-  background: var(--main-WT, #fff);
+  /* 셸: .calendar-outline-status-badge — 색상만 상태별 */
+  border-color: currentColor;
   color: rgba(61, 61, 61, 0.8);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-  white-space: nowrap;
 }
 
 .institution-application-status-badge--temp_assigned {

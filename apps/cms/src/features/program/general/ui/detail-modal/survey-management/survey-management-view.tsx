@@ -144,16 +144,16 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const [activeRegisteredSurveyId, setActiveRegisteredSurveyId] = useState<string | null>(() =>
     surveysRemote ? null : initialMock.activeRegisteredSurveyId
   )
-  const [satisfactionSurveysByAudience, setSatisfactionSurveysByAudience] = useState(
-    initialMock.satisfactionSurveysByAudience
-  )
+  const [satisfactionSurveysByAudience, setSatisfactionSurveysByAudience] = useState<
+    Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>>
+  >(() => (surveysRemote ? {} : initialMock.satisfactionSurveysByAudience))
   const [activeSatisfactionAudience, setActiveSatisfactionAudience] = useState(
     () => getDefaultGeneralSatisfactionAudience(program)
   )
   const [pendingSatisfactionAudience, setPendingSatisfactionAudience] =
     useState<GeneralSatisfactionAudienceKey | null>(null)
-  const [lectureEvalSurvey, setLectureEvalSurvey] = useState<RegisteredSurvey | null>(
-    initialMock.lectureEvalSurvey
+  const [lectureEvalSurvey, setLectureEvalSurvey] = useState<RegisteredSurvey | null>(() =>
+    surveysRemote ? null : initialMock.lectureEvalSurvey
   )
   const [lectureEvalSubmitted, setLectureEvalSubmitted] = useState(false)
   const [lectureEvalFormDraft, setLectureEvalFormDraft] = useState<WritingFormDraft | null>(null)
@@ -911,7 +911,15 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         ? GENERAL_LECTURE_EVAL_REGISTER_MODAL_COPY.description
         : '새로운 설문조사를 진행하시겠습니까?\n설문조사 신규 등록을 위해 사용할 템플릿 유형을 선택해 주세요.'
 
-  const renderSatisfactionView = () => (
+  const renderSatisfactionView = () => {
+    if (surveysRemote && surveysLoading) {
+      return (
+        <div className="survey-management-loading" role="status">
+          <Spin size="large" />
+        </div>
+      )
+    }
+    return (
     <SatisfactionSurveyView
       surveysByAudience={satisfactionSurveysByAudience}
       activeAudience={activeSatisfactionAudience}
@@ -945,7 +953,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       resultsExportRef={satisfactionResultsExportRef}
       resultsResponses={satisfactionResponses}
     />
-  )
+    )
+  }
 
   return (
     <>
@@ -954,6 +963,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         ? renderSatisfactionView()
         : null}
       {activeTab === 'lecture_evaluation' ? (
+        surveysRemote && surveysLoading ? (
+          <div className="survey-management-loading" role="status">
+            <Spin size="large" />
+          </div>
+        ) : (
         <LectureEvalSurveyView
           survey={lectureEvalSurvey}
           submitted={lectureEvalSubmitted}
@@ -981,6 +995,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           }}
           onDownloadResultsClick={() => setLectureEvalDownloadModalOpen(true)}
         />
+        )
       ) : null}
       {activeTab === 'main' ? renderEmptyMain() : null}
 

@@ -17,7 +17,7 @@ import { expectAuthenticatedShell } from '../../helpers/authenticated-shell'
  * 3) 모집 정보(참여자·강사·봉사자) 수정·저장 → 탭별 필드 일치 확인
  * 4) 신청 정보 양식 수정·저장 (form-template PUT)
  * 5) 상세·목록 재검증 (공통·모집 필드 재대조)
- * 6) 진행 현황 참여 기관·강사·봉사자 목록(API 빈 응답 시 FE mock 폴백)
+ * 6) 진행 현황 참여 기관·참여자·강사·봉사자 목록 셸(remote 빈 시드면 0건 허용)
  *
  * `serial` — 이후 단계가 programId·수정 스냅샷에 의존합니다.
  *
@@ -119,7 +119,7 @@ test.describe.serial('일반 프로그램 수정', () => {
     await editPage.expectDummyVisibleInList(programId)
   })
 
-  test('6) 진행 현황 참여 기관·강사·봉사자 mock 목록', async ({ page }) => {
+  test('6) 진행 현황 참여 기관·참여자·강사·봉사자 목록', async ({ page }) => {
     test.setTimeout(180_000)
 
     expect(opened, '1) 더미 열기 결과가 필요합니다').toBeDefined()

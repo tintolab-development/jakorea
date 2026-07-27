@@ -77,9 +77,29 @@ theme-provider (토큰) + shared/* (컴포넌트·colocated CSS)
 |------|------|
 | `pages/posts/admin-category-page` → FilterTableLayout | 완료 |
 | `pages/programs/education-enrollment-page` → FilterTableLayout 셸 | 완료 |
-| `pages/education-records/education-record-list-page` (TableFilterGroup → FilterTableLayout 래핑) | 후속 (탭·remote Alert·커스텀 CSS) |
-| DetailInfoForm (강사 상세 Descriptions 등) | 후속 (패리티·유형 회귀) |
+| `pages/education-records/education-record-list-page` → FilterTableLayout | 완료 |
+| DetailInfoForm (Descriptions → DetailInfoForm Wave B) | 완료 (Wave F: school-detail 포함 · 잔여 0) |
 | 프로그램 유형별 목록 | 유형별 PR + isolation |
+
+## Wave A–E (안전 패리티 후속, 2026-07-27)
+
+| Wave | 목표 | 상태 | 비고 |
+|------|------|------|------|
+| A | 캘린더 outline 배지 셸 SSOT | 완료 | `calendar-outline-status-badge.css` · Approval+Institution |
+| B | Descriptions → DetailInfoForm | 완료 | Wave F에서 school-detail 포함 · Descriptions 0 |
+| C | antd Modal → ContentModal | 완료 | MFA·주소검색 nested 제외 |
+| D | antd Empty → EmptyState | 완료 | 소비자 0 |
+| E | raw Button → CmsButton | 부분 | Wave F에서 추가 이관 · 잔여 20 (의도적) |
+
+## Wave F (잔여 패리티, 2026-07-27)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| school-detail Descriptions → DetailInfoForm | 완료 | view+edit · 2블록 · `applicant-instructor-basic-info` |
+| raw Button 안전 이관 | 완료 | 폼 submit/cancel·액션 → CmsButton · 27→20 |
+| 의도적 잔여 | 유지 | auth mock·link/text·Upload·dashed·e2e·mypage 타일 |
+
+**제외 고정:** Teal full 10 · MFA · Phase 5 Critical 룩 · Platform/`packages/ui`
 
 ## Phase 4 진행
 
@@ -101,4 +121,4 @@ theme-provider (토큰) + shared/* (컴포넌트·colocated CSS)
 
 에이전트 규칙: [`apps/cms/.cursor/rules/design/design-system-impact-audit.mdc`](../../.cursor/rules/design/design-system-impact-audit.mdc)
 
-**Last updated:** 2026-07-15
+**Last updated:** 2026-07-27

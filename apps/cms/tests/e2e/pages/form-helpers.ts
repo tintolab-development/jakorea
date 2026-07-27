@@ -196,6 +196,9 @@ async function selectOnLocator(
     }
   }
 
+  // 후원사 담당자처럼 상위 API 로드 후 활성화되는 Select는 준비될 때까지 기다린다.
+  await expect(select).toBeEnabled({ timeout: 15_000 })
+
   // force: UI만 선택되어 있고 React state가 비는 경우 — 다른 옵션을 한 번 골라 onChange를 유발한 뒤 목표 선택
   if (force && !isEmptySelectValue(current)) {
     const dropdown = await openSelectDropdown(page, select)
@@ -394,6 +397,7 @@ export async function checkRadioIfVisible(page: Page, label: string | RegExp) {
   if ((await radio.count()) === 0) return
   if (!(await radio.isVisible().catch(() => false))) return
   await radio.check({ force: true })
+  await expect(page.getByRole('radio', { name: label }).first()).toBeChecked({ timeout: 5_000 })
 }
 
 /** 체크박스 라벨 체크 (보일 때만) */
@@ -403,43 +407,131 @@ export async function checkCheckboxIfVisible(page: Page, label: string | RegExp)
   if (!(await checkbox.isVisible().catch(() => false))) return
   if (await checkbox.isChecked().catch(() => false)) return
   await checkbox.check({ force: true })
+  await expect(page.getByRole('checkbox', { name: label }).first()).toBeChecked({
+    timeout: 5_000,
+  })
+}
+
+export type FillParagraphDateOptions = {
+  /** 다음 달 버튼 클릭 횟수 — 현재 표시월 기준 N개월 뒤 */
+  futureMonthClicks?: number
+  /**
+   * single: 월말 쪽 날짜
+   * range: 월 후반 구간 (기본은 초반 0~4일)
+   */
+  preferLaterDays?: boolean
 }
 
 /**
  * ParagraphDatePicker — placeholder 트리거 클릭 후 캘린더에서 날짜 선택·설정.
  * `range`: 시작·종료 2일, `single`: 1일.
  */
-export async function fillParagraphDateByPlaceholder(
+async function fillParagraphDateByPlaceholderOnce(
   page: Page,
   placeholder: string,
-  mode: 'single' | 'range' = 'range'
+  mode: 'single' | 'range' = 'range',
+  options?: FillParagraphDateOptions
 ) {
-  const trigger = page
-    .locator('.paragraph-date-picker__trigger:visible')
-    .filter({ hasText: placeholder })
-    .first()
+  const triggerLocator = () =>
+    page
+      .locator('.paragraph-date-picker__trigger:visible')
+      .filter({ hasText: placeholder })
+      .first()
+
+  let trigger = triggerLocator()
   if ((await trigger.count()) === 0) return
   if (!(await trigger.isVisible().catch(() => false))) return
 
-  await trigger.scrollIntoViewIfNeeded()
+  // 탭 전환·리렌더로 트리거가 detach 될 수 있어 재조회 후 스크롤/클릭
+  try {
+    await trigger.scrollIntoViewIfNeeded()
+  } catch {
+    trigger = triggerLocator()
+    if ((await trigger.count()) === 0) return
+    if (!(await trigger.isVisible().catch(() => false))) return
+    await trigger.scrollIntoViewIfNeeded()
+  }
   await trigger.click()
 
   // `날짜 선택` (ParagraphDatePicker) · `날짜·시간 선택` (DateTimePicker)
   const dialog = page.getByRole('dialog', { name: /날짜/ })
   await expect(dialog).toBeVisible({ timeout: 10_000 })
 
-  const days = dialog.locator(
-    '.ant-picker-cell-in-view:not(.ant-picker-cell-disabled) .calendar-mini-cell'
+  const clicks = options?.futureMonthClicks ?? 0
+  if (clicks > 0) {
+    for (let i = 0; i < clicks; i += 1) {
+      // 월 이동마다 CalendarMini가 다시 렌더되므로 버튼을 새로 조회한다.
+      const nextBtn = dialog.locator('button.calendar-mini-nav-btn').last()
+      await expect(nextBtn).toBeVisible({ timeout: 5_000 })
+      await nextBtn.click()
+    }
+  }
+
+  const dayCells = dialog.locator(
+    'td.ant-picker-cell-in-view:not(.ant-picker-cell-disabled)'
   )
-  await expect(days.first()).toBeVisible({ timeout: 5_000 })
-  const dayCount = await days.count()
-  await days.nth(0).click({ force: true })
+  await expect(dayCells.first()).toBeVisible({ timeout: 5_000 })
+  const dayCount = await dayCells.count()
+
+  // preferLaterDays: 발표일 등 — 모집(초반)보다 뒤 날짜
+  const startIdx = options?.preferLaterDays
+    ? mode === 'single'
+      ? Math.max(dayCount - 2, 0)
+      : Math.min(Math.max(dayCount - 8, 0), Math.max(dayCount - 2, 0))
+    : 0
+  const endIdx = Math.min(startIdx + 4, dayCount - 1)
+  const startDate = await dayCells.nth(startIdx).getAttribute('title')
+  const endDate = await dayCells.nth(endIdx).getAttribute('title')
+
+  if (!startDate || (mode === 'range' && !endDate)) {
+    throw new Error(`날짜 셀 식별 실패: "${placeholder}"`)
+  }
+
+  await dialog
+    .locator(`td.ant-picker-cell-in-view[title="${startDate}"] .calendar-mini-cell`)
+    .click({ force: true })
   if (mode === 'range' && dayCount > 1) {
-    await days.nth(Math.min(4, dayCount - 1)).click({ force: true })
+    const endField = dialog
+      .locator('.date-time-picker-popover__field')
+      .filter({ hasText: '종료일' })
+      .first()
+    await endField.click()
+    await dialog
+      .locator(`td.ant-picker-cell-in-view[title="${endDate}"] .calendar-mini-cell`)
+      .click({ force: true })
   }
 
   await dialog.getByRole('button', { name: '설정' }).click()
   await expect(dialog).toBeHidden({ timeout: 10_000 })
+}
+
+export async function fillParagraphDateByPlaceholder(
+  page: Page,
+  placeholder: string,
+  mode: 'single' | 'range' = 'range',
+  options?: FillParagraphDateOptions
+) {
+  let lastError: unknown
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await fillParagraphDateByPlaceholderOnce(page, placeholder, mode, options)
+      return
+    } catch (error) {
+      lastError = error
+
+      // 다중 회차·면접 유무 전환 중 팝오버가 재마운트될 수 있다.
+      const backdrop = page.locator('.date-time-picker-popover__backdrop:visible').last()
+      if ((await backdrop.count()) > 0) {
+        await backdrop.click({ position: { x: 1, y: 1 }, force: true }).catch(() => undefined)
+      }
+      await expect(page.getByRole('dialog', { name: /날짜/ }))
+        .toBeHidden({ timeout: 2_000 })
+        .catch(() => undefined)
+    }
+  }
+
+  throw lastError
 }
 
 /** ParagraphTimePicker — placeholder 트리거 클릭 후 「설정」 */
@@ -447,14 +539,20 @@ export async function fillParagraphTimeIfVisible(
   page: Page,
   placeholder = '시간 선택'
 ) {
-  const trigger = page
-    .locator('.paragraph-time-picker__trigger:visible')
-    .filter({ hasText: placeholder })
-    .first()
+  const triggerLocator = () =>
+    page
+      .locator('.paragraph-time-picker__trigger:visible')
+      .filter({ hasText: placeholder })
+      .first()
+  let trigger = triggerLocator()
   if ((await trigger.count()) === 0) return
   if (!(await trigger.isVisible().catch(() => false))) return
 
-  await trigger.scrollIntoViewIfNeeded()
+  await trigger.scrollIntoViewIfNeeded().catch(async () => {
+    trigger = triggerLocator()
+    await expect(trigger).toBeVisible({ timeout: 5_000 })
+    await trigger.scrollIntoViewIfNeeded()
+  })
   await trigger.click()
 
   const dialog = page.getByRole('dialog', { name: '시간 설정' })
@@ -467,7 +565,8 @@ export async function fillParagraphTimeIfVisible(
 export async function fillAllParagraphDatesByPlaceholder(
   page: Page,
   placeholder: string,
-  mode: 'single' | 'range' = 'range'
+  mode: 'single' | 'range' = 'range',
+  options?: FillParagraphDateOptions
 ) {
   const triggers = page
     .locator('.paragraph-date-picker__trigger:visible')
@@ -475,7 +574,7 @@ export async function fillAllParagraphDatesByPlaceholder(
   const count = await triggers.count()
   for (let i = 0; i < count; i += 1) {
     // 매번 첫 번째 남은 placeholder 트리거를 채움 (설정 후 텍스트가 바뀜)
-    await fillParagraphDateByPlaceholder(page, placeholder, mode)
+    await fillParagraphDateByPlaceholder(page, placeholder, mode, options)
   }
 }
 
@@ -498,6 +597,11 @@ export async function clickRegistrationTabIfVisible(page: Page, label: string) {
   }
   if (!(await tab.isVisible().catch(() => false))) return
   await tab.click()
+  await expect(page.getByRole('tab', { name: label }).first()).toHaveAttribute(
+    'aria-selected',
+    'true',
+    { timeout: 10_000 }
+  )
 }
 
 /** 보이는 textarea / contenteditable 채움 */

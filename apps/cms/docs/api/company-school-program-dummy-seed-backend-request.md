@@ -21,6 +21,7 @@ CMS `/programs/company-school` (legacy `/programs/economy-education`) **목록 �
 > **금지**
 >
 > - 기존 E2E·일반 시드 title(`[수정 가능] 일반 프로그램 더미` 등)과 같게 만들거나 덮어쓰지 마세요.
+> - E2E 수정 더미 `[수정 가능] 1사1교 프로그램 더미`(CS-EDIT) title을 다른 CASE와 같게 만들거나 덮어쓰지 마세요.
 > - **봉사자** 신청/참여 행, **합반**, **과제** 관리 시드를 만들지 마세요.
 > - 일반 프로그램의 audience×structure×session 8종 매트릭스를 1사1교에 복제하지 마세요 (유형 축이 고정).
 
@@ -161,8 +162,10 @@ P1·P2는 FE에 없는 **BE 신규 시드**가 포함됩니다 (title로 FE mock
 | **CS-36** | P2 | *(BE 신규)* | `【1사1교·딥링크】programId` | education_after_textbook | active | full | 진행 | `?programId=` |
 | **CS-37** | P2 | *(BE 신규)* | `【1사1교·필터】businessYear·keyword` | recruiting_students | pending | single | 예정 | list query |
 | **CS-38** | P2 | *(BE 신규)* | `【1사1교】title 충돌 방지 샘플` | planned | pending | none | 예정 | 일반 시드와 구분 |
+| **CS-EDIT** | E2E | *(BE 신규)* | `[수정 가능] 1사1교 프로그램 더미` | `planned` | pending | full | 예정 | 상세 풀페이지 수정 E2E 전용 |
 
-권장 BE id: FE 정합 시 `economy-prog-00N` 유지, 신규는 `company-school-seed-CS-NN` (title로 FE와 구분).
+권장 BE id: FE 정합 시 `economy-prog-00N` 유지, 신규는 `company-school-seed-CS-NN` (title로 FE와 구분).  
+E2E 수정 더미 id 권장: `company-school-seed-CS-EDIT`.
 
 ---
 
@@ -643,6 +646,14 @@ create 직후 form-bindings:
 - [ ] CS-04: `inside_school`
 - [ ] 기관·강사 신청 3상태 행 · 참여 기관/강사 ≥1
 - [ ] 일반 E2E title과 충돌 없음
+- [ ] `[수정 가능] 1사1교 프로그램 더미`(CS-EDIT) 와 title 충돌 없음 · 목록 검색·「정보 수정」 가능
+
+### E2E 수정 더미 (CS-EDIT)
+
+- [ ] title 정확히 `[수정 가능] 1사1교 프로그램 더미`
+- [ ] `lifecycleStatus=planned` · **사업 시작일 미래** (정보 수정 게이트)
+- [ ] 학교/기관 + 강사만 · 봉사자 없음 · economy 양식 바인딩
+- [ ] 일반 `[수정 가능] 일반 프로그램 더미` 와 title 충돌 없음
 
 ### P1 (CS-09~26)
 
@@ -686,6 +697,46 @@ create 직후 form-bindings:
 | 만족도 교사-only | `src/features/program/general/lib/survey-audience.ts` |
 | 상세 LNB (company-school) | `src/features/program/general/ui/detail-modal/program-detail-fullpage-modal.tsx` |
 | README | `src/features/program/1c-1s/README.md` |
+| E2E 수정 더미 title | `tests/e2e/pages/company-school-seed-titles.ts` → `EDITABLE_COMPANY_SCHOOL_DUMMY_TITLE` |
+| E2E 수정 스펙 | `tests/e2e/flows/programs/company-school-edit.spec.ts` |
+
+---
+
+## 5b. CS-EDIT — E2E 상세 풀페이지 수정 더미
+
+Playwright `company-school-edit` 전용. **대표 프로그램명(국문)은 E2E가 변경하지 않으므로** title을 고정하세요.
+
+| 항목 | 값 |
+|------|-----|
+| title | `[수정 가능] 1사1교 프로그램 더미` |
+| id 권장 | `company-school-seed-CS-EDIT` |
+| lifecycle | `planned` |
+| status | `pending` |
+| survey | full (`survey` · `satisfaction` · `lecture_evaluation`) |
+| 사업 운영 기간 | **현재일 기준 +2개월 이후** 시작 (수정 가능 정책) |
+| participantTypes | `school_institution` + `teacher_instructor` only |
+| 양식 | `registration-economy` · `application-economy` |
+| 봉사자 | **없음** |
+
+공통 강제(§0.1) + 위 표. 모집·신청 양식 필드가 채워져 있어야 「정보 수정」·「양식 수정」이 동작합니다.
+
+```json
+{
+  "programType": "COMPANY_SCHOOL",
+  "title": "[수정 가능] 1사1교 프로그램 더미",
+  "lifecycleStatus": "planned",
+  "status": "pending",
+  "generalParticipantTypes": ["school_institution", "teacher_instructor"],
+  "generalVolunteers": 0,
+  "generalProgramAudience": "organization",
+  "generalProgramEducationStructure": "curriculum",
+  "generalProgramSessionRound": "single",
+  "rounds": [{ "roundNumber": 1 }],
+  "generalSurveyMenuKeys": ["survey", "satisfaction", "lecture_evaluation"],
+  "businessArea": "경제금융",
+  "studentListRequired": "not_required"
+}
+```
 
 ---
 

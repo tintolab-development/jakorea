@@ -7,6 +7,7 @@
 import { MESSAGES } from '@/shared/constants'
 import { useState } from 'react'
 import { Table, Button, Space, Tag, Tooltip, Dropdown } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
 import type { MenuProps } from 'antd'
 import { DownloadOutlined, EyeOutlined, MoreOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -244,14 +245,13 @@ export function InstructorList({
     <div>
       <Space style={{ marginBottom: 16, justifyContent: 'flex-end', width: '100%' }}>
         {canDownload && (
-          <Button
-            type="primary"
+          <CmsButton
             icon={<DownloadOutlined />}
             onClick={() => setDownloadModalOpen(true)}
             disabled={data.length === 0}
           >
             다운로드 ({data.length}건)
-          </Button>
+          </CmsButton>
         )}
       </Space>
 

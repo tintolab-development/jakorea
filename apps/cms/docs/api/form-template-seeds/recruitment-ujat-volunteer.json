@@ -1,5 +1,6 @@
 {
   "templateCode": "recruitment-ujat-volunteer",
+  "templateName": "UJAT_봉사자 모집 폼",
   "formType": "WRITING",
   "category": "RECRUITMENT",
   "schemaJson": {

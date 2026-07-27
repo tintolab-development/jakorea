@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Table, Empty } from 'antd'
+import { Table } from 'antd'
 import type { Application } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { EmptyState } from '@/shared/ui'
 import { useTablePage } from '@/shared/components/table-system/model/use-table-page'
 import { userProgramsEnrollmentStubTableConfig } from '../user-programs-stub-table.config'
 import { createProgramHistoryColumns } from '../detail-info/user-detail-program-history-columns'
@@ -81,7 +82,7 @@ export function EnrollmentTableView(props: RendererProps) {
           />
         ) : (
           <div className="user-detail-modal__program-tab-empty">
-            <Empty description={enrollmentEmptyDescription} />
+            <EmptyState description={enrollmentEmptyDescription} />
           </div>
         )}
       </div>

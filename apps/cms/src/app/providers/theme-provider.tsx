@@ -20,6 +20,8 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   return (
     <ConfigProvider
+      /* 클릭 wave 잔여 DOM/페인트가 뷰포트 하단에 민트 띠로 남는 경우 방지 */
+      wave={{ disabled: true }}
       theme={{
         token: {
           colorPrimary: brandColorsHex.primary,

@@ -10,7 +10,7 @@ export function InstitutionApplicationStatusBadge({
 }) {
   return (
     <span
-      className={`institution-application-status-badge institution-application-status-badge--${statusKey}`}
+      className={`calendar-outline-status-badge institution-application-status-badge institution-application-status-badge--${statusKey}`}
     >
       {label}
     </span>

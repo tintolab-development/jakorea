@@ -80,15 +80,6 @@
   gap: 10px;
 }
 
-/* 헤더 타이틀 + 디스크립션 + 수정 버튼 한 줄 row 정렬, 테이블과 10px gap */
-.school-detail-modal__basic-top {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
 .school-detail-modal__basic-header-row {
   display: flex;
   flex-direction: row;
@@ -97,7 +88,6 @@
   min-width: 0;
 }
 
-.school-detail-modal__section-title,
 .school-detail-modal__instructor-title {
   font-size: 16px;
   font-weight: 700;
@@ -141,150 +131,6 @@
   color: #3d3d3d;
   opacity: 0.6;
   line-height: 1.5;
-}
-
-/* 두 테이블이 같은 너비로 헤더 열 정렬되도록 wrapper */
-.school-detail-modal__descriptions-wrap {
-  width: 100%;
-}
-
-.school-detail-modal__descriptions {
-  margin-bottom: 0;
-}
-
-/* 두 테이블(기본 정보 / 강의·교재) 사이 갭 16px */
-.school-detail-modal__descriptions + .school-detail-modal__descriptions {
-  margin-top: 16px;
-}
-
-/* 디바이더 규격: w 1px, h 13px (구분선 두께 1px, 구간 간격 13px) */
-.school-detail-modal__descriptions-wrap {
-  --detail-divider-w: 1px;
-  --detail-divider-h: 13px;
-  --detail-divider-color: var(--color-border-light, #e8e8e8);
-}
-
-/* 열 너비 고정: 두 테이블 동일 컬럼 구조로 헤더 얼라인 맞춤 */
-.school-detail-modal__descriptions .ant-descriptions-view table {
-  table-layout: fixed;
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.school-detail-modal__descriptions .ant-descriptions-view table tbody tr td {
-  box-sizing: border-box;
-  /* 행 구분선: 세로선 1px, 가로선 1px */
-  border-right: var(--detail-divider-w) solid var(--detail-divider-color);
-  border-bottom: var(--detail-divider-w) solid var(--detail-divider-color);
-}
-
-.school-detail-modal__descriptions .ant-descriptions-view table tbody tr td:last-child {
-  border-right: none;
-}
-
-.school-detail-modal__descriptions .ant-descriptions-view table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* 한 열에 테이블 두 개: 헤더(라벨) 180×48, 바디 490×48 고정 */
-.school-detail-modal__descriptions
-  .ant-descriptions-view
-  table
-  tbody
-  tr:first-child
-  td:nth-child(1) {
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
-  height: 48px;
-  min-height: 48px;
-}
-
-.school-detail-modal__descriptions
-  .ant-descriptions-view
-  table
-  tbody
-  tr:first-child
-  td:nth-child(2) {
-  width: 490px !important;
-  min-width: 490px !important;
-  height: 48px;
-  min-height: 48px;
-}
-
-.school-detail-modal__descriptions
-  .ant-descriptions-view
-  table
-  tbody
-  tr:first-child
-  td:nth-child(3) {
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
-  height: 48px;
-  min-height: 48px;
-}
-
-.school-detail-modal__descriptions
-  .ant-descriptions-view
-  table
-  tbody
-  tr:first-child
-  td:nth-child(4) {
-  width: 490px !important;
-  min-width: 490px !important;
-  height: 48px;
-  min-height: 48px;
-}
-
-/* 테이블 헤더(라벨, th): 180×48 고정, 14px, 볼드, 가운데 정렬 + 세로 디바이더(라벨↔값 구분) */
-.school-detail-modal__descriptions .ant-descriptions-item-label {
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
-  height: 48px !important;
-  min-height: 48px !important;
-  font-size: 14px;
-  font-weight: 700;
-  text-align: center;
-  background: #edf0f2;
-  color: var(--color-text-label);
-  box-sizing: border-box;
-  vertical-align: middle;
-}
-
-/* 테이블 바디(한 열에 테이블 두 개 케이스): 490×48 고정, 행 정렬 vertical-align middle */
-.school-detail-modal__descriptions .ant-descriptions-item-content {
-  width: 490px !important;
-  min-width: 490px !important;
-  height: 48px !important;
-  min-height: 48px !important;
-  box-sizing: border-box;
-  vertical-align: middle;
-}
-
-/* 수정 모드: 텍스트에어리어가 있는 행도 라벨·값 세로 중앙 정렬 */
-.school-detail-modal__descriptions
-  .ant-descriptions-view
-  table
-  tbody
-  tr:has(
-    td.ant-descriptions-item-content:has(.school-detail-modal__form-row-with-divider--textarea)
-  )
-  td.ant-descriptions-item-label {
-  vertical-align: middle;
-}
-.school-detail-modal__descriptions
-  .ant-descriptions-view
-  table
-  tbody
-  tr
-  td.ant-descriptions-item-content:has(.school-detail-modal__form-row-with-divider--textarea) {
-  vertical-align: middle;
-}
-
-.school-detail-modal__descriptions .ant-descriptions-item-content {
-  padding: 12px 16px;
 }
 
 .school-detail-modal__instructor-section {

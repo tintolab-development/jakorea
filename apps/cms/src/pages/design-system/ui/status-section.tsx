@@ -12,6 +12,7 @@ import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import { AppStatusBadge } from '@/shared/components/app-status-badge'
 import { CalendarApprovalStatusBadge } from '@/shared/components/calendar/ui/item-list/calendar-approval-status-badge'
 import { InstitutionApplicationStatusBadge } from '@/shared/components/calendar/ui/item-list/institution-application-status-badge'
+import { UJAT_INSTITUTION_SCHEDULE_CONFIRM_CALENDAR_STATUS_LABEL } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-confirm/types'
 import { DeliveryStatusBadge, type TextbookDeliveryStatus } from '@/shared/components/delivery-status-badge'
 import { EditableStatusBadge } from '@/shared/components/editable-status-badge'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
@@ -126,7 +127,9 @@ export function StatusSection() {
             <span className="ds-demo__label">Institution calendar</span>
             <InstitutionApplicationStatusBadge
               statusKey="institution_confirmed"
-              label="기관 확인 완료"
+              label={
+                UJAT_INSTITUTION_SCHEDULE_CONFIRM_CALENDAR_STATUS_LABEL.institution_confirmed
+              }
             />
           </div>
         </div>

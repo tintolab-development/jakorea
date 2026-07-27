@@ -79,6 +79,18 @@ function resolveInitialExclusionState({
   return createDefaultUnavailableDatesExclusionState({ excludeNone: true, excludeHoliday: false })
 }
 
+function exclusionStateEquals(
+  a: UnavailableDatesExclusionState,
+  b: UnavailableDatesExclusionState
+): boolean {
+  return (
+    a.excludeNone === b.excludeNone &&
+    a.excludeSaturday === b.excludeSaturday &&
+    a.excludeSunday === b.excludeSunday &&
+    a.excludeHoliday === b.excludeHoliday
+  )
+}
+
 /** 면접·교육 등 공통 — 진행 불가일 직접 추가(chips) + 없음/토·일/공휴일 제외 */
 export function UnavailableDatesBulkExclusionsRow({
   disabledDate,
@@ -112,7 +124,7 @@ export function UnavailableDatesBulkExclusionsRow({
   const updateExclusionState = useCallback(
     (next: UnavailableDatesExclusionState) => {
       if (controlledExclusionState == null) {
-        setInternalExclusionState(next)
+        setInternalExclusionState(prev => (exclusionStateEquals(prev, next) ? prev : next))
       }
       onExclusionChange?.(next)
     },
@@ -121,7 +133,9 @@ export function UnavailableDatesBulkExclusionsRow({
 
   useEffect(() => {
     if (controlledExclusionState == null) return
-    setInternalExclusionState(controlledExclusionState)
+    setInternalExclusionState(prev =>
+      exclusionStateEquals(prev, controlledExclusionState) ? prev : controlledExclusionState
+    )
   }, [controlledExclusionState])
 
   const handleApplyDatesChange = useCallback(

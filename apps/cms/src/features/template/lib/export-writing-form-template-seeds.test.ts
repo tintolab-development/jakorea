@@ -9,16 +9,17 @@ import {
 } from '@/features/template/lib/export-writing-form-template-seeds'
 
 describe('exportWritingFormTemplateSeeds', () => {
-  it('exports 28 writing form seeds excluding registration-general', () => {
-    expect(getWritingFormSeedSpecsForExport()).toHaveLength(28)
-    expect(getWritingFormSeedSpecsForExport().some(s => s.templateCode === 'registration-general')).toBe(
-      false
-    )
+  it('exports writing form seeds excluding registration-general', () => {
+    const specs = getWritingFormSeedSpecsForExport()
+    expect(specs.some(s => s.templateCode === 'registration-general')).toBe(false)
+    expect(specs.some(s => s.templateCode === 'recruitment-trained-teachers')).toBe(true)
+    expect(specs.some(s => s.templateCode === 'recruitment-economy')).toBe(true)
+    expect(specs).toHaveLength(31)
   })
 
   it('writes seed json files and handoff markdown', () => {
     const result = exportWritingFormTemplateSeeds()
-    expect(result.exported).toBe(28)
+    expect(result.exported).toBe(31)
   })
 })
 

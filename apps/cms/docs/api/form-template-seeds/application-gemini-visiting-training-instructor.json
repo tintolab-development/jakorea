@@ -1,5 +1,6 @@
 {
   "templateCode": "application-gemini-visiting-training-instructor",
+  "templateName": "Gemini_찾아가는 연수 강사 신청 폼",
   "formType": "WRITING",
   "category": "APPLICATION",
   "schemaJson": {

@@ -1,5 +1,6 @@
 {
   "templateCode": "survey-default",
+  "templateName": "설문조사",
   "formType": "WRITING",
   "category": "SURVEY",
   "schemaJson": {

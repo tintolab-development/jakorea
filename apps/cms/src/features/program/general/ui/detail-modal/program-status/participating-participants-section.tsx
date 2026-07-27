@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Table } from 'antd'
+import { Table, Spin } from 'antd'
 import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -77,7 +77,8 @@ export function ParticipatingParticipantsSection({
     progressCalendarGranularity,
     setProgressCalendarGranularity,
   } = useParticipatingIndividualParticipantsParams()
-  const { participantList } = useProgressIndividualParticipantList(programId)
+  const { participantList, loading: participantsLoading } =
+    useProgressIndividualParticipantList(programId)
   const programBridge = useMemo(
     () => resolveInstitutionApplicationProgramBridge(program),
     [program]
@@ -270,6 +271,14 @@ export function ParticipatingParticipantsSection({
       return column
     })
   }, [columns])
+
+  if (participantsLoading && participantList.length === 0) {
+    return (
+      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+        <Spin size="large" />
+      </div>
+    )
+  }
 
   if (participantIdFromUrl && selectedParticipantFromUrl && program) {
     return (
