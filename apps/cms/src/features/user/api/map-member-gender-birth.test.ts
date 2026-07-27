@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { mapCreateUserRequestToPreRegister } from './map-pre-register-request'
+import {
+  mapCreateUserRequestToPreRegisterIndividual,
+  mapCreateUserRequestToPreRegisterInstructor,
+  mapCreateUserRequestToPreRegisterSchool,
+} from './map-pre-register-request'
 import { toApiBirthDate, toApiGender, toDisplayGender } from './map-member-gender-birth'
 
 describe('map-member-gender-birth', () => {
@@ -41,5 +46,101 @@ describe('mapCreateUserRequestToPreRegister', () => {
 
     expect(body.gender).toBe('M')
     expect(body.birthDate).toBe('1990-01-15')
+  })
+})
+
+describe('mapCreateUserRequestToPreRegisterIndividual', () => {
+  it('개인 등록 요청을 역할별 스키마로 매핑한다', () => {
+    const body = mapCreateUserRequestToPreRegisterIndividual({
+      email: 'a@test.com',
+      password: 'Temp1234!',
+      name: '홍길동',
+      phone: '010-1234-5678',
+      gender: '남성',
+      birthDate: '19900115',
+      role: 'INDIVIDUAL',
+      address: '서울시 강서구 화곡동',
+      detailAddress: '101호',
+      schoolEnrollmentStatus: 'ENROLLED',
+      id1365: '13650001',
+      isActive: true,
+    })
+
+    expect(body.email).toBe('a@test.com')
+    expect(body.gender).toBe('M')
+    expect(body.birthDate).toBe('1990-01-15')
+    expect(body.address).toBe('서울시 강서구 화곡동')
+    expect(body.addressDetail).toBe('101호')
+    expect(body.enrollmentStatus).toBe('ENROLLED')
+    expect(body.external1365Id).toBe('13650001')
+  })
+})
+
+describe('mapCreateUserRequestToPreRegisterSchool', () => {
+  it('학교 등록 요청을 organizationName·address로 매핑한다', () => {
+    const body = mapCreateUserRequestToPreRegisterSchool({
+      email: 'school@test.com',
+      password: 'Temp1234!',
+      name: '화곡중학교',
+      role: 'SCHOOL',
+      schoolInfo: {
+        schoolName: '화곡중학교',
+        address: '서울시 강서구 화곡동 1',
+      },
+      isActive: true,
+    })
+
+    expect(body.organizationName).toBe('화곡중학교')
+    expect(body.address).toBe('서울시 강서구 화곡동 1')
+    expect(body.email).toBe('school@test.com')
+  })
+
+  it('neisCode·regionSido·regionSigungu·zipCode를 매핑한다', () => {
+    const body = mapCreateUserRequestToPreRegisterSchool({
+      email: 'school@test.com',
+      password: 'Temp1234!',
+      name: '화곡중학교',
+      role: 'SCHOOL',
+      schoolInfo: {
+        schoolName: '화곡중학교',
+        address: '서울특별시 강서구 화곡로 1',
+      },
+      neisCode: 'B109000000',
+      regionSido: '서울특별시',
+      regionSigungu: '강서구',
+      zipCode: '07755',
+      isActive: true,
+    })
+
+    expect(body.neisCode).toBe('B109000000')
+    expect(body.regionSido).toBe('서울특별시')
+    expect(body.regionSigungu).toBe('강서구')
+    expect(body.zipCode).toBe('07755')
+  })
+})
+
+describe('mapCreateUserRequestToPreRegisterInstructor', () => {
+  it('강사 등록 요청에 계좌·주소 필드를 매핑한다', () => {
+    const body = mapCreateUserRequestToPreRegisterInstructor({
+      email: 'i@test.com',
+      password: 'Temp1234!',
+      name: '강사',
+      role: 'INSTRUCTOR',
+      address: '자택로 1',
+      detailAddress: '201호',
+      instructorType: 'GENERAL',
+      instructorInfo: {
+        bankName: '농협',
+        accountNumber: '1234',
+        accountHolder: '박강사',
+        isBusinessIncome: false,
+      },
+      isActive: true,
+    })
+
+    expect(body.homeAddress).toBe('자택로 1')
+    expect(body.bankName).toBe('농협')
+    expect(body.businessIncome).toBe(false)
+    expect(body.bankAccounts?.[0]?.bankName).toBe('농협')
   })
 })
