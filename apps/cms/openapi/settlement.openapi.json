@@ -73,6 +73,10 @@
       "description": "후원사, 담당자, 연도별 후원사업 관리 API입니다."
     },
     {
+      "name": "회원/강사",
+      "description": "회원 역할별 관리자 등록 API"
+    },
+    {
       "name": "기타 API",
       "description": "로그인 사용자 기준 CMS 대시보드 개인화 설정 API"
     },
@@ -7662,6 +7666,18 @@
           }
         }
       },
+      "SettlementApplicationRequestedItemRequest": {
+        "type": "object",
+        "properties": {
+          "itemType": {
+            "type": "string"
+          },
+          "requestedAmount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "SettlementApplicationResubmitRequest": {
         "type": "object",
         "properties": {
@@ -7674,6 +7690,12 @@
             "items": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          "requestedItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationRequestedItemRequest"
             }
           }
         }
@@ -7903,6 +7925,23 @@
             "items": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          "requestedItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationRequestedItemRequest"
+            }
+          }
+        }
+      },
+      "SettlementApplicationPreviewRequest": {
+        "type": "object",
+        "properties": {
+          "requestedItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationRequestedItemRequest"
             }
           }
         }
@@ -8773,6 +8812,9 @@
           "providerTxId": {
             "type": "string"
           },
+          "statusToken": {
+            "type": "string"
+          },
           "status": {
             "type": "string"
           },
@@ -8855,6 +8897,9 @@
             "type": "string"
           },
           "providerTxId": {
+            "type": "string"
+          },
+          "statusToken": {
             "type": "string"
           },
           "status": {
@@ -9583,6 +9628,47 @@
           }
         }
       },
+      "InstructorCertificationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "certificationName": {
+            "type": "string"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "certificateNumber": {
+            "type": "string"
+          },
+          "issuedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "expiresDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "fileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "InstructorDetailResponse": {
         "type": "object",
         "properties": {
@@ -9637,6 +9723,126 @@
           "revokedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "InstructorMemberDetailResponse": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "$ref": "#/components/schemas/MemberDetailResponse"
+          },
+          "instructorProfile": {
+            "$ref": "#/components/schemas/InstructorDetailResponse"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountHolder": {
+            "type": "string"
+          },
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberBankAccountHistoryResponse"
+            }
+          },
+          "certifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstructorCertificationResponse"
+            }
+          }
+        }
+      },
+      "MemberBankAccountHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountHolder": {
+            "type": "string"
+          },
+          "current": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "IndividualMemberDetailResponse": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "$ref": "#/components/schemas/MemberDetailResponse"
+          },
+          "address": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "zipCode": {
+            "type": "string"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "enrollmentStatus": {
+            "type": "string"
+          },
+          "addressDetailMasked": {
+            "type": "boolean"
+          },
+          "termsAgreements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermsAgreementRow"
+            }
+          }
+        }
+      },
+      "TermsAgreementRow": {
+        "type": "object",
+        "properties": {
+          "termsType": {
+            "type": "string"
+          },
+          "termsVersion": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "agreed": {
+            "type": "boolean"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorType": {
+            "type": "string"
+          },
+          "sourceFlow": {
+            "type": "string"
           }
         }
       },
@@ -9731,9 +9937,283 @@
           },
           "external1365Id": {
             "type": "string"
+          },
+          "role": {
+            "type": "string"
           }
         },
         "required": [
+          "name"
+        ]
+      },
+      "AdminPreRegisterSchoolRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "phone": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "organizationName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "neisCode": {
+            "type": "string"
+          },
+          "organizationCategory": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "zipCode": {
+            "type": "string"
+          },
+          "regionSido": {
+            "type": "string"
+          },
+          "regionSigungu": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string"
+          },
+          "termsAgreements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermsAgreementRequest"
+            }
+          }
+        },
+        "required": [
+          "address",
+          "email",
+          "name",
+          "organizationName"
+        ]
+      },
+      "AdminPreRegisterInstructorRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "phone": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "instructorType": {
+            "type": "string"
+          },
+          "feeGrade": {
+            "type": "string"
+          },
+          "jaGrade": {
+            "type": "string"
+          },
+          "businessIncome": {
+            "type": "boolean"
+          },
+          "homeAddress": {
+            "type": "string"
+          },
+          "homeAddressDetail": {
+            "type": "string"
+          },
+          "educationLevel": {
+            "type": "string"
+          },
+          "careerText": {
+            "type": "string"
+          },
+          "selfIntroduction": {
+            "type": "string"
+          },
+          "oneLineIntro": {
+            "type": "string"
+          },
+          "bankName": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountHolder": {
+            "type": "string"
+          },
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberBankAccountUpsertRequest"
+            },
+            "maxItems": 20,
+            "minItems": 0
+          },
+          "certifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstructorCertificationUpsertRequest"
+            },
+            "maxItems": 50,
+            "minItems": 0
+          },
+          "external1365Id": {
+            "type": "string"
+          },
+          "termsAgreements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermsAgreementRequest"
+            }
+          }
+        },
+        "required": [
+          "email",
+          "name"
+        ]
+      },
+      "InstructorCertificationUpsertRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "certificationName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "certificateNumber": {
+            "type": "string"
+          },
+          "issuedDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "expiresDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "fileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "current": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "certificationName"
+        ]
+      },
+      "MemberBankAccountUpsertRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bankName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "accountNumber": {
+            "type": "string"
+          },
+          "accountHolder": {
+            "type": "string"
+          },
+          "current": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "bankName"
+        ]
+      },
+      "AdminPreRegisterIndividualRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "phone": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "address": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "zipCode": {
+            "type": "string"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "enrollmentStatus": {
+            "type": "string"
+          },
+          "external1365Id": {
+            "type": "string"
+          },
+          "termsAgreements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermsAgreementRequest"
+            }
+          }
+        },
+        "required": [
+          "email",
           "name"
         ]
       },
@@ -13603,7 +14083,8 @@
           }
         },
         "required": [
-          "adminSsoSessionId"
+          "adminSsoSessionId",
+          "socialConsentVersion"
         ]
       },
       "AdminSocialAccountResponse": {
@@ -14127,6 +14608,19 @@
           "reason": {
             "type": "string",
             "minLength": 1
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "ApprovalResetRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
           }
         },
         "required": [
@@ -14848,14 +15342,14 @@
             "type": "string",
             "format": "date-time"
           },
+          "businessStartDate": {
+            "type": "string"
+          },
           "businessYear": {
             "type": "integer",
             "format": "int32"
           },
           "businessEndDate": {
-            "type": "string"
-          },
-          "businessStartDate": {
             "type": "string"
           }
         }
@@ -14945,10 +15439,10 @@
           "ujatPartnerRecommendationPath": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           }
         }
@@ -16501,6 +16995,33 @@
           }
         }
       },
+      "CertificateBulkIssueRequest": {
+        "type": "object",
+        "properties": {
+          "participantIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "certificateType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "issueReason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "certificateType",
+          "participantIds"
+        ]
+      },
       "AdminSsoStartRequest": {
         "type": "object",
         "properties": {
@@ -17064,6 +17585,14 @@
             "type": "integer",
             "format": "int64"
           },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "uuid": {
             "type": "string"
           },
@@ -17144,15 +17673,15 @@
       },
       "AdminAccountCreateRequest": {
         "type": "object",
-        "description": "관리자 신규 등록 요청. MASTER 관리자가 직접 등록하는 관리자 계정은 즉시 ACTIVE 상태가 되며, 초기 비밀번호는 이메일 주소와 동일하게 저장됩니다.",
+        "description": "MASTER 관리자가 즉시 ACTIVE 상태로 등록하는 관리자 신규 등록 요청입니다.",
         "properties": {
           "email": {
             "type": "string",
-            "description": "관리자 로그인 이메일. 초기 비밀번호도 이 이메일 값과 동일하게 설정됩니다."
+            "description": "관리자 로그인 이메일"
           },
           "rawPassword": {
             "type": "string",
-            "description": "사용하지 않습니다. 관리자 신규 등록 초기 비밀번호는 항상 email 값으로 설정됩니다."
+            "description": "초기 임시 비밀번호. 이메일 주소와 달라야 하며 비밀번호 정책을 충족해야 합니다."
           },
           "name": {
             "type": "string"
@@ -17199,8 +17728,12 @@
       },
       "AdminAccountPasswordResetRequest": {
         "type": "object",
-        "description": "관리자 비밀번호 초기화 요청입니다. 초기화 비밀번호는 관리자 이메일 값과 동일하게 설정합니다.",
+        "description": "MASTER 관리자가 관리자 비밀번호를 새 임시 비밀번호로 초기화하는 요청입니다. 이메일 주소와 같은 비밀번호는 허용되지 않습니다.",
         "properties": {
+          "newPassword": {
+            "type": "string",
+            "description": "12자 이상이며 영문 대/소문자, 숫자, 특수문자 중 3종 이상을 포함하는 새 임시 비밀번호"
+          },
           "reason": {
             "type": "string",
             "description": "비밀번호 초기화 사유"
@@ -17272,6 +17805,22 @@
           },
           "isBusinessIncome": {
             "type": "boolean"
+          },
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberBankAccountUpsertRequest"
+            },
+            "maxItems": 20,
+            "minItems": 0
+          },
+          "certifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstructorCertificationUpsertRequest"
+            },
+            "maxItems": 50,
+            "minItems": 0
           }
         }
       },
@@ -17362,6 +17911,14 @@
           "id": {
             "type": "string"
           },
+          "teacherMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "name": {
             "type": "string"
           },
@@ -17403,33 +17960,6 @@
             "items": {
               "$ref": "#/components/schemas/SchoolAffiliatedTeacherRow"
             }
-          }
-        }
-      },
-      "TermsAgreementRow": {
-        "type": "object",
-        "properties": {
-          "termsType": {
-            "type": "string"
-          },
-          "termsVersion": {
-            "type": "string"
-          },
-          "required": {
-            "type": "boolean"
-          },
-          "agreed": {
-            "type": "boolean"
-          },
-          "agreedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "actorType": {
-            "type": "string"
-          },
-          "sourceFlow": {
-            "type": "string"
           }
         }
       },
@@ -17657,6 +18187,13 @@
           },
           "actionState": {
             "$ref": "#/components/schemas/UserDetailActionState"
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "roleCode": {
+            "type": "string"
           },
           "memberId": {
             "type": "integer",
@@ -20262,6 +20799,51 @@
           }
         }
       },
+      "SchoolMemberDetailResponse": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "$ref": "#/components/schemas/MemberDetailResponse"
+          },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "neisCode": {
+            "type": "string"
+          },
+          "organizationCategory": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "zipCode": {
+            "type": "string"
+          },
+          "regionSido": {
+            "type": "string"
+          },
+          "regionSigungu": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string"
+          },
+          "affiliatedTeachers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchoolAffiliatedTeacherRow"
+            }
+          }
+        }
+      },
       "MemberProgramHistoryResponse": {
         "type": "object",
         "properties": {
@@ -20575,6 +21157,23 @@
           "fileCount": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "ProgramRoleOptionResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

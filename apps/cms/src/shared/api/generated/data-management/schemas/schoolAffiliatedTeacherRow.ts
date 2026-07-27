@@ -8,6 +8,8 @@
 
 export interface SchoolAffiliatedTeacherRow {
   id?: string;
+  teacherMemberId?: number;
+  memberId?: number;
   name?: string;
   assignedGrade?: string;
   phone?: string;

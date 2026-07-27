@@ -10,6 +10,7 @@ export interface NiceIdentityAuthStartResponse {
   sessionId?: number;
   provider?: string;
   providerTxId?: string;
+  statusToken?: string;
   status?: string;
   expiresAt?: string;
   authUrl?: string;

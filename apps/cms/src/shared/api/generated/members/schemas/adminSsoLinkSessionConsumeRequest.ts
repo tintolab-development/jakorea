@@ -18,6 +18,6 @@ export interface AdminSsoLinkSessionConsumeRequest {
      * @minLength 0
      * @maxLength 100
      */
-  socialConsentVersion?: string;
+  socialConsentVersion: string;
   socialConsentAgreed?: boolean;
 }
