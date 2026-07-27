@@ -3,6 +3,7 @@ import { createApplicantRecruitFormIndividualDraft } from '@/features/template/m
 import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/model/applicant-recruit-form-institution-draft'
 import { createGeminiVisitingTrainingApplicationFormInstructorDraft } from '@/features/template/model/gemini-visiting-training-application-form-instructor-draft'
 import { createGeminiVisitingTrainingApplicationFormInstitutionDraft } from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
+import { createGeminiVisitingTrainingRecruitFormDraft } from '@/features/template/model/gemini-visiting-training-recruit-form-draft'
 import { createProgramApplicationFormEconomyDraft } from '@/features/template/model/program-application-form-economy-draft'
 import { createProgramApplicationFormInstructorDraft } from '@/features/template/model/program-application-form-instructor-draft'
 import { createProgramApplicationFormInstitutionDraft } from '@/features/template/model/program-application-form-institution-draft'
@@ -17,6 +18,8 @@ import { createUjatProgramApplicationFormVolunteerDraft } from '@/features/templ
 import { createUjatProgramRegistrationDraft } from '@/features/template/model/ujat-program-registration-draft'
 import { createUjatRecruitFormInstitutionDraft } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { createUjatRecruitFormVolunteerDraft } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
+import { createTrainedTeachersRecruitFormInstitutionDraft } from '@/features/template/model/trained-teachers-recruit-form-institution-draft'
+import { createEconomyRecruitFormInstitutionDraft } from '@/features/template/model/economy-recruit-form-institution-draft'
 import { createPaymentStatementIssuanceDraft } from '@/features/template/model/payment-statement-issuance-draft'
 import { createPaymentStatementPreConsentDraft } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { createSettlementApplicationIssuanceDraft } from '@/features/template/model/settlement-application-issuance-draft'
@@ -39,11 +42,14 @@ const FORM_TEMPLATE_SEED_FACTORIES: Record<string, FormTemplateSeedFactory> = {
   'registration-trained-teachers': () => createProgramRegistrationDraft('trainedTeachers'),
   'registration-ujat': () => createUjatProgramRegistrationDraft(),
   'recruitment-participant-school': () => createApplicantRecruitFormInstitutionDraft(),
+  'recruitment-economy': () => createEconomyRecruitFormInstitutionDraft(),
   'recruitment-participant-individual': () => createApplicantRecruitFormIndividualDraft(),
   'recruitment-instructor': () => createRecruitFormInstructorDraft(),
   'recruitment-volunteer': () => createRecruitFormVolunteerDraft(),
   'recruitment-ujat-school': () => createUjatRecruitFormInstitutionDraft(),
   'recruitment-ujat-volunteer': () => createUjatRecruitFormVolunteerDraft(),
+  'recruitment-gemini-visiting-training': () => createGeminiVisitingTrainingRecruitFormDraft(),
+  'recruitment-trained-teachers': () => createTrainedTeachersRecruitFormInstitutionDraft(),
   'application-participant-school': () => createProgramApplicationFormInstitutionDraft(),
   'application-participant-individual': () => createProgramParticipantApplicationDraft(),
   'application-instructor': () => createProgramApplicationFormInstructorDraft(),

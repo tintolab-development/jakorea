@@ -58,6 +58,18 @@ import {
   GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
 import {
+  createGeminiVisitingTrainingRecruitFormDraft,
+  GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/gemini-visiting-training-recruit-form-draft'
+import {
+  createTrainedTeachersRecruitFormInstitutionDraft,
+  TRAINED_TEACHERS_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/trained-teachers-recruit-form-institution-draft'
+import {
+  createEconomyRecruitFormInstitutionDraft,
+  ECONOMY_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/economy-recruit-form-institution-draft'
+import {
   createProgramApplicationFormInstitutionDraft,
   PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-institution-draft'
@@ -252,7 +264,11 @@ export type UseProgramParticipantApplicationEditorOptions = {
 function isApplicantRecruitInstitutionVariant(
   variant: ProgramParticipantApplicationEditorVariant
 ): boolean {
-  return variant === 'applicant-recruit-institution'
+  return (
+    variant === 'applicant-recruit-institution' ||
+    variant === 'economy-recruit-institution' ||
+    variant === 'trained-teachers-recruit-institution'
+  )
 }
 
 function isGeneralRecruitOverlayVariant(
@@ -345,6 +361,10 @@ export function useProgramParticipantApplicationEditor(
       return UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     if (variant === 'applicant-recruit-institution')
       return APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'economy-recruit-institution')
+      return ECONOMY_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'trained-teachers-recruit-institution')
+      return TRAINED_TEACHERS_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'ujat-recruit-institution')
       return UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'applicant-recruit-individual')
@@ -352,6 +372,7 @@ export function useProgramParticipantApplicationEditor(
     if (variant === 'recruit-instructor') return RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
     if (variant === 'recruit-volunteer') return RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     if (variant === 'ujat-recruit-volunteer') return UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
+    if (variant === 'gemini-recruit') return GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS
     if (variant === 'instructor') return PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
     if (variant === 'volunteer') return PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     return PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS
@@ -399,12 +420,17 @@ export function useProgramParticipantApplicationEditor(
       return createUjatProgramApplicationFormVolunteerDraft()
     if (variant === 'applicant-recruit-institution')
       return createApplicantRecruitFormInstitutionDraft()
+    if (variant === 'economy-recruit-institution')
+      return createEconomyRecruitFormInstitutionDraft()
+    if (variant === 'trained-teachers-recruit-institution')
+      return createTrainedTeachersRecruitFormInstitutionDraft()
     if (variant === 'ujat-recruit-institution') return createUjatRecruitFormInstitutionDraft()
     if (variant === 'applicant-recruit-individual')
       return createApplicantRecruitFormIndividualDraft()
     if (variant === 'recruit-instructor') return createRecruitFormInstructorDraft()
     if (variant === 'recruit-volunteer') return createRecruitFormVolunteerDraft()
     if (variant === 'ujat-recruit-volunteer') return createUjatRecruitFormVolunteerDraft()
+    if (variant === 'gemini-recruit') return createGeminiVisitingTrainingRecruitFormDraft()
     if (variant === 'instructor') return createProgramApplicationFormInstructorDraft()
     if (variant === 'volunteer') return createProgramApplicationFormVolunteerDraft()
     return createProgramParticipantApplicationDraft()
@@ -841,15 +867,25 @@ export function useProgramParticipantApplicationEditor(
         ujatProgramApplicationGradeInfo,
         ujatProgramApplicationGradeClassTime,
         applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',
+        economyRecruitFormInstitution: variant === 'economy-recruit-institution',
+        trainedTeachersRecruitFormInstitution:
+          variant === 'trained-teachers-recruit-institution',
         showInstitutionApplicationLimits:
-          variant === 'applicant-recruit-institution' &&
+          (variant === 'applicant-recruit-institution' ||
+            variant === 'economy-recruit-institution' ||
+            variant === 'trained-teachers-recruit-institution') &&
           (editorOptions?.participantOrganization ?? true),
         applicantRecruitInstitutionLayoutVariant:
-          editorOptions?.applicantRecruitInstitutionLayoutVariant,
+          variant === 'economy-recruit-institution'
+            ? 'economy'
+            : editorOptions?.applicantRecruitInstitutionLayoutVariant,
         applicantRecruitInstitutionDefaults: editorOptions?.applicantRecruitInstitutionDefaults,
         applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
         recruitFormInstructor: variant === 'recruit-instructor',
         recruitFormVolunteer: variant === 'recruit-volunteer',
+        geminiRecruitForm: variant === 'gemini-recruit',
+        ujatRecruitFormInstitution: variant === 'ujat-recruit-institution',
+        ujatRecruitFormVolunteer: variant === 'ujat-recruit-volunteer',
         ujatRecruitParagraphProps: editorOptions?.ujatRecruitParagraphProps,
         programApplicationFormIndividual: variant === 'individual',
         programApplicationFormInstructor: programApplicationFormInstructorOptions,

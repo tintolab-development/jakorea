@@ -18,6 +18,7 @@ import {
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -137,7 +138,7 @@ export type ApplicantRecruitParticipantInfoParagraphProps = {
    * 미전달 시 기관 모집 양식 편집기에서는 true로 간주.
    */
   showInstitutionApplicationLimits?: boolean
-  layoutVariant?: 'general' | 'economy'
+  layoutVariant?: 'general' | 'economy' | 'trainedTeachers'
   defaults?: {
     studentListRequired?: 'need' | 'none'
     preguidanceRequired?: 'need' | 'none'
@@ -267,6 +268,14 @@ export function ApplicantRecruitParticipantInfoParagraph({
     APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.targetLevels,
     layoutVariant === 'economy' ? ['high'] : []
   )
+  const [notesNotApplicable, setNotesNotApplicable] = useApplicantRecruitInstitutionOverlayKv<boolean>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.notesNotApplicable,
+    false
+  )
+  const [notes, setNotes] = useApplicantRecruitInstitutionOverlayKv<string>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.notes,
+    ''
+  )
 
   useEffect(() => {
     patchInstitutionApplicationProgramBridge({
@@ -388,7 +397,6 @@ export function ApplicantRecruitParticipantInfoParagraph({
                   inputSize="medium"
                   width="100%"
                   placeholder="상세 교육 대상을 입력하세요"
-                  defaultValue="특성화고등학교 3학년"
                 />
               }
               view="-"
@@ -464,12 +472,31 @@ export function ApplicantRecruitParticipantInfoParagraph({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="비고"
+              fullRow
               edit={
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  placeholder="비고란을 작성하세요 (없으면 -로 입력)"
-                />
+                <div className={MAX_SUFFIX_CLASS}>
+                  <CmsCheckbox
+                    checkboxSize="medium"
+                    checked={notesNotApplicable}
+                    onChange={e => {
+                      const checked = e.target.checked
+                      setNotesNotApplicable(checked)
+                      if (checked) setNotes('')
+                    }}
+                  >
+                    해당 없음
+                  </CmsCheckbox>
+                  <DetailInfoForm.InputsSeparator />
+                  <CmsInput
+                    inputSize="medium"
+                    width="100%"
+                    style={{ flex: '1 1 0', minWidth: 0 }}
+                    placeholder="비고란을 작성하세요"
+                    value={notes}
+                    disabled={notesNotApplicable}
+                    onChange={e => setNotes(e.target.value)}
+                  />
+                </div>
               }
               view="-"
             />
@@ -479,45 +506,74 @@ export function ApplicantRecruitParticipantInfoParagraph({
     )
   }
 
+  const isTrainedTeachers = layoutVariant === 'trainedTeachers'
+
   return (
     <div className="applicant-recruit-participant-info-paragraph__forms">
       <DetailInfoForm title="참여자 모집 정보" hideHeader mode="edit">
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="공고 게시 여부"
-            fullRow
-            edit={
-              <ParticipantRecruitmentAnnouncementPublishedRadios
-                value={announcementPublished}
-                onChange={setAnnouncementPublished}
+        {isTrainedTeachers ? (
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="공고 게시 여부"
+              edit={
+                <ParticipantRecruitmentAnnouncementPublishedRadios
+                  value={announcementPublished}
+                  onChange={setAnnouncementPublished}
+                />
+              }
+              view="-"
+            />
+            <DetailInfoForm.Field
+              label="학생 명단 제출 여부"
+              edit={
+                <NeedOrNotRadioGroup
+                  value={studentListRequired}
+                  onChange={setStudentListRequired}
+                />
+              }
+              view="-"
+            />
+          </DetailInfoForm.Row>
+        ) : (
+          <>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="공고 게시 여부"
+                fullRow
+                edit={
+                  <ParticipantRecruitmentAnnouncementPublishedRadios
+                    value={announcementPublished}
+                    onChange={setAnnouncementPublished}
+                  />
+                }
+                view="-"
               />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+            </DetailInfoForm.Row>
 
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="학생 명단 제출 여부"
-            edit={
-              <NeedOrNotRadioGroup
-                value={studentListRequired}
-                onChange={setStudentListRequired}
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="학생 명단 제출 여부"
+                edit={
+                  <NeedOrNotRadioGroup
+                    value={studentListRequired}
+                    onChange={setStudentListRequired}
+                  />
+                }
+                view="-"
               />
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="사전 안내 사항 작성 여부"
-            edit={
-              <NeedOrNotRadioGroup
-                value={preguidanceRequired}
-                onChange={setPreguidanceRequired}
+              <DetailInfoForm.Field
+                label="사전 안내 사항 작성 여부"
+                edit={
+                  <NeedOrNotRadioGroup
+                    value={preguidanceRequired}
+                    onChange={setPreguidanceRequired}
+                  />
+                }
+                view="-"
               />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+            </DetailInfoForm.Row>
+          </>
+        )}
 
         {showInstitutionApplicationLimits ? (
           <>
@@ -650,19 +706,21 @@ export function ApplicantRecruitParticipantInfoParagraph({
           />
         </DetailInfoForm.Row>
 
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="수료증 발급 여부"
-            fullRow
-            edit={
-              <CertificateRadioGroup
-                value={certificateProvided}
-                onChange={setCertificateProvided}
-              />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+        {isTrainedTeachers ? null : (
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="수료증 발급 여부"
+              fullRow
+              edit={
+                <CertificateRadioGroup
+                  value={certificateProvided}
+                  onChange={setCertificateProvided}
+                />
+              }
+              view="-"
+            />
+          </DetailInfoForm.Row>
+        )}
 
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -733,12 +791,31 @@ export function ApplicantRecruitParticipantInfoParagraph({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="비고"
+            fullRow
             edit={
-              <CmsInput
-                inputSize="medium"
-                width="100%"
-                placeholder="비고란을 작성하세요 (없으면 -로 입력)"
-              />
+              <div className={MAX_SUFFIX_CLASS}>
+                <CmsCheckbox
+                  checkboxSize="medium"
+                  checked={notesNotApplicable}
+                  onChange={e => {
+                    const checked = e.target.checked
+                    setNotesNotApplicable(checked)
+                    if (checked) setNotes('')
+                  }}
+                >
+                  해당 없음
+                </CmsCheckbox>
+                <DetailInfoForm.InputsSeparator />
+                <CmsInput
+                  inputSize="medium"
+                  width="100%"
+                  style={{ flex: '1 1 0', minWidth: 0 }}
+                  placeholder="비고란을 작성하세요"
+                  value={notes}
+                  disabled={notesNotApplicable}
+                  onChange={e => setNotes(e.target.value)}
+                />
+              </div>
             }
             view="-"
           />

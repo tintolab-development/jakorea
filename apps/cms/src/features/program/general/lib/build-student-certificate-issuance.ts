@@ -4,7 +4,7 @@ import { resolveStudentCertificateTemplateName } from './student-certificate-tem
 import type { StudentCertificateKind } from './resolve-student-certificate-kind'
 
 export const COMPLETION_CERTIFICATE_DOCUMENT_TITLE = '수료증'
-export const PARTICIPATION_CERTIFICATE_DOCUMENT_TITLE = '참여인증서'
+export const PARTICIPATION_CERTIFICATE_DOCUMENT_TITLE = '참가인증서'
 
 const COMPLETION_CERTIFICATE_BODY_CONTENT =
   '귀하는 위의 과정에 참여하여\n교육과정을 수료하였음을 확인합니다.'

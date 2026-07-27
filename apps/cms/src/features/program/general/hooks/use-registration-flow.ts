@@ -192,6 +192,13 @@ export function useGeneralProgramRegistrationFlow(
       if (base.key === 'program') {
         return { ...base, templateId: 'registration-economy' }
       }
+      if (base.key === 'recruit-participant-school') {
+        return {
+          ...base,
+          templateId: 'recruitment-economy',
+          editorVariant: 'economy-recruit-institution' as const,
+        }
+      }
       if (base.key === 'application-participant-school') {
         return {
           ...base,

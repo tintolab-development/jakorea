@@ -29,7 +29,10 @@ import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/pay
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
 import { renderApplicantRecruitFormIndividualParagraphBody } from '@/features/template/ui/form-set/recruit-form/individual/paragraph-body'
 import { renderApplicantRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/institution/paragraph-body'
+import { renderEconomyRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/1c-1s/paragraph-body'
+import { renderGeminiRecruitFormParagraphBody } from '@/features/template/ui/form-set/recruit-form/gemini/paragraph-body'
 import { renderUjatRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/paragraph-body'
+import { renderTrainedTeachersRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/trained-teachers-institution/paragraph-body'
 import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui/form-set/recruit-form/instructor/paragraph-body'
 import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraph-body'
 import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
@@ -420,10 +423,13 @@ export function HorizontalTableParagraphBody({
   showInstitutionApplicationLimits,
   applicantRecruitInstitutionLayoutVariant,
   applicantRecruitInstitutionDefaults,
+  economyRecruitFormInstitution,
+  trainedTeachersRecruitFormInstitution,
   ujatRecruitFormInstitution,
   applicantRecruitFormIndividual,
   recruitFormInstructor,
   recruitFormVolunteer,
+  geminiRecruitForm,
   ujatRecruitFormVolunteer,
   ujatRecruitParagraphProps,
   programApplicationFormInstructor,
@@ -470,6 +476,10 @@ export function HorizontalTableParagraphBody({
   showInstitutionApplicationLimits?: boolean
   applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
+  /** 1사1교_참여 기관 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  economyRecruitFormInstitution?: boolean
+  /** 교육받은 교사_참여 기관 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  trainedTeachersRecruitFormInstitution?: boolean
   /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
@@ -478,6 +488,8 @@ export function HorizontalTableParagraphBody({
   recruitFormInstructor?: boolean
   /** 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   recruitFormVolunteer?: boolean
+  /** Gemini 찾아가는 연수 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  geminiRecruitForm?: boolean
   /** UJAT 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormVolunteer?: boolean
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
@@ -546,6 +558,23 @@ export function HorizontalTableParagraphBody({
     }
   )
   if (applicantRecruitFormInstitutionBody != null) return applicantRecruitFormInstitutionBody
+
+  const economyRecruitFormInstitutionBody = renderEconomyRecruitFormInstitutionParagraphBody(
+    p,
+    economyRecruitFormInstitution
+  )
+  if (economyRecruitFormInstitutionBody != null) return economyRecruitFormInstitutionBody
+
+  const trainedTeachersRecruitFormInstitutionBody =
+    renderTrainedTeachersRecruitFormInstitutionParagraphBody(
+      p,
+      trainedTeachersRecruitFormInstitution
+    )
+  if (trainedTeachersRecruitFormInstitutionBody != null)
+    return trainedTeachersRecruitFormInstitutionBody
+
+  const geminiRecruitFormBody = renderGeminiRecruitFormParagraphBody(p, geminiRecruitForm)
+  if (geminiRecruitFormBody != null) return geminiRecruitFormBody
 
   const ujatRecruitFormInstitutionBody = renderUjatRecruitFormInstitutionParagraphBody(
     p,

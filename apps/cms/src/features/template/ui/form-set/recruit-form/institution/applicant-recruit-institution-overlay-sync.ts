@@ -16,6 +16,8 @@ export const APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS = {
   recruitRangeSeal: 'recruit.recruitRangeSeal',
   finalAnnounceIso: 'recruit.finalAnnounceIso',
   targetLevels: 'recruit.targetLevels',
+  notesNotApplicable: 'recruit.notesNotApplicable',
+  notes: 'recruit.notes',
 } as const
 
 export type ApplicantRecruitInstitutionLimitsOverlay = {
@@ -36,6 +38,8 @@ export type ApplicantRecruitInstitutionOverlay = ApplicantRecruitInstitutionLimi
   recruitRangeSeal?: { start: string; end: string } | null
   finalAnnounceIso?: string | null
   targetLevels?: string[]
+  notesNotApplicable?: boolean
+  notes?: string
 }
 
 let overlayState: Record<string, unknown> = {}

@@ -22,6 +22,10 @@ export function getTemplateIdForParticipantApplicationVariant(
       return 'application-ujat-volunteer'
     case 'applicant-recruit-institution':
       return 'recruitment-participant-school'
+    case 'economy-recruit-institution':
+      return 'recruitment-economy'
+    case 'trained-teachers-recruit-institution':
+      return 'recruitment-trained-teachers'
     case 'ujat-recruit-institution':
       return 'recruitment-ujat-school'
     case 'applicant-recruit-individual':
@@ -32,6 +36,8 @@ export function getTemplateIdForParticipantApplicationVariant(
       return 'recruitment-volunteer'
     case 'ujat-recruit-volunteer':
       return 'recruitment-ujat-volunteer'
+    case 'gemini-recruit':
+      return 'recruitment-gemini-visiting-training'
     case 'instructor':
       return 'application-instructor'
     case 'volunteer':

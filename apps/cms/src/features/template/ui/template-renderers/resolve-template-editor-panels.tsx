@@ -17,6 +17,18 @@ import {
   ApplicantRecruitFormInstitutionEditorRightColumn,
 } from '@/features/template/ui/form-set/recruit-form/institution'
 import {
+  EconomyRecruitFormInstitutionEditorLeftColumn,
+  EconomyRecruitFormInstitutionEditorRightColumn,
+} from '@/features/template/ui/form-set/recruit-form/1c-1s'
+import {
+  TrainedTeachersRecruitFormInstitutionEditorLeftColumn,
+  TrainedTeachersRecruitFormInstitutionEditorRightColumn,
+} from '@/features/template/ui/form-set/recruit-form/trained-teachers-institution'
+import {
+  GeminiRecruitFormEditorLeftColumn,
+  GeminiRecruitFormEditorRightColumn,
+} from '@/features/template/ui/form-set/recruit-form/gemini'
+import {
   UjatRecruitFormInstitutionEditorLeftColumn,
   UjatRecruitFormInstitutionEditorRightColumn,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-institution'
@@ -119,6 +131,12 @@ function resolveParticipantApplicationLeft(
       return <UjatRecruitFormInstitutionEditorLeftColumn vm={vm} />
     case 'applicant-recruit-institution':
       return <ApplicantRecruitFormInstitutionEditorLeftColumn vm={vm} />
+    case 'economy-recruit-institution':
+      return <EconomyRecruitFormInstitutionEditorLeftColumn vm={vm} />
+    case 'trained-teachers-recruit-institution':
+      return <TrainedTeachersRecruitFormInstitutionEditorLeftColumn vm={vm} />
+    case 'gemini-recruit':
+      return <GeminiRecruitFormEditorLeftColumn vm={vm} />
     case 'institution':
       return <ProgramApplicationFormInstitutionEditorLeftColumn vm={vm} />
     case 'individual':
@@ -160,6 +178,12 @@ function resolveParticipantApplicationRight(
       return <UjatRecruitFormInstitutionEditorRightColumn vm={vm} />
     case 'applicant-recruit-institution':
       return <ApplicantRecruitFormInstitutionEditorRightColumn vm={vm} />
+    case 'economy-recruit-institution':
+      return <EconomyRecruitFormInstitutionEditorRightColumn vm={vm} />
+    case 'trained-teachers-recruit-institution':
+      return <TrainedTeachersRecruitFormInstitutionEditorRightColumn vm={vm} />
+    case 'gemini-recruit':
+      return <GeminiRecruitFormEditorRightColumn vm={vm} />
     case 'institution':
       return <ProgramApplicationFormInstitutionEditorRightColumn vm={vm} />
     case 'individual':
