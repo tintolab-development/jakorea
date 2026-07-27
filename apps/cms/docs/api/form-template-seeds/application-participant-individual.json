@@ -1,5 +1,6 @@
 {
   "templateCode": "application-participant-individual",
+  "templateName": "일반_참여자 신청 폼",
   "formType": "WRITING",
   "category": "APPLICATION",
   "schemaJson": {

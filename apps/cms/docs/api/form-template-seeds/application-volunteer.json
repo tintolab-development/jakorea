@@ -1,5 +1,6 @@
 {
   "templateCode": "application-volunteer",
+  "templateName": "공통_봉사자 신청 폼",
   "formType": "WRITING",
   "category": "APPLICATION",
   "schemaJson": {

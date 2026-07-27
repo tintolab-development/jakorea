@@ -1,5 +1,6 @@
 {
   "templateCode": "survey-student",
+  "templateName": "만족도조사 (학생용)",
   "formType": "WRITING",
   "category": "SURVEY",
   "schemaJson": {

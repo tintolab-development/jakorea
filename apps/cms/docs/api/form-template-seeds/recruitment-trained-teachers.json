@@ -1,8 +1,8 @@
 {
-  "templateCode": "application-gemini-visiting-training-instructor",
-  "templateName": "Gemini_찾아가는 연수 강사 신청 폼",
+  "templateCode": "recruitment-trained-teachers",
+  "templateName": "교육받은 교사_참여 기관 모집 폼",
   "formType": "WRITING",
-  "category": "APPLICATION",
+  "category": "RECRUITMENT",
   "schemaJson": {
     "schemaVersion": 1,
     "formSettings": {
@@ -10,17 +10,17 @@
     },
     "paragraphs": [
       {
-        "id": "gemini-vt-instructor-seed-available-schedule",
+        "id": "trained-teachers-recruit-institution-seed-recruit-info",
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "강의 진행 가능 일정",
-        "paragraphDescription": "강의 진행이 가능한 일정을 모두 선택해 주세요.",
+        "paragraphTitle": "참여 기관 모집 정보",
+        "paragraphDescription": "설명 입력",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [
-          "강의 진행 가능일",
-          ""
+          "항목",
+          "내용"
         ],
         "dataRows": [
           [
@@ -38,12 +38,12 @@
         "idTypeWithInput": null
       },
       {
-        "id": "gemini-vt-instructor-seed-official-document",
+        "id": "trained-teachers-recruit-institution-seed-detail-info",
         "kind": "single_item",
         "variant": "horizontal_table",
         "requiredMark": true,
-        "paragraphTitle": "연수 공문",
-        "paragraphDescription": "공문이 필요할 경우, 공문 내에 반드시 포함되어야 하는 정보를 작성해주세요.",
+        "paragraphTitle": "상세 정보",
+        "paragraphDescription": "공란인 경우, 홈페이지 모집 상세에서 항목 미노출 됩니다.",
         "participatesInTitleNumbering": true,
         "tableFlavor": "text",
         "columnHeaders": [

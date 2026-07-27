@@ -1,5 +1,6 @@
 {
   "templateCode": "agreement-third-party",
+  "templateName": "지급조서 사전 동의서",
   "formType": "WRITING",
   "category": "AGREEMENT",
   "schemaJson": {

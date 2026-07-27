@@ -1,5 +1,6 @@
 {
   "templateCode": "agreement-expense",
+  "templateName": "교육진행자 동의 서약서",
   "formType": "WRITING",
   "category": "AGREEMENT",
   "schemaJson": {

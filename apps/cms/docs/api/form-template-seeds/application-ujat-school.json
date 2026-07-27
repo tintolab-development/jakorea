@@ -1,5 +1,6 @@
 {
   "templateCode": "application-ujat-school",
+  "templateName": "UJAT_참여 기관 신청 폼",
   "formType": "WRITING",
   "category": "APPLICATION",
   "schemaJson": {

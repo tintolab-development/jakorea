@@ -1,5 +1,6 @@
 {
   "templateCode": "registration-trained-teachers",
+  "templateName": "교육받은 교사 프로그램 등록 폼",
   "formType": "WRITING",
   "category": "REGISTRATION",
   "schemaJson": {

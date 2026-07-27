@@ -1,5 +1,6 @@
 {
   "templateCode": "recruitment-participant-individual",
+  "templateName": "일반_참여자 모집 폼",
   "formType": "WRITING",
   "category": "RECRUITMENT",
   "schemaJson": {

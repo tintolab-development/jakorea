@@ -1,5 +1,6 @@
 {
   "templateCode": "application-instructor",
+  "templateName": "공통_강사 신청 폼",
   "formType": "WRITING",
   "category": "APPLICATION",
   "schemaJson": {
