@@ -35,6 +35,11 @@ export interface UsePersonalInfoRevealOptions {
   resolveMemberId?: () => string | undefined
   /** 회원 관리 역할별 unmask path 분기 */
   resolveMemberRole?: () => UserRole | undefined
+  /**
+   * 역할별 unmask API가 원문 상세 DTO를 반환하면 호출.
+   * 회원 상세 화면에서 주소·계좌 등 표시 갱신에 사용.
+   */
+  onPrivacyUnmasked?: (payload: unknown, role: UserRole | undefined) => void
   resetDeps: DependencyList
   controlMode: PersonalInfoRevealControlMode
   modalZIndex?: number
@@ -60,23 +65,23 @@ async function revealPersonalInfoWithAudit(
   resolveMemberId: (() => string | undefined) | undefined,
   reason: string,
   resolveMemberRole?: () => UserRole | undefined
-): Promise<boolean> {
+): Promise<{ ok: true; payload?: unknown; role?: UserRole } | { ok: false }> {
   const memberIdRaw = resolveMemberId?.()?.trim()
   const memberIdNum = memberIdRaw != null ? Number(memberIdRaw) : NaN
   const role = resolveMemberRole?.()
 
   if (isMembersRemoteEnabled() && Number.isFinite(memberIdNum)) {
     try {
-      await fetchMemberRolePrivacyUnmask(memberIdNum, reason, role)
+      const payload = await fetchMemberRolePrivacyUnmask(memberIdNum, reason, role)
       void queryClient.invalidateQueries({ queryKey: logsQueryKeys.all })
-      return true
+      return { ok: true, payload, role }
     } catch (error) {
       const message =
         error instanceof PrivacyUnmaskApiError
           ? error.message
           : '개인정보 원문 조회에 실패했습니다.'
       cmsAlertModal.show({ title: '열람 실패', content: message })
-      return false
+      return { ok: false }
     }
   }
 
@@ -84,25 +89,26 @@ async function revealPersonalInfoWithAudit(
     try {
       await fetchMemberPrivacyUnmask(memberIdRaw, reason)
       void queryClient.invalidateQueries({ queryKey: logsQueryKeys.all })
-      return true
+      return { ok: true, role }
     } catch (error) {
       const message =
         error instanceof PrivacyUnmaskApiError
           ? error.message
           : '개인정보 원문 조회에 실패했습니다.'
       cmsAlertModal.show({ title: '열람 실패', content: message })
-      return false
+      return { ok: false }
     }
   }
 
   trackPersonalInfoAccess(resolveAccessItem(), reason)
-  return true
+  return { ok: true, role }
 }
 
 export function usePersonalInfoReveal({
   resolveAccessItem,
   resolveMemberId,
   resolveMemberRole,
+  onPrivacyUnmasked,
   resetDeps,
   controlMode,
   modalZIndex,
@@ -128,13 +134,16 @@ export function usePersonalInfoReveal({
         resolveMemberId,
         reason,
         resolveMemberRole
-      ).then(ok => {
-        if (!ok) return
+      ).then(result => {
+        if (!result.ok) return
+        if (result.payload !== undefined) {
+          onPrivacyUnmasked?.(result.payload, result.role)
+        }
         setPersonalInfoRevealed(true)
         setConfirmOpen(false)
       })
     },
-    [resolveAccessItem, resolveMemberId, resolveMemberRole]
+    [onPrivacyUnmasked, resolveAccessItem, resolveMemberId, resolveMemberRole]
   )
 
   const openPersonalInfoRevealConfirm = useCallback(() => {
@@ -225,8 +234,8 @@ export function usePersonalInfoRevealByRow({
         () => resolveAccessItem(id),
         () => resolveMemberId?.(id),
         reason
-      ).then(ok => {
-        if (!ok) return
+      ).then(result => {
+        if (!result.ok) return
         setPrivacyRevealedByRowId(prev => ({ ...prev, [id]: true }))
         setPendingConfirmRowId(null)
       })

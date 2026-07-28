@@ -59,6 +59,7 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useQueryClient } from '@tanstack/react-query'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { applyPrivacyUnmaskResponseToUser } from '@/features/user/api/apply-privacy-unmask-to-user'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
 import {
   isMembersRemoteEnabled,
@@ -148,6 +149,26 @@ export function useUserDetailController({
     [displayUser?.name, displayUser?.schoolInfo?.schoolName]
   )
 
+  const handlePrivacyUnmasked = useCallback(
+    (payload: unknown, role: User['role'] | undefined) => {
+      if (!displayUser) return
+      const merged = applyPrivacyUnmaskResponseToUser(
+        displayUser,
+        payload,
+        role ?? displayUser.role
+      )
+      if (displayUser.memberId != null) {
+        queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
+      }
+      queryClient.setQueryData(
+        [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
+        merged
+      )
+      onMemberBasicInfoSaved?.(merged)
+    },
+    [displayUser, onMemberBasicInfoSaved, queryClient]
+  )
+
   const {
     personalInfoRevealed,
     personalInfoRevealConfirmOpen,
@@ -162,6 +183,7 @@ export function useUserDetailController({
       return displayUser?.id
     },
     resolveMemberRole: () => displayUser?.role,
+    onPrivacyUnmasked: handlePrivacyUnmasked,
     resetDeps: [open, displayUser?.id, displayUser?.memberId, displayUser?.role],
     controlMode: 'hideWhenRevealed',
     modalZIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
