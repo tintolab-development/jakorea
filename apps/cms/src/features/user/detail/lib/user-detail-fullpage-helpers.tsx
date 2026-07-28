@@ -119,10 +119,14 @@ export function ManagedProgramCountDisplay({
   )
 }
 
-function instructorDetailTitleSchoolName(user: Pick<User, 'affiliatedSchoolName' | 'schoolInfo'>): string {
+function instructorDetailTitleSchoolName(
+  user: Pick<User, 'affiliatedSchoolName' | 'schoolInfo'>
+): string | undefined {
   const fromField = user.affiliatedSchoolName?.trim()
-  if (fromField) return fromField
-  return user.schoolInfo?.schoolName?.trim() || '-'
+  if (fromField && fromField !== '-') return fromField
+  const fromSchool = user.schoolInfo?.schoolName?.trim()
+  if (fromSchool && fromSchool !== '-') return fromSchool
+  return undefined
 }
 
 export function userDetailModalTitle(user: Pick<
@@ -136,7 +140,7 @@ export function userDetailModalTitle(user: Pick<
   | 'listMetrics'
   | 'programRoles'
 >): string {
-  const displayName = user.name
+  const displayName = user.name?.trim() || '-'
   switch (user.role) {
     case 'ADMIN':
       return `관리자 상세_${displayName}`
@@ -144,7 +148,8 @@ export function userDetailModalTitle(user: Pick<
       const profile = resolveInstructorMemberProfile(user)
       if (profile === 'school_teacher' || profile === 'instructor_dual') {
         const school = instructorDetailTitleSchoolName(user)
-        return `교사 상세_${school}_${displayName}`
+        // 학교명 없으면 `교사 상세_-_이름` 형태를 만들지 않음
+        return school ? `교사 상세_${school}_${displayName}` : `교사 상세_${displayName}`
       }
       return `강사 상세_${displayName}`
     }

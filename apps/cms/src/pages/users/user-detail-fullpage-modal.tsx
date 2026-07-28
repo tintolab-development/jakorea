@@ -33,6 +33,10 @@ import { useUserDetailFullpageDerived } from '@/features/user/detail/lib/use-use
 import { useUserDetailModals } from '@/features/user/detail/lib/use-user-detail-modals'
 import { UserDetailLayout } from '@/features/user/detail/ui/detail-info/user-detail-layout'
 import { USER_BASIC_INFO_ENTRY_QUERY_KEY } from '@/features/user/detail/ui/user-basic-info/entry-resolver'
+import {
+  USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY,
+  USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY,
+} from '@/features/user/detail/lib/teacher-detail-url-context'
 import type { UserBasicInfoEntrySource } from '@/features/user/detail/ui/user-basic-info-section'
 import './user-detail-modal.css'
 
@@ -234,6 +238,8 @@ export function UserDetailFullPageModal({
         'lnb',
         USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
         USER_BASIC_INFO_ENTRY_QUERY_KEY,
+        USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY,
+        USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY,
       ],
     })
     const items = [makeBreadcrumbItem('회원 목록', location.pathname, listParams)]
@@ -244,7 +250,11 @@ export function UserDetailFullPageModal({
     }
 
     const detailParams = buildSearchParams(searchParams, {
-      delete: ['lnb', USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY, USER_BASIC_INFO_ENTRY_QUERY_KEY],
+      delete: [
+        'lnb',
+        USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
+        USER_BASIC_INFO_ENTRY_QUERY_KEY,
+      ],
       set: {
         id: displayUser.id,
         lnb: 'detail-info',

@@ -17,6 +17,13 @@ import {
   UserDetailFullPageModal,
   USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
 } from '@/pages/users/user-detail-fullpage-modal'
+import {
+  applyTeacherDetailUrlContext,
+  readTeacherDetailUrlContext,
+  teacherDetailUrlParamsFromUser,
+  USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY,
+  USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY,
+} from '@/features/user/detail/lib/teacher-detail-url-context'
 import { MemberRegisterModal } from '@/features/user/shared/ui/member-register-modal'
 import {
   AdminRegisterModal,
@@ -422,6 +429,12 @@ export function UserListPage() {
 
     if (drawerOpenRef.current && drawerUserRef.current?.id === targetId) return
 
+    const urlTeacherCtx = readTeacherDetailUrlContext(
+      new URLSearchParams(window.location.search)
+    )
+    const withTeacherCtx = (user: Omit<User, 'password'>) =>
+      applyTeacherDetailUrlContext(user, urlTeacherCtx)
+
     const cachedUser = useUserStore.getState().usersById[targetId]
     const returnSchoolUser =
       schoolDetailReturnUserRef.current?.id === targetId
@@ -435,34 +448,36 @@ export function UserListPage() {
           try {
             await fetchUserById(targetId, {
               memberId: seedUser.memberId,
-              role: seedUser.role,
+              role: seedUser.role === 'INSTRUCTOR' ? 'INSTRUCTOR' : seedUser.role,
             })
             if (cancelled) return
             const fetched = useUserStore.getState().usersById[targetId] ?? seedUser
-            openDrawer(mergeListUserWithFetchedDetail(seedUser, fetched))
+            openDrawer(withTeacherCtx(mergeListUserWithFetchedDetail(seedUser, fetched)))
           } catch {
-            if (!cancelled) openDrawer(seedUser)
+            if (!cancelled) openDrawer(withTeacherCtx(seedUser))
           }
         })()
         return
       }
-      openDrawer(seedUser)
+      openDrawer(withTeacherCtx(seedUser))
       return
     }
 
     if (selectedUser?.id === targetId) {
-      openDrawer(selectedUser)
+      openDrawer(withTeacherCtx(selectedUser))
       return
     }
 
     ;(async () => {
       try {
-        await fetchUserById(targetId)
+        const roleHint =
+          urlTeacherCtx.instructorMemberProfile != null ? ('INSTRUCTOR' as const) : undefined
+        await fetchUserById(targetId, roleHint ? { role: roleHint } : undefined)
         if (cancelled) return
         const fetched = useUserStore.getState().usersById[targetId]
         if (!fetched) return
         setSelectedUserId(targetId)
-        openDrawer(fetched)
+        openDrawer(withTeacherCtx(fetched))
       } catch {
         // 잘못된 id 또는 조회 실패 시 모달을 강제로 열지 않음
       }
@@ -473,6 +488,8 @@ export function UserListPage() {
     }
   }, [
     params.id,
+    params[USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY],
+    params[USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY],
     selectedUser,
     listUsers,
     setSelectedUserId,
@@ -551,6 +568,7 @@ export function UserListPage() {
           id: user.id,
           lnb: 'detail-info',
           [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
+          ...teacherDetailUrlParamsFromUser(user),
         },
         { replace: opts?.replace ?? false }
       )
@@ -564,6 +582,10 @@ export function UserListPage() {
           })
           if (fetched) {
             displayUser = mergeListUserWithFetchedDetail(user, fetched)
+            displayUser = applyTeacherDetailUrlContext(displayUser, {
+              affiliatedSchoolName: user.affiliatedSchoolName,
+              instructorMemberProfile: user.instructorMemberProfile,
+            })
           }
         } catch (error) {
           handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })
@@ -571,6 +593,15 @@ export function UserListPage() {
       }
 
       openDrawer(displayUser)
+      // 상세 merge 후 학교명·프로필이 채워졌으면 URL도 갱신 (새로고침 복원용)
+      setParams(
+        {
+          id: displayUser.id,
+          lnb: 'detail-info',
+          ...teacherDetailUrlParamsFromUser(displayUser),
+        },
+        { replace: true }
+      )
     },
     [setSelectedUserId, openDrawer, setParams, fetchUserById]
   )
@@ -666,6 +697,8 @@ export function UserListPage() {
         next.delete('id')
         next.delete('lnb')
         next.delete(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY)
+        next.delete(USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY)
+        next.delete(USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY)
         return next
       },
       { replace: true }
@@ -948,7 +981,7 @@ export function UserListPage() {
             : resolvedMemberListKind === 'instructors'
               ? {
                   search: pendingFilters.search,
-                  instructorType: pendingFilters.instructorType,
+                  jaEvaluationGrade: pendingFilters.jaEvaluationGrade,
                   settlementStatus: pendingFilters.settlementStatus,
                   createdAtRange: pendingFilters.createdAtRange ?? undefined,
                 }

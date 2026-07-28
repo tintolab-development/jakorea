@@ -24,6 +24,7 @@ import {
 } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { Instructor } from '@/types/domain'
+import { formatInstructorSettlementAccountParts } from '@/features/user/detail/ui/user-basic-info/display'
 import type { Settlement, Matching, Program } from '@/types/domain'
 import { useSettlementStore } from '@/features/settlement/model/settlement-store'
 import { StatusBadge } from '@/shared/components/status-badge'
@@ -194,6 +195,17 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
     setDrawerOpen(true)
   }
 
+  const settlementAccountParts = formatInstructorSettlementAccountParts({
+    bankName: instructor.bankName,
+    accountNumber: instructor.bankAccount,
+    accountHolder: instructor.accountHolder,
+  })
+  const settlementAccountDisplay = settlementAccountParts
+    ? settlementAccountParts.left && settlementAccountParts.holder
+      ? `${settlementAccountParts.left} | ${settlementAccountParts.holder}`
+      : settlementAccountParts.left || settlementAccountParts.holder || '-'
+    : null
+
   const settlementColumns: ColumnsType<Settlement> = [
     {
       title: '기간',
@@ -329,17 +341,9 @@ export function InstructorDetail({ instructor, onEdit, onDelete, loading }: Inst
             {instructor.rating && (
               <Descriptions.Item label="평점">{instructor.rating.toFixed(1)}/5.0</Descriptions.Item>
             )}
-            {(instructor.bankName || instructor.bankAccount) && (
-              <Descriptions.Item label="정산 계좌">
-                {instructor.bankName && <span>{instructor.bankName} </span>}
-                {instructor.bankAccount && (
-                  <span>
-                    {instructor.bankAccount.replace(/(\d{4})(\d{4})(\d+)/, '$1-****-****')}
-                  </span>
-                )}
-                {instructor.accountHolder && <span> ({instructor.accountHolder})</span>}
-              </Descriptions.Item>
-            )}
+            {settlementAccountDisplay ? (
+              <Descriptions.Item label="정산 계좌">{settlementAccountDisplay}</Descriptions.Item>
+            ) : null}
             <Descriptions.Item label="등록일">
               {new Date(instructor.createdAt).toLocaleDateString('ko-KR')}
             </Descriptions.Item>
