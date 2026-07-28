@@ -30,3 +30,15 @@ export function matchesInstructorSettlementFilter(user: UserRow, selected: strin
   }
   return label === token
 }
+
+/** 필터 value는 `A`|`B`|`C`|`D` — 행 값은 `A` 또는 `A등급` 모두 허용 */
+export function matchesInstructorJaEvaluationGradeFilter(
+  user: UserRow,
+  selected: string
+): boolean {
+  const token = selected.trim().replace(/등급$/u, '')
+  if (!token || token === 'all') return true
+  if (user.role !== 'INSTRUCTOR') return false
+  const grade = user.listMetrics?.jaEvaluationGrade?.trim().replace(/등급$/u, '') ?? ''
+  return grade === token
+}

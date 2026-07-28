@@ -24,8 +24,14 @@ import { PAGINATION_CONFIG } from '@/shared/constants/pagination'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { type MemberListKind, DEFAULT_MEMBER_LIST_KIND } from '@/shared/config/member-list-kinds'
-import { getInstructorTypeDisplayLabel } from '@/entities/user/lib/matches-instructor-list-filters'
 import { ManagedProgramCountDisplay } from '@/features/user/detail/lib/user-detail-fullpage-helpers'
+import { formatJaEvaluationGradeCellDisplay } from '@/features/program/general/lib/ja-evaluation-grade-display'
+import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
+import {
+  INSTRUCTOR_SETTLEMENT_STATUS_LABELS,
+  INSTRUCTOR_SETTLEMENT_STATUS_ORDER,
+  type InstructorSettlementUiStatus,
+} from '@/shared/constants/instructor-settlement-status'
 import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
@@ -72,31 +78,17 @@ function displayMetric(n: number | undefined | null) {
   return String(n)
 }
 
-function instructorTypeLabel(record: Row): string {
-  const label = getInstructorTypeDisplayLabel(record)
-  return label || '-'
-}
-
-function settlementStatusTextClass(statusLabel?: string): string {
+function resolveSettlementUiStatus(
+  statusLabel?: string
+): InstructorSettlementUiStatus | null {
   const normalized = statusLabel?.trim()
-  switch (normalized) {
-    case '확인 대기 중':
-      return 'user-list__settlement-status user-list__settlement-status--awaiting-confirmation'
-    case '확인 진행중':
-      return 'user-list__settlement-status user-list__settlement-status--partially-confirmed'
-    case '지급조서 확인 완료':
-      return 'user-list__settlement-status user-list__settlement-status--payment-statement-verified'
-    case '계좌 지급 완료':
-      return 'user-list__settlement-status user-list__settlement-status--account-paid'
-    case '해당 없음':
-      return 'user-list__settlement-status user-list__settlement-status--none'
-    case '신청 반려':
-      return 'user-list__settlement-status user-list__settlement-status--application-rejected'
-    case '지급 정정 요청':
-      return 'user-list__settlement-status user-list__settlement-status--payment-correction-requested'
-    default:
-      return 'user-list__settlement-status'
+  if (!normalized || normalized === '-') return null
+  for (const status of INSTRUCTOR_SETTLEMENT_STATUS_ORDER) {
+    if (INSTRUCTOR_SETTLEMENT_STATUS_LABELS[status] === normalized) return status
   }
+  // 구 mock·라벨 호환
+  if (normalized === '확인 진행중') return 'partial_confirmation'
+  return null
 }
 
 const ADMIN_PERMISSION_OPTIONS: { value: AdminPermissionTagVariant; label: string }[] = [
@@ -258,26 +250,20 @@ function columnsForKind(
         render: (email: string | undefined) => maskedEmail(email),
       },
       {
-        title: '강사 유형',
-        key: 'instructorType',
-        align: 'center',
-        render: (_: unknown, r: Row) => instructorTypeLabel(r),
-      },
-      {
         title: 'JA 평가 등급',
         key: 'jaGrade',
         align: 'center',
-        render: (_: unknown, r: Row) => r.listMetrics?.jaEvaluationGrade?.trim() || '-',
+        render: (_: unknown, r: Row) =>
+          formatJaEvaluationGradeCellDisplay(r.listMetrics?.jaEvaluationGrade),
       },
       {
-        title: '정산현황',
+        title: '정산 현황',
         key: 'settlement',
         align: 'center',
         render: (_: unknown, r: Row) => {
-          const statusLabel = r.listMetrics?.settlementStatusLabel?.trim()
-          return (
-            <span className={settlementStatusTextClass(statusLabel)}>{statusLabel || '-'}</span>
-          )
+          const status = resolveSettlementUiStatus(r.listMetrics?.settlementStatusLabel)
+          if (!status) return '-'
+          return <InstructorSettlementStatusText status={status} />
         },
       },
       {

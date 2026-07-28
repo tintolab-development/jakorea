@@ -24,8 +24,8 @@ import {
 } from '@/entities/user/api/user-service'
 import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
 import {
+  matchesInstructorJaEvaluationGradeFilter,
   matchesInstructorSettlementFilter,
-  matchesInstructorTypeFilter,
 } from '@/entities/user/lib/matches-instructor-list-filters'
 import {
   getAdminPermissionVariant,
@@ -43,7 +43,7 @@ interface UserFilters {
   createdAtFrom?: string
   createdAtTo?: string
   institutionLocation?: string
-  instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
 }
@@ -130,8 +130,8 @@ export const selectFilteredUserIds = (
       }
     }
 
-    if (filters.instructorType?.trim()) {
-      if (!matchesInstructorTypeFilter(user, filters.instructorType)) {
+    if (filters.jaEvaluationGrade?.trim()) {
+      if (!matchesInstructorJaEvaluationGradeFilter(user, filters.jaEvaluationGrade)) {
         return false
       }
     }

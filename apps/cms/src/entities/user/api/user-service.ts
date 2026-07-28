@@ -10,8 +10,8 @@ import {
 } from '@/features/user/shared/lib/admin-permission-display'
 import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
 import {
+  matchesInstructorJaEvaluationGradeFilter,
   matchesInstructorSettlementFilter,
-  matchesInstructorTypeFilter,
 } from '@/entities/user/lib/matches-instructor-list-filters'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import {
@@ -90,7 +90,7 @@ export async function getUsers(filters?: {
   createdAtFrom?: string
   createdAtTo?: string
   institutionLocation?: string
-  instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
   /** 강사 회원 관리(`kind=instructors`) — 순수 강사만, 교사·교사 및 강사 제외 */
@@ -141,8 +141,10 @@ export async function getUsers(filters?: {
     users = users.filter(user => matchesUserInstitutionLocation(user, filters.institutionLocation!))
   }
 
-  if (filters?.instructorType?.trim()) {
-    users = users.filter(user => matchesInstructorTypeFilter(user, filters.instructorType!))
+  if (filters?.jaEvaluationGrade?.trim()) {
+    users = users.filter(user =>
+      matchesInstructorJaEvaluationGradeFilter(user, filters.jaEvaluationGrade!)
+    )
   }
 
   if (filters?.settlementStatus?.trim()) {
@@ -183,7 +185,7 @@ export interface GetUsersPageParams {
   createdAtFrom?: string
   createdAtTo?: string
   institutionLocation?: string
-  instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
   instructorListPureOnly?: boolean

@@ -33,7 +33,9 @@ export type UserListQueryParams = Record<string, string | undefined> & {
   institutionLocation?: string
   institutionSido?: string
   institutionSigungu?: string
+  /** @deprecated 구 북마크 호환 — `jaEvaluationGrade`로 이관 */
   instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: string
 }
@@ -44,7 +46,7 @@ export type UserListApiFilters = {
   createdAtFrom?: string
   createdAtTo?: string
   institutionLocation?: string
-  instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
   instructorListPureOnly?: boolean
@@ -55,7 +57,7 @@ export type UserListPendingFilters = {
   role: UserRole | 'ALL'
   institutionSido: string
   institutionSigungu: string
-  instructorType: string
+  jaEvaluationGrade: string
   settlementStatus: string
   adminPermissionVariant: string
   createdAtRange: [Dayjs | null, Dayjs | null] | null
@@ -69,7 +71,7 @@ export type UserListStoreFilters = Partial<{
   createdAtFrom?: string
   createdAtTo?: string
   institutionLocation?: string
-  instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
 }>
@@ -135,7 +137,7 @@ export function pendingToApiFilters(
     | 'search'
     | 'institutionSido'
     | 'institutionSigungu'
-    | 'instructorType'
+    | 'jaEvaluationGrade'
     | 'settlementStatus'
     | 'adminPermissionVariant'
     | 'createdAtRange'
@@ -149,8 +151,8 @@ export function pendingToApiFilters(
     if (loc) api.institutionLocation = loc
   }
   if (listKind === 'instructors') {
-    const it = pending.instructorType.trim()
-    if (it) api.instructorType = it
+    const grade = pending.jaEvaluationGrade.trim()
+    if (grade) api.jaEvaluationGrade = grade
     const ss = pending.settlementStatus.trim()
     if (ss) api.settlementStatus = ss
   }
@@ -183,8 +185,8 @@ export function buildListQueryApiFilters(params: UserListQueryParams): UserListA
     if (loc) api.institutionLocation = loc
   }
   if (kind === 'instructors') {
-    const it = params.instructorType?.trim()
-    if (it) api.instructorType = it
+    const grade = (params.jaEvaluationGrade ?? params.instructorType)?.trim()
+    if (grade) api.jaEvaluationGrade = grade
     const ss = params.settlementStatus?.trim()
     if (ss) api.settlementStatus = ss
   }
@@ -220,7 +222,10 @@ export function userListPendingFiltersFromParams(params: UserListQueryParams): U
     role: pendingRoleFromParams(params),
     institutionSido: region.institutionSido,
     institutionSigungu: region.institutionSigungu,
-    instructorType: kind === 'instructors' ? (params.instructorType ?? '').trim() : '',
+    jaEvaluationGrade:
+      kind === 'instructors'
+        ? (params.jaEvaluationGrade ?? params.instructorType ?? '').trim()
+        : '',
     settlementStatus: kind === 'instructors' ? (params.settlementStatus ?? '').trim() : '',
     adminPermissionVariant:
       kind === 'admins' ? parseAdminPermissionVariantParam(params.adminPermissionVariant) : '',
@@ -252,14 +257,16 @@ function applyUserListSearchToParams(nextParams: URLSearchParams, filters: UserL
   }
 
   if (nextKind === 'instructors') {
-    const it = filters.instructorType.trim()
-    if (it) nextParams.set('instructorType', it)
-    else nextParams.delete('instructorType')
+    nextParams.delete('instructorType')
+    const grade = filters.jaEvaluationGrade.trim()
+    if (grade) nextParams.set('jaEvaluationGrade', grade)
+    else nextParams.delete('jaEvaluationGrade')
     const ss = filters.settlementStatus.trim()
     if (ss) nextParams.set('settlementStatus', ss)
     else nextParams.delete('settlementStatus')
   } else {
     nextParams.delete('instructorType')
+    nextParams.delete('jaEvaluationGrade')
     nextParams.delete('settlementStatus')
   }
 
@@ -312,7 +319,7 @@ export function createUserListTablePageConfig(opts: {
         role: 'ALL',
         institutionSido: '',
         institutionSigungu: '',
-        instructorType: '',
+        jaEvaluationGrade: '',
         settlementStatus: '',
         adminPermissionVariant: '',
         createdAtRange: null,
@@ -340,7 +347,7 @@ export function createUserListTablePageConfig(opts: {
             institutionSigungu: value === undefined || value === null ? '' : String(value),
           }
         }
-        if (key === 'instructorType' || key === 'settlementStatus') {
+        if (key === 'jaEvaluationGrade' || key === 'settlementStatus') {
           return {
             ...prev,
             [key]: value === undefined || value === null ? '' : String(value),
