@@ -8,6 +8,16 @@
   margin-bottom: var(--spacing-48);
 }
 
+/** 타이틀 위에 일러스트 등이 있을 때 — margin-top 제거 */
+.pageTitleAfterMedia {
+  margin-top: 0;
+}
+
+/** 아래 블록이 자체 상단 여백을 가질 때 (예: 로그인 form) */
+.pageDescriptionTight {
+  margin-bottom: 0;
+}
+
 @media (--bp-below-pc) {
   .pageTitle {
     font-size: 28px;
@@ -17,10 +27,18 @@
     margin-bottom: var(--spacing-8);
   }
 
+  .pageTitleAfterMedia {
+    margin-top: 0;
+  }
+
   .pageDescription {
     font-size: 16px;
     line-height: 150%;
     letter-spacing: -0.16px;
     margin-bottom: var(--spacing-40);
+  }
+
+  .pageDescriptionTight {
+    margin-bottom: 0;
   }
 }

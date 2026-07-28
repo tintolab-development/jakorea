@@ -62,10 +62,12 @@ export function PFTextInput({
     .join(' ')
 
   const inputClassName = [styles.input, sizeTypographyClassMap[size]].join(' ')
-  const messageClassName = [
-    styles.message,
-    styles[`message-${messageStatus}`],
-  ].join(' ')
+  const messageStatusClassMap = {
+    neutral: styles.messageNeutral,
+    success: styles.messageSuccess,
+    error: styles.messageError,
+  } as const
+  const messageClassName = [styles.message, messageStatusClassMap[messageStatus]].join(' ')
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (!isControlled) {

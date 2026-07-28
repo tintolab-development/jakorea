@@ -210,8 +210,8 @@ export function AdminRegisteredEditPage() {
       <AddressSearchModal
         open={isAddressModalOpen}
         onClose={() => setIsAddressModalOpen(false)}
-        onSelect={selectedAddress => {
-          setAddress(selectedAddress)
+        onSelect={selection => {
+          setAddress(selection.address)
           setIsAddressModalOpen(false)
         }}
       />

@@ -14,7 +14,7 @@ function AdminRegisteredFirstLoginNotice() {
 
   return (
     <>
-      <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
+      <PFText as="p" typo="bd-lg-rg" color="primary-800">
         현재 비밀번호는 가입된 이메일 주소와 동일합니다.
         <br />
         안전한 이용을 위해 본인인증 후 비밀번호를 변경해 주세요.
@@ -40,7 +40,7 @@ function AdminRegisteredSignUpNotice() {
 
   return (
     <>
-      <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
+      <PFText as="p" typo="bd-lg-rg" color="primary-800">
         안전한 이용을 위해 본인인증 후 비밀번호를 변경해 주세요.
       </PFText>
 
@@ -69,18 +69,13 @@ export function AdminRegisteredNoticePage() {
 
   return (
     <section>
-        <div className={styles.intro}>
-          <img
-            className={styles.illustration}
-            src={illustExclamationUrl}
-            alt=""
-            aria-hidden="true"
-          />
-          <PFText as="h1" typo="hd-md" color="black" className={authPageCopyClass('title')}>
-            관리자가 등록한 계정이에요.
-          </PFText>
-          {isSignUpEntry ? <AdminRegisteredSignUpNotice /> : <AdminRegisteredFirstLoginNotice />}
-        </div>
+      <div className={styles.intro}>
+        <img className={styles.illustration} src={illustExclamationUrl} alt="" aria-hidden="true" />
+        <PFText as="h1" typo="hd-md" color="black" className={authPageCopyClass('title')}>
+          관리자가 등록한 계정이에요.
+        </PFText>
+        {isSignUpEntry ? <AdminRegisteredSignUpNotice /> : <AdminRegisteredFirstLoginNotice />}
+      </div>
     </section>
   )
 }

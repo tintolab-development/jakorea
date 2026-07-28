@@ -15,7 +15,7 @@ import {
   PFTextInput,
 } from '@/shared/ui'
 import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
-import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { authPageCopy, authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 import styles from './page.module.css'
 
 const accountLinkItems: Array<{ label: string; href?: string }> = [
@@ -74,10 +74,20 @@ export function SignInPage() {
     <section>
         <div className={styles.intro}>
           <img className={styles.illustration} src={illustPeopleUrl} alt="" aria-hidden="true" />
-          <PFText as="div" typo="hd-lg" color="gradient-primary-01" className={authPageCopyClass('title')}>
+          <PFText
+            as="div"
+            typo="hd-lg"
+            color="gradient-primary-01"
+            className={authPageCopyClass('title', authPageCopy.titleAfterMedia)}
+          >
             다시 만나서 반가워요
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="primary-700" className={authPageCopyClass('description')}>
+          <PFText
+            as="p"
+            typo="bd-lg-rg"
+            color="primary-700"
+            className={authPageCopyClass('description', authPageCopy.descriptionTight)}
+          >
             이메일과 비밀번호로 로그인 해주세요.
           </PFText>
         </div>
