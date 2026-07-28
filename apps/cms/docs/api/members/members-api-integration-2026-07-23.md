@@ -389,3 +389,4 @@ UI: `AdminPermissionsRemotePanel` — `domain`별 체크박스 + 저장 버튼.
 | 2026-06-12 | 상세 하위 탭 Phase A~C — consent/external-id/instructor-profile/정산 탭 연동, mock 배너·갭 문서 보강 |
 | 2026-07-23 | 관리자 등록 `admin-accounts` 분리 · 개인·학교·강사 등록·상세 **path 분리(B안)** · handoff **§M-P1-5 마스킹** 와 정렬 |
 | 2026-07-28 | 관리자 사전등록 임시 비밀번호: 개인·강사 `rawPassword` 서버 수용 요청 · [admin-pre-register-temp-password-handover-2026-07-28.md](./admin-pre-register-temp-password-handover-2026-07-28.md) |
+| 2026-07-28 | 관리자 `createAdmin` 12자 에러 관측 → 비밀번호 정책 **Platform(영문·숫자·특수문자 8자+)** 통일 요청 (동 handover §2.4) |

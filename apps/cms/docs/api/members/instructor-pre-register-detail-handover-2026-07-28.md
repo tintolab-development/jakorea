@@ -29,7 +29,20 @@ CMS **강사 신규 등록** 폼에는 이력서·동의·학력 등 필드가 �
 2026-07-28 FE 재점검:
 
 - **API에 이미 있는 필드** → 등록·상세 표시까지 **매핑 완료** (§2)
-- **스키마/저장/상세에 없는 필드** → **서버 수정·필드 추가 요청** (§3) — FE는 등록 시 드롭하거나 빈 값 표시
+- **스키마/저장/상세에 없는 필드** → **서버 수정·필드 추가 요청** (§3)
+  - **등록**: pre-register body에 실어 보내지 않음(드롭)
+  - **상세 조회**: 빈 값·요약만 표시
+  - **상세 수정 모드**: 신규 등록과 동일 UI로 편집 가능하나 **저장 API 없어 UI만** (배너 안내)
+
+### 등록·상세 수정에서 UI만 가능 / API 미제공 (핵심 갭 — §3.2·§3.3)
+
+| 등록·수정 폼 구간 | 현재 API | 서버 추가 요청 |
+|-------------------|----------|----------------|
+| **구조화 학력** (고/전문/4년/대학원 rows·전공·기간) | `educationLevel` 문자열 요약만 | `educations[]` |
+| **경력사항** (`careerLevel` + `careers[]`) | `careerText`만 | `careerLevel` + `careers[]` |
+| **JA Korea 활동** (`jaKoreaRows[]`) | 없음 | `jaKoreaActivities[]` |
+| **수상·수료** (`awardRows[]`) | 없음 (자격증과 별개) | `awards[]` / `awardRows[]` |
+| **자유작성 2~4** | `selfIntroduction` = 1번만 | `freeWrite2`~`4` 또는 `essays[]` |
 
 ---
 
@@ -86,16 +99,19 @@ CMS **강사 신규 등록** 폼에는 이력서·동의·학력 등 필드가 �
 | 동의서 작성형 5종 (초상권·지급조서·교육진행자·행정정보·성범죄) | 라디오만 UI, terms 미전송 | `termsType` 확장 + 작성 완료 상태 |
 | **초기 비밀번호** | FE는 email=temp password 준비, **body 미전송** | `rawPassword` (값은 email과 동일) — [temp-password handover](./admin-pre-register-temp-password-handover-2026-07-28.md) |
 
-### 3.3 상세/이력서 UI에 필요하나 API에 없는 항목 (표시 공백)
+### 3.3 상세 조회·이력서·**상세 수정**에 필요하나 API에 없는 항목
+
+등록 폼과 **동일 구성의 상세 수정 모드**(`InstructorDetailEditForm`)에도 아래가 노출됩니다.  
+조회는 공백/요약, 수정은 UI만 — **pre-register·상세 GET·상세 PATCH(또는 instructor-profile upsert) 모두** 필드 추가가 필요합니다.
 
 | 이력서/상세 UI | 현재 FE | 필요 API |
 |----------------|---------|----------|
-| 구조화 학력 카드 | 요약 1행만 | `educations[]` |
-| 경력사항 카드 | `careerDetails: []` | `careers[]` |
-| JA 활동 | (등록 전용 UI) | `jaKoreaActivities[]` |
-| 수상·수료 | remote 시 `awards: []` | `awards[]` |
-| 자유작성 2~4 | `-` 또는 경력/소개 문단 분할 임시 | 문항별 필드 |
-| 소속·재직 태그 | loose `affiliation` 있을 때만 | 구조화 소속·재직 |
+| 구조화 학력 카드 / 수정 Form.List | 조회: 요약 1행 · 수정: UI만 | `educations[]` |
+| 경력사항 카드 / `careers[]` | 조회: `careerDetails: []` · 수정: UI만 | `careerLevel` + `careers[]` |
+| JA 활동 | 조회: 섹션 없음·빈 값 · 수정: UI만 | `jaKoreaActivities[]` |
+| 수상·수료 | 조회: remote 시 `awards: []` · 수정: UI만 | `awards[]` |
+| 자유작성 2~4 | 조회: `-` · 수정: UI만 (`selfIntroduction`≠2~4) | 문항별 필드 또는 `essays[]` |
+| 소속·재직 태그 | loose `affiliation` 있을 때만 | 구조화 소속·재직 | |
 
 ---
 
@@ -203,4 +219,4 @@ CMS **강사 신규 등록** 폼에는 이력서·동의·학력 등 필드가 �
 - [admin-pre-register-temp-password-handover-2026-07-28.md](./admin-pre-register-temp-password-handover-2026-07-28.md) (개인·강사 `rawPassword`)
 - [school-pre-register-list-detail-handover-2026-07-28.md](./school-pre-register-list-detail-handover-2026-07-28.md) (학교 등록 더미 email · 목록 주소)
 
-**Last updated:** 2026-07-28 (자격증·학력 요약 FE 매핑 반영, 서버 갭 §3.2/3.3 재정리, `rawPassword` 요청 추가)
+**Last updated:** 2026-07-28 (구조화 학력·경력·JA·수상·자유작성 2~4 갭을 요약 표·§3.3에 상세 수정 UI-only까지 명시, `rawPassword` 요청 포함)
