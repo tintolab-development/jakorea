@@ -1,10 +1,12 @@
 /**
  * 강사 추가 등록 — 학력사항
- * - 래퍼: DetailInfoForm
- * - 동적 행: 원형 + / × 버튼
+ * - 초기: 최종 학력 행만 노출
+ * - 최종 학력 선택 후 학력 상세·하위 행 노출
+ * - 최종 학력에 해당하는 상세 체크는 고정(체크·비활성)
+ * - 최종 학력 상태가 재학이면 해당 학력의 졸업년도 비활성
  */
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Form } from 'antd'
 import type { Dayjs } from 'dayjs'
 import {
@@ -48,6 +50,13 @@ export const EDUCATION_DETAIL_OPTIONS = [
 
 export type EducationDetailKey = (typeof EDUCATION_DETAIL_OPTIONS)[number]['value']
 
+const EDUCATION_LEVEL_ORDER: EducationDetailKey[] = [
+  'high',
+  'college23',
+  'college4',
+  'graduate',
+]
+
 export type EducationSchoolRow = {
   admitYear: Dayjs | null
   gradYear: Dayjs | null
@@ -71,13 +80,44 @@ export const EMPTY_EDUCATION_GRADUATE_ROW: EducationGraduateRow = {
   degree: '',
 }
 
+function isEducationDetailKey(value: string): value is EducationDetailKey {
+  return EDUCATION_LEVEL_ORDER.includes(value as EducationDetailKey)
+}
+
+/** 최종 학력 이하(포함)만 학력 상세 체크 옵션으로 노출 */
+export function resolveAvailableEducationDetailKeys(
+  eduSchoolType: string | undefined
+): EducationDetailKey[] {
+  if (!eduSchoolType || !isEducationDetailKey(eduSchoolType)) return []
+  const index = EDUCATION_LEVEL_ORDER.indexOf(eduSchoolType)
+  return EDUCATION_LEVEL_ORDER.slice(0, index + 1)
+}
+
+function orderEducationDetailKeys(keys: EducationDetailKey[]): EducationDetailKey[] {
+  const set = new Set(keys)
+  return EDUCATION_LEVEL_ORDER.filter(key => set.has(key))
+}
+
 function YearRangeFields({
   admitName,
   gradName,
+  gradDisabled = false,
 }: {
   admitName: (string | number)[]
   gradName: (string | number)[]
+  /** 최종 학력 재학 중 — 졸업년도 비활성 */
+  gradDisabled?: boolean
 }) {
+  const form = Form.useFormInstance()
+  const gradPathKey = gradName.join('.')
+
+  useEffect(() => {
+    if (!gradDisabled) return
+    form.setFieldValue(gradName, null)
+    // gradName은 렌더마다 새 배열일 수 있어 path key로 의존
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- path identity via gradPathKey
+  }, [form, gradDisabled, gradPathKey])
+
   return (
     <div className="instructor-register-education__year-range">
       <Form.Item name={admitName} noStyle>
@@ -99,6 +139,7 @@ function YearRangeFields({
           placeholder="졸업년도"
           format="YYYY"
           width={140}
+          disabled={gradDisabled}
         />
       </Form.Item>
     </div>
@@ -130,13 +171,50 @@ function SchoolNameField({
 
 export function InstructorRegisterEducationSection() {
   const form = Form.useFormInstance()
+  const eduSchoolType = (Form.useWatch('eduSchoolType', form) as string | undefined) ?? ''
+  const eduStatus = (Form.useWatch('eduStatus', form) as string | undefined) ?? ''
   const detailKeys =
     (Form.useWatch('educationDetailKeys', form) as EducationDetailKey[] | undefined) ?? []
+
+  const availableDetailKeys = useMemo(
+    () => resolveAvailableEducationDetailKeys(eduSchoolType),
+    [eduSchoolType]
+  )
+  const hasFinalEducation = availableDetailKeys.length > 0
+  const lockedDetailKey = isEducationDetailKey(eduSchoolType) ? eduSchoolType : null
+  const finalEducationEnrolled = eduStatus === 'enrolled'
 
   const showHigh = detailKeys.includes('high')
   const showCollege23 = detailKeys.includes('college23')
   const showCollege4 = detailKeys.includes('college4')
   const showGraduate = detailKeys.includes('graduate')
+
+  const detailCheckboxOptions = useMemo(
+    () =>
+      EDUCATION_DETAIL_OPTIONS.filter(option => availableDetailKeys.includes(option.value)).map(
+        option => ({
+          ...option,
+          disabled: option.value === lockedDetailKey,
+        })
+      ),
+    [availableDetailKeys, lockedDetailKey]
+  )
+
+  /** 최종 학력 변경 시: 하위 옵션만 유지 + 최종 학력 키 고정 체크 */
+  useEffect(() => {
+    if (!lockedDetailKey) {
+      form.setFieldValue('educationDetailKeys', [])
+      return
+    }
+    const current =
+      (form.getFieldValue('educationDetailKeys') as EducationDetailKey[] | undefined) ?? []
+    const available = new Set(availableDetailKeys)
+    const next = orderEducationDetailKeys([
+      lockedDetailKey,
+      ...current.filter(key => available.has(key) && key !== lockedDetailKey),
+    ]).filter(key => available.has(key))
+    form.setFieldValue('educationDetailKeys', next)
+  }, [availableDetailKeys, form, lockedDetailKey])
 
   /** 체크 시 Form.List가 비어 있으면 1행 보장 */
   useEffect(() => {
@@ -195,21 +273,38 @@ export function InstructorRegisterEducationSection() {
         />
       </DetailInfoForm.Row>
 
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="학력 상세"
-          labelWidth={LABEL_WIDTH}
-          fullRow
-          view="-"
-          edit={
-            <Form.Item name="educationDetailKeys" noStyle>
-              <CmsCheckbox.Group checkboxSize="large" options={[...EDUCATION_DETAIL_OPTIONS]} />
-            </Form.Item>
-          }
-        />
-      </DetailInfoForm.Row>
+      {hasFinalEducation ? (
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="학력 상세"
+            labelWidth={LABEL_WIDTH}
+            fullRow
+            view="-"
+            edit={
+              <Form.Item
+                name="educationDetailKeys"
+                noStyle
+                getValueFromEvent={(values: Array<string | number>) => {
+                  if (!lockedDetailKey) return []
+                  const available = new Set(availableDetailKeys)
+                  const next = (values ?? [])
+                    .map(String)
+                    .filter(isEducationDetailKey)
+                    .filter(key => available.has(key))
+                  return orderEducationDetailKeys([
+                    lockedDetailKey,
+                    ...next.filter(key => key !== lockedDetailKey),
+                  ])
+                }}
+              >
+                <CmsCheckbox.Group checkboxSize="large" options={detailCheckboxOptions} />
+              </Form.Item>
+            }
+          />
+        </DetailInfoForm.Row>
+      ) : null}
 
-      {showHigh ? (
+      {hasFinalEducation && showHigh ? (
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="고등학교"
@@ -221,6 +316,7 @@ export function InstructorRegisterEducationSection() {
                 <YearRangeFields
                   admitName={['highSchool', 'admitYear']}
                   gradName={['highSchool', 'gradYear']}
+                  gradDisabled={finalEducationEnrolled && lockedDetailKey === 'high'}
                 />
                 <DetailInfoForm.InputsSeparator />
                 <div className="instructor-register-education__school-grow">
@@ -232,7 +328,7 @@ export function InstructorRegisterEducationSection() {
         </DetailInfoForm.Row>
       ) : null}
 
-      {showCollege23 ? (
+      {hasFinalEducation && showCollege23 ? (
         <DetailInfoForm.Row type="single" className="instructor-register-education__multi-row">
           <DetailInfoForm.Field
             label="대학교 2, 3년제"
@@ -252,6 +348,9 @@ export function InstructorRegisterEducationSection() {
                           <YearRangeFields
                             admitName={[field.name, 'admitYear']}
                             gradName={[field.name, 'gradYear']}
+                            gradDisabled={
+                              finalEducationEnrolled && lockedDetailKey === 'college23'
+                            }
                           />
                           <DetailInfoForm.InputsSeparator />
                           <div className="instructor-register-education__school-major">
@@ -282,7 +381,7 @@ export function InstructorRegisterEducationSection() {
         </DetailInfoForm.Row>
       ) : null}
 
-      {showCollege4 ? (
+      {hasFinalEducation && showCollege4 ? (
         <DetailInfoForm.Row type="single" className="instructor-register-education__multi-row">
           <DetailInfoForm.Field
             label="대학교 4년제"
@@ -302,6 +401,9 @@ export function InstructorRegisterEducationSection() {
                           <YearRangeFields
                             admitName={[field.name, 'admitYear']}
                             gradName={[field.name, 'gradYear']}
+                            gradDisabled={
+                              finalEducationEnrolled && lockedDetailKey === 'college4'
+                            }
                           />
                           <DetailInfoForm.InputsSeparator />
                           <div className="instructor-register-education__school-major">
@@ -332,7 +434,7 @@ export function InstructorRegisterEducationSection() {
         </DetailInfoForm.Row>
       ) : null}
 
-      {showGraduate ? (
+      {hasFinalEducation && showGraduate ? (
         <DetailInfoForm.Row type="single" className="instructor-register-education__multi-row">
           <DetailInfoForm.Field
             label="대학원"
@@ -353,6 +455,9 @@ export function InstructorRegisterEducationSection() {
                             <YearRangeFields
                               admitName={[field.name, 'admitYear']}
                               gradName={[field.name, 'gradYear']}
+                              gradDisabled={
+                                finalEducationEnrolled && lockedDetailKey === 'graduate'
+                              }
                             />
                             <Form.Item name={[field.name, 'degree']} noStyle>
                               <CmsSelect

@@ -8,7 +8,7 @@ import type {
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 
 function baseIdentity(request: CreateUserRequest) {
-  const email = request.email.trim()
+  const email = request.email?.trim() || undefined
   const name = request.name.trim()
   const phone = request.phone?.trim() || undefined
   const gender = toApiGender(request.gender)
@@ -51,6 +51,9 @@ export function mapCreateUserRequestToPreRegisterIndividual(
   request: CreateUserRequest
 ): AdminPreRegisterIndividualRequest {
   const { email, name, phone, gender, birthDate } = baseIdentity(request)
+  if (!email) {
+    throw new Error('개인 회원 등록에는 이메일이 필요합니다.')
+  }
   const body: AdminPreRegisterIndividualRequest = { email, name }
   if (phone) body.phone = phone
   if (gender) body.gender = gender
@@ -72,12 +75,14 @@ export function mapCreateUserRequestToPreRegisterSchool(
   const organizationName =
     request.schoolInfo?.schoolName?.trim() || request.name.trim()
   const address = request.schoolInfo?.address?.trim() || request.address?.trim() || ''
-  const body: AdminPreRegisterSchoolRequest = {
-    email,
+  // email: 학교 등록 폼에 없음 — 미입력 시 더미(@institution.jakorea.local)를 넣지 않음.
+  // OpenAPI required는 BE optional 전환 전까지 타입 단언으로 우회 (handover 2026-07-28).
+  const body = {
     name: organizationName || name,
     organizationName,
     address,
-  }
+    ...(email ? { email } : {}),
+  } as AdminPreRegisterSchoolRequest
   if (phone) body.phone = phone
   if (gender) body.gender = gender
   if (birthDate) body.birthDate = birthDate
@@ -94,6 +99,9 @@ export function mapCreateUserRequestToPreRegisterInstructor(
   request: CreateUserRequest
 ): AdminPreRegisterInstructorRequest {
   const { email, name, phone, gender, birthDate } = baseIdentity(request)
+  if (!email) {
+    throw new Error('강사 회원 등록에는 이메일이 필요합니다.')
+  }
   const body: AdminPreRegisterInstructorRequest = { email, name }
   if (phone) body.phone = phone
   if (gender) body.gender = gender
@@ -104,7 +112,14 @@ export function mapCreateUserRequestToPreRegisterInstructor(
   if (request.oneLineIntro?.trim()) body.oneLineIntro = request.oneLineIntro.trim()
   if (request.careerText?.trim()) body.careerText = request.careerText.trim()
   if (request.selfIntroduction?.trim()) body.selfIntroduction = request.selfIntroduction.trim()
+  if (request.educationLevel?.trim()) body.educationLevel = request.educationLevel.trim()
   if (request.id1365?.trim()) body.external1365Id = request.id1365.trim()
+  if (request.termsAgreements != null && request.termsAgreements.length > 0) {
+    body.termsAgreements = request.termsAgreements
+  }
+  if (request.certifications != null && request.certifications.length > 0) {
+    body.certifications = request.certifications
+  }
   if (request.instructorInfo) {
     const bankName = request.instructorInfo.bankName?.trim()
     const accountNumber = request.instructorInfo.accountNumber?.trim()

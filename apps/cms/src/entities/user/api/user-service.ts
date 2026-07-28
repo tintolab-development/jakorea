@@ -39,6 +39,7 @@ import {
   mapCreateUserRequestToPreRegisterInstructor,
   mapCreateUserRequestToPreRegisterSchool,
 } from '@/features/user/api/map-pre-register-request'
+import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import {
   mapIsActiveToMemberStatus,
@@ -65,6 +66,8 @@ import {
   updateMemberCommentRemote,
 } from '@/features/user/api/members-api-client'
 import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
+import type { InstructorCertificationUpsertRequest } from '@/shared/api/generated/members/schemas/instructorCertificationUpsertRequest'
+import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import {
   MEMBER_DETAIL_SCREEN_CODE,
   resolveLatestMemberAdminCommentDetail,
@@ -706,8 +709,14 @@ export async function updateUserStatus(
  * 사용자 생성 (관리자용)
  */
 export interface CreateUserRequest {
-  email: string
-  password: string
+  /** 학교(기관) 등록 등 폼에 이메일이 없으면 생략 — 더미 생성 금지 */
+  email?: string
+  /**
+   * 관리자 사전등록 임시 비밀번호.
+   * 계정 아이디(email)가 있으면 `createUser`가 email로 덮어쓴다.
+   * email 없는 학교 등록 등에서만 호출부 값을 쓴다.
+   */
+  password?: string
   name: string
   nameEn?: string
   phone?: string
@@ -742,6 +751,10 @@ export interface CreateUserRequest {
   oneLineIntro?: string
   careerText?: string
   selfIntroduction?: string
+  /** 강사 사전등록 — 학력 요약(구조화 학력 전용 필드 부재 시) */
+  educationLevel?: string
+  termsAgreements?: TermsAgreementRequest[]
+  certifications?: InstructorCertificationUpsertRequest[]
 }
 
 async function fetchCreatedMemberAsUser(
@@ -768,12 +781,35 @@ async function fetchCreatedMemberAsUser(
   })
 }
 
+/**
+ * 관리자 사전등록: 계정 아이디(email) = 임시 비밀번호.
+ * email이 없으면(학교 등) 호출부 password를 그대로 사용.
+ */
+function resolveCreateUserPassword(request: CreateUserRequest): string {
+  const accountId = request.email?.trim()
+  if (accountId) {
+    return resolveAdminProvisionedTempPassword(accountId)
+  }
+  return request.password?.trim() ?? ''
+}
+
 export async function createUser(request: CreateUserRequest): Promise<Omit<User, 'password'>> {
+  const provisionedPassword = resolveCreateUserPassword(request)
+
   if (isMembersRemoteEnabled()) {
     try {
       if (request.role === 'ADMIN') {
+        const adminEmail = request.email?.trim()
+        if (!adminEmail) {
+          throw new Error('관리자 등록에는 이메일이 필요합니다.')
+        }
+        const rawPassword = provisionedPassword
+        if (!rawPassword) {
+          throw new Error('관리자 등록에는 초기 비밀번호가 필요합니다.')
+        }
         const created = await createAdminAccountRemote({
-          email: request.email.trim(),
+          email: adminEmail,
+          rawPassword,
           name: request.name.trim(),
           phone: request.phone?.trim(),
           gender: toApiGender(request.gender),
@@ -784,7 +820,7 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
         const uuid = created.uuid?.trim()
         return {
           id: uuid ? `admin-${uuid}` : `admin-account-${created.id ?? Date.now()}`,
-          email: created.email?.trim() || request.email,
+          email: created.email?.trim() || adminEmail,
           name: created.name?.trim() || request.name,
           phone: request.phone,
           role: 'ADMIN',
@@ -816,7 +852,7 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
         return {
           id: created.memberUuid.trim(),
           memberId: created.memberId,
-          email: request.email,
+          email: request.email?.trim() || '',
           name: request.name,
           role: request.role,
           isActive: request.isActive ?? true,
@@ -827,7 +863,7 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
       }
       return {
         id: `member-pre-${Date.now()}`,
-        email: request.email,
+        email: request.email?.trim() || '',
         name: request.name,
         role: request.role,
         isActive: request.isActive ?? true,
@@ -842,10 +878,13 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
 
   await new Promise(resolve => setTimeout(resolve, 300))
 
-  // 이메일 중복 체크
-  const existingUser = mockUsers.find(u => u.email === request.email)
-  if (existingUser) {
-    throw new Error('이미 사용 중인 이메일입니다.')
+  // 이메일 중복 체크 (학교 등 email 미입력은 스킵)
+  const emailForCreate = request.email?.trim() || ''
+  if (emailForCreate) {
+    const existingUser = mockUsers.find(u => u.email === emailForCreate)
+    if (existingUser) {
+      throw new Error('이미 사용 중인 이메일입니다.')
+    }
   }
 
   // UUID 생성
@@ -857,8 +896,8 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
 
   const newUser: User = {
     id: generateUUID(),
-    email: request.email,
-    password: request.password, // 실제로는 해시된 값이어야 함
+    email: emailForCreate,
+    password: provisionedPassword, // 관리자 사전등록: 계정 아이디 = 임시 비밀번호
     name: request.name,
     nameEn: request.nameEn,
     phone: request.phone,

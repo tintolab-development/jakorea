@@ -97,10 +97,22 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
     const schoolName = String(
       item.schoolInfo?.schoolName ?? item.organizationName ?? item.organizationText ?? item.name ?? ''
     ).trim()
+    const address =
+      item.schoolInfo?.address?.trim() ||
+      (typeof item.address === 'string' ? item.address.trim() : '') ||
+      ''
+    const schoolInfoLoose = item.schoolInfo as
+      | (NonNullable<MemberListItemResponse['schoolInfo']> & { addressDetail?: string })
+      | undefined
+    const addressDetail =
+      schoolInfoLoose?.addressDetail?.trim() ||
+      (typeof item.addressDetail === 'string' ? item.addressDetail.trim() : '') ||
+      undefined
     if (schoolName) {
       user.schoolInfo = {
         schoolName,
-        address: item.schoolInfo?.address?.trim() ?? '',
+        address,
+        ...(addressDetail ? { addressDetail } : {}),
         ...(item.schoolInfo?.position?.trim()
           ? { position: item.schoolInfo.position.trim() }
           : {}),

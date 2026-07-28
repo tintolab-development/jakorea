@@ -2,7 +2,8 @@
  * 학교 신규 등록 모달
  * - 기관명: NEIS 학교 검색 (`SchoolSearch`)
  * - 기관 소재지: 학교 선택 시 도로명 주소 자동 반영 + 상세 주소 입력
- * - 선택 시 NEIS 코드·검색 지역(시/도·시/군/구)을 함께 보관해 등록 API에 전달
+ * - 선택 시 NEIS 코드·검색 지역·우편번호·전화번호를 함께 보관해 등록 API에 전달
+ * - 초·중·고: NEIS `ORG_TELNO` → `phone` (대학 검색 API는 추후)
  */
 
 import { useEffect } from 'react'
@@ -22,6 +23,8 @@ export type SchoolRegisterModalFormValues = {
   regionSido?: string
   regionSigungu?: string
   zipCode?: string
+  /** NEIS `ORG_TELNO` (초·중·고) */
+  phone?: string
 }
 
 export interface SchoolRegisterModalProps {
@@ -40,6 +43,7 @@ const INITIAL_VALUES: SchoolRegisterModalFormValues = {
   regionSido: '',
   regionSigungu: '',
   zipCode: '',
+  phone: '',
 }
 
 const SCHOOL_REGISTER_MULTIPLE_VALIDATION_THRESHOLD = 2
@@ -57,6 +61,7 @@ function normalizeSubmitValues(
     regionSido: values.regionSido?.trim() || undefined,
     regionSigungu: values.regionSigungu?.trim() || undefined,
     zipCode: values.zipCode?.trim() || undefined,
+    phone: values.phone?.trim() || undefined,
   }
 }
 
@@ -104,6 +109,7 @@ export function SchoolRegisterModal({
       regionSido: meta.regionSido,
       regionSigungu: meta.regionSigungu,
       zipCode: school.orgRdnzc.trim(),
+      phone: school.orgTelno.trim(),
     })
   }
 
@@ -177,6 +183,9 @@ export function SchoolRegisterModal({
           <input type="hidden" />
         </Form.Item>
         <Form.Item name="zipCode" hidden>
+          <input type="hidden" />
+        </Form.Item>
+        <Form.Item name="phone" hidden>
           <input type="hidden" />
         </Form.Item>
         <DetailInfoForm title="기본 정보" mode="edit">

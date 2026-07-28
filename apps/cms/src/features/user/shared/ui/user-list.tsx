@@ -197,7 +197,13 @@ function columnsForKind(
         key: 'address',
         ellipsis: true,
         align: 'center',
-        render: (_: unknown, r: Row) => r.schoolInfo?.address?.trim() || '-',
+        render: (_: unknown, r: Row) => {
+          const parts = [
+            r.schoolInfo?.address?.trim(),
+            r.schoolInfo?.addressDetail?.trim(),
+          ].filter(Boolean)
+          return parts.length > 0 ? parts.join(' ') : '-'
+        },
       },
       {
         title: '프로그램 수강 횟수',

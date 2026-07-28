@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Form, Space } from 'antd'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
+import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
 import { individualAffiliationGradeSelectOptions } from '@/features/user/detail/ui/user-basic-info/sections/constants'
 import {
   AddressSearch,
@@ -250,7 +251,7 @@ export function AddUserIndividual({
 
     const request: CreateUserRequest = {
       email: values.email.trim(),
-      password: 'Temp1234!',
+      password: resolveAdminProvisionedTempPassword(values.email.trim()),
       name: values.name.trim(),
       phone: values.contact.trim(),
       gender: values.gender === 'male' ? '남성' : '여성',

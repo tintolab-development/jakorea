@@ -39,6 +39,7 @@ import {
 import { useUserStore, selectSelectedUser } from '@/features/user/shared/model/user-store'
 import type { User, AffiliatedTeacherLinkTarget } from '@/types/user'
 import type { CreateUserRequest, GetUsersPageResult } from '@/entities/user/api/user-service'
+import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { handleError } from '@/shared/utils/error-handler'
@@ -79,6 +80,11 @@ import {
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
 import { applyAffiliatedTeacherLinkToUser } from '@/features/user/api/apply-affiliated-teacher-link'
+import {
+  buildInstructorRegisterCertifications,
+  buildInstructorRegisterEducationLevel,
+  buildInstructorRegisterTermsAgreements,
+} from '@/features/user/api/map-instructor-register-extras'
 import { SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { buildSchoolDeleteMessageLines } from '@/features/program/general/ui/manager-delete-guide-modal'
 
@@ -691,18 +697,16 @@ export function UserListPage() {
 
   const handleSchoolRegisterSubmit = async (values: SchoolRegisterModalFormValues) => {
     try {
-      const address = [values.roadAddress.trim(), values.detailAddress?.trim()]
-        .filter(Boolean)
-        .join(' ')
+      // 학교 등록 폼에 계정 아이디(email) 없음 — 로그인 계정/임시 비밀번호 미발급
       await createUser({
-        email: `school-${Date.now()}@institution.jakorea.local`,
-        password: 'Temp1234!',
         name: values.institutionName.trim(),
         role: 'SCHOOL',
         schoolInfo: {
           schoolName: values.institutionName.trim(),
-          address,
+          address: values.roadAddress.trim(),
         },
+        detailAddress: values.detailAddress?.trim() || undefined,
+        phone: values.phone,
         neisCode: values.neisCode,
         regionSido: values.regionSido,
         regionSigungu: values.regionSigungu,
@@ -718,9 +722,10 @@ export function UserListPage() {
 
   const handleAdminRegisterSubmit = async (values: AdminRegisterModalFormValues) => {
     try {
+      const email = values.email.trim()
       await createUser({
-        email: values.email.trim(),
-        password: 'Temp1234!',
+        email,
+        password: resolveAdminProvisionedTempPassword(email),
         name: values.name.trim(),
         phone: values.contact.trim(),
         gender: values.gender === 'male' ? '남성' : '여성',
@@ -763,7 +768,7 @@ export function UserListPage() {
             ].filter(Boolean)
       await createUser({
         email,
-        password: 'Temp1234!',
+        password: resolveAdminProvisionedTempPassword(email),
         name,
         phone: values.contact.trim() || undefined,
         gender: values.gender === 'male' ? '남성' : '여성',
@@ -777,6 +782,16 @@ export function UserListPage() {
         oneLineIntro: values.oneLineIntro.trim() || undefined,
         careerText: values.instructorCareer.trim() || undefined,
         selfIntroduction: values.freeWrite1.trim() || undefined,
+        educationLevel: buildInstructorRegisterEducationLevel({
+          eduSchoolType: values.eduSchoolType,
+          eduStatus: values.eduStatus,
+        }),
+        termsAgreements: buildInstructorRegisterTermsAgreements({
+          consentTermsOfService: values.consentTermsOfService,
+          consentPersonal: values.consentPersonal,
+          consentMarketing: values.consentMarketing,
+        }),
+        certifications: buildInstructorRegisterCertifications(values.licenseRows),
         instructorInfo: {
           bankName: values.bankName.trim(),
           accountNumber: values.accountNumber.trim(),
