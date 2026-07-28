@@ -3,6 +3,7 @@ import type { User } from '@/types/user'
 import { formatDate } from '@/shared/utils'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import dayjs from 'dayjs'
 
 const REMOTE_RESUME_PLACEHOLDER_EDUCATION = '-'
 const REMOTE_RESUME_PLACEHOLDER_SCHOOL = '-'
@@ -23,6 +24,38 @@ function splitCareerParagraphs(text: string | undefined): string[] {
     .filter(Boolean)
 }
 
+function mapCertificationsToQualifications(
+  certifications: User['instructorCertifications']
+): NonNullable<ApplicantInstructorRow['qualifications']> {
+  if (!certifications?.length) return []
+  return certifications.map(cert => {
+    const year = cert.issuedDate
+      ? dayjs(cert.issuedDate).isValid()
+        ? dayjs(cert.issuedDate).format('YYYY')
+        : cert.issuedDate.slice(0, 4)
+      : undefined
+    return {
+      name: cert.name,
+      ...(year ? { year } : {}),
+    }
+  })
+}
+
+/** `educationLevel` 요약("4년제 / 졸업") → 이력서 학력 1행 (구조화 rows 없을 때) */
+function mapEducationLevelToEducationItems(
+  educationLevel: string | undefined
+): NonNullable<ApplicantInstructorRow['educations']> {
+  const raw = educationLevel?.trim()
+  if (!raw || raw === '-') return []
+  const [schoolType, status] = raw.split(/\s*\/\s*/).map(part => part.trim())
+  return [
+    {
+      ...(schoolType ? { schoolType } : {}),
+      ...(status ? { status } : !schoolType ? { schoolType: raw } : {}),
+    },
+  ]
+}
+
 export function userToApplicantInstructorRow(user: Omit<User, 'password'>): ApplicantInstructorRow {
   const grade = user.listMetrics?.jaEvaluationGrade?.trim()
   const years = user.participationHistory ?? 0
@@ -34,6 +67,10 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
   const careerParagraphs = splitCareerParagraphs(user.instructorCareerText)
   const introParagraphs = splitCareerParagraphs(user.instructorSelfIntroduction)
   const freeWritingFromApi = [...introParagraphs, ...careerParagraphs]
+  const qualifications = mapCertificationsToQualifications(user.instructorCertifications)
+  const educationsFromSummary = mapEducationLevelToEducationItems(
+    user.listMetrics?.highestEducationLabel
+  )
 
   return {
     id: user.id,
@@ -87,8 +124,8 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
         ? '-'
         : '수업 중 참여도가 낮았을 때, 짝 활동과 퀴즈 형식으로 분위기를 전환한 경험이 있습니다. 그 결과 학생들의 참여가 늘었고, 이후에도 같은 방식을 상황에 맞게 적용하고 있습니다.'),
     careerDetails: [],
-    educations: [],
-    qualifications: [],
+    educations: educationsFromSummary,
+    qualifications,
     awards: remote
       ? []
       : [

@@ -40,8 +40,9 @@ export interface UserBasicInfoSectionProps {
     userId: string
     permissionRole: 'instructor' | 'admin'
   }) => void
-  caption?: ReactNode
+  onOpenJaGradeEvaluation?: () => void
   scheduleChangeCount?: number
+  caption?: ReactNode
   externalId1365?: UserBasicInfoExternalId1365 | null
   personalInfoRevealed?: boolean
   memberInfoEditing?: boolean
@@ -60,6 +61,7 @@ export function UserBasicInfoSection({
   isInstructorPermissionDetail = false,
   isAdminPermissionDetail = false,
   onPermissionResendNotification,
+  onOpenJaGradeEvaluation,
   caption,
   scheduleChangeCount,
   externalId1365,
@@ -97,6 +99,7 @@ export function UserBasicInfoSection({
     externalId1365,
     personalInfoRevealed,
     onPermissionResendNotification,
+    onOpenJaGradeEvaluation,
     memberInfoEditing,
     memberInfoDraft,
     onMemberInfoDraftChange,

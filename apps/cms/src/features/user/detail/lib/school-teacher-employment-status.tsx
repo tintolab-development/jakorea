@@ -1,4 +1,5 @@
-import { EditableStatusBadge } from '@/shared/components'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { EditableStatusBadge, StatusDropdownCell } from '@/shared/components'
 import {
   getEmploymentBadgeTone,
   SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL,
@@ -47,5 +48,51 @@ export function SchoolTeacherEmploymentStatusBadge({
       label={SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL[status]}
       tone={getEmploymentBadgeTone(status)}
     />
+  )
+}
+
+/** 재직 현황 태그 드롭다운 — 교사 상세·강사(겸직) 소속 셀 공통 */
+export function SchoolTeacherEmploymentStatusDropdown({
+  userId,
+  employmentStatusLabel,
+  emptyFallback = <span>-</span>,
+}: {
+  userId: string
+  employmentStatusLabel?: string
+  /** 파싱 실패 시. `null`이면 아무것도 렌더하지 않음(강사 소속 인라인용) */
+  emptyFallback?: ReactNode | null
+}) {
+  const [employmentStatus, setEmploymentStatus] = useState<SchoolTeacherEmploymentStatus | null>(() =>
+    parseSchoolTeacherEmploymentStatus(employmentStatusLabel)
+  )
+  const [employmentDropdownOpen, setEmploymentDropdownOpen] = useState(false)
+
+  useEffect(() => {
+    setEmploymentStatus(parseSchoolTeacherEmploymentStatus(employmentStatusLabel))
+  }, [userId, employmentStatusLabel])
+
+  const handleEmploymentStatusChange = useCallback((next: SchoolTeacherEmploymentStatus) => {
+    setEmploymentStatus(next)
+    setEmploymentDropdownOpen(false)
+  }, [])
+
+  if (employmentStatus == null) {
+    return emptyFallback
+  }
+
+  return (
+    <span className="user-basic-info-section__teacher-employment-dropdown">
+      <StatusDropdownCell<SchoolTeacherEmploymentStatus>
+        status={employmentStatus}
+        statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
+        renderBadge={status => <SchoolTeacherEmploymentStatusBadge status={status} />}
+        isItemDisabled={(cur, opt) => cur === opt}
+        onChange={handleEmploymentStatusChange}
+        isOpen={employmentDropdownOpen}
+        onOpenChange={setEmploymentDropdownOpen}
+        style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
+        chrome="hug"
+      />
+    </span>
   )
 }

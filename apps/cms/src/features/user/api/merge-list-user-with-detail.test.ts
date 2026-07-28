@@ -63,4 +63,41 @@ describe('mergeListUserWithFetchedDetail', () => {
     expect(merged.name).toBe('박충재')
     expect(merged.schoolInfo).toBeUndefined()
   })
+
+  it('상세 계좌 정보를 목록 빈 instructorInfo 위에 병합한다', () => {
+    const list = baseUser({
+      id: 'teacher-uuid',
+      role: 'INSTRUCTOR',
+      name: '김강사',
+      instructorMemberProfile: 'school_teacher',
+      schoolInfo: undefined,
+      instructorInfo: {
+        bankName: '',
+        accountNumber: '',
+        accountHolder: '',
+        isBusinessIncome: false,
+      },
+    })
+    const fetched = baseUser({
+      id: 'teacher-uuid',
+      role: 'INSTRUCTOR',
+      name: '김강사',
+      schoolInfo: undefined,
+      instructorInfo: {
+        bankName: '우리은행',
+        accountNumber: '1002-859-723089',
+        accountHolder: '김강사',
+        isBusinessIncome: true,
+      },
+    })
+
+    const merged = mergeListUserWithFetchedDetail(list, fetched)
+
+    expect(merged.instructorInfo).toEqual({
+      bankName: '우리은행',
+      accountNumber: '1002-859-723089',
+      accountHolder: '김강사',
+      isBusinessIncome: true,
+    })
+  })
 })

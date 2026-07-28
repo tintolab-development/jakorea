@@ -128,12 +128,11 @@ const EMPTY_ADMIN_PROVISIONED_DRAFT: AdminProvisionedMemberBasicInfoDraft = {
 export function userToSchoolInstitutionEditDraft(
   user: Omit<User, 'password'>
 ): AdminProvisionedMemberBasicInfoDraft {
-  const addr = user.schoolInfo?.address ?? ''
   return {
     ...EMPTY_ADMIN_PROVISIONED_DRAFT,
     schoolName: user.schoolInfo?.schoolName ?? user.name ?? '',
-    institutionAddressSearch: addr,
-    institutionAddressDetail: '',
+    institutionAddressSearch: user.schoolInfo?.address?.trim() ?? '',
+    institutionAddressDetail: user.schoolInfo?.addressDetail?.trim() ?? '',
     adminComment: user.adminComment ?? '',
   }
 }

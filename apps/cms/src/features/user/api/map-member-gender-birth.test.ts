@@ -20,6 +20,7 @@ describe('map-member-gender-birth', () => {
     expect(toApiBirthDate('1990.01.15')).toBe('1990-01-15')
     expect(toApiBirthDate('1990-01-15')).toBe('1990-01-15')
     expect(toApiBirthDate('19900115')).toBe('1990-01-15')
+    expect(toApiBirthDate('1990-01-15T00:00:00Z')).toBe('1990-01-15')
     expect(toApiBirthDate('')).toBeUndefined()
   })
 
@@ -35,7 +36,7 @@ describe('mapCreateUserRequestToPreRegister', () => {
   it('성별·생년월일을 API 형식으로 매핑한다', () => {
     const body = mapCreateUserRequestToPreRegister({
       email: 'a@test.com',
-      password: 'Temp1234!',
+      password: 'a@test.com',
       name: '홍길동',
       phone: '010-1234-5678',
       gender: '남성',
@@ -53,7 +54,7 @@ describe('mapCreateUserRequestToPreRegisterIndividual', () => {
   it('개인 등록 요청을 역할별 스키마로 매핑한다', () => {
     const body = mapCreateUserRequestToPreRegisterIndividual({
       email: 'a@test.com',
-      password: 'Temp1234!',
+      password: 'a@test.com',
       name: '홍길동',
       phone: '010-1234-5678',
       gender: '남성',
@@ -80,7 +81,7 @@ describe('mapCreateUserRequestToPreRegisterSchool', () => {
   it('학교 등록 요청을 organizationName·address로 매핑한다', () => {
     const body = mapCreateUserRequestToPreRegisterSchool({
       email: 'school@test.com',
-      password: 'Temp1234!',
+      password: 'school@test.com',
       name: '화곡중학교',
       role: 'SCHOOL',
       schoolInfo: {
@@ -95,16 +96,17 @@ describe('mapCreateUserRequestToPreRegisterSchool', () => {
     expect(body.email).toBe('school@test.com')
   })
 
-  it('neisCode·regionSido·regionSigungu·zipCode를 매핑한다', () => {
+  it('neisCode·region·zipCode·phone을 매핑한다', () => {
     const body = mapCreateUserRequestToPreRegisterSchool({
       email: 'school@test.com',
-      password: 'Temp1234!',
+      password: 'school@test.com',
       name: '화곡중학교',
       role: 'SCHOOL',
       schoolInfo: {
         schoolName: '화곡중학교',
         address: '서울특별시 강서구 화곡로 1',
       },
+      phone: '02-1234-5678',
       neisCode: 'B109000000',
       regionSido: '서울특별시',
       regionSigungu: '강서구',
@@ -112,6 +114,7 @@ describe('mapCreateUserRequestToPreRegisterSchool', () => {
       isActive: true,
     })
 
+    expect(body.phone).toBe('02-1234-5678')
     expect(body.neisCode).toBe('B109000000')
     expect(body.regionSido).toBe('서울특별시')
     expect(body.regionSigungu).toBe('강서구')
@@ -123,7 +126,7 @@ describe('mapCreateUserRequestToPreRegisterInstructor', () => {
   it('강사 등록 요청에 계좌·주소 필드를 매핑한다', () => {
     const body = mapCreateUserRequestToPreRegisterInstructor({
       email: 'i@test.com',
-      password: 'Temp1234!',
+      password: 'i@test.com',
       name: '강사',
       role: 'INSTRUCTOR',
       address: '자택로 1',

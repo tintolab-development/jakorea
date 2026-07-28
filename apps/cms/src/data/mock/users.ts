@@ -182,7 +182,7 @@ const mockInstructors: User[] = [
     bio: '안녕하세요, 경제교육 전문 강사 최강사입니다.',
     birthDate: '1985-03-20',
     gender: '남성',
-    affiliation: '경제교육연구소 | 수석강사',
+    affiliation: '진월초등학교, 제미나이 강사단',
     socialAccounts: ['구글', '카카오'],
     instructorInfo: {
       bankName: '국민은행',

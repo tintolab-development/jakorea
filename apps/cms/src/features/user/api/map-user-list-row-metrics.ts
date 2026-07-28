@@ -1,6 +1,7 @@
 import type { UserListRowMetrics } from '@/types/user'
 import type { UserListRowMetrics as ApiUserListRowMetrics } from '@/shared/api/generated/members/schemas/userListRowMetrics'
 import { roleCodeToAdminPermissionVariant } from '@/features/user/api/admin-approval-role'
+import { toInstructorFeeGradeDisplayLabel } from '@/features/user/api/map-instructor-activity-display'
 
 export function mapApiUserListRowMetrics(
   metrics?: ApiUserListRowMetrics | null
@@ -20,8 +21,9 @@ export function mapApiUserListRowMetrics(
   if (metrics.instructorTypeLabel?.trim()) {
     mapped.instructorTypeLabel = metrics.instructorTypeLabel.trim()
   }
-  if (metrics.instructorFeeGradeLabel?.trim()) {
-    mapped.instructorFeeGradeLabel = metrics.instructorFeeGradeLabel.trim()
+  const feeGradeLabel = toInstructorFeeGradeDisplayLabel(metrics.instructorFeeGradeLabel)
+  if (feeGradeLabel) {
+    mapped.instructorFeeGradeLabel = feeGradeLabel
   }
   if (metrics.permissionApplicationTypeLabel?.trim()) {
     mapped.permissionApplicationTypeLabel = metrics.permissionApplicationTypeLabel.trim()

@@ -40,6 +40,10 @@ export function toApiBirthDate(birthDate: string | undefined | null): string | u
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
 
+  // ISO datetime / datetime-local → date part
+  const isoDate = raw.match(/^(\d{4}-\d{2}-\d{2})(?:[T\s].*)?$/)
+  if (isoDate) return isoDate[1]
+
   if (/^\d{8}$/.test(raw)) {
     return `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`
   }

@@ -104,6 +104,8 @@ export interface User {
   schoolInfo?: {
     schoolName: string
     address: string
+    /** 상세 주소 — 표시 시 address 뒤에만 이어 붙임 */
+    addressDetail?: string
     position?: string // 담당자 직책
     /** CMS mock/상세 — 소속 교사 목록 */
     affiliatedTeachers?: SchoolAffiliatedTeacherRow[]
@@ -196,11 +198,23 @@ export interface User {
   instructorSelfIntroduction?: string
   /** 강사 instructor-profile — 승인 상태 (remote) */
   instructorApprovalStatus?: string
+  /** 강사 상세 `certifications[]` — 자격·면허 (remote) */
+  instructorCertifications?: InstructorCertificationItem[]
 
   /**
    * 회원 목록 테이블 전용 지표 (API가 내려주면 표시, 없으면 '-' 또는 기존 필드로 추론)
    */
   listMetrics?: UserListRowMetrics
+}
+
+/** 강사 상세·이력서 — 자격증/면허 한 건 */
+export interface InstructorCertificationItem {
+  id?: number
+  name: string
+  issuer?: string
+  certificateNumber?: string
+  issuedDate?: string
+  expiresDate?: string
 }
 
 /** 목록 화면 열별 부가 데이터 */

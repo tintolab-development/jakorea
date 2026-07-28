@@ -1,0 +1,11 @@
+.instructor-detail-edit-form {
+  width: 100%;
+}
+
+.instructor-detail-edit-form__ja-grade {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  width: 100%;
+}

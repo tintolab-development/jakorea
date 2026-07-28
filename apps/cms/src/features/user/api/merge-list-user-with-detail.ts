@@ -1,4 +1,8 @@
 import type { User } from '@/types/user'
+import {
+  isInstructorMaskedPlaceholder,
+  looksLikeInstructorActivityEnumCode,
+} from '@/features/user/api/map-instructor-activity-display'
 
 function resolveMergedDisplayName(
   listUser: Omit<User, 'password'>,
@@ -29,10 +33,63 @@ function resolveMergedDisplayName(
   return fetchedName || listName
 }
 
+function resolveMergedAffiliation(
+  listUser: Omit<User, 'password'>,
+  fetched: Omit<User, 'password'>
+): string | undefined {
+  const fetchedAffiliation = fetched.affiliation?.trim()
+  const listAffiliation = listUser.affiliation?.trim()
+  if (fetchedAffiliation && !looksLikeInstructorActivityEnumCode(fetchedAffiliation)) {
+    return fetchedAffiliation
+  }
+  if (listAffiliation) return listAffiliation
+  return fetchedAffiliation || undefined
+}
+
+function resolveMergedBio(
+  listUser: Omit<User, 'password'>,
+  fetched: Omit<User, 'password'>
+): string | undefined {
+  const fetchedBio = fetched.bio?.trim()
+  const listBio = listUser.bio?.trim()
+  if (fetchedBio && !isInstructorMaskedPlaceholder(fetchedBio)) return fetchedBio
+  if (listBio && !isInstructorMaskedPlaceholder(listBio)) return listBio
+  return fetchedBio || listBio || undefined
+}
+
 /**
  * 목록 행을 remote 상세로 덮어쓸 때 SCHOOL·schoolInfo 등 목록 전용 필드를 보존한다.
  * 상세 API가 roles 누락 시 INDIVIDUAL로 떨어지면 「학교 상세」가 「회원 상세」로 보이는 문제를 막는다.
  */
+function resolveMergedInstructorInfo(
+  listInfo: User['instructorInfo'] | undefined,
+  fetchedInfo: User['instructorInfo'] | undefined
+): User['instructorInfo'] | undefined {
+  if (!listInfo && !fetchedInfo) return undefined
+  if (!fetchedInfo) return listInfo
+  if (!listInfo) return fetchedInfo
+
+  const fetchedHasBank =
+    Boolean(fetchedInfo.bankName?.trim()) ||
+    Boolean(fetchedInfo.accountNumber?.trim()) ||
+    Boolean(fetchedInfo.accountHolder?.trim())
+
+  return {
+    ...listInfo,
+    ...fetchedInfo,
+    bankName: fetchedHasBank
+      ? fetchedInfo.bankName || listInfo.bankName
+      : listInfo.bankName || fetchedInfo.bankName,
+    accountNumber: fetchedHasBank
+      ? fetchedInfo.accountNumber || listInfo.accountNumber
+      : listInfo.accountNumber || fetchedInfo.accountNumber,
+    accountHolder: fetchedHasBank
+      ? fetchedInfo.accountHolder || listInfo.accountHolder
+      : listInfo.accountHolder || fetchedInfo.accountHolder,
+    isBusinessIncome: fetchedInfo.isBusinessIncome ?? listInfo.isBusinessIncome,
+  }
+}
+
 export function mergeListUserWithFetchedDetail(
   listUser: Omit<User, 'password'>,
   fetched: Omit<User, 'password'>
@@ -45,6 +102,11 @@ export function mergeListUserWithFetchedDetail(
   const schoolInfo =
     role === 'SCHOOL' ? (fetched.schoolInfo ?? listUser.schoolInfo) : undefined
 
+  const listMetrics = {
+    ...listUser.listMetrics,
+    ...omitUndefinedMetrics(fetched.listMetrics),
+  }
+
   return {
     ...listUser,
     ...fetched,
@@ -52,15 +114,30 @@ export function mergeListUserWithFetchedDetail(
     memberId: fetched.memberId ?? listUser.memberId,
     role,
     schoolInfo,
+    instructorInfo: resolveMergedInstructorInfo(listUser.instructorInfo, fetched.instructorInfo),
     instructorMemberProfile:
       fetched.instructorMemberProfile ?? listUser.instructorMemberProfile,
     affiliatedSchoolUserId:
       fetched.affiliatedSchoolUserId ?? listUser.affiliatedSchoolUserId,
     affiliatedSchoolName: fetched.affiliatedSchoolName ?? listUser.affiliatedSchoolName,
-    listMetrics: {
-      ...listUser.listMetrics,
-      ...fetched.listMetrics,
-    },
+    affiliation: resolveMergedAffiliation(listUser, fetched),
+    bio: resolveMergedBio(listUser, fetched),
+    listMetrics: Object.keys(listMetrics).length > 0 ? listMetrics : undefined,
     name: resolveMergedDisplayName(listUser, fetched, role),
   }
+}
+
+function omitUndefinedMetrics(
+  metrics: User['listMetrics'] | undefined
+): User['listMetrics'] | undefined {
+  if (!metrics) return undefined
+  const next: NonNullable<User['listMetrics']> = {}
+  for (const [key, value] of Object.entries(metrics) as Array<
+    [keyof NonNullable<User['listMetrics']>, unknown]
+  >) {
+    if (value === undefined || value === null) continue
+    if (typeof value === 'string' && !value.trim()) continue
+    ;(next as Record<string, unknown>)[key as string] = value
+  }
+  return Object.keys(next).length > 0 ? next : undefined
 }

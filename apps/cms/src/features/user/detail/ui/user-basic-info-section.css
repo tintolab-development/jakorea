@@ -43,19 +43,16 @@
   overflow: visible;
 }
 
-.user-basic-info-section--school-teacher-profile-card
-  .user-basic-info-section__teacher-employment-dropdown {
+.user-basic-info-section__teacher-employment-dropdown {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
 }
 
 /* 트리거 패딩·크롬은 StatusDropdownCell chrome="hug" */
-.user-basic-info-section--school-teacher-profile-card
-  .user-basic-info-section__teacher-employment-dropdown
+.user-basic-info-section__teacher-employment-dropdown
   .user-basic-info-section__teacher-employment-badge.app-status-badge,
-.user-basic-info-section--school-teacher-profile-card
-  .user-basic-info-section__teacher-employment-dropdown
+.user-basic-info-section__teacher-employment-dropdown
   .status-dropdown-cell__status-trigger
   .app-status-badge.status-dropdown-cell__badge--cell-style {
   box-sizing: border-box;
@@ -67,6 +64,25 @@
   max-height: 32px !important;
   margin: 0 !important;
   padding: 6px 12px !important;
+}
+
+/* 강사 소속 — 복수 소속 콤마 나열 + 교사 겸직 재직 태그 인라인 */
+.user-basic-info-section__affiliation-multi {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.user-basic-info-section__affiliation-multi-item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.user-basic-info-section__affiliation-multi-sep {
+  white-space: pre;
 }
 
 /* 권한 승인 현황(상세) — 목록·회원 권한 승인 페이지와 동일 색/타이포 */

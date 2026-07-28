@@ -1,7 +1,7 @@
 import { CmsInput } from '@/shared/ui'
 import { EditableField } from '../fields/editable-field'
 import { EditableRow } from '../fields/editable-row'
-import { institutionTimesLabel } from '../display'
+import { addressLine, institutionTimesLabel } from '../display'
 import { useBasicInfoEditing } from '../use-basic-info-editing'
 import { FullWidthAddressEdit } from './shared'
 import type { BasicInfoSectionContext } from './types'
@@ -38,7 +38,7 @@ export function InstitutionSection(ctx: BasicInfoSectionContext) {
         <EditableField
           label="기관 소재지"
           readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={<span>{user.schoolInfo?.address ?? '-'}</span>}
+          view={<span>{addressLine(user)}</span>}
           edit={
             <FullWidthAddressEdit
               searchValue={d?.institutionAddressSearch ?? ''}

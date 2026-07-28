@@ -1,26 +1,48 @@
 import { createElement, type ReactNode } from 'react'
+import dayjs, { type Dayjs } from 'dayjs'
 import type { User } from '@/types/user'
 import type { DateValue } from '@/types'
-import { formatDateDot } from '@/shared/utils'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { getMemberPermissionInstructorApplicationTypeLabel } from '@/features/user/permission-management/lib/member-permission-instructor-application-type'
 import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
-import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 
-function ageFromBirthDate(birthDate: DateValue | undefined): number | null {
-  if (!birthDate) return null
-  const t = new Date(birthDate).getTime()
-  if (Number.isNaN(t)) return null
-  return Math.floor((Date.now() - t) / (365.25 * 24 * 60 * 60 * 1000))
+/** 만 나이 — 생일이 지나지 않았으면 연차에서 1을 뺀다 */
+function manAgeFromDayjs(birth: Dayjs): number | null {
+  const today = dayjs()
+  let age = today.year() - birth.year()
+  if (
+    today.month() < birth.month() ||
+    (today.month() === birth.month() && today.date() < birth.date())
+  ) {
+    age -= 1
+  }
+  return age >= 0 ? age : null
+}
+
+function parseBirthDayjs(birthDate: DateValue | undefined): Dayjs | null {
+  if (birthDate == null || birthDate === '') return null
+  if (birthDate instanceof Date) {
+    const parsed = dayjs(birthDate)
+    return parsed.isValid() ? parsed : null
+  }
+  const normalized = toApiBirthDate(String(birthDate)) ?? String(birthDate).trim()
+  const parsed = dayjs(normalized)
+  return parsed.isValid() ? parsed : null
+}
+
+/** 시안: `1990. 09. 15 (만 35세)` */
+function formatBirthDateAndManAge(birthDate: DateValue | undefined): string {
+  const parsed = parseBirthDayjs(birthDate)
+  if (!parsed) return '-'
+  const formatted = parsed.format('YYYY. MM. DD')
+  const age = manAgeFromDayjs(parsed)
+  return age != null ? `${formatted} (만 ${age}세)` : formatted
 }
 
 export function formatGenderBirthLine(user: Omit<User, 'password'>): string {
   const gender = toDisplayGender(user.gender)
-  if (!user.birthDate) return `${gender} | -`
-  const d = formatDateDot(user.birthDate)
-  const age = ageFromBirthDate(user.birthDate)
-  const agePart = age != null ? ` (만 ${age}세)` : ''
-  return `${gender} | ${d}${agePart}`
+  return `${gender} | ${formatBirthDateAndManAge(user.birthDate)}`
 }
 
 export function affiliationLine(user: Omit<User, 'password'>): string {
@@ -83,16 +105,18 @@ export function inlineSegmentsWithDividers(
   return createElement('span', { className }, ...children)
 }
 
-/** 성별 및 생년월일 td — 문자 `|` 대신 TdDivider, gap 12px */
+/** 성별 및 생년월일 td — 문자 `|` 대신 TdDivider, gap 12px. 시안: `남성 | 1990. 09. 15 (만 35세)` */
 export function genderBirthView(user: Omit<User, 'password'>): ReactNode {
   const gender = toDisplayGender(user.gender)
-  if (!user.birthDate) {
-    return inlineSegmentsWithDivider([gender, '-'])
-  }
-  const d = formatDateDot(user.birthDate)
-  const age = ageFromBirthDate(user.birthDate)
-  const agePart = age != null ? ` (만 ${age}세)` : ''
-  return inlineSegmentsWithDivider([gender, `${d}${agePart}`])
+  const birthPart = formatBirthDateAndManAge(user.birthDate)
+  // `-` 세그먼트를 버리지 않음 — 생년월일 없을 때도 `성별 | -` 유지
+  return createElement(
+    'span',
+    { className: 'user-basic-info-section__inline-segments' },
+    createElement('span', { key: 's-gender' }, gender),
+    createElement(DetailInfoFormTdDivider, { key: 'd-birth' }),
+    createElement('span', { key: 's-birth' }, birthPart)
+  )
 }
 
 /** 교사 기본 정보 — 소속 및 담당 학년 td (문자 `|` 대신 TdDivider, gap 12px) */
@@ -178,6 +202,76 @@ export function highestEducationView(user: Omit<User, 'password'>): ReactNode {
   return pipeSeparatedInlineView(highestEducationLine(user))
 }
 
+export function instructorCareerYearsLine(user: Omit<User, 'password'>): string {
+  const yearsLabel = user.listMetrics?.instructorCareerYearsLabel?.trim()
+  if (yearsLabel && yearsLabel !== '-') return yearsLabel
+
+  const summary = user.listMetrics?.instructorCareerSummaryLabel?.trim()
+  if (summary && summary !== '-') {
+    if (/^\d+$/.test(summary)) return `${summary}년`
+    return summary
+  }
+
+  const careerText = user.instructorCareerText?.trim()
+  if (careerText && careerText !== '-' && careerText !== '마스킹') {
+    if (/^\d+$/.test(careerText)) return `${careerText}년`
+    return careerText
+  }
+
+  const years = user.participationHistory
+  if (typeof years === 'number' && years > 0) return `${years}년`
+  if (typeof years === 'number' && years === 0) return '0년'
+  return '-'
+}
+
+/** 강사 소속 — 학교(기관)와 그 외(JA 강사단 등)를 분리. 여러 소속은 콤마로 합친다. */
+export function resolveInstructorAffiliationParts(user: Omit<User, 'password'>): {
+  schoolName?: string
+  others: string[]
+} {
+  const schoolName =
+    user.affiliatedSchoolName?.trim() ||
+    user.schoolInfo?.schoolName?.trim() ||
+    undefined
+
+  const seen = new Set<string>()
+  const others: string[] = []
+
+  const addOther = (raw: string | undefined | null) => {
+    const trimmed = raw?.trim()
+    if (!trimmed || trimmed === '-') return
+    const name = trimmed.split(/\s*\|\s*/)[0]?.trim()
+    if (!name) return
+    if (schoolName && name === schoolName) return
+    if (seen.has(name)) return
+    seen.add(name)
+    others.push(name)
+  }
+
+  if (schoolName) seen.add(schoolName)
+
+  const affiliation = user.affiliation?.trim()
+  if (affiliation) {
+    for (const part of affiliation.split(/\s*,\s*/)) {
+      addOther(part)
+    }
+  }
+
+  // 신청 유형 라벨 중 소속으로 쓸 만한 것만 (일반 강사/교사 회원 등 유형 라벨 제외)
+  const applicationType = user.listMetrics?.permissionApplicationTypeLabel?.trim()
+  if (applicationType && /(강사단|특강|UJAT|제미나이)/i.test(applicationType)) {
+    addOther(applicationType)
+  }
+
+  return { schoolName, others }
+}
+
+export function instructorAffiliationLine(user: Omit<User, 'password'>): string {
+  const { schoolName, others } = resolveInstructorAffiliationParts(user)
+  const parts = [...(schoolName ? [schoolName] : []), ...others]
+  return parts.length > 0 ? parts.join(', ') : '-'
+}
+
 export function jaEvaluationGradeLine(user: Omit<User, 'password'>): string {
   const grade = user.listMetrics?.jaEvaluationGrade?.trim()
   if (!grade) return '-'
@@ -185,15 +279,26 @@ export function jaEvaluationGradeLine(user: Omit<User, 'password'>): string {
 }
 
 export function instructorFeeGradeLine(user: Omit<User, 'password'>): string {
-  const grade =
-    user.listMetrics?.instructorFeeGradeLabel?.trim() ||
-    user.listMetrics?.instructorTypeLabel?.trim()
-  return grade && grade.length > 0 ? grade : '-'
+  // instructorTypeLabel(강사 유형)과 혼동하지 않음 — 승인 status가 type에 섞인 사례 방지
+  const grade = user.listMetrics?.instructorFeeGradeLabel?.trim()
+  if (!grade || grade === '-') return '-'
+  const upper = grade.toUpperCase()
+  if (
+    upper === 'APPROVED' ||
+    upper === 'PENDING' ||
+    upper === 'REJECTED' ||
+    upper === 'ACTIVE' ||
+    upper === 'REVOKED'
+  ) {
+    return '-'
+  }
+  return grade
 }
 
 export function oneLineIntroLine(user: Omit<User, 'password'>): string {
   const bio = user.bio?.trim()
-  return bio && bio.length > 0 ? bio : '-'
+  if (!bio || bio === '마스킹') return '-'
+  return bio
 }
 
 /** 회원 관리 기준 신청·소속 구분 (강사비 등급 `instructorTypeLabel`은 사용하지 않음) */
@@ -202,7 +307,17 @@ export function instructorApplicationTypeLine(user: Omit<User, 'password'>): str
 }
 
 export function addressLine(user: Omit<User, 'password'>): string {
-  return user.schoolInfo?.address ?? user.detailAddress ?? '-'
+  // 학교(기관) 상세 — 기관 소재지
+  if (user.role === 'SCHOOL') {
+    const parts = [user.schoolInfo?.address?.trim(), user.schoolInfo?.addressDetail?.trim()].filter(
+      Boolean
+    )
+    if (parts.length > 0) return parts.join(' ')
+    return '-'
+  }
+  // 강사·개인 등 — 자택 주소 (`instructorProfile.homeAddress` → `detailAddress`)
+  const detail = user.detailAddress?.trim()
+  return detail || '-'
 }
 
 export function socialLine(user: Omit<User, 'password'>): string {
