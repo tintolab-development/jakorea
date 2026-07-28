@@ -13,8 +13,9 @@ Platform은 CMS와 **동일한** 백엔드 응답 캐시 정책을 사용한다.
 
 ## Platform 적용 요점
 
-- 현재 RQ 미도입이어도, API·query hook·auth 작업 시 위 문서를 따른다.
-- 도입 시 키 루트는 **`['platform', …]`** (CMS의 `['cms', …]`와 분리).
-- 싱글톤 `QueryClient` + Provider를 `apps/platform/src`에 두고, logout/계정 전환 시 `removeQueries({ queryKey: ['platform'] })` (또는 스코프별 제거).
+- RQ **도입됨**: 싱글톤 [`shared/lib/query-client.ts`](../../../src/shared/lib/query-client.ts), Provider [`app/providers/query-provider.tsx`](../../../src/app/providers/query-provider.tsx) (`AppProviders`에서 감쌈).
+- 키 루트는 **`['platform', …]`** — [`shared/api/query-keys.ts`](../../../src/shared/api/query-keys.ts)의 `platformQueryKeys` 팩토리 사용.
+- logout / 토큰 clear 시 `clearAuthTokens()`가 `removeQueries({ queryKey: ['platform'] })` 호출.
 - CMS 키 팩토리·훅을 그대로 복사하지 않는다. 정책·패턴만 재사용한다.
 - `gcTime` 사용 (`cacheTime` 금지). 필터 없는 `invalidateQueries()` 금지.
+- CMS식 `VITE_REAL_API_MODULES`는 Platform에 **없음**. 실 API 여부는 `isRemoteApiConfigured()`만 사용.

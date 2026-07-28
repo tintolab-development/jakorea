@@ -332,6 +332,9 @@ importers:
       '@jakorea/form-template-runtime':
         specifier: workspace:*
         version: link:../../packages/form-template-runtime
+      '@jakorea/identity-verification':
+        specifier: workspace:*
+        version: link:../../packages/identity-verification
       '@jakorea/location':
         specifier: workspace:*
         version: link:../../packages/location
@@ -344,6 +347,9 @@ importers:
       '@jakorea/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      '@tanstack/react-query':
+        specifier: ^5.62.2
+        version: 5.90.21(react@19.2.0)
       '@tiptap/core':
         specifier: ^3.25.0
         version: 3.27.1(@tiptap/pm@3.27.1)
@@ -356,6 +362,9 @@ importers:
       antd:
         specifier: ^5.28.0
         version: 5.29.2(date-fns@4.1.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      axios:
+        specifier: ^1.7.9
+        version: 1.13.2
       react:
         specifier: ^19.2.0
         version: 19.2.0
