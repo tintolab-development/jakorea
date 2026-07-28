@@ -317,7 +317,8 @@ export function addressLine(user: Omit<User, 'password'>): string {
   }
   // 강사·개인 등 — 자택 주소 (`instructorProfile.homeAddress` → `detailAddress`)
   const detail = user.detailAddress?.trim()
-  return detail || '-'
+  if (!detail || detail === '마스킹') return '-'
+  return detail
 }
 
 export function socialLine(user: Omit<User, 'password'>): string {
@@ -345,29 +346,22 @@ export function detailEmailDisplay(user: Omit<User, 'password'>, revealed: boole
   return MASKING_POLICY.email(t)
 }
 
+/**
+ * 자택 주소 표시.
+ * - 개인정보 상세보기 전: BE가 시·군·구(또는 그 이하)로 잘라 준 값은 그대로 노출.
+ *   토큰 2개 이하(예: `서울특별시`, `서울특별시 관악구`)는 추가 블러하지 않음
+ *   → 시 단위만 올 때 글자 단위 블러로 “안 보이는” 현상 방지.
+ * - 도로명·상세가 더 붙으면(토큰 3+) 앞 2토큰만 노출, 이후 CSS blur.
+ * - 상세보기 후: 원문 전체.
+ */
 export function detailAddressView(user: Omit<User, 'password'>, revealed: boolean): ReactNode {
   const raw = addressLine(user)
   if (raw === '-' || revealed) return raw
   const parts = raw.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 0) return '-'
-  if (parts.length === 1) {
-    const [one] = parts
-    const cut = Math.min(4, Math.ceil(one.length / 2))
-    const head = one.slice(0, cut)
-    const tail = one.slice(cut)
-    return createElement(
-      'span',
-      { className: 'user-basic-info-section__address-privacy' },
-      createElement('span', null, head),
-      tail
-        ? createElement(
-            'span',
-            { className: 'user-basic-info-section__address-privacy__blur', 'aria-hidden': true },
-            tail
-          )
-        : null
-    )
-  }
+  // BE 마스킹 응답(시 / 시군구) — FE에서 재블러하지 않음
+  if (parts.length <= 2) return raw
+
   const head = parts.slice(0, 2).join(' ')
   const tail = parts.slice(2).join(' ')
   return createElement(
@@ -384,22 +378,47 @@ export function detailAddressView(user: Omit<User, 'password'>, revealed: boolea
   )
 }
 
+/**
+ * 강사 상세 · 정산 계좌 정보 마스킹 규칙
+ * - 은행명: 원문(마스킹 없음)
+ * - 계좌번호: 숫자 전부 `*` (하이픈 등 구분자는 유지)
+ * - 예금주: 성(씨)만 노출, 나머지 `*`
+ * - 형식: `{은행명} {마스킹계좌} | {마스킹예금주}` (예: `농협 ******-**-****** | 박**`)
+ */
+export function formatInstructorSettlementAccountParts(info: {
+  bankName?: string | null
+  accountNumber?: string | null
+  accountHolder?: string | null
+}): { left: string; holder: string } | null {
+  const bank = String(info.bankName ?? '').trim()
+  const rawNum = String(info.accountNumber ?? '').trim()
+  const rawHolder = String(info.accountHolder ?? '').trim()
+  if (!bank && !rawNum && !rawHolder) return null
+
+  const maskedNum = rawNum ? MASKING_POLICY.accountNumber(rawNum) : ''
+  const maskedHolder = rawHolder ? MASKING_POLICY.accountHolderName(rawHolder) : ''
+  const left = [bank, maskedNum].filter(Boolean).join(' ')
+  return { left, holder: maskedHolder }
+}
+
 export function instructorBankLine(user: Omit<User, 'password'>, revealed: boolean): string {
   const info = user.instructorInfo
   if (!info) return '-'
-  const rawNum = info.accountNumber ?? ''
-  const rawHolder = info.accountHolder ?? ''
-  const bank = info.bankName ?? ''
+
   if (revealed) {
-    const left = `${bank} ${rawNum}`.trim()
-    const holder = rawHolder ? ` | ${rawHolder}` : ''
-    return left || holder ? `${left}${holder}` : '-'
+    const bank = String(info.bankName ?? '').trim()
+    const rawNum = String(info.accountNumber ?? '').trim()
+    const rawHolder = String(info.accountHolder ?? '').trim()
+    const left = [bank, rawNum].filter(Boolean).join(' ')
+    if (left && rawHolder) return `${left} | ${rawHolder}`
+    return left || rawHolder || '-'
   }
-  const maskedNum = rawNum ? MASKING_POLICY.accountNumber(rawNum) : ''
-  const maskedHolder = rawHolder ? MASKING_POLICY.accountHolderName(rawHolder) : ''
-  const left = `${bank} ${maskedNum}`.trim()
-  const holder = maskedHolder ? ` | ${maskedHolder}` : ''
-  return left || holder ? `${left}${holder}` : '-'
+
+  const parts = formatInstructorSettlementAccountParts(info)
+  if (!parts) return '-'
+  const { left, holder } = parts
+  if (left && holder) return `${left} | ${holder}`
+  return left || holder || '-'
 }
 
 /** 강사 기본 정보 — 정산 계좌 정보 td (문자 `|` 대신 TdDivider, gap 12px) */
@@ -407,26 +426,20 @@ export function instructorBankView(user: Omit<User, 'password'>, revealed: boole
   const info = user.instructorInfo
   if (!info) return '-'
 
-  const rawNum = info.accountNumber ?? ''
-  const rawHolder = info.accountHolder ?? ''
-  const bank = info.bankName ?? ''
-
   if (revealed) {
-    const left = `${bank} ${rawNum}`.trim()
-    const holder = rawHolder.trim()
-    if (!left && !holder) return '-'
-    if (!holder) return left
-    if (!left) return holder
-    return inlineSegmentsWithDivider([left, holder])
+    const bank = String(info.bankName ?? '').trim()
+    const rawNum = String(info.accountNumber ?? '').trim()
+    const rawHolder = String(info.accountHolder ?? '').trim()
+    const left = [bank, rawNum].filter(Boolean).join(' ')
+    if (left && rawHolder) return inlineSegmentsWithDivider([left, rawHolder])
+    return left || rawHolder || '-'
   }
 
-  const maskedNum = rawNum ? MASKING_POLICY.accountNumber(rawNum) : ''
-  const maskedHolder = rawHolder ? MASKING_POLICY.accountHolderName(rawHolder) : ''
-  const left = `${bank} ${maskedNum}`.trim()
-  if (!left && !maskedHolder) return '-'
-  if (!maskedHolder) return left
-  if (!left) return maskedHolder
-  return inlineSegmentsWithDivider([left, maskedHolder])
+  const parts = formatInstructorSettlementAccountParts(info)
+  if (!parts) return '-'
+  const { left, holder } = parts
+  if (left && holder) return inlineSegmentsWithDivider([left, holder])
+  return left || holder || '-'
 }
 
 export function institutionTimesLabel(n: number | undefined): string {

@@ -3,6 +3,7 @@ import type { User } from '@/types/user'
 import { formatDate } from '@/shared/utils'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import dayjs from 'dayjs'
 
 const REMOTE_RESUME_PLACEHOLDER_EDUCATION = '-'
@@ -87,7 +88,11 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
     schoolName: user.schoolInfo?.schoolName ?? user.affiliatedSchoolName ?? '-',
     nameEnglish: user.nameEn ?? (remote ? '-' : 'Park Tinto'),
     birthDate: user.birthDate ? formatDate(user.birthDate) : remote ? '-' : '1990.09.15',
-    gender: user.gender ?? (remote ? '-' : '남성'),
+    gender: (() => {
+      const display = toDisplayGender(user.gender)
+      if (display !== '-') return display
+      return remote ? '-' : '남성'
+    })(),
     bankName: user.instructorInfo?.bankName ?? '',
     accountNumber: user.instructorInfo?.accountNumber ?? '',
     accountHolder: user.instructorInfo?.accountHolder ?? '',

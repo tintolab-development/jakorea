@@ -125,8 +125,24 @@ describe('mapInstructorMemberDetailToUser', () => {
 
     expect(user.affiliation).toBe('진월초등학교, JA 강사단')
     expect(user.affiliatedSchoolName).toBe('진월초등학교')
-    expect(user.instructorMemberProfile).toBe('instructor_dual')
+    // GENERAL은 학교명만으로 dual(교사 상세)로 올리지 않음
+    expect(user.instructorMemberProfile).toBe('instructor_only')
     expect(user.listMetrics?.employmentStatusLabel).toBe('재직중')
+  })
+
+  it('학교명 + SCHOOL_TEACHER가 아니면 겸직(dual)로 올린다', () => {
+    const user = mapInstructorMemberDetailToUser(
+      baseInstructorDetail({
+        instructorProfile: {
+          memberId: 101,
+          primaryActivityType: 'UJAT',
+        },
+        affiliatedSchoolName: '진월초등학교',
+      } as InstructorMemberDetailResponse)
+    )
+
+    expect(user.affiliatedSchoolName).toBe('진월초등학교')
+    expect(user.instructorMemberProfile).toBe('instructor_dual')
   })
 
   it('top-level 계좌가 없으면 bankAccounts(current)를 사용한다', () => {

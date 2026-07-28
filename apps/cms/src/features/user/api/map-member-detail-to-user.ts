@@ -69,9 +69,26 @@ function resolveInstructorHomeAddressLine(
   profile: InstructorProfileLoose | null
 ): string | undefined {
   const looseDetail = detail as InstructorMemberDetailLoose
-  const homeAddress = pickTrimmed(profile?.homeAddress, looseDetail.homeAddress)
+  const looseMember = detail.member as (MemberDetailResponse & { homeAddress?: string; address?: string }) | undefined
+  const homeAddress = pickTrimmed(
+    profile?.homeAddress,
+    (profile as { address?: string } | null)?.address,
+    looseDetail.homeAddress,
+    (looseDetail as { address?: string }).address,
+    looseMember?.homeAddress,
+    looseMember?.address
+  )
+  if (!homeAddress || isInstructorMaskedPlaceholder(homeAddress)) {
+    const detailOnly = pickTrimmed(profile?.homeAddressDetail, looseDetail.homeAddressDetail)
+    if (!detailOnly || isInstructorMaskedPlaceholder(detailOnly)) return undefined
+    return detailOnly
+  }
   const homeAddressDetail = pickTrimmed(profile?.homeAddressDetail, looseDetail.homeAddressDetail)
-  const addressLine = [homeAddress, homeAddressDetail].filter(Boolean).join(' ')
+  const detailPart =
+    homeAddressDetail && !isInstructorMaskedPlaceholder(homeAddressDetail)
+      ? homeAddressDetail
+      : undefined
+  const addressLine = [homeAddress, detailPart].filter(Boolean).join(' ')
   return addressLine || undefined
 }
 
@@ -228,11 +245,13 @@ function applyInstructorProfile(
     user.bio = selfIntro
   }
 
-  const homeAddress = pickTrimmed(profile?.homeAddress)
+  const homeAddress = pickTrimmed(profile?.homeAddress, (profile as { address?: string } | null)?.address)
   const homeAddressDetail = pickTrimmed(profile?.homeAddressDetail)
-  const addressLine = [homeAddress, homeAddressDetail].filter(Boolean).join(' ')
-  if (addressLine) {
-    user.detailAddress = addressLine
+  const addressParts = [homeAddress, homeAddressDetail].filter(
+    (part): part is string => Boolean(part) && !isInstructorMaskedPlaceholder(part)
+  )
+  if (addressParts.length > 0) {
+    user.detailAddress = addressParts.join(' ')
   }
 
   const careerText = pickTrimmed(profile?.careerText)
@@ -349,6 +368,17 @@ export function mapInstructorMemberDetailToUser(
   const homeAddressLine = resolveInstructorHomeAddressLine(detail, profileLoose)
   if (homeAddressLine) user.detailAddress = homeAddressLine
 
+  // member.gender 누락 시 루트/프로필 동의어로 보강 — 표시는 항상 남성/여성
+  if (!user.gender) {
+    const looseGender = pickTrimmed(
+      (looseDetail as { gender?: string }).gender,
+      (profileLoose as { gender?: string } | null)?.gender,
+      (member as { genderLabel?: string }).genderLabel
+    )
+    const display = toDisplayGender(looseGender)
+    if (display !== '-') user.gender = display
+  }
+
   const affiliation = pickTrimmed(profileLoose?.affiliation, looseDetail.affiliation)
   if (affiliation && !looksLikeInstructorActivityEnumCode(affiliation)) {
     user.affiliation = affiliation
@@ -361,7 +391,13 @@ export function mapInstructorMemberDetailToUser(
   )
   if (schoolName) {
     user.affiliatedSchoolName = schoolName
-    if (!user.instructorMemberProfile || user.instructorMemberProfile === 'instructor_only') {
+    const primaryUpper = profile?.primaryActivityType?.trim().toUpperCase()
+    // GENERAL(순수 강사)는 학교명 필드만으로 겸직(dual)로 올리지 않음
+    // → 새로고침 시 「강사 상세」가 「교사 상세」로 바뀌는 문제 방지
+    if (
+      primaryUpper !== 'GENERAL' &&
+      (!user.instructorMemberProfile || user.instructorMemberProfile === 'instructor_only')
+    ) {
       user.instructorMemberProfile = 'instructor_dual'
     }
   }

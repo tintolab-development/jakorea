@@ -1256,15 +1256,15 @@ const extraMockUsers: User[] = [
     detailAddress: '서울특별시 강남구 테헤란로',
     affiliation: 'JA 강사 | 강의 이력 데모',
     instructorInfo: {
-      bankName: '국민은행',
+      bankName: '농협',
       accountHolder: '박틴토',
-      accountNumber: '110-123-456789',
+      accountNumber: '123456-12-123456',
       isBusinessIncome: false,
     },
     listMetrics: {
       instructorFeeGradeLabel: '1급 강사비',
       permissionApplicationTypeLabel: '제미나이 강사단',
-      settlementStatusLabel: '확인 진행중',
+      settlementStatusLabel: '확인 진행 중',
       employmentStatusLabel: '재직 중',
       instructorAssignedGrade: '1학년',
     },

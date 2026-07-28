@@ -6,14 +6,27 @@ export function toApiGender(gender: string | undefined | null): 'M' | 'F' | unde
   if (!raw) return undefined
 
   const upper = raw.toUpperCase()
-  if (upper === 'MALE' || upper === 'M' || raw === '남성' || raw === '남' || raw.toLowerCase() === 'male') {
+  if (
+    upper === 'MALE' ||
+    upper === 'M' ||
+    upper === 'MAN' ||
+    upper === '1' ||
+    raw === '남성' ||
+    raw === '남' ||
+    raw === '남자' ||
+    raw.toLowerCase() === 'male'
+  ) {
     return 'M'
   }
   if (
     upper === 'FEMALE' ||
     upper === 'F' ||
+    upper === 'WOMAN' ||
+    upper === 'W' ||
+    upper === '2' ||
     raw === '여성' ||
     raw === '여' ||
+    raw === '여자' ||
     raw.toLowerCase() === 'female'
   ) {
     return 'F'
@@ -21,13 +34,12 @@ export function toApiGender(gender: string | undefined | null): 'M' | 'F' | unde
   return undefined
 }
 
-/** 회원 상세·목록 표시용 성별 */
+/** 회원 상세·목록 표시용 성별 — 항상 `남성` | `여성` | `-` */
 export function toDisplayGender(gender: string | undefined | null): string {
   const api = toApiGender(gender)
   if (api === 'M') return '남성'
   if (api === 'F') return '여성'
-  const trimmed = gender?.trim()
-  return trimmed || '-'
+  return '-'
 }
 
 /**

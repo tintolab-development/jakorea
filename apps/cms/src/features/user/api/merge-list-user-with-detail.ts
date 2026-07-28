@@ -57,6 +57,22 @@ function resolveMergedBio(
   return fetchedBio || listBio || undefined
 }
 
+/** 자택 주소 — `"마스킹"` 제외, unmask 등 더 긴(원문에 가까운) 쪽 우선 */
+function resolveMergedDetailAddress(
+  listUser: Omit<User, 'password'>,
+  fetched: Omit<User, 'password'>
+): string | undefined {
+  const fetchedAddr = fetched.detailAddress?.trim()
+  const listAddr = listUser.detailAddress?.trim()
+  const fetchedOk =
+    fetchedAddr && !isInstructorMaskedPlaceholder(fetchedAddr) ? fetchedAddr : undefined
+  const listOk = listAddr && !isInstructorMaskedPlaceholder(listAddr) ? listAddr : undefined
+  if (fetchedOk && listOk) {
+    return fetchedOk.length >= listOk.length ? fetchedOk : listOk
+  }
+  return fetchedOk || listOk || undefined
+}
+
 /**
  * 목록 행을 remote 상세로 덮어쓸 때 SCHOOL·schoolInfo 등 목록 전용 필드를 보존한다.
  * 상세 API가 roles 누락 시 INDIVIDUAL로 떨어지면 「학교 상세」가 「회원 상세」로 보이는 문제를 막는다.
@@ -121,6 +137,7 @@ export function mergeListUserWithFetchedDetail(
       fetched.affiliatedSchoolUserId ?? listUser.affiliatedSchoolUserId,
     affiliatedSchoolName: fetched.affiliatedSchoolName ?? listUser.affiliatedSchoolName,
     affiliation: resolveMergedAffiliation(listUser, fetched),
+    detailAddress: resolveMergedDetailAddress(listUser, fetched),
     bio: resolveMergedBio(listUser, fetched),
     listMetrics: Object.keys(listMetrics).length > 0 ? listMetrics : undefined,
     name: resolveMergedDisplayName(listUser, fetched, role),

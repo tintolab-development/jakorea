@@ -29,7 +29,7 @@ import {
 } from '../status'
 import { useBasicInfoEditing } from '../use-basic-info-editing'
 import type { BasicInfoSectionContext } from './types'
-import { ContactInfoFieldsRow } from './shared'
+import { ContactInfoFieldsRow, FullWidthAddressEdit } from './shared'
 import {
   GENDER_EDIT_OPTIONS,
   INDIVIDUAL_AFFILIATION_FIELDS_WIDTH,
@@ -336,12 +336,12 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
           edit={
-            <CmsInput
-              value={d?.detailAddressDetail ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ detailAddressDetail: e.target.value })}
-              inputSize="medium"
-              width="100%"
-              placeholder="상세 주소"
+            <FullWidthAddressEdit
+              searchValue={d?.detailAddressSearch ?? ''}
+              onSearchChange={next => onMemberInfoDraftChange?.({ detailAddressSearch: next })}
+              detailValue={d?.detailAddressDetail ?? ''}
+              onDetailChange={next => onMemberInfoDraftChange?.({ detailAddressDetail: next })}
+              detailAriaLabel="자택 주소 상세"
             />
           }
         />

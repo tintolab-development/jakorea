@@ -28,7 +28,11 @@ describe('map-member-gender-birth', () => {
     expect(toDisplayGender('M')).toBe('남성')
     expect(toDisplayGender('F')).toBe('여성')
     expect(toDisplayGender('MALE')).toBe('남성')
+    expect(toDisplayGender('1')).toBe('남성')
+    expect(toDisplayGender('2')).toBe('여성')
+    expect(toDisplayGender('남자')).toBe('남성')
     expect(toDisplayGender(undefined)).toBe('-')
+    expect(toDisplayGender('unknown')).toBe('-')
   })
 })
 

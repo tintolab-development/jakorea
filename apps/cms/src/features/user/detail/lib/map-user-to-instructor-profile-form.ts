@@ -26,7 +26,17 @@ function toConsentValue(agreed: boolean | undefined): ConsentValue {
 
 function mapGender(gender: string | undefined): 'male' | 'female' {
   const g = gender?.trim()
-  if (g === '여' || g === '여성' || g === 'F' || g === 'FEMALE') return 'female'
+  if (
+    g === '여' ||
+    g === '여성' ||
+    g === '여자' ||
+    g === 'F' ||
+    g === 'FEMALE' ||
+    g === 'female' ||
+    g === '2'
+  ) {
+    return 'female'
+  }
   return 'male'
 }
 

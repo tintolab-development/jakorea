@@ -4,6 +4,7 @@ import {
   getAdminPermissionVariant,
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 
 /** `user.affiliation` 저장 시 기관·학년 구분에 사용 (목·API와 동일) */
 export const USER_AFFILIATION_PIPE_SEP = ' | ' as const
@@ -184,7 +185,10 @@ export function userToAdminProvisionedBasicDraft(
     detailAddress: user.detailAddress ?? '',
     affiliationInstitution,
     affiliationGrade,
-    gender: user.gender ?? '',
+    gender: (() => {
+      const display = toDisplayGender(user.gender)
+      return display === '-' ? '' : display
+    })(),
     birthDate: birthDateToInputValue(user.birthDate),
     socialAccount: user.socialAccounts?.[0] ?? '',
     adminComment: user.adminComment ?? '',
