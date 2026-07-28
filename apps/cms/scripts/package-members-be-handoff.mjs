@@ -26,6 +26,7 @@ const outDir = outArg ? path.resolve(outArg.slice('--out='.length)) : defaultOut
 
 const coreFiles = [
   'members-api-backend-handoff-2026-07-23.md',
+  'members-pre-register-handover-2026-07-28.md',
   'e2e-members-pre-register-handoff-2026-07-23.md',
 ]
 

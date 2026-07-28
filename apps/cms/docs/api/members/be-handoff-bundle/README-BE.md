@@ -14,9 +14,10 @@ JaKorea **CMS** (`회원 관리` LNB) 프론트 연동 기준으로 정리한 �
 ## 읽는 순서 (권장)
 
 1. **`members-api-backend-handoff-2026-07-23.md`** — **필수** · P0~P2 · 체크리스트 · 등록·상세 **path 분리(B안)** · **마스킹 §M-P1-5** · `admin-accounts` 분리  
-2. **`e2e-members-pre-register-handoff-2026-07-23.md`** — **권장 첨부** · M1/M2 · pre-register·kind 목록 증상  
-3. **`members-api-integration-2026-07-23.md`** — (`--full` 시) FE가 호출하는 path·등록 필드 매핑  
-4. **`members-api-backend-gaps-2026-07-23.md`** · **`members-api-detail-missing-endpoints-handoff-2026-06-26.md`** — (`--full` 시) 레거시 갭 참고 (2026-06 일부 outdated)
+2. **`members-pre-register-handover-2026-07-28.md`** — **2026-07-28 갭 (단독 전달 가능)** · path·마스킹 · 학교 · 강사 · `rawPassword` · Platform 8자  
+3. **`e2e-members-pre-register-handoff-2026-07-23.md`** — **권장 첨부** · M1/M2 · pre-register·kind 목록 증상  
+4. **`members-api-integration-2026-07-23.md`** — (`--full` 시) FE가 호출하는 path·등록 필드 매핑  
+5. **`members-api-backend-gaps-2026-07-23.md`** · **`members-api-detail-missing-endpoints-handoff-2026-06-26.md`** — (`--full` 시) 레거시 갭 참고 (2026-06 일부 outdated)
 
 ---
 
@@ -44,4 +45,4 @@ pnpm --filter cms test:e2e:members
 
 재현·traceId는 E2E pre-register 문서 참고. 백엔드 단독 검증은 OpenAPI·스테이징 API로 진행하면 됩니다.
 
-**Last updated:** 2026-07-23
+**Last updated:** 2026-07-28

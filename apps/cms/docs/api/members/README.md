@@ -7,9 +7,7 @@ CMS LNB 「회원 관리」(회원 목록 · 권한 승인 · 권한 설정) API
 | 문서 | 용도 |
 |------|------|
 | [**members-api-backend-handoff-2026-07-23.md**](./members-api-backend-handoff-2026-07-23.md) | **백엔드 1차 전달용** — P0~P2 · 등록·상세 path 분리 · **마스킹 §M-P1-5** |
-| [instructor-pre-register-detail-handover-2026-07-28.md](./instructor-pre-register-detail-handover-2026-07-28.md) | **강사 신규 등록** — FE 연결 완료 vs 서버 필드·상세 반환 갭 |
-| [admin-pre-register-temp-password-handover-2026-07-28.md](./admin-pre-register-temp-password-handover-2026-07-28.md) | **관리자 사전등록** — 개인·강사 `rawPassword` 수용 · **비밀번호 정책 Platform(8자) 통일** · 계정 아이디 = 임시 비밀번호 |
-| [school-pre-register-list-detail-handover-2026-07-28.md](./school-pre-register-list-detail-handover-2026-07-28.md) | **학교(기관) 등록·목록·상세** — 더미 email 금지 · 목록 address/addressDetail · 기관 소재지 |
+| [**members-pre-register-handover-2026-07-28.md**](./members-pre-register-handover-2026-07-28.md) | **2026-07-28 BE 전달 (단독)** — path·마스킹 · 학교 · 강사 · `rawPassword` · Platform 8자 |
 | [members-api-integration-2026-07-23.md](./members-api-integration-2026-07-23.md) | FE 연동 명세 (모듈 키·endpoint·mapper·캐시) |
 | [e2e-members-pre-register-handoff-2026-07-23.md](./e2e-members-pre-register-handoff-2026-07-23.md) | E2E 관측 — 등록 path·pre-register (M1/M2) |
 | [members-api-backend-gaps-2026-07-23.md](./members-api-backend-gaps-2026-07-23.md) | 갭·스펙 불일치 목록 (2026-06 기준, 일부 outdated) |
