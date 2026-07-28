@@ -2,7 +2,8 @@
  * 컨텐츠 모달 (공통 레이아웃)
  * - 컨테이너 padding: top 26, bottom 34, horizontal 30
  * - 헤더: 보더 없음, padding 제거, 타이틀 24px Bold
- * - 바디: TealHeaderModal margin-top/padding 리셋. description prop이 있으면 타이틀–디스크립션 간격 16px(content-modal.css)
+ * - 바디: TealHeaderModal margin-top/padding 리셋.
+ *   타이틀↔본문 간격은 `description` 있을 때 16px, 또는 `titleBodyGap="always"`로 description 없이도 16px.
  * - 푸터: 상단 디바이더 없음, margin-top 30px, 버튼 래퍼 100% + 우측 정렬
  * - 셸: radius 12 · shadow 0 0 25px rgba(0,0,0,0.35)
  * 다른 모달에서 이 컴포넌트를 위주로 사용할 수 있도록 공통화함.
@@ -51,6 +52,13 @@ export interface ContentModalProps {
   description?: string
   /** default: 16px, compact: 10px (헤더 하단 ↔ 설명) */
   descriptionGap?: 'default' | 'compact'
+  /**
+   * 타이틀 ↔ 본문 상단 여백.
+   * - `auto`(기본): `description`이 있을 때만 16px — 기존 ContentModal 동작 유지
+   * - `always`: description 없어도 16px
+   * - `none`: 여백 없음
+   */
+  titleBodyGap?: 'auto' | 'always' | 'none'
   /** 다른 모달 위에 겹칠 때 (예: 이중 모달) */
   zIndex?: number
   /** TealHeaderModal → Modal `wrapClassName` (뷰포트 정렬 등) */
@@ -75,6 +83,7 @@ export function ContentModal({
   closeIcon = DEFAULT_CLOSE_ICON,
   description,
   descriptionGap = 'default',
+  titleBodyGap = 'auto',
   zIndex,
   wrapClassName,
   rootClassName,
@@ -83,6 +92,8 @@ export function ContentModal({
   const resolvedClassName = [
     'content-modal',
     description != null && descriptionGap === 'compact' ? 'content-modal--description-gap-compact' : '',
+    titleBodyGap === 'always' ? 'content-modal--title-body-gap-always' : '',
+    titleBodyGap === 'none' ? 'content-modal--title-body-gap-none' : '',
     className,
   ]
     .filter(Boolean)

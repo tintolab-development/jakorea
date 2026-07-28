@@ -254,6 +254,7 @@ export function SchoolSearch({
         open={open}
         onCancel={closeModal}
         title="학교 검색"
+        titleBodyGap="always"
         width={800}
         className="school-search-modal"
         zIndex={1100}

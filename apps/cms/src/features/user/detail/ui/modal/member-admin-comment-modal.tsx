@@ -27,6 +27,7 @@ export function MemberAdminCommentModal({
       open={open}
       onCancel={onCancel}
       title="코멘트 작성"
+      titleBodyGap="always"
       width={800}
       zIndex={2600}
       footer={
