@@ -250,7 +250,7 @@ subset path prefix (`scripts/filter-openapi-members.mjs`):
 - 강의보고/출석/과제 모달, 수료증 일괄 발급
 - 소속 교사 **재직 현황 변경**
 - 관리자 담당 프로그램 **이력 삭제** 등 일부 액션
-- 강사 이력서 일부(계좌·학력 상세·자격증·수상 — API 필드 부족)
+- 강사 이력서 일부(구조화 학력·경력·JA활동·수상·자유작성 2~4 — API 필드 부족; 계좌·자격증·학력 요약은 연동)
 - 강사 정산 (`paymentOrders`/`accountPayments` 미활성 시)
 
 ---
@@ -286,7 +286,7 @@ subset path prefix (`scripts/filter-openapi-members.mjs`):
 | `schoolInfo.schoolName` | `organizationText` + `name` |
 | 강사 소개 | `oneLineIntro` (일부) |
 | `role` (화면별) | **전송 안 됨** (스키마·path 분리로 해소 예정) |
-| `password` | **없음** (사전 등록 후 본인 가입 플로우) |
+| `password` / 임시 비밀번호 | **현행 없음** → **요청:** 개인·강사 `rawPassword` (값 = email). 관리자는 `createAdmin.rawPassword` 이미 사용. 학교(기관)는 N/A. 상세: [admin-pre-register-temp-password-handover-2026-07-28.md](./admin-pre-register-temp-password-handover-2026-07-28.md) |
 
 삭제 body: `{ reason: string }` — 최소 5자. 미전달 시 기본값 `CMS 관리자 회원 삭제`.
 
@@ -388,3 +388,4 @@ UI: `AdminPermissionsRemotePanel` — `domain`별 체크박스 + 저장 버튼.
 | 2026-06-12 | `.env` 모듈 키 활성화, 상세 재조회·memberId unmask 반영, 연동 상태 표 추가 |
 | 2026-06-12 | 상세 하위 탭 Phase A~C — consent/external-id/instructor-profile/정산 탭 연동, mock 배너·갭 문서 보강 |
 | 2026-07-23 | 관리자 등록 `admin-accounts` 분리 · 개인·학교·강사 등록·상세 **path 분리(B안)** · handoff **§M-P1-5 마스킹** 와 정렬 |
+| 2026-07-28 | 관리자 사전등록 임시 비밀번호: 개인·강사 `rawPassword` 서버 수용 요청 · [admin-pre-register-temp-password-handover-2026-07-28.md](./admin-pre-register-temp-password-handover-2026-07-28.md) |
