@@ -136,6 +136,7 @@ Auth routes (sign-in, sign-up, find-email/password, admin-registered, etc.) are 
   - Title margin: PC top 48 / bottom 16; mobile top 40 / bottom 8
   - Description margin-bottom: PC 48; mobile 40
   - Below PC font-size: title 28px, description 16px
+  - Illustration above title: also pass `authPageCopy.titleAfterMedia` (clears title margin-top). If the next block already has top margin (e.g. sign-in form), pass `authPageCopy.descriptionTight`
 - Do **not** add per-page `.title` / `.description` margin overrides for auth intro copy.
 
 Do **not** reintroduce per-page `.page` / `.container` 480px wrappers on auth screens.
