@@ -12,6 +12,8 @@ export interface NiceIdentityAuthStartResponse {
   sessionId?: number
   provider?: string
   providerTxId?: string
+  /** 세션 조회 시 `X-Verification-Status-Token` 헤더로 전달 */
+  statusToken?: string
   status?: string
   expiresAt?: string
   authUrl?: string
@@ -92,6 +94,8 @@ export type IdentityMessage =
 export interface PendingIdentityChallenge {
   sessionId: number
   nonce: string
+  /** nice/start 응답 — 세션 GET에 필수 */
+  statusToken?: string
   birthDate?: string
   gender?: string
   name?: string
@@ -129,7 +133,10 @@ export interface IdentityVerificationRoutes {
 
 export interface IdentityVerificationHttpClient {
   post<T = unknown>(url: string, body: unknown): Promise<{ data: T }>
-  get<T = unknown>(url: string): Promise<{ data: T }>
+  get<T = unknown>(
+    url: string,
+    config?: { headers?: Record<string, string> }
+  ): Promise<{ data: T }>
 }
 
 export type IdentityCallbackOutcome =

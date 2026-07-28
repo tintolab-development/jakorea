@@ -8,7 +8,7 @@ import { identityVerificationPaths } from '@/shared/config/identity-verification
 export const cmsIdentityVerificationClient = createIdentityVerificationClient({
   http: {
     post: (url, body) => axiosClient.post(url, body),
-    get: url => axiosClient.get(url),
+    get: (url, config) => axiosClient.get(url, config),
   },
   paths: identityVerificationPaths,
   routes: {

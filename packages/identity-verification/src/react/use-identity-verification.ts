@@ -58,6 +58,8 @@ export function useIdentityVerification({
   const popupRef = useRef<Window | null>(null)
   const stopWatchPopupRef = useRef<(() => void) | null>(null)
   const completingRef = useRef(false)
+  const onSuccessRef = useRef(onSuccess)
+  onSuccessRef.current = onSuccess
 
   const resetError = useCallback(() => {
     setErrorMessage(null)
@@ -123,7 +125,7 @@ export function useIdentityVerification({
         setErrorMessage(null)
 
         const verified = event.data
-        onSuccess({
+        onSuccessRef.current({
           sessionId: verified.sessionId,
           sessionUuid: verified.sessionUuid,
           profileToken: verified.profileToken,
@@ -140,7 +142,7 @@ export function useIdentityVerification({
     return () => {
       window.removeEventListener('message', handleMessage)
     }
-  }, [cleanupPopupWatch, client, handleCancel, onSuccess])
+  }, [cleanupPopupWatch, client, handleCancel])
 
   useEffect(() => {
     return () => {
