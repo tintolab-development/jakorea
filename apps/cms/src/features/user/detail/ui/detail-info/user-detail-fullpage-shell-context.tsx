@@ -46,6 +46,11 @@ export interface UserDetailFullpageShellValue {
   /** 관리자 상세 — 뷰 모드에서 권한 유형만 즉시 저장 중 */
   adminPermissionVariantPatching: boolean
   instructorPermissionRevokeOpen: boolean
+  jaGradeEvaluationOpen: boolean
+  onOpenJaGradeEvaluation: () => void
+  onCloseJaGradeEvaluation: () => void
+  onCompleteJaGradeEvaluation: (payload: { grade: string; totalScore: number }) => void
+  scheduleChangeCount?: number
   onStartBasicInfoEdit: () => void
   onStartAdminCommentEdit: () => void
   onCancelBasicInfoEdit: () => void

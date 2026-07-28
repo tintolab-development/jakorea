@@ -129,6 +129,7 @@ export function useUserDetailController({
   const [basicInfoSaveLoading, setBasicInfoSaveLoading] = useState(false)
   const [adminPermissionVariantPatching, setAdminPermissionVariantPatching] = useState(false)
   const [instructorPermissionRevokeOpen, setInstructorPermissionRevokeOpen] = useState(false)
+  const [jaGradeEvaluationOpen, setJaGradeEvaluationOpen] = useState(false)
 
   useUserDetailUrlSync({
     open,
@@ -174,6 +175,7 @@ export function useUserDetailController({
       setBasicInfoSaveLoading(false)
       setAdminPermissionVariantPatching(false)
       setInstructorPermissionRevokeOpen(false)
+      setJaGradeEvaluationOpen(false)
       setInstitutionDeleteBlockedOpen(false)
     }
   }, [open])
@@ -185,6 +187,7 @@ export function useUserDetailController({
     setBasicInfoSaveLoading(false)
     setAdminPermissionVariantPatching(false)
     setInstructorPermissionRevokeOpen(false)
+    setJaGradeEvaluationOpen(false)
     setInstitutionDeleteBlockedOpen(false)
   }, [displayUser?.id])
 
@@ -479,6 +482,38 @@ export function useUserDetailController({
     []
   )
 
+  const openJaGradeEvaluation = useCallback(() => {
+    if (!displayUser || displayUser.role !== 'INSTRUCTOR') return
+    setJaGradeEvaluationOpen(true)
+  }, [displayUser])
+
+  const closeJaGradeEvaluation = useCallback(() => {
+    setJaGradeEvaluationOpen(false)
+  }, [])
+
+  const completeJaGradeEvaluation = useCallback(
+    async ({ grade }: { grade: string; totalScore: number }) => {
+      if (!displayUser) return
+      setJaGradeEvaluationOpen(false)
+      if (displayUser.memberId != null) {
+        void queryClient.invalidateQueries({
+          queryKey: memberQueryKeys.detail(displayUser.memberId),
+        })
+        void queryClient.invalidateQueries({
+          queryKey: memberQueryKeys.detailByUuid(displayUser.id),
+        })
+      }
+      onMemberBasicInfoSaved?.({
+        ...displayUser,
+        listMetrics: {
+          ...displayUser.listMetrics,
+          jaEvaluationGrade: grade,
+        },
+      })
+    },
+    [displayUser, onMemberBasicInfoSaved, queryClient]
+  )
+
   const handleSidebarSelectTop = useCallback(
     (key: string) => {
       if (mode === 'permission') {
@@ -620,6 +655,7 @@ export function useUserDetailController({
       basicInfoSaveLoading,
       adminPermissionVariantPatching,
       instructorPermissionRevokeOpen,
+      jaGradeEvaluationOpen,
       personalInfoRevealModal,
     },
     actions: {
@@ -648,6 +684,9 @@ export function useUserDetailController({
       openInstructorPermissionRevoke,
       closeInstructorPermissionRevoke,
       confirmInstructorPermissionRevoke,
+      openJaGradeEvaluation,
+      closeJaGradeEvaluation,
+      completeJaGradeEvaluation,
     },
     derived: {
       role,

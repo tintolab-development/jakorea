@@ -15,6 +15,7 @@ import { InstructorPermissionRevokeModal } from '@/features/user/detail/ui/modal
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { useUserDetailFullpageShell } from './user-detail-fullpage-shell-context'
 import { InstitutionDeleteBlockedModal } from '@/features/user/shared/ui/institution-delete-blocked-modal'
+import { JaGradeEvaluationModal } from '@/features/user/detail/ui/modal/ja-grade-evaluation-modal'
 
 export function UserDetailFullpageModalsStack() {
   const {
@@ -29,6 +30,10 @@ export function UserDetailFullpageModalsStack() {
     instructorPermissionRevokeOpen,
     onCloseInstructorPermissionRevoke,
     onConfirmInstructorPermissionRevoke,
+    jaGradeEvaluationOpen,
+    onCloseJaGradeEvaluation,
+    onCompleteJaGradeEvaluation,
+    scheduleChangeCount,
     basicInfoEditing,
     basicInfoEditScope,
     basicInfoDraft,
@@ -102,6 +107,13 @@ export function UserDetailFullpageModalsStack() {
         onCancel={modals.assignment.close}
         application={modals.assignment.data ?? undefined}
         userName={displayUser.name}
+      />
+      <JaGradeEvaluationModal
+        open={jaGradeEvaluationOpen}
+        instructorMemberId={displayUser.memberId}
+        scheduleChangeCount={scheduleChangeCount ?? 0}
+        onClose={onCloseJaGradeEvaluation}
+        onComplete={onCompleteJaGradeEvaluation}
       />
     </>
   )

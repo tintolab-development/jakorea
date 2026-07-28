@@ -30,6 +30,8 @@ export function UserDetailFullpageTabPanels() {
     adminPermissionVariantPatching,
     onPatchAdminPermissionVariantFromDetailView,
     onPermissionResendNotification,
+    onOpenJaGradeEvaluation,
+    scheduleChangeCount,
   } = useUserDetailFullpageShell()
 
   const { sections, strategy, enrollmentTableRows, resolvedProgramsChild } = derived
@@ -52,6 +54,8 @@ export function UserDetailFullpageTabPanels() {
           adminPermissionVariantPatching={adminPermissionVariantPatching}
           onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
           onPermissionResendNotification={onPermissionResendNotification}
+          onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
+          scheduleChangeCount={scheduleChangeCount}
         />
       )}
       {tabState.lnb === 'history' &&

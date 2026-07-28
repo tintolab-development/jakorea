@@ -49,6 +49,7 @@ import type { AdminPermissionResponse } from '@/shared/api/generated/members/sch
 import type { AdminRoleResponse } from '@/shared/api/generated/members/schemas/adminRoleResponse'
 import type { MemberConsentRecordResponse } from '@/shared/api/generated/members/schemas/memberConsentRecordResponse'
 import type { ExternalIdentifierResponse } from '@/shared/api/generated/members/schemas/externalIdentifierResponse'
+import type { InstructorEvaluationGradeChangeRequest } from '@/shared/api/generated/members/schemas/instructorEvaluationGradeChangeRequest'
 
 const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
 
@@ -346,4 +347,17 @@ export async function updateAdminRolePermissionsRemote(
   body: AdminRolePermissionUpdateRequest
 ) {
   await membersApi.updateRolePermissions(roleCode, body)
+}
+
+/** Swagger `changeEvaluationGrade` — `POST /api/admin/instructors/{instructorMemberId}/evaluation-grade` */
+export async function changeInstructorEvaluationGradeRemote(
+  instructorMemberId: number,
+  body: InstructorEvaluationGradeChangeRequest
+) {
+  await customInstance({
+    url: `/api/admin/instructors/${instructorMemberId}/evaluation-grade`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+  })
 }
