@@ -19,10 +19,17 @@ function isKeywordTooShortError(message: string) {
   return message.includes(KEYWORD_TOO_SHORT_MESSAGE) || message.includes('두글자')
 }
 
+export type SelectedAddress = {
+  address: string
+  postalCode?: string
+  regionSido?: string
+  regionSigungu?: string
+}
+
 type AddressSearchModalProps = {
   open: boolean
   onClose: () => void
-  onSelect: (address: string) => void
+  onSelect: (selection: SelectedAddress) => void
 }
 
 function suggestionPrimaryLine(item: JusoAddressItem) {
@@ -79,7 +86,12 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
   }
 
   const handleSelect = (item: JusoAddressItem) => {
-    onSelect(item.roadAddr || item.jibunAddr)
+    onSelect({
+      address: item.roadAddr || item.jibunAddr,
+      postalCode: item.zipNo?.trim() || undefined,
+      regionSido: item.siNm?.trim() || undefined,
+      regionSigungu: item.sggNm?.trim() || undefined,
+    })
     handleClose()
   }
 

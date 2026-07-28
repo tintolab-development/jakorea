@@ -28,6 +28,7 @@ import {
   PFToggle,
   PFText,
   PFTextInput,
+  PFSelect,
 } from '@/shared/ui'
 import searchMintIconUrl from '@/shared/assets/icons/search-mint.svg'
 import { SearchListLayout } from '@/widgets/search-list-layout'
@@ -94,6 +95,11 @@ const stateBadgeTones = ['progress', 'success', 'error', 'disabled'] as const
 const buttonSizes = ['small', 'medium', 'large', 'xlarge'] as const
 const buttonVariants = ['primary', 'secondary', 'tertiary', 'text'] as const
 const inputSizes = ['medium', 'large', 'xlarge'] as const
+
+const selectDemoOptions = [
+  { value: 'edit', label: '수정하기' },
+  { value: 'delete', label: '삭제하기' },
+]
 const paginationSizes = ['large', 'small'] as const
 
 const authMockDataRows = [
@@ -163,9 +169,10 @@ const authGuideSections: { title: string; scenarios: readonly AuthGuideScenario[
         steps: [
           '스텝1~7 일반 플로우 (회원유형 → 생년월일·성별 → 본인인증 → 약관 → 이메일 → 비밀번호 → 프로필 → 확인)',
           '본인인증·프로필 단계 이름/휴대폰은 mock 고정값 표시',
-          `이메일 중복확인: ${MOCK_DUPLICATE_EMAIL} → "이미 가입된 이메일이에요. 로그인하거나 다른 이메일을 입력해 주세요."`,
+          `이메일 중복확인(mock): ${MOCK_DUPLICATE_EMAIL} → "이미 가입된 이메일이에요. 로그인하거나 다른 이메일을 입력해 주세요."`,
           '금칙어: admin@test.com → "사용할 수 없는 이메일이에요. 다른 이메일을 입력해 주세요."',
-          '가입 완료 → /auth/sign-up/complete',
+          '원격 API(VITE_API_*): 이메일·약관·학교검색·본인인증(NICE) 실API / 세션 없으면 가입 완료 단계에서 안내',
+          '가입 완료(mock·로컬·본인인증 mock) → /auth/sign-up/complete',
         ],
         href: '/auth/sign-up',
         buttonLabel: '회원가입 시작',
@@ -275,6 +282,8 @@ export function TestPage() {
   const [pillMediumTab, setPillMediumTab] = useState('pill-1')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFilterValue, setSearchFilterValue] = useState('all')
+  const [selectValue, setSelectValue] = useState('')
+  const [selectCompletedValue, setSelectCompletedValue] = useState('edit')
   const [toggleLarge, setToggleLarge] = useState(false)
   const [toggleSmall, setToggleSmall] = useState(true)
   const [toggleText, setToggleText] = useState(false)
@@ -568,6 +577,58 @@ export function TestPage() {
                 disabled
               />
               <PFTextInput size={size} label="Label" placeholder="text" defaultValue="text" error />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFSelect
+        </PFText>
+        <div className={styles.inputStack}>
+          {inputSizes.map(size => (
+            <div className={styles.inputRow} key={size}>
+              <PFText as="span" typo="label-md" color="neutral-cool-500">
+                {size}
+              </PFText>
+              <PFSelect
+                size={size}
+                label="Label"
+                placeholder="text"
+                options={selectDemoOptions}
+                value={selectValue}
+                onValueChange={setSelectValue}
+                required
+              />
+              <PFSelect
+                size={size}
+                label="Label"
+                placeholder="text"
+                options={selectDemoOptions}
+                value={selectCompletedValue}
+                onValueChange={setSelectCompletedValue}
+              />
+              <PFSelect
+                size={size}
+                label="Label"
+                placeholder="text"
+                options={selectDemoOptions}
+                value="edit"
+                onValueChange={() => undefined}
+                disabled
+              />
+              <PFSelect
+                size={size}
+                label="Label"
+                placeholder="text"
+                options={selectDemoOptions}
+                value="edit"
+                onValueChange={() => undefined}
+                error
+                message="오류 메시지"
+                messageStatus="error"
+              />
             </div>
           ))}
         </div>
@@ -1006,7 +1067,7 @@ export function TestPage() {
       <AddressSearchModal
         open={isAddressSearchModalOpen}
         onClose={() => setIsAddressSearchModalOpen(false)}
-        onSelect={setSelectedAddress}
+        onSelect={selection => setSelectedAddress(selection.address)}
       />
 
       <PFAlertModal

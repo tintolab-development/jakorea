@@ -1,5 +1,4 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from '@/features/auth/sign-up'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import { SchoolSearchModal } from '@/features/auth/sign-up/ui/school-search-modal'
 import { SignUpLayout } from '../layout/shell'
@@ -11,7 +10,7 @@ type TeacherProfileStepProps = {
 }
 
 export function TeacherProfileStep({ signUp }: TeacherProfileStepProps) {
-  const { step, profile } = signUp
+  const { step, profile, identity } = signUp
 
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
@@ -36,8 +35,8 @@ export function TeacherProfileStep({ signUp }: TeacherProfileStepProps) {
         }
       >
         <div className={styles.profileContent}>
-        <PFTextInput size="xlarge" label="이름" value={MOCK_VERIFIED_NAME} required disabled />
-        <PFTextInput size="xlarge" label="휴대폰 번호" value={MOCK_VERIFIED_PHONE} disabled />
+        <PFTextInput size="xlarge" label="이름" value={identity.verifiedName} required disabled />
+        <PFTextInput size="xlarge" label="휴대폰 번호" value={identity.verifiedPhone} disabled />
 
         <div className={styles.addressField}>
           <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
@@ -46,9 +45,17 @@ export function TeacherProfileStep({ signUp }: TeacherProfileStepProps) {
           <div className={styles.addressSearchRow}>
             <PFTextInput
               size="xlarge"
-              placeholder="소속 또는 학교를 입력해 주세요"
+              placeholder={
+                profile.requiresSchoolSearch
+                  ? '검색으로 학교를 선택해 주세요'
+                  : '소속 또는 학교를 입력해 주세요'
+              }
               value={profile.schoolName}
+              readOnly={profile.requiresSchoolSearch}
               onValueChange={profile.setSchoolName}
+              onClick={
+                profile.requiresSchoolSearch ? profile.openSchoolSearchModal : undefined
+              }
             />
             <PFButton
               size="xlarge"
@@ -92,7 +99,7 @@ export function TeacherProfileStep({ signUp }: TeacherProfileStepProps) {
       <SchoolSearchModal
         open={profile.isSchoolSearchModalOpen}
         onClose={profile.closeSchoolSearchModal}
-        onSelect={profile.setSchoolName}
+        onSelect={profile.selectSchool}
       />
     </SignUpLayout>
   )

@@ -1,0 +1,246 @@
+.root {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.label {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--spacing-4);
+  overflow: hidden;
+  padding-left: var(--spacing-8);
+  color: var(--color-neutral-warm-600);
+}
+
+.labelText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.requiredMark {
+  overflow: hidden;
+  flex: 0 0 auto;
+  color: var(--color-red);
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 160%;
+}
+
+.control {
+  position: relative;
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  gap: var(--spacing-8);
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+}
+
+.field:hover:not(.disabled),
+.field.open:not(.disabled),
+.field:focus-within:not(.disabled) {
+  border-color: var(--color-border-focus);
+  background: var(--color-neutral-white);
+}
+
+.field.error {
+  border-color: var(--color-border-error-strong);
+  background: var(--color-neutral-white);
+}
+
+.field.disabled {
+  border-color: var(--color-border-default);
+  background: var(--color-neutral-warm-100);
+}
+
+.medium {
+  height: 40px;
+}
+
+.large {
+  height: 44px;
+}
+
+.xlarge {
+  height: 54px;
+}
+
+.trigger {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.trigger:disabled {
+  cursor: not-allowed;
+}
+
+.value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.valuePlaceholder {
+  color: var(--color-neutral-warm-500);
+}
+
+.valueFilled {
+  color: var(--color-neutral-black);
+}
+
+.trailing {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.clearButton {
+  display: none;
+  width: var(--spacing-24);
+  height: var(--spacing-24);
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* completed + hover/active → clear 노출 */
+.field.completed:hover:not(.disabled) .clearButton,
+.field.completed.open:not(.disabled) .clearButton,
+.field.completed:focus-within:not(.disabled) .clearButton {
+  display: inline-flex;
+}
+
+.clearIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.chevronButton {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.chevronButton:disabled {
+  cursor: not-allowed;
+}
+
+.chevron {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.listbox {
+  position: absolute;
+  top: calc(100% + var(--spacing-8));
+  left: 0;
+  z-index: 20;
+  display: inline-flex;
+  box-sizing: border-box;
+  width: 100%;
+  max-height: 280px;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: auto;
+  margin: 0;
+  padding: var(--spacing-8);
+  list-style: none;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+  box-shadow: 0 4px 12px 0 rgb(34 64 77 / 10%);
+}
+
+.listbox li {
+  width: 100%;
+}
+
+.option {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  overflow: hidden;
+  padding: var(--spacing-8) var(--spacing-12);
+  border: 0;
+  border-radius: var(--radius-8);
+  background: transparent;
+  color: var(--color-neutral-black);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.option:hover:not(:disabled),
+.optionSelected {
+  background: var(--color-neutral-cool-50);
+}
+
+.optionDisabled,
+.option:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.message {
+  margin: 0;
+  padding-left: var(--spacing-8);
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+.messageNeutral {
+  color: var(--color-neutral-warm-500);
+}
+
+.messageSuccess {
+  color: var(--color-status-success-light);
+}
+
+.messageError {
+  color: var(--color-status-error-default);
+}

@@ -1,8 +1,8 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE, schoolGradeOptions } from '@/features/auth/sign-up'
-import { PFButton, PFText, PFTextInput } from '@/shared/ui'
-import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
+import { schoolGradeOptions } from '@/features/auth/sign-up'
+import { PFButton, PFSelect, PFText, PFTextInput } from '@/shared/ui'
 import { AddressSearchModal } from '@/features/auth/sign-up/ui/address-search-modal'
+import { SchoolSearchModal } from '@/features/auth/sign-up/ui/school-search-modal'
 import { SignUpLayout } from '../layout/shell'
 import { SignUpStepLayout } from '../layout/sign-up-step-layout'
 import styles from '../wizard.module.css'
@@ -12,7 +12,7 @@ type ProfileStepProps = {
 }
 
 export function ProfileStep({ signUp }: ProfileStepProps) {
-  const { step, profile } = signUp
+  const { step, profile, identity } = signUp
 
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
@@ -43,11 +43,11 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
         }
       >
         <div className={styles.profileContent}>
-        <PFTextInput size="xlarge" label="이름" value={MOCK_VERIFIED_NAME} required disabled />
+        <PFTextInput size="xlarge" label="이름" value={identity.verifiedName} required disabled />
         <PFTextInput
           size="xlarge"
           label="휴대폰 번호"
-          value={MOCK_VERIFIED_PHONE}
+          value={identity.verifiedPhone}
           required
           disabled
         />
@@ -81,43 +81,49 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
 
         {profile.schoolStatus === 'enrolled' ? (
           <>
-            <PFTextInput
-              size="xlarge"
-              label="소속/학교명"
-              placeholder="소속 또는 학교명을 입력해 주세요"
-              required
-              value={profile.schoolName}
-              onValueChange={profile.setSchoolName}
-            />
-
-            <div className={styles.gradeField}>
+            <div className={styles.addressField}>
               <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
-                학년 <span className={styles.inlineRequiredMark}>*</span>
+                소속/학교명 <span className={styles.inlineRequiredMark}>*</span>
               </PFText>
-              <div className={styles.gradeSelectWrap}>
-                <select
-                  className={styles.gradeSelect}
+              <div className={styles.addressSearchRow}>
+                <PFTextInput
+                  size="xlarge"
+                  placeholder={
+                    profile.requiresSchoolSearch
+                      ? '검색으로 학교를 선택해 주세요'
+                      : '소속 또는 학교명을 입력해 주세요'
+                  }
                   required
-                  value={profile.grade}
-                  onChange={event => profile.setGrade(event.target.value)}
-                >
-                  <option value="" disabled hidden>
-                    학년을 선택해 주세요
-                  </option>
-                  {schoolGradeOptions.map(option => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-                <img
-                  className={styles.gradeSelectArrow}
-                  src={chevronRightGrayUrl}
-                  alt=""
-                  aria-hidden="true"
+                  value={profile.schoolName}
+                  readOnly={profile.requiresSchoolSearch}
+                  onValueChange={profile.setSchoolName}
+                  onClick={
+                    profile.requiresSchoolSearch ? profile.openSchoolSearchModal : undefined
+                  }
                 />
+                <PFButton
+                  size="xlarge"
+                  variant="secondary"
+                  width="100%"
+                  onClick={profile.openSchoolSearchModal}
+                >
+                  검색
+                </PFButton>
               </div>
             </div>
+
+            <PFSelect
+              size="xlarge"
+              label="학년"
+              required
+              placeholder="학년을 선택해 주세요"
+              value={profile.grade}
+              onValueChange={profile.setGrade}
+              options={schoolGradeOptions.map(option => ({
+                value: option,
+                label: option,
+              }))}
+            />
           </>
         ) : null}
 
@@ -163,7 +169,12 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
       <AddressSearchModal
         open={profile.isAddressModalOpen}
         onClose={profile.closeAddressModal}
-        onSelect={profile.setAddress}
+        onSelect={profile.selectAddress}
+      />
+      <SchoolSearchModal
+        open={profile.isSchoolSearchModalOpen}
+        onClose={profile.closeSchoolSearchModal}
+        onSelect={profile.selectSchool}
       />
     </SignUpLayout>
   )

@@ -38,3 +38,10 @@ export { PFToggle } from './pf-toggle'
 export type { PFToggleProps, PFToggleVariant } from './pf-toggle'
 export { PFText } from './pf-text'
 export { PFTextInput } from './pf-text-input'
+export { PFSelect } from './pf-select'
+export type {
+  PFSelectMessageStatus,
+  PFSelectOption,
+  PFSelectProps,
+  PFSelectSize,
+} from './pf-select'

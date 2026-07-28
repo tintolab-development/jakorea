@@ -1,75 +1,89 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { filterNeisSchoolsByRegion, type NeisSchoolItem } from '@jakorea/location/neis'
 import { getSidoOptions, getSigunguOptions } from '@jakorea/location/sido-sigungu'
-import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
 import {
   getPlatformNeisMissingKeyMessage,
   readNeisApiKeyFromEnv,
   useNeisSchoolSearch,
 } from '@/shared/hooks'
+import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { highlightKeyword } from '@/shared/lib/highlight-keyword'
-import { PFButton, PFModal, PFPagination, PFText, PFTextInput } from '@/shared/ui'
+import { PFButton, PFModal, PFPagination, PFSelect, PFText, PFTextInput } from '@/shared/ui'
+import { searchHomepageSchools } from '../../api/client'
 import styles from './school-search-modal.module.css'
 
 const SCHOOL_SEARCH_PAGE_SIZE = 10
 
+export type SelectedSchool = {
+  name: string
+  organizationId?: number
+  /** NEIS 학교 코드 — CMS와 동일 출처 */
+  neisCode?: string
+}
+
 type SchoolSearchModalProps = {
   open: boolean
   onClose: () => void
-  onSelect: (schoolName: string) => void
-}
-
-type RegionSelectProps = {
-  placeholder: string
-  value: string
-  options: { label: string; value: string }[]
-  disabled?: boolean
-  onChange: (value: string) => void
+  onSelect: (school: SelectedSchool) => void
 }
 
 function schoolResultKey(school: NeisSchoolItem) {
   return `${school.sdSchulCode}-${school.schulNm}-${school.orgRdnma}`
 }
 
-function RegionSelect({
-  placeholder,
-  value,
-  options,
-  disabled = false,
-  onChange,
-}: RegionSelectProps) {
-  return (
-    <div
-      className={[
-        styles.schoolModalSelectWrap,
-        disabled ? styles.schoolModalSelectWrapDisabled : undefined,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <select
-        className={styles.schoolModalSelect}
-        disabled={disabled}
-        value={value}
-        onChange={event => onChange(event.target.value)}
-      >
-        <option value="" disabled hidden>
-          {placeholder}
-        </option>
-        {options.map(option => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <img
-        className={styles.schoolModalSelectArrow}
-        src={chevronRightGrayUrl}
-        alt=""
-        aria-hidden="true"
-      />
-    </div>
-  )
+/**
+ * 가입용 organizationId 보강.
+ * 검색 UX는 CMS와 같이 NEIS를 쓰고, remote일 때만 홈페이지 기관 캐시에서 ID를 찾는다.
+ */
+async function resolveOrganizationId(input: {
+  schoolName: string
+  regionSido: string
+  regionSigungu: string
+}): Promise<number | undefined> {
+  if (!isRemoteApiConfigured()) return undefined
+
+  const attempts: Array<{
+    keyword: string
+    regionSido?: string
+    regionSigungu?: string
+  }> = [
+    {
+      keyword: input.schoolName,
+      regionSido: input.regionSido || undefined,
+      regionSigungu: input.regionSigungu || undefined,
+    },
+    {
+      keyword: input.schoolName,
+      regionSido: input.regionSido || undefined,
+    },
+    { keyword: input.schoolName },
+  ]
+
+  for (const params of attempts) {
+    try {
+      const response = await searchHomepageSchools({
+        ...params,
+        page: 0,
+        size: 20,
+      })
+      const content = response.content ?? []
+      if (content.length === 0) continue
+
+      const exact = content.find(item => item.name?.trim() === input.schoolName)
+      if (exact?.organizationId != null) return exact.organizationId
+
+      const partial = content.find(item => item.name?.includes(input.schoolName))
+      if (partial?.organizationId != null) return partial.organizationId
+
+      if (content.length === 1 && content[0]?.organizationId != null) {
+        return content[0].organizationId
+      }
+    } catch {
+      // 다음 시도
+    }
+  }
+
+  return undefined
 }
 
 export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModalProps) {
@@ -78,6 +92,8 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
   const [keyword, setKeyword] = useState('')
   const [hasSearched, setHasSearched] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [isResolvingSelect, setIsResolvingSelect] = useState(false)
+  const [selectError, setSelectError] = useState('')
 
   const { schools, loading, error, search, reset } = useNeisSchoolSearch({
     apiKey: readNeisApiKeyFromEnv(),
@@ -88,7 +104,7 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
   const trimmedKeyword = keyword.trim()
   const filteredSchools = useMemo(
     () => filterNeisSchoolsByRegion(schools, sido, sigungu),
-    [schools, sido, sigungu]
+    [schools, sido, sigungu],
   )
   const filteredTotalCount = filteredSchools.length
   const totalPages = Math.max(1, Math.ceil(filteredTotalCount / SCHOOL_SEARCH_PAGE_SIZE))
@@ -96,12 +112,13 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
     () =>
       filteredSchools.slice(
         (currentPage - 1) * SCHOOL_SEARCH_PAGE_SIZE,
-        currentPage * SCHOOL_SEARCH_PAGE_SIZE
+        currentPage * SCHOOL_SEARCH_PAGE_SIZE,
       ),
-    [filteredSchools, currentPage]
+    [filteredSchools, currentPage],
   )
   const hasResults = filteredTotalCount > 0
   const canSearch = Boolean(sido && trimmedKeyword)
+  const busy = loading || isResolvingSelect
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -115,6 +132,8 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
     setKeyword('')
     setHasSearched(false)
     setCurrentPage(1)
+    setIsResolvingSelect(false)
+    setSelectError('')
     reset()
     onClose()
   }, [onClose, reset])
@@ -124,16 +143,18 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
     setSigungu('')
     setHasSearched(false)
     setCurrentPage(1)
+    setSelectError('')
     reset()
   }
 
   const handleSearch = () => {
-    if (!canSearch || loading) {
+    if (!canSearch || busy) {
       return
     }
 
     setHasSearched(true)
     setCurrentPage(1)
+    setSelectError('')
     void search(trimmedKeyword, sido)
   }
 
@@ -146,9 +167,38 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
     setCurrentPage(1)
   }
 
-  const handleSelect = (school: NeisSchoolItem) => {
-    onSelect(school.schulNm)
-    handleClose()
+  const handleSelect = async (school: NeisSchoolItem) => {
+    if (!school.schulNm || isResolvingSelect) return
+
+    setIsResolvingSelect(true)
+    setSelectError('')
+
+    try {
+      const organizationId = await resolveOrganizationId({
+        schoolName: school.schulNm,
+        regionSido: sido,
+        regionSigungu: sigungu,
+      })
+
+      // 실 API 가입은 schoolOrganizationId가 필수 — 기관 캐시 매칭 실패 시 이름만 넘기지 않는다.
+      if (isRemoteApiConfigured() && organizationId == null) {
+        setSelectError(
+          '선택한 학교를 시스템에 연결하지 못했어요. 다른 학교를 선택하거나, 학교 정보가 등록된 뒤 다시 시도해 주세요.',
+        )
+        return
+      }
+
+      onSelect({
+        name: school.schulNm,
+        organizationId,
+        neisCode: school.sdSchulCode || undefined,
+      })
+      handleClose()
+    } catch {
+      setSelectError('학교 선택에 실패했어요. 잠시 후 다시 시도해 주세요.')
+    } finally {
+      setIsResolvingSelect(false)
+    }
   }
 
   return (
@@ -162,18 +212,22 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
           .join(' ')}
       >
         <div className={styles.schoolModalRegionRow}>
-          <RegionSelect
+          <PFSelect
+            size="xlarge"
             placeholder="시/도"
+            aria-label="시/도"
             value={sido}
             options={getSidoOptions()}
-            onChange={handleSidoChange}
+            onValueChange={handleSidoChange}
           />
-          <RegionSelect
+          <PFSelect
+            size="xlarge"
             placeholder="시/군/구"
+            aria-label="시/군/구"
             value={sigungu}
             options={sigunguOptions}
             disabled={!sido}
-            onChange={handleSigunguChange}
+            onValueChange={handleSigunguChange}
           />
         </div>
 
@@ -193,6 +247,7 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
               setKeyword(next)
               setHasSearched(false)
               setCurrentPage(1)
+              setSelectError('')
               if (!next.trim()) {
                 reset()
               }
@@ -206,7 +261,7 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
           <PFButton
             size="xlarge"
             width="160px"
-            disabled={!canSearch || loading}
+            disabled={!canSearch || busy}
             onClick={handleSearch}
           >
             검색
@@ -232,6 +287,13 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
               <div className={styles.schoolResultNotice}>
                 <PFText typo="bd-md-sb" color="error">
                   {error.message}
+                </PFText>
+              </div>
+            ) : null}
+            {selectError ? (
+              <div className={styles.schoolResultNotice}>
+                <PFText typo="bd-md-sb" color="error">
+                  {selectError}
                 </PFText>
               </div>
             ) : null}
@@ -278,7 +340,10 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
                           size="medium"
                           variant="secondary"
                           width="72px"
-                          onClick={() => handleSelect(school)}
+                          disabled={isResolvingSelect}
+                          onClick={() => {
+                            void handleSelect(school)
+                          }}
                         >
                           선택
                         </PFButton>

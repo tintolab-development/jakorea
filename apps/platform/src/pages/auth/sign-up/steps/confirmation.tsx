@@ -19,10 +19,21 @@ export function ConfirmationStep({ signUp }: ConfirmationStepProps) {
         actionsVariant="terms"
         actions={
           <>
-            <PFButton size="xlarge" width="100%" onClick={confirmation.complete}>
-              가입 완료하기
+            <PFButton
+              size="xlarge"
+              width="100%"
+              disabled={confirmation.isSubmitting}
+              onClick={confirmation.complete}
+            >
+              {confirmation.isSubmitting ? '가입 처리 중…' : '가입 완료하기'}
             </PFButton>
-            <PFButton size="xlarge" variant="tertiary" width="100%" onClick={step.goPrevious}>
+            <PFButton
+              size="xlarge"
+              variant="tertiary"
+              width="100%"
+              disabled={confirmation.isSubmitting}
+              onClick={step.goPrevious}
+            >
               이전
             </PFButton>
           </>
@@ -52,6 +63,11 @@ export function ConfirmationStep({ signUp }: ConfirmationStepProps) {
             </div>
           ))}
         </div>
+        {confirmation.message ? (
+          <PFText as="p" typo="bd-sm-md" color="error" className={styles.confirmSubmitMessage}>
+            {confirmation.message}
+          </PFText>
+        ) : null}
       </SignUpStepLayout>
     </SignUpLayout>
   )

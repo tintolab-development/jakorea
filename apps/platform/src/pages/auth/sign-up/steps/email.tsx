@@ -55,9 +55,10 @@ export function EmailStep({ signUp }: EmailStepProps) {
             variant="secondary"
             width="100%"
             className={styles.duplicateCheckButton}
+            disabled={email.isChecking}
             onClick={email.duplicateCheck}
           >
-            중복확인
+            {email.isChecking ? '확인 중…' : '중복확인'}
           </PFButton>
           {email.message ? (
             <p

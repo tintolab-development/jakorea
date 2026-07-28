@@ -111,11 +111,13 @@ export function buildConfirmationRows(input: {
   addressDetail: string
   email: string
   volunteerId: string
+  name?: string
+  phone?: string
 }): ConfirmationRow[] {
   return [
     { label: '회원유형', value: getMemberTypeLabel(input.selectedType) },
-    { label: '이름', value: MOCK_VERIFIED_NAME },
-    { label: '휴대폰 번호', value: MOCK_VERIFIED_PHONE },
+    { label: '이름', value: input.name?.trim() || MOCK_VERIFIED_NAME },
+    { label: '휴대폰 번호', value: input.phone?.trim() || MOCK_VERIFIED_PHONE },
     { label: '생년월일', value: input.birthDate },
     { label: '성별', value: getGenderLabel(input.gender) },
     { label: '재학유무', value: getSchoolStatusLabel(input.schoolStatus) },
