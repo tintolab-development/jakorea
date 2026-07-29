@@ -3,7 +3,7 @@
  * - 컨테이너 padding: top 26, bottom 34, horizontal 30
  * - 헤더: 보더 없음, padding 제거, 타이틀 24px Bold
  * - 바디: TealHeaderModal margin-top/padding 리셋.
- *   타이틀↔본문 간격은 `description` 있을 때 16px, 또는 `titleBodyGap="always"`로 description 없이도 16px.
+ *   타이틀↔본문 간격 기본 16px (`titleBodyGap="always"`). 필요 시 `none` / description 전용 `auto`.
  * - 푸터: 상단 디바이더 없음, margin-top 30px, 버튼 래퍼 100% + 우측 정렬
  * - 셸: radius 12 · shadow 0 0 25px rgba(0,0,0,0.35)
  * 다른 모달에서 이 컴포넌트를 위주로 사용할 수 있도록 공통화함.
@@ -54,8 +54,8 @@ export interface ContentModalProps {
   descriptionGap?: 'default' | 'compact'
   /**
    * 타이틀 ↔ 본문 상단 여백.
-   * - `auto`(기본): `description`이 있을 때만 16px — 기존 ContentModal 동작 유지
-   * - `always`: description 없어도 16px
+   * - `always`(기본): description 유무와 관계없이 16px
+   * - `auto`: `description`이 있을 때만 16px
    * - `none`: 여백 없음
    */
   titleBodyGap?: 'auto' | 'always' | 'none'
@@ -83,7 +83,7 @@ export function ContentModal({
   closeIcon = DEFAULT_CLOSE_ICON,
   description,
   descriptionGap = 'default',
-  titleBodyGap = 'auto',
+  titleBodyGap = 'always',
   zIndex,
   wrapClassName,
   rootClassName,

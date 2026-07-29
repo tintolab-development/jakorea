@@ -5,7 +5,7 @@
  *
  * TealHeaderModal 누수 리셋:
  * - content padding:0 → 셸 26/30/34
- * - body margin-top:16 → 0 (타이틀↔본문 간격은 description / titleBodyGap / 화면별 지정)
+ * - body margin-top:16 → 0 (타이틀↔본문 간격은 titleBodyGap 기본 always 16px)
  * - footer padding:30 → 0 + margin-top 30
  */
 
@@ -73,8 +73,8 @@
 
 /*
  * 타이틀 ↔ 본문 상단 여백
- * - 기본(auto): description prop이 있을 때만 16px (기존 ContentModal 동작 유지)
- * - always: description 없어도 16px (`titleBodyGap="always"`)
+ * - always(기본): description 유무와 관계없이 16px
+ * - auto: description prop이 있을 때만 16px
  * - none: 여백 없음 (`titleBodyGap="none"`)
  */
 .content-modal .teal-header-modal__body:has(> .content-modal__description),

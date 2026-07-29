@@ -38,7 +38,8 @@
   align-self: stretch;
   width: 100%;
   gap: 0;
-  padding-top: 30px;
+  /* ContentModal 기본 titleBodyGap(16px)과 동일 — 별도 30px 오버라이드 제거 */
+  padding-top: 16px;
   box-sizing: border-box;
 }
 
