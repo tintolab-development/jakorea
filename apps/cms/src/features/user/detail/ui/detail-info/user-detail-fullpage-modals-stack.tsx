@@ -111,6 +111,7 @@ export function UserDetailFullpageModalsStack() {
       <JaGradeEvaluationModal
         open={jaGradeEvaluationOpen}
         instructorMemberId={displayUser.memberId}
+        instructorUserId={displayUser.id}
         scheduleChangeCount={scheduleChangeCount ?? 0}
         onClose={onCloseJaGradeEvaluation}
         onComplete={onCompleteJaGradeEvaluation}

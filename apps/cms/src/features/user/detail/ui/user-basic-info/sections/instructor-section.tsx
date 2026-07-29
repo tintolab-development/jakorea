@@ -30,11 +30,7 @@ import {
 import { useBasicInfoEditing } from '../use-basic-info-editing'
 import type { BasicInfoSectionContext } from './types'
 import { ContactInfoFieldsRow, FullWidthAddressEdit } from './shared'
-import {
-  GENDER_EDIT_OPTIONS,
-  INDIVIDUAL_AFFILIATION_FIELDS_WIDTH,
-  JA_EVALUATION_GRADE_OPTIONS,
-} from './constants'
+import { GENDER_EDIT_OPTIONS, INDIVIDUAL_AFFILIATION_FIELDS_WIDTH } from './constants'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 import { formatDate } from '@/shared/utils'
 
@@ -100,32 +96,14 @@ function InstructorAffiliationView({ user }: { user: BasicInfoSectionContext['us
   )
 }
 
+/** JA 평가 등급은 직접 수정 불가 — view/수정 모드 동일 노출(등급 평가 모달만) */
 function JaEvaluationGradeWithAction({
   user,
-  editing,
-  draftGrade,
-  onDraftGradeChange,
   onOpenJaGradeEvaluation,
 }: {
   user: BasicInfoSectionContext['user']
-  editing: boolean
-  draftGrade?: string
-  onDraftGradeChange?: (next: string) => void
   onOpenJaGradeEvaluation?: () => void
 }) {
-  if (editing) {
-    return (
-      <CmsSelect
-        value={draftGrade || undefined}
-        onChange={v => onDraftGradeChange?.(v != null ? String(v) : '')}
-        options={JA_EVALUATION_GRADE_OPTIONS}
-        placeholder="선택"
-        inputSize="medium"
-        width="100%"
-      />
-    )
-  }
-
   const hasGrade = Boolean(user.listMetrics?.jaEvaluationGrade?.trim())
   const gradeEvaluateButton = (
     <CmsButton
@@ -156,21 +134,11 @@ function JaEvaluationGradeWithAction({
 export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
   const {
     user,
-    memberInfoEditing,
-    memberInfoDraft,
-    onMemberInfoDraftChange,
-    cmsMayEditBasicProfileFields,
     onPermissionResendNotification,
     viewContext,
   } = ctx
   const isInstructorPermissionDetail =
     viewContext.permissionView && viewContext.permissionRole === 'instructor'
-  const editing = useBasicInfoEditing({
-    memberInfoEditing,
-    memberInfoDraft,
-    onMemberInfoDraftChange,
-    cmsMayEditBasicProfileFields,
-  })
 
   return (
     <>
@@ -192,22 +160,10 @@ export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
         />
         <EditableField
           label="JA 평가 등급"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
+          readOnlyDisplay
           view={
             <JaEvaluationGradeWithAction
               user={user}
-              editing={editing.isEditing}
-              draftGrade={memberInfoDraft?.jaEvaluationGrade}
-              onDraftGradeChange={next => onMemberInfoDraftChange?.({ jaEvaluationGrade: next })}
-              onOpenJaGradeEvaluation={ctx.onOpenJaGradeEvaluation}
-            />
-          }
-          edit={
-            <JaEvaluationGradeWithAction
-              user={user}
-              editing
-              draftGrade={memberInfoDraft?.jaEvaluationGrade}
-              onDraftGradeChange={next => onMemberInfoDraftChange?.({ jaEvaluationGrade: next })}
               onOpenJaGradeEvaluation={ctx.onOpenJaGradeEvaluation}
             />
           }

@@ -12,7 +12,10 @@ import {
   mapInstructorProfileFormToBasicInfoDraftPartial,
   mapUserToInstructorProfileFormValues,
 } from '@/features/user/detail/lib/map-user-to-instructor-profile-form'
-import { socialView } from '@/features/user/detail/ui/user-basic-info/display'
+import {
+  jaEvaluationGradeLine,
+  socialView,
+} from '@/features/user/detail/ui/user-basic-info/display'
 import { settlementStatusView } from '@/features/user/detail/ui/user-basic-info/status'
 import {
   InstructorProfileFormBody,
@@ -20,7 +23,6 @@ import {
 } from '@/features/user/shared/ui/instructor-profile-form'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, CmsSelect } from '@/shared/ui'
-import { JA_EVALUATION_GRADE_OPTIONS } from '@/features/user/detail/ui/user-basic-info/sections/constants'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 import { formatDate } from '@/shared/utils'
 import '@/features/user/shared/ui/instructor-register-modal.css'
@@ -59,6 +61,26 @@ export function InstructorDetailEditForm({
     onMemberInfoDraftChange(mapInstructorProfileFormToBasicInfoDraftPartial(values))
   }
 
+  const gradeEvaluateButton = (
+    <CmsButton
+      type="button"
+      variant="secondary"
+      size="small"
+      onClick={() => onOpenJaGradeEvaluation?.()}
+    >
+      등급 평가
+    </CmsButton>
+  )
+  const jaEvaluationGradeDisplay = user.listMetrics?.jaEvaluationGrade?.trim() ? (
+    <span className="instructor-detail-edit-form__ja-grade">
+      <span>{jaEvaluationGradeLine(user)}</span>
+      <DetailInfoForm.InputsSeparator />
+      {gradeEvaluateButton}
+    </span>
+  ) : (
+    gradeEvaluateButton
+  )
+
   const basicInfoPrefix = (
     <>
       <DetailInfoForm.Row type="double">
@@ -69,32 +91,8 @@ export function InstructorDetailEditForm({
         />
         <DetailInfoForm.Field
           label="JA 평가 등급"
-          view="-"
-          edit={
-            <span className="instructor-detail-edit-form__ja-grade">
-              <CmsSelect
-                value={memberInfoDraft.jaEvaluationGrade || undefined}
-                onChange={v =>
-                  onMemberInfoDraftChange({
-                    jaEvaluationGrade: v != null ? String(v) : '',
-                  })
-                }
-                options={JA_EVALUATION_GRADE_OPTIONS}
-                placeholder="선택"
-                inputSize="medium"
-                width={160}
-              />
-              <DetailInfoForm.InputsSeparator />
-              <CmsButton
-                type="button"
-                variant="secondary"
-                size="small"
-                onClick={() => onOpenJaGradeEvaluation?.()}
-              >
-                등급 평가
-              </CmsButton>
-            </span>
-          }
+          view={jaEvaluationGradeDisplay}
+          edit={jaEvaluationGradeDisplay}
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">

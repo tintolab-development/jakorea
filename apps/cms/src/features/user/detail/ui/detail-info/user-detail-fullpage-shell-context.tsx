@@ -49,7 +49,10 @@ export interface UserDetailFullpageShellValue {
   jaGradeEvaluationOpen: boolean
   onOpenJaGradeEvaluation: () => void
   onCloseJaGradeEvaluation: () => void
-  onCompleteJaGradeEvaluation: (payload: { grade: string; totalScore: number }) => void
+  onCompleteJaGradeEvaluation: (payload: {
+    grade: string
+    totalScore: number
+  }) => void | Promise<void>
   scheduleChangeCount?: number
   onStartBasicInfoEdit: () => void
   onStartAdminCommentEdit: () => void

@@ -11,9 +11,7 @@ import type {
 
 export type JaEvaluationLetterGrade = 'A' | 'B' | 'C' | 'D'
 
-export type JaGradeEvaluationValidationResult =
-  | { valid: true }
-  | { valid: false; message: string }
+export type JaGradeEvaluationValidationResult = { valid: true } | { valid: false }
 
 export interface JaGradeEvaluationScoreResult {
   qScores: [number, number, number, number]
@@ -71,11 +69,7 @@ export function validateJaGradeEvaluationDraft(
       paragraph.selectedPreviewItemId == null ||
       paragraph.selectedPreviewItemId === ''
     ) {
-      const title =
-        paragraph?.kind === 'single_item' && paragraph.variant === 'scale_type'
-          ? paragraph.paragraphTitle.trim() || '평가 항목'
-          : '평가 항목'
-      return { valid: false, message: `${title}에 답변해 주세요.` }
+      return { valid: false }
     }
   }
   return { valid: true }
