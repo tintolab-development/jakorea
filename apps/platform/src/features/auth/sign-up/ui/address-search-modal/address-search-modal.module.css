@@ -238,6 +238,11 @@
     width: 100%;
   }
 
+  .addressModalMain {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
   .addressModalMainActive {
     min-height: 0;
   }
@@ -253,6 +258,12 @@
 
   .addressResultList {
     margin-top: var(--spacing-16);
-    max-height: min(474px, 50vh);
+    max-height: none;
+    flex: 1 1 auto;
+  }
+
+  .addressPagination {
+    margin-top: var(--spacing-20);
+    margin-bottom: var(--spacing-8);
   }
 }

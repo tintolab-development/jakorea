@@ -117,7 +117,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
       open={open}
       title="주소 검색"
       onClose={handleClose}
-      mobilePlacement="bottom"
+      mobilePlacement="full"
       closeOnBackdropClick={false}
       closeOnEscape={false}
     >

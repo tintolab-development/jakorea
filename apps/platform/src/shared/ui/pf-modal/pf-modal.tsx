@@ -11,14 +11,14 @@ import closeIconUrl from './icons/close.svg'
 import { PFText } from '../pf-text'
 import styles from './pf-modal.module.css'
 
-type PFModalMobilePlacement = 'center' | 'bottom'
+type PFModalMobilePlacement = 'center' | 'bottom' | 'full'
 
 type PFModalProps = {
   open: boolean
   onClose: () => void
   title?: ReactNode
   width?: CSSProperties['width']
-  /** PC 미만에서 패널 배치. `bottom`이면 바텀시트 형태로 표시 */
+  /** PC 미만에서 패널 배치. `bottom`이면 바텀시트, `full`이면 전체 화면 */
   mobilePlacement?: PFModalMobilePlacement
   ariaLabelledBy?: string
   ariaDescribedBy?: string
@@ -82,6 +82,7 @@ export function PFModal({
   const panelRef = useRef<HTMLDivElement>(null)
   const titleId = ariaLabelledBy ?? (title ? fallbackTitleId : undefined)
   const isBottomSheetMobile = mobilePlacement === 'bottom'
+  const isFullPageMobile = mobilePlacement === 'full'
 
   const handleClose = useCallback(() => {
     blockGhostClicks()
@@ -141,6 +142,7 @@ export function PFModal({
       className={[
         styles.backdrop,
         isBottomSheetMobile ? styles.backdropBottomSheetMobile : undefined,
+        isFullPageMobile ? styles.backdropFullPageMobile : undefined,
       ]
         .filter(Boolean)
         .join(' ')}
@@ -162,6 +164,7 @@ export function PFModal({
         className={[
           styles.panel,
           isBottomSheetMobile ? styles.panelBottomSheetMobile : undefined,
+          isFullPageMobile ? styles.panelFullPageMobile : undefined,
           className,
         ]
           .filter(Boolean)
