@@ -66,11 +66,12 @@
 
 ## Breakpoints (기본)
 
-| 구간 | min-width |
-|------|-----------|
-| mobile | default |
-| tablet | 768px |
-| desktop | 1024px |
-| wide | 1280px |
+| 구간 | 조건 |
+|------|------|
+| below PC (mobile) | max-width: 1079px |
+| PC | min-width: 1080px |
+| PC compact | 1080px ~ 1359px |
+| header full | min-width: 1360px |
+| wide shell | min-width: 1600px |
 
-토큰: `src/shared/styles/tokens.css`
+토큰: `src/shared/styles/breakpoints.css`, `src/shared/lib/breakpoints.ts`

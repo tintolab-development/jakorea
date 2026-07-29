@@ -50,15 +50,19 @@ Avoid:
 
 ## Breakpoint guidance
 
-Use breakpoints only after a fluid base layout is already safe.
+Use breakpoints only after a fluid base layout is already safe. Prefer Platform aliases from `shared/styles/breakpoints.css`:
 
 ```css
-@media (min-width: 768px) {
-  /* tablet and up */
+@media (--bp-below-pc) {
+  /* ~1079: mobile UI */
 }
 
-@media (min-width: 1024px) {
-  /* desktop and up */
+@media (--bp-pc-up) {
+  /* 1080+: PC UI */
+}
+
+@media (--bp-wide-shell-up) {
+  /* 1600+: wider shell margins */
 }
 ```
 

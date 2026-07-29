@@ -117,14 +117,14 @@ Use mobile-first CSS:
 Default breakpoints:
 
 ```css
-/* mobile: 375px min layout width, default styles through 520px max */
-/* tablet: 521px–1079px */
-/* desktop: 1080px+ */
+/* ~1079: mobile UI + horizontal margins */
+/* 1080~1599: PC UI, left content, tighter margins */
+/* 1600~: PC UI, wider shell margins */
 ```
 
 Platform layout uses `--layout-min-width: 375px` on `html`, `body`, and `#root` (see `shared/styles/tokens.css`, `reset.css`). Do not repeat `min-width: 375px` on individual components unless a local exception is required.
 
-Responsive `@media` in CSS Modules and global styles should use **postcss-custom-media** aliases from `shared/styles/breakpoints.css` (e.g. `@media (--bp-pc-up) { … }`, `@media (--bp-tablet-only) { … }`). JS hooks use `shared/lib/breakpoints.ts` (`platformMediaQueries`).
+Responsive `@media` in CSS Modules and global styles should use **postcss-custom-media** aliases from `shared/styles/breakpoints.css` (e.g. `@media (--bp-pc-up) { … }`, `@media (--bp-below-pc) { … }`, `@media (--bp-wide-shell-up) { … }`). JS hooks use `shared/lib/breakpoints.ts` (`platformMediaQueries`).
 
 ### Auth layout (`layout: 'auth'`)
 
