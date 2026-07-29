@@ -10,11 +10,23 @@
  * 정산/지급 일괄 상태 변경 요청. 프론트 핸드오프 호환을 위해 statementIds/paymentIds와 legacy ids를 모두 허용합니다.
  */
 export interface SettlementBulkStatusChangeRequest {
-  /** Legacy 공통 대상 ID 목록. 지급조서 confirm은 statementId, 계좌 지급 paid는 paymentId를 사용합니다. */
+  /**
+     * Legacy 공통 대상 ID 목록. 지급조서 confirm은 statementId, 계좌 지급 paid는 paymentId를 사용합니다.
+     * @minItems 0
+     * @maxItems 500
+     */
   ids?: number[];
-  /** 지급조서 일괄 확인 대상 statementId 목록 */
+  /**
+     * 지급조서 일괄 확인 대상 statementId 목록
+     * @minItems 0
+     * @maxItems 500
+     */
   statementIds?: number[];
-  /** 계좌 지급 일괄 완료 대상 paymentId 목록 */
+  /**
+     * 계좌 지급 일괄 완료 대상 paymentId 목록
+     * @minItems 0
+     * @maxItems 500
+     */
   paymentIds?: number[];
   /** 지급조서 일괄 확인 시 강의비 지급 예정일 */
   scheduledPaymentDate?: string;
@@ -22,8 +34,8 @@ export interface SettlementBulkStatusChangeRequest {
   lectureFeePaymentScheduledDate?: string;
   /**
      * 상태 변경 사유
-     * @minLength 0
+     * @minLength 2
      * @maxLength 500
      */
-  reason?: string;
+  reason: string;
 }

@@ -593,7 +593,7 @@ const createVersion1 = (
  */
 const copyVersion = (
     templateId: number,
-    formTemplateVersionCopyRequest?: FormTemplateVersionCopyRequest,
+    formTemplateVersionCopyRequest: FormTemplateVersionCopyRequest,
  options?: SecondParameter<typeof customInstance<FormVersionAdminResponse>>,) => {
       return customInstance<FormVersionAdminResponse>(
       {url: `/api/admin/form-templates/${templateId}/versions/copy`, method: 'POST',
@@ -650,7 +650,7 @@ const copyVersion = (
  */
 const publishVersion = (
     versionId: number,
-    formTemplateVersionPublishRequest?: FormTemplateVersionPublishRequest,
+    formTemplateVersionPublishRequest: FormTemplateVersionPublishRequest,
  options?: SecondParameter<typeof customInstance<FormTemplateVersionResponse>>,) => {
       return customInstance<FormTemplateVersionResponse>(
       {url: `/api/admin/form-template-versions/${versionId}/publish`, method: 'POST',

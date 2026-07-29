@@ -267,7 +267,7 @@ const deleteCurrentConfig = (
  */
 const recalculate = (
     settlementId: number,
-    settlementGenerateRequest?: SettlementGenerateRequest,
+    settlementGenerateRequest: SettlementGenerateRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementGenerateResponse>>,) => {
       return customInstance<ApiResponseSettlementGenerateResponse>(
       {url: `/api/admin/settlements/${settlementId}/recalculate`, method: 'POST',
@@ -325,7 +325,7 @@ const recalculate = (
  */
 const requestPaymentStatement = (
     settlementId: number,
-    settlementStatusChangeRequest?: SettlementStatusChangeRequest,
+    settlementStatusChangeRequest: SettlementStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
       return customInstance<ApiResponse>(
       {url: `/api/admin/settlements/${settlementId}/payment-statement/request`, method: 'POST',
@@ -548,7 +548,7 @@ const bulkConfirmPaymentStatements = (
  * @summary POST /api/admin/settlements/exports/tax-report
  */
 const requestTaxReportExport = (
-    settlementExportRequest?: SettlementExportRequest,
+    settlementExportRequest: SettlementExportRequest,
  options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
       return customInstance<ApiResponse>(
       {url: `/api/admin/settlements/exports/tax-report`, method: 'POST',
@@ -605,7 +605,7 @@ const requestTaxReportExport = (
  * @summary POST /api/admin/settlements/exports/bulk-transfer
  */
 const requestBulkTransferExport = (
-    settlementExportRequest?: SettlementExportRequest,
+    settlementExportRequest: SettlementExportRequest,
  options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
       return customInstance<ApiResponse>(
       {url: `/api/admin/settlements/exports/bulk-transfer`, method: 'POST',
@@ -660,7 +660,7 @@ const requestBulkTransferExport = (
  * @summary POST /api/admin/settlement-configs/current/duplicate
  */
 const duplicateCurrentConfig = (
-    settlementConfigUpdateRequest?: SettlementConfigUpdateRequest,
+    settlementConfigUpdateRequest: SettlementConfigUpdateRequest,
  options?: SecondParameter<typeof customInstance<SettlementConfigResponse>>,) => {
       return customInstance<SettlementConfigResponse>(
       {url: `/api/admin/settlement-configs/current/duplicate`, method: 'POST',
@@ -718,7 +718,7 @@ const duplicateCurrentConfig = (
  */
 const confirmPaymentStatement = (
     statementId: number,
-    settlementStatusChangeRequest?: SettlementStatusChangeRequest,
+    settlementStatusChangeRequest: SettlementStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementStatusChangeResponse>>,) => {
       return customInstance<ApiResponseSettlementStatusChangeResponse>(
       {url: `/api/admin/settlements/statements/${statementId}/confirm`, method: 'PATCH',
@@ -776,7 +776,7 @@ const confirmPaymentStatement = (
  */
 const rejectCorrection = (
     correctionRequestId: number,
-    settlementCorrectionRequest?: SettlementCorrectionRequest,
+    settlementCorrectionRequest: SettlementCorrectionRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementCorrectionResponse>>,) => {
       return customInstance<ApiResponseSettlementCorrectionResponse>(
       {url: `/api/admin/settlements/correction-requests/${correctionRequestId}/reject`, method: 'PATCH',
@@ -834,7 +834,7 @@ const rejectCorrection = (
  */
 const approveCorrection = (
     correctionRequestId: number,
-    settlementCorrectionRequest?: SettlementCorrectionRequest,
+    settlementCorrectionRequest: SettlementCorrectionRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementCorrectionResponse>>,) => {
       return customInstance<ApiResponseSettlementCorrectionResponse>(
       {url: `/api/admin/settlements/correction-requests/${correctionRequestId}/approve`, method: 'PATCH',
@@ -892,7 +892,7 @@ const approveCorrection = (
  */
 const markPaid = (
     paymentId: number,
-    settlementStatusChangeRequest?: SettlementStatusChangeRequest,
+    settlementStatusChangeRequest: SettlementStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementStatusChangeResponse>>,) => {
       return customInstance<ApiResponseSettlementStatusChangeResponse>(
       {url: `/api/admin/account-payments/${paymentId}/paid`, method: 'PATCH',
@@ -950,7 +950,7 @@ const markPaid = (
  */
 const markFailed = (
     paymentId: number,
-    settlementStatusChangeRequest?: SettlementStatusChangeRequest,
+    settlementStatusChangeRequest: SettlementStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementStatusChangeResponse>>,) => {
       return customInstance<ApiResponseSettlementStatusChangeResponse>(
       {url: `/api/admin/account-payments/${paymentId}/failed`, method: 'PATCH',

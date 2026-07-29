@@ -71,7 +71,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  */
 const updateSystemIssueStatus = (
     issueId: number,
-    systemIssueStatusUpdateRequest?: SystemIssueStatusUpdateRequest,
+    systemIssueStatusUpdateRequest: SystemIssueStatusUpdateRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSystemIssueStatusResponse>>,) => {
       return customInstance<ApiResponseSystemIssueStatusResponse>(
       {url: `/api/admin/logs/system-issues/${issueId}/status`, method: 'PATCH',

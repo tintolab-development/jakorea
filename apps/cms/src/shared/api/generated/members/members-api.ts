@@ -32,7 +32,6 @@ import type {
   ApiResponseAdminAccountResponse,
   ApiResponseAdminPermissionRequestNotificationResponse,
   ApiResponseBulkActionResponse,
-  ApiResponseRolePermissionMutationResponse,
   ApiResponseVoid,
   ApprovalResetRequest,
   BulkDecisionRequest,
@@ -78,7 +77,6 @@ import type {
   PreRegisterConflictResponse,
   ProgramRoleOptionResponse,
   RawPrivacyAvailableActionsResponse,
-  RolePermissionPatchRequest,
   SchoolAffiliatedTeacherRow,
   SchoolMemberDetailResponse,
   TeacherEmploymentStatusUpdateRequest,
@@ -190,7 +188,7 @@ const listProgramRoles = (
  */
 const saveProgramRoles = (
     memberId: number,
-    memberProgramRoleSaveRequest?: MemberProgramRoleSaveRequest,
+    memberProgramRoleSaveRequest: MemberProgramRoleSaveRequest,
  options?: SecondParameter<typeof customInstance<PageResponseMemberAdminProgramResponse>>,) => {
       return customInstance<PageResponseMemberAdminProgramResponse>(
       {url: `/api/admin/users/${memberId}/program-roles`, method: 'PUT',
@@ -2025,7 +2023,7 @@ const getMemberDetail = (
  */
 const updateMemberBasicInfo = (
     memberId: number,
-    adminMemberBasicInfoUpdateRequest?: AdminMemberBasicInfoUpdateRequest,
+    adminMemberBasicInfoUpdateRequest: AdminMemberBasicInfoUpdateRequest,
  options?: SecondParameter<typeof customInstance<UserResponse>>,) => {
       return customInstance<UserResponse>(
       {url: `/api/admin/users/${memberId}`, method: 'PATCH',
@@ -2254,63 +2252,6 @@ const updateAffiliatedTeacherEmploymentStatus = (
       {url: `/api/admin/users/${memberId}/affiliated-teachers/${teacherMemberId}/employment-status`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: teacherEmploymentStatusUpdateRequest
-    },
-      options);
-    }
-
-/**
- * ### 이 API가 하는 일
- * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
- * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
- * - 호출 방식: `PATCH /api/admin/roles/{roleId}/permissions`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: 폼 상태 or 선택 행 action payload
- * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
- * - 프론트 조회 키: `patch_admin_roles_roleId_permissions`
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 라우트 준비 완료
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 기본 스모크 검증 대상
- * - 목데이터 대체: 임시 목데이터/localStorage 상태를 admin-permissions API 상태/캐시로 대체합니다.
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: 별도 접근 범위 제한 없음
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Auto-synced from implemented controller route
- * @summary 관리자 부분 수정
- */
-const patchRolePermissions = (
-    roleId: number,
-    rolePermissionPatchRequest?: RolePermissionPatchRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseRolePermissionMutationResponse>>,) => {
-      return customInstance<ApiResponseRolePermissionMutationResponse>(
-      {url: `/api/admin/roles/${roleId}/permissions`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: rolePermissionPatchRequest
     },
       options);
     }
@@ -4045,7 +3986,7 @@ const deleteAdminProgram = (
       options);
     }
 
-return {listProgramRoles,saveProgramRoles,getRolePermissions,updateRolePermissions,unmaskMemberPrivacy,unmaskInstructorMemberPrivacy,unmaskInstructorPrivacy,unmaskIndividualMemberPrivacy,deleteAndAnonymize,listMemberComments,createMemberComment,preRegister,preRegisterSchool,preRegisterInstructor,preRegisterIndividual,resolvePreRegisterConflict,bulkDeleteAndAnonymize,resetPending,resendNotification,reject2,approve1,bulkReject,bulkApprove,resetAdminApprovalToPending,resendAdminApprovalNotification,rejectAdminApprovalRequest,approveAdminApprovalRequest,bulkRejectAdminApprovalRequests,bulkApproveAdminApprovalRequests,listAdmins,createAdmin,verifyAdmin,resetAdminPassword,getMemberDetail,updateMemberBasicInfo,upsertExternalIdentifier,deleteMemberComment,updateMemberComment,updateAffiliatedTeacherEmploymentStatus,patchRolePermissions,changeAdminStatus,changeAdminRole,updateAdminBasicInfo,listMembers,getSchoolMemberDetail,listMemberProgramHistory,getMemberPrivacyAvailableActions,getInstructorMemberDetail,getInstructorDetail,getInstructorPrivacyAvailableActions,getIndividualMemberDetail,externalIdentifiers,consentRecords,listMemberApplications,listLectureReports,getApplicationEnrollmentSummary,listAssignmentSubmissions,listAffiliatedTeachers,listMemberAdminPrograms,listProgramRoleOptions,listPreRegisterConflicts,listInstructorRoleRequests,listRoles,listPermissions,listPermissionChangeLogs,listAdminApprovalRequests,getAdminApprovalRequest,getAdminAccount,deleteAdmin,deleteProgramHistory,deleteApplicationHistory,deleteAdminProgram}};
+return {listProgramRoles,saveProgramRoles,getRolePermissions,updateRolePermissions,unmaskMemberPrivacy,unmaskInstructorMemberPrivacy,unmaskInstructorPrivacy,unmaskIndividualMemberPrivacy,deleteAndAnonymize,listMemberComments,createMemberComment,preRegister,preRegisterSchool,preRegisterInstructor,preRegisterIndividual,resolvePreRegisterConflict,bulkDeleteAndAnonymize,resetPending,resendNotification,reject2,approve1,bulkReject,bulkApprove,resetAdminApprovalToPending,resendAdminApprovalNotification,rejectAdminApprovalRequest,approveAdminApprovalRequest,bulkRejectAdminApprovalRequests,bulkApproveAdminApprovalRequests,listAdmins,createAdmin,verifyAdmin,resetAdminPassword,getMemberDetail,updateMemberBasicInfo,upsertExternalIdentifier,deleteMemberComment,updateMemberComment,updateAffiliatedTeacherEmploymentStatus,changeAdminStatus,changeAdminRole,updateAdminBasicInfo,listMembers,getSchoolMemberDetail,listMemberProgramHistory,getMemberPrivacyAvailableActions,getInstructorMemberDetail,getInstructorDetail,getInstructorPrivacyAvailableActions,getIndividualMemberDetail,externalIdentifiers,consentRecords,listMemberApplications,listLectureReports,getApplicationEnrollmentSummary,listAssignmentSubmissions,listAffiliatedTeachers,listMemberAdminPrograms,listProgramRoleOptions,listPreRegisterConflicts,listInstructorRoleRequests,listRoles,listPermissions,listPermissionChangeLogs,listAdminApprovalRequests,getAdminApprovalRequest,getAdminAccount,deleteAdmin,deleteProgramHistory,deleteApplicationHistory,deleteAdminProgram}};
 export type ListProgramRolesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['listProgramRoles']>>>
 export type SaveProgramRolesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['saveProgramRoles']>>>
 export type GetRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['getRolePermissions']>>>
@@ -4085,7 +4026,6 @@ export type UpsertExternalIdentifierResult = NonNullable<Awaited<ReturnType<Retu
 export type DeleteMemberCommentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['deleteMemberComment']>>>
 export type UpdateMemberCommentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['updateMemberComment']>>>
 export type UpdateAffiliatedTeacherEmploymentStatusResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['updateAffiliatedTeacherEmploymentStatus']>>>
-export type PatchRolePermissionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['patchRolePermissions']>>>
 export type ChangeAdminStatusResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['changeAdminStatus']>>>
 export type ChangeAdminRoleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['changeAdminRole']>>>
 export type UpdateAdminBasicInfoResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIMembersSubset>['updateAdminBasicInfo']>>>

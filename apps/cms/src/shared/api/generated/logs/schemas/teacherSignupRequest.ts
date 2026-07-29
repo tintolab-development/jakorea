@@ -13,7 +13,7 @@ import type { MemberSignupRequest } from './memberSignupRequest';
 export interface TeacherSignupRequest {
   /** 기본 회원 가입 정보 */
   member: MemberSignupRequest;
-  /** 소속 학교/기관 ID */
+  /** GET /api/homepage/organizations/schools 응답의 organizationId. 내부 organization FK이며 외부 학교 코드를 직접 전달하지 않습니다. */
   organizationId: number;
   /** 재직 상태 */
   employmentStatus?: string;

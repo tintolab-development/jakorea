@@ -38,14 +38,14 @@ export async function publishFormTemplateVersionRemote(
   versionId: number,
   body?: FormTemplateVersionPublishRequest
 ): Promise<FormTemplateVersionResponse> {
-  return unwrapApiBody(await formsSurveysApi.publishVersion(versionId, body))
+  return unwrapApiBody(await formsSurveysApi.publishVersion(versionId, body ?? {}))
 }
 
 export async function copyFormTemplateVersionRemote(
   templateId: number,
   body?: FormTemplateVersionCopyRequest
 ): Promise<FormVersionAdminResponse> {
-  return unwrapApiBody(await formsSurveysApi.copyVersion(templateId, body))
+  return unwrapApiBody(await formsSurveysApi.copyVersion(templateId, body ?? {}))
 }
 
 export async function createFormTemplateRemote(

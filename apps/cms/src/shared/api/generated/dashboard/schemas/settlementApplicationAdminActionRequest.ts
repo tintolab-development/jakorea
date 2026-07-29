@@ -7,5 +7,9 @@
  */
 
 export interface SettlementApplicationAdminActionRequest {
-  reason?: string;
+  /**
+     * @minLength 2
+     * @maxLength 500
+     */
+  reason: string;
 }

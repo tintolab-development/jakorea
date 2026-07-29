@@ -8,5 +8,10 @@
 
 export interface ProgramCompleteRequest {
   forceComplete?: boolean;
+  /**
+     * @minLength 0
+     * @maxLength 500
+     */
   reason?: string;
+  forceCompleteReasonValid?: boolean;
 }

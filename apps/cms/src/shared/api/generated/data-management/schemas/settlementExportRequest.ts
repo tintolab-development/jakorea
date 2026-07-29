@@ -32,16 +32,16 @@ export interface SettlementExportRequest {
   toDate?: string;
   /**
      * export 사유. 감사 로그에 저장됩니다.
-     * @minLength 0
+     * @minLength 2
      * @maxLength 500
      */
-  reason?: string;
+  reason: string;
   /**
      * 업무 목적 또는 내부 결재 근거
-     * @minLength 0
+     * @minLength 2
      * @maxLength 500
      */
-  businessPurpose?: string;
+  businessPurpose: string;
   /**
      * export 정책. 예: MASKED_ONLY, MASKED_CLIENT_SIDE, RAW_PRIVACY_APPROVAL_REQUIRED
      * @minLength 0
@@ -56,4 +56,6 @@ export interface SettlementExportRequest {
      * @maxLength 120
      */
   approvalReference?: string;
+  dateRangeValid?: boolean;
+  rawPrivacyApprovalValid?: boolean;
 }

@@ -250,7 +250,7 @@ const getWidgetProgramFilters = (
  */
 const saveWidgetProgramFilters = (
     widgetKey: string,
-    widgetProgramFiltersSaveRequest?: WidgetProgramFiltersSaveRequest,
+    widgetProgramFiltersSaveRequest: WidgetProgramFiltersSaveRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseDashboardWidgetProgramFiltersSaveResponse>>,) => {
       return customInstance<ApiResponseDashboardWidgetProgramFiltersSaveResponse>(
       {url: `/api/admin/dashboard/widgets/${widgetKey}/program-filters`, method: 'PUT',
@@ -306,7 +306,7 @@ const saveWidgetProgramFilters = (
  * @summary PUT /api/admin/dashboard/widgets/layout
  */
 const saveDashboardWidgetLayout = (
-    dashboardWidgetLayoutSaveRequest?: DashboardWidgetLayoutSaveRequest,
+    dashboardWidgetLayoutSaveRequest: DashboardWidgetLayoutSaveRequest,
  options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
       return customInstance<ApiResponse>(
       {url: `/api/admin/dashboard/widgets/layout`, method: 'PUT',
@@ -362,7 +362,7 @@ const saveDashboardWidgetLayout = (
  * @summary PUT /api/admin/dashboard/shortcuts/visibility
  */
 const saveDashboardShortcutVisibility = (
-    dashboardShortcutVisibilitySaveRequest?: DashboardShortcutVisibilitySaveRequest,
+    dashboardShortcutVisibilitySaveRequest: DashboardShortcutVisibilitySaveRequest,
  options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
       return customInstance<ApiResponse>(
       {url: `/api/admin/dashboard/shortcuts/visibility`, method: 'PUT',
@@ -472,7 +472,7 @@ const dashboardPreferences = (
  * @summary PUT /api/admin/dashboard/preferences
  */
 const saveDashboardPreferences1 = (
-    dashboardPreferencesSaveRequest?: DashboardPreferencesSaveRequest,
+    dashboardPreferencesSaveRequest: DashboardPreferencesSaveRequest,
  options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
       return customInstance<ApiResponse>(
       {url: `/api/admin/dashboard/preferences`, method: 'PUT',
@@ -527,7 +527,7 @@ const saveDashboardPreferences1 = (
  */
 const readDashboardShortcutBadge = (
     shortcutId: string,
-    dashboardShortcutBadgeReadRequest?: DashboardShortcutBadgeReadRequest,
+    dashboardShortcutBadgeReadRequest: DashboardShortcutBadgeReadRequest,
  options?: SecondParameter<typeof customInstance<DashboardShortcutBadgeReadResponse>>,) => {
       return customInstance<DashboardShortcutBadgeReadResponse>(
       {url: `/api/me/dashboard-shortcut-badges/${shortcutId}/read`, method: 'POST',

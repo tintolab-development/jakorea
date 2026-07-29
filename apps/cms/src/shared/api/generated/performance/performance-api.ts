@@ -705,7 +705,7 @@ const updateRecord = (
  */
 const excludeRecord = (
     performanceRecordId: number,
-    performanceStatusChangeRequest?: PerformanceStatusChangeRequest,
+    performanceStatusChangeRequest: PerformanceStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponsePerformanceStatusChangeResponse>>,) => {
       return customInstance<ApiResponsePerformanceStatusChangeResponse>(
       {url: `/api/admin/performance-records/${performanceRecordId}/exclude`, method: 'PATCH',
@@ -762,7 +762,7 @@ const excludeRecord = (
  */
 const confirmRecord = (
     performanceRecordId: number,
-    performanceStatusChangeRequest?: PerformanceStatusChangeRequest,
+    performanceStatusChangeRequest: PerformanceStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponsePerformanceStatusChangeResponse>>,) => {
       return customInstance<ApiResponsePerformanceStatusChangeResponse>(
       {url: `/api/admin/performance-records/${performanceRecordId}/confirm`, method: 'PATCH',
@@ -876,7 +876,7 @@ const rejectCorrection1 = (
  */
 const approveCorrection1 = (
     correctionRequestId: number,
-    performanceCorrectionRequest?: PerformanceCorrectionRequest,
+    performanceCorrectionRequest: PerformanceCorrectionRequest,
  options?: SecondParameter<typeof customInstance<ApiResponsePerformanceCorrectionResponse>>,) => {
       return customInstance<ApiResponsePerformanceCorrectionResponse>(
       {url: `/api/admin/performance-correction-requests/${correctionRequestId}/approve`, method: 'PATCH',

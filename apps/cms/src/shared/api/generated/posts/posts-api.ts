@@ -806,7 +806,7 @@ const createFaqCategory = (
 const updateInquiryAnswer = (
     inquiryId: number,
     answerId: number,
-    inquiryAnswerUpdateRequest?: InquiryAnswerUpdateRequest,
+    inquiryAnswerUpdateRequest: InquiryAnswerUpdateRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseInquiryAnswerMutationResponse>>,) => {
       return customInstance<ApiResponseInquiryAnswerMutationResponse>(
       {url: `/api/admin/inquiries/${inquiryId}/answers/${answerId}`, method: 'PATCH',

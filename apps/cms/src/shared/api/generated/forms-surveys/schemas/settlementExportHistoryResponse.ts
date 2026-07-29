@@ -14,6 +14,8 @@ export interface SettlementExportHistoryResponse {
   queryJson?: string;
   fileObjectId?: number;
   privacyClientEventId?: number;
+  privacyExportFileId?: number;
+  deliveryMethod?: string;
   exportPolicy?: string;
   rawPrivacyIncluded?: boolean;
   approvalReferenceMasked?: string;

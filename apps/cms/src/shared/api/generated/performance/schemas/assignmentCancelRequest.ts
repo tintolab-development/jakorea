@@ -10,6 +10,10 @@
  * 강사/참가자 배정 취소 요청
  */
 export interface AssignmentCancelRequest {
-  /** 취소 사유. 배정 이력과 후속 알림에 사용됩니다. */
-  reason?: string;
+  /**
+     * 취소 사유. 배정 이력과 후속 알림에 사용됩니다.
+     * @minLength 2
+     * @maxLength 500
+     */
+  reason: string;
 }

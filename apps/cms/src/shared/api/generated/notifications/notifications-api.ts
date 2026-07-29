@@ -74,7 +74,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  */
 const updateNotificationEventCatalog = (
     eventType: string,
-    notificationEventCatalogUpdateRequest?: NotificationEventCatalogUpdateRequest,
+    notificationEventCatalogUpdateRequest: NotificationEventCatalogUpdateRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseNotificationEventCatalogMutationResponse>>,) => {
       return customInstance<ApiResponseNotificationEventCatalogMutationResponse>(
       {url: `/api/admin/notification-event-catalog/${eventType}`, method: 'PUT',
@@ -185,7 +185,7 @@ const listNotificationTemplates = (
  * @summary POST /api/admin/notification-templates
  */
 const createNotificationTemplate = (
-    notificationTemplateUpsertRequest?: NotificationTemplateUpsertRequest,
+    notificationTemplateUpsertRequest: NotificationTemplateUpsertRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseNotificationTemplateMutationResponse>>,) => {
       return customInstance<ApiResponseNotificationTemplateMutationResponse>(
       {url: `/api/admin/notification-templates`, method: 'POST',
@@ -241,7 +241,7 @@ const createNotificationTemplate = (
  * @summary POST /api/admin/notification-deliveries/test-send
  */
 const testSendNotification = (
-    notificationTestSendRequest?: NotificationTestSendRequest,
+    notificationTestSendRequest: NotificationTestSendRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseNotificationTestSendResponse>>,) => {
       return customInstance<ApiResponseNotificationTestSendResponse>(
       {url: `/api/admin/notification-deliveries/test-send`, method: 'POST',
@@ -298,7 +298,7 @@ const testSendNotification = (
  */
 const updateNotificationTemplate = (
     templateId: number,
-    notificationTemplateUpsertRequest?: NotificationTemplateUpsertRequest,
+    notificationTemplateUpsertRequest: NotificationTemplateUpsertRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseNotificationTemplateMutationResponse>>,) => {
       return customInstance<ApiResponseNotificationTemplateMutationResponse>(
       {url: `/api/admin/notification-templates/${templateId}`, method: 'PATCH',
