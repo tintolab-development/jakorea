@@ -8,17 +8,10 @@
 
 :root {
   /* Breakpoints (mobile-first; use in media queries) */
-  --bp-mobile-max: 520px;
-  --bp-tablet-min: 521px;
-  --bp-tablet-max: 1079px;
+  --bp-below-pc-max: 1079px;
   --bp-pc-min: 1080px;
   --bp-header-full-min: 1360px;
   --bp-wide-shell-min: 1600px;
-
-  /* Legacy aliases (migrate usages gradually) */
-  --bp-tablet: 768px;
-  --bp-desktop: 1024px;
-  --bp-wide: 1280px;
 
   --app-header-height: 56px;
 
@@ -51,11 +44,6 @@
 @media (--bp-pc-up) {
   :root {
     --app-header-height: var(--spacing-100);
-  }
-}
-
-@media (--bp-tablet-up) {
-  :root {
     --page-padding-x: 32px;
     --page-padding-y: 48px;
     --section-gap: 24px;

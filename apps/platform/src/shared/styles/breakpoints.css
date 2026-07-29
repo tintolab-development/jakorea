@@ -3,10 +3,11 @@
  * Used by postcss-custom-media (vite.config) — reference in CSS as @media (--bp-pc-up) { … }
  *
  * Sync with :root --bp-* in tokens.css and shared/lib/breakpoints.ts
+ *
+ * ~1079: mobile UI + horizontal margins
+ * 1080~1599: PC UI, left content, tighter margins
+ * 1600~: PC UI, wider shell margins
  */
-@custom-media --bp-mobile-only (max-width: 520px);
-@custom-media --bp-tablet-up (min-width: 521px);
-@custom-media --bp-tablet-only (min-width: 521px) and (max-width: 1079px);
 @custom-media --bp-below-pc (max-width: 1079px);
 @custom-media --bp-pc-up (min-width: 1080px);
 @custom-media --bp-pc-compact (min-width: 1080px) and (max-width: 1359px);
