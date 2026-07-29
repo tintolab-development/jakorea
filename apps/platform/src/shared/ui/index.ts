@@ -4,6 +4,8 @@ export { PFAlertModal } from './pf-alert-modal'
 export type { PFAlertModalProps } from './pf-alert-modal'
 export { PFArrowButton } from './pf-arrow-button'
 export type { PFArrowButtonProps, PFArrowButtonSize, PFArrowButtonVariant } from './pf-arrow-button'
+export { PFChevronButton } from './pf-chevron-button'
+export type { PFChevronButtonDirection, PFChevronButtonProps } from './pf-chevron-button'
 export { PFCategoryBadge } from './pf-category-badge'
 export type {
   PFCategoryBadgeIconVariant,

@@ -1,11 +1,6 @@
 .button {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-4);
+  gap: var(--spacing-16);
   padding-inline: 0;
-}
-
-.icon {
-  width: 20px;
-  height: 20px;
 }

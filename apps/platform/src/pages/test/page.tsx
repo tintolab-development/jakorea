@@ -17,6 +17,7 @@ import {
   PFCategoryBadge,
   PFAlertModal,
   PFArrowButton,
+  PFChevronButton,
   PFButton,
   PFModal,
   PFMetaBadge,
@@ -436,6 +437,32 @@ export function TestPage() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFChevronButton
+        </PFText>
+        <div className={styles.buttonStack}>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              default
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFChevronButton direction="left" aria-label="이전" />
+              <PFChevronButton direction="right" aria-label="다음" />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              disabled
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFChevronButton direction="left" disabled aria-label="이전 disabled" />
+              <PFChevronButton direction="right" disabled aria-label="다음 disabled" />
+            </div>
+          </div>
         </div>
       </div>
 

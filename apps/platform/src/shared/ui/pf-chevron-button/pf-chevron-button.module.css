@@ -1,0 +1,62 @@
+.button {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius-999);
+  background: var(--color-element-default-blue);
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  border-radius: var(--radius-999);
+  background: var(--color-element-default-blue);
+}
+
+.button:disabled {
+  border-radius: var(--radius-999);
+  background: var(--color-neutral-warm-100);
+  cursor: not-allowed;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.iconDefault {
+  display: block;
+}
+
+.iconHover {
+  display: none;
+}
+
+.button:hover:not(:disabled) .iconDefault {
+  display: none;
+}
+
+.button:hover:not(:disabled) .iconHover {
+  display: block;
+}
+
+/* 부모(목록으로 등)에 data-pf-chevron-hover 를 두면 영역 전체 hover 시 아이콘 전환 */
+:global([data-pf-chevron-hover]:hover) .button:not(:disabled) .iconDefault {
+  display: none;
+}
+
+:global([data-pf-chevron-hover]:hover) .button:not(:disabled) .iconHover {
+  display: block;
+}
