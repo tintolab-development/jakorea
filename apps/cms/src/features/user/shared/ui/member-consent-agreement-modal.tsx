@@ -149,11 +149,11 @@ export function MemberConsentAgreementModal({
         <div className="full-page-modal__body">
           <div className="full-page-modal__body-header member-consent-agreement-modal__body-header">
             <p className="full-page-modal__description member-consent-agreement-modal__description">
-              동의서를 작성·제출해 주세요. 제출까지 완료되어야 동의된 것으로 간주됩니다.
+              * 동의서는 관리자가 당사자의 서면 동의 확인 후 작성이 필요합니다.
             </p>
             <div className="full-page-modal__actions member-consent-agreement-modal__actions">
               <CmsButton variant="secondary" size="medium" onClick={onClose}>
-                닫기
+                취소
               </CmsButton>
               <CmsButton
                 variant="primary"
@@ -162,7 +162,7 @@ export function MemberConsentAgreementModal({
                 disabled={isDraftLoading || draft == null}
                 onClick={handleSubmit}
               >
-                제출
+                작성완료
               </CmsButton>
             </div>
           </div>

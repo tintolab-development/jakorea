@@ -7,10 +7,6 @@
   color: var(--main-WT, #fff);
 }
 
-.member-consent-agreement-modal__description {
-  font-size: 15px;
-}
-
 .member-consent-agreement-modal__actions {
   gap: 8px;
 }
