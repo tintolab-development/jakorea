@@ -44,6 +44,7 @@ export function AlertModal({
       open={open}
       onCancel={onClose}
       title={title}
+      titleBodyGap="always"
       width={width}
       zIndex={zIndex}
       className="alert-modal"
