@@ -20,11 +20,44 @@ export type ProgramListItem = {
   thumbnailUrl: string
 }
 
+export type ProgramSession = {
+  sessionLabel: string
+  title: string
+  description: string
+}
+
+export type ProgramLabeledValue = {
+  label: string
+  value: string
+}
+
+export type ProgramExtraSection = {
+  title: string
+  body: string
+}
+
+export type ProgramAttachment = {
+  name: string
+  url: string
+}
+
 export type ProgramDetail = ProgramListItem & {
   sponsor: string
   summary: string
   applicationPeriodLabel: string
   isRecruiting: boolean
+  businessFieldLabel: string
+  educationTargetGroupLabel: string
+  educationTargetDetailLabel: string
+  educationVenueLabel: string
+  sessions: ProgramSession[]
+  recruitmentPhaseGroupLabel: string
+  recruitmentPhases: ProgramLabeledValue[]
+  educationSchedules: ProgramLabeledValue[]
+  extraSections: ProgramExtraSection[]
+  applicationMethodLabel: string
+  applicationMethodValue: string
+  attachments: ProgramAttachment[]
 }
 
 export type ProgramsListParams = {
