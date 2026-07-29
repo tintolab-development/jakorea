@@ -289,6 +289,7 @@ export function UserDetailFullPageModal({
   return (
     <UserDetailFullpageShellProvider value={shell}>
       {state.personalInfoRevealModal}
+      {state.editUnmaskConfirmModal}
       <UserDetailLayout
         open={open}
         onClose={onClose}

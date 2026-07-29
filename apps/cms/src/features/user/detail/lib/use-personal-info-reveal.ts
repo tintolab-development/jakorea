@@ -53,6 +53,13 @@ export interface UsePersonalInfoRevealResult {
   openPersonalInfoRevealConfirm: () => void
   closePersonalInfoRevealConfirm: () => void
   submitPersonalInfoReveal: (reason: string) => void
+  /**
+   * 사유 입력 모달 없이 unmask 수행 (정보 수정 선행 해제 등).
+   * 성공 시 onPrivacyUnmasked + personalInfoRevealed=true.
+   */
+  revealWithReason: (
+    reason: string
+  ) => Promise<{ ok: true; payload?: unknown } | { ok: false }>
   confirmModal: ReactNode
 }
 
@@ -127,23 +134,32 @@ export function usePersonalInfoReveal({
     setConfirmOpen(false)
   }, [])
 
-  const submitPersonalInfoReveal = useCallback(
-    (reason: string) => {
-      void revealPersonalInfoWithAudit(
+  const revealWithReason = useCallback(
+    async (
+      reason: string
+    ): Promise<{ ok: true; payload?: unknown } | { ok: false }> => {
+      const result = await revealPersonalInfoWithAudit(
         resolveAccessItem,
         resolveMemberId,
         reason,
         resolveMemberRole
-      ).then(result => {
-        if (!result.ok) return
-        if (result.payload !== undefined) {
-          onPrivacyUnmasked?.(result.payload, result.role)
-        }
-        setPersonalInfoRevealed(true)
-        setConfirmOpen(false)
-      })
+      )
+      if (!result.ok) return { ok: false }
+      if (result.payload !== undefined) {
+        onPrivacyUnmasked?.(result.payload, result.role)
+      }
+      setPersonalInfoRevealed(true)
+      setConfirmOpen(false)
+      return { ok: true, payload: result.payload }
     },
     [onPrivacyUnmasked, resolveAccessItem, resolveMemberId, resolveMemberRole]
+  )
+
+  const submitPersonalInfoReveal = useCallback(
+    (reason: string) => {
+      void revealWithReason(reason)
+    },
+    [revealWithReason]
   )
 
   const openPersonalInfoRevealConfirm = useCallback(() => {
@@ -188,6 +204,7 @@ export function usePersonalInfoReveal({
     openPersonalInfoRevealConfirm,
     closePersonalInfoRevealConfirm,
     submitPersonalInfoReveal,
+    revealWithReason,
     confirmModal,
   }
 }

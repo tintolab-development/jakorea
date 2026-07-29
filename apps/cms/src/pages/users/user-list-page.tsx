@@ -547,9 +547,23 @@ export function UserListPage() {
   const handleMemberBasicInfoSaved = useCallback(
     (updated: Omit<User, 'password'>) => {
       setDrawerUser(updated)
+      setDetailBridgeUser(prev => (prev?.id === updated.id ? updated : prev))
+      queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+        { queryKey: ['users', 'list'] },
+        old => {
+          if (!old?.pages) return old
+          return {
+            ...old,
+            pages: old.pages.map(page => ({
+              ...page,
+              users: page.users.map(u => (u.id === updated.id ? { ...u, ...updated } : u)),
+            })),
+          }
+        }
+      )
       invalidateList()
     },
-    [setDrawerUser, invalidateList]
+    [setDrawerUser, setDetailBridgeUser, queryClient, invalidateList]
   )
 
   // 사용자 상세 보기

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, type MutableRefObject } from 'react'
+import { useState, useEffect, useCallback, useMemo, createElement, type MutableRefObject } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
@@ -64,8 +64,15 @@ import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/ins
 import {
   isMembersRemoteEnabled,
 } from '@/features/user/api/member-remote-capabilities'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
+
+/** 관리자 등록 회원 정보 수정 시 unmask 감사 로그 사유 */
+const BASIC_INFO_EDIT_UNMASK_REASON = '정보 수정'
+
+const BASIC_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
+  "관리자에 의해 등록된 회원은 정보 수정 시 개인정보 마스킹이 해제되며, 개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다. 해당 회원의 개인정보 열람 및 정보를 수정하시겠습니까?"
 
 export type BasicInfoEditScope = 'none' | 'profile' | 'comment'
 
@@ -175,6 +182,7 @@ export function useUserDetailController({
     openPersonalInfoRevealConfirm,
     closePersonalInfoRevealConfirm,
     submitPersonalInfoReveal,
+    revealWithReason,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolvePersonalInfoAccessItem,
@@ -189,6 +197,9 @@ export function useUserDetailController({
     modalZIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
   })
 
+  const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
+  const [editUnmaskConfirmLoading, setEditUnmaskConfirmLoading] = useState(false)
+
   useEffect(() => {
     if (!open) {
       setBasicInfoEditing(false)
@@ -199,6 +210,8 @@ export function useUserDetailController({
       setInstructorPermissionRevokeOpen(false)
       setJaGradeEvaluationOpen(false)
       setInstitutionDeleteBlockedOpen(false)
+      setEditUnmaskConfirmOpen(false)
+      setEditUnmaskConfirmLoading(false)
     }
   }, [open])
 
@@ -211,6 +224,8 @@ export function useUserDetailController({
     setInstructorPermissionRevokeOpen(false)
     setJaGradeEvaluationOpen(false)
     setInstitutionDeleteBlockedOpen(false)
+    setEditUnmaskConfirmOpen(false)
+    setEditUnmaskConfirmLoading(false)
   }, [displayUser?.id])
 
   useEffect(() => {
@@ -332,50 +347,103 @@ export function useUserDetailController({
     )
   }, [displayUser?.id, programsChildQueryKey, setSearchParams])
 
-  const startBasicInfoEdit = useCallback(() => {
+  const startBasicInfoEdit = useCallback(
+    (sourceUser?: Omit<User, 'password'> | null) => {
+      const target = sourceUser ?? displayUser
+      if (!target) return
+      if (!shouldShowCmsMemberInfoEditButton(target)) return
+
+      const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
+      const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, target.role)
+
+      if (target.role === 'SCHOOL' && bodyKey === 'institution') {
+        setBasicInfoDraft(userToSchoolInstitutionEditDraft(target))
+        setBasicInfoEditScope('profile')
+        setBasicInfoEditing(true)
+        focusDetailInfoTab()
+        return
+      }
+
+      if (target.role === 'INSTRUCTOR' && bodyKey === 'instructor') {
+        setBasicInfoDraft(userToAdminProvisionedBasicDraft(target))
+        setBasicInfoEditScope('profile')
+        setBasicInfoEditing(true)
+        focusDetailInfoTab()
+        return
+      }
+
+      if (bodyKey === 'admin') {
+        if (!canEditAdminMemberInfo(currentUser, target)) return
+        setBasicInfoDraft(userToAdminProvisionedBasicDraft(target))
+        setBasicInfoEditScope('profile')
+        setBasicInfoEditing(true)
+        focusDetailInfoTab()
+        return
+      }
+
+      if (bodyKey !== 'all_users') return
+      setBasicInfoDraft(userToAdminProvisionedBasicDraft(target))
+      setBasicInfoEditScope('profile')
+      setBasicInfoEditing(true)
+      focusDetailInfoTab()
+    },
+    [displayUser, basicInfoEntrySource, searchParams, currentUser, focusDetailInfoTab]
+  )
+
+  /** 관리자 등록 회원 — 마스킹 미해제 시 안내 모달 후 unmask, 이후 수정 진입 */
+  const requestStartBasicInfoEdit = useCallback(() => {
     if (!displayUser) return
     if (!shouldShowCmsMemberInfoEditButton(displayUser)) return
-
-    const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
-    const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)
-
-    if (displayUser.role === 'SCHOOL' && bodyKey === 'institution') {
-      setBasicInfoDraft(userToSchoolInstitutionEditDraft(displayUser))
-      setBasicInfoEditScope('profile')
-      setBasicInfoEditing(true)
-      focusDetailInfoTab()
+    if (!personalInfoRevealed) {
+      setEditUnmaskConfirmOpen(true)
       return
     }
+    startBasicInfoEdit()
+  }, [displayUser, personalInfoRevealed, startBasicInfoEdit])
 
-    if (displayUser.role === 'INSTRUCTOR' && bodyKey === 'instructor') {
-      setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
-      setBasicInfoEditScope('profile')
-      setBasicInfoEditing(true)
-      focusDetailInfoTab()
-      return
-    }
+  const closeEditUnmaskConfirm = useCallback(() => {
+    if (editUnmaskConfirmLoading) return
+    setEditUnmaskConfirmOpen(false)
+  }, [editUnmaskConfirmLoading])
 
-    if (bodyKey === 'admin') {
-      if (!canEditAdminMemberInfo(currentUser, displayUser)) return
-      setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
-      setBasicInfoEditScope('profile')
-      setBasicInfoEditing(true)
-      focusDetailInfoTab()
-      return
-    }
+  const confirmEditUnmaskAndStartEdit = useCallback(() => {
+    if (editUnmaskConfirmLoading || !displayUser) return
+    setEditUnmaskConfirmLoading(true)
+    void revealWithReason(BASIC_INFO_EDIT_UNMASK_REASON)
+      .then(result => {
+        if (!result.ok) return
+        const unmaskedUser =
+          result.payload !== undefined
+            ? applyPrivacyUnmaskResponseToUser(displayUser, result.payload, displayUser.role)
+            : displayUser
+        setEditUnmaskConfirmOpen(false)
+        startBasicInfoEdit(unmaskedUser)
+      })
+      .finally(() => {
+        setEditUnmaskConfirmLoading(false)
+      })
+  }, [displayUser, editUnmaskConfirmLoading, revealWithReason, startBasicInfoEdit])
 
-    if (bodyKey !== 'all_users') return
-    setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
-    setBasicInfoEditScope('profile')
-    setBasicInfoEditing(true)
-    focusDetailInfoTab()
-  }, [
-    displayUser,
-    basicInfoEntrySource,
-    searchParams,
-    currentUser,
-    focusDetailInfoTab,
-  ])
+  const editUnmaskConfirmModal = useMemo(
+    () =>
+      createElement(ConfirmModal, {
+        open: editUnmaskConfirmOpen,
+        title: '정보 수정 안내',
+        content: BASIC_INFO_EDIT_UNMASK_CONFIRM_CONTENT,
+        confirmText: '정보 수정',
+        cancelText: '취소',
+        onConfirm: confirmEditUnmaskAndStartEdit,
+        onCancel: closeEditUnmaskConfirm,
+        confirmLoading: editUnmaskConfirmLoading,
+        zIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
+      }),
+    [
+      editUnmaskConfirmOpen,
+      editUnmaskConfirmLoading,
+      confirmEditUnmaskAndStartEdit,
+      closeEditUnmaskConfirm,
+    ]
+  )
 
   const startAdminCommentEdit = useCallback(() => {
     if (!displayUser) return
@@ -515,25 +583,47 @@ export function useUserDetailController({
 
   const completeJaGradeEvaluation = useCallback(
     async ({ grade }: { grade: string; totalScore: number }) => {
-      if (!displayUser) return
-      setJaGradeEvaluationOpen(false)
-      if (displayUser.memberId != null) {
-        void queryClient.invalidateQueries({
-          queryKey: memberQueryKeys.detail(displayUser.memberId),
-        })
-        void queryClient.invalidateQueries({
-          queryKey: memberQueryKeys.detailByUuid(displayUser.id),
-        })
+      if (!displayUser) {
+        throw new Error('강사 정보가 없어 평가 등급을 반영할 수 없습니다.')
       }
-      onMemberBasicInfoSaved?.({
+
+      // remote: 모달에서 evaluation-grade POST 완료됨. mock만 상세 패치로 영속화.
+      if (patchMemberBasicInfo && !isMembersRemoteEnabled()) {
+        const persisted = await patchMemberBasicInfo(displayUser.id, {
+          listMetrics: { jaEvaluationGrade: grade },
+        })
+        if (persisted.memberId != null) {
+          queryClient.setQueryData(memberQueryKeys.detail(persisted.memberId), persisted)
+        }
+        queryClient.setQueryData(
+          [...memberQueryKeys.detailByUuid(persisted.id), persisted.role],
+          persisted
+        )
+        setJaGradeEvaluationOpen(false)
+        onMemberBasicInfoSaved?.(persisted)
+        return
+      }
+
+      const mergedUser: Omit<User, 'password'> = {
         ...displayUser,
         listMetrics: {
           ...displayUser.listMetrics,
           jaEvaluationGrade: grade,
         },
-      })
+      }
+
+      if (displayUser.memberId != null) {
+        queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), mergedUser)
+      }
+      queryClient.setQueryData(
+        [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
+        mergedUser
+      )
+
+      setJaGradeEvaluationOpen(false)
+      onMemberBasicInfoSaved?.(mergedUser)
     },
-    [displayUser, onMemberBasicInfoSaved, queryClient]
+    [displayUser, onMemberBasicInfoSaved, patchMemberBasicInfo, queryClient]
   )
 
   const handleSidebarSelectTop = useCallback(
@@ -679,6 +769,7 @@ export function useUserDetailController({
       instructorPermissionRevokeOpen,
       jaGradeEvaluationOpen,
       personalInfoRevealModal,
+      editUnmaskConfirmModal,
     },
     actions: {
       setTabState,
@@ -697,7 +788,7 @@ export function useUserDetailController({
       openPersonalInfoRevealConfirm,
       closePersonalInfoRevealConfirm,
       submitPersonalInfoReveal,
-      startBasicInfoEdit,
+      startBasicInfoEdit: requestStartBasicInfoEdit,
       startAdminCommentEdit,
       cancelBasicInfoEdit,
       saveBasicInfoEdit,
