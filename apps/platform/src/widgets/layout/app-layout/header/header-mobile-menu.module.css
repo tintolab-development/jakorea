@@ -30,8 +30,6 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 5px;
   border: 0;
   background: transparent;
   cursor: pointer;
@@ -44,16 +42,12 @@
 
 .backIcon {
   display: block;
-  width: 10px;
-  height: 18px;
-  aspect-ratio: 5 / 9;
+  width: 12px;
 }
 
 .notificationIcon {
   display: block;
-  width: 17px;
-  height: 21px;
-  aspect-ratio: 17 / 21;
+  width: 23px;
 }
 
 .topBarSpacer {
@@ -77,11 +71,13 @@
 
 .authCard {
   display: flex;
+  box-sizing: border-box;
   width: 100%;
-  flex-direction: column;
-  align-items: flex-start;
+  height: 52px;
+  flex-shrink: 0;
+  align-items: center;
   align-self: stretch;
-  padding: var(--spacing-4);
+  padding: var(--spacing-4) var(--spacing-12);
   border-radius: var(--radius-16);
   background: var(--color-neutral-cool-80);
 }
@@ -89,17 +85,21 @@
 .authButtonRow {
   display: flex;
   width: 100%;
+  height: 100%;
   align-items: center;
   align-self: stretch;
-  justify-content: space-between;
-  padding: var(--spacing-4) var(--spacing-12);
 }
 
 .authButton {
+  display: flex;
+  flex: 1 1 0;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--color-neutral-cool-600);
+  color: var(--color-neutral-cool-700);
   cursor: pointer;
 }
 

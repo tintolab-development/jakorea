@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
-import chevronUpMintUrl from '@/shared/assets/icons/chevron-up-mint.svg'
+import chevronUpBlackUrl from '@/shared/assets/icons/chevron-up-black-32.svg'
 import chevronLeftGrayUrl from '@/shared/assets/icons/chevron-left-gray.svg'
 import externalLinkIconUrl from '@/shared/assets/icons/external-link.svg'
 import notificationsIconUrl from '../image/icon/notifications.svg'
@@ -77,12 +77,12 @@ export function HeaderMobileMenu({
   isLoggedIn = false,
   onLogout,
 }: HeaderMobileMenuProps) {
-  const [expandedGroup, setExpandedGroup] = useState<NavigationItemLabel | null>('JA Korea')
+  const [expandedGroup, setExpandedGroup] = useState<NavigationItemLabel | null>(null)
 
   useEffect(() => {
     if (!open) return
 
-    setExpandedGroup('JA Korea')
+    setExpandedGroup(null)
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -146,7 +146,7 @@ export function HeaderMobileMenu({
             {isLoggedIn ? (
               <>
                 <button
-                  className={[styles.authButton, 'typo-bd-md-rg'].join(' ')}
+                  className={[styles.authButton, 'typo-bd-sm-rg'].join(' ')}
                   type="button"
                   onClick={() => {
                     const route = getLoggedInActionRoute('마이페이지')
@@ -158,7 +158,7 @@ export function HeaderMobileMenu({
                   마이페이지
                 </button>
                 <button
-                  className={[styles.authButton, 'typo-bd-md-rg'].join(' ')}
+                  className={[styles.authButton, 'typo-bd-sm-rg'].join(' ')}
                   type="button"
                   onClick={() => {
                     onLogout?.()
@@ -169,16 +169,22 @@ export function HeaderMobileMenu({
                 </button>
               </>
             ) : (
-              Object.entries(guestUserActionRoutes).map(([label, route]) => (
+              <>
                 <button
-                  className={[styles.authButton, 'typo-bd-md-rg'].join(' ')}
+                  className={[styles.authButton, 'typo-bd-sm-rg'].join(' ')}
                   type="button"
-                  key={label}
-                  onClick={() => window.location.assign(route)}
+                  onClick={() => window.location.assign(guestUserActionRoutes['회원가입'])}
                 >
-                  {label}
+                  회원가입
                 </button>
-              ))
+                <button
+                  className={[styles.authButton, 'typo-bd-sm-rg'].join(' ')}
+                  type="button"
+                  onClick={() => window.location.assign(guestUserActionRoutes['로그인'])}
+                >
+                  로그인
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -200,7 +206,7 @@ export function HeaderMobileMenu({
                   <span className={styles.menuTriggerLabel}>{group.label}</span>
                   <img
                     className={styles.menuChevron}
-                    src={isExpanded ? chevronUpMintUrl : chevronDownBlackUrl}
+                    src={isExpanded ? chevronUpBlackUrl : chevronDownBlackUrl}
                     alt=""
                     aria-hidden="true"
                   />
