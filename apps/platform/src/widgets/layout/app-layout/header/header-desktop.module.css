@@ -1,4 +1,6 @@
 .header {
+  position: relative;
+  z-index: 100;
   display: none;
   width: 100%;
   height: var(--spacing-100);
@@ -13,8 +15,6 @@
 }
 
 .headerTransparent {
-  position: relative;
-  z-index: 2;
   border-bottom: 0;
   background: transparent;
 }
@@ -45,6 +45,10 @@
     width: 100px;
     padding-inline: var(--spacing-12);
   }
+
+  .menuGroup {
+    width: 100px;
+  }
 }
 
 .logoLink {
@@ -58,6 +62,15 @@
 .logo {
   width: 195px;
   height: 60px;
+}
+
+.navigationArea {
+  position: relative;
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  justify-content: center;
+  align-items: stretch;
 }
 
 .navigation {
@@ -84,6 +97,90 @@
 
 .navigationButtonActive {
   border-bottom-color: var(--color-border-focus);
+}
+
+.dropdownPanel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--spacing-16);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    visibility 0.15s ease;
+}
+
+.dropdownPanel::before {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  border-bottom: 1px solid var(--color-border-default);
+  background: var(--color-neutral-white);
+  content: '';
+  transform: translateX(-50%);
+}
+
+.dropdownPanelOpen {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.menuGroup {
+  display: flex;
+  width: 140px;
+  padding: var(--spacing-16) 0;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.menuItem {
+  display: flex;
+  height: 60px;
+  padding: 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  border: 0;
+  border-radius: var(--radius-8);
+  background: transparent;
+  color: var(--color-neutral-black);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.menuItem:hover:not(.menuItemDisabled) {
+  background: var(--color-element-hover);
+}
+
+.menuItemDisabled {
+  cursor: default;
+}
+
+.menuItemLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menuItemExternalIcon {
+  display: block;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 .userActions {

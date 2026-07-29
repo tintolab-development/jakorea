@@ -4,10 +4,11 @@ import styles from './header-mobile.module.css'
 
 type HeaderMobileProps = {
   transparent?: boolean
+  isMenuOpen?: boolean
   onMenuOpen?: () => void
 }
 
-export function HeaderMobile({ transparent = false, onMenuOpen }: HeaderMobileProps) {
+export function HeaderMobile({ transparent = false, isMenuOpen = false, onMenuOpen }: HeaderMobileProps) {
   const headerClassName = [styles.header, transparent ? styles.headerTransparent : undefined]
     .filter(Boolean)
     .join(' ')
@@ -21,7 +22,8 @@ export function HeaderMobile({ transparent = false, onMenuOpen }: HeaderMobilePr
         className={styles.menuButton}
         type="button"
         aria-label="메뉴 열기"
-        aria-expanded={false}
+        aria-expanded={isMenuOpen}
+        aria-controls="mobile-header-menu"
         onClick={onMenuOpen}
       >
         <img className={styles.menuIcon} src={menuIconUrl} alt="" aria-hidden="true" />

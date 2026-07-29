@@ -1,0 +1,184 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  background: var(--color-neutral-white);
+}
+
+.overlayOpen {
+  display: flex;
+}
+
+.topBar {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  height: 56px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 0 8px;
+}
+
+.topBarButton {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.topBarButton:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.backIcon {
+  display: block;
+  width: 10px;
+  height: 18px;
+  aspect-ratio: 5 / 9;
+}
+
+.notificationIcon {
+  display: block;
+  width: 17px;
+  height: 21px;
+  aspect-ratio: 17 / 21;
+}
+
+.topBarSpacer {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.content {
+  display: flex;
+  min-height: 0;
+  flex: 1 0 0;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  justify-content: flex-start;
+  gap: var(--spacing-20);
+  padding: var(--spacing-16) var(--spacing-20) var(--spacing-56);
+  overflow-y: auto;
+}
+
+.authCard {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  padding: var(--spacing-4);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-80);
+}
+
+.authButtonRow {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  align-self: stretch;
+  justify-content: space-between;
+  padding: var(--spacing-4) var(--spacing-12);
+}
+
+.authButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-neutral-cool-600);
+  cursor: pointer;
+}
+
+.menuList {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+}
+
+.menuGroup {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-self: stretch;
+}
+
+.menuTrigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  align-self: stretch;
+  gap: 10px;
+  padding: var(--spacing-16) var(--spacing-2) var(--spacing-16) var(--spacing-8);
+  border: 0;
+  background: transparent;
+  color: var(--color-primary-800);
+  text-align: left;
+  cursor: pointer;
+}
+
+.menuTriggerLabel {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.menuChevron {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.childMenuList {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-self: stretch;
+}
+
+.childMenuItem {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--spacing-4);
+  padding: var(--spacing-12) var(--spacing-24);
+  border: 0;
+  background: transparent;
+  color: var(--color-neutral-cool-700);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.childMenuItemDisabled {
+  cursor: default;
+}
+
+.childMenuExternalIcon {
+  display: block;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+@media (--bp-pc-up) {
+  .overlay {
+    display: none !important;
+  }
+}
