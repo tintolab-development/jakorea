@@ -64,6 +64,8 @@ import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/ins
 import {
   isMembersRemoteEnabled,
 } from '@/features/user/api/member-remote-capabilities'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import { revokeInstructorPermission } from '@/entities/user/api/user-service'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
@@ -556,6 +558,8 @@ export function useUserDetailController({
 
   const openInstructorPermissionRevoke = useCallback(() => {
     if (!displayUser || displayUser.role !== 'INSTRUCTOR') return
+    if (resolveInstructorMemberProfile(displayUser) === 'school_teacher') return
+    if (displayUser.instructorApprovalStatus?.trim().toUpperCase() === 'REVOKED') return
     setInstructorPermissionRevokeOpen(true)
   }, [displayUser])
 
@@ -564,12 +568,29 @@ export function useUserDetailController({
   }, [])
 
   const confirmInstructorPermissionRevoke = useCallback(
-    (_payload: { reason: string; notifyTiming: InstructorPermissionRevokeNotifyTiming }) => {
-      // TODO(api): 강사 권한 박탈 API 연동 후 alert 제거·실제 처리로 교체
-      window.alert('준비 중입니다.')
-      setInstructorPermissionRevokeOpen(false)
+    async (payload: { reason: string; notifyTiming: InstructorPermissionRevokeNotifyTiming }) => {
+      if (!displayUser || displayUser.role !== 'INSTRUCTOR') return
+      const reason = payload.reason.trim()
+      if (!reason) return
+
+      try {
+        const revoked = await revokeInstructorPermission(
+          displayUser.id,
+          { reason, revokeReason: reason },
+          { memberId: displayUser.memberId }
+        )
+        if (isMembersRemoteEnabled()) {
+          void queryClient.invalidateQueries({ queryKey: memberQueryKeys.all })
+        }
+        onMemberBasicInfoSaved?.(revoked)
+        setInstructorPermissionRevokeOpen(false)
+      } catch (error) {
+        handleError(error, {
+          defaultMessage: getMemberApiErrorMessage(error, '강사 권한 박탈에 실패했습니다.'),
+        })
+      }
     },
-    []
+    [displayUser, onMemberBasicInfoSaved, queryClient]
   )
 
   const openJaGradeEvaluation = useCallback(() => {

@@ -14,6 +14,9 @@ import {
   matchesInstructorSettlementFilter,
 } from '@/entities/user/lib/matches-instructor-list-filters'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import { applyInstructorPermissionRevokedToUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
+import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
+import { markInstructorPermissionRevoked } from '@/features/user/shared/lib/revoked-instructor-overlay'
 import {
   canAssignUserProgramRoleForProgram,
   PROGRAM_PM_ROLE_LIMIT_MESSAGE,
@@ -62,6 +65,7 @@ import {
   preRegisterIndividualRemote,
   preRegisterInstructorRemote,
   preRegisterSchoolRemote,
+  revokeInstructorPermissionRemote,
   updateMemberBasicInfoRemote,
   updateMemberCommentRemote,
 } from '@/features/user/api/members-api-client'
@@ -108,7 +112,9 @@ export async function getUsers(filters?: {
   if (filters?.instructorListPureOnly) {
     users = users.filter(
       user =>
-        user.role !== 'INSTRUCTOR' || resolveInstructorMemberProfile(user) === 'instructor_only'
+        !isInstructorPermissionRevoked(user) &&
+        user.role === 'INSTRUCTOR' &&
+        resolveInstructorMemberProfile(user) === 'instructor_only'
     )
   }
 
@@ -221,7 +227,9 @@ export async function getUsersPage(
       if (filters?.instructorListPureOnly) {
         users = users.filter(
           user =>
-            user.role !== 'INSTRUCTOR' || resolveInstructorMemberProfile(user) === 'instructor_only'
+            !isInstructorPermissionRevoked(user) &&
+            user.role === 'INSTRUCTOR' &&
+            resolveInstructorMemberProfile(user) === 'instructor_only'
         )
       }
       const total = res.totalElements ?? users.length
@@ -936,6 +944,12 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
     newUser.instructorInfo = request.instructorInfo
   }
 
+  if (request.role === 'INSTRUCTOR') {
+    const instructorType = request.instructorType?.trim().toUpperCase()
+    newUser.instructorMemberProfile =
+      instructorType === 'SCHOOL_TEACHER' ? 'school_teacher' : 'instructor_only'
+  }
+
   if (request.id1365) {
     newUser.id1365 = request.id1365
   }
@@ -997,6 +1011,60 @@ export async function updateUserProgramRole(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { password, ...userWithoutPassword } = user
   return userWithoutPassword
+}
+
+/**
+ * 강사 권한 박탈 (Mock — mockUsers 반영 / Remote — revoke API)
+ */
+export async function revokeInstructorPermission(
+  userId: UUID,
+  payload: { reason: string; revokeReason?: string },
+  options?: { memberId?: number }
+): Promise<Omit<User, 'password'>> {
+  if (isMembersRemoteEnabled()) {
+    const memberId = resolveMemberIdForApi(userId, options)
+    await revokeInstructorPermissionRemote(memberId, {
+      reason: payload.reason,
+      revokeReason: payload.revokeReason ?? payload.reason,
+    })
+    const refreshed = await getUserById(userId, { memberId })
+    if (!refreshed) {
+      throw new Error('강사 권한 박탈 후 회원 정보를 불러오지 못했습니다.')
+    }
+    const revoked = applyInstructorPermissionRevokedToUser({
+      ...refreshed,
+      instructorApprovalStatus: 'REVOKED',
+    })
+    markInstructorPermissionRevoked(revoked)
+    return revoked
+  }
+
+  await new Promise(resolve => setTimeout(resolve, 200))
+  const userIndex = mockUsers.findIndex(u => u.id === userId)
+  if (userIndex === -1) {
+    throw new Error('사용자를 찾을 수 없습니다.')
+  }
+
+  const current = mockUsers[userIndex]
+  if (current.role !== 'INSTRUCTOR') {
+    throw new Error('강사 회원만 권한을 박탈할 수 있습니다.')
+  }
+
+  const { password: _password, ...withoutPassword } = current
+  const revoked = applyInstructorPermissionRevokedToUser(withoutPassword)
+  mockUsers[userIndex] = {
+    ...current,
+    ...revoked,
+    password: current.password,
+    updatedAt: new Date().toISOString(),
+  }
+  markInstructorPermissionRevoked(revoked)
+
+  const snapshot = snapshotUserWithoutPassword(userId)
+  if (!snapshot) {
+    throw new Error('강사 권한 박탈 후 회원 정보를 불러오지 못했습니다.')
+  }
+  return snapshot
 }
 
 /**

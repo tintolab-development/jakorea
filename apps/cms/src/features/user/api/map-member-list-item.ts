@@ -9,6 +9,7 @@ import {
   isMemberListItemResponse,
   type MemberListItemResponse,
 } from '@/features/user/api/types/member-list-item'
+import { normalizeRevokedInstructorUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
 
 function fallbackUuid(memberId?: number): string {
   if (memberId != null) return `member-${memberId}`
@@ -91,6 +92,13 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
       : {}),
     ...(programRoles ? { programRoles } : {}),
     ...(listMetrics ? { listMetrics } : {}),
+    ...(() => {
+      const instructorStatus = item.instructorStatus?.trim()
+      if (instructorStatus) return { instructorApprovalStatus: instructorStatus }
+      const memberStatus = (item.memberStatus ?? item.status)?.trim().toUpperCase()
+      if (memberStatus === 'REVOKED') return { instructorApprovalStatus: 'REVOKED' }
+      return {}
+    })(),
   }
 
   if (role === 'SCHOOL') {
@@ -131,7 +139,7 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
     }
   }
 
-  return user
+  return normalizeRevokedInstructorUser(user)
 }
 
 export function mapMemberListItems(items: unknown[] | undefined): Omit<User, 'password'>[] {

@@ -361,3 +361,19 @@ export async function changeInstructorEvaluationGradeRemote(
     data: body,
   })
 }
+
+/**
+ * Swagger `revoke` — `POST /api/admin/instructors/{instructorId}/revoke`
+ * path `instructorId` = 회원 memberId
+ */
+export async function revokeInstructorPermissionRemote(
+  instructorId: number,
+  body: InstructorRoleReviewRequest
+) {
+  await customInstance({
+    url: `/api/admin/instructors/${instructorId}/revoke`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+  })
+}

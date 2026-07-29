@@ -548,18 +548,32 @@ export function UserListPage() {
     (updated: Omit<User, 'password'>) => {
       setDrawerUser(updated)
       setDetailBridgeUser(prev => (prev?.id === updated.id ? updated : prev))
+      const patchListCache = (
+        old: InfiniteData<GetUsersPageResult> | undefined
+      ): InfiniteData<GetUsersPageResult> | undefined => {
+        if (!old?.pages) return old
+        return {
+          ...old,
+          pages: old.pages.map(page => ({
+            ...page,
+            users: page.users.map(u =>
+              u.id === updated.id ||
+              (updated.memberId != null && u.memberId === updated.memberId)
+                ? { ...u, ...updated }
+                : u
+            ),
+          })),
+        }
+      }
+      // mock 목록 키
       queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
         { queryKey: ['users', 'list'] },
-        old => {
-          if (!old?.pages) return old
-          return {
-            ...old,
-            pages: old.pages.map(page => ({
-              ...page,
-              users: page.users.map(u => (u.id === updated.id ? { ...u, ...updated } : u)),
-            })),
-          }
-        }
+        patchListCache
+      )
+      // remote 목록 키 (`['cms','members','list', …]`)
+      queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+        { queryKey: [...memberQueryKeys.all, 'list'] },
+        patchListCache
       )
       invalidateList()
     },

@@ -24,6 +24,7 @@ import {
   mapMemberStatusToIsActive,
   resolvePrimaryUserRole,
 } from '@/features/user/api/map-member-role'
+import { normalizeRevokedInstructorUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
 
 function fallbackUuid(memberId?: number): string {
   if (memberId != null) return `member-${memberId}`
@@ -298,6 +299,9 @@ function applyInstructorProfile(
   if (profile?.status?.trim()) {
     user.instructorApprovalStatus = profile.status.trim()
   }
+  if (profile?.revokedAt?.trim()) {
+    user.instructorApprovalStatus = 'REVOKED'
+  }
 }
 
 export function mapIndividualMemberDetailToUser(
@@ -454,5 +458,5 @@ export function mapInstructorMemberDetailToUser(
     user.instructorCertifications = certifications
   }
 
-  return user
+  return normalizeRevokedInstructorUser(user)
 }

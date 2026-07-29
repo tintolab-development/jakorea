@@ -3,6 +3,7 @@ import {
   isInstructorMaskedPlaceholder,
   looksLikeInstructorActivityEnumCode,
 } from '@/features/user/api/map-instructor-activity-display'
+import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
 
 function resolveMergedDisplayName(
   listUser: Omit<User, 'password'>,
@@ -110,10 +111,14 @@ export function mergeListUserWithFetchedDetail(
   listUser: Omit<User, 'password'>,
   fetched: Omit<User, 'password'>
 ): Omit<User, 'password'> {
+  const fetchedRevoked = isInstructorPermissionRevoked(fetched)
+  const listRevoked = isInstructorPermissionRevoked(listUser)
   const role =
-    fetched.role === 'INDIVIDUAL' && listUser.role !== 'INDIVIDUAL'
-      ? listUser.role
-      : fetched.role
+    fetchedRevoked || listRevoked
+      ? fetched.role
+      : fetched.role === 'INDIVIDUAL' && listUser.role !== 'INDIVIDUAL'
+        ? listUser.role
+        : fetched.role
 
   const schoolInfo =
     role === 'SCHOOL' ? (fetched.schoolInfo ?? listUser.schoolInfo) : undefined
@@ -132,13 +137,16 @@ export function mergeListUserWithFetchedDetail(
     schoolInfo,
     instructorInfo: resolveMergedInstructorInfo(listUser.instructorInfo, fetched.instructorInfo),
     instructorMemberProfile:
-      fetched.instructorMemberProfile ?? listUser.instructorMemberProfile,
+      fetched.instructorMemberProfile ??
+      (fetchedRevoked || listRevoked ? undefined : listUser.instructorMemberProfile),
     affiliatedSchoolUserId:
       fetched.affiliatedSchoolUserId ?? listUser.affiliatedSchoolUserId,
     affiliatedSchoolName: fetched.affiliatedSchoolName ?? listUser.affiliatedSchoolName,
     affiliation: resolveMergedAffiliation(listUser, fetched),
     detailAddress: resolveMergedDetailAddress(listUser, fetched),
     bio: resolveMergedBio(listUser, fetched),
+    instructorApprovalStatus:
+      fetched.instructorApprovalStatus ?? listUser.instructorApprovalStatus,
     listMetrics: Object.keys(listMetrics).length > 0 ? listMetrics : undefined,
     name: resolveMergedDisplayName(listUser, fetched, role),
   }

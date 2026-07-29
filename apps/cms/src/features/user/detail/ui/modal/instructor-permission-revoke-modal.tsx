@@ -13,7 +13,7 @@ export interface InstructorPermissionRevokeModalProps {
   onConfirm: (payload: {
     reason: string
     notifyTiming: InstructorPermissionRevokeNotifyTiming
-  }) => void
+  }) => void | Promise<void>
 }
 
 export function InstructorPermissionRevokeModal({
@@ -25,37 +25,56 @@ export function InstructorPermissionRevokeModal({
   const [notifyTiming, setNotifyTiming] =
     useState<InstructorPermissionRevokeNotifyTiming>('immediate')
   const [reason, setReason] = useState('')
+  const [confirmLoading, setConfirmLoading] = useState(false)
 
   useEffect(() => {
     if (!open) return
     setNotifyTiming('immediate')
     setReason('')
+    setConfirmLoading(false)
   }, [open])
 
   const trimmedReason = reason.trim()
-  const canConfirm = trimmedReason.length > 0
+  const canConfirm = trimmedReason.length > 0 && !confirmLoading
   const displayName = instructorName.trim() || '강사'
+
+  const handleConfirm = async () => {
+    if (!trimmedReason || confirmLoading) return
+    setConfirmLoading(true)
+    try {
+      await onConfirm({ reason: trimmedReason, notifyTiming })
+    } finally {
+      setConfirmLoading(false)
+    }
+  }
 
   return (
     <ContentModal
       open={open}
-      onCancel={onCancel}
+      onCancel={confirmLoading ? () => undefined : onCancel}
       title="강사 권한 박탈 안내"
+      titleBodyGap="always"
       width={600}
       className="instructor-permission-revoke-modal"
       footer={
         <div className="instructor-permission-revoke-modal__footer">
-          <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            type="button"
+            onClick={onCancel}
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
             variant="delete"
             type="button"
             disabled={!canConfirm}
+            loading={confirmLoading}
             size="medium"
             onClick={() => {
-              if (!canConfirm) return
-              onConfirm({ reason: trimmedReason, notifyTiming })
+              void handleConfirm()
             }}
           >
             권한 박탈
@@ -79,6 +98,7 @@ export function InstructorPermissionRevokeModal({
             onChange={e =>
               setNotifyTiming(e.target.value as InstructorPermissionRevokeNotifyTiming)
             }
+            disabled={confirmLoading}
           >
             <CmsRadio value="immediate">즉시</CmsRadio>
             <CmsRadio value="manual">직접 설정</CmsRadio>
@@ -94,6 +114,7 @@ export function InstructorPermissionRevokeModal({
             onChange={e => setReason(e.target.value)}
             placeholder="권한 박탈 사유를 입력해 주세요."
             maxLength={200}
+            disabled={confirmLoading}
           />
         </div>
       </div>
