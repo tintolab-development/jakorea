@@ -129,6 +129,11 @@ function instructorDetailTitleSchoolName(
   return undefined
 }
 
+/** 회원 상세 풀페이지 타이틀 — `강사 상세 (홍길동)` 형식 */
+function formatUserDetailModalTitle(kindLabel: string, subject: string): string {
+  return `${kindLabel} (${subject})`
+}
+
 export function userDetailModalTitle(user: Pick<
   User,
   | 'name'
@@ -143,20 +148,21 @@ export function userDetailModalTitle(user: Pick<
   const displayName = user.name?.trim() || '-'
   switch (user.role) {
     case 'ADMIN':
-      return `관리자 상세_${displayName}`
+      return formatUserDetailModalTitle('관리자 상세', displayName)
     case 'INSTRUCTOR': {
       const profile = resolveInstructorMemberProfile(user)
       if (profile === 'school_teacher' || profile === 'instructor_dual') {
         const school = instructorDetailTitleSchoolName(user)
-        // 학교명 없으면 `교사 상세_-_이름` 형태를 만들지 않음
-        return school ? `교사 상세_${school}_${displayName}` : `교사 상세_${displayName}`
+        // 학교명 없으면 빈 세그먼트를 넣지 않음
+        const subject = school ? `${school}_${displayName}` : displayName
+        return formatUserDetailModalTitle('교사 상세', subject)
       }
-      return `강사 상세_${displayName}`
+      return formatUserDetailModalTitle('강사 상세', displayName)
     }
     case 'SCHOOL':
-      return `학교 상세_${displayName}`
+      return formatUserDetailModalTitle('학교 상세', displayName)
     default:
-      return `회원 상세_${displayName}`
+      return formatUserDetailModalTitle('회원 상세', displayName)
   }
 }
 

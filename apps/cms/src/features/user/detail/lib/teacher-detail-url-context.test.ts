@@ -14,11 +14,11 @@ describe('userDetailModalTitle', () => {
       role: 'INSTRUCTOR',
       instructorMemberProfile: 'school_teacher',
     })
-    expect(title).toBe('교사 상세_김교사')
+    expect(title).toBe('교사 상세 (김교사)')
     expect(title).not.toContain('_-_')
   })
 
-  it('교사 상세에서 학교명이 있으면 학교_성명 형식을 쓴다', () => {
+  it('교사 상세에서 학교명이 있으면 괄호 안에 학교_성명 형식을 쓴다', () => {
     expect(
       userDetailModalTitle({
         name: '김교사',
@@ -26,7 +26,20 @@ describe('userDetailModalTitle', () => {
         instructorMemberProfile: 'instructor_dual',
         affiliatedSchoolName: '진월초등학교',
       })
-    ).toBe('교사 상세_진월초등학교_김교사')
+    ).toBe('교사 상세 (진월초등학교_김교사)')
+  })
+
+  it('강사·회원·학교·관리자 상세도 괄호 형식을 쓴다', () => {
+    expect(
+      userDetailModalTitle({
+        name: '박틴토',
+        role: 'INSTRUCTOR',
+        instructorMemberProfile: 'instructor_only',
+      })
+    ).toBe('강사 상세 (박틴토)')
+    expect(userDetailModalTitle({ name: '홍길동', role: 'INDIVIDUAL' })).toBe('회원 상세 (홍길동)')
+    expect(userDetailModalTitle({ name: '진월초', role: 'SCHOOL' })).toBe('학교 상세 (진월초)')
+    expect(userDetailModalTitle({ name: '관리자', role: 'ADMIN' })).toBe('관리자 상세 (관리자)')
   })
 })
 
