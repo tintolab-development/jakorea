@@ -16,6 +16,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
 import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import type { MemberConsentFieldKey } from '@/features/user/shared/lib/member-consent-template-map'
 import {
   isAgreementMemberConsentField,
@@ -139,63 +140,61 @@ function isUnder14BirthDate(value: string, today = new Date()): boolean {
   return !Number.isNaN(birthDate.getTime()) && fourteenthBirthday > today
 }
 
-function collectMemberRegisterValidationMessages(
+function collectMemberRegisterValidation(
   values: AddUserIndividualFormValues
-): string[] {
-  const messages: string[] = []
+): { missingRequired: boolean; formatMessages: string[] } {
+  let missingRequired = false
+  const formatMessages: string[] = []
 
   if (!values.name?.trim()) {
-    messages.push('성명을 입력해 주세요.')
+    missingRequired = true
   }
 
   const birthDate = values.birthDate?.trim()
   if (!birthDate || isBirthDateInputIncomplete(birthDate)) {
-    messages.push('생년월일을 입력해 주세요.')
+    missingRequired = true
   } else if (!isValidBirthDateFormValue(birthDate)) {
-    messages.push('올바른 생년월일을 입력해 주세요.')
+    formatMessages.push('올바른 생년월일을 입력해 주세요.')
   } else if (isUnder14BirthDate(birthDate)) {
-    messages.push('만 14세 미만 회원은 관리자가 직접 등록할 수 없습니다.')
+    formatMessages.push('만 14세 미만 회원은 관리자가 직접 등록할 수 없습니다.')
   }
 
   if (values.schoolEnrollmentStatus === 'enrolled') {
     if (!values.schoolName?.trim()) {
-      messages.push('소속 학교명을 입력해 주세요.')
+      missingRequired = true
     }
     if (!values.grade?.trim()) {
-      messages.push('학년을 선택해 주세요.')
+      missingRequired = true
     }
   }
 
   const contact = values.contact?.trim()
   if (!contact) {
-    messages.push('연락처를 입력해 주세요.')
+    missingRequired = true
   } else if (!KOREAN_PHONE_REGEX.test(contact)) {
-    messages.push('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')
+    formatMessages.push('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')
   }
 
   const email = values.email?.trim()
   if (!email) {
-    messages.push('이메일을 입력해 주세요.')
+    missingRequired = true
   } else if (!EMAIL_PATTERN.test(email)) {
-    messages.push('올바른 이메일 형식이 아닙니다')
+    formatMessages.push('올바른 이메일 형식이 아닙니다')
   }
 
   if (!values.address?.trim()) {
-    messages.push('주소를 검색해 주세요.')
+    missingRequired = true
   }
 
   if (values.consentTermsOfService !== 'agree') {
-    messages.push('서비스 이용약관에 동의해 주세요.')
+    missingRequired = true
   }
   if (values.consentPersonalInfo !== 'agree') {
-    messages.push('개인정보 수집·이용에 동의해 주세요.')
+    missingRequired = true
   }
 
-  return messages
+  return { missingRequired, formatMessages }
 }
-
-const MEMBER_REGISTER_MULTIPLE_VALIDATION_THRESHOLD = 2
-const MEMBER_REGISTER_MULTIPLE_VALIDATION_MESSAGE = '필수 항목을 모두 입력해 주세요.'
 
 export function AddUserIndividual({
   onSubmit,
@@ -271,14 +270,18 @@ export function AddUserIndividual({
   }
 
   const handleSubmitAttempt = (values: AddUserIndividualFormValues) => {
-    const messages = collectMemberRegisterValidationMessages(values)
-    if (messages.length > 0) {
+    const { missingRequired, formatMessages } = collectMemberRegisterValidation(values)
+    if (missingRequired) {
       showAlert({
         title: '안내',
-        content:
-          messages.length >= MEMBER_REGISTER_MULTIPLE_VALIDATION_THRESHOLD
-            ? MEMBER_REGISTER_MULTIPLE_VALIDATION_MESSAGE
-            : messages[0],
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
+    if (formatMessages.length > 0) {
+      showAlert({
+        title: '안내',
+        content: formatMessages[0],
       })
       return
     }

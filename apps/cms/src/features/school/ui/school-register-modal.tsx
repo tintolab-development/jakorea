@@ -12,6 +12,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form/detail-info
 import { CmsButton, CmsInput, ContentModal, SchoolSearch } from '@/shared/ui'
 import type { SchoolSearchSelection, SchoolSearchSelectMeta } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 
 const FORM_ID = 'cms-school-register-modal-form'
 
@@ -46,9 +47,6 @@ const INITIAL_VALUES: SchoolRegisterModalFormValues = {
   phone: '',
 }
 
-const SCHOOL_REGISTER_MULTIPLE_VALIDATION_THRESHOLD = 2
-const SCHOOL_REGISTER_MULTIPLE_VALIDATION_MESSAGE = '필수 항목을 모두 입력해 주세요.'
-
 function normalizeSubmitValues(
   values: SchoolRegisterModalFormValues
 ): SchoolRegisterModalFormValues {
@@ -65,19 +63,8 @@ function normalizeSubmitValues(
   }
 }
 
-function collectSchoolRegisterValidationMessages(
-  values: SchoolRegisterModalFormValues
-): string[] {
-  const messages: string[] = []
-
-  if (!values.institutionName?.trim()) {
-    messages.push('기관명을 검색해 주세요.')
-  }
-  if (!values.roadAddress?.trim()) {
-    messages.push('기관 소재지를 입력해 주세요.')
-  }
-
-  return messages
+function hasSchoolRegisterMissingRequired(values: SchoolRegisterModalFormValues): boolean {
+  return !values.institutionName?.trim() || !values.roadAddress?.trim()
 }
 
 export function SchoolRegisterModal({
@@ -126,14 +113,10 @@ export function SchoolRegisterModal({
   }
 
   const handleSubmitAttempt = (values: SchoolRegisterModalFormValues) => {
-    const messages = collectSchoolRegisterValidationMessages(values)
-    if (messages.length > 0) {
+    if (hasSchoolRegisterMissingRequired(values)) {
       showAlert({
         title: '안내',
-        content:
-          messages.length >= SCHOOL_REGISTER_MULTIPLE_VALIDATION_THRESHOLD
-            ? SCHOOL_REGISTER_MULTIPLE_VALIDATION_MESSAGE
-            : messages[0],
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return
     }

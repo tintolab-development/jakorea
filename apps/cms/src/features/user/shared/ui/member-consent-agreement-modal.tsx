@@ -12,6 +12,7 @@ import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-pan
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import {
   applyMemberPortraitConsentPrefill,
   type MemberConsentMemberContext,
@@ -104,7 +105,7 @@ export function MemberConsentAgreementModal({
     if (hasMemberConsentDisagreement(draft)) {
       showAlert({
         title: '안내',
-        content: '동의서의 모든 항목에 동의해 주세요.',
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return
     }
