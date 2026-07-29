@@ -11,3 +11,4 @@
 @custom-media --bp-pc-up (min-width: 1080px);
 @custom-media --bp-pc-compact (min-width: 1080px) and (max-width: 1359px);
 @custom-media --bp-header-full-up (min-width: 1360px);
+@custom-media --bp-wide-shell-up (min-width: 1600px);

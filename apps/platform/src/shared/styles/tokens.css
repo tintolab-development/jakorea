@@ -13,6 +13,7 @@
   --bp-tablet-max: 1079px;
   --bp-pc-min: 1080px;
   --bp-header-full-min: 1360px;
+  --bp-wide-shell-min: 1600px;
 
   /* Legacy aliases (migrate usages gradually) */
   --bp-tablet: 768px;
@@ -26,7 +27,7 @@
   --content-max-width: 1280px;
   --content-shell-max-width: 1440px;
   --content-outer-max-width: var(--content-shell-max-width);
-  --content-padding-block: var(--spacing-100);
+  --content-padding-block: var(--spacing-74);
   --page-padding-x: 16px;
   --page-padding-y: 24px;
   --section-gap: 16px;
