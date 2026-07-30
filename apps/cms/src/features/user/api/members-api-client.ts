@@ -31,6 +31,8 @@ import type {
   PageResponseInstructorRoleRequestListItemResponse,
   SchoolMemberDetailResponse,
 } from '@/shared/api/generated/members/schemas'
+import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
+import type { AdminAccountBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminAccountBasicInfoUpdateRequest'
 import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
 import type { AdminMemberCommentCreateRequest } from '@/shared/api/generated/members/schemas/adminMemberCommentCreateRequest'
 import type { AdminCommentUpdateRequest } from '@/shared/api/generated/members/schemas/adminCommentUpdateRequest'
@@ -317,6 +319,29 @@ export async function fetchAdminsPageRemote(
   params?: ListAdminsParams
 ): Promise<PageResponseAdminAccountListItemResponse> {
   return unwrapApiBody(await membersApi.listAdmins(params))
+}
+
+/** Swagger `getAdminAccount` — `GET /api/admin/admin-accounts/{adminId}` */
+export async function fetchAdminAccountDetailRemote(
+  adminId: number
+): Promise<AdminAccountApprovalDetailResponse> {
+  return unwrapApiBody(await membersApi.getAdminAccount(adminId))
+}
+
+/** Swagger `updateAdminBasicInfo` — `PATCH /api/admin/admin-accounts/{adminId}/basic-info` */
+export async function updateAdminBasicInfoRemote(
+  adminId: number,
+  body: AdminAccountBasicInfoUpdateRequest
+): Promise<AdminAccountResponse> {
+  return unwrapApiBody(await membersApi.updateAdminBasicInfo(adminId, body))
+}
+
+/** Swagger `deleteAdmin` — `DELETE /api/admin/admin-accounts/{adminId}` */
+export async function deleteAdminAccountRemote(
+  adminId: number,
+  params?: { reason?: string }
+): Promise<void> {
+  await membersApi.deleteAdmin(adminId, params)
 }
 
 export async function changeAdminAccountRoleRemote(

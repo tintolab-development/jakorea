@@ -25,6 +25,10 @@ import {
   resolvePrimaryUserRole,
 } from '@/features/user/api/map-member-role'
 import { normalizeRevokedInstructorUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
+import {
+  resolveIdentitySelfSignupCompletedAfterAdminRegistration,
+  resolveRegisteredByAdmin,
+} from '@/features/user/api/resolve-member-registration-flags'
 
 function fallbackUuid(memberId?: number): string {
   if (memberId != null) return `member-${memberId}`
@@ -143,7 +147,16 @@ function assignDefinedListMetrics(
 }
 
 type MemberDetailMappingSource = MemberDetailResponse &
-  Pick<UserResponse, 'socialAccounts' | 'guardianInfo' | 'schoolInfo' | 'role'>
+  Pick<
+    UserResponse,
+    | 'socialAccounts'
+    | 'guardianInfo'
+    | 'schoolInfo'
+    | 'role'
+    | 'registeredByAdmin'
+    | 'identitySelfSignupCompletedAfterAdminRegistration'
+    | 'adminAccountId'
+  >
 
 export function mapMemberDetailToUser(
   detail: MemberDetailMappingSource,
@@ -181,9 +194,26 @@ export function mapMemberDetailToUser(
     isActive: mapMemberStatusToIsActive(undefined, detail.status),
     createdAt: detail.joinedAt ?? detail.createdAt ?? now,
     updatedAt: detail.updatedAt ?? now,
-    registeredByAdmin: Boolean(detail.preRegistered ?? detail.createdByAdmin),
+    registeredByAdmin: resolveRegisteredByAdmin({
+      role,
+      registeredByAdmin: detail.registeredByAdmin,
+      preRegistered: detail.preRegistered,
+      createdByAdmin: detail.createdByAdmin,
+      adminAccountId: detail.adminAccountId,
+    }),
     id1365: detail.external1365Id?.trim() || undefined,
-    identitySelfSignupCompletedAfterAdminRegistration: detail.identityVerified === true,
+    identitySelfSignupCompletedAfterAdminRegistration:
+      resolveIdentitySelfSignupCompletedAfterAdminRegistration({
+        role,
+        registeredByAdmin: detail.registeredByAdmin,
+        preRegistered: detail.preRegistered,
+        createdByAdmin: detail.createdByAdmin,
+        adminAccountId: detail.adminAccountId,
+        identitySelfSignupCompletedAfterAdminRegistration:
+          detail.identitySelfSignupCompletedAfterAdminRegistration,
+        identityVerified: detail.identityVerified,
+      }),
+    ...(detail.adminAccountId != null ? { adminAccountId: detail.adminAccountId } : {}),
     socialAccounts: detail.socialAccounts?.map(account => account.trim()).filter(Boolean),
     under14: detail.under14,
     guardianConsentRequired: detail.guardianConsentRequired,

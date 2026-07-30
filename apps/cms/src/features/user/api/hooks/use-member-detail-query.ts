@@ -14,6 +14,11 @@ import {
   fetchMemberExternalIdentifiersRemote,
   fetchSchoolMemberDetailRemote,
 } from '@/features/user/api/members-api-client'
+import {
+  fetchAdminMemberDetailAsUser,
+  isAdminMemberDetailRole,
+  shouldUseAdminAccountDetailApi,
+} from '@/features/user/api/fetch-admin-member-detail'
 import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
@@ -24,23 +29,48 @@ import type { User, UserRole } from '@/types/user'
 export function useMemberDetailQuery(
   userId: string | null | undefined,
   enabled = true,
-  options?: { role?: UserRole }
+  options?: { role?: UserRole; memberId?: number; adminAccountId?: number; email?: string }
 ) {
   const remote = isMembersRemoteEnabled()
 
   return useQuery({
     queryKey: remote
-      ? [...memberQueryKeys.detailByUuid(userId ?? ''), options?.role ?? 'auto']
+      ? [
+          ...memberQueryKeys.detailByUuid(userId ?? ''),
+          options?.role ?? 'auto',
+          options?.adminAccountId ?? '',
+        ]
       : ['users', 'detail', userId, options?.role ?? 'auto'],
     enabled: Boolean(enabled && userId && remote),
     queryFn: async (): Promise<Omit<User, 'password'>> => {
       if (!userId) throw new Error('userId가 없습니다.')
-      const memberId = resolveMemberIdForApi(userId)
+
+      if (
+        shouldUseAdminAccountDetailApi({
+          role: options?.role,
+          adminAccountId: options?.adminAccountId,
+          userId,
+        })
+      ) {
+        return fetchAdminMemberDetailAsUser(userId, {
+          memberId: options?.memberId,
+          adminAccountId: options?.adminAccountId,
+          email: options?.email,
+        })
+      }
+
+      const memberId = resolveMemberIdForApi(userId, { memberId: options?.memberId })
       let role = options?.role
 
       if (!role) {
         const legacy = await fetchMemberDetailRemote(memberId)
         role = resolvePrimaryUserRole(legacy.roles)
+        if (isAdminMemberDetailRole(role)) {
+          return fetchAdminMemberDetailAsUser(userId, {
+            memberId,
+            email: legacy.email,
+          })
+        }
         if (role !== 'SCHOOL' && role !== 'INSTRUCTOR' && role !== 'INDIVIDUAL') {
           const externalIdentifiers = await fetchMemberExternalIdentifiersRemote(memberId).catch(
             () => []
@@ -53,6 +83,14 @@ export function useMemberDetailQuery(
           if (id1365) user.id1365 = id1365
           return user
         }
+      }
+
+      if (isAdminMemberDetailRole(role)) {
+        return fetchAdminMemberDetailAsUser(userId, {
+          memberId: options?.memberId ?? memberId,
+          adminAccountId: options?.adminAccountId,
+          email: options?.email,
+        })
       }
 
       if (role === 'SCHOOL') {

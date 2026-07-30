@@ -54,6 +54,7 @@ import {
   changeAdminAccountRoleRemote,
   createAdminAccountRemote,
   deleteMemberRemote,
+  deleteAdminAccountRemote,
   fetchAdminsPageRemote,
   fetchIndividualMemberDetailRemote,
   fetchInstructorMemberDetailRemote,
@@ -67,6 +68,7 @@ import {
   preRegisterSchoolRemote,
   revokeInstructorPermissionRemote,
   updateMemberBasicInfoRemote,
+  updateAdminBasicInfoRemote,
   updateMemberCommentRemote,
 } from '@/features/user/api/members-api-client'
 import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
@@ -78,10 +80,19 @@ import {
 } from '@/features/user/api/map-member-comments'
 import {
   hasAdminCommentPatch,
+  mapPatchUserBasicInfoToAdminAccountApiRequest,
   mapPatchUserBasicInfoToApiRequest,
 } from '@/features/user/api/map-patch-user-basic-info'
 import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
-import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
+import { resolveMemberIdForApi, registerMemberIdMapping } from '@/features/user/api/member-id-registry'
+import {
+  fetchAdminMemberDetailAsUser,
+  isAdminMemberDetailRole,
+  parseAdminAccountIdFromUserId,
+  resolveAdminAccountIdForDetail,
+  shouldUseAdminAccountDetailApi,
+} from '@/features/user/api/fetch-admin-member-detail'
+import { mapAdminAccountListItems } from '@/features/user/api/map-admin-account-list-item-to-user'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 
 /**
@@ -216,6 +227,28 @@ export async function getUsersPage(
   if (isMembersRemoteEnabled()) {
     try {
       const apiFilters = stripUnsupportedMemberListFilters(filters)
+
+      if (apiFilters.role === 'ADMIN') {
+        const res = await fetchAdminsPageRemote({
+          keyword: apiFilters.search?.trim() || undefined,
+          roleCode: apiFilters.adminPermissionVariant
+            ? adminPermissionFeeGradeToRoleCode(apiFilters.adminPermissionVariant)
+            : undefined,
+          page,
+          size: PAGE_SIZE,
+        })
+        let users = mapAdminAccountListItems(res.items)
+        if (apiFilters.adminPermissionVariant) {
+          users = users.filter(
+            user => getAdminPermissionVariant(user) === apiFilters.adminPermissionVariant
+          )
+        }
+        const total = res.totalElements ?? users.length
+        const totalPages = res.totalPages ?? 0
+        const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
+        return { users, total, hasMore }
+      }
+
       const res = await fetchMembersPageRemote({
         keyword: apiFilters.search?.trim() || undefined,
         role: mapUserRoleToApiRole(apiFilters.role),
@@ -317,10 +350,94 @@ async function mergeUserFromApiResponse(
   }
 }
 
+async function patchAdminUserBasicInfoRemote(
+  userId: UUID,
+  existing: Omit<User, 'password'>,
+  patch: PatchUserBasicInfoInput
+): Promise<Omit<User, 'password'>> {
+  const adminId =
+    existing.adminAccountId ??
+    (await resolveAdminAccountIdForDetail(userId, { email: existing.email }))
+
+  if (isAdminPermissionVariantOnlyPatch(patch)) {
+    return patchAdminPermissionVariantRemote(userId, patch.listMetrics!.adminPermissionVariant!)
+  }
+
+  const memberId = existing.memberId
+  if (memberId != null && hasAdminCommentPatch(patch)) {
+    const comment = patch.adminComment?.trim()
+    if (comment) {
+      const existingComments = await fetchMemberCommentsRemote(memberId, {
+        screenCode: MEMBER_DETAIL_SCREEN_CODE,
+      }).catch(() => [])
+      const latest = resolveLatestMemberAdminCommentDetail(
+        existingComments,
+        MEMBER_DETAIL_SCREEN_CODE
+      )
+      if (latest?.commentId != null) {
+        await updateMemberCommentRemote(memberId, latest.commentId, { comment })
+      } else {
+        await createMemberCommentRemote(memberId, {
+          screenCode: MEMBER_DETAIL_SCREEN_CODE,
+          comment,
+        })
+      }
+    }
+  }
+
+  const { adminComment: _adminComment, listMetrics, ...patchWithoutCommentAndMetrics } = patch
+  const body = mapPatchUserBasicInfoToAdminAccountApiRequest(patchWithoutCommentAndMetrics)
+  const hasBasicBody = Object.keys(body).length > 0
+
+  const permVariant = listMetrics?.adminPermissionVariant
+  if (
+    permVariant === 'manager' ||
+    permVariant === 'partner' ||
+    permVariant === 'viewer'
+  ) {
+    const current = getAdminPermissionVariant(existing)
+    if (permVariant !== current) {
+      await changeAdminAccountRoleRemote(adminId, {
+        roleCode: adminPermissionFeeGradeToRoleCode(permVariant),
+        reason: `CMS 관리자 회원 권한 유형 변경 (${permVariant})`,
+      })
+    }
+  }
+
+  if (!hasBasicBody && !hasAdminCommentPatch(patch) && !listMetrics?.adminPermissionVariant) {
+    return existing
+  }
+
+  if (hasBasicBody) {
+    await updateAdminBasicInfoRemote(adminId, body)
+  }
+
+  return fetchAdminMemberDetailAsUser(userId, {
+    adminAccountId: adminId,
+    memberId: existing.memberId,
+    email: existing.email,
+  })
+}
+
 async function patchUserBasicInfoRemote(
   userId: UUID,
   patch: PatchUserBasicInfoInput
 ): Promise<Omit<User, 'password'>> {
+  if (shouldUseAdminAccountDetailApi({ userId })) {
+    const existing = await fetchAdminMemberDetailAsUser(userId)
+    return patchAdminUserBasicInfoRemote(userId, existing, patch)
+  }
+
+  let existingForRole: Omit<User, 'password'> | null = null
+  try {
+    existingForRole = await getUserById(userId)
+  } catch {
+    existingForRole = null
+  }
+  if (existingForRole?.role === 'ADMIN') {
+    return patchAdminUserBasicInfoRemote(userId, existingForRole, patch)
+  }
+
   const memberId = resolveMemberIdForApi(userId)
   try {
     if (hasAdminCommentPatch(patch)) {
@@ -373,8 +490,12 @@ async function patchUserBasicInfoRemote(
 }
 
 async function resolveAdminAccountIdForMemberUser(
-  user: Pick<User, 'id' | 'email'>
+  user: Pick<User, 'id' | 'email' | 'adminAccountId'>
 ): Promise<number> {
+  if (user.adminAccountId != null && user.adminAccountId > 0) {
+    return user.adminAccountId
+  }
+
   const email = user.email?.trim()
   const page = await fetchAdminsPageRemote({
     ...(email ? { keyword: email } : {}),
@@ -408,13 +529,18 @@ async function patchAdminPermissionVariantRemote(
   try {
     let existing: Omit<User, 'password'> | null = null
     try {
-      existing = await getUserById(userId)
+      existing = await getUserById(userId, { role: 'ADMIN' })
     } catch {
       existing = null
     }
 
     let adminId: number
-    if (existing) {
+    const adminIdFromUserId = parseAdminAccountIdFromUserId(userId)
+    if (existing?.adminAccountId != null && existing.adminAccountId > 0) {
+      adminId = existing.adminAccountId
+    } else if (adminIdFromUserId != null) {
+      adminId = adminIdFromUserId
+    } else if (existing) {
       adminId = await resolveAdminAccountIdForMemberUser(existing)
     } else {
       // 목록 행이 member 상세에 없어도, id 레지스트리·숫자 id 로 admin account PATCH 시도
@@ -450,26 +576,25 @@ async function patchAdminPermissionVariantRemote(
       reason: `CMS 관리자 회원 권한 유형 변경 (${roleCode})`,
     })
 
-    if (existing) {
-      return {
-        ...existing,
-        listMetrics: {
-          ...existing.listMetrics,
-          adminPermissionVariant: variant,
-        },
-      }
-    }
+    const refreshed = await fetchAdminMemberDetailAsUser(userId, {
+      adminAccountId: adminId,
+      memberId: existing?.memberId,
+      email: existing?.email,
+    })
 
-    const now = new Date().toISOString()
     return {
-      id: userId,
-      email: '-',
-      name: '-',
-      role: 'ADMIN',
-      isActive: true,
-      createdAt: now,
-      updatedAt: now,
-      listMetrics: { adminPermissionVariant: variant },
+      ...refreshed,
+      registeredByAdmin: Boolean(
+        existing?.registeredByAdmin ?? refreshed.registeredByAdmin
+      ),
+      identitySelfSignupCompletedAfterAdminRegistration: Boolean(
+        existing?.identitySelfSignupCompletedAfterAdminRegistration ??
+          refreshed.identitySelfSignupCompletedAfterAdminRegistration
+      ),
+      listMetrics: {
+        ...refreshed.listMetrics,
+        adminPermissionVariant: variant,
+      },
     }
   } catch (error) {
     throw new Error(getMemberApiErrorMessage(error, '관리자 권한 유형 변경에 실패했습니다.'))
@@ -578,16 +703,32 @@ function snapshotUserWithoutPassword(userId: UUID): Omit<User, 'password'> | nul
 
 export async function getUserById(
   userId: UUID,
-  options?: { memberId?: number; role?: UserRole }
+  options?: { memberId?: number; role?: UserRole; adminAccountId?: number; email?: string }
 ): Promise<Omit<User, 'password'> | null> {
   if (isMembersRemoteEnabled()) {
     try {
+      if (
+        shouldUseAdminAccountDetailApi({
+          role: options?.role,
+          adminAccountId: options?.adminAccountId,
+          userId,
+        })
+      ) {
+        return fetchAdminMemberDetailAsUser(userId, options)
+      }
+
       const memberId = resolveMemberIdForApi(userId, options)
       let role = options?.role
 
       if (!role) {
         const legacy = await fetchMemberDetailRemote(memberId)
         role = resolvePrimaryUserRole(legacy.roles)
+        if (isAdminMemberDetailRole(role)) {
+          return fetchAdminMemberDetailAsUser(userId, {
+            memberId,
+            email: legacy.email,
+          })
+        }
         if (role !== 'SCHOOL' && role !== 'INSTRUCTOR' && role !== 'INDIVIDUAL') {
           const externalIdentifiers = await fetchMemberExternalIdentifiersRemote(memberId).catch(
             () => []
@@ -600,6 +741,14 @@ export async function getUserById(
           if (id1365) user.id1365 = id1365
           return user
         }
+      }
+
+      if (isAdminMemberDetailRole(role)) {
+        return fetchAdminMemberDetailAsUser(userId, {
+          memberId: options?.memberId ?? memberId,
+          adminAccountId: options?.adminAccountId,
+          email: options?.email,
+        })
       }
 
       if (role === 'SCHOOL') {
@@ -827,9 +976,19 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
           roleCode: 'VIEWER',
           reason: 'CMS 관리자 회원 신규 등록',
         })
+        const adminAccountId = created.adminAccountId ?? created.id
+        const memberId = created.memberId
         const uuid = created.uuid?.trim()
+        const id =
+          uuid ??
+          (memberId != null ? `member-${memberId}` : `admin-account-${adminAccountId ?? Date.now()}`)
+        if (uuid && memberId != null) {
+          registerMemberIdMapping(uuid, memberId)
+        }
         return {
-          id: uuid ? `admin-${uuid}` : `admin-account-${created.id ?? Date.now()}`,
+          id,
+          memberId,
+          adminAccountId,
           email: created.email?.trim() || adminEmail,
           name: created.name?.trim() || request.name,
           phone: request.phone,
@@ -1070,10 +1229,28 @@ export async function revokeInstructorPermission(
 /**
  * 사용자 삭제
  */
-export async function deleteUser(userId: UUID, reason = 'CMS 관리자 회원 삭제'): Promise<void> {
+export async function deleteUser(
+  userId: UUID,
+  reason = 'CMS 관리자 회원 삭제',
+  options?: { memberId?: number; adminAccountId?: number; role?: UserRole; email?: string }
+): Promise<void> {
   if (isMembersRemoteEnabled()) {
     try {
-      const memberId = resolveMemberIdForApi(userId)
+      if (
+        shouldUseAdminAccountDetailApi({
+          role: options?.role,
+          adminAccountId: options?.adminAccountId,
+          userId,
+        })
+      ) {
+        const adminId =
+          options?.adminAccountId ??
+          (await resolveAdminAccountIdForDetail(userId, options))
+        await deleteAdminAccountRemote(adminId, { reason })
+        return
+      }
+
+      const memberId = resolveMemberIdForApi(userId, options)
       await deleteMemberRemote(memberId, { reason })
       return
     } catch (error) {

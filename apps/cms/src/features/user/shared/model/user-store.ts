@@ -67,10 +67,13 @@ interface UserStore {
   fetchUsers: (filters?: UserFilters) => Promise<void>
   fetchUserById: (
     userId: UserId,
-    options?: { memberId?: number; role?: UserRole }
+    options?: { memberId?: number; role?: UserRole; adminAccountId?: number; email?: string }
   ) => Promise<UserWithoutPassword | null>
   createUser: (request: CreateUserRequest) => Promise<UserWithoutPassword>
-  deleteUser: (userId: UserId) => Promise<void>
+  deleteUser: (
+    userId: UserId,
+    options?: { memberId?: number; adminAccountId?: number; role?: UserRole; email?: string }
+  ) => Promise<void>
   changeUserRole: (
     userId: UserId,
     newRole: UserRole,
@@ -263,10 +266,10 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 
-  deleteUser: async userId => {
+  deleteUser: async (userId, options) => {
     set({ loading: true, error: null })
     try {
-      await deleteUser(userId)
+      await deleteUser(userId, 'CMS 관리자 회원 삭제', options)
       const state = get()
 
       // usersById에서 제거
