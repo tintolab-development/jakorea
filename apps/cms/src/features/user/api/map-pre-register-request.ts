@@ -6,6 +6,7 @@ import type {
   AdminPreRegisterSchoolRequest,
 } from '@/shared/api/generated/members/schemas'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
+import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
 
 function baseIdentity(request: CreateUserRequest) {
   const email = request.email?.trim() || undefined
@@ -54,7 +55,11 @@ export function mapCreateUserRequestToPreRegisterIndividual(
   if (!email) {
     throw new Error('개인 회원 등록에는 이메일이 필요합니다.')
   }
-  const body: AdminPreRegisterIndividualRequest = { email, name }
+  const body: AdminPreRegisterIndividualRequest = {
+    email,
+    name,
+    rawPassword: resolveAdminProvisionedTempPassword(email),
+  }
   if (phone) body.phone = phone
   if (gender) body.gender = gender
   if (birthDate) body.birthDate = birthDate
@@ -75,14 +80,12 @@ export function mapCreateUserRequestToPreRegisterSchool(
   const organizationName =
     request.schoolInfo?.schoolName?.trim() || request.name.trim()
   const address = request.schoolInfo?.address?.trim() || request.address?.trim() || ''
-  // email: 학교 등록 폼에 없음 — 미입력 시 더미(@institution.jakorea.local)를 넣지 않음.
-  // OpenAPI required는 BE optional 전환 전까지 타입 단언으로 우회 (handover 2026-07-28).
-  const body = {
+  const body: AdminPreRegisterSchoolRequest = {
     name: organizationName || name,
     organizationName,
     address,
-    ...(email ? { email } : {}),
-  } as AdminPreRegisterSchoolRequest
+  }
+  if (email) body.email = email
   if (phone) body.phone = phone
   if (gender) body.gender = gender
   if (birthDate) body.birthDate = birthDate
@@ -102,7 +105,11 @@ export function mapCreateUserRequestToPreRegisterInstructor(
   if (!email) {
     throw new Error('강사 회원 등록에는 이메일이 필요합니다.')
   }
-  const body: AdminPreRegisterInstructorRequest = { email, name }
+  const body: AdminPreRegisterInstructorRequest = {
+    email,
+    name,
+    rawPassword: resolveAdminProvisionedTempPassword(email),
+  }
   if (phone) body.phone = phone
   if (gender) body.gender = gender
   if (birthDate) body.birthDate = birthDate

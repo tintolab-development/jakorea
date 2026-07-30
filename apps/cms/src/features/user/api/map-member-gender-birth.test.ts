@@ -72,6 +72,7 @@ describe('mapCreateUserRequestToPreRegisterIndividual', () => {
     })
 
     expect(body.email).toBe('a@test.com')
+    expect(body.rawPassword).toBe('a@test.com')
     expect(body.gender).toBe('M')
     expect(body.birthDate).toBe('1990-01-15')
     expect(body.address).toBe('서울시 강서구 화곡동')
@@ -98,6 +99,23 @@ describe('mapCreateUserRequestToPreRegisterSchool', () => {
     expect(body.organizationName).toBe('화곡중학교')
     expect(body.address).toBe('서울시 강서구 화곡동 1')
     expect(body.email).toBe('school@test.com')
+  })
+
+  it('email 없이 학교 등록 요청을 매핑한다', () => {
+    const body = mapCreateUserRequestToPreRegisterSchool({
+      email: '',
+      password: '',
+      name: '화곡중학교',
+      role: 'SCHOOL',
+      schoolInfo: {
+        schoolName: '화곡중학교',
+        address: '서울시 강서구 화곡동 1',
+      },
+      isActive: true,
+    })
+
+    expect(body.email).toBeUndefined()
+    expect(body.organizationName).toBe('화곡중학교')
   })
 
   it('neisCode·region·zipCode·phone을 매핑한다', () => {
@@ -146,6 +164,7 @@ describe('mapCreateUserRequestToPreRegisterInstructor', () => {
     })
 
     expect(body.homeAddress).toBe('자택로 1')
+    expect(body.rawPassword).toBe('i@test.com')
     expect(body.bankName).toBe('농협')
     expect(body.businessIncome).toBe(false)
     expect(body.bankAccounts?.[0]?.bankName).toBe('농협')
