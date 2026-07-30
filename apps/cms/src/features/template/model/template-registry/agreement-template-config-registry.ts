@@ -8,7 +8,9 @@ import {
   createAgreementNoticeDraft,
   createAgreementPortraitDraft,
   createEducatorFacilitatorPledgeDraft,
+  EDUCATOR_FACILITATOR_PLEDGE_HIDDEN_DRAG_HANDLE_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
+  EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
   AGREEMENT_NOTICE_A4_HIDDEN_PARAGRAPH_IDS,
@@ -31,6 +33,9 @@ import {
   PAYMENT_STATEMENT_PRE_CONSENT_HIDDEN_DRAG_HANDLE_IDS,
   PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS,
 } from '@/features/template/ui/form-set/payment-statement-pre-consent/paragraph-config'
+import { AGREEMENT_PORTRAIT_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-portrait/paragraph-config'
+import { AGREEMENT_NOTICE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-notice/paragraph-config'
+import { EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS } from '@/features/template/ui/form-set/agreement-expense/paragraph-config'
 import type { AgreementWritingFormShellProps } from '@/features/template/ui/form-set/editors/new-agreement-form'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import { TEMPLATE_FORM_MODAL_DESCRIPTION } from './template-registry'
@@ -59,8 +64,11 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       modalTitle: title,
       modalDescription: TEMPLATE_FORM_MODAL_DESCRIPTION,
       writingPreviewHeaderTitle: title,
+      structureLockedParagraphIds: EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS,
+      hideDragHandleForParagraphIds: EDUCATOR_FACILITATOR_PLEDGE_HIDDEN_DRAG_HANDLE_IDS,
       previewLayout: 'a4-document',
       a4RenderMode: 'contentOnly',
+      paragraphBodyOptions: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_BODY_OPTIONS,
     }
   },
   'agreement-notice': () => {
@@ -77,6 +85,7 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       a4HiddenParagraphIds: AGREEMENT_NOTICE_A4_HIDDEN_PARAGRAPH_IDS,
       a4RenderMode: 'contentOnly',
       a4ParagraphGapPx: getAgreementNoticeA4ParagraphGap,
+      paragraphBodyOptions: AGREEMENT_NOTICE_PARAGRAPH_BODY_OPTIONS,
     }
   },
   'agreement-portrait': () => {
@@ -93,6 +102,7 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
       a4HiddenParagraphIds: AGREEMENT_PORTRAIT_A4_HIDDEN_PARAGRAPH_IDS,
       a4RenderMode: 'contentOnly',
       a4ParagraphGapPx: getAgreementPortraitA4ParagraphGap,
+      paragraphBodyOptions: AGREEMENT_PORTRAIT_PARAGRAPH_BODY_OPTIONS,
     }
   },
   'agreement-third-party': () => {

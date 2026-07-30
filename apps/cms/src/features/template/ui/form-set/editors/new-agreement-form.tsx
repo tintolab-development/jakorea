@@ -30,6 +30,7 @@ import {
   persistWritingFormTemplateDraft,
 } from '@/features/template/lib/writing-form-template-local-save'
 import { overlayPaymentStatementPreConsentSeedHorizontalTables } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { ensureAgreementNoticeConfirmationClosing } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
@@ -143,6 +144,9 @@ export function AgreementWritingFormShell({
         templateCode === 'document-payment-order-pre-consent'
       ) {
         normalized = overlayPaymentStatementPreConsentSeedHorizontalTables(normalized)
+      }
+      if (templateCode === 'agreement-notice') {
+        normalized = ensureAgreementNoticeConfirmationClosing(normalized)
       }
       setDraft(normalized)
       setActiveParagraphId(defaultActiveParagraphId ?? normalized.paragraphs[0]?.id ?? null)

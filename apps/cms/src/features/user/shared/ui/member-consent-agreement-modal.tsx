@@ -8,6 +8,7 @@ import {
 import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
+  ensureAgreementNoticeConfirmationClosing,
   normalizeWritingFormDraft,
   type WritingFormDraft,
   type WritingFormParagraph,
@@ -75,6 +76,9 @@ export function MemberConsentAgreementModal({
         const seed = saved?.draft ?? resolveSeedDraft(templateId)
         if (seed == null) return
         let next = normalizeWritingFormDraft(seed)
+        if (templateId === 'agreement-notice') {
+          next = ensureAgreementNoticeConfirmationClosing(next)
+        }
         if (templateId === 'agreement-portrait') {
           next = applyMemberPortraitConsentPrefill(next, memberContext)
         }
@@ -199,7 +203,10 @@ export function MemberConsentAgreementModal({
                   hideDragHandleForParagraphIds={agreementConfig?.hideDragHandleForParagraphIds}
                   hideParagraphRequiredChrome={agreementConfig?.previewLayout === 'a4-document'}
                   paragraphBodyOptions={paragraphBodyOptions}
-                  agreementClosingFooter={{ showSubmitButton: false }}
+                  agreementClosingFooter={{
+                    onSubmit: handleSubmit,
+                    submitDisabled: isDraftLoading || draft == null,
+                  }}
                 />
               </div>
             ) : (

@@ -186,6 +186,11 @@ export type RenderFormParagraphBodyOptions = {
   structureLockedAuthoringChoicePreview?: boolean
   /** 초상권 동의 fill — 1번 표 성명·소속 응답 입력만 허용 */
   portraitConsentResponseFieldsInteractive?: boolean
+  /**
+   * 회원 동의 작성(user) — 양식 본문(표 셀·설명글)은 잠금, 하단 동의·지급조서 등 응답 입력은 허용.
+   * `preview` 대신 사용(CSS pointer-events 차단 회피).
+   */
+  agreementConsentFillReadOnlyBody?: boolean
   /** 현재 조건에 따라 숨겨야 하는 단락 id 목록(에디터/미리보기 공통) */
   hiddenParagraphIds?: ReadonlySet<string>
   /**
@@ -211,19 +216,23 @@ export function renderFormParagraphBody(
   const isPreviewReadonly = isFormPreviewReadonlyMode(paragraphInteractionMode)
   const isCardSelected = isParagraphSelected
   const structureLocked = options?.structureLockedParagraphIds?.has(p.id) ?? false
+  const consentFillBodyReadOnly = options?.agreementConsentFillReadOnlyBody === true
   /**
    * 구조 잠금: 작성(authoring)에서는 카드 선택만으로는 본문 편집 불가.
-   * 미리보기(`user`)에서는 잠긴 시드도 입력 가능. `preview`는 항상 비활성.
+   * user + `agreementConsentFillReadOnlyBody`: 양식 본문만 잠금(동의서 작성).
+   * user(일반): 잠긴 시드도 입력 가능. `preview`는 항상 비활성.
    */
   const isBodyInteractive = isPreviewReadonly
     ? false
     : structureLocked
-      ? paragraphInteractionMode === 'user'
+      ? paragraphInteractionMode === 'user' && !consentFillBodyReadOnly
       : paragraphInteractionMode === 'user' || isParagraphSelected
   const structureLockedConsentChoiceInteractive =
     structureLocked &&
     options?.structureLockedAuthoringChoicePreview === true &&
-    (paragraphInteractionMode === 'authoring' || paragraphInteractionMode === 'preview')
+    (paragraphInteractionMode === 'authoring' ||
+      paragraphInteractionMode === 'preview' ||
+      (paragraphInteractionMode === 'user' && consentFillBodyReadOnly))
   const lockedAuthoringChoicePreview =
     structureLockedConsentChoiceInteractive && paragraphInteractionMode === 'authoring'
   switch (p.variant) {
@@ -328,10 +337,11 @@ export function renderFormParagraphBody(
       const hp = normalizeHorizontalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
       )
-      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 구조 잠금 시 작성 모드에서는 편집 불가, 미리보기(user)는 예외 */
+      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 동의서 fill은 양식 본문만 잠금 */
       const isEditMode =
         !isPreviewReadonly &&
-        (!structureLocked || paragraphInteractionMode === 'user') &&
+        (!structureLocked ||
+          (paragraphInteractionMode === 'user' && !consentFillBodyReadOnly)) &&
         (paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field')
       /** 표 격자·헤더 행 선택(민트 스트로크) — 작성(authoring) + 구조 미잠금에서만 */
       const tableCanvasInteractive =
@@ -572,7 +582,11 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isCardSelected={isCardSelected}
-          isBodyInteractive={isBodyInteractive || lockedAuthoringChoicePreview}
+          isBodyInteractive={
+            isBodyInteractive ||
+            lockedAuthoringChoicePreview ||
+            structureLockedConsentChoiceInteractive
+          }
           paragraphInteractionMode={paragraphInteractionMode}
           itemsEditActive={itemsEditActive}
           onActivateItemsEditor={

@@ -14,16 +14,17 @@ export type AgreementConsentFillContext = {
   portraitAffiliationSelectOptions?: ReadonlyArray<{ value: string; label: string }>
 }
 
-/** 회원관리(등록·상세) 동의서 작성 — 양식 본문은 읽기 전용(preview) */
+/** 회원관리(등록·상세) 동의서 작성 — user 모드 + 양식 본문만 잠금 */
 export function resolveAgreementConsentFillInteractionMode(
   _templateId?: string
 ): ParagraphBodyInteractionMode {
-  return 'preview'
+  return 'user'
 }
 
 /**
  * 회원·강사 등록/상세 — 동의서 작성 모달 본문 옵션.
- * 템플릿 관리(authoring)와 달리 본문·표 셀은 수정 불가(preview)이며, 하단 동의 라디오 등만 조작한다.
+ * - 양식(동의 문구·표 셀)은 `agreementConsentFillReadOnlyBody`로 잠금
+ * - 응답 작성(지급조서 기본정보, 하단 동의 라디오, 초상권 성명·소속)은 입력 가능
  */
 export function buildAgreementConsentFillParagraphBodyOptions(
   agreementConfig: AgreementWritingFormConfig | null | undefined,
@@ -56,7 +57,9 @@ export function buildAgreementConsentFillParagraphBodyOptions(
 
   return {
     ...baseOptions,
-    paragraphInteractionMode: 'preview',
+    paragraphInteractionMode: 'user',
+    /** preview CSS(pointer-events:none) 대신 본문만 선택 잠금 */
+    agreementConsentFillReadOnlyBody: true,
     structureLockedParagraphIds: agreementConfig.structureLockedParagraphIds,
     agreementSystemDisplayMode: 'write',
     agreementSystemParticipantName: participantName,
@@ -66,10 +69,6 @@ export function buildAgreementConsentFillParagraphBodyOptions(
     /** 구조 잠금 단락 — 본문은 preview 잠금, 하단 동의 라디오만 조작 */
     structureLockedAuthoringChoicePreview:
       baseOptions?.structureLockedAuthoringChoicePreview ?? true,
-    /** 지급조서 사전 동의 — 기본정보 블록은 발급용처럼 조회 전용 */
-    ...(baseOptions?.paymentStatementBasicInfoOnlyPaymentPurposeLocked === true
-      ? { paymentStatementDisplayMode: 'document' as const }
-      : {}),
     agreementAdminProxyConfirm: isAdminProxyConfirm ? true : undefined,
     hiddenParagraphIds,
   }
