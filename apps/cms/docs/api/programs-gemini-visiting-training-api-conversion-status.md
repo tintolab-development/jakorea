@@ -24,17 +24,15 @@
 
 | Phase | 상태 | 요약 |
 |-------|------|------|
-| **0** BE 계약 | **미확정** | enum 이중(`GEMINI`/`GEMINI_TRAINING`) · mutation OpenAPI 갭 — FE는 `GEMINI_TRAINING` 잠정 |
-| **1** 모집 목록 | **FE GET** | `GET …/recruitments` + gate · 등록/삭제는 mock(remote ON 시 안내) |
-| **2** 모집 상세 | **FE GET** | `GET …/recruitments/{id}` · 정보 수정 PATCH 갭(remote ON 시 편집 차단) |
-| **3** 기관 신청 | **FE GET** | `GET …/organization-applications` · approve/reject 갭 |
+| **0** BE 계약 | **부분** | enum 이중(`GEMINI`/`GEMINI_TRAINING`) 잔여 — FE는 `GEMINI_TRAINING` 잠정 |
+| **1** 모집 목록 | **FE GET + mutation** | list GET · **POST create · bulk/single DELETE** hybrid (2026-07-30) |
+| **2** 모집 상세 | **FE GET + PATCH** | detail GET · **정보 수정 PATCH** hybrid |
+| **3** 기관 신청 | **FE GET + approve/reject** | GET · **단건/다건 승인·반려** hybrid |
 | **4** 승인 목록 | **FE GET(갭)** | `GET …/approved` — DTO가 모집 item 재사용 · 컬럼 매핑 빈약 |
-| **5** 강사 신청 | **mock** | |
+| **5** 강사 신청 | **mock UI** | OpenAPI list/approve/reject 있음 · UI remote wiring 잔여 |
 | **6** managers · forms | **mock** | `ProgramManagersTab` 재사용 |
 
-**추정 완료율 ≈ GET 골격 연결 · mutation 0% · gate 기본 OFF**
-
-> **조기 핸드오프 (2026-07-16):** OpenAPI mutation·enum 확정 전까지 FE에서 할 수 있는 GET/가드를 마쳤고, 로드맵 **현재**는 Cat 6으로 이동한다. 잔여(등록·승인 mutation · 강사 신청 · approved 스키마)는 이 문서 백로그.
+**추정 완료율 ≈ 모집 CRUD·기관 승인 FE 연동 · approved/강사 잔여 · gate 기본 OFF**
 
 ---
 
