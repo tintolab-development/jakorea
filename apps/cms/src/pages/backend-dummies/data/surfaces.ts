@@ -801,11 +801,14 @@ export const SURFACE_ROWS: readonly SurfaceRow[] = [
     status: 'hybrid',
     getStatus: 'hybrid',
     mutationStatus: 'hybrid',
-    completionPct: 45,
+    completionPct: 80,
     gateKeys: ['adminApprovalRequests', 'instructorRoleRequests'],
     mockFiles: ['mockMemberPermissionApplicationsAdmin'],
-    apiPaths: [],
-    notes: '관리자 탭 일부 mock 배너',
+    apiPaths: [
+      'GET …/instructor-role-requests',
+      'GET …/admin-approval-requests',
+    ],
+    notes: 'env 게이트 ON 시 양 탭 remote · OFF 시 mock fallback',
   },
   {
     id: 'mem-admin-perm',
@@ -815,10 +818,11 @@ export const SURFACE_ROWS: readonly SurfaceRow[] = [
     status: 'hybrid',
     getStatus: 'hybrid',
     mutationStatus: 'hybrid',
-    completionPct: 70,
+    completionPct: 80,
     gateKeys: ['adminPermissions'],
     mockFiles: [],
-    apiPaths: ['admin permissions API'],
+    apiPaths: ['admin-roles · PUT'],
+    notes: 'adminPermissions 모듈 · env 전환 반영',
   },
 
   // ── settlement ──

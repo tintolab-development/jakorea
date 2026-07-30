@@ -217,9 +217,9 @@ export const GAP_ROWS: readonly GapRow[] = [
   {
     id: 'MEM-02',
     categoryId: 'members-permission-requests',
-    priority: 'P1',
-    title: '권한 승인 관리자 탭 API',
-    suggestedApi: 'adminApprovalRequests 전면 연동',
+    priority: 'P2',
+    title: '권한 승인 mutation·필터 polish',
+    suggestedApi: '승인/반려·목록 필터 잔여 갭 (목록 GET은 env 게이트로 remote)',
   },
   {
     id: 'SET-01',

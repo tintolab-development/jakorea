@@ -31,7 +31,7 @@ export const BACKEND_DUMMY_DOMAINS: readonly BackendDummyDomain[] = [
     label: '회원 관리',
     shortLabel: '회원',
     gateKeys: ['members', 'instructorRoleRequests', 'adminPermissions', 'adminApprovalRequests', 'logs'],
-    description: '회원 목록·권한 승인·관리자 권한',
+    description: '회원 목록·권한 승인·권한 설정 · env 실 API 게이트',
   },
   {
     id: 'settlement',

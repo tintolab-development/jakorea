@@ -3,7 +3,7 @@ import type { BackendDummyCategory, BackendDummyDomainId } from './types'
 export const BACKEND_DUMMIES_AS_OF = '2026-07-30'
 
 export const BACKEND_DUMMIES_DOC_HINT =
-  'docs/api/* · be-handoff-program-dummy-seeds/ · menu-config LNB'
+  'docs/api/* · members env(members,instructorRoleRequests,adminApprovalRequests,adminPermissions) · menu-config LNB'
 
 function cat(
   partial: Omit<BackendDummyCategory, 'programRoute' | 'menuLabel'> & {
@@ -167,7 +167,7 @@ export const BACKEND_DUMMY_CATEGORIES: readonly BackendDummyCategory[] = [
     applicationsStatus: 'n-a',
     progressNestedStatus: 'hybrid',
     surveyManagersStatus: 'n-a',
-    summary: '목록·등록·상세 코어 hybrid. 일부 하위 탭 mock 배너.',
+    summary: '목록·등록·상세 코어 hybrid. env members ON. 일부 하위 탭 mock 배너.',
   }),
   cat({
     id: 'members-institutions',
@@ -183,7 +183,7 @@ export const BACKEND_DUMMY_CATEGORIES: readonly BackendDummyCategory[] = [
     applicationsStatus: 'n-a',
     progressNestedStatus: 'hybrid',
     surveyManagersStatus: 'n-a',
-    summary: 'kind=institutions 필터 · members 모듈.',
+    summary: 'kind=institutions · members env ON.',
   }),
   cat({
     id: 'members-instructors',
@@ -191,15 +191,15 @@ export const BACKEND_DUMMY_CATEGORIES: readonly BackendDummyCategory[] = [
     label: '강사 회원',
     shortLabel: '강사',
     lnbPath: '/users/list?kind=instructors',
-    detailPct: 70,
+    detailPct: 75,
     crudPct: 90,
-    dummyPct: 30,
+    dummyPct: 25,
     gateKeys: ['members', 'instructorRoleRequests'],
     listCrudStatus: 'hybrid',
     applicationsStatus: 'hybrid',
     progressNestedStatus: 'hybrid',
     surveyManagersStatus: 'n-a',
-    summary: '강사 프로필·역할요청 hybrid. 정산 탭은 settlement 게이트 의존.',
+    summary: '강사 프로필·역할요청 hybrid. 정산 탭은 paymentOrders|accountPayments.',
   }),
   cat({
     id: 'members-admins',
@@ -207,15 +207,15 @@ export const BACKEND_DUMMY_CATEGORIES: readonly BackendDummyCategory[] = [
     label: '관리자 회원',
     shortLabel: '관리자',
     lnbPath: '/users/list?kind=admins',
-    detailPct: 80,
+    detailPct: 85,
     crudPct: 90,
-    dummyPct: 20,
+    dummyPct: 15,
     gateKeys: ['members'],
     listCrudStatus: 'hybrid',
     applicationsStatus: 'n-a',
     progressNestedStatus: 'n-a',
     surveyManagersStatus: 'n-a',
-    summary: 'admin-accounts / 목록 hybrid.',
+    summary: 'admin-accounts / 목록 hybrid · members env ON.',
   }),
   cat({
     id: 'members-permission-requests',
@@ -223,15 +223,16 @@ export const BACKEND_DUMMY_CATEGORIES: readonly BackendDummyCategory[] = [
     label: '권한 승인',
     shortLabel: '권한승인',
     lnbPath: '/admin/permission-requests',
-    detailPct: 40,
-    crudPct: 40,
-    dummyPct: 60,
+    detailPct: 80,
+    crudPct: 80,
+    dummyPct: 20,
     gateKeys: ['adminApprovalRequests', 'instructorRoleRequests'],
     listCrudStatus: 'hybrid',
     applicationsStatus: 'hybrid',
     progressNestedStatus: 'n-a',
     surveyManagersStatus: 'n-a',
-    summary: '강사 역할요청 hybrid. 관리자 탭 일부 mock 배너.',
+    summary:
+      '강사·관리자 탭 실 API(instructorRoleRequests·adminApprovalRequests 또는 members). env 게이트 ON.',
   }),
   cat({
     id: 'members-admin-permissions',
@@ -239,15 +240,15 @@ export const BACKEND_DUMMY_CATEGORIES: readonly BackendDummyCategory[] = [
     label: '관리자 권한 설정',
     shortLabel: '권한설정',
     lnbPath: '/admin/settings/permissions',
-    detailPct: 70,
-    crudPct: 70,
-    dummyPct: 30,
+    detailPct: 80,
+    crudPct: 80,
+    dummyPct: 20,
     gateKeys: ['adminPermissions'],
     listCrudStatus: 'hybrid',
     applicationsStatus: 'n-a',
     progressNestedStatus: 'n-a',
     surveyManagersStatus: 'n-a',
-    summary: 'adminPermissions ON 시 remote · OFF 시 로컬 mock.',
+    summary: 'adminPermissions ON 시 remote · OFF 시 로컬 mock. env 전환 반영.',
   }),
 
   // ── settlement ──
