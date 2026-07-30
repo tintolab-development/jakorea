@@ -1,8 +1,8 @@
 /** 커리어넷 OpenAPI — 학교·학과 등 공통 엔드포인트 */
 export const CAREER_NET_OPEN_API_URL = 'https://www.career.go.kr/cnet/openapi/getOpenApi'
 
-/** 학교 분류 — 대학교 검색 시 고정 */
-export const CAREER_NET_GUBUN_UNIVERSITY = '대학교' as const
+/** 학교 분류 — 커리어넷 SCHOOL API `gubun` (한글 `대학교`는 빈 결과) */
+export const CAREER_NET_GUBUN_UNIVERSITY = 'univ_list' as const
 
 /** 학교유형1(대학교) — sch1 */
 export const CAREER_NET_UNIV_SCH1 = {
