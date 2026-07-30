@@ -34,9 +34,9 @@ export const PARAGRAPH_KIND_OPTIONS: { value: ParagraphKindSelectValue; label: s
   { value: 'description', label: '설명글' },
   { value: 'table', label: '테이블' },
 ]
+/** 우측 패널 단락 유형 셀렉트 — 동의·발급·프로그램 전용 유형 제외 */
 export const SINGLE_ITEM_DETAIL_OPTIONS: { value: SingleItemDetailSelectValue; label: string }[] = [
   { value: 'subjective', label: '주관식형' },
-  { value: 'session_plan_short_essay', label: '교육계획 차시형' },
   { value: 'multiple_choice', label: '객관식형' },
   { value: 'date_only', label: '날짜형' },
   { value: 'time_only', label: '시간형' },
@@ -44,20 +44,43 @@ export const SINGLE_ITEM_DETAIL_OPTIONS: { value: SingleItemDetailSelectValue; l
   { value: 'scale_type', label: '점수 선택형' },
   { value: 'user_info', label: '사용자 정보형' },
   { value: 'file_attachment', label: '파일 첨부형' },
-  { value: 'ujat_journal_education_info', label: 'UJAT 교육 정보(교육일지)' },
-  { value: 'lecture_report_program_progress', label: '강의보고서 프로그램 진행 정보' },
-  { value: 'id_type_with_input', label: '식별번호 입력' },
 ]
 export const DESCRIPTION_DETAIL_OPTIONS: { value: DescriptionDetailSelectValue; label: string }[] = [
   { value: 'title', label: '제목형' },
   { value: 'text', label: '텍스트형' },
   { value: 'closing', label: '마무리글형' },
-  { value: 'static_description_lines', label: '정적 설명(다줄)' },
 ]
 export const TABLE_DETAIL_OPTIONS: { value: TableDetailSelectValue; label: string }[] = [
   { value: 'horizontal_table', label: '가로형' },
   { value: 'vertical_table', label: '세로형' },
 ]
+
+/** 셀렉트에 없는 전용 유형 — 잠금·기존 단락 표시용 라벨 */
+const HIDDEN_DETAIL_OPTION_LABELS: Partial<Record<DetailSelectValue, string>> = {
+  id_type_with_input: '식별번호 입력',
+  static_description_lines: '정적 설명(다줄)',
+  session_plan_short_essay: '교육계획 차시형',
+  ujat_journal_education_info: 'UJAT 교육 정보(교육일지)',
+  lecture_report_program_progress: '강의보고서 프로그램 진행 정보',
+}
+
+/** 공통 옵션 + (필요 시) 현재 값의 전용 유형 라벨 — 전환용 신규 선택은 불가 */
+export function detailSelectOptionsForValue(
+  kind: ParagraphKindSelectValue,
+  currentDetail: DetailSelectValue | null
+): { value: DetailSelectValue; label: string }[] {
+  const base: { value: DetailSelectValue; label: string }[] =
+    kind === 'table'
+      ? TABLE_DETAIL_OPTIONS
+      : kind === 'description'
+        ? DESCRIPTION_DETAIL_OPTIONS
+        : SINGLE_ITEM_DETAIL_OPTIONS
+  if (currentDetail == null) return base
+  if (base.some(o => o.value === currentDetail)) return base
+  const label = HIDDEN_DETAIL_OPTION_LABELS[currentDetail]
+  if (label == null) return base
+  return [...base, { value: currentDetail, label }]
+}
 
 export function paragraphKindSelectValue(p: WritingFormParagraph): ParagraphKindSelectValue {
   if (
