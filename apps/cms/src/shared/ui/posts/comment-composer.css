@@ -6,7 +6,8 @@
   padding: var(--spacing-12, 12px) var(--spacing-20, 20px);
 }
 
-.comment-composer::before {
+/* 댓글 목록이 있을 때만 작성기 상단 구분선 — 빈 목록에서 단독 보더 노출 방지 */
+.comment-list + .comment-composer::before {
   content: '';
   position: absolute;
   top: 0;
