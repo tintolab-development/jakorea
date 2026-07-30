@@ -17,7 +17,7 @@ Mock 시대 API 요약(엔티티별 mock 서비스): [api-spec-mock.md](../../.c
 | `VITE_DEV_PROXY_TARGET` / `VITE_NGROK_SERVER` | `VITE_API_SERVER`와 동일 역할(하위 호환·주석용 이름). | 위와 동일 |
 | `VITE_REAL_API_MODULES` | 쉼표 구분 모듈 키. **나열된 것만** 실 API 호출. | 해당 모듈이 켜진 요청만 실 서버로 감 |
 | `VITE_ADMIN_AUTH_API_PREFIX` | 관리자 인증 경로 prefix 덮어쓰기. | 기본 `/api/admin/auth` |
-| `VITE_AUTH_REFRESH_PATH` | 리프레시 토큰 POST 경로. | 기본 `/api/auth/refresh` |
+| `VITE_AUTH_REFRESH_PATH` | (deprecated) CMS는 사용하지 않음. refresh는 `/api/admin/auth/refresh`. | — |
 | `VITE_NGROK_SKIP_BROWSER_WARNING` | ngrok 무료 호스트 경고 우회 헤더 값. | 비워도 `VITE_API_SERVER`가 ngrok이면 프록시가 기본값(`69420`) 전달 |
 
 **프록시 사용 시:** DevTools에는 **항상 `localhost:3000`** 만 보이는 것이 정상입니다. Postman처럼 ngrok 호스트가 보이게 하려면 `VITE_API_BASE_URL`만 ngrok으로 두고 `VITE_API_SERVER`는 비웁니다.
