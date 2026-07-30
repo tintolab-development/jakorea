@@ -3,7 +3,8 @@
  * - 기관명: NEIS 학교 검색 (`SchoolSearch`)
  * - 기관 소재지: 학교 선택 시 도로명 주소 자동 반영 + 상세 주소 입력
  * - 선택 시 NEIS 코드·검색 지역·우편번호·전화번호를 함께 보관해 등록 API에 전달
- * - 초·중·고: NEIS `ORG_TELNO` → `phone` (대학 검색 API는 추후)
+ * - 초·중·고: NEIS `ORG_TELNO` → `phone`
+ * - 대학교: `UniversitySearch`(커리어넷 SCHOOL) — 전화 필드는 API에 없음
  */
 
 import { useEffect } from 'react'

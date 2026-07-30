@@ -7,6 +7,10 @@ interface ImportMetaEnv {
   readonly VITE_JUSO_CONFM_KEY?: string
   readonly VITE_JUSO_ADDRESS_API_URL?: string
   readonly VITE_NEIS_API_KEY?: string
+  /** 커리어넷 OpenAPI 인증키 (대학교 검색) */
+  readonly VITE_CAREER_NET_API_KEY?: string
+  /** @deprecated 오타 호환 — `VITE_CAREER_NET_API_KEY` 사용 권장 */
+  readonly VITE_CAREEAR_NET_API_KEY?: string
   /** 브라우저에서 직접 호출할 백엔드 오리진 (크로스 오리진). 로컬 프록시 쓸 때는 비움. */
   readonly VITE_API_BASE_URL?: string
   /** 로컬 Vite가 `/api` → 이 오리진으로 프록시. CMS와 동일. */

@@ -9,6 +9,7 @@
 import { useEffect, useMemo } from 'react'
 import { Form } from 'antd'
 import type { Dayjs } from 'dayjs'
+import { CAREER_NET_UNIV_SCH1 } from '@jakorea/location/career-net'
 import {
   CmsCheckbox,
   CmsCircleAddButton,
@@ -16,6 +17,7 @@ import {
   CmsInput,
   CmsSelect,
   SchoolSearch,
+  UniversitySearch,
 } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
@@ -164,6 +166,32 @@ function SchoolNameField({
         placeholder="학교명"
         inputSize="medium"
         width={width}
+      />
+    </Form.Item>
+  )
+}
+
+function UniversityNameField({
+  name,
+  width = 220,
+  defaultSch1 = '',
+}: {
+  name: (string | number)[]
+  width?: number | string
+  defaultSch1?: string
+}) {
+  const form = Form.useFormInstance()
+  const value = (Form.useWatch(name, form) as string | undefined) ?? ''
+
+  return (
+    <Form.Item name={name} noStyle>
+      <UniversitySearch
+        value={value}
+        onChange={next => form.setFieldValue(name, next)}
+        placeholder="대학교명"
+        inputSize="medium"
+        width={width}
+        defaultSch1={defaultSch1}
       />
     </Form.Item>
   )
@@ -354,7 +382,11 @@ export function InstructorRegisterEducationSection() {
                           />
                           <DetailInfoForm.InputsSeparator />
                           <div className="instructor-register-education__school-major">
-                            <SchoolNameField name={[field.name, 'schoolName']} width={200} />
+                            <UniversityNameField
+                              name={[field.name, 'schoolName']}
+                              width={200}
+                              defaultSch1={CAREER_NET_UNIV_SCH1.college}
+                            />
                             <Form.Item name={[field.name, 'major']} noStyle>
                               <CmsInput placeholder="전공" inputSize="medium" width={160} />
                             </Form.Item>
@@ -407,7 +439,11 @@ export function InstructorRegisterEducationSection() {
                           />
                           <DetailInfoForm.InputsSeparator />
                           <div className="instructor-register-education__school-major">
-                            <SchoolNameField name={[field.name, 'schoolName']} width={200} />
+                            <UniversityNameField
+                              name={[field.name, 'schoolName']}
+                              width={200}
+                              defaultSch1={CAREER_NET_UNIV_SCH1.university4}
+                            />
                             <Form.Item name={[field.name, 'major']} noStyle>
                               <CmsInput placeholder="전공" inputSize="medium" width={160} />
                             </Form.Item>
@@ -471,7 +507,7 @@ export function InstructorRegisterEducationSection() {
                           </div>
                           <DetailInfoForm.InputsSeparator />
                           <div className="instructor-register-education__school-major">
-                            <SchoolNameField name={[field.name, 'schoolName']} width={180} />
+                            <UniversityNameField name={[field.name, 'schoolName']} width={180} />
                             <Form.Item name={[field.name, 'major']} noStyle>
                               <CmsInput placeholder="전공" inputSize="medium" width={140} />
                             </Form.Item>

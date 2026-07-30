@@ -130,6 +130,12 @@ export type {
   SchoolSearchSelection,
   SchoolSearchSelectMeta,
 } from './school-search'
+export { UniversitySearch } from './university-search'
+export type {
+  UniversitySearchProps,
+  UniversitySearchSelection,
+  UniversitySearchSelectMeta,
+} from './university-search'
 export { CmsCompactPagination } from './cms-compact-pagination'
 export type { CmsCompactPaginationProps } from './cms-compact-pagination'
 export type { CmsControlSize } from './cms-control-size'

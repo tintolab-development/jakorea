@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { Dayjs } from 'dayjs'
-import { AddressSearch } from '@/shared/ui/address-search'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsDatePicker, CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -38,7 +37,6 @@ export function FormsSection() {
   const [toggle, setToggle] = useState(false)
   const [date, setDate] = useState<Dayjs | null>(null)
   const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>(null)
-  const [address, setAddress] = useState('')
   const [fileNames, setFileNames] = useState<string[]>([])
   const [integer, setInteger] = useState('')
   const [decimal, setDecimal] = useState('')
@@ -190,9 +188,8 @@ export function FormsSection() {
         </div>
       </DsDemo>
 
-      <DsDemo label="AddressSearch / FileSelectField">
+      <DsDemo label="FileSelectField">
         <div className="ds-demo__stack">
-          <AddressSearch value={address} onChange={setAddress} />
           <FileSelectField
             accept=".pdf,.png,.jpg"
             fileNames={fileNames}
@@ -201,6 +198,9 @@ export function FormsSection() {
             onRemoveFile={index => setFileNames(prev => prev.filter((_, i) => i !== index))}
           />
         </div>
+        <p className="ds-note">
+          주소·학교 검색 모달은 <a href="#search-modals">Search modals</a> 섹션을 참고하세요.
+        </p>
       </DsDemo>
     </DsSection>
   )
