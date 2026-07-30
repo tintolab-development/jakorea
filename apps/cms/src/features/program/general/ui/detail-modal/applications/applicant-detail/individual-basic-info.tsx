@@ -70,9 +70,6 @@ export interface ApplicantGeneralIndividualBasicInfoProps {
   onResendNotificationClick?: () => void
   screeningStage?: IndividualApplicantScreeningStage
   textbookOptions?: TextbookSelectOption[]
-  isAdminCommentEditing?: boolean
-  adminCommentDraft?: string
-  onAdminCommentDraftChange?: (value: string) => void
   openManagerDropdown?: { rowId: string; manager: 'A' | 'B' } | null
   setOpenManagerDropdown?: (value: { rowId: string; manager: 'A' | 'B' } | null) => void
   onManagerAEvaluationChange?: (id: string, evaluation: GeneralManagerEvaluation) => void
@@ -449,9 +446,6 @@ export function ApplicantGeneralIndividualBasicInfo({
   onResendNotificationClick,
   screeningStage = 'main',
   textbookOptions = [],
-  isAdminCommentEditing = false,
-  adminCommentDraft = '',
-  onAdminCommentDraftChange,
   openManagerDropdown = null,
   setOpenManagerDropdown,
   onManagerAEvaluationChange,
@@ -838,23 +832,8 @@ export function ApplicantGeneralIndividualBasicInfo({
       ) : null}
       {showAdminComment ? (
         <ApplicantAdminCommentSection
-          adminComment={
-            isAdminCommentEditing
-              ? adminCommentDraft
-              : isEditMode && draft
-                ? draft.adminComment
-                : applicant.adminComment
-          }
-          mode={isAdminCommentEditing || isEditMode ? 'edit' : 'view'}
-          draftValue={isAdminCommentEditing ? adminCommentDraft : (draft?.adminComment ?? '')}
-          onDraftChange={
-            isAdminCommentEditing && onAdminCommentDraftChange
-              ? onAdminCommentDraftChange
-              : isEditMode && onDraftChange
-                ? value => onDraftChange({ adminComment: value })
-                : undefined
-          }
-          validationError={validationErrors?.adminComment}
+          adminComment={applicant.adminComment}
+          mode="view"
         />
       ) : null}
 

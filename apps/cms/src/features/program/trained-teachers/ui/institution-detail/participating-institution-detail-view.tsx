@@ -47,6 +47,7 @@ import {
 } from '@/features/program/shared/ui/activity-withdraw-schedule-modal'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -92,7 +93,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
 
   const [textbookStatusDropdownOpen, setTextbookStatusDropdownOpen] = useState(false)
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
-  const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
+  const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
 
@@ -101,7 +102,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
   }, [detail.id])
 
   useEffect(() => {
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminCommentDraft('')
     setAdminCommentError(undefined)
     setActivityWithdrawModalOpen(false)
@@ -163,15 +164,20 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     if (isApplicationInfoEditing) return
     setAdminCommentDraft(mergedDetail.adminComment ?? '')
     setAdminCommentError(undefined)
-    setIsAdminCommentEditing(true)
+    setAdminCommentModalOpen(true)
   }, [isApplicationInfoEditing, mergedDetail.adminComment])
 
   const handleAdminCommentSave = useCallback(() => {
     const trimmed = adminCommentDraft.trim()
     onSaveBasicInfo?.({ id: detail.id, adminComment: trimmed || undefined })
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminCommentError(undefined)
   }, [adminCommentDraft, detail.id, onSaveBasicInfo])
+
+  const handleAdminCommentModalCancel = useCallback(() => {
+    setAdminCommentModalOpen(false)
+    setAdminCommentError(undefined)
+  }, [])
 
   const handleAdminCommentDraftChange = useCallback((value: string) => {
     setAdminCommentDraft(value)
@@ -186,9 +192,9 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       })
       return
     }
-    if (isApplicationInfoEditing || isAdminCommentEditing) return
+    if (isApplicationInfoEditing) return
     setActivityWithdrawModalOpen(true)
-  }, [isActivityWithdrawn, isApplicationInfoEditing, isAdminCommentEditing, showAlert])
+  }, [isActivityWithdrawn, isApplicationInfoEditing, showAlert])
 
   const handleConfirmActivityWithdraw = useCallback(
     (payload: ActivityWithdrawScheduleModalPayload) => {
@@ -315,16 +321,13 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                 variant="delete"
                 size="large"
                 width={140}
-                disabled={
-                  isActivityWithdrawn || isApplicationInfoEditing || isAdminCommentEditing
-                }
+                disabled={isActivityWithdrawn || isApplicationInfoEditing}
                 onClick={handleRequestActivityWithdraw}
               >
                 활동 포기
               </CmsButton>
               <CmsButton
                 {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                disabled={isAdminCommentEditing}
                 onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
                   onEnterEdit: enterApplicationInfoEdit,
                   onSaveEdit: () => saveApplicationInfoEdit(),
@@ -338,11 +341,9 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                   size="large"
                   width={140}
                   disabled={isApplicationInfoEditing}
-                  onClick={
-                    isAdminCommentEditing ? handleAdminCommentSave : handleAdminCommentEditEnter
-                  }
+                  onClick={handleAdminCommentEditEnter}
                 >
-                  {isAdminCommentEditing ? '코멘트 저장' : '코멘트 작성'}
+                  코멘트 작성
                 </CmsButton>
               ) : null}
               <PersonalInfoRevealButton
@@ -363,9 +364,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
               formError={applicationInfoValidationErrors?.form}
               showAdminComment={showAdminCommentSection}
               adminComment={mergedDetail.adminComment}
-              isAdminCommentEditing={isAdminCommentEditing}
-              adminCommentDraft={adminCommentDraft}
-              onAdminCommentDraftChange={handleAdminCommentDraftChange}
+              isAdminCommentEditing={false}
               adminCommentError={adminCommentError}
               programProgressCell={
                 <ProgramEnrollmentStatusText status={programProgressStatus} />
@@ -463,6 +462,13 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         scheduleOptions={activityWithdrawScheduleOptions}
         onCancel={() => setActivityWithdrawModalOpen(false)}
         onConfirm={handleConfirmActivityWithdraw}
+      />
+      <MemberAdminCommentModal
+        open={adminCommentModalOpen}
+        value={adminCommentDraft}
+        onChange={handleAdminCommentDraftChange}
+        onCancel={handleAdminCommentModalCancel}
+        onConfirm={handleAdminCommentSave}
       />
     </div>
   )

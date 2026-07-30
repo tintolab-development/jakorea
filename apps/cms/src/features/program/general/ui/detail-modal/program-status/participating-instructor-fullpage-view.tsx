@@ -34,6 +34,7 @@ import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import {
   INSTRUCTOR_ROLE_LABELS,
@@ -267,7 +268,7 @@ export function ParticipatingInstructorFullpageView({
   const [assignGuideSessionIds, setAssignGuideSessionIds] = useState<string[]>([])
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
   const [savedAdminComment, setSavedAdminComment] = useState('')
-  const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
+  const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
   const [instructorPatches, setInstructorPatches] = useState<Partial<ParticipatingInstructorRow>>(
@@ -352,7 +353,7 @@ export function ParticipatingInstructorFullpageView({
 
   useEffect(() => {
     setSavedAdminComment(d.adminComment ?? '')
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminCommentDraft('')
     setAdminCommentError(undefined)
     setInstructorPatches({})
@@ -811,9 +812,9 @@ export function ParticipatingInstructorFullpageView({
       })
       return
     }
-    if (applicationInfoEdit.isEditing || isAdminCommentEditing) return
+    if (applicationInfoEdit.isEditing) return
     setActivityWithdrawModalOpen(true)
-  }, [applicationInfoEdit.isEditing, isActivityWithdrawn, isAdminCommentEditing, showAlert])
+  }, [applicationInfoEdit.isEditing, isActivityWithdrawn, showAlert])
 
   const handleCancelActivityWithdraw = useCallback(() => {
     setActivityWithdrawModalOpen(false)
@@ -844,14 +845,19 @@ export function ParticipatingInstructorFullpageView({
     if (applicationInfoEdit.isEditing) return
     setAdminCommentDraft(savedAdminComment)
     setAdminCommentError(undefined)
-    setIsAdminCommentEditing(true)
+    setAdminCommentModalOpen(true)
   }, [applicationInfoEdit.isEditing, savedAdminComment])
 
   const handleAdminCommentSave = useCallback(() => {
     setSavedAdminComment(adminCommentDraft.trim())
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminCommentError(undefined)
   }, [adminCommentDraft])
+
+  const handleAdminCommentModalCancel = useCallback(() => {
+    setAdminCommentModalOpen(false)
+    setAdminCommentError(undefined)
+  }, [])
 
   const handleAdminCommentDraftChange = useCallback((value: string) => {
     setAdminCommentDraft(value)
@@ -866,9 +872,7 @@ export function ParticipatingInstructorFullpageView({
           program={program}
           privacyMasked={privacyMasked}
           adminComment={savedAdminComment}
-          isAdminCommentEditing={isAdminCommentEditing}
-          adminCommentDraft={adminCommentDraft}
-          onAdminCommentDraftChange={handleAdminCommentDraftChange}
+          isAdminCommentEditing={false}
           adminCommentError={adminCommentError}
           mode={applicationInfoEdit.isEditing ? 'edit' : 'view'}
           draft={applicationInfoEdit.draft ?? undefined}
@@ -1005,9 +1009,7 @@ export function ParticipatingInstructorFullpageView({
                 variant="delete"
                 size="large"
                 width={140}
-                disabled={
-                  isActivityWithdrawn || applicationInfoEdit.isEditing || isAdminCommentEditing
-                }
+                disabled={isActivityWithdrawn || applicationInfoEdit.isEditing}
                 onClick={handleRequestActivityWithdraw}
               >
                 활동 포기
@@ -1023,7 +1025,6 @@ export function ParticipatingInstructorFullpageView({
               </CmsButton>
               <CmsButton
                 {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                disabled={isAdminCommentEditing}
                 onClick={resolveProgramEditInfoClick(applicationInfoEdit.isEditing, {
                   onEnterEdit: applicationInfoEdit.enterEdit,
                   onSaveEdit: () => applicationInfoEdit.saveEdit(),
@@ -1036,11 +1037,9 @@ export function ParticipatingInstructorFullpageView({
                 size="large"
                 width={140}
                 disabled={applicationInfoEdit.isEditing}
-                onClick={
-                  isAdminCommentEditing ? handleAdminCommentSave : handleAdminCommentEditEnter
-                }
+                onClick={handleAdminCommentEditEnter}
               >
-                {isAdminCommentEditing ? '코멘트 저장' : '코멘트 작성'}
+                코멘트 작성
               </CmsButton>
               <PersonalInfoRevealButton
                 labelMode="stickyReveal"
@@ -1248,6 +1247,13 @@ export function ParticipatingInstructorFullpageView({
         scheduleOptions={activityWithdrawScheduleOptions}
         onCancel={handleCancelActivityWithdraw}
         onConfirm={handleConfirmActivityWithdraw}
+      />
+      <MemberAdminCommentModal
+        open={adminCommentModalOpen}
+        value={adminCommentDraft}
+        onChange={handleAdminCommentDraftChange}
+        onCancel={handleAdminCommentModalCancel}
+        onConfirm={handleAdminCommentSave}
       />
     </div>
   )

@@ -11,6 +11,7 @@ import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import {
   applyParticipatingVolunteerActivityWithdraw,
   getParticipatingVolunteerActivityWithdrawScheduleOptions,
@@ -65,7 +66,7 @@ export function ParticipatingVolunteerFullpageView({
   )
   const [volunteerPatches, setVolunteerPatches] = useState<Partial<ParticipatingVolunteerRow>>({})
   const [savedAdminComment, setSavedAdminComment] = useState('')
-  const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
+  const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
@@ -111,7 +112,7 @@ export function ParticipatingVolunteerFullpageView({
 
   useEffect(() => {
     setSavedAdminComment(initialVolunteer.adminComment ?? '')
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminCommentDraft('')
     setAdminCommentError(undefined)
     setVolunteerPatches({})
@@ -136,14 +137,8 @@ export function ParticipatingVolunteerFullpageView({
       })
       return
     }
-    if (isAdminCommentEditing) return
     setActivityWithdrawModalOpen(true)
-  }, [
-    activityWithdrawScheduleOptions.length,
-    isAdminCommentEditing,
-    mergedVolunteer.activityWithdrawn,
-    showAlert,
-  ])
+  }, [activityWithdrawScheduleOptions.length, mergedVolunteer.activityWithdrawn, showAlert])
 
   const handleConfirmActivityWithdraw = useCallback(
     (payload: { stopSessionKey: string }) => {
@@ -166,14 +161,19 @@ export function ParticipatingVolunteerFullpageView({
   const handleAdminCommentEditEnter = useCallback(() => {
     setAdminCommentDraft(savedAdminComment)
     setAdminCommentError(undefined)
-    setIsAdminCommentEditing(true)
+    setAdminCommentModalOpen(true)
   }, [savedAdminComment])
 
   const handleAdminCommentSave = useCallback(() => {
     setSavedAdminComment(adminCommentDraft.trim())
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminCommentError(undefined)
   }, [adminCommentDraft])
+
+  const handleAdminCommentModalCancel = useCallback(() => {
+    setAdminCommentModalOpen(false)
+    setAdminCommentError(undefined)
+  }, [])
 
   const handleAdminCommentDraftChange = useCallback((value: string) => {
     setAdminCommentDraft(value)
@@ -199,7 +199,6 @@ export function ParticipatingVolunteerFullpageView({
                 width={140}
                 disabled={
                   mergedVolunteer.activityWithdrawn ||
-                  isAdminCommentEditing ||
                   activityWithdrawScheduleOptions.length === 0
                 }
                 onClick={handleRequestActivityWithdraw}
@@ -219,11 +218,9 @@ export function ParticipatingVolunteerFullpageView({
                 variant="primary"
                 size="large"
                 width={140}
-                onClick={
-                  isAdminCommentEditing ? handleAdminCommentSave : handleAdminCommentEditEnter
-                }
+                onClick={handleAdminCommentEditEnter}
               >
-                {isAdminCommentEditing ? '코멘트 저장' : '코멘트 작성'}
+                코멘트 작성
               </CmsButton>
               <PersonalInfoRevealButton
                 labelMode="stickyReveal"
@@ -244,9 +241,7 @@ export function ParticipatingVolunteerFullpageView({
                 volunteer={mergedVolunteer}
                 privacyMasked={privacyMasked}
                 adminComment={savedAdminComment}
-                isAdminCommentEditing={isAdminCommentEditing}
-                adminCommentDraft={adminCommentDraft}
-                onAdminCommentDraftChange={handleAdminCommentDraftChange}
+                isAdminCommentEditing={false}
                 adminCommentError={adminCommentError}
               />
             </div>
@@ -280,6 +275,13 @@ export function ParticipatingVolunteerFullpageView({
         program={program}
       />
       {personalInfoRevealModal}
+      <MemberAdminCommentModal
+        open={adminCommentModalOpen}
+        value={adminCommentDraft}
+        onChange={handleAdminCommentDraftChange}
+        onCancel={handleAdminCommentModalCancel}
+        onConfirm={handleAdminCommentSave}
+      />
     </div>
   )
 }

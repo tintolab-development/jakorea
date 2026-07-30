@@ -16,6 +16,7 @@ import { MESSAGES } from '@/shared/constants/messages'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { buildParticipatingParticipantCertificateContext } from '@/features/program/general/lib/participating-individual-participant-certificate'
 import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
@@ -86,7 +87,7 @@ export function ParticipatingParticipantFullpageView({
     Partial<ParticipatingIndividualParticipantRow>
   >({})
   const [savedAdminComment, setSavedAdminComment] = useState('')
-  const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
+  const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
   const [certificateIssueModalOpen, setCertificateIssueModalOpen] = useState(false)
@@ -163,7 +164,7 @@ export function ParticipatingParticipantFullpageView({
   useEffect(() => {
     setParticipantPatches({})
     setSavedAdminComment(initialParticipant.adminComment ?? '')
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminCommentDraft('')
     setActivityWithdrawModalOpen(false)
     setCertificateIssueModalOpen(false)
@@ -190,12 +191,11 @@ export function ParticipatingParticipantFullpageView({
       })
       return
     }
-    if (isApplicationInfoEditing || isAdminCommentEditing) return
+    if (isApplicationInfoEditing) return
     setActivityWithdrawModalOpen(true)
   }, [
     activityWithdrawScheduleOptions.length,
     isActivityWithdrawn,
-    isAdminCommentEditing,
     isApplicationInfoEditing,
     showAlert,
   ])
@@ -222,11 +222,10 @@ export function ParticipatingParticipantFullpageView({
     if (!isWithinStudentCertificateIssuancePeriod(mergedParticipant.participationAppliedAt)) {
       return
     }
-    if (isApplicationInfoEditing || isAdminCommentEditing) return
+    if (isApplicationInfoEditing) return
     setCertificateIssueModalOpen(true)
   }, [
     certificateExportActive,
-    isAdminCommentEditing,
     isApplicationInfoEditing,
     mergedParticipant.participationAppliedAt,
   ])
@@ -264,7 +263,7 @@ export function ParticipatingParticipantFullpageView({
   const handleAdminCommentEditEnter = useCallback(() => {
     if (isApplicationInfoEditing) return
     setAdminCommentDraft(savedAdminComment)
-    setIsAdminCommentEditing(true)
+    setAdminCommentModalOpen(true)
   }, [isApplicationInfoEditing, savedAdminComment])
 
   const handleAdminCommentSave = useCallback(() => {
@@ -281,16 +280,19 @@ export function ParticipatingParticipantFullpageView({
     }
     setSavedAdminComment(trimmed)
     setParticipantPatches(prev => ({ ...prev, adminComment: updated.adminComment }))
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
   }, [adminCommentDraft, mergedParticipant.id, showAlert])
+
+  const handleAdminCommentModalCancel = useCallback(() => {
+    setAdminCommentModalOpen(false)
+  }, [])
 
   const handleAdminCommentDraftChange = useCallback((value: string) => {
     setAdminCommentDraft(value)
   }, [])
 
-  const displayAdminComment = isAdminCommentEditing
-    ? adminCommentDraft
-    : isApplicationInfoEditing && draft
+  const displayAdminComment =
+    isApplicationInfoEditing && draft
       ? draft.adminComment
       : savedAdminComment || mergedParticipant.adminComment
 
@@ -314,7 +316,6 @@ export function ParticipatingParticipantFullpageView({
                 disabled={
                   isActivityWithdrawn ||
                   isApplicationInfoEditing ||
-                  isAdminCommentEditing ||
                   activityWithdrawScheduleOptions.length === 0
                 }
                 onClick={handleRequestActivityWithdraw}
@@ -329,7 +330,6 @@ export function ParticipatingParticipantFullpageView({
                 disabled={
                   certificateExportActive ||
                   isApplicationInfoEditing ||
-                  isAdminCommentEditing ||
                   !isWithinStudentCertificateIssuancePeriod(
                     mergedParticipant.participationAppliedAt
                   )
@@ -340,7 +340,6 @@ export function ParticipatingParticipantFullpageView({
               </CmsButton>
               <CmsButton
                 {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-                disabled={isAdminCommentEditing}
                 onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
                   onEnterEdit: enterApplicationInfoEdit,
                   onSaveEdit: () => saveApplicationInfoEdit(),
@@ -353,11 +352,9 @@ export function ParticipatingParticipantFullpageView({
                 size="large"
                 width={140}
                 disabled={isApplicationInfoEditing}
-                onClick={
-                  isAdminCommentEditing ? handleAdminCommentSave : handleAdminCommentEditEnter
-                }
+                onClick={handleAdminCommentEditEnter}
               >
-                {isAdminCommentEditing ? '코멘트 저장' : '코멘트 작성'}
+                코멘트 작성
               </CmsButton>
               <PersonalInfoRevealButton
                 labelMode="stickyReveal"
@@ -436,9 +433,6 @@ export function ParticipatingParticipantFullpageView({
                 onDraftChange={isApplicationInfoEditing ? updateDraft : undefined}
                 validationErrors={validationErrors}
                 textbookOptions={textbookOptions}
-                isAdminCommentEditing={isAdminCommentEditing}
-                adminCommentDraft={adminCommentDraft}
-                onAdminCommentDraftChange={handleAdminCommentDraftChange}
               />
             </div>
           </div>
@@ -488,6 +482,13 @@ export function ParticipatingParticipantFullpageView({
         />
       ) : null}
       {personalInfoRevealModal}
+      <MemberAdminCommentModal
+        open={adminCommentModalOpen}
+        value={adminCommentDraft}
+        onChange={handleAdminCommentDraftChange}
+        onCancel={handleAdminCommentModalCancel}
+        onConfirm={handleAdminCommentSave}
+      />
     </div>
   )
 }
