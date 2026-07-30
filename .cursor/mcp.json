@@ -1,11 +1,14 @@
 {
   "mcpServers": {
+    "figma_official": {
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "notion": {
+      "url": "https://mcp.notion.com/mcp"
+    },
     "playwright": {
-      "command": "/Users/tintolab/.nvm/versions/node/v20.19.5/bin/npx",
-      "args": ["-y", "@playwright/mcp@latest"],
-      "env": {
-        "PATH": "/Users/tintolab/.nvm/versions/node/v20.19.5/bin:/usr/bin:/bin"
-      }
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
     }
   }
 }
