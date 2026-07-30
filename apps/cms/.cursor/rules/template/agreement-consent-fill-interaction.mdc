@@ -28,6 +28,7 @@ alwaysApply: false
 - 양식 본문만 잠금: **`agreementConsentFillReadOnlyBody: true`**
 - 하단 동의 라디오: `structureLockedAuthoringChoicePreview: true` (fill에서 user와 함께 동작하도록 렌더러 유지)
 - 초상권 1번 표: `portraitConsentResponseFieldsInteractive: true`
+- 행정정보 공동이용: `agreementConsentFillInteractiveParagraphIds`(이용기관·이용사무·대상자 본인) + `agreementNoticeIdTypeInteractive`
 
 ## 금지 · 주의
 
@@ -58,6 +59,7 @@ fill에서 양식만 잠그려면 `preview` 대신 **`user` + `agreementConsentF
 - [ ] **동의 / 동의하지 않음** 라디오 — 선택 가능
 - [ ] **지급조서 기본정보** (`BasicInfoParagraph`) — 입력 가능
 - [ ] **초상권** 성명·소속 — 입력 가능(해당 템플릿)
+- [ ] **행정정보 공동이용** 이용기관·이용사무·대상자 본인·식별번호 — 입력 가능
 - [ ] 템플릿 관리(authoring) 화면 — 기존 편집 동작 회귀 없음
 
 ## 관련 코드
