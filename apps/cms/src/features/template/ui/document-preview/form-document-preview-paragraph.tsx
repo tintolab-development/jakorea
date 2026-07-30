@@ -22,10 +22,12 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import type { FormDocumentPreviewRenderMode } from '@/features/template/lib/a4-document-preview'
 import { getDocumentPreviewParagraphViewModel } from '@/features/template/lib/a4-document-preview'
+import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import { resolveParagraphTitleRequiredMark } from '@/features/template/lib/paragraph-required-mark'
 import { getFormParagraphDisplayTitle } from '@/features/template/lib/form-title-numbering'
 import { ParagraphCard } from '@/features/template/ui/paragraph/shared/paragraph-card'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
+import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragraph/explanation/agreement-admin-proxy-confirm-block'
 import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
@@ -49,7 +51,9 @@ import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/s
 import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
+import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
+import '@/features/template/ui/form-editor/form-editor.css'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import './form-document-preview-body.css'
 
@@ -294,8 +298,31 @@ function renderBody(
       )
     case 'agreement_explanation_text': {
       const ph = safeTrim(p.bodyPlaceholder) || '텍스트를 작성해 주세요'
-      const text = safeTrim(p.bodyText) || ph
-      return <div className="form-document-preview-paragraph__body-text">{text}</div>
+      const body = safeTrim(p.bodyText)
+      return (
+        <div className="form-editor-body explanation-text">
+          <div
+            className={
+              body
+                ? 'form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--explanation-filled'
+                : 'form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--explanation-placeholder'
+            }
+          >
+            {body || ph}
+          </div>
+          {p.showBottomConsent === true || p.id === 'agreement-portrait-intro' ? (
+            <CmsRadioGroup
+              className="form-editor-table-bottom-consent"
+              size="large"
+              value={p.bottomConsent ?? 'agree'}
+              style={{ pointerEvents: 'none' }}
+            >
+              <CmsRadio value="agree">동의</CmsRadio>
+              <CmsRadio value="disagree">동의하지 않음</CmsRadio>
+            </CmsRadioGroup>
+          ) : null}
+        </div>
+      )
     }
     case 'horizontal_table':
       return (
@@ -493,6 +520,18 @@ function renderBody(
       return <IdTypeWithInput paragraph={p} onChange={noopOnParagraphChange} isEditMode={false} />
     case 'closing': {
       const c = p as ClosingParagraph
+      if (
+        paragraphBodyOptions?.agreementAdminProxyConfirm === true &&
+        isAgreementAdminProxyConfirmHostId(c.id)
+      ) {
+        return (
+          <AgreementAdminProxyConfirmBlock
+            consentText={c.body}
+            memberName={paragraphBodyOptions.agreementSystemParticipantName ?? ''}
+            now={paragraphBodyOptions.agreementSystemNow}
+          />
+        )
+      }
       return (
         <div className="form-document-preview-paragraph__body-text">{safeTrim(c.body) || ' '}</div>
       )
@@ -536,6 +575,34 @@ export function FormDocumentPreviewParagraph({
     paragraph.variant === 'closing'
   ) {
     const c = paragraph as ClosingParagraph
+    if (
+      paragraphBodyOptions?.agreementAdminProxyConfirm === true &&
+      isAgreementAdminProxyConfirmHostId(c.id)
+    ) {
+      return (
+        <div
+          className={[
+            'form-document-preview-paragraph',
+            'paragraph-card',
+            'agreement-admin-proxy-confirm-card',
+            overflow ? 'form-document-preview-paragraph--overflow' : '',
+            isAuthoringSyncFocused ? 'form-document-preview-paragraph--authoring-sync-focus' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          data-paragraph-id={paragraph.id}
+          style={style}
+        >
+          <div className="paragraph-card__slot">
+            <AgreementAdminProxyConfirmBlock
+              consentText={c.body}
+              memberName={paragraphBodyOptions.agreementSystemParticipantName ?? ''}
+              now={paragraphBodyOptions.agreementSystemNow}
+            />
+          </div>
+        </div>
+      )
+    }
     const head = readOnlyTitleBlock(displayTitle, undefined)
     return (
       <div

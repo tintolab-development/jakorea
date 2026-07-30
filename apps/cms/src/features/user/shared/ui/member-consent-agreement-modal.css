@@ -24,7 +24,8 @@
 }
 
 .member-consent-agreement-modal__form-panel {
-  width: min(920px, 100%);
+  /* 템플릿 단락 열 최대폭과 동일 (`--template-preview-paragraph-column-max`) */
+  width: min(1400px, 100%);
   margin: 0 auto;
 }
 

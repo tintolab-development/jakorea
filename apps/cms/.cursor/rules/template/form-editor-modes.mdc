@@ -49,5 +49,6 @@ alwaysApply: false
 ## 함께 볼 것
 
 - [template-management.md](../coding/template-management.md) — 템플릿 기능 경계
+- [agreement-consent-fill-interaction.mdc](./agreement-consent-fill-interaction.mdc) — **회원 동의서 작성**: `preview`/`user` 착오, 양식 잠금 vs 응답 입력
 - [ujat-program-new-registration-programs-url.md](../process/ujat-program-new-registration-programs-url.md) — `/programs/ujat?new` 부트스트랩 및 **사용자 모드 vs `userPreview`**
 - [paragraph-card-slots.mdc](./paragraph-card-slots.mdc) — 카드 슬롯·헤더

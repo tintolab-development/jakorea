@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   MOCK_ADMIN_REGISTERED_BIRTH_DATE,
   MOCK_ADMIN_REGISTERED_EMAIL,
@@ -37,6 +37,7 @@ import {
   DEV_MEMBER_PROFILE_OPTIONS,
   getDevAuthLoggedIn,
   getDevMemberProfile,
+  platformBreakpoints,
   setDevAuthLoggedIn,
   setDevMemberProfile,
 } from '@/shared/lib'
@@ -304,6 +305,13 @@ export function TestPage() {
     getDevMemberProfile()
   )
   const [devIsLoggedIn, setDevIsLoggedInState] = useState(() => getDevAuthLoggedIn())
+  const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth)
+
+  useEffect(() => {
+    const handleResize = () => setViewportWidth(window.innerWidth)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const handleDevMemberProfileChange = (profile: PlatformMemberProfile) => {
     setDevMemberProfile(profile)
@@ -315,6 +323,11 @@ export function TestPage() {
     setDevIsLoggedInState(loggedIn)
   }
 
+  const isMobileHeader = viewportWidth <= platformBreakpoints.belowPcMax
+  const viewportLabel = isMobileHeader
+    ? `모바일 헤더 (≤${platformBreakpoints.belowPcMax})`
+    : `PC 헤더 (≥${platformBreakpoints.pcMin})`
+
   const { editor, api } = useRichTextEditor({
     enabled: true,
     initialContent: '**Platform** rich text 데모',
@@ -324,6 +337,34 @@ export function TestPage() {
 
   return (
     <section className={styles.page}>
+      <div className={styles.mobileVerifyBar}>
+        <div className={styles.mobileVerifyInfo}>
+          <PFText as="div" typo="bd-sm-sb" color="black">
+            모바일 UI 검증
+          </PFText>
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            {viewportWidth}px · {viewportLabel}
+            {isMobileHeader ? ' · 햄버거로 메뉴 확인' : ' · DevTools에서 폭을 줄여 모바일 헤더 확인'}
+          </PFText>
+        </div>
+        <div className={styles.mobileVerifyActions}>
+          <PFButton
+            size="small"
+            variant={devIsLoggedIn ? 'primary' : 'tertiary'}
+            onClick={() => handleDevLoginToggle(true)}
+          >
+            로그인 ON
+          </PFButton>
+          <PFButton
+            size="small"
+            variant={!devIsLoggedIn ? 'primary' : 'tertiary'}
+            onClick={() => handleDevLoginToggle(false)}
+          >
+            로그인 OFF
+          </PFButton>
+        </div>
+      </div>
+
       <div className={styles.header}>
         <PFText as="div" typo="hd-lg" color="black">
           Platform Component Test

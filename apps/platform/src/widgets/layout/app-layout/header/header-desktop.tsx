@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { PFText } from '@/shared/ui'
 import logoUrl from '@/shared/assets/brand/ja-logo.svg'
-import externalLinkIconUrl from '@/shared/assets/icons/external-link.svg'
+import externalLinkIconUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
 import {
   getActiveNavigationItem,
   getLoggedInActionRoute,
@@ -32,7 +32,12 @@ function NavigationSubMenuItem({ item }: { item: NavigationSubItem }) {
     <>
       <span className={styles.menuItemLabel}>{item.label}</span>
       {item.external ? (
-        <img className={styles.menuItemExternalIcon} src={externalLinkIconUrl} alt="" aria-hidden="true" />
+        <img
+          className={styles.menuItemExternalIcon}
+          src={externalLinkIconUrl}
+          alt=""
+          aria-hidden="true"
+        />
       ) : null}
     </>
   )
@@ -43,9 +48,7 @@ function NavigationSubMenuItem({ item }: { item: NavigationSubItem }) {
         className={itemClassName}
         href={item.href}
         role="menuitem"
-        {...(item.external
-          ? { target: '_blank', rel: 'noopener noreferrer' }
-          : undefined)}
+        {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : undefined)}
       >
         {content}
       </a>
@@ -59,7 +62,11 @@ function NavigationSubMenuItem({ item }: { item: NavigationSubItem }) {
   )
 }
 
-export function HeaderDesktop({ isLoggedIn = false, onLogout, transparent = false }: HeaderDesktopProps) {
+export function HeaderDesktop({
+  isLoggedIn = false,
+  onLogout,
+  transparent = false,
+}: HeaderDesktopProps) {
   const [activeNavigationItem, setActiveNavigationItem] = useState(() =>
     getActiveNavigationItem(window.location.pathname)
   )
@@ -85,58 +92,44 @@ export function HeaderDesktop({ isLoggedIn = false, onLogout, transparent = fals
           <img className={styles.logo} src={logoUrl} alt="JA Korea" />
         </a>
 
-        <div
-          className={styles.navigationArea}
+        <nav
+          className={styles.navigation}
+          aria-label="주요 메뉴"
+          aria-expanded={isNavOpen}
           onMouseEnter={() => {
             setIsNavOpen(true)
           }}
         >
-          <nav className={styles.navigation} aria-label="주요 메뉴" aria-expanded={isNavOpen}>
-            {navigationGroups.map(group => {
-              const isActive = group.label === activeNavigationItem
-              const buttonClassName = [
-                styles.navigationButton,
-                isActive ? styles.navigationButtonActive : undefined,
-              ]
-                .filter(Boolean)
-                .join(' ')
+          {navigationGroups.map(group => {
+            const isActive = group.label === activeNavigationItem
+            const buttonClassName = [
+              styles.navigationButton,
+              isActive ? styles.navigationButtonActive : undefined,
+            ]
+              .filter(Boolean)
+              .join(' ')
 
-              return (
-                <button
-                  className={buttonClassName}
-                  type="button"
-                  aria-pressed={isActive}
-                  key={group.label}
-                  onClick={() => {
-                    setActiveNavigationItem(group.label)
-                    const href = 'href' in group ? group.href : undefined
-                    if (href) {
-                      window.location.assign(href)
-                    }
-                  }}
-                >
-                  <PFText typo="bd-lg-sb" color={isActive ? 'primary-500' : 'black'}>
-                    {group.label}
-                  </PFText>
-                </button>
-              )
-            })}
-          </nav>
-
-          <div
-            className={dropdownClassName}
-            role="menu"
-            aria-label="주요 메뉴 하위"
-          >
-            {navigationGroups.map(group => (
-              <div className={styles.menuGroup} role="group" aria-label={group.label} key={group.label}>
-                {group.children.map(item => (
-                  <NavigationSubMenuItem item={item} key={item.label} />
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+            return (
+              <button
+                className={buttonClassName}
+                type="button"
+                aria-pressed={isActive}
+                key={group.label}
+                onClick={() => {
+                  setActiveNavigationItem(group.label)
+                  const href = 'href' in group ? group.href : undefined
+                  if (href) {
+                    window.location.assign(href)
+                  }
+                }}
+              >
+                <PFText typo="bd-lg-sb" color={isActive ? 'primary-500' : 'black'}>
+                  {group.label}
+                </PFText>
+              </button>
+            )
+          })}
+        </nav>
 
         {isLoggedIn ? (
           <div className={styles.loggedInActions}>
@@ -182,6 +175,34 @@ export function HeaderDesktop({ isLoggedIn = false, onLogout, transparent = fals
             })}
           </div>
         )}
+      </div>
+
+      <div
+        className={dropdownClassName}
+        role="menu"
+        aria-label="주요 메뉴 하위"
+        onMouseEnter={() => {
+          setIsNavOpen(true)
+        }}
+      >
+        <div className={styles.dropdownInner}>
+          <div className={styles.dropdownLogoSpacer} aria-hidden="true" />
+          <div className={styles.dropdownColumns}>
+            {navigationGroups.map(group => (
+              <div
+                className={styles.menuGroup}
+                role="group"
+                aria-label={group.label}
+                key={group.label}
+              >
+                {group.children.map(item => (
+                  <NavigationSubMenuItem item={item} key={item.label} />
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className={styles.dropdownAuthSpacer} aria-hidden="true" />
+        </div>
       </div>
     </header>
   )

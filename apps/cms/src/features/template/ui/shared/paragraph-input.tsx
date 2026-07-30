@@ -53,22 +53,25 @@ export function ParagraphInput({
   const filled = safeValue.trim().length > 0
   const isExplanationTitle = className?.includes('paragraph-input-explanation-title') ?? false
   const isExplanationBody = className?.includes('paragraph-input--explanation-body') ?? false
-  /** 단락 카드 설명(설명글_텍스트형 본문 제외) — `\n` 개행·여러 줄 편집 */
+  /** 단락 카드 설명 — `\n` 개행·여러 줄 편집 */
   const isMultilineCardDescription =
     type === 'description' &&
     !isExplanationBody &&
     (!isExplanationTitle || safeValue.includes('\n'))
+  /** 설명글_텍스트형 본문 — 긴 텍스트 줄바꿈(말줄임 금지), `\n`·자동 개행 */
+  const isExplanationBodyMultiline = isExplanationBody
+  const useMultilineInput = isMultilineCardDescription || isExplanationBodyMultiline
   const widthSource = filled ? safeValue : (placeholder ?? '')
   const dynamicWidthPx = useMemo(() => {
-    if (isMultilineCardDescription) return 0
+    if (useMultilineInput) return 0
     const source = widthSource.length > 0 ? widthSource : ' '
     const measured = measureTextWidthPx(source, type, isExplanationTitle)
     return Math.max(measured + 2, 1)
-  }, [widthSource, type, isExplanationTitle, isMultilineCardDescription])
-  const dynamicWidthStyle: CSSProperties = isMultilineCardDescription
+  }, [widthSource, type, isExplanationTitle, useMultilineInput])
+  const dynamicWidthStyle: CSSProperties = useMultilineInput
     ? { width: '100%', minWidth: 0, maxWidth: '100%' }
     : {
-        width: isExplanationBody ? '100%' : `${dynamicWidthPx}px`,
+        width: `${dynamicWidthPx}px`,
         maxWidth: '100%',
       }
 
@@ -78,6 +81,7 @@ export function ParagraphInput({
     isEditMode ? 'paragraph-input--edit' : 'paragraph-input--view',
     filled && 'paragraph-input--filled',
     isMultilineCardDescription && 'paragraph-input--description-multiline',
+    isExplanationBodyMultiline && 'paragraph-input--explanation-body-multiline',
     className
   )
 
@@ -121,7 +125,7 @@ export function ParagraphInput({
         {row}
         <span className="paragraph-input__main">
           <div className={shellClass} style={dynamicWidthStyle}>
-            {isMultilineCardDescription ? (
+            {useMultilineInput ? (
               <Input.TextArea
                 disabled={disabled}
                 value={safeValue}

@@ -3,10 +3,8 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import type { WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { paragraphKindLabel } from '@/features/template/model/writing-form/paragraph-labels'
 import {
-  DESCRIPTION_DETAIL_OPTIONS,
   PARAGRAPH_KIND_OPTIONS,
-  SINGLE_ITEM_DETAIL_OPTIONS,
-  TABLE_DETAIL_OPTIONS,
+  detailSelectOptionsForValue,
   type DetailSelectValue,
   type ParagraphKindSelectValue,
 } from '@/features/template/model/writing-form/paragraph-selectors'
@@ -45,13 +43,10 @@ export function ParagraphMetaSection({
             <CmsSelect
               width="100%"
               value={activeDetailValue ?? paragraphVariantLabel(active)}
-              options={
-                activeKindValue === 'table'
-                  ? TABLE_DETAIL_OPTIONS
-                  : activeKindValue === 'description'
-                    ? DESCRIPTION_DETAIL_OPTIONS
-                    : SINGLE_ITEM_DETAIL_OPTIONS
-              }
+              options={detailSelectOptionsForValue(
+                activeKindValue ?? 'single_item',
+                activeDetailValue
+              )}
               onChange={v => onDetailChange(v as DetailSelectValue)}
               disabled={activeKindLocked}
             />

@@ -56,10 +56,14 @@ export function FormEditorRightPanel({
   verticalTableBodyRowSelection = null,
   onVerticalTableBodyRowDeleted,
   structureLockedParagraphIds,
-  hideParagraphKindOutline = true,
+  hideParagraphKindOutline: hideParagraphKindOutlineProp,
 }: FormEditorRightPanelProps) {
   const { active, structureLockedActive, outline, activeKindValue, activeDetailValue, activeKindLocked } =
     useActiveParagraphState({ draft, activeParagraphId, structureLockedParagraphIds })
+
+  /** 사용자 추가 단락: 유형 셀렉트 노출 / 시드·관리자 고정: 숨김 */
+  const hideParagraphKindOutline =
+    hideParagraphKindOutlineProp ?? structureLockedActive
 
   const { handleKindChange, handleDetailChange } = useParagraphConversion({
     active,
@@ -81,9 +85,10 @@ export function FormEditorRightPanel({
             onChange={onTitleNumberingChange}
           />
         ) : null}
-        {titleWithPeriodLocked || !hideParagraphKindOutline ? (
+        {/* 시드·고정 단락: 유형 셀렉트 숨김. 명시적으로 노출할 때만 StructureLocked 안내 */}
+        {hideParagraphKindOutline ? null : (
           <StructureLockedParagraphSection paragraph={active} />
-        ) : null}
+        )}
         {titleWithPeriodLocked ? (
           <ParagraphCustomFieldsFormShell
             active={active}

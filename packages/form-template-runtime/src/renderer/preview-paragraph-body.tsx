@@ -2,8 +2,7 @@ import type {
   WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import type { FormTemplateSurface, ParagraphBodyInteractionMode } from '@jakorea/form-schema/surface'
-import { DetailInfoForm } from '../detail-info-form/detail-info-form.js'
-import { horizontalTableToDetailInfoRows } from './horizontal-table-preview.js'
+import { HorizontalTablePreviewBody } from './horizontal-table-preview-body.js'
 
 export type PreviewParagraphBodyProps = {
   paragraph: WritingFormParagraph
@@ -24,15 +23,8 @@ export function PreviewParagraphBody({
   }
 
   if (paragraph.kind === 'single_item' && paragraph.variant === 'horizontal_table') {
-    const rows = horizontalTableToDetailInfoRows(paragraph)
     return (
-      <DetailInfoForm title={paragraph.paragraphTitle} hideHeader mode="view">
-        {rows.map((row, index) => (
-          <DetailInfoForm.Row key={`${paragraph.id}-row-${index}`}>
-            <DetailInfoForm.Field label={row.label} view={row.value} />
-          </DetailInfoForm.Row>
-        ))}
-      </DetailInfoForm>
+      <HorizontalTablePreviewBody paragraph={paragraph} interactionMode={interactionMode} />
     )
   }
 

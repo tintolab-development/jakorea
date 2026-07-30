@@ -1,7 +1,7 @@
 /**
  * 학교 검색: CmsInput 클릭 시 ContentModal
  * - 초·중·고 → NEIS(나이스) 학교 검색 API (`useNeisSchoolSearch`)
- * - 대학교 → 커리어넷 SCHOOL API (`useCareerNetUniversitySearch`)
+ * - 대학교·전문대학 → 커리어넷 SCHOOL API (`useCareerNetUniversitySearch`)
  */
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
@@ -10,6 +10,7 @@ import { SearchOutlined } from '@ant-design/icons'
 import { Flex, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
+  CAREER_NET_UNIV_SCH1,
   filterCareerNetUniversitiesBySigungu,
   type CareerNetUniversityItem,
 } from '@jakorea/location/career-net'
@@ -41,18 +42,26 @@ export const SCHOOL_LEVEL_OPTIONS = [
   { label: '중학교', value: '중학교' },
   { label: '고등학교', value: '고등학교' },
   { label: '대학교', value: '대학교' },
+  { label: '전문대학', value: '전문대학' },
 ] as const
 
 export type SchoolLevel = (typeof SCHOOL_LEVEL_OPTIONS)[number]['value']
 
 const K12_LEVELS: ReadonlySet<SchoolLevel> = new Set(['초등학교', '중학교', '고등학교'])
+const HIGHER_ED_LEVELS: ReadonlySet<SchoolLevel> = new Set(['대학교', '전문대학'])
 
-function isUniversityLevel(level: string): boolean {
-  return level === '대학교'
+function isHigherEdLevel(level: string): level is '대학교' | '전문대학' {
+  return HIGHER_ED_LEVELS.has(level as SchoolLevel)
 }
 
 function isK12Level(level: string): level is '초등학교' | '중학교' | '고등학교' {
   return K12_LEVELS.has(level as SchoolLevel)
+}
+
+function careerNetSch1ForLevel(level: string): string | undefined {
+  if (level === '대학교') return CAREER_NET_UNIV_SCH1.university4
+  if (level === '전문대학') return CAREER_NET_UNIV_SCH1.college
+  return undefined
 }
 
 function escapeRegExp(s: string): string {
@@ -146,7 +155,7 @@ export function SchoolSearch({
   const careerNetApiKey = careerNetApiKeyProp ?? readCareerNetApiKeyFromEnv()
   const sigunguOptions = getSigunguOptions(sido)
   const trimmedKeyword = keyword.trim()
-  const isUniversity = isUniversityLevel(schoolLevel)
+  const isHigherEd = isHigherEdLevel(schoolLevel)
 
   const {
     schools,
@@ -183,13 +192,13 @@ export function SchoolSearch({
 
   const filteredUniversities = useMemo(
     () =>
-      isUniversity
+      isHigherEd
         ? filterCareerNetUniversitiesBySigungu(universities, sigungu)
         : [],
-    [universities, sigungu, isUniversity]
+    [universities, sigungu, isHigherEd]
   )
 
-  const filteredTotalCount = isUniversity
+  const filteredTotalCount = isHigherEd
     ? filteredUniversities.length
     : filteredSchools.length
   const totalPages = Math.max(1, Math.ceil(filteredTotalCount / SCHOOL_SEARCH_PAGE_SIZE))
@@ -210,8 +219,8 @@ export function SchoolSearch({
     [filteredUniversities, currentPage]
   )
 
-  const loading = isUniversity ? careerNetLoading : neisLoading
-  const error = isUniversity ? careerNetError : neisError
+  const loading = isHigherEd ? careerNetLoading : neisLoading
+  const error = isHigherEd ? careerNetError : neisError
   const hasResults = filteredTotalCount > 0
   const canSearch = Boolean(schoolLevel && trimmedKeyword)
 
@@ -263,14 +272,14 @@ export function SchoolSearch({
     if (!canSearch || loading) return
     setHasSearched(true)
     setCurrentPage(1)
-    if (isUniversityLevel(schoolLevel)) {
+    if (isHigherEdLevel(schoolLevel)) {
       void searchCareerNet(trimmedKeyword, {
         regionSido: sido || undefined,
-        sch1: undefined,
+        sch1: careerNetSch1ForLevel(schoolLevel),
       })
       return
     }
-    void searchNeis(trimmedKeyword, sido)
+    void searchNeis(trimmedKeyword, sido || undefined)
   }
 
   const handlePageChange = (page: number) => {
@@ -476,7 +485,6 @@ export function SchoolSearch({
               onChange={handleSigunguChange}
               inputSize="medium"
               width={120}
-              disabled={!sido}
               withAllOption
             />
             <span className="school-search__keyword-wrap">
@@ -532,7 +540,7 @@ export function SchoolSearch({
                   {'검색 결과가 없습니다.\n검색 조건 및 검색어를 확인한 후 다시 시도해 주세요.'}
                 </div>
               ) : null}
-              {hasResults && isUniversity ? (
+              {hasResults && isHigherEd ? (
                 <>
                   <div aria-label="대학교 검색 결과">
                     <Table
@@ -554,7 +562,7 @@ export function SchoolSearch({
                   </div>
                 </>
               ) : null}
-              {hasResults && !isUniversity ? (
+              {hasResults && !isHigherEd ? (
                 <>
                   <div aria-label="학교 검색 결과">
                     <Table

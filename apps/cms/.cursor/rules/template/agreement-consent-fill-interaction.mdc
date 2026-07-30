@@ -1,0 +1,70 @@
+---
+description: 회원·강사 동의서 작성(fill) — 양식 잠금 vs 응답 입력, paragraphInteractionMode 착오 방지
+globs:
+  - "apps/cms/src/features/template/lib/build-agreement-consent-fill-options.ts"
+  - "apps/cms/src/features/user/shared/ui/member-consent-agreement-modal.tsx"
+  - "apps/cms/src/features/user/shared/**/*consent*"
+  - "apps/cms/src/features/template/ui/paragraph/renderers/render-form-paragraph-body.tsx"
+  - "apps/cms/src/features/template/ui/form-editor/**/*.{ts,tsx,css}"
+alwaysApply: false
+---
+
+# 동의서 작성(fill) — 상호작용 모드
+
+**템플릿 관리(authoring)** 와 **회원·강사 동의서 작성**(등록·상세·강사 신규 등록)은 다른 모드 정책을 쓴다.  
+「양식 수정 불가」≠「응답 입력 불가」 — 요구가 애매하면 **코드 변경 전 사용자에게 확인**한다.
+
+## 용어
+
+| 구분 | 의미 | 예 |
+|------|------|-----|
+| **양식(템플릿) 본문** | 배포된 동의 문구·표 구조·법률 고정 셀 | 개인정보 수집 표 본문, intro static-body |
+| **응답(작성) 필드** | 관리자가 당사자 확인 후 채우는 값 | 지급조서 기본정보, 하단 동의 라디오, 초상권 성명·소속 |
+
+## 필수 패턴 (회원 동의 작성)
+
+- 진입점: `buildAgreementConsentFillParagraphBodyOptions` + `MemberConsentAgreementModal`
+- `paragraphInteractionMode`: **`user`** (`resolveAgreementConsentFillInteractionMode`)
+- 양식 본문만 잠금: **`agreementConsentFillReadOnlyBody: true`**
+- 하단 동의 라디오: `structureLockedAuthoringChoicePreview: true` (fill에서 user와 함께 동작하도록 렌더러 유지)
+- 초상권 1번 표: `portraitConsentResponseFieldsInteractive: true`
+
+## 금지 · 주의
+
+### ❌ `preview` 모드로 fill 잠금
+
+`FormEditorLeftPanel` + `paragraphInteractionMode: 'preview'` 시 CSS가 **슬롯 전체** 입력을 막는다:
+
+```css
+/* form-editor-core.css — 지급조서·라디오까지 차단됨 */
+.form-editor-left--paragraph-body-preview .paragraph-card__slot {
+  pointer-events: none;
+}
+```
+
+fill에서 양식만 잠그려면 `preview` 대신 **`user` + `agreementConsentFillReadOnlyBody`**.
+
+### ❌ 지급조서 fill에 `paymentStatementDisplayMode: 'document'`
+
+`document`는 기본정보(성명·계좌 등)까지 조회 전용. fill에서는 `onlyPaymentPurposeLocked`만 유지(지급 목적 고정, 나머지 입력).
+
+### ❌ `user`만 쓰고 fill 잠금 플래그 없음
+
+구조 잠금 + `user`이면 표 셀·설명글이 **편집 가능**해져 「양식 수정」 회귀.
+
+## 구현 체크리스트
+
+- [ ] 동의 문구·가로형 표 **데이터 셀** — 입력 불가
+- [ ] **동의 / 동의하지 않음** 라디오 — 선택 가능
+- [ ] **지급조서 기본정보** (`BasicInfoParagraph`) — 입력 가능
+- [ ] **초상권** 성명·소속 — 입력 가능(해당 템플릿)
+- [ ] 템플릿 관리(authoring) 화면 — 기존 편집 동작 회귀 없음
+
+## 관련 코드
+
+- `apps/cms/src/features/template/lib/build-agreement-consent-fill-options.ts`
+- `render-form-paragraph-body.tsx` — `agreementConsentFillReadOnlyBody`, `structureLockedConsentChoiceInteractive`
+- `apps/cms/.cursor/rules/process/member-detail-consent-agreement-cms.md` — 정책·필드 매핑
+- [form-editor-modes.mdc](./form-editor-modes.mdc) — authoring vs write 용어
+
+**Last updated:** 2026-07-30

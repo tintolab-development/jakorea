@@ -40,7 +40,8 @@ function buildParagraphEditableHeading(
       <span className="paragraph-input__leading">{numberedPrefix}</span>
     ) : undefined,
     descriptionValue: visibleDescription ?? '',
-    showDescription: visibleDescription != null,
+    /** 비어 있어도 「설명 입력」 placeholder 노출 (CMS 미리보기·스크린샷과 동일) */
+    showDescription: true,
   }
 }
 

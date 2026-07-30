@@ -133,7 +133,7 @@
   border-bottom: 1px solid var(--table-line, #e0e0e0);
   background: var(--main-WT, #fff);
   cursor: inherit;
-  color: var(--gray-85969-d, #85969d);
+  color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
@@ -214,21 +214,31 @@
   opacity: 0.45;
 }
 
-.form-editor-vertical-table__cell-input-shell--body .ant-input {
+/* 본문 입력값 main-BK · placeholder만 회색 — 긴 텍스트는 줄바꿈(단줄 Input 잘림 방지) */
+.form-editor-vertical-table__cell-input-shell--body .ant-input,
+.form-editor-vertical-table__cell-input-shell--body textarea.ant-input {
   box-sizing: border-box;
   width: 100%;
-  height: 40px;
-  min-height: 40px;
+  height: auto !important;
+  min-height: 24px;
   text-align: left;
-  color: var(--gray-85969-d, #85969d);
+  color: var(--main-BK, #3d3d3d);
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-weight: 500;
-  line-height: 22px;
+  line-height: 150%;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  resize: none;
+  overflow: hidden;
 }
 
 .form-editor-vertical-table__cell-input-shell--body .ant-input::placeholder {
   color: var(--gray-85969-d, #85969d);
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 1;
   text-align: left;
 }
 
@@ -267,7 +277,10 @@
 
 .form-editor-vertical-table__cell-text {
   width: 100%;
+  overflow: visible;
+  overflow-wrap: break-word;
   word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .form-editor-vertical-table__cell-text--header {
@@ -292,15 +305,21 @@
 }
 
 .form-editor-vertical-table__cell-text--body {
-  color: var(--gray-85969-d, #85969d);
+  color: var(--main-BK, #3d3d3d);
   text-align: left;
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-weight: 500;
   line-height: 150%;
+  white-space: pre-wrap;
 }
 
+/* 빈 셀 placeholder만 회색 (내용 있으면 --body의 main-BK) */
 .form-editor-vertical-table__cell-text--placeholder {
+  color: var(--gray-85969-d, #85969d);
+}
+
+.form-editor-vertical-table__cell-text--body.form-editor-vertical-table__cell-text--placeholder {
   color: var(--gray-85969-d, #85969d);
 }
 

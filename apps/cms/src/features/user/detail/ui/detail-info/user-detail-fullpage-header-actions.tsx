@@ -25,7 +25,7 @@ import {
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   canAccessAdminCommentInAdminDetail,
-  canEditAdminMemberInfo,
+  canStartAdminMemberProfileEdit,
   isCmsAdminUser,
   shouldShowAdminCommentSectionForViewer,
   shouldShowCmsMemberInfoEditButton,
@@ -91,6 +91,8 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
 
   const isProfileEditing =
     pageShell.basicInfoEditing && pageShell.basicInfoEditScope === 'profile'
+  const isCommentEditing =
+    pageShell.basicInfoEditing && pageShell.basicInfoEditScope === 'comment'
 
   const actions = getDefaultHeaderActions({
     viewKind: headerLayout.viewKind,
@@ -127,11 +129,12 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
     !isProfileEditing &&
     shouldShowCmsMemberInfoEditButton(displayUser) &&
     canEditProfileBody &&
-    (displayUser.role !== 'ADMIN' || canEditAdminMemberInfo(currentUser, displayUser)) &&
+    (displayUser.role !== 'ADMIN' || canStartAdminMemberProfileEdit(currentUser, displayUser)) &&
     !remoteBasicInfoSaveBlocked
 
   const showCommentEditStart =
     !isProfileEditing &&
+    !isCommentEditing &&
     shouldShowAdminCommentSectionForViewer(currentUser, displayUser) &&
     canEditCommentBody
 

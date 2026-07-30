@@ -32,7 +32,8 @@
 }
 
 @media (--bp-pc-compact) {
-  .inner {
+  .inner,
+  .dropdownInner {
     column-gap: var(--spacing-24);
     padding-inline: var(--spacing-24);
   }
@@ -44,6 +45,10 @@
   .navigationButton {
     width: 100px;
     padding-inline: var(--spacing-12);
+  }
+
+  .dropdownColumns {
+    gap: var(--spacing-8);
   }
 
   .menuGroup {
@@ -64,18 +69,10 @@
   height: 60px;
 }
 
-.navigationArea {
-  position: relative;
-  display: flex;
-  height: 100%;
-  min-width: 0;
-  justify-content: center;
-  align-items: stretch;
-}
-
 .navigation {
   display: flex;
   height: 100%;
+  min-width: 0;
   justify-content: center;
   align-items: center;
   gap: var(--spacing-16);
@@ -105,10 +102,8 @@
   left: 0;
   right: 0;
   z-index: 1;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: var(--spacing-16);
+  border-bottom: 1px solid var(--color-border-default);
+  background: var(--color-neutral-white);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -117,23 +112,33 @@
     visibility 0.15s ease;
 }
 
-.dropdownPanel::before {
-  position: absolute;
-  z-index: -1;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 100vw;
-  border-bottom: 1px solid var(--color-border-default);
-  background: var(--color-neutral-white);
-  content: '';
-  transform: translateX(-50%);
-}
-
 .dropdownPanelOpen {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+}
+
+.dropdownInner {
+  display: grid;
+  grid-template-columns: 195px 1fr 152px;
+  column-gap: var(--spacing-64);
+  width: 100%;
+  max-width: 1920px;
+  margin-inline: auto;
+  padding-inline: var(--spacing-60);
+}
+
+.dropdownLogoSpacer,
+.dropdownAuthSpacer {
+  min-width: 0;
+}
+
+.dropdownColumns {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--spacing-16);
+  min-width: 0;
 }
 
 .menuGroup {

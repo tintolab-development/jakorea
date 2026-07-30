@@ -6,9 +6,11 @@ CMS LNB 「회원 관리」(회원 목록 · 권한 승인 · 권한 설정) API
 
 | 문서 | 용도 |
 |------|------|
-| [**members-api-backend-handoff-2026-07-23.md**](./members-api-backend-handoff-2026-07-23.md) | **백엔드 1차 전달용** — P0~P2 · 등록·상세 path 분리 · **마스킹 §M-P1-5** |
-| [**members-pre-register-handover-2026-07-28.md**](./members-pre-register-handover-2026-07-28.md) | **2026-07-28 BE 전달 (단독)** — path·마스킹 · 학교 · 강사 · `rawPassword` · Platform 8자 |
-| [**e2e-members-instructor-revoke-list-status-handoff-2026-07-29.md**](./e2e-members-instructor-revoke-list-status-handoff-2026-07-29.md) | **2026-07-29** — 박탈 목록 `REVOKED` · evaluation-grade 500 등 |
+| [**members-api-backend-handoff-2026-07-30.md**](./members-api-backend-handoff-2026-07-30.md) | **백엔드 전달 (통합 · 2026-07-30)** — admin unmask P0 · admin-accounts · 등록·상세 · 마스킹 · 체크리스트 **1파일** |
+| [admin-permission-settings-ui-api-handoff-2026-07-30.md](./admin-permission-settings-ui-api-handoff-2026-07-30.md) | **관리자 권한 설정** UI(스크린샷) ↔ API 카탈로그·역할별 granted 정합 요청 |
+| [members-api-backend-handoff-2026-07-23.md](./members-api-backend-handoff-2026-07-23.md) | (아카이브) 7/23 분할 handoff |
+| [members-pre-register-handover-2026-07-28.md](./members-pre-register-handover-2026-07-28.md) | (아카이브) 7/28 pre-register |
+| [e2e-members-instructor-revoke-list-status-handoff-2026-07-29.md](./e2e-members-instructor-revoke-list-status-handoff-2026-07-29.md) | (아카이브) 7/29 revoke · E2E |
 | [members-api-integration-2026-07-23.md](./members-api-integration-2026-07-23.md) | FE 연동 명세 (모듈 키·endpoint·mapper·캐시) |
 | [e2e-members-pre-register-handoff-2026-07-23.md](./e2e-members-pre-register-handoff-2026-07-23.md) | E2E 관측 — 등록 path·pre-register (M1/M2) |
 | [members-api-backend-gaps-2026-07-23.md](./members-api-backend-gaps-2026-07-23.md) | 갭·스펙 불일치 목록 (2026-06 기준, 일부 outdated) |
@@ -39,4 +41,4 @@ pnpm --filter cms package:members-be-handoff -- --out=~/Desktop/jakorea-members-
 
 번들 안내(백엔드용 README 템플릿): [be-handoff-bundle/README-BE.md](./be-handoff-bundle/README-BE.md)
 
-**Last updated:** 2026-07-29
+**Last updated:** 2026-07-30

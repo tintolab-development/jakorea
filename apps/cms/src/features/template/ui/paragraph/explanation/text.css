@@ -1,3 +1,13 @@
+/* 설명글_텍스트형 — 본문 + 하단 동의 라디오 */
+.explanation-text.form-editor-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
 /* 지급조서 사전 동의서 — 「개인정보 수집‧이용 및 제공 동의서」 본문(static-body, \\n + pre-line) */
 .explanation-text__static-body {
   margin: 0;
@@ -7,7 +17,9 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%; /* 30px */
-  white-space: pre-line;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* 사전 동의서 고정 동의·최종 확인 문구 바: `payment-pre-consent-sheet-bar.css` */

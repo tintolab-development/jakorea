@@ -10,6 +10,7 @@ import {
   type FormTitleNumberingStyle,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
 import { renderFormEditorParagraphBody } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-paragraph-body'
@@ -27,6 +28,30 @@ import {
   modalCardFooterActions,
   modalCardFooterToggles,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-card-footer'
+
+function isAgreementAdminProxyConfirmCard(
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): boolean {
+  return (
+    paragraphBodyOptions?.agreementAdminProxyConfirm === true &&
+    isAgreementAdminProxyConfirmHostId(paragraph.id)
+  )
+}
+
+function withAgreementAdminProxyConfirmHeading(
+  heading: ParagraphCardEditableHeading,
+  paragraph: WritingFormParagraph,
+  paragraphBodyOptions?: RenderFormParagraphBodyOptions
+): ParagraphCardEditableHeading {
+  if (!isAgreementAdminProxyConfirmCard(paragraph, paragraphBodyOptions)) return heading
+  return {
+    ...heading,
+    titleValue: '',
+    titleClassName: undefined,
+    showDescription: false,
+  }
+}
 
 /** 고정·구조 잠금 단락 — 순서 변경은 불가하나 양식 테스트와 동일한 햄버거 아이콘 노출 */
 export function ParagraphCardDragHandleNonInteractive() {
@@ -103,11 +128,15 @@ export function PinnedFormCard({
     ),
     !showEditorChrome
   )
-  const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
-    withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
-      withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-        withProgramRegistrationCurriculumTitleTrailing(
-          editableHeadingBase as ParagraphCardEditableHeading,
+  const editableHeading = withAgreementAdminProxyConfirmHeading(
+    withProgramApplicationFormVolunteerTitleTrailing(
+      withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+        withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+          withProgramRegistrationCurriculumTitleTrailing(
+            editableHeadingBase as ParagraphCardEditableHeading,
+            paragraph,
+            paragraphBodyOptions
+          ),
           paragraph,
           paragraphBodyOptions
         ),
@@ -120,6 +149,7 @@ export function PinnedFormCard({
     paragraph,
     paragraphBodyOptions
   )
+  const adminProxyConfirmCard = isAgreementAdminProxyConfirmCard(paragraph, paragraphBodyOptions)
 
   return (
     <ParagraphCard
@@ -129,6 +159,7 @@ export function PinnedFormCard({
         showEditorChrome ? 'paragraph-card--selectable' : '',
         showEditorChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
         isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
+        adminProxyConfirmCard ? 'agreement-admin-proxy-confirm-card' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -251,11 +282,15 @@ export function SortableMiddleFormCard({
     ),
     !showEditorChrome
   )
-  const editableHeading = withProgramApplicationFormVolunteerTitleTrailing(
-    withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
-      withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
-        withProgramRegistrationCurriculumTitleTrailing(
-          editableHeadingBase as ParagraphCardEditableHeading,
+  const editableHeading = withAgreementAdminProxyConfirmHeading(
+    withProgramApplicationFormVolunteerTitleTrailing(
+      withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrailing(
+        withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
+          withProgramRegistrationCurriculumTitleTrailing(
+            editableHeadingBase as ParagraphCardEditableHeading,
+            paragraph,
+            paragraphBodyOptions
+          ),
           paragraph,
           paragraphBodyOptions
         ),
@@ -268,6 +303,7 @@ export function SortableMiddleFormCard({
     paragraph,
     paragraphBodyOptions
   )
+  const adminProxyConfirmCard = isAgreementAdminProxyConfirmCard(paragraph, paragraphBodyOptions)
 
   return (
     <div
@@ -294,6 +330,7 @@ export function SortableMiddleFormCard({
           showEditorChrome ? 'paragraph-card--selectable' : '',
           showEditorChrome && selectedCardId === paragraph.id ? 'paragraph-card--active' : '',
           isTitleWithPeriodParagraph(paragraph) ? 'paragraph-card--survey-title-with-period' : '',
+          adminProxyConfirmCard ? 'agreement-admin-proxy-confirm-card' : '',
         ]
           .filter(Boolean)
           .join(' ')}

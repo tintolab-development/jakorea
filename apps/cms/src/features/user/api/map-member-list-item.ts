@@ -10,6 +10,10 @@ import {
   type MemberListItemResponse,
 } from '@/features/user/api/types/member-list-item'
 import { normalizeRevokedInstructorUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
+import {
+  resolveIdentitySelfSignupCompletedAfterAdminRegistration,
+  resolveRegisteredByAdmin,
+} from '@/features/user/api/resolve-member-registration-flags'
 
 function fallbackUuid(memberId?: number): string {
   if (memberId != null) return `member-${memberId}`
@@ -74,11 +78,26 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
     isActive: resolveListItemIsActive(item),
     createdAt: item.createdAt ?? now,
     updatedAt: item.updatedAt ?? now,
-    registeredByAdmin: Boolean(item.registeredByAdmin ?? item.preRegistered),
-    identitySelfSignupCompletedAfterAdminRegistration: Boolean(
-      item.identitySelfSignupCompletedAfterAdminRegistration ?? item.identityVerified
-    ),
+    registeredByAdmin: resolveRegisteredByAdmin({
+      role,
+      registeredByAdmin: item.registeredByAdmin,
+      preRegistered: item.preRegistered,
+      createdByAdmin: item.createdByAdmin,
+      adminAccountId: item.adminAccountId,
+    }),
+    identitySelfSignupCompletedAfterAdminRegistration:
+      resolveIdentitySelfSignupCompletedAfterAdminRegistration({
+        role,
+        registeredByAdmin: item.registeredByAdmin,
+        preRegistered: item.preRegistered,
+        createdByAdmin: item.createdByAdmin,
+        adminAccountId: item.adminAccountId,
+        identitySelfSignupCompletedAfterAdminRegistration:
+          item.identitySelfSignupCompletedAfterAdminRegistration,
+        identityVerified: item.identityVerified,
+      }),
     id1365: item.external1365Id?.trim() || undefined,
+    ...(item.adminAccountId != null ? { adminAccountId: item.adminAccountId } : {}),
     ...(item.affiliation?.trim() ? { affiliation: item.affiliation.trim() } : {}),
     ...(item.affiliatedSchoolUserId?.trim()
       ? { affiliatedSchoolUserId: item.affiliatedSchoolUserId.trim() }

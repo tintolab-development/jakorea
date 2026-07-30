@@ -133,7 +133,13 @@ export function mergeListUserWithFetchedDetail(
     ...fetched,
     id: listUser.id,
     memberId: fetched.memberId ?? listUser.memberId,
+    adminAccountId: fetched.adminAccountId ?? listUser.adminAccountId,
     role,
+    registeredByAdmin: Boolean(listUser.registeredByAdmin || fetched.registeredByAdmin),
+    identitySelfSignupCompletedAfterAdminRegistration: Boolean(
+      listUser.identitySelfSignupCompletedAfterAdminRegistration ||
+        fetched.identitySelfSignupCompletedAfterAdminRegistration
+    ),
     schoolInfo,
     instructorInfo: resolveMergedInstructorInfo(listUser.instructorInfo, fetched.instructorInfo),
     instructorMemberProfile:

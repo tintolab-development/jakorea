@@ -22,9 +22,18 @@
   padding-inline: 16px;
 }
 
+/* 앞·뒤 2칸이 half-cell(라벨 200px 제외) 안에 들어가도록 고정 240px 기본폭 대신 flex 분배 */
 .payment-statement-basic-info-detail-form__resident {
+  display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.payment-statement-basic-info-detail-form__resident > .cms-input {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .payment-statement-basic-info-detail-form__dash {

@@ -448,7 +448,9 @@ export function UserListPage() {
           try {
             await fetchUserById(targetId, {
               memberId: seedUser.memberId,
-              role: seedUser.role === 'INSTRUCTOR' ? 'INSTRUCTOR' : seedUser.role,
+              role: seedUser.role,
+              adminAccountId: seedUser.adminAccountId,
+              email: seedUser.email,
             })
             if (cancelled) return
             const fetched = useUserStore.getState().usersById[targetId] ?? seedUser
@@ -607,6 +609,8 @@ export function UserListPage() {
           const fetched = await fetchUserById(user.id, {
             memberId: user.memberId,
             role: user.role,
+            adminAccountId: user.adminAccountId,
+            email: user.email,
           })
           if (fetched) {
             displayUser = mergeListUserWithFetchedDetail(user, fetched)
@@ -889,7 +893,12 @@ export function UserListPage() {
     setDeleteLoading(true)
     try {
       for (const u of toDelete) {
-        await deleteUser(u.id)
+        await deleteUser(u.id, {
+          role: u.role,
+          adminAccountId: u.adminAccountId,
+          memberId: u.memberId,
+          email: u.email,
+        })
       }
       const domain = memberDeleteGuideDomain(resolvedMemberListKind)
       setDeleteResultTitle(buildDeleteCompletedTitle(domain.domainLabel))
@@ -926,7 +935,12 @@ export function UserListPage() {
       flushUserDetailModal()
       setDeleteLoading(true)
       try {
-        await deleteUser(u.id)
+        await deleteUser(u.id, {
+          role: u.role,
+          adminAccountId: u.adminAccountId,
+          memberId: u.memberId,
+          email: u.email,
+        })
         const entityLabel = entityLabelForWithdrawDeletedUser(u)
         setDeleteResultTitle(buildDeleteCompletedTitle(entityLabel))
         setDeleteResultMessage(
@@ -958,24 +972,43 @@ export function UserListPage() {
         const updated = await patchUserBasicInfo(ctx.userId, {
           listMetrics: { adminPermissionVariant: ctx.nextPermission },
         })
+        const patchListCache = (
+          old: InfiniteData<GetUsersPageResult> | undefined
+        ): InfiniteData<GetUsersPageResult> | undefined => {
+          if (!old?.pages) return old
+          return {
+            ...old,
+            pages: old.pages.map(page => ({
+              ...page,
+              users: page.users.map(u =>
+                u.id === ctx.userId || u.id === updated.id
+                  ? {
+                      ...u,
+                      ...updated,
+                      listMetrics: {
+                        ...u.listMetrics,
+                        ...updated.listMetrics,
+                        adminPermissionVariant: ctx.nextPermission,
+                      },
+                    }
+                  : u
+              ),
+            })),
+          }
+        }
         queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
           { queryKey: ['users', 'list'] },
-          old => {
-            if (!old?.pages) return old
-            return {
-              ...old,
-              pages: old.pages.map(page => ({
-                ...page,
-                users: page.users.map(u => (u.id === updated.id ? updated : u)),
-              })),
-            }
-          }
+          patchListCache
+        )
+        queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+          { queryKey: [...memberQueryKeys.all, 'list'] },
+          patchListCache
         )
         if (drawerUser?.id === ctx.userId) {
           setDrawerUser(updated)
         }
         setDetailBridgeUser(prev => (prev?.id === ctx.userId ? updated : prev))
-        } catch (error) {
+      } catch (error) {
         handleError(error, { defaultMessage: '관리자 권한 유형 변경에 실패했습니다.' })
       } finally {
         setAdminPermissionChangingUserId(null)
