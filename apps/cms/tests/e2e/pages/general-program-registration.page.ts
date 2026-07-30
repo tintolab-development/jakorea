@@ -1,4 +1,4 @@
-import { type Page, expect } from '@playwright/test'
+import { type Locator, type Page, expect } from '@playwright/test'
 import {
   checkCheckboxIfVisible,
   checkRadioIfVisible,
@@ -174,6 +174,99 @@ export class GeneralProgramRegistrationPage {
       .catch(() => undefined)
   }
 
+  /**
+   * 후원사 선택 후 담당자 자동선택(useEffect)을 기다린다.
+   * 담당자 없는 후원사면 multi 목록에서 다음 후원사로 바꿔 재시도한다.
+   */
+  private async ensureSponsorManagerSelected(sponsorField: Locator) {
+    const managerField = this.page
+      .locator('.detail-info-form__field')
+      .filter({
+        has: this.page.locator('.detail-info-form__field-label-text', {
+          hasText: /^후원사 담당자$/,
+        }),
+      })
+      .first()
+
+    const managerSelect = managerField.locator('.ant-select').first()
+    const managerFilled = async () => {
+      const item = managerSelect.locator('.ant-select-selection-item').first()
+      if ((await item.count()) === 0) return false
+      const text = (await item.innerText()).trim()
+      return text.length > 0 && !text.includes('선택하세요')
+    }
+
+    if (
+      await expect
+        .poll(managerFilled, { timeout: 12_000 })
+        .toBeTruthy()
+        .then(() => true)
+        .catch(() => false)
+    ) {
+      return
+    }
+
+    const trigger = sponsorField.locator('.cms-select-multi__trigger').first()
+    if ((await trigger.count()) === 0) {
+      await selectNearLabelIfVisible(this.page, '후원사 담당자')
+      await expect.poll(managerFilled, { timeout: 10_000 }).toBeTruthy()
+      return
+    }
+
+    await trigger.click()
+    const panel = this.page.locator('.cms-select-multi__panel').last()
+    await expect(panel).toBeVisible({ timeout: 10_000 })
+    const rows = panel.locator('.cms-select-multi__row')
+    const rowCount = await rows.count()
+
+    for (let i = 0; i < rowCount; i += 1) {
+      const row = rows.nth(i)
+      const text = (
+        await row.locator('.cms-select-multi__label-pill').innerText().catch(() => '')
+      ).trim()
+      if (!text || text === '전체' || text.includes('선택하세요')) continue
+
+      // 기존 선택 해제 후 이 후원사만 선택
+      const checkedRows = panel.locator('.cms-select-multi__row .ant-checkbox-checked')
+      const checkedCount = await checkedRows.count()
+      for (let c = 0; c < checkedCount; c += 1) {
+        await panel
+          .locator('.cms-select-multi__row')
+          .filter({ has: this.page.locator('.ant-checkbox-checked') })
+          .first()
+          .locator('.ant-checkbox-input, .cms-select-multi__checkbox')
+          .first()
+          .click()
+      }
+      await row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first().click()
+      if (await panel.isVisible().catch(() => false)) {
+        await trigger.click({ force: true }).catch(() => undefined)
+      }
+
+      if (
+        await expect
+          .poll(managerFilled, { timeout: 8_000 })
+          .toBeTruthy()
+          .then(() => true)
+          .catch(() => false)
+      ) {
+        return
+      }
+
+      await trigger.click()
+      await expect(panel).toBeVisible({ timeout: 5_000 })
+    }
+
+    if (await panel.isVisible().catch(() => false)) {
+      await trigger.click({ force: true }).catch(() => undefined)
+    }
+
+    await selectNearLabelIfVisible(this.page, '후원사 담당자')
+    await expect
+      .poll(managerFilled, { timeout: 10_000 })
+      .toBeTruthy()
+  }
+
   /** 공통 정보 — 케이스별 대·중·소분류 + 보이는 입력 채움 */
   async fillCommonInfo() {
     const { audience, structure, session } = this.regCase
@@ -214,17 +307,26 @@ export class GeneralProgramRegistrationPage {
         }),
       })
       .first()
-    await expect(sponsorField.locator('.ant-select-selection-item')).toBeVisible({
-      timeout: 10_000,
-    })
-    const sponsorSelected = (
-      await sponsorField.locator('.ant-select-selection-item').innerText()
-    ).trim()
-    expect(sponsorSelected.length).toBeGreaterThan(0)
-    expect(sponsorSelected).not.toContain('선택하세요')
-    expect(sponsorSelected).not.toBe('전체')
+    const sponsorMultiText = sponsorField.locator('.cms-select-multi__trigger-text').first()
+    if ((await sponsorMultiText.count()) > 0) {
+      await expect(sponsorMultiText).toBeVisible({ timeout: 10_000 })
+      const sponsorSelected = (await sponsorMultiText.innerText()).trim()
+      expect(sponsorSelected.length).toBeGreaterThan(0)
+      expect(sponsorSelected).not.toContain('선택하세요')
+      expect(sponsorSelected).not.toBe('전체')
+    } else {
+      await expect(sponsorField.locator('.ant-select-selection-item')).toBeVisible({
+        timeout: 10_000,
+      })
+      const sponsorSelected = (
+        await sponsorField.locator('.ant-select-selection-item').innerText()
+      ).trim()
+      expect(sponsorSelected.length).toBeGreaterThan(0)
+      expect(sponsorSelected).not.toContain('선택하세요')
+      expect(sponsorSelected).not.toBe('전체')
+    }
 
-    await selectNearLabelIfVisible(this.page, '후원사 담당자')
+    await this.ensureSponsorManagerSelected(sponsorField)
 
     await checkRadioIfVisible(this.page, '기관 안')
     await fillByPlaceholder(

@@ -20,6 +20,13 @@ async function getSelectSelectedText(select: Locator): Promise<string> {
   return (await item.innerText()).trim()
 }
 
+/** Ant Design Select disabled는 보통 class만 붙고 div에는 disabled attr이 없다. */
+async function isAntSelectDisabled(select: Locator): Promise<boolean> {
+  return select
+    .evaluate(el => el.classList.contains('ant-select-disabled'))
+    .catch(() => false)
+}
+
 async function getCmsMultiSelectedText(field: Locator): Promise<string> {
   const text = field.locator('.cms-select-multi__trigger-text').first()
   if ((await text.count()) === 0) return ''
@@ -196,8 +203,10 @@ async function selectOnLocator(
     }
   }
 
-  // 후원사 담당자처럼 상위 API 로드 후 활성화되는 Select는 준비될 때까지 기다린다.
-  await expect(select).toBeEnabled({ timeout: 15_000 })
+  // 후원사 담당자처럼 상위 선택 후 옵션이 채워지는 Select — ant-select-disabled 해제까지 대기
+  await expect
+    .poll(async () => !(await isAntSelectDisabled(select)), { timeout: 15_000 })
+    .toBeTruthy()
 
   // force: UI만 선택되어 있고 React state가 비는 경우 — 다른 옵션을 한 번 골라 onChange를 유발한 뒤 목표 선택
   if (force && !isEmptySelectValue(current)) {
@@ -351,6 +360,30 @@ export async function selectNearLabelIfVisible(
     .first()
   if ((await field.count()) === 0) return
   if (!(await field.isVisible().catch(() => false))) return
+
+  const multiTrigger = field.locator('.cms-select-multi__trigger').first()
+  if ((await multiTrigger.count()) > 0 && (await multiTrigger.isVisible().catch(() => false))) {
+    await selectNearLabel(page, label, optionLabel)
+    return
+  }
+
+  const select = field.locator('.ant-select').first()
+  if ((await select.count()) === 0) return
+
+  // 후원사 담당자: 옵션 로드·자동선택까지 대기. 끝까지 disabled면 skip.
+  const becameReady = await expect(async () => {
+    const text = await getSelectSelectedText(select)
+    if (!isEmptySelectValue(text)) return
+    if (!(await isAntSelectDisabled(select))) return
+    throw new Error(`${label} Select 옵션/활성화 대기`)
+  })
+    .toPass({ timeout: 15_000 })
+    .then(() => true)
+    .catch(() => false)
+
+  if (!becameReady) return
+  if (!isEmptySelectValue(await getSelectSelectedText(select))) return
+
   await selectNearLabel(page, label, optionLabel)
 }
 
