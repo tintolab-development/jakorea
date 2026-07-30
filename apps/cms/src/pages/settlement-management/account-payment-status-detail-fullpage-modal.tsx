@@ -23,6 +23,12 @@ import type { AccountPaymentRow } from '@/data/mock/account-payments-list'
 import { getMockAccountPaymentStatusDetail } from '@/data/mock/account-payments-list'
 import { useAccountPaymentDetailQuery } from '@/features/settlement-management/hooks/use-account-payment-detail-query'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
+import {
+  buildPaymentStatementIssuanceFileNameFromCalculation,
+  buildPaymentStatementIssuanceViewOptionsFromCalculation,
+  mapAccountPaymentStatusDetailToIssuanceInput,
+} from '@/features/settlement/lib/payment-order-calculation-statement-issuance-view'
+import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import './payment-order-admin-status-tag.css'
 import '@/features/settlement/ui/payment-record/payment-order-program-calculation-statement-modal.css'
@@ -77,10 +83,32 @@ export function AccountPaymentStatusDetailFullPageModal({
   const detailError = accountPaymentsRemote ? detailQuery.error : null
 
   const [paymentCompleteConfirmOpen, setPaymentCompleteConfirmOpen] = useState(false)
+  const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
 
   const singlePaymentConfirmPayload = useMemo(
     () => (detail ? buildAccountPaymentSingleConfirmationPayload(detail) : null),
     [detail]
+  )
+
+  const issuanceInput = useMemo(
+    () => (detail ? mapAccountPaymentStatusDetailToIssuanceInput(detail) : null),
+    [detail]
+  )
+
+  const issuanceParagraphBodyOptions = useMemo(
+    () =>
+      issuanceInput
+        ? buildPaymentStatementIssuanceViewOptionsFromCalculation(issuanceInput)
+        : undefined,
+    [issuanceInput]
+  )
+
+  const issuanceFileName = useMemo(
+    () =>
+      issuanceInput
+        ? buildPaymentStatementIssuanceFileNameFromCalculation(issuanceInput)
+        : undefined,
+    [issuanceInput]
   )
 
   const sidebarItems = useMemo<DetailModalSidebarNavItem[]>(
@@ -272,6 +300,7 @@ export function AccountPaymentStatusDetailFullPageModal({
               formulaLabel={detail.formulaLabel}
               totalAmount={detail.totalAmount}
               lectureSessionSegmentLabel="round"
+              onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
               headerActions={
                 row.accountPaymentStatus === 'account_paid' ? undefined : (
                   <CmsButton
@@ -297,6 +326,13 @@ export function AccountPaymentStatusDetailFullPageModal({
           setPaymentCompleteConfirmOpen(false)
         }}
         data={paymentCompleteConfirmOpen ? singlePaymentConfirmPayload : null}
+      />
+      <PaymentStatementIssuanceViewModal
+        open={issuanceViewOpen}
+        onClose={() => setIssuanceViewOpen(false)}
+        paragraphBodyOptions={issuanceParagraphBodyOptions}
+        fileName={issuanceFileName}
+        zIndex={1500}
       />
     </>
   )

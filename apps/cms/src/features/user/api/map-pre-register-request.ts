@@ -77,8 +77,7 @@ export function mapCreateUserRequestToPreRegisterSchool(
   request: CreateUserRequest
 ): AdminPreRegisterSchoolRequest {
   const { email, name, phone, gender, birthDate } = baseIdentity(request)
-  const organizationName =
-    request.schoolInfo?.schoolName?.trim() || request.name.trim()
+  const organizationName = request.schoolInfo?.schoolName?.trim() || request.name.trim()
   const address = request.schoolInfo?.address?.trim() || request.address?.trim() || ''
   const body: AdminPreRegisterSchoolRequest = {
     name: organizationName || name,

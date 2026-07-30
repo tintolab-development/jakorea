@@ -55,6 +55,8 @@ import {
 | `chrome` | `'cell'`(기본·테이블 열) / `'hug'`(폼·상세 인라인 — 패딩 0, 열림 시 가로 밀림 방지) |
 | `style` | 도메인별 배지 폭·패널 폭이 필요할 때 generic 크기를 주입 |
 
+현재 선택 옵션에는 `status-dropdown-cell__menu-item--active`(+ 민트 링)가 붙습니다. `isItemDisabled={(cur, opt) => cur === opt}`와 함께 쓰면 재선택은 막고 활성만 표시합니다.
+
 ---
 
 ## Column wiring
@@ -94,4 +96,4 @@ Shared styles live in `status-dropdown-cell.css`. Keep domain-specific badge cla
 
 ---
 
-**Last updated:** 2026-07-23
+**Last updated:** 2026-07-30

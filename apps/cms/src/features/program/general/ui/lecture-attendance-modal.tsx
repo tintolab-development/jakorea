@@ -1,11 +1,10 @@
 /**
  * 강의 출석 내역 모달
- * 명세: docs/design/lecture-attendance-modal-spec.md
+ * 스크린샷: ContentModal 800 · 패딩 26/30/34 · 설명↔표↔푸터 30px
+ * 본문: 4열 키-값 표(라벨 회색 / 값 흰색), 회차 2개씩 한 행
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
-import { Table } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -82,7 +81,7 @@ function AttendanceRateValue({ attended, held }: { attended: number; held: numbe
       <span className="lecture-attendance-modal__rate-count">
         {attended} / {held}건
       </span>
-      <span className="lecture-attendance-modal__rate-note">(강의 진행 회차 기준)</span>
+      <span className="lecture-attendance-modal__rate-note"> (강의 진행 회차 기준)</span>
     </span>
   )
 }
@@ -98,12 +97,6 @@ export interface LectureAttendanceModalProps {
   onCorrectAttendance?: () => void
   savedSessions?: LectureAttendanceSession[] | null
   zIndex?: number
-}
-
-interface AttendanceTableRow {
-  key: string
-  studentName: string
-  sessions: LectureAttendanceSession[]
 }
 
 export function LectureAttendanceModal({
@@ -153,6 +146,14 @@ export function LectureAttendanceModal({
   const { attended: attendedDisplay, held: heldDisplay } =
     countLectureAttendanceHeldAndAttended(rateSource)
 
+  const sessionPairs = useMemo(() => {
+    const pairs: Array<[LectureAttendanceSession | null, LectureAttendanceSession | null]> = []
+    for (let i = 0; i < tableSessions.length; i += 2) {
+      pairs.push([tableSessions[i] ?? null, tableSessions[i + 1] ?? null])
+    }
+    return pairs
+  }, [tableSessions])
+
   const patchSessionStatus = useCallback(
     (roundNumber: number, status: EditableAttendanceStatus) => {
       setSessionDraft(prev =>
@@ -190,91 +191,23 @@ export function LectureAttendanceModal({
 
   const footer = editing ? (
     <>
-      <CmsButton variant="secondary" size="large" onClick={cancelCorrection}>
+      <CmsButton variant="secondary" size="medium" onClick={cancelCorrection}>
         취소
       </CmsButton>
-      <CmsButton variant="primary" size="large" onClick={saveCorrection}>
+      <CmsButton variant="primary" size="medium" onClick={saveCorrection}>
         저장
       </CmsButton>
     </>
   ) : (
     <>
-      <CmsButton variant="secondary" size="large" onClick={onCancel}>
+      <CmsButton variant="secondary" size="medium" onClick={onCancel}>
         닫기
       </CmsButton>
-      <CmsButton variant="primary" size="large" onClick={startCorrection}>
+      <CmsButton variant="primary" size="medium" onClick={startCorrection}>
         출석 정정
       </CmsButton>
     </>
   )
-
-  const tableRow: AttendanceTableRow | null = detailBase
-    ? {
-        key: 'student',
-        studentName: detailBase.studentName,
-        sessions: tableSessions,
-      }
-    : null
-
-  const columns: ColumnsType<AttendanceTableRow> = useMemo(() => {
-    const roundCount = tableSessions.length
-    const roundColumns: ColumnsType<AttendanceTableRow> = Array.from(
-      { length: roundCount },
-      (_, index) => {
-        const roundNumber = index + 1
-        return {
-          title: `${roundNumber}회차`,
-          key: `round-${roundNumber}`,
-          width: editing ? 200 : 100,
-          align: 'center' as const,
-          onHeaderCell: () => ({
-            className: 'lecture-attendance-modal__round-header-cell',
-          }),
-          onCell: () => ({
-            className: 'lecture-attendance-modal__round-body-cell',
-          }),
-          render: (_value, record) => {
-            const session = record.sessions.find(s => s.roundNumber === roundNumber)
-            if (!session) return '-'
-            return (
-              <SessionStatusCell
-                session={session}
-                editing={editing}
-                onPick={patchSessionStatus}
-              />
-            )
-          },
-        }
-      }
-    )
-
-    return [
-      {
-        title: '학생명',
-        dataIndex: 'studentName',
-        key: 'studentName',
-        width: 100,
-        align: 'center',
-        fixed: 'left',
-        onHeaderCell: () => ({ className: 'lecture-attendance-modal__fixed-header-cell' }),
-        onCell: () => ({ className: 'lecture-attendance-modal__fixed-body-cell' }),
-      },
-      {
-        title: '출석률',
-        key: 'attendanceRate',
-        width: 168,
-        align: 'center',
-        onHeaderCell: () => ({ className: 'lecture-attendance-modal__fixed-header-cell' }),
-        onCell: () => ({ className: 'lecture-attendance-modal__fixed-body-cell' }),
-        render: () => <AttendanceRateValue attended={attendedDisplay} held={heldDisplay} />,
-      },
-      {
-        title: '강의 회차별 출석 내역',
-        key: 'rounds',
-        children: roundColumns,
-      },
-    ]
-  }, [tableSessions.length, editing, attendedDisplay, heldDisplay, patchSessionStatus])
 
   return (
     <ContentModal
@@ -284,24 +217,57 @@ export function LectureAttendanceModal({
       footer={footer}
       className="lecture-attendance-modal"
       zIndex={zIndex}
-      width={Math.min(960, 320 + tableSessions.length * (editing ? 200 : 100))}
+      width={800}
       description={
         detailBase
           ? `**[${detailBase.studentName}]** 학생의 강의 출석 내역입니다.`
           : undefined
       }
     >
-      {tableRow ? (
+      {detailBase ? (
         <div className="lecture-attendance-modal__table-wrap">
-          <Table<AttendanceTableRow>
-            className="lecture-attendance-modal__table cms-data-table"
-            rowKey="key"
-            size="middle"
-            pagination={false}
-            scroll={{ x: 'max-content' }}
-            columns={columns}
-            dataSource={[tableRow]}
-          />
+          <table className="lecture-attendance-modal__grid">
+            <colgroup>
+              <col className="lecture-attendance-modal__col-label" />
+              <col className="lecture-attendance-modal__col-value" />
+              <col className="lecture-attendance-modal__col-label" />
+              <col className="lecture-attendance-modal__col-value" />
+            </colgroup>
+            <tbody>
+              <tr>
+                <th scope="row">학생명</th>
+                <td>{detailBase.studentName}</td>
+                <th scope="row">출석률</th>
+                <td>
+                  <AttendanceRateValue attended={attendedDisplay} held={heldDisplay} />
+                </td>
+              </tr>
+              {sessionPairs.map(([left, right], index) => (
+                <tr key={`session-pair-${index}`}>
+                  <th scope="row">{left ? `${left.roundNumber}회차` : null}</th>
+                  <td>
+                    {left ? (
+                      <SessionStatusCell
+                        session={left}
+                        editing={editing}
+                        onPick={patchSessionStatus}
+                      />
+                    ) : null}
+                  </td>
+                  <th scope="row">{right ? `${right.roundNumber}회차` : null}</th>
+                  <td>
+                    {right ? (
+                      <SessionStatusCell
+                        session={right}
+                        editing={editing}
+                        onPick={patchSessionStatus}
+                      />
+                    ) : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : null}
     </ContentModal>

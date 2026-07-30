@@ -14,6 +14,7 @@ import { FiltersTablesSection } from './ui/filters-tables-section'
 import { FormsExtrasSection } from './ui/forms-extras-section'
 import { FormsSection } from './ui/forms-section'
 import { PostsAttachmentsSection } from './ui/posts-attachments-section'
+import { SearchModalsSection } from './ui/search-modals-section'
 import { FoundationsSection } from './ui/foundations-section'
 import { ImpactAuditSection } from './ui/impact-audit-section'
 import { EditorSection } from './ui/editor-section'
@@ -65,6 +66,7 @@ export function DesignSystemPage() {
           <ImpactAuditSection />
           <ButtonsSection />
           <FormsSection />
+          <SearchModalsSection />
           <PostsAttachmentsSection />
           <DetailFormsSection />
           <FormsExtrasSection />

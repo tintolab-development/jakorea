@@ -1,4 +1,7 @@
-import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { UjatVolunteerApplicantRow } from '@/data/mock/ujat-volunteer-applicants-mock'
 import {
@@ -29,43 +32,45 @@ export function ManagerEvaluationSection({
           <DetailInfoForm.Field
             label="담당자 A"
             view={
-              <StatusDropdownCell<UjatManagerEvaluation>
-                status={applicant.managerAEvaluation}
-                statusOptions={UJAT_MANAGER_EVALUATION_ORDER}
-                renderBadge={evaluation => <ManagerEvaluationBadge evaluation={evaluation} />}
-                isItemDisabled={(current, option) => current === option}
-                onChange={evaluation => onManagerAEvaluationChange(applicant.id, evaluation)}
-                isOpen={
-                  openManagerDropdown?.rowId === applicant.id &&
-                  openManagerDropdown.manager === 'A'
-                }
-                onOpenChange={open =>
-                  setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'A' } : null)
-                }
-                tagLayout="tag100"
-                chrome="hug"
-              />
+              <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
+                <StatusDropdownCell<UjatManagerEvaluation>
+                  status={applicant.managerAEvaluation}
+                  statusOptions={UJAT_MANAGER_EVALUATION_ORDER}
+                  renderBadge={evaluation => <ManagerEvaluationBadge evaluation={evaluation} />}
+                  isItemDisabled={(current, option) => current === option}
+                  onChange={evaluation => onManagerAEvaluationChange(applicant.id, evaluation)}
+                  isOpen={
+                    openManagerDropdown?.rowId === applicant.id &&
+                    openManagerDropdown.manager === 'A'
+                  }
+                  onOpenChange={open =>
+                    setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'A' } : null)
+                  }
+                  tagLayout="tag100"
+                />
+              </span>
             }
           />
           <DetailInfoForm.Field
             label="담당자 B"
             view={
-              <StatusDropdownCell<UjatManagerEvaluation>
-                status={applicant.managerBEvaluation}
-                statusOptions={UJAT_MANAGER_EVALUATION_ORDER}
-                renderBadge={evaluation => <ManagerEvaluationBadge evaluation={evaluation} />}
-                isItemDisabled={(current, option) => current === option}
-                onChange={evaluation => onManagerBEvaluationChange(applicant.id, evaluation)}
-                isOpen={
-                  openManagerDropdown?.rowId === applicant.id &&
-                  openManagerDropdown.manager === 'B'
-                }
-                onOpenChange={open =>
-                  setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'B' } : null)
-                }
-                tagLayout="tag100"
-                chrome="hug"
-              />
+              <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
+                <StatusDropdownCell<UjatManagerEvaluation>
+                  status={applicant.managerBEvaluation}
+                  statusOptions={UJAT_MANAGER_EVALUATION_ORDER}
+                  renderBadge={evaluation => <ManagerEvaluationBadge evaluation={evaluation} />}
+                  isItemDisabled={(current, option) => current === option}
+                  onChange={evaluation => onManagerBEvaluationChange(applicant.id, evaluation)}
+                  isOpen={
+                    openManagerDropdown?.rowId === applicant.id &&
+                    openManagerDropdown.manager === 'B'
+                  }
+                  onOpenChange={open =>
+                    setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'B' } : null)
+                  }
+                  tagLayout="tag100"
+                />
+              </span>
             }
           />
         </DetailInfoForm.Row>

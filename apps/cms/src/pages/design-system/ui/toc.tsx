@@ -8,6 +8,7 @@ export const DS_TOC_ITEMS: TocItem[] = [
   { id: 'impact-audit', label: 'Impact audit' },
   { id: 'buttons', label: 'Buttons' },
   { id: 'forms', label: 'Forms' },
+  { id: 'search-modals', label: 'Search modals' },
   { id: 'posts-attachments', label: 'Posts & attachments' },
   { id: 'detail-forms', label: 'Detail Forms' },
   { id: 'forms-extras', label: 'Forms extras' },

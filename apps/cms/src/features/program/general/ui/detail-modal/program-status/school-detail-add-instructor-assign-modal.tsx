@@ -1,8 +1,7 @@
 /**
  * 학교 상세정보 – 강사 배정 안내 모달
- * 프로그램 진행 현황 > 참여 기관 > 강사 배정 현황 탭에서 "추가배정" 클릭 시 노출.
- * - 담당자 등록 모달과 동일 폼 패턴: 대표 강사 지정 → 강사명(Select) → 교육 배정일 선택(태그).
- * - 스크린샷 스펙: 제목 "강사 배정 안내", [기관명] 볼드 처리, 대표 강사 변경 시 확인 더블 모달(ContentModal).
+ * 스펙(스크린샷): width 800 · 패딩 26/30/34 · 섹션 간격 30px
+ * 대표 강사 지정 → 강사명 → 교육 배정일(1열 칩 리스트) · 취소/강사 배정
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -55,8 +54,7 @@ function InstructorAssignSessionTags({
         return (
           <InstructorAssignSessionSlotChip
             key={opt.id}
-            scheduleLabel={opt.dateLabel ?? opt.scheduleLabel}
-            timeLabel={opt.timeLabel}
+            scheduleLabel={opt.scheduleLabel}
             sessionRoundLabel={opt.sessionRoundLabel}
             capacityLabel={opt.capacityLabel}
             selected={selected}
@@ -299,11 +297,9 @@ export function SchoolDetailAddInstructorAssignModal({
         width={MODAL_WIDTH}
         footer={footer}
         className="school-detail-add-instructor-assign-modal"
+        description={`**[${schoolName}]**에 추가 배정할 강사님을 선택해 주세요`}
       >
         <div className="school-detail-add-instructor-assign-modal__body">
-          <p className="school-detail-add-instructor-assign-modal__description">
-            [<strong>{schoolName}</strong>]에 추가 배정할 강사님을 선택해 주세요
-          </p>
           <Form
             form={form}
             layout="vertical"
@@ -320,12 +316,13 @@ export function SchoolDetailAddInstructorAssignModal({
               >
                 <CmsRadio.Group
                   className="school-detail-add-instructor-assign-modal__role-radios"
-                  size="large"
+                  size="medium"
                   options={[
                     { label: INSTRUCTOR_ROLE_LABELS.lead, value: 'lead' as InstructorRoleKey },
                     {
                       label: INSTRUCTOR_ROLE_LABELS.assistant,
-                      value: 'assistant' as InstructorRoleKey },
+                      value: 'assistant' as InstructorRoleKey,
+                    },
                   ]}
                 />
               </Form.Item>
@@ -337,6 +334,7 @@ export function SchoolDetailAddInstructorAssignModal({
                 <CmsSelect
                   placeholder="배정할 강사를 선택해 주세요"
                   inputSize="medium"
+                  width="100%"
                   className="school-detail-add-instructor-assign-modal__select"
                   options={instructorOptions}
                   showSearch

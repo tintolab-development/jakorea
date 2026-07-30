@@ -9,10 +9,10 @@
  * design-system·test/spec 제외.
  * cms-data-table = 클래스 문자열 (`*.{ts,tsx,css}`).
  * raw Button/Modal/Empty/Descriptions = antd named import · `shared/ui|shared/components` 제외.
- * 재집계일: 2026-07-27 (Wave F 잔여 패리티)
+ * 재집계일: 2026-07-30 (StatusDropdownCell tag100 크롬 통일 · chrome=hug 제거)
  */
 
-export const DS_IMPACT_AS_OF = '2026-07-27'
+export const DS_IMPACT_AS_OF = '2026-07-30'
 
 export const DS_IMPACT_AUDIT_METHOD =
   '심볼 \\bName\\b · apps/cms/src *.{ts,tsx} · excl /design-system/ · excl *.test|*.spec · cms-data-table=class'
@@ -129,8 +129,8 @@ export const DS_IMPACT_COVERAGE_ROWS: DsImpactCoverageRow[] = [
     area: '상태 배지',
     coverage: 'High',
     basis:
-      'StatusDropdownCell 41 · calendar-outline-status-badge 셸 · Approval/Institution',
-    verdict: '테이블·캘린더 outline 축 공통화',
+      'StatusDropdownCell 41 · tag100 단일 스펙(116·pad7·gap8) · INLINE_TAG100 셸 10 · chrome=hug 제거',
+    verdict: '테이블·폼/상세 상태변경 UI 통일 · 밀림은 INLINE 셸',
     tone: 'success',
   },
 ]
@@ -178,7 +178,7 @@ export const DS_IMPACT_ADOPTION_ROWS: DsImpactAdoptionRow[] = [
   {
     primitive: 'StatusDropdownCell',
     files: '41',
-    note: '테이블 상태 드롭다운 · Editable/Textbook 등',
+    note: 'tag100 단일 크롬 · INLINE_TAG100 폼/상세·교재명 · Editable/Textbook 등',
   },
 ]
 
@@ -287,6 +287,13 @@ export const DS_IMPACT_TOUCHPOINT_ROWS: DsImpactTouchpointRow[] = [
     tone: 'warning',
   },
   {
+    touchpoint: 'status-dropdown-cell.css / .tsx',
+    change: '상태변경 드롭다운 크롬(tag100·160·paymentOrderLine · INLINE 셸)',
+    blast: 'StatusDropdownCell ~41 · 폼 INLINE_TAG100 ~10',
+    risk: 'High',
+    tone: 'warning',
+  },
+  {
     touchpoint: 'pages/design-system/page.css',
     change: 'DS 데모 배치·보정',
     blast: '/design-system만',
@@ -353,6 +360,12 @@ export const DS_IMPACT_PHASE_ROWS: DsImpactPhaseRow[] = [
     tone: 'success',
   },
   {
+    phase: 'StatusDropdown 크롬 통일',
+    status: '완료',
+    note: 'chrome=hug 제거 · tag100 단일(116·7·8) · INLINE_TAG100 밀림 방지',
+    tone: 'success',
+  },
+  {
     phase: 'Dashboard E',
     status: '완료',
     note: 'instructor-count → StatisticsCard',
@@ -369,7 +382,7 @@ export const DS_IMPACT_FOLLOWUPS: string[] = [
 ]
 
 export const DS_IMPACT_CONCLUSION =
-  'Wave F 잔여 패리티 반영. ContentModal 181 · DetailInfoForm 197 · EmptyState 38 · CmsButton 360. antd Empty 0 · Descriptions 0 · antd Modal 잔여 MFA+주소 nested · raw Button 20(의도적). Teal full 10·Phase 5 룩은 동결.'
+  'StatusDropdownCell tag100 크롬 통일(chrome=hug 제거). ContentModal 181 · DetailInfoForm 197 · EmptyState 38 · CmsButton 360 · StatusDropdown 41. antd Empty 0 · Descriptions 0 · raw Button 20(의도적). Teal full 10·Phase 5 룩은 동결.'
 
 export const DS_IMPACT_NEXT =
-  '다음: Phase 5는 게이트 후 · raw Button variant 확장은 Phase 5와 함께 검토 · Teal/MFA 유지.'
+  '다음: Phase 5는 게이트 후 · StatusDropdown 새 도메인은 tag100/tag160+INLINE 셸 · Teal/MFA 유지.'

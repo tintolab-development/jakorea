@@ -78,6 +78,14 @@
   min-height: 54px;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.ujat-volunteer-applicant-manager-evaluation
+  .detail-info-form__field-content
+  > .status-dropdown-cell__inline-tag100 {
+  flex: 0 0 116px;
 }
 
 /* program-detail-info-tab / detail-info-form 외곽 */

@@ -43,8 +43,7 @@ function AssignSessionTags({
         return (
           <InstructorAssignSessionSlotChip
             key={opt.id}
-            scheduleLabel={opt.dateLabel ?? opt.scheduleLabel}
-            timeLabel={opt.timeLabel}
+            scheduleLabel={opt.scheduleLabel}
             sessionRoundLabel={opt.sessionRoundLabel}
             capacityLabel={opt.capacityLabel}
             selected={selected}
@@ -142,7 +141,7 @@ export function AssignGuideModal({
               </div>
               <CmsRadio.Group
                 className="school-detail-add-instructor-assign-modal__role-radios"
-                size="large"
+                size="medium"
                 value={role}
                 onChange={e => onRoleChange(e.target.value as InstructorRoleKey)}
                 options={[

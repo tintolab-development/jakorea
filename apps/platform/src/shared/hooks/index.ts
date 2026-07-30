@@ -6,9 +6,12 @@ export { usePrefersReducedMotion } from './use-prefers-reduced-motion'
 export { useMediaQuery } from './use-media-query'
 export { useJusoAddressSearch } from '@jakorea/location/juso/react'
 export { useNeisSchoolSearch } from '@jakorea/location/neis/react'
+export { useCareerNetUniversitySearch } from '@jakorea/location/career-net/react'
 export type { JusoAddressItem, JusoAddressRow } from '@jakorea/location/juso'
 export type { NeisSchoolItem } from '@jakorea/location/neis'
+export type { CareerNetUniversityItem } from '@jakorea/location/career-net'
 export { filterNeisSchoolsByRegion } from '@jakorea/location/neis'
+export { filterCareerNetUniversitiesBySigungu } from '@jakorea/location/career-net'
 export {
   getSidoMatchTokens,
   matchesSidoInText,
@@ -18,6 +21,8 @@ export {
   readJusoConfmKeyFromEnv,
   readJusoApiUrlFromEnv,
   readNeisApiKeyFromEnv,
+  readCareerNetApiKeyFromEnv,
   getPlatformJusoMissingKeyMessage,
   getPlatformNeisMissingKeyMessage,
+  getPlatformCareerNetMissingKeyMessage,
 } from '@/shared/lib/location-env'

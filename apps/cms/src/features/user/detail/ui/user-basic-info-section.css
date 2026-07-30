@@ -26,8 +26,8 @@
 }
 
 /*
- * 교사 상세 — 성명 블록 행 높이 56px (셀 padding 12×2 + 배지 32).
- * StatusDropdownCell 기본 트리거 padding(8px) 제거해 재직 현황 도입 전 높이 유지.
+ * 교사 상세 — 성명 블록 행 높이 56px (셀 여유 + tag100 인라인 셸 48).
+ * StatusDropdownCell tag100 + INLINE_TAG100(116×48) — 열림 시에도 행 높이 유지.
  */
 .user-basic-info-section--school-teacher-profile-card .detail-info-form__name-block {
   grid-template-rows: 56px 56px;
@@ -49,7 +49,7 @@
   flex-shrink: 0;
 }
 
-/* 트리거 패딩·크롬은 StatusDropdownCell chrome="hug" */
+/* 트리거 패딩·크롬은 StatusDropdownCell tag100 + INLINE_TAG100 셸(116×48) */
 .user-basic-info-section__teacher-employment-dropdown
   .user-basic-info-section__teacher-employment-badge.app-status-badge,
 .user-basic-info-section__teacher-employment-dropdown

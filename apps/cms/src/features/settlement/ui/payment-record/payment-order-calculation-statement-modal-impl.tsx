@@ -2,7 +2,7 @@
  * 산출 내역서 모달 — 지급 현황 상세(프로그램/강사) 공통 구현
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
@@ -11,6 +11,13 @@ import { getSettlementApiErrorMessage } from '@/features/settlement-management/a
 import { useConfirmPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
 import type { PaymentOrdersDetailContextQueryResult } from '@/features/settlement-management/hooks/use-payment-orders-detail-query'
 import type { PaymentOrderCalculationStatementCommitPayload } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
+import {
+  buildPaymentStatementIssuanceFileNameFromCalculation,
+  buildPaymentStatementIssuanceViewOptionsFromCalculation,
+  isPaymentOrderLineEligibleForPaymentStatementIssue,
+  mapProgramCalculationStatementToIssuanceInput,
+} from '@/features/settlement/lib/payment-order-calculation-statement-issuance-view'
+import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import '@/pages/settlement-management/payment-order-admin-status-tag.css'
@@ -66,6 +73,7 @@ export function PaymentOrderCalculationStatementModalImpl({
   const [paymentRejectOpen, setPaymentRejectOpen] = useState(false)
   const [paymentRejectDoneOpen, setPaymentRejectDoneOpen] = useState(false)
   const [paymentRejectReason, setPaymentRejectReason] = useState('')
+  const [issuanceViewOpen, setIssuanceViewOpen] = useState(false)
 
   /* 상위에서 open만 false로 줄 때(마스크 등) 자식 확인·반려 모달 상태를 비움 */
   /* eslint-disable react-hooks/set-state-in-effect -- 모달 닫힘과 동기화 */
@@ -75,9 +83,36 @@ export function PaymentOrderCalculationStatementModalImpl({
       setPaymentRejectOpen(false)
       setPaymentRejectDoneOpen(false)
       setPaymentRejectReason('')
+      setIssuanceViewOpen(false)
     }
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  const programStatement =
+    data?.context === 'program'
+      ? (data as PaymentOrderCalculationStatementProgramContext)
+      : null
+
+  const issuanceInput = useMemo(
+    () => (programStatement ? mapProgramCalculationStatementToIssuanceInput(programStatement) : null),
+    [programStatement]
+  )
+
+  const issuanceParagraphBodyOptions = useMemo(
+    () =>
+      issuanceInput
+        ? buildPaymentStatementIssuanceViewOptionsFromCalculation(issuanceInput)
+        : undefined,
+    [issuanceInput]
+  )
+
+  const issuanceFileName = useMemo(
+    () =>
+      issuanceInput
+        ? buildPaymentStatementIssuanceFileNameFromCalculation(issuanceInput)
+        : undefined,
+    [issuanceInput]
+  )
 
   const rootClass = ['payment-order-calc-statement-modal', entryClassName].filter(Boolean).join(' ')
 
@@ -134,6 +169,9 @@ export function PaymentOrderCalculationStatementModalImpl({
   }
 
   const statement: PaymentOrderCalculationStatementProgramContext = data
+  const canIssuePaymentStatement = isPaymentOrderLineEligibleForPaymentStatementIssue(
+    statement.basic.processingStatusClass
+  )
 
   const handleRemoteConfirm = async (lectureFeePaymentScheduledDateIso: string) => {
     if (statementId == null) {
@@ -178,6 +216,8 @@ export function PaymentOrderCalculationStatementModalImpl({
           formulaLabel={statement.formulaLabel}
           totalAmount={statement.totalAmount}
           processingStatus={statement.basic.processingStatusClass}
+          paymentStatementIssueDisabled={!canIssuePaymentStatement}
+          onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
           headerActions={
             <>
               <CmsButton
@@ -250,6 +290,13 @@ export function PaymentOrderCalculationStatementModalImpl({
         }}
         data={statement}
         reason={paymentRejectReason}
+      />
+      <PaymentStatementIssuanceViewModal
+        open={issuanceViewOpen}
+        onClose={() => setIssuanceViewOpen(false)}
+        paragraphBodyOptions={issuanceParagraphBodyOptions}
+        fileName={issuanceFileName}
+        zIndex={1500}
       />
     </>
   )
