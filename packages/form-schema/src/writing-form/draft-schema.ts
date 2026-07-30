@@ -2269,6 +2269,7 @@ export const AGREEMENT_NOTICE_PARAGRAPH_IDS = {
   idType: 'agreement-notice-id-type',
   consentStatic: 'agreement-notice-consent-static',
   subject: 'agreement-notice-subject',
+  confirmationClosing: 'agreement-notice-confirmation-closing',
   systemDate: 'agreement-notice-system-date',
   systemSignature: 'agreement-notice-system-signature',
 } as const
@@ -2282,12 +2283,16 @@ export const AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.idType,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.consentStatic,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.subject,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature,
 ])
 
 export const AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.title,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature,
 ])
 
 export function createDefaultIdTypeWithInputOptions(): IdTypeWithInputOption[] {
@@ -2306,6 +2311,17 @@ const AGREEMENT_NOTICE_CONSENT_LINES = [
   '○ 본인은 위 사무의 처리를 위하여 「전자정부법」 제36조에 따른 행정정보 공동이용을 통해 이용기관의 업무처리담당자가 전자적으로 본인의 구비서류(공동이용 행정정보)를 확인하는 것에 동의합니다.',
   '* 만일, 본인이 위 행정정보 이용에 대해 동의를 하지 아니할 경우에도 불이익은 없습니다. 다만, 동의하지 아니한 경우에는 본인이 해당 구비서류를 제출하여야 합니다.',
 ] as const
+
+const AGREEMENT_NOTICE_CONFIRMATION_CLOSING: ClosingParagraph = {
+  id: AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
+  kind: 'description',
+  variant: 'closing',
+  requiredMark: false,
+  paragraphTitle: '',
+  paragraphDescription: '',
+  participatesInTitleNumbering: false,
+  body: '위와 같은 행정정보 공동이용에 대한 내용을 모두 확인했습니다.',
+}
 
 /** 동의 양식 목록 > 행정정보 공동이용 사전동의서 — 편집 시드 초안 */
 export function createAgreementNoticeDraft(): WritingFormDraft {
@@ -2437,6 +2453,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         bodyPlaceholder: '답변을 입력해 주세요',
         bodyText: '',
       },
+      AGREEMENT_NOTICE_CONFIRMATION_CLOSING,
       {
         id: AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
         kind: 'description',
@@ -2459,6 +2476,27 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
       },
     ],
   }
+}
+
+/** 구 저장본에 confirmationClosing이 없으면 systemDate 앞에 삽입 */
+export function ensureAgreementNoticeConfirmationClosing(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  if (
+    draft.paragraphs.some(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing)
+  ) {
+    return draft
+  }
+  const dateIdx = draft.paragraphs.findIndex(
+    p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate
+  )
+  const paragraphs = [...draft.paragraphs]
+  if (dateIdx >= 0) {
+    paragraphs.splice(dateIdx, 0, AGREEMENT_NOTICE_CONFIRMATION_CLOSING)
+  } else {
+    paragraphs.push(AGREEMENT_NOTICE_CONFIRMATION_CLOSING)
+  }
+  return { ...draft, paragraphs }
 }
 
 /** 동의 양식 > 초상권 수집·이용 동의서 — 시드 단락 id */
@@ -2838,8 +2876,24 @@ export const EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS = {
   violationClosing: 'agreement-expense-pledge-violation-closing',
   systemDate: 'agreement-expense-pledge-system-date',
   systemSignature: 'agreement-expense-pledge-system-signature',
-  closing: 'agreement-expense-pledge-closing',
 } as const
+
+/** 템플릿 고정 단락 — 삭제·복제·순서 변경 불가 */
+export const EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS = new Set<string>([
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.title,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.intro,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause1,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause2,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause3,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause4,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.violationClosing,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemDate,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemSignature,
+])
+
+export const EDUCATOR_FACILITATOR_PLEDGE_HIDDEN_DRAG_HANDLE_IDS = new Set<string>(
+  EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS
+)
 
 const PLEDGE_MC_OPTIONS_BASE = 'pledge-mc' as const
 
@@ -2956,16 +3010,6 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
         paragraphTitle: '서명란 유형',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-      },
-      {
-        id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.closing,
-        kind: 'description',
-        variant: 'closing',
-        requiredMark: false,
-        paragraphTitle: '',
-        paragraphDescription: '',
-        participatesInTitleNumbering: false,
-        body: '내용을 자세히 검토하신 후 동의 여부를 결정하여 주시기 바랍니다.',
       },
     ],
   }
