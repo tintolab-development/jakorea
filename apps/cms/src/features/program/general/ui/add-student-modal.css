@@ -1,6 +1,7 @@
 /**
  * 학생 추가 등록 모달
- * 스펙: 디스크립션 16px/500/150%, 필드 간격 30px, CMS medium 인풋, 푸터 우측 취소/등록
+ * 스펙(스크린샷): ContentModal 패딩 26/30/34,
+ * 설명↔폼·행·열·푸터 간격 30px, 2열 그리드(비고만 full width), CMS medium 인풋
  */
 
 .add-student-modal.ant-modal .ant-modal-content {
@@ -25,11 +26,16 @@
 .add-student-modal .teal-header-modal__body {
   flex-shrink: 0;
   width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   background: var(--color-bg-base);
+  /* description ↔ form 30px (스크린샷) */
+  gap: 30px;
+  /* overflow-y:auto 단독 시 overflow-x도 auto → 가로 스크롤 방지 */
+  overflow-x: hidden;
 }
 
 .add-student-modal .teal-header-modal__footer {
@@ -41,7 +47,9 @@
 
 .add-student-modal__body {
   width: 100%;
+  max-width: 100%;
   flex: 1 1 auto;
+  min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -50,9 +58,14 @@
 
 .add-student-modal__form {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 30px;
+  row-gap: 30px;
+  align-items: start;
 }
 
 .add-student-modal__field {
@@ -60,6 +73,11 @@
   flex-direction: column;
   gap: 8px;
   align-items: stretch;
+  min-width: 0;
+}
+
+.add-student-modal__field--full {
+  grid-column: 1 / -1;
 }
 
 .add-student-modal__field .cms-input,
@@ -81,6 +99,8 @@
 .add-student-modal__radio-group {
   display: flex;
   gap: 16px;
+  align-items: center;
+  min-height: 40px;
 }
 
 .add-student-modal__radio-group .ant-radio-wrapper {

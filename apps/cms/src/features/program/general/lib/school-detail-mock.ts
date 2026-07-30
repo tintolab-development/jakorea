@@ -547,8 +547,8 @@ const LECTURE_ATTENDANCE_SESSIONS_BY_STUDENT_NAME: Readonly<
   최학생: [
     { roundNumber: 1, status: 'attended' },
     { roundNumber: 2, status: 'absent' },
-    { roundNumber: 3, status: 'attended' },
-    { roundNumber: 4, status: 'attended' },
+    { roundNumber: 3, status: 'not_held' },
+    { roundNumber: 4, status: 'not_held' },
   ],
   정학생: [
     { roundNumber: 1, status: 'attended' },
