@@ -124,11 +124,12 @@ export { CmsInputSearch } from './cms-input-search'
 export type { CmsInputSearchProps } from './cms-input-search'
 export { AddressSearch } from './address-search'
 export type { AddressSearchProps } from './address-search'
-export { SchoolSearch } from './school-search'
+export { SchoolSearch, SCHOOL_LEVEL_OPTIONS } from './school-search'
 export type {
   SchoolSearchProps,
   SchoolSearchSelection,
   SchoolSearchSelectMeta,
+  SchoolLevel,
 } from './school-search'
 export { UniversitySearch } from './university-search'
 export type {

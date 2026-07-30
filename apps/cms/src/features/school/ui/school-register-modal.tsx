@@ -1,10 +1,9 @@
 /**
  * 학교 신규 등록 모달
- * - 기관명: NEIS 학교 검색 (`SchoolSearch`)
+ * - 기관명: `SchoolSearch` (초·중·고 NEIS / 대학교 커리어넷)
  * - 기관 소재지: 학교 선택 시 도로명 주소 자동 반영 + 상세 주소 입력
- * - 선택 시 NEIS 코드·검색 지역·우편번호·전화번호를 함께 보관해 등록 API에 전달
- * - 초·중·고: NEIS `ORG_TELNO` → `phone`
- * - 대학교: `UniversitySearch`(커리어넷 SCHOOL) — 전화 필드는 API에 없음
+ * - 초·중·고: NEIS 코드·검색 지역·우편번호·전화(`ORG_TELNO`) 보관
+ * - 대학교: 이름·주소·지역만 반영 (전화·NEIS 코드 없음)
  */
 
 import { useEffect } from 'react'
@@ -86,18 +85,37 @@ export function SchoolRegisterModal({
   }, [open, form])
 
   const handleSchoolSelect = (
-    school: SchoolSearchSelection,
+    selection: SchoolSearchSelection,
     meta: SchoolSearchSelectMeta
   ) => {
+    if (selection.source === 'neis') {
+      const school = selection.item
+      form.setFieldsValue({
+        institutionName: school.schulNm.trim(),
+        roadAddress: school.orgRdnma.trim(),
+        detailAddress: '',
+        neisCode: school.sdSchulCode.trim(),
+        regionSido: meta.regionSido,
+        regionSigungu: meta.regionSigungu,
+        zipCode: school.orgRdnzc.trim(),
+        phone: school.orgTelno.trim(),
+      })
+      return
+    }
+
+    const univ = selection.item
+    const institutionName = univ.campusName
+      ? `${univ.schoolName.trim()} (${univ.campusName.trim()})`
+      : univ.schoolName.trim()
     form.setFieldsValue({
-      institutionName: school.schulNm.trim(),
-      roadAddress: school.orgRdnma.trim(),
+      institutionName,
+      roadAddress: univ.address.trim(),
       detailAddress: '',
-      neisCode: school.sdSchulCode.trim(),
+      neisCode: '',
       regionSido: meta.regionSido,
       regionSigungu: meta.regionSigungu,
-      zipCode: school.orgRdnzc.trim(),
-      phone: school.orgTelno.trim(),
+      zipCode: '',
+      phone: '',
     })
   }
 
