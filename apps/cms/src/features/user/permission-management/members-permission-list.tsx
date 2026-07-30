@@ -37,8 +37,6 @@ import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './members-permission-list.css'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH, ContentModal } from '@/shared/ui'
-import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
-import { usePersonalInfoRevealByRow } from '@/features/user/detail/lib/use-personal-info-reveal'
 
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
   SCHOOL: '학교(교사)',
@@ -204,27 +202,6 @@ export const MembersPermissionList = forwardRef<
     setBulkApproveBlockedSelectedCount(null)
     setBulkRejectBlockedSelectedCount(null)
   }, [baseRows])
-
-  const resolvePermissionListPersonalInfoAccessItem = useCallback((rowId: string) => {
-    const target = rowsRef.current.find(row => row.id === rowId)
-    return target?.name ?? '회원 권한 신청자'
-  }, [])
-
-  const resolvePermissionListMemberId = useCallback((rowId: string) => {
-    const target = rowsRef.current.find(row => row.id === rowId)
-    if (target?.memberId != null) return String(target.memberId)
-    return target?.userId
-  }, [])
-
-  const {
-    privacyRevealedByRowId,
-    handleToggleListPrivacyMask,
-    confirmModal: personalInfoRevealModal,
-  } = usePersonalInfoRevealByRow({
-    resolveAccessItem: resolvePermissionListPersonalInfoAccessItem,
-    resolveMemberId: resolvePermissionListMemberId,
-    resetDeps: [baseRows],
-  })
 
   useImperativeHandle(
     ref,
@@ -455,84 +432,80 @@ export const MembersPermissionList = forwardRef<
     selectedKeysSnapshot,
   ])
 
-  const selectedSingleRowId = selectedRowKeys.length === 1 ? String(selectedRowKeys[0]) : null
-  const isSelectedRowPrivacyRevealed =
-    selectedSingleRowId != null && Boolean(privacyRevealedByRowId[selectedSingleRowId])
-
   const columns: ColumnsType<MemberPermissionApplicationRow> = useMemo(
-    () => [
-      {
-        title: 'No.',
-        key: 'no',
-        className: CMS_TABLE_NO_COL_CLASS,
-        width: TABLE_COLUMN_WIDTHS.index,
-        align: 'center',
-        render: (_: unknown, __: MemberPermissionApplicationRow, index: number) =>
-          tableData.length - index,
-      },
-      {
-        title: '회원명',
-        dataIndex: 'name',
-        key: 'name',
-        width: TABLE_COLUMN_WIDTHS.name,
-        ellipsis: true,
-      },
-      {
-        title: '연락처',
-        key: 'phone',
-        width: TABLE_COLUMN_WIDTHS.phone,
-        render: (_: unknown, r: MemberPermissionApplicationRow) =>
-          privacyRevealedByRowId[r.id] ? r.phone?.trim() || '-' : maskedPhone(r.phone),
-      },
-      {
-        title: '이메일',
-        key: 'email',
-        width: TABLE_COLUMN_WIDTHS.email,
-        ellipsis: true,
-        render: (_: unknown, r: MemberPermissionApplicationRow) =>
-          privacyRevealedByRowId[r.id] ? r.email?.trim() || '-' : maskedEmail(r.email),
-      },
-      {
-        title: '회원 유형',
-        dataIndex: 'memberCategory',
-        key: 'memberCategory',
-        width: 120,
-        align: 'center',
-        render: (c: MemberPermissionApplicationRow['memberCategory']) => MEMBER_CATEGORY_LABEL[c],
-      },
-      {
-        title: '신청 유형',
-        dataIndex: 'applicationTypeLabel',
-        key: 'applicationTypeLabel',
-        width: 140,
-        align: 'center',
-        ellipsis: true,
-        render: (label: string) => (label?.trim() ? label : '-'),
-      },
-      {
-        title: '권한 승인 현황',
-        dataIndex: 'approvalStatus',
-        key: 'approvalStatus',
-        width: 120,
-        align: 'center',
-        onHeaderCell: () => ({
-          className: 'members-permission-list__col--approval-status',
-        }),
-        onCell: () => ({
-          className: 'members-permission-list__col--approval-status',
-        }),
-        render: (_: unknown, record: MemberPermissionApplicationRow) =>
-          memberPermissionApprovalStatusTextTag(record.approvalStatus),
-      },
-      {
-        title: '신청일',
-        dataIndex: 'appliedAt',
-        key: 'appliedAt',
-        width: TABLE_COLUMN_WIDTHS.date,
-        render: (v: string) => dayjs(v).format('YYYY.MM.DD'),
-      },
-    ],
-    [tableData.length, privacyRevealedByRowId]
+    () => {
+      const cols: ColumnsType<MemberPermissionApplicationRow> = [
+        {
+          title: 'No.',
+          key: 'no',
+          className: CMS_TABLE_NO_COL_CLASS,
+          width: TABLE_COLUMN_WIDTHS.index,
+          align: 'center',
+          render: (_: unknown, __: MemberPermissionApplicationRow, index: number) =>
+            tableData.length - index,
+        },
+        {
+          title: '회원명',
+          dataIndex: 'name',
+          key: 'name',
+          width: TABLE_COLUMN_WIDTHS.name,
+          ellipsis: true,
+        },
+        {
+          title: '연락처',
+          key: 'phone',
+          width: TABLE_COLUMN_WIDTHS.phone,
+          render: (_: unknown, r: MemberPermissionApplicationRow) => maskedPhone(r.phone),
+        },
+        {
+          title: '이메일',
+          key: 'email',
+          width: TABLE_COLUMN_WIDTHS.email,
+          ellipsis: true,
+          render: (_: unknown, r: MemberPermissionApplicationRow) => maskedEmail(r.email),
+        },
+      ]
+
+      // 강사 목록만「회원 유형」노출. 관리자 목록은 회원·신청 유형 모두 비노출.
+      if (memberType === 'instructor') {
+        cols.push({
+          title: '회원 유형',
+          dataIndex: 'memberCategory',
+          key: 'memberCategory',
+          width: 120,
+          align: 'center',
+          render: (c: MemberPermissionApplicationRow['memberCategory']) => MEMBER_CATEGORY_LABEL[c],
+        })
+      }
+
+      cols.push(
+        {
+          title: '권한 승인 현황',
+          dataIndex: 'approvalStatus',
+          key: 'approvalStatus',
+          width: 120,
+          align: 'center',
+          onHeaderCell: () => ({
+            className: 'members-permission-list__col--approval-status',
+          }),
+          onCell: () => ({
+            className: 'members-permission-list__col--approval-status',
+          }),
+          render: (_: unknown, record: MemberPermissionApplicationRow) =>
+            memberPermissionApprovalStatusTextTag(record.approvalStatus),
+        },
+        {
+          title: '신청일',
+          dataIndex: 'appliedAt',
+          key: 'appliedAt',
+          width: TABLE_COLUMN_WIDTHS.date,
+          render: (v: string) => dayjs(v).format('YYYY.MM.DD'),
+        }
+      )
+
+      return cols
+    },
+    [memberType, tableData.length]
   )
 
   const filterFields = useMemo<FilterFieldConfig[]>(() => {
@@ -634,17 +607,6 @@ export const MembersPermissionList = forwardRef<
           >
             신청 승인
           </CmsButton>
-          <PersonalInfoRevealButton
-            labelMode="toggle"
-            revealed={isSelectedRowPrivacyRevealed}
-            cmsVariant={isSelectedRowPrivacyRevealed ? 'default' : 'primary'}
-            cmsSize="large"
-            width={180}
-            disabled={selectedRowKeys.length !== 1}
-            onClick={() =>
-              handleToggleListPrivacyMask(selectedRowKeys, isSelectedRowPrivacyRevealed)
-            }
-          />
         </>
       }
       excelExport={{
@@ -681,7 +643,6 @@ export const MembersPermissionList = forwardRef<
         }
         pagination={false}
       />
-      {personalInfoRevealModal}
 
       {bulkApproveBlockedSelectedCount != null ? (
         <ContentModal
