@@ -11,7 +11,7 @@ export {
   setAuthTokens,
 } from './auth-token'
 export { queryClient } from './query-client'
-export { getDevAuthLoggedIn, setDevAuthLoggedIn } from './dev-auth'
+export { DEV_AUTH_CHANGE_EVENT, getDevAuthLoggedIn, setDevAuthLoggedIn } from './dev-auth'
 export {
   DEV_MEMBER_PROFILE_OPTIONS,
   getDevMemberProfile,

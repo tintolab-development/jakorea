@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react'
-import { getDevAuthLoggedIn, setDevAuthLoggedIn } from '@/shared/lib'
+import { useEffect, useState, type ReactNode } from 'react'
+import { DEV_AUTH_CHANGE_EVENT, getDevAuthLoggedIn, setDevAuthLoggedIn } from '@/shared/lib'
 import type { LayoutVariant } from '@/widgets/layout/layout-variant'
 import { AuthPageShell } from '@/widgets/layout/auth-page-shell'
 import { ContentShell } from '@/widgets/layout/content-shell'
@@ -17,6 +17,18 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   const isMypage = layout === 'mypage'
   const isAuth = layout === 'auth'
   const useContentShell = layout === 'default'
+
+  useEffect(() => {
+    const handleDevAuthChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ isLoggedIn: boolean }>).detail
+      if (typeof detail?.isLoggedIn === 'boolean') {
+        setIsLoggedIn(detail.isLoggedIn)
+      }
+    }
+
+    window.addEventListener(DEV_AUTH_CHANGE_EVENT, handleDevAuthChange)
+    return () => window.removeEventListener(DEV_AUTH_CHANGE_EVENT, handleDevAuthChange)
+  }, [])
 
   const handleLogout = () => {
     setDevAuthLoggedIn(false)
