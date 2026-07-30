@@ -1,9 +1,48 @@
 .page {
   display: flex;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   flex-direction: column;
   gap: var(--spacing-48);
   padding: var(--spacing-32);
+  overflow-x: clip;
+}
+
+.mobileVerifyBar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-12);
+  padding: var(--spacing-12) var(--spacing-16);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-80);
+}
+
+.mobileVerifyInfo {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 200px;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.mobileVerifyInfo p {
+  margin: 0;
+}
+
+.mobileVerifyActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-8);
 }
 
 .header {
@@ -14,6 +53,8 @@
 
 .section {
   display: flex;
+  width: 100%;
+  min-width: 0;
   flex-direction: column;
   gap: var(--spacing-24);
   padding: var(--spacing-32);
@@ -264,4 +305,51 @@
 
 .guideNote p {
   margin: 0;
+}
+
+@media (--bp-below-pc) {
+  .page {
+    gap: var(--spacing-24);
+    padding: var(--spacing-16) var(--spacing-12) var(--spacing-40);
+  }
+
+  .section {
+    gap: var(--spacing-16);
+    padding: var(--spacing-20) var(--spacing-16);
+    border-radius: var(--radius-16);
+  }
+
+  .sampleRow,
+  .buttonRow,
+  .paginationRow {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-12);
+  }
+
+  .inputRow {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-16);
+  }
+
+  .colorGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .guideTableRow {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-8);
+  }
+
+  .guideScenarioStack {
+    grid-template-columns: 1fr;
+  }
+
+  .listSlotPlaceholder {
+    min-height: 200px;
+  }
+
+  .mobileVerifyBar {
+    position: sticky;
+    top: 56px;
+  }
 }
