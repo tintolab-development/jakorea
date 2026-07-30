@@ -22,8 +22,8 @@ LNB 「회원 관리」 3화면(회원 목록·권한 승인·권한 설정)과 
 | 회원 상세 (강사 정산) | 정산 현황 탭 | `members` + (`paymentOrders` 또는 `accountPayments`) | `GET /api/settlements?instructorMemberId=` |
 | 회원 상세 (강사 정산 mock) | 동일 | `members` only | mock + 「정산 API 미활성」 배너 |
 | 회원 등록·삭제 | 목록 액션·모달 | `members` | 관리자: `POST /api/admin/admin-accounts` · 개인·학교·강사: **임시** 단일 `pre-register` → **역할별 path 분리 예정** · `delete` |
-| 권한 승인 — 강사 | `/admin/permission-requests` | `instructorRoleRequests` | `instructor-role-requests` |
-| 권한 승인 — 관리자 | 동일 | — | **mock 유지** + 안내 배너 |
+| 권한 승인 — 강사 | `/admin/permission-requests` | `instructorRoleRequests` (또는 `members`) | `instructor-role-requests` |
+| 권한 승인 — 관리자 | 동일 | `adminApprovalRequests` (또는 `members`) | `admin-approval-requests` |
 | 권한 설정 | `/admin/settings/permissions` | `adminPermissions` | `admin-roles` + PUT |
 | 권한 설정 (mock UI) | 동일 | `adminPermissions` **비활성** | 로컬 state |
 
@@ -37,14 +37,23 @@ LNB 「회원 관리」 3화면(회원 목록·권한 승인·권한 설정)과 
 
 ```env
 VITE_API_SERVER=https://your-backend.example
-VITE_REAL_API_MODULES=adminAuth,dashboard,logs,detailedPrograms,textbooks,sponsors,notices,faqs,inquiries,paymentOrders,accountPayments,settlementConfigs,members,instructorRoleRequests,adminPermissions
+VITE_REAL_API_MODULES=adminAuth,dashboard,logs,detailedPrograms,textbooks,sponsors,notices,faqs,inquiries,paymentOrders,accountPayments,settlementConfigs,members,instructorRoleRequests,adminApprovalRequests,adminPermissions
 ```
 
-회원 관리만 켜려면 기존 목록 끝에 아래 3개를 추가합니다.
+회원 관리만 켜려면 기존 목록 끝에 아래를 추가합니다.
 
 ```env
-members,instructorRoleRequests,adminPermissions
+members,instructorRoleRequests,adminApprovalRequests,adminPermissions
 ```
+
+| 키 | 용도 |
+|----|------|
+| `members` | 회원 목록·상세·등록·삭제 |
+| `instructorRoleRequests` | 권한 승인 — 강사 탭 |
+| `adminApprovalRequests` | 권한 승인 — 관리자 탭 |
+| `adminPermissions` | 권한 설정 |
+| `logs` | 개인정보 언마스크 (권장) |
+| `paymentOrders` / `accountPayments` | 강사 정산 탭 (택1+) |
 
 ### 2. dev 서버 재시작
 
@@ -68,6 +77,7 @@ MFA 완료 후 유효 JWT가 있어야 합니다 (`hasRemoteAdminJwt()`). 권한
 |----|-----------|-----------|
 | `members` | 회원 목록·상세·사전 등록·탈퇴 | `isMembersRemoteEnabled()` |
 | `instructorRoleRequests` | 권한 승인 — 강사 탭 | `isInstructorRoleRequestsRemoteEnabled()` |
+| `adminApprovalRequests` | 권한 승인 — 관리자 탭 | `isAdminApprovalRequestsRemoteEnabled()` |
 | `adminPermissions` | 권한 설정 (API 매트릭스 UI) | `isAdminPermissionsRemoteEnabled()` |
 | `paymentOrders` 또는 `accountPayments` | 회원 상세 강사 정산 탭 | `isMemberInstructorSettlementsRemoteEnabled()` (`members`와 함께 필요) |
 
@@ -363,7 +373,7 @@ UI: `AdminPermissionsRemotePanel` — `domain`별 체크박스 + 저장 버튼.
 
 ## 수동 검증 체크리스트
 
-- [ ] `.env`에 `members,instructorRoleRequests,adminPermissions` 포함 + dev 재시작
+- [ ] `.env`에 `members,instructorRoleRequests,adminApprovalRequests,adminPermissions` 포함 + (`logs`·정산 모듈 권장) + dev 재시작
 - [ ] MFA 로그인 후 kind 5종 목록 로드
 - [ ] 미지원 필터 적용 시 경고 배너
 - [ ] 상세 열기 시 API 재조회 (기본정보·동의·1365)
