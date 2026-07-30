@@ -200,34 +200,6 @@
   padding: 0 12px 0 14px;
 }
 
-.form-editor-horizontal-table__field-text-plain-input.ant-input {
-  width: 100%;
-  min-width: 0;
-  height: auto;
-  padding: 0 !important;
-  margin: 0;
-  text-align: center;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.form-editor-horizontal-table__field-text-plain-input.ant-input::placeholder {
-  color: var(--default-BK, #3d3d3d);
-  opacity: 0.45;
-}
-
-.form-editor-horizontal-table__field-text-plain-input.ant-input:focus,
-.form-editor-horizontal-table__field-text-plain-input.ant-input-focused {
-  box-shadow: none !important;
-}
-
 /* 주관식형: 기본 높이는 다른 필드와 맞추고, 입력 내용이 길 때만 확장 */
 .form-editor-horizontal-table__field-box--subjective {
   height: auto;
@@ -283,7 +255,8 @@
 .form-editor-horizontal-table__field-text-input.ant-input {
   flex: 1 0 0;
   min-width: 0;
-  height: auto;
+  height: auto !important;
+  min-height: 24px !important;
   padding: 0 !important;
   margin: 0;
   text-align: left;
@@ -293,6 +266,11 @@
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  resize: none;
+  overflow: hidden;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -573,19 +551,29 @@
   justify-content: center;
 }
 
-/* 직접 입력 텍스트 — td 기본(500); th는 font-weight만 700 */
-.form-editor-horizontal-table__cell-input-shell .ant-input {
+/* 직접 입력 텍스트 — placeholder 회색, 입력값 main-BK; th는 font-weight만 700 */
+.form-editor-horizontal-table__cell-input-shell .ant-input,
+.form-editor-horizontal-table__cell-input-shell textarea.ant-input {
   flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
+  height: auto !important;
+  min-height: 0;
   padding: 0;
   margin: 0;
   color: var(--main-BK, #3d3d3d);
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
   text-align: center;
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  resize: none;
+  overflow: hidden;
   background: transparent !important;
   box-shadow: none !important;
 }
@@ -596,12 +584,15 @@
 
 .form-editor-horizontal-table__cell-input-shell--header .ant-input::placeholder {
   color: var(--gray-85969-d, #85969d);
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 1;
   font-weight: 700;
 }
 
 .form-editor-horizontal-table__cell-input-shell--body .ant-input::placeholder {
-  color: var(--main-BK, #3d3d3d);
-  opacity: 0.45;
+  color: var(--gray-85969-d, #85969d);
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+  opacity: 1;
   font-weight: 500;
 }
 
@@ -620,6 +611,8 @@
   font-style: normal;
   line-height: 150%;
   text-align: center;
+  overflow: visible;
+  overflow-wrap: break-word;
   word-break: break-word;
   white-space: pre-wrap;
 }
@@ -637,7 +630,7 @@
 
 .form-editor-horizontal-table__cell-text--body {
   font-weight: 500;
-  color: var(--default-BK, #3d3d3d);
+  color: var(--main-BK, #3d3d3d);
 }
 
 .form-editor-horizontal-table__cell-text--header.form-editor-horizontal-table__cell-text--placeholder {
@@ -646,7 +639,8 @@
 }
 
 .form-editor-horizontal-table__cell-text--body.form-editor-horizontal-table__cell-text--placeholder {
-  opacity: 0.45;
+  color: var(--gray-85969-d, #85969d);
+  opacity: 1;
 }
 
 /* 하단 설명 — 「설명을 입력해 주세요」 타이포 (플레이스홀더·본문·뷰 공통) */
@@ -801,11 +795,99 @@
 
 .form-editor-horizontal-table-wrap--payment-pre-consent-p1
   .form-editor-horizontal-table__td--field
-  .form-editor-horizontal-table__cell-text--body {
+  .form-editor-horizontal-table__cell-text--body,
+.form-editor-horizontal-table-wrap--payment-pre-consent-p1
+  .form-editor-horizontal-table__td--field
+  .form-editor-horizontal-table__cell-textarea {
   color: inherit;
   font-weight: inherit;
   text-align: inherit;
-  white-space: pre-line;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* p1 — 수집·이용 목적·보유기간 열만 20/700 */
+.form-editor-horizontal-table-wrap--payment-pre-consent-p1
+  .form-editor-horizontal-table__td--field:nth-child(2)
+  .form-editor-horizontal-table__cell-text--body,
+.form-editor-horizontal-table-wrap--payment-pre-consent-p1
+  .form-editor-horizontal-table__td--field:nth-child(3)
+  .form-editor-horizontal-table__cell-text--body,
+.form-editor-horizontal-table-wrap--payment-pre-consent-p1
+  .form-editor-horizontal-table__td--field:nth-child(2)
+  .form-editor-horizontal-table__cell-textarea,
+.form-editor-horizontal-table-wrap--payment-pre-consent-p1
+  .form-editor-horizontal-table__td--field:nth-child(3)
+  .form-editor-horizontal-table__cell-textarea {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* p2 — 항목·보유기간(1·3열)만 20/700, 수집·이용 목적(2열)은 16/500 */
+.form-editor-horizontal-table-wrap--payment-pre-consent-p2
+  .form-editor-horizontal-table__row--header
+  .form-editor-horizontal-table__cell-text--header {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.form-editor-horizontal-table-wrap--payment-pre-consent-p2
+  .form-editor-horizontal-table__td--field {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.form-editor-horizontal-table-wrap--payment-pre-consent-p2
+  .form-editor-horizontal-table__td--field
+  .form-editor-horizontal-table__cell-text--body,
+.form-editor-horizontal-table-wrap--payment-pre-consent-p2
+  .form-editor-horizontal-table__td--field
+  .form-editor-horizontal-table__cell-textarea {
+  color: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  text-align: inherit;
+  line-height: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.form-editor-horizontal-table-wrap--payment-pre-consent-p2
+  .form-editor-horizontal-table__td--field:nth-child(1)
+  .form-editor-horizontal-table__cell-text--body,
+.form-editor-horizontal-table-wrap--payment-pre-consent-p2
+  .form-editor-horizontal-table__td--field:nth-child(3)
+  .form-editor-horizontal-table__cell-text--body,
+.form-editor-horizontal-table-wrap--payment-pre-consent-p2
+  .form-editor-horizontal-table__td--field:nth-child(1)
+  .form-editor-horizontal-table__cell-textarea,
+.form-editor-horizontal-table-wrap--payment-pre-consent-p2
+  .form-editor-horizontal-table__td--field:nth-child(3)
+  .form-editor-horizontal-table__cell-textarea {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
 }
 
 /* 지급조서 사전 동의서 — 3·4번 제3자 제공 표: 헤더 16/500, 본문(데이터) 셀 20/700 (모두 main-BK·중앙) */
@@ -860,7 +942,10 @@
 
 .form-editor-horizontal-table-wrap--payment-pre-consent-third-party
   .form-editor-horizontal-table__td--field
-  .form-editor-horizontal-table__cell-text--body {
+  .form-editor-horizontal-table__cell-text--body,
+.form-editor-horizontal-table-wrap--payment-pre-consent-third-party
+  .form-editor-horizontal-table__td--field
+  .form-editor-horizontal-table__cell-textarea {
   color: var(--main-BK, #3d3d3d);
   text-align: center;
   font-family: Pretendard, sans-serif;
@@ -869,6 +954,7 @@
   font-weight: 700;
   line-height: 150%;
   white-space: pre-wrap;
+  overflow-wrap: break-word;
   word-break: break-word;
 }
 
@@ -878,4 +964,20 @@
   color: var(--main-BK, #3d3d3d);
   font-weight: 700;
   opacity: 0.45;
+}
+
+/* p3·p4 — 항목 열(2번째)만 16/500, 나머지 본문 20/700 */
+.form-editor-horizontal-table-wrap--payment-pre-consent-third-party
+  .form-editor-horizontal-table__td--field:nth-child(2)
+  .form-editor-horizontal-table__cell-text--body,
+.form-editor-horizontal-table-wrap--payment-pre-consent-third-party
+  .form-editor-horizontal-table__td--field:nth-child(2)
+  .form-editor-horizontal-table__cell-textarea {
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }

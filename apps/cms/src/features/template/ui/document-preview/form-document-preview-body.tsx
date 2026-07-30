@@ -9,6 +9,7 @@ import type {
 } from '@/features/template/lib/a4-document-preview'
 import { FormDocumentPreviewParagraph } from '@/features/template/ui/document-preview/form-document-preview-paragraph'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
+import { AgreementSheetClosingFooter } from '@/features/template/ui/paragraph/explanation/agreement-sheet-closing-footer'
 import './form-document-preview-body.css'
 
 export interface FormDocumentPreviewBodyProps {
@@ -24,6 +25,12 @@ export interface FormDocumentPreviewBodyProps {
   paragraphGapPx?: number | FormDocumentPreviewParagraphGapResolver
   /** 작성 화면에서 선택한 단락 id — 미리보기 강조·스크롤 */
   focusedParagraphId?: string | null
+  /** 동의 양식 하단 귀하·작성완료. 미지정이면 agreement일 때 귀하만 노출 */
+  agreementClosingFooter?: {
+    onSubmit?: () => void
+    submitDisabled?: boolean
+    showSubmitButton?: boolean
+  }
 }
 
 export function FormDocumentPreviewBody({
@@ -37,6 +44,7 @@ export function FormDocumentPreviewBody({
   renderMode = 'card',
   paragraphGapPx,
   focusedParagraphId = null,
+  agreementClosingFooter,
 }: FormDocumentPreviewBodyProps) {
   const useCustomGaps = paragraphGapPx != null
   const hiddenParagraphIds = paragraphBodyOptions?.hiddenParagraphIds
@@ -54,6 +62,17 @@ export function FormDocumentPreviewBody({
     if (typeof paragraphGapPx === 'number') return paragraphGapPx
     return paragraphGapPx(paragraph, index, visibleParagraphs.slice(0, index))
   }
+
+  const closingFooter =
+    editorKind === 'agreement' ? (
+      <AgreementSheetClosingFooter
+        onSubmit={agreementClosingFooter?.onSubmit}
+        submitDisabled={agreementClosingFooter?.submitDisabled}
+        showSubmitButton={
+          agreementClosingFooter?.showSubmitButton ?? renderMode !== 'contentOnly'
+        }
+      />
+    ) : null
 
   return (
     <div
@@ -84,6 +103,7 @@ export function FormDocumentPreviewBody({
           }
         />
       ))}
+      {closingFooter}
     </div>
   )
 }

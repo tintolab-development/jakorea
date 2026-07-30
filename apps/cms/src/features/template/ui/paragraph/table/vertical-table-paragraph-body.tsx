@@ -10,6 +10,7 @@ import type {
   VerticalTableRow,
 } from '@/features/template/model/writing-form-draft.schema'
 import {
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
   DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL,
   DEFAULT_VERTICAL_SUBJECTIVE_CELL_PLACEHOLDER,
   effectiveVerticalCompositeTimeHint,
@@ -22,11 +23,14 @@ import {
 import { ParagraphInput } from '@/features/template/ui/shared/paragraph-input'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
+import { AgreementPortraitPersonalConsentNameRow } from '@/features/template/ui/paragraph/table/agreement-portrait-personal-consent-name-row'
 import '@/features/template/ui/form-editor/form-editor.css'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import '@/features/template/ui/paragraph/table/vertical-table-paragraph-body.css'
+
+const { TextArea } = Input
 
 dayjs.extend(customParseFormat)
 
@@ -141,6 +145,9 @@ export function VerticalTableParagraphBody({
   tableCanvasInteractive = true,
   tableRowSelection: controlledRow,
   onTableRowSelectionChange,
+  portraitPersonalConsentAffiliationOptions,
+  portraitConsentResponseFieldsInteractive = false,
+  bottomConsentInteractive: bottomConsentInteractiveProp,
 }: {
   paragraph: VerticalTableParagraph
   onChange: (next: VerticalTableParagraph) => void
@@ -154,7 +161,13 @@ export function VerticalTableParagraphBody({
   /** 있으면 상위와 본문 행 선택 동기화(다른 위젯 th/td 선택 시 단일 포커스) */
   tableRowSelection?: number | null
   onTableRowSelectionChange?: (row: number | null) => void
+  portraitPersonalConsentAffiliationOptions?: ReadonlyArray<{ value: string; label: string }>
+  /** preview fill — 초상권 1번 표 성명·소속만 입력 허용 */
+  portraitConsentResponseFieldsInteractive?: boolean
+  /** preview fill — 하단 동의 라디오만 조작 허용 */
+  bottomConsentInteractive?: boolean
 }) {
+  const bottomConsentInteractive = bottomConsentInteractiveProp ?? isEditMode
   const dtCellsInteractive = dateTimeCellsInteractiveProp ?? isEditMode
   const canvasInteractive = tableCanvasInteractive
   const p = useMemo(() => normalizeVerticalTableParagraph(paragraph), [paragraph])
@@ -241,7 +254,21 @@ export function VerticalTableParagraphBody({
     if (pickerOpen && canvasInteractive) setSelectedRow(rowIdxFocus)
   }
 
-  const renderStage = (row: VerticalTableRow, rowIdx: number, stageIdx: number) => {
+  const isPortraitPersonalConsent =
+    p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable
+  const isPortraitDelegatedConsent =
+    p.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable
+  /** 위탁·고정 안내 표 — 작성/편집 모두 스크린샷처럼 테두리 없는 본문 텍스트 */
+  const isPortraitStaticConsentTable = isPortraitDelegatedConsent
+
+  const renderStage = (
+    row: VerticalTableRow,
+    rowIdx: number,
+    stageIdx: number,
+    /** 초상권 1번 표 고정 문구 행 등 — 헤더·본문 모두 읽기 전용 텍스트 */
+    forceStatic = false
+  ) => {
+    const rowEditMode = forceStatic ? false : isEditMode
     const header = row.headers[stageIdx] ?? ''
     const cell = row.cells[stageIdx] ?? ''
     const hPh = verticalTableHeaderPlaceholder(rowIdx, stageIdx, row.stageCount)
@@ -404,7 +431,7 @@ export function VerticalTableParagraphBody({
               : undefined
           }
         >
-          {isEditMode ? (
+          {rowEditMode ? (
             <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--header">
               <Input
                 variant="borderless"
@@ -459,13 +486,13 @@ export function VerticalTableParagraphBody({
                 size="large"
                 value={cell.trim() !== '' ? cell : undefined}
                 onChange={(e: RadioChangeEvent) => {
-                  if (!isEditMode) return
+                  if (!rowEditMode) return
                   setCell(rowIdx, stageIdx, e.target.value)
                 }}
                 onFocus={() => {
                   if (canvasInteractive) setSelectedRow(rowIdx)
                 }}
-                disabled={!isEditMode}
+                disabled={!rowEditMode}
               >
                 {choiceOpts.map((o, i) => (
                   <CmsRadio key={`${rowIdx}-${stageIdx}-${i}`} size="large" value={o}>
@@ -492,9 +519,9 @@ export function VerticalTableParagraphBody({
                       checkboxSize="large"
                       className="form-editor-horizontal-table__field-check-label"
                       checked={checked}
-                      disabled={!isEditMode}
+                      disabled={!rowEditMode}
                       onChange={e => {
-                        if (!isEditMode) return
+                        if (!rowEditMode) return
                         const cur = row.choiceMultipleSelections?.[stageIdx] ?? []
                         const s = new Set(cur)
                         if (e.target.checked) s.add(o)
@@ -511,7 +538,7 @@ export function VerticalTableParagraphBody({
                 })}
               </div>
             </div>
-          ) : isEditMode ? (
+          ) : rowEditMode ? (
             <div
               className={[
                 'form-editor-vertical-table__cell-input-shell',
@@ -521,8 +548,10 @@ export function VerticalTableParagraphBody({
                 .filter(Boolean)
                 .join(' ')}
             >
-              <Input
+              <TextArea
                 variant="borderless"
+                className="form-editor-vertical-table__cell-textarea"
+                autoSize={{ minRows: 1 }}
                 value={cell}
                 placeholder={cPh}
                 onChange={e => setCell(rowIdx, stageIdx, e.target.value)}
@@ -557,14 +586,20 @@ export function VerticalTableParagraphBody({
     p.showBottomText || p.showBottomConsent ? (
       <div className="form-editor-vertical-table__bottom">
         {p.showBottomText ? (
-          <ParagraphInput
-            type="description"
-            className="form-editor-vertical-table__bottom-input"
-            value={p.bottomText}
-            isEditMode={isEditMode}
-            onChange={next => onChange({ ...p, bottomText: next })}
-            placeholder="설명을 입력해 주세요"
-          />
+          canvasInteractive ? (
+            <ParagraphInput
+              type="description"
+              className="form-editor-vertical-table__bottom-input"
+              value={p.bottomText}
+              isEditMode={isEditMode}
+              onChange={next => onChange({ ...p, bottomText: next })}
+              placeholder="설명을 입력해 주세요"
+            />
+          ) : (
+            <div className="detail-info-form--text form-editor-vertical-table__bottom-static">
+              {p.bottomText}
+            </div>
+          )
         ) : null}
         {p.showBottomConsent ? (
           <CmsRadioGroup
@@ -572,10 +607,10 @@ export function VerticalTableParagraphBody({
             size="large"
             value={p.bottomConsent ?? 'agree'}
             onChange={e => {
-              if (!isEditMode) return
+              if (!bottomConsentInteractive) return
               onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
             }}
-            style={isEditMode ? undefined : { pointerEvents: 'none' }}
+            style={bottomConsentInteractive ? undefined : { pointerEvents: 'none' }}
           >
             <CmsRadio value="agree">동의</CmsRadio>
             <CmsRadio value="disagree">동의하지 않음</CmsRadio>
@@ -654,25 +689,45 @@ export function VerticalTableParagraphBody({
   return (
     <div className="form-editor-body form-editor-vertical-table-wrap">
       <div className="form-editor-vertical-table" role="grid" aria-readonly={!isEditMode}>
-        {p.rows.map((row, rowIdx) => (
-          <div
-            key={`vr-${rowIdx}-sc${row.stageCount}`}
-            className={[
-              'form-editor-vertical-table__row',
-              canvasInteractive && selectedRow === rowIdx
-                ? 'form-editor-vertical-table__row--selected'
-                : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            role="row"
-            aria-selected={canvasInteractive && selectedRow === rowIdx}
-          >
-            {row.stageCount === 1
-              ? renderStage(row, rowIdx, 0)
-              : [0, 1].map(si => renderStage(row, rowIdx, si))}
-          </div>
-        ))}
+        {p.rows.map((row, rowIdx) => {
+          if (isPortraitPersonalConsent && rowIdx === 0) {
+            return (
+              <AgreementPortraitPersonalConsentNameRow
+                key={`vr-${rowIdx}-portrait-name`}
+                row={row}
+                interactive={isEditMode || portraitConsentResponseFieldsInteractive}
+                affiliationSelectOptions={portraitPersonalConsentAffiliationOptions}
+                onNameChange={value => setCell(0, 0, value)}
+                onAffiliationChange={value => setCell(0, 1, value)}
+                onSelectRow={() => {
+                  if (canvasInteractive) setSelectedRow(0)
+                }}
+              />
+            )
+          }
+
+          const forceStatic =
+            (isPortraitPersonalConsent && rowIdx > 0) || isPortraitStaticConsentTable
+          return (
+            <div
+              key={`vr-${rowIdx}-sc${row.stageCount}`}
+              className={[
+                'form-editor-vertical-table__row',
+                canvasInteractive && selectedRow === rowIdx
+                  ? 'form-editor-vertical-table__row--selected'
+                  : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              role="row"
+              aria-selected={canvasInteractive && selectedRow === rowIdx}
+            >
+              {row.stageCount === 1
+                ? renderStage(row, rowIdx, 0, forceStatic)
+                : [0, 1].map(si => renderStage(row, rowIdx, si, forceStatic))}
+            </div>
+          )
+        })}
       </div>
 
       {bottomSection}

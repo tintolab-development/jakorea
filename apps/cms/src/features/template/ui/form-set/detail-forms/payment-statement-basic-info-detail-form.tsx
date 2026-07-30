@@ -163,6 +163,7 @@ export function PaymentStatementBasicInfoDetailForm({
                 value={v.residentFront}
                 onValueChange={value => patch({ residentFront: value })}
                 maxLength={6}
+                width="100%"
                 aria-label="주민등록번호 앞자리"
               />
               {rowDash}
@@ -174,6 +175,7 @@ export function PaymentStatementBasicInfoDetailForm({
                 value={v.residentBack}
                 onValueChange={value => patch({ residentBack: value })}
                 maxLength={7}
+                width="100%"
                 aria-label="주민등록번호 뒷자리"
               />
             </div>

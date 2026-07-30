@@ -23,6 +23,7 @@ import {
   SortableMiddleFormCard,
 } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel-cards'
 import type { FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
+import { AgreementSheetClosingFooter } from '@/features/template/ui/paragraph/explanation/agreement-sheet-closing-footer'
 import '../form-editor.css'
 
 export type { FormEditorLeftPanelLayout, FormEditorLeftPanelProps } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel.types'
@@ -50,7 +51,16 @@ export function FormEditorLeftPanel({
   hideDragHandleForParagraphIds,
   hideParagraphRequiredChrome,
   headingDescriptionExtraClassName,
+  agreementClosingFooter,
 }: FormEditorLeftPanelProps) {
+  const closingFooter =
+    editorKind === 'agreement' ? (
+      <AgreementSheetClosingFooter
+        onSubmit={agreementClosingFooter?.onSubmit}
+        submitDisabled={agreementClosingFooter?.submitDisabled}
+        showSubmitButton={agreementClosingFooter?.showSubmitButton ?? true}
+      />
+    ) : null
   const mergedParagraphBodyOptions: RenderFormParagraphBodyOptions = {
     ...paragraphBodyOptions,
     paragraphInteractionMode,
@@ -392,6 +402,7 @@ export function FormEditorLeftPanel({
           ))}
         </div>
       ) : null}
+      {closingFooter}
     </div>
   )
 }

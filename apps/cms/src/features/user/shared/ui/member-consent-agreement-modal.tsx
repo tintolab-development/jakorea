@@ -1,6 +1,10 @@
 import { CloseOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  buildAgreementConsentFillParagraphBodyOptions,
+  resolveAgreementConsentFillInteractionMode,
+} from '@/features/template/lib/build-agreement-consent-fill-options'
 import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
@@ -113,12 +117,18 @@ export function MemberConsentAgreementModal({
   }, [draft, onComplete, showAlert])
 
   const paragraphBodyOptions = useMemo(
-    () => ({
-      ...agreementConfig?.paragraphBodyOptions,
-      paragraphInteractionMode: 'user' as const,
-      hiddenParagraphIds: agreementConfig?.a4HiddenParagraphIds,
-    }),
-    [agreementConfig]
+    () =>
+      buildAgreementConsentFillParagraphBodyOptions(agreementConfig, {
+        templateId,
+        participantName: memberContext.name,
+        portraitAffiliationSelectOptions: memberContext.portraitAffiliationSelectOptions,
+      }),
+    [agreementConfig, memberContext.name, memberContext.portraitAffiliationSelectOptions, templateId]
+  )
+
+  const paragraphInteractionMode = useMemo(
+    () => resolveAgreementConsentFillInteractionMode(templateId),
+    [templateId]
   )
 
   return (
@@ -183,12 +193,13 @@ export function MemberConsentAgreementModal({
                   updateParagraph={updateParagraph}
                   editorKind="agreement"
                   singleItemListActiveItemId={null}
-                  paragraphInteractionMode="user"
+                  paragraphInteractionMode={paragraphInteractionMode}
                   showEditorChrome={false}
                   structureLockedParagraphIds={agreementConfig?.structureLockedParagraphIds}
                   hideDragHandleForParagraphIds={agreementConfig?.hideDragHandleForParagraphIds}
                   hideParagraphRequiredChrome={agreementConfig?.previewLayout === 'a4-document'}
                   paragraphBodyOptions={paragraphBodyOptions}
+                  agreementClosingFooter={{ showSubmitButton: false }}
                 />
               </div>
             ) : (

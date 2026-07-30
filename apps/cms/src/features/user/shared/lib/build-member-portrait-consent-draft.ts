@@ -12,6 +12,8 @@ export type MemberConsentMemberContext = {
   schoolName?: string
   grade?: string
   affiliationOrganization?: string
+  /** 초상권 동의서 소속 셀렉트 고정 옵션(강사 신규 등록 등) */
+  portraitAffiliationSelectOptions?: ReadonlyArray<{ value: string; label: string }>
 }
 
 function fillPersonalConsentTable(
@@ -26,16 +28,22 @@ function fillPersonalConsentTable(
   }
 
   const name = ctx.name.trim() || '한글 성명'
-  const affiliation =
-    ctx.schoolEnrollmentStatus === 'enrolled'
-      ? [ctx.schoolName, ctx.grade].map(part => part?.trim()).filter(Boolean).join(' ')
-      : ctx.affiliationOrganization?.trim() ?? ''
+  const affiliationCell =
+    ctx.portraitAffiliationSelectOptions != null && ctx.portraitAffiliationSelectOptions.length > 0
+      ? ''
+      : (() => {
+          const affiliation =
+            ctx.schoolEnrollmentStatus === 'enrolled'
+              ? [ctx.schoolName, ctx.grade].map(part => part?.trim()).filter(Boolean).join(' ')
+              : ctx.affiliationOrganization?.trim() ?? ''
+          return affiliation || '소속 없음'
+        })()
 
   const rows: VerticalTableRow[] = [
     {
       stageCount: 2,
       headers: ['성명', '소속'],
-      cells: [name, affiliation || '소속 없음'],
+      cells: [name, affiliationCell],
     },
     ...paragraph.rows.slice(1),
   ]

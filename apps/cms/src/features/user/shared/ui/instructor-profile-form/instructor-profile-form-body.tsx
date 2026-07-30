@@ -19,6 +19,7 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
+import { INSTRUCTOR_PORTRAIT_CONSENT_AFFILIATION_OPTIONS } from '@/features/user/shared/lib/instructor-portrait-consent-affiliation-options'
 import {
   isAgreementInstructorConsentField,
   isInstructorCrimeConsentField,
@@ -92,7 +93,6 @@ export function InstructorProfileFormBody({
   const memberType = Form.useWatch('memberType', form) ?? 'general'
   const memberName = Form.useWatch('name', form) ?? ''
   const schoolName = Form.useWatch('schoolName', form) ?? ''
-  const affiliationName = Form.useWatch('affiliationName', form) ?? ''
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
   const isTeacherMember = memberType === 'school_teacher'
   const allValues = Form.useWatch([], form) as InstructorProfileFormValues | undefined
@@ -106,10 +106,9 @@ export function InstructorProfileFormBody({
       name: memberName,
       schoolEnrollmentStatus: isTeacherMember ? 'enrolled' : 'not_enrolled',
       schoolName: isTeacherMember ? schoolName : undefined,
-      affiliationOrganization:
-        !isTeacherMember && !affiliationNone ? affiliationName : undefined,
+      portraitAffiliationSelectOptions: INSTRUCTOR_PORTRAIT_CONSENT_AFFILIATION_OPTIONS,
     }
-  }, [affiliationName, affiliationNone, isTeacherMember, memberName, schoolName])
+  }, [isTeacherMember, memberName, schoolName])
 
   const handleConsentWrite = (fieldKey: InstructorConsentFieldKey) => {
     setActiveConsentField(fieldKey)

@@ -7,7 +7,8 @@ import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template
 
 /**
  * 개인정보 수집·이용 / 제3자 제공·이용 동의 — 하단 안내 문구.
- * `form-editor-horizontal-table__bottom-input`(ParagraphInput 설명형) 전용 타이포·셸 스타일을 적용하지 않고 일반 텍스트로만 노출한다.
+ * 가로형 테이블에서 작성 모드라도 하단 설명을 `detail-info-form--text`(검정·비편집)로만 노출한다.
+ * write/미리보기·구조 잠금 단락은 `tableCanvasInteractive === false`로도 동일하게 고정된다.
  */
 export const PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS = new Set<string>([
   PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.personalInfoCollection,

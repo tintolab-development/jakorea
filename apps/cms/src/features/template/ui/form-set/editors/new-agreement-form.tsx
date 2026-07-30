@@ -17,6 +17,7 @@ import {
   DEFAULT_DIRECT_AGREEMENT_PARAGRAPH_IDS,
   getWritingFormHeadMiddlePinnedTail,
   isAgreementLockedSystemParagraph,
+  normalizeWritingFormDraft,
   reorderWritingFormMiddleParagraphs,
   type FormTitleNumberingStyle,
   type WritingFormDraft,
@@ -28,6 +29,7 @@ import {
   loadWritingFormTemplateDraft,
   persistWritingFormTemplateDraft,
 } from '@/features/template/lib/writing-form-template-local-save'
+import { overlayPaymentStatementPreConsentSeedHorizontalTables } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
@@ -103,7 +105,8 @@ export function AgreementWritingFormShell({
   const isTemplateManagementSave = onTemplateDraftSaveConfirmed != null
 
   const resolveInitialDraft = useCallback((): WritingFormDraft => {
-    return typeof initialDraft === 'function' ? initialDraft() : initialDraft
+    const raw = typeof initialDraft === 'function' ? initialDraft() : initialDraft
+    return normalizeWritingFormDraft(raw)
   }, [initialDraft])
 
   const [draft, setDraft] = useState<WritingFormDraft>(() => resolveInitialDraft())
@@ -133,8 +136,16 @@ export function AgreementWritingFormShell({
 
   useEffect(() => {
     const applyDraft = (nextDraft: WritingFormDraft) => {
-      setDraft(nextDraft)
-      setActiveParagraphId(defaultActiveParagraphId ?? nextDraft.paragraphs[0]?.id ?? null)
+      let normalized = normalizeWritingFormDraft(nextDraft)
+      // 지급조서 사전 동의서: 구 저장본 1행 표 → 최신 시드(p3 2행 등) overlay
+      if (
+        templateCode === 'agreement-third-party' ||
+        templateCode === 'document-payment-order-pre-consent'
+      ) {
+        normalized = overlayPaymentStatementPreConsentSeedHorizontalTables(normalized)
+      }
+      setDraft(normalized)
+      setActiveParagraphId(defaultActiveParagraphId ?? normalized.paragraphs[0]?.id ?? null)
       setSingleItemListActiveItemId(null)
     }
 

@@ -60,4 +60,13 @@ export interface FormEditorLeftPanelProps {
    * 18px 기준으로 너비·하단 스트로크가 텍스트 길이에 맞는다.
    */
   headingDescriptionExtraClassName?: string
+  /**
+   * 동의 양식(`editorKind === 'agreement'`) 시트 하단 — JA KOREA 귀하 + 작성완료.
+   * `showSubmitButton: false`면 귀하 문구만.
+   */
+  agreementClosingFooter?: {
+    onSubmit?: () => void
+    submitDisabled?: boolean
+    showSubmitButton?: boolean
+  }
 }

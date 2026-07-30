@@ -49,7 +49,9 @@ import { LectureReportProgramProgress } from '@/features/template/ui/paragraph/s
 import { UjatJournalEducationInfo } from '@/features/template/ui/paragraph/single-item/ujat-journal-education-info'
 import { IdTypeWithInput } from '@/features/template/ui/paragraph/single-item/id-type-with-input'
 import { FormParagraphSectionDescription } from '@/features/template/ui/shared/form-paragraph-section-description'
+import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
+import '@/features/template/ui/form-editor/form-editor.css'
 import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import './form-document-preview-body.css'
 
@@ -294,8 +296,31 @@ function renderBody(
       )
     case 'agreement_explanation_text': {
       const ph = safeTrim(p.bodyPlaceholder) || '텍스트를 작성해 주세요'
-      const text = safeTrim(p.bodyText) || ph
-      return <div className="form-document-preview-paragraph__body-text">{text}</div>
+      const body = safeTrim(p.bodyText)
+      return (
+        <div className="form-editor-body explanation-text">
+          <div
+            className={
+              body
+                ? 'form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--explanation-filled'
+                : 'form-document-preview-paragraph__body-text form-document-preview-paragraph__body-text--explanation-placeholder'
+            }
+          >
+            {body || ph}
+          </div>
+          {p.showBottomConsent === true || p.id === 'agreement-portrait-intro' ? (
+            <CmsRadioGroup
+              className="form-editor-table-bottom-consent"
+              size="large"
+              value={p.bottomConsent ?? 'agree'}
+              style={{ pointerEvents: 'none' }}
+            >
+              <CmsRadio value="agree">동의</CmsRadio>
+              <CmsRadio value="disagree">동의하지 않음</CmsRadio>
+            </CmsRadioGroup>
+          ) : null}
+        </div>
+      )
     }
     case 'horizontal_table':
       return (

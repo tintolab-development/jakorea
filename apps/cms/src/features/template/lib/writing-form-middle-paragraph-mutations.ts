@@ -33,6 +33,8 @@ export function createAgreementExplanationTextParagraphForInsert(
     bodyPlaceholder: '텍스트를 작성해 주세요',
     bodyText: '',
     answerRequired: true,
+    showBottomConsent: false,
+    bottomConsent: 'agree',
   }
 }
 

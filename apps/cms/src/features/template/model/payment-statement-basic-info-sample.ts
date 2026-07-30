@@ -20,3 +20,11 @@ export const PAYMENT_STATEMENT_BASIC_INFO_SAMPLE_VALUES: PaymentStatementBasicIn
     accountHolder: '최강사',
     paymentPurpose: '강사비 또는 활동비 지급',
   }
+
+/**
+ * 지급조서 사전 동의서 authoring/작성 — 입력란은 비워 placeholder 노출, 지급 목적만 고정 문구.
+ */
+export const PAYMENT_STATEMENT_PRE_CONSENT_BASIC_INFO_AUTHORING_VALUES: Partial<PaymentStatementBasicInfoAutofillValues> =
+  {
+    paymentPurpose: '강사비 또는 활동비 지급',
+  }

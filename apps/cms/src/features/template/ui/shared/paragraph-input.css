@@ -97,12 +97,15 @@
   color: var(--gray-85969-d, #85969d);
 }
 
+.paragraph-input--closing-body.paragraph-input--view.paragraph-input--filled.paragraph-input--title
+  .paragraph-input__leading {
+  color: var(--main-BK, #3d3d3d);
+}
+
 .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
   .paragraph-input__view-text,
 .paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
   .paragraph-input__placeholder {
-  color: var(--gray-85969-d, #85969d) !important;
-  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
   font-family: Pretendard, sans-serif;
   font-size: 24px;
   font-style: normal;
@@ -111,10 +114,17 @@
   opacity: 1 !important;
 }
 
-.paragraph-input--closing-body.paragraph-input--view.paragraph-input--filled.paragraph-input--title
-  .paragraph-input__view-text {
+/* 마무리글 — placeholder만 회색, 내용 있으면 main-BK */
+.paragraph-input--closing-body.paragraph-input--view.paragraph-input--title
+  .paragraph-input__placeholder {
   color: var(--gray-85969-d, #85969d) !important;
   -webkit-text-fill-color: var(--gray-85969-d, #85969d);
+}
+
+.paragraph-input--closing-body.paragraph-input--view.paragraph-input--filled.paragraph-input--title
+  .paragraph-input__view-text {
+  color: var(--main-BK, #3d3d3d) !important;
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
   opacity: 1 !important;
 }
 
@@ -552,20 +562,13 @@
   -webkit-text-fill-color: var(--gray-85969-d, #85969d);
 }
 
-/* 설명글_텍스트형 본문 — view: 비선택(placeholder)도 20px/500/150% 메트릭 */
+/* 설명글_텍스트형 본문 — view: placeholder만 회색, 메트릭 20px/500/150% */
 .paragraph-input--explanation-body.paragraph-input--view:not(.paragraph-input--filled)
-  .paragraph-input__view-text {
-  font-family: Pretendard, sans-serif;
-  font-size: 20px;
-  font-weight: 500;
-  font-style: normal;
-  line-height: 150%;
-}
-
-/* 설명글_텍스트형 본문 — 카드 title/description과 별도: 포커스 또는 입력값 있을 때 색상 */
-.paragraph-input--explanation-body.paragraph-input--view.paragraph-input--filled
-  .paragraph-input__view-text {
-  color: var(--main-BK, #3d3d3d);
+  .paragraph-input__view-text,
+.paragraph-input--explanation-body.paragraph-input--view:not(.paragraph-input--filled)
+  .paragraph-input__placeholder {
+  color: var(--gray-85969-d, #85969d) !important;
+  -webkit-text-fill-color: var(--gray-85969-d, #85969d);
   font-family: Pretendard, sans-serif;
   font-size: 20px;
   font-weight: 500;
@@ -574,32 +577,71 @@
   opacity: 1;
 }
 
-/* 설명글_텍스트형 본문 — 20px 한 줄, 부모 폭 초과 시 말줄임 */
+/* 설명글_텍스트형 본문 — 내용 있을 때 main-BK (카드 description 회색 규칙·지급조서 오버라이드보다 우선) */
+.paragraph-input--explanation-body.paragraph-input--view.paragraph-input--filled
+  .paragraph-input__view-text {
+  color: var(--main-BK, #3d3d3d) !important;
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  font-style: normal;
+  line-height: 150%;
+  opacity: 1 !important;
+}
+
+/* 설명글_텍스트형 본문 — 긴 텍스트는 말줄임 없이 줄바꿈(`\n` + wrap) */
 .paragraph-input--explanation-body.paragraph-input--view .paragraph-input__view-text,
 .paragraph-input--explanation-body.paragraph-input--view .paragraph-input__placeholder {
   display: block;
-  white-space: nowrap !important;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  width: 100%;
+  max-width: 100%;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 .paragraph-input--explanation-body .paragraph-input__main,
-.paragraph-input--explanation-body .paragraph-input__shell {
+.paragraph-input--explanation-body .paragraph-input__shell,
+.paragraph-input--explanation-body-multiline .paragraph-input__main,
+.paragraph-input--explanation-body-multiline .paragraph-input__shell {
   width: 100%;
   max-width: 100%;
 }
 
-.paragraph-input--explanation-body.paragraph-input--edit
+.paragraph-input--explanation-body-multiline.paragraph-input--edit .paragraph-input__shell {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.paragraph-input--explanation-body-multiline.paragraph-input--edit
+  .paragraph-input__shell
+  textarea.ant-input {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* 설명글_텍스트형 본문 — edit: 포커스 또는 입력값 있을 때 main-BK (placeholder는 회색 유지) */
+.paragraph-input--explanation-body.paragraph-input--edit.paragraph-input--description
   .paragraph-input__shell--focused
   .ant-input,
-.paragraph-input--explanation-body.paragraph-input--edit
+.paragraph-input--explanation-body.paragraph-input--edit.paragraph-input--description
   .paragraph-input__shell--focused
   textarea.ant-input,
-.paragraph-input--explanation-body.paragraph-input--edit.paragraph-input--filled
+.paragraph-input--explanation-body.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
   .paragraph-input__shell
   .ant-input,
-.paragraph-input--explanation-body.paragraph-input--edit.paragraph-input--filled
+.paragraph-input--explanation-body.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
   .paragraph-input__shell
+  textarea.ant-input,
+.paragraph-input--explanation-body.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+  .paragraph-input__shell--focused
+  .ant-input,
+.paragraph-input--explanation-body.paragraph-input--edit.paragraph-input--filled.paragraph-input--description
+  .paragraph-input__shell--focused
   textarea.ant-input {
   color: var(--main-BK, #3d3d3d) !important;
   -webkit-text-fill-color: var(--main-BK, #3d3d3d);
@@ -612,6 +654,12 @@
 }
 
 /* 포커스만 있고 비어 있을 때 placeholder 톤은 유지 */
+.paragraph-input--explanation-body.paragraph-input--edit:not(.paragraph-input--filled)
+  .paragraph-input__shell
+  .ant-input::placeholder,
+.paragraph-input--explanation-body.paragraph-input--edit:not(.paragraph-input--filled)
+  .paragraph-input__shell
+  textarea.ant-input::placeholder,
 .paragraph-input--explanation-body.paragraph-input--edit:not(.paragraph-input--filled)
   .paragraph-input__shell--focused
   .ant-input::placeholder,

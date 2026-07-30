@@ -4,10 +4,8 @@ import type { WritingFormParagraph } from '@/features/template/model/writing-for
 import { writingOutlineLabel } from '@/features/template/model/writing-form-draft.schema'
 import { paragraphKindLabel } from '@/features/template/model/writing-form/paragraph-labels'
 import {
-  DESCRIPTION_DETAIL_OPTIONS,
   PARAGRAPH_KIND_OPTIONS,
-  SINGLE_ITEM_DETAIL_OPTIONS,
-  TABLE_DETAIL_OPTIONS,
+  detailSelectOptionsForValue,
   paragraphDetailSelectValue,
   paragraphKindSelectValue,
 } from '@/features/template/model/writing-form/paragraph-selectors'
@@ -39,13 +37,7 @@ export function StructureLockedParagraphSection({ paragraph }: { paragraph: Writ
             <CmsSelect
               width="100%"
               value={detailValue}
-              options={
-                kindValue === 'table'
-                  ? TABLE_DETAIL_OPTIONS
-                  : kindValue === 'description'
-                    ? DESCRIPTION_DETAIL_OPTIONS
-                    : SINGLE_ITEM_DETAIL_OPTIONS
-              }
+              options={detailSelectOptionsForValue(kindValue, detailValue)}
               withAllOption={false}
               onChange={noop}
               disabled

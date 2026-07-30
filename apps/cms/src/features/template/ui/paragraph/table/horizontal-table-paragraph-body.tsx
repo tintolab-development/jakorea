@@ -72,6 +72,8 @@ import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-editor/form-editor-horizontal-table.css'
 
+const { TextArea } = Input
+
 dayjs.extend(customParseFormat)
 
 /** 좌측 `.form-editor-left`(overflow: auto) 안에서 팝업이 잘리지 않도록 body에 붙임 */
@@ -246,8 +248,21 @@ function FieldTableBodyCell({
   }
 
   if (field.kind === 'text') {
-    const text = fieldCellValueToPlainText(rehomeForDisplay(field, cell))
-    return <HorizontalTableCellText value={text} placeholder={ph} variant="body" />
+    const textValue = cell.kind === 'text' || cell.kind === 'subjective' ? cell.value : ''
+    return (
+      <TextArea
+        variant="borderless"
+        className="form-editor-horizontal-table__cell-textarea"
+        autoSize={{ minRows: 1 }}
+        value={textValue}
+        placeholder={ph}
+        onChange={e => onFieldChange({ kind: 'text', value: e.target.value })}
+        onFocus={onSelectBodyRow}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
+        }}
+      />
+    )
   }
 
   if (field.kind === 'subjective') {
@@ -257,9 +272,10 @@ function FieldTableBodyCell({
         className="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--text"
         title="주관식형"
       >
-        <Input
+        <TextArea
           variant="borderless"
           className="form-editor-horizontal-table__field-text-input"
+          autoSize={{ minRows: 1 }}
           value={essayValue}
           placeholder={ph}
           onChange={e => onFieldChange({ kind: 'subjective', value: e.target.value })}
@@ -523,8 +539,15 @@ export function HorizontalTableParagraphBody({
     if (rows.length === 0) {
       rows.push(Array.from({ length: colCount }, () => ''))
     }
+    /** 필드형: `fieldDataRows`가 더 길면 행 수에 맞춤(시드 2행이 dataRows 1행으로 잘리는 문제 방지) */
+    if (p.tableFlavor === 'field') {
+      const fieldRowCount = Math.max(1, p.fieldDataRows?.length ?? 0)
+      while (rows.length < fieldRowCount) {
+        rows.push(Array.from({ length: colCount }, () => ''))
+      }
+    }
     return { colCount, headers, rows }
-  }, [p.columnHeaders, p.dataRows])
+  }, [p.columnHeaders, p.dataRows, p.tableFlavor, p.fieldDataRows])
 
   const activeSelection = useMemo((): HorizontalTableRowSelection | null => {
     if (selection == null) return null
@@ -765,11 +788,16 @@ export function HorizontalTableParagraphBody({
     p.id === 'agreement-portrait-delegated-consent-table' ||
     p.id === 'agreement-portrait-usage-table'
   const isPaymentStatementPreConsentP1 = p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p1Collection
+  const isPaymentStatementPreConsentP2 = p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p2RrnCollection
   const isPaymentStatementPreConsentThirdPartyTable =
     p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty ||
     p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p4RrnThirdParty
   const suppressPlaceholderText =
-    isAgreementNoticeTable || isAgreementPortraitTable || isPaymentStatementPreConsentP1
+    isAgreementNoticeTable ||
+    isAgreementPortraitTable ||
+    isPaymentStatementPreConsentP1 ||
+    isPaymentStatementPreConsentP2 ||
+    isPaymentStatementPreConsentThirdPartyTable
 
   return (
     <div
@@ -778,6 +806,9 @@ export function HorizontalTableParagraphBody({
         'form-editor-horizontal-table-wrap',
         isPaymentStatementPreConsentP1
           ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p1'
+          : '',
+        isPaymentStatementPreConsentP2
+          ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p2'
           : '',
         isPaymentStatementPreConsentThirdPartyTable
           ? 'form-editor-horizontal-table-wrap--payment-pre-consent-third-party'
@@ -875,8 +906,10 @@ export function HorizontalTableParagraphBody({
                   >
                     {effectiveEditMode ? (
                       <div className="form-editor-horizontal-table__cell-input-shell form-editor-horizontal-table__cell-input-shell--body">
-                        <Input
+                        <TextArea
                           variant="borderless"
+                          className="form-editor-horizontal-table__cell-textarea"
+                          autoSize={{ minRows: 1 }}
                           value={cell}
                           placeholder={ph}
                           onChange={e => setTextCellValue(rowIdx, colIdx, e.target.value)}
@@ -971,9 +1004,9 @@ export function HorizontalTableParagraphBody({
       {p.showBottomText || p.showBottomConsent || p.idTypeWithInput ? (
         <div className="form-editor-horizontal-table__bottom">
           {p.showBottomText ? (
-            PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS.has(p.id) ? (
-              <div className="detail-info-form--text">{p.bottomText}</div>
-            ) : (
+            /* 작성(authoring)·구조 미잠금에서만 하단 설명 편집. write/미리보기·시드 고정 단락은 검정 고정 노출 */
+            canvasInteractive &&
+            !PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS.has(p.id) ? (
               <ParagraphInput
                 type="description"
                 className="form-editor-horizontal-table__bottom-input"
@@ -982,6 +1015,10 @@ export function HorizontalTableParagraphBody({
                 onChange={next => onChange({ ...p, bottomText: next })}
                 placeholder="설명을 입력해 주세요"
               />
+            ) : (
+              <div className="detail-info-form--text form-editor-horizontal-table__bottom-static">
+                {p.bottomText}
+              </div>
             )
           ) : null}
           {p.idTypeWithInput ? (
