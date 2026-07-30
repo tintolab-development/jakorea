@@ -1,80 +1,86 @@
 import type { GapRow } from './types'
 
+/**
+ * BE/FE 갭 SSOT.
+ * OpenAPI v9(2026-07-30 fetch) 기준으로 「API 없음」과 「FE 미배선」을 구분한다.
+ */
 export const GAP_ROWS: readonly GapRow[] = [
-  // Gemini P0
+  // Gemini — OpenAPI mutation 존재, FE 미배선 (P0)
   {
     id: 'G-01',
     categoryId: 'gemini-visiting',
     priority: 'P0',
-    title: '모집 등록 POST',
-    suggestedApi: 'POST …/gemini/trainings/recruitments 또는 POST /programs + type 확정',
+    title: '모집 POST — FE 미배선',
+    suggestedApi: 'OpenAPI: POST …/gemini/trainings/recruitments · FE client GET만',
     relatedCases: ['165001'],
   },
   {
     id: 'G-02',
     categoryId: 'gemini-visiting',
     priority: 'P0',
-    title: '모집 수정/삭제',
-    suggestedApi: 'PATCH/DELETE …/recruitments/{id}',
+    title: '모집 PATCH/DELETE — FE 미배선',
+    suggestedApi: 'OpenAPI: PATCH/DELETE …/recruitments/{programId} · bulk-delete',
   },
   {
     id: 'G-03',
     categoryId: 'gemini-visiting',
     priority: 'P0',
-    title: '기관 신청 승인/반려',
-    suggestedApi: '공통 org approve/reject Gemini 스코프 계약',
+    title: '기관 신청 승인/반려 — FE 미배선',
+    suggestedApi: 'OpenAPI: POST …/organization-applications/{id}/approve|reject (+ bulk)',
     relatedCases: ['165002'],
   },
   {
     id: 'G-04',
     categoryId: 'gemini-visiting',
     priority: 'P0',
-    title: '모집→승인 전이',
-    suggestedApi: '상태 PATCH 또는 POST …/approved',
+    title: '모집→승인 전이 UX',
+    suggestedApi: '승인 list/detail GET은 OpenAPI 존재 · 전이 플로우 FE 가드/배선',
   },
   {
     id: 'G-05',
     categoryId: 'gemini-visiting',
     priority: 'P0',
-    title: '강사 신청 목록·승인',
-    suggestedApi: 'GET …/instructor-applications + approve/reject',
+    title: '강사 신청 목록·승인 — FE 미배선',
+    suggestedApi:
+      'OpenAPI: GET …/instructor-applications + POST approve|reject · FE mock-only',
   },
   {
     id: 'G-06',
     categoryId: 'gemini-visiting',
-    priority: 'P0',
-    title: '승인 상세 · approved list DTO',
-    suggestedApi: 'GET …/approved/{id} · list 전용 스키마',
+    priority: 'P1',
+    title: '승인 상세 DTO polish',
+    suggestedApi: 'OpenAPI: GET …/approved/{approvedTrainingId} · FE 상세 매핑 잔여',
   },
   {
     id: 'G-07',
     categoryId: 'gemini-visiting',
     priority: 'P0',
     title: 'GEMINI vs GEMINI_TRAINING enum SSOT',
-    suggestedApi: 'OpenAPI·시드 단일값 확정',
+    suggestedApi: 'OpenAPI·시드·FE 단일값 확정',
   },
   {
     id: 'G-08',
     categoryId: 'gemini-performance',
     priority: 'P0',
-    title: '실적 행 삭제 정책',
-    suggestedApi: 'DELETE …/training-reports/{id} 또는 미지원 문서화',
+    title: '실적 행 삭제 — FE 미배선',
+    suggestedApi:
+      'OpenAPI: DELETE …/training-reports/{id} · bulk-delete · FE remote 분기 throw 가드 해제',
   },
   {
     id: 'U-01',
     categoryId: 'ujat-regions',
-    priority: 'P0',
-    title: '교육지역 POST/DELETE OpenAPI 공식화',
-    suggestedApi: 'POST/DELETE …/ujat/education-regions · 사용중 409',
+    priority: 'P2',
+    title: '교육지역 사용중 409/hasUsageHistory 스모크',
+    suggestedApi: 'OpenAPI POST/DELETE 등재·FE 배선 완료 · 스테이징 409 계약 확인',
   },
 
-  // Nested / UJAT P1
+  // Nested / UJAT P1 — OpenAPI 일부 존재, FE mock
   {
     id: 'N-01',
     categoryId: 'general',
     priority: 'P1',
     title: '학교 중첩 · 신청 PATCH',
-    suggestedApi: 'PATCH organization-application / institution detail',
+    suggestedApi: 'PATCH organization-application / institution detail · FE 미배선',
     relatedCases: ['CASE-01', '166401'],
   },
   {
@@ -82,42 +88,43 @@ export const GAP_ROWS: readonly GapRow[] = [
     categoryId: 'general',
     priority: 'P1',
     title: '학교 · 학생명단',
-    suggestedApi: 'roster GET/PUT',
+    suggestedApi: 'roster GET/PUT (OpenAPI roster path 없음 · 계약 필요)',
   },
   {
     id: 'N-03',
     categoryId: 'general',
     priority: 'P1',
     title: '학교 · 강사 배정 (requiredCount)',
-    suggestedApi: 'assignment assign/unassign · requiredInstructorCount',
+    suggestedApi:
+      'OpenAPI: POST …/instructor-assignments · execution assign/cancel · FE 미배선',
   },
   {
     id: 'N-04',
     categoryId: 'general',
     priority: 'P1',
     title: '학교 · 출석 저장',
-    suggestedApi: 'institution schedule attendances',
+    suggestedApi: 'OpenAPI: PUT …/attendances · attendances:bulk-upsert · FE 중첩 미배선',
   },
   {
     id: 'N-05',
     categoryId: 'general',
     priority: 'P1',
     title: '강사 · 기관배정',
-    suggestedApi: 'institutionAssignment API',
+    suggestedApi: 'OpenAPI instructor-assignments · FE institutionAssignment 미배선',
   },
   {
     id: 'N-06',
     categoryId: 'general',
     priority: 'P1',
     title: '강사 · 강의보고 CRUD',
-    suggestedApi: 'lecture-reports POST/PATCH',
+    suggestedApi: '목록 GET hybrid · admin write path FE 미배선 (member POST는 존재)',
   },
   {
     id: 'N-07',
     categoryId: 'company-school',
     priority: 'P1',
     title: '강사 정산 (100km·교통·숙박)',
-    suggestedApi: 'settlement/wage · longDistance',
+    suggestedApi: 'OpenAPI settlement-applications · FE 장거리 필드 미배선',
     relatedCases: ['CS-06', '167006'],
   },
   {
@@ -125,42 +132,43 @@ export const GAP_ROWS: readonly GapRow[] = [
     categoryId: 'general',
     priority: 'P1',
     title: '봉사/개인 배정·과제',
-    suggestedApi: 'assignment · 과제 admin(P2-5)',
+    suggestedApi: 'assignment · 과제 admin(P2-5) OpenAPI 없음',
   },
   {
     id: 'N-09',
     categoryId: 'general',
     priority: 'P1',
     title: '면접 슬롯 GET OpenAPI',
-    suggestedApi: 'GET …/interview-slots (POST는 FE wired)',
+    suggestedApi: 'POST …/interview-slots만 등재 · GET 등재 잔여 (POST는 FE wired)',
   },
   {
     id: 'N-10',
     categoryId: 'ujat',
     priority: 'P1',
     title: 'UJAT 기관신청·임시배정',
-    suggestedApi: 'UJAT applications · partner-assignments · schedules[]',
+    suggestedApi:
+      'OpenAPI partner-assignments 존재 · FE 상세 applications/schedules[] 미배선',
   },
   {
     id: 'N-11',
     categoryId: 'ujat',
     priority: 'P1',
     title: 'UJAT H1/H2 봉사 선발',
-    suggestedApi: '서류/면접/최종 · 평가',
+    suggestedApi: '서류/면접/최종 · 평가 — OpenAPI/FE 모두 갭',
   },
   {
     id: 'N-12',
     categoryId: 'ujat',
     priority: 'P1',
     title: 'UJAT 교육진행 · 1365',
-    suggestedApi: 'execution · 출석 · 수료',
+    suggestedApi: 'execution · 출석 · 수료 — FE mock-only',
   },
   {
     id: 'N-13',
     categoryId: 'ujat',
     priority: 'P1',
     title: 'UJAT 설문 응답 수',
-    suggestedApi: 'surveys summary',
+    suggestedApi: 'surveys summary · UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT 제거',
   },
 
   // P2
@@ -169,7 +177,7 @@ export const GAP_ROWS: readonly GapRow[] = [
     categoryId: 'general',
     priority: 'P2',
     title: '신청경로 CRUD',
-    suggestedApi: 'path 리소스 OpenAPI',
+    suggestedApi: 'path 리소스 OpenAPI 없음 · applicationPathId PATCH만',
   },
   {
     id: 'P-02',

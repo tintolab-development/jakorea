@@ -1,6 +1,7 @@
 /**
  * `/backend-dummies` SSOT types.
- * Sync: menu-config LNB + docs/api/* integration/handoff
+ * Sync: menu-config LNB + OpenAPI v9 + docs/api/be-handoff-program-dummy-seeds/
+ * + programs-seed-case-api-coverage-backend-handoff-2026-07-30.md
  */
 
 export type BackendDummyDomainId =

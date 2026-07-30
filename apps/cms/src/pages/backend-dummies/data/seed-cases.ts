@@ -1,8 +1,11 @@
 import type { SeedCaseRow } from './types'
 
-/** Representative seed cases — BE id ↔ FE mock (handoff 00-map) */
+/**
+ * BE 시드 CASE ↔ FE mock — be-handoff-program-dummy-seeds/00-fe-mock-id-map-and-rules.md
+ * 대표 케이스(전수 아님). 스모크 우선순위 반영.
+ */
 export const SEED_CASES: readonly SeedCaseRow[] = [
-  // general P0 type variants
+  // ── general CASE-01 ~ 28 (대표) ──
   {
     id: 'g-01',
     categoryId: 'general',
@@ -87,6 +90,17 @@ export const SEED_CASES: readonly SeedCaseRow[] = [
     notes: '화면명≠period_status 가능',
   },
   {
+    id: 'g-22',
+    categoryId: 'general',
+    caseCode: 'CASE-22',
+    beProgramId: '166422',
+    feMockId: 'general-prog-in-progress-3',
+    scenario: '기관·강사·봉사·면접·설문/만족도 (ACTIVE)',
+    opensLnbs: ['applications', 'volunteer', 'progress', 'survey'],
+    needsChildSeed: true,
+    notes: '중첩 mock · 만족도 제출 mock',
+  },
+  {
     id: 'g-28',
     categoryId: 'general',
     caseCode: 'CASE-28',
@@ -96,8 +110,18 @@ export const SEED_CASES: readonly SeedCaseRow[] = [
     opensLnbs: ['applications'],
     needsChildSeed: false,
   },
+  {
+    id: 'g-menu-01',
+    categoryId: 'general',
+    caseCode: 'MENU-164001',
+    beProgramId: '164001',
+    scenario: '메뉴 전용 더미 · 일반 기관',
+    opensLnbs: ['info'],
+    needsChildSeed: false,
+    notes: '목록 비지 않게 — 상세 깊이는 CASE 28보다 얕음',
+  },
 
-  // company-school
+  // ── company-school CS-01 ~ 08 ──
   {
     id: 'cs-01',
     categoryId: 'company-school',
@@ -106,6 +130,16 @@ export const SEED_CASES: readonly SeedCaseRow[] = [
     feMockId: 'economy-prog-001',
     scenario: '기획/대기 · KPI 0 fallback',
     opensLnbs: ['info', 'applicants'],
+    needsChildSeed: true,
+  },
+  {
+    id: 'cs-02',
+    categoryId: 'company-school',
+    caseCode: 'CS-02',
+    beProgramId: '167002',
+    feMockId: 'economy-prog-002',
+    scenario: '학생 모집 · 설문',
+    opensLnbs: ['applicants', 'survey'],
     needsChildSeed: true,
   },
   {
@@ -131,6 +165,16 @@ export const SEED_CASES: readonly SeedCaseRow[] = [
     notes: '정산 mutation mock',
   },
   {
+    id: 'cs-07',
+    categoryId: 'company-school',
+    caseCode: 'CS-07',
+    beProgramId: '167007',
+    feMockId: 'economy-prog-007',
+    scenario: '교육 완료',
+    opensLnbs: ['progress'],
+    needsChildSeed: true,
+  },
+  {
     id: 'cs-08',
     categoryId: 'company-school',
     caseCode: 'CS-08',
@@ -141,7 +185,7 @@ export const SEED_CASES: readonly SeedCaseRow[] = [
     needsChildSeed: true,
   },
 
-  // ujat list 5
+  // ── ujat list 5 + menu seed ──
   {
     id: 'ujat-l01',
     categoryId: 'ujat',
@@ -187,8 +231,18 @@ export const SEED_CASES: readonly SeedCaseRow[] = [
     opensLnbs: ['info'],
     needsChildSeed: false,
   },
+  {
+    id: 'ujat-menu-01',
+    categoryId: 'ujat',
+    caseCode: 'MENU-164021',
+    beProgramId: '164021',
+    scenario: '메뉴 전용 UJAT 더미 · 상세 LNB mock',
+    opensLnbs: ['info'],
+    needsChildSeed: false,
+    notes: 'CRUD hybrid · 상세 mock',
+  },
 
-  // TT
+  // ── TT ──
   {
     id: 'tt-01',
     categoryId: 'trained-teachers',
@@ -226,7 +280,7 @@ export const SEED_CASES: readonly SeedCaseRow[] = [
     needsChildSeed: false,
   },
 
-  // gemini
+  // ── gemini 165001~005 ──
   {
     id: 'gem-01',
     categoryId: 'gemini-visiting',
@@ -235,7 +289,7 @@ export const SEED_CASES: readonly SeedCaseRow[] = [
     scenario: '예정 · 미래 모집',
     opensLnbs: ['info'],
     needsChildSeed: false,
-    notes: 'mutation 갭',
+    notes: 'GET hybrid · mutation FE 미배선',
   },
   {
     id: 'gem-02',
@@ -245,7 +299,25 @@ export const SEED_CASES: readonly SeedCaseRow[] = [
     scenario: '진행 · 기관신청·강사배정·보고서',
     opensLnbs: ['info', 'institutions', 'instructors'],
     needsChildSeed: true,
-    notes: 'approve/reject mock',
+    notes: 'approve/reject OpenAPI 있음 · FE 미배선',
+  },
+  {
+    id: 'gem-03',
+    categoryId: 'gemini-visiting',
+    caseCode: '165003',
+    beProgramId: '165003',
+    scenario: '완료 · 승인·배정·보고서 3',
+    opensLnbs: ['info', 'institutions'],
+    needsChildSeed: true,
+  },
+  {
+    id: 'gem-04',
+    categoryId: 'gemini-visiting',
+    caseCode: '165004',
+    beProgramId: '165004',
+    scenario: '초안 · 비활성 모집',
+    opensLnbs: ['info'],
+    needsChildSeed: false,
   },
   {
     id: 'gem-05',
@@ -263,6 +335,7 @@ export const SEED_CASES: readonly SeedCaseRow[] = [
     scenario: '실적 목록 featured',
     opensLnbs: [],
     needsChildSeed: false,
+    notes: 'list+import hybrid · DELETE FE 미배선',
   },
 ] as const
 
