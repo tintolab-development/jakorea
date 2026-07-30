@@ -95,7 +95,6 @@ export function GeminiRecruitmentDetailFullPageModal({
     handleSave: handleInfoSave,
     editor: infoEditor,
     editorMinHeight: infoEditorMinHeight,
-    remoteEnabled: detailRemoteEnabled,
     isDetailFetching,
   } = useGeminiRecruitmentInfoEdit(recruitmentId, todayKey)
 
@@ -177,26 +176,24 @@ export function GeminiRecruitmentDetailFullPageModal({
   }, [])
 
   const handleInfoEditClick = useCallback(() => {
-    if (detailRemoteEnabled) {
+    handleInfoEdit()
+  }, [handleInfoEdit])
+
+  const handleInfoSaveClick = useCallback(async () => {
+    if (!isEditModeInfo || infoDraft == null) return
+    try {
+      await handleInfoSave()
       showAlert({
         title: '안내',
-        content:
-          '모집 정보 수정 API가 아직 연동되지 않았습니다.\nOpenAPI PATCH 추가 후 사용할 수 있습니다.',
+        content: MESSAGES.success.saved,
       })
-      return
+    } catch {
+      showAlert({
+        title: '안내',
+        content: '모집 정보 저장에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
+      })
     }
-    handleInfoEdit()
-  }, [detailRemoteEnabled, handleInfoEdit, showAlert])
-
-  const handleInfoSaveClick = useCallback(() => {
-    if (!isEditModeInfo || infoDraft == null) return
-    if (detailRemoteEnabled) return
-    handleInfoSave()
-    showAlert({
-      title: '안내',
-      content: MESSAGES.success.saved,
-    })
-  }, [detailRemoteEnabled, handleInfoSave, infoDraft, isEditModeInfo, showAlert])
+  }, [handleInfoSave, infoDraft, isEditModeInfo, showAlert])
 
   const open = Boolean(recruitmentId)
 

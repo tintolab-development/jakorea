@@ -117,37 +117,34 @@ export function GeminiRecruitmentList() {
     showAlert({
       title: '안내',
       content:
-        '모집 공고 등록/삭제 API가 아직 연동되지 않았습니다.\nOpenAPI mutation 추가 후 사용할 수 있습니다.',
+        '모집 공고 등록/삭제를 처리하지 못했습니다.\n잠시 후 다시 시도해 주세요.',
     })
   }, [showAlert])
 
   const handleBulkDeleteClick = useCallback(() => {
     if (!canWrite) return
-    if (remoteEnabled) {
-      showRemoteMutationUnavailable()
-      return
-    }
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
     setDeleteModalOpen(true)
-  }, [canWrite, remoteEnabled, selectedRowKeys.length, showNoSelectionAlert, showRemoteMutationUnavailable])
+  }, [canWrite, selectedRowKeys.length, showNoSelectionAlert])
 
-  const handleConfirmDelete = useCallback(() => {
-    geminiRecruitmentService.delete(selectedRowKeys.map(key => String(key)))
-    setSelectedRowKeys([])
-    setDeleteModalOpen(false)
-  }, [selectedRowKeys])
+  const handleConfirmDelete = useCallback(async () => {
+    try {
+      await geminiRecruitmentService.delete(selectedRowKeys.map(key => String(key)))
+      setSelectedRowKeys([])
+      setDeleteModalOpen(false)
+      if (remoteEnabled) void refetch()
+    } catch {
+      showRemoteMutationUnavailable()
+    }
+  }, [refetch, remoteEnabled, selectedRowKeys, showRemoteMutationUnavailable])
 
   const handleAddRecruitment = useCallback(() => {
     if (!canWrite) return
-    if (remoteEnabled) {
-      showRemoteMutationUnavailable()
-      return
-    }
     openAdd()
-  }, [canWrite, openAdd, remoteEnabled, showRemoteMutationUnavailable])
+  }, [canWrite, openAdd])
 
   const columns: ColumnsType<GeminiRecruitmentRow> = useMemo(
     () => [

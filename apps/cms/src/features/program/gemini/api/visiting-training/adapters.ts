@@ -4,10 +4,15 @@ import type {
   GeminiInstitutionApprovalStatus,
 } from '@/features/program/gemini/model/recruitment/institution-application-mock'
 import type { GeminiRecruitmentDetail } from '@/features/program/gemini/model/recruitment/detail-types'
+import type { GeminiRecruitmentAddFormSnapshot } from '@/features/program/gemini/lib/recruitment/add-local-save'
+import type { GeminiRecruitmentInfoEditDraft } from '@/features/program/gemini/model/recruitment/info-edit-draft'
 import type { GeminiRecruitmentRow } from '@/features/program/gemini/model/recruitment/types'
 import type { GeminiOrganizationApplicationItem } from '@/shared/api/generated/dashboard/schemas/geminiOrganizationApplicationItem'
 import type { GeminiRecruitmentDetailResponse } from '@/shared/api/generated/dashboard/schemas/geminiRecruitmentDetailResponse'
 import type { GeminiRecruitmentItem } from '@/shared/api/generated/dashboard/schemas/geminiRecruitmentItem'
+import type { ProgramCreateRequest } from '@/shared/api/generated/dashboard/schemas/programCreateRequest'
+import type { ProgramUpdateRequest } from '@/shared/api/generated/dashboard/schemas/programUpdateRequest'
+import { GEMINI_VISITING_TRAINING_PROGRAM_TYPE } from './capabilities'
 
 function toId(value: number | string | undefined): string {
   if (value == null) return ''
@@ -17,6 +22,66 @@ function toId(value: number | string | undefined): string {
 function isDraftStatus(value?: string): boolean {
   const normalized = value?.trim().toUpperCase() ?? ''
   return normalized === 'DRAFT' || normalized === 'TEMPORARY' || normalized === 'TEMP'
+}
+
+function optionalDate(value: string | null | undefined): string | undefined {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : undefined
+}
+
+/** BulkIdsRequest 용 — 숫자로 파싱 가능한 id만 사용 */
+export function toGeminiNumericIds(ids: string[]): number[] {
+  const out: number[] = []
+  for (const id of ids) {
+    const n = Number(id)
+    if (Number.isFinite(n) && Number.isInteger(n)) out.push(n)
+  }
+  return out
+}
+
+export function mapGeminiRecruitmentSnapshotToCreateRequest(
+  snapshot: GeminiRecruitmentAddFormSnapshot
+): ProgramCreateRequest {
+  return {
+    programType: GEMINI_VISITING_TRAINING_PROGRAM_TYPE,
+    title: snapshot.title.trim() || undefined,
+    description: snapshot.programDescription || undefined,
+    businessStartDate: optionalDate(snapshot.applicationPeriodStart),
+    businessEndDate: optionalDate(snapshot.applicationPeriodEnd),
+    applicationStartDate: optionalDate(snapshot.applicationPeriodStart),
+    applicationEndDate: optionalDate(snapshot.applicationPeriodEnd),
+    totalParticipants: snapshot.minStudentCount ?? undefined,
+    managerName: snapshot.inquiryContactName || undefined,
+    contactPhone: snapshot.inquiryTel || undefined,
+    contactEmail: snapshot.inquiryEmail || undefined,
+    recruitmentGuide: snapshot.recruitmentGuide || undefined,
+    learningSupportContent: snapshot.learningSupportContent || undefined,
+    additionalContentHtml: snapshot.additionalContentMarkdown || undefined,
+    attachmentFileNames: snapshot.attachmentFileNames,
+    serviceDetailJson: JSON.stringify({ geminiRecruitment: snapshot }),
+  }
+}
+
+export function mapGeminiRecruitmentDetailToUpdateRequest(
+  draft: GeminiRecruitmentInfoEditDraft
+): ProgramUpdateRequest {
+  return {
+    title: draft.title.trim() || undefined,
+    description: draft.programDescription || undefined,
+    businessStartDate: optionalDate(draft.applicationPeriodStart),
+    businessEndDate: optionalDate(draft.applicationPeriodEnd),
+    applicationStartDate: optionalDate(draft.applicationPeriodStart),
+    applicationEndDate: optionalDate(draft.applicationPeriodEnd),
+    totalParticipants: draft.minStudentCount ?? undefined,
+    managerName: draft.inquiryContactName || undefined,
+    contactPhone: draft.inquiryTel || undefined,
+    contactEmail: draft.inquiryEmail || undefined,
+    recruitmentGuide: draft.recruitmentGuide || undefined,
+    learningSupportContent: draft.learningSupportContent || undefined,
+    additionalContentHtml: draft.additionalContentMarkdown || undefined,
+    attachmentFileNames: draft.attachmentFileNames,
+    serviceDetailJson: JSON.stringify({ geminiRecruitment: draft }),
+  }
 }
 
 export function mapGeminiRecruitmentItemToRow(

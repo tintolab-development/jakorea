@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs from 'dayjs'
+import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import {
@@ -11,6 +12,8 @@ import type { GeminiRecruitmentDetail } from '../model/recruitment/detail-types'
 import { getRecruitmentDetailById, patchRecruitmentDetail } from '../model/recruitment/detail-mock'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../api/visiting-training/capabilities'
 import { useGeminiRecruitmentDetailQuery } from '../api/visiting-training/hooks'
+import { geminiVisitingTrainingQueryKeys } from '../api/visiting-training/query-keys'
+import { updateGeminiRecruitment } from '../api/visiting-training/service'
 import {
   GEMINI_RECRUITMENT_EDIT_INFO_VALUE,
   GEMINI_RECRUITMENT_EDIT_PARAM,
@@ -23,6 +26,7 @@ export function useGeminiRecruitmentInfoEdit(
   recruitmentId: string | null,
   todayKey: string
 ) {
+  const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeLnb = parseGeminiRecruitmentDetailLnb(searchParams.get(GEMINI_RECRUITMENT_LNB_PARAM))
   const editTab = searchParams.get(GEMINI_RECRUITMENT_EDIT_PARAM)
@@ -106,27 +110,43 @@ export function useGeminiRecruitmentInfoEdit(
 
   const handleEdit = useCallback(() => {
     if (detail == null) return
-    if (remoteEnabled) return
     resetDraftFromDetail()
     setEditMode(true)
-  }, [detail, remoteEnabled, resetDraftFromDetail, setEditMode])
+  }, [detail, resetDraftFromDetail, setEditMode])
 
-  const handleSave = useCallback(() => {
-    if (detail == null || draft == null) return
-    if (remoteEnabled) return
+  const handleSave = useCallback(async () => {
+    if (detail == null || draft == null || !recruitmentId) return
     const nextDraft: GeminiRecruitmentInfoEditDraft = {
       ...draft,
       additionalContentMarkdown: getMarkdown() || draft.additionalContentMarkdown,
     }
-    const nextDetail = applyInfoEditDraft(detail, nextDraft)
-    patchRecruitmentDetail(detail.id, {
-      ...nextDraft,
-      title: nextDetail.title,
-      updatedAt: nextDetail.updatedAt,
-    })
+    if (remoteEnabled) {
+      await updateGeminiRecruitment(recruitmentId, nextDraft)
+      await queryClient.invalidateQueries({
+        queryKey: geminiVisitingTrainingQueryKeys.recruitmentDetail(recruitmentId),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: geminiVisitingTrainingQueryKeys.recruitmentList(),
+      })
+    } else {
+      const nextDetail = applyInfoEditDraft(detail, nextDraft)
+      patchRecruitmentDetail(detail.id, {
+        ...nextDraft,
+        title: nextDetail.title,
+        updatedAt: nextDetail.updatedAt,
+      })
+      setDetailVersion(v => v + 1)
+    }
     setEditMode(false)
-    setDetailVersion(v => v + 1)
-  }, [detail, draft, getMarkdown, remoteEnabled, setEditMode])
+  }, [
+    detail,
+    draft,
+    getMarkdown,
+    queryClient,
+    recruitmentId,
+    remoteEnabled,
+    setEditMode,
+  ])
 
   const patchDraft = useCallback((patch: Partial<GeminiRecruitmentInfoEditDraft>) => {
     setDraft(prev => (prev == null ? prev : { ...prev, ...patch }))

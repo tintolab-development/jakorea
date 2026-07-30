@@ -4,6 +4,8 @@ import {
   mapGeminiRecruitmentDetailToDetail,
   mapGeminiRecruitmentItemToApprovedRow,
   mapGeminiRecruitmentItemToRow,
+  mapGeminiRecruitmentSnapshotToCreateRequest,
+  toGeminiNumericIds,
 } from './adapters'
 
 describe('gemini visiting-training adapters', () => {
@@ -59,5 +61,37 @@ describe('gemini visiting-training adapters', () => {
     expect(row.id).toBe('3')
     expect(row.instructorName).toBe('미지정')
     expect(row.trainingDate).toBe('2026-05-01')
+  })
+
+  it('maps create request and numeric ids', () => {
+    const create = mapGeminiRecruitmentSnapshotToCreateRequest({
+      title: '공고',
+      announcementPublished: 'published',
+      educationTargetLevels: [],
+      educationTargetDetail: '',
+      applicationPeriodStart: '2026-03-01',
+      applicationPeriodEnd: '2026-03-31',
+      trainingRequestPeriodStart: '2026-04-01',
+      trainingRequestPeriodEnd: '2026-04-30',
+      minStudentCount: 15,
+      educationForm: 'offline',
+      inquiryContactName: '홍길동',
+      inquiryTel: '010',
+      inquiryEmail: 'a@b.c',
+      notesNotApplicable: true,
+      notes: '',
+      thumbnailFileName: null,
+      programDescription: '설명',
+      recruitmentGuide: '',
+      applicationMethod: '',
+      learningSupportContent: '',
+      additionalContentMarkdown: '',
+      attachmentFileNames: [],
+      institutionSectionDescription: '',
+      detailSectionDescription: '',
+    })
+    expect(create.programType).toBe('GEMINI_TRAINING')
+    expect(create.title).toBe('공고')
+    expect(toGeminiNumericIds(['1', 'x', '2'])).toEqual([1, 2])
   })
 })
