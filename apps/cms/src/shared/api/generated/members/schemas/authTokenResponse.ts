@@ -18,4 +18,6 @@ export interface AuthTokenResponse {
   tokenType?: string;
   /** access token 만료까지 남은 초 */
   expiresInSeconds?: number;
+  /** 관리자 발급 임시 비밀번호를 변경해야 하는지 여부 */
+  passwordChangeRequired?: boolean;
 }

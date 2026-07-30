@@ -11,6 +11,7 @@ import type { SchoolInfo } from './schoolInfo';
 import type { TermsAgreementRow } from './termsAgreementRow';
 import type { UserDetailActionState } from './userDetailActionState';
 import type { UserListRowMetrics } from './userListRowMetrics';
+import type { UserResponseInstructorStatus } from './userResponseInstructorStatus';
 import type { UserResponseProgramRoles } from './userResponseProgramRoles';
 
 export interface UserResponse {
@@ -64,4 +65,8 @@ export interface UserResponse {
   preRegistered?: boolean;
   external1365Id?: string;
   roles?: string[];
+  /** 강사 프로필 상태. 권한 박탈 회원은 REVOKED로 반환됩니다. */
+  instructorStatus?: UserResponseInstructorStatus;
+  /** 강사 권한 박탈 시각. 권한이 유효하거나 강사 프로필이 없으면 null입니다. */
+  instructorRevokedAt?: string;
 }

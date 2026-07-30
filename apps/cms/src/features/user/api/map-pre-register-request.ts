@@ -54,7 +54,8 @@ export function mapCreateUserRequestToPreRegisterIndividual(
   if (!email) {
     throw new Error('개인 회원 등록에는 이메일이 필요합니다.')
   }
-  const body: AdminPreRegisterIndividualRequest = { email, name }
+  // CMS 기본 임시 비밀번호 = 로그인 이메일 (OpenAPI rawPassword required)
+  const body: AdminPreRegisterIndividualRequest = { email, name, rawPassword: email }
   if (phone) body.phone = phone
   if (gender) body.gender = gender
   if (birthDate) body.birthDate = birthDate
@@ -102,7 +103,8 @@ export function mapCreateUserRequestToPreRegisterInstructor(
   if (!email) {
     throw new Error('강사 회원 등록에는 이메일이 필요합니다.')
   }
-  const body: AdminPreRegisterInstructorRequest = { email, name }
+  // CMS 기본 임시 비밀번호 = 로그인 이메일 (OpenAPI rawPassword required)
+  const body: AdminPreRegisterInstructorRequest = { email, name, rawPassword: email }
   if (phone) body.phone = phone
   if (gender) body.gender = gender
   if (birthDate) body.birthDate = birthDate

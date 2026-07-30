@@ -10,15 +10,25 @@
  * MASTER 관리자가 즉시 ACTIVE 상태로 등록하는 관리자 신규 등록 요청입니다.
  */
 export interface AdminAccountCreateRequest {
-  /** 관리자 로그인 이메일 */
-  email?: string;
-  /** 초기 임시 비밀번호. 이메일 주소와 달라야 하며 비밀번호 정책을 충족해야 합니다. */
-  rawPassword?: string;
-  name?: string;
+  /**
+     * 관리자 로그인 이메일
+     * @minLength 1
+     */
+  email: string;
+  /**
+     * 초기 임시 비밀번호. 이메일과 동일한 값 또는 영문·숫자·특수문자를 포함한 8자 이상의 값을 사용할 수 있습니다.
+     * @minLength 1
+     */
+  rawPassword: string;
+  /** @minLength 1 */
+  name: string;
   phone?: string;
   gender?: string;
   birthDate?: string;
-  /** 관리자 권한 코드. MASTER, PM, PARTNER, VIEWER */
-  roleCode?: string;
+  /**
+     * 관리자 권한 코드. MASTER, PM, PARTNER, VIEWER
+     * @minLength 1
+     */
+  roleCode: string;
   reason?: string;
 }
