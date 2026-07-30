@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
 import chevronUpBlackUrl from '@/shared/assets/icons/chevron-up-black-32.svg'
 import chevronLeftGrayUrl from '@/shared/assets/icons/chevron-left-gray.svg'
-import externalLinkIconUrl from '@/shared/assets/icons/external-link.svg'
+import externalLinkIconUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
 import notificationsIconUrl from '../image/icon/notifications.svg'
 import {
   getLoggedInActionRoute,
