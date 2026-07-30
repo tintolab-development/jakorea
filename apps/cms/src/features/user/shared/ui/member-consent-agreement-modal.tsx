@@ -5,6 +5,10 @@ import {
   buildAgreementConsentFillParagraphBodyOptions,
   resolveAgreementConsentFillInteractionMode,
 } from '@/features/template/lib/build-agreement-consent-fill-options'
+import {
+  extractAgreementDraftAuthorName,
+  resolveAgreementUserModeAuthorDisplayName,
+} from '@/features/template/lib/extract-agreement-draft-author-name'
 import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
@@ -14,6 +18,7 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
+import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -29,6 +34,10 @@ import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import './member-consent-agreement-modal.css'
 
 const MEMBER_CONSENT_MODAL_Z_INDEX = 1200
+const PAYMENT_STATEMENT_TEMPLATE_IDS = new Set([
+  'agreement-third-party',
+  'document-payment-order-pre-consent',
+])
 
 export interface MemberConsentAgreementModalProps {
   open: boolean
@@ -58,17 +67,21 @@ export function MemberConsentAgreementModal({
   const agreementConfig = useMemo(() => resolveAgreementWritingFormConfig(templateId), [templateId])
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   const [isDraftLoading, setIsDraftLoading] = useState(false)
+  /** 지급조서 기본정보 성명 — draft 밖 로컬 폼 값 */
+  const [paymentAuthorName, setPaymentAuthorName] = useState('')
 
   useEffect(() => {
     if (!open) {
       setDraft(null)
       setIsDraftLoading(false)
+      setPaymentAuthorName('')
       return
     }
 
     let cancelled = false
     setIsDraftLoading(true)
     setDraft(null)
+    setPaymentAuthorName('')
 
     void loadWritingFormTemplateDraft(templateId)
       .then(saved => {
@@ -120,15 +133,48 @@ export function MemberConsentAgreementModal({
     onComplete()
   }, [draft, onComplete, showAlert])
 
+  const handlePaymentBasicInfoValuesChange = useCallback(
+    (values: PaymentStatementBasicInfoAutofillValues) => {
+      setPaymentAuthorName(values.nameKo)
+    },
+    []
+  )
+
+  const syncedAuthorName = useMemo(() => {
+    if (PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) {
+      return paymentAuthorName
+    }
+    return extractAgreementDraftAuthorName(templateId, draft)
+  }, [draft, paymentAuthorName, templateId])
+
+  const authorDisplayName = useMemo(
+    () => resolveAgreementUserModeAuthorDisplayName(syncedAuthorName),
+    [syncedAuthorName]
+  )
+
   const paragraphBodyOptions = useMemo(
     () =>
       buildAgreementConsentFillParagraphBodyOptions(agreementConfig, {
         templateId,
-        participantName: memberContext.name,
+        participantName: authorDisplayName,
         portraitAffiliationSelectOptions: memberContext.portraitAffiliationSelectOptions,
       }),
-    [agreementConfig, memberContext.name, memberContext.portraitAffiliationSelectOptions, templateId]
+    [
+      agreementConfig,
+      authorDisplayName,
+      memberContext.portraitAffiliationSelectOptions,
+      templateId,
+    ]
   )
+
+  const paragraphBodyOptionsWithPaymentSync = useMemo(() => {
+    if (paragraphBodyOptions == null) return undefined
+    if (!PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) return paragraphBodyOptions
+    return {
+      ...paragraphBodyOptions,
+      paymentStatementBasicInfoOnValuesChange: handlePaymentBasicInfoValuesChange,
+    }
+  }, [handlePaymentBasicInfoValuesChange, paragraphBodyOptions, templateId])
 
   const paragraphInteractionMode = useMemo(
     () => resolveAgreementConsentFillInteractionMode(templateId),
@@ -202,7 +248,7 @@ export function MemberConsentAgreementModal({
                   structureLockedParagraphIds={agreementConfig?.structureLockedParagraphIds}
                   hideDragHandleForParagraphIds={agreementConfig?.hideDragHandleForParagraphIds}
                   hideParagraphRequiredChrome={agreementConfig?.previewLayout === 'a4-document'}
-                  paragraphBodyOptions={paragraphBodyOptions}
+                  paragraphBodyOptions={paragraphBodyOptionsWithPaymentSync}
                   agreementClosingFooter={{
                     onSubmit: handleSubmit,
                     submitDisabled: isDraftLoading || draft == null,

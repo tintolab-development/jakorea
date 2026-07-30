@@ -1,4 +1,5 @@
 import './agreement-admin-proxy-confirm-block.css'
+import { AGREEMENT_USER_MODE_AUTHOR_PLACEHOLDER } from '@/features/template/lib/extract-agreement-draft-author-name'
 
 export const AGREEMENT_ADMIN_PROXY_CONFIRM_GUIDANCE =
   '* 당사자의 서면 동의를 바탕으로 관리자가 동의 확인 처리합니다.'
@@ -25,7 +26,7 @@ export function AgreementAdminProxyConfirmBlock({
   guidanceText = AGREEMENT_ADMIN_PROXY_CONFIRM_GUIDANCE,
 }: AgreementAdminProxyConfirmBlockProps) {
   const dateText = formatKoreanFullDate(now ?? new Date())
-  const name = memberName.trim()
+  const name = memberName.trim() || AGREEMENT_USER_MODE_AUTHOR_PLACEHOLDER
 
   return (
     <div className="agreement-admin-proxy-confirm">
@@ -35,7 +36,7 @@ export function AgreementAdminProxyConfirmBlock({
       </div>
       <div className="agreement-admin-proxy-confirm__row">
         <p className="agreement-admin-proxy-confirm__guidance">{guidanceText}</p>
-        <p className="agreement-admin-proxy-confirm__name">{name || '—'}</p>
+        <p className="agreement-admin-proxy-confirm__name">{name}</p>
       </div>
     </div>
   )
