@@ -72,6 +72,13 @@ export type { AppBreadcrumbProps } from './app-breadcrumb'
 export type { BreadcrumbItem } from '@/shared/config/menu-config'
 export { FileSelectField } from './file-select-field'
 export type { FileSelectFieldProps } from './file-select-field'
+export {
+  FILE_SELECT_MAX_TOTAL_BYTES,
+  FILE_SELECT_TOTAL_SIZE_GUIDE_LINE,
+  sumFileBytes,
+  isFileSelectTotalSizeExceeded,
+  notifyFileSelectTotalSizeExceeded,
+} from './file-select-field-limits'
 export { TealHeaderModal } from './teal-header-modal'
 export type { ModalSize, TealHeaderModalProps } from './teal-header-modal'
 export { ContentModal } from './content-modal'

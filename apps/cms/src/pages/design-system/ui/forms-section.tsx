@@ -193,13 +193,17 @@ export function FormsSection() {
           <FileSelectField
             accept=".pdf,.png,.jpg"
             fileNames={fileNames}
-            guideLines={['PDF, PNG, JPG — 최대 10MB']}
-            onFilesChange={files => setFileNames(files.map(f => f.name))}
+            guideLines={['파일은 총 최대 15MB까지 업로드 가능합니다. (PDF, PNG, JPG)']}
+            onFilesChange={files =>
+              setFileNames(prev => [...prev, ...files.map(f => f.name)])
+            }
             onRemoveFile={index => setFileNames(prev => prev.filter((_, i) => i !== index))}
           />
         </div>
         <p className="ds-note">
-          주소·학교 검색 모달은 <a href="#search-modals">Search modals</a> 섹션을 참고하세요.
+          기본 <code>multiple</code>·합계 <code>15MB</code>. <code>accept</code>·가이드는 케이스별.
+          단건만 <code>multiple=&#123;false&#125;</code>. 주소·학교 검색은{' '}
+          <a href="#search-modals">Search modals</a>.
         </p>
       </DsDemo>
     </DsSection>

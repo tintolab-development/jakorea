@@ -175,7 +175,10 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
                       accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                       fileNames={evidenceFileNames}
                       onFilesChange={files =>
-                        setEvidenceFileNames(files.slice(0, 1).map(file => file.name))
+                        setEvidenceFileNames(prev => [
+                          ...prev,
+                          ...files.map(file => file.name),
+                        ])
                       }
                       onRemoveFile={index =>
                         setEvidenceFileNames(prev =>
