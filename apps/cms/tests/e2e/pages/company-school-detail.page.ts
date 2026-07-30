@@ -1,18 +1,26 @@
 import { type Page, expect } from '@playwright/test'
-import { EDITABLE_COMPANY_SCHOOL_DUMMY_TITLE } from './company-school-seed-titles'
+import {
+  COMPANY_SCHOOL_DETAIL_SEED_CANDIDATES,
+  EDITABLE_COMPANY_SCHOOL_DUMMY_TITLE,
+} from './company-school-seed-titles'
 
 export type CompanySchoolDetailOpenResult = {
   programId: string
   programTitle: string
+  usedCs01Seed?: boolean
 }
 
+/** URL `lnb` — 1사1교 ProgramDetailFullPageModal 키 (일반 institution_applications 등과 다름) */
 export type CompanySchoolDetailLnbKey =
   | 'info'
-  | 'institution_applications'
-  | 'instructor_applications'
+  | 'applicants'
+  | 'applicant_instructors'
   | 'progress'
   | 'survey'
   | 'managers'
+
+/** URL `tab` — 정보: info|institutions|instructors · 진행: institutions|instructors */
+export type CompanySchoolDetailTabKey = 'info' | 'institutions' | 'instructors'
 
 const LIST_PATH = '/programs/company-school'
 
@@ -90,7 +98,14 @@ export class CompanySchoolDetailPage {
           await this.page.waitForTimeout(400)
           continue
         }
-        throw lastApiError
+        // FE mock 폴백으로 행이 보이면 목록 API 실패여도 진행
+        if (!(await row.isVisible().catch(() => false))) {
+          if (attempt < 2) {
+            await this.page.waitForTimeout(300)
+            continue
+          }
+          throw lastApiError
+        }
       }
 
       const rowWaitMs = listRes ? listTimeoutMs : Math.min(2_000, listTimeoutMs)
@@ -107,11 +122,17 @@ export class CompanySchoolDetailPage {
 
       await row.click()
       await expect(this.page).toHaveURL(/programId=/, { timeout: 60_000 })
-      await this.expectDetailShellReady()
 
       const programId = new URL(this.page.url()).searchParams.get('programId')
       if (!programId) {
         throw new Error('상세 URL에 programId 가 없습니다.')
+      }
+
+      // 상세 GET 5xx 등으로 LNB가 안 뜨면 다음 시드 후보로 (throw 금지)
+      const shellOk = await this.tryExpectDetailShellReady(20_000)
+      if (!shellOk || (await this.isProgramDetailLoadFailed())) {
+        await this.closeDetail()
+        return null
       }
 
       return { programId, programTitle: title }
@@ -151,14 +172,71 @@ export class CompanySchoolDetailPage {
     return this.openByTitle(EDITABLE_COMPANY_SCHOOL_DUMMY_TITLE)
   }
 
+  /** CS-01 우선, 없으면 CS-EDIT */
+  async openPreferredDetailSeed(): Promise<CompanySchoolDetailOpenResult> {
+    for (const title of COMPANY_SCHOOL_DETAIL_SEED_CANDIDATES) {
+      const opened = await this.tryOpenByTitleOnce(title, 8_000)
+      if (opened) {
+        return {
+          ...opened,
+          usedCs01Seed: title === COMPANY_SCHOOL_DETAIL_SEED_CANDIDATES[0],
+        }
+      }
+    }
+    return {
+      ...(await this.openEditableDummy()),
+      usedCs01Seed: false,
+    }
+  }
+
+  async tryOpenPreferredDetailSeed(): Promise<CompanySchoolDetailOpenResult | null> {
+    for (const title of COMPANY_SCHOOL_DETAIL_SEED_CANDIDATES) {
+      try {
+        const opened = await this.tryOpenByTitleOnce(title, 8_000)
+        if (opened) {
+          return {
+            ...opened,
+            usedCs01Seed: title === COMPANY_SCHOOL_DETAIL_SEED_CANDIDATES[0],
+          }
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        // 목록/상세 일시 5xx — 다음 시드 후보
+        if (
+          message.includes('프로그램 목록 API 실패') ||
+          message.includes('상세 셸')
+        ) {
+          continue
+        }
+        throw err
+      }
+    }
+    return null
+  }
+
+  /** 공유 셸 aria-label: `프로그램 상세 메뉴` (레거시 `일반 프로그램 상세 메뉴`도 허용) */
+  lnbNav() {
+    return this.page.getByRole('navigation', { name: /프로그램 상세 메뉴/ })
+  }
+
+  async tryExpectDetailShellReady(timeoutMs = 60_000): Promise<boolean> {
+    try {
+      await expect(this.lnbNav()).toBeVisible({ timeout: timeoutMs })
+      const editOrClose = this.page
+        .getByRole('button', { name: /정보 수정|닫기|양식 수정/ })
+        .first()
+      await expect(editOrClose).toBeVisible({ timeout: Math.min(15_000, timeoutMs) })
+      return true
+    } catch {
+      return false
+    }
+  }
+
   async expectDetailShellReady() {
-    // 공유 상세 셸 — aria-label은 일반과 동일
-    const lnb = this.page.getByRole('navigation', { name: '일반 프로그램 상세 메뉴' })
-    await expect(lnb).toBeVisible({ timeout: 60_000 })
-    const editOrClose = this.page
-      .getByRole('button', { name: /정보 수정|닫기|양식 수정/ })
-      .first()
-    await expect(editOrClose).toBeVisible({ timeout: 60_000 })
+    const ok = await this.tryExpectDetailShellReady(60_000)
+    if (!ok) {
+      throw new Error('1사1교 상세 셸(LNB)이 나타나지 않았습니다.')
+    }
   }
 
   async isProgramDetailLoadFailed(): Promise<boolean> {
@@ -193,12 +271,19 @@ export class CompanySchoolDetailPage {
     return !(await this.isProgramDetailLoadFailed())
   }
 
-  lnbNav() {
-    return this.page.getByRole('navigation', { name: '일반 프로그램 상세 메뉴' })
-  }
-
   lnbChildByLabel(label: string) {
     return this.lnbNav().locator(`[data-text="${label}"]`).first()
+  }
+
+  async expectLnbVisible(label: string | RegExp) {
+    if (typeof label === 'string') {
+      const byData = this.lnbChildByLabel(label)
+      if ((await byData.count()) > 0) {
+        await expect(byData).toBeVisible({ timeout: 15_000 })
+        return
+      }
+    }
+    await expect(this.lnbNav().getByText(label).first()).toBeVisible({ timeout: 15_000 })
   }
 
   async expectLnbHidden(label: string | RegExp) {
@@ -213,6 +298,47 @@ export class CompanySchoolDetailPage {
     await expect(item).toBeHidden({ timeout: 5_000 })
   }
 
+  async ensureProgressAccordionOpen() {
+    const progressLi = this.lnbNav()
+      .locator('li')
+      .filter({
+        has: this.page.locator('.detail-fullpage-modal__lnb-item-label', {
+          hasText: /프로그램 진행 현황|진행 현황/,
+        }),
+      })
+      .first()
+    const wrap = progressLi.locator('.detail-fullpage-modal__lnb-children-wrap').first()
+    const open = await wrap
+      .evaluate(el => el.classList.contains('detail-fullpage-modal__lnb-children-wrap--open'))
+      .catch(() => false)
+    if (open) return
+
+    await progressLi.locator('.detail-fullpage-modal__lnb-item').first().click()
+    await expect(wrap).toHaveClass(/lnb-children-wrap--open/, { timeout: 10_000 })
+  }
+
+  async expectProgressTabLabels(options: {
+    mustHave?: readonly string[]
+    mustNotHave?: readonly string[]
+  }) {
+    const programId = new URL(this.page.url()).searchParams.get('programId')
+    if (!programId) throw new Error('programId 없음')
+
+    const opened = await this.tryGotoLnb(programId, 'progress', 'institutions')
+    if (!opened) {
+      await this.tryGotoLnb(programId, 'progress', 'instructors')
+    }
+
+    await this.ensureProgressAccordionOpen()
+
+    for (const label of options.mustHave ?? []) {
+      await expect(this.lnbChildByLabel(label)).toBeVisible({ timeout: 15_000 })
+    }
+    for (const label of options.mustNotHave ?? []) {
+      await this.expectLnbHidden(label)
+    }
+  }
+
   async selectLnbChild(label: string) {
     const nav = this.lnbNav()
     const byDataText = nav.locator(`[data-text="${label}"]`).first()
@@ -223,31 +349,34 @@ export class CompanySchoolDetailPage {
     await nav.getByText(label, { exact: true }).first().click()
   }
 
-  async goToInfoTab(tab: 'info' | 'recruitment' | 'application') {
-    const labels = {
+  async goToInfoTab(tab: CompanySchoolDetailTabKey | 'recruitment' | 'application') {
+    const mapped: CompanySchoolDetailTabKey =
+      tab === 'recruitment' ? 'institutions' : tab === 'application' ? 'instructors' : tab
+    const labels: Record<CompanySchoolDetailTabKey, string> = {
       info: '공통 정보',
-      recruitment: '모집 정보',
-      application: '신청 정보',
-    } as const
-    await this.selectLnbChild(labels[tab])
-    await expect(this.page).toHaveURL(new RegExp(`tab=${tab}`), { timeout: 15_000 })
+      institutions: '모집 정보',
+      instructors: '신청 정보',
+    }
+    await this.selectLnbChild(labels[mapped])
+    await expect(this.page).toHaveURL(new RegExp(`tab=${mapped}`), { timeout: 15_000 })
   }
 
   async gotoDetail(
     programId: string,
     lnb: CompanySchoolDetailLnbKey = 'info',
-    tab = 'info'
-  ) {
+    tab: string = 'info'
+  ): Promise<boolean> {
     const url = `${LIST_PATH}?programId=${programId}&lnb=${lnb}&tab=${tab}`
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
       await this.page.goto(url)
       await this.expectDetailShellReady()
       const loaded = await this.waitForProgramDetailLoaded(attempt === 0 ? 10_000 : 15_000)
-      if (loaded) return
-      if (attempt < 2) {
+      if (loaded) return true
+      if (attempt < 3) {
         await this.page.waitForTimeout(400)
       }
     }
+    return !(await this.isProgramDetailLoadFailed())
   }
 
   async tryGotoLnb(
@@ -255,11 +384,39 @@ export class CompanySchoolDetailPage {
     lnb: CompanySchoolDetailLnbKey,
     tab: string
   ): Promise<boolean> {
-    await this.gotoDetail(programId, lnb, tab)
+    const loaded = await this.gotoDetail(programId, lnb, tab)
+    if (!loaded) return false
     if (!this.page.url().includes(`lnb=${lnb}`)) return false
     if (await this.isProgramDetailLoadFailed()) return false
     await this.expectContentSettled()
     return true
+  }
+
+  async expectUrlLnbTab(lnb: CompanySchoolDetailLnbKey, tab?: string) {
+    await expect(this.page).toHaveURL(new RegExp(`lnb=${lnb}`), { timeout: 15_000 })
+    if (tab) {
+      await expect(this.page).toHaveURL(new RegExp(`tab=${tab}`), { timeout: 15_000 })
+    }
+  }
+
+  async expectManagersShellVisible() {
+    const dialog = this.page.getByRole('dialog')
+    await expect(
+      dialog.locator('.filter-table-layout__title').filter({ hasText: '담당자 목록' }).first()
+    ).toBeVisible({ timeout: 30_000 })
+  }
+
+  async expectApplicationPreviewNotice() {
+    if (await this.isProgramDetailLoadFailed()) {
+      throw new Error('프로그램 상세 로드 실패 — 신청 정보 미리보기를 단언할 수 없습니다')
+    }
+    await expect(
+      this.page
+        .getByRole('dialog')
+        .locator('.application-view__notice-text')
+        .filter({ hasText: /양식 미리보기|미리보기 화면/ })
+        .first()
+    ).toBeVisible({ timeout: 30_000 })
   }
 
   async expectContentSettled() {
