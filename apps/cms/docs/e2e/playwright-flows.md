@@ -124,6 +124,73 @@ pnpm --filter cms exec playwright test --project=setup --debug
 
 ---
 
+## 프로그램관리 E2E Phase 로드맵
+
+프로그램 관리 LNB 5축(일반 · 1사1교 · UJAT · Gemini · 교육받은 교사)을 **Phase 단위**로 확장합니다.  
+기존 일반 등록/수정/상세 · 1사1교 등록/수정 · UJAT 지역/수정 스펙은 유지하고, 빈 카테고리부터 채웁니다.
+
+| Phase | 범위 | 상태 |
+|-------|------|------|
+| **1** | 전 카테고리 목록·셸 스모크 (`list/`) | **구현됨** |
+| **2** | 1사1교 상세 smoke · LNB 격리(봉사자 없음) | **구현됨** |
+| **3** | UJAT 등록 + 상세 smoke | **구현됨** |
+| **4** | UJAT 상세 심화(봉사·교육진행·설문) | **구현됨** |
+| **5** | Gemini 찾아가는 연수 | **구현됨** |
+| **6** | Gemini 실적 관리 | **구현됨** |
+| **7** | 교육받은 교사 목록·상세 smoke | **구현됨** |
+| **8** | 교육받은 교사 심화(기관신청·교육일지) | **구현됨** |
+
+시드 SSOT: [`docs/api/be-handoff-program-dummy-seeds/`](../api/be-handoff-program-dummy-seeds/README-BE.md)
+
+---
+
+## 3-list. Phase 1 — 전 카테고리 목록·셸 스모크
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `tests/e2e/flows/programs/list/program-categories-list-smoke.spec.ts` |
+| POM | `program-list-smoke.page.ts` |
+| 시드 stub | `gemini-seed-titles.ts` · `trained-teachers-seed-titles.ts` (+ 기존 일반/1사1교/UJAT seed titles) |
+| 검증 | 7개 LNB 라우트: 인증 셸 · heading · 목록 마커 · 테이블/empty. featured 시드가 있으면 상세/모달 soft open, 없으면 annotation |
+
+| # | 경로 |
+|---|------|
+| 1.1 | `/programs/general` |
+| 1.2 | `/programs/company-school` |
+| 1.3 | `/programs/ujat` |
+| 1.4 | `/programs/ujat/regions` |
+| 1.5 | `/programs/gemini/visiting-training` |
+| 1.6 | `/programs/gemini/performance` |
+| 1.7 | `/programs/trained-teachers` |
+
+시드/상세 API가 없어도 **목록 셸은 통과**해야 합니다. 상세 오픈만 annotation으로 남깁니다.
+
+### 일반 (headless)
+
+```bash
+pnpm --filter cms test:e2e:programs:list
+```
+
+### UI로 확인
+
+```bash
+pnpm --filter cms test:e2e:programs:list:ui
+```
+
+### headed
+
+```bash
+pnpm --filter cms test:e2e:programs:list:headed
+```
+
+### debug
+
+```bash
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/list --project=chromium --debug
+```
+
+---
+
 ## 3. 프로그램 — 일반 프로그램 신규 등록
 
 | 항목 | 내용 |
@@ -346,6 +413,31 @@ pnpm --filter cms exec playwright test tests/e2e/flows/programs/company-school-e
 
 ---
 
+## 3e2. Phase 2 — 1사1교 상세 smoke · LNB 격리
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `tests/e2e/flows/programs/company-school/detail/*.spec.ts` |
+| POM | `company-school-detail.page.ts` · `company-school-seed-titles.ts` |
+| 시드 | CS-01 (`HSBC/HKU…`) 우선 → CS-EDIT `[수정 가능] 1사1교 프로그램 더미` |
+| 검증 | **smoke** LNB/탭/딥링크 · **LNB 격리** 봉사자·합반·과제·출석/게시글 부재 · 기관·강사만 |
+
+시드가 없으면 해당 스펙은 `test.skip`합니다. 수정 스펙(3e)과 **별도 실행**합니다.
+
+```bash
+pnpm --filter cms test:e2e:programs:company-school:detail
+pnpm --filter cms test:e2e:programs:company-school:detail:ui
+pnpm --filter cms test:e2e:programs:company-school:detail:headed
+
+# 단위
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/company-school/detail/company-school-detail-smoke.spec.ts --project=chromium
+pnpm --filter cms exec playwright test tests/e2e/flows/programs/company-school/detail/company-school-lnb-isolation.spec.ts --project=chromium
+```
+
+카테고리별 스크립트만 모아 둔 목록: [`program-e2e-scripts-by-lnb.md`](./program-e2e-scripts-by-lnb.md)
+
+---
+
 ## 3f. 프로그램 — UJAT 교육 지역 관리 CRUD
 
 | 항목 | 내용 |
@@ -383,6 +475,117 @@ pnpm --filter cms test:e2e:programs:ujat:regions:headed
 
 ```bash
 pnpm --filter cms exec playwright test tests/e2e/flows/programs/ujat-education-regions-crud.spec.ts --project=chromium --debug
+```
+
+---
+
+## 3f2. Phase 3 — UJAT 신규 등록 + 상세 smoke
+
+| 항목 | 내용 |
+|------|------|
+| 등록 스펙 | `tests/e2e/flows/programs/ujat-program-registration.spec.ts` |
+| 등록 POM | `ujat-program-registration.page.ts` |
+| 상세 스펙 | `tests/e2e/flows/programs/ujat/detail/ujat-program-detail-smoke.spec.ts` |
+| 상세 POM | `ujat-program-detail.page.ts` · `ujat-program-seed-titles.ts` |
+| 시드 | `[수정 가능] UJAT 프로그램 더미` → `[UJAT더미]…` → FE mock 목록 title |
+| 검증 | **등록** serial 완료·목록 · **smoke** 공통/모집·기관·봉사·교육진행·담당자 LNB · 강사 LNB 부재 |
+
+```bash
+pnpm --filter cms test:e2e:programs:ujat:registration
+pnpm --filter cms test:e2e:programs:ujat:detail
+pnpm --filter cms test:e2e:programs:ujat:detail:ui
+pnpm --filter cms test:e2e:programs:ujat:detail:headed
+```
+
+카테고리별 스크립트: [`program-e2e-scripts-by-lnb.md`](./program-e2e-scripts-by-lnb.md)
+
+---
+
+## 3f3. Phase 4 — UJAT 상세 심화 (봉사·교육진행·설문)
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `ujat/detail/ujat-program-volunteer-screening.spec.ts` · `…-education-progress.spec.ts` · `…-survey-managers.spec.ts` |
+| POM | `ujat-program-detail.page.ts` (`openAnyTabs` · `expectListOrEmptyShell`) |
+| 시드 | Phase 3와 동일 (`UJAT_DETAIL_SEED_CANDIDATES`) · 행 없으면 empty 셸 통과 |
+| 검증 | **기관** inst_* · **상/하반기 봉사** vh* · **교육진행** edu_h1_* / edu_h2 / edu_summary · **설문·담당자** · 강사 LNB 부재 |
+
+```bash
+pnpm --filter cms test:e2e:programs:ujat:detail:deep
+pnpm --filter cms test:e2e:programs:ujat:detail:deep:ui
+pnpm --filter cms test:e2e:programs:ujat:detail:deep:headed
+# 또는 Phase 3 smoke 포함 전체 상세
+pnpm --filter cms test:e2e:programs:ujat:detail
+```
+
+---
+
+## 3f4. Phase 5 — Gemini 찾아가는 연수
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `gemini/visiting-training/list-tabs-smoke` · `recruitment-detail-smoke` · `approved-detail-smoke` · `lnb-isolation` |
+| POM | `gemini-visiting-training.page.ts` · `gemini-seed-titles.ts` |
+| 시드 | BE `[Gemini더미]…` → FE mock Coding Bootcamp / 찾아가는 연수 · 승인 기관명 |
+| 검증 | **모집/승인 탭** · 모집 LNB(info·institutions·managers) · 승인 LNB(info·instructors·managers) · 봉사/교육진행/설문 부재 |
+
+```bash
+pnpm --filter cms test:e2e:programs:gemini:visiting
+pnpm --filter cms test:e2e:programs:gemini:visiting:ui
+pnpm --filter cms test:e2e:programs:gemini:visiting:headed
+```
+
+---
+
+## 3f5. Phase 6 — Gemini 실적 관리
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `gemini/performance/list-smoke` · `filter-smoke` · `isolation` |
+| POM | `gemini-performance.page.ts` · `gemini-seed-titles.ts`(GPERF 강사·장소) |
+| 시드 | GPERF-01 `홍길동` 등 · 행 없으면 필터 soft-skip |
+| 검증 | **목록 셸** · 필터(강사·연수방식·장소·연수일) · 등록 file input · 찾아가는 연수 탭 부재 |
+
+```bash
+pnpm --filter cms test:e2e:programs:gemini:performance
+pnpm --filter cms test:e2e:programs:gemini:performance:ui
+pnpm --filter cms test:e2e:programs:gemini:performance:headed
+```
+
+---
+
+## 3f6. Phase 7 — 교육받은 교사 목록·상세 smoke
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `trained-teachers/list-smoke` · `detail/detail-smoke` · `detail/lnb-isolation` |
+| POM | `trained-teachers-detail.page.ts` · `trained-teachers-seed-titles.ts` |
+| 시드 | TT-01 FE mock title · `[TT더미]…` · TT-02~08 |
+| 검증 | **목록 셸** · 정보(공통·모집·신청) · 기관신청·진행·담당자 · **강사/봉사 LNB 부재** |
+
+```bash
+pnpm --filter cms test:e2e:programs:trained-teachers
+pnpm --filter cms test:e2e:programs:trained-teachers:ui
+pnpm --filter cms test:e2e:programs:trained-teachers:headed
+```
+
+---
+
+## 3f7. Phase 8 — 교육받은 교사 심화 (기관신청·교육일지)
+
+| 항목 | 내용 |
+|------|------|
+| 스펙 | `detail/institution-applications-deep` · `detail/education-journal-progress` |
+| POM | `trained-teachers-detail.page.ts` (`tryOpenFirstInstitutionRow` · journal · performance summary) |
+| 시드 | TT-A-* 기관 · TT-J-* 일지 · TT-P-01 실적 요약 — 없으면 soft-skip |
+| 검증 | **기관 신청 목록** · 기관 상세(신청/일지) · **진행·실적 요약** · journal 딥링크 |
+
+```bash
+pnpm --filter cms test:e2e:programs:trained-teachers:deep
+pnpm --filter cms test:e2e:programs:trained-teachers:deep:ui
+pnpm --filter cms test:e2e:programs:trained-teachers:deep:headed
+# Phase 7 포함 전체
+pnpm --filter cms test:e2e:programs:trained-teachers
 ```
 
 ---
@@ -496,6 +699,12 @@ pnpm --filter cms exec playwright test tests/e2e/flows/members --project=chromiu
 | 일반 프로그램 수정 | `test:e2e:programs:edit` | `test:e2e:programs:edit:ui` | `test:e2e:programs:edit:headed` |
 | 일반 프로그램 상세 | `test:e2e:programs:detail` | `test:e2e:programs:detail:ui` | `test:e2e:programs:detail:headed` |
 | UJAT 교육 지역 CRUD | `test:e2e:programs:ujat:regions` | `test:e2e:programs:ujat:regions:ui` | `test:e2e:programs:ujat:regions:headed` |
+| UJAT 상세 smoke · Phase4 심화 | `test:e2e:programs:ujat:detail` | `test:e2e:programs:ujat:detail:ui` | `test:e2e:programs:ujat:detail:headed` |
+| UJAT 상세 심화만 | `test:e2e:programs:ujat:detail:deep` | `test:e2e:programs:ujat:detail:deep:ui` | `test:e2e:programs:ujat:detail:deep:headed` |
+| Gemini 찾아가는 연수 | `test:e2e:programs:gemini:visiting` | `test:e2e:programs:gemini:visiting:ui` | `test:e2e:programs:gemini:visiting:headed` |
+| Gemini 실적 관리 | `test:e2e:programs:gemini:performance` | `test:e2e:programs:gemini:performance:ui` | `test:e2e:programs:gemini:performance:headed` |
+| 교육받은 교사 | `test:e2e:programs:trained-teachers` | `test:e2e:programs:trained-teachers:ui` | `test:e2e:programs:trained-teachers:headed` |
+| 교육받은 교사 심화 | `test:e2e:programs:trained-teachers:deep` | `test:e2e:programs:trained-teachers:deep:ui` | `test:e2e:programs:trained-teachers:deep:headed` |
 | UJAT 상세 풀페이지 수정 | `test:e2e:programs:ujat:edit` | `test:e2e:programs:ujat:edit:ui` | `test:e2e:programs:ujat:edit:headed` |
 | 회원 목록 CRUD (4 kind, 권한 관리 제외) | `test:e2e:members` | `test:e2e:members:ui` | `test:e2e:members:headed` |
 | 전체 | `test:e2e` | `test:e2e:ui` | `test:e2e:headed` |
@@ -551,9 +760,16 @@ apps/cms/tests/e2e/
 ├── smoke/                          # 비로그인 로그인 페이지 로드
 ├── flows/
 │   ├── auth/                       # 세션 복원 → 대시보드
-│   ├── programs/                   # 일반·1사1교·UJAT 프로그램 등록·수정·교육지역
+│   ├── programs/                   # 일반·1사1교·UJAT·Gemini·교육받은 교사
+│   │   ├── list/                   # Phase 1 전 카테고리 목록·셸 스모크
+│   │   ├── company-school/detail/  # Phase 2 1사1교 상세 smoke · LNB 격리
+│   │   ├── ujat/detail/            # Phase 3 smoke + Phase 4 심화
+│   │   ├── gemini/visiting-training/  # Phase 5 찾아가는 연수
+│   │   ├── gemini/performance/        # Phase 6 실적 관리
+│   │   ├── trained-teachers/          # Phase 7 smoke + Phase 8 심화
 │   │   ├── general-program-*.spec.ts
 │   │   ├── company-school-*.spec.ts
+│   │   ├── ujat-program-registration.spec.ts
 │   │   ├── ujat-education-regions-crud.spec.ts
 │   │   ├── ujat-program-edit.spec.ts
 │   │   └── detail/                 # 일반 상세 LNB smoke·신청·진행·설문
@@ -565,4 +781,4 @@ apps/cms/tests/e2e/
 
 규칙: 모노레포 `.cursor/rules/playwright-e2e.mdc`
 
-**Last updated:** 2026-07-27
+**Last updated:** 2026-07-30
