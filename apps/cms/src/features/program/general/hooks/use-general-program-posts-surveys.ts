@@ -9,12 +9,14 @@ import {
   createGeneralProgramFormBinding,
   createGeneralProgramPost,
   deleteGeneralProgramFormBinding,
+  deleteGeneralProgramPost,
   fetchGeneralProgramFormBindings,
   fetchGeneralProgramPosts,
   fetchGeneralProgramSurveyResponseDetail,
   fetchGeneralProgramSurveyResponses,
   fetchGeneralProgramSurveySummary,
   fetchGeneralProgramSurveys,
+  updateGeneralProgramPost,
 } from '@/features/program/general/api/admin-general-programs-service'
 import {
   classifyProgramFormBindings,
@@ -124,6 +126,20 @@ export function useGeneralProgramPosts(programId: string | undefined) {
       const result = await createGeneralProgramPost(programId, payload)
       await queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) })
       return result
+    },
+    updatePost: async (
+      postId: string,
+      payload: { title?: string; content?: string; visibilityType?: string }
+    ) => {
+      if (!programId || !remoteEnabled) return null
+      const result = await updateGeneralProgramPost(programId, postId, payload)
+      await queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) })
+      return result
+    },
+    deletePost: async (postId: string) => {
+      if (!programId || !remoteEnabled) return
+      await deleteGeneralProgramPost(programId, postId)
+      await queryClient.invalidateQueries({ queryKey: generalProgramQueryKeys.posts(programId) })
     },
   }
 }
