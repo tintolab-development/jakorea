@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { EditableStatusBadge, StatusDropdownCell } from '@/shared/components'
+import { STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME } from '@/shared/components/status-dropdown-cell'
 import {
   getEmploymentBadgeTone,
   SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL,
@@ -81,7 +82,9 @@ export function SchoolTeacherEmploymentStatusDropdown({
   }
 
   return (
-    <span className="user-basic-info-section__teacher-employment-dropdown">
+    <span
+      className={`user-basic-info-section__teacher-employment-dropdown ${STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}`}
+    >
       <StatusDropdownCell<SchoolTeacherEmploymentStatus>
         status={employmentStatus}
         statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
@@ -90,8 +93,8 @@ export function SchoolTeacherEmploymentStatusDropdown({
         onChange={handleEmploymentStatusChange}
         isOpen={employmentDropdownOpen}
         onOpenChange={setEmploymentDropdownOpen}
+        tagLayout="tag100"
         style={SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE}
-        chrome="hug"
       />
     </span>
   )

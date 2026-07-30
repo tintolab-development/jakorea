@@ -4,7 +4,7 @@
   gap: 32px;
 }
 
-/* 소속 재직은 StatusDropdownCell chrome="hug" — 열림 시 행 높이만 고정 */
+/* 소속 재직은 StatusDropdownCell tag100 + INLINE_TAG100 셸 — 열림 시 행 높이만 고정 */
 .participating-instructor-application-info
   .detail-info-form__field:has(.applicant-general-instructor-basic-info__employment-dropdown),
 .participating-instructor-application-info
