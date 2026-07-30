@@ -47,4 +47,13 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 - Payment statement: **first settlement** flag, **PII-expiry re-consent** flag.
 - CMS: mostly read + status; e-sign payload in separate API spec when available.
 
-**Last updated:** 2026-07-20
+## 동의서 작성 모달 (fill) — 상호작용
+
+회원 등록·상세·강사 신규 등 **템플릿 관리 밖** 동의서 작성 UI는 아래 규칙을 따른다.  
+→ **[agreement-consent-fill-interaction.mdc](../template/agreement-consent-fill-interaction.mdc)**
+
+- **양식 본문**(동의 문구·표 셀) 수정 불가 / **응답**(지급조서 기본정보, 동의 라디오, 초상권 성명·소속) 입력 가능
+- `preview` 모드 + 슬롯 CSS로 잠그지 말 것 — 지급조서·라디오까지 막힘
+- 애매하면 코드 변경 전 사용자에게 확인
+
+**Last updated:** 2026-07-30
