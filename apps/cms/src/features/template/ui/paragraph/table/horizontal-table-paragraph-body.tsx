@@ -424,6 +424,7 @@ export function HorizontalTableParagraphBody({
   lectureFeeCalculationValues,
   paymentStatementCalculationLines,
   paymentStatementDisplayMode,
+  agreementNoticeIdTypeInteractive = false,
   programRegistration,
   ujatProgramRegistration,
   programApplicationFormInstitution,
@@ -467,6 +468,8 @@ export function HorizontalTableParagraphBody({
   lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
+  /** 행정정보 공동이용 fill — 표 셀은 잠그고 식별번호 입력만 허용 */
+  agreementNoticeIdTypeInteractive?: boolean
   programRegistration?: ProgramRegistrationParagraphBodyOptions
   ujatProgramRegistration?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
@@ -1025,7 +1028,7 @@ export function HorizontalTableParagraphBody({
             <IdTypeWithInputBody
               paragraph={p.idTypeWithInput}
               onChange={next => onChange({ ...p, idTypeWithInput: next })}
-              isEditMode={effectiveEditMode}
+              isEditMode={effectiveEditMode || agreementNoticeIdTypeInteractive}
               documentMode={paymentStatementDisplayMode === 'document'}
             />
           ) : null}

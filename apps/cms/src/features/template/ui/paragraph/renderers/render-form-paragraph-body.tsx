@@ -115,6 +115,10 @@ export type RenderFormParagraphBodyOptions = {
   paymentStatementBasicInfoValues?: Partial<PaymentStatementBasicInfoAutofillValues>
   /** true: 지급조서 기본정보에서 「지급 목적」만 비활성, 나머지 필드는 편집 가능(사전 동의 템플릿 등) */
   paymentStatementBasicInfoOnlyPaymentPurposeLocked?: boolean
+  /** 편집 가능 모드 — 기본정보 값 변경(성명 → 확인·서명란 동기화) */
+  paymentStatementBasicInfoOnValuesChange?: (
+    values: PaymentStatementBasicInfoAutofillValues
+  ) => void
   /** 강의비 산출 정보 단락 미리 채움 */
   lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
   /** 강의비 산출 내역 단락 — 발급용 테이블 목·실데이터 */
@@ -191,6 +195,10 @@ export type RenderFormParagraphBodyOptions = {
    * `preview` 대신 사용(CSS pointer-events 차단 회피).
    */
   agreementConsentFillReadOnlyBody?: boolean
+  /** fill에서 양식 잠금이어도 입력을 허용할 단락 id (행정정보 대상자 본인 등) */
+  agreementConsentFillInteractiveParagraphIds?: ReadonlySet<string>
+  /** 행정정보 공동이용 fill — 표 하단 식별번호 입력만 허용 */
+  agreementNoticeIdTypeInteractive?: boolean
   /** 현재 조건에 따라 숨겨야 하는 단락 id 목록(에디터/미리보기 공통) */
   hiddenParagraphIds?: ReadonlySet<string>
   /**
@@ -202,6 +210,8 @@ export type RenderFormParagraphBodyOptions = {
   programLinkedIndividualApplicationForm?: boolean
   /** 강의 평가 등 — 설문 기간을 기간 피커 대신 지정 텍스트로 표시 */
   surveyPeriodReadonly?: boolean
+  /** 회원 동의 작성(fill) — 제목형「작성 기간」본문 슬롯 숨김 */
+  hideSurveyWritingPeriod?: boolean
 }
 
 export function renderFormParagraphBody(
@@ -217,15 +227,20 @@ export function renderFormParagraphBody(
   const isCardSelected = isParagraphSelected
   const structureLocked = options?.structureLockedParagraphIds?.has(p.id) ?? false
   const consentFillBodyReadOnly = options?.agreementConsentFillReadOnlyBody === true
+  const consentFillParagraphInteractive =
+    consentFillBodyReadOnly &&
+    (options?.agreementConsentFillInteractiveParagraphIds?.has(p.id) ?? false)
   /**
    * 구조 잠금: 작성(authoring)에서는 카드 선택만으로는 본문 편집 불가.
    * user + `agreementConsentFillReadOnlyBody`: 양식 본문만 잠금(동의서 작성).
+   * user + interactive id 예외(대상자 본인 등): 응답 입력 허용.
    * user(일반): 잠긴 시드도 입력 가능. `preview`는 항상 비활성.
    */
   const isBodyInteractive = isPreviewReadonly
     ? false
     : structureLocked
-      ? paragraphInteractionMode === 'user' && !consentFillBodyReadOnly
+      ? paragraphInteractionMode === 'user' &&
+        (!consentFillBodyReadOnly || consentFillParagraphInteractive)
       : paragraphInteractionMode === 'user' || isParagraphSelected
   const structureLockedConsentChoiceInteractive =
     structureLocked &&
@@ -238,6 +253,7 @@ export function renderFormParagraphBody(
   switch (p.variant) {
     case 'survey_title_with_period':
       if (!isCardSelected && !isUserLikeVisible) return null
+      if (options?.hideSurveyWritingPeriod === true) return null
       if (!(p.showWritingPeriodOnForm ?? false)) return null
       if (options?.surveyPeriodReadonly) {
         return (
@@ -362,6 +378,7 @@ export function renderFormParagraphBody(
           lectureFeeCalculationValues={options?.lectureFeeCalculationValues}
           paymentStatementCalculationLines={options?.paymentStatementCalculationLines}
           paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
+          agreementNoticeIdTypeInteractive={options?.agreementNoticeIdTypeInteractive}
           programRegistration={options?.programRegistration}
           ujatProgramRegistration={options?.ujatProgramRegistration}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
@@ -452,6 +469,7 @@ export function renderFormParagraphBody(
             values={options?.paymentStatementBasicInfoValues}
             displayMode={options?.paymentStatementDisplayMode ?? 'editor'}
             onlyPaymentPurposeLocked={options?.paymentStatementBasicInfoOnlyPaymentPurposeLocked}
+            onValuesChange={options?.paymentStatementBasicInfoOnValuesChange}
           />
         )
       }
