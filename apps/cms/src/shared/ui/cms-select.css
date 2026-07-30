@@ -47,9 +47,10 @@
 .cms-select .ant-select-selector {
   flex: 1 1 auto;
   min-width: 0;
+  height: 100% !important;
   display: flex !important;
   align-items: center !important;
-  padding: 0 !important;
+  /* 패딩은 바깥 래퍼가 아니라 selector에 — 팝업 위치·폭이 테두리 박스와 일치 */
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -66,7 +67,6 @@
   transform: translateY(-50%);
   margin-top: 0;
   flex-shrink: 0;
-  inset-inline-end: 0 !important;
   inset-inline-start: auto !important;
   /* placeholder·라벨과 동일 톤 (`cms-input` 아이콘·입력 힌트와 맞춤) */
   color: var(--gray-85969-d, #85969d);
@@ -120,7 +120,15 @@
 .cms-select--large {
   min-width: 120px;
   height: 44px;
-  padding: 0 12px 0 14px;
+  padding: 0;
+}
+
+.cms-select--large .ant-select-selector {
+  padding: 0 28px 0 14px !important;
+}
+
+.cms-select--large .ant-select-arrow {
+  inset-inline-end: 12px !important;
 }
 
 .cms-select--large .ant-select-selection-item,
@@ -135,7 +143,15 @@
 .cms-select--medium {
   min-width: 120px;
   height: 40px;
-  padding: 0 12px 0 14px;
+  padding: 0;
+}
+
+.cms-select--medium .ant-select-selector {
+  padding: 0 28px 0 14px !important;
+}
+
+.cms-select--medium .ant-select-arrow {
+  inset-inline-end: 12px !important;
 }
 
 .cms-select--medium .ant-select-selection-item,
@@ -150,7 +166,15 @@
 .cms-select--small {
   min-width: 100px;
   height: 32px;
-  padding: 0 10px 0 12px;
+  padding: 0;
+}
+
+.cms-select--small .ant-select-selector {
+  padding: 0 24px 0 12px !important;
+}
+
+.cms-select--small .ant-select-arrow {
+  inset-inline-end: 10px !important;
 }
 
 .cms-select--small .ant-select-selection-item,
