@@ -22,7 +22,7 @@ export const BasicInfoLayout = {
 
 export type BasicInfoLayout = (typeof BasicInfoLayout)[keyof typeof BasicInfoLayout]
 
-export type SplitSectionVariant = 'all_users' | 'school_teacher' | 'instructor'
+export type SplitSectionVariant = 'all_users' | 'school_teacher' | 'instructor' | 'admin'
 
 export type BasicInfoLayoutResolved =
   | {
@@ -75,8 +75,9 @@ export function resolveBasicInfoLayout({
 
   if (bodyKey === 'admin') {
     return {
-      layout: BasicInfoLayout.SINGLE_CARD,
-      sections: [BasicInfoSectionTypes.ADMIN],
+      layout: BasicInfoLayout.SPLIT_CARD,
+      sections: [BasicInfoSectionTypes.META, BasicInfoSectionTypes.PROFILE],
+      splitSectionVariant: 'admin',
     }
   }
 

@@ -89,6 +89,19 @@ export function canEditAdminMemberInfo(
   return shouldShowCmsMemberInfoEditButton(targetUser)
 }
 
+/**
+ * 관리자 회원(`role === 'ADMIN'`) 상세 — [정보 수정] 진입.
+ * 관리자 등록 회원이면 CMS 관리자 전원 노출(마스터는 전체 기본정보, 그 외는 코멘트·권한 유형만).
+ */
+export function canStartAdminMemberProfileEdit(
+  currentUser: CurrentUserLike | null | undefined,
+  targetUser: AdminMemberEditTargetLike
+): boolean {
+  if (targetUser.role !== 'ADMIN') return false
+  if (!shouldShowCmsMemberInfoEditButton(targetUser)) return false
+  return canAccessAdminCommentInAdminDetail(currentUser)
+}
+
 /** 소속 교사 중 CMS 회원과 연동된 행이 하나라도 있으면 true (해당 학교명으로 가입·연동된 교사) */
 export function schoolHasAffiliatedTeacherLinkedAccount(user: SchoolUserLike): boolean {
   if (user.role !== 'SCHOOL') return false

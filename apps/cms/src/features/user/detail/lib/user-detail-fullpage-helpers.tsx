@@ -189,3 +189,20 @@ export function userDetailSidebarNavAriaLabel(
 }
 
 export { instructorDetailTitleSchoolName }
+
+type UserDetailSubjectSource = Pick<User, 'id' | 'memberId' | 'adminAccountId'>
+
+/** 목록 id·uuid·`admin-account-{id}` 혼용 시에도 동일 회원이면 편집 상태를 유지하기 위한 안정 키 */
+export function resolveUserDetailSubjectKey(
+  user: UserDetailSubjectSource | null | undefined
+): string | null {
+  if (!user) return null
+  if (user.adminAccountId != null && user.adminAccountId > 0) {
+    return `admin-account:${user.adminAccountId}`
+  }
+  if (user.memberId != null && user.memberId > 0) {
+    return `member:${user.memberId}`
+  }
+  const id = user.id?.trim()
+  return id ? `id:${id}` : null
+}

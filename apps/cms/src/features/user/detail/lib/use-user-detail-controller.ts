@@ -14,6 +14,7 @@ import {
   programsHistoryHasChildMenu,
   clampProgramsChildForUser,
   instructorDetailLnbClickShowsPrepareMessage,
+  resolveUserDetailSubjectKey,
   type TabState,
   type UserDetailLnbKey,
   type UserDetailProgramsChildKey,
@@ -31,6 +32,7 @@ import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import {
   canAccessAdminCommentInAdminDetail,
   canEditAdminMemberInfo,
+  canStartAdminMemberProfileEdit,
   shouldShowCmsMemberInfoEditButton,
   shouldShowAdminCommentSectionForViewer,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
@@ -39,6 +41,7 @@ import {
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import {
+  draftToAdminMemberRestrictedPatch,
   draftToAdminProvisionedInstructorBasicInfoPatch,
   draftToBasicInfoPatch,
   draftToSchoolAdminCommentOnlyPatch,
@@ -141,6 +144,11 @@ export function useUserDetailController({
   const [instructorPermissionRevokeOpen, setInstructorPermissionRevokeOpen] = useState(false)
   const [jaGradeEvaluationOpen, setJaGradeEvaluationOpen] = useState(false)
 
+  const detailSubjectKey = useMemo(
+    () => resolveUserDetailSubjectKey(displayUser),
+    [displayUser?.id, displayUser?.memberId, displayUser?.adminAccountId]
+  )
+
   useUserDetailUrlSync({
     open,
     displayUser,
@@ -228,7 +236,7 @@ export function useUserDetailController({
     setInstitutionDeleteBlockedOpen(false)
     setEditUnmaskConfirmOpen(false)
     setEditUnmaskConfirmLoading(false)
-  }, [displayUser?.id])
+  }, [detailSubjectKey])
 
   useEffect(() => {
     if (membersRemote) {
@@ -340,7 +348,11 @@ export function useUserDetailController({
     setSearchParams(
       prev => {
         const nextParams = new URLSearchParams(prev)
-        if (displayUser?.id) nextParams.set('id', displayUser.id)
+        const curId = prev.get('id')?.trim()
+        // 목록·드릴다운이 이미 id를 넣은 경우 덮어쓰지 않음 — admin-account-{id}/uuid 혼용 시 URL·상태 리셋 방지
+        if (displayUser?.id && !curId) {
+          nextParams.set('id', displayUser.id)
+        }
         nextParams.set('lnb', 'detail-info')
         nextParams.delete(programsChildQueryKey)
         return nextParams
@@ -375,7 +387,7 @@ export function useUserDetailController({
       }
 
       if (bodyKey === 'admin') {
-        if (!canEditAdminMemberInfo(currentUser, target)) return
+        if (!canStartAdminMemberProfileEdit(currentUser, target)) return
         setBasicInfoDraft(userToAdminProvisionedBasicDraft(target))
         setBasicInfoEditScope('profile')
         setBasicInfoEditing(true)
@@ -482,7 +494,7 @@ export function useUserDetailController({
       if (!canAccessAdminCommentInAdminDetail(currentUser)) return
     }
     if (basicInfoEditScope === 'profile' && displayUser.role === 'ADMIN') {
-      if (!canEditAdminMemberInfo(currentUser, displayUser)) return
+      if (!canStartAdminMemberProfileEdit(currentUser, displayUser)) return
     }
     setBasicInfoSaveLoading(true)
     try {
@@ -494,7 +506,9 @@ export function useUserDetailController({
       } else if (displayUser.role === 'INSTRUCTOR') {
         patch = draftToAdminProvisionedInstructorBasicInfoPatch(basicInfoDraft)
       } else if (displayUser.role === 'ADMIN') {
-        patch = draftToBasicInfoPatch(basicInfoDraft)
+        patch = canEditAdminMemberInfo(currentUser, displayUser)
+          ? draftToBasicInfoPatch(basicInfoDraft)
+          : draftToAdminMemberRestrictedPatch(basicInfoDraft)
       } else {
         patch = draftToBasicInfoPatch(basicInfoDraft)
       }

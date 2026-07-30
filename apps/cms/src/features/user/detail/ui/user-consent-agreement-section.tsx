@@ -160,6 +160,36 @@ const ADMIN_AND_CRIME_ROW: ConsentRowSchema = {
   ],
 }
 
+const MARKETING_AND_MFA_ROW: ConsentRowSchema = {
+  rowType: 'double',
+  fields: [
+    {
+      label: '마케팅 제공 동의',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: {
+        type: 'remote_consent',
+        agreed: false,
+        agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+      },
+    },
+    {
+      label: '2단계 인증(MFA) 설정 동의',
+      labelWidth: CONSENT_LABEL_WIDTH,
+      value: {
+        type: 'remote_consent',
+        agreed: true,
+        agreedAtDisplay: SAMPLE_AGREED_AT_DISPLAY,
+      },
+    },
+  ],
+}
+
+/** 관리자 회원 — 약관·동의 4항목(2열×2행) */
+export const CONSENT_ROWS_ADMIN: ConsentRowSchema[] = [
+  TERMS_AND_PRIVACY_ROW,
+  MARKETING_AND_MFA_ROW,
+]
+
 /** 회원 상세 약관·동의 — 스크린샷 기준 8항목(2열×4행) */
 const CONSENT_ROWS_FULL: ConsentRowSchema[] = [
   TERMS_AND_PRIVACY_ROW,
@@ -168,9 +198,12 @@ const CONSENT_ROWS_FULL: ConsentRowSchema[] = [
   ADMIN_AND_CRIME_ROW,
 ]
 
+const ADMIN_CONSENT_CAPTION =
+  '* 미동의 시 서비스 가입 및 관리자 활동에 제한이 있을 수 있습니다.'
+
 /** 프리셋별 행·필드 구조 (표시 데이터와 분리) */
 export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
-  admin: CONSENT_ROWS_FULL,
+  admin: CONSENT_ROWS_ADMIN,
   individual: CONSENT_ROWS_FULL,
   school_teacher: CONSENT_ROWS_FULL,
   instructor_dual: CONSENT_ROWS_FULL,
@@ -337,7 +370,9 @@ export function UserConsentAgreementSection({
   remoteConsentRows,
   remoteConsentLoading = false,
 }: UserConsentAgreementSectionProps) {
-  const effectiveCaption = caption ?? DEFAULT_CAPTION
+  const effectiveCaption =
+    caption ??
+    (preset === 'admin' ? ADMIN_CONSENT_CAPTION : DEFAULT_CAPTION)
 
   const doc = onOpenAgreementDocument ?? (() => window.alert('준비 중입니다.'))
 

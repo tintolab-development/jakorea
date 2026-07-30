@@ -24,6 +24,10 @@ const CONSENT_TYPE_TO_LABEL: Record<string, string> = {
   ADMINISTRATIVE_INFO_SHARING: '행정정보 공동이용 사전동의서',
   EDUCATOR_PLEDGE: '교육진행자 서약서',
   INSTRUCTOR_PLEDGE: '교육진행자 서약서',
+  MFA: '2단계 인증(MFA) 설정 동의',
+  MFA_SETUP: '2단계 인증(MFA) 설정 동의',
+  TWO_FACTOR_AUTH: '2단계 인증(MFA) 설정 동의',
+  TWO_FACTOR_AUTHENTICATION: '2단계 인증(MFA) 설정 동의',
 }
 
 const DOCUMENT_LABELS = new Set([
