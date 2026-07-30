@@ -18,20 +18,27 @@ export function SearchModalsSection() {
     setAddressHint(item.roadAddr || item.jibunAddr || null)
   }
 
-  const handleSchoolSelect = (item: SchoolSearchSelection, meta: SchoolSearchSelectMeta) => {
+  const handleSchoolSelect = (selection: SchoolSearchSelection, meta: SchoolSearchSelectMeta) => {
     const region = [meta.regionSido, meta.regionSigungu].filter(Boolean).join(' ')
-    setSchoolHint(region ? `${item.schulNm} · ${region}` : item.schulNm)
+    const name =
+      selection.source === 'neis'
+        ? selection.item.schulNm
+        : selection.item.campusName
+          ? `${selection.item.schoolName} (${selection.item.campusName})`
+          : selection.item.schoolName
+    setSchoolHint(region ? `${name} · ${region}` : name)
   }
 
   return (
     <DsSection
       id="search-modals"
       title="Search modals"
-      description="인풋 클릭 시 내부 ContentModal이 열리고 외부 API(행안부 Juso / NEIS)로 검색합니다. open prop 없이 컴포넌트가 모달을 자체 제어합니다."
+      description="인풋 클릭 시 내부 ContentModal이 열리고 외부 API(행안부 Juso / NEIS / 커리어넷)로 검색합니다. open prop 없이 컴포넌트가 모달을 자체 제어합니다."
     >
       <p className="ds-note">
-        주소: <code>VITE_ADDRESS_API_KEY</code> 또는 <code>VITE_JUSO_CONFM_KEY</code> · 학교:{' '}
-        <code>VITE_NEIS_API_KEY</code>. 키가 없으면 모달 안에 missing-key 안내가 표시됩니다.
+        주소: <code>VITE_ADDRESS_API_KEY</code> 또는 <code>VITE_JUSO_CONFM_KEY</code> · 초·중·고:{' '}
+        <code>VITE_NEIS_API_KEY</code> · 대학교: <code>VITE_CAREER_NET_API_KEY</code>. 키가 없으면
+        모달 안에 missing-key 안내가 표시됩니다.
       </p>
 
       <DsDemo label="AddressSearch">
@@ -68,16 +75,16 @@ export function SearchModalsSection() {
             </p>
           ) : (
             <p className="ds-demo__hint" style={{ marginTop: 0 }}>
-              <code>shared/ui/school-search</code> · NEIS 학교정보 API · 학력 대학 입력에도 동일
-              컴포넌트 사용
+              <code>shared/ui/school-search</code> · 학교급 선택 후 초·중·고는 NEIS, 대학교는
+              커리어넷
             </p>
           )}
         </div>
       </DsDemo>
 
       <p className="ds-note">
-        <strong>Not catalogued</strong> — <code>UniversitySearch</code>는 없습니다. 대학 학력은
-        현재 SchoolSearch(NEIS)로 처리하며, 학교 등록의 대학 검색 API는 추후입니다.
+        강사 학력의 대학(2·3/4년제) 입력은 <code>UniversitySearch</code>(학교유형 <code>sch1</code>
+        필터)를 별도로 사용합니다.
       </p>
     </DsSection>
   )

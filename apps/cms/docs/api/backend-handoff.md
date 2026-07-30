@@ -40,7 +40,6 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 VITE_API_SERVER=https://6920-221-146-247-18.ngrok-free.app//
 VITE_REAL_API_MODULES=adminAuth,dashboard,logs,detailedPrograms,textbooks,sponsors,notices,faqs,inquiries,paymentOrders,accountPayments,settlementConfigs,programs,applications,programProgress
 VITE_ADMIN_AUTH_API_PREFIX=/api/admin/auth
-VITE_AUTH_REFRESH_PATH=/api/auth/refresh
 ```
 
 3. `pnpm run cms` **재시작** (Vite env·proxy 반영)
@@ -57,8 +56,11 @@ VITE_AUTH_REFRESH_PATH=/api/auth/refresh
 | 관리자 로그인   | `POST /api/admin/auth/login`                                                                 |
 | MFA 검증        | `POST /api/admin/auth/mfa/verify`                                                            |
 | MFA TOTP 등록   | `POST /api/admin/auth/mfa/enrollment` (`mfaMethod`, `enabled`, `challengeUuid`·`totpSecret`) |
-| 관리자 로그아웃 | `POST /api/admin/auth/logout` body: `{ refreshToken }` (Bearer + refresh)                    |
-| 관리자 refresh  | `POST /api/admin/auth/refresh` (`adminAuth` 활성 시 axios가 자동 사용)                       |
+| 관리자 로그아웃 | `POST /api/admin/auth/logout` body: `{ refreshToken }` (Authorization 제외, 204)             |
+| 관리자 refresh  | `POST /api/admin/auth/refresh` body: `{ refreshToken }` (Authorization 제외, flat 토큰 응답) |
+
+Access 만료 시그널: `HTTP 401` + `error.code === "UNAUTHORIZED"` → axios silent refresh.  
+Refresh 무효: `401` + `REFRESH_TOKEN_INVALID` → 로그인. `/api/auth/refresh`는 사용하지 않음.
 
 **로그인 → MFA 흐름**
 

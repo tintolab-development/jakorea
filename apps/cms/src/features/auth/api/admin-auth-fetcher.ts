@@ -154,7 +154,10 @@ export async function fetchAdminAuthRefresh(
     const { data: payload } = await axiosClient.post<unknown>(
       adminAuthPaths.refresh(),
       body,
-      { skipRefresh: true } as InternalAxiosRequestConfig & { skipRefresh?: boolean }
+      {
+        skipRefresh: true,
+        skipAuth: true,
+      } as InternalAxiosRequestConfig & { skipRefresh?: boolean; skipAuth?: boolean }
     )
     return unwrapTokenResponse(payload)
   } catch (err) {
@@ -167,13 +170,20 @@ export async function fetchAdminAuthRefresh(
   }
 }
 
-/** POST /api/admin/auth/logout — refreshToken 무효화 (Bearer는 axios 인터셉터) */
+/** POST /api/admin/auth/logout — body refreshToken only (Authorization 제외), 204 */
 export async function fetchAdminAuthLogout(body: RefreshTokenRequestBody): Promise<void> {
   try {
     await axiosClient.post<unknown>(
       adminAuthPaths.logout(),
       body,
-      { skipRefresh: true } as InternalAxiosRequestConfig & { skipRefresh?: boolean }
+      {
+        skipRefresh: true,
+        skipAuth: true,
+        validateStatus: (status: number) => status === 204 || status === 200,
+      } as unknown as InternalAxiosRequestConfig & {
+        skipRefresh?: boolean
+        skipAuth?: boolean
+      }
     )
   } catch (err) {
     if (err instanceof AdminMfaApiError) throw err

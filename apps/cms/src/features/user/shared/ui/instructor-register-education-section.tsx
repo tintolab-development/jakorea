@@ -166,6 +166,7 @@ function SchoolNameField({
         placeholder="학교명"
         inputSize="medium"
         width={width}
+        allowedSchoolLevels={['고등학교']}
       />
     </Form.Item>
   )

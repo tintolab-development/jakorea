@@ -95,6 +95,7 @@ function parseSearchResponse(data: CareerNetJsonResponse): SearchCareerNetUniver
 
 /**
  * 커리어넷 학교정보 OpenAPI로 대학교를 검색한다.
+ * `gubun`은 `univ_list` 고정 (`대학교` 문자열은 API가 빈 content를 반환함).
  * @see https://www.career.go.kr/cnet/front/openapi/openApiSchoolCenter.do
  * @see https://www.data.go.kr/data/15057878/openapi.do (커리어넷 계열 — 학과 API와 동일 인증키)
  */

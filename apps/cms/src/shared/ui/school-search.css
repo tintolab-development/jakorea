@@ -40,7 +40,7 @@
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 150%; /* 24px */
   margin: 0;
 }
 
@@ -106,16 +106,24 @@
   width: 100%;
 }
 
-.school-search__table.cms-data-table .ant-table-thead > tr > th:first-child,
-.school-search__table.cms-data-table .ant-table-tbody > tr > td:first-child {
-  width: 140px !important;
-  min-width: 140px !important;
+/* 모달 테이블: clip 대신 열 폭으로 맞춤 — 선택 버튼이 잘리지 않게 */
+.school-search__table.cms-data-table .ant-table-container {
+  overflow: hidden;
 }
 
-.school-search__table.cms-data-table .ant-table-thead > tr > th:last-child,
-.school-search__table.cms-data-table .ant-table-tbody > tr > td:last-child {
-  width: 140px !important;
-  min-width: 140px !important;
+.school-search__table.cms-data-table .ant-table-thead > tr > th.school-search__col-select,
+.school-search__table.cms-data-table .ant-table-tbody > tr > td.school-search__col-select {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  padding-inline: 10px !important;
+  box-sizing: border-box;
+}
+
+.school-search__table.cms-data-table .school-search__col-select .cms-button {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
 }
 
 .school-search__pagination {

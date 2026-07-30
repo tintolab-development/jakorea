@@ -14,8 +14,8 @@ import {
 } from '@/entities/user/api/auth-service'
 import { updateMockUserById } from '@/data/mock/users'
 import type { AuthTokenResponse } from '@/features/auth/model/admin-login-api.types'
-import { fetchAdminAuthRefresh, fetchAdminAuthLogout } from '@/features/auth/api/admin-auth-fetcher'
-import { AUTH_REFRESH_TOKEN_KEY } from '@/shared/instance/axios-instance'
+import { fetchAdminAuthLogout } from '@/features/auth/api/admin-auth-fetcher'
+import { AUTH_REFRESH_TOKEN_KEY, refreshAccessTokenSession } from '@/shared/instance/axios-instance'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import { clearDashboardQueryCache } from '@/features/dashboard/api/clear-dashboard-query-cache'
 import { clearDataManagementQueryCache } from '@/features/data-management/api/clear-data-management-query-cache'
@@ -308,7 +308,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
           : null
 
-      // Bearer 헤더가 남아 있는 동안 서버 세션 무효화 (로컬 clear 전에 요청 시작)
+      // Authorization 없이 refreshToken body만으로 서버 세션 무효화 (로컬 clear 전에 요청 시작)
       let remoteLogout: Promise<void> | undefined
       if (isRealApiModuleEnabled('adminAuth') && refreshToken) {
         remoteLogout = fetchAdminAuthLogout({ refreshToken })
@@ -362,8 +362,8 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         return
       }
 
-      const token = localStorage.getItem(TOKEN_STORAGE_KEY)
-      const expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY)
+      let token = localStorage.getItem(TOKEN_STORAGE_KEY)
+      let expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY)
       const userStr = localStorage.getItem('auth_user')
 
       if (!token || !expiresAt || !userStr) {
@@ -371,26 +371,33 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         return
       }
 
-      // Phase 0.5: 세션 만료 확인 (약간의 여유 시간 추가: 30초)
-      const now = new Date()
-      const expiryTime = new Date(expiresAt)
-      const bufferTime = 30 * 1000 // 30초 버퍼
-
-      if (expiryTime.getTime() <= now.getTime() + bufferTime) {
-        // 만료된 경우 로그아웃
-        get().logout()
-        return
-      }
-
-      // checkAuth 실행 중 플래그 설정
       const checkAuthPromise = (async () => {
         try {
-          // Phase 0.5: 토큰 갱신 필요 여부 확인 (만료 1시간 전)
+          const now = new Date()
+          let expiryTime = new Date(expiresAt)
+          const bufferTime = 30 * 1000 // 30초 버퍼
+
+          // access 만료(버퍼 포함) 시 refresh 시도 후 실패하면 logout
+          if (expiryTime.getTime() <= now.getTime() + bufferTime) {
+            const refreshed = await get().refreshToken()
+            if (!refreshed) {
+              get().logout()
+              return
+            }
+            token = localStorage.getItem(TOKEN_STORAGE_KEY)
+            expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY)
+            if (!token || !expiresAt) {
+              get().logout()
+              return
+            }
+            expiryTime = new Date(expiresAt)
+          }
+
+          // 만료 1시간 전 선제 갱신 (백그라운드)
           const timeUntilExpiry = expiryTime.getTime() - now.getTime()
           const oneHour = 60 * 60 * 1000
 
           if (timeUntilExpiry < oneHour && timeUntilExpiry > 0) {
-            // 자동 토큰 갱신 시도 (백그라운드)
             get()
               .refreshToken()
               .catch(() => {
@@ -406,12 +413,10 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             // JSON 파싱 실패 시 validateToken 호출
           }
 
-          // validateToken 호출 (네트워크 오류 등에 대비해 재시도 로직 포함)
           let user: Omit<User, 'password'> | null = null
           try {
             user = await validateToken(token)
           } catch (error) {
-            // validateToken 실패 시 저장된 사용자 정보 사용 (간헐적 네트워크 오류 대응)
             console.warn('Token validation failed, using stored user:', error)
             if (storedUser && storedUser.isActive) {
               user = storedUser
@@ -420,7 +425,6 @@ export const useAuthStore = create<AuthState>()((set, get) => {
 
           if (user && user.isActive) {
             const normalizedUser = elevateAdminToMaster(user)
-            // localStorage 업데이트
             localStorage.setItem('auth_user', JSON.stringify(normalizedUser))
 
             set({
@@ -430,15 +434,12 @@ export const useAuthStore = create<AuthState>()((set, get) => {
               isAuthenticated: true,
             })
           } else {
-            // 사용자가 없거나 비활성화된 경우에만 로그아웃
-            // 단, 저장된 사용자 정보가 있고 활성화되어 있으면 유지
             if (!storedUser || !storedUser.isActive) {
               console.warn('User not found or inactive, logging out')
               get().logout()
             } else {
               const normalizedStoredUser = elevateAdminToMaster(storedUser)
               localStorage.setItem('auth_user', JSON.stringify(normalizedStoredUser))
-              // 저장된 사용자 정보로 상태 유지
               set({
                 user: normalizedStoredUser,
                 token,
@@ -448,7 +449,6 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             }
           }
         } catch (error) {
-          // 예상치 못한 오류 발생 시에도 저장된 사용자 정보로 복구 시도
           console.error('Unexpected error in checkAuth:', error)
           try {
             const storedUser = JSON.parse(userStr)
@@ -520,7 +520,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       void flushSocialPendingLinks()
     },
 
-    // Phase 0.5: 토큰 갱신 Mock 로직
+    // Phase 0.5: 토큰 갱신 — adminAuth 실 API는 axios single-flight와 동일 경로
     refreshToken: async (): Promise<boolean> => {
       const state = get()
       if (!state.user) {
@@ -528,25 +528,16 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       }
 
       if (isRealApiModuleEnabled('adminAuth')) {
-        const refreshToken =
-          typeof window !== 'undefined' && window.localStorage
-            ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
-            : null
-
-        if (!refreshToken) {
+        const ok = await refreshAccessTokenSession()
+        if (!ok) {
           return false
         }
-
-        try {
-          const tokens = await fetchAdminAuthRefresh({ refreshToken })
-          const normalizedUser = elevateAdminToMaster(state.user)
-          const { token, expiresAt } = persistAuthTokens(normalizedUser, tokens)
+        const token = localStorage.getItem(TOKEN_STORAGE_KEY)
+        const expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY)
+        if (token && expiresAt) {
           set({ token, expiresAt })
-          return true
-        } catch (error) {
-          console.error('Token refresh failed:', error)
-          return false
         }
+        return true
       }
 
       if (!state.token) {
@@ -578,7 +569,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       }
     },
 
-    // Phase 0.5: 세션 만료 확인
+    // Phase 0.5: 세션 만료 확인 — 만료 시 refresh 시도 후 실패하면 logout
     checkSessionExpiry: (): boolean => {
       const state = get()
       if (!state.expiresAt) {
@@ -590,7 +581,21 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       const bufferTime = 30 * 1000 // 30초 버퍼
 
       if (expiryTime.getTime() <= now.getTime() + bufferTime) {
-        // 만료된 경우 로그아웃
+        const refreshToken =
+          typeof window !== 'undefined' && window.localStorage
+            ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
+            : null
+
+        if (refreshToken) {
+          // 동기 API라 refresh는 fire-and-forget; 실패 시 logout
+          void get()
+            .refreshToken()
+            .then(ok => {
+              if (!ok) get().logout()
+            })
+          return false
+        }
+
         get().logout()
         return true
       }

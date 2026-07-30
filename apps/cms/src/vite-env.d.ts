@@ -30,7 +30,9 @@ interface ImportMetaEnv {
   readonly VITE_DEV_PROXY_TARGET?: string
   /** 관리자 인증 API 경로 prefix (기본 `/api/admin/auth`) */
   readonly VITE_ADMIN_AUTH_API_PREFIX?: string
-  /** 리프레시 토큰 API 경로 (기본: `/api/auth/refresh`). `VITE_API_BASE_URL` 오리진 뒤에 붙습니다. */
+  /**
+   * @deprecated CMS refresh는 항상 `/api/admin/auth/refresh`를 사용합니다. `/api/auth/refresh`는 사용하지 마세요.
+   */
   readonly VITE_AUTH_REFRESH_PATH?: string
   /** ngrok 등에서 브라우저 경고 우회용 헤더 값 */
   readonly VITE_NGROK_SKIP_BROWSER_WARNING?: string
