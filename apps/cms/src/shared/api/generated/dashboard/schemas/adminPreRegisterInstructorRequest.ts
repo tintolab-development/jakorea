@@ -12,6 +12,11 @@ import type { TermsAgreementRequest } from './termsAgreementRequest';
 export interface AdminPreRegisterInstructorRequest {
   /** @minLength 1 */
   email: string;
+  /**
+     * 관리자가 발급하는 초기 임시 비밀번호. CMS 기본값은 로그인 이메일과 동일합니다.
+     * @minLength 1
+     */
+  rawPassword: string;
   /** @minLength 1 */
   name: string;
   phone?: string;

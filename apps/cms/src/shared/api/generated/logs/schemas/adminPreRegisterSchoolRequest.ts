@@ -8,8 +8,8 @@
 import type { TermsAgreementRequest } from './termsAgreementRequest';
 
 export interface AdminPreRegisterSchoolRequest {
-  /** @minLength 1 */
-  email: string;
+  /** 기관 대표 로그인 계정을 별도로 발급하는 경우에만 전달합니다. 일반 학교 등록에서는 생략합니다. */
+  email?: string;
   /** @minLength 1 */
   name: string;
   phone?: string;

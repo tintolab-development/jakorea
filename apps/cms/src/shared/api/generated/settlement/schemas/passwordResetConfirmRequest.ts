@@ -19,12 +19,12 @@ export interface PasswordResetConfirmRequest {
      */
   profileToken: string;
   /**
-     * @minLength 12
+     * @minLength 8
      * @maxLength 128
      */
   newPassword: string;
   /**
-     * @minLength 12
+     * @minLength 8
      * @maxLength 128
      */
   newPasswordConfirm: string;

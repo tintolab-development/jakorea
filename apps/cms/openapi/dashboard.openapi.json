@@ -157,6 +157,10 @@
       "description": "Admin Operations 관련 관리자 API"
     },
     {
+      "name": "기타 API",
+      "description": "신청폼, 임시저장, 제출, 내 신청 조회 및 취소 API"
+    },
+    {
       "name": "프로그램 게시판",
       "description": "프로그램 게시글, 공개 노출, 상세 조회, 게시 상태 관리 API입니다."
     },
@@ -1455,6 +1459,62 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "SaveApplicationRequest": {
+        "type": "object",
+        "properties": {
+          "recruitmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 0
+          },
+          "formBindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "applicationType",
+          "formBindingId",
+          "recruitmentId"
+        ]
+      },
+      "ApplicationSaveResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formResponseStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reusedExisting": {
+            "type": "boolean"
           }
         }
       },
@@ -3441,18 +3501,6 @@
           }
         }
       },
-      "MemberIndividualApplicationSubmitRequest": {
-        "type": "object",
-        "properties": {
-          "recruitmentId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "memo": {
-            "type": "string"
-          }
-        }
-      },
       "SettlementApplicationSubmitRequest": {
         "type": "object",
         "properties": {
@@ -4001,6 +4049,40 @@
           }
         }
       },
+      "CancelApplicationRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "신청 취소 사유",
+            "example": "개인 일정으로 참여가 어렵습니다.",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "CancelApplicationResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "cancelledAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "HomepageTeacherSignupRequest": {
         "type": "object",
         "description": "홈페이지 교사회원 가입 요청",
@@ -4285,6 +4367,11 @@
             "format": "int64",
             "description": "access token 만료까지 남은 초",
             "example": 3600
+          },
+          "passwordChangeRequired": {
+            "type": "boolean",
+            "description": "관리자 발급 임시 비밀번호를 변경해야 하는지 여부",
+            "example": false
           }
         }
       },
@@ -4646,7 +4733,7 @@
             "description": "새 비밀번호. 실제 값을 문서나 로그에 남기지 않습니다.",
             "example": "new-sample-password",
             "maxLength": 200,
-            "minLength": 12
+            "minLength": 8
           }
         },
         "required": [
@@ -4675,12 +4762,12 @@
           "newPassword": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 12
+            "minLength": 8
           },
           "newPasswordConfirm": {
             "type": "string",
             "maxLength": 128,
-            "minLength": 12
+            "minLength": 8
           }
         },
         "required": [
@@ -5238,6 +5325,9 @@
           "homeAddress": {
             "type": "string"
           },
+          "homeAddressDetail": {
+            "type": "string"
+          },
           "educationLevel": {
             "type": "string"
           },
@@ -5492,7 +5582,7 @@
           "email": {
             "type": "string",
             "format": "email",
-            "minLength": 1
+            "description": "기관 대표 로그인 계정을 별도로 발급하는 경우에만 전달합니다. 일반 학교 등록에서는 생략합니다."
           },
           "name": {
             "type": "string",
@@ -5546,7 +5636,6 @@
         },
         "required": [
           "address",
-          "email",
           "name",
           "organizationName"
         ]
@@ -5557,6 +5646,11 @@
           "email": {
             "type": "string",
             "format": "email",
+            "minLength": 1
+          },
+          "rawPassword": {
+            "type": "string",
+            "description": "관리자가 발급하는 초기 임시 비밀번호. CMS 기본값은 로그인 이메일과 동일합니다.",
             "minLength": 1
           },
           "name": {
@@ -5640,7 +5734,8 @@
         },
         "required": [
           "email",
-          "name"
+          "name",
+          "rawPassword"
         ]
       },
       "InstructorCertificationUpsertRequest": {
@@ -5713,6 +5808,11 @@
             "format": "email",
             "minLength": 1
           },
+          "rawPassword": {
+            "type": "string",
+            "description": "관리자가 발급하는 초기 임시 비밀번호. CMS 기본값은 로그인 이메일과 동일합니다.",
+            "minLength": 1
+          },
           "name": {
             "type": "string",
             "minLength": 1
@@ -5754,7 +5854,8 @@
         },
         "required": [
           "email",
-          "name"
+          "name",
+          "rawPassword"
         ]
       },
       "PreRegisterConflictResolveRequest": {
@@ -10055,6 +10156,33 @@
           }
         }
       },
+      "InstructorRoleReviewRequest": {
+        "type": "object",
+        "properties": {
+          "activityType": {
+            "type": "string"
+          },
+          "feeGrade": {
+            "type": "string"
+          },
+          "jaGrade": {
+            "type": "string"
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "revokeReason": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
       "InstructorActivityTypeUpsertRequest": {
         "type": "object",
         "properties": {
@@ -10167,33 +10295,6 @@
             "format": "date-time"
           }
         }
-      },
-      "InstructorRoleReviewRequest": {
-        "type": "object",
-        "properties": {
-          "activityType": {
-            "type": "string"
-          },
-          "feeGrade": {
-            "type": "string"
-          },
-          "jaGrade": {
-            "type": "string"
-          },
-          "rejectReason": {
-            "type": "string"
-          },
-          "revokeReason": {
-            "type": "string"
-          },
-          "reason": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "reason"
-        ]
       },
       "ApprovalResetRequest": {
         "type": "object",
@@ -10923,14 +11024,14 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessStartDate": {
-            "type": "string"
-          },
           "businessYear": {
             "type": "integer",
             "format": "int32"
           },
           "businessEndDate": {
+            "type": "string"
+          },
+          "businessStartDate": {
             "type": "string"
           }
         }
@@ -13187,14 +13288,18 @@
         "properties": {
           "email": {
             "type": "string",
-            "description": "관리자 로그인 이메일"
+            "format": "email",
+            "description": "관리자 로그인 이메일",
+            "minLength": 1
           },
           "rawPassword": {
             "type": "string",
-            "description": "초기 임시 비밀번호. 이메일 주소와 달라야 하며 비밀번호 정책을 충족해야 합니다."
+            "description": "초기 임시 비밀번호. 이메일과 동일한 값 또는 영문·숫자·특수문자를 포함한 8자 이상의 값을 사용할 수 있습니다.",
+            "minLength": 1
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "phone": {
             "type": "string"
@@ -13207,12 +13312,19 @@
           },
           "roleCode": {
             "type": "string",
-            "description": "관리자 권한 코드. MASTER, PM, PARTNER, VIEWER"
+            "description": "관리자 권한 코드. MASTER, PM, PARTNER, VIEWER",
+            "minLength": 1
           },
           "reason": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "email",
+          "name",
+          "rawPassword",
+          "roleCode"
+        ]
       },
       "AdminAccountVerificationRequest": {
         "type": "object",
@@ -13238,17 +13350,21 @@
       },
       "AdminAccountPasswordResetRequest": {
         "type": "object",
-        "description": "MASTER 관리자가 관리자 비밀번호를 새 임시 비밀번호로 초기화하는 요청입니다. 이메일 주소와 같은 비밀번호는 허용되지 않습니다.",
+        "description": "MASTER 관리자가 관리자 비밀번호를 새 임시 비밀번호로 초기화하는 요청입니다.",
         "properties": {
           "newPassword": {
             "type": "string",
-            "description": "12자 이상이며 영문 대/소문자, 숫자, 특수문자 중 3종 이상을 포함하는 새 임시 비밀번호"
+            "description": "로그인 이메일과 동일한 임시 비밀번호 또는 영문·숫자·특수문자를 조합한 8자 이상의 비밀번호",
+            "minLength": 1
           },
           "reason": {
             "type": "string",
             "description": "비밀번호 초기화 사유"
           }
-        }
+        },
+        "required": [
+          "newPassword"
+        ]
       },
       "AdminMemberBasicInfoUpdateRequest": {
         "type": "object",
@@ -13460,6 +13576,9 @@
             "type": "string"
           },
           "address": {
+            "type": "string"
+          },
+          "addressDetail": {
             "type": "string"
           },
           "position": {
@@ -13732,6 +13851,21 @@
             "items": {
               "type": "string"
             }
+          },
+          "instructorStatus": {
+            "type": "string",
+            "description": "강사 프로필 상태. 권한 박탈 회원은 REVOKED로 반환됩니다.",
+            "enum": [
+              "PENDING",
+              "ACTIVE",
+              "APPROVED",
+              "REVOKED"
+            ]
+          },
+          "instructorRevokedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "강사 권한 박탈 시각. 권한이 유효하거나 강사 프로필이 없으면 null입니다."
           }
         }
       },
@@ -16175,6 +16309,46 @@
           }
         }
       },
+      "ApplicationFormResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recruitmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "formBindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "form": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "draftApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "draftFormResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "draftAnswers": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
       "ApplicationOptionResponse": {
         "type": "object",
         "properties": {
@@ -16324,6 +16498,141 @@
             "type": "string",
             "description": "데이터 출처",
             "example": "LOCAL_ORGANIZATION_CACHE"
+          }
+        }
+      },
+      "ApplicationListItemResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programTitle": {
+            "type": "string"
+          },
+          "programType": {
+            "type": "string"
+          },
+          "recruitmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recruitmentType": {
+            "type": "string"
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cancellable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageResponseApplicationListItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationListItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ApplicationDetailResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programTitle": {
+            "type": "string"
+          },
+          "programType": {
+            "type": "string"
+          },
+          "recruitmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recruitmentType": {
+            "type": "string"
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resultReason": {
+            "type": "string"
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formBindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formResponseStatus": {
+            "type": "string"
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "cancellable": {
+            "type": "boolean"
           }
         }
       },
