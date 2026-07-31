@@ -9,6 +9,7 @@ import type { User, UserListRowMetrics } from '@/types/user'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
 import {
   formatInstructorCareerDisplay,
+  formatInstructorEducationLevelDisplay,
   isInstructorMaskedPlaceholder,
   looksLikeInstructorActivityEnumCode,
   mapInstructorActivityTypesToLabels,
@@ -29,6 +30,18 @@ import {
   resolveIdentitySelfSignupCompletedAfterAdminRegistration,
   resolveRegisteredByAdmin,
 } from '@/features/user/api/resolve-member-registration-flags'
+
+const USER_AFFILIATION_PIPE_SEP = ' | ' as const
+
+function parseIndividualApiEnrollmentStatus(
+  raw: string | undefined
+): 'ENROLLED' | 'NOT_ENROLLED' | undefined {
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  const upper = trimmed.toUpperCase()
+  if (upper === 'ENROLLED' || upper === 'NOT_ENROLLED') return upper
+  return undefined
+}
 
 function fallbackUuid(memberId?: number): string {
   if (memberId != null) return `member-${memberId}`
@@ -69,12 +82,14 @@ function asInstructorProfileLoose(
   return profile ?? null
 }
 
-function resolveInstructorHomeAddressLine(
+function resolveInstructorHomeAddressParts(
   detail: InstructorMemberDetailResponse,
   profile: InstructorProfileLoose | null
-): string | undefined {
+): { homeAddress?: string; homeAddressDetail?: string } {
   const looseDetail = detail as InstructorMemberDetailLoose
-  const looseMember = detail.member as (MemberDetailResponse & { homeAddress?: string; address?: string }) | undefined
+  const looseMember = detail.member as
+    | (MemberDetailResponse & { homeAddress?: string; address?: string })
+    | undefined
   const homeAddress = pickTrimmed(
     profile?.homeAddress,
     (profile as { address?: string } | null)?.address,
@@ -83,18 +98,29 @@ function resolveInstructorHomeAddressLine(
     looseMember?.homeAddress,
     looseMember?.address
   )
+  const homeAddressDetail = pickTrimmed(
+    profile?.homeAddressDetail,
+    looseDetail.homeAddressDetail
+  )
+
   if (!homeAddress || isInstructorMaskedPlaceholder(homeAddress)) {
-    const detailOnly = pickTrimmed(profile?.homeAddressDetail, looseDetail.homeAddressDetail)
-    if (!detailOnly || isInstructorMaskedPlaceholder(detailOnly)) return undefined
-    return detailOnly
+    const detailOnly =
+      homeAddressDetail && !isInstructorMaskedPlaceholder(homeAddressDetail)
+        ? homeAddressDetail
+        : undefined
+    if (detailOnly) return { homeAddressDetail: detailOnly }
+    return homeAddress ? { homeAddress } : {}
   }
-  const homeAddressDetail = pickTrimmed(profile?.homeAddressDetail, looseDetail.homeAddressDetail)
+
   const detailPart =
     homeAddressDetail && !isInstructorMaskedPlaceholder(homeAddressDetail)
       ? homeAddressDetail
       : undefined
-  const addressLine = [homeAddress, detailPart].filter(Boolean).join(' ')
-  return addressLine || undefined
+
+  return {
+    homeAddress,
+    ...(detailPart ? { homeAddressDetail: detailPart } : {}),
+  }
 }
 
 function parseBusinessIncomeFlag(value: unknown): boolean | undefined {
@@ -270,7 +296,7 @@ function applyInstructorProfile(
 
   const oneLine = pickTrimmed(profile?.oneLineIntro)
   const selfIntro = pickTrimmed(profile?.selfIntroduction)
-  if (oneLine && !isInstructorMaskedPlaceholder(oneLine)) {
+  if (oneLine) {
     user.bio = oneLine
   } else if (selfIntro && !isInstructorMaskedPlaceholder(selfIntro)) {
     user.bio = selfIntro
@@ -278,11 +304,11 @@ function applyInstructorProfile(
 
   const homeAddress = pickTrimmed(profile?.homeAddress, (profile as { address?: string } | null)?.address)
   const homeAddressDetail = pickTrimmed(profile?.homeAddressDetail)
-  const addressParts = [homeAddress, homeAddressDetail].filter(
-    (part): part is string => Boolean(part) && !isInstructorMaskedPlaceholder(part)
-  )
-  if (addressParts.length > 0) {
-    user.detailAddress = addressParts.join(' ')
+  if (homeAddress) {
+    user.detailAddress = homeAddress
+  }
+  if (homeAddressDetail) {
+    user.detailAddressDetail = homeAddressDetail
   }
 
   const careerText = pickTrimmed(profile?.careerText)
@@ -290,7 +316,7 @@ function applyInstructorProfile(
   if (careerDisplay) {
     user.instructorCareerText = careerDisplay
   }
-  if (selfIntro && !isInstructorMaskedPlaceholder(selfIntro)) {
+  if (selfIntro?.trim()) {
     user.instructorSelfIntroduction = selfIntro
   }
 
@@ -309,16 +335,14 @@ function applyInstructorProfile(
     user.instructorMemberProfile = user.instructorMemberProfile ?? 'instructor_only'
   }
 
-  const feeGrade = toInstructorFeeGradeDisplayLabel(
-    pickTrimmed(profile?.defaultFeeGrade, profile?.feeGrade)
-  )
+  const feeGrade = toInstructorFeeGradeDisplayLabel(profile?.defaultFeeGrade)
   const jaGrade = pickTrimmed(profile?.defaultJaGrade, profile?.jaGrade)
   const educationLevel = pickTrimmed(profile?.educationLevel)
 
   user.listMetrics = assignDefinedListMetrics(user.listMetrics, {
     instructorFeeGradeLabel: feeGrade,
     jaEvaluationGrade: jaGrade,
-    highestEducationLabel: educationLevel,
+    highestEducationLabel: formatInstructorEducationLevelDisplay(educationLevel) ?? educationLevel,
     instructorCareerSummaryLabel: careerDisplay,
     instructorCareerYearsLabel: careerDisplay,
     permissionApplicationTypeLabel:
@@ -345,14 +369,29 @@ export function mapIndividualMemberDetailToUser(
   const user = mapMemberDetailToUser(member, null, {
     fallbackRole: options?.fallbackRole ?? 'INDIVIDUAL',
   })
-  const addressLine = [detail.address?.trim(), detail.addressDetail?.trim()]
-    .filter(Boolean)
-    .join(' ')
-  if (addressLine) user.detailAddress = addressLine
-  if (detail.schoolName?.trim()) {
-    user.affiliation = detail.enrollmentStatus?.trim()
-      ? `${detail.schoolName.trim()} | ${detail.enrollmentStatus.trim()}`
-      : detail.schoolName.trim()
+  const address = detail.address?.trim()
+  const addressDetail = detail.addressDetail?.trim()
+  if (address) user.detailAddress = address
+  if (addressDetail) user.detailAddressDetail = addressDetail
+
+  const enrollment = parseIndividualApiEnrollmentStatus(detail.enrollmentStatus)
+  if (enrollment) {
+    user.schoolEnrollmentStatus = enrollment
+  }
+
+  const schoolName = detail.schoolName?.trim()
+  if (schoolName) {
+    if (enrollment === 'NOT_ENROLLED') {
+      user.affiliation = schoolName
+    } else if (enrollment === 'ENROLLED') {
+      user.affiliation = schoolName
+    } else {
+      const legacySuffix = detail.enrollmentStatus?.trim()
+      user.affiliation =
+        legacySuffix && !parseIndividualApiEnrollmentStatus(legacySuffix)
+          ? `${schoolName}${USER_AFFILIATION_PIPE_SEP}${legacySuffix}`
+          : schoolName
+    }
   }
   return user
 }
@@ -398,9 +437,9 @@ export function mapInstructorMemberDetailToUser(
 
   const profileLoose = asInstructorProfileLoose(profile)
   const looseDetail = detail as InstructorMemberDetailLoose
-  // homeAddress → detailAddress (자택 주소). 프로필/응답 루트 어느 쪽이든 반영
-  const homeAddressLine = resolveInstructorHomeAddressLine(detail, profileLoose)
-  if (homeAddressLine) user.detailAddress = homeAddressLine
+  const { homeAddress, homeAddressDetail } = resolveInstructorHomeAddressParts(detail, profileLoose)
+  if (homeAddress) user.detailAddress = homeAddress
+  if (homeAddressDetail) user.detailAddressDetail = homeAddressDetail
 
   // member.gender 누락 시 루트/프로필 동의어로 보강 — 표시는 항상 남성/여성
   if (!user.gender) {

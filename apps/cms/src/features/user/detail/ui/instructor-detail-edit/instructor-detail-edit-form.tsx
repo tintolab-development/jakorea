@@ -145,6 +145,7 @@ export function InstructorDetailEditForm({
     >
       <InstructorProfileFormBody
         form={form}
+        layoutVariant="detailEdit"
         basicInfoPrefix={basicInfoPrefix}
         basicInfoExtraBeforeBusinessIncome={basicInfoExtraBeforeBusinessIncome}
       />

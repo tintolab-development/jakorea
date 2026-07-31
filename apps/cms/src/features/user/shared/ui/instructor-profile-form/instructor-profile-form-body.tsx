@@ -71,8 +71,12 @@ function ConsentDocumentFieldEdit({
   )
 }
 
+export type InstructorProfileFormLayoutVariant = 'register' | 'detailEdit'
+
 export interface InstructorProfileFormBodyProps {
   form: FormInstance<InstructorProfileFormValues>
+  /** 등록 모달 vs 강사 상세 수정 — 기본 정보 행 구성 분기 */
+  layoutVariant?: InstructorProfileFormLayoutVariant
   /** Extra rows injected at top of 기본 정보 DetailInfoForm (before 성명) — e.g. 정산현황/JA등급 for detail edit */
   basicInfoPrefix?: ReactNode
   /** Extra rows before 사업소득자 (e.g. 강사비 등급) */
@@ -82,10 +86,12 @@ export interface InstructorProfileFormBodyProps {
 
 export function InstructorProfileFormBody({
   form,
+  layoutVariant = 'register',
   basicInfoPrefix,
   basicInfoExtraBeforeBusinessIncome,
   className,
 }: InstructorProfileFormBodyProps) {
+  const isDetailEdit = layoutVariant === 'detailEdit'
   const [activeConsentField, setActiveConsentField] = useState<InstructorConsentFieldKey | null>(
     null
   )
@@ -122,6 +128,50 @@ export function InstructorProfileFormBody({
     form.setFieldValue(fieldKey, 'agree')
     setActiveConsentField(null)
   }
+
+  const affiliationFieldEdit = isTeacherMember ? (
+    <div className="detail-info-form-inputs-wrapper-no-gap">
+      <Form.Item name="schoolName" noStyle>
+        <SchoolSearch
+          value={schoolName}
+          onChange={nextSchoolName => form.setFieldValue('schoolName', nextSchoolName)}
+          placeholder="소속 학교명"
+          inputSize="medium"
+          width={FORM_INPUTS_2_WIDTHS[0]}
+        />
+      </Form.Item>
+      <DetailInfoForm.InputsSeparator />
+      <Form.Item name="employmentStatus" noStyle>
+        <CmsSelect
+          placeholder="재직현황"
+          inputSize="medium"
+          width={FORM_INPUTS_2_WIDTHS[1]}
+          options={EMPLOYMENT_STATUS_OPTIONS}
+          allowClear
+        />
+      </Form.Item>
+    </div>
+  ) : (
+    <div className="instructor-register-modal__affiliation-row">
+      <Form.Item name="affiliationName" style={{ ...FORM_ITEM_STYLE, flex: 1, minWidth: 0 }}>
+        <CmsInput
+          placeholder="소속 기관명"
+          inputSize="medium"
+          width="100%"
+          disabled={affiliationNone}
+        />
+      </Form.Item>
+      <Form.Item name="affiliationNone" valuePropName="checked" noStyle>
+        <CmsCheckbox checkboxSize="medium">소속 없음</CmsCheckbox>
+      </Form.Item>
+    </div>
+  )
+
+  const instructorCareerFieldEdit = (
+    <Form.Item name="instructorCareer" style={FORM_ITEM_STYLE}>
+      <CmsInput placeholder="강사 경력" inputSize="medium" width="100%" />
+    </Form.Item>
+  )
 
   return (
     <>
@@ -188,63 +238,28 @@ export function InstructorProfileFormBody({
               }
             />
           </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="double">
-            <DetailInfoForm.Field
-              label="회원 유형"
-              view="-"
-              edit={
-                <Form.Item name="memberType" noStyle>
-                  <CmsRadioGroup options={[...MEMBER_TYPE_OPTIONS]} size="large" />
-                </Form.Item>
-              }
-            />
-            <DetailInfoForm.Field
-              label="소속"
-              view="-"
-              edit={
-                isTeacherMember ? (
-                  <div className="detail-info-form-inputs-wrapper-no-gap">
-                    <Form.Item name="schoolName" noStyle>
-                      <SchoolSearch
-                        value={schoolName}
-                        onChange={nextSchoolName => form.setFieldValue('schoolName', nextSchoolName)}
-                        placeholder="소속 학교명"
-                        inputSize="medium"
-                        width={FORM_INPUTS_2_WIDTHS[0]}
-                      />
-                    </Form.Item>
-                    <DetailInfoForm.InputsSeparator />
-                    <Form.Item name="employmentStatus" noStyle>
-                      <CmsSelect
-                        placeholder="재직현황"
-                        inputSize="medium"
-                        width={FORM_INPUTS_2_WIDTHS[1]}
-                        options={EMPLOYMENT_STATUS_OPTIONS}
-                        allowClear
-                      />
-                    </Form.Item>
-                  </div>
-                ) : (
-                  <div className="instructor-register-modal__affiliation-row">
-                    <Form.Item
-                      name="affiliationName"
-                      style={{ ...FORM_ITEM_STYLE, flex: 1, minWidth: 0 }}
-                    >
-                      <CmsInput
-                        placeholder="소속 기관명"
-                        inputSize="medium"
-                        width="100%"
-                        disabled={affiliationNone}
-                      />
-                    </Form.Item>
-                    <Form.Item name="affiliationNone" valuePropName="checked" noStyle>
-                      <CmsCheckbox checkboxSize="medium">소속 없음</CmsCheckbox>
-                    </Form.Item>
-                  </div>
-                )
-              }
-            />
-          </DetailInfoForm.Row>
+          {isDetailEdit ? (
+            <>
+              <Form.Item name="memberType" hidden preserve />
+              <DetailInfoForm.Row type="double">
+                <DetailInfoForm.Field label="소속" view="-" edit={affiliationFieldEdit} />
+                <DetailInfoForm.Field label="강사 경력" view="-" edit={instructorCareerFieldEdit} />
+              </DetailInfoForm.Row>
+            </>
+          ) : (
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="회원 유형"
+                view="-"
+                edit={
+                  <Form.Item name="memberType" noStyle>
+                    <CmsRadioGroup options={[...MEMBER_TYPE_OPTIONS]} size="large" />
+                  </Form.Item>
+                }
+              />
+              <DetailInfoForm.Field label="소속" view="-" edit={affiliationFieldEdit} />
+            </DetailInfoForm.Row>
+          )}
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="자택 주소지"
@@ -269,18 +284,11 @@ export function InstructorProfileFormBody({
               }
             />
           </DetailInfoForm.Row>
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="강사 경력"
-              fullRow
-              view="-"
-              edit={
-                <Form.Item name="instructorCareer" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder="강사 경력" inputSize="medium" width="100%" />
-                </Form.Item>
-              }
-            />
-          </DetailInfoForm.Row>
+          {!isDetailEdit ? (
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="강사 경력" fullRow view="-" edit={instructorCareerFieldEdit} />
+            </DetailInfoForm.Row>
+          ) : null}
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="정산 계좌 정보"

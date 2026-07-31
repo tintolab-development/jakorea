@@ -1,9 +1,21 @@
+import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import type { User } from '@/types/user'
 import {
+  formatInstructorCareerDisplay,
   isInstructorMaskedPlaceholder,
   looksLikeInstructorActivityEnumCode,
 } from '@/features/user/api/map-instructor-activity-display'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
+
+const MASK_GUARDED_LIST_METRIC_KEYS = new Set<keyof NonNullable<User['listMetrics']>>([
+  'instructorCareerYearsLabel',
+  'instructorCareerSummaryLabel',
+  'highestEducationLabel',
+  'instructorFeeGradeLabel',
+  'jaEvaluationGrade',
+  'permissionApplicationTypeLabel',
+  'instructorAssignedGrade',
+])
 
 function resolveMergedDisplayName(
   listUser: Omit<User, 'password'>,
@@ -56,6 +68,82 @@ function resolveMergedBio(
   if (fetchedBio && !isInstructorMaskedPlaceholder(fetchedBio)) return fetchedBio
   if (listBio && !isInstructorMaskedPlaceholder(listBio)) return listBio
   return fetchedBio || listBio || undefined
+}
+
+function pickFirstNonMaskedString(
+  ...candidates: Array<string | undefined | null>
+): string | undefined {
+  for (const value of candidates) {
+    const trimmed = value?.trim()
+    if (trimmed && !isInstructorMaskedPlaceholder(trimmed)) return trimmed
+  }
+  for (const value of candidates) {
+    const trimmed = value?.trim()
+    if (trimmed) return trimmed
+  }
+  return undefined
+}
+
+function resolveMergedInstructorTextField(
+  listUser: Omit<User, 'password'>,
+  fetched: Omit<User, 'password'>,
+  key: 'instructorCareerText' | 'instructorSelfIntroduction'
+): string | undefined {
+  return pickFirstNonMaskedString(fetched[key], listUser[key])
+}
+
+function resolveMergedListMetrics(
+  listUser: Omit<User, 'password'>,
+  fetched: Omit<User, 'password'>,
+  patchMetrics?: User['listMetrics']
+): User['listMetrics'] | undefined {
+  const listM = listUser.listMetrics ?? {}
+  const fetchedM = omitUndefinedMetrics(fetched.listMetrics) ?? {}
+  const patchM = omitUndefinedMetrics(patchMetrics) ?? {}
+
+  const allKeys = new Set([
+    ...Object.keys(listM),
+    ...Object.keys(fetchedM),
+    ...Object.keys(patchM),
+  ]) as Set<keyof NonNullable<User['listMetrics']>>
+
+  const next: NonNullable<User['listMetrics']> = {}
+  for (const key of allKeys) {
+    if (MASK_GUARDED_LIST_METRIC_KEYS.has(key)) {
+      const val = pickFirstNonMaskedString(
+        patchM[key] as string | undefined,
+        listM[key] as string | undefined,
+        fetchedM[key] as string | undefined
+      )
+      if (val !== undefined) {
+        ;(next as Record<string, unknown>)[key as string] = val
+      }
+      continue
+    }
+
+    const val = patchM[key] ?? fetchedM[key] ?? listM[key]
+    if (val === undefined || val === null) continue
+    if (typeof val === 'string' && !val.trim()) continue
+    ;(next as Record<string, unknown>)[key as string] = val
+  }
+
+  return Object.keys(next).length > 0 ? next : undefined
+}
+
+/** 자택 주소 상세 — unmask 등 더 긴(원문에 가까운) 쪽 우선 */
+function resolveMergedDetailAddressDetail(
+  listUser: Omit<User, 'password'>,
+  fetched: Omit<User, 'password'>
+): string | undefined {
+  const fetchedDetail = fetched.detailAddressDetail?.trim()
+  const listDetail = listUser.detailAddressDetail?.trim()
+  const fetchedOk =
+    fetchedDetail && !isInstructorMaskedPlaceholder(fetchedDetail) ? fetchedDetail : undefined
+  const listOk = listDetail && !isInstructorMaskedPlaceholder(listDetail) ? listDetail : undefined
+  if (fetchedOk && listOk) {
+    return fetchedOk.length >= listOk.length ? fetchedOk : listOk
+  }
+  return fetchedOk || listOk || fetchedDetail || listDetail || undefined
 }
 
 /** 자택 주소 — `"마스킹"` 제외, unmask 등 더 긴(원문에 가까운) 쪽 우선 */
@@ -123,11 +211,6 @@ export function mergeListUserWithFetchedDetail(
   const schoolInfo =
     role === 'SCHOOL' ? (fetched.schoolInfo ?? listUser.schoolInfo) : undefined
 
-  const listMetrics = {
-    ...listUser.listMetrics,
-    ...omitUndefinedMetrics(fetched.listMetrics),
-  }
-
   return {
     ...listUser,
     ...fetched,
@@ -150,12 +233,81 @@ export function mergeListUserWithFetchedDetail(
     affiliatedSchoolName: fetched.affiliatedSchoolName ?? listUser.affiliatedSchoolName,
     affiliation: resolveMergedAffiliation(listUser, fetched),
     detailAddress: resolveMergedDetailAddress(listUser, fetched),
+    detailAddressDetail: resolveMergedDetailAddressDetail(listUser, fetched),
     bio: resolveMergedBio(listUser, fetched),
+    instructorCareerText: resolveMergedInstructorTextField(listUser, fetched, 'instructorCareerText'),
+    instructorSelfIntroduction: resolveMergedInstructorTextField(
+      listUser,
+      fetched,
+      'instructorSelfIntroduction'
+    ),
     instructorApprovalStatus:
       fetched.instructorApprovalStatus ?? listUser.instructorApprovalStatus,
-    listMetrics: Object.keys(listMetrics).length > 0 ? listMetrics : undefined,
+    listMetrics: resolveMergedListMetrics(listUser, fetched),
     name: resolveMergedDisplayName(listUser, fetched, role),
   }
+}
+
+/**
+ * PATCH 응답·마스킹 GET 위에 폼에서 저장한 값을 반영한다.
+ * unmask 세션 직후 저장 시 API `"마스킹"` placeholder가 덮어쓰지 않도록 patch 값을 우선한다.
+ */
+export function applySavedBasicInfoPatchToUser(
+  user: Omit<User, 'password'>,
+  patch: PatchUserBasicInfoInput
+): Omit<User, 'password'> {
+  const next: Omit<User, 'password'> = { ...user }
+
+  if (patch.name !== undefined) next.name = patch.name
+  if (patch.phone !== undefined) next.phone = patch.phone
+  if (patch.email !== undefined) next.email = patch.email
+  if (patch.detailAddress !== undefined) next.detailAddress = patch.detailAddress
+  if (patch.affiliation !== undefined) next.affiliation = patch.affiliation
+  if (patch.gender !== undefined) next.gender = patch.gender
+  if (patch.birthDate !== undefined) next.birthDate = patch.birthDate
+  if (patch.socialAccounts !== undefined) next.socialAccounts = patch.socialAccounts
+  if (Object.prototype.hasOwnProperty.call(patch, 'adminComment')) {
+    next.adminComment = patch.adminComment
+  }
+
+  if (patch.bio !== undefined) {
+    const bio = patch.bio.trim()
+    next.bio = bio || undefined
+    if (next.role === 'INSTRUCTOR' && bio) {
+      next.instructorSelfIntroduction = bio
+    }
+  }
+
+  if (patch.schoolInfo) {
+    next.schoolInfo = { ...next.schoolInfo, ...patch.schoolInfo }
+  }
+
+  if (patch.instructorInfo) {
+    next.instructorInfo = {
+      ...next.instructorInfo,
+      ...patch.instructorInfo,
+    } as NonNullable<User['instructorInfo']>
+  }
+
+  if (patch.listMetrics) {
+    next.listMetrics = resolveMergedListMetrics(next, next, patch.listMetrics)
+    const careerSummary = patch.listMetrics.instructorCareerSummaryLabel?.trim()
+    if (careerSummary && !isInstructorMaskedPlaceholder(careerSummary)) {
+      const careerDisplay = formatInstructorCareerDisplay(careerSummary) ?? careerSummary
+      next.listMetrics = {
+        ...next.listMetrics,
+        instructorCareerSummaryLabel: careerDisplay,
+        instructorCareerYearsLabel:
+          next.listMetrics?.instructorCareerYearsLabel &&
+          !isInstructorMaskedPlaceholder(next.listMetrics.instructorCareerYearsLabel)
+            ? next.listMetrics.instructorCareerYearsLabel
+            : careerDisplay,
+      }
+      next.instructorCareerText = careerDisplay.replace(/년$/, '') || careerSummary
+    }
+  }
+
+  return next
 }
 
 function omitUndefinedMetrics(

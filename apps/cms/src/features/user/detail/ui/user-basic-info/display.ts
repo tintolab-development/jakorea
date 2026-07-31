@@ -4,6 +4,10 @@ import type { User } from '@/types/user'
 import type { DateValue } from '@/types'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { getMemberPermissionInstructorApplicationTypeLabel } from '@/features/user/permission-management/lib/member-permission-instructor-application-type'
+import {
+  formatInstructorEducationLevelDisplay,
+  isInstructorMaskedPlaceholder,
+} from '@/features/user/api/map-instructor-activity-display'
 import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 
@@ -193,8 +197,9 @@ export function affiliationAndInstructorCareerView(user: Omit<User, 'password'>)
 }
 
 export function highestEducationLine(user: Omit<User, 'password'>): string {
-  const t = user.listMetrics?.highestEducationLabel?.trim()
-  return t && t.length > 0 ? t : '-'
+  const raw = user.listMetrics?.highestEducationLabel?.trim()
+  if (!raw || raw === '-') return '-'
+  return formatInstructorEducationLevelDisplay(raw) ?? raw
 }
 
 /** 최종학력 td — 문자 `|` 대신 TdDivider */
@@ -204,16 +209,21 @@ export function highestEducationView(user: Omit<User, 'password'>): ReactNode {
 
 export function instructorCareerYearsLine(user: Omit<User, 'password'>): string {
   const yearsLabel = user.listMetrics?.instructorCareerYearsLabel?.trim()
-  if (yearsLabel && yearsLabel !== '-') return yearsLabel
+  if (yearsLabel && yearsLabel !== '-') {
+    if (isInstructorMaskedPlaceholder(yearsLabel)) return yearsLabel
+    return yearsLabel
+  }
 
   const summary = user.listMetrics?.instructorCareerSummaryLabel?.trim()
   if (summary && summary !== '-') {
+    if (isInstructorMaskedPlaceholder(summary)) return summary
     if (/^\d+$/.test(summary)) return `${summary}년`
     return summary
   }
 
   const careerText = user.instructorCareerText?.trim()
-  if (careerText && careerText !== '-' && careerText !== '마스킹') {
+  if (careerText && careerText !== '-') {
+    if (isInstructorMaskedPlaceholder(careerText)) return careerText
     if (/^\d+$/.test(careerText)) return `${careerText}년`
     return careerText
   }
@@ -297,13 +307,18 @@ export function instructorFeeGradeLine(user: Omit<User, 'password'>): string {
 
 export function oneLineIntroLine(user: Omit<User, 'password'>): string {
   const bio = user.bio?.trim()
-  if (!bio || bio === '마스킹') return '-'
+  if (!bio) return '-'
+  if (isInstructorMaskedPlaceholder(bio)) return bio
   return bio
 }
 
 /** 회원 관리 기준 신청·소속 구분 (강사비 등급 `instructorTypeLabel`은 사용하지 않음) */
 export function instructorApplicationTypeLine(user: Omit<User, 'password'>): string {
   return getMemberPermissionInstructorApplicationTypeLabel(user)
+}
+
+export function composeUserDetailAddressLine(user: Pick<User, 'detailAddress' | 'detailAddressDetail'>): string {
+  return [user.detailAddress?.trim(), user.detailAddressDetail?.trim()].filter(Boolean).join(' ')
 }
 
 export function addressLine(user: Omit<User, 'password'>): string {
@@ -315,10 +330,11 @@ export function addressLine(user: Omit<User, 'password'>): string {
     if (parts.length > 0) return parts.join(' ')
     return '-'
   }
-  // 강사·개인 등 — 자택 주소 (`instructorProfile.homeAddress` → `detailAddress`)
-  const detail = user.detailAddress?.trim()
-  if (!detail || detail === '마스킹') return '-'
-  return detail
+  // 강사·개인 등 — 자택 주소 (`homeAddress` + `homeAddressDetail`)
+  const combined = composeUserDetailAddressLine(user)
+  if (!combined) return '-'
+  if (isInstructorMaskedPlaceholder(combined)) return combined
+  return combined
 }
 
 export function socialLine(user: Omit<User, 'password'>): string {

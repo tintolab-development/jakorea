@@ -73,9 +73,38 @@ export function toEmploymentStatusDisplayLabel(
 /** `careerText`가 숫자만이면 `N년`으로 표시 */
 export function formatInstructorCareerDisplay(raw: string | undefined | null): string | undefined {
   const trimmed = raw?.trim()
-  if (!trimmed || isInstructorMaskedPlaceholder(trimmed)) return undefined
+  if (!trimmed || isInstructorMaskedPlaceholder(trimmed)) return trimmed || undefined
   if (/^\d+$/.test(trimmed)) return `${trimmed}년`
   return trimmed
+}
+
+const EDU_SCHOOL_TYPE_LABELS: Record<string, string> = {
+  high: '고등학교',
+  college23: '대학교 2, 3년제',
+  college4: '대학교 4년제',
+  graduate: '대학원',
+}
+
+const EDU_STATUS_LABELS: Record<string, string> = {
+  enrolled: '재학',
+  graduated: '졸업',
+  completed: '수료',
+}
+
+/** `educationLevel` 요약(`college4 / graduated` 등) → 화면 표시용 */
+export function formatInstructorEducationLevelDisplay(
+  raw: string | undefined | null
+): string | undefined {
+  const trimmed = raw?.trim()
+  if (!trimmed || trimmed === '-') return undefined
+  if (isInstructorMaskedPlaceholder(trimmed)) return trimmed
+
+  const [schoolType, status] = trimmed.split(/\s*\/\s*/).map(part => part.trim())
+  const schoolLabel = schoolType ? (EDU_SCHOOL_TYPE_LABELS[schoolType] ?? schoolType) : undefined
+  const statusLabel = status ? (EDU_STATUS_LABELS[status] ?? status) : undefined
+
+  if (schoolLabel && statusLabel) return `${schoolLabel} / ${statusLabel}`
+  return schoolLabel ?? trimmed
 }
 
 /** 승인·프로필 status 코드 — 강사비 등급에 잘못 섞인 값 제외 */
@@ -103,7 +132,8 @@ const FEE_GRADE_LEVEL_LABELS: Record<string, string> = {
 
 /**
  * 강사비 등급 표시용.
- * BE가 `defaultFeeGrade`에 승인 status(`APPROVED` 등)를 넣는 경우를 걸러낸다.
+ * `instructorProfile.defaultFeeGrade`만 사용한다.
+ * BE가 `defaultFeeGrade`·`feeGrade`·`status`에 승인 코드(`APPROVED` 등)를 넣는 경우를 걸러낸다.
  */
 export function toInstructorFeeGradeDisplayLabel(
   raw: string | undefined | null

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { mergeListUserWithFetchedDetail } from './merge-list-user-with-detail'
+import {
+  applySavedBasicInfoPatchToUser,
+  mergeListUserWithFetchedDetail,
+} from './merge-list-user-with-detail'
 import type { User } from '@/types/user'
 
 function baseUser(partial: Partial<Omit<User, 'password'>>): Omit<User, 'password'> {
@@ -99,5 +102,71 @@ describe('mergeListUserWithFetchedDetail', () => {
       accountHolder: '김강사',
       isBusinessIncome: true,
     })
+  })
+
+  it('마스킹 placeholder 응답이 unmask·목록 강사 필드를 덮어쓰지 않는다', () => {
+    const list = baseUser({
+      id: 'teacher-uuid',
+      role: 'INSTRUCTOR',
+      name: '김강사',
+      bio: '한 줄 소개 원문',
+      instructorCareerText: '10',
+      instructorSelfIntroduction: '한 줄 소개 원문',
+      listMetrics: {
+        instructorCareerYearsLabel: '10년',
+        instructorCareerSummaryLabel: '10년',
+        highestEducationLabel: '대학교 4년제 | 졸업',
+      },
+    })
+    const fetched = baseUser({
+      id: 'teacher-uuid',
+      role: 'INSTRUCTOR',
+      name: '김강사',
+      bio: '마스킹',
+      instructorCareerText: '마스킹',
+      instructorSelfIntroduction: '마스킹',
+      listMetrics: {
+        instructorCareerYearsLabel: '마스킹',
+        instructorCareerSummaryLabel: '마스킹',
+        highestEducationLabel: '마스킹',
+      },
+      participationHistory: 0,
+    })
+
+    const merged = mergeListUserWithFetchedDetail(list, fetched)
+
+    expect(merged.bio).toBe('한 줄 소개 원문')
+    expect(merged.instructorSelfIntroduction).toBe('한 줄 소개 원문')
+    expect(merged.instructorCareerText).toBe('10')
+    expect(merged.listMetrics?.instructorCareerYearsLabel).toBe('10년')
+    expect(merged.listMetrics?.highestEducationLabel).toBe('대학교 4년제 | 졸업')
+  })
+})
+
+describe('applySavedBasicInfoPatchToUser', () => {
+  it('저장 patch의 경력·소개가 마스킹 placeholder 위에 반영된다', () => {
+    const user = baseUser({
+      id: 'teacher-uuid',
+      role: 'INSTRUCTOR',
+      name: '김강사',
+      bio: '마스킹',
+      instructorSelfIntroduction: '마스킹',
+      listMetrics: {
+        instructorCareerYearsLabel: '마스킹',
+        instructorCareerSummaryLabel: '마스킹',
+      },
+    })
+
+    const merged = applySavedBasicInfoPatchToUser(user, {
+      bio: '수정된 한 줄 소개',
+      listMetrics: {
+        instructorCareerSummaryLabel: '12년',
+      },
+    })
+
+    expect(merged.bio).toBe('수정된 한 줄 소개')
+    expect(merged.instructorSelfIntroduction).toBe('수정된 한 줄 소개')
+    expect(merged.listMetrics?.instructorCareerYearsLabel).toBe('12년')
+    expect(merged.instructorCareerText).toBe('12')
   })
 })

@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
+  mapIndividualMemberDetailToUser,
   mapInstructorMemberDetailToUser,
   resolveInstructorBankFields,
 } from './map-member-detail-to-user'
 import { mergeListUserWithFetchedDetail } from './merge-list-user-with-detail'
-import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
+import type {
+  IndividualMemberDetailResponse,
+  InstructorMemberDetailResponse,
+} from '@/shared/api/generated/members/schemas'
 import type { User } from '@/types/user'
 
 function baseInstructorDetail(
@@ -36,6 +40,60 @@ function baseInstructorDetail(
     ...partial,
   }
 }
+
+describe('mapIndividualMemberDetailToUser', () => {
+  function baseIndividualDetail(
+    partial: Partial<IndividualMemberDetailResponse> = {}
+  ): IndividualMemberDetailResponse {
+    return {
+      member: {
+        memberId: 201,
+        uuid: 'individual-uuid',
+        email: 'student@example.com',
+        name: '김학생',
+        roles: ['INDIVIDUAL'],
+        status: 'ACTIVE',
+      },
+      ...partial,
+    }
+  }
+
+  it('NOT_ENROLLED이면 schoolEnrollmentStatus와 소속(일반)만 매핑한다', () => {
+    const user = mapIndividualMemberDetailToUser(
+      baseIndividualDetail({
+        schoolName: 'JA Korea',
+        enrollmentStatus: 'NOT_ENROLLED',
+      })
+    )
+
+    expect(user.schoolEnrollmentStatus).toBe('NOT_ENROLLED')
+    expect(user.affiliation).toBe('JA Korea')
+  })
+
+  it('ENROLLED이면 enrollmentStatus를 학년 접미사로 붙이지 않는다', () => {
+    const user = mapIndividualMemberDetailToUser(
+      baseIndividualDetail({
+        schoolName: '서울고등학교',
+        enrollmentStatus: 'ENROLLED',
+      })
+    )
+
+    expect(user.schoolEnrollmentStatus).toBe('ENROLLED')
+    expect(user.affiliation).toBe('서울고등학교')
+  })
+
+  it('레거시 enrollmentStatus(학년)는 소속 접미사로 유지한다', () => {
+    const user = mapIndividualMemberDetailToUser(
+      baseIndividualDetail({
+        schoolName: '서울고등학교',
+        enrollmentStatus: '2학년',
+      })
+    )
+
+    expect(user.schoolEnrollmentStatus).toBeUndefined()
+    expect(user.affiliation).toBe('서울고등학교 | 2학년')
+  })
+})
 
 describe('mapInstructorMemberDetailToUser', () => {
   it('프로필·계좌 필드를 상세 화면에 맞게 매핑한다', () => {
@@ -103,11 +161,46 @@ describe('mapInstructorMemberDetailToUser', () => {
     )
 
     expect(user.affiliation).toBeUndefined()
-    expect(user.bio).toBeUndefined()
+    expect(user.bio).toBe('마스킹')
+    expect(user.instructorSelfIntroduction).toBe('마스킹')
     expect(user.instructorMemberProfile).toBe('instructor_only')
     expect(user.listMetrics?.permissionApplicationTypeLabel).toBe('일반 강사')
     expect(user.listMetrics?.instructorCareerYearsLabel).toBe('16년')
     expect(user.listMetrics?.instructorCareerSummaryLabel).toBe('16년')
+  })
+
+  it('마스킹 placeholder 경력·소개 필드를 User에 보존한다', () => {
+    const user = mapInstructorMemberDetailToUser(
+      baseInstructorDetail({
+        instructorProfile: {
+          memberId: 101,
+          primaryActivityType: 'SCHOOL_TEACHER',
+          careerText: '마스킹',
+          oneLineIntro: '마스킹',
+          selfIntroduction: '마스킹',
+          educationLevel: '마스킹',
+        },
+      })
+    )
+
+    expect(user.bio).toBe('마스킹')
+    expect(user.instructorCareerText).toBe('마스킹')
+    expect(user.instructorSelfIntroduction).toBe('마스킹')
+    expect(user.listMetrics?.highestEducationLabel).toBe('마스킹')
+    expect(user.instructorMemberProfile).toBe('school_teacher')
+  })
+
+  it('educationLevel 코드를 한글 라벨로 변환한다', () => {
+    const user = mapInstructorMemberDetailToUser(
+      baseInstructorDetail({
+        instructorProfile: {
+          memberId: 101,
+          educationLevel: 'college4 / graduated',
+        },
+      })
+    )
+
+    expect(user.listMetrics?.highestEducationLabel).toBe('대학교 4년제 / 졸업')
   })
 
   it('루트 affiliation·학교명·재직 현황 동의어를 매핑한다', () => {
@@ -222,12 +315,12 @@ describe('mapInstructorMemberDetailToUser', () => {
     expect(user.listMetrics?.instructorCareerYearsLabel).toBe('10년')
   })
 
-  it('feeGrade/jaGrade·homeAddressDetail·businessIncome Y/N 동의어를 허용한다', () => {
+  it('defaultFeeGrade·jaGrade·homeAddressDetail·businessIncome Y/N 동의어를 허용한다', () => {
     const user = mapInstructorMemberDetailToUser(
       baseInstructorDetail({
         instructorProfile: {
           memberId: 101,
-          feeGrade: '특강',
+          defaultFeeGrade: '특강',
           jaGrade: 'S',
           homeAddress: '서울시 마포구',
           homeAddressDetail: '101호',
@@ -237,11 +330,42 @@ describe('mapInstructorMemberDetailToUser', () => {
       })
     )
 
-    expect(user.detailAddress).toBe('서울시 마포구 101호')
+    expect(user.detailAddress).toBe('서울시 마포구')
+    expect(user.detailAddressDetail).toBe('101호')
     expect(user.listMetrics?.instructorFeeGradeLabel).toBe('특강')
     expect(user.listMetrics?.jaEvaluationGrade).toBe('S')
     expect(user.listMetrics?.highestEducationLabel).toBe('대학원')
     expect(user.instructorInfo?.isBusinessIncome).toBe(false)
+  })
+
+  it('instructorProfile.status는 강사비 등급에 매핑하지 않는다', () => {
+    const user = mapInstructorMemberDetailToUser(
+      baseInstructorDetail({
+        instructorProfile: {
+          memberId: 101,
+          status: 'APPROVED',
+          defaultFeeGrade: null as unknown as string,
+          feeGrade: 'APPROVED',
+        } as InstructorMemberDetailResponse['instructorProfile'],
+      })
+    )
+
+    expect(user.instructorApprovalStatus).toBe('APPROVED')
+    expect(user.listMetrics?.instructorFeeGradeLabel).toBeUndefined()
+  })
+
+  it('feeGrade 동의어는 강사비 등급에 쓰지 않는다 (defaultFeeGrade만)', () => {
+    const user = mapInstructorMemberDetailToUser(
+      baseInstructorDetail({
+        instructorProfile: {
+          memberId: 101,
+          defaultFeeGrade: undefined,
+          feeGrade: '특강',
+        } as InstructorMemberDetailResponse['instructorProfile'],
+      })
+    )
+
+    expect(user.listMetrics?.instructorFeeGradeLabel).toBeUndefined()
   })
 
   it('defaultFeeGrade에 승인 status가 오면 강사비 등급으로 쓰지 않는다', () => {
@@ -280,7 +404,8 @@ describe('mapInstructorMemberDetailToUser', () => {
       } as InstructorMemberDetailResponse)
     )
 
-    expect(user.detailAddress).toBe('경기도 성남시 분당구 판교로 1 202호')
+    expect(user.detailAddress).toBe('경기도 성남시 분당구 판교로 1')
+    expect(user.detailAddressDetail).toBe('202호')
   })
 
   it('프로필 값이 비면 listMetrics 키를 undefined로 넣지 않는다', () => {
