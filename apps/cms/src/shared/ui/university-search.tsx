@@ -120,8 +120,7 @@ export function UniversitySearch({
   const filteredTotalCount = filteredUniversities.length
   const totalPages = Math.max(1, Math.ceil(filteredTotalCount / PAGE_SIZE))
   const pagedUniversities = useMemo(
-    () =>
-      filteredUniversities.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    () => filteredUniversities.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
     [filteredUniversities, currentPage]
   )
 
@@ -346,9 +345,7 @@ export function UniversitySearch({
             </CmsButton>
           </Flex>
 
-          <p className="school-search__guide">
-            대학교명을 입력해 검색하세요. 시/도·학교유형은 선택 사항입니다.
-          </p>
+          <p className="school-search__guide">대학교명을 입력해 검색하세요.</p>
 
           {hasSearched ? (
             <div
