@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/data/mock/payment-order-admin-list'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { useConfirmPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
@@ -222,9 +222,7 @@ export function PaymentOrderCalculationStatementModalImpl({
             <>
               <CmsButton
                 variant="delete"
-                size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
+                size="medium"
                 disabled={paymentOrdersRemote}
                 title={paymentOrdersRemote ? '신청 반려 API 연동 대기 중입니다.' : undefined}
                 onClick={() => {
@@ -239,9 +237,7 @@ export function PaymentOrderCalculationStatementModalImpl({
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
+                size="medium"
                 onClick={() => setPaymentConfirmOpen(true)}
               >
                 확인 처리
