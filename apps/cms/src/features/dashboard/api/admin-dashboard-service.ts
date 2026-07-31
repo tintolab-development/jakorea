@@ -839,7 +839,7 @@ export async function getDashboardLogAlerts(): Promise<DashboardLogAlertItem[]> 
   return []
 }
 
-/** Swagger: GET /api/me/dashboard-shortcut-badges */
+/** Swagger: GET /api/admin/me/dashboard-shortcut-badges */
 export async function getDashboardShortcutBadges(): Promise<Record<string, number>> {
   if (shouldUseDashboardRemoteApi()) {
     const dto = await fetchDashboardShortcutBadgesRemote()
@@ -848,7 +848,7 @@ export async function getDashboardShortcutBadges(): Promise<Record<string, numbe
   return getMenuShortcutBadgeCounts()
 }
 
-/** Swagger: POST /api/me/dashboard-shortcut-badges/{shortcutId}/read */
+/** Swagger: POST /api/admin/me/dashboard-shortcut-badges/{shortcutId}/read */
 export async function readDashboardShortcutBadge(shortcutId: string): Promise<void> {
   if (!shouldUseDashboardRemoteApi()) return
   await readDashboardShortcutBadgeRemote(shortcutId, {

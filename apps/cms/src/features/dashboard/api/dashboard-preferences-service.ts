@@ -1,5 +1,5 @@
 /**
- * 대시보드 개인화 설정 — GET/PUT /api/me/dashboard-preferences (mock: zustand persist 유지)
+ * 대시보드 개인화 설정 — GET/PUT /api/admin/me/dashboard-preferences (mock: zustand persist 유지)
  */
 import {
   applyMeDashboardPreferencesResponse,
