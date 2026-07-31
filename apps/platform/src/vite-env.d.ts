@@ -18,7 +18,7 @@ interface ImportMetaEnv {
   readonly VITE_DEV_PROXY_TARGET?: string
   readonly VITE_NGROK_SERVER?: string
   readonly VITE_NGROK_SKIP_BROWSER_WARNING?: string
-  /** 리프레시 토큰 POST 경로. 기본 `/api/homepage/auth/refresh` (`/api/auth/refresh` 사용 금지) */
+  /** 리프레시 토큰 POST 경로. 기본 `/api/portal/auth/refresh` */
   readonly VITE_AUTH_REFRESH_PATH?: string
 }
 
