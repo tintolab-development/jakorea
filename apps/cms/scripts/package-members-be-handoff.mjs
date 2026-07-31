@@ -24,9 +24,9 @@ const date = new Date().toISOString().slice(0, 10)
 const defaultOut = path.join(cmsRoot, 'dist', `members-be-handoff-${date}`)
 const outDir = outArg ? path.resolve(outArg.slice('--out='.length)) : defaultOut
 
-/** 2026-07-30: 통합 handoff + 권한 설정 UI/API 정합 */
+/** 2026-07-31: 통합 handoff + 권한 설정 UI/API 정합 */
 const coreFiles = [
-  'members-api-backend-handoff-2026-07-30.md',
+  'members-api-backend-handoff-2026-07-31.md',
   'admin-permission-settings-ui-api-handoff-2026-07-30.md',
 ]
 
