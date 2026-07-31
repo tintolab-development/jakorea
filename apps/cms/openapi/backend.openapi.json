@@ -43626,6 +43626,9 @@
           "expectedBirthDate": {
             "type": "string"
           },
+          "expectedGender": {
+            "type": "string"
+          },
           "expectedPhone": {
             "type": "string"
           },
@@ -43711,6 +43714,12 @@
             "type": "string"
           },
           "status": {
+            "type": "string"
+          },
+          "failureCode": {
+            "type": "string"
+          },
+          "failureMessage": {
             "type": "string"
           },
           "verifiedAt": {
@@ -49937,15 +49946,15 @@
             "type": "string",
             "format": "date-time"
           },
+          "businessStartDate": {
+            "type": "string"
+          },
           "businessEndDate": {
             "type": "string"
           },
           "businessYear": {
             "type": "integer",
             "format": "int32"
-          },
-          "businessStartDate": {
-            "type": "string"
           }
         }
       },
@@ -50034,10 +50043,10 @@
           "ujatPartnerRecommendationPath": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           }
         }
