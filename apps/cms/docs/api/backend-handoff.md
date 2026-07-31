@@ -10,7 +10,9 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 **E2E 관측 수정 요청**: [**e2e-backend-fixes-index.md**](./e2e-backend-fixes-index.md) (`DATABASE_ERROR` · 회원 등록 path · MFA 동시성)
 
-**회원 관리 (members)**: [members/README.md](./members/README.md) · [**백엔드 handoff**](./members/members-api-backend-handoff-2026-07-23.md) · [FE 연동 명세](./members/members-api-integration-2026-07-23.md)
+**API 에러 사용자 메시지 (CMS·Platform 공통)**: [backend-handoff §에러 응답](./backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통) · [Platform handoff](../../platform/docs/api/api-error-response-handoff-2026-07-31.md)
+
+**회원 관리 (members)**: [members/README.md](./members/README.md) · [**백엔드 handoff**](./members/members-api-backend-handoff-2026-07-31.md) · [FE 연동 명세](./members/members-api-integration-2026-07-23.md)
 
 **프로그램 유형별 전환**: [**UJAT 백엔드 핸드오프**](./programs-ujat-api-backend-handoff.md) · [**1사1교 백엔드 핸드오프**](./programs-company-school-api-backend-handoff.md) · [**1사1교 더미 시드**](./company-school-program-dummy-seed-backend-request.md) · [**일반 프로그램 더미 시드**](./general-program-dummy-seed-backend-request.md)
 
@@ -186,6 +188,58 @@ UI·페이지는 분기하지 않습니다. **서비스 레이어**(`entities/*/
 
 ---
 
+## 에러 응답 — 사용자 노출 메시지 (P0 · CMS · Platform 공통)
+
+**우선순위:** P0  
+**대상:** JaKorea **백엔드 API 전체** (CMS ` /api/admin/*` · Platform `/api/homepage/*` · legacy `/api/users/*` 등)
+
+### 배경
+
+CMS·Platform FE는 API 실패 시 서버가 내려준 **`message` 문자열을 가공·번역 없이** alert·모달·폼 에러 영역에 **그대로 노출**합니다.
+
+| 앱 | 대표 FE 경로 | 노출 방식 |
+|----|--------------|-----------|
+| **CMS** | `features/user/detail/lib/use-personal-info-reveal.ts` | `cmsAlertModal` 「열람 실패」 본문 = `error.message` |
+| **CMS** | `features/user/api/get-member-api-error.ts` · `features/*/api/get-*-api-error.ts` | axios `response.data.message` / `error.message` |
+| **CMS** | `shared/utils/error-handler.ts` | 일부 화면은 타입별 fallback만, **API message 우선** |
+| **Platform** | `features/auth/sign-up/lib/helpers/get-signup-api-error-message.ts` | 회원가입·검색 모달 등 `message` 직접 표시 |
+
+→ BE validation·내부 오류 문구가 **최종 사용자 UI**에 그대로 보입니다.
+
+### 관측 예 (2026-07-31 · CMS unmask)
+
+| HTTP | 현재 BE `message` (UI 그대로) | 문제 |
+|------|-------------------------------|------|
+| 400 | `reason 크기가 5에서 500 사이여야 합니다` | Bean Validation **필드명·제약 리터럴** 노출 |
+
+### BE 요청 (전 API 공통)
+
+1. **`error.message`** (래퍼 `{ success: false, error: { code, message } }`) 또는 동급 top-level **`message`** 에 **한국어 사용자 안내 문구**만 넣을 것.
+2. **금지** — 아래 형태는 UI에 그대로 노출되므로 **사용하지 말 것**:
+   - Bean Validation 기본 문구 (`{field} 크기가 …`, `must not be null`, `Size`, `NotBlank` 등)
+   - 영문 개발자 메시지 (`unexpected server error`, `DATABASE_ERROR` 단독 등)
+   - Java 필드 path·스키마 키 그대로 (`reason`, `termsAgreements[0].termsType`)
+3. **권장** — `error.code`는 **기계 판별용**(예: `VALIDATION_ERROR`, `UNAUTHORIZED`) · `error.message`는 **사람이 읽을 문구**.
+4. **validation 매핑 예**
+
+| 상황 | `error.code` (예) | `error.message` (UI 노출 OK) |
+|------|-------------------|------------------------------|
+| unmask reason 빈값 | `VALIDATION_ERROR` | `열람 사유를 입력해 주세요.` |
+| unmask reason 500자 초과 | `VALIDATION_ERROR` | `열람 사유는 500자 이내로 입력해 주세요.` |
+| 권한 없음 | `FORBIDDEN` | `접근 권한이 없습니다.` |
+| 서버 내부 오류 | `INTERNAL_ERROR` | `일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.` |
+
+5. **OpenAPI** — 4xx/5xx response schema에 `message` **사용자 문구 예시** 기재 (필드명·제약 설명 X).
+6. **Platform 회원가입·NICE** 등 공개 API도 **동일 정책** — [Platform handoff](../../platform/docs/api/api-error-response-handoff-2026-07-31.md)
+
+### 수락 기준
+
+- [ ] validation 400 — FE alert에 **필드명·minLength/maxLength 리터럴 미노출**
+- [ ] CMS unmask reason 1글자 — § [members handoff §2.7](./members/members-api-backend-handoff-2026-07-31.md#27-unmask-reason-길이-제한-p0--2026-07-31-관측)
+- [ ] Platform 회원가입 401/400 — [signup handover](../../platform/docs/api/signup-public-api-401-and-nice-mismatch-handover.md) 재현 시 사용자 문구
+
+---
+
 ## 운영/QA 보조 API (Bearer 필요)
 
 | API                                         | 용도                 |
@@ -204,4 +258,4 @@ Swagger Authorize에 관리자 토큰 입력 후 호출.
 3. `pnpm --filter cms generate:api`
 4. dev 서버 재시작
 
-**Last updated:** 2026-07-10
+**Last updated:** 2026-07-31 (에러 사용자 메시지 P0 · members handoff 링크)
