@@ -13,8 +13,8 @@ const outputPath = join(root, 'openapi/dashboard.openapi.json')
 
 const DASHBOARD_PATH_PREFIXES = ['/api/admin/dashboard']
 const DASHBOARD_EXACT_PATHS = new Set([
-  '/api/me/dashboard-preferences',
-  '/api/me/dashboard-shortcut-badges',
+  '/api/admin/me/dashboard-preferences',
+  '/api/admin/me/dashboard-shortcut-badges',
   '/api/admin/notifications',
   '/api/admin/notifications/read-all',
   '/api/admin/notifications/unread-count',
@@ -23,7 +23,7 @@ const DASHBOARD_EXACT_PATHS = new Set([
 function isDashboardSubsetPath(path) {
   if (DASHBOARD_EXACT_PATHS.has(path)) return true
   if (DASHBOARD_PATH_PREFIXES.some(prefix => path.startsWith(prefix))) return true
-  if (path.startsWith('/api/me/dashboard-shortcut-badges/')) return true
+  if (path.startsWith('/api/admin/me/dashboard-shortcut-badges/')) return true
   if (path.startsWith('/api/admin/notifications/')) return true
   return false
 }

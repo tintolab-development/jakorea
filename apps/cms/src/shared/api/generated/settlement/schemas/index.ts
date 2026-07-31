@@ -18,6 +18,7 @@ export * from './adminAccountBasicInfoUpdateRequest';
 export * from './adminAccountCreateRequest';
 export * from './adminAccountListItemResponse';
 export * from './adminAccountPasswordResetRequest';
+export * from './adminAccountPrivacyResponse';
 export * from './adminAccountResponse';
 export * from './adminAccountStatusChangeRequest';
 export * from './adminAccountVerificationRequest';

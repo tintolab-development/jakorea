@@ -8,7 +8,7 @@
 import type { HomepageOrganizationSearchItem } from './homepageOrganizationSearchItem';
 
 /**
- * 홈페이지 학교·기관 검색 응답
+ * 회원 포탈 학교·기관 검색 응답
  */
 export interface HomepageOrganizationSearchResponse {
   /** 검색 결과 목록 */

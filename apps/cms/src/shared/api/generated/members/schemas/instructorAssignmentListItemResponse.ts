@@ -23,4 +23,9 @@ export interface InstructorAssignmentListItemResponse {
   lectureFeeAmountSnapshot?: number;
   lodgingApprovedYn?: boolean;
   lodgingAmountSnapshot?: number;
+  evaluationId?: number;
+  evaluationStatus?: string;
+  evaluationTotalScore?: number;
+  evaluationComment?: string;
+  evaluationSubmittedAt?: string;
 }

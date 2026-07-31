@@ -24,6 +24,10 @@ export interface ProgramPostResponse {
   readCount?: number;
   /** 미읽음 대상 수 */
   unreadCount?: number;
+  /** 삭제되지 않은 댓글 수 */
+  commentCount?: number;
+  /** 등록된 반응 수 */
+  reactionCount?: number;
   /** 작성자 actor 유형 */
   createdByActorType?: string;
   /** 작성자 actor ID */

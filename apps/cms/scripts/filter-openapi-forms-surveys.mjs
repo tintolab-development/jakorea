@@ -24,7 +24,7 @@ const filteredPaths = Object.fromEntries(
   Object.entries(spec.paths ?? {}).filter(
     ([path]) =>
       FORMS_SURVEYS_PATH_PREFIXES.some(prefix => path.startsWith(prefix)) ||
-      path.includes('/form-bindings')
+      (path.startsWith('/api/admin/') && path.includes('/form-bindings'))
   )
 )
 
