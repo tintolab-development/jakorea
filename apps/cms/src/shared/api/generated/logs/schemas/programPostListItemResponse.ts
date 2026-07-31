@@ -10,9 +10,12 @@ export interface ProgramPostListItemResponse {
   postId?: number;
   programId?: number;
   title?: string;
+  content?: string;
   visibilityType?: string;
   readCount?: number;
   unreadCount?: number;
+  commentCount?: number;
+  reactionCount?: number;
   createdByActorType?: string;
   createdByActorId?: number;
   createdAt?: string;

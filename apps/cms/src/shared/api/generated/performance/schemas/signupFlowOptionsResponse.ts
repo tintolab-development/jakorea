@@ -8,7 +8,7 @@
 import type { SignupTermsOption } from './signupTermsOption';
 
 /**
- * 홈페이지 회원가입 플로우 옵션 응답
+ * 회원 포탈 회원가입 플로우 옵션 응답
  */
 export interface SignupFlowOptionsResponse {
   /** 회원 유형 */

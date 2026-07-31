@@ -7,7 +7,7 @@
  */
 
 /**
- * 홈페이지 회원가입 약관/동의 항목
+ * 회원 포탈 회원가입 약관/동의 항목
  */
 export interface SignupTermsOption {
   /** 약관/동의 유형 */

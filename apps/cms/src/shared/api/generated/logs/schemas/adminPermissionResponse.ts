@@ -11,6 +11,8 @@ export interface AdminPermissionResponse {
   code?: string;
   name?: string;
   domain?: string;
+  sortOrder?: number;
+  runtimePermissionCode?: string;
   description?: string;
   highRisk?: boolean;
 }

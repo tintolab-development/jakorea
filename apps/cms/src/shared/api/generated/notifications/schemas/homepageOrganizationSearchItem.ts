@@ -7,7 +7,7 @@
  */
 
 /**
- * 홈페이지 학교·기관 검색 항목
+ * 회원 포탈 학교·기관 검색 항목
  */
 export interface HomepageOrganizationSearchItem {
   /** 학교·기관 ID */
