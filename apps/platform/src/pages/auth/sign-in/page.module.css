@@ -32,6 +32,10 @@
   width: 100%;
 }
 
+.formError {
+  margin-top: calc(var(--spacing-12) * -1);
+}
+
 .accountLinks {
   display: flex;
   align-items: center;
