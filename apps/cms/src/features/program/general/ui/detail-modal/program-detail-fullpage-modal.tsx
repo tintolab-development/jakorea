@@ -237,7 +237,12 @@ export function ProgramDetailFullPageModal({
   )
   const loading = onUpdateProgram ? externalLoading : legacyLoading
   const sponsorName = onUpdateProgram ? externalSponsorName : legacySponsorName
-  const displayProgram = useMemo(() => program ?? detailProgram ?? null, [detailProgram, program])
+  // remote 부모(onUpdateProgram): 로딩 중 목록/stub program으로 본문 채우지 않음
+  const displayProgram = useMemo(() => {
+    if (onUpdateProgram && externalLoading) return null
+    if (onUpdateProgram) return program ?? null
+    return program ?? detailProgram ?? null
+  }, [detailProgram, program, onUpdateProgram, externalLoading])
   const persistProgramPatch = async (draft: Program, patch: Partial<Program>) => {
     if (onUpdateProgram) {
       await onUpdateProgram(draft.id, draft, patch)
@@ -1272,7 +1277,7 @@ export function ProgramDetailFullPageModal({
         />
       }
     >
-      {loading && !displayProgram ? (
+      {loading ? (
         <div className="detail-fullpage-modal__loading">
           <Spin size="large" />
         </div>

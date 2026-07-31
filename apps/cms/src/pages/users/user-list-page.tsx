@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react'
-import { Alert } from 'antd'
+import { Alert, Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
@@ -57,6 +57,8 @@ import {
   buildDeleteCompletedMessageSingle,
   buildDeleteCompletedTitle,
 } from '@/shared/ui'
+import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import '@/shared/ui/detail-fullpage-modal.css'
 import {
   memberListKindToBasicInfoEntrySource,
   memberListPageTitle,
@@ -90,7 +92,7 @@ import { applyAffiliatedTeacherLinkToUser } from '@/features/user/api/apply-affi
 import {
   buildInstructorRegisterCertifications,
   buildInstructorRegisterEducationLevel,
-  buildInstructorRegisterTermsAgreements,
+  buildPreRegisterTermsAgreements,
 } from '@/features/user/api/map-instructor-register-extras'
 import { SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { buildSchoolDeleteMessageLines } from '@/features/program/general/ui/manager-delete-guide-modal'
@@ -286,14 +288,15 @@ export function UserListPage() {
   const [deleteResultMessage, setDeleteResultMessage] = useState('')
 
   /**
-   * 행 클릭 직후 URL·drawer·목록 배열이 한 틱 어긋날 때(전체 회원 등)에도 풀페이지가 바로 뜨도록
-   * 클릭한 행 객체를 동기적으로 보관
+   * 상세 GET 완료 후 동기 보관(목록 시드 선표시용 아님).
+   * fetch 완료 직후 drawer 반영 전 한 틱 보강용.
    */
   const [detailBridgeUser, setDetailBridgeUser] = useState<Omit<User, 'password'> | null>(null)
+  /** 상세 API 대기 중 — 목록 DTO로 본문을 채우지 않음 */
+  const [memberDetailLoading, setMemberDetailLoading] = useState(false)
 
   /**
-   * handleView가 id 쿼리보다 먼저 반영될 때 한 틱 동안 params.id가 이전 회원을 가리키는 경우가 있다.
-   * 이때 URL 동기화 effect가 목록에서 옛 id로 openDrawer를 호출하면 드로어·URL이 서로 덮어써 무한 갱신된다.
+   * handleView가 fetch 중인 회원 id. URL 복원 effect가 동일 id로 중복 fetch하지 않도록 한다.
    */
   const pendingOpenedUserIdRef = useRef<string | null>(null)
 
@@ -376,18 +379,19 @@ export function UserListPage() {
   useLayoutEffect(() => {
     const targetId = params.id?.trim()
     if (targetId) return
-    if (pendingOpenedUserIdRef.current != null && (detailBridgeUser || drawerOpen || drawerUser)) {
+    if (pendingOpenedUserIdRef.current != null && (memberDetailLoading || drawerOpen || drawerUser)) {
       return
     }
     pendingOpenedUserIdRef.current = null
     setDetailBridgeUser(null)
+    setMemberDetailLoading(false)
     if (drawerOpen || drawerUser || selectedUser) {
       closeDrawer()
       clearSelectedUserId(null)
     }
   }, [
     params.id,
-    detailBridgeUser,
+    memberDetailLoading,
     drawerOpen,
     drawerUser,
     selectedUser,
@@ -403,7 +407,7 @@ export function UserListPage() {
     }
   }, [params.id])
 
-  // URL(id) 기반 모달 상태 복원: 새로고침/직접 진입 시 상세 모달 유지
+  // URL(id) 기반 모달 상태 복원: 새로고침/직접 진입 — 목록 시드 없이 상세 GET 후 오픈
   useEffect(() => {
     let cancelled = false
     const targetId = params.id?.trim()
@@ -416,15 +420,9 @@ export function UserListPage() {
       return
     }
 
-    if (pendingOpenedUserIdRef.current) {
-      if (targetId !== pendingOpenedUserIdRef.current) {
-        return
-      }
-      pendingOpenedUserIdRef.current = null
-    }
-
-    if (selectedUser?.id !== targetId) {
-      setSelectedUserId(targetId)
+    // handleView가 fetch 중이면 URL effect는 개입하지 않음
+    if (pendingOpenedUserIdRef.current != null) {
+      return
     }
 
     if (drawerOpenRef.current && drawerUserRef.current?.id === targetId) return
@@ -435,100 +433,97 @@ export function UserListPage() {
     const withTeacherCtx = (user: Omit<User, 'password'>) =>
       applyTeacherDetailUrlContext(user, urlTeacherCtx)
 
-    const cachedUser = useUserStore.getState().usersById[targetId]
-    const returnSchoolUser =
-      schoolDetailReturnUserRef.current?.id === targetId
+    // memberId/role 힌트만 사용 — 목록·캐시로 본문을 그리지 않음
+    const hintUser =
+      (schoolDetailReturnUserRef.current?.id === targetId
         ? schoolDetailReturnUserRef.current
-        : null
-    const listMatched = listUsers.find(u => u.id === targetId)
-    const seedUser = returnSchoolUser ?? listMatched ?? cachedUser
-    if (seedUser) {
-      if (isMembersRemoteEnabled()) {
-        ;(async () => {
-          try {
-            await fetchUserById(targetId, {
-              memberId: seedUser.memberId,
-              role: seedUser.role,
-              adminAccountId: seedUser.adminAccountId,
-              email: seedUser.email,
-            })
-            if (cancelled) return
-            const fetched = useUserStore.getState().usersById[targetId] ?? seedUser
-            openDrawer(withTeacherCtx(mergeListUserWithFetchedDetail(seedUser, fetched)))
-          } catch {
-            if (!cancelled) openDrawer(withTeacherCtx(seedUser))
-          }
-        })()
-        return
-      }
-      openDrawer(withTeacherCtx(seedUser))
-      return
-    }
+        : null) ??
+      listUsers.find(u => u.id === targetId) ??
+      useUserStore.getState().usersById[targetId]
 
-    if (selectedUser?.id === targetId) {
-      openDrawer(withTeacherCtx(selectedUser))
-      return
-    }
+    setMemberDetailLoading(true)
+    setSelectedUserId(targetId)
 
     ;(async () => {
       try {
+        if (!isMembersRemoteEnabled()) {
+          if (hintUser) {
+            if (!cancelled) {
+              openDrawer(withTeacherCtx(hintUser))
+              setDetailBridgeUser(withTeacherCtx(hintUser))
+            }
+            return
+          }
+          await fetchUserById(targetId)
+          if (cancelled) return
+          const fetched = useUserStore.getState().usersById[targetId]
+          if (!fetched) return
+          openDrawer(withTeacherCtx(fetched))
+          setDetailBridgeUser(withTeacherCtx(fetched))
+          return
+        }
+
         const roleHint =
-          urlTeacherCtx.instructorMemberProfile != null ? ('INSTRUCTOR' as const) : undefined
-        await fetchUserById(targetId, roleHint ? { role: roleHint } : undefined)
+          hintUser?.role ??
+          (urlTeacherCtx.instructorMemberProfile != null ? ('INSTRUCTOR' as const) : undefined)
+        await fetchUserById(targetId, {
+          memberId: hintUser?.memberId,
+          role: roleHint,
+          adminAccountId: hintUser?.adminAccountId,
+          email: hintUser?.email,
+        })
         if (cancelled) return
         const fetched = useUserStore.getState().usersById[targetId]
-        if (!fetched) return
-        setSelectedUserId(targetId)
-        openDrawer(withTeacherCtx(fetched))
-      } catch {
-        // 잘못된 id 또는 조회 실패 시 모달을 강제로 열지 않음
+        if (!fetched) {
+          handleError(new Error('회원 상세를 불러오지 못했습니다.'), {
+            defaultMessage: '회원 상세를 불러오지 못했습니다.',
+          })
+          return
+        }
+        const displayUser = withTeacherCtx(fetched)
+        openDrawer(displayUser)
+        setDetailBridgeUser(displayUser)
+      } catch (error) {
+        if (!cancelled) {
+          handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })
+        }
+      } finally {
+        if (!cancelled) setMemberDetailLoading(false)
       }
     })()
 
     return () => {
       cancelled = true
     }
+    // listUsers는 힌트 조회용 — dep에 넣으면 목록 갱신마다 fetch가 취소·재시작됨
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- URL id·교사 컨텍스트만으로 복원
   }, [
     params.id,
     params[USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY],
     params[USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY],
-    selectedUser,
-    listUsers,
     setSelectedUserId,
     openDrawer,
     fetchUserById,
   ])
 
-  /** URL id만 먼저 반영되고 drawer 상태가 한 틱 늦을 때도 1회 클릭으로 모달이 뜨도록 목록 행으로 보강 */
-  const userFromListByUrlId = useMemo(() => {
-    const tid = params.id?.trim()
-    if (!tid) return null
-    return listUsers.find(u => u.id === tid) ?? null
-  }, [params.id, listUsers])
-
-  /** URL id와 일치하는 객체를 우선 — drill-down 중 drawerUser가 이전 회원(학교)일 때 교사 상세로 갱신 */
+  /** 상세 GET 완료분만이 본문 — 목록 행으로 필드를 채우지 않음 */
   const modalDetailUser = useMemo(() => {
     const urlDetailId = params.id?.trim()
-    const candidates = [
-      detailBridgeUser,
-      drawerUser,
-      selectedUser,
-      userFromListByUrlId,
-    ].filter((u): u is Omit<User, 'password'> => u != null)
+    const candidates = [detailBridgeUser, drawerUser].filter(
+      (u): u is Omit<User, 'password'> => u != null
+    )
 
     if (urlDetailId) {
       const matched = candidates.find(u => u.id === urlDetailId)
       if (matched) return matched
     }
 
-    return drawerUser ?? selectedUser ?? userFromListByUrlId ?? detailBridgeUser
-  }, [params.id, detailBridgeUser, drawerUser, selectedUser, userFromListByUrlId])
-  /**
-   * `params.id && modalDetailUser`만으로 열림을 두면, 닫기 직후 URL id가 한 틱 남거나
-   * 목록에서 id로 보강된 user가 남아 X로도 닫히지 않는 것처럼 보인다.
-   * URL 복원은 아래 useEffect가 openDrawer로 처리한다.
-   */
+    return drawerUser ?? detailBridgeUser
+  }, [params.id, detailBridgeUser, drawerUser])
+
   const userDetailModalOpen = drawerOpen || Boolean(detailBridgeUser)
+  const showMemberDetailLoadingShell =
+    memberDetailLoading && !modalDetailUser && Boolean(params.id?.trim())
 
   /** 열려 있는 상세 대상이 있으면 그 회원 역할 기준(전체 회원 혼합 목록 대응), 없으면 목록 kind 기준 */
   const basicInfoEntrySource = useMemo(() => {
@@ -561,7 +556,7 @@ export function UserListPage() {
             users: page.users.map(u =>
               u.id === updated.id ||
               (updated.memberId != null && u.memberId === updated.memberId)
-                ? { ...u, ...updated }
+                ? mergeListUserWithFetchedDetail(u, updated)
                 : u
             ),
           })),
@@ -582,60 +577,76 @@ export function UserListPage() {
     [setDrawerUser, setDetailBridgeUser, queryClient, invalidateList]
   )
 
-  // 사용자 상세 보기
-  const handleView = useCallback(
-    async (user: Omit<User, 'password'>, opts?: { replace?: boolean }) => {
+  /** 상세 GET 완료 후 모달·URL 반영 (목록 시드 선오픈 없음) */
+  const openMemberDetailFetched = useCallback(
+    (displayUser: Omit<User, 'password'>, opts?: { replace?: boolean }) => {
       suppressDetailRestoreRef.current = false
       detailCloseIntentRef.current = false
-      pendingOpenedUserIdRef.current = user.id
-      setDetailBridgeUser(user)
-      setSelectedUserId(user.id)
-      openDrawer(user)
-
-      // drill-down 중 URL 복원 effect가 이전 id로 되돌리지 않도록 id를 먼저 반영
-      setParams(
-        {
-          id: user.id,
-          lnb: 'detail-info',
-          [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
-          ...teacherDetailUrlParamsFromUser(user),
-        },
-        { replace: opts?.replace ?? false }
-      )
-
-      let displayUser = user
-      if (isMembersRemoteEnabled()) {
-        try {
-          const fetched = await fetchUserById(user.id, {
-            memberId: user.memberId,
-            role: user.role,
-            adminAccountId: user.adminAccountId,
-            email: user.email,
-          })
-          if (fetched) {
-            displayUser = mergeListUserWithFetchedDetail(user, fetched)
-            displayUser = applyTeacherDetailUrlContext(displayUser, {
-              affiliatedSchoolName: user.affiliatedSchoolName,
-              instructorMemberProfile: user.instructorMemberProfile,
-            })
-          }
-        } catch (error) {
-          handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })
-        }
-      }
-
+      setSelectedUserId(displayUser.id)
+      setDetailBridgeUser(displayUser)
       openDrawer(displayUser)
-      // 상세 merge 후 학교명·프로필이 채워졌으면 URL도 갱신 (새로고침 복원용)
       setParams(
         {
           id: displayUser.id,
           lnb: 'detail-info',
+          [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
           ...teacherDetailUrlParamsFromUser(displayUser),
         },
-        { replace: true }
+        { replace: opts?.replace ?? false }
       )
+      pendingOpenedUserIdRef.current = null
     },
-    [setSelectedUserId, openDrawer, setParams, fetchUserById]
+    [setSelectedUserId, openDrawer, setParams]
+  )
+
+  // 사용자 상세 보기 — remote면 상세 GET 완료 후에만 오픈
+  const handleView = useCallback(
+    async (
+      user: Omit<User, 'password'>,
+      opts?: { replace?: boolean; skipRemoteFetch?: boolean }
+    ) => {
+      suppressDetailRestoreRef.current = false
+      detailCloseIntentRef.current = false
+      pendingOpenedUserIdRef.current = user.id
+      setSelectedUserId(user.id)
+
+      if (!isMembersRemoteEnabled() || opts?.skipRemoteFetch) {
+        const displayUser = applyTeacherDetailUrlContext(user, {
+          affiliatedSchoolName: user.affiliatedSchoolName,
+          instructorMemberProfile: user.instructorMemberProfile,
+        })
+        openMemberDetailFetched(displayUser, opts)
+        return
+      }
+
+      setMemberDetailLoading(true)
+      try {
+        const fetched = await fetchUserById(user.id, {
+          memberId: user.memberId,
+          role: user.role,
+          adminAccountId: user.adminAccountId,
+          email: user.email,
+        })
+        if (!fetched) {
+          handleError(new Error('회원 상세를 불러오지 못했습니다.'), {
+            defaultMessage: '회원 상세를 불러오지 못했습니다.',
+          })
+          pendingOpenedUserIdRef.current = null
+          return
+        }
+        const displayUser = applyTeacherDetailUrlContext(fetched, {
+          affiliatedSchoolName: user.affiliatedSchoolName,
+          instructorMemberProfile: user.instructorMemberProfile,
+        })
+        openMemberDetailFetched(displayUser, { replace: opts?.replace ?? false })
+      } catch (error) {
+        pendingOpenedUserIdRef.current = null
+        handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })
+      } finally {
+        setMemberDetailLoading(false)
+      }
+    },
+    [setSelectedUserId, fetchUserById, openMemberDetailFetched]
   )
 
   const handleNavigateToLinkedUser = useCallback(
@@ -651,6 +662,7 @@ export function UserListPage() {
       }
 
       pendingOpenedUserIdRef.current = userId
+      setMemberDetailLoading(true)
 
       try {
         const fetched = await fetchUserById(userId, {
@@ -703,14 +715,17 @@ export function UserListPage() {
           schoolNameHint
         )
 
-        handleView(nextUser, { replace: false })
+        // 이미 상세 GET 완료 — 재fetch 없이 오픈
+        openMemberDetailFetched(nextUser, { replace: false })
       } catch (error) {
         pendingOpenedUserIdRef.current = null
         if (schoolReturn) schoolDetailReturnUserRef.current = null
         handleError(error, { defaultMessage: '교사 상세를 불러오지 못했습니다.' })
+      } finally {
+        setMemberDetailLoading(false)
       }
     },
-    [fetchUserById, handleView]
+    [fetchUserById, openMemberDetailFetched]
   )
 
   /** 모달·URL·복귀 스택까지 완전히 닫음 (탈퇴/삭제 플로우 등) */
@@ -719,6 +734,7 @@ export function UserListPage() {
     detailCloseIntentRef.current = true
     pendingOpenedUserIdRef.current = null
     setDetailBridgeUser(null)
+    setMemberDetailLoading(false)
     schoolDetailReturnUserRef.current = null
     setDrawerUser(null)
     closeDrawer()
@@ -851,11 +867,20 @@ export function UserListPage() {
           eduSchoolType: values.eduSchoolType,
           eduStatus: values.eduStatus,
         }),
-        termsAgreements: buildInstructorRegisterTermsAgreements({
-          consentTermsOfService: values.consentTermsOfService,
-          consentPersonal: values.consentPersonal,
-          consentMarketing: values.consentMarketing,
-        }),
+        termsAgreements: buildPreRegisterTermsAgreements(
+          {
+            consentTermsOfService: values.consentTermsOfService,
+            consentPersonal: values.consentPersonal,
+            consentMarketing: values.consentMarketing,
+          },
+          {
+            consentPortrait: values.consentPortrait,
+            consentPaymentStatement: values.consentPaymentStatement,
+            consentEducatorPledge: values.consentEducatorPledge,
+            consentAdministrativeJoint: values.consentAdministrativeJoint,
+            consentSexOffenseCheck: values.consentSexOffenseCheck,
+          }
+        ),
         certifications: buildInstructorRegisterCertifications(values.licenseRows),
         instructorInfo: {
           bankName: values.bankName.trim(),
@@ -1139,7 +1164,7 @@ export function UserListPage() {
           listKind={resolvedMemberListKind}
           totalCount={listTotal}
           data={listUsers}
-          loading={false}
+          loading={memberDetailLoading}
           onView={handleView}
           onDelete={canWrite ? handleDeleteClick : undefined}
           onAdminPermissionChange={canWrite ? handleAdminPermissionChange : undefined}
@@ -1151,16 +1176,32 @@ export function UserListPage() {
         <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
       </FilterTableLayout>
 
-      <UserDetailFullPageModal
-        open={userDetailModalOpen}
-        user={modalDetailUser}
-        basicInfoEntrySource={basicInfoEntrySource}
-        onClose={handleUserDetailModalClose}
-        onWithdraw={canWrite && modalDetailUser ? handleWithdrawFromDetail : undefined}
-        onNavigateToLinkedUser={handleNavigateToLinkedUser}
-        onMemberBasicInfoSaved={handleMemberBasicInfoSaved}
-        detailCloseIntentRef={detailCloseIntentRef}
-      />
+      {showMemberDetailLoadingShell ? (
+        <DetailFullPageModal
+          open
+          onClose={handleUserDetailModalClose}
+          title="회원 상세"
+        >
+          <div
+            className="detail-fullpage-modal__loading"
+            role="status"
+            aria-label="상세 불러오는 중"
+          >
+            <Spin size="large" />
+          </div>
+        </DetailFullPageModal>
+      ) : (
+        <UserDetailFullPageModal
+          open={userDetailModalOpen}
+          user={modalDetailUser}
+          basicInfoEntrySource={basicInfoEntrySource}
+          onClose={handleUserDetailModalClose}
+          onWithdraw={canWrite && modalDetailUser ? handleWithdrawFromDetail : undefined}
+          onNavigateToLinkedUser={handleNavigateToLinkedUser}
+          onMemberBasicInfoSaved={handleMemberBasicInfoSaved}
+          detailCloseIntentRef={detailCloseIntentRef}
+        />
+      )}
 
       <MemberRegisterModal
         open={createModalOpen}

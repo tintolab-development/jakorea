@@ -467,12 +467,15 @@ export function GeneralProgramDetailFullPageModal({
   const { disabledLnbKeys } = useGeneralProgramNavigation(open ? programId : undefined, open)
   const { showAlert } = useCmsAlert()
   const displayProgram = useMemo(() => {
+    // remote: 상세 GET만 본문에 사용 (목록 행·resolve 시드 선표시 금지)
+    if (remoteEnabled) {
+      return detailProgram ? applyGeneralProgramDetailSession(detailProgram) : null
+    }
     const base =
       detailProgram ??
       program ??
       (programId ? (resolveGeneralProgramForDetail(programId) ?? null) : null)
     if (base == null) return null
-    if (remoteEnabled && detailProgram) return detailProgram
     return applyGeneralProgramDetailSession(base)
   }, [detailProgram, program, programId, remoteEnabled])
 
@@ -1675,7 +1678,7 @@ export function GeneralProgramDetailFullPageModal({
           ) : null
         }
       >
-        {loading && !displayProgram ? (
+        {loading || (remoteEnabled && open && !displayProgram && !detailError) ? (
           <div className="detail-fullpage-modal__loading">
             <Spin size="large" />
           </div>

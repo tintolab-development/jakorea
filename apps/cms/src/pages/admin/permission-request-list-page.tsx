@@ -3,8 +3,12 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Spin } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
+import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
+import '@/shared/ui/detail-fullpage-modal.css'
+import type { User } from '@/types/user'
 import {
   MembersPermissionList,
   type MembersPermissionListHandle,
@@ -141,13 +145,35 @@ export function PermissionRequestListPage() {
   const [permissionStatusResetConfirm, setPermissionStatusResetConfirm] =
     useState<PermissionStatusResetConfirmState | null>(null)
   const [activeListTab, setActiveListTab] = useState<PermissionListTabKey>('instructor')
-  const detailUser = useUserStore(state =>
-    detailUserId ? (state.usersById[detailUserId] ?? null) : null
-  )
+  /** 이번 상세 GET 결과만 — stale usersById로 본문 선표시하지 않음 */
+  const [detailUser, setDetailUser] = useState<Omit<User, 'password'> | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
   useEffect(() => {
-    if (!detailUserId || !urlPermissionRole) return
-    void fetchUserById(detailUserId)
+    if (!detailUserId || !urlPermissionRole) {
+      setDetailUser(null)
+      setDetailLoading(false)
+      return
+    }
+    let cancelled = false
+    setDetailLoading(true)
+    setDetailUser(null)
+    ;(async () => {
+      try {
+        const fetched = await fetchUserById(detailUserId)
+        if (cancelled) return
+        if (fetched) setDetailUser(fetched)
+      } catch (error) {
+        if (!cancelled) {
+          handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })
+        }
+      } finally {
+        if (!cancelled) setDetailLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [detailUserId, urlPermissionRole, fetchUserById])
 
   const basicInfoEntrySource = useMemo(
@@ -156,26 +182,23 @@ export function PermissionRequestListPage() {
   )
 
   const handleOpenUserDetail = useCallback(
-    async (userId: string, role: UserDetailPermissionRole) => {
-      try {
-        await fetchUserById(userId)
-        const u = useUserStore.getState().usersById[userId]
-        if (u) {
-          setSearchParams(prev => {
-            const next = new URLSearchParams(prev)
-            next.set(PR_DETAIL_USER, userId)
-            next.set(PR_DETAIL_ROLE, role)
-            return next
-          }, { replace: false })
-        }
-      } catch {
-        // 회원 조회 실패 시 상세 모달 미오픈
-      }
+    (userId: string, role: UserDetailPermissionRole) => {
+      setSearchParams(
+        prev => {
+          const next = new URLSearchParams(prev)
+          next.set(PR_DETAIL_USER, userId)
+          next.set(PR_DETAIL_ROLE, role)
+          return next
+        },
+        { replace: false }
+      )
     },
-    [fetchUserById, setSearchParams]
+    [setSearchParams]
   )
 
   const handleCloseDetail = useCallback(() => {
+    setDetailUser(null)
+    setDetailLoading(false)
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)
       next.delete(PR_DETAIL_USER)
@@ -187,7 +210,9 @@ export function PermissionRequestListPage() {
   const syncDetailUserIfOpened = useCallback(
     (userId: string) => {
       if (!detailOpen || !detailUserId || detailUserId !== userId) return
-      void fetchUserById(userId)
+      void fetchUserById(userId).then(fetched => {
+        if (fetched) setDetailUser(fetched)
+      })
     },
     [detailOpen, detailUserId, fetchUserById]
   )
@@ -778,18 +803,30 @@ export function PermissionRequestListPage() {
               />
       )}
 
-      <UserDetailFullPageModal
-        open={detailOpen && detailUser != null && permissionRole != null}
-        user={detailUser}
-        onClose={handleCloseDetail}
-        basicInfoEntrySource={basicInfoEntrySource}
-        mode="permission"
-        permissionRole={detailPermissionRole}
-        onPermissionApprove={handlePermissionApprove}
-        onPermissionReject={handlePermissionReject}
-        onPermissionResetToPending={handlePermissionResetToPending}
-        onPermissionResendNotification={handlePermissionResendNotification}
-      />
+      {detailOpen && detailLoading && detailUser == null ? (
+        <DetailFullPageModal open onClose={handleCloseDetail} title="회원 상세">
+          <div
+            className="detail-fullpage-modal__loading"
+            role="status"
+            aria-label="상세 불러오는 중"
+          >
+            <Spin size="large" />
+          </div>
+        </DetailFullPageModal>
+      ) : (
+        <UserDetailFullPageModal
+          open={detailOpen && detailUser != null && permissionRole != null}
+          user={detailUser}
+          onClose={handleCloseDetail}
+          basicInfoEntrySource={basicInfoEntrySource}
+          mode="permission"
+          permissionRole={detailPermissionRole}
+          onPermissionApprove={handlePermissionApprove}
+          onPermissionReject={handlePermissionReject}
+          onPermissionResetToPending={handlePermissionResetToPending}
+          onPermissionResendNotification={handlePermissionResendNotification}
+        />
+      )}
 
       {instructorApproveModal ? (
         <InstructorPermissionApproveModal

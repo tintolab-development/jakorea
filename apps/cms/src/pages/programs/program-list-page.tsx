@@ -228,13 +228,12 @@ function ProgramListPageContent() {
   )
   const updateCompanySchoolMutation = useUpdateCompanySchoolProgram()
   const deleteCompanySchoolProgramsMutation = useDeleteCompanySchoolPrograms()
+  const companySchoolDetailData = companySchoolDetailQuery.data ?? null
   const companySchoolDetailProgram =
-    companySchoolDetailQuery.data ??
-    selectedProgramForFullPageModal ??
+    companySchoolDetailData ??
     (companySchoolProgramIdFromUrl
-      ? filteredPrograms.find(p => p.id === companySchoolProgramIdFromUrl) ??
-        ({ id: companySchoolProgramIdFromUrl } as Program)
-      : null)
+      ? ({ id: companySchoolProgramIdFromUrl } as Program)
+      : selectedProgramForFullPageModal)
 
   // 4. Effects
   useEffect(() => {
@@ -652,12 +651,14 @@ function ProgramListPageContent() {
         programVariant={isCompanySchoolPath ? 'company-school' : undefined}
         externalLoading={
           isCompanySchoolPath
-            ? companySchoolDetailQuery.isFetching && !companySchoolDetailProgram
+            ? Boolean(companySchoolProgramIdFromUrl) &&
+              !companySchoolDetailData &&
+              (companySchoolDetailQuery.isFetching || companySchoolDetailQuery.isLoading)
             : undefined
         }
         externalError={
           isCompanySchoolPath
-            ? companySchoolDetailQuery.isError && !companySchoolDetailProgram
+            ? companySchoolDetailQuery.isError && !companySchoolDetailData
             : undefined
         }
         onClose={handleCloseFullPageModal}

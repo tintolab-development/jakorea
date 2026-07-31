@@ -178,7 +178,8 @@ function UjatProgramListPageContent() {
     )
   }, [programIdFromUrl, programs])
   const detailQuery = useProgramDetail(programIdFromUrl ?? undefined, initialDetailProgram)
-  const ujatDetailProgram = detailQuery.data ?? initialDetailProgram
+  // remote: 상세 data만. local: mock/시드 허용
+  const ujatDetailProgram = detailQuery.data ?? null
 
   useEffect(() => {
     if (!programIdFromUrl) return
@@ -399,9 +400,13 @@ function UjatProgramListPageContent() {
       <UjatProgramDetailFullPageModal
         open={ujatDetailModalOpen}
         onClose={() => undefined}
-        program={ujatDetailProgram ?? null}
+        program={ujatDetailProgram}
         programIdHint={programIdFromUrl}
-        externalLoading={detailQuery.isFetching && !ujatDetailProgram}
+        externalLoading={
+          Boolean(programIdFromUrl) &&
+          !ujatDetailProgram &&
+          (detailQuery.isFetching || detailQuery.isLoading)
+        }
         externalError={detailQuery.isError && !ujatDetailProgram}
         onUpdateProgram={(programId, program, patch) =>
           updateProgramMutation.mutateAsync({ programId, program, patch })
