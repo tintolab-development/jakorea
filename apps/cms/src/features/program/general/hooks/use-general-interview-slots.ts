@@ -4,7 +4,7 @@ import { shouldUseApplicationsHttpRemoteApi } from '@/features/program/general/a
 import { generalInterviewSlotsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 
 /**
- * remote ON: GET …/interview-slots (hand-wrap). 실패·404 → data null → 호출부 mock 폴백.
+ * remote ON: GET …/interview-slots. 실패·404 → data null → 호출부 mock 폴백.
  * remote OFF: 쿼리 비활성, data undefined.
  */
 export function useGeneralInterviewSlots(programId: string, enabled = true) {

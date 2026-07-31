@@ -88,24 +88,24 @@ export async function fetchDashboardShortcutsRemote(): Promise<DashboardShortcut
   return unwrapBody(await dashboardRemoteApi.dashboardShortcuts())
 }
 
-/** Swagger: GET /api/me/dashboard-preferences */
+/** Swagger: GET /api/admin/me/dashboard-preferences */
 export async function fetchMeDashboardPreferencesRemote(): Promise<DashboardMePreferencesResponse> {
   return unwrapBody(await dashboardRemoteApi.getDashboardPreferences())
 }
 
-/** Swagger: PUT /api/me/dashboard-preferences */
+/** Swagger: PUT /api/admin/me/dashboard-preferences */
 export async function saveMeDashboardPreferencesRemote(
   body: DashboardMePreferencesRequest
 ): Promise<DashboardMePreferencesResponse> {
   return unwrapBody(await dashboardRemoteApi.saveDashboardPreferences(body))
 }
 
-/** Swagger: GET /api/me/dashboard-shortcut-badges */
+/** Swagger: GET /api/admin/me/dashboard-shortcut-badges */
 export async function fetchDashboardShortcutBadgesRemote(): Promise<DashboardShortcutBadgesResponse> {
   return unwrapBody(await dashboardRemoteApi.getDashboardShortcutBadges())
 }
 
-/** Swagger: POST /api/me/dashboard-shortcut-badges/{shortcutId}/read */
+/** Swagger: POST /api/admin/me/dashboard-shortcut-badges/{shortcutId}/read */
 export async function readDashboardShortcutBadgeRemote(
   shortcutId: string,
   body?: DashboardShortcutBadgeReadRequest

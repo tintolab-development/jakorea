@@ -192,7 +192,7 @@ export async function createInterviewSlotRemote(
 
 /**
  * GET /api/admin/programs/{programId}/interview-slots
- * OpenAPI 미등재(P2-1) — FE hand-wrap. 404/실패 시 호출측에서 mock 폴백.
+ * OpenAPI GET/POST 등재. 404/실패 시 호출측에서 mock 폴백.
  */
 export async function listInterviewSlotsRemote(
   programId: string,
