@@ -166,5 +166,6 @@ curl -sS -H 'Accept: application/json' -H 'Content-Type: application/json' \
 2. 이슈 A 반영 환경·예정 시각  
 3. 이슈 B: 불일치 시 사용할 **에러 코드·전달 채널**(콜백 query / 세션 status / JSON)  
 4. teacher signup·보호자 플로우도 동일 PUBLIC 정책인지
+5. **API 에러 `message` 사용자 문구** — validation·401 등 FE alert 직접 노출 ([api-error-response-handoff-2026-07-31.md](./api-error-response-handoff-2026-07-31.md))
 
 회신 주시면 Platform에서 회원가입 E2E를 다시 검증하겠습니다.
