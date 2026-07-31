@@ -1,11 +1,14 @@
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
 } from 'react'
+import { createPortal } from 'react-dom'
 import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
 import chevronDownGrayUrl from '@/shared/assets/icons/chevron-down-gray.svg'
 import { PFText } from '../pf-text'
@@ -45,6 +48,9 @@ const sizeTypographyClassMap: Record<PFSelectSize, string> = {
   xlarge: 'typo-bd-md-md',
 }
 
+const LISTBOX_GAP_PX = 8
+const LISTBOX_MAX_HEIGHT_PX = 290
+
 export function PFSelect({
   size = 'medium',
   label,
@@ -65,12 +71,15 @@ export function PFSelect({
   const generatedId = useId()
   const listboxId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
+  const fieldRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const listboxRef = useRef<HTMLUListElement>(null)
   const selectId = id ?? generatedId
 
   const isControlled = value !== undefined
   const [internalValue, setInternalValue] = useState(defaultValue)
   const [isOpen, setIsOpen] = useState(false)
+  const [listboxStyle, setListboxStyle] = useState<CSSProperties>()
   const currentValue = isControlled ? value : internalValue
   const selectedOption = options.find(option => option.value === currentValue)
   const hasValue = Boolean(selectedOption)
@@ -101,13 +110,51 @@ export function PFSelect({
   } as const
   const messageClassName = [styles.message, messageStatusClassMap[messageStatus]].join(' ')
 
+  useLayoutEffect(() => {
+    if (!isOpen) return
+
+    const updatePosition = () => {
+      const field = fieldRef.current
+      if (!field) return
+
+      const rect = field.getBoundingClientRect()
+      const viewportHeight = window.innerHeight
+      const spaceBelow = viewportHeight - rect.bottom - LISTBOX_GAP_PX
+      const spaceAbove = rect.top - LISTBOX_GAP_PX
+      const openUpward = spaceBelow < LISTBOX_MAX_HEIGHT_PX && spaceAbove > spaceBelow
+      const availableHeight = Math.max(0, openUpward ? spaceAbove : spaceBelow)
+      const maxHeight = Math.min(LISTBOX_MAX_HEIGHT_PX, availableHeight)
+
+      setListboxStyle({
+        position: 'fixed',
+        top: openUpward ? undefined : rect.bottom + LISTBOX_GAP_PX,
+        bottom: openUpward ? viewportHeight - rect.top + LISTBOX_GAP_PX : undefined,
+        left: rect.left,
+        width: rect.width,
+        maxHeight,
+        zIndex: 1100,
+      })
+    }
+
+    updatePosition()
+    window.addEventListener('resize', updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+
+    return () => {
+      window.removeEventListener('resize', updatePosition)
+      window.removeEventListener('scroll', updatePosition, true)
+    }
+  }, [isOpen, options.length])
+
   useEffect(() => {
     if (!isOpen) return
 
     const handlePointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setIsOpen(false)
+      const target = event.target as Node
+      if (rootRef.current?.contains(target) || listboxRef.current?.contains(target)) {
+        return
       }
+      setIsOpen(false)
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -163,6 +210,44 @@ export function PFSelect({
     }
   }
 
+  const listbox = isOpen ? (
+    <ul
+      ref={listboxRef}
+      className={styles.listbox}
+      id={listboxId}
+      role="listbox"
+      aria-labelledby={selectId}
+      style={listboxStyle}
+    >
+      {options.map(option => {
+        const isSelected = option.value === currentValue
+        const optionClassName = [
+          styles.option,
+          'typo-bd-sm-md',
+          isSelected ? styles.optionSelected : undefined,
+          option.disabled ? styles.optionDisabled : undefined,
+        ]
+          .filter(Boolean)
+          .join(' ')
+
+        return (
+          <li key={option.value} role="presentation">
+            <button
+              type="button"
+              role="option"
+              className={optionClassName}
+              aria-selected={isSelected}
+              disabled={option.disabled}
+              onClick={() => handleSelect(option.value, option.disabled)}
+            >
+              {option.label}
+            </button>
+          </li>
+        )
+      })}
+    </ul>
+  ) : null
+
   return (
     <div className={rootClassName} ref={rootRef}>
       {label ? (
@@ -179,7 +264,7 @@ export function PFSelect({
       ) : null}
 
       <div className={styles.control}>
-        <div className={fieldClassName}>
+        <div className={fieldClassName} ref={fieldRef}>
           <button
             ref={triggerRef}
             id={selectId}
@@ -226,40 +311,10 @@ export function PFSelect({
             </button>
           </span>
         </div>
-
-        {isOpen ? (
-          <ul className={styles.listbox} id={listboxId} role="listbox" aria-labelledby={selectId}>
-            {options.map(option => {
-              const isSelected = option.value === currentValue
-              const optionClassName = [
-                styles.option,
-                'typo-bd-sm-md',
-                isSelected ? styles.optionSelected : undefined,
-                option.disabled ? styles.optionDisabled : undefined,
-              ]
-                .filter(Boolean)
-                .join(' ')
-
-              return (
-                <li key={option.value} role="presentation">
-                  <button
-                    type="button"
-                    role="option"
-                    className={optionClassName}
-                    aria-selected={isSelected}
-                    disabled={option.disabled}
-                    onClick={() => handleSelect(option.value, option.disabled)}
-                  >
-                    {option.label}
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        ) : null}
       </div>
 
       {message ? <p className={messageClassName}>{message}</p> : null}
+      {listbox ? createPortal(listbox, document.body) : null}
     </div>
   )
 }
