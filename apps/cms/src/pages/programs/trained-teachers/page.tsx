@@ -108,13 +108,12 @@ function TrainedTeachersProgramPageContent() {
     Boolean(programIdFromUrl ?? selectedProgramForFullPageModal?.id)
   )
 
+  const detailData = detailQuery.data ?? null
   const detailProgram =
-    detailQuery.data ??
-    selectedProgramForFullPageModal ??
+    detailData ??
     (programIdFromUrl
-      ? filteredPrograms.find(p => p.id === programIdFromUrl) ??
-        ({ id: programIdFromUrl } as Program)
-      : null)
+      ? ({ id: programIdFromUrl } as Program)
+      : selectedProgramForFullPageModal)
 
   useEffect(() => {
     if (!isScheduledFilter) setSelectedRowKeys([])
@@ -396,8 +395,12 @@ function TrainedTeachersProgramPageContent() {
         open={Boolean(programIdFromUrl) || Boolean(selectedProgramForFullPageModal)}
         program={detailProgram}
         programVariant="trained-teachers"
-        externalLoading={detailQuery.isFetching && !detailProgram}
-        externalError={detailQuery.isError && !detailProgram}
+        externalLoading={
+          Boolean(programIdFromUrl) &&
+          !detailData &&
+          (detailQuery.isFetching || detailQuery.isLoading)
+        }
+        externalError={detailQuery.isError && !detailData}
         onClose={handleCloseFullPageModal}
         onUpdateProgram={
           remoteEnabled

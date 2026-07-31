@@ -36,8 +36,9 @@ export function useProgramDetail(
     queryKey: queryKeys.detail(dataScope, programId ?? ''),
     queryFn: () => detail(programId!),
     enabled: Boolean(programId),
+    // local(mock)만 목록 시드 허용. remote는 상세 GET 전 placeholder로 본문을 채우지 않음.
     initialData: dataScope === 'local' ? (initialData ?? undefined) : undefined,
-    placeholderData: initialData ?? undefined,
+    placeholderData: dataScope === 'local' ? (initialData ?? undefined) : undefined,
     staleTime: dataScope === 'remote' ? 30_000 : Infinity,
     retry: shouldRetryQuery,
   })

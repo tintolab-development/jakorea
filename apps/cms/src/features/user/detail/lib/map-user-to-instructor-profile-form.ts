@@ -127,10 +127,10 @@ function resolveHomeAddress(user: Omit<User, 'password'>): {
   homeAddress: string
   homeAddressDetail: string
 } {
-  const full = user.detailAddress?.trim() ?? ''
-  if (!full) return { homeAddress: '', homeAddressDetail: '' }
-  // 상세 주소가 별도 필드로 안 오면 전체를 검색 주소로 둔다
-  return { homeAddress: full, homeAddressDetail: '' }
+  return {
+    homeAddress: user.detailAddress?.trim() ?? '',
+    homeAddressDetail: user.detailAddressDetail?.trim() ?? '',
+  }
 }
 
 function mapTermsAgreements(

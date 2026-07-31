@@ -321,7 +321,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 8px;
   margin-left: auto;
 }
 
@@ -371,6 +371,22 @@
   background-image: none !important;
   color: var(--main-BK, #3d3d3d) !important;
   box-shadow: none !important;
+}
+
+.content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__password-change-btn.cms-button.ant-btn {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 6px 14px !important;
+  box-sizing: border-box;
+  border-radius: var(--radius-6, 6px) !important;
 }
 
 .content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__withdraw-button {

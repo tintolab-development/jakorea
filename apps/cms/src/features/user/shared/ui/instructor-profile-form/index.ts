@@ -23,4 +23,5 @@ export {
 export {
   InstructorProfileFormBody,
   type InstructorProfileFormBodyProps,
+  type InstructorProfileFormLayoutVariant,
 } from './instructor-profile-form-body'

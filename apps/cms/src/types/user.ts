@@ -177,6 +177,8 @@ export interface User {
   // 추가 프로필 정보
   bio?: string
   detailAddress?: string
+  /** 자택 주소 상세 — API `homeAddressDetail` / 개인 `addressDetail` */
+  detailAddressDetail?: string
   zipCode?: string
 
   // 회원 상세 모달 표시용 (선택)
@@ -184,6 +186,8 @@ export interface User {
   birthDate?: DateValue
   gender?: string
   affiliation?: string
+  /** 개인 회원 — API `enrollmentStatus` (`ENROLLED` | `NOT_ENROLLED`) */
+  schoolEnrollmentStatus?: 'ENROLLED' | 'NOT_ENROLLED'
   socialAccounts?: string[]
   /** 플랫폼 가입 시 서버가 판정한 만 14세 미만 여부 */
   under14?: boolean

@@ -8,6 +8,7 @@ import {
   affiliationAndGradeView,
   detailAddressView,
   genderBirthView,
+  instructorApplicationTypeLine,
   instructorBankView,
   instructorCareerYearsLine,
   oneLineIntroLine,
@@ -69,6 +70,13 @@ export function SchoolTeacherSection(ctx: BasicInfoSectionContext) {
           label="강사 경력"
           readOnlyDisplay
           view={<span>{instructorCareerYearsLine(user)}</span>}
+        />
+      </EditableRow>
+      <EditableRow type="single">
+        <EditableField
+          label="회원 유형"
+          readOnlyDisplay
+          view={<span>{instructorApplicationTypeLine(user)}</span>}
         />
       </EditableRow>
       <ContactInfoFieldsRow

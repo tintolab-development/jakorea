@@ -550,9 +550,11 @@ export function UjatProgramDetailFullPageModal({
   const sponsorName = onUpdateProgram ? externalSponsorName : legacySponsorName
 
   const displayProgram = useMemo(() => {
-    const base = program ?? detailProgram ?? null
+    // externalLoading 중 목록 시드로 본문 채우지 않음
+    if (onUpdateProgram && externalLoading) return null
+    const base = onUpdateProgram ? program : (program ?? detailProgram ?? null)
     return base ? resolveUjatProgramDisplayProgram(base) : null
-  }, [detailProgram, program])
+  }, [detailProgram, program, onUpdateProgram, externalLoading])
 
   const interviewEnabled = displayProgram ? getUjatVolunteerInterviewEnabled(displayProgram) : true
   const surveyItems = useMemo(
@@ -1760,7 +1762,7 @@ export function UjatProgramDetailFullPageModal({
         ) : null
       }
     >
-      {loading && !displayProgram ? (
+      {loading ? (
         <div className="detail-fullpage-modal__loading">
           <Spin size="large" />
         </div>

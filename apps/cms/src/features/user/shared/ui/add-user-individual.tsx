@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Form, Space } from 'antd'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
+import { buildPreRegisterTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
 import { individualAffiliationGradeSelectOptions } from '@/features/user/detail/ui/user-basic-info/sections/constants'
 import {
@@ -263,6 +264,20 @@ export function AddUserIndividual({
       schoolEnrollmentStatus: enrolled ? 'ENROLLED' : 'NOT_ENROLLED',
       affiliation,
       grade: enrolled ? values.grade.trim() : undefined,
+      termsAgreements: buildPreRegisterTermsAgreements(
+        {
+          consentTermsOfService: values.consentTermsOfService,
+          consentPersonal: values.consentPersonalInfo,
+          consentMarketing: values.consentMarketing,
+        },
+        {
+          consentPortrait: values.consentPortrait,
+          consentWithholdingTax: values.consentWithholdingTax,
+          consentFacilitatorPledge: values.consentFacilitatorPledge,
+          consentAdministrativeJoint: values.consentAdministrativeJoint,
+          consentSexOffenseCheck: values.consentSexOffenseCheck,
+        }
+      ),
     }
     await onSubmit(request)
     form.resetFields()

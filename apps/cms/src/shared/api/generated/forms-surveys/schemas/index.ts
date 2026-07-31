@@ -626,6 +626,8 @@ export * from './reconsentRequiredRequest';
 export * from './recruitmentResponse';
 export * from './refreshTokenRequest';
 export * from './render1200';
+export * from './renderApplicationFormParams';
+export * from './renderBinding200';
 export * from './representativeInstructorRequest';
 export * from './retentionEnforcementSummaryResponse';
 export * from './retentionPolicyResponse';

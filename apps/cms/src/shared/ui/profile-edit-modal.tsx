@@ -33,6 +33,7 @@ import {
 } from '@/features/auth/identity-verification'
 import { useIdentityVerification as useIdentityVerificationBase } from '@jakorea/identity-verification/react'
 import { CmsButton, CmsInput, CmsRadioGroup, ContentModal, useCmsAlert } from '@/shared/ui'
+import { ProfilePasswordChangeModal } from '@/shared/ui/profile-password-change-modal'
 import type { User } from '@/types/user'
 import { formatDate } from '@/shared/utils'
 import '@/features/user/detail/ui/user-consent-agreement-section.css'
@@ -178,6 +179,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
   const { showAlert } = useCmsAlert()
   const { linkedLabels, loading: loadingLinkedSocialAccounts } = useAdminLinkedSocialAccounts(open)
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
+  const [passwordChangeModalOpen, setPasswordChangeModalOpen] = useState(false)
   const [withdrawKeyword, setWithdrawKeyword] = useState('')
   const [withdrawing, setWithdrawing] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState<MarketingConsentValue>('agree')
@@ -228,6 +230,14 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
 
   const handleCancel = () => {
     onCancel()
+  }
+
+  const handleOpenPasswordChangeModal = () => {
+    setPasswordChangeModalOpen(true)
+  }
+
+  const handleClosePasswordChangeModal = () => {
+    setPasswordChangeModalOpen(false)
   }
 
   const handleOpenWithdrawModal = () => {
@@ -291,6 +301,8 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
 
   if (!user) return null
 
+  const isAdminUser = user.role === 'ADMIN'
+
   const serviceTerms = resolveTermsAgreement(user, 'SERVICE_TERMS')
   const personalInfoTerms = resolveTermsAgreement(user, 'PERSONAL_INFO')
   const linkedSocialDisplay =
@@ -317,6 +329,17 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
         >
           닫기
         </CmsButton>
+        {isAdminUser ? (
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            type="button"
+            className="profile-edit-modal__password-change-btn"
+            onClick={handleOpenPasswordChangeModal}
+          >
+            비밀번호 변경
+          </CmsButton>
+        ) : null}
       </div>
     </div>
   )
@@ -449,6 +472,11 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
           </div>
         </DetailInfoForm>
       </div>
+
+      <ProfilePasswordChangeModal
+        open={passwordChangeModalOpen}
+        onCancel={handleClosePasswordChangeModal}
+      />
 
       <ContentModal
         open={withdrawModalOpen}

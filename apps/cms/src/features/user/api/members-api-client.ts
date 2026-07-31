@@ -3,6 +3,7 @@ import type {
   ListAdminApprovalRequestsParams,
 } from '@/features/user/api/admin-approval-requests.types'
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { EXTERNAL_IDENTIFIER_PROVIDER_1365 } from '@/features/user/api/map-external-identifiers'
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 import { customInstance } from '@/shared/api/orval-mutator'
 import type {
@@ -195,6 +196,18 @@ export async function fetchMemberExternalIdentifiersRemote(
 ): Promise<ExternalIdentifierResponse[]> {
   const data = await unwrapApiBody(await membersApi.externalIdentifiers(memberId))
   return Array.isArray(data) ? data : []
+}
+
+export async function upsertMember1365ExternalIdentifierRemote(
+  memberId: number,
+  externalId: string
+): Promise<ExternalIdentifierResponse> {
+  return unwrapApiBody(
+    await membersApi.upsertExternalIdentifier(memberId, EXTERNAL_IDENTIFIER_PROVIDER_1365, {
+      externalId,
+      reason: 'CMS 관리자 회원 정보 수정',
+    })
+  )
 }
 
 /** @deprecated 역할별 pre-register 사용 권장 */

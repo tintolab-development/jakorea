@@ -1,11 +1,11 @@
-# CMS 회원 관리 API — 백엔드 전달 (통합 · 2026-07-30)
+# CMS 회원 관리 API — 백엔드 전달 (통합 · 2026-07-31)
 
 JaKorea **CMS 회원 관리** LNB(회원 목록 · 권한 승인 · 권한 설정) FE 연동 기준 **백엔드 확인·구현 요청**을 **본 문서 하나**에 모았습니다.  
-(2026-07-23·28·29 분할 handoff 내용 중 **아직 유효한 항목**과 **7/30 신규 블로커**를 통합·갱신했습니다.)
+(2026-07-23·28·29 분할 handoff 내용 중 **아직 유효한 항목**과 **7/30·7/31 갱신**을 통합·반영했습니다.)
 
 | 항목 | 값 |
 |------|-----|
-| **작성일** | 2026-07-30 |
+| **작성일** | 2026-07-31 |
 | **대상 BE** | `members` · `admin-accounts` · `instructor-role-requests` · `admin-approval-requests` · (unmask 감사로그) `logs` |
 | **FE 앱** | `apps/cms` |
 | **OpenAPI snapshot** | `apps/cms/openapi/members.openapi.json` (선택 첨부) |
@@ -23,6 +23,9 @@ JaKorea **CMS 회원 관리** LNB(회원 목록 · 권한 승인 · 권한 설�
 3. **P0 — 강사 권한 박탈 목록**  
    revoke 성공 후 목록 item에 `instructorStatus=REVOKED`(또는 `revokedAt`) 미하달 → 새로고침 시 UI 회귀 (§3.1).
 4. **P0~P1 — 역할별 등록·상세 path 분리(B안)** · 마스킹 · pre-register — §4~§5 (2026-07-23 이후 미해결 항목 유지).
+5. **P0 — CMS 관리자 등록 약관 `termsAgreements`** — 학교/강사/관리자/개인 **4유형** round-trip · `consent-records` — §4.1 · [강사 handoff §3.4](./instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md#34-관리자-등록--약관동의-p0)
+6. **P0 — unmask `reason` 최소 길이** — OpenAPI `minLength: 5` → **1** 허용 (§2.7)
+7. **P0 — API 에러 메시지 사용자 문구** — CMS·Platform 공통 ([backend-handoff §에러 응답](../backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통))
 
 FE는 BE가 §2 확정 후 Orval 재생성 → admin unmask·코멘트 분기 연동 예정.
 
@@ -134,6 +137,28 @@ FE는 **어느 쪽이든** Orval 재생성 후 연동 가능. **일관성상 Opt
 2. 임의 행 클릭 → 상세 → **개인정보 상세보기** → 사유 입력 → 확인
 3. DevTools Network에서 unmask URL 확인 (현재: `/api/users/{uuid}/…` — 수정 후 Option A/B path)
 
+### 2.7 unmask `reason` 길이 제한 (P0 · 2026-07-31 관측)
+
+| | |
+|---|---|
+| **OpenAPI** | `AdminPrivacyUnmaskRequest.reason` — `minLength: 5`, `maxLength: 500` |
+| **적용 path** | `POST …/users/{memberId}/privacy/unmask` · 역할별 `…/individual|instructor|school/…/privacy/unmask` · (Option A) `…/admin-accounts/{adminId}/privacy/unmask` |
+| **증상** | CMS 「개인정보 상세보기」→ 사유 **1~4자** 입력 후 「정보 열람」→ **400** · 모달 **「열람 실패」** |
+| **현재 BE 메시지 (그대로 UI 노출)** | `reason 크기가 5에서 500 사이여야 합니다` |
+| **FE 동작** | `use-personal-info-reveal.ts` — `PrivacyUnmaskApiError.message`를 **가공 없이** alert 본문에 표시 |
+
+**BE 요청**
+
+1. `reason` **`minLength` 5 → 1** (또는 제거) — **1글자 이상**이면 unmask 허용. `maxLength: 500` 유지 가능.
+2. OpenAPI `AdminPrivacyUnmaskRequest` · Bean Validation · 에러 메시지 **동시 갱신**.
+3. 검증 실패 시 사용자 메시지 예: **`열람 사유를 입력해 주세요.`** / **`열람 사유는 500자 이내로 입력해 주세요.`** — [공통 에러 메시지 정책 §](../backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통)
+
+**수락 기준**
+
+- [ ] 사유 1글자(`"a"`) 입력 → unmask **200**
+- [ ] 빈 문자열·공백만 → **400** + 사용자 문구 (필드명 `reason`·`minLength` **미노출**)
+- [ ] 501자 이상 → **400** + 「500자 이내」 안내
+
 ---
 
 ## 3. P0 — 기타 운영 블로커 (7/29 관측 · 미해결)
@@ -178,6 +203,21 @@ FE는 **어느 쪽이든** Orval 재생성 후 연동 가능. **일관성상 Opt
 - `createAdmin` / admin 목록 / `GET users?role=ADMIN` **동일 계정 uuid·adminAccountId·(Option B 시) memberId** 정합
 - pre-register 로 ADMIN 생성 시 **4xx**
 
+### 4.1 CMS 관리자 등록 — 약관·동의 `termsAgreements` (P0)
+
+**상세 (역할별 표·`termsType` 매핑·`consent-records` 요청):** [instructor-pre-register-detail-roundtrip-handoff §3.4](./instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md#34-관리자-등록--약관동의-p0)
+
+| 등록 유형 | CMS 화면 | FE → API (2026-07-31) | BE 잔여 |
+|-----------|----------|------------------------|---------|
+| **학교(기관)** | 약관 UI **없음** | 미전송 | OpenAPI `termsAgreements?`만 존재 · 정책·UI 확정 후 연동 |
+| **강사** | 8건 (라디오 3 + 동의서 5) | **8건 전송** | pre-register 저장 → `GET …/consent-records` round-trip |
+| **개인** | 8건 (강사와 동일) | **8건 전송** | 동일 |
+| **관리자** | 4건 (MFA 포함) | **0건** — `AdminAccountCreateRequest`에 **`termsAgreements` 없음** | 스키마 추가 후 FE 연동 |
+
+- FE 빌더: `apps/cms/src/features/user/api/build-pre-register-terms-agreements.ts`
+- 동의서 작성형: 현재 `agreed: true`만 전송 — `formResponseId`·스냅샷은 BE API 확정 후
+- 상세 동의 탭: `termsAgreements` → `consent-records` **`consentType` ↔ `termsType` 1:1** OpenAPI 명시
+
 ---
 
 ## 5. P1 — 목록·상세 DTO · 마스킹 · 필터
@@ -195,8 +235,10 @@ FE는 **어느 쪽이든** Orval 재생성 후 연동 가능. **일관성상 Opt
 | 기관 주소 | **마스킹 없음** |
 | 계좌 | 은행명 제외 · 번호 전부 `*` · 예금주 성만 |
 | 1365 ID | 뒤 3자리 `*` |
+| **강사 프로필 (비-PII)** | **마스킹 GET에서도 원문** — 아래 필드는 **CMS 화면 라벨과 API 키가 다름** ([강사 handoff §3.2](./instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md#32-강사-프로필-공개-필드--마스킹-get-오적용-p0) 매핑표 참고) |
+| | `careerText` → CMS 「강사 경력」(연차 요약) · `oneLineIntro` → 「한 줄 소개」 · `selfIntroduction` → 「자유작성 1」(≠ 한 줄 소개) · `educationLevel` → 「최종 학력」 코드 |
 
-역할별 상세 DTO(M-P0-1) 확정 시 동일 정책 반복 명시.
+역할별 상세 DTO(M-P0-1) 확정 시 동일 정책 반복 명시. **`"마스킹"` placeholder 리터럴은 PII 필드에만** 사용.
 
 ### 5.2 기타 P1
 
@@ -224,11 +266,13 @@ FE는 **어느 쪽이든** Orval 재생성 후 연동 가능. **일관성상 Opt
 - [ ] **§2.4** 관리자 코멘트 — Option에 맞는 API
 - [ ] **§3.1** 강사 revoke 후 목록 `REVOKED` (또는 equivalent)
 - [ ] **§4** 역할별 pre-register·상세 path (관리자 admin-accounts 유지)
+- [ ] **§4.1** 등록 `termsAgreements` — **학교·강사·개인·관리자** 저장·`consent-records` round-trip ([instructor handoff §3.4](./instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md#34-관리자-등록--약관동의-p0))
+- [ ] **§2.7** unmask `reason` **minLength 1** · 사용자 친화 validation 메시지
 - [ ] admin 계정 식별자 정합 (uuid · adminAccountId · memberId)
 
 ### P1
 
-- [ ] **§5.1** 마스킹 필드 정책 OpenAPI 명시
+- [ ] **§5.1** 마스킹 필드 정책 OpenAPI 명시 · **강사 프로필 공개 필드 GET 원문** ([instructor handoff §3.2](./instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md#32-강사-프로필-공개-필드--마스킹-get-오적용-p0))
 - [ ] **§5.2** teacherMemberId · 필터 · roleCode · admin resend notification
 
 ---
@@ -256,5 +300,5 @@ pnpm --filter cms exec playwright test \
 
 ---
 
-**Last updated:** 2026-07-30  
+**Last updated:** 2026-07-31 (§2.7 unmask reason · §4.1 등록 약관 · [강사 handoff](./instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md) cross-ref)  
 **작성:** CMS FE (회원 관리 · admin-accounts 전환 · unmask 블로커 기준)

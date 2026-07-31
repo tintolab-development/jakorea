@@ -10,6 +10,18 @@ export function isInstructorMaskedPlaceholder(value: string | undefined | null):
   return MASKED_PLACEHOLDERS.has(trimmed)
 }
 
+/**
+ * 강사 프로필 공개 텍스트(경력·소개·학력 등) — BE `"마스킹"` placeholder는 미입력으로 취급.
+ * 마스킹 정책상 PII가 아니므로 GET 기본 응답에 원문이 와야 하나, BE 오적용 시 화면에 `"마스킹"` 노출 방지.
+ */
+export function resolveInstructorPublicTextField(
+  value: string | undefined | null
+): string | undefined {
+  const trimmed = value?.trim()
+  if (!trimmed || isInstructorMaskedPlaceholder(trimmed)) return undefined
+  return trimmed
+}
+
 /** API activity / instructorType 코드 → 화면 라벨 */
 const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   GENERAL: '일반 강사',
@@ -72,10 +84,38 @@ export function toEmploymentStatusDisplayLabel(
 
 /** `careerText`가 숫자만이면 `N년`으로 표시 */
 export function formatInstructorCareerDisplay(raw: string | undefined | null): string | undefined {
-  const trimmed = raw?.trim()
-  if (!trimmed || isInstructorMaskedPlaceholder(trimmed)) return undefined
+  const trimmed = resolveInstructorPublicTextField(raw)
+  if (!trimmed) return undefined
   if (/^\d+$/.test(trimmed)) return `${trimmed}년`
   return trimmed
+}
+
+const EDU_SCHOOL_TYPE_LABELS: Record<string, string> = {
+  high: '고등학교',
+  college23: '대학교 2, 3년제',
+  college4: '대학교 4년제',
+  graduate: '대학원',
+}
+
+const EDU_STATUS_LABELS: Record<string, string> = {
+  enrolled: '재학',
+  graduated: '졸업',
+  completed: '수료',
+}
+
+/** `educationLevel` 요약(`college4 / graduated` 등) → 화면 표시용 */
+export function formatInstructorEducationLevelDisplay(
+  raw: string | undefined | null
+): string | undefined {
+  const trimmed = resolveInstructorPublicTextField(raw)
+  if (!trimmed || trimmed === '-') return undefined
+
+  const [schoolType, status] = trimmed.split(/\s*\/\s*/).map(part => part.trim())
+  const schoolLabel = schoolType ? (EDU_SCHOOL_TYPE_LABELS[schoolType] ?? schoolType) : undefined
+  const statusLabel = status ? (EDU_STATUS_LABELS[status] ?? status) : undefined
+
+  if (schoolLabel && statusLabel) return `${schoolLabel} / ${statusLabel}`
+  return schoolLabel ?? trimmed
 }
 
 /** 승인·프로필 status 코드 — 강사비 등급에 잘못 섞인 값 제외 */
@@ -103,7 +143,8 @@ const FEE_GRADE_LEVEL_LABELS: Record<string, string> = {
 
 /**
  * 강사비 등급 표시용.
- * BE가 `defaultFeeGrade`에 승인 status(`APPROVED` 등)를 넣는 경우를 걸러낸다.
+ * `instructorProfile.defaultFeeGrade`만 사용한다.
+ * BE가 `defaultFeeGrade`·`feeGrade`·`status`에 승인 코드(`APPROVED` 등)를 넣는 경우를 걸러낸다.
  */
 export function toInstructorFeeGradeDisplayLabel(
   raw: string | undefined | null

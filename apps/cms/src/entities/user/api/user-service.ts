@@ -32,6 +32,10 @@ import {
 } from '@/features/user/api/member-remote-capabilities'
 import { mapMemberListItems } from '@/features/user/api/map-member-list-item'
 import {
+  applySavedBasicInfoPatchToUser,
+  mergeListUserWithFetchedDetail,
+} from '@/features/user/api/merge-list-user-with-detail'
+import {
   mapIndividualMemberDetailToUser,
   mapInstructorMemberDetailToUser,
   mapMemberDetailToUser,
@@ -300,6 +304,7 @@ export type PatchUserBasicInfoInput = Partial<
     | 'birthDate'
     | 'socialAccounts'
     | 'adminComment'
+    | 'bio'
     | 'schoolInfo'
     | 'instructorInfo'
     | 'listMetrics'
@@ -329,25 +334,15 @@ async function mergeUserFromApiResponse(
   if (!mapped) {
     throw new Error('회원 정보 수정 응답을 처리하지 못했습니다.')
   }
-  if (!existing) return mapped
-  return {
-    ...existing,
-    ...mapped,
-    listMetrics: {
-      ...existing.listMetrics,
-      ...mapped.listMetrics,
-      ...patch?.listMetrics,
-    },
-    schoolInfo: patch?.schoolInfo
-      ? { ...existing.schoolInfo, ...mapped.schoolInfo, ...patch.schoolInfo }
-      : mapped.schoolInfo ?? existing.schoolInfo,
-    instructorInfo: patch?.instructorInfo
-      ? { ...existing.instructorInfo, ...mapped.instructorInfo, ...patch.instructorInfo }
-      : mapped.instructorInfo ?? existing.instructorInfo,
-    ...(patch && Object.prototype.hasOwnProperty.call(patch, 'adminComment')
-      ? { adminComment: patch.adminComment }
-      : {}),
+  if (!existing) {
+    return patch ? applySavedBasicInfoPatchToUser(mapped, patch) : mapped
   }
+
+  let merged = mergeListUserWithFetchedDetail(existing, mapped)
+  if (patch) {
+    merged = applySavedBasicInfoPatchToUser(merged, patch)
+  }
+  return merged
 }
 
 async function patchAdminUserBasicInfoRemote(

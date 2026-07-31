@@ -93,13 +93,12 @@ export default function SponsorPage() {
   const detailFromUrlQuery = useSponsorDetailQuery(sponsorIdFromUrl || null, Boolean(sponsorIdFromUrl))
   const sponsorRowForDetail = useMemo((): SponsorManagementRow | null => {
     if (!sponsorIdFromUrl) return null
-    const fromList = rows.find(r => r.id === sponsorIdFromUrl)
-    if (fromList) return fromList
+    // 상세 GET 결과만 본문에 사용 (목록 행 선표시 금지)
     if (detailFromUrlQuery.data) {
       const { contacts: _c, programHistories: _p, ...row } = detailFromUrlQuery.data
       return row
     }
-    if (detailFromUrlQuery.isLoading) {
+    if (detailFromUrlQuery.isLoading || detailFromUrlQuery.isFetching) {
       return {
         id: sponsorIdFromUrl,
         name: '',
@@ -109,7 +108,12 @@ export default function SponsorPage() {
       }
     }
     return null
-  }, [detailFromUrlQuery.data, detailFromUrlQuery.isLoading, rows, sponsorIdFromUrl])
+  }, [
+    detailFromUrlQuery.data,
+    detailFromUrlQuery.isFetching,
+    detailFromUrlQuery.isLoading,
+    sponsorIdFromUrl,
+  ])
   const sponsorDetailOpen = Boolean(sponsorIdFromUrl && sponsorRowForDetail)
 
   useEffect(() => {

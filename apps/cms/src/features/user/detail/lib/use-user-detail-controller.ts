@@ -63,10 +63,13 @@ import { useQueryClient } from '@tanstack/react-query'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { applyPrivacyUnmaskResponseToUser } from '@/features/user/api/apply-privacy-unmask-to-user'
-import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
 import {
-  isMembersRemoteEnabled,
-} from '@/features/user/api/member-remote-capabilities'
+  applySavedBasicInfoPatchToUser,
+  mergeListUserWithFetchedDetail,
+} from '@/features/user/api/merge-list-user-with-detail'
+import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
+import { upsertMember1365ExternalIdentifierRemote } from '@/features/user/api/members-api-client'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
@@ -404,11 +407,12 @@ export function useUserDetailController({
     [displayUser, basicInfoEntrySource, searchParams, currentUser, focusDetailInfoTab]
   )
 
-  /** 관리자 등록 회원 — 마스킹 미해제 시 안내 모달 후 unmask, 이후 수정 진입 */
+  /** 관리자 등록 회원 — 마스킹 미해제 시 안내 모달 후 unmask, 이후 수정 진입.
+   * 학교(기관) 상세는 마스킹 대상 없음 → 안내 모달 없이 바로 수정 진입. */
   const requestStartBasicInfoEdit = useCallback(() => {
     if (!displayUser) return
     if (!shouldShowCmsMemberInfoEditButton(displayUser)) return
-    if (!personalInfoRevealed) {
+    if (displayUser.role !== 'SCHOOL' && !personalInfoRevealed) {
       setEditUnmaskConfirmOpen(true)
       return
     }
@@ -519,15 +523,37 @@ export function useUserDetailController({
       }
 
       const updated = await patchMemberBasicInfo(displayUser.id, patch)
+      let merged = applySavedBasicInfoPatchToUser(
+        mergeListUserWithFetchedDetail(displayUser, updated),
+        patch
+      )
+
+      const draftId1365 = (basicInfoDraft.id1365 ?? '').trim()
+      const currentId1365 = (displayUser.id1365 ?? '').trim()
+      if (
+        displayUser.role === 'INDIVIDUAL' &&
+        membersRemote &&
+        displayUser.memberId != null &&
+        draftId1365 !== currentId1365 &&
+        draftId1365
+      ) {
+        await upsertMember1365ExternalIdentifierRemote(displayUser.memberId, draftId1365)
+        merged = { ...merged, id1365: draftId1365 }
+      }
       if (membersRemote && displayUser.memberId != null) {
         void queryClient.invalidateQueries({
           queryKey: [...memberQueryKeys.all, 'comments', displayUser.memberId],
         })
+        queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
+        queryClient.setQueryData(
+          [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
+          merged
+        )
       }
       setBasicInfoEditing(false)
       setBasicInfoEditScope('none')
       setBasicInfoDraft(null)
-      onMemberBasicInfoSaved?.(updated)
+      onMemberBasicInfoSaved?.(merged)
     } catch (error) {
       handleError(error, { defaultMessage: '회원 정보 저장에 실패했습니다.' })
     } finally {
@@ -779,7 +805,13 @@ export function useUserDetailController({
   const instructorResumeApplicantRow = useMemo((): ApplicantInstructorRow | null => {
     if (!displayUser || displayUser.role !== 'INSTRUCTOR') return null
     const profile = resolveInstructorMemberProfile(displayUser)
-    if (profile !== 'instructor_dual' && profile !== 'instructor_only') return null
+    if (
+      profile !== 'instructor_dual' &&
+      profile !== 'instructor_only' &&
+      profile !== 'school_teacher'
+    ) {
+      return null
+    }
     const src = personalInfoRevealed ? displayUser : maskedUserForInstructorDetail(displayUser)
     return userToApplicantInstructorRow(src)
   }, [displayUser, personalInfoRevealed])
