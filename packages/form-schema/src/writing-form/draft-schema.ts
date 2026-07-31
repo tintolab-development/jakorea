@@ -2382,7 +2382,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         periodMode: 'immediate',
         startAt: null,
         endAt: null,
-        showWritingPeriodOnForm: true,
+        showWritingPeriodOnForm: false,
       },
       {
         id: AGREEMENT_NOTICE_PARAGRAPH_IDS.institution,
@@ -2478,24 +2478,32 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
   }
 }
 
-/** 구 저장본에 confirmationClosing이 없으면 systemDate 앞에 삽입 */
+/** 구 저장본에 confirmationClosing이 없으면 systemDate 앞에 삽입. 제목형 작성 기간은 항상 off. */
 export function ensureAgreementNoticeConfirmationClosing(
   draft: WritingFormDraft
 ): WritingFormDraft {
-  if (
-    draft.paragraphs.some(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing)
-  ) {
-    return draft
+  let paragraphs = draft.paragraphs.map(p => {
+    if (
+      p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.title &&
+      p.kind === 'description' &&
+      p.variant === 'survey_title_with_period' &&
+      p.showWritingPeriodOnForm
+    ) {
+      return { ...p, showWritingPeriodOnForm: false }
+    }
+    return p
+  })
+
+  if (!paragraphs.some(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing)) {
+    const dateIdx = paragraphs.findIndex(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate)
+    paragraphs = [...paragraphs]
+    if (dateIdx >= 0) {
+      paragraphs.splice(dateIdx, 0, AGREEMENT_NOTICE_CONFIRMATION_CLOSING)
+    } else {
+      paragraphs.push(AGREEMENT_NOTICE_CONFIRMATION_CLOSING)
+    }
   }
-  const dateIdx = draft.paragraphs.findIndex(
-    p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate
-  )
-  const paragraphs = [...draft.paragraphs]
-  if (dateIdx >= 0) {
-    paragraphs.splice(dateIdx, 0, AGREEMENT_NOTICE_CONFIRMATION_CLOSING)
-  } else {
-    paragraphs.push(AGREEMENT_NOTICE_CONFIRMATION_CLOSING)
-  }
+
   return { ...draft, paragraphs }
 }
 

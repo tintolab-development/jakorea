@@ -22,7 +22,7 @@
         "periodMode": "immediate",
         "startAt": null,
         "endAt": null,
-        "showWritingPeriodOnForm": true
+        "showWritingPeriodOnForm": false
       },
       {
         "id": "agreement-notice-institution",

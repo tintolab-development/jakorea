@@ -117,6 +117,15 @@ describe('buildAgreementConsentFillParagraphBodyOptions', () => {
 
     expect(options?.agreementAdminProxyConfirm).toBe(true)
     expect(options?.agreementSystemParticipantName).toBe('김철수')
+    expect(options?.hideSurveyWritingPeriod).toBe(true)
+    expect(options?.agreementNoticeIdTypeInteractive).toBe(true)
+    expect(options?.agreementConsentFillInteractiveParagraphIds).toEqual(
+      new Set([
+        'agreement-notice-institution',
+        'agreement-notice-purpose',
+        'agreement-notice-subject',
+      ])
+    )
     expect(options?.hiddenParagraphIds).toEqual(
       new Set(['agreement-notice-system-date', 'agreement-notice-system-signature'])
     )
