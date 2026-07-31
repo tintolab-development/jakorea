@@ -7,6 +7,7 @@ import { getMemberPermissionInstructorApplicationTypeLabel } from '@/features/us
 import {
   formatInstructorEducationLevelDisplay,
   isInstructorMaskedPlaceholder,
+  resolveInstructorPublicTextField,
 } from '@/features/user/api/map-instructor-activity-display'
 import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
@@ -145,7 +146,7 @@ export function affiliationAndGradeView(user: Omit<User, 'password'>): ReactNode
 }
 
 export function affiliationAndInstructorCareerLine(user: Omit<User, 'password'>): string {
-  const summary = user.listMetrics?.instructorCareerSummaryLabel?.trim()
+  const summary = resolveInstructorPublicTextField(user.listMetrics?.instructorCareerSummaryLabel)
   if (summary) return summary
 
   const school = user.affiliatedSchoolName?.trim()
@@ -163,7 +164,7 @@ export function affiliationAndInstructorCareerLine(user: Omit<User, 'password'>)
 
 /** 강사 기본 정보 — 소속 및 강사 경력 td (문자 `|` 대신 TdDivider, gap 12px) */
 export function affiliationAndInstructorCareerView(user: Omit<User, 'password'>): ReactNode {
-  const summary = user.listMetrics?.instructorCareerSummaryLabel?.trim()
+  const summary = resolveInstructorPublicTextField(user.listMetrics?.instructorCareerSummaryLabel)
   if (summary) return summary
 
   const school = user.affiliatedSchoolName?.trim()
@@ -197,8 +198,8 @@ export function affiliationAndInstructorCareerView(user: Omit<User, 'password'>)
 }
 
 export function highestEducationLine(user: Omit<User, 'password'>): string {
-  const raw = user.listMetrics?.highestEducationLabel?.trim()
-  if (!raw || raw === '-') return '-'
+  const raw = resolveInstructorPublicTextField(user.listMetrics?.highestEducationLabel)
+  if (!raw) return '-'
   return formatInstructorEducationLevelDisplay(raw) ?? raw
 }
 
@@ -208,22 +209,17 @@ export function highestEducationView(user: Omit<User, 'password'>): ReactNode {
 }
 
 export function instructorCareerYearsLine(user: Omit<User, 'password'>): string {
-  const yearsLabel = user.listMetrics?.instructorCareerYearsLabel?.trim()
-  if (yearsLabel && yearsLabel !== '-') {
-    if (isInstructorMaskedPlaceholder(yearsLabel)) return yearsLabel
-    return yearsLabel
-  }
+  const yearsLabel = resolveInstructorPublicTextField(user.listMetrics?.instructorCareerYearsLabel)
+  if (yearsLabel) return yearsLabel
 
-  const summary = user.listMetrics?.instructorCareerSummaryLabel?.trim()
-  if (summary && summary !== '-') {
-    if (isInstructorMaskedPlaceholder(summary)) return summary
+  const summary = resolveInstructorPublicTextField(user.listMetrics?.instructorCareerSummaryLabel)
+  if (summary) {
     if (/^\d+$/.test(summary)) return `${summary}년`
     return summary
   }
 
-  const careerText = user.instructorCareerText?.trim()
-  if (careerText && careerText !== '-') {
-    if (isInstructorMaskedPlaceholder(careerText)) return careerText
+  const careerText = resolveInstructorPublicTextField(user.instructorCareerText)
+  if (careerText) {
     if (/^\d+$/.test(careerText)) return `${careerText}년`
     return careerText
   }
@@ -232,6 +228,11 @@ export function instructorCareerYearsLine(user: Omit<User, 'password'>): string 
   if (typeof years === 'number' && years > 0) return `${years}년`
   if (typeof years === 'number' && years === 0) return '0년'
   return '-'
+}
+
+export function oneLineIntroLine(user: Omit<User, 'password'>): string {
+  const bio = resolveInstructorPublicTextField(user.bio)
+  return bio ?? '-'
 }
 
 /** 강사 소속 — 학교(기관)와 그 외(JA 강사단 등)를 분리. 여러 소속은 콤마로 합친다. */
@@ -303,13 +304,6 @@ export function instructorFeeGradeLine(user: Omit<User, 'password'>): string {
     return '-'
   }
   return grade
-}
-
-export function oneLineIntroLine(user: Omit<User, 'password'>): string {
-  const bio = user.bio?.trim()
-  if (!bio) return '-'
-  if (isInstructorMaskedPlaceholder(bio)) return bio
-  return bio
 }
 
 /** 회원 관리 기준 신청·소속 구분 (강사비 등급 `instructorTypeLabel`은 사용하지 않음) */

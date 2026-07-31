@@ -10,6 +10,18 @@ export function isInstructorMaskedPlaceholder(value: string | undefined | null):
   return MASKED_PLACEHOLDERS.has(trimmed)
 }
 
+/**
+ * 강사 프로필 공개 텍스트(경력·소개·학력 등) — BE `"마스킹"` placeholder는 미입력으로 취급.
+ * 마스킹 정책상 PII가 아니므로 GET 기본 응답에 원문이 와야 하나, BE 오적용 시 화면에 `"마스킹"` 노출 방지.
+ */
+export function resolveInstructorPublicTextField(
+  value: string | undefined | null
+): string | undefined {
+  const trimmed = value?.trim()
+  if (!trimmed || isInstructorMaskedPlaceholder(trimmed)) return undefined
+  return trimmed
+}
+
 /** API activity / instructorType 코드 → 화면 라벨 */
 const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   GENERAL: '일반 강사',
@@ -72,8 +84,8 @@ export function toEmploymentStatusDisplayLabel(
 
 /** `careerText`가 숫자만이면 `N년`으로 표시 */
 export function formatInstructorCareerDisplay(raw: string | undefined | null): string | undefined {
-  const trimmed = raw?.trim()
-  if (!trimmed || isInstructorMaskedPlaceholder(trimmed)) return trimmed || undefined
+  const trimmed = resolveInstructorPublicTextField(raw)
+  if (!trimmed) return undefined
   if (/^\d+$/.test(trimmed)) return `${trimmed}년`
   return trimmed
 }
@@ -95,9 +107,8 @@ const EDU_STATUS_LABELS: Record<string, string> = {
 export function formatInstructorEducationLevelDisplay(
   raw: string | undefined | null
 ): string | undefined {
-  const trimmed = raw?.trim()
+  const trimmed = resolveInstructorPublicTextField(raw)
   if (!trimmed || trimmed === '-') return undefined
-  if (isInstructorMaskedPlaceholder(trimmed)) return trimmed
 
   const [schoolType, status] = trimmed.split(/\s*\/\s*/).map(part => part.trim())
   const schoolLabel = schoolType ? (EDU_SCHOOL_TYPE_LABELS[schoolType] ?? schoolType) : undefined

@@ -77,10 +77,6 @@ function pickFirstNonMaskedString(
     const trimmed = value?.trim()
     if (trimmed && !isInstructorMaskedPlaceholder(trimmed)) return trimmed
   }
-  for (const value of candidates) {
-    const trimmed = value?.trim()
-    if (trimmed) return trimmed
-  }
   return undefined
 }
 

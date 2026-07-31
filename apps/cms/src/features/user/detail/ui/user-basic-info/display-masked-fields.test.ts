@@ -21,12 +21,12 @@ function baseUser(partial: Partial<Omit<User, 'password'>> = {}): Omit<User, 'pa
 }
 
 describe('instructor detail masked field display', () => {
-  it('oneLineIntroLine — 마스킹 placeholder를 그대로 노출한다', () => {
-    expect(oneLineIntroLine(baseUser({ bio: '마스킹' }))).toBe('마스킹')
+  it('oneLineIntroLine — BE `"마스킹"` placeholder는 `-`로 표시한다', () => {
+    expect(oneLineIntroLine(baseUser({ bio: '마스킹' }))).toBe('-')
     expect(oneLineIntroLine(baseUser({ bio: undefined }))).toBe('-')
   })
 
-  it('instructorCareerYearsLine — 마스킹 placeholder를 그대로 노출한다', () => {
+  it('instructorCareerYearsLine — BE `"마스킹"` placeholder는 `-`로 표시한다', () => {
     expect(
       instructorCareerYearsLine(
         baseUser({
@@ -34,7 +34,17 @@ describe('instructor detail masked field display', () => {
           listMetrics: { instructorCareerYearsLabel: '마스킹' },
         })
       )
-    ).toBe('마스킹')
+    ).toBe('-')
+  })
+
+  it('highestEducationLine — `"마스킹"` placeholder는 `-`로 표시한다', () => {
+    expect(
+      highestEducationLine(
+        baseUser({
+          listMetrics: { highestEducationLabel: '마스킹' },
+        })
+      )
+    ).toBe('-')
   })
 
   it('highestEducationLine — educationLevel 코드를 한글로 표시한다', () => {

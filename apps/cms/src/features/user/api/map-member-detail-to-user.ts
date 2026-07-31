@@ -11,6 +11,7 @@ import {
   formatInstructorCareerDisplay,
   formatInstructorEducationLevelDisplay,
   isInstructorMaskedPlaceholder,
+  resolveInstructorPublicTextField,
   looksLikeInstructorActivityEnumCode,
   mapInstructorActivityTypesToLabels,
   toEmploymentStatusDisplayLabel,
@@ -294,11 +295,11 @@ function applyInstructorProfile(
     isBusinessIncome: businessIncome ?? false,
   }
 
-  const oneLine = pickTrimmed(profile?.oneLineIntro)
-  const selfIntro = pickTrimmed(profile?.selfIntroduction)
+  const oneLine = resolveInstructorPublicTextField(profile?.oneLineIntro)
+  const selfIntro = resolveInstructorPublicTextField(profile?.selfIntroduction)
   if (oneLine) {
     user.bio = oneLine
-  } else if (selfIntro && !isInstructorMaskedPlaceholder(selfIntro)) {
+  } else if (selfIntro) {
     user.bio = selfIntro
   }
 
@@ -311,12 +312,11 @@ function applyInstructorProfile(
     user.detailAddressDetail = homeAddressDetail
   }
 
-  const careerText = pickTrimmed(profile?.careerText)
-  const careerDisplay = formatInstructorCareerDisplay(careerText)
+  const careerDisplay = formatInstructorCareerDisplay(profile?.careerText)
   if (careerDisplay) {
     user.instructorCareerText = careerDisplay
   }
-  if (selfIntro?.trim()) {
+  if (selfIntro) {
     user.instructorSelfIntroduction = selfIntro
   }
 
@@ -337,12 +337,15 @@ function applyInstructorProfile(
 
   const feeGrade = toInstructorFeeGradeDisplayLabel(profile?.defaultFeeGrade)
   const jaGrade = pickTrimmed(profile?.defaultJaGrade, profile?.jaGrade)
-  const educationLevel = pickTrimmed(profile?.educationLevel)
+  const educationLevel = resolveInstructorPublicTextField(profile?.educationLevel)
+  const educationDisplay = educationLevel
+    ? formatInstructorEducationLevelDisplay(educationLevel) ?? educationLevel
+    : undefined
 
   user.listMetrics = assignDefinedListMetrics(user.listMetrics, {
     instructorFeeGradeLabel: feeGrade,
     jaEvaluationGrade: jaGrade,
-    highestEducationLabel: formatInstructorEducationLevelDisplay(educationLevel) ?? educationLevel,
+    highestEducationLabel: educationDisplay,
     instructorCareerSummaryLabel: careerDisplay,
     instructorCareerYearsLabel: careerDisplay,
     permissionApplicationTypeLabel:

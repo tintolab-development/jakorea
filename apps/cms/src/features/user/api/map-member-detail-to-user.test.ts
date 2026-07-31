@@ -161,15 +161,15 @@ describe('mapInstructorMemberDetailToUser', () => {
     )
 
     expect(user.affiliation).toBeUndefined()
-    expect(user.bio).toBe('마스킹')
-    expect(user.instructorSelfIntroduction).toBe('마스킹')
+    expect(user.bio).toBeUndefined()
+    expect(user.instructorSelfIntroduction).toBeUndefined()
     expect(user.instructorMemberProfile).toBe('instructor_only')
     expect(user.listMetrics?.permissionApplicationTypeLabel).toBe('일반 강사')
     expect(user.listMetrics?.instructorCareerYearsLabel).toBe('16년')
     expect(user.listMetrics?.instructorCareerSummaryLabel).toBe('16년')
   })
 
-  it('마스킹 placeholder 경력·소개 필드를 User에 보존한다', () => {
+  it('BE `"마스킹"` placeholder 경력·소개 필드는 User에 저장하지 않는다', () => {
     const user = mapInstructorMemberDetailToUser(
       baseInstructorDetail({
         instructorProfile: {
@@ -183,10 +183,10 @@ describe('mapInstructorMemberDetailToUser', () => {
       })
     )
 
-    expect(user.bio).toBe('마스킹')
-    expect(user.instructorCareerText).toBe('마스킹')
-    expect(user.instructorSelfIntroduction).toBe('마스킹')
-    expect(user.listMetrics?.highestEducationLabel).toBe('마스킹')
+    expect(user.bio).toBeUndefined()
+    expect(user.instructorCareerText).toBeUndefined()
+    expect(user.instructorSelfIntroduction).toBeUndefined()
+    expect(user.listMetrics?.highestEducationLabel).toBeUndefined()
     expect(user.instructorMemberProfile).toBe('school_teacher')
   })
 
