@@ -22,3 +22,11 @@ export {
 export { SURFACE_ROWS, getSurfacesForCategory } from './surfaces'
 export { SEED_CASES, getSeedCasesForCategory } from './seed-cases'
 export { GAP_ROWS, getGapsForCategory } from './gaps'
+export {
+  PROGRAM_UI_COMPLETENESS_AS_OF,
+  PROGRAM_UI_COMPLETENESS_ROWS,
+  getProgramUiCompleteness,
+  notionUiAlignmentLabel,
+  averageProgramUiPct,
+} from './ui-completeness'
+export type { NotionUiAlignment, ProgramUiCompletenessRow } from './ui-completeness'

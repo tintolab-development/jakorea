@@ -1,6 +1,6 @@
 /**
  * `/backend-dummies` SSOT types.
- * Sync: menu-config LNB + OpenAPI v9 + docs/api/be-handoff-program-dummy-seeds/
+ * Sync: menu-config LNB + OpenAPI v9 (2026-07-31 · 528 paths) + docs/api/be-handoff-program-dummy-seeds/
  * + programs-seed-case-api-coverage-backend-handoff-2026-07-30.md
  */
 

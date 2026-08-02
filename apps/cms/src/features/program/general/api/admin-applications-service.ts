@@ -293,7 +293,7 @@ export type GeneralInterviewSlotListItem = {
 }
 
 /**
- * remote ON: GET interview-slots (OpenAPI 미등재 hand-wrap). 404/실패 시 null → 호출부 mock.
+ * remote ON: GET interview-slots (OpenAPI GET/POST 등재). 404/실패 시 null → 호출부 mock.
  * remote OFF: null (호출부 mock).
  */
 export async function listGeneralInterviewSlots(

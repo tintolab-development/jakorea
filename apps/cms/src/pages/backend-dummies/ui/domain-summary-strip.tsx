@@ -5,6 +5,7 @@ export function DomainSummaryStrip({
   menuCount,
   avgApiPct,
   avgDummyPct,
+  avgUiPct,
   mockOnlyMenus,
   hybridMenus,
   gateReady,
@@ -13,6 +14,8 @@ export function DomainSummaryStrip({
   menuCount: number
   avgApiPct: number
   avgDummyPct: number
+  /** programs 탭만 — 화면 UI% 평균 */
+  avgUiPct?: number | null
   mockOnlyMenus: number
   hybridMenus: number
   gateReady: boolean
@@ -36,6 +39,12 @@ export function DomainSummaryStrip({
           <span className="bd-metric__label">평균 더미%</span>
           <span className="bd-metric__value bd-metric__value--dummy">{avgDummyPct}%</span>
         </div>
+        {avgUiPct != null ? (
+          <div className="bd-metric">
+            <span className="bd-metric__label">평균 화면 UI%</span>
+            <span className="bd-metric__value bd-metric__value--ui">{avgUiPct}%</span>
+          </div>
+        ) : null}
         <div className="bd-metric">
           <span className="bd-metric__label">mock-only 메뉴</span>
           <span className="bd-metric__value">{mockOnlyMenus}</span>

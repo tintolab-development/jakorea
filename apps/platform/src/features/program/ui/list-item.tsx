@@ -10,6 +10,8 @@ type ProgramListItemRowProps = {
 }
 
 export function ProgramListItemRow({ program, onClick }: ProgramListItemRowProps) {
+  const hasThumbnailImage = Boolean(program.thumbnailUrl?.trim())
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
@@ -25,8 +27,15 @@ export function ProgramListItemRow({ program, onClick }: ProgramListItemRowProps
       onClick={onClick}
       onKeyDown={handleKeyDown}
     >
-      <div className={styles.thumbnailWrap}>
-        <img className={styles.thumbnail} src={program.thumbnailUrl} alt="" />
+      <div
+        className={[
+          styles.thumbnailWrap,
+          hasThumbnailImage ? styles.thumbnailWrapHasImage : styles.thumbnailWrapNoImage,
+        ].join(' ')}
+      >
+        {hasThumbnailImage ? (
+          <img className={styles.thumbnail} src={program.thumbnailUrl} alt="" />
+        ) : null}
       </div>
 
       <div className={styles.content}>
@@ -37,9 +46,11 @@ export function ProgramListItemRow({ program, onClick }: ProgramListItemRowProps
           <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>
             {program.title}
           </PFText>
-          <PFText as="p" typo="bd-md-md" color="primary-500">
-            {program.operatingPeriodLabel}
-          </PFText>
+          <p className={styles.operatingPeriod}>
+            <PFText as="span" typo="bd-md-md" color="primary-500">
+              {program.operatingPeriodLabel}
+            </PFText>
+          </p>
         </div>
 
         <ProgramStatusBadges
@@ -60,7 +71,12 @@ export function ProgramListItemRow({ program, onClick }: ProgramListItemRowProps
           </PFText>
         </div>
 
-        <PFArrowButton variant="primary" size="medium" decorative />
+        <PFArrowButton
+          variant="primary"
+          size="medium"
+          decorative
+          disabled={program.recruitmentStatus === 'closed'}
+        />
       </div>
     </div>
   )

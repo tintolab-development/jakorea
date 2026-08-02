@@ -23,24 +23,35 @@
   aspect-ratio: 4 / 5;
   overflow: hidden;
   border-radius: 16px;
-  background: var(--color-neutral-cool-50);
+}
+
+/* 이미지 없음: placeholder 배경색 유지 */
+.thumbnailWrapNoImage {
+  background: lightgray;
+}
+
+/* 이미지 있음: 이미지 자체가 비주얼이므로 래퍼 배경 투명 */
+.thumbnailWrapHasImage {
+  background: transparent;
 }
 
 .thumbnail {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: 50% 50%;
 }
 
 .content {
   display: flex;
   min-width: 0;
-  flex: 1 0 0;
+  flex: 1 1 0;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-20);
   padding-block: var(--spacing-20);
+  overflow: hidden;
 }
 
 .info {
@@ -55,6 +66,16 @@
 
 .title {
   margin: 0;
+  width: 100%;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+/* Body/Medium/medium + primary-500 · 일정 스펙 text-align: right */
+.operatingPeriod {
+  width: 100%;
+  margin: 0;
+  text-align: right;
 }
 
 .recruitmentAside {
@@ -71,6 +92,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-4);
+  white-space: nowrap;
 }
 
 @media (max-width: 1023px) {
@@ -85,7 +107,8 @@
   }
 
   .content {
-    flex: 1 1 240px;
+    flex: 1 1 0;
+    min-width: 0;
     padding-block: 0;
   }
 

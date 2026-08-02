@@ -102,16 +102,16 @@ export const SURFACE_ROWS: readonly SurfaceRow[] = [
     getStatus: 'hybrid',
     mutationStatus: 'hybrid',
     weight: 2,
-    completionPct: 80,
+    completionPct: 85,
     gateKeys: ['applications', 'programs'],
     mockFiles: ['general-volunteer-applicants-mock.ts', 'general-volunteer-interview-schedule-mock'],
     apiPaths: [
       'GET …/volunteer-applications',
       'POST …/document-result',
       'POST …/final-result',
-      'POST …/interview-slots',
+      'GET/POST …/interview-slots',
     ],
-    notes: '슬롯 GET OpenAPI 미등재(POST만) · POST create/assign FE wired',
+    notes: '슬롯 GET OpenAPI 등재 · FE wired (실패 시 mock 폴백)',
   },
   {
     id: 'gen-progress-list',
@@ -138,7 +138,12 @@ export const SURFACE_ROWS: readonly SurfaceRow[] = [
     completionPct: 60,
     gateKeys: ['programProgress', 'programs'],
     mockFiles: ['participating-individual-progress-attendance-mock'],
-    apiPaths: ['GET/PUT attendances', 'dashboard program-schedules'],
+    apiPaths: [
+      'GET/PUT attendances',
+      'GET …/programs/{id}/schedules',
+      'dashboard program-schedules',
+    ],
+    notes: 'schedules GET OpenAPI 신규(2026-07-31) · FE progress는 execution/attendances·dashboard 일정 위주',
   },
   {
     id: 'gen-assignments',
@@ -740,7 +745,12 @@ export const SURFACE_ROWS: readonly SurfaceRow[] = [
     completionPct: 80,
     gateKeys: ['dashboard'],
     mockFiles: [],
-    apiPaths: ['GET /api/admin/dashboard/*'],
+    apiPaths: [
+      'GET /api/admin/dashboard/*',
+      'GET/PUT /api/admin/me/dashboard-preferences',
+      'GET/POST /api/admin/me/dashboard-shortcut-badges*',
+    ],
+    notes: 'preferences·badges 경로 /api/me → /api/admin/me 이전(2026-07-31)',
   },
 
   // ── members ──
@@ -823,6 +833,24 @@ export const SURFACE_ROWS: readonly SurfaceRow[] = [
     gateKeys: ['members'],
     mockFiles: [],
     apiPaths: ['POST /api/admin/admin-accounts'],
+  },
+  {
+    id: 'mem-admins-comments-privacy',
+    categoryId: 'members-admins',
+    area: 'progress',
+    label: '관리자 코멘트·privacy unmask',
+    status: 'hybrid',
+    getStatus: 'hybrid',
+    mutationStatus: 'hybrid',
+    completionPct: 55,
+    gateKeys: ['members'],
+    mockFiles: [],
+    apiPaths: [
+      'GET/POST …/admin-accounts/{id}/comments',
+      'GET …/privacy/available-actions',
+      'POST …/privacy/unmask',
+    ],
+    notes: 'OpenAPI 신규 · FE는 users/{memberId}/comments 경로 유지(admin-accounts 전용 미배선)',
   },
   {
     id: 'mem-perm-req',

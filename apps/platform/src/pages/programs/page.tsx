@@ -5,12 +5,15 @@ import {
   DEFAULT_PROGRAMS_LIST_PARAMS,
   getProgramsListReturnPath,
   getMockPrograms,
+  OPERATING_PERIOD_FILTER_OPTIONS,
   PROGRAM_CATEGORY_ITEMS,
   PROGRAM_FILTER_KEYS,
   programDetailPath,
+  programOverlapsOperatingYear,
   ProgramListItemRow,
   ProgramSort,
   readProgramsListParams,
+  withSyncedAudience,
 } from '@/features/program'
 import {
   educationTargetFilterOptions,
@@ -32,6 +35,14 @@ const educationFormFilterOptions = [
   { value: 'hybrid', label: '혼합' },
 ]
 
+const AUDIENCE_VALUES = new Set<ProgramCategory>(['all', 'youth', 'institution', 'instructor'])
+
+function parseAudienceValue(value: string): ProgramCategory {
+  return AUDIENCE_VALUES.has(value as ProgramCategory)
+    ? (value as ProgramCategory)
+    : DEFAULT_PROGRAMS_LIST_PARAMS.category
+}
+
 export function ProgramsPage() {
   const [params, setParams] = useState(readProgramsListParams)
 
@@ -41,12 +52,27 @@ export function ProgramsPage() {
     window.location.assign(buildProgramsListPath(merged))
   }
 
-  const { bindFilter, bindSort, reset } = useSearchFilters({
+  const setAudience = (audience: ProgramCategory) => {
+    updateParams({ ...withSyncedAudience(audience), page: 1 })
+  }
+
+  const { bindFilter, bindSort } = useSearchFilters({
     params,
     updateParams,
     defaultValues: DEFAULT_PROGRAMS_LIST_PARAMS,
     filterKeys: PROGRAM_FILTER_KEYS,
   })
+
+  /** 필터 초기화 시 모집대상 ↔ 탭도 함께 전체로 */
+  const reset = () => {
+    updateParams({
+      ...Object.fromEntries(
+        PROGRAM_FILTER_KEYS.map(key => [key, DEFAULT_PROGRAMS_LIST_PARAMS[key]])
+      ),
+      ...withSyncedAudience(DEFAULT_PROGRAMS_LIST_PARAMS.category),
+      page: 1,
+    })
+  }
 
   const filteredPrograms = useMemo(() => {
     let items = getMockPrograms()
@@ -60,12 +86,18 @@ export function ProgramsPage() {
       items = items.filter(program => program.title.toLowerCase().includes(query))
     }
 
+    if (params.operatingPeriod !== DEFAULT_PROGRAMS_LIST_PARAMS.operatingPeriod) {
+      items = items.filter(program =>
+        programOverlapsOperatingYear(program, params.operatingPeriod)
+      )
+    }
+
     if (params.sort === 'name') {
       items = [...items].sort((a, b) => a.title.localeCompare(b.title, 'ko'))
     }
 
     return items
-  }, [params.category, params.q, params.sort])
+  }, [params.category, params.q, params.operatingPeriod, params.sort])
 
   const totalPages = Math.max(1, Math.ceil(filteredPrograms.length / PAGE_SIZE))
   const currentPage = Math.min(params.page, totalPages)
@@ -87,7 +119,7 @@ export function ProgramsPage() {
         <PFTabs
           items={PROGRAM_CATEGORY_ITEMS.map(item => ({ key: item.key, label: item.label }))}
           value={params.category}
-          onChange={category => updateParams({ category: category as ProgramCategory, page: 1 })}
+          onChange={value => setAudience(parseAudienceValue(value))}
           variant="pill"
           size="large"
         />
@@ -106,12 +138,18 @@ export function ProgramsPage() {
             <PFSearchFilter
               label="모집대상"
               options={recruitmentTargetFilterOptions}
-              {...bindFilter('recruitmentTarget')}
+              value={params.recruitmentTarget}
+              onChange={value => setAudience(parseAudienceValue(value))}
             />
             <PFSearchFilter
               label="모집현황"
               options={recruitmentStatusFilterOptions}
               {...bindFilter('recruitmentStatus')}
+            />
+            <PFSearchFilter
+              label="운영기간"
+              options={[...OPERATING_PERIOD_FILTER_OPTIONS]}
+              {...bindFilter('operatingPeriod')}
             />
             <PFSearchFilter
               label="교육대상"

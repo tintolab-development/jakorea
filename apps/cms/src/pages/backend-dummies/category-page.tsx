@@ -15,6 +15,11 @@ import { getBackendDummyDomain } from './data/domains'
 import { getGapsForCategory } from './data/gaps'
 import { getSeedCasesForCategory } from './data/seed-cases'
 import { getSurfacesForCategory } from './data/surfaces'
+import {
+  PROGRAM_UI_COMPLETENESS_AS_OF,
+  getProgramUiCompleteness,
+  notionUiAlignmentLabel,
+} from './data/ui-completeness'
 import { computeSurfaceRates } from './lib/compute-rates'
 import { getLiveGateSnapshot } from './lib/gate-status'
 import { GapsList } from './ui/gaps-list'
@@ -60,6 +65,7 @@ export function BackendDummiesCategoryPage() {
   const nested = surfaces.filter(s => s.area === 'nested')
   const apiPct = rates.totalWeight > 0 ? rates.apiPct : cat.detailPct
   const dummyPct = rates.totalWeight > 0 ? rates.dummyPct : cat.dummyPct
+  const uiRow = getProgramUiCompleteness(cat.id)
 
   return (
     <div className="bd-shell">
@@ -73,8 +79,15 @@ export function BackendDummiesCategoryPage() {
               </p>
               <h1 className="bd-hero__title">{cat.label}</h1>
               <p className="bd-hero__meta">
-                API <strong>{apiPct}%</strong> · 더미 <strong>{dummyPct}%</strong> · mock-only{' '}
-                {rates.mockOnlyCount} · hybrid {rates.hybridCount} · 문서 {cat.detailPct}/{cat.crudPct}
+                API <strong>{apiPct}%</strong> · 더미 <strong>{dummyPct}%</strong>
+                {uiRow ? (
+                  <>
+                    {' '}
+                    · 화면 UI <strong>{uiRow.uiPct}%</strong>
+                  </>
+                ) : null}{' '}
+                · mock-only {rates.mockOnlyCount} · hybrid {rates.hybridCount} · 문서{' '}
+                {cat.detailPct}/{cat.crudPct}
               </p>
             </div>
             <div className="bd-actions bd-actions--compact">
@@ -100,6 +113,49 @@ export function BackendDummiesCategoryPage() {
         </header>
 
         <p className="bd-hero__lead">{cat.summary}</p>
+
+        {uiRow ? (
+          <section className="bd-ui-panel" aria-label="화면 UI 완성도">
+            <div className="bd-ui-panel__head">
+              <h2 className="bd-section__title bd-section__title--sm">화면 UI 완성도</h2>
+              <span className={`bd-pill bd-pill--align-${uiRow.notionAlignment}`}>
+                {notionUiAlignmentLabel(uiRow.notionAlignment)}
+              </span>
+              <span className="bd-ui-panel__asof">기준 {PROGRAM_UI_COMPLETENESS_AS_OF}</span>
+            </div>
+            <div className="bd-rate bd-ui-panel__bar">
+              <div className="bd-rate__label">
+                <span>렌더·네비 가능 화면 (API와 별축)</span>
+                <strong>{uiRow.uiPct}%</strong>
+              </div>
+              <div
+                className="bd-rate__track"
+                role="progressbar"
+                aria-valuenow={uiRow.uiPct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
+                <div
+                  className="bd-rate__fill bd-rate__fill--ui"
+                  style={{ width: `${uiRow.uiPct}%` }}
+                />
+              </div>
+            </div>
+            <p className="bd-ui-panel__verdict">{uiRow.verdict}</p>
+            <p className="bd-ui-panel__notion">
+              Notion 화면 개발: {uiRow.notionScreenDevSummary}
+            </p>
+            {uiRow.mismatches.length > 0 ? (
+              <ul className="bd-ui-panel__list">
+                {uiRow.mismatches.map(item => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="bd-empty">등록된 UI 불일치·stub 메모 없음.</p>
+            )}
+          </section>
+        ) : null}
 
         <GateBanner
           remoteConfigured={gate.remoteConfigured}

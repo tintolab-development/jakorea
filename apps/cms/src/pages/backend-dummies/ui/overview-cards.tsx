@@ -1,11 +1,15 @@
 import { Link } from 'react-router-dom'
 import type { BackendDummyCategory } from '../data/types'
+import {
+  getProgramUiCompleteness,
+  notionUiAlignmentLabel,
+} from '../data/ui-completeness'
 import { computeSurfaceRates } from '../lib/compute-rates'
 import { getLiveGateSnapshot } from '../lib/gate-status'
 import { getSurfacesForCategory } from '../data/surfaces'
 import { StatusBadge } from './status-badge'
 
-function RateBar({ label, pct, tone }: { label: string; pct: number; tone: 'api' | 'dummy' }) {
+function RateBar({ label, pct, tone }: { label: string; pct: number; tone: 'api' | 'dummy' | 'ui' }) {
   return (
     <div className="bd-rate">
       <div className="bd-rate__label">
@@ -14,7 +18,7 @@ function RateBar({ label, pct, tone }: { label: string; pct: number; tone: 'api'
       </div>
       <div className="bd-rate__track" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
         <div
-          className={tone === 'api' ? 'bd-rate__fill bd-rate__fill--api' : 'bd-rate__fill bd-rate__fill--dummy'}
+          className={`bd-rate__fill bd-rate__fill--${tone}`}
           style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
         />
       </div>
@@ -22,7 +26,13 @@ function RateBar({ label, pct, tone }: { label: string; pct: number; tone: 'api'
   )
 }
 
-export function OverviewCards({ categories }: { categories: readonly BackendDummyCategory[] }) {
+export function OverviewCards({
+  categories,
+  showUiCompleteness = false,
+}: {
+  categories: readonly BackendDummyCategory[]
+  showUiCompleteness?: boolean
+}) {
   return (
     <div className="bd-cards">
       {categories.map(cat => {
@@ -31,6 +41,7 @@ export function OverviewCards({ categories }: { categories: readonly BackendDumm
         const gate = getLiveGateSnapshot(cat.gateKeys)
         const apiPct = rates.totalWeight > 0 ? rates.apiPct : cat.detailPct
         const dummyPct = rates.totalWeight > 0 ? rates.dummyPct : cat.dummyPct
+        const uiRow = showUiCompleteness ? getProgramUiCompleteness(cat.id) : undefined
 
         return (
           <Link key={cat.id} to={`/backend-dummies/${cat.id}`} className="bd-card">
@@ -46,6 +57,17 @@ export function OverviewCards({ categories }: { categories: readonly BackendDumm
             </p>
             <RateBar label="API 전환 (surface 가중)" pct={apiPct} tone="api" />
             <RateBar label="더미 잔존" pct={dummyPct} tone="dummy" />
+            {uiRow ? (
+              <>
+                <RateBar label="화면 UI (렌더·네비)" pct={uiRow.uiPct} tone="ui" />
+                <p className="bd-card__ui-note">
+                  <span className={`bd-pill bd-pill--align-${uiRow.notionAlignment}`}>
+                    {notionUiAlignmentLabel(uiRow.notionAlignment)}
+                  </span>{' '}
+                  {uiRow.verdict}
+                </p>
+              </>
+            ) : null}
             <div className="bd-card__meta">
               <span>문서 CRUD {cat.crudPct}%</span>
               <span>문서 상세 {cat.detailPct}%</span>

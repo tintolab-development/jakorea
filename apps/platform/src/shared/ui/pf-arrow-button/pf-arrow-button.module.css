@@ -10,11 +10,6 @@
   transition: background 160ms ease;
 }
 
-.button:disabled {
-  background: var(--color-neutral-warm-100);
-  cursor: not-allowed;
-}
-
 .large {
   width: 52px;
   height: 52px;
@@ -44,7 +39,7 @@
   background: var(--color-primary-500);
 }
 
-.primary:hover:not(:disabled) {
+.primary:hover:not(:disabled):not(.disabled) {
   background: var(--color-primary-400);
 }
 
@@ -58,10 +53,24 @@
     var(--color-neutral-white);
 }
 
-.secondary:hover:not(:disabled) {
+.secondary:hover:not(:disabled):not(.disabled) {
   background:
-    linear-gradient(0deg, rgba(1, 161, 175, 0.2) 0%, rgba(1, 161, 175, 0.2) 100%),
+    linear-gradient(
+      0deg,
+      var(--color-element-hover-strong) 0%,
+      var(--color-element-hover-strong) 100%
+    ),
     var(--color-neutral-white);
+}
+
+/* primary/secondary 이후 — 비활성 배경 우선 */
+.button:disabled,
+.disabled {
+  background: var(--color-neutral-warm-100);
+}
+
+.button:disabled {
+  cursor: not-allowed;
 }
 
 @media (prefers-reduced-motion: reduce) {

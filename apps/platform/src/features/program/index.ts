@@ -6,6 +6,7 @@ export type {
 } from './model/types'
 export {
   DEFAULT_PROGRAMS_LIST_PARAMS,
+  OPERATING_PERIOD_FILTER_OPTIONS,
   PROGRAM_CATEGORY_ITEMS,
   PROGRAM_FILTER_KEYS,
   PROGRAM_SORT_OPTIONS,
@@ -15,11 +16,17 @@ export {
   programApplyRequiredPath,
   programDetailPath,
 } from './lib/constants'
-export { getMockProgramById, getMockPrograms } from './lib/mock-programs'
+export {
+  getMockProgramById,
+  getMockPrograms,
+  programOverlapsOperatingYear,
+} from './lib/mock-programs'
 export {
   buildProgramsListPath,
   getProgramsListReturnPath,
   readProgramsListParams,
+  syncCategoryAndRecruitmentTarget,
+  withSyncedAudience,
 } from './lib/list-params'
 export {
   getProgramIdFromPath,

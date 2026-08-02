@@ -20,15 +20,24 @@ export const DEFAULT_PROGRAMS_LIST_PARAMS = {
   q: '',
   recruitmentTarget: 'all',
   recruitmentStatus: 'all',
+  operatingPeriod: 'all',
   educationTarget: 'all',
   educationForm: 'all',
   sort: 'latest',
   page: 1,
 } as const
 
+/** 운영기간 필터 — 연 단위 (mock/API 공통 value = YYYY) */
+export const OPERATING_PERIOD_FILTER_OPTIONS = [
+  { value: 'all', label: '전체' },
+  { value: '2026', label: '2026년' },
+  { value: '2025', label: '2025년' },
+] as const
+
 export const PROGRAM_FILTER_KEYS = [
   'recruitmentTarget',
   'recruitmentStatus',
+  'operatingPeriod',
   'educationTarget',
   'educationForm',
 ] as const satisfies readonly (keyof ProgramsListParams)[]

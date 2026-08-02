@@ -2,7 +2,7 @@ import type { GapRow } from './types'
 
 /**
  * BE/FE 갭 SSOT.
- * OpenAPI v9(2026-07-30 fetch) 기준으로 「API 없음」과 「FE 미배선」을 구분한다.
+ * OpenAPI v9(2026-07-31 fetch · 528 paths) 기준으로 「API 없음」과 「FE 미배선」을 구분한다.
  */
 export const GAP_ROWS: readonly GapRow[] = [
   // Gemini — OpenAPI mutation 존재, FE 미배선 (P0)
@@ -137,9 +137,16 @@ export const GAP_ROWS: readonly GapRow[] = [
   {
     id: 'N-09',
     categoryId: 'general',
-    priority: 'P1',
-    title: '면접 슬롯 GET OpenAPI',
-    suggestedApi: 'POST …/interview-slots만 등재 · GET 등재 잔여 (POST는 FE wired)',
+    priority: 'P2',
+    title: '면접 슬롯 GET 스테이징 스모크',
+    suggestedApi: 'OpenAPI GET/POST …/interview-slots 등재·FE wired · 스테이징 계약 확인',
+  },
+  {
+    id: 'N-09b',
+    categoryId: 'general',
+    priority: 'P2',
+    title: '프로그램 schedules GET FE 배선',
+    suggestedApi: 'OpenAPI: GET …/programs/{id}/schedules 신규 · progress FE는 execution/dashboard 위주',
   },
   {
     id: 'N-10',
@@ -223,11 +230,26 @@ export const GAP_ROWS: readonly GapRow[] = [
     suggestedApi: '프로그램 이력·코멘트 등 members handoff 잔여 path',
   },
   {
+    id: 'MEM-03',
+    categoryId: 'members-admins',
+    priority: 'P1',
+    title: 'admin-accounts comments/privacy FE 배선',
+    suggestedApi:
+      'OpenAPI: …/admin-accounts/{id}/comments·privacy · FE는 users/{memberId}/comments 유지',
+  },
+  {
     id: 'MEM-02',
     categoryId: 'members-permission-requests',
     priority: 'P2',
     title: '권한 승인 mutation·필터 polish',
     suggestedApi: '승인/반려·목록 필터 잔여 갭 (목록 GET은 env 게이트로 remote)',
+  },
+  {
+    id: 'DASH-01',
+    categoryId: 'dashboard-home',
+    priority: 'P2',
+    title: 'dashboard me preferences 경로 이전 스모크',
+    suggestedApi: '/api/me/dashboard-* → /api/admin/me/dashboard-* · Orval·런타임 확인',
   },
   {
     id: 'SET-01',

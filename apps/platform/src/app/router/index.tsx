@@ -33,7 +33,7 @@ import {
   ProgramDetailPage,
   ProgramsPage,
 } from '@/pages/programs'
-import { TestPage } from '@/pages/test'
+import { DesignSystemPage } from '@/pages/design-system'
 import { YoutubeEmbedPage } from '@/pages/youtube-embed'
 import { parseProgramRoute } from '@/features/program'
 import type { LayoutVariant } from '@/widgets/layout/layout-variant'
@@ -84,7 +84,9 @@ const staticRoutes: RouteConfig[] = [
   authRoute('/auth/sign-up/social-connect/error', <SignUpSocialConnectErrorPage />),
   authRoute('/auth/social/error', <SocialErrorPage />),
   { path: '/mypage', element: <MypageHomePage />, layout: 'mypage' },
-  { path: '/test', element: <TestPage />, layout: 'full' },
+  { path: '/design-system', element: <DesignSystemPage />, layout: 'full' },
+  /** 하위 호환 — 기존 북마크용 */
+  { path: '/test', element: <DesignSystemPage />, layout: 'full' },
   { path: '/dev/youtube', element: <YoutubeEmbedPage />, layout: 'full' },
 ]
 
