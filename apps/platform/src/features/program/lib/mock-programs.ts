@@ -1,7 +1,7 @@
 import { RECRUITMENT_STATUS } from '@jakorea/domain/recruitment/recruitment-status'
-import illustBookUrl from '@/shared/assets/illustration/illust-book.svg'
-import illustFlagUrl from '@/shared/assets/illustration/illust-flag.svg'
-import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
+import programThumbnail01Url from '../image/illustration/program-thumbnail-01.png'
+import programThumbnail02Url from '../image/illustration/program-thumbnail-02.png'
+import programThumbnail03Url from '../image/illustration/program-thumbnail-03.png'
 import { EDUCATION_FORM_LABEL_MAP } from './badge-config'
 import type {
   ProgramAttachment,
@@ -11,6 +11,22 @@ import type {
   ProgramLabeledValue,
   ProgramSession,
 } from '../model/types'
+
+/** image 122 / 123 / 124 — 목록·상세 mock 썸네일 후보 */
+const MOCK_THUMBNAILS = [
+  programThumbnail01Url,
+  programThumbnail02Url,
+  programThumbnail03Url,
+] as const
+
+/** 프로그램별 안정적인 랜덤 썸네일 (목록↔상세 동일 이미지 유지) */
+function pickMockThumbnail(programId: string): string {
+  let hash = 0
+  for (let index = 0; index < programId.length; index += 1) {
+    hash = (hash * 31 + programId.charCodeAt(index)) >>> 0
+  }
+  return MOCK_THUMBNAILS[hash % MOCK_THUMBNAILS.length]
+}
 
 const DEFAULT_SESSIONS: ProgramSession[] = [
   {
@@ -132,21 +148,77 @@ const DETAIL_DEFAULTS = {
   attachments: DEFAULT_ATTACHMENTS,
 } as const
 
+/** 모집 현황 상태별 2건 — domain: scheduled | recruiting | closed (모집 예정 / 모집 중 / 모집 마감) */
 const MOCK_PROGRAMS: ProgramDetail[] = [
+  // ── 모집 예정 (scheduled) × 2 ──
   {
-    id: 'job-talk-2026',
+    id: 'youth-itc-scheduled',
+    category: 'youth',
+    categoryLabel: '청소년 · 청년',
+    title: '2026 FedEx-JA 국제무역창업대회 (모집 예정)',
+    operatingPeriodLabel: '2026.05.01(금) – 2026.11.30(월)',
+    operatingPeriodStart: '2026-05-01',
+    operatingPeriodEnd: '2026-11-30',
+    recruitmentPeriodLabel: '2026.09.01 – 09.30',
+    applicationPeriodLabel: '2026.09.01 – 09.30',
+    recruitmentStatus: RECRUITMENT_STATUS.scheduled,
+    educationTargetLabel: '고등학생',
+    educationForm: 'online',
+    educationFormLabel: EDUCATION_FORM_LABEL_MAP.online,
+    thumbnailUrl: pickMockThumbnail('youth-itc-scheduled'),
+    sponsor: 'FedEx',
+    summary: '국제무역·창업 역량을 키우는 고등학생 대상 대회입니다. 모집 시작 예정입니다.',
+    isRecruiting: false,
+    businessFieldLabel: '진로취업',
+    educationTargetGroupLabel: '고등학교',
+    educationTargetDetailLabel: '고등학교 1~3학년',
+    educationVenueLabel: '온라인',
+    ...DETAIL_DEFAULTS,
+    sessions: DEFAULT_SESSIONS,
+  },
+  {
+    id: 'instructor-expert-scheduled',
+    category: 'instructor',
+    categoryLabel: '강사',
+    title: '2026 JA Korea 경제금융교육 전문강사단 모집 (모집 예정)',
+    operatingPeriodLabel: '2026.09.01(화) – 2027.02.28(일)',
+    operatingPeriodStart: '2026-09-01',
+    operatingPeriodEnd: '2027-02-28',
+    recruitmentPeriodLabel: '2026.08.01 – 08.31',
+    applicationPeriodLabel: '2026.08.01 – 08.31',
+    recruitmentStatus: RECRUITMENT_STATUS.scheduled,
+    educationTargetLabel: '성인',
+    educationForm: 'hybrid',
+    educationFormLabel: EDUCATION_FORM_LABEL_MAP.hybrid,
+    thumbnailUrl: pickMockThumbnail('instructor-expert-scheduled'),
+    sponsor: 'JA Korea',
+    summary: '경제·금융 교육 전문 강사 모집 예정입니다. 모집 기간 전 미리보기로 공개됩니다.',
+    isRecruiting: false,
+    businessFieldLabel: '강사모집',
+    educationTargetGroupLabel: '성인',
+    educationTargetDetailLabel: '교육 진행 가능 성인',
+    educationVenueLabel: '전국',
+    ...DETAIL_DEFAULTS,
+    sessions: DEFAULT_SESSIONS,
+  },
+
+  // ── 모집 중 (recruiting) × 2 ──
+  {
+    id: 'job-talk-recruiting',
     category: 'youth',
     categoryLabel: '청소년 · 청년',
     title: '2026 한국씨티은행 - JA Korea 특별한 JOB담 모집 안내',
     operatingPeriodLabel: '2026.04.03(금) – 2026.11.20(금)',
+    operatingPeriodStart: '2026-04-03',
+    operatingPeriodEnd: '2026-11-20',
     recruitmentPeriodLabel: '2026.04.18 – 04.26',
     applicationPeriodLabel: '2026.04.18 – 04.26',
     recruitmentStatus: RECRUITMENT_STATUS.recruiting,
     educationTargetLabel: '고등학생',
     educationForm: 'online',
     educationFormLabel: EDUCATION_FORM_LABEL_MAP.online,
-    thumbnailUrl: illustBookUrl,
-    sponsor: 'FedEx',
+    thumbnailUrl: pickMockThumbnail('job-talk-recruiting'),
+    sponsor: '한국씨티은행',
     summary:
       '진로 멘토링 프로그램으로, 현직자와의 만남을 통해 진로 탐색과 자기 이해를 돕습니다.',
     isRecruiting: true,
@@ -158,41 +230,20 @@ const MOCK_PROGRAMS: ProgramDetail[] = [
     sessions: DEFAULT_SESSIONS,
   },
   {
-    id: 'citibank-job-talk',
-    category: 'youth',
-    categoryLabel: '청소년 · 청년',
-    title: '2026 한국씨티은행 - JA Korea 특별한 JOB-Talk 모집 공고',
-    operatingPeriodLabel: '2026.05.15(금) – 2026.06.15(일)',
-    recruitmentPeriodLabel: '2026.05.15 – 06.15',
-    applicationPeriodLabel: '2026.05.15 – 06.15',
-    recruitmentStatus: RECRUITMENT_STATUS.recruiting,
-    educationTargetLabel: '고등학생',
-    educationForm: 'offline',
-    educationFormLabel: EDUCATION_FORM_LABEL_MAP.offline,
-    thumbnailUrl: illustFlagUrl,
-    sponsor: '한국씨티은행',
-    summary: '현직자 멘토와 함께하는 직업 탐색 프로그램입니다.',
-    isRecruiting: true,
-    businessFieldLabel: '진로취업',
-    educationTargetGroupLabel: '고등학교',
-    educationTargetDetailLabel: '특성화고등학교 3학년',
-    educationVenueLabel: '기관 안, 서울시 강서구 가양 데시앙플렉스',
-    ...DETAIL_DEFAULTS,
-    sessions: DEFAULT_SESSIONS,
-  },
-  {
-    id: 'school-partnership',
+    id: 'school-partnership-recruiting',
     category: 'institution',
     categoryLabel: '기관',
     title: '2026 JA Korea 학교 파트너십 프로그램',
     operatingPeriodLabel: '2026.03.01(일) – 2026.12.31(목)',
+    operatingPeriodStart: '2026-03-01',
+    operatingPeriodEnd: '2026-12-31',
     recruitmentPeriodLabel: '2026.02.01 – 03.31',
     applicationPeriodLabel: '2026.02.01 – 03.31',
     recruitmentStatus: RECRUITMENT_STATUS.recruiting,
     educationTargetLabel: '초등학생',
     educationForm: 'hybrid',
     educationFormLabel: EDUCATION_FORM_LABEL_MAP.hybrid,
-    thumbnailUrl: illustPeopleUrl,
+    thumbnailUrl: pickMockThumbnail('school-partnership-recruiting'),
     sponsor: 'JA Korea',
     summary: '학교 단위로 참여하는 경제·진로 교육 프로그램입니다.',
     isRecruiting: true,
@@ -203,42 +254,23 @@ const MOCK_PROGRAMS: ProgramDetail[] = [
     ...DETAIL_DEFAULTS,
     sessions: DEFAULT_SESSIONS,
   },
-  {
-    id: 'instructor-recruitment',
-    category: 'instructor',
-    categoryLabel: '강사',
-    title: '2026 JA Korea 강사 모집',
-    operatingPeriodLabel: '2026.01.01(수) – 2026.12.31(목)',
-    recruitmentPeriodLabel: '2026.01.01 – 12.31',
-    applicationPeriodLabel: '2026.01.01 – 12.31',
-    recruitmentStatus: RECRUITMENT_STATUS.recruiting,
-    educationTargetLabel: '성인',
-    educationForm: 'offline',
-    educationFormLabel: EDUCATION_FORM_LABEL_MAP.offline,
-    thumbnailUrl: illustBookUrl,
-    sponsor: 'JA Korea',
-    summary: 'JA Korea 교육 프로그램을 함께 이끌어갈 강사를 모집합니다.',
-    isRecruiting: true,
-    businessFieldLabel: '강사모집',
-    educationTargetGroupLabel: '성인',
-    educationTargetDetailLabel: '교육 진행 가능 성인',
-    educationVenueLabel: '전국',
-    ...DETAIL_DEFAULTS,
-    sessions: DEFAULT_SESSIONS,
-  },
+
+  // ── 모집 마감 (closed) × 2 ──
   {
     id: 'youth-finance-closed',
     category: 'youth',
     categoryLabel: '청소년 · 청년',
-    title: '2025 JA Korea 청소년 금융 문해력 캠프 (모집 마감)',
+    title: '2025 JA Korea 청소년 금융 문해력 캠프',
     operatingPeriodLabel: '2025.07.01(화) – 2025.08.31(일)',
+    operatingPeriodStart: '2025-07-01',
+    operatingPeriodEnd: '2025-08-31',
     recruitmentPeriodLabel: '2025.05.01 – 06.15',
     applicationPeriodLabel: '2025.05.01 – 06.15',
     recruitmentStatus: RECRUITMENT_STATUS.closed,
     educationTargetLabel: '중학생',
     educationForm: 'offline',
     educationFormLabel: EDUCATION_FORM_LABEL_MAP.offline,
-    thumbnailUrl: illustFlagUrl,
+    thumbnailUrl: pickMockThumbnail('youth-finance-closed'),
     sponsor: 'JA Korea',
     summary: '중학생을 대상으로 한 금융 문해력 캠프입니다. 모집이 마감되었습니다.',
     isRecruiting: false,
@@ -253,15 +285,17 @@ const MOCK_PROGRAMS: ProgramDetail[] = [
     id: 'institution-economy-closed',
     category: 'institution',
     categoryLabel: '기관',
-    title: '2025 학교 경제교육 파트너십 (모집 마감)',
+    title: '2025 학교 경제교육 파트너십',
     operatingPeriodLabel: '2025.03.01(토) – 2025.11.30(일)',
+    operatingPeriodStart: '2025-03-01',
+    operatingPeriodEnd: '2025-11-30',
     recruitmentPeriodLabel: '2025.01.15 – 02.28',
     applicationPeriodLabel: '2025.01.15 – 02.28',
     recruitmentStatus: RECRUITMENT_STATUS.closed,
     educationTargetLabel: '초등학생',
     educationForm: 'hybrid',
     educationFormLabel: EDUCATION_FORM_LABEL_MAP.hybrid,
-    thumbnailUrl: illustPeopleUrl,
+    thumbnailUrl: pickMockThumbnail('institution-economy-closed'),
     sponsor: 'JA Korea',
     summary: '학교 단위 경제교육 파트너십 프로그램입니다. 모집이 마감되었습니다.',
     isRecruiting: false,
@@ -269,29 +303,6 @@ const MOCK_PROGRAMS: ProgramDetail[] = [
     educationTargetGroupLabel: '초등학교',
     educationTargetDetailLabel: '초등학교 전학년',
     educationVenueLabel: '학교 교실',
-    ...DETAIL_DEFAULTS,
-    sessions: DEFAULT_SESSIONS,
-  },
-  {
-    id: 'instructor-ujat-closed',
-    category: 'instructor',
-    categoryLabel: '강사',
-    title: '2025 UJAT 강사 모집 (모집 마감)',
-    operatingPeriodLabel: '2025.02.01(토) – 2025.12.20(토)',
-    recruitmentPeriodLabel: '2024.12.01 – 2025.01.20',
-    applicationPeriodLabel: '2024.12.01 – 2025.01.20',
-    recruitmentStatus: RECRUITMENT_STATUS.closed,
-    educationTargetLabel: '성인',
-    educationForm: 'online',
-    educationFormLabel: EDUCATION_FORM_LABEL_MAP.online,
-    thumbnailUrl: illustBookUrl,
-    sponsor: 'JA Korea',
-    summary: 'UJAT 교육 진행 강사 모집입니다. 모집이 마감되었습니다.',
-    isRecruiting: false,
-    businessFieldLabel: '강사모집',
-    educationTargetGroupLabel: '성인',
-    educationTargetDetailLabel: 'UJAT 교육 진행 가능 성인',
-    educationVenueLabel: '온라인',
     ...DETAIL_DEFAULTS,
     sessions: DEFAULT_SESSIONS,
   },
@@ -303,4 +314,23 @@ export function getMockPrograms(): ProgramListItem[] {
 
 export function getMockProgramById(id: string): ProgramDetail | undefined {
   return MOCK_PROGRAMS.find(program => program.id === id)
+}
+
+/** 프로그램 운영 기간이 선택한 연도(YYYY)와 겹치면 true */
+export function programOverlapsOperatingYear(
+  program: Pick<ProgramListItem, 'operatingPeriodStart' | 'operatingPeriodEnd'>,
+  year: string
+) {
+  const selectedYear = Number.parseInt(year, 10)
+  if (!Number.isFinite(selectedYear)) {
+    return true
+  }
+
+  const startYear = Number.parseInt(program.operatingPeriodStart.slice(0, 4), 10)
+  const endYear = Number.parseInt(program.operatingPeriodEnd.slice(0, 4), 10)
+  if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) {
+    return false
+  }
+
+  return startYear <= selectedYear && endYear >= selectedYear
 }
