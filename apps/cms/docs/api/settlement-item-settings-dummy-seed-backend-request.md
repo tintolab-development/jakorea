@@ -4,12 +4,13 @@ CMS **정산 관리 → 정산 항목 설정** 화면의 카드 목록·상세 �
 
 | 항목 | 값 |
 |------|-----|
-| **작성일** | 2026-07-21 |
+| **작성일** | 2026-07-21 · **갱신** 2026-07-31 |
 | **대상 화면** | LNB `정산 관리` → `정산 항목 설정` |
 | **FE path** | `/settlement-management/item-settings` |
 | **API** | `GET /api/admin/settlement-configs/current` (Orval / OpenAPI) |
 | **모듈 플래그** | `VITE_REAL_API_MODULES=...,settlementConfigs` |
 | **FE SSOT** | [`settlement-item-settings.ts`](../../src/data/mock/settlement-item-settings.ts) · [`settlement-item-setting-detail.mock.ts`](../../src/data/mock/settlement-item-setting-detail.mock.ts) |
+| **BE 복붙 페이로드** | [`settlement-item-settings-seed.payload.json`](./settlement-item-settings-seed.payload.json) — CASE-01~15 + `detailJson` 객체 |
 
 **관련 문서**
 
@@ -17,8 +18,25 @@ CMS **정산 관리 → 정산 항목 설정** 화면의 카드 목록·상세 �
 - [settlement-api-backend-gaps.md](./settlement-api-backend-gaps.md) §9 — CRUD·layout 상세 필드 갭
 - [settlement-item-setting-detail-modal-variants-spec.md](../../.cursor/rules/process/settlement-item-setting-detail-modal-variants-spec.md) — 상세 모달 변형
 
+**Notion (CMS 기능정의서 · 화면=`정산 항목 설정`)**
+
+| 페이지 | URL | 기획 상태 |
+|--------|-----|-----------|
+| 목록 개요 | https://app.notion.com/p/33af3e2a77d080ea8313e6df4aa2e538 | 프론트 완료 / 백엔드 확인 |
+| 임금 항목 | https://app.notion.com/p/33af3e2a77d08024adb9dec30e3cd0de | 백엔드 확인 |
+| 지급 항목 | https://app.notion.com/p/33af3e2a77d080fba08cc349ab4b8b5f | 백엔드 확인 |
+| 공제 항목 | https://app.notion.com/p/33af3e2a77d080f89c02da51f89e0a62 | 개발 확인 완료 |
+| 1~3급 상세 | https://app.notion.com/p/389f3e2a77d080f0b739c123618f04ed | 백엔드 확인 |
+| 특강·기타 | https://app.notion.com/p/389f3e2a77d080b5965ef04114e3e58f | 백엔드 확인 |
+| 제미나이 강사비 | https://app.notion.com/p/389f3e2a77d0802b84a5f7b1cefdba95 | 백엔드 확인 · **FE mock 없음** |
+| 교통비 | https://app.notion.com/p/389f3e2a77d080a1841ff48d08cfa364 | 백엔드 확인 |
+| 숙박비 | https://app.notion.com/p/389f3e2a77d0805580cbf9fd6a659a1e | 백엔드 확인 |
+| 식사비 | https://app.notion.com/p/389f3e2a77d080edb8b2c577f605127d | 백엔드 확인 |
+| 활동비 | https://app.notion.com/p/389f3e2a77d08042a95cc0fab74fc244 | 백엔드 확인 |
+
 > **중요:** 프로그램 시드처럼 row를 여러 개 만드는 구조가 **아닙니다**.  
-> **SettlementConfig current 1건** 안에 `wageItems`(7) + `paymentItems`(7) + `deductionItems`(1) = **15 items** 를 넣으면 됩니다.
+> **SettlementConfig current 1건** 안에 `wageItems`(7) + `paymentItems`(7) + `deductionItems`(1) = **15 items** 를 넣으면 됩니다.  
+> OpenAPI에 `detailJson?: string` 이 있으므로 layout 전용 필드는 **stringify된 JSON**으로 실어 주세요 (§6.4 · payload 파일).
 
 ---
 
@@ -358,6 +376,38 @@ OpenAPI: `itemName=일용근로자 원천징수세액`, `layout=withholdingDaily
 
 ---
 
+## 4.5 Notion ↔ FE mock 차이 (2026-07-31 대조)
+
+기획(노션)과 **현재 FE 모달 mock**이 어긋난 부분입니다. **P0 시드는 FE mock 기준**으로 두고, 아래는 BE·기획 합의용입니다.
+
+### 임금
+
+| Notion (현행) | FE mock | 비고 |
+|---------------|---------|------|
+| 1·2·3급 강사비 | ✅ w-1~3 | 한도 50/40/30만 일치 |
+| 특강 강사비 | ✅ w-4 | |
+| 기타 인건비 | ❌ (단순인건비 w-7만) | 매핑 합의 |
+| 제미나이 강사비 | ❌ | 차시 고정액 — P1 |
+| ~~보조 / 다수인출강 / 단순인건비~~ (취소선) | ✅ w-5~7 살아 있음 | 시드 유지 vs `useYn=false` |
+
+### 지급
+
+| Notion (현행) | FE mock | 비고 |
+|---------------|---------|------|
+| 교통비(학생) / 교통비(강사) | 교통비 / 교통비(1사1교) | 네이밍·분리 축 다름 |
+| 숙박비 일반 15만·증빙 / 1사1교 8만·증빙없음 | p-3 / p-7 | **p-7 FE는 evidence=required** — 기획은 불필요 |
+| 식사비 | ✅ p-4 | |
+| 활동비 (구 자원봉사자 활동비) | `자원봉사자 활동비` p-6 | rename |
+| ~~회의참석비~~ | ✅ p-5 | 취소선 vs FE 존재 |
+
+### 공제
+
+| Notion | FE mock | 비고 |
+|--------|---------|------|
+| 일용 125,000 / 미징수 1,000 / 공제 150,000 / 세율 3.3·8.8·4.4·22 | ✅ d-1 | config threshold와 동일 |
+
+---
+
 ## 5. P1 갭 케이스 (FE mock 없음 — 선택)
 
 | CASE | 목적 | 시드 요지 |
@@ -367,6 +417,8 @@ OpenAPI: `itemName=일용근로자 원천징수세액`, `layout=withholdingDaily
 | **CASE-18** | 1사1교 거리 금액 | tier1에 `basicFeeWon` / `longDistanceFeeWon` **숫자 채움** (mock은 null) |
 | **CASE-19** | 공제 세율 카드 분리 | 3.3 / 8.8 / 4.4 / 22 **개별 카드** (FE는 icon 키만 있고 카드 seed 없음) |
 | **CASE-20** | config 비활성 | envelope `useYn=false` 또는 `effectiveTo` 과거 |
+| **CASE-21** | 제미나이 강사비 | Notion 1–4차시 고정액 · FE layout 미구현 — 타입/`detailJson`만 합의 |
+| **CASE-22** | 기획 취소선 항목 | 보조·다수인출강·단순인건비·회의참석비 `useYn=false` 또는 미시드 |
 
 ---
 
@@ -388,17 +440,23 @@ OpenAPI: `itemName=일용근로자 원천징수세액`, `layout=withholdingDaily
 | `layout` | `WageItemResponse.layout` 등 (최근 스펙에 추가된 경우 있음) | **시드에 반드시 포함** 권장 |
 | `iconKey` / `emojiOverride` | optional | 없으면 FE가 type/name으로 추정 |
 | `basisHours`, `maxLimitWon`, `qualificationLines` | Wage 쪽 partial | Payment는 `maxAmount`/`maxLimitWon` 위주 |
-| `transportCommuteMode` | **없음** | extension 필요 |
-| `evidenceSubmission` | **없음** | extension 필요 |
-| `multiInstructor*` | **없음** (rateItems로 우회?) | extension 또는 rate 규칙 합의 |
-| `meetingAttendance*` | **없음** | extension 필요 |
-| `withholding*` | **없음** | extension 또는 config threshold + 단일 deduction |
-| `simpleLaborWon` / `weeklyHolidayAllowanceWon` | **없음** | extension 필요 |
-| `compareKind` | **없음** | extension 필요 |
-| `basicFeeWon` / `longDistanceFeeWon` | **없음** | CASE-18 |
+| `transportCommuteMode` 등 layout 전용 | `detailJson` (string) | OpenAPI v9에 추가됨 |
+| `evidenceSubmission` | `detailJson` | |
+| `multiInstructor*` | `detailJson` (또는 `rateItems`) | 구간 6개 규칙 문서화 |
+| `meetingAttendance*` | `detailJson` | |
+| `withholding*` | `detailJson` + config threshold | |
+| `simpleLaborWon` / `weeklyHolidayAllowanceWon` | `detailJson` | |
+| `compareKind` / `basicFeeWon` / `longDistanceFeeWon` | `detailJson` | CASE-18 |
+
+### 6.4 `detailJson` 저장 규칙
+
+- OpenAPI: `WageItemResponse.detailJson?: string` / Payment·Deduction 동일.
+- 시드·PUT 시 **객체를 `JSON.stringify`한 문자열**로 저장.
+- FE mock 키 이름을 그대로 쓴다 ([`settlement-item-settings-seed.payload.json`](./settlement-item-settings-seed.payload.json) 참고).
+- Flat에 이미 있는 `layout`, `basisHours`, `maxLimitWon`, `qualificationLines`, `remarkLines`는 flat 우선; `detailJson`에는 layout 전용만 넣어도 되고, mock 전체를 넣어도 됨(중복 허용).
 
 시드 시 **최소**: 목록에 title·type(또는 name)·useYn·layout·한도·자격 줄이 보이도록.  
-상세 모달까지 FE mock과 1:1이면 layout extension JSON을 회신해 주세요.
+상세 모달까지 FE mock과 1:1이면 `detailJson`에 layout 전용 필드를 넣어 주세요.
 
 ### 6.3 임금 `wageItemType` ↔ iconKey
 
@@ -459,5 +517,6 @@ OpenAPI: `itemName=일용근로자 원천징수세액`, `layout=withholdingDaily
 | Remote 매퍼 | `src/features/settlement-management/api/settlement-configs/map-settlement-config-sections.ts` |
 | Query | `src/features/settlement-management/hooks/use-settlement-config-sections-query.ts` |
 | OpenAPI schemas | `src/shared/api/generated/settlement/schemas/settlementConfigResponse.ts` 등 |
+| BE 복붙 JSON | `docs/api/settlement-item-settings-seed.payload.json` |
 
-**Last updated:** 2026-07-21
+**Last updated:** 2026-07-31
