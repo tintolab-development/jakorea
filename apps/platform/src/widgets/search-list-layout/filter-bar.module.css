@@ -15,18 +15,20 @@
 }
 
 .resetButton {
-  display: inline-flex;
+  display: flex;
+  width: 48px;
+  height: 48px;
   flex: 0 0 auto;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   margin-left: auto;
-  padding: var(--spacing-12);
+  padding: 12px;
   border: 0;
   border-radius: var(--radius-999);
   background: var(--color-element-default-blue);
+  box-sizing: border-box;
   cursor: pointer;
-  width: 48px;
-  height: 48px;
 }
 
 .resetButton:hover:not(:disabled) .resetIconDefault {
@@ -44,8 +46,10 @@
 
 .resetIcon {
   display: block;
-  width: 16px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
 }
 
 .resetIconHover {

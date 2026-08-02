@@ -13,6 +13,11 @@
     color 160ms ease;
 }
 
+.button:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
 .button:disabled {
   border: 1px solid rgb(61 61 61 / 10%);
   background:
@@ -49,6 +54,10 @@
   color: var(--color-neutral-white);
 }
 
+.primary:hover:not(:disabled) {
+  background: var(--color-primary-400);
+}
+
 .secondary {
   border: 1px solid var(--color-primary-500);
   background:
@@ -61,6 +70,16 @@
   color: var(--color-primary-500);
 }
 
+.secondary:hover:not(:disabled) {
+  background:
+    linear-gradient(
+      0deg,
+      var(--color-element-hover-strong) 0%,
+      var(--color-element-hover-strong) 100%
+    ),
+    var(--color-neutral-white);
+}
+
 .tertiary {
   border: 1px solid var(--color-border-default);
   background: var(--color-neutral-white);
@@ -68,6 +87,7 @@
 }
 
 .tertiary:hover:not(:disabled) {
+  border-color: var(--color-primary-500);
   color: var(--color-primary-500);
 }
 
