@@ -14,6 +14,9 @@ import {
 import { AddressSearchModal } from '@/features/auth/sign-up/ui/address-search-modal'
 import { PfRichTextEditor, RichTextViewer, useRichTextEditor } from '@/shared/rich-text'
 import {
+  GoogleSocialLoginIcon,
+  KakaoSocialLoginIcon,
+  NaverSocialLoginIcon,
   PFCategoryBadge,
   PFAlertModal,
   PFArrowButton,
@@ -25,11 +28,13 @@ import {
   PFSearchFilter,
   PFSearchInput,
   PFStateBadge,
+  PFStepProgress,
   PFTabs,
   PFToggle,
   PFText,
   PFTextInput,
   PFSelect,
+  PFSort,
 } from '@/shared/ui'
 import searchMintIconUrl from '@/shared/assets/icons/search-mint.svg'
 import { SearchListLayout } from '@/widgets/search-list-layout'
@@ -67,26 +72,336 @@ const layoutSortOptions = [
   { key: 'deadline', label: '마감일 가까운순' },
 ] as const
 
-const typographyItems = [
-  { label: 'page-title', typo: 'page-title' },
-  { label: 'hd-lg', typo: 'hd-lg' },
-  { label: 'hl-lg', typo: 'hl-lg' },
-  { label: 'bd-lg-rg', typo: 'bd-lg-rg' },
-  { label: 'bd-md-rg', typo: 'bd-md-rg' },
-  { label: 'bd-sm-rg', typo: 'bd-sm-rg' },
-  { label: 'caption-rg', typo: 'caption-rg' },
+const typographyTokenSpecs = [
+  {
+    token: 'typo-page-title',
+    pfText: 'page-title',
+    figma: 'Page Title',
+    size: '60px',
+    weight: '700',
+    lineHeight: '140%',
+    letterSpacing: '-0.6px',
+  },
+  {
+    token: 'typo-hd-lg',
+    pfText: 'hd-lg',
+    figma: 'Heading/Large',
+    size: '38px',
+    weight: '700',
+    lineHeight: '144%',
+    letterSpacing: '-0.76px',
+  },
+  {
+    token: 'typo-hd-md',
+    pfText: 'hd-md',
+    figma: 'Heading/Medium',
+    size: '34px',
+    weight: '700',
+    lineHeight: '144%',
+    letterSpacing: '-0.68px',
+  },
+  {
+    token: 'typo-hd-sm',
+    pfText: 'hd-sm',
+    figma: 'Heading/Small',
+    size: '30px',
+    weight: '700',
+    lineHeight: '144%',
+    letterSpacing: '0',
+  },
+  {
+    token: 'typo-hl-lg',
+    pfText: 'hl-lg',
+    figma: 'Headline/Large',
+    size: '24px',
+    weight: '600',
+    lineHeight: '150%',
+    letterSpacing: '-0.24px',
+  },
+  {
+    token: 'typo-hl-sm',
+    pfText: 'hl-sm',
+    figma: 'Headline/Small',
+    size: '20px',
+    weight: '600',
+    lineHeight: '150%',
+    letterSpacing: '-0.2px',
+  },
+  {
+    token: 'typo-bd-lg-rg',
+    pfText: 'bd-lg-rg',
+    figma: 'Body/Large/regular',
+    size: '18px',
+    weight: '400',
+    lineHeight: '150%',
+    letterSpacing: '-0.18px',
+  },
+  {
+    token: 'typo-bd-lg-sb',
+    pfText: 'bd-lg-sb',
+    figma: 'Body/Large/semibold',
+    size: '18px',
+    weight: '600',
+    lineHeight: '150%',
+    letterSpacing: '-0.18px',
+  },
+  {
+    token: 'typo-bd-md-rg',
+    pfText: 'bd-md-rg',
+    figma: 'Body/Medium/regular',
+    size: '16px',
+    weight: '400',
+    lineHeight: '150%',
+    letterSpacing: '-0.16px',
+  },
+  {
+    token: 'typo-bd-md-md',
+    pfText: 'bd-md-md',
+    figma: 'Body/Medium/medium',
+    size: '16px',
+    weight: '500',
+    lineHeight: '150%',
+    letterSpacing: '-0.16px',
+    note: '참여하기 리스트 운영 일정',
+  },
+  {
+    token: 'typo-bd-md-sb',
+    pfText: 'bd-md-sb',
+    figma: 'Body/Medium/semibold',
+    size: '16px',
+    weight: '600',
+    lineHeight: '150%',
+    letterSpacing: '-0.16px',
+  },
+  {
+    token: 'typo-bd-md-bd',
+    pfText: 'bd-md-bd',
+    figma: 'Body/Medium/bold',
+    size: '16px',
+    weight: '700',
+    lineHeight: '150%',
+    letterSpacing: '-0.16px',
+  },
+  {
+    token: 'typo-bd-sm-rg',
+    pfText: 'bd-sm-rg',
+    figma: 'Body/Small/regular',
+    size: '14px',
+    weight: '400',
+    lineHeight: '160%',
+    letterSpacing: '0',
+  },
+  {
+    token: 'typo-bd-sm-md',
+    pfText: 'bd-sm-md',
+    figma: 'Body/Small/medium',
+    size: '14px',
+    weight: '500',
+    lineHeight: '160%',
+    letterSpacing: '0',
+  },
+  {
+    token: 'typo-bd-sm-sb',
+    pfText: 'bd-sm-sb',
+    figma: 'Body/Small/semibold',
+    size: '14px',
+    weight: '600',
+    lineHeight: '160%',
+    letterSpacing: '0',
+  },
+  {
+    token: 'typo-label-md',
+    pfText: 'label-md',
+    figma: 'Label/Medium',
+    size: '13px',
+    weight: '500',
+    lineHeight: '140%',
+    letterSpacing: '0',
+  },
+  {
+    token: 'typo-caption-rg',
+    pfText: 'caption-rg',
+    figma: 'Caption/regular',
+    size: '12px',
+    weight: '400',
+    lineHeight: '140%',
+    letterSpacing: '0',
+  },
+  {
+    token: 'typo-caption-sb',
+    pfText: 'caption-sb',
+    figma: 'Caption/semibold',
+    size: '12px',
+    weight: '600',
+    lineHeight: '140%',
+    letterSpacing: '0',
+  },
 ] as const
 
-const colorItems = [
-  { label: 'black', color: 'black' },
-  { label: 'neutral-cool-500', color: 'neutral-cool-500' },
-  { label: 'neutral-cool-600', color: 'neutral-cool-600' },
-  { label: 'primary-500', color: 'primary-500' },
-  { label: 'primary-700', color: 'primary-700' },
-  { label: 'error', color: 'error' },
-  { label: 'success', color: 'success' },
-  { label: 'gradient-primary-01', color: 'gradient-primary-01' },
+const colorTokenGroups = [
+  {
+    id: 'primary',
+    label: 'Primary',
+    tokens: [
+      { cssVar: '--color-primary-100', hex: '#CDF4F7' },
+      { cssVar: '--color-primary-200', hex: '#95E8F0' },
+      { cssVar: '--color-primary-300', hex: '#4CD9E5' },
+      { cssVar: '--color-primary-400', hex: '#0CBDCC' },
+      {
+        cssVar: '--color-primary-500',
+        hex: '#01A1AF',
+        figma: 'Color/primary/500 · resilient_turquoise',
+        pfText: 'primary-500',
+        note: '참여하기 리스트 운영 일정',
+      },
+      { cssVar: '--color-primary-600', hex: '#337791' },
+      { cssVar: '--color-primary-700', hex: '#285F74', pfText: 'primary-700' },
+      { cssVar: '--color-primary-800', hex: '#22404D', pfText: 'primary-800' },
+    ],
+  },
+  {
+    id: 'neutral',
+    label: 'Neutral',
+    tokens: [
+      { cssVar: '--color-neutral-black', hex: '#3D3D3D', pfText: 'black' },
+      { cssVar: '--color-neutral-white', hex: '#FFFFFF', pfText: 'white' },
+      { cssVar: '--color-neutral-cool-50', hex: '#F5F7F7' },
+      { cssVar: '--color-neutral-cool-80', hex: '#EEF3F4' },
+      { cssVar: '--color-neutral-cool-100', hex: '#E6E9EB' },
+      { cssVar: '--color-neutral-cool-200', hex: '#D0D9DB' },
+      { cssVar: '--color-neutral-cool-300', hex: '#BBC4C7' },
+      { cssVar: '--color-neutral-cool-400', hex: '#9FAFB5' },
+      { cssVar: '--color-neutral-cool-500', hex: '#85969D', pfText: 'neutral-cool-500' },
+      { cssVar: '--color-neutral-cool-600', hex: '#667278', pfText: 'neutral-cool-600' },
+      { cssVar: '--color-neutral-cool-700', hex: '#41494D' },
+      { cssVar: '--color-neutral-warm-80', hex: '#F7F7F7' },
+      { cssVar: '--color-neutral-warm-100', hex: '#F0F1F2' },
+      { cssVar: '--color-neutral-warm-200', hex: '#E8E8E8' },
+      { cssVar: '--color-neutral-warm-300', hex: '#D1D1D1' },
+      { cssVar: '--color-neutral-warm-400', hex: '#BDBDBD' },
+      { cssVar: '--color-neutral-warm-500', hex: '#999999', pfText: 'neutral-warm-500' },
+      { cssVar: '--color-neutral-warm-600', hex: '#7A7A7A', pfText: 'neutral-warm-600' },
+      { cssVar: '--color-neutral-warm-700', hex: '#525252' },
+    ],
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    tokens: [
+      { cssVar: '--color-status-error-default', hex: '#C31D20', pfText: 'error' },
+      { cssVar: '--color-status-error-light', hex: '#ED4A4C' },
+      { cssVar: '--color-status-error-strong', hex: '#850D0F' },
+      { cssVar: '--color-status-success-default', hex: '#1D5CC2', pfText: 'success' },
+      { cssVar: '--color-status-success-light', hex: '#4A88ED' },
+      { cssVar: '--color-status-success-strong', hex: '#0D3B85' },
+    ],
+  },
+  {
+    id: 'palette',
+    label: 'Palette',
+    tokens: [
+      { cssVar: '--color-palette-cream', hex: '#F3F2B3' },
+      { cssVar: '--color-palette-yellow', hex: '#E3E24F' },
+      { cssVar: '--color-palette-green', hex: '#BBD153' },
+      { cssVar: '--color-palette-ice', hex: '#C2EDF0' },
+      { cssVar: '--color-palette-red', hex: '#F65F4E' },
+      { cssVar: '--color-palette-jade', hex: '#46B17B' },
+      { cssVar: '--color-palette-forest', hex: '#00763D' },
+    ],
+  },
+  {
+    id: 'gradient',
+    label: 'Gradient',
+    tokens: [
+      {
+        cssVar: '--color-gradient-primary-01',
+        hex: '90deg #285F74 → #00A0AF',
+        isGradient: true,
+        pfText: 'gradient-primary-01',
+      },
+      {
+        cssVar: '--color-gradient-primary-02',
+        hex: '101deg #2EAAFD → #0D81CF',
+        isGradient: true,
+      },
+      {
+        cssVar: '--color-gradient-primary-03',
+        hex: '93deg #46B17B → #BBD153',
+        isGradient: true,
+      },
+    ],
+  },
 ] as const
+
+const designSystemNav = [
+  { id: 'typography', label: 'Typography' },
+  { id: 'color', label: 'Color' },
+  { id: 'buttons', label: 'Buttons' },
+  { id: 'badges', label: 'Badges' },
+  { id: 'forms', label: 'Forms' },
+  { id: 'navigation', label: 'Navigation' },
+  { id: 'layout', label: 'Layout' },
+  { id: 'modals', label: 'Modals' },
+  { id: 'icons', label: 'Social Icons' },
+  { id: 'rich-text', label: 'Rich Text' },
+  { id: 'form-template', label: 'FormTemplate' },
+  { id: 'dev-tools', label: 'Dev Tools' },
+] as const
+
+/**
+ * Platform 반응형 룰 프리셋 (breakpoints.css / breakpoints.ts 와 동기)
+ * ~1079 below-pc · 1080~1359 pc-compact · ≥1360 header-full · ≥1600 wide-shell
+ */
+const VIEWPORT_PRESETS = [
+  {
+    key: 'below-pc',
+    label: 'Mobile',
+    rangeLabel: `below-pc · ≤${platformBreakpoints.belowPcMax}`,
+    description: '모바일 UI · 햄버거 헤더',
+    width: platformBreakpoints.layoutMinWidth + 15, // 390
+  },
+  {
+    key: 'pc-compact',
+    label: 'PC compact',
+    rangeLabel: `pc · ${platformBreakpoints.pcMin}–${platformBreakpoints.headerFullMin - 1}`,
+    description: 'PC UI · 타이트 마진 · 헤더 축약 구간',
+    width: 1200,
+  },
+  {
+    key: 'header-full',
+    label: 'Header full',
+    rangeLabel: `header-full · ≥${platformBreakpoints.headerFullMin}`,
+    description: 'PC UI · 헤더 풀 메뉴',
+    width: 1440,
+  },
+  {
+    key: 'wide-shell',
+    label: 'Wide shell',
+    rangeLabel: `wide-shell · ≥${platformBreakpoints.wideShellMin}`,
+    description: 'PC UI · wide shell 마진',
+    width: platformBreakpoints.wideShellMin,
+  },
+  {
+    key: 'live',
+    label: 'Live',
+    rangeLabel: '현재 브라우저 폭',
+    description: '뷰포트 리사이즈 없이 실제 창 크기',
+    width: null,
+  },
+] as const
+
+type ViewportPresetKey = (typeof VIEWPORT_PRESETS)[number]['key']
+
+const VIEWPORT_PREVIEW_QUERY = 'viewport-preview'
+
+function isViewportPreviewEmbed() {
+  return new URLSearchParams(window.location.search).get(VIEWPORT_PREVIEW_QUERY) === '1'
+}
+
+const viewportTabItems = VIEWPORT_PRESETS.map(preset => ({
+  key: preset.key,
+  label: preset.label,
+}))
 
 const arrowButtonSizes = ['large', 'medium'] as const
 const arrowButtonVariants = ['primary', 'secondary'] as const
@@ -275,7 +590,7 @@ const authRouteLinks = [
   { label: '소셜 오류', href: '/auth/social/error?reason=not-linked' },
 ] as const
 
-export function TestPage() {
+export function DesignSystemPage() {
   const [numberedPage, setNumberedPage] = useState(1)
   const [compactPage, setCompactPage] = useState(1)
   const [underlineIsolatedTab, setUnderlineIsolatedTab] = useState('tab-1')
@@ -299,13 +614,18 @@ export function TestPage() {
   const [richTextHtmlPreview, setRichTextHtmlPreview] = useState('')
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isBottomModalOpen, setIsBottomModalOpen] = useState(false)
+  const [isFullModalOpen, setIsFullModalOpen] = useState(false)
   const [isAddressSearchModalOpen, setIsAddressSearchModalOpen] = useState(false)
   const [selectedAddress, setSelectedAddress] = useState('')
+  const [stepProgressCurrent, setStepProgressCurrent] = useState(3)
   const [devMemberProfile, setDevMemberProfileState] = useState<PlatformMemberProfile>(() =>
     getDevMemberProfile()
   )
   const [devIsLoggedIn, setDevIsLoggedInState] = useState(() => getDevAuthLoggedIn())
   const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth)
+  const [viewportPreset, setViewportPreset] = useState<ViewportPresetKey>('live')
+  const [isViewportPreview] = useState(() => isViewportPreviewEmbed())
 
   useEffect(() => {
     const handleResize = () => setViewportWidth(window.innerWidth)
@@ -323,8 +643,14 @@ export function TestPage() {
     setDevIsLoggedInState(loggedIn)
   }
 
-  const isMobileHeader = viewportWidth <= platformBreakpoints.belowPcMax
-  const viewportLabel = isMobileHeader
+  const activeViewportPreset =
+    VIEWPORT_PRESETS.find(preset => preset.key === viewportPreset) ?? VIEWPORT_PRESETS[4]
+  const isFramedViewport = !isViewportPreview && viewportPreset !== 'live'
+  const effectiveViewportWidth = isViewportPreview
+    ? viewportWidth
+    : (activeViewportPreset.width ?? viewportWidth)
+  const isMobileHeader = effectiveViewportWidth <= platformBreakpoints.belowPcMax
+  const headerModeLabel = isMobileHeader
     ? `모바일 헤더 (≤${platformBreakpoints.belowPcMax})`
     : `PC 헤더 (≥${platformBreakpoints.pcMin})`
 
@@ -335,19 +661,25 @@ export function TestPage() {
     placeholder: '내용을 입력해 주세요.',
   })
 
-  return (
-    <section className={styles.page}>
-      <div className={styles.mobileVerifyBar}>
-        <div className={styles.mobileVerifyInfo}>
+  const viewportToolbar = !isViewportPreview ? (
+    <div
+      className={isFramedViewport ? styles.viewportToolbarOverlay : styles.viewportToolbar}
+    >
+      <div className={styles.viewportToolbarTop}>
+        <div className={styles.viewportToolbarInfo}>
           <PFText as="div" typo="bd-sm-sb" color="black">
-            모바일 UI 검증
+            반응형 프리뷰
           </PFText>
           <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-            {viewportWidth}px · {viewportLabel}
-            {isMobileHeader ? ' · 햄버거로 메뉴 확인' : ' · DevTools에서 폭을 줄여 모바일 헤더 확인'}
+            {activeViewportPreset.rangeLabel}
+            {activeViewportPreset.width != null ? ` · ${activeViewportPreset.width}px` : ` · ${viewportWidth}px`}
+            {' · '}
+            {headerModeLabel}
+            {' · '}
+            {activeViewportPreset.description}
           </PFText>
         </div>
-        <div className={styles.mobileVerifyActions}>
+        <div className={styles.viewportToolbarActions}>
           <PFButton
             size="small"
             variant={devIsLoggedIn ? 'primary' : 'tertiary'}
@@ -364,98 +696,198 @@ export function TestPage() {
           </PFButton>
         </div>
       </div>
+      <PFTabs
+        items={viewportTabItems}
+        value={viewportPreset}
+        onChange={key => setViewportPreset(key as ViewportPresetKey)}
+        variant="pill"
+        size="medium"
+        ariaLabel="반응형 프리셋"
+        className={styles.viewportTabs}
+      />
+    </div>
+  ) : null
+
+  if (isFramedViewport) {
+    return (
+      <div className={styles.viewportShell}>
+        {viewportToolbar}
+        <div className={styles.viewportStage}>
+          <iframe
+            className={styles.viewportFrame}
+            title={`반응형 프리뷰 ${activeViewportPreset.label}`}
+            src={`/design-system?${VIEWPORT_PREVIEW_QUERY}=1`}
+            style={{ width: activeViewportPreset.width ?? undefined }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <section className={styles.page}>
+      {viewportToolbar}
+
+      {isViewportPreview ? (
+        <div className={styles.viewportPreviewBadge}>
+          <PFText as="div" typo="bd-sm-sb" color="black">
+            Viewport preview embed
+          </PFText>
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            {viewportWidth}px · {headerModeLabel}
+          </PFText>
+        </div>
+      ) : null}
 
       <div className={styles.header}>
         <PFText as="div" typo="hd-lg" color="black">
-          Platform Component Test
+          Platform Design System
         </PFText>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          공통 컴포넌트와 스타일 토큰을 확인하기 위한 테스트 페이지입니다.
+          shared/ui 공통 컴포넌트와 스타일 토큰 쇼케이스입니다. (`/design-system`) 상단 탭으로
+          Platform 반응형 룰 구간별 화면을 확인할 수 있습니다.
         </PFText>
+        <nav className={styles.dsNav} aria-label="디자인 시스템 섹션">
+          {designSystemNav.map(item => (
+            <a key={item.id} className={styles.dsNavLink} href={`#${item.id}`}>
+              {item.label}
+            </a>
+          ))}
+        </nav>
       </div>
 
-      <div className={styles.section}>
+      <div className={styles.section} id="typography">
         <PFText as="div" typo="hl-sm" color="black">
-          FormTemplate (CMS embed)
+          Typography
         </PFText>
-        <FormTemplateSmokeDemo />
+        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          토큰 파일: <code>shared/styles/typography.css</code> · PFText{' '}
+          <code>typo</code> prop · 형식: typo-&#123;분류&#125;-&#123;크기&#125;-&#123;굵기&#125;
+        </PFText>
+
+        <div className={styles.usageCard}>
+          <PFText as="div" typo="bd-sm-sb" color="black">
+            참여하기 리스트 · 운영 일정
+          </PFText>
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            Figma Body/Medium/medium · primary-500 · text-align right
+          </PFText>
+          <code className={styles.codeBlock}>
+            {
+              '<p className={styles.operatingPeriod}><PFText typo="bd-md-md" color="primary-500">'
+            }
+          </code>
+          <p className={styles.scheduleSample}>
+            <PFText as="span" typo="bd-md-md" color="primary-500">
+              2026.04.03(금) – 2026.11.20(금)
+            </PFText>
+          </p>
+        </div>
+
+        <div className={styles.tokenTableWrap}>
+          <table className={styles.tokenTable}>
+            <thead>
+              <tr>
+                <th>CSS token</th>
+                <th>PFText</th>
+                <th>Figma</th>
+                <th>Size</th>
+                <th>Weight</th>
+                <th>LH</th>
+                <th>Tracking</th>
+                <th>Sample</th>
+              </tr>
+            </thead>
+            <tbody>
+              {typographyTokenSpecs.map(item => (
+                <tr key={item.token} className={'note' in item ? styles.tokenRowHighlight : undefined}>
+                  <td>
+                    <code>{item.token}</code>
+                    {'note' in item ? (
+                      <span className={styles.tokenNote}>{item.note}</span>
+                    ) : null}
+                  </td>
+                  <td>
+                    <code>{item.pfText}</code>
+                  </td>
+                  <td>{item.figma}</td>
+                  <td>{item.size}</td>
+                  <td>{item.weight}</td>
+                  <td>{item.lineHeight}</td>
+                  <td>{item.letterSpacing}</td>
+                  <td>
+                    <PFText as="span" typo={item.pfText} color="black">
+                      가나다 Aa 12
+                    </PFText>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className={styles.section}>
+      <div className={styles.section} id="color">
         <PFText as="div" typo="hl-sm" color="black">
-          PfRichTextEditor
+          Color
         </PFText>
-        <div className={styles.richTextDemo}>
-          <PfRichTextEditor editor={editor} />
-          <div className={styles.richTextActions}>
-            <PFButton
-              size="medium"
-              variant="secondary"
-              onClick={() => setRichTextPreview(api?.getMarkdown() ?? '')}
-            >
-              Markdown 미리보기
-            </PFButton>
-            <PFButton
-              size="medium"
-              variant="secondary"
-              onClick={() => setRichTextHtmlPreview(api?.getHTML() ?? '')}
-            >
-              HTML 미리보기
-            </PFButton>
+        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          토큰 파일: <code>shared/styles/color.css</code> · PFText{' '}
+          <code>color</code> prop 매핑은 텍스트용 토큰만 노출합니다.
+        </PFText>
+
+        {colorTokenGroups.map(group => (
+          <div key={group.id} className={styles.colorGroup}>
+            <PFText as="div" typo="bd-md-sb" color="black">
+              {group.label}
+            </PFText>
+            <div className={styles.colorSwatchGrid}>
+              {group.tokens.map(token => {
+                const isLight =
+                  token.hex.toUpperCase() === '#FFFFFF' ||
+                  token.hex.toUpperCase().startsWith('#F') ||
+                  token.hex.toUpperCase().startsWith('#E') ||
+                  token.hex.toUpperCase().startsWith('#D') ||
+                  token.hex.toUpperCase().startsWith('#C') ||
+                  ('isGradient' in token && token.isGradient)
+                return (
+                  <div
+                    key={token.cssVar}
+                    className={[
+                      styles.colorSwatch,
+                      'note' in token ? styles.colorSwatchHighlight : undefined,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
+                    <div
+                      className={[styles.colorSwatchChip, isLight ? styles.colorSwatchChipBordered : undefined]
+                        .filter(Boolean)
+                        .join(' ')}
+                      style={{ background: `var(${token.cssVar})` }}
+                    />
+                    <div className={styles.colorSwatchMeta}>
+                      <code className={styles.colorSwatchVar}>{token.cssVar}</code>
+                      <span className={styles.colorSwatchHex}>{token.hex}</span>
+                      {'figma' in token && token.figma ? (
+                        <span className={styles.tokenNote}>{token.figma}</span>
+                      ) : null}
+                      {'pfText' in token && token.pfText ? (
+                        <span className={styles.tokenNote}>PFText color=&quot;{token.pfText}&quot;</span>
+                      ) : null}
+                      {'note' in token && token.note ? (
+                        <span className={styles.tokenNote}>{token.note}</span>
+                      ) : null}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-          {richTextPreview ? (
-            <div className={styles.richTextPreview}>
-              <PFText as="div" typo="label-md" color="neutral-cool-500">
-                Markdown 미리보기
-              </PFText>
-              <RichTextViewer markdown={richTextPreview} maxHeight="240px" />
-            </div>
-          ) : null}
-          {richTextHtmlPreview ? (
-            <div className={styles.richTextPreview}>
-              <PFText as="div" typo="label-md" color="neutral-cool-500">
-                HTML 미리보기
-              </PFText>
-              <pre className={styles.richTextHtmlPreview}>{richTextHtmlPreview}</pre>
-            </div>
-          ) : null}
-        </div>
+        ))}
       </div>
 
-      <div className={styles.section}>
-        <PFText as="div" typo="hl-sm" color="black">
-          PFText Typography
-        </PFText>
-        <div className={styles.stack}>
-          {typographyItems.map(({ label, typo }) => (
-            <div className={styles.sampleRow} key={label}>
-              <PFText as="span" typo="label-md" color="neutral-cool-500">
-                {label}
-              </PFText>
-              <PFText as="span" typo={typo} color="black">
-                JA Korea 사용자 홈페이지 텍스트 샘플
-              </PFText>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className={styles.section}>
-        <PFText as="div" typo="hl-sm" color="black">
-          PFText Color
-        </PFText>
-        <div className={styles.colorGrid}>
-          {colorItems.map(({ label, color }) => (
-            <div className={styles.colorCard} key={label}>
-              <PFText as="span" typo="bd-sm-sb" color={color}>
-                {label}
-              </PFText>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className={styles.section}>
+      <div className={styles.section} id="buttons">
         <PFText as="div" typo="hl-sm" color="black">
           PFArrowButton
         </PFText>
@@ -475,6 +907,10 @@ export function TestPage() {
                   />
                 ))}
                 <PFArrowButton variant={variant} disabled aria-label={`${variant} disabled`} />
+                <PFArrowButton
+                  variant={variant}
+                  decorative
+                />
               </div>
             </div>
           ))}
@@ -502,6 +938,15 @@ export function TestPage() {
             <div className={styles.buttonList}>
               <PFChevronButton direction="left" disabled aria-label="이전 disabled" />
               <PFChevronButton direction="right" disabled aria-label="다음 disabled" />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              decorative
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFChevronButton direction="left" decorative />
+              <PFChevronButton direction="right" decorative />
             </div>
           </div>
         </div>
@@ -535,7 +980,7 @@ export function TestPage() {
         </div>
       </div>
 
-      <div className={styles.section}>
+      <div className={styles.section} id="badges">
         <PFText as="div" typo="hl-sm" color="black">
           PFCategoryBadge
         </PFText>
@@ -624,7 +1069,7 @@ export function TestPage() {
         </div>
       </div>
 
-      <div className={styles.section}>
+      <div className={styles.section} id="forms">
         <PFText as="div" typo="hl-sm" color="black">
           PFTextInput
         </PFText>
@@ -645,6 +1090,30 @@ export function TestPage() {
                 disabled
               />
               <PFTextInput size={size} label="Label" placeholder="text" defaultValue="text" error />
+              <PFTextInput
+                size={size}
+                label="Label"
+                placeholder="text"
+                message="안내 메시지"
+                messageStatus="neutral"
+              />
+              <PFTextInput
+                size={size}
+                label="Label"
+                placeholder="text"
+                defaultValue="text"
+                message="사용 가능한 값입니다."
+                messageStatus="success"
+              />
+              <PFTextInput
+                size={size}
+                label="Label"
+                placeholder="text"
+                defaultValue="text"
+                error
+                message="오류 메시지"
+                messageStatus="error"
+              />
             </div>
           ))}
         </div>
@@ -766,6 +1235,36 @@ export function TestPage() {
         </div>
       </div>
 
+      <div className={styles.section} id="navigation">
+        <PFText as="div" typo="hl-sm" color="black">
+          PFStepProgress
+        </PFText>
+        <div className={styles.buttonStack}>
+          <div className={styles.buttonRow}>
+            <PFText as="span" typo="label-md" color="neutral-cool-500">
+              step {stepProgressCurrent} / 7
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFButton
+                size="small"
+                variant="tertiary"
+                onClick={() => setStepProgressCurrent(step => Math.max(1, step - 1))}
+              >
+                이전
+              </PFButton>
+              <PFButton
+                size="small"
+                variant="tertiary"
+                onClick={() => setStepProgressCurrent(step => Math.min(7, step + 1))}
+              >
+                다음
+              </PFButton>
+            </div>
+          </div>
+          <PFStepProgress currentStep={stepProgressCurrent} totalSteps={7} />
+        </div>
+      </div>
+
       <div className={styles.section}>
         <PFText as="div" typo="hl-sm" color="black">
           PFPagination
@@ -806,6 +1305,17 @@ export function TestPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFSort
+        </PFText>
+        <PFSort
+          options={[...layoutSortOptions]}
+          value={layoutSort}
+          onChange={key => setLayoutSort(key as (typeof layoutSortOptions)[number]['key'])}
+        />
       </div>
 
       <div className={styles.section}>
@@ -867,7 +1377,7 @@ export function TestPage() {
         </div>
       </div>
 
-      <div className={styles.section}>
+      <div className={styles.section} id="layout">
         <PFText as="div" typo="hl-sm" color="black">
           SearchListLayout
         </PFText>
@@ -902,23 +1412,11 @@ export function TestPage() {
           }}
           toolbarTitle="총 32개 프로그램"
           sort={
-            <>
-              {layoutSortOptions.map(option => (
-                <button
-                  key={option.key}
-                  type="button"
-                  className={[
-                    styles.sortOption,
-                    layoutSort === option.key ? styles.sortOptionActive : undefined,
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  onClick={() => setLayoutSort(option.key)}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </>
+            <PFSort
+              options={[...layoutSortOptions]}
+              value={layoutSort}
+              onChange={key => setLayoutSort(key as (typeof layoutSortOptions)[number]['key'])}
+            />
           }
           pagination={
             <PFPagination currentPage={layoutPage} totalPages={8} onPageChange={setLayoutPage} />
@@ -928,13 +1426,22 @@ export function TestPage() {
         </SearchListLayout>
       </div>
 
-      <div className={styles.section}>
+      <div className={styles.section} id="modals">
         <PFText as="div" typo="hl-sm" color="black">
           PFModal
         </PFText>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          mobilePlacement: center(기본) · bottom(바텀시트) · full(전체 화면). PC 미만에서 확인하세요.
+        </PFText>
         <div className={styles.modalStack}>
           <PFButton variant="secondary" onClick={() => setIsModalOpen(true)}>
-            PFModal 열기
+            center
+          </PFButton>
+          <PFButton variant="secondary" onClick={() => setIsBottomModalOpen(true)}>
+            bottom
+          </PFButton>
+          <PFButton variant="secondary" onClick={() => setIsFullModalOpen(true)}>
+            full
           </PFButton>
         </div>
       </div>
@@ -969,7 +1476,66 @@ export function TestPage() {
         </div>
       </div>
 
-      <div className={styles.section}>
+      <div className={styles.section} id="icons">
+        <PFText as="div" typo="hl-sm" color="black">
+          Social Login Icons
+        </PFText>
+        <div className={styles.buttonList}>
+          <GoogleSocialLoginIcon />
+          <NaverSocialLoginIcon />
+          <KakaoSocialLoginIcon />
+        </div>
+      </div>
+
+      <div className={styles.section} id="rich-text">
+        <PFText as="div" typo="hl-sm" color="black">
+          PfRichTextEditor
+        </PFText>
+        <div className={styles.richTextDemo}>
+          <PfRichTextEditor editor={editor} />
+          <div className={styles.richTextActions}>
+            <PFButton
+              size="medium"
+              variant="secondary"
+              onClick={() => setRichTextPreview(api?.getMarkdown() ?? '')}
+            >
+              Markdown 미리보기
+            </PFButton>
+            <PFButton
+              size="medium"
+              variant="secondary"
+              onClick={() => setRichTextHtmlPreview(api?.getHTML() ?? '')}
+            >
+              HTML 미리보기
+            </PFButton>
+          </div>
+          {richTextPreview ? (
+            <div className={styles.richTextPreview}>
+              <PFText as="div" typo="label-md" color="neutral-cool-500">
+                Markdown 미리보기
+              </PFText>
+              <RichTextViewer markdown={richTextPreview} maxHeight="240px" />
+            </div>
+          ) : null}
+          {richTextHtmlPreview ? (
+            <div className={styles.richTextPreview}>
+              <PFText as="div" typo="label-md" color="neutral-cool-500">
+                HTML 미리보기
+              </PFText>
+              <pre className={styles.richTextHtmlPreview}>{richTextHtmlPreview}</pre>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className={styles.section} id="form-template">
+        <PFText as="div" typo="hl-sm" color="black">
+          FormTemplate (CMS embed)
+        </PFText>
+        <FormTemplateSmokeDemo />
+      </div>
+
+      <div className={styles.section} id="dev-tools">
         <PFText as="div" typo="hl-sm" color="black">
           Mypage Dev Tools
         </PFText>
@@ -1128,7 +1694,29 @@ export function TestPage() {
 
       <PFModal open={isModalOpen} title="모달 제목" onClose={() => setIsModalOpen(false)}>
         <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
-          PFModal은 X 버튼과 자유로운 children 콘텐츠를 가진 작업용 모달입니다.
+          PFModal 기본(center) 배치입니다. X 버튼과 자유로운 children 콘텐츠를 가집니다.
+        </PFText>
+      </PFModal>
+
+      <PFModal
+        open={isBottomModalOpen}
+        title="바텀시트 모달"
+        mobilePlacement="bottom"
+        onClose={() => setIsBottomModalOpen(false)}
+      >
+        <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
+          mobilePlacement=&quot;bottom&quot; — PC 미만에서 바텀시트로 표시됩니다.
+        </PFText>
+      </PFModal>
+
+      <PFModal
+        open={isFullModalOpen}
+        title="전체 화면 모달"
+        mobilePlacement="full"
+        onClose={() => setIsFullModalOpen(false)}
+      >
+        <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
+          mobilePlacement=&quot;full&quot; — PC 미만에서 전체 화면으로 표시됩니다.
         </PFText>
       </PFModal>
 
