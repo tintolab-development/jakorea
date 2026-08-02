@@ -1,5 +1,5 @@
 import jaLogoGrayUrl from '@/shared/assets/brand/ja-logo-gray.svg'
-import chevronDownGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
+import chevronDownGrayUrl from '@/shared/assets/icons/chevron-down-gray.svg'
 import facebookIconUrl from './image/icon/facebook.svg'
 import instagramIconUrl from './image/icon/instagram.svg'
 import youtubeIconUrl from './image/icon/youtube.svg'
