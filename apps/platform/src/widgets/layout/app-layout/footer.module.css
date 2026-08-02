@@ -225,7 +225,11 @@
   }
 
   .navigationButton {
+    color: var(--color-neutral-cool-500);
+    font-family: var(--font-family-base);
     font-size: 16px;
+    font-style: normal;
+    font-weight: 500;
     line-height: 150%;
     letter-spacing: -0.16px;
   }
