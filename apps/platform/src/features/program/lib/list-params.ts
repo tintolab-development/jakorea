@@ -12,9 +12,6 @@ const PROGRAM_SORTS = new Set<ProgramSort>(['latest', 'name', 'closing-soon'])
 /** 레거시 URL (탭 값) 이 모집대상에 남아 있으면 무시 */
 const LEGACY_AUDIENCE_AS_TARGET = new Set(['youth', 'institution', 'instructor'])
 
-/** 제거된 모집 예정 필터 — URL 잔존 시 all 로 취급 */
-const LEGACY_SCHEDULED_STATUS = 'scheduled'
-
 const EDUCATION_TARGET_VALUES = new Set([
   'elementary',
   'middle',
@@ -62,10 +59,11 @@ function parsePositiveInt(value: string | null, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
 }
 
-const VALID_RECRUITMENT_STATUS = new Set(['recruiting', 'closed', 'all'])
+/** 기간 기반 3단 모집현황 필터 */
+const VALID_RECRUITMENT_STATUS = new Set(['recruiting', 'closed', 'scheduled', 'all'])
 
 function parseRecruitmentStatusFilter(value: string | null): string {
-  if (!value || value === 'all' || value === LEGACY_SCHEDULED_STATUS) {
+  if (!value || value === 'all') {
     return DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentStatus
   }
   if (VALID_RECRUITMENT_STATUS.has(value)) {
