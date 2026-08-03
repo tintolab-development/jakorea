@@ -220,6 +220,15 @@
   text-align: right;
 }
 
+.pageTitleSample {
+  margin: 0;
+}
+
+.gradientTextSample {
+  display: block;
+  margin-top: var(--spacing-4);
+}
+
 .codeBlock {
   display: block;
   overflow-x: auto;

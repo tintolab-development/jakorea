@@ -75,8 +75,8 @@ const layoutSortOptions = [
 const typographyTokenSpecs = [
   {
     token: 'typo-page-title',
-    pfText: 'page-title',
-    figma: 'Page Title',
+    pfText: 'page-title' as const,
+    figma: 'Pagetitle/Large',
     size: '60px',
     weight: '700',
     lineHeight: '140%',
@@ -317,17 +317,25 @@ const colorTokenGroups = [
         cssVar: '--color-gradient-primary-01',
         hex: '90deg #285F74 → #00A0AF',
         isGradient: true,
-        pfText: 'gradient-primary-01',
+        figma: 'Primary_GR_01',
+        pfText: 'gradient-primary-01' as const,
+        utility: 'text-gradient-primary-01',
       },
       {
         cssVar: '--color-gradient-primary-02',
         hex: '101deg #2EAAFD → #0D81CF',
         isGradient: true,
+        figma: 'Primary_GR_02',
+        pfText: 'gradient-primary-02' as const,
+        utility: 'text-gradient-primary-02',
       },
       {
         cssVar: '--color-gradient-primary-03',
         hex: '93deg #46B17B → #BBD153',
         isGradient: true,
+        figma: 'Primary_GR_03',
+        pfText: 'gradient-primary-03' as const,
+        utility: 'text-gradient-primary-03',
       },
     ],
   },
@@ -842,6 +850,23 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
 
         <div className={styles.usageCard}>
           <PFText as="div" typo="bd-sm-sb" color="black">
+            프로그램 목록 · 상단 타이틀
+          </PFText>
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            Figma Pagetitle/Large · Primary_GR_01 (text gradient fill)
+          </PFText>
+          <code className={styles.codeBlock}>
+            {'<PFText as="h1" typo="page-title" color="gradient-primary-01">'}
+          </code>
+          <PFText as="p" typo="page-title" color="gradient-primary-01" className={styles.pageTitleSample}>
+            나에게 맞는
+            <br />
+            프로그램을 찾아볼까요?
+          </PFText>
+        </div>
+
+        <div className={styles.usageCard}>
+          <PFText as="div" typo="bd-sm-sb" color="black">
             참여하기 리스트 · 운영 일정
           </PFText>
           <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
@@ -907,8 +932,9 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
           Color
         </PFText>
         <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-          토큰 파일: <code>shared/styles/color.css</code> · PFText{' '}
-          <code>color</code> prop 매핑은 텍스트용 토큰만 노출합니다.
+          토큰 파일: <code>shared/styles/color.css</code> · 그라디언트 텍스트 유틸:{' '}
+          <code>shared/styles/text-gradient.css</code> · PFText <code>color</code> prop은 솔리드 +
+          gradient-primary-0* 텍스트 필을 노출합니다.
         </PFText>
 
         {colorTokenGroups.map(group => (
@@ -947,8 +973,18 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
                       {'figma' in token && token.figma ? (
                         <span className={styles.tokenNote}>{token.figma}</span>
                       ) : null}
+                      {'utility' in token && token.utility ? (
+                        <span className={styles.tokenNote}>
+                          utility: .{token.utility}
+                        </span>
+                      ) : null}
                       {'pfText' in token && token.pfText ? (
                         <span className={styles.tokenNote}>PFText color=&quot;{token.pfText}&quot;</span>
+                      ) : null}
+                      {'pfText' in token && token.pfText ? (
+                        <PFText as="span" typo="hl-sm" color={token.pfText} className={styles.gradientTextSample}>
+                          가나다 Gradient
+                        </PFText>
                       ) : null}
                       {'note' in token && token.note ? (
                         <span className={styles.tokenNote}>{token.note}</span>

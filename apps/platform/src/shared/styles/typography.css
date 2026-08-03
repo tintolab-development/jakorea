@@ -12,12 +12,13 @@
  * 굵기: rg (regular), md (medium), sb (semibold), bd (bold)
  */
 
+/* Figma: Pagetitle / Large · PFText typo="page-title" */
 .typo-page-title {
   font-family: var(--font-family-base);
   font-size: 60px;
   font-style: normal;
   font-weight: 700;
-  line-height: 140%;
+  line-height: 140%; /* 84px */
   letter-spacing: -0.6px;
 }
 

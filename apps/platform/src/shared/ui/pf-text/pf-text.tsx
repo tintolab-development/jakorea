@@ -1,7 +1,7 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react'
 import styles from './pf-text.module.css'
 
-type PFTypography =
+export type PFTypography =
   | 'page-title'
   | 'hd-lg'
   | 'hd-md'
@@ -21,7 +21,7 @@ type PFTypography =
   | 'caption-rg'
   | 'caption-sb'
 
-type PFTextColor =
+export type PFTextColor =
   | 'inherit'
   | 'black'
   | 'white'
@@ -34,7 +34,12 @@ type PFTextColor =
   | 'primary-800'
   | 'error'
   | 'success'
+  /** Figma Primary_GR_01 · CSS --color-gradient-primary-01 · .text-gradient-primary-01 */
   | 'gradient-primary-01'
+  /** Figma Primary_GR_02 · CSS --color-gradient-primary-02 · .text-gradient-primary-02 */
+  | 'gradient-primary-02'
+  /** Figma Primary_GR_03 · CSS --color-gradient-primary-03 · .text-gradient-primary-03 */
+  | 'gradient-primary-03'
 
 type PFTextOwnProps<T extends ElementType> = {
   as?: T
@@ -81,7 +86,10 @@ const colorClassMap: Record<PFTextColor, string> = {
   'primary-800': styles.colorPrimary800,
   error: styles.colorError,
   success: styles.colorSuccess,
-  'gradient-primary-01': styles.colorGradientPrimary01,
+  /* 전역 유틸: shared/styles/text-gradient.css */
+  'gradient-primary-01': 'text-gradient-primary-01',
+  'gradient-primary-02': 'text-gradient-primary-02',
+  'gradient-primary-03': 'text-gradient-primary-03',
 }
 
 export function PFText<T extends ElementType = 'span'>({
