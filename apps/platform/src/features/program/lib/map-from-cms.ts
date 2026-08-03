@@ -156,11 +156,15 @@ export function resolvePlatformCategory(
   return 'youth'
 }
 
+/**
+ * Platform 모집현황은 모집 중 / 모집 완료 2단.
+ * CMS lifecycle 의 planned·scheduled 계열은 공개 목록에서 「모집 중」으로 합친다.
+ */
 export function mapLifecycleToRecruitmentStatus(
   lifecycle: CmsLifecycleStatus | undefined
 ): RecruitmentStatus {
   if (!lifecycle) return RECRUITMENT_STATUS.recruiting
-  if (SCHEDULED_LIFECYCLES.has(lifecycle)) return RECRUITMENT_STATUS.scheduled
+  if (SCHEDULED_LIFECYCLES.has(lifecycle)) return RECRUITMENT_STATUS.recruiting
   if (RECRUITING_LIFECYCLES.has(lifecycle)) return RECRUITMENT_STATUS.recruiting
   return RECRUITMENT_STATUS.closed
 }

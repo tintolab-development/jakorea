@@ -5,11 +5,10 @@ import { PARTICIPANT_TYPE_OPTIONS } from '@jakorea/domain/recruitment/participan
 
 export const educationTargetFilterOptions = withAllFilter(EDUCATION_TARGET_OPTIONS)
 
-/** 목록 모집현황 — 기획 표기(모집 중 / 모집 완료) + 도메인 모집 예정 */
+/** 목록 모집현황 — Platform은 모집 중 / 모집 완료 2단만 (모집 예정 없음) */
 export const recruitmentStatusFilterOptions = withAllFilter([
   { value: RECRUITMENT_STATUS.recruiting, label: '모집 중' },
   { value: RECRUITMENT_STATUS.closed, label: '모집 완료' },
-  { value: RECRUITMENT_STATUS.scheduled, label: '모집 예정' },
 ])
 
 /** CMS participant-type 라벨 (도메인 SSOT). */

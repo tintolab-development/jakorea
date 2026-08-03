@@ -1,4 +1,3 @@
-import { getRecruitmentStatusLabel } from '@jakorea/domain/recruitment/recruitment-status'
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 import { PFCategoryBadge, PFStateBadge } from '@/shared/ui'
 import {
@@ -17,10 +16,9 @@ type ProgramStatusBadgesProps = {
   className?: string
 }
 
-/** 목록·상세 태그 — 기획 표기 「모집 완료」(domain: 모집 마감) */
+/** Platform 2단: 모집 중 | 모집 완료 (scheduled 등은 모집 중으로 표기) */
 function platformRecruitmentStatusLabel(status: RecruitmentStatus) {
-  if (status === 'closed') return '모집 완료'
-  return getRecruitmentStatusLabel(status)
+  return status === 'closed' ? '모집 완료' : '모집 중'
 }
 
 export function ProgramStatusBadges({

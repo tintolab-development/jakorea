@@ -153,7 +153,7 @@ function testTitlesAndIds() {
 }
 
 function testLifecycleMapping() {
-  assert.equal(mapLifecycleToRecruitmentStatus('planned'), RECRUITMENT_STATUS.scheduled)
+  assert.equal(mapLifecycleToRecruitmentStatus('planned'), RECRUITMENT_STATUS.recruiting)
   assert.equal(
     mapLifecycleToRecruitmentStatus('recruiting_students'),
     RECRUITMENT_STATUS.recruiting
