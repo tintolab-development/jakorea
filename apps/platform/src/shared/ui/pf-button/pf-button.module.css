@@ -45,7 +45,9 @@
 }
 
 .xlarge {
+  min-width: 160px;
   height: 53px;
+  padding: 13px var(--spacing-28);
 }
 
 .primary {
