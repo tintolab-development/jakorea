@@ -537,6 +537,106 @@ function isOrgCurriculumMultiVariant(variant: GeneralProgramVariant): boolean {
   )
 }
 
+/** Platform 개인 4케이스 fixture 와 동일 축 데이터 (CMS 상세·catalog 발행 정합) */
+function buildIndividualTypeCommonInfo(
+  variant: GeneralProgramVariant
+): NonNullable<Program['generalCommonInfo']> {
+  if (variant.educationStructure === 'schedule') {
+    if (variant.sessionRound === 'multi') {
+      return {
+        educationFormLabel: '오프라인',
+        scheduleDetails: [
+          {
+            scheduleLabel: '행사 일정 01',
+            name: '오리엔테이션',
+            scheduleDateLabel: '2026년 3월 2일(월) 10:00 ~ 12:00',
+          },
+          {
+            scheduleLabel: '행사 일정 02',
+            name: '국내대회',
+            scheduleDateLabel: '2026년 3월 11일(수) 10:00 ~ 12:00',
+          },
+        ],
+        educationScheduleLines: [
+          '2026년 4월 20일(월) 09:30 ~ 12:20',
+          '2026년 4월 27일(월) 13:00 ~ 15:50',
+        ],
+      }
+    }
+    return {
+      educationFormLabel: '오프라인',
+      scheduleDetails: [
+        {
+          scheduleLabel: '세부 일정 01',
+          name: '오리엔테이션',
+          progressTimeSummary: '그룹 A : 09:30 ~ 09:40 | 그룹 B : 13:00 ~ 13:10',
+        },
+        {
+          scheduleLabel: '세부 일정 02',
+          name: '온라인 워크숍',
+          progressTimeSummary: '그룹 A : 09:30 ~ 09:40 | 그룹 B : 13:00 ~ 13:10',
+        },
+      ],
+      educationScheduleLines: [
+        '2026년 4월 20일(월) 09:30 ~ 12:20',
+        '2026년 4월 20일(월) 13:00 ~ 15:50',
+        '2026년 4월 27일(월) 09:30 ~ 12:20',
+        '2026년 4월 27일(월) 13:00 ~ 15:50',
+      ],
+    }
+  }
+
+  if (variant.sessionRound === 'multi') {
+    return {
+      educationFormLabel: '오프라인',
+      curriculumSessions: [
+        {
+          sessionLabel: '1회차',
+          title: '2',
+          description:
+            '채용 공고 읽기, 이력서 작성하기 등 취업에 필요한 단계들을 알아봅니다.',
+          assignmentEnabled: true,
+          assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
+        },
+        {
+          sessionLabel: '2회차',
+          title: '2',
+          description:
+            '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
+          assignmentEnabled: true,
+          assignmentPeriod: '26년 4월 20일(월) ~ 26년 4월 27일(월)',
+        },
+      ],
+      educationScheduleLines: [
+        '2026년 4월 20일(월) 9:30 ~ 12:20',
+        '2026년 4월 27일(월) 13:00 ~ 15:50',
+      ],
+    }
+  }
+
+  return {
+    educationFormLabel: '오프라인',
+    curriculumSessions: [
+      {
+        sessionLabel: '1차시',
+        title: '1단원 나를 알리는 기술',
+        description:
+          '채용 공고 읽기, 이력서 작성하기 등 취업에 필요한 단계들을 알아봅니다.',
+      },
+      {
+        sessionLabel: '2차시',
+        title: '2단원 나를 보여주는 기술',
+        description:
+          '올바른 면접 태도에 대해 알아보고, 직접 면접 체험을 해보는 시간을 갖습니다.',
+      },
+    ],
+    educationScheduleLines: [
+      '2026년 4월 20일(월) 9:30 ~ 12:20',
+      '2026년 4월 27일(월) 13:00 ~ 15:50',
+    ],
+  }
+}
+
 function buildTypeVariantSeed(
   variant: GeneralProgramVariant,
   index: number
@@ -743,19 +843,7 @@ function buildTypeVariantSeed(
     ...(isIndividualAudience
       ? {
           generalParticipantInterviewEnabled: true,
-          generalCommonInfo: {
-            ...(variant.educationStructure === 'schedule'
-              ? {
-                  scheduleDetails: [
-                    {
-                      scheduleLabel: '세부 일정 01',
-                      name: '1차 교육',
-                      participationMethodLabel: '팀',
-                    },
-                  ],
-                }
-              : {}),
-          },
+          generalCommonInfo: buildIndividualTypeCommonInfo(variant),
         }
       : {}),
     generalVolunteerInterviewEnabled: true,

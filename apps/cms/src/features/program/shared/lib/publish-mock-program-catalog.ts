@@ -54,6 +54,7 @@ export function mapProgramToMockCatalogEntry(program: Program): Record<string, u
           educationFormLabel: common.educationFormLabel,
           sponsorDisplayName: common.sponsorDisplayName,
           curriculumSessions: common.curriculumSessions,
+          scheduleDetails: common.scheduleDetails,
           educationScheduleLines: common.educationScheduleLines,
         }
       : undefined,

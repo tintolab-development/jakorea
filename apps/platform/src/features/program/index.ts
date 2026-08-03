@@ -1,8 +1,10 @@
 export type {
   EducationForm,
   EducationTargetKey,
+  ProgramBasicInfoField,
   ProgramCategory,
   ProgramDetail,
+  ProgramDetailCase,
   ProgramListItem,
   ProgramsListParams,
 } from './model/types'
@@ -20,6 +22,11 @@ export {
 } from './lib/constants'
 export { getMockApplyFormDraft } from './lib/apply-form-drafts'
 export {
+  PROGRAM_DETAIL_CASE_SSOT_IDS,
+  resolveProgramDetailCase,
+  recruitmentRoleLabelForCase,
+} from './lib/detail-case'
+export {
   getMockProgramById,
   getMockPrograms,
   loadMockProgramById,
@@ -29,6 +36,7 @@ export {
 export { mergeSeedAndCatalogPrograms } from './lib/merge-seed-catalog'
 export { useMockProgramById, useMockProgramsCatalog } from './lib/use-mock-programs-catalog'
 export {
+  mapBasicInfoFields,
   mapCmsProgramToPlatformDetail,
   mapCmsProgramToPlatformListItem,
   mapCmsProgramsToPlatformDetails,
@@ -36,12 +44,17 @@ export {
   resolvePlatformCategory,
 } from './lib/map-from-cms'
 export {
+  CASE_INSTRUCTOR_FIXTURE,
+  CASE_VOLUNTEER_FIXTURE,
   CMS_PLATFORM_PROGRAM_FIXTURES,
+  DETAIL_CASE_FIXTURES,
   ECONOMY_REGISTRATION_FIXTURE,
   ECONOMY_REGISTRATION_FIXTURES,
   GENERAL_REGISTRATION_FIXTURES,
   GEMINI_RECRUITMENT_FIXTURES,
   TRAINED_TEACHERS_REGISTRATION_FIXTURES,
+  UJAT_PARTICIPANT_FIXTURE,
+  UJAT_VOLUNTEER_FIXTURE,
   getCmsRegistrationFixtureById,
   getCmsRegistrationFixturesByCase,
 } from './lib/cms-registration-fixtures'

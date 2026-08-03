@@ -12,7 +12,7 @@ const PROGRAM_DESCRIPTION = `JA Korea는 청소년들이 경제, 기업가정신
 
 이번 프로그램은 Google for Education과 JA Korea가 함께하는 Gemini Academy 찾아가는 연수로, 학교 현장에서 AI 활용 교육 역량을 강화하고 실습 중심의 연수를 제공합니다.`
 
-const RECRUITMENT_GUIDE = `1. 연수 일정 : 2025년 8월 1일(금) ~ 12월 19일(금)
+const RECRUITMENT_GUIDE = `1. 연수 일정 : 2026년 4월 20일(월) ~ 5월 25일(월)
 2. 교육 대상 : 특성화고등학교 3학년
 3. 연수 내용 : AI 활용 교육 역량 강화 및 Gemini 기반 실습 중심 연수
 4. 연수 방법 : Zoom 온라인 연수
@@ -22,16 +22,16 @@ const ADDITIONAL_CONTENT_HTML = `<p>준비물 안내</p><ul><li>PC 또는 노트
 
 const SCREENSHOT_DETAIL_FIELDS: GeminiRecruitmentDetailFields = {
   announcementPublished: 'published',
-  educationTargetLevels: ['adult'],
+  educationTargetLevels: ['high'],
   educationTargetDetail: '특성화고등학교 3학년',
   minStudentCount: 15,
-  educationForm: 'offline',
+  educationForm: 'online',
   inquiryContactName: 'JA Korea',
   inquiryTel: '02-6085-6028',
   inquiryEmail: 'cc@jakorea.org',
   notesNotApplicable: true,
   notes: '',
-  thumbnailFileName: '2026_한국씨티은행-JA Korea 특별한 JOB담 참가자 모집_cover.jpg',
+  thumbnailFileName: '2026_Gemini_Academy_찾아가는연수_cover.jpg',
   programDescription: PROGRAM_DESCRIPTION,
   recruitmentGuide: RECRUITMENT_GUIDE,
   applicationMethod: '',

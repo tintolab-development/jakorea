@@ -41,6 +41,16 @@ export type CmsCurriculumSession = {
   sessionLabel?: string
   title?: string
   description?: string
+  /** 복수 회차 과제 기간 등 (예: 26년 4월 20일(월) ~ 26년 4월 27일(월)) */
+  assignmentPeriod?: string
+}
+
+/** 일정형 세부·행사 일정 행 (CMS `scheduleDetails`) */
+export type CmsScheduleDetail = {
+  scheduleLabel?: string
+  name?: string
+  progressTimeSummary?: string
+  scheduleDateLabel?: string
 }
 
 export type CmsProgramCommonInfo = {
@@ -48,9 +58,25 @@ export type CmsProgramCommonInfo = {
   educationFormLabel?: string
   sponsorDisplayName?: string
   curriculumSessions?: CmsCurriculumSession[]
+  /** 일정형 — 세부 일정 NN / 행사 일정 NN */
+  scheduleDetails?: CmsScheduleDetail[]
   educationScheduleLines?: string[]
   notes?: string
+  /** 강사·UJAT 등 모집 소속/지부 표기 */
+  recruitmentAffiliationLabel?: string
+  /** 교육 대상 상세 오버라이드 (특성화고 3학년 등) */
+  educationTargetDetailLabel?: string
+  /** Gemini 등 기수·회차 요약 */
+  sessionCountLabel?: string
 }
+
+/** UJAT 목록 `ujatProgressStatus` 중 홈 상세 매핑에 쓰는 값 */
+export type CmsUjatProgressStatus =
+  | 'EDUCATION_SCHEDULED'
+  | 'PARTICIPANT_RECRUITING'
+  | 'VOLUNTEER_RECRUITING'
+  | 'EDUCATION_IN_PROGRESS'
+  | 'PROGRAM_ENDED'
 
 export type CmsProgramRound = {
   id?: string
@@ -92,7 +118,19 @@ export type CmsProgramLike = {
   otherNotes?: string
   rounds?: CmsProgramRound[]
   /** 프로그램 출처 유형 (Platform 탭 매핑용) */
-  registrationKind?: 'general' | 'economy' | 'trainedTeachers' | 'gemini'
+  registrationKind?: 'general' | 'economy' | 'trainedTeachers' | 'gemini' | 'ujat'
+  /** UJAT 진행 현황 (registrationKind=ujat) */
+  ujatProgressStatus?: CmsUjatProgressStatus
+  /** 봉사 모집 기간 (일반 봉사·UJAT 봉사) */
+  volunteerApplicationStartDate?: string
+  volunteerApplicationEndDate?: string
+  volunteerTarget?: string
+  volunteerTargetDetail?: string
+  documentPassAnnouncementDate?: string
+  interviewStartDate?: string
+  interviewEndDate?: string
+  finalPassAnnouncementDate?: string
+  resultAnnouncementDate?: string
 }
 
 export type CmsRegistrationCaseKind =
@@ -107,3 +145,7 @@ export type CmsRegistrationCaseKind =
   | 'economy-company-school'
   | 'trained-teachers-program'
   | 'gemini-recruitment'
+  | 'case-instructor-recruitment'
+  | 'case-volunteer-recruitment'
+  | 'ujat-volunteer-recruitment'
+  | 'ujat-participant-recruitment'

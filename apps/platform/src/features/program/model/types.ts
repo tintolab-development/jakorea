@@ -39,12 +39,25 @@ export type ProgramSession = {
   sessionLabel: string
   title: string
   description: string
+  /** 복수 회차 과제기간 등 — 없으면 비노출 */
+  dateLabel?: string
+}
+
+/** 일정형 기본정보 — 세부 일정 / 행사 일정 */
+export type ProgramEventSchedule = {
+  scheduleLabel: string
+  name: string
+  /** 일시·그룹 시간 요약 */
+  dateLabel: string
 }
 
 export type ProgramLabeledValue = {
   label: string
   value: string
 }
+
+/** 교육 진행 구조 (커리큘럼형 | 일정형). 없거나 비일반 시 커리큘럼 폴백 매핑. */
+export type ProgramEducationStructure = 'curriculum' | 'schedule'
 
 export type ProgramExtraSection = {
   title: string
@@ -54,6 +67,20 @@ export type ProgramExtraSection = {
 export type ProgramAttachment = {
   name: string
   url: string
+}
+
+/** 공개 상세 케이스 — 기본정보 필드 세트·모집 phase 라벨 분기 */
+export type ProgramDetailCase =
+  | 'instructor'
+  | 'volunteer'
+  | 'ujat-volunteer'
+  | 'ujat-participant'
+  | 'gemini'
+  | 'general'
+
+export type ProgramBasicInfoField = {
+  label: string
+  value: string
 }
 
 export type ProgramDetail = ProgramListItem & {
@@ -71,9 +98,24 @@ export type ProgramDetail = ProgramListItem & {
   educationTargetGroupLabel: string
   educationTargetDetailLabel: string
   educationVenueLabel: string
+  /** 상세 케이스 (강사·봉사·UJAT·Gemini 등) */
+  detailCase: ProgramDetailCase
+  /** 배지·요약용 모집 역할 (강사·봉사자·기관·교육생 등) */
+  recruitmentRoleLabel: string
+  /**
+   * 기본정보 그리드 — 케이스별 라벨/값 세트.
+   * 비어 있으면 레거시 5칸(사업 분야~교육 장소) 폴백 렌더.
+   */
+  basicInfoFields: ProgramBasicInfoField[]
+  /** curriculum | schedule — 기본정보 블록 분기 */
+  educationStructure: ProgramEducationStructure
+  /** 커리큘럼형 차시/회차 (일정형이면 빈 배열) */
   sessions: ProgramSession[]
+  /** 일정형 세부·행사 일정 (커리큘럼형이면 빈 배열) */
+  eventSchedules: ProgramEventSchedule[]
   recruitmentPhaseGroupLabel: string
   recruitmentPhases: ProgramLabeledValue[]
+  /** 세부내용 「교육 일정 N」 카드 — 보통 educationScheduleLines */
   educationSchedules: ProgramLabeledValue[]
   extraSections: ProgramExtraSection[]
   applicationMethodLabel: string

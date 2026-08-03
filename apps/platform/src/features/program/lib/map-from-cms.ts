@@ -8,19 +8,31 @@ import type {
   EducationForm,
   EducationTargetKey,
   ProgramAttachment,
+  ProgramBasicInfoField,
   ProgramDetail,
+  ProgramDetailCase,
+  ProgramEducationStructure,
+  ProgramEventSchedule,
   ProgramExtraSection,
   ProgramLabeledValue,
   ProgramListItem,
   ProgramSession,
 } from '../model/types'
 import type {
+  CmsEducationStructure,
   CmsLifecycleStatus,
   CmsParticipantType,
   CmsProgramDeliveryType,
   CmsProgramLike,
   CmsTargetLevel,
 } from '../model/cms-program.types'
+import {
+  recruitmentPeriodPhaseLabel,
+  recruitmentPhaseGroupLabel,
+  recruitmentRoleLabelForCase,
+  resolveProgramDetailCase,
+  shouldIncludeInterviewStages,
+} from './detail-case.ts'
 
 /** domain RECRUITMENT_STATUS 값과 동일 (value import 없이 런타임 selfcheck 가능) */
 const RECRUITMENT_STATUS = {
@@ -132,11 +144,32 @@ export function resolvePlatformCategory(
     | 'generalProgramAudience'
     | 'category'
     | 'registrationKind'
-  >
+    | 'ujatProgressStatus'
+    | 'lifecycleStatus'
+  > &
+    Partial<Pick<CmsProgramLike, 'id'>>
 ): ProgramListItem['category'] {
   if (program.registrationKind === 'trainedTeachers') return 'instructor'
   if (program.registrationKind === 'gemini') return 'institution'
   if (program.registrationKind === 'economy') return 'institution'
+
+  if (program.registrationKind === 'ujat') {
+    // UJAT 봉사 모집 → 청소년·청년 탭 / 기관(학교) 모집 → 기관 탭
+    if (program.ujatProgressStatus === 'VOLUNTEER_RECRUITING') return 'youth'
+    return 'institution'
+  }
+
+  const detailCase = resolveProgramDetailCase({
+    id: program.id ?? '',
+    registrationKind: program.registrationKind,
+    lifecycleStatus: program.lifecycleStatus,
+    generalParticipantTypes: program.generalParticipantTypes,
+    ujatProgressStatus: program.ujatProgressStatus,
+  })
+  if (detailCase === 'instructor') return 'instructor'
+  if (detailCase === 'volunteer') return 'youth'
+  if (detailCase === 'ujat-volunteer') return 'youth'
+  if (detailCase === 'ujat-participant' || detailCase === 'gemini') return 'institution'
 
   if (program.generalProgramAudience === 'organization') return 'institution'
   if (program.generalProgramAudience === 'individual') return 'youth'
@@ -206,6 +239,7 @@ function resolveTargetLabels(program: CmsProgramLike): {
   educationTargetGroupLabel: string
   educationTargetDetailLabel: string
 } {
+  const detailOverride = program.generalCommonInfo?.educationTargetDetailLabel?.trim()
   const level = program.targetLevel
   if (level && level in TARGET_LEVEL_LABELS) {
     const labels = TARGET_LEVEL_LABELS[level]
@@ -213,15 +247,146 @@ function resolveTargetLabels(program: CmsProgramLike): {
       educationTargetKey: level,
       educationTargetLabel: labels.educationTargetLabel,
       educationTargetGroupLabel: labels.educationTargetGroupLabel,
-      educationTargetDetailLabel: labels.educationTargetLabel,
+      educationTargetDetailLabel: detailOverride || labels.educationTargetLabel,
     }
   }
   return {
     educationTargetKey: null,
     educationTargetLabel: '전체',
     educationTargetGroupLabel: '전체',
-    educationTargetDetailLabel: '전체',
+    educationTargetDetailLabel: detailOverride || '전체',
   }
+}
+
+function formatOptionalDateRange(
+  startIso: string | undefined,
+  endIso: string | undefined
+): string {
+  return formatRecruitmentRangeLabel(toDate(startIso), toDate(endIso))
+}
+
+function formatOptionalDate(iso: string | undefined): string {
+  const date = toDate(iso)
+  return date ? formatDateLabel(date) : '-'
+}
+
+/**
+ * 상세 케이스별 기본정보 그리드.
+ * 스크린샷 식별 키(모집 구분·대상·지역 등)를 역할에 맞게 노출한다.
+ */
+export function mapBasicInfoFields(
+  program: CmsProgramLike,
+  detailCase: ProgramDetailCase,
+  args: {
+    businessFieldLabel: string
+    educationFormLabel: string
+    educationTargetGroupLabel: string
+    educationTargetDetailLabel: string
+    educationVenueLabel: string
+    roleLabel: string
+  }
+): ProgramBasicInfoField[] {
+  const affiliation =
+    program.generalCommonInfo?.recruitmentAffiliationLabel?.trim() || ''
+  const volunteerTarget =
+    program.volunteerTarget?.trim() || args.educationTargetDetailLabel
+  const sessionCount = program.generalCommonInfo?.sessionCountLabel?.trim()
+
+  switch (detailCase) {
+    case 'instructor':
+      return [
+        { label: '사업 분야', value: args.businessFieldLabel },
+        { label: '모집 구분', value: args.roleLabel },
+        { label: '대상', value: volunteerTarget || args.educationTargetGroupLabel },
+        { label: '모집 지역', value: args.educationVenueLabel },
+        ...(affiliation
+          ? [{ label: '모집 소속', value: affiliation }]
+          : []),
+      ]
+    case 'volunteer':
+      return [
+        { label: '사업 분야', value: args.businessFieldLabel },
+        { label: '모집 구분', value: args.roleLabel },
+        {
+          label: '대상',
+          value: volunteerTarget || args.educationTargetDetailLabel,
+        },
+        { label: '교육 형태', value: args.educationFormLabel },
+        { label: '교육 장소', value: args.educationVenueLabel },
+      ]
+    case 'ujat-volunteer':
+      return [
+        { label: '사업 분야', value: args.businessFieldLabel },
+        { label: '모집 구분', value: args.roleLabel },
+        {
+          label: '대상',
+          value: volunteerTarget || '대학(원)생',
+        },
+        {
+          label: '교육 지역',
+          value: args.educationVenueLabel,
+        },
+        ...(affiliation
+          ? [{ label: '모집 소속', value: affiliation }]
+          : []),
+      ]
+    case 'ujat-participant':
+      return [
+        { label: '사업 분야', value: args.businessFieldLabel },
+        { label: '모집 구분', value: args.roleLabel },
+        {
+          label: '대상',
+          value: args.educationTargetDetailLabel || '초등학교',
+        },
+        { label: '교육 지역', value: args.educationVenueLabel },
+        { label: '교육 형태', value: args.educationFormLabel },
+      ]
+    case 'gemini':
+      return [
+        { label: '교육 형태', value: args.educationFormLabel },
+        { label: '교육 대상', value: args.educationTargetGroupLabel },
+        {
+          label: '교육 대상 상세',
+          value: args.educationTargetDetailLabel,
+        },
+        ...(sessionCount
+          ? [{ label: '교육 기수', value: sessionCount }]
+          : [{ label: '교육 장소', value: args.educationVenueLabel }]),
+      ]
+    default:
+      return [
+        { label: '사업 분야', value: args.businessFieldLabel },
+        { label: '교육 형태', value: args.educationFormLabel },
+        { label: '교육대상', value: args.educationTargetGroupLabel },
+        { label: '교육 대상 상세', value: args.educationTargetDetailLabel },
+        { label: '교육 장소', value: args.educationVenueLabel },
+      ]
+  }
+}
+
+function resolvePrimaryApplicationWindow(
+  program: CmsProgramLike,
+  detailCase: ProgramDetailCase
+): { start: Date | null; end: Date | null } {
+  if (
+    (detailCase === 'volunteer' || detailCase === 'ujat-volunteer') &&
+    (program.volunteerApplicationStartDate || program.volunteerApplicationEndDate)
+  ) {
+    return {
+      start: toDate(program.volunteerApplicationStartDate),
+      end: toDate(program.volunteerApplicationEndDate),
+    }
+  }
+  return {
+    start: toDate(program.applicationStartDate),
+    end: toDate(program.applicationEndDate),
+  }
+}
+
+function resolveEducationStructure(
+  structure: CmsEducationStructure | undefined
+): ProgramEducationStructure {
+  return structure === 'schedule' ? 'schedule' : 'curriculum'
 }
 
 function defaultSessions(): ProgramSession[] {
@@ -239,14 +404,28 @@ function defaultSessions(): ProgramSession[] {
   ]
 }
 
+/**
+ * 커리큘럼형: curriculumSessions → 차시/회차.
+ * 일정형: 빈 배열 (기본정보에 행사·세부 일정 블록을 씀).
+ */
 function mapSessions(program: CmsProgramLike): ProgramSession[] {
+  if (program.generalProgramEducationStructure === 'schedule') {
+    return []
+  }
+
   const sessions = program.generalCommonInfo?.curriculumSessions
   if (sessions?.length) {
-    return sessions.map((session, index) => ({
-      sessionLabel: session.sessionLabel?.trim() || `${index + 1}차시`,
-      title: session.title?.trim() || `교육 ${index + 1}`,
-      description: session.description?.trim() || '',
-    }))
+    const isMulti = program.generalProgramSessionRound === 'multi'
+    return sessions.map((session, index) => {
+      const fallbackLabel = isMulti ? `${index + 1}회차` : `${index + 1}차시`
+      const dateLabel = session.assignmentPeriod?.trim()
+      return {
+        sessionLabel: session.sessionLabel?.trim() || fallbackLabel,
+        title: session.title?.trim() || `교육 ${index + 1}`,
+        description: session.description?.trim() || '',
+        ...(dateLabel ? { dateLabel } : {}),
+      }
+    })
   }
 
   const rounds = program.rounds?.filter(round => round.curriculum?.trim())
@@ -261,6 +440,39 @@ function mapSessions(program: CmsProgramLike): ProgramSession[] {
   return defaultSessions()
 }
 
+/**
+ * 일정형 기본정보: scheduleDetails → 세부 일정 / 행사 일정.
+ * 커리큘럼형: 빈 배열.
+ */
+function mapEventSchedules(program: CmsProgramLike): ProgramEventSchedule[] {
+  if (program.generalProgramEducationStructure !== 'schedule') {
+    return []
+  }
+
+  const details = program.generalCommonInfo?.scheduleDetails
+  if (!details?.length) return []
+
+  return details.map((detail, index) => {
+    const pad = String(index + 1).padStart(2, '0')
+    const scheduleLabel = detail.scheduleLabel?.trim() || `세부 일정 ${pad}`
+    const name = detail.name?.trim() || ''
+    const dateParts = [detail.scheduleDateLabel?.trim(), detail.progressTimeSummary?.trim()].filter(
+      Boolean
+    )
+    return {
+      scheduleLabel,
+      name,
+      dateLabel: dateParts.join(' · ') || '-',
+    }
+  })
+}
+
+/**
+ * 세부내용 「교육 일정 N」 카드.
+ * - educationScheduleLines 우선
+ * - 커리큘럼형: lines 없으면 운영 기간 1줄 폴백
+ * - 일정형: lines 없으면 빈 배열 (행사 일정은 기본정보 블록)
+ */
 function mapEducationSchedules(program: CmsProgramLike): ProgramLabeledValue[] {
   const lines = program.generalCommonInfo?.educationScheduleLines?.filter(line => line.trim())
   if (lines?.length) {
@@ -268,6 +480,10 @@ function mapEducationSchedules(program: CmsProgramLike): ProgramLabeledValue[] {
       label: `교육 일정 ${index + 1}`,
       value: line.trim(),
     }))
+  }
+
+  if (program.generalProgramEducationStructure === 'schedule') {
+    return []
   }
 
   const start = toDate(program.startDate)
@@ -290,38 +506,49 @@ function mapEducationSchedules(program: CmsProgramLike): ProgramLabeledValue[] {
 }
 
 function mapRecruitmentPhases(
+  program: CmsProgramLike,
+  detailCase: ProgramDetailCase,
   appStart: Date | null,
-  appEnd: Date | null,
-  options?: { includeInterviewStages?: boolean }
+  appEnd: Date | null
 ): ProgramLabeledValue[] {
+  const periodLabel = recruitmentPeriodPhaseLabel(detailCase)
   const phases: ProgramLabeledValue[] = [
     {
-      label: '참여자 모집 기간',
+      label: periodLabel,
       value: formatRecruitmentRangeLabel(appStart, appEnd),
     },
   ]
 
-  if (options?.includeInterviewStages) {
+  if (shouldIncludeInterviewStages(detailCase)) {
     phases.push(
       {
-        label: '1차 합격자 발표일',
-        value: '-',
+        label: '1차 서류 합격자 발표',
+        value: formatOptionalDate(program.documentPassAnnouncementDate),
       },
       {
         label: '면접 기간',
-        value: '-',
+        value: formatOptionalDateRange(
+          program.interviewStartDate,
+          program.interviewEndDate
+        ),
       }
     )
   }
 
+  const finalValue =
+    formatOptionalDate(program.finalPassAnnouncementDate) !== '-'
+      ? formatOptionalDate(program.finalPassAnnouncementDate)
+      : formatOptionalDate(program.resultAnnouncementDate)
+
   phases.push({
     label: '최종 합격자 발표',
-    value: '-',
+    value: finalValue,
   })
 
   return phases
 }
 
+/** mock 등 실파일 URL 이 없을 때 표시용 placeholder — 상세에서 빈 파일·원 파일명으로 다운로드 */
 function mapAttachments(program: CmsProgramLike): ProgramAttachment[] {
   const names = program.attachmentFileNames?.filter(name => name.trim())
   if (names?.length) {
@@ -366,6 +593,7 @@ export function mapCmsProgramToPlatformDetail(
   program: CmsProgramLike,
   options: MapCmsProgramOptions = {}
 ): ProgramDetail {
+  const detailCase = resolveProgramDetailCase(program)
   const category = resolvePlatformCategory(program)
   const recruitmentStatus = mapLifecycleToRecruitmentStatus(program.lifecycleStatus)
   const educationForm = mapDeliveryType(
@@ -373,11 +601,18 @@ export function mapCmsProgramToPlatformDetail(
     program.generalCommonInfo?.educationFormLabel
   )
   const targets = resolveTargetLabels(program)
+  const roleLabel = recruitmentRoleLabelForCase(detailCase)
 
   const opStart = toDate(program.startDate)
   const opEnd = toDate(program.endDate)
-  const appStart = toDate(program.applicationStartDate)
-  const appEnd = toDate(program.applicationEndDate)
+  const primaryWindow = resolvePrimaryApplicationWindow(program, detailCase)
+  const appStart = primaryWindow.start
+  const appEnd = primaryWindow.end
+  // 목록 정렬용 — 원본 application* 우선, 없으면 봉사 창
+  const listAppStart =
+    toDate(program.applicationStartDate) ?? toDate(program.volunteerApplicationStartDate)
+  const listAppEnd =
+    toDate(program.applicationEndDate) ?? toDate(program.volunteerApplicationEndDate)
 
   const title = resolveTitle(program)
   const summary =
@@ -390,6 +625,13 @@ export function mapCmsProgramToPlatformDetail(
   const isRecruiting = recruitmentStatus === RECRUITMENT_STATUS.recruiting
   const recruitmentPeriodLabel = formatRecruitmentRangeLabel(appStart, appEnd)
   const applicationMethodValue = program.applicationMethod?.trim() ?? ''
+  const educationStructure = resolveEducationStructure(
+    program.generalProgramEducationStructure
+  )
+  const businessFieldLabel = program.businessArea?.trim() || '경제금융'
+  const educationFormLabel = EDUCATION_FORM_LABEL_MAP[educationForm]
+  const educationVenueLabel =
+    program.district?.trim() || educationFormLabel
 
   return {
     id: program.id,
@@ -399,29 +641,39 @@ export function mapCmsProgramToPlatformDetail(
     operatingPeriodLabel: formatOperatingPeriodLabel(opStart, opEnd),
     operatingPeriodStart: opStart ? formatYmd(opStart) : '1970-01-01',
     operatingPeriodEnd: opEnd ? formatYmd(opEnd) : '1970-01-01',
-    applicationStartDate: appStart ? formatYmd(appStart) : null,
-    applicationEndDate: appEnd ? formatYmd(appEnd) : null,
+    applicationStartDate: listAppStart ? formatYmd(listAppStart) : null,
+    applicationEndDate: listAppEnd ? formatYmd(listAppEnd) : null,
     recruitmentPeriodLabel,
     applicationPeriodLabel: recruitmentPeriodLabel,
     recruitmentStatus,
     educationTargetKey: targets.educationTargetKey,
     educationTargetLabel: targets.educationTargetLabel,
     educationForm,
-    educationFormLabel: EDUCATION_FORM_LABEL_MAP[educationForm],
+    educationFormLabel,
     thumbnailUrl: options.thumbnailUrl,
     detailImageUrl: options.detailImageUrl,
     sponsor: resolveSponsor(program),
     summary,
     isRecruiting,
-    businessFieldLabel: program.businessArea?.trim() || '경제금융',
+    businessFieldLabel,
     educationTargetGroupLabel: targets.educationTargetGroupLabel,
     educationTargetDetailLabel: targets.educationTargetDetailLabel,
-    educationVenueLabel: program.district?.trim() || EDUCATION_FORM_LABEL_MAP[educationForm],
-    sessions: mapSessions(program),
-    recruitmentPhaseGroupLabel: '모집 및 선별 기간',
-    recruitmentPhases: mapRecruitmentPhases(appStart, appEnd, {
-      includeInterviewStages: false,
+    educationVenueLabel,
+    detailCase,
+    recruitmentRoleLabel: roleLabel,
+    basicInfoFields: mapBasicInfoFields(program, detailCase, {
+      businessFieldLabel,
+      educationFormLabel,
+      educationTargetGroupLabel: targets.educationTargetGroupLabel,
+      educationTargetDetailLabel: targets.educationTargetDetailLabel,
+      educationVenueLabel,
+      roleLabel,
     }),
+    educationStructure,
+    sessions: mapSessions(program),
+    eventSchedules: mapEventSchedules(program),
+    recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
+    recruitmentPhases: mapRecruitmentPhases(program, detailCase, appStart, appEnd),
     educationSchedules: mapEducationSchedules(program),
     extraSections: mapExtraSections(program),
     applicationMethodLabel: '지원방법',
