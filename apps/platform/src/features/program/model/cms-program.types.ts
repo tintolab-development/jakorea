@@ -53,6 +53,9 @@ export type CmsScheduleDetail = {
   scheduleDateLabel?: string
 }
 
+/** CMS 일반 프로그램 공통정보 — 참여 방식 (신청 폼 teamInfo 분기) */
+export type CmsParticipationMethod = 'individual' | 'team'
+
 export type CmsProgramCommonInfo = {
   announcementTitle?: string
   educationFormLabel?: string
@@ -68,6 +71,11 @@ export type CmsProgramCommonInfo = {
   educationTargetDetailLabel?: string
   /** Gemini 등 기수·회차 요약 */
   sessionCountLabel?: string
+  /**
+   * 참여 방식 — CMS `generalCommonInfo.participationMethod`.
+   * `team`이면 개인 신청 폼에 teamInfo 단락 노출 (CMS 미리보기와 동일).
+   */
+  participationMethod?: CmsParticipationMethod
 }
 
 /** UJAT 목록 `ujatProgressStatus` 중 홈 상세 매핑에 쓰는 값 */

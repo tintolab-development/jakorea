@@ -252,6 +252,15 @@ function testDetailCaseSsotMapping() {
     ECONOMY_REGISTRATION_FIXTURES.find(f => f.id === 'economy-prog-008')!
   )
   assert.equal(jobdam.sponsor, '한국씨티은행')
+
+  const teamInd = mapCmsProgramToPlatformDetail(
+    GENERAL_REGISTRATION_FIXTURES.find(f => f.id === 'general-prog-type-ind-curriculum-multi')!
+  )
+  assert.equal(teamInd.participationMethod, 'team')
+  const soloInd = mapCmsProgramToPlatformDetail(
+    GENERAL_REGISTRATION_FIXTURES.find(f => f.id === 'general-prog-type-ind-curriculum-single')!
+  )
+  assert.equal(soloInd.participationMethod, 'individual')
 }
 
 function makeStubDetail(id: string, title: string): ProgramDetail {
@@ -279,6 +288,7 @@ function makeStubDetail(id: string, title: string): ProgramDetail {
     educationTargetDetailLabel: '고등학생',
     educationVenueLabel: '온라인',
     detailCase: 'general',
+    participationMethod: 'individual',
     recruitmentRoleLabel: '참여자',
     basicInfoFields: [
       { label: '사업 분야', value: '경제금융' },

@@ -78,6 +78,9 @@ export type ProgramDetailCase =
   | 'gemini'
   | 'general'
 
+/** CMS 참여 방식 — 개인 신청 폼 teamInfo 노출 여부 */
+export type ProgramParticipationMethod = 'individual' | 'team'
+
 export type ProgramBasicInfoField = {
   label: string
   value: string
@@ -100,6 +103,11 @@ export type ProgramDetail = ProgramListItem & {
   educationVenueLabel: string
   /** 상세 케이스 (강사·봉사·UJAT·Gemini 등) */
   detailCase: ProgramDetailCase
+  /**
+   * CMS 참여 방식. 개인 프로그램에서 `team`이면 신청 폼 teamInfo 노출.
+   * 미설정·기관 등은 `individual`로 정규화.
+   */
+  participationMethod: ProgramParticipationMethod
   /** 배지·요약용 모집 역할 (강사·봉사자·기관·교육생 등) */
   recruitmentRoleLabel: string
   /**

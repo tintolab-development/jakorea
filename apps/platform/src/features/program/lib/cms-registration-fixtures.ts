@@ -113,6 +113,8 @@ type TypeSeedArgs = {
   businessArea: string
   targetLevel: CmsProgramLike['targetLevel']
   useRelativeDates: boolean
+  /** 개인 팀 신청 폼(teamInfo) mock — CMS participationMethod */
+  participationMethod?: 'individual' | 'team'
 }
 
 const CURRICULUM_SINGLE_SESSIONS: CmsCurriculumSession[] = [
@@ -282,6 +284,9 @@ function buildTypeFixture(args: TypeSeedArgs): CmsRegistrationFixture {
     educationFormLabel
   )
   commonInfo.announcementTitle = title
+  if (args.participationMethod) {
+    commonInfo.participationMethod = args.participationMethod
+  }
 
   return {
     registrationCase: args.registrationCase,
@@ -369,6 +374,8 @@ export const GENERAL_REGISTRATION_FIXTURES: CmsRegistrationFixture[] = [
     businessArea: '경제금융',
     targetLevel: 'high',
     useRelativeDates: true,
+    /** 개인_팀 신청 폼 SSOT — CMS participationMethod=team */
+    participationMethod: 'team',
   }),
   buildTypeFixture({
     registrationCase: 'general-org-schedule-single',
