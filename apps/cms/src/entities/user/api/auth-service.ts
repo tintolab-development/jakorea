@@ -34,6 +34,13 @@ export function hasRemoteAdminJwt(): boolean {
   return token.split('.').length >= 3
 }
 
+/** DEV 우회·mock credential 로그인 세션 (`mock-jwt-token-…`) */
+export function isMockAdminSession(): boolean {
+  if (typeof window === 'undefined') return false
+  const token = localStorage.getItem('auth_token')
+  return Boolean(token?.startsWith('mock-jwt-token-'))
+}
+
 function buildPendingAdminUser(email: string): Omit<User, 'password'> {
   const now = new Date().toISOString()
   return {
