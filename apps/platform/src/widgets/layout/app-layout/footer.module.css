@@ -211,18 +211,23 @@
 @media (--bp-pc-up) {
   .navigationArea .shell {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    /* Auto: 링크 좌측 · 관련사이트 우측 (여유 폭은 space-between) */
-    gap: var(--spacing-40);
+    /* 링크 그룹 + 드롭다운 묶음을 가운데 정렬 */
+    justify-content: center;
+    /* 가장 우측 텍스트 ↔ 드롭다운 */
+    gap: 150px;
     min-height: var(--spacing-68);
     padding-block: 0;
   }
 
   .navigation {
-    flex: 1 1 auto;
+    display: flex;
+    flex: 0 1 auto;
     flex-wrap: nowrap;
-    gap: var(--spacing-16);
+    align-items: center;
+    /* 텍스트 영역 사이 갭 */
+    gap: var(--spacing-48);
     min-width: 0;
     overflow: visible;
   }
@@ -322,13 +327,13 @@
     padding-inline: var(--spacing-40);
   }
 
+  /* 상단 내비: 48 / 150 유지 · 폭 부족 시 줄바꿈 (gap 유지) */
   .navigationArea .shell {
-    /* compact 폭에서 링크 줄이 밀리지 않도록 최소 간격만 보장 */
-    gap: var(--spacing-24);
+    gap: 150px;
   }
 
   .navigation {
-    gap: var(--spacing-12);
+    gap: var(--spacing-48);
   }
 }
 
@@ -340,11 +345,11 @@
   }
 
   .navigationArea .shell {
-    /* 링크 ↔ 관련사이트: Auto(space-between). 좁아질 때 최소 여유 */
-    gap: var(--spacing-40);
+    justify-content: center;
+    gap: 150px;
   }
 
   .navigation {
-    gap: var(--spacing-16);
+    gap: var(--spacing-48);
   }
 }
