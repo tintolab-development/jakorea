@@ -1,8 +1,7 @@
 import type { ProgramCategory, ProgramSort, ProgramsListParams } from '../model/types'
 import { DEFAULT_PROGRAMS_LIST_PARAMS, PROGRAMS_PATH } from './constants'
 
-/** 상단 탭(category) · 모집대상 필터(recruitmentTarget) 공통 값 */
-const PROGRAM_AUDIENCE_VALUES = new Set<ProgramCategory>([
+const PROGRAM_CATEGORY_VALUES = new Set<ProgramCategory>([
   'all',
   'youth',
   'institution',
@@ -10,43 +9,37 @@ const PROGRAM_AUDIENCE_VALUES = new Set<ProgramCategory>([
 ])
 const PROGRAM_SORTS = new Set<ProgramSort>(['latest', 'name', 'closing-soon'])
 
-function parseAudience(value: string | null): ProgramCategory {
-  if (value && PROGRAM_AUDIENCE_VALUES.has(value as ProgramCategory)) {
+/** 레거시 URL (탭 값) 이 모집대상에 남아 있으면 무시 */
+const LEGACY_AUDIENCE_AS_TARGET = new Set(['youth', 'institution', 'instructor'])
+
+const EDUCATION_TARGET_VALUES = new Set([
+  'elementary',
+  'middle',
+  'high',
+  'university',
+  'adult',
+])
+
+function parseCategory(value: string | null): ProgramCategory {
+  if (value && PROGRAM_CATEGORY_VALUES.has(value as ProgramCategory)) {
     return value as ProgramCategory
   }
 
   return DEFAULT_PROGRAMS_LIST_PARAMS.category
 }
 
-/**
- * 상단 탭 ↔ 모집대상 필터 동기화.
- * - 한쪽만 지정되면 그 값을 공유
- * - 둘 다 지정되었으면 동일해야 함. 충돌 시 category(탭) 우선
- */
-export function syncCategoryAndRecruitmentTarget(
-  category: ProgramCategory,
-  recruitmentTarget: ProgramCategory
-): Pick<ProgramsListParams, 'category' | 'recruitmentTarget'> {
-  if (category === recruitmentTarget) {
-    return { category, recruitmentTarget }
+/** 모집대상·교육대상 공통 age key */
+export function parseEducationTargetFilter(value: string | null): string {
+  if (!value || value === 'all') {
+    return DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentTarget
   }
-
-  if (category !== 'all' && recruitmentTarget === 'all') {
-    return { category, recruitmentTarget: category }
+  if (LEGACY_AUDIENCE_AS_TARGET.has(value)) {
+    return DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentTarget
   }
-
-  if (category === 'all' && recruitmentTarget !== 'all') {
-    return { category: recruitmentTarget, recruitmentTarget }
+  if (EDUCATION_TARGET_VALUES.has(value)) {
+    return value
   }
-
-  return { category, recruitmentTarget: category }
-}
-
-/** 탭/필터 변경 시 category·recruitmentTarget를 같은 상태로 맞춘 partial patch */
-export function withSyncedAudience(
-  audience: ProgramCategory
-): Pick<ProgramsListParams, 'category' | 'recruitmentTarget'> {
-  return { category: audience, recruitmentTarget: audience }
+  return DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentTarget
 }
 
 function parseSort(value: string | null): ProgramSort {
@@ -68,17 +61,14 @@ function parsePositiveInt(value: string | null, fallback: number) {
 
 export function readProgramsListParams(search = window.location.search): ProgramsListParams {
   const params = new URLSearchParams(search)
-  const audience = syncCategoryAndRecruitmentTarget(
-    parseAudience(params.get('category')),
-    parseAudience(params.get('recruitmentTarget'))
-  )
 
   return {
-    ...audience,
+    category: parseCategory(params.get('category')),
     q: params.get('q') ?? DEFAULT_PROGRAMS_LIST_PARAMS.q,
+    recruitmentTarget: parseEducationTargetFilter(params.get('recruitmentTarget')),
     recruitmentStatus: params.get('recruitmentStatus') ?? DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentStatus,
     operatingPeriod: params.get('operatingPeriod') ?? DEFAULT_PROGRAMS_LIST_PARAMS.operatingPeriod,
-    educationTarget: params.get('educationTarget') ?? DEFAULT_PROGRAMS_LIST_PARAMS.educationTarget,
+    educationTarget: parseEducationTargetFilter(params.get('educationTarget')),
     educationForm: params.get('educationForm') ?? DEFAULT_PROGRAMS_LIST_PARAMS.educationForm,
     sort: parseSort(params.get('sort')),
     page: parsePositiveInt(params.get('page'), DEFAULT_PROGRAMS_LIST_PARAMS.page),
@@ -87,19 +77,15 @@ export function readProgramsListParams(search = window.location.search): Program
 
 export function buildProgramsListPath(params: ProgramsListParams) {
   const searchParams = new URLSearchParams()
-  const audience = syncCategoryAndRecruitmentTarget(
-    parseAudience(params.category),
-    parseAudience(params.recruitmentTarget)
-  )
 
-  if (audience.category !== DEFAULT_PROGRAMS_LIST_PARAMS.category) {
-    searchParams.set('category', audience.category)
+  if (params.category !== DEFAULT_PROGRAMS_LIST_PARAMS.category) {
+    searchParams.set('category', params.category)
   }
   if (params.q) {
     searchParams.set('q', params.q)
   }
-  if (audience.recruitmentTarget !== DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentTarget) {
-    searchParams.set('recruitmentTarget', audience.recruitmentTarget)
+  if (params.recruitmentTarget !== DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentTarget) {
+    searchParams.set('recruitmentTarget', params.recruitmentTarget)
   }
   if (params.recruitmentStatus !== DEFAULT_PROGRAMS_LIST_PARAMS.recruitmentStatus) {
     searchParams.set('recruitmentStatus', params.recruitmentStatus)

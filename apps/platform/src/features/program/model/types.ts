@@ -1,10 +1,13 @@
+import type { EducationTarget } from '@jakorea/domain/recruitment/education-target'
 import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 
 export type ProgramCategory = 'all' | 'youth' | 'institution' | 'instructor'
 
 export type ProgramSort = 'latest' | 'name' | 'closing-soon'
 
-export type EducationForm = 'online' | 'offline' | 'hybrid'
+export type EducationForm = 'online' | 'offline' | 'hybrid' | 'participant_choice'
+
+export type EducationTargetKey = EducationTarget
 
 export type ProgramListItem = {
   id: string
@@ -17,12 +20,18 @@ export type ProgramListItem = {
   operatingPeriodStart: string
   /** YYYY-MM-DD — 운영기간 필터 매칭용 */
   operatingPeriodEnd: string
+  /** YYYY-MM-DD — 최신순 정렬 */
+  applicationStartDate: string | null
+  /** YYYY-MM-DD — 마감일 가까운순 정렬 */
+  applicationEndDate: string | null
   recruitmentPeriodLabel: string
   recruitmentStatus: RecruitmentStatus
+  /** 도메인 education-target value — 모집대상·교육대상 필터 */
+  educationTargetKey: EducationTargetKey | null
   educationTargetLabel: string
   educationForm: EducationForm
   educationFormLabel: string
-  /** 목록 썸네일 이미지 URL — 없으면 썸네일 영역 배경색만 표시 */
+  /** 목록 썸네일 이미지 URL(저해상) — 없으면 썸네일 영역 배경색만 표시 */
   thumbnailUrl?: string
 }
 
@@ -48,7 +57,13 @@ export type ProgramAttachment = {
 }
 
 export type ProgramDetail = ProgramListItem & {
+  /**
+   * 상세 배너 이미지 URL(고해상).
+   * 없으면 `thumbnailUrl` 폴백.
+   */
+  detailImageUrl?: string
   sponsor: string
+  /** 빈 문자열이면 상세에서 비노출 */
   summary: string
   applicationPeriodLabel: string
   isRecruiting: boolean
@@ -62,16 +77,17 @@ export type ProgramDetail = ProgramListItem & {
   educationSchedules: ProgramLabeledValue[]
   extraSections: ProgramExtraSection[]
   applicationMethodLabel: string
+  /** 빈 문자열이면 상세에서 비노출 */
   applicationMethodValue: string
   attachments: ProgramAttachment[]
 }
 
 export type ProgramsListParams = {
-  /** 상단 탭 — 모집대상 필터와 동일 값·연동 */
+  /** 상단 탭 — 프로그램 유형 (청소년·기관·강사) */
   category: ProgramCategory
   q: string
-  /** 모집대상 필터 — 상단 탭(category)과 동일 값·연동 */
-  recruitmentTarget: ProgramCategory
+  /** 모집대상 필터 — 초등~성인 (탭과 분리) */
+  recruitmentTarget: string
   recruitmentStatus: string
   /** 운영 연도 (`all` | `YYYY`) */
   operatingPeriod: string

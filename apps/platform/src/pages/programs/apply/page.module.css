@@ -98,7 +98,7 @@
   }
 }
 
-@media (--bp-wide-shell-up) {
+@media (--bp-pc-full-up) {
   .page {
     width: 100%;
     max-width: var(--content-shell-max-width);

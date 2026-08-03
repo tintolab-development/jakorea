@@ -1,11 +1,11 @@
 import {
-  getMockProgramById,
   getProgramIdFromPath,
   ProgramBackButton,
   ProgramStatusBadges,
   programApplyPath,
   programApplyRequiredPath,
   PROGRAMS_PATH,
+  useMockProgramById,
 } from '@/features/program'
 import arrowRightWhite16Url from '@/shared/assets/icons/arrow-right-white-16.svg'
 import downloadIconUrl from '@/shared/assets/icons/download.svg'
@@ -15,9 +15,13 @@ import styles from './page.module.css'
 
 export function ProgramDetailPage() {
   const programId = getProgramIdFromPath()
-  const program = programId ? getMockProgramById(programId) : undefined
+  const { program, isLoading } = useMockProgramById(programId)
   const searchParams = new URLSearchParams(window.location.search)
   const fromPath = searchParams.get('from')
+
+  if (isLoading && !program) {
+    return null
+  }
 
   if (!program) {
     return (
@@ -45,6 +49,11 @@ export function ProgramDetailPage() {
 
     window.location.assign(applyPath)
   }
+
+  /** 상세는 고해상 우선, 없으면 목록용 썸네일 폴백 */
+  const detailBannerUrl =
+    program.detailImageUrl?.trim() || program.thumbnailUrl?.trim() || ''
+  const hasDetailImage = Boolean(detailBannerUrl)
 
   return (
     <section className={styles.page}>
@@ -91,11 +100,13 @@ export function ProgramDetailPage() {
             </div>
           </header>
 
-          <p className={styles.summary}>
-            <PFText as="span" typo="bd-lg-rg" color="black">
-              {program.summary}
-            </PFText>
-          </p>
+          {program.summary.trim() ? (
+            <p className={styles.summary}>
+              <PFText as="span" typo="bd-lg-rg" color="black">
+                {program.summary}
+              </PFText>
+            </p>
+          ) : null}
 
           <section className={styles.basicInfo}>
             <PFText as="h2" typo="hl-sm" color="black">
@@ -166,65 +177,80 @@ export function ProgramDetailPage() {
             </PFText>
 
             <div className={styles.detailContentBody}>
-              <div className={styles.recruitmentCard}>
-                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
-                  {program.recruitmentPhaseGroupLabel}
-                </PFText>
-                <div className={styles.recruitmentList}>
-                  {program.recruitmentPhases.map(phase => (
-                    <div key={phase.label} className={styles.infoBlock}>
+              {program.recruitmentPhases.length > 0 ? (
+                <div className={styles.recruitmentCard}>
+                  <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
+                    {program.recruitmentPhaseGroupLabel}
+                  </PFText>
+                  <div className={styles.recruitmentList}>
+                    {program.recruitmentPhases.map(phase => (
+                      <div key={phase.label} className={styles.infoBlock}>
+                        <PFText as="span" typo="bd-md-sb" color="black">
+                          {phase.label}
+                        </PFText>
+                        <PFText as="span" typo="bd-md-md" color="black">
+                          {phase.value}
+                        </PFText>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {program.educationSchedules.length > 0 ? (
+                <div className={styles.schedules}>
+                  {program.educationSchedules.map(schedule => (
+                    <div key={schedule.label} className={styles.scheduleCard}>
                       <PFText as="span" typo="bd-md-sb" color="black">
-                        {phase.label}
+                        {schedule.label}
                       </PFText>
                       <PFText as="span" typo="bd-md-md" color="black">
-                        {phase.value}
+                        {schedule.value}
                       </PFText>
                     </div>
                   ))}
                 </div>
-              </div>
+              ) : null}
 
-              <div className={styles.schedules}>
-                {program.educationSchedules.map(schedule => (
-                  <div key={schedule.label} className={styles.scheduleCard}>
-                    <PFText as="span" typo="bd-md-sb" color="black">
-                      {schedule.label}
-                    </PFText>
-                    <PFText as="span" typo="bd-md-md" color="black">
-                      {schedule.value}
-                    </PFText>
-                  </div>
-                ))}
-              </div>
+              {program.extraSections.length > 0 ? (
+                <div className={styles.extraSections}>
+                  {program.extraSections.map(section => (
+                    <section key={section.title} className={styles.extraSection}>
+                      <PFText as="h3" typo="bd-sm-rg" color="neutral-cool-600">
+                        {section.title}
+                      </PFText>
+                      <PFText as="p" typo="bd-md-md" color="black" className={styles.extraSectionBody}>
+                        {section.body}
+                      </PFText>
+                    </section>
+                  ))}
+                </div>
+              ) : null}
 
-              <div className={styles.extraSections}>
-                {program.extraSections.map(section => (
-                  <section key={section.title} className={styles.extraSection}>
-                    <PFText as="h3" typo="bd-sm-rg" color="neutral-cool-600">
-                      {section.title}
-                    </PFText>
-                    <PFText as="p" typo="bd-md-md" color="black" className={styles.extraSectionBody}>
-                      {section.body}
-                    </PFText>
-                  </section>
-                ))}
-              </div>
-
-              <div className={styles.applicationMethod}>
-                <PFText as="span" typo="bd-md-md" color="neutral-cool-600">
-                  {program.applicationMethodLabel}
-                </PFText>
-                <PFText as="span" typo="bd-lg-sb" color="black">
-                  {program.applicationMethodValue}
-                </PFText>
-              </div>
+              {program.applicationMethodValue.trim() ? (
+                <div className={styles.applicationMethod}>
+                  <PFText as="span" typo="bd-md-md" color="neutral-cool-600">
+                    {program.applicationMethodLabel}
+                  </PFText>
+                  <PFText as="span" typo="bd-lg-sb" color="black">
+                    {program.applicationMethodValue}
+                  </PFText>
+                </div>
+              ) : null}
             </div>
           </section>
         </article>
 
         <aside className={styles.media}>
-          <div className={styles.banner}>
-            <img className={styles.bannerImage} src={program.thumbnailUrl} alt="" />
+          <div
+            className={[
+              styles.banner,
+              hasDetailImage ? styles.bannerHasImage : styles.bannerNoImage,
+            ].join(' ')}
+          >
+            {hasDetailImage ? (
+              <img className={styles.bannerImage} src={detailBannerUrl} alt="" />
+            ) : null}
           </div>
 
           <button

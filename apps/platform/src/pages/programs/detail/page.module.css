@@ -264,17 +264,26 @@
   margin-bottom: var(--spacing-24);
   overflow: hidden;
   border-radius: var(--radius-24);
-  background: lightgray;
   box-shadow:
     0 0 12px 3px rgb(14 42 53 / 8%),
     0 14px 23px 0 rgb(14 42 53 / 10%);
+}
+
+/* 이미지 없음: placeholder 배경색 유지 */
+.bannerNoImage {
+  background: lightgray;
+}
+
+/* 이미지 있음: 이미지 자체가 비주얼이므로 래퍼 배경 투명 */
+.bannerHasImage {
+  background: transparent;
 }
 
 .bannerImage {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: 50% 50%;
 }
 
@@ -379,7 +388,7 @@
   }
 }
 
-@media (--bp-wide-shell-up) {
+@media (--bp-pc-full-up) {
   .page {
     width: 100%;
     max-width: var(--content-shell-max-width);
