@@ -13,6 +13,8 @@ type ProgramStatusBadgesProps = {
   educationTargetLabel: string
   educationForm: EducationForm
   educationFormLabel: string
+  /** 케이스 역할 배지 (강사·봉사자·기관·교육생). 없거나 참여자면 비노출 */
+  recruitmentRoleLabel?: string
   className?: string
 }
 
@@ -21,20 +23,34 @@ function platformRecruitmentStatusLabel(status: RecruitmentStatus) {
   return status === 'closed' ? '모집 완료' : '모집 중'
 }
 
+function shouldShowRoleBadge(roleLabel: string | undefined): boolean {
+  if (!roleLabel?.trim()) return false
+  // 일반 참여자는 교육대상 배지와 중복되어 숨김
+  return roleLabel !== '참여자'
+}
+
 export function ProgramStatusBadges({
   recruitmentStatus,
   educationTargetLabel,
   educationForm,
   educationFormLabel,
+  recruitmentRoleLabel,
   className,
 }: ProgramStatusBadgesProps) {
   const rootClassName = [styles.root, className].filter(Boolean).join(' ')
+  const showRole = shouldShowRoleBadge(recruitmentRoleLabel)
 
   return (
     <div className={rootClassName}>
       <PFStateBadge size="small" tone={RECRUITMENT_STATUS_TONE_MAP[recruitmentStatus]}>
         {platformRecruitmentStatusLabel(recruitmentStatus)}
       </PFStateBadge>
+
+      {showRole ? (
+        <PFCategoryBadge size="large" iconVariant="secondary">
+          {recruitmentRoleLabel}
+        </PFCategoryBadge>
+      ) : null}
 
       <PFCategoryBadge
         size="large"
