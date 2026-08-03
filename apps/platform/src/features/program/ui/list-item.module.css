@@ -11,6 +11,10 @@
   text-align: left;
 }
 
+.rowClosed {
+  opacity: 0.72;
+}
+
 .row:focus-visible {
   outline: 2px solid var(--color-primary-500);
   outline-offset: 2px;
@@ -62,6 +66,7 @@
   align-items: flex-start;
   gap: var(--spacing-4);
   align-self: stretch;
+  text-align: left;
 }
 
 .title {
@@ -69,13 +74,14 @@
   width: 100%;
   overflow-wrap: anywhere;
   word-break: keep-all;
+  text-align: left;
 }
 
-/* Body/Medium/medium + primary-500 · 일정 스펙 text-align: right */
+/* Body/Medium/medium + primary-500 · 시안: 좌측 정렬 */
 .operatingPeriod {
   width: 100%;
   margin: 0;
-  text-align: right;
+  text-align: left;
 }
 
 .recruitmentAside {
@@ -89,13 +95,18 @@
 
 .recruitment {
   display: flex;
+  /* 모집기간 일자 영역: 형식 `YYYY.MM.DD – YYYY.MM.DD` 전체 고정 너비로 행간 간격 통일 */
+  flex: 0 0 auto;
+  width: 15.5rem;
+  min-width: 15.5rem;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-4);
   white-space: nowrap;
+  text-align: left;
 }
 
-@media (max-width: 1023px) {
+@media (--bp-below-pc) {
   .row {
     flex-wrap: wrap;
     gap: var(--spacing-24);
@@ -117,5 +128,11 @@
     justify-content: space-between;
     padding-left: 0;
     border-left: none;
+  }
+
+  .recruitment {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 auto;
   }
 }

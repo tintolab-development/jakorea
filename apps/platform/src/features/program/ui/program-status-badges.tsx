@@ -17,6 +17,12 @@ type ProgramStatusBadgesProps = {
   className?: string
 }
 
+/** 목록·상세 태그 — 기획 표기 「모집 완료」(domain: 모집 마감) */
+function platformRecruitmentStatusLabel(status: RecruitmentStatus) {
+  if (status === 'closed') return '모집 완료'
+  return getRecruitmentStatusLabel(status)
+}
+
 export function ProgramStatusBadges({
   recruitmentStatus,
   educationTargetLabel,
@@ -29,7 +35,7 @@ export function ProgramStatusBadges({
   return (
     <div className={rootClassName}>
       <PFStateBadge size="small" tone={RECRUITMENT_STATUS_TONE_MAP[recruitmentStatus]}>
-        {getRecruitmentStatusLabel(recruitmentStatus)}
+        {platformRecruitmentStatusLabel(recruitmentStatus)}
       </PFStateBadge>
 
       <PFCategoryBadge
