@@ -13,6 +13,13 @@ import type {
   TargetLevel,
   InstitutionType,
 } from '../../types/domain'
+import {
+  mockApplicationPeriod,
+  mockOperationPeriod,
+  mockRecruitmentCaseFromLifecycle,
+  mockOperationCaseFromLifecycle,
+  mockRelativeIso,
+} from './mock-program-period'
 import { mockSponsors } from './sponsors'
 
 const SPONSOR_ID = mockSponsors[0].id
@@ -34,11 +41,22 @@ const createRounds = (programId: string, capacity: number): ProgramRound[] => {
   ]
 }
 
-const now = new Date()
-const getDate = (daysAgo: number) => {
-  const d = new Date(now)
-  d.setDate(d.getDate() - daysAgo)
-  return d.toISOString()
+/** @deprecated mockRelativeIso 사용 — daysAgo 호환 */
+const getDate = (daysAgo: number) => mockRelativeIso(daysAgo)
+
+function economyPeriodFields(
+  lifecycleStatus: ProgramLifecycleStatus,
+  spreadDays = 0
+): Pick<
+  Program,
+  'startDate' | 'endDate' | 'applicationStartDate' | 'applicationEndDate'
+> {
+  const app = mockApplicationPeriod(
+    mockRecruitmentCaseFromLifecycle(lifecycleStatus),
+    spreadDays
+  )
+  const op = mockOperationPeriod(mockOperationCaseFromLifecycle(lifecycleStatus), spreadDays)
+  return { ...app, ...op }
 }
 
 function pad2(n: number): string {
@@ -136,10 +154,7 @@ const COMPANY_SCHOOL_CASE_PROGRAMS: Omit<
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[0 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: 'HSBC/HKU Business Case Competition 2026',
-    startDate: getDate(-45),
-    endDate: getDate(-180),
-    applicationStartDate: getDate(-30),
-    applicationEndDate: getDate(-7),
+    ...economyPeriodFields('planned', 0),
     status: 'pending',
     lifecycleStatus: 'planned' as ProgramLifecycleStatus,
     businessArea: '경제금융',
@@ -168,10 +183,7 @@ const COMPANY_SCHOOL_CASE_PROGRAMS: Omit<
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[1 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: '대학생경제교육봉사단 UJAT 36기',
-    startDate: getDate(-60),
-    endDate: getDate(-210),
-    applicationStartDate: getDate(10),
-    applicationEndDate: getDate(-20),
+    ...economyPeriodFields('recruiting_students', 0),
     status: 'pending',
     lifecycleStatus: 'recruiting_students' as ProgramLifecycleStatus,
     businessArea: '경제금융',
@@ -200,12 +212,9 @@ const COMPANY_SCHOOL_CASE_PROGRAMS: Omit<
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[2 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: 'Growth to Professional 2026',
-    startDate: getDate(-70),
-    endDate: getDate(-220),
-    applicationStartDate: getDate(20),
-    applicationEndDate: getDate(-25),
-    instructorApplicationStartDate: getDate(5),
-    instructorApplicationEndDate: getDate(-25),
+    ...economyPeriodFields('recruiting_instructors', 7),
+    instructorApplicationStartDate: mockRelativeIso(90),
+    instructorApplicationEndDate: mockRelativeIso(-90, true),
     status: 'pending',
     lifecycleStatus: 'recruiting_instructors' as ProgramLifecycleStatus,
     businessArea: '경제금융',
@@ -234,10 +243,7 @@ const COMPANY_SCHOOL_CASE_PROGRAMS: Omit<
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[3 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: '초등 경제교육 모집',
-    startDate: getDate(-80),
-    endDate: getDate(-240),
-    applicationStartDate: getDate(30),
-    applicationEndDate: getDate(5),
+    ...economyPeriodFields('matching_completed', 0),
     status: 'pending',
     lifecycleStatus: 'matching_completed' as ProgramLifecycleStatus,
     businessArea: '경제금융',
@@ -267,10 +273,7 @@ const COMPANY_SCHOOL_CASE_PROGRAMS: Omit<
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[4 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: 'SAP 함께 성장하JA IT SW 멘토링',
-    startDate: getDate(-10),
-    endDate: getDate(-120),
-    applicationStartDate: getDate(80),
-    applicationEndDate: getDate(20),
+    ...economyPeriodFields('education_before_textbook', 5),
     status: 'active',
     lifecycleStatus: 'education_before_textbook' as ProgramLifecycleStatus,
     businessArea: '경제금융',
@@ -300,10 +303,7 @@ const COMPANY_SCHOOL_CASE_PROGRAMS: Omit<
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[5 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: 'Global Career Discovery 원데이 취업 멘토링',
-    startDate: getDate(20),
-    endDate: getDate(-45),
-    applicationStartDate: getDate(100),
-    applicationEndDate: getDate(35),
+    ...economyPeriodFields('education_after_textbook', 10),
     status: 'active',
     lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
     businessArea: '경제금융',
@@ -335,10 +335,7 @@ const COMPANY_SCHOOL_CASE_PROGRAMS: Omit<
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[6 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: '경제금융교육 전문강사단 모집',
-    startDate: getDate(90),
-    endDate: getDate(10),
-    applicationStartDate: getDate(95),
-    applicationEndDate: getDate(40),
+    ...economyPeriodFields('education_completed', 0),
     status: 'completed',
     lifecycleStatus: 'education_completed' as ProgramLifecycleStatus,
     businessArea: '경제금융',
@@ -368,10 +365,7 @@ const COMPANY_SCHOOL_CASE_PROGRAMS: Omit<
     format: 'workshop',
     category: PARTICIPANT_CATEGORY_CYCLE[7 % PARTICIPANT_CATEGORY_CYCLE.length],
     description: '한국씨티은행 특별한 JOB담',
-    startDate: getDate(120),
-    endDate: getDate(90),
-    applicationStartDate: getDate(180),
-    applicationEndDate: getDate(100),
+    ...economyPeriodFields('document_processing_completed', 14),
     status: 'completed',
     lifecycleStatus: 'document_processing_completed' as ProgramLifecycleStatus,
     businessArea: '경제금융',

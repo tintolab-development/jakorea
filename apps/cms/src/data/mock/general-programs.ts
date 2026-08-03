@@ -35,6 +35,13 @@ import {
   GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
   GENERAL_PROGRAM_ORG_SCHEDULE_SINGLE_ID,
 } from '@/features/program/general/lib/detail-common-info-display'
+import {
+  mockApplicationPeriod,
+  mockOperationPeriod,
+  mockRecruitmentCaseFromLifecycle,
+  mockOperationCaseFromLifecycle,
+  mockRelativeIso,
+} from './mock-program-period'
 import { mockSponsors } from './sponsors'
 
 const SPONSOR_ID = mockSponsors[0]?.id ?? 'sponsor-1'
@@ -101,11 +108,20 @@ function lnbParticipantTypes(config: LnbMatrixConfig): GeneralProgramParticipant
   return types
 }
 
-const now = new Date()
-const getDate = (daysAgo: number) => {
-  const d = new Date(now)
-  d.setDate(d.getDate() - daysAgo)
-  return d.toISOString()
+const getDate = (daysAgo: number, endOfDay = false) => mockRelativeIso(daysAgo, endOfDay)
+
+/** lifecycle 기준 모집·운영 기간 (모집 예정/중/마감 넓은 창) */
+function periodsFromLifecycle(
+  lifecycle: ProgramLifecycleStatus | undefined,
+  spreadDays = 0
+): Pick<
+  Program,
+  'startDate' | 'endDate' | 'applicationStartDate' | 'applicationEndDate'
+> {
+  return {
+    ...mockApplicationPeriod(mockRecruitmentCaseFromLifecycle(lifecycle), spreadDays),
+    ...mockOperationPeriod(mockOperationCaseFromLifecycle(lifecycle), spreadDays),
+  }
 }
 
 function pad2(n: number): string {
@@ -492,7 +508,7 @@ const TYPE_VARIANT_LIFECYCLE: ProgramLifecycleStatus[] = [
   INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
   INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
   'education_after_textbook',
-  'education_after_textbook',
+  'recruiting_students',
   INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
   INDIVIDUAL_GENERAL_PROGRAM_SCHEDULED_LIFECYCLE,
 ]
@@ -545,8 +561,7 @@ function buildTypeVariantSeed(
       description: `유형 mock — ${screenshot.title} (공통 정보 스크린샷 기준)`,
       startDate: '2025-12-08T00:00:00+09:00',
       endDate: '2026-12-30T23:59:59+09:00',
-      applicationStartDate: getDate(150),
-      applicationEndDate: getDate(100),
+      ...mockApplicationPeriod('closed', 0),
       status: 'active',
       lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
       businessArea: '진로취업',
@@ -598,8 +613,7 @@ function buildTypeVariantSeed(
       description: `유형 mock — ${screenshot.title} (공통 정보 스크린샷 기준)`,
       startDate: '2025-12-08T00:00:00+09:00',
       endDate: '2026-12-30T23:59:59+09:00',
-      applicationStartDate: getDate(150),
-      applicationEndDate: getDate(100),
+      ...mockApplicationPeriod('closed', 0),
       status: 'active',
       lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
       businessArea: '진로취업',
@@ -651,8 +665,7 @@ function buildTypeVariantSeed(
       description: `유형 mock — ${screenshot.title} (공통 정보 스크린샷 기준)`,
       startDate: '2025-12-08T00:00:00+09:00',
       endDate: '2026-12-30T23:59:59+09:00',
-      applicationStartDate: getDate(150),
-      applicationEndDate: getDate(100),
+      ...mockApplicationPeriod('closed', 0),
       status: 'active',
       lifecycleStatus: 'education_in_progress' as ProgramLifecycleStatus,
       businessArea: '진로취업',
@@ -702,6 +715,7 @@ function buildTypeVariantSeed(
   )
   const isScheduled = ['recruiting_students', 'recruiting_instructors'].includes(lifecycleStatus)
   const isIndividualAudience = variant.audience === 'individual'
+  const period = periodsFromLifecycle(lifecycleStatus, index)
 
   return {
     id,
@@ -713,10 +727,7 @@ function buildTypeVariantSeed(
     format: variant.educationStructure === 'curriculum' ? 'course' : 'workshop',
     category: (variant.audience === 'organization' ? 'school' : 'individual') as ProgramCategory,
     description: `유형 mock · 행 ${typeCaseRow} — ${variantTitle} (강사·봉사·설문 LNB 전체)`,
-    startDate: getDate(isCompleted ? 120 : isScheduled ? 58 : 44),
-    endDate: getDate(isCompleted ? 90 : isScheduled ? 26 : 12),
-    applicationStartDate: getDate(isCompleted ? 150 : 88),
-    applicationEndDate: getDate(isCompleted ? 100 : 40),
+    ...period,
     status: isCompleted ? 'completed' : isScheduled ? 'pending' : 'active',
     lifecycleStatus,
     businessArea: '경제금융',
@@ -784,8 +795,7 @@ function buildOrgCurriculumMultiEduIpsPerScheduleSeed(): GeneralProgramSeed {
     description: `유형 mock · 행 15 — ${screenshot.title} (교육 형태·IPS 일정 별 상이)`,
     startDate: '2025-12-08T00:00:00+09:00',
     endDate: '2026-12-30T23:59:59+09:00',
-    applicationStartDate: getDate(150),
-    applicationEndDate: getDate(100),
+    ...mockApplicationPeriod('closed', 2),
     status: 'active',
     lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
     businessArea: '진로취업',
@@ -850,7 +860,10 @@ function buildLnbCaseSeed(
   overrides: Partial<GeneralProgramSeed> = {}
 ): GeneralProgramSeed {
   const title = formatLnbCaseTitle(row, matrix)
-  return {
+  const base: Omit<
+    GeneralProgramSeed,
+    'startDate' | 'endDate' | 'applicationStartDate' | 'applicationEndDate'
+  > = {
     id: `general-prog-lnb-${row}`,
     capacity: 30,
     sponsorId: SPONSOR_ID,
@@ -863,10 +876,6 @@ function buildLnbCaseSeed(
     generalProgramAudience: 'organization',
     generalProgramEducationStructure: 'curriculum',
     generalProgramSessionRound: 'single',
-    startDate: getDate(44),
-    endDate: getDate(14),
-    applicationStartDate: getDate(89),
-    applicationEndDate: getDate(29),
     status: 'active',
     lifecycleStatus: 'education_after_textbook' as ProgramLifecycleStatus,
     businessArea: '경제금융',
@@ -878,6 +887,11 @@ function buildLnbCaseSeed(
     ...buildLnbVolunteerFields(matrix),
     ...overrides,
   }
+  const period = periodsFromLifecycle(base.lifecycleStatus, row - 16)
+  return {
+    ...base,
+    ...period,
+  }
 }
 
 const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
@@ -887,10 +901,6 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     {
       capacity: 36,
       category: 'instructor' as ProgramCategory,
-      startDate: getDate(42),
-      endDate: getDate(12),
-      applicationStartDate: getDate(85),
-      applicationEndDate: getDate(27),
       approvedStudentCount: 24,
       instructors: 12,
       instructorCapacity: 20,
@@ -907,8 +917,6 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     { hasInstructor: true, volunteerMode: 'no_interview', surveyMode: 'full' },
     {
       category: 'instructor' as ProgramCategory,
-      startDate: getDate(43),
-      endDate: getDate(13),
       approvedStudentCount: 22,
       instructors: 10,
       instructorCapacity: 15,
@@ -925,8 +933,6 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
       category: 'volunteer' as ProgramCategory,
       businessArea: '진로취업',
       targetLevel: 'middle' as TargetLevel,
-      startDate: getDate(43),
-      endDate: getDate(13),
       approvedStudentCount: 22,
       generalVolunteers: 6,
       participatingSchoolCount: 5,
@@ -939,10 +945,6 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     {
       capacity: 32,
       category: 'volunteer' as ProgramCategory,
-      startDate: getDate(45),
-      endDate: getDate(15),
-      applicationStartDate: getDate(90),
-      applicationEndDate: getDate(30),
       approvedStudentCount: 20,
       generalVolunteers: 6,
       scheduleTimeEnabled: false,
@@ -957,10 +959,6 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
       category: 'volunteer' as ProgramCategory,
       businessArea: '진로취업',
       targetLevel: 'college' as TargetLevel,
-      startDate: getDate(118),
-      endDate: getDate(88),
-      applicationStartDate: getDate(152),
-      applicationEndDate: getDate(98),
       status: 'completed',
       lifecycleStatus: 'document_processing_completed' as ProgramLifecycleStatus,
       approvedStudentCount: 22,
@@ -973,10 +971,6 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     { hasInstructor: true, volunteerMode: 'none', surveyMode: 'none' },
     {
       category: 'instructor' as ProgramCategory,
-      startDate: getDate(58),
-      endDate: getDate(28),
-      applicationStartDate: getDate(88),
-      applicationEndDate: getDate(43),
       status: 'pending',
       lifecycleStatus: 'recruiting_instructors' as ProgramLifecycleStatus,
       scheduleTimeEnabled: false,
@@ -990,10 +984,6 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
       category: 'volunteer' as ProgramCategory,
       businessArea: '진로취업',
       targetLevel: 'college' as TargetLevel,
-      startDate: getDate(56),
-      endDate: getDate(26),
-      applicationStartDate: getDate(86),
-      applicationEndDate: getDate(41),
       status: 'pending',
       lifecycleStatus: 'recruiting_students' as ProgramLifecycleStatus,
       scheduleTimeEnabled: true,
@@ -1005,8 +995,6 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
     {
       capacity: 32,
       category: 'instructor' as ProgramCategory,
-      startDate: getDate(44),
-      endDate: getDate(14),
       approvedStudentCount: 18,
       instructors: 10,
       instructorCapacity: 15,
@@ -1026,10 +1014,6 @@ const LNB_GENERAL_PROGRAM_SEEDS: GeneralProgramSeed[] = [
       category: 'volunteer' as ProgramCategory,
       businessArea: '진로취업',
       targetLevel: 'college' as TargetLevel,
-      startDate: getDate(117),
-      endDate: getDate(87),
-      applicationStartDate: getDate(151),
-      applicationEndDate: getDate(97),
       status: 'completed',
       lifecycleStatus: 'education_completed' as ProgramLifecycleStatus,
       approvedStudentCount: 26,
