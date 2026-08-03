@@ -21,6 +21,7 @@
 
 - [Code style](./coding/code-style.md) — ESLint, TypeScript, kebab-case
 - **[Feature file naming](./coding/feature-file-naming.mdc)** — 경로=스코프, kebab-case (**alwaysApply**)
+- **[Soft navigation & fetch dedupe](./coding/soft-navigation-fetch-dedupe.mdc)** — 목록 탭/필터 soft nav · StrictMode 중복 fetch 금지
 - [Component splitting](./coding/component-splitting.md)
 - [Custom hooks](./coding/custom-hooks.md)
 - [Refactoring principles](./coding/refactoring-principles.md)
@@ -64,14 +65,13 @@
 - `.cursor/references/responsive-review-checklist.md`
 - `.cursor/references/templates/component-css-modules-template.md`
 
-## Breakpoints (기본)
+## Breakpoints (필수 3구간)
 
-| 구간 | 조건 |
-|------|------|
-| below PC (mobile) | max-width: 1079px |
-| PC | min-width: 1080px |
-| PC compact | 1080px ~ 1359px |
-| header full | min-width: 1360px |
-| wide shell | min-width: 1600px |
+| 구간 | 조건 | CSS custom media |
+|------|------|------------------|
+| Mobile | ~1079 (`max-width: 1079px`) | `--bp-below-pc` |
+| PC compact | 1080~1599 | `--bp-pc-compact` · (`--bp-pc-up` for 1080+) |
+| PC full | 1600~ | `--bp-pc-full-up` |
 
 토큰: `src/shared/styles/breakpoints.css`, `src/shared/lib/breakpoints.ts`
+

@@ -13,8 +13,8 @@ Use this checklist when reviewing CSS Modules and responsive UI changes.
 ## Responsiveness
 
 - Mobile-first default styles are present.
-- Tablet and desktop media queries only add complexity when needed.
-- Common widths are considered: 360px, 390px, 768px, 1024px, 1280px.
+- Only Platform 3-tier media queries when needed (mobile / PC compact / PC full).
+- Common widths are considered: 390 (mobile), 1280 (PC compact), 1600 (PC full).
 - Fixed widths are replaced with fluid alternatives where possible.
 - Layout does not create horizontal scrolling.
 

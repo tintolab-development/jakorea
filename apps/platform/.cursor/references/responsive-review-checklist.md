@@ -4,7 +4,7 @@ Use this checklist when reviewing CSS Modules responsive implementation in `apps
 
 ## Layout safety
 
-- Validate widths at 320, 360, 390, 768, 1024, and 1280px.
+- Validate Platform bands: 390 (mobile), 1280 (PC compact), 1600 (PC full).
 - Replace fixed container widths with `width: min(100%, max-width)`.
 - Add `min-width: 0` to grid/flex children containing text.
 - Avoid `100vw` unless scrollbar overflow is accounted for.
