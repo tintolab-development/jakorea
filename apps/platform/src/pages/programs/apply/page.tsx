@@ -46,7 +46,7 @@ export function ProgramApplyPage() {
   }
 
   const handleSubmit = () => {
-    // TODO: POST program application API · 필수 항목 FormTemplate 검증
+    // TODO: CMS 등록 신청 폼 draft 기준 검증 · POST program application API
     window.location.assign(programApplyCompletePath(program.id))
   }
 
@@ -82,7 +82,7 @@ export function ProgramApplyPage() {
           </FormTemplateHost>
 
           <div className={styles.actions}>
-            <PFButton size="xlarge" width="100%" type="button" onClick={handleSubmit}>
+            <PFButton size="xlarge" width={240} type="button" onClick={handleSubmit}>
               신청하기
             </PFButton>
           </div>

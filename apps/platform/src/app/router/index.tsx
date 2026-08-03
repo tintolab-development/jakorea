@@ -102,7 +102,10 @@ export function resolveLayout(pathname: string): LayoutVariant {
     return 'mypage'
   }
 
-  if (parseProgramRoute(pathname)) {
+  const programRoute = parseProgramRoute(pathname)
+  if (programRoute) {
+    /* 신청 폼: ContentShell(1440) 밖 바디 전체에 cool-50 배경 */
+    if (programRoute.name === 'apply') return 'full'
     return 'default'
   }
 
@@ -123,7 +126,7 @@ export function resolveRoute(pathname: string): RouteConfig {
       case 'detail':
         return { path: pathname, element: <ProgramDetailPage />, layout: 'default' }
       case 'apply':
-        return { path: pathname, element: <ProgramApplyPage />, layout: 'default' }
+        return { path: pathname, element: <ProgramApplyPage />, layout: 'full' }
       case 'complete':
         return { path: pathname, element: <ProgramApplyCompletePage />, layout: 'default' }
     }
