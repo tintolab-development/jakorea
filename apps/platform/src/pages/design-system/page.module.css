@@ -400,6 +400,15 @@
   max-width: 1440px;
 }
 
+.searchFilterRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+  /* 열린 드롭다운 메뉴가 잘리지 않도록 */
+  min-height: 280px;
+}
+
 .toggleStack {
   display: flex;
   flex-direction: column;
@@ -556,6 +565,62 @@
   margin: 0;
 }
 
+/* ── Responsive: Mobile base · PC compact · PC full ── */
+
+.breakpointGrid {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-12);
+}
+
+.breakpointCard {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  padding: var(--spacing-16);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-cool-50);
+}
+
+.breakpointCard p {
+  margin: 0;
+}
+
+.breakpointCard[data-range='mobile'] {
+  border-color: var(--color-neutral-cool-300);
+}
+
+.breakpointCard[data-range='pc-compact'] {
+  border-color: var(--color-primary-300);
+  background: var(--color-element-hover);
+}
+
+.breakpointCard[data-range='pc-full'] {
+  border-color: var(--color-primary-500);
+  background: var(--color-element-hover);
+}
+
+.breakpointCode {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  padding: var(--spacing-4) var(--spacing-8);
+  border-radius: var(--radius-8);
+  background: var(--color-neutral-cool-80);
+  color: var(--color-primary-700);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mobile · ~1079 (base for design-system page is PC; override below) */
 @media (--bp-below-pc) {
   .page {
     gap: var(--spacing-24);
@@ -580,7 +645,9 @@
     gap: var(--spacing-16);
   }
 
-  .colorGrid {
+  .colorGrid,
+  .colorSwatchGrid,
+  .breakpointGrid {
     grid-template-columns: 1fr;
   }
 
@@ -600,5 +667,78 @@
   .mobileVerifyBar {
     position: sticky;
     top: 56px;
+  }
+
+  .viewportTabs {
+    max-width: 100%;
+  }
+}
+
+/* PC compact · 1080~1599 */
+@media (--bp-pc-compact) {
+  .page {
+    gap: var(--spacing-40);
+    padding: var(--spacing-24) var(--spacing-20);
+  }
+
+  .section {
+    gap: var(--spacing-20);
+    padding: var(--spacing-28) var(--spacing-24);
+  }
+
+  .breakpointGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .buttonRow,
+  .paginationRow {
+    grid-template-columns: 100px 1fr;
+  }
+
+  .inputRow {
+    grid-template-columns: 72px repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  .colorSwatchGrid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  .tokenTable {
+    min-width: 760px;
+  }
+}
+
+/* PC full · 1600~ */
+@media (--bp-pc-full-up) {
+  .page {
+    gap: var(--spacing-48);
+    padding: var(--spacing-32);
+  }
+
+  .section {
+    gap: var(--spacing-24);
+    padding: var(--spacing-32);
+  }
+
+  .breakpointGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--spacing-16);
+  }
+
+  .buttonRow,
+  .paginationRow {
+    grid-template-columns: 120px 1fr;
+  }
+
+  .inputRow {
+    grid-template-columns: 80px repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  .colorSwatchGrid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .tokenTable {
+    min-width: 880px;
   }
 }

@@ -334,6 +334,7 @@ const colorTokenGroups = [
 ] as const
 
 const designSystemNav = [
+  { id: 'breakpoints', label: 'Breakpoints' },
   { id: 'typography', label: 'Typography' },
   { id: 'color', label: 'Color' },
   { id: 'buttons', label: 'Buttons' },
@@ -348,38 +349,58 @@ const designSystemNav = [
   { id: 'dev-tools', label: 'Dev Tools' },
 ] as const
 
+const BREAKPOINT_RULES = [
+  {
+    key: 'mobile',
+    label: 'Mobile',
+    range: '~1079',
+    media: '--bp-below-pc',
+    query: 'max-width: 1079px',
+    description: '모바일 UI · 햄버거 헤더 · 타이트 페이지 패딩',
+  },
+  {
+    key: 'pc-compact',
+    label: 'PC compact',
+    range: '1080~1599',
+    media: '--bp-pc-compact',
+    query: 'min-width: 1080px and max-width: 1599px',
+    description: 'PC UI · 타이트 마진 · compact 헤더 간격',
+  },
+  {
+    key: 'pc-full',
+    label: 'PC full',
+    range: '1600~',
+    media: '--bp-pc-full-up',
+    query: 'min-width: 1600px',
+    description: 'PC UI · wide shell 마진 · full 레이아웃',
+  },
+] as const
+
 /**
  * Platform 반응형 룰 프리셋 (breakpoints.css / breakpoints.ts 와 동기)
- * ~1079 below-pc · 1080~1359 pc-compact · ≥1360 header-full · ≥1600 wide-shell
+ * Mobile · ~1079 · PC compact · 1080~1599 · PC full · 1600~
  */
 const VIEWPORT_PRESETS = [
   {
-    key: 'below-pc',
+    key: 'mobile',
     label: 'Mobile',
-    rangeLabel: `below-pc · ≤${platformBreakpoints.belowPcMax}`,
+    rangeLabel: `mobile · ≤${platformBreakpoints.belowPcMax}`,
     description: '모바일 UI · 햄버거 헤더',
     width: platformBreakpoints.layoutMinWidth + 15, // 390
   },
   {
     key: 'pc-compact',
     label: 'PC compact',
-    rangeLabel: `pc · ${platformBreakpoints.pcMin}–${platformBreakpoints.headerFullMin - 1}`,
-    description: 'PC UI · 타이트 마진 · 헤더 축약 구간',
-    width: 1200,
+    rangeLabel: `PC compact · ${platformBreakpoints.pcMin}–${platformBreakpoints.pcCompactMax}`,
+    description: 'PC UI · 타이트 마진',
+    width: 1280,
   },
   {
-    key: 'header-full',
-    label: 'Header full',
-    rangeLabel: `header-full · ≥${platformBreakpoints.headerFullMin}`,
-    description: 'PC UI · 헤더 풀 메뉴',
-    width: 1440,
-  },
-  {
-    key: 'wide-shell',
-    label: 'Wide shell',
-    rangeLabel: `wide-shell · ≥${platformBreakpoints.wideShellMin}`,
+    key: 'pc-full',
+    label: 'PC full',
+    rangeLabel: `PC full · ≥${platformBreakpoints.pcFullMin}`,
     description: 'PC UI · wide shell 마진',
-    width: platformBreakpoints.wideShellMin,
+    width: platformBreakpoints.pcFullMin,
   },
   {
     key: 'live',
@@ -599,6 +620,7 @@ export function DesignSystemPage() {
   const [pillMediumTab, setPillMediumTab] = useState('pill-1')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFilterValue, setSearchFilterValue] = useState('all')
+  const [searchFilterStatus, setSearchFilterStatus] = useState('all')
   const [selectValue, setSelectValue] = useState('')
   const [selectCompletedValue, setSelectCompletedValue] = useState('edit')
   const [toggleLarge, setToggleLarge] = useState(false)
@@ -644,12 +666,18 @@ export function DesignSystemPage() {
   }
 
   const activeViewportPreset =
-    VIEWPORT_PRESETS.find(preset => preset.key === viewportPreset) ?? VIEWPORT_PRESETS[4]
+    VIEWPORT_PRESETS.find(preset => preset.key === viewportPreset) ?? VIEWPORT_PRESETS[3]
   const isFramedViewport = !isViewportPreview && viewportPreset !== 'live'
   const effectiveViewportWidth = isViewportPreview
     ? viewportWidth
     : (activeViewportPreset.width ?? viewportWidth)
   const isMobileHeader = effectiveViewportWidth <= platformBreakpoints.belowPcMax
+  const isPcFull = effectiveViewportWidth >= platformBreakpoints.pcFullMin
+  const layoutBandLabel = isMobileHeader
+    ? `Mobile (≤${platformBreakpoints.belowPcMax})`
+    : isPcFull
+      ? `PC full (≥${platformBreakpoints.pcFullMin})`
+      : `PC compact (${platformBreakpoints.pcMin}–${platformBreakpoints.pcCompactMax})`
   const headerModeLabel = isMobileHeader
     ? `모바일 헤더 (≤${platformBreakpoints.belowPcMax})`
     : `PC 헤더 (≥${platformBreakpoints.pcMin})`
@@ -673,6 +701,8 @@ export function DesignSystemPage() {
           <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
             {activeViewportPreset.rangeLabel}
             {activeViewportPreset.width != null ? ` · ${activeViewportPreset.width}px` : ` · ${viewportWidth}px`}
+            {' · '}
+            {layoutBandLabel}
             {' · '}
             {headerModeLabel}
             {' · '}
@@ -734,7 +764,7 @@ export function DesignSystemPage() {
             Viewport preview embed
           </PFText>
           <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-            {viewportWidth}px · {headerModeLabel}
+            {viewportWidth}px · {layoutBandLabel} · {headerModeLabel}
           </PFText>
         </div>
       ) : null}
@@ -745,7 +775,7 @@ export function DesignSystemPage() {
         </PFText>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
           shared/ui 공통 컴포넌트와 스타일 토큰 쇼케이스입니다. (`/design-system`) 상단 탭으로
-          Platform 반응형 룰 구간별 화면을 확인할 수 있습니다.
+          반응형 3구간(Mobile · PC compact · PC full)을 확인할 수 있습니다.
         </PFText>
         <nav className={styles.dsNav} aria-label="디자인 시스템 섹션">
           {designSystemNav.map(item => (
@@ -754,6 +784,51 @@ export function DesignSystemPage() {
             </a>
           ))}
         </nav>
+      </div>
+
+      <div className={styles.section} id="breakpoints">
+        <PFText as="div" typo="hl-sm" color="black">
+          Breakpoints
+        </PFText>
+        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          토큰: <code>shared/styles/breakpoints.css</code> · JS:{' '}
+          <code>shared/lib/breakpoints.ts</code> · CSS custom media
+        </PFText>
+        <div className={styles.breakpointGrid}>
+          {BREAKPOINT_RULES.map(rule => (
+            <article key={rule.key} className={styles.breakpointCard} data-range={rule.key}>
+              <PFText as="div" typo="bd-md-sb" color="black">
+                {rule.label}
+              </PFText>
+              <PFText as="p" typo="hl-sm" color="primary-500">
+                {rule.range}
+              </PFText>
+              <code className={styles.breakpointCode}>{rule.media}</code>
+              <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+                {rule.query}
+              </PFText>
+              <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+                {rule.description}
+              </PFText>
+            </article>
+          ))}
+        </div>
+        <div className={styles.usageCard}>
+          <PFText as="div" typo="bd-sm-sb" color="black">
+            CSS · JS 사용 예시
+          </PFText>
+          <code className={styles.codeBlock}>
+            {`@media (--bp-below-pc) { /* mobile ~1079 */ }
+@media (--bp-pc-up) { /* 1080+ shared PC */ }
+@media (--bp-pc-compact) { /* 1080~1599 only */ }
+@media (--bp-pc-full-up) { /* 1600+ */ }
+
+platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
+          </code>
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+            현재 폭: {effectiveViewportWidth}px · {layoutBandLabel}
+          </PFText>
+        </div>
       </div>
 
       <div className={styles.section} id="typography">
@@ -1187,19 +1262,27 @@ export function DesignSystemPage() {
           PFSearchFilter
         </PFText>
         <div className={styles.searchStack}>
-          <PFSearchFilter
-            label="모집현황"
-            options={recruitmentStatusFilterOptions}
-            value={searchFilterValue}
-            onChange={setSearchFilterValue}
-          />
-          <PFSearchFilter
-            label="모집현황"
-            options={recruitmentStatusFilterOptions}
-            value="all"
-            onChange={() => undefined}
-            disabled
-          />
+          <div className={styles.searchFilterRow}>
+            <PFSearchFilter
+              label="교육대상"
+              options={educationTargetFilterOptions}
+              value={searchFilterValue}
+              onChange={setSearchFilterValue}
+            />
+            <PFSearchFilter
+              label="모집현황"
+              options={recruitmentStatusFilterOptions}
+              value={searchFilterStatus}
+              onChange={setSearchFilterStatus}
+            />
+            <PFSearchFilter
+              label="모집현황"
+              options={recruitmentStatusFilterOptions}
+              value="all"
+              onChange={() => undefined}
+              disabled
+            />
+          </div>
         </div>
       </div>
 
@@ -1386,7 +1469,7 @@ export function DesignSystemPage() {
           filters={
             <>
               <PFSearchFilter
-                label="모집대상"
+                label="교육대상"
                 options={educationTargetFilterOptions}
                 value={layoutFilterTarget}
                 onChange={setLayoutFilterTarget}

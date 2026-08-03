@@ -7,11 +7,11 @@
 }
 
 :root {
-  /* Breakpoints (mobile-first; use in media queries) */
+  /* Breakpoints — mobile ~1079 · PC compact 1080~1599 · PC full 1600~ */
   --bp-below-pc-max: 1079px;
   --bp-pc-min: 1080px;
-  --bp-header-full-min: 1360px;
-  --bp-wide-shell-min: 1600px;
+  --bp-pc-compact-max: 1599px;
+  --bp-pc-full-min: 1600px;
 
   --app-header-height: 56px;
 
