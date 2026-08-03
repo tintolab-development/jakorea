@@ -64,9 +64,18 @@
   margin-top: 25px;
 }
 
+/* 텍스트 유무와 무관하게 배지~기본정보 사이 세로 영역 확보 */
 .summary {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   margin: 0;
   padding-block: var(--spacing-40);
+}
+
+.summaryText {
+  margin: 0;
 }
 
 .basicInfo {
