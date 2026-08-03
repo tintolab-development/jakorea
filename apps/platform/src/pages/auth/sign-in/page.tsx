@@ -4,8 +4,15 @@ import {
   isMockAdminRegisteredFirstLogin,
   setAdminRegisteredPasswordChangeRequired,
 } from '@/features/auth/admin-registered'
+import type { PlatformMemberProfile } from '@/features/mypage'
 import { useMediaQuery } from '@/shared/hooks'
-import { platformMediaQueries, setDevAuthLoggedIn, validateEmailId } from '@/shared/lib'
+import {
+  DEV_MEMBER_PROFILE_OPTIONS,
+  platformMediaQueries,
+  setDevAuthLoggedIn,
+  setDevMemberProfile,
+  validateEmailId,
+} from '@/shared/lib'
 import {
   GoogleSocialLoginIcon,
   KakaoSocialLoginIcon,
@@ -29,6 +36,19 @@ const socialLoginItems = [
   { label: '네이버 로그인', icon: <NaverSocialLoginIcon /> },
   { label: '카카오 로그인', icon: <KakaoSocialLoginIcon /> },
 ]
+
+function getRedirectPath() {
+  const searchParams = new URLSearchParams(window.location.search)
+  return searchParams.get('redirect') ?? '/'
+}
+
+function completeDevSignIn(profile?: PlatformMemberProfile) {
+  if (profile) {
+    setDevMemberProfile(profile)
+  }
+  setDevAuthLoggedIn(true)
+  window.location.assign(getRedirectPath())
+}
 
 export function SignInPage() {
   const [email, setEmail] = useState('')
@@ -59,11 +79,11 @@ export function SignInPage() {
       return
     }
 
-    const searchParams = new URLSearchParams(window.location.search)
-    const redirectPath = searchParams.get('redirect') ?? '/'
+    completeDevSignIn()
+  }
 
-    setDevAuthLoggedIn(true)
-    window.location.assign(redirectPath)
+  const handleMockProfileSignIn = (profile: PlatformMemberProfile) => {
+    completeDevSignIn(profile)
   }
 
   const handleSocialLogin = () => {
@@ -169,6 +189,31 @@ export function SignInPage() {
             ))}
           </div>
         </div>
+
+        {import.meta.env.DEV ? (
+          <div className={styles.mockSection}>
+            <div className={styles.socialDivider}>
+              <span className={styles.socialDividerLine} />
+              <PFText typo="caption-rg" color="neutral-cool-500">
+                Mock 로그인 (개발용)
+              </PFText>
+              <span className={styles.socialDividerLine} />
+            </div>
+            <div className={styles.mockLoginColumn}>
+              {DEV_MEMBER_PROFILE_OPTIONS.map(option => (
+                <PFButton
+                  key={option.value}
+                  type="button"
+                  size="xlarge"
+                  className={styles.submitButton}
+                  onClick={() => handleMockProfileSignIn(option.value)}
+                >
+                  {option.label} 로그인
+                </PFButton>
+              ))}
+            </div>
+          </div>
+        ) : null}
     </section>
   )
 }
