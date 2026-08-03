@@ -14,6 +14,26 @@ import { getDevAuthLoggedIn } from '@/shared/lib'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
+/** CMS user-preview `user-page__top-fab` 아이콘과 동일 */
+function TopFabIcon() {
+  return (
+    <svg
+      className={styles.topFabIcon}
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden
+    >
+      <path
+        d="M9 3.825L9 16L7 16L7 3.825L1.4 9.425L-3.49691e-07 8L8 -3.49691e-07L16 8L14.6 9.425L9 3.825Z"
+        fill="white"
+      />
+    </svg>
+  )
+}
+
 export function ProgramDetailPage() {
   const programId = getProgramIdFromPath()
   const { program, isLoading } = useMockProgramById(programId)
@@ -49,6 +69,10 @@ export function ProgramDetailPage() {
     }
 
     window.location.assign(applyPath)
+  }
+
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   /** 상세는 고해상 우선, 없으면 목록용 썸네일 폴백 */
@@ -312,6 +336,20 @@ export function ProgramDetailPage() {
               ))}
             </ul>
           ) : null}
+
+          {/*
+            Figma: 첨부·신청 블록 하단 기준
+            · 세로 gap 22px
+            · 컨테이너 우단 → FAB 우단 61px
+          */}
+          <button
+            type="button"
+            className={styles.topFab}
+            aria-label="Top"
+            onClick={handleScrollToTop}
+          >
+            <TopFabIcon />
+          </button>
         </aside>
       </div>
     </section>
