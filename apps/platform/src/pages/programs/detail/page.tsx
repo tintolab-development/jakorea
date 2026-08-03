@@ -58,6 +58,11 @@ export function ProgramDetailPage() {
   }
 
   const handleBackToList = () => {
+    // 기획: 목록으로 = 뒤로가기. history 없으면 from 또는 /programs
+    if (window.history.length > 1) {
+      window.history.back()
+      return
+    }
     window.location.assign(fromPath ?? PROGRAMS_PATH)
   }
 
@@ -126,14 +131,13 @@ export function ProgramDetailPage() {
             </div>
           </header>
 
-          {/* 소개 문구가 없어도 배지↔기본정보 간 동일 간격 영역을 유지 */}
-          <div className={styles.summary}>
-            {program.summary.trim() ? (
+          {program.summary.trim() ? (
+            <div className={styles.summary}>
               <PFText as="p" typo="bd-lg-rg" color="black" className={styles.summaryText}>
                 {program.summary}
               </PFText>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
 
           <section className={styles.basicInfo}>
             <PFText as="h2" typo="hl-sm" color="black">
@@ -145,7 +149,7 @@ export function ProgramDetailPage() {
                 : [
                     { label: '사업 분야', value: program.businessFieldLabel },
                     { label: '교육 형태', value: program.educationFormLabel },
-                    { label: '교육대상', value: program.educationTargetGroupLabel },
+                    { label: '교육 대상', value: program.educationTargetGroupLabel },
                     {
                       label: '교육 대상 상세',
                       value: program.educationTargetDetailLabel,
@@ -258,6 +262,17 @@ export function ProgramDetailPage() {
                       </PFText>
                     </section>
                   ))}
+                </div>
+              ) : null}
+
+              {program.contactValue.trim() ? (
+                <div className={styles.contact}>
+                  <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
+                    문의처
+                  </PFText>
+                  <PFText as="span" typo="bd-md-md" color="black">
+                    {program.contactValue}
+                  </PFText>
                 </div>
               ) : null}
 
