@@ -4,9 +4,16 @@
  */
 
 :root {
-  /* gradient*/
+  /**
+   * Gradient tokens (Figma Primary_GR_*)
+   * 배경/칩: background: var(--color-gradient-primary-01)
+   * 텍스트 필: .text-gradient-primary-01 또는 PFText color="gradient-primary-01"
+   */
+  /* Primary_GR_01 · 90deg #285F74 → #00A0AF */
   --color-gradient-primary-01: linear-gradient(90deg, #285f74 0%, #00a0af 100%);
+  /* Primary_GR_02 · 101deg #2EAAFD → #0D81CF */
   --color-gradient-primary-02: linear-gradient(101deg, #2eaafd 4.8%, #0d81cf 102.41%);
+  /* Primary_GR_03 · 93deg #46B17B → #BBD153 */
   --color-gradient-primary-03: linear-gradient(93deg, #46b17b 0%, #bbd153 90.52%);
 
   /* Border */

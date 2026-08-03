@@ -42,17 +42,26 @@
   padding: 0;
   border: 0;
   background: transparent;
+  /* Body/Large/semibold — 입력·placeholder 공통 */
   color: var(--color-neutral-cool-500);
   font-family: var(--font-family-base);
   font-size: 18px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 150%;
+  letter-spacing: -0.18px;
   outline: none;
 }
 
 .input::placeholder {
   color: var(--color-neutral-cool-500);
+  font-family: var(--font-family-base);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.18px;
+  opacity: 1;
 }
 
 .field.completed .input {

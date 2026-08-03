@@ -1,21 +1,21 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ProgramCategory, ProgramsListParams } from '@/features/program'
 import {
   buildProgramsListPath,
   DEFAULT_PROGRAMS_LIST_PARAMS,
+  filterAndSortPrograms,
   getProgramsListReturnPath,
-  getMockPrograms,
   OPERATING_PERIOD_FILTER_OPTIONS,
   PROGRAM_CATEGORY_ITEMS,
   PROGRAM_FILTER_KEYS,
   programDetailPath,
-  programOverlapsOperatingYear,
   ProgramListItemRow,
   ProgramSort,
   readProgramsListParams,
-  withSyncedAudience,
+  useMockProgramsCatalog,
 } from '@/features/program'
 import {
+  educationFormFilterOptions,
   educationTargetFilterOptions,
   recruitmentStatusFilterOptions,
   recruitmentTargetFilterOptions,
@@ -28,13 +28,6 @@ import styles from './page.module.css'
 
 const PAGE_SIZE = 10
 
-const educationFormFilterOptions = [
-  { value: 'all', label: '전체' },
-  { value: 'online', label: '온라인' },
-  { value: 'offline', label: '오프라인' },
-  { value: 'hybrid', label: '혼합' },
-]
-
 const AUDIENCE_VALUES = new Set<ProgramCategory>(['all', 'youth', 'institution', 'instructor'])
 
 function parseAudienceValue(value: string): ProgramCategory {
@@ -45,15 +38,29 @@ function parseAudienceValue(value: string): ProgramCategory {
 
 export function ProgramsPage() {
   const [params, setParams] = useState(readProgramsListParams)
+  const programs = useMockProgramsCatalog()
+
+  /** 탭·필터는 soft navigation — full reload 없이 URL·state만 동기화 (카탈로그 재요청 방지) */
+  useEffect(() => {
+    const onPopState = () => {
+      setParams(readProgramsListParams())
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
 
   const updateParams = (next: Partial<ProgramsListParams>) => {
     const merged = { ...params, ...next }
     setParams(merged)
-    window.location.assign(buildProgramsListPath(merged))
+    const nextPath = buildProgramsListPath(merged)
+    const currentPath = `${window.location.pathname}${window.location.search}`
+    if (nextPath !== currentPath) {
+      window.history.pushState(null, '', nextPath)
+    }
   }
 
   const setAudience = (audience: ProgramCategory) => {
-    updateParams({ ...withSyncedAudience(audience), page: 1 })
+    updateParams({ category: audience, page: 1 })
   }
 
   const { bindFilter, bindSort } = useSearchFilters({
@@ -63,41 +70,21 @@ export function ProgramsPage() {
     filterKeys: PROGRAM_FILTER_KEYS,
   })
 
-  /** 필터 초기화 시 모집대상 ↔ 탭도 함께 전체로 */
+  /** 필터 초기화 — 탭은 유지하지 않고 전체로 */
   const reset = () => {
     updateParams({
       ...Object.fromEntries(
         PROGRAM_FILTER_KEYS.map(key => [key, DEFAULT_PROGRAMS_LIST_PARAMS[key]])
       ),
-      ...withSyncedAudience(DEFAULT_PROGRAMS_LIST_PARAMS.category),
+      category: DEFAULT_PROGRAMS_LIST_PARAMS.category,
       page: 1,
     })
   }
 
-  const filteredPrograms = useMemo(() => {
-    let items = getMockPrograms()
-
-    if (params.category !== 'all') {
-      items = items.filter(program => program.category === params.category)
-    }
-
-    if (params.q.trim()) {
-      const query = params.q.trim().toLowerCase()
-      items = items.filter(program => program.title.toLowerCase().includes(query))
-    }
-
-    if (params.operatingPeriod !== DEFAULT_PROGRAMS_LIST_PARAMS.operatingPeriod) {
-      items = items.filter(program =>
-        programOverlapsOperatingYear(program, params.operatingPeriod)
-      )
-    }
-
-    if (params.sort === 'name') {
-      items = [...items].sort((a, b) => a.title.localeCompare(b.title, 'ko'))
-    }
-
-    return items
-  }, [params.category, params.q, params.operatingPeriod, params.sort])
+  const filteredPrograms = useMemo(
+    () => filterAndSortPrograms(programs, params),
+    [programs, params]
+  )
 
   const totalPages = Math.max(1, Math.ceil(filteredPrograms.length / PAGE_SIZE))
   const currentPage = Math.min(params.page, totalPages)
@@ -130,7 +117,7 @@ export function ProgramsPage() {
           <PFSearchInput
             value={params.q}
             onValueChange={q => updateParams({ q, page: 1 })}
-            placeholder="프로그램명 또는 키워드를 검색해 보세요"
+            placeholder="프로그램 검색 (예: 기업가 정신, 금융 문해력)"
           />
         }
         filters={
@@ -138,8 +125,7 @@ export function ProgramsPage() {
             <PFSearchFilter
               label="모집대상"
               options={recruitmentTargetFilterOptions}
-              value={params.recruitmentTarget}
-              onChange={value => setAudience(parseAudienceValue(value))}
+              {...bindFilter('recruitmentTarget')}
             />
             <PFSearchFilter
               label="모집현황"

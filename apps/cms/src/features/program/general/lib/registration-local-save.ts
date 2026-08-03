@@ -22,6 +22,7 @@ import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/ap
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { mockSponsors } from '@/data/mock/sponsors'
+import { publishRegisteredProgramToMockCatalog } from '@/features/program/shared/lib/publish-mock-program-catalog'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
 export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
@@ -353,6 +354,8 @@ export function persistGeneralRegistrationFormLocal(args: {
   const prev = readGeneralRegistrationLocalSaveRecords()
   const nextFile: LocalSaveFile = { version: 1, items: [...prev, record] }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(nextFile))
+
+  void publishRegisteredProgramToMockCatalog(program)
 
   return program
 }

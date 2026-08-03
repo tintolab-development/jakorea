@@ -12,7 +12,7 @@ export const PROGRAM_CATEGORY_ITEMS: { key: ProgramCategory; label: string }[] =
 export const PROGRAM_SORT_OPTIONS: { key: ProgramSort; label: string }[] = [
   { key: 'latest', label: '최신순' },
   { key: 'name', label: '이름순' },
-  { key: 'closing-soon', label: '마감임박순' },
+  { key: 'closing-soon', label: '마감일 가까운순' },
 ]
 
 export const DEFAULT_PROGRAMS_LIST_PARAMS = {

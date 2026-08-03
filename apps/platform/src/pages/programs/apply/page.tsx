@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
-  getMockProgramById,
+  getMockApplyFormDraft,
   getProgramIdFromPath,
   ProgramBackButton,
   programApplyCompletePath,
   programDetailPath,
+  useMockProgramById,
 } from '@/features/program'
+import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getDevAuthLoggedIn } from '@/shared/lib'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './page.module.css'
@@ -13,7 +15,7 @@ import styles from './page.module.css'
 export function ProgramApplyPage() {
   const [isReady, setIsReady] = useState(false)
   const programId = getProgramIdFromPath()
-  const program = programId ? getMockProgramById(programId) : undefined
+  const { program, isLoading } = useMockProgramById(programId)
 
   useEffect(() => {
     if (!programId) {
@@ -30,7 +32,12 @@ export function ProgramApplyPage() {
     setIsReady(true)
   }, [programId])
 
-  if (!isReady || !program) {
+  const draft = useMemo(
+    () => (program ? getMockApplyFormDraft(program) : null),
+    [program]
+  )
+
+  if (!isReady || isLoading || !program || !draft) {
     return null
   }
 
@@ -39,6 +46,7 @@ export function ProgramApplyPage() {
   }
 
   const handleSubmit = () => {
+    // TODO: CMS 등록 신청 폼 draft 기준 검증 · POST program application API
     window.location.assign(programApplyCompletePath(program.id))
   }
 
@@ -64,81 +72,21 @@ export function ProgramApplyPage() {
           </PFText>
         </div>
 
-        <form
-          className={styles.form}
-          onSubmit={event => {
-            event.preventDefault()
-            handleSubmit()
-          }}
-        >
-          <fieldset className={styles.fieldset}>
-            <legend className={styles.legend}>
-              <PFText as="span" typo="bd-md-sb" color="black">
-                개인정보 수집·이용 <span className={styles.required}>*</span>
-              </PFText>
-            </legend>
-            <label className={styles.radio}>
-              <input type="radio" name="privacy-consent" value="agree" defaultChecked />
-              동의
-            </label>
-            <label className={styles.radio}>
-              <input type="radio" name="privacy-consent" value="disagree" />
-              동의하지 않음
-            </label>
-          </fieldset>
-
-          <fieldset className={styles.fieldset}>
-            <legend className={styles.legend}>
-              <PFText as="span" typo="bd-md-sb" color="black">
-                개인정보 제3자 정보 제공·이용 동의 <span className={styles.required}>*</span>
-              </PFText>
-            </legend>
-            <label className={styles.radio}>
-              <input type="radio" name="third-party-consent" value="agree" defaultChecked />
-              동의
-            </label>
-            <label className={styles.radio}>
-              <input type="radio" name="third-party-consent" value="disagree" />
-              동의하지 않음
-            </label>
-          </fieldset>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="motivation">
-              <PFText as="span" typo="bd-md-sb" color="black">
-                자기소개 및 지원동기 <span className={styles.required}>*</span>
-              </PFText>
-            </label>
-            <textarea
-              id="motivation"
-              className={styles.textarea}
-              placeholder="자유롭게 작성해 주세요"
-              rows={6}
+        <div className={styles.form}>
+          <FormTemplateHost surface="platformUser">
+            <FormTemplateRenderer
+              draft={draft}
+              interactionMode="user"
+              surface="platformUser"
             />
-          </div>
-
-          <fieldset className={styles.fieldset}>
-            <legend className={styles.legend}>
-              <PFText as="span" typo="bd-md-sb" color="black">
-                진행 희망 교육 일정 <span className={styles.required}>*</span>
-              </PFText>
-            </legend>
-            <label className={styles.checkbox}>
-              <input type="checkbox" name="schedule" value="2026-04-20" />
-              &apos;26년 4월 20일(월) 9:30 - 12:20
-            </label>
-            <label className={styles.checkbox}>
-              <input type="checkbox" name="schedule" value="2026-04-27" />
-              &apos;26년 4월 27일(월) 13:00 - 15:50
-            </label>
-          </fieldset>
+          </FormTemplateHost>
 
           <div className={styles.actions}>
-            <PFButton size="xlarge" width="100%" type="submit">
+            <PFButton size="xlarge" width={240} type="button" onClick={handleSubmit}>
               신청하기
             </PFButton>
           </div>
-        </form>
+        </div>
       </div>
     </section>
   )

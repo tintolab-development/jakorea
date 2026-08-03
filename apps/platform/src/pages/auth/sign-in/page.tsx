@@ -1,18 +1,24 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
-import { setAdminRegisteredPasswordChangeRequired } from '@/features/auth/admin-registered'
+import {
+  isMockAdminRegisteredFirstLogin,
+  setAdminRegisteredPasswordChangeRequired,
+} from '@/features/auth/admin-registered'
 import {
   expiresAtFromExpiresInSeconds,
   getLoginApiErrorMessage,
   usePortalLoginMutation,
 } from '@/features/auth/sign-in'
+import type { PlatformMemberProfile } from '@/features/mypage'
 import { useMediaQuery } from '@/shared/hooks'
 import {
   clearAuthTokens,
+  DEV_MEMBER_PROFILE_OPTIONS,
   isRemoteApiConfigured,
   platformMediaQueries,
   setAuthTokens,
   setDevAuthLoggedIn,
+  setDevMemberProfile,
   validateEmailId,
 } from '@/shared/lib'
 import {
@@ -42,6 +48,14 @@ const socialLoginItems = [
 function resolveRedirectPath() {
   const searchParams = new URLSearchParams(window.location.search)
   return searchParams.get('redirect') ?? '/'
+}
+
+function completeDevSignIn(profile?: PlatformMemberProfile) {
+  if (profile) {
+    setDevMemberProfile(profile)
+  }
+  setDevAuthLoggedIn(true)
+  window.location.assign(resolveRedirectPath())
 }
 
 export function SignInPage() {
@@ -92,7 +106,12 @@ export function SignInPage() {
     }
 
     if (!remoteApi) {
-      setFormError('API 서버가 설정되지 않았어요. VITE_API_SERVER를 확인해 주세요.')
+      if (isMockAdminRegisteredFirstLogin(validation.normalized, password)) {
+        setAdminRegisteredPasswordChangeRequired(validation.normalized)
+        window.location.assign('/auth/admin-registered/notice')
+        return
+      }
+      completeDevSignIn()
       return
     }
 
@@ -126,6 +145,10 @@ export function SignInPage() {
         getLoginApiErrorMessage(error, '로그인에 실패했어요. 이메일과 비밀번호를 확인해 주세요.'),
       )
     }
+  }
+
+  const handleMockProfileSignIn = (profile: PlatformMemberProfile) => {
+    completeDevSignIn(profile)
   }
 
   const handleSocialLogin = () => {
@@ -248,6 +271,31 @@ export function SignInPage() {
           ))}
         </div>
       </div>
+
+      {import.meta.env.DEV ? (
+        <div className={styles.mockSection}>
+          <div className={styles.socialDivider}>
+            <span className={styles.socialDividerLine} />
+            <PFText typo="caption-rg" color="neutral-cool-500">
+              Mock 로그인 (개발용)
+            </PFText>
+            <span className={styles.socialDividerLine} />
+          </div>
+          <div className={styles.mockLoginColumn}>
+            {DEV_MEMBER_PROFILE_OPTIONS.map(option => (
+              <PFButton
+                key={option.value}
+                type="button"
+                size="xlarge"
+                className={styles.submitButton}
+                onClick={() => handleMockProfileSignIn(option.value)}
+              >
+                {option.label} 로그인
+              </PFButton>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }

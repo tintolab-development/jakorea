@@ -79,6 +79,22 @@ export function PFSearchFilter({
 
   return (
     <div className={rootClassName} ref={rootRef}>
+      {/* 가장 긴 옵션·트리거 기준 root 너비 확정 (열림 시 메뉴/트리거 폭 일치) */}
+      <div className={styles.widthSizer} aria-hidden="true">
+        <div className={styles.widthSizerTrigger}>
+          <span className={styles.label}>{label}</span>
+          <span className={styles.trailing}>
+            <span className={styles.value}>{selectedLabel}</span>
+            <img className={styles.chevron} src={chevronDownPrimaryUrl} alt="" />
+          </span>
+        </div>
+        {options.map(option => (
+          <div className={styles.widthSizerOption} key={`sizer-${option.value}`}>
+            {option.label}
+          </div>
+        ))}
+      </div>
+
       <button
         type="button"
         className={styles.trigger}

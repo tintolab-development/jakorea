@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import { e2eErrorLogMockApiPlugin } from './vite-plugins/e2e-error-log-mock-api'
 import { e2eTestLogMockApiPlugin } from './vite-plugins/e2e-test-log-mock-api'
+import { mockProgramCatalogApiPlugin } from '../../tools/mock-program-catalog/vite-plugin'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -15,7 +16,12 @@ export default defineConfig(({ mode }) => {
     env.VITE_NGROK_SERVER?.trim()
 
   return {
-    plugins: [react(), e2eErrorLogMockApiPlugin(), e2eTestLogMockApiPlugin()],
+    plugins: [
+      react(),
+      e2eErrorLogMockApiPlugin(),
+      e2eTestLogMockApiPlugin(),
+      mockProgramCatalogApiPlugin({ monorepoRoot: path.resolve(__dirname, '../..') }),
+    ],
     optimizeDeps: {
       include: ['@fortune-sheet/react', '@fortune-sheet/core', 'lodash', 'immer'],
     },

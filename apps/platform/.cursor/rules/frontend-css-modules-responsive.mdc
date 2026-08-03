@@ -114,17 +114,24 @@ Use mobile-first CSS:
 }
 ```
 
-Default breakpoints:
+Default breakpoints (Platform 3-tier only):
 
 ```css
-/* ~1079: mobile UI + horizontal margins */
-/* 1080~1599: PC UI, left content, tighter margins */
-/* 1600~: PC UI, wider shell margins */
+/* Mobile · ~1079 */
+/* PC compact · 1080~1599 */
+/* PC full · 1600~ */
 ```
 
 Platform layout uses `--layout-min-width: 375px` on `html`, `body`, and `#root` (see `shared/styles/tokens.css`, `reset.css`). Do not repeat `min-width: 375px` on individual components unless a local exception is required.
 
-Responsive `@media` in CSS Modules and global styles should use **postcss-custom-media** aliases from `shared/styles/breakpoints.css` (e.g. `@media (--bp-pc-up) { … }`, `@media (--bp-below-pc) { … }`, `@media (--bp-wide-shell-up) { … }`). JS hooks use `shared/lib/breakpoints.ts` (`platformMediaQueries`).
+Responsive `@media` in CSS Modules and global styles should use **postcss-custom-media** aliases from `shared/styles/breakpoints.css`:
+
+- `@media (--bp-below-pc)` — Mobile (~1079)
+- `@media (--bp-pc-up)` — PC compact + PC full (1080~)
+- `@media (--bp-pc-compact)` — PC compact only (1080~1599)
+- `@media (--bp-pc-full-up)` — PC full (1600~)
+
+JS hooks use `shared/lib/breakpoints.ts` (`platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`). Do **not** invent intermediate widths (768/1024/1360 등).
 
 ### Auth layout (`layout: 'auth'`)
 
@@ -308,7 +315,7 @@ When refactoring existing responsive CSS:
 3. Convert desktop-first media queries to mobile-first only when it is safe.
 4. Replace repeated margins with parent `gap` where possible.
 5. Replace fixed widths with fluid width, `max-width`, `minmax`, or `clamp`.
-6. Test at common widths: 360, 390, 768, 1024, 1280.
+6. Test at Platform bands: 390 (mobile), 1280 (PC compact), 1600 (PC full).
 
 ## Output Requirements
 

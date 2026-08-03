@@ -51,7 +51,7 @@ app-layout/
 
 - **컴포넌트 스코프**: `*.module.css` (파일명 kebab-case, **클래스명 camelCase**)
 - **전역**: `src/shared/styles/` (`tokens.css`, `breakpoints.css`, `reset.css`)
-- **브레이크포인트**: `breakpoints.css` + `@media (--bp-pc-up)` 등 (postcss-custom-media). JS: `shared/lib/breakpoints.ts`
+- **브레이크포인트** (3구간 only): Mobile ~1079 / PC compact 1080~1599 / PC full 1600~ — `breakpoints.css` custom media (`--bp-below-pc` · `--bp-pc-up` · `--bp-pc-compact` · `--bp-pc-full-up`). JS: `shared/lib/breakpoints.ts`
 - **인라인 style**: 동적 값이 CSS 변수로 표현 불가할 때만
 - **반응형**: JS viewport 분기 대신 CSS media query 우선
 

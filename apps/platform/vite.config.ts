@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import postcssCustomMedia from 'postcss-custom-media'
 import postcssGlobalData from '@csstools/postcss-global-data'
+import { mockProgramCatalogApiPlugin } from '../../tools/mock-program-catalog/vite-plugin'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -14,7 +15,10 @@ export default defineConfig(({ mode }) => {
     env.VITE_NGROK_SERVER?.trim()
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      mockProgramCatalogApiPlugin({ monorepoRoot: path.resolve(__dirname, '../..') }),
+    ],
     css: {
       postcss: {
         plugins: [
