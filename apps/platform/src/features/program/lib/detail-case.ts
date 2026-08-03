@@ -107,11 +107,41 @@ export function recruitmentPhaseGroupLabel(detailCase: ProgramDetailCase): strin
   }
 }
 
-/** 봉사자·UJAT 봉사·강사 — 서류/면접 단계 노출 */
-export function shouldIncludeInterviewStages(detailCase: ProgramDetailCase): boolean {
+/** 서류·면접 phase를 노출할 수 있는 케이스 */
+export function isInterviewCapableCase(detailCase: ProgramDetailCase): boolean {
   return (
     detailCase === 'volunteer' ||
     detailCase === 'ujat-volunteer' ||
     detailCase === 'instructor'
+  )
+}
+
+/**
+ * 면접 있는 경우에만 1차 서류·2차 면접 기간 노출.
+ * - interviewEnabled === false | 'no' → 숨김
+ * - interviewEnabled === true | 'yes' → 노출
+ * - 미설정: 서류/면접 일정 필드가 하나라도 있을 때만 노출
+ */
+export function shouldIncludeInterviewStages(
+  detailCase: ProgramDetailCase,
+  program?: Pick<
+    CmsProgramLike,
+    | 'interviewEnabled'
+    | 'documentPassAnnouncementDate'
+    | 'interviewStartDate'
+    | 'interviewEndDate'
+  >
+): boolean {
+  if (!isInterviewCapableCase(detailCase)) return false
+  if (!program) return true
+
+  const flag = program.interviewEnabled
+  if (flag === false || flag === 'no') return false
+  if (flag === true || flag === 'yes') return true
+
+  return Boolean(
+    program.documentPassAnnouncementDate?.trim() ||
+      program.interviewStartDate?.trim() ||
+      program.interviewEndDate?.trim()
   )
 }
