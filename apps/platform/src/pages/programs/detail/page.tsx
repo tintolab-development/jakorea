@@ -7,11 +7,9 @@ import {
   PROGRAMS_PATH,
   useMockProgramById,
 } from '@/features/program'
-import { downloadProgramAttachment } from '@/features/program/lib/attachment-download'
 import arrowRightWhite16Url from '@/shared/assets/icons/arrow-right-white-16.svg'
-import downloadIconUrl from '@/shared/assets/icons/download.svg'
 import { getDevAuthLoggedIn } from '@/shared/lib'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFButton, PFFileDownload, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 /** CMS user-preview `user-page__top-fab` 아이콘과 동일 */
@@ -329,24 +327,7 @@ export function ProgramDetailPage() {
             <ul className={styles.attachments}>
               {program.attachments.map(attachment => (
                 <li key={attachment.name}>
-                  <a
-                    className={styles.attachment}
-                    href={attachment.url}
-                    download={attachment.name}
-                    onClick={event => {
-                      event.preventDefault()
-                      downloadProgramAttachment(attachment.name, attachment.url)
-                    }}
-                  >
-                    <span className={`typo-bd-sm-md ${styles.attachmentName}`}>{attachment.name}</span>
-                    <img
-                      className={styles.attachmentIcon}
-                      src={downloadIconUrl}
-                      alt=""
-                      width={16}
-                      height={16}
-                    />
-                  </a>
+                  <PFFileDownload fileName={attachment.name} href={attachment.url} />
                 </li>
               ))}
             </ul>

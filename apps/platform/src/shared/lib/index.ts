@@ -26,4 +26,10 @@ export {
 export type { EmailIdErrorCode, EmailIdValidationResult } from './email-id'
 export { platformBreakpoints, platformMediaQueries } from './breakpoints'
 export type { PlatformBreakpointKey } from './breakpoints'
+export {
+  downloadAttachment,
+  getAttachmentFileExtension,
+  getEmptyAttachmentMimeType,
+  needsEmptyAttachmentFallback,
+} from './download-attachment'
 export { buildYouTubeNocookieEmbedSrc, extractYouTubeVideoId } from './youtube'
