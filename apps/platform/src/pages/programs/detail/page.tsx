@@ -7,11 +7,9 @@ import {
   PROGRAMS_PATH,
   useMockProgramById,
 } from '@/features/program'
-import { downloadProgramAttachment } from '@/features/program/lib/attachment-download'
 import arrowRightWhite16Url from '@/shared/assets/icons/arrow-right-white-16.svg'
-import downloadIconUrl from '@/shared/assets/icons/download.svg'
 import { getDevAuthLoggedIn } from '@/shared/lib'
-import { PFButton, PFText } from '@/shared/ui'
+import { PFButton, PFFileDownload, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
 /** CMS user-preview `user-page__top-fab` 아이콘과 동일 */
@@ -58,6 +56,11 @@ export function ProgramDetailPage() {
   }
 
   const handleBackToList = () => {
+    // 기획: 목록으로 = 뒤로가기. history 없으면 from 또는 /programs
+    if (window.history.length > 1) {
+      window.history.back()
+      return
+    }
     window.location.assign(fromPath ?? PROGRAMS_PATH)
   }
 
@@ -126,14 +129,13 @@ export function ProgramDetailPage() {
             </div>
           </header>
 
-          {/* 소개 문구가 없어도 배지↔기본정보 간 동일 간격 영역을 유지 */}
-          <div className={styles.summary}>
-            {program.summary.trim() ? (
+          {program.summary.trim() ? (
+            <div className={styles.summary}>
               <PFText as="p" typo="bd-lg-rg" color="black" className={styles.summaryText}>
                 {program.summary}
               </PFText>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
 
           <section className={styles.basicInfo}>
             <PFText as="h2" typo="hl-sm" color="black">
@@ -145,7 +147,7 @@ export function ProgramDetailPage() {
                 : [
                     { label: '사업 분야', value: program.businessFieldLabel },
                     { label: '교육 형태', value: program.educationFormLabel },
-                    { label: '교육대상', value: program.educationTargetGroupLabel },
+                    { label: '교육 대상', value: program.educationTargetGroupLabel },
                     {
                       label: '교육 대상 상세',
                       value: program.educationTargetDetailLabel,
@@ -261,6 +263,17 @@ export function ProgramDetailPage() {
                 </div>
               ) : null}
 
+              {program.contactValue.trim() ? (
+                <div className={styles.contact}>
+                  <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
+                    문의처
+                  </PFText>
+                  <PFText as="span" typo="bd-md-md" color="black">
+                    {program.contactValue}
+                  </PFText>
+                </div>
+              ) : null}
+
               {program.applicationMethodValue.trim() ? (
                 <div className={styles.applicationMethod}>
                   <PFText as="span" typo="bd-md-md" color="neutral-cool-600">
@@ -314,24 +327,7 @@ export function ProgramDetailPage() {
             <ul className={styles.attachments}>
               {program.attachments.map(attachment => (
                 <li key={attachment.name}>
-                  <a
-                    className={styles.attachment}
-                    href={attachment.url}
-                    download={attachment.name}
-                    onClick={event => {
-                      event.preventDefault()
-                      downloadProgramAttachment(attachment.name, attachment.url)
-                    }}
-                  >
-                    <span className={`typo-bd-sm-md ${styles.attachmentName}`}>{attachment.name}</span>
-                    <img
-                      className={styles.attachmentIcon}
-                      src={downloadIconUrl}
-                      alt=""
-                      width={16}
-                      height={16}
-                    />
-                  </a>
+                  <PFFileDownload fileName={attachment.name} href={attachment.url} />
                 </li>
               ))}
             </ul>

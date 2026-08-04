@@ -770,6 +770,12 @@ export const CASE_INSTRUCTOR_FIXTURE: CmsRegistrationFixture = {
   interviewStartDate: '2026-05-01T00:00:00.000Z',
   interviewEndDate: '2026-05-10T00:00:00.000Z',
   finalPassAnnouncementDate: '2026-05-20T00:00:00.000Z',
+  interviewEnabled: true,
+  contactPhone: '02-6085-6028',
+  contactEmail: 'instructor@jakorea.org',
+  additionalContent: '오리엔테이션 참석이 의무입니다.',
+  otherNotes: '활동 지역은 지원 시 1~2개 선택합니다.',
+  notes: '문의 시 성함·연락처를 남겨 주세요.',
   recruitmentGuide:
     '1. 대상: 대학(원)생·휴학생\n2. 활동: 상반기·하반기 강의 진행\n3. 특전: 수료증, 활동비\n4. 선발: 서류 → 면접 → 최종',
   applicationMethod: '온라인 신청서 제출 후 서류·면접 심사',
@@ -833,6 +839,10 @@ export const CASE_VOLUNTEER_FIXTURE: CmsRegistrationFixture = (() => {
     interviewStartDate: '2026-02-09T00:00:00.000Z',
     interviewEndDate: '2026-02-15T00:00:00.000Z',
     finalPassAnnouncementDate: '2026-02-20T00:00:00.000Z',
+    interviewEnabled: true,
+    contactPhone: '02-6085-6028',
+    contactEmail: 'cc@jakorea.org',
+    notes: '활동 지역·일정은 합격 후 별도 안내합니다.',
     recruitmentGuide:
       '1. 대상: 운영 봉사자\n2. 혜택: 수료증, 1365 봉사시간 등록\n3. 선발: 서류 → 면접 → 최종',
     otherNotes: '봉사시간 등록을 위해 1365 아이디를 준비해 주세요.',
@@ -901,6 +911,9 @@ export const UJAT_VOLUNTEER_FIXTURE: CmsRegistrationFixture = {
   interviewStartDate: '2028-05-01T00:00:00.000Z',
   interviewEndDate: '2028-05-10T00:00:00.000Z',
   finalPassAnnouncementDate: '2028-05-20T00:00:00.000Z',
+  interviewEnabled: true,
+  contactPhone: '02-6085-6028',
+  contactEmail: 'ujat@jakorea.org',
   resultAnnouncementDate: '2028-01-26T00:00:00.000Z',
   recruitmentGuide:
     '1. 신청 자격: 대학(원)생\n2. 신청 방법: 홈페이지 온라인 신청\n3. 선발: 서류 심사 및 면접\n4. 활동: 상·하반기 초등 경제교육',
@@ -909,6 +922,14 @@ export const UJAT_VOLUNTEER_FIXTURE: CmsRegistrationFixture = {
   attachmentFileNames: [
     '[UJAT 봉사자] 2028 대학생경제교육봉사단 안내.pdf',
     '[UJAT 봉사자] 2028 봉사단 신청서.pdf',
+  ],
+  ujatPublicEducationSchedules: [
+    { label: '사전교육(발대식)', value: '2028.03.28(금) 13:00 ~ 17:00' },
+    {
+      label: '교육 진행',
+      value: '상반기 2028.04.03 ~ 2028.06.19 / 하반기 2028.09.11 ~ 2028.11.20',
+    },
+    { label: '해단식', value: '2028.11.27(금) 14:00 ~ 16:00' },
   ],
   rounds: [
     {
@@ -983,9 +1004,17 @@ export const UJAT_PARTICIPANT_FIXTURE: CmsRegistrationFixture = {
   recruitmentGuide:
     '1. 신청 자격: 해당 지역 초등학교\n2. 신청 방법: 홈페이지 온라인 신청\n3. 선발: 선착순 및 서류 심사',
   applicationMethod: '홈페이지 온라인 신청 (담당교사)',
+  learningSupportContent: '교재, 교구, 강사(봉사자) 파견, 수업 지원 자료 제공',
+  contactPhone: '02-6085-6028',
+  contactEmail: 'school@jakorea.org',
+  notes: '금요일 1~4교시 일정이 가능한 학교만 신청해 주세요.',
   attachmentFileNames: [
     '[교육생·기관] 2029 초등 경제교육 학교 모집 안내.pdf',
     '[교육생·기관] 2029 참여 학교 신청서.pdf',
+  ],
+  ujatPublicEducationSchedules: [
+    { label: '상반기', value: '2029.04.03 ~ 2029.06.19' },
+    { label: '하반기', value: '2029.09.11 ~ 2029.11.20' },
   ],
   rounds: [
     {

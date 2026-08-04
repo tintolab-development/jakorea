@@ -190,15 +190,42 @@ export function resolvePlatformCategory(
 }
 
 /**
- * Platform 모집현황은 모집 중 / 모집 완료 2단.
- * CMS lifecycle 의 planned·scheduled 계열은 공개 목록에서 「모집 중」으로 합친다.
+ * lifecycle 폴백 매핑 (모집 기간 미설정 시).
+ * planned 계열 → 모집 예정, recruiting 계열 → 모집 중, 그 외 → 모집 완료.
  */
 export function mapLifecycleToRecruitmentStatus(
   lifecycle: CmsLifecycleStatus | undefined
 ): RecruitmentStatus {
-  if (!lifecycle) return RECRUITMENT_STATUS.recruiting
-  if (SCHEDULED_LIFECYCLES.has(lifecycle)) return RECRUITMENT_STATUS.recruiting
+  if (!lifecycle) return RECRUITMENT_STATUS.closed
+  if (SCHEDULED_LIFECYCLES.has(lifecycle)) return RECRUITMENT_STATUS.scheduled
   if (RECRUITING_LIFECYCLES.has(lifecycle)) return RECRUITMENT_STATUS.recruiting
+  return RECRUITMENT_STATUS.closed
+}
+
+/** day 단위로 시각 비교 (CMS getRecruitmentStatus 와 동일) */
+function startOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+/**
+ * 모집 기간 기준 모집현황 (기획 SSOT).
+ * 시작·종료가 모두 있을 때만 period 계산; 없으면 lifecycle 폴백.
+ */
+export function mapApplicationWindowToRecruitmentStatus(
+  start: Date | null,
+  end: Date | null,
+  lifecycle?: CmsLifecycleStatus
+): RecruitmentStatus {
+  if (!start || !end) {
+    return mapLifecycleToRecruitmentStatus(lifecycle)
+  }
+
+  const now = startOfLocalDay(new Date())
+  const startDay = startOfLocalDay(start)
+  const endDay = startOfLocalDay(end)
+
+  if (now.getTime() < startDay.getTime()) return RECRUITMENT_STATUS.scheduled
+  if (now.getTime() <= endDay.getTime()) return RECRUITMENT_STATUS.recruiting
   return RECRUITMENT_STATUS.closed
 }
 
@@ -230,7 +257,25 @@ function resolveTitle(program: CmsProgramLike): string {
 }
 
 function resolveSponsor(program: CmsProgramLike): string {
-  return program.generalCommonInfo?.sponsorDisplayName?.trim() || 'JA Korea'
+  return program.generalCommonInfo?.sponsorDisplayName?.trim() || '-'
+}
+
+function resolveContactValue(program: CmsProgramLike): string {
+  const phone = program.contactPhone?.trim()
+  const email = program.contactEmail?.trim()
+  if (phone && email) return `${phone} · ${email}`
+  return phone || email || ''
+}
+
+/** CMS HTML/plain 추가 내용 — 태그 제거 후 본문 텍스트 */
+function stripHtmlToText(value: string): string {
+  return value
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
 }
 
 function resolveTargetLabels(program: CmsProgramLike): {
@@ -357,7 +402,7 @@ export function mapBasicInfoFields(
       return [
         { label: '사업 분야', value: args.businessFieldLabel },
         { label: '교육 형태', value: args.educationFormLabel },
-        { label: '교육대상', value: args.educationTargetGroupLabel },
+        { label: '교육 대상', value: args.educationTargetGroupLabel },
         { label: '교육 대상 상세', value: args.educationTargetDetailLabel },
         { label: '교육 장소', value: args.educationVenueLabel },
       ]
@@ -377,6 +422,15 @@ function resolvePrimaryApplicationWindow(
       end: toDate(program.volunteerApplicationEndDate),
     }
   }
+  if (
+    detailCase === 'instructor' &&
+    (program.instructorApplicationStartDate || program.instructorApplicationEndDate)
+  ) {
+    return {
+      start: toDate(program.instructorApplicationStartDate),
+      end: toDate(program.instructorApplicationEndDate),
+    }
+  }
   return {
     start: toDate(program.applicationStartDate),
     end: toDate(program.applicationEndDate),
@@ -389,24 +443,9 @@ function resolveEducationStructure(
   return structure === 'schedule' ? 'schedule' : 'curriculum'
 }
 
-function defaultSessions(): ProgramSession[] {
-  return [
-    {
-      sessionLabel: '1차시',
-      title: '1단원 프로그램 안내',
-      description: '프로그램 목표와 진행 방식을 안내합니다.',
-    },
-    {
-      sessionLabel: '2차시',
-      title: '2단원 본 활동',
-      description: '핵심 학습 활동을 진행합니다.',
-    },
-  ]
-}
-
 /**
  * 커리큘럼형: curriculumSessions → 차시/회차.
- * 일정형: 빈 배열 (기본정보에 행사·세부 일정 블록을 씀).
+ * 일정형·미기재: 빈 배열 (가짜 폴백 없음).
  */
 function mapSessions(program: CmsProgramLike): ProgramSession[] {
   if (program.generalProgramEducationStructure === 'schedule') {
@@ -437,7 +476,7 @@ function mapSessions(program: CmsProgramLike): ProgramSession[] {
     }))
   }
 
-  return defaultSessions()
+  return []
 }
 
 /**
@@ -467,19 +506,56 @@ function mapEventSchedules(program: CmsProgramLike): ProgramEventSchedule[] {
   })
 }
 
+/** 교육 진행 불가일 행은 공개 상세 비노출 */
+function isUnavailableScheduleLine(line: string): boolean {
+  return /불가일|진행\s*불가|배정\s*불가/.test(line)
+}
+
 /**
- * 세부내용 「교육 일정 N」 카드.
- * - educationScheduleLines 우선
+ * 세부내용 「교육 일정」 카드.
+ * - UJAT: ujatPublicEducationSchedules 우선 (기관 상·하반기 / 봉사 사전교육·진행·해단식)
+ * - educationScheduleLines — 불가일 필터 후 사용
  * - 커리큘럼형: lines 없으면 운영 기간 1줄 폴백
- * - 일정형: lines 없으면 빈 배열 (행사 일정은 기본정보 블록)
+ * - 일정형: lines 없으면 빈 배열
  */
-function mapEducationSchedules(program: CmsProgramLike): ProgramLabeledValue[] {
-  const lines = program.generalCommonInfo?.educationScheduleLines?.filter(line => line.trim())
-  if (lines?.length) {
-    return lines.map((line, index) => ({
-      label: `교육 일정 ${index + 1}`,
-      value: line.trim(),
+function mapEducationSchedules(
+  program: CmsProgramLike,
+  detailCase: ProgramDetailCase
+): ProgramLabeledValue[] {
+  const ujatRows = program.ujatPublicEducationSchedules?.filter(
+    row => row.label.trim() && row.value.trim() && !isUnavailableScheduleLine(row.value)
+  )
+  if (
+    ujatRows?.length &&
+    (detailCase === 'ujat-volunteer' || detailCase === 'ujat-participant')
+  ) {
+    return ujatRows.map(row => ({
+      label: row.label.trim(),
+      value: row.value.trim(),
     }))
+  }
+
+  const rawLines = program.generalCommonInfo?.educationScheduleLines ?? []
+  const lines = rawLines
+    .map(line => line.trim())
+    .filter(line => line && !isUnavailableScheduleLine(line))
+
+  if (lines.length) {
+    return lines.map((line, index) => {
+      // UJAT 기관: "상반기: …" 형태면 label 분리
+      if (detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer') {
+        const colon = line.indexOf(':')
+        if (colon > 0 && colon < 24) {
+          const label = line.slice(0, colon).trim()
+          const value = line.slice(colon + 1).trim()
+          if (label && value) return { label, value }
+        }
+      }
+      return {
+        label: `교육 일정 ${index + 1}`,
+        value: line,
+      }
+    })
   }
 
   if (program.generalProgramEducationStructure === 'schedule') {
@@ -497,12 +573,7 @@ function mapEducationSchedules(program: CmsProgramLike): ProgramLabeledValue[] {
     ]
   }
 
-  return [
-    {
-      label: '교육 일정 1',
-      value: '-',
-    },
-  ]
+  return []
 }
 
 function mapRecruitmentPhases(
@@ -519,14 +590,14 @@ function mapRecruitmentPhases(
     },
   ]
 
-  if (shouldIncludeInterviewStages(detailCase)) {
+  if (shouldIncludeInterviewStages(detailCase, program)) {
     phases.push(
       {
         label: '1차 서류 합격자 발표',
         value: formatOptionalDate(program.documentPassAnnouncementDate),
       },
       {
-        label: '면접 기간',
+        label: '2차 면접 기간',
         value: formatOptionalDateRange(
           program.interviewStartDate,
           program.interviewEndDate
@@ -557,17 +628,49 @@ function mapAttachments(program: CmsProgramLike): ProgramAttachment[] {
   return []
 }
 
-function mapExtraSections(program: CmsProgramLike): ProgramExtraSection[] {
+function canShowOtherNotes(detailCase: ProgramDetailCase): boolean {
+  return (
+    detailCase === 'instructor' ||
+    detailCase === 'volunteer' ||
+    detailCase === 'ujat-volunteer'
+  )
+}
+
+function canShowLearningSupport(detailCase: ProgramDetailCase): boolean {
+  return (
+    detailCase === 'general' ||
+    detailCase === 'ujat-participant' ||
+    detailCase === 'gemini'
+  )
+}
+
+function mapExtraSections(
+  program: CmsProgramLike,
+  detailCase: ProgramDetailCase
+): ProgramExtraSection[] {
   const sections: ProgramExtraSection[] = []
   const guide = program.recruitmentGuide?.trim()
   if (guide) {
     sections.push({ title: '모집안내', body: guide })
   }
+
+  const additional = program.additionalContent?.trim()
+  if (additional) {
+    sections.push({ title: '추가 내용', body: stripHtmlToText(additional) })
+  }
+
+  const learning = program.learningSupportContent?.trim()
+  if (learning && canShowLearningSupport(detailCase)) {
+    sections.push({ title: '학습 지원 내용', body: learning })
+  }
+
   const other = program.otherNotes?.trim()
-  if (other) {
+  if (other && canShowOtherNotes(detailCase)) {
     sections.push({ title: '기타사항', body: other })
   }
-  const notes = program.generalCommonInfo?.notes?.trim()
+
+  const notes =
+    program.notes?.trim() || program.generalCommonInfo?.notes?.trim() || ''
   if (notes) {
     sections.push({ title: '비고', body: notes })
   }
@@ -595,7 +698,6 @@ export function mapCmsProgramToPlatformDetail(
 ): ProgramDetail {
   const detailCase = resolveProgramDetailCase(program)
   const category = resolvePlatformCategory(program)
-  const recruitmentStatus = mapLifecycleToRecruitmentStatus(program.lifecycleStatus)
   const educationForm = mapDeliveryType(
     program.type,
     program.generalCommonInfo?.educationFormLabel
@@ -608,11 +710,22 @@ export function mapCmsProgramToPlatformDetail(
   const primaryWindow = resolvePrimaryApplicationWindow(program, detailCase)
   const appStart = primaryWindow.start
   const appEnd = primaryWindow.end
-  // 목록 정렬용 — 원본 application* 우선, 없으면 봉사 창
+  const recruitmentStatus = mapApplicationWindowToRecruitmentStatus(
+    appStart,
+    appEnd,
+    program.lifecycleStatus
+  )
+  // 목록 정렬용 — 실제 모집 창(유형별 primary) 우선, 없으면 application/volunteer 폴백
   const listAppStart =
-    toDate(program.applicationStartDate) ?? toDate(program.volunteerApplicationStartDate)
+    appStart ??
+    toDate(program.applicationStartDate) ??
+    toDate(program.volunteerApplicationStartDate) ??
+    toDate(program.instructorApplicationStartDate)
   const listAppEnd =
-    toDate(program.applicationEndDate) ?? toDate(program.volunteerApplicationEndDate)
+    appEnd ??
+    toDate(program.applicationEndDate) ??
+    toDate(program.volunteerApplicationEndDate) ??
+    toDate(program.instructorApplicationEndDate)
 
   const title = resolveTitle(program)
   const summary =
@@ -628,10 +741,12 @@ export function mapCmsProgramToPlatformDetail(
   const educationStructure = resolveEducationStructure(
     program.generalProgramEducationStructure
   )
-  const businessFieldLabel = program.businessArea?.trim() || '경제금융'
+  const businessFieldLabel = program.businessArea?.trim() || '-'
   const educationFormLabel = EDUCATION_FORM_LABEL_MAP[educationForm]
   const educationVenueLabel =
-    program.district?.trim() || educationFormLabel
+    program.generalCommonInfo?.educationVenueLabel?.trim() ||
+    program.district?.trim() ||
+    educationFormLabel
 
   return {
     id: program.id,
@@ -676,8 +791,9 @@ export function mapCmsProgramToPlatformDetail(
     eventSchedules: mapEventSchedules(program),
     recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
     recruitmentPhases: mapRecruitmentPhases(program, detailCase, appStart, appEnd),
-    educationSchedules: mapEducationSchedules(program),
-    extraSections: mapExtraSections(program),
+    educationSchedules: mapEducationSchedules(program, detailCase),
+    extraSections: mapExtraSections(program, detailCase),
+    contactValue: resolveContactValue(program),
     applicationMethodLabel: '지원방법',
     applicationMethodValue,
     attachments: mapAttachments(program),

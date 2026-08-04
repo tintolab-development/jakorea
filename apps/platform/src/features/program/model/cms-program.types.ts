@@ -65,6 +65,8 @@ export type CmsProgramCommonInfo = {
   scheduleDetails?: CmsScheduleDetail[]
   educationScheduleLines?: string[]
   notes?: string
+  /** 공통 정보 > 교육 장소 표시 라벨 (venueKind + venueDetail) */
+  educationVenueLabel?: string
   /** 강사·UJAT 등 모집 소속/지부 표기 */
   recruitmentAffiliationLabel?: string
   /** 교육 대상 상세 오버라이드 (특성화고 3학년 등) */
@@ -76,6 +78,12 @@ export type CmsProgramCommonInfo = {
    * `team`이면 개인 신청 폼에 teamInfo 단락 노출 (CMS 미리보기와 동일).
    */
   participationMethod?: CmsParticipationMethod
+}
+
+/** UJAT 공개 상세 교육 일정 행 (불가일 제외·사전교육/진행/해단식) */
+export type CmsUjatEducationScheduleLine = {
+  label: string
+  value: string
 }
 
 /** UJAT 목록 `ujatProgressStatus` 중 홈 상세 매핑에 쓰는 값 */
@@ -124,6 +132,14 @@ export type CmsProgramLike = {
   applicationMethod?: string
   recruitmentGuide?: string
   otherNotes?: string
+  /** 모집 유형별 비고 (CMS oneLineIntroduction 등) */
+  notes?: string
+  /** 상세 정보 > 추가 내용 (HTML/plain) */
+  additionalContent?: string
+  /** 참여자 모집 > 학습 지원 내용 */
+  learningSupportContent?: string
+  contactPhone?: string
+  contactEmail?: string
   rounds?: CmsProgramRound[]
   /** 프로그램 출처 유형 (Platform 탭 매핑용) */
   registrationKind?: 'general' | 'economy' | 'trainedTeachers' | 'gemini' | 'ujat'
@@ -132,13 +148,26 @@ export type CmsProgramLike = {
   /** 봉사 모집 기간 (일반 봉사·UJAT 봉사) */
   volunteerApplicationStartDate?: string
   volunteerApplicationEndDate?: string
+  /** 강사 모집 기간 */
+  instructorApplicationStartDate?: string
+  instructorApplicationEndDate?: string
   volunteerTarget?: string
   volunteerTargetDetail?: string
+  /**
+   * 면접 유무. false/'no'면 서류·면접 phase 숨김.
+   * 미설정 시 관련 날짜 존재 여부로 추론.
+   */
+  interviewEnabled?: boolean | 'yes' | 'no'
   documentPassAnnouncementDate?: string
   interviewStartDate?: string
   interviewEndDate?: string
   finalPassAnnouncementDate?: string
   resultAnnouncementDate?: string
+  /**
+   * UJAT 공개 상세 교육 일정 (기관: 상·하반기 / 봉사: 사전교육·교육 진행·해단식).
+   * 있으면 educationScheduleLines 보다 우선. 불가일 행은 넣지 않는다.
+   */
+  ujatPublicEducationSchedules?: CmsUjatEducationScheduleLine[]
 }
 
 export type CmsRegistrationCaseKind =

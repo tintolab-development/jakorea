@@ -2,11 +2,11 @@ import type { ProgramListItem, ProgramsListParams } from '../model/types'
 import { DEFAULT_PROGRAMS_LIST_PARAMS } from './constants'
 import { programOverlapsOperatingYear } from './mock-programs'
 
-/** Platform 2단: 모집 중 우선, 모집 완료 후순위 */
+/** Platform: 모집 예정 우선, 모집 중, 모집 완료 후순위 */
 const STATUS_RANK: Record<string, number> = {
-  recruiting: 0,
   scheduled: 0,
-  closed: 1,
+  recruiting: 1,
+  closed: 2,
 }
 
 function parseYmdTime(value: string | null | undefined): number | null {

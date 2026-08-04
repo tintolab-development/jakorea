@@ -18,9 +18,11 @@ type ProgramStatusBadgesProps = {
   className?: string
 }
 
-/** Platform 2단: 모집 중 | 모집 완료 (scheduled 등은 모집 중으로 표기) */
+/** Platform 배지: 모집 예정 | 모집 중 | 모집 완료 */
 function platformRecruitmentStatusLabel(status: RecruitmentStatus) {
-  return status === 'closed' ? '모집 완료' : '모집 중'
+  if (status === 'closed') return '모집 완료'
+  if (status === 'scheduled') return '모집 예정'
+  return '모집 중'
 }
 
 function shouldShowRoleBadge(roleLabel: string | undefined): boolean {

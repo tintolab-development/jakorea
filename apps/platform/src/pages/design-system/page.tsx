@@ -22,6 +22,8 @@ import {
   PFArrowButton,
   PFChevronButton,
   PFButton,
+  PFDivider,
+  PFFileDownload,
   PFModal,
   PFMetaBadge,
   PFPagination,
@@ -81,6 +83,15 @@ const typographyTokenSpecs = [
     weight: '700',
     lineHeight: '140%',
     letterSpacing: '-0.6px',
+  },
+  {
+    token: 'typo-page-title-md',
+    pfText: 'page-title-md' as const,
+    figma: 'Pagetitle/Medium',
+    size: '48px',
+    weight: '700',
+    lineHeight: '140%',
+    letterSpacing: '-0.48px',
   },
   {
     token: 'typo-hd-lg',
@@ -264,6 +275,18 @@ const colorTokenGroups = [
     label: 'Neutral',
     tokens: [
       { cssVar: '--color-neutral-black', hex: '#3D3D3D', pfText: 'black' },
+      {
+        cssVar: '--color-neutral-black-30',
+        hex: 'rgba(35, 35, 35, 0.40)',
+        figma: 'Color/netural-black-30',
+        note: '카테고리 탭 비활성 텍스트',
+      },
+      {
+        cssVar: '--color-neutral-black-50',
+        hex: 'rgba(61, 61, 61, 0.50)',
+        figma: 'Divider',
+        note: 'PFDivider border',
+      },
       { cssVar: '--color-neutral-white', hex: '#FFFFFF', pfText: 'white' },
       { cssVar: '--color-neutral-cool-50', hex: '#F5F7F7' },
       { cssVar: '--color-neutral-cool-80', hex: '#EEF3F4' },
@@ -626,6 +649,7 @@ export function DesignSystemPage() {
   const [underlineBorderedTab, setUnderlineBorderedTab] = useState('tab-1')
   const [pillLargeTab, setPillLargeTab] = useState('pill-1')
   const [pillMediumTab, setPillMediumTab] = useState('pill-1')
+  const [categoryTab, setCategoryTab] = useState('pill-1')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFilterValue, setSearchFilterValue] = useState('all')
   const [searchFilterStatus, setSearchFilterStatus] = useState('all')
@@ -1091,6 +1115,16 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
         </div>
       </div>
 
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFFileDownload
+        </PFText>
+        <div className={styles.buttonStack}>
+          <PFFileDownload fileName="[명단] UJAT 36기 최종합격 명단.pdf" />
+          <PFFileDownload fileName="[안내문] UJAT 36기 향후 일정 안내 아주_긴_파일명_말줄임_테스트.pdf" />
+        </div>
+      </div>
+
       <div className={styles.section} id="badges">
         <PFText as="div" typo="hl-sm" color="black">
           PFCategoryBadge
@@ -1290,6 +1324,14 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
           <PFSearchInput value={searchQuery} onValueChange={setSearchQuery} />
           <PFSearchInput defaultValue="기업가 정신" />
           <PFSearchInput disabled placeholder="disabled" />
+          <PFSearchInput
+            variant="outlined"
+            placeholder="제목, 내용으로 검색해 보세요"
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
+          <PFSearchInput variant="outlined" defaultValue="기업가 정신" />
+          <PFSearchInput variant="outlined" disabled placeholder="disabled" />
         </div>
       </div>
 
@@ -1439,6 +1481,13 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
 
       <div className={styles.section}>
         <PFText as="div" typo="hl-sm" color="black">
+          PFDivider
+        </PFText>
+        <PFDivider />
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
           PFTabs
         </PFText>
         <div className={styles.tabsStack}>
@@ -1491,6 +1540,24 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
               onChange={setPillMediumTab}
               variant="pill"
               size="medium"
+            />
+          </div>
+
+          <div className={styles.tabsRow}>
+            <PFText as="span" typo="label-md" color="neutral-cool-500">
+              category (카테고리 배지 탭)
+            </PFText>
+            <PFTabs
+              items={[
+                { key: 'pill-1', label: '전체' },
+                { key: 'pill-2', label: '결과발표' },
+                { key: 'pill-3', label: '서류 심사' },
+                { key: 'pill-4', label: '심사결과' },
+              ]}
+              value={categoryTab}
+              onChange={setCategoryTab}
+              variant="category"
+              ariaLabel="카테고리"
             />
           </div>
         </div>

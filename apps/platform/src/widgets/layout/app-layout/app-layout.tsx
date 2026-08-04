@@ -22,8 +22,10 @@ type AppLayoutProps = {
 export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(getDevAuthLoggedIn)
   const isMypage = layout === 'mypage'
+  const isHero = layout === 'hero'
   const isAuth = layout === 'auth'
-  const useContentShell = layout === 'default'
+  const useContentShell = layout === 'default' || isHero
+  const transparentHeader = isMypage || isHero
 
   useEffect(() => {
     const handleDevAuthChange = (event: Event) => {
@@ -64,7 +66,7 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
 
   return (
     <div className={styles.layout}>
-      <Header isLoggedIn={isLoggedIn} onLogout={handleLogout} transparent={isMypage} />
+      <Header isLoggedIn={isLoggedIn} onLogout={handleLogout} transparent={transparentHeader} />
       <main className={isMypage ? styles.mainMypage : styles.main}>{mainContent}</main>
       <Footer />
     </div>

@@ -50,6 +50,7 @@ export { mergeSeedAndCatalogPrograms } from './lib/merge-seed-catalog'
 export { useMockProgramById, useMockProgramsCatalog } from './lib/use-mock-programs-catalog'
 export {
   mapBasicInfoFields,
+  mapApplicationWindowToRecruitmentStatus,
   mapCmsProgramToPlatformDetail,
   mapCmsProgramToPlatformListItem,
   mapCmsProgramsToPlatformDetails,

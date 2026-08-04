@@ -1,12 +1,17 @@
 import { type ChangeEvent, type InputHTMLAttributes, useId, useState } from 'react'
 import searchMintIconUrl from '@/shared/assets/icons/search-mint.svg'
+import searchWarm24IconUrl from './icons/search-warm-24.svg'
 import styles from './pf-search-input.module.css'
 
+export type PFSearchInputVariant = 'underline' | 'outlined'
+
 export type PFSearchInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'type'> & {
+  variant?: PFSearchInputVariant
   onValueChange?: (value: string) => void
 }
 
 export function PFSearchInput({
+  variant = 'underline',
   disabled = false,
   id,
   value,
@@ -23,9 +28,11 @@ export function PFSearchInput({
   const [internalValue, setInternalValue] = useState(defaultValue?.toString() ?? '')
   const currentValue = isControlled ? (value?.toString() ?? '') : internalValue
   const isCompleted = currentValue.length > 0
+  const isOutlined = variant === 'outlined'
 
   const fieldClassName = [
     styles.field,
+    styles[variant],
     isCompleted ? styles.completed : undefined,
     disabled ? styles.disabled : undefined,
     className,
@@ -42,9 +49,18 @@ export function PFSearchInput({
     onChange?.(event)
   }
 
+  const icon = (
+    <img
+      className={styles.icon}
+      src={isOutlined ? searchWarm24IconUrl : searchMintIconUrl}
+      alt=""
+      aria-hidden="true"
+    />
+  )
+
   return (
     <div className={fieldClassName}>
-      <img className={styles.icon} src={searchMintIconUrl} alt="" aria-hidden="true" />
+      {icon}
       <input
         id={inputId}
         type="search"

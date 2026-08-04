@@ -1,0 +1,36 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.tableWrap {
+  background: var(--color-bg-base, #fff);
+  border-radius: var(--radius-8, 8px);
+  padding: 16px;
+  max-height: calc(100vh - var(--header-height) - 140px);
+  overflow: auto;
+}
+
+.preline {
+  margin: 0 !important;
+  white-space: pre-line;
+  color: var(--color-text-body, #434343);
+}
+
+:global(.admin-data-table) .ant-table-thead > tr > th {
+  background: var(--color-table-head-bg, #edf0f2);
+}
+
+:global(.admin-data-table) .ant-table-tbody > tr:hover > td {
+  background: var(--color-table-row-hover, rgba(1, 161, 175, 0.06));
+}

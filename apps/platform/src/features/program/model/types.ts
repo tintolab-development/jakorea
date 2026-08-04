@@ -126,6 +126,11 @@ export type ProgramDetail = ProgramListItem & {
   /** 세부내용 「교육 일정 N」 카드 — 보통 educationScheduleLines */
   educationSchedules: ProgramLabeledValue[]
   extraSections: ProgramExtraSection[]
+  /**
+   * 문의처 표시 줄. 비어 있으면 상세에서 비노출.
+   * 예: 「02-6085-6028 · cc@jakorea.org」
+   */
+  contactValue: string
   applicationMethodLabel: string
   /** 빈 문자열이면 상세에서 비노출 */
   applicationMethodValue: string

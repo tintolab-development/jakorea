@@ -18,6 +18,7 @@ import {
 } from './cms-registration-fixtures.ts'
 import { PROGRAM_DETAIL_CASE_SSOT_IDS } from './detail-case.ts'
 import {
+  mapApplicationWindowToRecruitmentStatus,
   mapCmsProgramToPlatformDetail,
   mapCmsProgramsToPlatformDetails,
   mapLifecycleToRecruitmentStatus,
@@ -196,7 +197,7 @@ function testTitlesAndIds() {
 }
 
 function testLifecycleMapping() {
-  assert.equal(mapLifecycleToRecruitmentStatus('planned'), RECRUITMENT_STATUS.recruiting)
+  assert.equal(mapLifecycleToRecruitmentStatus('planned'), RECRUITMENT_STATUS.scheduled)
   assert.equal(
     mapLifecycleToRecruitmentStatus('recruiting_students'),
     RECRUITMENT_STATUS.recruiting
@@ -204,6 +205,33 @@ function testLifecycleMapping() {
   assert.equal(
     mapLifecycleToRecruitmentStatus('matching_completed'),
     RECRUITMENT_STATUS.closed
+  )
+
+  const futureStart = new Date()
+  futureStart.setDate(futureStart.getDate() + 30)
+  const futureEnd = new Date()
+  futureEnd.setDate(futureEnd.getDate() + 60)
+  assert.equal(
+    mapApplicationWindowToRecruitmentStatus(futureStart, futureEnd),
+    RECRUITMENT_STATUS.scheduled
+  )
+
+  const pastStart = new Date()
+  pastStart.setDate(pastStart.getDate() - 60)
+  const pastEnd = new Date()
+  pastEnd.setDate(pastEnd.getDate() - 30)
+  assert.equal(
+    mapApplicationWindowToRecruitmentStatus(pastStart, pastEnd),
+    RECRUITMENT_STATUS.closed
+  )
+
+  const openStart = new Date()
+  openStart.setDate(openStart.getDate() - 10)
+  const openEnd = new Date()
+  openEnd.setDate(openEnd.getDate() + 10)
+  assert.equal(
+    mapApplicationWindowToRecruitmentStatus(openStart, openEnd),
+    RECRUITMENT_STATUS.recruiting
   )
 }
 
@@ -213,28 +241,44 @@ function testDetailCaseSsotMapping() {
   assert.equal(instructor.recruitmentRoleLabel, '강사')
   assert.equal(instructor.category, 'instructor')
   assert.ok(instructor.recruitmentPhases.some(p => p.label === '강사 모집 기간'))
+  assert.ok(instructor.recruitmentPhases.some(p => p.label === '2차 면접 기간'))
   assert.ok(instructor.basicInfoFields.some(f => f.label === '모집 구분' && f.value === '강사'))
   assert.ok(instructor.basicInfoFields.some(f => f.label === '모집 소속'))
+  assert.equal(instructor.contactValue, '02-6085-6028 · instructor@jakorea.org')
+  assert.ok(instructor.extraSections.some(s => s.title === '추가 내용'))
+  assert.ok(instructor.extraSections.some(s => s.title === '기타사항'))
+  assert.ok(instructor.extraSections.some(s => s.title === '비고'))
 
   const volunteer = mapCmsProgramToPlatformDetail(CASE_VOLUNTEER_FIXTURE)
   assert.equal(volunteer.detailCase, 'volunteer')
   assert.equal(volunteer.recruitmentRoleLabel, '봉사자')
   assert.equal(volunteer.category, 'youth')
   assert.ok(volunteer.recruitmentPhases.some(p => p.label === '봉사자 모집 기간'))
-  assert.ok(volunteer.recruitmentPhases.some(p => p.label === '면접 기간'))
+  assert.ok(volunteer.recruitmentPhases.some(p => p.label === '2차 면접 기간'))
   assert.equal(volunteer.sponsor, '한국씨티은행')
+  assert.equal(volunteer.recruitmentStatus, RECRUITMENT_STATUS.closed)
+  assert.equal(volunteer.isRecruiting, false)
 
   const ujatVol = mapCmsProgramToPlatformDetail(UJAT_VOLUNTEER_FIXTURE)
   assert.equal(ujatVol.detailCase, 'ujat-volunteer')
   assert.equal(ujatVol.category, 'youth')
   assert.ok(ujatVol.recruitmentPhases.some(p => p.label === '봉사자 모집 기간'))
   assert.match(ujatVol.recruitmentPhases[0]?.value ?? '', /2028/)
+  assert.equal(ujatVol.recruitmentStatus, RECRUITMENT_STATUS.scheduled)
+  assert.ok(ujatVol.educationSchedules.some(s => s.label === '사전교육(발대식)'))
+  assert.ok(ujatVol.educationSchedules.some(s => s.label === '교육 진행'))
+  assert.ok(ujatVol.educationSchedules.some(s => s.label === '해단식'))
 
   const ujatOrg = mapCmsProgramToPlatformDetail(UJAT_PARTICIPANT_FIXTURE)
   assert.equal(ujatOrg.detailCase, 'ujat-participant')
   assert.equal(ujatOrg.category, 'institution')
   assert.ok(ujatOrg.recruitmentPhases.some(p => p.label === '기관 모집 기간'))
   assert.equal(ujatOrg.recruitmentRoleLabel, '기관')
+  assert.ok(ujatOrg.educationSchedules.some(s => s.label === '상반기'))
+  assert.ok(ujatOrg.educationSchedules.some(s => s.label === '하반기'))
+  assert.ok(ujatOrg.extraSections.some(s => s.title === '학습 지원 내용'))
+  assert.ok(!ujatOrg.extraSections.some(s => s.title === '기타사항'))
+  assert.ok(ujatOrg.contactValue.includes('school@jakorea.org'))
 
   const gemini = mapCmsProgramToPlatformDetail(
     GEMINI_RECRUITMENT_FIXTURES.find(f => f.id === PROGRAM_DETAIL_CASE_SSOT_IDS.gemini)!
@@ -293,7 +337,7 @@ function makeStubDetail(id: string, title: string): ProgramDetail {
     basicInfoFields: [
       { label: '사업 분야', value: '경제금융' },
       { label: '교육 형태', value: '온라인' },
-      { label: '교육대상', value: '고등학교' },
+      { label: '교육 대상', value: '고등학교' },
       { label: '교육 대상 상세', value: '고등학생' },
       { label: '교육 장소', value: '온라인' },
     ],
@@ -304,6 +348,7 @@ function makeStubDetail(id: string, title: string): ProgramDetail {
     recruitmentPhases: [],
     educationSchedules: [],
     extraSections: [],
+    contactValue: '',
     applicationMethodLabel: '지원방법',
     applicationMethodValue: '-',
     attachments: [],

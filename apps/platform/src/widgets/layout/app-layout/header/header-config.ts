@@ -1,4 +1,6 @@
+import { isNoticesPath, NOTICES_PATH } from '@/features/notice'
 import { isProgramsPath, PROGRAMS_PATH } from '@/features/program'
+import { isResultsPath, RESULTS_PATH } from '@/features/result'
 import { MYPAGE_PATH } from '@/features/mypage'
 import { getDevAuthLoggedIn } from '@/shared/lib'
 import logOutIconUrl from '../image/icon/log-out.svg'
@@ -26,7 +28,7 @@ export const navigationGroups = [
       { label: '투명경영' },
       { label: '함께하는 사람들' },
       { label: '오시는 길' },
-      { label: '공지사항' },
+      { label: '공지사항', href: NOTICES_PATH },
       { label: '채용' },
     ],
   },
@@ -48,7 +50,7 @@ export const navigationGroups = [
     label: '참여하기',
     children: [
       { label: '프로그램 신청', href: PROGRAMS_PATH },
-      { label: '결과 확인' },
+      { label: '결과 확인', href: RESULTS_PATH },
       { label: '온라인 학습', external: true },
       { label: 'Alumni', external: true },
     ],
@@ -92,8 +94,12 @@ export function getLoggedInActionRoute(label: string) {
 }
 
 export function getActiveNavigationItem(pathname: string): NavigationItemLabel {
-  if (isProgramsPath(pathname)) {
+  if (isProgramsPath(pathname) || isResultsPath(pathname)) {
     return '참여하기'
+  }
+
+  if (isNoticesPath(pathname)) {
+    return 'JA Korea'
   }
 
   return 'JA Korea'

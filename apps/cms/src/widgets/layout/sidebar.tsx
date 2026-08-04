@@ -2,10 +2,11 @@
 
 import { Layout, Menu } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useState, useMemo, useEffect, type CSSProperties } from 'react'
+import { useState, useMemo, useEffect, useCallback, type CSSProperties } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMenuItemsByRole } from '@/shared/config/menu-config'
 import { memberListHref, normalizeMemberListKind } from '@/shared/config/member-list-kinds'
+import { MenuDropdownChevronIcon } from '@/shared/ui/icons'
 import './sidebar.css'
 import { Header } from './header'
 
@@ -162,6 +163,11 @@ export function Sidebar() {
     color: 'var(--color-sidebar-text)',
   }
 
+  const expandIcon = useCallback(
+    ({ isOpen }: { isOpen?: boolean }) => <MenuDropdownChevronIcon open={!!isOpen} />,
+    []
+  )
+
   return (
     <Sider width={sidebarWidth} className="sidebar-container" style={sidebarChrome}>
       <Header />
@@ -174,6 +180,7 @@ export function Sidebar() {
           className="sidebar-menu"
           style={sidebarChrome}
           items={menuItems}
+          expandIcon={expandIcon}
           onClick={({ key }) => {
             if (typeof key !== 'string' || !key.startsWith('/')) return
             navigate(key)

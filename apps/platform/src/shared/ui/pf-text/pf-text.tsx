@@ -3,6 +3,7 @@ import styles from './pf-text.module.css'
 
 export type PFTypography =
   | 'page-title'
+  | 'page-title-md'
   | 'hd-lg'
   | 'hd-md'
   | 'hd-sm'
@@ -54,6 +55,7 @@ type PFTextProps<T extends ElementType> = PFTextOwnProps<T> &
 
 const typographyClassMap: Record<PFTypography, string> = {
   'page-title': 'typo-page-title',
+  'page-title-md': 'typo-page-title-md',
   'hd-lg': 'typo-hd-lg',
   'hd-md': 'typo-hd-md',
   'hd-sm': 'typo-hd-sm',

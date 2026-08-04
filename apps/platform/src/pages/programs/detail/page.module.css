@@ -62,16 +62,18 @@
 
 .badges {
   margin-top: 25px;
+  /* summary 유무와 무관하게 배지~다음 블록 사이 간격 유지 */
+  margin-bottom: var(--spacing-40);
 }
 
-/* 텍스트 유무와 무관하게 배지~기본정보 사이 세로 영역 확보 */
 .summary {
   display: block;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
   margin: 0;
-  padding-block: var(--spacing-40);
+  /* 상단은 .badges margin-bottom으로 확보, 하단만 텍스트~기본정보 간격 */
+  padding-bottom: var(--spacing-40);
 }
 
 .summaryText {
@@ -246,6 +248,15 @@
   white-space: pre-line;
 }
 
+.contact {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+  margin-top: var(--spacing-32);
+}
+
 .applicationMethod {
   display: flex;
   width: 100%;
@@ -334,41 +345,12 @@
 .attachments {
   display: flex;
   width: 100%;
+  max-width: 360px;
   flex-direction: column;
   gap: var(--spacing-12);
   margin: var(--spacing-24) 0 0;
   padding: 0;
   list-style: none;
-}
-
-.attachment {
-  display: flex;
-  width: 100%;
-  height: 40px;
-  box-sizing: border-box;
-  align-items: center;
-  align-self: stretch;
-  gap: var(--spacing-20);
-  padding: 0 var(--spacing-20);
-  overflow: hidden;
-  border-radius: var(--radius-16);
-  background: var(--color-neutral-warm-100);
-  color: var(--color-neutral-black);
-  text-decoration: none;
-}
-
-.attachmentName {
-  min-width: 0;
-  flex: 1 1 auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.attachmentIcon {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
 }
 
 /**
