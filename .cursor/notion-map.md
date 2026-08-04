@@ -9,6 +9,7 @@ Cursor / agents: **Notion MCP로 전체 워크스페이스를 검색하지 말 �
 |---|---|---|---|
 | Project page | 🌐 JA코리아 | https://app.notion.com/p/tintolab/JA-2a3f3e2a77d0803fa1daff2aada4b499 | `2a3f3e2a-77d0-803f-a1da-ff2aada4b499` |
 | CMS specs (entry) | 1️⃣ CMS 어드민 기능정의서 | https://app.notion.com/p/tintolab/CMS-33af3e2a77d080748112df7c8b1adfe0 | `33af3e2a-77d0-8074-8112-df7c8b1adfe0` |
+| Homepage Admin specs (entry) | 3️⃣ 홈페이지 어드민 기능정의서 | https://app.notion.com/p/tintolab/399f3e2a77d08095a1dec4e26d9098f9 | `399f3e2a-77d0-8095-a1de-c4e26d9098f9` |
 
 ## Notion databases (under JA코리아)
 
@@ -21,11 +22,13 @@ Cursor / agents: **Notion MCP로 전체 워크스페이스를 검색하지 말 �
 | 프로젝트 일정 | https://app.notion.com/p/2a3f3e2a77d081be88b7ca4e193f474b | `collection://2a3f3e2a-77d0-8114-8b16-000baac96ae2` |
 | 고객사 공유용 회의록 아카이브 | https://app.notion.com/p/390f3e2a77d0805e8cfad48024815e38 | `collection://364f3e2a-77d0-8310-86f9-87e101d50064` |
 | CMS 어드민 기능정의서 (DB) | https://app.notion.com/p/33af3e2a77d08150a11af3311f10c641 | `collection://33af3e2a-77d0-8153-a119-000b7b801259` |
+| 홈페이지 어드민 기능정의서 (DB) | https://app.notion.com/p/a91f3e2a77d082bb9a8f816680f2f0db | `collection://5c6f3e2a-77d0-831f-9e07-878687a2bfa2` |
 
 ### Scope hints
 
 - **CMS** 기능·화면·스펙 → CMS entry page / CMS DB만 사용.  
   상세 규칙: `apps/cms/.cursor/rules/process/notion-mcp-cms.mdc`
+- **Homepage Admin** (`apps/admin`) 기능·화면·스펙 → Homepage Admin entry page / DB만 사용.
 - **프로젝트 일정·회의·자료·R&R** → 해당 DB만 사용.
 - 유저가 다른 Notion URL을 준 경우에만 그 URL을 직접 fetch.
 
