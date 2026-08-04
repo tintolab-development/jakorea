@@ -16,32 +16,28 @@ pnpm admin
 
 환경 변수: `.env.example`을 `.env` / `.env.local`로 복사 후 설정.
 
-## Phase
+## 현재 상태
+
+- **LNB·레이아웃 셸** + **상단 GNB**(CMS MainHeader 이식, mock 유저·알림)
+- LNB **최대 3뎁스** (시안 기준) — 리프 경로는 Placeholder 라우트만 연결
+- 기능 화면 컴포넌트는 제거된 상태 — 이후 Phase에서 화면별로 다시 구현
 
 | Phase | 내용 | 상태 |
 |-------|------|------|
 | 1 | 환경구성 (Vite/antd/라우터/테마/API) | 완료 |
 | 2 | 레이아웃·사이드메뉴 셸 | 완료 |
-| 3 | 메인 히어로 배너 (목록·등록/수정) | 완료 |
-| 4 | 메인 팝업 관리 (목록·등록/수정) | 완료 |
-| 5 | 메인 상단 띠배너 관리 | 완료 |
-| 6 | 메인 소셜 링크 관리 | 완료 |
-| 7 | 메인 콘텐츠 관리 | 완료 |
-| 8 | JA Korea 소개 관리 | 완료 |
-| 9 | JA Global Value 관리 | 완료 |
-| 10 | JA Worldwide 관리 | 완료 |
-| 11 | 연혁 관리 | 완료 |
-| 12 | 수상 관리 | 완료 |
-| 13+ | 인증 → BI → 투명경영 → … | 대기 |
+| 2.1 | 상단 GNB (타이틀·알림·계정) | 완료 |
+| 2.2 | LNB 3뎁스 구조·라우터 연결 | 완료 |
+| 3+ | LNB 화면별 기능 구현 | 대기 |
 
 ## 구조 (FSD)
 
 ```
 src/
   app/          # providers, router
-  pages/        # 라우트 페이지
-  widgets/      # 레이아웃 등
-  features/     # 기능 단위
+  pages/        # 라우트 페이지 (home · placeholder)
+  widgets/      # 레이아웃·LNB
+  features/     # 기능 단위 (화면 구현 시 추가)
   entities/     # 도메인 엔티티
-  shared/       # 토큰, axios, 공통 UI
+  shared/       # 토큰, axios, 공통 UI·메뉴 설정
 ```

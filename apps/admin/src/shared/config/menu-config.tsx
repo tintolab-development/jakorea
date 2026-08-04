@@ -20,7 +20,7 @@ export interface MenuItemConfig {
   type?: 'divider'
 }
 
-/** 2뎁스 불릿 — CMS와 동일 (`•` + sidebar.css에서 3px 원형으로 렌더) */
+/** 2뎁스 불릿 — CMS와 동일 (`•` + sidebar.css에서 3px 원형으로 렌더). 3뎁스 리프는 CSS에서 숨김 */
 function BulletIcon() {
   return (
     <span
@@ -39,8 +39,8 @@ function BulletIcon() {
 }
 
 /**
- * 홈페이지 어드민 LNB — 시안 GNB 대메뉴 기준
- * (하위 상세는 Notion「홈페이지 어드민 기능정의서」)
+ * 홈페이지 어드민 LNB — 시안 기준 **최대 3뎁스**
+ * 1뎁스: 시안 대메뉴 / 2·3뎁스: 시안 드롭다운·하위 항목
  */
 export const menuItems: MenuItemConfig[] = [
   {
@@ -64,37 +64,47 @@ export const menuItems: MenuItemConfig[] = [
         key: 'ja-korea-intro-group',
         label: '기관 소개',
         children: [
-          { key: '/ja-korea/intro', label: 'JA Korea 소개' },
-          { key: '/ja-korea/global-value', label: 'JA Global Value' },
-          { key: '/ja-korea/worldwide', label: 'JA Worldwide' },
-          { key: '/ja-korea/history', label: '연혁' },
-          { key: '/ja-korea/awards', label: '수상' },
-          { key: '/ja-korea/certifications', label: '인증' },
-          { key: '/ja-korea/bi', label: 'BI 소개' },
+          { key: '/ja-korea/intro', label: 'JA Korea 소개 관리' },
+          { key: '/ja-korea/global-value', label: 'JA Global Value 관리' },
+          { key: '/ja-korea/worldwide', label: 'JA Worldwide 관리' },
+          { key: '/ja-korea/history-awards-certs', label: '연혁/수상/인증 관리' },
+          { key: '/ja-korea/bi', label: 'BI 소개 관리' },
         ],
       },
       {
         key: 'ja-korea-transparency-group',
         label: '투명경영',
         children: [
-          { key: '/ja-korea/principles', label: '운영원칙' },
-          { key: '/ja-korea/income', label: '수입' },
-          { key: '/ja-korea/expense', label: '지출' },
-          { key: '/ja-korea/annual-report', label: '연차보고서' },
-          { key: '/ja-korea/audit-report', label: '회계감사 보고서' },
-          { key: '/ja-korea/nts-disclosure', label: '국세청 공시' },
+          { key: '/ja-korea/principles', label: '소개 및 운영원칙 관리' },
+          { key: '/ja-korea/income-expense', label: '수입&지출 관리' },
+          { key: '/ja-korea/reports-disclosure', label: '보고서 및 공시 관리' },
         ],
       },
-      { key: '/ja-korea/notices', label: '공지사항' },
-      { key: '/ja-korea/directions', label: '오시는 길' },
       {
-        key: 'ja-korea-people-group',
-        label: '함께하는 사람들',
+        key: 'ja-korea-history-group',
+        label: 'JA History',
+        children: [{ key: '/ja-korea/ja-history/resumes', label: '강사 이력서' }],
+      },
+      {
+        key: 'ja-korea-recruit-group',
+        label: '채용',
         children: [
-          { key: '/ja-korea/organization', label: '조직도' },
-          { key: '/ja-korea/board', label: '이사회' },
+          { key: '/ja-korea/recruit/ideal-talent', label: '인재상 관리' },
+          { key: '/ja-korea/recruit/postings', label: '공고 관리' },
+          { key: '/ja-korea/recruit/applicants', label: '지원자 관리' },
         ],
       },
+      {
+        key: 'ja-korea-notice-group',
+        label: '공지 관리',
+        children: [
+          { key: '/ja-korea/notice-fields', label: '사업분야 관리' },
+          { key: '/ja-korea/notices', label: '공지 관리' },
+        ],
+      },
+      { key: '/ja-korea/directions', label: '오시는 길' },
+      { key: '/ja-korea/organization', label: '조직도' },
+      { key: '/ja-korea/board', label: '이사회' },
     ],
   },
   {
@@ -117,10 +127,33 @@ export const menuItems: MenuItemConfig[] = [
     label: '후원하기 관리',
     icon: <SponsorMenuIcon />,
     children: [
-      { key: '/sponsor/individual', label: '개인후원' },
-      { key: '/sponsor/corporate-guide', label: '기업후원 안내' },
-      { key: '/sponsor/partners', label: '후원사' },
-      { key: '/sponsor/corporate-applications', label: '기업 후원 신청 현황' },
+      {
+        key: 'sponsor-individual-group',
+        label: '개인후원',
+        children: [
+          { key: '/sponsor/individual/banner', label: '메인 배너 관리' },
+          { key: '/sponsor/individual/usage-guide', label: '후원금 사용 안내 관리' },
+          { key: '/sponsor/individual/links', label: '후원 연결 관리' },
+        ],
+      },
+      {
+        key: 'sponsor-corporate-group',
+        label: '기업후원',
+        children: [
+          { key: '/sponsor/corporate/guide', label: '기업후원 안내 관리' },
+          { key: '/sponsor/corporate/partners', label: '후원사 목록 관리' },
+          { key: '/sponsor/corporate/consultations', label: '기업 후원 상담 신청 관리' },
+        ],
+      },
+      {
+        key: 'sponsor-talent-group',
+        label: '재능기부',
+        children: [
+          { key: '/sponsor/talent/intro', label: '소개글 관리' },
+          { key: '/sponsor/talent/interviews', label: '인터뷰 관리' },
+          { key: '/sponsor/talent/applications', label: '재능기부 신청 목록' },
+        ],
+      },
     ],
   },
   {
@@ -166,13 +199,15 @@ function toAntItems(items: MenuItemConfig[], depth = 0): MenuProps['items'] {
     if (item.type === 'divider') {
       return { type: 'divider' as const, key: item.key }
     }
-    const children = item.children ? toAntItems(item.children, depth + 1) : undefined
-    // 1뎁스: 카테고리 아이콘 / 2뎁스: BulletIcon(•) / 3뎁스+: 아이콘 없음 — CMS filterMenuByRole과 동일
+    const children = item.children?.length
+      ? toAntItems(item.children, depth + 1)
+      : undefined
+    // 1뎁스: 카테고리 아이콘 / 2뎁스: BulletIcon(•) / 3뎁스: CSS에서 아이콘 숨김
     const showIcon = depth === 0 && item.icon != null
     return {
       key: item.key,
       label: item.label,
-      icon: showIcon ? item.icon : depth === 1 ? <BulletIcon /> : undefined,
+      icon: showIcon ? item.icon : depth >= 1 ? <BulletIcon /> : undefined,
       children,
     }
   })
@@ -236,9 +271,30 @@ const PAGE_TITLE_BY_PATH: Record<string, string> = {
   '/ja-korea/intro': 'JA Korea 소개 관리',
   '/ja-korea/global-value': 'JA Global Value 관리',
   '/ja-korea/worldwide': 'JA Worldwide 관리',
-  '/ja-korea/history': '연혁 관리',
-  '/ja-korea/awards': '수상 관리',
+  '/ja-korea/history-awards-certs': '연혁/수상/인증 관리',
+  '/ja-korea/bi': 'BI 소개 관리',
+  '/ja-korea/principles': '소개 및 운영원칙 관리',
+  '/ja-korea/income-expense': '수입&지출 관리',
+  '/ja-korea/reports-disclosure': '보고서 및 공시 관리',
+  '/ja-korea/ja-history/resumes': '강사 이력서',
+  '/ja-korea/recruit/ideal-talent': '인재상 관리',
+  '/ja-korea/recruit/postings': '공고 관리',
+  '/ja-korea/recruit/applicants': '지원자 관리',
+  '/ja-korea/notice-fields': '사업분야 관리',
+  '/ja-korea/notices': '공지 관리',
+  '/ja-korea/directions': '오시는 길 관리',
+  '/ja-korea/organization': '조직도 관리',
+  '/ja-korea/board': '이사회 관리',
   '/impact/stories': '임팩트 스토리 관리',
+  '/sponsor/individual/banner': '메인 배너 관리',
+  '/sponsor/individual/usage-guide': '후원금 사용 안내 관리',
+  '/sponsor/individual/links': '후원 연결 관리',
+  '/sponsor/corporate/guide': '기업후원 안내 관리',
+  '/sponsor/corporate/partners': '후원사 목록 관리',
+  '/sponsor/corporate/consultations': '기업 후원 상담 신청 관리',
+  '/sponsor/talent/intro': '소개글 관리',
+  '/sponsor/talent/interviews': '인터뷰 관리',
+  '/sponsor/talent/applications': '재능기부 신청 목록',
   '/participate': '참여하기 관리',
 }
 
