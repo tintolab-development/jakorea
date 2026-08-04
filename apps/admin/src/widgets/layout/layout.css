@@ -1,0 +1,28 @@
+.app-layout {
+  min-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.app-layout > .ant-layout {
+  background: var(--color-bg-tertiary);
+  margin-left: var(--sidebar-width);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.layout-content {
+  position: relative;
+  margin: 0;
+  padding: 32px;
+  background: transparent;
+  min-height: calc(100vh - var(--header-height));
+  margin-top: var(--header-height);
+  overflow-y: auto;
+  height: calc(100vh - var(--header-height));
+}
+
+.layout-content-outlet {
+  width: 100%;
+  min-width: 0;
+}

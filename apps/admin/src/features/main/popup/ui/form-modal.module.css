@@ -1,0 +1,46 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.metaRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-weight: 500;
+  color: var(--color-text-label, #262626);
+}
+
+.required {
+  color: var(--color-red, #c32f4a);
+}
+
+.hint {
+  font-size: 12px;
+}
+
+.preview img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: var(--radius-6, 6px);
+  border: 1px solid var(--color-border, #e0e0e0);
+  background: var(--color-bg-secondary, #fafafa);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
