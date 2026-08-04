@@ -84,7 +84,7 @@ export function ResultsPage() {
           </div>
         </div>
 
-        <PFDivider />
+        <PFDivider variant="focus" />
 
         <div className={styles.list}>
           {pageItems.length === 0 ? (

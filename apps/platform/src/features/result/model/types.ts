@@ -35,7 +35,7 @@ export type ResultDetail = ResultListItem & {
   content: string
   author: string
   viewCount: number
-  /** 상세 메타용 — 예: 2026년 09월 15일(월) */
+  /** 상세 메타용 — 예: 2026년 01월 15일 오후 3:00 */
   announcedAtDetailLabel: string
   attachments: ResultAttachment[]
 }
