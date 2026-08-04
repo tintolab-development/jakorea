@@ -5,5 +5,13 @@
   margin: 0;
   padding: 0;
   border: 0;
+}
+
+.default {
   border-top: 2px solid var(--color-neutral-black-50);
+}
+
+/** 결과 확인 등 — focus(민트) 디바이더 */
+.focus {
+  border-top: 2px solid var(--color-border-focus);
 }
