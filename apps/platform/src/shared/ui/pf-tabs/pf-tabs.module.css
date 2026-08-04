@@ -101,6 +101,43 @@
   color: var(--color-primary-500);
 }
 
+/**
+ * category — 상단 카테고리 배지 탭
+ * Active: element-default-gray bg + primary-700 text
+ * Inactive: transparent + neutral-black-30 text
+ * Gap between tabs: 20px
+ */
+.category {
+  width: auto;
+  justify-content: center;
+  gap: var(--spacing-20);
+}
+
+.category .tab {
+  flex: 0 0 auto;
+  height: 60px;
+  padding: 0 var(--spacing-28);
+  gap: var(--spacing-12);
+  border-radius: 131px;
+  background: transparent;
+  color: var(--color-neutral-black-30);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.24px;
+}
+
+.category .tab.active {
+  gap: 10px;
+  background: var(--color-element-default-gray);
+  color: var(--color-primary-700);
+}
+
+.category .tab:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
 /* ── badge (underline only) ── */
 
 .badge {

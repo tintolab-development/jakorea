@@ -1,0 +1,44 @@
+.root {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 360px;
+  height: 40px;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--spacing-20);
+  padding: 0 var(--spacing-20);
+  overflow: hidden;
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-warm-100);
+  color: var(--color-neutral-black);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.root:hover {
+  filter: brightness(0.98);
+}
+
+.root:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.name {
+  min-width: 0;
+  max-width: 276px;
+  flex: 1 1 auto;
+  overflow: hidden;
+  color: var(--color-neutral-black);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon {
+  display: block;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  aspect-ratio: 1 / 1;
+}
