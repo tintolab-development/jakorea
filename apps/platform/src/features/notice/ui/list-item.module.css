@@ -28,6 +28,9 @@
   display: block;
   flex-shrink: 0;
   min-width: 2ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 

@@ -52,13 +52,13 @@ export function NoticesPage() {
 
       <div className={styles.content}>
         <header className={styles.hero}>
-          <PFText as="h1" typo="page-title" color="black" className={styles.heroTitle}>
+          <PFText as="h1" typo="page-title-md" color="black" className={styles.heroTitle}>
             공지사항
           </PFText>
         </header>
 
         <div className={styles.toolbar}>
-          <PFText as="span" typo="bd-md-md" color="neutral-cool-600" className={styles.count}>
+          <PFText as="span" typo="hd-sm" color="black" className={styles.count}>
             {`총 ${filteredNotices.length}건`}
           </PFText>
           <div className={styles.search}>

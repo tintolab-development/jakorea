@@ -10,7 +10,12 @@ type NoticeListItemRowProps = {
 export function NoticeListItemRow({ item, onClick }: NoticeListItemRowProps) {
   return (
     <button type="button" className={styles.row} onClick={onClick}>
-      <PFText as="span" typo="bd-md-rg" color="neutral-cool-500" className={styles.no}>
+      <PFText
+        as="span"
+        typo="bd-lg-sb"
+        color={item.isPinned ? 'primary-500' : 'neutral-cool-600'}
+        className={styles.no}
+      >
         {item.no}
       </PFText>
 
@@ -20,12 +25,7 @@ export function NoticeListItemRow({ item, onClick }: NoticeListItemRowProps) {
             공지
           </PFStateBadge>
         ) : null}
-        <PFText
-          as="span"
-          typo={item.isPinned ? 'bd-lg-sb' : 'bd-lg-rg'}
-          color="black"
-          className={styles.title}
-        >
+        <PFText as="span" typo="hl-sm" color="black" className={styles.title}>
           {item.title}
         </PFText>
       </div>
