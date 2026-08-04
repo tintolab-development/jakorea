@@ -1,7 +1,12 @@
+import { PLATFORM_AUTH_TOKEN_KEY } from './auth-token'
+
 const DEV_AUTH_STORAGE_KEY = 'platform:dev:is-logged-in'
 export const DEV_AUTH_CHANGE_EVENT = 'platform:dev-auth-change'
 
 export function getDevAuthLoggedIn() {
+  if (typeof window === 'undefined') return false
+  // 실로그인 토큰이 있으면 로그인으로 간주 (헤더·마이페이지 가드 호환)
+  if (window.localStorage.getItem(PLATFORM_AUTH_TOKEN_KEY)) return true
   return window.localStorage.getItem(DEV_AUTH_STORAGE_KEY) === 'true'
 }
 

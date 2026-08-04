@@ -2,7 +2,7 @@
  * Platform(Vite)용 Axios 클라이언트.
  * - Base URL: `VITE_API_BASE_URL` (미설정 + DEV 프록시 시 동일 출처 상대 경로)
  * - 인증: `platform_auth_*` localStorage + `withCredentials`
- * - 리프레시: `POST /api/homepage/auth/refresh` (body refreshToken only, no Bearer)
+ * - 리프레시: `POST /api/portal/auth/refresh` (body refreshToken only, no Bearer)
  */
 
 import axios, {
@@ -18,6 +18,7 @@ import {
   getRefreshToken,
   setAuthTokens,
 } from '@/shared/lib/auth-token'
+import { setDevAuthLoggedIn } from '@/shared/lib/dev-auth'
 
 export type TAxiosHeaders = {
   'Content-Type': string
@@ -44,8 +45,10 @@ type RetryableRequest = InternalAxiosRequestConfig & {
 }
 
 const HOMEPAGE_AUTH_PREFIX = '/api/homepage/auth'
-const DEFAULT_REFRESH_PATH = `${HOMEPAGE_AUTH_PREFIX}/refresh`
-const DEFAULT_LOGOUT_PATH = `${HOMEPAGE_AUTH_PREFIX}/logout`
+const PORTAL_AUTH_PREFIX = '/api/portal/auth'
+const PORTAL_ORGANIZATIONS_SCHOOLS = '/api/portal/organizations/schools'
+const DEFAULT_REFRESH_PATH = `${PORTAL_AUTH_PREFIX}/refresh`
+const DEFAULT_LOGOUT_PATH = `${PORTAL_AUTH_PREFIX}/logout`
 
 export { getApiBaseUrl, isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
@@ -87,7 +90,12 @@ function isExcludedFromAutoRefresh(url?: string): boolean {
     path.includes(`${HOMEPAGE_AUTH_PREFIX}/login`) ||
     path.includes(`${HOMEPAGE_AUTH_PREFIX}/refresh`) ||
     path.includes(`${HOMEPAGE_AUTH_PREFIX}/logout`) ||
-    path.includes(`${HOMEPAGE_AUTH_PREFIX}/signup`)
+    path.includes(`${HOMEPAGE_AUTH_PREFIX}/signup`) ||
+    path.includes(`${PORTAL_AUTH_PREFIX}/login`) ||
+    path.includes(`${PORTAL_AUTH_PREFIX}/refresh`) ||
+    path.includes(`${PORTAL_AUTH_PREFIX}/logout`) ||
+    path.includes(`${PORTAL_AUTH_PREFIX}/signup`) ||
+    path.includes(PORTAL_ORGANIZATIONS_SCHOOLS)
   )
 }
 
@@ -145,8 +153,8 @@ export async function postAuthenticationRefreshToken(refreshToken: string) {
   )
 }
 
-/** POST /api/homepage/auth/logout — body refreshToken only, expects 204 */
-export async function postHomepageAuthLogout(refreshToken: string): Promise<void> {
+/** POST /api/portal/auth/logout — body refreshToken only, expects 204 */
+export async function postPortalAuthLogout(refreshToken: string): Promise<void> {
   await axiosClient.post(
     getLogoutPath(),
     { refreshToken },
@@ -157,6 +165,9 @@ export async function postHomepageAuthLogout(refreshToken: string): Promise<void
     } as unknown as RetryableRequest,
   )
 }
+
+/** @deprecated `postPortalAuthLogout` 사용 */
+export const postHomepageAuthLogout = postPortalAuthLogout
 
 let isRefreshing = false
 let refreshPromise: Promise<string> | null = null
@@ -218,6 +229,7 @@ function parseExpiresInFromRefreshBody(payload: unknown): number | undefined {
 
 function handleAuthFailure() {
   clearAuthTokens()
+  setDevAuthLoggedIn(false)
   if (typeof window !== 'undefined') {
     const path = `${window.location.pathname}${window.location.search}`
     const next = encodeURIComponent(path)

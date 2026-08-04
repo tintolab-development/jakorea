@@ -10,6 +10,7 @@ export interface IdentityChallengeCreateRequest {
   provider?: string;
   expectedName?: string;
   expectedBirthDate?: string;
+  expectedGender?: string;
   expectedPhone?: string;
   flow?: string;
   frontendReturnUrl?: string;

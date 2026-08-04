@@ -1,9 +1,10 @@
-/** 홈페이지 회원가입·학교 검색 공개 API 경로 */
+/** 포털(사용자 홈페이지) 회원가입·학교 검색 PUBLIC API 경로 (`/api/portal/**`) */
 
 export const signupPaths = {
-  emailAvailability: () => '/api/homepage/auth/signup/email-availability',
-  terms: () => '/api/homepage/auth/signup/terms',
-  signupGeneral: () => '/api/homepage/auth/signup/general',
-  signupTeacher: () => '/api/homepage/auth/signup/teacher',
-  schools: () => '/api/homepage/organizations/schools',
+  emailAvailability: () => '/api/portal/auth/signup/email-availability',
+  terms: () => '/api/portal/auth/signup/terms',
+  flowOptions: () => '/api/portal/auth/signup/flow-options',
+  signupGeneral: () => '/api/portal/auth/signup/general',
+  signupTeacher: () => '/api/portal/auth/signup/teacher',
+  schools: () => '/api/portal/organizations/schools',
 } as const

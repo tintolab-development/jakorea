@@ -20,6 +20,6 @@ export interface ProgramScheduleResponse {
   ujatPartnerAssignmentEligible?: boolean;
   ujatPartnerAssignmentsPath?: string;
   ujatPartnerRecommendationPath?: string;
-  startDate?: string;
   endDate?: string;
+  startDate?: string;
 }

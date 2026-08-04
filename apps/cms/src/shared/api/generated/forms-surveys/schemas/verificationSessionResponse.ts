@@ -10,6 +10,8 @@ export interface VerificationSessionResponse {
   sessionId?: number;
   provider?: string;
   status?: string;
+  failureCode?: string;
+  failureMessage?: string;
   verifiedAt?: string;
   expiresAt?: string;
   usedAt?: string;

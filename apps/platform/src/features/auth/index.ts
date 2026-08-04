@@ -7,3 +7,10 @@ export { useSignUpConsent } from './sign-up/hooks/use-consent'
 export { useTermsViewModal } from './hooks/use-terms-view-modal'
 export { TermsViewModal } from './ui/terms-view-modal'
 export { RegisterTermsAgreement } from './ui/register-terms-agreement'
+export {
+  portalAuthPaths,
+  postPortalLogin,
+  usePortalLoginMutation,
+  getLoginApiErrorMessage,
+} from './sign-in'
+export type { AuthTokenResponse, MemberLoginRequest } from './sign-in'
