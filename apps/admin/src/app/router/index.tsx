@@ -10,6 +10,7 @@ import { ContentsPage } from '@/pages/main/contents/page'
 import { JaKoreaIntroPage } from '@/pages/ja-korea/intro/page'
 import { GlobalValuePage } from '@/pages/ja-korea/global-value/page'
 import { WorldwidePage } from '@/pages/ja-korea/worldwide/page'
+import { HistoryPage } from '@/pages/ja-korea/history/page'
 import { getLeafMenuPaths } from '@/shared/config/menu-config'
 
 const IMPLEMENTED_PATHS = new Set([
@@ -21,6 +22,7 @@ const IMPLEMENTED_PATHS = new Set([
   'ja-korea/intro',
   'ja-korea/global-value',
   'ja-korea/worldwide',
+  'ja-korea/history',
 ])
 
 const leafRoutes = getLeafMenuPaths()
@@ -45,6 +47,7 @@ export const router = createBrowserRouter([
       { path: 'ja-korea/intro', element: <JaKoreaIntroPage /> },
       { path: 'ja-korea/global-value', element: <GlobalValuePage /> },
       { path: 'ja-korea/worldwide', element: <WorldwidePage /> },
+      { path: 'ja-korea/history', element: <HistoryPage /> },
       ...leafRoutes,
       { path: '*', element: <Navigate to="/" replace /> },
     ],

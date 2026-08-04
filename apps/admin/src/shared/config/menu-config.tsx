@@ -236,6 +236,7 @@ const PAGE_TITLE_BY_PATH: Record<string, string> = {
   '/ja-korea/intro': 'JA Korea 소개 관리',
   '/ja-korea/global-value': 'JA Global Value 관리',
   '/ja-korea/worldwide': 'JA Worldwide 관리',
+  '/ja-korea/history': '연혁 관리',
   '/impact/stories': '임팩트 스토리 관리',
   '/participate': '참여하기 관리',
 }
