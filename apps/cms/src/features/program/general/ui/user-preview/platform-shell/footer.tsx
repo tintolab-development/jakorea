@@ -40,6 +40,8 @@ const partnerLogos = [
   { label: '국민권익위원회', logoUrl: rightsLogoUrl },
 ]
 
+const copyrightYear = new Date().getFullYear()
+
 /** 미리보기 전용 — Platform Footer 정적 표현 */
 export function PlatformPreviewFooter() {
   return (
@@ -92,7 +94,7 @@ export function PlatformPreviewFooter() {
           </div>
 
           <PFText as="p" typo="bd-sm-rg" color="neutral-cool-500" className={styles.copyright}>
-            ⓒJA Korea,2022
+            ⓒJA Korea,{copyrightYear}
           </PFText>
         </div>
       </div>
