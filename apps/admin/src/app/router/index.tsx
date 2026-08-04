@@ -11,6 +11,7 @@ import { JaKoreaIntroPage } from '@/pages/ja-korea/intro/page'
 import { GlobalValuePage } from '@/pages/ja-korea/global-value/page'
 import { WorldwidePage } from '@/pages/ja-korea/worldwide/page'
 import { HistoryPage } from '@/pages/ja-korea/history/page'
+import { AwardsPage } from '@/pages/ja-korea/awards/page'
 import { getLeafMenuPaths } from '@/shared/config/menu-config'
 
 const IMPLEMENTED_PATHS = new Set([
@@ -23,6 +24,7 @@ const IMPLEMENTED_PATHS = new Set([
   'ja-korea/global-value',
   'ja-korea/worldwide',
   'ja-korea/history',
+  'ja-korea/awards',
 ])
 
 const leafRoutes = getLeafMenuPaths()
@@ -48,6 +50,7 @@ export const router = createBrowserRouter([
       { path: 'ja-korea/global-value', element: <GlobalValuePage /> },
       { path: 'ja-korea/worldwide', element: <WorldwidePage /> },
       { path: 'ja-korea/history', element: <HistoryPage /> },
+      { path: 'ja-korea/awards', element: <AwardsPage /> },
       ...leafRoutes,
       { path: '*', element: <Navigate to="/" replace /> },
     ],
