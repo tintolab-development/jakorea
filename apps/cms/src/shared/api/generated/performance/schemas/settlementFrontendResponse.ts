@@ -18,6 +18,9 @@ export interface SettlementFrontendResponse {
   items?: SettlementFrontendItemResponse[];
   totalAmount?: number;
   status?: string;
+  calculationStatus?: string;
+  statementStatus?: string;
+  paymentStatus?: string;
   documentGeneratedAt?: string;
   notes?: string;
   attachments?: SettlementFrontendAttachmentResponse[];

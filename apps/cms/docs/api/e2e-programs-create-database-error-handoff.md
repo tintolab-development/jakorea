@@ -1,7 +1,7 @@
 # 일반 프로그램 등록 · `DATABASE_ERROR` — 백엔드 수정 요청
 
 CMS E2E **일반 프로그램 신규 등록** 시 `POST /api/admin/programs` 가 **HTTP 500 / `DATABASE_ERROR`** 를 반환합니다.  
-FE는 스텁 없이 실 API만 호출하므로, 이 오류가 해소되기 전까지 `test:e2e:programs` 목록 검증(등록 후 목록 행)이 실패합니다.
+FE는 스텁 없이 실 API만 호출하므로, 이 오류가 해소되기 전까지 `test:e2e:programs:registration` 목록 검증(등록 후 목록 행)이 실패합니다.
 
 | 항목 | 값 |
 |------|-----|
@@ -25,7 +25,7 @@ FE는 스텁 없이 실 API만 호출하므로, 이 오류가 해소되기 전�
 | **상황(FE 로그)** | 일반 프로그램 등록 · 신청 정보 / 등록 완료 |
 | **요청** | `POST /api/admin/programs` |
 | **응답 메시지(관측)** | `database operation failed` (또는 래퍼 `DATABASE_ERROR: …`) |
-| **재현** | `pnpm --filter cms test:e2e:programs` |
+| **재현** | `pnpm --filter cms test:e2e:programs:registration` |
 
 응답 예시 형태(공통 ApiResponse 래퍼):
 
@@ -108,7 +108,7 @@ OpenAPI·기존 핸드오프상 create 계약은 “완료”로 표기되어 �
 | 항목 | 상태 |
 |------|------|
 | 성공 스텁 | **사용 안 함** (실 API만) |
-| E2E | BE 수정 전 `test:e2e:programs` 실패 가능 |
+| E2E | BE 수정 전 `test:e2e:programs:registration` 실패 가능 |
 | 에러 가시화 | `/e2e-error-log` · 터미널 덤프 |
 
 ---
@@ -116,7 +116,7 @@ OpenAPI·기존 핸드오프상 create 계약은 “완료”로 표기되어 �
 ## 6. 연락·재현 정보
 
 ```bash
-pnpm --filter cms test:e2e:programs
+pnpm --filter cms test:e2e:programs:registration
 # 실패 시: apps/cms/test-results/e2e-error-log-latest.json
 # 또는 http://localhost:3000/e2e-error-log
 ```

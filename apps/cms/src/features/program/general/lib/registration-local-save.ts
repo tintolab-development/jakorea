@@ -22,6 +22,7 @@ import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/ap
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import { mockSponsors } from '@/data/mock/sponsors'
+import { publishRegisteredProgramToMockCatalog } from '@/features/program/shared/lib/publish-mock-program-catalog'
 
 export const GENERAL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'general-local-'
 export const COMPANY_SCHOOL_REGISTRATION_LOCAL_PROGRAM_ID_PREFIX = 'company-school-local-'
@@ -76,9 +77,21 @@ function participantTypesFromState(
   return types.length > 0 ? types : ['school_institution']
 }
 
+function audienceFromParticipant(
+  participant: ProgramRegistrationParticipantState
+): Program['generalProgramAudience'] {
+  if (participant.individual && !participant.organization) return 'individual'
+  if (participant.organization && !participant.individual) return 'organization'
+  // 둘 다/둘 다 아님 → 미설정. applicationTargetMode 는 participantTypes 로 보정
+  return undefined
+}
+
 function primaryCategoryFromParticipant(
   participant: ProgramRegistrationParticipantState
 ): ProgramCategory {
+  // 대분류(개인/기관)가 category 1순위 — 강사·봉사는 generalParticipantTypes 로 표현
+  if (participant.individual && !participant.organization) return 'individual'
+  if (participant.organization && !participant.individual) return 'school'
   if (participant.organization) return 'school'
   if (participant.teacherInstructor) return 'instructor'
   if (participant.volunteer) return 'volunteer'
@@ -165,6 +178,11 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
     startTime: '09:00',
     endTime: '18:00',
     studentListRequired: isCompanySchool ? 'not_required' : 'required',
+    generalProgramAudience: isCompanySchool || isTrainedTeachers
+      ? 'organization'
+      : audienceFromParticipant(args.participant),
+    generalProgramEducationStructure:
+      isCompanySchool || isTrainedTeachers ? 'curriculum' : args.programType,
     generalCommonInfo: isCompanySchool || isTrainedTeachers
       ? {
           educationScheduleMode: 'period',
@@ -336,6 +354,8 @@ export function persistGeneralRegistrationFormLocal(args: {
   const prev = readGeneralRegistrationLocalSaveRecords()
   const nextFile: LocalSaveFile = { version: 1, items: [...prev, record] }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(nextFile))
+
+  void publishRegisteredProgramToMockCatalog(program)
 
   return program
 }

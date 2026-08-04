@@ -5,10 +5,22 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorCertificationUpsertRequest } from './instructorCertificationUpsertRequest';
+import type { MemberBankAccountUpsertRequest } from './memberBankAccountUpsertRequest';
 
 export interface InstructorInfoPatch {
   bankName?: string;
   accountNumber?: string;
   accountHolder?: string;
   isBusinessIncome?: boolean;
+  /**
+     * @minItems 0
+     * @maxItems 20
+     */
+  bankAccounts?: MemberBankAccountUpsertRequest[];
+  /**
+     * @minItems 0
+     * @maxItems 50
+     */
+  certifications?: InstructorCertificationUpsertRequest[];
 }

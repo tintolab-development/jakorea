@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
@@ -6,6 +6,10 @@ import {
   clampInstitutionScheduleBlockCount,
 } from '@/features/template/lib/participant-recruitment-institution-limits'
 import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  useGeneralApplicationOverlayKv,
+  updateGeneralApplicationOverlayKey,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
@@ -232,25 +236,39 @@ export function TrainedTeachersProgramApplicationPreferredScheduleParagraph({
     return (date: Dayjs) => date.isBefore(start, 'day') || date.isAfter(end, 'day')
   }, [bridge.educationScheduleRange])
 
-  const [blocks, setBlocks] = useState<ScheduleBlockState[]>(() =>
-    readOnlyPreview
-      ? // 미리보기 — 1지망(1차시)·2지망(2차시) 예시 블록으로 차시별 시간 지정 구조를 노출
-        Array.from({ length: Math.min(2, Math.max(maxBlocks, 1)) }, (_, index) =>
-          createEmptyBlockState(index + 1)
-        )
-      : Array.from({ length: isProgramLinked ? 1 : 2 }, () => createEmptyBlockState())
+  const [blocks] = useGeneralApplicationOverlayKv<ScheduleBlockState[]>(
+    'application.trainedTeachers.preferredSchedules',
+    []
   )
+
+  // Initialize with correct default based on preview mode and program linkage
+  useMemo(() => {
+    if (blocks.length === 0) {
+      updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', () =>
+        readOnlyPreview
+          ? // 미리보기 — 1지망(1차시)·2지망(2차시) 예시 블록으로 차시별 시간 지정 구조를 노출
+            Array.from({ length: Math.min(2, Math.max(maxBlocks, 1)) }, (_, index) =>
+              createEmptyBlockState(index + 1)
+            )
+          : Array.from({ length: isProgramLinked ? 1 : 2 }, () => createEmptyBlockState())
+      )
+    }
+  }, [blocks.length, isProgramLinked, maxBlocks, readOnlyPreview])
 
   const visibleBlockCount = Math.min(Math.max(blocks.length, 1), Math.max(maxBlocks, blocks.length))
   const displayBlocks = blocks.slice(0, visibleBlockCount)
 
   const patchBlock = (index: number, patch: Partial<ScheduleBlockState>) => {
-    setBlocks(prev => prev.map((b, i) => (i === index ? { ...b, ...patch } : b)))
+    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
+      const current = (prev ?? []) as ScheduleBlockState[]
+      return current.map((b, i) => (i === index ? { ...b, ...patch } : b))
+    })
   }
 
   const setBlockSession = (index: number, value: string | undefined) => {
-    setBlocks(prev =>
-      prev.map((b, i) => {
+    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
+      const current = (prev ?? []) as ScheduleBlockState[]
+      return current.map((b, i) => {
         if (i !== index) return b
         const count = Math.max(1, parseInt(value ?? '1', 10) || 1)
         const times = Array.from(
@@ -259,12 +277,13 @@ export function TrainedTeachersProgramApplicationPreferredScheduleParagraph({
         )
         return { ...b, session: value, times }
       })
-    )
+    })
   }
 
   const patchBlockTime = (index: number, timeIndex: number, patch: Partial<SessionTimeState>) => {
-    setBlocks(prev =>
-      prev.map((b, i) =>
+    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
+      const current = (prev ?? []) as ScheduleBlockState[]
+      return current.map((b, i) =>
         i === index
           ? {
               ...b,
@@ -272,18 +291,22 @@ export function TrainedTeachersProgramApplicationPreferredScheduleParagraph({
             }
           : b
       )
-    )
+    })
   }
 
   const removeBlock = (index: number) => {
-    setBlocks(prev => {
-      if (prev.length <= 1) return [createEmptyBlockState()]
-      return prev.filter((_, i) => i !== index)
+    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
+      const current = (prev ?? []) as ScheduleBlockState[]
+      if (current.length <= 1) return [createEmptyBlockState()]
+      return current.filter((_, i) => i !== index)
     })
   }
 
   const addBlock = () => {
-    setBlocks(prev => (prev.length >= maxBlocks ? prev : [...prev, createEmptyBlockState()]))
+    updateGeneralApplicationOverlayKey<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
+      const current = (prev ?? []) as ScheduleBlockState[]
+      return current.length >= maxBlocks ? current : [...current, createEmptyBlockState()]
+    })
   }
 
   return (

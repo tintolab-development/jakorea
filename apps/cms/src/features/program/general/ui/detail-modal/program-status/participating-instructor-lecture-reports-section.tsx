@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { ParticipatingInstructorRow } from '@/data/mock/participating-instructors'
@@ -18,21 +18,12 @@ import {
   type LectureReportPreviewContext,
 } from '@/features/program/general/lib/build-lecture-report-issuance-preview'
 import { downloadLectureReportPdfFiles } from '@/features/program/general/lib/download-lecture-reports-bulk-pdf'
+import { useProgramLectureReports } from '@/features/program/general/hooks/use-program-lecture-reports'
+import type { ParticipatingInstructorLectureReportRow } from '@/features/program/general/api/adapters/lecture-reports-adapters'
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { LectureReportBulkPdfExportHost } from './lecture-report-bulk-pdf-export-host'
 import { LectureReportIssuancePreviewModal } from './lecture-report-issuance-preview-modal'
-
-interface ParticipatingInstructorLectureReportRow {
-  id: string
-  no: number
-  schoolName: string
-  educationGrade: string
-  educationScheduleLabel: string
-  submissionPeriodLabel: string
-  lectureProgressLabel: '진행 완료' | '진행 예정'
-  submissionStatusLabel: '제출 완료' | '미제출' | '진행 예정'
-  canViewReport: boolean
-}
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 
 function buildParticipatingInstructorLectureReportRows(): ParticipatingInstructorLectureReportRow[] {
   return [
@@ -125,7 +116,14 @@ export function ParticipatingInstructorLectureReportsSection({
   program,
 }: ParticipatingInstructorLectureReportsSectionProps) {
   const { showAlert } = useCmsAlert()
-  const rows = useMemo(() => buildParticipatingInstructorLectureReportRows(), [])
+  const lectureReports = useProgramLectureReports(program?.id)
+  const mockRows = useMemo(() => buildParticipatingInstructorLectureReportRows(), [])
+  // remote loading 중에는 mock을 쓰지 않음 (건수·테이블 플래시 방지). 실패/OFF만 mock 폴백.
+  const rows = lectureReports.loading
+    ? []
+    : lectureReports.isRemoteDataSource && lectureReports.rows != null
+      ? lectureReports.rows
+      : mockRows
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewContext, setPreviewContext] = useState<LectureReportPreviewContext | null>(null)
   const [bulkExportQueue, setBulkExportQueue] = useState<LectureReportPreviewContext[]>([])
@@ -247,6 +245,7 @@ export function ParticipatingInstructorLectureReportsSection({
         key: 'educationScheduleLabel',
         align: 'center',
         width: 320,
+        render: (label: string) => renderProgramDetailPipeSeparated(label),
       },
       {
         title: '강의보고서 제출 기간',
@@ -307,6 +306,16 @@ export function ParticipatingInstructorLectureReportsSection({
     ],
     [handleOpenPreview]
   )
+
+  if (lectureReports.loading) {
+    return (
+      <div className="school-detail-fullpage-view__instructor-section">
+        <div className="flex min-h-[160px] items-center justify-center py-8" role="status">
+          <Spin size="large" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="school-detail-fullpage-view__instructor-section">

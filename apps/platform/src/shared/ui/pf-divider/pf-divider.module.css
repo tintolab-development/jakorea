@@ -1,0 +1,9 @@
+.root {
+  display: block;
+  width: 100%;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-top: 2px solid var(--color-neutral-black-50);
+}

@@ -23,9 +23,10 @@ export function useProgressVolunteerList(programId?: string) {
     retry: false,
   })
 
-  const [volunteerList, setVolunteerList] = useState<ParticipatingVolunteerRow[]>(() => [
-    ...MOCK_PARTICIPATING_VOLUNTEERS,
-  ])
+  const [volunteerList, setVolunteerList] = useState<ParticipatingVolunteerRow[]>(() =>
+    // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
+    remoteEnabled ? [] : [...MOCK_PARTICIPATING_VOLUNTEERS]
+  )
 
   useEffect(() => {
     if (remoteEnabled) {
@@ -51,7 +52,9 @@ export function useProgressVolunteerList(programId?: string) {
   return {
     volunteerList,
     addVolunteerFromMember,
-    applicationsLoading: remoteEnabled ? remoteQuery.isFetching : false,
+    applicationsLoading: remoteEnabled
+      ? remoteQuery.isFetching && remoteQuery.data === undefined
+      : false,
     isRemoteDataSource: remoteEnabled,
   }
 }

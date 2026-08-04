@@ -7,6 +7,14 @@
   width: 100%;
 }
 
+.program-managers-tab--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  width: 100%;
+}
+
 /* 컬럼 width 합 68+80+246+150+246+246+246 = 1282 */
 .program-managers-tab .program-managers-tab__managers-table.cms-data-table--fluid .ant-table-container {
   min-width: 1282px;

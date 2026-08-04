@@ -7,6 +7,7 @@ import {
   useDateTimePickerPopoverLayer,
 } from '@/shared/components/date-time-picker-shared'
 import { DateTimePickerTimeInlineSelects } from '@/shared/components/date-time-picker-time-selects'
+import { CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -71,7 +72,7 @@ export function ParagraphDatePickerPopover({
   anchorRef,
   dismissExcludeRef,
   panelId,
-  zIndex = 1060,
+  zIndex = CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX,
   disabled,
   disabledDate,
   isRangeCalendarMode,
@@ -381,7 +382,7 @@ export function ParagraphTimePickerPopover({
   anchorRef,
   dismissExcludeRef,
   panelId,
-  zIndex = 1060,
+  zIndex = CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX,
   showEndTimeToggle = true,
   disabled,
   isEndTimeOn,

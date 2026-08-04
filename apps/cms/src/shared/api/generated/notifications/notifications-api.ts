@@ -47,7 +47,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 이 API는 일반 사용자 화면용이 아니라 관리자/QA/운영자가 시스템 상태를 확인할 때 사용하는 API입니다. 일반 화면 개발 시에는 직접 호출하지 않습니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -74,7 +74,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  */
 const updateNotificationEventCatalog = (
     eventType: string,
-    notificationEventCatalogUpdateRequest?: NotificationEventCatalogUpdateRequest,
+    notificationEventCatalogUpdateRequest: NotificationEventCatalogUpdateRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseNotificationEventCatalogMutationResponse>>,) => {
       return customInstance<ApiResponseNotificationEventCatalogMutationResponse>(
       {url: `/api/admin/notification-event-catalog/${eventType}`, method: 'PUT',
@@ -104,7 +104,7 @@ const updateNotificationEventCatalog = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -159,7 +159,7 @@ const listNotificationTemplates = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -185,7 +185,7 @@ const listNotificationTemplates = (
  * @summary POST /api/admin/notification-templates
  */
 const createNotificationTemplate = (
-    notificationTemplateUpsertRequest?: NotificationTemplateUpsertRequest,
+    notificationTemplateUpsertRequest: NotificationTemplateUpsertRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseNotificationTemplateMutationResponse>>,) => {
       return customInstance<ApiResponseNotificationTemplateMutationResponse>(
       {url: `/api/admin/notification-templates`, method: 'POST',
@@ -215,7 +215,7 @@ const createNotificationTemplate = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -241,7 +241,7 @@ const createNotificationTemplate = (
  * @summary POST /api/admin/notification-deliveries/test-send
  */
 const testSendNotification = (
-    notificationTestSendRequest?: NotificationTestSendRequest,
+    notificationTestSendRequest: NotificationTestSendRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseNotificationTestSendResponse>>,) => {
       return customInstance<ApiResponseNotificationTestSendResponse>(
       {url: `/api/admin/notification-deliveries/test-send`, method: 'POST',
@@ -271,7 +271,7 @@ const testSendNotification = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -298,7 +298,7 @@ const testSendNotification = (
  */
 const updateNotificationTemplate = (
     templateId: number,
-    notificationTemplateUpsertRequest?: NotificationTemplateUpsertRequest,
+    notificationTemplateUpsertRequest: NotificationTemplateUpsertRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseNotificationTemplateMutationResponse>>,) => {
       return customInstance<ApiResponseNotificationTemplateMutationResponse>(
       {url: `/api/admin/notification-templates/${templateId}`, method: 'PATCH',
@@ -328,7 +328,7 @@ const updateNotificationTemplate = (
  * - 이 API는 일반 사용자 화면용이 아니라 관리자/QA/운영자가 시스템 상태를 확인할 때 사용하는 API입니다. 일반 화면 개발 시에는 직접 호출하지 않습니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -382,7 +382,7 @@ const notificationEventCatalog = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -437,7 +437,7 @@ const listNotificationDeliveries = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.

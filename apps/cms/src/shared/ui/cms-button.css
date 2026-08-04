@@ -9,13 +9,17 @@
  *   large + icon    180×44 · padding 6×16×6×10 · row · gap 6
  *   medium          120×40 · padding 6×14 · radius 6 · gap 10 · font 14/600/150%
  *   small           100×32 · padding 6×12 · radius 6 · gap 4 · font 12/600/150%
- * Secondary / Delete: border + gradient(6%) + #FFF
+ * Secondary: border + mint 6% overlay + #FFF
+ * Delete: border + `--color-bg-red` (red 10% overlay + #FFF)
+ *
+ * Figma auto-layout이 `padding: 32px 31px`처럼 height와 모순된 값을 내보내는 경우
+ * 무시하고 위 size 패딩 + flex center를 쓴다.
  */
 
 .cms-button.ant-btn {
   box-sizing: border-box;
-  display: flex !important;
-  flex-direction: column;
+  display: inline-flex !important;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
   margin: 0;
@@ -48,30 +52,32 @@
   ) !important;
 }
 
-.cms-button.ant-btn.cms-button--loading-only {
-  /* Ant loading-icon이 형제로 붙을 때 column이면 스피너가 위로 밀림 */
-  flex-direction: row !important;
-  gap: 0 !important;
-}
-
 /* spinner 오버레이는 `button-loading-only.css` */
 
-/* ----- size ----- */
+/* ----- size -----
+ * height·padding은 antd CSS-in-JS(.ant-btn-middle 등)보다 뒤에 와도 이기도록 !important.
+ * (antd middle 기본 32px가 덮으면 세로 패딩이 찌그러져 글자가 테두리에 붙음)
+ */
 .cms-button.ant-btn.cms-button--large {
   width: 140px;
-  height: 44px;
+  height: 44px !important;
+  min-height: 44px !important;
   padding: 6px 16px !important;
+  padding-block: 6px !important;
+  padding-inline: 16px !important;
   gap: 6px;
   border-radius: var(--radius-8, 8px);
   font-size: 16px;
 }
 
-/* Large + 아이콘(캘린더·엑셀 등) — 180×44, 좌측 패딩 10 */
+/* Large + 아이콘(캘린더·엑셀 등) — 기본 180×44, 좌측 패딩 10.
+ * max-width는 두지 않음 — `width` prop(인라인)으로 더 넓힐 수 있어야 함 */
 .cms-button.ant-btn.cms-button--large.cms-button--has-icon {
   width: 180px;
   min-width: 180px;
-  max-width: 180px;
   padding: 6px 16px 6px 10px !important;
+  padding-block: 6px !important;
+  padding-inline: 10px 16px !important;
   flex-direction: row;
   gap: 6px;
 }
@@ -82,12 +88,17 @@
   min-width: 140px !important;
   max-width: 140px !important;
   padding: 6px 16px !important;
+  padding-block: 6px !important;
+  padding-inline: 16px !important;
 }
 
 .cms-button.ant-btn.cms-button--medium {
   width: 120px;
-  height: 40px;
+  height: 40px !important;
+  min-height: 40px !important;
   padding: 6px 14px !important;
+  padding-block: 6px !important;
+  padding-inline: 14px !important;
   gap: 10px;
   border-radius: var(--radius-6, 6px);
   font-size: 14px;
@@ -95,8 +106,11 @@
 
 .cms-button.ant-btn.cms-button--small {
   width: 100px;
-  height: 32px;
+  height: 32px !important;
+  min-height: 32px !important;
   padding: 6px 12px !important;
+  padding-block: 6px !important;
+  padding-inline: 12px !important;
   gap: 4px;
   border-radius: var(--radius-6, 6px);
   font-size: 12px;
@@ -110,17 +124,19 @@
   line-height: 0;
 }
 
-/* Ant existIcon 경로용 더미 — 레이아웃에 영향 없음 */
-.cms-button.ant-btn .cms-button__loading-slot {
-  display: none;
-}
-
 .cms-button.ant-btn .cms-button__label {
-  display: block;
+  display: inline-flex;
+  align-items: center;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.5;
+}
+
+.cms-button.ant-btn .btn-loading-only__content {
+  min-height: 0;
+  line-height: 1.5;
 }
 
 /** 라벨 말줄임 없음 — `width` auto·max-content 등과 함께 사용 */
@@ -131,8 +147,33 @@
   flex-shrink: 0;
 }
 
-.cms-button.ant-btn.cms-button--no-label-ellipsis.cms-button--large {
-  width: auto;
+.cms-button.ant-btn.cms-button--no-label-ellipsis.cms-button--large,
+.cms-button.ant-btn.cms-button--no-label-ellipsis.cms-button--medium,
+.cms-button.ant-btn.cms-button--no-label-ellipsis.cms-button--small {
+  width: max-content;
+  min-width: fit-content;
+  max-width: none;
+}
+
+/* 긴 라벨 + 아이콘 — large+icon 패딩(6 16 6 10)·세로 중앙 유지 */
+.cms-button.ant-btn.cms-button--no-label-ellipsis.cms-button--large.cms-button--has-icon {
+  padding: 6px 16px 6px 10px !important;
+  padding-block: 6px !important;
+  padding-inline: 10px 16px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* 비주얼 아이콘은 children(`cms-button__icon`) — 비로딩 시 antd icon 슬롯(잔여)은 레이아웃에서 제외 */
+.cms-button.ant-btn:not(.ant-btn-loading) > .ant-btn-icon {
+  display: none !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none;
 }
 
 /* ----- variant (enabled) ----- */
@@ -162,12 +203,11 @@
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled) {
   color: var(--color-red, #c32f4a) !important;
   border-color: var(--color-red, #c32f4a) !important;
-  background: linear-gradient(
-      0deg,
-      rgba(195, 47, 74, 0.06) 0%,
-      rgba(195, 47, 74, 0.06) 100%
-    ),
-    #fff !important;
+  background: var(
+    --color-bg-red,
+    linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%),
+    #fff
+  ) !important;
 }
 
 /* hover / focus / active — 기본 상태와 동일 (시각 변화 없음) */
@@ -208,11 +248,10 @@
 .cms-button.ant-btn.cms-button--delete:not(:disabled):not(.ant-btn-disabled):active {
   color: var(--color-red, #c32f4a) !important;
   border-color: var(--color-red, #c32f4a) !important;
-  background: linear-gradient(
-      0deg,
-      rgba(195, 47, 74, 0.06) 0%,
-      rgba(195, 47, 74, 0.06) 100%
-    ),
-    #fff !important;
+  background: var(
+    --color-bg-red,
+    linear-gradient(0deg, rgba(195, 47, 74, 0.1) 0%, rgba(195, 47, 74, 0.1) 100%),
+    #fff
+  ) !important;
   box-shadow: none !important;
 }

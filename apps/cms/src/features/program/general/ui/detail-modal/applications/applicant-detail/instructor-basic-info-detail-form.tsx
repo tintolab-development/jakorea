@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { StatusDropdownCell } from '@/shared/components'
+import { STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME } from '@/shared/components/status-dropdown-cell'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
 import {
   SCHOOL_TEACHER_EMPLOYMENT_BADGE_CELL_STYLE,
@@ -141,7 +142,9 @@ export function AffiliationEmploymentStatusField({
   }
 
   return (
-    <span className="applicant-general-instructor-basic-info__employment-dropdown">
+    <span
+      className={`applicant-general-instructor-basic-info__employment-dropdown ${STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}`}
+    >
       <StatusDropdownCell<SchoolTeacherEmploymentStatus>
         status={employmentStatus}
         statusOptions={SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS}
@@ -150,6 +153,7 @@ export function AffiliationEmploymentStatusField({
         onChange={handleEmploymentStatusChange}
         isOpen={employmentDropdownOpen}
         onOpenChange={setEmploymentDropdownOpen}
+        tagLayout="tag100"
         style={AFFILIATION_EMPLOYMENT_BADGE_CELL_STYLE}
       />
     </span>

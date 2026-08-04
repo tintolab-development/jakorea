@@ -11,6 +11,7 @@ import { CRIME_CONSENT_DOCUMENT_MODAL_HEADER_TITLE } from '@/features/template/u
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { downloadBlob } from '@/shared/utils/file-download'
 import '@/features/template/ui/template-management/crime-record-consent-document-fullpage-modal.css'
 import './member-consent-crime-modal.css'
@@ -92,7 +93,7 @@ export function MemberConsentCrimeModal({ open, onClose, onComplete }: MemberCon
     if (!hasUploadedDocument) {
       showAlert({
         title: '안내',
-        content: '동의서 문서를 업로드한 후 제출해 주세요.',
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return
     }

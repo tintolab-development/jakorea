@@ -1,5 +1,6 @@
 {
   "templateCode": "survey-teacher",
+  "templateName": "만족도조사 (교사용)",
   "formType": "WRITING",
   "category": "SURVEY",
   "schemaJson": {

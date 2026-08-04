@@ -9,7 +9,7 @@ import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
 } from '@/shared/constants'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-activity-certificate-preview-modal'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
@@ -236,7 +236,7 @@ export function UjatEducationProgressVolunteersSection({
               type="button"
               variant="secondary"
               size="large"
-              width={210}
+              width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
               icon={<DownloadOutlined />}
               disabled={studentCertificateExportActive}
               onClick={handleStudentCertificateIssueClick}

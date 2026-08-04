@@ -1,4 +1,5 @@
-import { Descriptions, Select, Spin } from 'antd'
+import { Select, Spin } from 'antd'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { getLogsApiErrorMessage } from '@/features/logs/api/admin-logs-service'
@@ -78,26 +79,42 @@ export function BugIssueDetailModal({ open, issueId, onClose }: BugIssueDetailMo
         />
       ) : data ? (
         <>
-          <Descriptions bordered column={1} size="small" style={{ marginBottom: 16 }}>
-            <Descriptions.Item label="이슈 ID">{data.issueId}</Descriptions.Item>
-            <Descriptions.Item label="유형">{data.issueType}</Descriptions.Item>
-            <Descriptions.Item label="심각도">{data.severity}</Descriptions.Item>
-            <Descriptions.Item label="화면">{data.screenKey}</Descriptions.Item>
-            <Descriptions.Item label="API 경로">{data.apiPath}</Descriptions.Item>
-            <Descriptions.Item label="메시지">{data.message}</Descriptions.Item>
-            <Descriptions.Item label="요약">{data.detailSummary}</Descriptions.Item>
-            <Descriptions.Item label="발생 일시">
-              {dayjs(data.createdAt).format('YYYY.MM.DD HH:mm:ss')}
-            </Descriptions.Item>
-            {data.resolvedAt ? (
-              <Descriptions.Item label="해결 일시">
-                {dayjs(data.resolvedAt).format('YYYY.MM.DD HH:mm:ss')}
-              </Descriptions.Item>
-            ) : null}
-            <Descriptions.Item label="스택트레이스">
-              {data.stackTraceAvailable ? '있음' : '없음'}
-            </Descriptions.Item>
-          </Descriptions>
+          <div style={{ marginBottom: 16 }}>
+            <DetailInfoForm title="이슈 상세" hideHeader mode="view">
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="이슈 ID" view={data.issueId} />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="유형" view={data.issueType} />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="심각도" view={data.severity} />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="화면" view={data.screenKey} />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="API 경로" view={data.apiPath} />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="메시지" view={data.message} />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="요약" view={data.detailSummary} />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="발생 일시" view={dayjs(data.createdAt).format('YYYY.MM.DD HH:mm:ss')} />
+              </DetailInfoForm.Row>
+              {data.resolvedAt && (
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field label="해결 일시" view={dayjs(data.resolvedAt).format('YYYY.MM.DD HH:mm:ss')} />
+                </DetailInfoForm.Row>
+              )}
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="스택트레이스" view={data.stackTraceAvailable ? '있음' : '없음'} />
+              </DetailInfoForm.Row>
+            </DetailInfoForm>
+          </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <span>상태</span>
             <Select

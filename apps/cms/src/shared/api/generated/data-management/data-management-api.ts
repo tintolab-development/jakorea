@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type {
+  ApiResponseBulkActionResponse,
   ApiResponseDeleteResponse,
   ApiResponseDetailedProgramDeleteResponse,
   ApiResponseDetailedProgramResponse,
@@ -17,6 +18,7 @@ import type {
   ApiResponseSponsorYearlyBusinessResponse,
   ApiResponseTextbookResponse,
   ApiResponseVoid,
+  BulkIdsRequest,
   CalculateParams,
   CurrentKitCalculationParams,
   DetailedProgramRequest,
@@ -76,7 +78,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -131,7 +133,7 @@ const textbooks = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -169,6 +171,60 @@ const create = (
 
 /**
  * ### 이 API가 하는 일
+ * - POST /api/admin/textbooks/bulk-delete
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/textbooks/bulk-delete`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MASTER_DATA_WRITE 권한 필요
+ * - 접근 범위: GLOBAL 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: NONE 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend bulk API handoff implemented with max 100 and partial-success contract
+ * @summary POST /api/admin/textbooks/bulk-delete
+ */
+const bulkDelete = (
+    bulkIdsRequest: BulkIdsRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseBulkActionResponse>>,) => {
+      return customInstance<ApiResponseBulkActionResponse>(
+      {url: `/api/admin/textbooks/bulk-delete`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkIdsRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
@@ -187,7 +243,7 @@ const create = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -242,7 +298,7 @@ const sponsors = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -298,7 +354,7 @@ const create2 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -352,7 +408,7 @@ const yearlyBusinesses = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -409,7 +465,7 @@ const addYearlyBusiness = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -463,7 +519,7 @@ const end = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -517,7 +573,7 @@ const contacts = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -556,6 +612,114 @@ const addContact = (
 
 /**
  * ### 이 API가 하는 일
+ * - POST /api/admin/sponsors/contacts/bulk-delete
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/sponsors/contacts/bulk-delete`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MASTER_DATA_WRITE 권한 필요
+ * - 접근 범위: GLOBAL 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: NONE 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend bulk API handoff implemented with max 100 and partial-success contract
+ * @summary POST /api/admin/sponsors/contacts/bulk-delete
+ */
+const bulkDeleteContacts = (
+    bulkIdsRequest: BulkIdsRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseBulkActionResponse>>,) => {
+      return customInstance<ApiResponseBulkActionResponse>(
+      {url: `/api/admin/sponsors/contacts/bulk-delete`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkIdsRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - POST /api/admin/sponsors/bulk-delete
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/sponsors/bulk-delete`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MASTER_DATA_WRITE 권한 필요
+ * - 접근 범위: GLOBAL 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: NONE 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend bulk API handoff implemented with max 100 and partial-success contract
+ * @summary POST /api/admin/sponsors/bulk-delete
+ */
+const bulkDeleteSponsors = (
+    bulkIdsRequest: BulkIdsRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseBulkActionResponse>>,) => {
+      return customInstance<ApiResponseBulkActionResponse>(
+      {url: `/api/admin/sponsors/bulk-delete`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkIdsRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
@@ -574,7 +738,7 @@ const addContact = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -629,7 +793,7 @@ const kits = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -685,7 +849,7 @@ const create4 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -739,7 +903,7 @@ const versions = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -796,7 +960,7 @@ const createVersion = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -853,7 +1017,7 @@ const addTargetCount = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -908,7 +1072,7 @@ const detailedPrograms = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -946,6 +1110,60 @@ const create5 = (
 
 /**
  * ### 이 API가 하는 일
+ * - POST /api/admin/detailed-programs/bulk-delete
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/detailed-programs/bulk-delete`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: MASTER_DATA_WRITE 권한 필요
+ * - 접근 범위: GLOBAL 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: NONE 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Frontend bulk API handoff implemented with max 100 and partial-success contract
+ * @summary POST /api/admin/detailed-programs/bulk-delete
+ */
+const bulkDelete2 = (
+    bulkIdsRequest: BulkIdsRequest,
+ options?: SecondParameter<typeof customInstance<ApiResponseBulkActionResponse>>,) => {
+      return customInstance<ApiResponseBulkActionResponse>(
+      {url: `/api/admin/detailed-programs/bulk-delete`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: bulkIdsRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
  * - 관리자 조회
  * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
  * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
@@ -964,7 +1182,7 @@ const create5 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1018,7 +1236,7 @@ const textbook = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1072,7 +1290,7 @@ const _delete = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1129,7 +1347,7 @@ const update = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1183,7 +1401,7 @@ const sponsor = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1237,7 +1455,7 @@ const delete1 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1294,7 +1512,7 @@ const update2 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1348,7 +1566,7 @@ const deleteYearlyBusiness = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1405,7 +1623,7 @@ const updateYearlyBusiness = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1459,7 +1677,7 @@ const deleteContact = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1516,7 +1734,7 @@ const updateContact = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1570,7 +1788,7 @@ const kit = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1624,7 +1842,7 @@ const delete2 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1681,7 +1899,7 @@ const update3 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1735,7 +1953,7 @@ const detailedProgram = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1789,7 +2007,7 @@ const delete3 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1837,7 +2055,7 @@ const update4 = (
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신
- * - 프론트 조회 키: `get_admin_textbooks_matches`
+ * - 프론트 조회 키: `get_admin_textbooks_matching`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED
  * - 외부 연동 확인: 외부 연동 대기 없음
@@ -1846,7 +2064,7 @@ const update4 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1901,7 +2119,7 @@ const matches = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1957,7 +2175,7 @@ const programHistories = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -2013,7 +2231,7 @@ const currentKitCalculation = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -2049,9 +2267,10 @@ const calculate = (
       options);
     }
 
-return {textbooks,create,sponsors,create2,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,kits,create4,versions,createVersion,addTargetCount,detailedPrograms,create5,textbook,_delete,update,sponsor,delete1,update2,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,kit,delete2,update3,detailedProgram,delete3,update4,matches,programHistories,currentKitCalculation,calculate}};
+return {textbooks,create,bulkDelete,sponsors,create2,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,bulkDeleteContacts,bulkDeleteSponsors,kits,create4,versions,createVersion,addTargetCount,detailedPrograms,create5,bulkDelete2,textbook,_delete,update,sponsor,delete1,update2,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,kit,delete2,update3,detailedProgram,delete3,update4,matches,programHistories,currentKitCalculation,calculate}};
 export type TextbooksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbooks']>>>
 export type CreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create']>>>
+export type BulkDeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDelete']>>>
 export type SponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['sponsors']>>>
 export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create2']>>>
 export type YearlyBusinessesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['yearlyBusinesses']>>>
@@ -2059,6 +2278,8 @@ export type AddYearlyBusinessResult = NonNullable<Awaited<ReturnType<ReturnType<
 export type EndResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['end']>>>
 export type ContactsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['contacts']>>>
 export type AddContactResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addContact']>>>
+export type BulkDeleteContactsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDeleteContacts']>>>
+export type BulkDeleteSponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDeleteSponsors']>>>
 export type KitsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['kits']>>>
 export type Create4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create4']>>>
 export type VersionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['versions']>>>
@@ -2066,6 +2287,7 @@ export type CreateVersionResult = NonNullable<Awaited<ReturnType<ReturnType<type
 export type AddTargetCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addTargetCount']>>>
 export type DetailedProgramsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['detailedPrograms']>>>
 export type Create5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create5']>>>
+export type BulkDelete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDelete2']>>>
 export type TextbookResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbook']>>>
 export type _DeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['_delete']>>>
 export type UpdateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update']>>>

@@ -7,6 +7,7 @@ import { Alert, Button, Space, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { e2eTestLogMockApi } from '@/features/e2e-test-log/api/e2e-test-log-mock-api'
 import type { E2eTestLogEntry } from '@/features/e2e-test-log/model/types'
+import { CopyablePre } from './copyable-pre'
 
 const PAGE_CHUNK = 40
 const TABLE_BODY_MIN_Y = 240
@@ -26,6 +27,8 @@ function statusColor(status: string): string {
       return 'processing'
     case 'api':
       return 'blue'
+    case 'note':
+      return 'gold'
     default:
       return 'default'
   }
@@ -224,7 +227,7 @@ export function E2eTestLogPanel({ active }: Props) {
       <div className="e2e-error-log-page__panel-toolbar">
         <Typography.Paragraph type="secondary" style={{ marginBottom: 0, flex: 1 }}>
           DEV Mock API(<code>/__dev__/e2e-test-logs</code>) · Playwright가 테스트 시작/종료·mutation
-          POST payload·지표를 기록합니다.
+          POST payload·지표·수정 시 변경/미수정 필드 note를 기록합니다.
         </Typography.Paragraph>
         <Space wrap>
           <Button
@@ -253,7 +256,7 @@ export function E2eTestLogPanel({ active }: Props) {
 
       <section className="e2e-error-log-page__summary" aria-label="테스트 진행 요약">
         <Typography.Text strong>진행 현황</Typography.Text>
-        <div className="e2e-error-log-page__chips">
+        <div className="e2e-error-log-page__chips e2e-error-log-page__chips--single-line">
           {summary ? (
             <>
               <Tag color="default">실행 {summary.runCount}</Tag>
@@ -269,16 +272,12 @@ export function E2eTestLogPanel({ active }: Props) {
           ) : (
             <Typography.Text type="secondary">요약 없음</Typography.Text>
           )}
+          {statusChips.map(row => (
+            <Tag key={row.status} color={statusColor(row.status)}>
+              {row.status} × {row.count}
+            </Tag>
+          ))}
         </div>
-        {statusChips.length > 0 ? (
-          <div className="e2e-error-log-page__chips" style={{ marginTop: 8 }}>
-            {statusChips.map(row => (
-              <Tag key={row.status} color={statusColor(row.status)}>
-                {row.status} × {row.count}
-              </Tag>
-            ))}
-          </div>
-        ) : null}
       </section>
 
       <div className="e2e-error-log-page__list-meta">
@@ -305,52 +304,29 @@ export function E2eTestLogPanel({ active }: Props) {
             columnWidth: 48,
             expandedRowRender: row => (
               <div className="e2e-error-log-page__detail">
-                <div>
-                  <Typography.Text type="secondary">테스트</Typography.Text>
-                  <pre>{row.title}</pre>
-                </div>
-                {row.phase ? (
-                  <div>
-                    <Typography.Text type="secondary">단계</Typography.Text>
-                    <pre>{row.phase}</pre>
-                  </div>
-                ) : null}
+                <CopyablePre label="테스트" text={row.title} />
+                {row.phase ? <CopyablePre label="단계" text={row.phase} /> : null}
+                {row.message ? <CopyablePre label="메시지" text={row.message} /> : null}
                 {row.method || row.requestPath ? (
-                  <div>
-                    <Typography.Text type="secondary">요청</Typography.Text>
-                    <pre>{`${row.method ?? ''} ${row.requestPath ?? ''}`.trim()}</pre>
-                  </div>
+                  <CopyablePre
+                    label="요청"
+                    text={`${row.method ?? ''} ${row.requestPath ?? ''}`.trim()}
+                  />
                 ) : null}
                 {row.requestPayload ? (
-                  <div>
-                    <Typography.Text type="secondary">request payload</Typography.Text>
-                    <pre>{row.requestPayload}</pre>
-                  </div>
+                  <CopyablePre
+                    label={row.status === 'note' ? '상세' : 'request payload'}
+                    text={row.requestPayload}
+                  />
                 ) : null}
                 {row.responsePreview ? (
-                  <div>
-                    <Typography.Text type="secondary">response</Typography.Text>
-                    <pre>{row.responsePreview}</pre>
-                  </div>
+                  <CopyablePre label="response" text={row.responsePreview} />
                 ) : null}
                 {row.metrics ? (
-                  <div>
-                    <Typography.Text type="secondary">지표</Typography.Text>
-                    <pre>{JSON.stringify(row.metrics, null, 2)}</pre>
-                  </div>
+                  <CopyablePre label="지표" text={JSON.stringify(row.metrics, null, 2)} />
                 ) : null}
-                {row.errorMessage ? (
-                  <div>
-                    <Typography.Text type="secondary">에러</Typography.Text>
-                    <pre>{row.errorMessage}</pre>
-                  </div>
-                ) : null}
-                {row.file ? (
-                  <div>
-                    <Typography.Text type="secondary">파일</Typography.Text>
-                    <pre>{row.file}</pre>
-                  </div>
-                ) : null}
+                {row.errorMessage ? <CopyablePre label="에러" text={row.errorMessage} /> : null}
+                {row.file ? <CopyablePre label="파일" text={row.file} /> : null}
               </div>
             ),
           }}

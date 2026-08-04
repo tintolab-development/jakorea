@@ -23,7 +23,13 @@ import {
   USER_BASIC_INFO_ENTRY_QUERY_KEY,
 } from '@/features/user/detail/ui/user-basic-info-section'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
+import {
+  canAccessAdminCommentInAdminDetail,
+  canStartAdminMemberProfileEdit,
+  isCmsAdminUser,
+  shouldShowAdminCommentSectionForViewer,
+  shouldShowCmsMemberInfoEditButton,
+} from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import {
   isMemberBasicInfoPatchRemoteEnabled,
   isMembersRemoteEnabled,
@@ -83,10 +89,15 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
     return null
   }
 
+  const isProfileEditing =
+    pageShell.basicInfoEditing && pageShell.basicInfoEditScope === 'profile'
+  const isCommentEditing =
+    pageShell.basicInfoEditing && pageShell.basicInfoEditScope === 'comment'
+
   const actions = getDefaultHeaderActions({
     viewKind: headerLayout.viewKind,
     displayUser,
-    onWithdraw: pageShell.basicInfoEditing ? undefined : onWithdraw,
+    onWithdraw: isProfileEditing ? undefined : onWithdraw,
     onOpenWithdrawConfirm,
     onOpenInstructorPermissionRevoke: pageShell.onOpenInstructorPermissionRevoke,
   })
@@ -99,19 +110,35 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
     entryFromQuery,
     displayUser.role
   )
-  const canInlineEdit =
+  const canEditProfileBody =
     basicBodyKey === 'all_users' ||
     basicBodyKey === 'institution' ||
     basicBodyKey === 'instructor' ||
     (basicBodyKey === 'admin' && isCmsAdminUser(currentUser))
 
+  const canEditCommentBody =
+    basicBodyKey === 'all_users' ||
+    basicBodyKey === 'institution' ||
+    basicBodyKey === 'instructor' ||
+    (basicBodyKey === 'admin' && canAccessAdminCommentInAdminDetail(currentUser))
+
   const remoteBasicInfoSaveBlocked =
     isMembersRemoteEnabled() && !isMemberBasicInfoPatchRemoteEnabled()
 
-  const showInlineEditStart =
-    !pageShell.basicInfoEditing && canInlineEdit && !remoteBasicInfoSaveBlocked
+  const showProfileEditStart =
+    !isProfileEditing &&
+    shouldShowCmsMemberInfoEditButton(displayUser) &&
+    canEditProfileBody &&
+    (displayUser.role !== 'ADMIN' || canStartAdminMemberProfileEdit(currentUser, displayUser)) &&
+    !remoteBasicInfoSaveBlocked
 
-  const showInlineEditControls = pageShell.basicInfoEditing && canInlineEdit
+  const showCommentEditStart =
+    !isProfileEditing &&
+    !isCommentEditing &&
+    shouldShowAdminCommentSectionForViewer(currentUser, displayUser) &&
+    canEditCommentBody
+
+  const showInlineEditControls = isProfileEditing
 
   const inlineEditCluster = showInlineEditControls ? (
     <>
@@ -135,7 +162,9 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
         저장
       </CmsButton>
     </>
-  ) : showInlineEditStart ? (
+  ) : null
+
+  const profileEditButton = showProfileEditStart ? (
     <CmsButton
       key="basic-info-edit"
       size="medium"
@@ -146,10 +175,21 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
     </CmsButton>
   ) : null
 
+  const commentEditButton = showCommentEditStart ? (
+    <CmsButton
+      key="admin-comment-edit"
+      size="medium"
+      variant="primary"
+      onClick={pageShell.onStartAdminCommentEdit}
+    >
+      코멘트 작성
+    </CmsButton>
+  ) : null
+
   const leadingSpaceNode = headerLayout.leadingSpace ? ' ' : null
 
   const personalInfoNode =
-    !pageShell.basicInfoEditing && headerLayout.showPersonalInfoToggle && personalInfoButton ? (
+    !isProfileEditing && headerLayout.showPersonalInfoToggle && personalInfoButton ? (
       <PersonalInfoRevealButton
         labelMode="stickyReveal"
         revealed={personalInfoRevealed}
@@ -160,7 +200,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
       />
     ) : null
 
-  const headerActionsForLayout = pageShell.basicInfoEditing
+  const headerActionsForLayout = isProfileEditing
     ? actions.filter(a => a.key !== 'school-delete' && a.key !== 'withdraw')
     : actions
 
@@ -179,7 +219,14 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
     <div className="info-section-buttons--wrapper">
       {leadingSpaceNode}
       {actionButtons}
-      {inlineEditCluster}
+      {showInlineEditControls ? (
+        inlineEditCluster
+      ) : (
+        <>
+          {profileEditButton}
+          {commentEditButton}
+        </>
+      )}
       {personalInfoNode}
     </div>
   )

@@ -12,9 +12,9 @@ import {
   AttachmentDownloadList,
   CommentList,
   CommentComposer,
-  getReactionEmojiItemByType,
+  ReactionUserList,
 } from '@/shared/ui'
-import type { ProgramPost, ProgramFile, ProgramPostReactionUser } from '@/types/domain'
+import type { ProgramPost, ProgramFile } from '@/types/domain'
 import dayjs from 'dayjs'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
 import {
@@ -30,7 +30,6 @@ import {
   removeProgramPostReactionUser,
 } from '@/data/mock'
 import { downloadFile } from '@/shared/lib/file-download'
-import { truncateDisplayNameForList } from '@/shared/lib/truncate-display-name'
 import { PostReadStatusPopoverContent } from '../post-read-status-popover'
 import { formatProgramPostAudienceBadgeLabel } from '../../lib/post-audience-display'
 import './post-detail-modal.css'
@@ -104,17 +103,6 @@ export interface PostDetailModalProps {
   onPostStatsChanged?: () => void
 }
 
-function reactionRowIsCurrentUser(
-  row: ProgramPostReactionUser,
-  displayName: string,
-  roleLabel: string
-): boolean {
-  return (
-    row.authorName.trim() === displayName.trim() &&
-    row.roleLabel.trim() === roleLabel.trim()
-  )
-}
-
 export function PostDetailModal({
   open,
   onCancel,
@@ -124,7 +112,6 @@ export function PostDetailModal({
   commentAuthorRoleLabel,
   onPostStatsChanged,
 }: PostDetailModalProps) {
-  const reactionClipBaseId = useId().replace(/:/g, '')
   const eyeIconMaskId = useId().replace(/:/g, '')
   const [commentInput, setCommentInput] = useState('')
   const [emojiActive, setEmojiActive] = useState(false)
@@ -301,87 +288,13 @@ export function PostDetailModal({
                         trigger.closest('.post-detail-modal__card') ?? document.body
                       }
                       content={
-                        <div className="post-detail-modal__reaction-popup">
-                          <div
-                            className="post-detail-modal__reaction-popup-header"
-                            role="group"
-                            aria-label="이모지별 반응 수"
-                          >
-                            {reactions.slice(0, 5).map((reaction, i) => {
-                              const item = getReactionEmojiItemByType(reaction.emojiType)
-                              if (!item) return null
-                              const clipId = `${reactionClipBaseId}-header-${i}`
-                              return (
-                                <div
-                                  key={`header-${reaction.emojiType}`}
-                                  className="post-detail-modal__reaction-popup-header-stat"
-                                >
-                                  <span className="post-detail-modal__reaction-popup-header-emoji" aria-hidden>
-                                    {item.renderIcon(clipId)}
-                                  </span>
-                                  <span className="post-detail-modal__reaction-popup-header-count">
-                                    {reaction.count}
-                                  </span>
-                                </div>
-                              )
-                            })}
-                            {reactions.length > 5 && (
-                              <span className="post-detail-modal__reaction-popup-header-ellipsis" aria-hidden>
-                                ...
-                              </span>
-                            )}
-                          </div>
-                          <div className="post-detail-modal__reaction-popup-body">
-                            {reactionUsers.map((row, index) => {
-                              const item = getReactionEmojiItemByType(row.emojiType)
-                              if (!item) return null
-                              const clipId = `${reactionClipBaseId}-row-${index}`
-                              const isOwnRow = reactionRowIsCurrentUser(
-                                row,
-                                viewerDisplayName,
-                                viewerRoleLabel
-                              )
-                              return (
-                                <div key={row.id} className="post-detail-modal__reaction-user-row">
-                                  <ProfileAvatarIcon className="post-detail-modal__reaction-user-avatar" />
-                                  <div className="post-detail-modal__reaction-user-meta">
-                                    <span
-                                      className="post-detail-modal__reaction-user-name"
-                                      title={row.authorName}
-                                    >
-                                      {truncateDisplayNameForList(row.authorName, 3)}
-                                    </span>
-                                    <span className="post-detail-modal__reaction-user-divider">|</span>
-                                    <span className="post-detail-modal__reaction-user-role">
-                                      {row.roleLabel}
-                                    </span>
-                                  </div>
-                                  {isOwnRow ? (
-                                    <button
-                                      type="button"
-                                      className="post-detail-modal__reaction-user-emoji-btn"
-                                      aria-label="내 반응 취소"
-                                      onClick={() => handleRemoveOwnReaction(row.id)}
-                                    >
-                                      <span className="post-detail-modal__reaction-user-emoji" aria-hidden>
-                                        {item.renderIcon(clipId)}
-                                      </span>
-                                    </button>
-                                  ) : (
-                                    <span className="post-detail-modal__reaction-user-emoji" aria-hidden>
-                                      {item.renderIcon(clipId)}
-                                    </span>
-                                  )}
-                                </div>
-                              )
-                            })}
-                            {reactionUsers.length === 0 && (
-                              <div className="post-detail-modal__reaction-popup-empty">
-                                아직 반응이 없습니다.
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                        <ReactionUserList
+                          reactions={reactions}
+                          users={reactionUsers}
+                          currentUserName={viewerDisplayName}
+                          currentUserRoleLabel={viewerRoleLabel}
+                          onRemoveOwnReaction={handleRemoveOwnReaction}
+                        />
                       }
                       placement="bottomLeft"
                     >

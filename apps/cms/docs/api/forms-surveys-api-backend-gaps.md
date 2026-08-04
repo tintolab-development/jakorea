@@ -9,7 +9,7 @@ JSON 계약 SSOT: [form-template-json-contract.md](./form-template-json-contract
 **신규 템플릿 생성 전용**: [template-create-api-backend-handoff.md](./template-create-api-backend-handoff.md)
 
 **작성일**: 2026-07-01  
-**Swagger 서버 스냅샷**: `https://29d0-183-102-114-192.ngrok-free.app/`
+**Swagger 서버 스냅샷**: `https://6920-221-146-247-18.ngrok-free.app//`
 
 ---
 
@@ -77,35 +77,35 @@ JSON 계약 SSOT: [form-template-json-contract.md](./form-template-json-contract
 
 **시드 표 (SSOT)**
 
-| templateCode                                      | templateName                      | formType (제안) | category (제안) |
-| ------------------------------------------------- | --------------------------------- | --------------- | --------------- |
-| `registration-general`                            | 일반 프로그램 등록 폼             | `WRITING`       | `REGISTRATION`  |
-| `registration-economy`                            | 1사 1교 프로그램 등록 폼          | `WRITING`       | `REGISTRATION`  |
-| `registration-ujat`                               | UJAT 프로그램 등록 폼             | `WRITING`       | `REGISTRATION`  |
-| `recruitment-participant-school`                  | 프로그램 참여자 모집 폼 (학교)    | `WRITING`       | `RECRUITMENT`   |
-| `recruitment-participant-individual`              | 프로그램 참여자 모집 폼 (개인)    | `WRITING`       | `RECRUITMENT`   |
-| `recruitment-instructor`                          | 프로그램 강사 모집 폼             | `WRITING`       | `RECRUITMENT`   |
-| `recruitment-volunteer`                           | 프로그램 봉사자 모집 폼           | `WRITING`       | `RECRUITMENT`   |
-| `recruitment-ujat-school`                         | UJAT 프로그램 학교 모집 폼        | `WRITING`       | `RECRUITMENT`   |
-| `recruitment-ujat-volunteer`                      | UJAT 프로그램 봉사자 모집 폼      | `WRITING`       | `RECRUITMENT`   |
-| `application-participant-school`                  | 프로그램 참여자 신청 폼 (학교)    | `WRITING`       | `APPLICATION`   |
-| `application-participant-individual`              | 프로그램 참여자 신청 폼 (개인)    | `WRITING`       | `APPLICATION`   |
-| `application-instructor`                          | 프로그램 강사 신청 폼             | `WRITING`       | `APPLICATION`   |
-| `application-volunteer`                           | 프로그램 봉사자 신청 폼           | `WRITING`       | `APPLICATION`   |
-| `application-economy`                             | 1사1교 프로그램 참여자 신청 폼    | `WRITING`       | `APPLICATION`   |
-| `application-gemini-visiting-training-instructor` | Gemini 찾아가는 연수 강사 신청 폼 | `WRITING`       | `APPLICATION`   |
-| `application-gemini-visiting-training-school`     | Gemini 찾아가는 연수 학교 신청 폼 | `WRITING`       | `APPLICATION`   |
-| `application-ujat-school`                         | UJAT 프로그램 학교 신청 폼        | `WRITING`       | `APPLICATION`   |
-| `application-ujat-volunteer`                      | UJAT 프로그램 봉사자 신청 폼      | `WRITING`       | `APPLICATION`   |
-| `survey-default`                                  | 설문조사                          | `WRITING`       | `SURVEY`        |
-| `survey-student`                                  | 만족도조사 (학생용)               | `WRITING`       | `SURVEY`        |
-| `survey-teacher`                                  | 만족도조사 (교사용)               | `WRITING`       | `SURVEY`        |
-| `survey-admin`                                    | 강의 평가 (관리자용)              | `WRITING`       | `SURVEY`        |
-| `agreement-third-party`                           | 지급조서 사전 동의서              | `WRITING`       | `AGREEMENT`     |
-| `agreement-crime`                                 | 성범죄 경력조회 동의서            | `WRITING`       | `AGREEMENT`     |
-| `agreement-notice`                                | 행정정보 공동이용 사전 동의서     | `WRITING`       | `AGREEMENT`     |
-| `agreement-expense`                               | 교육진행자 동의 서약서            | `WRITING`       | `AGREEMENT`     |
-| `agreement-portrait`                              | 초상권 수집·이용 동의서           | `WRITING`       | `AGREEMENT`     |
+| templateCode                                      | templateName                              | formType (제안) | category (제안) |
+| ------------------------------------------------- | ----------------------------------------- | --------------- | --------------- |
+| `registration-general`                            | 일반 프로그램 등록 폼                     | `WRITING`       | `REGISTRATION`  |
+| `registration-economy`                            | 1사1교 프로그램 등록 폼                   | `WRITING`       | `REGISTRATION`  |
+| `registration-ujat`                               | UJAT 프로그램 등록 폼                     | `WRITING`       | `REGISTRATION`  |
+| `recruitment-participant-school`                  | 일반_참여 기관 모집 폼                    | `WRITING`       | `RECRUITMENT`   |
+| `recruitment-participant-individual`              | 일반_참여자 모집 폼                       | `WRITING`       | `RECRUITMENT`   |
+| `recruitment-instructor`                          | 공통_강사 모집 폼                         | `WRITING`       | `RECRUITMENT`   |
+| `recruitment-volunteer`                           | 공통_봉사자 모집 폼                       | `WRITING`       | `RECRUITMENT`   |
+| `recruitment-ujat-school`                         | UJAT_참여 기관 모집 폼                    | `WRITING`       | `RECRUITMENT`   |
+| `recruitment-ujat-volunteer`                      | UJAT_봉사자 모집 폼                       | `WRITING`       | `RECRUITMENT`   |
+| `application-participant-school`                  | 일반_참여 기관 신청 폼                    | `WRITING`       | `APPLICATION`   |
+| `application-participant-individual`              | 일반_참여자 신청 폼                       | `WRITING`       | `APPLICATION`   |
+| `application-instructor`                          | 공통_강사 신청 폼                         | `WRITING`       | `APPLICATION`   |
+| `application-volunteer`                           | 공통_봉사자 신청 폼                       | `WRITING`       | `APPLICATION`   |
+| `application-economy`                             | 1사1교_참여 기관 신청 폼                  | `WRITING`       | `APPLICATION`   |
+| `application-gemini-visiting-training-instructor` | Gemini_찾아가는 연수 강사 신청 폼         | `WRITING`       | `APPLICATION`   |
+| `application-gemini-visiting-training-school`     | Gemini_찾아가는 연수 참여 기관 신청 폼    | `WRITING`       | `APPLICATION`   |
+| `application-ujat-school`                         | UJAT_참여 기관 신청 폼                    | `WRITING`       | `APPLICATION`   |
+| `application-ujat-volunteer`                      | UJAT_봉사자 신청 폼                       | `WRITING`       | `APPLICATION`   |
+| `survey-default`                                  | 설문조사                                  | `WRITING`       | `SURVEY`        |
+| `survey-student`                                  | 만족도조사 (학생용)                       | `WRITING`       | `SURVEY`        |
+| `survey-teacher`                                  | 만족도조사 (교사용)                       | `WRITING`       | `SURVEY`        |
+| `survey-admin`                                    | 강의평가 (관리자용)                       | `WRITING`       | `SURVEY`        |
+| `agreement-third-party`                           | 지급조서 사전 동의서                      | `WRITING`       | `AGREEMENT`     |
+| `agreement-crime`                                 | 성범죄 경력조회 동의서                    | `WRITING`       | `AGREEMENT`     |
+| `agreement-notice`                                | 행정정보 공동이용 사전 동의서             | `WRITING`       | `AGREEMENT`     |
+| `agreement-expense`                               | 교육진행자 동의 서약서                    | `WRITING`       | `AGREEMENT`     |
+| `agreement-portrait`                              | 초상권 수집/이용 동의                     | `WRITING`       | `AGREEMENT`     |
 
 **`schemaJson` 계약 (프론트 제안)**
 
@@ -213,35 +213,35 @@ JSON 계약 SSOT: [form-template-json-contract.md](./form-template-json-contract
 
 ### 8. 발급 양식(ISSUANCE) 시드 — **FE 연동 완료, BE 시드 대기**
 
-|                          |                                                                           |
-| ------------------------ | ------------------------------------------------------------------------- |
-| **화면**                 | `/templates/form-management` 발급 양식 탭 (`issuance-form-tab.tsx`)       |
-| **FE 상태 (2026-07-10)** | 목록 GET + 11종 load/save + 프로그램 실발급 `settingsJson` 연동 **완료**  |
+|                          |                                                                                               |
+| ------------------------ | --------------------------------------------------------------------------------------------- |
+| **화면**                 | `/templates/form-management` 발급 양식 탭 (`issuance-form-tab.tsx`)                           |
+| **FE 상태 (2026-07-10)** | 목록 GET + 11종 load/save + 프로그램 실발급 `settingsJson` 연동 **완료**                      |
 | **갭 유형**              | **BE DB 시드 등록 대기**. FE 시드 JSON: P0 지급조서 2종 + `document-3` 완료, 잔여 10종 미작성 |
-| **상세**                 | [issuance-form-api-follow-up.md](./issuance-form-api-follow-up.md) §2·§3.2 |
+| **상세**                 | [issuance-form-api-follow-up.md](./issuance-form-api-follow-up.md) §2·§3.2                    |
 
 **FE 시드 JSON (완료)**
 
-| templateCode | 파일 |
-|--------------|------|
-| `document-payment-order-issue` | [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json) |
+| templateCode                         | 파일                                                                                                     |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `document-payment-order-issue`       | [document-payment-order-issue.json](./form-template-seeds/document-payment-order-issue.json)             |
 | `document-payment-order-pre-consent` | [document-payment-order-pre-consent.json](./form-template-seeds/document-payment-order-pre-consent.json) |
-| `document-3` | [document-3-certificate.json](./form-template-seeds/document-3-certificate.json) |
+| `document-3`                         | [document-3-certificate.json](./form-template-seeds/document-3-certificate.json)                         |
 
 **발급 templateCode (FE SSOT — BE 합의 필요)**
 
-| FE key (임시)                        | templateName                          |
-| ------------------------------------ | ------------------------------------- |
-| `issuance-1`                         | UJAT 결과리포트                       |
-| `issuance-2`                         | UJAT 교육계획서                       |
-| `issuance-ujat-edu-journal`          | UJAT 교육일지                         |
-| `issuance-3`                         | 강의보고서                            |
-| `issuance-4`                         | 정산 신청서                           |
-| `issuance-5`                         | 결과보고서                            |
-| `document-payment-order-issue`       | 지급조서(발급)                        |
-| `document-payment-order-pre-consent` | 지급조서 사전 동의서                  |
-| `document-3`                         | 수료증                                |
-| `document-participation-certificate` | 참여인증서                            |
+| FE key (임시)                        | templateName                                       |
+| ------------------------------------ | -------------------------------------------------- |
+| `issuance-1`                         | UJAT 결과리포트                                    |
+| `issuance-2`                         | UJAT 교육계획서                                    |
+| `issuance-ujat-edu-journal`          | UJAT 교육일지                                      |
+| `issuance-3`                         | 강의보고서                                         |
+| `issuance-4`                         | 정산 신청서                                        |
+| `issuance-5`                         | 결과보고서                                         |
+| `document-payment-order-issue`       | 지급조서 (발급용)                                  |
+| `document-payment-order-pre-consent` | 지급조서 사전 동의서                               |
+| `document-3`                         | 수료증                                             |
+| `document-participation-certificate` | 참가인증서                                         |
 | …                                    | (전체 14종: `issuance-form-api-follow-up.md` §2.1) |
 
 ---

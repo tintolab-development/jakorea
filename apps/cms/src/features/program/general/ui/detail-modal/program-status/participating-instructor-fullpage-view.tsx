@@ -26,6 +26,7 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
@@ -33,6 +34,7 @@ import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import {
   INSTRUCTOR_ROLE_LABELS,
@@ -124,7 +126,8 @@ function renderWaitingTableEmpty() {
   )
 }
 
-/** TODO(api): 강사 중첩 탭 mutation — assignment/lecture-reports/settlement.
+/** TODO(api): 강사 중첩 탭 mutation 잔여 — institutionAssignment·settlement.
+ * lectureReports: GET list hybrid (`useProgramLectureReports`).
  * 1사1교 정산은 100km·교통·숙박·wagePolicies/paymentItems 구조화 계약 후. */
 export const INSTRUCTOR_DETAIL_TAB_KEYS = [
   'application',
@@ -160,7 +163,7 @@ function isCompanySchoolProgram(program: Program): boolean {
     program.id.startsWith('company-school-prog-') ||
     program.id.startsWith('company-school-local-') ||
     program.mainTitle?.includes('1사1교') === true ||
-    program.title.includes('1사1교')
+    program.title?.includes('1사1교') === true
   )
 }
 
@@ -241,7 +244,13 @@ export function ParticipatingInstructorFullpageView({
   schoolRows = MOCK_PARTICIPATING_SCHOOLS,
   instructorList = MOCK_PARTICIPATING_INSTRUCTORS,
 }: ParticipatingInstructorFullpageViewProps) {
-  const [internalTab, setInternalTab] = useState<InstructorDetailTabKey>('application')
+  /**
+   * URL(`instructorTab`)이 source of truth이지만, setSearchParams 반영 전·props 지연 시
+   * 탭 UI/본문이 안 바뀌는 문제가 있어 로컬 탭을 먼저 갱신한 뒤 URL과 동기화한다.
+   */
+  const [uiTab, setUiTab] = useState<InstructorDetailTabKey>(
+    () => activeTabFromUrl ?? 'application'
+  )
   const [assignedSchools, setAssignedSchools] = useState<InstructorAssignedSchoolRow[]>([])
   const [waitingSchools, setWaitingSchools] = useState<InstructorWaitingSchoolRow[]>([])
   const [selectedAssignedSchoolKeys, setSelectedAssignedSchoolKeys] = useState<Key[]>([])
@@ -259,7 +268,7 @@ export function ParticipatingInstructorFullpageView({
   const [assignGuideSessionIds, setAssignGuideSessionIds] = useState<string[]>([])
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
   const [savedAdminComment, setSavedAdminComment] = useState('')
-  const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
+  const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
   const [instructorPatches, setInstructorPatches] = useState<Partial<ParticipatingInstructorRow>>(
@@ -311,13 +320,18 @@ export function ParticipatingInstructorFullpageView({
     controlMode: 'toggleRemask',
   })
 
-  const activeTab =
-    activeTabFromUrl !== undefined && activeTabFromUrl !== null ? activeTabFromUrl : internalTab
-  const effectiveTab = activeTab
-  const setActiveTab = (key: InstructorDetailTabKey) => {
-    if (onTabChange) onTabChange(key)
-    else setInternalTab(key)
-  }
+  useEffect(() => {
+    setUiTab(activeTabFromUrl ?? 'application')
+  }, [d.id, activeTabFromUrl])
+
+  const effectiveTab = uiTab
+  const setActiveTab = useCallback(
+    (key: InstructorDetailTabKey) => {
+      setUiTab(key)
+      onTabChange?.(key)
+    },
+    [onTabChange]
+  )
 
   useEffect(() => {
     const assigned = buildInitialAssignedSchoolRows(d, schoolRows, instructorList)
@@ -339,7 +353,7 @@ export function ParticipatingInstructorFullpageView({
 
   useEffect(() => {
     setSavedAdminComment(d.adminComment ?? '')
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminCommentDraft('')
     setAdminCommentError(undefined)
     setInstructorPatches({})
@@ -798,9 +812,9 @@ export function ParticipatingInstructorFullpageView({
       })
       return
     }
-    if (applicationInfoEdit.isEditing || isAdminCommentEditing) return
+    if (applicationInfoEdit.isEditing) return
     setActivityWithdrawModalOpen(true)
-  }, [applicationInfoEdit.isEditing, isActivityWithdrawn, isAdminCommentEditing, showAlert])
+  }, [applicationInfoEdit.isEditing, isActivityWithdrawn, showAlert])
 
   const handleCancelActivityWithdraw = useCallback(() => {
     setActivityWithdrawModalOpen(false)
@@ -831,14 +845,19 @@ export function ParticipatingInstructorFullpageView({
     if (applicationInfoEdit.isEditing) return
     setAdminCommentDraft(savedAdminComment)
     setAdminCommentError(undefined)
-    setIsAdminCommentEditing(true)
+    setAdminCommentModalOpen(true)
   }, [applicationInfoEdit.isEditing, savedAdminComment])
 
   const handleAdminCommentSave = useCallback(() => {
     setSavedAdminComment(adminCommentDraft.trim())
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminCommentError(undefined)
   }, [adminCommentDraft])
+
+  const handleAdminCommentModalCancel = useCallback(() => {
+    setAdminCommentModalOpen(false)
+    setAdminCommentError(undefined)
+  }, [])
 
   const handleAdminCommentDraftChange = useCallback((value: string) => {
     setAdminCommentDraft(value)
@@ -853,9 +872,7 @@ export function ParticipatingInstructorFullpageView({
           program={program}
           privacyMasked={privacyMasked}
           adminComment={savedAdminComment}
-          isAdminCommentEditing={isAdminCommentEditing}
-          adminCommentDraft={adminCommentDraft}
-          onAdminCommentDraftChange={handleAdminCommentDraftChange}
+          isAdminCommentEditing={false}
           adminCommentError={adminCommentError}
           mode={applicationInfoEdit.isEditing ? 'edit' : 'view'}
           draft={applicationInfoEdit.draft ?? undefined}
@@ -992,9 +1009,7 @@ export function ParticipatingInstructorFullpageView({
                 variant="delete"
                 size="large"
                 width={140}
-                disabled={
-                  isActivityWithdrawn || applicationInfoEdit.isEditing || isAdminCommentEditing
-                }
+                disabled={isActivityWithdrawn || applicationInfoEdit.isEditing}
                 onClick={handleRequestActivityWithdraw}
               >
                 활동 포기
@@ -1009,10 +1024,7 @@ export function ParticipatingInstructorFullpageView({
                 활동인증서 발급
               </CmsButton>
               <CmsButton
-                variant="secondary"
-                size="large"
-                width={140}
-                disabled={isAdminCommentEditing}
+                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
                 onClick={resolveProgramEditInfoClick(applicationInfoEdit.isEditing, {
                   onEnterEdit: applicationInfoEdit.enterEdit,
                   onSaveEdit: () => applicationInfoEdit.saveEdit(),
@@ -1025,11 +1037,9 @@ export function ParticipatingInstructorFullpageView({
                 size="large"
                 width={140}
                 disabled={applicationInfoEdit.isEditing}
-                onClick={
-                  isAdminCommentEditing ? handleAdminCommentSave : handleAdminCommentEditEnter
-                }
+                onClick={handleAdminCommentEditEnter}
               >
-                {isAdminCommentEditing ? '코멘트 저장' : '코멘트 작성'}
+                코멘트 작성
               </CmsButton>
               <PersonalInfoRevealButton
                 labelMode="stickyReveal"
@@ -1237,6 +1247,13 @@ export function ParticipatingInstructorFullpageView({
         scheduleOptions={activityWithdrawScheduleOptions}
         onCancel={handleCancelActivityWithdraw}
         onConfirm={handleConfirmActivityWithdraw}
+      />
+      <MemberAdminCommentModal
+        open={adminCommentModalOpen}
+        value={adminCommentDraft}
+        onChange={handleAdminCommentDraftChange}
+        onCancel={handleAdminCommentModalCancel}
+        onConfirm={handleAdminCommentSave}
       />
     </div>
   )

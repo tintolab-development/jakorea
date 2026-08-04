@@ -20,6 +20,7 @@ import {
   BusinessIncomeView,
   LectureFeeBasisView,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-fee-fields'
+import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import { participatingRowToApplicantFeeViewRow } from '@/features/program/general/lib/participating-instructor-detail-edit'
 import {
@@ -318,6 +319,7 @@ export function ParticipatingInstructorSettlementSection({
         key: 'educationScheduleLabel',
         align: 'center',
         width: 320,
+        render: (label: string) => renderProgramDetailPipeSeparated(label),
       },
       {
         title: '강의 진행 여부',

@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, type CSSProperties } from 'react'
 import {
   patchInstitutionApplicationProgramBridge,
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
   useInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { parsePositiveIntInput } from '@/features/template/lib/participant-recruitment-institution-limits'
@@ -17,6 +18,7 @@ import {
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -136,7 +138,7 @@ export type ApplicantRecruitParticipantInfoParagraphProps = {
    * 미전달 시 기관 모집 양식 편집기에서는 true로 간주.
    */
   showInstitutionApplicationLimits?: boolean
-  layoutVariant?: 'general' | 'economy'
+  layoutVariant?: 'general' | 'economy' | 'trainedTeachers'
   defaults?: {
     studentListRequired?: 'need' | 'none'
     preguidanceRequired?: 'need' | 'none'
@@ -160,15 +162,25 @@ export function ApplicantRecruitParticipantInfoParagraph({
   const showMaxSessionsPerDayField =
     showInstitutionApplicationLimits &&
     shouldShowInstitutionApplicationMaxSessionsPerDayField(institutionApplicationBridge)
+  type RangeSeal = { start: string; end: string } | null
+
   const [announcementPublished, setAnnouncementPublished] =
-    useState<ParticipantRecruitmentAnnouncementPublishedValue>('published')
-  const [preguidanceRequired, setPreguidanceRequired] = useState<string>(
+    useApplicantRecruitInstitutionOverlayKv<ParticipantRecruitmentAnnouncementPublishedValue>(
+      APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.announcementPublished,
+      'published'
+    )
+  const [preguidanceRequired, setPreguidanceRequired] = useApplicantRecruitInstitutionOverlayKv<string>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.preguidanceRequired,
     defaults?.preguidanceRequired ?? 'need'
   )
-  const [studentListRequired, setStudentListRequired] = useState<string>(
+  const [studentListRequired, setStudentListRequired] = useApplicantRecruitInstitutionOverlayKv<string>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.studentListRequired,
     defaults?.studentListRequired ?? 'need'
   )
-  const [certificateProvided, setCertificateProvided] = useState<string>('provide')
+  const [certificateProvided, setCertificateProvided] = useApplicantRecruitInstitutionOverlayKv<string>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.certificateProvided,
+    'provide'
+  )
 
   const [maxInstructors, setMaxInstructors] = useApplicantRecruitInstitutionOverlayKv<
     number | undefined
@@ -191,23 +203,78 @@ export function ApplicantRecruitParticipantInfoParagraph({
   const maxScheduleInput = maxScheduleCount != null ? String(maxScheduleCount) : ''
   const maxSessionsInput = maxSessionsPerDay != null ? String(maxSessionsPerDay) : ''
 
-  const [programAnchor, setProgramAnchor] = useState<Dayjs | null>(null)
-  const [programRange, setProgramRange] = useState<[Dayjs, Dayjs] | null>(null)
+  const [programAnchorIso, setProgramAnchorIso] = useApplicantRecruitInstitutionOverlayKv<
+    string | null
+  >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.programAnchorIso, null)
+  const [programRangeSeal, setProgramRangeSeal] = useApplicantRecruitInstitutionOverlayKv<RangeSeal>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.programRangeSeal,
+    null
+  )
+  const programAnchor = programAnchorIso ? dayjs(programAnchorIso) : null
+  const setProgramAnchor = (next: Dayjs | null) => {
+    setProgramAnchorIso(next == null ? null : next.toISOString())
+  }
+  const programRange: [Dayjs, Dayjs] | null = useMemo(() => {
+    if (programRangeSeal == null) return null
+    return [dayjs(programRangeSeal.start), dayjs(programRangeSeal.end)]
+  }, [programRangeSeal])
+  const setProgramRange = (next: [Dayjs, Dayjs] | null) => {
+    if (next == null) {
+      setProgramRangeSeal(null)
+      return
+    }
+    setProgramRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
+  }
   const programRangeWithTime = useMemo(
     () => (programRange == null ? false : dateRangeUsesClockTime(programRange[0], programRange[1])),
     [programRange]
   )
 
-  const [recruitAnchor, setRecruitAnchor] = useState<Dayjs | null>(null)
-  const [recruitRange, setRecruitRange] = useState<[Dayjs, Dayjs] | null>(null)
+  const [recruitAnchorIso, setRecruitAnchorIso] = useApplicantRecruitInstitutionOverlayKv<
+    string | null
+  >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.recruitAnchorIso, null)
+  const [recruitRangeSeal, setRecruitRangeSeal] = useApplicantRecruitInstitutionOverlayKv<RangeSeal>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.recruitRangeSeal,
+    null
+  )
+  const recruitAnchor = recruitAnchorIso ? dayjs(recruitAnchorIso) : null
+  const setRecruitAnchor = (next: Dayjs | null) => {
+    setRecruitAnchorIso(next == null ? null : next.toISOString())
+  }
+  const recruitRange: [Dayjs, Dayjs] | null = useMemo(() => {
+    if (recruitRangeSeal == null) return null
+    return [dayjs(recruitRangeSeal.start), dayjs(recruitRangeSeal.end)]
+  }, [recruitRangeSeal])
+  const setRecruitRange = (next: [Dayjs, Dayjs] | null) => {
+    if (next == null) {
+      setRecruitRangeSeal(null)
+      return
+    }
+    setRecruitRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
+  }
   const recruitRangeWithTime = useMemo(
     () => (recruitRange == null ? false : dateRangeUsesClockTime(recruitRange[0], recruitRange[1])),
     [recruitRange]
   )
 
-  const [finalAnnounceDate, setFinalAnnounceDate] = useState<Dayjs | null>(null)
-  const [targetLevels, setTargetLevels] = useState<string[]>(
+  const [finalAnnounceIso, setFinalAnnounceIso] = useApplicantRecruitInstitutionOverlayKv<
+    string | null
+  >(APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.finalAnnounceIso, null)
+  const finalAnnounceDate = finalAnnounceIso ? dayjs(finalAnnounceIso) : null
+  const setFinalAnnounceDate = (next: Dayjs | null) => {
+    setFinalAnnounceIso(next == null ? null : next.toISOString())
+  }
+  const [targetLevels, setTargetLevels] = useApplicantRecruitInstitutionOverlayKv<string[]>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.targetLevels,
     layoutVariant === 'economy' ? ['high'] : []
+  )
+  const [notesNotApplicable, setNotesNotApplicable] = useApplicantRecruitInstitutionOverlayKv<boolean>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.notesNotApplicable,
+    false
+  )
+  const [notes, setNotes] = useApplicantRecruitInstitutionOverlayKv<string>(
+    APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS.notes,
+    ''
   )
 
   useEffect(() => {
@@ -330,7 +397,6 @@ export function ApplicantRecruitParticipantInfoParagraph({
                   inputSize="medium"
                   width="100%"
                   placeholder="상세 교육 대상을 입력하세요"
-                  defaultValue="특성화고등학교 3학년"
                 />
               }
               view="-"
@@ -406,12 +472,31 @@ export function ApplicantRecruitParticipantInfoParagraph({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="비고"
+              fullRow
               edit={
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  placeholder="비고란을 작성하세요 (없으면 -로 입력)"
-                />
+                <div className={MAX_SUFFIX_CLASS}>
+                  <CmsCheckbox
+                    checkboxSize="medium"
+                    checked={notesNotApplicable}
+                    onChange={e => {
+                      const checked = e.target.checked
+                      setNotesNotApplicable(checked)
+                      if (checked) setNotes('')
+                    }}
+                  >
+                    해당 없음
+                  </CmsCheckbox>
+                  <DetailInfoForm.InputsSeparator />
+                  <CmsInput
+                    inputSize="medium"
+                    width="100%"
+                    style={{ flex: '1 1 0', minWidth: 0 }}
+                    placeholder="비고란을 작성하세요"
+                    value={notes}
+                    disabled={notesNotApplicable}
+                    onChange={e => setNotes(e.target.value)}
+                  />
+                </div>
               }
               view="-"
             />
@@ -421,45 +506,74 @@ export function ApplicantRecruitParticipantInfoParagraph({
     )
   }
 
+  const isTrainedTeachers = layoutVariant === 'trainedTeachers'
+
   return (
     <div className="applicant-recruit-participant-info-paragraph__forms">
       <DetailInfoForm title="참여자 모집 정보" hideHeader mode="edit">
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="공고 게시 여부"
-            fullRow
-            edit={
-              <ParticipantRecruitmentAnnouncementPublishedRadios
-                value={announcementPublished}
-                onChange={setAnnouncementPublished}
+        {isTrainedTeachers ? (
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="공고 게시 여부"
+              edit={
+                <ParticipantRecruitmentAnnouncementPublishedRadios
+                  value={announcementPublished}
+                  onChange={setAnnouncementPublished}
+                />
+              }
+              view="-"
+            />
+            <DetailInfoForm.Field
+              label="학생 명단 제출 여부"
+              edit={
+                <NeedOrNotRadioGroup
+                  value={studentListRequired}
+                  onChange={setStudentListRequired}
+                />
+              }
+              view="-"
+            />
+          </DetailInfoForm.Row>
+        ) : (
+          <>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="공고 게시 여부"
+                fullRow
+                edit={
+                  <ParticipantRecruitmentAnnouncementPublishedRadios
+                    value={announcementPublished}
+                    onChange={setAnnouncementPublished}
+                  />
+                }
+                view="-"
               />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+            </DetailInfoForm.Row>
 
-        <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field
-            label="학생 명단 제출 여부"
-            edit={
-              <NeedOrNotRadioGroup
-                value={studentListRequired}
-                onChange={setStudentListRequired}
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="학생 명단 제출 여부"
+                edit={
+                  <NeedOrNotRadioGroup
+                    value={studentListRequired}
+                    onChange={setStudentListRequired}
+                  />
+                }
+                view="-"
               />
-            }
-            view="-"
-          />
-          <DetailInfoForm.Field
-            label="사전 안내 사항 작성 여부"
-            edit={
-              <NeedOrNotRadioGroup
-                value={preguidanceRequired}
-                onChange={setPreguidanceRequired}
+              <DetailInfoForm.Field
+                label="사전 안내 사항 작성 여부"
+                edit={
+                  <NeedOrNotRadioGroup
+                    value={preguidanceRequired}
+                    onChange={setPreguidanceRequired}
+                  />
+                }
+                view="-"
               />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+            </DetailInfoForm.Row>
+          </>
+        )}
 
         {showInstitutionApplicationLimits ? (
           <>
@@ -592,19 +706,21 @@ export function ApplicantRecruitParticipantInfoParagraph({
           />
         </DetailInfoForm.Row>
 
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="수료증 발급 여부"
-            fullRow
-            edit={
-              <CertificateRadioGroup
-                value={certificateProvided}
-                onChange={setCertificateProvided}
-              />
-            }
-            view="-"
-          />
-        </DetailInfoForm.Row>
+        {isTrainedTeachers ? null : (
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="수료증 발급 여부"
+              fullRow
+              edit={
+                <CertificateRadioGroup
+                  value={certificateProvided}
+                  onChange={setCertificateProvided}
+                />
+              }
+              view="-"
+            />
+          </DetailInfoForm.Row>
+        )}
 
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -675,12 +791,31 @@ export function ApplicantRecruitParticipantInfoParagraph({
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="비고"
+            fullRow
             edit={
-              <CmsInput
-                inputSize="medium"
-                width="100%"
-                placeholder="비고란을 작성하세요 (없으면 -로 입력)"
-              />
+              <div className={MAX_SUFFIX_CLASS}>
+                <CmsCheckbox
+                  checkboxSize="medium"
+                  checked={notesNotApplicable}
+                  onChange={e => {
+                    const checked = e.target.checked
+                    setNotesNotApplicable(checked)
+                    if (checked) setNotes('')
+                  }}
+                >
+                  해당 없음
+                </CmsCheckbox>
+                <DetailInfoForm.InputsSeparator />
+                <CmsInput
+                  inputSize="medium"
+                  width="100%"
+                  style={{ flex: '1 1 0', minWidth: 0 }}
+                  placeholder="비고란을 작성하세요"
+                  value={notes}
+                  disabled={notesNotApplicable}
+                  onChange={e => setNotes(e.target.value)}
+                />
+              </div>
             }
             view="-"
           />

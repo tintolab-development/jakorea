@@ -27,6 +27,7 @@ export function resolveUserBasicInfoBodyKey(
 ): UserBasicInfoEntrySource {
   if (entrySourceProp) return entrySourceProp
   if (entryFromQuery) return entryFromQuery
+  if (role === 'SCHOOL') return 'institution'
   if (role === 'INSTRUCTOR') return 'instructor'
   if (role === 'ADMIN') return 'admin'
   return 'all_users'

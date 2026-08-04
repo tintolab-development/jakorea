@@ -29,6 +29,7 @@ When deleting or mutating entities, keep **referential integrity** (e.g. cascade
 - id: `general-prog-type-{org|ind}-{curriculum|schedule}-{single|multi}`
 - **title**: `일반 프로그램 (기관)_커리큘럼형_단일 회차` 형식 (8종 전체) — **목록·상세 헤더·breadcrumb**
 - **공고용 프로그램명** 등 공통 정보 필드는 `generalCommonInfo` / `buildGeneralOrgCurriculumSingleProgramSeedFields()` (기관_커리큘럼형_단일 회차 스크린샷 mock: `general-prog-type-org-curriculum-single`)
+- **참여 기관 1건** — `participating-schools.ts` `ORG_CURRICULUM_SINGLE_PARTICIPATING_SCHOOLS` (`school-1` 강서초, `programId` 스코프). `getParticipatingSchoolsForProgram`이 programId 매칭 시 해당 목록만 반환
 - **추가 데모 1건** — 기관_커리큘럼형_복수 회차 + 교육 형태·IPS **일정 별 상이**: id `general-prog-type-org-curriculum-multi-edu-ips-per-schedule`, 목록 **title** `…복수 회차 · 교육·IPS 일정별 상이` (8종 mock과 구분)
 - **LNB**: 강사·봉사(면접 2depth)·설문(3항목) **전부 포함**
 - `generalProgramAudience` / `generalProgramEducationStructure` / `generalProgramSessionRound` 필드 설정

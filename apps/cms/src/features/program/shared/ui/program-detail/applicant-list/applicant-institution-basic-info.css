@@ -21,6 +21,11 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* StatusDropdown 열림 시 자식 min-content 가 섹션 가로를 키우지 않도록 */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .applicant-institution-basic-info__title {
@@ -62,8 +67,14 @@
 .applicant-institution-basic-info__table-wrap {
   border: 1px solid #d4d4d4;
   border-radius: 8px;
-  overflow: hidden;
+  /* clip: 모서리만 자르고 스크롤포트는 만들지 않음 — StatusDropdown 열림 시 가로 밀림 방지 */
+  overflow: clip;
   background: #fff;
+  /* flex/grid 조상에서 콘텐츠 min-content 로 표 폭이 커지지 않게 고정 */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* 신청 양식 수정 슬롯: 테이블 td 안에서 detail-info-form 한 줄 래퍼가 폭을 채우도록 */

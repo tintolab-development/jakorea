@@ -8,7 +8,7 @@
 import type { SignupTermsDocument } from './signupTermsDocument';
 
 /**
- * 홈페이지 회원가입 약관 원장 응답
+ * 회원 포탈 회원가입 약관 원장 응답
  */
 export interface SignupTermsCatalogResponse {
   /** 회원 유형 */

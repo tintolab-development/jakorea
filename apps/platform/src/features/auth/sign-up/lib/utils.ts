@@ -9,6 +9,21 @@ import {
   MOCK_VERIFIED_PHONE,
 } from './constants'
 
+/** 숫자만 입력해도 YYYY.MM.DD 형식으로 `.`을 자동 삽입한다. */
+export function formatBirthDateInput(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 8)
+
+  if (digits.length <= 4) {
+    return digits
+  }
+
+  if (digits.length <= 6) {
+    return `${digits.slice(0, 4)}.${digits.slice(4)}`
+  }
+
+  return `${digits.slice(0, 4)}.${digits.slice(4, 6)}.${digits.slice(6)}`
+}
+
 export function parseBirthDate(value: string) {
   const matched = value.trim().match(/^(\d{4})\.(\d{2})\.(\d{2})$/)
 
@@ -96,11 +111,13 @@ export function buildConfirmationRows(input: {
   addressDetail: string
   email: string
   volunteerId: string
+  name?: string
+  phone?: string
 }): ConfirmationRow[] {
   return [
     { label: '회원유형', value: getMemberTypeLabel(input.selectedType) },
-    { label: '이름', value: MOCK_VERIFIED_NAME },
-    { label: '휴대폰 번호', value: MOCK_VERIFIED_PHONE },
+    { label: '이름', value: input.name?.trim() || MOCK_VERIFIED_NAME },
+    { label: '휴대폰 번호', value: input.phone?.trim() || MOCK_VERIFIED_PHONE },
     { label: '생년월일', value: input.birthDate },
     { label: '성별', value: getGenderLabel(input.gender) },
     { label: '재학유무', value: getSchoolStatusLabel(input.schoolStatus) },

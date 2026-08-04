@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef } from 'react'
+import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import type { VolunteerInterviewScheduleEditSeed } from '@/features/program/shared/lib/volunteer-interview-schedule-edit-seed'
 import {
@@ -12,6 +13,10 @@ import { ProgramApplicationScheduleSummaryHintText } from '@/features/template/u
 import { useProgramRegistrationScheduleTopCalendarHeightSync } from '@/features/template/hooks/use-program-registration-schedule-top-calendar-height-sync'
 import { ParagraphCalendarMini } from '@/features/template/ui/shared/paragraph-calendar-mini'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
+import {
+  useGeneralApplicationOverlayKv,
+  updateGeneralApplicationOverlayKey,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import './volunteer-interview-applicant-schedule-paragraph.css'
 
 type SelectedSlot = {
@@ -33,6 +38,14 @@ function formatDateSummaryLabel(dateKey: string): string {
   const d = dayjs(dateKey)
   const yShort = d.year() % 100
   return `${yShort}년 ${d.month() + 1}월 ${d.date()}일`
+}
+
+/** overlay는 JSON 왕복 시 Dayjs → ISO string이 되므로 저장도 ISO로 통일 */
+function coerceOverlayDayjs(value: Dayjs | string | null | undefined, fallback: Dayjs): Dayjs {
+  if (value == null) return fallback
+  if (dayjs.isDayjs(value)) return value.isValid() ? value : fallback
+  const parsed = dayjs(value)
+  return parsed.isValid() ? parsed : fallback
 }
 
 function buildGroupedSummaryEntries(
@@ -70,12 +83,26 @@ export function VolunteerInterviewApplicantScheduleParagraph({
     [seed]
   )
 
-  const [currentMonth, setCurrentMonth] = useState(() => parsedSchedule.scheduleMonth)
-  const [selectedDate, setSelectedDate] = useState(() => {
+  const computeDefaultSelectedDate = () => {
     const first = [...parsedSchedule.clickableDateKeys].sort()[0]
     return first ? dayjs(first) : parsedSchedule.scheduleMonth
-  })
-  const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([])
+  }
+
+  const defaultSelectedDate = computeDefaultSelectedDate()
+  const [currentMonthIso, setCurrentMonthIso] = useGeneralApplicationOverlayKv(
+    'application.volunteer.applicant.currentMonth',
+    parsedSchedule.scheduleMonth.toISOString()
+  )
+  const [selectedDateIso, setSelectedDateIso] = useGeneralApplicationOverlayKv(
+    'application.volunteer.applicant.selectedDate',
+    defaultSelectedDate.toISOString()
+  )
+  const currentMonth = coerceOverlayDayjs(currentMonthIso, parsedSchedule.scheduleMonth)
+  const selectedDate = coerceOverlayDayjs(selectedDateIso, defaultSelectedDate)
+  const [selectedSlots] = useGeneralApplicationOverlayKv<SelectedSlot[]>(
+    'application.volunteer.applicant.selectedSlots',
+    []
+  )
 
   const scheduleTopRef = useRef<HTMLDivElement>(null)
   const calendarWrapRef = useRef<HTMLDivElement>(null)
@@ -86,24 +113,25 @@ export function VolunteerInterviewApplicantScheduleParagraph({
   const slotsForSelectedDay = parsedSchedule.slotsForDate(selectedDateKey)
 
   useEffect(() => {
-    setCurrentMonth(parsedSchedule.scheduleMonth)
+    setCurrentMonthIso(parsedSchedule.scheduleMonth.toISOString())
     const first = [...parsedSchedule.clickableDateKeys].sort()[0]
-    setSelectedDate(first ? dayjs(first) : parsedSchedule.scheduleMonth)
-    setSelectedSlots([])
-  }, [seed])
+    setSelectedDateIso((first ? dayjs(first) : parsedSchedule.scheduleMonth).toISOString())
+    updateGeneralApplicationOverlayKey<SelectedSlot[]>('application.volunteer.applicant.selectedSlots', () => [])
+  }, [seed, setCurrentMonthIso, setSelectedDateIso])
 
   const toggleSlot = (slotKey: string, label: string, enabled: boolean) => {
     if (readOnlyPreview || !enabled) return
-    setSelectedSlots(prev => {
-      const exists = prev.some(
-        item => item.dateKey === selectedDateKey && item.slotKey === slotKey
+    updateGeneralApplicationOverlayKey<SelectedSlot[]>('application.volunteer.applicant.selectedSlots', prev => {
+      const current = prev ?? []
+      const exists = current.some(
+        (item: SelectedSlot) => item.dateKey === selectedDateKey && item.slotKey === slotKey
       )
       if (exists) {
-        return prev.filter(
-          item => !(item.dateKey === selectedDateKey && item.slotKey === slotKey)
+        return current.filter(
+          (item: SelectedSlot) => !(item.dateKey === selectedDateKey && item.slotKey === slotKey)
         )
       }
-      return [...prev, { dateKey: selectedDateKey, slotKey, label }]
+      return [...current, { dateKey: selectedDateKey, slotKey, label }]
     })
   }
 
@@ -144,8 +172,8 @@ export function VolunteerInterviewApplicantScheduleParagraph({
           <ParagraphCalendarMini
             currentMonth={currentMonth}
             selectedDate={selectedDate}
-            onMonthChange={setCurrentMonth}
-            onSelectDate={setSelectedDate}
+            onMonthChange={date => setCurrentMonthIso(date.toISOString())}
+            onSelectDate={date => setSelectedDateIso(date.toISOString())}
             programDates={adminAvailableDateKeys}
             disabledDate={parsedSchedule.disabledDate}
           />

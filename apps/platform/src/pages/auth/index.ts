@@ -17,5 +17,11 @@ export {
   SignUpSocialConnectCompletePage,
   SignUpSocialConnectErrorPage,
 } from './sign-up'
+export {
+  SignUpIdentityCallbackPage,
+  SignUpGuardianIdentityCallbackPage,
+  SignUpIdentityMockNicePage,
+  SignUpGuardianIdentityMockNicePage,
+} from './sign-up/identity-pages'
 export { RequiredPage } from './required'
 export { SocialErrorPage } from './social'

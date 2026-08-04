@@ -18,6 +18,12 @@ export interface CreateIdentityVerificationStateOptions {
   routes: IdentityVerificationRoutes
   /** localStorage 키 prefix — 앱·플로우별로 분리 */
   storagePrefix?: string
+  /**
+   * 콜백·mock URL origin.
+   * 미지정 시 `window.location.origin`.
+   * 백엔드 NICE frontendReturnUrl allowlist와 맞추려면 `VITE_OAUTH_REDIRECT_ORIGIN` 등을 넘긴다.
+   */
+  publicOrigin?: () => string
 }
 
 const DEFAULT_PREFIX = 'identity_verification'
@@ -29,6 +35,7 @@ export function createIdentityVerificationState(
   const keys = {
     sessionId: `${prefix}_session_id`,
     nonce: `${prefix}_challenge_nonce`,
+    statusToken: `${prefix}_status_token`,
     birthDate: `${prefix}_birth_date`,
     gender: `${prefix}_gender`,
     name: `${prefix}_name`,
@@ -41,6 +48,11 @@ export function createIdentityVerificationState(
   function setPendingChallenge(challenge: PendingIdentityChallenge) {
     localStorage.setItem(keys.sessionId, String(challenge.sessionId))
     localStorage.setItem(keys.nonce, challenge.nonce)
+    if (challenge.statusToken) {
+      localStorage.setItem(keys.statusToken, challenge.statusToken)
+    } else {
+      localStorage.removeItem(keys.statusToken)
+    }
     if (challenge.birthDate) {
       localStorage.setItem(keys.birthDate, challenge.birthDate)
     } else {
@@ -71,16 +83,18 @@ export function createIdentityVerificationState(
       return null
     }
 
+    const statusToken = localStorage.getItem(keys.statusToken) ?? undefined
     const birthDate = localStorage.getItem(keys.birthDate) ?? undefined
     const gender = localStorage.getItem(keys.gender) ?? undefined
     const name = localStorage.getItem(keys.name) ?? undefined
 
-    return { sessionId, nonce, birthDate, gender, name }
+    return { sessionId, nonce, statusToken, birthDate, gender, name }
   }
 
   function clearPendingChallenge() {
     localStorage.removeItem(keys.sessionId)
     localStorage.removeItem(keys.nonce)
+    localStorage.removeItem(keys.statusToken)
     localStorage.removeItem(keys.birthDate)
     localStorage.removeItem(keys.gender)
     localStorage.removeItem(keys.name)

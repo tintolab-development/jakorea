@@ -18,7 +18,7 @@ export interface PasswordChangeRequest {
   currentPassword: string;
   /**
      * 새 비밀번호. 실제 값을 문서나 로그에 남기지 않습니다.
-     * @minLength 12
+     * @minLength 8
      * @maxLength 200
      */
   newPassword: string;

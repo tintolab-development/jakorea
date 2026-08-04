@@ -1,5 +1,6 @@
 {
   "templateCode": "application-trained-teachers",
+  "templateName": "교육받은 교사_참여 기관 신청 폼",
   "formType": "WRITING",
   "category": "APPLICATION",
   "schemaJson": {

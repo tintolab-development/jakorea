@@ -1,6 +1,7 @@
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './complete.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 const SOCIAL_CONNECT_PATH = '/auth/sign-up/social-connect'
 
@@ -14,14 +15,13 @@ export function SignUpSocialConnectCompletePage() {
   }
 
   return (
-    <section className={styles.page}>
-      <div className={styles.container}>
+    <section>
         <div className={styles.intro}>
           <img className={styles.illustration} src={illustCheckUrl} alt="" aria-hidden="true" />
-          <PFText as="div" typo="hd-md" color="black" className={styles.title}>
+          <PFText as="div" typo="hd-md" color="black" className={authPageCopyClass('title')}>
             소셜 계정이 연결되었어요!
           </PFText>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={styles.description}>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-500" className={authPageCopyClass('description')}>
             다음부터 이 계정으로 간편하게 로그인할 수 있어요.
           </PFText>
         </div>
@@ -34,7 +34,6 @@ export function SignUpSocialConnectCompletePage() {
             다른 소셜계정도 연결하기
           </PFButton>
         </div>
-      </div>
     </section>
   )
 }

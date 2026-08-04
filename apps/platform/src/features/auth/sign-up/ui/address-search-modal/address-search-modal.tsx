@@ -19,10 +19,17 @@ function isKeywordTooShortError(message: string) {
   return message.includes(KEYWORD_TOO_SHORT_MESSAGE) || message.includes('두글자')
 }
 
+export type SelectedAddress = {
+  address: string
+  postalCode?: string
+  regionSido?: string
+  regionSigungu?: string
+}
+
 type AddressSearchModalProps = {
   open: boolean
   onClose: () => void
-  onSelect: (address: string) => void
+  onSelect: (selection: SelectedAddress) => void
 }
 
 function suggestionPrimaryLine(item: JusoAddressItem) {
@@ -48,8 +55,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
   const trimmedKeyword = keyword.trim()
   const totalPages = Math.max(1, Math.ceil(totalCount / RESULT_COUNT_PER_PAGE))
   const hasAddressResults = addresses.length > 0
-  const suggestOverlayError =
-    error && !isKeywordTooShortError(error.message) ? error.message : null
+  const suggestOverlayError = error && !isKeywordTooShortError(error.message) ? error.message : null
   const showSuggestOverlay =
     !hasSearched && trimmedKeyword.length > 0 && Boolean(suggestOverlayError || hasAddressResults)
 
@@ -80,7 +86,12 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
   }
 
   const handleSelect = (item: JusoAddressItem) => {
-    onSelect(item.roadAddr || item.jibunAddr)
+    onSelect({
+      address: item.roadAddr || item.jibunAddr,
+      postalCode: item.zipNo?.trim() || undefined,
+      regionSido: item.siNm?.trim() || undefined,
+      regionSigungu: item.sggNm?.trim() || undefined,
+    })
     handleClose()
   }
 
@@ -102,7 +113,14 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
   }, [hasSearched, keyword, open, search, trimmedKeyword])
 
   return (
-    <PFModal open={open} title="주소 검색" onClose={handleClose}>
+    <PFModal
+      open={open}
+      title="주소 검색"
+      onClose={handleClose}
+      mobilePlacement="full"
+      closeOnBackdropClick={false}
+      closeOnEscape={false}
+    >
       <div
         className={[
           styles.addressModalMain,
@@ -130,7 +148,11 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
                 }
               }}
             />
-            <PFButton size="xlarge" width="160px" onClick={handleSearch}>
+            <PFButton
+              size="xlarge"
+              className={styles.addressModalSearchButton}
+              onClick={handleSearch}
+            >
               검색
             </PFButton>
           </div>
@@ -174,12 +196,7 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
               <PFText as="div" typo="bd-lg-sb" color="black">
                 Tip
               </PFText>
-              <PFText
-                as="p"
-                typo="bd-sm-md"
-                color="black"
-                className={styles.addressModalTipLead}
-              >
+              <PFText as="p" typo="bd-sm-md" color="black" className={styles.addressModalTipLead}>
                 아래와 같은 조합으로 검색을 하시면 더욱 정확한 결과가 검색됩니다.
               </PFText>
               <div className={styles.addressModalTipList}>

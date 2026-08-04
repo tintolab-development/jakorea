@@ -9,7 +9,10 @@ import type {
 import { SponsorContactDeleteModal } from '@/features/sponsor/ui/modal/sponsor-contact-delete-modal'
 import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import { AddressSearch, CmsButton, CmsInput, CmsRadioGroup } from '@/shared/ui'
 import type { SponsorOrganizationKind } from '@/types/domain'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -57,21 +60,23 @@ export function SponsorBasicInfoSection({
 
   const sponsorshipStatusFieldContent =
     canWrite ? (
-      <StatusDropdownCell<SponsorshipStatus>
-        status={value.sponsorshipStatus ?? 'active'}
-        statusOptions={SPONSORSHIP_STATUS_OPTIONS}
-        renderBadge={status => <SponsorSponsorshipStatusBadge status={status} />}
-        isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
-        onChange={next =>
-          onChange(prev => ({
-            ...prev,
-            sponsorshipStatus: next,
-          }))
-        }
-        isOpen={isSponsorshipStatusDropdownOpen}
-        onOpenChange={setIsSponsorshipStatusDropdownOpen}
-        tagLayout="tag100"
-      />
+      <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
+        <StatusDropdownCell<SponsorshipStatus>
+          status={value.sponsorshipStatus ?? 'active'}
+          statusOptions={SPONSORSHIP_STATUS_OPTIONS}
+          renderBadge={status => <SponsorSponsorshipStatusBadge status={status} />}
+          isItemDisabled={(currentStatus, optionStatus) => currentStatus === optionStatus}
+          onChange={next =>
+            onChange(prev => ({
+              ...prev,
+              sponsorshipStatus: next,
+            }))
+          }
+          isOpen={isSponsorshipStatusDropdownOpen}
+          onOpenChange={setIsSponsorshipStatusDropdownOpen}
+          tagLayout="tag100"
+        />
+      </span>
     ) : (
       <SponsorSponsorshipStatusBadge status={value.sponsorshipStatus ?? 'active'} />
     )

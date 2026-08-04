@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -12,6 +12,7 @@ import {
   ProgramRegistrationIpsTypeFields,
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
+import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 type TrainedTeachersRegistrationTypeSettingsParagraphProps = {
@@ -79,12 +80,21 @@ export function TrainedTeachersRegistrationTypeSettingsParagraph({
   ipsScheduleDetail,
   onIpsScheduleDetailChange,
 }: TrainedTeachersRegistrationTypeSettingsParagraphProps) {
-  const [educationForm, setEducationForm] = useState('online')
-  const [multiCommonEducationForm, setMultiCommonEducationForm] = useState('')
-  const [ipsType, setIpsType] = useState<ProgramRegistrationIpsTypeValue>({
-    category: '',
-    detail: '',
-  })
+  const [educationForm, setEducationForm] = useProgramRegistrationOverlayKv(
+    'trainedTeachersRegistration.typeSettings.educationForm',
+    'online'
+  )
+  const [multiCommonEducationForm, setMultiCommonEducationForm] = useProgramRegistrationOverlayKv(
+    'trainedTeachersRegistration.typeSettings.multiCommonEducationForm',
+    ''
+  )
+  const [ipsType, setIpsType] = useProgramRegistrationOverlayKv<ProgramRegistrationIpsTypeValue>(
+    'trainedTeachersRegistration.typeSettings.ipsType',
+    {
+      category: '',
+      detail: '',
+    }
+  )
 
   const educationFormOptions = getProgramRegistrationEducationFormOptions(true)
 

@@ -1,0 +1,67 @@
+---
+description: 목록 탭·필터 soft navigation + StrictMode/중복 fetch 방지 (프로그램 mock catalog 재발 방지)
+globs: apps/platform/src/pages/**/*.{ts,tsx},apps/platform/src/features/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Soft navigation & fetch dedupe (Platform)
+
+프로그램 목록 등에서 **탭·필터마다 mock/API가 두 번(이상) 호출**되던 재발을 막는다.  
+(원인: `location.assign` 전체 리로드 + React StrictMode 이중 `useEffect` + in-flight 캐시 없음.)
+
+## 1. 같은 화면 내 쿼리 변경 = soft navigation
+
+목록·검색·탭·필터·페이지 번호만 바뀔 때:
+
+| 금지 | 필수 |
+|------|------|
+| `window.location.assign` / `href` 로 같은 페이지 재진입 | `setState` + `history.pushState` (또는 replaceState)로 path/query 동기화 |
+| URL만 바꾸고 state 미반영 | `popstate` 에서 search params 재파싱 → state 갱신 |
+
+클라이언트 필터로 충분한 데이터는 **탭/필터 변경 시 다시 fetch 하지 않는다.**  
+마운트(또는 세션/로그인 경계)에서 1회 load · hydrate 한다.
+
+참고 구현: [`pages/programs/page.tsx`](../../../src/pages/programs/page.tsx) (`updateParams` + `popstate`).
+
+```tsx
+// ❌ BAD — 탭마다 문서 리로드 → 훅 재마운트 → catalog 재요청
+window.location.assign(buildListPath(merged))
+
+// ✅ GOOD — URL 공유·뒤로가기 유지, 리마운트 없음
+setParams(merged)
+window.history.pushState(null, '', buildListPath(merged))
+// + popstate → setParams(readListParams())
+```
+
+상세/다른 라우트로 나갈 때만 `location.assign` (또는 라우터) 허용.
+
+## 2. DEV StrictMode — 네트워크는 1회
+
+`main.tsx` 의 `<StrictMode>` 는 **개발에서 effect를 두 번** 돈다.  
+`useEffect` 안의 `fetch` 는 다음 중 하나를 **반드시** 갖춘다:
+
+1. **모듈 스코프 in-flight + result 캐시** (같은 Promise 공유 → 완료 후 메모리 재사용)
+2. **TanStack Query** (`queryKey` 동일 → 자동 중복 제거) — [tanstack-query-cache.mdc](../libraries/tanstack-query-cache.mdc)
+
+| 금지 | 필수 |
+|------|------|
+| effect 에서 매 호출 raw `fetch` 만 | in-flight 중이면 새 요청 시작하지 않음 |
+| 캐시 없는 동시 이중 호출 | 로그아웃·권한/`DEV_AUTH` 변경 시에만 캐시 무효화 |
+
+참고 구현: [`features/program/lib/mock-program-catalog-client.ts`](../../../src/features/program/lib/mock-program-catalog-client.ts)  
+(`inflightRequest` + `cachedCatalog` + `clearMockProgramCatalogCache`).
+
+POST·일회성 콜백(예: 본인인증) 도 모듈 `Set`/키 dedupe를 고려 — [`identity-callback-once.ts`](../../../src/features/auth/identity-verification/identity-callback-once.ts).
+
+## 3. 체크리스트 (목록·catalog·mock API 작업 시)
+
+- [ ] 탭/필터/정렬/페이지가 **soft navigation** 인가? (`location.assign` 잔존 여부)
+- [ ] load 훅이 **카탈로그·목록 API를 필터 change 마다** 부르지 않는가?
+- [ ] 네트워크 레이어에 **in-flight dedupe 또는 RQ** 가 있는가?
+- [ ] 로그인/로그아웃 시 캐시 무효화가 정의되어 있는가?
+- [ ] DEV Network 탭에서 StrictMode 진입 시 동일 요청이 **1회**인가?
+
+## 관련
+
+- mock catalog hydrate: [`use-mock-programs-catalog.ts`](../../../src/features/program/lib/use-mock-programs-catalog.ts)
+- list URL params: [`list-params.ts`](../../../src/features/program/lib/list-params.ts)

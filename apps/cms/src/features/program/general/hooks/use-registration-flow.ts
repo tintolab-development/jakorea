@@ -4,6 +4,9 @@ import {
   resetInstitutionApplicationProgramBridge,
 } from '@/features/program/general/lib/institution-application-program-bridge'
 import { resetApplicantRecruitInstitutionOverlay } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import { resetGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import { resetGeneralApplicationOverlay } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
+import { resetProgramRegistrationOverlay } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
   lookupTemplateRegistry,
@@ -189,6 +192,13 @@ export function useGeneralProgramRegistrationFlow(
       if (base.key === 'program') {
         return { ...base, templateId: 'registration-economy' }
       }
+      if (base.key === 'recruit-participant-school') {
+        return {
+          ...base,
+          templateId: 'recruitment-economy',
+          editorVariant: 'economy-recruit-institution' as const,
+        }
+      }
       if (base.key === 'application-participant-school') {
         return {
           ...base,
@@ -247,6 +257,9 @@ export function useGeneralProgramRegistrationFlow(
     if (!open) {
       resetInstitutionApplicationProgramBridge()
       resetApplicantRecruitInstitutionOverlay()
+      resetGeneralRecruitOverlay()
+      resetGeneralApplicationOverlay()
+      resetProgramRegistrationOverlay()
       return
     }
     patchInstitutionApplicationProgramBridge({
@@ -306,6 +319,14 @@ export function useGeneralProgramRegistrationFlow(
     [registryEntry, editorVm]
   )
 
+  const persistDraftSilent = useCallback(async () => {
+    if (isProgramStep) {
+      await registrationVm.handleSave({ silent: true })
+      return
+    }
+    await participantVm.handleSave({ silent: true })
+  }, [isProgramStep, registrationVm, participantVm])
+
   const selectStep = useCallback(
     (key: GeneralProgramRegistrationStepKey) => {
       const next = coerceRegistrationStepForVariant(
@@ -313,10 +334,19 @@ export function useGeneralProgramRegistrationFlow(
         participantFlags,
         registrationFormVariant
       )
-      setActiveStep(next)
-      options?.onStepChange?.(next)
+      if (next === coercedActiveStep) return
+      void persistDraftSilent().finally(() => {
+        setActiveStep(next)
+        options?.onStepChange?.(next)
+      })
     },
-    [options, participantFlags, registrationFormVariant]
+    [
+      coercedActiveStep,
+      options,
+      participantFlags,
+      persistDraftSilent,
+      registrationFormVariant,
+    ]
   )
 
   const goToPhase = useCallback(
@@ -344,14 +374,6 @@ export function useGeneralProgramRegistrationFlow(
       return
     }
     participantVm.handlePreview()
-  }, [isProgramStep, registrationVm, participantVm])
-
-  const persistDraftSilent = useCallback(async () => {
-    if (isProgramStep) {
-      await registrationVm.handleSave({ silent: true })
-      return
-    }
-    await participantVm.handleSave({ silent: true })
   }, [isProgramStep, registrationVm, participantVm])
 
   const handleSave = useCallback(() => {

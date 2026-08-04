@@ -10,8 +10,16 @@
  * 정산 지급정정 요청
  */
 export interface SettlementCorrectionRequest {
-  /** 정정 요청 사유 */
-  reason?: string;
-  /** 요청 변경 요약 */
+  /**
+     * 정정 요청 사유
+     * @minLength 2
+     * @maxLength 500
+     */
+  reason: string;
+  /**
+     * 요청 변경 요약
+     * @minLength 0
+     * @maxLength 1000
+     */
   requestedChangeSummary?: string;
 }

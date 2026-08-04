@@ -7,7 +7,7 @@
  */
 
 /**
- * 홈페이지 회원 이메일 중복 확인 응답
+ * 회원 포탈 회원 이메일 중복 확인 응답
  */
 export interface HomepageEmailAvailabilityResponse {
   /** 정규화된 이메일 */

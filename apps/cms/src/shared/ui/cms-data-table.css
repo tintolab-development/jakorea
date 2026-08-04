@@ -13,7 +13,8 @@
 .cms-data-table .ant-table-container {
   border: 1px solid var(--table-line, var(--color-border));
   border-radius: var(--radius-8, 8px);
-  overflow: hidden;
+  /* clip: StatusDropdown 열림(그림자) 시 overflow:hidden 스크롤포트 가로 밀림 방지 */
+  overflow: clip;
 }
 
 .cms-data-table .ant-table-tbody > tr:last-child > td {

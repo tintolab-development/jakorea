@@ -38,6 +38,14 @@
   width: 100%;
 }
 
+.survey-management-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  width: 100%;
+}
+
 .survey-management-create-modal .teal-header-modal__body:has(> .content-modal__description) {
   padding-top: 12px;
 }

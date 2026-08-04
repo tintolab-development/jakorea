@@ -1,5 +1,5 @@
 import { useCallback, type MouseEvent } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
@@ -81,6 +81,7 @@ export function GeneralVolunteerDocScreeningSection({
     setOpenManagerDropdown,
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
+    applicationsLoading,
   } = useGeneralVolunteerDocScreening({ programId })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
@@ -208,6 +209,14 @@ export function GeneralVolunteerDocScreeningSection({
           onCancelDocumentRejection={() => openCancelRejectModal(selectedApplicant)}
         />
       </>
+    )
+  }
+
+  if (applicationsLoading && list.length === 0) {
+    return (
+      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+        <Spin size="large" />
+      </div>
     )
   }
 

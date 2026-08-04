@@ -56,6 +56,8 @@ export function EditorSection() {
           <CmsButton
             variant="secondary"
             size="medium"
+            width="auto"
+            className="cms-button--no-label-ellipsis"
             onClick={() => setPreviewMarkdown(api?.getMarkdown() ?? DEMO_MARKDOWN)}
           >
             에디터 내용으로 미리보기 갱신

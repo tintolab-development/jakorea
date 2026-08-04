@@ -10,7 +10,11 @@ import type { StudentListFilterParams } from '../../../hooks/use-student-list-fi
 import { CheckOutlined, DownloadOutlined } from '@ant-design/icons'
 import { Table } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
-import { CmsButton, CmsInput, CmsRadio, CmsSelect, FilterTableLayout, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsRadio, CmsSelect, FilterTableLayout, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
+import {
+  PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
+} from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -553,7 +557,7 @@ export function SchoolDetailStudentListSection({
       <CmsButton
         variant="secondary"
         size="large"
-        width={215}
+        width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
         icon={<DownloadOutlined />}
         className="school-detail-student-list-section__btn-outline"
         disabled={certificateExportActive}
@@ -564,18 +568,15 @@ export function SchoolDetailStudentListSection({
       {!readOnly ? (
         <>
           <CmsButton
-            variant="secondary"
-            size="large"
-            width={140}
-            className={[
-              'school-detail-student-list-section__btn-edit-info',
-              isStudentListEditMode && 'school-detail-student-list-section__btn-edit-info--active',
-            ]
-              .filter(Boolean)
-              .join(' ')}
+            {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
+            className={
+              isStudentListEditMode
+                ? 'school-detail-student-list-section__btn-edit-info--active'
+                : undefined
+            }
             onClick={handleEditInfoClick}
           >
-            정보 수정
+            {PROGRAM_EDIT_INFO_BUTTON_LABEL}
           </CmsButton>
           <CmsButton
             variant="primary"
@@ -596,13 +597,10 @@ export function SchoolDetailStudentListSection({
         <>
           {onEditInfo && (
             <CmsButton
-              variant="secondary"
-              size="large"
-              width={140}
-              className="school-detail-student-list-section__btn-edit-info"
+              {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
               onClick={onEditInfo}
             >
-              정보 수정
+              {PROGRAM_EDIT_INFO_BUTTON_LABEL}
             </CmsButton>
           )}
           {onAddStudent && (

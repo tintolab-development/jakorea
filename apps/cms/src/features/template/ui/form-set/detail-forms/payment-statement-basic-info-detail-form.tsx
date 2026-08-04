@@ -66,6 +66,8 @@ export type PaymentStatementBasicInfoDetailFormProps = {
    * false: 발급용과 같이 전 필드 비활성.
    */
   onlyPaymentPurposeLocked?: boolean
+  /** 편집 가능 모드에서 값 변경 시 (확인·서명란 성명 동기화 등) */
+  onValuesChange?: (values: PaymentStatementBasicInfoAutofillValues) => void
 }
 
 function textOrDash(value: string): string {
@@ -84,6 +86,7 @@ export function PaymentStatementBasicInfoDetailForm({
   className,
   displayMode = 'editor',
   onlyPaymentPurposeLocked = false,
+  onValuesChange,
 }: PaymentStatementBasicInfoDetailFormProps) {
   const isDocumentMode = displayMode === 'document'
   const merged = useMemo(() => ({ ...EMPTY, ...valuesProp }), [valuesProp])
@@ -96,7 +99,12 @@ export function PaymentStatementBasicInfoDetailForm({
   const v = editable ? local : merged
   const allAutofillLocked = !editable
   const patch = (next: Partial<PaymentStatementBasicInfoAutofillValues>) => {
-    if (editable) setLocal(prev => ({ ...prev, ...next }))
+    if (!editable) return
+    setLocal(prev => {
+      const updated = { ...prev, ...next }
+      onValuesChange?.(updated)
+      return updated
+    })
   }
 
   const rowDash = <span className="payment-statement-basic-info-detail-form__dash">-</span>
@@ -163,6 +171,7 @@ export function PaymentStatementBasicInfoDetailForm({
                 value={v.residentFront}
                 onValueChange={value => patch({ residentFront: value })}
                 maxLength={6}
+                width="100%"
                 aria-label="주민등록번호 앞자리"
               />
               {rowDash}
@@ -174,6 +183,7 @@ export function PaymentStatementBasicInfoDetailForm({
                 value={v.residentBack}
                 onValueChange={value => patch({ residentBack: value })}
                 maxLength={7}
+                width="100%"
                 aria-label="주민등록번호 뒷자리"
               />
             </div>

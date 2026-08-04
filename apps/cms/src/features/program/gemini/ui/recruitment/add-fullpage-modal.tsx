@@ -60,15 +60,22 @@ export function GeminiRecruitmentAddFullpageModal({
     })
   }, [form, showAlert])
 
-  const handleRegister = useCallback(() => {
+  const handleRegister = useCallback(async () => {
     if (!form.hydrated || !form.isRegisterReady) return
     const snapshot = form.buildSaveSnapshot()
-    geminiRecruitmentService.register(snapshot)
-    showAlert({
-      title: '안내',
-      content: REGISTER_SUCCESS_MESSAGE,
-    })
-    onClose()
+    try {
+      await geminiRecruitmentService.register(snapshot)
+      showAlert({
+        title: '안내',
+        content: REGISTER_SUCCESS_MESSAGE,
+      })
+      onClose()
+    } catch {
+      showAlert({
+        title: '안내',
+        content: '모집 공고 등록에 실패했습니다.\n입력값과 서버 상태를 확인한 뒤 다시 시도해 주세요.',
+      })
+    }
   }, [form, onClose, showAlert])
 
   const handleRequestClose = useCallback(() => {

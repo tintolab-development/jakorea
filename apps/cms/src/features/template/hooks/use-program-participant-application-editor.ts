@@ -58,6 +58,18 @@ import {
   GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
 import {
+  createGeminiVisitingTrainingRecruitFormDraft,
+  GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/gemini-visiting-training-recruit-form-draft'
+import {
+  createTrainedTeachersRecruitFormInstitutionDraft,
+  TRAINED_TEACHERS_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/trained-teachers-recruit-form-institution-draft'
+import {
+  createEconomyRecruitFormInstitutionDraft,
+  ECONOMY_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
+} from '@/features/template/model/economy-recruit-form-institution-draft'
+import {
   createProgramApplicationFormInstitutionDraft,
   PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/program-application-form-institution-draft'
@@ -116,6 +128,21 @@ import {
   replaceUjatRecruitVolunteerOverlay,
   resetUjatRecruitVolunteerOverlay,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
+import {
+  getApplicantRecruitInstitutionOverlayRecord,
+  replaceApplicantRecruitInstitutionOverlay,
+  resetApplicantRecruitInstitutionOverlay,
+} from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
+import {
+  getGeneralRecruitOverlayRecord,
+  replaceGeneralRecruitOverlay,
+  resetGeneralRecruitOverlay,
+} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
+import {
+  getGeneralApplicationOverlayRecord,
+  replaceGeneralApplicationOverlay,
+  resetGeneralApplicationOverlay,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import {
   shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph,
   useInstitutionApplicationFormVisibilityVersion,
@@ -234,6 +261,74 @@ export type UseProgramParticipantApplicationEditorOptions = {
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
 }
 
+function isApplicantRecruitInstitutionVariant(
+  variant: ProgramParticipantApplicationEditorVariant
+): boolean {
+  return (
+    variant === 'applicant-recruit-institution' ||
+    variant === 'economy-recruit-institution' ||
+    variant === 'trained-teachers-recruit-institution'
+  )
+}
+
+function isGeneralRecruitOverlayVariant(
+  variant: ProgramParticipantApplicationEditorVariant
+): boolean {
+  return (
+    variant === 'applicant-recruit-individual' ||
+    variant === 'recruit-instructor' ||
+    variant === 'recruit-volunteer'
+  )
+}
+
+function isGeneralApplicationOverlayVariant(
+  variant: ProgramParticipantApplicationEditorVariant
+): boolean {
+  return (
+    variant === 'institution' ||
+    variant === 'individual' ||
+    variant === 'instructor' ||
+    variant === 'volunteer' ||
+    variant === 'economy-application-institution' ||
+    variant === 'trained-teachers-application-institution'
+  )
+}
+
+function restoreParticipantOverlayForVariant(
+  variant: ProgramParticipantApplicationEditorVariant,
+  overlay: Record<string, unknown> | undefined
+): void {
+  if (isApplicantRecruitInstitutionVariant(variant)) {
+    if (overlay) replaceApplicantRecruitInstitutionOverlay(overlay)
+    else resetApplicantRecruitInstitutionOverlay()
+    return
+  }
+  if (isGeneralRecruitOverlayVariant(variant)) {
+    if (overlay) replaceGeneralRecruitOverlay(overlay)
+    else resetGeneralRecruitOverlay()
+    return
+  }
+  if (isGeneralApplicationOverlayVariant(variant)) {
+    if (overlay) replaceGeneralApplicationOverlay(overlay)
+    else resetGeneralApplicationOverlay()
+  }
+}
+
+function collectParticipantOverlayForVariant(
+  variant: ProgramParticipantApplicationEditorVariant
+): Record<string, unknown> | undefined {
+  if (isApplicantRecruitInstitutionVariant(variant)) {
+    return { ...getApplicantRecruitInstitutionOverlayRecord() }
+  }
+  if (isGeneralRecruitOverlayVariant(variant)) {
+    return { ...getGeneralRecruitOverlayRecord() }
+  }
+  if (isGeneralApplicationOverlayVariant(variant)) {
+    return { ...getGeneralApplicationOverlayRecord() }
+  }
+  return undefined
+}
+
 export function useProgramParticipantApplicationEditor(
   active: boolean,
   previewHeaderTitle: string,
@@ -266,6 +361,10 @@ export function useProgramParticipantApplicationEditor(
       return UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     if (variant === 'applicant-recruit-institution')
       return APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'economy-recruit-institution')
+      return ECONOMY_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
+    if (variant === 'trained-teachers-recruit-institution')
+      return TRAINED_TEACHERS_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'ujat-recruit-institution')
       return UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS
     if (variant === 'applicant-recruit-individual')
@@ -273,6 +372,7 @@ export function useProgramParticipantApplicationEditor(
     if (variant === 'recruit-instructor') return RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
     if (variant === 'recruit-volunteer') return RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     if (variant === 'ujat-recruit-volunteer') return UJAT_RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
+    if (variant === 'gemini-recruit') return GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS
     if (variant === 'instructor') return PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS
     if (variant === 'volunteer') return PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS
     return PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS
@@ -320,12 +420,17 @@ export function useProgramParticipantApplicationEditor(
       return createUjatProgramApplicationFormVolunteerDraft()
     if (variant === 'applicant-recruit-institution')
       return createApplicantRecruitFormInstitutionDraft()
+    if (variant === 'economy-recruit-institution')
+      return createEconomyRecruitFormInstitutionDraft()
+    if (variant === 'trained-teachers-recruit-institution')
+      return createTrainedTeachersRecruitFormInstitutionDraft()
     if (variant === 'ujat-recruit-institution') return createUjatRecruitFormInstitutionDraft()
     if (variant === 'applicant-recruit-individual')
       return createApplicantRecruitFormIndividualDraft()
     if (variant === 'recruit-instructor') return createRecruitFormInstructorDraft()
     if (variant === 'recruit-volunteer') return createRecruitFormVolunteerDraft()
     if (variant === 'ujat-recruit-volunteer') return createUjatRecruitFormVolunteerDraft()
+    if (variant === 'gemini-recruit') return createGeminiVisitingTrainingRecruitFormDraft()
     if (variant === 'instructor') return createProgramApplicationFormInstructorDraft()
     if (variant === 'volunteer') return createProgramApplicationFormVolunteerDraft()
     return createProgramParticipantApplicationDraft()
@@ -395,6 +500,7 @@ export function useProgramParticipantApplicationEditor(
           if (cancelled) return
           if (saved?.draft) {
             applyDraft(saved.draft)
+            restoreParticipantOverlayForVariant(variant, saved.overlay)
             applyParticipantApplicationEditorState({
               variant,
               editorState: saved.editorState,
@@ -406,6 +512,7 @@ export function useProgramParticipantApplicationEditor(
             })
             return
           }
+          restoreParticipantOverlayForVariant(variant, undefined)
           applyDraft(createSeedDraft())
           if (variant === 'ujat-application-volunteer') {
             setUjatVolunteerApplicationType('ujat-graduate')
@@ -760,15 +867,25 @@ export function useProgramParticipantApplicationEditor(
         ujatProgramApplicationGradeInfo,
         ujatProgramApplicationGradeClassTime,
         applicantRecruitFormInstitution: variant === 'applicant-recruit-institution',
+        economyRecruitFormInstitution: variant === 'economy-recruit-institution',
+        trainedTeachersRecruitFormInstitution:
+          variant === 'trained-teachers-recruit-institution',
         showInstitutionApplicationLimits:
-          variant === 'applicant-recruit-institution' &&
+          (variant === 'applicant-recruit-institution' ||
+            variant === 'economy-recruit-institution' ||
+            variant === 'trained-teachers-recruit-institution') &&
           (editorOptions?.participantOrganization ?? true),
         applicantRecruitInstitutionLayoutVariant:
-          editorOptions?.applicantRecruitInstitutionLayoutVariant,
+          variant === 'economy-recruit-institution'
+            ? 'economy'
+            : editorOptions?.applicantRecruitInstitutionLayoutVariant,
         applicantRecruitInstitutionDefaults: editorOptions?.applicantRecruitInstitutionDefaults,
         applicantRecruitFormIndividual: variant === 'applicant-recruit-individual',
         recruitFormInstructor: variant === 'recruit-instructor',
         recruitFormVolunteer: variant === 'recruit-volunteer',
+        geminiRecruitForm: variant === 'gemini-recruit',
+        ujatRecruitFormInstitution: variant === 'ujat-recruit-institution',
+        ujatRecruitFormVolunteer: variant === 'ujat-recruit-volunteer',
         ujatRecruitParagraphProps: editorOptions?.ujatRecruitParagraphProps,
         programApplicationFormIndividual: variant === 'individual',
         programApplicationFormInstructor: programApplicationFormInstructorOptions,
@@ -841,10 +958,12 @@ export function useProgramParticipantApplicationEditor(
           ujatApplicationGradeByBlockId,
           ujatGradeClassTimeBlockIds,
         })
+        const overlay = collectParticipantOverlayForVariant(variant)
         await persistWritingFormTemplateDraft({
           templateId,
           draft,
           editorState,
+          ...(overlay != null ? { overlay } : {}),
         })
       }
       if (options?.silent) return

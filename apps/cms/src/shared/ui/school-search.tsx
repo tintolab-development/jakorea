@@ -1,18 +1,27 @@
 /**
- * 학교 검색: CmsInput 클릭 시 ContentModal + NEIS(나이스) 학교 검색 API
- * @see useNeisSchoolSearch — `VITE_NEIS_API_KEY`
+ * 학교 검색: CmsInput 클릭 시 ContentModal
+ * - 초·중·고 → NEIS(나이스) 학교 검색 API (`useNeisSchoolSearch`)
+ * - 대학교·전문대학 → 커리어넷 SCHOOL API (`useCareerNetUniversitySearch`)
  */
 
-import { Fragment, useCallback, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Flex, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import {
+  CAREER_NET_UNIV_SCH1,
+  filterCareerNetUniversitiesBySigungu,
+  type CareerNetUniversityItem,
+} from '@jakorea/location/career-net'
 import { filterNeisSchoolsByRegion } from '@jakorea/location/neis'
 import { getSidoOptions, getSigunguOptions } from '@jakorea/location/sido-sigungu'
 import {
+  getCmsCareerNetMissingKeyMessage,
   getCmsNeisMissingKeyMessage,
+  readCareerNetApiKeyFromEnv,
   readNeisApiKeyFromEnv,
+  useCareerNetUniversitySearch,
   useNeisSchoolSearch,
   type NeisSchoolItem,
 } from '@/shared/hooks'
@@ -25,7 +34,35 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import './school-search.css'
 
 const SCHOOL_SEARCH_PAGE_SIZE = 5
-const MODAL_KEYWORD_PLACEHOLDER = '학교명을 입력해 주세요'
+const MODAL_KEYWORD_PLACEHOLDER = '예) JA초등학교'
+const GUIDE_TEXT = '학교급과 지역을 선택한 후 학교명을 입력해 검색하세요.'
+
+export const SCHOOL_LEVEL_OPTIONS = [
+  { label: '초등학교', value: '초등학교' },
+  { label: '중학교', value: '중학교' },
+  { label: '고등학교', value: '고등학교' },
+  { label: '대학교', value: '대학교' },
+  { label: '전문대학', value: '전문대학' },
+] as const
+
+export type SchoolLevel = (typeof SCHOOL_LEVEL_OPTIONS)[number]['value']
+
+const K12_LEVELS: ReadonlySet<SchoolLevel> = new Set(['초등학교', '중학교', '고등학교'])
+const HIGHER_ED_LEVELS: ReadonlySet<SchoolLevel> = new Set(['대학교', '전문대학'])
+
+function isHigherEdLevel(level: string): level is '대학교' | '전문대학' {
+  return HIGHER_ED_LEVELS.has(level as SchoolLevel)
+}
+
+function isK12Level(level: string): level is '초등학교' | '중학교' | '고등학교' {
+  return K12_LEVELS.has(level as SchoolLevel)
+}
+
+function careerNetSch1ForLevel(level: string): string | undefined {
+  if (level === '대학교') return CAREER_NET_UNIV_SCH1.university4
+  if (level === '전문대학') return CAREER_NET_UNIV_SCH1.college
+  return undefined
+}
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -50,7 +87,19 @@ function schoolResultKey(school: NeisSchoolItem) {
   return `${school.sdSchulCode}-${school.schulNm}-${school.orgRdnma}`
 }
 
-export type SchoolSearchSelection = NeisSchoolItem
+function universityResultKey(item: CareerNetUniversityItem) {
+  return `${item.seq}-${item.schoolName}-${item.campusName}-${item.address}`
+}
+
+export type SchoolSearchSelection =
+  | { source: 'neis'; item: NeisSchoolItem }
+  | { source: 'careerNet'; item: CareerNetUniversityItem }
+
+/** 검색 시 선택한 시/도·시/군/구 (서버 `regionSido`/`regionSigungu`용) */
+export type SchoolSearchSelectMeta = {
+  regionSido: string
+  regionSigungu: string
+}
 
 export interface SchoolSearchProps extends Pick<
   CmsInputProps,
@@ -62,7 +111,14 @@ export interface SchoolSearchProps extends Pick<
   placeholder?: string
   /** NEIS API 키 — 미지정 시 `VITE_NEIS_API_KEY` */
   apiKey?: string
-  onSelect?: (item: SchoolSearchSelection) => void
+  /** 커리어넷 API 키 — 미지정 시 env */
+  careerNetApiKey?: string
+  /**
+   * 허용 학교급. 1개만 있으면 모달 오픈 시 고정·셀렉트 비활성.
+   * 미지정 시 초·중·고·대 전체.
+   */
+  allowedSchoolLevels?: readonly SchoolLevel[]
+  onSelect?: (item: SchoolSearchSelection, meta: SchoolSearchSelectMeta) => void
 }
 
 export function SchoolSearch({
@@ -74,87 +130,200 @@ export function SchoolSearch({
   disabled,
   className,
   apiKey: apiKeyProp,
+  careerNetApiKey: careerNetApiKeyProp,
+  allowedSchoolLevels,
   onSelect,
 }: SchoolSearchProps) {
+  const levelOptions = useMemo(() => {
+    if (!allowedSchoolLevels?.length) return [...SCHOOL_LEVEL_OPTIONS]
+    const allowed = new Set(allowedSchoolLevels)
+    return SCHOOL_LEVEL_OPTIONS.filter(opt => allowed.has(opt.value))
+  }, [allowedSchoolLevels])
+
+  const lockedLevel =
+    allowedSchoolLevels?.length === 1 ? allowedSchoolLevels[0] : undefined
+
   const [open, setOpen] = useState(false)
+  const [schoolLevel, setSchoolLevel] = useState<string>(lockedLevel ?? '')
   const [sido, setSido] = useState('')
   const [sigungu, setSigungu] = useState('')
   const [keyword, setKeyword] = useState('')
   const [hasSearched, setHasSearched] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
 
-  const apiKey = apiKeyProp ?? readNeisApiKeyFromEnv()
+  const neisApiKey = apiKeyProp ?? readNeisApiKeyFromEnv()
+  const careerNetApiKey = careerNetApiKeyProp ?? readCareerNetApiKeyFromEnv()
   const sigunguOptions = getSigunguOptions(sido)
   const trimmedKeyword = keyword.trim()
+  const isHigherEd = isHigherEdLevel(schoolLevel)
 
-  const { schools, totalCount, loading, error, search, reset } = useNeisSchoolSearch({
-    apiKey,
-    pageSize: SCHOOL_SEARCH_PAGE_SIZE,
+  const {
+    schools,
+    loading: neisLoading,
+    error: neisError,
+    search: searchNeis,
+    reset: resetNeis,
+  } = useNeisSchoolSearch({
+    apiKey: neisApiKey,
     missingKeyMessage: getCmsNeisMissingKeyMessage(),
   })
 
-  const filteredSchools = useMemo(
-    () => filterNeisSchoolsByRegion(schools, sido, sigungu),
-    [schools, sido, sigungu]
+  const {
+    universities,
+    loading: careerNetLoading,
+    error: careerNetError,
+    search: searchCareerNet,
+    reset: resetCareerNet,
+  } = useCareerNetUniversitySearch({
+    apiKey: careerNetApiKey,
+    missingKeyMessage: getCmsCareerNetMissingKeyMessage(),
+  })
+
+  const resetResults = useCallback(() => {
+    resetNeis()
+    resetCareerNet()
+  }, [resetNeis, resetCareerNet])
+
+  const filteredSchools = useMemo(() => {
+    if (!isK12Level(schoolLevel)) return []
+    const byRegion = filterNeisSchoolsByRegion(schools, sido, sigungu)
+    return byRegion.filter(school => school.schulKndScNm.trim() === schoolLevel)
+  }, [schools, sido, sigungu, schoolLevel])
+
+  const filteredUniversities = useMemo(
+    () =>
+      isHigherEd
+        ? filterCareerNetUniversitiesBySigungu(universities, sigungu)
+        : [],
+    [universities, sigungu, isHigherEd]
   )
 
-  const hasResults = filteredSchools.length > 0
-  const canSearch = Boolean(sido && trimmedKeyword)
-  const totalPages = Math.max(1, Math.ceil(totalCount / SCHOOL_SEARCH_PAGE_SIZE))
+  const filteredTotalCount = isHigherEd
+    ? filteredUniversities.length
+    : filteredSchools.length
+  const totalPages = Math.max(1, Math.ceil(filteredTotalCount / SCHOOL_SEARCH_PAGE_SIZE))
+  const pagedFilteredSchools = useMemo(
+    () =>
+      filteredSchools.slice(
+        (currentPage - 1) * SCHOOL_SEARCH_PAGE_SIZE,
+        currentPage * SCHOOL_SEARCH_PAGE_SIZE
+      ),
+    [filteredSchools, currentPage]
+  )
+  const pagedUniversities = useMemo(
+    () =>
+      filteredUniversities.slice(
+        (currentPage - 1) * SCHOOL_SEARCH_PAGE_SIZE,
+        currentPage * SCHOOL_SEARCH_PAGE_SIZE
+      ),
+    [filteredUniversities, currentPage]
+  )
+
+  const loading = isHigherEd ? careerNetLoading : neisLoading
+  const error = isHigherEd ? careerNetError : neisError
+  const hasResults = filteredTotalCount > 0
+  const canSearch = Boolean(schoolLevel && trimmedKeyword)
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
 
   const closeModal = useCallback(() => {
     setOpen(false)
+    setSchoolLevel(lockedLevel ?? '')
     setSido('')
     setSigungu('')
     setKeyword('')
     setHasSearched(false)
     setCurrentPage(1)
-    reset()
-  }, [reset])
+    resetResults()
+  }, [lockedLevel, resetResults])
 
   const openModal = useCallback(() => {
     if (disabled) return
     setKeyword(value.trim())
+    setSchoolLevel(lockedLevel ?? '')
     setSido('')
     setSigungu('')
     setHasSearched(false)
     setCurrentPage(1)
-    reset()
+    resetResults()
     setOpen(true)
-  }, [disabled, reset, value])
+  }, [disabled, lockedLevel, resetResults, value])
+
+  const handleSchoolLevelChange = (next: string) => {
+    setSchoolLevel(next)
+    setHasSearched(false)
+    setCurrentPage(1)
+    resetResults()
+  }
 
   const handleSidoChange = (next: string) => {
     setSido(next)
     setSigungu('')
     setHasSearched(false)
     setCurrentPage(1)
-    reset()
+    resetResults()
   }
 
   const handleSearch = () => {
     if (!canSearch || loading) return
     setHasSearched(true)
     setCurrentPage(1)
-    void search(trimmedKeyword, 1)
+    if (isHigherEdLevel(schoolLevel)) {
+      void searchCareerNet(trimmedKeyword, {
+        regionSido: sido || undefined,
+        sch1: careerNetSch1ForLevel(schoolLevel),
+      })
+      return
+    }
+    void searchNeis(trimmedKeyword, sido || undefined)
   }
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
-    void search(trimmedKeyword, page)
   }
 
-  const handleSelect = (school: NeisSchoolItem) => {
+  const handleSigunguChange = (next: string) => {
+    setSigungu(next)
+    setCurrentPage(1)
+  }
+
+  const handleSelectNeis = (school: NeisSchoolItem) => {
     onChange(school.schulNm)
-    onSelect?.(school)
+    onSelect?.(
+      { source: 'neis', item: school },
+      {
+        regionSido: sido.trim(),
+        regionSigungu: sigungu.trim(),
+      }
+    )
     closeModal()
   }
 
-  const columns: ColumnsType<NeisSchoolItem> = [
+  const handleSelectUniversity = (item: CareerNetUniversityItem) => {
+    const displayName = item.campusName
+      ? `${item.schoolName} (${item.campusName})`
+      : item.schoolName
+    onChange(displayName)
+    onSelect?.(
+      { source: 'careerNet', item },
+      {
+        regionSido: sido.trim() || item.region.trim(),
+        regionSigungu: sigungu.trim(),
+      }
+    )
+    closeModal()
+  }
+
+  const neisColumns: ColumnsType<NeisSchoolItem> = [
     {
       title: '학교급',
       dataIndex: 'schulKndScNm',
       key: 'schulKndScNm',
-      width: 140,
+      width: 100,
       ellipsis: true,
       render: (text: string) => text || '-',
     },
@@ -162,6 +331,7 @@ export function SchoolSearch({
       title: '학교명',
       dataIndex: 'schulNm',
       key: 'schulNm',
+      width: 220,
       ellipsis: true,
       render: (text: string) => highlightKeyword(text, keyword),
     },
@@ -175,14 +345,68 @@ export function SchoolSearch({
     {
       title: '선택',
       key: 'select',
-      width: 140,
+      width: 120,
       align: 'center',
+      className: 'school-search__col-select',
+      onHeaderCell: () => ({ className: 'school-search__col-select' }),
       render: (_, record) => (
         <CmsButton
           type="button"
           variant="secondary"
           size="small"
-          onClick={() => handleSelect(record)}
+          onClick={() => handleSelectNeis(record)}
+        >
+          선택
+        </CmsButton>
+      ),
+    },
+  ]
+
+  const universityColumns: ColumnsType<CareerNetUniversityItem> = [
+    {
+      title: '학교유형',
+      dataIndex: 'schoolGubun',
+      key: 'schoolGubun',
+      width: 110,
+      ellipsis: true,
+      render: (text: string) => text || '-',
+    },
+    {
+      title: '대학교명',
+      dataIndex: 'schoolName',
+      key: 'schoolName',
+      width: 200,
+      ellipsis: true,
+      render: (text: string) => highlightKeyword(text, keyword),
+    },
+    {
+      title: '캠퍼스',
+      dataIndex: 'campusName',
+      key: 'campusName',
+      width: 100,
+      ellipsis: true,
+      render: (text: string) => text || '-',
+    },
+    {
+      title: '소재지',
+      dataIndex: 'address',
+      key: 'address',
+      ellipsis: true,
+      render: (text: string) => text || '-',
+    },
+    {
+      title: '선택',
+      key: 'select',
+      width: 120,
+      align: 'center',
+      className: 'school-search__col-select',
+      onHeaderCell: () => ({ className: 'school-search__col-select' }),
+      render: (_, record) => (
+        <CmsButton
+          type="button"
+          variant="secondary"
+          size="small"
+          onClick={() => handleSelectUniversity(record)}
         >
           선택
         </CmsButton>
@@ -226,30 +450,42 @@ export function SchoolSearch({
         open={open}
         onCancel={closeModal}
         title="학교 검색"
-        width={800}
+        titleBodyGap="always"
+        width={1000}
         className="school-search-modal"
         zIndex={1100}
       >
         <div className="school-search__body">
-          <Flex className="school-search__filter-row" gap={10} align="center" wrap="wrap">
+          <p className="school-search__guide">{GUIDE_TEXT}</p>
+
+          <Flex className="school-search__filter-row" gap={16} align="center" wrap="wrap">
             <CmsSelect
-              placeholder="시/도"
-              value={sido || undefined}
-              options={getSidoOptions()}
-              onChange={handleSidoChange}
+              placeholder="학교급"
+              value={schoolLevel || undefined}
+              options={levelOptions.map(opt => ({ label: opt.label, value: opt.value }))}
+              onChange={handleSchoolLevelChange}
               inputSize="medium"
-              width={140}
+              width={120}
+              disabled={Boolean(lockedLevel)}
               withAllOption={false}
             />
             <CmsSelect
-              placeholder="시/군/구"
-              value={sigungu || undefined}
-              options={sigunguOptions}
-              onChange={setSigungu}
+              placeholder="시/도"
+              value={sido}
+              options={getSidoOptions()}
+              onChange={handleSidoChange}
               inputSize="medium"
-              width={140}
-              disabled={!sido}
-              withAllOption={false}
+              width={120}
+              withAllOption
+            />
+            <CmsSelect
+              placeholder="시/군/구"
+              value={sigungu}
+              options={sigunguOptions}
+              onChange={handleSigunguChange}
+              inputSize="medium"
+              width={120}
+              withAllOption
             />
             <span className="school-search__keyword-wrap">
               <CmsInput
@@ -261,7 +497,7 @@ export function SchoolSearch({
                   setHasSearched(false)
                   setCurrentPage(1)
                   if (!next.trim()) {
-                    reset()
+                    resetResults()
                   }
                 }}
                 onPressEnter={handleSearch}
@@ -281,10 +517,6 @@ export function SchoolSearch({
               검색
             </CmsButton>
           </Flex>
-
-          <p className="school-search__guide">
-            지역을 선택 후 학교명을 입력하여 검색 가능합니다. 소속된 학교명을 선택해 주세요.
-          </p>
 
           {hasSearched ? (
             <div
@@ -308,13 +540,35 @@ export function SchoolSearch({
                   {'검색 결과가 없습니다.\n검색 조건 및 검색어를 확인한 후 다시 시도해 주세요.'}
                 </div>
               ) : null}
-              {hasResults ? (
+              {hasResults && isHigherEd ? (
+                <>
+                  <div aria-label="대학교 검색 결과">
+                    <Table
+                      className="cms-data-table cms-data-table--skip-auto-no-col school-search__table"
+                      columns={universityColumns}
+                      dataSource={pagedUniversities}
+                      rowKey={universityResultKey}
+                      pagination={false}
+                      size="small"
+                    />
+                  </div>
+                  <div className="school-search__pagination">
+                    <CmsCompactPagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                      ariaLabel="학교 검색 페이지 이동"
+                    />
+                  </div>
+                </>
+              ) : null}
+              {hasResults && !isHigherEd ? (
                 <>
                   <div aria-label="학교 검색 결과">
                     <Table
                       className="cms-data-table cms-data-table--skip-auto-no-col school-search__table"
-                      columns={columns}
-                      dataSource={filteredSchools}
+                      columns={neisColumns}
+                      dataSource={pagedFilteredSchools}
                       rowKey={schoolResultKey}
                       pagination={false}
                       size="small"

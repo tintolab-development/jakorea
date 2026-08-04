@@ -7,7 +7,7 @@
  */
 
 /**
- * 홈페이지 회원가입 완료 응답
+ * 회원 포탈 회원가입 완료 응답
  */
 export interface HomepageSignupResponse {
   memberId?: number;

@@ -25,6 +25,8 @@ import { PROGRAM_PARTICIPANT_APPLICATION_SEED_PARAGRAPH_IDS } from '@/features/t
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-institution-draft'
 import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS } from '@/features/template/model/applicant-recruit-form-individual-draft'
 import { APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/applicant-recruit-form-institution-draft'
+import { ECONOMY_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/economy-recruit-form-institution-draft'
+import { TRAINED_TEACHERS_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/trained-teachers-recruit-form-institution-draft'
 import { PROGRAM_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-instructor-draft'
 import { PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/model/program-application-form-volunteer-draft'
 import { RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS } from '@/features/template/model/recruit-form-instructor-draft'
@@ -32,6 +34,7 @@ import { RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS } from '@/features/template/m
 import { UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-program-registration-draft'
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
 import { GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS } from '@/features/template/model/gemini-visiting-training-application-form-instructor-draft'
+import { GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS } from '@/features/template/model/gemini-visiting-training-recruit-form-draft'
 import { UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { GENERAL_PROGRAM_CURRICULUM_MAX_SESSION_COUNT } from '@/features/program/general/lib/curriculum-progress-session-options'
 import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
@@ -80,9 +83,12 @@ function usesPlaceholderDescriptionValue(paragraphId: string): boolean {
     UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     PROGRAM_REGISTRATION_GENERAL_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     UJAT_PROGRAM_REGISTRATION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    ECONOMY_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
+    TRAINED_TEACHERS_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(paragraphId) ||
     RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(paragraphId) ||
@@ -589,8 +595,11 @@ export function paragraphEditableHeading(
             UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
             GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
             GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
+            GEMINI_VISITING_TRAINING_RECRUIT_FORM_SEED_PARAGRAPH_IDS.has(p.id) ||
             APPLICANT_RECRUIT_FORM_INDIVIDUAL_SEED_PARAGRAPH_IDS.has(p.id) ||
             APPLICANT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            ECONOMY_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
+            TRAINED_TEACHERS_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||
             RECRUIT_FORM_INSTRUCTOR_SEED_PARAGRAPH_IDS.has(p.id) ||
             RECRUIT_FORM_VOLUNTEER_SEED_PARAGRAPH_IDS.has(p.id) ||
             UJAT_RECRUIT_FORM_INSTITUTION_SEED_PARAGRAPH_IDS.has(p.id) ||

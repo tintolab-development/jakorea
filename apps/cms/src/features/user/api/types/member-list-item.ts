@@ -21,7 +21,9 @@ export interface MemberListItemResponse {
   organizationText?: string
   loginEnabled?: boolean
   preRegistered?: boolean
+  createdByAdmin?: boolean
   registeredByAdmin?: boolean
+  adminAccountId?: number
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
   identityVerified?: boolean
   isActive?: boolean

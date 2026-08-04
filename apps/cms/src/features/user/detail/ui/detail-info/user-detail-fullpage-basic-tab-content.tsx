@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { Space } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
-import type { User, SchoolTeacherEmploymentStatus } from '@/types/user'
+import type { User, AffiliatedTeacherLinkTarget, SchoolTeacherEmploymentStatus } from '@/types/user'
 import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { UserDetailStrategySectionConfig } from '@/features/user/detail/strategies'
 import {
@@ -15,6 +15,8 @@ import {
   CONSENT_ROWS_PERMISSION_INSTRUCTOR,
 } from '@/features/user/detail/ui/user-consent-agreement-section'
 import { InstructorResumeDetailForms } from '@/features/user/detail/ui/instructor-resume-detail-forms'
+import { InstructorDetailEditForm } from '@/features/user/detail/ui/instructor-detail-edit/instructor-detail-edit-form'
+import { AdminDetailEditForm } from '@/features/user/detail/ui/admin-detail-edit/admin-detail-edit-form'
 import { SchoolAffiliatedTeachersSection } from '@/features/user/detail/ui/school-affiliated-teachers-section'
 import { UserDetailAdminCommentSection } from './user-detail-admin-comment-section'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
@@ -45,7 +47,7 @@ export interface UserDetailFullpageBasicTabContentProps {
   basicInfoEntrySource?: UserBasicInfoEntrySource
   personalInfoRevealed: boolean
   instructorResumeApplicantRow: ApplicantInstructorRow | null
-  onNavigateToLinkedUser?: (userId: string) => void
+  onNavigateToLinkedUser?: (target: AffiliatedTeacherLinkTarget) => void
   memberInfoEditing?: boolean
   memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
   onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
@@ -57,6 +59,8 @@ export interface UserDetailFullpageBasicTabContentProps {
     userId: string
     permissionRole: 'instructor' | 'admin'
   }) => void
+  onOpenJaGradeEvaluation?: () => void
+  scheduleChangeCount?: number
 }
 
 export function UserDetailFullpageBasicTabContent({
@@ -74,6 +78,8 @@ export function UserDetailFullpageBasicTabContent({
   adminPermissionVariantPatching = false,
   onPatchAdminPermissionVariantFromDetailView,
   onPermissionResendNotification,
+  onOpenJaGradeEvaluation,
+  scheduleChangeCount,
 }: UserDetailFullpageBasicTabContentProps) {
   const currentUser = useAuthStore(state => state.user)
   const queryClient = useQueryClient()
@@ -155,6 +161,19 @@ export function UserDetailFullpageBasicTabContent({
     consentRecords,
   ])
 
+  const isInstructorPermissionDetail = mode === 'permission' && permissionRole === 'instructor'
+  const isAdminPermissionDetail = mode === 'permission' && permissionRole === 'admin'
+  const showInstructorRegisterLikeEdit =
+    memberInfoEditing &&
+    memberInfoDraft != null &&
+    onMemberInfoDraftChange != null &&
+    user.role === 'INSTRUCTOR'
+  const showAdminRegisterLikeEdit =
+    memberInfoEditing &&
+    memberInfoDraft != null &&
+    onMemberInfoDraftChange != null &&
+    user.role === 'ADMIN'
+
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
       {canShowAdminCommentForTarget ? (
@@ -164,48 +183,72 @@ export function UserDetailFullpageBasicTabContent({
           ) : null}
           <UserDetailAdminCommentSection
             user={userForAdminComment}
-            memberInfoEditing={memberInfoEditing}
-            adminCommentDraft={memberInfoDraft?.adminComment}
-            onAdminCommentChange={
-              memberInfoEditing && onMemberInfoDraftChange
-                ? value => onMemberInfoDraftChange({ adminComment: value })
-                : undefined
-            }
           />
         </>
       ) : null}
-      <UserBasicInfoSection
-        user={user}
-        entrySource={basicInfoEntrySource}
-        isInstructorPermissionDetail={mode === 'permission' && permissionRole === 'instructor'}
-        isAdminPermissionDetail={mode === 'permission' && permissionRole === 'admin'}
-        caption={basicTab.caption}
-        externalId1365={basicTab.externalId1365}
-        personalInfoRevealed={personalInfoRevealed}
-        memberInfoEditing={memberInfoEditing}
-        memberInfoDraft={memberInfoDraft}
-        onMemberInfoDraftChange={onMemberInfoDraftChange}
-        adminPermissionVariantPatching={adminPermissionVariantPatching}
-        onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
-        adminMemberProfileFieldsEditableWhenEditing={adminMemberProfileFieldsEditableWhenEditing}
-        onPermissionResendNotification={onPermissionResendNotification}
-      />
-      {basicTab.showConsentAgreement ? (
-        <UserConsentAgreementSection
-          preset={consentPreset}
-          viewVariant={consentViewVariant}
-          remoteConsentRows={remoteConsentRows}
-          remoteConsentLoading={membersRemote && consentLoading}
-        />
-      ) : null}
-      {instructorResumeApplicantRow ? (
+      {showInstructorRegisterLikeEdit ? (
         <>
           {membersRemote ? (
-            <MemberDetailMockDataBanner message="강사 이력서 중 계좌·학력 상세·자격증·수상 내역은 API 미제공 필드로 mock 또는 빈 값이 표시될 수 있습니다." />
+            <MemberDetailMockDataBanner message="강사 이력서 중 구조화 학력·경력사항·JA 활동·수상·자유작성 2~4는 API 미제공으로 저장되지 않을 수 있습니다. 기본정보·계좌·자격증·학력 요약·자유작성 1은 연동됩니다." />
           ) : null}
-          <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
+          <InstructorDetailEditForm
+            user={user}
+            instructorResumeApplicantRow={instructorResumeApplicantRow}
+            memberInfoDraft={memberInfoDraft}
+            onMemberInfoDraftChange={onMemberInfoDraftChange}
+            onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
+            isInstructorPermissionDetail={isInstructorPermissionDetail}
+          />
         </>
-      ) : null}
+      ) : showAdminRegisterLikeEdit ? (
+        <AdminDetailEditForm
+          user={user}
+          memberInfoDraft={memberInfoDraft}
+          onMemberInfoDraftChange={onMemberInfoDraftChange}
+          profileFieldsEditable={adminMemberProfileFieldsEditableWhenEditing}
+          isAdminPermissionDetail={isAdminPermissionDetail}
+          remoteConsentRows={remoteConsentRows}
+          remoteConsentLoading={membersRemote && consentLoading}
+          onPermissionResendNotification={onPermissionResendNotification}
+        />
+      ) : (
+        <>
+          <UserBasicInfoSection
+            user={user}
+            entrySource={basicInfoEntrySource}
+            isInstructorPermissionDetail={isInstructorPermissionDetail}
+            isAdminPermissionDetail={mode === 'permission' && permissionRole === 'admin'}
+            caption={basicTab.caption}
+            externalId1365={basicTab.externalId1365}
+            personalInfoRevealed={personalInfoRevealed}
+            memberInfoEditing={memberInfoEditing}
+            memberInfoDraft={memberInfoDraft}
+            onMemberInfoDraftChange={onMemberInfoDraftChange}
+            adminPermissionVariantPatching={adminPermissionVariantPatching}
+            onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
+            adminMemberProfileFieldsEditableWhenEditing={adminMemberProfileFieldsEditableWhenEditing}
+            onPermissionResendNotification={onPermissionResendNotification}
+            onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
+            scheduleChangeCount={scheduleChangeCount}
+          />
+          {basicTab.showConsentAgreement ? (
+            <UserConsentAgreementSection
+              preset={consentPreset}
+              viewVariant={consentViewVariant}
+              remoteConsentRows={remoteConsentRows}
+              remoteConsentLoading={membersRemote && consentLoading}
+            />
+          ) : null}
+          {instructorResumeApplicantRow ? (
+            <>
+              {membersRemote ? (
+                <MemberDetailMockDataBanner message="강사 이력서 중 구조화 학력·경력사항·JA 활동·수상·자유작성 2~4는 API 미제공으로 빈 값 또는 요약만 표시될 수 있습니다. (계좌·자격증·학력 요약·자유작성 1은 API 연동)" />
+              ) : null}
+              <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
+            </>
+          ) : null}
+        </>
+      )}
       {basicTab.showSchoolAffiliatedTeachers ? (
         <>
           {membersRemote && teachersError ? (

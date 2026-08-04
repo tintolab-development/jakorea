@@ -6,7 +6,10 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Table, Tag, Button, Space, Typography, Empty, Tabs, Modal, Descriptions } from 'antd'
+import { Card, Table, Tag, Button, Space, Typography, Tabs } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
+import { ContentModal, EmptyState } from '@/shared/ui'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { PlusOutlined, EyeOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getMySchedules } from '@/entities/schedule/api/instructor-schedule-service'
@@ -246,23 +249,21 @@ export function InstructorReportsPage() {
       render: (_: unknown, record: LectureReportListItem) => (
         <Space>
           {record.status === 'NOT_SUBMITTED' ? (
-            <Button
-              type="primary"
+            <CmsButton
               size="small"
               icon={<PlusOutlined />}
               onClick={() => handleView(record)}
             >
               작성
-            </Button>
+            </CmsButton>
           ) : record.status === 'REJECTED' ? (
-            <Button
-              type="primary"
+            <CmsButton
               size="small"
               icon={<PlusOutlined />}
               onClick={() => handleView(record)}
             >
               다시 작성
-            </Button>
+            </CmsButton>
           ) : (
             <Button
               type="link"
@@ -315,69 +316,79 @@ export function InstructorReportsPage() {
             pageSizeOptions: ['10', '20', '50'],
           }}
           locale={{
-            emptyText: <Empty description="보고서가 없습니다." />,
+            emptyText: <EmptyState description="보고서가 없습니다." />,
           }}
         />
       </Card>
 
-      <Modal
+      <ContentModal
         title="보고서 상세"
         open={detailModalOpen}
         onCancel={() => {
           setDetailModalOpen(false)
           setSelectedReport(null)
         }}
-        footer={null}
-        width={800}
-        destroyOnHidden
+        size="default"
       >
         {selectedReport && (
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            <Descriptions title="기본 정보" bordered column={1} size="small">
-              <Descriptions.Item label="보고서 ID">{selectedReport.id}</Descriptions.Item>
-              <Descriptions.Item label="타입">
-                <Tag color={getReportTypeColor(selectedReport.type)}>
-                  {getReportTypeLabel(selectedReport.type)}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="상태">
-                <StatusBadge
-                  domain="custom"
-                  label={reportStatusStatusConfig[selectedReport.status].label}
-                  accentColor={getStatusConfigAccentColor(
-                    reportStatusStatusConfig[selectedReport.status].color
-                  )}
+            <DetailInfoForm title="기본 정보" mode="view">
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="보고서 ID" view={selectedReport.id} />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="타입"
+                  view={
+                    <Tag color={getReportTypeColor(selectedReport.type)}>
+                      {getReportTypeLabel(selectedReport.type)}
+                    </Tag>
+                  }
                 />
-              </Descriptions.Item>
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="상태"
+                  view={
+                    <StatusBadge
+                      domain="custom"
+                      label={reportStatusStatusConfig[selectedReport.status].label}
+                      accentColor={getStatusConfigAccentColor(
+                        reportStatusStatusConfig[selectedReport.status].color
+                      )}
+                    />
+                  }
+                />
+              </DetailInfoForm.Row>
               {selectedReport.programId && (
-                <Descriptions.Item label="프로그램">
-                  {getProgramByIdSync(selectedReport.programId)?.title ?? '-'}
-                </Descriptions.Item>
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field label="프로그램" view={getProgramByIdSync(selectedReport.programId)?.title ?? '-'} />
+                </DetailInfoForm.Row>
               )}
-              <Descriptions.Item label="제출일">
-                {dayjs(selectedReport.submittedAt).format('YYYY-MM-DD HH:mm')}
-              </Descriptions.Item>
-              {selectedReport.reviewedAt ? (
-                <Descriptions.Item label="검토일">
-                  {dayjs(selectedReport.reviewedAt).format('YYYY-MM-DD HH:mm')}
-                </Descriptions.Item>
-              ) : null}
-              {selectedReport.reviewNotes ? (
-                <Descriptions.Item label="검토 사유">
-                  {selectedReport.reviewNotes}
-                </Descriptions.Item>
-              ) : null}
-            </Descriptions>
-            <Descriptions title="보고서 내용" bordered column={1} size="small">
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="제출일" view={dayjs(selectedReport.submittedAt).format('YYYY-MM-DD HH:mm')} />
+              </DetailInfoForm.Row>
+              {selectedReport.reviewedAt && (
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field label="검토일" view={dayjs(selectedReport.reviewedAt).format('YYYY-MM-DD HH:mm')} />
+                </DetailInfoForm.Row>
+              )}
+              {selectedReport.reviewNotes && (
+                <DetailInfoForm.Row type="single">
+                  <DetailInfoForm.Field label="검토 사유" view={selectedReport.reviewNotes} />
+                </DetailInfoForm.Row>
+              )}
+            </DetailInfoForm>
+            <DetailInfoForm title="보고서 내용" mode="view">
               {Object.entries(selectedReport.fields).map(([key, value]) => (
-                <Descriptions.Item key={key} label={key}>
-                  {typeof value === 'number' ? value.toLocaleString() : String(value)}
-                </Descriptions.Item>
+                <DetailInfoForm.Row key={key} type="single">
+                  <DetailInfoForm.Field label={key} view={typeof value === 'number' ? value.toLocaleString() : String(value)} />
+                </DetailInfoForm.Row>
               ))}
-            </Descriptions>
+            </DetailInfoForm>
           </Space>
         )}
-      </Modal>
+      </ContentModal>
     </div>
   )
 }

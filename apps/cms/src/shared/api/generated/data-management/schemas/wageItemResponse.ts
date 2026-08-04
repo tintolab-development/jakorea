@@ -20,5 +20,8 @@ export interface WageItemResponse {
   basisHours?: number;
   maxLimitWon?: number;
   qualificationLines?: string[];
+  remarkLines?: string[];
+  description?: string;
+  detailJson?: string;
   rateItems?: WageItemRateResponse[];
 }

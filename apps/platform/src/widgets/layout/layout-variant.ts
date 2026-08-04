@@ -1,1 +1,1 @@
-export type LayoutVariant = 'default' | 'auth' | 'mypage' | 'full'
+export type LayoutVariant = 'default' | 'auth' | 'mypage' | 'full' | 'hero'

@@ -26,8 +26,8 @@
 }
 
 /*
- * 교사 상세 — 성명 블록 행 높이 56px (셀 padding 12×2 + 배지 32).
- * StatusDropdownCell 기본 트리거 padding(8px) 제거해 재직 현황 도입 전 높이 유지.
+ * 교사 상세 — 성명 블록 행 높이 56px (셀 여유 + tag100 인라인 셸 48).
+ * StatusDropdownCell tag100 + INLINE_TAG100(116×48) — 열림 시에도 행 높이 유지.
  */
 .user-basic-info-section--school-teacher-profile-card .detail-info-form__name-block {
   grid-template-rows: 56px 56px;
@@ -43,41 +43,16 @@
   overflow: visible;
 }
 
-.user-basic-info-section--school-teacher-profile-card
-  .user-basic-info-section__teacher-employment-dropdown {
+.user-basic-info-section__teacher-employment-dropdown {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
 }
 
-.user-basic-info-section--school-teacher-profile-card
-  .user-basic-info-section__teacher-employment-dropdown
-  .status-dropdown-cell__status-trigger {
-  box-sizing: border-box;
-  width: auto;
-  min-width: 0;
-  max-width: none;
-  height: 32px;
-  min-height: 32px;
-  max-height: 32px;
-  padding: 0;
-  gap: 0;
-}
-
-.user-basic-info-section--school-teacher-profile-card
-  .user-basic-info-section__teacher-employment-dropdown
-  .status-dropdown-cell__status-trigger--open {
-  height: 32px;
-  min-height: 32px;
-  max-height: 32px;
-  padding: 0;
-}
-
-.user-basic-info-section--school-teacher-profile-card
-  .user-basic-info-section__teacher-employment-dropdown
+/* 트리거 패딩·크롬은 StatusDropdownCell tag100 + INLINE_TAG100 셸(116×48) */
+.user-basic-info-section__teacher-employment-dropdown
   .user-basic-info-section__teacher-employment-badge.app-status-badge,
-.user-basic-info-section--school-teacher-profile-card
-  .user-basic-info-section__teacher-employment-dropdown
+.user-basic-info-section__teacher-employment-dropdown
   .status-dropdown-cell__status-trigger
   .app-status-badge.status-dropdown-cell__badge--cell-style {
   box-sizing: border-box;
@@ -89,6 +64,25 @@
   max-height: 32px !important;
   margin: 0 !important;
   padding: 6px 12px !important;
+}
+
+/* 강사 소속 — 복수 소속 콤마 나열 + 교사 겸직 재직 태그 인라인 */
+.user-basic-info-section__affiliation-multi {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.user-basic-info-section__affiliation-multi-item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.user-basic-info-section__affiliation-multi-sep {
+  white-space: pre;
 }
 
 /* 권한 승인 현황(상세) — 목록·회원 권한 승인 페이지와 동일 색/타이포 */

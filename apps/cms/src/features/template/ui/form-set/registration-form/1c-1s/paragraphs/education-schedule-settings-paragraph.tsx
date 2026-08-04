@@ -1,9 +1,10 @@
 /**
  * 1사 1교 프로그램 등록 폼 — 교육 진행 일정 설정
  */
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { ProgramRegistrationEducationScheduleMode } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
 import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import {
   EducationSchedulePreviewLines,
@@ -12,30 +13,46 @@ import {
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
+import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 function isValidDayjs(d: Dayjs | null | undefined): d is Dayjs {
   return d != null && d.isValid()
 }
 
+type OneCOneSEducationScheduleSettingsProps = {
+  educationScheduleMode: ProgramRegistrationEducationScheduleMode
+  onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
+  /** Overlay key prefix (default: 'economyRegistration.educationScheduleSettings') */
+  overlayKeyPrefix?: string
+}
+
 export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
   educationScheduleMode: _educationScheduleMode,
   onEducationScheduleModeChange: _onEducationScheduleModeChange,
-}: {
-  educationScheduleMode: ProgramRegistrationEducationScheduleMode
-  onEducationScheduleModeChange: (value: ProgramRegistrationEducationScheduleMode) => void
-}) {
-  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([null, null])
+  overlayKeyPrefix = 'economyRegistration.educationScheduleSettings',
+}: OneCOneSEducationScheduleSettingsProps) {
+  const [dateRangeSeal, setDateRangeSeal] = useProgramRegistrationOverlayKv<
+    { start: string; end: string } | null
+  >(`${overlayKeyPrefix}.dateRangeSeal`, null)
+
+  const dateRange: [Dayjs | null, Dayjs | null] = dateRangeSeal
+    ? [dayjs(dateRangeSeal.start), dayjs(dateRangeSeal.end)]
+    : [null, null]
 
   const handleDateRangeChange = (next: [Dayjs | null, Dayjs | null]) => {
-    setDateRange(next)
     const [start, end] = next
-    patchInstitutionApplicationProgramBridge({
-      educationScheduleRange:
-        isValidDayjs(start) && isValidDayjs(end)
-          ? { start: start.toISOString(), end: end.toISOString() }
-          : undefined,
-    })
+    if (isValidDayjs(start) && isValidDayjs(end)) {
+      setDateRangeSeal({ start: start.toISOString(), end: end.toISOString() })
+      patchInstitutionApplicationProgramBridge({
+        educationScheduleRange: { start: start.toISOString(), end: end.toISOString() },
+      })
+    } else {
+      setDateRangeSeal(null)
+      patchInstitutionApplicationProgramBridge({
+        educationScheduleRange: undefined,
+      })
+    }
   }
 
   const previewLines = useMemo((): string[] => {

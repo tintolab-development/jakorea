@@ -1,8 +1,10 @@
 /**
  * 테이블용 상태 드롭다운 셀 공통 스타일
  * 디자인 스펙: 외곽 트리거 136px (padding 8 + 태그 120 + padding 8), 태그 radius 4px,
- * 활성 시 민트 border + 그림자, 드롭다운 패널 136px·#D4D4D4 border
+ * 활성 시 민트 border + 그림자, 드롭다운 패널 136px·#D4D4D4 border, 메뉴 padding·gap 8px
+ * tag-100: 외곽 116px (1 + 7 + 100 + 7 + 1, border-box), 트리거·메뉴 padding 7px·gap 8px
  * 지급 조서 라인: 외곽 176px (8 + 태그 160 + 8), 패널·메뉴 padding·gap 8px 동일
+ * hug: 트리거·패널 배지 밀착(가로 padding 0), placement bottomLeft
  */
 
 /* 테이블 td에 적용 시: 상하·좌우 패딩 0, overflow visible */
@@ -192,8 +194,8 @@
 }
 
 /* --------------------------------------------------------------------------
- * 100×32 편집 가능 상태 배지: border-box 래퍼 116px = 8px pad + 100 태그 + 8px pad
- * 재직·권한·교재배송·서류평가 시안 4종
+ * 100×32 편집 가능 상태 배지: border-box 래퍼 116px = 1px border + 7px pad + 100 태그 + 7px pad + 1px
+ * 재직·권한·교재배송·서류평가 시안 4종 — 트리거·패널 padding 모두 7px 로 통일
  * -------------------------------------------------------------------------- */
 .status-dropdown-cell__cell-status--tag-100 {
   text-align: center !important;
@@ -220,6 +222,10 @@
   padding-right: 0 !important;
 }
 
+/*
+ * tag-100: border-box 116px = 1px border + 7px pad + 100 배지 + 7px pad + 1px
+ * 닫힘·열림 패딩을 동일하게 유지 — open 때만 7px로 바꾸면 배지/행이 가로로 밀림
+ */
 .status-dropdown-cell__status-trigger--tag-100 {
   box-sizing: border-box;
   display: inline-flex;
@@ -227,7 +233,7 @@
   width: 116px;
   min-width: 116px;
   max-width: 116px;
-  padding: 8px;
+  padding: 7px;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
@@ -257,22 +263,22 @@
   width: 116px !important;
   min-width: 116px !important;
   max-width: 116px !important;
-  /* border-box 116px 안에 100px 배지: 1px border + 7px pad + 100 + 7px pad + 1px */
   padding: 7px !important;
   justify-content: center !important;
   align-items: center !important;
 }
 
+/* tag-100 + style.width: 배지 변수만 쓰고 트리거 외곽은 116px 고정 유지 */
 .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__trigger--cell-style {
-  width: calc(var(--sdcb-overlay-w) + 16px) !important;
-  min-width: calc(var(--sdcb-overlay-minw) + 16px) !important;
-  max-width: calc(var(--sdcb-overlay-maxw) + 16px) !important;
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
 }
 
 .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__trigger--cell-style.status-dropdown-cell__status-trigger--open {
-  width: calc(var(--sdcb-overlay-w) + 16px) !important;
-  min-width: calc(var(--sdcb-overlay-minw) + 16px) !important;
-  max-width: calc(var(--sdcb-overlay-maxw) + 16px) !important;
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
 }
 
 .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover,
@@ -372,7 +378,7 @@
   border: 1px solid #d4d4d4;
   background: #fff;
   box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1);
-  padding: 8px;
+  padding: 7px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -389,12 +395,19 @@
   width: 100%;
   height: auto;
   min-height: 0;
-  padding: 0;
+  padding: 0 !important;
   border-radius: 6px;
   background: transparent !important;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu-item .ant-dropdown-menu-title-content {
+  display: flex !important;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
 }
 
 .status-dropdown-cell__dropdown-overlay--tag-100.status-dropdown-cell__dropdown-overlay--cell-style
@@ -410,6 +423,36 @@
 
 .status-dropdown-cell__dropdown-overlay--tag-100 .ant-dropdown-menu-item:hover {
   background: transparent !important;
+}
+
+/* 현재 선택(활성) — 트리거 open과 동일 민트 링. disabled 흐림 방지 */
+.status-dropdown-cell__dropdown-overlay .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active,
+.status-dropdown-cell__dropdown-overlay
+  .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active.ant-dropdown-menu-item-disabled {
+  opacity: 1 !important;
+  cursor: default;
+  background: transparent !important;
+}
+
+.status-dropdown-cell__dropdown-overlay
+  .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active
+  .status-dropdown-cell__dropdown-item--active {
+  display: inline-flex;
+  box-sizing: border-box;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px var(--color-brand-primary, var(--JA-mint-01, #01a1af));
+}
+
+.status-dropdown-cell__dropdown-overlay
+  .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active
+  .editable-status-badge,
+.status-dropdown-cell__dropdown-overlay
+  .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active
+  .app-status-badge,
+.status-dropdown-cell__dropdown-overlay
+  .ant-dropdown-menu-item.status-dropdown-cell__menu-item--active
+  .status-badge {
+  opacity: 1 !important;
 }
 
 
@@ -868,12 +911,10 @@
   min-height: 33px;
 }
 
-/* 드롭다운 패널 (tag-160·payment-order-line는 위 전용 블록 — 여기 136px 규칙이 덮어쓰면 태그가 메뉴에 끼어 보임) */
+/* 드롭다운 패널 (tag-160·payment-order-line·hug는 위/아래 전용 블록 — 여기 136px 규칙이 덮어쓰면 태그가 메뉴에 끼어 보임) */
 .status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
     .status-dropdown-cell__dropdown-overlay--tag-160
-  ):not(
-    .status-dropdown-cell__dropdown-overlay--payment-order-line
-  ) {
+  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line) {
   width: 136px !important;
   min-width: 136px !important;
   max-width: 136px !important;
@@ -881,9 +922,7 @@
 
 .status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
     .status-dropdown-cell__dropdown-overlay--tag-160
-  ):not(
-    .status-dropdown-cell__dropdown-overlay--payment-order-line
-  )
+  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line)
   .ant-dropdown-menu {
   box-sizing: border-box;
   min-width: 136px !important;
@@ -902,9 +941,7 @@
 
 .status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
     .status-dropdown-cell__dropdown-overlay--tag-160
-  ):not(
-    .status-dropdown-cell__dropdown-overlay--payment-order-line
-  )
+  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line)
   .ant-dropdown-menu-item {
   margin: 0;
   width: 100%;
@@ -920,30 +957,31 @@
 
 .status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
     .status-dropdown-cell__dropdown-overlay--tag-160
-  ):not(
-    .status-dropdown-cell__dropdown-overlay--payment-order-line
-  )
+  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line)
   .ant-dropdown-menu-item:last-child {
   margin-bottom: 0;
 }
 
 .status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
     .status-dropdown-cell__dropdown-overlay--tag-160
-  ):not(
-    .status-dropdown-cell__dropdown-overlay--payment-order-line
-  )
+  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line)
   .ant-dropdown-menu-item:hover {
   background: transparent !important;
 }
 
-/* `style.width` = 배지 폭; 패널은 트리거와 맞춤 = 배지 + 좌우 padding 8px×2 (기본 136 = 120+16) */
-.status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style {
+/* `style.width` = 배지 폭; 패널은 트리거와 맞춤 = 배지 + 좌우 chrome 16px (기본 136 = 120+16)
+ * tag-100은 고정 116px(1+7+100+7+1) — cell-style calc로 덮어쓰지 않음(단위 누락 시 ~110px 수축 방지) */
+.status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style:not(
+    .status-dropdown-cell__dropdown-overlay--tag-100
+  ) {
   width: calc(var(--sdcb-overlay-w) + 16px) !important;
   min-width: calc(var(--sdcb-overlay-minw) + 16px) !important;
   max-width: calc(var(--sdcb-overlay-maxw) + 16px) !important;
 }
 
-.status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style
+.status-dropdown-cell__dropdown-overlay.status-dropdown-cell__dropdown-overlay--cell-style:not(
+    .status-dropdown-cell__dropdown-overlay--tag-100
+  )
   .ant-dropdown-menu {
   box-sizing: border-box;
   min-width: calc(var(--sdcb-overlay-minw) + 16px) !important;
@@ -1002,4 +1040,54 @@
   background: #f2f3f5 !important;
   color: #464646 !important;
   border: 1px solid rgba(126, 138, 150, 0.06) !important;
+}
+
+/* popupRender 래퍼 — 폭 측정이 깨져 bottom* placement 가 어긋나는 것 방지 */
+.status-dropdown-cell__popup-root {
+  display: inline-block;
+  width: max-content;
+  max-width: max-content;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+
+/*
+ * 인라인 tag100 셸 — 폼·상세·교재명 행 등.
+ * 닫힘/열림 모두 레이아웃 기여 = 116×48 고정. 조상 flex/table 이 min-content 로 커지는 것을 차단.
+ * 패널 스펙은 테이블 tag100 과 동일(padding 7·gap 8).
+ */
+.status-dropdown-cell__inline-tag100 {
+  display: inline-flex;
+  box-sizing: border-box;
+  width: 116px;
+  min-width: 116px;
+  max-width: 116px;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+  flex: 0 0 116px;
+  justify-content: center;
+  align-items: center;
+  vertical-align: middle;
+  position: relative;
+  overflow: visible;
+}
+
+.status-dropdown-cell__inline-tag100 .ant-dropdown-trigger,
+.status-dropdown-cell__inline-tag100 .status-dropdown-cell__status-trigger--tag-100,
+.status-dropdown-cell__inline-tag100
+  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  box-sizing: border-box !important;
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  padding: 7px !important;
+  margin: 0 !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+/* 셸 안 트리거 그림자는 레이아웃/페인트 overflow 유발 — 패널 그림자로 충분 */
+.status-dropdown-cell__inline-tag100 .status-dropdown-cell__status-trigger--open {
+  box-shadow: none !important;
 }

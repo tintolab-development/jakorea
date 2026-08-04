@@ -34,16 +34,16 @@ export const PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS = new Set<string>(
 )
 
 const P1_BOTTOM =
-  '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 다만 동의하지 않을 경우 본 지급조서 사전 동의 절차를 진행할 수 없습니다.'
+  '위의 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 기관 사업에 필요한 업무처리에 제약이 발생할 수 있습니다.'
 
 const P2_BOTTOM =
-  '위의 고유식별번호(주민등록번호) 수집·이용에 대한 동의를 거부할 권리가 있습니다. 다만 동의하지 않을 경우 본 지급조서 사전 동의 절차를 진행할 수 없습니다.'
+  '위의 고유식별번호(주민등록번호) 수집·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 활동비지급 및 세금신고 등 업무처리에 제약이 발생할 수 있습니다.'
 
 const P3_BOTTOM =
-  '위의 개인정보 제3자 제공에 대한 동의를 거부할 권리가 있습니다. 다만 동의하지 않을 경우 본 지급조서 사전 동의 절차를 진행할 수 없습니다.'
+  '위의 개인정보의 제3자 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 활동비지급 및 세금신고 등 업무처리에 제약이 발생할 수 있습니다.'
 
 const P4_BOTTOM =
-  '위의 고유식별번호 제3자 제공에 대한 동의를 거부할 권리가 있습니다. 다만 동의하지 않을 경우 본 지급조서 사전 동의 절차를 진행할 수 없습니다.'
+  '위의 고유식별정보의 제3자 제공·이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의를 거부할 경우 활동비지급 및 세금 신고 등 업무처리에 제약이 발생할 수 있습니다.'
 
 function createP1CollectionTable(): HorizontalTableParagraph {
   const colCount = 3
@@ -72,11 +72,11 @@ function createP1CollectionTable(): HorizontalTableParagraph {
     kind: 'single_item',
     variant: 'horizontal_table',
     requiredMark: true,
-    paragraphTitle: '개인정보 수집‧이용',
+    paragraphTitle: '개인정보 수집·이용',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
-    columnHeaders: ['항목', '수집‧이용 목적', '보유기간'],
+    columnHeaders: ['항목', '수집·이용 목적', '보유기간'],
     dataRows: [Array.from({ length: colCount }, () => '')],
     columnFields,
     fieldDataRows: [bodyRow],
@@ -101,12 +101,11 @@ function createP2RrnCollectionTable(): HorizontalTableParagraph {
     },
     {
       kind: 'text',
-      value: '소득 지급 및 원천징수 등 세무 신고·관리',
+      value: '지급명세서(소득세 납부) 제출 항목',
     },
     {
       kind: 'text',
-      value:
-        '수집·이용 목적 달성 시까지. 관련 법령에 따라 보존이 필요한 경우 해당 기간까지 보관 후 지체 없이 파기',
+      value: '10년',
     },
   ]
   return normalizeHorizontalTableParagraph({
@@ -138,20 +137,23 @@ function createP3ThirdPartyTable(): HorizontalTableParagraph {
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
   ]
-  const bodyRow: HorizontalTableFieldCellValue[] = [
-    { kind: 'text', value: '국세청 등 관계 기관' },
-    {
-      kind: 'text',
-      value: '성명, 연락처, 이메일, 소속, 계좌정보 등',
-    },
-    {
-      kind: 'text',
-      value: '세무 신고·공제·환급 및 관련 법령에 따른 업무 수행',
-    },
-    {
-      kind: 'text',
-      value: '제공 목적 달성 시 또는 관련 법령에 따른 보존 기간',
-    },
+  const bodyRows: HorizontalTableFieldCellValue[][] = [
+    [
+      { kind: 'text', value: '국세청' },
+      { kind: 'text', value: '성명, 주소' },
+      { kind: 'text', value: '원천세 신고' },
+      { kind: 'text', value: '소득세법에 따른 보관기간' },
+    ],
+    [
+      { kind: 'text', value: '사회복지공동모금회' },
+      {
+        kind: 'text',
+        value:
+          '성명, 생년월일, 주소, 전화번호, e-mail,\n계좌정보(은행, 계좌번호, 예금주)',
+      },
+      { kind: 'text', value: '배분사업 수행 관련 증빙서류 제출' },
+      { kind: 'text', value: '10년' },
+    ],
   ]
   return normalizeHorizontalTableParagraph({
     id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty,
@@ -163,9 +165,9 @@ function createP3ThirdPartyTable(): HorizontalTableParagraph {
     participatesInTitleNumbering: true,
     tableFlavor: 'field',
     columnHeaders: ['제공받는 곳', '항목', '제공목적', '제공받는 자의 보유기간'],
-    dataRows: [Array.from({ length: colCount }, () => '')],
+    dataRows: bodyRows.map(() => Array.from({ length: colCount }, () => '')),
     columnFields,
-    fieldDataRows: [bodyRow],
+    fieldDataRows: bodyRows,
     bottomText: P3_BOTTOM,
     showBottomText: true,
     showBottomConsent: true,
@@ -183,19 +185,10 @@ function createP4RrnThirdPartyTable(): HorizontalTableParagraph {
     { kind: 'text' as const, placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER },
   ]
   const bodyRow: HorizontalTableFieldCellValue[] = [
-    { kind: 'text', value: '국세청 등 관계 기관' },
-    {
-      kind: 'text',
-      value: '주민등록번호',
-    },
-    {
-      kind: 'text',
-      value: '소득 지급 및 원천징수 등 세무 신고·관리',
-    },
-    {
-      kind: 'text',
-      value: '제공 목적 달성 시 또는 관련 법령에 따른 보존 기간',
-    },
+    { kind: 'text', value: '국세청' },
+    { kind: 'text', value: '성명, 주소' },
+    { kind: 'text', value: '원천세 신고' },
+    { kind: 'text', value: '소득세법에 따른 보관기간' },
   ]
   return normalizeHorizontalTableParagraph({
     id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.p4RrnThirdParty,
@@ -368,5 +361,32 @@ export function createPaymentStatementPreConsentDraft(): WritingFormDraft {
       tailSignature,
       closingRecipient,
     ],
+  })
+}
+
+/** 지급조서 사전 동의서 — 가로형 시드 표(p1~p4) ID */
+export const PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS = new Set<string>([
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS.p1Collection,
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS.p2RrnCollection,
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty,
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS.p4RrnThirdParty,
+])
+
+/**
+ * 저장된 draft에 구 시드(1행·옛 문구)가 남아 있어도
+ * 가로형 표 단락(p1~p4)은 최신 시드 내용으로 덮어쓴다.
+ */
+export function overlayPaymentStatementPreConsentSeedHorizontalTables(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  const seedById = new Map(
+    createPaymentStatementPreConsentDraft().paragraphs.map(p => [p.id, p] as const)
+  )
+  return normalizeWritingFormDraft({
+    ...draft,
+    paragraphs: draft.paragraphs.map(p => {
+      if (!PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS.has(p.id)) return p
+      return seedById.get(p.id) ?? p
+    }),
   })
 }

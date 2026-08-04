@@ -1,6 +1,7 @@
 @import '../../../../shared/ui/program-detail/project-info/project-info-form-shared.css';
 
-.participating-instructor-settlement-section__summary {
+.participating-instructor-settlement-section__summary.program-detail-fullpage-modal__info-tab-block {
+  margin-top: 0;
   margin-bottom: 32px;
 }
 

@@ -1,5 +1,6 @@
 {
   "templateCode": "agreement-expense",
+  "templateName": "교육진행자 동의 서약서",
   "formType": "WRITING",
   "category": "AGREEMENT",
   "schemaJson": {
@@ -156,16 +157,6 @@
         "paragraphTitle": "서명란 유형",
         "paragraphDescription": "",
         "participatesInTitleNumbering": false
-      },
-      {
-        "id": "agreement-expense-pledge-closing",
-        "kind": "description",
-        "variant": "closing",
-        "requiredMark": false,
-        "paragraphTitle": "",
-        "paragraphDescription": "",
-        "participatesInTitleNumbering": false,
-        "body": "내용을 자세히 검토하신 후 동의 여부를 결정하여 주시기 바랍니다."
       }
     ]
   },

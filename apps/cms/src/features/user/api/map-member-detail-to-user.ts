@@ -1,20 +1,194 @@
 import type { InstructorDetailResponse } from '@/shared/api/generated/members/schemas'
+import type { IndividualMemberDetailResponse } from '@/shared/api/generated/members/schemas'
+import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
+import type { MemberBankAccountHistoryResponse } from '@/shared/api/generated/members/schemas'
 import type { MemberDetailResponse } from '@/shared/api/generated/members/schemas'
-import type { User } from '@/types/user'
+import type { SchoolMemberDetailResponse } from '@/shared/api/generated/members/schemas'
+import type { UserResponse } from '@/shared/api/generated/members/schemas'
+import type { User, UserListRowMetrics } from '@/types/user'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
+import {
+  formatInstructorCareerDisplay,
+  formatInstructorEducationLevelDisplay,
+  isInstructorMaskedPlaceholder,
+  resolveInstructorPublicTextField,
+  looksLikeInstructorActivityEnumCode,
+  mapInstructorActivityTypesToLabels,
+  toEmploymentStatusDisplayLabel,
+  toInstructorActivityTypeLabel,
+  toInstructorFeeGradeDisplayLabel,
+} from '@/features/user/api/map-instructor-activity-display'
+import {
+  toApiBirthDate,
+  toDisplayGender,
+} from '@/features/user/api/map-member-gender-birth'
 import {
   mapMemberStatusToIsActive,
   resolvePrimaryUserRole,
 } from '@/features/user/api/map-member-role'
+import { normalizeRevokedInstructorUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
+import {
+  resolveIdentitySelfSignupCompletedAfterAdminRegistration,
+  resolveRegisteredByAdmin,
+} from '@/features/user/api/resolve-member-registration-flags'
+
+const USER_AFFILIATION_PIPE_SEP = ' | ' as const
+
+function parseIndividualApiEnrollmentStatus(
+  raw: string | undefined
+): 'ENROLLED' | 'NOT_ENROLLED' | undefined {
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  const upper = trimmed.toUpperCase()
+  if (upper === 'ENROLLED' || upper === 'NOT_ENROLLED') return upper
+  return undefined
+}
 
 function fallbackUuid(memberId?: number): string {
   if (memberId != null) return `member-${memberId}`
   return `member-unknown-${crypto.randomUUID()}`
 }
 
+function pickTrimmed(...values: Array<string | undefined | null>): string | undefined {
+  for (const value of values) {
+    const trimmed = value?.trim()
+    if (trimmed) return trimmed
+  }
+  return undefined
+}
+
+/** OpenAPI 외 BE가 내려줄 수 있는 동의어 필드 */
+type InstructorProfileLoose = InstructorDetailResponse & {
+  homeAddressDetail?: string
+  feeGrade?: string
+  jaGrade?: string
+  businessIncome?: boolean | string
+  affiliation?: string
+  affiliatedSchoolName?: string
+  schoolName?: string
+  employmentStatus?: string
+}
+
+type InstructorMemberDetailLoose = InstructorMemberDetailResponse & {
+  homeAddress?: string
+  homeAddressDetail?: string
+  affiliation?: string
+  affiliatedSchoolName?: string
+  employmentStatus?: string
+}
+
+function asInstructorProfileLoose(
+  profile: InstructorDetailResponse | null | undefined
+): InstructorProfileLoose | null {
+  return profile ?? null
+}
+
+function resolveInstructorHomeAddressParts(
+  detail: InstructorMemberDetailResponse,
+  profile: InstructorProfileLoose | null
+): { homeAddress?: string; homeAddressDetail?: string } {
+  const looseDetail = detail as InstructorMemberDetailLoose
+  const looseMember = detail.member as
+    | (MemberDetailResponse & { homeAddress?: string; address?: string })
+    | undefined
+  const homeAddress = pickTrimmed(
+    profile?.homeAddress,
+    (profile as { address?: string } | null)?.address,
+    looseDetail.homeAddress,
+    (looseDetail as { address?: string }).address,
+    looseMember?.homeAddress,
+    looseMember?.address
+  )
+  const homeAddressDetail = pickTrimmed(
+    profile?.homeAddressDetail,
+    looseDetail.homeAddressDetail
+  )
+
+  if (!homeAddress || isInstructorMaskedPlaceholder(homeAddress)) {
+    const detailOnly =
+      homeAddressDetail && !isInstructorMaskedPlaceholder(homeAddressDetail)
+        ? homeAddressDetail
+        : undefined
+    if (detailOnly) return { homeAddressDetail: detailOnly }
+    return homeAddress ? { homeAddress } : {}
+  }
+
+  const detailPart =
+    homeAddressDetail && !isInstructorMaskedPlaceholder(homeAddressDetail)
+      ? homeAddressDetail
+      : undefined
+
+  return {
+    homeAddress,
+    ...(detailPart ? { homeAddressDetail: detailPart } : {}),
+  }
+}
+
+function parseBusinessIncomeFlag(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'string') {
+    const upper = value.trim().toUpperCase()
+    if (upper === 'Y' || upper === 'TRUE' || upper === '1') return true
+    if (upper === 'N' || upper === 'FALSE' || upper === '0') return false
+  }
+  return undefined
+}
+
+function resolveCurrentBankAccount(
+  accounts: MemberBankAccountHistoryResponse[] | undefined
+): MemberBankAccountHistoryResponse | undefined {
+  if (!accounts?.length) return undefined
+  return accounts.find(account => account.current === true) ?? accounts[0]
+}
+
+export function resolveInstructorBankFields(detail: InstructorMemberDetailResponse): {
+  bankName: string
+  accountNumber: string
+  accountHolder: string
+} {
+  const current = resolveCurrentBankAccount(detail.bankAccounts)
+  return {
+    bankName: detail.bankName?.trim() || current?.bankName?.trim() || '',
+    accountNumber: detail.accountNumber?.trim() || current?.accountNumber?.trim() || '',
+    accountHolder: detail.accountHolder?.trim() || current?.accountHolder?.trim() || '',
+  }
+}
+
+function assignDefinedListMetrics(
+  target: UserListRowMetrics | undefined,
+  patch: Partial<UserListRowMetrics>
+): UserListRowMetrics | undefined {
+  const next: UserListRowMetrics = { ...target }
+  let changed = Boolean(target)
+
+  for (const [key, value] of Object.entries(patch) as Array<
+    [keyof UserListRowMetrics, UserListRowMetrics[keyof UserListRowMetrics] | undefined]
+  >) {
+    if (value === undefined || value === null) continue
+    if (typeof value === 'string' && !value.trim()) continue
+    ;(next as Record<string, unknown>)[key as string] = value
+    changed = true
+  }
+
+  return changed ? next : target
+}
+
+type MemberDetailMappingSource = MemberDetailResponse &
+  Pick<
+    UserResponse,
+    | 'socialAccounts'
+    | 'guardianInfo'
+    | 'schoolInfo'
+    | 'role'
+    | 'registeredByAdmin'
+    | 'identitySelfSignupCompletedAfterAdminRegistration'
+    | 'adminAccountId'
+  >
+
 export function mapMemberDetailToUser(
-  detail: MemberDetailResponse,
-  instructorProfile?: InstructorDetailResponse | null
+  detail: MemberDetailMappingSource,
+  instructorProfile?: InstructorDetailResponse | null,
+  options?: { fallbackRole?: User['role'] }
 ): Omit<User, 'password'> {
   const memberId = detail.memberId
   const uuid =
@@ -28,8 +202,9 @@ export function mapMemberDetailToUser(
     registerMemberIdMapping(uuid, memberId)
   }
 
-  const role = resolvePrimaryUserRole(detail.roles)
+  const role = resolvePrimaryUserRole(detail.roles, detail.role ?? options?.fallbackRole)
   const now = new Date().toISOString()
+  const normalizedBirthDate = toApiBirthDate(detail.birthDate)
 
   const user: Omit<User, 'password'> = {
     id: uuid,
@@ -38,58 +213,322 @@ export function mapMemberDetailToUser(
     name: String(detail.name ?? '').trim() || '-',
     phone: detail.phone?.trim() || undefined,
     role,
-    gender: detail.gender?.trim() || undefined,
-    birthDate: detail.birthDate ?? undefined,
+    gender: (() => {
+      const display = toDisplayGender(detail.gender)
+      return display === '-' ? undefined : display
+    })(),
+    birthDate: normalizedBirthDate ?? detail.birthDate ?? undefined,
     isActive: mapMemberStatusToIsActive(undefined, detail.status),
-    createdAt: detail.createdAt ?? now,
+    createdAt: detail.joinedAt ?? detail.createdAt ?? now,
     updatedAt: detail.updatedAt ?? now,
-    registeredByAdmin: Boolean(detail.preRegistered),
+    registeredByAdmin: resolveRegisteredByAdmin({
+      role,
+      registeredByAdmin: detail.registeredByAdmin,
+      preRegistered: detail.preRegistered,
+      createdByAdmin: detail.createdByAdmin,
+      adminAccountId: detail.adminAccountId,
+    }),
     id1365: detail.external1365Id?.trim() || undefined,
-    identitySelfSignupCompletedAfterAdminRegistration: detail.identityVerified === true,
+    identitySelfSignupCompletedAfterAdminRegistration:
+      resolveIdentitySelfSignupCompletedAfterAdminRegistration({
+        role,
+        registeredByAdmin: detail.registeredByAdmin,
+        preRegistered: detail.preRegistered,
+        createdByAdmin: detail.createdByAdmin,
+        adminAccountId: detail.adminAccountId,
+        identitySelfSignupCompletedAfterAdminRegistration:
+          detail.identitySelfSignupCompletedAfterAdminRegistration,
+        identityVerified: detail.identityVerified,
+      }),
+    ...(detail.adminAccountId != null ? { adminAccountId: detail.adminAccountId } : {}),
+    socialAccounts: detail.socialAccounts?.map(account => account.trim()).filter(Boolean),
+    under14: detail.under14,
+    guardianConsentRequired: detail.guardianConsentRequired,
+    guardianInfo: detail.guardianInfo
+      ? {
+          guardianName: detail.guardianInfo.guardianName?.trim() || undefined,
+          relation: detail.guardianInfo.relation?.trim() || undefined,
+          phone: detail.guardianInfo.phone?.trim() || undefined,
+          consentStatus: detail.guardianInfo.consentStatus?.trim() || undefined,
+          consentedAt: detail.guardianInfo.consentedAt,
+        }
+      : undefined,
+  }
+
+  if (role === 'SCHOOL') {
+    const schoolName = String(
+      detail.schoolInfo?.schoolName ?? detail.name ?? ''
+    ).trim()
+    if (schoolName) {
+      user.schoolInfo = {
+        schoolName,
+        address: detail.schoolInfo?.address?.trim() ?? '',
+        ...(detail.schoolInfo?.position?.trim()
+          ? { position: detail.schoolInfo.position.trim() }
+          : {}),
+      }
+      user.name = schoolName
+    }
   }
 
   if (role === 'INSTRUCTOR' && instructorProfile) {
-    user.instructorInfo = {
-      bankName: '',
-      accountNumber: '',
-      accountHolder: detail.name?.trim() ?? '',
-      isBusinessIncome: Boolean(instructorProfile.businessIncomeYn),
-    }
-    const oneLine = instructorProfile.oneLineIntro?.trim()
-    const selfIntro = instructorProfile.selfIntroduction?.trim()
-    if (oneLine) {
-      user.bio = oneLine
-    } else if (selfIntro) {
-      user.bio = selfIntro
-    }
-    if (instructorProfile.homeAddress?.trim()) {
-      user.detailAddress = instructorProfile.homeAddress.trim()
-    }
-    if (instructorProfile.careerText?.trim()) {
-      user.instructorCareerText = instructorProfile.careerText.trim()
-    }
-    if (selfIntro) {
-      user.instructorSelfIntroduction = selfIntro
-    }
-    const activityTypes = (instructorProfile.activityTypes ?? []).filter(Boolean)
-    if (activityTypes.length > 0) {
-      user.affiliation = activityTypes.join(', ')
-    }
-    user.listMetrics = {
-      ...user.listMetrics,
-      instructorFeeGradeLabel:
-        instructorProfile.defaultFeeGrade?.trim() || user.listMetrics?.instructorFeeGradeLabel,
-      jaEvaluationGrade:
-        instructorProfile.defaultJaGrade?.trim() || user.listMetrics?.jaEvaluationGrade,
-      highestEducationLabel:
-        instructorProfile.educationLevel?.trim() || user.listMetrics?.highestEducationLabel,
-      instructorCareerSummaryLabel:
-        instructorProfile.careerText?.trim() || user.listMetrics?.instructorCareerSummaryLabel,
-    }
-    if (instructorProfile.status?.trim()) {
-      user.instructorApprovalStatus = instructorProfile.status.trim()
-    }
+    applyInstructorProfile(user, instructorProfile, detail.name)
   }
 
   return user
+}
+
+function applyInstructorProfile(
+  user: Omit<User, 'password'>,
+  instructorProfile: InstructorDetailResponse,
+  memberName?: string | null
+) {
+  const profile = asInstructorProfileLoose(instructorProfile)
+  const businessIncome =
+    parseBusinessIncomeFlag(profile?.businessIncomeYn) ??
+    parseBusinessIncomeFlag(profile?.businessIncome)
+
+  user.instructorInfo = {
+    bankName: '',
+    accountNumber: '',
+    accountHolder: memberName?.trim() ?? '',
+    isBusinessIncome: businessIncome ?? false,
+  }
+
+  const oneLine = resolveInstructorPublicTextField(profile?.oneLineIntro)
+  const selfIntro = resolveInstructorPublicTextField(profile?.selfIntroduction)
+  if (oneLine) {
+    user.bio = oneLine
+  } else if (selfIntro) {
+    user.bio = selfIntro
+  }
+
+  const homeAddress = pickTrimmed(profile?.homeAddress, (profile as { address?: string } | null)?.address)
+  const homeAddressDetail = pickTrimmed(profile?.homeAddressDetail)
+  if (homeAddress) {
+    user.detailAddress = homeAddress
+  }
+  if (homeAddressDetail) {
+    user.detailAddressDetail = homeAddressDetail
+  }
+
+  const careerDisplay = formatInstructorCareerDisplay(profile?.careerText)
+  if (careerDisplay) {
+    user.instructorCareerText = careerDisplay
+  }
+  if (selfIntro) {
+    user.instructorSelfIntroduction = selfIntro
+  }
+
+  // activityTypes/primaryActivityType 은 신청·활동 유형 — 소속(affiliation)에 넣지 않는다
+  const activityLabels = mapInstructorActivityTypesToLabels(
+    profile?.activityTypes,
+    profile?.primaryActivityType
+  )
+  const primaryActivityLabel =
+    toInstructorActivityTypeLabel(profile?.primaryActivityType) ?? activityLabels[0]
+
+  const primaryUpper = profile?.primaryActivityType?.trim().toUpperCase()
+  if (primaryUpper === 'SCHOOL_TEACHER') {
+    user.instructorMemberProfile = user.instructorMemberProfile ?? 'school_teacher'
+  } else if (primaryUpper === 'GENERAL') {
+    user.instructorMemberProfile = user.instructorMemberProfile ?? 'instructor_only'
+  }
+
+  const feeGrade = toInstructorFeeGradeDisplayLabel(profile?.defaultFeeGrade)
+  const jaGrade = pickTrimmed(profile?.defaultJaGrade, profile?.jaGrade)
+  const educationLevel = resolveInstructorPublicTextField(profile?.educationLevel)
+  const educationDisplay = educationLevel
+    ? formatInstructorEducationLevelDisplay(educationLevel) ?? educationLevel
+    : undefined
+
+  user.listMetrics = assignDefinedListMetrics(user.listMetrics, {
+    instructorFeeGradeLabel: feeGrade,
+    jaEvaluationGrade: jaGrade,
+    highestEducationLabel: educationDisplay,
+    instructorCareerSummaryLabel: careerDisplay,
+    instructorCareerYearsLabel: careerDisplay,
+    permissionApplicationTypeLabel:
+      primaryActivityLabel ??
+      (activityLabels.length > 0 ? activityLabels.join(', ') : undefined),
+  })
+
+  if (profile?.status?.trim()) {
+    user.instructorApprovalStatus = profile.status.trim()
+  }
+  if (profile?.revokedAt?.trim()) {
+    user.instructorApprovalStatus = 'REVOKED'
+  }
+}
+
+export function mapIndividualMemberDetailToUser(
+  detail: IndividualMemberDetailResponse,
+  options?: { fallbackRole?: User['role'] }
+): Omit<User, 'password'> {
+  const member = detail.member
+  if (!member) {
+    throw new Error('개인 회원 상세 응답에 member가 없습니다.')
+  }
+  const user = mapMemberDetailToUser(member, null, {
+    fallbackRole: options?.fallbackRole ?? 'INDIVIDUAL',
+  })
+  const address = detail.address?.trim()
+  const addressDetail = detail.addressDetail?.trim()
+  if (address) user.detailAddress = address
+  if (addressDetail) user.detailAddressDetail = addressDetail
+
+  const enrollment = parseIndividualApiEnrollmentStatus(detail.enrollmentStatus)
+  if (enrollment) {
+    user.schoolEnrollmentStatus = enrollment
+  }
+
+  const schoolName = detail.schoolName?.trim()
+  if (schoolName) {
+    if (enrollment === 'NOT_ENROLLED') {
+      user.affiliation = schoolName
+    } else if (enrollment === 'ENROLLED') {
+      user.affiliation = schoolName
+    } else {
+      const legacySuffix = detail.enrollmentStatus?.trim()
+      user.affiliation =
+        legacySuffix && !parseIndividualApiEnrollmentStatus(legacySuffix)
+          ? `${schoolName}${USER_AFFILIATION_PIPE_SEP}${legacySuffix}`
+          : schoolName
+    }
+  }
+  return user
+}
+
+export function mapSchoolMemberDetailToUser(
+  detail: SchoolMemberDetailResponse,
+  options?: { fallbackRole?: User['role'] }
+): Omit<User, 'password'> {
+  const member = detail.member
+  if (!member) {
+    throw new Error('학교 회원 상세 응답에 member가 없습니다.')
+  }
+  const user = mapMemberDetailToUser(member, null, {
+    fallbackRole: options?.fallbackRole ?? 'SCHOOL',
+  })
+  const schoolName = detail.organizationName?.trim() || user.schoolInfo?.schoolName || user.name
+  const address = detail.address?.trim() ?? ''
+  const addressDetail = detail.addressDetail?.trim() || undefined
+  user.role = 'SCHOOL'
+  user.schoolInfo = {
+    schoolName,
+    address,
+    ...(addressDetail ? { addressDetail } : {}),
+    ...(detail.position?.trim() ? { position: detail.position.trim() } : {}),
+  }
+  user.name = schoolName
+  return user
+}
+
+export function mapInstructorMemberDetailToUser(
+  detail: InstructorMemberDetailResponse,
+  options?: { fallbackRole?: User['role'] }
+): Omit<User, 'password'> {
+  const member = detail.member
+  if (!member) {
+    throw new Error('강사 회원 상세 응답에 member가 없습니다.')
+  }
+  const profile = detail.instructorProfile ?? null
+  const user = mapMemberDetailToUser(member, profile, {
+    fallbackRole: options?.fallbackRole ?? 'INSTRUCTOR',
+  })
+  user.role = 'INSTRUCTOR'
+
+  const profileLoose = asInstructorProfileLoose(profile)
+  const looseDetail = detail as InstructorMemberDetailLoose
+  const { homeAddress, homeAddressDetail } = resolveInstructorHomeAddressParts(detail, profileLoose)
+  if (homeAddress) user.detailAddress = homeAddress
+  if (homeAddressDetail) user.detailAddressDetail = homeAddressDetail
+
+  // member.gender 누락 시 루트/프로필 동의어로 보강 — 표시는 항상 남성/여성
+  if (!user.gender) {
+    const looseGender = pickTrimmed(
+      (looseDetail as { gender?: string }).gender,
+      (profileLoose as { gender?: string } | null)?.gender,
+      (member as { genderLabel?: string }).genderLabel
+    )
+    const display = toDisplayGender(looseGender)
+    if (display !== '-') user.gender = display
+  }
+
+  const affiliation = pickTrimmed(profileLoose?.affiliation, looseDetail.affiliation)
+  if (affiliation && !looksLikeInstructorActivityEnumCode(affiliation)) {
+    user.affiliation = affiliation
+  }
+
+  const schoolName = pickTrimmed(
+    profileLoose?.affiliatedSchoolName,
+    profileLoose?.schoolName,
+    looseDetail.affiliatedSchoolName
+  )
+  if (schoolName) {
+    user.affiliatedSchoolName = schoolName
+    const primaryUpper = profile?.primaryActivityType?.trim().toUpperCase()
+    // GENERAL(순수 강사)는 학교명 필드만으로 겸직(dual)로 올리지 않음
+    // → 새로고침 시 「강사 상세」가 「교사 상세」로 바뀌는 문제 방지
+    if (
+      primaryUpper !== 'GENERAL' &&
+      (!user.instructorMemberProfile || user.instructorMemberProfile === 'instructor_only')
+    ) {
+      user.instructorMemberProfile = 'instructor_dual'
+    }
+  }
+
+  const employmentLabel = toEmploymentStatusDisplayLabel(
+    pickTrimmed(profileLoose?.employmentStatus, looseDetail.employmentStatus)
+  )
+  if (employmentLabel) {
+    user.listMetrics = assignDefinedListMetrics(user.listMetrics, {
+      employmentStatusLabel: employmentLabel,
+    })
+  }
+
+  const bank = resolveInstructorBankFields(detail)
+  const businessIncome =
+    parseBusinessIncomeFlag(profileLoose?.businessIncomeYn) ??
+    parseBusinessIncomeFlag(profileLoose?.businessIncome)
+
+  if (!user.instructorInfo) {
+    user.instructorInfo = {
+      bankName: bank.bankName,
+      accountNumber: bank.accountNumber,
+      accountHolder: bank.accountHolder || member.name?.trim() || '',
+      isBusinessIncome: businessIncome ?? false,
+    }
+  } else {
+    // 빈 문자열이어도 API 값을 반영 (목록 빈 instructorInfo가 남는 경우 방지)
+    user.instructorInfo.bankName = bank.bankName || user.instructorInfo.bankName
+    user.instructorInfo.accountNumber = bank.accountNumber || user.instructorInfo.accountNumber
+    user.instructorInfo.accountHolder =
+      bank.accountHolder || user.instructorInfo.accountHolder || member.name?.trim() || ''
+    if (businessIncome !== undefined) {
+      user.instructorInfo.isBusinessIncome = businessIncome
+    }
+  }
+
+  const certifications = (detail.certifications ?? [])
+    .map(row => {
+      const name = row.certificationName?.trim()
+      if (!name) return null
+      return {
+        id: row.id,
+        name,
+        ...(row.issuer?.trim() ? { issuer: row.issuer.trim() } : {}),
+        ...(row.certificateNumber?.trim()
+          ? { certificateNumber: row.certificateNumber.trim() }
+          : {}),
+        ...(row.issuedDate?.trim() ? { issuedDate: row.issuedDate.trim() } : {}),
+        ...(row.expiresDate?.trim() ? { expiresDate: row.expiresDate.trim() } : {}),
+      }
+    })
+    .filter((row): row is NonNullable<typeof row> => row != null)
+  if (certifications.length > 0) {
+    user.instructorCertifications = certifications
+  }
+
+  return normalizeRevokedInstructorUser(user)
 }

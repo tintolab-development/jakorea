@@ -19,28 +19,31 @@ function createFeaturedRows(today: Dayjs): GeminiRecruitmentRow[] {
       id: 'gvt-recruitment-scheduled',
       displayNo: 0,
       title: '(Google for Education & JA Korea)Gemini Academy Coding Bootcamp',
-      applicationPeriodStart: today.add(7, 'day').format('YYYY-MM-DD'),
-      applicationPeriodEnd: today.add(21, 'day').format('YYYY-MM-DD'),
-      trainingRequestPeriodStart: today.startOf('year').add(2, 'month').format('YYYY-MM-DD'),
-      trainingRequestPeriodEnd: today.startOf('year').add(3, 'month').format('YYYY-MM-DD'),
+      // 모집 예정: D+60 ~ D+240
+      applicationPeriodStart: today.add(60, 'day').format('YYYY-MM-DD'),
+      applicationPeriodEnd: today.add(240, 'day').format('YYYY-MM-DD'),
+      trainingRequestPeriodStart: today.add(90, 'day').format('YYYY-MM-DD'),
+      trainingRequestPeriodEnd: today.add(300, 'day').format('YYYY-MM-DD'),
     },
     {
       id: 'gvt-recruitment-in-progress',
       displayNo: 0,
       title: SCREENSHOT_IN_PROGRESS_TITLE,
-      applicationPeriodStart: today.subtract(5, 'day').format('YYYY-MM-DD'),
-      applicationPeriodEnd: today.add(10, 'day').format('YYYY-MM-DD'),
-      trainingRequestPeriodStart: today.startOf('year').add(1, 'month').format('YYYY-MM-DD'),
-      trainingRequestPeriodEnd: today.startOf('year').add(2, 'month').format('YYYY-MM-DD'),
+      // 모집 중: D-120 ~ D+120
+      applicationPeriodStart: today.subtract(120, 'day').format('YYYY-MM-DD'),
+      applicationPeriodEnd: today.add(120, 'day').format('YYYY-MM-DD'),
+      trainingRequestPeriodStart: today.add(30, 'day').format('YYYY-MM-DD'),
+      trainingRequestPeriodEnd: today.add(210, 'day').format('YYYY-MM-DD'),
     },
     {
       id: 'gvt-recruitment-ended',
       displayNo: 0,
       title: '(Google for Education & JA Korea) Gemini Academy AI for Education Workshop',
-      applicationPeriodStart: today.subtract(30, 'day').format('YYYY-MM-DD'),
-      applicationPeriodEnd: today.subtract(7, 'day').format('YYYY-MM-DD'),
-      trainingRequestPeriodStart: today.startOf('year').format('YYYY-MM-DD'),
-      trainingRequestPeriodEnd: today.startOf('year').add(20, 'day').format('YYYY-MM-DD'),
+      // 모집 마감: D-300 ~ D-45
+      applicationPeriodStart: today.subtract(300, 'day').format('YYYY-MM-DD'),
+      applicationPeriodEnd: today.subtract(45, 'day').format('YYYY-MM-DD'),
+      trainingRequestPeriodStart: today.subtract(200, 'day').format('YYYY-MM-DD'),
+      trainingRequestPeriodEnd: today.subtract(60, 'day').format('YYYY-MM-DD'),
     },
   ]
 }

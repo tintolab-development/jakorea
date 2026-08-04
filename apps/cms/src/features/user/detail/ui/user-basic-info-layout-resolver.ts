@@ -22,13 +22,13 @@ export const BasicInfoLayout = {
 
 export type BasicInfoLayout = (typeof BasicInfoLayout)[keyof typeof BasicInfoLayout]
 
-export type InstructorSectionVariant = 'school_teacher' | 'instructor'
+export type SplitSectionVariant = 'all_users' | 'school_teacher' | 'instructor' | 'admin'
 
 export type BasicInfoLayoutResolved =
   | {
       layout: typeof BasicInfoLayout.SPLIT_CARD
       sections: readonly [typeof BasicInfoSectionTypes.META, typeof BasicInfoSectionTypes.PROFILE]
-      instructorSectionVariant: InstructorSectionVariant
+      splitSectionVariant: SplitSectionVariant
     }
   | {
       layout: typeof BasicInfoLayout.SINGLE_CARD
@@ -41,7 +41,7 @@ export type BasicInfoLayoutResolved =
 
 function resolveInstructorSectionVariant(
   instructorProfile: InstructorMemberProfile | null | undefined
-): InstructorSectionVariant {
+): SplitSectionVariant {
   return instructorProfile === 'school_teacher' ? 'school_teacher' : 'instructor'
 }
 
@@ -62,7 +62,7 @@ export function resolveBasicInfoLayout({
     return {
       layout: BasicInfoLayout.SPLIT_CARD,
       sections: [BasicInfoSectionTypes.META, BasicInfoSectionTypes.PROFILE],
-      instructorSectionVariant: resolveInstructorSectionVariant(instructorProfile),
+      splitSectionVariant: resolveInstructorSectionVariant(instructorProfile),
     }
   }
 
@@ -75,13 +75,15 @@ export function resolveBasicInfoLayout({
 
   if (bodyKey === 'admin') {
     return {
-      layout: BasicInfoLayout.SINGLE_CARD,
-      sections: [BasicInfoSectionTypes.ADMIN],
+      layout: BasicInfoLayout.SPLIT_CARD,
+      sections: [BasicInfoSectionTypes.META, BasicInfoSectionTypes.PROFILE],
+      splitSectionVariant: 'admin',
     }
   }
 
   return {
-    layout: BasicInfoLayout.SINGLE_CARD,
-    sections: [BasicInfoSectionTypes.ALL_USERS],
+    layout: BasicInfoLayout.SPLIT_CARD,
+    sections: [BasicInfoSectionTypes.META, BasicInfoSectionTypes.PROFILE],
+    splitSectionVariant: 'all_users',
   }
 }

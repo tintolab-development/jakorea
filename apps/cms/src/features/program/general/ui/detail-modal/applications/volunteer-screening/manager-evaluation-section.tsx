@@ -1,4 +1,7 @@
-import { StatusDropdownCell } from '@/shared/components/status-dropdown-cell'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { GeneralVolunteerApplicantRow } from '@/data/mock/general-volunteer-applicants-mock'
 import {
@@ -29,41 +32,45 @@ export function GeneralVolunteerApplicantManagerEvaluationSection({
           <DetailInfoForm.Field
             label="담당자 A"
             view={
-              <StatusDropdownCell<GeneralManagerEvaluation>
-                status={applicant.managerAEvaluation}
-                statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
-                renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
-                isItemDisabled={(current, option) => current === option}
-                onChange={evaluation => onManagerAEvaluationChange(applicant.id, evaluation)}
-                isOpen={
-                  openManagerDropdown?.rowId === applicant.id &&
-                  openManagerDropdown.manager === 'A'
-                }
-                onOpenChange={open =>
-                  setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'A' } : null)
-                }
-                tagLayout="tag100"
-              />
+              <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
+                <StatusDropdownCell<GeneralManagerEvaluation>
+                  status={applicant.managerAEvaluation}
+                  statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
+                  renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
+                  isItemDisabled={(current, option) => current === option}
+                  onChange={evaluation => onManagerAEvaluationChange(applicant.id, evaluation)}
+                  isOpen={
+                    openManagerDropdown?.rowId === applicant.id &&
+                    openManagerDropdown.manager === 'A'
+                  }
+                  onOpenChange={open =>
+                    setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'A' } : null)
+                  }
+                  tagLayout="tag100"
+                />
+              </span>
             }
           />
           <DetailInfoForm.Field
             label="담당자 B"
             view={
-              <StatusDropdownCell<GeneralManagerEvaluation>
-                status={applicant.managerBEvaluation}
-                statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
-                renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
-                isItemDisabled={(current, option) => current === option}
-                onChange={evaluation => onManagerBEvaluationChange(applicant.id, evaluation)}
-                isOpen={
-                  openManagerDropdown?.rowId === applicant.id &&
-                  openManagerDropdown.manager === 'B'
-                }
-                onOpenChange={open =>
-                  setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'B' } : null)
-                }
-                tagLayout="tag100"
-              />
+              <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
+                <StatusDropdownCell<GeneralManagerEvaluation>
+                  status={applicant.managerBEvaluation}
+                  statusOptions={GENERAL_MANAGER_EVALUATION_ORDER}
+                  renderBadge={evaluation => <GeneralManagerEvaluationBadge evaluation={evaluation} />}
+                  isItemDisabled={(current, option) => current === option}
+                  onChange={evaluation => onManagerBEvaluationChange(applicant.id, evaluation)}
+                  isOpen={
+                    openManagerDropdown?.rowId === applicant.id &&
+                    openManagerDropdown.manager === 'B'
+                  }
+                  onOpenChange={open =>
+                    setOpenManagerDropdown(open ? { rowId: applicant.id, manager: 'B' } : null)
+                  }
+                  tagLayout="tag100"
+                />
+              </span>
             }
           />
         </DetailInfoForm.Row>

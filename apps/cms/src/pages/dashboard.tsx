@@ -12,10 +12,14 @@ import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core'
 import { SortableContext, rectSortingStrategy, type SortingStrategy } from '@dnd-kit/sortable'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getAdminLevelLabel } from '@/shared/config/permissions'
-import { DASHBOARD_SLOT_HEIGHT_HALF_PX, isWidgetResizable } from '@/shared/config/dashboard-config'
+import {
+  DASHBOARD_SLOT_HEIGHT_HALF_PX,
+  getDashboardWidgetsForUser,
+  isWidgetResizable,
+} from '@/shared/config/dashboard-config'
 import { getRoleLabel } from '@/shared/ui'
 import {
-  useDashboardData,
+  useActiveProgramCount,
   useDashboardLayout,
   SortableWidgetSlot,
   DashboardSettingsModal,
@@ -44,7 +48,7 @@ const noScaleRectSortingStrategy: SortingStrategy = args => {
 
 export function Dashboard() {
   const { user } = useAuthStore()
-  const { activePrograms } = useDashboardData()
+  const mockActiveProgramCount = useActiveProgramCount()
   const isAdmin = user?.role === 'ADMIN'
   const useRemoteDashboard = isAdmin && shouldUseDashboardRemoteApi()
   const { data: dashboardHome } = useDashboardHome(!!isAdmin)
@@ -60,7 +64,7 @@ export function Dashboard() {
   const activeProgramsCount =
     useRemoteDashboard && dashboardHome?.programCount != null
       ? dashboardHome.programCount
-      : activePrograms.count
+      : mockActiveProgramCount
 
   const userRoleLabel = useMemo(() => {
     if (!user) return ''
@@ -73,7 +77,14 @@ export function Dashboard() {
   const isInstructorOrIndividual =
     (user?.role === 'INSTRUCTOR' || user?.role === 'INDIVIDUAL') && !!user?.instructorId
 
-  const { data: overallStatistics, loading: statisticsLoading } = useOverallStatistics(!!isAdmin)
+  /** 역할 위젯에 overall-statistics가 있을 때만 조회 (관리자 홈 기본 구성에는 없음) */
+  const needsOverallStatistics = useMemo(() => {
+    if (!isAdmin || !user) return false
+    return getDashboardWidgetsForUser(user).some(w => w.type === 'overall-statistics-cards')
+  }, [isAdmin, user])
+
+  const { data: overallStatistics, loading: statisticsLoading } =
+    useOverallStatistics(needsOverallStatistics)
   const { data: instructorActivity, loading: instructorActivityLoading } = useInstructorActivity(
     !!isInstructorOrIndividual,
     user?.instructorId

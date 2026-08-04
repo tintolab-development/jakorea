@@ -14,6 +14,7 @@ import {
 } from '@/features/template/model/payment-statement-pre-consent-a4-preview'
 import {
   createPaymentStatementPreConsentDraft,
+  overlayPaymentStatementPreConsentSeedHorizontalTables,
   PAYMENT_STATEMENT_PRE_CONSENT_SEED_PARAGRAPH_IDS,
 } from '@/features/template/model/payment-statement-pre-consent-draft'
 import {
@@ -47,7 +48,9 @@ export function usePaymentStatementPreConsentEditor(
   const [isDraftLoading, setIsDraftLoading] = useState(() => active)
 
   const applyDraftSnapshot = useCallback((next: WritingFormDraft) => {
-    const normalized = normalizeWritingFormDraft(next)
+    const normalized = overlayPaymentStatementPreConsentSeedHorizontalTables(
+      normalizeWritingFormDraft(next)
+    )
     setDraft(normalized)
     setActiveParagraphId(normalized.paragraphs[0]?.id ?? null)
     setSingleItemListActiveItemId(null)

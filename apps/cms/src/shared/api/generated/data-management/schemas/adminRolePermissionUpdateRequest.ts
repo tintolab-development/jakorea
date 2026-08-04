@@ -7,6 +7,18 @@
  */
 
 export interface AdminRolePermissionUpdateRequest {
+  /**
+     * @minItems 0
+     * @maxItems 500
+     * @items.minLength 0
+     * @items.maxLength 100
+     */
   permissionCodes?: string[];
-  reason?: string;
+  clearAll?: boolean;
+  /**
+     * @minLength 2
+     * @maxLength 500
+     */
+  reason: string;
+  permissionSelectionValid?: boolean;
 }

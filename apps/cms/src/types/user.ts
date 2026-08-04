@@ -16,6 +16,14 @@ export interface TermsAgreementRow {
   sourceFlow?: string
 }
 
+export interface UserGuardianInfo {
+  guardianName?: string
+  relation?: string
+  phone?: string
+  consentStatus?: string
+  consentedAt?: string
+}
+
 // ===== 역할 정의 =====
 
 // 프론트 사용자 역할 (§2.1)
@@ -57,12 +65,22 @@ export interface SchoolAffiliatedTeacherRow {
   teacherMemberId?: number
 }
 
+/** 학교 상세 소속 교사 행 → 교사 상세 drill-down */
+export interface AffiliatedTeacherLinkTarget {
+  userId: string
+  teacherMemberId?: number
+  name?: string
+  assignedGrade?: string
+}
+
 // ===== 사용자 인터페이스 =====
 
 export interface User {
   id: UUID
   /** 백엔드 회원 숫자 ID — remote API 연동 시 목록·상세에서 채움 */
   memberId?: number
+  /** admin-accounts API numeric id — 관리자 회원 상세·권한 유형 변경 */
+  adminAccountId?: number
   email: string
   password: string // Mock 데이터용 (실제로는 해시된 값)
   name: string
@@ -88,6 +106,8 @@ export interface User {
   schoolInfo?: {
     schoolName: string
     address: string
+    /** 상세 주소 — 표시 시 address 뒤에만 이어 붙임 */
+    addressDetail?: string
     position?: string // 담당자 직책
     /** CMS mock/상세 — 소속 교사 목록 */
     affiliatedTeachers?: SchoolAffiliatedTeacherRow[]
@@ -157,6 +177,8 @@ export interface User {
   // 추가 프로필 정보
   bio?: string
   detailAddress?: string
+  /** 자택 주소 상세 — API `homeAddressDetail` / 개인 `addressDetail` */
+  detailAddressDetail?: string
   zipCode?: string
 
   // 회원 상세 모달 표시용 (선택)
@@ -164,7 +186,14 @@ export interface User {
   birthDate?: DateValue
   gender?: string
   affiliation?: string
+  /** 개인 회원 — API `enrollmentStatus` (`ENROLLED` | `NOT_ENROLLED`) */
+  schoolEnrollmentStatus?: 'ENROLLED' | 'NOT_ENROLLED'
   socialAccounts?: string[]
+  /** 플랫폼 가입 시 서버가 판정한 만 14세 미만 여부 */
+  under14?: boolean
+  guardianConsentRequired?: boolean
+  /** 만 14세 미만 플랫폼 가입자의 법정대리인 인증 정보 */
+  guardianInfo?: UserGuardianInfo
 
   /** 약관·동의 이력 — `/me` API 연동 시 채움 */
   termsAgreements?: TermsAgreementRow[]
@@ -175,11 +204,23 @@ export interface User {
   instructorSelfIntroduction?: string
   /** 강사 instructor-profile — 승인 상태 (remote) */
   instructorApprovalStatus?: string
+  /** 강사 상세 `certifications[]` — 자격·면허 (remote) */
+  instructorCertifications?: InstructorCertificationItem[]
 
   /**
    * 회원 목록 테이블 전용 지표 (API가 내려주면 표시, 없으면 '-' 또는 기존 필드로 추론)
    */
   listMetrics?: UserListRowMetrics
+}
+
+/** 강사 상세·이력서 — 자격증/면허 한 건 */
+export interface InstructorCertificationItem {
+  id?: number
+  name: string
+  issuer?: string
+  certificateNumber?: string
+  issuedDate?: string
+  expiresDate?: string
 }
 
 /** 목록 화면 열별 부가 데이터 */

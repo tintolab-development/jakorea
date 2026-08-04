@@ -15,11 +15,14 @@ import {
   fetchMemberPrivacyUnmask,
   PrivacyUnmaskApiError,
 } from '@/features/logs/api/privacy-unmask-fetcher'
+import { fetchMemberRolePrivacyUnmask } from '@/features/user/api/member-privacy-unmask'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { logsQueryKeys } from '@/features/logs/api/logs-query-keys'
 import { trackPersonalInfoAccess } from '@/features/logs/lib/personal-info-access-tracker'
 import { UserPersonalInfoRevealConfirmModal } from '@/features/user/detail/ui/modal/user-personal-info-reveal-confirm-modal'
 import { queryClient } from '@/shared/lib/query-client'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import type { UserRole } from '@/types/user'
 
 export type PersonalInfoRevealControlMode =
   | 'toggleRemask'
@@ -30,6 +33,13 @@ export interface UsePersonalInfoRevealOptions {
   resolveAccessItem: () => string
   /** 실 API unmask 시 회원 ID (없으면 mock tracker만 사용) */
   resolveMemberId?: () => string | undefined
+  /** 회원 관리 역할별 unmask path 분기 */
+  resolveMemberRole?: () => UserRole | undefined
+  /**
+   * 역할별 unmask API가 원문 상세 DTO를 반환하면 호출.
+   * 회원 상세 화면에서 주소·계좌 등 표시 갱신에 사용.
+   */
+  onPrivacyUnmasked?: (payload: unknown, role: UserRole | undefined) => void
   resetDeps: DependencyList
   controlMode: PersonalInfoRevealControlMode
   modalZIndex?: number
@@ -43,6 +53,13 @@ export interface UsePersonalInfoRevealResult {
   openPersonalInfoRevealConfirm: () => void
   closePersonalInfoRevealConfirm: () => void
   submitPersonalInfoReveal: (reason: string) => void
+  /**
+   * 사유 입력 모달 없이 unmask 수행 (정보 수정 선행 해제 등).
+   * 성공 시 onPrivacyUnmasked + personalInfoRevealed=true.
+   */
+  revealWithReason: (
+    reason: string
+  ) => Promise<{ ok: true; payload?: unknown } | { ok: false }>
   confirmModal: ReactNode
 }
 
@@ -53,31 +70,52 @@ export interface UsePersonalInfoRevealResult {
 async function revealPersonalInfoWithAudit(
   resolveAccessItem: () => string,
   resolveMemberId: (() => string | undefined) | undefined,
-  reason: string
-): Promise<boolean> {
-  const memberId = resolveMemberId?.()?.trim()
-  if (shouldUseLogsRemoteApi() && memberId) {
+  reason: string,
+  resolveMemberRole?: () => UserRole | undefined
+): Promise<{ ok: true; payload?: unknown; role?: UserRole } | { ok: false }> {
+  const memberIdRaw = resolveMemberId?.()?.trim()
+  const memberIdNum = memberIdRaw != null ? Number(memberIdRaw) : NaN
+  const role = resolveMemberRole?.()
+
+  if (isMembersRemoteEnabled() && Number.isFinite(memberIdNum)) {
     try {
-      await fetchMemberPrivacyUnmask(memberId, reason)
+      const payload = await fetchMemberRolePrivacyUnmask(memberIdNum, reason, role)
       void queryClient.invalidateQueries({ queryKey: logsQueryKeys.all })
-      return true
+      return { ok: true, payload, role }
     } catch (error) {
       const message =
         error instanceof PrivacyUnmaskApiError
           ? error.message
           : '개인정보 원문 조회에 실패했습니다.'
       cmsAlertModal.show({ title: '열람 실패', content: message })
-      return false
+      return { ok: false }
+    }
+  }
+
+  if (shouldUseLogsRemoteApi() && memberIdRaw) {
+    try {
+      await fetchMemberPrivacyUnmask(memberIdRaw, reason)
+      void queryClient.invalidateQueries({ queryKey: logsQueryKeys.all })
+      return { ok: true, role }
+    } catch (error) {
+      const message =
+        error instanceof PrivacyUnmaskApiError
+          ? error.message
+          : '개인정보 원문 조회에 실패했습니다.'
+      cmsAlertModal.show({ title: '열람 실패', content: message })
+      return { ok: false }
     }
   }
 
   trackPersonalInfoAccess(resolveAccessItem(), reason)
-  return true
+  return { ok: true, role }
 }
 
 export function usePersonalInfoReveal({
   resolveAccessItem,
   resolveMemberId,
+  resolveMemberRole,
+  onPrivacyUnmasked,
   resetDeps,
   controlMode,
   modalZIndex,
@@ -96,15 +134,32 @@ export function usePersonalInfoReveal({
     setConfirmOpen(false)
   }, [])
 
+  const revealWithReason = useCallback(
+    async (
+      reason: string
+    ): Promise<{ ok: true; payload?: unknown } | { ok: false }> => {
+      const result = await revealPersonalInfoWithAudit(
+        resolveAccessItem,
+        resolveMemberId,
+        reason,
+        resolveMemberRole
+      )
+      if (!result.ok) return { ok: false }
+      if (result.payload !== undefined) {
+        onPrivacyUnmasked?.(result.payload, result.role)
+      }
+      setPersonalInfoRevealed(true)
+      setConfirmOpen(false)
+      return { ok: true, payload: result.payload }
+    },
+    [onPrivacyUnmasked, resolveAccessItem, resolveMemberId, resolveMemberRole]
+  )
+
   const submitPersonalInfoReveal = useCallback(
     (reason: string) => {
-      void revealPersonalInfoWithAudit(resolveAccessItem, resolveMemberId, reason).then(ok => {
-        if (!ok) return
-        setPersonalInfoRevealed(true)
-        setConfirmOpen(false)
-      })
+      void revealWithReason(reason)
     },
-    [resolveAccessItem, resolveMemberId]
+    [revealWithReason]
   )
 
   const openPersonalInfoRevealConfirm = useCallback(() => {
@@ -149,6 +204,7 @@ export function usePersonalInfoReveal({
     openPersonalInfoRevealConfirm,
     closePersonalInfoRevealConfirm,
     submitPersonalInfoReveal,
+    revealWithReason,
     confirmModal,
   }
 }
@@ -195,8 +251,8 @@ export function usePersonalInfoRevealByRow({
         () => resolveAccessItem(id),
         () => resolveMemberId?.(id),
         reason
-      ).then(ok => {
-        if (!ok) return
+      ).then(result => {
+        if (!result.ok) return
         setPrivacyRevealedByRowId(prev => ({ ...prev, [id]: true }))
         setPendingConfirmRowId(null)
       })

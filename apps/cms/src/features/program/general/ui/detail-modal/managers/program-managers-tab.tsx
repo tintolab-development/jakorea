@@ -2,14 +2,16 @@
  * 프로그램 상세 - 담당자 정보 탭
  * 필터(담당자명, 권한) + 조회 + 담당자 목록 테이블 + 삭제/등록
  *
- * TODO(api): OpenAPI 담당자 CRUD 확정 후 일반·1사1교 모두 remote 연동.
- * 1사1교는 program-type-isolation — shared 기본값을 바꾸지 말고 surface/variant로 분기.
+ * Hybrid: programs remote 게이트 ON → GET/POST/PATCH/DELETE …/managers
+ * OFF → mock(`getMockProgramManagers`). mock 파일은 폴백용으로 유지.
+ * 공유 탭 — 일반·UJAT·1사1교·Gemini 상세에서 재사용 (program-type-isolation).
  */
 
 import { useMemo, useState, useEffect, useCallback } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { ColumnsType } from 'antd/es/table'
 import type { ProgramRole } from '@/types/user'
@@ -17,20 +19,13 @@ import {
   useProgramManagersParams,
   type ProgramManagersFilters,
 } from '../../../hooks/use-program-managers-params'
-import {
-  getMockProgramManagers,
-  PROGRAM_ROLE_LABELS,
-  type ProgramManagerRow,
-} from '@/data/mock/program-managers'
+import { useProgramManagers } from '../../../hooks/use-program-managers'
+import { PROGRAM_ROLE_LABELS, type ProgramManagerRow } from '@/data/mock/program-managers'
 import {
   canAddProgramPm,
   canSetProgramManagerRole,
 } from '@/entities/program/lib/program-pm-role-policy'
-import {
-  AddManagerModal,
-  buildManagerRowFromForm,
-  type AddManagerFormValues,
-} from '../../add-manager-modal'
+import { AddManagerModal, type AddManagerFormValues } from '../../add-manager-modal'
 import { ManagerDeleteGuideModal } from '../../manager-delete-guide-modal'
 import {
   EditableStatusBadge,
@@ -56,6 +51,7 @@ interface ProgramManagersTabProps {
 }
 
 export function ProgramManagersTab({ programId, maskSensitive = false }: ProgramManagersTabProps) {
+  const { showAlert } = useCmsAlert()
   const { filters, setFilters } = useProgramManagersParams()
   const [pendingFilters, setPendingFilters] = useState<ProgramManagersFilters>(() => ({
     ...filters,
@@ -63,10 +59,28 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [appliedFilters, setAppliedFilters] = useState<ProgramManagersFilters>(filters)
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
+  const [addModalOpen, setAddModalOpen] = useState(false)
+  const [deleteGuideModalOpen, setDeleteGuideModalOpen] = useState(false)
+
+  const {
+    managers: managerList,
+    loading,
+    isMutating,
+    getAssignableCandidates,
+    candidatesLoading,
+    addManager,
+    updateManagerRole,
+    deleteManagers,
+  } = useProgramManagers(programId)
 
   useEffect(() => {
     setPendingFilters({ ...filters })
   }, [filters])
+
+  useEffect(() => {
+    setSelectedRowKeys([])
+    setOpenRoleDropdownId(null)
+  }, [programId])
 
   const managerFilterFields = useMemo((): FilterFieldConfig[] => {
     return [
@@ -114,18 +128,6 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
     })
   }
 
-  const [managerList, setManagerList] = useState<ProgramManagerRow[]>(() =>
-    getMockProgramManagers(programId)
-  )
-  const [addModalOpen, setAddModalOpen] = useState(false)
-  const [deleteGuideModalOpen, setDeleteGuideModalOpen] = useState(false)
-
-  useEffect(() => {
-    setManagerList(getMockProgramManagers(programId))
-    setSelectedRowKeys([])
-    setOpenRoleDropdownId(null)
-  }, [programId])
-
   const filteredManagers = useMemo(() => {
     const list = managerList.filter(row => {
       const keyword = (appliedFilters.managerName || '').trim().toLowerCase()
@@ -142,6 +144,16 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
     return [...list].sort((a, b) => b.no - a.no)
   }, [managerList, appliedFilters])
 
+  const excludeManagerNames = useMemo(
+    () => managerList.map(row => row.name),
+    [managerList]
+  )
+
+  const assignableCandidates = useMemo(
+    () => getAssignableCandidates(excludeManagerNames),
+    [excludeManagerNames, getAssignableCandidates]
+  )
+
   const handleDeleteClick = () => {
     if (selectedRowKeys.length === 0) {
       return
@@ -154,9 +166,13 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
     return managerList.filter(row => keysSet.has(row.id)).map(row => row.name)
   }, [selectedRowKeys, managerList])
 
-  const handleDeleteConfirm = () => {
-    const keysToDelete = new Set(selectedRowKeys.map(String))
-    setManagerList(prev => prev.filter(row => !keysToDelete.has(row.id)))
+  const handleDeleteConfirm = async () => {
+    const keysToDelete = selectedRowKeys.map(String)
+    const result = await deleteManagers(keysToDelete)
+    if (!result.ok) {
+      void showAlert({ title: '삭제 실패', content: result.message })
+      return
+    }
     setSelectedRowKeys([])
     setDeleteGuideModalOpen(false)
   }
@@ -165,18 +181,20 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
     setDeleteGuideModalOpen(false)
   }
 
-  const handleAdd = (values: AddManagerFormValues) => {
+  const handleAdd = async (values: AddManagerFormValues): Promise<boolean> => {
     if (values.role === 'OWNER' && !canAddProgramPm(managerList)) {
-      return
+      return false
     }
-    const nextNo = managerList.length > 0 ? Math.max(...managerList.map(r => r.no)) + 1 : 1
-    const nextId = `manager-new-${Date.now()}`
-    const newRow = buildManagerRowFromForm(values, nextNo, nextId)
-    setManagerList(prev => [newRow, ...prev])
+    const result = await addManager(values)
+    if (!result.ok) {
+      void showAlert({ title: '등록 실패', content: result.message })
+      return false
+    }
+    return true
   }
 
   const handleTableRoleChange = useCallback(
-    (recordId: string, newRole: ProgramRole) => {
+    async (recordId: string, newRole: ProgramRole) => {
       const manager = managerList.find(m => m.id === recordId)
       if (!manager) return
       if (manager.role === newRole) {
@@ -187,12 +205,13 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
         setOpenRoleDropdownId(null)
         return
       }
-      setManagerList(prev =>
-        prev.map(row => (row.id === recordId ? { ...row, role: newRole } : row))
-      )
+      const result = await updateManagerRole(recordId, newRole)
+      if (!result.ok) {
+        void showAlert({ title: '권한 변경 실패', content: result.message })
+      }
       setOpenRoleDropdownId(null)
     },
-    [managerList]
+    [managerList, showAlert, updateManagerRole]
   )
 
   const roleItemDisabled = useCallback(
@@ -236,7 +255,9 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
             statusOptions={TABLE_ROLE_ORDER}
             renderBadge={renderRoleBadge}
             isItemDisabled={(_cur, opt) => roleItemDisabled(record, opt)}
-            onChange={key => handleTableRoleChange(record.id, key)}
+            onChange={key => {
+              void handleTableRoleChange(record.id, key)
+            }}
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
@@ -286,6 +307,14 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
     ]
   )
 
+  if (loading && managerList.length === 0) {
+    return (
+      <div className="program-managers-tab program-managers-tab--loading" role="status">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
   return (
     <div className="program-managers-tab">
       <FilterTableLayout
@@ -300,10 +329,20 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
         description={`${filteredManagers.length}건`}
         actions={
           <>
-            <CmsButton variant="delete" size="large" onClick={handleDeleteClick}>
+            <CmsButton
+              variant="delete"
+              size="large"
+              loading={isMutating && deleteGuideModalOpen}
+              onClick={handleDeleteClick}
+            >
               담당자 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={() => setAddModalOpen(true)}>
+            <CmsButton
+              variant="primary"
+              size="large"
+              disabled={isMutating}
+              onClick={() => setAddModalOpen(true)}
+            >
               담당자 등록
             </CmsButton>
           </>
@@ -313,10 +352,14 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
           className="cms-data-table cms-data-table--fluid program-managers-tab__managers-table"
           rowKey="id"
           pagination={false}
+          loading={loading}
           rowSelection={{
             columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys as string[]),
+            getCheckboxProps: record => ({
+              disabled: record.removableYn === false,
+            }),
           }}
           columns={columns}
           dataSource={filteredManagers}
@@ -327,6 +370,10 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
         open={addModalOpen}
         onCancel={() => setAddModalOpen(false)}
         currentOwnerCount={managerList.filter(m => m.role === 'OWNER').length}
+        excludeManagerNames={excludeManagerNames}
+        candidates={assignableCandidates}
+        candidatesLoading={candidatesLoading}
+        confirmLoading={isMutating}
         onAdd={handleAdd}
       />
 
@@ -334,7 +381,9 @@ export function ProgramManagersTab({ programId, maskSensitive = false }: Program
         open={deleteGuideModalOpen}
         onCancel={handleDeleteGuideCancel}
         managerNames={managerNamesToDelete}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={() => {
+          void handleDeleteConfirm()
+        }}
       />
     </div>
   )

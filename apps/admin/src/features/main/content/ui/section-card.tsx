@@ -1,0 +1,44 @@
+import { Button, Space, Typography } from 'antd'
+import type { ReactNode } from 'react'
+import styles from './section-card.module.css'
+
+const { Title } = Typography
+
+export function ContentSectionCard({
+  title,
+  editing,
+  onEdit,
+  onCancel,
+  onSave,
+  children,
+}: {
+  title: string
+  editing: boolean
+  onEdit: () => void
+  onCancel: () => void
+  onSave: () => void
+  children: ReactNode
+}) {
+  return (
+    <section className={styles.card}>
+      <div className={styles.header}>
+        <Title level={4} className={styles.title}>
+          {title}
+        </Title>
+        {editing ? (
+          <Space>
+            <Button onClick={onCancel}>취소</Button>
+            <Button type="primary" onClick={onSave}>
+              저장
+            </Button>
+          </Space>
+        ) : (
+          <Button type="primary" onClick={onEdit}>
+            수정
+          </Button>
+        )}
+      </div>
+      <div className={styles.body}>{children}</div>
+    </section>
+  )
+}

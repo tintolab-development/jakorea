@@ -205,3 +205,28 @@
   justify-content: flex-end;
 }
 
+/* 결과 다운로드 — large+icon · 긴 라벨(max-content) · DS 패딩 6 16 6 10 */
+.survey-management-registered-actions__download-button.cms-button.ant-btn.cms-button--large {
+  width: max-content !important;
+  min-width: fit-content;
+  max-width: none;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 6px 16px 6px 10px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.survey-management-registered-actions__download-button.cms-button .btn-loading-only__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.survey-management-registered-actions__download-button.cms-button .cms-button__label {
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
+}
+

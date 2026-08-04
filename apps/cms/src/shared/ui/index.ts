@@ -72,6 +72,13 @@ export type { AppBreadcrumbProps } from './app-breadcrumb'
 export type { BreadcrumbItem } from '@/shared/config/menu-config'
 export { FileSelectField } from './file-select-field'
 export type { FileSelectFieldProps } from './file-select-field'
+export {
+  FILE_SELECT_MAX_TOTAL_BYTES,
+  FILE_SELECT_TOTAL_SIZE_GUIDE_LINE,
+  sumFileBytes,
+  isFileSelectTotalSizeExceeded,
+  notifyFileSelectTotalSizeExceeded,
+} from './file-select-field-limits'
 export { TealHeaderModal } from './teal-header-modal'
 export type { ModalSize, TealHeaderModalProps } from './teal-header-modal'
 export { ContentModal } from './content-modal'
@@ -91,8 +98,14 @@ export {
 } from './app-datepicker'
 export type { AppDatePickerProps, AppDateRangePickerProps } from './app-datepicker'
 export { LoadingButton } from './loading-button'
-export { CmsButton, CMS_ACTION_BUTTON_WIDTH } from './cms-button'
+export {
+  CmsButton,
+  CMS_ACTION_BUTTON_WIDTH,
+  CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH,
+} from './cms-button'
 export type { CmsButtonProps, CmsButtonVariant, CmsButtonSize } from './cms-button'
+export { CmsCircleAddButton } from './cms-circle-add-button'
+export type { CmsCircleAddButtonProps } from './cms-circle-add-button'
 export { ExcelButton } from './excel-button'
 export type { ExcelButtonProps } from './excel-button'
 export { CmsInput } from './cms-input'
@@ -118,8 +131,19 @@ export { CmsInputSearch } from './cms-input-search'
 export type { CmsInputSearchProps } from './cms-input-search'
 export { AddressSearch } from './address-search'
 export type { AddressSearchProps } from './address-search'
-export { SchoolSearch } from './school-search'
-export type { SchoolSearchProps, SchoolSearchSelection } from './school-search'
+export { SchoolSearch, SCHOOL_LEVEL_OPTIONS } from './school-search'
+export type {
+  SchoolSearchProps,
+  SchoolSearchSelection,
+  SchoolSearchSelectMeta,
+  SchoolLevel,
+} from './school-search'
+export { UniversitySearch } from './university-search'
+export type {
+  UniversitySearchProps,
+  UniversitySearchSelection,
+  UniversitySearchSelectMeta,
+} from './university-search'
 export { CmsCompactPagination } from './cms-compact-pagination'
 export type { CmsCompactPaginationProps } from './cms-compact-pagination'
 export type { CmsControlSize } from './cms-control-size'
@@ -188,6 +212,7 @@ export {
   REACTION_EMOJI_TYPE_TO_INDEX,
   getReactionEmojiItemByType,
   ReactionEmojiPicker,
+  ReactionUserList,
   CommentList,
   CommentComposer,
   AttachmentDownloadList,
@@ -195,6 +220,9 @@ export {
 export type {
   ReactionEmojiItem,
   ReactionEmojiPickerProps,
+  ReactionUserListProps,
+  ReactionUserListRow,
+  ReactionUserListSummaryItem,
   CommentListProps,
   CommentListItem,
   CommentComposerProps,

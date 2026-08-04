@@ -22,10 +22,12 @@ import {
   type CreateUserRequest,
   type PatchUserBasicInfoInput,
 } from '@/entities/user/api/user-service'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
 import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
 import {
+  matchesInstructorJaEvaluationGradeFilter,
   matchesInstructorSettlementFilter,
-  matchesInstructorTypeFilter,
 } from '@/entities/user/lib/matches-instructor-list-filters'
 import {
   getAdminPermissionVariant,
@@ -43,7 +45,7 @@ interface UserFilters {
   createdAtFrom?: string
   createdAtTo?: string
   institutionLocation?: string
-  instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
 }
@@ -65,9 +67,15 @@ interface UserStore {
 
   // Actions
   fetchUsers: (filters?: UserFilters) => Promise<void>
-  fetchUserById: (userId: UserId) => Promise<void>
+  fetchUserById: (
+    userId: UserId,
+    options?: { memberId?: number; role?: UserRole; adminAccountId?: number; email?: string }
+  ) => Promise<UserWithoutPassword | null>
   createUser: (request: CreateUserRequest) => Promise<UserWithoutPassword>
-  deleteUser: (userId: UserId) => Promise<void>
+  deleteUser: (
+    userId: UserId,
+    options?: { memberId?: number; adminAccountId?: number; role?: UserRole; email?: string }
+  ) => Promise<void>
   changeUserRole: (
     userId: UserId,
     newRole: UserRole,
@@ -127,8 +135,8 @@ export const selectFilteredUserIds = (
       }
     }
 
-    if (filters.instructorType?.trim()) {
-      if (!matchesInstructorTypeFilter(user, filters.instructorType)) {
+    if (filters.jaEvaluationGrade?.trim()) {
+      if (!matchesInstructorJaEvaluationGradeFilter(user, filters.jaEvaluationGrade)) {
         return false
       }
     }
@@ -202,26 +210,43 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 
-  fetchUserById: async userId => {
+  fetchUserById: async (userId, options) => {
     set({ loading: true, error: null })
     try {
-      const user = await getUserById(userId)
-      if (!user) {
+      const state = get()
+      const existingHint =
+        state.usersById[userId] ??
+        (options?.memberId != null
+          ? Object.values(state.usersById).find(u => u.memberId === options.memberId)
+          : undefined)
+
+      const fetched = await getUserById(userId, options)
+      if (!fetched) {
         set({ loading: false })
-        return
+        return null
       }
 
-      // usersById에 추가/업데이트
-      const state = get()
+      const user =
+        existingHint && isMembersRemoteEnabled()
+          ? mergeListUserWithFetchedDetail(existingHint, fetched)
+          : fetched
+
+      // usersById에 추가/업데이트 — 요청 키·canonical id 모두 저장
+      const nextUsersById = {
+        ...state.usersById,
+        [userId]: user,
+        ...(user.id !== userId ? { [user.id]: user } : {}),
+      }
+      const nextUserIds = state.userIds.includes(user.id)
+        ? state.userIds
+        : [...state.userIds, user.id]
+
       set({
-        usersById: {
-          ...state.usersById,
-          [userId]: user,
-        },
-        // userIds에 없으면 추가
-        userIds: state.userIds.includes(userId) ? state.userIds : [...state.userIds, userId],
+        usersById: nextUsersById,
+        userIds: nextUserIds,
         loading: false,
       })
+      return user
     } catch (err) {
       const error = err instanceof Error ? err : new Error('사용자 정보를 불러오는데 실패했습니다.')
       set({ error, loading: false })
@@ -254,10 +279,10 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 
-  deleteUser: async userId => {
+  deleteUser: async (userId, options) => {
     set({ loading: true, error: null })
     try {
-      await deleteUser(userId)
+      await deleteUser(userId, 'CMS 관리자 회원 삭제', options)
       const state = get()
 
       // usersById에서 제거

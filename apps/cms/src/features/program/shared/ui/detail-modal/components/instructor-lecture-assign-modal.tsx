@@ -18,6 +18,7 @@ import { UjatVolunteerInterviewAssignCalendarMini } from '@/features/program/uja
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
 import { InstructorAssignSessionSlotChip } from '@/features/program/shared/ui/detail-modal/components/instructor-assign-session-slot-chip'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import type { Program } from '@/types/domain'
@@ -127,7 +128,10 @@ function renderSlotChip(params: {
       <span className="instructor-lecture-assign-modal__slot-main">
         <span className="instructor-lecture-assign-modal__slot-school">{slot.schoolName}</span>
         <span className="instructor-lecture-assign-modal__slot-meta">
-          {slot.region} | {slot.sessionLabel} ({slot.timeRange})
+          {withProgramDetailTdDivider([
+            slot.region,
+            `${slot.sessionLabel} (${slot.timeRange})`,
+          ])}
         </span>
       </span>
       <span className="instructor-lecture-assign-modal__slot-count">{slot.assignedCount}명</span>

@@ -3,8 +3,9 @@
  * FSD: features/program으로 이동 (shared는 entities 미참조)
  */
 
-import { Modal, Form, Rate, Input, Button } from 'antd'
+import { Form, Rate, Input } from 'antd'
 import { FormOutlined } from '@ant-design/icons'
+import { CmsButton, ContentModal } from '@/shared/ui'
 import { useState, useEffect } from 'react'
 import type { MyProgram } from '@/entities/program/api/instructor-program-service'
 import dayjs from 'dayjs'
@@ -75,18 +76,23 @@ export function SatisfactionSurveyModal({
     return null
   }
 
+  const footer = (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+      <CmsButton variant="default" onClick={handleCancel}>취소</CmsButton>
+      <CmsButton type="submit" form="satisfaction-survey-form" loading={submitting}>
+        제출하기
+      </CmsButton>
+    </div>
+  )
+
   return (
-    <Modal
+    <ContentModal
       open={open}
-      title={
-        <span>
-          <FormOutlined /> 만족도 조사 - {program.title}
-        </span>
-      }
+      title={`만족도 조사 - ${program.title}`}
+      titlePrefix={<FormOutlined />}
       onCancel={handleCancel}
-      footer={null}
-      width={800}
-      destroyOnHidden
+      footer={footer}
+      size="default"
     >
       {existingRecord && (
         <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
@@ -95,7 +101,7 @@ export function SatisfactionSurveyModal({
         </div>
       )}
 
-      <Form form={form} layout="vertical" onFinish={handleSubmit} style={{ marginTop: 24 }}>
+      <Form id="satisfaction-survey-form" form={form} layout="vertical" onFinish={handleSubmit} style={{ marginTop: 24 }}>
         <Form.Item
           label="프로그램 만족도"
           name="programRating"
@@ -150,16 +156,7 @@ export function SatisfactionSurveyModal({
             showCount
           />
         </Form.Item>
-
-        <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <Button onClick={handleCancel}>취소</Button>
-            <Button type="primary" htmlType="submit" loading={submitting}>
-              제출하기
-            </Button>
-          </div>
-        </Form.Item>
       </Form>
-    </Modal>
+    </ContentModal>
   )
 }

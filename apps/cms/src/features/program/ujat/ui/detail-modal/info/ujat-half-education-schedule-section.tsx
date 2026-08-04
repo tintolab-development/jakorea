@@ -21,6 +21,7 @@ import {
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { CmsCircleAddButton } from '@/shared/ui/cms-circle-add-button'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -71,40 +72,14 @@ function getRowRegionOptions(
 
 function AddScheduleRowButton({ onClick }: { onClick: () => void }) {
   return (
-    <button
-      type="button"
+    <CmsCircleAddButton
       className="ujat-first-half-schedule__add-row-button"
       aria-label="진행 일정 행 추가"
       onClick={e => {
         e.stopPropagation()
         onClick()
       }}
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="28"
-        height="28"
-        viewBox="0 0 28 28"
-        fill="none"
-        aria-hidden
-      >
-        <rect width="28" height="28" rx="14" fill="white" />
-        <rect width="28" height="28" rx="14" fill="#01A1AF" fillOpacity="0.1" />
-        <rect
-          x="0.5"
-          y="0.5"
-          width="27"
-          height="27"
-          rx="13.5"
-          stroke="#01A1AF"
-          strokeOpacity="0.1"
-        />
-        <path
-          d="M13.5007 19.6654V14.4987H8.33398V13.4987H13.5007V8.33203H14.5007V13.4987H19.6673V14.4987H14.5007V19.6654H13.5007Z"
-          fill="#01A1AF"
-        />
-      </svg>
-    </button>
+    />
   )
 }
 

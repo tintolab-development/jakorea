@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { normalizeEmailId, validateEmailId } from '@/shared/lib/email-id'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import styles from './page.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 const EMAIL_NOT_FOUND_MESSAGE =
   '가입한 이메일을 찾지 못했어요. 입력한 정보를 다시 확인해 주세요.'
@@ -35,13 +36,12 @@ export function FindPasswordPage() {
   }
 
   return (
-    <section className={styles.page}>
-      <div className={styles.container}>
+    <section>
         <div className={styles.header}>
-          <PFText as="h1" typo="hd-sm" color="black" className={styles.title}>
+          <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
             비밀번호를 다시 설정할게요
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={styles.description}>
+          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
             가입한 이메일과 본인 인증이 필요해요.
           </PFText>
         </div>
@@ -65,7 +65,6 @@ export function FindPasswordPage() {
             본인인증 하기
           </PFButton>
         </div>
-      </div>
     </section>
   )
 }

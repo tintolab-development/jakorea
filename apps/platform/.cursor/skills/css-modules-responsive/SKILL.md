@@ -15,7 +15,7 @@ Apply this skill when implementing or reviewing frontend UI in `apps/platform` t
 - Keep styling in CSS Modules unless inline style is required for dynamic values.
 - Use mobile-first CSS by default.
 - Avoid JavaScript viewport checks unless CSS cannot solve the layout.
-- Prevent horizontal scrolling at 320px, 360px, 390px, 768px, 1024px, and 1280px widths.
+- Prevent horizontal scrolling at Platform bands: 390 (mobile), 1280 (PC compact), 1600 (PC full).
 - Use semantic HTML and accessible controls.
 
 ## Responsive CSS rules
@@ -50,19 +50,27 @@ Avoid:
 
 ## Breakpoint guidance
 
-Use breakpoints only after a fluid base layout is already safe.
+Use breakpoints only after a fluid base layout is already safe. Prefer Platform 3-tier aliases from `shared/styles/breakpoints.css`:
 
 ```css
-@media (min-width: 768px) {
-  /* tablet and up */
+@media (--bp-below-pc) {
+  /* Mobile · ~1079 */
 }
 
-@media (min-width: 1024px) {
-  /* desktop and up */
+@media (--bp-pc-up) {
+  /* PC compact + PC full · 1080+ */
+}
+
+@media (--bp-pc-compact) {
+  /* PC compact only · 1080~1599 */
+}
+
+@media (--bp-pc-full-up) {
+  /* PC full · 1600+ */
 }
 ```
 
-Do not create many narrow breakpoint patches unless the component truly needs them.
+Do not invent intermediate breakpoints (768 / 1024 / 1360 등). Do not create many narrow breakpoint patches unless the component truly needs them.
 
 ## Component output pattern
 

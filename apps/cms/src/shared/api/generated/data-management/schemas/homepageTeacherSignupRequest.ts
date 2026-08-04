@@ -8,7 +8,7 @@
 import type { TeacherSignupRequest } from './teacherSignupRequest';
 
 /**
- * 홈페이지 교사회원 가입 요청
+ * 회원 포탈 교사회원 가입 요청
  */
 export interface HomepageTeacherSignupRequest {
   teacher: TeacherSignupRequest;

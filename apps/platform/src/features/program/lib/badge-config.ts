@@ -16,6 +16,7 @@ export const EDUCATION_FORM_ICON_MAP: Record<EducationForm, string> = {
   online: badgeOnlineIconUrl,
   offline: badgeOfflineIconUrl,
   hybrid: badgeOnOfflineIconUrl,
+  participant_choice: badgeRecruitTargetIconUrl,
 }
 
 export const educationTargetBadgeIconUrl = badgeRecruitTargetIconUrl
@@ -23,5 +24,6 @@ export const educationTargetBadgeIconUrl = badgeRecruitTargetIconUrl
 export const EDUCATION_FORM_LABEL_MAP: Record<EducationForm, string> = {
   online: '온라인',
   offline: '오프라인',
-  hybrid: '온·오프라인',
+  hybrid: '온/오프라인',
+  participant_choice: '참여자 선택',
 }

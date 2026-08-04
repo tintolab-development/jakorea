@@ -227,7 +227,12 @@ export function usePaymentOrderDetailFullPageModalState(input: PaymentOrderDetai
     detailContextQuery,
   }
 
-  const detailLoading = paymentOrdersRemote && isOpen && detailContextQuery.isLoading
+  const detailLoading =
+    paymentOrdersRemote &&
+    isOpen &&
+    Boolean(aggregateKey) &&
+    !detail &&
+    (detailContextQuery.isLoading || detailContextQuery.isFetching)
 
   return {
     canRender: Boolean(isOpen && row && detail && !detailLoading),

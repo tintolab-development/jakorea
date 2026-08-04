@@ -17,6 +17,16 @@ import type { BasicInfoSectionContext } from './types'
 import { formatDate } from '@/shared/utils'
 import { socialView } from '../display'
 
+export function AllUsersMetaSection(ctx: BasicInfoSectionContext) {
+  const { user } = ctx
+  return (
+    <EditableRow type="double">
+      <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
+      <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
+    </EditableRow>
+  )
+}
+
 export function AllUsersSection(ctx: BasicInfoSectionContext) {
   const {
     user,
@@ -35,6 +45,9 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
     cmsMayEditBasicProfileFields,
   })
   const d = memberInfoDraft
+  const isIndividual = user.role === 'INDIVIDUAL'
+  const isSchoolEnrollmentAffiliation =
+    !isIndividual || (d?.schoolEnrollmentStatus ?? 'enrolled') !== 'not_enrolled'
   const nameWithBadge = (nameNode: ReactNode) => (
     <span className="user-basic-info-section__name-with-badge">
       {nameNode}
@@ -64,11 +77,21 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
         />
         <EditableField
           label="1365 ID"
-          readOnlyDisplay
+          readOnlyDisplay={editing.isReadOnlyDisplay}
           view={
             <Id1365View
               personalInfoRevealed={personalInfoRevealed}
               externalId1365={externalId1365}
+            />
+          }
+          edit={
+            <CmsInput
+              placeholder="1365 ID"
+              value={d?.id1365 ?? ''}
+              onChange={e => onMemberInfoDraftChange?.({ id1365: e.target.value })}
+              inputSize="medium"
+              width="100%"
+              aria-label="1365 ID"
             />
           }
         />
@@ -135,36 +158,43 @@ export function AllUsersSection(ctx: BasicInfoSectionContext) {
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={affiliationView(user)}
           edit={
-            <span className="detail-info-form-inputs-wrapper-no-gap">
+            isSchoolEnrollmentAffiliation ? (
+              <span className="detail-info-form-inputs-wrapper-no-gap">
+                <CmsInput
+                  placeholder="학교명"
+                  value={d?.affiliationInstitution ?? ''}
+                  onChange={e => onMemberInfoDraftChange?.({ affiliationInstitution: e.target.value })}
+                  inputSize="medium"
+                  width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                  aria-label="소속 기관(학교명)"
+                />
+                <DetailInfoForm.InputsSeparator />
+                <CmsSelect
+                  placeholder="학년"
+                  value={d?.affiliationGrade || undefined}
+                  onChange={v =>
+                    onMemberInfoDraftChange?.({ affiliationGrade: v != null ? String(v) : '' })
+                  }
+                  options={individualAffiliationGradeSelectOptions(d?.affiliationGrade)}
+                  inputSize="medium"
+                  width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
+                  aria-label="소속 학년"
+                />
+              </span>
+            ) : (
               <CmsInput
-                placeholder="학교명"
+                placeholder="소속"
                 value={d?.affiliationInstitution ?? ''}
                 onChange={e => onMemberInfoDraftChange?.({ affiliationInstitution: e.target.value })}
                 inputSize="medium"
-                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
-                aria-label="소속 기관(학교명)"
+                width="100%"
+                aria-label="소속"
               />
-              <DetailInfoForm.InputsSeparator />
-              <CmsSelect
-                placeholder="학년"
-                value={d?.affiliationGrade || undefined}
-                onChange={v =>
-                  onMemberInfoDraftChange?.({ affiliationGrade: v != null ? String(v) : '' })
-                }
-                options={individualAffiliationGradeSelectOptions(d?.affiliationGrade)}
-                inputSize="medium"
-                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
-                aria-label="소속 학년"
-              />
-            </span>
+            )
           }
         />
       </EditableRow>
 
-      <EditableRow type="double">
-        <EditableField label="가입일" readOnlyDisplay view={<span>{formatDate(user.createdAt)}</span>} />
-        <EditableField label="연동된 소셜 계정" readOnlyDisplay view={socialView(user)} />
-      </EditableRow>
     </>
   )
 }

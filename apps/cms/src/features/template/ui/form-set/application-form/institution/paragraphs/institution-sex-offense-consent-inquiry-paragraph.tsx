@@ -1,10 +1,10 @@
-import { useState } from 'react'
 import { shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph } from '@/features/program/general/lib/institution-application-form-visibility'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS,
   INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS,
 } from '@/features/template/lib/institution-sex-offense-consent-field-definitions'
+import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
@@ -20,10 +20,22 @@ const inlineRowStyle = {
 
 /** 프로그램 참여자 신청 폼 (학교) — 성범죄 경력 조회 동의서 조회 방식 */
 export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagraph() {
-  const [inquiryMethod, setInquiryMethod] = useState<string>('criminal_record_site')
-  const [siteSubmission, setSiteSubmission] = useState<string>('online')
-  const [institutionId, setInstitutionId] = useState('')
-  const [verificationNumber, setVerificationNumber] = useState('')
+  const [inquiryMethod, setInquiryMethod] = useGeneralApplicationOverlayKv<string>(
+    'application.institution.sexOffense.inquiryMethod',
+    'criminal_record_site'
+  )
+  const [siteSubmission, setSiteSubmission] = useGeneralApplicationOverlayKv<string>(
+    'application.institution.sexOffense.siteSubmission',
+    'online'
+  )
+  const [institutionId, setInstitutionId] = useGeneralApplicationOverlayKv(
+    'application.institution.sexOffense.institutionId',
+    ''
+  )
+  const [verificationNumber, setVerificationNumber] = useGeneralApplicationOverlayKv(
+    'application.institution.sexOffense.verificationNumber',
+    ''
+  )
 
   if (!shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph()) {
     return null

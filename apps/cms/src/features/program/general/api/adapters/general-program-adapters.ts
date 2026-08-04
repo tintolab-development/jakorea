@@ -16,6 +16,53 @@ import {
   serializeGeneralProgramServiceDetailJson,
 } from '@/features/program/general/lib/general-program-service-detail-json'
 
+/**
+ * BE `applicationTargetMode` — OpenAPI codegen에 아직 없음.
+ * CMS `generalProgramAudience`(기관/개인)와 대응. BOTH는 BE 허용값이나 CMS 대분류는 상호 배타.
+ */
+export type ProgramApplicationTargetMode = 'ORGANIZATION' | 'INDIVIDUAL' | 'BOTH'
+
+export type ProgramCreateRequestBody = ProgramCreateRequest & {
+  applicationTargetMode?: ProgramApplicationTargetMode
+}
+
+export type ProgramUpdateRequestBody = ProgramUpdateRequest & {
+  applicationTargetMode?: ProgramApplicationTargetMode
+}
+
+export type ProgramWriteRequestBody = ProgramCreateRequestBody | ProgramUpdateRequestBody
+
+export function mapAudienceToApplicationTargetMode(
+  audience: Program['generalProgramAudience'],
+  participantTypes?: Program['generalParticipantTypes']
+): ProgramApplicationTargetMode {
+  if (audience === 'individual') return 'INDIVIDUAL'
+  if (audience === 'organization') return 'ORGANIZATION'
+
+  const types = participantTypes ?? []
+  const hasIndividual = types.includes('individual')
+  const hasOrg = types.includes('school_institution')
+  if (hasIndividual && hasOrg) return 'BOTH'
+  if (hasIndividual) return 'INDIVIDUAL'
+  if (hasOrg) return 'ORGANIZATION'
+  // 미설정 시 공통정보 폼 기본값(organization)과 동일
+  return 'ORGANIZATION'
+}
+
+/**
+ * OpenAPI `programType` — 기관/개인 대분류에 맞춰 GENERAL_* 를 보낸다.
+ * BE는 `GENERAL` + `applicationTargetMode=INDIVIDUAL` 조합을 거부하는 경우가 있음.
+ */
+export function resolveGeneralProgramCreateProgramType(
+  audience: Program['generalProgramAudience'],
+  participantTypes?: Program['generalParticipantTypes']
+): 'GENERAL' | 'GENERAL_ORGANIZATION' | 'GENERAL_INDIVIDUAL' {
+  const mode = mapAudienceToApplicationTargetMode(audience, participantTypes)
+  if (mode === 'INDIVIDUAL') return 'GENERAL_INDIVIDUAL'
+  if (mode === 'ORGANIZATION') return 'GENERAL_ORGANIZATION'
+  return 'GENERAL'
+}
+
 const DEFAULT_SPONSOR_ID = 'sponsor-default'
 const DEFAULT_ROUNDS: Program['rounds'] = []
 
@@ -214,10 +261,12 @@ function mapProgramRoundsToRequest(program: Program): ProgramCreateRequest['roun
   }))
 }
 
-function mapProgramCoreFieldsToRequest(
-  program: Program
-): ProgramCreateRequest & ProgramUpdateRequest {
+function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBody {
   const targetLevel = program.targetLevels?.[0] ?? program.targetLevel
+  const applicationTargetMode = mapAudienceToApplicationTargetMode(
+    program.generalProgramAudience,
+    program.generalParticipantTypes
+  )
 
   return {
     sponsorId: program.sponsorId,
@@ -230,8 +279,6 @@ function mapProgramCoreFieldsToRequest(
     endDate: toRequestDate(program.endDate),
     applicationStartDate: toRequestDate(program.applicationStartDate),
     applicationEndDate: toRequestDate(program.applicationEndDate),
-    status: program.status,
-    lifecycleStatus: program.lifecycleStatus,
     businessArea: program.businessArea,
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,
@@ -272,18 +319,23 @@ function mapProgramCoreFieldsToRequest(
     recruitmentGuide: program.recruitmentGuide,
     learningSupportContent: program.learningSupportContent,
     attachmentFileNames: program.attachmentFileNames,
+    // BE 필수 — serviceDetailJson 앞쪽에 둬 로깅·디버깅 시 잘리지 않게
+    applicationTargetMode,
     rounds: mapProgramRoundsToRequest(program),
     serviceDetailJson: serializeGeneralProgramServiceDetailJson(program),
   }
 }
 
-export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreateRequest {
+export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreateRequestBody {
   const core = mapProgramCoreFieldsToRequest(program)
   return {
     ...core,
     // OpenAPI `sponsorId`는 string — 숫자 id가 number로 직렬화되면 BE 검증/DB 오류 유발 가능
     sponsorId: program.sponsorId != null ? String(program.sponsorId) : undefined,
-    programType: 'GENERAL',
+    programType: resolveGeneralProgramCreateProgramType(
+      program.generalProgramAudience,
+      program.generalParticipantTypes
+    ),
     businessStartDate: toRequestDate(program.startDate),
     businessEndDate: toRequestDate(program.endDate),
     autoApplyDefaultFormBindings: true,
@@ -293,7 +345,7 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreat
 export function mapGeneralProgramToUpdateRequest(
   program: Program,
   patch?: Partial<Program>
-): ProgramUpdateRequest {
+): ProgramUpdateRequestBody {
   const merged = patch ? { ...program, ...patch } : program
   return mapProgramCoreFieldsToRequest(merged)
 }

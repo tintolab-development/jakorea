@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -6,6 +7,7 @@ import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { handleError } from '@/shared/utils/error-handler'
 import { duplicateWritingTemplate } from '@/features/template/api/duplicate-writing-template'
+import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
 import { useClipboard } from '@/features/template/hooks/use-clipboard'
 import { useTemplateWritingPreview } from '@/features/template/context/template-writing-preview-context'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
@@ -80,7 +82,16 @@ import {
   type GeneralSatisfactionAudienceKey,
 } from '@/features/program/general/lib/survey-audience'
 import { buildGeneralSurveyMockState } from './survey-mock'
-import { useGeneralProgramSurveys, useGeneralProgramSurveyResponses, useGeneralProgramSurveySummary } from '@/features/program/general/hooks/use-general-program-posts-surveys'
+import {
+  useGeneralProgramSurveyFormBindingMutations,
+  useGeneralProgramSurveyResponses,
+  useGeneralProgramSurveys,
+  useGeneralProgramSurveySummary,
+} from '@/features/program/general/hooks/use-general-program-posts-surveys'
+import { submitGeneralProgramFormResponse } from '@/features/program/general/api/admin-general-programs-service'
+import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { useQueryClient } from '@tanstack/react-query'
+import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import './survey-management.css'
 
 type CreateModalKind = 'survey' | 'satisfaction' | 'lecture'
@@ -119,29 +130,30 @@ function buildSatisfactionResultsPdfFileName(programTitle: string, surveyTitle: 
 
 export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurveyManagementViewProps) {
   const initialMock = useMemo(() => buildGeneralSurveyMockState(program), [program])
-  const { registeredSurveys: remoteRegisteredSurveys } = useGeneralProgramSurveys(program.id)
-  const [registeredSurveys, setRegisteredSurveys] = useState(initialMock.registeredSurveys)
-  const [activeRegisteredSurveyId, setActiveRegisteredSurveyId] = useState<string | null>(
-    initialMock.activeRegisteredSurveyId
+  const {
+    registeredSurveys: remoteRegisteredSurveys,
+    classifiedBindings,
+    loading: surveysLoading,
+    isRemoteDataSource: surveysRemote,
+  } = useGeneralProgramSurveys(program.id)
+  const { createBinding, deleteBinding, isMutating: bindingMutating } =
+    useGeneralProgramSurveyFormBindingMutations(program.id)
+  const [registeredSurveys, setRegisteredSurveys] = useState(() =>
+    surveysRemote ? [] : initialMock.registeredSurveys
   )
-  const { responses: remoteSurveyResponses } = useGeneralProgramSurveyResponses(
-    program.id,
-    activeRegisteredSurveyId ?? undefined
+  const [activeRegisteredSurveyId, setActiveRegisteredSurveyId] = useState<string | null>(() =>
+    surveysRemote ? null : initialMock.activeRegisteredSurveyId
   )
-  const { summary: remoteSurveySummary } = useGeneralProgramSurveySummary(
-    program.id,
-    activeRegisteredSurveyId ?? undefined
-  )
-  const [satisfactionSurveysByAudience, setSatisfactionSurveysByAudience] = useState(
-    initialMock.satisfactionSurveysByAudience
-  )
+  const [satisfactionSurveysByAudience, setSatisfactionSurveysByAudience] = useState<
+    Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>>
+  >(() => (surveysRemote ? {} : initialMock.satisfactionSurveysByAudience))
   const [activeSatisfactionAudience, setActiveSatisfactionAudience] = useState(
     () => getDefaultGeneralSatisfactionAudience(program)
   )
   const [pendingSatisfactionAudience, setPendingSatisfactionAudience] =
     useState<GeneralSatisfactionAudienceKey | null>(null)
-  const [lectureEvalSurvey, setLectureEvalSurvey] = useState<RegisteredSurvey | null>(
-    initialMock.lectureEvalSurvey
+  const [lectureEvalSurvey, setLectureEvalSurvey] = useState<RegisteredSurvey | null>(() =>
+    surveysRemote ? null : initialMock.lectureEvalSurvey
   )
   const [lectureEvalSubmitted, setLectureEvalSubmitted] = useState(false)
   const [lectureEvalFormDraft, setLectureEvalFormDraft] = useState<WritingFormDraft | null>(null)
@@ -172,8 +184,38 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const { openWritingUserPreview } = useTemplateWritingPreview()
   const { copyText } = useClipboard()
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
+
+  const activeSatisfactionSurveyId =
+    satisfactionSurveysByAudience[activeSatisfactionAudience]?.id ?? undefined
+  const pollResponseVersionId = activeTab === 'survey' ? activeRegisteredSurveyId ?? undefined : undefined
+  const satisfactionResponseVersionId = isGeneralSatisfactionSurveyNavTab(activeTab)
+    ? activeSatisfactionSurveyId
+    : undefined
+  const lectureResponseVersionId =
+    activeTab === 'lecture_evaluation' ? lectureEvalSurvey?.id : undefined
+
+  const {
+    pollResponses: remotePollResponses,
+    loading: pollResponsesLoading,
+    isRemoteDataSource: pollResponsesRemote,
+  } = useGeneralProgramSurveyResponses(program.id, pollResponseVersionId)
+  const {
+    pollResponses: remoteSatisfactionResponses,
+    isRemoteDataSource: satisfactionResponsesRemote,
+  } = useGeneralProgramSurveyResponses(program.id, satisfactionResponseVersionId)
+  const {
+    pollResponses: remoteLectureResponses,
+    isRemoteDataSource: lectureResponsesRemote,
+  } = useGeneralProgramSurveyResponses(program.id, lectureResponseVersionId)
+  const { totalResponseCount: remotePollSummaryCount } = useGeneralProgramSurveySummary(
+    program.id,
+    pollResponseVersionId
+  )
 
   useEffect(() => {
+    // remote ON이면 mock으로 덮어쓰지 않음 — remote 목록 effect가 채움
+    if (surveysRemote) return
     const next = buildGeneralSurveyMockState(program)
     setRegisteredSurveys(next.registeredSurveys)
     setActiveRegisteredSurveyId(next.activeRegisteredSurveyId)
@@ -185,13 +227,34 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     setLectureEvalFormDraft(null)
     setLectureEvalResponses([])
     setActiveLectureEvalTab('eval')
-  }, [program])
+  }, [program, surveysRemote])
 
   useEffect(() => {
-    if (!remoteRegisteredSurveys || remoteRegisteredSurveys.length === 0) return
+    if (!surveysRemote) return
+    if (!remoteRegisteredSurveys) return
     setRegisteredSurveys(remoteRegisteredSurveys)
-    setActiveRegisteredSurveyId(prev => prev ?? remoteRegisteredSurveys[0]?.id ?? null)
-  }, [remoteRegisteredSurveys])
+    setActiveRegisteredSurveyId(prev =>
+      prev && remoteRegisteredSurveys.some(s => s.id === prev)
+        ? prev
+        : (remoteRegisteredSurveys[0]?.id ?? null)
+    )
+  }, [remoteRegisteredSurveys, surveysRemote])
+
+  useEffect(() => {
+    if (!surveysRemote || !classifiedBindings) return
+    const nextSatisfaction: Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey>> = {}
+    let nextLecture: RegisteredSurvey | null = null
+    for (const item of classifiedBindings) {
+      if (item.kind === 'satisfaction' && item.satisfactionAudience) {
+        nextSatisfaction[item.satisfactionAudience] = item.survey
+      }
+      if (item.kind === 'lecture_evaluation') {
+        nextLecture = item.survey
+      }
+    }
+    setSatisfactionSurveysByAudience(nextSatisfaction)
+    setLectureEvalSurvey(nextLecture)
+  }, [classifiedBindings, surveysRemote])
 
   useEffect(() => {
     if (!isGeneralSatisfactionSurveyNavTab(activeTab)) return
@@ -222,46 +285,105 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   const showSatisfactionAudienceTabs =
     !isInstitutionTeacherOnlySatisfaction && satisfactionAudienceTabs.length > 0
   const activeSatisfactionSurvey = satisfactionSurveysByAudience[activeSatisfactionAudience] ?? null
-  // OpenAPI responses는 메타만 제공 — 문항 answers 미포함 시 mock 폴백 유지
-  const pollResponses = useMemo(() => {
-    if (remoteSurveyResponses && remoteSurveyResponses.length > 0) {
-      return remoteSurveyResponses.map(item => ({
-        respondentId: String(item.formResponseId ?? ''),
-        respondentName: `응답 ${item.formResponseId ?? ''}`,
-        addressRegion: '',
-        answers: {},
-      }))
-    }
+
+  const pollResponses = useMemo((): SurveyPollRawResponse[] => {
+    if (pollResponsesRemote) return remotePollResponses ?? []
     return buildGeneralSurveyMockState(program).responses
-  }, [program, remoteSurveyResponses])
-  const satisfactionResponses = pollResponses
+  }, [pollResponsesRemote, program, remotePollResponses])
+
+  const satisfactionResponses = useMemo((): SurveyPollRawResponse[] => {
+    if (satisfactionResponsesRemote) return remoteSatisfactionResponses ?? []
+    return pollResponses
+  }, [pollResponses, remoteSatisfactionResponses, satisfactionResponsesRemote])
 
   useEffect(() => {
-    if (!remoteSurveyResponses || !activeRegisteredSurveyId) return
+    if (!pollResponsesRemote || !activeRegisteredSurveyId) return
+    const count = remotePollSummaryCount || (remotePollResponses?.length ?? 0)
     setRegisteredSurveys(prev =>
       prev.map(survey =>
-        survey.id === activeRegisteredSurveyId
-          ? { ...survey, responseCount: remoteSurveyResponses.length }
-          : survey
+        survey.id === activeRegisteredSurveyId ? { ...survey, responseCount: count } : survey
       )
     )
-  }, [activeRegisteredSurveyId, remoteSurveyResponses])
+  }, [
+    activeRegisteredSurveyId,
+    pollResponsesRemote,
+    remotePollResponses,
+    remotePollSummaryCount,
+  ])
 
-  // summary는 집계 UI 계약 확정 전 count 동기화용으로만 보유
-  void remoteSurveySummary
+  useEffect(() => {
+    if (!lectureResponsesRemote) return
+    if (remoteLectureResponses && remoteLectureResponses.length > 0) {
+      setLectureEvalResponses(remoteLectureResponses)
+      setLectureEvalSubmitted(true)
+    }
+  }, [lectureResponsesRemote, remoteLectureResponses])
 
   useEffect(() => {
     if (lectureEvalSurvey == null) {
       setLectureEvalFormDraft(null)
-      setLectureEvalResponses([])
-      setLectureEvalSubmitted(false)
+      if (!lectureResponsesRemote) {
+        setLectureEvalResponses([])
+        setLectureEvalSubmitted(false)
+      }
       setActiveLectureEvalTab('eval')
       return
     }
     if (lectureEvalSurvey.status === 'in_progress' || lectureEvalSurvey.status === 'finished') {
       setLectureEvalFormDraft(prev => prev ?? buildLectureEvalFormDraft(lectureEvalSurvey.templateId))
     }
-  }, [lectureEvalSurvey])
+  }, [lectureEvalSurvey, lectureResponsesRemote])
+
+  function resolveBindingIds(templateCode: string): {
+    templateId?: number
+    templateVersionId?: number
+  } {
+    const cached = getFormTemplateVersionCacheEntry(templateCode)
+    if (cached) {
+      return {
+        templateId: cached.templateId,
+        templateVersionId: cached.templateVersionId ?? cached.latestVersionId,
+      }
+    }
+    const numeric = Number(templateCode)
+    if (Number.isFinite(numeric) && numeric > 0) {
+      return { templateId: Math.trunc(numeric) }
+    }
+    return {}
+  }
+
+  function buildFormBindingPayload(
+    kind: CreateModalKind,
+    templateCode: string,
+    audience?: GeneralSatisfactionAudienceKey | null
+  ): ProgramFormBindingRequest | null {
+    const ids = resolveBindingIds(templateCode)
+    if (ids.templateId == null) return null
+    const formType =
+      kind === 'satisfaction' ? 'SATISFACTION' : kind === 'lecture' ? 'LECTURE_EVALUATION' : 'SURVEY'
+    const targetRole =
+      kind === 'satisfaction' && audience
+        ? audience === 'teacher'
+          ? 'TEACHER'
+          : audience === 'student'
+            ? 'STUDENT'
+            : audience === 'volunteer_h1'
+              ? 'VOLUNTEER_H1'
+              : audience === 'volunteer_h2'
+                ? 'VOLUNTEER_H2'
+                : 'INDIVIDUAL'
+        : kind === 'lecture'
+          ? 'ADMIN'
+          : undefined
+    return {
+      formType,
+      templateId: ids.templateId,
+      templateVersionId: ids.templateVersionId,
+      targetRole,
+      active: true,
+      required: false,
+    }
+  }
 
   const openTemplatePreview = useCallback(
     (templateId: string, options?: { allowEdit?: boolean }) => {
@@ -320,6 +442,31 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         category: 'survey',
       })
       const row = findWritingTemplateRowByDefinitionId(newTemplateId)
+      const templateCode = row?.id ?? newTemplateId
+
+      if (surveysRemote) {
+        const payload = buildFormBindingPayload(
+          createModalKind,
+          selectedTemplateId,
+          pendingSatisfactionAudience
+        )
+        if (payload == null) {
+          void showAlert({
+            title: '등록 실패',
+            content:
+              '선택한 템플릿의 서버 ID를 찾지 못했습니다. 양식 관리에서 템플릿을 동기화한 뒤 다시 시도해 주세요.',
+          })
+          return
+        }
+        const result = await createBinding(payload)
+        if (!result.ok) {
+          void showAlert({ title: '등록 실패', content: result.message })
+          return
+        }
+        setCreateModalKind(null)
+        return
+      }
+
       if (row != null && createModalKind === 'survey') {
         const nextSurvey: RegisteredSurvey = {
           id: `general-survey-${Date.now()}`,
@@ -351,7 +498,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         const nextSurvey: RegisteredSurvey = {
           id: `general-lecture-eval-${Date.now()}`,
           title: row.templateName,
-          templateId: row.id,
+          templateId: templateCode,
           status: 'before_start',
           responseCount: 0,
           participantTotal: 1,
@@ -369,17 +516,38 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       setSubmitting(false)
     }
   }, [
+    createBinding,
     createModalKind,
     individualProgram,
     pendingSatisfactionAudience,
     registeredSurveys.length,
     selectedTemplateId,
+    showAlert,
+    surveysRemote,
   ])
 
-  const confirmDelete = useCallback(() => {
+  const confirmDelete = useCallback(async () => {
     if (deleteConfirmWord.trim() !== '삭제') return
     if (deleteModalKind === 'survey' && activeRegisteredSurvey != null) {
       if (activeRegisteredSurvey.status !== 'before_start') return
+      if (surveysRemote) {
+        const bindingId = activeRegisteredSurvey.bindingId
+        if (!bindingId) {
+          void showAlert({
+            title: '삭제 실패',
+            content: '삭제할 설문 바인딩 ID를 찾지 못했습니다.',
+          })
+          return
+        }
+        const result = await deleteBinding(bindingId)
+        if (!result.ok) {
+          void showAlert({ title: '삭제 실패', content: result.message })
+          return
+        }
+        setDeleteModalKind(null)
+        setDeleteConfirmWord('')
+        return
+      }
       setRegisteredSurveys(prev => {
         const next = prev.filter(item => item.id !== activeRegisteredSurvey.id)
         setActiveRegisteredSurveyId(current =>
@@ -394,6 +562,24 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       activeSatisfactionAudience != null
     ) {
       if (activeSatisfactionSurvey.status !== 'before_start') return
+      if (surveysRemote) {
+        const bindingId = activeSatisfactionSurvey.bindingId
+        if (!bindingId) {
+          void showAlert({
+            title: '삭제 실패',
+            content: '삭제할 만족도조사 바인딩 ID를 찾지 못했습니다.',
+          })
+          return
+        }
+        const result = await deleteBinding(bindingId)
+        if (!result.ok) {
+          void showAlert({ title: '삭제 실패', content: result.message })
+          return
+        }
+        setDeleteModalKind(null)
+        setDeleteConfirmWord('')
+        return
+      }
       setSatisfactionSurveysByAudience(prev => {
         const next = { ...prev }
         delete next[activeSatisfactionAudience]
@@ -406,8 +592,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     activeRegisteredSurvey,
     activeSatisfactionAudience,
     activeSatisfactionSurvey,
+    deleteBinding,
     deleteConfirmWord,
     deleteModalKind,
+    showAlert,
+    surveysRemote,
   ])
 
   const shareRegisteredSurveyUrl = useCallback(
@@ -502,7 +691,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     [activeRegisteredSurvey, pollResponses, program.title, showAlert]
   )
 
-  const handleLectureEvalSubmit = useCallback(() => {
+  const handleLectureEvalSubmit = useCallback(async () => {
     if (lectureEvalSurvey == null || lectureEvalFormDraft == null) return
     const validation = validateLectureEvalFormDraft(lectureEvalFormDraft)
     if (!validation.valid) {
@@ -510,8 +699,36 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       return
     }
 
+    const pollResponse = draftToLectureEvalPollResponse(lectureEvalFormDraft)
+    const bindingIds = resolveBindingIds(lectureEvalSurvey.templateId)
+    const programIdNum = Number(program.id)
+
+    if (bindingIds.templateVersionId != null && Number.isFinite(programIdNum)) {
+      try {
+        await submitGeneralProgramFormResponse({
+          templateVersionId: bindingIds.templateVersionId,
+          programId: programIdNum,
+          contextType: 'PROGRAM',
+          answers: pollResponse.answers,
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramQueryKeys.surveyResponses(
+            String(program.id),
+            String(bindingIds.templateVersionId)
+          ),
+        })
+      } catch (error) {
+        handleError(error, { context: 'generalLectureEvalSubmit' })
+        void showAlert({
+          title: '제출 실패',
+          content: '강의평가 제출 중 오류가 발생했습니다. 다시 시도해 주세요.',
+        })
+        return
+      }
+    }
+
     setLectureEvalSubmitted(true)
-    setLectureEvalResponses([draftToLectureEvalPollResponse(lectureEvalFormDraft)])
+    setLectureEvalResponses([pollResponse])
     setLectureEvalSurvey(prev => {
       if (prev == null) return prev
       const nextStatus =
@@ -525,7 +742,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         participantTotal: Math.max(prev.participantTotal, 1),
       }
     })
-  }, [lectureEvalFormDraft, lectureEvalSurvey, showAlert])
+  }, [lectureEvalFormDraft, lectureEvalSurvey, program.id, queryClient, showAlert])
 
   const handleLectureEvalTabChange = useCallback(
     (tab: LectureEvalTabKey) => {
@@ -593,15 +810,25 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     [lectureEvalResponses, lectureEvalSurvey, program.title, showAlert]
   )
 
-  const renderPoll = () =>
-    registeredSurveys.length === 0 ? (
-      <SurveyEmptyState
-        title={GENERAL_SURVEY_POLL_EMPTY_COPY.title}
-        description={GENERAL_SURVEY_POLL_EMPTY_COPY.description}
-        registerButtonLabel={GENERAL_SURVEY_POLL_EMPTY_COPY.registerButton}
-        onRegisterClick={() => openCreateModal('survey')}
-      />
-    ) : (
+  const renderPoll = () => {
+    if (surveysRemote && surveysLoading && registeredSurveys.length === 0) {
+      return (
+        <div className="survey-management-loading" role="status">
+          <Spin size="large" />
+        </div>
+      )
+    }
+    if (registeredSurveys.length === 0) {
+      return (
+        <SurveyEmptyState
+          title={GENERAL_SURVEY_POLL_EMPTY_COPY.title}
+          description={GENERAL_SURVEY_POLL_EMPTY_COPY.description}
+          registerButtonLabel={GENERAL_SURVEY_POLL_EMPTY_COPY.registerButton}
+          onRegisterClick={() => openCreateModal('survey')}
+        />
+      )
+    }
+    return (
       <div className="program-detail-fullpage-modal__info-tab survey-management-registered">
         <CmsTextTabs
           className="survey-management-registered__tabs"
@@ -626,7 +853,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             ) : null
           }
         />
-        {activeRegisteredSurvey != null && activeRegisteredSurvey.responseCount === 0 ? (
+        {pollResponsesRemote && pollResponsesLoading && activeRegisteredSurvey != null ? (
+          <div className="survey-management-loading" role="status">
+            <Spin size="large" />
+          </div>
+        ) : activeRegisteredSurvey != null && activeRegisteredSurvey.responseCount === 0 ? (
           <SurveyNoResponseState
             title={GENERAL_SURVEY_POLL_NO_RESPONSE_COPY.title}
             description={GENERAL_SURVEY_POLL_NO_RESPONSE_COPY.description}
@@ -656,6 +887,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         ) : null}
       </div>
     )
+  }
 
   const renderEmptyMain = () => (
     <SurveyEmptyState
@@ -679,7 +911,15 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         ? GENERAL_LECTURE_EVAL_REGISTER_MODAL_COPY.description
         : '새로운 설문조사를 진행하시겠습니까?\n설문조사 신규 등록을 위해 사용할 템플릿 유형을 선택해 주세요.'
 
-  const renderSatisfactionView = () => (
+  const renderSatisfactionView = () => {
+    if (surveysRemote && surveysLoading) {
+      return (
+        <div className="survey-management-loading" role="status">
+          <Spin size="large" />
+        </div>
+      )
+    }
+    return (
     <SatisfactionSurveyView
       surveysByAudience={satisfactionSurveysByAudience}
       activeAudience={activeSatisfactionAudience}
@@ -713,7 +953,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       resultsExportRef={satisfactionResultsExportRef}
       resultsResponses={satisfactionResponses}
     />
-  )
+    )
+  }
 
   return (
     <>
@@ -722,6 +963,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         ? renderSatisfactionView()
         : null}
       {activeTab === 'lecture_evaluation' ? (
+        surveysRemote && surveysLoading ? (
+          <div className="survey-management-loading" role="status">
+            <Spin size="large" />
+          </div>
+        ) : (
         <LectureEvalSurveyView
           survey={lectureEvalSurvey}
           submitted={lectureEvalSubmitted}
@@ -749,6 +995,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           }}
           onDownloadResultsClick={() => setLectureEvalDownloadModalOpen(true)}
         />
+        )
       ) : null}
       {activeTab === 'main' ? renderEmptyMain() : null}
 
@@ -842,8 +1089,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
               size="medium"
               width={120}
               type="button"
-              disabled={deleteConfirmWord.trim() !== '삭제'}
-              onClick={confirmDelete}
+              disabled={deleteConfirmWord.trim() !== '삭제' || bindingMutating}
+              loading={bindingMutating}
+              onClick={() => {
+                void confirmDelete()
+              }}
             >
               삭제
             </CmsButton>

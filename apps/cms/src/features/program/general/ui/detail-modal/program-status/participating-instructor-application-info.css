@@ -4,40 +4,7 @@
   gap: 32px;
 }
 
-/*
- * 소속 재직 StatusDropdownCell — `participating-institutions-section` ant-table용 136px 규칙과 분리.
- * 강사 신청 상세(`applicant-general-instructor-basic-info`)와 동일: auto 폭 + 열림 시 민트 테두리·그림자.
- */
-.participating-institutions-section
-  .participating-instructor-application-info
-  .applicant-general-instructor-basic-info__employment-dropdown
-  .status-dropdown-cell__status-trigger,
-.participating-institutions-section
-  .participating-instructor-application-info
-  .applicant-general-instructor-basic-info__employment-dropdown
-  .status-dropdown-cell__status-trigger--open {
-  box-sizing: border-box;
-  width: auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  height: 32px;
-  min-height: 32px;
-  max-height: 32px;
-  padding: 0 !important;
-  gap: 0;
-  overflow: visible;
-}
-
-.participating-institutions-section
-  .participating-instructor-application-info
-  .applicant-general-instructor-basic-info__employment-dropdown
-  .status-dropdown-cell__status-trigger--open {
-  background: #fff;
-  border: 1px solid var(--JA-mint-01, #01a1af);
-  border-radius: 6px;
-  box-shadow: 0 4px 16px 0 rgba(32, 32, 33, 0.1);
-}
-
+/* 소속 재직은 StatusDropdownCell tag100 + INLINE_TAG100 셸 — 열림 시 행 높이만 고정 */
 .participating-instructor-application-info
   .detail-info-form__field:has(.applicant-general-instructor-basic-info__employment-dropdown),
 .participating-instructor-application-info

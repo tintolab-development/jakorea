@@ -237,7 +237,12 @@ export function ProgramDetailFullPageModal({
   )
   const loading = onUpdateProgram ? externalLoading : legacyLoading
   const sponsorName = onUpdateProgram ? externalSponsorName : legacySponsorName
-  const displayProgram = useMemo(() => program ?? detailProgram ?? null, [detailProgram, program])
+  // remote 부모(onUpdateProgram): 로딩 중 목록/stub program으로 본문 채우지 않음
+  const displayProgram = useMemo(() => {
+    if (onUpdateProgram && externalLoading) return null
+    if (onUpdateProgram) return program ?? null
+    return program ?? detailProgram ?? null
+  }, [detailProgram, program, onUpdateProgram, externalLoading])
   const persistProgramPatch = async (draft: Program, patch: Partial<Program>) => {
     if (onUpdateProgram) {
       await onUpdateProgram(draft.id, draft, patch)
@@ -844,8 +849,14 @@ export function ProgramDetailFullPageModal({
   const setVolunteerId = (id: string | null) => {
     const next = new URLSearchParams(searchParams)
     if (id) {
+      const prevId = searchParams.get(VOLUNTEER_ID_PARAM)
       next.set(VOLUNTEER_ID_PARAM, id)
-      next.set(VOLUNTEER_TAB_PARAM, 'application')
+      // 동일 봉사자 재진입 시 중첩 탭(volunteerTab)을 application으로 덮어쓰지 않음
+      if (prevId !== id) {
+        next.set(VOLUNTEER_TAB_PARAM, 'application')
+      } else if (!searchParams.get(VOLUNTEER_TAB_PARAM)) {
+        next.set(VOLUNTEER_TAB_PARAM, 'application')
+      }
       next.delete(SCHOOL_ID_PARAM)
       next.delete(SCHOOL_TAB_PARAM)
       next.delete(INSTRUCTOR_ID_PARAM)
@@ -878,29 +889,8 @@ export function ProgramDetailFullPageModal({
     setSearchParams(next, { replace: true })
   }
 
+  // TODO: X는 바깥 모달 닫기로 통일됨. breadcrumb/목록 복귀 외 용도가 없으면 등록부 제거 검토.
   const applicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
-
-  const handleHeaderCloseClick = () => {
-    if (schoolIdFromUrl) {
-      setSchoolId(null)
-      return
-    }
-    if (instructorIdFromUrl) {
-      setInstructorId(null)
-      return
-    }
-    if (volunteerIdFromUrl) {
-      setVolunteerId(null)
-      return
-    }
-    if (
-      (activeLnb === 'applicants' || activeLnb === 'applicant_instructors') &&
-      applicantCloseHandlerRef.current?.()
-    ) {
-      return
-    }
-    onClose()
-  }
 
   const setActiveTab = (key: TabKey) => {
     const next = new URLSearchParams(searchParams)
@@ -1266,7 +1256,6 @@ export function ProgramDetailFullPageModal({
       <DetailFullPageModal
       open={open}
       onClose={onClose}
-      onHeaderClose={handleHeaderCloseClick}
       title={title}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
       className={[
@@ -1275,7 +1264,7 @@ export function ProgramDetailFullPageModal({
       ]
         .filter(Boolean)
         .join(' ')}
-      closeAriaLabel={schoolIdFromUrl || instructorIdFromUrl || volunteerIdFromUrl ? '목록으로' : '닫기'}
+      closeAriaLabel="닫기"
       sidebar={
         <DetailModalSidebar
           navAriaLabel="프로그램 상세 메뉴"
@@ -1288,7 +1277,7 @@ export function ProgramDetailFullPageModal({
         />
       }
     >
-      {loading && !displayProgram ? (
+      {loading ? (
         <div className="detail-fullpage-modal__loading">
           <Spin size="large" />
         </div>

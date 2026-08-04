@@ -78,7 +78,10 @@ import type { InstructorLectureAssignItem } from '@/features/program/general/lib
 import type { Program } from '@/types/domain'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { useGeneralProgramApplicationsRemoteSync } from '@/features/program/general/hooks/use-general-program-applications-remote-sync'
-import { useIsTrainedTeachersProgramsSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
+import {
+  useApplicationsRemoteEnabledForSurface,
+  useIsTrainedTeachersProgramsSurface,
+} from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherOrganizationApplicationsRemoteSync } from '@/features/program/trained-teachers/api/organization-applications-hooks'
 
 export type InstructorApprovalTarget =
@@ -101,10 +104,42 @@ export type ApplicantDetailMeta = {
   kind: 'institution' | 'individual' | 'instructor'
 } | null
 
+function buildApplicantDetailMetaFromRow(
+  menu: ApplicantListMenu | '',
+  row: ApplicantListRow | null
+): ApplicantDetailMeta {
+  if (!row || !menu) return null
+  if (menu === 'instructors') {
+    const instructor = row as ApplicantInstructorRow
+    return {
+      title: `강사 신청 상세 (${instructor.instructorName})`,
+      breadcrumbLabel: instructor.instructorName,
+      kind: 'instructor',
+    }
+  }
+  if (menu === 'institutions') {
+    const institution = row as ApplicantSchoolRow
+    return {
+      title: `참여 기관 신청 상세 (${institution.schoolName})`,
+      breadcrumbLabel: institution.schoolName,
+      kind: 'institution',
+    }
+  }
+  if (menu === 'individual-applications') {
+    const individual = row as GeneralIndividualApplicantRow
+    return {
+      title: `참여자 신청 상세 (${individual.applicantName})`,
+      breadcrumbLabel: individual.applicantName,
+      kind: 'individual',
+    }
+  }
+  return null
+}
+
 export function useApplicantsDetail({
   menu,
   onRegisterApplicantCloseHandler,
-  onApplicantDetailMetaChange: _onApplicantDetailMetaChange,
+  onApplicantDetailMetaChange,
   listTitle,
   filterFields: filterFieldsOverride,
   institutionColumnPreset = 'legacy',
@@ -163,19 +198,31 @@ export function useApplicantsDetail({
 
   const [appliedFilters, setAppliedFilters] = useState<Record<string, unknown>>({})
 
+  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
+  const applicationsRemoteEnabled = useApplicationsRemoteEnabledForSurface(programId)
+  /** remote ON이면 mock/로컬로 채우지 않음 (잘못된 목록 플래시·덮어쓰기 방지) */
+  const preferRemoteApplications =
+    applicationsRemoteEnabled ||
+    (isTrainedTeachersSurface &&
+      menu === 'institutions' &&
+      usesProgramInstitutionApplications)
+
   const [institutionList, setInstitutionList] = useState<ApplicantSchoolRow[]>(() => {
+    if (preferRemoteApplications) return []
     if (programId && usesProgramInstitutionApplications) {
       return getGeneralInstitutionApplicationsForProgram(programId)
     }
     return [...MOCK_APPLICANT_INSTITUTIONS]
   })
   const [instructorList, setInstructorList] = useState<ApplicantInstructorRow[]>(() => {
+    if (preferRemoteApplications) return []
     if (programId && instructorColumnPreset === 'general-detail') {
       return getApplicantInstructorsByProgramId(programId)
     }
     return [...MOCK_APPLICANT_INSTRUCTORS]
   })
   const [individualList, setIndividualList] = useState<GeneralIndividualApplicantRow[]>(() => {
+    if (preferRemoteApplications) return []
     if (programId) {
       if (individualScreeningStage === 'doc1') {
         return getGeneralParticipantDoc1Applicants(programId)
@@ -184,8 +231,6 @@ export function useApplicantsDetail({
     }
     return []
   })
-
-  const isTrainedTeachersSurface = useIsTrainedTeachersProgramsSurface()
 
   const applicationsRemote = useGeneralProgramApplicationsRemoteSync({
     programId,
@@ -386,6 +431,7 @@ export function useApplicantsDetail({
   )
 
   useEffect(() => {
+    // TODO: 모달 X는 바깥 닫기로 통일됨. 등록 핸들러가 호출되지 않으면 제거 검토.
     if (!onRegisterApplicantCloseHandler) return
     const handler = () => {
       if (selectedItemRef.current) {
@@ -415,6 +461,11 @@ export function useApplicantsDetail({
 
   useEffect(() => {
     if (!applicantIdFromUrl || selectedItem || !menu || menu === 'volunteers') return
+    // remote 목록 로딩 중에는 URL deep-link를 지우지 않음
+    const applicationsLoading =
+      applicationsRemote.applicationsLoading ||
+      trainedTeacherApplicationsRemote.applicationsLoading
+    if (applicationsLoading) return
     setSearchParams(
       prevParams => {
         const next = new URLSearchParams(prevParams)
@@ -425,7 +476,20 @@ export function useApplicantsDetail({
       },
       { replace: true }
     )
-  }, [applicantIdFromUrl, selectedItem, menu, setSearchParams])
+  }, [
+    applicantIdFromUrl,
+    selectedItem,
+    menu,
+    setSearchParams,
+    applicationsRemote.applicationsLoading,
+    trainedTeacherApplicationsRemote.applicationsLoading,
+  ])
+
+  useEffect(() => {
+    if (!onApplicantDetailMetaChange) return
+    onApplicantDetailMetaChange(buildApplicantDetailMetaFromRow(menu, selectedItem))
+    return () => onApplicantDetailMetaChange(null)
+  }, [menu, selectedItem, onApplicantDetailMetaChange])
 
   const prevMenuRef = useRef<ApplicantListMenu | ''>(menu)
   useEffect(() => {
@@ -478,19 +542,26 @@ export function useApplicantsDetail({
 
   useEffect(() => {
     if (programId && menu === 'individual-applications') {
+      if (applicationsRemote.remoteEnabled) return
       setIndividualList(
         individualScreeningStage === 'doc1'
           ? getGeneralParticipantDoc1Applicants(programId)
           : getGeneralIndividualApplicationsForProgram(programId)
       )
     }
-  }, [programId, menu, individualScreeningStage])
+  }, [
+    programId,
+    menu,
+    individualScreeningStage,
+    applicationsRemote.remoteEnabled,
+  ])
 
   useEffect(() => {
     if (programId && instructorColumnPreset === 'general-detail' && menu === 'instructors') {
+      if (applicationsRemote.remoteEnabled) return
       setInstructorList(getApplicantInstructorsByProgramId(programId))
     }
-  }, [programId, instructorColumnPreset, menu])
+  }, [programId, instructorColumnPreset, menu, applicationsRemote.remoteEnabled])
 
   const fields = useMemo((): FilterFieldConfig[] => {
     if (

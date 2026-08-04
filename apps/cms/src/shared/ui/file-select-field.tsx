@@ -1,12 +1,19 @@
 /**
- * 파일 선택 필드 공통 컴포넌트
+ * 파일 선택 필드 공통 컴포넌트 (디자인 시스템)
  * - hidden input + 파일명 목록(삭제 X 버튼) + "파일 선택" 버튼 + 가이드 텍스트
+ * - 기본 다중 선택(`multiple=true`). accept·가이드 문구는 케이스별 props
+ * - 첨부 합계 기본 최대 15MB (`maxTotalBytes` / `currentTotalBytes`)
  * - disabled 시 버튼 비활성화, input 미렌더, 삭제 버튼 미표시
  */
 
 import { useRef, type ChangeEvent } from 'react'
 import './file-select-field.css'
 import { CmsButton } from '@/shared/ui/cms-button'
+import {
+  FILE_SELECT_MAX_TOTAL_BYTES,
+  isFileSelectTotalSizeExceeded,
+  notifyFileSelectTotalSizeExceeded,
+} from '@/shared/ui/file-select-field-limits'
 
 function RemoveIcon() {
   return (
@@ -42,17 +49,21 @@ function RemoveIcon() {
 }
 
 export interface FileSelectFieldProps {
-  /** input accept 속성 (예: ".jpg,.png,.pdf") */
+  /** input accept 속성 (예: ".jpg,.png,.pdf") — 케이스별 */
   accept?: string
-  /** 다중 파일 선택 허용 */
+  /**
+   * 다중 파일 선택 허용.
+   * 디자인 시스템 기본은 `true`(모든 업로드 케이스 공통).
+   * 썸네일처럼 단건만 필요할 때만 `false`.
+   */
   multiple?: boolean
   /** 비활성화 (버튼 비활성화, input 미렌더, 삭제 버튼 미표시) */
   disabled?: boolean
   /** 표시할 파일명 목록 */
   fileNames?: string[]
-  /** 안내 문구 줄 목록 */
+  /** 안내 문구 줄 목록 — 케이스별(확장자 등). 용량은 공통 총 15MB 정책 */
   guideLines?: string[]
-  /** 파일 선택 시 콜백 */
+  /** 파일 선택 시 콜백 (이번 선택분). 목록 누적은 호출측에서 `fileNames`로 관리 */
   onFilesChange?: (files: File[]) => void
   /** 특정 인덱스 파일 업로드 취소(삭제) 시 콜백 — 전달 시 해당 파일 옆에 X 버튼 표시 */
   onRemoveFile?: (index: number) => void
@@ -62,11 +73,18 @@ export interface FileSelectFieldProps {
   uploading?: boolean
   /** 추가 클래스명 */
   className?: string
+  /**
+   * 이미 첨부된 파일 합계(byte). 여러 번 선택해 누적할 때 전달.
+   * 미전달 시 이번 선택분만 `maxTotalBytes`와 비교.
+   */
+  currentTotalBytes?: number
+  /** 첨부 합계 상한(byte). 기본 15MB. `0`이면 용량 검사 생략 */
+  maxTotalBytes?: number
 }
 
 export function FileSelectField({
   accept,
-  multiple = false,
+  multiple = true,
   disabled = false,
   fileNames,
   guideLines,
@@ -75,13 +93,27 @@ export function FileSelectField({
   buttonLabel = '파일 선택',
   uploading = false,
   className = '',
+  currentTotalBytes = 0,
+  maxTotalBytes = FILE_SELECT_MAX_TOTAL_BYTES,
 }: FileSelectFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files?.length) {
-      onFilesChange?.(Array.from(files))
+      const incoming = Array.from(files)
+      if (
+        maxTotalBytes > 0 &&
+        isFileSelectTotalSizeExceeded({
+          incoming,
+          currentTotalBytes,
+          maxTotalBytes,
+        })
+      ) {
+        notifyFileSelectTotalSizeExceeded()
+      } else {
+        onFilesChange?.(incoming)
+      }
     }
     e.target.value = ''
   }
@@ -141,7 +173,8 @@ export function FileSelectField({
       ) : null}
 
       <div className="file-select-field__actions">
-        <CmsButton type="button"
+        <CmsButton
+          type="button"
           variant="secondary"
           size="large"
           disabled={disabled}

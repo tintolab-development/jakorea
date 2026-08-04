@@ -1,5 +1,5 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CmsButton } from '@/shared/ui'
@@ -69,6 +69,7 @@ export function GeneralVolunteerDocPassedSection({
     cancelWithdrawActivity,
     confirmWithdrawActivity,
     withdrawTarget,
+    applicationsLoading,
   } = useGeneralVolunteerDocPassed({ programId, subjectKind })
 
   const { selectedApplicant, openApplicantDetail } = useGeneralVolunteerApplicantDetail({
@@ -181,6 +182,14 @@ export function GeneralVolunteerDocPassedSection({
         {withdrawConfirmModal}
         {assignModals}
       </>
+    )
+  }
+
+  if (applicationsLoading && list.length === 0) {
+    return (
+      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+        <Spin size="large" />
+      </div>
     )
   }
 

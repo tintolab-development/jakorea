@@ -44,7 +44,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -71,7 +71,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  */
 const updateSystemIssueStatus = (
     issueId: number,
-    systemIssueStatusUpdateRequest?: SystemIssueStatusUpdateRequest,
+    systemIssueStatusUpdateRequest: SystemIssueStatusUpdateRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSystemIssueStatusResponse>>,) => {
       return customInstance<ApiResponseSystemIssueStatusResponse>(
       {url: `/api/admin/logs/system-issues/${issueId}/status`, method: 'PATCH',
@@ -101,7 +101,7 @@ const updateSystemIssueStatus = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -156,7 +156,7 @@ const systemIssueLogs = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -210,7 +210,7 @@ const systemIssueDetail = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -265,7 +265,7 @@ const privacyAccessLogs = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.

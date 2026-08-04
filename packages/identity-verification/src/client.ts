@@ -147,6 +147,7 @@ export function createIdentityVerificationClient(
       state.setPendingChallenge({
         sessionId,
         nonce: body.state ?? challengeState,
+        statusToken: body.statusToken,
         birthDate: input.birthDate,
         gender: input.gender,
         name: input.name,
@@ -208,8 +209,21 @@ export function createIdentityVerificationClient(
     }
 
     try {
+      const statusToken = state.getPendingChallenge()?.statusToken?.trim()
+      if (!statusToken) {
+        throw new IdentityVerificationApiError(
+          'INVALID_REQUEST',
+          '본인인증 상태 토큰이 없습니다. 다시 시도해 주세요.'
+        )
+      }
+
       const { data: payload } = await options.http.get<unknown>(
-        options.paths.identitySession(sessionId)
+        options.paths.identitySession(sessionId),
+        {
+          headers: {
+            'X-Verification-Status-Token': statusToken,
+          },
+        }
       )
       return normalizeVerificationSession(unwrapApiData<unknown>(payload))
     } catch (error) {

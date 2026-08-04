@@ -2,11 +2,16 @@
  * 컨텐츠 모달 공통 레이아웃
  * 셸(Figma): padding 26 30 34 · radius 12 · shadow 0 0 25px rgba(0,0,0,0.35)
  * 푸터: margin-top 30 · 버튼 우측 · medium 120×40
+ *
+ * TealHeaderModal 누수 리셋:
+ * - content padding:0 → 셸 26/30/34
+ * - body margin-top:16 → 0 (타이틀↔본문 간격은 titleBodyGap 기본 always 16px)
+ * - footer padding:30 → 0 + margin-top 30
  */
 
-/* 모달 컨테이너 */
-.content-modal.ant-modal .ant-modal-content {
-  padding: 26px 30px 34px 30px;
+/* 모달 컨테이너 — `.teal-header-modal .ant-modal-content { padding:0 }` 보다 우선 */
+.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  padding: 26px 30px 34px;
   border-radius: var(--radius-12, 12px);
   background: #fff;
   box-shadow: var(--shadow-modal);
@@ -55,23 +60,34 @@
   color: var(--color-text-secondary, #8c8c8c);
 }
 
-/* 바디: padding 제거 */
+/* 바디: TealHeaderModal 기본 margin-top/padding 제거 (gap은 다중 자식 간격용으로 유지) */
 .content-modal .teal-header-modal__body {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  margin-top: 0;
   padding: 0;
 }
 
-/* 헤더 타이틀 ↔ 디스크립션(description prop) 16px */
-.content-modal .teal-header-modal__body:has(> .content-modal__description) {
+/*
+ * 타이틀 ↔ 본문 상단 여백
+ * - always(기본): description 유무와 관계없이 16px
+ * - auto: description prop이 있을 때만 16px
+ * - none: 여백 없음 (`titleBodyGap="none"`)
+ */
+.content-modal .teal-header-modal__body:has(> .content-modal__description),
+.content-modal.content-modal--title-body-gap-always .teal-header-modal__body {
   padding-top: 16px;
 }
 
 .content-modal.content-modal--description-gap-compact .teal-header-modal__body:has(> .content-modal__description) {
   padding-top: 10px;
+}
+
+.content-modal.content-modal--title-body-gap-none .teal-header-modal__body {
+  padding-top: 0;
 }
 
 /* 푸터: 테이블–버튼 갭 30px, padding/보더 없음, 전체 너비 */

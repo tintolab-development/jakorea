@@ -3,6 +3,8 @@
  * 수강 참여 학교 목록 (필터: 지역, 교육 학년, 강의 진행 회차, 교재 현황, 교사/강사명)
  */
 
+import { GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID } from '@/features/program/general/lib/detail-common-info-display'
+
 export type TextbookStatusKey = 'preparing' | 'shipping' | 'delivered' | 'not_applicable'
 
 /** 참여 기관 승인/반려 상태 (선택 승인·선택 반려·승인 취소 연동) */
@@ -251,17 +253,50 @@ const TRAINED_TEACHERS_PARTICIPATING_SCHOOLS: ParticipatingSchoolRow[] = [
   },
 ]
 
+/**
+ * 기관_커리큘럼형_단일 (`general-prog-type-org-curriculum-single`) 전용 참여 기관 1건.
+ * id `school-1` — 게시글/파일 mock(강서초)과 동일 키. 공용 풀에서는 제외.
+ */
+const ORG_CURRICULUM_SINGLE_PARTICIPATING_SCHOOLS: ParticipatingSchoolRow[] = [
+  {
+    id: 'school-1',
+    no: 1,
+    schoolName: '강서초등학교',
+    region: '서울특별시 강서구',
+    educationGrade: '5학년',
+    classCount: 3,
+    studentCount: 72,
+    lectureRound: LECTURE_ROUND_LABEL,
+    textbookStatus: 'preparing',
+    approvalStatus: 'approved',
+    teacherName: '홍채원',
+    instructors: '김서연 외 2명',
+    programId: GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID,
+    sessions: [demoParticipatingSchoolSession(1, '2026.01.09', '금', '9:20~11:20')],
+  },
+]
+
 export const MOCK_PARTICIPATING_SCHOOLS: ParticipatingSchoolRow[] = [
-  ...buildParticipatingSchoolsByTextbookStatus(),
+  ...buildParticipatingSchoolsByTextbookStatus().filter(row => row.id !== 'school-1'),
   ...TRAINED_TEACHERS_PARTICIPATING_SCHOOLS,
+  ...ORG_CURRICULUM_SINGLE_PARTICIPATING_SCHOOLS,
 ]
 
 export function getParticipatingSchoolsForProgram(programId: string): ParticipatingSchoolRow[] {
+  const scoped = MOCK_PARTICIPATING_SCHOOLS.filter(row => row.programId === programId)
+  if (scoped.length > 0) {
+    return scoped.map((row, index) => ({
+      ...row,
+      no: scoped.length - index,
+    }))
+  }
+
   const isTrainedTeachers =
     programId.startsWith('trained-teachers-prog-') ||
     programId.startsWith('trained-teachers-local-')
-  if (isTrainedTeachers) {
-    return MOCK_PARTICIPATING_SCHOOLS.filter(row => row.programId === programId)
-  }
+  if (isTrainedTeachers) return []
+
+  // programId 스코프 없는 일반·원격 UUID 프로그램 — 공용 참여 기관 mock
+  // (기관_커리큘럼형_단일 FE id는 위 scoped 1건; Playwright 원격 생성본은 여기로 폴백)
   return MOCK_PARTICIPATING_SCHOOLS.filter(row => row.programId == null)
 }

@@ -12,13 +12,24 @@
  * 굵기: rg (regular), md (medium), sb (semibold), bd (bold)
  */
 
+/* Figma: Pagetitle / Large · PFText typo="page-title" */
 .typo-page-title {
   font-family: var(--font-family-base);
   font-size: 60px;
   font-style: normal;
   font-weight: 700;
-  line-height: 140%;
+  line-height: 140%; /* 84px */
   letter-spacing: -0.6px;
+}
+
+/* Figma: Pagetitle / Medium · PFText typo="page-title-md" · 48px / 140% */
+.typo-page-title-md {
+  font-family: var(--font-family-base);
+  font-size: 48px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%; /* 67.2px */
+  letter-spacing: -0.48px;
 }
 
 .typo-hd-lg {
@@ -144,7 +155,7 @@
   font-style: normal;
   font-weight: 600;
   line-height: 160%;
-  letter-spacing: 0;
+  letter-spacing: 0.14px;
 }
 
 .typo-label-md {

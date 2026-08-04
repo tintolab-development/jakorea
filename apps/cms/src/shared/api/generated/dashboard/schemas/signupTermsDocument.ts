@@ -8,7 +8,7 @@
 import type { SignupTermsAgreementPayload } from './signupTermsAgreementPayload';
 
 /**
- * 홈페이지 회원가입 약관 문서 및 동의 payload
+ * 회원 포탈 회원가입 약관 문서 및 동의 payload
  */
 export interface SignupTermsDocument {
   /** 약관/동의 유형 */

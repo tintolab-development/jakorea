@@ -1,0 +1,88 @@
+.row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--spacing-48);
+  margin: 0;
+  padding: var(--spacing-32) var(--spacing-32) var(--spacing-32) var(--spacing-48);
+  border: 0;
+  border-top: 1px solid var(--color-neutral-black-10);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* 최상단 행 — PFDivider와 겹치지 않도록 border-top 제외 */
+.row:first-child {
+  border-top: 0;
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.no {
+  display: block;
+  flex-shrink: 0;
+  min-width: 2ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.titleGroup {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--spacing-12);
+}
+
+.badge {
+  width: auto;
+  min-width: 44px;
+  height: 28px;
+  padding: 4px 10px;
+}
+
+.title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.date {
+  display: block;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+@media (--bp-below-pc) {
+  .row {
+    flex-wrap: wrap;
+    gap: var(--spacing-8) var(--spacing-16);
+    padding: var(--spacing-24) var(--spacing-16);
+  }
+
+  .titleGroup {
+    flex: 1 1 calc(100% - 48px);
+  }
+
+  .title {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .date {
+    width: 100%;
+    padding-left: calc(2ch + var(--spacing-48));
+  }
+}

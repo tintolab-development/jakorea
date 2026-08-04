@@ -1,7 +1,8 @@
 /**
  * 학생 추가 등록 모달
  * 프로그램 상세 풀페이지 모달 > 프로그램 진행현황 > 참여기관 > 학생 추가 클릭 시 노출
- * 스펙: 제목 "학생 추가 등록", 설명 문구, 필수 학생명/성별/생년월일/학급, 선택 연락처/이메일/비고, 취소/등록 버튼
+ * 스펙: 제목 "학생 추가 등록", 설명 문구,
+ * 2열(학생명|성별 / 생년월일|학급 / 연락처|이메일) + 비고 full width, 취소/등록
  */
 
 import { useEffect } from 'react'
@@ -234,7 +235,7 @@ export function AddStudentModal({
             )}
           </div>
 
-          <div className="add-student-modal__field">
+          <div className="add-student-modal__field add-student-modal__field--full">
             <label className="add-student-modal__label">비고</label>
             <Controller
               name="notes"

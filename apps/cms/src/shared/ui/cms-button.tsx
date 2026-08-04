@@ -27,6 +27,9 @@ export type CmsButtonSize = 'large' | 'medium' | 'small'
 /** 승인·반려·취소 등 CMS 관리 액션 버튼 공통 폭(px) */
 export const CMS_ACTION_BUTTON_WIDTH = 140
 
+/** 「수료증/참여인증서 발급」 버튼 공통 폭(px) */
+export const CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH = 210
+
 export interface CmsButtonProps extends Omit<ButtonProps, CmsButtonPropsOmit> {
   variant?: CmsButtonVariant
   size?: CmsButtonSize
@@ -58,8 +61,27 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
     ref
   ) => {
     const hasIcon = icon != null
+    const resolvedWidth = width == null ? undefined : typeof width === 'number' ? `${width}px` : width
+    /**
+     * 고정 폭: width/min/max를 동일 값으로 덮어 size·has-icon 기본 min-width를 깬다.
+     * fluid(`auto`/`max-content`/`fit-content`): max-content 기준으로 긴 라벨이 잘리지 않게 한다.
+     * (`auto`에 min=max=auto를 넣으면 has-icon 180 고정·정렬이 깨질 수 있음)
+     */
+    const isFluidWidth =
+      resolvedWidth === 'auto' ||
+      resolvedWidth === 'max-content' ||
+      resolvedWidth === 'fit-content' ||
+      resolvedWidth === 'min-content'
     const widthStyle: CSSProperties | undefined =
-      width != null ? { width: typeof width === 'number' ? `${width}px` : width } : undefined
+      resolvedWidth == null
+        ? undefined
+        : isFluidWidth
+          ? {
+              width: resolvedWidth === 'auto' ? 'max-content' : resolvedWidth,
+              minWidth: 'fit-content',
+              maxWidth: 'none',
+            }
+          : { width: resolvedWidth, minWidth: resolvedWidth, maxWidth: resolvedWidth }
 
     const antdSize = size === 'large' ? 'large' : size === 'small' ? 'small' : 'middle'
     const isLoading = Boolean(loading)

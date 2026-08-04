@@ -111,7 +111,7 @@ export function isAgreementLockedSystemParagraph(p: WritingFormParagraph): boole
   )
 }
 
-/** 동의서 설명글·텍스트형 — 제목 / 설명 / 한 줄 본문 + 답변 필수 토글 */
+/** 동의서 설명글·텍스트형 — 제목 / 설명 / 본문 + 답변 필수 토글 (+ 선택적 하단 동의 라디오) */
 export interface AgreementExplanationTextParagraph extends WritingFormParagraphBase {
   kind: 'single_item'
   variant: 'agreement_explanation_text'
@@ -119,6 +119,10 @@ export interface AgreementExplanationTextParagraph extends WritingFormParagraphB
   bodyText: string
   /** 카드 하단 토글 — 본문(답변) 필수 여부 */
   answerRequired: boolean
+  /** 하단에 동의(라디오) 영역 노출 — 초상권 수집·이용 동의서 intro 등 */
+  showBottomConsent?: boolean
+  /** `showBottomConsent`일 때 동의 라디오 값 */
+  bottomConsent?: TableBottomConsent
 }
 
 export interface IdTypeWithInputOption {
@@ -643,13 +647,13 @@ function padFieldRow(
   })
 }
 
-/** 필드 모드: `dataRows` 행 수에 맞춰 `fieldDataRows`를 채움(불일치 복구) */
+/** 필드 모드: `dataRows`·`fieldDataRows` 중 더 긴 쪽 행 수에 맞춤(불일치 복구) */
 function syncFieldDataRowsToTextRows(
   p: HorizontalTableParagraph,
   colCount: number,
   fieldCols: HorizontalTableColumnField[]
 ): HorizontalTableFieldCellValue[][] {
-  const n = Math.max(1, p.dataRows.length)
+  const n = Math.max(1, p.dataRows.length, p.fieldDataRows?.length ?? 0)
   return Array.from({ length: n }, (_, ri) =>
     padFieldRow(p.fieldDataRows?.[ri], colCount, fieldCols)
   )
@@ -956,63 +960,22 @@ export function normalizeHorizontalTableParagraph(
   if (dataRows.length === 0) {
     dataRows = [Array.from({ length: colCount }, () => '')]
   }
-  if (tableFlavor === 'text') {
-    const rowCount = dataRows.length
-    const hasDataInCells = dataRows.some(r => r.some(c => String(c ?? '').trim().length > 0))
-    let nextDataRows = dataRows
-    let nextColumnFields = p.columnFields ?? []
-    let nextCellMatrix = p.cellColumnFields
-
-    if (hasDataInCells) {
-      if (rowCount <= 1) {
-        const row0 = dataRows[0] ?? Array.from({ length: colCount }, () => '')
-        nextColumnFields = Array.from({ length: colCount }, (_, ci) =>
-          repairColumnField(
-            {
-              kind: 'text' as const,
-              placeholder:
-                String(row0[ci] ?? '').trim().length > 0
-                  ? String(row0[ci] ?? '')
-                  : HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
-            },
-            ci
-          )
-        )
-        nextDataRows = [Array.from({ length: colCount }, () => '')]
-        nextCellMatrix = undefined
-      } else {
-        nextCellMatrix = dataRows.map(row =>
-          Array.from({ length: colCount }, (_, ci) =>
-            repairColumnField(
-              {
-                kind: 'text' as const,
-                placeholder:
-                  String(row[ci] ?? '').trim().length > 0
-                    ? String(row[ci] ?? '')
-                    : HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
-              },
-              ci
-            )
-          )
-        )
-        nextColumnFields = nextCellMatrix[0]!.map((f, i) => repairColumnField(f, i))
-        nextDataRows = dataRows.map(() => Array.from({ length: colCount }, () => ''))
-      }
-    } else if (
-      !hasDataInCells &&
-      ((nextColumnFields?.length ?? 0) > 0 || (nextCellMatrix != null && nextCellMatrix.length > 0))
-    ) {
-      nextDataRows = dataRows.map(() => Array.from({ length: colCount }, () => ''))
+  if (tableFlavor === 'field') {
+    const fieldRowCount = Math.max(1, p.fieldDataRows?.length ?? 0)
+    while (dataRows.length < fieldRowCount) {
+      dataRows.push(Array.from({ length: colCount }, () => ''))
     }
-
+  }
+  if (tableFlavor === 'text') {
+    /* 텍스트형 셀 값은 dataRows — placeholder로 옮기며 비우지 않음(입력 유지) */
     return {
       ...p,
       tableFlavor: 'text',
       columnHeaders: headers,
-      dataRows: nextDataRows,
-      columnFields: nextColumnFields,
+      dataRows,
+      columnFields: p.columnFields ?? [],
       fieldDataRows: p.fieldDataRows ?? [],
-      cellColumnFields: nextCellMatrix,
+      cellColumnFields: p.cellColumnFields,
       bottomText: p.bottomText ?? '',
       showBottomText: Boolean(p.showBottomText),
       showBottomConsent: Boolean(p.showBottomConsent),
@@ -1161,22 +1124,20 @@ export function horizontalTablePromoteTextRowsToField(
     dataRows = [Array.from({ length: colCount }, () => '')]
   }
   const rowCount = dataRows.length
-  const matrix: HorizontalTableColumnField[][] = dataRows.map(textRow =>
-    Array.from({ length: colCount }, (_, ci) => {
-      const t = String(textRow[ci] ?? '').trim()
-      return repairColumnField(
+  const matrix: HorizontalTableColumnField[][] = dataRows.map(() =>
+    Array.from({ length: colCount }, (_, ci) =>
+      repairColumnField(
         {
           kind: 'text' as const,
-          placeholder:
-            t.length > 0 ? String(textRow[ci] ?? '') : HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
+          placeholder: HORIZONTAL_TABLE_INPUT_GUIDANCE_PLACEHOLDER,
         },
         ci
       )
-    })
+    )
   )
   const fieldCols = matrix[0]!.map((f, i) => repairColumnField(f, i))
   const fieldDataRows = dataRows.map(textRow =>
-    textRow.map(() => ({ kind: 'text' as const, value: '' }))
+    textRow.map(cellText => ({ kind: 'text' as const, value: String(cellText ?? '') }))
   )
   return normalizeHorizontalTableParagraph({
     ...n,
@@ -2100,10 +2061,95 @@ export function normalizeWritingFormDraft(draft: WritingFormDraft): WritingFormD
   }
 }
 
+/** 초상권 수집·이용 동의서 intro — 구 시드/저장본에 하단 동의 라디오 필드 보정 */
+function migrateAgreementPortraitIntroBottomConsent(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (
+    p.id !== 'agreement-portrait-intro' ||
+    p.kind !== 'single_item' ||
+    p.variant !== 'agreement_explanation_text'
+  ) {
+    return p
+  }
+  if (p.showBottomConsent === true) {
+    return {
+      ...p,
+      bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
+    }
+  }
+  return {
+    ...p,
+    showBottomConsent: true,
+    bottomConsent: normalizeTableBottomConsent(p.bottomConsent),
+  }
+}
+
+/** 초상권 1번 표 — 구 시드의 성명·소속 안내 문구를 빈 셀(placeholder UI)로 보정 */
+function migrateAgreementPortraitPersonalConsentNameCells(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (
+    p.id !== AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable ||
+    p.kind !== 'single_item' ||
+    p.variant !== 'vertical_table'
+  ) {
+    return p
+  }
+  const rows = p.rows ?? []
+  if (rows.length === 0) return p
+  const r0 = rows[0]
+  if (r0 == null || r0.stageCount !== 2) return p
+  const c0 = (r0.cells[0] ?? '').trim()
+  const c1 = (r0.cells[1] ?? '').trim()
+  const clearName = c0 === '한글 성명'
+  const clearAff = c1 === '소속 / 소속 없음' || c1 === '소속'
+  if (!clearName && !clearAff) return p
+  const nextCells: [string, string] = [
+    clearName ? '' : (r0.cells[0] ?? ''),
+    clearAff ? '' : (r0.cells[1] ?? ''),
+  ]
+  return {
+    ...p,
+    rows: [{ ...r0, cells: nextCells }, ...rows.slice(1)],
+  }
+}
+
+const LEGACY_PORTRAIT_DELEGATED_TASK_CELL =
+  'JA Korea 사업 수행 및 관리: 대내외 보고서 작성, 활동영상 및 자료 제작\nJA Korea 프로그램 홍보를 위한 온라인 매체 게시 및 인쇄물 발간\n- 온라인 매체: 홈페이지 및 SNS 이미지/영상 포맷 게시물\n- 인쇄물: 리플렛, 활동북, 브로슈어, 기념보고서, 사례집, 아카이브자료 등'
+
+const PORTRAIT_DELEGATED_TASK_CELL =
+  'JA Korea 사업 수행 및 관리: 대내외 보고서 작성, 홍보영상 및 자료 제작\nJA Korea 프로그램 홍보를 위한 온라인 매체 게시 및 인쇄물 발간\n- 온라인 매체: 홈페이지 및 SNS 이미지와 영상 포함 게시물\n- 인쇄물: 리플렛, 팜플렛, 브로슈어, 기업보고서, 사례집, 애뉴얼리포트 등'
+
+/** 초상권 2번 표 — 위탁 업무 문구를 최신 카피로 보정 */
+function migrateAgreementPortraitDelegatedTaskCopy(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (
+    p.id !== AGREEMENT_PORTRAIT_PARAGRAPH_IDS.delegatedConsentTable ||
+    p.kind !== 'single_item' ||
+    p.variant !== 'vertical_table'
+  ) {
+    return p
+  }
+  const rows = p.rows ?? []
+  const taskRowIdx = rows.findIndex(r => (r.headers[0] ?? '').trim() === '위탁 업무')
+  if (taskRowIdx < 0) return p
+  const taskRow = rows[taskRowIdx]!
+  if ((taskRow.cells[0] ?? '') !== LEGACY_PORTRAIT_DELEGATED_TASK_CELL) return p
+  if (taskRow.stageCount !== 1) return p
+  const nextRows = [...rows]
+  nextRows[taskRowIdx] = { ...taskRow, cells: [PORTRAIT_DELEGATED_TASK_CELL] }
+  return { ...p, rows: nextRows }
+}
+
 function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormParagraph {
   let next = migrateLegacySingleItemDateTimeParagraph(p)
   next = normalizeUjatJournalEducationInfoParagraph(next)
   next = normalizeLectureReportProgramProgressParagraph(next)
+  next = migrateAgreementPortraitIntroBottomConsent(next)
+  next = migrateAgreementPortraitPersonalConsentNameCells(next)
+  next = migrateAgreementPortraitDelegatedTaskCopy(next)
   if (next.kind === 'description' && next.variant === 'survey_title_with_period') {
     return normalizeTitleWithPeriodParagraph(next)
   }
@@ -2223,6 +2269,7 @@ export const AGREEMENT_NOTICE_PARAGRAPH_IDS = {
   idType: 'agreement-notice-id-type',
   consentStatic: 'agreement-notice-consent-static',
   subject: 'agreement-notice-subject',
+  confirmationClosing: 'agreement-notice-confirmation-closing',
   systemDate: 'agreement-notice-system-date',
   systemSignature: 'agreement-notice-system-signature',
 } as const
@@ -2236,12 +2283,16 @@ export const AGREEMENT_NOTICE_SEED_PARAGRAPH_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.idType,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.consentStatic,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.subject,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
   AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature,
 ])
 
 export const AGREEMENT_NOTICE_HIDDEN_DRAG_HANDLE_IDS = new Set<string>([
   AGREEMENT_NOTICE_PARAGRAPH_IDS.title,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
+  AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature,
 ])
 
 export function createDefaultIdTypeWithInputOptions(): IdTypeWithInputOption[] {
@@ -2260,6 +2311,17 @@ const AGREEMENT_NOTICE_CONSENT_LINES = [
   '○ 본인은 위 사무의 처리를 위하여 「전자정부법」 제36조에 따른 행정정보 공동이용을 통해 이용기관의 업무처리담당자가 전자적으로 본인의 구비서류(공동이용 행정정보)를 확인하는 것에 동의합니다.',
   '* 만일, 본인이 위 행정정보 이용에 대해 동의를 하지 아니할 경우에도 불이익은 없습니다. 다만, 동의하지 아니한 경우에는 본인이 해당 구비서류를 제출하여야 합니다.',
 ] as const
+
+const AGREEMENT_NOTICE_CONFIRMATION_CLOSING: ClosingParagraph = {
+  id: AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing,
+  kind: 'description',
+  variant: 'closing',
+  requiredMark: false,
+  paragraphTitle: '',
+  paragraphDescription: '',
+  participatesInTitleNumbering: false,
+  body: '위와 같은 행정정보 공동이용에 대한 내용을 모두 확인했습니다.',
+}
 
 /** 동의 양식 목록 > 행정정보 공동이용 사전동의서 — 편집 시드 초안 */
 export function createAgreementNoticeDraft(): WritingFormDraft {
@@ -2320,7 +2382,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         periodMode: 'immediate',
         startAt: null,
         endAt: null,
-        showWritingPeriodOnForm: true,
+        showWritingPeriodOnForm: false,
       },
       {
         id: AGREEMENT_NOTICE_PARAGRAPH_IDS.institution,
@@ -2391,6 +2453,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         bodyPlaceholder: '답변을 입력해 주세요',
         bodyText: '',
       },
+      AGREEMENT_NOTICE_CONFIRMATION_CLOSING,
       {
         id: AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate,
         kind: 'description',
@@ -2413,6 +2476,35 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
       },
     ],
   }
+}
+
+/** 구 저장본에 confirmationClosing이 없으면 systemDate 앞에 삽입. 제목형 작성 기간은 항상 off. */
+export function ensureAgreementNoticeConfirmationClosing(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  let paragraphs = draft.paragraphs.map(p => {
+    if (
+      p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.title &&
+      p.kind === 'description' &&
+      p.variant === 'survey_title_with_period' &&
+      p.showWritingPeriodOnForm
+    ) {
+      return { ...p, showWritingPeriodOnForm: false }
+    }
+    return p
+  })
+
+  if (!paragraphs.some(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.confirmationClosing)) {
+    const dateIdx = paragraphs.findIndex(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.systemDate)
+    paragraphs = [...paragraphs]
+    if (dateIdx >= 0) {
+      paragraphs.splice(dateIdx, 0, AGREEMENT_NOTICE_CONFIRMATION_CLOSING)
+    } else {
+      paragraphs.push(AGREEMENT_NOTICE_CONFIRMATION_CLOSING)
+    }
+  }
+
+  return { ...draft, paragraphs }
 }
 
 /** 동의 양식 > 초상권 수집·이용 동의서 — 시드 단락 id */
@@ -2487,6 +2579,8 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
         bodyPlaceholder: '한 줄 안내를 입력해 주세요',
         bodyText: AGREEMENT_PORTRAIT_INTRO_TEXT,
         answerRequired: true,
+        showBottomConsent: true,
+        bottomConsent: 'agree',
       },
       normalizeVerticalTableParagraph({
         id: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable,
@@ -2501,7 +2595,8 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
           {
             stageCount: 2,
             headers: ['성명', '소속'],
-            cells: ['한글 성명', '소속 / 소속 없음'],
+            /** 성명·소속은 작성(write) UI placeholder — 셀 값은 비움 */
+            cells: ['', ''],
           },
           {
             stageCount: 1,
@@ -2545,9 +2640,7 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
           {
             stageCount: 1,
             headers: ['위탁 업무'],
-            cells: [
-              'JA Korea 사업 수행 및 관리: 대내외 보고서 작성, 활동영상 및 자료 제작\nJA Korea 프로그램 홍보를 위한 온라인 매체 게시 및 인쇄물 발간\n- 온라인 매체: 홈페이지 및 SNS 이미지/영상 포맷 게시물\n- 인쇄물: 리플렛, 활동북, 브로슈어, 기념보고서, 사례집, 아카이브자료 등',
-            ],
+            cells: [PORTRAIT_DELEGATED_TASK_CELL],
           },
           {
             stageCount: 1,
@@ -2791,8 +2884,24 @@ export const EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS = {
   violationClosing: 'agreement-expense-pledge-violation-closing',
   systemDate: 'agreement-expense-pledge-system-date',
   systemSignature: 'agreement-expense-pledge-system-signature',
-  closing: 'agreement-expense-pledge-closing',
 } as const
+
+/** 템플릿 고정 단락 — 삭제·복제·순서 변경 불가 */
+export const EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS = new Set<string>([
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.title,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.intro,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause1,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause2,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause3,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.clause4,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.violationClosing,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemDate,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemSignature,
+])
+
+export const EDUCATOR_FACILITATOR_PLEDGE_HIDDEN_DRAG_HANDLE_IDS = new Set<string>(
+  EDUCATOR_FACILITATOR_PLEDGE_SEED_PARAGRAPH_IDS
+)
 
 const PLEDGE_MC_OPTIONS_BASE = 'pledge-mc' as const
 
@@ -2909,16 +3018,6 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
         paragraphTitle: '서명란 유형',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-      },
-      {
-        id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.closing,
-        kind: 'description',
-        variant: 'closing',
-        requiredMark: false,
-        paragraphTitle: '',
-        paragraphDescription: '',
-        participatesInTitleNumbering: false,
-        body: '내용을 자세히 검토하신 후 동의 여부를 결정하여 주시기 바랍니다.',
       },
     ],
   }

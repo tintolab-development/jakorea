@@ -53,7 +53,7 @@ export function ExplanationSystem({
         ? formatKoreanFullDate(now ?? new Date())
         : AUTHORING_DATE_LABEL
       : displayMode === 'write'
-        ? `동의자 : ${(participantName ?? '').trim() || '000'} (서명)`
+        ? `동의자 : ${(participantName ?? '').trim() || '(작성자)'} (서명)`
         : AUTHORING_SIGNATURE_LABEL
 
   const documentSignatureBody =

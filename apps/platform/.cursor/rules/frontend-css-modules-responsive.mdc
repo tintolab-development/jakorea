@@ -114,16 +114,43 @@ Use mobile-first CSS:
 }
 ```
 
-Default breakpoints:
+Default breakpoints (Platform 3-tier only):
 
 ```css
-/* mobile: default */
-/* tablet: 768px+ */
-/* desktop: 1024px+ */
-/* wide: 1280px+ */
+/* Mobile · ~1079 */
+/* PC compact · 1080~1599 */
+/* PC full · 1600~ */
 ```
 
-Use these breakpoints unless the project already defines different breakpoints.
+Platform layout uses `--layout-min-width: 375px` on `html`, `body`, and `#root` (see `shared/styles/tokens.css`, `reset.css`). Do not repeat `min-width: 375px` on individual components unless a local exception is required.
+
+Responsive `@media` in CSS Modules and global styles should use **postcss-custom-media** aliases from `shared/styles/breakpoints.css`:
+
+- `@media (--bp-below-pc)` — Mobile (~1079)
+- `@media (--bp-pc-up)` — PC compact + PC full (1080~)
+- `@media (--bp-pc-compact)` — PC compact only (1080~1599)
+- `@media (--bp-pc-full-up)` — PC full (1600~)
+
+JS hooks use `shared/lib/breakpoints.ts` (`platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`). Do **not** invent intermediate widths (768/1024/1360 등).
+
+### Auth layout (`layout: 'auth'`)
+
+Auth routes (sign-in, sign-up, find-email/password, admin-registered, etc.) are wrapped by `AuthPageShell` in `AppLayout`:
+
+- Outer: full width, centered, `padding-inline: var(--auth-page-padding-x)` (20px)
+- Inner: `max-width: var(--width-page-sm)` (480px), `width: 100%`; below PC: `padding-top: 40px`, `padding-bottom: 56px` (PC: `padding-block: 100px`)
+- Page intro copy: `authPageCopyClass('title' | 'description')` in [`auth-page-copy.module.css`](apps/platform/src/widgets/layout/auth-page-shell/auth-page-copy.module.css)
+  - Title margin: PC top 48 / bottom 16; mobile top 40 / bottom 8
+  - Description margin-bottom: PC 48; mobile 40
+  - Below PC font-size: title 28px, description 16px
+  - Illustration above title: also pass `authPageCopy.titleAfterMedia` (clears title margin-top). If the next block already has top margin (e.g. sign-in form), pass `authPageCopy.descriptionTight`
+- Do **not** add per-page `.title` / `.description` margin overrides for auth intro copy.
+
+Do **not** reintroduce per-page `.page` / `.container` 480px wrappers on auth screens.
+
+### Sign-up wizard step layout
+
+Each sign-up step inside `SignUpLayout` must use [`SignUpStepLayout`](apps/platform/src/pages/auth/sign-up/layout/sign-up-step-layout.tsx): **title → description → body (`children`) → actions**. Use `StepHeader` only via `SignUpStepLayout`; do not pass `titleClassName` / `descriptionClassName` for spacing.
 
 ## Layout Rules
 
@@ -288,7 +315,7 @@ When refactoring existing responsive CSS:
 3. Convert desktop-first media queries to mobile-first only when it is safe.
 4. Replace repeated margins with parent `gap` where possible.
 5. Replace fixed widths with fluid width, `max-width`, `minmax`, or `clamp`.
-6. Test at common widths: 360, 390, 768, 1024, 1280.
+6. Test at Platform bands: 390 (mobile), 1280 (PC compact), 1600 (PC full).
 
 ## Output Requirements
 

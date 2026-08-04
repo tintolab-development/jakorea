@@ -7,7 +7,11 @@
  */
 
 export interface SettlementApplicationItemAmountAdjustmentRequest {
-  applicationItemId?: number;
-  approvedAmount?: number;
+  applicationItemId: number;
+  approvedAmount: number;
+  /**
+     * @minLength 0
+     * @maxLength 500
+     */
   reason?: string;
 }

@@ -4,10 +4,12 @@
  * 목록/캘린더 보기 전환 및 상세 정보 표시
  */
 
-import { CmsRadio } from '@/shared/ui'
+import { CmsRadio, ContentModal, EmptyState } from '@/shared/ui'
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, Space, Typography, Modal, Descriptions, Tag, Button, Empty } from 'antd'
+import { Card, Space, Typography, Tag } from 'antd'
+import { CmsButton } from '@/shared/ui/cms-button'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CalendarOutlined, TableOutlined } from '@ant-design/icons'
 import { Calendar, Badge } from 'antd'
 import type { Dayjs } from 'dayjs'
@@ -201,7 +203,7 @@ export function InstructorSchedulePage() {
   if (!user?.instructorId) {
     return (
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px' }}>
-        <Empty description="강사 정보가 없습니다." />
+        <EmptyState description="강사 정보가 없습니다." />
       </div>
     )
   }
@@ -239,7 +241,7 @@ export function InstructorSchedulePage() {
         {viewMode === 'calendar' && (
           <Card loading={loading}>
             {schedulesWithDetails.length === 0 ? (
-              <Empty description="일정이 없습니다." />
+              <EmptyState description="일정이 없습니다." />
             ) : (
               <Calendar
                 dateCellRender={dateCellRender}
@@ -254,7 +256,7 @@ export function InstructorSchedulePage() {
         {viewMode === 'list' && (
           <Card loading={loading}>
             {schedulesWithDetails.length === 0 ? (
-              <Empty description="일정이 없습니다." />
+              <EmptyState description="일정이 없습니다." />
             ) : (
               <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                 {schedulesWithDetails.map(schedule => (
@@ -290,71 +292,91 @@ export function InstructorSchedulePage() {
       </Space>
 
       {/* Phase 0.2.6: 일정 상세 모달 */}
-      <Modal
+      <ContentModal
         title="일정 상세 정보"
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
-        footer={[
-          <Button key="close" onClick={() => setModalOpen(false)}>
-            닫기
-          </Button>,
-          <Button
-            key="detail"
-            type="primary"
-            onClick={() => {
-              if (selectedSchedule) {
-                navigate(`/schedules/${selectedSchedule.id}`)
-                setModalOpen(false)
-              }
-            }}
-          >
-            상세 페이지 보기
-          </Button>,
-        ]}
-        width={600}
+        footer={
+          <Space>
+            <CmsButton variant="secondary" onClick={() => setModalOpen(false)}>
+              닫기
+            </CmsButton>
+            <CmsButton
+              onClick={() => {
+                if (selectedSchedule) {
+                  navigate(`/schedules/${selectedSchedule.id}`)
+                  setModalOpen(false)
+                }
+              }}
+            >
+              상세 페이지 보기
+            </CmsButton>
+          </Space>
+        }
+        size="compact"
       >
         {selectedSchedule && (
-          <Descriptions column={1} bordered>
-            <Descriptions.Item label="프로그램">
-              <Tag color="blue">{selectedSchedule.programName || '-'}</Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="일정 제목">{selectedSchedule.title}</Descriptions.Item>
+          <DetailInfoForm title="일정 상세" hideHeader mode="view">
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="프로그램" view={<Tag color="blue">{selectedSchedule.programName || '-'}</Tag>} />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="일정 제목" view={selectedSchedule.title} />
+            </DetailInfoForm.Row>
             {selectedSchedule.schoolName && (
-              <Descriptions.Item label="학교명">{selectedSchedule.schoolName}</Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="학교명" view={selectedSchedule.schoolName} />
+              </DetailInfoForm.Row>
             )}
             {selectedSchedule.region && (
-              <Descriptions.Item label="지역">{selectedSchedule.region}</Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="지역" view={selectedSchedule.region} />
+              </DetailInfoForm.Row>
             )}
             {selectedSchedule.grade && (
-              <Descriptions.Item label="학년">{selectedSchedule.grade}</Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="학년" view={selectedSchedule.grade} />
+              </DetailInfoForm.Row>
             )}
-            <Descriptions.Item label="날짜">
-              {dayjs(selectedSchedule.date).format('YYYY년 MM월 DD일')}
-            </Descriptions.Item>
-            <Descriptions.Item label="시간">
-              {selectedSchedule.startTime} - {selectedSchedule.endTime}
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="날짜" view={dayjs(selectedSchedule.date).format('YYYY년 MM월 DD일')} />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="시간" view={`${selectedSchedule.startTime} - ${selectedSchedule.endTime}`} />
+            </DetailInfoForm.Row>
             {selectedSchedule.location && (
-              <Descriptions.Item label="장소">{selectedSchedule.location}</Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="장소" view={selectedSchedule.location} />
+              </DetailInfoForm.Row>
             )}
             {selectedSchedule.address && (
-              <Descriptions.Item label="주소">{selectedSchedule.address}</Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="주소" view={selectedSchedule.address} />
+              </DetailInfoForm.Row>
             )}
             {selectedSchedule.contactPerson && (
-              <Descriptions.Item label="담당자">{selectedSchedule.contactPerson}</Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="담당자" view={selectedSchedule.contactPerson} />
+              </DetailInfoForm.Row>
             )}
             {selectedSchedule.contactPhone && (
-              <Descriptions.Item label="연락처">{selectedSchedule.contactPhone}</Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="연락처" view={selectedSchedule.contactPhone} />
+              </DetailInfoForm.Row>
             )}
             {selectedSchedule.waitingRoom && (
-              <Descriptions.Item label="대기실">{selectedSchedule.waitingRoom}</Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="대기실" view={selectedSchedule.waitingRoom} />
+              </DetailInfoForm.Row>
             )}
             {selectedSchedule.mealInfo && (
-              <Descriptions.Item label="급식 정보">{selectedSchedule.mealInfo}</Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="급식 정보" view={selectedSchedule.mealInfo} />
+              </DetailInfoForm.Row>
             )}
-          </Descriptions>
+          </DetailInfoForm>
         )}
-      </Modal>
+      </ContentModal>
     </div>
   )
 }

@@ -3,6 +3,7 @@
  * 정산·수강·기관 확인·출석·교재·Editable 톤 + My* 잔존 Legacy StatusBadge/Display
  */
 
+import { useState } from 'react'
 import { ProgramAttendanceStatusText } from '@/features/program/shared/ui/program-attendance-status-text'
 import '@/features/program/shared/ui/program-attendance-detail.css'
 import { SecondInterviewScreeningStatusText } from '@/features/program/shared/ui/volunteer-screening/second-interview-screening-status-text'
@@ -12,17 +13,28 @@ import { SponsorContactTypeBadge } from '@/features/sponsor/ui/sponsor-contact-t
 import { SponsorSponsorshipStatusBadge } from '@/features/sponsor/ui/sponsor-sponsorship-status-badge'
 import { UjatInstitutionApplicationStatusBadge } from '@/features/program/ujat/ui/detail-modal/application-institution/list/status-badge'
 import { DocumentScreeningStatusText } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/document-screening-status-text'
+import { ManagerEvaluationBadge } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/manager-evaluation-badge'
 import { UjatInstitutionScheduleConfirmStatusBadge } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-confirm/status-badge'
 import {
   UJAT_INSTITUTION_SCHEDULE_CONFIRM_STATUS_ORDER,
   type UjatInstitutionScheduleConfirmStatus,
 } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-confirm/types'
+import {
+  UJAT_MANAGER_EVALUATION_ORDER,
+  type UjatManagerEvaluation,
+} from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { PaymentOrderAdminLineProcessingStatus } from '@/data/mock/payment-order-admin-list'
+import type { TextbookStatusKey } from '@/data/mock/participating-schools'
+import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/data/mock/participating-schools'
 import { EditableStatusBadge } from '@/shared/components/editable-status-badge'
 import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
+import {
+  StatusDropdownCell,
+  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
+} from '@/shared/components/status-dropdown-cell'
 import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import {
@@ -63,6 +75,63 @@ const EDITABLE_TONE_SAMPLES: Array<{ label: string; tone: EditableStatusBadgeTon
   { label: 'greenOverlay', tone: 'greenOverlay' },
   { label: 'red', tone: 'red' },
 ]
+
+const TEXTBOOK_DROPDOWN_OPTIONS = TEXTBOOK_STATUS_OPTION_KEYS.filter(
+  (s): s is Exclude<TextbookStatusKey, 'not_applicable'> => s !== 'not_applicable'
+)
+
+/** StatusDropdownCell — tag100 단일 스펙 (테이블·폼 동일) */
+function StatusDropdownActiveDemo() {
+  const [textbookStatus, setTextbookStatus] =
+    useState<(typeof TEXTBOOK_DROPDOWN_OPTIONS)[number]>('preparing')
+  const [textbookOpen, setTextbookOpen] = useState(true)
+  const [evalStatus, setEvalStatus] = useState<UjatManagerEvaluation>('neutral')
+  const [evalOpen, setEvalOpen] = useState(false)
+
+  return (
+    <>
+      <DsDemo label="StatusDropdownCell — tag100 · 테이블">
+        <p className="ds-note" style={{ marginTop: 0 }}>
+          단일 스펙: 패널 116×padding 7·gap 8. 클릭해 상태를 바꿔 보세요.
+        </p>
+        <div className="ds-demo__row" style={{ minHeight: 160, alignItems: 'flex-start' }}>
+          <StatusDropdownCell
+            status={textbookStatus}
+            statusOptions={TEXTBOOK_DROPDOWN_OPTIONS}
+            renderBadge={s => <TextbookStatusBadge status={s} />}
+            isItemDisabled={(cur, opt) => cur === opt}
+            onChange={setTextbookStatus}
+            isOpen={textbookOpen}
+            onOpenChange={setTextbookOpen}
+            tagLayout="tag100"
+          />
+        </div>
+      </DsDemo>
+
+      <DsDemo label="StatusDropdownCell — tag100 · 폼/상세 (INLINE 셸)">
+        <p className="ds-note" style={{ marginTop: 0 }}>
+          동일 tag100 스펙. 폼·상세는{' '}
+          <code>STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME</code> 셸(116×48)로 열림 시 가로 밀림을
+          막습니다.
+        </p>
+        <div className="ds-demo__row" style={{ minHeight: 200, alignItems: 'flex-start' }}>
+          <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
+            <StatusDropdownCell
+              status={evalStatus}
+              statusOptions={UJAT_MANAGER_EVALUATION_ORDER}
+              renderBadge={s => <ManagerEvaluationBadge evaluation={s} />}
+              isItemDisabled={(cur, opt) => cur === opt}
+              onChange={setEvalStatus}
+              isOpen={evalOpen}
+              onOpenChange={setEvalOpen}
+              tagLayout="tag100"
+            />
+          </span>
+        </div>
+      </DsDemo>
+    </>
+  )
+}
 
 export function StatusExtendedSection() {
   return (
@@ -157,8 +226,8 @@ export function StatusExtendedSection() {
 
       <DsDemo label="EditableStatusBadge 톤 팔레트">
         <p className="ds-note" style={{ marginTop: 0 }}>
-          현행 CMS 상태 태그 베이스입니다. 드롭다운 변경은 Filters &amp; Tables의{' '}
-          <code>StatusDropdownCell</code>과 조합합니다.
+          현행 CMS 상태 태그 베이스입니다. 드롭다운 변경은 아래{' '}
+          <code>StatusDropdownCell</code> 데모와 Filters &amp; Tables를 참고하세요.
         </p>
         <div className="ds-demo__row">
           {EDITABLE_TONE_SAMPLES.map(({ label, tone }) => (
@@ -166,6 +235,8 @@ export function StatusExtendedSection() {
           ))}
         </div>
       </DsDemo>
+
+      <StatusDropdownActiveDemo />
 
       <DsDemo label="서류·면접·배정 상태 텍스트">
         <div className="ds-demo__row">

@@ -3,7 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import { Space, Empty } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, type CmsButtonVariant } from '@/shared/ui'
+import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert, type CmsButtonVariant } from '@/shared/ui'
+import { MESSAGES } from '@/shared/constants/messages'
 import {
   patchApplicantInstitutionAdminComment,
   type ApplicantSchoolRow,
@@ -31,9 +32,11 @@ import {
   PersonalInfoRevealButton,
   PERSONAL_INFO_REVEAL_BUTTON_LABEL,
 } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import './applicants-detail-contents.css'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
@@ -55,7 +58,7 @@ function isCompanySchoolProgram(program: Program | null | undefined): boolean {
     program?.id.startsWith('company-school-prog-') === true ||
     program?.id.startsWith('company-school-local-') === true ||
     program?.mainTitle?.includes('1사1교') === true ||
-    program?.title.includes('1사1교') === true
+    program?.title?.includes('1사1교') === true
   )
 }
 
@@ -169,9 +172,9 @@ function headerBtnEditInfo(
 ): ApplicantHeaderActionItem {
   return {
     key: 'edit-info',
-    variant: 'secondary',
+    variant: PROGRAM_EDIT_INFO_BUTTON_PROPS.variant,
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
-    width: CMS_ACTION_BUTTON_WIDTH,
+    width: PROGRAM_EDIT_INFO_BUTTON_PROPS.width,
     disabled,
     onClick: disabled
       ? undefined
@@ -185,9 +188,9 @@ function headerBtnEditInfo(
 function headerBtnEditInfoDisabled(): ApplicantHeaderActionItem {
   return {
     key: 'edit-info',
-    variant: 'secondary',
+    variant: PROGRAM_EDIT_INFO_BUTTON_PROPS.variant,
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
-    width: CMS_ACTION_BUTTON_WIDTH,
+    width: PROGRAM_EDIT_INFO_BUTTON_PROPS.width,
     disabled: true,
   }
 }
@@ -195,9 +198,9 @@ function headerBtnEditInfoDisabled(): ApplicantHeaderActionItem {
 function headerBtnEditInfoPreparing(): ApplicantHeaderActionItem {
   return {
     key: 'edit-info',
-    variant: 'secondary',
+    variant: PROGRAM_EDIT_INFO_BUTTON_PROPS.variant,
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
-    width: CMS_ACTION_BUTTON_WIDTH,
+    width: PROGRAM_EDIT_INFO_BUTTON_PROPS.width,
     onClick: () => window.alert('준비중'),
   }
 }
@@ -210,16 +213,6 @@ function headerBtnWriteComment(onClick: () => void, disabled = false): Applicant
     width: CMS_ACTION_BUTTON_WIDTH,
     disabled,
     onClick: disabled ? undefined : onClick,
-  }
-}
-
-function headerBtnSaveComment(onClick: () => void): ApplicantHeaderActionItem {
-  return {
-    key: 'write-comment',
-    variant: 'primary',
-    label: '코멘트 저장',
-    width: CMS_ACTION_BUTTON_WIDTH,
-    onClick,
   }
 }
 
@@ -292,9 +285,7 @@ function resolveApplicantHeaderItems(params: {
   onEnterInstructorEdit?: () => void
   onSaveInstructorEdit?: () => void
   isAdminCommentWriteEnabled?: boolean
-  isEditingAdminComment?: boolean
   onEnterAdminCommentEdit?: () => void
-  onSaveAdminCommentEdit?: () => void
 }): ApplicantHeaderActionItem[] | null {
   const {
     applicantId,
@@ -326,9 +317,7 @@ function resolveApplicantHeaderItems(params: {
     onEnterInstructorEdit,
     onSaveInstructorEdit,
     isAdminCommentWriteEnabled = false,
-    isEditingAdminComment = false,
     onEnterAdminCommentEdit,
-    onSaveAdminCommentEdit,
   } = params
 
   if (isApprovedInstitution) {
@@ -337,8 +326,7 @@ function resolveApplicantHeaderItems(params: {
         ? headerBtnEditInfo(
             onEnterInstitutionEdit,
             onSaveInstitutionEdit,
-            isEditingInstitutionDetail,
-            isEditingAdminComment
+            isEditingInstitutionDetail
           )
         : headerBtnEditInfoDisabled()
 
@@ -347,11 +335,9 @@ function resolveApplicantHeaderItems(params: {
       editButton,
     ]
 
-    if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit && onSaveAdminCommentEdit) {
+    if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
       items.push(
-        isEditingAdminComment
-          ? headerBtnSaveComment(onSaveAdminCommentEdit)
-          : headerBtnWriteComment(onEnterAdminCommentEdit, isEditingInstitutionDetail)
+        headerBtnWriteComment(onEnterAdminCommentEdit, isEditingInstitutionDetail)
       )
     }
 
@@ -365,18 +351,15 @@ function resolveApplicantHeaderItems(params: {
         ? headerBtnEditInfo(
             onEnterIndividualEdit,
             onSaveIndividualEdit,
-            isEditingIndividualDetail,
-            isEditingAdminComment
+            isEditingIndividualDetail
           )
         : headerBtnEditInfoDisabled()
 
     const items: ApplicantHeaderActionItem[] = [editButton]
 
-    if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit && onSaveAdminCommentEdit) {
+    if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
       items.push(
-        isEditingAdminComment
-          ? headerBtnSaveComment(onSaveAdminCommentEdit)
-          : headerBtnWriteComment(onEnterAdminCommentEdit, isEditingIndividualDetail)
+        headerBtnWriteComment(onEnterAdminCommentEdit, isEditingIndividualDetail)
       )
     }
 
@@ -459,9 +442,9 @@ export function ApplicantsDetailContents({
     rowId: string
     manager: 'A' | 'B'
   } | null>(null)
-  const [isIndividualAdminCommentEditing, setIsIndividualAdminCommentEditing] = useState(false)
+  const [isIndividualAdminCommentModalOpen, setIsIndividualAdminCommentModalOpen] = useState(false)
   const [individualAdminCommentDraft, setIndividualAdminCommentDraft] = useState('')
-  const [individualAdminCommentError, setIndividualAdminCommentError] = useState<string | undefined>()
+  const { showAlert } = useCmsAlert()
 
   const isInstitution = type === 'institutions'
   const isInstructor = type === 'instructors'
@@ -528,40 +511,42 @@ export function ApplicantsDetailContents({
     },
   })
 
-  const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
+  const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
-  const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
 
   /* eslint-disable react-hooks/set-state-in-effect -- 기관 변경 시 코멘트 편집 상태 초기화 */
   useEffect(() => {
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminCommentDraft('')
-    setAdminCommentError(undefined)
   }, [applicantId, institutionData?.adminComment])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleAdminCommentEditEnter = useCallback(() => {
     if (institutionDetailEdit.isEditing) return
     setAdminCommentDraft(institutionData?.adminComment ?? '')
-    setAdminCommentError(undefined)
-    setIsAdminCommentEditing(true)
+    setAdminCommentModalOpen(true)
   }, [institutionDetailEdit.isEditing, institutionData?.adminComment])
 
   const handleAdminCommentSave = useCallback(() => {
     if (!institutionData) return
     const updated = patchApplicantInstitutionAdminComment(institutionData.id, adminCommentDraft)
     if (!updated) {
-      setAdminCommentError('저장에 실패했습니다.')
+      void showAlert({
+        title: '안내',
+        content: MESSAGES.error.save,
+      })
       return
     }
     onInstitutionDetailSaved?.([updated])
-    setIsAdminCommentEditing(false)
-    setAdminCommentError(undefined)
-  }, [adminCommentDraft, institutionData, onInstitutionDetailSaved])
+    setAdminCommentModalOpen(false)
+  }, [adminCommentDraft, institutionData, onInstitutionDetailSaved, showAlert])
+
+  const handleAdminCommentModalCancel = useCallback(() => {
+    setAdminCommentModalOpen(false)
+  }, [])
 
   const handleAdminCommentDraftChange = useCallback((value: string) => {
     setAdminCommentDraft(value)
-    setAdminCommentError(undefined)
   }, [])
 
   const individualDetailEdit = useApplicantIndividualDetailEdit({
@@ -574,9 +559,8 @@ export function ApplicantsDetailContents({
 
   /* eslint-disable react-hooks/set-state-in-effect -- 개인 신청자 변경 시 코멘트·평가 UI 초기화 */
   useEffect(() => {
-    setIsIndividualAdminCommentEditing(false)
+    setIsIndividualAdminCommentModalOpen(false)
     setIndividualAdminCommentDraft('')
-    setIndividualAdminCommentError(undefined)
     setOpenManagerDropdown(null)
   }, [applicantId, individualData?.adminComment])
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -584,8 +568,7 @@ export function ApplicantsDetailContents({
   const handleIndividualAdminCommentEditEnter = useCallback(() => {
     if (individualDetailEdit.isEditing) return
     setIndividualAdminCommentDraft(individualData?.adminComment ?? '')
-    setIndividualAdminCommentError(undefined)
-    setIsIndividualAdminCommentEditing(true)
+    setIsIndividualAdminCommentModalOpen(true)
   }, [individualDetailEdit.isEditing, individualData?.adminComment])
 
   const handleIndividualAdminCommentSave = useCallback(() => {
@@ -594,17 +577,22 @@ export function ApplicantsDetailContents({
       adminComment: individualAdminCommentDraft,
     })
     if (!updated) {
-      setIndividualAdminCommentError('저장에 실패했습니다.')
+      void showAlert({
+        title: '안내',
+        content: MESSAGES.error.save,
+      })
       return
     }
     onIndividualDetailSaved?.(updated)
-    setIsIndividualAdminCommentEditing(false)
-    setIndividualAdminCommentError(undefined)
-  }, [individualAdminCommentDraft, individualData, onIndividualDetailSaved])
+    setIsIndividualAdminCommentModalOpen(false)
+  }, [individualAdminCommentDraft, individualData, onIndividualDetailSaved, showAlert])
+
+  const handleIndividualAdminCommentModalCancel = useCallback(() => {
+    setIsIndividualAdminCommentModalOpen(false)
+  }, [])
 
   const handleIndividualAdminCommentDraftChange = useCallback((value: string) => {
     setIndividualAdminCommentDraft(value)
-    setIndividualAdminCommentError(undefined)
   }, [])
 
   const handleManagerAEvaluationChange = useCallback(
@@ -730,13 +718,9 @@ export function ApplicantsDetailContents({
       },
       isAdminCommentWriteEnabled:
         isGeneralInstitutionEditEnabled || isGeneralIndividualEditEnabled,
-      isEditingAdminComment: isAdminCommentEditing || isIndividualAdminCommentEditing,
       onEnterAdminCommentEdit: isApprovedIndividual
         ? handleIndividualAdminCommentEditEnter
         : handleAdminCommentEditEnter,
-      onSaveAdminCommentEdit: isApprovedIndividual
-        ? handleIndividualAdminCommentSave
-        : handleAdminCommentSave,
     })
     if (!items) return null
     return <ApplicantHeaderActionsExtra items={items} personalInfoRevealed={personalInfoRevealed} />
@@ -770,12 +754,8 @@ export function ApplicantsDetailContents({
     onCancelApproval,
     onCancelReject,
     personalInfoRevealed,
-    isAdminCommentEditing,
-    isIndividualAdminCommentEditing,
     handleAdminCommentEditEnter,
-    handleAdminCommentSave,
     handleIndividualAdminCommentEditEnter,
-    handleIndividualAdminCommentSave,
   ])
 
   const tabBarExtraContent = headerExtraContent
@@ -806,10 +786,7 @@ export function ApplicantsDetailContents({
           hideCombinedClass={isCombinedClassHidden}
           validationErrors={institutionDetailEdit.validationErrors}
           onResendNotificationClick={onResendNotification}
-          isAdminCommentEditing={isAdminCommentEditing}
-          adminCommentDraft={adminCommentDraft}
-          onAdminCommentDraftChange={handleAdminCommentDraftChange}
-          adminCommentError={adminCommentError}
+          isAdminCommentEditing={false}
         />
       )
     }
@@ -835,10 +812,6 @@ export function ApplicantsDetailContents({
     institutionDetailEdit.isCombinedClassApplyRadioDisabled,
     institutionDetailEdit.validationErrors,
     onResendNotification,
-    isAdminCommentEditing,
-    adminCommentDraft,
-    handleAdminCommentDraftChange,
-    adminCommentError,
   ])
 
   const instructorInfoPanel = useMemo(() => {
@@ -906,10 +879,6 @@ export function ApplicantsDetailContents({
           onResendNotificationClick={onResendNotification}
           screeningStage={individualScreeningStage}
           textbookOptions={individualDetailEdit.textbookOptions}
-          isAdminCommentEditing={isIndividualAdminCommentEditing}
-          adminCommentDraft={individualAdminCommentDraft}
-          onAdminCommentDraftChange={handleIndividualAdminCommentDraftChange}
-          adminCommentError={individualAdminCommentError}
           openManagerDropdown={openManagerDropdown}
           setOpenManagerDropdown={setOpenManagerDropdown}
           onManagerAEvaluationChange={handleManagerAEvaluationChange}
@@ -938,16 +907,31 @@ export function ApplicantsDetailContents({
     onResendNotification,
     program,
     individualScreeningStage,
-    isIndividualAdminCommentEditing,
-    individualAdminCommentDraft,
-    handleIndividualAdminCommentDraftChange,
-    individualAdminCommentError,
     openManagerDropdown,
     handleManagerAEvaluationChange,
     handleManagerBEvaluationChange,
   ])
 
   const tabDefs = isVolunteer ? [{ key: 'info', label: '기본 정보' }] : []
+
+  const adminCommentModals = (
+    <>
+      <MemberAdminCommentModal
+        open={adminCommentModalOpen}
+        value={adminCommentDraft}
+        onChange={handleAdminCommentDraftChange}
+        onCancel={handleAdminCommentModalCancel}
+        onConfirm={handleAdminCommentSave}
+      />
+      <MemberAdminCommentModal
+        open={isIndividualAdminCommentModalOpen}
+        value={individualAdminCommentDraft}
+        onChange={handleIndividualAdminCommentDraftChange}
+        onCancel={handleIndividualAdminCommentModalCancel}
+        onConfirm={handleIndividualAdminCommentSave}
+      />
+    </>
+  )
 
   if (
     isInstitution &&
@@ -956,19 +940,21 @@ export function ApplicantsDetailContents({
     institutionData
   ) {
     return (
-      <TrainedTeachersApplicantInstitutionDetailContents
-        institution={institutionData}
-        program={program}
-        personalInfoRevealed={personalInfoRevealed}
-        headerExtraContent={headerExtraContent}
-        personalInfoRevealModal={personalInfoRevealModal}
-        institutionDetailEdit={institutionDetailEdit}
-        onResendNotification={onResendNotification}
-        isAdminCommentEditing={isAdminCommentEditing}
-        adminCommentDraft={adminCommentDraft}
-        onAdminCommentDraftChange={handleAdminCommentDraftChange}
-        adminCommentError={adminCommentError}
-      />
+      <>
+        <TrainedTeachersApplicantInstitutionDetailContents
+          institution={institutionData}
+          program={program}
+          personalInfoRevealed={personalInfoRevealed}
+          headerExtraContent={headerExtraContent}
+          personalInfoRevealModal={personalInfoRevealModal}
+          institutionDetailEdit={institutionDetailEdit}
+          onResendNotification={onResendNotification}
+          isAdminCommentEditing={false}
+          adminCommentDraft=""
+          onAdminCommentDraftChange={() => {}}
+        />
+        {adminCommentModals}
+      </>
     )
   }
 
@@ -980,6 +966,7 @@ export function ApplicantsDetailContents({
         ) : null}
         <div className="applicant-contents__panel">{tabPanel}</div>
         {personalInfoRevealModal}
+        {adminCommentModals}
       </div>
     )
   }
@@ -997,6 +984,7 @@ export function ApplicantsDetailContents({
         <div className="applicant-contents__panel">{tabPanel}</div>
       </div>
       {personalInfoRevealModal}
+      {adminCommentModals}
     </div>
   )
 }

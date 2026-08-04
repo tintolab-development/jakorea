@@ -1,5 +1,8 @@
 /**
  * 신청 경로 관리 관련 로직 커스텀 훅
+ *
+ * path 메타 CRUD: application-path-store mock 유지 (P2-4 — OpenAPI path 리소스 없음).
+ * 프로그램 연결만 remote: `applicationPathId` PATCH via `updateGeneralProgram`.
  */
 
 import { useState } from 'react'

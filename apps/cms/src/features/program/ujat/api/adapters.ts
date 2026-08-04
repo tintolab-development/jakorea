@@ -158,8 +158,6 @@ function coreRequest(
     endDate: dateValue(program.endDate),
     applicationStartDate: dateValue(program.applicationStartDate),
     applicationEndDate: dateValue(program.applicationEndDate),
-    status: program.status,
-    lifecycleStatus: program.lifecycleStatus,
     businessArea: program.businessArea,
     titleEn: program.titleEn,
     mainTitle: program.mainTitle ?? program.title,

@@ -3,6 +3,9 @@
  * 성공/에러/알림 메시지 중앙 관리
  */
 
+/** 폼 제출 — 필수 항목 미완 시 AlertModal 본문 (필드명 미안내) */
+export const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'
+
 /** 미구현 기능 `window.alert` 공통 안내 (프로그램 상세 미리보기, 대시보드 위젯 더보기 등) */
 export const FEATURE_COMING_SOON_ALERT_MESSAGE = '준비 중입니다.'
 

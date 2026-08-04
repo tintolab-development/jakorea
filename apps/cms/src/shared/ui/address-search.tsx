@@ -272,6 +272,7 @@ export function AddressSearch({
         open={open}
         onCancel={closeModal}
         title="주소 검색"
+        titleBodyGap="always"
         width={600}
         className={modalClassName}
       >

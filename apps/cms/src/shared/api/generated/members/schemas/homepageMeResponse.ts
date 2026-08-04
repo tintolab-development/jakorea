@@ -7,7 +7,7 @@
  */
 
 /**
- * 홈페이지 현재 로그인 회원 응답
+ * 회원 포탈 현재 로그인 회원 응답
  */
 export interface HomepageMeResponse {
   /** 회원 ID */

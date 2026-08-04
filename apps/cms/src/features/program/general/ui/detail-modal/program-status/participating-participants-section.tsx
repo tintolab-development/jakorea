@@ -3,11 +3,11 @@
  */
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Table } from 'antd'
+import { Table, Spin } from 'antd'
 import { CalendarOutlined, DownloadOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
 import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE,
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
@@ -77,7 +77,8 @@ export function ParticipatingParticipantsSection({
     progressCalendarGranularity,
     setProgressCalendarGranularity,
   } = useParticipatingIndividualParticipantsParams()
-  const { participantList } = useProgressIndividualParticipantList(programId)
+  const { participantList, loading: participantsLoading } =
+    useProgressIndividualParticipantList(programId)
   const programBridge = useMemo(
     () => resolveInstitutionApplicationProgramBridge(program),
     [program]
@@ -271,6 +272,14 @@ export function ParticipatingParticipantsSection({
     })
   }, [columns])
 
+  if (participantsLoading && participantList.length === 0) {
+    return (
+      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
   if (participantIdFromUrl && selectedParticipantFromUrl && program) {
     return (
       <div className="program-status-participating participating-participants-section">
@@ -310,7 +319,7 @@ export function ParticipatingParticipantsSection({
             <CmsButton
               variant="secondary"
               size="large"
-              width={220}
+              width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
               icon={<DownloadOutlined />}
               disabled={certificateExportActive}
               onClick={handleCertificateIssueClick}

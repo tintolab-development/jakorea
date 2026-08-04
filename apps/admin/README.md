@@ -1,73 +1,47 @@
-# React + TypeScript + Vite
+# JAKorea Homepage Admin
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+사용자 홈페이지(`apps/platform`) 콘텐츠·운영을 위한 어드민 앱입니다.  
+기획: [홈페이지 어드민 기능정의서](https://app.notion.com/p/tintolab/399f3e2a77d08095a1dec4e26d9098f9)
 
-Currently, two official plugins are available:
+디자인 시스템·스택은 **CMS(`apps/cms`)와 동일**합니다 (Ant Design 5 + Pretendard + CMS 토큰 미러).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 실행
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# 모노레포 루트
+pnpm install
+pnpm admin
+# → http://localhost:3001
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+환경 변수: `.env.example`을 `.env` / `.env.local`로 복사 후 설정.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Phase
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Phase | 내용 | 상태 |
+|-------|------|------|
+| 1 | 환경구성 (Vite/antd/라우터/테마/API) | 완료 |
+| 2 | 레이아웃·사이드메뉴 셸 | 완료 |
+| 3 | 메인 히어로 배너 (목록·등록/수정) | 완료 |
+| 4 | 메인 팝업 관리 (목록·등록/수정) | 완료 |
+| 5 | 메인 상단 띠배너 관리 | 완료 |
+| 6 | 메인 소셜 링크 관리 | 완료 |
+| 7 | 메인 콘텐츠 관리 | 완료 |
+| 8 | JA Korea 소개 관리 | 완료 |
+| 9 | JA Global Value 관리 | 완료 |
+| 10 | JA Worldwide 관리 | 완료 |
+| 11 | 연혁 관리 | 완료 |
+| 12 | 수상 관리 | 완료 |
+| 13+ | 인증 → BI → 투명경영 → … | 대기 |
+
+## 구조 (FSD)
+
+```
+src/
+  app/          # providers, router
+  pages/        # 라우트 페이지
+  widgets/      # 레이아웃 등
+  features/     # 기능 단위
+  entities/     # 도메인 엔티티
+  shared/       # 토큰, axios, 공통 UI
 ```

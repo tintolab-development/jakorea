@@ -1,6 +1,6 @@
 import styles from './pf-tabs.module.css'
 
-export type PFTabsVariant = 'underline' | 'pill'
+export type PFTabsVariant = 'underline' | 'pill' | 'category'
 export type PFTabsUnderlineStyle = 'isolated' | 'bordered'
 export type PFTabsSize = 'large' | 'medium'
 
@@ -37,7 +37,8 @@ export function PFTabs({
   const rootClassName = [
     styles.tabs,
     styles[variant],
-    variant === 'underline' ? styles[underlineStyle] : styles[size],
+    variant === 'underline' ? styles[underlineStyle] : undefined,
+    variant === 'pill' ? styles[size] : undefined,
     className,
   ]
     .filter(Boolean)

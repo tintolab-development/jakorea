@@ -3,76 +3,193 @@
   background: var(--color-neutral-white);
 }
 
+/**
+ * Horizontal shell
+ * - Mobile (~1079): page padding 16
+ * - PC compact (1080~1599): tighter inset, fluid width
+ * - PC full (1600~): Figma 240px side inset (시안 기준)
+ */
+.shell {
+  box-sizing: border-box;
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: var(--spacing-16);
+}
+
 .navigationArea {
   background: var(--color-neutral-cool-80);
 }
 
-.navigation,
-.contentArea {
-  width: 100%;
-  max-width: var(--content-max-width);
-  margin-inline: auto;
-  padding-inline: var(--page-padding-x);
+.navigationArea .shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  padding-block: var(--spacing-16);
 }
 
 .navigation {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--spacing-48);
-  min-height: var(--spacing-68);
+  gap: var(--spacing-12) var(--spacing-20);
 }
 
 .navigationButton {
   padding: 0;
   border: 0;
   background: transparent;
+  cursor: pointer;
   white-space: nowrap;
+  color: var(--color-neutral-cool-500);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 160%;
 }
 
-.contentArea {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-24);
-  padding: 60px 0;
+.relatedSitesLabel {
+  color: var(--color-neutral-cool-600);
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 160%;
 }
 
-.logoArea {
+.relatedSites {
   display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-80);
+  gap: var(--spacing-12);
+  padding: 8px 16px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-8);
+  background: var(--color-neutral-white);
+  cursor: pointer;
+}
+
+.relatedSites:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.relatedSitesChevron {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.contentArea .shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-20);
+  padding-block: var(--spacing-32);
+}
+
+.logoRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-16);
 }
 
 .jaLogo {
-  width: 195px;
-  height: 60px;
+  display: block;
+  width: 130px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.partnerLogos {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  width: 135px;
+  gap: 21px;
+}
+
+.partnerLogo {
+  display: block;
+  width: auto;
+  height: auto;
+  flex-shrink: 0;
+}
+
+.partnerLogoMinistry {
+  width: 28px;
+}
+
+.partnerLogoTax {
+  width: 19px;
+}
+
+.partnerLogoRights {
+  width: 36px;
 }
 
 .infoArea {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: var(--spacing-8);
+  min-width: 0;
 }
 
-.companyInfoList {
+.address {
+  margin: 0;
+  color: var(--color-neutral-cool-500);
+  font-family: var(--font-family-base);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 160%;
+  letter-spacing: -0.13px;
+}
+
+.infoDetail {
+  color: var(--color-neutral-cool-500);
+  font-family: var(--font-family-base);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 160%;
+  letter-spacing: -0.13px;
+}
+
+.companyInfoLine {
   display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  margin: 0;
+}
+
+.companyInfoLineDesktop {
+  display: none;
   flex-wrap: wrap;
   gap: var(--spacing-8) var(--spacing-20);
+  margin: 0;
 }
 
-.companyInfoList > * {
-  white-space: nowrap;
+.companyInfoEmailOnly {
+  margin: 0;
 }
 
-.socialArea {
+.metaRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-80);
+  gap: var(--spacing-16);
 }
 
 .socialLinks {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 18px;
 }
@@ -85,18 +202,154 @@
   justify-content: center;
 }
 
-.partnerLogos {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-48);
-}
-
-.partnerLogo {
-  width: auto;
-  height: 60px;
-}
-
 .copyright {
-  text-align: right;
+  margin: 0;
   white-space: nowrap;
+}
+
+/* ── PC shared (compact + full) · 1080+ ── */
+@media (--bp-pc-up) {
+  .navigationArea .shell {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    /* 링크 그룹 + 드롭다운 묶음을 가운데 정렬 */
+    justify-content: center;
+    /* 가장 우측 텍스트 ↔ 드롭다운 */
+    gap: 150px;
+    min-height: var(--spacing-68);
+    padding-block: 0;
+  }
+
+  .navigation {
+    display: flex;
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+    align-items: center;
+    /* 텍스트 영역 사이 갭 */
+    gap: var(--spacing-48);
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .relatedSites {
+    width: 240px;
+    flex-shrink: 0;
+    border: 0;
+    padding: 8px 16px;
+  }
+
+  .relatedSitesLabel {
+    color: var(--color-neutral-cool-600);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 150%;
+    letter-spacing: -0.16px;
+  }
+
+  .navigationButton {
+    color: var(--color-neutral-cool-500);
+    font-family: var(--font-family-base);
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 150%;
+    letter-spacing: -0.16px;
+  }
+
+  .address {
+    font-size: 16px;
+    line-height: 150%;
+    letter-spacing: -0.16px;
+  }
+
+  .infoDetail {
+    font-size: 14px;
+    line-height: 160%;
+    letter-spacing: 0;
+  }
+
+  /* 시안: nav ↔ 콘텐츠 60 · 하단 60 */
+  .contentArea .shell {
+    gap: var(--spacing-24);
+    padding-block: var(--spacing-60);
+  }
+
+  .logoRow {
+    justify-content: space-between;
+    gap: var(--spacing-80);
+  }
+
+  .jaLogo {
+    width: 195px;
+    height: 60px;
+  }
+
+  .partnerLogos {
+    width: auto;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: var(--spacing-48);
+  }
+
+  .partnerLogoMinistry,
+  .partnerLogoTax,
+  .partnerLogoRights {
+    width: auto;
+    height: 60px;
+  }
+
+  .companyInfoLine {
+    display: none;
+  }
+
+  .companyInfoLineDesktop {
+    display: flex;
+  }
+
+  .companyInfoEmailOnly {
+    display: none;
+  }
+
+  .metaRow {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    gap: var(--spacing-80);
+  }
+}
+
+/* ── PC compact · 1080~1599 ── */
+@media (--bp-pc-compact) {
+  .shell {
+    max-width: none;
+    /* compact: 시안 full(240)보다 타이트, mobile(16)보다 넓게 */
+    padding-inline: var(--spacing-40);
+  }
+
+  /* 상단 내비: 48 / 150 유지 · 폭 부족 시 줄바꿈 (gap 유지) */
+  .navigationArea .shell {
+    gap: 150px;
+  }
+
+  .navigation {
+    gap: var(--spacing-48);
+  }
+}
+
+/* ── PC full · 1600~ (시안: 좌우 240) ── */
+@media (--bp-pc-full-up) {
+  .shell {
+    max-width: none;
+    padding-inline: 240px;
+  }
+
+  .navigationArea .shell {
+    justify-content: center;
+    gap: 150px;
+  }
+
+  .navigation {
+    gap: var(--spacing-48);
+  }
 }

@@ -190,6 +190,32 @@ export async function createInterviewSlotRemote(
   )
 }
 
+/**
+ * GET /api/admin/programs/{programId}/interview-slots
+ * OpenAPI GET/POST 등재. 404/실패 시 호출측에서 mock 폴백.
+ */
+export async function listInterviewSlotsRemote(
+  programId: string,
+  params?: { from?: string; to?: string }
+): Promise<
+  import('@/shared/api/generated/dashboard/schemas/interviewSlotResponse').InterviewSlotResponse[]
+> {
+  const body = await unwrapApiBody<
+    | import('@/shared/api/generated/dashboard/schemas/interviewSlotResponse').InterviewSlotResponse[]
+    | {
+        items?: import('@/shared/api/generated/dashboard/schemas/interviewSlotResponse').InterviewSlotResponse[]
+      }
+  >(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/interview-slots`,
+      method: 'GET',
+      params,
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.items ?? []
+}
+
 export async function createInterviewAssignmentRemote(
   payload: import('@/shared/api/generated/dashboard/schemas/interviewAssignmentCreateRequest').InterviewAssignmentCreateRequest
 ): Promise<

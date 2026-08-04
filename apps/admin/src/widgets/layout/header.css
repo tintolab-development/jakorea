@@ -1,0 +1,27 @@
+.sidebar-header {
+  height: auto !important;
+  min-height: auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 30px 44px;
+  background: var(--color-sidebar-bg);
+  flex-shrink: 0;
+}
+
+.sidebar-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: var(--spacing-12);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  width: 100px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}

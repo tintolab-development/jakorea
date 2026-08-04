@@ -78,6 +78,7 @@ import { PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT } from '@/feat
 import { CmsButton } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -668,7 +669,11 @@ function BasicInfoSection({
           />
           <DetailInfoForm.Field
             label="후원사 담당자"
-            view={commonInfo.sponsorManagerLine?.trim() || program.managerName || '-'}
+            view={
+              <PipeSeparatedInlineView
+                text={commonInfo.sponsorManagerLine?.trim() || program.managerName || '-'}
+              />
+            }
             edit={
               <Controller
                 name="sponsorManagerContactId"
@@ -3720,9 +3725,7 @@ export function GeneralProgramDetailCommonInfoView({
       {(canWrite || isEditMode) && (
         <div className="detail-common-info-view__header">
           <CmsButton
-            variant="secondary"
-            size="large"
-            width={140}
+            {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
             onClick={resolveProgramEditInfoClick(isEditMode, {
               onEnterEdit: onEdit ?? (() => {}),
               onSaveEdit: onSave ?? (() => {}),

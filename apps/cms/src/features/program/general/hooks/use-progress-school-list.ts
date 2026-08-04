@@ -60,9 +60,13 @@ export function useProgressSchoolList({
     ttRemoteEnabled
   )
 
-  const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>(() =>
-    programId ? getParticipatingSchoolsForProgram(programId) : [...MOCK_PARTICIPATING_SCHOOLS]
-  )
+  const [schoolList, setSchoolList] = useState<ParticipatingSchoolRow[]>(() => {
+    // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
+    if (ttRemoteEnabled || remoteEnabled) return []
+    return programId
+      ? getParticipatingSchoolsForProgram(programId)
+      : [...MOCK_PARTICIPATING_SCHOOLS]
+  })
 
   useEffect(() => {
     if (ttRemoteEnabled) {
@@ -244,7 +248,11 @@ export function useProgressSchoolList({
     handleSchoolApprovalCancel,
     getInstructorDisplayForSchool,
     getInstructorRowsForSchool,
-    applicationsLoading: remoteEnabled ? remoteQuery.isFetching : false,
-    isRemoteDataSource: remoteEnabled,
+    applicationsLoading: ttRemoteEnabled
+      ? ttParticipatingQuery.isFetching && ttParticipatingQuery.data === undefined
+      : remoteEnabled
+        ? remoteQuery.isFetching && remoteQuery.data === undefined
+        : false,
+    isRemoteDataSource: ttRemoteEnabled || remoteEnabled,
   }
 }

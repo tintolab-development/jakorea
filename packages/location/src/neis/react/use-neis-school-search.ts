@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 
-import { searchNeisSchools } from '../client'
+import { resolveNeisAtptOfcdcScCode } from '../atpt-code-map'
+import { searchAllNeisSchools } from '../client'
 import type {
   NeisSchoolItem,
   UseNeisSchoolSearchOptions,
@@ -10,14 +11,14 @@ import type {
 export function useNeisSchoolSearch(
   options: UseNeisSchoolSearchOptions,
 ): UseNeisSchoolSearchReturn {
-  const { apiKey, pageSize = 20, missingKeyMessage } = options
+  const { apiKey, fetchPageSize = 100, missingKeyMessage } = options
   const [schools, setSchools] = useState<NeisSchoolItem[]>([])
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
   const search = useCallback(
-    async (keyword: string, page: number = 1): Promise<NeisSchoolItem[]> => {
+    async (keyword: string, sido?: string): Promise<NeisSchoolItem[]> => {
       const trimmed = keyword.trim()
       if (!trimmed) {
         setSchools([])
@@ -38,11 +39,12 @@ export function useNeisSchoolSearch(
       setError(null)
 
       try {
-        const result = await searchNeisSchools({
+        const atptOfcdcScCode = sido ? resolveNeisAtptOfcdcScCode(sido) : undefined
+        const result = await searchAllNeisSchools({
           apiKey,
           keyword: trimmed,
-          page,
-          pageSize,
+          atptOfcdcScCode,
+          pageSize: fetchPageSize,
           missingKeyMessage,
         })
         setSchools(result.schools)
@@ -58,7 +60,7 @@ export function useNeisSchoolSearch(
         setLoading(false)
       }
     },
-    [apiKey, missingKeyMessage, pageSize],
+    [apiKey, fetchPageSize, missingKeyMessage],
   )
 
   const reset = useCallback(() => {

@@ -57,7 +57,7 @@ import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   useCompanySchoolProgramDetail,
   useCompanySchoolPrograms,
-  useDeleteCompanySchoolProgram,
+  useDeleteCompanySchoolPrograms,
   useUpdateCompanySchoolProgram,
 } from '@/features/program/1c-1s/api/hooks'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
@@ -227,14 +227,13 @@ function ProgramListPageContent() {
       Boolean(companySchoolProgramIdFromUrl ?? selectedProgramForFullPageModal?.id)
   )
   const updateCompanySchoolMutation = useUpdateCompanySchoolProgram()
-  const deleteCompanySchoolMutation = useDeleteCompanySchoolProgram()
+  const deleteCompanySchoolProgramsMutation = useDeleteCompanySchoolPrograms()
+  const companySchoolDetailData = companySchoolDetailQuery.data ?? null
   const companySchoolDetailProgram =
-    companySchoolDetailQuery.data ??
-    selectedProgramForFullPageModal ??
+    companySchoolDetailData ??
     (companySchoolProgramIdFromUrl
-      ? filteredPrograms.find(p => p.id === companySchoolProgramIdFromUrl) ??
-        ({ id: companySchoolProgramIdFromUrl } as Program)
-      : null)
+      ? ({ id: companySchoolProgramIdFromUrl } as Program)
+      : selectedProgramForFullPageModal)
 
   // 4. Effects
   useEffect(() => {
@@ -652,12 +651,14 @@ function ProgramListPageContent() {
         programVariant={isCompanySchoolPath ? 'company-school' : undefined}
         externalLoading={
           isCompanySchoolPath
-            ? companySchoolDetailQuery.isFetching && !companySchoolDetailProgram
+            ? Boolean(companySchoolProgramIdFromUrl) &&
+              !companySchoolDetailData &&
+              (companySchoolDetailQuery.isFetching || companySchoolDetailQuery.isLoading)
             : undefined
         }
         externalError={
           isCompanySchoolPath
-            ? companySchoolDetailQuery.isError && !companySchoolDetailProgram
+            ? companySchoolDetailQuery.isError && !companySchoolDetailData
             : undefined
         }
         onClose={handleCloseFullPageModal}
@@ -753,9 +754,9 @@ function ProgramListPageContent() {
           void (async () => {
             try {
               if (isCompanySchoolPath) {
-                for (const program of programsPendingBulkDelete) {
-                  await deleteCompanySchoolMutation.mutateAsync(program.id)
-                }
+                await deleteCompanySchoolProgramsMutation.mutateAsync(
+                  programsPendingBulkDelete.map(program => program.id)
+                )
                 await companySchoolListQuery.refetch()
                 setSelectedRowKeys([])
               } else {

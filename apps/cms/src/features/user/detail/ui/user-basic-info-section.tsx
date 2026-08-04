@@ -19,6 +19,7 @@ import {
   type UserBasicInfoEntrySource,
 } from './user-basic-info/entry-resolver'
 import type { UserBasicInfoExternalId1365 } from './user-basic-info/sections/types'
+import { GuardianSection } from './user-basic-info/sections/guardian-section'
 import './user-basic-info-section.css'
 import '@/features/user/shared/ui/admin-permission-tag.css'
 
@@ -39,8 +40,9 @@ export interface UserBasicInfoSectionProps {
     userId: string
     permissionRole: 'instructor' | 'admin'
   }) => void
-  caption?: ReactNode
+  onOpenJaGradeEvaluation?: () => void
   scheduleChangeCount?: number
+  caption?: ReactNode
   externalId1365?: UserBasicInfoExternalId1365 | null
   personalInfoRevealed?: boolean
   memberInfoEditing?: boolean
@@ -59,6 +61,7 @@ export function UserBasicInfoSection({
   isInstructorPermissionDetail = false,
   isAdminPermissionDetail = false,
   onPermissionResendNotification,
+  onOpenJaGradeEvaluation,
   caption,
   scheduleChangeCount,
   externalId1365,
@@ -96,6 +99,7 @@ export function UserBasicInfoSection({
     externalId1365,
     personalInfoRevealed,
     onPermissionResendNotification,
+    onOpenJaGradeEvaluation,
     memberInfoEditing,
     memberInfoDraft,
     onMemberInfoDraftChange,
@@ -120,6 +124,7 @@ export function UserBasicInfoSection({
           mode={detailInfoFormMode}
           shared={sectionContext}
         />
+        <GuardianSection user={user} personalInfoRevealed={personalInfoRevealed} />
       </div>
     </div>
   )

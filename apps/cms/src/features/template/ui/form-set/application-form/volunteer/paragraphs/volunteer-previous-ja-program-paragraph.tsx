@@ -1,7 +1,10 @@
-import { useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
+import {
+  useGeneralApplicationOverlayKv,
+  updateGeneralApplicationOverlayKey,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 
 const CERTIFICATE_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG, PDF 형식만 등록 가능합니다.',
@@ -12,9 +15,18 @@ const CERTIFICATE_ACCEPT = '.jpg,.jpeg,.png,.pdf'
 
 /** 프로그램 봉사자 신청 폼 — 이전 참여 JA 봉사 프로그램 */
 export function VolunteerPreviousJaProgramParagraph() {
-  const [applicationYear, setApplicationYear] = useState('')
-  const [programName, setProgramName] = useState('')
-  const [fileNames, setFileNames] = useState<string[]>([])
+  const [applicationYear, setApplicationYear] = useGeneralApplicationOverlayKv(
+    'application.volunteer.previousProgram.applicationYear',
+    ''
+  )
+  const [programName, setProgramName] = useGeneralApplicationOverlayKv(
+    'application.volunteer.previousProgram.programName',
+    ''
+  )
+  const [fileNames] = useGeneralApplicationOverlayKv<string[]>(
+    'application.volunteer.previousProgram.fileNames',
+    []
+  )
 
   return (
     <DetailInfoForm title="이전 참여 JA 봉사 프로그램" hideHeader mode="edit">
@@ -57,10 +69,18 @@ export function VolunteerPreviousJaProgramParagraph() {
               multiple
               guideLines={CERTIFICATE_GUIDE_LINES}
               fileNames={fileNames}
-              onFilesChange={files =>
-                setFileNames(prev => [...prev, ...files.map(file => file.name)])
-              }
-              onRemoveFile={index => setFileNames(prev => prev.filter((_, i) => i !== index))}
+              onFilesChange={files => {
+                updateGeneralApplicationOverlayKey<string[]>(
+                  'application.volunteer.previousProgram.fileNames',
+                  prev => [...(prev ?? []), ...files.map(file => file.name)]
+                )
+              }}
+              onRemoveFile={index => {
+                updateGeneralApplicationOverlayKey<string[]>(
+                  'application.volunteer.previousProgram.fileNames',
+                  prev => (prev ?? []).filter((_, i) => i !== index)
+                )
+              }}
             />
           }
           view="-"

@@ -95,6 +95,203 @@ export const mockNotices: Notice[] = [
   },
 ]
 
+/** Platform 「결과 확인」목록용 — 카테고리: 최종 합격 발표 | 서류 심사 결과 */
+export const PROGRAM_RESULT_NOTICE_CATEGORIES = [
+  '최종 합격 발표',
+  '서류 심사 결과',
+] as const
+
+export type ProgramResultNoticeCategory = (typeof PROGRAM_RESULT_NOTICE_CATEGORIES)[number]
+
+export function isProgramResultNoticeCategory(category: string): category is ProgramResultNoticeCategory {
+  return (PROGRAM_RESULT_NOTICE_CATEGORIES as readonly string[]).includes(category)
+}
+
+/** 프로그램 결과 발표 공지 mock (CMS 공지 카테고리·게시글과 동일 Notice shape) */
+export const mockProgramResultNotices: Notice[] = [
+  {
+    id: 'notice-result-1',
+    title: '2026 국제무역창업대회(International Trade Challenge, ITC) 참가자 발표',
+    content:
+      '2026 국제무역창업대회(ITC) 참가자 최종 결과를 발표합니다. 합격하신 분들께는 개별 안내드릴 예정입니다.',
+    category: '최종 합격 발표',
+    createdAt: '2026-09-15T10:00:00',
+    isImportant: true,
+    viewCount: 1820,
+    hasAttachment: false,
+    author: '운영팀',
+    status: 'published',
+  },
+  {
+    id: 'notice-result-2',
+    title: '2026 JA Korea 대학생경제교육봉사단 UJAT36기 최종 합격 발표',
+    content: `안녕하세요. JA Korea입니다.
+
+2026 JA Korea 대학생경제교육봉사단 UJAT36기에 지원해 주신 모든 분들께 감사드립니다.
+
+엄격한 서류 심사와 면접을 거쳐 최종 합격자를 아래와 같이 발표합니다.
+
+## [최종 합격자 안내]
+
+상세 합격자 명단은 첨부파일을 확인해 주세요. 합격하신 분들께는 개별 안내 메일·문자를 발송할 예정입니다.
+
+## [합격자 안내 사항]
+
+- 합격자 대상 오리엔테이션 참석이 필수입니다.
+- 제출 서류 및 일정은 첨부 안내문을 참고해 주세요.
+- 미제출·미참석 시 합격이 취소될 수 있습니다.
+
+## [추후 상세 일정]
+
+- 합격자 서류 제출 및 오리엔테이션 일정은 첨부 「향후 일정 안내」를 확인해 주세요.
+- 일정 변경 시 홈페이지 공지 및 개별 안내로 공지합니다.
+
+문의: jakorea@jakorea.org / 02-783-2367
+
+감사합니다.
+JA Korea 드림`,
+    category: '최종 합격 발표',
+    createdAt: '2026-09-15T09:00:00',
+    isImportant: true,
+    viewCount: 915000,
+    hasAttachment: true,
+    attachments: [
+      { name: '[명단] UJAT 36기 최종합격 명단.pdf' },
+      { name: '[안내문] UJAT 36기 향후 일정 안내.pdf' },
+    ],
+    author: '홍길동 매니저',
+    status: 'published',
+  },
+  {
+    id: 'notice-result-3',
+    title: '2026 JA Korea 금융교육 강사단 서류 심사 결과',
+    content: '금융교육 강사단 모집 서류 심사 결과를 안내드립니다.',
+    category: '서류 심사 결과',
+    createdAt: '2026-09-14T14:00:00',
+    isImportant: false,
+    viewCount: 960,
+    hasAttachment: false,
+    author: '강사운영팀',
+    status: 'published',
+  },
+  {
+    id: 'notice-result-4',
+    title: '2026 JA Korea 대학생경제교육봉사단 UJAT36기 서류합격발표',
+    content: 'UJAT36기 1차 서류 합격자를 발표합니다.',
+    category: '서류 심사 결과',
+    createdAt: '2026-09-12T11:00:00',
+    isImportant: true,
+    viewCount: 2100,
+    hasAttachment: false,
+    author: '운영팀',
+    status: 'published',
+  },
+  {
+    id: 'notice-result-5',
+    title: 'SAMSUNG X JA Korea 참가자 선정 발표',
+    content: 'SAMSUNG X JA Korea 프로그램 참가자 선정 결과를 발표합니다.',
+    category: '최종 합격 발표',
+    createdAt: '2026-09-10T16:00:00',
+    isImportant: true,
+    viewCount: 3100,
+    hasAttachment: false,
+    author: '대외협력팀',
+    status: 'published',
+  },
+  {
+    id: 'notice-result-6',
+    title: '2026 기업가정신 캠프 참가자 최종 발표',
+    content: '기업가정신 캠프 참가자 최종 명단을 발표합니다.',
+    category: '최종 합격 발표',
+    createdAt: '2026-09-08T10:00:00',
+    isImportant: false,
+    viewCount: 740,
+    hasAttachment: false,
+    author: '운영팀',
+    status: 'published',
+  },
+  {
+    id: 'notice-result-7',
+    title: '2026 경제금융교육 전문강사단 모집 서류 심사 결과',
+    content: '경제금융교육 전문강사단 서류 심사 결과를 안내드립니다.',
+    category: '서류 심사 결과',
+    createdAt: '2026-09-05T13:00:00',
+    isImportant: false,
+    viewCount: 880,
+    hasAttachment: true,
+    attachments: [{ name: '서류심사_안내.pdf' }],
+    author: '강사운영팀',
+    status: 'published',
+  },
+  {
+    id: 'notice-result-8',
+    title: '2026 특별한 JOB담 봉사자 최종 합격 발표',
+    content: '특별한 JOB담 봉사자 최종 합격자를 발표합니다.',
+    category: '최종 합격 발표',
+    createdAt: '2026-09-01T09:30:00',
+    isImportant: true,
+    viewCount: 1250,
+    hasAttachment: false,
+    author: '운영팀',
+    status: 'published',
+  },
+  {
+    id: 'notice-result-9',
+    title: '2026 디지털 리터러시 프로그램 참가자 발표',
+    content: '디지털 리터러시 프로그램 참가자 최종 결과를 발표합니다.',
+    category: '최종 합격 발표',
+    createdAt: '2026-08-28T15:00:00',
+    isImportant: false,
+    viewCount: 640,
+    hasAttachment: false,
+    author: '교육팀',
+    status: 'published',
+  },
+  {
+    id: 'notice-result-10',
+    title: '2026 진로취업 아카데미 서류 심사 결과',
+    content: '진로취업 아카데미 서류 심사 결과를 안내드립니다.',
+    category: '서류 심사 결과',
+    createdAt: '2026-08-25T11:00:00',
+    isImportant: false,
+    viewCount: 520,
+    hasAttachment: false,
+    author: '교육팀',
+    status: 'published',
+  },
+  {
+    id: 'notice-result-11',
+    title: '2026 JA Korea 여름 캠프 최종 합격 발표',
+    content: '여름 캠프 최종 합격자를 발표합니다.',
+    category: '최종 합격 발표',
+    createdAt: '2026-08-20T10:00:00',
+    isImportant: false,
+    viewCount: 990,
+    hasAttachment: false,
+    author: '운영팀',
+    status: 'published',
+  },
+  {
+    id: 'notice-result-12',
+    title: '2026 금융문해력 강사 모집 서류 심사 결과',
+    content: '금융문해력 강사 모집 서류 심사 결과를 안내드립니다.',
+    category: '서류 심사 결과',
+    createdAt: '2026-08-18T14:00:00',
+    isImportant: false,
+    viewCount: 430,
+    hasAttachment: false,
+    author: '강사운영팀',
+    status: 'published',
+  },
+]
+
+/** Platform·공개 목록용 — 게시된 프로그램 결과 공지만 */
+export function listPublishedProgramResultNotices(): Notice[] {
+  return mockProgramResultNotices
+    .filter(n => n.status === 'published' && isProgramResultNoticeCategory(n.category))
+    .map(n => ({ ...n }))
+}
+
 const ADMIN_NOTICE_DEMO_ATTACHMENTS: NoticeAttachment[] = [
   { name: '(2026) JA Korea 경제금융교육 커리큘럼.pdf' },
   { name: 'JA Korea 공지 부록.pdf' },

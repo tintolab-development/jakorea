@@ -12,6 +12,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
@@ -67,6 +68,7 @@ import {
   STATUS_DROPDOWN_CELL_CLASSNAME,
   STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME,
   STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
+  STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME,
 } from '@/shared/components'
 import { getInstructorRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
@@ -89,8 +91,10 @@ import {
   resolveProgramEnrollmentDisplayStatusFromLabel,
 } from '@/shared/constants/status'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
+import { useGeneralProgramPosts } from '@/features/program/general/hooks/use-general-program-posts-surveys'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import {
   InstitutionAddressDetailEdit,
   InstitutionComputerInRoomEdit,
@@ -194,7 +198,7 @@ function isCompanySchoolProgram(program: Program): boolean {
     program.id.startsWith('company-school-prog-') ||
     program.id.startsWith('company-school-local-') ||
     program.mainTitle?.includes('1사1교') === true ||
-    program.title.includes('1사1교')
+    program.title?.includes('1사1교') === true
   )
 }
 
@@ -324,8 +328,10 @@ export interface SchoolDetailFullpageViewProps {
   onCancelApproval?: (schoolId: string) => void
   /** 신청 정보 탭 교재 현황 태그 클릭 시 상태 변경 (참여 기관 목록·mock과 동기화) */
   onTextbookStatusChange?: (schoolId: string, status: TextbookStatusKey) => void
-  // TODO(api): 학교 중첩 상세(application/instructors/students/attendance/posts) mutation
-  // — participants·schedules·assignment BE 계약 후 remote. 1사1교는 과제·합반 제외.
+  // TODO(api): 학교 중첩 상세 mutation 잔여 —
+  // application 편집·students·instructors 배정은 BE PATCH/assignment 계약 후.
+  // attendance: progress 탭은 dashboard schedules hybrid. 기관 상세 attendance는 세션 mock+schedule GET 재사용 예정.
+  // posts: EnrollmentProgramDetailPostsTab + createGeneralProgramPost (invalidate는 부모에서 연결).
 }
 
 export function GeneralParticipatingInstitutionDetailView(
@@ -408,8 +414,10 @@ export function GeneralParticipatingInstitutionDetailView(
   } | null>(null)
   const [textbookStatusDropdownOpen, setTextbookStatusDropdownOpen] = useState(false)
   const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
+  const { posts: remotePosts, isRemoteDataSource: postsRemote, invalidatePosts } =
+    useGeneralProgramPosts(program.id)
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
-  const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
+  const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminCommentDraft, setAdminCommentDraft] = useState('')
   const [adminCommentError, setAdminCommentError] = useState<string | undefined>()
 
@@ -423,7 +431,7 @@ export function GeneralParticipatingInstitutionDetailView(
   }, [detail.id])
 
   useEffect(() => {
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminCommentDraft('')
     setAdminCommentError(undefined)
     setActivityWithdrawModalOpen(false)
@@ -489,15 +497,20 @@ export function GeneralParticipatingInstitutionDetailView(
     if (isApplicationInfoEditing) return
     setAdminCommentDraft(mergedDetail.adminComment ?? '')
     setAdminCommentError(undefined)
-    setIsAdminCommentEditing(true)
+    setAdminCommentModalOpen(true)
   }, [isApplicationInfoEditing, mergedDetail.adminComment])
 
   const handleAdminCommentSave = useCallback(() => {
     const trimmed = adminCommentDraft.trim()
     onSaveBasicInfo?.({ id: detail.id, adminComment: trimmed || undefined })
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminCommentError(undefined)
   }, [adminCommentDraft, detail.id, onSaveBasicInfo])
+
+  const handleAdminCommentModalCancel = useCallback(() => {
+    setAdminCommentModalOpen(false)
+    setAdminCommentError(undefined)
+  }, [])
 
   const handleAdminCommentDraftChange = useCallback((value: string) => {
     setAdminCommentDraft(value)
@@ -512,14 +525,9 @@ export function GeneralParticipatingInstitutionDetailView(
       })
       return
     }
-    if (isApplicationInfoEditing || isAdminCommentEditing) return
+    if (isApplicationInfoEditing) return
     setActivityWithdrawModalOpen(true)
-  }, [
-    isActivityWithdrawn,
-    isApplicationInfoEditing,
-    isAdminCommentEditing,
-    showAlert,
-  ])
+  }, [isActivityWithdrawn, isApplicationInfoEditing, showAlert])
 
   const handleCancelActivityWithdraw = useCallback(() => {
     setActivityWithdrawModalOpen(false)
@@ -1137,16 +1145,18 @@ export function GeneralParticipatingInstitutionDetailView(
   /** 기본 정보 — 상단(진행·교재) / 하단(기관·신청) 테이블 분리 (시안) */
   const textbookStatusCell =
     onTextbookStatusChange != null ? (
-      <StatusDropdownCell<TextbookStatusKey>
-        status={mergedDetail.textbookStatus}
-        statusOptions={TEXTBOOK_STATUS_OPTION_KEYS}
-        renderBadge={s => <TextbookStatusBadge status={s} />}
-        isItemDisabled={(cur, opt) => cur === opt}
-        onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
-        isOpen={textbookStatusDropdownOpen}
-        onOpenChange={setTextbookStatusDropdownOpen}
-        tagLayout="tag100"
-      />
+      <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
+        <StatusDropdownCell<TextbookStatusKey>
+          status={mergedDetail.textbookStatus}
+          statusOptions={TEXTBOOK_STATUS_OPTION_KEYS}
+          renderBadge={s => <TextbookStatusBadge status={s} />}
+          isItemDisabled={(cur, opt) => cur === opt}
+          onChange={newStatus => onTextbookStatusChange(detail.id, newStatus)}
+          isOpen={textbookStatusDropdownOpen}
+          onOpenChange={setTextbookStatusDropdownOpen}
+          tagLayout="tag100"
+        />
+      </span>
     ) : (
       <TextbookStatusBadge status={mergedDetail.textbookStatus} />
     )
@@ -1254,18 +1264,13 @@ export function GeneralParticipatingInstitutionDetailView(
                 variant="delete"
                 size="large"
                 width={140}
-                disabled={
-                  isActivityWithdrawn || isApplicationInfoEditing || isAdminCommentEditing
-                }
+                disabled={isActivityWithdrawn || isApplicationInfoEditing}
                 onClick={handleRequestActivityWithdraw}
               >
                 활동 포기
               </CmsButton>
               <CmsButton
-                variant="secondary"
-                size="large"
-                width={140}
-                disabled={isAdminCommentEditing}
+                {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
                 onClick={resolveProgramEditInfoClick(isApplicationInfoEditing, {
                   onEnterEdit: enterApplicationInfoEdit,
                   onSaveEdit: () => saveApplicationInfoEdit(),
@@ -1279,11 +1284,9 @@ export function GeneralParticipatingInstitutionDetailView(
                   size="large"
                   width={140}
                   disabled={isApplicationInfoEditing}
-                  onClick={
-                    isAdminCommentEditing ? handleAdminCommentSave : handleAdminCommentEditEnter
-                  }
+                  onClick={handleAdminCommentEditEnter}
                 >
-                  {isAdminCommentEditing ? '코멘트 저장' : '코멘트 작성'}
+                  코멘트 작성
                 </CmsButton>
               ) : null}
               <PersonalInfoRevealButton
@@ -1308,9 +1311,7 @@ export function GeneralParticipatingInstitutionDetailView(
               formError={applicationInfoValidationErrors?.form}
               showAdminComment={showAdminCommentSection}
               adminComment={mergedDetail.adminComment}
-              isAdminCommentEditing={isAdminCommentEditing}
-              adminCommentDraft={adminCommentDraft}
-              onAdminCommentDraftChange={handleAdminCommentDraftChange}
+              isAdminCommentEditing={false}
               adminCommentError={adminCommentError}
               programProgressCell={
                 <ProgramEnrollmentStatusText status={programProgressStatus} />
@@ -1779,6 +1780,10 @@ export function GeneralParticipatingInstitutionDetailView(
               showWriteButtonInSection={false}
               writeModalOpen={postWriteModalOpen}
               onWriteModalOpenChange={setPostWriteModalOpen}
+              postsOverride={postsRemote ? remotePosts : null}
+              onPostWriteSuccess={() => {
+                void invalidatePosts()
+              }}
             />
           </div>
         )}
@@ -1791,6 +1796,13 @@ export function GeneralParticipatingInstitutionDetailView(
         scheduleOptions={activityWithdrawScheduleOptions}
         onCancel={handleCancelActivityWithdraw}
         onConfirm={handleConfirmActivityWithdraw}
+      />
+      <MemberAdminCommentModal
+        open={adminCommentModalOpen}
+        value={adminCommentDraft}
+        onChange={handleAdminCommentDraftChange}
+        onCancel={handleAdminCommentModalCancel}
+        onConfirm={handleAdminCommentSave}
       />
     </div>
   )

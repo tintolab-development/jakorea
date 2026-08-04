@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState, useEffect, useRef, useLayoutEffect } from 'react'
-import { Table } from 'antd'
+import { Spin, Table } from 'antd'
 import { CalendarOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { CmsButton, FilterTableLayout } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
@@ -54,20 +54,11 @@ import {
   buildParticipatingSchoolPreferredScheduleLines,
   formatParticipatingSchoolSessionLine,
 } from '../../../lib/participating-school-session-display'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import './participating-institutions-section.css'
 
 function formatSessionLine(s: ParticipatingSchoolSession): string {
   return formatParticipatingSchoolSessionLine(s)
-}
-
-function isCompanySchoolProgram(program: Program | null | undefined): boolean {
-  return (
-    program?.id.startsWith('economy-prog-') === true ||
-    program?.id.startsWith('company-school-prog-') === true ||
-    program?.id.startsWith('company-school-local-') === true ||
-    program?.mainTitle?.includes('1사1교') === true ||
-    program?.title.includes('1사1교') === true
-  )
 }
 
 export interface ParticipatingInstitutionsSectionProps {
@@ -91,7 +82,7 @@ export interface ParticipatingInstitutionsSectionProps {
 }
 
 export function ParticipatingInstitutionsSection({
-  programId: _programId,
+  programId,
   program,
   schoolIdFromUrl,
   schoolTabFromUrl,
@@ -194,11 +185,15 @@ export function ParticipatingInstitutionsSection({
     [appliedFilters]
   )
 
-  const instructorHook = useProgressInstructorList({ appliedFilters: progressFilters })
+  const resolvedProgramId = programId ?? program?.id
+  const instructorHook = useProgressInstructorList({
+    appliedFilters: progressFilters,
+    programId: resolvedProgramId,
+  })
   const schoolHook = useProgressSchoolList({
     appliedFilters: progressFilters,
     instructorList: instructorHook.instructorList,
-    programId: program?.id,
+    programId: resolvedProgramId,
   })
 
   const {
@@ -216,6 +211,7 @@ export function ParticipatingInstitutionsSection({
     setSavedInstructorPatches,
     getInstructorRowsForSchool,
     getInstructorDisplayForSchool,
+    applicationsLoading,
   } = schoolHook
 
   /** URL schoolId로 선택된 학교 행 (인라인 상세 뷰용) */
@@ -243,7 +239,8 @@ export function ParticipatingInstitutionsSection({
     setViewMode('list')
   }
 
-  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
+  const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
+    useProgramTextbookCatalog(program)
 
   const isCompanySchool = isCompanySchoolProgram(program)
   const programBridge = useMemo(
@@ -251,7 +248,9 @@ export function ParticipatingInstitutionsSection({
     [program]
   )
   const maxClassCount = isCompanySchool ? programBridge.maxClassCount : undefined
-  const showTextbookFeatures = program ? programUsesTextbook(program, textbookCatalog) : true
+  const showTextbookFeatures = program
+    ? isTextbookCatalogLoading || programUsesTextbook(program, textbookCatalog)
+    : true
   const showTextbookStatusColumn = isCompanySchool || showTextbookFeatures
 
   const filterFields = useMemo(
@@ -421,6 +420,14 @@ export function ParticipatingInstitutionsSection({
       showTextbookStatusColumn,
     ]
   )
+
+  if (applicationsLoading && schoolList.length === 0) {
+    return (
+      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+        <Spin size="large" />
+      </div>
+    )
+  }
 
   if (selectedRowFromUrl && program) {
     const baseDetail = getSchoolDetailByRow(selectedRowFromUrl)
@@ -608,6 +615,8 @@ export function ParticipatingInstitutionsSection({
             setSavedInstructorPatches(prev => ({ ...prev, [schoolId]: instructors }))
           }}
           participatingRow={selectedSchoolForDetail}
+          programId={resolvedProgramId}
+          participatingInstructorList={instructorHook.instructorList}
           onCancelApproval={handleSchoolApprovalCancel}
         />
       )}

@@ -67,7 +67,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
  * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
- * - 프론트 조회 키: `get_admin_settlement-configs_current`
+ * - 프론트 조회 키: `get_admin_settlements_config_active`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: PROVIDER_PENDING
  * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
@@ -76,7 +76,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -129,7 +129,7 @@ const currentConfig = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -184,7 +184,7 @@ const updateCurrentConfig = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -239,7 +239,7 @@ const deleteCurrentConfig = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -267,7 +267,7 @@ const deleteCurrentConfig = (
  */
 const recalculate = (
     settlementId: number,
-    settlementGenerateRequest?: SettlementGenerateRequest,
+    settlementGenerateRequest: SettlementGenerateRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementGenerateResponse>>,) => {
       return customInstance<ApiResponseSettlementGenerateResponse>(
       {url: `/api/admin/settlements/${settlementId}/recalculate`, method: 'POST',
@@ -297,7 +297,7 @@ const recalculate = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -325,7 +325,7 @@ const recalculate = (
  */
 const requestPaymentStatement = (
     settlementId: number,
-    settlementStatusChangeRequest?: SettlementStatusChangeRequest,
+    settlementStatusChangeRequest: SettlementStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
       return customInstance<ApiResponse>(
       {url: `/api/admin/settlements/${settlementId}/payment-statement/request`, method: 'POST',
@@ -353,7 +353,7 @@ const requestPaymentStatement = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -408,7 +408,7 @@ const requestPaymentStatementDownload = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -464,7 +464,7 @@ const requestCorrection = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -521,7 +521,7 @@ const bulkConfirmPaymentStatements = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -548,7 +548,7 @@ const bulkConfirmPaymentStatements = (
  * @summary POST /api/admin/settlements/exports/tax-report
  */
 const requestTaxReportExport = (
-    settlementExportRequest?: SettlementExportRequest,
+    settlementExportRequest: SettlementExportRequest,
  options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
       return customInstance<ApiResponse>(
       {url: `/api/admin/settlements/exports/tax-report`, method: 'POST',
@@ -578,7 +578,7 @@ const requestTaxReportExport = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -605,7 +605,7 @@ const requestTaxReportExport = (
  * @summary POST /api/admin/settlements/exports/bulk-transfer
  */
 const requestBulkTransferExport = (
-    settlementExportRequest?: SettlementExportRequest,
+    settlementExportRequest: SettlementExportRequest,
  options?: SecondParameter<typeof customInstance<ApiResponse>>,) => {
       return customInstance<ApiResponse>(
       {url: `/api/admin/settlements/exports/bulk-transfer`, method: 'POST',
@@ -633,7 +633,7 @@ const requestBulkTransferExport = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -660,7 +660,7 @@ const requestBulkTransferExport = (
  * @summary POST /api/admin/settlement-configs/current/duplicate
  */
 const duplicateCurrentConfig = (
-    settlementConfigUpdateRequest?: SettlementConfigUpdateRequest,
+    settlementConfigUpdateRequest: SettlementConfigUpdateRequest,
  options?: SecondParameter<typeof customInstance<SettlementConfigResponse>>,) => {
       return customInstance<SettlementConfigResponse>(
       {url: `/api/admin/settlement-configs/current/duplicate`, method: 'POST',
@@ -690,7 +690,7 @@ const duplicateCurrentConfig = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -718,7 +718,7 @@ const duplicateCurrentConfig = (
  */
 const confirmPaymentStatement = (
     statementId: number,
-    settlementStatusChangeRequest?: SettlementStatusChangeRequest,
+    settlementStatusChangeRequest: SettlementStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementStatusChangeResponse>>,) => {
       return customInstance<ApiResponseSettlementStatusChangeResponse>(
       {url: `/api/admin/settlements/statements/${statementId}/confirm`, method: 'PATCH',
@@ -748,7 +748,7 @@ const confirmPaymentStatement = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -776,7 +776,7 @@ const confirmPaymentStatement = (
  */
 const rejectCorrection = (
     correctionRequestId: number,
-    settlementCorrectionRequest?: SettlementCorrectionRequest,
+    settlementCorrectionRequest: SettlementCorrectionRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementCorrectionResponse>>,) => {
       return customInstance<ApiResponseSettlementCorrectionResponse>(
       {url: `/api/admin/settlements/correction-requests/${correctionRequestId}/reject`, method: 'PATCH',
@@ -806,7 +806,7 @@ const rejectCorrection = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -834,7 +834,7 @@ const rejectCorrection = (
  */
 const approveCorrection = (
     correctionRequestId: number,
-    settlementCorrectionRequest?: SettlementCorrectionRequest,
+    settlementCorrectionRequest: SettlementCorrectionRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementCorrectionResponse>>,) => {
       return customInstance<ApiResponseSettlementCorrectionResponse>(
       {url: `/api/admin/settlements/correction-requests/${correctionRequestId}/approve`, method: 'PATCH',
@@ -855,7 +855,7 @@ const approveCorrection = (
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
  * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)
- * - 프론트 조회 키: `patch_admin_account-payments_paymentId_paid`
+ * - 프론트 조회 키: `patch_admin_settlements_account-payments_accountPaymentId_paid`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: PROVIDER_PENDING
  * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요
@@ -892,7 +892,7 @@ const approveCorrection = (
  */
 const markPaid = (
     paymentId: number,
-    settlementStatusChangeRequest?: SettlementStatusChangeRequest,
+    settlementStatusChangeRequest: SettlementStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementStatusChangeResponse>>,) => {
       return customInstance<ApiResponseSettlementStatusChangeResponse>(
       {url: `/api/admin/account-payments/${paymentId}/paid`, method: 'PATCH',
@@ -950,7 +950,7 @@ const markPaid = (
  */
 const markFailed = (
     paymentId: number,
-    settlementStatusChangeRequest?: SettlementStatusChangeRequest,
+    settlementStatusChangeRequest: SettlementStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSettlementStatusChangeResponse>>,) => {
       return customInstance<ApiResponseSettlementStatusChangeResponse>(
       {url: `/api/admin/account-payments/${paymentId}/failed`, method: 'PATCH',
@@ -1035,7 +1035,7 @@ const bulkPaid = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1091,7 +1091,7 @@ const listSettlements = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1146,7 +1146,7 @@ const getSettlement = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1203,7 +1203,7 @@ const listSettlementRevisions = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1259,7 +1259,7 @@ const getSettlementRevisionDetail = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1367,7 +1367,7 @@ const getSettlementAvailableActions = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1421,7 +1421,7 @@ const listTransportationSnapshots = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1476,7 +1476,7 @@ const statusMappings = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1532,7 +1532,7 @@ const listPaymentStatements = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1587,7 +1587,7 @@ const openQuestions = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1643,7 +1643,7 @@ const listExportHistories = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1699,7 +1699,7 @@ const listCorrectionRequests = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1755,7 +1755,7 @@ const settlementCalendar = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1811,7 +1811,7 @@ const settlementCalendarSummary = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1864,7 +1864,7 @@ const settlementCalendarDate = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1918,7 +1918,7 @@ const budgetSummary = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1964,8 +1964,8 @@ const listSettlementAggregates = (
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
- * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)
- * - 프론트 조회 키: `get_admin_settlements_account-payments`
+ * - 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (canonical account payment list endpoint; mock/local provider first, production provider after staging config)
+ * - 프론트 조회 키: `get_admin_account-payments`
  * - 구현 상태: 구현 완료
  * - 로컬/스테이징 준비도: PROVIDER_PENDING
  * - 외부 연동 확인: NAVER_MAPS_FUEL_PDF_XLSX_EXPORT_TEMPLATE 연동 검증 필요

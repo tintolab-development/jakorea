@@ -7,7 +7,7 @@ export const UJAT_EDUCATION_PLAN_TEMPLATE_CODE = 'issuance-2' as const
 export const UJAT_EDUCATION_JOURNAL_TEMPLATE_CODE = 'issuance-ujat-edu-journal' as const
 export const LECTURE_REPORT_TEMPLATE_CODE = 'issuance-3' as const
 
-export const PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME = '지급조서(발급용)'
+export const PAYMENT_STATEMENT_ISSUANCE_TEMPLATE_NAME = '지급조서 (발급용)'
 export const PAYMENT_STATEMENT_PRE_CONSENT_TEMPLATE_NAME = '지급조서 사전 동의서'
 export const SETTLEMENT_APPLICATION_TEMPLATE_NAME = '정산 신청서'
 export const UJAT_EDUCATION_PLAN_TEMPLATE_NAME = 'UJAT 교육계획서'
@@ -50,7 +50,7 @@ const issuanceDocumentDefinitions = [
   { id: 'document-1', templateName: '지출증빙서류(필수폼)' },
   { id: 'document-2', templateName: '휴가 인증서' },
   { id: 'document-3', templateName: '수료증' },
-  { id: 'document-participation-certificate', templateName: '참여인증서' },
+  { id: 'document-participation-certificate', templateName: '참가인증서' },
   { id: 'document-4', templateName: '강사 활동 인증서' },
   { id: 'document-5', templateName: '봉사 활동 인증서' },
 ] as const

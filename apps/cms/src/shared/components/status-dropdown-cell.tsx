@@ -8,6 +8,8 @@
  * 2. 테이블 CSS에 tr:has(td.status-dropdown-cell__cell-status), tr:has(td .status-dropdown-cell__status-trigger--open) 규칙 추가 (UI shifting 방지)
  * 3. 새 도메인은 renderBadge에 해당 배지 컴포넌트 전달; 드롭다운 내 배지 색상은 status-dropdown-cell.css에 도메인 클래스 추가
  *    (지급 조서 라인: PaymentOrderLineProcessingStatusBadge = TextbookStatusBadge payment-order-line, 신청자 프로그램 승인과 동일 계열)
+ * 4. 폼·상세·교재명 인라인도 동일 tag100 스펙(패널 116·padding 7·gap 8).
+ *    열림 시 가로 밀림 방지는 STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME 셸(+ 조상 overflow:clip).
  * 트리거 래퍼는 CSS에서 불투명 흰 배경 — 테이블 행 hover 시 rgba 배지가 배경색과 섞이지 않도록 함.
  *
  * @example
@@ -52,13 +54,19 @@ export const STATUS_DROPDOWN_CELL_TAG_160_CLASSNAME = 'status-dropdown-cell__cel
 export const STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME = 'status-dropdown-cell__header--tag-160'
 
 /**
- * 편집 가능 상태 배지 100×32 + 트리거/오버레이 116px(border-box: 8 + 100 + 8).
+ * 편집 가능 상태 배지 100×32 + 트리거/오버레이 116px(border-box: 1 + 7 + 100 + 7 + 1).
  * 재직·권한·교재배송·서류평가 시안 4종용.
  */
 export const STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME = 'status-dropdown-cell__cell-status--tag-100'
 
 /** 동일 열 `th` — `STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME` 과 짝 */
 export const STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME = 'status-dropdown-cell__header--tag-100'
+
+/**
+ * 교재명 등 인라인 tag100 — 항상 116×48 예약.
+ * 열림 크롬/그림자가 테이블·flex 조상을 가로로 키우지 않도록 셸로 격리할 때 사용.
+ */
+export const STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME = 'status-dropdown-cell__inline-tag100'
 
 /**
  * 지급 조서 처리 현황 — 내부 태그 160px, 열·트리거·드롭다운 외곽 176px(패딩 8+태그+8, 기본 136px 규칙과 동일).
@@ -92,9 +100,10 @@ export interface StatusDropdownCellProps<T extends string = string> {
   /** status가 null일 때 표시 (기본 '-') */
   emptyPlaceholder?: React.ReactNode
   /**
-   * `tag100`: 편집 가능 상태 배지 100×32 — 트리거/오버레이 116px.
+   * `tag100`: 편집 가능 상태 배지 100×32 — 트리거/오버레이 116px(padding 7·gap 8).
    * `tag160` / `paymentOrderLine`: 전용 오버레이·트리거 폭 — 셀/헤더에는 각 `STATUS_DROPDOWN_CELL_*_CLASSNAME` 병기.
    * `style`과 병행 가능(배지 폭·패널 변수).
+   * 폼·상세 인라인도 tag100/tag160 동일 스펙 — 밀림 방지는 INLINE_TAG100 셸·overflow:clip.
    */
   tagLayout?: 'default' | 'tag100' | 'tag160' | 'paymentOrderLine'
   /**
@@ -123,12 +132,22 @@ function subscribeActiveStatusDropdown(listener: () => void): () => void {
   return () => activeStatusDropdownListeners.delete(listener)
 }
 
-/** 배지 가로 크기용 변수 — 패널 폭은 CSS에서 `+ 16px`(트리거 좌우 padding 8px×2) */
+/**
+ * React는 custom property에 number → `px`를 붙이지 않음.
+ * `calc(var(--x) + 16px)`가 깨지지 않도록 길이는 항상 단위 포함 문자열로 둔다.
+ */
+function cssLength(value: string | number | undefined): string | undefined {
+  if (value == null) return undefined
+  if (typeof value === 'number') return `${value}px`
+  return value
+}
+
+/** 배지 가로 크기용 변수 — 패널 폭은 CSS에서 `+ 16px`(트리거 좌우 padding·보더 합) */
 function overlayStyleFromCellStyle(cellStyle: CSSProperties | undefined): CSSProperties | undefined {
   if (cellStyle?.width == null) return undefined
-  const w = cellStyle.width
-  const minw = cellStyle.minWidth ?? w
-  const maxw = cellStyle.maxWidth ?? w
+  const w = cssLength(cellStyle.width as string | number)
+  const minw = cssLength((cellStyle.minWidth ?? cellStyle.width) as string | number)
+  const maxw = cssLength((cellStyle.maxWidth ?? cellStyle.width) as string | number)
   return {
     ['--sdcb-overlay-w' as string]: w,
     ['--sdcb-overlay-minw' as string]: minw,
@@ -150,10 +169,10 @@ function injectBadgeCellStyle(node: ReactNode, cellStyle: CSSProperties | undefi
 
   const nextStyle: Record<string, string | number | undefined> = { ...prevStyle, ...cellStyle }
   if (cellStyle.width != null) {
-    const w = cellStyle.width
-    nextStyle['--sdcb-badge-w'] = w
-    nextStyle['--sdcb-badge-minw'] = (cellStyle.minWidth ?? w) as string | number
-    nextStyle['--sdcb-badge-maxw'] = (cellStyle.maxWidth ?? w) as string | number
+    const w = cellStyle.width as string | number
+    nextStyle['--sdcb-badge-w'] = cssLength(w)
+    nextStyle['--sdcb-badge-minw'] = cssLength((cellStyle.minWidth ?? w) as string | number)
+    nextStyle['--sdcb-badge-maxw'] = cssLength((cellStyle.maxWidth ?? w) as string | number)
   }
 
   return cloneElement(el, {
@@ -204,16 +223,32 @@ export function StatusDropdownCell<T extends string = string>({
     [dropdownCellId]
   )
 
-  const menuItems: MenuProps['items'] = statusOptions.map(opt => ({
-    key: opt,
-    label: (
-      <span className="status-dropdown-cell__dropdown-item">
-        {injectBadgeCellStyle(renderBadge(opt), style)}
-      </span>
-    ),
-    disabled: status != null && isItemDisabled?.(status, opt),
-    className: getItemClassName?.(opt),
-  }))
+  const menuItems: MenuProps['items'] = statusOptions.map(opt => {
+    const isActive = status != null && status === opt
+    const extraClass = getItemClassName?.(opt)
+    return {
+      key: opt,
+      label: (
+        <span
+          className={[
+            'status-dropdown-cell__dropdown-item',
+            isActive ? 'status-dropdown-cell__dropdown-item--active' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {injectBadgeCellStyle(renderBadge(opt), style)}
+        </span>
+      ),
+      disabled: status != null && isItemDisabled?.(status, opt),
+      className: [
+        isActive ? 'status-dropdown-cell__menu-item--active' : '',
+        extraClass,
+      ]
+        .filter(Boolean)
+        .join(' ') || undefined,
+    }
+  })
 
   if (status == null) {
     return (
@@ -240,6 +275,15 @@ export function StatusDropdownCell<T extends string = string>({
     .join(' ')
 
   const overlayStyle = overlayStyleFromCellStyle(style)
+
+  const triggerLayoutClass =
+    tagLayout === 'tag100'
+      ? ' status-dropdown-cell__status-trigger--tag-100'
+      : tagLayout === 'tag160'
+        ? ' status-dropdown-cell__status-trigger--tag-160'
+        : tagLayout === 'paymentOrderLine'
+          ? ' status-dropdown-cell__status-trigger--payment-order-line'
+          : ''
 
   return (
     <Dropdown
@@ -271,6 +315,7 @@ export function StatusDropdownCell<T extends string = string>({
       }}
       popupRender={originNode => (
         <div
+          className="status-dropdown-cell__popup-root"
           onMouseDown={e => {
             e.preventDefault()
             e.stopPropagation()
@@ -281,14 +326,15 @@ export function StatusDropdownCell<T extends string = string>({
       )}
     >
       <span
-        className={`status-dropdown-cell__status-trigger${
-          tagLayout === 'tag100' ? ' status-dropdown-cell__status-trigger--tag-100' : ''
-        }${tagLayout === 'tag160' ? ' status-dropdown-cell__status-trigger--tag-160' : ''}${
-          tagLayout === 'paymentOrderLine' ? ' status-dropdown-cell__status-trigger--payment-order-line' : ''
-        }${controlledOpen ? ' status-dropdown-cell__status-trigger--open' : ''}${
-          style != null ? ` ${TRIGGER_CELL_STYLE_CLASS}` : ''
-        }`}
+        className={`status-dropdown-cell__status-trigger${triggerLayoutClass}${
+          controlledOpen ? ' status-dropdown-cell__status-trigger--open' : ''
+        }${style != null ? ` ${TRIGGER_CELL_STYLE_CLASS}` : ''}`}
         style={overlayStyle}
+        // focus 시 조상 overflow 스크롤포트가 scrollIntoView 로 가로 밀림 — mousedown에서 포커스 차단
+        onMouseDown={e => {
+          e.preventDefault()
+          e.stopPropagation()
+        }}
         onClick={e => e.stopPropagation()}
       >
         {injectBadgeCellStyle(renderBadge(status), style)}

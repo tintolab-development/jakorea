@@ -1,8 +1,8 @@
 import {
-  getMockProgramById,
   getProgramIdFromPath,
   programDetailPath,
   PROGRAMS_PATH,
+  useMockProgramById,
 } from '@/features/program'
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
@@ -10,7 +10,11 @@ import styles from './page.module.css'
 
 export function ProgramApplyCompletePage() {
   const programId = getProgramIdFromPath()
-  const program = programId ? getMockProgramById(programId) : undefined
+  const { program, isLoading } = useMockProgramById(programId)
+
+  if (isLoading && !program) {
+    return null
+  }
 
   if (!program) {
     return (

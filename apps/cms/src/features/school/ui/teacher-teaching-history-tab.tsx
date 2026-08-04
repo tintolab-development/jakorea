@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback, useMemo } from 'react'
-import { Table, Empty } from 'antd'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   type TeachingHistoryRow,
@@ -11,6 +11,7 @@ import {
   type TeachingSettlementStatus,
 } from '@/data/mock/school-detail'
 import { StatusBadge } from '@/shared/components/status-badge'
+import { EmptyState } from '@/shared/ui'
 import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import {
   StatusDropdownCell,
@@ -153,7 +154,7 @@ export function TeacherTeachingHistoryTab({ initialData }: TeacherTeachingHistor
           className="teacher-detail-modal__teaching-table cms-data-table"
         />
       ) : (
-        <Empty description="프로그램 강의 이력이 없습니다." />
+        <EmptyState description="프로그램 강의 이력이 없습니다." />
       )}
     </div>
   )

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { Dayjs } from 'dayjs'
-import { AddressSearch } from '@/shared/ui/address-search'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsDatePicker, CmsDateRangePicker } from '@/shared/ui/cms-datepicker'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -38,7 +37,6 @@ export function FormsSection() {
   const [toggle, setToggle] = useState(false)
   const [date, setDate] = useState<Dayjs | null>(null)
   const [range, setRange] = useState<[Dayjs | null, Dayjs | null] | null>(null)
-  const [address, setAddress] = useState('')
   const [fileNames, setFileNames] = useState<string[]>([])
   const [integer, setInteger] = useState('')
   const [decimal, setDecimal] = useState('')
@@ -190,17 +188,23 @@ export function FormsSection() {
         </div>
       </DsDemo>
 
-      <DsDemo label="AddressSearch / FileSelectField">
+      <DsDemo label="FileSelectField">
         <div className="ds-demo__stack">
-          <AddressSearch value={address} onChange={setAddress} />
           <FileSelectField
             accept=".pdf,.png,.jpg"
             fileNames={fileNames}
-            guideLines={['PDF, PNG, JPG — 최대 10MB']}
-            onFilesChange={files => setFileNames(files.map(f => f.name))}
+            guideLines={['파일은 총 최대 15MB까지 업로드 가능합니다. (PDF, PNG, JPG)']}
+            onFilesChange={files =>
+              setFileNames(prev => [...prev, ...files.map(f => f.name)])
+            }
             onRemoveFile={index => setFileNames(prev => prev.filter((_, i) => i !== index))}
           />
         </div>
+        <p className="ds-note">
+          기본 <code>multiple</code>·합계 <code>15MB</code>. <code>accept</code>·가이드는 케이스별.
+          단건만 <code>multiple=&#123;false&#125;</code>. 주소·학교 검색은{' '}
+          <a href="#search-modals">Search modals</a>.
+        </p>
       </DsDemo>
     </DsSection>
   )

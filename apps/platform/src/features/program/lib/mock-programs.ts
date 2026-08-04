@@ -1,86 +1,101 @@
-import { RECRUITMENT_STATUS } from '@jakorea/domain/recruitment/recruitment-status'
-import illustBookUrl from '@/shared/assets/illustration/illust-book.svg'
-import illustFlagUrl from '@/shared/assets/illustration/illust-flag.svg'
-import illustPeopleUrl from '@/shared/assets/illustration/illust-people.svg'
-import { EDUCATION_FORM_LABEL_MAP } from './badge-config'
+import programDetail01Url from '../image/illustration/program-detail-01.png'
+import programDetail02Url from '../image/illustration/program-detail-02.png'
+import programDetail03Url from '../image/illustration/program-detail-03.png'
+import programThumbnail01Url from '../image/illustration/program-thumbnail-01.png'
+import programThumbnail02Url from '../image/illustration/program-thumbnail-02.png'
+import programThumbnail03Url from '../image/illustration/program-thumbnail-03.png'
 import type { ProgramDetail, ProgramListItem } from '../model/types'
+import { CMS_PLATFORM_PROGRAM_FIXTURES } from './cms-registration-fixtures'
+import { mapCmsProgramsToPlatformDetails } from './map-from-cms'
+import { mergeSeedAndCatalogPrograms } from './merge-seed-catalog'
+import { fetchMockProgramCatalog } from './mock-program-catalog-client'
 
-const MOCK_PROGRAMS: ProgramDetail[] = [
+/**
+ * mock 이미지 페어 — 동일 프로그램 비주얼을 해상도별로 분리.
+ * - thumbnail: 목록용 저해상 (~160×220)
+ * - detail: 상세 배너용 고해상
+ */
+const MOCK_IMAGE_PAIRS = [
   {
-    id: 'job-talk-2026',
-    category: 'youth',
-    categoryLabel: '청소년 · 청년',
-    title: '2026 한국씨티은행 - JA Korea 특별한 JOB담 모집 안내',
-    operatingPeriodLabel: '2026.04.03(금) – 2026.11.20(금)',
-    recruitmentPeriodLabel: '2026.04.18 – 04.26',
-    applicationPeriodLabel: '2026.04.18 – 04.26',
-    recruitmentStatus: RECRUITMENT_STATUS.recruiting,
-    educationTargetLabel: '고등학생',
-    educationForm: 'online',
-    educationFormLabel: EDUCATION_FORM_LABEL_MAP.online,
-    thumbnailUrl: illustBookUrl,
-    sponsor: 'FedEx',
-    summary:
-      '진로 멘토링 프로그램으로, 현직자와의 만남을 통해 진로 탐색과 자기 이해를 돕습니다.',
-    isRecruiting: true,
+    thumbnailUrl: programThumbnail01Url,
+    detailImageUrl: programDetail01Url,
   },
   {
-    id: 'citibank-job-talk',
-    category: 'youth',
-    categoryLabel: '청소년 · 청년',
-    title: '2026 한국씨티은행 - JA Korea 특별한 JOB-Talk 모집 공고',
-    operatingPeriodLabel: '2026.05.15(금) – 2026.06.15(일)',
-    recruitmentPeriodLabel: '2026.05.15 – 06.15',
-    applicationPeriodLabel: '2026.05.15 – 06.15',
-    recruitmentStatus: RECRUITMENT_STATUS.recruiting,
-    educationTargetLabel: '고등학생',
-    educationForm: 'offline',
-    educationFormLabel: EDUCATION_FORM_LABEL_MAP.offline,
-    thumbnailUrl: illustFlagUrl,
-    sponsor: '한국씨티은행',
-    summary: '현직자 멘토와 함께하는 직업 탐색 프로그램입니다.',
-    isRecruiting: true,
+    thumbnailUrl: programThumbnail02Url,
+    detailImageUrl: programDetail02Url,
   },
   {
-    id: 'school-partnership',
-    category: 'institution',
-    categoryLabel: '기관',
-    title: '2026 JA Korea 학교 파트너십 프로그램',
-    operatingPeriodLabel: '2026.03.01(일) – 2026.12.31(목)',
-    recruitmentPeriodLabel: '2026.02.01 – 03.31',
-    applicationPeriodLabel: '2026.02.01 – 03.31',
-    recruitmentStatus: RECRUITMENT_STATUS.recruiting,
-    educationTargetLabel: '초등학생',
-    educationForm: 'hybrid',
-    educationFormLabel: EDUCATION_FORM_LABEL_MAP.hybrid,
-    thumbnailUrl: illustPeopleUrl,
-    sponsor: 'JA Korea',
-    summary: '학교 단위로 참여하는 경제·진로 교육 프로그램입니다.',
-    isRecruiting: true,
+    thumbnailUrl: programThumbnail03Url,
+    detailImageUrl: programDetail03Url,
   },
-  {
-    id: 'instructor-recruitment',
-    category: 'instructor',
-    categoryLabel: '강사',
-    title: '2026 JA Korea 강사 모집',
-    operatingPeriodLabel: '2026.01.01(수) – 2026.12.31(목)',
-    recruitmentPeriodLabel: '2026.01.01 – 12.31',
-    applicationPeriodLabel: '2026.01.01 – 12.31',
-    recruitmentStatus: RECRUITMENT_STATUS.recruiting,
-    educationTargetLabel: '성인',
-    educationForm: 'offline',
-    educationFormLabel: EDUCATION_FORM_LABEL_MAP.offline,
-    thumbnailUrl: illustBookUrl,
-    sponsor: 'JA Korea',
-    summary: 'JA Korea 교육 프로그램을 함께 이끌어갈 강사를 모집합니다.',
-    isRecruiting: true,
-  },
-]
+] as const
 
+/** 프로그램별 안정적인 이미지 페어 (목록 썸네일 ↔ 상세 고해상 동일 비주얼 유지) */
+function pickMockImagePair(programId: string): {
+  thumbnailUrl: string
+  detailImageUrl: string
+} {
+  let hash = 0
+  for (let index = 0; index < programId.length; index += 1) {
+    hash = (hash * 31 + programId.charCodeAt(index)) >>> 0
+  }
+  const pair = MOCK_IMAGE_PAIRS[hash % MOCK_IMAGE_PAIRS.length]
+  return {
+    thumbnailUrl: pair.thumbnailUrl,
+    detailImageUrl: pair.detailImageUrl,
+  }
+}
+
+/**
+ * CMS 등록 케이스 fixture → Platform 상세.
+ * 일반 8 + 1사1교 8 + 교육받은 교사 8 + Gemini featured 3
+ */
+const SEED_PROGRAMS: ProgramDetail[] = mapCmsProgramsToPlatformDetails(
+  CMS_PLATFORM_PROGRAM_FIXTURES,
+  pickMockImagePair
+)
+
+/** 시드 전용 동기 조회 (비로그인·초기 페인트) */
 export function getMockPrograms(): ProgramListItem[] {
-  return MOCK_PROGRAMS
+  return SEED_PROGRAMS
 }
 
 export function getMockProgramById(id: string): ProgramDetail | undefined {
-  return MOCK_PROGRAMS.find(program => program.id === id)
+  return SEED_PROGRAMS.find(program => program.id === id)
+}
+
+/**
+ * mock 로그인 시 CMS catalog 를 merge 한 목록.
+ * 비로그인·실패 시 시드만 반환.
+ */
+export async function loadMockPrograms(): Promise<ProgramDetail[]> {
+  const catalogLike = await fetchMockProgramCatalog()
+  if (catalogLike.length === 0) return [...SEED_PROGRAMS]
+
+  const catalogDetails = mapCmsProgramsToPlatformDetails(catalogLike, pickMockImagePair)
+  return mergeSeedAndCatalogPrograms(SEED_PROGRAMS, catalogDetails)
+}
+
+export async function loadMockProgramById(id: string): Promise<ProgramDetail | undefined> {
+  const programs = await loadMockPrograms()
+  return programs.find(program => program.id === id)
+}
+
+/** 프로그램 운영 기간이 선택한 연도(YYYY)와 겹치면 true */
+export function programOverlapsOperatingYear(
+  program: Pick<ProgramListItem, 'operatingPeriodStart' | 'operatingPeriodEnd'>,
+  year: string
+) {
+  const selectedYear = Number.parseInt(year, 10)
+  if (!Number.isFinite(selectedYear)) {
+    return true
+  }
+
+  const startYear = Number.parseInt(program.operatingPeriodStart.slice(0, 4), 10)
+  const endYear = Number.parseInt(program.operatingPeriodEnd.slice(0, 4), 10)
+  if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) {
+    return false
+  }
+
+  return startYear <= selectedYear && endYear >= selectedYear
 }

@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
 import { RichTextEditor } from '@/shared/rich-text'
 import { ProgramThumbnailPlaceholder } from '@/features/program/shared/ui/program-thumbnail-placeholder'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
+import {
+  useGeneralRecruitOverlayKv,
+  updateGeneralRecruitOverlayKey,
+} from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import '@/features/posts/ui/notice-register-modal.css'
 import '@/features/template/ui/form-editor/form-editor.css'
 
@@ -24,9 +28,18 @@ export function RecruitDetailInfoParagraph({
   wysiwygResetKey,
   textFields,
 }: RecruitDetailInfoParagraphProps) {
-  const [thumbObjectUrl, setThumbObjectUrl] = useState<string | null>(null)
-  const [thumbFileName, setThumbFileName] = useState<string | null>(null)
-  const [attachmentFileNames, setAttachmentFileNames] = useState<string[]>([])
+  const [thumbObjectUrl, setThumbObjectUrl] = useGeneralRecruitOverlayKv<string | null>(
+    'recruit.detailInfo.thumbObjectUrl',
+    null
+  )
+  const [thumbFileName, setThumbFileName] = useGeneralRecruitOverlayKv<string | null>(
+    'recruit.detailInfo.thumbFileName',
+    null
+  )
+  const [attachmentFileNames] = useGeneralRecruitOverlayKv<string[]>(
+    'recruit.detailInfo.attachmentFileNames',
+    []
+  )
 
   const revokeThumb = useCallback((url: string | null) => {
     if (url) URL.revokeObjectURL(url)
@@ -124,11 +137,17 @@ export function RecruitDetailInfoParagraph({
               accept=".jpg,.jpeg,.png"
               multiple
               fileNames={attachmentFileNames}
-              onFilesChange={files =>
-                setAttachmentFileNames(prev => [...prev, ...files.map(file => file.name)])
+              onFilesChange={(files: File[]) =>
+                updateGeneralRecruitOverlayKey<string[]>(
+                  'recruit.detailInfo.attachmentFileNames',
+                  (prev: string[] | undefined) => [...(prev ?? []), ...files.map(file => file.name)]
+                )
               }
-              onRemoveFile={index =>
-                setAttachmentFileNames(prev => prev.filter((_, i) => i !== index))
+              onRemoveFile={(index: number) =>
+                updateGeneralRecruitOverlayKey<string[]>(
+                  'recruit.detailInfo.attachmentFileNames',
+                  (prev: string[] | undefined) => (prev ?? []).filter((_, i) => i !== index)
+                )
               }
             />
           }

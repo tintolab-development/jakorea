@@ -9,6 +9,11 @@ import {
   isMemberListItemResponse,
   type MemberListItemResponse,
 } from '@/features/user/api/types/member-list-item'
+import { normalizeRevokedInstructorUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
+import {
+  resolveIdentitySelfSignupCompletedAfterAdminRegistration,
+  resolveRegisteredByAdmin,
+} from '@/features/user/api/resolve-member-registration-flags'
 
 function fallbackUuid(memberId?: number): string {
   if (memberId != null) return `member-${memberId}`
@@ -73,11 +78,26 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
     isActive: resolveListItemIsActive(item),
     createdAt: item.createdAt ?? now,
     updatedAt: item.updatedAt ?? now,
-    registeredByAdmin: Boolean(item.registeredByAdmin ?? item.preRegistered),
-    identitySelfSignupCompletedAfterAdminRegistration: Boolean(
-      item.identitySelfSignupCompletedAfterAdminRegistration ?? item.identityVerified
-    ),
+    registeredByAdmin: resolveRegisteredByAdmin({
+      role,
+      registeredByAdmin: item.registeredByAdmin,
+      preRegistered: item.preRegistered,
+      createdByAdmin: item.createdByAdmin,
+      adminAccountId: item.adminAccountId,
+    }),
+    identitySelfSignupCompletedAfterAdminRegistration:
+      resolveIdentitySelfSignupCompletedAfterAdminRegistration({
+        role,
+        registeredByAdmin: item.registeredByAdmin,
+        preRegistered: item.preRegistered,
+        createdByAdmin: item.createdByAdmin,
+        adminAccountId: item.adminAccountId,
+        identitySelfSignupCompletedAfterAdminRegistration:
+          item.identitySelfSignupCompletedAfterAdminRegistration,
+        identityVerified: item.identityVerified,
+      }),
     id1365: item.external1365Id?.trim() || undefined,
+    ...(item.adminAccountId != null ? { adminAccountId: item.adminAccountId } : {}),
     ...(item.affiliation?.trim() ? { affiliation: item.affiliation.trim() } : {}),
     ...(item.affiliatedSchoolUserId?.trim()
       ? { affiliatedSchoolUserId: item.affiliatedSchoolUserId.trim() }
@@ -91,16 +111,35 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
       : {}),
     ...(programRoles ? { programRoles } : {}),
     ...(listMetrics ? { listMetrics } : {}),
+    ...(() => {
+      const instructorStatus = item.instructorStatus?.trim()
+      if (instructorStatus) return { instructorApprovalStatus: instructorStatus }
+      const memberStatus = (item.memberStatus ?? item.status)?.trim().toUpperCase()
+      if (memberStatus === 'REVOKED') return { instructorApprovalStatus: 'REVOKED' }
+      return {}
+    })(),
   }
 
   if (role === 'SCHOOL') {
     const schoolName = String(
       item.schoolInfo?.schoolName ?? item.organizationName ?? item.organizationText ?? item.name ?? ''
     ).trim()
+    const address =
+      item.schoolInfo?.address?.trim() ||
+      (typeof item.address === 'string' ? item.address.trim() : '') ||
+      ''
+    const schoolInfoLoose = item.schoolInfo as
+      | (NonNullable<MemberListItemResponse['schoolInfo']> & { addressDetail?: string })
+      | undefined
+    const addressDetail =
+      schoolInfoLoose?.addressDetail?.trim() ||
+      (typeof item.addressDetail === 'string' ? item.addressDetail.trim() : '') ||
+      undefined
     if (schoolName) {
       user.schoolInfo = {
         schoolName,
-        address: item.schoolInfo?.address?.trim() ?? '',
+        address,
+        ...(addressDetail ? { addressDetail } : {}),
         ...(item.schoolInfo?.position?.trim()
           ? { position: item.schoolInfo.position.trim() }
           : {}),
@@ -119,7 +158,7 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
     }
   }
 
-  return user
+  return normalizeRevokedInstructorUser(user)
 }
 
 export function mapMemberListItems(items: unknown[] | undefined): Omit<User, 'password'>[] {

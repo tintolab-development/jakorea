@@ -9,6 +9,10 @@ import { useState, useEffect, useMemo } from 'react'
 import { Checkbox, Input } from 'antd'
 import { CmsButton, ContentModal } from '@/shared/ui'
 import { FileSelectField } from '@/shared/ui/file-select-field'
+import {
+  FILE_SELECT_MAX_TOTAL_BYTES,
+  sumFileBytes,
+} from '@/shared/ui/file-select-field-limits'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import type { Program } from '@/types/domain'
 import { createProgramPost, addProgramFiles } from '@/data/mock'
@@ -50,8 +54,6 @@ function resolvePostWriteAudienceForSave(
     return key
   })
 }
-
-const MAX_FILE_SIZE = 15 * 1024 * 1024 // 15MB
 
 const ALLOWED_EXTENSIONS: string[] = [
   '.jpg', '.jpeg', '.png',
@@ -112,9 +114,6 @@ export function PostWriteModal({
     for (const file of newFiles) {
       const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
       if (!ALLOWED_EXTENSIONS.includes(ext)) {
-        continue
-      }
-      if (file.size > MAX_FILE_SIZE) {
         continue
       }
       valid.push(file)
@@ -230,14 +229,15 @@ export function PostWriteModal({
               <div className="post-write-modal__attachment-body">
                 <FileSelectField
                   accept=".jpg,.jpeg,.png"
-                  multiple
                   fileNames={fileNames}
+                  currentTotalBytes={sumFileBytes(files)}
+                  maxTotalBytes={FILE_SELECT_MAX_TOTAL_BYTES}
                   onFilesChange={handleFilesChange}
                   onRemoveFile={handleRemoveFile}
                   uploading={loading}
                   buttonLabel="파일 선택"
                   guideLines={[
-                    `-  파일은 최대 15M까지 ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`,
+                    `- 파일은 총 최대 15MB까지 ${getAllowedExtensionsDescription()} 형식만 등록 가능합니다.`,
                     '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
                   ]}
                   className="post-write-modal__file-select file-select-field--edit"

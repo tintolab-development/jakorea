@@ -18,6 +18,7 @@ import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 
 const ROUND_DELIVERY_OPTIONS: { value: RoundDeliveryType; label: string }[] = [
   { value: 'online', label: '온라인' },
@@ -56,16 +57,6 @@ function parseCurriculumContent(content: string | undefined): {
     duration: content.slice(0, idx).trim() || '1시간',
     description: content.slice(idx + sep.length).trim(),
   }
-}
-
-function isCompanySchoolProgram(program: Program): boolean {
-  return (
-    program.id.startsWith('economy-prog-') ||
-    program.id.startsWith('company-school-prog-') ||
-    program.id.startsWith('company-school-local-') ||
-    program.mainTitle?.includes('1사1교') === true ||
-    program.title.includes('1사1교')
-  )
 }
 
 function resolveCompanySchoolCurriculumRows(program: Program) {

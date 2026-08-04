@@ -30,24 +30,28 @@ const JOB담_VOLUNTEER_INTERVIEW_SCHEDULE_UNAVAILABLE_DATE_ISOS = ['2026-02-10']
 export function resolveGeneralProgramVolunteerInterviewScheduleDisplay(
   program: Program
 ): GeneralProgramVolunteerInterviewScheduleDisplay {
+  const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
+  const availableTimeSlots = info?.availableTimeSlots?.trim()
+
+  // 프로그램 API 필드가 있으면 우선 사용 (시드 특수 id mock 하드코딩보다 상위)
+  if (availableTimeSlots && availableTimeSlots !== '-') {
+    return {
+      recurringUnavailable:
+        info?.recurringUnavailable ??
+        DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.recurringUnavailable,
+      specificUnavailableDates:
+        info?.specificUnavailableDates ??
+        DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.specificUnavailableDates,
+      availableTimeSlots,
+    }
+  }
+
+  // API 값 없을 때만 개발용 mock (파일은 유지)
   if (program.id === GENERAL_PROGRAM_ORG_CURRICULUM_SINGLE_ID) {
     return JOB담_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK
   }
 
-  const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
-  const availableTimeSlots = info?.availableTimeSlots?.trim()
-
-  if (!availableTimeSlots || availableTimeSlots === '-') {
-    return DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK
-  }
-
-  return {
-    recurringUnavailable:
-      info?.recurringUnavailable ?? DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.recurringUnavailable,
-    specificUnavailableDates:
-      info?.specificUnavailableDates ?? DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK.specificUnavailableDates,
-    availableTimeSlots,
-  }
+  return DEFAULT_GENERAL_VOLUNTEER_INTERVIEW_SCHEDULE_MOCK
 }
 
 export function resolveGeneralProgramVolunteerInterviewScheduleEditSeed(

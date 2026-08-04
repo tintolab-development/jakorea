@@ -5,8 +5,9 @@
  * 모달: 화면 정중앙 고정
  */
 
-/* 풀페이지 모달: 래퍼가 flex center가 아니라 전체 채움 (아래 :has(.teal-header-modal) 규칙보다 우선하도록 별도 유지) */
-.ant-modal-wrap:has(.teal-header-modal--full) {
+/* 풀페이지 모달: 래퍼가 flex center가 아니라 전체 채움 (아래 :has(.teal-header-modal) 규칙보다 우선하도록 별도 유지)
+ * open=false 시 Ant가 wrap에 inline `display: none`을 넣는데, 아래 `flex !important`가 덮어쓰면 닫히지 않음 */
+.ant-modal-wrap:has(.teal-header-modal--full):not([style*='display: none']) {
   display: flex !important;
   align-items: stretch !important;
   justify-content: flex-start !important;

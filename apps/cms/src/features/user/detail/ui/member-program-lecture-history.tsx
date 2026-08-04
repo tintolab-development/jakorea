@@ -45,6 +45,7 @@ import '@/pages/users/user-list-page.css'
 import './member-program-lecture-history.css'
 import {
   CmsButton,
+  CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH,
   DeleteGuideModal,
   ProgramHistoryDeleteBlockedModal,
   buildProgramProgressHistoryDeleteGuide,
@@ -672,7 +673,7 @@ export function MemberProgramLectureHistory({
                   <CmsButton
                     variant="secondary"
                     size="large"
-                    width={240}
+                    width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
                     icon={<DownloadOutlined />}
                     disabled={selectedRowKeys.length === 0}
                     onClick={() => {

@@ -1,6 +1,7 @@
 import { CmsButton } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -36,9 +37,7 @@ export function UjatProgramRecruitmentTabsRow({
       }))}
       trailing={
         <CmsButton
-          variant="secondary"
-          size="large"
-          width={140}
+          {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
           disabled={!canEdit && !isEditMode}
           onClick={resolveProgramEditInfoClick(isEditMode, {
             onEnterEdit: onEdit,

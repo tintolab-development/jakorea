@@ -3,10 +3,10 @@
  * Phase 6.1.2: 강사/봉사자 정산 제출
  */
 
-import { CmsRadio } from '@/shared/ui'
+import { CmsButton, CmsRadio, ContentModal } from '@/shared/ui'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { useState, useEffect, useCallback } from 'react'
-import { Modal, Form, Select, Input, Upload, Button, Space, Divider, Typography, Switch, DatePicker, Collapse, Card } from 'antd'
+import { Form, Select, Input, Upload, Space, Divider, Typography, Switch, DatePicker, Collapse, Card, Button } from 'antd'
 import { UploadOutlined, CalculatorOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -338,16 +338,14 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
   }
 
   return (
-    <Modal
+    <ContentModal
       open={open}
       onCancel={handleCancel}
       title="정산 제출"
-      width={800}
-      footer={null}
-      destroyOnHidden
+      size="default"
       className="settlement-submit-modal"
-      style={{ top: 20 }}
-      styles={{
+      wrapClassName="settlement-submit-modal-wrap"
+      modalStyles={{
         body: {
           paddingBottom: 24 } }}
     >
@@ -726,12 +724,12 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
             </Form.Item>
 
             <div className="settlement-actions">
-              <Button onClick={handleCancel} disabled={submitting} size="large">
+              <CmsButton variant="default" onClick={handleCancel} disabled={submitting} size="large">
                 취소
-              </Button>
-              <Button type="primary" htmlType="submit" loading={submitting} size="large">
+              </CmsButton>
+              <CmsButton type="submit" loading={submitting} size="large">
                 제출하기
-              </Button>
+              </CmsButton>
             </div>
           </>
         )}
@@ -742,6 +740,6 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
           </div>
         )}
       </Form>
-    </Modal>
+    </ContentModal>
   )
 }

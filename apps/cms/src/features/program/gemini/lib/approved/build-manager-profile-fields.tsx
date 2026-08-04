@@ -4,7 +4,10 @@ import {
   formatAccountDisplayContent,
   HomeAddressDisplay,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/instructor-basic-info-detail-form'
-import { ProgramDetailTdSegmentWrap } from '@/features/program/shared/ui/program-detail-td-divider'
+import {
+  ProgramDetailTdSegmentWrap,
+  withProgramDetailTdDivider,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import { SchoolTeacherEmploymentStatusBadge } from '@/features/user/detail/lib/school-teacher-employment-status'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
 import type {
@@ -51,7 +54,7 @@ export function buildGeminiApprovedManagerTableItems(
       label: '성별 및 생년월일',
       children: (
         <ProgramDetailTdSegmentWrap>
-          {detail.managerGender} | {detail.managerBirthDate}
+          {withProgramDetailTdDivider([detail.managerGender, detail.managerBirthDate])}
         </ProgramDetailTdSegmentWrap>
       ),
     },

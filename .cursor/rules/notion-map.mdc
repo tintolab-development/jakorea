@@ -1,0 +1,16 @@
+---
+description: Use local Notion map instead of workspace-wide Notion search
+alwaysApply: true
+---
+
+# Notion MCP — use local map first
+
+Before any Notion MCP call:
+
+1. Read [`.cursor/notion-map.md`](../notion-map.md).
+2. Resolve the target page/DB from that map (or a URL the user provided).
+3. Call `notion-fetch` / query tools **with that URL or ID only**.
+
+Do **not** run broad `notion-search` across the whole workspace to “find” JA Korea / CMS docs unless the map has no matching entry and the user did not give a URL.
+
+CMS specs → map entry **CMS 어드민 기능정의서** (also `apps/cms/.cursor/rules/process/notion-mcp-cms.mdc`).

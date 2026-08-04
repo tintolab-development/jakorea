@@ -20,6 +20,7 @@
   --spacing-64: 64px;
   --spacing-68: 68px;
   --spacing-72: 72px;
+  --spacing-74: 74px;
   --spacing-76: 76px;
   --spacing-80: 80px;
   --spacing-84: 84px;
@@ -45,4 +46,7 @@
   --width-popup-sm: 440px;
   --width-popup-md: 600px;
   --width-popup-lg: 960px;
+
+  /* auth layout (login / sign-up / find-* ) */
+  --auth-page-padding-x: var(--spacing-20);
 }

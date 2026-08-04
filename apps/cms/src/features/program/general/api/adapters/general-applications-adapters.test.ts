@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   mapApiApplicationStatusToApprovalStatus,
+  mapInstructorApplicationToApplicantInstructorRow,
   mapOrganizationApplicationToApplicantSchoolRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
@@ -36,6 +37,27 @@ describe('general-applications-adapters', () => {
     expect(row.schoolName).toBe('서울초')
     expect(row.approvalStatus).toBe('pending')
     expect(row.programId).toBe('5001')
+  })
+
+  it('maps instructor application list item to applicant row', () => {
+    const row = mapInstructorApplicationToApplicantInstructorRow(
+      {
+        id: 77,
+        instructorName: '이강사',
+        applicationStatus: 'APPROVED',
+        instructorFeeGradeSnapshot: '3급 강사비',
+        submittedAt: '2026-04-02T00:00:00Z',
+        rejectReason: '서류 미비',
+      },
+      0,
+      '5001'
+    )
+
+    expect(row.id).toBe('77')
+    expect(row.instructorName).toBe('이강사')
+    expect(row.approvalStatus).toBe('approved')
+    expect(row.instructorFeeGradeLabel).toBe('3급 강사비')
+    expect(row.rejectionReason).toBe('서류 미비')
   })
 
   it('maps volunteer application list item to screening row', () => {

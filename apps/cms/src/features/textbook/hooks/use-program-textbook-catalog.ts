@@ -27,11 +27,23 @@ export function useProgramTextbookCatalog(program: Program | null | undefined) {
     retry: false,
   })
 
-  const catalog: TextbookRow[] = remoteEnabled ? (query.data ?? []) : mockCatalog
+  /**
+   * 원격 최초 로딩 중 `[]`를 넘기면 programUsesTextbook 등이 “교재 없음”으로 판단해
+   * 교재명 필드가 사라졌다가 다시 나타나는 플래시가 난다.
+   * data 없으면 undefined → 소비측이 sync store로 폴백.
+   * 로드 완료 후 빈 목록은 `[]` 유지.
+   */
+  const catalog: TextbookRow[] | undefined = !remoteEnabled
+    ? mockCatalog
+    : query.data !== undefined
+      ? query.data
+      : query.isPending || query.isLoading
+        ? undefined
+        : []
 
   return {
     catalog,
-    isLoading: remoteEnabled && query.isLoading,
+    isLoading: remoteEnabled && (query.isPending || query.isLoading),
     isRemote: remoteEnabled,
   }
 }

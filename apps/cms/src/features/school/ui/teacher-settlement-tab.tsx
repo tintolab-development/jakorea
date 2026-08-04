@@ -3,7 +3,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react'
-import { Table, Input, Empty, Checkbox, Calendar } from 'antd'
+import { Table, Input, Checkbox, Calendar } from 'antd'
 import {
   LeftOutlined,
   RightOutlined,
@@ -15,7 +15,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 const CAL_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, EmptyState } from '@/shared/ui'
 import { InstructorPaymentStatusBadge } from '@/shared/components/instructor-payment-status-badge'
 import type { InstructorSettlementUiStatus } from '@/shared/constants/instructor-settlement-status'
 import {
@@ -397,7 +397,7 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
               })}
             />
           ) : (
-            <Empty description="정산 내역이 없습니다." />
+            <EmptyState description="정산 내역이 없습니다." />
           )}
         </div>
       )}

@@ -6,6 +6,7 @@
 import {
   ADMIN_NOTICE_MOCK_LIST_COUNT,
   buildAdminNoticeMockList,
+  mockProgramResultNotices,
   type Notice,
 } from '@/data/mock/notices'
 
@@ -13,7 +14,10 @@ let adminNotices: Notice[] | null = null
 
 function seed(): Notice[] {
   if (!adminNotices) {
-    adminNotices = buildAdminNoticeMockList(ADMIN_NOTICE_MOCK_LIST_COUNT).map(n => ({ ...n }))
+    adminNotices = [
+      ...buildAdminNoticeMockList(ADMIN_NOTICE_MOCK_LIST_COUNT),
+      ...mockProgramResultNotices,
+    ].map(n => ({ ...n }))
   }
   return adminNotices
 }

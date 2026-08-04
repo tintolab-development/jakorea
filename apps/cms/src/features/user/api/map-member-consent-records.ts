@@ -7,28 +7,35 @@ import dayjs from 'dayjs'
 
 /** consentType → UI 라벨 (백엔드 enum 확인 전 임시 매핑) */
 const CONSENT_TYPE_TO_LABEL: Record<string, string> = {
-  PERSONAL_INFO: '개인정보 수집 동의',
-  PERSONAL_INFO_COLLECTION: '개인정보 수집 동의',
+  TERMS: '서비스 이용약관',
+  TERMS_OF_SERVICE: '서비스 이용약관',
+  SERVICE_TERMS: '서비스 이용약관',
+  PERSONAL_INFO: '개인정보 수집·이용 동의',
+  PERSONAL_INFO_COLLECTION: '개인정보 수집·이용 동의',
   MARKETING: '마케팅 제공 동의',
   MARKETING_CONSENT: '마케팅 제공 동의',
   PORTRAIT_RIGHTS: '초상권 수집·이용 동의',
   PORTRAIT: '초상권 수집·이용 동의',
-  PAYMENT_STATEMENT: '지급조서 작성 동의',
-  PAYMENT_STATEMENT_CONSENT: '지급조서 작성 동의',
-  SEX_OFFENSE_CHECK: '성범죄 경력조회 동의',
-  SEXUAL_OFFENSE_CHECK: '성범죄 경력조회 동의',
-  ADMIN_INFO_SHARING: '행정정보 공동이용 사전 동의',
-  ADMINISTRATIVE_INFO_SHARING: '행정정보 공동이용 사전 동의',
-  EDUCATOR_PLEDGE: '교육진행자 동의 서약',
-  INSTRUCTOR_PLEDGE: '교육진행자 동의 서약',
+  PAYMENT_STATEMENT: '지급조서 사전 동의서',
+  PAYMENT_STATEMENT_CONSENT: '지급조서 사전 동의서',
+  SEX_OFFENSE_CHECK: '성범죄 경력 조회 동의서',
+  SEXUAL_OFFENSE_CHECK: '성범죄 경력 조회 동의서',
+  ADMIN_INFO_SHARING: '행정정보 공동이용 사전동의서',
+  ADMINISTRATIVE_INFO_SHARING: '행정정보 공동이용 사전동의서',
+  EDUCATOR_PLEDGE: '교육진행자 서약서',
+  INSTRUCTOR_PLEDGE: '교육진행자 서약서',
+  MFA: '2단계 인증(MFA) 설정 동의',
+  MFA_SETUP: '2단계 인증(MFA) 설정 동의',
+  TWO_FACTOR_AUTH: '2단계 인증(MFA) 설정 동의',
+  TWO_FACTOR_AUTHENTICATION: '2단계 인증(MFA) 설정 동의',
 }
 
 const DOCUMENT_LABELS = new Set([
   '초상권 수집·이용 동의',
-  '지급조서 작성 동의',
-  '성범죄 경력조회 동의',
-  '행정정보 공동이용 사전 동의',
-  '교육진행자 동의 서약',
+  '지급조서 사전 동의서',
+  '성범죄 경력 조회 동의서',
+  '행정정보 공동이용 사전동의서',
+  '교육진행자 서약서',
 ])
 
 function resolveConsentLabel(record: MemberConsentRecordResponse): string | undefined {
@@ -60,7 +67,7 @@ function recordToFieldValue(
   return {
     type: 'remote_consent',
     agreed,
-    agreedAtDisplay: agreed ? agreedAtDisplay : undefined,
+    agreedAtDisplay,
   }
 }
 
@@ -85,9 +92,6 @@ export function applyConsentRecordsToSchema(
       ...row,
       fields: row.fields.map(field => {
         if (field.value.type === 'empty_half') return field
-        if (field.value.type === 'sample_consent') {
-          return { ...field, value: { type: 'remote_consent' as const, agreed: false } }
-        }
         if (field.value.type === 'document') {
           return { ...field, value: { type: 'document' as const, agreed: false } }
         }

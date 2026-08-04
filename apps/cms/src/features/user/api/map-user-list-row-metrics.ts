@@ -1,6 +1,10 @@
 import type { UserListRowMetrics } from '@/types/user'
 import type { UserListRowMetrics as ApiUserListRowMetrics } from '@/shared/api/generated/members/schemas/userListRowMetrics'
 import { roleCodeToAdminPermissionVariant } from '@/features/user/api/admin-approval-role'
+import {
+  resolveInstructorPublicTextField,
+  toInstructorFeeGradeDisplayLabel,
+} from '@/features/user/api/map-instructor-activity-display'
 
 export function mapApiUserListRowMetrics(
   metrics?: ApiUserListRowMetrics | null
@@ -20,8 +24,9 @@ export function mapApiUserListRowMetrics(
   if (metrics.instructorTypeLabel?.trim()) {
     mapped.instructorTypeLabel = metrics.instructorTypeLabel.trim()
   }
-  if (metrics.instructorFeeGradeLabel?.trim()) {
-    mapped.instructorFeeGradeLabel = metrics.instructorFeeGradeLabel.trim()
+  const feeGradeLabel = toInstructorFeeGradeDisplayLabel(metrics.instructorFeeGradeLabel)
+  if (feeGradeLabel) {
+    mapped.instructorFeeGradeLabel = feeGradeLabel
   }
   if (metrics.permissionApplicationTypeLabel?.trim()) {
     mapped.permissionApplicationTypeLabel = metrics.permissionApplicationTypeLabel.trim()
@@ -47,13 +52,16 @@ export function mapApiUserListRowMetrics(
     mapped.instructorAssignedGrade = metrics.instructorAssignedGrade.trim()
   }
   if (metrics.highestEducationLabel?.trim()) {
-    mapped.highestEducationLabel = metrics.highestEducationLabel.trim()
+    const label = resolveInstructorPublicTextField(metrics.highestEducationLabel)
+    if (label) mapped.highestEducationLabel = label
   }
   if (metrics.instructorCareerSummaryLabel?.trim()) {
-    mapped.instructorCareerSummaryLabel = metrics.instructorCareerSummaryLabel.trim()
+    const label = resolveInstructorPublicTextField(metrics.instructorCareerSummaryLabel)
+    if (label) mapped.instructorCareerSummaryLabel = label
   }
   if (metrics.instructorCareerYearsLabel?.trim()) {
-    mapped.instructorCareerYearsLabel = metrics.instructorCareerYearsLabel.trim()
+    const label = resolveInstructorPublicTextField(metrics.instructorCareerYearsLabel)
+    if (label) mapped.instructorCareerYearsLabel = label
   }
 
   return Object.keys(mapped).length > 0 ? mapped : undefined

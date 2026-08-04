@@ -29,7 +29,10 @@ import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/pay
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
 import { renderApplicantRecruitFormIndividualParagraphBody } from '@/features/template/ui/form-set/recruit-form/individual/paragraph-body'
 import { renderApplicantRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/institution/paragraph-body'
+import { renderEconomyRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/1c-1s/paragraph-body'
+import { renderGeminiRecruitFormParagraphBody } from '@/features/template/ui/form-set/recruit-form/gemini/paragraph-body'
 import { renderUjatRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-institution/paragraph-body'
+import { renderTrainedTeachersRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/trained-teachers-institution/paragraph-body'
 import { renderRecruitFormInstructorParagraphBody } from '@/features/template/ui/form-set/recruit-form/instructor/paragraph-body'
 import { renderRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/volunteer/paragraph-body'
 import { renderUjatRecruitFormVolunteerParagraphBody } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/paragraph-body'
@@ -68,6 +71,8 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-editor/form-editor-horizontal-table.css'
+
+const { TextArea } = Input
 
 dayjs.extend(customParseFormat)
 
@@ -243,8 +248,21 @@ function FieldTableBodyCell({
   }
 
   if (field.kind === 'text') {
-    const text = fieldCellValueToPlainText(rehomeForDisplay(field, cell))
-    return <HorizontalTableCellText value={text} placeholder={ph} variant="body" />
+    const textValue = cell.kind === 'text' || cell.kind === 'subjective' ? cell.value : ''
+    return (
+      <TextArea
+        variant="borderless"
+        className="form-editor-horizontal-table__cell-textarea"
+        autoSize={{ minRows: 1 }}
+        value={textValue}
+        placeholder={ph}
+        onChange={e => onFieldChange({ kind: 'text', value: e.target.value })}
+        onFocus={onSelectBodyRow}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
+        }}
+      />
+    )
   }
 
   if (field.kind === 'subjective') {
@@ -254,9 +272,10 @@ function FieldTableBodyCell({
         className="form-editor-horizontal-table__field-box form-editor-horizontal-table__field-box--text"
         title="주관식형"
       >
-        <Input
+        <TextArea
           variant="borderless"
           className="form-editor-horizontal-table__field-text-input"
+          autoSize={{ minRows: 1 }}
           value={essayValue}
           placeholder={ph}
           onChange={e => onFieldChange({ kind: 'subjective', value: e.target.value })}
@@ -405,6 +424,7 @@ export function HorizontalTableParagraphBody({
   lectureFeeCalculationValues,
   paymentStatementCalculationLines,
   paymentStatementDisplayMode,
+  agreementNoticeIdTypeInteractive = false,
   programRegistration,
   ujatProgramRegistration,
   programApplicationFormInstitution,
@@ -420,10 +440,13 @@ export function HorizontalTableParagraphBody({
   showInstitutionApplicationLimits,
   applicantRecruitInstitutionLayoutVariant,
   applicantRecruitInstitutionDefaults,
+  economyRecruitFormInstitution,
+  trainedTeachersRecruitFormInstitution,
   ujatRecruitFormInstitution,
   applicantRecruitFormIndividual,
   recruitFormInstructor,
   recruitFormVolunteer,
+  geminiRecruitForm,
   ujatRecruitFormVolunteer,
   ujatRecruitParagraphProps,
   programApplicationFormInstructor,
@@ -445,6 +468,8 @@ export function HorizontalTableParagraphBody({
   lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
   paymentStatementCalculationLines?: PaymentStatementCalculationLinesViewModel
   paymentStatementDisplayMode?: PaymentStatementIssuanceParagraphDisplayMode
+  /** 행정정보 공동이용 fill — 표 셀은 잠그고 식별번호 입력만 허용 */
+  agreementNoticeIdTypeInteractive?: boolean
   programRegistration?: ProgramRegistrationParagraphBodyOptions
   ujatProgramRegistration?: boolean
   /** 프로그램 참여자 신청 폼 (학교) 시드 단락 — `DetailInfoForm` 본문 */
@@ -470,6 +495,10 @@ export function HorizontalTableParagraphBody({
   showInstitutionApplicationLimits?: boolean
   applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
+  /** 1사1교_참여 기관 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  economyRecruitFormInstitution?: boolean
+  /** 교육받은 교사_참여 기관 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  trainedTeachersRecruitFormInstitution?: boolean
   /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
@@ -478,6 +507,8 @@ export function HorizontalTableParagraphBody({
   recruitFormInstructor?: boolean
   /** 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   recruitFormVolunteer?: boolean
+  /** Gemini 찾아가는 연수 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  geminiRecruitForm?: boolean
   /** UJAT 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormVolunteer?: boolean
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
@@ -511,8 +542,15 @@ export function HorizontalTableParagraphBody({
     if (rows.length === 0) {
       rows.push(Array.from({ length: colCount }, () => ''))
     }
+    /** 필드형: `fieldDataRows`가 더 길면 행 수에 맞춤(시드 2행이 dataRows 1행으로 잘리는 문제 방지) */
+    if (p.tableFlavor === 'field') {
+      const fieldRowCount = Math.max(1, p.fieldDataRows?.length ?? 0)
+      while (rows.length < fieldRowCount) {
+        rows.push(Array.from({ length: colCount }, () => ''))
+      }
+    }
     return { colCount, headers, rows }
-  }, [p.columnHeaders, p.dataRows])
+  }, [p.columnHeaders, p.dataRows, p.tableFlavor, p.fieldDataRows])
 
   const activeSelection = useMemo((): HorizontalTableRowSelection | null => {
     if (selection == null) return null
@@ -546,6 +584,23 @@ export function HorizontalTableParagraphBody({
     }
   )
   if (applicantRecruitFormInstitutionBody != null) return applicantRecruitFormInstitutionBody
+
+  const economyRecruitFormInstitutionBody = renderEconomyRecruitFormInstitutionParagraphBody(
+    p,
+    economyRecruitFormInstitution
+  )
+  if (economyRecruitFormInstitutionBody != null) return economyRecruitFormInstitutionBody
+
+  const trainedTeachersRecruitFormInstitutionBody =
+    renderTrainedTeachersRecruitFormInstitutionParagraphBody(
+      p,
+      trainedTeachersRecruitFormInstitution
+    )
+  if (trainedTeachersRecruitFormInstitutionBody != null)
+    return trainedTeachersRecruitFormInstitutionBody
+
+  const geminiRecruitFormBody = renderGeminiRecruitFormParagraphBody(p, geminiRecruitForm)
+  if (geminiRecruitFormBody != null) return geminiRecruitFormBody
 
   const ujatRecruitFormInstitutionBody = renderUjatRecruitFormInstitutionParagraphBody(
     p,
@@ -736,11 +791,16 @@ export function HorizontalTableParagraphBody({
     p.id === 'agreement-portrait-delegated-consent-table' ||
     p.id === 'agreement-portrait-usage-table'
   const isPaymentStatementPreConsentP1 = p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p1Collection
+  const isPaymentStatementPreConsentP2 = p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p2RrnCollection
   const isPaymentStatementPreConsentThirdPartyTable =
     p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty ||
     p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p4RrnThirdParty
   const suppressPlaceholderText =
-    isAgreementNoticeTable || isAgreementPortraitTable || isPaymentStatementPreConsentP1
+    isAgreementNoticeTable ||
+    isAgreementPortraitTable ||
+    isPaymentStatementPreConsentP1 ||
+    isPaymentStatementPreConsentP2 ||
+    isPaymentStatementPreConsentThirdPartyTable
 
   return (
     <div
@@ -749,6 +809,9 @@ export function HorizontalTableParagraphBody({
         'form-editor-horizontal-table-wrap',
         isPaymentStatementPreConsentP1
           ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p1'
+          : '',
+        isPaymentStatementPreConsentP2
+          ? 'form-editor-horizontal-table-wrap--payment-pre-consent-p2'
           : '',
         isPaymentStatementPreConsentThirdPartyTable
           ? 'form-editor-horizontal-table-wrap--payment-pre-consent-third-party'
@@ -846,8 +909,10 @@ export function HorizontalTableParagraphBody({
                   >
                     {effectiveEditMode ? (
                       <div className="form-editor-horizontal-table__cell-input-shell form-editor-horizontal-table__cell-input-shell--body">
-                        <Input
+                        <TextArea
                           variant="borderless"
+                          className="form-editor-horizontal-table__cell-textarea"
+                          autoSize={{ minRows: 1 }}
                           value={cell}
                           placeholder={ph}
                           onChange={e => setTextCellValue(rowIdx, colIdx, e.target.value)}
@@ -942,9 +1007,9 @@ export function HorizontalTableParagraphBody({
       {p.showBottomText || p.showBottomConsent || p.idTypeWithInput ? (
         <div className="form-editor-horizontal-table__bottom">
           {p.showBottomText ? (
-            PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS.has(p.id) ? (
-              <div className="detail-info-form--text">{p.bottomText}</div>
-            ) : (
+            /* 작성(authoring)·구조 미잠금에서만 하단 설명 편집. write/미리보기·시드 고정 단락은 검정 고정 노출 */
+            canvasInteractive &&
+            !PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS.has(p.id) ? (
               <ParagraphInput
                 type="description"
                 className="form-editor-horizontal-table__bottom-input"
@@ -953,13 +1018,17 @@ export function HorizontalTableParagraphBody({
                 onChange={next => onChange({ ...p, bottomText: next })}
                 placeholder="설명을 입력해 주세요"
               />
+            ) : (
+              <div className="detail-info-form--text form-editor-horizontal-table__bottom-static">
+                {p.bottomText}
+              </div>
             )
           ) : null}
           {p.idTypeWithInput ? (
             <IdTypeWithInputBody
               paragraph={p.idTypeWithInput}
               onChange={next => onChange({ ...p, idTypeWithInput: next })}
-              isEditMode={effectiveEditMode}
+              isEditMode={effectiveEditMode || agreementNoticeIdTypeInteractive}
               documentMode={paymentStatementDisplayMode === 'document'}
             />
           ) : null}

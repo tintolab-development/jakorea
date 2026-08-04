@@ -21,6 +21,7 @@
 
 - [Code style](./coding/code-style.md) — ESLint, TypeScript, kebab-case
 - **[Feature file naming](./coding/feature-file-naming.mdc)** — 경로=스코프, kebab-case (**alwaysApply**)
+- **[Soft navigation & fetch dedupe](./coding/soft-navigation-fetch-dedupe.mdc)** — 목록 탭/필터 soft nav · StrictMode 중복 fetch 금지
 - [Component splitting](./coding/component-splitting.md)
 - [Custom hooks](./coding/custom-hooks.md)
 - [Refactoring principles](./coding/refactoring-principles.md)
@@ -37,13 +38,20 @@
 - [Package management](./environment/package-management.md)
 - [Shared packages](./libraries/shared-packages.md)
 
+## API
+
+- env: `VITE_API_BASE_URL` / `VITE_API_SERVER` (CMS와 동일) — `.env.example` 참고
+- remote 판별: `src/shared/lib/api-remote-env.ts` (`isRemoteApiConfigured`)
+- axios: `src/shared/api/axios-instance.ts` · barrel `src/shared/api/`
+- auth 토큰: `src/shared/lib/auth-token.ts`
+- Vite `/api` 프록시: `vite.config.ts`
+
 ## Data / TanStack Query (모노레포 공통)
 
 - 앱 포인터: [libraries/tanstack-query-cache.mdc](./libraries/tanstack-query-cache.mdc)
+- Provider: `src/app/providers/query-provider.tsx` · keys: `src/shared/api/query-keys.ts` (`['platform', …]`)
 - 공통 Rule: [`.cursor/rules/backend-response-cache-policy.mdc`](../../../../.cursor/rules/backend-response-cache-policy.mdc)
 - 공통 Skill: [`.cursor/skills/tanstack-query-backend-cache/SKILL.md`](../../../../.cursor/skills/tanstack-query-backend-cache/SKILL.md)
-
-키 루트는 Platform 도입 시 `['platform', …]` (CMS `['cms', …]`와 분리).
 
 ## Skills
 
@@ -57,13 +65,13 @@
 - `.cursor/references/responsive-review-checklist.md`
 - `.cursor/references/templates/component-css-modules-template.md`
 
-## Breakpoints (기본)
+## Breakpoints (필수 3구간)
 
-| 구간 | min-width |
-|------|-----------|
-| mobile | default |
-| tablet | 768px |
-| desktop | 1024px |
-| wide | 1280px |
+| 구간 | 조건 | CSS custom media |
+|------|------|------------------|
+| Mobile | ~1079 (`max-width: 1079px`) | `--bp-below-pc` |
+| PC compact | 1080~1599 | `--bp-pc-compact` · (`--bp-pc-up` for 1080+) |
+| PC full | 1600~ | `--bp-pc-full-up` |
 
-토큰: `src/shared/styles/tokens.css`
+토큰: `src/shared/styles/breakpoints.css`, `src/shared/lib/breakpoints.ts`
+

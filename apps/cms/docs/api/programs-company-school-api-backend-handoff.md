@@ -11,11 +11,13 @@ CMS `/programs/company-school` 및 legacy 호환 경로 `/programs/economy-educa
 | 로드맵 | [programs-api-conversion-roadmap.md](./programs-api-conversion-roadmap.md) — **Cat 1** |
 | 현재 운영 상태 | FE 연결 완료, **기본 OFF**, OpenAPI/BE 수용 확인 전 원격 활성화 금지 |
 | 공통 등록 플로우 | [programs-registration-flow-api-backend-handoff.md](./programs-registration-flow-api-backend-handoff.md) — 공통 원칙만 링크하며 중복하지 않음 |
+| **더미 시드 (목록·상세 CASE)** | [company-school-program-dummy-seed-backend-request.md](./company-school-program-dummy-seed-backend-request.md) |
 
 > SSOT는 `src/features/program/1c-1s/api/*`, `general`의 `economy` 등록 분기, 공통 `programs-api-client.ts`, 현재 `openapi/backend.openapi.json`입니다. 1사1교는 학교/기관과 강사를 대상으로 하며 **봉사자가 없습니다.**
 
 **Cat1 코어 DoD (FE → Cat2 진입):** 스테이징 Phase 0–6 통과 + `VITE_COMPANY_SCHOOL_PROGRAMS_REMOTE_ENABLED=true` QA 가능.  
-상세 FE Phase SSOT: [programs-company-school-detail-api-conversion-status.md](./programs-company-school-detail-api-conversion-status.md)
+상세 FE Phase SSOT: [programs-company-school-detail-api-conversion-status.md](./programs-company-school-detail-api-conversion-status.md)  
+목록·상세 LNB 검증용 BE 더미: [company-school-program-dummy-seed-backend-request.md](./company-school-program-dummy-seed-backend-request.md)
 
 ---
 
@@ -94,6 +96,7 @@ COMPANY_SCHOOL_PROGRAM_API_TYPE = "COMPANY_SCHOOL"
 | Method | Path | FE 요청 | FE가 사용하는 응답 |
 |--------|------|---------|--------------------|
 | `GET` | `/api/admin/programs` | `programType=COMPANY_SCHOOL`, 선택 `keyword`, `periodStatus`, `businessYear`, 고정 `page=0`, `size=500` | page `{ items, page, size, totalElements, totalPages }` |
+| `GET` | `/api/admin/programs` (상단 4카드) | 동일 + `size=1`, `periodStatus`별 4회 병렬 (`생략`/`RECRUITING`/`IN_PROGRESS`/`COMPLETED`) | `totalElements`만 사용 |
 | `GET` | `/api/admin/programs/{programId}` | encoded id | `ProgramResponse`, `rounds`, `serviceDetailJson` |
 | `POST` | `/api/admin/programs` | `ProgramCreateRequest`, §4 참조 | 생성된 `ProgramResponse`, 안정적 id 필수 |
 | `PATCH` | `/api/admin/programs/{programId}` | 기존 program + patch를 merge한 `ProgramUpdateRequest` | 갱신된 `ProgramResponse` |
@@ -241,8 +244,9 @@ parser도 위 값을 다시 강제하고 아래 봉사자 필드를 제거합니
 | 단계 | templateCode |
 |------|--------------|
 | 프로그램 공통정보 | `registration-economy` |
+| 학교/기관 모집 | `recruitment-economy` |
 | 학교/기관 신청 | `application-economy` |
-| 학교/강사 모집 | 일반 등록 flow의 해당 모집 template를 재사용하며 participant flag로 학교·강사만 노출 |
+| 강사 모집 | `recruitment-instructor` (공통) — participant flag로 학교·강사만 노출 |
 
 실제 완료 순서:
 
@@ -264,7 +268,7 @@ parser도 위 값을 다시 강제하고 아래 봉사자 필드를 제거합니
 - FE는 `default-form-bindings/apply`나 단건 binding POST를 직접 호출하지 않습니다.
 - POST의 `autoApplyDefaultFormBindings=true`에 따라 백엔드가 published 1사1교 기본 binding을 적용해야 합니다.
 
-gate를 켜기 전에 백엔드는 `registration-economy`, `application-economy` 및 학교/강사 모집 양식의 시드·기본 binding을 제공해야 합니다.
+gate를 켜기 전에 백엔드는 `registration-economy`, `recruitment-economy`, `application-economy` 및 강사 모집 양식의 시드·기본 binding을 제공해야 합니다.
 
 공통 등록 원칙과 form-template API는 [programs-registration-flow-api-backend-handoff.md](./programs-registration-flow-api-backend-handoff.md)를 참조합니다.
 

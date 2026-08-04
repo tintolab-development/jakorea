@@ -7,9 +7,14 @@
  */
 
 /**
- * 관리자 비밀번호 초기화 요청입니다. 초기화 비밀번호는 관리자 이메일 값과 동일하게 설정합니다.
+ * MASTER 관리자가 관리자 비밀번호를 새 임시 비밀번호로 초기화하는 요청입니다.
  */
 export interface AdminAccountPasswordResetRequest {
+  /**
+     * 로그인 이메일과 동일한 임시 비밀번호 또는 영문·숫자·특수문자를 조합한 8자 이상의 비밀번호
+     * @minLength 1
+     */
+  newPassword: string;
   /** 비밀번호 초기화 사유 */
   reason?: string;
 }

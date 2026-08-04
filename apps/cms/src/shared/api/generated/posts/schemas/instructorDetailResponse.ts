@@ -15,6 +15,7 @@ export interface InstructorDetailResponse {
   defaultJaGrade?: string;
   businessIncomeYn?: boolean;
   homeAddress?: string;
+  homeAddressDetail?: string;
   educationLevel?: string;
   careerText?: string;
   selfIntroduction?: string;

@@ -1,6 +1,6 @@
 # JaKorea Platform
 
-Vite + React + TypeScript + **CSS Modules** 기반 공개 플랫폼 앱. 모바일 퍼스트 반응형(360 / 390 / 768 / 1024 / 1280px)을 기본으로 한다.
+Vite + React + TypeScript + **CSS Modules** 기반 공개 플랫폼 앱. 모바일 퍼스트 반응형(~1079 / 1080+ / 1600+)을 기본으로 한다.
 
 ## 개발
 

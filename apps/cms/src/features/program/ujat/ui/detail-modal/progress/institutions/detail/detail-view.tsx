@@ -3,8 +3,10 @@ import type { Program } from '@/types/domain'
 import { CmsButton } from '@/shared/ui'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { useCmsAlert } from '@/shared/ui'
+import { PROGRAM_EDIT_INFO_BUTTON_PROPS } from '@/features/program/shared/lib/program-edit-info-button'
 import type { UjatEducationProgressInstitutionDetailTab } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import {
   UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TAB_LABELS,
@@ -49,7 +51,7 @@ export function UjatEducationProgressInstitutionDetailView({
   const [changeClassModalOpen, setChangeClassModalOpen] = useState(false)
   const [activityWithdrawn, setActivityWithdrawn] = useState(false)
   const [isApplicationInfoEditing, setIsApplicationInfoEditing] = useState(false)
-  const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
+  const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminComment, setAdminComment] = useState(() => detail.adminComment)
   const [adminCommentDraft, setAdminCommentDraft] = useState(() => detail.adminComment)
   const [addressDetail, setAddressDetail] = useState(() => detail.applicationDetail.addressDetail)
@@ -71,7 +73,7 @@ export function UjatEducationProgressInstitutionDetailView({
     setChangeClassModalOpen(false)
     setActivityWithdrawn(false)
     setIsApplicationInfoEditing(false)
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setAdminComment(detail.adminComment)
     setAdminCommentDraft(detail.adminComment)
     setAddressDetail(detail.applicationDetail.addressDetail)
@@ -194,20 +196,24 @@ export function UjatEducationProgressInstitutionDetailView({
     teacherContactDraft,
   ])
 
-  const handleAdminCommentButtonClick = useCallback(() => {
-    if (!isAdminCommentEditing) {
-      setAdminCommentDraft(adminComment)
-      setIsAdminCommentEditing(true)
-      return
-    }
+  const handleAdminCommentEditEnter = useCallback(() => {
+    if (isApplicationInfoEditing) return
+    setAdminCommentDraft(adminComment)
+    setAdminCommentModalOpen(true)
+  }, [adminComment, isApplicationInfoEditing])
 
-    setAdminComment(adminCommentDraft)
-    setIsAdminCommentEditing(false)
+  const handleAdminCommentSave = useCallback(() => {
+    setAdminComment(adminCommentDraft.trim())
+    setAdminCommentModalOpen(false)
     showAlert({
       title: '코멘트 저장',
       content: '관리자 코멘트가 저장되었습니다.',
     })
-  }, [adminComment, adminCommentDraft, isAdminCommentEditing, showAlert])
+  }, [adminCommentDraft, showAlert])
+
+  const handleAdminCommentModalCancel = useCallback(() => {
+    setAdminCommentModalOpen(false)
+  }, [])
 
   return (
     <div className="ujat-education-progress-institution-detail">
@@ -243,9 +249,7 @@ export function UjatEducationProgressInstitutionDetailView({
             </CmsButton>
             <CmsButton
               type="button"
-              variant="secondary"
-              size="large"
-              width={160}
+              {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
               onClick={handleApplicationInfoButtonClick}
             >
               {isApplicationInfoEditing ? '정보 저장' : '정보 수정'}
@@ -255,9 +259,10 @@ export function UjatEducationProgressInstitutionDetailView({
               variant="primary"
               size="large"
               width={160}
-              onClick={handleAdminCommentButtonClick}
+              disabled={isApplicationInfoEditing}
+              onClick={handleAdminCommentEditEnter}
             >
-              {isAdminCommentEditing ? '코멘트 저장' : '코멘트 작성'}
+              코멘트 작성
             </CmsButton>
             <PersonalInfoRevealButton
               labelMode="stickyReveal"
@@ -306,9 +311,9 @@ export function UjatEducationProgressInstitutionDetailView({
               onAddressDetailDraftChange={setAddressDetailDraft}
               teacherContactDraft={teacherContactDraft}
               onTeacherContactDraftChange={setTeacherContactDraft}
-              isAdminCommentEditing={isAdminCommentEditing}
-              adminCommentDraft={adminCommentDraft}
-              onAdminCommentDraftChange={setAdminCommentDraft}
+              isAdminCommentEditing={false}
+              adminCommentDraft=""
+              onAdminCommentDraftChange={() => {}}
             />
           </div>
         ) : null}
@@ -352,6 +357,13 @@ export function UjatEducationProgressInstitutionDetailView({
         gradeBlocks={gradeBlocks}
         onCancel={() => setChangeClassModalOpen(false)}
         onConfirm={handleConfirmChangeClass}
+      />
+      <MemberAdminCommentModal
+        open={adminCommentModalOpen}
+        value={adminCommentDraft}
+        onChange={setAdminCommentDraft}
+        onCancel={handleAdminCommentModalCancel}
+        onConfirm={handleAdminCommentSave}
       />
     </div>
   )

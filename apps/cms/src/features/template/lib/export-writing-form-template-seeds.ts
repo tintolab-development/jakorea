@@ -8,8 +8,10 @@ import {
 import type { FormTemplateExtensionPayload } from '@/features/template/api/adapters/form-template-draft-adapters'
 import { createApplicantRecruitFormIndividualDraft } from '@/features/template/model/applicant-recruit-form-individual-draft'
 import { createApplicantRecruitFormInstitutionDraft } from '@/features/template/model/applicant-recruit-form-institution-draft'
+import { createEconomyRecruitFormInstitutionDraft } from '@/features/template/model/economy-recruit-form-institution-draft'
 import { createGeminiVisitingTrainingApplicationFormInstructorDraft } from '@/features/template/model/gemini-visiting-training-application-form-instructor-draft'
 import { createGeminiVisitingTrainingApplicationFormInstitutionDraft } from '@/features/template/model/gemini-visiting-training-application-form-institution-draft'
+import { createGeminiVisitingTrainingRecruitFormDraft } from '@/features/template/model/gemini-visiting-training-recruit-form-draft'
 import { createProgramApplicationFormEconomyDraft } from '@/features/template/model/program-application-form-economy-draft'
 import { createProgramApplicationFormInstructorDraft } from '@/features/template/model/program-application-form-instructor-draft'
 import { createProgramApplicationFormInstitutionDraft } from '@/features/template/model/program-application-form-institution-draft'
@@ -24,6 +26,7 @@ import { createUjatProgramApplicationFormVolunteerDraft } from '@/features/templ
 import { createUjatProgramRegistrationDraft } from '@/features/template/model/ujat-program-registration-draft'
 import { createUjatRecruitFormInstitutionDraft } from '@/features/template/model/ujat-recruit-form-institution-draft'
 import { createUjatRecruitFormVolunteerDraft } from '@/features/template/model/ujat-recruit-form-volunteer-draft'
+import { createTrainedTeachersRecruitFormInstitutionDraft } from '@/features/template/model/trained-teachers-recruit-form-institution-draft'
 import { createPaymentStatementIssuanceDraft } from '@/features/template/model/payment-statement-issuance-draft'
 import { createPaymentStatementPreConsentDraft } from '@/features/template/model/payment-statement-pre-consent-draft'
 import { createSettlementApplicationIssuanceDraft } from '@/features/template/model/settlement-application-issuance-draft'
@@ -104,6 +107,11 @@ const WRITING_FORM_SEED_SPECS: WritingFormSeedSpec[] = [
     note: 'UJAT 모집 overlay는 extensionJson.overlay에 저장(초기 {}).',
   },
   {
+    templateCode: 'recruitment-economy',
+    payload: 'A',
+    createDraft: () => createEconomyRecruitFormInstitutionDraft(),
+  },
+  {
     templateCode: 'recruitment-participant-individual',
     payload: 'A',
     createDraft: () => createApplicantRecruitFormIndividualDraft(),
@@ -129,6 +137,16 @@ const WRITING_FORM_SEED_SPECS: WritingFormSeedSpec[] = [
     payload: 'C',
     createDraft: () => createUjatRecruitFormVolunteerDraft(),
     createExtension: EMPTY_EXTENSION,
+  },
+  {
+    templateCode: 'recruitment-gemini-visiting-training',
+    payload: 'A',
+    createDraft: () => createGeminiVisitingTrainingRecruitFormDraft(),
+  },
+  {
+    templateCode: 'recruitment-trained-teachers',
+    payload: 'A',
+    createDraft: () => createTrainedTeachersRecruitFormInstitutionDraft(),
   },
   {
     templateCode: 'application-participant-school',
@@ -319,6 +337,7 @@ export function exportWritingFormTemplateSeeds(options?: {
   for (const item of exports) {
     const fileBody = {
       templateCode: item.templateCode,
+      templateName: item.templateName,
       formType: item.formType,
       category: item.category,
       schemaJson: item.schemaJson,
@@ -387,7 +406,7 @@ export function exportWritingFormTemplateSeeds(options?: {
     '',
     '상세 계약: [form-template-json-contract.md](./form-template-json-contract.md)',
     '',
-    '## 목록 (28종)',
+    `## 목록 (${exports.length}종)`,
     '',
   ]
 
@@ -524,7 +543,7 @@ const ISSUANCE_FORM_SEED_SPECS: IssuanceFormSeedSpec[] = [
     templateCode: 'document-participation-certificate',
     payload: 'D',
     schemaJsonNull: true,
-    settingsJson: createCertificateSettingsJson('참여인증서'),
+    settingsJson: createCertificateSettingsJson('참가인증서'),
     apiStorageNote:
       '인증서 양식은 schemaJson 없이 settingsJson만 사용. DB/API에는 settingsJson을 JSON.stringify한 string으로 저장',
   },

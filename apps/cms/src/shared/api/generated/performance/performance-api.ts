@@ -66,7 +66,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -121,7 +121,7 @@ const listRules = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -177,7 +177,7 @@ const upsertRule = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -231,7 +231,7 @@ const refreshSnapshots = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -286,7 +286,7 @@ const listExternalExports = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -342,7 +342,7 @@ const requestExternalExport = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -399,7 +399,7 @@ const requestCorrection1 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -455,7 +455,7 @@ const rebuild = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -511,7 +511,7 @@ const reopenMonth = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -567,7 +567,7 @@ const closeMonth = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -621,7 +621,7 @@ const getRecord = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -678,7 +678,7 @@ const updateRecord = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -705,7 +705,7 @@ const updateRecord = (
  */
 const excludeRecord = (
     performanceRecordId: number,
-    performanceStatusChangeRequest?: PerformanceStatusChangeRequest,
+    performanceStatusChangeRequest: PerformanceStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponsePerformanceStatusChangeResponse>>,) => {
       return customInstance<ApiResponsePerformanceStatusChangeResponse>(
       {url: `/api/admin/performance-records/${performanceRecordId}/exclude`, method: 'PATCH',
@@ -735,7 +735,7 @@ const excludeRecord = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -762,7 +762,7 @@ const excludeRecord = (
  */
 const confirmRecord = (
     performanceRecordId: number,
-    performanceStatusChangeRequest?: PerformanceStatusChangeRequest,
+    performanceStatusChangeRequest: PerformanceStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponsePerformanceStatusChangeResponse>>,) => {
       return customInstance<ApiResponsePerformanceStatusChangeResponse>(
       {url: `/api/admin/performance-records/${performanceRecordId}/confirm`, method: 'PATCH',
@@ -792,7 +792,7 @@ const confirmRecord = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -849,7 +849,7 @@ const rejectCorrection1 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -876,7 +876,7 @@ const rejectCorrection1 = (
  */
 const approveCorrection1 = (
     correctionRequestId: number,
-    performanceCorrectionRequest?: PerformanceCorrectionRequest,
+    performanceCorrectionRequest: PerformanceCorrectionRequest,
  options?: SecondParameter<typeof customInstance<ApiResponsePerformanceCorrectionResponse>>,) => {
       return customInstance<ApiResponsePerformanceCorrectionResponse>(
       {url: `/api/admin/performance-correction-requests/${correctionRequestId}/approve`, method: 'PATCH',
@@ -906,7 +906,7 @@ const approveCorrection1 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -961,7 +961,7 @@ const getPerformanceSummary = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1015,7 +1015,7 @@ const listSnapshotLinks = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1070,7 +1070,7 @@ const listRecords = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1124,7 +1124,7 @@ const listRevisions = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1179,7 +1179,7 @@ const getRevisionDetail = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1234,7 +1234,7 @@ const exportRecords = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
@@ -1289,7 +1289,7 @@ const listCorrectionRequests1 = (
  * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
  *
  * ### 권한/보안
- * - 호출 가능 계정: PROTECTED 계정 정책
+ * - 호출 가능 계정: 관리자 계정
  * - 필요 권한: 별도 세부 권한 없음
  * - 접근 범위: 별도 접근 범위 제한 없음
  * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.

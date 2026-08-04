@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import { Form, Select } from 'antd'
+import { Form, Select, Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { ActionResultModal } from '@/shared/ui/action-result-modal'
 import { CmsButton, CmsRadio } from '@/shared/ui'
@@ -13,10 +13,13 @@ import type { ProgramRole } from '@/types/user'
 import {
   PROGRAM_ROLE_LABELS,
   getAssignableManagerCandidates,
-  type ProgramManagerRow } from '@/data/mock/program-managers'
+  type ProgramManagerRow,
+} from '@/data/mock/program-managers'
 import {
   canAddProgramPmFromPmCount,
-  PROGRAM_PM_ROLE_LIMIT_MESSAGE } from '@/entities/program/lib/program-pm-role-policy'
+  PROGRAM_PM_ROLE_LIMIT_MESSAGE,
+} from '@/entities/program/lib/program-pm-role-policy'
+import type { AssignableManagerCandidate } from '@/features/program/general/hooks/use-program-managers'
 import './add-manager-modal.css'
 
 const ROLE_OPTIONS: { label: string; value: ProgramRole }[] = [
@@ -35,6 +38,8 @@ export interface AddManagerFormValues {
   email: string
   phone: string
   role: ProgramRole
+  /** remote POST용 admin account id */
+  adminId?: number
 }
 
 interface AddManagerModalProps {
@@ -44,7 +49,12 @@ interface AddManagerModalProps {
   currentOwnerCount: number
   /** 이미 해당 프로그램 담당자로 등록된 이름 — 선택 목록에서 제외 */
   excludeManagerNames?: string[]
-  onAdd: (values: AddManagerFormValues) => void
+  /** remote 후보 목록 — 미지정 시 mock 후보 사용 */
+  candidates?: AssignableManagerCandidate[]
+  candidatesLoading?: boolean
+  confirmLoading?: boolean
+  /** false 반환 시 모달을 닫지 않음 (API 실패 등) */
+  onAdd: (values: AddManagerFormValues) => boolean | void | Promise<boolean | void>
 }
 
 export function AddManagerModal({
@@ -52,14 +62,19 @@ export function AddManagerModal({
   onCancel,
   currentOwnerCount,
   excludeManagerNames = [],
-  onAdd }: AddManagerModalProps) {
+  candidates,
+  candidatesLoading = false,
+  confirmLoading = false,
+  onAdd,
+}: AddManagerModalProps) {
   const [form] = Form.useForm<AddManagerModalFormValues>()
   const [showOwnerLimitModal, setShowOwnerLimitModal] = useState(false)
 
-  const assignablePool = useMemo(
-    () => getAssignableManagerCandidates(excludeManagerNames),
-    [excludeManagerNames]
-  )
+  const assignablePool = useMemo((): AssignableManagerCandidate[] => {
+    if (candidates) return candidates
+    // mock 후보는 adminId 없음 — remote 후보와 동일 shape로 맞춤
+    return getAssignableManagerCandidates(excludeManagerNames).map(c => ({ ...c }))
+  }, [candidates, excludeManagerNames])
 
   useEffect(() => {
     if (!open) return
@@ -73,7 +88,7 @@ export function AddManagerModal({
     if (!open) setShowOwnerLimitModal(false)
   }, [open])
 
-  const handleSubmit = (values: AddManagerModalFormValues) => {
+  const handleSubmit = async (values: AddManagerModalFormValues) => {
     const picked = assignablePool.find(m => m.id === values.managerPreset)
     if (!picked) return
 
@@ -82,11 +97,14 @@ export function AddManagerModal({
       return
     }
 
-    onAdd({
+    const result = await onAdd({
       name: picked.name,
       email: picked.email,
       phone: picked.phone,
-      role: values.role })
+      role: values.role,
+      adminId: picked.adminId,
+    })
+    if (result === false) return
     form.resetFields()
     onCancel()
   }
@@ -98,10 +116,20 @@ export function AddManagerModal({
 
   const footer = (
     <>
-      <CmsButton variant="secondary" size="large" onClick={handleCancel}>
+      <CmsButton
+        variant="secondary"
+        size="large"
+        onClick={handleCancel}
+        disabled={confirmLoading}
+      >
         취소
       </CmsButton>
-      <CmsButton variant="primary" size="large" onClick={() => form.submit()}>
+      <CmsButton
+        variant="primary"
+        size="large"
+        loading={confirmLoading}
+        onClick={() => form.submit()}
+      >
         담당자 등록
       </CmsButton>
     </>
@@ -122,15 +150,13 @@ export function AddManagerModal({
             form={form}
             layout="vertical"
             className="add-manager-modal__form"
-            onFinish={handleSubmit}
+            onFinish={values => {
+              void handleSubmit(values)
+            }}
             initialValues={{ managerPreset: undefined, role: 'OWNER' }}
             requiredMark={false}
           >
-            <Form.Item
-              name="role"
-              label="권한 설정"
-              className="add-manager-modal__field"
-            >
+            <Form.Item name="role" label="권한 설정" className="add-manager-modal__field">
               <CmsRadio.Group className="add-manager-modal__role-radios" size="large">
                 {ROLE_OPTIONS.map(opt => (
                   <CmsRadio
@@ -155,12 +181,18 @@ export function AddManagerModal({
                 placeholder="담당자를 선택하세요"
                 size="large"
                 allowClear
+                loading={candidatesLoading}
                 className="add-manager-modal__select"
                 options={assignablePool.map(m => ({
                   value: m.id,
-                  label: m.name }))}
+                  label: m.name,
+                }))}
                 notFoundContent={
-                  assignablePool.length === 0 ? '등록 가능한 담당자가 없습니다' : undefined
+                  candidatesLoading ? (
+                    <Spin size="small" />
+                  ) : assignablePool.length === 0 ? (
+                    '등록 가능한 담당자가 없습니다'
+                  ) : undefined
                 }
                 getPopupContainer={() => document.body}
               />
@@ -203,5 +235,7 @@ export function buildManagerRowFromForm(
     role: values.role,
     phone: values.phone,
     email: values.email,
-    registeredAt: formatRegisteredAt(new Date()) }
+    registeredAt: formatRegisteredAt(new Date()),
+    adminId: values.adminId,
+  }
 }

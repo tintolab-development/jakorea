@@ -1,0 +1,88 @@
+/**
+ * CMS app-radio — runtime preview consent 라디오 (발췌)
+ */
+
+.app-radio-group.ant-radio-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-radio-group .ant-radio-wrapper {
+  margin-inline-end: 0;
+}
+
+.app-radio-group .ant-radio,
+.app-radio-group .ant-radio .ant-radio-inner,
+.app-radio-group .ant-radio .ant-radio-inner::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+.app-radio-group--large.ant-radio-group {
+  font-size: 16px;
+}
+
+.app-radio-group--large .ant-radio-wrapper {
+  display: inline-flex;
+  align-items: center !important;
+  gap: 8px;
+  margin-inline-end: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.app-radio-group--large .ant-radio-wrapper .ant-radio .ant-radio-inner {
+  width: 20px;
+  height: 20px;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #c4cdd1;
+  background-color: #fff;
+  box-sizing: border-box;
+}
+
+.app-radio-group--large .ant-radio-wrapper .ant-radio-checked .ant-radio-inner::after {
+  width: 10px !important;
+  height: 10px !important;
+  margin-block-start: 0 !important;
+  margin-inline-start: 0 !important;
+  inset-block-start: 50% !important;
+  inset-inline-start: 50% !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+}
+
+.app-radio-group .ant-radio-wrapper::after {
+  display: none !important;
+}
+
+.app-radio-group--large .ant-radio-wrapper .ant-radio {
+  align-self: center;
+  top: 0 !important;
+}
+
+.app-radio-group--large .ant-radio-checked .ant-radio-inner {
+  border-color: #4da1af;
+  background-color: #fff;
+}
+
+.app-radio-group--large .ant-radio-checked .ant-radio-inner::after {
+  background-color: #4da1af;
+}
+
+.app-radio-group--large .ant-radio-wrapper-checked {
+  color: var(--JA-mint-01, #01a1af) !important;
+}
+
+.app-radio-group--large .ant-radio-wrapper span.ant-radio + * {
+  padding-inline-start: 0 !important;
+  padding-inline-end: 0 !important;
+}
+
+.app-radio-group--large .ant-radio-wrapper span.ant-radio {
+  padding: 0 !important;
+}

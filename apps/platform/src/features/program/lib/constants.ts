@@ -12,7 +12,7 @@ export const PROGRAM_CATEGORY_ITEMS: { key: ProgramCategory; label: string }[] =
 export const PROGRAM_SORT_OPTIONS: { key: ProgramSort; label: string }[] = [
   { key: 'latest', label: '최신순' },
   { key: 'name', label: '이름순' },
-  { key: 'closing-soon', label: '마감임박순' },
+  { key: 'closing-soon', label: '마감일 가까운순' },
 ]
 
 export const DEFAULT_PROGRAMS_LIST_PARAMS = {
@@ -20,15 +20,24 @@ export const DEFAULT_PROGRAMS_LIST_PARAMS = {
   q: '',
   recruitmentTarget: 'all',
   recruitmentStatus: 'all',
+  operatingPeriod: 'all',
   educationTarget: 'all',
   educationForm: 'all',
   sort: 'latest',
   page: 1,
 } as const
 
+/** 운영기간 필터 — 연 단위 (mock/API 공통 value = YYYY) */
+export const OPERATING_PERIOD_FILTER_OPTIONS = [
+  { value: 'all', label: '전체' },
+  { value: '2026', label: '2026년' },
+  { value: '2025', label: '2025년' },
+] as const
+
 export const PROGRAM_FILTER_KEYS = [
   'recruitmentTarget',
   'recruitmentStatus',
+  'operatingPeriod',
   'educationTarget',
   'educationForm',
 ] as const satisfies readonly (keyof ProgramsListParams)[]

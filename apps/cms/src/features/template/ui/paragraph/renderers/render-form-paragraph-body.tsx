@@ -10,6 +10,8 @@ import {
   type UjatJournalEducationInfoParagraph,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragraph/explanation/agreement-admin-proxy-confirm-block'
+import { isAgreementAdminProxyConfirmHostId } from '@/features/template/lib/agreement-admin-proxy-confirm-paragraphs'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
 import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
 import {
@@ -95,6 +97,13 @@ export type RenderFormParagraphBodyOptions = {
   agreementSystemParticipantName?: string
   agreementSystemNow?: Date
   /**
+   * 관리자 대리 작성(회원 등록) — 마무리·날짜·서명을 2단 확인 카드로 합침.
+   * `agreementSystemParticipantName`과 함께 쓰며, 날짜·서명 단락은 `hiddenParagraphIds`로 숨긴다.
+   */
+  agreementAdminProxyConfirm?: boolean
+  /** 초상권 동의서 1번 표 — 소속 셀렉트 고정 옵션(강사 신규 등록 등) */
+  portraitPersonalConsentAffiliationOptions?: ReadonlyArray<{ value: string; label: string }>
+  /**
    * 기본 authoring.
    * - user: 카드 선택은 유지(우측 패널 등)하되, 본문 입력은 카드 비선택에서도 가능(`isBodyInteractive`).
    * - preview: user와 동일하게 본문 노출, 입력은 전부 비활성(프로그램 상세 신청 정보 미리보기).
@@ -106,6 +115,10 @@ export type RenderFormParagraphBodyOptions = {
   paymentStatementBasicInfoValues?: Partial<PaymentStatementBasicInfoAutofillValues>
   /** true: 지급조서 기본정보에서 「지급 목적」만 비활성, 나머지 필드는 편집 가능(사전 동의 템플릿 등) */
   paymentStatementBasicInfoOnlyPaymentPurposeLocked?: boolean
+  /** 편집 가능 모드 — 기본정보 값 변경(성명 → 확인·서명란 동기화) */
+  paymentStatementBasicInfoOnValuesChange?: (
+    values: PaymentStatementBasicInfoAutofillValues
+  ) => void
   /** 강의비 산출 정보 단락 미리 채움 */
   lectureFeeCalculationValues?: Partial<LectureFeeCalculationAutofillValues>
   /** 강의비 산출 내역 단락 — 발급용 테이블 목·실데이터 */
@@ -140,6 +153,10 @@ export type RenderFormParagraphBodyOptions = {
   showInstitutionApplicationLimits?: boolean
   applicantRecruitInstitutionLayoutVariant?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['layoutVariant']
   applicantRecruitInstitutionDefaults?: import('@/features/template/ui/form-set/recruit-form/institution/paragraph-body').ApplicantRecruitFormInstitutionParagraphBodyOptions['defaults']
+  /** 1사1교_참여 기관 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  economyRecruitFormInstitution?: boolean
+  /** 교육받은 교사_참여 기관 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  trainedTeachersRecruitFormInstitution?: boolean
   /** UJAT 프로그램 학교 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormInstitution?: boolean
   /** 프로그램 참여자 모집 폼 (개인) 시드 단락 — `DetailInfoForm` 본문 */
@@ -148,6 +165,8 @@ export type RenderFormParagraphBodyOptions = {
   recruitFormInstructor?: boolean
   /** 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   recruitFormVolunteer?: boolean
+  /** Gemini 찾아가는 연수 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
+  geminiRecruitForm?: boolean
   /** UJAT 프로그램 봉사자 모집 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatRecruitFormVolunteer?: boolean
   ujatRecruitParagraphProps?: import('@/features/program/ujat/ui/detail-modal/info/ujat-recruit-paragraph-props').UjatRecruitParagraphProps
@@ -165,9 +184,21 @@ export type RenderFormParagraphBodyOptions = {
   documentPreviewClassName?: string
   /**
    * 구조 잠금 + 작성(authoring)일 때도 객관식·가로형 하단 동의 라디오 등 선택 UI만 조작 가능(미리 체크).
+   * preview(회원 동의 작성)에서도 동일하게 하단 동의만 조작 가능.
    * 프로그램 참여자 신청 폼 등 고정 단락 템플릿용.
    */
   structureLockedAuthoringChoicePreview?: boolean
+  /** 초상권 동의 fill — 1번 표 성명·소속 응답 입력만 허용 */
+  portraitConsentResponseFieldsInteractive?: boolean
+  /**
+   * 회원 동의 작성(user) — 양식 본문(표 셀·설명글)은 잠금, 하단 동의·지급조서 등 응답 입력은 허용.
+   * `preview` 대신 사용(CSS pointer-events 차단 회피).
+   */
+  agreementConsentFillReadOnlyBody?: boolean
+  /** fill에서 양식 잠금이어도 입력을 허용할 단락 id (행정정보 대상자 본인 등) */
+  agreementConsentFillInteractiveParagraphIds?: ReadonlySet<string>
+  /** 행정정보 공동이용 fill — 표 하단 식별번호 입력만 허용 */
+  agreementNoticeIdTypeInteractive?: boolean
   /** 현재 조건에 따라 숨겨야 하는 단락 id 목록(에디터/미리보기 공통) */
   hiddenParagraphIds?: ReadonlySet<string>
   /**
@@ -179,6 +210,8 @@ export type RenderFormParagraphBodyOptions = {
   programLinkedIndividualApplicationForm?: boolean
   /** 강의 평가 등 — 설문 기간을 기간 피커 대신 지정 텍스트로 표시 */
   surveyPeriodReadonly?: boolean
+  /** 회원 동의 작성(fill) — 제목형「작성 기간」본문 슬롯 숨김 */
+  hideSurveyWritingPeriod?: boolean
 }
 
 export function renderFormParagraphBody(
@@ -193,22 +226,34 @@ export function renderFormParagraphBody(
   const isPreviewReadonly = isFormPreviewReadonlyMode(paragraphInteractionMode)
   const isCardSelected = isParagraphSelected
   const structureLocked = options?.structureLockedParagraphIds?.has(p.id) ?? false
+  const consentFillBodyReadOnly = options?.agreementConsentFillReadOnlyBody === true
+  const consentFillParagraphInteractive =
+    consentFillBodyReadOnly &&
+    (options?.agreementConsentFillInteractiveParagraphIds?.has(p.id) ?? false)
   /**
    * 구조 잠금: 작성(authoring)에서는 카드 선택만으로는 본문 편집 불가.
-   * 미리보기(`user`)에서는 잠긴 시드도 입력 가능. `preview`는 항상 비활성.
+   * user + `agreementConsentFillReadOnlyBody`: 양식 본문만 잠금(동의서 작성).
+   * user + interactive id 예외(대상자 본인 등): 응답 입력 허용.
+   * user(일반): 잠긴 시드도 입력 가능. `preview`는 항상 비활성.
    */
   const isBodyInteractive = isPreviewReadonly
     ? false
     : structureLocked
-      ? paragraphInteractionMode === 'user'
+      ? paragraphInteractionMode === 'user' &&
+        (!consentFillBodyReadOnly || consentFillParagraphInteractive)
       : paragraphInteractionMode === 'user' || isParagraphSelected
-  const lockedAuthoringChoicePreview =
+  const structureLockedConsentChoiceInteractive =
     structureLocked &&
-    paragraphInteractionMode === 'authoring' &&
-    options?.structureLockedAuthoringChoicePreview === true
+    options?.structureLockedAuthoringChoicePreview === true &&
+    (paragraphInteractionMode === 'authoring' ||
+      paragraphInteractionMode === 'preview' ||
+      (paragraphInteractionMode === 'user' && consentFillBodyReadOnly))
+  const lockedAuthoringChoicePreview =
+    structureLockedConsentChoiceInteractive && paragraphInteractionMode === 'authoring'
   switch (p.variant) {
     case 'survey_title_with_period':
       if (!isCardSelected && !isUserLikeVisible) return null
+      if (options?.hideSurveyWritingPeriod === true) return null
       if (!(p.showWritingPeriodOnForm ?? false)) return null
       if (options?.surveyPeriodReadonly) {
         return (
@@ -261,15 +306,26 @@ export function renderFormParagraphBody(
       )
     }
     case 'agreement_explanation_text': {
+      if (
+        options?.agreementAdminProxyConfirm === true &&
+        isAgreementAdminProxyConfirmHostId(p.id)
+      ) {
+        const consentText = 'bodyText' in p ? String(p.bodyText ?? '') : ''
+        return (
+          <AgreementAdminProxyConfirmBlock
+            consentText={consentText}
+            memberName={options.agreementSystemParticipantName ?? ''}
+            now={options.agreementSystemNow}
+          />
+        )
+      }
       const isPaymentPreConsentIntro =
-        p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro &&
-        paragraphInteractionMode === 'authoring' &&
-        structureLocked
+        p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro && structureLocked
       const isPaymentPreConsentWhiteSheetBar =
         (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine ||
           p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) &&
-        paragraphInteractionMode === 'authoring' &&
-        structureLocked
+        structureLocked &&
+        options?.agreementAdminProxyConfirm !== true
       const shouldRenderDisabledPlaceholder =
         paragraphInteractionMode === 'authoring' &&
         structureLocked &&
@@ -289,6 +345,7 @@ export function renderFormParagraphBody(
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isBodyInteractive}
           bodyDisplayMode={explanationBodyDisplayMode}
+          bottomConsentInteractive={isBodyInteractive || structureLockedConsentChoiceInteractive}
         />
       )
     }
@@ -296,10 +353,11 @@ export function renderFormParagraphBody(
       const hp = normalizeHorizontalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
       )
-      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 구조 잠금 시 작성 모드에서는 편집 불가, 미리보기(user)는 예외 */
+      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 동의서 fill은 양식 본문만 잠금 */
       const isEditMode =
         !isPreviewReadonly &&
-        (!structureLocked || paragraphInteractionMode === 'user') &&
+        (!structureLocked ||
+          (paragraphInteractionMode === 'user' && !consentFillBodyReadOnly)) &&
         (paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field')
       /** 표 격자·헤더 행 선택(민트 스트로크) — 작성(authoring) + 구조 미잠금에서만 */
       const tableCanvasInteractive =
@@ -310,7 +368,7 @@ export function renderFormParagraphBody(
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isEditMode}
           tableCanvasInteractive={tableCanvasInteractive}
-          bottomConsentPreviewInAuthoring={lockedAuthoringChoicePreview}
+          bottomConsentPreviewInAuthoring={structureLockedConsentChoiceInteractive}
           tableRowSelection={options?.horizontalTableRowSelection}
           onTableRowSelectionChange={options?.onHorizontalTableRowSelectionChange}
           paymentStatementBasicInfoValues={options?.paymentStatementBasicInfoValues}
@@ -320,6 +378,7 @@ export function renderFormParagraphBody(
           lectureFeeCalculationValues={options?.lectureFeeCalculationValues}
           paymentStatementCalculationLines={options?.paymentStatementCalculationLines}
           paymentStatementDisplayMode={options?.paymentStatementDisplayMode}
+          agreementNoticeIdTypeInteractive={options?.agreementNoticeIdTypeInteractive}
           programRegistration={options?.programRegistration}
           ujatProgramRegistration={options?.ujatProgramRegistration}
           programApplicationFormInstitution={options?.programApplicationFormInstitution}
@@ -344,10 +403,15 @@ export function renderFormParagraphBody(
             options?.applicantRecruitInstitutionLayoutVariant
           }
           applicantRecruitInstitutionDefaults={options?.applicantRecruitInstitutionDefaults}
+          economyRecruitFormInstitution={options?.economyRecruitFormInstitution}
+          trainedTeachersRecruitFormInstitution={
+            options?.trainedTeachersRecruitFormInstitution
+          }
           ujatRecruitFormInstitution={options?.ujatRecruitFormInstitution}
           applicantRecruitFormIndividual={options?.applicantRecruitFormIndividual}
           recruitFormInstructor={options?.recruitFormInstructor}
           recruitFormVolunteer={options?.recruitFormVolunteer}
+          geminiRecruitForm={options?.geminiRecruitForm}
           ujatRecruitFormVolunteer={options?.ujatRecruitFormVolunteer}
           ujatRecruitParagraphProps={options?.ujatRecruitParagraphProps}
           programApplicationFormInstructor={
@@ -405,6 +469,7 @@ export function renderFormParagraphBody(
             values={options?.paymentStatementBasicInfoValues}
             displayMode={options?.paymentStatementDisplayMode ?? 'editor'}
             onlyPaymentPurposeLocked={options?.paymentStatementBasicInfoOnlyPaymentPurposeLocked}
+            onValuesChange={options?.paymentStatementBasicInfoOnValuesChange}
           />
         )
       }
@@ -423,6 +488,13 @@ export function renderFormParagraphBody(
           tableCanvasInteractive={tableCanvasInteractive}
           tableRowSelection={options?.verticalTableRowSelection}
           onTableRowSelectionChange={options?.onVerticalTableRowSelectionChange}
+          portraitPersonalConsentAffiliationOptions={
+            options?.portraitPersonalConsentAffiliationOptions
+          }
+          portraitConsentResponseFieldsInteractive={
+            options?.portraitConsentResponseFieldsInteractive
+          }
+          bottomConsentInteractive={structureLockedConsentChoiceInteractive}
         />
       )
     }
@@ -445,8 +517,23 @@ export function renderFormParagraphBody(
       }
       return null
     }
-    case 'closing':
+    case 'closing': {
+      if (
+        options?.agreementAdminProxyConfirm === true &&
+        isAgreementAdminProxyConfirmHostId(p.id) &&
+        p.kind === 'description' &&
+        p.variant === 'closing'
+      ) {
+        return (
+          <AgreementAdminProxyConfirmBlock
+            consentText={p.body}
+            memberName={options.agreementSystemParticipantName ?? ''}
+            now={options.agreementSystemNow}
+          />
+        )
+      }
       return null
+    }
     case 'static_description_lines':
       if (p.kind !== 'description' || p.variant !== 'static_description_lines') return null
       return <StaticDescriptionLines paragraph={p} />
@@ -513,7 +600,11 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isCardSelected={isCardSelected}
-          isBodyInteractive={isBodyInteractive || lockedAuthoringChoicePreview}
+          isBodyInteractive={
+            isBodyInteractive ||
+            lockedAuthoringChoicePreview ||
+            structureLockedConsentChoiceInteractive
+          }
           paragraphInteractionMode={paragraphInteractionMode}
           itemsEditActive={itemsEditActive}
           onActivateItemsEditor={

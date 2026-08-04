@@ -3,8 +3,9 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Card, Button, Space, Input } from 'antd'
+import { Alert, Card, Space, Input } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
+import { CmsButton } from '@/shared/ui'
 import type { CertificateTextField } from '@/types/template'
 import { generateCertificatePdf } from '@/shared/utils/certificate-pdf-generator'
 import { downloadBlob } from '@/shared/utils/file-download'
@@ -217,16 +218,15 @@ export function CertificatePreview({
 
         {pdfError ? <Alert type="error" description={pdfError} showIcon /> : null}
 
-        <Button
-          type="primary"
+        <CmsButton
           icon={<DownloadOutlined />}
           onClick={handleDownload}
           loading={generating}
           disabled={disabled || !backgroundImageUrl}
-          block
+          width="100%"
         >
           PDF 다운로드
-        </Button>
+        </CmsButton>
       </Space>
 
       {/* 숨겨진 Canvas (렌더링용) */}

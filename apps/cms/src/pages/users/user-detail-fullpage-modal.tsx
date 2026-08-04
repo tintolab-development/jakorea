@@ -25,7 +25,7 @@ import {
   type UserDetailFullpageShellValue,
 } from '@/features/user/detail/ui/detail-info/user-detail-fullpage-shell-context'
 import { UserDetailFullpageTabPanels } from '@/features/user/detail/ui/detail-info/user-detail-fullpage-tab-panels'
-import type { User } from '@/types/user'
+import type { User, AffiliatedTeacherLinkTarget } from '@/types/user'
 import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import { useUserStore } from '@/features/user/shared/model/user-store'
 import { useUserDetailController } from '@/features/user/detail/lib/use-user-detail-controller'
@@ -33,6 +33,10 @@ import { useUserDetailFullpageDerived } from '@/features/user/detail/lib/use-use
 import { useUserDetailModals } from '@/features/user/detail/lib/use-user-detail-modals'
 import { UserDetailLayout } from '@/features/user/detail/ui/detail-info/user-detail-layout'
 import { USER_BASIC_INFO_ENTRY_QUERY_KEY } from '@/features/user/detail/ui/user-basic-info/entry-resolver'
+import {
+  USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY,
+  USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY,
+} from '@/features/user/detail/lib/teacher-detail-url-context'
 import type { UserBasicInfoEntrySource } from '@/features/user/detail/ui/user-basic-info-section'
 import './user-detail-modal.css'
 
@@ -67,7 +71,7 @@ export interface UserDetailFullPageModalProps {
     userId: string
     permissionRole: UserDetailPermissionRole
   }) => void
-  onNavigateToLinkedUser?: (userId: string) => void
+  onNavigateToLinkedUser?: (target: AffiliatedTeacherLinkTarget) => void
   /** 저장 후 목록·드로어 등 상위가 동일 회원 객체를 갱신할 때 */
   onMemberBasicInfoSaved?: (user: Omit<User, 'password'>) => void
   /** 목록 상세 닫기 중 URL 동기화 차단 */
@@ -145,11 +149,18 @@ export function UserDetailFullPageModal({
       onWithdrawModalCancel: actions.closeWithdrawConfirm,
       onWithdrawModalConfirm: actions.handleWithdrawConfirm,
       basicInfoEditing: state.basicInfoEditing,
+      basicInfoEditScope: state.basicInfoEditScope,
       basicInfoDraft: state.basicInfoDraft,
       basicInfoSaveLoading: state.basicInfoSaveLoading,
       adminPermissionVariantPatching: state.adminPermissionVariantPatching,
       instructorPermissionRevokeOpen: state.instructorPermissionRevokeOpen,
+      jaGradeEvaluationOpen: state.jaGradeEvaluationOpen,
+      onOpenJaGradeEvaluation: actions.openJaGradeEvaluation,
+      onCloseJaGradeEvaluation: actions.closeJaGradeEvaluation,
+      onCompleteJaGradeEvaluation: actions.completeJaGradeEvaluation,
+      scheduleChangeCount: undefined,
       onStartBasicInfoEdit: actions.startBasicInfoEdit,
+      onStartAdminCommentEdit: actions.startAdminCommentEdit,
       onCancelBasicInfoEdit: actions.cancelBasicInfoEdit,
       onSaveBasicInfoEdit: actions.saveBasicInfoEdit,
       onBasicInfoDraftChange: actions.updateBasicInfoDraft,
@@ -176,11 +187,14 @@ export function UserDetailFullPageModal({
     state.withdrawConfirmOpen,
     state.institutionDeleteBlockedOpen,
     state.basicInfoEditing,
+    state.basicInfoEditScope,
     state.basicInfoDraft,
     state.basicInfoSaveLoading,
     state.adminPermissionVariantPatching,
     state.instructorPermissionRevokeOpen,
+    state.jaGradeEvaluationOpen,
     actions.startBasicInfoEdit,
+    actions.startAdminCommentEdit,
     actions.cancelBasicInfoEdit,
     actions.saveBasicInfoEdit,
     actions.updateBasicInfoDraft,
@@ -188,6 +202,9 @@ export function UserDetailFullPageModal({
     actions.openInstructorPermissionRevoke,
     actions.closeInstructorPermissionRevoke,
     actions.confirmInstructorPermissionRevoke,
+    actions.openJaGradeEvaluation,
+    actions.closeJaGradeEvaluation,
+    actions.completeJaGradeEvaluation,
     onPermissionResendNotification,
     derived.instructorResumeApplicantRow,
     derived.canPatchAdminPermissionInDetailView,
@@ -221,6 +238,8 @@ export function UserDetailFullPageModal({
         'lnb',
         USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
         USER_BASIC_INFO_ENTRY_QUERY_KEY,
+        USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY,
+        USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY,
       ],
     })
     const items = [makeBreadcrumbItem('회원 목록', location.pathname, listParams)]
@@ -231,7 +250,11 @@ export function UserDetailFullPageModal({
     }
 
     const detailParams = buildSearchParams(searchParams, {
-      delete: ['lnb', USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY, USER_BASIC_INFO_ENTRY_QUERY_KEY],
+      delete: [
+        'lnb',
+        USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY,
+        USER_BASIC_INFO_ENTRY_QUERY_KEY,
+      ],
       set: {
         id: displayUser.id,
         lnb: 'detail-info',
@@ -266,6 +289,7 @@ export function UserDetailFullPageModal({
   return (
     <UserDetailFullpageShellProvider value={shell}>
       {state.personalInfoRevealModal}
+      {state.editUnmaskConfirmModal}
       <UserDetailLayout
         open={open}
         onClose={onClose}

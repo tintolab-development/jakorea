@@ -1,6 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { DEFAULT_GENERAL_EDUCATION_SCHEDULE_LINES_MOCK } from '@/features/program/general/lib/detail-common-info-display'
+import {
+  useGeneralApplicationOverlayKv,
+  updateGeneralApplicationOverlayKey,
+} from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import '@/features/template/ui/paragraph/single-item/multiple-choice.css'
 
@@ -19,15 +23,20 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
     return [...DEFAULT_GENERAL_EDUCATION_SCHEDULE_LINES_MOCK]
   }, [bridge.educationScheduleLines])
 
-  const [selectedLines, setSelectedLines] = useState<Set<string>>(() => new Set())
+  const [selectedLines] = useGeneralApplicationOverlayKv<string[]>(
+    'application.institution.fixedScheduleSelected',
+    []
+  )
 
   const toggleLine = (line: string, checked: boolean) => {
     if (readOnlyPreview) return
-    setSelectedLines(prev => {
-      const next = new Set(prev)
-      if (checked) next.add(line)
-      else next.delete(line)
-      return next
+    updateGeneralApplicationOverlayKey<string[]>('application.institution.fixedScheduleSelected', prev => {
+      const current = (prev ?? []) as string[]
+      if (checked) {
+        return current.includes(line) ? current : [...current, line]
+      } else {
+        return current.filter((l: string) => l !== line)
+      }
     })
   }
 
@@ -45,7 +54,7 @@ export function ProgramApplicationFormInstitutionFixedScheduleParagraph({
         <div key={line} role="presentation" className="multiple-choice-row">
           <CmsCheckbox
             disabled={readOnlyPreview}
-            checked={selectedLines.has(line)}
+            checked={selectedLines.includes(line)}
             onChange={event => toggleLine(line, event.target.checked)}
           />
           <span className="multiple-choice-row__label">{line}</span>

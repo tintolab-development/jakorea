@@ -5,12 +5,13 @@
 }
 
 html {
-    -webkit-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+  min-width: var(--layout-min-width);
 }
 
 body {
-    margin: 0;
-    min-width: 320px;
+  margin: 0;
+  min-width: var(--layout-min-width);
     min-height: 100vh;
     font-family: var(--font-family-base);
     font-size: var(--font-size-body);
@@ -67,5 +68,6 @@ a {
 }
 
 #root {
-    min-height: 100vh;
+  min-height: 100vh;
+  min-width: var(--layout-min-width);
 }

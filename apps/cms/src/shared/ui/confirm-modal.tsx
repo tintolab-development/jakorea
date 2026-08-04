@@ -8,7 +8,7 @@ import './confirm-modal.css'
 
 const DEFAULT_WIDTH = 600
 
-interface ConfirmModalProps {
+export interface ConfirmModalProps {
   open: boolean
   title: string
   content: string
@@ -22,6 +22,8 @@ interface ConfirmModalProps {
   /** 모달 너비(px). 기본 600 */
   width?: number
   zIndex?: number
+  /** 확인 버튼 로딩 (비동기 확인 중) */
+  confirmLoading?: boolean
 }
 
 export function ConfirmModal({
@@ -36,6 +38,7 @@ export function ConfirmModal({
   warningMessage,
   width = DEFAULT_WIDTH,
   zIndex = 1001,
+  confirmLoading = false,
 }: ConfirmModalProps) {
   return (
     <ContentModal
@@ -47,7 +50,13 @@ export function ConfirmModal({
       className="confirm-modal"
       footer={
         <>
-          <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            type="button"
+            onClick={onCancel}
+            disabled={confirmLoading}
+          >
             {cancelText}
           </CmsButton>
           <CmsButton
@@ -55,6 +64,8 @@ export function ConfirmModal({
             size="medium"
             type="button"
             onClick={onConfirm}
+            loading={confirmLoading}
+            disabled={confirmLoading}
           >
             {confirmText}
           </CmsButton>

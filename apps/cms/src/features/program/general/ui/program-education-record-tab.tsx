@@ -2,7 +2,8 @@
  * 프로그램 실적 통계 상세 탭
  */
 
-import { Space, Card, Descriptions, Tag, Typography } from 'antd'
+import { Space, Card, Tag, Typography } from 'antd'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { Program } from '@/types/domain'
 
 const { Text } = Typography
@@ -31,116 +32,112 @@ export function ProgramEducationRecordTab({
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       {/* 기본 교육실적 정보 */}
       <Card title="기본 교육실적 정보">
-        <Descriptions column={1} bordered>
+        <DetailInfoForm title="기본 교육실적 정보" hideHeader mode="view">
           {program.businessArea && (
-            <Descriptions.Item label="사업분야">{program.businessArea}</Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="사업분야" view={program.businessArea} />
+            </DetailInfoForm.Row>
           )}
           {sponsorNameEn && (
-            <Descriptions.Item label="후원사명(영문)">
-              <Text ellipsis={{ tooltip: sponsorNameEn }}>{sponsorNameEn}</Text>
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="후원사명(영문)" view={<Text ellipsis={{ tooltip: sponsorNameEn }}>{sponsorNameEn}</Text>} />
+            </DetailInfoForm.Row>
           )}
           {program.titleEn && (
-            <Descriptions.Item label="프로그램명(영문)">
-              <Text ellipsis={{ tooltip: program.titleEn }}>{program.titleEn}</Text>
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="프로그램명(영문)" view={<Text ellipsis={{ tooltip: program.titleEn }}>{program.titleEn}</Text>} />
+            </DetailInfoForm.Row>
           )}
           {program.mainTitle && (
-            <Descriptions.Item label="대표 프로그램명(국문)">
-              <Text ellipsis={{ tooltip: program.mainTitle }}>{program.mainTitle}</Text>
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="대표 프로그램명(국문)" view={<Text ellipsis={{ tooltip: program.mainTitle }}>{program.mainTitle}</Text>} />
+            </DetailInfoForm.Row>
           )}
           {program.textbookName && (
-            <Descriptions.Item label="교재명(국문)">
-              <Text ellipsis={{ tooltip: program.textbookName }}>{program.textbookName}</Text>
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="교재명(국문)" view={<Text ellipsis={{ tooltip: program.textbookName }}>{program.textbookName}</Text>} />
+            </DetailInfoForm.Row>
           )}
           {program.textbookNameEn && (
-            <Descriptions.Item label="교재명(영문)">
-              <Text ellipsis={{ tooltip: program.textbookNameEn }}>
-                {program.textbookNameEn}
-              </Text>
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="교재명(영문)" view={<Text ellipsis={{ tooltip: program.textbookNameEn }}>{program.textbookNameEn}</Text>} />
+            </DetailInfoForm.Row>
           )}
           {schoolInfo && (
             <>
-              <Descriptions.Item label="학교명 (기관)">
-                <Text ellipsis={{ tooltip: schoolInfo.name }}>{schoolInfo.name}</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="시군구">
-                <Text ellipsis={{ tooltip: schoolInfo.region || program.district || '-' }}>
-                  {schoolInfo.region || program.district || '-'}
-                </Text>
-              </Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="학교명 (기관)" view={<Text ellipsis={{ tooltip: schoolInfo.name }}>{schoolInfo.name}</Text>} />
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="시군구" view={<Text ellipsis={{ tooltip: schoolInfo.region || program.district || '-' }}>{schoolInfo.region || program.district || '-'}</Text>} />
+              </DetailInfoForm.Row>
             </>
           )}
           {program.ipOwned && (
-            <Descriptions.Item label="IP Owned">{program.ipOwned}</Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="IP Owned" view={program.ipOwned} />
+            </DetailInfoForm.Row>
           )}
           {program.courseDeliveredBy && (
-            <Descriptions.Item label="Course Delivered By">
-              {program.courseDeliveredBy === 'JA'
-                ? 'JA'
-                : program.courseDeliveredBy === 'Jointly'
-                  ? 'Jointly'
-                  : program.courseDeliveredBy}
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="Course Delivered By"
+                view={program.courseDeliveredBy === 'JA' ? 'JA' : program.courseDeliveredBy === 'Jointly' ? 'Jointly' : program.courseDeliveredBy}
+              />
+            </DetailInfoForm.Row>
           )}
           {program.partnerInvolvement !== undefined && (
-            <Descriptions.Item label="Partner Involvement">
-              {program.partnerInvolvement ? 'Yes' : 'No'}
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="Partner Involvement" view={program.partnerInvolvement ? 'Yes' : 'No'} />
+            </DetailInfoForm.Row>
           )}
           {program.ips && (
-            <Descriptions.Item label="IPS 분류">
-              <Tag>{program.ips}</Tag>
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="IPS 분류" view={<Tag>{program.ips}</Tag>} />
+            </DetailInfoForm.Row>
           )}
           {program.targetLevel && (
-            <Descriptions.Item label="대상 구분">
-              {program.targetLevel === 'elementary'
-                ? '초'
-                : program.targetLevel === 'middle'
-                  ? '중'
-                  : program.targetLevel === 'high'
-                    ? '고'
-                    : program.targetLevel}
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="대상 구분"
+                view={program.targetLevel === 'elementary' ? '초' : program.targetLevel === 'middle' ? '중' : program.targetLevel === 'high' ? '고' : program.targetLevel}
+              />
+            </DetailInfoForm.Row>
           )}
           {program.institutionType && (
-            <Descriptions.Item label="기관 구분">
-              {program.institutionType === 'inside_school' ? '학교 안' : '학교 밖'}
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="기관 구분" view={program.institutionType === 'inside_school' ? '학교 안' : '학교 밖'} />
+            </DetailInfoForm.Row>
           )}
           {program.ips === 'Succeed' && program.programCategory && (
-            <Descriptions.Item label="프로그램 종류">
-              <Text ellipsis={{ tooltip: program.programCategory }}>
-                {program.programCategory}
-              </Text>
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="프로그램 종류" view={<Text ellipsis={{ tooltip: program.programCategory }}>{program.programCategory}</Text>} />
+            </DetailInfoForm.Row>
           )}
           {program.ips === 'Inspire' && program.programChannel && (
-            <Descriptions.Item label="프로그램 채널 및 형식">
-              <Text ellipsis={{ tooltip: program.programChannel }}>
-                {program.programChannel}
-              </Text>
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="프로그램 채널 및 형식" view={<Text ellipsis={{ tooltip: program.programChannel }}>{program.programChannel}</Text>} />
+            </DetailInfoForm.Row>
           )}
-          <Descriptions.Item label="교육 형태">
-            <Tag>{programTypeLabels[program.type] || program.type}</Tag>
-          </Descriptions.Item>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field label="교육 형태" view={<Tag>{programTypeLabels[program.type] || program.type}</Tag>} />
+          </DetailInfoForm.Row>
           {program.educationTime && (
-            <Descriptions.Item label="교육시간">{program.educationTime}시간</Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="교육시간" view={`${program.educationTime}시간`} />
+            </DetailInfoForm.Row>
           )}
           {program.rounds && program.rounds[0]?.classCount && (
-            <Descriptions.Item label="학급수">
-              {program.rounds[0].classCount}
-            </Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="학급수" view={program.rounds[0].classCount} />
+            </DetailInfoForm.Row>
           )}
           {program.managerName && (
-            <Descriptions.Item label="담당자명">{program.managerName}</Descriptions.Item>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="담당자명" view={program.managerName} />
+            </DetailInfoForm.Row>
           )}
-        </Descriptions>
+        </DetailInfoForm>
       </Card>
 
       {/* 참가자 통계 */}
@@ -148,25 +145,26 @@ export function ProgramEducationRecordTab({
         program.femaleParticipants !== undefined ||
         program.totalParticipants !== undefined) && (
         <Card title="참가자 통계">
-          <Descriptions column={2} bordered>
-            {program.maleParticipants !== undefined && (
-              <Descriptions.Item label="남성 참가자">
-                {program.maleParticipants}명
-              </Descriptions.Item>
-            )}
-            {program.femaleParticipants !== undefined && (
-              <Descriptions.Item label="여성 참가자">
-                {program.femaleParticipants}명
-              </Descriptions.Item>
+          <DetailInfoForm title="참가자 통계" hideHeader mode="view">
+            {(program.maleParticipants !== undefined || program.femaleParticipants !== undefined) && (
+              <DetailInfoForm.Row type="double">
+                {program.maleParticipants !== undefined && (
+                  <DetailInfoForm.Field label="남성 참가자" view={`${program.maleParticipants}명`} />
+                )}
+                {program.femaleParticipants !== undefined && (
+                  <DetailInfoForm.Field label="여성 참가자" view={`${program.femaleParticipants}명`} />
+                )}
+              </DetailInfoForm.Row>
             )}
             {program.totalParticipants !== undefined && (
-              <Descriptions.Item label="총 참가자" span={2}>
-                <Text strong style={{ fontSize: 16 }}>
-                  {program.totalParticipants}명
-                </Text>
-              </Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="총 참가자"
+                  view={<Text strong style={{ fontSize: 16 }}>{program.totalParticipants}명</Text>}
+                />
+              </DetailInfoForm.Row>
             )}
-          </Descriptions>
+          </DetailInfoForm>
         </Card>
       )}
 
@@ -175,23 +173,21 @@ export function ProgramEducationRecordTab({
         program.staffVolunteers !== undefined ||
         program.returningVolunteers !== undefined) && (
         <Card title="자원봉사자 통계">
-          <Descriptions column={2} bordered>
-            {program.generalVolunteers !== undefined && (
-              <Descriptions.Item label="일반 자원봉사자">
-                {program.generalVolunteers}명
-              </Descriptions.Item>
-            )}
-            {program.staffVolunteers !== undefined && (
-              <Descriptions.Item label="임직원 자원봉사자">
-                {program.staffVolunteers}명
-              </Descriptions.Item>
-            )}
+          <DetailInfoForm title="자원봉사자 통계" hideHeader mode="view">
+            <DetailInfoForm.Row type="double">
+              {program.generalVolunteers !== undefined && (
+                <DetailInfoForm.Field label="일반 자원봉사자" view={`${program.generalVolunteers}명`} />
+              )}
+              {program.staffVolunteers !== undefined && (
+                <DetailInfoForm.Field label="임직원 자원봉사자" view={`${program.staffVolunteers}명`} />
+              )}
+            </DetailInfoForm.Row>
             {program.returningVolunteers !== undefined && (
-              <Descriptions.Item label="재참여 자원봉사자">
-                {program.returningVolunteers}명
-              </Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="재참여 자원봉사자" view={`${program.returningVolunteers}명`} />
+              </DetailInfoForm.Row>
             )}
-          </Descriptions>
+          </DetailInfoForm>
         </Card>
       )}
 
@@ -200,21 +196,21 @@ export function ProgramEducationRecordTab({
         program.educatedTeachers !== undefined ||
         program.instructors !== undefined) && (
         <Card title="교사/강사 통계">
-          <Descriptions column={2} bordered>
-            {program.generalTeachers !== undefined && (
-              <Descriptions.Item label="일반담당교사">
-                {program.generalTeachers}명
-              </Descriptions.Item>
-            )}
-            {program.educatedTeachers !== undefined && (
-              <Descriptions.Item label="교육받은교사">
-                {program.educatedTeachers}명
-              </Descriptions.Item>
-            )}
+          <DetailInfoForm title="교사/강사 통계" hideHeader mode="view">
+            <DetailInfoForm.Row type="double">
+              {program.generalTeachers !== undefined && (
+                <DetailInfoForm.Field label="일반담당교사" view={`${program.generalTeachers}명`} />
+              )}
+              {program.educatedTeachers !== undefined && (
+                <DetailInfoForm.Field label="교육받은교사" view={`${program.educatedTeachers}명`} />
+              )}
+            </DetailInfoForm.Row>
             {program.instructors !== undefined && (
-              <Descriptions.Item label="강사">{program.instructors}명</Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field label="강사" view={`${program.instructors}명`} />
+              </DetailInfoForm.Row>
             )}
-          </Descriptions>
+          </DetailInfoForm>
         </Card>
       )}
     </Space>

@@ -12,6 +12,10 @@
   margin-top: var(--spacing-28);
 }
 
+.addressModalSearchButton {
+  width: 160px;
+}
+
 .addressModalMain {
   display: flex;
   width: 100%;
@@ -222,4 +226,44 @@
   width: 100%;
   justify-content: center;
   margin-top: var(--spacing-28);
+}
+
+@media (--bp-below-pc) {
+  .addressModalSearchRow {
+    grid-template-columns: 1fr;
+    margin-top: var(--spacing-28);
+  }
+
+  .addressModalSearchButton {
+    width: 100%;
+  }
+
+  .addressModalMain {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .addressModalMainActive {
+    min-height: 0;
+  }
+
+  .addressModalTip {
+    margin-top: var(--spacing-28);
+  }
+
+  .addressSuggestList {
+    width: 100%;
+    max-height: min(316px, 40vh);
+  }
+
+  .addressResultList {
+    margin-top: var(--spacing-16);
+    max-height: none;
+    flex: 1 1 auto;
+  }
+
+  .addressPagination {
+    margin-top: var(--spacing-20);
+    margin-bottom: var(--spacing-8);
+  }
 }

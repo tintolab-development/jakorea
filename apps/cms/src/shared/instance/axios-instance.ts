@@ -5,14 +5,13 @@
  *   `https://xxxx.ngrok-free.app` (끝에 `/api` 붙이지 않음 — 경로는 각 요청·`getRefreshPath`에서 합침).
  * - ngrok 무료 호스트의 브라우저 경고 페이지를 피하려면 `VITE_NGROK_SKIP_BROWSER_WARNING` 설정.
  * - 인증: `useAuthStore` 토큰 + `withCredentials`(쿠키 기반 세션과 병행 가능).
- * - 리프레시: `localStorage`의 `auth_refresh_token`(선택) + `POST` 갱신 API.
+ * - 리프레시: `POST /api/admin/auth/refresh` (body refreshToken only, no Bearer).
  */
 
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { recordBackendErrorForE2e } from '@/features/e2e-error-log/lib/record-from-axios-error'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { adminAuthPaths } from '@/shared/config/api-paths'
-import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import axios, {
   type AxiosError,
   type AxiosRequestHeaders,
@@ -24,7 +23,7 @@ import axios, {
 const AUTH_TOKEN_KEY = 'auth_token'
 const AUTH_EXPIRY_KEY = 'auth_expires_at'
 
-/** 백엔드에서 리프레시 토큰을 내려줄 때 저장용 (선택) */
+/** 백엔드에서 리프레시 토큰을 내려줄 때 저장용 */
 export const AUTH_REFRESH_TOKEN_KEY = 'auth_refresh_token'
 
 export type TAxiosHeaders = {
@@ -35,27 +34,88 @@ export type TAxiosHeaders = {
 }
 
 export type TErrorResponse = {
-  code: number
-  message: string
+  success?: boolean
+  data?: unknown
+  message?: string
+  error?: {
+    code?: string
+    message?: string
+  }
+  code?: number
 }
 
 export type TApiErrorMessage = Record<number, string>
 
-type RetryableRequest = InternalAxiosRequestConfig & {
+export type RetryableRequest = InternalAxiosRequestConfig & {
   _retry?: boolean
   skipRefresh?: boolean
+  skipAuth?: boolean
 }
 
 export { getApiBaseUrl, isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
-/** adminAuth 실 API 사용 시 `/api/admin/auth/refresh`; 그 외 `VITE_AUTH_REFRESH_PATH` 또는 `/api/auth/refresh` */
 function getRefreshPath(): string {
-  if (isRealApiModuleEnabled('adminAuth')) {
-    return adminAuthPaths.refresh()
+  return adminAuthPaths.refresh()
+}
+
+function getErrorCode(data: unknown): string | undefined {
+  if (!data || typeof data !== 'object') return undefined
+  const error = (data as TErrorResponse).error
+  if (error && typeof error === 'object' && typeof error.code === 'string') {
+    return error.code
   }
-  const fromEnv = import.meta.env.VITE_AUTH_REFRESH_PATH?.trim()
-  const path = fromEnv || '/api/auth/refresh'
-  return path.startsWith('/') ? path : `/${path}`
+  return undefined
+}
+
+function resolveRequestUrl(config: InternalAxiosRequestConfig): string {
+  const raw = `${config.baseURL ?? ''}${config.url ?? ''}`
+  try {
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return new URL(raw).pathname
+    }
+  } catch {
+    // fall through
+  }
+  return config.url ?? raw
+}
+
+function isExcludedFromAutoRefresh(url?: string): boolean {
+  if (!url) return false
+  const path = url.split('?')[0] ?? url
+  const prefix = adminAuthPaths.prefix
+  return (
+    path.includes(`${prefix}/login`) ||
+    path.includes(`${prefix}/refresh`) ||
+    path.includes(`${prefix}/logout`) ||
+    path.includes(`${prefix}/mfa/`) ||
+    path.includes(`${prefix}/signup`) ||
+    path.includes(`${prefix}/sso/`)
+  )
+}
+
+function clearAuthorizationHeader(
+  headers: InternalAxiosRequestConfig['headers'] | undefined,
+): InternalAxiosRequestConfig['headers'] {
+  const next = (headers ?? {}) as AxiosRequestHeaders
+  if (typeof next.delete === 'function') {
+    next.delete('Authorization')
+  } else {
+    delete (next as Record<string, unknown>).Authorization
+  }
+  return next
+}
+
+function setAuthorizationHeader(
+  headers: InternalAxiosRequestConfig['headers'] | undefined,
+  token: string,
+): InternalAxiosRequestConfig['headers'] {
+  const next = (headers ?? {}) as AxiosRequestHeaders
+  if (typeof next.set === 'function') {
+    next.set('Authorization', `Bearer ${token}`)
+  } else {
+    ;(next as Record<string, string>).Authorization = `Bearer ${token}`
+  }
+  return next
 }
 
 const timeout = 30_000
@@ -79,10 +139,12 @@ export async function postAuthenticationRefreshToken(refreshToken: string) {
   const path = getRefreshPath()
   return axiosClient.post<unknown>(path, { refreshToken }, {
     skipRefresh: true,
+    skipAuth: true,
   } as RetryableRequest)
 }
 
 let isRefreshing = false
+let refreshPromise: Promise<string> | null = null
 let failedQueue: {
   resolve: (token: string) => void
   reject: (err: unknown) => void
@@ -105,7 +167,7 @@ function readRefreshToken(): string | null {
 }
 
 function persistAccessToken(accessToken: string, expiresAtIso?: string) {
-  const expires = expiresAtIso ?? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  const expires = expiresAtIso ?? new Date(Date.now() + 60 * 60 * 1000).toISOString()
 
   if (typeof window !== 'undefined' && window.localStorage) {
     localStorage.setItem(AUTH_TOKEN_KEY, accessToken)
@@ -116,6 +178,12 @@ function persistAccessToken(accessToken: string, expiresAtIso?: string) {
     token: accessToken,
     expiresAt: expires,
   })
+}
+
+function persistRefreshToken(refreshToken: string) {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, refreshToken)
+  }
 }
 
 function parseAccessTokenFromRefreshBody(payload: unknown): string | null {
@@ -167,17 +235,82 @@ function handleAuthFailure() {
   }
 }
 
+function enqueueWhileRefreshing(originalRequest: RetryableRequest) {
+  return new Promise((resolve, reject) => {
+    failedQueue.push({
+      resolve: (token: string) => {
+        originalRequest.headers = setAuthorizationHeader(originalRequest.headers, token)
+        resolve(axiosClient(originalRequest))
+      },
+      reject: err => {
+        reject(err)
+      },
+    })
+  })
+}
+
+async function runSingleFlightRefresh(refreshToken: string): Promise<string> {
+  if (refreshPromise) {
+    return refreshPromise
+  }
+
+  refreshPromise = (async () => {
+    try {
+      const res = await postAuthenticationRefreshToken(refreshToken)
+      const newAccessToken = parseAccessTokenFromRefreshBody(res.data)
+      const newRefreshToken = parseRefreshTokenFromRefreshBody(res.data)
+      const expiresInSeconds = parseExpiresInFromRefreshBody(res.data)
+
+      if (!newAccessToken || !newRefreshToken) {
+        throw new Error('Invalid refresh response: missing access or refresh token')
+      }
+
+      const expiresAtIso =
+        expiresInSeconds && expiresInSeconds > 0
+          ? new Date(Date.now() + expiresInSeconds * 1000).toISOString()
+          : undefined
+
+      persistAccessToken(newAccessToken, expiresAtIso)
+      persistRefreshToken(newRefreshToken)
+
+      return newAccessToken
+    } finally {
+      refreshPromise = null
+    }
+  })()
+
+  return refreshPromise
+}
+
+/**
+ * 선제·수동 갱신용. 인터셉터와 동일 single-flight를 공유한다.
+ * refreshToken이 없거나 실패하면 false.
+ */
+export async function refreshAccessTokenSession(): Promise<boolean> {
+  const refreshToken = readRefreshToken()
+  if (!refreshToken) return false
+
+  try {
+    await runSingleFlightRefresh(refreshToken)
+    return true
+  } catch {
+    return false
+  }
+}
+
 axiosClient.interceptors.request.use(
   config => {
+    const retryable = config as RetryableRequest
+    const url = resolveRequestUrl(config)
+
+    if (retryable.skipAuth || isExcludedFromAutoRefresh(url)) {
+      config.headers = clearAuthorizationHeader(config.headers)
+      return config
+    }
+
     const token = useAuthStore.getState().token
     if (token) {
-      config.headers = config.headers ?? {}
-      const headers = config.headers
-      if (typeof headers.set === 'function') {
-        headers.set('Authorization', `Bearer ${token}`)
-      } else {
-        ;(headers as Record<string, string>).Authorization = `Bearer ${token}`
-      }
+      config.headers = setAuthorizationHeader(config.headers, token)
     }
     return config
   },
@@ -197,79 +330,42 @@ axiosClient.interceptors.response.use(
     }
 
     const originalRequest = config as RetryableRequest
+    const requestUrl = resolveRequestUrl(originalRequest)
+    const status = response.status
+    const code = getErrorCode(response.data)
 
-    if (originalRequest.skipRefresh) {
+    if (originalRequest.skipRefresh || isExcludedFromAutoRefresh(requestUrl)) {
       return Promise.reject(error)
     }
 
-    const body = response.data
-    const code = body && typeof body === 'object' && 'code' in body ? body.code : undefined
+    if (status === 403 && code === 'PERMISSION_DENIED') {
+      return Promise.reject(error)
+    }
 
-    const isTokenExpired = typeof code === 'number' && code >= 60_000 && code < 70_000
-
-    if (!isTokenExpired || originalRequest._retry) {
+    const isAccessTokenFailure = status === 401 && code === 'UNAUTHORIZED'
+    if (!isAccessTokenFailure || originalRequest._retry) {
       return Promise.reject(error)
     }
 
     const refreshToken = readRefreshToken()
     if (!refreshToken) {
+      handleAuthFailure()
       return Promise.reject(error)
     }
 
     if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        failedQueue.push({
-          resolve: (token: string) => {
-            originalRequest.headers = originalRequest.headers ?? {}
-            const h = originalRequest.headers
-            if (typeof h.set === 'function') {
-              h.set('Authorization', `Bearer ${token}`)
-            } else {
-              ;(h as Record<string, string>).Authorization = `Bearer ${token}`
-            }
-            resolve(axiosClient(originalRequest))
-          },
-          reject: err => {
-            reject(err)
-          },
-        })
-      })
+      return enqueueWhileRefreshing(originalRequest)
     }
 
     originalRequest._retry = true
     isRefreshing = true
 
     try {
-      const res = await postAuthenticationRefreshToken(refreshToken)
-      const newAccessToken = parseAccessTokenFromRefreshBody(res.data)
-      const newRefreshToken = parseRefreshTokenFromRefreshBody(res.data)
-      const expiresInSeconds = parseExpiresInFromRefreshBody(res.data)
-
-      if (!newAccessToken) {
-        throw new Error('Invalid refresh response: missing access token')
-      }
-
-      const expiresAtIso =
-        expiresInSeconds && expiresInSeconds > 0
-          ? new Date(Date.now() + expiresInSeconds * 1000).toISOString()
-          : undefined
-
-      persistAccessToken(newAccessToken, expiresAtIso)
-
-      if (newRefreshToken && typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, newRefreshToken)
-      }
+      const newAccessToken = await runSingleFlightRefresh(refreshToken)
       processQueue(newAccessToken)
       isRefreshing = false
 
-      originalRequest.headers = originalRequest.headers ?? {}
-      const h = originalRequest.headers
-      if (typeof h.set === 'function') {
-        h.set('Authorization', `Bearer ${newAccessToken}`)
-      } else {
-        ;(h as Record<string, string>).Authorization = `Bearer ${newAccessToken}`
-      }
-
+      originalRequest.headers = setAuthorizationHeader(originalRequest.headers, newAccessToken)
       return axiosClient(originalRequest)
     } catch (err) {
       processQueue(null, err)

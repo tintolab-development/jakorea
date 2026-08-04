@@ -10,6 +10,7 @@ import type { SchoolAffiliatedTeacherRow } from './schoolAffiliatedTeacherRow';
 export interface SchoolInfo {
   schoolName?: string;
   address?: string;
+  addressDetail?: string;
   position?: string;
   affiliatedTeachers?: SchoolAffiliatedTeacherRow[];
 }

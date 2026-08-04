@@ -17,6 +17,7 @@ import {
 } from '@/data/mock'
 import { PostReadStatusPopoverContent } from './post-read-status-popover'
 import { downloadFile } from '@/shared/lib/file-download'
+import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 import dayjs from 'dayjs'
 
 export interface EnrollmentProgramDetailPostsTabProps {
@@ -347,13 +348,20 @@ export function EnrollmentProgramDetailPostsTab({
             </CmsButton>
           </div>
         )}
-        <div className="enrollment-program-detail-modal__posts-list">
-          {posts.length === 0 ? (
-            <p className="enrollment-program-detail-modal__placeholder">
-              등록된 게시글이 없습니다.
-            </p>
-          ) : (
-            posts.map(post => (
+        {posts.length === 0 ? (
+          <div className="enrollment-program-detail-modal__posts-empty" role="status">
+            <div className="enrollment-program-detail-modal__posts-empty-text">
+              <p className="enrollment-program-detail-modal__posts-empty-title">
+                등록된 게시글이 없습니다
+              </p>
+              <p className="enrollment-program-detail-modal__posts-empty-desc">
+                새로운 게시글이 등록되면 확인 가능합니다.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="enrollment-program-detail-modal__posts-list">
+            {posts.map(post => (
               <article
                 key={post.id}
                 role="button"
@@ -447,9 +455,9 @@ export function EnrollmentProgramDetailPostsTab({
                   </div>
                 </div>
               </article>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
       <div className="enrollment-program-detail-modal__posts-tab-column enrollment-program-detail-modal__posts-tab-column--right">
         <div className="enrollment-program-detail-modal__files-search-wrap">
@@ -481,7 +489,14 @@ export function EnrollmentProgramDetailPostsTab({
         </div>
         <div className="enrollment-program-detail-modal__files-list">
           {allFiles.length === 0 ? (
-            <p className="enrollment-program-detail-modal__placeholder">등록된 파일이 없습니다.</p>
+            <div className="enrollment-program-detail-modal__files-empty" role="status">
+              <p className="enrollment-program-detail-modal__files-empty-title">
+                첨부된 파일이 없어요
+              </p>
+              <p className="enrollment-program-detail-modal__files-empty-desc">
+                첨부파일이 등록되면 확인 가능합니다.
+              </p>
+            </div>
           ) : filteredFiles.length === 0 ? (
             <p className="enrollment-program-detail-modal__placeholder">검색 결과가 없습니다.</p>
           ) : (
@@ -503,7 +518,12 @@ export function EnrollmentProgramDetailPostsTab({
                   </div>
                   <div className="enrollment-program-detail-modal__file-meta">
                     {formatFileDate(file.uploadedAt)}
-                    {file.fileSize != null ? ` | ${formatFileSize(file.fileSize)}` : ''}
+                    {file.fileSize != null ? (
+                      <>
+                        <DetailInfoFormTdDivider />
+                        {formatFileSize(file.fileSize)}
+                      </>
+                    ) : null}
                   </div>
                 </div>
                 <Dropdown

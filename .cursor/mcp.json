@@ -1,5 +1,11 @@
 {
   "mcpServers": {
+    "figma_official": {
+      "url": "https://mcp.figma.com/mcp"
+    },
+    "notion": {
+      "url": "https://mcp.notion.com/mcp"
+    },
     "playwright": {
       "command": "npx",
       "args": ["-y", "@playwright/mcp@latest"]

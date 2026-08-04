@@ -226,7 +226,7 @@
 .paragraph-date-picker__backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1055;
+  z-index: 1195;
   background: transparent;
 }
 
@@ -235,7 +235,7 @@
   --paragraph-date-picker-popover-inner-w: 601px;
 
   position: fixed;
-  z-index: 1060;
+  z-index: 1200;
   box-sizing: border-box;
   width: min(var(--paragraph-date-picker-popover-inner-w), calc(100vw - 24px));
   max-width: calc(100vw - 24px);

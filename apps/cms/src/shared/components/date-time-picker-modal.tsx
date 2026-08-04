@@ -21,6 +21,7 @@ import {
   buildTime,
   parseNum,
 } from '@/shared/components/date-time-picker-time-selects'
+import { CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -76,7 +77,7 @@ export function DateTimePickerPopover({
   disabled,
   footerExtra,
   applyLabel = '설정',
-  zIndex = 1060,
+  zIndex = CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX,
 }: DateTimePickerPopoverProps) {
   const panelId = useId()
 

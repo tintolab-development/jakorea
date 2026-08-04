@@ -3,17 +3,24 @@ import type {
   ListAdminApprovalRequestsParams,
 } from '@/features/user/api/admin-approval-requests.types'
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { EXTERNAL_IDENTIFIER_PROVIDER_1365 } from '@/features/user/api/map-external-identifiers'
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 import { customInstance } from '@/shared/api/orval-mutator'
 import type {
   AdminAccountCreateRequest,
   AdminAccountResponse,
   AdminAccountVerificationRequest,
+  AdminPreRegisterIndividualRequest,
+  AdminPreRegisterInstructorRequest,
   AdminPreRegisterMemberRequest,
+  AdminPreRegisterSchoolRequest,
+  AdminPrivacyUnmaskRequest,
   AdminRoleChangeRequest,
   AdminRolePermissionMatrixResponse,
   AdminRolePermissionUpdateRequest,
+  IndividualMemberDetailResponse,
   InstructorDetailResponse,
+  InstructorMemberDetailResponse,
   InstructorRoleReviewRequest,
   ListAdminsParams,
   ListInstructorRoleRequestsParams,
@@ -23,7 +30,10 @@ import type {
   PageResponse,
   PageResponseAdminAccountListItemResponse,
   PageResponseInstructorRoleRequestListItemResponse,
+  SchoolMemberDetailResponse,
 } from '@/shared/api/generated/members/schemas'
+import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
+import type { AdminAccountBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminAccountBasicInfoUpdateRequest'
 import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
 import type { AdminMemberCommentCreateRequest } from '@/shared/api/generated/members/schemas/adminMemberCommentCreateRequest'
 import type { AdminCommentUpdateRequest } from '@/shared/api/generated/members/schemas/adminCommentUpdateRequest'
@@ -42,6 +52,7 @@ import type { AdminPermissionResponse } from '@/shared/api/generated/members/sch
 import type { AdminRoleResponse } from '@/shared/api/generated/members/schemas/adminRoleResponse'
 import type { MemberConsentRecordResponse } from '@/shared/api/generated/members/schemas/memberConsentRecordResponse'
 import type { ExternalIdentifierResponse } from '@/shared/api/generated/members/schemas/externalIdentifierResponse'
+import type { InstructorEvaluationGradeChangeRequest } from '@/shared/api/generated/members/schemas/instructorEvaluationGradeChangeRequest'
 
 const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
 
@@ -53,8 +64,27 @@ export async function fetchMembersPageRemote(params: ListMembersParams): Promise
   return unwrapApiBody(await membersApi.listMembers(params))
 }
 
+/** @deprecated 역할별 상세 API 사용 권장 */
 export async function fetchMemberDetailRemote(memberId: number): Promise<MemberDetailResponse> {
   return unwrapApiBody(await membersApi.getMemberDetail(memberIdParam(memberId)))
+}
+
+export async function fetchIndividualMemberDetailRemote(
+  memberId: number
+): Promise<IndividualMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.getIndividualMemberDetail(memberId))
+}
+
+export async function fetchSchoolMemberDetailRemote(
+  memberId: number
+): Promise<SchoolMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.getSchoolMemberDetail(memberId))
+}
+
+export async function fetchInstructorMemberDetailRemote(
+  memberId: number
+): Promise<InstructorMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.getInstructorMemberDetail(memberId))
 }
 
 export async function updateMemberBasicInfoRemote(
@@ -168,10 +198,63 @@ export async function fetchMemberExternalIdentifiersRemote(
   return Array.isArray(data) ? data : []
 }
 
+export async function upsertMember1365ExternalIdentifierRemote(
+  memberId: number,
+  externalId: string
+): Promise<ExternalIdentifierResponse> {
+  return unwrapApiBody(
+    await membersApi.upsertExternalIdentifier(memberId, EXTERNAL_IDENTIFIER_PROVIDER_1365, {
+      externalId,
+      reason: 'CMS 관리자 회원 정보 수정',
+    })
+  )
+}
+
+/** @deprecated 역할별 pre-register 사용 권장 */
 export async function preRegisterMemberRemote(
   body: AdminPreRegisterMemberRequest
 ): Promise<MemberWorkflowResponse> {
   return unwrapApiBody(await membersApi.preRegister(body))
+}
+
+export async function preRegisterIndividualRemote(
+  body: AdminPreRegisterIndividualRequest
+): Promise<MemberWorkflowResponse> {
+  return unwrapApiBody(await membersApi.preRegisterIndividual(body))
+}
+
+export async function preRegisterSchoolRemote(
+  body: AdminPreRegisterSchoolRequest
+): Promise<MemberWorkflowResponse> {
+  return unwrapApiBody(await membersApi.preRegisterSchool(body))
+}
+
+export async function preRegisterInstructorRemote(
+  body: AdminPreRegisterInstructorRequest
+): Promise<MemberWorkflowResponse> {
+  return unwrapApiBody(await membersApi.preRegisterInstructor(body))
+}
+
+export async function unmaskIndividualMemberPrivacyRemote(
+  memberId: number,
+  body: AdminPrivacyUnmaskRequest
+): Promise<IndividualMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.unmaskIndividualMemberPrivacy(memberId, body))
+}
+
+export async function unmaskInstructorMemberPrivacyRemote(
+  memberId: number,
+  body: AdminPrivacyUnmaskRequest
+): Promise<InstructorMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.unmaskInstructorMemberPrivacy(memberId, body))
+}
+
+/** SCHOOL 전용 unmask path 없음 — legacy member unmask */
+export async function unmaskMemberPrivacyRemote(
+  memberId: number,
+  body: AdminPrivacyUnmaskRequest
+): Promise<MemberDetailResponse> {
+  return unwrapApiBody(await membersApi.unmaskMemberPrivacy(memberId, body))
 }
 
 export async function deleteMemberRemote(memberId: number, body: AdminMemberDeleteRequest) {
@@ -251,6 +334,29 @@ export async function fetchAdminsPageRemote(
   return unwrapApiBody(await membersApi.listAdmins(params))
 }
 
+/** Swagger `getAdminAccount` — `GET /api/admin/admin-accounts/{adminId}` */
+export async function fetchAdminAccountDetailRemote(
+  adminId: number
+): Promise<AdminAccountApprovalDetailResponse> {
+  return unwrapApiBody(await membersApi.getAdminAccount(adminId))
+}
+
+/** Swagger `updateAdminBasicInfo` — `PATCH /api/admin/admin-accounts/{adminId}/basic-info` */
+export async function updateAdminBasicInfoRemote(
+  adminId: number,
+  body: AdminAccountBasicInfoUpdateRequest
+): Promise<AdminAccountResponse> {
+  return unwrapApiBody(await membersApi.updateAdminBasicInfo(adminId, body))
+}
+
+/** Swagger `deleteAdmin` — `DELETE /api/admin/admin-accounts/{adminId}` */
+export async function deleteAdminAccountRemote(
+  adminId: number,
+  params?: { reason?: string }
+): Promise<void> {
+  await membersApi.deleteAdmin(adminId, params)
+}
+
 export async function changeAdminAccountRoleRemote(
   adminId: number,
   body: AdminRoleChangeRequest
@@ -279,4 +385,33 @@ export async function updateAdminRolePermissionsRemote(
   body: AdminRolePermissionUpdateRequest
 ) {
   await membersApi.updateRolePermissions(roleCode, body)
+}
+
+/** Swagger `changeEvaluationGrade` — `POST /api/admin/instructors/{instructorMemberId}/evaluation-grade` */
+export async function changeInstructorEvaluationGradeRemote(
+  instructorMemberId: number,
+  body: InstructorEvaluationGradeChangeRequest
+) {
+  await customInstance({
+    url: `/api/admin/instructors/${instructorMemberId}/evaluation-grade`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+  })
+}
+
+/**
+ * Swagger `revoke` — `POST /api/admin/instructors/{instructorId}/revoke`
+ * path `instructorId` = 회원 memberId
+ */
+export async function revokeInstructorPermissionRemote(
+  instructorId: number,
+  body: InstructorRoleReviewRequest
+) {
+  await customInstance({
+    url: `/api/admin/instructors/${instructorId}/revoke`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+  })
 }

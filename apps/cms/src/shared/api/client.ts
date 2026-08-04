@@ -6,6 +6,7 @@ export {
   axiosClient,
   default as apiClient,
   postAuthenticationRefreshToken,
+  refreshAccessTokenSession,
   getApiBaseUrl,
   isRemoteApiConfigured,
   AUTH_REFRESH_TOKEN_KEY,

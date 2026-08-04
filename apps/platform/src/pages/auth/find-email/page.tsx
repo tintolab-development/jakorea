@@ -1,5 +1,6 @@
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './page.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 export function FindEmailPage() {
   const handleFindEmail = () => {
@@ -8,13 +9,12 @@ export function FindEmailPage() {
   }
 
   return (
-    <section className={styles.page}>
-      <div className={styles.container}>
+    <section>
         <div className={styles.header}>
-          <PFText as="h1" typo="hd-sm" color="black" className={styles.title}>
+          <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
             가입한 이메일을 찾아드릴게요
           </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={styles.description}>
+          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
             본인 확인 후 가입한 이메일을 확인할 수 있어요
           </PFText>
         </div>
@@ -32,7 +32,6 @@ export function FindEmailPage() {
             본인인증 후 이메일 찾기
           </PFButton>
         </div>
-      </div>
     </section>
   )
 }

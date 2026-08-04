@@ -1,29 +1,44 @@
 .page {
   display: flex;
   width: 100%;
-  max-width: 1200px;
   min-width: 0;
   flex-direction: column;
+  gap: var(--spacing-40);
   margin-inline: auto;
-  padding-bottom: var(--spacing-80);
-  padding-inline: var(--spacing-24);
+  padding-block: var(--spacing-24) var(--spacing-80);
+  padding-inline: var(--page-padding-x);
 }
 
 .back {
-  margin-bottom: var(--spacing-24);
+  width: 100%;
 }
 
-.layout {
-  display: grid;
-  gap: var(--spacing-40);
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.main {
+.body {
   display: flex;
+  width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: var(--spacing-16);
+  gap: var(--spacing-32);
+}
+
+.detail {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0;
+  order: 1;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+}
+
+.headerMain {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
 }
 
 .title {
@@ -32,80 +47,405 @@
 
 .meta {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-4);
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--spacing-32);
+  row-gap: var(--spacing-8);
 }
 
-.tags {
+.metaItem {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--spacing-8);
 }
 
-.tag {
-  padding: var(--spacing-4) var(--spacing-8);
-  border-radius: 999px;
-  background: var(--color-neutral-cool-50);
+.badges {
+  margin-top: 25px;
+  /* summary 유무와 무관하게 배지~다음 블록 사이 간격 유지 */
+  margin-bottom: var(--spacing-40);
 }
 
-.section {
+.summary {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  /* 상단은 .badges margin-bottom으로 확보, 하단만 텍스트~기본정보 간격 */
+  padding-bottom: var(--spacing-40);
+}
+
+.summaryText {
+  margin: 0;
+}
+
+.basicInfo {
   display: flex;
+  width: 100%;
   flex-direction: column;
-  gap: var(--spacing-12);
-  margin-top: var(--spacing-24);
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-24);
+  padding: var(--spacing-20);
+  border: 1px solid var(--color-neutral-cool-100);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
 }
 
-.infoGrid {
-  display: grid;
-  gap: var(--spacing-16);
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  padding: var(--spacing-24);
-  border-radius: 16px;
-  background: var(--color-neutral-cool-50);
+.infoFields {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  column-gap: var(--spacing-60);
+  row-gap: var(--spacing-16);
 }
 
 .infoItem {
   display: flex;
+  min-width: 0;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: var(--spacing-8);
 }
 
-.sidebar {
+.sessions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: var(--spacing-20);
+  list-style: none;
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-cool-50);
+}
+
+.session {
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-8);
+  padding-block: var(--spacing-16);
+}
+
+.session:first-child {
+  padding-top: 0;
+}
+
+.session:last-child {
+  padding-bottom: 0;
+}
+
+.session + .session {
+  border-top: 1px solid var(--color-neutral-cool-100);
+}
+
+.sessionTitle {
+  margin: 0;
+}
+
+.sessionLabel {
+  color: var(--color-primary-500);
+}
+
+.detailContent {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-32);
+  margin-top: var(--spacing-40);
+  padding-top: var(--spacing-16);
+  border-top: 2px solid var(--color-border-focus);
+}
+
+.detailContentBody {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+}
+
+.recruitmentCard {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-16);
+  padding: var(--spacing-20);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+}
+
+.recruitmentList {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.infoBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+  padding-bottom: var(--spacing-16);
+}
+
+.infoBlock:not(:last-child) {
+  margin-bottom: var(--spacing-16);
+  border-bottom: 1px solid rgb(61 61 61 / 10%);
+}
+
+.infoBlock:last-child {
+  padding-bottom: 0;
+}
+
+.schedules {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
   gap: var(--spacing-12);
+  margin-top: var(--spacing-12);
+}
+
+.scheduleCard {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  justify-content: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-20);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+}
+
+.extraSections {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-32);
+  margin-top: var(--spacing-32);
+}
+
+.extraSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+}
+
+.extraSectionBody {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.contact {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+  margin-top: var(--spacing-32);
+}
+
+.applicationMethod {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--spacing-20);
+  margin-top: var(--spacing-32);
+  padding: var(--spacing-20);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+}
+
+.media {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  order: -1;
 }
 
 .banner {
+  align-self: stretch;
+  height: 450px;
+  margin-bottom: var(--spacing-24);
   overflow: hidden;
-  border-radius: 16px;
-  background: var(--color-neutral-cool-50);
+  border-radius: var(--radius-24);
+  box-shadow:
+    0 0 12px 3px rgb(14 42 53 / 8%),
+    0 14px 23px 0 rgb(14 42 53 / 10%);
+}
+
+/* 이미지 없음: placeholder 배경색 유지 */
+.bannerNoImage {
+  background: lightgray;
+}
+
+/* 이미지 있음: 이미지 자체가 비주얼이므로 래퍼 배경 투명 */
+.bannerHasImage {
+  background: transparent;
 }
 
 .bannerImage {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
 }
 
-.applyPeriod {
-  text-align: center;
+.applyButton {
+  display: flex;
+  width: 100%;
+  height: 80px;
+  flex-shrink: 0;
+  align-items: center;
+  align-self: stretch;
+  justify-content: space-between;
+  padding: var(--spacing-16) var(--spacing-20);
+  border: 0;
+  border-radius: var(--radius-16);
+  background: var(--color-primary-500);
+  cursor: pointer;
 }
 
-@media (min-width: 1024px) {
-  .layout {
-    align-items: start;
-    grid-template-columns: minmax(0, 1fr) 320px;
-  }
-
-  .sidebar {
-    position: sticky;
-    top: var(--spacing-24);
-  }
+.applyButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
-@media (min-width: 768px) {
+.applyCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-4);
+}
+
+.applyArrow {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+.attachments {
+  display: flex;
+  width: 100%;
+  max-width: 360px;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  margin: var(--spacing-24) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/**
+ * Top FAB — CMS `user-page__top-fab` 톤
+ * Figma (신청·첨부 기준):
+ *   · 세로: 마지막 CTA/첨부 하단 ↔ FAB 상단 22px
+ *   · 가로: 우측 컬럼 우단 ↔ FAB 우단 61px (right: -61px)
+ * 모바일: 메인 카피를 가리지 않도록 뷰포트 고정 폴백
+ */
+.topFab {
+  --detail-top-fab-size: 60px;
+  --detail-top-fab-gap-y: 22px;
+  --detail-top-fab-offset-x: 61px;
+
+  position: fixed;
+  z-index: 40;
+  right: var(--page-padding-x);
+  bottom: var(--spacing-24);
+  display: flex;
+  width: var(--detail-top-fab-size);
+  height: var(--detail-top-fab-size);
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-999);
+  background: var(--color-primary-700);
+  color: var(--color-neutral-white);
+  cursor: pointer;
+}
+
+.topFab:hover {
+  filter: brightness(1.05);
+}
+
+.topFab:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.topFabIcon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+@media (--bp-pc-up) {
   .page {
-    padding-inline: var(--spacing-40);
+    gap: var(--spacing-74);
+    padding-block: 0;
+    padding-inline: 80px;
+  }
+
+  .body {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 120px;
+    /* FAB이 사이드바 우로 61px 돌출 — 가로 잘림 방지 */
+    overflow: visible;
+  }
+
+  .detail {
+    flex: 1 1 0;
+    order: 0;
+  }
+
+  .media {
+    position: sticky;
+    top: calc(var(--app-header-height) + var(--spacing-24));
+    flex: 0 0 361px;
+    width: 361px;
+    order: 0;
+    overflow: visible;
+  }
+
+  /* 신청하기 / 첨부 리스트 하단 기준 앵커 */
+  .topFab {
+    position: absolute;
+    top: calc(100% + var(--detail-top-fab-gap-y));
+    right: calc(-1 * var(--detail-top-fab-offset-x));
+    bottom: auto;
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .page {
+    width: 100%;
+    max-width: var(--content-shell-max-width);
+    padding-inline: 0;
+    overflow: visible;
+  }
+
+  .detail {
+    flex: 0 0 959px;
+    width: 959px;
   }
 }

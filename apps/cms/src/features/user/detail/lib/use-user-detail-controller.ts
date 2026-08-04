@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, type MutableRefObject } from 'react'
+import { useState, useEffect, useCallback, useMemo, createElement, type MutableRefObject } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import type { Application, UserHistory } from '@/types/domain'
 import type { ApplicationProgressStatus } from '@/types/application-progress'
@@ -14,6 +14,7 @@ import {
   programsHistoryHasChildMenu,
   clampProgramsChildForUser,
   instructorDetailLnbClickShowsPrepareMessage,
+  resolveUserDetailSubjectKey,
   type TabState,
   type UserDetailLnbKey,
   type UserDetailProgramsChildKey,
@@ -31,15 +32,15 @@ import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import {
   canAccessAdminCommentInAdminDetail,
   canEditAdminMemberInfo,
-  isMasterAdminUser,
+  canStartAdminMemberProfileEdit,
   shouldShowCmsMemberInfoEditButton,
+  shouldShowAdminCommentSectionForViewer,
 } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import {
   getAdminPermissionVariant,
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import {
-  draftToAdminCommentAndInstructorFeePatch,
   draftToAdminMemberRestrictedPatch,
   draftToAdminProvisionedInstructorBasicInfoPatch,
   draftToBasicInfoPatch,
@@ -61,12 +62,27 @@ import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useQueryClient } from '@tanstack/react-query'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
-import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
+import { applyPrivacyUnmaskResponseToUser } from '@/features/user/api/apply-privacy-unmask-to-user'
 import {
-  isMembersRemoteEnabled,
-} from '@/features/user/api/member-remote-capabilities'
+  applySavedBasicInfoPatchToUser,
+  mergeListUserWithFetchedDetail,
+} from '@/features/user/api/merge-list-user-with-detail'
+import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
+import { upsertMember1365ExternalIdentifierRemote } from '@/features/user/api/members-api-client'
+import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
+import { revokeInstructorPermission } from '@/entities/user/api/user-service'
+import { ConfirmModal } from '@/shared/ui/confirm-modal'
 
 const PERSONAL_INFO_REVEAL_MODAL_Z_INDEX = 1100
+
+/** 관리자 등록 회원 정보 수정 시 unmask 감사 로그 사유 */
+const BASIC_INFO_EDIT_UNMASK_REASON = '정보 수정'
+
+const BASIC_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
+  "관리자에 의해 등록된 회원은 정보 수정 시 개인정보 마스킹이 해제되며, 개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다. 해당 회원의 개인정보 열람 및 정보를 수정하시겠습니까?"
+
+export type BasicInfoEditScope = 'none' | 'profile' | 'comment'
 
 export type InstructorPermissionRevokeNotifyTiming = 'immediate' | 'manual'
 
@@ -122,12 +138,19 @@ export function useUserDetailController({
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
   const [institutionDeleteBlockedOpen, setInstitutionDeleteBlockedOpen] = useState(false)
   const [basicInfoEditing, setBasicInfoEditing] = useState(false)
+  const [basicInfoEditScope, setBasicInfoEditScope] = useState<BasicInfoEditScope>('none')
   const [basicInfoDraft, setBasicInfoDraft] = useState<AdminProvisionedMemberBasicInfoDraft | null>(
     null
   )
   const [basicInfoSaveLoading, setBasicInfoSaveLoading] = useState(false)
   const [adminPermissionVariantPatching, setAdminPermissionVariantPatching] = useState(false)
   const [instructorPermissionRevokeOpen, setInstructorPermissionRevokeOpen] = useState(false)
+  const [jaGradeEvaluationOpen, setJaGradeEvaluationOpen] = useState(false)
+
+  const detailSubjectKey = useMemo(
+    () => resolveUserDetailSubjectKey(displayUser),
+    [displayUser?.id, displayUser?.memberId, displayUser?.adminAccountId]
+  )
 
   useUserDetailUrlSync({
     open,
@@ -146,12 +169,33 @@ export function useUserDetailController({
     [displayUser?.name, displayUser?.schoolInfo?.schoolName]
   )
 
+  const handlePrivacyUnmasked = useCallback(
+    (payload: unknown, role: User['role'] | undefined) => {
+      if (!displayUser) return
+      const merged = applyPrivacyUnmaskResponseToUser(
+        displayUser,
+        payload,
+        role ?? displayUser.role
+      )
+      if (displayUser.memberId != null) {
+        queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
+      }
+      queryClient.setQueryData(
+        [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
+        merged
+      )
+      onMemberBasicInfoSaved?.(merged)
+    },
+    [displayUser, onMemberBasicInfoSaved, queryClient]
+  )
+
   const {
     personalInfoRevealed,
     personalInfoRevealConfirmOpen,
     openPersonalInfoRevealConfirm,
     closePersonalInfoRevealConfirm,
     submitPersonalInfoReveal,
+    revealWithReason,
     confirmModal: personalInfoRevealModal,
   } = usePersonalInfoReveal({
     resolveAccessItem: resolvePersonalInfoAccessItem,
@@ -159,30 +203,43 @@ export function useUserDetailController({
       if (displayUser?.memberId != null) return String(displayUser.memberId)
       return displayUser?.id
     },
-    resetDeps: [open, displayUser?.id, displayUser?.memberId],
+    resolveMemberRole: () => displayUser?.role,
+    onPrivacyUnmasked: handlePrivacyUnmasked,
+    resetDeps: [open, displayUser?.id, displayUser?.memberId, displayUser?.role],
     controlMode: 'hideWhenRevealed',
     modalZIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
   })
 
+  const [editUnmaskConfirmOpen, setEditUnmaskConfirmOpen] = useState(false)
+  const [editUnmaskConfirmLoading, setEditUnmaskConfirmLoading] = useState(false)
+
   useEffect(() => {
     if (!open) {
       setBasicInfoEditing(false)
+      setBasicInfoEditScope('none')
       setBasicInfoDraft(null)
       setBasicInfoSaveLoading(false)
       setAdminPermissionVariantPatching(false)
       setInstructorPermissionRevokeOpen(false)
+      setJaGradeEvaluationOpen(false)
       setInstitutionDeleteBlockedOpen(false)
+      setEditUnmaskConfirmOpen(false)
+      setEditUnmaskConfirmLoading(false)
     }
   }, [open])
 
   useEffect(() => {
     setBasicInfoEditing(false)
+    setBasicInfoEditScope('none')
     setBasicInfoDraft(null)
     setBasicInfoSaveLoading(false)
     setAdminPermissionVariantPatching(false)
     setInstructorPermissionRevokeOpen(false)
+    setJaGradeEvaluationOpen(false)
     setInstitutionDeleteBlockedOpen(false)
-  }, [displayUser?.id])
+    setEditUnmaskConfirmOpen(false)
+    setEditUnmaskConfirmLoading(false)
+  }, [detailSubjectKey])
 
   useEffect(() => {
     if (membersRemote) {
@@ -289,141 +346,215 @@ export function useUserDetailController({
     }
   }, [displayUser, onWithdraw])
 
-  const startBasicInfoEdit = useCallback(() => {
-    if (!displayUser) return
-    const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
-    const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)
-
-    if (displayUser.role === 'SCHOOL' && bodyKey === 'institution') {
-      if (shouldShowCmsMemberInfoEditButton(displayUser)) {
-        setBasicInfoDraft(userToSchoolInstitutionEditDraft(displayUser))
-      } else {
-        setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
-      }
-      setBasicInfoEditing(true)
-      setTabState({ lnb: 'detail-info' })
-      setSearchParams(
-        prev => {
-          const nextParams = new URLSearchParams(prev)
-          if (displayUser.id) nextParams.set('id', displayUser.id)
-          nextParams.set('lnb', 'detail-info')
-          nextParams.delete(programsChildQueryKey)
-          return nextParams
-        },
-        { replace: true }
-      )
-      return
-    }
-
-    if (displayUser.role === 'INSTRUCTOR' && bodyKey === 'instructor') {
-      if (shouldShowCmsMemberInfoEditButton(displayUser)) {
-        setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
-      } else {
-        setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
-      }
-      setBasicInfoEditing(true)
-      setTabState({ lnb: 'detail-info' })
-      setSearchParams(
-        prev => {
-          const nextParams = new URLSearchParams(prev)
-          if (displayUser.id) nextParams.set('id', displayUser.id)
-          nextParams.set('lnb', 'detail-info')
-          nextParams.delete(programsChildQueryKey)
-          return nextParams
-        },
-        { replace: true }
-      )
-      return
-    }
-
-    if (bodyKey === 'admin') {
-      if (!canAccessAdminCommentInAdminDetail(currentUser)) return
-      if (canEditAdminMemberInfo(currentUser, displayUser)) {
-        setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
-      } else {
-        setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
-      }
-      setBasicInfoEditing(true)
-      setTabState({ lnb: 'detail-info' })
-      setSearchParams(
-        prev => {
-          const nextParams = new URLSearchParams(prev)
-          if (displayUser.id) nextParams.set('id', displayUser.id)
-          nextParams.set('lnb', 'detail-info')
-          nextParams.delete(programsChildQueryKey)
-          return nextParams
-        },
-        { replace: true }
-      )
-      return
-    }
-
-    if (bodyKey !== 'all_users') return
-    if (shouldShowCmsMemberInfoEditButton(displayUser)) {
-      setBasicInfoDraft(userToAdminProvisionedBasicDraft(displayUser))
-    } else {
-      setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
-    }
-    setBasicInfoEditing(true)
+  const focusDetailInfoTab = useCallback(() => {
     setTabState({ lnb: 'detail-info' })
     setSearchParams(
       prev => {
         const nextParams = new URLSearchParams(prev)
-        if (displayUser.id) nextParams.set('id', displayUser.id)
+        const curId = prev.get('id')?.trim()
+        // 목록·드릴다운이 이미 id를 넣은 경우 덮어쓰지 않음 — admin-account-{id}/uuid 혼용 시 URL·상태 리셋 방지
+        if (displayUser?.id && !curId) {
+          nextParams.set('id', displayUser.id)
+        }
         nextParams.set('lnb', 'detail-info')
         nextParams.delete(programsChildQueryKey)
         return nextParams
       },
       { replace: true }
     )
-  }, [
-    displayUser,
-    basicInfoEntrySource,
-    searchParams,
-    programsChildQueryKey,
-    setSearchParams,
-  ])
+  }, [displayUser?.id, programsChildQueryKey, setSearchParams])
+
+  const startBasicInfoEdit = useCallback(
+    (sourceUser?: Omit<User, 'password'> | null) => {
+      const target = sourceUser ?? displayUser
+      if (!target) return
+      if (!shouldShowCmsMemberInfoEditButton(target)) return
+
+      const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
+      const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, target.role)
+
+      if (target.role === 'SCHOOL' && bodyKey === 'institution') {
+        setBasicInfoDraft(userToSchoolInstitutionEditDraft(target))
+        setBasicInfoEditScope('profile')
+        setBasicInfoEditing(true)
+        focusDetailInfoTab()
+        return
+      }
+
+      if (target.role === 'INSTRUCTOR' && bodyKey === 'instructor') {
+        setBasicInfoDraft(userToAdminProvisionedBasicDraft(target))
+        setBasicInfoEditScope('profile')
+        setBasicInfoEditing(true)
+        focusDetailInfoTab()
+        return
+      }
+
+      if (bodyKey === 'admin') {
+        if (!canStartAdminMemberProfileEdit(currentUser, target)) return
+        setBasicInfoDraft(userToAdminProvisionedBasicDraft(target))
+        setBasicInfoEditScope('profile')
+        setBasicInfoEditing(true)
+        focusDetailInfoTab()
+        return
+      }
+
+      if (bodyKey !== 'all_users') return
+      setBasicInfoDraft(userToAdminProvisionedBasicDraft(target))
+      setBasicInfoEditScope('profile')
+      setBasicInfoEditing(true)
+      focusDetailInfoTab()
+    },
+    [displayUser, basicInfoEntrySource, searchParams, currentUser, focusDetailInfoTab]
+  )
+
+  /** 관리자 등록 회원 — 마스킹 미해제 시 안내 모달 후 unmask, 이후 수정 진입.
+   * 학교(기관) 상세는 마스킹 대상 없음 → 안내 모달 없이 바로 수정 진입. */
+  const requestStartBasicInfoEdit = useCallback(() => {
+    if (!displayUser) return
+    if (!shouldShowCmsMemberInfoEditButton(displayUser)) return
+    if (displayUser.role !== 'SCHOOL' && !personalInfoRevealed) {
+      setEditUnmaskConfirmOpen(true)
+      return
+    }
+    startBasicInfoEdit()
+  }, [displayUser, personalInfoRevealed, startBasicInfoEdit])
+
+  const closeEditUnmaskConfirm = useCallback(() => {
+    if (editUnmaskConfirmLoading) return
+    setEditUnmaskConfirmOpen(false)
+  }, [editUnmaskConfirmLoading])
+
+  const confirmEditUnmaskAndStartEdit = useCallback(() => {
+    if (editUnmaskConfirmLoading || !displayUser) return
+    setEditUnmaskConfirmLoading(true)
+    void revealWithReason(BASIC_INFO_EDIT_UNMASK_REASON)
+      .then(result => {
+        if (!result.ok) return
+        const unmaskedUser =
+          result.payload !== undefined
+            ? applyPrivacyUnmaskResponseToUser(displayUser, result.payload, displayUser.role)
+            : displayUser
+        setEditUnmaskConfirmOpen(false)
+        startBasicInfoEdit(unmaskedUser)
+      })
+      .finally(() => {
+        setEditUnmaskConfirmLoading(false)
+      })
+  }, [displayUser, editUnmaskConfirmLoading, revealWithReason, startBasicInfoEdit])
+
+  const editUnmaskConfirmModal = useMemo(
+    () =>
+      createElement(ConfirmModal, {
+        open: editUnmaskConfirmOpen,
+        title: '정보 수정 안내',
+        content: BASIC_INFO_EDIT_UNMASK_CONFIRM_CONTENT,
+        confirmText: '정보 수정',
+        cancelText: '취소',
+        onConfirm: confirmEditUnmaskAndStartEdit,
+        onCancel: closeEditUnmaskConfirm,
+        confirmLoading: editUnmaskConfirmLoading,
+        zIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
+      }),
+    [
+      editUnmaskConfirmOpen,
+      editUnmaskConfirmLoading,
+      confirmEditUnmaskAndStartEdit,
+      closeEditUnmaskConfirm,
+    ]
+  )
+
+  const startAdminCommentEdit = useCallback(() => {
+    if (!displayUser) return
+    if (!shouldShowAdminCommentSectionForViewer(currentUser, displayUser)) return
+
+    const entryQ = parseUserBasicInfoEntryQuery(searchParams.get(USER_BASIC_INFO_ENTRY_QUERY_KEY))
+    const bodyKey = resolveUserBasicInfoBodyKey(basicInfoEntrySource, entryQ, displayUser.role)
+
+    if (bodyKey === 'admin' && !canAccessAdminCommentInAdminDetail(currentUser)) return
+    if (
+      bodyKey !== 'all_users' &&
+      bodyKey !== 'institution' &&
+      bodyKey !== 'instructor' &&
+      bodyKey !== 'admin'
+    ) {
+      return
+    }
+
+    setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
+    setBasicInfoEditScope('comment')
+    setBasicInfoEditing(true)
+    focusDetailInfoTab()
+  }, [displayUser, basicInfoEntrySource, searchParams, currentUser, focusDetailInfoTab])
 
   const cancelBasicInfoEdit = useCallback(() => {
     setBasicInfoEditing(false)
+    setBasicInfoEditScope('none')
     setBasicInfoDraft(null)
   }, [])
 
   const saveBasicInfoEdit = useCallback(async () => {
     if (!displayUser || !basicInfoDraft || !patchMemberBasicInfo) return
-    if (displayUser.role === 'ADMIN' && !canAccessAdminCommentInAdminDetail(currentUser)) return
+    if (basicInfoEditScope === 'comment' && displayUser.role === 'ADMIN') {
+      if (!canAccessAdminCommentInAdminDetail(currentUser)) return
+    }
+    if (basicInfoEditScope === 'profile' && displayUser.role === 'ADMIN') {
+      if (!canStartAdminMemberProfileEdit(currentUser, displayUser)) return
+    }
     setBasicInfoSaveLoading(true)
     try {
       let patch: PatchUserBasicInfoInput
-      if (!shouldShowCmsMemberInfoEditButton(displayUser)) {
-        patch =
-          displayUser.role === 'INSTRUCTOR'
-            ? draftToAdminCommentAndInstructorFeePatch(basicInfoDraft)
-            : displayUser.role === 'ADMIN'
-              ? draftToAdminMemberRestrictedPatch(basicInfoDraft)
-              : draftToSchoolAdminCommentOnlyPatch(basicInfoDraft)
+      if (basicInfoEditScope === 'comment') {
+        patch = draftToSchoolAdminCommentOnlyPatch(basicInfoDraft)
       } else if (displayUser.role === 'SCHOOL') {
         patch = draftToSchoolInstitutionBasicInfoPatch(basicInfoDraft)
       } else if (displayUser.role === 'INSTRUCTOR') {
         patch = draftToAdminProvisionedInstructorBasicInfoPatch(basicInfoDraft)
       } else if (displayUser.role === 'ADMIN') {
-        patch =
-          isMasterAdminUser(currentUser) && shouldShowCmsMemberInfoEditButton(displayUser)
-            ? draftToBasicInfoPatch(basicInfoDraft)
-            : draftToAdminMemberRestrictedPatch(basicInfoDraft)
+        patch = canEditAdminMemberInfo(currentUser, displayUser)
+          ? draftToBasicInfoPatch(basicInfoDraft)
+          : draftToAdminMemberRestrictedPatch(basicInfoDraft)
       } else {
         patch = draftToBasicInfoPatch(basicInfoDraft)
       }
+
+      if (basicInfoEditScope === 'profile' && Object.prototype.hasOwnProperty.call(patch, 'adminComment')) {
+        const { adminComment: _adminComment, ...patchWithoutComment } = patch
+        patch = patchWithoutComment
+      }
+
       const updated = await patchMemberBasicInfo(displayUser.id, patch)
+      let merged = applySavedBasicInfoPatchToUser(
+        mergeListUserWithFetchedDetail(displayUser, updated),
+        patch
+      )
+
+      const draftId1365 = (basicInfoDraft.id1365 ?? '').trim()
+      const currentId1365 = (displayUser.id1365 ?? '').trim()
+      if (
+        displayUser.role === 'INDIVIDUAL' &&
+        membersRemote &&
+        displayUser.memberId != null &&
+        draftId1365 !== currentId1365 &&
+        draftId1365
+      ) {
+        await upsertMember1365ExternalIdentifierRemote(displayUser.memberId, draftId1365)
+        merged = { ...merged, id1365: draftId1365 }
+      }
       if (membersRemote && displayUser.memberId != null) {
         void queryClient.invalidateQueries({
           queryKey: [...memberQueryKeys.all, 'comments', displayUser.memberId],
         })
+        queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
+        queryClient.setQueryData(
+          [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
+          merged
+        )
       }
       setBasicInfoEditing(false)
+      setBasicInfoEditScope('none')
       setBasicInfoDraft(null)
-      onMemberBasicInfoSaved?.(updated)
-      } catch (error) {
+      onMemberBasicInfoSaved?.(merged)
+    } catch (error) {
       handleError(error, { defaultMessage: '회원 정보 저장에 실패했습니다.' })
     } finally {
       setBasicInfoSaveLoading(false)
@@ -431,6 +562,7 @@ export function useUserDetailController({
   }, [
     displayUser,
     basicInfoDraft,
+    basicInfoEditScope,
     patchMemberBasicInfo,
     onMemberBasicInfoSaved,
     currentUser,
@@ -466,6 +598,8 @@ export function useUserDetailController({
 
   const openInstructorPermissionRevoke = useCallback(() => {
     if (!displayUser || displayUser.role !== 'INSTRUCTOR') return
+    if (resolveInstructorMemberProfile(displayUser) === 'school_teacher') return
+    if (displayUser.instructorApprovalStatus?.trim().toUpperCase() === 'REVOKED') return
     setInstructorPermissionRevokeOpen(true)
   }, [displayUser])
 
@@ -474,12 +608,83 @@ export function useUserDetailController({
   }, [])
 
   const confirmInstructorPermissionRevoke = useCallback(
-    (_payload: { reason: string; notifyTiming: InstructorPermissionRevokeNotifyTiming }) => {
-      // TODO(api): 강사 권한 박탈 API 연동 후 alert 제거·실제 처리로 교체
-      window.alert('준비 중입니다.')
-      setInstructorPermissionRevokeOpen(false)
+    async (payload: { reason: string; notifyTiming: InstructorPermissionRevokeNotifyTiming }) => {
+      if (!displayUser || displayUser.role !== 'INSTRUCTOR') return
+      const reason = payload.reason.trim()
+      if (!reason) return
+
+      try {
+        const revoked = await revokeInstructorPermission(
+          displayUser.id,
+          { reason, revokeReason: reason },
+          { memberId: displayUser.memberId }
+        )
+        if (isMembersRemoteEnabled()) {
+          void queryClient.invalidateQueries({ queryKey: memberQueryKeys.all })
+        }
+        onMemberBasicInfoSaved?.(revoked)
+        setInstructorPermissionRevokeOpen(false)
+      } catch (error) {
+        handleError(error, {
+          defaultMessage: getMemberApiErrorMessage(error, '강사 권한 박탈에 실패했습니다.'),
+        })
+      }
     },
-    []
+    [displayUser, onMemberBasicInfoSaved, queryClient]
+  )
+
+  const openJaGradeEvaluation = useCallback(() => {
+    if (!displayUser || displayUser.role !== 'INSTRUCTOR') return
+    setJaGradeEvaluationOpen(true)
+  }, [displayUser])
+
+  const closeJaGradeEvaluation = useCallback(() => {
+    setJaGradeEvaluationOpen(false)
+  }, [])
+
+  const completeJaGradeEvaluation = useCallback(
+    async ({ grade }: { grade: string; totalScore: number }) => {
+      if (!displayUser) {
+        throw new Error('강사 정보가 없어 평가 등급을 반영할 수 없습니다.')
+      }
+
+      // remote: 모달에서 evaluation-grade POST 완료됨. mock만 상세 패치로 영속화.
+      if (patchMemberBasicInfo && !isMembersRemoteEnabled()) {
+        const persisted = await patchMemberBasicInfo(displayUser.id, {
+          listMetrics: { jaEvaluationGrade: grade },
+        })
+        if (persisted.memberId != null) {
+          queryClient.setQueryData(memberQueryKeys.detail(persisted.memberId), persisted)
+        }
+        queryClient.setQueryData(
+          [...memberQueryKeys.detailByUuid(persisted.id), persisted.role],
+          persisted
+        )
+        setJaGradeEvaluationOpen(false)
+        onMemberBasicInfoSaved?.(persisted)
+        return
+      }
+
+      const mergedUser: Omit<User, 'password'> = {
+        ...displayUser,
+        listMetrics: {
+          ...displayUser.listMetrics,
+          jaEvaluationGrade: grade,
+        },
+      }
+
+      if (displayUser.memberId != null) {
+        queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), mergedUser)
+      }
+      queryClient.setQueryData(
+        [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
+        mergedUser
+      )
+
+      setJaGradeEvaluationOpen(false)
+      onMemberBasicInfoSaved?.(mergedUser)
+    },
+    [displayUser, onMemberBasicInfoSaved, patchMemberBasicInfo, queryClient]
   )
 
   const handleSidebarSelectTop = useCallback(
@@ -600,7 +805,13 @@ export function useUserDetailController({
   const instructorResumeApplicantRow = useMemo((): ApplicantInstructorRow | null => {
     if (!displayUser || displayUser.role !== 'INSTRUCTOR') return null
     const profile = resolveInstructorMemberProfile(displayUser)
-    if (profile !== 'instructor_dual' && profile !== 'instructor_only') return null
+    if (
+      profile !== 'instructor_dual' &&
+      profile !== 'instructor_only' &&
+      profile !== 'school_teacher'
+    ) {
+      return null
+    }
     const src = personalInfoRevealed ? displayUser : maskedUserForInstructorDetail(displayUser)
     return userToApplicantInstructorRow(src)
   }, [displayUser, personalInfoRevealed])
@@ -618,11 +829,14 @@ export function useUserDetailController({
       personalInfoRevealed,
       personalInfoRevealConfirmOpen,
       basicInfoEditing,
+      basicInfoEditScope,
       basicInfoDraft,
       basicInfoSaveLoading,
       adminPermissionVariantPatching,
       instructorPermissionRevokeOpen,
+      jaGradeEvaluationOpen,
       personalInfoRevealModal,
+      editUnmaskConfirmModal,
     },
     actions: {
       setTabState,
@@ -641,7 +855,8 @@ export function useUserDetailController({
       openPersonalInfoRevealConfirm,
       closePersonalInfoRevealConfirm,
       submitPersonalInfoReveal,
-      startBasicInfoEdit,
+      startBasicInfoEdit: requestStartBasicInfoEdit,
+      startAdminCommentEdit,
       cancelBasicInfoEdit,
       saveBasicInfoEdit,
       updateBasicInfoDraft,
@@ -649,6 +864,9 @@ export function useUserDetailController({
       openInstructorPermissionRevoke,
       closeInstructorPermissionRevoke,
       confirmInstructorPermissionRevoke,
+      openJaGradeEvaluation,
+      closeJaGradeEvaluation,
+      completeJaGradeEvaluation,
     },
     derived: {
       role,

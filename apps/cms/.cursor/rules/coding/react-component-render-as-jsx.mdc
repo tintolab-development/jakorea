@@ -1,0 +1,14 @@
+---
+description: CMS — 훅 쓰는 컴포넌트를 일반 함수로 호출 금지 (모노레포 규칙 위임)
+globs:
+  - "apps/cms/src/**/*.{tsx,jsx}"
+alwaysApply: false
+---
+
+# React component as JSX (CMS)
+
+모노레포 규칙을 따른다:
+
+→ **[.cursor/rules/react-component-render-as-jsx.mdc](../../../../../.cursor/rules/react-component-render-as-jsx.mdc)**
+
+요약: `AdminSection(shared)` 금지 → `<AdminSection {...shared} />`. 훅이 있는 PascalCase 컴포넌트는 렌더러·헬퍼에서도 JSX로만 마운트한다.

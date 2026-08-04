@@ -119,10 +119,19 @@ export function ManagedProgramCountDisplay({
   )
 }
 
-function instructorDetailTitleSchoolName(user: Pick<User, 'affiliatedSchoolName' | 'schoolInfo'>): string {
+function instructorDetailTitleSchoolName(
+  user: Pick<User, 'affiliatedSchoolName' | 'schoolInfo'>
+): string | undefined {
   const fromField = user.affiliatedSchoolName?.trim()
-  if (fromField) return fromField
-  return user.schoolInfo?.schoolName?.trim() || '-'
+  if (fromField && fromField !== '-') return fromField
+  const fromSchool = user.schoolInfo?.schoolName?.trim()
+  if (fromSchool && fromSchool !== '-') return fromSchool
+  return undefined
+}
+
+/** 회원 상세 풀페이지 타이틀 — `강사 상세 (홍길동)` 형식 */
+function formatUserDetailModalTitle(kindLabel: string, subject: string): string {
+  return `${kindLabel} (${subject})`
 }
 
 export function userDetailModalTitle(user: Pick<
@@ -136,22 +145,24 @@ export function userDetailModalTitle(user: Pick<
   | 'listMetrics'
   | 'programRoles'
 >): string {
-  const displayName = user.name
+  const displayName = user.name?.trim() || '-'
   switch (user.role) {
     case 'ADMIN':
-      return `관리자 상세_${displayName}`
+      return formatUserDetailModalTitle('관리자 상세', displayName)
     case 'INSTRUCTOR': {
       const profile = resolveInstructorMemberProfile(user)
       if (profile === 'school_teacher' || profile === 'instructor_dual') {
         const school = instructorDetailTitleSchoolName(user)
-        return `교사 상세_${school}_${displayName}`
+        // 학교명 없으면 빈 세그먼트를 넣지 않음
+        const subject = school ? `${school}_${displayName}` : displayName
+        return formatUserDetailModalTitle('교사 상세', subject)
       }
-      return `강사 상세_${displayName}`
+      return formatUserDetailModalTitle('강사 상세', displayName)
     }
     case 'SCHOOL':
-      return `학교 상세_${displayName}`
+      return formatUserDetailModalTitle('학교 상세', displayName)
     default:
-      return `회원 상세_${displayName}`
+      return formatUserDetailModalTitle('회원 상세', displayName)
   }
 }
 
@@ -178,3 +189,20 @@ export function userDetailSidebarNavAriaLabel(
 }
 
 export { instructorDetailTitleSchoolName }
+
+type UserDetailSubjectSource = Pick<User, 'id' | 'memberId' | 'adminAccountId'>
+
+/** 목록 id·uuid·`admin-account-{id}` 혼용 시에도 동일 회원이면 편집 상태를 유지하기 위한 안정 키 */
+export function resolveUserDetailSubjectKey(
+  user: UserDetailSubjectSource | null | undefined
+): string | null {
+  if (!user) return null
+  if (user.adminAccountId != null && user.adminAccountId > 0) {
+    return `admin-account:${user.adminAccountId}`
+  }
+  if (user.memberId != null && user.memberId > 0) {
+    return `member:${user.memberId}`
+  }
+  const id = user.id?.trim()
+  return id ? `id:${id}` : null
+}

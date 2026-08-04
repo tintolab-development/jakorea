@@ -4,10 +4,13 @@ import { CmsButton, CmsInput, CmsRadioGroup, ContentModal } from '@/shared/ui'
 import {
   CmsDateTextInput,
   birthDateFormValueToApi,
+  isBirthDateInputIncomplete,
   isValidBirthDateFormValue,
 } from '@/shared/ui/date-text-input'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import './admin-register-modal.css'
 
 const FORM_ID = 'cms-admin-register-modal-form'
@@ -72,27 +75,45 @@ function normalizeSubmitValues(
   }
 }
 
-function canSubmitAdminRegisterForm(values: AdminRegisterModalFormValues | undefined): boolean {
-  if (!values) {
-    return false
+function collectAdminRegisterValidation(
+  values: AdminRegisterModalFormValues
+): { missingRequired: boolean; formatMessages: string[] } {
+  let missingRequired = false
+  const formatMessages: string[] = []
+
+  if (!values.name?.trim()) {
+    missingRequired = true
   }
 
-  const name = values.name?.trim()
-  const contact = values.contact?.trim()
-  const email = values.email?.trim()
   const birthDate = values.birthDate?.trim()
+  if (!birthDate || isBirthDateInputIncomplete(birthDate)) {
+    missingRequired = true
+  } else if (!isValidBirthDateFormValue(birthDate)) {
+    formatMessages.push('올바른 생년월일을 입력해 주세요.')
+  }
 
-  return Boolean(
-    name &&
-      birthDate &&
-      isValidBirthDateFormValue(birthDate) &&
-      contact &&
-      KOREAN_PHONE_REGEX.test(contact) &&
-      email &&
-      EMAIL_PATTERN.test(email) &&
-      values.consentTermsOfService === 'agree' &&
-      values.consentPersonalInfo === 'agree'
-  )
+  const contact = values.contact?.trim()
+  if (!contact) {
+    missingRequired = true
+  } else if (!KOREAN_PHONE_REGEX.test(contact)) {
+    formatMessages.push('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')
+  }
+
+  const email = values.email?.trim()
+  if (!email) {
+    missingRequired = true
+  } else if (!EMAIL_PATTERN.test(email)) {
+    formatMessages.push('올바른 이메일 형식이 아닙니다')
+  }
+
+  if (values.consentTermsOfService !== 'agree') {
+    missingRequired = true
+  }
+  if (values.consentPersonalInfo !== 'agree') {
+    missingRequired = true
+  }
+
+  return { missingRequired, formatMessages }
 }
 
 export function AdminRegisterModal({
@@ -101,9 +122,8 @@ export function AdminRegisterModal({
   onSubmit,
   loading = false,
 }: AdminRegisterModalProps) {
+  const { showAlert } = useCmsAlert()
   const [form] = Form.useForm<AdminRegisterModalFormValues>()
-  const watchedValues = Form.useWatch([], form) as AdminRegisterModalFormValues | undefined
-  const isSubmitDisabled = loading || !canSubmitAdminRegisterForm(watchedValues)
 
   useEffect(() => {
     if (open) {
@@ -128,6 +148,25 @@ export function AdminRegisterModal({
     }
   }
 
+  const handleSubmitAttempt = (values: AdminRegisterModalFormValues) => {
+    const { missingRequired, formatMessages } = collectAdminRegisterValidation(values)
+    if (missingRequired) {
+      showAlert({
+        title: '안내',
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
+    if (formatMessages.length > 0) {
+      showAlert({
+        title: '안내',
+        content: formatMessages[0],
+      })
+      return
+    }
+    void handleFinish(values)
+  }
+
   return (
     <ContentModal
       open={open}
@@ -145,7 +184,7 @@ export function AdminRegisterModal({
             type="submit"
             form={FORM_ID}
             loading={loading}
-            disabled={isSubmitDisabled}
+            disabled={loading}
           >
             신규 등록
           </CmsButton>
@@ -158,7 +197,7 @@ export function AdminRegisterModal({
         layout="vertical"
         initialValues={INITIAL_VALUES}
         requiredMark={false}
-        onFinish={values => void handleFinish(values)}
+        onFinish={handleSubmitAttempt}
       >
         <div className="admin-register-modal__sections">
           <DetailInfoForm
@@ -196,6 +235,7 @@ export function AdminRegisterModal({
                       name="birthDate"
                       style={{ ...FORM_ITEM_STYLE, flex: '1 1 0', minWidth: 0 }}
                       trigger="onValueChange"
+                      getValueFromEvent={(value: string) => value}
                     >
                       <CmsDateTextInput
                         placeholder="YYYY.MM.DD"

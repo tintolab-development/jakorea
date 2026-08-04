@@ -188,6 +188,11 @@ export interface PaymentOrderCalculationBreakdownTableProps {
   /** 산출 내역 헤더 우측 (예: 신청 반려/확인 처리, 지급 완료 처리) */
   headerActions?: ReactNode
   onDownloadPaymentStatement?: () => void
+  /**
+   * 지급조서 발급 비활성(확인 완료·계좌 지급 완료 외).
+   * 미전달 시 버튼 활성 — 호출부에서 조건 검증.
+   */
+  paymentStatementIssueDisabled?: boolean
   /** 계좌 지급 현황 상세 등: 산출 내역 강의 진행 일자 열에서 차시 대신 회차 표기 */
   lectureSessionSegmentLabel?: 'session' | 'round'
 }
@@ -199,6 +204,7 @@ export function PaymentOrderCalculationBreakdownTable({
   processingStatus,
   headerActions,
   onDownloadPaymentStatement,
+  paymentStatementIssueDisabled = false,
   lectureSessionSegmentLabel = 'session',
 }: PaymentOrderCalculationBreakdownTableProps) {
   const tableRows = useMemo(() => buildPaymentOrderCalculationTableRows(blocks), [blocks])
@@ -216,12 +222,13 @@ export function PaymentOrderCalculationBreakdownTable({
     (processingStatus === undefined || !hideHeaderActionsStatuses.includes(processingStatus))
 
   const handleDownload = () => {
-    window.alert('준비 중입니다.')
+    if (paymentStatementIssueDisabled) return
     if (onDownloadPaymentStatement) {
       onDownloadPaymentStatement()
       return
     }
-    }
+    window.alert('준비 중입니다.')
+  }
 
   return (
     <div
@@ -274,6 +281,12 @@ export function PaymentOrderCalculationBreakdownTable({
                   size="large"
                   style={{ width: '160px' }}
                   icon={<DownloadOutlined />}
+                  disabled={paymentStatementIssueDisabled}
+                  title={
+                    paymentStatementIssueDisabled
+                      ? '지급조서 확인 완료 또는 계좌 지급 완료 건만 발급할 수 있습니다.'
+                      : undefined
+                  }
                   onClick={handleDownload}
                 >
                   지급조서 발급

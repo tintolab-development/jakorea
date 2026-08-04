@@ -10,10 +10,14 @@
 }
 
 .small {
-  padding: var(--spacing-4) var(--spacing-12);
+  width: 80px;
+  height: 32px;
+  flex-shrink: 0;
+  padding: 10px var(--spacing-12);
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .progress {

@@ -1,10 +1,8 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from '@/features/auth/sign-up'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import { SchoolSearchModal } from '@/features/auth/sign-up/ui/school-search-modal'
-import { SignUpActions } from '../layout/actions'
 import { SignUpLayout } from '../layout/shell'
-import { StepHeader } from '../layout/step-header'
+import { SignUpStepLayout } from '../layout/sign-up-step-layout'
 import styles from '../wizard.module.css'
 
 type TeacherProfileStepProps = {
@@ -12,20 +10,33 @@ type TeacherProfileStepProps = {
 }
 
 export function TeacherProfileStep({ signUp }: TeacherProfileStepProps) {
-  const { step, profile } = signUp
+  const { step, profile, identity } = signUp
 
   return (
     <SignUpLayout currentStep={step.current} totalSteps={step.total}>
-      <StepHeader
+      <SignUpStepLayout
         title="교사회원 정보를 입력해 주세요"
         description="교육 활동에 필요한 선생님 정보를 확인할게요."
-        titleClassName={styles.profileTitle}
-        descriptionClassName={styles.profileDescription}
-      />
-
-      <div className={styles.profileContent}>
-        <PFTextInput size="xlarge" label="이름" value={MOCK_VERIFIED_NAME} required disabled />
-        <PFTextInput size="xlarge" label="휴대폰 번호" value={MOCK_VERIFIED_PHONE} disabled />
+        actionsVariant="terms"
+        actions={
+          <>
+            <PFButton
+              size="xlarge"
+              width="100%"
+              disabled={!profile.isValid}
+              onClick={profile.continue}
+            >
+              가입 정보 확인하기
+            </PFButton>
+            <PFButton size="xlarge" variant="tertiary" width="100%" onClick={step.goPrevious}>
+              이전
+            </PFButton>
+          </>
+        }
+      >
+        <div className={styles.profileContent}>
+        <PFTextInput size="xlarge" label="이름" value={identity.verifiedName} required disabled />
+        <PFTextInput size="xlarge" label="휴대폰 번호" value={identity.verifiedPhone} disabled />
 
         <div className={styles.addressField}>
           <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
@@ -34,9 +45,17 @@ export function TeacherProfileStep({ signUp }: TeacherProfileStepProps) {
           <div className={styles.addressSearchRow}>
             <PFTextInput
               size="xlarge"
-              placeholder="소속 또는 학교를 입력해 주세요"
+              placeholder={
+                profile.requiresSchoolSearch
+                  ? '검색으로 학교를 선택해 주세요'
+                  : '소속 또는 학교를 입력해 주세요'
+              }
               value={profile.schoolName}
+              readOnly={profile.requiresSchoolSearch}
               onValueChange={profile.setSchoolName}
+              onClick={
+                profile.requiresSchoolSearch ? profile.openSchoolSearchModal : undefined
+              }
             />
             <PFButton
               size="xlarge"
@@ -74,26 +93,13 @@ export function TeacherProfileStep({ signUp }: TeacherProfileStepProps) {
             </PFButton>
           </div>
         </div>
-      </div>
-
-      <SignUpActions variant="terms">
-        <PFButton
-          size="xlarge"
-          width="100%"
-          disabled={!profile.isValid}
-          onClick={profile.continue}
-        >
-          가입 정보 확인하기
-        </PFButton>
-        <PFButton size="xlarge" variant="tertiary" width="100%" onClick={step.goPrevious}>
-          이전
-        </PFButton>
-      </SignUpActions>
+        </div>
+      </SignUpStepLayout>
 
       <SchoolSearchModal
         open={profile.isSchoolSearchModalOpen}
         onClose={profile.closeSchoolSearchModal}
-        onSelect={profile.setSchoolName}
+        onSelect={profile.selectSchool}
       />
     </SignUpLayout>
   )

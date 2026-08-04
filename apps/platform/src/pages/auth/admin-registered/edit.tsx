@@ -11,6 +11,7 @@ import type { SchoolStatus } from '@/features/auth/sign-up'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
 import sharedStyles from './shared.module.css'
+import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
 export function AdminRegisteredEditPage() {
   const wizardState = requireAdminRegisteredWizardState()
@@ -69,17 +70,16 @@ export function AdminRegisteredEditPage() {
   }
 
   return (
-    <section className={sharedStyles.page}>
-      <div className={sharedStyles.container}>
-        <div className={sharedStyles.header}>
-          <PFText as="h1" typo="hd-sm" color="black" className={sharedStyles.title}>
-            회원 정보를 수정해 주세요
-          </PFText>
-          <PFText as="p" typo="bd-lg-rg" color="primary-800" className={sharedStyles.description}>
-            변경된 내용이 있다면 정보를 수정해 주세요. 휴대폰 번호는 마이페이지에서 본인인증 후
-            변경할 수 있어요.
-          </PFText>
-        </div>
+    <section>
+      <div className={sharedStyles.header}>
+        <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
+          회원 정보를 수정해 주세요
+        </PFText>
+        <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
+          변경된 내용이 있다면 정보를 수정해 주세요. 휴대폰 번호는 마이페이지에서 본인인증 후
+          변경할 수 있어요.
+        </PFText>
+      </div>
 
         <div className={sharedStyles.content}>
           <PFTextInput size="xlarge" label="이름" value={MOCK_VERIFIED_NAME} required disabled />
@@ -206,13 +206,12 @@ export function AdminRegisteredEditPage() {
             이전
           </PFButton>
         </div>
-      </div>
 
       <AddressSearchModal
         open={isAddressModalOpen}
         onClose={() => setIsAddressModalOpen(false)}
-        onSelect={selectedAddress => {
-          setAddress(selectedAddress)
+        onSelect={selection => {
+          setAddress(selection.address)
           setIsAddressModalOpen(false)
         }}
       />

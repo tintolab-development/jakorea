@@ -1,26 +1,62 @@
 .field {
   display: flex;
   width: 100%;
-  max-width: 1440px;
-  height: 56px;
   box-sizing: border-box;
   align-items: center;
   gap: var(--spacing-12);
-  padding: 8px;
-  border-bottom: 2px solid var(--color-primary-800);
-  transition: border-color 160ms ease;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
 }
 
-.field:hover:not(.disabled) {
+.underline {
+  max-width: 1440px;
+  height: 56px;
+  padding: 8px;
+  border-bottom: 2px solid var(--color-primary-800);
+}
+
+.underline:hover:not(.disabled) {
   border-bottom-color: var(--color-primary-500);
 }
 
-.field.completed {
+.underline.completed {
   border-bottom-color: var(--color-primary-800);
 }
 
-.field.completed:hover:not(.disabled) {
+.underline.completed:hover:not(.disabled) {
   border-bottom-color: var(--color-primary-500);
+}
+
+/**
+ * Outlined — Figma 검색 인풋
+ * height 54 · padding 12/12/12/14 · gap 8 · radius 16 · border default
+ * placeholder warm-500 16/500/150% · icon 24×24 (#999)
+ */
+.outlined {
+  width: 360px;
+  max-width: 100%;
+  height: 54px;
+  flex-direction: row;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--spacing-8);
+  padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+}
+
+.outlined:hover:not(.disabled) {
+  border-color: var(--color-primary-500);
+}
+
+.outlined.completed {
+  border-color: var(--color-border-default);
+}
+
+.outlined:focus-within:not(.disabled) {
+  border-color: var(--color-border-focus);
 }
 
 .field.disabled {
@@ -31,6 +67,12 @@
 .icon {
   display: block;
   flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  aspect-ratio: 1 / 1;
+}
+
+.underline .icon {
   width: 32px;
   height: 32px;
 }
@@ -46,17 +88,47 @@
   font-family: var(--font-family-base);
   font-size: 18px;
   font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.18px;
+  outline: none;
+}
+
+.outlined .input {
+  overflow: hidden;
+  color: var(--color-neutral-warm-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
   font-weight: 500;
   line-height: 150%;
-  outline: none;
+  letter-spacing: 0;
 }
 
 .input::placeholder {
   color: var(--color-neutral-cool-500);
+  font-family: var(--font-family-base);
+  font-size: inherit;
+  font-style: normal;
+  font-weight: inherit;
+  line-height: 150%;
+  letter-spacing: inherit;
+  opacity: 1;
+}
+
+.outlined .input::placeholder {
+  overflow: hidden;
+  color: var(--color-neutral-warm-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .field.completed .input {
   color: var(--color-neutral-cool-700);
+}
+
+.outlined.completed .input {
+  color: var(--color-neutral-black);
 }
 
 .input:disabled {

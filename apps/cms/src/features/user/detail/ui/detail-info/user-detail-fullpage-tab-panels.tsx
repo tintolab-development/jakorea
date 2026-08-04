@@ -24,11 +24,14 @@ export function UserDetailFullpageTabPanels() {
     onOpenAssignmentSubmission,
     onOpenEnrollmentProgramDetail,
     basicInfoEditing,
+    basicInfoEditScope,
     basicInfoDraft,
     onBasicInfoDraftChange,
     adminPermissionVariantPatching,
     onPatchAdminPermissionVariantFromDetailView,
     onPermissionResendNotification,
+    onOpenJaGradeEvaluation,
+    scheduleChangeCount,
   } = useUserDetailFullpageShell()
 
   const { sections, strategy, enrollmentTableRows, resolvedProgramsChild } = derived
@@ -45,12 +48,14 @@ export function UserDetailFullpageTabPanels() {
           personalInfoRevealed={personalInfoRevealed}
           instructorResumeApplicantRow={instructorResumeApplicantRow}
           onNavigateToLinkedUser={onNavigateToLinkedUser}
-          memberInfoEditing={basicInfoEditing}
+          memberInfoEditing={basicInfoEditing && basicInfoEditScope === 'profile'}
           memberInfoDraft={basicInfoDraft}
           onMemberInfoDraftChange={onBasicInfoDraftChange}
           adminPermissionVariantPatching={adminPermissionVariantPatching}
           onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
           onPermissionResendNotification={onPermissionResendNotification}
+          onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
+          scheduleChangeCount={scheduleChangeCount}
         />
       )}
       {tabState.lnb === 'history' &&

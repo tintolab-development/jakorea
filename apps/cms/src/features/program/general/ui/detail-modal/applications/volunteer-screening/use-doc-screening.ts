@@ -22,6 +22,7 @@ import {
   formatGeneralVolunteerEssayCellValue,
   type GeneralManagerEvaluation,
 } from '@/features/program/general/lib/volunteer-screening-constants'
+import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { useGeneralVolunteerApplicationsRemote } from '@/features/program/general/hooks/use-general-volunteer-applications-remote'
 import { useGeneralVolunteerDocScreeningColumns } from './doc-screening-columns'
 import {
@@ -112,8 +113,10 @@ export function useGeneralVolunteerDocScreening({ programId }: { programId: stri
   } | null>(null)
   const [cancelApprovalTargetId, setCancelApprovalTargetId] = useState<string | null>(null)
   const [cancelRejectTargetId, setCancelRejectTargetId] = useState<string | null>(null)
+  // remote ON이면 mock으로 채우지 않음 (잘못된 목록 플래시 방지)
+  const remoteSeed = shouldUseGeneralApplicationsRemoteApi() && Boolean(programId)
   const [list, setList] = useState<GeneralVolunteerApplicantRow[]>(() =>
-    getGeneralVolunteerDoc1Applicants(programId)
+    remoteSeed ? [] : getGeneralVolunteerDoc1Applicants(programId)
   )
   const volunteerRemote = useGeneralVolunteerApplicationsRemote({
     programId,

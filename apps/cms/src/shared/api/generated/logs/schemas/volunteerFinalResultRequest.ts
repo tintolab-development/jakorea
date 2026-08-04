@@ -5,15 +5,24 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { VolunteerFinalResultRequestResult } from './volunteerFinalResultRequestResult';
 
 /**
  * 봉사자 최종 결과 처리 요청
  */
 export interface VolunteerFinalResultRequest {
-  /** 최종 결과. 예: PASS, FAIL, RESERVE */
-  result?: string;
-  /** 예비 합격 순위. 결과가 RESERVE일 때 사용합니다. */
+  /** 최종 결과. PASS/APPROVED, FAIL/REJECTED, RESERVE */
+  result: VolunteerFinalResultRequestResult;
+  /**
+     * 예비 합격 순위. RESERVE일 때 1~4 필수
+     * @minimum 1
+     * @maximum 4
+     */
   reserveRank?: number;
-  /** 최종 결과 처리 사유 */
+  /**
+     * 최종 결과 처리 사유. FAIL인 경우 필수
+     * @minLength 0
+     * @maxLength 500
+     */
   reason?: string;
 }

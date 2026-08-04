@@ -47,6 +47,7 @@ export function PFArrowButton({
     styles.button,
     styles[size],
     styles[variant],
+    disabled ? styles.disabled : undefined,
     className,
   ]
     .filter(Boolean)

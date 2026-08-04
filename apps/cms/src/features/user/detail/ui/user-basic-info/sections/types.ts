@@ -33,5 +33,6 @@ export interface BasicInfoSectionContext {
     userId: string
     permissionRole: 'instructor' | 'admin'
   }) => void
+  onOpenJaGradeEvaluation?: () => void
   viewContext: BasicInfoViewContext
 }

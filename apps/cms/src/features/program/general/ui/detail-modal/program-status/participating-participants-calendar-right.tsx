@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo } from 'react'
-import { Empty } from 'antd'
+import { EmptyState } from '@/shared/ui'
 import type { ParticipatingIndividualParticipantCalendarEvent } from '@/features/program/general/lib/build-participating-individual-participant-calendar-events'
 import { formatInstitutionCalendarSessionTimeDisplay } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-calendar-session'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
@@ -79,7 +79,7 @@ export function ParticipatingParticipantsCalendarRight({
       }
     >
       {isEmpty ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="해당 날짜에 일정이 없습니다" />
+        <EmptyState description="해당 날짜에 일정이 없습니다" />
       ) : (
         listRows.map(row => {
           const event = events.find(ev => ev.id === row.id)

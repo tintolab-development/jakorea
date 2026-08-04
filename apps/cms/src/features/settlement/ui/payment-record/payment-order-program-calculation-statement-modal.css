@@ -274,50 +274,6 @@
   flex-shrink: 0;
 }
 
-/* 산출 내역서 모달 — 산출 내역 상세 헤더: 신청 반려·확인 처리 140×44 */
-.payment-order-calc-statement-modal
-  .payment-order-calc-statement-modal__detail-actions
-  .cms-button.cms-button--large.ant-btn,
-.payment-order-calc-statement-modal
-  .payment-order-calc-statement-modal__detail-actions
-  .cms-button.cms-button--large.ant-btn-lg {
-  box-sizing: border-box !important;
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
-  height: 44px !important;
-  min-height: 44px !important;
-  max-height: 44px !important;
-  padding: 0 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
-}
-
-/* 신청 반려 라벨 타이포 */
-.payment-order-calc-statement-modal
-  .payment-order-calc-statement-modal__detail-actions
-  .cms-button--delete.cms-button--large.ant-btn-dangerous {
-  color: var(--color-red, #c32f4a) !important;
-  border-color: var(--color-red, #c32f4a) !important;
-  font-family: Pretendard, sans-serif !important;
-  font-size: 14px !important;
-  font-style: normal !important;
-  font-weight: 600 !important;
-  line-height: 150% !important;
-}
-
-.payment-order-calc-statement-modal
-  .payment-order-calc-statement-modal__detail-actions
-  .cms-button--delete.cms-button--large.ant-btn-dangerous:hover:not(:disabled),
-.payment-order-calc-statement-modal
-  .payment-order-calc-statement-modal__detail-actions
-  .cms-button--delete.cms-button--large.ant-btn-dangerous:focus-visible:not(:disabled) {
-  color: var(--color-red, #c32f4a) !important;
-  border-color: color-mix(in srgb, var(--color-red, #c32f4a) 88%, #000) !important;
-}
-
 /* 산출 내역 상세 테이블 보더 */
 .payment-order-calc-statement-modal__table.ant-table-wrapper .ant-table {
   border-radius: 6px;

@@ -10,10 +10,13 @@ import {
 } from '@/features/user/shared/lib/admin-permission-display'
 import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
 import {
+  matchesInstructorJaEvaluationGradeFilter,
   matchesInstructorSettlementFilter,
-  matchesInstructorTypeFilter,
 } from '@/entities/user/lib/matches-instructor-list-filters'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import { applyInstructorPermissionRevokedToUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
+import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
+import { markInstructorPermissionRevoked } from '@/features/user/shared/lib/revoked-instructor-overlay'
 import {
   canAssignUserProgramRoleForProgram,
   PROGRAM_PM_ROLE_LIMIT_MESSAGE,
@@ -28,38 +31,72 @@ import {
   stripUnsupportedMemberListFilters,
 } from '@/features/user/api/member-remote-capabilities'
 import { mapMemberListItems } from '@/features/user/api/map-member-list-item'
-import { mapMemberDetailToUser } from '@/features/user/api/map-member-detail-to-user'
-import { mapCreateUserRequestToPreRegister } from '@/features/user/api/map-pre-register-request'
+import {
+  applySavedBasicInfoPatchToUser,
+  mergeListUserWithFetchedDetail,
+} from '@/features/user/api/merge-list-user-with-detail'
+import {
+  mapIndividualMemberDetailToUser,
+  mapInstructorMemberDetailToUser,
+  mapMemberDetailToUser,
+  mapSchoolMemberDetailToUser,
+} from '@/features/user/api/map-member-detail-to-user'
+import {
+  mapCreateUserRequestToPreRegisterIndividual,
+  mapCreateUserRequestToPreRegisterInstructor,
+  mapCreateUserRequestToPreRegisterSchool,
+} from '@/features/user/api/map-pre-register-request'
+import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
+import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import {
   mapIsActiveToMemberStatus,
   mapUserRoleToApiRole,
+  resolvePrimaryUserRole,
 } from '@/features/user/api/map-member-role'
 import {
   createMemberCommentRemote,
   changeAdminAccountRoleRemote,
   createAdminAccountRemote,
   deleteMemberRemote,
+  deleteAdminAccountRemote,
   fetchAdminsPageRemote,
+  fetchIndividualMemberDetailRemote,
+  fetchInstructorMemberDetailRemote,
   fetchMemberCommentsRemote,
   fetchMemberDetailRemote,
   fetchMemberExternalIdentifiersRemote,
-  fetchMemberInstructorProfileRemote,
   fetchMembersPageRemote,
-  preRegisterMemberRemote,
+  fetchSchoolMemberDetailRemote,
+  preRegisterIndividualRemote,
+  preRegisterInstructorRemote,
+  preRegisterSchoolRemote,
+  revokeInstructorPermissionRemote,
   updateMemberBasicInfoRemote,
+  updateAdminBasicInfoRemote,
   updateMemberCommentRemote,
 } from '@/features/user/api/members-api-client'
 import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
+import type { InstructorCertificationUpsertRequest } from '@/shared/api/generated/members/schemas/instructorCertificationUpsertRequest'
+import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import {
   MEMBER_DETAIL_SCREEN_CODE,
   resolveLatestMemberAdminCommentDetail,
 } from '@/features/user/api/map-member-comments'
 import {
   hasAdminCommentPatch,
+  mapPatchUserBasicInfoToAdminAccountApiRequest,
   mapPatchUserBasicInfoToApiRequest,
 } from '@/features/user/api/map-patch-user-basic-info'
 import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
-import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
+import { resolveMemberIdForApi, registerMemberIdMapping } from '@/features/user/api/member-id-registry'
+import {
+  fetchAdminMemberDetailAsUser,
+  isAdminMemberDetailRole,
+  parseAdminAccountIdFromUserId,
+  resolveAdminAccountIdForDetail,
+  shouldUseAdminAccountDetailApi,
+} from '@/features/user/api/fetch-admin-member-detail'
+import { mapAdminAccountListItems } from '@/features/user/api/map-admin-account-list-item-to-user'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 
 /**
@@ -72,7 +109,7 @@ export async function getUsers(filters?: {
   createdAtFrom?: string
   createdAtTo?: string
   institutionLocation?: string
-  instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
   /** 강사 회원 관리(`kind=instructors`) — 순수 강사만, 교사·교사 및 강사 제외 */
@@ -90,7 +127,9 @@ export async function getUsers(filters?: {
   if (filters?.instructorListPureOnly) {
     users = users.filter(
       user =>
-        user.role !== 'INSTRUCTOR' || resolveInstructorMemberProfile(user) === 'instructor_only'
+        !isInstructorPermissionRevoked(user) &&
+        user.role === 'INSTRUCTOR' &&
+        resolveInstructorMemberProfile(user) === 'instructor_only'
     )
   }
 
@@ -123,8 +162,10 @@ export async function getUsers(filters?: {
     users = users.filter(user => matchesUserInstitutionLocation(user, filters.institutionLocation!))
   }
 
-  if (filters?.instructorType?.trim()) {
-    users = users.filter(user => matchesInstructorTypeFilter(user, filters.instructorType!))
+  if (filters?.jaEvaluationGrade?.trim()) {
+    users = users.filter(user =>
+      matchesInstructorJaEvaluationGradeFilter(user, filters.jaEvaluationGrade!)
+    )
   }
 
   if (filters?.settlementStatus?.trim()) {
@@ -165,7 +206,7 @@ export interface GetUsersPageParams {
   createdAtFrom?: string
   createdAtTo?: string
   institutionLocation?: string
-  instructorType?: string
+  jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
   instructorListPureOnly?: boolean
@@ -190,6 +231,28 @@ export async function getUsersPage(
   if (isMembersRemoteEnabled()) {
     try {
       const apiFilters = stripUnsupportedMemberListFilters(filters)
+
+      if (apiFilters.role === 'ADMIN') {
+        const res = await fetchAdminsPageRemote({
+          keyword: apiFilters.search?.trim() || undefined,
+          roleCode: apiFilters.adminPermissionVariant
+            ? adminPermissionFeeGradeToRoleCode(apiFilters.adminPermissionVariant)
+            : undefined,
+          page,
+          size: PAGE_SIZE,
+        })
+        let users = mapAdminAccountListItems(res.items)
+        if (apiFilters.adminPermissionVariant) {
+          users = users.filter(
+            user => getAdminPermissionVariant(user) === apiFilters.adminPermissionVariant
+          )
+        }
+        const total = res.totalElements ?? users.length
+        const totalPages = res.totalPages ?? 0
+        const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
+        return { users, total, hasMore }
+      }
+
       const res = await fetchMembersPageRemote({
         keyword: apiFilters.search?.trim() || undefined,
         role: mapUserRoleToApiRole(apiFilters.role),
@@ -201,7 +264,9 @@ export async function getUsersPage(
       if (filters?.instructorListPureOnly) {
         users = users.filter(
           user =>
-            user.role !== 'INSTRUCTOR' || resolveInstructorMemberProfile(user) === 'instructor_only'
+            !isInstructorPermissionRevoked(user) &&
+            user.role === 'INSTRUCTOR' &&
+            resolveInstructorMemberProfile(user) === 'instructor_only'
         )
       }
       const total = res.totalElements ?? users.length
@@ -239,6 +304,7 @@ export type PatchUserBasicInfoInput = Partial<
     | 'birthDate'
     | 'socialAccounts'
     | 'adminComment'
+    | 'bio'
     | 'schoolInfo'
     | 'instructorInfo'
     | 'listMetrics'
@@ -268,31 +334,105 @@ async function mergeUserFromApiResponse(
   if (!mapped) {
     throw new Error('회원 정보 수정 응답을 처리하지 못했습니다.')
   }
-  if (!existing) return mapped
-  return {
-    ...existing,
-    ...mapped,
-    listMetrics: {
-      ...existing.listMetrics,
-      ...mapped.listMetrics,
-      ...patch?.listMetrics,
-    },
-    schoolInfo: patch?.schoolInfo
-      ? { ...existing.schoolInfo, ...mapped.schoolInfo, ...patch.schoolInfo }
-      : mapped.schoolInfo ?? existing.schoolInfo,
-    instructorInfo: patch?.instructorInfo
-      ? { ...existing.instructorInfo, ...mapped.instructorInfo, ...patch.instructorInfo }
-      : mapped.instructorInfo ?? existing.instructorInfo,
-    ...(patch && Object.prototype.hasOwnProperty.call(patch, 'adminComment')
-      ? { adminComment: patch.adminComment }
-      : {}),
+  if (!existing) {
+    return patch ? applySavedBasicInfoPatchToUser(mapped, patch) : mapped
   }
+
+  let merged = mergeListUserWithFetchedDetail(existing, mapped)
+  if (patch) {
+    merged = applySavedBasicInfoPatchToUser(merged, patch)
+  }
+  return merged
+}
+
+async function patchAdminUserBasicInfoRemote(
+  userId: UUID,
+  existing: Omit<User, 'password'>,
+  patch: PatchUserBasicInfoInput
+): Promise<Omit<User, 'password'>> {
+  const adminId =
+    existing.adminAccountId ??
+    (await resolveAdminAccountIdForDetail(userId, { email: existing.email }))
+
+  if (isAdminPermissionVariantOnlyPatch(patch)) {
+    return patchAdminPermissionVariantRemote(userId, patch.listMetrics!.adminPermissionVariant!)
+  }
+
+  const memberId = existing.memberId
+  if (memberId != null && hasAdminCommentPatch(patch)) {
+    const comment = patch.adminComment?.trim()
+    if (comment) {
+      const existingComments = await fetchMemberCommentsRemote(memberId, {
+        screenCode: MEMBER_DETAIL_SCREEN_CODE,
+      }).catch(() => [])
+      const latest = resolveLatestMemberAdminCommentDetail(
+        existingComments,
+        MEMBER_DETAIL_SCREEN_CODE
+      )
+      if (latest?.commentId != null) {
+        await updateMemberCommentRemote(memberId, latest.commentId, { comment })
+      } else {
+        await createMemberCommentRemote(memberId, {
+          screenCode: MEMBER_DETAIL_SCREEN_CODE,
+          comment,
+        })
+      }
+    }
+  }
+
+  const { adminComment: _adminComment, listMetrics, ...patchWithoutCommentAndMetrics } = patch
+  const body = mapPatchUserBasicInfoToAdminAccountApiRequest(patchWithoutCommentAndMetrics)
+  const hasBasicBody = Object.keys(body).length > 0
+
+  const permVariant = listMetrics?.adminPermissionVariant
+  if (
+    permVariant === 'manager' ||
+    permVariant === 'partner' ||
+    permVariant === 'viewer'
+  ) {
+    const current = getAdminPermissionVariant(existing)
+    if (permVariant !== current) {
+      await changeAdminAccountRoleRemote(adminId, {
+        roleCode: adminPermissionFeeGradeToRoleCode(permVariant),
+        reason: `CMS 관리자 회원 권한 유형 변경 (${permVariant})`,
+      })
+    }
+  }
+
+  if (!hasBasicBody && !hasAdminCommentPatch(patch) && !listMetrics?.adminPermissionVariant) {
+    return existing
+  }
+
+  if (hasBasicBody) {
+    await updateAdminBasicInfoRemote(adminId, body)
+  }
+
+  return fetchAdminMemberDetailAsUser(userId, {
+    adminAccountId: adminId,
+    memberId: existing.memberId,
+    email: existing.email,
+  })
 }
 
 async function patchUserBasicInfoRemote(
   userId: UUID,
   patch: PatchUserBasicInfoInput
 ): Promise<Omit<User, 'password'>> {
+  if (shouldUseAdminAccountDetailApi({ userId })) {
+    const existing = await fetchAdminMemberDetailAsUser(userId)
+    return patchAdminUserBasicInfoRemote(userId, existing, patch)
+  }
+
+  let existingForRole: Omit<User, 'password'> | null = null
+  try {
+    existingForRole = await getUserById(userId)
+  } catch {
+    existingForRole = null
+  }
+  if (existingForRole?.role === 'ADMIN') {
+    return patchAdminUserBasicInfoRemote(userId, existingForRole, patch)
+  }
+
   const memberId = resolveMemberIdForApi(userId)
   try {
     if (hasAdminCommentPatch(patch)) {
@@ -345,8 +485,12 @@ async function patchUserBasicInfoRemote(
 }
 
 async function resolveAdminAccountIdForMemberUser(
-  user: Pick<User, 'id' | 'email'>
+  user: Pick<User, 'id' | 'email' | 'adminAccountId'>
 ): Promise<number> {
+  if (user.adminAccountId != null && user.adminAccountId > 0) {
+    return user.adminAccountId
+  }
+
   const email = user.email?.trim()
   const page = await fetchAdminsPageRemote({
     ...(email ? { keyword: email } : {}),
@@ -380,13 +524,18 @@ async function patchAdminPermissionVariantRemote(
   try {
     let existing: Omit<User, 'password'> | null = null
     try {
-      existing = await getUserById(userId)
+      existing = await getUserById(userId, { role: 'ADMIN' })
     } catch {
       existing = null
     }
 
     let adminId: number
-    if (existing) {
+    const adminIdFromUserId = parseAdminAccountIdFromUserId(userId)
+    if (existing?.adminAccountId != null && existing.adminAccountId > 0) {
+      adminId = existing.adminAccountId
+    } else if (adminIdFromUserId != null) {
+      adminId = adminIdFromUserId
+    } else if (existing) {
       adminId = await resolveAdminAccountIdForMemberUser(existing)
     } else {
       // 목록 행이 member 상세에 없어도, id 레지스트리·숫자 id 로 admin account PATCH 시도
@@ -422,26 +571,25 @@ async function patchAdminPermissionVariantRemote(
       reason: `CMS 관리자 회원 권한 유형 변경 (${roleCode})`,
     })
 
-    if (existing) {
-      return {
-        ...existing,
-        listMetrics: {
-          ...existing.listMetrics,
-          adminPermissionVariant: variant,
-        },
-      }
-    }
+    const refreshed = await fetchAdminMemberDetailAsUser(userId, {
+      adminAccountId: adminId,
+      memberId: existing?.memberId,
+      email: existing?.email,
+    })
 
-    const now = new Date().toISOString()
     return {
-      id: userId,
-      email: '-',
-      name: '-',
-      role: 'ADMIN',
-      isActive: true,
-      createdAt: now,
-      updatedAt: now,
-      listMetrics: { adminPermissionVariant: variant },
+      ...refreshed,
+      registeredByAdmin: Boolean(
+        existing?.registeredByAdmin ?? refreshed.registeredByAdmin
+      ),
+      identitySelfSignupCompletedAfterAdminRegistration: Boolean(
+        existing?.identitySelfSignupCompletedAfterAdminRegistration ??
+          refreshed.identitySelfSignupCompletedAfterAdminRegistration
+      ),
+      listMetrics: {
+        ...refreshed.listMetrics,
+        adminPermissionVariant: variant,
+      },
     }
   } catch (error) {
     throw new Error(getMemberApiErrorMessage(error, '관리자 권한 유형 변경에 실패했습니다.'))
@@ -548,28 +696,99 @@ function snapshotUserWithoutPassword(userId: UUID): Omit<User, 'password'> | nul
   }
 }
 
-export async function getUserById(userId: UUID): Promise<Omit<User, 'password'> | null> {
+export async function getUserById(
+  userId: UUID,
+  options?: { memberId?: number; role?: UserRole; adminAccountId?: number; email?: string }
+): Promise<Omit<User, 'password'> | null> {
   if (isMembersRemoteEnabled()) {
     try {
-      const memberId = resolveMemberIdForApi(userId)
+      if (
+        shouldUseAdminAccountDetailApi({
+          role: options?.role,
+          adminAccountId: options?.adminAccountId,
+          userId,
+        })
+      ) {
+        return fetchAdminMemberDetailAsUser(userId, options)
+      }
+
+      const memberId = resolveMemberIdForApi(userId, options)
+      let role = options?.role
+
+      if (!role) {
+        const legacy = await fetchMemberDetailRemote(memberId)
+        role = resolvePrimaryUserRole(legacy.roles)
+        if (isAdminMemberDetailRole(role)) {
+          return fetchAdminMemberDetailAsUser(userId, {
+            memberId,
+            email: legacy.email,
+          })
+        }
+        if (role !== 'SCHOOL' && role !== 'INSTRUCTOR' && role !== 'INDIVIDUAL') {
+          const externalIdentifiers = await fetchMemberExternalIdentifiersRemote(memberId).catch(
+            () => []
+          )
+          const user = mapMemberDetailToUser(legacy, null)
+          const id1365 = resolve1365IdFromExternalIdentifiers(
+            externalIdentifiers,
+            legacy.external1365Id
+          )
+          if (id1365) user.id1365 = id1365
+          return user
+        }
+      }
+
+      if (isAdminMemberDetailRole(role)) {
+        return fetchAdminMemberDetailAsUser(userId, {
+          memberId: options?.memberId ?? memberId,
+          adminAccountId: options?.adminAccountId,
+          email: options?.email,
+        })
+      }
+
+      if (role === 'SCHOOL') {
+        const detail = await fetchSchoolMemberDetailRemote(memberId)
+        return mapSchoolMemberDetailToUser(detail, { fallbackRole: 'SCHOOL' })
+      }
+
+      if (role === 'INSTRUCTOR') {
+        const [detail, externalIdentifiers] = await Promise.all([
+          fetchInstructorMemberDetailRemote(memberId),
+          fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
+        ])
+        const user = mapInstructorMemberDetailToUser(detail, { fallbackRole: 'INSTRUCTOR' })
+        const id1365 = resolve1365IdFromExternalIdentifiers(
+          externalIdentifiers,
+          detail.member?.external1365Id
+        )
+        if (id1365) user.id1365 = id1365
+        return user
+      }
+
+      if (role === 'INDIVIDUAL') {
+        const [detail, externalIdentifiers] = await Promise.all([
+          fetchIndividualMemberDetailRemote(memberId),
+          fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
+        ])
+        const user = mapIndividualMemberDetailToUser(detail, { fallbackRole: 'INDIVIDUAL' })
+        const id1365 = resolve1365IdFromExternalIdentifiers(
+          externalIdentifiers,
+          detail.member?.external1365Id
+        )
+        if (id1365) user.id1365 = id1365
+        return user
+      }
+
       const detail = await fetchMemberDetailRemote(memberId)
-      const isInstructor = (detail.roles ?? []).some(
-        r => String(r).toUpperCase() === 'INSTRUCTOR'
+      const externalIdentifiers = await fetchMemberExternalIdentifiersRemote(memberId).catch(
+        () => []
       )
-      const [instructorProfile, externalIdentifiers] = await Promise.all([
-        isInstructor
-          ? fetchMemberInstructorProfileRemote(memberId).catch(() => null)
-          : Promise.resolve(null),
-        fetchMemberExternalIdentifiersRemote(memberId).catch(() => []),
-      ])
-      const user = mapMemberDetailToUser(detail, instructorProfile)
+      const user = mapMemberDetailToUser(detail, null, { fallbackRole: role })
       const id1365 = resolve1365IdFromExternalIdentifiers(
         externalIdentifiers,
         detail.external1365Id
       )
-      if (id1365) {
-        user.id1365 = id1365
-      }
+      if (id1365) user.id1365 = id1365
       return user
     } catch (error) {
       throw new Error(getMemberApiErrorMessage(error, '회원 상세를 불러오지 못했습니다.'))
@@ -644,8 +863,14 @@ export async function updateUserStatus(
  * 사용자 생성 (관리자용)
  */
 export interface CreateUserRequest {
-  email: string
-  password: string
+  /** 학교(기관) 등록 등 폼에 이메일이 없으면 생략 — 더미 생성 금지 */
+  email?: string
+  /**
+   * 관리자 사전등록 임시 비밀번호.
+   * 계정 아이디(email)가 있으면 `createUser`가 email로 덮어쓴다.
+   * email 없는 학교 등록 등에서만 호출부 값을 쓴다.
+   */
+  password?: string
   name: string
   nameEn?: string
   phone?: string
@@ -672,25 +897,94 @@ export interface CreateUserRequest {
   affiliation?: string
   grade?: string
   schoolEnrollmentStatus?: 'ENROLLED' | 'NOT_ENROLLED'
+  neisCode?: string
+  regionSido?: string
+  regionSigungu?: string
+  zipCode?: string
+  instructorType?: string
+  oneLineIntro?: string
+  careerText?: string
+  selfIntroduction?: string
+  /** 강사 사전등록 — 학력 요약(구조화 학력 전용 필드 부재 시) */
+  educationLevel?: string
+  termsAgreements?: TermsAgreementRequest[]
+  certifications?: InstructorCertificationUpsertRequest[]
+}
+
+async function fetchCreatedMemberAsUser(
+  memberId: number,
+  role: UserRole
+): Promise<Omit<User, 'password'>> {
+  if (role === 'SCHOOL') {
+    return mapSchoolMemberDetailToUser(await fetchSchoolMemberDetailRemote(memberId), {
+      fallbackRole: 'SCHOOL',
+    })
+  }
+  if (role === 'INSTRUCTOR') {
+    return mapInstructorMemberDetailToUser(await fetchInstructorMemberDetailRemote(memberId), {
+      fallbackRole: 'INSTRUCTOR',
+    })
+  }
+  if (role === 'INDIVIDUAL') {
+    return mapIndividualMemberDetailToUser(await fetchIndividualMemberDetailRemote(memberId), {
+      fallbackRole: 'INDIVIDUAL',
+    })
+  }
+  return mapMemberDetailToUser(await fetchMemberDetailRemote(memberId), null, {
+    fallbackRole: role,
+  })
+}
+
+/**
+ * 관리자 사전등록: 계정 아이디(email) = 임시 비밀번호.
+ * email이 없으면(학교 등) 호출부 password를 그대로 사용.
+ */
+function resolveCreateUserPassword(request: CreateUserRequest): string {
+  const accountId = request.email?.trim()
+  if (accountId) {
+    return resolveAdminProvisionedTempPassword(accountId)
+  }
+  return request.password?.trim() ?? ''
 }
 
 export async function createUser(request: CreateUserRequest): Promise<Omit<User, 'password'>> {
+  const provisionedPassword = resolveCreateUserPassword(request)
+
   if (isMembersRemoteEnabled()) {
     try {
       if (request.role === 'ADMIN') {
+        const adminEmail = request.email?.trim()
+        if (!adminEmail) {
+          throw new Error('관리자 등록에는 이메일이 필요합니다.')
+        }
+        const rawPassword = provisionedPassword
+        if (!rawPassword) {
+          throw new Error('관리자 등록에는 초기 비밀번호가 필요합니다.')
+        }
         const created = await createAdminAccountRemote({
-          email: request.email.trim(),
+          email: adminEmail,
+          rawPassword,
           name: request.name.trim(),
           phone: request.phone?.trim(),
-          gender: request.gender?.trim(),
-          birthDate: request.birthDate?.trim(),
+          gender: toApiGender(request.gender),
+          birthDate: toApiBirthDate(request.birthDate),
           roleCode: 'VIEWER',
           reason: 'CMS 관리자 회원 신규 등록',
         })
+        const adminAccountId = created.adminAccountId ?? created.id
+        const memberId = created.memberId
         const uuid = created.uuid?.trim()
+        const id =
+          uuid ??
+          (memberId != null ? `member-${memberId}` : `admin-account-${adminAccountId ?? Date.now()}`)
+        if (uuid && memberId != null) {
+          registerMemberIdMapping(uuid, memberId)
+        }
         return {
-          id: uuid ? `admin-${uuid}` : `admin-account-${created.id ?? Date.now()}`,
-          email: created.email?.trim() || request.email,
+          id,
+          memberId,
+          adminAccountId,
+          email: created.email?.trim() || adminEmail,
           name: created.name?.trim() || request.name,
           phone: request.phone,
           role: 'ADMIN',
@@ -703,18 +997,26 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
         }
       }
 
-      const body = mapCreateUserRequestToPreRegister(request)
-      const created = await preRegisterMemberRemote(body)
+      const created =
+        request.role === 'SCHOOL'
+          ? await preRegisterSchoolRemote(mapCreateUserRequestToPreRegisterSchool(request))
+          : request.role === 'INSTRUCTOR'
+            ? await preRegisterInstructorRemote(
+                mapCreateUserRequestToPreRegisterInstructor(request)
+              )
+            : await preRegisterIndividualRemote(
+                mapCreateUserRequestToPreRegisterIndividual(request)
+              )
+
       const memberId = created.memberId
       if (memberId != null && !Number.isNaN(memberId)) {
-        const detail = await fetchMemberDetailRemote(memberId)
-        return mapMemberDetailToUser(detail, null)
+        return await fetchCreatedMemberAsUser(memberId, request.role)
       }
       if (created.memberUuid?.trim()) {
         return {
           id: created.memberUuid.trim(),
           memberId: created.memberId,
-          email: request.email,
+          email: request.email?.trim() || '',
           name: request.name,
           role: request.role,
           isActive: request.isActive ?? true,
@@ -725,7 +1027,7 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
       }
       return {
         id: `member-pre-${Date.now()}`,
-        email: request.email,
+        email: request.email?.trim() || '',
         name: request.name,
         role: request.role,
         isActive: request.isActive ?? true,
@@ -740,10 +1042,13 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
 
   await new Promise(resolve => setTimeout(resolve, 300))
 
-  // 이메일 중복 체크
-  const existingUser = mockUsers.find(u => u.email === request.email)
-  if (existingUser) {
-    throw new Error('이미 사용 중인 이메일입니다.')
+  // 이메일 중복 체크 (학교 등 email 미입력은 스킵)
+  const emailForCreate = request.email?.trim() || ''
+  if (emailForCreate) {
+    const existingUser = mockUsers.find(u => u.email === emailForCreate)
+    if (existingUser) {
+      throw new Error('이미 사용 중인 이메일입니다.')
+    }
   }
 
   // UUID 생성
@@ -755,8 +1060,8 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
 
   const newUser: User = {
     id: generateUUID(),
-    email: request.email,
-    password: request.password, // 실제로는 해시된 값이어야 함
+    email: emailForCreate,
+    password: provisionedPassword, // 관리자 사전등록: 계정 아이디 = 임시 비밀번호
     name: request.name,
     nameEn: request.nameEn,
     phone: request.phone,
@@ -791,6 +1096,12 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
   // 강사 정보 설정
   if (request.role === 'INSTRUCTOR' && request.instructorInfo) {
     newUser.instructorInfo = request.instructorInfo
+  }
+
+  if (request.role === 'INSTRUCTOR') {
+    const instructorType = request.instructorType?.trim().toUpperCase()
+    newUser.instructorMemberProfile =
+      instructorType === 'SCHOOL_TEACHER' ? 'school_teacher' : 'instructor_only'
   }
 
   if (request.id1365) {
@@ -857,12 +1168,84 @@ export async function updateUserProgramRole(
 }
 
 /**
+ * 강사 권한 박탈 (Mock — mockUsers 반영 / Remote — revoke API)
+ */
+export async function revokeInstructorPermission(
+  userId: UUID,
+  payload: { reason: string; revokeReason?: string },
+  options?: { memberId?: number }
+): Promise<Omit<User, 'password'>> {
+  if (isMembersRemoteEnabled()) {
+    const memberId = resolveMemberIdForApi(userId, options)
+    await revokeInstructorPermissionRemote(memberId, {
+      reason: payload.reason,
+      revokeReason: payload.revokeReason ?? payload.reason,
+    })
+    const refreshed = await getUserById(userId, { memberId })
+    if (!refreshed) {
+      throw new Error('강사 권한 박탈 후 회원 정보를 불러오지 못했습니다.')
+    }
+    const revoked = applyInstructorPermissionRevokedToUser({
+      ...refreshed,
+      instructorApprovalStatus: 'REVOKED',
+    })
+    markInstructorPermissionRevoked(revoked)
+    return revoked
+  }
+
+  await new Promise(resolve => setTimeout(resolve, 200))
+  const userIndex = mockUsers.findIndex(u => u.id === userId)
+  if (userIndex === -1) {
+    throw new Error('사용자를 찾을 수 없습니다.')
+  }
+
+  const current = mockUsers[userIndex]
+  if (current.role !== 'INSTRUCTOR') {
+    throw new Error('강사 회원만 권한을 박탈할 수 있습니다.')
+  }
+
+  const { password: _password, ...withoutPassword } = current
+  const revoked = applyInstructorPermissionRevokedToUser(withoutPassword)
+  mockUsers[userIndex] = {
+    ...current,
+    ...revoked,
+    password: current.password,
+    updatedAt: new Date().toISOString(),
+  }
+  markInstructorPermissionRevoked(revoked)
+
+  const snapshot = snapshotUserWithoutPassword(userId)
+  if (!snapshot) {
+    throw new Error('강사 권한 박탈 후 회원 정보를 불러오지 못했습니다.')
+  }
+  return snapshot
+}
+
+/**
  * 사용자 삭제
  */
-export async function deleteUser(userId: UUID, reason = 'CMS 관리자 회원 삭제'): Promise<void> {
+export async function deleteUser(
+  userId: UUID,
+  reason = 'CMS 관리자 회원 삭제',
+  options?: { memberId?: number; adminAccountId?: number; role?: UserRole; email?: string }
+): Promise<void> {
   if (isMembersRemoteEnabled()) {
     try {
-      const memberId = resolveMemberIdForApi(userId)
+      if (
+        shouldUseAdminAccountDetailApi({
+          role: options?.role,
+          adminAccountId: options?.adminAccountId,
+          userId,
+        })
+      ) {
+        const adminId =
+          options?.adminAccountId ??
+          (await resolveAdminAccountIdForDetail(userId, options))
+        await deleteAdminAccountRemote(adminId, { reason })
+        return
+      }
+
+      const memberId = resolveMemberIdForApi(userId, options)
       await deleteMemberRemote(memberId, { reason })
       return
     } catch (error) {

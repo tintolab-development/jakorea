@@ -42,7 +42,8 @@ export function calculateParticipatingTextbookKitQuantity(
 }
 
 function listUsedTextbooksForProgram(program: Program, catalog?: TextbookRow[]): TextbookRow[] {
-  if (catalog) return catalog
+  // undefined = 아직 원격 미도착 → sync store 폴백. [] = 로드 완료·교재 없음.
+  if (catalog !== undefined) return catalog
   const educationTarget = resolveProgramEducationTarget(program)
   return listTextbooksFromStore().filter(row => {
     if (row.useStatus !== 'USED') return false

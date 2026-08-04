@@ -45,7 +45,7 @@ const UNSUPPORTED_LIST_FILTER_LABELS: Record<string, string> = {
   createdAtFrom: '가입일(시작)',
   createdAtTo: '가입일(종료)',
   institutionLocation: '기관 지역',
-  instructorType: '강사 유형',
+  jaEvaluationGrade: 'JA 평가 등급',
   settlementStatus: '정산 현황',
   adminPermissionVariant: '관리자 권한 유형',
   instructorListPureOnly: '순수 강사만',
@@ -62,8 +62,8 @@ export function getUnsupportedMemberListFilterLabels(
   if (filters.institutionLocation?.trim()) {
     labels.push(UNSUPPORTED_LIST_FILTER_LABELS.institutionLocation)
   }
-  if (filters.instructorType?.trim()) {
-    labels.push(UNSUPPORTED_LIST_FILTER_LABELS.instructorType)
+  if (filters.jaEvaluationGrade?.trim()) {
+    labels.push(UNSUPPORTED_LIST_FILTER_LABELS.jaEvaluationGrade)
   }
   if (filters.settlementStatus?.trim()) {
     labels.push(UNSUPPORTED_LIST_FILTER_LABELS.settlementStatus)
@@ -85,7 +85,7 @@ export function stripUnsupportedMemberListFilters(
     createdAtFrom: _a,
     createdAtTo: _b,
     institutionLocation: _c,
-    instructorType: _d,
+    jaEvaluationGrade: _d,
     settlementStatus: _e,
     adminPermissionVariant: _f,
     instructorListPureOnly: _g,

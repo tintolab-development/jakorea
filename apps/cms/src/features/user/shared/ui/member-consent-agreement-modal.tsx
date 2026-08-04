@@ -1,17 +1,28 @@
 import { CloseOutlined } from '@ant-design/icons'
 import { Spin } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  buildAgreementConsentFillParagraphBodyOptions,
+  resolveAgreementConsentFillInteractionMode,
+} from '@/features/template/lib/build-agreement-consent-fill-options'
+import {
+  extractAgreementDraftAuthorName,
+  resolveAgreementUserModeAuthorDisplayName,
+} from '@/features/template/lib/extract-agreement-draft-author-name'
 import { loadWritingFormTemplateDraft } from '@/features/template/lib/writing-form-template-local-save'
 import { resolveAgreementWritingFormConfig } from '@/features/template/model/template-registry/agreement-template-config-registry'
 import {
+  ensureAgreementNoticeConfirmationClosing,
   normalizeWritingFormDraft,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
+import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import {
   applyMemberPortraitConsentPrefill,
   type MemberConsentMemberContext,
@@ -23,6 +34,10 @@ import '@/features/template/ui/template-management/template-fullpage-modal.css'
 import './member-consent-agreement-modal.css'
 
 const MEMBER_CONSENT_MODAL_Z_INDEX = 1200
+const PAYMENT_STATEMENT_TEMPLATE_IDS = new Set([
+  'agreement-third-party',
+  'document-payment-order-pre-consent',
+])
 
 export interface MemberConsentAgreementModalProps {
   open: boolean
@@ -52,17 +67,21 @@ export function MemberConsentAgreementModal({
   const agreementConfig = useMemo(() => resolveAgreementWritingFormConfig(templateId), [templateId])
   const [draft, setDraft] = useState<WritingFormDraft | null>(null)
   const [isDraftLoading, setIsDraftLoading] = useState(false)
+  /** 지급조서 기본정보 성명 — draft 밖 로컬 폼 값 */
+  const [paymentAuthorName, setPaymentAuthorName] = useState('')
 
   useEffect(() => {
     if (!open) {
       setDraft(null)
       setIsDraftLoading(false)
+      setPaymentAuthorName('')
       return
     }
 
     let cancelled = false
     setIsDraftLoading(true)
     setDraft(null)
+    setPaymentAuthorName('')
 
     void loadWritingFormTemplateDraft(templateId)
       .then(saved => {
@@ -70,6 +89,9 @@ export function MemberConsentAgreementModal({
         const seed = saved?.draft ?? resolveSeedDraft(templateId)
         if (seed == null) return
         let next = normalizeWritingFormDraft(seed)
+        if (templateId === 'agreement-notice') {
+          next = ensureAgreementNoticeConfirmationClosing(next)
+        }
         if (templateId === 'agreement-portrait') {
           next = applyMemberPortraitConsentPrefill(next, memberContext)
         }
@@ -104,20 +126,59 @@ export function MemberConsentAgreementModal({
     if (hasMemberConsentDisagreement(draft)) {
       showAlert({
         title: '안내',
-        content: '동의서의 모든 항목에 동의해 주세요.',
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return
     }
     onComplete()
   }, [draft, onComplete, showAlert])
 
+  const handlePaymentBasicInfoValuesChange = useCallback(
+    (values: PaymentStatementBasicInfoAutofillValues) => {
+      setPaymentAuthorName(values.nameKo)
+    },
+    []
+  )
+
+  const syncedAuthorName = useMemo(() => {
+    if (PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) {
+      return paymentAuthorName
+    }
+    return extractAgreementDraftAuthorName(templateId, draft)
+  }, [draft, paymentAuthorName, templateId])
+
+  const authorDisplayName = useMemo(
+    () => resolveAgreementUserModeAuthorDisplayName(syncedAuthorName),
+    [syncedAuthorName]
+  )
+
   const paragraphBodyOptions = useMemo(
-    () => ({
-      ...agreementConfig?.paragraphBodyOptions,
-      paragraphInteractionMode: 'user' as const,
-      hiddenParagraphIds: agreementConfig?.a4HiddenParagraphIds,
-    }),
-    [agreementConfig]
+    () =>
+      buildAgreementConsentFillParagraphBodyOptions(agreementConfig, {
+        templateId,
+        participantName: authorDisplayName,
+        portraitAffiliationSelectOptions: memberContext.portraitAffiliationSelectOptions,
+      }),
+    [
+      agreementConfig,
+      authorDisplayName,
+      memberContext.portraitAffiliationSelectOptions,
+      templateId,
+    ]
+  )
+
+  const paragraphBodyOptionsWithPaymentSync = useMemo(() => {
+    if (paragraphBodyOptions == null) return undefined
+    if (!PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) return paragraphBodyOptions
+    return {
+      ...paragraphBodyOptions,
+      paymentStatementBasicInfoOnValuesChange: handlePaymentBasicInfoValuesChange,
+    }
+  }, [handlePaymentBasicInfoValuesChange, paragraphBodyOptions, templateId])
+
+  const paragraphInteractionMode = useMemo(
+    () => resolveAgreementConsentFillInteractionMode(templateId),
+    [templateId]
   )
 
   return (
@@ -148,11 +209,11 @@ export function MemberConsentAgreementModal({
         <div className="full-page-modal__body">
           <div className="full-page-modal__body-header member-consent-agreement-modal__body-header">
             <p className="full-page-modal__description member-consent-agreement-modal__description">
-              동의서를 작성·제출해 주세요. 제출까지 완료되어야 동의된 것으로 간주됩니다.
+              * 동의서는 관리자가 당사자의 서면 동의 확인 후 작성이 필요합니다.
             </p>
             <div className="full-page-modal__actions member-consent-agreement-modal__actions">
               <CmsButton variant="secondary" size="medium" onClick={onClose}>
-                닫기
+                취소
               </CmsButton>
               <CmsButton
                 variant="primary"
@@ -161,7 +222,7 @@ export function MemberConsentAgreementModal({
                 disabled={isDraftLoading || draft == null}
                 onClick={handleSubmit}
               >
-                제출
+                작성완료
               </CmsButton>
             </div>
           </div>
@@ -182,12 +243,16 @@ export function MemberConsentAgreementModal({
                   updateParagraph={updateParagraph}
                   editorKind="agreement"
                   singleItemListActiveItemId={null}
-                  paragraphInteractionMode="user"
+                  paragraphInteractionMode={paragraphInteractionMode}
                   showEditorChrome={false}
                   structureLockedParagraphIds={agreementConfig?.structureLockedParagraphIds}
                   hideDragHandleForParagraphIds={agreementConfig?.hideDragHandleForParagraphIds}
                   hideParagraphRequiredChrome={agreementConfig?.previewLayout === 'a4-document'}
-                  paragraphBodyOptions={paragraphBodyOptions}
+                  paragraphBodyOptions={paragraphBodyOptionsWithPaymentSync}
+                  agreementClosingFooter={{
+                    onSubmit: handleSubmit,
+                    submitDisabled: isDraftLoading || draft == null,
+                  }}
                 />
               </div>
             ) : (

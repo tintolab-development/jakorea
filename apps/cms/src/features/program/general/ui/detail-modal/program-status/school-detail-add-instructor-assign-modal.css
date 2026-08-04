@@ -1,6 +1,7 @@
 /**
  * 학교 상세정보 – 강사 배정 안내 모달
- * 스펙: width 800, 안내 문구 + 대표 강사 지정 + 강사명 + 교육 배정일 태그(2열·인원 배지)
+ * 스펙(스크린샷): width 800 · 패딩 26/30/34 · 섹션 간격 30px
+ * 교육 배정일: 외곽 보더 박스 안 1열 칩 리스트(선택/미선택/비활성)
  */
 
 .school-detail-add-instructor-assign-modal.ant-modal .ant-modal-content {
@@ -27,12 +28,16 @@
 .school-detail-add-instructor-assign-modal .teal-header-modal__body {
   flex-shrink: 0;
   width: 100%;
-  padding: 16px 0 0;
+  min-width: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   background: var(--color-bg-base);
+  /* description ↔ form 30px (스크린샷) */
+  gap: 30px;
+  /* overflow-y:auto 단독 시 overflow-x도 auto → 가로 스크롤 방지 */
+  overflow-x: hidden;
 }
 
 .school-detail-add-instructor-assign-modal .teal-header-modal__footer {
@@ -45,13 +50,16 @@
 
 .school-detail-add-instructor-assign-modal__body {
   width: 100%;
+  max-width: 100%;
   flex: 1 1 auto;
+  min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
 }
 
+/* assign-guide-modal 등 body 내 커스텀 description 호환 */
 .school-detail-add-instructor-assign-modal__description {
   margin: 0 0 30px;
   color: var(--default-BK, #3d3d3d);
@@ -72,6 +80,9 @@
   flex-direction: column;
   gap: 30px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .school-detail-add-instructor-assign-modal__form.ant-form-vertical
@@ -81,10 +92,12 @@
 
 .school-detail-add-instructor-assign-modal__field {
   margin-bottom: 0 !important;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .school-detail-add-instructor-assign-modal__field-label {
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   color: var(--color-text-label);
   font-family: Pretendard, sans-serif;
   font-size: var(--font-size-14);
@@ -94,7 +107,7 @@
 
 .school-detail-add-instructor-assign-modal__field .ant-form-item-label {
   padding-bottom: 0;
-  margin-bottom: var(--spacing-6);
+  margin-bottom: 8px;
 }
 
 .school-detail-add-instructor-assign-modal__field .ant-form-item-label > label {
@@ -109,7 +122,8 @@
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--spacing-24);
+  gap: 16px;
+  min-height: 40px;
 }
 
 .school-detail-add-instructor-assign-modal__role-radios .ant-radio-wrapper {
@@ -132,20 +146,27 @@
   width: 100%;
 }
 
-/* 교육 배정일 선택 — 2열 그리드 컨테이너 */
-.school-detail-add-instructor-assign-modal__session-grid {
-  border-radius: var(--8, 8px);
-  border: 1px solid var(--table-line, #e0e0e0);
-  display: inline-grid;
-  padding: 16px;
-  row-gap: 10px;
-  column-gap: 10px;
-  align-self: stretch;
-  grid-template-rows: repeat(2, fit-content(100%));
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-flow: row;
+.school-detail-add-instructor-assign-modal__select.cms-select,
+.school-detail-add-instructor-assign-modal__field .cms-select {
   width: 100%;
+  min-width: 0;
+}
+
+/* 교육 배정일 선택 — 1열 리스트 (스크린샷) */
+.school-detail-add-instructor-assign-modal__session-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
+  padding: 16px;
+  border-radius: var(--radius-8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: #fff;
+  align-self: stretch;
+  overflow: hidden;
 }
 
 .school-detail-add-instructor-assign-modal__session-empty {

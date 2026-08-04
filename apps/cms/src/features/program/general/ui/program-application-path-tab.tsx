@@ -2,7 +2,9 @@
  * 프로그램 신청 경로 탭
  */
 
-import { Space, Card, Descriptions, Tag, Button, Alert, Typography } from 'antd'
+import { Space, Card, Tag, Alert, Typography } from 'antd'
+import { CmsButton } from '@/shared/ui'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { EditOutlined, PlusOutlined } from '@ant-design/icons'
 import type { ApplicationPath } from '@/types/domain'
 import dayjs from 'dayjs'
@@ -33,63 +35,83 @@ export function ProgramApplicationPathTab({
           isAdmin ? (
             <Space>
               {applicationPath ? (
-                <Button icon={<EditOutlined />} onClick={onEdit}>
+                <CmsButton variant="default" icon={<EditOutlined />} onClick={onEdit}>
                   수정
-                </Button>
+                </CmsButton>
               ) : (
-                <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>
+                <CmsButton icon={<PlusOutlined />} onClick={onCreate}>
                   신청 경로 등록
-                </Button>
+                </CmsButton>
               )}
             </Space>
           ) : null
         }
       >
         {applicationPath ? (
-          <Descriptions column={1} bordered>
-            <Descriptions.Item label="신청 경로 유형">
-              <Tag color={applicationPath.pathType === 'google_form' ? 'orange' : 'blue'}>
-                {pathTypeLabels[applicationPath.pathType]}
-              </Tag>
-            </Descriptions.Item>
+          <DetailInfoForm title="신청 경로 설정" hideHeader mode="view">
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="신청 경로 유형"
+                view={
+                  <Tag color={applicationPath.pathType === 'google_form' ? 'orange' : 'blue'}>
+                    {pathTypeLabels[applicationPath.pathType]}
+                  </Tag>
+                }
+              />
+            </DetailInfoForm.Row>
             {applicationPath.pathType === 'google_form' && applicationPath.googleFormUrl && (
-              <Descriptions.Item label="구글폼 링크">
-                <Paragraph
-                  ellipsis={{ tooltip: applicationPath.googleFormUrl }}
-                  style={{ margin: 0 }}
-                >
-                  <a
-                    href={applicationPath.googleFormUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {applicationPath.googleFormUrl}
-                  </a>
-                </Paragraph>
-              </Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="구글폼 링크"
+                  view={
+                    <Paragraph
+                      ellipsis={{ tooltip: applicationPath.googleFormUrl }}
+                      style={{ margin: 0 }}
+                    >
+                      <a
+                        href={applicationPath.googleFormUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {applicationPath.googleFormUrl}
+                      </a>
+                    </Paragraph>
+                  }
+                />
+              </DetailInfoForm.Row>
             )}
             {applicationPath.guideText && (
-              <Descriptions.Item label="안내 문구">
-                <Paragraph
-                  style={{ margin: 0 }}
-                  ellipsis={{ rows: 2, expandable: true, symbol: '더보기' }}
-                >
-                  {applicationPath.guideText}
-                </Paragraph>
-              </Descriptions.Item>
+              <DetailInfoForm.Row type="single">
+                <DetailInfoForm.Field
+                  label="안내 문구"
+                  view={
+                    <Paragraph
+                      style={{ margin: 0 }}
+                      ellipsis={{ rows: 2, expandable: true, symbol: '더보기' }}
+                    >
+                      {applicationPath.guideText}
+                    </Paragraph>
+                  }
+                />
+              </DetailInfoForm.Row>
             )}
-            <Descriptions.Item label="상태">
-              <Tag color={applicationPath.isActive ? 'green' : 'default'}>
-                {applicationPath.isActive ? '활성' : '비활성'}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="등록일">
-              {dayjs(applicationPath.createdAt).format('YYYY-MM-DD HH:mm')}
-            </Descriptions.Item>
-            <Descriptions.Item label="수정일">
-              {dayjs(applicationPath.updatedAt).format('YYYY-MM-DD HH:mm')}
-            </Descriptions.Item>
-          </Descriptions>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="상태"
+                view={
+                  <Tag color={applicationPath.isActive ? 'green' : 'default'}>
+                    {applicationPath.isActive ? '활성' : '비활성'}
+                  </Tag>
+                }
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="등록일" view={dayjs(applicationPath.createdAt).format('YYYY-MM-DD HH:mm')} />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field label="수정일" view={dayjs(applicationPath.updatedAt).format('YYYY-MM-DD HH:mm')} />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
         ) : (
           <Alert
             description="신청 경로를 등록하여 프로그램 신청 방식을 설정할 수 있습니다."

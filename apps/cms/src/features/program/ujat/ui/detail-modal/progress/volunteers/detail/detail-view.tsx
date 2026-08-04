@@ -2,13 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
 import type { Program } from '@/types/domain'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, useCmsAlert, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from '@/shared/ui'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
+  PROGRAM_EDIT_INFO_BUTTON_PROPS,
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { clearUjatVolunteerApplicantsMockCache } from '@/data/mock/ujat-volunteer-applicants-mock'
 import {
@@ -63,9 +65,9 @@ export function UjatEducationProgressVolunteerDetailView({
   const [preferredRegionDraft, setPreferredRegionDraft] = useState<UjatVolunteerPreferredRegion>(
     detail.applicant.preferredRegion
   )
+  const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminComment, setAdminComment] = useState(detail.adminComment)
   const [adminCommentDraft, setAdminCommentDraft] = useState(detail.adminComment)
-  const [isAdminCommentEditing, setIsAdminCommentEditing] = useState(false)
   const [activityWithdrawModalOpen, setActivityWithdrawModalOpen] = useState(false)
   const [activityCertPreviewOpen, setActivityCertPreviewOpen] = useState(false)
   const [studentCertificateIssueModalOpen, setStudentCertificateIssueModalOpen] = useState(false)
@@ -79,7 +81,7 @@ export function UjatEducationProgressVolunteerDetailView({
     setPreferredRegionDraft(detail.applicant.preferredRegion)
     setAdminComment(detail.adminComment)
     setAdminCommentDraft(detail.adminComment)
-    setIsAdminCommentEditing(false)
+    setAdminCommentModalOpen(false)
     setActivityWithdrawModalOpen(false)
     setActivityCertPreviewOpen(false)
     setStudentCertificateIssueModalOpen(false)
@@ -163,20 +165,24 @@ export function UjatEducationProgressVolunteerDetailView({
     })
   }
 
-  const handleAdminCommentButtonClick = useCallback(() => {
-    if (!isAdminCommentEditing) {
-      setAdminCommentDraft(adminComment)
-      setIsAdminCommentEditing(true)
-      return
-    }
+  const handleAdminCommentEditEnter = useCallback(() => {
+    if (isEditing) return
+    setAdminCommentDraft(adminComment)
+    setAdminCommentModalOpen(true)
+  }, [adminComment, isEditing])
 
-    setAdminComment(adminCommentDraft)
-    setIsAdminCommentEditing(false)
+  const handleAdminCommentSave = useCallback(() => {
+    setAdminComment(adminCommentDraft.trim())
+    setAdminCommentModalOpen(false)
     showAlert({
       title: '코멘트 저장',
       content: '관리자 코멘트가 저장되었습니다.',
     })
-  }, [adminComment, adminCommentDraft, isAdminCommentEditing, showAlert])
+  }, [adminCommentDraft, showAlert])
+
+  const handleAdminCommentModalCancel = useCallback(() => {
+    setAdminCommentModalOpen(false)
+  }, [])
 
   const activityCertificateVolunteer = useMemo(
     () => buildActivityCertificateVolunteerFromUjatDetail(detail),
@@ -238,7 +244,7 @@ export function UjatEducationProgressVolunteerDetailView({
         type="button"
         variant="secondary"
         size="large"
-        width={210}
+        width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
         icon={<DownloadOutlined />}
         disabled={studentCertificateExportActive}
         onClick={() => setStudentCertificateIssueModalOpen(true)}
@@ -247,9 +253,7 @@ export function UjatEducationProgressVolunteerDetailView({
       </CmsButton>
       <CmsButton
         type="button"
-        variant="secondary"
-        size="large"
-        width={140}
+        {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
         onClick={resolveProgramEditInfoClick(isEditing, {
           onEnterEdit: handleEnterEdit,
           onSaveEdit: handleSaveEdit,
@@ -262,9 +266,10 @@ export function UjatEducationProgressVolunteerDetailView({
         variant="primary"
         size="large"
         width={160}
-        onClick={handleAdminCommentButtonClick}
+        disabled={isEditing}
+        onClick={handleAdminCommentEditEnter}
       >
-        {isAdminCommentEditing ? '코멘트 저장' : '코멘트 작성'}
+        코멘트 작성
       </CmsButton>
       <PersonalInfoRevealButton
         labelMode="stickyReveal"
@@ -301,9 +306,7 @@ export function UjatEducationProgressVolunteerDetailView({
             isEditing={isEditing}
             preferredRegionDraft={preferredRegionDraft}
             onPreferredRegionDraftChange={setPreferredRegionDraft}
-            isAdminCommentEditing={isAdminCommentEditing}
-            adminCommentDraft={adminCommentDraft}
-            onAdminCommentDraftChange={setAdminCommentDraft}
+            isAdminCommentEditing={false}
           />
         ) : (
           <UjatEducationProgressVolunteerAssignmentProgressTab
@@ -343,6 +346,13 @@ export function UjatEducationProgressVolunteerDetailView({
           onComplete={handleStudentCertificateExportComplete}
         />
       ) : null}
+      <MemberAdminCommentModal
+        open={adminCommentModalOpen}
+        value={adminCommentDraft}
+        onChange={setAdminCommentDraft}
+        onCancel={handleAdminCommentModalCancel}
+        onConfirm={handleAdminCommentSave}
+      />
     </div>
   )
 }

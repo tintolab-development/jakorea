@@ -1,26 +1,5 @@
-.page {
-  display: flex;
-  width: 100%;
-  min-height: 480px;
-  align-items: center;
-  justify-content: center;
-}
-
-.container {
-  display: flex;
-  width: min(100%, var(--width-page-sm));
-  flex-direction: column;
-  align-items: flex-start;
-  padding-block: var(--spacing-100);
-}
-
 .title {
   margin-bottom: var(--spacing-16);
-}
-
-.description {
-  margin: 0;
-  margin-bottom: var(--spacing-48);
 }
 
 .socialConnectSection {

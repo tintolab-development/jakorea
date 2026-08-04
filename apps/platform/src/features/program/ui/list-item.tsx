@@ -10,6 +10,9 @@ type ProgramListItemRowProps = {
 }
 
 export function ProgramListItemRow({ program, onClick }: ProgramListItemRowProps) {
+  const hasThumbnailImage = Boolean(program.thumbnailUrl?.trim())
+  const isClosed = program.recruitmentStatus === 'closed'
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
@@ -19,27 +22,41 @@ export function ProgramListItemRow({ program, onClick }: ProgramListItemRowProps
 
   return (
     <div
-      className={styles.row}
+      className={[styles.row, isClosed ? styles.rowClosed : null].filter(Boolean).join(' ')}
       role="button"
       tabIndex={0}
       onClick={onClick}
       onKeyDown={handleKeyDown}
     >
-      <div className={styles.thumbnailWrap}>
-        <img className={styles.thumbnail} src={program.thumbnailUrl} alt="" />
+      <div
+        className={[
+          styles.thumbnailWrap,
+          hasThumbnailImage ? styles.thumbnailWrapHasImage : styles.thumbnailWrapNoImage,
+        ].join(' ')}
+      >
+        {hasThumbnailImage ? (
+          <img className={styles.thumbnail} src={program.thumbnailUrl} alt="" />
+        ) : null}
       </div>
 
       <div className={styles.content}>
         <div className={styles.info}>
-          <PFText as="span" typo="bd-lg-sb" color="black">
+          <PFText as="span" typo="bd-lg-sb" color={isClosed ? 'neutral-cool-500' : 'black'}>
             {program.categoryLabel}
           </PFText>
-          <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>
+          <PFText
+            as="h2"
+            typo="hl-lg"
+            color={isClosed ? 'neutral-cool-500' : 'black'}
+            className={styles.title}
+          >
             {program.title}
           </PFText>
-          <PFText as="p" typo="bd-md-md" color="primary-500">
-            {program.operatingPeriodLabel}
-          </PFText>
+          <p className={styles.operatingPeriod}>
+            <PFText as="span" typo="bd-md-md" color={isClosed ? 'neutral-cool-500' : 'primary-500'}>
+              {program.operatingPeriodLabel}
+            </PFText>
+          </p>
         </div>
 
         <ProgramStatusBadges
@@ -55,12 +72,17 @@ export function ProgramListItemRow({ program, onClick }: ProgramListItemRowProps
           <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
             모집기간
           </PFText>
-          <PFText as="span" typo="bd-lg-sb" color="black">
+          <PFText as="span" typo="bd-lg-sb" color={isClosed ? 'neutral-cool-500' : 'black'}>
             {program.recruitmentPeriodLabel}
           </PFText>
         </div>
 
-        <PFArrowButton variant="primary" size="medium" decorative />
+        <PFArrowButton
+          variant="primary"
+          size="medium"
+          decorative
+          disabled={isClosed}
+        />
       </div>
     </div>
   )

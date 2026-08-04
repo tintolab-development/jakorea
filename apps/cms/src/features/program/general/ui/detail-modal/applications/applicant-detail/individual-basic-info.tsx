@@ -70,10 +70,6 @@ export interface ApplicantGeneralIndividualBasicInfoProps {
   onResendNotificationClick?: () => void
   screeningStage?: IndividualApplicantScreeningStage
   textbookOptions?: TextbookSelectOption[]
-  isAdminCommentEditing?: boolean
-  adminCommentDraft?: string
-  onAdminCommentDraftChange?: (value: string) => void
-  adminCommentError?: string
   openManagerDropdown?: { rowId: string; manager: 'A' | 'B' } | null
   setOpenManagerDropdown?: (value: { rowId: string; manager: 'A' | 'B' } | null) => void
   onManagerAEvaluationChange?: (id: string, evaluation: GeneralManagerEvaluation) => void
@@ -450,10 +446,6 @@ export function ApplicantGeneralIndividualBasicInfo({
   onResendNotificationClick,
   screeningStage = 'main',
   textbookOptions = [],
-  isAdminCommentEditing = false,
-  adminCommentDraft = '',
-  onAdminCommentDraftChange,
-  adminCommentError,
   openManagerDropdown = null,
   setOpenManagerDropdown,
   onManagerAEvaluationChange,
@@ -464,11 +456,12 @@ export function ApplicantGeneralIndividualBasicInfo({
   const shouldMask = maskSensitive && applicant.approvalStatus !== 'approved'
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const showAdminComment = isProgressContext || applicant.approvalStatus === 'approved'
-  const { catalog: textbookCatalog } = useProgramTextbookCatalog(program)
+  const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
+    useProgramTextbookCatalog(program)
   const showTextbookField =
     screeningStage === 'main' &&
     applicant.approvalStatus === 'approved' &&
-    individualApplicantUsesTextbook(program, textbookCatalog)
+    (isTextbookCatalogLoading || individualApplicantUsesTextbook(program, textbookCatalog))
 
   const showTeamSection = shouldShowIndividualApplicantTeamSection(program, detail)
   const showManagerEvaluation = shouldShowIndividualManagerEvaluationSection(
@@ -839,23 +832,8 @@ export function ApplicantGeneralIndividualBasicInfo({
       ) : null}
       {showAdminComment ? (
         <ApplicantAdminCommentSection
-          adminComment={
-            isAdminCommentEditing
-              ? adminCommentDraft
-              : isEditMode && draft
-                ? draft.adminComment
-                : applicant.adminComment
-          }
-          mode={isAdminCommentEditing || isEditMode ? 'edit' : 'view'}
-          draftValue={isAdminCommentEditing ? adminCommentDraft : (draft?.adminComment ?? '')}
-          onDraftChange={
-            isAdminCommentEditing && onAdminCommentDraftChange
-              ? onAdminCommentDraftChange
-              : isEditMode && onDraftChange
-                ? value => onDraftChange({ adminComment: value })
-                : undefined
-          }
-          validationError={adminCommentError ?? validationErrors?.adminComment}
+          adminComment={applicant.adminComment}
+          mode="view"
         />
       ) : null}
 

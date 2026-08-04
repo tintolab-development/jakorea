@@ -11,6 +11,10 @@
   text-align: left;
 }
 
+.rowClosed {
+  opacity: 0.72;
+}
+
 .row:focus-visible {
   outline: 2px solid var(--color-primary-500);
   outline-offset: 2px;
@@ -23,24 +27,35 @@
   aspect-ratio: 4 / 5;
   overflow: hidden;
   border-radius: 16px;
-  background: var(--color-neutral-cool-50);
+}
+
+/* 이미지 없음: placeholder 배경색 유지 */
+.thumbnailWrapNoImage {
+  background: lightgray;
+}
+
+/* 이미지 있음: 이미지 자체가 비주얼이므로 래퍼 배경 투명 */
+.thumbnailWrapHasImage {
+  background: transparent;
 }
 
 .thumbnail {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: 50% 50%;
 }
 
 .content {
   display: flex;
   min-width: 0;
-  flex: 1 0 0;
+  flex: 1 1 0;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-20);
   padding-block: var(--spacing-20);
+  overflow: hidden;
 }
 
 .info {
@@ -51,10 +66,22 @@
   align-items: flex-start;
   gap: var(--spacing-4);
   align-self: stretch;
+  text-align: left;
 }
 
 .title {
   margin: 0;
+  width: 100%;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  text-align: left;
+}
+
+/* Body/Medium/medium + primary-500 · 시안: 좌측 정렬 */
+.operatingPeriod {
+  width: 100%;
+  margin: 0;
+  text-align: left;
 }
 
 .recruitmentAside {
@@ -68,12 +95,18 @@
 
 .recruitment {
   display: flex;
+  /* 모집기간 일자 영역: 형식 `YYYY.MM.DD – YYYY.MM.DD` 전체 고정 너비로 행간 간격 통일 */
+  flex: 0 0 auto;
+  width: 15.5rem;
+  min-width: 15.5rem;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-4);
+  white-space: nowrap;
+  text-align: left;
 }
 
-@media (max-width: 1023px) {
+@media (--bp-below-pc) {
   .row {
     flex-wrap: wrap;
     gap: var(--spacing-24);
@@ -85,7 +118,8 @@
   }
 
   .content {
-    flex: 1 1 240px;
+    flex: 1 1 0;
+    min-width: 0;
     padding-block: 0;
   }
 
@@ -94,5 +128,11 @@
     justify-content: space-between;
     padding-left: 0;
     border-left: none;
+  }
+
+  .recruitment {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 auto;
   }
 }

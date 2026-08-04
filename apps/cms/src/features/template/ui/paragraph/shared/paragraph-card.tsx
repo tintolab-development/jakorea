@@ -82,7 +82,11 @@ export function ParagraphCard({
       const h = editableHeading
       const titleEditMode = h.titleIsEditMode ?? h.isEditMode
       const descriptionEditMode = h.descriptionIsEditMode ?? h.isEditMode
-      const titleInput = (
+      /** view: 타이틀 내용 없으면 placeholder(「타이틀을 입력해 주세요」등) 영역 숨김 */
+      const titleHasContent =
+        (typeof h.titleValue === 'string' ? h.titleValue.trim() : '').length > 0
+      const showTitle = titleEditMode || titleHasContent
+      const titleInput = showTitle ? (
         <ParagraphInput
           type="title"
           isEditMode={titleEditMode}
@@ -93,7 +97,7 @@ export function ParagraphCard({
           leading={h.titleLeading}
           className={h.titleClassName}
         />
-      )
+      ) : null
       const descriptionInput = (
         <ParagraphInput
           type="description"
@@ -108,25 +112,29 @@ export function ParagraphCard({
       const showDescription = h.showDescription !== false
 
       const titleBlock =
-        h.titleTrailing != null ? (
-          <div className="paragraph-card__title-block paragraph-card__title-block--with-trailing">
-            <div className="paragraph-card__title-main">{titleInput}</div>
-            <div className="paragraph-card__title-trailing">{h.titleTrailing}</div>
-          </div>
-        ) : (
-          <div className="paragraph-card__title-block">{titleInput}</div>
-        )
+        showTitle && titleInput != null ? (
+          h.titleTrailing != null ? (
+            <div className="paragraph-card__title-block paragraph-card__title-block--with-trailing">
+              <div className="paragraph-card__title-main">{titleInput}</div>
+              <div className="paragraph-card__title-trailing">{h.titleTrailing}</div>
+            </div>
+          ) : (
+            <div className="paragraph-card__title-block">{titleInput}</div>
+          )
+        ) : null
 
       return (
         <>
-          {actionSlot ? (
-            <div className="paragraph-card__header-title-row">
-              <div className="paragraph-card__action-slot-wrap">{actionSlot}</div>
-              {titleBlock}
-            </div>
-          ) : (
-            titleBlock
-          )}
+          {actionSlot != null || titleBlock != null ? (
+            actionSlot != null ? (
+              <div className="paragraph-card__header-title-row">
+                <div className="paragraph-card__action-slot-wrap">{actionSlot}</div>
+                {titleBlock}
+              </div>
+            ) : (
+              titleBlock
+            )
+          ) : null}
           {showDescription ? (
             <div className="paragraph-card__description-block">{descriptionInput}</div>
           ) : null}

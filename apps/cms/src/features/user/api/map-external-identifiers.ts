@@ -4,6 +4,9 @@ import { openPortal1365Main } from '@/shared/constants'
 
 const PROVIDER_1365_ALIASES = new Set(['1365', 'VOLUNTEER_1365', 'KOREA_1365'])
 
+/** PATCH `/external-identifiers/{provider}` path provider */
+export const EXTERNAL_IDENTIFIER_PROVIDER_1365 = 'VOLUNTEER_1365' as const
+
 function is1365Provider(provider: string | undefined): boolean {
   if (!provider?.trim()) return false
   const upper = provider.trim().toUpperCase()

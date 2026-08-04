@@ -1,5 +1,5 @@
 .shell {
-  --mypage-header-height: var(--spacing-100);
+  --mypage-header-height: var(--app-header-height);
   --mypage-sidebar-width: 461px;
   --mypage-background-height: 400px;
   --mypage-hero-fade-length: 150px;
@@ -18,7 +18,7 @@
   z-index: 0;
   width: 100%;
   height: var(--mypage-background-height);
-  background-image: url('./image/background/mypage-background.svg');
+  background-image: url('../../shared/assets/illustration/page-hero-background.svg');
   background-repeat: no-repeat;
   background-position: top center;
   background-size: cover;

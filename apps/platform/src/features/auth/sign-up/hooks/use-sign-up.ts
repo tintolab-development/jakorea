@@ -18,7 +18,7 @@ import {
   MOCK_VERIFIED_NAME,
   MOCK_VERIFIED_PHONE,
 } from '../lib/constants'
-import { buildConfirmationRows } from '../lib/utils'
+import { buildConfirmationRows, formatBirthDateInput } from '../lib/utils'
 import {
   agreementItems,
   createInitialAgreementState,
@@ -36,6 +36,7 @@ import {
 import { validateEmailDuplicateCheck } from '../email/email.logic'
 import {
   ADMIN_REGISTERED_NOTICE_PATH,
+  isMockAdminRegisteredEmail,
   isMockAdminRegisteredIdentityMatch,
   setAdminRegisteredPasswordChangeRequired,
   startAdminRegisteredFlowFromSignUp,
@@ -45,10 +46,32 @@ import { isProfileStepValid } from '../profile/profile.logic'
 import { isTeacherProfileValid } from '../profile/teacher-profile.logic'
 import { isGuardianProfileValid } from '../guardian/guardian-profile.logic'
 import { isBirthStepValid, validateBirthStep } from '../identity/identity.logic'
+import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
+import { EMAIL_ID_MESSAGES, normalizeEmailId, validateEmailId } from '@/shared/lib/email-id'
+import type { SelectedAddress } from '../ui/address-search-modal'
+import type { SelectedSchool } from '../ui/school-search-modal'
+import {
+  getEmailAvailability,
+  postGeneralSignup,
+  postTeacherSignup,
+  useSignupTermsQuery,
+} from '../api'
+import {
+  mapSignUpToGeneralRequest,
+  mapSignUpToTeacherRequest,
+  toApiBirthDate,
+  toApiMemberType,
+} from '../model/mapper'
+import {
+  hasRequiredVerificationSessions,
+  SIGNUP_IDENTITY_REQUIRED_MESSAGE,
+} from '../model/validation'
+import { getSignupApiErrorMessage } from '../lib/helpers'
 
 export type UseSignUpReturn = ReturnType<typeof useSignUp>
 
 export function useSignUp() {
+  const remoteApi = isRemoteApiConfigured()
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedType, setSelectedType] = useState<MemberType | null>(null)
   const [birthDate, setBirthDate] = useState('')
@@ -63,21 +86,45 @@ export function useSignUp() {
   )
   const [guardianRelationship, setGuardianRelationship] = useState('')
   const [isIdentityVerified, setIsIdentityVerified] = useState(false)
+  const [identityVerificationSessionId, setIdentityVerificationSessionId] = useState<number | null>(
+    null,
+  )
+  const [guardianVerificationSessionId, setGuardianVerificationSessionId] = useState<number | null>(
+    null,
+  )
+  const [verifiedName, setVerifiedName] = useState(MOCK_VERIFIED_NAME)
+  const [verifiedPhone, setVerifiedPhone] = useState(MOCK_VERIFIED_PHONE)
   const [agreements, setAgreements] = useState<AgreementState>(createInitialAgreementState)
   const [email, setEmail] = useState('')
   const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [emailMessage, setEmailMessage] = useState('')
+  const [isEmailChecking, setIsEmailChecking] = useState(false)
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [schoolStatus, setSchoolStatus] = useState<SchoolStatus>('none')
   const [schoolName, setSchoolName] = useState('')
+  const [schoolOrganizationId, setSchoolOrganizationId] = useState<number | null>(null)
   const [grade, setGrade] = useState('')
   const [employmentStatus, setEmploymentStatus] = useState<EmploymentStatus | null>('employed')
   const [address, setAddress] = useState('')
   const [addressDetail, setAddressDetail] = useState('')
+  const [postalCode, setPostalCode] = useState('')
+  const [regionSido, setRegionSido] = useState('')
+  const [regionSigungu, setRegionSigungu] = useState('')
   const [volunteerId, setVolunteerId] = useState('')
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [isSchoolSearchModalOpen, setIsSchoolSearchModalOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitMessage, setSubmitMessage] = useState('')
+
+  const birthDateIso = toApiBirthDate(birthDate) ?? null
+  const apiMemberType = selectedType ? toApiMemberType(selectedType) : null
+
+  const termsQuery = useSignupTermsQuery({
+    memberType: apiMemberType,
+    birthDateIso,
+    enabled: Boolean(selectedType && birthDateIso),
+  })
 
   const agreementDerived = getAgreementDerived(agreements)
   const guardianAgreementDerived = getGuardianAgreementDerived(guardianAgreements)
@@ -85,8 +132,14 @@ export function useSignUp() {
   const isStepTwoValid = isBirthStepValid(birthDate, gender)
   const isStepSixValid =
     selectedType === 'teacher'
-      ? isTeacherProfileValid(schoolName, employmentStatus)
-      : isProfileStepValid(address, addressDetail, schoolStatus, schoolName, grade)
+      ? isTeacherProfileValid(schoolName, employmentStatus, {
+          requireSchoolOrganizationId: remoteApi,
+          schoolOrganizationId,
+        })
+      : isProfileStepValid(address, addressDetail, schoolStatus, schoolName, grade, {
+          requireSchoolOrganizationId: remoteApi,
+          schoolOrganizationId,
+        })
   const isGuardianProfileValidState = isGuardianProfileValid(guardianRelationship)
 
   const handleSignIn = () => {
@@ -194,7 +247,25 @@ export function useSignUp() {
     }
   }
 
-  const handleGuardianIdentityVerify = () => {
+  const handleIdentitySuccess = (result: {
+    sessionId: number
+    verifiedName?: string
+    verifiedPhone?: string
+  }) => {
+    setIdentityVerificationSessionId(result.sessionId)
+    if (result.verifiedName?.trim()) setVerifiedName(result.verifiedName.trim())
+    if (result.verifiedPhone?.trim()) setVerifiedPhone(result.verifiedPhone.trim())
+    setIsIdentityVerified(true)
+  }
+
+  const handleGuardianIdentitySuccess = (result: {
+    sessionId: number
+    verifiedName?: string
+    verifiedPhone?: string
+  }) => {
+    setGuardianVerificationSessionId(result.sessionId)
+    if (result.verifiedName?.trim()) setVerifiedName(result.verifiedName.trim())
+    if (result.verifiedPhone?.trim()) setVerifiedPhone(result.verifiedPhone.trim())
     setIsGuardianIdentityVerified(true)
     setCurrentStep(4)
   }
@@ -211,17 +282,60 @@ export function useSignUp() {
     setEmailMessage('')
   }
 
-  const handleEmailDuplicateCheck = () => {
-    const result = validateEmailDuplicateCheck(email)
+  const handleEmailDuplicateCheck = async () => {
+    if (isEmailChecking) return
 
-    if (result.shouldRedirectToAdminRegisteredNotice) {
-      setAdminRegisteredPasswordChangeRequired(email, 'sign-up')
+    if (!remoteApi) {
+      const result = validateEmailDuplicateCheck(email)
+
+      if (result.shouldRedirectToAdminRegisteredNotice) {
+        setAdminRegisteredPasswordChangeRequired(email, 'sign-up')
+        window.location.assign('/auth/admin-registered/notice')
+        return
+      }
+
+      setEmailCheckStatus(result.status)
+      setEmailMessage(result.message)
+      return
+    }
+
+    const validation = validateEmailId(email)
+    if (!validation.ok) {
+      setEmailCheckStatus('error')
+      setEmailMessage(validation.message)
+      return
+    }
+
+    const normalizedEmail = validation.normalized
+
+    if (isMockAdminRegisteredEmail(normalizedEmail)) {
+      setAdminRegisteredPasswordChangeRequired(normalizedEmail, 'sign-up')
       window.location.assign('/auth/admin-registered/notice')
       return
     }
 
-    setEmailCheckStatus(result.status)
-    setEmailMessage(result.message)
+    setIsEmailChecking(true)
+    setEmailMessage('')
+
+    try {
+      const response = await getEmailAvailability(normalizedEmail)
+      const available = response.available === true
+      setEmailCheckStatus(available ? 'success' : 'error')
+      setEmailMessage(
+        response.message?.trim() ||
+          (available ? '사용할 수 있는 이메일이에요.' : EMAIL_ID_MESSAGES.duplicate),
+      )
+      if (available) {
+        setEmail(normalizeEmailId(normalizedEmail))
+      }
+    } catch (error) {
+      setEmailCheckStatus('error')
+      setEmailMessage(
+        getSignupApiErrorMessage(error, '이메일 확인에 실패했어요. 잠시 후 다시 시도해 주세요.'),
+      )
+    } finally {
+      setIsEmailChecking(false)
+    }
   }
 
   const handleAgreementContinue = () => {
@@ -241,8 +355,26 @@ export function useSignUp() {
 
     if (status === 'none') {
       setSchoolName('')
+      setSchoolOrganizationId(null)
       setGrade('')
     }
+  }
+
+  const handleSchoolNameChange = (value: string) => {
+    setSchoolName(value)
+    setSchoolOrganizationId(null)
+  }
+
+  const handleSchoolSelect = (school: SelectedSchool) => {
+    setSchoolName(school.name)
+    setSchoolOrganizationId(school.organizationId ?? null)
+  }
+
+  const handleAddressSelect = (selection: SelectedAddress) => {
+    setAddress(selection.address)
+    setPostalCode(selection.postalCode ?? '')
+    setRegionSido(selection.regionSido ?? '')
+    setRegionSigungu(selection.regionSigungu ?? '')
   }
 
   const handlePasswordContinue = () => {
@@ -254,7 +386,7 @@ export function useSignUp() {
   }
 
   const handleBirthDateChange = (value: string) => {
-    setBirthDate(value)
+    setBirthDate(formatBirthDateInput(value))
     setStepTwoMessage('')
     setRequiresGuardianConsent(false)
     setIsUnderAgeSignup(false)
@@ -262,6 +394,11 @@ export function useSignUp() {
     setIsGuardianIdentityVerified(false)
     setGuardianAgreements(createInitialGuardianAgreementState())
     setGuardianRelationship('')
+    setIsIdentityVerified(false)
+    setIdentityVerificationSessionId(null)
+    setGuardianVerificationSessionId(null)
+    setVerifiedName(MOCK_VERIFIED_NAME)
+    setVerifiedPhone(MOCK_VERIFIED_PHONE)
   }
 
   const handleStartGuardianConsent = () => {
@@ -270,7 +407,100 @@ export function useSignUp() {
     setIsGuardianIdentityVerified(false)
     setGuardianAgreements(createInitialGuardianAgreementState())
     setGuardianRelationship('')
+    setGuardianVerificationSessionId(null)
+    setVerifiedName(MOCK_VERIFIED_NAME)
+    setVerifiedPhone(MOCK_VERIFIED_PHONE)
     setCurrentStep(3)
+  }
+
+  const handleSignupComplete = async () => {
+    setSubmitMessage('')
+
+    if (!remoteApi) {
+      window.location.assign(SIGN_UP_COMPLETE_PATH)
+      return
+    }
+
+    if (!selectedType) {
+      setSubmitMessage('회원 유형을 다시 확인해 주세요.')
+      return
+    }
+
+    if (
+      !hasRequiredVerificationSessions({
+        isUnderAgeSignup,
+        identityVerificationSessionId,
+        guardianVerificationSessionId,
+      })
+    ) {
+      setSubmitMessage(SIGNUP_IDENTITY_REQUIRED_MESSAGE)
+      return
+    }
+
+    if (selectedType === 'teacher' && schoolOrganizationId == null) {
+      setSubmitMessage('소속 학교를 검색에서 선택해 주세요.')
+      return
+    }
+
+    if (
+      selectedType === 'general' &&
+      schoolStatus === 'enrolled' &&
+      schoolOrganizationId == null
+    ) {
+      setSubmitMessage('소속 학교를 검색에서 선택해 주세요.')
+      return
+    }
+
+    const mapInput = {
+      selectedType,
+      email,
+      password,
+      birthDate,
+      gender,
+      isUnderAgeSignup,
+      isIdentityVerified,
+      identityVerificationSessionId,
+      guardianVerificationSessionId,
+      schoolStatus,
+      schoolName,
+      schoolOrganizationId,
+      grade,
+      employmentStatus,
+      address,
+      addressDetail,
+      postalCode,
+      regionSido,
+      regionSigungu,
+      volunteerId,
+      name: verifiedName,
+      phone: verifiedPhone,
+      agreements,
+      guardianAgreements,
+      termsCatalog: termsQuery.data ?? null,
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      if (selectedType === 'teacher') {
+        const body = mapSignUpToTeacherRequest(mapInput)
+        if (!body) {
+          setSubmitMessage('소속 학교를 검색에서 선택해 주세요.')
+          return
+        }
+        await postTeacherSignup(body)
+      } else {
+        await postGeneralSignup(mapSignUpToGeneralRequest(mapInput))
+      }
+
+      window.location.assign(SIGN_UP_COMPLETE_PATH)
+    } catch (error) {
+      setSubmitMessage(
+        getSignupApiErrorMessage(error, '가입에 실패했어요. 입력 정보를 확인한 뒤 다시 시도해 주세요.'),
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const confirmationRows = buildConfirmationRows({
@@ -282,6 +512,8 @@ export function useSignUp() {
     addressDetail,
     email,
     volunteerId,
+    name: verifiedName,
+    phone: verifiedPhone,
   })
 
   return {
@@ -323,11 +555,12 @@ export function useSignUp() {
       },
       identity: {
         isVerified: isGuardianIdentityVerified,
-        verify: handleGuardianIdentityVerify,
+        sessionId: guardianVerificationSessionId,
+        complete: handleGuardianIdentitySuccess,
       },
       profile: {
-        name: MOCK_VERIFIED_NAME,
-        phone: MOCK_VERIFIED_PHONE,
+        name: verifiedName,
+        phone: verifiedPhone,
         relationship: guardianRelationship,
         setRelationship: setGuardianRelationship,
         isValid: isGuardianProfileValidState,
@@ -336,21 +569,28 @@ export function useSignUp() {
     },
     identity: {
       isVerified: isIdentityVerified,
-      verify: () => {
-        // TODO: 본인인증 결과와 DB 대조 API 연동
+      verifiedName,
+      verifiedPhone,
+      sessionId: identityVerificationSessionId,
+      complete: handleIdentitySuccess,
+      tryAdminRegisteredRedirect: () => {
         if (isMockAdminRegisteredIdentityMatch(birthDate)) {
           if (!gender) {
-            return
+            return false
           }
 
           startAdminRegisteredFlowFromSignUp({ birthDate, gender })
           window.location.assign(ADMIN_REGISTERED_NOTICE_PATH)
-          return
+          return true
         }
-
-        setIsIdentityVerified(true)
+        return false
       },
-      resetVerified: () => setIsIdentityVerified(false),
+      resetVerified: () => {
+        setIsIdentityVerified(false)
+        setIdentityVerificationSessionId(null)
+        setVerifiedName(MOCK_VERIFIED_NAME)
+        setVerifiedPhone(MOCK_VERIFIED_PHONE)
+      },
     },
     agreement: {
       items: agreementItems,
@@ -360,13 +600,18 @@ export function useSignUp() {
       toggle: toggleAgreement,
       toggleAll: toggleAllAgreements,
       continue: handleAgreementContinue,
+      termsLoading: termsQuery.isFetching,
+      termsError: termsQuery.isError,
     },
     email: {
       value: email,
       checkStatus: emailCheckStatus,
       message: emailMessage,
+      isChecking: isEmailChecking,
       onChange: handleEmailChange,
-      duplicateCheck: handleEmailDuplicateCheck,
+      duplicateCheck: () => {
+        void handleEmailDuplicateCheck()
+      },
       continue: handleEmailNext,
     },
     password: {
@@ -382,15 +627,23 @@ export function useSignUp() {
       schoolStatus,
       setSchoolStatus: handleSchoolStatusChange,
       schoolName,
-      setSchoolName,
+      setSchoolName: handleSchoolNameChange,
+      schoolOrganizationId,
+      /** remote API일 때 학교는 검색 선택만 허용 */
+      requiresSchoolSearch: remoteApi,
+      selectSchool: handleSchoolSelect,
       grade,
       setGrade,
       employmentStatus,
       setEmploymentStatus,
       address,
       setAddress,
+      selectAddress: handleAddressSelect,
       addressDetail,
       setAddressDetail,
+      postalCode,
+      regionSido,
+      regionSigungu,
       volunteerId,
       setVolunteerId,
       isAddressModalOpen,
@@ -404,7 +657,11 @@ export function useSignUp() {
     },
     confirmation: {
       rows: confirmationRows,
-      complete: () => window.location.assign(SIGN_UP_COMPLETE_PATH),
+      message: submitMessage,
+      isSubmitting,
+      complete: () => {
+        void handleSignupComplete()
+      },
     },
     navigation: {
       signIn: handleSignIn,

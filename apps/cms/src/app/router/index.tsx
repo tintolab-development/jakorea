@@ -172,6 +172,8 @@ const PersonalInfoAccessHistoryPage = lazyLoad(
 const BugIssueHistoryPage = lazyLoad(() => import('@/pages/logs/bug-issue-history-page'))
 const DesignSystemPage = lazyLoad(() => import('@/pages/design-system/page'))
 const E2eErrorLogPage = lazyLoad(() => import('@/pages/e2e-error-log/page'))
+const BackendDummiesPage = lazyLoad(() => import('@/pages/backend-dummies/page'))
+const BackendDummiesCategoryPage = lazyLoad(() => import('@/pages/backend-dummies/category-page'))
 
 function LegacyPostsRedirect({
   kind,
@@ -322,6 +324,23 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={<RouterLoadingFallback fullViewport />}>
         <E2eErrorLogPage />
+      </Suspense>
+    ),
+  },
+  {
+    // LNB 전체 도메인 API/더미 적용률 대시보드 (로그인 불필요 · 회원·프로그램 env 게이트 포함)
+    path: '/backend-dummies',
+    element: (
+      <Suspense fallback={<RouterLoadingFallback fullViewport />}>
+        <BackendDummiesPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/backend-dummies/:categoryId',
+    element: (
+      <Suspense fallback={<RouterLoadingFallback fullViewport />}>
+        <BackendDummiesCategoryPage />
       </Suspense>
     ),
   },

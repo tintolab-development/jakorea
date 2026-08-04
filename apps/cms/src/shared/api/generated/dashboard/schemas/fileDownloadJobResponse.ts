@@ -5,10 +5,15 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { FileDownloadJobResponseRequiredHeaders } from './fileDownloadJobResponseRequiredHeaders';
 
 export interface FileDownloadJobResponse {
   jobType?: string;
   programId?: number;
   generatedFileJobId?: number;
   status?: string;
+  fileObjectId?: number;
+  downloadUrl?: string;
+  downloadExpiresAt?: string;
+  requiredHeaders?: FileDownloadJobResponseRequiredHeaders;
 }

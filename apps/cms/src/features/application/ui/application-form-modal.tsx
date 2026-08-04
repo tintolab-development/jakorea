@@ -4,7 +4,7 @@
  * FSD: features/application으로 이동 (shared는 features 미참조)
  */
 
-import { Modal } from 'antd'
+import { ContentModal } from '@/shared/ui'
 import { ApplicationForm } from '@/features/application/ui/application-form'
 import { useApplicationStore } from '@/features/application/model/application-store'
 import { useAuth } from '@/shared/lib/auth/auth-context'
@@ -65,13 +65,11 @@ export function ApplicationFormModal({
   }
 
   return (
-    <Modal
+    <ContentModal
       title={`프로그램 신청 - ${programTitle}`}
       open={open}
       onCancel={onClose}
-      footer={null}
-      width={800}
-      destroyOnHidden
+      size="default"
       zIndex={1001}
     >
       <ApplicationForm
@@ -80,6 +78,6 @@ export function ApplicationFormModal({
         onCancel={onClose}
         loading={loading}
       />
-    </Modal>
+    </ContentModal>
   )
 }

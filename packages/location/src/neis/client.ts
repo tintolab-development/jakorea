@@ -8,6 +8,22 @@ import type {
 
 const DEFAULT_MISSING_KEY_MESSAGE = 'NEIS API 키가 설정되지 않았습니다.'
 
+function normalizeNeisPageIndex(page: number | undefined): number {
+  const normalized = Number(page)
+  if (!Number.isInteger(normalized) || normalized < 1) {
+    return 1
+  }
+  return normalized
+}
+
+function normalizeNeisPageSize(pageSize: number | undefined): number {
+  const normalized = Number(pageSize)
+  if (!Number.isInteger(normalized) || normalized < 1) {
+    return 100
+  }
+  return normalized
+}
+
 type NeisApiResult = {
   CODE?: string
   MESSAGE?: string
@@ -27,6 +43,7 @@ function mapRowToItem(row: NeisSchoolRow): NeisSchoolItem {
     atptOfcdcScNm: row.ATPT_OFCDC_SC_NM ?? '',
     lctnScNm: row.LCTN_SC_NM ?? '',
     orgRdnma: row.ORG_RDNMA ?? '',
+    orgRdnzc: row.ORG_RDNZC ?? '',
     orgTelno: row.ORG_TELNO ?? '',
     hmpgAdres: row.HMPG_ADRES ?? '',
     foasMemrd: row.FOAS_MEMRD ?? '',
@@ -117,10 +134,14 @@ export async function searchNeisSchools(
   const {
     apiKey,
     keyword,
-    page = 1,
-    pageSize = 20,
+    atptOfcdcScCode,
+    page,
+    pageSize,
     missingKeyMessage = DEFAULT_MISSING_KEY_MESSAGE,
   } = options
+
+  const normalizedPage = normalizeNeisPageIndex(page)
+  const normalizedPageSize = normalizeNeisPageSize(pageSize)
 
   const trimmed = keyword.trim()
   if (!trimmed) {
@@ -134,10 +155,13 @@ export async function searchNeisSchools(
   const params = new URLSearchParams({
     KEY: apiKey,
     Type: 'json',
-    pIndex: String(page),
-    pSize: String(pageSize),
+    pIndex: String(normalizedPage),
+    pSize: String(normalizedPageSize),
     SCHUL_NM: trimmed,
   })
+  if (atptOfcdcScCode?.trim()) {
+    params.set('ATPT_OFCDC_SC_CODE', atptOfcdcScCode.trim())
+  }
   const res = await fetch(`${NEIS_SCHOOL_INFO_URL}?${params.toString()}`)
   const data = await res.json()
 
@@ -146,4 +170,32 @@ export async function searchNeisSchools(
   }
 
   return parseNeisSchoolResponse(data)
+}
+
+/** 키워드 검색 결과 전 페이지를 순차 조회한다 (지역 필터·클라이언트 페이지네이션용). */
+export async function searchAllNeisSchools(
+  options: Omit<SearchNeisSchoolsOptions, 'page'>,
+): Promise<SearchNeisSchoolsResult> {
+  const pageSize = normalizeNeisPageSize(options.pageSize)
+  const first = await searchNeisSchools({ ...options, page: 1, pageSize })
+
+  if (first.totalCount <= first.schools.length) {
+    return first
+  }
+
+  const allSchools = [...first.schools]
+  const totalPages = Math.ceil(first.totalCount / pageSize)
+
+  for (let page = 2; page <= totalPages; page += 1) {
+    const result = await searchNeisSchools({ ...options, page, pageSize })
+    allSchools.push(...result.schools)
+    if (result.schools.length === 0) {
+      break
+    }
+  }
+
+  return {
+    schools: allSchools,
+    totalCount: first.totalCount,
+  }
 }

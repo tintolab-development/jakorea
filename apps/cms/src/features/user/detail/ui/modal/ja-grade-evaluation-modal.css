@@ -1,0 +1,63 @@
+.ja-grade-evaluation-modal .full-page-modal__topbar {
+  background: var(--color-mint-01, #01a1af);
+}
+
+.ja-grade-evaluation-modal .full-page-modal__title-text,
+.ja-grade-evaluation-modal .full-page-modal__close {
+  color: var(--main-WT, #fff);
+}
+
+.ja-grade-evaluation-modal .full-page-modal__body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ja-grade-evaluation-modal__workspace {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 24px 52px 0;
+  box-sizing: border-box;
+}
+
+.ja-grade-evaluation-modal__form-panel {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  padding-bottom: 24px;
+}
+
+.ja-grade-evaluation-modal__form-panel .form-editor-left {
+  padding: 0;
+}
+
+.ja-grade-evaluation-modal__footer {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 16px 52px 32px;
+  box-sizing: border-box;
+  background: #f4f6f6;
+}
+
+.ja-grade-evaluation-modal__footer-inner {
+  width: min(920px, 100%);
+}
+
+.ja-grade-evaluation-modal__submit {
+  width: 100%;
+  display: block;
+}
+
+.ja-grade-evaluation-modal__submit.cms-button.ant-btn {
+  width: 100%;
+  height: 56px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 700;
+}

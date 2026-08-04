@@ -80,6 +80,8 @@ export function useProgressInstructorList({
   })
 
   const [instructorList, setInstructorList] = useState<ParticipatingInstructorRow[]>(() => {
+    // remote ON이면 mock/localStorage로 채우지 않음 (잘못된 목록 플래시 방지)
+    if (remoteEnabled) return []
     if (preferMock) return [...MOCK_PARTICIPATING_INSTRUCTORS]
     const stored = loadInstructorListFromStorage()
     const list = stored ?? [...MOCK_PARTICIPATING_INSTRUCTORS]
@@ -87,9 +89,18 @@ export function useProgressInstructorList({
   })
 
   useEffect(() => {
-    if (!remoteEnabled) return
-    if (remoteQuery.data) setInstructorList(remoteQuery.data)
-  }, [remoteEnabled, remoteQuery.data])
+    if (remoteEnabled) {
+      if (remoteQuery.data) setInstructorList(remoteQuery.data)
+      return
+    }
+    if (preferMock) {
+      setInstructorList([...MOCK_PARTICIPATING_INSTRUCTORS])
+      return
+    }
+    const stored = loadInstructorListFromStorage()
+    const list = stored ?? [...MOCK_PARTICIPATING_INSTRUCTORS]
+    setInstructorList(stored ? mergeWithMock(list) : list)
+  }, [preferMock, remoteEnabled, remoteQuery.data])
 
   const [selectedInstructorRowKeys, setSelectedInstructorRowKeys] = useState<React.Key[]>([])
   const [selectedInstructorForDetail, setSelectedInstructorForDetail] =
@@ -208,7 +219,9 @@ export function useProgressInstructorList({
     handleSettlementStatusChange,
     handleInstructorDeleteClick,
     handleInstructorDeleteConfirm,
-    applicationsLoading: remoteEnabled ? remoteQuery.isFetching : false,
+    applicationsLoading: remoteEnabled
+      ? remoteQuery.isFetching && remoteQuery.data === undefined
+      : false,
     isRemoteDataSource: remoteEnabled,
   }
 }

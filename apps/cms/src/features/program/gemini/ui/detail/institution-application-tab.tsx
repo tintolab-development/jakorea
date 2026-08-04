@@ -15,6 +15,10 @@ import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { shouldUseGeminiVisitingTrainingRemoteApi } from '../../api/visiting-training/capabilities'
 import { useGeminiOrganizationApplicationsQuery } from '../../api/visiting-training/hooks'
 import {
+  approveGeminiOrganizationApplications,
+  rejectGeminiOrganizationApplications,
+} from '../../api/visiting-training/service'
+import {
   getGeminiInstitutionApplicationRows,
   patchGeminiInstitutionApplicationApprovalStatus,
   type GeminiInstitutionApplicationRow,
@@ -187,7 +191,7 @@ export function GeminiInstitutionApplicationTab({
     showAlert({
       title: '안내',
       content:
-        '기관 신청 승인/반려 API가 아직 연동되지 않았습니다.\nOpenAPI mutation 추가 후 사용할 수 있습니다.',
+        '기관 신청 승인/반려 처리에 실패했습니다.\n잠시 후 다시 시도해 주세요.',
     })
   }, [showAlert])
 
@@ -200,91 +204,92 @@ export function GeminiInstitutionApplicationTab({
 
   const handleBulkReject = useCallback(() => {
     if (!canWrite) return
-    if (remoteEnabled) {
-      showRemoteMutationUnavailable()
-      return
-    }
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
     if (rejectDisabled) return
     setBulkRejectOpen(true)
-  }, [
-    canWrite,
-    rejectDisabled,
-    remoteEnabled,
-    selectedRowKeys.length,
-    showNoSelectionAlert,
-    showRemoteMutationUnavailable,
-  ])
+  }, [canWrite, rejectDisabled, selectedRowKeys.length, showNoSelectionAlert])
 
   const handleBulkApprove = useCallback(() => {
     if (!canWrite) return
-    if (remoteEnabled) {
-      showRemoteMutationUnavailable()
-      return
-    }
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
     if (approveDisabled) return
     setBulkApproveOpen(true)
-  }, [
-    approveDisabled,
-    canWrite,
-    remoteEnabled,
-    selectedRowKeys.length,
-    showNoSelectionAlert,
-    showRemoteMutationUnavailable,
-  ])
+  }, [approveDisabled, canWrite, selectedRowKeys.length, showNoSelectionAlert])
 
-  const confirmBulkReject = useCallback(() => {
-    if (remoteEnabled) {
-      showRemoteMutationUnavailable()
-      setBulkRejectOpen(false)
-      return
-    }
+  const confirmBulkReject = useCallback(async () => {
     const ids = selectedRows
       .filter(row => row.approvalStatus !== 'REJECTED')
       .map(row => row.id)
     if (ids.length === 0) return
-    patchGeminiInstitutionApplicationApprovalStatus(ids, 'REJECTED')
-    refreshRows()
-    setSelectedRowKeys([])
-    setBulkRejectOpen(false)
+    try {
+      if (remoteEnabled) {
+        await rejectGeminiOrganizationApplications(ids)
+      } else {
+        patchGeminiInstitutionApplicationApprovalStatus(ids, 'REJECTED')
+      }
+      refreshRows()
+      setSelectedRowKeys([])
+      setBulkRejectOpen(false)
+    } catch {
+      showRemoteMutationUnavailable()
+      setBulkRejectOpen(false)
+    }
   }, [refreshRows, remoteEnabled, selectedRows, showRemoteMutationUnavailable])
 
-  const confirmBulkApprove = useCallback(() => {
-    if (remoteEnabled) {
-      showRemoteMutationUnavailable()
-      setBulkApproveOpen(false)
-      return
-    }
+  const confirmBulkApprove = useCallback(async () => {
     const ids = selectedRows
       .filter(row => row.approvalStatus !== 'APPROVED')
       .map(row => row.id)
     if (ids.length === 0) return
-    patchGeminiInstitutionApplicationApprovalStatus(ids, 'APPROVED')
-    refreshRows()
-    setSelectedRowKeys([])
-    setBulkApproveOpen(false)
+    try {
+      if (remoteEnabled) {
+        await approveGeminiOrganizationApplications(ids)
+      } else {
+        patchGeminiInstitutionApplicationApprovalStatus(ids, 'APPROVED')
+      }
+      refreshRows()
+      setSelectedRowKeys([])
+      setBulkApproveOpen(false)
+    } catch {
+      showRemoteMutationUnavailable()
+      setBulkApproveOpen(false)
+    }
   }, [refreshRows, remoteEnabled, selectedRows, showRemoteMutationUnavailable])
 
   const handleApprovalStatusChange = useCallback(
-    (rowId: string, next: GeminiInstitutionApprovalStatus) => {
+    async (rowId: string, next: GeminiInstitutionApprovalStatus) => {
       if (!canWrite) return
-      if (remoteEnabled) {
+      try {
+        if (remoteEnabled) {
+          if (next === 'APPROVED') {
+            await approveGeminiOrganizationApplications([rowId])
+          } else if (next === 'REJECTED') {
+            await rejectGeminiOrganizationApplications([rowId])
+          } else {
+            showAlert({
+              title: '안내',
+              content: '원격 API에서는 승인 대기로 되돌릴 수 없습니다.',
+            })
+            setOpenApprovalDropdownId(null)
+            return
+          }
+        } else {
+          patchGeminiInstitutionApplicationApprovalStatus([rowId], next)
+        }
+        refreshRows()
+        setOpenApprovalDropdownId(null)
+      } catch {
         showRemoteMutationUnavailable()
         setOpenApprovalDropdownId(null)
-        return
       }
-      patchGeminiInstitutionApplicationApprovalStatus([rowId], next)
-      refreshRows()
-      setOpenApprovalDropdownId(null)
     },
-    [canWrite, refreshRows, remoteEnabled, showRemoteMutationUnavailable]
+    [canWrite, refreshRows, remoteEnabled, showAlert, showRemoteMutationUnavailable]
   )
 
   const columns = useMemo<ColumnsType<GeminiInstitutionApplicationRow>>(

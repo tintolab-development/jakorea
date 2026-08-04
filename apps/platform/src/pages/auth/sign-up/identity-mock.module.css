@@ -1,0 +1,33 @@
+.root {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--color-neutral-cool-50, #f5f7f7);
+}
+
+.card {
+  display: flex;
+  width: 100%;
+  max-width: 360px;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 8%);
+}
+
+.badge,
+.title,
+.description {
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}

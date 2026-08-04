@@ -8,6 +8,11 @@
 import type { SettlementApplicationItemAmountAdjustmentRequest } from './settlementApplicationItemAmountAdjustmentRequest';
 
 export interface SettlementApplicationAmountAdjustmentRequest {
-  items?: SettlementApplicationItemAmountAdjustmentRequest[];
-  reason?: string;
+  /** @minItems 1 */
+  items: SettlementApplicationItemAmountAdjustmentRequest[];
+  /**
+     * @minLength 2
+     * @maxLength 500
+     */
+  reason: string;
 }
