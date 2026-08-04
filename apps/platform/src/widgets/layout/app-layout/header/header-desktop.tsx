@@ -123,9 +123,11 @@ export function HeaderDesktop({
                   }
                 }}
               >
-                <PFText typo="bd-lg-sb" color={isActive ? 'primary-500' : 'black'}>
-                  {group.label}
-                </PFText>
+                <span className={styles.navigationButtonLabel}>
+                  <PFText typo="bd-lg-sb" color={isActive ? 'primary-500' : 'black'}>
+                    {group.label}
+                  </PFText>
+                </span>
               </button>
             )
           })}

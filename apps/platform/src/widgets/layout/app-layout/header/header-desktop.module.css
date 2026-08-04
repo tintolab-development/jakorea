@@ -87,13 +87,29 @@
   gap: 10px;
   padding: 0;
   border: 0;
-  border-bottom: 4px solid transparent;
   background: transparent;
   cursor: pointer;
 }
 
-.navigationButtonActive {
-  border-bottom-color: var(--color-border-focus);
+.navigationButtonLabel {
+  position: relative;
+  display: inline-flex;
+  height: 100%;
+  align-items: center;
+}
+
+.navigationButtonLabel::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: transparent;
+}
+
+.navigationButtonActive .navigationButtonLabel::after {
+  background: var(--color-border-focus);
 }
 
 .dropdownPanel {
