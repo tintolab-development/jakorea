@@ -4,9 +4,7 @@ import { getCategoryNameByPath } from '@/shared/config/menu-config'
 
 const { Paragraph, Text } = Typography
 
-/**
- * Phase 2 셸용 플레이스홀더 — Phase 3에서 실제 화면으로 교체
- */
+/** LNB 셸용 빈 화면 — 기능 화면 구현 전까지 표시 */
 export function PlaceholderPage() {
   const location = useLocation()
   const title = getCategoryNameByPath(location.pathname)
@@ -31,7 +29,7 @@ export function PlaceholderPage() {
             </Paragraph>
             <Text type="secondary">{location.pathname}</Text>
             <Paragraph type="secondary" style={{ marginTop: 12, marginBottom: 0 }}>
-              Phase 3에서 기능 화면을 구현합니다.
+              준비 중인 화면입니다.
             </Paragraph>
           </>
         }
