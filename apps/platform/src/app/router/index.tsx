@@ -33,9 +33,13 @@ import {
   ProgramDetailPage,
   ProgramsPage,
 } from '@/pages/programs'
+import { NoticeDetailPage, NoticesPage } from '@/pages/notices'
+import { ResultDetailPage, ResultsPage } from '@/pages/results'
 import { DesignSystemPage } from '@/pages/design-system'
 import { YoutubeEmbedPage } from '@/pages/youtube-embed'
+import { parseNoticeRoute } from '@/features/notice'
 import { parseProgramRoute } from '@/features/program'
+import { parseResultRoute } from '@/features/result'
 import type { LayoutVariant } from '@/widgets/layout/layout-variant'
 
 export type RouteConfig = {
@@ -109,6 +113,16 @@ export function resolveLayout(pathname: string): LayoutVariant {
     return 'default'
   }
 
+  const resultRoute = parseResultRoute(pathname)
+  if (resultRoute) {
+    return resultRoute.name === 'list' ? 'hero' : 'default'
+  }
+
+  const noticeRoute = parseNoticeRoute(pathname)
+  if (noticeRoute) {
+    return noticeRoute.name === 'list' ? 'hero' : 'default'
+  }
+
   return staticRoute?.layout ?? 'default'
 }
 
@@ -129,6 +143,26 @@ export function resolveRoute(pathname: string): RouteConfig {
         return { path: pathname, element: <ProgramApplyPage />, layout: 'full' }
       case 'complete':
         return { path: pathname, element: <ProgramApplyCompletePage />, layout: 'default' }
+    }
+  }
+
+  const resultRoute = parseResultRoute(pathname)
+  if (resultRoute) {
+    switch (resultRoute.name) {
+      case 'list':
+        return { path: pathname, element: <ResultsPage />, layout: 'hero' }
+      case 'detail':
+        return { path: pathname, element: <ResultDetailPage />, layout: 'default' }
+    }
+  }
+
+  const noticeRoute = parseNoticeRoute(pathname)
+  if (noticeRoute) {
+    switch (noticeRoute.name) {
+      case 'list':
+        return { path: pathname, element: <NoticesPage />, layout: 'hero' }
+      case 'detail':
+        return { path: pathname, element: <NoticeDetailPage />, layout: 'default' }
     }
   }
 

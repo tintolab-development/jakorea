@@ -34,6 +34,8 @@ const partnerLogos = [
   { label: '국민권익위원회', logoUrl: rightsLogoUrl, logoClassName: styles.partnerLogoRights },
 ] as const
 
+const copyrightYear = new Date().getFullYear()
+
 export function Footer() {
   return (
     <footer className={styles.footer}>
@@ -103,7 +105,9 @@ export function Footer() {
           </div>
 
           <div className={styles.metaRow}>
-            <p className={[styles.infoDetail, styles.copyright].join(' ')}>©JA Korea, 2022</p>
+            <p className={[styles.infoDetail, styles.copyright].join(' ')}>
+              ©JA Korea, {copyrightYear}
+            </p>
             <div className={styles.socialLinks}>
               {socialLinks.map(({ label, iconUrl }) => (
                 <a className={styles.socialLink} href="/" aria-label={label} key={label}>
