@@ -1,0 +1,128 @@
+/**
+ * 상단 알림 드롭다운 패널 — CMS 셸 시각 미러 (auth/API 연동 전 mock)
+ */
+
+.notificationDropdownPanel {
+  box-sizing: border-box;
+  width: 406px;
+  min-width: 406px;
+  max-width: 406px;
+  height: 500px;
+  padding: 4px 0 16px 0;
+  border-radius: 6px;
+  border: 1px solid #d4d4d4;
+  background: #fafafa;
+  box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.notificationDropdownHeader {
+  box-sizing: border-box;
+  height: 63px;
+  min-height: 63px;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #fff;
+  border-bottom: 1px solid rgba(212, 212, 212, 0.5);
+  padding: 0 16px;
+}
+
+.notificationDropdownCategoryBtn {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  height: 31px;
+  padding: 0 10px;
+  border-radius: 4px;
+  border: 1px solid #d4d4d4;
+  background: #fff;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.notificationDropdownCategoryBtnActive {
+  background: var(--JA-mint-01, #01a1af);
+  border-color: var(--JA-mint-01, #01a1af);
+  color: #fff;
+}
+
+.notificationDropdownBody {
+  flex: 1;
+  margin-top: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  min-height: 0;
+  background: #fafafa;
+  padding: 6px 16px 0 16px;
+}
+
+.notificationDropdownEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  color: var(--color-text-secondary, #8c8c8c);
+  font-size: 14px;
+}
+
+.notificationDropdownList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.notificationDropdownItem {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(212, 212, 212, 0.5);
+  cursor: pointer;
+}
+
+.notificationDropdownItem:hover {
+  background: rgba(1, 161, 175, 0.04);
+}
+
+.notificationDropdownItemTitleRow {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.notificationDropdownItemTag {
+  flex-shrink: 0;
+  color: var(--JA-mint-01, #01a1af);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.notificationDropdownItemMessage {
+  flex: 1;
+  min-width: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notificationDropdownItemDate {
+  display: block;
+  margin-top: 6px;
+  color: var(--color-text-secondary, #8c8c8c);
+  font-size: 12px;
+}

@@ -1,3 +1,7 @@
+/**
+ * 메인 헤더 스타일 — CMS MainHeader 미러
+ */
+
 .main-header {
   background: var(--main-WT, #fff);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
@@ -42,5 +46,196 @@
   color: var(--default-BK, #3d3d3d);
   font-size: 26px;
   font-weight: 700;
-  line-height: 120%;
+  line-height: 120%; /* 31.2px */
+}
+
+.main-header-right {
+  display: flex;
+  align-items: center;
+}
+
+.main-header-right .ant-space {
+  align-items: center;
+}
+
+.main-header-right .ant-space-item {
+  display: flex;
+  align-items: center;
+}
+
+.main-header-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-body);
+  transition: all 0.2s;
+  line-height: 1;
+  vertical-align: middle;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.main-header-icon-button .anticon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-header-icon-button:hover {
+  background: rgba(1, 161, 175, 0.06);
+}
+
+.main-header-user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  height: var(--spacing-32, 32px);
+}
+
+.main-header-user-role {
+  margin: 0;
+  line-height: 1;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 150%; /* 27px */
+}
+
+.main-header-user-divider {
+  width: 1px;
+  height: var(--spacing-14);
+  background: var(--color-border-input);
+}
+
+.main-header-user-name {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 150%; /* 27px */
+  margin: 0;
+}
+
+.main-header-avatar {
+  flex-shrink: 0;
+  transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+  aspect-ratio: 1 / 1;
+}
+
+.main-header-avatar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  margin-right: 16px;
+}
+
+.main-header-account-trigger svg {
+  width: 28px;
+  height: 28px;
+  aspect-ratio: 1 / 1;
+}
+
+.main-header-avatar:hover {
+  opacity: 1;
+}
+
+.main-header-account-dropdown {
+  display: inline-flex;
+  width: 76px;
+  height: 98px;
+  padding: 4px;
+  flex-direction: column;
+  align-items: flex-start;
+  border-radius: var(--6, 6px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.main-header-account-dropdown-item {
+  display: flex;
+  width: 68px;
+  padding: 5px 8px 4px 8px;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 10px;
+  border: none;
+  border-radius: var(--4, 4px);
+  background: #fff;
+  color: var(--main-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  cursor: pointer;
+}
+
+.main-header-account-dropdown-item:hover {
+  background: var(
+    --status-hover-bg,
+    linear-gradient(0deg, rgba(1, 161, 175, 0.06) 0%, rgba(1, 161, 175, 0.06) 100%),
+    #fff
+  );
+}
+
+.main-header-account-dropdown-item:focus-visible {
+  outline: 2px solid rgba(1, 161, 175, 0.35);
+  outline-offset: 1px;
+}
+
+.main-header-notification-dropdown {
+  box-sizing: border-box;
+  width: 406px;
+  min-width: 406px;
+  max-width: 406px;
+  padding-top: 1px;
+}
+
+.main-header-notification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  gap: var(--spacing-6);
+  height: var(--spacing-32, 32px);
+  padding: 0 var(--spacing-14);
+  background: var(--color-bg-accent);
+  border-radius: var(--radius-16);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  line-height: var(--spacing-32, 32px);
+}
+
+.main-header-notification-badge:hover {
+  background: var(--color-bg-accent-hover);
+}
+
+.main-header-notification-icon {
+  font-size: var(--font-size-14);
+  color: var(--color-brand-primary);
+  display: flex;
+  align-items: center;
+}
+
+.main-header-notification-count {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 130%; /* 20.8px */
+  margin: 0;
+  display: flex;
+  align-items: center;
 }
