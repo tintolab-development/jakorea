@@ -26,14 +26,28 @@ const MOCK_USER = {
 const MOCK_NOTIFICATIONS: HeaderNotification[] = [
   {
     id: 'n1',
-    category: 'content',
+    type: 'schedule',
     message: '히어로 배너 게시 기간이 곧 만료됩니다.',
     createdAt: '2026-08-03T09:00:00+09:00',
     read: false,
   },
   {
     id: 'n2',
-    category: 'system',
+    type: 'matching',
+    message: '메인 콘텐츠 게시 요청이 승인 대기 중입니다.',
+    createdAt: '2026-08-02T11:20:00+09:00',
+    read: false,
+  },
+  {
+    id: 'n3',
+    type: 'settlement',
+    message: '후원 상담 신청 건이 등록되었습니다.',
+    createdAt: '2026-08-01T16:00:00+09:00',
+    read: true,
+  },
+  {
+    id: 'n4',
+    type: 'system',
     message: '홈페이지 어드민 셸이 배포되었습니다.',
     createdAt: '2026-08-01T14:30:00+09:00',
     read: true,
@@ -96,6 +110,7 @@ export function MainHeader() {
                   <NotificationDropdown
                     notifications={notifications}
                     onNotificationClick={handleNotificationClick}
+                    onClose={() => setDropdownOpen(false)}
                   />
                 </div>
               )}
