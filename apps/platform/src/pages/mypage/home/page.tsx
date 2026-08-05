@@ -12,7 +12,7 @@ import { getDevAuthLoggedIn, getDevMemberProfile } from '@/shared/lib'
 import { MypageLayout, mypageSettingsIconUrl } from '@/widgets/mypage-layout'
 import { PFText } from '@/shared/ui'
 import { ProgramStatCards } from './program-stat-cards'
-import { SchedulePlaceholder } from './schedule-placeholder'
+import { ScheduleSection } from './schedule-section'
 import styles from './page.module.css'
 
 export function MypageHomePage() {
@@ -65,7 +65,7 @@ export function MypageHomePage() {
           </div>
 
           <div className={styles.schedule}>
-            <SchedulePlaceholder />
+            <ScheduleSection />
           </div>
         </div>
       ) : (

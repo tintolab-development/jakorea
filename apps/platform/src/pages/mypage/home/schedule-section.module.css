@@ -1,0 +1,116 @@
+/* 넓을 때: 캘린더 | 일정목록 / 좁을 때(캘린더 600+gap+목록 293 미만): 목록이 하단으로 */
+.section {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1220px;
+  align-items: stretch;
+  gap: var(--spacing-16);
+  min-width: 0;
+}
+
+.calendar {
+  flex: 1 1 600px;
+  width: 100%;
+  max-width: 911px;
+  min-width: 600px;
+}
+
+.listSlot {
+  display: flex;
+  flex: 1 1 293px;
+  width: 293px;
+  min-width: 293px;
+  min-height: 420px;
+  align-self: stretch;
+  background: var(--color-neutral-white);
+}
+
+.list {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  align-self: stretch;
+  min-height: 0;
+  padding: var(--spacing-8) 0;
+  overflow: hidden;
+}
+
+.listCount {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.listItems {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.listItem {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-white);
+  box-shadow: var(--shadow-card-sm);
+  overflow: hidden;
+}
+
+.listAccent {
+  flex-shrink: 0;
+  width: 6px;
+  align-self: stretch;
+}
+
+.listCopy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  min-width: 0;
+  padding: var(--spacing-16);
+}
+
+.listProgram,
+.listTitle {
+  margin: 0;
+}
+
+.empty {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  gap: var(--spacing-8);
+  padding: var(--spacing-20) 0 var(--spacing-40);
+  text-align: center;
+}
+
+.emptyTitle,
+.emptyDescription {
+  margin: 0;
+  text-align: center;
+}
+
+@media (--bp-below-pc) {
+  .calendar {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .listSlot {
+    min-width: 0;
+    width: 100%;
+    min-height: 240px;
+  }
+}
