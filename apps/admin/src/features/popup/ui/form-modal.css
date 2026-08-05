@@ -1,0 +1,162 @@
+/* 시안: padding 24 / 30 / 32 / 30, 타이틀↔디스크립션 12px, 디스크립션↔폼·폼↔푸터 30px */
+.popup-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  padding: 24px 30px 32px;
+}
+
+.popup-form-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body,
+.popup-form-modal.content-modal .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 12px;
+  gap: 30px;
+}
+
+.popup-form-modal .teal-header-modal__footer {
+  margin-top: 30px;
+}
+
+.popup-form-modal .content-modal__footer-actions {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.popup-form-modal__footer-start,
+.popup-form-modal__footer-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.popup-form-modal__forms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.popup-form-modal__form {
+  width: 100%;
+}
+
+/*
+ * th 시안: 140px · padding 10px
+ * Field 인라인 --detail-info-label-w(기본 200) 보다 우선
+ */
+.popup-form-modal__form .detail-info-form__field {
+  --detail-info-label-w: 140px !important;
+  grid-template-columns: 140px minmax(0, 1fr) !important;
+}
+
+.popup-form-modal__form .detail-info-form__field-label {
+  display: flex !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  min-height: 48px;
+  padding: 10px !important;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  align-self: stretch;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* td 텍스트·콘텐츠 좌측 정렬 (시안) */
+.popup-form-modal__form .detail-info-form__field-content {
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+}
+
+.popup-form-modal__form .detail-info-form__field-content--view,
+.popup-form-modal__form .detail-info-form__field-content--edit {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.popup-form-modal__form .detail-info-form__field-content--edit > * {
+  justify-content: flex-start;
+  text-align: left;
+  width: 100%;
+}
+
+.popup-form-modal__form .detail-info-form__field-content--view > * {
+  text-align: left;
+}
+
+/* 등록일시 | 사용 여부 — 한 줄 유지 */
+.popup-form-modal__form--meta .detail-info-form__row--double {
+  flex-wrap: nowrap;
+}
+
+.popup-form-modal__created-at {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.popup-form-modal__image-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+
+.popup-form-modal__preview {
+  width: 120px;
+  height: 80px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-secondary, #f7f7f7);
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.popup-form-modal__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popup-form-modal__file-field {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.popup-form-modal__file-name {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.popup-form-modal__link-edit,
+.popup-form-modal__link-view {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* TdDivider 기본 margin(12px) 대신 컨테이너 gap 16px 사용 */
+.popup-form-modal__link-edit .detail-info-form-inputs-separator,
+.popup-form-modal__link-view .detail-info-form-inputs-separator {
+  margin: 0;
+}
+
+.popup-form-modal__link-edit .cms-input {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.popup-form-modal__link-url {
+  word-break: break-all;
+  min-width: 0;
+}
