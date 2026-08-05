@@ -65,9 +65,13 @@ export function useMemberDetailQuery(
       if (!role) {
         const legacy = await fetchMemberDetailRemote(memberId)
         role = resolvePrimaryUserRole(legacy.roles)
-        if (isAdminMemberDetailRole(role)) {
+        if (
+          isAdminMemberDetailRole(role) &&
+          shouldUseAdminAccountDetailApi({ userId, adminAccountId: options?.adminAccountId })
+        ) {
           return fetchAdminMemberDetailAsUser(userId, {
             memberId,
+            adminAccountId: options?.adminAccountId,
             email: legacy.email,
           })
         }
@@ -85,12 +89,24 @@ export function useMemberDetailQuery(
         }
       }
 
-      if (isAdminMemberDetailRole(role)) {
+      if (
+        isAdminMemberDetailRole(role) &&
+        shouldUseAdminAccountDetailApi({
+          userId,
+          adminAccountId: options?.adminAccountId,
+        })
+      ) {
         return fetchAdminMemberDetailAsUser(userId, {
           memberId: options?.memberId ?? memberId,
           adminAccountId: options?.adminAccountId,
           email: options?.email,
         })
+      }
+
+      if (isAdminMemberDetailRole(role)) {
+        throw new Error(
+          '관리자 회원 상세를 조회하려면 목록 응답에 adminAccountId가 필요합니다.'
+        )
       }
 
       if (role === 'SCHOOL') {

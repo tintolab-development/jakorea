@@ -1,5 +1,10 @@
-import type { InstructorMemberProfile, ProgramRole, User } from '@/types/user'
+import type { InstructorMemberProfile, ProgramRole, User, UserRole } from '@/types/user'
+import { parseAdminAccountIdFromUserId } from '@/features/user/api/fetch-admin-member-detail'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
+import {
+  coercePositiveInt,
+  isUserResponseDisplayRowId,
+} from '@/features/user/api/user-response-row-id'
 import {
   mapMemberStatusToIsActive,
   resolvePrimaryUserRole,
@@ -20,12 +25,21 @@ function fallbackUuid(memberId?: number): string {
   return `member-unknown-${crypto.randomUUID()}`
 }
 
-function resolveListItemUuid(item: MemberListItemResponse, memberId?: number): string {
+function resolveListItemUuid(
+  item: MemberListItemResponse,
+  memberId?: number,
+  adminAccountId?: number
+): string {
   const uuid = typeof item.uuid === 'string' ? item.uuid.trim() : ''
-  if (uuid) return uuid
+  if (uuid && !isUserResponseDisplayRowId(uuid)) return uuid
+
+  if (adminAccountId != null) return `admin-account-${adminAccountId}`
+  if (memberId != null) return `member-${memberId}`
+
   const id = typeof item.id === 'string' ? item.id.trim() : ''
-  if (id) return id
-  return memberId != null ? fallbackUuid(memberId) : fallbackUuid()
+  if (id && !isUserResponseDisplayRowId(id)) return id
+
+  return fallbackUuid(memberId)
 }
 
 function mapInstructorMemberProfile(raw?: string): InstructorMemberProfile | undefined {
@@ -54,15 +68,54 @@ function resolveListItemIsActive(item: MemberListItemResponse): boolean {
   return mapMemberStatusToIsActive(item.memberStatus, item.status)
 }
 
-export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User, 'password'> {
-  const memberId = typeof item.memberId === 'number' ? item.memberId : undefined
-  const uuid = resolveListItemUuid(item, memberId)
+function resolveListItemRole(item: MemberListItemResponse): UserRole {
+  const role = resolvePrimaryUserRole(item.roles, item.role)
+  if (role === 'ADMIN') return role
+  if (item.adminAccountId != null && item.adminAccountId > 0) return 'ADMIN'
+  if (item.adminId != null && item.adminId > 0) return 'ADMIN'
+  if (typeof item.adminLevel === 'string' && item.adminLevel.trim()) return 'ADMIN'
+  return role
+}
 
+function resolveListItemAdminAccountId(
+  item: MemberListItemResponse,
+  role: UserRole
+): number | undefined {
+  const fromAdminAccountId = coercePositiveInt(item.adminAccountId)
+  if (fromAdminAccountId != null) return fromAdminAccountId
+
+  const fromAdminId = coercePositiveInt(item.adminId)
+  if (fromAdminId != null) return fromAdminId
+
+  if (role !== 'ADMIN') return undefined
+
+  for (const token of [item.uuid, item.id]) {
+    if (typeof token !== 'string') continue
+    const trimmed = token.trim()
+    if (!trimmed || isUserResponseDisplayRowId(trimmed)) continue
+    const fromAdminAccountPrefix = parseAdminAccountIdFromUserId(trimmed)
+    if (fromAdminAccountPrefix != null) return fromAdminAccountPrefix
+  }
+  return undefined
+}
+
+export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User, 'password'> {
+  const memberId = coercePositiveInt(item.memberId)
+  const role = resolveListItemRole(item)
+  const adminAccountId = resolveListItemAdminAccountId(item, role)
+  const uuid = resolveListItemUuid(item, memberId, adminAccountId)
   if (memberId != null) {
     registerMemberIdMapping(uuid, memberId)
   }
+  const listItemId = typeof item.id === 'string' ? item.id.trim() : ''
+  if (listItemId && listItemId !== uuid && memberId != null) {
+    registerMemberIdMapping(listItemId, memberId)
+  }
 
-  const role = resolvePrimaryUserRole(item.roles, item.role)
+  if (listItemId && listItemId !== uuid && memberId != null) {
+    registerMemberIdMapping(listItemId, memberId)
+  }
+
   const now = new Date().toISOString()
   const listMetrics = mapApiUserListRowMetrics(item.listMetrics)
   const instructorMemberProfile = mapInstructorMemberProfile(item.instructorMemberProfile)
@@ -83,7 +136,7 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
       registeredByAdmin: item.registeredByAdmin,
       preRegistered: item.preRegistered,
       createdByAdmin: item.createdByAdmin,
-      adminAccountId: item.adminAccountId,
+      adminAccountId,
     }),
     identitySelfSignupCompletedAfterAdminRegistration:
       resolveIdentitySelfSignupCompletedAfterAdminRegistration({
@@ -91,13 +144,13 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
         registeredByAdmin: item.registeredByAdmin,
         preRegistered: item.preRegistered,
         createdByAdmin: item.createdByAdmin,
-        adminAccountId: item.adminAccountId,
+        adminAccountId,
         identitySelfSignupCompletedAfterAdminRegistration:
           item.identitySelfSignupCompletedAfterAdminRegistration,
         identityVerified: item.identityVerified,
       }),
     id1365: item.external1365Id?.trim() || undefined,
-    ...(item.adminAccountId != null ? { adminAccountId: item.adminAccountId } : {}),
+    ...(adminAccountId != null ? { adminAccountId } : {}),
     ...(item.affiliation?.trim() ? { affiliation: item.affiliation.trim() } : {}),
     ...(item.affiliatedSchoolUserId?.trim()
       ? { affiliatedSchoolUserId: item.affiliatedSchoolUserId.trim() }

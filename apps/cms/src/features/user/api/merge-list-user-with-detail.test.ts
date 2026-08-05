@@ -104,6 +104,29 @@ describe('mergeListUserWithFetchedDetail', () => {
     })
   })
 
+  it('관리자 목록 slug id는 admin-account-{adminAccountId}로 canonicalize한다', () => {
+    const list = baseUser({
+      id: 'local-demo-admin-viewer',
+      role: 'ADMIN',
+      name: '데모 관리자',
+      adminAccountId: 165003,
+      schoolInfo: undefined,
+      memberId: undefined,
+    })
+    const fetched = baseUser({
+      id: 'local-demo-admin-viewer',
+      role: 'ADMIN',
+      name: '데모 관리자',
+      adminAccountId: 165003,
+      schoolInfo: undefined,
+      memberId: undefined,
+    })
+
+    const merged = mergeListUserWithFetchedDetail(list, fetched)
+
+    expect(merged.id).toBe('admin-account-165003')
+  })
+
   it('마스킹 placeholder 응답이 unmask·목록 강사 필드를 덮어쓰지 않는다', () => {
     const list = baseUser({
       id: 'teacher-uuid',

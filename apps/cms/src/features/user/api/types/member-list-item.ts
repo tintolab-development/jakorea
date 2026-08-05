@@ -24,6 +24,9 @@ export interface MemberListItemResponse {
   createdByAdmin?: boolean
   registeredByAdmin?: boolean
   adminAccountId?: number
+  /** BE가 `adminAccountId` 대신 내려주는 경우 (legacy) */
+  adminId?: number
+  adminLevel?: string
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
   identityVerified?: boolean
   isActive?: boolean

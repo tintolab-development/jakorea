@@ -6,6 +6,7 @@ import {
   looksLikeInstructorActivityEnumCode,
 } from '@/features/user/api/map-instructor-activity-display'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
+import { resolveCanonicalUserDetailId } from '@/features/user/api/user-response-row-id'
 
 const MASK_GUARDED_LIST_METRIC_KEYS = new Set<keyof NonNullable<User['listMetrics']>>([
   'instructorCareerYearsLabel',
@@ -210,7 +211,7 @@ export function mergeListUserWithFetchedDetail(
   return {
     ...listUser,
     ...fetched,
-    id: listUser.id,
+    id: resolveCanonicalUserDetailId(listUser, fetched),
     memberId: fetched.memberId ?? listUser.memberId,
     adminAccountId: fetched.adminAccountId ?? listUser.adminAccountId,
     role,

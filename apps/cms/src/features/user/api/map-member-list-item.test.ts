@@ -1,0 +1,81 @@
+import { describe, expect, it } from 'vitest'
+import { mapMemberListItemToUser } from './map-member-list-item'
+
+describe('mapMemberListItemToUser — ADMIN', () => {
+  it('adminAccountId 필드를 admin 상세 path id로 보존', () => {
+    const user = mapMemberListItemToUser({
+      uuid: 'a1c1b91b-d1ce-4bec-a192-8b3290113227',
+      adminAccountId: 7,
+      email: 'adm***@test.com',
+      name: '관리자',
+      roles: ['ADMIN'],
+    })
+
+    expect(user.role).toBe('ADMIN')
+    expect(user.adminAccountId).toBe(7)
+  })
+
+  it('role 필드 없이 adminAccountId만 있어도 ADMIN으로 분기', () => {
+    const user = mapMemberListItemToUser({
+      uuid: 'admin-uuid',
+      adminAccountId: 9,
+      email: 'a@test.com',
+      name: '관리자',
+      roles: [],
+    })
+
+    expect(user.role).toBe('ADMIN')
+    expect(user.adminAccountId).toBe(9)
+  })
+
+  it('adminLevel만 있어도 ADMIN으로 분기', () => {
+    const user = mapMemberListItemToUser({
+      uuid: 'admin-uuid',
+      adminLevel: 'MASTER',
+      email: 'a@test.com',
+      name: '관리자',
+    })
+
+    expect(user.role).toBe('ADMIN')
+  })
+
+  it('memberId 숫자 id와 adminAccountId를 혼동하지 않음', () => {
+    const user = mapMemberListItemToUser({
+      memberId: 42,
+      uuid: 'member-uuid',
+      id: '42',
+      roles: ['ADMIN'],
+      email: 'a@test.com',
+      name: '관리자',
+    })
+
+    expect(user.memberId).toBe(42)
+    expect(user.adminAccountId).toBeUndefined()
+  })
+
+  it('UserResponse.id slug(local-admin-*)는 admin path id로 쓰지 않음', () => {
+    const user = mapMemberListItemToUser({
+      id: 'local-admin-member-viewer',
+      adminAccountId: 7,
+      email: 'a@test.com',
+      name: '관리자',
+      roles: ['ADMIN'],
+    })
+
+    expect(user.id).toBe('admin-account-7')
+    expect(user.adminAccountId).toBe(7)
+  })
+
+  it('adminAccountId 문자열 숫자도 매핑', () => {
+    const user = mapMemberListItemToUser({
+      id: 'local-admin-member-viewer',
+      adminAccountId: '9' as unknown as number,
+      roles: ['ADMIN'],
+      email: 'a@test.com',
+      name: '관리자',
+    })
+
+    expect(user.adminAccountId).toBe(9)
+    expect(user.id).toBe('admin-account-9')
+  })
+})
