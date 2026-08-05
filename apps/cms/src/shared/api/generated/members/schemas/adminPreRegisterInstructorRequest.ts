@@ -13,7 +13,7 @@ export interface AdminPreRegisterInstructorRequest {
   /** @minLength 1 */
   email: string;
   /**
-     * 관리자가 발급하는 초기 임시 비밀번호. CMS 기본값은 로그인 이메일과 동일합니다.
+     * 관리자가 발급하는 초기 임시 비밀번호. 로그인 이메일과 달라야 하며 영문·숫자·특수문자를 포함한 8자 이상이어야 합니다.
      * @minLength 1
      */
   rawPassword: string;

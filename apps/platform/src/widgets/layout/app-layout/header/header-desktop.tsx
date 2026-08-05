@@ -72,7 +72,11 @@ export function HeaderDesktop({
   )
   const [isNavOpen, setIsNavOpen] = useState(false)
 
-  const headerClassName = [styles.header, transparent ? styles.headerTransparent : undefined]
+  const headerClassName = [
+    styles.header,
+    transparent ? styles.headerTransparent : undefined,
+    isNavOpen ? styles.headerNavOpen : undefined,
+  ]
     .filter(Boolean)
     .join(' ')
 

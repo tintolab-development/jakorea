@@ -11,8 +11,8 @@
  */
 export interface AdminPrivacyUnmaskRequest {
   /**
-     * 원문 조회 사유. 감사 로그에 남으므로 업무상 필요한 사유를 작성합니다.
-     * @minLength 5
+     * 원문 조회 사유. 1자 이상 500자 이하로 입력하며 감사 로그에 저장됩니다.
+     * @minLength 1
      * @maxLength 500
      */
   reason: string;

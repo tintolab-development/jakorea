@@ -209,6 +209,10 @@
       "description": "관리자/회원 로그인, MFA, 토큰 갱신, 로그아웃 API"
     },
     {
+      "name": "기타 API",
+      "description": "회원 본인 소유 제출 파일의 업로드, 확정, 조회, 다운로드 API"
+    },
+    {
       "name": "외부 연동 제공자",
       "description": "외부 provider 연동 상태, 콜백, 리허설, 운영 확인용 API입니다."
     },
@@ -329,6 +333,10 @@
       "description": "회원가입 약관 문서를 DB에서 버전 관리하고 피그마 약관 모달에 공급하는 API"
     },
     {
+      "name": "기타 API",
+      "description": "대시보드, 내정보, 일정, 회원탈퇴 화면 API"
+    },
+    {
       "name": "관리자 관리",
       "description": "관리자 계정 목록, 생성, 수정, 잠금, 권한 관리 API입니다."
     }
@@ -340,7 +348,7 @@
           "실적"
         ],
         "summary": "실적 조회",
-        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance/rules`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_performance_rules`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance/rules`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_performance_rules`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "listRules",
         "parameters": [
           {
@@ -415,7 +423,7 @@
           "실적"
         ],
         "summary": "POST /api/admin/performance/rules",
-        "description": "### 이 API가 하는 일\n- POST /api/admin/performance/rules\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance/rules`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_performance_rules`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/performance/rules\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance/rules`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_performance_rules`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "upsertRule",
         "requestBody": {
           "content": {
@@ -462,7 +470,7 @@
           "실적"
         ],
         "summary": "POST /api/admin/performance/records/{performanceRecordId}/master-snapshots:refresh",
-        "description": "### 이 API가 하는 일\n- POST /api/admin/performance/records/{performanceRecordId}/master-snapshots:refresh\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance/records/{performanceRecordId}/master-snapshots:refresh`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_performance_records_performanceRecordId_master-snapshots:refresh`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/performance/records/{performanceRecordId}/master-snapshots:refresh\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance/records/{performanceRecordId}/master-snapshots:refresh`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_performance_records_performanceRecordId_master-snapshots:refresh`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "refreshSnapshots",
         "parameters": [
           {
@@ -508,7 +516,7 @@
           "실적"
         ],
         "summary": "실적 조회",
-        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance/external-exports`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_performance_external-exports`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance/external-exports`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_performance_external-exports`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "listExternalExports",
         "parameters": [
           {
@@ -573,7 +581,7 @@
           "실적"
         ],
         "summary": "POST /api/admin/performance/external-exports",
-        "description": "### 이 API가 하는 일\n- POST /api/admin/performance/external-exports\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance/external-exports`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_performance_external-exports`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/performance/external-exports\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance/external-exports`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_performance_external-exports`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "requestExternalExport",
         "requestBody": {
           "content": {
@@ -620,7 +628,7 @@
           "실적"
         ],
         "summary": "POST /api/admin/performance-records/{performanceRecordId}/correction-requests",
-        "description": "### 이 API가 하는 일\n- POST /api/admin/performance-records/{performanceRecordId}/correction-requests\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance-records/{performanceRecordId}/correction-requests`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 정정 요청 생성 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `post_api_admin_performance_records_performancerecordid_correction_requests`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CORRECTION_CREATE_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 정정 요청 생성 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/performance-records/{performanceRecordId}/correction-requests\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance-records/{performanceRecordId}/correction-requests`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 정정 요청 생성 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `post_api_admin_performance_records_performancerecordid_correction_requests`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CORRECTION_CREATE_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 정정 요청 생성 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "requestCorrection_1",
         "parameters": [
           {
@@ -679,7 +687,7 @@
           "실적"
         ],
         "summary": "POST /api/admin/performance-records/rebuild",
-        "description": "### 이 API가 하는 일\n- POST /api/admin/performance-records/rebuild\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance-records/rebuild`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_performance-records_rebuild`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/performance-records/rebuild\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance-records/rebuild`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `post_admin_performance-records_rebuild`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "rebuild",
         "requestBody": {
           "content": {
@@ -726,7 +734,7 @@
           "실적"
         ],
         "summary": "POST /api/admin/performance-closings/reopen",
-        "description": "### 이 API가 하는 일\n- POST /api/admin/performance-closings/reopen\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance-closings/reopen`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 월마감 재오픈 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `post_api_admin_performance_closings_reopen`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CLOSING_REOPEN_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 월마감 재오픈 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/performance-closings/reopen\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance-closings/reopen`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 월마감 재오픈 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `post_api_admin_performance_closings_reopen`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CLOSING_REOPEN_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 월마감 재오픈 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "reopenMonth",
         "requestBody": {
           "content": {
@@ -773,7 +781,7 @@
           "실적"
         ],
         "summary": "POST /api/admin/performance-closings/close",
-        "description": "### 이 API가 하는 일\n- POST /api/admin/performance-closings/close\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance-closings/close`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 월마감 처리 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `post_api_admin_performance_closings_close`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CLOSING_CLOSE_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 월마감 처리 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/performance-closings/close\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `POST /api/admin/performance-closings/close`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 월마감 처리 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `post_api_admin_performance_closings_close`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CLOSING_CLOSE_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 월마감 처리 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "closeMonth",
         "requestBody": {
           "content": {
@@ -820,7 +828,7 @@
           "실적"
         ],
         "summary": "실적 조회",
-        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-records/{performanceRecordId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_performance-records_performanceRecordId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-records/{performanceRecordId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_performance-records_performanceRecordId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "getRecord",
         "parameters": [
           {
@@ -864,7 +872,7 @@
           "실적"
         ],
         "summary": "실적 부분 수정",
-        "description": "### 이 API가 하는 일\n- 실적 부분 수정\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `PATCH /api/admin/performance-records/{performanceRecordId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `patch_admin_performance-records_performanceRecordId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `PATCH /api/admin/performance-records/{performanceRecordId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `patch_admin_performance-records_performanceRecordId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "updateRecord",
         "parameters": [
           {
@@ -923,7 +931,7 @@
           "실적"
         ],
         "summary": "실적 부분 수정",
-        "description": "### 이 API가 하는 일\n- 실적 부분 수정\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `PATCH /api/admin/performance-records/{performanceRecordId}/exclude`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `patch_admin_performance-records_performanceRecordId_exclude`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `PATCH /api/admin/performance-records/{performanceRecordId}/exclude`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `patch_admin_performance-records_performanceRecordId_exclude`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "excludeRecord",
         "parameters": [
           {
@@ -982,7 +990,7 @@
           "실적"
         ],
         "summary": "실적 부분 수정",
-        "description": "### 이 API가 하는 일\n- 실적 부분 수정\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `PATCH /api/admin/performance-records/{performanceRecordId}/confirm`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `patch_admin_performance-records_performanceRecordId_confirm`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `PATCH /api/admin/performance-records/{performanceRecordId}/confirm`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신\n- 프론트 조회 키: `patch_admin_performance-records_performanceRecordId_confirm`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "confirmRecord",
         "parameters": [
           {
@@ -1041,7 +1049,7 @@
           "실적"
         ],
         "summary": "실적 부분 수정",
-        "description": "### 이 API가 하는 일\n- 실적 부분 수정\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `PATCH /api/admin/performance-correction-requests/{correctionRequestId}/reject`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 정정 요청 반려 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `patch_api_admin_performance_correction_requests_correctionrequestid_reject`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CORRECTION_REJECT_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 정정 요청 반려 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `PATCH /api/admin/performance-correction-requests/{correctionRequestId}/reject`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 정정 요청 반려 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `patch_api_admin_performance_correction_requests_correctionrequestid_reject`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CORRECTION_REJECT_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 정정 요청 반려 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "rejectCorrection_1",
         "parameters": [
           {
@@ -1100,7 +1108,7 @@
           "실적"
         ],
         "summary": "실적 부분 수정",
-        "description": "### 이 API가 하는 일\n- 실적 부분 수정\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `PATCH /api/admin/performance-correction-requests/{correctionRequestId}/approve`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 정정 요청 승인 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `patch_api_admin_performance_correction_requests_correctionrequestid_approve`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CORRECTION_APPROVE_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 정정 요청 승인 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `PATCH /api/admin/performance-correction-requests/{correctionRequestId}/approve`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 정정 요청 승인 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `patch_api_admin_performance_correction_requests_correctionrequestid_approve`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CORRECTION_APPROVE_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 정정 요청 승인 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "approveCorrection_1",
         "parameters": [
           {
@@ -1159,7 +1167,7 @@
           "실적"
         ],
         "summary": "실적 조회",
-        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance/summary`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리 from 필터\n- 응답 사용 위치: 조회 캐시 / 화면 summary state\n- 프론트 조회 키: `get_performance_summary`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: STAGE103_PERFORMANCE_SUMMARY_SMOKE\n- 목데이터 대체: Replace localStorage performance summary API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance/summary`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리 from 필터\n- 응답 사용 위치: 조회 캐시 / 화면 summary state\n- 프론트 조회 키: `get_performance_summary`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: STAGE103_PERFORMANCE_SUMMARY_SMOKE\n- 목데이터 대체: Replace localStorage performance summary API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "getPerformanceSummary",
         "parameters": [
           {
@@ -1214,7 +1222,7 @@
           "실적"
         ],
         "summary": "실적 조회",
-        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance/records/{performanceRecordId}/master-snapshots`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_performance_records_performanceRecordId_master-snapshots`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance/records/{performanceRecordId}/master-snapshots`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_performance_records_performanceRecordId_master-snapshots`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "listSnapshotLinks",
         "parameters": [
           {
@@ -1263,7 +1271,7 @@
           "실적"
         ],
         "summary": "실적 조회",
-        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-records`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_performance-records`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-records`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_performance-records`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "listRecords",
         "parameters": [
           {
@@ -1352,7 +1360,7 @@
           "실적"
         ],
         "summary": "실적 조회",
-        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-records/{performanceRecordId}/revisions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 revision 목록 조회 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `get_api_admin_performance_records_performancerecordid_revisions`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_REVISION_LIST_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 revision 목록 조회 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-records/{performanceRecordId}/revisions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 revision 목록 조회 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `get_api_admin_performance_records_performancerecordid_revisions`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_REVISION_LIST_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 revision 목록 조회 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "listRevisions",
         "parameters": [
           {
@@ -1401,7 +1409,7 @@
           "실적"
         ],
         "summary": "실적 조회",
-        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-records/{performanceRecordId}/revisions/{revisionId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 revision 상세 조회 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `get_api_admin_performance_records_performancerecordid_revisions_revisionid`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_REVISION_DETAIL_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 revision 상세 조회 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-records/{performanceRecordId}/revisions/{revisionId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 revision 상세 조회 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `get_api_admin_performance_records_performancerecordid_revisions_revisionid`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_REVISION_DETAIL_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 revision 상세 조회 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "getRevisionDetail",
         "parameters": [
           {
@@ -1457,7 +1465,7 @@
           "실적"
         ],
         "summary": "실적 조회",
-        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-records/export`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_performance-records_export`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-records/export`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신\n- 프론트 조회 키: `get_admin_performance-records_export`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 performance API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "exportRecords",
         "parameters": [
           {
@@ -1567,7 +1575,7 @@
           "실적"
         ],
         "summary": "실적 조회",
-        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-correction-requests`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 정정 요청 목록 조회 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `get_api_admin_performance_correction_requests`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CORRECTION_LIST_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 정정 요청 목록 조회 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-correction-requests`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 정정 요청 목록 조회 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `get_api_admin_performance_correction_requests`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CORRECTION_LIST_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 정정 요청 목록 조회 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "listCorrectionRequests_1",
         "parameters": [
           {
@@ -1654,7 +1662,7 @@
           "실적"
         ],
         "summary": "실적 조회",
-        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 실적 관리 (`SCR_PERFORMANCE`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-correction-requests/{correctionRequestId}/diff`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 정정 전후 diff 조회 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `get_api_admin_performance_correction_requests_correctionrequestid_diff`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CORRECTION_DIFF_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 정정 전후 diff 조회 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 실적 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 실적 관리 (`null`)\n- 프론트 담당 영역: 실적 (`performance`)\n- 호출 방식: `GET /api/admin/performance-correction-requests/{correctionRequestId}/diff`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 경로/쿼리/요청 본문 from 선택 행, 필터, or provider callback\n- 응답 사용 위치: 실적 정정 전후 diff 조회 response drives 화면 state, modal, or audit detail\n- 프론트 조회 키: `get_api_admin_performance_correction_requests_correctionrequestid_diff`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PERFORMANCE_CORRECTION_DIFF_SMOKE\n- 목데이터 대체: Replace localStorage state for 실적 정정 전후 diff 조회 with API response/cache.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 실적 상태는 생성/확정/마감/정정 흐름을 구분합니다. 화면에서는 원천 프로그램, 일정, 정산과의 추적 링크를 함께 보여주는 것을 권장합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "getCorrectionDiff",
         "parameters": [
           {
@@ -3340,6 +3348,50 @@
           }
         }
       },
+      "PortalWithdrawalRequest": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "confirmationText": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "confirmationText",
+          "currentPassword",
+          "reason"
+        ]
+      },
+      "PortalWithdrawalResponse": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
       "SocialLinkRequest": {
         "type": "object",
         "properties": {
@@ -3934,6 +3986,16 @@
           "answers": {
             "type": "object",
             "additionalProperties": {}
+          },
+          "fileObjectIdsByQuestion": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
           }
         }
       },
@@ -3957,9 +4019,342 @@
           }
         }
       },
+      "AbsenceReasonSubmissionRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "fileObjectIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 20,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "AbsenceReasonSubmissionResponse": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendanceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reviewStatus": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "fileObjectIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PaymentStatementConsentRequest": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "documentVersion": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "agreed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "documentId",
+          "documentVersion"
+        ]
+      },
+      "PaymentStatementConsentResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "agreed": {
+            "type": "boolean"
+          },
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "documentVersion": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canAgree": {
+            "type": "boolean"
+          },
+          "canWithdraw": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateNoticeCommentRequest": {
+        "type": "object",
+        "description": "회원 포탈 안내사항 댓글 등록 요청",
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "NoticeCommentMutationResponse": {
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "commentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "created": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "processedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GiveUpApplicationRequest": {
+        "type": "object",
+        "properties": {
+          "reasonCode": {
+            "type": "string",
+            "description": "활동 포기 사유 코드",
+            "example": "PERSONAL_SCHEDULE",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "reason": {
+            "type": "string",
+            "description": "활동 포기 사유",
+            "example": "남은 교육에 참여하기 어렵습니다.",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "GiveUpApplicationResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantStatus": {
+            "type": "string"
+          },
+          "giveUpAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idempotent": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ExpenseReceiptSubmitRequest": {
+        "type": "object",
+        "properties": {
+          "expenseType": {
+            "type": "string",
+            "example": "TRANSPORTATION",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "expenseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "fileObjectIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        },
+        "required": [
+          "amount",
+          "expenseDate",
+          "expenseType"
+        ]
+      },
+      "ExpenseReceiptFile": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ExpenseReceiptItem": {
+        "type": "object",
+        "properties": {
+          "receiptId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalReceiptId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "latestRevision": {
+            "type": "boolean"
+          },
+          "expenseType": {
+            "type": "string"
+          },
+          "expenseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "description": {
+            "type": "string"
+          },
+          "receiptStatus": {
+            "type": "string"
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpenseReceiptFile"
+            }
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canEdit": {
+            "type": "boolean"
+          }
+        }
+      },
       "CancelApplicationRequest": {
         "type": "object",
         "properties": {
+          "reasonCode": {
+            "type": "string",
+            "description": "신청 취소 사유 코드",
+            "example": "PERSONAL_SCHEDULE",
+            "maxLength": 50,
+            "minLength": 0
+          },
           "reason": {
             "type": "string",
             "description": "신청 취소 사유",
@@ -4300,6 +4695,222 @@
           }
         }
       },
+      "FormRevisionRequest": {
+        "type": "object",
+        "description": "회원 포탈 Form 재제출 요청",
+        "properties": {
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "fileObjectIdsByQuestion": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          }
+        }
+      },
+      "FormRevisionResponse": {
+        "type": "object",
+        "properties": {
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "responseStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MemberPortalFileDownloadRequest": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2
+          }
+        },
+        "required": [
+          "purpose"
+        ]
+      },
+      "MemberPortalFileDownloadResponse": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "downloadUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requiredHeaders": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "MemberPortalFileUploadConfirmRequest": {
+        "type": "object",
+        "properties": {
+          "fileSize": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "checksumSha256": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 0
+          },
+          "contentType": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "contentType",
+          "fileSize"
+        ]
+      },
+      "MemberPortalFileResponse": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "filePurpose": {
+            "type": "string"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scanStatus": {
+            "type": "string"
+          },
+          "uploadStatus": {
+            "type": "string"
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "downloadable": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MemberPortalFileUploadRequest": {
+        "type": "object",
+        "properties": {
+          "filePurpose": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 0
+          },
+          "originalFileName": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "contentType": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "checksumSha256": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "contentType",
+          "filePurpose",
+          "fileSize",
+          "originalFileName"
+        ]
+      },
+      "MemberPortalFileUploadResponse": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uploadUrl": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requiredHeaders": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "confirmPath": {
+            "type": "string"
+          },
+          "uploadStatus": {
+            "type": "string"
+          },
+          "scanStatus": {
+            "type": "string"
+          }
+        }
+      },
       "CertificateIssueRequest": {
         "type": "object",
         "properties": {
@@ -4546,7 +5157,7 @@
           "schoolOrganizationId": {
             "type": "integer",
             "format": "int64",
-            "description": "재학중 선택 시 GET /api/portal/organizations/schools 응답의 organizationId. NEIS 코드나 프론트 mock ID가 아닙니다.",
+            "description": "기존 CMS 학교 organizationId. 미등록 학교의 외부 선택 ID도 허용하지만 이 경우 schoolName을 함께 보내야 하며 서버가 canonical 학교를 생성합니다.",
             "example": 3001
           },
           "schoolName": {
@@ -4619,7 +5230,7 @@
           "organizationId": {
             "type": "integer",
             "format": "int64",
-            "description": "GET /api/portal/organizations/schools 응답의 organizationId. 내부 organization FK이며 외부 학교 코드를 직접 전달하지 않습니다.",
+            "description": "기존 CMS 학교 organizationId. 미등록 학교는 null 또는 외부 선택 ID와 함께 member.schoolName을 보내면 서버가 canonical 학교를 등록합니다.",
             "example": 3001
           },
           "employmentStatus": {
@@ -4629,8 +5240,7 @@
           }
         },
         "required": [
-          "member",
-          "organizationId"
+          "member"
         ]
       },
       "TermsAgreementRequest": {
@@ -5483,10 +6093,10 @@
         "properties": {
           "reason": {
             "type": "string",
-            "description": "원문 조회 사유. 감사 로그에 남으므로 업무상 필요한 사유를 작성합니다.",
-            "example": "본인 요청에 따른 회원 정보 확인",
+            "description": "원문 조회 사유. 1자 이상 500자 이하로 입력하며 감사 로그에 저장됩니다.",
+            "example": "회원 요청 확인",
             "maxLength": 500,
-            "minLength": 5
+            "minLength": 1
           }
         },
         "required": [
@@ -5850,44 +6460,6 @@
           }
         }
       },
-      "AdminPreRegisterMemberRequest": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "phone": {
-            "type": "string"
-          },
-          "gender": {
-            "type": "string"
-          },
-          "birthDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "organizationText": {
-            "type": "string"
-          },
-          "oneLineIntro": {
-            "type": "string"
-          },
-          "external1365Id": {
-            "type": "string"
-          },
-          "role": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
       "AdminPreRegisterSchoolRequest": {
         "type": "object",
         "properties": {
@@ -5962,7 +6534,7 @@
           },
           "rawPassword": {
             "type": "string",
-            "description": "관리자가 발급하는 초기 임시 비밀번호. CMS 기본값은 로그인 이메일과 동일합니다.",
+            "description": "관리자가 발급하는 초기 임시 비밀번호. 로그인 이메일과 달라야 하며 영문·숫자·특수문자를 포함한 8자 이상이어야 합니다.",
             "minLength": 1
           },
           "name": {
@@ -6122,7 +6694,7 @@
           },
           "rawPassword": {
             "type": "string",
-            "description": "관리자가 발급하는 초기 임시 비밀번호. CMS 기본값은 로그인 이메일과 동일합니다.",
+            "description": "관리자가 발급하는 초기 임시 비밀번호. 로그인 이메일과 달라야 하며 영문·숫자·특수문자를 포함한 8자 이상이어야 합니다.",
             "minLength": 1
           },
           "name": {
@@ -11368,15 +11940,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessStartDate": {
-            "type": "string"
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
           },
           "businessEndDate": {
             "type": "string"
           },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
+          "businessStartDate": {
+            "type": "string"
           }
         }
       },
@@ -11465,10 +12037,10 @@
           "ujatPartnerRecommendationPath": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           }
         }
@@ -13464,57 +14036,6 @@
           }
         }
       },
-      "AdminPermissionRequestNotificationResponse": {
-        "type": "object",
-        "properties": {
-          "requestId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "requestType": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "notificationQueued": {
-            "type": "boolean"
-          },
-          "requestedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "ApiResponseAdminPermissionRequestNotificationResponse": {
-        "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "요청 처리 성공 여부",
-            "example": false
-          },
-          "data": {
-            "type": "null",
-            "$ref": "#/components/schemas/AdminPermissionRequestNotificationResponse",
-            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
-          },
-          "message": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
-          },
-          "error": {
-            "type": "null",
-            "$ref": "#/components/schemas/ErrorDetail",
-            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
-          }
-        }
-      },
       "AdminAccountApprovalDecisionRequest": {
         "type": "object",
         "description": "관리자 승인/반려 처리 요청. 승인 시 roleCode를 함께 보내면 신청자가 선택한 권한 유형 대신 MASTER가 최종 승인한 권한 유형으로 적용됩니다.",
@@ -13626,6 +14147,57 @@
           "ids"
         ]
       },
+      "AdminPermissionRequestNotificationResponse": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "requestType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "notificationQueued": {
+            "type": "boolean"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApiResponseAdminPermissionRequestNotificationResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/AdminPermissionRequestNotificationResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
+            "example": "CONFLICT: requested change conflicts with existing data"
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
       "AdminAccountCreateRequest": {
         "type": "object",
         "description": "MASTER 관리자가 즉시 ACTIVE 상태로 등록하는 관리자 신규 등록 요청입니다.",
@@ -13638,7 +14210,7 @@
           },
           "rawPassword": {
             "type": "string",
-            "description": "초기 임시 비밀번호. 이메일과 동일한 값 또는 영문·숫자·특수문자를 포함한 8자 이상의 값을 사용할 수 있습니다.",
+            "description": "초기 임시 비밀번호. 로그인 이메일과 달라야 하며 영문·숫자·특수문자를 포함한 8자 이상의 값을 사용해야 합니다.",
             "minLength": 1
           },
           "name": {
@@ -13661,13 +14233,23 @@
           },
           "reason": {
             "type": "string"
+          },
+          "termsAgreements": {
+            "type": "array",
+            "description": "관리자 등록 약관 4종. SERVICE_TERMS, PRIVACY_COLLECTION, MFA_SETUP_CONSENT, MARKETING을 각각 1건씩 전송합니다.",
+            "items": {
+              "$ref": "#/components/schemas/TermsAgreementRequest"
+            },
+            "maxItems": 4,
+            "minItems": 4
           }
         },
         "required": [
           "email",
           "name",
           "rawPassword",
-          "roleCode"
+          "roleCode",
+          "termsAgreements"
         ]
       },
       "AdminAccountVerificationRequest": {
@@ -13732,7 +14314,7 @@
         "properties": {
           "newPassword": {
             "type": "string",
-            "description": "로그인 이메일과 동일한 임시 비밀번호 또는 영문·숫자·특수문자를 조합한 8자 이상의 비밀번호",
+            "description": "로그인 이메일과 다르고 영문·숫자·특수문자를 조합한 8자 이상의 임시 비밀번호",
             "minLength": 1
           },
           "reason": {
@@ -13743,6 +14325,122 @@
         "required": [
           "newPassword"
         ]
+      },
+      "UpdatePortalProfileRequest": {
+        "type": "object",
+        "description": "회원 포탈 내정보 수정 요청. 이메일·이름·휴대폰·생년월일·성별은 본인인증 정보이므로 이 API에서 수정하지 않습니다.",
+        "properties": {
+          "postalCode": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "addressDetail": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "regionSido": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "regionSigungu": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "grade": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "affiliationName": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        }
+      },
+      "PortalProfileResponse": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "memberType": {
+            "type": "string"
+          },
+          "teacher": {
+            "type": "boolean"
+          },
+          "instructor": {
+            "type": "boolean"
+          },
+          "postalCode": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "regionSido": {
+            "type": "string"
+          },
+          "regionSigungu": {
+            "type": "string"
+          },
+          "schoolOrganizationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "grade": {
+            "type": "string"
+          },
+          "affiliationName": {
+            "type": "string"
+          },
+          "schoolEnrollmentStatus": {
+            "type": "string"
+          },
+          "teacherEmploymentStatus": {
+            "type": "string"
+          },
+          "accountStatus": {
+            "type": "string"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "AdminMemberBasicInfoUpdateRequest": {
         "type": "object",
@@ -16715,6 +17413,22 @@
           },
           "reason": {
             "type": "string"
+          },
+          "eligible": {
+            "type": "boolean"
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "reasonMessage": {
+            "type": "string"
+          },
+          "existingIssueId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "canDownload": {
+            "type": "boolean"
           }
         }
       },
@@ -16809,6 +17523,53 @@
           },
           "cancellable": {
             "type": "boolean"
+          },
+          "thumbnailFileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participationStatus": {
+            "type": "string"
+          },
+          "displayStatus": {
+            "type": "string"
+          },
+          "educationStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "educationEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "nextScheduleAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "progressPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unreadNoticeCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pendingAssignmentCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pendingSurveyCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "certificateAvailable": {
+            "type": "boolean"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -16836,6 +17597,35 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "ApplicationCapabilities": {
+        "type": "object",
+        "properties": {
+          "canCancelApplication": {
+            "type": "boolean"
+          },
+          "canGiveUp": {
+            "type": "boolean"
+          },
+          "canSubmitAssignment": {
+            "type": "boolean"
+          },
+          "canSubmitSurvey": {
+            "type": "boolean"
+          },
+          "canSubmitSatisfaction": {
+            "type": "boolean"
+          },
+          "canIssueCertificate": {
+            "type": "boolean"
+          },
+          "canSubmitReceipt": {
+            "type": "boolean"
+          },
+          "canAgreePaymentStatementConsent": {
+            "type": "boolean"
           }
         }
       },
@@ -16901,6 +17691,574 @@
           },
           "cancellable": {
             "type": "boolean"
+          },
+          "program": {
+            "$ref": "#/components/schemas/ProgramSummary"
+          },
+          "participation": {
+            "$ref": "#/components/schemas/ParticipationSummary"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/EducationScreenSummary"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/ApplicationCapabilities"
+          }
+        }
+      },
+      "EducationScreenSummary": {
+        "type": "object",
+        "properties": {
+          "unreadNoticeCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "surveyPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "satisfactionPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "receiptSubmissionCount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ParticipationSummary": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "progressPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstEducationAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastEducationAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completionStatus": {
+            "type": "string"
+          },
+          "certificateStatus": {
+            "type": "string"
+          }
+        }
+      },
+      "ProgramSummary": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "sponsorName": {
+            "type": "string"
+          },
+          "recruitmentStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "recruitmentEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "educationStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "educationEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "inquiryEmail": {
+            "type": "string"
+          },
+          "inquiryPhone": {
+            "type": "string"
+          },
+          "posterFileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ApplicationTimelineEventResponse": {
+        "type": "object",
+        "properties": {
+          "historyId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fromStatus": {
+            "type": "string"
+          },
+          "toStatus": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApplicationTimelineResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "currentStatus": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationTimelineEventResponse"
+            }
+          }
+        }
+      },
+      "EducationScheduleItem": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "locationName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "scheduleStatus": {
+            "type": "string"
+          },
+          "attendanceStatus": {
+            "type": "string"
+          },
+          "absenceReasonStatus": {
+            "type": "string"
+          },
+          "assignmentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "surveyCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "satisfactionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EducationScheduleListResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EducationScheduleItem"
+            }
+          }
+        }
+      },
+      "EducationScheduleDetailResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/EducationScheduleItem"
+          }
+        }
+      },
+      "NoticeListItem": {
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "pinned": {
+            "type": "boolean"
+          },
+          "unread": {
+            "type": "boolean"
+          },
+          "commentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attachmentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NoticeListResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeListItem"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "NoticeAttachment": {
+        "type": "object",
+        "properties": {
+          "attachmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mimeType": {
+            "type": "string"
+          }
+        }
+      },
+      "NoticeComment": {
+        "type": "object",
+        "properties": {
+          "commentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "content": {
+            "type": "string"
+          },
+          "authorType": {
+            "type": "string"
+          },
+          "authorId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mine": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NoticeDetailResponse": {
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "visibilityType": {
+            "type": "string"
+          },
+          "pinned": {
+            "type": "boolean"
+          },
+          "unread": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeAttachment"
+            }
+          },
+          "comments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeComment"
+            }
+          }
+        }
+      },
+      "PortalFormListItem": {
+        "type": "object",
+        "properties": {
+          "bindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formType": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "targetScope": {
+            "type": "string"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "submissionStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "submissionEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "latestFormResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "canResubmit": {
+            "type": "boolean"
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PortalFormListResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortalFormListItem"
+            }
+          }
+        }
+      },
+      "ExpenseReceiptListResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "evidenceRequired": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpenseReceiptItem"
+            }
+          }
+        }
+      },
+      "InstructorRoleRequestSummary": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectedReason": {
+            "type": "string"
+          },
+          "canRequest": {
+            "type": "boolean"
+          },
+          "canReapply": {
+            "type": "boolean"
           }
         }
       },
@@ -16962,6 +18320,326 @@
           }
         }
       },
+      "FormResponseDetailResponse": {
+        "type": "object",
+        "properties": {
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "latestRevision": {
+            "type": "boolean"
+          },
+          "bindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formType": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "responseStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormResponseFile"
+            }
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retentionExpired": {
+            "type": "boolean"
+          },
+          "canResubmit": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FormResponseFile": {
+        "type": "object",
+        "properties": {
+          "formSubmissionFileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "questionKey": {
+            "type": "string"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "downloadable": {
+            "type": "boolean"
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FormFeedbackItem": {
+        "type": "object",
+        "properties": {
+          "feedbackId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "content": {
+            "type": "string"
+          },
+          "authorLabel": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FormFeedbackResponse": {
+        "type": "object",
+        "properties": {
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "responseStatus": {
+            "type": "string"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "feedbacks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormFeedbackItem"
+            }
+          },
+          "canResubmit": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ApplicationSummary": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "draft": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "submitted": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "approved": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rejected": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cancelled": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "inProgress": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "giveUp": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PendingActionSummary": {
+        "type": "object",
+        "properties": {
+          "applicationsWaiting": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentsPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "surveysPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "satisfactionSurveysPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "absenceReasonsPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lectureReportsPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "settlementApplicationsPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paymentStatementConsentPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "certificatesAvailable": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PortalDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "memberType": {
+            "type": "string"
+          },
+          "teacher": {
+            "type": "boolean"
+          },
+          "instructor": {
+            "type": "boolean"
+          },
+          "instructorRoleRequest": {
+            "$ref": "#/components/schemas/InstructorRoleRequestSummary"
+          },
+          "applications": {
+            "$ref": "#/components/schemas/ApplicationSummary"
+          },
+          "pendingActions": {
+            "$ref": "#/components/schemas/PendingActionSummary"
+          },
+          "upcomingSchedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortalScheduleItem"
+            }
+          },
+          "recentNotices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortalNoticeItem"
+            }
+          }
+        }
+      },
+      "PortalNoticeItem": {
+        "type": "object",
+        "properties": {
+          "noticeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "pinned": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PortalScheduleItem": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programTitle": {
+            "type": "string"
+          },
+          "scheduleName": {
+            "type": "string"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "locationName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "participationRole": {
+            "type": "string"
+          }
+        }
+      },
       "FileDownloadJobResponse": {
         "type": "object",
         "properties": {
@@ -16994,6 +18672,25 @@
             "type": "object",
             "additionalProperties": {
               "type": "string"
+            }
+          }
+        }
+      },
+      "PortalCalendarResponse": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortalScheduleItem"
             }
           }
         }
@@ -25383,6 +27080,48 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "AdminTermsAgreementResponse": {
+        "type": "object",
+        "description": "CMS 관리자 등록 약관·동의 저장 이력",
+        "properties": {
+          "agreementId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "adminId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "consentType": {
+            "type": "string",
+            "description": "프론트 consentType과 동일하게 사용하는 약관 유형"
+          },
+          "termsType": {
+            "type": "string",
+            "description": "consentType과 1:1인 서버 약관 유형"
+          },
+          "version": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "agreed": {
+            "type": "boolean"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "withdrawnAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceFlow": {
+            "type": "string"
           }
         }
       },

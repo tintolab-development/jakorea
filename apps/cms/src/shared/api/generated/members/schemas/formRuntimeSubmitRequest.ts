@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { FormRuntimeSubmitRequestAnswers } from './formRuntimeSubmitRequestAnswers';
+import type { FormRuntimeSubmitRequestFileObjectIdsByQuestion } from './formRuntimeSubmitRequestFileObjectIdsByQuestion';
 
 export interface FormRuntimeSubmitRequest {
   templateVersionId?: number;
@@ -18,4 +19,5 @@ export interface FormRuntimeSubmitRequest {
   submittedByMemberId?: number;
   submittedByAdminId?: number;
   answers?: FormRuntimeSubmitRequestAnswers;
+  fileObjectIdsByQuestion?: FormRuntimeSubmitRequestFileObjectIdsByQuestion;
 }

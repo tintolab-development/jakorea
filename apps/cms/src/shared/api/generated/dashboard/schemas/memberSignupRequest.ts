@@ -42,7 +42,7 @@ export interface MemberSignupRequest {
   guardianVerificationSessionId?: number;
   /** 학교 재학 여부. ENROLLED 또는 NOT_ENROLLED */
   schoolEnrollmentStatus?: string;
-  /** 재학중 선택 시 GET /api/portal/organizations/schools 응답의 organizationId. NEIS 코드나 프론트 mock ID가 아닙니다. */
+  /** 기존 CMS 학교 organizationId. 미등록 학교의 외부 선택 ID도 허용하지만 이 경우 schoolName을 함께 보내야 하며 서버가 canonical 학교를 생성합니다. */
   schoolOrganizationId?: number;
   /** 학교명 snapshot. 검색 팝업 선택값 또는 프론트 표시값 */
   schoolName?: string;

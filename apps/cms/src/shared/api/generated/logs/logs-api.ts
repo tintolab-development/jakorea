@@ -27,8 +27,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * ### 이 API가 하는 일
  * - 시스템 상태 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 로그 관리 (`null`)
  * - 프론트 담당 영역: logs (`logs`)
  * - 호출 방식: `PATCH /api/admin/logs/system-issues/{issueId}/status`
  *
@@ -84,8 +84,8 @@ const updateSystemIssueStatus = (
 /**
  * ### 이 API가 하는 일
  * - 시스템 상태 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 로그 관리 (`null`)
  * - 프론트 담당 영역: logs (`logs`)
  * - 호출 방식: `GET /api/admin/logs/system-issues`
  *
@@ -139,8 +139,8 @@ const systemIssueLogs = (
 /**
  * ### 이 API가 하는 일
  * - 시스템 상태 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 로그 관리 (`null`)
  * - 프론트 담당 영역: logs (`logs`)
  * - 호출 방식: `GET /api/admin/logs/system-issues/{issueId}`
  *
@@ -193,8 +193,8 @@ const systemIssueDetail = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 로그 관리 (`null`)
  * - 프론트 담당 영역: logs (`logs`)
  * - 호출 방식: `GET /api/admin/logs/privacy-access`
  *
@@ -248,8 +248,8 @@ const privacyAccessLogs = (
 /**
  * ### 이 API가 하는 일
  * - 파일 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 로그 관리 (`SCR_LOG`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 로그 관리 (`null`)
  * - 프론트 담당 영역: logs (`logs`)
  * - 호출 방식: `GET /api/admin/logs/file-access`
  *

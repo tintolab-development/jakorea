@@ -5,7 +5,11 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { ApplicationCapabilities } from './applicationCapabilities';
 import type { ApplicationDetailResponseAnswers } from './applicationDetailResponseAnswers';
+import type { EducationScreenSummary } from './educationScreenSummary';
+import type { ParticipationSummary } from './participationSummary';
+import type { ProgramSummary } from './programSummary';
 
 export interface ApplicationDetailResponse {
   applicationId?: number;
@@ -25,4 +29,8 @@ export interface ApplicationDetailResponse {
   formResponseStatus?: string;
   answers?: ApplicationDetailResponseAnswers;
   cancellable?: boolean;
+  program?: ProgramSummary;
+  participation?: ParticipationSummary;
+  summary?: EducationScreenSummary;
+  capabilities?: ApplicationCapabilities;
 }
