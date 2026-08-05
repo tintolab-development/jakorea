@@ -14,6 +14,7 @@ import { resolveAgreementWritingFormConfig } from '@/features/template/model/tem
 import {
   ensureAgreementNoticeConfirmationClosing,
   normalizeWritingFormDraft,
+  overlayAgreementNoticeSeedHorizontalTable,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -27,7 +28,7 @@ import {
   applyMemberPortraitConsentPrefill,
   type MemberConsentMemberContext,
 } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
-import { hasMemberConsentDisagreement } from '@/features/user/shared/lib/validate-member-consent-draft'
+import { hasMemberConsentIncompleteRequiredFields } from '@/features/user/shared/lib/validate-member-consent-draft'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
@@ -91,6 +92,7 @@ export function MemberConsentAgreementModal({
         let next = normalizeWritingFormDraft(seed)
         if (templateId === 'agreement-notice') {
           next = ensureAgreementNoticeConfirmationClosing(next)
+          next = overlayAgreementNoticeSeedHorizontalTable(next)
         }
         if (templateId === 'agreement-portrait') {
           next = applyMemberPortraitConsentPrefill(next, memberContext)
@@ -123,7 +125,12 @@ export function MemberConsentAgreementModal({
 
   const handleSubmit = useCallback(() => {
     if (draft == null) return
-    if (hasMemberConsentDisagreement(draft)) {
+    if (
+      hasMemberConsentIncompleteRequiredFields(draft, {
+        templateId,
+        paymentAuthorName,
+      })
+    ) {
       showAlert({
         title: '안내',
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
@@ -131,7 +138,7 @@ export function MemberConsentAgreementModal({
       return
     }
     onComplete()
-  }, [draft, onComplete, showAlert])
+  }, [draft, onComplete, paymentAuthorName, showAlert, templateId])
 
   const handlePaymentBasicInfoValuesChange = useCallback(
     (values: PaymentStatementBasicInfoAutofillValues) => {
@@ -247,7 +254,7 @@ export function MemberConsentAgreementModal({
                   showEditorChrome={false}
                   structureLockedParagraphIds={agreementConfig?.structureLockedParagraphIds}
                   hideDragHandleForParagraphIds={agreementConfig?.hideDragHandleForParagraphIds}
-                  hideParagraphRequiredChrome={agreementConfig?.previewLayout === 'a4-document'}
+                  hideParagraphRequiredChrome={false}
                   paragraphBodyOptions={paragraphBodyOptionsWithPaymentSync}
                   agreementClosingFooter={{
                     onSubmit: handleSubmit,
