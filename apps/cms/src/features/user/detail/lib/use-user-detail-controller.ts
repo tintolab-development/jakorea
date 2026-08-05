@@ -67,6 +67,7 @@ import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { applyPrivacyUnmaskResponseToUser } from '@/features/user/api/apply-privacy-unmask-to-user'
+import { parseAdminAccountIdFromUserId } from '@/features/user/api/fetch-admin-member-detail'
 import {
   applySavedBasicInfoPatchToUser,
   mergeListUserWithFetchedDetail,
@@ -217,6 +218,11 @@ export function useUserDetailController({
       return displayUser?.id
     },
     resolveMemberRole: () => displayUser?.role,
+    resolveAdminAccountId: () => {
+      if (displayUser?.adminAccountId != null) return displayUser.adminAccountId
+      const id = displayUser?.id
+      return id ? parseAdminAccountIdFromUserId(id) : undefined
+    },
     onPrivacyUnmasked: handlePrivacyUnmasked,
     resetDeps: [open, displayUser?.id, displayUser?.memberId, displayUser?.role],
     controlMode: 'hideWhenRevealed',

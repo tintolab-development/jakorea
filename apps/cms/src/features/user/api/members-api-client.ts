@@ -300,6 +300,13 @@ export async function unmaskMemberPrivacyRemote(
   return unwrapApiBody(await membersApi.unmaskMemberPrivacy(memberId, body))
 }
 
+export async function unmaskAdminAccountPrivacyRemote(
+  adminAccountId: number,
+  body: AdminPrivacyUnmaskRequest
+) {
+  return unwrapApiBody(await membersApi.unmask(adminAccountId, body))
+}
+
 export async function deleteMemberRemote(memberId: number, body: AdminMemberDeleteRequest) {
   await membersApi.deleteAndAnonymize(memberId, body)
 }

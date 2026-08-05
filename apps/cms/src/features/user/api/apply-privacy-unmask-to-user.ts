@@ -1,4 +1,6 @@
 import type { User, UserRole } from '@/types/user'
+import type { AdminAccountPrivacyResponse } from '@/shared/api/generated/members/schemas/adminAccountPrivacyResponse'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import type { IndividualMemberDetailResponse } from '@/shared/api/generated/members/schemas/individualMemberDetailResponse'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas/instructorMemberDetailResponse'
 import type { MemberDetailResponse } from '@/shared/api/generated/members/schemas/memberDetailResponse'
@@ -23,6 +25,20 @@ export function applyPrivacyUnmaskResponseToUser(
   }
 
   try {
+    if (role === 'ADMIN') {
+      const privacy = unmaskPayload as AdminAccountPrivacyResponse
+      const genderDisplay = privacy.gender != null ? toDisplayGender(privacy.gender) : undefined
+      return mergeListUserWithFetchedDetail(current, {
+        ...current,
+        adminAccountId: privacy.adminAccountId ?? current.adminAccountId,
+        email: privacy.email?.trim() || current.email,
+        name: privacy.name?.trim() || current.name,
+        phone: privacy.phone?.trim() || current.phone,
+        gender: genderDisplay && genderDisplay !== '-' ? genderDisplay : current.gender,
+        birthDate: privacy.birthDate ?? current.birthDate,
+      })
+    }
+
     if (role === 'INSTRUCTOR') {
       const mapped = mapInstructorMemberDetailToUser(
         unmaskPayload as InstructorMemberDetailResponse,
