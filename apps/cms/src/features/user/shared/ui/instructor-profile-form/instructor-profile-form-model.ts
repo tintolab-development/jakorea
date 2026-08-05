@@ -187,7 +187,7 @@ export const INITIAL_VALUES: InstructorProfileFormValues = {
   oneLineIntro: '',
   consentTermsOfService: 'agree',
   consentPersonal: 'agree',
-  consentMarketing: 'disagree',
+  consentMarketing: 'agree',
   consentPortrait: 'disagree',
   consentPaymentStatement: 'disagree',
   consentEducatorPledge: 'disagree',

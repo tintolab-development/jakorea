@@ -29,6 +29,12 @@
   padding-block: 5px;
 }
 
+.add-user-individual__terms-consent-heading > .detail-info-form__header .detail-info-form__title::after {
+  content: '*';
+  margin-left: 2px;
+  color: var(--color-error, #ff4d4f);
+}
+
 .add-user-individual__terms-consent-heading.detail-info-form > .detail-info-form__body {
   border: none;
   background: transparent;

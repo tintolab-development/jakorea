@@ -63,6 +63,12 @@ export function hasAdminCommentPatch(patch: PatchUserBasicInfoInput): boolean {
   return Object.prototype.hasOwnProperty.call(patch, 'adminComment')
 }
 
+/** `adminComment`만 있는 patch — 코멘트 API만 호출하고 상세 GET을 생략할 때 사용 */
+export function isAdminCommentOnlyPatch(patch: PatchUserBasicInfoInput): boolean {
+  const keys = Object.keys(patch) as (keyof PatchUserBasicInfoInput)[]
+  return keys.length === 1 && keys[0] === 'adminComment'
+}
+
 /** 관리자 계정 — `PATCH /api/admin/admin-accounts/{adminId}/basic-info` */
 export function mapPatchUserBasicInfoToAdminAccountApiRequest(
   patch: PatchUserBasicInfoInput

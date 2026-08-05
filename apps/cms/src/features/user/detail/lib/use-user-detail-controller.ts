@@ -28,7 +28,10 @@ import type { ApplicantInstructorRow } from '@/data/mock/applicant-instructors'
 import type { User } from '@/types/user'
 import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import { getProgramAdminDetailInfoTabUrl } from '@/features/program/general/lib/program-admin-detail-url'
-import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
+import type {
+  PatchUserBasicInfoInput,
+  PatchUserBasicInfoOptions,
+} from '@/entities/user/api/user-service'
 import {
   canAccessAdminCommentInAdminDetail,
   canEditAdminMemberInfo,
@@ -61,6 +64,7 @@ import { handleError } from '@/shared/utils/error-handler'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useQueryClient } from '@tanstack/react-query'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
+import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { applyPrivacyUnmaskResponseToUser } from '@/features/user/api/apply-privacy-unmask-to-user'
 import {
@@ -68,7 +72,7 @@ import {
   mergeListUserWithFetchedDetail,
 } from '@/features/user/api/merge-list-user-with-detail'
 import { institutionHasRegisteredTeachers } from '@/features/user/shared/lib/institution-delete-guard'
-import { upsertMember1365ExternalIdentifierRemote } from '@/features/user/api/members-api-client'
+import { upsertMember1365ExternalIdentifierRemote, upsertMemberAdminCommentRemote } from '@/features/user/api/members-api-client'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { revokeInstructorPermission } from '@/entities/user/api/user-service'
@@ -88,6 +92,11 @@ export type InstructorPermissionRevokeNotifyTiming = 'immediate' | 'manual'
 
 export type UserDetailControllerModalMode = 'default' | 'permission'
 
+export type MemberBasicInfoSavedOptions = {
+  /** 코멘트만 저장 시 목록 invalidate(members all) 생략 */
+  skipListInvalidate?: boolean
+}
+
 export interface UseUserDetailControllerParams {
   open: boolean
   displayUser: Omit<User, 'password'> | null
@@ -98,9 +107,13 @@ export interface UseUserDetailControllerParams {
   modals: UseUserDetailModalsResult
   patchMemberBasicInfo?: (
     userId: string,
-    patch: PatchUserBasicInfoInput
+    patch: PatchUserBasicInfoInput,
+    options?: PatchUserBasicInfoOptions
   ) => Promise<Omit<User, 'password'>>
-  onMemberBasicInfoSaved?: (user: Omit<User, 'password'>) => void
+  onMemberBasicInfoSaved?: (
+    user: Omit<User, 'password'>,
+    options?: MemberBasicInfoSavedOptions
+  ) => void
   detailCloseIntentRef?: MutableRefObject<boolean>
 }
 
@@ -480,11 +493,32 @@ export function useUserDetailController({
       return
     }
 
-    setBasicInfoDraft(userToAdminCommentOnlyDraft(displayUser))
+    const draft = userToAdminCommentOnlyDraft(displayUser)
+    const fromUser = (displayUser.adminComment ?? '').trim()
+    const fromCommentsCache =
+      !fromUser && membersRemote && displayUser.memberId != null
+        ? (
+            queryClient.getQueryData<{ latestComment?: string }>(
+              memberQueryKeys.comments(displayUser.memberId, MEMBER_DETAIL_SCREEN_CODE)
+            )?.latestComment ?? ''
+          ).trim()
+        : ''
+    setBasicInfoDraft({
+      ...draft,
+      adminComment: fromUser || fromCommentsCache || draft.adminComment,
+    })
     setBasicInfoEditScope('comment')
     setBasicInfoEditing(true)
     focusDetailInfoTab()
-  }, [displayUser, basicInfoEntrySource, searchParams, currentUser, focusDetailInfoTab])
+  }, [
+    displayUser,
+    basicInfoEntrySource,
+    searchParams,
+    currentUser,
+    focusDetailInfoTab,
+    membersRemote,
+    queryClient,
+  ])
 
   const cancelBasicInfoEdit = useCallback(() => {
     setBasicInfoEditing(false)
@@ -502,6 +536,49 @@ export function useUserDetailController({
     }
     setBasicInfoSaveLoading(true)
     try {
+      // Remote 코멘트 전용: upsert만 호출 (상세 GET·목록 invalidate 없음)
+      if (basicInfoEditScope === 'comment' && membersRemote && displayUser.memberId != null) {
+        const savedComment = (basicInfoDraft.adminComment ?? '').trim()
+        if (!savedComment) {
+          setBasicInfoEditing(false)
+          setBasicInfoEditScope('none')
+          setBasicInfoDraft(null)
+          return
+        }
+        const cachedComments = queryClient.getQueryData<{
+          comments?: unknown[]
+          latestComment?: string
+          latestCommentDetail?: { commentId?: number; comment: string }
+        }>(memberQueryKeys.comments(displayUser.memberId, MEMBER_DETAIL_SCREEN_CODE))
+        const saved = await upsertMemberAdminCommentRemote(displayUser.memberId, savedComment, {
+          existingCommentId: cachedComments?.latestCommentDetail?.commentId,
+          screenCode: MEMBER_DETAIL_SCREEN_CODE,
+        })
+        const commentId = saved.commentId ?? cachedComments?.latestCommentDetail?.commentId
+        const merged = { ...displayUser, adminComment: savedComment }
+        queryClient.setQueryData(
+          memberQueryKeys.comments(displayUser.memberId, MEMBER_DETAIL_SCREEN_CODE),
+          {
+            comments: cachedComments?.comments ?? [],
+            latestComment: savedComment,
+            latestCommentDetail: {
+              comment: savedComment,
+              ...(commentId != null ? { commentId } : {}),
+            },
+          }
+        )
+        queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
+        queryClient.setQueryData(
+          [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
+          merged
+        )
+        setBasicInfoEditing(false)
+        setBasicInfoEditScope('none')
+        setBasicInfoDraft(null)
+        onMemberBasicInfoSaved?.(merged, { skipListInvalidate: true })
+        return
+      }
+
       let patch: PatchUserBasicInfoInput
       if (basicInfoEditScope === 'comment') {
         patch = draftToSchoolAdminCommentOnlyPatch(basicInfoDraft)
@@ -541,6 +618,26 @@ export function useUserDetailController({
         merged = { ...merged, id1365: draftId1365 }
       }
       if (membersRemote && displayUser.memberId != null) {
+        const savedComment = patch.adminComment?.trim()
+        if (savedComment) {
+          queryClient.setQueryData(
+            memberQueryKeys.comments(displayUser.memberId, MEMBER_DETAIL_SCREEN_CODE),
+            (prev: {
+              comments?: unknown[]
+              latestComment?: string
+              latestCommentDetail?: { comment: string; commentId?: number }
+            } | undefined) => ({
+              comments: prev?.comments ?? [],
+              latestComment: savedComment,
+              latestCommentDetail: {
+                comment: savedComment,
+                ...(prev?.latestCommentDetail?.commentId != null
+                  ? { commentId: prev.latestCommentDetail.commentId }
+                  : {}),
+              },
+            })
+          )
+        }
         void queryClient.invalidateQueries({
           queryKey: [...memberQueryKeys.all, 'comments', displayUser.memberId],
         })
@@ -587,7 +684,7 @@ export function useUserDetailController({
           listMetrics: { adminPermissionVariant: nextPermission },
         })
         onMemberBasicInfoSaved?.(updated)
-        } catch (error) {
+      } catch (error) {
         handleError(error, { defaultMessage: '관리자 권한 유형 변경에 실패했습니다.' })
       } finally {
         setAdminPermissionVariantPatching(false)

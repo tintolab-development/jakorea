@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Form, Space } from 'antd'
 import type { FormInstance } from 'antd/es/form'
+import type { FormListFieldData } from 'antd/es/form/FormList'
 import {
   AddressSearch,
   CmsButton,
@@ -48,6 +49,85 @@ import {
   type InstructorProfileFormValues,
 } from './instructor-profile-form-model'
 import '../instructor-register-modal.css'
+
+function InstructorCareerRowEdit({
+  form,
+  field,
+  index,
+  onAdd,
+  onRemove,
+}: {
+  form: FormInstance<InstructorProfileFormValues>
+  field: FormListFieldData
+  index: number
+  onAdd: () => void
+  onRemove: () => void
+}) {
+  const currentlyEmployed =
+    Form.useWatch(['careers', field.name, 'currentlyEmployed'], form) === true
+
+  return (
+    <div
+      className="detail-info-form-inputs-wrapper-no-gap instructor-register-modal__field-stack-row"
+    >
+      <div className="instructor-register-modal__period">
+        <Form.Item name={[field.name, 'periodStart']} noStyle>
+          <CmsDatePicker
+            picker="month"
+            inputSize="medium"
+            placeholder="입사연월"
+            format="YYYY.MM"
+            width={140}
+          />
+        </Form.Item>
+        <span className="instructor-register-modal__tilde" aria-hidden>
+          ~
+        </span>
+        <Form.Item name={[field.name, 'periodEnd']} noStyle>
+          <CmsDatePicker
+            picker="month"
+            inputSize="medium"
+            placeholder="퇴사연월"
+            format="YYYY.MM"
+            width={140}
+            disabled={currentlyEmployed}
+          />
+        </Form.Item>
+      </div>
+      <DetailInfoForm.InputsSeparator />
+      <div className="instructor-register-modal__inline-group">
+        <Form.Item name={[field.name, 'companyName']} noStyle>
+          <CmsInput placeholder="회사명" inputSize="medium" width={220} />
+        </Form.Item>
+        <Form.Item name={[field.name, 'roleName']} noStyle>
+          <CmsInput placeholder="담당 업무" inputSize="medium" width={160} />
+        </Form.Item>
+        <Form.Item
+          name={[field.name, 'currentlyEmployed']}
+          valuePropName="checked"
+          noStyle
+          getValueFromEvent={event => {
+            if (event.target.checked) {
+              form.setFieldValue(['careers', field.name, 'periodEnd'], null)
+            }
+            return event.target.checked
+          }}
+        >
+          <CmsCheckbox checkboxSize="medium">재직중</CmsCheckbox>
+        </Form.Item>
+        {index === 0 ? (
+          <CmsCircleAddButton onClick={onAdd} />
+        ) : (
+          <ItemDeleteButton
+            className="item-delete-button"
+            aria-label="항목 삭제"
+            onClick={onRemove}
+          />
+        )}
+      </div>
+    </div>
+  )
+}
 
 function ConsentDocumentFieldEdit({
   value,
@@ -522,59 +602,14 @@ export function InstructorProfileFormBody({
                       {(fields, { add, remove }) => (
                         <>
                           {fields.map((field, index) => (
-                            <div
+                            <InstructorCareerRowEdit
                               key={field.key}
-                              className="detail-info-form-inputs-wrapper-no-gap instructor-register-modal__field-stack-row"
-                            >
-                              <div className="instructor-register-modal__period">
-                                <Form.Item name={[field.name, 'periodStart']} noStyle>
-                                  <CmsDatePicker
-                                    picker="month"
-                                    inputSize="medium"
-                                    placeholder="입사연월"
-                                    format="YYYY.MM"
-                                    width={140}
-                                  />
-                                </Form.Item>
-                                <span className="instructor-register-modal__tilde" aria-hidden>
-                                  ~
-                                </span>
-                                <Form.Item name={[field.name, 'periodEnd']} noStyle>
-                                  <CmsDatePicker
-                                    picker="month"
-                                    inputSize="medium"
-                                    placeholder="퇴사연월"
-                                    format="YYYY.MM"
-                                    width={140}
-                                  />
-                                </Form.Item>
-                              </div>
-                              <DetailInfoForm.InputsSeparator />
-                              <div className="instructor-register-modal__inline-group">
-                                <Form.Item name={[field.name, 'companyName']} noStyle>
-                                  <CmsInput placeholder="회사명" inputSize="medium" width={220} />
-                                </Form.Item>
-                                <Form.Item name={[field.name, 'roleName']} noStyle>
-                                  <CmsInput placeholder="담당 업무" inputSize="medium" width={160} />
-                                </Form.Item>
-                                <Form.Item
-                                  name={[field.name, 'currentlyEmployed']}
-                                  valuePropName="checked"
-                                  noStyle
-                                >
-                                  <CmsCheckbox checkboxSize="medium">재직중</CmsCheckbox>
-                                </Form.Item>
-                                {index === 0 ? (
-                                  <CmsCircleAddButton onClick={() => add({ ...EMPTY_CAREER })} />
-                                ) : (
-                                  <ItemDeleteButton
-                                    className="item-delete-button"
-                                    aria-label="항목 삭제"
-                                    onClick={() => remove(field.name)}
-                                  />
-                                )}
-                              </div>
-                            </div>
+                              form={form}
+                              field={field}
+                              index={index}
+                              onAdd={() => add({ ...EMPTY_CAREER })}
+                              onRemove={() => remove(field.name)}
+                            />
                           ))}
                         </>
                       )}

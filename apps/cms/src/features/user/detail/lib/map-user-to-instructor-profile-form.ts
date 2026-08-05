@@ -162,7 +162,7 @@ function mapTermsAgreements(
   return {
     consentTermsOfService: service ? toConsentValue(service.agreed) : INITIAL_VALUES.consentTermsOfService,
     consentPersonal: privacy ? toConsentValue(privacy.agreed) : INITIAL_VALUES.consentPersonal,
-    consentMarketing: marketing ? toConsentValue(marketing.agreed) : INITIAL_VALUES.consentMarketing,
+    consentMarketing: marketing ? toConsentValue(marketing.agreed) : 'disagree',
     consentPortrait: portrait ? toConsentValue(portrait.agreed) : INITIAL_VALUES.consentPortrait,
     consentPaymentStatement: payment
       ? toConsentValue(payment.agreed)

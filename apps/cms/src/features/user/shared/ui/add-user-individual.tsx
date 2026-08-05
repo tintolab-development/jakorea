@@ -17,7 +17,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
 import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE, REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE } from '@/shared/constants/messages'
 import type { MemberConsentFieldKey } from '@/features/user/shared/lib/member-consent-template-map'
 import {
   isAgreementMemberConsentField,
@@ -141,6 +141,21 @@ function isUnder14BirthDate(value: string, today = new Date()): boolean {
   return !Number.isNaN(birthDate.getTime()) && fourteenthBirthday > today
 }
 
+const MEMBER_REGISTER_CONSENT_FIELD_KEYS = [
+  'consentTermsOfService',
+  'consentPersonalInfo',
+  'consentMarketing',
+  'consentPortrait',
+  'consentWithholdingTax',
+  'consentFacilitatorPledge',
+  'consentAdministrativeJoint',
+  'consentSexOffenseCheck',
+] as const satisfies ReadonlyArray<keyof AddUserIndividualFormValues>
+
+function hasAllMemberRegisterTermsAgreed(values: AddUserIndividualFormValues): boolean {
+  return MEMBER_REGISTER_CONSENT_FIELD_KEYS.every(key => values[key] === 'agree')
+}
+
 function collectMemberRegisterValidation(
   values: AddUserIndividualFormValues
 ): { missingRequired: boolean; formatMessages: string[] } {
@@ -184,13 +199,6 @@ function collectMemberRegisterValidation(
   }
 
   if (!values.address?.trim()) {
-    missingRequired = true
-  }
-
-  if (values.consentTermsOfService !== 'agree') {
-    missingRequired = true
-  }
-  if (values.consentPersonalInfo !== 'agree') {
     missingRequired = true
   }
 
@@ -285,6 +293,14 @@ export function AddUserIndividual({
   }
 
   const handleSubmitAttempt = (values: AddUserIndividualFormValues) => {
+    if (!hasAllMemberRegisterTermsAgreed(values)) {
+      showAlert({
+        title: '안내',
+        content: REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE,
+      })
+      return
+    }
+
     const { missingRequired, formatMessages } = collectMemberRegisterValidation(values)
     if (missingRequired) {
       showAlert({

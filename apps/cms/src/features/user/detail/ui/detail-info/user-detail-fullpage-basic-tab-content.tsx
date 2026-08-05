@@ -109,8 +109,12 @@ export function UserDetailFullpageBasicTabContent({
   )
 
   const userForAdminComment = useMemo(() => {
-    if (!commentsData?.latestComment) return user
-    return { ...user, adminComment: commentsData.latestComment }
+    const fromUser = user.adminComment?.trim()
+    const fromApi = commentsData?.latestComment?.trim()
+    // 저장 직후 user.adminComment가 먼저 갱신되고 comments 쿼리는 지연될 수 있음 → user 우선
+    if (fromUser) return { ...user, adminComment: fromUser }
+    if (fromApi) return { ...user, adminComment: fromApi }
+    return user
   }, [user, commentsData?.latestComment])
 
   const affiliatedTeacherRows = membersRemote
