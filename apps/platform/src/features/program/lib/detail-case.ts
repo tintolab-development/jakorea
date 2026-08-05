@@ -107,9 +107,10 @@ export function recruitmentPhaseGroupLabel(detailCase: ProgramDetailCase): strin
   }
 }
 
-/** 서류·면접 phase를 노출할 수 있는 케이스 */
+/** 서류·면접 phase를 노출할 수 있는 케이스 (기획: 면접 있는 모집 유형) */
 export function isInterviewCapableCase(detailCase: ProgramDetailCase): boolean {
   return (
+    detailCase === 'general' ||
     detailCase === 'volunteer' ||
     detailCase === 'ujat-volunteer' ||
     detailCase === 'instructor'

@@ -1,0 +1,99 @@
+/**
+ * 파일 선택 필드 공통 스타일
+ * - 숨겨진 input + 파일명 목록 + 버튼(120×40) + 가이드 텍스트
+ */
+
+.file-select-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+/* 첨부 없음 — 파일명 영역 미노출, 버튼 상단 여백 제거 */
+.file-select-field--empty {
+  gap: 0;
+}
+
+/* 숨겨진 file input */
+.file-select-field__input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  pointer-events: none;
+}
+
+/* 파일명 목록 */
+.file-select-field__names {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.file-select-field__name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.file-select-field__name {
+  font-size: var(--font-size-16);
+  color: var(--color-text-primary);
+}
+
+/* 업로드 중 문구 — 파일명과 동일한 스타일로 UI shifting 방지 */
+.file-select-field__name--uploading {
+  color: var(--color-text-primary);
+}
+
+/* 업로드 취소(X) 버튼 — 배경 없음, SVG 아이콘 그대로 */
+.file-select-field__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.file-select-field__remove:hover svg {
+  opacity: 1;
+}
+
+.file-select-field__remove:focus {
+  outline: none;
+}
+
+.file-select-field__remove:focus-visible {
+  outline: 2px solid var(--color-focus-teal);
+  outline-offset: 1px;
+  border-radius: 50%;
+}
+
+/* 버튼 + 가이드 텍스트 가로 배치 */
+.file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+  flex-wrap: wrap;
+}
+
+/* 가이드 텍스트 */
+.file-select-field__guide {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+  opacity: 0.6;
+}
+
+.file-select-field__guide-line {
+  display: block;
+}

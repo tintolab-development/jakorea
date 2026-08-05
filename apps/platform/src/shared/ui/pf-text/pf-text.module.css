@@ -22,6 +22,10 @@
   color: var(--color-neutral-cool-600);
 }
 
+.colorNeutralCool700 {
+  color: var(--color-neutral-cool-700);
+}
+
 .colorNeutralWarm500 {
   color: var(--color-neutral-warm-500);
 }

@@ -1,0 +1,36 @@
+/**
+ * Admin 목록 카드·툴바 갭 — CMS FilterTableLayout 미러
+ * @see apps/cms/src/shared/components/filter-table-layout.css
+ */
+
+:root {
+  --admin-list-card-padding: 20px;
+  --admin-list-card-radius: 12px;
+  --admin-list-toolbar-to-table-gap: var(--spacing-16, 16px);
+  --admin-list-title-desc-gap: 10px;
+  /* CMS --filter-table-toolbar-actions-gap */
+  --admin-list-toolbar-actions-gap: 8px;
+}
+
+.admin-list-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--color-bg-base, #fff);
+  margin-bottom: var(--spacing-24, 24px);
+  padding: var(--admin-list-card-padding);
+  border-radius: var(--admin-list-card-radius);
+  /* CMS filter-table-layout: 0 0 16px soft */
+  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.08);
+}
+
+.admin-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-12, 12px);
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--admin-list-toolbar-to-table-gap);
+}

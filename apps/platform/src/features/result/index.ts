@@ -21,12 +21,14 @@ export {
   useMockNoticeCategories,
 } from './lib/mock-notice-categories'
 export {
+  getAdjacentResults,
   getMockResultById,
   getMockResultDetailById,
   getMockResults,
   useMockResultDetail,
   useMockResultsCatalog,
 } from './lib/mock-results'
+export type { AdjacentResults } from './lib/mock-results'
 export { filterAndSortResults } from './lib/filter-results'
 export {
   buildResultsListPath,
@@ -41,4 +43,5 @@ export {
   type ResultRouteName,
 } from './lib/routes'
 export { ResultListItemRow } from './ui/list-item'
+export { ResultAdjacentNav } from './ui/adjacent-nav'
 export { ResultSort } from './ui/result-sort'

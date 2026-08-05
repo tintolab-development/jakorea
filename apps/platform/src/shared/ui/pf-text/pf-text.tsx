@@ -28,6 +28,7 @@ export type PFTextColor =
   | 'white'
   | 'neutral-cool-500'
   | 'neutral-cool-600'
+  | 'neutral-cool-700'
   | 'neutral-warm-500'
   | 'neutral-warm-600'
   | 'primary-500'
@@ -81,6 +82,7 @@ const colorClassMap: Record<PFTextColor, string> = {
   white: styles.colorWhite,
   'neutral-cool-500': styles.colorNeutralCool500,
   'neutral-cool-600': styles.colorNeutralCool600,
+  'neutral-cool-700': styles.colorNeutralCool700,
   'neutral-warm-500': styles.colorNeutralWarm500,
   'neutral-warm-600': styles.colorNeutralWarm600,
   'primary-500': styles.colorPrimary500,

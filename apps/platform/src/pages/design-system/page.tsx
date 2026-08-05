@@ -24,6 +24,7 @@ import {
   PFPageButton,
   PFButton,
   PFDivider,
+  PFAttachmentDropdown,
   PFFileDownload,
   PFModal,
   PFMetaBadge,
@@ -286,7 +287,13 @@ const colorTokenGroups = [
         cssVar: '--color-neutral-black-50',
         hex: 'rgba(61, 61, 61, 0.50)',
         figma: 'Divider',
-        note: 'PFDivider border',
+        note: 'PFDivider default border',
+      },
+      {
+        cssVar: '--color-border-focus',
+        hex: '#01A1AF',
+        figma: 'Color/border-focus',
+        note: 'PFDivider focus (결과 확인)',
       },
       { cssVar: '--color-neutral-white', hex: '#FFFFFF', pfText: 'white' },
       { cssVar: '--color-neutral-cool-50', hex: '#F5F7F7' },
@@ -1156,6 +1163,23 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
         </div>
       </div>
 
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFAttachmentDropdown
+        </PFText>
+        <div className={styles.buttonStack}>
+          <PFAttachmentDropdown
+            files={[{ fileName: '디지털 범죄예방 코믹북.pdf' }]}
+          />
+          <PFAttachmentDropdown
+            files={[
+              { fileName: '디지털 범죄예방 코믹북.pdf' },
+              { fileName: '디지털 범죄예방 코믹북_2.pdf' },
+            ]}
+          />
+        </div>
+      </div>
+
       <div className={styles.section} id="badges">
         <PFText as="div" typo="hl-sm" color="black">
           PFCategoryBadge
@@ -1514,7 +1538,20 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
         <PFText as="div" typo="hl-sm" color="black">
           PFDivider
         </PFText>
-        <PFDivider />
+        <div className={styles.buttonStack}>
+          <div className={styles.buttonRow}>
+            <PFText as="span" typo="label-md" color="neutral-cool-500">
+              default
+            </PFText>
+            <PFDivider />
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText as="span" typo="label-md" color="neutral-cool-500">
+              focus (결과 확인)
+            </PFText>
+            <PFDivider variant="focus" />
+          </div>
+        </div>
       </div>
 
       <div className={styles.section}>

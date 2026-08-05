@@ -89,8 +89,6 @@ const staticRoutes: RouteConfig[] = [
   authRoute('/auth/social/error', <SocialErrorPage />),
   { path: '/mypage', element: <MypageHomePage />, layout: 'mypage' },
   { path: '/design-system', element: <DesignSystemPage />, layout: 'full' },
-  /** 하위 호환 — 기존 북마크용 */
-  { path: '/test', element: <DesignSystemPage />, layout: 'full' },
   { path: '/dev/youtube', element: <YoutubeEmbedPage />, layout: 'full' },
 ]
 

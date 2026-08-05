@@ -1,0 +1,57 @@
+---
+description: Admin 목록 화면 테이블·툴바·버튼 갭은 CMS FilterTableLayout 스펙을 미러한다
+globs:
+  - apps/admin/src/pages/**/*.{tsx,css}
+  - apps/admin/src/features/**/ui/**/*.{tsx,css}
+  - apps/admin/src/shared/ui/table-header-label.css
+  - apps/admin/src/shared/ui/list-table-layout.css
+alwaysApply: false
+---
+
+# Admin 목록 테이블·버튼 갭 (CMS 미러)
+
+admin 목록 화면의 **카드·툴바·버튼 간격**은 CMS [`FilterTableLayout`](../../../cms/src/shared/components/filter-table-layout.css)과 동일하게 맞춘다.  
+`apps/cms` path alias로 컴포넌트·CSS를 import하지 말고, admin 공유 토큰·클래스를 쓴다.
+
+## 단일 소스
+
+| 항목 | CSS 변수 | 값 |
+|------|----------|-----|
+| 카드 padding | `--admin-list-card-padding` | `20px` |
+| 카드 radius | `--admin-list-card-radius` | `12px` |
+| 툴바 → 테이블 | `--admin-list-toolbar-to-table-gap` | `16px` |
+| 제목 ↔ 건수 | `--admin-list-title-desc-gap` | `10px` |
+| 액션 버튼 간격 | `--admin-list-toolbar-actions-gap` | **`8px`** |
+
+정의·셸: [`list-table-layout.css`](../../../src/shared/ui/list-table-layout.css)  
+라벨·액션 래퍼: [`table-header-label.css`](../../../src/shared/ui/table-header-label.css)
+
+## 마크업
+
+```tsx
+<div className="admin-list-card">
+  <div className="admin-list-toolbar"> {/* 또는 동등 BEM + margin-bottom 토큰 */}
+    <div className="table-header-title--wrapper">
+      <span className="table-title">… 목록</span>
+      <span className="table-description">총 N건</span>
+    </div>
+    <div className="table-header-actions--wrapper">
+      {/* CmsButton 들 */}
+    </div>
+  </div>
+  {/* table */}
+</div>
+```
+
+## 금지
+
+- 페이지에서 액션 `gap: 12px` 등 **8px 이외**로 override
+- 카드 `padding` / `box-shadow` / `border-radius`를 화면 CSS에 하드코딩 (`.admin-list-card` 사용)
+- `apps/cms/...` 직접 import로 갭 맞춤
+
+## 참고
+
+- CMS 소스: `apps/cms/src/shared/components/filter-table-layout.css` (`--filter-table-toolbar-actions-gap: 8px`, toolbar `margin-bottom: 16px`, card `padding: 20px`)
+- FilterTableLayout 컴포넌트 전체 이식은 별도 작업 — 갭·셸만 미러
+
+**Last updated:** 2026-08-05

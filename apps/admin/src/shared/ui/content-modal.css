@@ -1,0 +1,146 @@
+/**
+ * 컨텐츠 모달 공통 레이아웃
+ * 셸(Figma): padding 26 30 34 · radius 12 · shadow 0 0 25px rgba(0,0,0,0.35)
+ * 푸터: margin-top 30 · 버튼 우측 · medium 120×40
+ *
+ * TealHeaderModal 누수 리셋:
+ * - content padding:0 → 셸 26/30/34
+ * - body margin-top:16 → 0 (타이틀↔본문 간격은 titleBodyGap 기본 always 16px)
+ * - footer padding:30 → 0 + margin-top 30
+ */
+
+/* 모달 컨테이너 — `.teal-header-modal .ant-modal-content { padding:0 }` 보다 우선 */
+.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  padding: 26px 30px 34px;
+  border-radius: var(--radius-12, 12px);
+  background: #fff;
+  box-shadow: var(--shadow-modal);
+}
+
+/* 헤더: 흰 배경, 타이틀 영역 높이 36px */
+.content-modal .teal-header-modal__header {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  background: #fff;
+  border-top: none;
+  border-bottom: none;
+  padding: 0;
+  align-items: center;
+}
+
+/* 타이틀: 24px Bold, default-BK (+ 선택적 titlePrefix와 가로 정렬) */
+.content-modal .teal-header-modal__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.content-modal .teal-header-modal__title-prefix {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.content-modal .teal-header-modal__title-text {
+  min-width: 0;
+}
+
+.content-modal .teal-header-modal__close {
+  color: var(--color-text-secondary, #8c8c8c);
+}
+
+/* 바디: TealHeaderModal 기본 margin-top/padding 제거 (gap은 다중 자식 간격용으로 유지) */
+.content-modal .teal-header-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: 0;
+  padding: 0;
+}
+
+/*
+ * 타이틀 ↔ 본문 상단 여백
+ * - always(기본): description 유무와 관계없이 16px
+ * - auto: description prop이 있을 때만 16px
+ * - none: 여백 없음 (`titleBodyGap="none"`)
+ */
+.content-modal .teal-header-modal__body:has(> .content-modal__description),
+.content-modal.content-modal--title-body-gap-always .teal-header-modal__body {
+  padding-top: 16px;
+}
+
+.content-modal.content-modal--description-gap-compact .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 10px;
+}
+
+.content-modal.content-modal--title-body-gap-none .teal-header-modal__body {
+  padding-top: 0;
+}
+
+/* 푸터: 테이블–버튼 갭 30px, padding/보더 없음, 전체 너비 */
+.content-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  width: 100%;
+  margin-top: 30px;
+  padding: 0;
+  border-top: none;
+}
+
+/* 버튼 래퍼: 100% 너비, 우측 정렬 */
+.content-modal__footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/*
+ * 카드형 모달 푸터 CmsButton — Figma medium 120×40 고정
+ * size="large"|"small" · cms-button--action · 인라인 width 를 덮어씀.
+ * 의도적 가변 폭이 필요하면 `.cms-button--footer-auto` 로 제외.
+ */
+.content-modal__footer-actions .cms-button.ant-btn:not(.cms-button--footer-auto) {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  height: 40px !important;
+  padding: 6px 14px !important;
+  gap: 10px;
+  border-radius: var(--radius-6, 6px);
+  font-size: 14px;
+}
+
+/* description prop 본문 — 전 모달 공통 */
+.content-modal__description {
+  margin: 0;
+  width: 100%;
+  align-self: stretch;
+}
+
+.content-modal__description-text {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.content-modal__description-text strong {
+  font-weight: 700;
+}

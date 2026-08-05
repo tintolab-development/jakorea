@@ -4,6 +4,7 @@
  */
 
 import type { ResultAttachment, ResultDetail, ResultListItem } from '../model/types'
+import { filterAndSortResults } from './filter-results'
 import {
   findNoticeCategoryByName,
   RESULT_ANNOUNCEMENT_CATEGORY_NAMES,
@@ -21,8 +22,6 @@ type CmsProgramResultNoticeSeed = {
   attachments?: ResultAttachment[]
 }
 
-const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
-
 /** 목록용: 2026년 09월 15일 */
 function formatAnnouncedAtLabel(isoDate: string): string {
   const date = new Date(isoDate)
@@ -34,7 +33,7 @@ function formatAnnouncedAtLabel(isoDate: string): string {
   return `${y}년 ${m}월 ${d}일`
 }
 
-/** 상세 메타용: 2026년 09월 15일(월) */
+/** 상세 메타용 — 예: 2026년 01월 15일 오후 3:00 */
 function formatAnnouncedAtDetailLabel(isoDate: string): string {
   const date = new Date(isoDate)
   if (Number.isNaN(date.getTime())) return '-'
@@ -42,8 +41,11 @@ function formatAnnouncedAtDetailLabel(isoDate: string): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
-  const w = WEEKDAY_KO[date.getDay()]
-  return `${y}년 ${m}월 ${d}일(${w})`
+  const hours24 = date.getHours()
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const period = hours24 < 12 ? '오전' : '오후'
+  const hours12 = hours24 % 12 || 12
+  return `${y}년 ${m}월 ${d}일 ${period} ${hours12}:${minutes}`
 }
 
 /** CMS `mockProgramResultNotices`와 동기 */
@@ -52,12 +54,13 @@ const CMS_PROGRAM_RESULT_NOTICE_SEED: readonly CmsProgramResultNoticeSeed[] = [
     id: 'notice-result-1',
     title: '2026 국제무역창업대회(International Trade Challenge, ITC) 참가자 발표',
     category: '최종 합격 발표',
-    createdAt: '2026-09-15T10:00:00',
+    createdAt: '2026-01-15T15:00:00',
     status: 'published',
     content:
       '2026 국제무역창업대회(ITC) 참가자 최종 결과를 발표합니다. 합격하신 분들께는 개별 안내드릴 예정입니다.',
     author: '운영팀',
-    viewCount: 1820,
+    viewCount: 1232,
+    attachments: [{ name: 'ITC_2026_참가자_명단.pdf' }],
   },
   {
     id: 'notice-result-2',
@@ -262,4 +265,30 @@ export function useMockResultsCatalog(): ResultListItem[] {
 export function useMockResultDetail(id: string | null): ResultDetail | null {
   if (!id) return null
   return getMockResultDetailById(id)
+}
+
+export type AdjacentResults = {
+  previous: ResultListItem | null
+  next: ResultListItem | null
+}
+
+/**
+ * 최신순(발표일 desc) 기준 인접 글.
+ * - previous(이전글): 목록에서 아래(더 오래된) 글
+ * - next(다음글): 목록에서 위(더 최근) 글
+ */
+export function getAdjacentResults(id: string): AdjacentResults {
+  const sorted = filterAndSortResults(getMockResults(), {
+    category: 'all',
+    q: '',
+    sort: 'latest',
+  })
+  const index = sorted.findIndex(item => item.id === id)
+  if (index < 0) {
+    return { previous: null, next: null }
+  }
+  return {
+    next: index > 0 ? (sorted[index - 1] ?? null) : null,
+    previous: index < sorted.length - 1 ? (sorted[index + 1] ?? null) : null,
+  }
 }

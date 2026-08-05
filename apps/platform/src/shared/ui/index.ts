@@ -27,7 +27,12 @@ export { PFButton } from './pf-button'
 export { PFCalendar, CALENDAR_LEGEND_ITEMS, CALENDAR_EVENT_COLORS } from './pf-calendar'
 export type { PFCalendarProps, PFCalendarEvent, CalendarLegendItem } from './pf-calendar'
 export { PFDivider } from './pf-divider'
-export type { PFDividerProps } from './pf-divider'
+export type { PFDividerProps, PFDividerVariant } from './pf-divider'
+export { PFAttachmentDropdown } from './pf-attachment-dropdown'
+export type {
+  PFAttachmentDropdownItem,
+  PFAttachmentDropdownProps,
+} from './pf-attachment-dropdown'
 export { PFFileDownload } from './pf-file-download'
 export type { PFFileDownloadProps } from './pf-file-download'
 export { PFModal } from './pf-modal'
