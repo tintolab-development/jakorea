@@ -2734,7 +2734,7 @@
       "AdminMarketingConsentResponse": {
         "type": "object",
         "properties": {
-          "adminId": {
+          "adminAccountId": {
             "type": "integer",
             "format": "int64"
           },
@@ -5227,13 +5227,17 @@
           "schoolOrganizationId": {
             "type": "integer",
             "format": "int64",
-            "description": "기존 CMS 학교 organizationId. 미등록 학교의 외부 선택 ID도 허용하지만 이 경우 schoolName을 함께 보내야 하며 서버가 canonical 학교를 생성합니다.",
+            "description": "기존 CMS 학교 organizationId. CMS 내부 숫자 PK만 허용합니다. CMS 미등록 학교는 schoolSelection을 사용합니다.",
             "example": 3001
           },
           "schoolName": {
             "type": "string",
-            "description": "학교명 snapshot. 검색 팝업 선택값 또는 프론트 표시값",
+            "description": "학교명 snapshot. organizationId 또는 schoolSelection과 함께 사용할 수 있으며 이 값만으로 학교를 생성하지 않습니다.",
             "example": "JA초등학교"
+          },
+          "schoolSelection": {
+            "$ref": "#/components/schemas/PortalSchoolSelectionRequest",
+            "description": "CMS에 아직 등록되지 않은 학교 검색 결과. 서버가 학교를 먼저 canonical organization으로 등록한 후 회원가입을 진행합니다."
           },
           "grade": {
             "type": "string",
@@ -5289,6 +5293,57 @@
           "password"
         ]
       },
+      "PortalSchoolSelectionRequest": {
+        "type": "object",
+        "description": "회원가입 학교 검색 선택값. CMS 미등록 학교를 선택한 경우 전달합니다.",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "학교 검색 공급자. 나이스 학교정보 API는 NEIS를 사용합니다.",
+            "example": "NEIS"
+          },
+          "externalSchoolCode": {
+            "type": "string",
+            "description": "공급자의 학교 고유 코드. 숫자 이외 문자가 포함될 수 있습니다.",
+            "example": "B100000658"
+          },
+          "name": {
+            "type": "string",
+            "description": "학교명",
+            "example": "서울중학교"
+          },
+          "schoolLevel": {
+            "type": "string",
+            "description": "학교급 표시값",
+            "example": "중학교"
+          },
+          "organizationCategory": {
+            "type": "string",
+            "description": "CMS 기관 분류. 생략 시 SCHOOL",
+            "example": "SCHOOL"
+          },
+          "regionSido": {
+            "type": "string",
+            "description": "시/도",
+            "example": "서울특별시"
+          },
+          "regionSigungu": {
+            "type": "string",
+            "description": "시/군/구",
+            "example": "강남구"
+          },
+          "zipcode": {
+            "type": "string",
+            "description": "우편번호",
+            "example": "06234"
+          },
+          "address": {
+            "type": "string",
+            "description": "학교 기본 주소",
+            "example": "서울특별시 강남구 테헤란로 1"
+          }
+        }
+      },
       "TeacherSignupRequest": {
         "type": "object",
         "description": "교사 회원 가입 요청",
@@ -5300,7 +5355,7 @@
           "organizationId": {
             "type": "integer",
             "format": "int64",
-            "description": "기존 CMS 학교 organizationId. 미등록 학교는 null 또는 외부 선택 ID와 함께 member.schoolName을 보내면 서버가 canonical 학교를 등록합니다.",
+            "description": "기존 CMS 학교 organizationId. CMS 내부 숫자 PK만 허용합니다. 미등록 학교는 member.schoolSelection을 사용합니다.",
             "example": 3001
           },
           "employmentStatus": {
@@ -5365,6 +5420,11 @@
           },
           "memberType": {
             "type": "string"
+          },
+          "schoolOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "가입 전에 해석 또는 등록된 CMS 학교 organizationId. 학교가 필요 없는 회원은 null입니다."
           },
           "nextStep": {
             "type": "string"
@@ -12006,14 +12066,14 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessStartDate": {
+          "businessEndDate": {
             "type": "string"
           },
           "businessYear": {
             "type": "integer",
             "format": "int32"
           },
-          "businessEndDate": {
+          "businessStartDate": {
             "type": "string"
           }
         }
@@ -12103,10 +12163,10 @@
           "ujatPartnerRecommendationPath": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           }
         }
@@ -14125,18 +14185,16 @@
         "properties": {
           "id": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "관리자 계정 PK. adminAccountId와 동일합니다."
           },
           "adminAccountId": {
             "type": "integer",
             "format": "int64"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64"
-          },
           "uuid": {
-            "type": "string"
+            "type": "string",
+            "description": "외부 참조 및 감사용 관리자 UUID"
           },
           "email": {
             "type": "string"
@@ -14276,8 +14334,7 @@
           },
           "rawPassword": {
             "type": "string",
-            "description": "초기 임시 비밀번호. 로그인 이메일과 달라야 하며 영문·숫자·특수문자를 포함한 8자 이상의 값을 사용해야 합니다.",
-            "minLength": 1
+            "description": "초기 비밀번호. 생략하면 정규화된 로그인 이메일을 사용하며, 전달하는 경우 이메일과 동일해야 합니다."
           },
           "name": {
             "type": "string",
@@ -14313,7 +14370,6 @@
         "required": [
           "email",
           "name",
-          "rawPassword",
           "roleCode",
           "termsAgreements"
         ]
@@ -14677,15 +14733,23 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "integer",
+            "format": "int64",
+            "description": "교사 회원 PK. teacherMemberId 및 memberId와 동일합니다."
           },
           "teacherMemberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "deprecated": true,
+            "description": "폐기 예정 호환 필드. 신규 연동에서는 memberId를 사용합니다."
           },
           "memberId": {
             "type": "integer",
             "format": "int64"
+          },
+          "uuid": {
+            "type": "string",
+            "description": "외부 참조 및 감사용 회원 UUID"
           },
           "name": {
             "type": "string"
@@ -14707,7 +14771,9 @@
             "format": "date-time"
           },
           "linkedUserId": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "폐기 예정 호환 필드. 신규 연동에서는 memberId와 uuid를 사용합니다."
           }
         }
       },
@@ -14822,7 +14888,9 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "integer",
+            "format": "int64",
+            "description": "현재 응답 도메인의 내부 숫자 식별자. 회원/강사 응답에서는 memberId, 관리자 응답에서는 adminAccountId와 같습니다."
           },
           "email": {
             "type": "string"
@@ -14855,7 +14923,9 @@
             "$ref": "#/components/schemas/SchoolInfo"
           },
           "affiliatedSchoolUserId": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "폐기 예정 호환 필드. 항상 null이며 신규 연동에서는 사용하지 않습니다."
           },
           "affiliatedSchoolName": {
             "type": "string"
@@ -14867,7 +14937,9 @@
             "$ref": "#/components/schemas/InstructorInfo"
           },
           "instructorId": {
-            "type": "string"
+            "type": "integer",
+            "format": "int64",
+            "description": "강사 프로필 PK. 회원 PK인 memberId와 구분됩니다."
           },
           "interviewStatus": {
             "type": "string"
@@ -14961,17 +15033,20 @@
           },
           "adminAccountId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "관리자 계정 PK. 관리자 응답에서만 반환됩니다."
           },
           "roleCode": {
             "type": "string"
           },
           "memberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "회원 PK. 일반/학교/강사 회원 응답에서만 반환됩니다."
           },
           "uuid": {
-            "type": "string"
+            "type": "string",
+            "description": "외부 참조 및 감사용 불변 UUID. 조회/수정/삭제 경로에는 숫자 id를 사용합니다."
           },
           "status": {
             "type": "string"
@@ -15967,6 +16042,10 @@
             "type": "integer",
             "format": "int64"
           },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "uuid": {
             "type": "string"
           },
@@ -16062,7 +16141,7 @@
       "AdminIdentityContactResponse": {
         "type": "object",
         "properties": {
-          "adminId": {
+          "adminAccountId": {
             "type": "integer",
             "format": "int64"
           },
@@ -17339,6 +17418,21 @@
             "type": "string",
             "description": "데이터 출처",
             "example": "LOCAL_ORGANIZATION_CACHE"
+          },
+          "externalLookupRequired": {
+            "type": "boolean",
+            "description": "CMS 검색 결과가 없어서 나이스 학교 검색이 필요한지",
+            "example": false
+          },
+          "externalProvider": {
+            "type": "string",
+            "description": "외부 학교 검색 공급자",
+            "example": "NEIS"
+          },
+          "nextAction": {
+            "type": "string",
+            "description": "프론트 다음 동작",
+            "example": "SELECT_CMS_ORGANIZATION"
           }
         }
       },
@@ -27056,7 +27150,13 @@
         "properties": {
           "id": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "관리자 계정 PK. 하위 조회/수정/삭제 경로에 사용합니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 계정 PK의 명시적 별칭. id와 동일합니다."
           },
           "uuid": {
             "type": "string"
@@ -27127,6 +27227,10 @@
         "type": "object",
         "properties": {
           "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "adminAccountId": {
             "type": "integer",
             "format": "int64"
           },
@@ -27297,7 +27401,7 @@
             "type": "integer",
             "format": "int64"
           },
-          "adminId": {
+          "adminAccountId": {
             "type": "integer",
             "format": "int64"
           },

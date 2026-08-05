@@ -11,7 +11,7 @@
  */
 export interface AdminTermsAgreementResponse {
   agreementId?: number;
-  adminId?: number;
+  adminAccountId?: number;
   /** 프론트 consentType과 동일하게 사용하는 약관 유형 */
   consentType?: string;
   /** consentType과 1:1인 서버 약관 유형 */

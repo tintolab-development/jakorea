@@ -587,6 +587,7 @@ export * from './portalFormListResponse';
 export * from './portalNoticeItem';
 export * from './portalProfileResponse';
 export * from './portalScheduleItem';
+export * from './portalSchoolSelectionRequest';
 export * from './portalWithdrawalRequest';
 export * from './portalWithdrawalResponse';
 export * from './postCommentUpsertRequest';

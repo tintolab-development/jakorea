@@ -9,6 +9,7 @@ import type { AdminLinkedSocialAccountResponse } from './adminLinkedSocialAccoun
 
 export interface AdminAccountApprovalDetailResponse {
   id?: number;
+  adminAccountId?: number;
   uuid?: string;
   email?: string;
   name?: string;

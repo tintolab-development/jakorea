@@ -16,11 +16,8 @@ export interface AdminAccountCreateRequest {
      * @minLength 1
      */
   email: string;
-  /**
-     * 초기 임시 비밀번호. 로그인 이메일과 달라야 하며 영문·숫자·특수문자를 포함한 8자 이상의 값을 사용해야 합니다.
-     * @minLength 1
-     */
-  rawPassword: string;
+  /** 초기 비밀번호. 생략하면 정규화된 로그인 이메일을 사용하며, 전달하는 경우 이메일과 동일해야 합니다. */
+  rawPassword?: string;
   /** @minLength 1 */
   name: string;
   phone?: string;

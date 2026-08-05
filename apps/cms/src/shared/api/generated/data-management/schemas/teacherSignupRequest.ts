@@ -13,7 +13,7 @@ import type { MemberSignupRequest } from './memberSignupRequest';
 export interface TeacherSignupRequest {
   /** 기본 회원 가입 정보 */
   member: MemberSignupRequest;
-  /** 기존 CMS 학교 organizationId. 미등록 학교는 null 또는 외부 선택 ID와 함께 member.schoolName을 보내면 서버가 canonical 학교를 등록합니다. */
+  /** 기존 CMS 학교 organizationId. CMS 내부 숫자 PK만 허용합니다. 미등록 학교는 member.schoolSelection을 사용합니다. */
   organizationId?: number;
   /** 재직 상태 */
   employmentStatus?: string;

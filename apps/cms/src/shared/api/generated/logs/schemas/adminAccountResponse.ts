@@ -7,9 +7,10 @@
  */
 
 export interface AdminAccountResponse {
+  /** 관리자 계정 PK. adminAccountId와 동일합니다. */
   id?: number;
   adminAccountId?: number;
-  memberId?: number;
+  /** 외부 참조 및 감사용 관리자 UUID */
   uuid?: string;
   email?: string;
   name?: string;

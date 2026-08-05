@@ -5,7 +5,7 @@ import { getMemberIdByUuid } from './member-id-registry'
 describe('mapAffiliatedTeacherRow', () => {
   it('linkedUserId가 없으면 teacherMemberId로 이동 식별자를 채운다', () => {
     const row = mapAffiliatedTeacherRow({
-      id: '42',
+      id: 42,
       name: '김교사',
       assignedGrade: '1학년',
       phone: '010-1111-2222',

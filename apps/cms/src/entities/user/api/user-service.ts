@@ -84,7 +84,7 @@ import {
   mapPatchUserBasicInfoToApiRequest,
 } from '@/features/user/api/map-patch-user-basic-info'
 import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
-import { resolveMemberIdForApi, registerMemberIdMapping } from '@/features/user/api/member-id-registry'
+import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
 import {
   fetchAdminMemberDetailAsUser,
   isAdminMemberDetailRole,
@@ -1000,17 +1000,14 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
           termsAgreements,
         })
         const adminAccountId = created.adminAccountId ?? created.id
-        const memberId = created.memberId
         const uuid = created.uuid?.trim()
         const id =
           uuid ??
-          (memberId != null ? `member-${memberId}` : `admin-account-${adminAccountId ?? Date.now()}`)
-        if (uuid && memberId != null) {
-          registerMemberIdMapping(uuid, memberId)
-        }
+          (adminAccountId != null
+            ? `admin-account-${adminAccountId}`
+            : `admin-account-${Date.now()}`)
         return {
           id,
-          memberId,
           adminAccountId,
           email: created.email?.trim() || adminEmail,
           name: created.name?.trim() || request.name,

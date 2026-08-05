@@ -11,22 +11,21 @@ function mapEmploymentStatus(raw?: string): SchoolTeacherEmploymentStatus {
 }
 
 function resolveTeacherMemberId(row: ApiSchoolAffiliatedTeacherRow): number | undefined {
-  const extended = row as ApiSchoolAffiliatedTeacherRow & {
-    teacherMemberId?: number
-    memberId?: number
+  if (typeof row.teacherMemberId === 'number' && Number.isFinite(row.teacherMemberId)) {
+    return row.teacherMemberId
   }
-  if (typeof extended.teacherMemberId === 'number' && Number.isFinite(extended.teacherMemberId)) {
-    return extended.teacherMemberId
+  if (typeof row.memberId === 'number' && Number.isFinite(row.memberId)) {
+    return row.memberId
   }
-  if (typeof extended.memberId === 'number' && Number.isFinite(extended.memberId)) {
-    return extended.memberId
-  }
-  const fromId = Number(row.id)
-  if (Number.isFinite(fromId) && String(fromId) === String(row.id).trim()) {
-    return fromId
+  if (typeof row.id === 'number' && Number.isFinite(row.id) && row.id > 0) {
+    return row.id
   }
   const fromLinked = Number(row.linkedUserId)
-  if (Number.isFinite(fromLinked) && String(fromLinked) === String(row.linkedUserId).trim()) {
+  if (
+    row.linkedUserId != null &&
+    Number.isFinite(fromLinked) &&
+    String(fromLinked) === String(row.linkedUserId).trim()
+  ) {
     return fromLinked
   }
   return undefined
@@ -37,10 +36,11 @@ export function mapAffiliatedTeacherRow(
 ): SchoolAffiliatedTeacherRow {
   const teacherMemberId = resolveTeacherMemberId(row)
   const linkedFromApi = row.linkedUserId?.trim() || undefined
-  const rowId = row.id?.trim() || undefined
+  const rowId = row.id != null ? String(row.id) : undefined
   /** API가 linkedUserId를 생략해도 teacherMemberId/id로 상세 이동 가능하도록 보정 */
   const linkedUserId =
     linkedFromApi ||
+    (row.uuid?.trim() || undefined) ||
     (teacherMemberId != null ? String(teacherMemberId) : undefined) ||
     rowId
 
@@ -49,7 +49,7 @@ export function mapAffiliatedTeacherRow(
   }
 
   const id =
-    rowId ||
+    row.uuid?.trim() ||
     linkedUserId ||
     (teacherMemberId != null ? String(teacherMemberId) : `teacher-${crypto.randomUUID()}`)
   return {

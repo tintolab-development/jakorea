@@ -7,7 +7,7 @@
  */
 
 export interface AdminIdentityContactResponse {
-  adminId?: number;
+  adminAccountId?: number;
   name?: string;
   phone?: string;
   maskedPhone?: string;

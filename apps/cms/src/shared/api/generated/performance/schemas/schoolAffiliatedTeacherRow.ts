@@ -7,14 +7,25 @@
  */
 
 export interface SchoolAffiliatedTeacherRow {
-  id?: string;
+  /** 교사 회원 PK. teacherMemberId 및 memberId와 동일합니다. */
+  id?: number;
+  /**
+     * 폐기 예정 호환 필드. 신규 연동에서는 memberId를 사용합니다.
+     * @deprecated
+     */
   teacherMemberId?: number;
   memberId?: number;
+  /** 외부 참조 및 감사용 회원 UUID */
+  uuid?: string;
   name?: string;
   assignedGrade?: string;
   phone?: string;
   email?: string;
   employmentStatus?: string;
   joinedAt?: string;
+  /**
+     * 폐기 예정 호환 필드. 신규 연동에서는 memberId와 uuid를 사용합니다.
+     * @deprecated
+     */
   linkedUserId?: string;
 }

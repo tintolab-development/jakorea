@@ -7,7 +7,10 @@
  */
 
 export interface AdminAccountListItemResponse {
+  /** 관리자 계정 PK. 하위 조회/수정/삭제 경로에 사용합니다. */
   id?: number;
+  /** 관리자 계정 PK의 명시적 별칭. id와 동일합니다. */
+  adminAccountId?: number;
   uuid?: string;
   email?: string;
   name?: string;

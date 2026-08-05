@@ -15,7 +15,8 @@ import type { UserResponseInstructorStatus } from './userResponseInstructorStatu
 import type { UserResponseProgramRoles } from './userResponseProgramRoles';
 
 export interface UserResponse {
-  id?: string;
+  /** 현재 응답 도메인의 내부 숫자 식별자. 회원/강사 응답에서는 memberId, 관리자 응답에서는 adminAccountId와 같습니다. */
+  id?: number;
   email?: string;
   name?: string;
   nameEn?: string;
@@ -25,11 +26,16 @@ export interface UserResponse {
   adminLevel?: string;
   programRoles?: UserResponseProgramRoles;
   schoolInfo?: SchoolInfo;
+  /**
+     * 폐기 예정 호환 필드. 항상 null이며 신규 연동에서는 사용하지 않습니다.
+     * @deprecated
+     */
   affiliatedSchoolUserId?: string;
   affiliatedSchoolName?: string;
   instructorMemberProfile?: string;
   instructorInfo?: InstructorInfo;
-  instructorId?: string;
+  /** 강사 프로필 PK. 회원 PK인 memberId와 구분됩니다. */
+  instructorId?: number;
   interviewStatus?: string;
   interviewScheduledAt?: string;
   interviewCompletedAt?: string;
@@ -55,9 +61,12 @@ export interface UserResponse {
   guardianInfo?: GuardianInfo;
   termsAgreements?: TermsAgreementRow[];
   actionState?: UserDetailActionState;
+  /** 관리자 계정 PK. 관리자 응답에서만 반환됩니다. */
   adminAccountId?: number;
   roleCode?: string;
+  /** 회원 PK. 일반/학교/강사 회원 응답에서만 반환됩니다. */
   memberId?: number;
+  /** 외부 참조 및 감사용 불변 UUID. 조회/수정/삭제 경로에는 숫자 id를 사용합니다. */
   uuid?: string;
   status?: string;
   loginEnabled?: boolean;

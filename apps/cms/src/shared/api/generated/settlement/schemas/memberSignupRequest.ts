@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { PortalSchoolSelectionRequest } from './portalSchoolSelectionRequest';
 import type { TermsAgreementRequest } from './termsAgreementRequest';
 
 /**
@@ -42,10 +43,12 @@ export interface MemberSignupRequest {
   guardianVerificationSessionId?: number;
   /** 학교 재학 여부. ENROLLED 또는 NOT_ENROLLED */
   schoolEnrollmentStatus?: string;
-  /** 기존 CMS 학교 organizationId. 미등록 학교의 외부 선택 ID도 허용하지만 이 경우 schoolName을 함께 보내야 하며 서버가 canonical 학교를 생성합니다. */
+  /** 기존 CMS 학교 organizationId. CMS 내부 숫자 PK만 허용합니다. CMS 미등록 학교는 schoolSelection을 사용합니다. */
   schoolOrganizationId?: number;
-  /** 학교명 snapshot. 검색 팝업 선택값 또는 프론트 표시값 */
+  /** 학교명 snapshot. organizationId 또는 schoolSelection과 함께 사용할 수 있으며 이 값만으로 학교를 생성하지 않습니다. */
   schoolName?: string;
+  /** CMS에 아직 등록되지 않은 학교 검색 결과. 서버가 학교를 먼저 canonical organization으로 등록한 후 회원가입을 진행합니다. */
+  schoolSelection?: PortalSchoolSelectionRequest;
   /** 재학중 선택 시 학년 */
   grade?: string;
   /** 미재학 선택 시 선택 입력 가능한 소속 기관명 */
