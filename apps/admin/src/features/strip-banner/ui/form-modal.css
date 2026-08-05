@@ -1,0 +1,121 @@
+/* 시안: padding 24 / 30 / 32 / 30, 타이틀↔디스크립션 12px, 디스크립션↔폼·폼↔푸터 30px */
+.strip-banner-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  padding: 24px 30px 32px;
+}
+
+.strip-banner-form-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body,
+.strip-banner-form-modal.content-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 12px;
+  gap: 30px;
+}
+
+.strip-banner-form-modal .teal-header-modal__footer {
+  margin-top: 30px;
+}
+
+.strip-banner-form-modal .content-modal__footer-actions {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.strip-banner-form-modal__footer-start,
+.strip-banner-form-modal__footer-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 등록 메타 테이블 ↔ 본문 테이블 분리 (팝업 상세 / CMS form-stack) */
+.strip-banner-form-modal__forms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.strip-banner-form-modal__form {
+  width: 100%;
+}
+
+/*
+ * th 시안 스펙
+ * Field 인라인 --detail-info-label-w(기본 200) 보다 우선
+ */
+.strip-banner-form-modal__form .detail-info-form__field {
+  --detail-info-label-w: 140px !important;
+  grid-template-columns: 140px minmax(0, 1fr) !important;
+}
+
+.strip-banner-form-modal__form .detail-info-form__field-label {
+  display: flex !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  min-height: 48px;
+  padding: 10px !important;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  align-self: stretch;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/*
+ * td 텍스트 좌측 정렬
+ * Field 기본 flex + 상속 text-align 대비 강제
+ */
+.strip-banner-form-modal__form .detail-info-form__field-content,
+.strip-banner-form-modal__form .detail-info-form__field-content--view,
+.strip-banner-form-modal__form .detail-info-form__field-content--edit {
+  justify-content: flex-start !important;
+  align-items: center;
+  text-align: left !important;
+}
+
+.strip-banner-form-modal__form .detail-info-form__field-content > *,
+.strip-banner-form-modal__form .detail-info-form__field-content--edit > * {
+  justify-content: flex-start !important;
+  text-align: left !important;
+  margin-inline: 0 auto !important;
+  width: auto;
+  max-width: 100%;
+}
+
+/* 등록일시 한 줄 유지 */
+.strip-banner-form-modal__created-at {
+  display: inline-block;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.strip-banner-form-modal__link-edit,
+.strip-banner-form-modal__link-view {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+
+.strip-banner-form-modal__link-edit .detail-info-form-inputs-separator,
+.strip-banner-form-modal__link-view .detail-info-form-inputs-separator {
+  margin: 0;
+}
+
+.strip-banner-form-modal__link-edit .cms-input {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.strip-banner-form-modal__link-url {
+  word-break: break-all;
+  min-width: 0;
+  text-align: left;
+}
