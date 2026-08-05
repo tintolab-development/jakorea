@@ -1,0 +1,40 @@
+.social-links-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.social-links-page__table-scroll {
+  max-height: calc(100vh - var(--header-height, 64px) - 180px);
+  overflow: auto;
+}
+
+.social-links-page__name,
+.social-links-page__link {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.social-links-page__link {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 사용 여부 Switch — DS mint-01 (#01A1AF) */
+.social-links-page .ant-switch-checked {
+  background: var(--color-mint-01, #01a1af) !important;
+}
+
+.social-link-table .ant-table-tbody > tr > td {
+  vertical-align: middle;
+}
+
+.social-link-table .ant-table-tbody > tr > td .cms-input {
+  display: block;
+  max-width: 100%;
+}
