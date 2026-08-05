@@ -1,0 +1,290 @@
+.calendar {
+  display: flex;
+  width: 100%;
+  max-width: 911px;
+  min-width: 600px;
+  flex-direction: column;
+  border-radius: var(--radius-24);
+  border: 1px solid rgb(61 61 61 / 10%);
+  background: var(--color-neutral-white);
+  box-shadow: var(--shadow-card-lg);
+  overflow: hidden;
+}
+
+@media (--bp-below-pc) {
+  .calendar {
+    min-width: 0;
+  }
+}
+
+/* 넓을 때: 네비 | 범례(우측) / 좁을 때: 네비 아래 범례 한 줄 (항목 줄바꿈 없음) */
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  padding: var(--spacing-20) var(--spacing-16) var(--spacing-20) var(--spacing-24);
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  column-gap: var(--spacing-16);
+  row-gap: var(--spacing-20);
+}
+
+.headerLeft {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-16);
+  flex: 0 0 auto;
+}
+
+.yearMonth {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.headerLeft .todayButton {
+  display: flex;
+  height: 36px;
+  min-width: 0;
+  padding: 0 var(--spacing-16);
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-8);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-neutral-white);
+  color: var(--color-neutral-cool-600);
+  /* Body/Medium/bold — PFButton small의 label-md 덮어씀 */
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+.headerLeft .todayButton:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+  color: var(--color-neutral-cool-600);
+}
+
+@media (--bp-below-pc) {
+  .headerLeft .todayButton {
+    font-size: 16px;
+  }
+}
+
+.navGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-4);
+  flex: 0 0 auto;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.legend::-webkit-scrollbar {
+  display: none;
+}
+
+.legendItem {
+  display: flex;
+  height: 30px;
+  padding: 0 var(--spacing-8);
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-4);
+  flex-shrink: 0;
+}
+
+.legendDot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: var(--radius-999);
+  aspect-ratio: 1 / 1;
+}
+
+.legendLabel {
+  margin: 0;
+  color: var(--color-neutral-black);
+  white-space: nowrap;
+}
+
+.weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  width: 100%;
+  /* 헤더 padding-bottom 20 + 여기 12 → 범례~요일 간격 */
+  padding: var(--spacing-12) 0;
+  border-bottom: 1px solid rgb(61 61 61 / 10%);
+}
+
+.weekday {
+  margin: 0;
+  text-align: center;
+}
+
+.weekdaySun {
+  color: #f65f4e;
+}
+
+.weekdaySat {
+  color: #0d81cf;
+}
+
+.weekdayDefault {
+  color: var(--color-neutral-cool-500);
+}
+
+.weeks {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.week {
+  position: relative;
+  width: 100%;
+  border-bottom: 1px solid rgb(61 61 61 / 10%);
+}
+
+.weekDays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  width: 100%;
+}
+
+.cell {
+  position: relative;
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  /* 넓을 때 1:1, 셀 폭이 124 미만이면 높이 하한 유지 */
+  aspect-ratio: 1 / 1;
+  min-height: 124px;
+  padding: var(--spacing-8) 0 22px var(--spacing-8);
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.cellOutside {
+  background: var(--color-neutral-cool-50);
+}
+
+.cell:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: -2px;
+}
+
+.eventLayer {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  bottom: 22px;
+  left: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(2, 20px);
+  row-gap: 2px;
+  padding-inline: 2px;
+  pointer-events: none;
+}
+
+.eventBar {
+  display: flex;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 20px;
+  align-items: center;
+  margin-right: 2px;
+  padding: 0 6px 0 4px;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.eventBarStart {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.eventBarEnd {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.eventBarText {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 140%;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overflowLabel {
+  position: absolute;
+  bottom: 4px;
+  left: var(--spacing-8);
+  z-index: 2;
+  color: var(--color-neutral-cool-600);
+  font-family: var(--font-family-base);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 140%;
+  pointer-events: none;
+}
+
+.dayText {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: var(--radius-999);
+  aspect-ratio: 1 / 1;
+  text-align: center;
+}
+
+.dayCurrent {
+  color: var(--color-neutral-black);
+}
+
+.daySun {
+  color: #f65f4e;
+}
+
+.daySat {
+  color: #0d81cf;
+}
+
+.dayOutside {
+  color: var(--color-neutral-warm-400);
+}
+
+.daySelected {
+  background: var(--color-neutral-cool-700);
+  color: var(--color-neutral-white);
+}

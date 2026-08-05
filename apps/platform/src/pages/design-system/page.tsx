@@ -21,6 +21,7 @@ import {
   PFAlertModal,
   PFArrowButton,
   PFChevronButton,
+  PFPageButton,
   PFButton,
   PFDivider,
   PFFileDownload,
@@ -1082,6 +1083,36 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
             <div className={styles.buttonList}>
               <PFChevronButton direction="left" decorative />
               <PFChevronButton direction="right" decorative />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFPageButton
+        </PFText>
+        <div className={styles.buttonStack}>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              large
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFPageButton size="large" direction="left" aria-label="이전 large" />
+              <PFPageButton size="large" direction="right" aria-label="다음 large" />
+              <PFPageButton size="large" direction="left" disabled aria-label="이전 large disabled" />
+              <PFPageButton size="large" direction="right" disabled aria-label="다음 large disabled" />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              small
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFPageButton size="small" direction="left" aria-label="이전 small" />
+              <PFPageButton size="small" direction="right" aria-label="다음 small" />
+              <PFPageButton size="small" direction="left" disabled aria-label="이전 small disabled" />
+              <PFPageButton size="small" direction="right" disabled aria-label="다음 small disabled" />
             </div>
           </div>
         </div>
