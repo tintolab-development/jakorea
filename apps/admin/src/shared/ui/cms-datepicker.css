@@ -1,0 +1,309 @@
+/**
+ * CMS 전용 DatePicker — CmsInput과 동일 치수·크롬
+ */
+
+/* ----- 단일 필드 래퍼 ----- */
+.cms-datepicker:not(.cms-datepicker--range-split) {
+  display: flex;
+  box-sizing: border-box;
+  align-items: center;
+  min-width: 0;
+  vertical-align: middle;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  transition: border-color 0.15s ease;
+}
+
+.cms-datepicker:not(.cms-datepicker--range-split):hover:not(.cms-datepicker--disabled) {
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.cms-datepicker:not(.cms-datepicker--range-split):focus-within:not(.cms-datepicker--disabled),
+.cms-datepicker:not(.cms-datepicker--range-split):has(.ant-picker-focused):not(.cms-datepicker--disabled) {
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.cms-datepicker--disabled:not(.cms-datepicker--range-split) {
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background-color: #fff;
+  background-image: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%)
+  );
+  cursor: not-allowed;
+}
+
+.cms-datepicker--large:not(.cms-datepicker--range-split):not(.cms-datepicker--explicit-width) {
+  width: 240px;
+}
+
+.cms-datepicker--large:not(.cms-datepicker--range-split) {
+  min-width: 120px;
+  height: 44px;
+  padding: 0 12px 0 14px;
+}
+
+.cms-datepicker--medium:not(.cms-datepicker--range-split):not(.cms-datepicker--explicit-width) {
+  width: 240px;
+}
+
+.cms-datepicker--medium:not(.cms-datepicker--range-split) {
+  min-width: 120px;
+  height: 40px;
+  padding: 0 12px 0 14px;
+}
+
+.cms-datepicker--small:not(.cms-datepicker--range-split):not(.cms-datepicker--explicit-width) {
+  width: 200px;
+}
+
+.cms-datepicker--small:not(.cms-datepicker--range-split) {
+  min-width: 100px;
+  height: 32px;
+  padding: 0 10px 0 12px;
+}
+
+.cms-datepicker--explicit-width:not(.cms-datepicker--range-split) {
+  width: 100%;
+  min-width: 0;
+}
+
+.cms-datepicker .ant-picker.cms-datepicker__picker {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.cms-datepicker .ant-picker.cms-datepicker__picker.ant-picker-focused {
+  box-shadow: none !important;
+}
+
+.cms-datepicker .ant-picker.cms-datepicker__picker .ant-picker-prefix {
+  margin-inline: 0 8px;
+}
+
+.cms-datepicker .ant-picker.cms-datepicker__picker .ant-picker-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cms-datepicker .ant-picker.cms-datepicker__picker .ant-picker-input > input {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--main-BK, #3d3d3d);
+}
+
+/* placeholder — `cms-input__inner .ant-input::placeholder` 와 동일 (15px·Pretendard) */
+.cms-datepicker .ant-picker.cms-datepicker__picker .ant-picker-input > input::placeholder,
+.cms-datepicker__segment .ant-picker.cms-datepicker__picker .ant-picker-input > input::placeholder {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--gray-85969-d, #85969d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.cms-datepicker--disabled .ant-picker.cms-datepicker__picker .ant-picker-input > input,
+.cms-datepicker--disabled .ant-picker.cms-datepicker__picker .ant-picker-input > input::placeholder {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5)) !important;
+  cursor: not-allowed;
+}
+
+.cms-datepicker__calendar-icon {
+  color: var(--gray-85969-d, #85969d);
+  font-size: 16px;
+}
+
+.cms-datepicker--small .cms-datepicker__calendar-icon {
+  font-size: 14px;
+}
+
+/* 단일: 사이즈별 입력 값 글자 크기 (placeholder는 위 공통 15px) */
+.cms-datepicker--large:not(.cms-datepicker--range-split)
+  .ant-picker.cms-datepicker__picker
+  .ant-picker-input
+  > input {
+  font-size: 16px;
+}
+
+.cms-datepicker--medium:not(.cms-datepicker--range-split)
+  .ant-picker.cms-datepicker__picker
+  .ant-picker-input
+  > input {
+  font-size: 15px;
+}
+
+.cms-datepicker--small:not(.cms-datepicker--range-split)
+  .ant-picker.cms-datepicker__picker
+  .ant-picker-input
+  > input {
+  font-size: 14px;
+}
+
+/* ----- 기간: 분리 세그먼트 ----- */
+.cms-datepicker.cms-datepicker--range-split {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.cms-datepicker__segment {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 218px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  border-radius: var(--8, 8px);
+  border: 1px solid var(--table-line, #e0e0e0);
+  background: var(--main-WT, #fff);
+  transition: border-color 0.15s ease;
+}
+
+.cms-datepicker__segment:hover:not(.cms-datepicker__segment--disabled) {
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.cms-datepicker__segment:focus-within:not(.cms-datepicker__segment--disabled),
+.cms-datepicker__segment:has(.ant-picker-focused):not(.cms-datepicker__segment--disabled) {
+  border-color: var(--color-mint-01, #01a1af);
+}
+
+.cms-datepicker__segment--disabled {
+  border-color: var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+  background-color: #fff;
+  background-image: var(
+    --disabled-default-bg,
+    linear-gradient(0deg, rgba(61, 61, 61, 0.1) 0%, rgba(61, 61, 61, 0.1) 100%)
+  );
+  cursor: not-allowed;
+}
+
+.cms-datepicker--range-split.cms-datepicker--explicit-width .cms-datepicker__segment {
+  max-width: none;
+  flex: 1 1 0;
+}
+
+.cms-datepicker--range-split.cms-datepicker--large .cms-datepicker__segment {
+  height: 44px;
+  padding: 0 12px 0 14px;
+}
+
+.cms-datepicker--range-split.cms-datepicker--medium .cms-datepicker__segment {
+  height: 40px;
+  padding: 0 12px 0 14px;
+}
+
+.cms-datepicker--range-split.cms-datepicker--small .cms-datepicker__segment {
+  height: 32px;
+  padding: 0 10px 0 12px;
+}
+
+.cms-datepicker__segment .ant-picker.cms-datepicker__picker {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.cms-datepicker__segment .ant-picker.cms-datepicker__picker.ant-picker-focused {
+  box-shadow: none !important;
+}
+
+.cms-datepicker__segment .ant-picker.cms-datepicker__picker .ant-picker-prefix {
+  margin-inline: 0 8px;
+}
+
+.cms-datepicker__segment .ant-picker.cms-datepicker__picker .ant-picker-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cms-datepicker__segment .ant-picker.cms-datepicker__picker .ant-picker-input > input {
+  overflow: hidden;
+  color: var(--main-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.cms-datepicker__segment--disabled .ant-picker.cms-datepicker__picker .ant-picker-input > input,
+.cms-datepicker__segment--disabled .ant-picker.cms-datepicker__picker .ant-picker-input > input::placeholder {
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5)) !important;
+  cursor: not-allowed;
+}
+
+.cms-datepicker--range-split.cms-datepicker--large
+  .cms-datepicker__segment
+  .ant-picker.cms-datepicker__picker
+  .ant-picker-input
+  > input {
+  font-size: 16px;
+}
+
+.cms-datepicker--range-split.cms-datepicker--medium
+  .cms-datepicker__segment
+  .ant-picker.cms-datepicker__picker
+  .ant-picker-input
+  > input {
+  font-size: 15px;
+}
+
+.cms-datepicker--range-split.cms-datepicker--small
+  .cms-datepicker__segment
+  .ant-picker.cms-datepicker__picker
+  .ant-picker-input
+  > input {
+  font-size: 14px;
+}
+
+.cms-datepicker--range-split .cms-datepicker__range-separator {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  margin: 0 6px;
+  padding: 0;
+  color: var(--gray-85969-d, #85969d);
+  font-family: inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.cms-datepicker--range-split.cms-datepicker--large .cms-datepicker__range-separator {
+  height: 44px;
+}
+
+.cms-datepicker--range-split.cms-datepicker--medium .cms-datepicker__range-separator {
+  height: 40px;
+}
+
+.cms-datepicker--range-split.cms-datepicker--small .cms-datepicker__range-separator {
+  height: 32px;
+}

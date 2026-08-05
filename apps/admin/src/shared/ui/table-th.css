@@ -1,0 +1,9 @@
+/**
+ * DetailInfoForm 라벨 셀 — 테이블 th와 동일 배경 (#F5F6F7)
+ * border는 패키지(field-label border-right + row border-bottom) 유지
+ */
+
+.detail-info-form__field-label,
+.detail-info-form__name-block-cell--label {
+  background: var(--table-th-bg, #f5f6f7) !important;
+}

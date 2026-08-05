@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui build",
+    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/form-template-runtime build",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint . --max-warnings=-1",
@@ -19,6 +19,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^3.9.1",
+    "@jakorea/form-template-runtime": "workspace:^",
     "@jakorea/ui": "workspace:*",
     "@jakorea/utils": "workspace:*",
     "@tanstack/react-query": "^5.62.2",
