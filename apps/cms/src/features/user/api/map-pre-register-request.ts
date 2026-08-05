@@ -2,11 +2,20 @@ import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import type {
   AdminPreRegisterIndividualRequest,
   AdminPreRegisterInstructorRequest,
-  AdminPreRegisterMemberRequest,
   AdminPreRegisterSchoolRequest,
 } from '@/shared/api/generated/members/schemas'
+import type { AdminPreRegisterMemberRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterMemberRequest'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
+
+function attachTermsAgreements<
+  T extends { termsAgreements?: AdminPreRegisterIndividualRequest['termsAgreements'] },
+>(body: T, request: CreateUserRequest): T {
+  if (request.termsAgreements != null && request.termsAgreements.length > 0) {
+    body.termsAgreements = request.termsAgreements
+  }
+  return body
+}
 
 function baseIdentity(request: CreateUserRequest) {
   const email = request.email?.trim() || undefined
@@ -70,7 +79,7 @@ export function mapCreateUserRequestToPreRegisterIndividual(
     body.enrollmentStatus = request.schoolEnrollmentStatus
   }
   if (request.id1365?.trim()) body.external1365Id = request.id1365.trim()
-  return body
+  return attachTermsAgreements(body, request)
 }
 
 export function mapCreateUserRequestToPreRegisterSchool(
@@ -94,7 +103,7 @@ export function mapCreateUserRequestToPreRegisterSchool(
   if (request.regionSido?.trim()) body.regionSido = request.regionSido.trim()
   if (request.regionSigungu?.trim()) body.regionSigungu = request.regionSigungu.trim()
   if (request.zipCode?.trim()) body.zipCode = request.zipCode.trim()
-  return body
+  return attachTermsAgreements(body, request)
 }
 
 export function mapCreateUserRequestToPreRegisterInstructor(
@@ -120,9 +129,7 @@ export function mapCreateUserRequestToPreRegisterInstructor(
   if (request.selfIntroduction?.trim()) body.selfIntroduction = request.selfIntroduction.trim()
   if (request.educationLevel?.trim()) body.educationLevel = request.educationLevel.trim()
   if (request.id1365?.trim()) body.external1365Id = request.id1365.trim()
-  if (request.termsAgreements != null && request.termsAgreements.length > 0) {
-    body.termsAgreements = request.termsAgreements
-  }
+  attachTermsAgreements(body, request)
   if (request.certifications != null && request.certifications.length > 0) {
     body.certifications = request.certifications
   }

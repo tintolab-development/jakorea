@@ -54,7 +54,6 @@ import {
   resolvePrimaryUserRole,
 } from '@/features/user/api/map-member-role'
 import {
-  createMemberCommentRemote,
   changeAdminAccountRoleRemote,
   createAdminAccountRemote,
   deleteMemberRemote,
@@ -62,7 +61,6 @@ import {
   fetchAdminsPageRemote,
   fetchIndividualMemberDetailRemote,
   fetchInstructorMemberDetailRemote,
-  fetchMemberCommentsRemote,
   fetchMemberDetailRemote,
   fetchMemberExternalIdentifiersRemote,
   fetchMembersPageRemote,
@@ -73,17 +71,15 @@ import {
   revokeInstructorPermissionRemote,
   updateMemberBasicInfoRemote,
   updateAdminBasicInfoRemote,
-  updateMemberCommentRemote,
+  upsertMemberAdminCommentRemote,
 } from '@/features/user/api/members-api-client'
 import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
 import type { InstructorCertificationUpsertRequest } from '@/shared/api/generated/members/schemas/instructorCertificationUpsertRequest'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
-import {
-  MEMBER_DETAIL_SCREEN_CODE,
-  resolveLatestMemberAdminCommentDetail,
-} from '@/features/user/api/map-member-comments'
+import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
 import {
   hasAdminCommentPatch,
+  isAdminCommentOnlyPatch,
   mapPatchUserBasicInfoToAdminAccountApiRequest,
   mapPatchUserBasicInfoToApiRequest,
 } from '@/features/user/api/map-patch-user-basic-info'
@@ -311,6 +307,15 @@ export type PatchUserBasicInfoInput = Partial<
   >
 >
 
+/** 코멘트 전용 저장 시 상세 GET·코멘트 목록 GET을 줄이기 위한 힌트 */
+export type PatchUserBasicInfoOptions = {
+  knownRole?: UserRole
+  memberId?: number
+  existingCommentId?: number
+  /** 코멘트만 저장 후 이 객체를 기준으로 반환 (추가 상세 GET 생략) */
+  baseUser?: Omit<User, 'password'>
+}
+
 function isAdminPermissionVariantOnlyPatch(patch: PatchUserBasicInfoInput): boolean {
   const keys = Object.keys(patch) as (keyof PatchUserBasicInfoInput)[]
   if (keys.length !== 1 || keys[0] !== 'listMetrics' || !patch.listMetrics) return false
@@ -348,35 +353,24 @@ async function mergeUserFromApiResponse(
 async function patchAdminUserBasicInfoRemote(
   userId: UUID,
   existing: Omit<User, 'password'>,
-  patch: PatchUserBasicInfoInput
+  patch: PatchUserBasicInfoInput,
+  options?: PatchUserBasicInfoOptions
 ): Promise<Omit<User, 'password'>> {
   const adminId =
-    existing.adminAccountId ??
-    (await resolveAdminAccountIdForDetail(userId, { email: existing.email }))
+    existing.adminAccountId ?? (await resolveAdminAccountIdForDetail(userId))
 
   if (isAdminPermissionVariantOnlyPatch(patch)) {
     return patchAdminPermissionVariantRemote(userId, patch.listMetrics!.adminPermissionVariant!)
   }
 
-  const memberId = existing.memberId
+  const memberId = options?.memberId ?? existing.memberId
   if (memberId != null && hasAdminCommentPatch(patch)) {
     const comment = patch.adminComment?.trim()
     if (comment) {
-      const existingComments = await fetchMemberCommentsRemote(memberId, {
+      await upsertMemberAdminCommentRemote(memberId, comment, {
+        existingCommentId: options?.existingCommentId,
         screenCode: MEMBER_DETAIL_SCREEN_CODE,
-      }).catch(() => [])
-      const latest = resolveLatestMemberAdminCommentDetail(
-        existingComments,
-        MEMBER_DETAIL_SCREEN_CODE
-      )
-      if (latest?.commentId != null) {
-        await updateMemberCommentRemote(memberId, latest.commentId, { comment })
-      } else {
-        await createMemberCommentRemote(memberId, {
-          screenCode: MEMBER_DETAIL_SCREEN_CODE,
-          comment,
-        })
-      }
+      })
     }
   }
 
@@ -407,6 +401,14 @@ async function patchAdminUserBasicInfoRemote(
     await updateAdminBasicInfoRemote(adminId, body)
   }
 
+  if (isAdminCommentOnlyPatch(patch)) {
+    const comment = patch.adminComment?.trim()
+    return {
+      ...existing,
+      ...(comment ? { adminComment: comment } : { adminComment: undefined }),
+    }
+  }
+
   return fetchAdminMemberDetailAsUser(userId, {
     adminAccountId: adminId,
     memberId: existing.memberId,
@@ -416,43 +418,42 @@ async function patchAdminUserBasicInfoRemote(
 
 async function patchUserBasicInfoRemote(
   userId: UUID,
-  patch: PatchUserBasicInfoInput
+  patch: PatchUserBasicInfoInput,
+  options?: PatchUserBasicInfoOptions
 ): Promise<Omit<User, 'password'>> {
-  if (shouldUseAdminAccountDetailApi({ userId })) {
-    const existing = await fetchAdminMemberDetailAsUser(userId)
-    return patchAdminUserBasicInfoRemote(userId, existing, patch)
+  const knownRole = options?.knownRole ?? options?.baseUser?.role
+
+  if (shouldUseAdminAccountDetailApi({ userId }) || knownRole === 'ADMIN') {
+    const existing =
+      options?.baseUser?.role === 'ADMIN'
+        ? options.baseUser
+        : await fetchAdminMemberDetailAsUser(userId)
+    return patchAdminUserBasicInfoRemote(userId, existing, patch, options)
   }
 
-  let existingForRole: Omit<User, 'password'> | null = null
-  try {
-    existingForRole = await getUserById(userId)
-  } catch {
-    existingForRole = null
+  let existingForRole: Omit<User, 'password'> | null = options?.baseUser ?? null
+  if (!knownRole && !existingForRole) {
+    try {
+      existingForRole = await getUserById(userId)
+    } catch {
+      existingForRole = null
+    }
   }
-  if (existingForRole?.role === 'ADMIN') {
-    return patchAdminUserBasicInfoRemote(userId, existingForRole, patch)
+  if ((knownRole ?? existingForRole?.role) === 'ADMIN') {
+    const existing =
+      existingForRole ?? (await fetchAdminMemberDetailAsUser(userId))
+    return patchAdminUserBasicInfoRemote(userId, existing, patch, options)
   }
 
-  const memberId = resolveMemberIdForApi(userId)
+  const memberId = options?.memberId ?? resolveMemberIdForApi(userId)
   try {
     if (hasAdminCommentPatch(patch)) {
       const comment = patch.adminComment?.trim()
       if (comment) {
-        const existingComments = await fetchMemberCommentsRemote(memberId, {
+        await upsertMemberAdminCommentRemote(memberId, comment, {
+          existingCommentId: options?.existingCommentId,
           screenCode: MEMBER_DETAIL_SCREEN_CODE,
-        }).catch(() => [])
-        const latest = resolveLatestMemberAdminCommentDetail(
-          existingComments,
-          MEMBER_DETAIL_SCREEN_CODE
-        )
-        if (latest?.commentId != null) {
-          await updateMemberCommentRemote(memberId, latest.commentId, { comment })
-        } else {
-          await createMemberCommentRemote(memberId, {
-            screenCode: MEMBER_DETAIL_SCREEN_CODE,
-            comment,
-          })
-        }
+        })
       }
     }
 
@@ -461,18 +462,21 @@ async function patchUserBasicInfoRemote(
     const hasBodyFields = Object.keys(body).length > 0
 
     if (!hasBodyFields && hasAdminCommentPatch(patch)) {
-      const existing = await getUserById(userId)
-      if (!existing) {
+      const base =
+        options?.baseUser ??
+        existingForRole ??
+        (await getUserById(userId))
+      if (!base) {
         throw new Error('사용자를 찾을 수 없습니다.')
       }
       return {
-        ...existing,
-        adminComment: patch.adminComment?.trim() || existing.adminComment,
+        ...base,
+        adminComment: patch.adminComment?.trim() || base.adminComment,
       }
     }
 
     if (!hasBodyFields) {
-      const existing = await getUserById(userId)
+      const existing = options?.baseUser ?? existingForRole ?? (await getUserById(userId))
       if (!existing) throw new Error('사용자를 찾을 수 없습니다.')
       return existing
     }
@@ -599,14 +603,15 @@ async function patchAdminPermissionVariantRemote(
 /** CMS: 관리자 등록 회원 등 기본 정보 일부 수정 (Mock — mockUsers 반영) */
 export async function patchUserBasicInfo(
   userId: UUID,
-  patch: PatchUserBasicInfoInput
+  patch: PatchUserBasicInfoInput,
+  options?: PatchUserBasicInfoOptions
 ): Promise<Omit<User, 'password'>> {
   if (isMembersRemoteEnabled()) {
     if (isAdminPermissionVariantOnlyPatch(patch) && isAdminPermissionVariantPatchRemoteEnabled()) {
       return patchAdminPermissionVariantRemote(userId, patch.listMetrics!.adminPermissionVariant!)
     }
     if (isMemberBasicInfoPatchRemoteEnabled()) {
-      return patchUserBasicInfoRemote(userId, patch)
+      return patchUserBasicInfoRemote(userId, patch, options)
     }
     throw new Error('회원 기본정보 수정 API가 아직 제공되지 않습니다.')
   }
@@ -718,9 +723,13 @@ export async function getUserById(
       if (!role) {
         const legacy = await fetchMemberDetailRemote(memberId)
         role = resolvePrimaryUserRole(legacy.roles)
-        if (isAdminMemberDetailRole(role)) {
+        if (
+          isAdminMemberDetailRole(role) &&
+          shouldUseAdminAccountDetailApi({ userId, adminAccountId: options?.adminAccountId })
+        ) {
           return fetchAdminMemberDetailAsUser(userId, {
             memberId,
+            adminAccountId: options?.adminAccountId,
             email: legacy.email,
           })
         }
@@ -738,12 +747,24 @@ export async function getUserById(
         }
       }
 
-      if (isAdminMemberDetailRole(role)) {
+      if (
+        isAdminMemberDetailRole(role) &&
+        shouldUseAdminAccountDetailApi({
+          userId,
+          adminAccountId: options?.adminAccountId,
+        })
+      ) {
         return fetchAdminMemberDetailAsUser(userId, {
           memberId: options?.memberId ?? memberId,
           adminAccountId: options?.adminAccountId,
           email: options?.email,
         })
+      }
+
+      if (isAdminMemberDetailRole(role)) {
+        throw new Error(
+          '관리자 회원 상세를 조회하려면 목록 응답에 adminAccountId가 필요합니다.'
+        )
       }
 
       if (role === 'SCHOOL') {
@@ -961,6 +982,12 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
         if (!rawPassword) {
           throw new Error('관리자 등록에는 초기 비밀번호가 필요합니다.')
         }
+        const termsAgreements = request.termsAgreements
+        if (!termsAgreements || termsAgreements.length !== 4) {
+          throw new Error(
+            '관리자 등록에는 약관 동의 4종(서비스·개인정보·MFA·마케팅)이 필요합니다.'
+          )
+        }
         const created = await createAdminAccountRemote({
           email: adminEmail,
           rawPassword,
@@ -970,6 +997,7 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
           birthDate: toApiBirthDate(request.birthDate),
           roleCode: 'VIEWER',
           reason: 'CMS 관리자 회원 신규 등록',
+          termsAgreements,
         })
         const adminAccountId = created.adminAccountId ?? created.id
         const memberId = created.memberId

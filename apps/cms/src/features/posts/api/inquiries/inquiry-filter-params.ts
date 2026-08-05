@@ -1,9 +1,9 @@
-import type { InquiriesParams } from '@/shared/api/generated/posts/schemas'
+import type { Inquiries1Params } from '@/shared/api/generated/posts/schemas'
 
 export const INQUIRY_LIST_PAGE_SIZE = 500
 
-export function inquiriesParamsFromSearchParams(searchParams: URLSearchParams): InquiriesParams {
-  const params: InquiriesParams = {
+export function inquiriesParamsFromSearchParams(searchParams: URLSearchParams): Inquiries1Params {
+  const params: Inquiries1Params = {
     page: 0,
     size: INQUIRY_LIST_PAGE_SIZE,
   }

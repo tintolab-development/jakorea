@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   ADMIN_PRE_REGISTER_TERMS_VERSION,
+  buildAdminAccountCreateTermsAgreements,
   buildPreRegisterDocumentTermsAgreements,
   buildPreRegisterRadioTermsAgreements,
   buildPreRegisterTermsAgreements,
@@ -36,7 +37,7 @@ describe('build-pre-register-terms-agreements', () => {
     ])
   })
 
-  it('동의서 작성형은 agree일 때만 termsAgreements에 포함한다', () => {
+  it('동의서 작성형 — agree/disagree 모두 termsAgreements에 포함', () => {
     expect(
       buildPreRegisterDocumentTermsAgreements({
         consentPortrait: 'agree',
@@ -51,11 +52,45 @@ describe('build-pre-register-terms-agreements', () => {
         agreed: true,
       },
       {
+        termsType: 'PAYMENT_STATEMENT',
+        version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+        required: false,
+        agreed: false,
+      },
+      {
         termsType: 'EDUCATOR_PLEDGE',
         version: ADMIN_PRE_REGISTER_TERMS_VERSION,
         required: false,
         agreed: true,
       },
+    ])
+  })
+
+  it('개인 등록 8건 — 라디오 3 + 동의서 5 모두 agree/disagree 포함', () => {
+    const rows = buildPreRegisterTermsAgreements(
+      {
+        consentTermsOfService: 'agree',
+        consentPersonal: 'agree',
+        consentMarketing: 'disagree',
+      },
+      {
+        consentPortrait: 'agree',
+        consentWithholdingTax: 'disagree',
+        consentFacilitatorPledge: 'disagree',
+        consentAdministrativeJoint: 'agree',
+        consentSexOffenseCheck: 'disagree',
+      }
+    )
+    expect(rows).toHaveLength(8)
+    expect(rows.map(r => [r.termsType, r.agreed])).toEqual([
+      ['SERVICE_TERMS', true],
+      ['PRIVACY_COLLECTION', true],
+      ['MARKETING', false],
+      ['PORTRAIT_RIGHTS', true],
+      ['PAYMENT_STATEMENT', false],
+      ['EDUCATOR_PLEDGE', false],
+      ['ADMINISTRATIVE_JOINT', true],
+      ['SEX_OFFENSE_CHECK', false],
     ])
   })
 
@@ -84,6 +119,42 @@ describe('build-pre-register-terms-agreements', () => {
       'EDUCATOR_PLEDGE',
       'ADMINISTRATIVE_JOINT',
       'SEX_OFFENSE_CHECK',
+    ])
+  })
+
+  it('관리자 계정 생성용 약관 4종을 매핑한다', () => {
+    expect(
+      buildAdminAccountCreateTermsAgreements({
+        consentTermsOfService: 'agree',
+        consentPersonal: 'agree',
+        consentMarketing: 'disagree',
+        consentMfaSetup: 'agree',
+      })
+    ).toEqual([
+      {
+        termsType: 'SERVICE_TERMS',
+        version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+        required: true,
+        agreed: true,
+      },
+      {
+        termsType: 'PRIVACY_COLLECTION',
+        version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+        required: true,
+        agreed: true,
+      },
+      {
+        termsType: 'MFA_SETUP_CONSENT',
+        version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+        required: false,
+        agreed: true,
+      },
+      {
+        termsType: 'MARKETING',
+        version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+        required: false,
+        agreed: false,
+      },
     ])
   })
 })

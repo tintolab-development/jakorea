@@ -5,7 +5,7 @@ import type {
   InquiryAnswerResponse,
   InquiryAnswerUpdateRequest,
   InquiryResponse,
-  InquiriesParams,
+  Inquiries1Params,
   PageResponse,
 } from '@/shared/api/generated/posts/schemas'
 
@@ -16,12 +16,12 @@ function pathId(id: string): number {
   return Number.isFinite(parsed) ? parsed : (id as unknown as number)
 }
 
-export async function fetchInquiriesRemote(params: InquiriesParams): Promise<PageResponse> {
-  return unwrapApiBody(await postsApi.inquiries(params))
+export async function fetchInquiriesRemote(params: Inquiries1Params): Promise<PageResponse> {
+  return unwrapApiBody(await postsApi.inquiries1(params))
 }
 
 export async function fetchInquiryRemote(id: string): Promise<InquiryResponse> {
-  return unwrapApiBody(await postsApi.inquiry(pathId(id)))
+  return unwrapApiBody(await postsApi.inquiry1(pathId(id)))
 }
 
 export async function fetchInquiryAnswersRemote(

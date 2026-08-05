@@ -89,6 +89,7 @@ import {
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
 import { applyAffiliatedTeacherLinkToUser } from '@/features/user/api/apply-affiliated-teacher-link'
+import { buildAdminAccountCreateTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
 import {
   buildInstructorRegisterCertifications,
   buildInstructorRegisterEducationLevel,
@@ -483,6 +484,9 @@ export function UserListPage() {
         const displayUser = withTeacherCtx(fetched)
         openDrawer(displayUser)
         setDetailBridgeUser(displayUser)
+        if (displayUser.id && displayUser.id !== targetId) {
+          setParams({ id: displayUser.id }, { replace: true })
+        }
       } catch (error) {
         if (!cancelled) {
           handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })
@@ -504,6 +508,7 @@ export function UserListPage() {
     setSelectedUserId,
     openDrawer,
     fetchUserById,
+    setParams,
   ])
 
   /** 상세 GET 완료분만이 본문 — 목록 행으로 필드를 채우지 않음 */
@@ -542,7 +547,10 @@ export function UserListPage() {
   }, [queryClient])
 
   const handleMemberBasicInfoSaved = useCallback(
-    (updated: Omit<User, 'password'>) => {
+    (
+      updated: Omit<User, 'password'>,
+      options?: { skipListInvalidate?: boolean }
+    ) => {
       setDrawerUser(updated)
       setDetailBridgeUser(prev => (prev?.id === updated.id ? updated : prev))
       const patchListCache = (
@@ -572,7 +580,9 @@ export function UserListPage() {
         { queryKey: [...memberQueryKeys.all, 'list'] },
         patchListCache
       )
-      invalidateList()
+      if (!options?.skipListInvalidate) {
+        invalidateList()
+      }
     },
     [setDrawerUser, setDetailBridgeUser, queryClient, invalidateList]
   )
@@ -814,6 +824,12 @@ export function UserListPage() {
         role: 'ADMIN',
         adminLevel: 'ADMIN',
         isActive: true,
+        termsAgreements: buildAdminAccountCreateTermsAgreements({
+          consentTermsOfService: values.consentTermsOfService,
+          consentPersonal: values.consentPersonalInfo,
+          consentMarketing: values.consentMarketing,
+          consentMfaSetup: values.consentMfaSetup,
+        }),
       })
       invalidateList()
       closeAdminRegisterModal()

@@ -63,7 +63,7 @@ export function buildPreRegisterRadioTermsAgreements(
 }
 
 /**
- * 동의서 작성형 — `agree`일 때만 termsAgreements에 포함.
+ * 동의서 작성형 — 폼에 있는 항목은 agree/disagree 모두 termsAgreements에 포함.
  * formResponseId·전문 스냅샷 API는 BE 확정 전 — agreed 플래그만 전송.
  */
 export function buildPreRegisterDocumentTermsAgreements(
@@ -77,7 +77,7 @@ export function buildPreRegisterDocumentTermsAgreements(
   for (const [key, value] of Object.entries(documents) as Array<
     [PreRegisterDocumentConsentKey, PreRegisterConsentValue | undefined]
   >) {
-    if (value !== 'agree') continue
+    if (value == null) continue
     const termsType = DOCUMENT_TERMS_TYPE[key]
     if (!termsType || seenTermsTypes.has(termsType)) continue
     seenTermsTypes.add(termsType)
@@ -85,7 +85,7 @@ export function buildPreRegisterDocumentTermsAgreements(
       termsType,
       version: ADMIN_PRE_REGISTER_TERMS_VERSION,
       required: false,
-      agreed: true,
+      agreed: toAgreed(value),
     })
   }
 
@@ -99,6 +99,45 @@ export function buildPreRegisterTermsAgreements(
   return [
     ...buildPreRegisterRadioTermsAgreements(radio),
     ...buildPreRegisterDocumentTermsAgreements(documents),
+  ]
+}
+
+export type AdminAccountCreateConsentFields = PreRegisterRadioConsentFields & {
+  consentMfaSetup: PreRegisterConsentValue
+}
+
+/**
+ * 관리자 계정 생성용 약관 4종.
+ * SERVICE_TERMS, PRIVACY_COLLECTION, MFA_SETUP_CONSENT, MARKETING — 각 1건.
+ */
+export function buildAdminAccountCreateTermsAgreements(
+  values: AdminAccountCreateConsentFields
+): TermsAgreementRequest[] {
+  return [
+    {
+      termsType: 'SERVICE_TERMS',
+      version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+      required: true,
+      agreed: toAgreed(values.consentTermsOfService),
+    },
+    {
+      termsType: 'PRIVACY_COLLECTION',
+      version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+      required: true,
+      agreed: toAgreed(values.consentPersonal),
+    },
+    {
+      termsType: 'MFA_SETUP_CONSENT',
+      version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+      required: false,
+      agreed: toAgreed(values.consentMfaSetup),
+    },
+    {
+      termsType: 'MARKETING',
+      version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+      required: false,
+      agreed: toAgreed(values.consentMarketing),
+    },
   ]
 }
 

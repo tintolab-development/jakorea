@@ -30,7 +30,7 @@ export async function fetchSponsorRemote(id: string): Promise<SponsorDetailRespo
 }
 
 export async function createSponsorRemote(body: SponsorRequest): Promise<SponsorResponse> {
-  return unwrapApiBody(await dmApi.create2(body))
+  return unwrapApiBody(await dmApi.create3(body))
 }
 
 export async function updateSponsorRemote(

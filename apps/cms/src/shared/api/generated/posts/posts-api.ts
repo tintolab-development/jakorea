@@ -19,7 +19,7 @@ import type {
   FaqRequest,
   FaqResponse,
   FaqsParams,
-  InquiriesParams,
+  Inquiries1Params,
   InquiryAnswerRequest,
   InquiryAnswerResponse,
   InquiryAnswerUpdateRequest,
@@ -1413,8 +1413,8 @@ const updateFaqCategory = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary 관리자 조회
  */
-const inquiries = (
-    params?: InquiriesParams,
+const inquiries1 = (
+    params?: Inquiries1Params,
  options?: SecondParameter<typeof customInstance<PageResponse>>,) => {
       return customInstance<PageResponse>(
       {url: `/api/admin/inquiries`, method: 'GET',
@@ -1468,7 +1468,7 @@ const inquiries = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary 관리자 조회
  */
-const inquiry = (
+const inquiry1 = (
     inquiryId: number,
  options?: SecondParameter<typeof customInstance<InquiryResponse>>,) => {
       return customInstance<InquiryResponse>(
@@ -1529,7 +1529,7 @@ const deleteInquiry = (
       options);
     }
 
-return {answers,answer,bulkDelete1,notices,createNotice,bulkDeleteNotices,noticeCategories,createNoticeCategory,faqs,createFaq,bulkDeleteFaqs,faqCategories,createFaqCategory,updateInquiryAnswer,notice,deleteNotice,updateNotice,deleteNoticeCategory,updateNoticeCategory,faq,deleteFaq,updateFaq,deleteFaqCategory,updateFaqCategory,inquiries,inquiry,deleteInquiry}};
+return {answers,answer,bulkDelete1,notices,createNotice,bulkDeleteNotices,noticeCategories,createNoticeCategory,faqs,createFaq,bulkDeleteFaqs,faqCategories,createFaqCategory,updateInquiryAnswer,notice,deleteNotice,updateNotice,deleteNoticeCategory,updateNoticeCategory,faq,deleteFaq,updateFaq,deleteFaqCategory,updateFaqCategory,inquiries1,inquiry1,deleteInquiry}};
 export type AnswersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['answers']>>>
 export type AnswerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['answer']>>>
 export type BulkDelete1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['bulkDelete1']>>>
@@ -1554,6 +1554,6 @@ export type DeleteFaqResult = NonNullable<Awaited<ReturnType<ReturnType<typeof g
 export type UpdateFaqResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['updateFaq']>>>
 export type DeleteFaqCategoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['deleteFaqCategory']>>>
 export type UpdateFaqCategoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['updateFaqCategory']>>>
-export type InquiriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['inquiries']>>>
-export type InquiryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['inquiry']>>>
+export type Inquiries1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['inquiries1']>>>
+export type Inquiry1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['inquiry1']>>>
 export type DeleteInquiryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['deleteInquiry']>>>
