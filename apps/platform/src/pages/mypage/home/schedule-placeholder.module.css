@@ -1,7 +1,7 @@
 .section {
   display: flex;
-  width: 1220px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 1220px;
   align-items: stretch;
   gap: var(--spacing-24);
   padding: var(--spacing-24);
@@ -9,6 +9,16 @@
   border: 1px solid rgb(61 61 61 / 10%);
   background: var(--color-neutral-white);
   box-shadow: var(--shadow-card-lg);
+}
+
+@media (--bp-below-pc) {
+  .section {
+    flex-direction: column;
+  }
+
+  .empty {
+    width: 100%;
+  }
 }
 
 .calendarSlot {
