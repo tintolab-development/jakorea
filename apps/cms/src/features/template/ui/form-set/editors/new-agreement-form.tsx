@@ -30,7 +30,10 @@ import {
   persistWritingFormTemplateDraft,
 } from '@/features/template/lib/writing-form-template-local-save'
 import { overlayPaymentStatementPreConsentSeedHorizontalTables } from '@/features/template/model/payment-statement-pre-consent-draft'
-import { ensureAgreementNoticeConfirmationClosing } from '@/features/template/model/writing-form-draft.schema'
+import {
+  ensureAgreementNoticeConfirmationClosing,
+  overlayAgreementNoticeSeedHorizontalTable,
+} from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
@@ -147,6 +150,7 @@ export function AgreementWritingFormShell({
       }
       if (templateCode === 'agreement-notice') {
         normalized = ensureAgreementNoticeConfirmationClosing(normalized)
+        normalized = overlayAgreementNoticeSeedHorizontalTable(normalized)
       }
       setDraft(normalized)
       setActiveParagraphId(defaultActiveParagraphId ?? normalized.paragraphs[0]?.id ?? null)
@@ -219,7 +223,8 @@ export function AgreementWritingFormShell({
       a4RenderMode,
       a4ParagraphGapPx,
       paragraphBodyOptions,
-      hideParagraphRequiredChrome: previewLayout === 'a4-document',
+      /** 사용자 모드(미리보기·응답 입력)에서도 필수(*) 표시 */
+      hideParagraphRequiredChrome: false,
       focusedParagraphId: activeParagraphId,
     }),
     [

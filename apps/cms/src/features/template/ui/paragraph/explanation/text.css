@@ -53,7 +53,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--default-BK, #3d3d3d);
+  color: var(--disabled-txt, rgba(61, 61, 61, 0.5));
   font-family: Pretendard;
   font-size: 16px;
   font-style: normal;

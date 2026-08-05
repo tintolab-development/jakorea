@@ -1,5 +1,4 @@
-import { Input } from 'antd'
-import { CmsRadio } from '@/shared/ui'
+import { CmsInput, CmsRadio } from '@/shared/ui'
 import type { IdTypeWithInputParagraph } from '@/features/template/model/writing-form-draft.schema'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './id-type-with-input.css'
@@ -41,6 +40,7 @@ export function IdTypeWithInputBody({
       : paragraph.inputPlaceholder.trim() || '번호를 입력해 주세요'
   const inputValueForView = documentMode ? '' : paragraph.inputValue
   const inputPlaceholderForView = documentMode ? '' : ph
+  const inputDisabled = documentMode || !isEditMode
 
   const setSelected = (nextId: string) => {
     onChange({
@@ -76,15 +76,17 @@ export function IdTypeWithInputBody({
           </CmsRadio>
         ))}
       </CmsRadio.Group>
-      <Input
-        className="id-type-with-input__input paragraph-input--explanation-body"
+      <CmsInput
+        className="id-type-with-input__input"
+        inputSize="large"
+        width={280}
         value={inputValueForView}
         placeholder={inputPlaceholderForView}
+        disabled={inputDisabled}
         onChange={e => {
           if (!isEditMode) return
           onChange({ ...paragraph, inputValue: e.target.value, inputPlaceholder: ph })
         }}
-        disabled={documentMode}
       />
     </div>
   )

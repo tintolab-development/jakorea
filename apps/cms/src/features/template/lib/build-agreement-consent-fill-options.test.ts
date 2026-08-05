@@ -123,6 +123,7 @@ describe('buildAgreementConsentFillParagraphBodyOptions', () => {
       new Set([
         'agreement-notice-institution',
         'agreement-notice-purpose',
+        'agreement-notice-table',
         'agreement-notice-subject',
       ])
     )

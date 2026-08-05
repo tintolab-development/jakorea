@@ -757,6 +757,43 @@
   max-width: 100px;
 }
 
+/* 행정정보 표 셀 — 단락 공통 ParagraphInput (표 셀 폭·가운데 정렬) */
+[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__cell-paragraph-input.paragraph-input {
+  width: 100%;
+}
+
+[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__cell-paragraph-input
+  .paragraph-input__row,
+[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__cell-paragraph-input
+  .paragraph-input__main,
+[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__cell-paragraph-input
+  .paragraph-input__view-text,
+[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__cell-paragraph-input
+  .paragraph-input__shell {
+  width: 100%;
+  max-width: 100%;
+  justify-content: center;
+}
+
+[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__cell-paragraph-input
+  .paragraph-input__view-text,
+[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__cell-paragraph-input
+  .paragraph-input__placeholder,
+[data-paragraph-id='agreement-notice-table']
+  .form-editor-horizontal-table__cell-paragraph-input
+  .ant-input {
+  text-align: center;
+  width: 100% !important;
+  max-width: 100%;
+}
+
 /* 초상권 동의서(1번 섹션) — 4열 표에서 항목 컬럼 폭 고정 */
 [data-paragraph-id='agreement-portrait-personal-consent-table']
   .form-editor-horizontal-table__row

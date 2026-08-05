@@ -28,31 +28,31 @@
         "id": "agreement-notice-institution",
         "kind": "single_item",
         "variant": "agreement_explanation_text",
-        "requiredMark": true,
+        "requiredMark": false,
         "paragraphTitle": "이용기관 명칭",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "bodyPlaceholder": "이용기관 명칭을 입력해 주세요",
         "bodyText": "",
-        "answerRequired": true
+        "answerRequired": false
       },
       {
         "id": "agreement-notice-purpose",
         "kind": "single_item",
         "variant": "agreement_explanation_text",
-        "requiredMark": true,
+        "requiredMark": false,
         "paragraphTitle": "이용사무(이용목적)",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
         "bodyPlaceholder": "이용 목적을 입력해 주세요",
         "bodyText": "범죄경력 유무 조회",
-        "answerRequired": true
+        "answerRequired": false
       },
       {
         "id": "agreement-notice-table",
         "kind": "single_item",
         "variant": "horizontal_table",
-        "requiredMark": true,
+        "requiredMark": false,
         "paragraphTitle": "공동이용 행정정보(구비서류)",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,
@@ -64,6 +64,12 @@
           "행정정보명"
         ],
         "dataRows": [
+          [
+            "1",
+            "성범죄경력 및 아동학대관련 범죄전력 조회",
+            "",
+            ""
+          ],
           [
             "",
             "",
@@ -92,11 +98,11 @@
         "columnFields": [
           {
             "kind": "text",
-            "placeholder": "1"
+            "placeholder": "텍스트를 입력해 주세요"
           },
           {
             "kind": "text",
-            "placeholder": "성범죄경력 및 아동학대관련 범죄전력 조회"
+            "placeholder": "텍스트를 입력해 주세요"
           },
           {
             "kind": "text",
@@ -116,7 +122,7 @@
           "id": "agreement-notice-id-type",
           "kind": "single_item",
           "variant": "id_type_with_input",
-          "requiredMark": true,
+          "requiredMark": false,
           "paragraphTitle": "",
           "paragraphDescription": "",
           "participatesInTitleNumbering": true,
@@ -141,9 +147,9 @@
           "selectedOptionId": "agreement-notice-id-resident",
           "inputPlaceholder": "주민등록번호를 입력해 주세요",
           "inputValue": "",
-          "answerRequired": true
+          "answerRequired": false
         },
-        "answerRequired": true,
+        "answerRequired": false,
         "cellColumnFields": [
           [
             {
@@ -223,7 +229,7 @@
         "id": "agreement-notice-consent-static",
         "kind": "description",
         "variant": "static_description_lines",
-        "requiredMark": true,
+        "requiredMark": false,
         "paragraphTitle": "정보주체(본인) 동의사항",
         "paragraphDescription": "",
         "participatesInTitleNumbering": true,

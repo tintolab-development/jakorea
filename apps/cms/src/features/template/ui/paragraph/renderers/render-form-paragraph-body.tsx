@@ -353,11 +353,17 @@ export function renderFormParagraphBody(
       const hp = normalizeHorizontalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
       )
-      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 동의서 fill은 양식 본문만 잠금 */
+      const isAgreementNoticeTable = hp.id === 'agreement-notice-table'
+      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 동의서 fill은 양식 본문만 잠금
+       * 행정정보 표: fill interactive + authoring 선택 시 셀 입력 허용 */
       const isEditMode =
         !isPreviewReadonly &&
         (!structureLocked ||
-          (paragraphInteractionMode === 'user' && !consentFillBodyReadOnly)) &&
+          consentFillParagraphInteractive ||
+          (paragraphInteractionMode === 'user' && !consentFillBodyReadOnly) ||
+          (paragraphInteractionMode === 'authoring' &&
+            isParagraphSelected &&
+            isAgreementNoticeTable)) &&
         (paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field')
       /** 표 격자·헤더 행 선택(민트 스트로크) — 작성(authoring) + 구조 미잠금에서만 */
       const tableCanvasInteractive =
