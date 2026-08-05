@@ -111,9 +111,9 @@ function buildMember(input: SignUpMapInput): MemberSignupRequest {
   }
 
   if (input.selectedType === 'general' && input.schoolStatus === 'enrolled') {
+    // NEIS 선택 학교명·학년. organizationId는 기관 캐시에 있을 때만 전달(없어도 가입 진행).
     member.schoolName = input.schoolName.trim() || undefined
     member.grade = input.grade.trim() || undefined
-    // 백엔드: 재학 중 일반회원은 schoolOrganizationId 필수
     if (input.schoolOrganizationId != null) {
       member.schoolOrganizationId = input.schoolOrganizationId
     }

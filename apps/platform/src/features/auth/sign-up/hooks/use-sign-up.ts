@@ -132,14 +132,8 @@ export function useSignUp() {
   const isStepTwoValid = isBirthStepValid(birthDate, gender)
   const isStepSixValid =
     selectedType === 'teacher'
-      ? isTeacherProfileValid(schoolName, employmentStatus, {
-          requireSchoolOrganizationId: remoteApi,
-          schoolOrganizationId,
-        })
-      : isProfileStepValid(address, addressDetail, schoolStatus, schoolName, grade, {
-          requireSchoolOrganizationId: remoteApi,
-          schoolOrganizationId,
-        })
+      ? isTeacherProfileValid(schoolName, employmentStatus)
+      : isProfileStepValid(address, addressDetail, schoolStatus, schoolName, grade)
   const isGuardianProfileValidState = isGuardianProfileValid(guardianRelationship)
 
   const handleSignIn = () => {
@@ -438,15 +432,6 @@ export function useSignUp() {
     }
 
     if (selectedType === 'teacher' && schoolOrganizationId == null) {
-      setSubmitMessage('소속 학교를 검색에서 선택해 주세요.')
-      return
-    }
-
-    if (
-      selectedType === 'general' &&
-      schoolStatus === 'enrolled' &&
-      schoolOrganizationId == null
-    ) {
       setSubmitMessage('소속 학교를 검색에서 선택해 주세요.')
       return
     }
