@@ -2,7 +2,7 @@
  * 메인 히어로 배너 관리
  */
 
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState, type Key } from 'react'
 import { Image, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { HeroBanner } from '@/entities/hero-banner/model/types'
@@ -14,6 +14,7 @@ import {
   useSetHeroBannerActive,
   useUpdateHeroBanner,
 } from '@/features/hero-banner/api/hooks'
+import { heroBannerQueryKeys } from '@/features/hero-banner/api/query-keys'
 import { HERO_BANNERS_CHANGED_EVENT } from '@/features/hero-banner/api/store'
 import {
   HeroBannerFormModal,
@@ -24,6 +25,7 @@ import {
   HeroBannersSortableTable,
 } from '@/features/hero-banner/ui/sortable-table'
 import { HeroBannerTextLinkCell } from '@/features/hero-banner/ui/text-link-cell'
+import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
 
 import './page.css'
@@ -44,13 +46,7 @@ export function HeroBannersPage() {
   const [editingBanner, setEditingBanner] = useState<HeroBanner | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
-  useEffect(() => {
-    const handler = () => {
-      void listQuery.refetch()
-    }
-    window.addEventListener(HERO_BANNERS_CHANGED_EVENT, handler)
-    return () => window.removeEventListener(HERO_BANNERS_CHANGED_EVENT, handler)
-  }, [listQuery])
+  useInvalidateOnWindowEvent(HERO_BANNERS_CHANGED_EVENT, heroBannerQueryKeys.lists())
 
   const handleRowsReorder = useCallback(
     (reorderedRows: HeroBanner[]) => {
