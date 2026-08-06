@@ -281,7 +281,7 @@ const PAGE_TITLE_BY_PATH: Record<string, string> = {
   '/ja-korea/recruit/postings': '공고 관리',
   '/ja-korea/recruit/applicants': '지원자 관리',
   '/ja-korea/notice-fields': '사업분야 관리',
-  '/ja-korea/notices': '공지 관리',
+  '/ja-korea/notices': '공지사항',
   '/ja-korea/directions': '오시는 길 관리',
   '/ja-korea/organization': '조직도 관리',
   '/ja-korea/board': '이사회 관리',
