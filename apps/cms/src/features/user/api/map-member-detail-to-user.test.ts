@@ -93,6 +93,20 @@ describe('mapIndividualMemberDetailToUser', () => {
     expect(user.schoolEnrollmentStatus).toBeUndefined()
     expect(user.affiliation).toBe('서울고등학교 | 2학년')
   })
+
+  it('termsAgreements를 User에 매핑한다', () => {
+    const user = mapIndividualMemberDetailToUser(
+      baseIndividualDetail({
+        termsAgreements: [
+          { termsType: 'SERVICE_TERMS', agreed: true },
+          { termsType: 'MARKETING', agreed: false },
+        ],
+      })
+    )
+
+    expect(user.termsAgreements).toHaveLength(2)
+    expect(user.termsAgreements?.[1]).toMatchObject({ termsType: 'MARKETING', agreed: false })
+  })
 })
 
 describe('mapInstructorMemberDetailToUser', () => {

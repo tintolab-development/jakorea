@@ -50,6 +50,24 @@ export function resolveMemberConsentTemplateEntry(
   return MEMBER_CONSENT_TEMPLATE_MAP[fieldKey]
 }
 
+const CONSENT_LABEL_TO_FIELD_KEY: Record<string, MemberConsentFieldKey> = {
+  '초상권 수집·이용 동의': 'consentPortrait',
+  '지급조서 사전 동의서': 'consentWithholdingTax',
+  '교육진행자 서약서': 'consentFacilitatorPledge',
+  '교육진행자 동의 서약서': 'consentFacilitatorPledge',
+  '행정정보 공동이용 사전동의서': 'consentAdministrativeJoint',
+  '성범죄 경력 조회 동의서': 'consentSexOffenseCheck',
+}
+
+/** 회원 상세 약관·동의 UI 라벨 → 동의서 템플릿 */
+export function resolveMemberConsentTemplateByLabel(
+  label: string
+): MemberConsentTemplateEntry | undefined {
+  const fieldKey = CONSENT_LABEL_TO_FIELD_KEY[label.trim()]
+  if (!fieldKey) return undefined
+  return MEMBER_CONSENT_TEMPLATE_MAP[fieldKey]
+}
+
 export function isMemberCrimeConsentField(fieldKey: MemberConsentFieldKey): boolean {
   return fieldKey === 'consentSexOffenseCheck'
 }

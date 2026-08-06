@@ -396,6 +396,9 @@ export function mapIndividualMemberDetailToUser(
           : schoolName
     }
   }
+  if (detail.termsAgreements?.length) {
+    user.termsAgreements = detail.termsAgreements
+  }
   return user
 }
 

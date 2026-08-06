@@ -5,6 +5,7 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import type { User } from '@/types/user'
 
 export type MemberConsentMemberContext = {
   name: string
@@ -60,5 +61,28 @@ export function applyMemberPortraitConsentPrefill(
   return {
     ...normalized,
     paragraphs: normalized.paragraphs.map(paragraph => fillPersonalConsentTable(paragraph, ctx)),
+  }
+}
+
+const USER_AFFILIATION_PIPE_SEP = ' | ' as const
+
+/** 회원 상세 — 동의서 보기 모달용 회원 컨텍스트 */
+export function buildMemberConsentContextFromUser(
+  user: Pick<User, 'name' | 'schoolEnrollmentStatus' | 'affiliation'>
+): MemberConsentMemberContext {
+  const enrolled = user.schoolEnrollmentStatus === 'ENROLLED'
+  const affiliationRaw = user.affiliation?.trim() ?? ''
+  const pipeIdx = affiliationRaw.indexOf(USER_AFFILIATION_PIPE_SEP)
+  const primaryAffiliation =
+    pipeIdx === -1 ? affiliationRaw : affiliationRaw.slice(0, pipeIdx).trim()
+  const affiliationSuffix =
+    pipeIdx === -1 ? '' : affiliationRaw.slice(pipeIdx + USER_AFFILIATION_PIPE_SEP.length).trim()
+
+  return {
+    name: user.name?.trim() ?? '',
+    schoolEnrollmentStatus: enrolled ? 'enrolled' : 'not_enrolled',
+    schoolName: enrolled ? primaryAffiliation || undefined : undefined,
+    grade: enrolled && affiliationSuffix ? affiliationSuffix : undefined,
+    affiliationOrganization: !enrolled ? primaryAffiliation || undefined : undefined,
   }
 }

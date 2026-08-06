@@ -1,0 +1,11 @@
+.member-consent-document-view-modal__body-header {
+  justify-content: flex-end;
+}
+
+.member-consent-document-view-modal__toolbar {
+  justify-content: flex-end;
+}
+
+.member-consent-document-view-modal__actions {
+  margin-left: auto;
+}

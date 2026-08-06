@@ -31,7 +31,8 @@ import {
   useAffiliatedTeachersQuery,
   useMemberCommentsQuery,
 } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
-import { applyConsentRecordsToSchema } from '@/features/user/api/map-member-consent-records'
+import { applyMemberConsentToSchema } from '@/features/user/api/map-member-consent-records'
+import { buildMemberConsentContextFromUser } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { updateAffiliatedTeacherEmploymentStatusRemote } from '@/features/user/api/members-api-client'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
@@ -156,14 +157,23 @@ export function UserDetailFullpageBasicTabContent({
       consentViewVariant === 'permission_instructor'
         ? CONSENT_ROWS_PERMISSION_INSTRUCTOR
         : CONSENT_PRESET_SCHEMA[consentPreset]
-    return applyConsentRecordsToSchema(baseSchema, consentRecords)
+    return applyMemberConsentToSchema(baseSchema, {
+      consentRecords,
+      termsAgreements: user.termsAgreements,
+    })
   }, [
     membersRemote,
     basicTab.showConsentAgreement,
     consentViewVariant,
     consentPreset,
     consentRecords,
+    user.termsAgreements,
   ])
+
+  const memberConsentContext = useMemo(
+    () => buildMemberConsentContextFromUser(user),
+    [user]
+  )
 
   const isInstructorPermissionDetail = mode === 'permission' && permissionRole === 'instructor'
   const isAdminPermissionDetail = mode === 'permission' && permissionRole === 'admin'
@@ -241,6 +251,7 @@ export function UserDetailFullpageBasicTabContent({
               viewVariant={consentViewVariant}
               remoteConsentRows={remoteConsentRows}
               remoteConsentLoading={membersRemote && consentLoading}
+              memberConsentContext={memberConsentContext}
             />
           ) : null}
           {instructorResumeApplicantRow ? (
