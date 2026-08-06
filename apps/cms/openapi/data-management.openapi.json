@@ -6530,7 +6530,7 @@
       },
       "PortalSchoolSelectionRequest": {
         "type": "object",
-        "description": "회원가입 학교 검색 선택값. CMS 미등록 학교를 선택한 경우 전달합니다.",
+        "description": "회원가입 학교 검색 선택값. CMS organizationId가 없어도 NEIS 코드, 학교명, 주소를 전달하면 기존 CMS 학교를 안전하게 재사용하거나 없을 때만 등록합니다.",
         "properties": {
           "schoolOrganizationId": {
             "type": "integer",
@@ -6596,7 +6596,7 @@
           "organizationId": {
             "type": "integer",
             "format": "int64",
-            "description": "기존 CMS 학교 organizationId. CMS 내부 숫자 PK만 허용합니다. 미등록 학교는 member.schoolSelection을 사용합니다.",
+            "description": "기존 CMS 학교 organizationId. teacher.organizationId 또는 member.schoolOrganizationId 중 한 곳에 전달할 수 있으며 둘 다 있으면 같아야 합니다. 미등록 학교는 member.schoolSelection을 사용합니다.",
             "example": 3001
           },
           "employmentStatus": {

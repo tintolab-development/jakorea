@@ -7,7 +7,7 @@
  */
 
 /**
- * 회원가입 학교 검색 선택값. CMS 미등록 학교를 선택한 경우 전달합니다.
+ * 회원가입 학교 검색 선택값. CMS organizationId가 없어도 NEIS 코드, 학교명, 주소를 전달하면 기존 CMS 학교를 안전하게 재사용하거나 없을 때만 등록합니다.
  */
 export interface PortalSchoolSelectionRequest {
   /** CMS에 이미 등록된 학교 PK. 학교 검색 결과 객체를 그대로 전달할 때 사용합니다. */

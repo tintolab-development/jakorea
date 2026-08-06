@@ -13,7 +13,7 @@ import type { MemberSignupRequest } from './memberSignupRequest';
 export interface TeacherSignupRequest {
   /** 기본 회원 가입 정보 */
   member: MemberSignupRequest;
-  /** 기존 CMS 학교 organizationId. CMS 내부 숫자 PK만 허용합니다. 미등록 학교는 member.schoolSelection을 사용합니다. */
+  /** 기존 CMS 학교 organizationId. teacher.organizationId 또는 member.schoolOrganizationId 중 한 곳에 전달할 수 있으며 둘 다 있으면 같아야 합니다. 미등록 학교는 member.schoolSelection을 사용합니다. */
   organizationId?: number;
   /** 재직 상태 */
   employmentStatus?: string;
