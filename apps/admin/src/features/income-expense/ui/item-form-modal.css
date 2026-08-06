@@ -1,0 +1,59 @@
+.income-expense-item-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  padding: 24px 30px 32px;
+}
+
+.income-expense-item-form-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body,
+.income-expense-item-form-modal.content-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 12px;
+  gap: 30px;
+}
+
+.income-expense-item-form-modal .teal-header-modal__footer {
+  margin-top: 30px;
+}
+
+.income-expense-item-form-modal .content-modal__footer-actions {
+  justify-content: space-between;
+  width: 100%;
+}
+
+.income-expense-item-form-modal__footer-start,
+.income-expense-item-form-modal__footer-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.income-expense-item-form-modal__form {
+  width: 100%;
+}
+
+.income-expense-item-form-modal__form .detail-info-form__field {
+  --detail-info-label-w: 140px !important;
+  grid-template-columns: 140px minmax(0, 1fr) !important;
+}
+
+.income-expense-item-form-modal__with-suffix {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.income-expense-item-form-modal__with-suffix .cms-input,
+.income-expense-item-form-modal__with-suffix .ant-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.income-expense-item-form-modal__suffix {
+  flex-shrink: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 150%;
+}

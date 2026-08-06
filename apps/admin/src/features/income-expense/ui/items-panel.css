@@ -1,0 +1,220 @@
+.income-expense-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+}
+
+/* 항목 툴바 ↔ 테이블 — 시안 8px */
+.income-expense-panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.income-expense-panel__toolbar {
+  flex-shrink: 0;
+  /* list-table-layout 기본 toolbar→table 16px 대신 시안 8px gap 사용 */
+  margin-bottom: 0 !important;
+}
+
+.income-expense-panel__table-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.income-expense-panel__cell-text {
+  display: block;
+  max-width: 100%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  word-break: keep-all;
+  white-space: normal;
+  text-align: left;
+}
+
+.income-expense-panel__category-text {
+  display: block;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.income-expense-panel__input-suffix {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.income-expense-panel__input-suffix--ratio {
+  max-width: 110px;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.income-expense-panel__input-suffix--amount {
+  max-width: 180px;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.income-expense-panel__input-suffix .cms-input,
+.income-expense-panel__input-suffix .ant-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.income-expense-panel__suffix {
+  flex-shrink: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.income-expense-table .ant-table-tbody > tr > td {
+  vertical-align: middle;
+}
+
+/* ── 공통 고정열 ── */
+.income-expense-table .ant-table-thead > tr > th.income-expense-table__col--sort,
+.income-expense-table .ant-table-tbody > tr > td.income-expense-table__col--sort {
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+}
+
+.income-expense-table .ant-table-thead > tr > th.cms-table-col--no,
+.income-expense-table .ant-table-tbody > tr > td.cms-table-col--no {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+/* ── 수입 · 지출그래프 항목 테이블 ──
+ * 항목명 ~40%(좌) · 비율 ~15%(중앙) · 금액 ~30%(우)
+ */
+.income-expense-table:not(.income-expense-table--expense)
+  .ant-table-thead
+  > tr
+  > th.income-expense-table__col--name,
+.income-expense-table:not(.income-expense-table--expense)
+  .ant-table-tbody
+  > tr
+  > td.income-expense-table__col--name {
+  min-width: 240px;
+  text-align: left !important;
+}
+
+.income-expense-table:not(.income-expense-table--expense)
+  .ant-table-thead
+  > tr
+  > th.income-expense-table__col--ratio,
+.income-expense-table:not(.income-expense-table--expense)
+  .ant-table-tbody
+  > tr
+  > td.income-expense-table__col--ratio {
+  width: 160px !important;
+  min-width: 140px !important;
+  max-width: 180px !important;
+  text-align: center !important;
+}
+
+.income-expense-table:not(.income-expense-table--expense)
+  .ant-table-thead
+  > tr
+  > th.income-expense-table__col--amount,
+.income-expense-table:not(.income-expense-table--expense)
+  .ant-table-tbody
+  > tr
+  > td.income-expense-table__col--amount {
+  width: 280px !important;
+  min-width: 220px !important;
+  max-width: 320px !important;
+  text-align: right !important;
+  padding-right: 20px !important;
+}
+
+.income-expense-table:not(.income-expense-table--expense)
+  .ant-table-thead
+  > tr
+  > th.income-expense-table__col--amount {
+  text-align: center !important;
+}
+
+/* ── 지출 테이블 항목 (시안) ──
+ * 구분 ~15% · 항목명 ~35%(좌·넓음) · 비율 ~10% · 금액 ~20%(우)
+ */
+.income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--category,
+.income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--category {
+  width: 160px !important;
+  min-width: 140px !important;
+  max-width: 200px !important;
+  text-align: center !important;
+}
+
+.income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--name,
+.income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--name {
+  min-width: 220px;
+  text-align: left !important;
+}
+
+.income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--ratio,
+.income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--ratio {
+  width: 120px !important;
+  min-width: 100px !important;
+  max-width: 140px !important;
+  text-align: center !important;
+}
+
+.income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--amount,
+.income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--amount {
+  width: 220px !important;
+  min-width: 180px !important;
+  max-width: 260px !important;
+  text-align: right !important;
+  padding-right: 20px !important;
+}
+
+.income-expense-table--expense .ant-table-thead > tr > th.income-expense-table__col--amount {
+  text-align: center !important;
+}
+
+/* 편집: 구분 라디오가 좁은 열에서 줄바꿈되도록 */
+.income-expense-table--expense .ant-table-tbody > tr > td.income-expense-table__col--category {
+  white-space: normal !important;
+}
+
+.income-expense-table--expense
+  .ant-table-tbody
+  > tr
+  > td.income-expense-table__col--category
+  .cms-radio-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+/* 편집 모드 행 높이 점프 최소화 */
+.income-expense-table .ant-table-tbody > tr > td .cms-input .ant-input,
+.income-expense-table .ant-table-tbody > tr > td .ant-input {
+  min-height: 36px;
+}
