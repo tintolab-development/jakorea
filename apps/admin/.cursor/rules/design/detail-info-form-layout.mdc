@@ -58,11 +58,21 @@ admin 폼 화면 예: intro / worldwide / main-content section cards — 대부�
 - view 행 **`min-height: 54px`** (강제 tall 금지)  
 - edit **`rows` 고정 + `fixed-rows`**
 
+## FileSelectField (첨부·이미지)
+
+등록 모달·Field edit 에 파일 선택 넣을 때:
+
+→ **[file-select-detail-form](../../../../.cursor/rules/cms-admin-ui/file-select-detail-form.mdc)**  
+(DetailInfoForm edit 자식 `display:flex; align-items:center`가 FileSelect를 깨뜨림 — 모달 스코프 override 필수)
+
+예: `features/hero-banner/ui/form-modal` · `reports-disclosure/ui/report-form-modal`
+
 ## 체크리스트
 
 - [ ] `apps/cms` 또는 CMS 상대경로로 DetailInfoForm import 없음  
 - [ ] nested table은 Field 값에 **전용** 격자 (DetailInfoForm 중첩 금지)  
 - [ ] th/라벨 배경 `var(--BG-header)` ([table-th.mdc](./table-th.mdc))
 - [ ] 단건 폼이면 [detail-document-form-card.mdc](./detail-document-form-card.mdc) §0·완료 체크리스트 병행
+- [ ] FileSelect 행이면 edit 슬롯 layout override + 버튼 medium
 
 **Last updated:** 2026-08-06

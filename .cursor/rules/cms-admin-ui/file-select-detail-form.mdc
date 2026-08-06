@@ -1,0 +1,128 @@
+---
+description: CMS·Admin 공통 — FileSelectField + DetailInfoForm 이미지/첨부 레이아웃
+globs:
+  - apps/cms/src/**/*.{tsx,css}
+  - apps/admin/src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# FileSelectField · DetailInfoForm 첨부 레이아웃 (CMS · Admin)
+
+배너·팝업·보고서 등록 등 **이미지 미리보기 + 파일 선택 / 첨부만** 패턴.
+
+## FileSelectField 구조 (공통)
+
+컴포넌트: `shared/ui/file-select-field`  
+스타일: `file-select-field.css`
+
+| 요소 | 규격 |
+|------|------|
+| 루트 | `flex-direction: column` · gap 12 (empty면 gap 0 — 파일명 영역 없음) |
+| 파일명 행 | 상단 · X 삭제 |
+| 액션 행 | **가로** · 버튼 + 가이드 · gap 12 · `flex-wrap: wrap` · `align-items: flex-start` |
+| 「파일 추가」 버튼 | CmsButton **secondary · medium (120×40)** |
+| 가이드 | 14 · medium · opacity 0.6 · line-height 150% |
+
+```tsx
+// 이미지 행 (hero/popup/보고서 썸네일)
+<div className="…__image-row">
+  <div className="…__preview">{/* empty or img */}</div>
+  <FileSelectField
+    className="…__file-field"
+    multiple={false}
+    accept=".jpg,.jpeg,.png,…"
+    buttonLabel="파일 추가"
+    fileNames={…}
+    guideLines={[…]}
+    onFilesChange={…}
+    onRemoveFile={…}
+  />
+</div>
+
+// 첨부만 (PDF 등)
+<div className="…__attach-row">
+  <FileSelectField multiple={false} accept=".pdf,…" … />
+</div>
+```
+
+### 이미지 행 CSS 앵커 (hero 미러)
+
+```css
+.__image-row {
+  display: flex;
+  flex-wrap: wrap; /* 또는 nowrap + min-width 0 */
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+.__file-field {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+```
+
+### Empty vs 미리보기
+
+| 상태 | 권장 |
+|------|------|
+| 이미지 미선택 | empty 아이콘 **86×86** (시안 SVG/플레이스홀더). **비율 박스로 empty를 키우지 않음** |
+| 이미지 선택 후 | 종류별 비율 프리뷰 (예: A4 17:24, 배너 16:9) · `object-fit: cover` |
+| empty↔filled | 슬롯 크기 변경 시 레이아웃 shift 최소화 또는 empty 정사각 유지 |
+
+가이드 복사: 용량·확장자·권장 해상도 줄 (`- …` 형식).
+
+---
+
+## DetailInfoForm 함정 (**필수 대응**)
+
+`@jakorea/form-template-runtime` 기본:
+
+```css
+.detail-info-form__field-content--edit > * {
+  margin-block: auto;
+  display: flex;
+  align-items: center; /* 자식이 FileSelect 일 때 컬럼 레이아웃 붕괴 가능 */
+}
+```
+
+### 모달·등록 폼에서 FileSelect를 Field edit에 넣을 때
+
+스코프 클래스로 **원복**:
+
+```css
+.feature-form-modal .detail-info-form__field-content--edit > * {
+  display: block;           /* or flex + column for wrappers */
+  margin-block: 0 !important;
+  width: 100%;
+  min-width: 0;
+}
+.feature-form-modal .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+.feature-form-modal .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+```
+
+### 금지
+
+- FileSelect 루트에 `flex-wrap: nowrap` 강제해 가이드를 비정상 폭으로 압박
+- empty 86과 선택 후 프리뷰를 같은 tall 박스만 쓰고 empty를 찌그러뜨림
+- 모달 폭 override로 `flex: 1 1 240` 등 레거시 값 재도입 (hero는 **280**)
+
+---
+
+## 체크리스트
+
+- [ ] 버튼 medium 120×40 · 푸터 large 140×44 와 **혼동 없음** ([cms-button-action-sizes](./cms-button-action-sizes.mdc))
+- [ ] DetailInfoForm edit 자식 override 적용 (FileSelect 깨짐 방지)
+- [ ] empty 86 정사각 · filled 시안 비율
+- [ ] 가이드는 액션 행에서 버튼 옆 / wrap 시 아래로
+
+**Last updated:** 2026-08-06

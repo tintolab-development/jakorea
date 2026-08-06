@@ -34,11 +34,18 @@ alwaysApply: false
       <span className="table-title">… 목록</span>
       <span className="table-description">총 N건</span>
     </div>
-    <div className="table-header-actions--wrapper">{/* CmsButton */}</div>
+    <div className="table-header-actions--wrapper">{/* CmsButton size="large" */}</div>
   </div>
   {/* table */}
 </div>
 ```
+
+### 툴바 버튼 사이즈
+
+목록·카드 툴바(등록 / 선택 삭제 / 취소 / 저장) = **`size="large"` (140×44)**  
+→ [cms-button-action-sizes](../../../../.cursor/rules/cms-admin-ui/cms-button-action-sizes.mdc) · Admin 어댑터 [cms-button-action-sizes.mdc](./cms-button-action-sizes.mdc)
+
+CSS 강제: `table-header-label.css` `.table-header-actions--wrapper .cms-button`
 
 ## 금지
 

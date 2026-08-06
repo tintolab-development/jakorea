@@ -1,0 +1,28 @@
+---
+description: Admin CmsButton 액션 사이즈 — cms-admin-ui SSOT 어댑터 (경로)
+globs:
+  - apps/admin/src/**/*.{tsx,css}
+  - apps/admin/src/shared/ui/content-modal.css
+  - apps/admin/src/shared/ui/table-header-label.css
+alwaysApply: false
+---
+
+# CmsButton 액션 사이즈 (Admin 어댑터)
+
+**수치·용도 매핑 SSOT:** [cms-button-action-sizes](../../../../.cursor/rules/cms-admin-ui/cms-button-action-sizes.mdc)
+
+## Admin 구현 path
+
+| 영역 | 파일 |
+|------|------|
+| size 토큰 | `shared/ui/cms-button.css` · `cms-button.tsx` |
+| 모달 푸터 강제 large | `shared/ui/content-modal.css` → `.content-modal__footer-actions` |
+| 목록 툴바 강제 large | `shared/ui/table-header-label.css` → `.table-header-actions--wrapper` |
+| FileSelect medium | `shared/ui/file-select-field.tsx` |
+
+## 관련
+
+- [file-select-detail-form](../../../../.cursor/rules/cms-admin-ui/file-select-detail-form.mdc)
+- [list-table-spacing](./list-table-spacing.mdc)
+
+**Last updated:** 2026-08-06

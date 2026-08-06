@@ -19,11 +19,12 @@ alwaysApply: false
 | 툴바 → 테이블 margin/gap | **16px** |
 | 제목 ↔ 건수 gap | **10px** |
 | 액션 버튼 간 gap | **8px** |
+| 툴바·모달 푸터 CmsButton | **large 140×44** — [cms-button-action-sizes](./cms-button-action-sizes.mdc) |
 
 ## 권장 마크업 역할
 
 - 제목 래퍼: `table-header-title--wrapper` · `table-title` · `table-description`
-- 액션 래퍼: `table-header-actions--wrapper`
+- 액션 래퍼: `table-header-actions--wrapper` — 내부 버튼 **`size="large"`**
 
 ## 금지
 
