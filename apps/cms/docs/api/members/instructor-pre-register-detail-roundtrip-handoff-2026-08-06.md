@@ -1,6 +1,6 @@
 # 강사 사전등록 ↔ 상세조회 round-trip — 미반영·관측 갭
 
-**작성일:** 2026-07-31  
+**작성일:** 2026-07-31 · **갱신(파일명 기준):** 2026-08-06  
 **우선순위:** P0 (등록 후 상세 표시)  
 **관련 API**
 
@@ -14,10 +14,15 @@
 
 **관련 FE**
 
-- 등록: `instructor-register-modal.tsx` · `user-list-page.tsx` · `map-pre-register-request.ts` · `map-instructor-register-extras.ts`
-- 상세: `map-member-detail-to-user.ts` · `user-basic-info/display.ts` · `user-to-applicant-instructor-row.ts` · `user-detail-fullpage-basic-tab-content.tsx`
+- 등록: `instructor-register-modal.tsx` · `user-list-page.tsx` · `map-pre-register-request.ts` · `map-instructor-cms-profile.ts`
+- 상세: `map-member-detail-to-user.ts` · `map-user-to-instructor-profile-form.ts` · `user-to-applicant-instructor-row.ts` · `user-detail-fullpage-basic-tab-content.tsx`
+- 약관: `build-pre-register-terms-agreements.ts` · `map-member-consent-records.ts`
+- FE DTO (codegen 전): `instructor-cms-profile-proposal.ts` · §3.8 shape
 
-**선행 문서:** [members-pre-register-handover-2026-07-28.md](./members-pre-register-handover-2026-07-28.md) §C
+**선행·보조 문서**
+
+- [members-pre-register-handover-2026-07-28.md](./members-pre-register-handover-2026-07-28.md) §C
+- [instructor-register-ui-openapi-mismatch-2026-08-06.md](./instructor-register-ui-openapi-mismatch-2026-08-06.md) — UI↔OpenAPI 필드 갭 SSOT
 
 ---
 
@@ -168,9 +173,9 @@
 | ✅ | `email`, `phone` | 마스킹 | 원문 | 상세보기 전/후 |
 | ✅ | `name`, `gender`, `birthDate` | 원문 | 원문 | 기본정보 |
 | ✅ | `instructorType` | `primaryActivityType` | 동일 | `school_teacher` 레이아웃 **분기만** (소속 데이터는 §3.5) |
-| ❌ | 소속 학교명 (`schoolName`) | **없음** | **없음** | 상세 **소속** 행 `-` |
-| ❌ | 재직 현황 (`employmentStatus`) | **없음** | **없음** | 재직 배지·소속 `\|` 구분 미표시 |
-| ❌ | `affiliation` (학교명 \| 재직) | **없음** | **없음** | pre-register **미전송** |
+| ⚠️ | 소속 학교명 (`profile.affiliation.schoolName`) | **없음** | **없음** | FE **등록·PATCH 전송(2026-08-06)** · BE 미수신 |
+| ⚠️ | 재직 현황 (`profile.affiliation.employmentStatus`) | **없음** | **없음** | FE 전송 · BE 미수신 |
+| ⚠️ | `affiliation` (학교명 \| 재직) | **없음** | **없음** | FE `profile.affiliation` + legacy flat 병행 |
 | ❌ | `affiliatedSchoolUserId` | **없음** | **없음** | 학교↔교사 **양방향 링크 불가** |
 | ❌ | 학교↔교사 affiliation | — | — | `GET …/affiliated-teachers` **미연결** |
 | ✅ | `businessIncome` | `businessIncomeYn` | 동일 | 사업소득자 |
@@ -180,19 +185,38 @@
 | ❌ | `oneLineIntro`, `careerText`, `selfIntroduction`, `educationLevel` | **`"마스킹"` (오적용)** | **원문** | FE: placeholder → `-` · **BE §3.2** · **필드명↔화면 §3.2 표** |
 | ⚠️ | `educationLevel` 형식 | — | `college4 / graduated` 코드 | FE 한글 라벨 변환 |
 | ❌ | `accountHolder` | `null` | **`null`** | 예금주 미저장 |
-| ❌ | `termsAgreements` | 상세 본문 없음 | — | `consent-records` · **등록 8건 FE 전송(2026-07-31)** |
-| ❌ | 동의서 작성형 5종 | 미전송 | — | BE API 필요 |
-| — | `certifications` | `[]` | `[]` | 미전송 시 정상 |
-| — | 구조화 학력·경력 | 스키마 없음 | — | 요약만 |
-| ❌ | 자유작성 2~4 | 필드 없음 | — | FE: 빈칸 |
-| ❌ | 자유작성 1 (`selfIntroduction`) | **`"마스킹"` (오적용)** | `selfIntroduction` | §3.2 · **한 줄 소개(`oneLineIntro`)와 별도** |
+| ⚠️ | `termsAgreements` | 상세 DTO **없음** | — | FE **8건 pre-register 전송** · `consent-records`/`termsAgreements` round-trip **BE 대기** |
+| ⚠️ | 동의서 작성형 5종 | `agreed`만 전송 | — | **`formResponseId`·전문 스냅샷 BE API 대기** |
+| — | `certifications` | `[]` | `[]` | FE `profile.licenses` + root `certifications[]` 병행 전송 |
+| ⚠️ | 구조화 학력·경력·JA·수상 | 스키마 없음 | — | FE **`profile` 전송(2026-08-06)** · BE 미저장 |
+| ⚠️ | 자유작성 2~4 | 필드 없음 | — | FE **`profile.essays.freeWrite2~4` 전송** · BE 미저장 |
+| ❌ | 자유작성 1 (`selfIntroduction`) | **`"마스킹"` (오적용)** | `selfIntroduction` | §3.2 · legacy flat + `profile.essays.freeWrite1` |
 
 ---
 
-## 3. BE 수정 요청
+## 3. BE 수정 필요 내역 (회원관리 > 강사 등록·상세)
 
+> **2026-08-06 갱신:** FE가 §3.8 `profile` / `settlement` 구조체를 **등록·상세·PATCH**에 연동 완료.  
+> OpenAPI `AdminPreRegisterInstructorRequest` / `InstructorMemberDetailResponse`에는 **아직 `profile`·`settlement` 키 없음** — BE는 §3.8 shape 수락·저장·반환·codegen이 **최우선 P0**.
+>
 > **2026-07-31 재관측:** unmask 후 `homeAddressDetail`·소개·경력·학력·계좌번호 등 **등록 원문 round-trip 확인됨**.  
-> 아래 P0는 **마스킹 GET 정책 오적용(§3.2)** · **마스킹 GET 주소(§3.1)** · **강사 소속·학교↔교사 매핑(§3.5)** · **accountHolder** · **동의/스키마** 등 **잔여** 항목.
+> 잔여 P0: **§3.8 OpenAPI·저장** · **§3.2 마스킹 GET** · **§3.5 소속** · **§3.4 약관·동의** · **§3.1 마스킹 GET 주소**.
+
+### 3.0 우선순위 요약 (2026-08-06)
+
+| P | 항목 | FE (2026-08-06) | BE |
+|---|------|-----------------|-----|
+| **P0** | §3.8 `InstructorCmsProfile` / `InstructorCmsSettlement` — OpenAPI·GET·pre-register·PATCH | ✅ `profile`+`settlement` 전송 · loose 수신 · legacy flat **병행** | ❌ 스키마 미등록 · 저장·반환 없음 |
+| **P0** | §3.2 마스킹 GET — `oneLineIntro`·`careerText`·`selfIntroduction`·`educationLevel` | ✅ `"마스킹"` → 화면 `-` | ❌ 공개 필드에 `"마스킹"` 오적용 |
+| **P0** | §3.5 교사 소속 · `affiliated-teachers` | ✅ `profile.affiliation.{schoolName,employmentStatus}` 전송 | ❌ 수신·GET·affiliation row |
+| **P0** | §3.4 약관 8건 · `consent-records` | ✅ pre-register `termsAgreements` · 상세 매핑(`map-member-consent-records`) | ❌ 저장 round-trip · 강사 상세 `termsAgreements` 없음 |
+| **P0** | §3.1 마스킹 GET — `homeAddress` / `homeAddressDetail` | — | ❌ truncation · detail `null` |
+| **P1** | §3.6 `accountHolder` | ✅ `settlement.accountHolder` 전송 | ❌ unmask 후에도 `null` 관측 |
+| **P1** | 동의서 작성형 — `formResponseId`·전문 | UI `agreed`만 · 작성 완료 UX(2026-08-06) | ❌ 증빙·스냅샷 API |
+| **P2** | `feeGrade` / `jaGrade` | 등록 UI 미수집 | OpenAPI만 존재 |
+
+**FE codegen 전 타입 SSOT:** `apps/cms/src/features/user/api/types/instructor-cms-profile-proposal.ts`  
+**Mapper:** `map-instructor-cms-profile.ts` (`instructorProfileFormValuesToCmsProfile` · `instructorCmsProfileToFormValues` · legacy flat 호환)
 
 ### 3.1 자택 주소 — **마스킹 GET** (P0)
 
@@ -325,13 +349,15 @@ BE `instructorProfile` 필드명(`careerText`, `oneLineIntro`, `selfIntroduction
 | 2 | 개인정보 수집·이용 | 라디오 | `PRIVACY_COLLECTION` | required |
 | 3 | 마케팅 제공 | 라디오 | `MARKETING` | optional |
 | 4 | 초상권 | 동의서 작성 | `PORTRAIT_RIGHTS` | `agree`일 때만 body 포함 |
-| 5 | 지급조서 | 동의서 작성 | `PAYMENT_STATEMENT` | 동일 |
-| 6 | 교육진행자 서약 | 동의서 작성 | `EDUCATOR_PLEDGE` | 동일 |
-| 7 | 행정정보 공동이용 | 동의서 작성 | `ADMINISTRATIVE_JOINT` | 동일 |
-| 8 | 성범죄 경력 조회 | 동의서 작성 | `SEX_OFFENSE_CHECK` | 동일 |
+| 5 | 지급조서 | 동의서 작성 | `PAYMENT_STATEMENT_PRE_CONSENT` | canonical · alias `PAYMENT_STATEMENT_CONSENT` 허용 |
+| 6 | 교육진행자 서약 | 동의서 작성 | `FACILITATOR_PLEDGE` | alias `EDUCATOR_PLEDGE` |
+| 7 | 행정정보 공동이용 | 동의서 작성 | `ADMINISTRATIVE_INFO_CONSENT` | alias `ADMINISTRATIVE_JOINT` |
+| 8 | 성범죄 경력 조회 | 동의서 작성 | `CRIMINAL_HISTORY_CHECK_CONSENT` | alias `SEX_OFFENSE_CHECK` |
 
 - FE: `apps/cms/src/features/user/api/build-pre-register-terms-agreements.ts`
-- 동의서 작성형은 **`agreed: true`만** 전송 — `formResponseId`·전문 스냅샷은 **BE API 확정 후** 추가
+- 동의서 작성형 — **`agreed: true/false`만** 전송 · `formResponseId`·전문 스냅샷 **BE API 확정 후** 추가
+- 상세: `InstructorMemberDetailResponse`에 **`termsAgreements` 없음** (개인 상세에는 있음) → `GET …/consent-records` **`consentType` ↔ 위 `termsType` 1:1** 필수
+- FE 상세 매핑: `map-member-consent-records.ts` — `termsAgreements` 있으면 SSOT · 없으면 `consent-records` fallback
 
 #### 관리자 4건 — BE 요청
 
@@ -352,23 +378,27 @@ BE `instructorProfile` 필드명(`careerText`, `oneLineIntro`, `selfIntroduction
 #### 상세 조회 · `consent-records` (잔여 P0)
 
 - pre-register `termsAgreements` → `GET …/consent-records` **저장·조회** round-trip
-- `consentType` enum ↔ 위 `termsType` **1:1 매핑** OpenAPI 명시
-- 동의서 작성형 — `formResponseId`·증빙 파일·관리자 대리 작성 API (전문 보관)
+- **`InstructorMemberDetailResponse.termsAgreements[]` 추가** (개인 상세와 동일) — 또는 consent-records만으로 8건 보장
+- `consentType` enum ↔ 위 canonical `termsType` **1:1 매핑** OpenAPI 명시 (alias 허용 시 매핑표 문서화)
+- 동의서 작성형 — `formResponseId`·증빙 파일(성범죄 경력 조회 업로드)·관리자 대리 작성 API (전문 보관)
+- FE 동의서 작성 UI(2026-08-06): 교육진행자 서약 default 동의 · 행정정보 식별번호 필수 · 성범죄 문서 업로드 — **제출 payload는 여전히 `agreed`만**
 
 
 ### 3.5 강사 소속 · 학교↔교사 매핑 (P0)
 
-#### CMS 등록 vs BE 스키마 (2026-07-31 관측)
+#### CMS 등록 vs BE 스키마 (2026-08-06)
 
-| CMS UI (교사 회원) | FE `createUser` | `POST …/pre-register/instructor` | 상세 GET §1.2·§1.3 |
-|--------------------|-----------------|-----------------------------------|---------------------|
-| 소속 학교명 (`schoolName`) **필수** | `affiliation` 문자열 일부 | **미전송** | **필드 없음** |
-| 재직 현황 (`employmentStatus`) | `affiliation`에 `\|` 결합 | **미전송** | **필드 없음** |
-| 회원 유형 | `instructorType: SCHOOL_TEACHER` | ✅ 전송 | `primaryActivityType: SCHOOL_TEACHER` ✅ |
-| 기관 memberId / uuid | — | **없음** | **`affiliatedSchoolUserId` 없음** |
+| CMS UI (교사 회원) | FE pre-register (2026-08-06) | OpenAPI body | 상세 GET |
+|--------------------|------------------------------|--------------|----------|
+| 소속 학교명 (`schoolName`) **필수** | `profile.affiliation.schoolName` + legacy flat 없음 | **미정의** | **필드 없음** |
+| 재직 현황 (`employmentStatus`) | `profile.affiliation.employmentStatus` | **미정의** | **필드 없음** |
+| 일반 강사 소속 | `profile.affiliation.organizationNames[]` | **미정의** | **필드 없음** |
+| 회원 유형 | `profile.memberType` + `instructorType` | `instructorType` ✅ | `primaryActivityType` ✅ |
+| 기관 memberId | `profile.affiliation.affiliatedSchoolUserId` (선택) | **미정의** | **없음** |
 
-- OpenAPI `AdminPreRegisterInstructorRequest` · `InstructorDetailResponse`에 **`affiliation` / `affiliatedSchoolName` / `employmentStatus` / `affiliatedSchoolUserId`(또는 `affiliatedSchoolMemberId`) 없음**
-- FE `map-pre-register-request.ts`는 위 소속 필드를 body에 **넣지 않음** (폼에서 모아도 API로 **드롭**)
+- OpenAPI `AdminPreRegisterInstructorRequest` · `InstructorMemberDetailResponse`에 **`profile` 블록 없음** — §3.8 shape로 흡수 요청
+- FE `map-pre-register-request.ts`: `body.profile` + `buildLegacyFlatFieldsFromCmsProfile()` 로 **legacy 6필드 병행 전송**(BE 마이그레이션용)
+- 상세 `map-member-detail-to-user.ts`: response에 `profile`/`settlement` **loose parse** — BE 미반환 시 legacy `instructorProfile` flat으로 merge
 
 #### 증상 (CMS)
 
@@ -393,96 +423,72 @@ BE `instructorProfile` 필드명(`careerText`, `oneLineIntro`, `selfIntroduction
 4. **학교↔교사 affiliation API** — 강사 pre-register 완료 시 `GET …/users/{schoolMemberId}/affiliated-teachers`에 **교사 memberId·teacherMemberId·재직** 반영
 5. OpenAPI — `InstructorDetailResponse`·pre-register DTO에 필드 추가 · 마스킹 정책(학교명 공개 여부) 명시
 
-#### FE (BE 반영 전 · 임시)
+#### FE (BE 반영 전 · 2026-08-06)
 
 | 항목 | 조치 |
 |------|------|
-| pre-register body | BE 스키마 확정 후 `schoolName`/`employmentStatus`/`affiliation` **전송 추가** |
-| 상세 매핑 | `map-member-detail-to-user.ts` — loose 필드 수신 시 이미 매핑 준비됨 (§ 테스트 `affiliatedSchoolName`) |
+| pre-register body | ✅ `profile` + `settlement` + legacy flat 병행 전송 |
+| 상세 PATCH | ✅ `map-patch-user-basic-info.ts` — `profile`/`settlement` extended body |
+| 상세 매핑 | ✅ `map-member-detail-to-user.ts` — loose `profile`/`settlement` 수신 · legacy merge |
+| 이력서 탭 | ✅ `user-to-applicant-instructor-row.ts` — cms profile 우선 (학력·경력·수상·자유작성 1~4) |
 | drill-down | `affiliated-teachers` BE 연동 전까지 학교 컨텍스트 힌트 유지 |
 
 ### 3.6 기타 (P1)
 
 | 항목 | 마스킹 / unmask 관측 | BE 요청 |
 |------|------------------------|---------|
-| `accountHolder` | 등록 미전송 · unmask 후에도 **`null`** (루트·`bankAccounts[]`) | pre-register `accountHolder` 수신·저장 · unmask round-trip · CMS는 `accountHolder` 또는 예금주명 전송 예정 |
+| `accountHolder` | unmask 후에도 **`null`** (루트·`bankAccounts[]`) | FE **`settlement.accountHolder` 전송(2026-08-06)** · BE 수신·저장·unmask round-trip |
 | `educationLevel` | unmask: `college4 / graduated` **코드 문자열** | 저장·반환 **코드 vs 한글 라벨** 정책 · 또는 `educations[]` |
 | `defaultFeeGrade` | `null` | 강사비 등급 설정 API와 연동 (`instructorProfile.status`와 **혼동 금지**) |
 | `certifications[]` | `[]` (미전송) | 전송 시 non-empty round-trip |
 
-### 3.7 자유작성 1~4 (P1) — **현재 BE 필드 1개뿐**
+### 3.7 자유작성 1~4 · 구조화 이력서 — **§3.8 `profile`로 흡수** (P0)
 
-#### CMS 등록 폼 vs OpenAPI
+> **2026-08-06:** FE는 등록·상세·PATCH에서 §3.8 `profile.essays` · `profile.education` · `profile.career` 등 **전 필드 전송**.  
+> OpenAPI·BE 저장 없으면 **입력값 유실** — §3.8 OpenAPI가 본 항목의 실질 요청.
 
-| CMS UI | pre-register body | 상세 GET (`instructorProfile`) | 비고 |
-|--------|-------------------|-------------------------------|------|
-| 자유작성 1 | `selfIntroduction` | `selfIntroduction` | ✅ 유일 연동 필드 |
-| 자유작성 2 | **미전송** | **없음** | |
-| 자유작성 3 | **미전송** | **없음** | |
-| 자유작성 4 | **미전송** | **없음** | |
-| 강사 경력(기본정보) | `careerText` | `careerText` | 자유작성과 **별도** — 2번에 섞지 말 것 |
+#### CMS 등록 폼 vs 현재 OpenAPI (2026-08-06)
 
-#### FE 오동작 (2026-07-31 수정 전)
+| CMS UI | FE pre-register (`profile`) | OpenAPI flat | BE GET |
+|--------|----------------------------|--------------|--------|
+| 자유작성 1 | `essays.freeWrite1` + legacy `selfIntroduction` | `selfIntroduction` | flat만(마스킹 이슈 §3.2) |
+| 자유작성 2~4 | `essays.freeWrite2~4` | **없음** | **없음** |
+| 강사 경력(기본정보) | `instructorCareerSummary` + legacy `careerText` | `careerText` | flat만 |
+| 구조화 학력 rows | `education.*` | `educationLevel` 요약만 | flat만 |
+| 경력 rows | `career.rows[]` · `career.level` | **없음** | **없음** |
+| JA 활동 | `jaKoreaActivities[]` | **없음** | **없음** |
+| 수상 | `awards[]` | **없음** | **없음** |
+| 자격증 | `licenses[]` + root `certifications[]` | `certifications[]` | `certifications[]` |
 
-- `user-to-applicant-instructor-row.ts`가 `careerText`를 `freeWriting2`에 **잘못 매핑**
-- API 미연동 시 **mock 샘플 문단**을 2~4번에 표시
-- → **2026-07-31 FE 수정:** 2~4번은 API 필드 생기기 전까지 **항상 빈칸**, 1번만 `selfIntroduction`
+#### FE (2026-08-06 완료)
 
-#### BE 요청 (스키마 확장)
+- `user-to-applicant-instructor-row.ts`: cms profile 우선 · `careerText`→freeWrite2 **혼입 제거**
+- API 미연동 필드: BE `profile` 미반환 시 **빈칸** (mock 샘플 제거)
+- `instructor-resume-blocks.tsx`: 경력 `new` → 「신입」 · 학력 다건 rows
 
-**Option A — 개별 필드 (FE mapper 단순)**
+#### BE 요청
 
-```json
-{
-  "selfIntroduction": "1번 원문",
-  "freeWrite2": "2번 원문",
-  "freeWrite3": "3번 원문",
-  "freeWrite4": "4번 원문"
-}
-```
+- §3.8 `InstructorCmsProfile` 수락 — **Option A/B는 §3.8.2 표 채택** (개별 nested 필드)
+- legacy flat 6필드 — **읽기 호환 1 release** (`buildLegacyFlatFieldsFromCmsProfile` 역변환 기준)
 
-- `AdminPreRegisterInstructorRequest` · `InstructorDetailResponse` · PATCH(상세 수정) DTO에 추가
-- 마스킹 GET / unmask 정책은 §3.2와 동일
-
-**Option B — 배열**
-
-```json
-{
-  "essays": [
-    { "order": 1, "body": "..." },
-    { "order": 2, "body": "..." }
-  ]
-}
-```
-
-#### 등록·상세·수정 path
-
-| Method | Path | 필요 |
-|--------|------|------|
-| `POST` | `…/pre-register/instructor` | 2~4 필드 수신·저장 |
-| `GET` | `…/users/{memberId}/instructor` | 2~4 반환 |
-| `PATCH` | `…/users/{memberId}/instructor` (또는 profile PATCH) | CMS 상세 수정 저장 |
-
-#### 구조화 이력서 (별도 P1 — handoff §C.3.2)
-
-| CMS UI | 현재 API | BE 요청 |
-|--------|----------|---------|
-| 구조화 학력 rows | `educationLevel` 요약만 | `educations[]` |
-| 경력 rows | `careerText`만 | `careerLevel` + `careers[]` |
-| JA 활동 | 없음 | `jaKoreaActivities[]` |
-| 수상 | 없음 | `awards[]` |
-| 소속·재직 | loose / 미전송 | **`§3.5 P0`** — `affiliation`, `affiliatedSchoolName`, `employmentStatus`, `affiliated-teachers` |
-
-> **통합 제안:** §3.7 Option A/B·위 표를 **`§3.8 CMS 화면 기준 강사 구조체`** 로 일원화. BE는 §3.8 shape 채택을 권장.
-
-### 3.8 CMS 화면 기준 강사 프로필 구조체 (제안 · P0 스키마)
+### 3.8 CMS 화면 기준 강사 프로필 구조체 (**FE 연동 완료 · BE OpenAPI P0**)
 
 **목적:** 등록 모달·상세 기본정보·이력서 탭과 **1:1** 대응하는 OpenAPI DTO.  
-기존 `instructorProfile.{careerText, selfIntroduction, educationLevel, …}` flat 키는 **deprecated** → `profile.*` 중첩으로 이전.
+기존 `instructorProfile.{careerText, selfIntroduction, educationLevel, …}` flat 키는 **deprecated** → `profile.*` + `settlement.*` 중첩으로 이전.
 
-**FE 참조 타입 (codegen 전):**  
+**FE 타입 (codegen 전 SSOT):**  
 `apps/cms/src/features/user/api/types/instructor-cms-profile-proposal.ts`  
+**FE mapper:** `apps/cms/src/features/user/api/map-instructor-cms-profile.ts`  
 **FE 폼 SSOT:** `InstructorRegisterModalFormValues` (`instructor-profile-form-model.ts`)
+
+#### FE 연동 상태 (2026-08-06)
+
+| 경로 | `profile` | `settlement` | legacy flat |
+|------|-----------|--------------|-------------|
+| `POST …/pre-register/instructor` | ✅ 전송 | ✅ 전송 | ✅ 병행 (`educationLevel` 등) |
+| `GET …/users/{memberId}/instructor` | ⚠️ loose parse (BE 미반환 시 legacy merge) | ⚠️ 동일 | ✅ 수신 |
+| PATCH 상세 수정 | ✅ `map-patch-user-basic-info.ts` | ✅ 동일 | ✅ 병행 |
+| OpenAPI codegen | ❌ extended type only | ❌ | ✅ generated |
 
 #### 3.8.1 최상위 — `InstructorMemberDetailResponse` (개정안)
 
@@ -631,46 +637,49 @@ BE `instructorProfile` 필드명(`careerText`, `oneLineIntro`, `selfIntroduction
 
 #### 3.8.5 pre-register · PATCH
 
-- `POST …/pre-register/instructor` body: **`profile` + `settlement` + `member` identity** 동일 shape (비밀번호·약관 제외)
-- `PATCH …/users/{memberId}/instructor`: **`profile` partial update** — CMS 상세 수정 모드와 동일 필드셋
-- **마이그레이션:** 기존 flat `instructorProfile` 6개월 병행 후 deprecated (BE 일정 협의)
+- `POST …/pre-register/instructor` body: **`profile` + `settlement` + `member` identity** — FE **이미 전송(2026-08-06)**
+- `PATCH …/users/{memberId}/instructor` (또는 basic-info): **`profile` partial update** — FE **이미 전송**
+- **마이그레이션:** 기존 flat `instructorProfile` **6개월 병행** 후 deprecated (BE 일정 협의)
+- BE는 수신 시 **legacy flat + `profile` 동시 수신** 가능 — `profile` 우선 저장 권장
 
-#### 3.8.6 BE 수락 기준
+#### 3.8.6 BE 수락 기준 (2026-08-06)
 
-- [ ] OpenAPI `InstructorCmsProfile` 스키마 등록 · codegen
-- [ ] GET `…/instructor` 가 §3.8.3 shape 반환 (공개 필드 **마스킹 GET 원문**)
+- [ ] OpenAPI `InstructorCmsProfile` · `InstructorCmsSettlement` 스키마 등록 · **Orval codegen**
+- [ ] `AdminPreRegisterInstructorRequest`에 `profile?` · `settlement?` 추가
+- [ ] `InstructorMemberDetailResponse`에 `profile` · `settlement` · (선택) `termsAgreements` 추가
+- [ ] GET `…/instructor` 가 §3.8.3 shape 반환 (공개 필드 **마스킹 GET 원문** §3.2)
 - [ ] pre-register · PATCH round-trip — 등록 폼 **전 필드** (§3.8.2 표) 저장·재조회
-- [ ] legacy `careerText`/`selfIntroduction`/`educationLevel` — **읽기 호환 1 release** 또는 migration script
+- [ ] legacy `careerText`/`selfIntroduction`/`educationLevel`/`oneLineIntro` — **읽기 호환 1 release** 또는 migration script
 
 ---
 
-## 4. FE 대응 (2026-07-31)
+## 4. FE 대응
 
-| 항목 | 조치 |
-|------|------|
-| 마스킹 placeholder | `"마스킹"` → state 미저장 · 화면 `-` (§3.2) |
-| API↔화면 필드명 | §3.2 매핑표 SSOT · OpenAPI description에 CMS 라벨 기재 요청 |
-| `educationLevel` 코드 | `college4 / graduated` → `대학교 4년제 / 졸업` 표시 |
-| `school_teacher` 프로필 | API 연동 필드(학력 요약·자유작성 1 등) 이력서 섹션 노출 · **소속 학교명·재직은 §3.5 BE 대기** |
-| 학교↔교사 drill-down | API `affiliatedSchoolUserId` 없을 때 **학교 drawer 힌트**로 프로필·학교명 보강 (임시) |
-| 자택 주소 수정 모드 | `homeAddress` / `homeAddressDetail` 분리 표시 |
-| **자유작성 2~4** | API 없으면 **빈칸** · `careerText` 혼입·mock 제거 |
-| unmask 연동 | unmask 응답 원문 → 상세·수정 폼 반영 (§1.3 필드) |
-| **약관 등록 연동** | 강사·개인 **8건** `termsAgreements` pre-register 전송 · 학교 UI 없음 · 관리자 BE 스키마 대기 |
-| 동의 탭 | `consent-records` 연동 · BE `termsAgreements`→records round-trip 대기 |
+| 항목 | 2026-07-31 | 2026-08-06 |
+|------|------------|------------|
+| §3.8 `profile`/`settlement` | 제안만 | ✅ 등록·상세·PATCH · legacy flat 병행 |
+| 마스킹 placeholder | `"마스킹"` → `-` | ✅ 유지 |
+| `educationLevel` 코드 | 한글 변환 | ✅ 유지 |
+| 자유작성 2~4 · 구조화 이력서 | 빈칸 | ✅ `profile` 전송 · BE 미반환 시 빈칸 |
+| 소속 학교·재직 | BE 대기 | ✅ `profile.affiliation` 전송 · BE 대기 |
+| 약관 8건 | pre-register 전송 | ✅ + `map-member-consent-records` · canonical `termsType` |
+| 동의서 작성 UI | — | ✅ default 동의·식별번호 필수·업로드 UX (payload `agreed`만) |
+| 상세 API 호출 | 다수 GET | ✅ PATCH 후 `getUserById` 생략 · list invalidate 축소 |
+| unmask 연동 | 원문 반영 | ✅ 유지 |
+| codegen | — | ⏳ BE OpenAPI `profile`/`settlement` 반영 후 extended type 제거 |
 
 ---
 
-## 5. BE 회신 부탁
+## 5. BE 회신 부탁 (2026-08-06)
 
-1. §3.1 **마스킹 GET** — `homeAddressDetail` `null` vs placeholder · `homeAddress` truncation 정책 확정
+1. **§3.8 `InstructorCmsProfile` / `InstructorCmsSettlement`** — OpenAPI 등록 · pre-register·GET·PATCH round-trip (**FE 전송 완료 · BE 최우선**)
 2. **§3.2 강사 프로필 공개 필드** — 마스킹 GET 원문 · OpenAPI CMS 라벨 매핑
-3. **§3.8 CMS 화면 기준 `InstructorCmsProfile` 스키마** — 등록·상세·PATCH 통합 DTO
-4. §3.3 unmask 응답 shape OpenAPI 반영
-5. §3.4 **등록 약관** — 역할별 round-trip
-6. **§3.5 강사 소속** — `affiliation` nested · affiliated-teachers
-7. §3.6 `accountHolder` · `defaultFeeGrade`
-8. §3.7 자유작성 2~4 — §3.8 `profile.essays` 로 흡수
+3. **§3.5 강사 소속** — `profile.affiliation` 저장 · `affiliated-teachers`
+4. **§3.4 등록 약관** — `termsAgreements`→`consent-records` · 강사 상세 `termsAgreements?` · `consentType`↔`termsType` alias 표
+5. **§3.4 동의서 작성형** — `formResponseId` · 성범죄 경력 조회 증빙 파일 API
+6. §3.1 **마스킹 GET** — `homeAddressDetail` `null` vs placeholder · `homeAddress` truncation
+7. §3.3 unmask 응답 shape OpenAPI 반영
+8. §3.6 `accountHolder` round-trip (`settlement.accountHolder` FE 전송 중)
 9. **unmask `reason` minLength 1** · **API 에러 사용자 문구** — [members handoff §2.7](./members-api-backend-handoff-2026-07-31.md#27-unmask-reason-길이-제한-p0--2026-07-31-관측) · [backend-handoff §에러 응답](../backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통)
 
-**Last updated:** 2026-07-31 (§3.8 CMS 강사 구조체 · §3.2 마스킹·필드명 · §3.4 약관 · §3.5 소속 · unmask reason · 에러 메시지)
+**Last updated:** 2026-08-06 (§3.0 우선순위 · §3.8 FE 연동 완료 · §3.4 canonical termsType · §3.5/§3.7 profile 전송 · 동의서 UI · [openapi-mismatch](./instructor-register-ui-openapi-mismatch-2026-08-06.md) 교차 참조)
