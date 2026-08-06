@@ -6,6 +6,8 @@ category: tables
 
 # Ant Design `Table` implementation (CMS)
 
+**공유 스펙 (CMS·Admin):** [cms-admin-ui/cms-data-table](../../../../.cursor/rules/cms-admin-ui/cms-data-table.mdc) · [table-th](../../../../.cursor/rules/cms-admin-ui/table-th.mdc)
+
 **See also:** [UI principles — filters](../design/ui-principles.md), [table td divider](../design/table-td-divider.mdc), [table management](./table-management.md), [Ant Design usage](../libraries/ant-design-usage.md), [status dropdown cell](../coding/status-dropdown-cell.md).
 
 ---
@@ -35,13 +37,14 @@ category: tables
 
 ## Selection column
 
-Use `rowSelection` when bulk actions exist. Selection column width follows `--table-selection-column-width` (60px default). Align overrides only when a spec requires it.
+Use `rowSelection` when bulk actions exist. Selection column width follows `--table-selection-column-width` (60px default; 공유 정렬 시 68px 패턴은 공유 룰 참고). Align overrides only when a spec requires it.
 
 ---
 
 ## Styling (typical CMS list)
 
-- Header row height ~57px, padding `12px 16px`, background `#EDF0F2`, bold label color.  
+- **신규·정렬:** 공유 룰 — th **54px** 패턴 · `var(--BG-header)` ([cms-data-table](../../../../.cursor/rules/cms-admin-ui/cms-data-table.mdc)).  
+- 레거시 화면의 ~57px / `#EDF0F2` 단독 표기는 점진 이관.  
 - Body cells: middle vertical align; zebra/hover per global table CSS if applicable.  
 - Avoid horizontal overflow: fixed widths + `scroll={{ x: true }}` when many columns.
 
@@ -71,4 +74,4 @@ Non-interactive tbody rows use shared **`cms-data-table__row--disabled`**:
 
 ---
 
-**Last updated:** 2026-05-26
+**Last updated:** 2026-08-06
