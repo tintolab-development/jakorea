@@ -1,0 +1,351 @@
+/**
+ * 공지사항 등록·수정 모달
+ * 시안 패딩: content 26 / 30 / 34 · 타이틀↔본문 24 · 블록 gap 24 · 내용↔첨부·첨부↔푸터 30
+ * 첨부만 th/td · 나머지 vertical 폼
+ */
+
+/* 뷰포트 정중앙 — 바깥 스크롤 없음 (높이는 뷰포트에 맞춤) */
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.story-form-modal) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.story-form-modal)
+  .ant-modal.teal-header-modal--large.story-form-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(1400px, calc(100vw - 32px)) !important;
+  max-width: min(1400px, calc(100vw - 32px)) !important;
+  max-height: calc(100vh - 32px) !important;
+  max-height: calc(100dvh - 32px) !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+}
+
+/*
+ * 셸 패딩 시안: top 26 · sides 30 · bottom 34
+ * 뷰포트에 맞게 고정 높이 상한 — 내부 body 스크롤 대신 에디터 축소
+ */
+.content-modal.story-form-modal.teal-header-modal--large .ant-modal-content,
+.story-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  padding: 26px 30px 34px !important;
+  border-radius: 12px;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  max-height: min(880px, calc(100vh - 32px));
+  max-height: min(880px, calc(100dvh - 32px));
+  height: auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.content-modal.story-form-modal.teal-header-modal--large .ant-modal-body,
+.story-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 타이틀 ↔ 본문 24px — 내부 스크롤 금지 (에디터가 남은 높이 흡수) */
+.story-form-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body,
+.story-form-modal.content-modal .teal-header-modal__body {
+  padding-top: 24px !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 본문(첨부) ↔ 푸터 30px */
+.story-form-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  margin-top: 30px !important;
+}
+
+.story-form-modal .content-modal__footer-actions {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+/* 푸터: 좌 삭제 · 우 취소/저장·등록 */
+.story-form-modal__footer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.story-form-modal__footer-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.story-form-modal__form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* 라벨 — vertical 14px · 필수 * */
+.story-form-modal__label {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 10px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.story-form-modal__required {
+  color: var(--color-red, #c32f4a);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* 상단 1행 → 제목 24px */
+.story-form-modal__filter-wrap {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.story-form-modal__filter-inner {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.story-form-modal__filter-inner--with-category {
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+
+.story-form-modal__filter-inner--with-category .story-form-modal__filter-field {
+  flex: 0 1 auto;
+}
+
+.story-form-modal__filter-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 0 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.story-form-modal__filter-field .story-form-modal__label {
+  margin-bottom: 10px;
+}
+
+.story-form-modal__filter-field--datetime {
+  width: 280px;
+  max-width: 280px;
+}
+
+.story-form-modal__filter-field--radio {
+  width: 200px;
+  max-width: 200px;
+}
+
+/* 제목 → 내용 24px */
+.story-form-modal__section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 24px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+/* 내용 → 첨부 30px — 남는 세로 공간을 에디터가 흡수해 모달 스크롤 방지 */
+.story-form-modal__section--editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+}
+
+.story-form-modal__editor-host {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 200px;
+  max-height: 320px;
+  height: auto;
+  box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.story-form-modal__editor-host .cms-rich-text-editor.rich-text-editor,
+.story-form-modal__editor-host .rich-text-editor {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100%;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.story-form-modal__editor-host .rich-text-editor__body {
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  overflow-y: auto;
+}
+
+.story-form-modal__editor-host .rich-text-editor__content,
+.story-form-modal__editor-host .ProseMirror {
+  min-height: 0 !important;
+}
+
+/* 첨부만 테이블 — CMS th 180 + body */
+.story-form-modal__attachment {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+  border-top: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-left: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.story-form-modal__attachment-label {
+  display: flex;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 180px;
+  min-width: 180px;
+  padding: 10px;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  background: #edf0f2;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.story-form-modal__attachment-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 12px 16px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  box-sizing: border-box;
+}
+
+.story-form-modal__file-field.file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 8px;
+  width: 100%;
+}
+
+.story-form-modal__file-field .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.story-form-modal__file-field .file-select-field__guide {
+  flex: 1 1 200px;
+  min-width: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.story-form-modal__file-field .file-select-field__guide-line {
+  display: block;
+}
+
+.story-form-modal__file-field .file-select-field__name {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+@media (max-width: 1100px) {
+  .story-form-modal__filter-inner,
+  .story-form-modal__filter-inner--with-category {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .story-form-modal__filter-field--datetime,
+  .story-form-modal__filter-field--radio {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .story-form-modal__attachment {
+    flex-direction: column;
+  }
+
+  .story-form-modal__attachment-label {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+  }
+}

@@ -1,0 +1,8 @@
+/* 페이지가 layout-content 높이를 채우도록 (header + content padding 32×2) */
+.ja-korea-bi-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: calc(100vh - var(--header-height, 64px) - 64px);
+  height: calc(100vh - var(--header-height, 64px) - 64px);
+}

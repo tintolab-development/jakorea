@@ -186,7 +186,7 @@ function HeroBannerFormBody({
         <>
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="large"
             type="button"
             onClick={onCancel}
             disabled={confirmLoading}
@@ -195,7 +195,7 @@ function HeroBannerFormBody({
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="medium"
+            size="large"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}

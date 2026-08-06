@@ -1,0 +1,52 @@
+/**
+ * JA Global Value 관리
+ * 목록 카드·툴바 갭: list-table-layout.css / table-header-label.css
+ * - card padding 20px · toolbar→table 16px · title↔desc 10px · actions 8px
+ */
+
+.global-value-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.global-value-page .admin-list-toolbar {
+  align-items: center;
+}
+
+.global-value-page__table-scroll {
+  max-height: calc(100vh - var(--header-height, 64px) - 180px);
+  overflow: auto;
+}
+
+.global-value-page__main-text,
+.global-value-page__sub-text {
+  display: block;
+  max-width: 100%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-line;
+  word-break: keep-all;
+  text-align: center;
+}
+
+.global-value-page__main-text {
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* 사용 여부 Switch — DS mint-01 (#01A1AF) */
+.global-value-page .ant-switch-checked {
+  background: var(--color-mint-01, #01a1af) !important;
+}
+
+.global-value-table .ant-table-tbody > tr > td {
+  vertical-align: middle;
+}
+
+.global-value-table .ant-table-tbody > tr > td .cms-textarea {
+  display: block;
+  max-width: 100%;
+}

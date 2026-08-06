@@ -1,0 +1,57 @@
+---
+description: CMS·Admin 공통 — color/spacing 디자인 토큰 우선
+globs:
+  - apps/cms/src/**/*.{css,tsx}
+  - apps/admin/src/**/*.{css,tsx}
+alwaysApply: false
+---
+
+# Design tokens (CMS · Admin 공통 원칙)
+
+color · spacing · typography · radius · shadow 는 **토큰 우선**. 토큰이 있으면 리터럴 중복 금지.
+
+## Rules
+
+- **Colors:** `var(--color-*)`, `var(--table-line)`, `var(--BG-header)` …
+- **Spacing / gap / padding:** `var(--spacing-*)` + 목록/필터 전용 토큰
+- **Type:** `var(--font-size-*)`, `var(--font-weight-*)`, `var(--line-height-*)`
+- **Radius / shadow:** `var(--radius-*)`, `var(--shadow-*)`
+
+```css
+/* Good */
+.card {
+  padding: var(--spacing-20, 20px);
+  color: var(--color-text-body);
+  border-radius: var(--radius-12, 12px);
+}
+
+/* Bad */
+.card {
+  padding: 20px;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.08);
+}
+```
+
+## 목록·테이블 관련 요약
+
+| 용도 | 참조 |
+|------|------|
+| th 배경 | [table-th.mdc](./table-th.mdc) |
+| 필터 칸 | [filter-area-dimensions.mdc](./filter-area-dimensions.mdc) |
+| 목록 셸 gap | [list-table-shell.mdc](./list-table-shell.mdc) |
+| 테이블 셀 | [cms-data-table.mdc](./cms-data-table.mdc) |
+
+## 정의 파일 (앱별)
+
+| 앱 | theme |
+|----|--------|
+| CMS | `apps/cms/src/app/providers/theme-provider.css` (또는 프로젝트 관례 path) |
+| Admin | `apps/admin/src/app/providers/theme-provider.css` |
+
+값 부재 시 **해당 앱 theme에 토큰 추가** 후 사용. Admin이 CMS path 를 import해 토큰을 끌어오지 않는다.
+
+## Exceptions
+
+- 3rd-party override에 리터럴 필요 시 최소 범위 + 주석
+
+**Last updated:** 2026-08-06

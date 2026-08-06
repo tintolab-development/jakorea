@@ -49,6 +49,13 @@ export type {
   CmsRadioButtonProps,
 } from './cms-radio'
 
+export { CmsTextTabs } from './cms-text-tabs'
+export type {
+  CmsTextTabItem,
+  CmsTextTabsProps,
+  CmsTextTabsVariant,
+} from './cms-text-tabs'
+
 export { FileSelectField } from './file-select-field'
 export type { FileSelectFieldProps } from './file-select-field'
 export {
@@ -67,3 +74,12 @@ export { cmsAlertModal, isCmsAlertModalReady } from './cms-alert-modal-api'
 export type { CmsAlertModalShowOptions } from './cms-alert-modal-api'
 export { CmsAlertModalProvider, useCmsAlert } from './cms-alert-modal-provider'
 export type { CmsAlertModalContextValue } from './cms-alert-modal-provider'
+
+export { PageContentLoading } from './page-content-loading'
+export type {
+  PageContentLoadingProps,
+  PageContentLoadingVariant,
+} from './page-content-loading'
+
+export { AttachmentDownloadIcon } from './attachment-download-icon'
+export type { AttachmentDownloadIconProps } from './attachment-download-icon'

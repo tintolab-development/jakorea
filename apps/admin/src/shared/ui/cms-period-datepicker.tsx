@@ -3,10 +3,11 @@
  * 시작·종료를 한 필드로 선택 (시안: 「게시 기간을 선택하세요」)
  */
 
-import { useRef, useState, type CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { CalendarOutlined } from '@ant-design/icons'
 import { DatePicker } from 'antd'
 import type { Dayjs } from 'dayjs'
+import { CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX } from '@/shared/constants/modal-z-index'
 import type { CmsControlSize } from './cms-control-size'
 import { formatAppDatepickerRangePlain } from './app-datepicker'
 import './cms-datepicker.css'
@@ -25,6 +26,9 @@ export type CmsPeriodDatePickerProps = {
   allowClear?: boolean
 }
 
+/** 모달·테이블 행 위로 뜨도록 body 포탈 (CmsDatePicker와 동일) */
+const periodDatePickerPopupContainer = () => document.body
+
 export function CmsPeriodDatePicker({
   value,
   onChange,
@@ -35,7 +39,6 @@ export function CmsPeriodDatePicker({
   className,
   allowClear = true,
 }: CmsPeriodDatePickerProps) {
-  const rootRef = useRef<HTMLSpanElement>(null)
   const [open, setOpen] = useState(false)
 
   const start = value?.[0] ?? null
@@ -64,7 +67,6 @@ export function CmsPeriodDatePicker({
 
   return (
     <span
-      ref={rootRef}
       className={wrapperCn}
       style={widthStyle}
       role="button"
@@ -99,6 +101,7 @@ export function CmsPeriodDatePicker({
 
       <DatePicker.RangePicker
         className="cms-period-datepicker__hidden-picker"
+        popupClassName="cms-period-datepicker-dropdown"
         open={open}
         onOpenChange={next => {
           if (disabled) return
@@ -115,7 +118,12 @@ export function CmsPeriodDatePicker({
         allowClear={allowClear}
         disabled={disabled}
         inputReadOnly
-        getPopupContainer={() => rootRef.current ?? document.body}
+        getPopupContainer={periodDatePickerPopupContainer}
+        styles={{
+          popup: {
+            root: { zIndex: CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX },
+          },
+        }}
       />
     </span>
   )

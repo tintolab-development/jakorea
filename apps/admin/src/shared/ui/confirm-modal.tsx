@@ -52,7 +52,7 @@ export function ConfirmModal({
         <>
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="large"
             type="button"
             onClick={onCancel}
             disabled={confirmLoading}
@@ -61,7 +61,7 @@ export function ConfirmModal({
           </CmsButton>
           <CmsButton
             variant={danger ? 'delete' : 'primary'}
-            size="medium"
+            size="large"
             type="button"
             onClick={onConfirm}
             loading={confirmLoading}

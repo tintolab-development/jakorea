@@ -1,0 +1,36 @@
+---
+description: Admin Ant Table — cms-data-table 경로 (공통 스펙 cms-admin-ui)
+globs:
+  - apps/admin/src/pages/**/*.{tsx,css}
+  - apps/admin/src/features/**/ui/**/*.{tsx,css}
+  - apps/admin/src/shared/ui/cms-data-table.css
+  - apps/admin/src/shared/constants/table.ts
+alwaysApply: false
+---
+
+# Admin Ant Design `Table` (어댑터)
+
+**공통 스펙:** [cms-data-table.mdc](../../../../.cursor/rules/cms-admin-ui/cms-data-table.mdc) · [table-th.mdc](../../../../.cursor/rules/cms-admin-ui/table-th.mdc)
+
+## Admin path
+
+| 항목 | 경로 |
+|------|------|
+| CSS | `apps/admin/src/shared/ui/cms-data-table.css` |
+| 상수 | `apps/admin/src/shared/constants/table.ts` (`TABLE_COLUMN_WIDTHS`, `CMS_TABLE_NO_COL_CLASS`, disabled class) |
+
+## Admin 관례
+
+- No. 열: `width: TABLE_COLUMN_WIDTHS.index` (80), `className: CMS_TABLE_NO_COL_CLASS`
+- 선택: `TABLE_COLUMN_WIDTHS.checkbox` (68)
+- 첫 열이 No.가 아니면 `cms-data-table--skip-auto-no-col`
+- 필터: 조회 커밋 ([list-filter-url-sync](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc))
+- **Don’t** `apps/cms/...` import
+
+## 스택 차이
+
+| | CMS | Admin |
+|--|-----|-------|
+| 목록 셸 | `FilterTableLayout` + `useTablePage` | `admin-list-card` + `useListFilterUrl` |
+
+**Last updated:** 2026-08-06

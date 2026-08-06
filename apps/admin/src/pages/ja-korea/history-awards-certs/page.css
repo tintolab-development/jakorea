@@ -1,0 +1,43 @@
+.hac-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.hac-page__tabs {
+  margin-bottom: 0;
+}
+
+.hac-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.hac-panel__year-month-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.hac-panel__table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+/* 정렬 셀렉트 | TdDivider(margin 0 12px) | 선택삭제·등록
+ * `.table-header-actions--wrapper` 기본 gap 8px 이 디바이더 양옆 12px 와 겹치지 않도록 제거 */
+.table-header-actions--wrapper.hac-panel__toolbar-actions {
+  gap: 0;
+}
+
+.hac-panel__toolbar-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--admin-list-toolbar-actions-gap, 8px);
+}

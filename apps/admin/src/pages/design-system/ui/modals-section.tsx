@@ -12,8 +12,12 @@ export function ModalsSection() {
     <DsSection
       id="modals"
       title="Modals"
-      description="ContentModal · ConfirmModal · AlertModal / useCmsAlert."
+      description="ContentModal · ConfirmModal · AlertModal. 푸터 버튼 large 140×44 (content-modal CSS 강제)."
     >
+      <p className="ds-note">
+        푸터 취소/등록/확인 = <code>size=&quot;large&quot;</code>. SSOT:{' '}
+        <code>cms-admin-ui/cms-button-action-sizes.mdc</code>
+      </p>
       <DsDemo label="Triggers">
         <div className="ds-demo__row">
           <CmsButton variant="secondary" size="medium" onClick={() => setContentOpen(true)}>
@@ -48,10 +52,10 @@ export function ModalsSection() {
         width={800}
         footer={
           <>
-            <CmsButton variant="secondary" size="medium" onClick={() => setContentOpen(false)}>
+            <CmsButton variant="secondary" size="large" onClick={() => setContentOpen(false)}>
               취소
             </CmsButton>
-            <CmsButton variant="primary" size="medium" onClick={() => setContentOpen(false)}>
+            <CmsButton variant="primary" size="large" onClick={() => setContentOpen(false)}>
               배너 등록
             </CmsButton>
           </>

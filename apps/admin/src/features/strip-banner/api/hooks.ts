@@ -69,7 +69,8 @@ export function useReorderStripBanners() {
   return useMutation({
     mutationFn: (orderedIds: string[]) => reorderStripBannersService(orderedIds),
     retry: false,
-    onSuccess: () => {
+    onSuccess: rows => {
+      queryClient.setQueryData(stripBannerQueryKeys.list(source()), rows)
       void queryClient.invalidateQueries({ queryKey: stripBannerQueryKeys.lists() })
     },
   })

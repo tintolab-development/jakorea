@@ -1,0 +1,24 @@
+/* 함께하는 사람들 — 탭 + 패널 셸
+ * @see detail-document-form-card.mdc
+ */
+.people-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: calc(100vh - var(--header-height, 64px) - 64px);
+  height: calc(100vh - var(--header-height, 64px) - 64px);
+}
+
+.people-page__tabs {
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.people-page > .org-chart-panel,
+.people-page > .board-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}

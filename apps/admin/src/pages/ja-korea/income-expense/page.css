@@ -1,0 +1,76 @@
+/**
+ * 수입&지출 관리 — 뷰포트 채움 카드 (detail-document-form-card)
+ * 시안: 1단 탭(수입|지출) → 흰 카드 → 타이틀 → 2단 탭(그래프|테이블) → 본문
+ */
+
+.income-expense-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  height: calc(100vh - var(--header-height, 64px) - 64px);
+  min-height: 0;
+}
+
+.income-expense-page__tabs {
+  flex-shrink: 0;
+}
+
+.income-expense-page__card {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+  gap: 0;
+}
+
+.income-expense-page__title {
+  margin: 0;
+  flex-shrink: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+/* 카드 내부: 타이틀 아래 네스트된 그래프|테이블 탭 */
+.income-expense-page__tabs--view {
+  margin-top: 16px;
+  margin-bottom: 20px;
+}
+
+/*
+ * 그래프 · 테이블 탭 타이포 (시안)
+ * active: mint-01 / 18 / 700 / lh 150%
+ */
+.income-expense-page__tabs--view .cms-text-tabs__list {
+  gap: 8px;
+}
+
+.income-expense-page__tabs--view button.cms-text-tabs__tab {
+  padding: 4px 8px 8px;
+  color: #7d7d7d;
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.income-expense-page__tabs--view button.cms-text-tabs__tab:hover:not(:disabled) {
+  color: var(--color-mint-01, #01a1af);
+}
+
+.income-expense-page__tabs--view button.cms-text-tabs__tab.cms-text-tabs__tab--active {
+  color: var(--color-mint-01, #01a1af);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 27px */
+  border-bottom-color: var(--color-mint-01, #01a1af);
+}

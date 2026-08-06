@@ -1,0 +1,192 @@
+/* 이사회 관리 패널 */
+
+.board-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.board-panel__card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.board-panel__card .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.board-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.board-panel__group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.board-panel__group-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.board-panel__group-title-marker {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  background: var(--default-BK, #3d3d3d);
+}
+
+.board-panel__group-title-text {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.board-panel__table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.board-panel .board-members-table .ant-table-tbody > tr {
+  transition: none;
+}
+
+/* scroll.x 합계 유지 — cms-data-table width:100% 가 열 합을 잡아먹지 않도록 */
+.board-panel .board-members-table.cms-data-table table.ant-table {
+  table-layout: fixed !important;
+  width: max(100%, 1236px) !important;
+  min-width: 1236px !important;
+}
+
+.board-panel .board-members-table .ant-table-thead > tr > th,
+.board-panel .board-members-table .ant-table-tbody > tr > td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  box-sizing: border-box !important;
+}
+
+/*
+ * 테이블 셀 텍스트 스펙 (시안)
+ * color main-BK / center / Pretendard 16 medium / line-height 150%
+ */
+.board-panel .board-members-table .ant-table-tbody > tr > td {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* ── 고정 컬럼 폭 (cms-data-table 강제 규칙 override) ──
+ * 선택 68 | 순서 80 | No. 80 | 공개 100 | 한글 140 | 영문 188 | 직위 120 | 소속 460
+ */
+
+/* selection-col 다음을 No.로 가정하는 공통 규칙 덮어쓰기 → 순서 80 */
+.board-panel .board-members-table.cms-data-table col.ant-table-selection-col + col {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--sort,
+.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--sort {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--no,
+.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--no,
+.board-panel .board-members-table .ant-table-thead > tr > th.cms-table-col--no,
+.board-panel .board-members-table .ant-table-tbody > tr > td.cms-table-col--no {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--public,
+.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--public {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+}
+
+.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--name-ko,
+.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--name-ko {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--name-en,
+.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--name-en {
+  width: 188px !important;
+  min-width: 188px !important;
+  max-width: 188px !important;
+}
+
+.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--position,
+.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--position {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+}
+
+.board-panel .board-members-table .ant-table-thead > tr > th.board-members-table__col--affiliation,
+.board-panel .board-members-table .ant-table-tbody > tr > td.board-members-table__col--affiliation {
+  width: 460px !important;
+  min-width: 280px !important;
+}
+
+.board-panel-inline-field.cms-input {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 인라인 필드도 동일 셀 텍스트 스펙 */
+.board-panel-inline-field .cms-input__control,
+.board-panel-inline-field .cms-input__control input {
+  color: var(--main-BK, #3d3d3d) !important;
+  text-align: center !important;
+  font-family: Pretendard, sans-serif !important;
+  font-size: 16px !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+  line-height: 150% !important;
+}
+
+.board-panel-inline-field--readonly .cms-input__control {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+.board-panel-inline-field--edit .cms-input__control {
+  cursor: text;
+}

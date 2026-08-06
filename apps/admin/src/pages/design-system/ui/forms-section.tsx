@@ -31,8 +31,15 @@ export function FormsSection() {
     <DsSection
       id="forms"
       title="Forms"
-      description="CmsInput · CmsRadio · CmsDatePicker · FileSelectField. 배너·팝업 등록 모달과 동일 패턴을 포함합니다."
+      description="CmsInput · CmsRadio · CmsDatePicker · FileSelectField. 배너·팝업·보고서 등록 모달과 동일 패턴."
     >
+      <p className="ds-note">
+        FileSelect + DetailInfoForm 규약:{' '}
+        <code>.cursor/rules/cms-admin-ui/file-select-detail-form.mdc</code>
+        <br />
+        Field edit 에 FileSelect 넣을 때 runtime CSS(
+        <code>display:flex; align-items:center</code>) 를 스코프에서 원복할 것.
+      </p>
       <DsDemo label="CmsInput">
         <div className="ds-demo__stack">
           <CmsInput inputSize="large" width="100%" placeholder="상단 문구를 입력하세요" />
@@ -77,11 +84,12 @@ export function FormsSection() {
         </p>
       </DsDemo>
 
-      <DsDemo label="FileSelectField (배너 등록 패턴)">
+      <DsDemo label="FileSelectField (등록 모달 패턴)">
         <p className="ds-demo__hint" style={{ marginTop: 0 }}>
-          버튼: <code>CmsButton</code> <code>variant=&quot;secondary&quot;</code>{' '}
-          <code>size=&quot;medium&quot;</code> (120×40) — 모달 푸터 취소와 동일 스펙.
-          <code>buttonLabel=&quot;파일 추가&quot;</code> · <code>multiple=&#123;false&#125;</code>
+          버튼: secondary <code>medium</code> (120×40). 모달 푸터 취소/등록은{' '}
+          <code>large</code> (140×44) — 혼동 금지.
+          <code>buttonLabel=&quot;파일 추가&quot;</code> · <code>multiple=&#123;false&#125;</code> ·
+          액션 행 = 버튼 + 가이드(가로, wrap 허용).
         </p>
         <div className="ds-demo__stack">
           <FileSelectField

@@ -1,0 +1,19 @@
+---
+description: Admin 토큰 경로 (공통 원칙 cms-admin-ui styling-tokens)
+globs:
+  - apps/admin/src/**/*.{css,tsx}
+alwaysApply: false
+---
+
+# Design tokens (Admin 어댑터)
+
+**원칙:** [cms-admin-ui/styling-tokens.mdc](../../../../.cursor/rules/cms-admin-ui/styling-tokens.mdc)
+
+**정의 파일:** [`apps/admin/src/app/providers/theme-provider.css`](../../../src/app/providers/theme-provider.css)
+
+Admin 목록 전용: `var(--admin-list-*)` ([list-table-spacing](./list-table-spacing.mdc))  
+필터: `var(--filter-*)` ([filter-area-layout](./filter-area-layout.mdc))
+
+값 부재 시 theme-provider에 토큰 추가. CMS path import 금지.
+
+**Last updated:** 2026-08-06

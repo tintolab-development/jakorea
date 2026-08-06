@@ -1,0 +1,229 @@
+/* 오시는 길 관리 — 단건 문서 폼 카드
+ * 흰 카드 viewport 남은 높이 fill — detail-document-form-card.mdc
+ * 카카오맵 HTML 행: 시안 패딩 20px + 남은 세로 공간 stretch
+ * 조회↔수정: 컨트롤 유지 + 보더/배경만 전환 (span↔input 스왑 금지)
+ */
+
+.directions-card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.directions-card .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.directions-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 상단: 주소 + 카카오맵 — 남은 높이 채움 */
+.directions-card__info {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.directions-card__info .detail-info-form__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.directions-card__row--fixed {
+  flex: 0 0 auto;
+}
+
+/* 카카오맵 HTML 행 — 남은 세로 fill (시안 주요 영역) */
+.directions-card__row--kakao.detail-info-form__row--single {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 280px;
+}
+
+.directions-card__row--kakao > .detail-info-form__field {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  align-items: stretch;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* 시안 패딩 20px (Figma spacing) */
+.directions-card__row--kakao .detail-info-form__field-label {
+  padding: 20px;
+  align-items: center;
+  min-height: 0;
+  height: auto;
+}
+
+.directions-card__row--kakao .detail-info-form__field-content {
+  min-height: 0;
+  height: 100%;
+  padding: 20px;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+/* 런타임 edit 슬롯 margin-block:auto 가 높이 fill 을 방해 → 원복 */
+.directions-card__row--kakao .detail-info-form__field-content--edit > * {
+  margin-block: 0 !important;
+  display: flex !important;
+  flex: 1 1 auto;
+  align-items: stretch !important;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+/* 하단 연락처 — 높이 고정, 카드 하단 */
+.directions-card__contact {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.directions-card .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 160px;
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+.directions-card .detail-info-form__field-label {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
+.directions-card .detail-info-form__field-content {
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+}
+
+.directions-card .detail-info-form__field-content--edit:has(.cms-textarea) {
+  align-items: flex-start;
+}
+
+/* ----- 인라인 필드: 조회=투명 보더, 수정=일반 컨트롤 (동일 노드) ----- */
+
+.directions-card .directions-inline-field {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.directions-card .directions-inline-field .cms-input__control,
+.directions-card .directions-inline-field .cms-textarea__control {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.directions-card .directions-inline-field--readonly .cms-input__control,
+.directions-card .directions-inline-field--readonly .cms-textarea__control {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+.directions-card .directions-inline-field--readonly .cms-input__control:hover,
+.directions-card .directions-inline-field--readonly .cms-textarea__control:hover {
+  border-color: transparent !important;
+}
+
+.directions-card .directions-inline-field--readonly .ant-input,
+.directions-card .directions-inline-field--readonly textarea.ant-input {
+  cursor: default;
+  color: var(--default-BK, #3d3d3d) !important;
+  font-weight: 500;
+}
+
+.directions-card .directions-inline-field--readonly.cms-input .ant-input {
+  font-weight: 600;
+}
+
+.directions-card
+  .directions-inline-field--edit.cms-textarea--fixed-rows
+  .cms-textarea__inner
+  textarea.ant-input,
+.directions-card
+  .directions-inline-field.cms-textarea--fixed-rows
+  .cms-textarea__inner
+  textarea.ant-input {
+  resize: none !important;
+  overflow-y: auto;
+}
+
+.directions-card .directions-inline-field .cms-textarea {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* 카카오맵 HTML — 행 높이 전체 채움 (flex height, rows 는 a11y 폴백만) */
+.directions-card .directions-inline-field--kakao.cms-textarea {
+  display: flex !important;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  align-self: stretch;
+}
+
+.directions-card .directions-inline-field--kakao .cms-textarea__control {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  min-height: 0 !important;
+  height: 100%;
+}
+
+.directions-card .directions-inline-field--kakao .cms-textarea__inner {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
+}
+
+.directions-card
+  .directions-inline-field--kakao
+  .cms-textarea__inner
+  textarea.ant-input {
+  flex: 1 1 auto;
+  height: 100% !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  resize: none !important;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}

@@ -55,3 +55,38 @@
   align-items: center;
   gap: var(--admin-list-toolbar-actions-gap, 8px);
 }
+
+/*
+ * 목록·카드 툴바 액션 버튼 — Figma large 140×44
+ * (모달 푸터 content-modal__footer-actions 와 동일 스펙)
+ * 의도적 예외: `.cms-button--toolbar-auto` 또는 인라인 width 가 필요하면 footer-auto 패턴 사용.
+ */
+.table-header-actions--wrapper .cms-button.ant-btn:not(.cms-button--footer-auto):not(.cms-button--toolbar-auto),
+.admin-list-toolbar > .cms-button.ant-btn:not(.cms-button--footer-auto):not(.cms-button--toolbar-auto),
+.hac-panel__toolbar-buttons .cms-button.ant-btn:not(.cms-button--footer-auto):not(.cms-button--toolbar-auto) {
+  display: inline-flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  padding: 6px 16px !important;
+  padding-block: 6px !important;
+  padding-inline: 16px !important;
+  gap: 6px;
+  border-radius: var(--radius-8, 8px);
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.table-header-actions--wrapper
+  .cms-button.ant-btn.cms-button--has-icon:not(.cms-button--footer-auto):not(.cms-button--toolbar-auto),
+.hac-panel__toolbar-buttons
+  .cms-button.ant-btn.cms-button--has-icon:not(.cms-button--footer-auto):not(.cms-button--toolbar-auto) {
+  flex-direction: row;
+}
+

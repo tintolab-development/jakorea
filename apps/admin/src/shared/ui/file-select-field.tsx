@@ -62,7 +62,7 @@ export interface FileSelectFieldProps {
   /** 표시할 파일명 목록 */
   fileNames?: string[]
   /** 안내 문구 줄 목록 — 케이스별(확장자 등). 용량은 공통 총 15MB 정책 */
-  guideLines?: string[]
+  guideLines?: readonly string[]
   /** 파일 선택 시 콜백 (이번 선택분). 목록 누적은 호출측에서 `fileNames`로 관리 */
   onFilesChange?: (files: File[]) => void
   /** 특정 인덱스 파일 업로드 취소(삭제) 시 콜백 — 전달 시 해당 파일 옆에 X 버튼 표시 */

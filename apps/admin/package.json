@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/form-template-runtime build",
+    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/form-template-runtime --filter @jakorea/rich-text build",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint . --max-warnings=-1",
@@ -20,8 +20,10 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^3.9.1",
     "@jakorea/form-template-runtime": "workspace:^",
+    "@jakorea/rich-text": "workspace:^",
     "@jakorea/ui": "workspace:*",
     "@jakorea/utils": "workspace:*",
+    "@tiptap/react": "^3.25.0",
     "@tanstack/react-query": "^5.62.2",
     "antd": "^5.28.0",
     "axios": "^1.7.9",
@@ -30,8 +32,7 @@
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.54.2",
     "react-router-dom": "^7.1.3",
-    "zod": "^3.24.1",
-    "zustand": "^5.0.2"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

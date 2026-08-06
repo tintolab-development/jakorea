@@ -1,7 +1,7 @@
 /**
  * 컨텐츠 모달 공통 레이아웃
  * 셸(Figma): padding 26 30 34 · radius 12 · shadow 0 0 25px rgba(0,0,0,0.35)
- * 푸터: margin-top 30 · 버튼 우측 · medium 120×40
+ * 푸터: margin-top 30 · 버튼 우측 · large 140×44
  *
  * TealHeaderModal 누수 리셋:
  * - content padding:0 → 셸 26/30/34
@@ -109,19 +109,34 @@
 }
 
 /*
- * 카드형 모달 푸터 CmsButton — Figma medium 120×40 고정
- * size="large"|"small" · cms-button--action · 인라인 width 를 덮어씀.
+ * 카드형 모달 푸터 CmsButton — Figma large 140×44 고정
+ * (display flex · padding 6×16 · gap 6 · radius 8 · font 16)
+ * size prop / cms-button--action / 인라인 width 를 덮어씀.
  * 의도적 가변 폭이 필요하면 `.cms-button--footer-auto` 로 제외.
  */
 .content-modal__footer-actions .cms-button.ant-btn:not(.cms-button--footer-auto) {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-  height: 40px !important;
-  padding: 6px 14px !important;
-  gap: 10px;
-  border-radius: var(--radius-6, 6px);
-  font-size: 14px;
+  display: inline-flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  padding: 6px 16px !important;
+  padding-block: 6px !important;
+  padding-inline: 16px !important;
+  gap: 6px;
+  border-radius: var(--radius-8, 8px);
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+/* 아이콘+라벨 푸터 버튼은 가로 배치 유지 */
+.content-modal__footer-actions .cms-button.ant-btn.cms-button--has-icon:not(.cms-button--footer-auto) {
+  flex-direction: row;
 }
 
 /* description prop 본문 — 전 모달 공통 */

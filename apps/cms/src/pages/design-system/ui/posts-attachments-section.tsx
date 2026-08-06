@@ -195,7 +195,8 @@ export function PostsAttachmentsSection() {
 
       <DsDemo label="FileSelectField (게시글 등록 패턴)">
         <p className="ds-demo__hint">
-          폼 섹션에도 있습니다. 게시글 가이드 문구 예시는 아래와 같습니다.
+          폼 섹션에도 있습니다. 버튼 medium · 가이드 가로 배치. SSOT{' '}
+          <code>file-select-detail-form</code>. 게시글 가이드 문구 예시는 아래와 같습니다.
         </p>
         <FileSelectField
           accept=".jpg,.jpeg,.png"

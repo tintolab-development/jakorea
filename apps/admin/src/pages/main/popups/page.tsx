@@ -2,7 +2,7 @@
  * 메인 팝업 관리
  */
 
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState, type Key } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import { Image, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -20,6 +20,7 @@ import {
   useSetPopupActive,
   useUpdatePopup,
 } from '@/features/popup/api/hooks'
+import { popupQueryKeys } from '@/features/popup/api/query-keys'
 import { POPUPS_CHANGED_EVENT } from '@/features/popup/api/store'
 import {
   PopupFormModal,
@@ -29,6 +30,22 @@ import {
   PopupDragHandle,
   PopupsSortableTable,
 } from '@/features/popup/ui/sortable-table'
+import {
+  FILTER_CONTROL_MAX_WIDTH_PX,
+  FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+  FILTER_SEARCH_BUTTON_WIDTH_PX,
+} from '@/shared/constants/filter-field-width'
+import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
+import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
+import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
+import {
+  applyDateRangeToSearchParams,
+  pendingDateRangeTupleEqual,
+  resolvePendingDateRangeFromUrl,
+  type PendingDateRange,
+  type UrlDateRangePendingSyncRef,
+  ymdFromParam,
+} from '@/shared/lib/url-date-range-pending-sync'
 import {
   CmsButton,
   CmsDateRangePicker,
@@ -42,19 +59,71 @@ import './page.css'
 
 type ActiveFilterValue = '' | 'true' | 'false'
 
-type FilterDraft = {
+type PopupPendingFilters = {
   isActive: ActiveFilterValue
   name: string
   altText: string
-  periodRange: [Dayjs | null, Dayjs | null]
+  periodRange: PendingDateRange
 }
 
-const EMPTY_FILTER_DRAFT: FilterDraft = {
+const INITIAL_PENDING: PopupPendingFilters = {
   isActive: '',
   name: '',
   altText: '',
-  periodRange: [null, null],
+  periodRange: null,
 }
+
+const periodSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
+
+function parseActive(raw: string | null): ActiveFilterValue {
+  if (raw === 'true' || raw === 'false') return raw
+  return ''
+}
+
+function parseApplied(searchParams: URLSearchParams): PopupListFilter {
+  const filter: PopupListFilter = {}
+  const active = parseActive(searchParams.get('pu_active'))
+  if (active === 'true') filter.isActive = true
+  if (active === 'false') filter.isActive = false
+  const name = (searchParams.get('pu_name') ?? '').trim()
+  if (name) filter.name = name
+  const altText = (searchParams.get('pu_alt') ?? '').trim()
+  if (altText) filter.altText = altText
+  const start = ymdFromParam(searchParams.get('pu_from'))
+  const end = ymdFromParam(searchParams.get('pu_to'))
+  if (start) filter.periodStart = start
+  if (end) filter.periodEnd = end
+  return filter
+}
+
+const searchSyncRules: readonly TableSearchParamRule<PopupPendingFilters>[] = [
+  {
+    kind: 'param',
+    filterKey: 'isActive',
+    paramKey: 'pu_active',
+    condition: f => f.isActive === 'true' || f.isActive === 'false',
+  },
+  {
+    kind: 'param',
+    filterKey: 'name',
+    paramKey: 'pu_name',
+    condition: f => f.name.trim().length > 0,
+    transform: v => String(v).trim(),
+  },
+  {
+    kind: 'param',
+    filterKey: 'altText',
+    paramKey: 'pu_alt',
+    condition: f => f.altText.trim().length > 0,
+    transform: v => String(v).trim(),
+  },
+  {
+    kind: 'apply',
+    apply: (nextParams, f) => {
+      applyDateRangeToSearchParams(nextParams, f.periodRange, 'pu_from', 'pu_to')
+    },
+  },
+]
 
 function formatPeriodDot(start: string, end: string): string {
   const s = start.replace(/-/g, '.')
@@ -66,18 +135,6 @@ function formatCreatedDate(iso: string): string {
   const d = dayjs(iso)
   if (!d.isValid()) return '-'
   return d.format('YYYY.MM.DD')
-}
-
-function draftToFilter(draft: FilterDraft): PopupListFilter {
-  const filter: PopupListFilter = {}
-  if (draft.isActive === 'true') filter.isActive = true
-  if (draft.isActive === 'false') filter.isActive = false
-  if (draft.name.trim()) filter.name = draft.name.trim()
-  if (draft.altText.trim()) filter.altText = draft.altText.trim()
-  const [start, end] = draft.periodRange
-  if (start) filter.periodStart = start.format('YYYY-MM-DD')
-  if (end) filter.periodEnd = end.format('YYYY-MM-DD')
-  return filter
 }
 
 function matchesClientFilter(row: Popup, filter: PopupListFilter): boolean {
@@ -102,6 +159,11 @@ function matchesClientFilter(row: Popup, filter: PopupListFilter): boolean {
   return true
 }
 
+function periodAsPickerValue(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
+  if (!period) return [null, null]
+  return [period[0] ?? null, period[1] ?? null]
+}
+
 export function PopupsPage() {
   const { showAlert } = useCmsAlert()
   const listQuery = usePopupsList()
@@ -111,22 +173,52 @@ export function PopupsPage() {
   const reorderMutation = useReorderPopups()
   const setActiveMutation = useSetPopupActive()
 
+  const {
+    pendingFilters,
+    setPendingFilters,
+    applied: appliedFilter,
+    applySearch,
+  } = useListFilterUrl<PopupPendingFilters, PopupListFilter>({
+    initialPending: INITIAL_PENDING,
+    paramConfig: searchSyncRules,
+    parseApplied,
+    syncPendingFromUrl: ({ searchParams, setPendingFilters: setPending }) => {
+      const isActive = parseActive(searchParams.get('pu_active'))
+      const name = searchParams.get('pu_name') ?? ''
+      const altText = searchParams.get('pu_alt') ?? ''
+      const from = searchParams.get('pu_from')
+      const to = searchParams.get('pu_to')
+
+      setPending(prev => {
+        const periodRange = resolvePendingDateRangeFromUrl({
+          ref: periodSyncRef,
+          from,
+          to,
+          prev: prev.periodRange,
+        }) as PendingDateRange
+
+        const next: PopupPendingFilters = { isActive, name, altText, periodRange }
+        if (
+          prev.isActive === next.isActive &&
+          prev.name === next.name &&
+          prev.altText === next.altText &&
+          pendingDateRangeTupleEqual(prev.periodRange, next.periodRange)
+        ) {
+          return prev
+        }
+        return next
+      })
+    },
+  })
+
   const allRows = useMemo(() => listQuery.data ?? [], [listQuery.data])
-  const [filterDraft, setFilterDraft] = useState<FilterDraft>(EMPTY_FILTER_DRAFT)
-  const [appliedFilter, setAppliedFilter] = useState<PopupListFilter>({})
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [formOpen, setFormOpen] = useState(false)
   const [formVariant, setFormVariant] = useState<'create' | 'detail'>('create')
   const [editingPopup, setEditingPopup] = useState<Popup | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
-  useEffect(() => {
-    const handler = () => {
-      void listQuery.refetch()
-    }
-    window.addEventListener(POPUPS_CHANGED_EVENT, handler)
-    return () => window.removeEventListener(POPUPS_CHANGED_EVENT, handler)
-  }, [listQuery])
+  useInvalidateOnWindowEvent(POPUPS_CHANGED_EVENT, popupQueryKeys.lists())
 
   const rows = useMemo(
     () => allRows.filter(row => matchesClientFilter(row, appliedFilter)),
@@ -134,9 +226,9 @@ export function PopupsPage() {
   )
 
   const handleSearch = useCallback(() => {
-    setAppliedFilter(draftToFilter(filterDraft))
+    applySearch()
     setSelectedRowKeys([])
-  }, [filterDraft])
+  }, [applySearch])
 
   const handleRowsReorder = useCallback(
     (reorderedRows: Popup[]) => {
@@ -367,16 +459,16 @@ export function PopupsPage() {
   return (
     <div className="popups-page">
       <div className="admin-list-card popups-page__filter-card">
-        <div className="popups-page__filter-row">
-          <div className="popups-page__filter-field">
-            <span className="popups-page__filter-label">사용 여부</span>
+        <div className="admin-filter-area popups-page__filter-row">
+          <div className="admin-filter-area__field admin-filter-area__field--control">
+            <span className="admin-filter-area__label">사용 여부</span>
             <CmsSelect
-              inputSize="medium"
-              width={140}
+              inputSize="large"
+              width={FILTER_CONTROL_MAX_WIDTH_PX}
               withAllOption
-              value={filterDraft.isActive}
+              value={pendingFilters.isActive}
               onChange={value =>
-                setFilterDraft(prev => ({
+                setPendingFilters(prev => ({
                   ...prev,
                   isActive: (value as ActiveFilterValue) ?? '',
                 }))
@@ -388,45 +480,52 @@ export function PopupsPage() {
               placeholder="전체"
             />
           </div>
-          <div className="popups-page__filter-field popups-page__filter-field--grow">
-            <span className="popups-page__filter-label">팝업명</span>
+          <div className="admin-filter-area__field admin-filter-area__field--control">
+            <span className="admin-filter-area__label">팝업명</span>
             <CmsInput
-              inputSize="medium"
-              width="100%"
+              inputSize="large"
+              width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="팝업명 검색"
-              value={filterDraft.name}
-              onChange={e => setFilterDraft(prev => ({ ...prev, name: e.target.value }))}
+              value={pendingFilters.name}
+              onChange={e => setPendingFilters(prev => ({ ...prev, name: e.target.value }))}
               onPressEnter={handleSearch}
             />
           </div>
-          <div className="popups-page__filter-field popups-page__filter-field--grow">
-            <span className="popups-page__filter-label">대체 텍스트</span>
+          <div className="admin-filter-area__field admin-filter-area__field--control">
+            <span className="admin-filter-area__label">대체 텍스트</span>
             <CmsInput
-              inputSize="medium"
-              width="100%"
+              inputSize="large"
+              width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="대체 텍스트 검색"
-              value={filterDraft.altText}
-              onChange={e => setFilterDraft(prev => ({ ...prev, altText: e.target.value }))}
+              value={pendingFilters.altText}
+              onChange={e => setPendingFilters(prev => ({ ...prev, altText: e.target.value }))}
               onPressEnter={handleSearch}
             />
           </div>
-          <div className="popups-page__filter-field popups-page__filter-field--period">
-            <span className="popups-page__filter-label">게시 기간</span>
+          <div className="admin-filter-area__field admin-filter-area__field--date-range">
+            <span className="admin-filter-area__label">게시 기간</span>
             <CmsDateRangePicker
-              inputSize="medium"
-              width="100%"
-              value={filterDraft.periodRange}
+              inputSize="large"
+              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+              value={periodAsPickerValue(pendingFilters.periodRange)}
               onChange={dates =>
-                setFilterDraft(prev => ({
+                setPendingFilters(prev => ({
                   ...prev,
-                  periodRange: dates ?? [null, null],
+                  periodRange: dates ?? null,
                 }))
               }
               placeholder={['시작일', '종료일']}
             />
           </div>
-          <div className="popups-page__filter-actions">
-            <CmsButton variant="primary" size="medium" type="button" onClick={handleSearch}>
+          <div className="admin-filter-area__actions">
+            <CmsButton
+              className="admin-filter-area__search-button"
+              variant="primary"
+              size="large"
+              type="button"
+              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+              onClick={handleSearch}
+            >
               조회
             </CmsButton>
           </div>
@@ -445,14 +544,14 @@ export function PopupsPage() {
           <div className="table-header-actions--wrapper">
             <CmsButton
               variant="delete"
-              size="medium"
+              size="large"
               type="button"
               onClick={handleDeleteClick}
               loading={removeMutation.isPending && !formOpen}
             >
               선택 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="medium" type="button" onClick={openCreate}>
+            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
               팝업 등록
             </CmsButton>
           </div>

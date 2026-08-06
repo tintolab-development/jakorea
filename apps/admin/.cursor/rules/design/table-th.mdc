@@ -1,33 +1,17 @@
 ---
-description: Admin 테이블 th / 라벨 셀 배경·보더 통일 (#F5F6F7, table-line)
+description: Admin 테이블 th — theme path (공통 스펙 cms-admin-ui table-th)
 globs:
   - apps/admin/src/**/*.{tsx,css}
 alwaysApply: false
 ---
 
-# Admin 테이블 th 스타일
+# Admin 테이블 th (어댑터)
 
-목록·DetailInfoForm 라벨 셀(th) 배경·보더는 아래 스펙으로 통일한다.
+**스펙:** [cms-admin-ui/table-th.mdc](../../../../.cursor/rules/cms-admin-ui/table-th.mdc)
 
-```css
-border-right: 1px solid var(--table-line, #e0e0e0);
-border-bottom: 1px solid var(--table-line, #e0e0e0);
-background: var(--BG-header);
-/* --BG-header =
-   linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%), #fff
-*/
-```
+## Admin 정의·적용
 
-## 토큰
+- 정의: `theme-provider.css`
+- 적용: `cms-data-table.css` · `table-th.css` · DetailInfoForm 라벨
 
-| 변수 | 값 |
-|------|-----|
-| `--BG-header` | `linear-gradient(0deg, rgba(231,235,239,.6) …), #fff` (CMS·form-template-runtime 동일) |
-| `--table-th-bg` | `var(--BG-header)` |
-| `--table-line` | `#e0e0e0` (`--color-border`) |
-
-정의: `theme-provider.css` · 적용: `cms-data-table.css` · `table-th.css` · DetailInfoForm 라벨
-
-화면별 th `background` 단색(`#f5f6f7`) 하드코딩 금지 — `var(--BG-header)` 사용.
-
-**Last updated:** 2026-08-05
+**Last updated:** 2026-08-06

@@ -16,11 +16,32 @@ export function ButtonsSection() {
         <br />
         <strong>Variant</strong> — primary · secondary(민트 아웃라인) · default · delete.
         <br />
-        <strong>용도</strong> — 목록 툴바 액션=medium · 모달 푸터=medium · FileSelectField 버튼=medium
-        secondary.
+        <strong>용도 (SSOT)</strong> — 목록 툴바=large · 모달 푸터=large · FileSelectField 버튼=medium
+        secondary. 규칙:{' '}
+        <code>.cursor/rules/cms-admin-ui/cms-button-action-sizes.mdc</code>
       </p>
 
-      <DsDemo label="CmsButton variants (medium)">
+      <DsDemo label="용도별: 툴바·모달 푸터 large (140×44)">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          취소 secondary · 등록/저장 primary · 선택 삭제 delete — 모두{' '}
+          <code>size=&quot;large&quot;</code>. CSS 강제: 모달{' '}
+          <code>.content-modal__footer-actions</code> · 툴바{' '}
+          <code>.table-header-actions--wrapper</code>
+        </p>
+        <div className="ds-demo__row">
+          <CmsButton variant="secondary" size="large">
+            취소
+          </CmsButton>
+          <CmsButton variant="primary" size="large">
+            등록
+          </CmsButton>
+          <CmsButton variant="delete" size="large">
+            선택 삭제
+          </CmsButton>
+        </div>
+      </DsDemo>
+
+      <DsDemo label="CmsButton variants (medium — 행 액션·FileSelect 등)">
         <div className="ds-demo__row">
           <CmsButton variant="primary" size="medium">
             Primary
@@ -43,13 +64,13 @@ export function ButtonsSection() {
       <DsDemo label="CmsButton sizes">
         <div className="ds-demo__row">
           <CmsButton variant="secondary" size="large">
-            Large
+            Large 140×44
           </CmsButton>
           <CmsButton variant="secondary" size="medium">
-            Medium
+            Medium 120×40
           </CmsButton>
           <CmsButton variant="secondary" size="small">
-            Small
+            Small 100×32
           </CmsButton>
         </div>
       </DsDemo>
@@ -58,14 +79,14 @@ export function ButtonsSection() {
         <div className="ds-demo__row">
           <CmsButton
             variant="primary"
-            size="medium"
+            size="large"
             loading={loading}
             onClick={() => {
               setLoading(true)
               window.setTimeout(() => setLoading(false), 1200)
             }}
           >
-            클릭
+            저장
           </CmsButton>
         </div>
       </DsDemo>

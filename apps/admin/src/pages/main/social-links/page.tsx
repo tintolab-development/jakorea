@@ -2,7 +2,7 @@
  * 메인 소셜 링크 관리
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { SocialLink } from '@/entities/social-link/model/types'
@@ -12,11 +12,13 @@ import {
   useSetSocialLinkActive,
   useSocialLinksList,
 } from '@/features/social-link/api/hooks'
+import { socialLinkQueryKeys } from '@/features/social-link/api/query-keys'
 import { SOCIAL_LINKS_CHANGED_EVENT } from '@/features/social-link/api/store'
 import {
   SocialLinkDragHandle,
   SocialLinksSortableTable,
 } from '@/features/social-link/ui/sortable-table'
+import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
 
 import './page.css'
@@ -36,13 +38,7 @@ export function SocialLinksPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [draftUrls, setDraftUrls] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    const handler = () => {
-      void listQuery.refetch()
-    }
-    window.addEventListener(SOCIAL_LINKS_CHANGED_EVENT, handler)
-    return () => window.removeEventListener(SOCIAL_LINKS_CHANGED_EVENT, handler)
-  }, [listQuery])
+  useInvalidateOnWindowEvent(SOCIAL_LINKS_CHANGED_EVENT, socialLinkQueryKeys.lists())
 
   const handleRowsReorder = useCallback(
     (reorderedRows: SocialLink[]) => {
@@ -187,7 +183,7 @@ export function SocialLinksPage() {
               <>
                 <CmsButton
                   variant="secondary"
-                  size="medium"
+                  size="large"
                   type="button"
                   onClick={handleCancelEdit}
                   disabled={saveMutation.isPending}
@@ -196,7 +192,7 @@ export function SocialLinksPage() {
                 </CmsButton>
                 <CmsButton
                   variant="primary"
-                  size="medium"
+                  size="large"
                   type="button"
                   loading={saveMutation.isPending}
                   onClick={() => {
@@ -209,7 +205,7 @@ export function SocialLinksPage() {
             ) : (
               <CmsButton
                 variant="primary"
-                size="medium"
+                size="large"
                 type="button"
                 onClick={handleStartEdit}
                 disabled={listQuery.isLoading || rows.length === 0}

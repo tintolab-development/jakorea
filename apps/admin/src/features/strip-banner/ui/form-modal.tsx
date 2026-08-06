@@ -4,8 +4,8 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import {
   CmsButton,
-  CmsDateRangePicker,
   CmsInput,
+  CmsPeriodDatePicker,
   CmsRadio,
   CmsRadioGroup,
   ConfirmModal,
@@ -177,7 +177,7 @@ function StripBannerFormBody({
               {variant === 'detail' ? (
                 <CmsButton
                   variant="delete"
-                  size="medium"
+                  size="large"
                   type="button"
                   onClick={() => setDeleteConfirmOpen(true)}
                   disabled={confirmLoading || deleteLoading}
@@ -190,7 +190,7 @@ function StripBannerFormBody({
             <div className="strip-banner-form-modal__footer-end">
               <CmsButton
                 variant="secondary"
-                size="medium"
+                size="large"
                 type="button"
                 onClick={onCancel}
                 disabled={confirmLoading || deleteLoading}
@@ -199,7 +199,7 @@ function StripBannerFormBody({
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="medium"
+                size="large"
                 type="button"
                 loading={confirmLoading}
                 disabled={confirmLoading || deleteLoading}
@@ -304,14 +304,14 @@ function StripBannerFormBody({
                 required
                 view={<span>{periodViewLabel}</span>}
                 edit={
-                  <CmsDateRangePicker
+                  <CmsPeriodDatePicker
                     inputSize="large"
                     width="100%"
                     value={periodRange}
                     onChange={dates => {
                       setPeriodRange(dates ?? [null, null])
                     }}
-                    placeholder={['게시 기간을 선택하세요', '게시 기간을 선택하세요']}
+                    placeholder="게시 기간을 선택하세요"
                   />
                 }
               />

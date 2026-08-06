@@ -1,0 +1,200 @@
+/* JA Worldwide 관리 — 시안 영역·패딩 스펙
+ * 목록 카드·툴바 갭: list-table-layout.css / table-header-label.css
+ * - card padding 20px · toolbar→table 16px · title↔desc 10px · actions 8px
+ * - 상단 테이블 ↔ 하단 gap 24px
+ * - 지부명 | 연결 링크 열 50% / 50%
+ * - 상단 테이블 영역이 남은 세로 공간을 채움 (하단 문구는 카드 하단 고정)
+ */
+
+.ja-worldwide-card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.ja-worldwide-card .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.ja-worldwide-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 24px;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 상단 관리 테이블: 남은 높이까지 박스 확장 (행 아래 빈 여백) */
+.ja-worldwide-card__body > .ja-worldwide-table-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* 하단 문구: 높이 고정, 카드 하단 */
+.ja-worldwide-card__body > .ja-worldwide-bottom {
+  flex: 0 0 auto;
+}
+
+/* ── 공통 래퍼 ──────────────────────────────────── */
+
+.ja-worldwide-table-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-8, 8px);
+  background: #fff;
+}
+
+/* ── 상단: 지부명 | 연결 링크 (50% / 50%, 시안 flex 셀) ── */
+
+.ja-worldwide-branches {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  background: #fff;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+}
+
+.ja-worldwide-branches__row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 시안: 지부명·연결링크 셀 (th/td 공통 스펙) */
+.ja-worldwide-branches__cell {
+  display: flex;
+  padding: 12px 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  align-self: stretch;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 54px;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  background: #fff;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+}
+
+.ja-worldwide-branches__cell:last-child {
+  border-right: none;
+}
+
+.ja-worldwide-branches__cell--head {
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ja-worldwide-branches__url {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.ja-worldwide-branches__cell .cms-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+/* ── 하단: 하단 문구 (라벨 200px | 값 flex 1 행 레이아웃) ──
+ * th/td에 display:flex를 주면 table-cell 역할이 깨지므로
+ * 시안 flex 스펙을 전용 row 컨테이너로 구현한다.
+ */
+
+.ja-worldwide-bottom {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-8, 8px);
+  background: #fff;
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+}
+
+/* 시안: 하단 문구 th */
+.ja-worldwide-bottom__label {
+  display: flex;
+  width: 200px;
+  flex: 0 0 200px;
+  padding: 12px 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  box-sizing: border-box;
+  border-right: 1px solid var(--table-header-line, #ddd);
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  white-space: nowrap;
+}
+
+/* 시안: 하단 문구 td */
+.ja-worldwide-bottom__value {
+  display: flex;
+  min-width: 100px;
+  min-height: 54px;
+  padding: 10px 16px;
+  align-items: center;
+  gap: 16px;
+  flex: 1 0 0;
+  box-sizing: border-box;
+  background: #fff;
+  text-align: left;
+}
+
+.ja-worldwide-bottom__text {
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  white-space: pre-line;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 160%;
+  text-align: left;
+}
+
+.ja-worldwide-bottom__value .cms-textarea--fixed-rows {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+.ja-worldwide-card .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
+  resize: none;
+}

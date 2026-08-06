@@ -1,0 +1,67 @@
+.impact-stories-page {
+  width: 100%;
+  min-width: 0;
+}
+
+/* 필터 카드 ↔ 목록 카드 24px (admin-list-card margin-bottom) */
+.impact-stories-page__filter-card {
+  margin-bottom: var(--spacing-24, 24px);
+}
+
+.impact-stories-page__filter {
+  width: 100%;
+}
+
+.impact-stories-page__table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow: auto;
+}
+
+.impact-stories-page__title-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.impact-stories-page__pin {
+  flex-shrink: 0;
+  display: block;
+}
+
+.impact-stories-page__title-text {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
+/* 상단 고정은 아이콘만 차별, 제목 색·타이포는 동일 */
+
+.impact-stories-page__table .ant-table-tbody > tr {
+  cursor: pointer;
+}
+
+.impact-stories-page__table .ant-table-tbody > tr > td {
+  vertical-align: middle;
+}
+
+/* 공개 여부 Switch — 시안 mint */
+.impact-stories-page .ant-switch-checked {
+  background: var(--color-mint-01, #01a1af) !important;
+}
+
+.impact-stories-page .ant-switch {
+  min-width: 40px;
+}

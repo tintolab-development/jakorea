@@ -274,7 +274,7 @@ function PopupFormBody({
               {variant === 'detail' ? (
                 <CmsButton
                   variant="delete"
-                  size="medium"
+                  size="large"
                   type="button"
                   onClick={() => setDeleteConfirmOpen(true)}
                   disabled={confirmLoading || deleteLoading}
@@ -287,7 +287,7 @@ function PopupFormBody({
             <div className="popup-form-modal__footer-end">
               <CmsButton
                 variant="secondary"
-                size="medium"
+                size="large"
                 type="button"
                 onClick={onCancel}
                 disabled={confirmLoading || deleteLoading}
@@ -296,7 +296,7 @@ function PopupFormBody({
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="medium"
+                size="large"
                 type="button"
                 loading={confirmLoading}
                 disabled={confirmLoading || deleteLoading}

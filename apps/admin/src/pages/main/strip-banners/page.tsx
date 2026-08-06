@@ -2,7 +2,7 @@
  * 메인 상단 띠배너 관리
  */
 
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState, type Key } from 'react'
 import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
@@ -21,6 +21,7 @@ import {
   useUpdateStripBanner,
   type StripBannerListFilter,
 } from '@/features/strip-banner/api/hooks'
+import { stripBannerQueryKeys } from '@/features/strip-banner/api/query-keys'
 import { STRIP_BANNERS_CHANGED_EVENT } from '@/features/strip-banner/api/store'
 import {
   StripBannerFormModal,
@@ -30,6 +31,22 @@ import {
   StripBannerDragHandle,
   StripBannersSortableTable,
 } from '@/features/strip-banner/ui/sortable-table'
+import {
+  FILTER_CONTROL_MAX_WIDTH_PX,
+  FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+  FILTER_SEARCH_BUTTON_WIDTH_PX,
+} from '@/shared/constants/filter-field-width'
+import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
+import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
+import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
+import {
+  applyDateRangeToSearchParams,
+  pendingDateRangeTupleEqual,
+  resolvePendingDateRangeFromUrl,
+  type PendingDateRange,
+  type UrlDateRangePendingSyncRef,
+  ymdFromParam,
+} from '@/shared/lib/url-date-range-pending-sync'
 import {
   CmsButton,
   CmsDateRangePicker,
@@ -43,6 +60,61 @@ import './page.css'
 
 type ActiveFilterValue = '' | 'true' | 'false'
 
+type StripBannerPendingFilters = {
+  active: ActiveFilterValue
+  text: string
+  period: PendingDateRange
+}
+
+const INITIAL_PENDING: StripBannerPendingFilters = {
+  active: '',
+  text: '',
+  period: null,
+}
+
+const periodSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
+
+function parseActive(raw: string | null): ActiveFilterValue {
+  if (raw === 'true' || raw === 'false') return raw
+  return ''
+}
+
+function parseApplied(searchParams: URLSearchParams): StripBannerListFilter {
+  const filter: StripBannerListFilter = {}
+  const active = parseActive(searchParams.get('sb_active'))
+  if (active === 'true') filter.isActive = true
+  if (active === 'false') filter.isActive = false
+  const text = (searchParams.get('sb_text') ?? '').trim()
+  if (text) filter.text = text
+  const start = ymdFromParam(searchParams.get('sb_from'))
+  const end = ymdFromParam(searchParams.get('sb_to'))
+  if (start) filter.periodStart = start
+  if (end) filter.periodEnd = end
+  return filter
+}
+
+const searchSyncRules: readonly TableSearchParamRule<StripBannerPendingFilters>[] = [
+  {
+    kind: 'param',
+    filterKey: 'active',
+    paramKey: 'sb_active',
+    condition: f => f.active === 'true' || f.active === 'false',
+  },
+  {
+    kind: 'param',
+    filterKey: 'text',
+    paramKey: 'sb_text',
+    condition: f => f.text.trim().length > 0,
+    transform: v => String(v).trim(),
+  },
+  {
+    kind: 'apply',
+    apply: (nextParams, f) => {
+      applyDateRangeToSearchParams(nextParams, f.period, 'sb_from', 'sb_to')
+    },
+  },
+]
+
 function formatYmdDot(ymd: string): string {
   if (!ymd) return '-'
   return ymd.replace(/-/g, '.')
@@ -53,23 +125,6 @@ function formatCreatedDate(iso: string): string {
   const d = dayjs(iso)
   if (!d.isValid()) return '-'
   return d.format('YYYY.MM.DD')
-}
-
-function buildFilter(params: {
-  active: ActiveFilterValue
-  text: string
-  period: [Dayjs | null, Dayjs | null]
-}): StripBannerListFilter {
-  const filter: StripBannerListFilter = {}
-  if (params.active === 'true') filter.isActive = true
-  if (params.active === 'false') filter.isActive = false
-  const text = params.text.trim()
-  if (text) filter.text = text
-  const start = params.period[0]
-  const end = params.period[1]
-  if (start) filter.periodStart = start.format('YYYY-MM-DD')
-  if (end) filter.periodEnd = end.format('YYYY-MM-DD')
-  return filter
 }
 
 function matchesClientFilter(row: StripBanner, filter: StripBannerListFilter): boolean {
@@ -91,13 +146,49 @@ function matchesClientFilter(row: StripBanner, filter: StripBannerListFilter): b
   return true
 }
 
+function periodAsPickerValue(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
+  if (!period) return [null, null]
+  return [period[0] ?? null, period[1] ?? null]
+}
+
 export function StripBannersPage() {
   const { showAlert } = useCmsAlert()
 
-  const [draftActive, setDraftActive] = useState<ActiveFilterValue>('')
-  const [draftText, setDraftText] = useState('')
-  const [draftPeriod, setDraftPeriod] = useState<[Dayjs | null, Dayjs | null]>([null, null])
-  const [appliedFilter, setAppliedFilter] = useState<StripBannerListFilter>({})
+  const {
+    pendingFilters,
+    setPendingFilters,
+    applied: appliedFilter,
+    applySearch,
+  } = useListFilterUrl<StripBannerPendingFilters, StripBannerListFilter>({
+    initialPending: INITIAL_PENDING,
+    paramConfig: searchSyncRules,
+    parseApplied,
+    syncPendingFromUrl: ({ searchParams, setPendingFilters: setPending }) => {
+      const active = parseActive(searchParams.get('sb_active'))
+      const text = searchParams.get('sb_text') ?? ''
+      const from = searchParams.get('sb_from')
+      const to = searchParams.get('sb_to')
+
+      setPending(prev => {
+        const period = resolvePendingDateRangeFromUrl({
+          ref: periodSyncRef,
+          from,
+          to,
+          prev: prev.period,
+        }) as PendingDateRange
+
+        const next: StripBannerPendingFilters = { active, text, period }
+        if (
+          prev.active === next.active &&
+          prev.text === next.text &&
+          pendingDateRangeTupleEqual(prev.period, next.period)
+        ) {
+          return prev
+        }
+        return next
+      })
+    },
+  })
 
   const listQuery = useStripBannersList()
   const createMutation = useCreateStripBanner()
@@ -117,24 +208,12 @@ export function StripBannersPage() {
   const [editingBanner, setEditingBanner] = useState<StripBanner | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
-  useEffect(() => {
-    const handler = () => {
-      void listQuery.refetch()
-    }
-    window.addEventListener(STRIP_BANNERS_CHANGED_EVENT, handler)
-    return () => window.removeEventListener(STRIP_BANNERS_CHANGED_EVENT, handler)
-  }, [listQuery])
+  useInvalidateOnWindowEvent(STRIP_BANNERS_CHANGED_EVENT, stripBannerQueryKeys.lists())
 
   const handleSearch = useCallback(() => {
-    setAppliedFilter(
-      buildFilter({
-        active: draftActive,
-        text: draftText,
-        period: draftPeriod,
-      })
-    )
+    applySearch()
     setSelectedRowKeys([])
-  }, [draftActive, draftPeriod, draftText])
+  }, [applySearch])
 
   const handleRowsReorder = useCallback(
     (reorderedRows: StripBanner[]) => {
@@ -351,14 +430,19 @@ export function StripBannersPage() {
   return (
     <div className="strip-banners-page">
       <div className="admin-list-card">
-        <div className="strip-banners-page__filter">
-          <div className="strip-banners-page__filter-field strip-banners-page__filter-field--status">
-            <p className="strip-banners-page__filter-label">사용 여부</p>
+        <div className="admin-filter-area strip-banners-page__filter">
+          <div className="admin-filter-area__field admin-filter-area__field--control">
+            <p className="admin-filter-area__label">사용 여부</p>
             <CmsSelect
               inputSize="large"
-              width="100%"
-              value={draftActive}
-              onChange={value => setDraftActive((value as ActiveFilterValue) ?? '')}
+              width={FILTER_CONTROL_MAX_WIDTH_PX}
+              value={pendingFilters.active}
+              onChange={value =>
+                setPendingFilters(prev => ({
+                  ...prev,
+                  active: (value as ActiveFilterValue) ?? '',
+                }))
+              }
               options={[
                 { label: '전체', value: '' },
                 { label: '사용', value: 'true' },
@@ -366,30 +450,42 @@ export function StripBannersPage() {
               ]}
             />
           </div>
-          <div className="strip-banners-page__filter-field strip-banners-page__filter-field--text">
-            <p className="strip-banners-page__filter-label">배너 문구</p>
+          <div className="admin-filter-area__field admin-filter-area__field--control">
+            <p className="admin-filter-area__label">배너 문구</p>
             <CmsInput
               inputSize="large"
-              width="100%"
+              width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="배너 문구를 입력하세요"
-              value={draftText}
-              onChange={e => setDraftText(e.target.value)}
+              value={pendingFilters.text}
+              onChange={e => setPendingFilters(prev => ({ ...prev, text: e.target.value }))}
               onPressEnter={handleSearch}
             />
           </div>
-          <div className="strip-banners-page__filter-field strip-banners-page__filter-field--period">
-            <p className="strip-banners-page__filter-label">게시 기간</p>
+          <div className="admin-filter-area__field admin-filter-area__field--date-range">
+            <p className="admin-filter-area__label">게시 기간</p>
             <CmsDateRangePicker
               inputSize="large"
-              width="100%"
-              value={draftPeriod}
-              onChange={dates => setDraftPeriod(dates ?? [null, null])}
+              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+              value={periodAsPickerValue(pendingFilters.period)}
+              onChange={dates =>
+                setPendingFilters(prev => ({
+                  ...prev,
+                  period: dates ?? null,
+                }))
+              }
               placeholder={['시작일', '종료일']}
               allowClear
             />
           </div>
-          <div className="strip-banners-page__filter-actions">
-            <CmsButton variant="primary" size="large" type="button" onClick={handleSearch}>
+          <div className="admin-filter-area__actions">
+            <CmsButton
+              className="admin-filter-area__search-button"
+              variant="primary"
+              size="large"
+              type="button"
+              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+              onClick={handleSearch}
+            >
               조회
             </CmsButton>
           </div>
@@ -408,14 +504,14 @@ export function StripBannersPage() {
           <div className="table-header-actions--wrapper">
             <CmsButton
               variant="delete"
-              size="medium"
+              size="large"
               type="button"
               onClick={handleDeleteClick}
               loading={removeMutation.isPending}
             >
               선택 삭제
             </CmsButton>
-            <CmsButton variant="primary" size="medium" type="button" onClick={openCreate}>
+            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
               배너 등록
             </CmsButton>
           </div>

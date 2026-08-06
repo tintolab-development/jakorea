@@ -2,6 +2,25 @@
 
 Development standards for **JAKorea CMS** (`apps/cms`).
 
+## CMS · Admin 공유 UI (SSOT)
+
+Homepage Admin과 **치수·필터 URL 의도·테이블 셸**을 같이 쓴다. 공통 수정은 아래 폴더만.
+
+→ [`.cursor/rules/cms-admin-ui/`](../../../../.cursor/rules/cms-admin-ui/README.md)
+
+| 공유 룰 | 용도 |
+|---------|------|
+| [filter-area-dimensions](../../../../.cursor/rules/cms-admin-ui/filter-area-dimensions.mdc) | 필터 240 · gap 12 · 조회 160 |
+| [list-filter-url-sync](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc) | draft + searchParams |
+| [list-table-shell](../../../../.cursor/rules/cms-admin-ui/list-table-shell.mdc) | 카드·툴바 갭 |
+| [cms-button-action-sizes](../../../../.cursor/rules/cms-admin-ui/cms-button-action-sizes.mdc) | 툴바·모달 푸터 large 140×44 |
+| [file-select-detail-form](../../../../.cursor/rules/cms-admin-ui/file-select-detail-form.mdc) | FileSelect + DetailInfoForm |
+| [cms-data-table](../../../../.cursor/rules/cms-admin-ui/cms-data-table.mdc) | `cms-data-table` 패딩 |
+| [table-th](../../../../.cursor/rules/cms-admin-ui/table-th.mdc) / [table-td-divider](../../../../.cursor/rules/cms-admin-ui/table-td-divider.mdc) | th · 값 셀 디바이더 |
+| [styling-tokens](../../../../.cursor/rules/cms-admin-ui/styling-tokens.mdc) | 토큰 우선 |
+
+Admin 구현 스택: [`apps/admin/.cursor/rules`](../../../admin/.cursor/rules/README.md) (`useListFilterUrl` — CMS `useTablePage`와 다름).
+
 ## Start here
 
 - [Project overview](./project-overview.md)
@@ -17,7 +36,8 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 - [Code style](./coding/code-style.md) — ESLint, Prettier, TS, naming  
 - **[Feature file naming](./coding/feature-file-naming.mdc)** — CMS 전역 파일명 간략화 (**alwaysApply**, 필수)  
 - [Component patterns](./coding/component-patterns.md) — shared UI usage  
-- [List page composition](./coding/list-page-composition.mdc) — filter + table layout  
+- [List page composition](./coding/list-page-composition.mdc) — filter + table layout (공유 URL 의도 → cms-admin-ui)  
+- [List page table stack](./tables/list-page-table-stack.md) — `useTablePage`  
 - **[TableFilterGroup layout](./design/table-filter-group-layout.mdc)** — 260px·gap·responsive wrap·겹침 금지 패턴  
 - [Status dropdown cell](./coding/status-dropdown-cell.md) — `StatusDropdownCell`, tag layout  
 - [Custom hooks](./coding/custom-hooks.md)  
@@ -31,6 +51,7 @@ Development standards for **JAKorea CMS** (`apps/cms`).
 
 - [UI principles](./design/ui-principles.md)  
 - [숫자 입력 UX](./design/numeric-input-ux.mdc) — 정수·소수·금액·날짜 텍스트·숫자형 식별자 입력 규칙
+- **[CmsButton 액션 사이즈](./design/cms-button-action-sizes.mdc)** — 툴바·모달 푸터 large 140×44 (SSOT 어댑터)
 - [Modal viewport centering](./design/modal-viewport-centering.md) — center modals in viewport  
 - Prefer **`ContentModal`**; direct **`TealHeaderModal`** use is deprecated  
 - [CMS 공통 Alert 모달](./libraries/cms-alert-modal.md) — 단일 확인 안내 (`useCmsAlert` / `cmsAlertModal`)  
