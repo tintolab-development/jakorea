@@ -15,12 +15,14 @@ import {
   PFText,
 } from '@/shared/ui'
 import styles from './page.module.css'
+import { useNavigate } from 'react-router-dom'
 
 function formatViewCount(count: number) {
   return count.toLocaleString('ko-KR')
 }
 
 export function ResultDetailPage() {
+  const navigate = useNavigate()
   const resultId = getResultIdFromPath()
   const detail = useMockResultDetail(resultId)
 
@@ -29,11 +31,11 @@ export function ResultDetailPage() {
       window.history.back()
       return
     }
-    window.location.assign(RESULTS_PATH)
+    navigate(RESULTS_PATH)
   }
 
   const handleGoToList = () => {
-    window.location.assign(RESULTS_PATH)
+    navigate(RESULTS_PATH)
   }
 
   if (!detail) {

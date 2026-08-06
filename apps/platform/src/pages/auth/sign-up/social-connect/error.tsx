@@ -2,6 +2,7 @@ import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamatio
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './error.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 const SOCIAL_CONNECT_PATH = '/auth/sign-up/social-connect'
 const SIGN_IN_PATH = '/auth/sign-in'
@@ -19,15 +20,16 @@ function getErrorReason(): SocialConnectErrorReason {
 }
 
 export function SignUpSocialConnectErrorPage() {
+  const navigate = useNavigate()
   const reason = getErrorReason()
   const isAlreadyLinked = reason === 'already-linked'
 
   const handleRetry = () => {
-    window.location.assign(SOCIAL_CONNECT_PATH)
+    navigate(SOCIAL_CONNECT_PATH)
   }
 
   const handleSignIn = () => {
-    window.location.assign(SIGN_IN_PATH)
+    navigate(SIGN_IN_PATH)
   }
 
   return (

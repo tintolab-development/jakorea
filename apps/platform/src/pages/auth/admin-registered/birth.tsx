@@ -11,8 +11,10 @@ import {
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import styles from './birth.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 export function AdminRegisteredBirthPage() {
+  const navigate = useNavigate()
   const wizardState = requireAdminRegisteredWizardState()
 
   if (!wizardState) {
@@ -43,11 +45,11 @@ export function AdminRegisteredBirthPage() {
     }
 
     updateAdminRegisteredWizardState({ birthDate, gender })
-    window.location.assign('/auth/admin-registered/identity')
+    navigate('/auth/admin-registered/identity')
   }
 
   const handlePrevious = () => {
-    window.location.assign('/auth/admin-registered/notice')
+    navigate('/auth/admin-registered/notice')
   }
 
   const handleBirthDateChange = (value: string) => {

@@ -6,10 +6,13 @@ import illustExclamationUrl from '@/shared/assets/illustration/illust-exclamatio
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './notice.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 function AdminRegisteredFirstLoginNotice() {
+  const navigate = useNavigate()
+
   const handleChangePassword = () => {
-    window.location.assign('/auth/admin-registered/birth')
+    navigate('/auth/admin-registered/birth')
   }
 
   return (
@@ -30,12 +33,14 @@ function AdminRegisteredFirstLoginNotice() {
 }
 
 function AdminRegisteredSignUpNotice() {
+  const navigate = useNavigate()
+
   const handleChangePassword = () => {
-    window.location.assign(getAdminRegisteredSignUpChangePasswordPath())
+    navigate(getAdminRegisteredSignUpChangePasswordPath())
   }
 
   const handleFindEmail = () => {
-    window.location.assign('/auth/find-email')
+    navigate('/auth/find-email')
   }
 
   return (

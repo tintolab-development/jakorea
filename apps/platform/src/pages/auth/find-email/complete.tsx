@@ -2,16 +2,18 @@ import illustSearchUrl from '@/shared/assets/illustration/illust-search.png'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './complete.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 const MOCK_MASKED_EMAIL = 'Ja****@gmail.com'
 
 export function FindEmailCompletePage() {
+  const navigate = useNavigate()
   const handleGoLogin = () => {
-    window.location.assign('/auth/sign-in')
+    navigate('/auth/sign-in')
   }
 
   const handleResetPassword = () => {
-    window.location.assign('/auth/find-password')
+    navigate('/auth/find-password')
   }
 
   return (

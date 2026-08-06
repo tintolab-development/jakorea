@@ -8,6 +8,7 @@ import {
 } from '@/shared/ui'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 type SocialProvider = 'google' | 'naver' | 'kakao'
 
@@ -56,6 +57,7 @@ function StatusDot({ connected }: { connected: boolean }) {
 }
 
 export function SignUpSocialConnectPage() {
+  const navigate = useNavigate()
   const [connectedMap, setConnectedMap] = useState<Record<SocialProvider, boolean>>({
     google: false,
     naver: false,
@@ -70,17 +72,17 @@ export function SignUpSocialConnectPage() {
 
     if (!isConnected) {
       if (provider === 'google') {
-        window.location.assign(SOCIAL_CONNECT_COMPLETE_PATH)
+        navigate(SOCIAL_CONNECT_COMPLETE_PATH)
         return
       }
 
       if (provider === 'naver') {
-        window.location.assign(`${SOCIAL_CONNECT_ERROR_PATH}?reason=connection-failed`)
+        navigate(`${SOCIAL_CONNECT_ERROR_PATH}?reason=connection-failed`)
         return
       }
 
       if (provider === 'kakao') {
-        window.location.assign(`${SOCIAL_CONNECT_ERROR_PATH}?reason=already-linked`)
+        navigate(`${SOCIAL_CONNECT_ERROR_PATH}?reason=already-linked`)
         return
       }
     }
@@ -89,11 +91,11 @@ export function SignUpSocialConnectPage() {
   }
 
   const handleComplete = () => {
-    window.location.assign('/')
+    navigate('/')
   }
 
   const handleSkip = () => {
-    window.location.assign('/auth/sign-up/complete')
+    navigate('/auth/sign-up/complete')
   }
 
   return (

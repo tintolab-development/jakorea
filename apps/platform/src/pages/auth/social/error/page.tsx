@@ -8,6 +8,7 @@ import {
 import illustSquareUrl from '@/shared/assets/illustration/illust-square.svg'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 const socialLoginItems = [
   { label: 'Google 로그인', icon: <GoogleSocialLoginIcon /> },
@@ -16,16 +17,17 @@ const socialLoginItems = [
 ]
 
 export function SocialErrorPage() {
+  const navigate = useNavigate()
   const handleSignIn = () => {
-    window.location.assign('/auth/sign-in')
+    navigate('/auth/sign-in')
   }
 
   const handleSignUp = () => {
-    window.location.assign('/auth/sign-up')
+    navigate('/auth/sign-up')
   }
 
   const handleSocialRetry = () => {
-    window.location.assign('/auth/social/error?reason=not-linked')
+    navigate('/auth/social/error?reason=not-linked')
   }
 
   return (

@@ -2,8 +2,10 @@ import { PFButton, PFText } from '@/shared/ui'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation.svg'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 export function RequiredPage() {
+  const navigate = useNavigate()
   const searchParams = new URLSearchParams(window.location.search)
   const redirectPath = searchParams.get('redirect')
   const signInPath = redirectPath
@@ -11,11 +13,11 @@ export function RequiredPage() {
     : '/auth/sign-in'
 
   const handleSignIn = () => {
-    window.location.assign(signInPath)
+    navigate(signInPath)
   }
 
   const handleSignUp = () => {
-    window.location.assign('/auth/sign-up')
+    navigate('/auth/sign-up')
   }
 
   const handleBack = () => {
@@ -24,7 +26,7 @@ export function RequiredPage() {
       return
     }
 
-    window.location.assign('/')
+    navigate('/')
   }
 
   return (

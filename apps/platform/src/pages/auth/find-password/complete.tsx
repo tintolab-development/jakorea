@@ -3,11 +3,13 @@ import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './complete.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 export function FindPasswordCompletePage() {
+  const navigate = useNavigate()
   const handleGoLogin = () => {
     clearAdminRegisteredPasswordChangeRequired()
-    window.location.assign('/auth/sign-in')
+    navigate('/auth/sign-in')
   }
 
   return (

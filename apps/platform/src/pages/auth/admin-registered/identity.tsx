@@ -2,21 +2,23 @@ import { requireAdminRegisteredWizardState } from '@/features/auth/admin-registe
 import { PFButton, PFText } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 export function AdminRegisteredIdentityPage() {
+  const navigate = useNavigate()
   const wizardState = requireAdminRegisteredWizardState()
 
   if (!wizardState?.birthDate || !wizardState.gender) {
-    window.location.assign('/auth/admin-registered/birth')
+    navigate('/auth/admin-registered/birth')
     return null
   }
 
   const handleVerify = () => {
-    window.location.assign('/auth/admin-registered/change-password')
+    navigate('/auth/admin-registered/change-password')
   }
 
   const handlePrevious = () => {
-    window.location.assign('/auth/admin-registered/birth')
+    navigate('/auth/admin-registered/birth')
   }
 
   return (

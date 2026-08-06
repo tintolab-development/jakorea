@@ -6,23 +6,25 @@ import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 export function AdminRegisteredCompletePage() {
+  const navigate = useNavigate()
   useEffect(() => {
     setDevAuthLoggedIn(true)
     clearAdminRegisteredWizardState()
   }, [])
 
   const handleStart = () => {
-    window.location.assign('/')
+    navigate('/')
   }
 
   const handleGoMyPage = () => {
-    window.location.assign(MYPAGE_PATH)
+    navigate(MYPAGE_PATH)
   }
 
   const handleConnectSocial = () => {
-    window.location.assign('/auth/sign-up/social-connect')
+    navigate('/auth/sign-up/social-connect')
   }
 
   return (
