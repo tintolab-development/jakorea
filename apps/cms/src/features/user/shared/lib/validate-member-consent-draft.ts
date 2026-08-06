@@ -1,5 +1,6 @@
 import { resolveParagraphTitleRequiredMark } from '@/features/template/lib/paragraph-required-mark'
 import {
+  AGREEMENT_NOTICE_PARAGRAPH_IDS,
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
   type MultipleChoiceParagraph,
   type TableBottomConsent,
@@ -10,6 +11,8 @@ import {
   portraitPersonalConsentAffiliationState,
   portraitPersonalConsentNameValue,
 } from '@/features/template/ui/paragraph/table/agreement-portrait-personal-consent-name-row'
+import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
+import { isPaymentStatementBasicInfoIncomplete } from '@/features/user/shared/lib/validate-payment-statement-basic-info'
 
 function readParagraphBottomConsent(
   paragraph: WritingFormParagraph
@@ -78,6 +81,19 @@ function isIdTypeWithInputComplete(paragraph: WritingFormParagraph): boolean {
   return nested.inputValue.trim() !== ''
 }
 
+function isAgreementNoticeIdTypeComplete(draft: WritingFormDraft): boolean {
+  const table = draft.paragraphs.find(
+    paragraph => paragraph.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.table
+  )
+  if (table == null || table.kind !== 'single_item' || table.variant !== 'horizontal_table') {
+    return false
+  }
+  const nested = table.idTypeWithInput
+  if (nested == null) return false
+  if (nested.selectedOptionId == null || nested.selectedOptionId === '') return false
+  return nested.inputValue.trim() !== ''
+}
+
 function isPortraitPersonalConsentResponseComplete(draft: WritingFormDraft): boolean {
   const table = draft.paragraphs.find(
     paragraph => paragraph.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.personalConsentTable
@@ -124,8 +140,8 @@ function isRequiredParagraphResponseComplete(paragraph: WritingFormParagraph): b
 
 export type MemberConsentDraftValidationOptions = {
   templateId?: string
-  /** 지급조서 기본정보 성명 — draft 밖 로컬 폼 값 */
-  paymentAuthorName?: string
+  /** 지급조서 기본정보 — draft 밖 로컬 폼 값 */
+  paymentStatementBasicInfo?: Partial<PaymentStatementBasicInfoAutofillValues>
 }
 
 const PAYMENT_STATEMENT_TEMPLATE_IDS = new Set([
@@ -151,8 +167,12 @@ export function hasMemberConsentIncompleteRequiredFields(
     return !isPortraitPersonalConsentResponseComplete(draft)
   }
 
+  if (templateId === 'agreement-notice') {
+    return !isAgreementNoticeIdTypeComplete(draft)
+  }
+
   if (templateId != null && PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) {
-    return (options?.paymentAuthorName ?? '').trim() === ''
+    return isPaymentStatementBasicInfoIncomplete(options?.paymentStatementBasicInfo)
   }
 
   return false

@@ -17,6 +17,19 @@ describe('resolveTermsTypeToConsentLabel', () => {
       '행정정보 공동이용 사전동의서'
     )
   })
+
+  it('등록 canonical termsType을 UI 라벨로 매핑한다', () => {
+    expect(resolveTermsTypeToConsentLabel('PAYMENT_STATEMENT_PRE_CONSENT')).toBe(
+      '지급조서 사전 동의서'
+    )
+    expect(resolveTermsTypeToConsentLabel('FACILITATOR_PLEDGE')).toBe('교육진행자 서약서')
+    expect(resolveTermsTypeToConsentLabel('ADMINISTRATIVE_INFO_CONSENT')).toBe(
+      '행정정보 공동이용 사전동의서'
+    )
+    expect(resolveTermsTypeToConsentLabel('CRIMINAL_HISTORY_CHECK_CONSENT')).toBe(
+      '성범죄 경력 조회 동의서'
+    )
+  })
 })
 
 describe('applyTermsAgreementsToSchema', () => {
@@ -69,6 +82,32 @@ describe('applyTermsAgreementsToSchema', () => {
     })
   })
 
+  it('등록 canonical termsType(상세 조회)을 동의 상태로 반영한다', () => {
+    const instructorSchema = CONSENT_PRESET_SCHEMA.instructor_only
+    const rows = applyTermsAgreementsToSchema(instructorSchema, [
+      { termsType: 'SERVICE_TERMS', agreed: true },
+      { termsType: 'PRIVACY_COLLECTION', agreed: true },
+      { termsType: 'MARKETING', agreed: true },
+      { termsType: 'PORTRAIT_RIGHTS', agreed: true },
+      { termsType: 'PAYMENT_STATEMENT_PRE_CONSENT', agreed: true },
+      { termsType: 'FACILITATOR_PLEDGE', agreed: true },
+      { termsType: 'ADMINISTRATIVE_INFO_CONSENT', agreed: true },
+      { termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT', agreed: true },
+    ])
+
+    const field = (label: string) =>
+      rows.flatMap(r => r.fields).find(f => f.label === label)?.value
+
+    expect(field('서비스 이용약관')).toMatchObject({ agreed: true })
+    expect(field('지급조서 사전 동의서')).toMatchObject({ type: 'document', agreed: true })
+    expect(field('교육진행자 서약서')).toMatchObject({ type: 'document', agreed: true })
+    expect(field('행정정보 공동이용 사전동의서')).toMatchObject({
+      type: 'document',
+      agreed: true,
+    })
+    expect(field('성범죄 경력 조회 동의서')).toMatchObject({ type: 'document', agreed: true })
+  })
+
   it('데이터가 없으면 mock 샘플 대신 미동의 기본값을 사용한다', () => {
     const rows = applyTermsAgreementsToSchema(individualSchema, [])
 
@@ -81,7 +120,7 @@ describe('applyTermsAgreementsToSchema', () => {
 })
 
 describe('applyMemberConsentToSchema', () => {
-  it('consent-records가 termsAgreements보다 우선한다', () => {
+  it('상세 termsAgreements가 있으면 consent-records보다 우선한다', () => {
     const rows = applyMemberConsentToSchema(individualSchema, {
       termsAgreements: [{ termsType: 'MARKETING', agreed: true }],
       consentRecords: [
@@ -90,6 +129,6 @@ describe('applyMemberConsentToSchema', () => {
     })
 
     const marketing = rows.flatMap(r => r.fields).find(f => f.label === '마케팅 제공 동의')?.value
-    expect(marketing).toMatchObject({ type: 'remote_consent', agreed: false })
+    expect(marketing).toMatchObject({ type: 'remote_consent', agreed: true })
   })
 })

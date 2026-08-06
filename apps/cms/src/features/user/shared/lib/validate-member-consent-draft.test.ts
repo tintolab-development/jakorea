@@ -76,6 +76,19 @@ function withPledgeClausesAgreed(draft: WritingFormDraft): WritingFormDraft {
 }
 
 describe('hasMemberConsentIncompleteRequiredFields', () => {
+  it('allows portrait when instructor affiliation is prefilled from school name', () => {
+    const draft = applyMemberPortraitConsentPrefill(createAgreementPortraitDraft(), {
+      name: '홍길동',
+      schoolEnrollmentStatus: 'enrolled',
+      schoolName: '○○고등학교',
+      portraitAffiliationSelectOptions: INSTRUCTOR_PORTRAIT_CONSENT_AFFILIATION_OPTIONS,
+    })
+
+    expect(
+      hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-portrait' })
+    ).toBe(false)
+  })
+
   it('blocks instructor portrait when affiliation is empty', () => {
     const draft = applyMemberPortraitConsentPrefill(createAgreementPortraitDraft(), {
       name: '홍길동',
@@ -180,7 +193,49 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     ).toBe(true)
   })
 
-  it('allows agreement-notice when only subject paragraph is filled', () => {
+  it('allows agreement-notice when subject and id type are filled', () => {
+    const base = normalizeWritingFormDraft(createAgreementNoticeDraft())
+    const draft: WritingFormDraft = {
+      ...base,
+      paragraphs: base.paragraphs.map(paragraph => {
+        if (paragraph.id !== 'agreement-notice-subject') return paragraph
+        if (paragraph.kind !== 'single_item' || paragraph.variant !== 'short_essay') {
+          return paragraph
+        }
+        return {
+          ...paragraph,
+          items: (paragraph.items ?? []).map(item => ({
+            ...item,
+            bodyText:
+              item.id === 'agreement-notice-subj-name'
+                ? '홍길동'
+                : item.id === 'agreement-notice-subj-birth'
+                  ? '19900101'
+                  : '01012345678',
+          })),
+        }
+      }).map(paragraph => {
+        if (paragraph.id !== 'agreement-notice-table') return paragraph
+        if (paragraph.kind !== 'single_item' || paragraph.variant !== 'horizontal_table') {
+          return paragraph
+        }
+        if (paragraph.idTypeWithInput == null) return paragraph
+        return {
+          ...paragraph,
+          idTypeWithInput: {
+            ...paragraph.idTypeWithInput,
+            inputValue: '900101-1234567',
+          },
+        }
+      }),
+    }
+
+    expect(
+      hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-notice' })
+    ).toBe(false)
+  })
+
+  it('blocks agreement-notice when id type input is empty', () => {
     const base = normalizeWritingFormDraft(createAgreementNoticeDraft())
     const draft: WritingFormDraft = {
       ...base,
@@ -206,6 +261,6 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
 
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-notice' })
-    ).toBe(false)
+    ).toBe(true)
   })
 })

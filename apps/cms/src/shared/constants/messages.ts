@@ -9,6 +9,10 @@ export const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두
 /** 회원 신규 등록 — 약관·동의 미완료 시 AlertModal 본문 */
 export const REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE = '필수 약관에 동의해주세요'
 
+/** 강사 신규 등록 — 동의서 작성 전 기본 정보 미작성 시 AlertModal 본문 */
+export const INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE =
+  '기본 정보를 먼저 작성 해주세요.'
+
 /** 미구현 기능 `window.alert` 공통 안내 (프로그램 상세 미리보기, 대시보드 위젯 더보기 등) */
 export const FEATURE_COMING_SOON_ALERT_MESSAGE = '준비 중입니다.'
 

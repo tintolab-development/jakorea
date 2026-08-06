@@ -22,15 +22,19 @@ export const TERMS_TYPE_TO_LABEL: Record<string, string> = {
   PORTRAIT: '초상권 수집·이용 동의',
   PAYMENT_STATEMENT: '지급조서 사전 동의서',
   PAYMENT_STATEMENT_CONSENT: '지급조서 사전 동의서',
+  PAYMENT_STATEMENT_PRE_CONSENT: '지급조서 사전 동의서',
   PAYMENT: '지급조서 사전 동의서',
   SEX_OFFENSE_CHECK: '성범죄 경력 조회 동의서',
   SEXUAL_OFFENSE_CHECK: '성범죄 경력 조회 동의서',
   CRIME_CHECK: '성범죄 경력 조회 동의서',
+  CRIMINAL_HISTORY_CHECK_CONSENT: '성범죄 경력 조회 동의서',
   ADMIN_INFO_SHARING: '행정정보 공동이용 사전동의서',
   ADMINISTRATIVE_INFO_SHARING: '행정정보 공동이용 사전동의서',
   ADMINISTRATIVE_JOINT: '행정정보 공동이용 사전동의서',
+  ADMINISTRATIVE_INFO_CONSENT: '행정정보 공동이용 사전동의서',
   ADMIN_INFO_JOINT: '행정정보 공동이용 사전동의서',
   EDUCATOR_PLEDGE: '교육진행자 서약서',
+  FACILITATOR_PLEDGE: '교육진행자 서약서',
   INSTRUCTOR_PLEDGE: '교육진행자 서약서',
   EDUCATOR: '교육진행자 서약서',
   MFA: '2단계 인증(MFA) 설정 동의',
@@ -156,7 +160,9 @@ function overlayAgreementByLabel(
   }))
 }
 
-/** 상세 `termsAgreements` + `consent-records` → 약관·동의 UI 스키마 */
+/** 상세 `termsAgreements` + `consent-records` → 약관·동의 UI 스키마.
+ * 상세 `termsAgreements`가 있으면 이를 SSOT로 쓰고, 없을 때만 consent-records를 사용한다.
+ */
 export function applyMemberConsentToSchema(
   schema: ConsentRowSchema[],
   input: {
@@ -171,16 +177,14 @@ export function applyMemberConsentToSchema(
     return neutralizeConsentSchema(schema)
   }
 
-  let result = neutralizeConsentSchema(schema)
+  const result = neutralizeConsentSchema(schema)
 
+  // 상세 약관이 있으면 상세만 반영 (consent-records로 덮어쓰지 않음)
   if (terms.length > 0) {
-    result = overlayAgreementByLabel(result, buildTermsAgreementLabelMap(terms))
-  }
-  if (records.length > 0) {
-    result = overlayAgreementByLabel(result, buildConsentRecordLabelMap(records))
+    return overlayAgreementByLabel(result, buildTermsAgreementLabelMap(terms))
   }
 
-  return result
+  return overlayAgreementByLabel(result, buildConsentRecordLabelMap(records))
 }
 
 /** @deprecated `applyMemberConsentToSchema` 사용 */
