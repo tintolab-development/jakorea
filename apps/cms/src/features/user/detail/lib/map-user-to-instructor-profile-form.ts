@@ -16,9 +16,19 @@ import {
   type LicenseOrAwardRow,
 } from '@/features/user/shared/ui/instructor-profile-form'
 import {
+  instructorCmsProfileToFormValues,
+  instructorProfileFormValuesToCmsProfile,
+  instructorProfileFormValuesToCmsSettlement,
+} from '@/features/user/api/map-instructor-cms-profile'
+import type {
+  InstructorCmsProfileProposal,
+  InstructorCmsSettlement,
+} from '@/features/user/api/types/instructor-cms-profile-proposal'
+import {
   EMPTY_EDUCATION_GRADUATE_ROW,
   EMPTY_EDUCATION_SCHOOL_ROW,
 } from '@/features/user/shared/ui/instructor-register-education-section'
+import { USER_AFFILIATION_PIPE_SEP } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 
 function toConsentValue(agreed: boolean | undefined): ConsentValue {
   return agreed === true ? 'agree' : 'disagree'
@@ -63,6 +73,7 @@ function mapCertificationsToLicenseRows(user: Omit<User, 'password'>): LicenseOr
     acquiredYear: cert.issuedDate && dayjs(cert.issuedDate).isValid() ? dayjs(cert.issuedDate) : null,
     title: cert.name,
     issuer: cert.issuer ?? '',
+    ...(cert.id != null ? { certificationId: cert.id } : {}),
   }))
 }
 
@@ -84,6 +95,23 @@ function resolveMemberType(user: Omit<User, 'password'>): 'general' | 'school_te
   return 'general'
 }
 
+function normalizeSchoolTeacherEmploymentStatus(
+  status: string | undefined
+): InstructorProfileFormValues['employmentStatus'] {
+  if (status === 'LEAVE') return 'ON_LEAVE'
+  if (status === 'TRANSFER') return 'TRANSFERRED'
+  if (status === 'RESIGNED') return 'WITHDRAWN'
+  if (
+    status === 'ACTIVE' ||
+    status === 'ON_LEAVE' ||
+    status === 'WITHDRAWN' ||
+    status === 'TRANSFERRED'
+  ) {
+    return status
+  }
+  return ''
+}
+
 function resolveAffiliationFields(user: Omit<User, 'password'>): Pick<
   InstructorProfileFormValues,
   'affiliationName' | 'affiliationNone' | 'schoolName' | 'employmentStatus'
@@ -93,9 +121,14 @@ function resolveAffiliationFields(user: Omit<User, 'password'>): Pick<
   const schoolName =
     user.schoolInfo?.schoolName?.trim() ||
     user.affiliatedSchoolName?.trim() ||
-    (memberType === 'school_teacher' ? affiliation.split(',')[0]?.trim() ?? '' : '')
+    user.instructorCmsProfile?.affiliation?.schoolName?.trim() ||
+    (memberType === 'school_teacher'
+      ? (user.affiliation?.split(/\s*,\s*/)[0]?.trim().split(USER_AFFILIATION_PIPE_SEP)[0]?.trim() ??
+        '')
+      : '')
   const employment =
-    parseSchoolTeacherEmploymentStatus(user.listMetrics?.employmentStatusLabel) ?? ''
+    parseSchoolTeacherEmploymentStatus(user.listMetrics?.employmentStatusLabel) ??
+    normalizeSchoolTeacherEmploymentStatus(user.instructorCmsProfile?.affiliation?.employmentStatus)
 
   if (memberType === 'school_teacher') {
     return {
@@ -154,10 +187,23 @@ function mapTermsAgreements(
   const privacy = find(['PRIVACY_COLLECTION', 'PRIVACY'])
   const marketing = find(['MARKETING'])
   const portrait = find(['PORTRAIT', 'PORTRAIT_RIGHTS'])
-  const payment = find(['PAYMENT_STATEMENT', 'PAYMENT'])
-  const educator = find(['EDUCATOR_PLEDGE', 'EDUCATOR'])
-  const sexOffense = find(['SEX_OFFENSE_CHECK', 'CRIME_CHECK'])
-  const adminJoint = find(['ADMINISTRATIVE_JOINT', 'ADMIN_INFO_JOINT'])
+  const payment = find([
+    'PAYMENT_STATEMENT',
+    'PAYMENT',
+    'PAYMENT_STATEMENT_CONSENT',
+    'PAYMENT_STATEMENT_PRE_CONSENT',
+  ])
+  const educator = find(['EDUCATOR_PLEDGE', 'EDUCATOR', 'FACILITATOR_PLEDGE'])
+  const sexOffense = find([
+    'SEX_OFFENSE_CHECK',
+    'CRIME_CHECK',
+    'CRIMINAL_HISTORY_CHECK_CONSENT',
+  ])
+  const adminJoint = find([
+    'ADMINISTRATIVE_JOINT',
+    'ADMIN_INFO_JOINT',
+    'ADMINISTRATIVE_INFO_CONSENT',
+  ])
 
   return {
     consentTermsOfService: service ? toConsentValue(service.agreed) : INITIAL_VALUES.consentTermsOfService,
@@ -184,8 +230,11 @@ export function mapUserToInstructorProfileFormValues(
   user: Omit<User, 'password'>,
   instructorResume: ApplicantInstructorRow | null
 ): InstructorProfileFormValues {
+  const fromCmsProfile = user.instructorCmsProfile
+    ? instructorCmsProfileToFormValues(user.instructorCmsProfile)
+    : null
+
   const { eduSchoolType, eduStatus } = splitEducationLevel(user.listMetrics?.highestEducationLabel)
-  const affiliationFields = resolveAffiliationFields(user)
   const home = resolveHomeAddress(user)
   const careerText =
     user.instructorCareerText?.trim() ||
@@ -212,38 +261,58 @@ export function mapUserToInstructorProfileFormValues(
 
   return {
     ...INITIAL_VALUES,
+    ...(fromCmsProfile ?? {}),
     name: user.name ?? '',
     gender: mapGender(user.gender),
     birthDate: birthDateToFormValue(user.birthDate),
     contact: user.phone ?? '',
     email: user.email ?? '',
-    memberType: resolveMemberType(user),
-    ...affiliationFields,
-    instructorCareer: careerText,
-    isBusinessIncome: user.instructorInfo?.isBusinessIncome === true ? 'yes' : 'no',
-    bankName: user.instructorInfo?.bankName ?? '',
-    accountNumber: user.instructorInfo?.accountNumber ?? '',
-    accountHolder: user.instructorInfo?.accountHolder ?? '',
-    homeAddress: home.homeAddress,
-    homeAddressDetail: home.homeAddressDetail,
-    oneLineIntro: user.bio ?? '',
+    memberType: fromCmsProfile?.memberType ?? resolveMemberType(user),
+    ...(fromCmsProfile
+      ? {}
+      : {
+          ...resolveAffiliationFields(user),
+        }),
+    instructorCareer:
+      fromCmsProfile?.instructorCareer ??
+      careerText,
+    isBusinessIncome:
+      user.instructorCmsSettlement?.businessIncome != null
+        ? user.instructorCmsSettlement.businessIncome
+          ? 'yes'
+          : 'no'
+        : user.instructorInfo?.isBusinessIncome === true
+          ? 'yes'
+          : 'no',
+    bankName: user.instructorCmsSettlement?.bankName ?? user.instructorInfo?.bankName ?? '',
+    accountNumber:
+      user.instructorCmsSettlement?.accountNumber ?? user.instructorInfo?.accountNumber ?? '',
+    accountHolder:
+      user.instructorCmsSettlement?.accountHolder ?? user.instructorInfo?.accountHolder ?? '',
+    homeAddress: fromCmsProfile?.homeAddress ?? home.homeAddress,
+    homeAddressDetail: fromCmsProfile?.homeAddressDetail ?? home.homeAddressDetail,
+    oneLineIntro: fromCmsProfile?.oneLineIntro ?? user.bio ?? '',
     ...mapTermsAgreements(user),
-    eduSchoolType,
-    eduStatus,
-    educationDetailKeys: [],
-    highSchool: { ...EMPTY_EDUCATION_SCHOOL_ROW },
-    college23Rows: [{ ...EMPTY_EDUCATION_SCHOOL_ROW }],
-    college4Rows: [{ ...EMPTY_EDUCATION_SCHOOL_ROW }],
-    graduateRows: [{ ...EMPTY_EDUCATION_GRADUATE_ROW }],
-    careerLevel: 'experienced',
-    careers: [{ ...EMPTY_CAREER }],
-    jaKoreaRows: [{ ...EMPTY_JA_KOREA_ROW }],
-    licenseRows: mapCertificationsToLicenseRows(user),
-    awardRows: mapAwardsToRows(instructorResume),
-    freeWrite1,
-    freeWrite2,
-    freeWrite3,
-    freeWrite4,
+    eduSchoolType: fromCmsProfile?.eduSchoolType ?? eduSchoolType,
+    eduStatus: fromCmsProfile?.eduStatus ?? eduStatus,
+    ...(fromCmsProfile
+      ? {}
+      : {
+          educationDetailKeys: [],
+          highSchool: { ...EMPTY_EDUCATION_SCHOOL_ROW },
+          college23Rows: [{ ...EMPTY_EDUCATION_SCHOOL_ROW }],
+          college4Rows: [{ ...EMPTY_EDUCATION_SCHOOL_ROW }],
+          graduateRows: [{ ...EMPTY_EDUCATION_GRADUATE_ROW }],
+          careerLevel: instructorResume?.instructorCareerLevel ?? ('experienced' as const),
+          careers: [{ ...EMPTY_CAREER }],
+          jaKoreaRows: [{ ...EMPTY_JA_KOREA_ROW }],
+        }),
+    licenseRows: fromCmsProfile?.licenseRows ?? mapCertificationsToLicenseRows(user),
+    awardRows: fromCmsProfile?.awardRows ?? mapAwardsToRows(instructorResume),
+    freeWrite1: fromCmsProfile?.freeWrite1 ?? freeWrite1,
+    freeWrite2: fromCmsProfile?.freeWrite2 ?? freeWrite2,
+    freeWrite3: fromCmsProfile?.freeWrite3 ?? freeWrite3,
+    freeWrite4: fromCmsProfile?.freeWrite4 ?? freeWrite4,
   }
 }
 
@@ -268,6 +337,9 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
   bio: string
   highestEducationLevel: string
   highestEducationSchoolName: string
+  licenseRows: InstructorProfileFormValues['licenseRows']
+  instructorCmsProfile: InstructorCmsProfileProposal
+  instructorCmsSettlement: InstructorCmsSettlement
 } {
   const birthDigits = values.birthDate.replace(/\D/g, '')
   const birthDate =
@@ -305,5 +377,8 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
     bio: values.oneLineIntro.trim(),
     highestEducationLevel: values.eduSchoolType.trim(),
     highestEducationSchoolName: values.eduStatus.trim(),
+    licenseRows: values.licenseRows,
+    instructorCmsProfile: instructorProfileFormValuesToCmsProfile(values),
+    instructorCmsSettlement: instructorProfileFormValuesToCmsSettlement(values),
   }
 }

@@ -94,6 +94,8 @@ export type LicenseOrAwardRow = {
   acquiredYear: Dayjs | null
   title: string
   issuer: string
+  /** 상세 수정 — 기존 자격증 PATCH 시 `certifications[].id` */
+  certificationId?: number
 }
 
 export type InstructorRegisterModalFormValues = {

@@ -228,12 +228,22 @@ export function AddUserIndividual({
   const memberConsentContext = useMemo((): MemberConsentMemberContext => {
     return {
       name: memberName,
+      birthDate: allValues?.birthDate,
+      phone: allValues?.contact,
       schoolEnrollmentStatus,
       schoolName,
       grade: memberGrade,
       affiliationOrganization,
     }
-  }, [affiliationOrganization, memberGrade, memberName, schoolEnrollmentStatus, schoolName])
+  }, [
+    affiliationOrganization,
+    allValues?.birthDate,
+    allValues?.contact,
+    memberGrade,
+    memberName,
+    schoolEnrollmentStatus,
+    schoolName,
+  ])
 
   const activeConsentEntry =
     activeConsentField != null ? resolveMemberConsentTemplateEntry(activeConsentField) : null

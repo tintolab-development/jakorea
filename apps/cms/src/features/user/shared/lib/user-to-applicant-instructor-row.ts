@@ -9,6 +9,7 @@ import {
   formatInstructorEducationLevelDisplay,
   isInstructorMaskedPlaceholder,
 } from '@/features/user/api/map-instructor-activity-display'
+import { instructorCmsProfileToApplicantInstructorRowPartial } from '@/features/user/api/map-instructor-cms-profile'
 import dayjs from 'dayjs'
 
 const REMOTE_RESUME_PLACEHOLDER_EDUCATION = '-'
@@ -39,9 +40,26 @@ function mapCertificationsToQualifications(
   })
 }
 
-/** `educationLevel` 요약("4년제 / 졸업") → 이력서 학력 1행 (구조화 rows 없을 때) */
+const HIGHEST_EDUCATION_PIPE_SEP = ' | ' as const
+
+function splitHighestEducationLabel(label: string | undefined): {
+  levelPart: string | undefined
+  schoolName: string | undefined
+} {
+  const trimmed = label?.trim()
+  if (!trimmed) return { levelPart: undefined, schoolName: undefined }
+  const idx = trimmed.indexOf(HIGHEST_EDUCATION_PIPE_SEP)
+  if (idx === -1) return { levelPart: trimmed, schoolName: undefined }
+  return {
+    levelPart: trimmed.slice(0, idx).trim() || undefined,
+    schoolName: trimmed.slice(idx + HIGHEST_EDUCATION_PIPE_SEP.length).trim() || undefined,
+  }
+}
+
+/** `educationLevel` 요약("college4 / graduated" 등) → 이력서 최종 학력 1행 */
 function mapEducationLevelToEducationItems(
-  educationLevel: string | undefined
+  educationLevel: string | undefined,
+  schoolName?: string
 ): NonNullable<ApplicantInstructorRow['educations']> {
   const raw = educationLevel?.trim()
   if (!raw || raw === '-') return []
@@ -50,11 +68,14 @@ function mapEducationLevelToEducationItems(
   }
 
   const display = formatInstructorEducationLevelDisplay(raw) ?? raw
-  const [schoolType, status] = display.split(/\s*\/\s*/).map(part => part.trim())
+  const [schoolType] = display.split(/\s*\/\s*/).map(part => part.trim())
+  const resolvedSchoolName = schoolName?.trim()
   return [
     {
-      ...(schoolType ? { schoolType } : {}),
-      ...(status ? { status } : !schoolType ? { schoolType: display } : {}),
+      ...(schoolType ? { schoolType } : !schoolType ? { schoolType: display } : {}),
+      ...(resolvedSchoolName && !isInstructorMaskedPlaceholder(resolvedSchoolName)
+        ? { schoolName: resolvedSchoolName }
+        : {}),
     },
   ]
 }
@@ -77,13 +98,25 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
   const affiliation = user.affiliation?.trim() || 'JA 강사'
   const remote = isMembersRemoteEnabled()
   const rawEducationLevel = user.listMetrics?.highestEducationLabel?.trim()
+  const { levelPart: rawEducationLevelPart, schoolName: schoolFromLabel } =
+    splitHighestEducationLabel(rawEducationLevel)
   const educationLevel =
-    (rawEducationLevel ? formatInstructorEducationLevelDisplay(rawEducationLevel) : undefined) ||
-    (remote ? REMOTE_RESUME_PLACEHOLDER_EDUCATION : '4년제 졸업')
+    (rawEducationLevelPart
+      ? formatInstructorEducationLevelDisplay(rawEducationLevelPart)
+      : undefined) || (remote ? REMOTE_RESUME_PLACEHOLDER_EDUCATION : '4년제 졸업')
+  const educationSchoolName =
+    schoolFromLabel && !isInstructorMaskedPlaceholder(schoolFromLabel)
+      ? schoolFromLabel
+      : remote
+        ? REMOTE_RESUME_PLACEHOLDER_SCHOOL
+        : '-*대학교'
   /** API `selfIntroduction` → 자유작성 1번만. 2~4번 전용 필드는 스키마 없음 → 빈 값 */
   const freeWriting1FromApi = user.instructorSelfIntroduction?.trim() ?? ''
   const qualifications = mapCertificationsToQualifications(user.instructorCertifications)
-  const educationsFromSummary = mapEducationLevelToEducationItems(rawEducationLevel)
+  const educationsFromSummary = mapEducationLevelToEducationItems(
+    rawEducationLevelPart ?? rawEducationLevel,
+    schoolFromLabel
+  )
   const teachingExperience =
     careerLabel && !isInstructorMaskedPlaceholder(careerLabel)
       ? careerLabel
@@ -93,13 +126,17 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
           ? '-'
           : '3년'
 
-  return {
+  const cmsPartial = user.instructorCmsProfile
+    ? instructorCmsProfileToApplicantInstructorRowPartial(user.instructorCmsProfile)
+    : null
+
+  const baseRow = {
     id: user.id,
     no: 1,
     instructorName: user.name,
     lectureExperienceYears: years,
     educationLevel,
-    educationSchoolName: remote ? REMOTE_RESUME_PLACEHOLDER_SCHOOL : '-*대학교',
+    educationSchoolName,
     contact: user.phone ?? '',
     email: user.email ?? '',
     address: composeUserDetailAddressLine(user) || user.schoolInfo?.address || '',
@@ -141,6 +178,34 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
           { year: '2024', name: 'OO교육원 웹마스터 915기 교육 수료' },
           { year: '2020', name: '서울특별시 대통령배 OO부문 금상' },
         ],
+  }
+
+  if (!cmsPartial) {
+    return baseRow
+  }
+
+  return {
+    ...baseRow,
+    ...cmsPartial,
+    educationLevel: cmsPartial.educationLevel || baseRow.educationLevel,
+    educationSchoolName:
+      cmsPartial.educationSchoolName !== '-'
+        ? cmsPartial.educationSchoolName
+        : baseRow.educationSchoolName,
+    teachingExperience: cmsPartial.teachingExperience || baseRow.teachingExperience,
+    oneLineIntro: cmsPartial.oneLineIntro !== '-' ? cmsPartial.oneLineIntro : baseRow.oneLineIntro,
+    freeWriting1: cmsPartial.freeWriting1 || baseRow.freeWriting1,
+    qualifications:
+      (cmsPartial.qualifications?.length ?? 0) > 0
+        ? cmsPartial.qualifications
+        : baseRow.qualifications,
+    awards: (cmsPartial.awards?.length ?? 0) > 0 ? cmsPartial.awards : baseRow.awards,
+    careerDetails:
+      (cmsPartial.careerDetails?.length ?? 0) > 0
+        ? cmsPartial.careerDetails
+        : baseRow.careerDetails,
+    educations:
+      (cmsPartial.educations?.length ?? 0) > 0 ? cmsPartial.educations : baseRow.educations,
   }
 }
 

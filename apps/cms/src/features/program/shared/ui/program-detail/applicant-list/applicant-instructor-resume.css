@@ -29,6 +29,11 @@
   margin-left: 8px;
 }
 
+.instructor-resume-section-count--empty {
+  color: var(--color-text-secondary, #888);
+  font-weight: 500;
+}
+
 .instructor-resume-divider {
   height: 1px;
   background: var(--table-line, #e0e0e0);
