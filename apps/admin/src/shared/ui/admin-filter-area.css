@@ -1,0 +1,183 @@
+/**
+ * Admin 목록 필터 영역 레이아웃 — CMS TableFilterGroup 1행 규격 미러
+ * @see apps/cms/src/shared/components/table-filter-group.css
+ * @see apps/cms/.cursor/rules/design/filter-area-layout.mdc
+ */
+
+.admin-filter-area {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--filter-field-gap, 12px);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 레이블 + 컨트롤 세로 스택 · 사이 6px */
+.admin-filter-area__field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--filter-label-control-gap, 6px);
+  flex: 0 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* 단일 검색·셀렉트 칸 240px — % / flex grow 금지 */
+.admin-filter-area__field--control {
+  width: var(--filter-control-max-width, 240px);
+  min-width: var(--filter-control-max-width, 240px);
+  max-width: var(--filter-control-max-width, 240px);
+}
+
+/* 분리형 기간 칸 500px = 2×240 + 20 */
+.admin-filter-area__field--date-range {
+  width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+  min-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+  max-width: calc(
+    2 * var(--filter-control-max-width, 240px) + var(--filter-control-range-split-between, 20px)
+  );
+}
+
+.admin-filter-area__label {
+  margin: 0;
+  color: var(--filter-area-label-color);
+  font-family: var(--filter-area-label-font-family);
+  font-size: var(--filter-area-label-font-size);
+  font-style: normal;
+  font-weight: var(--filter-area-label-font-weight);
+  line-height: var(--filter-area-label-line-height);
+  white-space: nowrap;
+}
+
+/* 조회 — 우측 정렬, 160×44 */
+.admin-filter-area__actions {
+  display: flex;
+  align-items: flex-end;
+  flex: 0 0 var(--filter-search-button-width, 160px);
+  width: var(--filter-search-button-width, 160px);
+  min-width: var(--filter-search-button-width, 160px);
+  max-width: var(--filter-search-button-width, 160px);
+  margin-left: auto;
+  box-sizing: border-box;
+}
+
+.admin-filter-area__search-button.cms-button.cms-button--large {
+  width: var(--filter-search-button-width, 160px) !important;
+  min-width: var(--filter-search-button-width, 160px) !important;
+  max-width: var(--filter-search-button-width, 160px) !important;
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
+  max-height: var(--filter-control-height, 44px) !important;
+  box-sizing: border-box;
+}
+
+/* 단일 셀렉트 · 인풋 240×44 */
+.admin-filter-area__field--control > .cms-select,
+.admin-filter-area__field--control > .cms-input {
+  width: var(--filter-control-max-width, 240px) !important;
+  min-width: var(--filter-control-max-width, 240px) !important;
+  max-width: var(--filter-control-max-width, 240px) !important;
+  height: var(--filter-control-height, 44px) !important;
+  box-sizing: border-box;
+}
+
+.admin-filter-area__field--control > .cms-select > .ant-select {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
+  box-sizing: border-box;
+}
+
+.admin-filter-area__field--control .cms-input__control {
+  height: 100%;
+  min-height: var(--filter-control-height, 44px);
+}
+
+.admin-filter-area__field--control
+  .ant-select-single:not(.ant-select-customize-input)
+  .ant-select-selector {
+  height: var(--filter-control-height, 44px) !important;
+  min-height: var(--filter-control-height, 44px) !important;
+  box-sizing: border-box !important;
+}
+
+/* 분리형 기간: 바깥 500, 세그먼트 각 240 */
+.admin-filter-area__field--date-range .cms-datepicker.cms-datepicker--range-split {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  height: var(--filter-control-height, 44px) !important;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.admin-filter-area__field--date-range .cms-datepicker--range-split .cms-datepicker__segment {
+  flex: 0 0 var(--filter-control-max-width, 240px);
+  min-width: var(--filter-control-max-width, 240px);
+  max-width: var(--filter-control-max-width, 240px);
+  width: var(--filter-control-max-width, 240px);
+  height: var(--filter-control-height, 44px);
+  box-sizing: border-box;
+}
+
+.admin-filter-area__field--date-range
+  .cms-datepicker--range-split.cms-datepicker--explicit-width
+  .cms-datepicker__segment {
+  flex: 0 0 var(--filter-control-max-width, 240px);
+  max-width: var(--filter-control-max-width, 240px);
+  width: var(--filter-control-max-width, 240px);
+}
+
+.admin-filter-area__field--date-range .cms-datepicker--range-split .cms-datepicker__range-separator {
+  flex-shrink: 0;
+  width: var(--filter-control-range-split-between, 20px);
+  margin: 0;
+  height: var(--filter-control-height, 44px);
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .admin-filter-area__field--control,
+  .admin-filter-area__field--date-range {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .admin-filter-area__field--control > .cms-select,
+  .admin-filter-area__field--control > .cms-input {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .admin-filter-area__field--date-range .cms-datepicker--range-split .cms-datepicker__segment {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+    width: auto;
+  }
+
+  .admin-filter-area__actions {
+    margin-left: 0;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    flex: 1 1 auto;
+  }
+
+  .admin-filter-area__search-button.cms-button.cms-button--large {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+}
