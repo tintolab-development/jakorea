@@ -77,6 +77,18 @@ pnpm format       # Prettier 포맷팅
 
 인덱스: [cms-admin-ui/README.md](./cms-admin-ui/README.md)
 
+## Admin Platform Kit (신규 어드민 재사용)
+
+CMS 통째 복제 없이 **셸 Kit + 도메인 분리**로 신규 관리자를 구축할 때의 기준 문서:
+
+→ [`docs/admin-platform-kit/`](../docs/admin-platform-kit/README.md)
+
+- L0 of record: `apps/admin` 셸 (`shared/ui` · layout · list hooks)
+- 스펙 SSOT: `cms-admin-ui`
+- 아키텍처·Cursor 교차검증: `05-frontend-architecture-cursor-crosscheck.md`
+- **이 레포 앱별 적용**: `06-jakorea-monorepo-adoption.md`
+- P2 패키지 승격 범위: `04-package-promotion-scope.md`
+
 
 
 

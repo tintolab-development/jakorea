@@ -42,3 +42,13 @@ src/
   entities/     # 도메인 엔티티
   shared/       # 토큰, axios, 공통 UI·메뉴 설정
 ```
+
+## Admin Platform Kit (재사용 of record)
+
+이 앱의 **레이아웃·`shared/ui`·list 훅**은 신규 어드민 L0 스캐폴드의 복사 소스 of record다.  
+홈페이지 도메인 feature는 템플릿이 아니다.
+
+| 문서 | 내용 |
+|------|------|
+| [docs/admin-platform-kit](../../docs/admin-platform-kit/README.md) | 셸 vs 도메인 · L0 체크리스트 · 수직 슬라이스 · P2 패키지 범위 |
+| [.cursor/rules/cms-admin-ui](../../.cursor/rules/cms-admin-ui/README.md) | CMS·Admin 공유 시각·목록 스펙 |
