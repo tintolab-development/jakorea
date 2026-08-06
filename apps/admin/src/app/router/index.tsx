@@ -6,6 +6,7 @@ import { HistoryAwardsCertsPage } from '@/pages/ja-korea/history-awards-certs/pa
 import { IncomeExpensePage } from '@/pages/ja-korea/income-expense/page'
 import { IntroPage } from '@/pages/ja-korea/intro/page'
 import { GlobalValuePage } from '@/pages/ja-korea/global-value/page'
+import { PeoplePage } from '@/pages/ja-korea/people/page'
 import { PrinciplesPage } from '@/pages/ja-korea/principles/page'
 import { ReportsDisclosurePage } from '@/pages/ja-korea/reports-disclosure/page'
 import { NoticesPage } from '@/pages/ja-korea/notices/page'
@@ -35,6 +36,7 @@ const IMPLEMENTED_LEAF_PATHS = new Set([
   '/ja-korea/income-expense',
   '/ja-korea/reports-disclosure',
   '/ja-korea/notices',
+  '/ja-korea/people',
 ])
 
 /** LNB 리프 경로 → 빈 화면(플레이스홀더). 구현된 화면은 제외 */
@@ -71,6 +73,15 @@ export const router = createBrowserRouter([
       { path: 'ja-korea/reports-disclosure', element: <ReportsDisclosurePage /> },
       { path: 'ja-korea/notices', element: <NoticesPage /> },
       { path: 'ja-korea/notices/:id', element: <NoticeDetailPage /> },
+      { path: 'ja-korea/people', element: <PeoplePage /> },
+      {
+        path: 'ja-korea/organization',
+        element: <Navigate to="/ja-korea/people" replace />,
+      },
+      {
+        path: 'ja-korea/board',
+        element: <Navigate to="/ja-korea/people?tab=board" replace />,
+      },
       ...leafRoutes,
       { path: '*', element: <Navigate to="/" replace /> },
     ],
