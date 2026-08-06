@@ -31,7 +31,7 @@ Development standards for **Homepage Admin** (`apps/admin`).
 | [table-implementation.mdc](./tables/table-implementation.mdc) | admin `cms-data-table.css` · 상수 |
 | [table-th.mdc](./design/table-th.mdc) | admin theme path |
 | [detail-info-form-layout.mdc](./design/detail-info-form-layout.mdc) | form-template-runtime |
-| [detail-document-form-card.mdc](./design/detail-document-form-card.mdc) | 단건 폼 흰 카드 fill |
+| [detail-document-form-card.mdc](./design/detail-document-form-card.mdc) | **alwaysApply** · 흰 카드 fill · 툴바 title · 조회/수정 shift 최소화 |
 | [detail-info-nested-table.mdc](./design/detail-info-nested-table.mdc) | Field 값 안 nested 격자 |
 | [table-td-divider.mdc](./design/table-td-divider.mdc) | Admin TdDivider import |
 | [styling-tokens.mdc](./design/styling-tokens.mdc) | admin theme-provider path |

@@ -48,19 +48,21 @@ admin 폼 화면 예: intro / worldwide / main-content section cards — 대부�
 문자 `|` 금지 → [table-td-divider.mdc](./table-td-divider.mdc)  
 (`DetailInfoForm.TdDivider` / `DetailInfoFormTdDivider`)
 
-## 흰 카드 fill · view/edit 행 높이
+## 흰 카드 fill · view/edit · UI shift
 
-단건 문서 폼(카드 1장·수정 모드 전환): [detail-document-form-card.mdc](./detail-document-form-card.mdc)
+단건 문서 폼(카드 1장·수정 모드 전환): **[detail-document-form-card.mdc](./detail-document-form-card.mdc)** (`alwaysApply` · 필수)
 
-- view 기본 행 **`min-height: 54px`** (강제 tall 금지)
-- edit 높이 점프 **최소화** (`rows`·`fixed-rows`)
-- 시안 흰 카드 **viewport 남은 높이 fill**
+- 흰 카드 **viewport 남은 높이 fill**
+- 툴바 **`table-title` 필수** (수정 버튼 레벨)
+- view↔edit **컨트롤 유지** · span↔input 스왑 금지 · 모드 전환용 `autoSize` 금지
+- view 행 **`min-height: 54px`** (강제 tall 금지)  
+- edit **`rows` 고정 + `fixed-rows`**
 
 ## 체크리스트
 
 - [ ] `apps/cms` 또는 CMS 상대경로로 DetailInfoForm import 없음  
 - [ ] nested table은 Field 값에 **전용** 격자 (DetailInfoForm 중첩 금지)  
 - [ ] th/라벨 배경 `var(--BG-header)` ([table-th.mdc](./table-th.mdc))
-- [ ] 단건 폼이면 [detail-document-form-card.mdc](./detail-document-form-card.mdc) 체크리스트 병행
+- [ ] 단건 폼이면 [detail-document-form-card.mdc](./detail-document-form-card.mdc) §0·완료 체크리스트 병행
 
 **Last updated:** 2026-08-06
