@@ -199,6 +199,8 @@ export type RenderFormParagraphBodyOptions = {
   agreementConsentFillInteractiveParagraphIds?: ReadonlySet<string>
   /** 행정정보 공동이용 fill — 표 하단 식별번호 입력만 허용 */
   agreementNoticeIdTypeInteractive?: boolean
+  /** 행정정보 fill — prefill된 대상자 본인 항목은 읽기 전용 */
+  agreementNoticeSubjectPrefilledReadOnly?: boolean
   /** 현재 조건에 따라 숨겨야 하는 단락 id 목록(에디터/미리보기 공통) */
   hiddenParagraphIds?: ReadonlySet<string>
   /**
@@ -553,6 +555,10 @@ export function renderFormParagraphBody(
           paragraphInteractionMode={paragraphInteractionMode}
           activeItemId={options?.singleItemListActiveItemId}
           onSelectItem={options?.onSelectSingleItemListItem}
+          readOnlyFilledItems={
+            options?.agreementNoticeSubjectPrefilledReadOnly === true &&
+            p.id === 'agreement-notice-subject'
+          }
         />
       )
     case 'session_plan_short_essay':

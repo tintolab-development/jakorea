@@ -77,6 +77,8 @@ export function buildAgreementConsentFillParagraphBodyOptions(
         ? AGREEMENT_NOTICE_CONSENT_FILL_INTERACTIVE_PARAGRAPH_IDS
         : undefined,
     agreementNoticeIdTypeInteractive: templateId === 'agreement-notice' ? true : undefined,
+    /** 행정정보 — 회원 정보로 prefill된 대상자 본인 항목은 수정 불가 */
+    agreementNoticeSubjectPrefilledReadOnly: templateId === 'agreement-notice' ? true : undefined,
     /** 구조 잠금 단락 — 본문은 preview 잠금, 하단 동의 라디오만 조작 */
     structureLockedAuthoringChoicePreview:
       baseOptions?.structureLockedAuthoringChoicePreview ?? true,
