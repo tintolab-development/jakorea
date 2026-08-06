@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
 import { HomePage } from '@/pages/home/page'
+import { BiPage } from '@/pages/ja-korea/bi/page'
+import { HistoryAwardsCertsPage } from '@/pages/ja-korea/history-awards-certs/page'
 import { IntroPage } from '@/pages/ja-korea/intro/page'
 import { GlobalValuePage } from '@/pages/ja-korea/global-value/page'
 import { WorldwidePage } from '@/pages/ja-korea/worldwide/page'
@@ -22,6 +24,8 @@ const IMPLEMENTED_LEAF_PATHS = new Set([
   '/ja-korea/intro',
   '/ja-korea/global-value',
   '/ja-korea/worldwide',
+  '/ja-korea/history-awards-certs',
+  '/ja-korea/bi',
 ])
 
 /** LNB 리프 경로 → 빈 화면(플레이스홀더). 구현된 화면은 제외 */
@@ -51,6 +55,8 @@ export const router = createBrowserRouter([
       { path: 'ja-korea/intro', element: <IntroPage /> },
       { path: 'ja-korea/global-value', element: <GlobalValuePage /> },
       { path: 'ja-korea/worldwide', element: <WorldwidePage /> },
+      { path: 'ja-korea/history-awards-certs', element: <HistoryAwardsCertsPage /> },
+      { path: 'ja-korea/bi', element: <BiPage /> },
       ...leafRoutes,
       { path: '*', element: <Navigate to="/" replace /> },
     ],
