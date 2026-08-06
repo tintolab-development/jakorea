@@ -10,7 +10,14 @@ JA Korea 제품 도메인을 통째로 복제하지 않고, **관리자 셸(Kit)
 | [03-first-vertical-slice.md](./03-first-vertical-slice.md) | 첫 목록 CRUD 수직 슬라이스 합격 기준 | P0–P1 |
 | [04-package-promotion-scope.md](./04-package-promotion-scope.md) | `@jakorea/admin-ui` 등 패키지 승격 범위 | P2 |
 | [05-frontend-architecture-cursor-crosscheck.md](./05-frontend-architecture-cursor-crosscheck.md) | 아키텍처 상세 · Cursor 교차검증 프로토콜 | 전 단계 SSOT |
-| [06-jakorea-monorepo-adoption.md](./06-jakorea-monorepo-adoption.md) | **이 레포** 앱별 적용·갭·플레이북 | 실무 진입점 |
+| [08-gpt-handoff-generic-cms-new-project.md](./08-gpt-handoff-generic-cms-new-project.md) | **GPT 핸드오프** monorepo 이식 | 범용 CMS 착수 참고 |
+| [**10-generic-cms-execution-ssot.md**](./10-generic-cms-execution-ssot.md) | **실행 SSOT (10r1)** | **구현 계약 우선** |
+| [11~17 교차검증](./17-accept-doc-16-and-10r1.md) | evidence 체인 · 16 수용 | 11–16 validation |
+
+> **실행 계약:** 항상 [10r1](./10-generic-cms-execution-ssot.md).  
+> 01–08 · 구 교차검증은 Admin Kit 또는 evidence. 고객별 CRUD → 01–04.  
+> kit 폴더는 git ignore 가능 — 신규 CMS 레포에 10r1을 커밋할 것.
+
 
 ## 한 줄 원칙
 
