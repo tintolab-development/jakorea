@@ -2,7 +2,7 @@
  * 메인 팝업 관리
  */
 
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState, type Key } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import { Image, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -20,6 +20,7 @@ import {
   useSetPopupActive,
   useUpdatePopup,
 } from '@/features/popup/api/hooks'
+import { popupQueryKeys } from '@/features/popup/api/query-keys'
 import { POPUPS_CHANGED_EVENT } from '@/features/popup/api/store'
 import {
   PopupFormModal,
@@ -29,6 +30,12 @@ import {
   PopupDragHandle,
   PopupsSortableTable,
 } from '@/features/popup/ui/sortable-table'
+import {
+  FILTER_CONTROL_MAX_WIDTH_PX,
+  FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+  FILTER_SEARCH_BUTTON_WIDTH_PX,
+} from '@/shared/constants/filter-field-width'
+import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import {
   CmsButton,
   CmsDateRangePicker,
@@ -120,13 +127,7 @@ export function PopupsPage() {
   const [editingPopup, setEditingPopup] = useState<Popup | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
-  useEffect(() => {
-    const handler = () => {
-      void listQuery.refetch()
-    }
-    window.addEventListener(POPUPS_CHANGED_EVENT, handler)
-    return () => window.removeEventListener(POPUPS_CHANGED_EVENT, handler)
-  }, [listQuery])
+  useInvalidateOnWindowEvent(POPUPS_CHANGED_EVENT, popupQueryKeys.lists())
 
   const rows = useMemo(
     () => allRows.filter(row => matchesClientFilter(row, appliedFilter)),
@@ -367,12 +368,12 @@ export function PopupsPage() {
   return (
     <div className="popups-page">
       <div className="admin-list-card popups-page__filter-card">
-        <div className="popups-page__filter-row">
-          <div className="popups-page__filter-field">
-            <span className="popups-page__filter-label">사용 여부</span>
+        <div className="admin-filter-area popups-page__filter-row">
+          <div className="admin-filter-area__field admin-filter-area__field--control">
+            <span className="admin-filter-area__label">사용 여부</span>
             <CmsSelect
-              inputSize="medium"
-              width={140}
+              inputSize="large"
+              width={FILTER_CONTROL_MAX_WIDTH_PX}
               withAllOption
               value={filterDraft.isActive}
               onChange={value =>
@@ -388,33 +389,33 @@ export function PopupsPage() {
               placeholder="전체"
             />
           </div>
-          <div className="popups-page__filter-field popups-page__filter-field--grow">
-            <span className="popups-page__filter-label">팝업명</span>
+          <div className="admin-filter-area__field admin-filter-area__field--control">
+            <span className="admin-filter-area__label">팝업명</span>
             <CmsInput
-              inputSize="medium"
-              width="100%"
+              inputSize="large"
+              width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="팝업명 검색"
               value={filterDraft.name}
               onChange={e => setFilterDraft(prev => ({ ...prev, name: e.target.value }))}
               onPressEnter={handleSearch}
             />
           </div>
-          <div className="popups-page__filter-field popups-page__filter-field--grow">
-            <span className="popups-page__filter-label">대체 텍스트</span>
+          <div className="admin-filter-area__field admin-filter-area__field--control">
+            <span className="admin-filter-area__label">대체 텍스트</span>
             <CmsInput
-              inputSize="medium"
-              width="100%"
+              inputSize="large"
+              width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="대체 텍스트 검색"
               value={filterDraft.altText}
               onChange={e => setFilterDraft(prev => ({ ...prev, altText: e.target.value }))}
               onPressEnter={handleSearch}
             />
           </div>
-          <div className="popups-page__filter-field popups-page__filter-field--period">
-            <span className="popups-page__filter-label">게시 기간</span>
+          <div className="admin-filter-area__field admin-filter-area__field--date-range">
+            <span className="admin-filter-area__label">게시 기간</span>
             <CmsDateRangePicker
-              inputSize="medium"
-              width="100%"
+              inputSize="large"
+              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
               value={filterDraft.periodRange}
               onChange={dates =>
                 setFilterDraft(prev => ({
@@ -425,8 +426,15 @@ export function PopupsPage() {
               placeholder={['시작일', '종료일']}
             />
           </div>
-          <div className="popups-page__filter-actions">
-            <CmsButton variant="primary" size="medium" type="button" onClick={handleSearch}>
+          <div className="admin-filter-area__actions">
+            <CmsButton
+              className="admin-filter-area__search-button"
+              variant="primary"
+              size="large"
+              type="button"
+              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+              onClick={handleSearch}
+            >
               조회
             </CmsButton>
           </div>

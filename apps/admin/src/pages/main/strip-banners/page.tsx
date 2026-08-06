@@ -2,7 +2,7 @@
  * 메인 상단 띠배너 관리
  */
 
-import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { useCallback, useMemo, useState, type Key } from 'react'
 import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
@@ -21,6 +21,7 @@ import {
   useUpdateStripBanner,
   type StripBannerListFilter,
 } from '@/features/strip-banner/api/hooks'
+import { stripBannerQueryKeys } from '@/features/strip-banner/api/query-keys'
 import { STRIP_BANNERS_CHANGED_EVENT } from '@/features/strip-banner/api/store'
 import {
   StripBannerFormModal,
@@ -30,6 +31,12 @@ import {
   StripBannerDragHandle,
   StripBannersSortableTable,
 } from '@/features/strip-banner/ui/sortable-table'
+import {
+  FILTER_CONTROL_MAX_WIDTH_PX,
+  FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
+  FILTER_SEARCH_BUTTON_WIDTH_PX,
+} from '@/shared/constants/filter-field-width'
+import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import {
   CmsButton,
   CmsDateRangePicker,
@@ -117,13 +124,7 @@ export function StripBannersPage() {
   const [editingBanner, setEditingBanner] = useState<StripBanner | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
-  useEffect(() => {
-    const handler = () => {
-      void listQuery.refetch()
-    }
-    window.addEventListener(STRIP_BANNERS_CHANGED_EVENT, handler)
-    return () => window.removeEventListener(STRIP_BANNERS_CHANGED_EVENT, handler)
-  }, [listQuery])
+  useInvalidateOnWindowEvent(STRIP_BANNERS_CHANGED_EVENT, stripBannerQueryKeys.lists())
 
   const handleSearch = useCallback(() => {
     setAppliedFilter(
@@ -351,12 +352,12 @@ export function StripBannersPage() {
   return (
     <div className="strip-banners-page">
       <div className="admin-list-card">
-        <div className="strip-banners-page__filter">
-          <div className="strip-banners-page__filter-field strip-banners-page__filter-field--status">
-            <p className="strip-banners-page__filter-label">사용 여부</p>
+        <div className="admin-filter-area strip-banners-page__filter">
+          <div className="admin-filter-area__field admin-filter-area__field--control">
+            <p className="admin-filter-area__label">사용 여부</p>
             <CmsSelect
               inputSize="large"
-              width="100%"
+              width={FILTER_CONTROL_MAX_WIDTH_PX}
               value={draftActive}
               onChange={value => setDraftActive((value as ActiveFilterValue) ?? '')}
               options={[
@@ -366,30 +367,37 @@ export function StripBannersPage() {
               ]}
             />
           </div>
-          <div className="strip-banners-page__filter-field strip-banners-page__filter-field--text">
-            <p className="strip-banners-page__filter-label">배너 문구</p>
+          <div className="admin-filter-area__field admin-filter-area__field--control">
+            <p className="admin-filter-area__label">배너 문구</p>
             <CmsInput
               inputSize="large"
-              width="100%"
+              width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="배너 문구를 입력하세요"
               value={draftText}
               onChange={e => setDraftText(e.target.value)}
               onPressEnter={handleSearch}
             />
           </div>
-          <div className="strip-banners-page__filter-field strip-banners-page__filter-field--period">
-            <p className="strip-banners-page__filter-label">게시 기간</p>
+          <div className="admin-filter-area__field admin-filter-area__field--date-range">
+            <p className="admin-filter-area__label">게시 기간</p>
             <CmsDateRangePicker
               inputSize="large"
-              width="100%"
+              width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
               value={draftPeriod}
               onChange={dates => setDraftPeriod(dates ?? [null, null])}
               placeholder={['시작일', '종료일']}
               allowClear
             />
           </div>
-          <div className="strip-banners-page__filter-actions">
-            <CmsButton variant="primary" size="large" type="button" onClick={handleSearch}>
+          <div className="admin-filter-area__actions">
+            <CmsButton
+              className="admin-filter-area__search-button"
+              variant="primary"
+              size="large"
+              type="button"
+              width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+              onClick={handleSearch}
+            >
               조회
             </CmsButton>
           </div>
