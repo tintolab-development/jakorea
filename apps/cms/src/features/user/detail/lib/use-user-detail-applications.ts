@@ -116,6 +116,10 @@ export function useUserDetailApplications(
     }
   }, [displayUser])
 
+  const applicationLoadKey = displayUser
+    ? `${displayUser.id}:${displayUser.memberId ?? ''}:${displayUser.role}`
+    : ''
+
   useEffect(() => {
     if (open && displayUser) {
       const run = async () => {
@@ -141,7 +145,7 @@ export function useUserDetailApplications(
       setApplications([])
       setEnrollmentApplications([])
     }
-  }, [open, displayUser])
+  }, [open, applicationLoadKey])
 
   return {
     applications,

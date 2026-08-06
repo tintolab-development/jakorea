@@ -39,10 +39,17 @@ export type BasicInfoLayoutResolved =
       ]
     }
 
+/** 강사·교사 겸 강사 기본 정보 — 스크린샷 2카드(instructor) 레이아웃 */
+export function usesInstructorMemberBasicInfoLayout(
+  instructorProfile: InstructorMemberProfile | null | undefined
+): boolean {
+  return instructorProfile !== 'school_teacher'
+}
+
 function resolveInstructorSectionVariant(
   instructorProfile: InstructorMemberProfile | null | undefined
 ): SplitSectionVariant {
-  return instructorProfile === 'school_teacher' ? 'school_teacher' : 'instructor'
+  return usesInstructorMemberBasicInfoLayout(instructorProfile) ? 'instructor' : 'school_teacher'
 }
 
 /**

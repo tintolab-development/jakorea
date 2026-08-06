@@ -198,7 +198,7 @@ export function useUserDetailController({
         [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
         merged
       )
-      onMemberBasicInfoSaved?.(merged)
+      onMemberBasicInfoSaved?.(merged, { skipListInvalidate: true })
     },
     [displayUser, onMemberBasicInfoSaved, queryClient]
   )
@@ -605,7 +605,16 @@ export function useUserDetailController({
         patch = patchWithoutComment
       }
 
-      const updated = await patchMemberBasicInfo(displayUser.id, patch)
+      const patchOptions: PatchUserBasicInfoOptions | undefined =
+        membersRemote && displayUser.memberId != null
+          ? {
+              knownRole: displayUser.role,
+              memberId: displayUser.memberId,
+              baseUser: displayUser,
+            }
+          : undefined
+
+      const updated = await patchMemberBasicInfo(displayUser.id, patch, patchOptions)
       let merged = applySavedBasicInfoPatchToUser(
         mergeListUserWithFetchedDetail(displayUser, updated),
         patch
@@ -644,9 +653,6 @@ export function useUserDetailController({
             })
           )
         }
-        void queryClient.invalidateQueries({
-          queryKey: [...memberQueryKeys.all, 'comments', displayUser.memberId],
-        })
         queryClient.setQueryData(memberQueryKeys.detail(displayUser.memberId), merged)
         queryClient.setQueryData(
           [...memberQueryKeys.detailByUuid(displayUser.id), displayUser.role],
@@ -656,7 +662,8 @@ export function useUserDetailController({
       setBasicInfoEditing(false)
       setBasicInfoEditScope('none')
       setBasicInfoDraft(null)
-      onMemberBasicInfoSaved?.(merged)
+      const skipListInvalidate = membersRemote && basicInfoEditScope === 'profile'
+      onMemberBasicInfoSaved?.(merged, skipListInvalidate ? { skipListInvalidate: true } : undefined)
     } catch (error) {
       handleError(error, { defaultMessage: '회원 정보 저장에 실패했습니다.' })
     } finally {

@@ -157,9 +157,12 @@ export function UserDetailFullpageBasicTabContent({
       consentViewVariant === 'permission_instructor'
         ? CONSENT_ROWS_PERMISSION_INSTRUCTOR
         : CONSENT_PRESET_SCHEMA[consentPreset]
+    const detailTerms = user.termsAgreements
     return applyMemberConsentToSchema(baseSchema, {
-      consentRecords,
-      termsAgreements: user.termsAgreements,
+      // 상세 termsAgreements가 SSOT — 있을 때 consent-records는 무시
+      termsAgreements: detailTerms,
+      consentRecords:
+        detailTerms != null && detailTerms.length > 0 ? undefined : consentRecords,
     })
   }, [
     membersRemote,

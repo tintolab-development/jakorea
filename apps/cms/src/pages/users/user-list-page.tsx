@@ -19,11 +19,17 @@ import {
 } from '@/pages/users/user-detail-fullpage-modal'
 import {
   applyTeacherDetailUrlContext,
-  readTeacherDetailUrlContext,
-  teacherDetailUrlParamsFromUser,
+  memberDetailUrlParamsFromUser,
+  readMemberDetailUrlContext,
   USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY,
   USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY,
+  USER_DETAIL_MEMBER_ID_QUERY_KEY,
+  USER_DETAIL_MEMBER_ROLE_QUERY_KEY,
 } from '@/features/user/detail/lib/teacher-detail-url-context'
+import {
+  canResolveMemberIdForDetailRestore,
+  resolveMemberDetailRestoreHint,
+} from '@/features/user/detail/lib/resolve-member-detail-restore-hint'
 import { MemberRegisterModal } from '@/features/user/shared/ui/member-register-modal'
 import {
   AdminRegisterModal,
@@ -92,9 +98,12 @@ import { applyAffiliatedTeacherLinkToUser } from '@/features/user/api/apply-affi
 import { buildAdminAccountCreateTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
 import {
   buildInstructorRegisterCertifications,
-  buildInstructorRegisterEducationLevel,
   buildPreRegisterTermsAgreements,
 } from '@/features/user/api/map-instructor-register-extras'
+import {
+  instructorProfileFormValuesToCmsProfile,
+  instructorProfileFormValuesToCmsSettlement,
+} from '@/features/user/api/map-instructor-cms-profile'
 import { SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL } from '@/features/user/detail/lib/school-teacher-employment-status'
 import { buildSchoolDeleteMessageLines } from '@/features/program/general/ui/manager-delete-guide-modal'
 
@@ -333,6 +342,28 @@ export function UserListPage() {
 
   const resolvedMemberListKind = useMemo(() => normalizeMemberListKind(params.kind), [params.kind])
 
+  const urlDetailRestoreHint = useMemo(() => {
+    const targetId = params.id?.trim()
+    if (!targetId) return null
+    return resolveMemberDetailRestoreHint({
+      userId: targetId,
+      urlCtx: readMemberDetailUrlContext(new URLSearchParams(window.location.search)),
+      listKind: resolvedMemberListKind,
+      storeUsersById: useUserStore.getState().usersById,
+      listUsers,
+      queryClient,
+    })
+  }, [
+    params.id,
+    params[USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY],
+    params[USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY],
+    params[USER_DETAIL_MEMBER_ID_QUERY_KEY],
+    params[USER_DETAIL_MEMBER_ROLE_QUERY_KEY],
+    resolvedMemberListKind,
+    listUsers,
+    queryClient,
+  ])
+
   const deleteTargets = useMemo((): UserListRow[] => {
     if (bulkDeleteUsers && bulkDeleteUsers.length > 0) return bulkDeleteUsers
     if (deletingUser) return [deletingUser]
@@ -428,19 +459,36 @@ export function UserListPage() {
 
     if (drawerOpenRef.current && drawerUserRef.current?.id === targetId) return
 
-    const urlTeacherCtx = readTeacherDetailUrlContext(
+    const urlDetailCtx = readMemberDetailUrlContext(
       new URLSearchParams(window.location.search)
     )
+    const restoreHint =
+      urlDetailRestoreHint ??
+      resolveMemberDetailRestoreHint({
+        userId: targetId,
+        urlCtx: urlDetailCtx,
+        listKind: resolvedMemberListKind,
+        storeUsersById: useUserStore.getState().usersById,
+        listUsers,
+        queryClient,
+      })
     const withTeacherCtx = (user: Omit<User, 'password'>) =>
-      applyTeacherDetailUrlContext(user, urlTeacherCtx)
+      applyTeacherDetailUrlContext(user, urlDetailCtx)
 
-    // memberId/role 힌트만 사용 — 목록·캐시로 본문을 그리지 않음
     const hintUser =
       (schoolDetailReturnUserRef.current?.id === targetId
         ? schoolDetailReturnUserRef.current
-        : null) ??
-      listUsers.find(u => u.id === targetId) ??
-      useUserStore.getState().usersById[targetId]
+        : null) ?? restoreHint.user
+
+    if (
+      isMembersRemoteEnabled() &&
+      !canResolveMemberIdForDetailRestore(targetId, restoreHint) &&
+      listFetching
+    ) {
+      setMemberDetailLoading(true)
+      setSelectedUserId(targetId)
+      return
+    }
 
     setMemberDetailLoading(true)
     setSelectedUserId(targetId)
@@ -464,14 +512,19 @@ export function UserListPage() {
           return
         }
 
-        const roleHint =
-          hintUser?.role ??
-          (urlTeacherCtx.instructorMemberProfile != null ? ('INSTRUCTOR' as const) : undefined)
+        if (!canResolveMemberIdForDetailRestore(targetId, restoreHint)) {
+          handleError(new Error('회원 식별자(memberId)를 찾을 수 없습니다. 목록에서 다시 열어 주세요.'), {
+            defaultMessage: '회원 상세를 불러오지 못했습니다.',
+          })
+          return
+        }
+
+        const roleHint = restoreHint.role
         await fetchUserById(targetId, {
-          memberId: hintUser?.memberId,
+          memberId: restoreHint.memberId,
           role: roleHint,
-          adminAccountId: hintUser?.adminAccountId,
-          email: hintUser?.email,
+          adminAccountId: restoreHint.adminAccountId ?? hintUser?.adminAccountId,
+          email: restoreHint.email ?? hintUser?.email,
         })
         if (cancelled) return
         const fetched = useUserStore.getState().usersById[targetId]
@@ -484,9 +537,14 @@ export function UserListPage() {
         const displayUser = withTeacherCtx(fetched)
         openDrawer(displayUser)
         setDetailBridgeUser(displayUser)
-        if (displayUser.id && displayUser.id !== targetId) {
-          setParams({ id: displayUser.id }, { replace: true })
-        }
+        setParams(
+          {
+            id: displayUser.id,
+            lnb: params.lnb ?? 'detail-info',
+            ...memberDetailUrlParamsFromUser(displayUser),
+          },
+          { replace: true }
+        )
       } catch (error) {
         if (!cancelled) {
           handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })
@@ -499,12 +557,19 @@ export function UserListPage() {
     return () => {
       cancelled = true
     }
-    // listUsers는 힌트 조회용 — dep에 넣으면 목록 갱신마다 fetch가 취소·재시작됨
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- URL id·교사 컨텍스트만으로 복원
+    // listUsers·목록 fetch 완료 후 memberId 힌트가 생기면 재시도
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- URL id·복원 힌트만으로 복원
   }, [
     params.id,
+    params.lnb,
     params[USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY],
     params[USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY],
+    params[USER_DETAIL_MEMBER_ID_QUERY_KEY],
+    params[USER_DETAIL_MEMBER_ROLE_QUERY_KEY],
+    urlDetailRestoreHint?.memberId,
+    urlDetailRestoreHint?.role,
+    listFetching,
+    resolvedMemberListKind,
     setSelectedUserId,
     openDrawer,
     fetchUserById,
@@ -600,7 +665,7 @@ export function UserListPage() {
           id: displayUser.id,
           lnb: 'detail-info',
           [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
-          ...teacherDetailUrlParamsFromUser(displayUser),
+          ...memberDetailUrlParamsFromUser(displayUser),
         },
         { replace: opts?.replace ?? false }
       )
@@ -757,6 +822,8 @@ export function UserListPage() {
         next.delete(USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY)
         next.delete(USER_DETAIL_AFFILIATED_SCHOOL_QUERY_KEY)
         next.delete(USER_DETAIL_INSTRUCTOR_PROFILE_QUERY_KEY)
+        next.delete(USER_DETAIL_MEMBER_ID_QUERY_KEY)
+        next.delete(USER_DETAIL_MEMBER_ROLE_QUERY_KEY)
         return next
       },
       { replace: true }
@@ -824,7 +891,7 @@ export function UserListPage() {
         role: 'ADMIN',
         adminLevel: 'ADMIN',
         isActive: true,
-        termsAgreements: buildAdminAccountCreateTermsAgreements({
+        adminTermsAgreements: buildAdminAccountCreateTermsAgreements({
           consentTermsOfService: values.consentTermsOfService,
           consentPersonal: values.consentPersonalInfo,
           consentMarketing: values.consentMarketing,
@@ -871,18 +938,11 @@ export function UserListPage() {
         gender: values.gender === 'male' ? '남성' : '여성',
         birthDate,
         role: 'INSTRUCTOR',
-        address: values.homeAddress.trim() || undefined,
-        detailAddress: values.homeAddressDetail.trim() || undefined,
         affiliation: affiliationParts.length > 0 ? affiliationParts.join(' | ') : undefined,
         instructorType:
           values.memberType === 'school_teacher' ? 'SCHOOL_TEACHER' : 'GENERAL',
-        oneLineIntro: values.oneLineIntro.trim() || undefined,
-        careerText: values.instructorCareer.trim() || undefined,
-        selfIntroduction: values.freeWrite1.trim() || undefined,
-        educationLevel: buildInstructorRegisterEducationLevel({
-          eduSchoolType: values.eduSchoolType,
-          eduStatus: values.eduStatus,
-        }),
+        instructorCmsProfile: instructorProfileFormValuesToCmsProfile(values),
+        instructorCmsSettlement: instructorProfileFormValuesToCmsSettlement(values),
         termsAgreements: buildPreRegisterTermsAgreements(
           {
             consentTermsOfService: values.consentTermsOfService,

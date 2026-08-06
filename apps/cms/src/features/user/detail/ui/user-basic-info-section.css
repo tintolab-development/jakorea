@@ -43,6 +43,21 @@
   overflow: visible;
 }
 
+/* 강사·교사 겸 강사 — 성명+일정변경 배지 행 높이 (교사 카드와 동일) */
+.user-basic-info-section--instructor-profile-card .detail-info-form__name-block {
+  grid-template-rows: 56px 56px;
+}
+
+.user-basic-info-section--instructor-profile-card
+  .detail-info-form__name-block-cell {
+  min-height: 0;
+}
+
+.user-basic-info-section--instructor-profile-card
+  .detail-info-form__name-block-cell--r1 {
+  overflow: visible;
+}
+
 .user-basic-info-section__teacher-employment-dropdown {
   display: inline-flex;
   align-items: center;

@@ -152,10 +152,7 @@ export function userDetailModalTitle(user: Pick<
     case 'INSTRUCTOR': {
       const profile = resolveInstructorMemberProfile(user)
       if (profile === 'school_teacher' || profile === 'instructor_dual') {
-        const school = instructorDetailTitleSchoolName(user)
-        // 학교명 없으면 빈 세그먼트를 넣지 않음
-        const subject = school ? `${school}_${displayName}` : displayName
-        return formatUserDetailModalTitle('교사 상세', subject)
+        return formatUserDetailModalTitle('교사 상세', displayName)
       }
       return formatUserDetailModalTitle('강사 상세', displayName)
     }
