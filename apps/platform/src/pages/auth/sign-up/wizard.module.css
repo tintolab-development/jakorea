@@ -270,6 +270,13 @@
   box-sizing: border-box;
 }
 
+.emailField {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
 .emailInputRow {
   display: flex;
   width: 100%;
@@ -279,13 +286,28 @@
   box-sizing: border-box;
 }
 
-.emailInputGrow {
+.emailInputControl {
   flex: 1 1 0;
   min-width: 0;
 }
 
-.duplicateCheckButton {
+/* PFTextInput.xlarge .field 와 동일 높이 트랙 */
+.emailButtonControl {
+  display: flex;
   flex: 0 0 auto;
+  align-items: stretch;
+  width: auto;
+  height: 54px;
+}
+
+.emailButtonControl .duplicateCheckButton {
+  width: 100%;
+  /* pf-button.xlarge height:53px 를 인풋 field(54px)에 맞춤 */
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  padding: 0 var(--spacing-28);
+  box-sizing: border-box;
 }
 
 .emailMessage {
