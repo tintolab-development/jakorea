@@ -1,6 +1,9 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
 import { HomePage } from '@/pages/home/page'
+import { IntroPage } from '@/pages/ja-korea/intro/page'
+import { GlobalValuePage } from '@/pages/ja-korea/global-value/page'
+import { WorldwidePage } from '@/pages/ja-korea/worldwide/page'
 import { HeroBannersPage } from '@/pages/main/hero-banners/page'
 import { StripBannersPage } from '@/pages/main/strip-banners/page'
 import { SocialLinksPage } from '@/pages/main/social-links/page'
@@ -16,6 +19,9 @@ const IMPLEMENTED_LEAF_PATHS = new Set([
   '/main/social-links',
   '/main/contents',
   '/main/popups',
+  '/ja-korea/intro',
+  '/ja-korea/global-value',
+  '/ja-korea/worldwide',
 ])
 
 /** LNB 리프 경로 → 빈 화면(플레이스홀더). 구현된 화면은 제외 */
@@ -42,6 +48,9 @@ export const router = createBrowserRouter([
       { path: 'main/social-links', element: <SocialLinksPage /> },
       { path: 'main/contents', element: <ContentsPage /> },
       { path: 'main/popups', element: <PopupsPage /> },
+      { path: 'ja-korea/intro', element: <IntroPage /> },
+      { path: 'ja-korea/global-value', element: <GlobalValuePage /> },
+      { path: 'ja-korea/worldwide', element: <WorldwidePage /> },
       ...leafRoutes,
       { path: '*', element: <Navigate to="/" replace /> },
     ],
