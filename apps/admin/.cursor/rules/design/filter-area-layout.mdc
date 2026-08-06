@@ -20,7 +20,7 @@ alwaysApply: false
 | 레이아웃 | `apps/admin/src/shared/ui/admin-filter-area.css` · `admin-filter-area` |
 | 상수 | `apps/admin/src/shared/constants/filter-field-width.ts` |
 
-## 마크업
+## 마크업 (1행)
 
 ```tsx
 <div className="admin-filter-area">
@@ -40,10 +40,36 @@ alwaysApply: false
 </div>
 ```
 
+## 2행 (CMS `mergedAutoFillTrailingFieldKeys` 미러)
+
+시안처럼 **1행 필드 / 2행 trailing + 조회**가 필요할 때 (예: 공지 — 작성일·조회 하단).
+
+CMS: `multiRowResponsiveLayout="merged-auto-fill"` + `mergedAutoFillTrailingFieldKeys`  
+→ Admin:
+
+```tsx
+<div className="admin-filter-area admin-filter-area--split">
+  <div className="admin-filter-area__head">
+    {/* 상단 필드들 — flex-wrap, 240/500 고정 */}
+  </div>
+  <div className="admin-filter-area__bottom">
+    <div className="admin-filter-area__bottom-fields">
+      {/* trailing 필드 (예: 작성일 dateRange) */}
+    </div>
+    <div className="admin-filter-area__actions">…조회…</div>
+  </div>
+</div>
+```
+
+- 행 간 gap = `--filter-field-gap` (12px)
+- 조회는 하단 행 `margin-left: auto` (우측)
+- 필드 폭 stretch(`flex: 1` · `%`) 금지 — 공유 치수 SSOT
+
 ## 관련 (Admin)
 
 - [list-page-composition.mdc](../coding/list-page-composition.mdc)
 - [list-table-spacing.mdc](./list-table-spacing.mdc)
 - [styling-tokens.mdc](./styling-tokens.mdc)
+- CMS: [table-filter-group-layout.mdc](../../../cms/.cursor/rules/design/table-filter-group-layout.mdc)
 
 **Last updated:** 2026-08-06

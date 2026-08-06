@@ -1,6 +1,7 @@
 /**
- * Admin 목록 필터 영역 레이아웃 — CMS TableFilterGroup 1행 규격 미러
+ * Admin 목록 필터 영역 레이아웃 — CMS TableFilterGroup 1행·2행 규격 미러
  * @see apps/cms/src/shared/components/table-filter-group.css
+ * @see apps/cms/.cursor/rules/design/table-filter-group-layout.mdc
  * @see apps/cms/.cursor/rules/design/filter-area-layout.mdc
  */
 
@@ -12,6 +13,59 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+}
+
+/*
+ * 2행 (CMS merged-auto-fill + trailing keys 미러)
+ * 상단: 필드 flex-wrap
+ * 하단: trailing 필드 + 조회 (우측)
+ */
+.admin-filter-area--split {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: var(--filter-field-gap, 12px);
+}
+
+.admin-filter-area__head {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: var(--filter-field-gap, 12px);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-filter-area__bottom {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--filter-field-gap, 12px);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-filter-area__bottom-fields {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--filter-field-gap, 12px);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-filter-area--split .admin-filter-area__actions {
+  flex: 0 0 auto;
+  margin-left: auto;
+  align-self: flex-end;
 }
 
 /* 레이블 + 컨트롤 세로 스택 · 사이 6px */
@@ -173,6 +227,17 @@
     min-width: 0;
     max-width: none;
     flex: 1 1 auto;
+  }
+
+  .admin-filter-area--split .admin-filter-area__bottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-filter-area--split .admin-filter-area__actions {
+    margin-left: 0;
+    width: 100%;
+    max-width: none;
   }
 
   .admin-filter-area__search-button.cms-button.cms-button--large {
