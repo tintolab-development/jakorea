@@ -65,6 +65,9 @@ importers:
       '@jakorea/form-template-runtime':
         specifier: workspace:^
         version: link:../../packages/form-template-runtime
+      '@jakorea/rich-text':
+        specifier: workspace:^
+        version: link:../../packages/rich-text
       '@jakorea/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -74,6 +77,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.62.2
         version: 5.90.21(react@19.2.0)
+      '@tiptap/react':
+        specifier: ^3.25.0
+        version: 3.27.1(@floating-ui/dom@1.7.6)(@tiptap/core@3.27.1(@tiptap/pm@3.27.1))(@tiptap/pm@3.27.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       antd:
         specifier: ^5.28.0
         version: 5.29.2(date-fns@4.1.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
