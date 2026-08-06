@@ -1,33 +1,26 @@
 ---
-description: Admin 목록·테이블 상단 필터 영역 공통 규격 (CMS 미러)
-alwaysApply: false
+description: Admin 필터 영역 — admin-filter-area 구현 (공통 치수는 cms-admin-ui)
 globs:
   - apps/admin/src/pages/**/*
   - apps/admin/src/shared/ui/admin-filter-area.css
   - apps/admin/src/shared/ui/filter-controls-common.css
+alwaysApply: false
 ---
 
-# Admin 필터 영역 공통 규격
+# Admin 필터 영역 (어댑터)
 
-CMS [`filter-area-layout.mdc`](../../../cms/.cursor/rules/design/filter-area-layout.mdc) 를 **Homepage Admin** 에 동일 적용한다.
+**치수·금지:** 공유 SSOT → [filter-area-dimensions.mdc](../../../../.cursor/rules/cms-admin-ui/filter-area-dimensions.mdc)  
+**URL 동기화:** [list-filter-url-sync.mdc](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc)
 
-**토큰:** `apps/admin/src/shared/ui/filter-controls-common.css`  
-**레이아웃:** `apps/admin/src/shared/ui/admin-filter-area.css` · 클래스 `admin-filter-area`  
-**상수:** `apps/admin/src/shared/constants/filter-field-width.ts`
+## Admin path
 
-## 치수
+| 항목 | 경로 |
+|------|------|
+| 토큰 CSS | `apps/admin/src/shared/ui/filter-controls-common.css` |
+| 레이아웃 | `apps/admin/src/shared/ui/admin-filter-area.css` · `admin-filter-area` |
+| 상수 | `apps/admin/src/shared/constants/filter-field-width.ts` |
 
-| 항목 | 값 |
-|------|-----|
-| 단일 검색·셀렉트 폭 | **240px** (`FILTER_CONTROL_MAX_WIDTH_PX`) |
-| 컨트롤 높이 | 44px (`inputSize="large"`) |
-| 필터 칸 사이 gap | 12px |
-| 레이블·컨트롤 gap | 6px |
-| 레이블 타이포 | 14px / 500 / 150% |
-| 조회 버튼 | **160×44px** (`FILTER_SEARCH_BUTTON_WIDTH_PX`) |
-| 분리형 dateRange | **500px** (`FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` = 2×240+20) |
-
-## 마크업 패턴
+## 마크업
 
 ```tsx
 <div className="admin-filter-area">
@@ -47,16 +40,10 @@ CMS [`filter-area-layout.mdc`](../../../cms/.cursor/rules/design/filter-area-lay
 </div>
 ```
 
-## 금지
+## 관련 (Admin)
 
-- 필터 칸에 `flex: 1 1 …` / `width: 100%` 로 행 전체 stretch
-- 셀렉트·검색을 240px 초과로 늘리기
-- 조회 버튼을 CmsButton large 기본(140)만 쓰고 160 미지정
-
-## 관련
-
-- 목록 카드·툴바: [list-table-spacing.mdc](./list-table-spacing.mdc)
-- 목록 페이지 조합: [list-page-composition.mdc](../coding/list-page-composition.mdc)
-- 토큰: [styling-tokens.mdc](./styling-tokens.mdc)
+- [list-page-composition.mdc](../coding/list-page-composition.mdc)
+- [list-table-spacing.mdc](./list-table-spacing.mdc)
+- [styling-tokens.mdc](./styling-tokens.mdc)
 
 **Last updated:** 2026-08-06

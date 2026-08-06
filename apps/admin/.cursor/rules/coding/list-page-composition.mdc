@@ -1,71 +1,52 @@
 ---
-description: Admin 목록 화면 조합 — filter card + table card · cms-data-table (CMS list stack 미러)
+description: Admin 목록 조합 — admin-list-card + useListFilterUrl (공통 의도는 cms-admin-ui)
 globs:
   - apps/admin/src/pages/**/*.{tsx,css}
   - apps/admin/src/features/**/ui/**/*sortable*.{tsx,css}
+  - apps/admin/src/features/**/ui/**/*panel*.{tsx,css}
 alwaysApply: false
 ---
 
-# Admin 목록 페이지 조합
+# Admin 목록 페이지 조합 (어댑터)
 
-CMS [`list-page-composition.mdc`](../../../cms/.cursor/rules/coding/list-page-composition.mdc) · [`list-page-table-stack.md`](../../../cms/.cursor/rules/tables/list-page-table-stack.md) 의 **의도**(필터 + 툴바 + 테이블)를 Admin에 이식한다.  
-CMS 전용 `FilterTableLayout` / `useTablePage` / URL 필터 동기화는 쓰지 않는다.
+**의도 SSOT:**
 
-## 필수 빌딩 블록
+- [list-filter-url-sync.mdc](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc)
+- [list-table-shell.mdc](../../../../.cursor/rules/cms-admin-ui/list-table-shell.mdc)
+- [filter-area-dimensions.mdc](../../../../.cursor/rules/cms-admin-ui/filter-area-dimensions.mdc)
 
-1. **필터 카드** (검색 UI가 있을 때)
-   - 래퍼: `admin-list-card`
-   - 내부: `admin-filter-area` ([filter-area-layout.mdc](../design/filter-area-layout.mdc))
-   - draft 상태 + **조회** 시 applied filter 커밋 (live filter 금지)
+CMS `FilterTableLayout` / `useTablePage` / `TableFilterGroup` **사용 금지**.
 
-2. **테이블 카드**
-   - 래퍼: `admin-list-card`
-   - 툴바: `admin-list-toolbar` + `table-header-title--wrapper` / `table-header-actions--wrapper`  
-     ([list-table-spacing.mdc](../design/list-table-spacing.mdc))
-   - 테이블: Ant `Table` + `className="cms-data-table …"`  
-     ([table-implementation.mdc](../tables/table-implementation.mdc))
+## Admin 스택
 
-3. **데이터**
-   - 목록·mutations: feature `api/hooks` (TanStack Query). UI draft·모달·선택 키만 `useState`.
+1. **필터 카드:** `admin-list-card` + `admin-filter-area` ([filter-area-layout](../design/filter-area-layout.mdc))
+2. **URL:** `useListFilterUrl` + `useTableSearch` (`@/shared/lib`)  
+   - `paramConfig` · `parseApplied` · `syncPendingFromUrl`  
+   - 조회 `applySearch()` · 즉시 반영은 `patchSearchParams`  
+   - 접두어 예: `sb_`, `pu_`, `h_`, `a_`, `c_`
+3. **테이블 카드:** `admin-list-toolbar` + Ant `Table` `className="cms-data-table …"` ([table-implementation](../tables/table-implementation.mdc))
+4. **데이터:** feature `api/hooks`. applied 필터는 searchParams 파생.
 
 ```tsx
+const { pendingFilters, setPendingFilters, applied, applySearch } = useListFilterUrl({…})
+
 <div className="…-page">
   <div className="admin-list-card">
-    <div className="admin-filter-area">…filter fields + 조회…</div>
+    <div className="admin-filter-area">…pending + 조회…</div>
   </div>
-
   <div className="admin-list-card">
-    <div className="admin-list-toolbar">
-      <div className="table-header-title--wrapper">
-        <span className="table-title">… 목록</span>
-        <span className="table-description">총 N건</span>
-      </div>
-      <div className="table-header-actions--wrapper">{/* CmsButton */}</div>
-    </div>
-    <XxxSortableTable className="cms-data-table …" />
+    <div className="admin-list-toolbar">…</div>
+    <Table className="cms-data-table" dataSource={…} />
   </div>
 </div>
 ```
 
-필터가 없으면 필터 카드를 생략하고 테이블 카드만 둔다 (히어로·소셜 등).
-
-## 카드 간 간격
-
-- `.admin-list-card` `margin-bottom: 24px` (`--spacing-24`) — 필터 카드와 테이블 카드 사이 수직 갭  
-- CMS 단일 카드 내부 divider(`padding: 32px 0` + 1px 선) 패턴은 **동일 카드에 필터+테이블을 합칠 때만** 검토. 현 구현은 **2카드**가 표준.
+필터 없으면 필터 카드 생략 가능.
 
 ## 금지
 
-- 필터·테이블을 페이지 ad-hoc flex로 새로 조립하며 갭 토큰 무시  
-- CMS `FilterTableLayout` / `TableFilterGroup` / `useTablePage` 를 admin에 복사 import  
-- 카드 `padding`·`box-shadow`를 페이지 CSS에 하드코딩  
-- 필터 live-apply (키 입력마마 목록 변경)
-
-## 관련 규칙
-
-- [filter-area-layout.mdc](../design/filter-area-layout.mdc)  
-- [list-table-spacing.mdc](../design/list-table-spacing.mdc)  
-- [table-implementation.mdc](../tables/table-implementation.mdc)  
-- [table-th.mdc](../design/table-th.mdc)
+- 조회 후 필터를 로컬 state만으로 유지
+- 필터 live-apply
+- CMS 스택 복사 import
 
 **Last updated:** 2026-08-06

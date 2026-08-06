@@ -1,0 +1,160 @@
+---
+description: Admin 단건 문서 폼 카드 — 흰 카드 viewport fill · view 테이블 기본 사이즈 · edit 높이 최소 변형
+globs:
+  - apps/admin/src/pages/**/*.{tsx,css}
+  - apps/admin/src/features/**/ui/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# 단건 문서 폼 카드 (DetailInfoForm · view/edit)
+
+시안이 **흰 카드 1장 + 상단 수정/취소·저장 + DetailInfoForm 격자** 인 화면  
+(예: BI 소개, JA Worldwide, JA Korea 소개 카드 셸).
+
+목록 Ant Table 행([table-implementation.mdc](../tables/table-implementation.mdc))과 구분.  
+다블록 Form 패턴: [detail-info-form-layout.mdc](./detail-info-form-layout.mdc).
+
+---
+
+## 1. 흰 카드가 콘텐츠 영역 높이를 채움
+
+시안: `layout-content` 회색 패딩 안쪽은 **흰 카드가 남은 세로를 채운다.**  
+카드가 콘텐츠 높이만 줄어들면 테이블 아래 회색 빈 면이 크게 보여 시안과 어긋난다.
+
+### 페이지
+
+```css
+/* header + content padding 32×2 = 64 */
+.feature-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: calc(100vh - var(--header-height, 64px) - 64px);
+  height: calc(100vh - var(--header-height, 64px) - 64px);
+}
+```
+
+### 카드
+
+```css
+.feature-card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.feature-card .admin-list-toolbar { flex-shrink: 0; }
+
+.feature-card__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  /* DetailInfoForm은 상단 정렬 — 아래 빈 여백은 카드 흰 배경 */
+}
+```
+
+- 빈 여백은 **테이블 셀을 늘려 채우지 않는다** (카드 배경이 흰 면).
+- 참고 구현: `pages/ja-korea/bi/page.css`, `features/ja-korea-bi/ui/bi-form.css`  
+  · Worldwide: `pages/ja-korea/worldwide/page.css`, `features/ja-korea-worldwide/ui/worldwide-form.css`
+
+### 금지
+
+- 페이지 높이를 지정하지 않은 채 짧은 카드만 두고 하단 회색을 「빈 화면」으로 방치
+- view 행 전체를 edit textarea 높이에 맞춰 **강제 고정(height/max-height)** 해서 조회 시 테이블이 비대해지는 패턴
+
+---
+
+## 2. 조회(view) 테이블 기본 사이즈
+
+| 항목 | 값 |
+|------|-----|
+| Field / 라벨 / 값 셀 | **`min-height: 54px`** (기본) |
+| 라벨 폭 | 시안 기준 보통 **160px** (`--detail-info-label-w`) |
+| 줄바꿈 문구 | view에 `white-space: pre-line` (`.…-preline`) |
+| 행 높이 | 콘텐츠에 맞게 **자연 증가** 허용 (`min-height`만, 불필요한 고정 `height` 금지) |
+
+```css
+.feature-card .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 160px;
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+.feature-card .detail-info-form__field-label,
+.feature-card .detail-info-form__field-content {
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+```
+
+조회 시 시안처럼 **짧은 행 + 필요 시 줄바꿈만 늘어남**.  
+view/edit 동기화를 위해 **조회 행을 100px·148px 등으로 미리 키우지 않는다.**
+
+---
+
+## 3. 수정(edit) — 높이 변형은 최소한
+
+조회 → 수정 전환 시 입력 컨트롤 때문에 행이 커질 수 있다. **허용하되 점프를 최소화**한다.
+
+| 규칙 | 내용 |
+|------|------|
+| 단줄·짧은 제목 | `CmsTextArea` **`rows={1}`** (기본 expandable — 줄바꿈 스펙 시 유지) |
+| 중간 문장 | **`rows={2}`** |
+| 긴 본문 | **`rows={3}`** 전후 — 4행 이상은 스펙 없으면 피함 |
+| resize | `className="cms-textarea--fixed-rows"` + colocated `resize: none` |
+| 정렬 | edit 셀: `align-items: flex-start` (`:has(.cms-textarea)`) |
+| 폭 | `width="100%"` · control `min-width: 0` |
+
+```tsx
+// ✅ GOOD — 최소 rows + fixed-rows
+<CmsTextArea
+  className="cms-textarea--fixed-rows"
+  inputSize="large"
+  width="100%"
+  rows={1} // or 2 / 3
+  value={…}
+  onChange={…}
+/>
+
+// ❌ BAD — view 높이에 맞추려 조회·수정 공통 height 강제 / rows를 과대 설정
+// ❌ BAD — resize로 사용자가 테이블을 임의 확대
+```
+
+### 금지
+
+- view 기본 사이즈를 깨기 위해 edit 박스에 맞춘 **강제 tall row**를 view에도 적용
+- 수정 진입 시 레이아웃 붕괴를 이유로 **카드/테이블 전체 스케일**을 바꾸는 것
+
+---
+
+## 4. 툴바 상태 머신 (기획 공통)
+
+| 모드 | 버튼 |
+|------|------|
+| view | **수정** (primary) |
+| edit | **취소** (secondary) + **저장** (primary, `loading`) |
+
+- 취소: draft 폐기 · view 복귀  
+- 저장: mutation 성공 시 view · 실패 시 `useCmsAlert`  
+- 셸: `admin-list-card` + `admin-list-toolbar` + `table-header-*` ([list-table-spacing.mdc](./list-table-spacing.mdc))
+
+---
+
+## 체크리스트
+
+- [ ] 페이지 `calc(100vh - header - 64px)` + 카드 `flex:1` / `height:100%` (흰 면 fill)
+- [ ] view 행 `min-height: 54px`, 강제 tall fixed height 없음
+- [ ] edit `rows` 최소, `fixed-rows` + `resize: none`
+- [ ] 줄바꿈 문구는 view `pre-line` · edit textarea
+- [ ] 수정/취소/저장 버튼 리스트 규격
+
+## 참고 구현
+
+- BI: `features/ja-korea-bi/ui/bi-form.{tsx,css}`, `pages/ja-korea/bi/page.css`
+- Intro 다섹션(동일 툴바·행 54): `features/ja-korea-intro/ui/intro-form.*`
+- Worldwide 높이 fill: `features/ja-korea-worldwide/ui/worldwide-form.css`
+
+**Last updated:** 2026-08-06

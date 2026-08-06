@@ -1,56 +1,25 @@
 ---
-description: Admin DetailInfoForm·상세 격자 값 셀 — 문자열 | 금지, TdDivider 사용
+description: Admin 값 셀 디바이더 — form-template-runtime (공통 원칙 cms-admin-ui)
 globs:
   - apps/admin/src/**/*.tsx
 alwaysApply: false
 ---
 
-# 테이블·상세 값 셀 — 세그먼트 구분 (디바이더)
+# Admin 값 셀 디바이더 (어댑터)
 
-CMS [`table-td-divider.mdc`](../../../cms/.cursor/rules/design/table-td-divider.mdc) 와 동일 원칙.  
-admin에서는 **program-detail 전용 divider** 대신 공유 패키지 디바이더를 쓴다.
-
-## 금지
-
-```tsx
-// ❌
-value={`${name} | ${phone}`}
-<span>{a} | {b}</span>
-// ❌ CSS content: '|' 흉내
-```
-
-## 사용
+**원칙:** [cms-admin-ui/table-td-divider.mdc](../../../../.cursor/rules/cms-admin-ui/table-td-divider.mdc)
 
 ```tsx
 import { DetailInfoForm, DetailInfoFormTdDivider } from '@jakorea/form-template-runtime'
 
-// Form API
 <>
   {segmentA}
   <DetailInfoForm.TdDivider />
   {segmentB}
 </>
-
-// 또는
-<>
-  {segmentA}
-  <DetailInfoFormTdDivider />
-  {segmentB}
-</>
+// 또는 <DetailInfoFormTdDivider />
 ```
 
-- 세그먼트는 **항목별로 분리**해 렌더한다.
-- mock/레거시에 `|` 가 박혀 있으면 `split` 후 디바이더로 **재조립**. 화면에 `|` 문자 그대로 출력하지 않는다.
-
-## 예외
-
-- 테이블 **밖** 일반 문장·라벨·로그·API/mock 원문 필드 값 자체
-- 목록 `cms-data-table` 셀에서 단일 텍스트만 표시하는 경우
-
-## 관련
-
-- [detail-info-form-layout.mdc](./detail-info-form-layout.mdc)  
-- [detail-info-nested-table.mdc](./detail-info-nested-table.mdc)  
-- [table-implementation.mdc](../tables/table-implementation.mdc)
+program-detail 전용 CMS divider 대신 **공유 패키지**만 사용.
 
 **Last updated:** 2026-08-06

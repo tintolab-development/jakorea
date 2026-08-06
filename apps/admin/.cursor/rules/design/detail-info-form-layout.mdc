@@ -7,8 +7,9 @@ alwaysApply: false
 
 # DetailInfoForm — 다블록 레이아웃 (Admin)
 
-CMS [`detail-info-form-layout.mdc`](../../../cms/.cursor/rules/design/detail-info-form-layout.mdc)를 admin에 맞춘다.  
-컴포넌트는 **`@jakorea/form-template-runtime`** 의 `DetailInfoForm`을 사용한다 (CMS 로컬 경로 import 금지).
+컴포넌트는 **`@jakorea/form-template-runtime`** 의 `DetailInfoForm`을 사용한다 (CMS 로컬 경로 import 금지).  
+관련 공통: [table-th](../../../../.cursor/rules/cms-admin-ui/table-th.mdc) · [table-td-divider](../../../../.cursor/rules/cms-admin-ui/table-td-divider.mdc).  
+CMS 다블록 관례: [`apps/cms/.../detail-info-form-layout.mdc`](../../../cms/.cursor/rules/design/detail-info-form-layout.mdc).
 
 ## 표준 구조
 
@@ -47,10 +48,19 @@ admin 폼 화면 예: intro / worldwide / main-content section cards — 대부�
 문자 `|` 금지 → [table-td-divider.mdc](./table-td-divider.mdc)  
 (`DetailInfoForm.TdDivider` / `DetailInfoFormTdDivider`)
 
+## 흰 카드 fill · view/edit 행 높이
+
+단건 문서 폼(카드 1장·수정 모드 전환): [detail-document-form-card.mdc](./detail-document-form-card.mdc)
+
+- view 기본 행 **`min-height: 54px`** (강제 tall 금지)
+- edit 높이 점프 **최소화** (`rows`·`fixed-rows`)
+- 시안 흰 카드 **viewport 남은 높이 fill**
+
 ## 체크리스트
 
 - [ ] `apps/cms` 또는 CMS 상대경로로 DetailInfoForm import 없음  
 - [ ] nested table은 Field 값에 **전용** 격자 (DetailInfoForm 중첩 금지)  
 - [ ] th/라벨 배경 `var(--BG-header)` ([table-th.mdc](./table-th.mdc))
+- [ ] 단건 폼이면 [detail-document-form-card.mdc](./detail-document-form-card.mdc) 체크리스트 병행
 
 **Last updated:** 2026-08-06

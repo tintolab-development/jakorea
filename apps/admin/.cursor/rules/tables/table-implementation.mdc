@@ -1,5 +1,5 @@
 ---
-description: Admin Ant Design Table 구현 규격 (cms-data-table · 패딩·열폭 · CMS 미러)
+description: Admin Ant Table — cms-data-table 경로 (공통 스펙 cms-admin-ui)
 globs:
   - apps/admin/src/pages/**/*.{tsx,css}
   - apps/admin/src/features/**/ui/**/*.{tsx,css}
@@ -8,86 +8,29 @@ globs:
 alwaysApply: false
 ---
 
-# Admin Ant Design `Table` 구현
+# Admin Ant Design `Table` (어댑터)
 
-CMS [`table-implementation.md`](../../../cms/.cursor/rules/tables/table-implementation.md) 패턴을 **Homepage Admin**에 맞춘다.  
-CSS·클래스명은 admin 공유 파일을 쓰고 `apps/cms`를 import하지 않는다.
+**공통 스펙:** [cms-data-table.mdc](../../../../.cursor/rules/cms-admin-ui/cms-data-table.mdc) · [table-th.mdc](../../../../.cursor/rules/cms-admin-ui/table-th.mdc)
 
-**스타일 SSOT:** [`cms-data-table.css`](../../../src/shared/ui/cms-data-table.css)  
-**th 배경:** [table-th.mdc](../design/table-th.mdc)  
-**목록 셸·갭:** [list-table-spacing.mdc](../design/list-table-spacing.mdc)  
-**목록 조합:** [list-page-composition.mdc](../coding/list-page-composition.mdc)
+## Admin path
 
----
-
-## Defaults
-
-- Ant Design **`Table`** 사용. 행 타입 `ColumnsType<Row>`, `rowKey` 필수.
-- 목록 테이블에 **`className="cms-data-table"`** (+ feature BEM, 예: `strip-banner-table`).
-- 정렬·가로 스크롤이 필요하면 `scroll={{ x: true }}` 또는 숫자 합계. 세로는 페이지 스코프에서 제한 가능.
-
----
-
-## 셀 패딩·헤더 (공통 CSS — 화면에서 override 금지)
-
-| 항목 | 값 | 선택자 |
-|------|-----|--------|
-| thead 높이 | **54px** | `.cms-data-table .ant-table-thead … th` |
-| thead 패딩 | **12px 20px** | 선택 열·scrollbar 제외 |
-| thead 타이포 | 16px / 700 / center | |
-| thead 배경 | `var(--table-th-bg)` → `var(--BG-header)` | [table-th.mdc](../design/table-th.mdc) |
-| thead/tbody 보더 | `1px solid var(--table-line)` | |
-| tbody 패딩 | **10px 16px** | |
-| tbody 높이 | **54px** | |
-| tbody 타이포 | 16px / 500 / center | |
-| 외곽 보더 | `1px solid var(--table-line)` · `border-radius: 8px` | `.ant-table-container` |
-| 선택 열 폭 | **68px** | `--table-selection-column-width` |
-| No. 열 폭 | **80px** | `--table-no-column-width` · `cms-table-col--no` |
-
-상수: [`shared/constants/table.ts`](../../../src/shared/constants/table.ts) (`TABLE_COLUMN_WIDTHS`, `CMS_TABLE_NO_COL_CLASS`).
-
----
-
-## Columns
-
-| Prop | Notes |
-|------|--------|
-| `width` | 고정 레이아웃용. 흔한 값 56–220px · `TABLE_COLUMN_WIDTHS` 우선 |
-| `align` | 목록은 기본 center (CSS와 맞춤) |
-| `ellipsis` | 긴 텍스트 `true` |
-| `render` | optional → `value ?? '-'` |
-
-- **No. 열:** `width: TABLE_COLUMN_WIDTHS.index` (80), `className: CMS_TABLE_NO_COL_CLASS`  
-- **선택:** `rowSelection` + 체크 폭 68 (`TABLE_COLUMN_WIDTHS.checkbox`)  
-- **액션 열:** `render` only, `key` 설정, `dataIndex` 없음  
-- 첫 열이 No.가 아니면 테이블 루트에 `cms-data-table--skip-auto-no-col`
-
----
-
-## Disable / hover
-
-| 항목 | 상세 |
+| 항목 | 경로 |
 |------|------|
-| 비활성 행 | `CMS_DATA_TABLE_ROW_DISABLED_CLASS` → `rowClassName` |
-| 행 클릭 hover 유지 | `cms-data-table--hoverable` 또는 행에 pointer/clickable 클래스 |
-| 조회만 하는 테이블 | 기본은 non-clickable 행 hover 배경 비활성 (CSS) |
+| CSS | `apps/admin/src/shared/ui/cms-data-table.css` |
+| 상수 | `apps/admin/src/shared/constants/table.ts` (`TABLE_COLUMN_WIDTHS`, `CMS_TABLE_NO_COL_CLASS`, disabled class) |
 
----
+## Admin 관례
 
-## Do / Don’t
+- No. 열: `width: TABLE_COLUMN_WIDTHS.index` (80), `className: CMS_TABLE_NO_COL_CLASS`
+- 선택: `TABLE_COLUMN_WIDTHS.checkbox` (68)
+- 첫 열이 No.가 아니면 `cms-data-table--skip-auto-no-col`
+- 필터: 조회 커밋 ([list-filter-url-sync](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc))
+- **Don’t** `apps/cms/...` import
 
-- **Do** 필터 적용은 조회 버튼 커밋 ([filter-area-layout.mdc](../design/filter-area-layout.mdc))  
-- **Don’t** 페이지 CSS로 th/td `padding`·`height` 하드코딩  
-- **Don’t** `apps/cms/...` 직접 import 로 스타일 공유  
-- **Don’t** thead 배경을 `#f5f6f7` 단색으로 새로 박기 — `var(--table-th-bg)` / `--BG-header`
+## 스택 차이
 
----
-
-## 참고 (CMS → Admin 차이)
-
-| | CMS `table-implementation` | Admin (본 문서) |
-|--|---------------------------|-----------------|
-| 헤더 높이 메모 | ~57px / `#EDF0F2` (구 문서) | **실제 CSS 54px** + `--BG-header` |
-| 스택 | `FilterTableLayout` + `useTablePage` | `admin-list-card` + `admin-filter-area` |
+| | CMS | Admin |
+|--|-----|-------|
+| 목록 셸 | `FilterTableLayout` + `useTablePage` | `admin-list-card` + `useListFilterUrl` |
 
 **Last updated:** 2026-08-06
