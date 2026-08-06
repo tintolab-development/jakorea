@@ -1,0 +1,17 @@
+/* 페이지가 layout-content 높이를 채우도록 (header + content padding 32×2)
+ * @see detail-document-form-card.mdc
+ */
+.ja-korea-directions-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: calc(100vh - var(--header-height, 64px) - 64px);
+  height: calc(100vh - var(--header-height, 64px) - 64px);
+}
+
+.ja-korea-directions-page > .admin-list-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
