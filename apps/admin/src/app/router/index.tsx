@@ -7,6 +7,7 @@ import { IncomeExpensePage } from '@/pages/ja-korea/income-expense/page'
 import { IntroPage } from '@/pages/ja-korea/intro/page'
 import { GlobalValuePage } from '@/pages/ja-korea/global-value/page'
 import { PrinciplesPage } from '@/pages/ja-korea/principles/page'
+import { ReportsDisclosurePage } from '@/pages/ja-korea/reports-disclosure/page'
 import { WorldwidePage } from '@/pages/ja-korea/worldwide/page'
 import { HeroBannersPage } from '@/pages/main/hero-banners/page'
 import { StripBannersPage } from '@/pages/main/strip-banners/page'
@@ -30,6 +31,7 @@ const IMPLEMENTED_LEAF_PATHS = new Set([
   '/ja-korea/bi',
   '/ja-korea/principles',
   '/ja-korea/income-expense',
+  '/ja-korea/reports-disclosure',
 ])
 
 /** LNB 리프 경로 → 빈 화면(플레이스홀더). 구현된 화면은 제외 */
@@ -63,6 +65,7 @@ export const router = createBrowserRouter([
       { path: 'ja-korea/bi', element: <BiPage /> },
       { path: 'ja-korea/principles', element: <PrinciplesPage /> },
       { path: 'ja-korea/income-expense', element: <IncomeExpensePage /> },
+      { path: 'ja-korea/reports-disclosure', element: <ReportsDisclosurePage /> },
       ...leafRoutes,
       { path: '*', element: <Navigate to="/" replace /> },
     ],
