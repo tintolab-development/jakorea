@@ -11,7 +11,7 @@
  */
 export interface AdminMfaSetupResponse {
   /** 관리자 계정 ID */
-  adminId?: number;
+  adminAccountId?: number;
   /** MFA 방식 */
   mfaMethod?: string;
   /** MFA 활성화 여부 */

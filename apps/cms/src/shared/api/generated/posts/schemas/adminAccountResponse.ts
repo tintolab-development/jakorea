@@ -7,10 +7,9 @@
  */
 
 export interface AdminAccountResponse {
-  /** 관리자 계정 PK. adminAccountId와 동일합니다. */
-  id?: number;
+  /** 관리자 계정 PK. 관리자 조회/수정/삭제 경로에 사용합니다. */
   adminAccountId?: number;
-  /** 외부 참조 및 감사용 관리자 UUID */
+  /** 외부 참조 및 감사용 관리자 UUID. CRUD 경로에는 사용하지 않습니다. */
   uuid?: string;
   email?: string;
   name?: string;

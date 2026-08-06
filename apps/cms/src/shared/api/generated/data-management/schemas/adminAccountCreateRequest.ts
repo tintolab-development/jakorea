@@ -5,7 +5,7 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { TermsAgreementRequest } from './termsAgreementRequest';
+import type { AdminTermsAgreementRequest } from './adminTermsAgreementRequest';
 
 /**
  * MASTER 관리자가 즉시 ACTIVE 상태로 등록하는 관리자 신규 등록 요청입니다.
@@ -34,5 +34,5 @@ export interface AdminAccountCreateRequest {
      * @minItems 4
      * @maxItems 4
      */
-  termsAgreements: TermsAgreementRequest[];
+  termsAgreements: AdminTermsAgreementRequest[];
 }

@@ -10,6 +10,8 @@
  * 회원가입 학교 검색 선택값. CMS 미등록 학교를 선택한 경우 전달합니다.
  */
 export interface PortalSchoolSelectionRequest {
+  /** CMS에 이미 등록된 학교 PK. 학교 검색 결과 객체를 그대로 전달할 때 사용합니다. */
+  schoolOrganizationId?: number;
   /** 학교 검색 공급자. 나이스 학교정보 API는 NEIS를 사용합니다. */
   provider?: string;
   /** 공급자의 학교 고유 코드. 숫자 이외 문자가 포함될 수 있습니다. */

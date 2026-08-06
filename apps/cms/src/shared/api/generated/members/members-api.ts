@@ -203,8 +203,8 @@ const saveProgramRoles = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-roles/{roleCode}/permissions`
  *
@@ -257,8 +257,8 @@ const getRolePermissions = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `PUT /api/admin/admin-roles/{roleCode}/permissions`
  *
@@ -314,8 +314,8 @@ const updateRolePermissions = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/users/{memberId}/privacy/unmask
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/privacy/unmask`
  *
@@ -371,8 +371,8 @@ const unmaskMemberPrivacy = (
 /**
  * ### 이 API가 하는 일
  * - 강사 회원 역할 상세 원문 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/instructor/privacy/unmask`
  *
@@ -483,8 +483,8 @@ const unmaskInstructorPrivacy = (
 /**
  * ### 이 API가 하는 일
  * - 개인 회원 역할 상세 원문 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/individual/privacy/unmask`
  *
@@ -540,8 +540,8 @@ const unmaskIndividualMemberPrivacy = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/users/{memberId}/delete
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/delete`
  *
@@ -597,8 +597,8 @@ const deleteAndAnonymize = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/comments`
  *
@@ -653,8 +653,8 @@ const listMemberComments = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/users/{memberId}/comments
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/{memberId}/comments`
  *
@@ -710,8 +710,8 @@ const createMemberComment = (
 /**
  * ### 이 API가 하는 일
  * - 학교·기관 회원 사전 등록
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/pre-register/school`
  *
@@ -766,8 +766,8 @@ const preRegisterSchool = (
 /**
  * ### 이 API가 하는 일
  * - 강사 회원 사전 등록
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/pre-register/instructor`
  *
@@ -822,8 +822,8 @@ const preRegisterInstructor = (
 /**
  * ### 이 API가 하는 일
  * - 개인 회원 사전 등록
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/pre-register/individual`
  *
@@ -878,8 +878,8 @@ const preRegisterIndividual = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/users/pre-register-conflicts/{conflictId}/resolve
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `POST /api/admin/users/pre-register-conflicts/{conflictId}/resolve`
  *
@@ -989,8 +989,8 @@ const bulkDeleteAndAnonymize = (
 /**
  * ### 이 API가 하는 일
  * - 강사 권한 신청 재검토 대기 전환
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: members-permission (`members-permission`)
  * - 호출 방식: `POST /api/admin/instructor-role-requests/{requestId}/reset-pending`
  *
@@ -1098,8 +1098,8 @@ const resendNotification = (
 /**
  * ### 이 API가 하는 일
  * - 강사 권한 신청 반려
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `POST /api/admin/instructor-role-requests/{requestId}/reject`
  *
@@ -1155,8 +1155,8 @@ const reject2 = (
 /**
  * ### 이 API가 하는 일
  * - 강사 권한 신청 승인
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `POST /api/admin/instructor-role-requests/{requestId}/approve`
  *
@@ -1320,10 +1320,10 @@ const bulkApprove = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 승인 반려 건 재검토 대기 전환
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: members-permission (`members-permission`)
- * - 호출 방식: `POST /api/admin/admin-approval-requests/{adminId}/reset-pending`
+ * - 호출 방식: `POST /api/admin/admin-approval-requests/{adminAccountId}/reset-pending`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: authenticated API action
@@ -1363,11 +1363,11 @@ const bulkApprove = (
  * @summary 관리자 승인 반려 건 재검토 대기 전환
  */
 const resetAdminApprovalToPending = (
-    adminId: number,
+    adminAccountId: number,
     approvalResetRequest: ApprovalResetRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseAdminAccountResponse>>,) => {
       return customInstance<ApiResponseAdminAccountResponse>(
-      {url: `/api/admin/admin-approval-requests/${adminId}/reset-pending`, method: 'POST',
+      {url: `/api/admin/admin-approval-requests/${adminAccountId}/reset-pending`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: approvalResetRequest
     },
@@ -1377,10 +1377,10 @@ const resetAdminApprovalToPending = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 승인 알림 재발송
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
- * - 호출 방식: `POST /api/admin/admin-approval-requests/{adminId}/resend-notification`
+ * - 호출 방식: `POST /api/admin/admin-approval-requests/{adminAccountId}/resend-notification`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 역할별 등록 폼 또는 선택 회원 ID
@@ -1420,10 +1420,10 @@ const resetAdminApprovalToPending = (
  * @summary 관리자 승인 알림 재발송
  */
 const resendAdminApprovalNotification = (
-    adminId: number,
+    adminAccountId: number,
  options?: SecondParameter<typeof customInstance<ApiResponseAdminPermissionRequestNotificationResponse>>,) => {
       return customInstance<ApiResponseAdminPermissionRequestNotificationResponse>(
-      {url: `/api/admin/admin-approval-requests/${adminId}/resend-notification`, method: 'POST'
+      {url: `/api/admin/admin-approval-requests/${adminAccountId}/resend-notification`, method: 'POST'
     },
       options);
     }
@@ -1433,7 +1433,7 @@ const resendAdminApprovalNotification = (
  * - 관리자 셀프 가입 반려
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `POST /api/admin/admin-approval-requests/{adminId}/reject`
+ * - 호출 방식: `POST /api/admin/admin-approval-requests/{adminAccountId}/reject`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -1472,11 +1472,11 @@ const resendAdminApprovalNotification = (
  * @summary 관리자 셀프 가입 반려
  */
 const rejectAdminApprovalRequest = (
-    adminId: number,
+    adminAccountId: number,
     adminAccountApprovalDecisionRequest: AdminAccountApprovalDecisionRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseAdminAccountResponse>>,) => {
       return customInstance<ApiResponseAdminAccountResponse>(
-      {url: `/api/admin/admin-approval-requests/${adminId}/reject`, method: 'POST',
+      {url: `/api/admin/admin-approval-requests/${adminAccountId}/reject`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: adminAccountApprovalDecisionRequest
     },
@@ -1488,7 +1488,7 @@ const rejectAdminApprovalRequest = (
  * - 관리자 셀프 가입 승인
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `POST /api/admin/admin-approval-requests/{adminId}/approve`
+ * - 호출 방식: `POST /api/admin/admin-approval-requests/{adminAccountId}/approve`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -1527,11 +1527,11 @@ const rejectAdminApprovalRequest = (
  * @summary 관리자 셀프 가입 승인
  */
 const approveAdminApprovalRequest = (
-    adminId: number,
+    adminAccountId: number,
     adminAccountApprovalDecisionRequest: AdminAccountApprovalDecisionRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseAdminAccountResponse>>,) => {
       return customInstance<ApiResponseAdminAccountResponse>(
-      {url: `/api/admin/admin-approval-requests/${adminId}/approve`, method: 'POST',
+      {url: `/api/admin/admin-approval-requests/${adminAccountId}/approve`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: adminAccountApprovalDecisionRequest
     },
@@ -1649,8 +1649,8 @@ const bulkApproveAdminApprovalRequests = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 목록 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-accounts`
  *
@@ -1703,8 +1703,8 @@ const listAdmins = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 생성
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `POST /api/admin/admin-accounts`
  *
@@ -1760,9 +1760,9 @@ const createAdmin = (
  * ### 이 API가 하는 일
  * - 마스터 관리자 검증 후 관리자 계정 활성화 또는 반려
  * - API 분류: 시스템 진단/운영 검증 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: permission (`permission`)
- * - 호출 방식: `POST /api/admin/admin-accounts/{adminId}/verify`
+ * - 호출 방식: `POST /api/admin/admin-accounts/{adminAccountId}/verify`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: path/요청 본문 from operator action or secure workflow
@@ -1802,11 +1802,11 @@ const createAdmin = (
  * @summary 마스터 관리자 검증 후 관리자 계정 활성화 또는 반려
  */
 const verifyAdmin = (
-    adminId: number,
+    adminAccountId: number,
     adminAccountVerificationRequest: AdminAccountVerificationRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseAdminAccountResponse>>,) => {
       return customInstance<ApiResponseAdminAccountResponse>(
-      {url: `/api/admin/admin-accounts/${adminId}/verify`, method: 'POST',
+      {url: `/api/admin/admin-accounts/${adminAccountId}/verify`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: adminAccountVerificationRequest
     },
@@ -1818,7 +1818,7 @@ const verifyAdmin = (
  * - 관리자 개인정보 원문 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `POST /api/admin/admin-accounts/{adminId}/privacy/unmask`
+ * - 호출 방식: `POST /api/admin/admin-accounts/{adminAccountId}/privacy/unmask`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -1857,11 +1857,11 @@ const verifyAdmin = (
  * @summary 관리자 개인정보 원문 조회
  */
 const unmask = (
-    adminId: number,
+    adminAccountId: number,
     adminPrivacyUnmaskRequest: AdminPrivacyUnmaskRequest,
  options?: SecondParameter<typeof customInstance<AdminAccountPrivacyResponse>>,) => {
       return customInstance<AdminAccountPrivacyResponse>(
-      {url: `/api/admin/admin-accounts/${adminId}/privacy/unmask`, method: 'POST',
+      {url: `/api/admin/admin-accounts/${adminAccountId}/privacy/unmask`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: adminPrivacyUnmaskRequest
     },
@@ -1873,7 +1873,7 @@ const unmask = (
  * - 관리자 비밀번호 초기화
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `POST /api/admin/admin-accounts/{adminId}/password-reset`
+ * - 호출 방식: `POST /api/admin/admin-accounts/{adminAccountId}/password-reset`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -1912,11 +1912,11 @@ const unmask = (
  * @summary 관리자 비밀번호 초기화
  */
 const resetAdminPassword = (
-    adminId: number,
+    adminAccountId: number,
     adminAccountPasswordResetRequest: AdminAccountPasswordResetRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseAdminAccountResponse>>,) => {
       return customInstance<ApiResponseAdminAccountResponse>(
-      {url: `/api/admin/admin-accounts/${adminId}/password-reset`, method: 'POST',
+      {url: `/api/admin/admin-accounts/${adminAccountId}/password-reset`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: adminAccountPasswordResetRequest
     },
@@ -1928,7 +1928,7 @@ const resetAdminPassword = (
  * - 관리자 상세 코멘트 목록
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `GET /api/admin/admin-accounts/{adminId}/comments`
+ * - 호출 방식: `GET /api/admin/admin-accounts/{adminAccountId}/comments`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -1966,11 +1966,11 @@ const resetAdminPassword = (
  * @summary 관리자 상세 코멘트 목록
  */
 const listComments = (
-    adminId: number,
+    adminAccountId: number,
     params?: ListCommentsParams,
  options?: SecondParameter<typeof customInstance<AdminCommentResponse[]>>,) => {
       return customInstance<AdminCommentResponse[]>(
-      {url: `/api/admin/admin-accounts/${adminId}/comments`, method: 'GET',
+      {url: `/api/admin/admin-accounts/${adminAccountId}/comments`, method: 'GET',
         params
     },
       options);
@@ -1981,7 +1981,7 @@ const listComments = (
  * - 관리자 상세 코멘트 등록
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `POST /api/admin/admin-accounts/{adminId}/comments`
+ * - 호출 방식: `POST /api/admin/admin-accounts/{adminAccountId}/comments`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -2020,11 +2020,11 @@ const listComments = (
  * @summary 관리자 상세 코멘트 등록
  */
 const createComment = (
-    adminId: number,
+    adminAccountId: number,
     adminMemberCommentCreateRequest: AdminMemberCommentCreateRequest,
  options?: SecondParameter<typeof customInstance<AdminCommentResponse>>,) => {
       return customInstance<AdminCommentResponse>(
-      {url: `/api/admin/admin-accounts/${adminId}/comments`, method: 'POST',
+      {url: `/api/admin/admin-accounts/${adminAccountId}/comments`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: adminMemberCommentCreateRequest
     },
@@ -2089,8 +2089,8 @@ const updateMemberBasicInfo = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 부분 수정
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `PATCH /api/admin/users/{memberId}/external-identifiers/{provider}`
  *
@@ -2314,7 +2314,7 @@ const updateAffiliatedTeacherEmploymentStatus = (
  * - 관리자 사용 상태 변경
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `PATCH /api/admin/admin-accounts/{adminId}/status`
+ * - 호출 방식: `PATCH /api/admin/admin-accounts/{adminAccountId}/status`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -2353,11 +2353,11 @@ const updateAffiliatedTeacherEmploymentStatus = (
  * @summary 관리자 사용 상태 변경
  */
 const changeAdminStatus = (
-    adminId: number,
+    adminAccountId: number,
     adminAccountStatusChangeRequest: AdminAccountStatusChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseAdminAccountResponse>>,) => {
       return customInstance<ApiResponseAdminAccountResponse>(
-      {url: `/api/admin/admin-accounts/${adminId}/status`, method: 'PATCH',
+      {url: `/api/admin/admin-accounts/${adminAccountId}/status`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: adminAccountStatusChangeRequest
     },
@@ -2367,10 +2367,10 @@ const changeAdminStatus = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 role 변경
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
- * - 호출 방식: `PATCH /api/admin/admin-accounts/{adminId}/role`
+ * - 호출 방식: `PATCH /api/admin/admin-accounts/{adminAccountId}/role`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 폼 상태 or 선택 행 action payload
@@ -2410,11 +2410,11 @@ const changeAdminStatus = (
  * @summary 관리자 role 변경
  */
 const changeAdminRole = (
-    adminId: number,
+    adminAccountId: number,
     adminRoleChangeRequest: AdminRoleChangeRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseAdminAccountResponse>>,) => {
       return customInstance<ApiResponseAdminAccountResponse>(
-      {url: `/api/admin/admin-accounts/${adminId}/role`, method: 'PATCH',
+      {url: `/api/admin/admin-accounts/${adminAccountId}/role`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: adminRoleChangeRequest
     },
@@ -2426,7 +2426,7 @@ const changeAdminRole = (
  * - 관리자 상세 코멘트 삭제
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `DELETE /api/admin/admin-accounts/{adminId}/comments/{commentId}`
+ * - 호출 방식: `DELETE /api/admin/admin-accounts/{adminAccountId}/comments/{commentId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -2465,11 +2465,11 @@ const changeAdminRole = (
  * @summary 관리자 상세 코멘트 삭제
  */
 const deleteComment = (
-    adminId: number,
+    adminAccountId: number,
     commentId: number,
  options?: SecondParameter<typeof customInstance<unknown>>,) => {
       return customInstance<unknown>(
-      {url: `/api/admin/admin-accounts/${adminId}/comments/${commentId}`, method: 'DELETE'
+      {url: `/api/admin/admin-accounts/${adminAccountId}/comments/${commentId}`, method: 'DELETE'
     },
       options);
     }
@@ -2479,7 +2479,7 @@ const deleteComment = (
  * - 관리자 상세 코멘트 수정
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `PATCH /api/admin/admin-accounts/{adminId}/comments/{commentId}`
+ * - 호출 방식: `PATCH /api/admin/admin-accounts/{adminAccountId}/comments/{commentId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -2518,12 +2518,12 @@ const deleteComment = (
  * @summary 관리자 상세 코멘트 수정
  */
 const updateComment = (
-    adminId: number,
+    adminAccountId: number,
     commentId: number,
     adminCommentUpdateRequest: AdminCommentUpdateRequest,
  options?: SecondParameter<typeof customInstance<AdminCommentResponse>>,) => {
       return customInstance<AdminCommentResponse>(
-      {url: `/api/admin/admin-accounts/${adminId}/comments/${commentId}`, method: 'PATCH',
+      {url: `/api/admin/admin-accounts/${adminAccountId}/comments/${commentId}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: adminCommentUpdateRequest
     },
@@ -2535,7 +2535,7 @@ const updateComment = (
  * - 관리자 기본 정보 수정
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `PATCH /api/admin/admin-accounts/{adminId}/basic-info`
+ * - 호출 방식: `PATCH /api/admin/admin-accounts/{adminAccountId}/basic-info`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -2574,11 +2574,11 @@ const updateComment = (
  * @summary 관리자 기본 정보 수정
  */
 const updateAdminBasicInfo = (
-    adminId: number,
+    adminAccountId: number,
     adminAccountBasicInfoUpdateRequest: AdminAccountBasicInfoUpdateRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseAdminAccountResponse>>,) => {
       return customInstance<ApiResponseAdminAccountResponse>(
-      {url: `/api/admin/admin-accounts/${adminId}/basic-info`, method: 'PATCH',
+      {url: `/api/admin/admin-accounts/${adminAccountId}/basic-info`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
       data: adminAccountBasicInfoUpdateRequest
     },
@@ -2588,8 +2588,8 @@ const updateAdminBasicInfo = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users`
  *
@@ -2643,8 +2643,8 @@ const listMembers = (
 /**
  * ### 이 API가 하는 일
  * - 학교·기관 회원 상세 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/school`
  *
@@ -2803,8 +2803,8 @@ const getMemberPrivacyAvailableActions = (
 /**
  * ### 이 API가 하는 일
  * - 강사 회원 상세 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/instructor`
  *
@@ -2857,8 +2857,8 @@ const getInstructorMemberDetail = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/instructor-profile`
  *
@@ -2963,8 +2963,8 @@ const getInstructorPrivacyAvailableActions = (
 /**
  * ### 이 API가 하는 일
  * - 개인 회원 상세 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/individual`
  *
@@ -3017,8 +3017,8 @@ const getIndividualMemberDetail = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/external-identifiers`
  *
@@ -3071,8 +3071,8 @@ const externalIdentifiers = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/consent-records`
  *
@@ -3345,8 +3345,8 @@ const listAssignmentSubmissions = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/{memberId}/affiliated-teachers`
  *
@@ -3453,8 +3453,8 @@ const listMemberAdminPrograms = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 담당 역할 옵션 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: members-permission (`members-permission`)
  * - 호출 방식: `GET /api/admin/users/program-role-options`
  *
@@ -3507,8 +3507,8 @@ const listProgramRoleOptions = (
 /**
  * ### 이 API가 하는 일
  * - 회원/강사 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 관리 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 관리 (`SCR_MEMBER`)
  * - 프론트 담당 영역: members (`members`)
  * - 호출 방식: `GET /api/admin/users/pre-register-conflicts`
  *
@@ -3561,8 +3561,8 @@ const listPreRegisterConflicts = (
 /**
  * ### 이 API가 하는 일
  * - 강사 권한 신청 목록 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/instructor-role-requests`
  *
@@ -3616,8 +3616,8 @@ const listInstructorRoleRequests = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-roles`
  *
@@ -3670,8 +3670,8 @@ const listRoles = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
  * - 호출 방식: `GET /api/admin/admin-permissions`
  *
@@ -3725,8 +3725,8 @@ const listPermissions = (
 /**
  * ### 이 API가 하는 일
  * - 화면/운영에서 사용하는 구현 API
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/admin-permission-change-logs`
  *
@@ -3834,7 +3834,7 @@ const listAdminApprovalRequests = (
  * - 관리자 셀프 가입 승인 상세 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `GET /api/admin/admin-approval-requests/{adminId}`
+ * - 호출 방식: `GET /api/admin/admin-approval-requests/{adminAccountId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -3872,10 +3872,10 @@ const listAdminApprovalRequests = (
  * @summary 관리자 셀프 가입 승인 상세 조회
  */
 const getAdminApprovalRequest = (
-    adminId: number,
+    adminAccountId: number,
  options?: SecondParameter<typeof customInstance<AdminAccountApprovalDetailResponse>>,) => {
       return customInstance<AdminAccountApprovalDetailResponse>(
-      {url: `/api/admin/admin-approval-requests/${adminId}`, method: 'GET'
+      {url: `/api/admin/admin-approval-requests/${adminAccountId}`, method: 'GET'
     },
       options);
     }
@@ -3885,7 +3885,7 @@ const getAdminApprovalRequest = (
  * - 관리자 계정 상세 조회
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `GET /api/admin/admin-accounts/{adminId}`
+ * - 호출 방식: `GET /api/admin/admin-accounts/{adminAccountId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -3923,10 +3923,10 @@ const getAdminApprovalRequest = (
  * @summary 관리자 계정 상세 조회
  */
 const getAdminAccount = (
-    adminId: number,
+    adminAccountId: number,
  options?: SecondParameter<typeof customInstance<AdminAccountApprovalDetailResponse>>,) => {
       return customInstance<AdminAccountApprovalDetailResponse>(
-      {url: `/api/admin/admin-accounts/${adminId}`, method: 'GET'
+      {url: `/api/admin/admin-accounts/${adminAccountId}`, method: 'GET'
     },
       options);
     }
@@ -3936,7 +3936,7 @@ const getAdminAccount = (
  * - 관리자 계정 삭제
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `DELETE /api/admin/admin-accounts/{adminId}`
+ * - 호출 방식: `DELETE /api/admin/admin-accounts/{adminAccountId}`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -3975,11 +3975,11 @@ const getAdminAccount = (
  * @summary 관리자 계정 삭제
  */
 const deleteAdmin = (
-    adminId: number,
+    adminAccountId: number,
     params?: DeleteAdminParams,
  options?: SecondParameter<typeof customInstance<ApiResponseVoid>>,) => {
       return customInstance<ApiResponseVoid>(
-      {url: `/api/admin/admin-accounts/${adminId}`, method: 'DELETE',
+      {url: `/api/admin/admin-accounts/${adminAccountId}`, method: 'DELETE',
         params
     },
       options);
@@ -3990,7 +3990,7 @@ const deleteAdmin = (
  * - 관리자 개인정보 원문 조회 가능 작업
  * - API 분류: 내부 처리 또는 보조 API
  * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `GET /api/admin/admin-accounts/{adminId}/privacy/available-actions`
+ * - 호출 방식: `GET /api/admin/admin-accounts/{adminAccountId}/privacy/available-actions`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
@@ -4029,10 +4029,10 @@ const deleteAdmin = (
  * @summary 관리자 개인정보 원문 조회 가능 작업
  */
 const availableActions1 = (
-    adminId: number,
+    adminAccountId: number,
  options?: SecondParameter<typeof customInstance<RawPrivacyAvailableActionsResponse>>,) => {
       return customInstance<RawPrivacyAvailableActionsResponse>(
-      {url: `/api/admin/admin-accounts/${adminId}/privacy/available-actions`, method: 'GET'
+      {url: `/api/admin/admin-accounts/${adminAccountId}/privacy/available-actions`, method: 'GET'
     },
       options);
     }
@@ -4040,10 +4040,10 @@ const availableActions1 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 등록 약관·동의 이력 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 회원 권한/관리자 권한 (`null`)
+ * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
+ * - 사용하는 화면: 회원 권한/관리자 권한 (`SCR_PERMISSION`)
  * - 프론트 담당 영역: 관리자-permissions (`admin-permissions`)
- * - 호출 방식: `GET /api/admin/admin-accounts/{adminId}/consent-records`
+ * - 호출 방식: `GET /api/admin/admin-accounts/{adminAccountId}/consent-records`
  *
  * ### 화면/프론트 사용 기준
  * - 요청값 출처: 선택 관리자 ID
@@ -4082,10 +4082,10 @@ const availableActions1 = (
  * @summary 관리자 등록 약관·동의 이력 조회
  */
 const consentRecords1 = (
-    adminId: number,
+    adminAccountId: number,
  options?: SecondParameter<typeof customInstance<AdminTermsAgreementResponse[]>>,) => {
       return customInstance<AdminTermsAgreementResponse[]>(
-      {url: `/api/admin/admin-accounts/${adminId}/consent-records`, method: 'GET'
+      {url: `/api/admin/admin-accounts/${adminAccountId}/consent-records`, method: 'GET'
     },
       options);
     }

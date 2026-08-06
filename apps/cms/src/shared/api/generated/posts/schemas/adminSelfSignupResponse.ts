@@ -7,7 +7,7 @@
  */
 
 export interface AdminSelfSignupResponse {
-  adminId?: number;
+  adminAccountId?: number;
   email?: string;
   status?: string;
   requestedRoleCode?: string;

@@ -43,11 +43,11 @@ export interface MemberSignupRequest {
   guardianVerificationSessionId?: number;
   /** 학교 재학 여부. ENROLLED 또는 NOT_ENROLLED */
   schoolEnrollmentStatus?: string;
-  /** 기존 CMS 학교 organizationId. CMS 내부 숫자 PK만 허용합니다. CMS 미등록 학교는 schoolSelection을 사용합니다. */
+  /** 기존 CMS 학교 PK. 학교 검색 응답의 organizationId를 그대로 전달할 수 있으며 schoolOrganizationId, schoolId 등도 호환합니다. */
   schoolOrganizationId?: number;
   /** 학교명 snapshot. organizationId 또는 schoolSelection과 함께 사용할 수 있으며 이 값만으로 학교를 생성하지 않습니다. */
   schoolName?: string;
-  /** CMS에 아직 등록되지 않은 학교 검색 결과. 서버가 학교를 먼저 canonical organization으로 등록한 후 회원가입을 진행합니다. */
+  /** 선택한 학교 참조. CMS 학교 선택 객체 또는 아직 등록되지 않은 NEIS 학교 선택 객체를 전달할 수 있습니다. */
   schoolSelection?: PortalSchoolSelectionRequest;
   /** 재학중 선택 시 학년 */
   grade?: string;
