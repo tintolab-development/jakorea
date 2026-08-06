@@ -65,14 +65,18 @@ pnpm format       # Prettier 포맷팅
 
 ## 📝 규칙 구조
 
-각 프로젝트는 독립적인 `.cursor/rules`를 가질 수 있습니다:
+| 위치 | 역할 |
+|------|------|
+| `.cursor/rules/` | 모노레포 공통 |
+| **`.cursor/rules/cms-admin-ui/`** | **CMS · Admin 공유 UI SSOT** (필터 치수·URL 동기화 의도·테이블 셸 등) |
+| `apps/cms/.cursor/rules/` | CMS 전용 (스택·도메인 process/*) |
+| `apps/admin/.cursor/rules/` | Admin 전용 (스택 어댑터 · CMS import 금지) |
+| `apps/lms/.cursor/rules/` | LMS 전용 |
 
-- `.cursor/rules/`: 모노레포 공통 규칙
-- `apps/cms/.cursor/rules/`: CMS 전용 규칙
-- `apps/lms/.cursor/rules/`: LMS 전용 규칙
-- `apps/admin/.cursor/rules/`: Admin 전용 규칙
+공유 UI 스펙 변경 시 **cms-admin-ui 폴더만** 수정하고, 앱 룰은 구현 path·훅 이름(어댑터)만 유지한다.
 
-Cursor는 가장 가까운 규칙을 자동으로 사용합니다.
+인덱스: [cms-admin-ui/README.md](./cms-admin-ui/README.md)
+
 
 
 

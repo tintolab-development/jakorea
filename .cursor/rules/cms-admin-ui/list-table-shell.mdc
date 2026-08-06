@@ -1,0 +1,40 @@
+---
+description: CMS·Admin 공통 — 목록 카드·툴바·액션 버튼 갭
+globs:
+  - apps/cms/src/**/*.{tsx,css}
+  - apps/admin/src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# 목록 테이블 셸 · 갭 (CMS · Admin)
+
+필터 아래(또는 단일 카드 내) **제목/건수 + 액션 + 테이블** 영역의 간격.
+
+## 수치
+
+| 항목 | 값 |
+|------|-----|
+| 목록 카드 padding | **20px** |
+| 카드 border-radius | **12px** (해당 셸 사용 시) |
+| 툴바 → 테이블 margin/gap | **16px** |
+| 제목 ↔ 건수 gap | **10px** |
+| 액션 버튼 간 gap | **8px** |
+
+## 권장 마크업 역할
+
+- 제목 래퍼: `table-header-title--wrapper` · `table-title` · `table-description`
+- 액션 래퍼: `table-header-actions--wrapper`
+
+## 금지
+
+- 액션 gap을 12px 등 **8px 외**로 override
+- 카드 padding/shadow/radius를 화면 CSS에 하드코딩 (공유 셸 클래스·토큰 사용)
+
+## 앱 구현
+
+| 앱 | 소스 | 상세 |
+|----|------|------|
+| **Admin** | `list-table-layout.css` · `admin-list-card` · `--admin-list-*` | [list-table-spacing](../../../apps/admin/.cursor/rules/design/list-table-spacing.mdc) |
+| **CMS** | `filter-table-layout.css` · `FilterTableLayout` (`--filter-table-toolbar-actions-gap: 8px` 등) | [list-page-composition](../../../apps/cms/.cursor/rules/coding/list-page-composition.mdc) |
+
+**Last updated:** 2026-08-06
