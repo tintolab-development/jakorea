@@ -74,3 +74,9 @@ export { cmsAlertModal, isCmsAlertModalReady } from './cms-alert-modal-api'
 export type { CmsAlertModalShowOptions } from './cms-alert-modal-api'
 export { CmsAlertModalProvider, useCmsAlert } from './cms-alert-modal-provider'
 export type { CmsAlertModalContextValue } from './cms-alert-modal-provider'
+
+export { PageContentLoading } from './page-content-loading'
+export type {
+  PageContentLoadingProps,
+  PageContentLoadingVariant,
+} from './page-content-loading'

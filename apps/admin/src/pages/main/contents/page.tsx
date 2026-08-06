@@ -13,6 +13,7 @@ import { EducationSectionCard } from '@/features/main-content/ui/education-secti
 import { ImpactStorySectionCard } from '@/features/main-content/ui/impact-story-section'
 import { PerformanceSectionCard } from '@/features/main-content/ui/performance-section'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
+import { PageContentLoading } from '@/shared/ui'
 
 import './page.css'
 
@@ -25,10 +26,20 @@ export function ContentsPage() {
   const data = contentsQuery.data
   const options = optionsQuery.data ?? []
 
-  if (contentsQuery.isLoading || !data) {
+  if (contentsQuery.isLoading) {
     return (
       <div className="main-contents-page">
-        <div className="admin-list-card">콘텐츠를 불러오는 중…</div>
+        <PageContentLoading variant="viewport" />
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="main-contents-page">
+        <div className="admin-list-card page-content-error" role="alert">
+          콘텐츠를 불러오지 못했습니다.
+        </div>
       </div>
     )
   }

@@ -7,6 +7,7 @@ import { jaKoreaBiQueryKeys } from '@/features/ja-korea-bi/api/query-keys'
 import { JA_KOREA_BI_CHANGED_EVENT } from '@/features/ja-korea-bi/api/store'
 import { BiFormCard } from '@/features/ja-korea-bi/ui/bi-form'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
+import { PageContentLoading } from '@/shared/ui'
 
 import './page.css'
 
@@ -17,10 +18,20 @@ export function BiPage() {
 
   const data = biQuery.data
 
-  if (biQuery.isLoading || !data) {
+  if (biQuery.isLoading) {
     return (
       <div className="ja-korea-bi-page">
-        <div className="admin-list-card">콘텐츠를 불러오는 중…</div>
+        <PageContentLoading variant="viewport" />
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="ja-korea-bi-page">
+        <div className="admin-list-card page-content-error" role="alert">
+          콘텐츠를 불러오지 못했습니다.
+        </div>
       </div>
     )
   }

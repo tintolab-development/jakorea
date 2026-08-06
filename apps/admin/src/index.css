@@ -4,6 +4,7 @@
 @import './shared/ui/admin-filter-area.css';
 @import './shared/ui/table-header-label.css';
 @import './shared/ui/table-th.css';
+@import './shared/ui/page-content-loading.css';
 
 /* 토큰 정의는 theme-provider.css에서 로드됨 (ThemeProvider import) */
 :root {

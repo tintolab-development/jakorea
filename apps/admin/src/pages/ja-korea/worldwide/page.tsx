@@ -7,6 +7,7 @@ import { jaKoreaWorldwideQueryKeys } from '@/features/ja-korea-worldwide/api/que
 import { JA_KOREA_WORLDWIDE_CHANGED_EVENT } from '@/features/ja-korea-worldwide/api/store'
 import { WorldwideFormCard } from '@/features/ja-korea-worldwide/ui/worldwide-form'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
+import { PageContentLoading } from '@/shared/ui'
 
 import './page.css'
 
@@ -17,10 +18,20 @@ export function WorldwidePage() {
 
   const data = worldwideQuery.data
 
-  if (worldwideQuery.isLoading || !data) {
+  if (worldwideQuery.isLoading) {
     return (
       <div className="ja-korea-worldwide-page">
-        <div className="admin-list-card">콘텐츠를 불러오는 중…</div>
+        <PageContentLoading variant="viewport" />
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="ja-korea-worldwide-page">
+        <div className="admin-list-card page-content-error" role="alert">
+          콘텐츠를 불러오지 못했습니다.
+        </div>
       </div>
     )
   }

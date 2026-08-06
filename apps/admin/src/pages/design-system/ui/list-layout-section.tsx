@@ -17,6 +17,10 @@ export function ListLayoutSection() {
         툴바 버튼: <code>size=&quot;large&quot;</code> (등록·선택 삭제 등). Rule:{' '}
         <code>cms-admin-ui/cms-button-action-sizes</code> ·{' '}
         <code>list-table-spacing.mdc</code>
+        <br />
+        단건 페이지 로딩: <code>PageContentLoading</code> · RQ{' '}
+        <code>isLoading</code> 후 empty — Rule:{' '}
+        <code>detail-loading-before-empty</code>
       </p>
 
       <DsDemo label="admin-list-card + toolbar">

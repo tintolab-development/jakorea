@@ -35,6 +35,7 @@ Development standards for **Homepage Admin** (`apps/admin`).
 | [table-th.mdc](./design/table-th.mdc) | admin theme path |
 | [detail-info-form-layout.mdc](./design/detail-info-form-layout.mdc) | form-template-runtime |
 | [detail-document-form-card.mdc](./design/detail-document-form-card.mdc) | **alwaysApply** · 흰 카드 fill · 툴바 title · 조회/수정 shift 최소화 |
+| [detail-loading-before-empty.mdc](./design/detail-loading-before-empty.mdc) | 단건·상세 로딩 Spin 먼저 · RQ isLoading / isPending |
 | [detail-info-nested-table.mdc](./design/detail-info-nested-table.mdc) | Field 값 안 nested 격자 |
 | [table-td-divider.mdc](./design/table-td-divider.mdc) | Admin TdDivider import |
 | [styling-tokens.mdc](./design/styling-tokens.mdc) | admin theme-provider path |
