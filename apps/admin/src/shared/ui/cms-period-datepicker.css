@@ -64,3 +64,11 @@
   box-shadow: none !important;
   background: transparent !important;
 }
+
+/*
+ * body 포탈 드롭다운 — ContentModal(Ant Modal z-index ~1000) 위
+ * 값: CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX (styles.popup.root 과 동기)
+ */
+.cms-period-datepicker-dropdown.ant-picker-dropdown {
+  z-index: 1200;
+}
