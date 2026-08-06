@@ -11,8 +11,10 @@ export const platformQueryKeys = {
     all: () => [...platformQueryKeys.all, 'auth'] as const,
     /** 세션·토큰 검증 등 */
     session: () => [...platformQueryKeys.auth.all(), 'session'] as const,
-    /** 현재 로그인 회원 프로필 */
+    /** 현재 로그인 회원 세션 정보 — GET /api/portal/auth/me */
     me: () => [...platformQueryKeys.auth.all(), 'me'] as const,
+    /** 회원 포탈 내정보 — GET /api/portal/me/profile */
+    memberProfile: () => [...platformQueryKeys.auth.all(), 'member-profile'] as const,
     /** 회원가입 이메일 가용성 (mutation 키·캐시 무효화용) */
     emailAvailability: (email: string) =>
       [...platformQueryKeys.auth.all(), 'email-availability', email] as const,

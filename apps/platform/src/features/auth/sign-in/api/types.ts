@@ -13,3 +13,27 @@ export type AuthTokenResponse = {
   /** 관리자 발급 임시 비밀번호 변경 필요 */
   passwordChangeRequired?: boolean
 }
+
+/** GET /api/portal/auth/me — HomepageMeResponse */
+export type HomepageMeResponse = {
+  memberId?: number
+  memberUuid?: string
+  email?: string
+  name?: string
+  status?: string
+  memberType?: string
+  ageGroup?: string
+  teacher?: boolean
+  identityVerified?: boolean
+  lastLoginAt?: string
+}
+
+/** GET /api/portal/me/profile — PortalProfileResponse (마이페이지 역할 매핑용 최소 필드) */
+export type PortalProfileResponse = {
+  memberId?: number
+  email?: string
+  name?: string
+  memberType?: string
+  teacher?: boolean
+  instructor?: boolean
+}
