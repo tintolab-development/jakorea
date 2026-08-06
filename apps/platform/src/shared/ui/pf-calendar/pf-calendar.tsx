@@ -221,13 +221,7 @@ export function PFCalendar({
                     return (
                       <div
                         key={`${segment.eventId}-${segment.startCol}-${segment.lane}`}
-                        className={[
-                          styles.eventBar,
-                          segment.isRangeStart ? styles.eventBarStart : undefined,
-                          segment.isRangeEnd ? styles.eventBarEnd : undefined,
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
+                        className={styles.eventBar}
                         style={{
                           gridColumn: `${segment.startCol + 1} / ${segment.endCol + 2}`,
                           gridRow: segment.lane + 1,
@@ -242,7 +236,8 @@ export function PFCalendar({
                           handleSelectDay(week.days[segment.startCol + colOffset].date)
                         }}
                       >
-                        <span className={styles.eventBarText}>{segment.label}</span>
+                        <span className={styles.eventBarProgram}>{segment.programName}</span>
+                        <span className={styles.eventBarTitle}>{segment.title}</span>
                       </div>
                     )
                   })}

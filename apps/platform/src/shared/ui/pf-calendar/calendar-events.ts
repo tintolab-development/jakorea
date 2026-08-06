@@ -6,7 +6,8 @@ export const CALENDAR_MAX_VISIBLE_LANES = 2
 
 export type PFCalendarEvent = {
   id: string
-  label: string
+  programName: string
+  title: string
   type: CalendarLegendItem['key']
   startDate: Date | string
   endDate: Date | string
@@ -14,7 +15,8 @@ export type PFCalendarEvent = {
 
 export type CalendarEventSegment = {
   eventId: string
-  label: string
+  programName: string
+  title: string
   type: CalendarLegendItem['key']
   lane: number
   /** 0–6 inclusive */
@@ -112,7 +114,8 @@ export function buildCalendarWeekLayouts(
 
       segments.push({
         eventId: event.id,
-        label: event.label,
+        programName: event.programName,
+        title: event.title,
         type: event.type,
         lane,
         startCol,

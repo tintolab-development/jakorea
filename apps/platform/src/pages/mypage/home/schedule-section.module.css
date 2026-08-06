@@ -1,4 +1,4 @@
-/* 넓을 때: 캘린더 | 일정목록 / 좁을 때(캘린더 600+gap+목록 293 미만): 목록이 하단으로 */
+/* 넓을 때: 캘린더 | 일정목록(293) / 좁을 때(600+16+293 미만): 세로 스택 · 목록 100% */
 .section {
   display: flex;
   flex-wrap: wrap;
@@ -7,6 +7,8 @@
   align-items: stretch;
   gap: var(--spacing-16);
   min-width: 0;
+  container-type: inline-size;
+  container-name: schedule-section;
 }
 
 .calendar {
@@ -18,70 +20,112 @@
 
 .listSlot {
   display: flex;
-  flex: 1 1 293px;
+  flex: 0 0 293px;
   width: 293px;
   min-width: 293px;
+  max-width: 293px;
   min-height: 420px;
   align-self: stretch;
-  background: var(--color-neutral-white);
+  /* background: var(--color-neutral-white); */
+}
+
+/* 수직 배치: 캘린더 최소폭+gap+목록293 이 한 줄에 안 들어갈 때 */
+@container schedule-section (max-width: 908px) {
+  .calendar {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .listSlot {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
 }
 
 .list {
   display: flex;
   flex: 1 0 0;
   flex-direction: column;
-  gap: var(--spacing-16);
+  align-items: flex-start;
   align-self: stretch;
+  gap: var(--spacing-24);
   min-height: 0;
-  padding: var(--spacing-8) 0;
+  padding: var(--spacing-20) 0 var(--spacing-40) var(--spacing-16);
   overflow: hidden;
 }
 
+.listHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.listLead,
 .listCount {
   margin: 0;
-  flex-shrink: 0;
 }
 
 .listItems {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: var(--spacing-12);
+  align-self: stretch;
+  gap: var(--spacing-8);
   margin: 0;
   padding: 0;
   list-style: none;
   overflow-y: auto;
   min-height: 0;
+  width: 100%;
 }
 
 .listItem {
   display: flex;
-  align-items: stretch;
-  gap: 0;
-  border-radius: var(--radius-12);
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) var(--spacing-20);
+  border-left: 6px solid transparent;
   background: var(--color-neutral-white);
   box-shadow: var(--shadow-card-sm);
-  overflow: hidden;
-}
-
-.listAccent {
-  flex-shrink: 0;
-  width: 6px;
-  align-self: stretch;
-}
-
-.listCopy {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: var(--spacing-4);
   min-width: 0;
-  padding: var(--spacing-16);
 }
 
 .listProgram,
-.listTitle {
+.listTitle,
+.listTime {
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.listProgram {
+  width: 100%;
+}
+
+.listDetail {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-8);
+  width: 100%;
+  min-width: 0;
+}
+
+.listTitle {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.listTime {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .empty {
@@ -109,7 +153,9 @@
   }
 
   .listSlot {
+    flex: 1 1 auto;
     min-width: 0;
+    max-width: none;
     width: 100%;
     min-height: 240px;
   }

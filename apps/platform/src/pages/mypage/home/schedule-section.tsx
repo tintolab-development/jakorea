@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
   MOCK_MYPAGE_SCHEDULE_EVENTS,
-  formatMypageScheduleBarLabel,
   getMypageScheduleEventsOnDate,
   syncSelectedDateToMonth,
   type MypageScheduleEvent,
@@ -15,7 +14,8 @@ const INITIAL_SELECTED = new Date(2026, 0, 3)
 function toCalendarEvents(events: MypageScheduleEvent[]): PFCalendarEvent[] {
   return events.map(event => ({
     id: event.id,
-    label: formatMypageScheduleBarLabel(event),
+    programName: event.programName,
+    title: event.title,
     type: event.type,
     startDate: event.startDate,
     endDate: event.endDate,
@@ -64,30 +64,37 @@ export function ScheduleSection() {
       <aside className={styles.listSlot} aria-label="일정 목록">
         {selectedEvents.length > 0 ? (
           <div className={styles.list}>
-            <PFText as="h3" typo="bd-md-bd" color="black" className={styles.listCount}>
-              총 {selectedEvents.length}개
-            </PFText>
+            <div className={styles.listHeader}>
+              <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600" className={styles.listLead}>
+                확인이 필요한 일정이에요
+              </PFText>
+              <PFText as="h3" typo="hd-sm" color="black" className={styles.listCount}>
+                총 {selectedEvents.length}개
+              </PFText>
+            </div>
             <ul className={styles.listItems}>
               {selectedEvents.map(event => {
                 const colors = CALENDAR_EVENT_COLORS[event.type]
                 return (
-                  <li key={event.id} className={styles.listItem}>
-                    <span
-                      className={styles.listAccent}
-                      style={{ backgroundColor: colors.accent }}
-                      aria-hidden="true"
-                    />
-                    <div className={styles.listCopy}>
-                      <PFText
-                        as="p"
-                        typo="bd-sm-rg"
-                        color="neutral-cool-500"
-                        className={styles.listProgram}
-                      >
-                        {event.programName}
-                      </PFText>
-                      <PFText as="p" typo="bd-md-bd" color="black" className={styles.listTitle}>
+                  <li
+                    key={event.id}
+                    className={styles.listItem}
+                    style={{ borderLeftColor: colors.accent }}
+                  >
+                    <PFText
+                      as="p"
+                      typo="bd-sm-rg"
+                      color="neutral-cool-500"
+                      className={styles.listProgram}
+                    >
+                      {event.programName}
+                    </PFText>
+                    <div className={styles.listDetail}>
+                      <PFText as="p" typo="bd-lg-sb" color="black" className={styles.listTitle}>
                         {event.title}
+                      </PFText>
+                      <PFText as="p" typo="bd-md-rg" color="black" className={styles.listTime}>
+                        {event.time}
                       </PFText>
                     </div>
                   </li>
