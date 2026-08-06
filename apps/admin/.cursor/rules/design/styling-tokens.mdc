@@ -1,0 +1,63 @@
+---
+description: Admin 디자인 토큰 — color/spacing 우선, 패딩·gap 하드코딩 금지 (CMS 미러)
+globs:
+  - apps/admin/src/**/*.{css,tsx}
+alwaysApply: false
+---
+
+# Design tokens (Admin)
+
+CMS [`styling-tokens.md`](../../../cms/.cursor/rules/design/styling-tokens.md) 와 동일 원칙.  
+**정의 파일:** [`apps/admin/src/app/providers/theme-provider.css`](../../../src/app/providers/theme-provider.css)
+
+## Priority
+
+color · spacing · typography · radius · shadow 는 **토큰 우선**. 토큰이 있으면 리터럴 중복 금지.
+
+## Rules
+
+- **Colors:** `var(--color-*)`, `var(--table-line)`, `var(--BG-header)` …  
+- **Spacing / gap / padding:** `var(--spacing-*)`, 목록 전용 `var(--admin-list-*)` ([list-table-spacing.mdc](./list-table-spacing.mdc))  
+- **Filter:** `var(--filter-field-gap)`, `var(--filter-control-max-width)` … ([filter-area-layout.mdc](./filter-area-layout.mdc))  
+- **Type:** `var(--font-size-*)`, `var(--font-weight-*)`, `var(--line-height-*)`  
+- **Radius / shadow:** `var(--radius-*)`, `var(--shadow-*)` · 카드 soft shadow는 list-table-layout 준수
+
+```css
+/* Good */
+.card {
+  padding: var(--admin-list-card-padding, var(--spacing-20, 20px));
+  color: var(--color-text-body);
+  border-radius: var(--admin-list-card-radius, 12px);
+}
+
+/* Bad — 목록 카드에 raw 복제 */
+.card {
+  padding: 20px;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.08);
+}
+```
+
+## 테이블 관련 토큰 요약
+
+| 용도 | 토큰 / 값 |
+|------|-----------|
+| th 배경 | `--table-th-bg` / `--BG-header` |
+| 셀 보더 | `--table-line` |
+| 선택 열 | `--table-selection-column-width` (68px) |
+| No. 열 | `--table-no-column-width` (80px) |
+| 목록 카드 padding | `--admin-list-card-padding` (20px) |
+| 툴바→테이블 | `--admin-list-toolbar-to-table-gap` (16px) |
+| 액션 버튼 gap | `--admin-list-toolbar-actions-gap` (8px) |
+
+## Exceptions
+
+- 3rd-party override에 리터럴이 필요하면 최소 범위 + 주석  
+- 값 부재 시 **theme-provider.css에 토큰 추가** 후 사용
+
+## Related
+
+- [table-implementation.mdc](../tables/table-implementation.mdc)  
+- [list-table-spacing.mdc](./list-table-spacing.mdc)  
+- [filter-area-layout.mdc](./filter-area-layout.mdc)
+
+**Last updated:** 2026-08-06

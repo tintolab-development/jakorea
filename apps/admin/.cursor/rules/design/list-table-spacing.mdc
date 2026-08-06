@@ -53,5 +53,8 @@ admin 목록 화면의 **카드·툴바·버튼 간격**은 CMS [`FilterTableLay
 
 - CMS 소스: `apps/cms/src/shared/components/filter-table-layout.css` (`--filter-table-toolbar-actions-gap: 8px`, toolbar `margin-bottom: 16px`, card `padding: 20px`)
 - FilterTableLayout 컴포넌트 전체 이식은 별도 작업 — 갭·셸만 미러
+- 목록 조합: [list-page-composition.mdc](../coding/list-page-composition.mdc)
+- 테이블 셀 패딩: [table-implementation.mdc](../tables/table-implementation.mdc)
+- 토큰 일반: [styling-tokens.mdc](./styling-tokens.mdc)
 
-**Last updated:** 2026-08-05
+**Last updated:** 2026-08-06

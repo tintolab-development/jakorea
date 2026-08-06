@@ -1,0 +1,120 @@
+---
+description: DetailInfoForm 값 셀(td) 안 중첩 테이블 — 전용 CSS 격자, DetailInfoForm 중첩 금지
+globs:
+  - apps/admin/src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# DetailInfoForm — td 내부 nested table
+
+`DetailInfoForm.Field` **값 슬롯** 안에 2열·다중 행 라벨|값 격자가 필요할 때 아래 규격을 따른다  
+(예: 메인 콘텐츠 실적 2×2, CTA 버튼 2행).
+
+## 금지 (레이아웃 깨짐 원인)
+
+```tsx
+// ❌ BAD — Field 값 안에 DetailInfoForm / Row type="double" 중첩
+<DetailInfoForm.Field
+  label="실적 및 성과"
+  view={<DetailInfoForm hideHeader>…Row double…</DetailInfoForm>}
+  edit={/* 동일 */}
+/>
+```
+
+중첩 시 충돌:
+
+1. `.detail-info-form__field-content--edit > * { display: flex }` → 격자 `display:grid|column` 무력화
+2. 라벨 고정 `220px` + `height:50px` → 긴 한글 라벨·2열에서 overflow / 한 열만 보이기
+3. `Row--double` `flex-wrap` → 폭 부족 시 행 붕괴
+
+## 표준 패턴
+
+**전용 nested table 마크업 + colocated CSS.** 외곽만 `DetailInfoForm`, **값 칸은 자체 격자**.
+
+```tsx
+// ✅ GOOD
+<DetailInfoForm.Field
+  label="실적 및 성과"
+  view={<MetricsNestedTable mode="view" … />}
+  edit={<MetricsNestedTable mode="edit" … />}
+/>
+```
+
+### 마크업 BEM
+
+| 역할 | class |
+|------|--------|
+| 루트 | `{scope}-nested-table` + modifier (`--metrics` 2×2, `--cta` 행 스택 등) |
+| 행(CTA) | `__row` — 내부 2셀 grid |
+| 셀 | `__cell` — `라벨 | 값` 2열 grid |
+| 라벨 | `__label` |
+| 값 | `__value` |
+
+```tsx
+<div className="foo-nested-table foo-nested-table--metrics" role="group" aria-label="…">
+  {items.map(item => (
+    <div key={item.id} className="foo-nested-table__cell">
+      <div className="foo-nested-table__label">{item.label}</div>
+      <div className="foo-nested-table__value">{/* view | edit */}</div>
+    </div>
+  ))}
+</div>
+```
+
+### CSS 스펙
+
+| 항목 | 값 |
+|------|-----|
+| 바깥 값 셀 padding | `20px` (시안) |
+| 루트 border | `1px solid var(--table-line, #e0e0e0)` + `border-radius: 8px` + `overflow: hidden` |
+| 라벨 배경 | `var(--BG-header)` — [table-th.mdc](./table-th.mdc) |
+| 셀 격자 | `grid-template-columns: minmax(140px, 220px) minmax(0, 1fr)` |
+| 셀 min-height | `50px` (고정 `height` 금지 — 긴 라벨 줄바꿈 허용) |
+| 2×2 | `grid-template-columns: 1fr 1fr` + 셀 border로 구분선 |
+| CTA 다행 | 루트 `flex-direction: column`, 행마다 2셀 grid |
+
+**필수 오버라이드** — edit 슬롯이 nested 루트에 `display:flex`를 강제하므로, **섹션 스코프에서 specificity를 더 높게** modifier display를 재지정한다.
+
+```css
+/* 바깥 td */
+.section .detail-info-form__field-content:has(.foo-nested-table) {
+  display: flex;
+  padding: 20px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.section .detail-info-form__field-content:has(.foo-nested-table) > .foo-nested-table--metrics {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  width: 100%;
+  min-width: 0;
+  margin-block: 0; /* edit 슬롯 margin-block:auto 무력화 */
+}
+```
+
+### 수치 + 단위(실적)
+
+- edit: `[CmsInput][단위 span]` flex row, 단위 `flex-shrink: 0`, 인풋 `max-width` 제한
+- view: `value + unit` 한 문자열 또는 동일 flex (시안 일치)
+
+## 참고 구현
+
+- `apps/admin/src/features/main-content/ui/nested-tables.tsx`
+- `apps/admin/src/features/main-content/ui/section-card.css` (`.main-content-nested-table*`)
+
+## 체크리스트
+
+- [ ] 값 슬롯에 `DetailInfoForm` 중첩 없음
+- [ ] BEM 루트 + `__cell` / `__label` / `__value`
+- [ ] 라벨 `height` 고정 없음 · `--BG-header` · `--table-line`
+- [ ] edit 슬롯 `display:flex` 오버라이드 + `width:100%` + `min-width:0`
+- [ ] view/edit 동일 격자 구조 (shift 최소화)
+
+## 관련
+
+- [detail-info-form-layout.mdc](./detail-info-form-layout.mdc)
+- [table-th.mdc](./table-th.mdc)
+- [table-td-divider.mdc](./table-td-divider.mdc)
+
+**Last updated:** 2026-08-06

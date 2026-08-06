@@ -30,4 +30,9 @@ background: var(--BG-header);
 
 화면별 th `background` 단색(`#f5f6f7`) 하드코딩 금지 — `var(--BG-header)` 사용.
 
-**Last updated:** 2026-08-05
+## 관련
+
+- [table-implementation.mdc](../tables/table-implementation.mdc) — th/td 패딩·높이
+- [detail-info-nested-table.mdc](./detail-info-nested-table.mdc) — nested 라벨 셀
+
+**Last updated:** 2026-08-06
