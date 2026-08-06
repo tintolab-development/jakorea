@@ -80,3 +80,6 @@ export type {
   PageContentLoadingProps,
   PageContentLoadingVariant,
 } from './page-content-loading'
+
+export { AttachmentDownloadIcon } from './attachment-download-icon'
+export type { AttachmentDownloadIconProps } from './attachment-download-icon'
