@@ -104,7 +104,6 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
                 <PFButton
                   size="xlarge"
                   variant="secondary"
-                  width="100%"
                   onClick={profile.openSchoolSearchModal}
                 >
                   검색
@@ -139,12 +138,7 @@ export function ProfileStep({ signUp }: ProfileStepProps) {
               readOnly
               onClick={profile.openAddressModal}
             />
-            <PFButton
-              size="xlarge"
-              variant="secondary"
-              width="100%"
-              onClick={profile.openAddressModal}
-            >
+            <PFButton size="xlarge" variant="secondary" onClick={profile.openAddressModal}>
               주소 검색
             </PFButton>
           </div>

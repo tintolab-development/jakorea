@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import type {
   AgreementKey,
   AgreementState,
@@ -67,25 +68,47 @@ import {
   SIGNUP_IDENTITY_REQUIRED_MESSAGE,
 } from '../model/validation'
 import { getSignupApiErrorMessage } from '../lib/helpers'
+import {
+  buildSignUpSearch,
+  isSignUpWizardLocationState,
+  parseSignUpPhase,
+  parseSignUpStep,
+  type SignUpWizardPhase,
+} from '../lib/wizard-location'
 
 export type UseSignUpReturn = ReturnType<typeof useSignUp>
 
 export function useSignUp() {
   const remoteApi = isRemoteApiConfigured()
-  const [currentStep, setCurrentStep] = useState(1)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const isUnderAgeSignupRef = useRef(false)
+  const skipUrlSyncRef = useRef(false)
+  const wizardPathname = location.pathname
+
+  const [currentStep, setCurrentStep] = useState(() =>
+    parseSignUpStep(searchParams, SIGN_UP_UNDER_AGE_TOTAL_STEPS),
+  )
   const [selectedType, setSelectedType] = useState<MemberType | null>(null)
   const [birthDate, setBirthDate] = useState('')
   const [gender, setGender] = useState<GenderType | null>(null)
   const [stepTwoMessage, setStepTwoMessage] = useState('')
-  const [requiresGuardianConsent, setRequiresGuardianConsent] = useState(false)
+  const [requiresGuardianConsent, setRequiresGuardianConsent] = useState(
+    () => parseSignUpPhase(searchParams) === 'guardian-consent',
+  )
   const [isUnderAgeSignup, setIsUnderAgeSignup] = useState(false)
-  const [isGuardianAgreementCompleted, setIsGuardianAgreementCompleted] = useState(false)
+  const [isGuardianAgreementCompleted, setIsGuardianAgreementCompleted] = useState(
+    () => parseSignUpPhase(searchParams) === 'guardian-identity',
+  )
   const [isGuardianIdentityVerified, setIsGuardianIdentityVerified] = useState(false)
   const [guardianAgreements, setGuardianAgreements] = useState<GuardianAgreementState>(
     createInitialGuardianAgreementState,
   )
   const [guardianRelationship, setGuardianRelationship] = useState('')
-  const [isIdentityVerified, setIsIdentityVerified] = useState(false)
+  const [isIdentityVerified, setIsIdentityVerified] = useState(
+    () => parseSignUpPhase(searchParams) === 'agreement',
+  )
   const [identityVerificationSessionId, setIdentityVerificationSessionId] = useState<number | null>(
     null,
   )
@@ -103,6 +126,8 @@ export function useSignUp() {
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [schoolStatus, setSchoolStatus] = useState<SchoolStatus>('none')
   const [schoolName, setSchoolName] = useState('')
+  const [schoolAddress, setSchoolAddress] = useState('')
+  const [schoolNeisCode, setSchoolNeisCode] = useState<string | null>(null)
   const [schoolOrganizationId, setSchoolOrganizationId] = useState<number | null>(null)
   const [grade, setGrade] = useState('')
   const [employmentStatus, setEmploymentStatus] = useState<EmploymentStatus | null>('employed')
@@ -116,6 +141,80 @@ export function useSignUp() {
   const [isSchoolSearchModalOpen, setIsSchoolSearchModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState('')
+
+  isUnderAgeSignupRef.current = isUnderAgeSignup
+
+  const totalSteps = isUnderAgeSignup ? SIGN_UP_UNDER_AGE_TOTAL_STEPS : SIGN_UP_TOTAL_STEPS
+
+  const pushWizard = (step: number, phase?: SignUpWizardPhase | null) => {
+    skipUrlSyncRef.current = true
+    setCurrentStep(step)
+    navigate(
+      { pathname: wizardPathname, search: `?${buildSignUpSearch(step, phase)}` },
+      { replace: false, state: { signupWizard: true } },
+    )
+  }
+
+  const replaceWizard = (step: number, phase?: SignUpWizardPhase | null) => {
+    skipUrlSyncRef.current = true
+    setCurrentStep(step)
+    navigate(
+      { pathname: wizardPathname, search: `?${buildSignUpSearch(step, phase)}` },
+      { replace: true, state: { signupWizard: true } },
+    )
+  }
+
+  const applyWizardFromUrl = (step: number, phase: SignUpWizardPhase | null) => {
+    setCurrentStep(step)
+
+    if (step === 2) {
+      setRequiresGuardianConsent(phase === 'guardian-consent')
+    }
+
+    if (step === 3) {
+      if (isUnderAgeSignupRef.current) {
+        if (phase === 'guardian-identity') {
+          setIsGuardianAgreementCompleted(true)
+          setIsGuardianIdentityVerified(false)
+        } else {
+          setIsGuardianAgreementCompleted(false)
+          setIsGuardianIdentityVerified(false)
+        }
+      } else if (phase === 'agreement') {
+        setIsIdentityVerified(true)
+      } else {
+        setIsIdentityVerified(false)
+      }
+    }
+
+    if (step >= 4) {
+      if (isUnderAgeSignupRef.current) {
+        setIsGuardianAgreementCompleted(true)
+        setIsGuardianIdentityVerified(true)
+      } else {
+        setIsIdentityVerified(true)
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (!searchParams.get('step')) {
+      setSearchParams(buildSignUpSearch(1), { replace: true })
+    }
+  }, [searchParams, setSearchParams])
+
+  useEffect(() => {
+    if (skipUrlSyncRef.current) {
+      skipUrlSyncRef.current = false
+      return
+    }
+
+    const step = parseSignUpStep(searchParams, SIGN_UP_UNDER_AGE_TOTAL_STEPS)
+    const phase = parseSignUpPhase(searchParams)
+    applyWizardFromUrl(step, phase)
+    // URL pop/push from browser or external navigation only
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync intentionally driven by searchParams
+  }, [searchParams])
 
   const birthDateIso = toApiBirthDate(birthDate) ?? null
   const apiMemberType = selectedType ? toApiMemberType(selectedType) : null
@@ -137,12 +236,12 @@ export function useSignUp() {
   const isGuardianProfileValidState = isGuardianProfileValid(guardianRelationship)
 
   const handleSignIn = () => {
-    window.location.assign(SIGN_IN_PATH)
+    navigate(SIGN_IN_PATH)
   }
 
   const handleNextStep = () => {
     if (currentStep === 1 && selectedType) {
-      setCurrentStep(2)
+      pushWizard(2)
     }
   }
 
@@ -165,13 +264,14 @@ export function useSignUp() {
       setStepTwoMessage('')
       setIsUnderAgeSignup(true)
       setRequiresGuardianConsent(true)
+      pushWizard(2, 'guardian-consent')
       return
     }
 
     setStepTwoMessage('')
     setIsUnderAgeSignup(false)
     setRequiresGuardianConsent(false)
-    setCurrentStep(3)
+    pushWizard(3, 'identity')
   }
 
   const handleSwitchToGeneralMember = () => {
@@ -181,42 +281,71 @@ export function useSignUp() {
     setIsUnderAgeSignup(false)
   }
 
-  const handlePreviousStep = () => {
+  const applyPreviousStepProgrammatically = () => {
     if (currentStep === 2 && requiresGuardianConsent) {
       setRequiresGuardianConsent(false)
+      replaceWizard(2)
       return
     }
 
     if (currentStep === 3 && isUnderAgeSignup) {
       if (isGuardianIdentityVerified) {
         setIsGuardianIdentityVerified(false)
+        replaceWizard(3, 'guardian-identity')
         return
       }
 
       if (isGuardianAgreementCompleted) {
         setIsGuardianAgreementCompleted(false)
+        replaceWizard(3, 'guardian-agreement')
         return
       }
 
       setRequiresGuardianConsent(true)
-      setCurrentStep(2)
+      replaceWizard(2, 'guardian-consent')
       return
     }
 
     if (currentStep === 4 && isUnderAgeSignup) {
       setIsGuardianIdentityVerified(false)
-      setCurrentStep(3)
+      replaceWizard(3, 'guardian-identity')
       return
     }
 
     if (currentStep === 3 && isIdentityVerified) {
       setIsIdentityVerified(false)
+      replaceWizard(3, 'identity')
       return
     }
 
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
+      const previousStep = currentStep - 1
+      let phase: SignUpWizardPhase | null = null
+      if (previousStep === 3) {
+        phase = isUnderAgeSignup ? 'guardian-identity' : 'agreement'
+      }
+      if (previousStep === 2 && isUnderAgeSignup && currentStep === 3) {
+        phase = 'guardian-consent'
+      }
+      replaceWizard(previousStep, phase)
     }
+  }
+
+  const handlePreviousStep = () => {
+    if (currentStep <= 1 && !requiresGuardianConsent) {
+      return
+    }
+
+    if (isSignUpWizardLocationState(location.state)) {
+      navigate(-1)
+      return
+    }
+
+    applyPreviousStepProgrammatically()
+  }
+
+  const handleGoToStep = (step: number) => {
+    pushWizard(step)
   }
 
   const toggleAgreement = (key: AgreementKey) => {
@@ -238,6 +367,7 @@ export function useSignUp() {
   const handleGuardianAgreementContinue = () => {
     if (guardianAgreementDerived.isRequiredAgreed) {
       setIsGuardianAgreementCompleted(true)
+      pushWizard(3, 'guardian-identity')
     }
   }
 
@@ -250,6 +380,7 @@ export function useSignUp() {
     if (result.verifiedName?.trim()) setVerifiedName(result.verifiedName.trim())
     if (result.verifiedPhone?.trim()) setVerifiedPhone(result.verifiedPhone.trim())
     setIsIdentityVerified(true)
+    pushWizard(3, 'agreement')
   }
 
   const handleGuardianIdentitySuccess = (result: {
@@ -261,12 +392,12 @@ export function useSignUp() {
     if (result.verifiedName?.trim()) setVerifiedName(result.verifiedName.trim())
     if (result.verifiedPhone?.trim()) setVerifiedPhone(result.verifiedPhone.trim())
     setIsGuardianIdentityVerified(true)
-    setCurrentStep(4)
+    pushWizard(4)
   }
 
   const handleGuardianProfileContinue = () => {
     if (isGuardianProfileValidState) {
-      setCurrentStep(5)
+      pushWizard(5)
     }
   }
 
@@ -284,7 +415,7 @@ export function useSignUp() {
 
       if (result.shouldRedirectToAdminRegisteredNotice) {
         setAdminRegisteredPasswordChangeRequired(email, 'sign-up')
-        window.location.assign('/auth/admin-registered/notice')
+        navigate('/auth/admin-registered/notice')
         return
       }
 
@@ -304,7 +435,7 @@ export function useSignUp() {
 
     if (isMockAdminRegisteredEmail(normalizedEmail)) {
       setAdminRegisteredPasswordChangeRequired(normalizedEmail, 'sign-up')
-      window.location.assign('/auth/admin-registered/notice')
+      navigate('/auth/admin-registered/notice')
       return
     }
 
@@ -334,13 +465,13 @@ export function useSignUp() {
 
   const handleAgreementContinue = () => {
     if (agreementDerived.isRequiredAgreed) {
-      setCurrentStep(4)
+      pushWizard(4)
     }
   }
 
   const handleEmailNext = () => {
     if (emailCheckStatus === 'success') {
-      setCurrentStep(isUnderAgeSignup ? 6 : 5)
+      pushWizard(isUnderAgeSignup ? 6 : 5)
     }
   }
 
@@ -349,6 +480,8 @@ export function useSignUp() {
 
     if (status === 'none') {
       setSchoolName('')
+      setSchoolAddress('')
+      setSchoolNeisCode(null)
       setSchoolOrganizationId(null)
       setGrade('')
     }
@@ -356,11 +489,15 @@ export function useSignUp() {
 
   const handleSchoolNameChange = (value: string) => {
     setSchoolName(value)
+    setSchoolAddress('')
+    setSchoolNeisCode(null)
     setSchoolOrganizationId(null)
   }
 
   const handleSchoolSelect = (school: SelectedSchool) => {
     setSchoolName(school.name)
+    setSchoolAddress(school.address?.trim() ?? '')
+    setSchoolNeisCode(school.neisCode?.trim() || null)
     setSchoolOrganizationId(school.organizationId ?? null)
   }
 
@@ -372,11 +509,11 @@ export function useSignUp() {
   }
 
   const handlePasswordContinue = () => {
-    setCurrentStep(isUnderAgeSignup ? 7 : 6)
+    pushWizard(isUnderAgeSignup ? 7 : 6)
   }
 
   const handleProfileContinue = () => {
-    setCurrentStep(isUnderAgeSignup ? 8 : 7)
+    pushWizard(isUnderAgeSignup ? 8 : 7)
   }
 
   const handleBirthDateChange = (value: string) => {
@@ -393,6 +530,9 @@ export function useSignUp() {
     setGuardianVerificationSessionId(null)
     setVerifiedName(MOCK_VERIFIED_NAME)
     setVerifiedPhone(MOCK_VERIFIED_PHONE)
+    if (parseSignUpPhase(searchParams)) {
+      replaceWizard(2)
+    }
   }
 
   const handleStartGuardianConsent = () => {
@@ -404,14 +544,14 @@ export function useSignUp() {
     setGuardianVerificationSessionId(null)
     setVerifiedName(MOCK_VERIFIED_NAME)
     setVerifiedPhone(MOCK_VERIFIED_PHONE)
-    setCurrentStep(3)
+    pushWizard(3, 'guardian-agreement')
   }
 
   const handleSignupComplete = async () => {
     setSubmitMessage('')
 
     if (!remoteApi) {
-      window.location.assign(SIGN_UP_COMPLETE_PATH)
+      navigate(SIGN_UP_COMPLETE_PATH, { replace: true })
       return
     }
 
@@ -431,7 +571,7 @@ export function useSignUp() {
       return
     }
 
-    if (selectedType === 'teacher' && schoolOrganizationId == null) {
+    if (selectedType === 'teacher' && !schoolName.trim()) {
       setSubmitMessage('소속 학교를 검색에서 선택해 주세요.')
       return
     }
@@ -449,6 +589,8 @@ export function useSignUp() {
       schoolStatus,
       schoolName,
       schoolOrganizationId,
+      schoolNeisCode,
+      schoolAddress,
       grade,
       employmentStatus,
       address,
@@ -478,7 +620,7 @@ export function useSignUp() {
         await postGeneralSignup(mapSignUpToGeneralRequest(mapInput))
       }
 
-      window.location.assign(SIGN_UP_COMPLETE_PATH)
+      navigate(SIGN_UP_COMPLETE_PATH, { replace: true })
     } catch (error) {
       setSubmitMessage(
         getSignupApiErrorMessage(error, '가입에 실패했어요. 입력 정보를 확인한 뒤 다시 시도해 주세요.'),
@@ -499,13 +641,16 @@ export function useSignUp() {
     volunteerId,
     name: verifiedName,
     phone: verifiedPhone,
+    schoolName,
+    schoolAddress,
+    employmentStatus,
   })
 
   return {
     step: {
       current: currentStep,
-      total: isUnderAgeSignup ? SIGN_UP_UNDER_AGE_TOTAL_STEPS : SIGN_UP_TOTAL_STEPS,
-      goTo: setCurrentStep,
+      total: totalSteps,
+      goTo: handleGoToStep,
       goPrevious: handlePreviousStep,
       goNextFromStep1: handleNextStep,
       goNextFromStep2: handleStepTwoNext,
@@ -565,7 +710,7 @@ export function useSignUp() {
           }
 
           startAdminRegisteredFlowFromSignUp({ birthDate, gender })
-          window.location.assign(ADMIN_REGISTERED_NOTICE_PATH)
+          navigate(ADMIN_REGISTERED_NOTICE_PATH)
           return true
         }
         return false
@@ -575,6 +720,7 @@ export function useSignUp() {
         setIdentityVerificationSessionId(null)
         setVerifiedName(MOCK_VERIFIED_NAME)
         setVerifiedPhone(MOCK_VERIFIED_PHONE)
+        replaceWizard(3, 'identity')
       },
     },
     agreement: {

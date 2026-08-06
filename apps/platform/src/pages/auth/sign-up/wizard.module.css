@@ -261,21 +261,34 @@
 }
 
 .emailContent {
-  display: grid;
+  display: flex;
   width: 100%;
-  grid-template-columns: 1fr 120px;
-  align-items: start;
-  column-gap: var(--spacing-12);
-  row-gap: var(--spacing-4);
+  max-width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-4);
   margin-bottom: var(--spacing-64);
+  box-sizing: border-box;
+}
+
+.emailInputRow {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  align-items: flex-end;
+  gap: var(--spacing-12);
+  box-sizing: border-box;
+}
+
+.emailInputGrow {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .duplicateCheckButton {
-  margin-top: 23px;
+  flex: 0 0 auto;
 }
 
 .emailMessage {
-  grid-column: 1 / -1;
   margin: 0;
   padding-left: var(--spacing-8);
   font-family: var(--font-family-base);
@@ -292,18 +305,6 @@
 
 .emailMessageError {
   color: var(--color-status-error-default);
-}
-
-@media (--bp-below-pc) {
-  .emailContent {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-8);
-  }
-
-  .duplicateCheckButton {
-    margin-top: 0;
-  }
 }
 
 .passwordContent {
@@ -341,10 +342,21 @@
 }
 
 .addressSearchRow {
-  display: grid;
+  display: flex;
   width: 100%;
-  grid-template-columns: 1fr 120px;
+  max-width: 100%;
+  align-items: stretch;
   gap: var(--spacing-12);
+  box-sizing: border-box;
+}
+
+.addressSearchRow > :first-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.addressSearchRow > :last-child {
+  flex: 0 0 auto;
 }
 
 .confirmReview {

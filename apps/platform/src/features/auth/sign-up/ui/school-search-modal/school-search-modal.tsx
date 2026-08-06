@@ -17,6 +17,8 @@ export type SelectedSchool = {
   organizationId?: number
   /** NEIS 학교 코드 — CMS와 동일 출처 */
   neisCode?: string
+  /** NEIS 소재지 도로명 주소 — 확인 화면 소속/학교 표시용 */
+  address?: string
 }
 
 type SchoolSearchModalProps = {
@@ -110,6 +112,7 @@ export function SchoolSearchModal({ open, onClose, onSelect }: SchoolSearchModal
     onSelect({
       name: school.schulNm,
       neisCode: school.sdSchulCode || undefined,
+      address: school.orgRdnma?.trim() || undefined,
     })
     handleClose()
   }

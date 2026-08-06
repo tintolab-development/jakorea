@@ -40,26 +40,29 @@ export function EmailStep({ signUp }: EmailStepProps) {
         }
       >
         <div className={styles.emailContent}>
-          <PFTextInput
-            size="xlarge"
-            label="이메일"
-            placeholder="이메일을 입력해 주세요."
-            type="email"
-            required
-            value={email.value}
-            onValueChange={email.onChange}
-            error={email.checkStatus === 'error'}
-          />
-          <PFButton
-            size="xlarge"
-            variant="secondary"
-            width="100%"
-            className={styles.duplicateCheckButton}
-            disabled={email.isChecking}
-            onClick={email.duplicateCheck}
-          >
-            {email.isChecking ? '확인 중…' : '중복확인'}
-          </PFButton>
+          <div className={styles.emailInputRow}>
+            <div className={styles.emailInputGrow}>
+              <PFTextInput
+                size="xlarge"
+                label="이메일"
+                placeholder="이메일을 입력해 주세요."
+                type="email"
+                required
+                value={email.value}
+                onValueChange={email.onChange}
+                error={email.checkStatus === 'error'}
+              />
+            </div>
+            <PFButton
+              size="xlarge"
+              variant="secondary"
+              className={styles.duplicateCheckButton}
+              disabled={email.isChecking}
+              onClick={email.duplicateCheck}
+            >
+              {email.isChecking ? '확인 중…' : '중복확인'}
+            </PFButton>
+          </div>
           {email.message ? (
             <p
               className={[
