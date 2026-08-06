@@ -183,7 +183,7 @@ export function SocialLinksPage() {
               <>
                 <CmsButton
                   variant="secondary"
-                  size="medium"
+                  size="large"
                   type="button"
                   onClick={handleCancelEdit}
                   disabled={saveMutation.isPending}
@@ -192,7 +192,7 @@ export function SocialLinksPage() {
                 </CmsButton>
                 <CmsButton
                   variant="primary"
-                  size="medium"
+                  size="large"
                   type="button"
                   loading={saveMutation.isPending}
                   onClick={() => {
@@ -205,7 +205,7 @@ export function SocialLinksPage() {
             ) : (
               <CmsButton
                 variant="primary"
-                size="medium"
+                size="large"
                 type="button"
                 onClick={handleStartEdit}
                 disabled={listQuery.isLoading || rows.length === 0}

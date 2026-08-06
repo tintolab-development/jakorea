@@ -283,7 +283,7 @@ export function PrinciplesFormCard({ data }: Props) {
             <>
               <CmsButton
                 variant="secondary"
-                size="medium"
+                size="large"
                 type="button"
                 onClick={handleCancel}
                 disabled={saveMutation.isPending}
@@ -292,7 +292,7 @@ export function PrinciplesFormCard({ data }: Props) {
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="medium"
+                size="large"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
@@ -303,7 +303,7 @@ export function PrinciplesFormCard({ data }: Props) {
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="medium" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}

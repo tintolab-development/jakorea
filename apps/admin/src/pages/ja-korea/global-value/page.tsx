@@ -219,7 +219,7 @@ export function GlobalValuePage() {
               <>
                 <CmsButton
                   variant="secondary"
-                  size="medium"
+                  size="large"
                   type="button"
                   onClick={handleCancelEdit}
                   disabled={saveMutation.isPending}
@@ -228,7 +228,7 @@ export function GlobalValuePage() {
                 </CmsButton>
                 <CmsButton
                   variant="primary"
-                  size="medium"
+                  size="large"
                   type="button"
                   loading={saveMutation.isPending}
                   onClick={() => {
@@ -241,7 +241,7 @@ export function GlobalValuePage() {
             ) : (
               <CmsButton
                 variant="primary"
-                size="medium"
+                size="large"
                 type="button"
                 onClick={handleStartEdit}
                 disabled={listQuery.isLoading || rows.length === 0}

@@ -78,7 +78,8 @@ export function ModalProcessSection() {
     >
       <p className="ds-note">
         프로세스별 문구와 입력 필드는 달라도 셸·폭·높이·푸터 정렬은 공통 규격을 따릅니다. 푸터
-        버튼은 medium(120×40) — <a href="#buttons">Buttons</a>. 아래 라이브 데모는 실제 공통
+        버튼은 large(140×44) — <a href="#buttons">Buttons</a> · SSOT{' '}
+        <code>cms-button-action-sizes</code>. 아래 라이브 데모는 실제 공통
         컴포넌트 API만 사용합니다.
       </p>
 

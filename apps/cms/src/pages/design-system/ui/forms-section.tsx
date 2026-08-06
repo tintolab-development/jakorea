@@ -202,7 +202,9 @@ export function FormsSection() {
         </div>
         <p className="ds-note">
           기본 <code>multiple</code>·합계 <code>15MB</code>. <code>accept</code>·가이드는 케이스별.
-          단건만 <code>multiple=&#123;false&#125;</code>. 주소·학교 검색은{' '}
+          단건만 <code>multiple=&#123;false&#125;</code>. 버튼은 secondary medium(120×40).
+          DetailInfoForm Field edit 사용 시 layout override —{' '}
+          <code>cms-admin-ui/file-select-detail-form</code>. 주소·학교 검색은{' '}
           <a href="#search-modals">Search modals</a>.
         </p>
       </DsDemo>

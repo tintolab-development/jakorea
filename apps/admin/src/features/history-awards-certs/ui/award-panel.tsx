@@ -509,14 +509,14 @@ export function AwardPanel() {
             <div className="hac-panel__toolbar-buttons">
               <CmsButton
                 variant="delete"
-                size="medium"
+                size="large"
                 type="button"
                 onClick={handleDeleteClick}
                 loading={removeMutation.isPending}
               >
                 선택 삭제
               </CmsButton>
-              <CmsButton variant="primary" size="medium" type="button" onClick={openCreate}>
+              <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
                 수상 등록
               </CmsButton>
             </div>

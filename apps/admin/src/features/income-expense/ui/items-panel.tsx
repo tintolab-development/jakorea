@@ -470,7 +470,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
               <>
                 <CmsButton
                   variant="secondary"
-                  size="medium"
+                  size="large"
                   type="button"
                   onClick={handleCancelEdit}
                   disabled={updateMutation.isPending}
@@ -479,7 +479,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                 </CmsButton>
                 <CmsButton
                   variant="primary"
-                  size="medium"
+                  size="large"
                   type="button"
                   loading={updateMutation.isPending}
                   onClick={() => void handleSave()}
@@ -491,7 +491,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
               <>
                 <CmsButton
                   variant="delete"
-                  size="medium"
+                  size="large"
                   type="button"
                   onClick={handleDeleteClick}
                   loading={removeMutation.isPending}
@@ -500,7 +500,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                 </CmsButton>
                 <CmsButton
                   variant="secondary"
-                  size="medium"
+                  size="large"
                   type="button"
                   onClick={handleStartEdit}
                   disabled={rows.length === 0}
@@ -509,7 +509,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                 </CmsButton>
                 <CmsButton
                   variant="primary"
-                  size="medium"
+                  size="large"
                   type="button"
                   onClick={handleOpenCreate}
                 >

@@ -112,7 +112,7 @@ export function ItemFormModal({
           <div className="income-expense-item-form-modal__footer-end">
             <CmsButton
               variant="secondary"
-              size="medium"
+              size="large"
               type="button"
               disabled={confirmLoading}
               onClick={onCancel}
@@ -121,7 +121,7 @@ export function ItemFormModal({
             </CmsButton>
             <CmsButton
               variant="primary"
-              size="medium"
+              size="large"
               type="button"
               loading={confirmLoading}
               disabled={confirmLoading}

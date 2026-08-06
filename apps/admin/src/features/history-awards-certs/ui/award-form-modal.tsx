@@ -123,7 +123,7 @@ function AwardFormBody({
               {variant === 'edit' && onDelete ? (
                 <CmsButton
                   variant="delete"
-                  size="medium"
+                  size="large"
                   type="button"
                   onClick={() => setDeleteConfirmOpen(true)}
                   disabled={confirmLoading || deleteLoading}
@@ -136,7 +136,7 @@ function AwardFormBody({
             <div className="hac-form-modal__footer-end">
               <CmsButton
                 variant="secondary"
-                size="medium"
+                size="large"
                 type="button"
                 onClick={onCancel}
                 disabled={confirmLoading || deleteLoading}
@@ -145,7 +145,7 @@ function AwardFormBody({
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="medium"
+                size="large"
                 type="button"
                 loading={confirmLoading}
                 disabled={deleteLoading}

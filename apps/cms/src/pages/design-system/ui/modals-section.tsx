@@ -103,14 +103,13 @@ export function ModalsSection() {
       <p className="ds-note">
         카드형 모달 셸 — 기본 폭 800px · padding <code>26px 30px 34px</code> · radius 12 · shadow{' '}
         <code>0 0 25px rgba(0,0,0,0.35)</code>. 푸터 버튼은{' '}
-        <code>size=&quot;medium&quot;</code>(120×40). 취소 <code>secondary</code> · 확인{' '}
-        <code>primary</code> / 삭제 <code>delete</code>. 상세는 <a href="#buttons">Buttons</a>{' '}
-        참고.
+        <code>size=&quot;large&quot;</code>(140×44). 취소 <code>secondary</code> · 확인{' '}
+        <code>primary</code> / 삭제 <code>delete</code>. SSOT{' '}
+        <code>cms-admin-ui/cms-button-action-sizes</code> · 상세는 <a href="#buttons">Buttons</a>.
       </p>
-
       <DsDemo label="ContentModal — 기본 (800px)">
         <p className="ds-note" style={{ marginTop: 0 }}>
-          표준 폼·설정 모달. 푸터 취소/확인은 medium.
+          표준 폼·설정 모달. 푸터 취소/확인은 large.
         </p>
         <div className="ds-demo__row ds-demo__row--fluid">
           <CmsButton
