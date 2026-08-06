@@ -21,3 +21,9 @@ export {
   isGeneralMypageReady,
   showInstructorApplyCta,
 } from './lib/member-profile'
+export {
+  mapPortalMemberToPlatformProfile,
+  resolvePortalDisplayName,
+} from './lib/map-portal-member-profile'
+export { useMypageMember } from './hooks/use-mypage-member'
+export type { MypageMemberView } from './hooks/use-mypage-member'
