@@ -85,6 +85,12 @@
   max-width: 100%;
 }
 
+/* 게시 기간 — CmsPeriodDatePicker 전체 너비 (팝업 상세와 동일) */
+.strip-banner-form-modal__form .detail-info-form__field-content--edit > .cms-period-datepicker {
+  width: 100% !important;
+  margin-inline: 0 !important;
+}
+
 /* 등록일시 한 줄 유지 */
 .strip-banner-form-modal__created-at {
   display: inline-block;

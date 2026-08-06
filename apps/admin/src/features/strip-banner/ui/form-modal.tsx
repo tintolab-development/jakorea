@@ -4,8 +4,8 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import {
   CmsButton,
-  CmsDateRangePicker,
   CmsInput,
+  CmsPeriodDatePicker,
   CmsRadio,
   CmsRadioGroup,
   ConfirmModal,
@@ -304,14 +304,14 @@ function StripBannerFormBody({
                 required
                 view={<span>{periodViewLabel}</span>}
                 edit={
-                  <CmsDateRangePicker
+                  <CmsPeriodDatePicker
                     inputSize="large"
                     width="100%"
                     value={periodRange}
                     onChange={dates => {
                       setPeriodRange(dates ?? [null, null])
                     }}
-                    placeholder={['게시 기간을 선택하세요', '게시 기간을 선택하세요']}
+                    placeholder="게시 기간을 선택하세요"
                   />
                 }
               />
