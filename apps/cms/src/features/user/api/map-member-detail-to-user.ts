@@ -4,7 +4,7 @@ import type { InstructorMemberDetailResponse } from '@/shared/api/generated/memb
 import type { MemberBankAccountHistoryResponse } from '@/shared/api/generated/members/schemas'
 import type { MemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type { SchoolMemberDetailResponse } from '@/shared/api/generated/members/schemas'
-import type { UserResponse } from '@/shared/api/generated/members/schemas'
+import type { TermsAgreementRow } from '@/shared/api/generated/members/schemas/termsAgreementRow'
 import type { User, UserListRowMetrics } from '@/types/user'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
 import {
@@ -27,6 +27,16 @@ import {
   resolvePrimaryUserRole,
 } from '@/features/user/api/map-member-role'
 import { normalizeRevokedInstructorUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
+import {
+  mergeInstructorCmsProfileFromLegacyFlat,
+  buildLegacyFlatFieldsFromCmsProfile,
+} from '@/features/user/api/map-instructor-cms-profile'
+import { parseOrganizationNamesFromText } from '@/features/user/detail/lib/parse-instructor-affiliation-text'
+import type {
+  InstructorCmsMemberType,
+  InstructorCmsProfileProposal,
+  InstructorCmsSettlement,
+} from '@/features/user/api/types/instructor-cms-profile-proposal'
 import {
   resolveIdentitySelfSignupCompletedAfterAdminRegistration,
   resolveRegisteredByAdmin,
@@ -67,6 +77,7 @@ type InstructorProfileLoose = InstructorDetailResponse & {
   affiliatedSchoolName?: string
   schoolName?: string
   employmentStatus?: string
+  organizationText?: string
 }
 
 type InstructorMemberDetailLoose = InstructorMemberDetailResponse & {
@@ -75,6 +86,64 @@ type InstructorMemberDetailLoose = InstructorMemberDetailResponse & {
   affiliation?: string
   affiliatedSchoolName?: string
   employmentStatus?: string
+  assignedGrade?: string
+  instructorAssignedGrade?: string
+  organizationText?: string
+  listMetrics?: UserListRowMetrics
+  /** OpenAPI 미반영 시 runtime 상세 응답 */
+  termsAgreements?: TermsAgreementRow[]
+  profile?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsProfileProposal
+  settlement?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsSettlement
+}
+
+function resolveCmsMemberTypeForMerge(
+  user: Omit<User, 'password'>,
+  cmsProfile: InstructorCmsProfileProposal | undefined,
+  legacy: InstructorDetailResponse | null | undefined
+): InstructorCmsMemberType {
+  if (cmsProfile?.memberType) return cmsProfile.memberType
+  const primary = legacy?.primaryActivityType?.trim().toUpperCase()
+  if (primary === 'SCHOOL_TEACHER') return 'SCHOOL_TEACHER'
+  if (user.instructorMemberProfile === 'school_teacher') return 'SCHOOL_TEACHER'
+  return 'GENERAL'
+}
+
+function buildDefaultCmsAffiliationForMerge(
+  memberType: InstructorCmsMemberType,
+  cmsProfile: InstructorCmsProfileProposal | undefined,
+  legacy: InstructorProfileLoose | null,
+  loose?: { affiliation?: string; organizationText?: string }
+): InstructorCmsProfileProposal['affiliation'] {
+  if (memberType === 'SCHOOL_TEACHER') {
+    const schoolName = pickTrimmed(
+      cmsProfile?.affiliation?.schoolName,
+      legacy?.affiliatedSchoolName,
+      legacy?.schoolName,
+      loose?.organizationText
+    )
+    return {
+      ...(schoolName ? { schoolName } : {}),
+      ...(cmsProfile?.affiliation?.employmentStatus
+        ? { employmentStatus: cmsProfile.affiliation.employmentStatus }
+        : {}),
+      organizationNames: [],
+    }
+  }
+
+  const existingOrgs =
+    cmsProfile?.affiliation?.organizationNames?.map(name => name.trim()).filter(Boolean) ?? []
+  if (existingOrgs.length > 0) {
+    return cmsProfile!.affiliation
+  }
+
+  const fromText = pickTrimmed(
+    loose?.organizationText,
+    loose?.affiliation,
+    legacy?.affiliation,
+    legacy?.organizationText
+  )
+  const orgs = parseOrganizationNamesFromText(fromText)
+  return orgs.length > 0 ? { organizationNames: orgs } : { organizationNames: [] }
 }
 
 function asInstructorProfileLoose(
@@ -173,20 +242,8 @@ function assignDefinedListMetrics(
   return changed ? next : target
 }
 
-type MemberDetailMappingSource = MemberDetailResponse &
-  Pick<
-    UserResponse,
-    | 'socialAccounts'
-    | 'guardianInfo'
-    | 'schoolInfo'
-    | 'role'
-    | 'registeredByAdmin'
-    | 'identitySelfSignupCompletedAfterAdminRegistration'
-    | 'adminAccountId'
-  >
-
 export function mapMemberDetailToUser(
-  detail: MemberDetailMappingSource,
+  detail: MemberDetailResponse,
   instructorProfile?: InstructorDetailResponse | null,
   options?: { fallbackRole?: User['role'] }
 ): Omit<User, 'password'> {
@@ -202,7 +259,7 @@ export function mapMemberDetailToUser(
     registerMemberIdMapping(uuid, memberId)
   }
 
-  const role = resolvePrimaryUserRole(detail.roles, detail.role ?? options?.fallbackRole)
+  const role = resolvePrimaryUserRole(detail.roles, options?.fallbackRole)
   const now = new Date().toISOString()
   const normalizedBirthDate = toApiBirthDate(detail.birthDate)
 
@@ -223,52 +280,19 @@ export function mapMemberDetailToUser(
     updatedAt: detail.updatedAt ?? now,
     registeredByAdmin: resolveRegisteredByAdmin({
       role,
-      registeredByAdmin: detail.registeredByAdmin,
       preRegistered: detail.preRegistered,
       createdByAdmin: detail.createdByAdmin,
-      adminAccountId: detail.adminAccountId,
     }),
     id1365: detail.external1365Id?.trim() || undefined,
     identitySelfSignupCompletedAfterAdminRegistration:
       resolveIdentitySelfSignupCompletedAfterAdminRegistration({
         role,
-        registeredByAdmin: detail.registeredByAdmin,
         preRegistered: detail.preRegistered,
         createdByAdmin: detail.createdByAdmin,
-        adminAccountId: detail.adminAccountId,
-        identitySelfSignupCompletedAfterAdminRegistration:
-          detail.identitySelfSignupCompletedAfterAdminRegistration,
         identityVerified: detail.identityVerified,
       }),
-    ...(detail.adminAccountId != null ? { adminAccountId: detail.adminAccountId } : {}),
-    socialAccounts: detail.socialAccounts?.map(account => account.trim()).filter(Boolean),
     under14: detail.under14,
     guardianConsentRequired: detail.guardianConsentRequired,
-    guardianInfo: detail.guardianInfo
-      ? {
-          guardianName: detail.guardianInfo.guardianName?.trim() || undefined,
-          relation: detail.guardianInfo.relation?.trim() || undefined,
-          phone: detail.guardianInfo.phone?.trim() || undefined,
-          consentStatus: detail.guardianInfo.consentStatus?.trim() || undefined,
-          consentedAt: detail.guardianInfo.consentedAt,
-        }
-      : undefined,
-  }
-
-  if (role === 'SCHOOL') {
-    const schoolName = String(
-      detail.schoolInfo?.schoolName ?? detail.name ?? ''
-    ).trim()
-    if (schoolName) {
-      user.schoolInfo = {
-        schoolName,
-        address: detail.schoolInfo?.address?.trim() ?? '',
-        ...(detail.schoolInfo?.position?.trim()
-          ? { position: detail.schoolInfo.position.trim() }
-          : {}),
-      }
-      user.name = schoolName
-    }
   }
 
   if (role === 'INSTRUCTOR' && instructorProfile) {
@@ -276,6 +300,137 @@ export function mapMemberDetailToUser(
   }
 
   return user
+}
+
+function applyInstructorCmsStructureToUser(
+  user: Omit<User, 'password'>,
+  cmsProfile: InstructorCmsProfileProposal | undefined,
+  cmsSettlement: InstructorCmsSettlement | undefined,
+  legacyProfile: InstructorDetailResponse | null,
+  loose?: { affiliation?: string; organizationText?: string }
+): void {
+  const legacyLoose = asInstructorProfileLoose(legacyProfile)
+  const memberType = resolveCmsMemberTypeForMerge(user, cmsProfile, legacyProfile)
+  const affiliationLoose = {
+    affiliation: pickTrimmed(loose?.affiliation, legacyLoose?.affiliation, user.affiliation),
+    organizationText: pickTrimmed(loose?.organizationText, legacyLoose?.organizationText),
+  }
+  const mergedProfile = mergeInstructorCmsProfileFromLegacyFlat(
+    cmsProfile ?? {
+      memberType,
+      affiliation: buildDefaultCmsAffiliationForMerge(
+        memberType,
+        cmsProfile,
+        legacyLoose,
+        affiliationLoose
+      ),
+      homeAddress: { line: user.detailAddress ?? '' },
+      education: {},
+      career: { level: 'experienced', rows: [] },
+      jaKoreaActivities: [],
+      licenses: [],
+      awards: [],
+      essays: {},
+    },
+    legacyProfile ?? undefined,
+    affiliationLoose
+  )
+
+  user.instructorCmsProfile = mergedProfile
+  if (cmsSettlement) {
+    user.instructorCmsSettlement = cmsSettlement
+  }
+
+  const legacyFlat = buildLegacyFlatFieldsFromCmsProfile(mergedProfile)
+  if (legacyFlat.oneLineIntro) {
+    user.bio = legacyFlat.oneLineIntro
+  }
+  if (legacyFlat.selfIntroduction) {
+    user.instructorSelfIntroduction = legacyFlat.selfIntroduction
+  }
+  if (legacyFlat.careerText) {
+    const careerDisplay = formatInstructorCareerDisplay(legacyFlat.careerText)
+    user.instructorCareerText = careerDisplay ?? legacyFlat.careerText
+  }
+  if (legacyFlat.educationLevel) {
+    const educationDisplay =
+      formatInstructorEducationLevelDisplay(legacyFlat.educationLevel) ?? legacyFlat.educationLevel
+    user.listMetrics = assignDefinedListMetrics(user.listMetrics, {
+      highestEducationLabel: educationDisplay,
+    })
+  }
+
+  if (mergedProfile.homeAddress.line?.trim()) {
+    user.detailAddress = mergedProfile.homeAddress.line.trim()
+  }
+  if (mergedProfile.homeAddress.detail?.trim()) {
+    user.detailAddressDetail = mergedProfile.homeAddress.detail.trim()
+  }
+
+  if (cmsSettlement) {
+    user.instructorInfo = {
+      bankName: cmsSettlement.bankName ?? user.instructorInfo?.bankName ?? '',
+      accountNumber: cmsSettlement.accountNumber ?? user.instructorInfo?.accountNumber ?? '',
+      accountHolder: cmsSettlement.accountHolder ?? user.instructorInfo?.accountHolder ?? '',
+      isBusinessIncome: cmsSettlement.businessIncome ?? user.instructorInfo?.isBusinessIncome ?? false,
+    }
+  }
+
+  applyCmsAffiliationFromProfile(user, mergedProfile)
+}
+
+function applyCmsAffiliationFromProfile(
+  user: Omit<User, 'password'>,
+  profile: InstructorCmsProfileProposal
+): void {
+  const affiliation = profile.affiliation ?? {}
+  const schoolName = affiliation.schoolName?.trim()
+  const isSchoolTeacher =
+    profile.memberType === 'SCHOOL_TEACHER' ||
+    user.instructorMemberProfile === 'school_teacher' ||
+    Boolean(schoolName)
+
+  if (isSchoolTeacher) {
+    if (schoolName && !user.affiliatedSchoolName?.trim()) {
+      user.affiliatedSchoolName = schoolName
+    }
+
+    const employmentLabel = toEmploymentStatusDisplayLabel(affiliation.employmentStatus)
+    if (employmentLabel && !user.listMetrics?.employmentStatusLabel?.trim()) {
+      user.listMetrics = assignDefinedListMetrics(user.listMetrics, {
+        employmentStatusLabel: employmentLabel,
+      })
+    }
+
+    if (schoolName && !user.affiliation?.trim()) {
+      user.affiliation = employmentLabel
+        ? `${schoolName}${USER_AFFILIATION_PIPE_SEP}${employmentLabel}`
+        : schoolName
+    }
+
+    const orgs = affiliation.organizationNames?.map(name => name.trim()).filter(Boolean) ?? []
+    if (orgs.length > 0) {
+      const orgPart = orgs.join(', ')
+      if (!user.affiliation?.trim()) {
+        user.affiliation = schoolName ? `${schoolName}, ${orgPart}` : orgPart
+      } else if (!user.affiliation.includes(orgPart)) {
+        user.affiliation = `${user.affiliation}, ${orgPart}`
+      }
+    }
+
+    if (
+      schoolName &&
+      (!user.instructorMemberProfile || user.instructorMemberProfile === 'instructor_only')
+    ) {
+      user.instructorMemberProfile = 'school_teacher'
+    }
+    return
+  }
+
+  const orgs = affiliation.organizationNames?.map(name => name.trim()).filter(Boolean) ?? []
+  if (orgs.length > 0 && !user.affiliation?.trim()) {
+    user.affiliation = orgs.join(', ')
+  }
 }
 
 function applyInstructorProfile(
@@ -490,6 +645,17 @@ export function mapInstructorMemberDetailToUser(
     })
   }
 
+  const assignedGrade = pickTrimmed(
+    looseDetail.instructorAssignedGrade,
+    looseDetail.assignedGrade,
+    looseDetail.listMetrics?.instructorAssignedGrade
+  )
+  if (assignedGrade) {
+    user.listMetrics = assignDefinedListMetrics(user.listMetrics, {
+      instructorAssignedGrade: assignedGrade,
+    })
+  }
+
   const bank = resolveInstructorBankFields(detail)
   const businessIncome =
     parseBusinessIncomeFlag(profileLoose?.businessIncomeYn) ??
@@ -532,6 +698,25 @@ export function mapInstructorMemberDetailToUser(
   if (certifications.length > 0) {
     user.instructorCertifications = certifications
   }
+
+  if (looseDetail.termsAgreements?.length) {
+    user.termsAgreements = looseDetail.termsAgreements
+  }
+
+  applyInstructorCmsStructureToUser(
+    user,
+    looseDetail.profile,
+    looseDetail.settlement,
+    profile,
+    {
+      affiliation: pickTrimmed(profileLoose?.affiliation, looseDetail.affiliation),
+      organizationText: pickTrimmed(
+        looseDetail.organizationText,
+        (member as { organizationText?: string }).organizationText,
+        profileLoose?.organizationText
+      ),
+    }
+  )
 
   return normalizeRevokedInstructorUser(user)
 }

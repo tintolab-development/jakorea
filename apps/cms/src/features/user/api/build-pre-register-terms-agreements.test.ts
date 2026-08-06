@@ -52,13 +52,13 @@ describe('build-pre-register-terms-agreements', () => {
         agreed: true,
       },
       {
-        termsType: 'PAYMENT_STATEMENT',
+        termsType: 'PAYMENT_STATEMENT_PRE_CONSENT',
         version: ADMIN_PRE_REGISTER_TERMS_VERSION,
         required: false,
         agreed: false,
       },
       {
-        termsType: 'EDUCATOR_PLEDGE',
+        termsType: 'FACILITATOR_PLEDGE',
         version: ADMIN_PRE_REGISTER_TERMS_VERSION,
         required: false,
         agreed: true,
@@ -87,10 +87,10 @@ describe('build-pre-register-terms-agreements', () => {
       ['PRIVACY_COLLECTION', true],
       ['MARKETING', false],
       ['PORTRAIT_RIGHTS', true],
-      ['PAYMENT_STATEMENT', false],
-      ['EDUCATOR_PLEDGE', false],
-      ['ADMINISTRATIVE_JOINT', true],
-      ['SEX_OFFENSE_CHECK', false],
+      ['PAYMENT_STATEMENT_PRE_CONSENT', false],
+      ['FACILITATOR_PLEDGE', false],
+      ['ADMINISTRATIVE_INFO_CONSENT', true],
+      ['CRIMINAL_HISTORY_CHECK_CONSENT', false],
     ])
   })
 
@@ -115,10 +115,10 @@ describe('build-pre-register-terms-agreements', () => {
       'PRIVACY_COLLECTION',
       'MARKETING',
       'PORTRAIT_RIGHTS',
-      'PAYMENT_STATEMENT',
-      'EDUCATOR_PLEDGE',
-      'ADMINISTRATIVE_JOINT',
-      'SEX_OFFENSE_CHECK',
+      'PAYMENT_STATEMENT_PRE_CONSENT',
+      'FACILITATOR_PLEDGE',
+      'ADMINISTRATIVE_INFO_CONSENT',
+      'CRIMINAL_HISTORY_CHECK_CONSENT',
     ])
   })
 

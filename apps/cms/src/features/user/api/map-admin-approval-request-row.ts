@@ -34,7 +34,7 @@ function applicationTypeLabelForAdminAccount(item: AdminAccountListItemResponse)
 export function mapAdminApprovalRequestToRow(
   item: AdminAccountListItemResponse
 ): MemberPermissionApplicationRow {
-  const adminId = item.id
+  const adminId = item.adminAccountId
   const uuid = item.uuid?.trim()
   const userId = uuid ? `admin-${uuid}` : `admin-account-${adminId ?? 'unknown'}`
 

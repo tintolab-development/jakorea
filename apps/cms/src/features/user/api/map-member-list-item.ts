@@ -48,6 +48,21 @@ function mapInstructorMemberProfile(raw?: string): InstructorMemberProfile | und
   return undefined
 }
 
+function inferInstructorMemberProfileFromListItem(
+  item: MemberListItemResponse
+): InstructorMemberProfile | undefined {
+  const fromApi = mapInstructorMemberProfile(item.instructorMemberProfile)
+  if (fromApi) return fromApi
+
+  if (item.affiliatedSchoolUserId?.trim()) return 'instructor_dual'
+
+  const typeLabel =
+    item.listMetrics?.permissionApplicationTypeLabel?.trim() ||
+    item.listMetrics?.instructorTypeLabel?.trim()
+  if (typeLabel === '교사 회원') return 'school_teacher'
+  return undefined
+}
+
 function mapProgramRoles(
   raw?: Record<string, string>
 ): Record<string, ProgramRole> | undefined {
@@ -118,7 +133,7 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
 
   const now = new Date().toISOString()
   const listMetrics = mapApiUserListRowMetrics(item.listMetrics)
-  const instructorMemberProfile = mapInstructorMemberProfile(item.instructorMemberProfile)
+  const instructorMemberProfile = inferInstructorMemberProfileFromListItem(item)
   const programRoles = mapProgramRoles(item.programRoles)
 
   const user: Omit<User, 'password'> = {

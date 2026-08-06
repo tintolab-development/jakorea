@@ -19,7 +19,7 @@ export function mapAdminAccountDetailToUser(
   detail: AdminAccountApprovalDetailResponse,
   options?: { memberId?: number; fallbackId?: string }
 ): Omit<User, 'password'> {
-  const adminAccountId = detail.id
+  const adminAccountId = detail.adminAccountId
   const memberId = options?.memberId ?? undefined
   const uuid =
     detail.uuid?.trim() ||

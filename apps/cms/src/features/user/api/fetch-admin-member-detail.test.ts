@@ -15,7 +15,7 @@ vi.mock('@/features/user/api/map-admin-account-detail-to-user', () => ({
   mapAdminAccountDetailToUser: vi.fn((detail, opts) => ({
     id: opts?.fallbackId ?? 'mapped',
     role: 'ADMIN',
-    adminAccountId: detail.id,
+    adminAccountId: detail.adminAccountId,
     email: detail.email ?? '-',
     name: detail.name ?? '-',
     isActive: true,
@@ -52,7 +52,7 @@ describe('fetch-admin-member-detail', () => {
 
   it('fetchAdminMemberDetailAsUser — numeric adminId로 상세 GET', async () => {
     fetchAdminAccountDetailRemoteMock.mockResolvedValue({
-      id: 7,
+      adminAccountId: 7,
       email: 'admin@test.com',
       name: '관리자',
     })

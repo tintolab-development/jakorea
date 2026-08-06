@@ -75,7 +75,9 @@ import {
 } from '@/features/user/api/members-api-client'
 import { adminPermissionFeeGradeToRoleCode } from '@/features/user/api/admin-approval-role'
 import type { InstructorCertificationUpsertRequest } from '@/shared/api/generated/members/schemas/instructorCertificationUpsertRequest'
+import type { AdminTermsAgreementRequest } from '@/shared/api/generated/members/schemas/adminTermsAgreementRequest'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
+import { resolvePreRegisterTermsAgreementVersions } from '@/features/user/api/resolve-pre-register-terms-agreement-versions'
 import { MEMBER_DETAIL_SCREEN_CODE } from '@/features/user/api/map-member-comments'
 import {
   hasAdminCommentPatch,
@@ -305,7 +307,14 @@ export type PatchUserBasicInfoInput = Partial<
     | 'instructorInfo'
     | 'listMetrics'
   >
->
+> & {
+  /** PATCH `instructorInfo.certifications` — 등록·상세 수정 공통 */
+  instructorCertifications?: InstructorCertificationUpsertRequest[]
+  /** PATCH `profile` — CMS 강사 구조체 (§3.8) */
+  instructorCmsProfile?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsProfileProposal
+  /** PATCH `settlement` */
+  instructorCmsSettlement?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsSettlement
+}
 
 /** 코멘트 전용 저장 시 상세 GET·코멘트 목록 GET을 줄이기 위한 힌트 */
 export type PatchUserBasicInfoOptions = {
@@ -332,13 +341,15 @@ function isAdminPermissionVariantOnlyPatch(patch: PatchUserBasicInfoInput): bool
 async function mergeUserFromApiResponse(
   userId: UUID,
   response: Awaited<ReturnType<typeof updateMemberBasicInfoRemote>>,
-  patch?: PatchUserBasicInfoInput
+  patch?: PatchUserBasicInfoInput,
+  baseUser?: Omit<User, 'password'>
 ): Promise<Omit<User, 'password'>> {
-  const existing = await getUserById(userId)
   const mapped = mapMemberListItems([response])[0]
   if (!mapped) {
     throw new Error('회원 정보 수정 응답을 처리하지 못했습니다.')
   }
+
+  const existing = baseUser ?? (await getUserById(userId))
   if (!existing) {
     return patch ? applySavedBasicInfoPatchToUser(mapped, patch) : mapped
   }
@@ -482,7 +493,12 @@ async function patchUserBasicInfoRemote(
     }
 
     const response = await updateMemberBasicInfoRemote(memberId, body)
-    return mergeUserFromApiResponse(userId, response, patch)
+    return mergeUserFromApiResponse(
+      userId,
+      response,
+      patch,
+      options?.baseUser ?? existingForRole ?? undefined
+    )
   } catch (error) {
     throw new Error(getMemberApiErrorMessage(error, '회원 정보 저장에 실패했습니다.'))
   }
@@ -508,10 +524,10 @@ async function resolveAdminAccountIdForMemberUser(
     if (item.uuid && (item.uuid === user.id || item.uuid === idToken)) return true
     return false
   })
-  if (match?.id == null) {
+  if (match?.adminAccountId == null) {
     throw new Error('관리자 계정(adminId)을 찾지 못해 권한 유형을 변경할 수 없습니다.')
   }
-  return match.id
+  return match.adminAccountId
 }
 
 /**
@@ -562,10 +578,10 @@ async function patchAdminPermissionVariantRemote(
           if (!uuid) return false
           return uuid === userId || uuid === raw || `admin-${uuid}` === userId
         })
-        if (match?.id == null) {
+        if (match?.adminAccountId == null) {
           throw new Error('관리자 계정(adminId)을 찾지 못해 권한 유형을 변경할 수 없습니다.')
         }
-        adminId = match.id
+        adminId = match.adminAccountId
       }
     }
 
@@ -929,7 +945,12 @@ export interface CreateUserRequest {
   /** 강사 사전등록 — 학력 요약(구조화 학력 전용 필드 부재 시) */
   educationLevel?: string
   termsAgreements?: TermsAgreementRequest[]
+  adminTermsAgreements?: AdminTermsAgreementRequest[]
   certifications?: InstructorCertificationUpsertRequest[]
+  /** BE §3.8 — CMS 강사 `profile` 구조체 */
+  instructorCmsProfile?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsProfileProposal
+  /** BE §3.8 — CMS 강사 `settlement` 구조체 */
+  instructorCmsSettlement?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsSettlement
 }
 
 async function fetchCreatedMemberAsUser(
@@ -968,13 +989,33 @@ function resolveCreateUserPassword(request: CreateUserRequest): string {
   return request.password?.trim() ?? ''
 }
 
+async function withResolvedTermsAgreements(
+  request: CreateUserRequest
+): Promise<CreateUserRequest> {
+  if (request.adminTermsAgreements?.length) {
+    const adminTermsAgreements = (await resolvePreRegisterTermsAgreementVersions(
+      request.adminTermsAgreements
+    )) as AdminTermsAgreementRequest[] | undefined
+    return { ...request, adminTermsAgreements }
+  }
+  if (request.termsAgreements?.length) {
+    const termsAgreements = (await resolvePreRegisterTermsAgreementVersions(
+      request.termsAgreements
+    )) as TermsAgreementRequest[] | undefined
+    return { ...request, termsAgreements }
+  }
+  return request
+}
+
 export async function createUser(request: CreateUserRequest): Promise<Omit<User, 'password'>> {
   const provisionedPassword = resolveCreateUserPassword(request)
 
   if (isMembersRemoteEnabled()) {
     try {
-      if (request.role === 'ADMIN') {
-        const adminEmail = request.email?.trim()
+      const resolvedRequest = await withResolvedTermsAgreements(request)
+
+      if (resolvedRequest.role === 'ADMIN') {
+        const adminEmail = resolvedRequest.email?.trim()
         if (!adminEmail) {
           throw new Error('관리자 등록에는 이메일이 필요합니다.')
         }
@@ -982,7 +1023,7 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
         if (!rawPassword) {
           throw new Error('관리자 등록에는 초기 비밀번호가 필요합니다.')
         }
-        const termsAgreements = request.termsAgreements
+        const termsAgreements = resolvedRequest.adminTermsAgreements
         if (!termsAgreements || termsAgreements.length !== 4) {
           throw new Error(
             '관리자 등록에는 약관 동의 4종(서비스·개인정보·MFA·마케팅)이 필요합니다.'
@@ -991,15 +1032,15 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
         const created = await createAdminAccountRemote({
           email: adminEmail,
           rawPassword,
-          name: request.name.trim(),
-          phone: request.phone?.trim(),
-          gender: toApiGender(request.gender),
-          birthDate: toApiBirthDate(request.birthDate),
+          name: resolvedRequest.name.trim(),
+          phone: resolvedRequest.phone?.trim(),
+          gender: toApiGender(resolvedRequest.gender),
+          birthDate: toApiBirthDate(resolvedRequest.birthDate),
           roleCode: 'VIEWER',
           reason: 'CMS 관리자 회원 신규 등록',
           termsAgreements,
         })
-        const adminAccountId = created.adminAccountId ?? created.id
+        const adminAccountId = created.adminAccountId
         const uuid = created.uuid?.trim()
         const id =
           uuid ??
@@ -1010,8 +1051,8 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
           id,
           adminAccountId,
           email: created.email?.trim() || adminEmail,
-          name: created.name?.trim() || request.name,
-          phone: request.phone,
+          name: created.name?.trim() || resolvedRequest.name,
+          phone: resolvedRequest.phone,
           role: 'ADMIN',
           adminLevel: 'ADMIN',
           isActive: true,
@@ -1023,28 +1064,28 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
       }
 
       const created =
-        request.role === 'SCHOOL'
-          ? await preRegisterSchoolRemote(mapCreateUserRequestToPreRegisterSchool(request))
-          : request.role === 'INSTRUCTOR'
+        resolvedRequest.role === 'SCHOOL'
+          ? await preRegisterSchoolRemote(mapCreateUserRequestToPreRegisterSchool(resolvedRequest))
+          : resolvedRequest.role === 'INSTRUCTOR'
             ? await preRegisterInstructorRemote(
-                mapCreateUserRequestToPreRegisterInstructor(request)
+                mapCreateUserRequestToPreRegisterInstructor(resolvedRequest)
               )
             : await preRegisterIndividualRemote(
-                mapCreateUserRequestToPreRegisterIndividual(request)
+                mapCreateUserRequestToPreRegisterIndividual(resolvedRequest)
               )
 
       const memberId = created.memberId
       if (memberId != null && !Number.isNaN(memberId)) {
-        return await fetchCreatedMemberAsUser(memberId, request.role)
+        return await fetchCreatedMemberAsUser(memberId, resolvedRequest.role)
       }
       if (created.memberUuid?.trim()) {
         return {
           id: created.memberUuid.trim(),
           memberId: created.memberId,
-          email: request.email?.trim() || '',
-          name: request.name,
-          role: request.role,
-          isActive: request.isActive ?? true,
+          email: resolvedRequest.email?.trim() || '',
+          name: resolvedRequest.name,
+          role: resolvedRequest.role,
+          isActive: resolvedRequest.isActive ?? true,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           registeredByAdmin: true,
@@ -1052,10 +1093,10 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
       }
       return {
         id: `member-pre-${Date.now()}`,
-        email: request.email?.trim() || '',
-        name: request.name,
-        role: request.role,
-        isActive: request.isActive ?? true,
+        email: resolvedRequest.email?.trim() || '',
+        name: resolvedRequest.name,
+        role: resolvedRequest.role,
+        isActive: resolvedRequest.isActive ?? true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         registeredByAdmin: true,

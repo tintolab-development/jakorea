@@ -167,13 +167,13 @@ describe('mergeListUserWithFetchedDetail', () => {
 })
 
 describe('applySavedBasicInfoPatchToUser', () => {
-  it('저장 patch의 경력·소개가 마스킹 placeholder 위에 반영된다', () => {
+  it('저장 patch의 bio(한 줄 소개)는 instructorSelfIntroduction(자기소개)에 반영하지 않는다', () => {
     const user = baseUser({
       id: 'teacher-uuid',
       role: 'INSTRUCTOR',
       name: '김강사',
-      bio: '마스킹',
-      instructorSelfIntroduction: '마스킹',
+      bio: '기존 한 줄 소개',
+      instructorSelfIntroduction: '기존 자기소개 및 지원동기',
       listMetrics: {
         instructorCareerYearsLabel: '마스킹',
         instructorCareerSummaryLabel: '마스킹',
@@ -188,7 +188,7 @@ describe('applySavedBasicInfoPatchToUser', () => {
     })
 
     expect(merged.bio).toBe('수정된 한 줄 소개')
-    expect(merged.instructorSelfIntroduction).toBe('수정된 한 줄 소개')
+    expect(merged.instructorSelfIntroduction).toBe('기존 자기소개 및 지원동기')
     expect(merged.listMetrics?.instructorCareerYearsLabel).toBe('12년')
     expect(merged.instructorCareerText).toBe('12')
   })

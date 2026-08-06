@@ -56,13 +56,13 @@ export function useProgramManagers(programId: string | undefined) {
     queryFn: async (): Promise<AssignableManagerCandidate[]> => {
       const page = await fetchAdminsPageRemote({ page: 0, size: 100, status: 'ACTIVE' })
       return (page.items ?? [])
-        .filter(item => item.id != null && item.name?.trim())
+        .filter(item => item.adminAccountId != null && item.name?.trim())
         .map(item => ({
-          id: String(item.id),
+          id: String(item.adminAccountId),
           name: item.name!.trim(),
           email: item.email?.trim() || '',
           phone: item.phone?.trim() || '',
-          adminId: item.id,
+          adminId: item.adminAccountId,
         }))
     },
     enabled: remoteEnabled,

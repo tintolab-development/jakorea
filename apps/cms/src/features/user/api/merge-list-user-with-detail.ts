@@ -222,6 +222,8 @@ export function mergeListUserWithFetchedDetail(
     ),
     schoolInfo,
     instructorInfo: resolveMergedInstructorInfo(listUser.instructorInfo, fetched.instructorInfo),
+    instructorCmsProfile: fetched.instructorCmsProfile ?? listUser.instructorCmsProfile,
+    instructorCmsSettlement: fetched.instructorCmsSettlement ?? listUser.instructorCmsSettlement,
     instructorMemberProfile:
       fetched.instructorMemberProfile ??
       (fetchedRevoked || listRevoked ? undefined : listUser.instructorMemberProfile),
@@ -270,9 +272,6 @@ export function applySavedBasicInfoPatchToUser(
   if (patch.bio !== undefined) {
     const bio = patch.bio.trim()
     next.bio = bio || undefined
-    if (next.role === 'INSTRUCTOR' && bio) {
-      next.instructorSelfIntroduction = bio
-    }
   }
 
   if (patch.schoolInfo) {
@@ -283,6 +282,54 @@ export function applySavedBasicInfoPatchToUser(
     next.instructorInfo = {
       ...next.instructorInfo,
       ...patch.instructorInfo,
+    } as NonNullable<User['instructorInfo']>
+  }
+
+  if (patch.instructorCertifications != null) {
+    next.instructorCertifications = patch.instructorCertifications
+      .map(row => {
+        const name = row.certificationName?.trim()
+        if (!name) return null
+        return {
+          ...(row.id != null ? { id: row.id } : {}),
+          name,
+          ...(row.issuer?.trim() ? { issuer: row.issuer.trim() } : {}),
+          ...(row.certificateNumber?.trim()
+            ? { certificateNumber: row.certificateNumber.trim() }
+            : {}),
+          ...(row.issuedDate?.trim() ? { issuedDate: row.issuedDate.trim() } : {}),
+          ...(row.expiresDate?.trim() ? { expiresDate: row.expiresDate.trim() } : {}),
+        }
+      })
+      .filter((row): row is NonNullable<typeof row> => row != null)
+  }
+
+  if (patch.instructorCmsProfile) {
+    next.instructorCmsProfile = patch.instructorCmsProfile
+    if (patch.instructorCmsProfile.essays.freeWrite1) {
+      next.instructorSelfIntroduction = patch.instructorCmsProfile.essays.freeWrite1
+    }
+    if (patch.instructorCmsProfile.oneLineIntro) {
+      next.bio = patch.instructorCmsProfile.oneLineIntro
+    }
+    if (patch.instructorCmsProfile.instructorCareerSummary ?? patch.instructorCmsProfile.career.summaryYears) {
+      next.instructorCareerText =
+        patch.instructorCmsProfile.instructorCareerSummary ??
+        patch.instructorCmsProfile.career.summaryYears
+    }
+  }
+
+  if (patch.instructorCmsSettlement) {
+    next.instructorCmsSettlement = patch.instructorCmsSettlement
+    next.instructorInfo = {
+      ...next.instructorInfo,
+      bankName: patch.instructorCmsSettlement.bankName ?? next.instructorInfo?.bankName ?? '',
+      accountNumber:
+        patch.instructorCmsSettlement.accountNumber ?? next.instructorInfo?.accountNumber ?? '',
+      accountHolder:
+        patch.instructorCmsSettlement.accountHolder ?? next.instructorInfo?.accountHolder ?? '',
+      isBusinessIncome:
+        patch.instructorCmsSettlement.businessIncome ?? next.instructorInfo?.isBusinessIncome ?? false,
     } as NonNullable<User['instructorInfo']>
   }
 

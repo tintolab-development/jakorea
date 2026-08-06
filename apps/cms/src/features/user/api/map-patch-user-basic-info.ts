@@ -55,8 +55,25 @@ export function mapPatchUserBasicInfoToApiRequest(
         : {}),
     }
   }
+  if (patch.instructorCertifications != null) {
+    body.instructorInfo = {
+      ...(body.instructorInfo ?? {}),
+      certifications: patch.instructorCertifications,
+    }
+  }
 
-  return body
+  const extendedBody = body as AdminMemberBasicInfoUpdateRequest & {
+    profile?: PatchUserBasicInfoInput['instructorCmsProfile']
+    settlement?: PatchUserBasicInfoInput['instructorCmsSettlement']
+  }
+  if (patch.instructorCmsProfile != null) {
+    extendedBody.profile = patch.instructorCmsProfile
+  }
+  if (patch.instructorCmsSettlement != null) {
+    extendedBody.settlement = patch.instructorCmsSettlement
+  }
+
+  return extendedBody
 }
 
 export function hasAdminCommentPatch(patch: PatchUserBasicInfoInput): boolean {
