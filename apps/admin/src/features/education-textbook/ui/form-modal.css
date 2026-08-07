@@ -1,0 +1,504 @@
+/**
+ * 교재 등록·상세·수정 모달
+ * 시안: 1400×880 · 셸 padding 26/30/34 · 타이틀↔본문 24 · 본문↔푸터 30
+ * 테이블: DetailInfoForm (th 라벨 160 · min-height 54 · BG-header)
+ */
+
+/* 뷰포트 정중앙 */
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.education-textbook-form-modal) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.education-textbook-form-modal)
+  .ant-modal.teal-header-modal--large.education-textbook-form-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(1400px, calc(100vw - 32px)) !important;
+  max-width: min(1400px, calc(100vw - 32px)) !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+}
+
+/*
+ * 셸: top 26 · sides 30 · bottom 34
+ * 높이 시안 880 (뷰포트 초과 시 축소)
+ */
+.content-modal.education-textbook-form-modal.teal-header-modal--large .ant-modal-content,
+.education-textbook-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  padding: 26px 30px 34px !important;
+  border-radius: 12px;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  height: min(880px, calc(100vh - 32px));
+  height: min(880px, calc(100dvh - 32px));
+  max-height: min(880px, calc(100vh - 32px));
+  max-height: min(880px, calc(100dvh - 32px));
+  min-height: 0;
+  overflow: hidden;
+}
+
+.content-modal.education-textbook-form-modal.teal-header-modal--large .ant-modal-body,
+.education-textbook-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 타이틀 ↔ 본문 24px */
+.education-textbook-form-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body,
+.education-textbook-form-modal.content-modal .teal-header-modal__body {
+  padding-top: 24px !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 100%;
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 본문 ↔ 푸터 30px (시안) */
+.education-textbook-form-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  margin-top: 30px !important;
+}
+
+.education-textbook-form-modal .content-modal__footer-actions {
+  width: 100%;
+  justify-content: space-between;
+}
+
+/* 푸터: 좌 삭제 · 우 취소/수정·저장 */
+.education-textbook-form-modal__footer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.education-textbook-form-modal__footer-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.education-textbook-form-modal__scroll {
+  display: flex;
+  flex-direction: column;
+  /* 시안: 기본 정보 테이블 ↔ 교육 정보 테이블 사이 간격 */
+  gap: 28px;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+/* 섹션 = 제목 + 독립 테이블 스택 (물리적으로 분리된 DetailInfoForm body) */
+.education-textbook-form-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* 기본 정보 내 테이블 간 간격 (등록일시 / 메타 2열 / 교재 본문) */
+.education-textbook-form-modal__section
+  > .education-textbook-form-modal__table
+  + .education-textbook-form-modal__table {
+  margin-top: 0;
+}
+
+.education-textbook-form-modal__section {
+  gap: 16px;
+}
+
+.education-textbook-form-modal__section-title {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%; /* 25.2px */
+}
+
+/* 섹션 제목 아래 첫 테이블과의 간격은 title gap 16으로 통일 */
+.education-textbook-form-modal__section > .education-textbook-form-modal__section-title {
+  margin-bottom: 0;
+}
+
+/* 독립 테이블 루트 — body 테두리·radius 는 DetailInfoForm 패키지 기본 유지 */
+.education-textbook-form-modal__table {
+  width: 100%;
+  min-width: 0;
+}
+
+.education-textbook-form-modal__table .detail-info-form__body {
+  width: 100%;
+  isolation: isolate;
+}
+
+/*
+ * 2열 분리 행(type=double):
+ * 시안 "사용 여부|사업분야", "교육 대상|교육 효과" — 줄바꿈 없이 1:1 고정
+ */
+.education-textbook-form-modal__table .detail-info-form__row--double {
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+.education-textbook-form-modal__table .detail-info-form__row--double > .detail-info-form__field {
+  flex: 1 1 50%;
+  width: 50%;
+  max-width: 50%;
+  min-width: 0;
+}
+
+/* DetailInfoForm 라벨 열 — 시안 테이블 th (inline labelWidth 200 덮어씀) */
+.education-textbook-form-modal__table .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 160px !important;
+  grid-template-columns: 160px minmax(0, 1fr) !important;
+}
+
+.education-textbook-form-modal__table .detail-info-form__field-label {
+  display: flex !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  min-height: 54px;
+  padding: 12px 16px !important;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  align-self: stretch;
+  box-sizing: border-box;
+  text-align: center;
+  background: var(--BG-header, var(--table-th-bg, #edf0f2));
+}
+
+.education-textbook-form-modal__table .detail-info-form__field-content {
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+  min-width: 0;
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
+/* 여러 줄·리치텍스트 행: 상단 정렬 */
+.education-textbook-form-modal__table
+  .detail-info-form__field-content:has(.education-textbook-form-modal__preline),
+.education-textbook-form-modal__table
+  .detail-info-form__field-content:has(.education-textbook-form-modal__rt-view),
+.education-textbook-form-modal__table
+  .detail-info-form__field-content:has(.education-textbook-form-modal__rt-edit),
+.education-textbook-form-modal__table
+  .detail-info-form__field-content:has(.cms-textarea) {
+  align-items: flex-start;
+}
+
+.education-textbook-form-modal__table
+  .detail-info-form__field:has(.education-textbook-form-modal__preline)
+  .detail-info-form__field-label,
+.education-textbook-form-modal__table
+  .detail-info-form__field:has(.education-textbook-form-modal__rt-view)
+  .detail-info-form__field-label,
+.education-textbook-form-modal__table
+  .detail-info-form__field:has(.education-textbook-form-modal__rt-edit)
+  .detail-info-form__field-label,
+.education-textbook-form-modal__table
+  .detail-info-form__field:has(.cms-textarea)
+  .detail-info-form__field-label {
+  align-items: flex-start;
+  padding-top: 16px !important;
+}
+
+/*
+ * form-template-runtime edit 슬롯 flex 오버라이드 → FileSelect / 이미지 행 복원
+ */
+.education-textbook-form-modal__table .detail-info-form__field-content--edit {
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
+.education-textbook-form-modal__table .detail-info-form__field-content--edit > * {
+  display: block;
+  margin-block: 0 !important;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.education-textbook-form-modal__table .detail-info-form__field-content--edit > .cms-input,
+.education-textbook-form-modal__table .detail-info-form__field-content--edit > .cms-select,
+.education-textbook-form-modal__table
+  .detail-info-form__field-content--edit
+  > .education-textbook-form-modal__session-row {
+  display: flex;
+  align-items: center;
+  margin-block: auto !important;
+  width: 100%;
+  min-width: 0;
+}
+
+/*
+ * 사용 여부 등 라디오 — CmsRadioGroup 클래스는 app-radio-group.
+ * edit > * 의 display:block 이 flex 행을 깨므로 복원.
+ * 표 TD 가로 라디오: large(원 20px·16px) · 옵션 gap 16px (modal-spec-table 규격)
+ */
+.education-textbook-form-modal__table
+  .detail-info-form__field-content--edit
+  > .app-radio-group.ant-radio-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-block: auto !important;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* multiple UI 는 내부 trigger 레이아웃 유지 (display:flex 가 깨지지 않도록 block) */
+.education-textbook-form-modal__table
+  .detail-info-form__field-content--edit
+  > .cms-select--multiple-ui {
+  display: block;
+  margin-block: auto !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.education-textbook-form-modal__table .detail-info-form__field-content--edit > .cms-textarea {
+  display: block;
+  margin-block: 0 !important;
+}
+
+.education-textbook-form-modal__table
+  .detail-info-form__field-content--edit
+  > .education-textbook-form-modal__image-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.education-textbook-form-modal .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.education-textbook-form-modal .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.education-textbook-form-modal__image-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+
+.education-textbook-form-modal__preview {
+  width: 86px;
+  height: 122px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  background: var(--color-bg-secondary, #fafafa);
+}
+
+/* 교재 썸네일 권장 비율 226×320 근사 */
+.education-textbook-form-modal__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.education-textbook-form-modal__file-field {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+/* 상세: 파일 아이콘 + 파일명 (시안) */
+.education-textbook-form-modal__thumb-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.education-textbook-form-modal__thumb-icon {
+  flex-shrink: 0;
+  display: block;
+  color: var(--default-BK, #3d3d3d);
+  opacity: 0.72;
+}
+
+.education-textbook-form-modal__thumb-name {
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 상세: 총 n단원 | 차시 설명 — 한 줄 가로 정렬 */
+.education-textbook-form-modal__session-view {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 수정: [숫자] 단원 | [차시 설명] — 시안 가로 정렬 + TdDivider */
+.education-textbook-form-modal__session-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.education-textbook-form-modal__session-count {
+  flex: 0 0 80px;
+  width: 80px !important;
+  min-width: 80px;
+}
+
+.education-textbook-form-modal__session-suffix {
+  flex-shrink: 0;
+  margin-left: 8px;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+/* 숫자·단원 ↔ 텍스트: DetailInfoForm.TdDivider 기본 margin(12px) */
+.education-textbook-form-modal__session-row .detail-info-form-inputs-separator {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.education-textbook-form-modal__session-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto !important;
+  max-width: 100%;
+}
+
+.education-textbook-form-modal__preline {
+  white-space: pre-line;
+  word-break: keep-all;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.education-textbook-form-modal__rt-edit,
+.education-textbook-form-modal__rt-view {
+  width: 100%;
+  min-width: 0;
+}
+
+.education-textbook-form-modal__rt-view {
+  padding: 4px 0;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* 단원 제목 등 mint accent (시안) */
+.education-textbook-form-modal__rt-view strong,
+.education-textbook-form-modal__rt-view b,
+.education-textbook-form-modal__rt-view .cms-rich-text-viewer strong,
+.education-textbook-form-modal__rt-view .rich-text-viewer strong {
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 700;
+}
+
+.education-textbook-form-modal__rt-edit {
+  min-height: 200px;
+}
+
+.education-textbook-form-modal__table .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
+  resize: none !important;
+  overflow-y: auto !important;
+}
+
+.education-textbook-form-modal__registered {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}

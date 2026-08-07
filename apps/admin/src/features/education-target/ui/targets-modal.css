@@ -1,0 +1,13 @@
+.education-targets-modal__note {
+  margin: 0 0 16px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.education-targets-modal__table .ant-table-tbody > tr > td {
+  vertical-align: middle;
+}
