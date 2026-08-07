@@ -30,7 +30,10 @@ import {
   isMembersRemoteEnabled,
   stripUnsupportedMemberListFilters,
 } from '@/features/user/api/member-remote-capabilities'
-import { mapMemberListItems } from '@/features/user/api/map-member-list-item'
+import {
+  filterMemberListItemsForSchoolRole,
+  mapMemberListItems,
+} from '@/features/user/api/map-member-list-item'
 import {
   applySavedBasicInfoPatchToUser,
   mergeListUserWithFetchedDetail,
@@ -258,7 +261,11 @@ export async function getUsersPage(
         page,
         size: PAGE_SIZE,
       })
-      let users = mapMemberListItems(res.items)
+      const listItems =
+        apiFilters.role === 'SCHOOL'
+          ? filterMemberListItemsForSchoolRole(res.items)
+          : res.items
+      let users = mapMemberListItems(listItems)
       if (filters?.instructorListPureOnly) {
         users = users.filter(
           user =>

@@ -39,6 +39,29 @@ describe('mapMemberListItemToUser — ADMIN', () => {
     expect(user.role).toBe('ADMIN')
   })
 
+  it('legacy role 필드만 있고 roles가 없으면 INDIVIDUAL로 본다', () => {
+    const user = mapMemberListItemToUser({
+      uuid: 'legacy-role-only',
+      role: 'SCHOOL',
+      email: 's@test.com',
+      name: '학교',
+    })
+
+    expect(user.role).toBe('INDIVIDUAL')
+  })
+
+  it('roles에 SCHOOL이 있을 때만 SCHOOL 회원으로 본다', () => {
+    const user = mapMemberListItemToUser({
+      uuid: 'school-member',
+      roles: ['SCHOOL'],
+      email: 's@test.com',
+      name: 'OO초등학교',
+      organizationName: 'OO초등학교',
+    })
+
+    expect(user.role).toBe('SCHOOL')
+  })
+
   it('memberId 숫자 id와 adminAccountId를 혼동하지 않음', () => {
     const user = mapMemberListItemToUser({
       memberId: 42,

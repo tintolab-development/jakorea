@@ -4,6 +4,7 @@
  * 별칭: school→institutions, instructor→instructors, admin→admins
  */
 import type { UserRole } from '@/types/user'
+import { parseLegacyRoleFilterParam } from '@/features/user/api/map-member-role'
 
 export const MEMBER_LIST_KINDS = [
   'all',
@@ -96,9 +97,8 @@ export function resolveRoleFilterFromMemberListParams(params: {
       if (r !== undefined) return r
     }
   }
-  if (params.role && params.role !== 'ALL') {
-    return params.role as UserRole
-  }
+  const legacyRole = parseLegacyRoleFilterParam(params.role)
+  if (legacyRole) return legacyRole
   return undefined
 }
 

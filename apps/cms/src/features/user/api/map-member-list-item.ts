@@ -7,7 +7,8 @@ import {
 } from '@/features/user/api/user-response-row-id'
 import {
   mapMemberStatusToIsActive,
-  resolvePrimaryUserRole,
+  memberRolesIncludeSchool,
+  resolvePrimaryUserRoleFromRoles,
 } from '@/features/user/api/map-member-role'
 import { mapApiUserListRowMetrics } from '@/features/user/api/map-user-list-row-metrics'
 import {
@@ -63,9 +64,7 @@ function inferInstructorMemberProfileFromListItem(
   return undefined
 }
 
-function mapProgramRoles(
-  raw?: Record<string, string>
-): Record<string, ProgramRole> | undefined {
+function mapProgramRoles(raw?: Record<string, string>): Record<string, ProgramRole> | undefined {
   if (!raw || typeof raw !== 'object') return undefined
   const mapped: Record<string, ProgramRole> = {}
   for (const [programId, role] of Object.entries(raw)) {
@@ -84,7 +83,7 @@ function resolveListItemIsActive(item: MemberListItemResponse): boolean {
 }
 
 function resolveListItemRole(item: MemberListItemResponse): UserRole {
-  const role = resolvePrimaryUserRole(item.roles, item.role)
+  const role = resolvePrimaryUserRoleFromRoles(item.roles)
   if (role === 'ADMIN') return role
   if (item.adminAccountId != null && item.adminAccountId > 0) return 'ADMIN'
   if (item.adminId != null && item.adminId > 0) return 'ADMIN'
@@ -123,10 +122,6 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
     registerMemberIdMapping(uuid, memberId)
   }
   const listItemId = typeof item.id === 'string' ? item.id.trim() : ''
-  if (listItemId && listItemId !== uuid && memberId != null) {
-    registerMemberIdMapping(listItemId, memberId)
-  }
-
   if (listItemId && listItemId !== uuid && memberId != null) {
     registerMemberIdMapping(listItemId, memberId)
   }
@@ -190,7 +185,11 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
 
   if (role === 'SCHOOL') {
     const schoolName = String(
-      item.schoolInfo?.schoolName ?? item.organizationName ?? item.organizationText ?? item.name ?? ''
+      item.schoolInfo?.schoolName ??
+        item.organizationName ??
+        item.organizationText ??
+        item.name ??
+        ''
     ).trim()
     const address =
       item.schoolInfo?.address?.trim() ||
@@ -208,9 +207,7 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
         schoolName,
         address,
         ...(addressDetail ? { addressDetail } : {}),
-        ...(item.schoolInfo?.position?.trim()
-          ? { position: item.schoolInfo.position.trim() }
-          : {}),
+        ...(item.schoolInfo?.position?.trim() ? { position: item.schoolInfo.position.trim() } : {}),
       }
       user.name = schoolName
     }
@@ -227,6 +224,17 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
   }
 
   return normalizeRevokedInstructorUser(user)
+}
+
+/** 학교(교사) 회원 관리 — `roles`에 SCHOOL 포함 항목만 (SCHOOL_TEACHER 토큰은 제외) */
+export function filterMemberListItemsForSchoolRole(
+  items: unknown[] | undefined
+): MemberListItemResponse[] {
+  if (!items?.length) return []
+  return items.filter(
+    (item): item is MemberListItemResponse =>
+      isMemberListItemResponse(item) && memberRolesIncludeSchool(item.roles)
+  )
 }
 
 export function mapMemberListItems(items: unknown[] | undefined): Omit<User, 'password'>[] {
