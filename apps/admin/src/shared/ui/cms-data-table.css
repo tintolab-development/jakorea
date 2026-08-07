@@ -39,8 +39,9 @@
 }
 
 .cms-data-table col.ant-table-selection-col {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+  max-width: var(--table-selection-column-width, 60px) !important;
 }
 
 /*
@@ -63,12 +64,12 @@
   border-bottom: 1px solid var(--table-line, #e0e0e0);
 }
 
-/* rowSelection.columnWidth·colgroup 과 동일 폭 유지 — 총폭 68px·좌 8px 패딩 포함 */
+/* rowSelection.columnWidth·colgroup 과 동일 폭 유지 — 총폭 60px·좌 8px 패딩 포함 */
 .cms-data-table .ant-table-thead > tr > th.ant-table-cell.ant-table-selection-column,
 .cms-data-table .ant-table-tbody > tr > td.ant-table-cell.ant-table-selection-column {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
-  max-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+  max-width: var(--table-selection-column-width, 60px) !important;
   box-sizing: border-box !important;
   padding: 12px 4px 12px 8px !important;
   vertical-align: middle !important;
@@ -78,6 +79,7 @@
 .cms-data-table col.ant-table-selection-col + col {
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
+  max-width: var(--table-no-column-width, 80px) !important;
 }
 
 /* No. 열: 컬럼 정의에 `className: CMS_TABLE_NO_COL_CLASS` — colgroup 미적용·CSS-in-JS 덮어쓰기 대비 */
@@ -86,6 +88,24 @@
   width: var(--table-no-column-width, 80px) !important;
   min-width: var(--table-no-column-width, 80px) !important;
   max-width: var(--table-no-column-width, 80px) !important;
+  box-sizing: border-box !important;
+}
+
+/* 사용 여부 열: `className: CMS_TABLE_USAGE_COL_CLASS` — 100px 고정 */
+.cms-data-table .ant-table-thead > tr > th.cms-table-col--usage,
+.cms-data-table .ant-table-tbody > tr > td.cms-table-col--usage {
+  width: var(--table-usage-column-width, 100px) !important;
+  min-width: var(--table-usage-column-width, 100px) !important;
+  max-width: var(--table-usage-column-width, 100px) !important;
+  box-sizing: border-box !important;
+}
+
+/* 순서 열: `className: CMS_TABLE_SORT_COL_CLASS` — 80px 고정 */
+.cms-data-table .ant-table-thead > tr > th.cms-table-col--sort,
+.cms-data-table .ant-table-tbody > tr > td.cms-table-col--sort {
+  width: var(--table-sort-column-width, 80px) !important;
+  min-width: var(--table-sort-column-width, 80px) !important;
+  max-width: var(--table-sort-column-width, 80px) !important;
   box-sizing: border-box !important;
 }
 
@@ -171,8 +191,8 @@
  * 선택·No. 열 폭을 덮어쓸 때 상위 스코프로 재확정
  */
 .detail-fullpage-modal .cms-data-table col.ant-table-selection-col {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
 }
 
 .detail-fullpage-modal .cms-data-table col.ant-table-selection-col + col {
@@ -182,9 +202,9 @@
 
 .detail-fullpage-modal .cms-data-table .ant-table-thead > tr > th.ant-table-cell.ant-table-selection-column,
 .detail-fullpage-modal .cms-data-table .ant-table-tbody > tr > td.ant-table-cell.ant-table-selection-column {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
-  max-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+  max-width: var(--table-selection-column-width, 60px) !important;
   box-sizing: border-box !important;
   padding: 12px 4px 12px 8px !important;
   vertical-align: middle !important;
@@ -207,8 +227,8 @@
 }
 
 .detail-fullpage-modal .ant-table-wrapper.cms-data-table col.ant-table-selection-col {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
 }
 
 .detail-fullpage-modal .ant-table-wrapper.cms-data-table col.ant-table-selection-col + col {
@@ -226,9 +246,9 @@
   .ant-table-tbody
   > tr
   > td.ant-table-cell.ant-table-selection-column {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
-  max-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+  max-width: var(--table-selection-column-width, 60px) !important;
   box-sizing: border-box !important;
   padding: 12px 4px 12px 8px !important;
   vertical-align: middle !important;
@@ -278,8 +298,8 @@
  * antd Table CSS-in-js(hash 클래스)보다 구체성을 높여 선택·No. 열·행 높이 54px 확정
  */
 .filter-table-layout .filter-table-layout__table .ant-table-wrapper.cms-data-table col.ant-table-selection-col {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
 }
 
 .filter-table-layout .filter-table-layout__table .ant-table-wrapper.cms-data-table col.ant-table-selection-col + col {
@@ -299,9 +319,9 @@
   .ant-table-tbody
   > tr
   > td.ant-table-cell.ant-table-selection-column {
-  width: var(--table-selection-column-width, 68px) !important;
-  min-width: var(--table-selection-column-width, 68px) !important;
-  max-width: var(--table-selection-column-width, 68px) !important;
+  width: var(--table-selection-column-width, 60px) !important;
+  min-width: var(--table-selection-column-width, 60px) !important;
+  max-width: var(--table-selection-column-width, 60px) !important;
   box-sizing: border-box !important;
   padding: 12px 4px 12px 8px !important;
   vertical-align: middle !important;

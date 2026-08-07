@@ -22,7 +22,9 @@ alwaysApply: false
 ## Admin 관례
 
 - No. 열: `width: TABLE_COLUMN_WIDTHS.index` (80), `className: CMS_TABLE_NO_COL_CLASS`
-- 선택: `TABLE_COLUMN_WIDTHS.checkbox` (68)
+- 순서 열: `width: TABLE_COLUMN_WIDTHS.sort` (80), `className: CMS_TABLE_SORT_COL_CLASS`
+- 선택: `TABLE_COLUMN_WIDTHS.checkbox` (60), `rowSelection.columnWidth` 동일
+- 사용 여부: `TABLE_COLUMN_WIDTHS.usage` (100), `className: CMS_TABLE_USAGE_COL_CLASS`
 - 첫 열이 No.가 아니면 `cms-data-table--skip-auto-no-col`
 - 필터: 조회 커밋 ([list-filter-url-sync](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc))
 - **Don’t** `apps/cms/...` import
