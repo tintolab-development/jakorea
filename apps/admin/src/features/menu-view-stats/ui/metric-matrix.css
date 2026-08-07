@@ -1,0 +1,200 @@
+/**
+ * 메뉴별 조회 통계 — DetailInfoForm + nested table
+ *
+ * th(라벨) 크기:
+ *   width: 220px; height: 50px; padding: 12px 20px;
+ *   display: flex; justify/align center; gap: 8px
+ * 정렬:
+ *   th 텍스트 → 중앙
+ *   td 텍스트(값 칸) → 좌측
+ */
+
+/* ── DetailInfoForm 외곽 ───────────────────────────────── */
+
+.mvs-metric-form {
+  width: 100%;
+  min-width: 0;
+}
+
+.mvs-metric-form .detail-info-form__body {
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-8, 8px);
+  overflow: hidden;
+}
+
+.mvs-metric-form .detail-info-form__field {
+  min-height: 50px;
+  --detail-info-label-w: 220px !important;
+  grid-template-columns: 220px minmax(0, 1fr) !important;
+  align-items: stretch;
+}
+
+/* th — 대메뉴 · 중메뉴 · 게시글 총 조회수: 중앙 정렬 */
+.mvs-metric-form .detail-info-form__field-label {
+  display: flex !important;
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  height: 50px;
+  min-height: 50px;
+  max-height: none;
+  padding: 12px 20px !important;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* 중메뉴 행: nested 높이에 맞춰 라벨 세로 늘림 (텍스트는 수직·수평 중앙 유지) */
+.mvs-metric-form
+  .detail-info-form__field:has(.mvs-nested-table)
+  .detail-info-form__field-label {
+  height: auto;
+  min-height: 50px;
+  align-self: stretch;
+}
+
+/* td 값 — 좌측 정렬 */
+.mvs-metric-form .detail-info-form__field-content {
+  min-height: 50px;
+  padding: 12px 20px !important;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
+}
+
+.mvs-metric-form .detail-info-form__row--double > .detail-info-form__field {
+  flex: 1 1 50%;
+  min-width: 0;
+}
+
+.mvs-metric-form--disabled .detail-info-form__field-content {
+  white-space: nowrap;
+}
+
+/*
+ * nested table 이 들어가는 값 셀 — padding 20px · stretch
+ * (detail-info-nested-table.mdc)
+ */
+.mvs-metric-form
+  .detail-info-form__field-content:has(.mvs-nested-table) {
+  display: flex !important;
+  padding: 20px !important;
+  justify-content: stretch;
+  align-items: stretch;
+  gap: 0;
+  min-height: 0;
+  min-width: 0;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.mvs-metric-form
+  .detail-info-form__field-content:has(.mvs-nested-table)
+  > .mvs-nested-table {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  margin-block: 0 !important;
+  align-self: stretch;
+}
+
+/* ── Nested table (중메뉴 값 칸) ───────────────────────── */
+
+.mvs-nested-table {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-8, 8px);
+  overflow: hidden;
+  background: #fff;
+}
+
+.mvs-nested-table--mid {
+  display: flex;
+  flex-direction: column;
+}
+
+.mvs-nested-table__row {
+  display: grid;
+  min-width: 0;
+}
+
+.mvs-nested-table__row--double {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.mvs-nested-table__row--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.mvs-nested-table__row + .mvs-nested-table__row {
+  border-top: 1px solid var(--table-line, #e0e0e0);
+}
+
+.mvs-nested-table__row--double > .mvs-nested-table__cell:first-child {
+  border-right: 1px solid var(--table-line, #e0e0e0);
+}
+
+.mvs-nested-table__cell {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: stretch;
+  min-width: 0;
+  min-height: 50px;
+  box-sizing: border-box;
+}
+
+/* nested th — 연차보고서 / 게시글 총 조회수: 중앙 */
+.mvs-nested-table__label {
+  display: flex;
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+  height: 50px;
+  min-height: 50px;
+  padding: 12px 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  text-align: center;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* nested td 값 — 좌측 */
+.mvs-nested-table__value {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  min-height: 50px;
+  height: 50px;
+  padding: 12px 20px;
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
