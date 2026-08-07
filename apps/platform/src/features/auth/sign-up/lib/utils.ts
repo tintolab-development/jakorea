@@ -1,5 +1,6 @@
 import type {
   ConfirmationRow,
+  EmploymentStatus,
   GenderType,
   MemberType,
   SchoolStatus,
@@ -84,8 +85,19 @@ export function getSchoolStatusLabel(value: SchoolStatus) {
   return '해당 없음'
 }
 
+export function getEmploymentStatusLabel(value: EmploymentStatus | null) {
+  if (value === 'on-leave') return '휴직 중'
+  if (value === 'employed') return '재직 중'
+  return '-'
+}
+
 export function formatHomeAddress(address: string, addressDetail: string) {
   return [address.trim(), addressDetail.trim()].filter(Boolean).join(' ')
+}
+
+/** 교사회원 확인 화면 — 학교명, 소재지 */
+export function formatTeacherAffiliation(schoolName: string, schoolAddress: string) {
+  return [schoolName.trim(), schoolAddress.trim()].filter(Boolean).join(', ') || '-'
 }
 
 export function isAllAgreed<T extends string>(
@@ -113,13 +125,32 @@ export function buildConfirmationRows(input: {
   volunteerId: string
   name?: string
   phone?: string
+  schoolName?: string
+  schoolAddress?: string
+  employmentStatus?: EmploymentStatus | null
 }): ConfirmationRow[] {
-  return [
+  const shared: ConfirmationRow[] = [
     { label: '회원유형', value: getMemberTypeLabel(input.selectedType) },
     { label: '이름', value: input.name?.trim() || MOCK_VERIFIED_NAME },
     { label: '휴대폰 번호', value: input.phone?.trim() || MOCK_VERIFIED_PHONE },
     { label: '생년월일', value: input.birthDate },
     { label: '성별', value: getGenderLabel(input.gender) },
+  ]
+
+  if (input.selectedType === 'teacher') {
+    return [
+      ...shared,
+      {
+        label: '소속/학교',
+        value: formatTeacherAffiliation(input.schoolName ?? '', input.schoolAddress ?? ''),
+      },
+      { label: '재직 현황', value: getEmploymentStatusLabel(input.employmentStatus ?? null) },
+      { label: '이메일 ID', value: input.email },
+    ]
+  }
+
+  return [
+    ...shared,
     { label: '재학유무', value: getSchoolStatusLabel(input.schoolStatus) },
     { label: '자택 주소', value: formatHomeAddress(input.address, input.addressDetail) },
     { label: '이메일 ID', value: input.email },

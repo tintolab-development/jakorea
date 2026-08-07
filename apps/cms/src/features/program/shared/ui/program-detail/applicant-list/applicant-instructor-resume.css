@@ -29,12 +29,18 @@
   margin-left: 8px;
 }
 
+.instructor-resume-section-count--empty {
+  color: var(--color-text-secondary, #888);
+  font-weight: 500;
+}
+
 .instructor-resume-divider {
   height: 1px;
   background: var(--table-line, #e0e0e0);
 }
 
 .instructor-resume-card {
+  border: 1px solid var(--table-line, #e0e0e0);
   border-radius: 6px;
   background: #fff;
   box-sizing: border-box;
@@ -43,6 +49,12 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* DetailInfoForm __body 가 외곽선·radius 제공 — 이중 테두리 방지 (cross-table.css 동일 패턴) */
+.detail-info-form__body > .detail-info-form__row--custom > .instructor-resume-card {
+  border: none;
+  border-radius: 0;
 }
 
 .instructor-resume-row {

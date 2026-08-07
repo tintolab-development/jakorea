@@ -23,7 +23,7 @@ JaKorea **CMS 회원 관리** LNB(회원 목록 · 권한 승인 · 권한 설�
 3. **P0 — 강사 권한 박탈 목록**  
    revoke 성공 후 목록 item에 `instructorStatus=REVOKED`(또는 `revokedAt`) 미하달 → 새로고침 시 UI 회귀 (§3.1).
 4. **P0~P1 — 역할별 등록·상세 path 분리(B안)** · 마스킹 · pre-register — §4~§5 (2026-07-23 이후 미해결 항목 유지).
-5. **P0 — CMS 관리자 등록 약관 `termsAgreements`** — 학교/강사/관리자/개인 **4유형** round-trip · `consent-records` — §4.1 · [강사 handoff §3.4](./instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md#34-관리자-등록--약관동의-p0)
+5. **P0 — CMS 관리자 등록 약관 `termsAgreements`** — 학교/강사/관리자/개인 **4유형** round-trip · `consent-records` — §4.1 · [강사 handoff §3.4](./instructor-pre-register-detail-roundtrip-handoff-2026-08-06.md#34-관리자-등록--약관동의-p0)
 6. **P0 — unmask `reason` 최소 길이** — OpenAPI `minLength: 5` → **1** 허용 (§2.7)
 7. **P0 — API 에러 메시지 사용자 문구** — CMS·Platform 공통 ([backend-handoff §에러 응답](../backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통))
 
@@ -205,7 +205,7 @@ FE는 **어느 쪽이든** Orval 재생성 후 연동 가능. **일관성상 Opt
 
 ### 4.1 CMS 관리자 등록 — 약관·동의 `termsAgreements` (P0)
 
-**상세 (역할별 표·`termsType` 매핑·`consent-records` 요청):** [instructor-pre-register-detail-roundtrip-handoff §3.4](./instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md#34-관리자-등록--약관동의-p0)
+**상세 (역할별 표·`termsType` 매핑·`consent-records` 요청):** [instructor-pre-register-detail-roundtrip-handoff §3.4](./instructor-pre-register-detail-roundtrip-handoff-2026-08-06.md#34-관리자-등록--약관동의-p0)
 
 | 등록 유형 | CMS 화면 | FE → API (2026-07-31) | BE 잔여 |
 |-----------|----------|------------------------|---------|
@@ -235,7 +235,7 @@ FE는 **어느 쪽이든** Orval 재생성 후 연동 가능. **일관성상 Opt
 | 기관 주소 | **마스킹 없음** |
 | 계좌 | 은행명 제외 · 번호 전부 `*` · 예금주 성만 |
 | 1365 ID | 뒤 3자리 `*` |
-| **강사 프로필 (비-PII)** | **마스킹 GET에서도 원문** — 아래 필드는 **CMS 화면 라벨과 API 키가 다름** ([강사 handoff §3.2](./instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md#32-강사-프로필-공개-필드--마스킹-get-오적용-p0) 매핑표 참고) |
+| **강사 프로필 (비-PII)** | **마스킹 GET에서도 원문** — 아래 필드는 **CMS 화면 라벨과 API 키가 다름** ([강사 handoff §3.2](./instructor-pre-register-detail-roundtrip-handoff-2026-08-06.md#32-강사-프로필-공개-필드--마스킹-get-오적용-p0) 매핑표 참고) |
 | | `careerText` → CMS 「강사 경력」(연차 요약) · `oneLineIntro` → 「한 줄 소개」 · `selfIntroduction` → 「자유작성 1」(≠ 한 줄 소개) · `educationLevel` → 「최종 학력」 코드 |
 
 역할별 상세 DTO(M-P0-1) 확정 시 동일 정책 반복 명시. **`"마스킹"` placeholder 리터럴은 PII 필드에만** 사용.
@@ -266,13 +266,13 @@ FE는 **어느 쪽이든** Orval 재생성 후 연동 가능. **일관성상 Opt
 - [ ] **§2.4** 관리자 코멘트 — Option에 맞는 API
 - [ ] **§3.1** 강사 revoke 후 목록 `REVOKED` (또는 equivalent)
 - [ ] **§4** 역할별 pre-register·상세 path (관리자 admin-accounts 유지)
-- [ ] **§4.1** 등록 `termsAgreements` — **학교·강사·개인·관리자** 저장·`consent-records` round-trip ([instructor handoff §3.4](./instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md#34-관리자-등록--약관동의-p0))
+- [ ] **§4.1** 등록 `termsAgreements` — **학교·강사·개인·관리자** 저장·`consent-records` round-trip ([instructor handoff §3.4](./instructor-pre-register-detail-roundtrip-handoff-2026-08-06.md#34-관리자-등록--약관동의-p0))
 - [ ] **§2.7** unmask `reason` **minLength 1** · 사용자 친화 validation 메시지
 - [ ] admin 계정 식별자 정합 (uuid · adminAccountId · memberId)
 
 ### P1
 
-- [ ] **§5.1** 마스킹 필드 정책 OpenAPI 명시 · **강사 프로필 공개 필드 GET 원문** ([instructor handoff §3.2](./instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md#32-강사-프로필-공개-필드--마스킹-get-오적용-p0))
+- [ ] **§5.1** 마스킹 필드 정책 OpenAPI 명시 · **강사 프로필 공개 필드 GET 원문** ([instructor handoff §3.2](./instructor-pre-register-detail-roundtrip-handoff-2026-08-06.md#32-강사-프로필-공개-필드--마스킹-get-오적용-p0))
 - [ ] **§5.2** teacherMemberId · 필터 · roleCode · admin resend notification
 
 ---
@@ -300,5 +300,5 @@ pnpm --filter cms exec playwright test \
 
 ---
 
-**Last updated:** 2026-07-31 (§2.7 unmask reason · §4.1 등록 약관 · [강사 handoff](./instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md) cross-ref)  
+**Last updated:** 2026-07-31 (§2.7 unmask reason · §4.1 등록 약관 · [강사 handoff](./instructor-pre-register-detail-roundtrip-handoff-2026-08-06.md) cross-ref)  
 **작성:** CMS FE (회원 관리 · admin-accounts 전환 · unmask 블로커 기준)

@@ -1,0 +1,28 @@
+---
+description: CMS CmsButton 액션 사이즈 — cms-admin-ui SSOT 어댑터
+globs:
+  - apps/cms/src/**/*.{tsx,css}
+  - apps/cms/src/shared/ui/content-modal.css
+  - apps/cms/src/shared/ui/cms-button.css
+alwaysApply: false
+---
+
+# CmsButton 액션 사이즈 (CMS 어댑터)
+
+**수치·용도 매핑 SSOT:** [cms-button-action-sizes](../../../../.cursor/rules/cms-admin-ui/cms-button-action-sizes.mdc)
+
+## CMS 구현 path
+
+| 영역 | 파일 |
+|------|------|
+| size 토큰 | `shared/ui/cms-button.css` · `cms-button.tsx` |
+| 모달 푸터 강제 large | `shared/ui/content-modal.css` → `.content-modal__footer-actions` |
+| 목록 툴바 | FilterTableLayout 액션 · props `size="large"` · `cms-button--action` (폭 140) |
+| FileSelect medium | `shared/ui/file-select-field.tsx` (CMS 내부는 large 쓰는 경우도 있음 — 공통 SSOT는 **medium 파일 추가 버튼**) |
+
+## 관련
+
+- [file-select-detail-form](../../../../.cursor/rules/cms-admin-ui/file-select-detail-form.mdc)
+- [list-page-composition](../coding/list-page-composition.mdc)
+
+**Last updated:** 2026-08-06

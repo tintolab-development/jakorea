@@ -1,5 +1,5 @@
 import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import { PFButton, PFTextInput } from '@/shared/ui'
+import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import { SignUpLayout } from '../layout/shell'
 import { SignUpStepLayout } from '../layout/sign-up-step-layout'
 import styles from '../wizard.module.css'
@@ -40,26 +40,36 @@ export function EmailStep({ signUp }: EmailStepProps) {
         }
       >
         <div className={styles.emailContent}>
-          <PFTextInput
-            size="xlarge"
-            label="이메일"
-            placeholder="이메일을 입력해 주세요."
-            type="email"
-            required
-            value={email.value}
-            onValueChange={email.onChange}
-            error={email.checkStatus === 'error'}
-          />
-          <PFButton
-            size="xlarge"
-            variant="secondary"
-            width="100%"
-            className={styles.duplicateCheckButton}
-            disabled={email.isChecking}
-            onClick={email.duplicateCheck}
-          >
-            {email.isChecking ? '확인 중…' : '중복확인'}
-          </PFButton>
+          <div className={styles.emailField}>
+            <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
+              이메일 <span className={styles.inlineRequiredMark}>*</span>
+            </PFText>
+            <div className={styles.emailInputRow}>
+              <div className={styles.emailInputControl}>
+                <PFTextInput
+                  size="xlarge"
+                  placeholder="이메일을 입력해 주세요."
+                  type="email"
+                  required
+                  value={email.value}
+                  onValueChange={email.onChange}
+                  error={email.checkStatus === 'error'}
+                  aria-label="이메일"
+                />
+              </div>
+              <div className={styles.emailButtonControl}>
+                <PFButton
+                  size="xlarge"
+                  variant="secondary"
+                  className={styles.duplicateCheckButton}
+                  disabled={email.isChecking}
+                  onClick={email.duplicateCheck}
+                >
+                  {email.isChecking ? '확인 중…' : '중복확인'}
+                </PFButton>
+              </div>
+            </div>
+          </div>
           {email.message ? (
             <p
               className={[

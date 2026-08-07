@@ -396,7 +396,34 @@ function testIndCurriculumScheduleCases() {
   assert.equal(schMulti.eventSchedules[0]?.scheduleLabel, '행사 일정 01')
   assert.equal(schMulti.eventSchedules[1]?.name, '국내대회')
   assert.match(schMulti.eventSchedules[0]?.dateLabel ?? '', /3월/)
-  assert.equal(schMulti.educationSchedules.length, 2)
+  // 기획: 일정형 + 복수회차 → 세부내용 「교육 일정」 비노출
+  assert.equal(schMulti.educationSchedules.length, 0)
+
+  const schMultiOrg = byId['general-prog-type-org-schedule-multi']
+  assert.ok(schMultiOrg)
+  assert.equal(schMultiOrg.educationSchedules.length, 0)
+
+  // 기획: 일반(참여자)도 면접 있으면 1차 서류·2차 면접 노출
+  const soloInd = GENERAL_REGISTRATION_FIXTURES.find(
+    f => f.id === 'general-prog-type-ind-curriculum-single'
+  )!
+  const withInterview = mapCmsProgramToPlatformDetail({
+    ...soloInd,
+    interviewEnabled: true,
+    documentPassAnnouncementDate: '2026-05-01T00:00:00+09:00',
+    interviewStartDate: '2026-05-10T00:00:00+09:00',
+    interviewEndDate: '2026-05-15T00:00:00+09:00',
+  })
+  assert.equal(withInterview.detailCase, 'general')
+  assert.ok(withInterview.recruitmentPhases.some(p => p.label === '1차 서류 합격자 발표'))
+  assert.ok(withInterview.recruitmentPhases.some(p => p.label === '2차 면접 기간'))
+
+  const withoutInterview = mapCmsProgramToPlatformDetail({
+    ...soloInd,
+    interviewEnabled: false,
+  })
+  assert.ok(!withoutInterview.recruitmentPhases.some(p => p.label === '1차 서류 합격자 발표'))
+  assert.ok(!withoutInterview.recruitmentPhases.some(p => p.label === '2차 면접 기간'))
 }
 
 function testMerge() {

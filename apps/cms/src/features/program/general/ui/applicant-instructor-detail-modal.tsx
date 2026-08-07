@@ -20,44 +20,25 @@ import {
 import type {
   ApplicantInstructorRow,
   ApplicantInstructorCareerDetail,
-  ApplicantInstructorEducationItem,
 } from '@/data/mock/applicant-instructors'
 import {
   ProgramDetailTdDivider,
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import {
+  INSTRUCTOR_RESUME_EMPTY_DISPLAY,
+  INSTRUCTOR_RESUME_NO_DATA,
+  instructorAwardsSectionDescription,
+  instructorCareerSectionDescription,
+  instructorEducationSectionDescription,
+  instructorQualificationsSectionDescription,
+  resolveFinalEducationDisplay,
+} from '@/features/program/shared/ui/program-detail/applicant-list/instructor-resume-blocks'
 import './applicant-instructor-detail-modal.css'
 
 const TAB_BASIC = 'basic'
 const TAB_RESUME = 'resume'
-
-/** educationLevel(예: 4년제 졸업) 또는 schoolType(예: 대학 4년제) → 강사 이력서 탭 학력사항 대학상태 배지 표시 */
-function getEducationLevelBadge(educationLevel?: string, schoolType?: string): string {
-  const raw = schoolType ?? educationLevel ?? ''
-  const map: Record<string, string> = {
-    '4년제 졸업': '대학교 4년제',
-    '2년제 졸업': '대학교 2년제',
-    '고등학교 졸업': '고등학교',
-    '4년제 휴학': '대학교 4년제',
-    '4년제 중퇴': '대학교 4년제',
-    '대학원': '대학원',
-    '대학 4년제': '대학교 4년제',
-    '대학 2・3년제': '대학교 2·3년제',
-    '고등학교': '고등학교',
-    '중학교': '중학교',
-  }
-  return map[raw] || raw || '-'
-}
-
-/** 학력 한 건 기간 문자열: "YYYY.MM ~ YYYY.MM" */
-function formatEducationPeriod(item: ApplicantInstructorEducationItem): string {
-  const start = item.enrollmentYear
-  const end = item.graduationYear
-  if (!start) return '-'
-  if (!end) return start
-  return `${start} ~ ${end}`
-}
 
 /** 경력 한 건 기간 문자열: "YYYY.MM ~ 재직중" 또는 "YYYY.MM ~ YYYY.MM(N년)" */
 function formatCareerPeriod(item: ApplicantInstructorCareerDetail): string {
@@ -76,29 +57,6 @@ function getMonthsBetween(from: string, to: string): number {
   const [y1, m1] = from.split('.').map(Number)
   const [y2, m2] = to.split('.').map(Number)
   return (y2 - y1) * 12 + (m2 - m1)
-}
-
-/** 경력 상세 배열에서 총 경력 연수 (재직중은 오늘까지) */
-function getTotalCareerYears(items: ApplicantInstructorCareerDetail[] | undefined): number {
-  if (!items?.length) return 0
-  const today = new Date()
-  let totalMonths = 0
-  for (const item of items) {
-    const start = item.startDate
-    if (!start) continue
-    const [y1, m1] = start.split('.').map(Number)
-    const end = item.isCurrent
-      ? { year: today.getFullYear(), month: today.getMonth() + 1 }
-      : item.endDate
-        ? (() => {
-            const [y2, m2] = item.endDate!.split('.').map(Number)
-            return { year: y2, month: m2 }
-          })()
-        : null
-    if (!end) continue
-    totalMonths += (end.year - y1) * 12 + (end.month - m1)
-  }
-  return Math.floor(totalMonths / 12)
 }
 
 function formatBirthDateAndAgeContent(birthDate?: string, age?: number): ReactNode {
@@ -576,71 +534,46 @@ export function ApplicantInstructorDetailModal({
   )
 
   const resumeTabContent = (() => {
-        const NO_DATA = '데이터 없음'
-        const totalCareerYears = getTotalCareerYears(instructor.careerDetails)
-        const educationBadge =
-          instructor.educations?.[0]?.schoolType != null
-            ? getEducationLevelBadge(undefined, instructor.educations[0].schoolType)
-            : getEducationLevelBadge(instructor.educationLevel)
-        const hasEducation =
-          (instructor.educations?.length ?? 0) > 0 ||
-          (instructor.educationLevel ?? instructor.educationSchoolName)
+        const EMPTY = INSTRUCTOR_RESUME_EMPTY_DISPLAY
+        const educationSummary = instructorEducationSectionDescription(instructor)
+        const careerSummary = instructorCareerSectionDescription(instructor)
+        const qualificationSummary = instructorQualificationsSectionDescription(instructor)
+        const awardsSummary = instructorAwardsSectionDescription(instructor)
+        const finalEducation = resolveFinalEducationDisplay(instructor)
         return (
           <div className="applicant-instructor-detail-modal__resume applicant-instructor-detail-modal__resume--has-content">
             {/* 1. 학력사항: 항상 노출 */}
             <section className="applicant-instructor-detail-modal__resume-section">
               <h3 className="applicant-instructor-detail-modal__resume-section-title">
                 학력사항
-                <span className="applicant-instructor-detail-modal__resume-section-count">
-                  {hasEducation ? educationBadge : NO_DATA}
-                </span>
+                {educationSummary ? (
+                  <span className="applicant-instructor-detail-modal__resume-section-count">
+                    {educationSummary}
+                  </span>
+                ) : null}
               </h3>
               <div className="applicant-instructor-detail-modal__resume-card">
-                {(instructor.educations?.length ?? 0) > 0 ? (
-                  instructor.educations?.map((item, idx) => {
-                    const period = formatEducationPeriod(item)
-                    const schoolLabel = item.schoolName
-                      ? [item.schoolName, item.schoolType ? `(${getEducationLevelBadge(undefined, item.schoolType)})` : ''].filter(Boolean).join(' ')
-                      : NO_DATA
-                    return (
-                      <div
-                        key={idx}
-                        className="applicant-instructor-detail-modal__resume-row applicant-instructor-detail-modal__resume-row--career"
-                      >
-                        <span className="applicant-instructor-detail-modal__resume-row-left">
-                          {period || NO_DATA}
-                        </span>
-                        <span className="applicant-instructor-detail-modal__resume-row-right applicant-instructor-detail-modal__resume-row-right--with-divider">
-                          <span className="applicant-instructor-detail-modal__resume-emphasis applicant-instructor-detail-modal__resume-emphasis--left">
-                            {schoolLabel}
-                          </span>
-                          {item.major ? (
-                            <>
-                              <ProgramDetailTdDivider />
-                              <span className="applicant-instructor-detail-modal__resume-role">
-                                {item.major}
-                              </span>
-                            </>
-                          ) : null}
-                        </span>
-                      </div>
-                    )
-                  })
-                ) : hasEducation ? (
+                {finalEducation ? (
                   <div className="applicant-instructor-detail-modal__resume-row applicant-instructor-detail-modal__resume-row--career">
-                    <span className="applicant-instructor-detail-modal__resume-row-left">-</span>
+                    <span className="applicant-instructor-detail-modal__resume-row-left">
+                      {finalEducation.period ?? '-'}
+                    </span>
                     <span className="applicant-instructor-detail-modal__resume-row-right applicant-instructor-detail-modal__resume-row-right--with-divider">
                       <span className="applicant-instructor-detail-modal__resume-emphasis applicant-instructor-detail-modal__resume-emphasis--left">
-                        {withProgramDetailTdDivider(
-                          [instructor.educationLevel, instructor.educationSchoolName].filter(
-                            Boolean
-                          ) as string[]
-                        )}
+                        {finalEducation.schoolName}
                       </span>
+                      {finalEducation.major ? (
+                        <>
+                          <ProgramDetailTdDivider />
+                          <span className="applicant-instructor-detail-modal__resume-role">
+                            {finalEducation.major}
+                          </span>
+                        </>
+                      ) : null}
                     </span>
                   </div>
                 ) : (
-                  <p className="applicant-instructor-detail-modal__resume-empty">{NO_DATA}</p>
+                  <p className="applicant-instructor-detail-modal__resume-empty">{EMPTY}</p>
                 )}
               </div>
             </section>
@@ -649,9 +582,11 @@ export function ApplicantInstructorDetailModal({
             <section className="applicant-instructor-detail-modal__resume-section">
               <h3 className="applicant-instructor-detail-modal__resume-section-title">
                 경력사항
-                <span className="applicant-instructor-detail-modal__resume-section-count">
-                  {(instructor.careerDetails?.length ?? 0) > 0 ? `${totalCareerYears}년` : NO_DATA}
-                </span>
+                {careerSummary ? (
+                  <span className="applicant-instructor-detail-modal__resume-section-count">
+                    {careerSummary}
+                  </span>
+                ) : null}
               </h3>
               <div className="applicant-instructor-detail-modal__resume-card">
                 {(instructor.careerDetails?.length ?? 0) > 0 ? (
@@ -689,14 +624,14 @@ export function ApplicantInstructorDetailModal({
                               ) : null}
                             </>
                           ) : (
-                            NO_DATA
+                            EMPTY
                           )}
                         </span>
                       </div>
                     )
                   })
                 ) : (
-                  <p className="applicant-instructor-detail-modal__resume-empty">{NO_DATA}</p>
+                  <p className="applicant-instructor-detail-modal__resume-empty">{EMPTY}</p>
                 )}
               </div>
             </section>
@@ -705,9 +640,11 @@ export function ApplicantInstructorDetailModal({
             <section className="applicant-instructor-detail-modal__resume-section">
               <h3 className="applicant-instructor-detail-modal__resume-section-title">
                 자격 및 면허
-                <span className="applicant-instructor-detail-modal__resume-section-count">
-                  {(instructor.qualifications?.length ?? 0) > 0 ? `${instructor.qualifications?.length}개` : NO_DATA}
-                </span>
+                {qualificationSummary ? (
+                  <span className="applicant-instructor-detail-modal__resume-section-count">
+                    {qualificationSummary}
+                  </span>
+                ) : null}
               </h3>
               <div className="applicant-instructor-detail-modal__resume-card">
                 {(instructor.qualifications?.length ?? 0) > 0 ? (
@@ -717,7 +654,7 @@ export function ApplicantInstructorDetailModal({
                       className="applicant-instructor-detail-modal__resume-row"
                     >
                       <span className="applicant-instructor-detail-modal__resume-row-left">
-                        {item.year ?? NO_DATA}
+                        {item.year ?? EMPTY}
                       </span>
                       <span className="applicant-instructor-detail-modal__resume-row-right applicant-instructor-detail-modal__resume-row-right--black">
                         {item.name ? (
@@ -725,13 +662,13 @@ export function ApplicantInstructorDetailModal({
                             {item.name}
                           </span>
                         ) : (
-                          NO_DATA
+                          EMPTY
                         )}
                       </span>
                     </div>
                   ))
                 ) : (
-                  <p className="applicant-instructor-detail-modal__resume-empty">{NO_DATA}</p>
+                  <p className="applicant-instructor-detail-modal__resume-empty">{EMPTY}</p>
                 )}
               </div>
             </section>
@@ -740,9 +677,11 @@ export function ApplicantInstructorDetailModal({
             <section className="applicant-instructor-detail-modal__resume-section">
               <h3 className="applicant-instructor-detail-modal__resume-section-title">
                 수상 및 수료 내역
-                <span className="applicant-instructor-detail-modal__resume-section-count">
-                  {(instructor.awards?.length ?? 0) > 0 ? `${instructor.awards?.length}개` : NO_DATA}
-                </span>
+                {awardsSummary ? (
+                  <span className="applicant-instructor-detail-modal__resume-section-count">
+                    {awardsSummary}
+                  </span>
+                ) : null}
               </h3>
               <div className="applicant-instructor-detail-modal__resume-card">
                 {(instructor.awards?.length ?? 0) > 0 ? (
@@ -752,7 +691,7 @@ export function ApplicantInstructorDetailModal({
                       className="applicant-instructor-detail-modal__resume-row"
                     >
                       <span className="applicant-instructor-detail-modal__resume-row-left">
-                        {item.year ?? NO_DATA}
+                        {item.year ?? EMPTY}
                       </span>
                       <span className="applicant-instructor-detail-modal__resume-row-right applicant-instructor-detail-modal__resume-row-right--black">
                         {item.name ? (
@@ -760,13 +699,13 @@ export function ApplicantInstructorDetailModal({
                             {item.name}
                           </span>
                         ) : (
-                          NO_DATA
+                          EMPTY
                         )}
                       </span>
                     </div>
                   ))
                 ) : (
-                  <p className="applicant-instructor-detail-modal__resume-empty">{NO_DATA}</p>
+                  <p className="applicant-instructor-detail-modal__resume-empty">{EMPTY}</p>
                 )}
               </div>
             </section>
@@ -801,7 +740,7 @@ export function ApplicantInstructorDetailModal({
                   <p className="applicant-instructor-detail-modal__resume-free-writing-text">
                     {item.content != null && String(item.content).trim() !== ''
                       ? item.content
-                      : NO_DATA}
+                      : INSTRUCTOR_RESUME_NO_DATA}
                   </p>
                 </div>
               </section>

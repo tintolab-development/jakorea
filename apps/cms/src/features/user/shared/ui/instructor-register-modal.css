@@ -40,6 +40,14 @@
   flex: 0 0 auto;
 }
 
+.instructor-register-modal__ja-grade {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  width: 100%;
+}
+
 /** DetailInfoForm 편집 슬롯에서 CmsInput width 100%가 실제로 꽉 차도록 */
 .instructor-register-modal__full-width-input {
   flex: 1 1 0;

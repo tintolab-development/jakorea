@@ -57,12 +57,7 @@ export function TeacherProfileStep({ signUp }: TeacherProfileStepProps) {
                 profile.requiresSchoolSearch ? profile.openSchoolSearchModal : undefined
               }
             />
-            <PFButton
-              size="xlarge"
-              variant="secondary"
-              width="100%"
-              onClick={profile.openSchoolSearchModal}
-            >
+            <PFButton size="xlarge" variant="secondary" onClick={profile.openSchoolSearchModal}>
               검색
             </PFButton>
           </div>

@@ -11,7 +11,7 @@
  */
 export interface AdminAccountPasswordResetRequest {
   /**
-     * 로그인 이메일과 동일한 임시 비밀번호 또는 영문·숫자·특수문자를 조합한 8자 이상의 비밀번호
+     * 로그인 이메일과 다르고 영문·숫자·특수문자를 조합한 8자 이상의 임시 비밀번호
      * @minLength 1
      */
   newPassword: string;

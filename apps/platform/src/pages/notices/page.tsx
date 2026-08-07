@@ -11,8 +11,10 @@ import {
 } from '@/features/notice'
 import { PFDivider, PFPagination, PFSearchInput, PFText } from '@/shared/ui'
 import styles from './page.module.css'
+import { useNavigate } from 'react-router-dom'
 
 export function NoticesPage() {
+  const navigate = useNavigate()
   const [params, setParams] = useState(readNoticesListParams)
   const notices = useMockNoticesCatalog()
 
@@ -84,7 +86,7 @@ export function NoticesPage() {
               <NoticeListItemRow
                 key={item.id}
                 item={item}
-                onClick={() => window.location.assign(noticeDetailPath(item.id))}
+                onClick={() => navigate(noticeDetailPath(item.id))}
               />
             ))
           )}

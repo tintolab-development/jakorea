@@ -4,7 +4,11 @@ alwaysApply: false
 category: design
 ---
 
-# 필터 영역 공통 규격
+# 필터 영역 공통 규격 (CMS)
+
+**공유 치수 SSOT (CMS·Admin):** [cms-admin-ui/filter-area-dimensions.mdc](../../../../.cursor/rules/cms-admin-ui/filter-area-dimensions.mdc) · [list-filter-url-sync](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc)
+
+아래는 **CMS 구현 경로**와 **addressRegion·프로그램 1뎁스 등 CMS 전용** 규칙.
 
 **토큰:** `apps/cms/src/shared/components/filter-controls-common.css`  
 **레이아웃:** `TableFilterGroup` · `FilterTableLayout` · `UnifiedFilterCard`
@@ -13,7 +17,7 @@ category: design
 
 | 항목 | 값 | 토큰/상수 |
 |------|-----|-----------|
-| 단일 검색·셀렉트 폭 | **240px** | `--filter-control-width` · `--filter-control-max-width` · `FILTER_CONTROL_MAX_WIDTH_PX` |
+| 단일 검색·셀렉트 폭 | **240px** (공유 SSOT) | `--filter-control-width` · `--filter-control-max-width` · `FILTER_CONTROL_MAX_WIDTH_PX` |
 | 컨트롤 높이 | 44px (≤768px: 40px) | `--filter-control-height` |
 | 필터 칸 사이 gap | 12px | `--filter-field-gap` |
 | 레이블·컨트롤 gap | 6px | `--filter-label-control-gap` |

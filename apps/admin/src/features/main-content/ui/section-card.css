@@ -1,0 +1,221 @@
+.main-content-section-card__title-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+
+.main-content-section-card__description {
+  margin: 0;
+}
+
+.main-content-section-card__body {
+  min-width: 0;
+}
+
+/*
+ * view ↔ edit UI shift 방지
+ * - 단줄: padding 12×2 + medium control 40 = 64px
+ * - 다줄(rows=2): padding 12×2 + textarea ~76px ≈ 100px
+ */
+.main-content-section-card .detail-info-form__field-content {
+  min-height: 64px;
+  box-sizing: border-box;
+}
+
+.main-content-section-card .detail-info-form__field-content--view:has(.main-content-preline),
+.main-content-section-card .detail-info-form__field-content--edit:has(.cms-textarea) {
+  min-height: 100px;
+  align-items: flex-start;
+}
+
+.main-content-section-card .main-content-preline {
+  white-space: pre-line;
+  width: 100%;
+  min-height: 76px;
+  display: flex;
+  align-items: center;
+}
+
+/*
+ * td 안 중첩 테이블 (시안)
+ * 규격: apps/admin/.cursor/rules/design/detail-info-nested-table.mdc
+ * — 바깥 셀: padding 20px, 격자 100% 폭
+ * — edit 슬롯의 `> * { display:flex }` 오버라이드 필수
+ */
+.main-content-section-card .detail-info-form__field-content:has(.main-content-nested-table) {
+  display: flex;
+  padding: 20px;
+  justify-content: stretch;
+  align-items: stretch;
+  gap: 0;
+  min-height: 0;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/*
+ * edit 슬롯 `> * { display:flex }` 보다 강하게 격자 레이아웃 유지
+ * (view/edit 동일 컴포넌트)
+ */
+.main-content-section-card
+  .detail-info-form__field-content:has(.main-content-nested-table)
+  > .main-content-nested-table {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  margin-block: 0;
+  align-self: stretch;
+  align-items: stretch;
+}
+
+/* ── 공통 중첩 격자 ───────────────────────────────── */
+
+.main-content-nested-table {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-8, 8px);
+  overflow: hidden;
+  background: #fff;
+}
+
+/* 실적: 2열 × 2행 */
+.main-content-section-card
+  .detail-info-form__field-content:has(.main-content-nested-table)
+  > .main-content-nested-table--metrics,
+.main-content-nested-table--metrics {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+}
+
+/* CTA: 행마다 2셀 */
+.main-content-section-card
+  .detail-info-form__field-content:has(.main-content-nested-table)
+  > .main-content-nested-table--cta,
+.main-content-nested-table--cta {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content-nested-table__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-width: 0;
+}
+
+.main-content-nested-table__row + .main-content-nested-table__row {
+  border-top: 1px solid var(--table-line, #e0e0e0);
+}
+
+/*
+ * 셀: 라벨(회색) | 값
+ * 긴 라벨(전문 협업 학교…)도 높이 자동 확장, 세로 중앙 정렬
+ */
+.main-content-nested-table__cell {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+  align-items: stretch;
+  min-width: 0;
+  min-height: 50px;
+  box-sizing: border-box;
+}
+
+/* 메트릭 2×2 구분선 */
+.main-content-nested-table--metrics > .main-content-nested-table__cell:nth-child(odd) {
+  border-right: 1px solid var(--table-line, #e0e0e0);
+}
+
+.main-content-nested-table--metrics > .main-content-nested-table__cell:nth-child(-n + 2) {
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+/* CTA 행 내 좌·우 셀 구분 */
+.main-content-nested-table__row > .main-content-nested-table__cell:first-child {
+  border-right: 1px solid var(--table-line, #e0e0e0);
+}
+
+.main-content-nested-table__label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 12px 16px;
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  );
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+  text-align: center;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.main-content-nested-table__value {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+}
+
+.main-content-nested-table__value > * {
+  width: 100%;
+  min-width: 0;
+}
+
+.main-content-nested-table__url {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 실적 수정: 수치 인풋 + 단위 고정 표기 */
+.main-content-metric-edit {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.main-content-metric-edit .cms-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 160px;
+}
+
+.main-content-metric-edit__unit {
+  flex-shrink: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+  white-space: nowrap;
+}
+
+.main-content-metric-view {
+  white-space: nowrap;
+}
+
+.main-content-section-card .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
+  resize: none;
+}

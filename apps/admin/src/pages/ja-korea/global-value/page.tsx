@@ -1,195 +1,268 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Button, Input, Space, Switch, Typography, message } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
-import type { GlobalValueItem } from '@/features/ja-korea/global-value'
-import {
-  GlobalValueFixedIcon,
-  useGlobalValueStore,
-} from '@/features/ja-korea/global-value'
-import {
-  SortableDataTable,
-  SortableDragHandle,
-} from '@/shared/ui/sortable-data-table'
-import styles from './page.module.css'
-
-const { Text, Paragraph } = Typography
-const { TextArea } = Input
-
 /**
- * JA Korea > 기관 소개 > JA Global Value
- * Notion: 1-2. JA Global Value 관리
+ * JA Global Value 관리
  */
+
+import { useCallback, useMemo, useState } from 'react'
+import { Switch } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
+import type { GlobalValue } from '@/entities/global-value/model/types'
+import {
+  useGlobalValuesList,
+  useReorderGlobalValues,
+  useSaveGlobalValues,
+  useSetGlobalValueActive,
+} from '@/features/global-value/api/hooks'
+import { globalValueQueryKeys } from '@/features/global-value/api/query-keys'
+import { GLOBAL_VALUES_CHANGED_EVENT } from '@/features/global-value/api/store'
+import {
+  GlobalValueDragHandle,
+  GlobalValuesSortableTable,
+} from '@/features/global-value/ui/sortable-table'
+import { ValueIcon } from '@/features/global-value/ui/value-icon'
+import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
+import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+
+import './page.css'
+type DraftTexts = Record<string, { mainText: string; subText: string }>
+
+function buildDraftTexts(rows: GlobalValue[]): DraftTexts {
+  return Object.fromEntries(
+    rows.map(row => [row.id, { mainText: row.mainText, subText: row.subText }])
+  )
+}
+
 export function GlobalValuePage() {
-  const items = useGlobalValueStore(s => s.items)
-  const setActive = useGlobalValueStore(s => s.setActive)
-  const reorder = useGlobalValueStore(s => s.reorder)
-  const saveAll = useGlobalValueStore(s => s.saveAll)
+  const { showAlert } = useCmsAlert()
+  const listQuery = useGlobalValuesList()
+  const reorderMutation = useReorderGlobalValues()
+  const setActiveMutation = useSetGlobalValueActive()
+  const saveMutation = useSaveGlobalValues()
 
-  const [editing, setEditing] = useState(false)
-  const [drafts, setDrafts] = useState<GlobalValueItem[]>(items)
+  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
+  const [isEditing, setIsEditing] = useState(false)
+  const [draftTexts, setDraftTexts] = useState<DraftTexts>({})
 
-  useEffect(() => {
-    if (!editing) setDrafts(items.map(row => ({ ...row })))
-  }, [editing, items])
+  useInvalidateOnWindowEvent(GLOBAL_VALUES_CHANGED_EVENT, globalValueQueryKeys.lists())
 
-  const rows = editing ? drafts : items
-
-  const startEdit = useCallback(() => {
-    setDrafts(items.map(row => ({ ...row })))
-    setEditing(true)
-  }, [items])
-
-  const cancelEdit = useCallback(() => {
-    setDrafts(items.map(row => ({ ...row })))
-    setEditing(false)
-  }, [items])
-
-  const handleSave = useCallback(() => {
-    const empty = drafts.find(row => !row.mainText.trim())
-    if (empty) {
-      message.error('메인 텍스트를 입력해 주세요.')
-      return
-    }
-    saveAll(drafts)
-    setEditing(false)
-    message.success('JA Global Value가 저장되었습니다.')
-  }, [drafts, saveAll])
-
-  const handleToggle = useCallback(
-    (row: GlobalValueItem, checked: boolean) => {
-      if (editing) {
-        setDrafts(prev =>
-          prev.map(item => (item.id === row.id ? { ...item, active: checked } : item))
-        )
-        return
-      }
-      setActive(row.id, checked)
+  const handleRowsReorder = useCallback(
+    (reorderedRows: GlobalValue[]) => {
+      void reorderMutation.mutateAsync(reorderedRows.map(row => row.id)).catch(() => {
+        showAlert({
+          title: '순서 변경 실패',
+          content: 'JA Global Value 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
+        })
+        void listQuery.refetch()
+      })
     },
-    [editing, setActive]
+    [listQuery, reorderMutation, showAlert]
   )
 
-  const handleTextChange = useCallback(
-    (id: GlobalValueItem['id'], field: 'mainText' | 'subText', value: string) => {
-      setDrafts(prev =>
-        prev.map(item => (item.id === id ? { ...item, [field]: value } : item))
-      )
+  const handleToggleActive = useCallback(
+    (id: string, isActive: boolean) => {
+      void setActiveMutation.mutateAsync({ id, isActive }).catch(() => {
+        showAlert({
+          title: '사용 여부 변경 실패',
+          content: '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
+        })
+        void listQuery.refetch()
+      })
+    },
+    [listQuery, setActiveMutation, showAlert]
+  )
+
+  const handleStartEdit = useCallback(() => {
+    setDraftTexts(buildDraftTexts(rows))
+    setIsEditing(true)
+  }, [rows])
+
+  const handleCancelEdit = useCallback(() => {
+    setDraftTexts({})
+    setIsEditing(false)
+  }, [])
+
+  const handleDraftChange = useCallback(
+    (id: string, field: 'mainText' | 'subText', value: string) => {
+      setDraftTexts(prev => ({
+        ...prev,
+        [id]: {
+          mainText: field === 'mainText' ? value : (prev[id]?.mainText ?? ''),
+          subText: field === 'subText' ? value : (prev[id]?.subText ?? ''),
+        },
+      }))
     },
     []
   )
 
-  const handleReorder = useCallback(
-    (reordered: GlobalValueItem[]) => {
-      const ids = reordered.map(row => row.id)
-      if (editing) {
-        setDrafts(reordered.map((row, index) => ({ ...row, order: index })))
-        return
-      }
-      reorder(ids)
-    },
-    [editing, reorder]
-  )
+  const handleSave = useCallback(async () => {
+    try {
+      await saveMutation.mutateAsync(
+        rows.map(row => ({
+          id: row.id,
+          mainText: draftTexts[row.id]?.mainText ?? row.mainText,
+          subText: draftTexts[row.id]?.subText ?? row.subText,
+        }))
+      )
+      setDraftTexts({})
+      setIsEditing(false)
+    } catch {
+      showAlert({
+        title: '저장 실패',
+        content: 'JA Global Value 저장에 실패했습니다. 다시 시도해 주세요.',
+      })
+    }
+  }, [draftTexts, rows, saveMutation, showAlert])
 
-  const columns = useMemo<ColumnsType<GlobalValueItem>>(
+  const columns = useMemo<ColumnsType<GlobalValue>>(
     () => [
       {
         title: '순서',
         key: 'sort',
-        width: 56,
+        width: TABLE_COLUMN_WIDTHS.sort,
+        className: CMS_TABLE_SORT_COL_CLASS,
         align: 'center',
-        render: () => <SortableDragHandle />,
+        render: () => <GlobalValueDragHandle />,
       },
       {
         title: 'No.',
         key: 'no',
-        width: 56,
+        width: TABLE_COLUMN_WIDTHS.index,
+        className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
-        render: (_v, _r, index) => index + 1,
+        render: (_value, _record, index) => index + 1,
       },
       {
         title: '사용 여부',
-        dataIndex: 'active',
-        width: 100,
+        key: 'isActive',
+        width: TABLE_COLUMN_WIDTHS.usage,
         align: 'center',
-        render: (active: boolean, row) => (
+        className: CMS_TABLE_USAGE_COL_CLASS,
+        render: (_value, record) => (
           <Switch
-            checked={active}
-            checkedChildren="사용"
-            unCheckedChildren="미사용"
-            onChange={checked => handleToggle(row, checked)}
+            checked={record.isActive}
+            onChange={checked => handleToggleActive(record.id, checked)}
+            aria-label={`${record.mainText} 사용 여부`}
           />
         ),
       },
       {
         title: '아이콘',
-        dataIndex: 'iconKey',
+        key: 'icon',
         width: 88,
         align: 'center',
-        render: (iconKey: GlobalValueItem['iconKey']) => (
-          <GlobalValueFixedIcon iconKey={iconKey} />
-        ),
+        render: (_value, record) => <ValueIcon iconKey={record.iconKey} size={40} />,
       },
       {
         title: '메인 텍스트',
-        dataIndex: 'mainText',
-        width: 220,
-        render: (mainText: string, row) =>
-          editing ? (
-            <TextArea
-              value={mainText}
-              rows={2}
-              onChange={e => handleTextChange(row.id, 'mainText', e.target.value)}
-              placeholder="메인 텍스트를 입력하세요"
-            />
-          ) : (
-            <Paragraph className={styles.preline}>{mainText || '—'}</Paragraph>
-          ),
+        key: 'mainText',
+        render: (_value, record) => {
+          const value = draftTexts[record.id]?.mainText ?? record.mainText
+          if (isEditing) {
+            return (
+              <CmsTextArea
+                inputSize="medium"
+                width="100%"
+                rows={2}
+                value={value}
+                onChange={e => handleDraftChange(record.id, 'mainText', e.target.value)}
+                placeholder="메인 텍스트를 입력하세요"
+                aria-label={`메인 텍스트 ${record.sortOrder}`}
+              />
+            )
+          }
+          return (
+            <span className="global-value-page__main-text" title={value || undefined}>
+              {value || '-'}
+            </span>
+          )
+        },
       },
       {
         title: '서브 텍스트',
-        dataIndex: 'subText',
-        render: (subText: string, row) =>
-          editing ? (
-            <TextArea
-              value={subText}
-              rows={3}
-              onChange={e => handleTextChange(row.id, 'subText', e.target.value)}
-              placeholder="서브 텍스트를 입력하세요"
-            />
-          ) : (
-            <Paragraph className={styles.preline}>{subText || '—'}</Paragraph>
-          ),
+        key: 'subText',
+        width: 280,
+        render: (_value, record) => {
+          const value = draftTexts[record.id]?.subText ?? record.subText
+          if (isEditing) {
+            return (
+              <CmsTextArea
+                inputSize="medium"
+                width="100%"
+                rows={2}
+                value={value}
+                onChange={e => handleDraftChange(record.id, 'subText', e.target.value)}
+                placeholder="서브 텍스트를 입력하세요"
+                aria-label={`서브 텍스트 ${record.sortOrder}`}
+              />
+            )
+          }
+          return (
+            <span className="global-value-page__sub-text" title={value || undefined}>
+              {value || '-'}
+            </span>
+          )
+        },
       },
     ],
-    [editing, handleTextChange, handleToggle]
+    [draftTexts, handleDraftChange, handleToggleActive, isEditing]
   )
 
   return (
-    <div className={styles.page}>
-      <div className={styles.toolbar}>
-        <Text type="secondary">
-          가치 항목은 5개로 고정됩니다. 아이콘은 수정·삭제할 수 없습니다.
-        </Text>
-        {editing ? (
-          <Space>
-            <Button onClick={cancelEdit}>취소</Button>
-            <Button type="primary" onClick={handleSave}>
-              저장
-            </Button>
-          </Space>
-        ) : (
-          <Button type="primary" onClick={startEdit}>
-            수정
-          </Button>
-        )}
-      </div>
+    <div className="global-value-page">
+      <div className="admin-list-card">
+        <div className="admin-list-toolbar">
+          <div className="table-header-title--wrapper">
+            <span className="table-title">JA Global Value 관리</span>
+            <span className="table-description">
+              아이콘 이미지는 수정 및 삭제가 불가합니다.
+            </span>
+          </div>
+          <div className="table-header-actions--wrapper">
+            {isEditing ? (
+              <>
+                <CmsButton
+                  variant="secondary"
+                  size="large"
+                  type="button"
+                  onClick={handleCancelEdit}
+                  disabled={saveMutation.isPending}
+                >
+                  취소
+                </CmsButton>
+                <CmsButton
+                  variant="primary"
+                  size="large"
+                  type="button"
+                  loading={saveMutation.isPending}
+                  onClick={() => {
+                    void handleSave()
+                  }}
+                >
+                  저장
+                </CmsButton>
+              </>
+            ) : (
+              <CmsButton
+                variant="primary"
+                size="large"
+                type="button"
+                onClick={handleStartEdit}
+                disabled={listQuery.isLoading || rows.length === 0}
+              >
+                수정
+              </CmsButton>
+            )}
+          </div>
+        </div>
 
-      <div className={styles.tableWrap}>
-        <SortableDataTable
-          rows={rows}
-          columns={columns}
-          scrollX={960}
-          onRowsReorder={handleReorder}
-        />
+        <div className="global-value-page__table-scroll">
+          <GlobalValuesSortableTable
+            rows={rows}
+            columns={columns}
+            loading={listQuery.isLoading}
+            onRowsReorder={handleRowsReorder}
+          />
+        </div>
       </div>
     </div>
   )

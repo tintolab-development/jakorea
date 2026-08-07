@@ -25,6 +25,7 @@ import { PFPagination, PFSearchFilter, PFSearchInput, PFTabs, PFText } from '@/s
 import jaArrowUrl from '@/shared/assets/brand/ja-arrow.svg'
 import { SearchListLayout } from '@/widgets/search-list-layout'
 import styles from './page.module.css'
+import { useNavigate } from 'react-router-dom'
 
 const PAGE_SIZE = 10
 
@@ -37,6 +38,7 @@ function parseAudienceValue(value: string): ProgramCategory {
 }
 
 export function ProgramsPage() {
+  const navigate = useNavigate()
   const [params, setParams] = useState(readProgramsListParams)
   const programs = useMockProgramsCatalog()
 
@@ -166,7 +168,7 @@ export function ProgramsPage() {
               key={program.id}
               program={program}
               onClick={() =>
-                window.location.assign(programDetailPath(program.id, getProgramsListReturnPath()))
+                navigate(programDetailPath(program.id, getProgramsListReturnPath()))
               }
             />
           ))}

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { PFText } from '@/shared/ui'
 import logoUrl from '@/shared/assets/brand/ja-logo.svg'
 import externalLinkIconUrl from '@/shared/assets/icons/arrow-diagonal-black.svg'
@@ -43,15 +44,24 @@ function NavigationSubMenuItem({ item }: { item: NavigationSubItem }) {
   )
 
   if (item.href && !isDisabled) {
+    if (item.external) {
+      return (
+        <a
+          className={itemClassName}
+          href={item.href}
+          role="menuitem"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {content}
+        </a>
+      )
+    }
+
     return (
-      <a
-        className={itemClassName}
-        href={item.href}
-        role="menuitem"
-        {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : undefined)}
-      >
+      <Link className={itemClassName} to={item.href} role="menuitem">
         {content}
-      </a>
+      </Link>
     )
   }
 
@@ -67,12 +77,22 @@ export function HeaderDesktop({
   onLogout,
   transparent = false,
 }: HeaderDesktopProps) {
+  const navigate = useNavigate()
+  const { pathname } = useLocation()
   const [activeNavigationItem, setActiveNavigationItem] = useState(() =>
-    getActiveNavigationItem(window.location.pathname)
+    getActiveNavigationItem(pathname),
   )
   const [isNavOpen, setIsNavOpen] = useState(false)
 
-  const headerClassName = [styles.header, transparent ? styles.headerTransparent : undefined]
+  useEffect(() => {
+    setActiveNavigationItem(getActiveNavigationItem(pathname))
+  }, [pathname])
+
+  const headerClassName = [
+    styles.header,
+    transparent ? styles.headerTransparent : undefined,
+    isNavOpen ? styles.headerNavOpen : undefined,
+  ]
     .filter(Boolean)
     .join(' ')
 
@@ -88,9 +108,9 @@ export function HeaderDesktop({
       }}
     >
       <div className={styles.inner}>
-        <a className={styles.logoLink} href="/" aria-label="JA Korea 홈">
+        <Link className={styles.logoLink} to="/" aria-label="JA Korea 홈">
           <img className={styles.logo} src={logoUrl} alt="JA Korea" />
-        </a>
+        </Link>
 
         <nav
           className={styles.navigation}
@@ -119,13 +139,15 @@ export function HeaderDesktop({
                   setActiveNavigationItem(group.label)
                   const href = 'href' in group ? group.href : undefined
                   if (href) {
-                    window.location.assign(href)
+                    navigate(href)
                   }
                 }}
               >
-                <PFText typo="bd-lg-sb" color={isActive ? 'primary-500' : 'black'}>
-                  {group.label}
-                </PFText>
+                <span className={styles.navigationButtonLabel}>
+                  <PFText typo="bd-lg-sb" color={isActive ? 'primary-500' : 'black'}>
+                    {group.label}
+                  </PFText>
+                </span>
               </button>
             )
           })}
@@ -147,7 +169,7 @@ export function HeaderDesktop({
 
                   const route = getLoggedInActionRoute(label)
                   if (route) {
-                    window.location.assign(route)
+                    navigate(route)
                   }
                 }}
               >
@@ -165,7 +187,7 @@ export function HeaderDesktop({
                   className={styles.userActionButton}
                   type="button"
                   key={action}
-                  onClick={() => window.location.assign(route)}
+                  onClick={() => navigate(route)}
                 >
                   <PFText typo="bd-md-rg" color="neutral-cool-600">
                     {action}

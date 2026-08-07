@@ -1,0 +1,75 @@
+---
+description: Admin 필터 영역 — admin-filter-area 구현 (공통 치수는 cms-admin-ui)
+globs:
+  - apps/admin/src/pages/**/*
+  - apps/admin/src/shared/ui/admin-filter-area.css
+  - apps/admin/src/shared/ui/filter-controls-common.css
+alwaysApply: false
+---
+
+# Admin 필터 영역 (어댑터)
+
+**치수·금지:** 공유 SSOT → [filter-area-dimensions.mdc](../../../../.cursor/rules/cms-admin-ui/filter-area-dimensions.mdc)  
+**URL 동기화:** [list-filter-url-sync.mdc](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc)
+
+## Admin path
+
+| 항목 | 경로 |
+|------|------|
+| 토큰 CSS | `apps/admin/src/shared/ui/filter-controls-common.css` |
+| 레이아웃 | `apps/admin/src/shared/ui/admin-filter-area.css` · `admin-filter-area` |
+| 상수 | `apps/admin/src/shared/constants/filter-field-width.ts` |
+
+## 마크업 (1행)
+
+```tsx
+<div className="admin-filter-area">
+  <div className="admin-filter-area__field admin-filter-area__field--control">
+    <p className="admin-filter-area__label">…</p>
+    <CmsSelect inputSize="large" width={FILTER_CONTROL_MAX_WIDTH_PX} … />
+  </div>
+  <div className="admin-filter-area__field admin-filter-area__field--date-range">
+    <p className="admin-filter-area__label">게시 기간</p>
+    <CmsDateRangePicker inputSize="large" width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX} … />
+  </div>
+  <div className="admin-filter-area__actions">
+    <CmsButton className="admin-filter-area__search-button" size="large" width={FILTER_SEARCH_BUTTON_WIDTH_PX}>
+      조회
+    </CmsButton>
+  </div>
+</div>
+```
+
+## 2행 (CMS `mergedAutoFillTrailingFieldKeys` 미러)
+
+시안처럼 **1행 필드 / 2행 trailing + 조회**가 필요할 때 (예: 공지 — 작성일·조회 하단).
+
+CMS: `multiRowResponsiveLayout="merged-auto-fill"` + `mergedAutoFillTrailingFieldKeys`  
+→ Admin:
+
+```tsx
+<div className="admin-filter-area admin-filter-area--split">
+  <div className="admin-filter-area__head">
+    {/* 상단 필드들 — flex-wrap, 240/500 고정 */}
+  </div>
+  <div className="admin-filter-area__bottom">
+    <div className="admin-filter-area__bottom-fields">
+      {/* trailing 필드 (예: 작성일 dateRange) */}
+    </div>
+    <div className="admin-filter-area__actions">…조회…</div>
+  </div>
+</div>
+```
+
+- 행 간 gap = `--filter-field-gap` (12px)
+- 조회는 하단 행 `margin-left: auto` (우측)
+- 필드 폭 stretch(`flex: 1` · `%`) 금지 — 공유 치수 SSOT
+
+## 관련 (Admin)
+
+- [list-page-composition.mdc](../coding/list-page-composition.mdc)
+- [list-table-spacing.mdc](./list-table-spacing.mdc)
+- [styling-tokens.mdc](./styling-tokens.mdc)
+- CMS: [table-filter-group-layout.mdc](../../../cms/.cursor/rules/design/table-filter-group-layout.mdc)
+
+**Last updated:** 2026-08-06

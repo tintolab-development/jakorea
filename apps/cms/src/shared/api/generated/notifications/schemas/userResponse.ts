@@ -15,7 +15,6 @@ import type { UserResponseInstructorStatus } from './userResponseInstructorStatu
 import type { UserResponseProgramRoles } from './userResponseProgramRoles';
 
 export interface UserResponse {
-  id?: string;
   email?: string;
   name?: string;
   nameEn?: string;
@@ -25,11 +24,11 @@ export interface UserResponse {
   adminLevel?: string;
   programRoles?: UserResponseProgramRoles;
   schoolInfo?: SchoolInfo;
-  affiliatedSchoolUserId?: string;
   affiliatedSchoolName?: string;
   instructorMemberProfile?: string;
   instructorInfo?: InstructorInfo;
-  instructorId?: string;
+  /** 강사 프로필 PK. 회원 PK인 memberId와 구분됩니다. */
+  instructorId?: number;
   interviewStatus?: string;
   interviewScheduledAt?: string;
   interviewCompletedAt?: string;
@@ -55,9 +54,10 @@ export interface UserResponse {
   guardianInfo?: GuardianInfo;
   termsAgreements?: TermsAgreementRow[];
   actionState?: UserDetailActionState;
-  adminAccountId?: number;
   roleCode?: string;
+  /** 회원 PK. 일반/학교/강사 회원 응답에서만 반환됩니다. */
   memberId?: number;
+  /** 외부 참조 및 감사용 불변 UUID. 조회/수정/삭제 경로에는 memberId를 사용합니다. */
   uuid?: string;
   status?: string;
   loginEnabled?: boolean;

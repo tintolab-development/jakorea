@@ -27,7 +27,8 @@ export function ModalsExtendedSection() {
       </p>
       <p className="ds-note">
         카드형 셸 — 기본 800 · padding <code>26px 30px 34px</code> · radius 12 · shadow{' '}
-        <code>0 0 25px rgba(0,0,0,0.35)</code> · 푸터 medium 120×40 우측 정렬.
+        <code>0 0 25px rgba(0,0,0,0.35)</code> · 푸터 large 140×44 우측 정렬 (
+        <code>cms-admin-ui/cms-button-action-sizes</code>).
       </p>
 
       <DsDemo label="ContentModal">

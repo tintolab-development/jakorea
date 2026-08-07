@@ -40,7 +40,9 @@ export function BasicInfoLayoutRenderer({
             'user-basic-info-section',
             resolution.splitSectionVariant === 'school_teacher'
               ? 'user-basic-info-section--school-teacher-profile-card'
-              : '',
+              : resolution.splitSectionVariant === 'instructor'
+                ? 'user-basic-info-section--instructor-profile-card'
+                : '',
           ]
             .filter(Boolean)
             .join(' ')}

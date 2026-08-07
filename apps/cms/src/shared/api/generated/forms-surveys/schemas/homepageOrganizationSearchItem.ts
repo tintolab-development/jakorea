@@ -10,7 +10,7 @@
  * 회원 포탈 학교·기관 검색 항목
  */
 export interface HomepageOrganizationSearchItem {
-  /** 학교·기관 ID */
+  /** CMS 학교 PK. 회원가입 요청의 schoolOrganizationId 또는 organizationId 호환 필드로 전달합니다. */
   organizationId?: number;
   /** 학교·기관명 */
   name?: string;

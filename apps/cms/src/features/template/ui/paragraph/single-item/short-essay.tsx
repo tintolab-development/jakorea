@@ -17,6 +17,7 @@ export function ShortEssay({
   paragraphInteractionMode = 'authoring',
   activeItemId,
   onSelectItem,
+  readOnlyFilledItems = false,
 }: {
   paragraph: ShortEssayParagraph
   onChange: (next: ShortEssayParagraph) => void
@@ -25,6 +26,8 @@ export function ShortEssay({
   paragraphInteractionMode?: ParagraphBodyInteractionMode
   activeItemId?: string | null
   onSelectItem?: (itemId: string | null) => void
+  /** 값이 채워진 항목은 입력 대신 검정 고정 텍스트로 표시 */
+  readOnlyFilledItems?: boolean
 }) {
   const paragraphRef = useRef(paragraph)
   paragraphRef.current = paragraph
@@ -108,14 +111,32 @@ export function ShortEssay({
 
   return (
     <div className="short-essay-items">
-      {items.map((item, index) => (
+      {items.map((item, index) => {
+        const itemLabel = showItemTitle
+          ? (item.label ?? `Title ${String(index + 1).padStart(2, '0')}`)
+          : undefined
+        const isReadOnlyFilled = readOnlyFilledItems && (item.bodyText ?? '').trim() !== ''
+
+        if (isReadOnlyFilled) {
+          return (
+            <div key={item.id} className="short-essay-item-row short-essay-item-row--read-only">
+              {itemLabel != null ? (
+                <span className="short-essay-item-row__label">
+                  <span className="short-essay-item-row__bullet" aria-hidden>
+                    ·
+                  </span>
+                  {itemLabel}
+                </span>
+              ) : null}
+              <span className="short-essay-item-row__value">{item.bodyText}</span>
+            </div>
+          )
+        }
+
+        return (
         <div key={item.id} className="short-essay-item-row">
           <ParagraphLabelInput
-            label={
-              showItemTitle
-                ? (item.label ?? `Title ${String(index + 1).padStart(2, '0')}`)
-                : undefined
-            }
+            label={itemLabel}
             className={activeItemId === item.id ? 'short-essay-item--active' : undefined}
             value={item.bodyText}
             placeholder={item.placeholder ?? ph}
@@ -137,7 +158,8 @@ export function ShortEssay({
             />
           ) : null}
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

@@ -1,0 +1,45 @@
+---
+description: CMS·Admin 공통 — 목록 필터 draft + 조회 후 searchParams 단일 소스
+globs:
+  - apps/cms/src/**/*.{tsx,ts}
+  - apps/admin/src/**/*.{tsx,ts}
+alwaysApply: false
+---
+
+# 목록 필터 ↔ 쿼리파라미터 동기화 (의도)
+
+양 앱 필터 가능 목록 화면의 **상태 모델**. 훅 이름은 앱마다 달라도 의도는 동일.
+
+```text
+[UI draft / pending]  --조회 applySearch-->  [searchParams]
+        ^                                         |
+        +---------- syncPendingFromUrl -----------+
+                                                  |
+                                           [목록 data = parse from URL]
+```
+
+## 필수
+
+1. **Pending(draft)** — 입력 중 URL·목록을 바꾸지 않음.
+2. **조회(Apply)** — pending을 URL에 기록 (`replace: true` 권장).
+3. **조회 후 목록 필터 단일 소스 = `searchParams`** — 별도 `appliedFilter` state만 두지 않음.
+4. 딥링크·새로고침 — URL → pending UI (`syncPendingFromUrl`) + 목록 파생.
+5. 빈 값 조회 — 해당 쿼리 키 **삭제**.
+6. 여러 탭·화면이 한 경로를 쓰면 쿼리 키 **네임스페이스**(접두어).
+
+## 금지
+
+- 조회 없이 키 입력마다 URL/목록 변경 (live filter)
+- 조회 후 필터를 로컬 state만 유지하고 URL 무시
+- pending vs applied 이중 소스로 갱신 충돌
+
+## 앱 구현
+
+| 앱 | 스택 | 상세 |
+|----|------|------|
+| **CMS** | `useTablePage` + `getSearchSync` / `useTableSearch` + `TablePageConfig` | [list-page-table-stack](../../../apps/cms/.cursor/rules/tables/list-page-table-stack.md) · [list-page-composition](../../../apps/cms/.cursor/rules/coding/list-page-composition.mdc) |
+| **Admin** | `useListFilterUrl` + `useTableSearch` (`@/shared/lib`) | [list-page-composition](../../../apps/admin/.cursor/rules/coding/list-page-composition.mdc) |
+
+정렬·탭 등 즉시 반영 필드는 URL partial patch 허용 (필터 draft와 구분).
+
+**Last updated:** 2026-08-06

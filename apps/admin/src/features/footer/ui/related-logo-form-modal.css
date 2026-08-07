@@ -1,0 +1,161 @@
+/**
+ * 유관기관 로고 배너 수정 모달
+ * 후원사 form-modal 레이아웃과 동일 패턴
+ * — 라디오에 display:block 을 쓰지 않음 (세로·깨짐 원인)
+ */
+
+/* 시안 패딩: 24 / 30 / 32 / 30, 타이틀↔디스크립션 12, 디스크립션↔폼·폼↔푸터 30 */
+.footer-related-logo-form-modal.content-modal.teal-header-modal.ant-modal
+  .ant-modal-content {
+  padding: 24px 30px 32px;
+}
+
+.footer-related-logo-form-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body,
+.footer-related-logo-form-modal.content-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 12px;
+  gap: 30px;
+}
+
+.footer-related-logo-form-modal .teal-header-modal__footer {
+  margin-top: 30px;
+}
+
+.footer-related-logo-form-modal__form {
+  width: 100%;
+  min-width: 0;
+}
+
+/* 라벨 열 160 — DetailInfoForm 그리드 안정화 */
+.footer-related-logo-form-modal .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 160px !important;
+  grid-template-columns: 160px minmax(0, 1fr) !important;
+  align-items: stretch;
+}
+
+.footer-related-logo-form-modal .detail-info-form__field-label {
+  display: flex !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  min-height: 54px;
+  padding: 12px !important;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  text-align: center;
+  align-self: stretch;
+}
+
+.footer-related-logo-form-modal .detail-info-form__field-content {
+  display: flex !important;
+  min-width: 0;
+  min-height: 54px;
+  padding: 12px !important;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.footer-related-logo-form-modal
+  .detail-info-form__field-content:has(.footer-related-logo-form-modal__image-row) {
+  align-items: flex-start;
+}
+
+/*
+ * edit 슬롯: width 100% 만 (display:block 금지)
+ * block 강제 시 .app-radio-group 가로 flex 가 깨져 라디오가 세로/찌그러짐
+ */
+.footer-related-logo-form-modal .detail-info-form__field-content--edit > * {
+  margin-block: 0 !important;
+  min-width: 0;
+}
+
+.footer-related-logo-form-modal .detail-info-form__field-content--edit > .cms-input {
+  display: block;
+  width: 100%;
+}
+
+/*
+ * 사용 여부 라디오 — 가로 flex 고정
+ * @see corporate-partner/ui/form-modal.css
+ */
+.footer-related-logo-form-modal
+  .detail-info-form__field-content--edit
+  > .app-radio-group.ant-radio-group {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  width: auto !important;
+  max-width: 100%;
+  flex: 0 0 auto;
+}
+
+.footer-related-logo-form-modal .app-radio-group .ant-radio-wrapper {
+  margin-inline-end: 0 !important;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.footer-related-logo-form-modal .app-radio-group .ant-radio-wrapper span.ant-radio + * {
+  padding-inline-start: 8px;
+  padding-inline-end: 0;
+}
+
+/* 로고 미리보기 + 파일 선택 */
+.footer-related-logo-form-modal__image-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.footer-related-logo-form-modal__preview {
+  width: 195px;
+  height: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--color-bg-secondary, #f7f7f7);
+  box-sizing: border-box;
+}
+
+.footer-related-logo-form-modal__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.footer-related-logo-form-modal__file-field {
+  flex: 1 1 280px;
+  min-width: 0;
+  width: auto;
+}
+
+.footer-related-logo-form-modal .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100%;
+}
+
+.footer-related-logo-form-modal .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}

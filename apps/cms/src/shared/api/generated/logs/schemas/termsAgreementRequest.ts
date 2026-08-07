@@ -5,16 +5,17 @@
  * Filtered for CMS logs management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { TermsAgreementRequestTermsType } from './termsAgreementRequestTermsType';
 
 /**
- * 회원가입/소셜연결/마케팅/보호자 동의 이력 요청
+ * 일반·학교·교사·강사 회원 등록과 회원포탈에서 사용하는 회원 동의 이력 요청
  */
 export interface TermsAgreementRequest {
   /**
-     * 동의 유형. 예: SERVICE_TERMS, PRIVACY_COLLECTION, TEACHER_INFO_COLLECTION, GUARDIAN_CONSENT, CHILD_PRIVACY_COLLECTION, MARKETING, SOCIAL_CONNECTION
+     * 회원 동의 원장에 저장 가능한 canonical TERMS_TYPE입니다. CMS 약관 문서 관리의 전체 18개 타입 중 회원 동의 테이블에 저장되는 15개 canonical 타입과 지급조서 문서 입력 별칭 1개를 사용합니다. PAYMENT_STATEMENT_PRE_CONSENT 입력은 회원 원장의 PAYMENT_STATEMENT_CONSENT로 정규화됩니다.
      * @minLength 1
      */
-  termsType: string;
+  termsType: TermsAgreementRequestTermsType;
   /**
      * 약관/동의서 버전
      * @minLength 1
@@ -24,6 +25,6 @@ export interface TermsAgreementRequest {
   required?: boolean;
   /** 동의 여부 */
   agreed?: boolean;
-  /** 동의 당시 전문 또는 요약 스냅샷 JSON. 원문 전문 저장소가 별도이면 해시/버전 참조를 저장합니다. */
+  /** 호환 입력 필드입니다. 저장되는 약관 스냅샷은 서버가 게시 약관 원장에서 생성하며 이 값을 신뢰하지 않습니다. */
   termsSnapshotJson?: string;
 }

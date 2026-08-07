@@ -1,6 +1,10 @@
 .shell {
   --mypage-header-height: var(--app-header-height);
-  --mypage-sidebar-width: 461px;
+  --mypage-lnb-width: 280px;
+  --mypage-content-max-width: 1220px;
+  --mypage-content-min-width: 600px;
+  --mypage-page-padding-x: var(--spacing-80);
+  --mypage-lnb-gap: var(--spacing-40);
   --mypage-background-height: 400px;
   --mypage-hero-fade-length: 150px;
 
@@ -50,25 +54,30 @@
   z-index: 1;
   display: flex;
   align-items: stretch;
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
+  padding-inline: var(--mypage-page-padding-x);
+  column-gap: var(--mypage-lnb-gap);
   background: transparent;
 }
 
 .sidebar {
   box-sizing: border-box;
-  flex-shrink: 0;
-  width: var(--mypage-sidebar-width);
-  padding: 251px 99px 70px 82px;
+  flex: 0 0 var(--mypage-lnb-width);
+  width: var(--mypage-lnb-width);
+  padding-top: 251px;
+  padding-bottom: 70px;
   background: transparent;
 }
 
 .content {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
+  width: 100%;
   min-width: 0;
+  max-width: var(--mypage-content-max-width);
   padding-top: 140px;
-  padding-right: var(--spacing-24);
   padding-bottom: var(--spacing-72);
   background: transparent;
 }
@@ -76,4 +85,81 @@
 .contentInner {
   position: relative;
   z-index: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+/* ── PC compact · 1080~1599 ──
+ * 좌우 패딩 80 고정
+ * LNB 280 · 여백 40 · 내용영역 600~1220
+ */
+@media (--bp-pc-compact) {
+  .shell {
+    --mypage-page-padding-x: var(--spacing-80);
+    --mypage-lnb-gap: var(--spacing-40);
+  }
+
+  .content {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: var(--mypage-content-max-width);
+  }
+}
+
+/* ── PC full · 1600~ ──
+ * 좌우 패딩 최소 80 (여유 폭은 양쪽에 분배)
+ * LNB 280 · 여백 40~100 · 내용영역 1220
+ * 280+100+1220=1600 → 패딩 80일 때 기준폭 1760에서 여백 100
+ * 패딩 80·여백 40일 때 기준폭 1700
+ */
+@media (--bp-pc-full-up) {
+  .shell {
+    --mypage-lnb-gap: clamp(
+      var(--spacing-40),
+      calc(40px + (100vw - 1700px)),
+      var(--spacing-100)
+    );
+  }
+
+  .layout {
+    padding-inline: max(var(--spacing-80), calc((100% - 1600px) / 2));
+  }
+
+  .content {
+    flex: 0 1 var(--mypage-content-max-width);
+    width: var(--mypage-content-max-width);
+    max-width: var(--mypage-content-max-width);
+  }
+}
+
+/* ── Mobile · ~1079 ── */
+@media (--bp-below-pc) {
+  .shell {
+    --mypage-page-padding-x: var(--spacing-16);
+    --mypage-lnb-gap: var(--spacing-24);
+    --mypage-background-height: 280px;
+    --mypage-hero-fade-length: 96px;
+  }
+
+  .layout {
+    flex-direction: column;
+    align-items: stretch;
+    row-gap: var(--mypage-lnb-gap);
+    column-gap: 0;
+  }
+
+  .sidebar {
+    flex: none;
+    width: 100%;
+    padding-top: var(--spacing-24);
+    padding-bottom: 0;
+  }
+
+  .content {
+    flex: none;
+    width: 100%;
+    max-width: none;
+    padding-top: var(--spacing-16);
+    padding-bottom: var(--spacing-48);
+  }
 }

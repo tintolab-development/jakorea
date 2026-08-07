@@ -1,0 +1,231 @@
+/**
+ * 기업 후원 상담 신청 상세 모달
+ * 시안: 1400×880 · 셸 padding 26/30/34 · 타이틀↔본문 24 · 본문↔푸터 30
+ */
+
+/* 뷰포트 정중앙 */
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.corp-consult-detail-modal) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 16px !important;
+  box-sizing: border-box !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.corp-consult-detail-modal)
+  .ant-modal.teal-header-modal--large.corp-consult-detail-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  padding-bottom: 0 !important;
+  width: min(1400px, calc(100vw - 32px)) !important;
+  max-width: min(1400px, calc(100vw - 32px)) !important;
+  flex: none !important;
+  box-sizing: border-box !important;
+}
+
+/*
+ * 셸: top 26 · sides 30 · bottom 34
+ * 높이 시안 880 (뷰포트 초과 시 축소)
+ */
+.content-modal.corp-consult-detail-modal.teal-header-modal--large .ant-modal-content,
+.corp-consult-detail-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  padding: 26px 30px 34px !important;
+  border-radius: 12px;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
+  height: min(880px, calc(100vh - 32px));
+  height: min(880px, calc(100dvh - 32px));
+  max-height: min(880px, calc(100vh - 32px));
+  max-height: min(880px, calc(100dvh - 32px));
+  min-height: 0;
+  overflow: hidden;
+}
+
+.content-modal.corp-consult-detail-modal.teal-header-modal--large .ant-modal-body,
+.corp-consult-detail-modal.content-modal.teal-header-modal.ant-modal .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 타이틀 ↔ 본문 24px */
+.corp-consult-detail-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body,
+.corp-consult-detail-modal.content-modal .teal-header-modal__body {
+  padding-top: 24px !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  width: 100%;
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 본문 ↔ 푸터 30px */
+.corp-consult-detail-modal .teal-header-modal__footer {
+  flex-shrink: 0;
+  margin-top: 30px !important;
+}
+
+.corp-consult-detail-modal .content-modal__footer-actions {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.corp-consult-detail-modal__footer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.corp-consult-detail-modal__footer-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.corp-consult-detail-modal__scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.corp-consult-detail-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 신청 정보: 처리 메타 테이블 + 기업·담당자 테이블 (기업명/담당자명 기준 분리) */
+.corp-consult-detail-modal__apply-tables {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.corp-consult-detail-modal__section-title {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.corp-consult-detail-modal .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 160px !important;
+  grid-template-columns: 160px minmax(0, 1fr) !important;
+}
+
+/* 라벨 셀 긴 경우 (개인정보 수집·이용 동의) */
+.corp-consult-detail-modal .detail-info-form__field-label {
+  display: flex !important;
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+  min-height: 48px;
+  padding: 10px !important;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  align-self: stretch;
+  box-sizing: border-box;
+  text-align: center;
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 140%;
+}
+
+.corp-consult-detail-modal .detail-info-form__field-content {
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+  min-width: 0;
+}
+
+.corp-consult-detail-modal__table--consult .detail-info-form__field-content {
+  align-items: flex-start;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.corp-consult-detail-modal__confirmed {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+
+.corp-consult-detail-modal__content {
+  white-space: pre-line;
+  word-break: break-word;
+  line-height: 150%;
+}
+
+.corp-consult-detail-modal__link {
+  color: var(--color-mint-01, #01a1af);
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.corp-consult-detail-modal__link:hover {
+  opacity: 0.85;
+}
+
+.corp-consult-detail-modal__attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--default-BK, #3d3d3d);
+  text-decoration: none;
+  min-width: 0;
+}
+
+.corp-consult-detail-modal__attachment:hover {
+  color: var(--color-mint-01, #01a1af);
+}
+
+.corp-consult-detail-modal__file-icon {
+  flex-shrink: 0;
+  color: var(--color-mint-01, #01a1af);
+}
+
+.corp-consult-detail-modal__status--pending {
+  color: var(--color-mint-01, #01a1af);
+  font-weight: 600;
+}
+
+.corp-consult-detail-modal__status--confirmed {
+  color: var(--default-BK, #3d3d3d);
+  font-weight: 500;
+}

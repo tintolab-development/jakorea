@@ -1,0 +1,29 @@
+/**
+ * Admin Figma 에디터 chrome — CMS 미러
+ * 본문·툴바 패딩·보더는 @jakorea/rich-text/styles 와 함께 적용.
+ */
+.cms-rich-text-editor {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  --rt-body-min-height: 200px;
+  --rt-border: var(--table-line, #e0e0e0);
+  --rt-radius: 8px;
+  --rt-toolbar-border: var(--table-line, #e0e0e0);
+  --rt-toolbar-bg: var(--main-WT, #fff);
+  --rt-background: var(--main-WT, #fff);
+  --rt-body-padding: 16px;
+  --rt-placeholder-color: var(--text-placeholder, #999);
+  --rt-content-color: var(--default-BK, #3d3d3d);
+}
+
+.notice-form-modal__editor-host .cms-rich-text-editor {
+  min-height: 0;
+}
+
+.notice-form-modal__editor-host .cms-rich-text-editor .rich-text-editor__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+}

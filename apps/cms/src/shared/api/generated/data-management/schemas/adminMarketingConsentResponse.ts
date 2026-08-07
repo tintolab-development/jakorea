@@ -7,7 +7,7 @@
  */
 
 export interface AdminMarketingConsentResponse {
-  adminId?: number;
+  adminAccountId?: number;
   consentType?: string;
   version?: string;
   agreed?: boolean;

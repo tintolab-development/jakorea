@@ -1,5 +1,5 @@
 /**
- * 기본 레이아웃 — CMS 셸과 동일 구조 (auth/ACL 없음)
+ * 기본 레이아웃 — CMS 셸과 동일 구조 (LNB + 상단 GNB, auth/ACL 이후 연동)
  */
 
 import { useEffect, useRef } from 'react'

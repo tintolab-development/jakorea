@@ -1,0 +1,183 @@
+/* 사이트 정보 관리 — 시안 상세 폼 카드 */
+
+.site-info-form-card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.site-info-form-card .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.site-info-form-card .table-header-title--wrapper {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.site-info-form-card .table-description {
+  color: var(--main-gray1, #8a8a8a);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.site-info-form-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.site-info-form .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 160px;
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+.site-info-form .detail-info-form__field-label {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
+.site-info-form .detail-info-form__field-content {
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+}
+
+.site-info-form .detail-info-form__field-content--edit {
+  align-items: flex-start;
+}
+
+.site-info-form .detail-info-form__field-content--edit > * {
+  margin-block: 0 !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.site-info-form__text-view {
+  display: block;
+  width: 100%;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: left;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.site-info-form__image-view {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.site-info-form__image-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+
+.site-info-form__preview {
+  width: 195px;
+  height: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-secondary, #f7f7f7);
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* 브라우저탭 아이콘 — 시안 규격 */
+.site-info-form__preview--favicon {
+  width: 23.846px;
+  height: 30px;
+  flex-shrink: 0;
+  aspect-ratio: 31 / 39;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.site-info-form__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.site-info-form__preview--favicon img {
+  width: 23.846px;
+  height: 30px;
+  object-fit: contain;
+  display: block;
+}
+
+.site-info-form__file-name {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  word-break: break-all;
+}
+
+.site-info-form__file-field {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.site-info-form .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.site-info-form .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.site-info-form__field-error {
+  margin-top: 6px;
+  color: var(--color-error, #e53935);
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.site-info-form .cms-input {
+  width: 100%;
+  max-width: 100%;
+}

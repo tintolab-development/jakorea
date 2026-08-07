@@ -7,8 +7,10 @@ import {
 import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './page.module.css'
+import { useNavigate } from 'react-router-dom'
 
 export function ProgramApplyCompletePage() {
+  const navigate = useNavigate()
   const programId = getProgramIdFromPath()
   const { program, isLoading } = useMockProgramById(programId)
 
@@ -22,7 +24,7 @@ export function ProgramApplyCompletePage() {
         <PFText as="p" typo="hd-md" color="black">
           신청 정보를 확인할 수 없어요
         </PFText>
-        <PFButton variant="secondary" onClick={() => window.location.assign(PROGRAMS_PATH)}>
+        <PFButton variant="secondary" onClick={() => navigate(PROGRAMS_PATH)}>
           목록으로
         </PFButton>
       </section>
@@ -43,14 +45,14 @@ export function ProgramApplyCompletePage() {
         </PFText>
 
         <div className={styles.actions}>
-          <PFButton size="xlarge" width="100%" onClick={() => window.location.assign(PROGRAMS_PATH)}>
+          <PFButton size="xlarge" width="100%" onClick={() => navigate(PROGRAMS_PATH)}>
             다른 프로그램 보기
           </PFButton>
           <PFButton
             size="xlarge"
             variant="tertiary"
             width="100%"
-            onClick={() => window.location.assign(programDetailPath(program.id))}
+            onClick={() => navigate(programDetailPath(program.id))}
           >
             프로그램 상세로 이동
           </PFButton>

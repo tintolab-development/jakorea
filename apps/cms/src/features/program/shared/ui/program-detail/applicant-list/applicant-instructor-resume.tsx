@@ -22,50 +22,45 @@ export interface ApplicantInstructorResumeProps {
   showFreeWritingSections?: boolean
 }
 
+function ResumeSectionTitle({ title, summary }: { title: string; summary: string }) {
+  const trimmed = summary.trim()
+  return (
+    <h3 className="instructor-resume-section-title">
+      {title}
+      {trimmed ? <span className="instructor-resume-section-count">{trimmed}</span> : null}
+    </h3>
+  )
+}
+
 export function ApplicantInstructorResume({
   instructor: d,
   showFreeWritingSections = true,
 }: ApplicantInstructorResumeProps) {
+  const educationSummary = instructorEducationSectionDescription(d)
+  const careerSummary = instructorCareerSectionDescription(d)
+  const qualificationSummary = instructorQualificationsSectionDescription(d)
+  const awardsSummary = instructorAwardsSectionDescription(d)
+
   return (
     <div className="applicant-instructor-resume">
       <section className="instructor-resume-section">
-        <h3 className="instructor-resume-section-title">
-          학력사항
-          <span className="instructor-resume-section-count">
-            {instructorEducationSectionDescription(d)}
-          </span>
-        </h3>
+        <ResumeSectionTitle title="학력사항" summary={educationSummary} />
         <InstructorResumeEducationCardBody d={d} />
       </section>
 
       <section className="instructor-resume-section">
-        <h3 className="instructor-resume-section-title">
-          경력사항
-          <span className="instructor-resume-section-count">
-            {instructorCareerSectionDescription(d)}
-          </span>
-        </h3>
+        <ResumeSectionTitle title="경력사항" summary={careerSummary} />
         <InstructorResumeCareerCardBody d={d} />
       </section>
 
       <section className="instructor-resume-section">
-        <h3 className="instructor-resume-section-title">
-          자격 및 면허
-          <span className="instructor-resume-section-count">
-            {instructorQualificationsSectionDescription(d)}
-          </span>
-        </h3>
+        <ResumeSectionTitle title="자격 및 면허" summary={qualificationSummary} />
         <InstructorResumeQualificationsCardBody d={d} />
       </section>
 
       {/* 수상 및 수료 내역 */}
       <section className="instructor-resume-section">
-        <h3 className="instructor-resume-section-title">
-          수상 및 수료 내역
-          <span className="instructor-resume-section-count">
-            {instructorAwardsSectionDescription(d)}
-          </span>
-        </h3>
+        <ResumeSectionTitle title="수상 및 수료 내역" summary={awardsSummary} />
         <InstructorResumeAwardsCardBody d={d} />
       </section>
 

@@ -48,6 +48,19 @@ export type TermsAgreementRequest = {
   termsSnapshotJson?: string
 }
 
+/** CMS 미등록 학교(NEIS 등) 선택값 — OpenAPI PortalSchoolSelectionRequest */
+export type PortalSchoolSelectionRequest = {
+  provider?: string
+  externalSchoolCode?: string
+  name?: string
+  schoolLevel?: string
+  organizationCategory?: string
+  regionSido?: string
+  regionSigungu?: string
+  zipcode?: string
+  address?: string
+}
+
 export type MemberSignupRequest = {
   email: string
   password: string
@@ -62,6 +75,8 @@ export type MemberSignupRequest = {
   schoolEnrollmentStatus?: string
   schoolOrganizationId?: number
   schoolName?: string
+  /** CMS 미등록 학교 — organizationId 없을 때 사용 */
+  schoolSelection?: PortalSchoolSelectionRequest
   grade?: string
   affiliationName?: string
   postalCode?: string
@@ -75,7 +90,8 @@ export type MemberSignupRequest = {
 
 export type TeacherSignupRequest = {
   member: MemberSignupRequest
-  organizationId: number
+  /** CMS 등록 학교 PK. 미등록이면 생략하고 member.schoolSelection 사용 */
+  organizationId?: number
   employmentStatus?: string
 }
 

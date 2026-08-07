@@ -1,177 +1,232 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Button, Input, Space, Switch, Typography, message } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
-import type { SocialLink } from '@/features/main/social-link/model/types'
-import { useSocialLinkStore } from '@/features/main/social-link/lib/store'
-import {
-  SortableDataTable,
-  SortableDragHandle,
-} from '@/shared/ui/sortable-data-table'
-import styles from './page.module.css'
-
-const { Text } = Typography
-
 /**
- * 메인 > 소셜 링크 관리
- * Notion: 2. 메인 소셜 링크 관리
+ * 메인 소셜 링크 관리
  */
+
+import { useCallback, useMemo, useState } from 'react'
+import { Switch } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
+import type { SocialLink } from '@/entities/social-link/model/types'
+import {
+  useReorderSocialLinks,
+  useSaveSocialLinks,
+  useSetSocialLinkActive,
+  useSocialLinksList,
+} from '@/features/social-link/api/hooks'
+import { socialLinkQueryKeys } from '@/features/social-link/api/query-keys'
+import { SOCIAL_LINKS_CHANGED_EVENT } from '@/features/social-link/api/store'
+import {
+  SocialLinkDragHandle,
+  SocialLinksSortableTable,
+} from '@/features/social-link/ui/sortable-table'
+import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
+import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+
+import './page.css'
+function buildDraftUrls(rows: SocialLink[]): Record<string, string> {
+  return Object.fromEntries(rows.map(row => [row.id, row.linkUrl]))
+}
+
 export function SocialLinksPage() {
-  const links = useSocialLinkStore(s => s.links)
-  const setActive = useSocialLinkStore(s => s.setActive)
-  const reorder = useSocialLinkStore(s => s.reorder)
-  const saveAll = useSocialLinkStore(s => s.saveAll)
+  const { showAlert } = useCmsAlert()
+  const listQuery = useSocialLinksList()
+  const reorderMutation = useReorderSocialLinks()
+  const setActiveMutation = useSetSocialLinkActive()
+  const saveMutation = useSaveSocialLinks()
 
-  const [editing, setEditing] = useState(false)
-  const [drafts, setDrafts] = useState<SocialLink[]>(links)
+  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
+  const [isEditing, setIsEditing] = useState(false)
+  const [draftUrls, setDraftUrls] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    if (!editing) setDrafts(links)
-  }, [editing, links])
+  useInvalidateOnWindowEvent(SOCIAL_LINKS_CHANGED_EVENT, socialLinkQueryKeys.lists())
 
-  const rows = editing ? drafts : links
-
-  const startEdit = useCallback(() => {
-    setDrafts(links.map(row => ({ ...row })))
-    setEditing(true)
-  }, [links])
-
-  const cancelEdit = useCallback(() => {
-    setDrafts(links.map(row => ({ ...row })))
-    setEditing(false)
-  }, [links])
-
-  const handleSave = useCallback(() => {
-    const result = saveAll(drafts)
-    if (!result.ok) {
-      const names = drafts
-        .filter(row => result.missingIds.includes(row.id))
-        .map(row => row.name)
-        .join(', ')
-      message.error(`사용 중인 채널의 연결 링크는 필수입니다. (${names})`)
-      return
-    }
-    setEditing(false)
-    message.success('소셜 링크가 저장되었습니다.')
-  }, [drafts, saveAll])
-
-  const handleToggle = useCallback(
-    (row: SocialLink, checked: boolean) => {
-      if (editing) {
-        setDrafts(prev =>
-          prev.map(item => (item.id === row.id ? { ...item, active: checked } : item))
-        )
-        return
-      }
-      if (checked && !row.linkUrl.trim()) {
-        message.warning('연결 링크를 먼저 저장한 뒤 사용할 수 있습니다. [수정]에서 URL을 입력해 주세요.')
-        return
-      }
-      setActive(row.id, checked)
+  const handleRowsReorder = useCallback(
+    (reorderedRows: SocialLink[]) => {
+      void reorderMutation.mutateAsync(reorderedRows.map(row => row.id)).catch(() => {
+        showAlert({
+          title: '순서 변경 실패',
+          content: '소셜 링크 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
+        })
+        void listQuery.refetch()
+      })
     },
-    [editing, setActive]
+    [listQuery, reorderMutation, showAlert]
   )
 
-  const handleUrlChange = useCallback((id: SocialLink['id'], linkUrl: string) => {
-    setDrafts(prev => prev.map(item => (item.id === id ? { ...item, linkUrl } : item)))
+  const handleToggleActive = useCallback(
+    (id: string, isActive: boolean) => {
+      void setActiveMutation.mutateAsync({ id, isActive }).catch(() => {
+        showAlert({
+          title: '사용 여부 변경 실패',
+          content: '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
+        })
+        void listQuery.refetch()
+      })
+    },
+    [listQuery, setActiveMutation, showAlert]
+  )
+
+  const handleStartEdit = useCallback(() => {
+    setDraftUrls(buildDraftUrls(rows))
+    setIsEditing(true)
+  }, [rows])
+
+  const handleCancelEdit = useCallback(() => {
+    setDraftUrls({})
+    setIsEditing(false)
   }, [])
 
-  const handleReorder = useCallback(
-    (reordered: SocialLink[]) => {
-      const ids = reordered.map(row => row.id)
-      if (editing) {
-        setDrafts(reordered.map((row, index) => ({ ...row, order: index })))
-        return
-      }
-      reorder(ids)
-    },
-    [editing, reorder]
-  )
+  const handleDraftChange = useCallback((id: string, value: string) => {
+    setDraftUrls(prev => ({ ...prev, [id]: value }))
+  }, [])
+
+  const handleSave = useCallback(async () => {
+    const invalid = rows.filter(row => {
+      if (!row.isActive) return false
+      const url = (draftUrls[row.id] ?? row.linkUrl).trim()
+      return url.length === 0
+    })
+    if (invalid.length > 0) {
+      showAlert({
+        title: '연결 링크 필수',
+        content: `사용 중인 채널(${invalid.map(r => r.name).join(', ')})의 연결 링크를 입력해 주세요.`,
+      })
+      return
+    }
+
+    try {
+      await saveMutation.mutateAsync(
+        rows.map(row => ({
+          id: row.id,
+          linkUrl: draftUrls[row.id] ?? row.linkUrl,
+        }))
+      )
+      setDraftUrls({})
+      setIsEditing(false)
+    } catch {
+      showAlert({
+        title: '저장 실패',
+        content: '소셜 링크 저장에 실패했습니다. 다시 시도해 주세요.',
+      })
+    }
+  }, [draftUrls, rows, saveMutation, showAlert])
 
   const columns = useMemo<ColumnsType<SocialLink>>(
     () => [
       {
         title: '순서',
         key: 'sort',
-        width: 56,
+        width: TABLE_COLUMN_WIDTHS.sort,
+        className: CMS_TABLE_SORT_COL_CLASS,
         align: 'center',
-        render: () => <SortableDragHandle />,
+        render: () => <SocialLinkDragHandle />,
       },
       {
         title: 'No.',
         key: 'no',
-        width: 56,
+        width: TABLE_COLUMN_WIDTHS.index,
+        className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
-        render: (_v, _r, index) => index + 1,
+        render: (_value, _record, index) => index + 1,
       },
       {
         title: '사용 여부',
-        dataIndex: 'active',
-        width: 100,
+        key: 'isActive',
+        width: TABLE_COLUMN_WIDTHS.usage,
         align: 'center',
-        render: (active: boolean, row) => (
+        className: CMS_TABLE_USAGE_COL_CLASS,
+        render: (_value, record) => (
           <Switch
-            checked={active}
-            checkedChildren="사용"
-            unCheckedChildren="미사용"
-            onChange={checked => handleToggle(row, checked)}
+            checked={record.isActive}
+            onChange={checked => handleToggleActive(record.id, checked)}
+            aria-label={`${record.name} 사용 여부`}
           />
         ),
       },
       {
         title: '소셜 매체명',
-        dataIndex: 'name',
+        key: 'name',
         width: 160,
+        render: (_value, record) => (
+          <span className="social-links-page__name">{record.name}</span>
+        ),
       },
       {
         title: '연결 링크',
-        dataIndex: 'linkUrl',
-        render: (linkUrl: string, row) =>
-          editing ? (
-            <Input
-              value={linkUrl}
-              onChange={e => handleUrlChange(row.id, e.target.value)}
+        key: 'linkUrl',
+        render: (_value, record) =>
+          isEditing ? (
+            <CmsInput
+              inputSize="medium"
+              width="100%"
+              value={draftUrls[record.id] ?? record.linkUrl}
+              onChange={e => handleDraftChange(record.id, e.target.value)}
               placeholder="연결 링크를 입력하세요"
-              status={row.active && !linkUrl.trim() ? 'error' : undefined}
+              aria-label={`${record.name} 연결 링크`}
             />
-          ) : linkUrl ? (
-            <a href={linkUrl} target="_blank" rel="noreferrer">
-              {linkUrl}
-            </a>
           ) : (
-            <Text type="secondary">—</Text>
+            <span className="social-links-page__link" title={record.linkUrl || undefined}>
+              {record.linkUrl || '-'}
+            </span>
           ),
       },
     ],
-    [editing, handleToggle, handleUrlChange]
+    [draftUrls, handleDraftChange, handleToggleActive, isEditing]
   )
 
   return (
-    <div className={styles.page}>
-      <div className={styles.toolbar}>
-        <Text type="secondary">
-          관리 채널은 고정 항목입니다. 신규 채널 추가는 제공하지 않습니다.
-        </Text>
-        {editing ? (
-          <Space>
-            <Button onClick={cancelEdit}>취소</Button>
-            <Button type="primary" onClick={handleSave}>
-              저장
-            </Button>
-          </Space>
-        ) : (
-          <Button type="primary" onClick={startEdit}>
-            수정
-          </Button>
-        )}
-      </div>
+    <div className="social-links-page">
+      <div className="admin-list-card">
+        <div className="admin-list-toolbar">
+          <div className="table-header-title--wrapper">
+            <span className="table-title">소셜 링크 목록</span>
+          </div>
+          <div className="table-header-actions--wrapper">
+            {isEditing ? (
+              <>
+                <CmsButton
+                  variant="secondary"
+                  size="large"
+                  type="button"
+                  onClick={handleCancelEdit}
+                  disabled={saveMutation.isPending}
+                >
+                  취소
+                </CmsButton>
+                <CmsButton
+                  variant="primary"
+                  size="large"
+                  type="button"
+                  loading={saveMutation.isPending}
+                  onClick={() => {
+                    void handleSave()
+                  }}
+                >
+                  저장
+                </CmsButton>
+              </>
+            ) : (
+              <CmsButton
+                variant="primary"
+                size="large"
+                type="button"
+                onClick={handleStartEdit}
+                disabled={listQuery.isLoading || rows.length === 0}
+              >
+                수정
+              </CmsButton>
+            )}
+          </div>
+        </div>
 
-      <div className={styles.tableWrap}>
-        <SortableDataTable
-          rows={rows}
-          columns={columns}
-          scrollX={900}
-          onRowsReorder={handleReorder}
-        />
+        <div className="social-links-page__table-scroll">
+          <SocialLinksSortableTable
+            rows={rows}
+            columns={columns}
+            loading={listQuery.isLoading}
+            onRowsReorder={handleRowsReorder}
+          />
+        </div>
       </div>
     </div>
   )

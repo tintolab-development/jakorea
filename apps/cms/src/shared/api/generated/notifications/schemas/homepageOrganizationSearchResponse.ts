@@ -21,4 +21,10 @@ export interface HomepageOrganizationSearchResponse {
   totalElements?: number;
   /** 데이터 출처 */
   source?: string;
+  /** CMS 검색 결과가 없어서 나이스 학교 검색이 필요한지 */
+  externalLookupRequired?: boolean;
+  /** 외부 학교 검색 공급자 */
+  externalProvider?: string;
+  /** 프론트 다음 동작 */
+  nextAction?: string;
 }

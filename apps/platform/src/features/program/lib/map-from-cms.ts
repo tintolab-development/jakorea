@@ -514,6 +514,7 @@ function isUnavailableScheduleLine(line: string): boolean {
 /**
  * 세부내용 「교육 일정」 카드.
  * - UJAT: ujatPublicEducationSchedules 우선 (기관 상·하반기 / 봉사 사전교육·진행·해단식)
+ * - 일정형 + 복수회차: 비노출 (기획 SSOT — 일정은 기본정보 행사·세부 일정으로만)
  * - educationScheduleLines — 불가일 필터 후 사용
  * - 커리큘럼형: lines 없으면 운영 기간 1줄 폴백
  * - 일정형: lines 없으면 빈 배열
@@ -533,6 +534,14 @@ function mapEducationSchedules(
       label: row.label.trim(),
       value: row.value.trim(),
     }))
+  }
+
+  // 기획: 일정형 + 복수회차 → 세부내용 「교육 일정」 비노출
+  if (
+    program.generalProgramEducationStructure === 'schedule' &&
+    program.generalProgramSessionRound === 'multi'
+  ) {
+    return []
   }
 
   const rawLines = program.generalCommonInfo?.educationScheduleLines ?? []

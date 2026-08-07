@@ -21,3 +21,5 @@ export type MypageProgramStats = {
   inProgress: number
   completed: number
 }
+
+export type { MypageScheduleEvent, MypageScheduleEventType } from './schedule-types'

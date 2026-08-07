@@ -11,8 +11,10 @@ import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template
 import { getDevAuthLoggedIn } from '@/shared/lib'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './page.module.css'
+import { useNavigate } from 'react-router-dom'
 
 export function ProgramApplyPage() {
+  const navigate = useNavigate()
   const [isReady, setIsReady] = useState(false)
   const programId = getProgramIdFromPath()
   const { program, isLoading } = useMockProgramById(programId)
@@ -23,14 +25,14 @@ export function ProgramApplyPage() {
     }
 
     if (!getDevAuthLoggedIn()) {
-      window.location.assign(
+      navigate(
         `/auth/required?redirect=${encodeURIComponent(`/programs/${programId}/apply`)}`
       )
       return
     }
 
     setIsReady(true)
-  }, [programId])
+  }, [navigate, programId])
 
   const draft = useMemo(
     () => (program ? getMockApplyFormDraft(program) : null),
@@ -42,12 +44,12 @@ export function ProgramApplyPage() {
   }
 
   const handleBack = () => {
-    window.location.assign(programDetailPath(program.id))
+    navigate(programDetailPath(program.id))
   }
 
   const handleSubmit = () => {
     // TODO: CMS 등록 신청 폼 draft 기준 검증 · POST program application API
-    window.location.assign(programApplyCompletePath(program.id))
+    navigate(programApplyCompletePath(program.id))
   }
 
   return (

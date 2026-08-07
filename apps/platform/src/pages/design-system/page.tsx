@@ -21,8 +21,10 @@ import {
   PFAlertModal,
   PFArrowButton,
   PFChevronButton,
+  PFPageButton,
   PFButton,
   PFDivider,
+  PFAttachmentDropdown,
   PFFileDownload,
   PFModal,
   PFMetaBadge,
@@ -285,7 +287,13 @@ const colorTokenGroups = [
         cssVar: '--color-neutral-black-50',
         hex: 'rgba(61, 61, 61, 0.50)',
         figma: 'Divider',
-        note: 'PFDivider border',
+        note: 'PFDivider default border',
+      },
+      {
+        cssVar: '--color-border-focus',
+        hex: '#01A1AF',
+        figma: 'Color/border-focus',
+        note: 'PFDivider focus (결과 확인)',
       },
       { cssVar: '--color-neutral-white', hex: '#FFFFFF', pfText: 'white' },
       { cssVar: '--color-neutral-cool-50', hex: '#F5F7F7' },
@@ -1089,6 +1097,36 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
 
       <div className={styles.section}>
         <PFText as="div" typo="hl-sm" color="black">
+          PFPageButton
+        </PFText>
+        <div className={styles.buttonStack}>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              large
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFPageButton size="large" direction="left" aria-label="이전 large" />
+              <PFPageButton size="large" direction="right" aria-label="다음 large" />
+              <PFPageButton size="large" direction="left" disabled aria-label="이전 large disabled" />
+              <PFPageButton size="large" direction="right" disabled aria-label="다음 large disabled" />
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText typo="label-md" color="neutral-cool-500">
+              small
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFPageButton size="small" direction="left" aria-label="이전 small" />
+              <PFPageButton size="small" direction="right" aria-label="다음 small" />
+              <PFPageButton size="small" direction="left" disabled aria-label="이전 small disabled" />
+              <PFPageButton size="small" direction="right" disabled aria-label="다음 small disabled" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
           PFButton
         </PFText>
         <div className={styles.buttonStack}>
@@ -1122,6 +1160,23 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
         <div className={styles.buttonStack}>
           <PFFileDownload fileName="[명단] UJAT 36기 최종합격 명단.pdf" />
           <PFFileDownload fileName="[안내문] UJAT 36기 향후 일정 안내 아주_긴_파일명_말줄임_테스트.pdf" />
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFAttachmentDropdown
+        </PFText>
+        <div className={styles.buttonStack}>
+          <PFAttachmentDropdown
+            files={[{ fileName: '디지털 범죄예방 코믹북.pdf' }]}
+          />
+          <PFAttachmentDropdown
+            files={[
+              { fileName: '디지털 범죄예방 코믹북.pdf' },
+              { fileName: '디지털 범죄예방 코믹북_2.pdf' },
+            ]}
+          />
         </div>
       </div>
 
@@ -1483,7 +1538,20 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
         <PFText as="div" typo="hl-sm" color="black">
           PFDivider
         </PFText>
-        <PFDivider />
+        <div className={styles.buttonStack}>
+          <div className={styles.buttonRow}>
+            <PFText as="span" typo="label-md" color="neutral-cool-500">
+              default
+            </PFText>
+            <PFDivider />
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText as="span" typo="label-md" color="neutral-cool-500">
+              focus (결과 확인)
+            </PFText>
+            <PFDivider variant="focus" />
+          </div>
+        </div>
       </div>
 
       <div className={styles.section}>

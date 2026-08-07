@@ -1,0 +1,160 @@
+/**
+ * 푸터 — 기관 정보 섹션
+ * 카드 크롬 없음 — 페이지 단일 site-footer-card 안에 배치
+ *
+ * 값 셀(td): padding vertical 10px · horizontal 16px
+ */
+
+.footer-org-section .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.footer-org-section__body {
+  min-width: 0;
+  width: 100%;
+}
+
+.footer-org-section .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 160px !important;
+  grid-template-columns: 160px minmax(0, 1fr) !important;
+  align-items: stretch;
+}
+
+.footer-org-section .detail-info-form__row--double > .detail-info-form__field {
+  flex: 1 1 50%;
+  min-width: 0;
+}
+
+.footer-org-section .detail-info-form__field-label {
+  width: 160px !important;
+  min-width: 160px !important;
+  max-width: 160px !important;
+}
+
+/* 값 셀(td) — padding vertical 10 · horizontal 16 */
+.footer-org-section .detail-info-form__field-content,
+.footer-org-section .detail-info-form__field-content--view,
+.footer-org-section .detail-info-form__field-content--edit {
+  padding: 10px 16px !important;
+  padding-block: 10px !important;
+  padding-inline: 16px !important;
+  box-sizing: border-box;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  min-width: 0;
+}
+
+/* logo/FileSelect 행: 값 영역 상단 정렬 */
+.footer-org-section
+  .detail-info-form__row--single
+  .detail-info-form__field-content:has(.footer-org-section__image-row) {
+  align-items: flex-start;
+}
+
+.footer-org-section .detail-info-form__field-content--edit > * {
+  display: block;
+  margin-block: 0 !important;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.footer-org-inline-field {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.footer-org-inline-field .cms-input__control {
+  width: 100% !important;
+  min-width: 0 !important;
+  border-width: 1px;
+  border-style: solid;
+  box-sizing: border-box;
+}
+
+.footer-org-inline-field--readonly .cms-input__control {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+  /* 입력 chrome 패딩(좌 14/우 12) 제거 — 셀 패딩(16)에만 맞춘 텍스트 정렬 */
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border-width: 0 !important;
+}
+
+.footer-org-inline-field--readonly .cms-input__inner,
+.footer-org-inline-field--readonly .ant-input {
+  padding: 0 !important;
+}
+
+.footer-org-inline-field--readonly .ant-input {
+  cursor: default;
+  color: var(--default-BK, #3d3d3d) !important;
+}
+
+.footer-org-section__image-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.footer-org-section__preview {
+  width: 195px;
+  height: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--color-bg-secondary, #f7f7f7);
+}
+
+.footer-org-section__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.footer-org-section__file-field {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.footer-org-section .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.footer-org-section__logo-view {
+  display: flex;
+  align-items: center;
+  width: 195px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.footer-org-section__logo-view img {
+  width: 195px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.footer-org-section__logo-empty {
+  opacity: 0.6;
+}

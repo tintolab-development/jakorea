@@ -139,6 +139,8 @@ export interface ApplicantInstructorRow {
   awards?: ApplicantInstructorAward[]
   /** 강사 이력서 - 학력사항 (강사 추가 모달 educations와 연동) */
   educations?: ApplicantInstructorEducationItem[]
+  /** 경력 구분 — CMS `profile.career.level` */
+  instructorCareerLevel?: 'new' | 'experienced'
   /** 1. 자기소개 및 지원동기 */
   freeWriting1?: string
   /** 2. 청소년 경제 교육의 중요성... */

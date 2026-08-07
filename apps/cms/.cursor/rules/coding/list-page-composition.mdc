@@ -10,6 +10,9 @@ alwaysApply: false
 
 Use this stack for **admin/data list pages**: filters + toolbar + `cms-data-table`, same as **sponsor** (`sponsor-page.tsx`) and **admin notice** (`admin-notice-list-page.tsx`).
 
+**공유 의도 (CMS·Admin):** [list-filter-url-sync](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc) · [list-table-shell](../../../../.cursor/rules/cms-admin-ui/list-table-shell.mdc) · [cms-data-table](../../../../.cursor/rules/cms-admin-ui/cms-data-table.mdc)  
+Homepage Admin 스택은 공유 의도를 따르되 구현은 [admin list-page-composition](../../../admin/.cursor/rules/coding/list-page-composition.mdc) (`useListFilterUrl`).
+
 ## Required building blocks
 
 1. **`FilterTableLayout`** (`@/shared/components/filter-table-layout`) — wraps `TableFilterGroup` (not `UnifiedFilterCard` on the same strip). Pass `fields`, `filters`, `onFilterChange`, `onSearch`; optional `title`, `description`, `actions`; usually `bordered={false}`. **필터 4개 이상·모달:** [table-filter-group-layout.mdc](../design/table-filter-group-layout.mdc) — `fields` + `mergedAutoFillInlineSearch`; 페이지 CSS로 grid/`min-width:0` 금지.

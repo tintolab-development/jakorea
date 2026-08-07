@@ -6,14 +6,16 @@ import {
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 const PASSWORD_HELP_TEXT = '영문, 숫자, 특수문자를 조합해 8자 이상 입력해 주세요.'
 
 export function AdminRegisteredChangePasswordPage() {
+  const navigate = useNavigate()
   const wizardState = requireAdminRegisteredWizardState()
 
   if (!wizardState?.birthDate || !wizardState.gender) {
-    window.location.assign('/auth/admin-registered/birth')
+    navigate('/auth/admin-registered/birth')
     return null
   }
 
@@ -52,7 +54,7 @@ export function AdminRegisteredChangePasswordPage() {
     }
 
     // TODO: POST /api/auth/password/change API 연동
-    window.location.assign('/auth/admin-registered/confirm')
+    navigate('/auth/admin-registered/confirm')
   }
 
   return (

@@ -6,6 +6,12 @@ export { PFArrowButton } from './pf-arrow-button'
 export type { PFArrowButtonProps, PFArrowButtonSize, PFArrowButtonVariant } from './pf-arrow-button'
 export { PFChevronButton } from './pf-chevron-button'
 export type { PFChevronButtonDirection, PFChevronButtonProps } from './pf-chevron-button'
+export { PFPageButton } from './pf-page-button'
+export type {
+  PFPageButtonDirection,
+  PFPageButtonProps,
+  PFPageButtonSize,
+} from './pf-page-button'
 export { PFCategoryBadge } from './pf-category-badge'
 export type {
   PFCategoryBadgeIconVariant,
@@ -18,8 +24,15 @@ export type { PFMetaBadgeProps } from './pf-meta-badge'
 export { PFStateBadge } from './pf-state-badge'
 export type { PFStateBadgeProps, PFStateBadgeSize, PFStateBadgeTone } from './pf-state-badge'
 export { PFButton } from './pf-button'
+export { PFCalendar, CALENDAR_LEGEND_ITEMS, CALENDAR_EVENT_COLORS } from './pf-calendar'
+export type { PFCalendarProps, PFCalendarEvent, CalendarLegendItem } from './pf-calendar'
 export { PFDivider } from './pf-divider'
-export type { PFDividerProps } from './pf-divider'
+export type { PFDividerProps, PFDividerVariant } from './pf-divider'
+export { PFAttachmentDropdown } from './pf-attachment-dropdown'
+export type {
+  PFAttachmentDropdownItem,
+  PFAttachmentDropdownProps,
+} from './pf-attachment-dropdown'
 export { PFFileDownload } from './pf-file-download'
 export type { PFFileDownloadProps } from './pf-file-download'
 export { PFModal } from './pf-modal'

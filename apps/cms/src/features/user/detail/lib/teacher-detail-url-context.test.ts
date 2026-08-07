@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { userDetailModalTitle } from './user-detail-fullpage-helpers'
 import {
   applyTeacherDetailUrlContext,
+  memberDetailUrlParamsFromUser,
+  readMemberDetailUrlContext,
   readTeacherDetailUrlContext,
   teacherDetailUrlParamsFromUser,
 } from './teacher-detail-url-context'
@@ -18,15 +20,22 @@ describe('userDetailModalTitle', () => {
     expect(title).not.toContain('_-_')
   })
 
-  it('교사 상세에서 학교명이 있으면 괄호 안에 학교_성명 형식을 쓴다', () => {
+  it('교사·겸직 강사 상세는 성명만 괄호에 넣는다', () => {
     expect(
       userDetailModalTitle({
-        name: '김교사',
+        name: '박틴토',
+        role: 'INSTRUCTOR',
+        instructorMemberProfile: 'school_teacher',
+      })
+    ).toBe('교사 상세 (박틴토)')
+    expect(
+      userDetailModalTitle({
+        name: '박틴토',
         role: 'INSTRUCTOR',
         instructorMemberProfile: 'instructor_dual',
         affiliatedSchoolName: '진월초등학교',
       })
-    ).toBe('교사 상세 (진월초등학교_김교사)')
+    ).toBe('교사 상세 (박틴토)')
   })
 
   it('강사·회원·학교·관리자 상세도 괄호 형식을 쓴다', () => {
@@ -95,6 +104,26 @@ describe('teacher-detail-url-context', () => {
     expect(readTeacherDetailUrlContext(sp)).toEqual({
       affiliatedSchoolName: '진월초등학교',
       instructorMemberProfile: 'school_teacher',
+    })
+  })
+
+  it('memberDetailUrlParamsFromUser는 memberId·role 힌트를 넣는다', () => {
+    const params = memberDetailUrlParamsFromUser({
+      role: 'INSTRUCTOR',
+      memberId: 42,
+      instructorMemberProfile: 'instructor_only',
+    })
+    expect(params.memberId).toBe('42')
+    expect(params.memberRole).toBe('INSTRUCTOR')
+    expect(params.instructorProfile).toBe('instructor_only')
+  })
+
+  it('readMemberDetailUrlContext는 memberId·role을 파싱한다', () => {
+    const sp = new URLSearchParams('memberId=99&memberRole=INSTRUCTOR&instructorProfile=instructor_only')
+    expect(readMemberDetailUrlContext(sp)).toEqual({
+      memberId: 99,
+      role: 'INSTRUCTOR',
+      instructorMemberProfile: 'instructor_only',
     })
   })
 })

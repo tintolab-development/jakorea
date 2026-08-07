@@ -1,219 +1,285 @@
-import { useCallback, useMemo, useState } from 'react'
-import { Button, Modal, Space, Switch, Typography, message } from 'antd'
+/**
+ * 메인 히어로 배너 관리
+ */
+
+import { useCallback, useMemo, useState, type Key } from 'react'
+import { Image, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { HeroBanner, HeroBannerDraft } from '@/features/main/hero-banner/model/types'
-import { useHeroBannerStore } from '@/features/main/hero-banner/lib/store'
-import { HeroBannerFormModal } from '@/features/main/hero-banner/ui/form-modal'
+import type { HeroBanner } from '@/entities/hero-banner/model/types'
+import {
+  useCreateHeroBanner,
+  useHeroBannersList,
+  useRemoveHeroBanners,
+  useReorderHeroBanners,
+  useSetHeroBannerActive,
+  useUpdateHeroBanner,
+} from '@/features/hero-banner/api/hooks'
+import { heroBannerQueryKeys } from '@/features/hero-banner/api/query-keys'
+import { HERO_BANNERS_CHANGED_EVENT } from '@/features/hero-banner/api/store'
+import {
+  HeroBannerFormModal,
+  type HeroBannerFormValues,
+} from '@/features/hero-banner/ui/form-modal'
 import {
   HeroBannerDragHandle,
-  HeroBannerSortableTable,
-} from '@/features/main/hero-banner/ui/sortable-table'
-import styles from './page.module.css'
+  HeroBannersSortableTable,
+} from '@/features/hero-banner/ui/sortable-table'
+import { HeroBannerTextLinkCell } from '@/features/hero-banner/ui/text-link-cell'
+import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
+import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
-const { Text } = Typography
-
-/**
- * 메인 > 히어로 배너 관리
- * Notion: 1-1 목록 / 1-2 등록·수정 팝업
- */
+import './page.css'
 export function HeroBannersPage() {
-  const banners = useHeroBannerStore(s => s.banners)
-  const create = useHeroBannerStore(s => s.create)
-  const update = useHeroBannerStore(s => s.update)
-  const remove = useHeroBannerStore(s => s.remove)
-  const setActive = useHeroBannerStore(s => s.setActive)
-  const reorder = useHeroBannerStore(s => s.reorder)
+  const { showAlert } = useCmsAlert()
+  const listQuery = useHeroBannersList()
+  const createMutation = useCreateHeroBanner()
+  const updateMutation = useUpdateHeroBanner()
+  const removeMutation = useRemoveHeroBanners()
+  const reorderMutation = useReorderHeroBanners()
+  const setActiveMutation = useSetHeroBannerActive()
 
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
-  const [editing, setEditing] = useState<HeroBanner | null>(null)
+  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [formOpen, setFormOpen] = useState(false)
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
+  const [editingBanner, setEditingBanner] = useState<HeroBanner | null>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+
+  useInvalidateOnWindowEvent(HERO_BANNERS_CHANGED_EVENT, heroBannerQueryKeys.lists())
+
+  const handleRowsReorder = useCallback(
+    (reorderedRows: HeroBanner[]) => {
+      void reorderMutation.mutateAsync(reorderedRows.map(row => row.id)).catch(() => {
+        showAlert({
+          title: '순서 변경 실패',
+          content: '배너 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
+        })
+        void listQuery.refetch()
+      })
+    },
+    [listQuery, reorderMutation, showAlert]
+  )
+
+  const handleToggleActive = useCallback(
+    (id: string, isActive: boolean) => {
+      void setActiveMutation.mutateAsync({ id, isActive }).catch(() => {
+        showAlert({
+          title: '사용 여부 변경 실패',
+          content: '사용 여부 변경에 실패했습니다. 다시 시도해 주세요.',
+        })
+        void listQuery.refetch()
+      })
+    },
+    [listQuery, setActiveMutation, showAlert]
+  )
 
   const openCreate = useCallback(() => {
-    setModalMode('create')
-    setEditing(null)
-    setModalOpen(true)
+    setFormMode('create')
+    setEditingBanner(null)
+    setFormOpen(true)
   }, [])
 
-  const openEdit = useCallback((row: HeroBanner) => {
-    setModalMode('edit')
-    setEditing(row)
-    setModalOpen(true)
+  const openEdit = useCallback((banner: HeroBanner) => {
+    setFormMode('edit')
+    setEditingBanner(banner)
+    setFormOpen(true)
   }, [])
 
-  const closeModal = useCallback(() => {
-    setModalOpen(false)
-    setEditing(null)
-  }, [])
-
-  const handleSubmit = useCallback(
-    (draft: HeroBannerDraft) => {
-      if (modalMode === 'create') {
-        create(draft)
-        message.success('배너가 등록되었습니다.')
-      } else if (editing) {
-        update(editing.id, draft)
-        message.success('배너가 수정되었습니다.')
+  const handleFormSubmit = useCallback(
+    async (values: HeroBannerFormValues) => {
+      try {
+        if (formMode === 'edit' && editingBanner) {
+          await updateMutation.mutateAsync({ id: editingBanner.id, patch: values })
+        } else {
+          await createMutation.mutateAsync(values)
+        }
+        setFormOpen(false)
+        setEditingBanner(null)
+      } catch {
+        showAlert({
+          title: formMode === 'edit' ? '수정 실패' : '등록 실패',
+          content:
+            formMode === 'edit'
+              ? '배너 수정에 실패했습니다. 다시 시도해 주세요.'
+              : '배너 등록에 실패했습니다. 다시 시도해 주세요.',
+        })
       }
-      closeModal()
     },
-    [closeModal, create, editing, modalMode, update]
+    [createMutation, editingBanner, formMode, showAlert, updateMutation]
   )
 
-  const handleDeleteSelected = useCallback(() => {
-    if (selectedIds.length === 0) {
-      message.warning('삭제할 배너를 선택해 주세요.')
+  const handleDeleteClick = useCallback(() => {
+    if (selectedRowKeys.length === 0) {
+      showAlert({
+        title: '선택 항목 없음',
+        content: '삭제할 배너를 선택해 주세요.',
+      })
       return
     }
-    Modal.confirm({
-      title: '선택 삭제',
-      content: `선택한 배너 ${selectedIds.length}건을 삭제하시겠습니까?`,
-      okText: '삭제',
-      okButtonProps: { danger: true },
-      cancelText: '취소',
-      onOk: () => {
-        remove(selectedIds)
-        setSelectedIds([])
-        message.success('선택한 배너가 삭제되었습니다.')
-      },
-    })
-  }, [remove, selectedIds])
+    setDeleteConfirmOpen(true)
+  }, [selectedRowKeys.length, showAlert])
 
-  const handleReorder = useCallback(
-    (rows: HeroBanner[]) => {
-      reorder(rows.map(row => row.id))
-    },
-    [reorder]
-  )
+  const handleDeleteConfirm = useCallback(async () => {
+    const ids = selectedRowKeys.map(String)
+    try {
+      await removeMutation.mutateAsync(ids)
+      setSelectedRowKeys([])
+      setDeleteConfirmOpen(false)
+    } catch {
+      showAlert({
+        title: '삭제 실패',
+        content: '배너 삭제에 실패했습니다. 다시 시도해 주세요.',
+      })
+    }
+  }, [removeMutation, selectedRowKeys, showAlert])
 
   const columns = useMemo<ColumnsType<HeroBanner>>(
     () => [
       {
         title: '순서',
         key: 'sort',
-        width: 56,
+        width: TABLE_COLUMN_WIDTHS.sort,
+        className: CMS_TABLE_SORT_COL_CLASS,
         align: 'center',
         render: () => <HeroBannerDragHandle />,
       },
       {
         title: 'No.',
         key: 'no',
-        width: 64,
+        width: TABLE_COLUMN_WIDTHS.index,
+        className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
-        render: (_value, _row, index) => index + 1,
+        render: (_value, _record, index) => index + 1,
       },
       {
         title: '사용 여부',
-        dataIndex: 'active',
-        width: 100,
+        key: 'isActive',
+        width: TABLE_COLUMN_WIDTHS.usage,
         align: 'center',
-        render: (active: boolean, row) => (
+        className: CMS_TABLE_USAGE_COL_CLASS,
+        render: (_value, record) => (
           <Switch
-            checked={active}
-            checkedChildren="사용"
-            unCheckedChildren="미사용"
-            onChange={checked => setActive(row.id, checked)}
+            checked={record.isActive}
+            onChange={checked => handleToggleActive(record.id, checked)}
+            aria-label={`${record.mainTitle || '배너'} 사용 여부`}
           />
         ),
       },
       {
         title: '배너 이미지',
-        dataIndex: 'imageUrl',
-        width: 140,
-        render: (url: string, row) => (
-          <img
-            src={url}
-            alt={row.imageName ?? '배너'}
-            className={styles.thumb}
-          />
-        ),
-      },
-      {
-        title: '배너 텍스트',
-        key: 'texts',
-        render: (_value, row) => (
-          <div className={styles.textCell}>
-            <div className={styles.textRow}>
-              <Text type="secondary" className={styles.textLabel}>
-                상단
-              </Text>
-              <span>{row.topText || '—'}</span>
-            </div>
-            <div className={styles.textRow}>
-              <Text type="secondary" className={styles.textLabel}>
-                타이틀
-              </Text>
-              <span>{row.mainTitle || '—'}</span>
-            </div>
-            <div className={styles.textRow}>
-              <Text type="secondary" className={styles.textLabel}>
-                하단
-              </Text>
-              <span>{row.bottomText || '—'}</span>
-            </div>
-            <div className={styles.textRow}>
-              <Text type="secondary" className={styles.textLabel}>
-                링크
-              </Text>
-              {row.linkUrl ? (
-                <a href={row.linkUrl} target="_blank" rel="noreferrer">
-                  {row.linkUrl}
-                </a>
-              ) : (
-                <span>—</span>
-              )}
-            </div>
+        key: 'image',
+        width: 232,
+        align: 'center',
+        render: (_value, record) => (
+          <div className="hero-banners-page__thumb-wrap">
+            <Image
+              className="hero-banners-page__thumb"
+              src={record.imageUrl}
+              alt={record.imageFileName || '배너 이미지'}
+              preview={{ mask: '이미지 보기' }}
+            />
           </div>
         ),
       },
       {
+        title: '배너 텍스트 및 링크',
+        key: 'textLink',
+        render: (_value, record) => <HeroBannerTextLinkCell banner={record} />,
+      },
+      {
         title: '관리',
         key: 'actions',
-        width: 100,
+        width: 120,
         align: 'center',
-        fixed: 'right',
-        render: (_value, row) => (
-          <Button type="link" onClick={() => openEdit(row)}>
+        render: (_value, record) => (
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            width={88}
+            type="button"
+            onClick={e => {
+              e.stopPropagation()
+              openEdit(record)
+            }}
+          >
             수정
-          </Button>
+          </CmsButton>
         ),
       },
     ],
-    [openEdit, setActive]
+    [handleToggleActive, openEdit]
   )
 
-  return (
-    <div className={styles.page}>
-      <div className={styles.toolbar}>
-        <Text className={styles.count}>
-          전체 <strong>{banners.length}</strong>건
-        </Text>
-        <Space>
-          <Button onClick={handleDeleteSelected}>선택 삭제</Button>
-          <Button type="primary" onClick={openCreate}>
-            배너 등록
-          </Button>
-        </Space>
-      </div>
+  const totalCount = rows.length
+  const formLoading =
+    formMode === 'edit' ? updateMutation.isPending : createMutation.isPending
 
-      <div className={styles.tableWrap}>
-        <HeroBannerSortableTable
-          rows={banners}
-          columns={columns}
-          onRowsReorder={handleReorder}
-          rowSelection={{
-            selectedRowKeys: selectedIds,
-            onChange: keys => setSelectedIds(keys.map(String)),
-          }}
-        />
+  return (
+    <div className="hero-banners-page">
+      <div className="admin-list-card">
+        <div className="admin-list-toolbar">
+          <div className="table-header-title--wrapper">
+            <span className="table-title">히어로 배너 목록</span>
+            <span className="table-description">총 {totalCount.toLocaleString()}건</span>
+          </div>
+          <div className="table-header-actions--wrapper">
+            <CmsButton
+              variant="delete"
+              size="large"
+              type="button"
+              onClick={handleDeleteClick}
+              loading={removeMutation.isPending}
+            >
+              선택 삭제
+            </CmsButton>
+            <CmsButton variant="primary" size="large" type="button" onClick={openCreate}>
+              배너 등록
+            </CmsButton>
+          </div>
+        </div>
+
+        <div className="hero-banners-page__table-scroll">
+          <HeroBannersSortableTable
+            rows={rows}
+            columns={columns}
+            loading={listQuery.isLoading}
+            onRowsReorder={handleRowsReorder}
+            rowSelection={{
+              selectedRowKeys,
+              onChange: keys => setSelectedRowKeys(keys),
+              columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
+            }}
+          />
+        </div>
       </div>
 
       <HeroBannerFormModal
-        open={modalOpen}
-        mode={modalMode}
-        banner={editing}
-        onCancel={closeModal}
-        onSubmit={handleSubmit}
+        open={formOpen}
+        mode={formMode}
+        initial={editingBanner}
+        confirmLoading={formLoading}
+        onCancel={() => {
+          setFormOpen(false)
+          setEditingBanner(null)
+        }}
+        onSubmit={values => {
+          void handleFormSubmit(values)
+        }}
+      />
+
+      <ConfirmModal
+        open={deleteConfirmOpen}
+        title="배너 삭제"
+        content={`선택한 배너 ${selectedRowKeys.length}건을 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.`}
+        confirmText="삭제"
+        cancelText="취소"
+        danger
+        confirmLoading={removeMutation.isPending}
+        onCancel={() => setDeleteConfirmOpen(false)}
+        onConfirm={() => {
+          void handleDeleteConfirm()
+        }}
       />
     </div>
   )

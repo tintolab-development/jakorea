@@ -11,23 +11,8 @@ function mapEmploymentStatus(raw?: string): SchoolTeacherEmploymentStatus {
 }
 
 function resolveTeacherMemberId(row: ApiSchoolAffiliatedTeacherRow): number | undefined {
-  const extended = row as ApiSchoolAffiliatedTeacherRow & {
-    teacherMemberId?: number
-    memberId?: number
-  }
-  if (typeof extended.teacherMemberId === 'number' && Number.isFinite(extended.teacherMemberId)) {
-    return extended.teacherMemberId
-  }
-  if (typeof extended.memberId === 'number' && Number.isFinite(extended.memberId)) {
-    return extended.memberId
-  }
-  const fromId = Number(row.id)
-  if (Number.isFinite(fromId) && String(fromId) === String(row.id).trim()) {
-    return fromId
-  }
-  const fromLinked = Number(row.linkedUserId)
-  if (Number.isFinite(fromLinked) && String(fromLinked) === String(row.linkedUserId).trim()) {
-    return fromLinked
+  if (typeof row.memberId === 'number' && Number.isFinite(row.memberId)) {
+    return row.memberId
   }
   return undefined
 }
@@ -36,20 +21,16 @@ export function mapAffiliatedTeacherRow(
   row: ApiSchoolAffiliatedTeacherRow
 ): SchoolAffiliatedTeacherRow {
   const teacherMemberId = resolveTeacherMemberId(row)
-  const linkedFromApi = row.linkedUserId?.trim() || undefined
-  const rowId = row.id?.trim() || undefined
-  /** API가 linkedUserId를 생략해도 teacherMemberId/id로 상세 이동 가능하도록 보정 */
+  /** API UUID가 없으면 memberId로 상세 이동 식별자를 보정한다. */
   const linkedUserId =
-    linkedFromApi ||
-    (teacherMemberId != null ? String(teacherMemberId) : undefined) ||
-    rowId
+    row.uuid?.trim() || (teacherMemberId != null ? String(teacherMemberId) : undefined)
 
   if (linkedUserId && teacherMemberId != null) {
     registerMemberIdMapping(linkedUserId, teacherMemberId)
   }
 
   const id =
-    rowId ||
+    row.uuid?.trim() ||
     linkedUserId ||
     (teacherMemberId != null ? String(teacherMemberId) : `teacher-${crypto.randomUUID()}`)
   return {

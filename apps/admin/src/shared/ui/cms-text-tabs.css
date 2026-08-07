@@ -1,0 +1,110 @@
+/**
+ * CmsTextTabs — 민트 밑줄 텍스트 탭 (CMS 포트)
+ */
+
+.cms-text-tabs {
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.cms-text-tabs__row {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-16, 16px);
+  min-height: 0;
+}
+
+.cms-text-tabs--detail .cms-text-tabs__row {
+  padding: 0 0 32px;
+}
+
+.cms-text-tabs--list .cms-text-tabs__row {
+  padding: 0;
+}
+
+.cms-text-tabs__list {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.cms-text-tabs__list--wrap {
+  flex-wrap: wrap;
+  row-gap: 8px;
+  overflow-x: visible;
+}
+
+.cms-text-tabs__trailing {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  flex-shrink: 0;
+}
+
+.cms-text-tabs button.cms-text-tabs__tab {
+  display: inline-flex;
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 6px 16px 10px 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  color: #7d7d7d;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.cms-text-tabs button.cms-text-tabs__tab:hover:not(:disabled) {
+  color: var(--JA-mint-01, #01a1af);
+}
+
+.cms-text-tabs button.cms-text-tabs__tab:disabled {
+  color: #bdbdbd;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.cms-text-tabs button.cms-text-tabs__tab:disabled:hover {
+  color: #bdbdbd;
+}
+
+.cms-text-tabs__tab-label {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.cms-text-tabs button.cms-text-tabs__tab.cms-text-tabs__tab--active {
+  color: var(--JA-mint-01, #01a1af);
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%;
+  border-bottom: 2px solid var(--JA-mint-01, #01a1af);
+}
+
+.cms-text-tabs button.cms-text-tabs__tab:focus,
+.cms-text-tabs button.cms-text-tabs__tab:focus-visible {
+  outline: none;
+  box-shadow: none;
+}

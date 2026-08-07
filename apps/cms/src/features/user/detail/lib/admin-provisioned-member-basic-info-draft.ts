@@ -1,5 +1,10 @@
 import type { User } from '@/types/user'
 import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
+import { buildInstructorRegisterCertifications, type InstructorRegisterLicenseRow } from '@/features/user/api/map-instructor-register-extras'
+import type {
+  InstructorCmsProfileProposal,
+  InstructorCmsSettlement,
+} from '@/features/user/api/types/instructor-cms-profile-proposal'
 import {
   getAdminPermissionVariant,
   type AdminPermissionTagVariant,
@@ -56,6 +61,12 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   highestEducationLevel?: string
   /** 강사 — 최종 졸업 학교명 */
   highestEducationSchoolName?: string
+  /** 강사 — 자격 및 면허 (상세 수정 저장용) */
+  licenseRows?: InstructorRegisterLicenseRow[]
+  /** BE §3.8 — CMS 강사 profile (상세 수정 저장) */
+  instructorCmsProfile?: InstructorCmsProfileProposal
+  /** BE §3.8 — CMS 강사 settlement */
+  instructorCmsSettlement?: InstructorCmsSettlement
   /** 관리자 — 권한 유형 태그 */
   adminPermissionVariant?: AdminPermissionTagVariant | ''
 }
@@ -359,6 +370,7 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
   const accountNumber = (draft.instructorAccountNumber ?? '').trim()
   const accountHolder = (draft.instructorAccountHolder ?? '').trim()
   const bio = (draft.bio ?? '').trim()
+  const certifications = buildInstructorRegisterCertifications(draft.licenseRows)
   return {
     ...base,
     ...(bio ? { bio } : {}),
@@ -368,6 +380,9 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
       ...(accountHolder ? { accountHolder } : {}),
       ...(businessIncome !== undefined ? { isBusinessIncome: businessIncome } : {}),
     } as NonNullable<User['instructorInfo']>,
+    ...(certifications != null ? { instructorCertifications: certifications } : {}),
+    ...(draft.instructorCmsProfile ? { instructorCmsProfile: draft.instructorCmsProfile } : {}),
+    ...(draft.instructorCmsSettlement ? { instructorCmsSettlement: draft.instructorCmsSettlement } : {}),
     listMetrics: {
       ...(feeGrade ? { instructorFeeGradeLabel: feeGrade } : {}),
       ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),

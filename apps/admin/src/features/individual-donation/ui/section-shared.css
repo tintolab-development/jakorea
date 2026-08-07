@@ -1,0 +1,104 @@
+/**
+ * 개인후원 섹션 공통 스타일 — pre-line · 썸네일 · 테이블 열 보정
+ * 시안: 테이블 내 텍스트 가운데 정렬
+ */
+
+.individual-donation-preline {
+  display: block;
+  width: 100%;
+  white-space: pre-line;
+  word-break: keep-all;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+}
+
+.individual-donation-thumb {
+  width: 160px;
+  height: 155.256px;
+  flex-shrink: 0;
+  aspect-ratio: 101 / 98;
+  margin: 0 auto;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--color-bg-secondary, #f7f7f7);
+  border: 1px solid var(--table-line, #e0e0e0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.individual-donation-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.individual-donation-thumb--empty {
+  color: var(--color-text-tertiary, #9e9e9e);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.individual-donation-url {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+}
+
+.individual-donation-section {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.individual-donation-section .admin-list-toolbar {
+  flex-shrink: 0;
+}
+
+.individual-donation-section .cms-data-table .ant-table-thead > tr > th,
+.individual-donation-section .cms-data-table .ant-table-tbody > tr > td {
+  text-align: center !important;
+  vertical-align: middle;
+}
+
+/* 배너: 이미지 컬럼 200px · 썸네일 160×155.256 (aspect 101/98) */
+.individual-donation-banner-table .ant-table-thead > tr > th.individual-donation-col--image,
+.individual-donation-banner-table .ant-table-tbody > tr > td.individual-donation-col--image {
+  width: 200px !important;
+  min-width: 200px !important;
+  max-width: 200px !important;
+}
+
+/* 사용안내: 항목명 고정 열 */
+.individual-donation-usage-table .ant-table-thead > tr > th.individual-donation-col--label,
+.individual-donation-usage-table .ant-table-tbody > tr > td.individual-donation-col--label {
+  width: 180px !important;
+  min-width: 140px !important;
+  max-width: 220px !important;
+}
+
+/* 후원하기 CTA */
+.individual-donation-cta-table .ant-table-thead > tr > th.individual-donation-col--button,
+.individual-donation-cta-table .ant-table-tbody > tr > td.individual-donation-col--button {
+  width: 320px !important;
+  min-width: 320px !important;
+  max-width: 320px !important;
+}

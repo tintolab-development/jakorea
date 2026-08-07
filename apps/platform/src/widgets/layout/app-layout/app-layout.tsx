@@ -1,5 +1,13 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { DEV_AUTH_CHANGE_EVENT, getDevAuthLoggedIn, setDevAuthLoggedIn } from '@/shared/lib'
+import { useNavigate } from 'react-router-dom'
+import { postPortalAuthLogout } from '@/shared/api/axios-instance'
+import {
+  DEV_AUTH_CHANGE_EVENT,
+  clearAuthTokens,
+  getDevAuthLoggedIn,
+  getRefreshToken,
+  setDevAuthLoggedIn,
+} from '@/shared/lib'
 import type { LayoutVariant } from '@/widgets/layout/layout-variant'
 import { AuthPageShell } from '@/widgets/layout/auth-page-shell'
 import { ContentShell } from '@/widgets/layout/content-shell'
@@ -13,6 +21,7 @@ type AppLayoutProps = {
 }
 
 export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
+  const navigate = useNavigate()
   const [isLoggedIn, setIsLoggedIn] = useState(getDevAuthLoggedIn)
   const isMypage = layout === 'mypage'
   const isHero = layout === 'hero'
@@ -33,9 +42,20 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   }, [])
 
   const handleLogout = () => {
-    setDevAuthLoggedIn(false)
-    setIsLoggedIn(false)
-    window.location.assign('/')
+    const refreshToken = getRefreshToken()
+    void (async () => {
+      if (refreshToken) {
+        try {
+          await postPortalAuthLogout(refreshToken)
+        } catch {
+          // 로컬 세션은 항상 정리
+        }
+      }
+      clearAuthTokens()
+      setDevAuthLoggedIn(false)
+      setIsLoggedIn(false)
+      navigate('/')
+    })()
   }
 
   const mainContent = useContentShell ? (

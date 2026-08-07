@@ -1,0 +1,28 @@
+/* 보고서 및 공시 관리 페이지 */
+
+.rd-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 국세청 탭: 흰 카드 viewport fill */
+.rd-page--nts {
+  min-height: calc(100vh - var(--header-height, 64px) - 64px);
+  height: calc(100vh - var(--header-height, 64px) - 64px);
+}
+
+.rd-page--nts .rd-page__tabs {
+  flex-shrink: 0;
+}
+
+.rd-page--nts > .rd-nts-card {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.rd-page__tabs {
+  flex-shrink: 0;
+}

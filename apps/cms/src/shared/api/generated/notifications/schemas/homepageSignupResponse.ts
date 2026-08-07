@@ -14,6 +14,8 @@ export interface HomepageSignupResponse {
   memberUuid?: string;
   status?: string;
   memberType?: string;
+  /** 가입 전에 해석 또는 등록된 CMS 학교 organizationId. 학교가 필요 없는 회원은 null입니다. */
+  schoolOrganizationId?: number;
   nextStep?: string;
   loginEnabled?: boolean;
   message?: string;

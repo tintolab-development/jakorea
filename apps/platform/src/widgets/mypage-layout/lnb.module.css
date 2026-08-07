@@ -64,3 +64,38 @@
   width: 100%;
   margin-top: var(--spacing-8);
 }
+
+/* ── Mobile · ~1079 — 가로 스크롤 메뉴 ── */
+@media (--bp-below-pc) {
+  .lnb {
+    width: 100%;
+    gap: var(--spacing-12);
+  }
+
+  .menu {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: var(--spacing-8);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .item {
+    width: auto;
+    min-width: max-content;
+    height: 48px;
+    padding: var(--spacing-12) var(--spacing-16);
+    flex-shrink: 0;
+  }
+
+  .ctaWrap {
+    margin-top: 0;
+  }
+}

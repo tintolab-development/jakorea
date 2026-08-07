@@ -88,6 +88,8 @@ export interface AddressSearchProps extends Pick<
   /** 미지정 시 `VITE_ADDRESS_API_KEY` 또는 `VITE_JUSO_CONFM_KEY` */
   confmKey?: string
   onSelect?: (item: JusoAddressItem) => void
+  /** 다른 모달(동의서 작성 등) 위에 겹칠 때 */
+  modalZIndex?: number
 }
 
 export function AddressSearch({
@@ -100,6 +102,7 @@ export function AddressSearch({
   className,
   confmKey: confmKeyProp,
   onSelect,
+  modalZIndex,
 }: AddressSearchProps) {
   const [open, setOpen] = useState(false)
   const [keyword, setKeyword] = useState('')
@@ -275,6 +278,7 @@ export function AddressSearch({
         titleBodyGap="always"
         width={600}
         className={modalClassName}
+        zIndex={modalZIndex}
       >
         <div className="address-search__body">
           <Flex className="address-search__search-row" gap={10} align="center">

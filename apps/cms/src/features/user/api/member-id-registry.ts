@@ -2,6 +2,8 @@
 const uuidToMemberId = new Map<string, number>()
 const memberIdToUuid = new Map<number, string>()
 
+const MEMBER_ID_PREFIX = /^member-(\d+)$/i
+
 export function registerMemberIdMapping(uuid: string, memberId: number): void {
   if (!uuid || memberId == null || Number.isNaN(memberId)) return
   uuidToMemberId.set(uuid, memberId)
@@ -28,10 +30,15 @@ export function resolveMemberIdForApi(
   if (hint?.memberId != null && !Number.isNaN(hint.memberId)) {
     return hint.memberId
   }
-  const fromRegistry = getMemberIdByUuid(userId)
+  const trimmed = userId.trim()
+  const fromRegistry = getMemberIdByUuid(trimmed)
   if (fromRegistry != null) return fromRegistry
-  if (/^\d+$/.test(userId.trim())) {
-    return Number(userId)
+  const memberPrefix = trimmed.match(MEMBER_ID_PREFIX)
+  if (memberPrefix) {
+    return Number(memberPrefix[1])
+  }
+  if (/^\d+$/.test(trimmed)) {
+    return Number(trimmed)
   }
   throw new Error('회원 식별자(memberId)를 찾을 수 없습니다. 목록에서 다시 열어 주세요.')
 }

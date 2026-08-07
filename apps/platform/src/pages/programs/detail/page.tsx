@@ -11,6 +11,7 @@ import arrowRightWhite16Url from '@/shared/assets/icons/arrow-right-white-16.svg
 import { getDevAuthLoggedIn } from '@/shared/lib'
 import { PFButton, PFFileDownload, PFText } from '@/shared/ui'
 import styles from './page.module.css'
+import { useNavigate } from 'react-router-dom'
 
 /** CMS user-preview `user-page__top-fab` 아이콘과 동일 */
 function TopFabIcon() {
@@ -33,6 +34,7 @@ function TopFabIcon() {
 }
 
 export function ProgramDetailPage() {
+  const navigate = useNavigate()
   const programId = getProgramIdFromPath()
   const { program, isLoading } = useMockProgramById(programId)
   const searchParams = new URLSearchParams(window.location.search)
@@ -48,7 +50,7 @@ export function ProgramDetailPage() {
         <PFText as="p" typo="hd-md" color="black">
           프로그램을 찾을 수 없어요
         </PFText>
-        <PFButton variant="secondary" onClick={() => window.location.assign(PROGRAMS_PATH)}>
+        <PFButton variant="secondary" onClick={() => navigate(PROGRAMS_PATH)}>
           목록으로
         </PFButton>
       </section>
@@ -61,17 +63,17 @@ export function ProgramDetailPage() {
       window.history.back()
       return
     }
-    window.location.assign(fromPath ?? PROGRAMS_PATH)
+    navigate(fromPath ?? PROGRAMS_PATH)
   }
 
   const handleApply = () => {
     const applyPath = programApplyPath(program.id)
     if (!getDevAuthLoggedIn()) {
-      window.location.assign(programApplyRequiredPath(program.id))
+      navigate(programApplyRequiredPath(program.id))
       return
     }
 
-    window.location.assign(applyPath)
+    navigate(applyPath)
   }
 
   const handleScrollToTop = () => {

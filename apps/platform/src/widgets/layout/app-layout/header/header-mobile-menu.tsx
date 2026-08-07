@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
 import chevronUpBlackUrl from '@/shared/assets/icons/chevron-up-black-32.svg'
 import chevronLeftGrayUrl from '@/shared/assets/icons/chevron-left-gray.svg'
@@ -51,16 +52,25 @@ function MobileChildMenuItem({
   )
 
   if (item.href) {
+    if (item.external) {
+      return (
+        <a
+          className={itemClassName}
+          href={item.href}
+          role="menuitem"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onNavigate}
+        >
+          {content}
+        </a>
+      )
+    }
+
     return (
-      <a
-        className={itemClassName}
-        href={item.href}
-        role="menuitem"
-        {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : undefined)}
-        onClick={onNavigate}
-      >
+      <Link className={itemClassName} to={item.href} role="menuitem" onClick={onNavigate}>
         {content}
-      </a>
+      </Link>
     )
   }
 
@@ -77,6 +87,7 @@ export function HeaderMobileMenu({
   isLoggedIn = false,
   onLogout,
 }: HeaderMobileMenuProps) {
+  const navigate = useNavigate()
   const [expandedGroup, setExpandedGroup] = useState<NavigationItemLabel | null>(null)
 
   useEffect(() => {
@@ -151,7 +162,8 @@ export function HeaderMobileMenu({
                   onClick={() => {
                     const route = getLoggedInActionRoute('마이페이지')
                     if (route) {
-                      window.location.assign(route)
+                      navigate(route)
+                      onClose()
                     }
                   }}
                 >
@@ -173,14 +185,20 @@ export function HeaderMobileMenu({
                 <button
                   className={[styles.authButton, 'typo-bd-sm-rg'].join(' ')}
                   type="button"
-                  onClick={() => window.location.assign(guestUserActionRoutes['회원가입'])}
+                  onClick={() => {
+                    navigate(guestUserActionRoutes['회원가입'])
+                    onClose()
+                  }}
                 >
                   회원가입
                 </button>
                 <button
                   className={[styles.authButton, 'typo-bd-sm-rg'].join(' ')}
                   type="button"
-                  onClick={() => window.location.assign(guestUserActionRoutes['로그인'])}
+                  onClick={() => {
+                    navigate(guestUserActionRoutes['로그인'])
+                    onClose()
+                  }}
                 >
                   로그인
                 </button>

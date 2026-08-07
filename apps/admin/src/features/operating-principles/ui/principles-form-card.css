@@ -1,0 +1,192 @@
+/* 운영원칙 관리 — 소개글 + 운영 원칙 테이블 카드
+ * 흰 카드 viewport 남은 높이 fill — detail-document-form-card.mdc
+ * 조회↔수정: 컨트롤 유지 + 보더/배경만 전환 (span↔input 스왑 금지)
+ */
+
+.principles-form-card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.principles-form-card .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.principles-form-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 24px;
+  min-width: 0;
+  min-height: 0;
+  /* 섹션·테이블은 상단 정렬 — 아래 빈 여백은 카드 흰 배경 */
+}
+
+.principles-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.principles-form-section--table {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.principles-form-section-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.principles-form-section-title__marker {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  background: var(--default-BK, #3d3d3d);
+}
+
+.principles-form-section-title__text {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+/* 섹션 타이틀 옆 안내 — 시안 gray/60% */
+.principles-form-section-title__note {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+  opacity: 0.6;
+}
+
+/*
+ * DetailInfoForm 행 — 시안 min-height 54px
+ */
+.principles-form-card .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 160px;
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+.principles-form-card .detail-info-form__field-label {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
+.principles-form-card .detail-info-form__field-content {
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: left;
+}
+
+.principles-form-card .detail-info-form__field-content--edit:has(.cms-textarea) {
+  align-items: flex-start;
+}
+
+/* ----- 인라인 필드: 조회=투명 보더, 수정=일반 컨트롤 (동일 노드) ----- */
+
+.principles-form-card .principles-inline-field {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.principles-form-card .principles-inline-field .cms-input__control,
+.principles-form-card .principles-inline-field .cms-textarea__control {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+  /* 조회/수정 모두 보더 슬롯 유지 → 보더 색만 바꿔 1px 점프 방지 */
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* 조회: 테두리·배경 투명, 포인터 비활성 */
+.principles-form-card .principles-inline-field--readonly .cms-input__control,
+.principles-form-card .principles-inline-field--readonly .cms-textarea__control {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+.principles-form-card
+  .principles-inline-field--readonly
+  .cms-input__control:hover,
+.principles-form-card
+  .principles-inline-field--readonly
+  .cms-textarea__control:hover {
+  border-color: transparent !important;
+}
+
+.principles-form-card .principles-inline-field--readonly .ant-input,
+.principles-form-card .principles-inline-field--readonly textarea.ant-input {
+  cursor: default;
+  color: var(--default-BK, #3d3d3d) !important;
+  font-weight: 500;
+}
+
+.principles-form-card
+  .principles-inline-field--readonly.cms-input
+  .ant-input {
+  font-weight: 600;
+}
+
+/* 수정: 일반 컨트롤 + resize 비활성 (detail-document-form-card) */
+.principles-form-card .principles-inline-field--edit .cms-textarea--fixed-rows
+  .cms-textarea__inner
+  textarea.ant-input,
+.principles-form-card
+  .principles-inline-field--edit.cms-textarea--fixed-rows
+  .cms-textarea__inner
+  textarea.ant-input {
+  resize: none !important;
+  overflow-y: auto;
+}
+
+/* 사용 여부 Switch — DS mint-01 */
+.principles-form-card .ant-switch-checked {
+  background: var(--color-mint-01, #01a1af) !important;
+}
+
+.principles-sortable-table .ant-table {
+  table-layout: fixed;
+}
+
+.principles-sortable-table .ant-table-tbody > tr > td {
+  vertical-align: middle;
+}
+
+/* 수정 모드 전환 시 행 transition 점프 방지 */
+.principles-sortable-table .ant-table-tbody > tr {
+  transition: none;
+}
+
+.principles-sortable-table .ant-table-tbody > tr > td .cms-textarea,
+.principles-sortable-table .ant-table-tbody > tr > td .cms-input {
+  display: block;
+  max-width: 100%;
+}

@@ -1,0 +1,194 @@
+.rich-text-toolbar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  gap: var(--rt-toolbar-gap, 12px);
+  padding: var(--rt-toolbar-padding, 8px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.rich-text-toolbar > * {
+  flex-shrink: 0;
+}
+
+.rich-text-toolbar__dropdown-trigger,
+.rich-text-toolbar__toggle,
+.rich-text-toolbar__swatch-clear {
+  display: inline-flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  gap: var(--rt-toolbar-trigger-gap, 4px);
+  border: none;
+  background: transparent;
+  color: var(--rt-toolbar-text-color, var(--main-BK, #3D3D3D));
+  font-family: var(--rt-toolbar-font-family, Pretendard), var(--font-family-primary, sans-serif);
+  font-size: var(--rt-toolbar-label-font-size, 15px);
+  font-style: normal;
+  font-weight: var(--rt-toolbar-label-font-weight, 500);
+  line-height: var(--rt-toolbar-label-line-height, 150%);
+  cursor: pointer;
+}
+
+/* 글꼴·크기·제목·텍스트 색상·하이라이트·삽입 */
+.rich-text-toolbar__dropdown-trigger--labeled {
+  height: var(--rt-toolbar-control-height, 32px);
+  padding: 0 6px 0 10px;
+  border-radius: var(--rt-toolbar-control-radius, 8px);
+}
+
+/* 줄간격·이모지·정렬·목록 등 아이콘 트리거 */
+.rich-text-toolbar__dropdown-trigger--icon-only {
+  height: var(--rt-toolbar-control-height, 32px);
+  padding: 0 8px;
+  justify-content: center;
+  align-items: center;
+  border-radius: var(--rt-toolbar-control-radius, 8px);
+}
+
+.rich-text-toolbar__dropdown-trigger:hover:not(:disabled),
+.rich-text-toolbar__toggle:hover:not(:disabled) {
+  background: var(--rt-toolbar-hover-bg, #ebebeb);
+}
+
+.rich-text-toolbar__dropdown-trigger:disabled,
+.rich-text-toolbar__toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rich-text-toolbar__dropdown-leading {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.rich-text-toolbar__dropdown-label {
+  white-space: nowrap;
+}
+
+.rich-text-toolbar__dropdown-trigger--icon-only .rich-text-toolbar__dropdown-label {
+  display: none;
+}
+
+.rich-text-toolbar__dropdown-chevron {
+  flex-shrink: 0;
+}
+
+.rich-text-toolbar__toggle {
+  border-radius: var(--rt-toolbar-control-radius, 8px);
+}
+
+.rich-text-toolbar__toggle--active {
+  background: var(--rt-toolbar-active-bg, #e6f4f1);
+  color: var(--rt-toolbar-active-color, #00897b);
+}
+
+.rich-text-toolbar__emoji-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 240px;
+}
+
+.rich-text-toolbar__emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.rich-text-toolbar__emoji-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rich-text-toolbar__emoji-cell:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.rich-text-toolbar__emoji-cell:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rich-text-toolbar__dropdown-panel {
+  padding: 12px;
+  background: var(--main-WT, #fff);
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.rich-text-toolbar__swatch-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 160px;
+}
+
+.rich-text-toolbar__swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rich-text-toolbar__swatch {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.rich-text-toolbar__swatch--active {
+  outline: 2px solid var(--color-mint-01, #01a1af);
+  outline-offset: 1px;
+}
+
+.rich-text-toolbar__swatch:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rich-text-toolbar__swatch-clear {
+  justify-content: flex-start;
+  width: 100%;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+.rich-text-toolbar__swatch-clear:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.rich-text-toolbar__file-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}

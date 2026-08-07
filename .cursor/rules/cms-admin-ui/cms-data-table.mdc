@@ -1,0 +1,64 @@
+---
+description: CMS·Admin 공통 — cms-data-table 셀 패딩·높이·className
+globs:
+  - apps/cms/src/**/*.{tsx,css}
+  - apps/admin/src/**/*.{tsx,css}
+alwaysApply: false
+---
+
+# Ant Design `Table` · `cms-data-table` (공통)
+
+목록 데이터 테이블의 **클래스·치수 의도**. 앱별 path·상수 파일은 어댑터.
+
+## Defaults
+
+- Ant Design **`Table`**, `ColumnsType<Row>`, **`rowKey` 필수**
+- 목록: **`className="cms-data-table"`** (+ feature BEM 허용)
+- 가로 스크롤 필요 시 `scroll={{ x: true }}` 또는 합계 폭
+
+## 셀 패딩·헤더 (공유 CSS 패턴 — 화면 override 금지)
+
+| 항목 | 값 (현재 admin 정렬 스펙) |
+|------|---------------------------|
+| thead 높이 | **54px** |
+| thead 패딩 | **12px 20px** |
+| thead 타이포 | 16px / 700 / center (관례) |
+| thead 배경 | `var(--table-th-bg)` → `var(--BG-header)` — [table-th.mdc](./table-th.mdc) |
+| thead/tbody 보더 | `1px solid var(--table-line)` |
+| tbody 패딩 | **10px 16px** |
+| tbody 높이 | **54px** |
+| 외곽 | `1px solid var(--table-line)` · radius **8px** 관례 |
+| 선택 열 폭 | **68px** (`--table-selection-column-width` 또는 앱 상수) |
+| No. 열 폭 | **~80px** (앱 `TABLE_COLUMN_WIDTHS.index`) |
+
+> CMS 구 문서의 ~57px / `#EDF0F2` 단독 표기는 **레거시 메모**. 신규·정렬 작업은 **`--BG-header` + 54px 패턴**을 따른다.
+
+## Columns
+
+| Prop | Notes |
+|------|--------|
+| `width` | 고정 레이아웃. 56–220px 흔한 값 · 앱 상수 우선 |
+| `align` | 목록 기본 center |
+| `ellipsis` | 긴 텍스트 `true` |
+| `render` | optional → `value ?? '-'` |
+| Actions | `render` only, `key` 있음, `dataIndex` 없음 |
+
+## Disable / hover (해당 시)
+
+- 비활성 행 클래스: `cms-data-table__row--disabled` / `CMS_DATA_TABLE_ROW_DISABLED_CLASS`
+- 조회만: non-clickable row hover 비활성 관례
+
+## 금지
+
+- 페이지 CSS로 th/td `padding`·`height` 하드코딩
+- thead 배경 `#f5f6f7` 등 **단색 새로 박기** — 토큰 사용
+- Admin에서 `apps/cms` 경로로 CSS/컴포넌트 import
+
+## 앱 상세
+
+| 앱 | 문서 |
+|----|------|
+| Admin | [table-implementation](../../../apps/admin/.cursor/rules/tables/table-implementation.mdc) |
+| CMS | [table-implementation](../../../apps/cms/.cursor/rules/tables/table-implementation.md) · [table-management](../../../apps/cms/.cursor/rules/tables/table-management.md) |
+
+**Last updated:** 2026-08-06

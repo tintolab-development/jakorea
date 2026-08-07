@@ -1,0 +1,94 @@
+/**
+ * 메뉴별 조회 통계 페이지
+ */
+
+.menu-views-stats-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+  min-height: calc(100vh - var(--header-height, 64px) - 64px);
+}
+
+.menu-views-stats-page__filter-card.admin-list-card {
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.menu-views-stats-page__result-card.admin-list-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+  overflow: auto;
+}
+
+.menu-views-stats-page__result-card .admin-list-toolbar {
+  flex-shrink: 0;
+  margin-bottom: 16px;
+}
+
+.menu-views-stats-page__placeholder {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--color-text-secondary, #7d7d7d);
+  font-size: 14px;
+  line-height: 150%;
+}
+
+/* 요약 테이블 */
+.menu-views-stats-page .menu-view-stats-summary {
+  flex-shrink: 0;
+  margin-bottom: 24px;
+}
+
+.menu-views-stats-page .menu-view-stats-summary .cms-data-table .ant-table-container {
+  border-radius: 8px;
+}
+
+.menu-views-stats-page .menu-view-stats-summary .ant-table-thead > tr > th,
+.menu-views-stats-page .menu-view-stats-summary .ant-table-tbody > tr > td {
+  text-align: center !important;
+  vertical-align: middle;
+}
+
+/* 탭 — 시안 16px / 활성 Bold 민트 · 라벨 길이에 맞춘 너비 */
+.menu-views-stats-page__tabs {
+  flex-shrink: 0;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.menu-views-stats-page__tabs .cms-text-tabs__list {
+  gap: 4px;
+}
+
+.menu-views-stats-page__tabs button.cms-text-tabs__tab {
+  padding: 6px 12px 10px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  color: #7d7d7d;
+  margin-bottom: -1px;
+}
+
+.menu-views-stats-page__tabs button.cms-text-tabs__tab.cms-text-tabs__tab--active {
+  color: var(--color-mint-01, #01a1af);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  border-bottom-color: var(--color-mint-01, #01a1af);
+}
+
+.menu-views-stats-page__tabs button.cms-text-tabs__tab:hover:not(:disabled) {
+  color: var(--color-mint-01, #01a1af);
+}
+
+.menu-views-stats-page__detail {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}

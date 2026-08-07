@@ -1,0 +1,128 @@
+/**
+ * CMS 목록 테이블 라벨 스펙 (apps/cms/src/index.css 동일)
+ * - .table-title / .table-description / 헤더 래퍼
+ * - 갭 토큰: list-table-layout.css (--admin-list-*)
+ */
+
+.table-header-actions {
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.table-header-title--wrapper {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--admin-list-title-desc-gap, 10px);
+  min-width: 0;
+}
+
+.table-title {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+  padding: 0 10px 0 8px;
+  padding-right: 0;
+}
+
+.table-description--black {
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.table-description {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}
+
+.table-header-actions--wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--admin-list-toolbar-actions-gap, 8px);
+}
+
+/*
+ * 목록·카드 툴바 액션 버튼 — Figma large 140×44
+ * (모달 푸터 content-modal__footer-actions 와 동일 스펙)
+ * 의도적 예외:
+ * - `.cms-button--toolbar-auto` / `.cms-button--footer-auto` — 가변 폭
+ * - `.excel-button` — large+icon 180×44 (CMS ExcelButton 스펙)
+ */
+.table-header-actions--wrapper
+  .cms-button.ant-btn:not(.cms-button--footer-auto):not(.cms-button--toolbar-auto):not(.excel-button),
+.admin-list-toolbar
+  > .cms-button.ant-btn:not(.cms-button--footer-auto):not(.cms-button--toolbar-auto):not(
+    .excel-button
+  ),
+.hac-panel__toolbar-buttons
+  .cms-button.ant-btn:not(.cms-button--footer-auto):not(.cms-button--toolbar-auto):not(
+    .excel-button
+  ) {
+  display: inline-flex !important;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  padding: 6px 16px !important;
+  padding-block: 6px !important;
+  padding-inline: 16px !important;
+  gap: 6px;
+  border-radius: var(--radius-8, 8px);
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.table-header-actions--wrapper
+  .cms-button.ant-btn.cms-button--has-icon:not(.cms-button--footer-auto):not(
+    .cms-button--toolbar-auto
+  ):not(.excel-button),
+.hac-panel__toolbar-buttons
+  .cms-button.ant-btn.cms-button--has-icon:not(.cms-button--footer-auto):not(
+    .cms-button--toolbar-auto
+  ):not(.excel-button) {
+  flex-direction: row;
+}
+
+/* 엑셀 다운로드 — large + icon 180×44 (CMS ExcelButton / design-system) */
+.table-header-actions--wrapper .cms-button.ant-btn.excel-button,
+.admin-list-toolbar > .cms-button.ant-btn.excel-button,
+.hac-panel__toolbar-buttons .cms-button.ant-btn.excel-button {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  justify-content: center;
+  align-items: center;
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  padding: 6px 16px 6px 10px !important;
+  padding-block: 6px !important;
+  padding-inline: 10px 16px !important;
+  gap: 6px;
+  border-radius: var(--radius-8, 8px);
+  font-size: 16px;
+  box-sizing: border-box;
+}
+

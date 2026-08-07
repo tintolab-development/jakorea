@@ -9,7 +9,7 @@ import type { DetailedProgramResponse } from './detailedProgramResponse';
 import type { ErrorDetail } from './errorDetail';
 
 /**
- * 공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.
+ * 공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.
  */
 export interface ApiResponseDetailedProgramResponse {
   /** 요청 처리 성공 여부 */
@@ -20,7 +20,7 @@ export interface ApiResponseDetailedProgramResponse {
      */
   data?: DetailedProgramResponse;
   /**
-     * 오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.
+     * 오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.
      * @nullable
      */
   message?: string | null;

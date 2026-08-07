@@ -11,12 +11,14 @@ import {
 } from '@/features/result'
 import { PFDivider, PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
 import styles from './page.module.css'
+import { useNavigate } from 'react-router-dom'
 
 const PAGE_SIZE = 10
 
 const CATEGORY_TAB_ITEMS = getResultCategoryTabItems()
 
 export function ResultsPage() {
+  const navigate = useNavigate()
   const [params, setParams] = useState(readResultsListParams)
   const results = useMockResultsCatalog()
 
@@ -84,7 +86,7 @@ export function ResultsPage() {
           </div>
         </div>
 
-        <PFDivider />
+        <PFDivider variant="focus" />
 
         <div className={styles.list}>
           {pageItems.length === 0 ? (
@@ -96,7 +98,7 @@ export function ResultsPage() {
               <ResultListItemRow
                 key={item.id}
                 item={item}
-                onClick={() => window.location.assign(resultDetailPath(item.id))}
+                onClick={() => navigate(resultDetailPath(item.id))}
               />
             ))
           )}

@@ -6,16 +6,18 @@
  * OpenAPI spec version: v9
  */
 import type { InstructorCertificationResponse } from './instructorCertificationResponse';
-import type { InstructorDetailResponse } from './instructorDetailResponse';
-import type { MemberBankAccountHistoryResponse } from './memberBankAccountHistoryResponse';
+import type { InstructorCmsProfile } from './instructorCmsProfile';
+import type { InstructorCmsSettlement } from './instructorCmsSettlement';
 import type { MemberDetailResponse } from './memberDetailResponse';
+import type { TermsAgreementRow } from './termsAgreementRow';
 
+/**
+ * CMS 강사 상세 응답. 강사 프로필과 현재 정산계좌를 구조화하여 중복 없이 반환합니다.
+ */
 export interface InstructorMemberDetailResponse {
   member?: MemberDetailResponse;
-  instructorProfile?: InstructorDetailResponse;
-  bankName?: string;
-  accountNumber?: string;
-  accountHolder?: string;
-  bankAccounts?: MemberBankAccountHistoryResponse[];
+  profile?: InstructorCmsProfile;
+  settlement?: InstructorCmsSettlement;
   certifications?: InstructorCertificationResponse[];
+  termsAgreements?: TermsAgreementRow[];
 }
