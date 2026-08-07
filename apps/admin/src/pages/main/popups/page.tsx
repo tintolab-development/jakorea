@@ -38,6 +38,7 @@ import {
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
+import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import {
   applyDateRangeToSearchParams,
   pendingDateRangeTupleEqual,
@@ -56,7 +57,6 @@ import {
 } from '@/shared/ui'
 
 import './page.css'
-
 type ActiveFilterValue = '' | 'true' | 'false'
 
 type PopupPendingFilters = {
@@ -362,22 +362,25 @@ export function PopupsPage() {
       {
         title: '순서',
         key: 'sort',
-        width: 72,
+        width: TABLE_COLUMN_WIDTHS.sort,
+        className: CMS_TABLE_SORT_COL_CLASS,
         align: 'center',
         render: () => <PopupDragHandle />,
       },
       {
         title: 'No.',
         key: 'no',
-        width: 72,
+        width: TABLE_COLUMN_WIDTHS.index,
+        className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
         render: (_value, _record, index) => index + 1,
       },
       {
         title: '사용 여부',
         key: 'isActive',
-        width: 100,
+        width: TABLE_COLUMN_WIDTHS.usage,
         align: 'center',
+        className: CMS_TABLE_USAGE_COL_CLASS,
         render: (_value, record) => (
           <Switch
             checked={record.isActive}
@@ -566,7 +569,7 @@ export function PopupsPage() {
             rowSelection={{
               selectedRowKeys,
               onChange: keys => setSelectedRowKeys(keys),
-              columnWidth: 68,
+              columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             }}
           />
         </div>

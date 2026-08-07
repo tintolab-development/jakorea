@@ -30,7 +30,7 @@ import {
   BoardMemberDragHandle,
   BoardMembersSortableTable,
 } from '@/features/board-members/ui/sortable-table'
-import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, CmsInput, ConfirmModal, PageContentLoading, useCmsAlert } from '@/shared/ui'
 
@@ -38,13 +38,13 @@ import './board-panel.css'
 
 /**
  * 시안 이사회 테이블 컬럼 폭
- * 선택 68(cms 공통) | 순서·No 80 | 공개 100 | 나머지 비율 ≈ 한글12 : 영문16 : 직위10 : 소속40
+ * 선택 60 · 순서·No 80 · 공개 100 (공통 상수) + 나머지 비율
  */
 const BOARD_COLUMN_WIDTHS = {
-  selection: 68,
-  sort: 80,
-  no: 80,
-  isPublic: 100,
+  selection: TABLE_COLUMN_WIDTHS.checkbox,
+  sort: TABLE_COLUMN_WIDTHS.sort,
+  no: TABLE_COLUMN_WIDTHS.index,
+  isPublic: TABLE_COLUMN_WIDTHS.usage,
   nameKo: 140,
   nameEn: 188,
   position: 120,
@@ -243,8 +243,8 @@ export function BoardPanel() {
         key: 'sort',
         width: BOARD_COLUMN_WIDTHS.sort,
         align: 'center',
-        className: 'board-members-table__col--sort',
-        onHeaderCell: () => ({ className: 'board-members-table__col--sort' }),
+        className: `${CMS_TABLE_SORT_COL_CLASS} board-members-table__col--sort`,
+        onHeaderCell: () => ({ className: `${CMS_TABLE_SORT_COL_CLASS} board-members-table__col--sort` }),
         render: () => <BoardMemberDragHandle />,
       },
       {

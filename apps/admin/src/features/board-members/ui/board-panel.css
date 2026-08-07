@@ -74,8 +74,8 @@
 /* scroll.x 합계 유지 — cms-data-table width:100% 가 열 합을 잡아먹지 않도록 */
 .board-panel .board-members-table.cms-data-table table.ant-table {
   table-layout: fixed !important;
-  width: max(100%, 1236px) !important;
-  min-width: 1236px !important;
+  width: max(100%, 1228px) !important;
+  min-width: 1228px !important;
 }
 
 .board-panel .board-members-table .ant-table-thead > tr > th,
@@ -103,7 +103,7 @@
 }
 
 /* ── 고정 컬럼 폭 (cms-data-table 강제 규칙 override) ──
- * 선택 68 | 순서 80 | No. 80 | 공개 100 | 한글 140 | 영문 188 | 직위 120 | 소속 460
+ * 선택 60 | 순서 80 | No. 80 | 공개 100 | 한글 140 | 영문 188 | 직위 120 | 소속 460
  */
 
 /* selection-col 다음을 No.로 가정하는 공통 규칙 덮어쓰기 → 순서 80 */

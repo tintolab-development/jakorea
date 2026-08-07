@@ -8,11 +8,10 @@
   flex: 1;
 }
 
-/* 항목 툴바 ↔ 테이블 — 시안 8px */
+/* 항목 툴바 ↔ 테이블 — admin-list-toolbar 기본 16px */
 .income-expense-panel__list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   flex: 1;
   min-height: 0;
   min-width: 0;
@@ -20,8 +19,6 @@
 
 .income-expense-panel__toolbar {
   flex-shrink: 0;
-  /* list-table-layout 기본 toolbar→table 16px 대신 시안 8px gap 사용 */
-  margin-bottom: 0 !important;
 }
 
 .income-expense-panel__table-scroll {
@@ -96,9 +93,9 @@
 /* ── 공통 고정열 ── */
 .income-expense-table .ant-table-thead > tr > th.income-expense-table__col--sort,
 .income-expense-table .ant-table-tbody > tr > td.income-expense-table__col--sort {
-  width: 72px !important;
-  min-width: 72px !important;
-  max-width: 72px !important;
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
 }
 
 .income-expense-table .ant-table-thead > tr > th.cms-table-col--no,

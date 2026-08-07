@@ -27,10 +27,7 @@ import {
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
   FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
-import {
-  CMS_TABLE_NO_COL_CLASS,
-  TABLE_COLUMN_WIDTHS,
-} from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -322,7 +319,8 @@ export function NoticesPage() {
         title: '공개 여부',
         dataIndex: 'isPublic',
         key: 'isPublic',
-        width: 100,
+        width: TABLE_COLUMN_WIDTHS.usage,
+        className: CMS_TABLE_USAGE_COL_CLASS,
         render: (value: boolean, row) => (
           <Switch
             checked={value}

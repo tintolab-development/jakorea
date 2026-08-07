@@ -36,10 +36,7 @@ import {
   FinanceItemsSortableTable,
 } from '@/features/income-expense/ui/sortable-table'
 import { SummaryBar } from '@/features/income-expense/ui/summary-bar'
-import {
-  CMS_TABLE_NO_COL_CLASS,
-  TABLE_COLUMN_WIDTHS,
-} from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import {
   CmsButton,
@@ -58,7 +55,7 @@ import './items-panel.css'
  * 지출 테이블: +구분(~15) · 항목명(~35) · 비율(~10) · 금액(~20)
  */
 const COL_WIDTH = {
-  sort: 72,
+  sort: TABLE_COLUMN_WIDTHS.sort,
   no: TABLE_COLUMN_WIDTHS.index,
   name: 480,
   ratio: 160,
@@ -313,7 +310,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
         key: 'sort',
         width: COL_WIDTH.sort,
         align: 'center',
-        className: 'income-expense-table__col--sort',
+        className: `${CMS_TABLE_SORT_COL_CLASS} income-expense-table__col--sort`,
         render: () => <FinanceItemDragHandle />,
       },
       {

@@ -20,9 +20,9 @@ import {
 } from '@/features/social-link/ui/sortable-table'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 import './page.css'
-
 function buildDraftUrls(rows: SocialLink[]): Record<string, string> {
   return Object.fromEntries(rows.map(row => [row.id, row.linkUrl]))
 }
@@ -116,22 +116,25 @@ export function SocialLinksPage() {
       {
         title: '순서',
         key: 'sort',
-        width: 72,
+        width: TABLE_COLUMN_WIDTHS.sort,
+        className: CMS_TABLE_SORT_COL_CLASS,
         align: 'center',
         render: () => <SocialLinkDragHandle />,
       },
       {
         title: 'No.',
         key: 'no',
-        width: 72,
+        width: TABLE_COLUMN_WIDTHS.index,
+        className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
         render: (_value, _record, index) => index + 1,
       },
       {
         title: '사용 여부',
         key: 'isActive',
-        width: 100,
+        width: TABLE_COLUMN_WIDTHS.usage,
         align: 'center',
+        className: CMS_TABLE_USAGE_COL_CLASS,
         render: (_value, record) => (
           <Switch
             checked={record.isActive}
