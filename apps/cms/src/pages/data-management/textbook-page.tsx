@@ -8,7 +8,7 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
-import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ContentModal, DeleteGuideModal } from '@/shared/ui'
 import { getTextbookListFilterKey } from '@/features/textbook/api/admin-textbooks-service'
 import { getDataManagementApiErrorMessage } from '@/features/data-management/api/get-data-management-api-error'
@@ -30,9 +30,6 @@ import { TextbookDetailFullPageModal } from '@/features/textbook/ui/textbook-det
 import { TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS } from '@/features/textbook/model/textbook-business-areas'
 import { TEXTBOOK_EDUCATION_TARGET_SELECT_OPTIONS } from '@/features/textbook/model/textbook-education-targets'
 import type { TextbookRow, TextbookUseStatus } from '@/features/textbook/model/textbook.types'
-import '@/pages/programs/program-list-page.css'
-import '@/pages/users/user-list-page.css'
-import '@/features/program/general/ui/program-list.css'
 import './textbook-page.css'
 
 type TextbookFilters = {
@@ -46,7 +43,6 @@ type TextbookFilters = {
 const TEXTBOOK_TABLE_SCROLL_X = 1280
 
 const TEXTBOOK_COL_WIDTH = {
-  no: 80,
   businessArea: 150,
   educationTarget: 150,
   grade: 130,
@@ -315,7 +311,8 @@ export default function TextbookPage() {
       {
         title: 'No.',
         key: 'no',
-        width: TEXTBOOK_COL_WIDTH.no,
+        width: TABLE_COLUMN_WIDTHS.index,
+        className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
         render: (_: unknown, __: TextbookRow, index: number) =>
           filteredRows.length === 0 ? '—' : filteredRows.length - index,
@@ -524,6 +521,7 @@ export default function TextbookPage() {
           rowKey="id"
           className="cms-data-table textbook-page__table"
           tableLayout="fixed"
+          loading={listQuery.isLoading}
           scroll={{ x: TEXTBOOK_TABLE_SCROLL_X }}
           columns={columns}
           dataSource={filteredRows}
@@ -545,8 +543,8 @@ export default function TextbookPage() {
               }
               setDetailRoute(record.id, 'view')
             },
+            style: { cursor: 'pointer' },
           })}
-          rowClassName="textbook-page__row"
         />
       </FilterTableLayout>
     </div>
