@@ -1,0 +1,102 @@
+/* GNB 메뉴 관리 */
+
+.gnb-menu-form-card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.gnb-menu-form-card .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.gnb-menu-form-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.gnb-menu-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.gnb-menu-form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gnb-menu-form-section-title__marker {
+  color: var(--main-BK, #3d3d3d);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.gnb-menu-form-section-title__text {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+}
+
+/* cms-data-table 공통 규격 + 셀 가운데 정렬 */
+.gnb-menu-table.cms-data-table .ant-table-thead > tr > th,
+.gnb-menu-table.cms-data-table .ant-table-tbody > tr > td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.gnb-menu-form__name-text {
+  display: block;
+  width: 100%;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: left;
+}
+
+/* 하위 메뉴명 열 — 셀 공통 패딩(12×20) 안쪽 가로 fill, 이중 패딩 없음 */
+.gnb-menu-table .ant-table-tbody > tr > td.gnb-menu-table__name-col {
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.gnb-menu-table .ant-table-thead > tr > th.gnb-menu-table__name-col {
+  text-align: center;
+}
+
+.gnb-menu-form__name-input.cms-input,
+.gnb-menu-table .ant-table-tbody > tr > td.gnb-menu-table__name-col .cms-input {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.gnb-menu-table .ant-table-tbody > tr > td.gnb-menu-table__name-col .cms-input__control,
+.gnb-menu-table .ant-table-tbody > tr > td.gnb-menu-table__name-col .cms-input__inner,
+.gnb-menu-table .ant-table-tbody > tr > td.gnb-menu-table__name-col .ant-input {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+.gnb-menu-form-card .ant-switch-checked {
+  background: var(--color-mint-01, #01a1af) !important;
+}
