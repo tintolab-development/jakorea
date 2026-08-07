@@ -1,0 +1,45 @@
+/* 페이지가 layout-content 높이를 채움 (header + content padding 32×2)
+ * @see detail-document-form-card.mdc
+ * 시안: 흰 카드 1장 안에 3개 항목(상단 배너 · 사용안내 · 후원하기)
+ */
+.individual-donation-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100vh - var(--header-height, 64px) - 64px);
+  height: calc(100vh - var(--header-height, 64px) - 64px);
+}
+
+/* 단일 흰 배경 — 카드 1장만, 하단 회색 빈 면 없음 */
+.individual-donation-page > .individual-donation-card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+  /* 콘텐츠 상단 정렬, 남는 세로 = 카드 흰 면 */
+}
+
+/* 항목 블록: 카드/위젯 크롬 금지 (배경·그림자·패딩·radius 없음) */
+.individual-donation-page .individual-donation-section {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.individual-donation-page .individual-donation-section .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+  margin-bottom: var(--admin-list-toolbar-to-table-gap, 16px);
+}
