@@ -5,6 +5,9 @@
 export { CmsButton, CMS_ACTION_BUTTON_WIDTH, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from './cms-button'
 export type { CmsButtonProps, CmsButtonVariant, CmsButtonSize } from './cms-button'
 
+export { ExcelButton } from './excel-button'
+export type { ExcelButtonProps } from './excel-button'
+
 export { TealHeaderModal } from './teal-header-modal'
 export type { ModalSize, TealHeaderModalProps } from './teal-header-modal'
 
@@ -21,6 +24,11 @@ export type { CmsTextAreaProps, CmsTextAreaSize } from './cms-textarea'
 
 export { CmsSelect } from './cms-select'
 export type { CmsSelectProps } from './cms-select'
+export { CmsSelectMultiple, CMS_MULTI_SELECT_TAG_COLORS } from './cms-select-multiple'
+export type {
+  CmsSelectMultipleOption,
+  CmsSelectMultipleProps,
+} from './cms-select-multiple'
 
 export {
   CmsDatePicker,
@@ -83,3 +91,17 @@ export type {
 
 export { AttachmentDownloadIcon } from './attachment-download-icon'
 export type { AttachmentDownloadIconProps } from './attachment-download-icon'
+
+export { SortOrderDragIcon } from './sort-order-drag-icon'
+export type { SortOrderDragIconProps } from './sort-order-drag-icon'
+
+export { SortOrderDragHandle } from './sort-order-drag-handle'
+export type { SortOrderDragHandleProps } from './sort-order-drag-handle'
+
+export {
+  AdminSortableTableRow,
+  AdminSortableDragHandle,
+  AdminSortableDndShell,
+  useAdminTableDndReorder,
+} from './admin-sortable-table'
+export type { AdminSortableRowId } from './admin-sortable-table'
