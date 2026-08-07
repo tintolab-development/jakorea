@@ -45,6 +45,18 @@ describe('userToApplicantInstructorRow', () => {
     expect(row.freeWriting4).toBe('')
   })
 
+  it('한 줄 소개(bio)와 자유작성 1번(selfIntroduction)을 분리한다', () => {
+    const row = userToApplicantInstructorRow(
+      baseUser({
+        bio: '짧은 한 줄 소개',
+        instructorSelfIntroduction: '긴 자기소개 및 지원동기',
+      })
+    )
+
+    expect(row.oneLineIntro).toBe('짧은 한 줄 소개')
+    expect(row.freeWriting1).toBe('긴 자기소개 및 지원동기')
+  })
+
   it('selfIntroduction이 없으면 자유작성 1번도 빈칸이다', () => {
     const row = userToApplicantInstructorRow(baseUser())
 

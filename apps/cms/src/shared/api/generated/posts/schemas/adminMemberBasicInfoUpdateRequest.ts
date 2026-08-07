@@ -5,6 +5,8 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorCmsProfile } from './instructorCmsProfile';
+import type { InstructorCmsSettlement } from './instructorCmsSettlement';
 import type { InstructorInfoPatch } from './instructorInfoPatch';
 import type { SchoolInfoPatch } from './schoolInfoPatch';
 import type { UserListRowMetricsPatch } from './userListRowMetricsPatch';
@@ -24,4 +26,6 @@ export interface AdminMemberBasicInfoUpdateRequest {
   instructorInfo?: InstructorInfoPatch;
   listMetrics?: UserListRowMetricsPatch;
   bio?: string;
+  profile?: InstructorCmsProfile;
+  settlement?: InstructorCmsSettlement;
 }

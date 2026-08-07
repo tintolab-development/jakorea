@@ -21,6 +21,7 @@ import {
   patchUserBasicInfo,
   type CreateUserRequest,
   type PatchUserBasicInfoInput,
+  type PatchUserBasicInfoOptions,
 } from '@/entities/user/api/user-service'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
@@ -83,7 +84,11 @@ interface UserStore {
     programRole?: ProgramRole
   ) => Promise<void>
   changeUserStatus: (userId: UserId, isActive: boolean) => Promise<void>
-  patchUserBasicInfo: (userId: UserId, patch: PatchUserBasicInfoInput) => Promise<UserWithoutPassword>
+  patchUserBasicInfo: (
+    userId: UserId,
+    patch: PatchUserBasicInfoInput,
+    options?: PatchUserBasicInfoOptions
+  ) => Promise<UserWithoutPassword>
   setSelectedUserId: (userId: UserId | null) => void
   setFilters: (filters: Partial<UserFilters>) => void
   clearFilters: () => void
@@ -393,10 +398,10 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 
-  patchUserBasicInfo: async (userId, patch) => {
+  patchUserBasicInfo: async (userId, patch, options) => {
     set({ loading: true, error: null })
     try {
-      const updatedUser = await patchUserBasicInfo(userId, patch)
+      const updatedUser = await patchUserBasicInfo(userId, patch, options)
       const state = get()
       set({
         usersById: {

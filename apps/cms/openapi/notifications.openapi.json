@@ -29,6 +29,10 @@
       "description": "실적 목록, 상세, 재생성, 마감, 정정, 외부 반출 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "회원 본인의 통합 동의 조회, 전자서명, 철회 API"
+    },
+    {
       "name": "수료증/참여인증서",
       "description": "수료증과 참여인증서 발급, 조회, 다운로드, 상태 확인 API입니다."
     },
@@ -73,6 +77,10 @@
       "description": "공지사항, FAQ, 문의, 고객지원 화면에서 사용하는 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "회원과 CMS 관리자 계정을 한 화면에서 검색하는 읽기 전용 API"
+    },
+    {
       "name": "후원사",
       "description": "후원사, 담당자, 연도별 후원사업 관리 API입니다."
     },
@@ -99,6 +107,10 @@
     {
       "name": "정산",
       "description": "정산, 지급조서, 계좌지급, 정산 캘린더, 정정 요청 API입니다."
+    },
+    {
+      "name": "기타 API",
+      "description": "회원 본인의 전자서명 등록 및 조회 API"
     },
     {
       "name": "기타 API",
@@ -177,6 +189,10 @@
       "description": "프로그램 목록, 상세, 생성, 수정, 삭제, 임시저장, 일정 관리 API입니다."
     },
     {
+      "name": "기타 API",
+      "description": "회원 본인의 문의 작성, 목록, 상세, 삭제 API"
+    },
+    {
       "name": "CMS 콘텐츠",
       "description": "CMS 내부 콘텐츠 관리 화면에서 사용하는 공지, FAQ, 문의, 템플릿 등 콘텐츠 관리 API입니다."
     },
@@ -207,6 +223,10 @@
     {
       "name": "인증/세션",
       "description": "관리자/회원 로그인, MFA, 토큰 갱신, 로그아웃 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "회원 본인 소유 제출 파일의 업로드, 확정, 조회, 다운로드 API"
     },
     {
       "name": "외부 연동 제공자",
@@ -329,6 +349,10 @@
       "description": "회원가입 약관 문서를 DB에서 버전 관리하고 피그마 약관 모달에 공급하는 API"
     },
     {
+      "name": "기타 API",
+      "description": "대시보드, 내정보, 일정, 회원탈퇴 화면 API"
+    },
+    {
       "name": "관리자 관리",
       "description": "관리자 계정 목록, 생성, 수정, 잠금, 권한 관리 API입니다."
     }
@@ -340,7 +364,7 @@
           "관리자 운영 기능"
         ],
         "summary": "PUT /api/admin/notification-event-catalog/{eventType}",
-        "description": "### 이 API가 하는 일\n- PUT /api/admin/notification-event-catalog/{eventType}\n- API 분류: 시스템 진단/운영 검증 API\n- 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `PUT /api/admin/notification-event-catalog/{eventType}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `put_admin_notification-event-catalog_eventType`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 이 API는 일반 사용자 화면용이 아니라 관리자/QA/운영자가 시스템 상태를 확인할 때 사용하는 API입니다. 일반 화면 개발 시에는 직접 호출하지 않습니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- PUT /api/admin/notification-event-catalog/{eventType}\n- API 분류: 시스템 진단/운영 검증 API\n- 사용하는 화면: 알림/발송관리 (`null`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `PUT /api/admin/notification-event-catalog/{eventType}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `put_admin_notification-event-catalog_eventType`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 이 API는 일반 사용자 화면용이 아니라 관리자/QA/운영자가 시스템 상태를 확인할 때 사용하는 API입니다. 일반 화면 개발 시에는 직접 호출하지 않습니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "updateNotificationEventCatalog",
         "parameters": [
           {
@@ -398,7 +422,7 @@
           "관리자 운영 기능"
         ],
         "summary": "알림 조회",
-        "description": "### 이 API가 하는 일\n- 알림 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `GET /api/admin/notification-templates`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_notification-templates`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 알림 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 알림/발송관리 (`null`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `GET /api/admin/notification-templates`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_notification-templates`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "listNotificationTemplates",
         "parameters": [
           {
@@ -444,7 +468,7 @@
           "관리자 운영 기능"
         ],
         "summary": "POST /api/admin/notification-templates",
-        "description": "### 이 API가 하는 일\n- POST /api/admin/notification-templates\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `POST /api/admin/notification-templates`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `post_admin_notification-templates`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/notification-templates\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 알림/발송관리 (`null`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `POST /api/admin/notification-templates`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `post_admin_notification-templates`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "createNotificationTemplate",
         "requestBody": {
           "content": {
@@ -491,7 +515,7 @@
           "관리자 운영 기능"
         ],
         "summary": "POST /api/admin/notification-deliveries/test-send",
-        "description": "### 이 API가 하는 일\n- POST /api/admin/notification-deliveries/test-send\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `POST /api/admin/notification-deliveries/test-send`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `post_admin_notification-deliveries_test-send`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- POST /api/admin/notification-deliveries/test-send\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 알림/발송관리 (`null`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `POST /api/admin/notification-deliveries/test-send`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `post_admin_notification-deliveries_test-send`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "testSendNotification",
         "requestBody": {
           "content": {
@@ -538,7 +562,7 @@
           "관리자 운영 기능"
         ],
         "summary": "알림 부분 수정",
-        "description": "### 이 API가 하는 일\n- 알림 부분 수정\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `PATCH /api/admin/notification-templates/{templateId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `patch_admin_notification-templates_templateId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 알림 부분 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 알림/발송관리 (`null`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `PATCH /api/admin/notification-templates/{templateId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 폼 상태 or 선택 행 action payload\n- 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `patch_admin_notification-templates_templateId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "updateNotificationTemplate",
         "parameters": [
           {
@@ -597,7 +621,7 @@
           "관리자 운영 기능"
         ],
         "summary": "알림 조회",
-        "description": "### 이 API가 하는 일\n- 알림 조회\n- API 분류: 시스템 진단/운영 검증 API\n- 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `GET /api/admin/notification-event-catalog`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_notification-event-catalog`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 이 API는 일반 사용자 화면용이 아니라 관리자/QA/운영자가 시스템 상태를 확인할 때 사용하는 API입니다. 일반 화면 개발 시에는 직접 호출하지 않습니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 알림 조회\n- API 분류: 시스템 진단/운영 검증 API\n- 사용하는 화면: 알림/발송관리 (`null`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `GET /api/admin/notification-event-catalog`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_notification-event-catalog`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 이 API는 일반 사용자 화면용이 아니라 관리자/QA/운영자가 시스템 상태를 확인할 때 사용하는 API입니다. 일반 화면 개발 시에는 직접 호출하지 않습니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "notificationEventCatalog",
         "responses": {
           "200": {
@@ -631,7 +655,7 @@
           "관리자 운영 기능"
         ],
         "summary": "알림 조회",
-        "description": "### 이 API가 하는 일\n- 알림 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `GET /api/admin/notification-deliveries`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_notification-deliveries`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 알림 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 알림/발송관리 (`null`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `GET /api/admin/notification-deliveries`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_notification-deliveries`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "listNotificationDeliveries",
         "parameters": [
           {
@@ -679,7 +703,7 @@
           "관리자 운영 기능"
         ],
         "summary": "알림 조회",
-        "description": "### 이 API가 하는 일\n- 알림 조회\n- API 분류: 피그마/프론트 화면에서 사용하는 화면 API\n- 사용하는 화면: 알림/발송관리 (`SCR_NOTIFICATION`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `GET /api/admin/notification-deliveries/{deliveryId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_notification-deliveries_deliveryId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
+        "description": "### 이 API가 하는 일\n- 알림 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 알림/발송관리 (`null`)\n- 프론트 담당 영역: notifications (`notifications`)\n- 호출 방식: `GET /api/admin/notification-deliveries/{deliveryId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달\n- 응답 사용 위치: 조회 캐시 및 화면 목록·상세 상태 갱신 (mock/local provider first, production provider after staging config)\n- 프론트 조회 키: `get_admin_notification-deliveries_deliveryId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: STAGING_VERIFY_REQUIRED\n- 외부 연동 확인: DIRECTSEND_SMS_EMAIL 연동 검증 필요\n- 스테이징 점검 기준: REQUIRED\n- 목데이터 대체: 임시 목데이터/localStorage 상태를 notifications API 상태/캐시로 대체합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: 별도 접근 범위 제한 없음\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: UNKNOWN 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Auto-synced from implemented controller route",
         "operationId": "getNotificationDelivery",
         "parameters": [
           {
@@ -775,6 +799,67 @@
           },
           "reusedExisting": {
             "type": "boolean"
+          }
+        }
+      },
+      "MemberPortalSignatureProfileRequest": {
+        "type": "object",
+        "properties": {
+          "signatureType": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "displayName": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "fontStyleCode": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "fileObjectId",
+          "signatureType"
+        ]
+      },
+      "MemberPortalSignatureProfileResponse": {
+        "type": "object",
+        "properties": {
+          "signatureProfileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "signatureType": {
+            "type": "string"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "fontStyleCode": {
+            "type": "string"
+          },
+          "versionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -1074,7 +1159,7 @@
       },
       "ApiResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -1090,8 +1175,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -1112,7 +1197,7 @@
           "message": {
             "type": "string",
             "description": "사용자/프론트에 노출 가능한 안전한 오류 메시지",
-            "example": "requested change conflicts with existing data"
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "field": {
             "type": [
@@ -1396,7 +1481,7 @@
       },
       "ApiResponseProgramPostReactionMutationResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -1413,8 +1498,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -1499,7 +1584,7 @@
       },
       "ApiResponseProgramMaterialAssignmentResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -1516,8 +1601,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -1804,7 +1889,7 @@
       },
       "ApiResponseParticipantPerformancePolicyResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -1821,8 +1906,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -1873,7 +1958,7 @@
       },
       "ApiResponseProgramDraftSaveResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -1890,8 +1975,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -1937,7 +2022,7 @@
       },
       "ApiResponseNotificationEventCatalogMutationResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -1954,8 +2039,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -1992,7 +2077,7 @@
       "AdminMarketingConsentResponse": {
         "type": "object",
         "properties": {
-          "adminId": {
+          "adminAccountId": {
             "type": "integer",
             "format": "int64"
           },
@@ -2021,7 +2106,7 @@
       },
       "ApiResponseAdminMarketingConsentResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -2038,8 +2123,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -2229,7 +2314,7 @@
       },
       "ApiResponseDashboardWidgetProgramFiltersSaveResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -2246,8 +2331,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -2339,7 +2424,7 @@
       },
       "ApiResponseVoid": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -2355,13 +2440,57 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "PortalWithdrawalRequest": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 0
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "confirmationText": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "confirmationText",
+          "currentPassword",
+          "reason"
+        ]
+      },
+      "PortalWithdrawalResponse": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "message": {
+            "type": "string"
           }
         }
       },
@@ -2503,7 +2632,7 @@
       },
       "ApiResponseSettlementStatusChangeResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -2520,8 +2649,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -2615,7 +2744,7 @@
       },
       "ApiResponseSettlementApplicationResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -2632,8 +2761,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -2835,7 +2964,7 @@
       },
       "ApiResponseEducationJournalResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -2852,8 +2981,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -2959,6 +3088,16 @@
           "answers": {
             "type": "object",
             "additionalProperties": {}
+          },
+          "fileObjectIdsByQuestion": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
           }
         }
       },
@@ -2982,9 +3121,342 @@
           }
         }
       },
+      "AbsenceReasonSubmissionRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          },
+          "fileObjectIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 20,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "AbsenceReasonSubmissionResponse": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendanceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reviewStatus": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "fileObjectIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PaymentStatementConsentRequest": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "documentVersion": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "agreed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "documentId",
+          "documentVersion"
+        ]
+      },
+      "PaymentStatementConsentResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "agreed": {
+            "type": "boolean"
+          },
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "documentVersion": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canAgree": {
+            "type": "boolean"
+          },
+          "canWithdraw": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateNoticeCommentRequest": {
+        "type": "object",
+        "description": "회원 포탈 안내사항 댓글 등록 요청",
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "NoticeCommentMutationResponse": {
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "commentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "created": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "processedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GiveUpApplicationRequest": {
+        "type": "object",
+        "properties": {
+          "reasonCode": {
+            "type": "string",
+            "description": "활동 포기 사유 코드",
+            "example": "PERSONAL_SCHEDULE",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "reason": {
+            "type": "string",
+            "description": "활동 포기 사유",
+            "example": "남은 교육에 참여하기 어렵습니다.",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "GiveUpApplicationResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "applicationStatus": {
+            "type": "string"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantStatus": {
+            "type": "string"
+          },
+          "giveUpAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idempotent": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ExpenseReceiptSubmitRequest": {
+        "type": "object",
+        "properties": {
+          "expenseType": {
+            "type": "string",
+            "example": "TRANSPORTATION",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "expenseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 0
+          },
+          "fileObjectIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        },
+        "required": [
+          "amount",
+          "expenseDate",
+          "expenseType"
+        ]
+      },
+      "ExpenseReceiptFile": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ExpenseReceiptItem": {
+        "type": "object",
+        "properties": {
+          "receiptId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalReceiptId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "latestRevision": {
+            "type": "boolean"
+          },
+          "expenseType": {
+            "type": "string"
+          },
+          "expenseDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "description": {
+            "type": "string"
+          },
+          "receiptStatus": {
+            "type": "string"
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpenseReceiptFile"
+            }
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canEdit": {
+            "type": "boolean"
+          }
+        }
+      },
       "CancelApplicationRequest": {
         "type": "object",
         "properties": {
+          "reasonCode": {
+            "type": "string",
+            "description": "신청 취소 사유 코드",
+            "example": "PERSONAL_SCHEDULE",
+            "maxLength": 50,
+            "minLength": 0
+          },
           "reason": {
             "type": "string",
             "description": "신청 취소 사유",
@@ -3216,7 +3688,7 @@
       },
       "ApiResponseSettlementApplicationPreviewResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -3233,8 +3705,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -3320,6 +3792,533 @@
             "format": "int64"
           },
           "attachmentGroupId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "MemberPortalInquiryCreateRequest": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "category",
+          "content",
+          "title"
+        ]
+      },
+      "MemberPortalInquiryAnswer": {
+        "type": "object",
+        "properties": {
+          "answerId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "content": {
+            "type": "string"
+          },
+          "answeredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MemberPortalInquiryDetailResponse": {
+        "type": "object",
+        "properties": {
+          "inquiryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "category": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programName": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "displayStatus": {
+            "type": "string"
+          },
+          "inquiredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "answeredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalInquiryAnswer"
+            }
+          }
+        }
+      },
+      "FormRevisionRequest": {
+        "type": "object",
+        "description": "회원 포탈 Form 재제출 요청",
+        "properties": {
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "fileObjectIdsByQuestion": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          }
+        }
+      },
+      "FormRevisionResponse": {
+        "type": "object",
+        "properties": {
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "responseStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MemberPortalFileDownloadRequest": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2
+          }
+        },
+        "required": [
+          "purpose"
+        ]
+      },
+      "MemberPortalFileDownloadResponse": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "downloadUrl": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requiredHeaders": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "MemberPortalFileUploadConfirmRequest": {
+        "type": "object",
+        "properties": {
+          "fileSize": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "checksumSha256": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 0
+          },
+          "contentType": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "contentType",
+          "fileSize"
+        ]
+      },
+      "MemberPortalFileResponse": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "filePurpose": {
+            "type": "string"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scanStatus": {
+            "type": "string"
+          },
+          "uploadStatus": {
+            "type": "string"
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "downloadable": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MemberPortalFileUploadRequest": {
+        "type": "object",
+        "properties": {
+          "filePurpose": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 0
+          },
+          "originalFileName": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "contentType": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 0
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1
+          },
+          "checksumSha256": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "contentType",
+          "filePurpose",
+          "fileSize",
+          "originalFileName"
+        ]
+      },
+      "MemberPortalFileUploadResponse": {
+        "type": "object",
+        "properties": {
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uploadUrl": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requiredHeaders": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "confirmPath": {
+            "type": "string"
+          },
+          "uploadStatus": {
+            "type": "string"
+          },
+          "scanStatus": {
+            "type": "string"
+          }
+        }
+      },
+      "MemberPortalConsentDocumentCreateRequest": {
+        "type": "object",
+        "properties": {
+          "consentType": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "targetType": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "targetId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "consentType"
+        ]
+      },
+      "MemberPortalConsentDocumentResponse": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "consentType": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "documentStatus": {
+            "type": "string"
+          },
+          "contentFormat": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "contentSha256": {
+            "type": "string"
+          },
+          "termsVersion": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "withdrawable": {
+            "type": "boolean"
+          },
+          "participationRestricted": {
+            "type": "boolean"
+          },
+          "paymentRestricted": {
+            "type": "boolean"
+          },
+          "signedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "withdrawnAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signedFileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "generatedFileJobId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "renderStatus": {
+            "type": "string"
+          },
+          "renderFailureReason": {
+            "type": "string"
+          },
+          "signatureFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalConsentSignatureField"
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalConsentEvent"
+            }
+          }
+        }
+      },
+      "MemberPortalConsentEvent": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "beforeStatus": {
+            "type": "string"
+          },
+          "afterStatus": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MemberPortalConsentSignatureField": {
+        "type": "object",
+        "properties": {
+          "fieldId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fieldKey": {
+            "type": "string"
+          },
+          "fieldLabel": {
+            "type": "string"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "signed": {
+            "type": "boolean"
+          },
+          "signatureProfileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "signatureFileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "signedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MemberPortalConsentWithdrawRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "MemberPortalConsentMutationResponse": {
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "consentType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MemberPortalConsentSignFieldRequest": {
+        "type": "object",
+        "properties": {
+          "signatureProfileId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "MemberPortalConsentCompleteRequest": {
+        "type": "object",
+        "properties": {
+          "identityVerificationSessionId": {
             "type": "integer",
             "format": "int64"
           }
@@ -3571,13 +4570,17 @@
           "schoolOrganizationId": {
             "type": "integer",
             "format": "int64",
-            "description": "재학중 선택 시 GET /api/portal/organizations/schools 응답의 organizationId. NEIS 코드나 프론트 mock ID가 아닙니다.",
+            "description": "기존 CMS 학교 PK. 학교 검색 응답의 organizationId를 그대로 전달할 수 있으며 schoolOrganizationId, schoolId 등도 호환합니다.",
             "example": 3001
           },
           "schoolName": {
             "type": "string",
-            "description": "학교명 snapshot. 검색 팝업 선택값 또는 프론트 표시값",
+            "description": "학교명 snapshot. organizationId 또는 schoolSelection과 함께 사용할 수 있으며 이 값만으로 학교를 생성하지 않습니다.",
             "example": "JA초등학교"
+          },
+          "schoolSelection": {
+            "$ref": "#/components/schemas/PortalSchoolSelectionRequest",
+            "description": "선택한 학교 참조. CMS 학교 선택 객체 또는 아직 등록되지 않은 NEIS 학교 선택 객체를 전달할 수 있습니다."
           },
           "grade": {
             "type": "string",
@@ -3633,6 +4636,63 @@
           "password"
         ]
       },
+      "PortalSchoolSelectionRequest": {
+        "type": "object",
+        "description": "회원가입 학교 검색 선택값. CMS organizationId가 없어도 NEIS 코드, 학교명, 주소를 전달하면 기존 CMS 학교를 안전하게 재사용하거나 없을 때만 등록합니다.",
+        "properties": {
+          "schoolOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "CMS에 이미 등록된 학교 PK. 학교 검색 결과 객체를 그대로 전달할 때 사용합니다.",
+            "example": 3001
+          },
+          "provider": {
+            "type": "string",
+            "description": "학교 검색 공급자. 나이스 학교정보 API는 NEIS를 사용합니다.",
+            "example": "NEIS"
+          },
+          "externalSchoolCode": {
+            "type": "string",
+            "description": "공급자의 학교 고유 코드. 숫자 이외 문자가 포함될 수 있습니다.",
+            "example": "B100000658"
+          },
+          "name": {
+            "type": "string",
+            "description": "학교명",
+            "example": "서울중학교"
+          },
+          "schoolLevel": {
+            "type": "string",
+            "description": "학교급 표시값",
+            "example": "중학교"
+          },
+          "organizationCategory": {
+            "type": "string",
+            "description": "CMS 기관 분류. 생략 시 SCHOOL",
+            "example": "SCHOOL"
+          },
+          "regionSido": {
+            "type": "string",
+            "description": "시/도",
+            "example": "서울특별시"
+          },
+          "regionSigungu": {
+            "type": "string",
+            "description": "시/군/구",
+            "example": "강남구"
+          },
+          "zipcode": {
+            "type": "string",
+            "description": "우편번호",
+            "example": "06234"
+          },
+          "address": {
+            "type": "string",
+            "description": "학교 기본 주소",
+            "example": "서울특별시 강남구 테헤란로 1"
+          }
+        }
+      },
       "TeacherSignupRequest": {
         "type": "object",
         "description": "교사 회원 가입 요청",
@@ -3644,7 +4704,7 @@
           "organizationId": {
             "type": "integer",
             "format": "int64",
-            "description": "GET /api/portal/organizations/schools 응답의 organizationId. 내부 organization FK이며 외부 학교 코드를 직접 전달하지 않습니다.",
+            "description": "기존 CMS 학교 organizationId. teacher.organizationId 또는 member.schoolOrganizationId 중 한 곳에 전달할 수 있으며 둘 다 있으면 같아야 합니다. 미등록 학교는 member.schoolSelection을 사용합니다.",
             "example": 3001
           },
           "employmentStatus": {
@@ -3654,17 +4714,34 @@
           }
         },
         "required": [
-          "member",
-          "organizationId"
+          "member"
         ]
       },
       "TermsAgreementRequest": {
         "type": "object",
-        "description": "회원가입/소셜연결/마케팅/보호자 동의 이력 요청",
+        "description": "일반·학교·교사·강사 회원 등록과 회원포탈에서 사용하는 회원 동의 이력 요청",
         "properties": {
           "termsType": {
             "type": "string",
-            "description": "동의 유형. 예: SERVICE_TERMS, PRIVACY_COLLECTION, TEACHER_INFO_COLLECTION, GUARDIAN_CONSENT, CHILD_PRIVACY_COLLECTION, MARKETING, SOCIAL_CONNECTION",
+            "description": "회원 동의 원장에 저장 가능한 canonical TERMS_TYPE입니다. CMS 약관 문서 관리의 전체 18개 타입 중 회원 동의 테이블에 저장되는 15개 canonical 타입과 지급조서 문서 입력 별칭 1개를 사용합니다. PAYMENT_STATEMENT_PRE_CONSENT 입력은 회원 원장의 PAYMENT_STATEMENT_CONSENT로 정규화됩니다.",
+            "enum": [
+              "SERVICE_TERMS",
+              "PRIVACY_COLLECTION",
+              "MARKETING",
+              "GUARDIAN_CONSENT",
+              "CHILD_PRIVACY_COLLECTION",
+              "TEACHER_INFO_COLLECTION",
+              "PORTRAIT_RIGHTS",
+              "SOCIAL_CONNECTION",
+              "PROGRAM_PRIVACY_CONSENT",
+              "PROGRAM_THIRD_PARTY_CONSENT",
+              "INSTRUCTOR_VERIFICATION_CONSENT",
+              "PAYMENT_STATEMENT_PRE_CONSENT",
+              "PAYMENT_STATEMENT_CONSENT",
+              "FACILITATOR_PLEDGE",
+              "ADMINISTRATIVE_INFO_CONSENT",
+              "CRIMINAL_HISTORY_CHECK_CONSENT"
+            ],
             "example": "SERVICE_TERMS",
             "minLength": 1
           },
@@ -3686,7 +4763,7 @@
           },
           "termsSnapshotJson": {
             "type": "string",
-            "description": "동의 당시 전문 또는 요약 스냅샷 JSON. 원문 전문 저장소가 별도이면 해시/버전 참조를 저장합니다."
+            "description": "호환 입력 필드입니다. 저장되는 약관 스냅샷은 서버가 게시 약관 원장에서 생성하며 이 값을 신뢰하지 않습니다."
           }
         },
         "required": [
@@ -3710,6 +4787,11 @@
           },
           "memberType": {
             "type": "string"
+          },
+          "schoolOrganizationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "가입 전에 해석 또는 등록된 CMS 학교 organizationId. 학교가 필요 없는 회원은 null입니다."
           },
           "nextStep": {
             "type": "string"
@@ -4428,7 +5510,7 @@
       },
       "ApiResponseBulkActionResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -4445,8 +5527,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -4508,10 +5590,10 @@
         "properties": {
           "reason": {
             "type": "string",
-            "description": "원문 조회 사유. 감사 로그에 남으므로 업무상 필요한 사유를 작성합니다.",
-            "example": "본인 요청에 따른 회원 정보 확인",
+            "description": "원문 조회 사유. 1자 이상 500자 이하로 입력하며 감사 로그에 저장됩니다.",
+            "example": "회원 요청 확인",
             "maxLength": 500,
-            "minLength": 5
+            "minLength": 1
           }
         },
         "required": [
@@ -4592,6 +5674,129 @@
           }
         }
       },
+      "Affiliation": {
+        "type": "object",
+        "properties": {
+          "schoolName": {
+            "type": "string"
+          },
+          "employmentStatus": {
+            "type": "string"
+          },
+          "organizationNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 0
+          },
+          "affiliatedSchoolUserId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "Career": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "description": "신입/경력 구분",
+            "example": "experienced"
+          },
+          "summaryYears": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "maxItems": 100,
+            "minItems": 0
+          }
+        }
+      },
+      "Education": {
+        "type": "object",
+        "properties": {
+          "highestSchoolType": {
+            "type": "string"
+          },
+          "highestStatus": {
+            "type": "string"
+          },
+          "detailKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 0
+          },
+          "highSchool": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "college23": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "maxItems": 20,
+            "minItems": 0
+          },
+          "college4": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "maxItems": 20,
+            "minItems": 0
+          },
+          "graduate": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "maxItems": 20,
+            "minItems": 0
+          }
+        }
+      },
+      "Essays": {
+        "type": "object",
+        "properties": {
+          "freeWrite1": {
+            "type": "string"
+          },
+          "freeWrite2": {
+            "type": "string"
+          },
+          "freeWrite3": {
+            "type": "string"
+          },
+          "freeWrite4": {
+            "type": "string"
+          }
+        }
+      },
+      "HomeAddress": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      },
       "InstructorCertificationResponse": {
         "type": "object",
         "properties": {
@@ -4630,6 +5835,155 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "InstructorCmsProfile": {
+        "type": "object",
+        "description": "CMS 강사 등록·상세 화면의 구조화 프로필. 기존 flat 강사 필드는 한시적으로 입력 호환만 유지하며 이 구조를 우선 사용합니다.",
+        "properties": {
+          "memberType": {
+            "type": "string",
+            "description": "회원 유형",
+            "example": "SCHOOL_TEACHER"
+          },
+          "status": {
+            "type": "string",
+            "description": "강사 프로필 상태. 상세 응답에서 서버가 설정합니다.",
+            "example": "APPROVED"
+          },
+          "affiliation": {
+            "$ref": "#/components/schemas/Affiliation"
+          },
+          "instructorCareerSummary": {
+            "type": "string",
+            "description": "기본정보의 강사 경력 요약",
+            "example": "10년"
+          },
+          "oneLineIntro": {
+            "type": "string",
+            "description": "기본정보의 한 줄 소개"
+          },
+          "homeAddress": {
+            "$ref": "#/components/schemas/HomeAddress"
+          },
+          "education": {
+            "$ref": "#/components/schemas/Education"
+          },
+          "career": {
+            "$ref": "#/components/schemas/Career"
+          },
+          "jaKoreaActivities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "maxItems": 50,
+            "minItems": 0
+          },
+          "licenses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "maxItems": 50,
+            "minItems": 0
+          },
+          "awards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "maxItems": 50,
+            "minItems": 0
+          },
+          "essays": {
+            "$ref": "#/components/schemas/Essays"
+          },
+          "defaultFeeGrade": {
+            "type": "string",
+            "description": "기본 강사비 등급"
+          },
+          "defaultJaGrade": {
+            "type": "string",
+            "description": "기본 JA 평가 등급"
+          }
+        }
+      },
+      "InstructorCmsSettlement": {
+        "type": "object",
+        "description": "강사 현재 정산 계좌. 상세 응답에서는 루트 계좌 필드와 bankAccounts 배열을 중복 반환하지 않고 이 객체만 사용합니다.",
+        "properties": {
+          "bankName": {
+            "type": "string"
+          },
+          "accountNumber": {
+            "type": "string",
+            "description": "계좌번호. 기본 상세 조회에서는 마스킹되고 개인정보 원문 조회에서만 원문을 반환합니다."
+          },
+          "accountHolder": {
+            "type": "string",
+            "description": "예금주. 기본 상세 조회에서는 마스킹됩니다."
+          },
+          "businessIncome": {
+            "type": "boolean"
+          }
+        }
+      },
+      "InstructorMemberDetailResponse": {
+        "type": "object",
+        "description": "CMS 강사 상세 응답. 강사 프로필과 현재 정산계좌를 구조화하여 중복 없이 반환합니다.",
+        "properties": {
+          "member": {
+            "$ref": "#/components/schemas/MemberDetailResponse"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/InstructorCmsProfile"
+          },
+          "settlement": {
+            "$ref": "#/components/schemas/InstructorCmsSettlement"
+          },
+          "certifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstructorCertificationResponse"
+            }
+          },
+          "termsAgreements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermsAgreementRow"
+            }
+          }
+        }
+      },
+      "TermsAgreementRow": {
+        "type": "object",
+        "properties": {
+          "termsType": {
+            "type": "string"
+          },
+          "termsVersion": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "agreed": {
+            "type": "boolean"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actorType": {
+            "type": "string"
+          },
+          "sourceFlow": {
+            "type": "string"
           }
         }
       },
@@ -4690,67 +6044,9 @@
           "revokedAt": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "InstructorMemberDetailResponse": {
-        "type": "object",
-        "properties": {
-          "member": {
-            "$ref": "#/components/schemas/MemberDetailResponse"
           },
-          "instructorProfile": {
-            "$ref": "#/components/schemas/InstructorDetailResponse"
-          },
-          "bankName": {
-            "type": "string"
-          },
-          "accountNumber": {
-            "type": "string"
-          },
-          "accountHolder": {
-            "type": "string"
-          },
-          "bankAccounts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MemberBankAccountHistoryResponse"
-            }
-          },
-          "certifications": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InstructorCertificationResponse"
-            }
-          }
-        }
-      },
-      "MemberBankAccountHistoryResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "bankName": {
-            "type": "string"
-          },
-          "accountNumber": {
-            "type": "string"
-          },
-          "accountHolder": {
-            "type": "string"
-          },
-          "current": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
+          "profile": {
+            "$ref": "#/components/schemas/InstructorCmsProfile"
           }
         }
       },
@@ -4783,33 +6079,6 @@
             "items": {
               "$ref": "#/components/schemas/TermsAgreementRow"
             }
-          }
-        }
-      },
-      "TermsAgreementRow": {
-        "type": "object",
-        "properties": {
-          "termsType": {
-            "type": "string"
-          },
-          "termsVersion": {
-            "type": "string"
-          },
-          "required": {
-            "type": "boolean"
-          },
-          "agreed": {
-            "type": "boolean"
-          },
-          "agreedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "actorType": {
-            "type": "string"
-          },
-          "sourceFlow": {
-            "type": "string"
           }
         }
       },
@@ -4874,44 +6143,6 @@
             "format": "date-time"
           }
         }
-      },
-      "AdminPreRegisterMemberRequest": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "phone": {
-            "type": "string"
-          },
-          "gender": {
-            "type": "string"
-          },
-          "birthDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "organizationText": {
-            "type": "string"
-          },
-          "oneLineIntro": {
-            "type": "string"
-          },
-          "external1365Id": {
-            "type": "string"
-          },
-          "role": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
-        ]
       },
       "AdminPreRegisterSchoolRequest": {
         "type": "object",
@@ -4979,6 +6210,7 @@
       },
       "AdminPreRegisterInstructorRequest": {
         "type": "object",
+        "description": "CMS 강사 신규 등록 요청. profile/settlement 구조가 canonical이며 기존 flat 필드는 한시적 입력 호환용입니다.",
         "properties": {
           "email": {
             "type": "string",
@@ -4987,8 +6219,7 @@
           },
           "rawPassword": {
             "type": "string",
-            "description": "관리자가 발급하는 초기 임시 비밀번호. CMS 기본값은 로그인 이메일과 동일합니다.",
-            "minLength": 1
+            "description": "호환용 입력값입니다. 생략할 수 있으며, 입력하는 경우 가입 이메일과 동일해야 합니다. 실제 초기 비밀번호는 정규화된 가입 이메일로 설정됩니다."
           },
           "name": {
             "type": "string",
@@ -5005,46 +6236,74 @@
             "format": "date"
           },
           "instructorType": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "profile.memberType 호환 필드"
           },
           "feeGrade": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "profile.defaultFeeGrade 호환 필드"
           },
           "jaGrade": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "profile.defaultJaGrade 호환 필드"
           },
           "businessIncome": {
-            "type": "boolean"
+            "type": "boolean",
+            "deprecated": true,
+            "description": "settlement.businessIncome 호환 필드"
           },
           "homeAddress": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "profile.homeAddress.line 호환 필드"
           },
           "homeAddressDetail": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "profile.homeAddress.detail 호환 필드"
           },
           "educationLevel": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "profile.education 최고학력 요약 호환 필드"
           },
           "careerText": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "profile.instructorCareerSummary 호환 필드"
           },
           "selfIntroduction": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "profile.essays.freeWrite1 호환 필드"
           },
           "oneLineIntro": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "profile.oneLineIntro 호환 필드"
           },
           "bankName": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "settlement.bankName 호환 필드"
           },
           "accountNumber": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "settlement.accountNumber 호환 필드"
           },
           "accountHolder": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true,
+            "description": "settlement.accountHolder 호환 필드"
           },
           "bankAccounts": {
             "type": "array",
+            "deprecated": true,
+            "description": "다계좌 호환 입력. 상세 응답은 settlement 현재 계좌만 반환합니다.",
             "items": {
               "$ref": "#/components/schemas/MemberBankAccountUpsertRequest"
             },
@@ -5067,12 +6326,17 @@
             "items": {
               "$ref": "#/components/schemas/TermsAgreementRequest"
             }
+          },
+          "profile": {
+            "$ref": "#/components/schemas/InstructorCmsProfile"
+          },
+          "settlement": {
+            "$ref": "#/components/schemas/InstructorCmsSettlement"
           }
         },
         "required": [
           "email",
-          "name",
-          "rawPassword"
+          "name"
         ]
       },
       "InstructorCertificationUpsertRequest": {
@@ -5147,8 +6411,7 @@
           },
           "rawPassword": {
             "type": "string",
-            "description": "관리자가 발급하는 초기 임시 비밀번호. CMS 기본값은 로그인 이메일과 동일합니다.",
-            "minLength": 1
+            "description": "호환용 입력값입니다. 생략할 수 있으며, 입력하는 경우 가입 이메일과 동일해야 합니다. 실제 초기 비밀번호는 정규화된 가입 이메일로 설정됩니다."
           },
           "name": {
             "type": "string",
@@ -5191,8 +6454,7 @@
         },
         "required": [
           "email",
-          "name",
-          "rawPassword"
+          "name"
         ]
       },
       "PreRegisterConflictResolveRequest": {
@@ -5309,7 +6571,7 @@
       },
       "ApiResponseTextbookResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -5326,8 +6588,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -5409,7 +6671,21 @@
               "SERVICE_TERMS",
               "PRIVACY_COLLECTION",
               "MFA_SETUP_CONSENT",
-              "MARKETING"
+              "MARKETING",
+              "GUARDIAN_CONSENT",
+              "CHILD_PRIVACY_COLLECTION",
+              "TEACHER_INFO_COLLECTION",
+              "PORTRAIT_RIGHTS",
+              "SOCIAL_CONNECTION",
+              "PROGRAM_PRIVACY_CONSENT",
+              "PROGRAM_THIRD_PARTY_CONSENT",
+              "INSTRUCTOR_VERIFICATION_CONSENT",
+              "PAYMENT_STATEMENT_PRE_CONSENT",
+              "PAYMENT_STATEMENT_CONSENT",
+              "FACILITATOR_PLEDGE",
+              "ADMINISTRATIVE_INFO_CONSENT",
+              "CRIMINAL_HISTORY_CHECK_CONSENT",
+              "CERTIFICATE_HISTORY"
             ],
             "example": "SERVICE_TERMS",
             "minLength": 1
@@ -5472,7 +6748,7 @@
       },
       "ApiResponseTermsDocumentResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -5489,8 +6765,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -5516,7 +6792,21 @@
               "SERVICE_TERMS",
               "PRIVACY_COLLECTION",
               "MFA_SETUP_CONSENT",
-              "MARKETING"
+              "MARKETING",
+              "GUARDIAN_CONSENT",
+              "CHILD_PRIVACY_COLLECTION",
+              "TEACHER_INFO_COLLECTION",
+              "PORTRAIT_RIGHTS",
+              "SOCIAL_CONNECTION",
+              "PROGRAM_PRIVACY_CONSENT",
+              "PROGRAM_THIRD_PARTY_CONSENT",
+              "INSTRUCTOR_VERIFICATION_CONSENT",
+              "PAYMENT_STATEMENT_PRE_CONSENT",
+              "PAYMENT_STATEMENT_CONSENT",
+              "FACILITATOR_PLEDGE",
+              "ADMINISTRATIVE_INFO_CONSENT",
+              "CRIMINAL_HISTORY_CHECK_CONSENT",
+              "CERTIFICATE_HISTORY"
             ],
             "example": "SERVICE_TERMS"
           },
@@ -5644,7 +6934,7 @@
       },
       "ApiResponseSponsorResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -5661,8 +6951,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -5768,7 +7058,7 @@
       },
       "ApiResponseSponsorYearlyBusinessResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -5785,8 +7075,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -5869,7 +7159,7 @@
       },
       "ApiResponseSponsorContactResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -5886,8 +7176,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -5989,7 +7279,7 @@
       },
       "ApiResponseSettlementGenerateResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -6006,8 +7296,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -6085,7 +7375,7 @@
       },
       "ApiResponseSettlementCorrectionResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -6102,8 +7392,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -6221,7 +7511,7 @@
       },
       "ApiResponseSettlementBulkStatusChangeResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -6238,8 +7528,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -6836,7 +8126,7 @@
       },
       "ApiResponseEducationJournalGeneratedFileJobResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -6853,8 +8143,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -6934,7 +8224,7 @@
       },
       "ApiResponseProgramScheduleChangeHistoryResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -6951,8 +8241,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -7014,7 +8304,7 @@
       },
       "ApiResponseProgramPostMutationResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -7031,8 +8321,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -7073,7 +8363,7 @@
       },
       "ApiResponseProgramPostUnreadReminderResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -7090,8 +8380,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -7138,7 +8428,7 @@
       },
       "ApiResponseProgramPostCommentMutationResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -7155,8 +8445,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -7193,7 +8483,7 @@
       },
       "ApiResponseProgramManagerResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -7210,8 +8500,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -8550,7 +9840,7 @@
       },
       "ApiResponsePerformanceRuleResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -8567,8 +9857,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -8607,7 +9897,7 @@
       },
       "ApiResponsePerformanceSnapshotRefreshResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -8624,8 +9914,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -8670,7 +9960,7 @@
       },
       "ApiResponsePerformanceExternalExportResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -8687,8 +9977,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -8744,7 +10034,7 @@
       },
       "ApiResponsePerformanceCorrectionResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -8761,8 +10051,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -8815,7 +10105,7 @@
       },
       "ApiResponsePerformanceRebuildResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -8832,8 +10122,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -8884,7 +10174,7 @@
       },
       "ApiResponsePerformanceClosingResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -8901,8 +10191,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -8960,7 +10250,7 @@
       },
       "ApiResponseNotificationTemplateMutationResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -8977,8 +10267,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -9034,7 +10324,7 @@
       },
       "ApiResponseNotificationTestSendResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -9051,8 +10341,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -9235,7 +10525,7 @@
       },
       "ApiResponseMaterialKitResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -9252,8 +10542,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -9314,7 +10604,7 @@
       },
       "ApiResponseMaterialKitVersionResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -9331,8 +10621,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -9901,7 +11191,7 @@
       },
       "ApiResponseGeneratedFileJobResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -9918,8 +11208,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -10393,15 +11683,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessStartDate": {
-            "type": "string"
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
           },
           "businessEndDate": {
             "type": "string"
           },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
+          "businessStartDate": {
+            "type": "string"
           }
         }
       },
@@ -10490,10 +11780,10 @@
           "ujatPartnerRecommendationPath": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           }
         }
@@ -11444,7 +12734,7 @@
       },
       "ApiResponseCommonExportDataResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -11461,8 +12751,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -11529,7 +12819,7 @@
       },
       "ApiResponseDetailedProgramResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -11546,8 +12836,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -11646,7 +12936,7 @@
       },
       "ApiResponseNoticeResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -11663,8 +12953,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -11755,7 +13045,7 @@
       },
       "ApiResponseMapStringObject": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -11775,8 +13065,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -11829,7 +13119,7 @@
       },
       "ApiResponseFaqResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -11846,8 +13136,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -12213,7 +13503,7 @@
       "AdminSelfSignupResponse": {
         "type": "object",
         "properties": {
-          "adminId": {
+          "adminAccountId": {
             "type": "integer",
             "format": "int64"
           },
@@ -12317,7 +13607,7 @@
         "type": "object",
         "description": "관리자 MFA 설정 응답",
         "properties": {
-          "adminId": {
+          "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 계정 ID",
@@ -12489,57 +13779,6 @@
           }
         }
       },
-      "AdminPermissionRequestNotificationResponse": {
-        "type": "object",
-        "properties": {
-          "requestId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "requestType": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "notificationQueued": {
-            "type": "boolean"
-          },
-          "requestedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "ApiResponseAdminPermissionRequestNotificationResponse": {
-        "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "요청 처리 성공 여부",
-            "example": false
-          },
-          "data": {
-            "type": "null",
-            "$ref": "#/components/schemas/AdminPermissionRequestNotificationResponse",
-            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
-          },
-          "message": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
-          },
-          "error": {
-            "type": "null",
-            "$ref": "#/components/schemas/ErrorDetail",
-            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
-          }
-        }
-      },
       "AdminAccountApprovalDecisionRequest": {
         "type": "object",
         "description": "관리자 승인/반려 처리 요청. 승인 시 roleCode를 함께 보내면 신청자가 선택한 권한 유형 대신 MASTER가 최종 승인한 권한 유형으로 적용됩니다.",
@@ -12561,20 +13800,14 @@
       "AdminAccountResponse": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
           "adminAccountId": {
             "type": "integer",
-            "format": "int64"
-          },
-          "memberId": {
-            "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "관리자 계정 PK. 관리자 조회/수정/삭제 경로에 사용합니다."
           },
           "uuid": {
-            "type": "string"
+            "type": "string",
+            "description": "외부 참조 및 감사용 관리자 UUID. CRUD 경로에는 사용하지 않습니다."
           },
           "email": {
             "type": "string"
@@ -12595,7 +13828,7 @@
       },
       "ApiResponseAdminAccountResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -12612,8 +13845,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -12651,6 +13884,57 @@
           "ids"
         ]
       },
+      "AdminPermissionRequestNotificationResponse": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "requestType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "notificationQueued": {
+            "type": "boolean"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApiResponseAdminPermissionRequestNotificationResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/AdminPermissionRequestNotificationResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
       "AdminAccountCreateRequest": {
         "type": "object",
         "description": "MASTER 관리자가 즉시 ACTIVE 상태로 등록하는 관리자 신규 등록 요청입니다.",
@@ -12663,8 +13947,7 @@
           },
           "rawPassword": {
             "type": "string",
-            "description": "초기 임시 비밀번호. 이메일과 동일한 값 또는 영문·숫자·특수문자를 포함한 8자 이상의 값을 사용할 수 있습니다.",
-            "minLength": 1
+            "description": "초기 비밀번호. 생략하면 정규화된 로그인 이메일을 사용하며, 전달하는 경우 이메일과 동일해야 합니다."
           },
           "name": {
             "type": "string",
@@ -12686,13 +13969,64 @@
           },
           "reason": {
             "type": "string"
+          },
+          "termsAgreements": {
+            "type": "array",
+            "description": "관리자 등록 약관 4종. SERVICE_TERMS, PRIVACY_COLLECTION, MFA_SETUP_CONSENT, MARKETING을 각각 1건씩 전송합니다.",
+            "items": {
+              "$ref": "#/components/schemas/AdminTermsAgreementRequest"
+            },
+            "maxItems": 4,
+            "minItems": 4
           }
         },
         "required": [
           "email",
           "name",
-          "rawPassword",
-          "roleCode"
+          "roleCode",
+          "termsAgreements"
+        ]
+      },
+      "AdminTermsAgreementRequest": {
+        "type": "object",
+        "description": "CMS 관리자 계정 등록 약관 동의 항목. 관리자 계정은 고정된 4개 타입만 허용합니다.",
+        "properties": {
+          "termsType": {
+            "type": "string",
+            "description": "관리자 계정 등록 약관 유형",
+            "enum": [
+              "SERVICE_TERMS",
+              "PRIVACY_COLLECTION",
+              "MFA_SETUP_CONSENT",
+              "MARKETING"
+            ],
+            "example": "SERVICE_TERMS",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "description": "게시 약관 버전",
+            "example": "2026-01",
+            "minLength": 1
+          },
+          "required": {
+            "type": "boolean",
+            "description": "필수 약관 여부. 서버 원장을 기준으로 최종 검증합니다.",
+            "example": true
+          },
+          "agreed": {
+            "type": "boolean",
+            "description": "동의 여부",
+            "example": true
+          },
+          "termsSnapshotJson": {
+            "type": "string",
+            "description": "호환 입력 필드. 실제 스냅샷은 서버의 게시 약관 원장으로 생성합니다."
+          }
+        },
+        "required": [
+          "termsType",
+          "version"
         ]
       },
       "AdminAccountVerificationRequest": {
@@ -12757,7 +14091,7 @@
         "properties": {
           "newPassword": {
             "type": "string",
-            "description": "로그인 이메일과 동일한 임시 비밀번호 또는 영문·숫자·특수문자를 조합한 8자 이상의 비밀번호",
+            "description": "로그인 이메일과 다르고 영문·숫자·특수문자를 조합한 8자 이상의 임시 비밀번호",
             "minLength": 1
           },
           "reason": {
@@ -12768,6 +14102,122 @@
         "required": [
           "newPassword"
         ]
+      },
+      "UpdatePortalProfileRequest": {
+        "type": "object",
+        "description": "회원 포탈 내정보 수정 요청. 이메일·이름·휴대폰·생년월일·성별은 본인인증 정보이므로 이 API에서 수정하지 않습니다.",
+        "properties": {
+          "postalCode": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 0
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "addressDetail": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          },
+          "regionSido": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "regionSigungu": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          },
+          "grade": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 0
+          },
+          "affiliationName": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 0
+          }
+        }
+      },
+      "PortalProfileResponse": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "memberType": {
+            "type": "string"
+          },
+          "teacher": {
+            "type": "boolean"
+          },
+          "instructor": {
+            "type": "boolean"
+          },
+          "postalCode": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "regionSido": {
+            "type": "string"
+          },
+          "regionSigungu": {
+            "type": "string"
+          },
+          "schoolOrganizationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "grade": {
+            "type": "string"
+          },
+          "affiliationName": {
+            "type": "string"
+          },
+          "schoolEnrollmentStatus": {
+            "type": "string"
+          },
+          "teacherEmploymentStatus": {
+            "type": "string"
+          },
+          "accountStatus": {
+            "type": "string"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "AdminMemberBasicInfoUpdateRequest": {
         "type": "object",
@@ -12817,6 +14267,12 @@
           },
           "bio": {
             "type": "string"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/InstructorCmsProfile"
+          },
+          "settlement": {
+            "$ref": "#/components/schemas/InstructorCmsSettlement"
           }
         }
       },
@@ -12937,16 +14393,14 @@
       "SchoolAffiliatedTeacherRow": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "teacherMemberId": {
-            "type": "integer",
-            "format": "int64"
-          },
           "memberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "교사 회원 PK. 교사 회원 조회/수정 경로에 사용합니다."
+          },
+          "uuid": {
+            "type": "string",
+            "description": "외부 참조 및 감사용 회원 UUID. CRUD 경로에는 사용하지 않습니다."
           },
           "name": {
             "type": "string"
@@ -12966,9 +14420,6 @@
           "joinedAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "linkedUserId": {
-            "type": "string"
           }
         }
       },
@@ -13082,9 +14533,6 @@
       "UserResponse": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
           "email": {
             "type": "string"
           },
@@ -13115,9 +14563,6 @@
           "schoolInfo": {
             "$ref": "#/components/schemas/SchoolInfo"
           },
-          "affiliatedSchoolUserId": {
-            "type": "string"
-          },
           "affiliatedSchoolName": {
             "type": "string"
           },
@@ -13128,7 +14573,9 @@
             "$ref": "#/components/schemas/InstructorInfo"
           },
           "instructorId": {
-            "type": "string"
+            "type": "integer",
+            "format": "int64",
+            "description": "강사 프로필 PK. 회원 PK인 memberId와 구분됩니다."
           },
           "interviewStatus": {
             "type": "string"
@@ -13220,19 +14667,17 @@
           "actionState": {
             "$ref": "#/components/schemas/UserDetailActionState"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64"
-          },
           "roleCode": {
             "type": "string"
           },
           "memberId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "회원 PK. 일반/학교/강사 회원 응답에서만 반환됩니다."
           },
           "uuid": {
-            "type": "string"
+            "type": "string",
+            "description": "외부 참조 및 감사용 불변 UUID. 조회/수정/삭제 경로에는 memberId를 사용합니다."
           },
           "status": {
             "type": "string"
@@ -13384,7 +14829,7 @@
       },
       "ApiResponseSettlementApplicationAdminActionResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -13401,8 +14846,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -13703,7 +15148,7 @@
       },
       "ApiResponseProgramResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -13720,8 +15165,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -13755,7 +15200,7 @@
       },
       "ApiResponseTrainedTeacherProgramDetailResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -13772,8 +15217,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -13938,7 +15383,7 @@
       },
       "ApiResponsePerformanceRecordFrontendResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -13955,8 +15400,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -14123,7 +15568,7 @@
       },
       "ApiResponsePerformanceStatusChangeResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -14140,8 +15585,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -14171,7 +15616,7 @@
       },
       "ApiResponseNotificationReadAllResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -14188,8 +15633,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -14224,7 +15669,7 @@
       "AdminMeResponse": {
         "type": "object",
         "properties": {
-          "id": {
+          "adminAccountId": {
             "type": "integer",
             "format": "int64"
           },
@@ -14281,7 +15726,7 @@
       },
       "ApiResponseAdminMeResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -14298,8 +15743,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -14323,7 +15768,7 @@
       "AdminIdentityContactResponse": {
         "type": "object",
         "properties": {
-          "adminId": {
+          "adminAccountId": {
             "type": "integer",
             "format": "int64"
           },
@@ -14357,7 +15802,7 @@
       },
       "ApiResponseAdminIdentityContactResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -14374,8 +15819,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -14394,7 +15839,7 @@
       },
       "ApiResponseSystemIssueStatusResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -14411,8 +15856,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -14452,7 +15897,7 @@
       },
       "ApiResponseInquiryAnswerMutationResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -14469,8 +15914,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -14529,7 +15974,7 @@
       },
       "ApiResponseAdminCommentMutationResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -14546,8 +15991,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -15532,7 +16977,7 @@
           "organizationId": {
             "type": "integer",
             "format": "int64",
-            "description": "학교·기관 ID",
+            "description": "CMS 학교 PK. 회원가입 요청의 schoolOrganizationId 또는 organizationId 호환 필드로 전달합니다.",
             "example": 1001
           },
           "name": {
@@ -15600,12 +17045,27 @@
             "type": "string",
             "description": "데이터 출처",
             "example": "LOCAL_ORGANIZATION_CACHE"
+          },
+          "externalLookupRequired": {
+            "type": "boolean",
+            "description": "CMS 검색 결과가 없어서 나이스 학교 검색이 필요한지",
+            "example": false
+          },
+          "externalProvider": {
+            "type": "string",
+            "description": "외부 학교 검색 공급자",
+            "example": "NEIS"
+          },
+          "nextAction": {
+            "type": "string",
+            "description": "프론트 다음 동작",
+            "example": "SELECT_CMS_ORGANIZATION"
           }
         }
       },
       "ApiResponseString": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -15624,8 +17084,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -15636,7 +17096,7 @@
       },
       "ApiResponseListSettlementApplicationListItemResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -15658,8 +17118,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -15740,6 +17200,22 @@
           },
           "reason": {
             "type": "string"
+          },
+          "eligible": {
+            "type": "boolean"
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "reasonMessage": {
+            "type": "string"
+          },
+          "existingIssueId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "canDownload": {
+            "type": "boolean"
           }
         }
       },
@@ -15834,6 +17310,53 @@
           },
           "cancellable": {
             "type": "boolean"
+          },
+          "thumbnailFileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participationStatus": {
+            "type": "string"
+          },
+          "displayStatus": {
+            "type": "string"
+          },
+          "educationStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "educationEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "nextScheduleAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "progressPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unreadNoticeCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pendingAssignmentCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pendingSurveyCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "certificateAvailable": {
+            "type": "boolean"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -15861,6 +17384,35 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "ApplicationCapabilities": {
+        "type": "object",
+        "properties": {
+          "canCancelApplication": {
+            "type": "boolean"
+          },
+          "canGiveUp": {
+            "type": "boolean"
+          },
+          "canSubmitAssignment": {
+            "type": "boolean"
+          },
+          "canSubmitSurvey": {
+            "type": "boolean"
+          },
+          "canSubmitSatisfaction": {
+            "type": "boolean"
+          },
+          "canIssueCertificate": {
+            "type": "boolean"
+          },
+          "canSubmitReceipt": {
+            "type": "boolean"
+          },
+          "canAgreePaymentStatementConsent": {
+            "type": "boolean"
           }
         }
       },
@@ -15926,12 +17478,580 @@
           },
           "cancellable": {
             "type": "boolean"
+          },
+          "program": {
+            "$ref": "#/components/schemas/ProgramSummary"
+          },
+          "participation": {
+            "$ref": "#/components/schemas/ParticipationSummary"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/EducationScreenSummary"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/ApplicationCapabilities"
+          }
+        }
+      },
+      "EducationScreenSummary": {
+        "type": "object",
+        "properties": {
+          "unreadNoticeCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "surveyPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "satisfactionPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "receiptSubmissionCount": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ParticipationSummary": {
+        "type": "object",
+        "properties": {
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "progressPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstEducationAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastEducationAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completionStatus": {
+            "type": "string"
+          },
+          "certificateStatus": {
+            "type": "string"
+          }
+        }
+      },
+      "ProgramSummary": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "sponsorName": {
+            "type": "string"
+          },
+          "recruitmentStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "recruitmentEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "educationStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "educationEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "inquiryEmail": {
+            "type": "string"
+          },
+          "inquiryPhone": {
+            "type": "string"
+          },
+          "posterFileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ApplicationTimelineEventResponse": {
+        "type": "object",
+        "properties": {
+          "historyId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fromStatus": {
+            "type": "string"
+          },
+          "toStatus": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "changedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApplicationTimelineResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "currentStatus": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationTimelineEventResponse"
+            }
+          }
+        }
+      },
+      "EducationScheduleItem": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "locationName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "scheduleStatus": {
+            "type": "string"
+          },
+          "attendanceStatus": {
+            "type": "string"
+          },
+          "absenceReasonStatus": {
+            "type": "string"
+          },
+          "assignmentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "surveyCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "satisfactionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EducationScheduleListResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EducationScheduleItem"
+            }
+          }
+        }
+      },
+      "EducationScheduleDetailResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/EducationScheduleItem"
+          }
+        }
+      },
+      "NoticeListItem": {
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "pinned": {
+            "type": "boolean"
+          },
+          "unread": {
+            "type": "boolean"
+          },
+          "commentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attachmentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NoticeListResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeListItem"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "NoticeAttachment": {
+        "type": "object",
+        "properties": {
+          "attachmentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mimeType": {
+            "type": "string"
+          }
+        }
+      },
+      "NoticeComment": {
+        "type": "object",
+        "properties": {
+          "commentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "content": {
+            "type": "string"
+          },
+          "authorType": {
+            "type": "string"
+          },
+          "authorId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mine": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NoticeDetailResponse": {
+        "type": "object",
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "visibilityType": {
+            "type": "string"
+          },
+          "pinned": {
+            "type": "boolean"
+          },
+          "unread": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeAttachment"
+            }
+          },
+          "comments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeComment"
+            }
+          }
+        }
+      },
+      "PortalFormListItem": {
+        "type": "object",
+        "properties": {
+          "bindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templateVersionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formType": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "targetScope": {
+            "type": "string"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "submissionStartAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "submissionEndAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "latestFormResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "canResubmit": {
+            "type": "boolean"
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PortalFormListResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortalFormListItem"
+            }
+          }
+        }
+      },
+      "ExpenseReceiptListResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "evidenceRequired": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpenseReceiptItem"
+            }
+          }
+        }
+      },
+      "InstructorRoleRequestSummary": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectedReason": {
+            "type": "string"
+          },
+          "canRequest": {
+            "type": "boolean"
+          },
+          "canReapply": {
+            "type": "boolean"
           }
         }
       },
       "ApiResponseSettlementApplicationAvailabilityResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -15948,8 +18068,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -15987,6 +18107,466 @@
           }
         }
       },
+      "MemberPortalInquiryListItem": {
+        "type": "object",
+        "properties": {
+          "inquiryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "category": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programName": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "displayStatus": {
+            "type": "string"
+          },
+          "inquiredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "answeredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PageResponseMemberPortalInquiryListItem": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalInquiryListItem"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "MemberPortalInquiryProgramOption": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programName": {
+            "type": "string"
+          },
+          "programType": {
+            "type": "string"
+          }
+        }
+      },
+      "FormResponseDetailResponse": {
+        "type": "object",
+        "properties": {
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "latestRevision": {
+            "type": "boolean"
+          },
+          "bindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formType": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "responseStatus": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rejectReason": {
+            "type": "string"
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormResponseFile"
+            }
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retentionExpired": {
+            "type": "boolean"
+          },
+          "canResubmit": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FormResponseFile": {
+        "type": "object",
+        "properties": {
+          "formSubmissionFileId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "questionKey": {
+            "type": "string"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "downloadable": {
+            "type": "boolean"
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FormFeedbackItem": {
+        "type": "object",
+        "properties": {
+          "feedbackId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "content": {
+            "type": "string"
+          },
+          "authorLabel": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FormFeedbackResponse": {
+        "type": "object",
+        "properties": {
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "responseStatus": {
+            "type": "string"
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "feedbacks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormFeedbackItem"
+            }
+          },
+          "canResubmit": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ApplicationSummary": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "draft": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "submitted": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "approved": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rejected": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cancelled": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "inProgress": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completed": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "giveUp": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PendingActionSummary": {
+        "type": "object",
+        "properties": {
+          "applicationsWaiting": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentsPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "surveysPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "satisfactionSurveysPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "absenceReasonsPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lectureReportsPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "settlementApplicationsPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paymentStatementConsentPending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "certificatesAvailable": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PortalDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "memberType": {
+            "type": "string"
+          },
+          "teacher": {
+            "type": "boolean"
+          },
+          "instructor": {
+            "type": "boolean"
+          },
+          "instructorRoleRequest": {
+            "$ref": "#/components/schemas/InstructorRoleRequestSummary"
+          },
+          "applications": {
+            "$ref": "#/components/schemas/ApplicationSummary"
+          },
+          "pendingActions": {
+            "$ref": "#/components/schemas/PendingActionSummary"
+          },
+          "upcomingSchedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortalScheduleItem"
+            }
+          },
+          "recentNotices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortalNoticeItem"
+            }
+          }
+        }
+      },
+      "PortalNoticeItem": {
+        "type": "object",
+        "properties": {
+          "noticeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "pinned": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PortalScheduleItem": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "programTitle": {
+            "type": "string"
+          },
+          "scheduleName": {
+            "type": "string"
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "allDay": {
+            "type": "boolean"
+          },
+          "locationName": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "participationRole": {
+            "type": "string"
+          }
+        }
+      },
+      "MemberPortalConsentSummary": {
+        "type": "object",
+        "properties": {
+          "consentType": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "applicable": {
+            "type": "boolean"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "agreed": {
+            "type": "boolean"
+          },
+          "signed": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expired": {
+            "type": "boolean"
+          },
+          "withdrawable": {
+            "type": "boolean"
+          },
+          "participationRestricted": {
+            "type": "boolean"
+          },
+          "paymentRestricted": {
+            "type": "boolean"
+          },
+          "reconsentRequired": {
+            "type": "boolean"
+          },
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "termsVersion": {
+            "type": "string"
+          },
+          "currentTermsVersion": {
+            "type": "string"
+          },
+          "policyUpdated": {
+            "type": "boolean"
+          }
+        }
+      },
       "FileDownloadJobResponse": {
         "type": "object",
         "properties": {
@@ -16019,6 +18599,25 @@
             "type": "object",
             "additionalProperties": {
               "type": "string"
+            }
+          }
+        }
+      },
+      "PortalCalendarResponse": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortalScheduleItem"
             }
           }
         }
@@ -16388,6 +18987,58 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "TeacherMemberDetailResponse": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "$ref": "#/components/schemas/MemberDetailResponse"
+          },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "neisCode": {
+            "type": "string"
+          },
+          "organizationCategory": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "addressDetail": {
+            "type": "string"
+          },
+          "zipCode": {
+            "type": "string"
+          },
+          "regionSido": {
+            "type": "string"
+          },
+          "regionSigungu": {
+            "type": "string"
+          },
+          "employmentStatus": {
+            "type": "string"
+          },
+          "affiliationStatus": {
+            "type": "string"
+          },
+          "affiliationStartedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "termsAgreements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermsAgreementRow"
+            }
           }
         }
       },
@@ -19765,7 +22416,7 @@
       },
       "ApiResponseListProgramMaterialCandidateResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -19787,8 +22438,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -19851,7 +22502,7 @@
       },
       "ApiResponseListProgramManagerResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -19873,8 +22524,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -21772,7 +24423,7 @@
       "AdminSocialAccountListResponse": {
         "type": "object",
         "properties": {
-          "adminId": {
+          "adminAccountId": {
             "type": "integer",
             "format": "int64"
           },
@@ -24176,12 +26827,14 @@
       "AdminAccountListItemResponse": {
         "type": "object",
         "properties": {
-          "id": {
+          "adminAccountId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "관리자 계정 PK. 관리자 조회/수정/삭제 경로에 사용합니다."
           },
           "uuid": {
-            "type": "string"
+            "type": "string",
+            "description": "외부 참조 및 감사용 관리자 UUID. CRUD 경로에는 사용하지 않습니다."
           },
           "email": {
             "type": "string"
@@ -24248,12 +26901,14 @@
       "AdminAccountApprovalDetailResponse": {
         "type": "object",
         "properties": {
-          "id": {
+          "adminAccountId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "관리자 계정 PK. 관리자 조회/수정/삭제 경로에 사용합니다."
           },
           "uuid": {
-            "type": "string"
+            "type": "string",
+            "description": "외부 참조 및 감사용 관리자 UUID. CRUD 경로에는 사용하지 않습니다."
           },
           "email": {
             "type": "string"
@@ -24411,6 +27066,48 @@
           }
         }
       },
+      "AdminTermsAgreementResponse": {
+        "type": "object",
+        "description": "CMS 관리자 등록 약관·동의 저장 이력",
+        "properties": {
+          "agreementId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "consentType": {
+            "type": "string",
+            "description": "프론트 consentType과 동일하게 사용하는 약관 유형"
+          },
+          "termsType": {
+            "type": "string",
+            "description": "consentType과 1:1인 서버 약관 유형"
+          },
+          "version": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "agreed": {
+            "type": "boolean"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "withdrawnAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceFlow": {
+            "type": "string"
+          }
+        }
+      },
       "AccountPaymentListItemResponse": {
         "type": "object",
         "properties": {
@@ -24514,9 +27211,107 @@
           }
         }
       },
+      "AccountDirectoryItemResponse": {
+        "type": "object",
+        "description": "CMS 전체 계정 디렉터리 항목. 회원과 관리자 계정을 한 화면에서 검색하기 위한 읽기 전용 응답입니다.",
+        "properties": {
+          "accountType": {
+            "type": "string",
+            "description": "계정 도메인",
+            "enum": [
+              "MEMBER",
+              "ADMIN_ACCOUNT"
+            ],
+            "example": "MEMBER"
+          },
+          "accountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "accountType 도메인의 PK. MEMBER면 memberId, ADMIN_ACCOUNT면 adminAccountId입니다.",
+            "example": 168005
+          },
+          "uuid": {
+            "type": "string",
+            "description": "외부 참조 및 감사용 UUID. CRUD 경로에는 사용하지 않습니다."
+          },
+          "email": {
+            "type": "string",
+            "description": "마스킹된 로그인 이메일"
+          },
+          "name": {
+            "type": "string",
+            "description": "마스킹된 이름"
+          },
+          "phone": {
+            "type": "string",
+            "description": "마스킹된 연락처"
+          },
+          "status": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "description": "회원 역할 또는 관리자 권한 코드",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PageResponseAccountDirectoryItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountDirectoryItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "MemberPortalInquiryDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "inquiryId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ApiResponseSponsorDeleteResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -24533,8 +27328,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -24560,7 +27355,7 @@
       },
       "ApiResponseDeleteResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -24577,8 +27372,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -24603,7 +27398,7 @@
       },
       "ApiResponseProgramDraftDeleteResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -24620,8 +27415,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",
@@ -24641,7 +27436,7 @@
       },
       "ApiResponseDetailedProgramDeleteResponse": {
         "type": "object",
-        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message는 기존 호환용 CODE: message 형식을 유지하고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
         "properties": {
           "success": {
             "type": "boolean",
@@ -24658,8 +27453,8 @@
               "string",
               "null"
             ],
-            "description": "오류 또는 안내 메시지. 오류 응답은 기존 호환을 위해 CODE: message 형식을 유지합니다.",
-            "example": "CONFLICT: requested change conflicts with existing data"
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
           },
           "error": {
             "type": "null",

@@ -7,7 +7,7 @@
  */
 
 export interface AdminMeResponse {
-  id?: number;
+  adminAccountId?: number;
   uuid?: string;
   email?: string;
   name?: string;

@@ -12,12 +12,14 @@ import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
 import sharedStyles from './shared.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 export function AdminRegisteredEditPage() {
+  const navigate = useNavigate()
   const wizardState = requireAdminRegisteredWizardState()
 
   if (!wizardState?.birthDate || !wizardState.gender) {
-    window.location.assign('/auth/admin-registered/birth')
+    navigate('/auth/admin-registered/birth')
     return null
   }
 
@@ -62,11 +64,11 @@ export function AdminRegisteredEditPage() {
       volunteerId,
     })
 
-    window.location.assign('/auth/admin-registered/confirm')
+    navigate('/auth/admin-registered/confirm')
   }
 
   const handlePrevious = () => {
-    window.location.assign('/auth/admin-registered/confirm')
+    navigate('/auth/admin-registered/confirm')
   }
 
   return (

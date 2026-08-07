@@ -1,5 +1,6 @@
 /* 동의 양식 — 식별번호 유형(라디오) + 단일 텍스트 입력
- * 행정정보 공동이용 사전 동의서: 라디오 4종과 입력창을 한 줄(가로) 배치 */
+ * 행정정보 공동이용 사전 동의서: 라디오 4종과 입력창을 한 줄(가로) 배치
+ * 텍스트 인풋은 CmsInput(large) — hover/focus/disabled/placeholder는 cms-input.css 스펙 */
 
 .id-type-with-input {
   display: flex;
@@ -21,18 +22,15 @@
   margin-inline-end: 0;
 }
 
-.id-type-with-input__input.ant-input {
-  display: flex;
-  width: 280px;
-  height: 44px;
-  min-width: 120px;
-  padding: 0 12px 0 14px;
-  align-items: center;
-  gap: 8px;
-  border-radius: var(--8, 8px);
-  border: 1px solid var(--table-line, #e0e0e0);
-  background: var(--main-WT, #fff);
+/* CmsInput large 기본 240px → 식별번호 입력은 280px 고정 */
+.id-type-with-input__input.cms-input {
   flex: 0 0 auto;
+  width: 280px;
+}
+
+.id-type-with-input__input .cms-input__control {
+  width: 100%;
+  min-width: 120px;
 }
 
 /* 문서 모드 — ●/○ 텍스트 레이블 (A4 미리보기) */
@@ -47,27 +45,4 @@
   font-weight: 500;
   line-height: 150%;
   white-space: nowrap;
-}
-
-/* 입력 텍스트·placeholder 공통 스펙 — 16px / 500 / 150%, #3D3D3D */
-.id-type-with-input__input.ant-input,
-.id-type-with-input__input .ant-input {
-  color: var(--default-BK, #3d3d3d);
-  -webkit-text-fill-color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.id-type-with-input__input.ant-input::placeholder,
-.id-type-with-input__input .ant-input::placeholder {
-  color: var(--gray-85969-d, #85969d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 1;
 }

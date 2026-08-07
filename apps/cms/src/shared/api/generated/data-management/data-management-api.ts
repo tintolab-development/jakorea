@@ -61,8 +61,8 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/textbooks`
  *
@@ -116,8 +116,8 @@ const textbooks = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/textbooks
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/textbooks`
  *
@@ -158,7 +158,7 @@ const textbooks = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/textbooks
  */
-const create = (
+const create1 = (
     textbookRequest: TextbookRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseTextbookResponse>>,) => {
       return customInstance<ApiResponseTextbookResponse>(
@@ -226,8 +226,8 @@ const bulkDelete = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/sponsors`
  *
@@ -281,8 +281,8 @@ const sponsors = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/sponsors
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/sponsors`
  *
@@ -323,7 +323,7 @@ const sponsors = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/sponsors
  */
-const create2 = (
+const create3 = (
     sponsorRequest: SponsorRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseSponsorResponse>>,) => {
       return customInstance<ApiResponseSponsorResponse>(
@@ -337,8 +337,8 @@ const create2 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/yearly-businesses`
  *
@@ -391,8 +391,8 @@ const yearlyBusinesses = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/sponsors/{sponsorId}/yearly-businesses
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/yearly-businesses`
  *
@@ -448,8 +448,8 @@ const addYearlyBusiness = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/sponsors/{sponsorId}/end
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/end`
  *
@@ -502,8 +502,8 @@ const end = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/contacts`
  *
@@ -556,8 +556,8 @@ const contacts = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/sponsors/{sponsorId}/contacts
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/sponsors/{sponsorId}/contacts`
  *
@@ -721,8 +721,8 @@ const bulkDeleteSponsors = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits`
  *
@@ -776,8 +776,8 @@ const kits = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/material-kits
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/material-kits`
  *
@@ -818,7 +818,7 @@ const kits = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/material-kits
  */
-const create4 = (
+const create5 = (
     materialKitRequest: MaterialKitRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseMaterialKitResponse>>,) => {
       return customInstance<ApiResponseMaterialKitResponse>(
@@ -832,8 +832,8 @@ const create4 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits/{kitId}/versions`
  *
@@ -886,8 +886,8 @@ const versions = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/material-kits/{kitId}/versions
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/material-kits/{kitId}/versions`
  *
@@ -943,8 +943,8 @@ const createVersion = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/material-kits/versions/{versionId}/target-counts
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/material-kits/versions/{versionId}/target-counts`
  *
@@ -1000,8 +1000,8 @@ const addTargetCount = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/detailed-programs`
  *
@@ -1055,8 +1055,8 @@ const detailedPrograms = (
 /**
  * ### 이 API가 하는 일
  * - POST /api/admin/detailed-programs
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `POST /api/admin/detailed-programs`
  *
@@ -1097,7 +1097,7 @@ const detailedPrograms = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/detailed-programs
  */
-const create5 = (
+const create6 = (
     detailedProgramRequest: DetailedProgramRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseDetailedProgramResponse>>,) => {
       return customInstance<ApiResponseDetailedProgramResponse>(
@@ -1165,8 +1165,8 @@ const bulkDelete2 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/textbooks/{textbookId}`
  *
@@ -1219,8 +1219,8 @@ const textbook = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/textbooks/{textbookId}`
  *
@@ -1273,8 +1273,8 @@ const _delete = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/textbooks/{textbookId}`
  *
@@ -1330,8 +1330,8 @@ const update = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}`
  *
@@ -1384,8 +1384,8 @@ const sponsor = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/sponsors/{sponsorId}`
  *
@@ -1438,8 +1438,8 @@ const delete1 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/sponsors/{sponsorId}`
  *
@@ -1495,8 +1495,8 @@ const update2 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/sponsors/yearly-businesses/{yearlyBusinessId}`
  *
@@ -1549,8 +1549,8 @@ const deleteYearlyBusiness = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/sponsors/yearly-businesses/{yearlyBusinessId}`
  *
@@ -1606,8 +1606,8 @@ const updateYearlyBusiness = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/sponsors/contacts/{contactId}`
  *
@@ -1660,8 +1660,8 @@ const deleteContact = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/sponsors/contacts/{contactId}`
  *
@@ -1717,8 +1717,8 @@ const updateContact = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits/{kitId}`
  *
@@ -1771,8 +1771,8 @@ const kit = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data-material-kits (`master-data-material-kits`)
  * - 호출 방식: `DELETE /api/admin/material-kits/{kitId}`
  *
@@ -1825,8 +1825,8 @@ const delete2 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/material-kits/{kitId}`
  *
@@ -1882,8 +1882,8 @@ const update3 = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/detailed-programs/{detailedProgramId}`
  *
@@ -1936,8 +1936,8 @@ const detailedProgram = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 삭제
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `DELETE /api/admin/detailed-programs/{detailedProgramId}`
  *
@@ -1990,8 +1990,8 @@ const delete3 = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 부분 수정
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `PATCH /api/admin/detailed-programs/{detailedProgramId}`
  *
@@ -2047,8 +2047,8 @@ const update4 = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/textbooks/matches`
  *
@@ -2102,8 +2102,8 @@ const matches = (
 /**
  * ### 이 API가 하는 일
  * - 프로그램 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data-sponsors (`master-data-sponsors`)
  * - 호출 방식: `GET /api/admin/sponsors/{sponsorId}/program-histories`
  *
@@ -2158,8 +2158,8 @@ const programHistories = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits/{kitId}/versions/current/calculate`
  *
@@ -2214,8 +2214,8 @@ const currentKitCalculation = (
 /**
  * ### 이 API가 하는 일
  * - 관리자 조회
- * - API 분류: 피그마/프론트 화면에서 사용하는 화면 API
- * - 사용하는 화면: 후원사/교재/마스터데이터 (`SCR_MASTER`)
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 후원사/교재/마스터데이터 (`null`)
  * - 프론트 담당 영역: master-data (`master-data`)
  * - 호출 방식: `GET /api/admin/material-kits/{kitId}/calculate`
  *
@@ -2267,12 +2267,12 @@ const calculate = (
       options);
     }
 
-return {textbooks,create,bulkDelete,sponsors,create2,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,bulkDeleteContacts,bulkDeleteSponsors,kits,create4,versions,createVersion,addTargetCount,detailedPrograms,create5,bulkDelete2,textbook,_delete,update,sponsor,delete1,update2,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,kit,delete2,update3,detailedProgram,delete3,update4,matches,programHistories,currentKitCalculation,calculate}};
+return {textbooks,create1,bulkDelete,sponsors,create3,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,bulkDeleteContacts,bulkDeleteSponsors,kits,create5,versions,createVersion,addTargetCount,detailedPrograms,create6,bulkDelete2,textbook,_delete,update,sponsor,delete1,update2,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,kit,delete2,update3,detailedProgram,delete3,update4,matches,programHistories,currentKitCalculation,calculate}};
 export type TextbooksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbooks']>>>
-export type CreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create']>>>
+export type Create1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create1']>>>
 export type BulkDeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDelete']>>>
 export type SponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['sponsors']>>>
-export type Create2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create2']>>>
+export type Create3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create3']>>>
 export type YearlyBusinessesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['yearlyBusinesses']>>>
 export type AddYearlyBusinessResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addYearlyBusiness']>>>
 export type EndResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['end']>>>
@@ -2281,12 +2281,12 @@ export type AddContactResult = NonNullable<Awaited<ReturnType<ReturnType<typeof 
 export type BulkDeleteContactsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDeleteContacts']>>>
 export type BulkDeleteSponsorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDeleteSponsors']>>>
 export type KitsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['kits']>>>
-export type Create4Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create4']>>>
+export type Create5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create5']>>>
 export type VersionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['versions']>>>
 export type CreateVersionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['createVersion']>>>
 export type AddTargetCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addTargetCount']>>>
 export type DetailedProgramsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['detailedPrograms']>>>
-export type Create5Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create5']>>>
+export type Create6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create6']>>>
 export type BulkDelete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDelete2']>>>
 export type TextbookResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbook']>>>
 export type _DeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['_delete']>>>

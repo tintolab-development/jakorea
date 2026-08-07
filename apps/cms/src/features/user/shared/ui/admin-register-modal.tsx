@@ -55,7 +55,7 @@ const INITIAL_VALUES: AdminRegisterModalFormValues = {
   email: '',
   consentTermsOfService: 'agree',
   consentPersonalInfo: 'agree',
-  consentMarketing: 'disagree',
+  consentMarketing: 'agree',
   consentMfaSetup: 'agree',
 }
 

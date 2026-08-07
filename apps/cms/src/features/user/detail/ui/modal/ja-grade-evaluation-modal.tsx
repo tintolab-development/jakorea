@@ -33,11 +33,15 @@ import './ja-grade-evaluation-modal.css'
 
 const JA_GRADE_EVALUATION_MODAL_Z_INDEX = 1200
 
+export type JaGradeEvaluationPersistMode = 'remote' | 'localOnly'
+
 export interface JaGradeEvaluationModalProps {
   open: boolean
   instructorMemberId: number | null | undefined
   /** uuid — used as localStorage key when memberId is absent (mock) */
   instructorUserId?: string | null
+  /** `localOnly`: API 저장 없이 평가 결과만 반환 (신규 등록 등 memberId 없을 때) */
+  persistMode?: JaGradeEvaluationPersistMode
   scheduleChangeCount?: number
   lateReportCount?: number
   onClose: () => void
@@ -49,6 +53,7 @@ export function JaGradeEvaluationModal({
   open,
   instructorMemberId,
   instructorUserId,
+  persistMode = 'remote',
   scheduleChangeCount = 0,
   lateReportCount = 0,
   onClose,
@@ -126,7 +131,7 @@ export function JaGradeEvaluationModal({
       const reason = buildJaGradeEvaluationReason(result)
       let remoteMemberId = instructorMemberId ?? null
 
-      if (isMembersRemoteEnabled()) {
+      if (persistMode === 'remote' && isMembersRemoteEnabled()) {
         if (remoteMemberId == null && instructorUserId) {
           try {
             remoteMemberId = resolveMemberIdForApi(instructorUserId)
@@ -170,6 +175,7 @@ export function JaGradeEvaluationModal({
     draft,
     instructorMemberId,
     instructorUserId,
+    persistMode,
     lateReportCount,
     onClose,
     onComplete,

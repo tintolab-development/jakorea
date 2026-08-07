@@ -8,6 +8,6 @@
 import type { AdminSocialAccountResponse } from './adminSocialAccountResponse';
 
 export interface AdminSocialAccountListResponse {
-  adminId?: number;
+  adminAccountId?: number;
   content?: AdminSocialAccountResponse[];
 }

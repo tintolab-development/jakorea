@@ -1,11 +1,9 @@
 /**
- * CMS 화면 기준 강사 프로필 DTO — **BE OpenAPI 제안안** (2026-07-31)
+ * CMS 화면 기준 강사 프로필 DTO — BE OpenAPI `InstructorCmsProfile` (2026-08-06 FE 연동)
  *
- * - SSOT 문서: `apps/cms/docs/api/members/instructor-pre-register-detail-roundtrip-handoff-2026-07-31.md` §3.8
+ * - SSOT 문서: `apps/cms/docs/api/members/instructor-pre-register-detail-roundtrip-handoff-2026-08-06.md` §3.8
  * - FE 등록·수정 폼 SSOT: `InstructorRegisterModalFormValues` (`instructor-profile-form-model.ts`)
- * - 기존 `InstructorDetailResponse` flat 필드(`careerText`, `selfIntroduction` 등)를 **화면 섹션 단위**로 재구성
- *
- * codegen 전 참조용. 런타임 mapper는 BE 스키마 확정 후 연동.
+ * - Mapper: `map-instructor-cms-profile.ts`
  */
 
 /** CMS 「회원 유형」 — API `primaryActivityType` / pre-register `instructorType` */

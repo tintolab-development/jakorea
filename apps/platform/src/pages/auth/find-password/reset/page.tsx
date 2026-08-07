@@ -3,11 +3,13 @@ import { isValidPassword } from '@/features/auth/sign-up'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 const PASSWORD_HELP_TEXT = '영문, 숫자, 특수문자를 조합해 8자 이상 입력해 주세요.'
 const PASSWORD_MISMATCH_MESSAGE = '비밀번호가 서로 달라요. 다시 한 번 확인해 주세요.'
 
 export function FindPasswordResetPage() {
+  const navigate = useNavigate()
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
@@ -17,7 +19,7 @@ export function FindPasswordResetPage() {
 
   const handleSubmit = () => {
     // TODO: 비밀번호 변경 API 연동
-    window.location.assign('/auth/find-password/complete')
+    navigate('/auth/find-password/complete')
   }
 
   return (

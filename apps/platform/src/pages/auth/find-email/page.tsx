@@ -1,11 +1,13 @@
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 export function FindEmailPage() {
+  const navigate = useNavigate()
   const handleFindEmail = () => {
     // TODO: 통신사 본인인증 연동 후 이메일 조회
-    window.location.assign('/auth/find-email/complete')
+    navigate('/auth/find-email/complete')
   }
 
   return (

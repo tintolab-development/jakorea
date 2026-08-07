@@ -10,11 +10,8 @@ import type { TermsAgreementRequest } from './termsAgreementRequest';
 export interface AdminPreRegisterIndividualRequest {
   /** @minLength 1 */
   email: string;
-  /**
-     * 관리자가 발급하는 초기 임시 비밀번호. CMS 기본값은 로그인 이메일과 동일합니다.
-     * @minLength 1
-     */
-  rawPassword: string;
+  /** 호환용 입력값입니다. 생략할 수 있으며, 입력하는 경우 가입 이메일과 동일해야 합니다. 실제 초기 비밀번호는 정규화된 가입 이메일로 설정됩니다. */
+  rawPassword?: string;
   /** @minLength 1 */
   name: string;
   phone?: string;

@@ -17,6 +17,7 @@ export type InstructorRegisterLicenseRow = {
   acquiredYear: Dayjs | null
   title: string
   issuer: string
+  certificationId?: number
 }
 
 export type InstructorRegisterEducationSummaryFields = {
@@ -39,6 +40,7 @@ export function buildInstructorRegisterCertifications(
         ? row.acquiredYear.format('YYYY-01-01')
         : undefined
       return {
+        ...(row.certificationId != null ? { id: row.certificationId } : {}),
         certificationName,
         ...(issuer ? { issuer } : {}),
         ...(issuedDate ? { issuedDate } : {}),

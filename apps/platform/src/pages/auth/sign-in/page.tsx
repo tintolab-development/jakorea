@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   isMockAdminRegisteredFirstLogin,
   setAdminRegisteredPasswordChangeRequired,
@@ -10,12 +11,14 @@ import {
   usePortalLoginMutation,
 } from '@/features/auth/sign-in'
 import type { PlatformMemberProfile } from '@/features/mypage'
+import { platformQueryKeys } from '@/shared/api/query-keys'
 import { useMediaQuery } from '@/shared/hooks'
 import {
   clearAuthTokens,
   DEV_MEMBER_PROFILE_OPTIONS,
   isRemoteApiConfigured,
   platformMediaQueries,
+  queryClient,
   setAuthTokens,
   setDevAuthLoggedIn,
   setDevMemberProfile,
@@ -45,20 +48,9 @@ const socialLoginItems = [
   { label: '카카오 로그인', icon: <KakaoSocialLoginIcon /> },
 ]
 
-function resolveRedirectPath() {
-  const searchParams = new URLSearchParams(window.location.search)
-  return searchParams.get('redirect') ?? '/'
-}
-
-function completeDevSignIn(profile?: PlatformMemberProfile) {
-  if (profile) {
-    setDevMemberProfile(profile)
-  }
-  setDevAuthLoggedIn(true)
-  window.location.assign(resolveRedirectPath())
-}
-
 export function SignInPage() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
@@ -66,6 +58,16 @@ export function SignInPage() {
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
   const remoteApi = isRemoteApiConfigured()
   const loginMutation = usePortalLoginMutation()
+
+  const resolveRedirectPath = () => searchParams.get('redirect') ?? '/'
+
+  const completeDevSignIn = (profile?: PlatformMemberProfile) => {
+    if (profile) {
+      setDevMemberProfile(profile)
+    }
+    setDevAuthLoggedIn(true)
+    navigate(resolveRedirectPath())
+  }
 
   const handleEmailChange = (value: string) => {
     setEmail(value)
@@ -82,6 +84,9 @@ export function SignInPage() {
     refreshToken: string
     expiresInSeconds?: number
   }) => {
+    // 이전 세션 회원 캐시 제거 후 새 토큰 저장
+    queryClient.removeQueries({ queryKey: platformQueryKeys.auth.me() })
+    queryClient.removeQueries({ queryKey: platformQueryKeys.auth.memberProfile() })
     setAuthTokens({
       accessToken: input.accessToken,
       refreshToken: input.refreshToken,
@@ -108,7 +113,7 @@ export function SignInPage() {
     if (!remoteApi) {
       if (isMockAdminRegisteredFirstLogin(validation.normalized, password)) {
         setAdminRegisteredPasswordChangeRequired(validation.normalized)
-        window.location.assign('/auth/admin-registered/notice')
+        navigate('/auth/admin-registered/notice')
         return
       }
       completeDevSignIn()
@@ -128,7 +133,7 @@ export function SignInPage() {
           refreshToken: tokens.refreshToken,
           expiresInSeconds: tokens.expiresInSeconds,
         })
-        window.location.assign('/auth/admin-registered/notice')
+        navigate('/auth/admin-registered/notice')
         return
       }
 
@@ -137,7 +142,7 @@ export function SignInPage() {
         refreshToken: tokens.refreshToken,
         expiresInSeconds: tokens.expiresInSeconds,
       })
-      window.location.assign(resolveRedirectPath())
+      navigate(resolveRedirectPath())
     } catch (error) {
       clearAuthTokens()
       setDevAuthLoggedIn(false)
@@ -152,7 +157,7 @@ export function SignInPage() {
   }
 
   const handleSocialLogin = () => {
-    window.location.assign('/auth/social/error?reason=not-linked')
+    navigate('/auth/social/error?reason=not-linked')
   }
 
   const isSubmitting = loginMutation.isPending
@@ -234,7 +239,7 @@ export function SignInPage() {
               onClick={
                 item.href
                   ? () => {
-                      window.location.assign(item.href!)
+                      navigate(item.href!)
                     }
                   : undefined
               }

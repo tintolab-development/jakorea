@@ -2,11 +2,34 @@ import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import type {
   AdminPreRegisterIndividualRequest,
   AdminPreRegisterInstructorRequest,
-  AdminPreRegisterMemberRequest,
   AdminPreRegisterSchoolRequest,
 } from '@/shared/api/generated/members/schemas'
+import type { AdminPreRegisterMemberRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterMemberRequest'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
+import { buildLegacyFlatFieldsFromCmsProfile } from '@/features/user/api/map-instructor-cms-profile'
+import type {
+  InstructorCmsProfileProposal,
+  InstructorCmsSettlement,
+} from '@/features/user/api/types/instructor-cms-profile-proposal'
+
+type AdminPreRegisterInstructorRequestExtended = Omit<
+  AdminPreRegisterInstructorRequest,
+  'profile' | 'settlement'
+> & {
+  profile?: InstructorCmsProfileProposal
+  settlement?: InstructorCmsSettlement
+  organizationText?: string
+}
+
+function attachTermsAgreements<
+  T extends { termsAgreements?: AdminPreRegisterIndividualRequest['termsAgreements'] },
+>(body: T, request: CreateUserRequest): T {
+  if (request.termsAgreements != null && request.termsAgreements.length > 0) {
+    body.termsAgreements = request.termsAgreements
+  }
+  return body
+}
 
 function baseIdentity(request: CreateUserRequest) {
   const email = request.email?.trim() || undefined
@@ -70,7 +93,7 @@ export function mapCreateUserRequestToPreRegisterIndividual(
     body.enrollmentStatus = request.schoolEnrollmentStatus
   }
   if (request.id1365?.trim()) body.external1365Id = request.id1365.trim()
-  return body
+  return attachTermsAgreements(body, request)
 }
 
 export function mapCreateUserRequestToPreRegisterSchool(
@@ -94,7 +117,7 @@ export function mapCreateUserRequestToPreRegisterSchool(
   if (request.regionSido?.trim()) body.regionSido = request.regionSido.trim()
   if (request.regionSigungu?.trim()) body.regionSigungu = request.regionSigungu.trim()
   if (request.zipCode?.trim()) body.zipCode = request.zipCode.trim()
-  return body
+  return attachTermsAgreements(body, request)
 }
 
 export function mapCreateUserRequestToPreRegisterInstructor(
@@ -104,7 +127,7 @@ export function mapCreateUserRequestToPreRegisterInstructor(
   if (!email) {
     throw new Error('강사 회원 등록에는 이메일이 필요합니다.')
   }
-  const body: AdminPreRegisterInstructorRequest = {
+  const body: AdminPreRegisterInstructorRequestExtended = {
     email,
     name,
     rawPassword: resolveAdminProvisionedTempPassword(email),
@@ -113,20 +136,49 @@ export function mapCreateUserRequestToPreRegisterInstructor(
   if (gender) body.gender = gender
   if (birthDate) body.birthDate = birthDate
   if (request.instructorType?.trim()) body.instructorType = request.instructorType.trim()
-  if (request.address?.trim()) body.homeAddress = request.address.trim()
-  if (request.detailAddress?.trim()) body.homeAddressDetail = request.detailAddress.trim()
-  if (request.oneLineIntro?.trim()) body.oneLineIntro = request.oneLineIntro.trim()
-  if (request.careerText?.trim()) body.careerText = request.careerText.trim()
-  if (request.selfIntroduction?.trim()) body.selfIntroduction = request.selfIntroduction.trim()
-  if (request.educationLevel?.trim()) body.educationLevel = request.educationLevel.trim()
   if (request.id1365?.trim()) body.external1365Id = request.id1365.trim()
-  if (request.termsAgreements != null && request.termsAgreements.length > 0) {
-    body.termsAgreements = request.termsAgreements
-  }
+  attachTermsAgreements(body, request)
   if (request.certifications != null && request.certifications.length > 0) {
     body.certifications = request.certifications
   }
-  if (request.instructorInfo) {
+
+  if (request.instructorCmsProfile) {
+    body.profile = request.instructorCmsProfile
+    const legacy = buildLegacyFlatFieldsFromCmsProfile(request.instructorCmsProfile)
+    if (legacy.educationLevel) body.educationLevel = legacy.educationLevel
+    if (legacy.careerText) body.careerText = legacy.careerText
+    if (legacy.selfIntroduction) body.selfIntroduction = legacy.selfIntroduction
+    if (legacy.oneLineIntro) body.oneLineIntro = legacy.oneLineIntro
+    if (request.instructorCmsProfile.homeAddress.line?.trim()) {
+      body.homeAddress = request.instructorCmsProfile.homeAddress.line.trim()
+    }
+    if (request.instructorCmsProfile.homeAddress.detail?.trim()) {
+      body.homeAddressDetail = request.instructorCmsProfile.homeAddress.detail.trim()
+    }
+  } else {
+    if (request.address?.trim()) body.homeAddress = request.address.trim()
+    if (request.detailAddress?.trim()) body.homeAddressDetail = request.detailAddress.trim()
+    if (request.oneLineIntro?.trim()) body.oneLineIntro = request.oneLineIntro.trim()
+    if (request.careerText?.trim()) body.careerText = request.careerText.trim()
+    if (request.selfIntroduction?.trim()) body.selfIntroduction = request.selfIntroduction.trim()
+    if (request.educationLevel?.trim()) body.educationLevel = request.educationLevel.trim()
+  }
+
+  const settlement = request.instructorCmsSettlement
+  if (settlement) {
+    body.settlement = settlement
+    if (settlement.bankName) body.bankName = settlement.bankName
+    if (settlement.accountNumber) body.accountNumber = settlement.accountNumber
+    if (settlement.accountHolder) body.accountHolder = settlement.accountHolder
+    body.businessIncome = settlement.businessIncome
+    if (settlement.bankAccounts?.length) {
+      body.bankAccounts = settlement.bankAccounts.map(row => ({
+        bankName: row.bankName,
+        ...(row.accountNumber ? { accountNumber: row.accountNumber } : {}),
+        ...(row.accountHolder ? { accountHolder: row.accountHolder } : {}),
+      }))
+    }
+  } else if (request.instructorInfo) {
     const bankName = request.instructorInfo.bankName?.trim()
     const accountNumber = request.instructorInfo.accountNumber?.trim()
     const accountHolder = request.instructorInfo.accountHolder?.trim()
@@ -144,5 +196,21 @@ export function mapCreateUserRequestToPreRegisterInstructor(
       ]
     }
   }
-  return body
+
+  const cmsProfile = request.instructorCmsProfile
+  if (cmsProfile) {
+    const orgs = cmsProfile.affiliation?.organizationNames?.map(name => name.trim()).filter(Boolean) ?? []
+    if (orgs.length > 0) {
+      body.organizationText = orgs.join(', ')
+    } else if (cmsProfile.memberType === 'SCHOOL_TEACHER') {
+      const school = cmsProfile.affiliation?.schoolName?.trim()
+      if (school) body.organizationText = school
+    }
+  }
+  if (!body.organizationText && request.affiliation?.trim()) {
+    body.organizationText = request.affiliation.trim()
+  }
+
+  // CMS proposal DTO → OpenAPI InstructorCmsProfile (wire JSON 동일, affiliatedSchoolUserId 등 형만 상이)
+  return body as AdminPreRegisterInstructorRequest
 }

@@ -231,28 +231,28 @@ const intro: AgreementExplanationTextParagraph = {
   id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro,
   kind: 'single_item',
   variant: 'agreement_explanation_text',
-  requiredMark: false,
+  requiredMark: true,
   paragraphTitle: '개인정보 수집‧이용 및 제공 동의서',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
   bodyPlaceholder: '',
   bodyText:
     'JA KOREA (이하 "기관"이라 함)는 「개인정보 보호법」 제15조 및 22조에 의거하여 개인정보 수집 및 이용에 관한 정보주체의 동의절차를 준수하며,\n개인정보 제공자가 동의한 이용목적 외의 용도로는 이용, 제공되지 않습니다. 제공된 개인정보는 개인정보 관리책임자를 통해 열람, 정정, 삭제 등을 요구할 수 있습니다.',
-  answerRequired: false,
+  answerRequired: true,
 }
 
 const midConsentLine: AgreementExplanationTextParagraph = {
   id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine,
   kind: 'single_item',
   variant: 'agreement_explanation_text',
-  requiredMark: false,
+  requiredMark: true,
   paragraphTitle: '',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
   bodyPlaceholder: '',
   bodyText:
     '상기 본인은 위와 같이 「개인정보보호법」등 관련 법규에 의거하여 개인정보 수집 및 활용에 동의합니다.',
-  answerRequired: false,
+  answerRequired: true,
 }
 
 const midDate: WritingFormParagraph = {
@@ -260,7 +260,7 @@ const midDate: WritingFormParagraph = {
   kind: 'description',
   variant: 'system',
   systemPreset: 'agreement_date',
-  requiredMark: false,
+  requiredMark: true,
   paragraphTitle: '날짜 유형',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
@@ -271,7 +271,7 @@ const midSignature: WritingFormParagraph = {
   kind: 'description',
   variant: 'system',
   systemPreset: 'agreement_signature',
-  requiredMark: false,
+  requiredMark: true,
   paragraphTitle: '서명란 유형',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
@@ -298,14 +298,14 @@ const finalConfirm: AgreementExplanationTextParagraph = {
   id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm,
   kind: 'single_item',
   variant: 'agreement_explanation_text',
-  requiredMark: false,
+  requiredMark: true,
   paragraphTitle: '',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
   bodyPlaceholder: '',
   bodyText:
     '본인은 본 비용 지급 목적의 활동에 참여하였으며 상기 내용을 바탕으로 금액을 수령함을 확인합니다.',
-  answerRequired: false,
+  answerRequired: true,
 }
 
 const tailDate: WritingFormParagraph = {
@@ -313,7 +313,7 @@ const tailDate: WritingFormParagraph = {
   kind: 'description',
   variant: 'system',
   systemPreset: 'agreement_date',
-  requiredMark: false,
+  requiredMark: true,
   paragraphTitle: '날짜 유형',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
@@ -324,7 +324,7 @@ const tailSignature: WritingFormParagraph = {
   kind: 'description',
   variant: 'system',
   systemPreset: 'agreement_signature',
-  requiredMark: false,
+  requiredMark: true,
   paragraphTitle: '서명란 유형',
   paragraphDescription: '',
   participatesInTitleNumbering: false,
@@ -334,7 +334,7 @@ const closingRecipient: ClosingParagraph = {
   id: PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingRecipient,
   kind: 'description',
   variant: 'closing',
-  requiredMark: false,
+  requiredMark: true,
   paragraphTitle: '',
   paragraphDescription: '',
   participatesInTitleNumbering: false,

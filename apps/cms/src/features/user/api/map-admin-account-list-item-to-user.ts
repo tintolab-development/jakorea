@@ -10,7 +10,7 @@ import type { User } from '@/types/user'
 export function mapAdminAccountListItemToUser(
   item: AdminAccountListItemResponse
 ): Omit<User, 'password'> {
-  const adminAccountId = item.id
+  const adminAccountId = item.adminAccountId
   const uuid = item.uuid?.trim()
   const id =
     uuid ??

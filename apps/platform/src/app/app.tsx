@@ -1,13 +1,6 @@
-import { AppLayout } from '@/widgets/layout'
-import { resolveRoute } from './router'
+import { RouterProvider } from 'react-router-dom'
+import { router } from './router'
 
 export function App() {
-  const currentPath = window.location.pathname
-  const currentRoute = resolveRoute(currentPath)
-
-  return (
-    <AppLayout layout={currentRoute.layout ?? 'default'}>
-      {currentRoute.element}
-    </AppLayout>
-  )
+  return <RouterProvider router={router} />
 }

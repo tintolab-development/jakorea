@@ -2143,6 +2143,127 @@ function migrateAgreementPortraitDelegatedTaskCopy(
   return { ...p, rows: nextRows }
 }
 
+/** 초상권 시드 단락 — 필수항목(*)·답변 필수 강제 */
+function migrateAgreementPortraitSeedRequiredMarks(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (!AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS.has(p.id)) {
+    return p
+  }
+  if (p.kind === 'single_item') {
+    if (p.requiredMark === true && p.answerRequired === true) return p
+    return { ...p, requiredMark: true, answerRequired: true }
+  }
+  if (p.requiredMark === true) return p
+  return { ...p, requiredMark: true }
+}
+
+/** 지급조서 사전 동의서 시드 단락 — 필수항목(*)·답변 필수 강제 */
+function migratePaymentStatementPreConsentSeedRequiredMarks(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (!p.id.startsWith('payment-statement-pre-consent-seed-')) {
+    return p
+  }
+  if (p.kind === 'single_item') {
+    if (p.requiredMark === true && p.answerRequired === true) return p
+    return { ...p, requiredMark: true, answerRequired: true }
+  }
+  if (p.requiredMark === true) return p
+  return { ...p, requiredMark: true }
+}
+
+/**
+ * 행정정보 공동이용 사전동의서 — 「대상자 본인」만 필수.
+ * 제목형(survey_title_with_period)은 타입상 requiredMark 고정.
+ */
+function migrateAgreementNoticeSeedRequiredMarks(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (!p.id.startsWith('agreement-notice-')) {
+    return p
+  }
+  if (p.kind === 'description' && p.variant === 'survey_title_with_period') {
+    return p
+  }
+
+  const isSubject = p.id === 'agreement-notice-subject'
+  if (isSubject) {
+    if (p.kind === 'single_item') {
+      if (p.requiredMark === true && p.answerRequired === true) return p
+      return { ...p, requiredMark: true, answerRequired: true }
+    }
+    if (p.requiredMark === true) return p
+    return { ...p, requiredMark: true }
+  }
+
+  if (p.kind === 'single_item') {
+    let next: WritingFormParagraph = p
+    if (p.requiredMark !== false || p.answerRequired !== false) {
+      next = { ...p, requiredMark: false, answerRequired: false }
+    }
+    if (
+      next.kind === 'single_item' &&
+      next.variant === 'horizontal_table' &&
+      next.idTypeWithInput != null &&
+      (next.idTypeWithInput.requiredMark !== false ||
+        next.idTypeWithInput.answerRequired !== false)
+    ) {
+      next = {
+        ...next,
+        idTypeWithInput: {
+          ...next.idTypeWithInput,
+          requiredMark: false,
+          answerRequired: false,
+        },
+      }
+    }
+    return next
+  }
+
+  if (p.requiredMark === false) return p
+  return { ...p, requiredMark: false }
+}
+
+/**
+ * 행정정보 공동이용 표 — 1행 시드(연번·행정정보명) 보정 + 최소 행 수 확보.
+ * (구 JSON·localStorage/API 저장본이 빈 1행만 가진 경우 복구)
+ */
+function migrateAgreementNoticeTableSeedRows(
+  p: WritingFormParagraph
+): WritingFormParagraph {
+  if (
+    p.id !== 'agreement-notice-table' ||
+    p.kind !== 'single_item' ||
+    p.variant !== 'horizontal_table'
+  ) {
+    return p
+  }
+  const colCount = Math.max(4, p.columnHeaders?.length ?? 4)
+  let dataRows = (p.dataRows ?? []).map(row => {
+    const next = [...row]
+    while (next.length < colCount) next.push('')
+    return next.slice(0, colCount)
+  })
+  if (dataRows.length === 0) {
+    dataRows = createAgreementNoticeTableDataRows().map(r => [...r])
+  } else {
+    const r0 = dataRows[0] ?? Array.from({ length: colCount }, () => '')
+    /** 시드 고정 문구 — 좌측 1행은 항상 최신 시드로 맞춤(빈 저장본 덮어쓰기·플래시 방지) */
+    dataRows[0] = [
+      AGREEMENT_NOTICE_TABLE_FIRST_ROW[0],
+      AGREEMENT_NOTICE_TABLE_FIRST_ROW[1],
+      r0[2] ?? '',
+      r0[3] ?? '',
+      ...r0.slice(4),
+    ]
+    while (dataRows.length < AGREEMENT_NOTICE_TABLE_BODY_ROW_COUNT) {
+      dataRows.push(Array.from({ length: colCount }, () => ''))
+    }
+  }
+  return { ...p, dataRows }
+}
+
 function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormParagraph {
   let next = migrateLegacySingleItemDateTimeParagraph(p)
   next = normalizeUjatJournalEducationInfoParagraph(next)
@@ -2150,6 +2271,10 @@ function normalizeWritingFormParagraph(p: WritingFormParagraph): WritingFormPara
   next = migrateAgreementPortraitIntroBottomConsent(next)
   next = migrateAgreementPortraitPersonalConsentNameCells(next)
   next = migrateAgreementPortraitDelegatedTaskCopy(next)
+  next = migrateAgreementPortraitSeedRequiredMarks(next)
+  next = migratePaymentStatementPreConsentSeedRequiredMarks(next)
+  next = migrateAgreementNoticeSeedRequiredMarks(next)
+  next = migrateAgreementNoticeTableSeedRows(next)
   if (next.kind === 'description' && next.variant === 'survey_title_with_period') {
     return normalizeTitleWithPeriodParagraph(next)
   }
@@ -2323,6 +2448,22 @@ const AGREEMENT_NOTICE_CONFIRMATION_CLOSING: ClosingParagraph = {
   body: '위와 같은 행정정보 공동이용에 대한 내용을 모두 확인했습니다.',
 }
 
+const AGREEMENT_NOTICE_TABLE_FIRST_ROW: [string, string, string, string] = [
+  '1',
+  '성범죄경력 및 아동학대관련 범죄전력 조회',
+  '',
+  '',
+]
+
+const AGREEMENT_NOTICE_TABLE_BODY_ROW_COUNT = 5
+
+function createAgreementNoticeTableDataRows(): string[][] {
+  return [
+    [...AGREEMENT_NOTICE_TABLE_FIRST_ROW],
+    ...Array.from({ length: AGREEMENT_NOTICE_TABLE_BODY_ROW_COUNT - 1 }, () => ['', '', '', '']),
+  ]
+}
+
 /** 동의 양식 목록 > 행정정보 공동이용 사전동의서 — 편집 시드 초안 */
 export function createAgreementNoticeDraft(): WritingFormDraft {
   const idTypeOpts = createDefaultIdTypeWithInputOptions()
@@ -2330,18 +2471,13 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
     id: AGREEMENT_NOTICE_PARAGRAPH_IDS.table,
     kind: 'single_item',
     variant: 'horizontal_table',
-    requiredMark: true,
+    requiredMark: false,
     paragraphTitle: '공동이용 행정정보(구비서류)',
     paragraphDescription: '',
     participatesInTitleNumbering: true,
     tableFlavor: 'text',
     columnHeaders: ['연번', '행정정보명', '연번', '행정정보명'],
-    dataRows: [
-      ['1', '성범죄경력 및 아동학대관련 범죄전력 조회', '', ''],
-      ['', '', '', ''],
-      ['', '', '', ''],
-      ['', '', '', ''],
-    ],
+    dataRows: createAgreementNoticeTableDataRows(),
     columnFields: [],
     fieldDataRows: [],
     bottomText: AGREEMENT_NOTICE_TABLE_BOTTOM_TEXT,
@@ -2352,7 +2488,7 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
       id: AGREEMENT_NOTICE_PARAGRAPH_IDS.idType,
       kind: 'single_item',
       variant: 'id_type_with_input',
-      requiredMark: true,
+      requiredMark: false,
       paragraphTitle: '',
       paragraphDescription: '',
       participatesInTitleNumbering: true,
@@ -2360,9 +2496,9 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
       selectedOptionId: idTypeOpts[0]?.id ?? null,
       inputPlaceholder: '주민등록번호를 입력해 주세요',
       inputValue: '',
-      answerRequired: true,
+      answerRequired: false,
     },
-    answerRequired: true,
+    answerRequired: false,
   })
 
   return {
@@ -2388,32 +2524,32 @@ export function createAgreementNoticeDraft(): WritingFormDraft {
         id: AGREEMENT_NOTICE_PARAGRAPH_IDS.institution,
         kind: 'single_item',
         variant: 'agreement_explanation_text',
-        requiredMark: true,
+        requiredMark: false,
         paragraphTitle: '이용기관 명칭',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
         bodyPlaceholder: '이용기관 명칭을 입력해 주세요',
         bodyText: '',
-        answerRequired: true,
+        answerRequired: false,
       },
       {
         id: AGREEMENT_NOTICE_PARAGRAPH_IDS.purpose,
         kind: 'single_item',
         variant: 'agreement_explanation_text',
-        requiredMark: true,
+        requiredMark: false,
         paragraphTitle: '이용사무(이용목적)',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
         bodyPlaceholder: '이용 목적을 입력해 주세요',
         bodyText: '범죄경력 유무 조회',
-        answerRequired: true,
+        answerRequired: false,
       },
       tableSeed,
       {
         id: AGREEMENT_NOTICE_PARAGRAPH_IDS.consentStatic,
         kind: 'description',
         variant: 'static_description_lines',
-        requiredMark: true,
+        requiredMark: false,
         paragraphTitle: '정보주체(본인) 동의사항',
         paragraphDescription: '',
         participatesInTitleNumbering: true,
@@ -2505,6 +2641,20 @@ export function ensureAgreementNoticeConfirmationClosing(
   }
 
   return { ...draft, paragraphs }
+}
+
+/**
+ * 저장본(API/localStorage) 로드 후 공동이용 행정정보 표 1행 시드·행 수를 최신 시드에 맞춤.
+ * 초기 createDraft 시드가 잠깐 보이다가 빈 저장본으로 덮이는 플래시를 막는다.
+ * (지급조서 `overlayPaymentStatementPreConsentSeedHorizontalTables`와 동일 역할)
+ */
+export function overlayAgreementNoticeSeedHorizontalTable(
+  draft: WritingFormDraft
+): WritingFormDraft {
+  return normalizeWritingFormDraft({
+    ...draft,
+    paragraphs: draft.paragraphs.map(p => migrateAgreementNoticeTableSeedRows(p)),
+  })
 }
 
 /** 동의 양식 > 초상권 수집·이용 동의서 — 시드 단락 id */
@@ -2701,7 +2851,7 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
         id: AGREEMENT_PORTRAIT_PARAGRAPH_IDS.confirmationClosing,
         kind: 'description',
         variant: 'closing',
-        requiredMark: false,
+        requiredMark: true,
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
@@ -2712,7 +2862,7 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
         kind: 'description',
         variant: 'system',
         systemPreset: 'agreement_date',
-        requiredMark: false,
+        requiredMark: true,
         paragraphTitle: '날짜 유형',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
@@ -2722,7 +2872,7 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
         kind: 'description',
         variant: 'system',
         systemPreset: 'agreement_signature',
-        requiredMark: false,
+        requiredMark: true,
         paragraphTitle: '서명란 유형',
         paragraphDescription: '',
         participatesInTitleNumbering: false,

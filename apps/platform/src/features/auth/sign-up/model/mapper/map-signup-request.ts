@@ -56,6 +56,9 @@ export type SignUpMapInput = {
   schoolStatus: SchoolStatus
   schoolName: string
   schoolOrganizationId?: number | null
+  /** NEIS 학교 코드 — schoolSelection.externalSchoolCode */
+  schoolNeisCode?: string | null
+  schoolAddress?: string
   grade: string
   employmentStatus: EmploymentStatus | null
   address: string
@@ -69,6 +72,19 @@ export type SignUpMapInput = {
   agreements: AgreementState
   guardianAgreements?: GuardianAgreementState
   termsCatalog?: SignupTermsCatalogResponse | null
+}
+
+function buildSchoolSelection(input: SignUpMapInput) {
+  const name = input.schoolName.trim()
+  if (!name) return undefined
+
+  return {
+    provider: 'NEIS',
+    externalSchoolCode: input.schoolNeisCode?.trim() || undefined,
+    name,
+    address: input.schoolAddress?.trim() || undefined,
+    organizationCategory: 'SCHOOL',
+  }
 }
 
 function buildMember(input: SignUpMapInput): MemberSignupRequest {
@@ -111,11 +127,13 @@ function buildMember(input: SignUpMapInput): MemberSignupRequest {
   }
 
   if (input.selectedType === 'general' && input.schoolStatus === 'enrolled') {
+    // NEIS 선택 학교명·학년. CMS PK가 있으면 organizationId, 없으면 schoolSelection.
     member.schoolName = input.schoolName.trim() || undefined
     member.grade = input.grade.trim() || undefined
-    // 백엔드: 재학 중 일반회원은 schoolOrganizationId 필수
     if (input.schoolOrganizationId != null) {
       member.schoolOrganizationId = input.schoolOrganizationId
+    } else {
+      member.schoolSelection = buildSchoolSelection(input)
     }
   }
 
@@ -129,14 +147,26 @@ export function mapSignUpToGeneralRequest(input: SignUpMapInput): HomepageGenera
 export function mapSignUpToTeacherRequest(
   input: SignUpMapInput,
 ): HomepageTeacherSignupRequest | null {
-  if (input.schoolOrganizationId == null) {
+  const schoolName = input.schoolName.trim()
+  if (!schoolName) {
     return null
+  }
+
+  const member = buildMember(input)
+  member.schoolName = schoolName
+
+  if (input.schoolOrganizationId != null) {
+    member.schoolOrganizationId = input.schoolOrganizationId
+  } else {
+    member.schoolSelection = buildSchoolSelection(input)
   }
 
   return {
     teacher: {
-      member: buildMember(input),
-      organizationId: input.schoolOrganizationId,
+      member,
+      ...(input.schoolOrganizationId != null
+        ? { organizationId: input.schoolOrganizationId }
+        : {}),
       employmentStatus: toApiEmploymentStatus(input.employmentStatus),
     },
   }

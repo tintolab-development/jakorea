@@ -8,6 +8,12 @@
 
 export interface CancelApplicationRequest {
   /**
+     * 신청 취소 사유 코드
+     * @minLength 0
+     * @maxLength 50
+     */
+  reasonCode?: string;
+  /**
      * 신청 취소 사유
      * @minLength 0
      * @maxLength 500

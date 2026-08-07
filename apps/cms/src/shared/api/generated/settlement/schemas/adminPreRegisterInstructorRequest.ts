@@ -6,36 +6,92 @@
  * OpenAPI spec version: v9
  */
 import type { InstructorCertificationUpsertRequest } from './instructorCertificationUpsertRequest';
+import type { InstructorCmsProfile } from './instructorCmsProfile';
+import type { InstructorCmsSettlement } from './instructorCmsSettlement';
 import type { MemberBankAccountUpsertRequest } from './memberBankAccountUpsertRequest';
 import type { TermsAgreementRequest } from './termsAgreementRequest';
 
+/**
+ * CMS 강사 신규 등록 요청. profile/settlement 구조가 canonical이며 기존 flat 필드는 한시적 입력 호환용입니다.
+ */
 export interface AdminPreRegisterInstructorRequest {
   /** @minLength 1 */
   email: string;
-  /**
-     * 관리자가 발급하는 초기 임시 비밀번호. CMS 기본값은 로그인 이메일과 동일합니다.
-     * @minLength 1
-     */
-  rawPassword: string;
+  /** 호환용 입력값입니다. 생략할 수 있으며, 입력하는 경우 가입 이메일과 동일해야 합니다. 실제 초기 비밀번호는 정규화된 가입 이메일로 설정됩니다. */
+  rawPassword?: string;
   /** @minLength 1 */
   name: string;
   phone?: string;
   gender?: string;
   birthDate?: string;
+  /**
+     * profile.memberType 호환 필드
+     * @deprecated
+     */
   instructorType?: string;
+  /**
+     * profile.defaultFeeGrade 호환 필드
+     * @deprecated
+     */
   feeGrade?: string;
+  /**
+     * profile.defaultJaGrade 호환 필드
+     * @deprecated
+     */
   jaGrade?: string;
+  /**
+     * settlement.businessIncome 호환 필드
+     * @deprecated
+     */
   businessIncome?: boolean;
+  /**
+     * profile.homeAddress.line 호환 필드
+     * @deprecated
+     */
   homeAddress?: string;
+  /**
+     * profile.homeAddress.detail 호환 필드
+     * @deprecated
+     */
   homeAddressDetail?: string;
+  /**
+     * profile.education 최고학력 요약 호환 필드
+     * @deprecated
+     */
   educationLevel?: string;
+  /**
+     * profile.instructorCareerSummary 호환 필드
+     * @deprecated
+     */
   careerText?: string;
+  /**
+     * profile.essays.freeWrite1 호환 필드
+     * @deprecated
+     */
   selfIntroduction?: string;
+  /**
+     * profile.oneLineIntro 호환 필드
+     * @deprecated
+     */
   oneLineIntro?: string;
+  /**
+     * settlement.bankName 호환 필드
+     * @deprecated
+     */
   bankName?: string;
+  /**
+     * settlement.accountNumber 호환 필드
+     * @deprecated
+     */
   accountNumber?: string;
+  /**
+     * settlement.accountHolder 호환 필드
+     * @deprecated
+     */
   accountHolder?: string;
   /**
+     * 다계좌 호환 입력. 상세 응답은 settlement 현재 계좌만 반환합니다.
+     * @deprecated
      * @minItems 0
      * @maxItems 20
      */
@@ -47,4 +103,6 @@ export interface AdminPreRegisterInstructorRequest {
   certifications?: InstructorCertificationUpsertRequest[];
   external1365Id?: string;
   termsAgreements?: TermsAgreementRequest[];
+  profile?: InstructorCmsProfile;
+  settlement?: InstructorCmsSettlement;
 }

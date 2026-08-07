@@ -11,6 +11,7 @@
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { recordBackendErrorForE2e } from '@/features/e2e-error-log/lib/record-from-axios-error'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
+import { showGlobalApiErrorAlert } from '@/shared/lib/show-global-api-error-alert'
 import { adminAuthPaths } from '@/shared/config/api-paths'
 import axios, {
   type AxiosError,
@@ -50,6 +51,8 @@ export type RetryableRequest = InternalAxiosRequestConfig & {
   _retry?: boolean
   skipRefresh?: boolean
   skipAuth?: boolean
+  /** true면 axios 글로벌 에러 AlertModal을 띄우지 않음 (호출부에서 직접 처리) */
+  skipGlobalErrorAlert?: boolean
 }
 
 export { getApiBaseUrl, isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
@@ -326,6 +329,7 @@ axiosClient.interceptors.response.use(
     const { response, config } = error
 
     if (!response || !config) {
+      showGlobalApiErrorAlert(error, config as RetryableRequest | undefined)
       return Promise.reject(error)
     }
 
@@ -335,15 +339,18 @@ axiosClient.interceptors.response.use(
     const code = getErrorCode(response.data)
 
     if (originalRequest.skipRefresh || isExcludedFromAutoRefresh(requestUrl)) {
+      showGlobalApiErrorAlert(error, originalRequest)
       return Promise.reject(error)
     }
 
     if (status === 403 && code === 'PERMISSION_DENIED') {
+      showGlobalApiErrorAlert(error, originalRequest)
       return Promise.reject(error)
     }
 
     const isAccessTokenFailure = status === 401 && code === 'UNAUTHORIZED'
     if (!isAccessTokenFailure || originalRequest._retry) {
+      showGlobalApiErrorAlert(error, originalRequest)
       return Promise.reject(error)
     }
 

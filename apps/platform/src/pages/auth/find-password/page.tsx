@@ -3,12 +3,14 @@ import { normalizeEmailId, validateEmailId } from '@/shared/lib/email-id'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 const EMAIL_NOT_FOUND_MESSAGE =
   '가입한 이메일을 찾지 못했어요. 입력한 정보를 다시 확인해 주세요.'
 const MOCK_NOT_FOUND_EMAIL = 'ja@gmail.com'
 
 export function FindPasswordPage() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
 
@@ -32,7 +34,7 @@ export function FindPasswordPage() {
       return
     }
 
-    window.location.assign('/auth/find-password/reset')
+    navigate('/auth/find-password/reset')
   }
 
   return (

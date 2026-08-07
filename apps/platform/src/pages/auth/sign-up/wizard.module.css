@@ -261,21 +261,56 @@
 }
 
 .emailContent {
-  display: grid;
+  display: flex;
   width: 100%;
-  grid-template-columns: 1fr 120px;
-  align-items: start;
-  column-gap: var(--spacing-12);
-  row-gap: var(--spacing-4);
+  max-width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-4);
   margin-bottom: var(--spacing-64);
+  box-sizing: border-box;
 }
 
-.duplicateCheckButton {
-  margin-top: 23px;
+.emailField {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.emailInputRow {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  align-items: flex-end;
+  gap: var(--spacing-12);
+  box-sizing: border-box;
+}
+
+.emailInputControl {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* PFTextInput.xlarge .field 와 동일 높이 트랙 */
+.emailButtonControl {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: stretch;
+  width: auto;
+  height: 54px;
+}
+
+.emailButtonControl .duplicateCheckButton {
+  width: 100%;
+  /* pf-button.xlarge height:53px 를 인풋 field(54px)에 맞춤 */
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  padding: 0 var(--spacing-28);
+  box-sizing: border-box;
 }
 
 .emailMessage {
-  grid-column: 1 / -1;
   margin: 0;
   padding-left: var(--spacing-8);
   font-family: var(--font-family-base);
@@ -292,18 +327,6 @@
 
 .emailMessageError {
   color: var(--color-status-error-default);
-}
-
-@media (--bp-below-pc) {
-  .emailContent {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-8);
-  }
-
-  .duplicateCheckButton {
-    margin-top: 0;
-  }
 }
 
 .passwordContent {
@@ -341,10 +364,21 @@
 }
 
 .addressSearchRow {
-  display: grid;
+  display: flex;
   width: 100%;
-  grid-template-columns: 1fr 120px;
+  max-width: 100%;
+  align-items: stretch;
   gap: var(--spacing-12);
+  box-sizing: border-box;
+}
+
+.addressSearchRow > :first-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.addressSearchRow > :last-child {
+  flex: 0 0 auto;
 }
 
 .confirmReview {

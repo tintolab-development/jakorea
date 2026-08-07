@@ -1,8 +1,12 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import type { InternalAxiosRequestConfig } from 'axios'
-import { portalAuthPaths } from './endpoints'
+import { portalAuthPaths, portalMePaths } from './endpoints'
 import { parseAuthTokenResponse } from './parse-auth-token'
-import type { MemberLoginRequest } from './types'
+import {
+  parseHomepageMeResponse,
+  parsePortalProfileResponse,
+} from './parse-portal-member'
+import type { HomepageMeResponse, MemberLoginRequest, PortalProfileResponse } from './types'
 
 type SkipAuthConfig = InternalAxiosRequestConfig & {
   skipAuth?: boolean
@@ -22,4 +26,16 @@ export async function postPortalLogin(body: MemberLoginRequest): Promise<{
     skipRefresh: true,
   } as SkipAuthConfig)
   return parseAuthTokenResponse(data)
+}
+
+/** GET /api/portal/auth/me — 세션 회원 정보 */
+export async function getPortalMe(signal?: AbortSignal): Promise<HomepageMeResponse> {
+  const { data } = await axiosClient.get<unknown>(portalAuthPaths.me(), { signal })
+  return parseHomepageMeResponse(data)
+}
+
+/** GET /api/portal/me/profile — 내정보(역할 플래그 포함) */
+export async function getPortalProfile(signal?: AbortSignal): Promise<PortalProfileResponse> {
+  const { data } = await axiosClient.get<unknown>(portalMePaths.profile(), { signal })
+  return parsePortalProfileResponse(data)
 }

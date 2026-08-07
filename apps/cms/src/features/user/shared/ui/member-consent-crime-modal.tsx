@@ -169,6 +169,7 @@ export function MemberConsentCrimeModal({ open, onClose, onComplete }: MemberCon
               </CmsButton>
               <CmsButton
                 variant="secondary"
+                size="medium"
                 icon={<DownloadOutlined />}
                 onClick={() => void handleDownload()}
                 className="crime-consent-doc-modal__download-btn"

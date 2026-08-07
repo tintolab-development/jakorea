@@ -4,7 +4,7 @@
  * - 제출 버튼은 항상 활성(loading 제외). 필수값 미충족 시 alert
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Form } from 'antd'
 import {
   isBirthDateInputIncomplete,
@@ -14,6 +14,7 @@ import { CmsButton, ContentModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
+import { JaGradeEvaluationModal } from '@/features/user/detail/ui/modal/ja-grade-evaluation-modal'
 import {
   EMPTY_CAREER,
   INITIAL_VALUES,
@@ -95,12 +96,15 @@ export function InstructorRegisterModal({
   const { showAlert } = useCmsAlert()
   const [form] = Form.useForm<InstructorRegisterModalFormValues>()
   const [formBodyKey, setFormBodyKey] = useState(0)
+  const [jaGradeEvaluationOpen, setJaGradeEvaluationOpen] = useState(false)
+  const registerDraftId = useId()
   const careerLevel = Form.useWatch('careerLevel', form) ?? 'new'
 
   useEffect(() => {
     if (open) {
       form.setFieldsValue(INITIAL_VALUES)
       setFormBodyKey(key => key + 1)
+      setJaGradeEvaluationOpen(false)
     }
   }, [open, form])
 
@@ -187,8 +191,23 @@ export function InstructorRegisterModal({
         requiredMark={false}
         onFinish={handleSubmitAttempt}
       >
-        <InstructorProfileFormBody key={formBodyKey} form={form} />
+        <InstructorProfileFormBody
+          key={formBodyKey}
+          form={form}
+          onOpenJaGradeEvaluation={() => setJaGradeEvaluationOpen(true)}
+        />
       </Form>
+      <JaGradeEvaluationModal
+        open={jaGradeEvaluationOpen}
+        instructorMemberId={null}
+        instructorUserId={`instructor-register-draft:${registerDraftId}:${formBodyKey}`}
+        persistMode="localOnly"
+        onClose={() => setJaGradeEvaluationOpen(false)}
+        onComplete={({ grade }) => {
+          form.setFieldValue('jaEvaluationGrade', grade)
+          setJaGradeEvaluationOpen(false)
+        }}
+      />
     </ContentModal>
   )
 }

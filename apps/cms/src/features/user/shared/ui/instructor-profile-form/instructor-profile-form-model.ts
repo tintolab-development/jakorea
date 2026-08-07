@@ -94,6 +94,8 @@ export type LicenseOrAwardRow = {
   acquiredYear: Dayjs | null
   title: string
   issuer: string
+  /** 상세 수정 — 기존 자격증 PATCH 시 `certifications[].id` */
+  certificationId?: number
 }
 
 export type InstructorRegisterModalFormValues = {
@@ -108,6 +110,10 @@ export type InstructorRegisterModalFormValues = {
   schoolName: string
   employmentStatus: SchoolTeacherEmploymentStatus | ''
   instructorCareer: string
+  /** 강사비 등급 — BE `profile.defaultFeeGrade` */
+  instructorFeeGrade: string
+  /** JA 평가 등급 — BE `profile.defaultJaGrade` */
+  jaEvaluationGrade: string
   isBusinessIncome: 'yes' | 'no'
   bankName: string
   accountNumber: string
@@ -178,6 +184,8 @@ export const INITIAL_VALUES: InstructorProfileFormValues = {
   schoolName: '',
   employmentStatus: '',
   instructorCareer: '',
+  instructorFeeGrade: '',
+  jaEvaluationGrade: '',
   isBusinessIncome: 'no',
   bankName: '',
   accountNumber: '',
@@ -187,7 +195,7 @@ export const INITIAL_VALUES: InstructorProfileFormValues = {
   oneLineIntro: '',
   consentTermsOfService: 'agree',
   consentPersonal: 'agree',
-  consentMarketing: 'disagree',
+  consentMarketing: 'agree',
   consentPortrait: 'disagree',
   consentPaymentStatement: 'disagree',
   consentEducatorPledge: 'disagree',

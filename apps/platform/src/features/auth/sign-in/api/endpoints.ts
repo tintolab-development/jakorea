@@ -6,3 +6,8 @@ export const portalAuthPaths = {
   logout: () => '/api/portal/auth/logout',
   me: () => '/api/portal/auth/me',
 } as const
+
+/** 포털 회원 본인 리소스 (`/api/portal/me/**`) */
+export const portalMePaths = {
+  profile: () => '/api/portal/me/profile',
+} as const

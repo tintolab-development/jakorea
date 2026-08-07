@@ -7,6 +7,7 @@ import {
 } from '@/features/user/api/resolve-member-registration-flags'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import { mapMemberStatusToIsActive } from '@/features/user/api/map-member-role'
+import { resolveCanonicalUserDetailId } from '@/features/user/api/user-response-row-id'
 import type { User } from '@/types/user'
 
 function fallbackUuid(memberId?: number): string {
@@ -18,7 +19,7 @@ export function mapAdminAccountDetailToUser(
   detail: AdminAccountApprovalDetailResponse,
   options?: { memberId?: number; fallbackId?: string }
 ): Omit<User, 'password'> {
-  const adminAccountId = detail.id
+  const adminAccountId = detail.adminAccountId
   const memberId = options?.memberId ?? undefined
   const uuid =
     detail.uuid?.trim() ||
@@ -39,7 +40,10 @@ export function mapAdminAccountDetailToUser(
   const role = 'ADMIN' as const
 
   return {
-    id: options?.fallbackId?.trim() || uuid,
+    id: resolveCanonicalUserDetailId(
+      { id: options?.fallbackId, memberId, adminAccountId: adminAccountId ?? undefined },
+      { id: detail.uuid, memberId, adminAccountId: adminAccountId ?? undefined }
+    ),
     memberId,
     adminAccountId,
     email: String(detail.email ?? '').trim() || '-',

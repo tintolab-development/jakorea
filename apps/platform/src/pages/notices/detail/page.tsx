@@ -7,6 +7,7 @@ import {
 import { RichTextViewer } from '@/shared/rich-text'
 import { PFFileDownload, PFText } from '@/shared/ui'
 import styles from './page.module.css'
+import { useNavigate } from 'react-router-dom'
 
 function TopFabIcon() {
   return (
@@ -32,6 +33,7 @@ function formatViewCount(count: number) {
 }
 
 export function NoticeDetailPage() {
+  const navigate = useNavigate()
   const noticeId = getNoticeIdFromPath()
   const detail = useMockNoticeDetail(noticeId)
 
@@ -40,7 +42,7 @@ export function NoticeDetailPage() {
       window.history.back()
       return
     }
-    window.location.assign(NOTICES_PATH)
+    navigate(NOTICES_PATH)
   }
 
   const handleScrollToTop = () => {

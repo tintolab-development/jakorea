@@ -3,18 +3,20 @@ import illustCheckUrl from '@/shared/assets/illustration/illust-check.svg'
 import { PFButton, PFText } from '@/shared/ui'
 import styles from './complete.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 export function SignUpCompletePage() {
+  const navigate = useNavigate()
   const handleStart = () => {
-    window.location.assign('/')
+    navigate('/')
   }
 
   const handleGoMyPage = () => {
-    window.location.assign(MYPAGE_PATH)
+    navigate(MYPAGE_PATH)
   }
 
   const handleConnectSocial = () => {
-    window.location.assign('/auth/sign-up/social-connect')
+    navigate('/auth/sign-up/social-connect')
   }
 
   return (

@@ -213,15 +213,7 @@
   background: #f0f0f0;
 }
 
-.instructor-resume-card {
-  border-radius: 8px;
-  border: 1px solid #d4d4d4;
-  border-radius: 8px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+/* `.instructor-resume-card` 외곽선 — `applicant-instructor-resume.css` SSOT (DetailInfoForm 중첩 시 이중선 방지 포함) */
 
 .instructor-resume-row {
   display: flex;

@@ -1,38 +1,9 @@
-.instructor-resume-detail-forms__section {
-  margin-top: var(--detail-fullpage-section-gap, 32px);
-}
-
-/* 학력·경력·자격 헤더 요약: 데이터 있음 = 민트 700, 없음 = 회색 500 */
-.instructor-resume-detail-forms__section .detail-info-form__description {
+/* DetailInfoForm description 슬롯 — 내부 `.instructor-resume-section-count` 타이포가 적용되도록 래퍼만 초기화 */
+.instructor-resume-detail-forms__form .detail-info-form__description {
   margin: 0;
   opacity: 1;
-}
-
-.instructor-resume-detail-forms__description {
-  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 140%;
-  color: var(--JA-mint-01, #01a1af);
-}
-
-.instructor-resume-detail-forms__description--empty {
-  color: var(--color-text-secondary, #888);
-  font-weight: 500;
-}
-
-.instructor-resume-detail-forms__section .detail-info-form__body {
-  padding: 0;
-  border: none;
-  background: transparent;
-}
-
-.instructor-resume-detail-forms__section .detail-info-form__row--custom {
-  border: none;
-}
-
-.instructor-resume-detail-forms__section .detail-info-form__row--custom > * {
-  width: 100%;
-  min-width: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
 }

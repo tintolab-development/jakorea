@@ -185,6 +185,7 @@ function isEventFromTableInteractive(target: EventTarget | null) {
         '.ant-checkbox-wrapper',
         '.ant-radio',
         '.ant-radio-wrapper',
+        '.paragraph-input',
         'input',
         'textarea',
         'label',
@@ -852,7 +853,7 @@ export function HorizontalTableParagraphBody({
                     : undefined
                 }
               >
-                {effectiveEditMode && !headerFieldLocked ? (
+                {effectiveEditMode && !headerFieldLocked && !isAgreementNoticeTable ? (
                   <div className="form-editor-horizontal-table__cell-input-shell form-editor-horizontal-table__cell-input-shell--header">
                     <Input
                       variant="borderless"
@@ -909,18 +910,29 @@ export function HorizontalTableParagraphBody({
                   >
                     {effectiveEditMode ? (
                       <div className="form-editor-horizontal-table__cell-input-shell form-editor-horizontal-table__cell-input-shell--body">
-                        <TextArea
-                          variant="borderless"
-                          className="form-editor-horizontal-table__cell-textarea"
-                          autoSize={{ minRows: 1 }}
-                          value={cell}
-                          placeholder={ph}
-                          onChange={e => setTextCellValue(rowIdx, colIdx, e.target.value)}
-                          onFocus={() => focusBodyCell(rowIdx, colIdx)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
-                          }}
-                        />
+                        {isAgreementNoticeTable ? (
+                          <ParagraphInput
+                            type="description"
+                            className="form-editor-horizontal-table__cell-paragraph-input"
+                            value={cell}
+                            placeholder={ph}
+                            isEditMode
+                            onChange={next => setTextCellValue(rowIdx, colIdx, next)}
+                          />
+                        ) : (
+                          <TextArea
+                            variant="borderless"
+                            className="form-editor-horizontal-table__cell-textarea"
+                            autoSize={{ minRows: 1 }}
+                            value={cell}
+                            placeholder={ph}
+                            onChange={e => setTextCellValue(rowIdx, colIdx, e.target.value)}
+                            onFocus={() => focusBodyCell(rowIdx, colIdx)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
+                            }}
+                          />
+                        )}
                       </div>
                     ) : (
                       <HorizontalTableCellText value={cell} placeholder={ph} variant="body" />

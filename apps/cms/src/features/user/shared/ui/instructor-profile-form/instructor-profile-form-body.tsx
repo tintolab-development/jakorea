@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Form, Space } from 'antd'
 import type { FormInstance } from 'antd/es/form'
+import type { FormListFieldData } from 'antd/es/form/FormList'
 import {
   AddressSearch,
   CmsButton,
@@ -18,7 +19,11 @@ import { FreeWriteItemsSection } from '@/shared/components/free-write-items-sect
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
+import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
+import { INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
+import { buildMemberPaymentStatementBasicInfoAutofill } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
 import { INSTRUCTOR_PORTRAIT_CONSENT_AFFILIATION_OPTIONS } from '@/features/user/shared/lib/instructor-portrait-consent-affiliation-options'
 import {
   isAgreementInstructorConsentField,
@@ -26,6 +31,7 @@ import {
   resolveInstructorConsentTemplateEntry,
   type InstructorConsentFieldKey,
 } from '@/features/user/shared/lib/instructor-consent-field-map'
+import { isInstructorRegisterBasicInfoIncompleteForConsent } from '@/features/user/shared/lib/validate-instructor-consent-basic-info'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import { InstructorRegisterEducationSection } from '@/features/user/shared/ui/instructor-register-education-section'
@@ -48,6 +54,85 @@ import {
   type InstructorProfileFormValues,
 } from './instructor-profile-form-model'
 import '../instructor-register-modal.css'
+
+function InstructorCareerRowEdit({
+  form,
+  field,
+  index,
+  onAdd,
+  onRemove,
+}: {
+  form: FormInstance<InstructorProfileFormValues>
+  field: FormListFieldData
+  index: number
+  onAdd: () => void
+  onRemove: () => void
+}) {
+  const currentlyEmployed =
+    Form.useWatch(['careers', field.name, 'currentlyEmployed'], form) === true
+
+  return (
+    <div
+      className="detail-info-form-inputs-wrapper-no-gap instructor-register-modal__field-stack-row"
+    >
+      <div className="instructor-register-modal__period">
+        <Form.Item name={[field.name, 'periodStart']} noStyle>
+          <CmsDatePicker
+            picker="month"
+            inputSize="medium"
+            placeholder="입사연월"
+            format="YYYY.MM"
+            width={140}
+          />
+        </Form.Item>
+        <span className="instructor-register-modal__tilde" aria-hidden>
+          ~
+        </span>
+        <Form.Item name={[field.name, 'periodEnd']} noStyle>
+          <CmsDatePicker
+            picker="month"
+            inputSize="medium"
+            placeholder="퇴사연월"
+            format="YYYY.MM"
+            width={140}
+            disabled={currentlyEmployed}
+          />
+        </Form.Item>
+      </div>
+      <DetailInfoForm.InputsSeparator />
+      <div className="instructor-register-modal__inline-group">
+        <Form.Item name={[field.name, 'companyName']} noStyle>
+          <CmsInput placeholder="회사명" inputSize="medium" width={220} />
+        </Form.Item>
+        <Form.Item name={[field.name, 'roleName']} noStyle>
+          <CmsInput placeholder="담당 업무" inputSize="medium" width={160} />
+        </Form.Item>
+        <Form.Item
+          name={[field.name, 'currentlyEmployed']}
+          valuePropName="checked"
+          noStyle
+          getValueFromEvent={event => {
+            if (event.target.checked) {
+              form.setFieldValue(['careers', field.name, 'periodEnd'], null)
+            }
+            return event.target.checked
+          }}
+        >
+          <CmsCheckbox checkboxSize="medium">재직중</CmsCheckbox>
+        </Form.Item>
+        {index === 0 ? (
+          <CmsCircleAddButton onClick={onAdd} />
+        ) : (
+          <ItemDeleteButton
+            className="item-delete-button"
+            aria-label="항목 삭제"
+            onClick={onRemove}
+          />
+        )}
+      </div>
+    </div>
+  )
+}
 
 function ConsentDocumentFieldEdit({
   value,
@@ -81,7 +166,15 @@ export interface InstructorProfileFormBodyProps {
   basicInfoPrefix?: ReactNode
   /** Extra rows before 사업소득자 (e.g. 강사비 등급) */
   basicInfoExtraBeforeBusinessIncome?: ReactNode
+  /** 신규 등록 — JA 등급 평가 모달 열기 */
+  onOpenJaGradeEvaluation?: () => void
   className?: string
+}
+
+function formatJaEvaluationGradeDisplay(grade: string): string {
+  const trimmed = grade.trim()
+  if (!trimmed) return ''
+  return trimmed.endsWith('등급') ? trimmed : `${trimmed}등급`
 }
 
 export function InstructorProfileFormBody({
@@ -89,9 +182,11 @@ export function InstructorProfileFormBody({
   layoutVariant = 'register',
   basicInfoPrefix,
   basicInfoExtraBeforeBusinessIncome,
+  onOpenJaGradeEvaluation,
   className,
 }: InstructorProfileFormBodyProps) {
   const isDetailEdit = layoutVariant === 'detailEdit'
+  const { showAlert } = useCmsAlert()
   const [activeConsentField, setActiveConsentField] = useState<InstructorConsentFieldKey | null>(
     null
   )
@@ -100,6 +195,7 @@ export function InstructorProfileFormBody({
   const memberName = Form.useWatch('name', form) ?? ''
   const schoolName = Form.useWatch('schoolName', form) ?? ''
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
+  const jaEvaluationGrade = Form.useWatch('jaEvaluationGrade', form) ?? ''
   const isTeacherMember = memberType === 'school_teacher'
   const allValues = Form.useWatch([], form) as InstructorProfileFormValues | undefined
   const careerLevel = Form.useWatch('careerLevel', form) ?? 'new'
@@ -110,13 +206,66 @@ export function InstructorProfileFormBody({
   const memberConsentContext = useMemo((): MemberConsentMemberContext => {
     return {
       name: memberName,
+      birthDate: allValues?.birthDate,
+      phone: allValues?.contact,
       schoolEnrollmentStatus: isTeacherMember ? 'enrolled' : 'not_enrolled',
       schoolName: isTeacherMember ? schoolName : undefined,
+      affiliationOrganization:
+        !isTeacherMember && !affiliationNone ? allValues?.affiliationName?.trim() : undefined,
+      affiliationNone: !isTeacherMember && affiliationNone,
       portraitAffiliationSelectOptions: INSTRUCTOR_PORTRAIT_CONSENT_AFFILIATION_OPTIONS,
     }
-  }, [isTeacherMember, memberName, schoolName])
+  }, [
+    affiliationNone,
+    allValues?.affiliationName,
+    allValues?.birthDate,
+    allValues?.contact,
+    isTeacherMember,
+    memberName,
+    schoolName,
+  ])
+
+  const paymentStatementBasicInfoAutofill = useMemo(
+    () =>
+      buildMemberPaymentStatementBasicInfoAutofill({
+        name: memberName,
+        birthDate: allValues?.birthDate,
+        homeAddress,
+        homeAddressDetail: allValues?.homeAddressDetail,
+        bankName: allValues?.bankName,
+        accountNumber: allValues?.accountNumber,
+        accountHolder: allValues?.accountHolder,
+        memberType,
+        affiliationNone,
+        schoolName,
+        affiliationName: allValues?.affiliationName,
+      }),
+    [
+      affiliationNone,
+      allValues?.accountHolder,
+      allValues?.accountNumber,
+      allValues?.affiliationName,
+      allValues?.bankName,
+      allValues?.birthDate,
+      allValues?.homeAddressDetail,
+      homeAddress,
+      memberName,
+      memberType,
+      schoolName,
+    ]
+  )
 
   const handleConsentWrite = (fieldKey: InstructorConsentFieldKey) => {
+    if (!isDetailEdit) {
+      const values = allValues ?? form.getFieldsValue()
+      if (isInstructorRegisterBasicInfoIncompleteForConsent(values)) {
+        showAlert({
+          title: '안내',
+          content: INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
+        })
+        return
+      }
+    }
     setActiveConsentField(fieldKey)
   }
 
@@ -172,6 +321,28 @@ export function InstructorProfileFormBody({
       <CmsInput placeholder="강사 경력" inputSize="medium" width="100%" />
     </Form.Item>
   )
+
+  const gradeEvaluateButton = (
+    <CmsButton
+      type="button"
+      variant="secondary"
+      size="small"
+      onClick={() => onOpenJaGradeEvaluation?.()}
+    >
+      등급 평가
+    </CmsButton>
+  )
+
+  const jaEvaluationGradeFieldEdit =
+    jaEvaluationGrade.trim() !== '' ? (
+      <span className="instructor-register-modal__ja-grade">
+        <span>{formatJaEvaluationGradeDisplay(jaEvaluationGrade)}</span>
+        <DetailInfoForm.InputsSeparator />
+        {gradeEvaluateButton}
+      </span>
+    ) : (
+      gradeEvaluateButton
+    )
 
   return (
     <>
@@ -350,6 +521,40 @@ export function InstructorProfileFormBody({
           </DetailInfoForm.Row>
         </DetailInfoForm>
 
+        {!isDetailEdit ? (
+          <DetailInfoForm title="강사 등급" mode="edit">
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="강사비 등급"
+                view="-"
+                edit={
+                  <Form.Item name="instructorFeeGrade" noStyle>
+                    <CmsSelect
+                      placeholder="강사비 등급을 선택하세요"
+                      options={INSTRUCTOR_FEE_GRADE_OPTIONS}
+                      inputSize="medium"
+                      width="100%"
+                      allowClear
+                    />
+                  </Form.Item>
+                }
+              />
+              <DetailInfoForm.Field
+                label="JA 평가 등급"
+                view="-"
+                edit={
+                  <>
+                    <Form.Item name="jaEvaluationGrade" hidden noStyle>
+                      <CmsInput />
+                    </Form.Item>
+                    {jaEvaluationGradeFieldEdit}
+                  </>
+                }
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
+        ) : null}
+
         <DetailInfoForm
           title="약관 및 동의"
           mode="edit"
@@ -522,59 +727,14 @@ export function InstructorProfileFormBody({
                       {(fields, { add, remove }) => (
                         <>
                           {fields.map((field, index) => (
-                            <div
+                            <InstructorCareerRowEdit
                               key={field.key}
-                              className="detail-info-form-inputs-wrapper-no-gap instructor-register-modal__field-stack-row"
-                            >
-                              <div className="instructor-register-modal__period">
-                                <Form.Item name={[field.name, 'periodStart']} noStyle>
-                                  <CmsDatePicker
-                                    picker="month"
-                                    inputSize="medium"
-                                    placeholder="입사연월"
-                                    format="YYYY.MM"
-                                    width={140}
-                                  />
-                                </Form.Item>
-                                <span className="instructor-register-modal__tilde" aria-hidden>
-                                  ~
-                                </span>
-                                <Form.Item name={[field.name, 'periodEnd']} noStyle>
-                                  <CmsDatePicker
-                                    picker="month"
-                                    inputSize="medium"
-                                    placeholder="퇴사연월"
-                                    format="YYYY.MM"
-                                    width={140}
-                                  />
-                                </Form.Item>
-                              </div>
-                              <DetailInfoForm.InputsSeparator />
-                              <div className="instructor-register-modal__inline-group">
-                                <Form.Item name={[field.name, 'companyName']} noStyle>
-                                  <CmsInput placeholder="회사명" inputSize="medium" width={220} />
-                                </Form.Item>
-                                <Form.Item name={[field.name, 'roleName']} noStyle>
-                                  <CmsInput placeholder="담당 업무" inputSize="medium" width={160} />
-                                </Form.Item>
-                                <Form.Item
-                                  name={[field.name, 'currentlyEmployed']}
-                                  valuePropName="checked"
-                                  noStyle
-                                >
-                                  <CmsCheckbox checkboxSize="medium">재직중</CmsCheckbox>
-                                </Form.Item>
-                                {index === 0 ? (
-                                  <CmsCircleAddButton onClick={() => add({ ...EMPTY_CAREER })} />
-                                ) : (
-                                  <ItemDeleteButton
-                                    className="item-delete-button"
-                                    aria-label="항목 삭제"
-                                    onClick={() => remove(field.name)}
-                                  />
-                                )}
-                              </div>
-                            </div>
+                              form={form}
+                              field={field}
+                              index={index}
+                              onAdd={() => add({ ...EMPTY_CAREER })}
+                              onRemove={() => remove(field.name)}
+                            />
                           ))}
                         </>
                       )}
@@ -791,6 +951,7 @@ export function InstructorProfileFormBody({
           items={INSTRUCTOR_FREE_WRITE_ITEMS}
           rows={3}
           placeholder="자유롭게 작성해주세요"
+          className={isDetailEdit ? 'detail-info-form--gap-bottom' : undefined}
         />
       </div>
 
@@ -802,6 +963,7 @@ export function InstructorProfileFormBody({
           templateId={activeConsentEntry.templateId}
           modalTitle={activeConsentEntry.modalTitle}
           memberContext={memberConsentContext}
+          paymentStatementBasicInfoAutofill={paymentStatementBasicInfoAutofill}
           onClose={handleConsentModalClose}
           onComplete={() => handleConsentComplete(activeConsentField)}
         />

@@ -28,6 +28,8 @@ export {
   calculateInternationalAge,
   formatBirthDateInput,
   formatHomeAddress,
+  formatTeacherAffiliation,
+  getEmploymentStatusLabel,
   getGenderLabel,
   getMemberTypeLabel,
   getSchoolStatusLabel,

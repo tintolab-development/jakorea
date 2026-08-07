@@ -12,4 +12,9 @@ export interface CertificateAvailabilityResponse {
   certificateType?: string;
   available?: boolean;
   reason?: string;
+  eligible?: boolean;
+  reasonCode?: string;
+  reasonMessage?: string;
+  existingIssueId?: number;
+  canDownload?: boolean;
 }

@@ -206,6 +206,10 @@ export interface User {
   instructorApprovalStatus?: string
   /** 강사 상세 `certifications[]` — 자격·면허 (remote) */
   instructorCertifications?: InstructorCertificationItem[]
+  /** BE `profile` — CMS 강사 구조체 (§3.8) */
+  instructorCmsProfile?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsProfileProposal
+  /** BE `settlement` — 정산 계좌 구조체 */
+  instructorCmsSettlement?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsSettlement
 
   /**
    * 회원 목록 테이블 전용 지표 (API가 내려주면 표시, 없으면 '-' 또는 기존 필드로 추론)

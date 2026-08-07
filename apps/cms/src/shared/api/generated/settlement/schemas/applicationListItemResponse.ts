@@ -18,4 +18,16 @@ export interface ApplicationListItemResponse {
   submittedAt?: string;
   updatedAt?: string;
   cancellable?: boolean;
+  thumbnailFileObjectId?: number;
+  participationStatus?: string;
+  displayStatus?: string;
+  educationStartAt?: string;
+  educationEndAt?: string;
+  nextScheduleAt?: string;
+  progressPercent?: number;
+  unreadNoticeCount?: number;
+  pendingAssignmentCount?: number;
+  pendingSurveyCount?: number;
+  certificateAvailable?: boolean;
+  availableActions?: string[];
 }

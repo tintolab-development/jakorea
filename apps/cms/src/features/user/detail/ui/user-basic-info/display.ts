@@ -11,6 +11,14 @@ import {
 } from '@/features/user/api/map-instructor-activity-display'
 import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import {
+  parseAffiliationOrgSegments,
+  splitAffiliationFirstSegment,
+  CAREER_LIKE_AFFILIATION_HEAD,
+} from '@/features/user/detail/lib/parse-instructor-affiliation-text'
+
+const GRADE_LIKE_AFFILIATION_TAIL = /학년|담임/
 
 /** 만 나이 — 생일이 지나지 않았으면 연차에서 1을 뺀다 */
 function manAgeFromDayjs(birth: Dayjs): number | null {
@@ -124,10 +132,41 @@ export function genderBirthView(user: Omit<User, 'password'>): ReactNode {
   )
 }
 
+/** `affiliation` 첫 세그먼트 — `학교 | 학년` pipe 분리 (재직 현황 라벨은 grade로 취급하지 않음) */
+function shouldUseAffiliationSchoolFallback(user: Omit<User, 'password'>): boolean {
+  const profile = resolveInstructorMemberProfile(user)
+  return (
+    profile === 'school_teacher' ||
+    profile === 'instructor_dual' ||
+    user.instructorCmsProfile?.memberType === 'SCHOOL_TEACHER'
+  )
+}
+
+/** 교사 상세 — 소속 학교·담당 학년 표시용 (CMS profile · listMetrics · affiliation pipe) */
+export function resolveSchoolTeacherAffiliationDisplay(user: Omit<User, 'password'>): {
+  school: string
+  grade: string
+} {
+  const cmsSchool = user.instructorCmsProfile?.affiliation?.schoolName?.trim()
+  let school =
+    user.affiliatedSchoolName?.trim() ||
+    cmsSchool ||
+    user.schoolInfo?.schoolName?.trim() ||
+    ''
+  let grade = user.listMetrics?.instructorAssignedGrade?.trim() || ''
+
+  if (!school || !grade) {
+    const { institution, tail } = splitAffiliationFirstSegment(user.affiliation)
+    if (!school && institution) school = institution
+    if (!grade && tail && GRADE_LIKE_AFFILIATION_TAIL.test(tail)) grade = tail
+  }
+
+  return { school, grade }
+}
+
 /** 교사 기본 정보 — 소속 및 담당 학년 td (문자 `|` 대신 TdDivider, gap 12px) */
 export function affiliationAndGradeView(user: Omit<User, 'password'>): ReactNode {
-  const school = user.affiliatedSchoolName?.trim()
-  const grade = user.listMetrics?.instructorAssignedGrade?.trim()
+  const { school, grade } = resolveSchoolTeacherAffiliationDisplay(user)
   if (school && grade) {
     return inlineSegmentsWithDivider([school, grade])
   }
@@ -240,9 +279,18 @@ export function resolveInstructorAffiliationParts(user: Omit<User, 'password'>):
   schoolName?: string
   others: string[]
 } {
+  const cmsAffiliation = user.instructorCmsProfile?.affiliation
+  const cmsSchool = cmsAffiliation?.schoolName?.trim()
+  const cmsOrgs =
+    cmsAffiliation?.organizationNames?.map(name => name.trim()).filter(Boolean) ?? []
+
   const schoolName =
     user.affiliatedSchoolName?.trim() ||
+    cmsSchool ||
     user.schoolInfo?.schoolName?.trim() ||
+    (shouldUseAffiliationSchoolFallback(user)
+      ? splitAffiliationFirstSegment(user.affiliation).institution
+      : '') ||
     undefined
 
   const seen = new Set<string>()
@@ -252,7 +300,7 @@ export function resolveInstructorAffiliationParts(user: Omit<User, 'password'>):
     const trimmed = raw?.trim()
     if (!trimmed || trimmed === '-') return
     const name = trimmed.split(/\s*\|\s*/)[0]?.trim()
-    if (!name) return
+    if (!name || CAREER_LIKE_AFFILIATION_HEAD.test(name)) return
     if (schoolName && name === schoolName) return
     if (seen.has(name)) return
     seen.add(name)
@@ -261,11 +309,12 @@ export function resolveInstructorAffiliationParts(user: Omit<User, 'password'>):
 
   if (schoolName) seen.add(schoolName)
 
-  const affiliation = user.affiliation?.trim()
-  if (affiliation) {
-    for (const part of affiliation.split(/\s*,\s*/)) {
-      addOther(part)
-    }
+  for (const org of cmsOrgs) {
+    addOther(org)
+  }
+
+  for (const segment of parseAffiliationOrgSegments(user.affiliation)) {
+    addOther(segment)
   }
 
   // 신청 유형 라벨 중 소속으로 쓸 만한 것만 (일반 강사/교사 회원 등 유형 라벨 제외)

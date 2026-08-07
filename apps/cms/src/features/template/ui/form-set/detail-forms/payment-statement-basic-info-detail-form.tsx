@@ -5,13 +5,12 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
-import { SearchOutlined } from '@ant-design/icons'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
+import { AddressSearch } from '@/shared/ui/address-search'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
-import { CmsSelect } from '@/shared/ui/cms-select'
 import './payment-statement-basic-info-detail-form.css'
 
 /** 발급·미리보기에서 채울 값. CMS 템플릿 편집기에서는 비워 두고 placeholder만 노출할 수 있음 */
@@ -45,17 +44,20 @@ const EMPTY: PaymentStatementBasicInfoAutofillValues = {
   paymentPurpose: '',
 }
 
-const BANK_OPTIONS = [
-  { value: 'kb', label: 'KB국민은행' },
-  { value: 'shinhan', label: '신한은행' },
-  { value: 'woori', label: '우리은행' },
-  { value: 'hana', label: '하나은행' },
-]
+/** 발급·미리보기 목 데이터 등 레거시 코드값 표시용 */
+const LEGACY_BANK_LABELS: Record<string, string> = {
+  kb: 'KB국민은행',
+  shinhan: '신한은행',
+  woori: '우리은행',
+  hana: '하나은행',
+}
 
-const AFFILIATION_OPTIONS = [
-  { value: 'school', label: '○○고등학교' },
-  { value: 'org', label: '○○기관' },
-]
+const LEGACY_AFFILIATION_LABELS: Record<string, string> = {
+  school: '○○고등학교',
+  org: '○○기관',
+}
+
+const PAYMENT_STATEMENT_ADDRESS_SEARCH_MODAL_Z_INDEX = 1300
 
 export type PaymentStatementBasicInfoDetailFormProps = {
   values?: Partial<PaymentStatementBasicInfoAutofillValues>
@@ -74,11 +76,17 @@ function textOrDash(value: string): string {
   return value.trim() || '-'
 }
 
-function optionLabel(
-  options: Array<{ value: string; label: string }>,
-  value: string
-): string {
-  return options.find(option => option.value === value)?.label ?? value
+function displayBankName(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return '-'
+  return LEGACY_BANK_LABELS[trimmed] ?? trimmed
+}
+
+function displayAffiliation(value: string, noAffiliation: boolean): string {
+  if (noAffiliation) return '소속 없음'
+  const trimmed = value.trim()
+  if (!trimmed) return '-'
+  return LEGACY_AFFILIATION_LABELS[trimmed] ?? trimmed
 }
 
 export function PaymentStatementBasicInfoDetailForm({
@@ -109,12 +117,10 @@ export function PaymentStatementBasicInfoDetailForm({
 
   const rowDash = <span className="payment-statement-basic-info-detail-form__dash">-</span>
   const residentNumber = [v.residentFront, v.residentBack].filter(Boolean).join('-')
-  const affiliationText = v.noAffiliation
-    ? '소속 없음'
-    : textOrDash(optionLabel(AFFILIATION_OPTIONS, v.affiliation))
+  const affiliationText = displayAffiliation(v.affiliation, v.noAffiliation)
   const addressText = [v.addressRoad, v.addressDetail].filter(Boolean).join(' ')
-  const accountText = [optionLabel(BANK_OPTIONS, v.bankName), v.accountNumber, v.accountHolder]
-    .filter(Boolean)
+  const accountText = [displayBankName(v.bankName), v.accountNumber, v.accountHolder]
+    .filter(part => part && part !== '-')
     .join(' · ')
 
   return (
@@ -194,22 +200,26 @@ export function PaymentStatementBasicInfoDetailForm({
           view={affiliationText}
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__affiliation">
-              <CmsSelect
-                disabled={allAutofillLocked}
+              <CmsInput
+                disabled={allAutofillLocked || v.noAffiliation}
                 inputSize="medium"
                 placeholder="소속"
-                withAllOption={false}
-                options={AFFILIATION_OPTIONS}
-                value={v.affiliation || undefined}
-                onChange={next => patch({ affiliation: (next as string) ?? '' })}
-                width={221}
+                value={v.affiliation}
+                onChange={e => patch({ affiliation: e.target.value })}
+                width="100%"
+                style={{ flex: '1 1 0', minWidth: 0 }}
                 aria-label="소속 (발급 시 자동 입력)"
               />
               <DetailInfoForm.InputsSeparator />
               <CmsCheckbox
                 disabled={allAutofillLocked}
                 checked={v.noAffiliation}
-                onChange={e => patch({ noAffiliation: e.target.checked })}
+                onChange={e =>
+                  patch({
+                    noAffiliation: e.target.checked,
+                    ...(e.target.checked ? { affiliation: '' } : {}),
+                  })
+                }
                 checkboxSize="large"
               >
                 소속 없음
@@ -226,17 +236,29 @@ export function PaymentStatementBasicInfoDetailForm({
           view={textOrDash(addressText)}
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__address">
-              <CmsInput
-                disabled={allAutofillLocked}
-                inputSize="large"
-                icon={<SearchOutlined aria-hidden />}
-                placeholder="건물명, 도로명 또는 지번"
-                value={v.addressRoad}
-                onChange={e => patch({ addressRoad: e.target.value })}
-                width="100%"
-                style={{ flex: '1.2 1 0', minWidth: 0 }}
-                aria-label="도로명·지번 주소 (발급 시 자동 입력)"
-              />
+              {editable ? (
+                <AddressSearch
+                  value={v.addressRoad}
+                  onChange={next => patch({ addressRoad: next })}
+                  placeholder="건물명, 도로명 또는 지번"
+                  inputSize="large"
+                  width="100%"
+                  disabled={allAutofillLocked}
+                  className="payment-statement-basic-info-detail-form__address-search"
+                  modalZIndex={PAYMENT_STATEMENT_ADDRESS_SEARCH_MODAL_Z_INDEX}
+                />
+              ) : (
+                <CmsInput
+                  disabled={allAutofillLocked}
+                  inputSize="large"
+                  placeholder="건물명, 도로명 또는 지번"
+                  value={v.addressRoad}
+                  onChange={e => patch({ addressRoad: e.target.value })}
+                  width="100%"
+                  style={{ flex: '1.2 1 0', minWidth: 0 }}
+                  aria-label="도로명·지번 주소 (발급 시 자동 입력)"
+                />
+              )}
               <DetailInfoForm.InputsSeparator />
               <CmsInput
                 disabled={allAutofillLocked}
@@ -260,15 +282,13 @@ export function PaymentStatementBasicInfoDetailForm({
           view={textOrDash(accountText)}
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__account">
-              <CmsSelect
+              <CmsInput
                 disabled={allAutofillLocked}
                 inputSize="medium"
                 placeholder="은행명"
-                withAllOption={false}
-                options={BANK_OPTIONS}
-                value={v.bankName || undefined}
-                onChange={next => patch({ bankName: (next as string) ?? '' })}
-                width={200}
+                value={v.bankName}
+                onChange={e => patch({ bankName: e.target.value })}
+                width="100%"
                 aria-label="은행명 (발급 시 자동 입력)"
               />
               <CmsNumericInput
@@ -278,7 +298,7 @@ export function PaymentStatementBasicInfoDetailForm({
                 placeholder="계좌번호(숫자만)"
                 value={v.accountNumber}
                 onValueChange={value => patch({ accountNumber: value })}
-                width={200}
+                width="100%"
                 aria-label="계좌번호 (발급 시 자동 입력)"
               />
               <DetailInfoForm.InputsSeparator />
@@ -288,7 +308,7 @@ export function PaymentStatementBasicInfoDetailForm({
                 placeholder="예금주명"
                 value={v.accountHolder}
                 onChange={e => patch({ accountHolder: e.target.value })}
-                width={200}
+                width="100%"
                 aria-label="예금주명 (발급 시 자동 입력)"
               />
             </div>

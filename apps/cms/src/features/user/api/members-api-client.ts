@@ -4,6 +4,10 @@ import type {
 } from '@/features/user/api/admin-approval-requests.types'
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { EXTERNAL_IDENTIFIER_PROVIDER_1365 } from '@/features/user/api/map-external-identifiers'
+import {
+  MEMBER_DETAIL_SCREEN_CODE,
+  resolveLatestMemberAdminCommentDetail,
+} from '@/features/user/api/map-member-comments'
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 import { customInstance } from '@/shared/api/orval-mutator'
 import type {
@@ -12,7 +16,6 @@ import type {
   AdminAccountVerificationRequest,
   AdminPreRegisterIndividualRequest,
   AdminPreRegisterInstructorRequest,
-  AdminPreRegisterMemberRequest,
   AdminPreRegisterSchoolRequest,
   AdminPrivacyUnmaskRequest,
   AdminRoleChangeRequest,
@@ -31,6 +34,7 @@ import type {
   PageResponseAdminAccountListItemResponse,
   PageResponseInstructorRoleRequestListItemResponse,
   SchoolMemberDetailResponse,
+  TeacherMemberDetailResponse,
 } from '@/shared/api/generated/members/schemas'
 import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
 import type { AdminAccountBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminAccountBasicInfoUpdateRequest'
@@ -56,17 +60,34 @@ import type { InstructorEvaluationGradeChangeRequest } from '@/shared/api/genera
 
 const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
 
-function memberIdParam(memberId: number): string {
-  return String(memberId)
-}
-
 export async function fetchMembersPageRemote(params: ListMembersParams): Promise<PageResponse> {
   return unwrapApiBody(await membersApi.listMembers(params))
 }
 
-/** @deprecated 역할별 상세 API 사용 권장 */
+/**
+ * @deprecated 역할별 상세 API 사용 권장.
+ * 통합 GET이 제거되어 individual → school → instructor 순으로 `member` 스냅샷을 조회한다.
+ */
 export async function fetchMemberDetailRemote(memberId: number): Promise<MemberDetailResponse> {
-  return unwrapApiBody(await membersApi.getMemberDetail(memberIdParam(memberId)))
+  const loaders: Array<() => Promise<{ member?: MemberDetailResponse }>> = [
+    async () => unwrapApiBody(await membersApi.getIndividualMemberDetail(memberId)),
+    async () => unwrapApiBody(await membersApi.getSchoolMemberDetail(memberId)),
+    async () => unwrapApiBody(await membersApi.getInstructorMemberDetail(memberId)),
+  ]
+
+  let lastError: unknown
+  for (const load of loaders) {
+    try {
+      const detail = await load()
+      if (detail.member) return detail.member
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('회원 상세를 불러오지 못했습니다.')
 }
 
 export async function fetchIndividualMemberDetailRemote(
@@ -85,6 +106,12 @@ export async function fetchInstructorMemberDetailRemote(
   memberId: number
 ): Promise<InstructorMemberDetailResponse> {
   return unwrapApiBody(await membersApi.getInstructorMemberDetail(memberId))
+}
+
+export async function fetchTeacherMemberDetailRemote(
+  memberId: number
+): Promise<TeacherMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.getTeacherMemberDetail(memberId))
 }
 
 export async function updateMemberBasicInfoRemote(
@@ -115,6 +142,36 @@ export async function updateMemberCommentRemote(
   body: AdminCommentUpdateRequest
 ): Promise<AdminCommentResponse> {
   return unwrapApiBody(await membersApi.updateMemberComment(memberId, commentId, body))
+}
+
+/**
+ * 회원 관리자 코멘트 upsert.
+ * `existingCommentId`가 있으면 목록 GET 없이 update만 호출한다.
+ * 없으면 목록으로 id를 확인한 뒤 update 또는 create.
+ */
+export async function upsertMemberAdminCommentRemote(
+  memberId: number,
+  comment: string,
+  options?: { existingCommentId?: number; screenCode?: string }
+): Promise<AdminCommentResponse> {
+  const screenCode = options?.screenCode ?? MEMBER_DETAIL_SCREEN_CODE
+  const trimmed = comment.trim()
+  if (!trimmed) {
+    throw new Error('관리자 코멘트가 비어 있습니다.')
+  }
+
+  let commentId = options?.existingCommentId
+  if (commentId == null) {
+    const existingComments = await fetchMemberCommentsRemote(memberId, { screenCode }).catch(
+      () => []
+    )
+    commentId = resolveLatestMemberAdminCommentDetail(existingComments, screenCode)?.commentId
+  }
+
+  if (commentId != null) {
+    return updateMemberCommentRemote(memberId, commentId, { comment: trimmed })
+  }
+  return createMemberCommentRemote(memberId, { screenCode, comment: trimmed })
 }
 
 export async function deleteMemberCommentRemote(memberId: number, commentId: number): Promise<void> {
@@ -210,13 +267,6 @@ export async function upsertMember1365ExternalIdentifierRemote(
   )
 }
 
-/** @deprecated 역할별 pre-register 사용 권장 */
-export async function preRegisterMemberRemote(
-  body: AdminPreRegisterMemberRequest
-): Promise<MemberWorkflowResponse> {
-  return unwrapApiBody(await membersApi.preRegister(body))
-}
-
 export async function preRegisterIndividualRemote(
   body: AdminPreRegisterIndividualRequest
 ): Promise<MemberWorkflowResponse> {
@@ -255,6 +305,13 @@ export async function unmaskMemberPrivacyRemote(
   body: AdminPrivacyUnmaskRequest
 ): Promise<MemberDetailResponse> {
   return unwrapApiBody(await membersApi.unmaskMemberPrivacy(memberId, body))
+}
+
+export async function unmaskAdminAccountPrivacyRemote(
+  adminAccountId: number,
+  body: AdminPrivacyUnmaskRequest
+) {
+  return unwrapApiBody(await membersApi.unmask(adminAccountId, body))
 }
 
 export async function deleteMemberRemote(memberId: number, body: AdminMemberDeleteRequest) {

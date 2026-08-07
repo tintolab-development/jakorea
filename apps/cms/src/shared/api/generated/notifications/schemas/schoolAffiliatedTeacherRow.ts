@@ -7,14 +7,14 @@
  */
 
 export interface SchoolAffiliatedTeacherRow {
-  id?: string;
-  teacherMemberId?: number;
+  /** 교사 회원 PK. 교사 회원 조회/수정 경로에 사용합니다. */
   memberId?: number;
+  /** 외부 참조 및 감사용 회원 UUID. CRUD 경로에는 사용하지 않습니다. */
+  uuid?: string;
   name?: string;
   assignedGrade?: string;
   phone?: string;
   email?: string;
   employmentStatus?: string;
   joinedAt?: string;
-  linkedUserId?: string;
 }

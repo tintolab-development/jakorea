@@ -1,9 +1,16 @@
 .cards {
   display: flex;
-  width: 1220px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 1220px;
   align-items: center;
   gap: var(--spacing-16);
+}
+
+@media (--bp-below-pc) {
+  .cards {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .card {
@@ -33,10 +40,20 @@
   text-align: left;
 }
 
+.label {
+  white-space: nowrap;
+}
+
 .illustration {
   flex-shrink: 0;
   width: 91px;
   height: 91px;
   display: block;
   object-fit: contain;
+}
+
+@media (max-width: 1199px) {
+  .illustration {
+    display: none;
+  }
 }

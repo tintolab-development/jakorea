@@ -12,6 +12,7 @@ import {
   resolveRoleFilterFromMemberListParams,
   type MemberListKind,
 } from '@/shared/config/member-list-kinds'
+import { parseLegacyRoleFilterParam } from '@/features/user/api/map-member-role'
 import {
   INSTITUTION_SIDO_VALUES,
   LEGACY_INSTITUTION_LOCATION_TO_SIDO_SIGUNGU,
@@ -126,7 +127,7 @@ export function pendingRoleFromParams(params: UserListQueryParams): UserRole | '
     return memberListKindToPendingRole(normalizeMemberListKind(params.kind))
   }
   if (params.role && params.role !== 'ALL') {
-    return params.role as UserRole
+    return parseLegacyRoleFilterParam(params.role) ?? 'ALL'
   }
   return 'ALL'
 }

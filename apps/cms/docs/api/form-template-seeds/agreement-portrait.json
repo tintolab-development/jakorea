@@ -243,7 +243,7 @@
         "id": "agreement-portrait-confirmation-closing",
         "kind": "description",
         "variant": "closing",
-        "requiredMark": false,
+        "requiredMark": true,
         "paragraphTitle": "",
         "paragraphDescription": "",
         "participatesInTitleNumbering": false,
@@ -254,7 +254,7 @@
         "kind": "description",
         "variant": "system",
         "systemPreset": "agreement_date",
-        "requiredMark": false,
+        "requiredMark": true,
         "paragraphTitle": "날짜 유형",
         "paragraphDescription": "",
         "participatesInTitleNumbering": false
@@ -264,7 +264,7 @@
         "kind": "description",
         "variant": "system",
         "systemPreset": "agreement_signature",
-        "requiredMark": false,
+        "requiredMark": true,
         "paragraphTitle": "서명란 유형",
         "paragraphDescription": "",
         "participatesInTitleNumbering": false

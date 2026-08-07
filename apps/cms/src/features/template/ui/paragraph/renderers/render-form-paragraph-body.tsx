@@ -199,6 +199,8 @@ export type RenderFormParagraphBodyOptions = {
   agreementConsentFillInteractiveParagraphIds?: ReadonlySet<string>
   /** 행정정보 공동이용 fill — 표 하단 식별번호 입력만 허용 */
   agreementNoticeIdTypeInteractive?: boolean
+  /** 행정정보 fill — prefill된 대상자 본인 항목은 읽기 전용 */
+  agreementNoticeSubjectPrefilledReadOnly?: boolean
   /** 현재 조건에 따라 숨겨야 하는 단락 id 목록(에디터/미리보기 공통) */
   hiddenParagraphIds?: ReadonlySet<string>
   /**
@@ -353,11 +355,17 @@ export function renderFormParagraphBody(
       const hp = normalizeHorizontalTableParagraph(
         p as Extract<WritingFormParagraph, { variant: 'horizontal_table' }>
       )
-      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 동의서 fill은 양식 본문만 잠금 */
+      const isAgreementNoticeTable = hp.id === 'agreement-notice-table'
+      /* 필드형: 단락 카드 비선택이어도 셀 인풋·피커 유지. 동의서 fill은 양식 본문만 잠금
+       * 행정정보 표: fill interactive + authoring 선택 시 셀 입력 허용 */
       const isEditMode =
         !isPreviewReadonly &&
         (!structureLocked ||
-          (paragraphInteractionMode === 'user' && !consentFillBodyReadOnly)) &&
+          consentFillParagraphInteractive ||
+          (paragraphInteractionMode === 'user' && !consentFillBodyReadOnly) ||
+          (paragraphInteractionMode === 'authoring' &&
+            isParagraphSelected &&
+            isAgreementNoticeTable)) &&
         (paragraphInteractionMode === 'user' || isParagraphSelected || hp.tableFlavor === 'field')
       /** 표 격자·헤더 행 선택(민트 스트로크) — 작성(authoring) + 구조 미잠금에서만 */
       const tableCanvasInteractive =
@@ -547,6 +555,10 @@ export function renderFormParagraphBody(
           paragraphInteractionMode={paragraphInteractionMode}
           activeItemId={options?.singleItemListActiveItemId}
           onSelectItem={options?.onSelectSingleItemListItem}
+          readOnlyFilledItems={
+            options?.agreementNoticeSubjectPrefilledReadOnly === true &&
+            p.id === 'agreement-notice-subject'
+          }
         />
       )
     case 'session_plan_short_essay':

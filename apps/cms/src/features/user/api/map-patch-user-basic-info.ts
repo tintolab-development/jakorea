@@ -55,12 +55,36 @@ export function mapPatchUserBasicInfoToApiRequest(
         : {}),
     }
   }
+  if (patch.instructorCertifications != null) {
+    body.instructorInfo = {
+      ...(body.instructorInfo ?? {}),
+      certifications: patch.instructorCertifications,
+    }
+  }
 
-  return body
+  const extendedBody = body as Omit<AdminMemberBasicInfoUpdateRequest, 'profile' | 'settlement'> & {
+    profile?: PatchUserBasicInfoInput['instructorCmsProfile']
+    settlement?: PatchUserBasicInfoInput['instructorCmsSettlement']
+  }
+  if (patch.instructorCmsProfile != null) {
+    extendedBody.profile = patch.instructorCmsProfile
+  }
+  if (patch.instructorCmsSettlement != null) {
+    extendedBody.settlement = patch.instructorCmsSettlement
+  }
+
+  // CMS proposal DTO → OpenAPI InstructorCmsProfile (wire JSON 동일, affiliatedSchoolUserId 등 형만 상이)
+  return extendedBody as AdminMemberBasicInfoUpdateRequest
 }
 
 export function hasAdminCommentPatch(patch: PatchUserBasicInfoInput): boolean {
   return Object.prototype.hasOwnProperty.call(patch, 'adminComment')
+}
+
+/** `adminComment`만 있는 patch — 코멘트 API만 호출하고 상세 GET을 생략할 때 사용 */
+export function isAdminCommentOnlyPatch(patch: PatchUserBasicInfoInput): boolean {
+  const keys = Object.keys(patch) as (keyof PatchUserBasicInfoInput)[]
+  return keys.length === 1 && keys[0] === 'adminComment'
 }
 
 /** 관리자 계정 — `PATCH /api/admin/admin-accounts/{adminId}/basic-info` */

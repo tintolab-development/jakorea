@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import logoUrl from '@/shared/assets/brand/ja-logo.svg'
 import menuIconUrl from './image/icon/menu.svg'
 import styles from './header-mobile.module.css'
@@ -15,9 +16,9 @@ export function HeaderMobile({ transparent = false, isMenuOpen = false, onMenuOp
 
   return (
     <header className={headerClassName}>
-      <a className={styles.logoLink} href="/" aria-label="JA Korea 홈">
+      <Link className={styles.logoLink} to="/" aria-label="JA Korea 홈">
         <img className={styles.logo} src={logoUrl} alt="JA Korea" />
-      </a>
+      </Link>
       <button
         className={styles.menuButton}
         type="button"

@@ -5,27 +5,29 @@ import {
 import { PFButton, PFText } from '@/shared/ui'
 import sharedStyles from './shared.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
+import { useNavigate } from 'react-router-dom'
 
 export function AdminRegisteredConfirmPage() {
+  const navigate = useNavigate()
   const wizardState = requireAdminRegisteredWizardState()
 
   if (!wizardState?.birthDate || !wizardState.gender) {
-    window.location.assign('/auth/admin-registered/birth')
+    navigate('/auth/admin-registered/birth')
     return null
   }
 
   const rows = buildAdminRegisteredConfirmationRows(wizardState)
 
   const handleComplete = () => {
-    window.location.assign('/auth/admin-registered/complete')
+    navigate('/auth/admin-registered/complete')
   }
 
   const handleEdit = () => {
-    window.location.assign('/auth/admin-registered/edit')
+    navigate('/auth/admin-registered/edit')
   }
 
   const handlePrevious = () => {
-    window.location.assign('/auth/admin-registered/change-password')
+    navigate('/auth/admin-registered/change-password')
   }
 
   return (

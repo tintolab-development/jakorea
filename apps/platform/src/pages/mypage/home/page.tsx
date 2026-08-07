@@ -1,46 +1,60 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   getMypageLnbItems,
   getMypageProfileLabel,
   isGeneralMypageReady,
   MOCK_MYPAGE_PROGRAM_STATS,
-  MOCK_MYPAGE_USER_NAME,
   MYPAGE_PATH,
   showInstructorApplyCta,
+  useMypageMember,
 } from '@/features/mypage'
-import { getDevAuthLoggedIn, getDevMemberProfile } from '@/shared/lib'
+import { getDevAuthLoggedIn } from '@/shared/lib'
 import { MypageLayout, mypageSettingsIconUrl } from '@/widgets/mypage-layout'
 import { PFText } from '@/shared/ui'
 import { ProgramStatCards } from './program-stat-cards'
-import { SchedulePlaceholder } from './schedule-placeholder'
+import { ScheduleSection } from './schedule-section'
 import styles from './page.module.css'
 
 export function MypageHomePage() {
-  const [isReady, setIsReady] = useState(false)
-  const profile = getDevMemberProfile()
-  const lnbItems = getMypageLnbItems(profile)
-  const isGeneralReady = isGeneralMypageReady(profile)
+  const navigate = useNavigate()
+  const [isAuthReady, setIsAuthReady] = useState(false)
+  const member = useMypageMember()
+  const lnbItems = getMypageLnbItems(member.profile)
+  const isGeneralReady = isGeneralMypageReady(member.profile)
 
   useEffect(() => {
     if (!getDevAuthLoggedIn()) {
-      window.location.assign(`/auth/required?redirect=${encodeURIComponent(MYPAGE_PATH)}`)
+      navigate(`/auth/required?redirect=${encodeURIComponent(MYPAGE_PATH)}`)
       return
     }
 
-    setIsReady(true)
-  }, [])
+    setIsAuthReady(true)
+  }, [navigate])
 
-  if (!isReady) {
+  if (!isAuthReady) {
     return null
   }
 
+  if (member.isRemoteSession && member.isLoading) {
+    return (
+      <MypageLayout lnbItems={lnbItems} showInstructorApply={showInstructorApplyCta(member.profile)}>
+        <div className={styles.placeholder}>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            회원 정보를 불러오는 중이에요…
+          </PFText>
+        </div>
+      </MypageLayout>
+    )
+  }
+
   return (
-    <MypageLayout lnbItems={lnbItems} showInstructorApply={showInstructorApplyCta(profile)}>
+    <MypageLayout lnbItems={lnbItems} showInstructorApply={showInstructorApplyCta(member.profile)}>
       {isGeneralReady ? (
         <div className={styles.page}>
           <header className={styles.header}>
             <PFText as="h1" typo="page-title" color="black">
-              {MOCK_MYPAGE_USER_NAME}님
+              {member.displayName}님
             </PFText>
             <button
               className={styles.settingsButton}
@@ -65,7 +79,7 @@ export function MypageHomePage() {
           </div>
 
           <div className={styles.schedule}>
-            <SchedulePlaceholder />
+            <ScheduleSection />
           </div>
         </div>
       ) : (
@@ -74,7 +88,7 @@ export function MypageHomePage() {
             해당 회원 유형 마이페이지는 준비 중입니다
           </PFText>
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            {getMypageProfileLabel(profile)} 화면은 추후 제공될 예정이에요.
+            {getMypageProfileLabel(member.profile)} 화면은 추후 제공될 예정이에요.
           </PFText>
         </div>
       )}

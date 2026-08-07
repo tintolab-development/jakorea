@@ -3,11 +3,19 @@
  */
 
 import { Spin } from 'antd'
-import { type CSSProperties, type ReactNode } from 'react'
+import { useCallback, useState, type CSSProperties, type ReactNode } from 'react'
 import type { User } from '@/types/user'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import {
+  type MemberConsentMemberContext,
+} from '@/features/user/shared/lib/build-member-portrait-consent-draft'
+import {
+  resolveMemberConsentTemplateByLabel,
+  type MemberConsentTemplateEntry,
+} from '@/features/user/shared/lib/member-consent-template-map'
+import { MemberConsentDocumentViewModal } from '@/features/user/shared/ui/member-consent-document-view-modal'
 import './detail-info/user-detail-section-head.css'
 import './user-consent-agreement-section.css'
 
@@ -29,6 +37,8 @@ export interface UserConsentAgreementSectionProps {
   remoteConsentRows?: ConsentRowSchema[]
   /** remote 모드에서 API 로딩 중 */
   remoteConsentLoading?: boolean
+  /** 동의서 보기 — 회원 정보 프리필(미지정 시 member 미전달) */
+  memberConsentContext?: MemberConsentMemberContext
 }
 
 const DEFAULT_CAPTION = '*미동의 시 서비스 가입 및 프로그램 참여에 제한이 있을 수 있습니다.'
@@ -213,7 +223,7 @@ export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
 export const CONSENT_ROWS_PERMISSION_INSTRUCTOR: ConsentRowSchema[] = CONSENT_ROWS_FULL
 
 export interface ConsentRenderCtx {
-  openDocument: () => void
+  openDocumentForLabel: (label: string) => void
 }
 
 /** `동의 | 2026.01.15 09:15:42` 형태면 상태·구분자·날짜시간으로 나누어 날짜에 전용 스타일 적용 */
@@ -246,7 +256,7 @@ function ConsentDocumentRow({
   agreedAtDisplay?: string
   onOpenDocument?: () => void
 }) {
-  const open = onOpenDocument ?? (() => window.alert('준비 중입니다.'))
+  const open = onOpenDocument
 
   return (
     <span className="user-consent-agreement-section__value-inner">
@@ -258,18 +268,13 @@ function ConsentDocumentRow({
       </span>
       {agreed ? (
         <>
-          <CmsButton variant="secondary" size="medium" width={120} onClick={open}>
+          <CmsButton variant="secondary" size="medium" width={120} onClick={open} disabled={!open}>
             동의서 보기
           </CmsButton>
           {agreedAtDisplay ? (
-            <>
-              <span className="user-consent-agreement-section__value-sep" aria-hidden>
-                |
-              </span>
-              <span className="user-consent-agreement-section__value-datetime">
-                {agreedAtDisplay}
-              </span>
-            </>
+            <span className="user-consent-agreement-section__value-datetime">
+              {agreedAtDisplay}
+            </span>
           ) : null}
         </>
       ) : (
@@ -289,7 +294,11 @@ function consentFieldContent(value: ReactNode) {
   )
 }
 
-function resolveConsentFieldView(value: ConsentFieldValueSchema, ctx: ConsentRenderCtx): ReactNode {
+function resolveConsentFieldView(
+  value: ConsentFieldValueSchema,
+  ctx: ConsentRenderCtx,
+  fieldLabel: string
+): ReactNode {
   switch (value.type) {
     case 'remote_consent': {
       const status = value.agreed ? '동의' : '미동의'
@@ -303,7 +312,9 @@ function resolveConsentFieldView(value: ConsentFieldValueSchema, ctx: ConsentRen
         <ConsentDocumentRow
           agreed={value.agreed}
           agreedAtDisplay={value.agreedAtDisplay}
-          onOpenDocument={value.agreed ? ctx.openDocument : undefined}
+          onOpenDocument={
+            value.agreed ? () => ctx.openDocumentForLabel(fieldLabel) : undefined
+          }
         />
       )
     case 'empty_half':
@@ -336,7 +347,7 @@ export function renderConsentField(
     )
   }
 
-  const view = resolveConsentFieldView(field.value, ctx)
+  const view = resolveConsentFieldView(field.value, ctx, field.label)
   return (
     <DetailInfoForm.Field
       key={fieldKey}
@@ -369,12 +380,27 @@ export function UserConsentAgreementSection({
   onOpenAgreementDocument,
   remoteConsentRows,
   remoteConsentLoading = false,
+  memberConsentContext,
 }: UserConsentAgreementSectionProps) {
+  const [activeViewEntry, setActiveViewEntry] = useState<MemberConsentTemplateEntry | null>(null)
+
   const effectiveCaption =
     caption ??
     (preset === 'admin' ? ADMIN_CONSENT_CAPTION : DEFAULT_CAPTION)
 
-  const doc = onOpenAgreementDocument ?? (() => window.alert('준비 중입니다.'))
+  const openDocumentForLabel = useCallback(
+    (label: string) => {
+      if (onOpenAgreementDocument) {
+        onOpenAgreementDocument()
+        return
+      }
+      const entry = resolveMemberConsentTemplateByLabel(label)
+      if (entry) {
+        setActiveViewEntry(entry)
+      }
+    },
+    [onOpenAgreementDocument]
+  )
 
   const baseSchema =
     viewVariant === 'permission_instructor'
@@ -383,7 +409,7 @@ export function UserConsentAgreementSection({
   const schema = remoteConsentRows ?? baseSchema
   const upperRows = schema.slice(0, 2)
   const lowerRows = schema.slice(2)
-  const ctx: ConsentRenderCtx = { openDocument: doc }
+  const ctx: ConsentRenderCtx = { openDocumentForLabel }
 
   return (
     <div className="user-consent-agreement-section">
@@ -407,6 +433,15 @@ export function UserConsentAgreementSection({
           ) : null}
         </div>
       </Spin>
+      {activeViewEntry != null && memberConsentContext != null ? (
+        <MemberConsentDocumentViewModal
+          open
+          templateId={activeViewEntry.templateId}
+          modalTitle={activeViewEntry.modalTitle}
+          memberContext={memberConsentContext}
+          onClose={() => setActiveViewEntry(null)}
+        />
+      ) : null}
     </div>
   )
 }
