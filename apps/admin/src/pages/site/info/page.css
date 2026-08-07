@@ -1,0 +1,7 @@
+.site-info-page {
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100vh - var(--header-height, 64px) - 64px);
+  display: flex;
+  flex-direction: column;
+}
