@@ -1,8 +1,8 @@
 /**
- * Admin 셀렉트 (단일 선택만) — CmsInput 치수 정렬
- * - inputSize: large | medium | small
- * - allowClear 없음
- * - withAllOption 기본 false (콘텐츠 관리 등 폼용)
+ * Admin 셀렉트 — CMS 디자인 시스템 정렬
+ * - inputSize: large | medium | small (CmsInput 치수 정렬)
+ * - 단일 선택: allowClear(×) 없음. withAllOption 기본 false
+ * - `mode="multiple"`: 검색·체크·pill, 닫힘 시 쉼표 구분 (Ant Select 미사용)
  */
 
 import { forwardRef, useMemo } from 'react'
@@ -11,6 +11,10 @@ import { Select } from 'antd'
 import type { SelectProps } from 'antd'
 import type { RefSelectProps } from 'antd/es/select'
 import type { CmsControlSize } from './cms-control-size'
+import {
+  CmsSelectMultiple,
+  type CmsSelectMultipleOption,
+} from './cms-select-multiple'
 import './cms-select.css'
 
 const CMS_SELECT_ALL_OPTION = { label: '전체', value: '' as const }
@@ -50,17 +54,44 @@ function optionsAlreadyStartWithAllLabel(options: SelectProps['options']): boole
 
 function mergeOptionsForCmsSelect(
   options: SelectProps['options'],
+  mode: SelectProps['mode'] | undefined,
   withAllOption: boolean
 ): SelectProps['options'] {
   if (!withAllOption) return options
+  if (mode === 'multiple' || mode === 'tags') return options
   if (!Array.isArray(options)) return options
   if (optionsIncludeEmptyValueOption(options)) return options
   if (optionsAlreadyStartWithAllLabel(options)) return options
   return [CMS_SELECT_ALL_OPTION, ...options]
 }
 
-export interface CmsSelectProps
-  extends Omit<SelectProps, 'variant' | 'size' | 'allowClear' | 'mode'> {
+function normalizeMultipleOptions(options: SelectProps['options']): CmsSelectMultipleOption[] {
+  if (!Array.isArray(options)) return []
+  return options.flatMap(opt => {
+    if (opt == null || typeof opt !== 'object') return []
+    const o = opt as {
+      value?: unknown
+      label?: unknown
+      options?: unknown[]
+      tagColor?: string
+      tagTextColor?: string
+    }
+    if (Array.isArray(o.options)) return []
+    if (o.value == null) return []
+    return [
+      {
+        value: String(o.value),
+        label: String(o.label ?? o.value),
+        tagColor: o.tagColor,
+        tagTextColor: o.tagTextColor,
+      },
+    ]
+  })
+}
+
+export { CMS_MULTI_SELECT_TAG_COLORS } from './cms-select-multiple'
+
+export interface CmsSelectProps extends Omit<SelectProps, 'variant' | 'size' | 'allowClear'> {
   /** Ant Select 루트(.ant-select)에만 붙는 클래스 */
   selectClassName?: string
   /** large 44px / medium 40px / small 32px */
@@ -69,6 +100,8 @@ export interface CmsSelectProps
   width?: number | string
   /** true면 비어있는 전체 옵션을 자동 삽입 (기본 false) */
   withAllOption?: boolean
+  /** `mode="multiple"`일 때 선택 초기화(×) 표시 (기본 true) */
+  allowClear?: boolean
 }
 
 export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
@@ -83,7 +116,9 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
       value,
       onChange,
       options,
+      mode,
       withAllOption = false,
+      allowClear = true,
       placeholder,
       ...rest
     },
@@ -96,8 +131,13 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
         : undefined
 
     const mergedOptions = useMemo(
-      () => mergeOptionsForCmsSelect(options, withAllOption),
-      [options, withAllOption]
+      () => mergeOptionsForCmsSelect(options, mode, withAllOption),
+      [options, mode, withAllOption]
+    )
+
+    const multipleOptions = useMemo(
+      () => normalizeMultipleOptions(mergedOptions),
+      [mergedOptions]
     )
 
     const optionsHaveEmptyValue = useMemo(
@@ -106,14 +146,22 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
     )
 
     const resolvedValue = useMemo(() => {
+      if (mode === 'multiple') {
+        return Array.isArray(value) ? value.map(String) : []
+      }
       if (optionsHaveEmptyValue) return value
       if (value === '' || value === null || value === undefined) return undefined
       return value
-    }, [value, optionsHaveEmptyValue])
+    }, [value, optionsHaveEmptyValue, mode])
 
     const handleChange: SelectProps['onChange'] = (next, option) => {
       if (!onChange) return
-      if (!optionsHaveEmptyValue && (next === undefined || next === null)) {
+      const isMulti = mode === 'multiple' || mode === 'tags'
+      if (
+        !optionsHaveEmptyValue &&
+        !isMulti &&
+        (next === undefined || next === null)
+      ) {
         onChange('' as never, option)
         return
       }
@@ -130,6 +178,23 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
       .filter(Boolean)
       .join(' ')
 
+    if (mode === 'multiple') {
+      return (
+        <CmsSelectMultiple
+          className={[wrapperCn, 'cms-select--multiple-ui'].filter(Boolean).join(' ')}
+          style={{ ...widthStyle, ...style }}
+          disabled={disabled}
+          placeholder={typeof placeholder === 'string' ? placeholder : undefined}
+          options={multipleOptions}
+          value={resolvedValue as string[]}
+          allowClear={allowClear}
+          onChange={next => {
+            onChange?.(next as never, [] as never)
+          }}
+        />
+      )
+    }
+
     return (
       <span className={wrapperCn} style={{ ...widthStyle, ...style }}>
         <Select
@@ -139,6 +204,7 @@ export const CmsSelect = forwardRef<RefSelectProps, CmsSelectProps>(
           disabled={disabled}
           placeholder={placeholder}
           {...rest}
+          mode={mode}
           options={mergedOptions}
           value={resolvedValue as SelectProps['value']}
           onChange={handleChange}
