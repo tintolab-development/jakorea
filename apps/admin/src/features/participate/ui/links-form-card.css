@@ -1,0 +1,95 @@
+/**
+ * 참여하기 — 메뉴명 연결 링크 관리 카드
+ * 단건 문서 카드 fill + 인라인 필드 보더 슬롯
+ */
+
+.participate-links-card.admin-list-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  margin-bottom: 0;
+}
+
+.participate-links-card .admin-list-toolbar {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.participate-links-card__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.participate-links-card .detail-info-form__field {
+  min-height: 54px;
+  --detail-info-label-w: 160px;
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+.participate-links-card .detail-info-form__field-label {
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
+.participate-links-card .detail-info-form__field-content {
+  min-height: 54px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.participate-links-card .detail-info-form__field-content--edit > * {
+  display: block;
+  margin-block: 0 !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.participate-links-inline-field {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.participate-links-inline-field .cms-input__control {
+  width: 100% !important;
+  min-width: 0 !important;
+  border-width: 1px;
+  border-style: solid;
+  box-sizing: border-box;
+}
+
+.participate-links-inline-field--readonly .cms-input__control {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+.participate-links-inline-field--readonly .ant-input {
+  cursor: default;
+  color: var(--default-BK, #3d3d3d) !important;
+}
+
+/* 빈 링크 조회 문구 — 행 높이 유지 */
+.participate-links-empty {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  width: 100%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+  box-sizing: border-box;
+}
