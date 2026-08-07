@@ -7,6 +7,7 @@ import type {
   ApplicantInstructorCareerDetail,
   ApplicantInstructorEducationItem,
 } from '@/data/mock/applicant-instructors'
+import dayjs from 'dayjs'
 import {
   formatInstructorEducationLevelDisplay,
   isInstructorMaskedPlaceholder,
@@ -147,10 +148,24 @@ export function formatEducationPeriod(item: ApplicantInstructorEducationItem): s
   return `${start} ~ ${end}`
 }
 
-function getMonthsBetween(from: string, to: string): number {
-  const [y1, m1] = from.split('.').map(Number)
-  const [y2, m2] = to.split('.').map(Number)
-  return (y2 - y1) * 12 + (m2 - m1)
+const CAREER_MONTH_PARSE_FORMATS = ['YYYY-MM', 'YYYY.MM', 'YYYY-MM-DD', 'YYYY'] as const
+
+/** API `YYYY-MM` · legacy `YYYY.MM` 등 경력 월 파싱 */
+export function parseCareerYearMonth(
+  raw: string | undefined
+): { year: number; month: number } | null {
+  const trimmed = raw?.trim()
+  if (!trimmed) return null
+  const parsed = dayjs(trimmed, [...CAREER_MONTH_PARSE_FORMATS], true)
+  if (!parsed.isValid()) return null
+  return { year: parsed.year(), month: parsed.month() + 1 }
+}
+
+function getMonthsBetweenCareerDates(from: string, to: string): number | null {
+  const start = parseCareerYearMonth(from)
+  const end = parseCareerYearMonth(to)
+  if (!start || !end) return null
+  return (end.year - start.year) * 12 + (end.month - start.month)
 }
 
 export function formatCareerPeriod(item: ApplicantInstructorCareerDetail): string {
@@ -159,32 +174,38 @@ export function formatCareerPeriod(item: ApplicantInstructorCareerDetail): strin
   if (item.isCurrent) return `${start} ~ 재직중`
   const end = item.endDate
   if (!end) return start
-  const months = getMonthsBetween(start, end)
-  const years = Math.floor(months / 12)
-  const yearLabel = years >= 1 ? `(${years}년)` : ''
-  return `${start} ~ ${end}${yearLabel}`
+  const months = getMonthsBetweenCareerDates(start, end)
+  if (months == null) return `${start} ~ ${end}`
+  const durationLabel =
+    months >= 12 ? `(${Math.floor(months / 12)}년)` : months > 0 ? `(${months}개월)` : ''
+  return `${start} ~ ${end}${durationLabel}`
+}
+
+export function getTotalCareerMonths(
+  items: ApplicantInstructorCareerDetail[] | undefined
+): number {
+  if (!items?.length) return 0
+  const today = dayjs()
+  let totalMonths = 0
+  for (const item of items) {
+    const start = parseCareerYearMonth(item.startDate)
+    if (!start) continue
+    const end = item.isCurrent
+      ? { year: today.year(), month: today.month() + 1 }
+      : parseCareerYearMonth(item.endDate)
+    if (!end) continue
+    totalMonths += (end.year - start.year) * 12 + (end.month - start.month)
+  }
+  return Math.max(0, totalMonths)
+}
+
+export function formatCareerDurationSummary(totalMonths: number): string {
+  if (totalMonths < 12) return `${totalMonths}개월`
+  return `${Math.floor(totalMonths / 12)}년`
 }
 
 export function getTotalCareerYears(items: ApplicantInstructorCareerDetail[] | undefined): number {
-  if (!items?.length) return 0
-  const today = new Date()
-  let totalMonths = 0
-  for (const item of items) {
-    const start = item.startDate
-    if (!start) continue
-    const [y1, m1] = start.split('.').map(Number)
-    const end = item.isCurrent
-      ? { year: today.getFullYear(), month: today.getMonth() + 1 }
-      : item.endDate
-        ? (() => {
-            const [y2, m2] = item.endDate!.split('.').map(Number)
-            return { year: y2, month: m2 }
-          })()
-        : null
-    if (!end) continue
-    totalMonths += (end.year - y1) * 12 + (end.month - m1)
-  }
-  return Math.floor(totalMonths / 12)
+  return Math.floor(getTotalCareerMonths(items) / 12)
 }
 
 export function instructorEducationSectionDescription(d: ApplicantInstructorRow): string {
@@ -199,9 +220,8 @@ export function instructorEducationSectionDescription(d: ApplicantInstructorRow)
 
 export function instructorCareerSectionDescription(d: ApplicantInstructorRow): string {
   if (d.instructorCareerLevel === 'new') return '신입'
-  const totalCareerYears = getTotalCareerYears(d.careerDetails)
-  if ((d.careerDetails?.length ?? 0) > 0) return `${totalCareerYears}년`
-  return ''
+  if ((d.careerDetails?.length ?? 0) === 0) return ''
+  return formatCareerDurationSummary(getTotalCareerMonths(d.careerDetails))
 }
 
 export function instructorQualificationsSectionDescription(d: ApplicantInstructorRow): string {

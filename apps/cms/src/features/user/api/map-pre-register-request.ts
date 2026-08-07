@@ -13,7 +13,10 @@ import type {
   InstructorCmsSettlement,
 } from '@/features/user/api/types/instructor-cms-profile-proposal'
 
-type AdminPreRegisterInstructorRequestExtended = AdminPreRegisterInstructorRequest & {
+type AdminPreRegisterInstructorRequestExtended = Omit<
+  AdminPreRegisterInstructorRequest,
+  'profile' | 'settlement'
+> & {
   profile?: InstructorCmsProfileProposal
   settlement?: InstructorCmsSettlement
   organizationText?: string
@@ -119,7 +122,7 @@ export function mapCreateUserRequestToPreRegisterSchool(
 
 export function mapCreateUserRequestToPreRegisterInstructor(
   request: CreateUserRequest
-): AdminPreRegisterInstructorRequestExtended {
+): AdminPreRegisterInstructorRequest {
   const { email, name, phone, gender, birthDate } = baseIdentity(request)
   if (!email) {
     throw new Error('강사 회원 등록에는 이메일이 필요합니다.')
@@ -208,5 +211,6 @@ export function mapCreateUserRequestToPreRegisterInstructor(
     body.organizationText = request.affiliation.trim()
   }
 
-  return body
+  // CMS proposal DTO → OpenAPI InstructorCmsProfile (wire JSON 동일, affiliatedSchoolUserId 등 형만 상이)
+  return body as AdminPreRegisterInstructorRequest
 }

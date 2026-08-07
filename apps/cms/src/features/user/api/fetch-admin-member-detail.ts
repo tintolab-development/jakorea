@@ -31,12 +31,31 @@ export function canResolveAdminDetailPathId(
   }
 }
 
+/** 회원 uuid·member-{memberId}는 관리자 API 경로로 취급하지 않는다 */
+function isMemberScopedUserId(userId: string): boolean {
+  const trimmed = userId.trim()
+  if (!trimmed) return false
+  if (/^member-/i.test(trimmed)) return true
+  // uuid — admin-account-/숫자-only 패턴이 아니면 회원 id로 간주
+  if (/^admin-account-\d+$/i.test(trimmed)) return false
+  if (/^\d+$/.test(trimmed)) return false
+  if (/^admin-\d+$/i.test(trimmed)) return false
+  return true
+}
+
 export function shouldUseAdminAccountDetailApi(options?: {
   role?: UserRole
   adminAccountId?: number
   userId?: string
 }): boolean {
-  return canResolveAdminDetailPathId(options?.userId ?? '', options)
+  if (options?.role != null && options.role !== 'ADMIN') {
+    return false
+  }
+  const userId = options?.userId?.trim() ?? ''
+  if (isMemberScopedUserId(userId)) {
+    return false
+  }
+  return canResolveAdminDetailPathId(userId, options)
 }
 
 /**
@@ -57,9 +76,18 @@ export function resolveAdminDetailPathId(
   if (fromUserId != null) return fromUserId
 
   const trimmed = userId.trim()
-  const idToken = trimmed.replace(/^(admin-|member-|admin-account-)/, '')
-  if (/^\d+$/.test(idToken)) {
-    const numeric = Number(idToken)
+  if (/^member-/i.test(trimmed)) {
+    throw new Error(ADMIN_ACCOUNT_ID_REQUIRED_MESSAGE)
+  }
+
+  const adminPrefixed = trimmed.match(/^admin-(\d+)$/i)
+  if (adminPrefixed) {
+    const numeric = Number(adminPrefixed[1])
+    if (numeric > 0) return numeric
+  }
+
+  if (/^\d+$/.test(trimmed)) {
+    const numeric = Number(trimmed)
     if (numeric > 0) return numeric
   }
 

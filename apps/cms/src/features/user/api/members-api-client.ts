@@ -34,6 +34,7 @@ import type {
   PageResponseAdminAccountListItemResponse,
   PageResponseInstructorRoleRequestListItemResponse,
   SchoolMemberDetailResponse,
+  TeacherMemberDetailResponse,
 } from '@/shared/api/generated/members/schemas'
 import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
 import type { AdminAccountBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminAccountBasicInfoUpdateRequest'
@@ -105,6 +106,12 @@ export async function fetchInstructorMemberDetailRemote(
   memberId: number
 ): Promise<InstructorMemberDetailResponse> {
   return unwrapApiBody(await membersApi.getInstructorMemberDetail(memberId))
+}
+
+export async function fetchTeacherMemberDetailRemote(
+  memberId: number
+): Promise<TeacherMemberDetailResponse> {
+  return unwrapApiBody(await membersApi.getTeacherMemberDetail(memberId))
 }
 
 export async function updateMemberBasicInfoRemote(

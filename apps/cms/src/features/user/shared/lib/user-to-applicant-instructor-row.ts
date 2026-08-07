@@ -110,7 +110,7 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
       : remote
         ? REMOTE_RESUME_PLACEHOLDER_SCHOOL
         : '-*대학교'
-  /** API `selfIntroduction` → 자유작성 1번만. 2~4번 전용 필드는 스키마 없음 → 빈 값 */
+  /** API `profile.essays.freeWrite1` 또는 legacy `selfIntroduction` */
   const freeWriting1FromApi = user.instructorSelfIntroduction?.trim() ?? ''
   const qualifications = mapCertificationsToQualifications(user.instructorCertifications)
   const educationsFromSummary = mapEducationLevelToEducationItems(

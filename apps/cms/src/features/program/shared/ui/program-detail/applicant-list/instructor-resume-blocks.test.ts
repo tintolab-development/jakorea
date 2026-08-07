@@ -104,3 +104,40 @@ describe('instructor resume education display', () => {
     expect(instructorAwardsSectionDescription(baseRow())).toBe('')
   })
 })
+
+describe('instructor resume career display', () => {
+  it('YYYY-MM 재직중 경력은 NaN 없이 개월 수로 요약한다', () => {
+    const summary = instructorCareerSectionDescription(
+      baseRow({
+        careerDetails: [{ companyName: 'JA', startDate: '2026-01', isCurrent: true }],
+      })
+    )
+
+    expect(summary).toMatch(/^\d+개월$/)
+    expect(summary).not.toContain('NaN')
+  })
+
+  it('1년 이상 경력은 년 단위로 요약한다', () => {
+    expect(
+      instructorCareerSectionDescription(
+        baseRow({
+          careerDetails: [
+            { companyName: 'A', startDate: '2022.03', endDate: '2024.02', isCurrent: false },
+          ],
+        })
+      )
+    ).toBe('1년')
+  })
+
+  it('legacy YYYY.MM 형식도 파싱한다', () => {
+    expect(
+      instructorCareerSectionDescription(
+        baseRow({
+          careerDetails: [
+            { companyName: 'A', startDate: '2024.02', endDate: '2024.08', isCurrent: false },
+          ],
+        })
+      )
+    ).toBe('6개월')
+  })
+})

@@ -7,12 +7,34 @@ import {
 import { mergeListUserWithFetchedDetail } from './merge-list-user-with-detail'
 import type {
   IndividualMemberDetailResponse,
+  InstructorDetailResponse,
   InstructorMemberDetailResponse,
 } from '@/shared/api/generated/members/schemas'
 import type { User } from '@/types/user'
 
+type InstructorMemberDetailTestInput = InstructorMemberDetailResponse & {
+  instructorProfile?: InstructorDetailResponse | null
+  homeAddress?: string
+  homeAddressDetail?: string
+  affiliation?: string
+  affiliatedSchoolName?: string
+  employmentStatus?: string
+  assignedGrade?: string
+  instructorAssignedGrade?: string
+  organizationText?: string
+  bankName?: string
+  accountNumber?: string
+  accountHolder?: string
+  bankAccounts?: Array<{
+    bankName?: string
+    accountNumber?: string
+    accountHolder?: string
+    current?: boolean
+  }>
+}
+
 function baseInstructorDetail(
-  partial: Partial<InstructorMemberDetailResponse> = {}
+  partial: Partial<InstructorMemberDetailTestInput> = {}
 ): InstructorMemberDetailResponse {
   return {
     member: {
@@ -118,7 +140,7 @@ describe('mapInstructorMemberDetailToUser', () => {
           { termsType: 'PAYMENT_STATEMENT_PRE_CONSENT', agreed: true },
           { termsType: 'FACILITATOR_PLEDGE', agreed: true },
         ],
-      } as InstructorMemberDetailResponse)
+      } as InstructorMemberDetailTestInput)
     )
 
     expect(user.termsAgreements).toHaveLength(3)
@@ -245,7 +267,7 @@ describe('mapInstructorMemberDetailToUser', () => {
         affiliation: '진월초등학교, JA 강사단',
         affiliatedSchoolName: '진월초등학교',
         employmentStatus: 'ACTIVE',
-      } as InstructorMemberDetailResponse)
+      } as InstructorMemberDetailTestInput)
     )
 
     expect(user.affiliation).toBe('진월초등학교, JA 강사단')
@@ -278,7 +300,7 @@ describe('mapInstructorMemberDetailToUser', () => {
           essays: {},
         },
         instructorAssignedGrade: '4학년',
-      } as InstructorMemberDetailResponse)
+      } as InstructorMemberDetailTestInput)
     )
 
     expect(user.affiliatedSchoolName).toBe('진월초등학교')
@@ -296,7 +318,7 @@ describe('mapInstructorMemberDetailToUser', () => {
           primaryActivityType: 'UJAT',
         },
         affiliatedSchoolName: '진월초등학교',
-      } as InstructorMemberDetailResponse)
+      } as InstructorMemberDetailTestInput)
     )
 
     expect(user.affiliatedSchoolName).toBe('진월초등학교')
@@ -329,6 +351,37 @@ describe('mapInstructorMemberDetailToUser', () => {
     expect(user.instructorInfo?.bankName).toBe('농협')
     expect(user.instructorInfo?.accountNumber).toBe('999-888')
     expect(user.instructorInfo?.accountHolder).toBe('김강사')
+  })
+
+  it('settlement 객체의 계좌를 instructorInfo에 매핑한다', () => {
+    const user = mapInstructorMemberDetailToUser(
+      baseInstructorDetail({
+        instructorProfile: undefined,
+        profile: {
+          memberType: 'GENERAL',
+          affiliation: { organizationNames: [] },
+          homeAddress: { line: '' },
+          education: {},
+          career: { level: 'experienced', rows: [] },
+          jaKoreaActivities: [],
+          licenses: [],
+          awards: [],
+          essays: {},
+        },
+        settlement: {
+          bankName: '국민은행',
+          accountNumber: '123-456',
+          accountHolder: '김강사',
+          businessIncome: true,
+        },
+      })
+    )
+
+    expect(user.instructorInfo?.bankName).toBe('국민은행')
+    expect(user.instructorInfo?.accountNumber).toBe('123-456')
+    expect(user.instructorInfo?.accountHolder).toBe('김강사')
+    expect(user.instructorInfo?.isBusinessIncome).toBe(true)
+    expect(user.instructorCmsSettlement?.bankName).toBe('국민은행')
   })
 
   it('루트 은행명만 있고 계좌번호는 bankAccounts에서 보완한다', () => {
@@ -391,7 +444,7 @@ describe('mapInstructorMemberDetailToUser', () => {
           homeAddressDetail: '101호',
           businessIncomeYn: 'N' as unknown as boolean,
           educationLevel: '대학원',
-        } as InstructorMemberDetailResponse['instructorProfile'],
+        } as InstructorDetailResponse,
       })
     )
 
@@ -411,7 +464,7 @@ describe('mapInstructorMemberDetailToUser', () => {
           status: 'APPROVED',
           defaultFeeGrade: null as unknown as string,
           feeGrade: 'APPROVED',
-        } as InstructorMemberDetailResponse['instructorProfile'],
+        } as InstructorDetailResponse,
       })
     )
 
@@ -426,7 +479,7 @@ describe('mapInstructorMemberDetailToUser', () => {
           memberId: 101,
           defaultFeeGrade: undefined,
           feeGrade: '특강',
-        } as InstructorMemberDetailResponse['instructorProfile'],
+        } as InstructorDetailResponse,
       })
     )
 
@@ -466,7 +519,7 @@ describe('mapInstructorMemberDetailToUser', () => {
         instructorProfile: undefined,
         homeAddress: '경기도 성남시 분당구 판교로 1',
         homeAddressDetail: '202호',
-      } as InstructorMemberDetailResponse)
+      } as InstructorMemberDetailTestInput)
     )
 
     expect(user.detailAddress).toBe('경기도 성남시 분당구 판교로 1')
@@ -496,7 +549,7 @@ describe('mapInstructorMemberDetailToUser', () => {
           memberId: 101,
           primaryActivityType: 'GENERAL',
         },
-      } as InstructorMemberDetailResponse)
+      } as InstructorMemberDetailTestInput)
     )
 
     expect(user.instructorCmsProfile?.affiliation?.organizationNames).toEqual(['JA 강사단'])
@@ -508,7 +561,7 @@ describe('resolveInstructorBankFields', () => {
   it('current 계좌가 없으면 첫 계좌를 쓴다', () => {
     const bank = resolveInstructorBankFields({
       bankAccounts: [{ bankName: '신한', accountNumber: '1', accountHolder: 'A' }],
-    })
+    } as InstructorMemberDetailResponse)
     expect(bank.bankName).toBe('신한')
   })
 })

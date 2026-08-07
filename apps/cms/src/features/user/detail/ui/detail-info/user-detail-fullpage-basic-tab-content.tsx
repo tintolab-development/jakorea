@@ -205,9 +205,6 @@ export function UserDetailFullpageBasicTabContent({
       ) : null}
       {showInstructorRegisterLikeEdit ? (
         <>
-          {membersRemote ? (
-            <MemberDetailMockDataBanner message="강사 이력서 중 구조화 학력·경력사항·JA 활동·수상·자유작성 2~4는 API 미제공으로 저장되지 않을 수 있습니다. 기본정보·계좌·자격증·학력 요약·자유작성 1은 연동됩니다." />
-          ) : null}
           <InstructorDetailEditForm
             user={user}
             instructorResumeApplicantRow={instructorResumeApplicantRow}
@@ -258,12 +255,7 @@ export function UserDetailFullpageBasicTabContent({
             />
           ) : null}
           {instructorResumeApplicantRow ? (
-            <>
-              {membersRemote ? (
-                <MemberDetailMockDataBanner message="강사 이력서 중 구조화 학력·경력사항·JA 활동·수상·자유작성 2~4는 API 미제공으로 빈 값 또는 요약만 표시될 수 있습니다. (계좌·자격증·학력 요약·자유작성 1은 API 연동)" />
-              ) : null}
-              <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
-            </>
+            <InstructorResumeDetailForms instructor={instructorResumeApplicantRow} />
           ) : null}
         </>
       )}

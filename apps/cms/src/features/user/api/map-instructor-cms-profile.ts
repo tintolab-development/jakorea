@@ -24,6 +24,8 @@ import type {
   InstructorCmsProfileProposal,
   InstructorCmsSettlement,
 } from '@/features/user/api/types/instructor-cms-profile-proposal'
+import type { InstructorCmsProfile as ApiInstructorCmsProfile } from '@/shared/api/generated/members/schemas/instructorCmsProfile'
+import type { InstructorCmsSettlement as ApiInstructorCmsSettlement } from '@/shared/api/generated/members/schemas/instructorCmsSettlement'
 import type { InstructorDetailResponse } from '@/shared/api/generated/members/schemas/instructorDetailResponse'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
 import { formatInstructorEducationLevelDisplay } from '@/features/user/api/map-instructor-activity-display'
@@ -222,6 +224,12 @@ export function instructorProfileFormValuesToCmsProfile(
     ...(trimOptional(values.instructorCareer)
       ? { instructorCareerSummary: values.instructorCareer.trim() }
       : {}),
+    ...(trimOptional(values.instructorFeeGrade)
+      ? { defaultFeeGrade: values.instructorFeeGrade.trim() }
+      : {}),
+    ...(trimOptional(values.jaEvaluationGrade)
+      ? { defaultJaGrade: values.jaEvaluationGrade.trim() }
+      : {}),
     ...(trimOptional(values.oneLineIntro) ? { oneLineIntro: values.oneLineIntro.trim() } : {}),
     homeAddress: {
       line: values.homeAddress.trim(),
@@ -416,6 +424,8 @@ export function instructorCmsProfileToFormValues(
           affiliationNone: (affiliation.organizationNames?.length ?? 0) === 0,
         }),
     instructorCareer: profile.instructorCareerSummary ?? profile.career.summaryYears ?? '',
+    instructorFeeGrade: profile.defaultFeeGrade ?? '',
+    jaEvaluationGrade: profile.defaultJaGrade ?? '',
     oneLineIntro: profile.oneLineIntro ?? '',
     homeAddress: profile.homeAddress.line ?? '',
     homeAddressDetail: profile.homeAddress.detail ?? '',
@@ -635,6 +645,119 @@ export function instructorCmsProfileToApplicantInstructorRowPartial(
       (profile.career.level === 'new' ? '신입' : ''),
     oneLineIntro: profile.oneLineIntro?.trim() || '-',
     instructorCareerLevel: profile.career.level,
+  }
+}
+
+function mapApiEmploymentStatus(
+  raw: string | undefined
+): InstructorCmsProfileProposal['affiliation']['employmentStatus'] {
+  const v = raw?.trim().toUpperCase()
+  if (v === 'ACTIVE' || v === 'LEAVE' || v === 'TRANSFER' || v === 'RESIGNED') {
+    return v as InstructorCmsProfileProposal['affiliation']['employmentStatus']
+  }
+  if (v === 'ON_LEAVE') return 'LEAVE'
+  if (v === 'WITHDRAWN') return 'RESIGNED'
+  if (v === 'TRANSFERRED') return 'TRANSFER'
+  return undefined
+}
+
+/** OpenAPI `InstructorCmsProfile` → CMS proposal DTO */
+export function normalizeInstructorCmsProfileFromApi(
+  profile: ApiInstructorCmsProfile | undefined
+): InstructorCmsProfileProposal | undefined {
+  if (!profile) return undefined
+
+  const memberTypeRaw = profile.memberType?.trim().toUpperCase()
+  const memberType: InstructorCmsProfileProposal['memberType'] =
+    memberTypeRaw === 'SCHOOL_TEACHER' ? 'SCHOOL_TEACHER' : 'GENERAL'
+
+  return {
+    memberType,
+    ...(profile.status?.trim() ? { status: profile.status.trim() } : {}),
+    affiliation: {
+      ...(profile.affiliation?.schoolName?.trim()
+        ? { schoolName: profile.affiliation.schoolName.trim() }
+        : {}),
+      ...(mapApiEmploymentStatus(profile.affiliation?.employmentStatus)
+        ? { employmentStatus: mapApiEmploymentStatus(profile.affiliation?.employmentStatus) }
+        : {}),
+      organizationNames: profile.affiliation?.organizationNames?.map(name => name.trim()).filter(Boolean) ?? [],
+      ...(profile.affiliation?.affiliatedSchoolUserId != null
+        ? { affiliatedSchoolUserId: String(profile.affiliation.affiliatedSchoolUserId) }
+        : {}),
+    },
+    ...(profile.instructorCareerSummary?.trim()
+      ? { instructorCareerSummary: profile.instructorCareerSummary.trim() }
+      : {}),
+    ...(profile.oneLineIntro?.trim() ? { oneLineIntro: profile.oneLineIntro.trim() } : {}),
+    homeAddress: {
+      line: profile.homeAddress?.line?.trim() ?? '',
+      ...(profile.homeAddress?.detail?.trim()
+        ? { detail: profile.homeAddress.detail.trim() }
+        : {}),
+    },
+    education: (profile.education ?? {}) as InstructorCmsEducation,
+    // Orval Career/rows·활동·자격 item이 `{[key: string]: unknown}` 이라 proposal DTO로 unknown 경유
+    career: (profile.career ?? { level: 'experienced', rows: [] }) as unknown as InstructorCmsProfileProposal['career'],
+    jaKoreaActivities: (profile.jaKoreaActivities ??
+      []) as unknown as InstructorCmsProfileProposal['jaKoreaActivities'],
+    licenses: (profile.licenses ?? []) as unknown as InstructorCmsProfileProposal['licenses'],
+    awards: (profile.awards ?? []) as unknown as InstructorCmsProfileProposal['awards'],
+    essays: (profile.essays ?? {}) as InstructorCmsEssays,
+    defaultFeeGrade: profile.defaultFeeGrade ?? null,
+    defaultJaGrade: profile.defaultJaGrade ?? null,
+  }
+}
+
+/** OpenAPI `InstructorCmsSettlement` → CMS proposal DTO */
+export function normalizeInstructorCmsSettlementFromApi(
+  settlement: ApiInstructorCmsSettlement | undefined
+): InstructorCmsSettlement | undefined {
+  if (!settlement) return undefined
+  return {
+    ...(settlement.bankName?.trim() ? { bankName: settlement.bankName.trim() } : {}),
+    ...(settlement.accountNumber?.trim() ? { accountNumber: settlement.accountNumber.trim() } : {}),
+    ...(settlement.accountHolder?.trim() ? { accountHolder: settlement.accountHolder.trim() } : {}),
+    businessIncome: settlement.businessIncome ?? false,
+  }
+}
+
+/** CMS `profile` → legacy flat `instructorProfile` (읽기 호환) */
+export function synthesizeLegacyInstructorProfileFromCms(
+  cmsProfile: InstructorCmsProfileProposal,
+  cmsSettlement: InstructorCmsSettlement | undefined,
+  memberId?: number
+): InstructorDetailResponse {
+  const flat = buildLegacyFlatFieldsFromCmsProfile(cmsProfile)
+  return {
+    ...(memberId != null ? { memberId } : {}),
+    primaryActivityType: cmsProfile.memberType === 'SCHOOL_TEACHER' ? 'SCHOOL_TEACHER' : 'GENERAL',
+    ...(cmsProfile.status?.trim() ? { status: cmsProfile.status.trim() } : {}),
+    ...(flat.educationLevel ? { educationLevel: flat.educationLevel } : {}),
+    ...(flat.careerText ? { careerText: flat.careerText } : {}),
+    ...(flat.selfIntroduction ? { selfIntroduction: flat.selfIntroduction } : {}),
+    ...(flat.oneLineIntro ? { oneLineIntro: flat.oneLineIntro } : {}),
+    ...(cmsProfile.homeAddress.line?.trim()
+      ? { homeAddress: cmsProfile.homeAddress.line.trim() }
+      : {}),
+    ...(cmsProfile.homeAddress.detail?.trim()
+      ? { homeAddressDetail: cmsProfile.homeAddress.detail.trim() }
+      : {}),
+    ...(cmsProfile.defaultFeeGrade?.trim()
+      ? { defaultFeeGrade: cmsProfile.defaultFeeGrade.trim() }
+      : {}),
+    ...(cmsProfile.defaultJaGrade?.trim()
+      ? { defaultJaGrade: cmsProfile.defaultJaGrade.trim() }
+      : {}),
+    ...(cmsSettlement?.businessIncome != null
+      ? { businessIncomeYn: cmsSettlement.businessIncome }
+      : {}),
+    ...(cmsProfile.affiliation.schoolName?.trim()
+      ? { affiliatedSchoolName: cmsProfile.affiliation.schoolName.trim() }
+      : {}),
+    ...(cmsProfile.affiliation.employmentStatus
+      ? { employmentStatus: cmsProfile.affiliation.employmentStatus }
+      : {}),
   }
 }
 

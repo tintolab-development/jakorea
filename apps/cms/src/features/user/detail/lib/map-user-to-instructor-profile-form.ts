@@ -276,6 +276,16 @@ export function mapUserToInstructorProfileFormValues(
     instructorCareer:
       fromCmsProfile?.instructorCareer ??
       careerText,
+    instructorFeeGrade:
+      fromCmsProfile?.instructorFeeGrade ??
+      user.instructorCmsProfile?.defaultFeeGrade?.trim() ??
+      user.listMetrics?.instructorFeeGradeLabel?.trim() ??
+      '',
+    jaEvaluationGrade:
+      fromCmsProfile?.jaEvaluationGrade ??
+      user.instructorCmsProfile?.defaultJaGrade?.trim() ??
+      user.listMetrics?.jaEvaluationGrade?.trim() ??
+      '',
     isBusinessIncome:
       user.instructorCmsSettlement?.businessIncome != null
         ? user.instructorCmsSettlement.businessIncome

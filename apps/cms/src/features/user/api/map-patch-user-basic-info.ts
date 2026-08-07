@@ -62,7 +62,7 @@ export function mapPatchUserBasicInfoToApiRequest(
     }
   }
 
-  const extendedBody = body as AdminMemberBasicInfoUpdateRequest & {
+  const extendedBody = body as Omit<AdminMemberBasicInfoUpdateRequest, 'profile' | 'settlement'> & {
     profile?: PatchUserBasicInfoInput['instructorCmsProfile']
     settlement?: PatchUserBasicInfoInput['instructorCmsSettlement']
   }
@@ -73,7 +73,8 @@ export function mapPatchUserBasicInfoToApiRequest(
     extendedBody.settlement = patch.instructorCmsSettlement
   }
 
-  return extendedBody
+  // CMS proposal DTO → OpenAPI InstructorCmsProfile (wire JSON 동일, affiliatedSchoolUserId 등 형만 상이)
+  return extendedBody as AdminMemberBasicInfoUpdateRequest
 }
 
 export function hasAdminCommentPatch(patch: PatchUserBasicInfoInput): boolean {

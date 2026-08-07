@@ -19,6 +19,7 @@ import { FreeWriteItemsSection } from '@/shared/components/free-write-items-sect
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
+import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 import { INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
@@ -165,7 +166,15 @@ export interface InstructorProfileFormBodyProps {
   basicInfoPrefix?: ReactNode
   /** Extra rows before 사업소득자 (e.g. 강사비 등급) */
   basicInfoExtraBeforeBusinessIncome?: ReactNode
+  /** 신규 등록 — JA 등급 평가 모달 열기 */
+  onOpenJaGradeEvaluation?: () => void
   className?: string
+}
+
+function formatJaEvaluationGradeDisplay(grade: string): string {
+  const trimmed = grade.trim()
+  if (!trimmed) return ''
+  return trimmed.endsWith('등급') ? trimmed : `${trimmed}등급`
 }
 
 export function InstructorProfileFormBody({
@@ -173,6 +182,7 @@ export function InstructorProfileFormBody({
   layoutVariant = 'register',
   basicInfoPrefix,
   basicInfoExtraBeforeBusinessIncome,
+  onOpenJaGradeEvaluation,
   className,
 }: InstructorProfileFormBodyProps) {
   const isDetailEdit = layoutVariant === 'detailEdit'
@@ -185,6 +195,7 @@ export function InstructorProfileFormBody({
   const memberName = Form.useWatch('name', form) ?? ''
   const schoolName = Form.useWatch('schoolName', form) ?? ''
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
+  const jaEvaluationGrade = Form.useWatch('jaEvaluationGrade', form) ?? ''
   const isTeacherMember = memberType === 'school_teacher'
   const allValues = Form.useWatch([], form) as InstructorProfileFormValues | undefined
   const careerLevel = Form.useWatch('careerLevel', form) ?? 'new'
@@ -310,6 +321,28 @@ export function InstructorProfileFormBody({
       <CmsInput placeholder="강사 경력" inputSize="medium" width="100%" />
     </Form.Item>
   )
+
+  const gradeEvaluateButton = (
+    <CmsButton
+      type="button"
+      variant="secondary"
+      size="small"
+      onClick={() => onOpenJaGradeEvaluation?.()}
+    >
+      등급 평가
+    </CmsButton>
+  )
+
+  const jaEvaluationGradeFieldEdit =
+    jaEvaluationGrade.trim() !== '' ? (
+      <span className="instructor-register-modal__ja-grade">
+        <span>{formatJaEvaluationGradeDisplay(jaEvaluationGrade)}</span>
+        <DetailInfoForm.InputsSeparator />
+        {gradeEvaluateButton}
+      </span>
+    ) : (
+      gradeEvaluateButton
+    )
 
   return (
     <>
@@ -487,6 +520,40 @@ export function InstructorProfileFormBody({
             />
           </DetailInfoForm.Row>
         </DetailInfoForm>
+
+        {!isDetailEdit ? (
+          <DetailInfoForm title="강사 등급" mode="edit">
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="강사비 등급"
+                view="-"
+                edit={
+                  <Form.Item name="instructorFeeGrade" noStyle>
+                    <CmsSelect
+                      placeholder="강사비 등급을 선택하세요"
+                      options={INSTRUCTOR_FEE_GRADE_OPTIONS}
+                      inputSize="medium"
+                      width="100%"
+                      allowClear
+                    />
+                  </Form.Item>
+                }
+              />
+              <DetailInfoForm.Field
+                label="JA 평가 등급"
+                view="-"
+                edit={
+                  <>
+                    <Form.Item name="jaEvaluationGrade" hidden noStyle>
+                      <CmsInput />
+                    </Form.Item>
+                    {jaEvaluationGradeFieldEdit}
+                  </>
+                }
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
+        ) : null}
 
         <DetailInfoForm
           title="약관 및 동의"

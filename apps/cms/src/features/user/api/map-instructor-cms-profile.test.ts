@@ -112,6 +112,28 @@ describe('map-instructor-cms-profile', () => {
     expect(profile.education.college4?.[0]?.schoolName).toBe('OO대학교')
   })
 
+  it('강사비 등급(instructorFeeGrade) → defaultFeeGrade round-trip', () => {
+    const profile = instructorProfileFormValuesToCmsProfile({
+      ...INITIAL_VALUES,
+      instructorFeeGrade: '2급 강사비',
+    })
+    expect(profile.defaultFeeGrade).toBe('2급 강사비')
+
+    const back = instructorCmsProfileToFormValues(profile)
+    expect(back.instructorFeeGrade).toBe('2급 강사비')
+  })
+
+  it('JA 평가 등급(jaEvaluationGrade) → defaultJaGrade round-trip', () => {
+    const profile = instructorProfileFormValuesToCmsProfile({
+      ...INITIAL_VALUES,
+      jaEvaluationGrade: 'B',
+    })
+    expect(profile.defaultJaGrade).toBe('B')
+
+    const back = instructorCmsProfileToFormValues(profile)
+    expect(back.jaEvaluationGrade).toBe('B')
+  })
+
   it('Form.List sparse row(undefined)가 있어도 profile 변환에 실패하지 않는다', () => {
     const profile = instructorProfileFormValuesToCmsProfile({
       ...INITIAL_VALUES,

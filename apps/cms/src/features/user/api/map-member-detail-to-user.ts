@@ -1,7 +1,8 @@
 import type { InstructorDetailResponse } from '@/shared/api/generated/members/schemas'
 import type { IndividualMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
-import type { MemberBankAccountHistoryResponse } from '@/shared/api/generated/members/schemas'
+import type { TeacherMemberDetailResponse } from '@/shared/api/generated/members/schemas'
+import type { MemberBankAccountHistoryResponse } from '@/shared/api/generated/members/schemas/memberBankAccountHistoryResponse'
 import type { MemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type { SchoolMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type { TermsAgreementRow } from '@/shared/api/generated/members/schemas/termsAgreementRow'
@@ -30,6 +31,9 @@ import { normalizeRevokedInstructorUser } from '@/features/user/shared/lib/apply
 import {
   mergeInstructorCmsProfileFromLegacyFlat,
   buildLegacyFlatFieldsFromCmsProfile,
+  normalizeInstructorCmsProfileFromApi,
+  normalizeInstructorCmsSettlementFromApi,
+  synthesizeLegacyInstructorProfileFromCms,
 } from '@/features/user/api/map-instructor-cms-profile'
 import { parseOrganizationNamesFromText } from '@/features/user/detail/lib/parse-instructor-affiliation-text'
 import type {
@@ -81,6 +85,8 @@ type InstructorProfileLoose = InstructorDetailResponse & {
 }
 
 type InstructorMemberDetailLoose = InstructorMemberDetailResponse & {
+  /** @deprecated BE 6개월 병행 — runtime legacy flat */
+  instructorProfile?: InstructorDetailResponse | null
   homeAddress?: string
   homeAddressDetail?: string
   affiliation?: string
@@ -90,10 +96,12 @@ type InstructorMemberDetailLoose = InstructorMemberDetailResponse & {
   instructorAssignedGrade?: string
   organizationText?: string
   listMetrics?: UserListRowMetrics
-  /** OpenAPI 미반영 시 runtime 상세 응답 */
+  /** @deprecated BE 6개월 병행 — runtime 루트 flat 계좌 */
+  bankName?: string
+  accountNumber?: string
+  accountHolder?: string
+  bankAccounts?: MemberBankAccountHistoryResponse[]
   termsAgreements?: TermsAgreementRow[]
-  profile?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsProfileProposal
-  settlement?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsSettlement
 }
 
 function resolveCmsMemberTypeForMerge(
@@ -154,13 +162,15 @@ function asInstructorProfileLoose(
 
 function resolveInstructorHomeAddressParts(
   detail: InstructorMemberDetailResponse,
-  profile: InstructorProfileLoose | null
+  profile: InstructorProfileLoose | null,
+  cmsProfile?: InstructorCmsProfileProposal
 ): { homeAddress?: string; homeAddressDetail?: string } {
   const looseDetail = detail as InstructorMemberDetailLoose
   const looseMember = detail.member as
     | (MemberDetailResponse & { homeAddress?: string; address?: string })
     | undefined
   const homeAddress = pickTrimmed(
+    cmsProfile?.homeAddress?.line,
     profile?.homeAddress,
     (profile as { address?: string } | null)?.address,
     looseDetail.homeAddress,
@@ -169,6 +179,7 @@ function resolveInstructorHomeAddressParts(
     looseMember?.address
   )
   const homeAddressDetail = pickTrimmed(
+    cmsProfile?.homeAddress?.detail,
     profile?.homeAddressDetail,
     looseDetail.homeAddressDetail
   )
@@ -215,11 +226,25 @@ export function resolveInstructorBankFields(detail: InstructorMemberDetailRespon
   accountNumber: string
   accountHolder: string
 } {
-  const current = resolveCurrentBankAccount(detail.bankAccounts)
+  const looseDetail = detail as InstructorMemberDetailLoose
+  const settlement = detail.settlement
+  if (
+    settlement?.bankName?.trim() ||
+    settlement?.accountNumber?.trim() ||
+    settlement?.accountHolder?.trim()
+  ) {
+    return {
+      bankName: settlement.bankName?.trim() || '',
+      accountNumber: settlement.accountNumber?.trim() || '',
+      accountHolder: settlement.accountHolder?.trim() || '',
+    }
+  }
+
+  const current = resolveCurrentBankAccount(looseDetail.bankAccounts)
   return {
-    bankName: detail.bankName?.trim() || current?.bankName?.trim() || '',
-    accountNumber: detail.accountNumber?.trim() || current?.accountNumber?.trim() || '',
-    accountHolder: detail.accountHolder?.trim() || current?.accountHolder?.trim() || '',
+    bankName: looseDetail.bankName?.trim() || current?.bankName?.trim() || '',
+    accountNumber: looseDetail.accountNumber?.trim() || current?.accountNumber?.trim() || '',
+    accountHolder: looseDetail.accountHolder?.trim() || current?.accountHolder?.trim() || '',
   }
 }
 
@@ -342,29 +367,38 @@ function applyInstructorCmsStructureToUser(
   }
 
   const legacyFlat = buildLegacyFlatFieldsFromCmsProfile(mergedProfile)
-  if (legacyFlat.oneLineIntro) {
-    user.bio = legacyFlat.oneLineIntro
+  const oneLine = resolveInstructorPublicTextField(legacyFlat.oneLineIntro)
+  const selfIntro = resolveInstructorPublicTextField(legacyFlat.selfIntroduction)
+  if (oneLine) {
+    user.bio = oneLine
+  } else if (selfIntro) {
+    user.bio = selfIntro
   }
-  if (legacyFlat.selfIntroduction) {
-    user.instructorSelfIntroduction = legacyFlat.selfIntroduction
+  if (selfIntro) {
+    user.instructorSelfIntroduction = selfIntro
   }
   if (legacyFlat.careerText) {
     const careerDisplay = formatInstructorCareerDisplay(legacyFlat.careerText)
-    user.instructorCareerText = careerDisplay ?? legacyFlat.careerText
+    if (careerDisplay) {
+      user.instructorCareerText = careerDisplay
+    }
   }
-  if (legacyFlat.educationLevel) {
+  const educationLevel = resolveInstructorPublicTextField(legacyFlat.educationLevel)
+  if (educationLevel) {
     const educationDisplay =
-      formatInstructorEducationLevelDisplay(legacyFlat.educationLevel) ?? legacyFlat.educationLevel
+      formatInstructorEducationLevelDisplay(educationLevel) ?? educationLevel
     user.listMetrics = assignDefinedListMetrics(user.listMetrics, {
       highestEducationLabel: educationDisplay,
     })
   }
 
-  if (mergedProfile.homeAddress.line?.trim()) {
-    user.detailAddress = mergedProfile.homeAddress.line.trim()
+  const homeLine = mergedProfile.homeAddress.line?.trim()
+  if (homeLine && !isInstructorMaskedPlaceholder(homeLine)) {
+    user.detailAddress = homeLine
   }
-  if (mergedProfile.homeAddress.detail?.trim()) {
-    user.detailAddressDetail = mergedProfile.homeAddress.detail.trim()
+  const homeDetail = mergedProfile.homeAddress.detail?.trim()
+  if (homeDetail && !isInstructorMaskedPlaceholder(homeDetail)) {
+    user.detailAddressDetail = homeDetail
   }
 
   if (cmsSettlement) {
@@ -590,15 +624,28 @@ export function mapInstructorMemberDetailToUser(
   if (!member) {
     throw new Error('강사 회원 상세 응답에 member가 없습니다.')
   }
-  const profile = detail.instructorProfile ?? null
+
+  const looseDetail = detail as InstructorMemberDetailLoose
+  const cmsProfile = normalizeInstructorCmsProfileFromApi(detail.profile)
+  const cmsSettlement = normalizeInstructorCmsSettlementFromApi(detail.settlement)
+  const legacyProfile =
+    looseDetail.instructorProfile ??
+    (cmsProfile
+      ? synthesizeLegacyInstructorProfileFromCms(cmsProfile, cmsSettlement, member.memberId)
+      : null)
+  const profile = legacyProfile ?? null
+
   const user = mapMemberDetailToUser(member, profile, {
     fallbackRole: options?.fallbackRole ?? 'INSTRUCTOR',
   })
   user.role = 'INSTRUCTOR'
 
   const profileLoose = asInstructorProfileLoose(profile)
-  const looseDetail = detail as InstructorMemberDetailLoose
-  const { homeAddress, homeAddressDetail } = resolveInstructorHomeAddressParts(detail, profileLoose)
+  const { homeAddress, homeAddressDetail } = resolveInstructorHomeAddressParts(
+    detail,
+    profileLoose,
+    cmsProfile
+  )
   if (homeAddress) user.detailAddress = homeAddress
   if (homeAddressDetail) user.detailAddressDetail = homeAddressDetail
 
@@ -658,6 +705,7 @@ export function mapInstructorMemberDetailToUser(
 
   const bank = resolveInstructorBankFields(detail)
   const businessIncome =
+    parseBusinessIncomeFlag(cmsSettlement?.businessIncome) ??
     parseBusinessIncomeFlag(profileLoose?.businessIncomeYn) ??
     parseBusinessIncomeFlag(profileLoose?.businessIncome)
 
@@ -699,14 +747,16 @@ export function mapInstructorMemberDetailToUser(
     user.instructorCertifications = certifications
   }
 
-  if (looseDetail.termsAgreements?.length) {
+  if (detail.termsAgreements?.length) {
+    user.termsAgreements = detail.termsAgreements
+  } else if (looseDetail.termsAgreements?.length) {
     user.termsAgreements = looseDetail.termsAgreements
   }
 
   applyInstructorCmsStructureToUser(
     user,
-    looseDetail.profile,
-    looseDetail.settlement,
+    cmsProfile,
+    cmsSettlement,
     profile,
     {
       affiliation: pickTrimmed(profileLoose?.affiliation, looseDetail.affiliation),
@@ -719,4 +769,46 @@ export function mapInstructorMemberDetailToUser(
   )
 
   return normalizeRevokedInstructorUser(user)
+}
+
+/** 학교 소속 교사 상세 — `GET /api/admin/users/{memberId}/teacher` */
+export function mapTeacherMemberDetailToUser(
+  detail: TeacherMemberDetailResponse,
+  options?: { fallbackRole?: User['role'] }
+): Omit<User, 'password'> {
+  const member = detail.member
+  if (!member) {
+    throw new Error('교사 회원 상세 응답에 member가 없습니다.')
+  }
+
+  const user = mapMemberDetailToUser(member, null, {
+    fallbackRole: options?.fallbackRole ?? 'INSTRUCTOR',
+  })
+  user.role = 'INSTRUCTOR'
+  user.instructorMemberProfile = 'school_teacher'
+
+  const schoolName = detail.organizationName?.trim()
+  if (schoolName) {
+    user.affiliatedSchoolName = schoolName
+    const employmentLabel = toEmploymentStatusDisplayLabel(detail.employmentStatus)
+    user.affiliation = employmentLabel
+      ? `${schoolName}${USER_AFFILIATION_PIPE_SEP}${employmentLabel}`
+      : schoolName
+    if (employmentLabel) {
+      user.listMetrics = assignDefinedListMetrics(user.listMetrics, {
+        employmentStatusLabel: employmentLabel,
+      })
+    }
+  }
+
+  const address = detail.address?.trim()
+  const addressDetail = detail.addressDetail?.trim()
+  if (address) user.detailAddress = address
+  if (addressDetail) user.detailAddressDetail = addressDetail
+
+  if (detail.termsAgreements?.length) {
+    user.termsAgreements = detail.termsAgreements
+  }
+
+  return user
 }

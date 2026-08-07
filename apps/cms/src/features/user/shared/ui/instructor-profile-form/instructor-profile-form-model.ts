@@ -110,6 +110,10 @@ export type InstructorRegisterModalFormValues = {
   schoolName: string
   employmentStatus: SchoolTeacherEmploymentStatus | ''
   instructorCareer: string
+  /** 강사비 등급 — BE `profile.defaultFeeGrade` */
+  instructorFeeGrade: string
+  /** JA 평가 등급 — BE `profile.defaultJaGrade` */
+  jaEvaluationGrade: string
   isBusinessIncome: 'yes' | 'no'
   bankName: string
   accountNumber: string
@@ -180,6 +184,8 @@ export const INITIAL_VALUES: InstructorProfileFormValues = {
   schoolName: '',
   employmentStatus: '',
   instructorCareer: '',
+  instructorFeeGrade: '',
+  jaEvaluationGrade: '',
   isBusinessIncome: 'no',
   bankName: '',
   accountNumber: '',
