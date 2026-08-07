@@ -1,0 +1,134 @@
+/* 시안: padding 24 / 30 / 32 / 30, 타이틀↔디스크립션 12px, 디스크립션↔폼·폼↔푸터 30px */
+.corporate-partner-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
+  padding: 24px 30px 32px;
+}
+
+.corporate-partner-form-modal.content-modal.content-modal--title-body-gap-always
+  .teal-header-modal__body,
+.corporate-partner-form-modal.content-modal
+  .teal-header-modal__body:has(> .content-modal__description) {
+  padding-top: 12px;
+  gap: 30px;
+}
+
+.corporate-partner-form-modal .teal-header-modal__footer {
+  margin-top: 30px;
+}
+
+.corporate-partner-form-modal__form {
+  width: 100%;
+}
+
+.corporate-partner-form-modal__image-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+
+/* 시안: 사각 미리보기 placeholder (로고 가로형은 목록 테이블에서 적용) */
+.corporate-partner-form-modal__preview {
+  width: 86px;
+  height: 86px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-secondary, #f7f7f7);
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.corporate-partner-form-modal__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.corporate-partner-form-modal__file-field {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+/* DetailInfoForm edit 슬롯 — FileSelect/Input 레이아웃 보존 */
+.corporate-partner-form-modal .detail-info-form__field-content--edit > * {
+  margin-block: 0 !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.corporate-partner-form-modal .detail-info-form__field-content--edit > .cms-input {
+  display: block;
+}
+
+/*
+ * 공개 여부 라디오: CmsRadioGroup(.app-radio-group) 가로 flex 유지.
+ * display:block 으로 덮어쓰면 옵션이 세로·깨진 레이아웃이 됨.
+ */
+.corporate-partner-form-modal
+  .detail-info-form__field-content--edit
+  > .app-radio-group.ant-radio-group {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: auto;
+  max-width: 100%;
+}
+
+.corporate-partner-form-modal .app-radio-group .ant-radio-wrapper {
+  margin-inline-end: 0;
+}
+
+.corporate-partner-form-modal .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.corporate-partner-form-modal .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* 노출 순서: input 160×40 + helper 가로, gap 16px */
+.corporate-partner-form-modal__sort-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.corporate-partner-form-modal__sort-row .cms-input,
+.corporate-partner-form-modal__sort-row .ant-input-affix-wrapper,
+.corporate-partner-form-modal__sort-row input.ant-input {
+  width: 160px !important;
+  min-width: 160px;
+  height: 40px;
+}
+
+.corporate-partner-form-modal__helper {
+  margin: 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 21px */
+}
+
+.corporate-partner-form-modal__field-error {
+  margin-top: 6px;
+  color: var(--color-error, #e53935);
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 150%;
+}
