@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, ExcelButton } from '@/shared/ui'
 import { DsDemo, DsSection } from './section'
 
 export function ButtonsSection() {
@@ -12,12 +12,12 @@ export function ButtonsSection() {
       description="표준 버튼은 CmsButton입니다. loading 중에는 라벨을 숨기고 스피너만 표시합니다."
     >
       <p className="ds-note">
-        <strong>Size</strong> — large 140×44 · medium 120×40 · small 100×32.
+        <strong>Size</strong> — large 140×44 · medium 120×40 · small 100×32 · large+icon 180×44.
         <br />
         <strong>Variant</strong> — primary · secondary(민트 아웃라인) · default · delete.
         <br />
-        <strong>용도 (SSOT)</strong> — 목록 툴바=large · 모달 푸터=large · FileSelectField 버튼=medium
-        secondary. 규칙:{' '}
+        <strong>용도 (SSOT)</strong> — 목록 툴바=large · 모달 푸터=large · 엑셀=
+        <code>ExcelButton</code> · FileSelectField 버튼=medium secondary. 규칙:{' '}
         <code>.cursor/rules/cms-admin-ui/cms-button-action-sizes.mdc</code>
       </p>
 
@@ -38,6 +38,16 @@ export function ButtonsSection() {
           <CmsButton variant="delete" size="large">
             선택 삭제
           </CmsButton>
+        </div>
+      </DsDemo>
+
+      <DsDemo label="ExcelButton (large + icon 180×44)">
+        <p className="ds-demo__hint" style={{ marginTop: 0 }}>
+          <code>ExcelButton</code> = primary · large · Download 아이콘 · 180×44 (CMS 동일 스펙)
+        </p>
+        <div className="ds-demo__row">
+          <ExcelButton onClick={() => undefined} />
+          <ExcelButton disabled />
         </div>
       </DsDemo>
 
