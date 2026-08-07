@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorCmsProfile } from './instructorCmsProfile';
 
 export interface InstructorDetailResponse {
   memberId?: number;
@@ -23,4 +24,5 @@ export interface InstructorDetailResponse {
   activityTypes?: string[];
   approvedAt?: string;
   revokedAt?: string;
+  profile?: InstructorCmsProfile;
 }
