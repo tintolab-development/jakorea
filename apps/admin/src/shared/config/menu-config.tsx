@@ -116,9 +116,14 @@ export const menuItems: MenuItemConfig[] = [
     label: '교육 소개 관리',
     icon: <EducationMenuIcon />,
     children: [
-      { key: '/education/fields', label: '사업분야' },
-      { key: '/education/textbooks', label: '교재 소개' },
-      { key: '/education/targets', label: '교육 대상' },
+      {
+        key: 'education-textbook-intro-group',
+        label: '교재 소개',
+        children: [
+          { key: '/education/fields', label: '사업분야 관리' },
+          { key: '/education/textbooks', label: '교재 관리' },
+        ],
+      },
     ],
   },
   {
@@ -126,15 +131,7 @@ export const menuItems: MenuItemConfig[] = [
     label: '후원하기 관리',
     icon: <SponsorMenuIcon />,
     children: [
-      {
-        key: 'sponsor-individual-group',
-        label: '개인후원',
-        children: [
-          { key: '/sponsor/individual/banner', label: '메인 배너 관리' },
-          { key: '/sponsor/individual/usage-guide', label: '후원금 사용 안내 관리' },
-          { key: '/sponsor/individual/links', label: '후원 연결 관리' },
-        ],
-      },
+      { key: '/sponsor/individual', label: '개인후원' },
       {
         key: 'sponsor-corporate-group',
         label: '기업후원',
@@ -165,9 +162,9 @@ export const menuItems: MenuItemConfig[] = [
     label: '사이트 관리',
     icon: <SiteMenuIcon />,
     children: [
-      { key: '/site/info', label: '사이트 정보' },
-      { key: '/site/gnb', label: 'GNB 메뉴' },
-      { key: '/site/footer', label: '푸터' },
+      { key: '/site/info', label: '사이트 정보 관리' },
+      { key: '/site/gnb', label: 'GNB 메뉴 관리' },
+      { key: '/site/footer', label: '푸터 관리' },
     ],
   },
   {
@@ -284,9 +281,7 @@ const PAGE_TITLE_BY_PATH: Record<string, string> = {
   '/ja-korea/directions': '오시는 길 관리',
   '/ja-korea/people': '함께하는 사람들',
   '/impact/stories': '임팩트 스토리 관리',
-  '/sponsor/individual/banner': '메인 배너 관리',
-  '/sponsor/individual/usage-guide': '후원금 사용 안내 관리',
-  '/sponsor/individual/links': '후원 연결 관리',
+  '/sponsor/individual': '개인후원 관리',
   '/sponsor/corporate/guide': '기업후원 안내 관리',
   '/sponsor/corporate/partners': '후원사 목록 관리',
   '/sponsor/corporate/consultations': '기업 후원 상담 신청 관리',
@@ -294,6 +289,9 @@ const PAGE_TITLE_BY_PATH: Record<string, string> = {
   '/sponsor/talent/interviews': '인터뷰 관리',
   '/sponsor/talent/applications': '재능기부 신청 목록',
   '/participate': '참여하기 관리',
+  '/site/info': '사이트 정보 관리',
+  '/site/gnb': 'GNB 메뉴 관리',
+  '/site/footer': '푸터 관리',
 }
 
 export function getCategoryNameByPath(path: string): string {

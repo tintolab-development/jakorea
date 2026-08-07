@@ -21,6 +21,23 @@ import { SocialLinksPage } from '@/pages/main/social-links/page'
 import { ContentsPage } from '@/pages/main/contents/page'
 import { PopupsPage } from '@/pages/main/popups/page'
 import { DesignSystemPage } from '@/pages/design-system/page'
+import { EducationFieldsPage } from '@/pages/education/fields/page'
+import { EducationTextbooksPage } from '@/pages/education/textbooks/page'
+import { IndividualDonationPage } from '@/pages/sponsor/individual/page'
+import { CorporateGuidePage } from '@/pages/sponsor/corporate/guide/page'
+import { CorporatePartnersPage } from '@/pages/sponsor/corporate/partners/page'
+import { CorporateConsultationsPage } from '@/pages/sponsor/corporate/consultations/page'
+import { SiteInfoPage } from '@/pages/site/info/page'
+import { GnbMenuPage } from '@/pages/site/gnb/page'
+import { FooterPage } from '@/pages/site/footer/page'
+import { ParticipatePage } from '@/pages/participate/page'
+import { MenuViewsStatsPage } from '@/pages/stats/menu-views/page'
+import { VisitorsStatsPage } from '@/pages/stats/visitors/page'
+import { MemberLoginLogPage } from '@/pages/logs/member-login/page'
+import { AdminAccountLogPage } from '@/pages/logs/admin-account/page'
+import { FileDownloadLogPage } from '@/pages/logs/file-download/page'
+import { PiiAccessLogPage } from '@/pages/logs/pii-access/page'
+import { BugIssueLogPage } from '@/pages/logs/bugs/page'
 import { PlaceholderPage } from '@/pages/placeholder/page'
 import { getLeafMenuPaths } from '@/shared/config/menu-config'
 
@@ -42,6 +59,23 @@ const IMPLEMENTED_LEAF_PATHS = new Set([
   '/ja-korea/directions',
   '/ja-korea/people',
   '/impact/stories',
+  '/education/fields',
+  '/education/textbooks',
+  '/sponsor/individual',
+  '/sponsor/corporate/guide',
+  '/sponsor/corporate/partners',
+  '/sponsor/corporate/consultations',
+  '/site/info',
+  '/site/gnb',
+  '/site/footer',
+  '/participate',
+  '/stats/visitors',
+  '/stats/menu-views',
+  '/logs/member-login',
+  '/logs/admin-account',
+  '/logs/file-download',
+  '/logs/pii-access',
+  '/logs/bugs',
 ])
 
 /** LNB 리프 경로 → 빈 화면(플레이스홀더). 구현된 화면은 제외 */
@@ -90,6 +124,38 @@ export const router = createBrowserRouter([
       },
       { path: 'impact/stories', element: <ImpactStoriesPage /> },
       { path: 'impact/stories/:id', element: <ImpactStoryDetailPage /> },
+      { path: 'education/fields', element: <EducationFieldsPage /> },
+      { path: 'education/textbooks', element: <EducationTextbooksPage /> },
+      { path: 'sponsor/individual', element: <IndividualDonationPage /> },
+      { path: 'sponsor/corporate/guide', element: <CorporateGuidePage /> },
+      { path: 'sponsor/corporate/partners', element: <CorporatePartnersPage /> },
+      {
+        path: 'sponsor/corporate/consultations',
+        element: <CorporateConsultationsPage />,
+      },
+      { path: 'site/info', element: <SiteInfoPage /> },
+      { path: 'site/gnb', element: <GnbMenuPage /> },
+      { path: 'site/footer', element: <FooterPage /> },
+      {
+        path: 'sponsor/individual/banner',
+        element: <Navigate to="/sponsor/individual" replace />,
+      },
+      {
+        path: 'sponsor/individual/usage-guide',
+        element: <Navigate to="/sponsor/individual" replace />,
+      },
+      {
+        path: 'sponsor/individual/links',
+        element: <Navigate to="/sponsor/individual" replace />,
+      },
+      { path: 'participate', element: <ParticipatePage /> },
+      { path: 'stats/visitors', element: <VisitorsStatsPage /> },
+      { path: 'stats/menu-views', element: <MenuViewsStatsPage /> },
+      { path: 'logs/member-login', element: <MemberLoginLogPage /> },
+      { path: 'logs/admin-account', element: <AdminAccountLogPage /> },
+      { path: 'logs/file-download', element: <FileDownloadLogPage /> },
+      { path: 'logs/pii-access', element: <PiiAccessLogPage /> },
+      { path: 'logs/bugs', element: <BugIssueLogPage /> },
       ...leafRoutes,
       { path: '*', element: <Navigate to="/" replace /> },
     ],
