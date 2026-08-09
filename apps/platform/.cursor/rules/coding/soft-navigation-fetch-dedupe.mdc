@@ -64,4 +64,4 @@ POST·일회성 콜백(예: 본인인증) 도 모듈 `Set`/키 dedupe를 고려 
 ## 관련
 
 - mock catalog hydrate: [`use-mock-programs-catalog.ts`](../../../src/features/program/lib/use-mock-programs-catalog.ts)
-- list URL params: [`list-params.ts`](../../../src/features/program/lib/list-params.ts)
+- list URL params: [`list-params.ts`](../../../src/features/program/lib/list-params.ts) · 규약 [list-url-query-params.mdc](./list-url-query-params.mdc)

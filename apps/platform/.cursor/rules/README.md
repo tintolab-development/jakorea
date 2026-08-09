@@ -22,6 +22,7 @@
 - [Code style](./coding/code-style.md) — ESLint, TypeScript, kebab-case
 - **[Feature file naming](./coding/feature-file-naming.mdc)** — 경로=스코프, kebab-case (**alwaysApply**)
 - **[Soft navigation & fetch dedupe](./coding/soft-navigation-fetch-dedupe.mdc)** — 목록 탭/필터 soft nav · StrictMode 중복 fetch 금지
+- **[List URL query params](./coding/list-url-query-params.mdc)** — 목록 `list-params` · soft sync · `from`/`redirect` · CMS draft+apply 비적용
 - [Component splitting](./coding/component-splitting.md)
 - [Custom hooks](./coding/custom-hooks.md)
 - [Refactoring principles](./coding/refactoring-principles.md)
