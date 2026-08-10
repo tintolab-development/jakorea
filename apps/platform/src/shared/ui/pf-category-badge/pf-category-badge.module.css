@@ -3,7 +3,8 @@
 }
 
 .large {
-  padding: 6px var(--spacing-12);
+  height: 32px;
+  padding: 0 var(--spacing-12);
   justify-content: center;
   align-items: center;
   gap: 10px;
@@ -11,7 +12,7 @@
 
 .small {
   height: 32px;
-  padding: 10px var(--spacing-12);
+  padding: 0 var(--spacing-12);
   align-items: center;
   gap: var(--spacing-6);
 }
@@ -24,7 +25,7 @@
 }
 
 .smallWithIcon {
-  height: 30px;
+  height: 32px;
   padding: 0 14px 0 10px;
   align-items: center;
   gap: var(--spacing-6);
