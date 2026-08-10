@@ -1,4 +1,5 @@
 import { isNoticesPath, NOTICES_PATH } from '@/features/notice'
+import { isDirectionsPath, DIRECTIONS_PATH } from '@/features/directions'
 import { isPeoplePath, PEOPLE_PATH } from '@/features/people'
 import { isProgramsPath, PROGRAMS_PATH } from '@/features/program'
 import { isResultsPath, RESULTS_PATH } from '@/features/result'
@@ -29,7 +30,7 @@ export const navigationGroups = [
       { label: 'JA History' },
       { label: '투명경영' },
       { label: '함께하는 사람들', href: PEOPLE_PATH },
-      { label: '오시는 길' },
+      { label: '오시는 길', href: DIRECTIONS_PATH },
       { label: '공지사항', href: NOTICES_PATH },
       { label: '채용' },
     ],
@@ -104,7 +105,7 @@ export function getActiveNavigationItem(pathname: string): NavigationItemLabel {
     return '교육 소개'
   }
 
-  if (isNoticesPath(pathname) || isPeoplePath(pathname)) {
+  if (isNoticesPath(pathname) || isPeoplePath(pathname) || isDirectionsPath(pathname)) {
     return 'JA Korea'
   }
 
