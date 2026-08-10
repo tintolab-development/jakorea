@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { ScrollRestoration, useNavigate } from 'react-router-dom'
 import { postPortalAuthLogout } from '@/shared/api/axios-instance'
 import {
   DEV_AUTH_CHANGE_EVENT,
@@ -68,6 +68,7 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
 
   return (
     <div className={styles.layout}>
+      <ScrollRestoration />
       <Header isLoggedIn={isLoggedIn} onLogout={handleLogout} transparent={transparentHeader} />
       <main className={isMypage ? styles.mainMypage : styles.main}>{mainContent}</main>
       <Footer />

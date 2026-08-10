@@ -33,6 +33,7 @@ const relatedSites = [
 ] as const
 
 const RELATED_SITES_SCROLL_THUMB_HEIGHT = 24
+const RELATED_SITES_SCROLLBAR_INSET = 8
 
 const companyAddress =
   '사단법인 제이에이코리아 서울특별시 강서구 마곡중앙로 171 마곡나루역 프라이빗타워2차 714호'
@@ -72,7 +73,8 @@ export function Footer() {
       return
     }
 
-    const trackTravel = clientHeight - RELATED_SITES_SCROLL_THUMB_HEIGHT
+    const trackHeight = clientHeight - RELATED_SITES_SCROLLBAR_INSET * 2
+    const trackTravel = Math.max(0, trackHeight - RELATED_SITES_SCROLL_THUMB_HEIGHT)
     setShowScrollThumb(true)
     setScrollThumbTop((scrollTop / overflow) * trackTravel)
   }
