@@ -19,7 +19,13 @@ type HeaderDesktopProps = {
   transparent?: boolean
 }
 
-function NavigationSubMenuItem({ item }: { item: NavigationSubItem }) {
+function NavigationSubMenuItem({
+  item,
+  onNavigate,
+}: {
+  item: NavigationSubItem
+  onNavigate?: () => void
+}) {
   const isDisabled = !item.href
   const itemClassName = [
     styles.menuItem,
@@ -52,6 +58,7 @@ function NavigationSubMenuItem({ item }: { item: NavigationSubItem }) {
           role="menuitem"
           target="_blank"
           rel="noopener noreferrer"
+          onClick={onNavigate}
         >
           {content}
         </a>
@@ -59,7 +66,7 @@ function NavigationSubMenuItem({ item }: { item: NavigationSubItem }) {
     }
 
     return (
-      <Link className={itemClassName} to={item.href} role="menuitem">
+      <Link className={itemClassName} to={item.href} role="menuitem" onClick={onNavigate}>
         {content}
       </Link>
     )
@@ -86,7 +93,12 @@ export function HeaderDesktop({
 
   useEffect(() => {
     setActiveNavigationItem(getActiveNavigationItem(pathname))
+    setIsNavOpen(false)
   }, [pathname])
+
+  const closeNav = () => {
+    setIsNavOpen(false)
+  }
 
   const headerClassName = [
     styles.header,
@@ -139,6 +151,7 @@ export function HeaderDesktop({
                   setActiveNavigationItem(group.label)
                   const href = 'href' in group ? group.href : undefined
                   if (href) {
+                    closeNav()
                     navigate(href)
                   }
                 }}
@@ -218,7 +231,11 @@ export function HeaderDesktop({
                 key={group.label}
               >
                 {group.children.map(item => (
-                  <NavigationSubMenuItem item={item} key={item.label} />
+                  <NavigationSubMenuItem
+                    item={item}
+                    key={item.label}
+                    onNavigate={closeNav}
+                  />
                 ))}
               </div>
             ))}

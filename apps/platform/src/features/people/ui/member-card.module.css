@@ -1,0 +1,26 @@
+.card {
+  display: flex;
+  width: 342px;
+  max-width: 100%;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.nameRow {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-8);
+  margin-bottom: var(--spacing-4);
+}
+
+.affiliation {
+  margin: 0 0 var(--spacing-16);
+}
+
+.name,
+.role,
+.englishName {
+  margin: 0;
+}

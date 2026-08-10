@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+import { DIRECTIONS_PATH } from '@/features/directions'
 import jaLogoGrayUrl from '@/shared/assets/brand/ja-logo-gray.svg'
 import chevronDownGrayUrl from '@/shared/assets/icons/chevron-down-gray.svg'
 import facebookIconUrl from './image/icon/facebook.svg'
@@ -9,14 +11,14 @@ import rightsLogoUrl from './image/logo/footer-logo-3.svg'
 import styles from './footer.module.css'
 
 const footerNavItems = [
-  '이용약관',
-  '개인정보처리방침',
-  '오시는길',
-  '국세청 공시 및 공개 내역',
-  '국세청 탈세 제보',
-  '후원하기',
-  '기부금영수증',
-  '온라인 학습관리',
+  { label: '이용약관' },
+  { label: '개인정보처리방침' },
+  { label: '오시는길', href: DIRECTIONS_PATH },
+  { label: '국세청 공시 및 공개 내역' },
+  { label: '국세청 탈세 제보' },
+  { label: '후원하기' },
+  { label: '기부금영수증' },
+  { label: '온라인 학습관리' },
 ] as const
 
 const companyAddress =
@@ -42,11 +44,17 @@ export function Footer() {
       <div className={styles.navigationArea}>
         <div className={styles.shell}>
           <nav className={styles.navigation} aria-label="하단 메뉴">
-            {footerNavItems.map(item => (
-              <button className={styles.navigationButton} type="button" key={item}>
-                {item}
-              </button>
-            ))}
+            {footerNavItems.map(item =>
+              'href' in item && item.href ? (
+                <Link className={styles.navigationButton} to={item.href} key={item.label}>
+                  {item.label}
+                </Link>
+              ) : (
+                <button className={styles.navigationButton} type="button" key={item.label}>
+                  {item.label}
+                </button>
+              )
+            )}
           </nav>
           <button className={styles.relatedSites} type="button" aria-haspopup="listbox">
             <span className={styles.relatedSitesLabel}>관련 사이트 보기</span>

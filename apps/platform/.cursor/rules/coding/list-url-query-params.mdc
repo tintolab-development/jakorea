@@ -1,0 +1,60 @@
+---
+description: Platform 목록·복귀·auth 쿼리파라미터 연결 규약
+globs: apps/platform/src/pages/**/*.{ts,tsx},apps/platform/src/features/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# List URL query params (Platform)
+
+목록·검색·필터·페이지의 **단일 소스는 URL query**. CMS draft→조회 패턴을 Platform에 이식하지 않는다.
+
+## 1. Feature `lib/list-params.ts`
+
+| API | 역할 |
+|-----|------|
+| `readXxxListParams(search?)` | URL → typed state (whitelist + 기본값) |
+| `buildXxxListPath(params)` | state → path + query |
+| `getXxxListReturnPath()` | 상세 복귀용 `pathname + search` |
+
+참고: [`program/lib/list-params.ts`](../../../src/features/program/lib/list-params.ts) · notice · result · textbook.
+
+## 2. 페이지 soft sync
+
+```tsx
+const [params, setParams] = useState(readXxxListParams)
+// updateParams: merge → setParams + history.pushState(null, '', buildXxxListPath(merged))
+// popstate: setParams(readXxxListParams())
+```
+
+같은 목록 내 쿼리 변경은 **soft navigation** — [soft-navigation-fetch-dedupe.mdc](./soft-navigation-fetch-dedupe.mdc).  
+필터 UI 바인딩은 [`use-search-filters`](../../../src/shared/hooks/use-search-filters.ts) 사용 가능.
+
+## 3. 필수
+
+1. enum/필터 값은 `Set` whitelist + 기본값 fallback
+2. URL에는 **비기본값·비어 있지 않은 값만** (`page === 1`, 빈 `q` 등 omit)
+3. 필터·검색·탭 변경 시 `page: 1`
+4. 상세 복귀: `getXxxListReturnPath()` → `?from=` (예: `programDetailPath`)
+5. auth 복귀: `?redirect=` · 회원가입 위저드: `step`/`phase` + `useSearchParams` ([wizard-location.ts](../../../src/features/auth/sign-up/lib/wizard-location.ts))
+
+## 4. 금지
+
+| 금지 | 대신 |
+|------|------|
+| 같은 목록에 `location.assign` / full reload | `pushState` + state |
+| 페이지에 ad-hoc `URLSearchParams` 파싱 중복 | feature `list-params` |
+| CMS draft + “조회” apply 무분별 이식 | 즉시 URL 반영 |
+| 조회 후 필터를 로컬 state만 유지 | URL ↔ state 동기화 |
+
+## 5. 예외
+
+- **textbook**: `category`/`sort`를 기본값 포함 항상 기록 (공유·초기 sync 의도). 신규 목록은 omit 표준을 따른다.
+- auth/콜백(`sessionId`, `nonce`, `reason` 등)은 해당 flow 전용 — 목록 `list-params`와 섞지 않음.
+
+## 체크리스트
+
+- [ ] `read` / `build` 가 feature `list-params`에 있는가?
+- [ ] `updateParams` + `popstate` 가 있는가?
+- [ ] 필터 변경 시 `page: 1`인가?
+- [ ] 기본값이 URL에 불필요하게 안 남는가? (textbook 예외 제외)
+- [ ] 상세 복귀 `from` / 로그인 `redirect`가 필요한가?

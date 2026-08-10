@@ -1,0 +1,126 @@
+.page {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  overflow: visible;
+}
+
+/**
+ * 함께하는 사람들 히어로 배경 — people-gradient.png
+ * 헤더 영역까지 확장 (transparent header / layout: hero)
+ */
+.pageBackground {
+  position: absolute;
+  top: calc(-1 * (var(--app-header-height) + var(--content-padding-block)));
+  left: 50%;
+  z-index: 0;
+  width: 100vw;
+  height: 1000px;
+  pointer-events: none;
+  background-color: transparent;
+  background-image: url('../../../assets/background_gradient/people-gradient.png');
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+  transform: translateX(-50%);
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  padding-inline: var(--page-padding-x);
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-20);
+  margin-bottom: var(--spacing-40);
+}
+
+.heroLabel,
+.heroTitle {
+  margin: 0;
+}
+
+.orgBlock {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: var(--spacing-150);
+}
+
+.orgCard {
+  display: flex;
+  width: min(100%, 1440px);
+  min-width: 0;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-100) 115px var(--spacing-96);
+  border: 2px solid var(--color-neutral-white);
+  border-radius: 80px;
+  background: linear-gradient(
+    149deg,
+    rgb(255 255 255 / 60%) 19.45%,
+    var(--color-neutral-white) 49.35%
+  );
+}
+
+.orgImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.memberList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  padding-bottom: var(--spacing-80);
+}
+
+.memberSectionBlock,
+.memberSectionBlockSpaced {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.memberSectionBlockSpaced {
+  margin-top: var(--spacing-80);
+}
+
+.rankDivider {
+  margin-bottom: var(--spacing-24);
+  border-top: 1px solid var(--color-border-default);
+}
+
+@media (--bp-below-pc) {
+  .orgCard {
+    padding: var(--spacing-40) var(--spacing-20);
+  }
+
+  .orgBlock {
+    margin-bottom: var(--spacing-48);
+  }
+
+  .memberSectionBlockSpaced {
+    margin-top: var(--spacing-48);
+  }
+
+  .memberList {
+    padding-bottom: var(--spacing-48);
+  }
+}

@@ -36,6 +36,7 @@ export type {
 export { PFFileDownload } from './pf-file-download'
 export type { PFFileDownloadProps } from './pf-file-download'
 export { PFModal } from './pf-modal'
+export type { PFModalMobilePlacement, PFModalProps, PFModalSize } from './pf-modal'
 export { PFPagination } from './pf-pagination'
 export type { PFPaginationProps, PFPaginationSize, PFPaginationVariant } from './pf-pagination'
 export { PFSearchInput } from './pf-search-input'

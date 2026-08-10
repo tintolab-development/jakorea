@@ -1,6 +1,9 @@
 import { isNoticesPath, NOTICES_PATH } from '@/features/notice'
+import { isDirectionsPath, DIRECTIONS_PATH } from '@/features/directions'
+import { isPeoplePath, PEOPLE_PATH } from '@/features/people'
 import { isProgramsPath, PROGRAMS_PATH } from '@/features/program'
 import { isResultsPath, RESULTS_PATH } from '@/features/result'
+import { isTextbooksPath, TEXTBOOKS_PATH } from '@/features/textbook'
 import { MYPAGE_PATH } from '@/features/mypage'
 import { getDevAuthLoggedIn } from '@/shared/lib'
 import logOutIconUrl from '../image/icon/log-out.svg'
@@ -26,8 +29,8 @@ export const navigationGroups = [
       { label: '기관 소개' },
       { label: 'JA History' },
       { label: '투명경영' },
-      { label: '함께하는 사람들' },
-      { label: '오시는 길' },
+      { label: '함께하는 사람들', href: PEOPLE_PATH },
+      { label: '오시는 길', href: DIRECTIONS_PATH },
       { label: '공지사항', href: NOTICES_PATH },
       { label: '채용' },
     ],
@@ -43,7 +46,7 @@ export const navigationGroups = [
       { label: '경제금융' },
       { label: '기업가정신' },
       { label: '디지털리터러시' },
-      { label: '교재' },
+      { label: '교재', href: TEXTBOOKS_PATH },
     ],
   },
   {
@@ -98,7 +101,11 @@ export function getActiveNavigationItem(pathname: string): NavigationItemLabel {
     return '참여하기'
   }
 
-  if (isNoticesPath(pathname)) {
+  if (isTextbooksPath(pathname)) {
+    return '교육 소개'
+  }
+
+  if (isNoticesPath(pathname) || isPeoplePath(pathname) || isDirectionsPath(pathname)) {
     return 'JA Korea'
   }
 
