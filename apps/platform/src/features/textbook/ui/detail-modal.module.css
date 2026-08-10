@@ -1,0 +1,162 @@
+.body {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--spacing-28);
+  overflow: auto;
+}
+
+.summary {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  gap: var(--spacing-32);
+  padding: var(--spacing-24);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+}
+
+.thumbnailWrap {
+  width: 176px;
+  height: 220px;
+  flex-shrink: 0;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--radius-12);
+}
+
+.thumbnailWrapNoImage {
+  background: lightgray;
+}
+
+.thumbnailWrapHasImage {
+  background: transparent;
+}
+
+.thumbnail {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 50%;
+}
+
+.summaryContent {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+}
+
+.summaryCopy {
+  display: flex;
+  min-width: 0;
+  min-height: 158px;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.contentTitle {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.contentDescription {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-8);
+}
+
+.details {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-20);
+  margin: 0;
+  padding: 0 var(--spacing-32) var(--spacing-24);
+  box-sizing: border-box;
+}
+
+.detailRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: flex-start;
+  gap: var(--spacing-24);
+}
+
+.detailLabel {
+  width: 88px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.detailValue {
+  min-width: 0;
+  flex: 1 1 0;
+  margin: 0;
+}
+
+.units {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.unit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.unitHeading {
+  margin: 0;
+  color: var(--color-primary-500);
+  word-break: keep-all;
+}
+
+.unitLabel,
+.unitTitle {
+  color: inherit;
+}
+
+.unitDescription {
+  margin: 0;
+  word-break: keep-all;
+}
+
+@media (--bp-below-pc) {
+  .summary {
+    flex-direction: column;
+    gap: var(--spacing-20);
+    padding: var(--spacing-20);
+  }
+
+  .thumbnailWrap {
+    width: 120px;
+    height: 150px;
+  }
+
+  .detailRow {
+    flex-direction: column;
+    gap: var(--spacing-8);
+  }
+
+  .detailLabel {
+    width: auto;
+  }
+}
