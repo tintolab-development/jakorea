@@ -44,8 +44,14 @@ import searchMintIconUrl from '@/shared/assets/icons/search-mint.svg'
 import { SearchListLayout } from '@/widgets/search-list-layout'
 import {
   DEV_MEMBER_PROFILE_OPTIONS,
+  EDUCATION_LEVEL_BORDER_FALLBACK_HEX,
+  EDUCATION_LEVEL_CSS_VARS,
+  EDUCATION_LEVEL_HEX,
+  EDUCATION_LEVEL_KEYS,
+  EDUCATION_LEVEL_LABELS,
   getDevAuthLoggedIn,
   getDevMemberProfile,
+  getEducationLevelColor,
   platformBreakpoints,
   setDevAuthLoggedIn,
   setDevMemberProfile,
@@ -328,6 +334,22 @@ const colorTokenGroups = [
     ],
   },
   {
+    id: 'education-level',
+    label: 'Education Level',
+    tokens: [
+      ...EDUCATION_LEVEL_KEYS.map(key => ({
+        cssVar: EDUCATION_LEVEL_CSS_VARS[key],
+        hex: EDUCATION_LEVEL_HEX[key],
+        note: EDUCATION_LEVEL_LABELS[key],
+      })),
+      {
+        cssVar: '--color-education-level-border-fallback',
+        hex: EDUCATION_LEVEL_BORDER_FALLBACK_HEX,
+        note: '리스트 아이템 기본 보더 fallback',
+      },
+    ],
+  },
+  {
     id: 'palette',
     label: 'Palette',
     tokens: [
@@ -372,10 +394,56 @@ const colorTokenGroups = [
   },
 ] as const
 
+const spacingTokenSpecs = [
+  { cssVar: '--spacing-2', value: '2px' },
+  { cssVar: '--spacing-4', value: '4px' },
+  { cssVar: '--spacing-6', value: '6px' },
+  { cssVar: '--spacing-8', value: '8px' },
+  { cssVar: '--spacing-12', value: '12px' },
+  { cssVar: '--spacing-16', value: '16px' },
+  { cssVar: '--spacing-20', value: '20px' },
+  { cssVar: '--spacing-24', value: '24px' },
+  { cssVar: '--spacing-28', value: '28px' },
+  { cssVar: '--spacing-32', value: '32px' },
+  { cssVar: '--spacing-36', value: '36px' },
+  { cssVar: '--spacing-40', value: '40px' },
+  { cssVar: '--spacing-44', value: '44px' },
+  { cssVar: '--spacing-48', value: '48px' },
+  { cssVar: '--spacing-52', value: '52px' },
+  { cssVar: '--spacing-56', value: '56px' },
+  { cssVar: '--spacing-60', value: '60px' },
+  { cssVar: '--spacing-64', value: '64px' },
+  { cssVar: '--spacing-68', value: '68px' },
+  { cssVar: '--spacing-72', value: '72px' },
+  { cssVar: '--spacing-74', value: '74px' },
+  { cssVar: '--spacing-76', value: '76px' },
+  { cssVar: '--spacing-80', value: '80px' },
+  { cssVar: '--spacing-84', value: '84px' },
+  { cssVar: '--spacing-88', value: '88px' },
+  { cssVar: '--spacing-92', value: '92px' },
+  { cssVar: '--spacing-96', value: '96px' },
+  { cssVar: '--spacing-100', value: '100px' },
+  { cssVar: '--spacing-104', value: '104px' },
+  { cssVar: '--spacing-108', value: '108px' },
+  { cssVar: '--spacing-112', value: '112px' },
+  { cssVar: '--spacing-116', value: '116px' },
+  {
+    cssVar: '--spacing-120',
+    value: '120px',
+    note: '교재 히어로 ↔ 리스트',
+  },
+  {
+    cssVar: '--spacing-200',
+    value: '200px',
+    note: '교재 디렉터리 ↔ 카테고리 영역',
+  },
+] as const
+
 const designSystemNav = [
   { id: 'breakpoints', label: 'Breakpoints' },
   { id: 'typography', label: 'Typography' },
   { id: 'color', label: 'Color' },
+  { id: 'spacing', label: 'Spacing' },
   { id: 'buttons', label: 'Buttons' },
   { id: 'badges', label: 'Badges' },
   { id: 'forms', label: 'Forms' },
@@ -676,6 +744,7 @@ export function DesignSystemPage() {
   const [richTextHtmlPreview, setRichTextHtmlPreview] = useState('')
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isLargeModalOpen, setIsLargeModalOpen] = useState(false)
   const [isBottomModalOpen, setIsBottomModalOpen] = useState(false)
   const [isFullModalOpen, setIsFullModalOpen] = useState(false)
   const [isAddressSearchModalOpen, setIsAddressSearchModalOpen] = useState(false)
@@ -964,7 +1033,8 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
           Color
         </PFText>
         <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
-          토큰 파일: <code>shared/styles/color.css</code> · 그라디언트 텍스트 유틸:{' '}
+          토큰 파일: <code>shared/styles/color.css</code> · 교육 대상/상태:{' '}
+          <code>shared/lib/education-level-colors.ts</code> · 그라디언트 텍스트 유틸:{' '}
           <code>shared/styles/text-gradient.css</code> · PFText <code>color</code> prop은 솔리드 +
           gradient-primary-0* 텍스트 필을 노출합니다.
         </PFText>
@@ -1026,8 +1096,79 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
                 )
               })}
             </div>
+            {group.id === 'education-level' ? (
+              <div className={styles.educationLevelDemo}>
+                <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+                  교재 디렉터리 리스트 용법 — <code>getEducationLevelColor(key)</code> → 좌측 보더 +
+                  우측 라벨
+                </PFText>
+                <div className={styles.educationLevelList}>
+                  {EDUCATION_LEVEL_KEYS.map(key => {
+                    const levelColor = getEducationLevelColor(key)
+                    return (
+                      <div
+                        key={key}
+                        className={styles.educationLevelRow}
+                        style={{ borderLeftColor: levelColor, color: levelColor }}
+                      >
+                        <PFText as="span" typo="bd-lg-sb" color="black">
+                          샘플 콘텐츠 · {key}
+                        </PFText>
+                        <span className={styles.educationLevelLabel}>
+                          <span className="typo-bd-md-sb">{EDUCATION_LEVEL_LABELS[key]}</span>
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : null}
           </div>
         ))}
+      </div>
+
+      <div className={styles.section} id="spacing">
+        <PFText as="div" typo="hl-sm" color="black">
+          Spacing
+        </PFText>
+        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          토큰 파일: <code>shared/styles/size.css</code> · gap / padding / margin에{' '}
+          <code>var(--spacing-*)</code> 사용
+        </PFText>
+        <div className={styles.tokenTableWrap}>
+          <table className={styles.tokenTable}>
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Value</th>
+                <th>Preview</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              {spacingTokenSpecs.map(item => (
+                <tr
+                  key={item.cssVar}
+                  className={'note' in item ? styles.tokenRowHighlight : undefined}
+                >
+                  <td>
+                    <code>{item.cssVar}</code>
+                  </td>
+                  <td>{item.value}</td>
+                  <td>
+                    <div className={styles.spacingBarTrack}>
+                      <span
+                        className={styles.spacingBarMark}
+                        style={{ width: `var(${item.cssVar})` }}
+                      />
+                    </div>
+                  </td>
+                  <td>{'note' in item ? item.note : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className={styles.section} id="buttons">
@@ -1685,11 +1826,14 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
           PFModal
         </PFText>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          mobilePlacement: center(기본) · bottom(바텀시트) · full(전체 화면). PC 미만에서 확인하세요.
+          size: sm(440) · md(600, 기본) · lg(960). mobilePlacement: center · bottom · full.
         </PFText>
         <div className={styles.modalStack}>
           <PFButton variant="secondary" onClick={() => setIsModalOpen(true)}>
-            center
+            size md
+          </PFButton>
+          <PFButton variant="secondary" onClick={() => setIsLargeModalOpen(true)}>
+            size lg
           </PFButton>
           <PFButton variant="secondary" onClick={() => setIsBottomModalOpen(true)}>
             bottom
@@ -1946,9 +2090,20 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
         </div>
       </div>
 
-      <PFModal open={isModalOpen} title="모달 제목" onClose={() => setIsModalOpen(false)}>
+      <PFModal open={isModalOpen} title="모달 제목" size="md" onClose={() => setIsModalOpen(false)}>
         <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
-          PFModal 기본(center) 배치입니다. X 버튼과 자유로운 children 콘텐츠를 가집니다.
+          PFModal size=&quot;md&quot; (600px). X 버튼과 자유로운 children 콘텐츠를 가집니다.
+        </PFText>
+      </PFModal>
+
+      <PFModal
+        open={isLargeModalOpen}
+        title="교육 콘텐츠 안내"
+        size="lg"
+        onClose={() => setIsLargeModalOpen(false)}
+      >
+        <PFText as="p" typo="bd-md-rg" color="neutral-warm-600">
+          PFModal size=&quot;lg&quot; (960px, max-height 960). Thumbnail&amp;Popup 그림자·패딩·gap 28px.
         </PFText>
       </PFModal>
 

@@ -329,6 +329,58 @@
   border: 1px solid var(--color-border-default);
 }
 
+.educationLevelDemo {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.educationLevelList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.educationLevelRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-24);
+  padding: var(--spacing-16) var(--spacing-20) var(--spacing-16) var(--spacing-32);
+  border-left: 6px solid var(--color-education-level-border-fallback);
+  background: var(--color-neutral-white);
+  box-shadow: var(--shadow-card-sm);
+}
+
+.educationLevelLabel {
+  flex-shrink: 0;
+}
+
+.spacingBarTrack {
+  display: flex;
+  width: min(100%, 220px);
+  min-width: 0;
+  align-items: center;
+  height: 12px;
+  overflow: hidden;
+  background: var(--color-neutral-cool-80);
+  border-radius: var(--radius-4);
+}
+
+.spacingBarMark {
+  display: block;
+  height: 100%;
+  max-width: 100%;
+  background: var(--color-primary-400);
+  border-radius: var(--radius-4);
+}
+
 .colorSwatchMeta {
   display: flex;
   min-width: 0;
