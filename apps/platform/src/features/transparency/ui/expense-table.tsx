@@ -11,6 +11,12 @@ type ExpenseTableProps = {
 export function ExpenseTable({ groups, totalAmount }: ExpenseTableProps) {
   return (
     <table className={styles.table}>
+      <colgroup>
+        <col className={styles.colCategory} />
+        <col className={styles.colArea} />
+        <col className={styles.colRatio} />
+        <col className={styles.colAmount} />
+      </colgroup>
       <thead>
         <tr>
           <th scope="col" className={styles.headCell}>
@@ -19,7 +25,7 @@ export function ExpenseTable({ groups, totalAmount }: ExpenseTableProps) {
           <th scope="col" className={styles.headCell}>
             영역
           </th>
-          <th scope="col" className={styles.headCell}>
+          <th scope="col" className={[styles.headCell, styles.ratioCell].join(' ')}>
             비율
           </th>
           <th scope="col" className={[styles.headCell, styles.amountCell].join(' ')}>
@@ -30,40 +36,48 @@ export function ExpenseTable({ groups, totalAmount }: ExpenseTableProps) {
       <tbody>
         {groups.map((group, groupIndex) => (
           <Fragment key={group.id}>
-            {group.rows.map((row, rowIndex) => (
-              <tr
-                key={row.id}
-                className={
-                  groupIndex > 0 && rowIndex === 0 ? styles.groupStartRow : undefined
-                }
-              >
-                {rowIndex === 0 ? (
-                  <th
-                    scope="rowgroup"
-                    rowSpan={group.rows.length + 1}
-                    className={styles.groupCell}
-                  >
-                    {group.label}
-                  </th>
-                ) : null}
-                <td className={styles.cell}>{row.label}</td>
-                <td className={styles.cell}>{row.percent}%</td>
-                <td className={[styles.cell, styles.amountCell].join(' ')}>
-                  {formatKrwAmount(row.amount)}
-                </td>
-              </tr>
-            ))}
-            <tr>
+            {group.rows.map((row, rowIndex) => {
+              const isFirstRow = rowIndex === 0
+              const isGroupStart = groupIndex > 0 && isFirstRow
+
+              return (
+                <tr
+                  key={row.id}
+                  className={[
+                    isFirstRow ? styles.groupFirstRow : '',
+                    isGroupStart ? styles.groupStartRow : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  {isFirstRow ? (
+                    <th
+                      scope="rowgroup"
+                      rowSpan={group.rows.length + 1}
+                      className={styles.groupCell}
+                    >
+                      {group.label}
+                    </th>
+                  ) : null}
+                  <td className={styles.cell}>{row.label}</td>
+                  <td className={[styles.cell, styles.ratioCell].join(' ')}>
+                    {row.percent}%
+                  </td>
+                  <td className={[styles.cell, styles.amountCell].join(' ')}>
+                    {formatKrwAmount(row.amount)}
+                  </td>
+                </tr>
+              )
+            })}
+            <tr className={styles.groupLastRow}>
               <td className={[styles.cell, styles.subtotalCell].join(' ')}>
                 {group.subtotal.label}
               </td>
-              <td className={[styles.cell, styles.subtotalCell].join(' ')}>
+              <td className={[styles.cell, styles.subtotalCell, styles.ratioCell].join(' ')}>
                 {group.subtotal.percent}%
               </td>
               <td
-                className={[styles.cell, styles.subtotalCell, styles.amountCell].join(
-                  ' '
-                )}
+                className={[styles.cell, styles.subtotalCell, styles.amountCell].join(' ')}
               >
                 {formatKrwAmount(group.subtotal.amount)}
               </td>
@@ -71,9 +85,11 @@ export function ExpenseTable({ groups, totalAmount }: ExpenseTableProps) {
           </Fragment>
         ))}
         <tr className={styles.totalRow}>
-          <td className={styles.cell}>지출총계</td>
-          <td className={styles.cell} aria-hidden="true" />
-          <td className={styles.cell}>100.0%</td>
+          <td className={[styles.cell, styles.totalLabel].join(' ')}>지출총계</td>
+          <td className={styles.cell} aria-hidden="true">
+            &nbsp;
+          </td>
+          <td className={[styles.cell, styles.ratioCell].join(' ')}>100.0%</td>
           <td className={[styles.cell, styles.amountCell].join(' ')}>
             {formatKrwAmount(totalAmount)}
           </td>
