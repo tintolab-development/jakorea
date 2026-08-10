@@ -88,6 +88,13 @@
   box-sizing: border-box;
   border-width: 1px;
   border-style: solid;
+  /* 수정 모드 전환 시 border/배경 fade 제거 */
+  transition: none !important;
+}
+
+.education-fields-page .education-fields-inline-field .ant-input,
+.education-fields-page .education-fields-inline-field textarea.ant-input {
+  transition: none !important;
 }
 
 .education-fields-page .education-fields-inline-field--readonly .cms-input__control,
