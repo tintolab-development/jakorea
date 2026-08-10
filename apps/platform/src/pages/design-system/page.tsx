@@ -12,6 +12,7 @@ import {
   MOCK_VERIFIED_PHONE,
 } from '@/features/auth/sign-up'
 import { AddressSearchModal } from '@/features/auth/sign-up/ui/address-search-modal'
+import { SchoolSearchModal } from '@/features/auth/sign-up/ui/school-search-modal'
 import { PfRichTextEditor, RichTextViewer, useRichTextEditor } from '@/shared/rich-text'
 import {
   GoogleSocialLoginIcon,
@@ -433,6 +434,11 @@ const spacingTokenSpecs = [
     note: '교재 히어로 ↔ 리스트',
   },
   {
+    cssVar: '--spacing-150',
+    value: '150px',
+    note: '함께하는 사람들 조직도 ↔ 인원 목록',
+  },
+  {
     cssVar: '--spacing-200',
     value: '200px',
     note: '교재 디렉터리 ↔ 카테고리 영역',
@@ -450,6 +456,8 @@ const designSystemNav = [
   { id: 'navigation', label: 'Navigation' },
   { id: 'layout', label: 'Layout' },
   { id: 'modals', label: 'Modals' },
+  { id: 'address-search-modal', label: '주소 검색' },
+  { id: 'school-search-modal', label: '학교 검색' },
   { id: 'icons', label: 'Social Icons' },
   { id: 'rich-text', label: 'Rich Text' },
   { id: 'form-template', label: 'FormTemplate' },
@@ -749,6 +757,8 @@ export function DesignSystemPage() {
   const [isFullModalOpen, setIsFullModalOpen] = useState(false)
   const [isAddressSearchModalOpen, setIsAddressSearchModalOpen] = useState(false)
   const [selectedAddress, setSelectedAddress] = useState('')
+  const [isSchoolSearchModalOpen, setIsSchoolSearchModalOpen] = useState(false)
+  const [selectedSchool, setSelectedSchool] = useState('')
   const [stepProgressCurrent, setStepProgressCurrent] = useState(3)
   const [devMemberProfile, setDevMemberProfileState] = useState<PlatformMemberProfile>(() =>
     getDevMemberProfile()
@@ -1844,22 +1854,95 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
         </div>
       </div>
 
-      <div className={styles.section}>
+      <div className={styles.section} id="address-search-modal">
         <PFText as="div" typo="hl-sm" color="black">
-          AddressSearchModal
+          주소 검색창 팝업 (AddressSearchModal)
         </PFText>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          회원가입 프로필 등과 동일한 주소 검색 모달입니다. PC는 중앙, 1080 미만은 바텀시트입니다.
+          회원가입 프로필 등과 동일한 도로명 주소 검색 모달입니다. Juso API · PC 중앙 / 1080 미만
+          바텀시트.
         </PFText>
-        <div className={styles.modalStack}>
-          <PFButton variant="secondary" onClick={() => setIsAddressSearchModalOpen(true)}>
-            주소 검색 모달 열기
-          </PFButton>
-          {selectedAddress ? (
-            <PFText as="p" typo="bd-sm-md" color="black">
-              선택 주소: {selectedAddress}
+        <div className={styles.specCompareRow}>
+          <div className={styles.specCompareDemo}>
+            <div className={styles.modalStack}>
+              <PFButton variant="secondary" onClick={() => setIsAddressSearchModalOpen(true)}>
+                주소 검색 팝업 열기
+              </PFButton>
+              {selectedAddress ? (
+                <PFText as="p" typo="bd-sm-md" color="black">
+                  선택 주소: {selectedAddress}
+                </PFText>
+              ) : null}
+            </div>
+          </div>
+          <aside className={styles.specCompareGaps} aria-label="기획 대비 불일치">
+            <PFText as="p" typo="bd-sm-sb" color="error">
+              기획 대비 불일치
             </PFText>
-          ) : null}
+            <ul className={styles.specCompareGapsList}>
+              <li className={styles.specCompareGapsItem}>
+                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
+                  미입력 시 빨간 스트로크 + 검색 차단 미구현 (`error` prop 미사용, 빈 검색도 API 호출)
+                </PFText>
+              </li>
+              <li className={styles.specCompareGapsItem}>
+                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
+                  「영문보기」 토글 미구현 (`engAddr` 데이터는 있으나 UI 없음)
+                </PFText>
+              </li>
+            </ul>
+          </aside>
+        </div>
+      </div>
+
+      <div className={styles.section} id="school-search-modal">
+        <PFText as="div" typo="hl-sm" color="black">
+          학교 검색창 팝업 (SchoolSearchModal)
+        </PFText>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          회원가입 소속/학교 검색과 동일한 NEIS 학교 검색 모달입니다. 시·도 / 시·군·구 선택 후
+          학교명 검색.
+        </PFText>
+        <div className={styles.specCompareRow}>
+          <div className={styles.specCompareDemo}>
+            <div className={styles.modalStack}>
+              <PFButton variant="secondary" onClick={() => setIsSchoolSearchModalOpen(true)}>
+                학교 검색 팝업 열기
+              </PFButton>
+              {selectedSchool ? (
+                <PFText as="p" typo="bd-sm-md" color="black">
+                  선택 학교: {selectedSchool}
+                </PFText>
+              ) : null}
+            </div>
+          </div>
+          <aside className={styles.specCompareGaps} aria-label="기획 대비 불일치">
+            <PFText as="p" typo="bd-sm-sb" color="error">
+              기획 대비 불일치
+            </PFText>
+            <ul className={styles.specCompareGapsList}>
+              <li className={styles.specCompareGapsItem}>
+                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
+                  시/도·시/군/구는 기획상 선택인데, 현재 시/도가 검색 필수
+                </PFText>
+              </li>
+              <li className={styles.specCompareGapsItem}>
+                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
+                  미입력 시 빨간 스트로크 미구현
+                </PFText>
+              </li>
+              <li className={styles.specCompareGapsItem}>
+                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
+                  결과 정렬(학교명 → 소재지 → 학교급 고/중/초/유) 미구현
+                </PFText>
+              </li>
+              <li className={styles.specCompareGapsItem}>
+                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
+                  결과 항목에 학교급(`schulKndScNm`) 미표시
+                </PFText>
+              </li>
+            </ul>
+          </aside>
         </div>
       </div>
 
@@ -2133,6 +2216,15 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
         open={isAddressSearchModalOpen}
         onClose={() => setIsAddressSearchModalOpen(false)}
         onSelect={selection => setSelectedAddress(selection.address)}
+      />
+
+      <SchoolSearchModal
+        open={isSchoolSearchModalOpen}
+        onClose={() => setIsSchoolSearchModalOpen(false)}
+        onSelect={school => {
+          const detail = [school.name, school.address].filter(Boolean).join(' · ')
+          setSelectedSchool(detail)
+        }}
       />
 
       <PFAlertModal
