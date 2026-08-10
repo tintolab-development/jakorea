@@ -161,6 +161,7 @@ export function EducationFieldsPage() {
         key: 'sort',
         width: TABLE_COLUMN_WIDTHS.sort,
         className: CMS_TABLE_SORT_COL_CLASS,
+        align: 'center',
         render: () => <EducationBusinessFieldDragHandle />,
       },
       {
@@ -168,12 +169,14 @@ export function EducationFieldsPage() {
         key: 'no',
         width: TABLE_COLUMN_WIDTHS.index,
         className: CMS_TABLE_NO_COL_CLASS,
+        align: 'center',
         render: (_value, _record, index) => index + 1,
       },
       {
         title: '사용 여부',
         key: 'isActive',
         width: TABLE_COLUMN_WIDTHS.usage,
+        align: 'center',
         className: CMS_TABLE_USAGE_COL_CLASS,
         render: (_value, record) => (
           <Switch
