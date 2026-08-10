@@ -1,0 +1,84 @@
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--font-family-base);
+  table-layout: fixed;
+}
+
+.headCell {
+  height: 48px;
+  padding: 0 var(--spacing-24);
+  background: var(--color-neutral-white);
+  color: var(--color-neutral-black);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.headCell:first-child {
+  width: 22%;
+  border-radius: 24px 0 0 24px;
+}
+
+.headCell:last-child {
+  border-radius: 0 24px 24px 0;
+}
+
+/* 그룹(구분) 셀 — 세로 중앙 + 영역 열과의 세로 구분선 */
+.groupCell {
+  padding: var(--spacing-16) var(--spacing-24);
+  border-right: 1px solid var(--color-neutral-cool-200);
+  color: var(--color-neutral-black);
+  font-size: 15px;
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.cell {
+  height: 64px;
+  padding: var(--spacing-12) var(--spacing-24);
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--color-neutral-cool-100);
+  color: var(--color-neutral-black);
+  font-size: 15px;
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.amountCell {
+  text-align: right;
+}
+
+/* 그룹 경계 — 두 번째 그룹 첫 행 상단 굵은 구분선 */
+.groupStartRow .cell,
+.groupStartRow .groupCell {
+  border-top: 2px solid var(--color-neutral-cool-200);
+}
+
+.subtotalCell {
+  border-bottom: none;
+  color: var(--color-primary-500);
+  font-weight: 700;
+}
+
+.totalRow .cell {
+  background: #e9f2f2;
+  border-bottom: none;
+  font-weight: 700;
+}
+
+@media (--bp-below-pc) {
+  .headCell,
+  .cell,
+  .groupCell {
+    padding-inline: var(--spacing-8);
+    font-size: 12px;
+  }
+
+  .cell {
+    height: 52px;
+  }
+}

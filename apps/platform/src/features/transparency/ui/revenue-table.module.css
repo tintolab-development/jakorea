@@ -1,0 +1,105 @@
+.table {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-family: var(--font-family-base);
+}
+
+/* 시안: 구분 ~40% / 비율 ~25% / 금액 ~35% */
+.colCategory {
+  width: 40%;
+}
+
+.colRatio {
+  width: 25%;
+}
+
+.colAmount {
+  width: 35%;
+}
+
+.headCell {
+  box-sizing: border-box;
+  height: 78px;
+  padding: var(--spacing-24) var(--spacing-48);
+  background: var(--color-neutral-white);
+  color: var(--color-neutral-black);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.headCell:first-child {
+  border-radius: 40px 0 0 40px;
+  text-align: right;
+}
+
+.headCell:last-child {
+  border-radius: 0 40px 40px 0;
+  text-align: right;
+}
+
+.cell {
+  box-sizing: border-box;
+  height: 78px;
+  padding: var(--spacing-24) var(--spacing-48);
+  color: var(--color-neutral-black);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.row .cell {
+  border-bottom: 1px solid var(--color-neutral-cool-100);
+}
+
+.categoryCell {
+  text-align: right;
+}
+
+.ratioCell {
+  text-align: center;
+  font-weight: 600;
+}
+
+.amountCell {
+  text-align: right;
+}
+
+.totalRow .cell {
+  background: #ecf5ee;
+  color: #2f8a4f;
+  font-weight: 600;
+}
+
+.totalRow .amountCell {
+  font-weight: 400;
+}
+
+@media (--bp-below-pc) {
+  .headCell,
+  .cell {
+    height: 56px;
+    padding: var(--spacing-12) var(--spacing-16);
+    font-size: 14px;
+  }
+
+  .headCell:first-child {
+    border-radius: 16px 0 0 16px;
+  }
+
+  .headCell:last-child {
+    border-radius: 0 16px 16px 0;
+  }
+}

@@ -1,0 +1,50 @@
+.list {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-48);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.icon {
+  display: inline-flex;
+  width: 140px;
+  height: 140px;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.title,
+.description {
+  margin: 0;
+}
+
+/* Figma: 34px / 600 — typo-hd-md는 700이라 스펙에 맞춰 조정 */
+.title {
+  font-weight: 600;
+}
+
+@media (--bp-pc-up) {
+  /* 시안: 항목 사이 80px */
+  .list {
+    gap: var(--spacing-80);
+  }
+}
