@@ -161,7 +161,6 @@ export function EducationFieldsPage() {
         key: 'sort',
         width: TABLE_COLUMN_WIDTHS.sort,
         className: CMS_TABLE_SORT_COL_CLASS,
-        align: 'center',
         render: () => <EducationBusinessFieldDragHandle />,
       },
       {
@@ -169,14 +168,12 @@ export function EducationFieldsPage() {
         key: 'no',
         width: TABLE_COLUMN_WIDTHS.index,
         className: CMS_TABLE_NO_COL_CLASS,
-        align: 'center',
         render: (_value, _record, index) => index + 1,
       },
       {
         title: '사용 여부',
         key: 'isActive',
         width: TABLE_COLUMN_WIDTHS.usage,
-        align: 'center',
         className: CMS_TABLE_USAGE_COL_CLASS,
         render: (_value, record) => (
           <Switch
@@ -223,12 +220,12 @@ export function EducationFieldsPage() {
               className={
                 isEditing
                   ? 'education-fields-inline-field education-fields-inline-field--edit cms-textarea--fixed-rows'
-                  : 'education-fields-inline-field education-fields-inline-field--readonly cms-textarea--fixed-rows'
+                  : 'education-fields-inline-field education-fields-inline-field--readonly'
               }
               inputSize="medium"
               width="100%"
-              rows={2}
-              autoSize={false}
+              rows={isEditing ? 2 : 1}
+              autoSize={isEditing ? false : { minRows: 1, maxRows: 2 }}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -252,12 +249,12 @@ export function EducationFieldsPage() {
               className={
                 isEditing
                   ? 'education-fields-inline-field education-fields-inline-field--edit cms-textarea--fixed-rows'
-                  : 'education-fields-inline-field education-fields-inline-field--readonly cms-textarea--fixed-rows'
+                  : 'education-fields-inline-field education-fields-inline-field--readonly'
               }
               inputSize="medium"
               width="100%"
-              rows={2}
-              autoSize={false}
+              rows={isEditing ? 2 : 1}
+              autoSize={isEditing ? false : { minRows: 1, maxRows: 2 }}
               value={value}
               placeholder={GUIDE_PLACEHOLDER}
               readOnly={!isEditing}

@@ -129,15 +129,33 @@
   box-sizing: border-box;
 }
 
-/* medium + rows=2: 행 높이 고정 (내용이 길어도 셀·행이 늘어나지 않음) */
-.education-fields-page
-  .education-fields-inline-field.cms-textarea--fixed-rows.cms-textarea--medium
+/*
+ * 조회: autoSize(1~2줄) + 컨트롤 세로 패딩 제거 → 셀 vertical-align 으로 세로 중앙.
+ * 수정(fixed-rows): 2줄 슬롯 고정 (15px × 1.5 × 2 = 3em).
+ */
+.education-fields-table
+  .education-fields-inline-field--readonly.cms-textarea--medium
+  .cms-textarea__control {
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.education-fields-table
+  .education-fields-inline-field--edit.cms-textarea--fixed-rows.cms-textarea--medium
   .cms-textarea__inner
   textarea.ant-input {
-  /* 15px × 1.5 line-height × 2 rows */
-  height: 2.25em !important;
-  min-height: 2.25em !important;
-  max-height: 2.25em !important;
+  height: 3em !important;
+  min-height: 3em !important;
+  max-height: 3em !important;
+}
+
+/* 조회 모드 textarea resize 핸들 숨김 */
+.education-fields-table
+  .education-fields-inline-field--readonly
+  .cms-textarea__inner
+  textarea.ant-input {
+  resize: none !important;
 }
 
 .education-fields-page .ant-switch-checked {
@@ -152,13 +170,34 @@
   transition: none;
 }
 
-.education-fields-table .ant-table-tbody > tr > td {
-  vertical-align: middle;
+/*
+ * 2줄 textarea가 cms-data-table 기본(height 54px · nowrap)에 잘리지 않도록.
+ * hover 규칙도 동일 — report-list와 같은 패턴.
+ */
+.education-fields-table.cms-data-table .ant-table-tbody > tr > td,
+.education-fields-table.cms-data-table .ant-table-tbody > tr:hover > td {
+  height: auto !important;
+  min-height: 54px;
+  vertical-align: middle !important;
+  white-space: normal !important;
+  overflow: visible;
 }
 
+/* 행 높이보다 짧은 인풋·텍스트영역 — 셀 안 세로 중앙 */
 .education-fields-table .ant-table-tbody > tr > td .cms-textarea,
 .education-fields-table .ant-table-tbody > tr > td .cms-input {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   width: 100%;
   max-width: 100%;
+}
+
+.education-fields-table
+  .education-fields-inline-field--readonly.cms-input--medium
+  .cms-input__control {
+  height: auto;
+  min-height: 1.5em;
+  padding-top: 0;
+  padding-bottom: 0;
 }
