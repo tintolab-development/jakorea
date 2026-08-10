@@ -42,7 +42,8 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--spacing-20);
-  margin-bottom: var(--spacing-100);
+  /* 상단 문구 ↔ 원칙 목록 */
+  margin-bottom: 170px;
 }
 
 .heroLabel,
