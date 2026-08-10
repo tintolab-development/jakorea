@@ -37,6 +37,17 @@ export { PFFileDownload } from './pf-file-download'
 export type { PFFileDownloadProps } from './pf-file-download'
 export { PFModal } from './pf-modal'
 export type { PFModalMobilePlacement, PFModalProps, PFModalSize } from './pf-modal'
+export {
+  PFElectronicSignatureEditConfirm,
+  PFElectronicSignatureModal,
+  SIGNATURE_FONT_STYLES,
+} from './pf-electronic-signature-modal'
+export type {
+  ElectronicSignatureMode,
+  ElectronicSignatureResult,
+  PFElectronicSignatureEditConfirmProps,
+  PFElectronicSignatureModalProps,
+} from './pf-electronic-signature-modal'
 export { PFPagination } from './pf-pagination'
 export type { PFPaginationProps, PFPaginationSize, PFPaginationVariant } from './pf-pagination'
 export { PFSearchInput } from './pf-search-input'

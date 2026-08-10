@@ -28,6 +28,8 @@ import {
   PFAttachmentDropdown,
   PFFileDownload,
   PFModal,
+  PFElectronicSignatureEditConfirm,
+  PFElectronicSignatureModal,
   PFMetaBadge,
   PFPagination,
   PFSearchFilter,
@@ -456,6 +458,7 @@ const designSystemNav = [
   { id: 'navigation', label: 'Navigation' },
   { id: 'layout', label: 'Layout' },
   { id: 'modals', label: 'Modals' },
+  { id: 'electronic-signature', label: '전자서명' },
   { id: 'address-search-modal', label: '주소 검색' },
   { id: 'school-search-modal', label: '학교 검색' },
   { id: 'icons', label: 'Social Icons' },
@@ -759,6 +762,10 @@ export function DesignSystemPage() {
   const [selectedAddress, setSelectedAddress] = useState('')
   const [isSchoolSearchModalOpen, setIsSchoolSearchModalOpen] = useState(false)
   const [selectedSchool, setSelectedSchool] = useState('')
+  const [isElectronicSignatureOpen, setIsElectronicSignatureOpen] = useState(false)
+  const [isElectronicSignatureEditConfirmOpen, setIsElectronicSignatureEditConfirmOpen] =
+    useState(false)
+  const [lastElectronicSignaturePreview, setLastElectronicSignaturePreview] = useState('')
   const [stepProgressCurrent, setStepProgressCurrent] = useState(3)
   const [devMemberProfile, setDevMemberProfileState] = useState<PlatformMemberProfile>(() =>
     getDevMemberProfile()
@@ -1854,6 +1861,39 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
         </div>
       </div>
 
+      <div className={styles.section} id="electronic-signature">
+        <PFText as="div" typo="hl-sm" color="black">
+          전자서명 팝업 (PFElectronicSignatureModal)
+        </PFText>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          PFModal size=&quot;lg&quot; 셸 + 서명 그리기 / 서명 만들기 탭. 수정 확인은
+          PFElectronicSignatureEditConfirm.
+        </PFText>
+        <div className={styles.modalStack}>
+          <PFButton variant="secondary" onClick={() => setIsElectronicSignatureOpen(true)}>
+            전자서명하기 열기
+          </PFButton>
+          <PFButton
+            variant="secondary"
+            onClick={() => setIsElectronicSignatureEditConfirmOpen(true)}
+          >
+            전자서명 수정 확인
+          </PFButton>
+          {lastElectronicSignaturePreview ? (
+            <div className={styles.modalStack}>
+              <PFText as="p" typo="bd-sm-md" color="black">
+                최근 서명 미리보기
+              </PFText>
+              <img
+                src={lastElectronicSignaturePreview}
+                alt="전자서명 미리보기"
+                style={{ maxWidth: 320, maxHeight: 120, objectFit: 'contain' }}
+              />
+            </div>
+          ) : null}
+        </div>
+      </div>
+
       <div className={styles.section} id="address-search-modal">
         <PFText as="div" typo="hl-sm" color="black">
           주소 검색창 팝업 (AddressSearchModal)
@@ -2224,6 +2264,21 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
         onSelect={school => {
           const detail = [school.name, school.address].filter(Boolean).join(' · ')
           setSelectedSchool(detail)
+        }}
+      />
+
+      <PFElectronicSignatureModal
+        open={isElectronicSignatureOpen}
+        onClose={() => setIsElectronicSignatureOpen(false)}
+        onSign={result => setLastElectronicSignaturePreview(result.dataUrl)}
+      />
+
+      <PFElectronicSignatureEditConfirm
+        open={isElectronicSignatureEditConfirmOpen}
+        onCancel={() => setIsElectronicSignatureEditConfirmOpen(false)}
+        onConfirm={() => {
+          setIsElectronicSignatureEditConfirmOpen(false)
+          setIsElectronicSignatureOpen(true)
         }}
       />
 
