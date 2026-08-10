@@ -46,3 +46,26 @@ export type ExpenseDetailGroup = {
     amount: number
   }
 }
+
+export type TransparencyReportType = 'annual' | 'audit'
+
+export type TransparencyReport = {
+  id: string
+  /** 카드 하단 타이틀 (예: 2025 Annual Report JA Korea) */
+  title: string
+  /** 회계감사 카드 하단 게시일 (예: 2026년 05월 08일) */
+  date?: string
+  /** 커버 placeholder 텍스트 — 실이미지(coverUrl) 없을 때 표시 */
+  coverLabel: string
+  /** 커버 placeholder 그라디언트 CSS 값 */
+  coverGradient: string
+  /** 실제 커버 이미지 URL (있으면 그라디언트 대신 사용) */
+  coverUrl?: string
+  /** 다운로드 파일명 */
+  fileName: string
+}
+
+export type TransparencyReportsListParams = {
+  q: string
+  page: number
+}
