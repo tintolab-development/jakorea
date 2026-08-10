@@ -11,12 +11,19 @@ import closeIconUrl from './icons/close.svg'
 import { PFText } from '../pf-text'
 import styles from './pf-modal.module.css'
 
-type PFModalMobilePlacement = 'center' | 'bottom' | 'full'
+export type PFModalSize = 'sm' | 'md' | 'lg'
+export type PFModalMobilePlacement = 'center' | 'bottom' | 'full'
 
-type PFModalProps = {
+export type PFModalProps = {
   open: boolean
   onClose: () => void
   title?: ReactNode
+  /**
+   * 팝업 폭 variant — sm 440 / md 600 / lg 960
+   * `width`가 있으면 size보다 우선
+   */
+  size?: PFModalSize
+  /** size 대신 임의 폭이 필요할 때 */
   width?: CSSProperties['width']
   /** PC 미만에서 패널 배치. `bottom`이면 바텀시트, `full`이면 전체 화면 */
   mobilePlacement?: PFModalMobilePlacement
@@ -27,6 +34,12 @@ type PFModalProps = {
   closeOnEscape?: boolean
   className?: string
   children: ReactNode
+}
+
+const SIZE_CLASS_MAP: Record<PFModalSize, string> = {
+  sm: styles.panelSm,
+  md: styles.panelMd,
+  lg: styles.panelLg,
 }
 
 /** 모바일에서 오버레이 제거 직후 동일 좌표 ghost click이 아래 버튼을 다시 누르는 것을 막음 */
@@ -68,6 +81,7 @@ export function PFModal({
   open,
   onClose,
   title,
+  size = 'md',
   width,
   mobilePlacement = 'center',
   ariaLabelledBy,
@@ -163,6 +177,7 @@ export function PFModal({
         tabIndex={-1}
         className={[
           styles.panel,
+          !width ? SIZE_CLASS_MAP[size] : undefined,
           isBottomSheetMobile ? styles.panelBottomSheetMobile : undefined,
           isFullPageMobile ? styles.panelFullPageMobile : undefined,
           className,

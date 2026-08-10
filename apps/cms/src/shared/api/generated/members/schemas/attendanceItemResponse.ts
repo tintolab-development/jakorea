@@ -19,4 +19,7 @@ export interface AttendanceItemResponse {
   internalLate?: boolean;
   volunteer1365Minutes?: number;
   volunteer1365DurationLabel?: string;
+  checkedByMemberId?: number;
+  memberCheckedInAt?: string;
+  checkInSource?: string;
 }

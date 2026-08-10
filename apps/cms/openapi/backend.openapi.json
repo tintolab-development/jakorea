@@ -507,6 +507,147 @@
         }
       }
     },
+    "/api/portal/me/program-applications/{applicationType}/{applicationId}/notices/{postId}/reactions": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "내 프로그램 안내사항 반응 조회",
+        "description": "### 이 API가 하는 일\n- 내 프로그램 안내사항 반응 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 회원포탈 안내사항 상세 (`null`)\n- 프론트 담당 영역: portal-member-notice (`portal-member-notice`)\n- 호출 방식: `GET /api/portal/me/program-applications/{applicationType}/{applicationId}/notices/{postId}/reactions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: authenticated member action\n- 응답 사용 위치: 내 프로그램 안내사항 반응 조회\n- 프론트 조회 키: `get_api_portal_me_program_applications_applicationtype_applicationid_notices_postid_reactions`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: FRONTEND_READY\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PORTAL_NOTICE_CMS_SHARED_AGGREGATE_E2E\n- 목데이터 대체: none\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED_PROGRAM_PARTICIPATION 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NONE 개인정보 정책\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS가 생성한 동일 program_post aggregate를 회원포탈 참여자 권한으로 조회·수정; 별도 복제 테이블 금지",
+        "operationId": "noticeReactions",
+        "parameters": [
+          {
+            "name": "applicationType",
+            "in": "path",
+            "description": "경로 파라미터입니다. 요청값 출처: authenticated member action",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "postId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeReactionListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "내 프로그램 안내사항 반응 등록·갱신",
+        "description": "### 이 API가 하는 일\n- 내 프로그램 안내사항 반응 등록·갱신\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 회원포탈 안내사항 상세 (`null`)\n- 프론트 담당 영역: portal-member-notice (`portal-member-notice`)\n- 호출 방식: `PUT /api/portal/me/program-applications/{applicationType}/{applicationId}/notices/{postId}/reactions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: authenticated member action\n- 응답 사용 위치: 내 프로그램 안내사항 반응 등록·갱신\n- 프론트 조회 키: `put_api_portal_me_program_applications_applicationtype_applicationid_notices_postid_reactions`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: FRONTEND_READY\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PORTAL_NOTICE_CMS_SHARED_AGGREGATE_E2E\n- 목데이터 대체: none\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED_PROGRAM_PARTICIPATION 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NONE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS가 생성한 동일 program_post aggregate를 회원포탈 참여자 권한으로 조회·수정; 별도 복제 테이블 금지",
+        "operationId": "upsertNoticeReaction",
+        "parameters": [
+          {
+            "name": "applicationType",
+            "in": "path",
+            "description": "경로 파라미터입니다. 요청값 출처: authenticated member action",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "postId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoticeReactionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeReactionMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/users/{memberId}/program-roles": {
       "get": {
         "tags": [
@@ -3212,6 +3353,71 @@
           },
           "409": {
             "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
+    "/api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/attendance/check-in": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 봉사자 본인 출석 처리",
+        "description": "### 이 API가 하는 일\n- UJAT 봉사자 본인 출석 처리\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 일반회원 UJAT 배정 및 출결 현황 (`null`)\n- 프론트 담당 영역: member-portal-ujat (`member-portal-ujat`)\n- 호출 방식: `POST /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/attendance/check-in`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 로그인 회원의 출석 버튼 클릭\n- 응답 사용 위치: 최초 출석시각과 멱등 처리 결과 반영\n- 프론트 조회 키: `post_api_portal_me_ujat_attendance_check_in`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: MEMBER_PORTAL_UJAT_ATTENDANCE_SMOKE\n- 목데이터 대체: 출석 클릭 시각은 서버 수신시각으로 영구 저장하고 로컬 상태를 신뢰하지 않습니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED_ACTIVE_ASSIGNMENT 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: CLIENT_IP_USER_AGENT_AUDIT 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 시작 30분 전부터, 마감·자동 지각 없음, 서버 수신시각 저장, 최초 시각 멱등 보존",
+        "operationId": "checkIn",
+        "parameters": [
+          {
+            "name": "applicationType",
+            "in": "path",
+            "description": "경로 파라미터입니다. 요청값 출처: 로그인 회원의 출석 버튼 클릭",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceCheckInResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
           },
           "500": {
             "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
@@ -20971,6 +21177,167 @@
         }
       }
     },
+    "/api/portal/me/program-applications/{applicationType}/{applicationId}/notices/{postId}/comments/{commentId}": {
+      "delete": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "내 프로그램 안내사항 댓글 삭제",
+        "description": "### 이 API가 하는 일\n- 내 프로그램 안내사항 댓글 삭제\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `DELETE /api/portal/me/program-applications/{applicationType}/{applicationId}/notices/{postId}/comments/{commentId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: General member portal phase 1 화면 contract",
+        "operationId": "deleteNoticeComment",
+        "parameters": [
+          {
+            "name": "applicationType",
+            "in": "path",
+            "description": "경로 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "postId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeCommentMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "내 프로그램 안내사항 댓글 수정",
+        "description": "### 이 API가 하는 일\n- 내 프로그램 안내사항 댓글 수정\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 회원포탈 안내사항 상세 (`null`)\n- 프론트 담당 영역: portal-member-notice (`portal-member-notice`)\n- 호출 방식: `PATCH /api/portal/me/program-applications/{applicationType}/{applicationId}/notices/{postId}/comments/{commentId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: authenticated member action\n- 응답 사용 위치: 내 프로그램 안내사항 댓글 수정\n- 프론트 조회 키: `patch_api_portal_me_program_applications_applicationtype_applicationid_notices_postid_comments_commentid`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: FRONTEND_READY\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PORTAL_NOTICE_CMS_SHARED_AGGREGATE_E2E\n- 목데이터 대체: none\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED_PROGRAM_PARTICIPATION 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NONE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS가 생성한 동일 program_post aggregate를 회원포탈 참여자 권한으로 조회·수정; 별도 복제 테이블 금지",
+        "operationId": "updateNoticeComment",
+        "parameters": [
+          {
+            "name": "applicationType",
+            "in": "path",
+            "description": "경로 파라미터입니다. 요청값 출처: authenticated member action",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "postId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNoticeCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeCommentMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/portal/me/program-applications/{applicationType}/{applicationId}/expense-receipts/{receiptId}": {
       "patch": {
         "tags": [
@@ -28642,6 +29009,71 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/EducationScheduleDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "서버 내부 오류입니다. requestId와 서버 로그를 확인합니다."
+          }
+        }
+      }
+    },
+    "/api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/attendance": {
+      "get": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 봉사자 본인 출석 현황 조회",
+        "description": "### 이 API가 하는 일\n- UJAT 봉사자 본인 출석 현황 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 일반회원 UJAT 배정 및 출결 현황 (`null`)\n- 프론트 담당 영역: member-portal-ujat (`member-portal-ujat`)\n- 호출 방식: `GET /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/attendance`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: 로그인 회원의 VOLUNTEER 신청·현재 활성 배정·일정\n- 응답 사용 위치: 실제 출석시각·출결담당 여부·1365 인정시간·availableActions 조회\n- 프론트 조회 키: `get_api_portal_me_ujat_attendance`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: MEMBER_PORTAL_UJAT_ATTENDANCE_SMOKE\n- 목데이터 대체: 출석 상태와 가능 동작은 서버 canonical 응답을 사용합니다.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED_ACTIVE_ASSIGNMENT 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.\n- `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: V39.29 일반회원 마이페이지 UJAT 출석 P0 계약",
+        "operationId": "attendance",
+        "parameters": [
+          {
+            "name": "applicationType",
+            "in": "path",
+            "description": "경로 파라미터입니다. 요청값 출처: 로그인 회원의 VOLUNTEER 신청·현재 활성 배정·일정",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "scheduleId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "요청 성공. 화면은 응답 데이터를 조회 캐시 또는 목록/상세 상태에 반영합니다.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttendanceStatusResponse"
                 }
               }
             }
@@ -42551,19 +42983,19 @@
         }
       }
     },
-    "/api/portal/me/program-applications/{applicationType}/{applicationId}/notices/{postId}/comments/{commentId}": {
+    "/api/portal/me/program-applications/{applicationType}/{applicationId}/notices/{postId}/reactions/{reactionType}": {
       "delete": {
         "tags": [
           "기타 API"
         ],
-        "summary": "내 프로그램 안내사항 댓글 삭제",
-        "description": "### 이 API가 하는 일\n- 내 프로그램 안내사항 댓글 삭제\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `DELETE /api/portal/me/program-applications/{applicationType}/{applicationId}/notices/{postId}/comments/{commentId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: General member portal phase 1 화면 contract",
-        "operationId": "deleteNoticeComment",
+        "summary": "내 프로그램 안내사항 반응 취소",
+        "description": "### 이 API가 하는 일\n- 내 프로그램 안내사항 반응 취소\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 회원포탈 안내사항 상세 (`null`)\n- 프론트 담당 영역: portal-member-notice (`portal-member-notice`)\n- 호출 방식: `DELETE /api/portal/me/program-applications/{applicationType}/{applicationId}/notices/{postId}/reactions/{reactionType}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: authenticated member action\n- 응답 사용 위치: 내 프로그램 안내사항 반응 취소\n- 프론트 조회 키: `delete_api_portal_me_program_applications_applicationtype_applicationid_notices_postid_reactions_reactiontype`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: FRONTEND_READY\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: PORTAL_NOTICE_CMS_SHARED_AGGREGATE_E2E\n- 목데이터 대체: none\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED_PROGRAM_PARTICIPATION 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NONE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS가 생성한 동일 program_post aggregate를 회원포탈 참여자 권한으로 조회·수정; 별도 복제 테이블 금지",
+        "operationId": "deleteNoticeReaction",
         "parameters": [
           {
             "name": "applicationType",
             "in": "path",
-            "description": "경로 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "description": "경로 파라미터입니다. 요청값 출처: authenticated member action",
             "required": true,
             "schema": {
               "type": "string"
@@ -42590,13 +43022,12 @@
             }
           },
           {
-            "name": "commentId",
+            "name": "reactionType",
             "in": "path",
-            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "description": "경로 파라미터입니다. 요청값 출처: authenticated member action",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int64"
+              "type": "string"
             }
           }
         ],
@@ -42606,7 +43037,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/NoticeCommentMutationResponse"
+                  "$ref": "#/components/schemas/NoticeReactionMutationResponse"
                 }
               }
             }
@@ -43046,6 +43477,70 @@
           "activatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "NoticeReactionRequest": {
+        "type": "object",
+        "description": "회원 포탈 안내사항 반응 등록 요청",
+        "properties": {
+          "reactionType": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reactionType"
+        ]
+      },
+      "NoticeReactionMutationResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "postId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reactionType": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeReactionSummary"
+            }
+          },
+          "myReactions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "processedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NoticeReactionSummary": {
+        "type": "object",
+        "properties": {
+          "reactionType": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -44047,6 +44542,17 @@
             "format": "int32"
           },
           "volunteer1365DurationLabel": {
+            "type": "string"
+          },
+          "checkedByMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberCheckedInAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "checkInSource": {
             "type": "string"
           }
         }
@@ -45307,6 +45813,61 @@
           }
         }
       },
+      "AttendanceCheckInResponse": {
+        "type": "object",
+        "description": "회원 포탈 UJAT 봉사자 본인 출석 처리 결과",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendanceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendanceStatus": {
+            "type": "string"
+          },
+          "recordSource": {
+            "type": "string"
+          },
+          "checkedInAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "checkInOpensAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "attendanceManager": {
+            "type": "boolean"
+          },
+          "idempotent": {
+            "type": "boolean"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "AbsenceReasonSubmissionRequest": {
         "type": "object",
         "properties": {
@@ -45459,6 +46020,9 @@
             "format": "int64"
           },
           "created": {
+            "type": "boolean"
+          },
+          "updated": {
             "type": "boolean"
           },
           "deleted": {
@@ -51259,7 +51823,8 @@
           "generatedByAdminId": {
             "type": "integer",
             "format": "int64",
-            "description": "배정 생성 관리자 ID",
+            "deprecated": true,
+            "description": "레거시 호환 필드. 서버는 인증된 CMS 관리자 ID를 사용하며 이 값은 무시합니다.",
             "example": 1
           }
         }
@@ -53869,12 +54434,12 @@
             "type": "string",
             "format": "date-time"
           },
+          "businessEndDate": {
+            "type": "string"
+          },
           "businessYear": {
             "type": "integer",
             "format": "int32"
-          },
-          "businessEndDate": {
-            "type": "string"
           },
           "businessStartDate": {
             "type": "string"
@@ -59925,6 +60490,102 @@
           }
         }
       },
+      "AttendanceStatusResponse": {
+        "type": "object",
+        "description": "회원 포탈 UJAT 봉사자 출석 현황",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentGroupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignmentRole": {
+            "type": "string"
+          },
+          "attendanceManager": {
+            "type": "boolean"
+          },
+          "assignmentStatus": {
+            "type": "string"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "classLabel": {
+            "type": "string"
+          },
+          "partnerParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendanceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendanceStatus": {
+            "type": "string"
+          },
+          "recordSource": {
+            "type": "string"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "memberCheckedInAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "arrivalTime": {
+            "type": "string"
+          },
+          "absenceReason": {
+            "type": "string"
+          },
+          "absenceReasonStatus": {
+            "type": "string"
+          },
+          "internalLate": {
+            "type": "boolean"
+          },
+          "volunteer1365Minutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "checkInOpensAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canCheckIn": {
+            "type": "boolean"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "NoticeListItem": {
         "type": "object",
         "properties": {
@@ -60094,6 +60755,31 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/NoticeComment"
+            }
+          }
+        }
+      },
+      "NoticeReactionListResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "postId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "summary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeReactionSummary"
+            }
+          },
+          "myReactions": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           }
         }

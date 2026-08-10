@@ -736,6 +736,70 @@
           }
         }
       },
+      "NoticeReactionRequest": {
+        "type": "object",
+        "description": "회원 포탈 안내사항 반응 등록 요청",
+        "properties": {
+          "reactionType": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "reactionType"
+        ]
+      },
+      "NoticeReactionMutationResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "postId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reactionType": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeReactionSummary"
+            }
+          },
+          "myReactions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "processedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NoticeReactionSummary": {
+        "type": "object",
+        "properties": {
+          "reactionType": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "MemberProgramRoleSaveRequest": {
         "type": "object",
         "properties": {
@@ -1734,6 +1798,17 @@
             "format": "int32"
           },
           "volunteer1365DurationLabel": {
+            "type": "string"
+          },
+          "checkedByMemberId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "memberCheckedInAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "checkInSource": {
             "type": "string"
           }
         }
@@ -2994,6 +3069,61 @@
           }
         }
       },
+      "AttendanceCheckInResponse": {
+        "type": "object",
+        "description": "회원 포탈 UJAT 봉사자 본인 출석 처리 결과",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendanceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendanceStatus": {
+            "type": "string"
+          },
+          "recordSource": {
+            "type": "string"
+          },
+          "checkedInAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "checkInOpensAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "attendanceManager": {
+            "type": "boolean"
+          },
+          "idempotent": {
+            "type": "boolean"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "AbsenceReasonSubmissionRequest": {
         "type": "object",
         "properties": {
@@ -3146,6 +3276,9 @@
             "format": "int64"
           },
           "created": {
+            "type": "boolean"
+          },
+          "updated": {
             "type": "boolean"
           },
           "deleted": {
@@ -8946,7 +9079,8 @@
           "generatedByAdminId": {
             "type": "integer",
             "format": "int64",
-            "description": "배정 생성 관리자 ID",
+            "deprecated": true,
+            "description": "레거시 호환 필드. 서버는 인증된 CMS 관리자 ID를 사용하며 이 값은 무시합니다.",
             "example": 1
           }
         }
@@ -11556,12 +11690,12 @@
             "type": "string",
             "format": "date-time"
           },
+          "businessEndDate": {
+            "type": "string"
+          },
           "businessYear": {
             "type": "integer",
             "format": "int32"
-          },
-          "businessEndDate": {
-            "type": "string"
           },
           "businessStartDate": {
             "type": "string"
@@ -17612,6 +17746,102 @@
           }
         }
       },
+      "AttendanceStatusResponse": {
+        "type": "object",
+        "description": "회원 포탈 UJAT 봉사자 출석 현황",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicationType": {
+            "type": "string"
+          },
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "participantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "assignmentGroupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignmentRole": {
+            "type": "string"
+          },
+          "attendanceManager": {
+            "type": "boolean"
+          },
+          "assignmentStatus": {
+            "type": "string"
+          },
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "classLabel": {
+            "type": "string"
+          },
+          "partnerParticipantId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendanceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attendanceStatus": {
+            "type": "string"
+          },
+          "recordSource": {
+            "type": "string"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "memberCheckedInAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "arrivalTime": {
+            "type": "string"
+          },
+          "absenceReason": {
+            "type": "string"
+          },
+          "absenceReasonStatus": {
+            "type": "string"
+          },
+          "internalLate": {
+            "type": "boolean"
+          },
+          "volunteer1365Minutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "checkInOpensAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "canCheckIn": {
+            "type": "boolean"
+          },
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "NoticeListItem": {
         "type": "object",
         "properties": {
@@ -17781,6 +18011,31 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/NoticeComment"
+            }
+          }
+        }
+      },
+      "NoticeReactionListResponse": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "postId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "summary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NoticeReactionSummary"
+            }
+          },
+          "myReactions": {
+            "type": "array",
+            "items": {
+              "type": "string"
             }
           }
         }

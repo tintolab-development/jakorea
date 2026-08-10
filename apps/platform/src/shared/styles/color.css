@@ -103,4 +103,17 @@
   --color-status-success-light: #4a88ed;
   --color-status-success-soft: #b6d0fa;
   --color-status-success-strong: #0d3b85;
+
+  /**
+   * Education level (교재·교육 콘텐츠 상태/연령)
+   * Figma list-item right label + left border
+   */
+  --color-education-level-notice: #9e9e9e;
+  --color-education-level-preschool: #d3ba00;
+  --color-education-level-elementary: #a1bc2c;
+  --color-education-level-middle: #46b17b;
+  --color-education-level-high: #0cbdcc;
+  --color-education-level-adult: #4e6ad9;
+  /* Figma list-item default border fallback */
+  --color-education-level-border-fallback: #bebebe;
 }

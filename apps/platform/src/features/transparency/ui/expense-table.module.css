@@ -1,0 +1,184 @@
+.table {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-family: var(--font-family-base);
+}
+
+.colCategory {
+  width: 18%;
+  min-width: 18%;
+}
+
+.colArea {
+  width: 42%;
+  min-width: 42%;
+}
+
+.colRatio {
+  width: 20%;
+  min-width: 20%;
+}
+
+.colAmount {
+  width: 20%;
+  min-width: 20%;
+}
+
+.headCell {
+  box-sizing: border-box;
+  height: 78px;
+  padding: var(--spacing-24) var(--spacing-48);
+  overflow: hidden;
+  background: #fff;
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.headCell:first-child {
+  border-radius: 40px 0 0 40px;
+}
+
+.headCell:last-child {
+  border-radius: 0 40px 40px 0;
+}
+
+/* 그룹(구분) 셀 — 세로 중앙 + 영역 열과의 세로 구분선 */
+.groupCell {
+  box-sizing: border-box;
+  padding: var(--spacing-32) var(--spacing-32);
+  overflow: hidden;
+  border-right: 1px solid var(--color-border-default);
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+  text-align: center;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.cell {
+  box-sizing: border-box;
+  min-height: 78px;
+  height: auto;
+  padding: var(--spacing-24) var(--spacing-32);
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-neutral-cool-100);
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* 비율·금액 — 우측정렬로 자릿수와 무관하게 동일 축 */
+.ratioCell,
+.amountCell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Figma: 각 그룹 섹션 상하 Spacing/32 */
+.groupFirstRow .cell {
+  padding-top: var(--spacing-32);
+}
+
+.groupLastRow .cell {
+  padding-bottom: var(--spacing-32);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.groupStartRow .cell,
+.groupStartRow .groupCell {
+  border-top: 1px solid var(--color-border-default);
+}
+
+/* 소계 행 — primary Headline/Large */
+.subtotalCell {
+  overflow: hidden;
+  border-bottom: none;
+  color: var(--color-primary-500);
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.24px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subtotalCell.ratioCell,
+.subtotalCell.amountCell {
+  text-align: right;
+}
+
+.groupLastRow .subtotalCell {
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+/* 총계 행 — 구분 열 = 직접사업비 이외비용과 동일 위치
+ * 비율·금액 = 위 행과 동일 열 · cool-80 + border-bottom */
+.totalRow .cell {
+  padding-block: var(--spacing-32);
+  border-bottom: 1px solid var(--color-border-default);
+  background: var(--color-neutral-cool-80);
+}
+
+.totalLabel {
+  border-right: 1px solid var(--color-border-default);
+  text-align: center;
+}
+
+@media (--bp-below-pc) {
+  .headCell,
+  .cell,
+  .groupCell {
+    min-height: 56px;
+    padding: var(--spacing-12) var(--spacing-16);
+    font-size: 14px;
+  }
+
+  .groupFirstRow .cell {
+    padding-top: var(--spacing-16);
+  }
+
+  .groupLastRow .cell {
+    padding-bottom: var(--spacing-16);
+  }
+
+  .subtotalCell {
+    font-size: 16px;
+  }
+
+  .headCell:first-child {
+    border-radius: 16px 0 0 16px;
+  }
+
+  .headCell:last-child {
+    border-radius: 0 16px 16px 0;
+  }
+}

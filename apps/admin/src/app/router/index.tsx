@@ -126,6 +126,10 @@ export const router = createBrowserRouter([
       { path: 'impact/stories/:id', element: <ImpactStoryDetailPage /> },
       { path: 'education/fields', element: <EducationFieldsPage /> },
       { path: 'education/textbooks', element: <EducationTextbooksPage /> },
+      {
+        path: 'ja-korea/notice-fields',
+        element: <Navigate to="/education/fields" replace />,
+      },
       { path: 'sponsor/individual', element: <IndividualDonationPage /> },
       { path: 'sponsor/corporate/guide', element: <CorporateGuidePage /> },
       { path: 'sponsor/corporate/partners', element: <CorporatePartnersPage /> },

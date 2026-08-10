@@ -26,6 +26,7 @@
   max-height: 100%;
   flex-direction: column;
   align-items: flex-start;
+  gap: var(--spacing-28);
   overflow: hidden;
   padding: var(--spacing-28);
   border: 1px solid var(--color-border-default);
@@ -35,6 +36,19 @@
     0 0 12px 3px rgb(14 42 53 / 8%),
     0 14px 23px 0 rgb(14 42 53 / 10%);
   outline: none;
+}
+
+.panelSm {
+  width: var(--width-popup-sm, 440px);
+}
+
+.panelMd {
+  width: var(--width-popup-md, 600px);
+}
+
+.panelLg {
+  width: var(--width-popup-lg, 960px);
+  max-height: min(960px, calc(100dvh - 32px));
 }
 
 .title {

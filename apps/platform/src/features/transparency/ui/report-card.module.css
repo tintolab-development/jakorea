@@ -1,0 +1,88 @@
+.card {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.cover {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--radius-16);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.annual .cover {
+  aspect-ratio: 4 / 5;
+}
+
+.audit .cover {
+  aspect-ratio: 380 / 240;
+}
+
+.coverLabel {
+  padding: var(--spacing-16);
+  color: var(--color-neutral-white);
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: -0.24px;
+  text-align: center;
+  white-space: pre-line;
+  text-shadow: 0 1px 8px rgb(13 35 44 / 20%);
+  user-select: none;
+}
+
+.downloadButton {
+  position: absolute;
+  right: var(--spacing-16);
+  bottom: var(--spacing-16);
+  display: flex;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-999);
+  background: var(--color-neutral-white);
+  box-shadow: 0 4px 12px 0 rgb(34 64 77 / 10%);
+  cursor: pointer;
+}
+
+.downloadButton:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.downloadIcon {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.meta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.title {
+  margin: 0;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.date {
+  margin: 0;
+}

@@ -1,0 +1,149 @@
+.root {
+  display: block;
+  width: min(100%, 1440px);
+  min-width: 0;
+}
+
+/**
+ * 지도 프레임 1440×728.
+ * 확대·이동 잠금: pointer-events none + Roughmap 컨트롤 숨김.
+ * OSM/카카오 임베드 하단 attribution 바는 overflow로 클립한다.
+ */
+.mapFrame {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 1440 / 728;
+  max-height: 728px;
+  overflow: hidden;
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-80);
+  /* 휠·드래그·핀치 줌 차단 */
+  pointer-events: none;
+  user-select: none;
+  touch-action: none;
+}
+
+.mapHost {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.mapHost :global(.leaflet-container) {
+  width: 100%;
+  height: 100%;
+  background: var(--color-neutral-cool-80);
+}
+
+.mapHost :global(.leaflet-control-container) {
+  display: none !important;
+}
+
+/* 카카오맵 유사 A핀 + 라벨 마커 */
+.mapHost :global(.ja-kakao-marker-wrap) {
+  background: transparent;
+  border: 0;
+}
+
+.mapHost :global(.ja-kakao-marker) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 160px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.mapHost :global(.ja-kakao-marker__bubble) {
+  box-sizing: border-box;
+  max-width: 160px;
+  padding: 6px 10px;
+  border: 1px solid #3d3d3d;
+  border-radius: 4px;
+  background: #fff;
+  color: #3d3d3d;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+}
+
+.mapHost :global(.ja-kakao-marker__pin) {
+  position: relative;
+  display: flex;
+  width: 28px;
+  height: 36px;
+  align-items: flex-start;
+  justify-content: center;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 25%));
+}
+
+.mapHost :global(.ja-kakao-marker__pin)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: 50% 50% 50% 0;
+  background: #3c7eff;
+  transform: translateX(-50%) rotate(-45deg);
+}
+
+.mapHost :global(.ja-kakao-marker__pin) span {
+  position: relative;
+  z-index: 1;
+  margin-top: 5px;
+  color: #fff;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mapHost :global(iframe) {
+  display: block;
+  width: 100%;
+  /* 하단 attribution(~28px)을 프레임 밖으로 밀어 클립 */
+  height: calc(100% + 28px);
+  max-width: 100%;
+  min-height: 0;
+  border: 0;
+  pointer-events: none;
+}
+
+.mapHost :global(.root_daum_roughmap),
+.mapHost :global(.root_daum_roughmap_landing) {
+  width: 100% !important;
+  max-width: 100%;
+  height: calc(100% + 28px) !important;
+}
+
+.mapHost :global(.wrap_map),
+.mapHost :global(.map) {
+  width: 100% !important;
+  max-width: 100%;
+  height: 100% !important;
+}
+
+/* 카카오 Roughmap 확대/축소·컨트롤러 숨김 */
+.mapHost :global(.wrap_controllers),
+.mapHost :global(.wrap_btn_zoom),
+.mapHost :global(.btn_zoom),
+.mapHost :global(.zoom),
+.mapHost :global(.map_control) {
+  display: none !important;
+}
+
+@media (--bp-below-pc) {
+  .mapFrame {
+    max-height: none;
+  }
+}

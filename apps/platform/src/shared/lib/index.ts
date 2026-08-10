@@ -27,6 +27,17 @@ export type { EmailIdErrorCode, EmailIdValidationResult } from './email-id'
 export { platformBreakpoints, platformMediaQueries } from './breakpoints'
 export type { PlatformBreakpointKey } from './breakpoints'
 export {
+  EDUCATION_LEVEL_BORDER_FALLBACK_HEX,
+  EDUCATION_LEVEL_CSS_VARS,
+  EDUCATION_LEVEL_HEX,
+  EDUCATION_LEVEL_KEYS,
+  EDUCATION_LEVEL_LABELS,
+  getEducationLevelColor,
+  getEducationLevelLabel,
+  isEducationLevelKey,
+} from './education-level-colors'
+export type { EducationLevelKey } from './education-level-colors'
+export {
   downloadAttachment,
   getAttachmentFileExtension,
   getEmptyAttachmentMimeType,

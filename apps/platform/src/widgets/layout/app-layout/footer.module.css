@@ -4,10 +4,10 @@
 }
 
 /**
- * Horizontal shell
- * - Mobile (~1079): page padding 16
- * - PC compact (1080~1599): tighter inset, fluid width
- * - PC full (1600~): Figma 240px side inset (시안 기준)
+ * Horizontal shell (width 기준)
+ * - Mobile (~1079): padding 16
+ * - PC compact (1080~1599): padding 40
+ * - PC full (1600~): content-shell 1440 기준 fluid inset (1920 → 240)
  */
 .shell {
   box-sizing: border-box;
@@ -46,6 +46,7 @@
   font-style: normal;
   font-weight: 400;
   line-height: 160%;
+  text-decoration: none;
 }
 
 .relatedSitesLabel {
@@ -57,9 +58,16 @@
   line-height: 160%;
 }
 
+.relatedSitesRoot {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+}
+
 .relatedSites {
   display: flex;
   width: 100%;
+  max-width: 100%;
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-12);
@@ -80,6 +88,105 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+  transition: transform 160ms ease;
+}
+
+.relatedSitesChevronOpen {
+  transform: rotate(180deg);
+}
+
+.relatedSitesDropdown {
+  position: absolute;
+  top: calc(100% + var(--spacing-8));
+  right: 0;
+  z-index: 20;
+  display: flex;
+  box-sizing: border-box;
+  width: 240px;
+  height: 180px;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  border-radius: var(--radius-8);
+  background: var(--color-neutral-white);
+  /* Dropdown */
+  box-shadow: 0 4px 12px 0 rgb(34 64 77 / 10%);
+}
+
+.relatedSitesList {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  /* OS 기본 스크롤바 숨김 — 커스텀 thumb(3×24)로 Windows/Mac 통일 */
+  scrollbar-width: none;
+}
+
+.relatedSitesList::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.relatedSitesScrollbar {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  bottom: 0;
+  display: flex;
+  width: 3px;
+  align-self: stretch;
+  pointer-events: none;
+}
+
+.relatedSitesScrollbarThumb {
+  width: 3px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 60px;
+  background: var(--color-neutral-cool-200);
+  will-change: transform;
+}
+
+.relatedSitesOption {
+  display: flex;
+  width: 100%;
+  align-self: stretch;
+}
+
+.relatedSitesLink {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 16px;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  overflow: hidden;
+  color: var(--color-neutral-cool-500);
+  text-align: left;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+.relatedSitesLink:hover,
+.relatedSitesLink:focus-visible {
+  background: var(--color-element-hover-strong);
+  color: var(--color-primary-500);
+  outline: none;
 }
 
 .contentArea .shell {
@@ -207,34 +314,40 @@
   white-space: nowrap;
 }
 
-/* ── PC shared (compact + full) · 1080+ ── */
+/* ── PC shared · 1080+ ──
+ * 드롭다운은 항상 240px 고정 (풀폭 확장 금지).
+ * 링크는 남는 폭을 쓰며 gap 은 구간별로 줄인다.
+ */
 @media (--bp-pc-up) {
   .navigationArea .shell {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    /* 링크 그룹 + 드롭다운 묶음을 가운데 정렬 */
-    justify-content: center;
-    /* 가장 우측 텍스트 ↔ 드롭다운 */
-    gap: 150px;
+    justify-content: space-between;
+    gap: var(--spacing-24);
     min-height: var(--spacing-68);
     padding-block: 0;
   }
 
   .navigation {
     display: flex;
-    flex: 0 1 auto;
-    flex-wrap: nowrap;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
     align-items: center;
-    /* 텍스트 영역 사이 갭 */
-    gap: var(--spacing-48);
+    gap: var(--spacing-12) var(--spacing-16);
     min-width: 0;
-    overflow: visible;
+  }
+
+  .relatedSitesRoot {
+    width: 240px;
+    max-width: 240px;
+    flex: 0 0 240px;
   }
 
   .relatedSites {
     width: 240px;
-    flex-shrink: 0;
+    max-width: 240px;
+    flex: 0 0 240px;
     border: 0;
     padding: 8px 16px;
   }
@@ -269,7 +382,6 @@
     letter-spacing: 0;
   }
 
-  /* 시안: nav ↔ 콘텐츠 60 · 하단 60 */
   .contentArea .shell {
     gap: var(--spacing-24);
     padding-block: var(--spacing-60);
@@ -319,37 +431,67 @@
   }
 }
 
-/* ── PC compact · 1080~1599 ── */
+/* ── PC compact · 1080~1599 (예: 1300) ──
+ * 콘텐츠 폭이 좁아 링크 gap / 링크↔드롭다운 gap 을 타이트하게 유지.
+ */
 @media (--bp-pc-compact) {
   .shell {
     max-width: none;
-    /* compact: 시안 full(240)보다 타이트, mobile(16)보다 넓게 */
     padding-inline: var(--spacing-40);
   }
 
-  /* 상단 내비: 48 / 150 유지 · 폭 부족 시 줄바꿈 (gap 유지) */
   .navigationArea .shell {
-    gap: 150px;
+    gap: var(--spacing-24);
   }
 
   .navigation {
-    gap: var(--spacing-48);
+    gap: var(--spacing-8) var(--spacing-16);
+  }
+
+  .navigationButton {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 160%;
+    letter-spacing: -0.14px;
+  }
+
+  .relatedSitesLabel {
+    font-size: 14px;
+    line-height: 160%;
+    letter-spacing: -0.14px;
   }
 }
 
-/* ── PC full · 1600~ (시안: 좌우 240) ── */
+/* ── PC full · 1600~ ── */
 @media (--bp-pc-full-up) {
   .shell {
     max-width: none;
-    padding-inline: 240px;
+    padding-inline: max(
+      var(--spacing-40),
+      calc((100% - var(--content-shell-max-width)) / 2)
+    );
   }
 
+  .navigationArea .shell {
+    justify-content: center;
+    gap: clamp(var(--spacing-40), 6vw, 150px);
+  }
+
+  .navigation {
+    flex: 0 1 auto;
+    gap: var(--spacing-24) var(--spacing-32);
+  }
+}
+
+/* ── PC wide · 1920~ (시안: 링크 gap 48 · 링크↔드롭다운 150) ── */
+@media (min-width: 1920px) {
   .navigationArea .shell {
     justify-content: center;
     gap: 150px;
   }
 
   .navigation {
+    flex-wrap: nowrap;
     gap: var(--spacing-48);
   }
 }
