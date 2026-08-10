@@ -38,7 +38,7 @@ import { ResultDetailPage, ResultsPage } from '@/pages/results'
 import { TextbooksPage } from '@/pages/education/textbooks'
 import { DirectionsPage } from '@/pages/about/directions'
 import { PeoplePage } from '@/pages/about/people'
-import { TransparencyPage } from '@/pages/about/transparency'
+import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
 import { DesignSystemPage } from '@/pages/design-system'
 import { YoutubeEmbedPage } from '@/pages/youtube-embed'
 import { AppLayoutRoute } from './app-layout-route'
@@ -64,6 +64,14 @@ export const router = createBrowserRouter([
       { path: '/about/people', element: <PeoplePage /> },
       { path: '/about/directions', element: <DirectionsPage /> },
       { path: '/about/transparency', element: <TransparencyPage /> },
+      {
+        path: '/about/transparency/annual-reports',
+        element: <TransparencyReportsPage type="annual" />,
+      },
+      {
+        path: '/about/transparency/audit-reports',
+        element: <TransparencyReportsPage type="audit" />,
+      },
     ],
   },
   {
