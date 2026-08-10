@@ -1,6 +1,7 @@
 import { isNoticesPath, NOTICES_PATH } from '@/features/notice'
 import { isProgramsPath, PROGRAMS_PATH } from '@/features/program'
 import { isResultsPath, RESULTS_PATH } from '@/features/result'
+import { isTextbooksPath, TEXTBOOKS_PATH } from '@/features/textbook'
 import { MYPAGE_PATH } from '@/features/mypage'
 import { getDevAuthLoggedIn } from '@/shared/lib'
 import logOutIconUrl from '../image/icon/log-out.svg'
@@ -43,7 +44,7 @@ export const navigationGroups = [
       { label: '경제금융' },
       { label: '기업가정신' },
       { label: '디지털리터러시' },
-      { label: '교재' },
+      { label: '교재', href: TEXTBOOKS_PATH },
     ],
   },
   {
@@ -96,6 +97,10 @@ export function getLoggedInActionRoute(label: string) {
 export function getActiveNavigationItem(pathname: string): NavigationItemLabel {
   if (isProgramsPath(pathname) || isResultsPath(pathname)) {
     return '참여하기'
+  }
+
+  if (isTextbooksPath(pathname)) {
+    return '교육 소개'
   }
 
   if (isNoticesPath(pathname)) {
