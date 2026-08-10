@@ -190,6 +190,7 @@ export function EducationFieldsPage() {
         title: '사업분야명',
         key: 'name',
         width: 160,
+        align: 'center',
         render: (_value, record) => {
           const value = draft?.rows[record.id]?.name ?? record.name
           return (
@@ -216,6 +217,7 @@ export function EducationFieldsPage() {
       {
         title: '설명 텍스트',
         key: 'description',
+        align: 'center',
         render: (_value, record) => {
           const value = draft?.rows[record.id]?.description ?? record.description
           return (
@@ -223,12 +225,12 @@ export function EducationFieldsPage() {
               className={
                 isEditing
                   ? 'education-fields-inline-field education-fields-inline-field--edit cms-textarea--fixed-rows'
-                  : 'education-fields-inline-field education-fields-inline-field--readonly cms-textarea--fixed-rows'
+                  : 'education-fields-inline-field education-fields-inline-field--readonly'
               }
               inputSize="medium"
               width="100%"
-              rows={2}
-              autoSize={false}
+              rows={isEditing ? 2 : 1}
+              autoSize={isEditing ? false : { minRows: 1, maxRows: 2 }}
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
@@ -245,6 +247,7 @@ export function EducationFieldsPage() {
         title: '안내사항',
         key: 'guideText',
         width: 280,
+        align: 'center',
         render: (_value, record) => {
           const value = draft?.rows[record.id]?.guideText ?? record.guideText
           return (
@@ -252,12 +255,12 @@ export function EducationFieldsPage() {
               className={
                 isEditing
                   ? 'education-fields-inline-field education-fields-inline-field--edit cms-textarea--fixed-rows'
-                  : 'education-fields-inline-field education-fields-inline-field--readonly cms-textarea--fixed-rows'
+                  : 'education-fields-inline-field education-fields-inline-field--readonly'
               }
               inputSize="medium"
               width="100%"
-              rows={2}
-              autoSize={false}
+              rows={isEditing ? 2 : 1}
+              autoSize={isEditing ? false : { minRows: 1, maxRows: 2 }}
               value={value}
               placeholder={GUIDE_PLACEHOLDER}
               readOnly={!isEditing}

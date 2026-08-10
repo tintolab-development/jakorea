@@ -1,0 +1,1 @@
+export { TransparencyReportsPage } from './page'

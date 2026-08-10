@@ -1,0 +1,96 @@
+.table {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-family: var(--font-family-base);
+}
+
+/* Figma: 구분 셀 ≈844 / 비율·금액 균등(≈314+314) → 56% / 22% / 22% */
+.colCategory {
+  width: 56%;
+}
+
+.colRatio {
+  width: 22%;
+}
+
+.colAmount {
+  width: 22%;
+}
+
+.headCell {
+  box-sizing: border-box;
+  height: 78px;
+  padding: var(--spacing-24) var(--spacing-48);
+  overflow: hidden;
+  background: #fff;
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.headCell:first-child {
+  border-radius: 40px 0 0 40px;
+}
+
+.headCell:last-child {
+  border-radius: 0 40px 40px 0;
+}
+
+.cell {
+  box-sizing: border-box;
+  height: 78px;
+  padding: var(--spacing-24) var(--spacing-48);
+  overflow: hidden;
+  color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.row .cell {
+  border-bottom: 1px solid var(--color-neutral-cool-100);
+}
+
+/* Figma: 총계 행 상하 Spacing/32 */
+.totalRow .cell {
+  height: auto;
+  padding-block: var(--spacing-32);
+  background: var(--color-neutral-cool-80);
+  color: #2f8a4f;
+}
+
+@media (--bp-below-pc) {
+  .headCell,
+  .cell {
+    height: 56px;
+    padding: var(--spacing-12) var(--spacing-16);
+    font-size: 14px;
+  }
+
+  .headCell:first-child {
+    border-radius: 16px 0 0 16px;
+  }
+
+  .headCell:last-child {
+    border-radius: 0 16px 16px 0;
+  }
+}

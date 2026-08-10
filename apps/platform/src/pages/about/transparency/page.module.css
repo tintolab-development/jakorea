@@ -1,0 +1,123 @@
+.page {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  overflow: visible;
+}
+
+/**
+ * 투명경영 히어로 배경 — transparency-gradient.png
+ * 헤더 영역까지 확장 (transparent header / layout: hero)
+ * background-image 는 page.tsx 에서 asset import 로 주입
+ */
+.pageBackground {
+  position: absolute;
+  top: calc(-1 * (var(--app-header-height) + var(--content-padding-block)));
+  left: 50%;
+  z-index: 0;
+  width: 100vw;
+  height: 1000px;
+  pointer-events: none;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+  transform: translateX(-50%);
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  padding-inline: var(--page-padding-x);
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-20);
+  /* 상단 문구 ↔ 원칙 목록 */
+  margin-bottom: 170px;
+}
+
+.heroLabel,
+.heroTitle {
+  margin: 0;
+}
+
+.principles {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--spacing-120);
+}
+
+/**
+ * 재정(수익·지출) 영역 — 풀블리드 연회색 배경 밴드 (시안).
+ */
+.financeArea {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-120);
+  padding-block: var(--spacing-100) var(--spacing-120);
+}
+
+.financeArea::before {
+  position: absolute;
+  top: 0;
+  bottom: calc(-1 * var(--content-padding-block));
+  left: 50%;
+  z-index: -1;
+  width: 100vw;
+  content: '';
+  background-color: var(--color-neutral-cool-50);
+  transform: translateX(-50%);
+}
+
+.financeSection {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-40);
+}
+
+/* 차트 범례(프로그램 운영비·사무비 등) ↔ 테이블 헤더 */
+.financeTable {
+  margin-top: calc(66px - var(--spacing-40));
+}
+
+.financeTitle {
+  margin: 0;
+}
+
+@media (--bp-below-pc) {
+  .hero {
+    margin-bottom: var(--spacing-48);
+  }
+
+  .principles {
+    margin-bottom: var(--spacing-64);
+  }
+
+  .financeArea {
+    gap: var(--spacing-64);
+    padding-block: var(--spacing-48) var(--spacing-64);
+  }
+
+  .financeSection {
+    gap: var(--spacing-24);
+  }
+
+  .financeTable {
+    margin-top: 0;
+  }
+}
