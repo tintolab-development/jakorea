@@ -1,0 +1,1 @@
+export { TemporaryPage } from './page'
