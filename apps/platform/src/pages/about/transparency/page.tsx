@@ -49,7 +49,7 @@ export function TransparencyPage() {
             <PFText
               as="h2"
               id="revenue-total"
-              typo="hd-sm"
+              typo="page-title-md"
               color="black"
               className={styles.financeTitle}
             >
@@ -60,17 +60,19 @@ export function TransparencyPage() {
               height={700}
               ariaLabel="수익총계 도넛 차트"
             />
-            <RevenueTable
-              summary={MOCK_REVENUE_SUMMARY}
-              order={MOCK_REVENUE_TABLE_ORDER}
-            />
+            <div className={styles.financeTable}>
+              <RevenueTable
+                summary={MOCK_REVENUE_SUMMARY}
+                order={MOCK_REVENUE_TABLE_ORDER}
+              />
+            </div>
           </section>
 
           <section className={styles.financeSection} aria-labelledby="expense-total">
             <PFText
               as="h2"
               id="expense-total"
-              typo="hd-sm"
+              typo="page-title-md"
               color="black"
               className={styles.financeTitle}
             >
@@ -81,10 +83,12 @@ export function TransparencyPage() {
               height={900}
               ariaLabel="지출총계 도넛 차트"
             />
-            <ExpenseTable
-              groups={MOCK_EXPENSE_DETAIL_GROUPS}
-              totalAmount={MOCK_EXPENSE_SUMMARY.totalAmount}
-            />
+            <div className={styles.financeTable}>
+              <ExpenseTable
+                groups={MOCK_EXPENSE_DETAIL_GROUPS}
+                totalAmount={MOCK_EXPENSE_SUMMARY.totalAmount}
+              />
+            </div>
           </section>
 
           <ReportLinks />

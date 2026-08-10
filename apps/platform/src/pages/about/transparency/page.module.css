@@ -89,6 +89,11 @@
   gap: var(--spacing-40);
 }
 
+/* 차트 범례(프로그램 운영비·사무비 등) ↔ 테이블 헤더 */
+.financeTable {
+  margin-top: calc(66px - var(--spacing-40));
+}
+
 .financeTitle {
   margin: 0;
 }
@@ -109,5 +114,9 @@
 
   .financeSection {
     gap: var(--spacing-24);
+  }
+
+  .financeTable {
+    margin-top: 0;
   }
 }
