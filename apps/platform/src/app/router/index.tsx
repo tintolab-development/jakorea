@@ -36,6 +36,7 @@ import {
 import { NoticeDetailPage, NoticesPage } from '@/pages/notices'
 import { ResultDetailPage, ResultsPage } from '@/pages/results'
 import { TextbooksPage } from '@/pages/education/textbooks'
+import { PeoplePage } from '@/pages/about/people'
 import { DesignSystemPage } from '@/pages/design-system'
 import { YoutubeEmbedPage } from '@/pages/youtube-embed'
 import { AppLayoutRoute } from './app-layout-route'
@@ -58,6 +59,7 @@ export const router = createBrowserRouter([
       { path: '/results', element: <ResultsPage /> },
       { path: '/notices', element: <NoticesPage /> },
       { path: '/education/textbooks', element: <TextbooksPage /> },
+      { path: '/about/people', element: <PeoplePage /> },
     ],
   },
   {
