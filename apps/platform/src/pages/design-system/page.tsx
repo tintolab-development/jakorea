@@ -38,6 +38,7 @@ import {
   PFToggle,
   PFText,
   PFTextInput,
+  PFDateInput,
   PFSelect,
   PFSort,
 } from '@/shared/ui'
@@ -146,6 +147,24 @@ const typographyTokenSpecs = [
     weight: '600',
     lineHeight: '150%',
     letterSpacing: '-0.2px',
+  },
+  {
+    token: 'typo-form-section-title',
+    pfText: 'form-section-title' as const,
+    figma: 'Form/SectionTitle',
+    size: '20px',
+    weight: '600',
+    lineHeight: '150%',
+    letterSpacing: '-0.2px',
+  },
+  {
+    token: 'typo-form-field-label',
+    pfText: 'form-field-label' as const,
+    figma: 'Form/FieldLabel',
+    size: '16px',
+    weight: '700',
+    lineHeight: '140%',
+    letterSpacing: '0',
   },
   {
     token: 'typo-bd-lg-rg',
@@ -1461,6 +1480,39 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
                 label="Label"
                 placeholder="text"
                 defaultValue="text"
+                error
+                message="오류 메시지"
+                messageStatus="error"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFDateInput
+        </PFText>
+        <div className={styles.inputStack}>
+          {inputSizes.map(size => (
+            <div className={styles.inputRow} key={size}>
+              <PFText as="span" typo="label-md" color="neutral-cool-500">
+                {size}
+              </PFText>
+              <PFDateInput size={size} label="Label" placeholder="text" required />
+              <PFDateInput size={size} label="Label" placeholder="text" defaultValue="2026-03-21" />
+              <PFDateInput
+                size={size}
+                label="Label"
+                placeholder="text"
+                defaultValue="2026-03-21"
+                disabled
+              />
+              <PFDateInput
+                size={size}
+                label="Label"
+                placeholder="text"
+                defaultValue="2026-03-21"
                 error
                 message="오류 메시지"
                 messageStatus="error"
