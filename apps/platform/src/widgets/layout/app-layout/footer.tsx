@@ -1,3 +1,4 @@
+import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DIRECTIONS_PATH } from '@/features/directions'
 import jaLogoGrayUrl from '@/shared/assets/brand/ja-logo-gray.svg'
@@ -21,6 +22,18 @@ const footerNavItems = [
   { label: '온라인 학습관리' },
 ] as const
 
+const relatedSites = [
+  { label: 'JA Worldwide', href: 'https://www.jaworldwide.org/' },
+  { label: 'JA Africa', href: 'https://ja-africa.org/' },
+  { label: 'JA Americas', href: 'https://www.jaamericas.org/' },
+  { label: 'JA Asia Pacific', href: 'https://www.jaasiapacific.org/' },
+  { label: 'JA Europe', href: 'https://www.jaeurope.org/' },
+  { label: 'INJAZ Al-Arab', href: 'https://injazalarab.org/' },
+  { label: 'Junior Achievement USA', href: 'https://jausa.ja.org/' },
+] as const
+
+const RELATED_SITES_SCROLL_THUMB_HEIGHT = 24
+
 const companyAddress =
   '사단법인 제이에이코리아 서울특별시 강서구 마곡중앙로 171 마곡나루역 프라이빗타워2차 714호'
 
@@ -39,6 +52,77 @@ const partnerLogos = [
 const copyrightYear = new Date().getFullYear()
 
 export function Footer() {
+  const relatedSitesListId = useId()
+  const relatedSitesRef = useRef<HTMLDivElement>(null)
+  const relatedSitesTriggerRef = useRef<HTMLButtonElement>(null)
+  const relatedSitesListRef = useRef<HTMLUListElement>(null)
+  const [isRelatedSitesOpen, setIsRelatedSitesOpen] = useState(false)
+  const [scrollThumbTop, setScrollThumbTop] = useState(0)
+  const [showScrollThumb, setShowScrollThumb] = useState(false)
+
+  const updateRelatedSitesScrollThumb = () => {
+    const list = relatedSitesListRef.current
+    if (!list) return
+
+    const { scrollTop, scrollHeight, clientHeight } = list
+    const overflow = scrollHeight - clientHeight
+    if (overflow <= 0) {
+      setShowScrollThumb(false)
+      setScrollThumbTop(0)
+      return
+    }
+
+    const trackTravel = clientHeight - RELATED_SITES_SCROLL_THUMB_HEIGHT
+    setShowScrollThumb(true)
+    setScrollThumbTop((scrollTop / overflow) * trackTravel)
+  }
+
+  useEffect(() => {
+    if (!isRelatedSitesOpen) return
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const root = relatedSitesRef.current
+      if (!root) return
+      if (event.target instanceof Node && !root.contains(event.target)) {
+        setIsRelatedSitesOpen(false)
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsRelatedSitesOpen(false)
+        relatedSitesTriggerRef.current?.focus()
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isRelatedSitesOpen])
+
+  useEffect(() => {
+    if (!isRelatedSitesOpen) {
+      setShowScrollThumb(false)
+      setScrollThumbTop(0)
+      return
+    }
+
+    const frame = requestAnimationFrame(updateRelatedSitesScrollThumb)
+    const list = relatedSitesListRef.current
+    if (!list) return () => cancelAnimationFrame(frame)
+
+    list.addEventListener('scroll', updateRelatedSitesScrollThumb)
+    window.addEventListener('resize', updateRelatedSitesScrollThumb)
+    return () => {
+      cancelAnimationFrame(frame)
+      list.removeEventListener('scroll', updateRelatedSitesScrollThumb)
+      window.removeEventListener('resize', updateRelatedSitesScrollThumb)
+    }
+  }, [isRelatedSitesOpen])
+
   return (
     <footer className={styles.footer}>
       <div className={styles.navigationArea}>
@@ -56,15 +140,64 @@ export function Footer() {
               )
             )}
           </nav>
-          <button className={styles.relatedSites} type="button" aria-haspopup="listbox">
-            <span className={styles.relatedSitesLabel}>관련 사이트 보기</span>
-            <img
-              className={styles.relatedSitesChevron}
-              src={chevronDownGrayUrl}
-              alt=""
-              aria-hidden="true"
-            />
-          </button>
+          <div className={styles.relatedSitesRoot} ref={relatedSitesRef}>
+            <button
+              ref={relatedSitesTriggerRef}
+              className={styles.relatedSites}
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={isRelatedSitesOpen}
+              aria-controls={isRelatedSitesOpen ? relatedSitesListId : undefined}
+              onClick={() => setIsRelatedSitesOpen(open => !open)}
+            >
+              <span className={styles.relatedSitesLabel}>관련 사이트 보기</span>
+              <img
+                className={[
+                  styles.relatedSitesChevron,
+                  isRelatedSitesOpen ? styles.relatedSitesChevronOpen : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                src={chevronDownGrayUrl}
+                alt=""
+                aria-hidden="true"
+              />
+            </button>
+
+            {isRelatedSitesOpen ? (
+              <div className={styles.relatedSitesDropdown}>
+                <ul
+                  ref={relatedSitesListRef}
+                  id={relatedSitesListId}
+                  className={styles.relatedSitesList}
+                  role="listbox"
+                  aria-label="관련 사이트"
+                >
+                  {relatedSites.map(site => (
+                    <li key={site.label} className={styles.relatedSitesOption} role="option">
+                      <a
+                        className={styles.relatedSitesLink}
+                        href={site.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setIsRelatedSitesOpen(false)}
+                      >
+                        {site.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+                {showScrollThumb ? (
+                  <div className={styles.relatedSitesScrollbar} aria-hidden="true">
+                    <div
+                      className={styles.relatedSitesScrollbarThumb}
+                      style={{ transform: `translateY(${scrollThumbTop}px)` }}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 
