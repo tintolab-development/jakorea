@@ -187,6 +187,7 @@ export function EducationFieldsPage() {
         title: '사업분야명',
         key: 'name',
         width: 160,
+        align: 'center',
         render: (_value, record) => {
           const value = draft?.rows[record.id]?.name ?? record.name
           return (
@@ -213,6 +214,7 @@ export function EducationFieldsPage() {
       {
         title: '설명 텍스트',
         key: 'description',
+        align: 'center',
         render: (_value, record) => {
           const value = draft?.rows[record.id]?.description ?? record.description
           return (
@@ -242,6 +244,7 @@ export function EducationFieldsPage() {
         title: '안내사항',
         key: 'guideText',
         width: 280,
+        align: 'center',
         render: (_value, record) => {
           const value = draft?.rows[record.id]?.guideText ?? record.guideText
           return (

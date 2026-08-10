@@ -150,12 +150,28 @@
   max-height: 3em !important;
 }
 
-/* 조회 모드 textarea resize 핸들 숨김 */
+/* 조회 = 가로 중앙 / 수정 = 좌측 */
+.education-fields-table
+  .education-fields-inline-field--readonly
+  .cms-input__inner
+  .ant-input,
 .education-fields-table
   .education-fields-inline-field--readonly
   .cms-textarea__inner
   textarea.ant-input {
+  text-align: center !important;
   resize: none !important;
+}
+
+.education-fields-table
+  .education-fields-inline-field--edit
+  .cms-input__inner
+  .ant-input,
+.education-fields-table
+  .education-fields-inline-field--edit
+  .cms-textarea__inner
+  textarea.ant-input {
+  text-align: left !important;
 }
 
 .education-fields-page .ant-switch-checked {
