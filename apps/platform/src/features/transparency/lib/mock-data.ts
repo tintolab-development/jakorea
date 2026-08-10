@@ -55,7 +55,7 @@ export const MOCK_TRANSPARENCY_PRINCIPLES: readonly TransparencyPrinciple[] = [
   },
 ]
 
-/** 수익총계 도넛 팔레트 — 시안 연두·그린·딥그린 */
+/** 수익총계 도넛 — admin 수입&지출 graph seed 와 동일 */
 export const MOCK_REVENUE_SUMMARY: FinanceSummary = {
   totalLabel: '수익총계(원)',
   totalAmount: 6_685_750_266,
@@ -63,28 +63,28 @@ export const MOCK_REVENUE_SUMMARY: FinanceSummary = {
     {
       id: 'corporate',
       label: '기업기부금',
-      percent: '45.00',
-      amount: 3_008_587_620,
+      percent: '98.86',
+      amount: 6_609_656_834,
       color: '#bbd153',
-    },
-    {
-      id: 'individual',
-      label: '개인기부금',
-      percent: '35.00',
-      amount: 2_340_012_593,
-      color: '#46b17b',
     },
     {
       id: 'non-business',
       label: '사업외수익',
-      percent: '20.00',
-      amount: 1_337_150_053,
+      percent: '0.95',
+      amount: 63_834_713,
       color: '#006b5e',
+    },
+    {
+      id: 'individual',
+      label: '개인기부금',
+      percent: '0.18',
+      amount: 12_258_719,
+      color: '#46b17b',
     },
   ],
 }
 
-/** 지출총계 도넛 팔레트 — 시안 딥틸~시안·옐로·레드 */
+/** 지출총계 도넛 — admin 수입&지출 graph seed 와 동일 */
 export const MOCK_EXPENSE_SUMMARY: FinanceSummary = {
   totalLabel: '지출총계(원)',
   totalAmount: 6_012_724_646,
@@ -92,43 +92,43 @@ export const MOCK_EXPENSE_SUMMARY: FinanceSummary = {
     {
       id: 'program',
       label: '프로그램 운영비',
-      percent: '40.00',
-      amount: 2_405_089_858,
+      percent: '94.46',
+      amount: 5_679_666_252,
       color: '#2b6173',
     },
     {
       id: 'office',
       label: '사무비',
-      percent: '25.00',
-      amount: 1_503_181_162,
+      percent: '4.27',
+      amount: 256_937_982,
       color: '#01a1af',
     },
     {
       id: 'non-business',
       label: '사업외비용',
-      percent: '15.00',
-      amount: 901_908_697,
+      percent: '0.79',
+      amount: 47_338_878,
       color: '#4cd9e5',
     },
     {
       id: 'promotion',
       label: '기획/홍보비',
-      percent: '10.00',
-      amount: 601_272_465,
+      percent: '0.20',
+      amount: 12_239_870,
       color: '#95e8f0',
     },
     {
       id: 'fundraising',
       label: '기부모집및관리비',
-      percent: '6.00',
-      amount: 360_763_479,
+      percent: '0.20',
+      amount: 12_049_384,
       color: '#e3e24f',
     },
     {
       id: 'board',
       label: '이사회운영비',
-      percent: '4.00',
-      amount: 240_508_986,
+      percent: '0.07',
+      amount: 4_492_280,
       color: '#e8574a',
     },
   ],

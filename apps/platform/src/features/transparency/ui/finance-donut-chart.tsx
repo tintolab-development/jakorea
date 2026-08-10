@@ -21,11 +21,13 @@ const RADIAN = Math.PI / 180
 /** Figma 도넛 본체 544×543.098 → 직경 544 */
 const PIE_SIZE = 544
 const OUTER_RADIUS = PIE_SIZE / 2
-/** 시안 링 두께 비율 유지 (기존 112/150) */
-const INNER_RADIUS = Math.round(OUTER_RADIUS * (112 / 150))
-/** 모바일: 좁은 폭에 맞춤 */
+/** 시안 링 두께 56px */
+const RING_THICKNESS = 56
+const INNER_RADIUS = OUTER_RADIUS - RING_THICKNESS
+/** 모바일: 좁은 폭에 맞춤 · 두께는 반경 비율로 축소 */
 const MOBILE_OUTER_RADIUS = 140
-const MOBILE_INNER_RADIUS = Math.round(MOBILE_OUTER_RADIUS * (112 / 150))
+const MOBILE_INNER_RADIUS =
+  MOBILE_OUTER_RADIUS - Math.round(RING_THICKNESS * (MOBILE_OUTER_RADIUS / OUTER_RADIUS))
 /** 세그먼트 중앙각에서 링 바깥으로 뻗는 짧은 방사형 구간 길이 */
 const RADIAL_LEN = 28
 /** 도넛 외곽과 라벨 수평선(레일) 사이 최소 여백 */
@@ -34,9 +36,29 @@ const RAIL_GAP = 44
 const H_LINE = 220
 /** 인접 라벨 간 최소 세로 간격 (타이틀 + 수치 2줄 높이) */
 const MIN_LABEL_GAP = 80
+/** 라벨 텍스트와 도넛 사이 최소 가로 여백 */
+const TEXT_CLEARANCE = 16
+/** 퍼센트 ↔ 금액 tspan 간격 (dx) */
+const VALUE_TSPAN_GAP = 12
 /** 콜아웃 여백을 포함한 기본 SVG 높이 */
 const DEFAULT_CHART_HEIGHT = 700
 const MOBILE_CHART_HEIGHT = 320
+
+/**
+ * SVG 텍스트는 렌더 전 측정이 어려워 문자 클래스 기반으로 폭을 추정한다.
+ * (Pretendard 기준 근사치 — 숫자 0.6em, 구두점 0.3em, %, 전각 문자 등)
+ */
+function estimateTextWidth(text: string, fontSize: number) {
+  let width = 0
+  for (const ch of text) {
+    if (ch === '.' || ch === ',') width += fontSize * 0.3
+    else if (ch === '%') width += fontSize * 0.95
+    else if (ch >= '0' && ch <= '9') width += fontSize * 0.62
+    else if (ch === ' ') width += fontSize * 0.28
+    else width += fontSize // 한글 등 전각 문자
+  }
+  return width
+}
 
 type CalloutRenderProps = {
   cx?: number
@@ -152,7 +174,34 @@ export function FinanceDonutChart({
     const railInnerX = isRight
       ? Math.max(elbowX + 8, cx + outerRadius + RAIL_GAP)
       : Math.min(elbowX - 8, cx - outerRadius - RAIL_GAP)
-    const railOuterX = isRight ? railInnerX + H_LINE : railInnerX - H_LINE
+
+    // 4) 텍스트 폭 추정 — 타이틀(20px) vs 퍼센트+금액(24px) 중 넓은 쪽
+    const valueLineWidth =
+      estimateTextWidth(`${slice.percent}%`, 24) +
+      VALUE_TSPAN_GAP +
+      estimateTextWidth(formatKrwAmount(slice.amount), 24)
+    const textWidth = Math.max(estimateTextWidth(slice.label, 20), valueLineWidth)
+
+    // 5) 라벨 세로 밴드(타이틀~수치)에서 도넛이 차지하는 최대 가로 반폭.
+    //    라벨이 도넛 위/아래 바깥이면 0 — 기존 레이아웃 그대로 유지된다.
+    const bandNearY = Math.min(Math.max(cy, labelY - 30), labelY + 36)
+    const ringReach = outerRadius + 8
+    const bandDy = bandNearY - cy
+    const donutHalfWidth =
+      Math.abs(bandDy) >= ringReach
+        ? 0
+        : Math.sqrt(ringReach * ringReach - bandDy * bandDy)
+
+    // 6) 텍스트가 도넛과 겹치지 않도록 레일 바깥 끝을 필요한 만큼 연장
+    const railOuterX = isRight
+      ? Math.max(
+          railInnerX + H_LINE,
+          cx + donutHalfWidth + TEXT_CLEARANCE + textWidth
+        )
+      : Math.min(
+          railInnerX - H_LINE,
+          cx - donutHalfWidth - TEXT_CLEARANCE - textWidth
+        )
 
     // 텍스트는 레일 바깥쪽 끝에 정렬 (우측 → 오른끝, 좌측 → 왼끝)
     const textX = railOuterX
