@@ -30,7 +30,7 @@ export function RevenueTable({ summary, order }: RevenueTableProps) {
           <th scope="col" className={styles.headCell}>
             비율
           </th>
-          <th scope="col" className={[styles.headCell, styles.amountCell].join(' ')}>
+          <th scope="col" className={styles.headCell}>
             금액
           </th>
         </tr>
@@ -38,19 +38,15 @@ export function RevenueTable({ summary, order }: RevenueTableProps) {
       <tbody>
         {rows.map(slice => (
           <tr key={slice.id} className={styles.row}>
-            <td className={[styles.cell, styles.categoryCell].join(' ')}>{slice.label}</td>
-            <td className={[styles.cell, styles.ratioCell].join(' ')}>{slice.percent}%</td>
-            <td className={[styles.cell, styles.amountCell].join(' ')}>
-              {formatKrwAmount(slice.amount)}
-            </td>
+            <td className={styles.cell}>{slice.label}</td>
+            <td className={styles.cell}>{slice.percent}%</td>
+            <td className={styles.cell}>{formatKrwAmount(slice.amount)}</td>
           </tr>
         ))}
         <tr className={styles.totalRow}>
-          <td className={[styles.cell, styles.categoryCell].join(' ')}>수익총계</td>
-          <td className={[styles.cell, styles.ratioCell].join(' ')}>100.0%</td>
-          <td className={[styles.cell, styles.amountCell].join(' ')}>
-            {formatKrwAmount(summary.totalAmount)}
-          </td>
+          <td className={styles.cell}>수익총계</td>
+          <td className={styles.cell}>100.0%</td>
+          <td className={styles.cell}>{formatKrwAmount(summary.totalAmount)}</td>
         </tr>
       </tbody>
     </table>

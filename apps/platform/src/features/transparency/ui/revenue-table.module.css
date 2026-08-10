@@ -8,55 +8,61 @@
   font-family: var(--font-family-base);
 }
 
-/* 시안: 구분 ~40% / 비율 ~25% / 금액 ~35% */
+/* Figma: 구분 셀 ≈844 / 비율·금액 균등(≈314+314) → 56% / 22% / 22% */
 .colCategory {
-  width: 40%;
+  width: 56%;
 }
 
 .colRatio {
-  width: 25%;
+  width: 22%;
 }
 
 .colAmount {
-  width: 35%;
+  width: 22%;
 }
 
 .headCell {
   box-sizing: border-box;
   height: 78px;
   padding: var(--spacing-24) var(--spacing-48);
-  background: var(--color-neutral-white);
+  overflow: hidden;
+  background: #fff;
   color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
   font-size: 20px;
   font-style: normal;
   font-weight: 600;
   line-height: 150%;
   letter-spacing: -0.2px;
   text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   vertical-align: middle;
 }
 
 .headCell:first-child {
   border-radius: 40px 0 0 40px;
-  text-align: right;
 }
 
 .headCell:last-child {
   border-radius: 0 40px 40px 0;
-  text-align: right;
 }
 
 .cell {
   box-sizing: border-box;
   height: 78px;
   padding: var(--spacing-24) var(--spacing-48);
+  overflow: hidden;
   color: var(--color-neutral-black);
+  font-family: var(--font-family-base);
   font-size: 20px;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 600;
   line-height: 150%;
   letter-spacing: -0.2px;
   text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   vertical-align: middle;
 }
 
@@ -64,27 +70,12 @@
   border-bottom: 1px solid var(--color-neutral-cool-100);
 }
 
-.categoryCell {
-  text-align: right;
-}
-
-.ratioCell {
-  text-align: center;
-  font-weight: 600;
-}
-
-.amountCell {
-  text-align: right;
-}
-
+/* Figma: 총계 행 상하 Spacing/32 */
 .totalRow .cell {
-  background: #ecf5ee;
+  height: auto;
+  padding-block: var(--spacing-32);
+  background: var(--color-neutral-cool-80);
   color: #2f8a4f;
-  font-weight: 600;
-}
-
-.totalRow .amountCell {
-  font-weight: 400;
 }
 
 @media (--bp-below-pc) {
