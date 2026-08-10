@@ -20,6 +20,9 @@ export interface UjatDgbongPartnerAssignmentConfirmRequest {
   organizationApplicationId?: number;
   /** 배정 반/그룹 라벨 */
   classLabel?: string;
-  /** 배정 생성 관리자 ID */
+  /**
+     * 레거시 호환 필드. 서버는 인증된 CMS 관리자 ID를 사용하며 이 값은 무시합니다.
+     * @deprecated
+     */
   generatedByAdminId?: number;
 }

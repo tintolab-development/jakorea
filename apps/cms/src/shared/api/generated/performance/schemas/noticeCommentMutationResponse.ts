@@ -10,6 +10,7 @@ export interface NoticeCommentMutationResponse {
   postId?: number;
   commentId?: number;
   created?: boolean;
+  updated?: boolean;
   deleted?: boolean;
   processedAt?: string;
 }
