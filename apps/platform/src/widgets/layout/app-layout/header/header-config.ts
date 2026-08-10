@@ -4,6 +4,7 @@ import { isPeoplePath, PEOPLE_PATH } from '@/features/people'
 import { isProgramsPath, PROGRAMS_PATH } from '@/features/program'
 import { isResultsPath, RESULTS_PATH } from '@/features/result'
 import { isTextbooksPath, TEXTBOOKS_PATH } from '@/features/textbook'
+import { isTransparencyPath, TRANSPARENCY_PATH } from '@/features/transparency'
 import { MYPAGE_PATH } from '@/features/mypage'
 import { getDevAuthLoggedIn } from '@/shared/lib'
 import logOutIconUrl from '../image/icon/log-out.svg'
@@ -28,7 +29,7 @@ export const navigationGroups = [
     children: [
       { label: '기관 소개' },
       { label: 'JA History' },
-      { label: '투명경영' },
+      { label: '투명경영', href: TRANSPARENCY_PATH },
       { label: '함께하는 사람들', href: PEOPLE_PATH },
       { label: '오시는 길', href: DIRECTIONS_PATH },
       { label: '공지사항', href: NOTICES_PATH },
@@ -105,7 +106,12 @@ export function getActiveNavigationItem(pathname: string): NavigationItemLabel {
     return '교육 소개'
   }
 
-  if (isNoticesPath(pathname) || isPeoplePath(pathname) || isDirectionsPath(pathname)) {
+  if (
+    isNoticesPath(pathname) ||
+    isPeoplePath(pathname) ||
+    isDirectionsPath(pathname) ||
+    isTransparencyPath(pathname)
+  ) {
     return 'JA Korea'
   }
 
