@@ -97,10 +97,7 @@ export const menuItems: MenuItemConfig[] = [
       {
         key: 'ja-korea-notice-group',
         label: '공지 관리',
-        children: [
-          { key: '/ja-korea/notice-fields', label: '사업분야 관리' },
-          { key: '/ja-korea/notices', label: '공지 관리' },
-        ],
+        children: [{ key: '/ja-korea/notices', label: '공지 관리' }],
       },
       { key: '/ja-korea/directions', label: '오시는 길' },
       { key: '/ja-korea/people', label: '함께하는 사람들' },
@@ -276,8 +273,9 @@ const PAGE_TITLE_BY_PATH: Record<string, string> = {
   '/ja-korea/recruit/ideal-talent': '인재상 관리',
   '/ja-korea/recruit/postings': '공고 관리',
   '/ja-korea/recruit/applicants': '지원자 관리',
-  '/ja-korea/notice-fields': '사업분야 관리',
   '/ja-korea/notices': '공지사항',
+  '/education/fields': '사업분야 관리',
+  '/education/textbooks': '교재 관리',
   '/ja-korea/directions': '오시는 길 관리',
   '/ja-korea/people': '함께하는 사람들',
   '/impact/stories': '임팩트 스토리 관리',
