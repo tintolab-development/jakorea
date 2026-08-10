@@ -1,0 +1,194 @@
+.form {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-24);
+  align-self: stretch;
+}
+
+.radioGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-16);
+  align-items: center;
+}
+
+.radioOption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-6);
+  cursor: pointer;
+  color: var(--color-neutral-black);
+}
+
+.radioOption input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-primary-500);
+}
+
+.checkboxOption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-6);
+  cursor: pointer;
+}
+
+.checkboxOption input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-primary-500);
+}
+
+.consentStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  flex-wrap: wrap;
+}
+
+.textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 120px;
+  padding: var(--spacing-12) var(--spacing-16);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-8);
+  resize: vertical;
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  line-height: 150%;
+  color: var(--color-neutral-black);
+  background: var(--color-neutral-white);
+}
+
+.textarea:focus {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: -1px;
+}
+
+/* CMS DetailInfoForm inputs-wrapper-no-gap + separator 대응 */
+.inlineControls {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.inlineSeparator {
+  flex-shrink: 0;
+  align-self: center;
+  width: 1px;
+  height: 13px;
+  margin-inline: var(--spacing-12);
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
+}
+
+.inlineControls .radioGroup {
+  flex-shrink: 0;
+}
+
+.settlementAccount {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.bankAccountPair {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-8);
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.fieldStack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.fieldStackRow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: var(--spacing-12) 0;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.fieldStackRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.fieldStackRow:first-child {
+  padding-top: 0;
+}
+
+.period {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  gap: 0;
+}
+
+.tilde {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  color: var(--color-neutral-black);
+  flex-shrink: 0;
+}
+
+.inlineGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-12);
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.degreeSelectMargin {
+  margin-left: var(--spacing-8);
+}
+
+@media (--bp-below-pc) {
+  .settlementAccount {
+    flex-wrap: wrap;
+    row-gap: var(--spacing-8);
+  }
+
+  .bankAccountPair {
+    flex: 1 1 100%;
+  }
+
+  .fieldStackRow {
+    flex-wrap: wrap;
+    row-gap: var(--spacing-8);
+  }
+
+  .inlineGroup {
+    flex: 1 1 100%;
+  }
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  padding-top: var(--spacing-16);
+}

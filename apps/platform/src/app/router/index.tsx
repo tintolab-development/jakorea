@@ -26,7 +26,7 @@ import {
   SocialErrorPage,
 } from '@/pages/auth'
 import { HomePage } from '@/pages/home'
-import { MypageHomePage } from '@/pages/mypage'
+import { MypageHomePage, MypageInstructorApplyPage } from '@/pages/mypage'
 import {
   ProgramApplyCompletePage,
   ProgramApplyPage,
@@ -113,6 +113,7 @@ export const router = createBrowserRouter([
         element: <SignUpGuardianIdentityMockNicePage />,
       },
       { path: '/programs/:programId/apply', element: <ProgramApplyPage /> },
+      { path: '/mypage/instructor-apply', element: <MypageInstructorApplyPage /> },
       { path: '/design-system', element: <DesignSystemPage /> },
       { path: '/dev/youtube', element: <YoutubeEmbedPage /> },
     ],

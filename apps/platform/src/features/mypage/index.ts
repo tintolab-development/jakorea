@@ -6,7 +6,12 @@ export type {
   MypageScheduleEventType,
   PlatformMemberProfile,
 } from './model/types'
-export { MOCK_MYPAGE_PROGRAM_STATS, MOCK_MYPAGE_USER_NAME, MYPAGE_PATH } from './lib/constants'
+export {
+  INSTRUCTOR_APPLY_PATH,
+  MOCK_MYPAGE_PROGRAM_STATS,
+  MOCK_MYPAGE_USER_NAME,
+  MYPAGE_PATH,
+} from './lib/constants'
 export {
   MOCK_MYPAGE_SCHEDULE_EVENTS,
   formatMypageScheduleBarLabel,
@@ -27,3 +32,5 @@ export {
 } from './lib/map-portal-member-profile'
 export { useMypageMember } from './hooks/use-mypage-member'
 export type { MypageMemberView } from './hooks/use-mypage-member'
+export { InstructorApplyForm } from './instructor-apply'
+export type { InstructorApplyFormProps } from './instructor-apply'
