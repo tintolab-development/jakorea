@@ -60,9 +60,12 @@ import { AppLayoutRoute } from './app-layout-route'
 
 export const router = createBrowserRouter([
   {
+    element: <AppLayoutRoute layout="home" />,
+    children: [{ path: '/', element: <HomePage /> }],
+  },
+  {
     element: <AppLayoutRoute layout="default" />,
     children: [
-      { path: '/', element: <HomePage /> },
       { path: '/programs', element: <ProgramsPage /> },
       { path: '/programs/:programId', element: <ProgramDetailPage /> },
       { path: '/programs/:programId/apply/complete', element: <ProgramApplyCompletePage /> },
@@ -156,7 +159,7 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    element: <AppLayoutRoute layout="default" />,
+    element: <AppLayoutRoute layout="home" />,
     children: [{ path: '*', element: <HomePage /> }],
   },
 ])

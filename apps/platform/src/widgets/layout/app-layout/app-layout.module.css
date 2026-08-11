@@ -20,3 +20,9 @@
   align-items: stretch;
   overflow: visible;
 }
+
+/* 홈 — 투명 헤더가 히어로 위에 겹치도록 헤더 높이만큼 끌어올림 */
+.mainHome {
+  composes: main;
+  margin-top: calc(-1 * var(--app-header-height));
+}
