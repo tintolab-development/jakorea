@@ -17,7 +17,11 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
 import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE, REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE,
+} from '@/shared/constants/messages'
 import type { MemberConsentFieldKey } from '@/features/user/shared/lib/member-consent-template-map'
 import {
   isAgreementMemberConsentField,
@@ -25,6 +29,8 @@ import {
   resolveMemberConsentTemplateEntry,
 } from '@/features/user/shared/lib/member-consent-template-map'
 import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
+import { buildMemberPaymentStatementBasicInfoAutofill } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
+import { isMemberRegisterBasicInfoIncompleteForConsent } from '@/features/user/shared/lib/validate-member-consent-basic-info'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import './add-user-individual.css'
@@ -217,6 +223,7 @@ export function AddUserIndividual({
   const [activeConsentField, setActiveConsentField] = useState<MemberConsentFieldKey | null>(null)
   const allValues = Form.useWatch([], form) as AddUserIndividualFormValues | undefined
   const address = Form.useWatch('address', form) ?? ''
+  const detailAddress = Form.useWatch('detailAddress', form) ?? ''
   const schoolName = Form.useWatch('schoolName', form) ?? ''
   const memberName = Form.useWatch('name', form) ?? ''
   const memberGrade = Form.useWatch('grade', form) ?? ''
@@ -245,10 +252,39 @@ export function AddUserIndividual({
     schoolName,
   ])
 
+  const paymentStatementBasicInfoAutofill = useMemo(
+    () =>
+      buildMemberPaymentStatementBasicInfoAutofill({
+        name: memberName,
+        birthDate: allValues?.birthDate,
+        homeAddress: address,
+        homeAddressDetail: detailAddress,
+        memberType: 'general',
+        affiliationName: isEnrolled ? schoolName : affiliationOrganization,
+      }),
+    [
+      address,
+      affiliationOrganization,
+      allValues?.birthDate,
+      detailAddress,
+      isEnrolled,
+      memberName,
+      schoolName,
+    ]
+  )
+
   const activeConsentEntry =
     activeConsentField != null ? resolveMemberConsentTemplateEntry(activeConsentField) : null
 
   const handleConsentWrite = (fieldKey: MemberConsentFieldKey) => {
+    const values = allValues ?? form.getFieldsValue()
+    if (isMemberRegisterBasicInfoIncompleteForConsent(values)) {
+      showAlert({
+        title: '안내',
+        content: INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
+      })
+      return
+    }
     setActiveConsentField(fieldKey)
   }
 
@@ -676,6 +712,7 @@ export function AddUserIndividual({
         templateId={activeConsentEntry.templateId}
         modalTitle={activeConsentEntry.modalTitle}
         memberContext={memberConsentContext}
+        paymentStatementBasicInfoAutofill={paymentStatementBasicInfoAutofill}
         onClose={handleConsentModalClose}
         onComplete={() => handleConsentComplete(activeConsentField)}
       />
