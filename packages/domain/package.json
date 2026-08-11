@@ -32,6 +32,10 @@
       "types": "./dist/shared/types.d.ts",
       "import": "./dist/shared/types.js"
     },
+    "./shared/required-consent-alert": {
+      "types": "./dist/shared/required-consent-alert.d.ts",
+      "import": "./dist/shared/required-consent-alert.js"
+    },
     "./instructor/gender": {
       "types": "./dist/instructor/gender.d.ts",
       "import": "./dist/instructor/gender.js"
