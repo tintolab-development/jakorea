@@ -20,6 +20,7 @@ import {
   EMPTY_CAREER,
   INITIAL_VALUES,
   InstructorProfileFormBody,
+  mapInstructorRegisterFormValuesToValidationInput,
   type CareerRow,
   type InstructorRegisterModalFormValues,
 } from '@/features/user/shared/ui/instructor-profile-form'
@@ -37,11 +38,14 @@ export interface InstructorRegisterModalProps {
 }
 
 function validateInstructorRegister(values: InstructorRegisterModalFormValues) {
-  return collectInstructorRegisterValidation(values, {
-    isBirthDateIncomplete: isBirthDateInputIncomplete,
-    isBirthDateValid: isValidBirthDateFormValue,
-    isPhoneValid: value => KOREAN_PHONE_REGEX.test(value),
-  })
+  return collectInstructorRegisterValidation(
+    mapInstructorRegisterFormValuesToValidationInput(values),
+    {
+      isBirthDateIncomplete: isBirthDateInputIncomplete,
+      isBirthDateValid: isValidBirthDateFormValue,
+      isPhoneValid: value => KOREAN_PHONE_REGEX.test(value),
+    }
+  )
 }
 
 export function InstructorRegisterModal({

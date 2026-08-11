@@ -18,6 +18,7 @@ import { GENDER_OPTIONS as DOMAIN_GENDER_OPTIONS } from '@jakorea/domain/instruc
 import {
   INSTRUCTOR_MEMBER_TYPE_OPTIONS,
 } from '@jakorea/domain/instructor/member-type'
+import type { InstructorRegisterValidationInput } from '@jakorea/domain/instructor/validate-register'
 import {
   EMPTY_EDUCATION_GRADUATE_ROW,
   EMPTY_EDUCATION_SCHOOL_ROW,
@@ -214,3 +215,74 @@ export const INITIAL_VALUES: InstructorProfileFormValues = {
   freeWrite3: '',
   freeWrite4: '',
 }
+
+function formatOptionalDayjs(value: Dayjs | null | undefined, pattern: string): string | null {
+  if (value == null || !value.isValid()) return null
+  return value.format(pattern)
+}
+
+function mapEducationSchoolRowToValidation(row: EducationSchoolRow) {
+  return {
+    admitYear: formatOptionalDayjs(row.admitYear, 'YYYY'),
+    gradYear: formatOptionalDayjs(row.gradYear, 'YYYY'),
+    schoolName: row.schoolName,
+    major: row.major,
+  }
+}
+
+/** CMS Dayjs 폼 값 → domain `InstructorRegisterValidationInput` */
+export function mapInstructorRegisterFormValuesToValidationInput(
+  values: InstructorRegisterModalFormValues
+): InstructorRegisterValidationInput {
+  return {
+    name: values.name,
+    gender: values.gender,
+    birthDate: values.birthDate,
+    contact: values.contact,
+    email: values.email,
+    memberType: values.memberType,
+    schoolName: values.schoolName,
+    employmentStatus: values.employmentStatus,
+    affiliationName: values.affiliationName,
+    affiliationNone: values.affiliationNone,
+    homeAddress: values.homeAddress,
+    homeAddressDetail: values.homeAddressDetail,
+    instructorCareer: values.instructorCareer,
+    bankName: values.bankName,
+    accountNumber: values.accountNumber,
+    accountHolder: values.accountHolder,
+    isBusinessIncome: values.isBusinessIncome,
+    oneLineIntro: values.oneLineIntro,
+    consentTermsOfService: values.consentTermsOfService,
+    consentPersonal: values.consentPersonal,
+    consentMarketing: values.consentMarketing,
+    consentPortrait: values.consentPortrait,
+    consentPaymentStatement: values.consentPaymentStatement,
+    consentEducatorPledge: values.consentEducatorPledge,
+    consentAdministrativeJoint: values.consentAdministrativeJoint,
+    consentSexOffenseCheck: values.consentSexOffenseCheck,
+    eduSchoolType: values.eduSchoolType,
+    eduStatus: values.eduStatus,
+    educationDetailKeys: values.educationDetailKeys,
+    highSchool: mapEducationSchoolRowToValidation(values.highSchool),
+    college23Rows: values.college23Rows.map(mapEducationSchoolRowToValidation),
+    college4Rows: values.college4Rows.map(mapEducationSchoolRowToValidation),
+    graduateRows: values.graduateRows.map(row => ({
+      ...mapEducationSchoolRowToValidation(row),
+      degree: row.degree,
+    })),
+    careerLevel: values.careerLevel,
+    careers: values.careers.map(row => ({
+      companyName: row.companyName,
+      roleName: row.roleName,
+      periodStart: formatOptionalDayjs(row.periodStart, 'YYYY-MM'),
+      periodEnd: formatOptionalDayjs(row.periodEnd, 'YYYY-MM'),
+      currentlyEmployed: row.currentlyEmployed,
+    })),
+    freeWrite1: values.freeWrite1,
+    freeWrite2: values.freeWrite2,
+    freeWrite3: values.freeWrite3,
+    freeWrite4: values.freeWrite4,
+  }
+}
+

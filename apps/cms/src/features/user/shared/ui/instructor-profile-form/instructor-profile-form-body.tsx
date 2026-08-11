@@ -6,6 +6,7 @@ import {
   INSTRUCTOR_FORM_PLACEHOLDERS,
   INSTRUCTOR_FORM_SECTION_DESCRIPTIONS,
 } from '@jakorea/domain/instructor/form-copy'
+import { getInstructorFormLayout } from '@jakorea/domain/instructor/form-layout'
 import {
   AddressSearch,
   CmsButton,
@@ -52,7 +53,6 @@ import {
   INITIAL_VALUES,
   INSTRUCTOR_FREE_WRITE_ITEMS,
   MEMBER_TYPE_OPTIONS,
-  TERMS_CONSENT_DESCRIPTION,
   TERMS_CONSENT_LABEL_WIDTH,
   type ConsentValue,
   type InstructorProfileFormValues,
@@ -190,6 +190,7 @@ export function InstructorProfileFormBody({
   className,
 }: InstructorProfileFormBodyProps) {
   const isDetailEdit = layoutVariant === 'detailEdit'
+  const formLayout = getInstructorFormLayout(isDetailEdit ? 'cmsDetailEdit' : 'cmsRegister')
   const { showAlert } = useCmsAlert()
   const [activeConsentField, setActiveConsentField] = useState<InstructorConsentFieldKey | null>(
     null
@@ -260,7 +261,7 @@ export function InstructorProfileFormBody({
   )
 
   const handleConsentWrite = (fieldKey: InstructorConsentFieldKey) => {
-    if (!isDetailEdit) {
+    if (!formLayout.consent.skipBasicInfoGate) {
       const values = allValues ?? form.getFieldsValue()
       if (isInstructorRegisterBasicInfoIncompleteForConsent(values)) {
         showAlert({
@@ -525,7 +526,7 @@ export function InstructorProfileFormBody({
           </DetailInfoForm.Row>
         </DetailInfoForm>
 
-        {!isDetailEdit ? (
+        {formLayout.showInstructorGradeSection ? (
           <DetailInfoForm title="강사 등급" mode="edit">
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
@@ -560,9 +561,9 @@ export function InstructorProfileFormBody({
         ) : null}
 
         <DetailInfoForm
-          title="약관 및 동의"
+          title={formLayout.consent.title}
           mode="edit"
-          description={TERMS_CONSENT_DESCRIPTION}
+          description={formLayout.consent.description}
           className="instructor-register-modal__consent-heading"
         >
           <div className="instructor-register-modal__consent-form-stack">
