@@ -1,8 +1,24 @@
 import type { Dayjs } from 'dayjs'
 import {
-  SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL,
-  SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS,
-} from '@/features/user/detail/lib/school-teacher-employment-status'
+  BUSINESS_INCOME_OPTIONS as DOMAIN_BUSINESS_INCOME_OPTIONS,
+} from '@jakorea/domain/instructor/business-income'
+import {
+  CAREER_LEVEL_OPTIONS as DOMAIN_CAREER_LEVEL_OPTIONS,
+} from '@jakorea/domain/instructor/career-level'
+import {
+  CONSENT_RADIO_OPTIONS as DOMAIN_CONSENT_RADIO_OPTIONS,
+  TERMS_CONSENT_DESCRIPTION as DOMAIN_TERMS_CONSENT_DESCRIPTION,
+  type ConsentValue,
+} from '@jakorea/domain/instructor/consent'
+import {
+  SCHOOL_TEACHER_EMPLOYMENT_STATUS_FORM_OPTIONS,
+} from '@jakorea/domain/instructor/employment-status'
+import { INSTRUCTOR_FREE_WRITE_ITEMS as DOMAIN_FREE_WRITE_ITEMS } from '@jakorea/domain/instructor/free-write'
+import { GENDER_OPTIONS as DOMAIN_GENDER_OPTIONS } from '@jakorea/domain/instructor/gender'
+import {
+  INSTRUCTOR_MEMBER_TYPE_OPTIONS,
+} from '@jakorea/domain/instructor/member-type'
+import type { InstructorRegisterValidationInput } from '@jakorea/domain/instructor/validate-register'
 import {
   EMPTY_EDUCATION_GRADUATE_ROW,
   EMPTY_EDUCATION_SCHOOL_ROW,
@@ -12,67 +28,48 @@ import {
 } from '@/features/user/shared/ui/instructor-register-education-section'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
 
+export type { ConsentValue }
+
 export const FORM_ITEM_STYLE = { marginBottom: 0, width: '100%' } as const
 
-export const GENDER_OPTIONS = [
-  { label: '남', value: 'male' },
-  { label: '여', value: 'female' },
-] as const
+/** Ant Design Radio/Select용 — domain SSOT (`value`/`label`) */
+export const GENDER_OPTIONS = DOMAIN_GENDER_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+}))
 
-export const MEMBER_TYPE_OPTIONS = [
-  { label: '일반 회원', value: 'general' },
-  { label: '교사 회원', value: 'school_teacher' },
-] as const
+export const MEMBER_TYPE_OPTIONS = INSTRUCTOR_MEMBER_TYPE_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+}))
 
-export const EMPLOYMENT_STATUS_OPTIONS = SCHOOL_TEACHER_EMPLOYMENT_STATUS_DROPDOWN_OPTIONS.map(
-  value => ({
-    label: SCHOOL_TEACHER_EMPLOYMENT_BADGE_LABEL[value],
-    value,
-  })
+export const EMPLOYMENT_STATUS_OPTIONS = SCHOOL_TEACHER_EMPLOYMENT_STATUS_FORM_OPTIONS.map(
+  option => ({
+    label: option.label,
+    value: option.value,
+  }),
 )
 
-export const INSTRUCTOR_FREE_WRITE_ITEMS = [
-  {
-    name: 'freeWrite1' as const,
-    label: '1. 자기소개 및 지원동기',
-  },
-  {
-    name: 'freeWrite2' as const,
-    label: '2. 청소년 경제 교육의 중요성에 대해 본인의 생각을 구체적으로 작성해주세요.',
-  },
-  {
-    name: 'freeWrite3' as const,
-    label:
-      '3. 청소년과 소통할 때 가장 중요하다고 생각하는 점은 무엇이며, 이를 실천하기 위해 어떤 노력을 하는지 작성해주세요.',
-  },
-  {
-    name: 'freeWrite4' as const,
-    label:
-      '4. 교육 중 예기치 않은 상황(예: 수업 분위기 저하, 참여도 부족 등)이 발생했을 때 대처한 사례가 있다면 공유해주세요.',
-  },
-] as const
+export const INSTRUCTOR_FREE_WRITE_ITEMS = DOMAIN_FREE_WRITE_ITEMS
 
-export type ConsentValue = 'agree' | 'disagree'
+export const CONSENT_RADIO_OPTIONS = DOMAIN_CONSENT_RADIO_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+}))
 
-export const CONSENT_RADIO_OPTIONS = [
-  { label: '동의', value: 'agree' },
-  { label: '미동의', value: 'disagree' },
-]
-
-export const TERMS_CONSENT_DESCRIPTION =
-  '*미동의 시 서비스 가입 및 프로그램 참여에 제한이 있을 수 있습니다.'
+export const TERMS_CONSENT_DESCRIPTION = DOMAIN_TERMS_CONSENT_DESCRIPTION
 
 export const TERMS_CONSENT_LABEL_WIDTH = 240 as const
 
-export const BUSINESS_INCOME_OPTIONS = [
-  { label: '해당', value: 'yes' },
-  { label: '해당 없음', value: 'no' },
-]
+export const BUSINESS_INCOME_OPTIONS = DOMAIN_BUSINESS_INCOME_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+}))
 
-export const CAREER_LEVEL_OPTIONS = [
-  { label: '신입', value: 'new' },
-  { label: '경력', value: 'experienced' },
-]
+export const CAREER_LEVEL_OPTIONS = DOMAIN_CAREER_LEVEL_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+}))
 
 export type CareerRow = {
   companyName: string
@@ -110,9 +107,9 @@ export type InstructorRegisterModalFormValues = {
   schoolName: string
   employmentStatus: SchoolTeacherEmploymentStatus | ''
   instructorCareer: string
-  /** 강사비 등급 — BE `profile.defaultFeeGrade` */
+  /** 강사비 등급 — BE `profile.defaultFeeGrade` (CMS 등록 전용) */
   instructorFeeGrade: string
-  /** JA 평가 등급 — BE `profile.defaultJaGrade` */
+  /** JA 평가 등급 — BE `profile.defaultJaGrade` (CMS 등록 전용) */
   jaEvaluationGrade: string
   isBusinessIncome: 'yes' | 'no'
   bankName: string
@@ -218,3 +215,74 @@ export const INITIAL_VALUES: InstructorProfileFormValues = {
   freeWrite3: '',
   freeWrite4: '',
 }
+
+function formatOptionalDayjs(value: Dayjs | null | undefined, pattern: string): string | null {
+  if (value == null || !value.isValid()) return null
+  return value.format(pattern)
+}
+
+function mapEducationSchoolRowToValidation(row: EducationSchoolRow) {
+  return {
+    admitYear: formatOptionalDayjs(row.admitYear, 'YYYY'),
+    gradYear: formatOptionalDayjs(row.gradYear, 'YYYY'),
+    schoolName: row.schoolName,
+    major: row.major,
+  }
+}
+
+/** CMS Dayjs 폼 값 → domain `InstructorRegisterValidationInput` */
+export function mapInstructorRegisterFormValuesToValidationInput(
+  values: InstructorRegisterModalFormValues
+): InstructorRegisterValidationInput {
+  return {
+    name: values.name,
+    gender: values.gender,
+    birthDate: values.birthDate,
+    contact: values.contact,
+    email: values.email,
+    memberType: values.memberType,
+    schoolName: values.schoolName,
+    employmentStatus: values.employmentStatus,
+    affiliationName: values.affiliationName,
+    affiliationNone: values.affiliationNone,
+    homeAddress: values.homeAddress,
+    homeAddressDetail: values.homeAddressDetail,
+    instructorCareer: values.instructorCareer,
+    bankName: values.bankName,
+    accountNumber: values.accountNumber,
+    accountHolder: values.accountHolder,
+    isBusinessIncome: values.isBusinessIncome,
+    oneLineIntro: values.oneLineIntro,
+    consentTermsOfService: values.consentTermsOfService,
+    consentPersonal: values.consentPersonal,
+    consentMarketing: values.consentMarketing,
+    consentPortrait: values.consentPortrait,
+    consentPaymentStatement: values.consentPaymentStatement,
+    consentEducatorPledge: values.consentEducatorPledge,
+    consentAdministrativeJoint: values.consentAdministrativeJoint,
+    consentSexOffenseCheck: values.consentSexOffenseCheck,
+    eduSchoolType: values.eduSchoolType,
+    eduStatus: values.eduStatus,
+    educationDetailKeys: values.educationDetailKeys,
+    highSchool: mapEducationSchoolRowToValidation(values.highSchool),
+    college23Rows: values.college23Rows.map(mapEducationSchoolRowToValidation),
+    college4Rows: values.college4Rows.map(mapEducationSchoolRowToValidation),
+    graduateRows: values.graduateRows.map(row => ({
+      ...mapEducationSchoolRowToValidation(row),
+      degree: row.degree,
+    })),
+    careerLevel: values.careerLevel,
+    careers: values.careers.map(row => ({
+      companyName: row.companyName,
+      roleName: row.roleName,
+      periodStart: formatOptionalDayjs(row.periodStart, 'YYYY-MM'),
+      periodEnd: formatOptionalDayjs(row.periodEnd, 'YYYY-MM'),
+      currentlyEmployed: row.currentlyEmployed,
+    })),
+    freeWrite1: values.freeWrite1,
+    freeWrite2: values.freeWrite2,
+    freeWrite3: values.freeWrite3,
+    freeWrite4: values.freeWrite4,
+  }
+}
+

@@ -13,7 +13,12 @@ import {
   fetchMemberDetailRemote,
   fetchMemberExternalIdentifiersRemote,
   fetchSchoolMemberDetailRemote,
+  fetchSchoolOrganizationRemote,
 } from '@/features/user/api/members-api-client'
+import {
+  mapSchoolOrganizationToUser,
+  parseOrganizationIdFromUserId,
+} from '@/features/user/api/map-school-organization-to-user'
 import {
   fetchAdminMemberDetailAsUser,
   isAdminMemberDetailRole,
@@ -29,7 +34,13 @@ import type { User, UserRole } from '@/types/user'
 export function useMemberDetailQuery(
   userId: string | null | undefined,
   enabled = true,
-  options?: { role?: UserRole; memberId?: number; adminAccountId?: number; email?: string }
+  options?: {
+    role?: UserRole
+    memberId?: number
+    organizationId?: number
+    adminAccountId?: number
+    email?: string
+  }
 ) {
   const remote = isMembersRemoteEnabled()
 
@@ -39,8 +50,9 @@ export function useMemberDetailQuery(
           ...memberQueryKeys.detailByUuid(userId ?? ''),
           options?.role ?? 'auto',
           options?.adminAccountId ?? '',
+          options?.organizationId ?? '',
         ]
-      : ['users', 'detail', userId, options?.role ?? 'auto'],
+      : ['users', 'detail', userId, options?.role ?? 'auto', options?.organizationId ?? ''],
     enabled: Boolean(enabled && userId && remote),
     queryFn: async (): Promise<Omit<User, 'password'>> => {
       if (!userId) throw new Error('userId가 없습니다.')
@@ -59,8 +71,22 @@ export function useMemberDetailQuery(
         })
       }
 
+      const organizationId =
+        options?.organizationId ?? parseOrganizationIdFromUserId(userId) ?? undefined
+
+      if (options?.role === 'SCHOOL' || organizationId != null) {
+        if (organizationId != null) {
+          return mapSchoolOrganizationToUser(await fetchSchoolOrganizationRemote(organizationId))
+        }
+        const memberId = resolveMemberIdForApi(userId, { memberId: options?.memberId })
+        return mapSchoolMemberDetailToUser(await fetchSchoolMemberDetailRemote(memberId), {
+          fallbackRole: 'SCHOOL',
+        })
+      }
+
       const memberId = resolveMemberIdForApi(userId, { memberId: options?.memberId })
-      let role = options?.role
+      // options.role은 위에서 SCHOOL early-return 후 좁혀질 수 있어 명시 타입 유지
+      let role: UserRole | undefined = options?.role
 
       if (!role) {
         const legacy = await fetchMemberDetailRemote(memberId)
@@ -110,6 +136,9 @@ export function useMemberDetailQuery(
       }
 
       if (role === 'SCHOOL') {
+        if (organizationId != null) {
+          return mapSchoolOrganizationToUser(await fetchSchoolOrganizationRemote(organizationId))
+        }
         return mapSchoolMemberDetailToUser(await fetchSchoolMemberDetailRemote(memberId), {
           fallbackRole: 'SCHOOL',
         })

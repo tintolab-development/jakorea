@@ -5,7 +5,6 @@ import {
   DEFAULT_PROGRAMS_LIST_PARAMS,
   filterAndSortPrograms,
   getProgramsListReturnPath,
-  OPERATING_PERIOD_FILTER_OPTIONS,
   PROGRAM_CATEGORY_ITEMS,
   PROGRAM_FILTER_KEYS,
   programDetailPath,
@@ -21,7 +20,14 @@ import {
   recruitmentTargetFilterOptions,
 } from '@/shared/lib/filter-options'
 import { useSearchFilters } from '@/shared/hooks'
-import { PFPagination, PFSearchFilter, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
+import {
+  PFPagination,
+  PFSearchDateFilter,
+  PFSearchFilter,
+  PFSearchInput,
+  PFTabs,
+  PFText,
+} from '@/shared/ui'
 import jaArrowUrl from '@/shared/assets/brand/ja-arrow.svg'
 import { SearchListLayout } from '@/widgets/search-list-layout'
 import styles from './page.module.css'
@@ -134,9 +140,8 @@ export function ProgramsPage() {
               options={recruitmentStatusFilterOptions}
               {...bindFilter('recruitmentStatus')}
             />
-            <PFSearchFilter
+            <PFSearchDateFilter
               label="운영기간"
-              options={[...OPERATING_PERIOD_FILTER_OPTIONS]}
               {...bindFilter('operatingPeriod')}
             />
             <PFSearchFilter

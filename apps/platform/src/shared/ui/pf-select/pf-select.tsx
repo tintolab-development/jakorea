@@ -16,6 +16,7 @@ import cancelIconUrl from '../pf-text-input/icons/cancel.svg'
 import styles from './pf-select.module.css'
 
 export type PFSelectSize = 'medium' | 'large' | 'xlarge'
+export type PFSelectVariant = 'default' | 'formPage'
 export type PFSelectMessageStatus = 'neutral' | 'success' | 'error'
 
 export type PFSelectOption = {
@@ -26,6 +27,10 @@ export type PFSelectOption = {
 
 export type PFSelectProps = {
   size?: PFSelectSize
+  /** Platform 양식 페이지(PFFormPage) 내부 전용 스타일 */
+  variant?: PFSelectVariant
+  /** 지정 시 루트 width (숫자는 px) */
+  width?: number | string
   label?: string
   placeholder?: string
   options: PFSelectOption[]
@@ -38,8 +43,14 @@ export type PFSelectProps = {
   message?: string
   messageStatus?: PFSelectMessageStatus
   className?: string
+  style?: CSSProperties
   id?: string
   'aria-label'?: string
+}
+
+function toWidthStyle(width: number | string | undefined): CSSProperties | undefined {
+  if (width == null) return undefined
+  return { width: typeof width === 'number' ? `${width}px` : width }
 }
 
 const sizeTypographyClassMap: Record<PFSelectSize, string> = {
@@ -53,6 +64,8 @@ const LISTBOX_MAX_HEIGHT_PX = 290
 
 export function PFSelect({
   size = 'medium',
+  variant = 'default',
+  width,
   label,
   placeholder = '선택해 주세요',
   options,
@@ -65,6 +78,7 @@ export function PFSelect({
   message,
   messageStatus = 'neutral',
   className,
+  style,
   id,
   'aria-label': ariaLabel,
 }: PFSelectProps) {
@@ -84,11 +98,14 @@ export function PFSelect({
   const selectedOption = options.find(option => option.value === currentValue)
   const hasValue = Boolean(selectedOption)
   const displayLabel = selectedOption?.label ?? placeholder
+  const isFormPage = variant === 'formPage'
+  const rootStyle = { ...toWidthStyle(width), ...style }
 
   const rootClassName = [styles.root, className].filter(Boolean).join(' ')
   const fieldClassName = [
     styles.field,
     styles[size],
+    isFormPage ? styles.formPage : undefined,
     error ? styles.error : undefined,
     disabled ? styles.disabled : undefined,
     isOpen ? styles.open : undefined,
@@ -99,8 +116,16 @@ export function PFSelect({
 
   const valueClassName = [
     styles.value,
-    sizeTypographyClassMap[size],
-    hasValue ? styles.valueFilled : styles.valuePlaceholder,
+    isFormPage ? styles.formPageValue : sizeTypographyClassMap[size],
+    isFormPage
+      ? disabled
+        ? styles.formPageValueDisabled
+        : hasValue
+          ? styles.formPageValueFilled
+          : styles.formPageValuePlaceholder
+      : hasValue
+        ? styles.valueFilled
+        : styles.valuePlaceholder,
   ].join(' ')
 
   const messageStatusClassMap = {
@@ -249,7 +274,7 @@ export function PFSelect({
   ) : null
 
   return (
-    <div className={rootClassName} ref={rootRef}>
+    <div className={rootClassName} ref={rootRef} style={rootStyle}>
       {label ? (
         <label className={styles.label} htmlFor={selectId}>
           <PFText as="span" typo="label-md" color="inherit" className={styles.labelText}>

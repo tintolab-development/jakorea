@@ -7,17 +7,43 @@
  */
 import type { TermsAgreementRequest } from './termsAgreementRequest';
 
+/**
+ * [Deprecated compatibility] 기존 학교 사전등록 요청입니다. 학교는 member가 아니라 organization으로 생성되며 회원 신원 필드는 무시됩니다.
+ * @deprecated
+ */
 export interface AdminPreRegisterSchoolRequest {
-  /** 기관 대표 로그인 계정을 별도로 발급하는 경우에만 전달합니다. 일반 학교 등록에서는 생략합니다. */
+  /**
+     * [Deprecated/ignored] 학교 member 로그인 계정을 만들지 않습니다.
+     * @deprecated
+     */
   email?: string;
-  /** @minLength 1 */
-  name: string;
+  /**
+     * [Deprecated/ignored] 학교 대표 member 이름. organization 생성에는 사용하지 않습니다.
+     * @deprecated
+     */
+  name?: string;
+  /**
+     * [Deprecated/ignored] 학교 대표 member 전화번호. organization 생성에는 사용하지 않습니다.
+     * @deprecated
+     */
   phone?: string;
+  /**
+     * [Deprecated/ignored] member 성별. organization 생성에는 사용하지 않습니다.
+     * @deprecated
+     */
   gender?: string;
+  /**
+     * [Deprecated/ignored] member 생년월일. organization 생성에는 사용하지 않습니다.
+     * @deprecated
+     */
   birthDate?: string;
   /** @minLength 1 */
   organizationName: string;
   neisCode?: string;
+  /**
+     * [Deprecated compatibility] 신규 canonical 학교 API는 organizationCategory=SCHOOL을 서버에서 고정합니다.
+     * @deprecated
+     */
   organizationCategory?: string;
   /** @minLength 1 */
   address: string;
@@ -25,6 +51,14 @@ export interface AdminPreRegisterSchoolRequest {
   zipCode?: string;
   regionSido?: string;
   regionSigungu?: string;
+  /**
+     * [Deprecated/ignored] member 직책. organization 생성에는 사용하지 않습니다.
+     * @deprecated
+     */
   position?: string;
+  /**
+     * [Deprecated/ignored] 학교 organization 생성에는 회원 약관 동의를 기록하지 않습니다.
+     * @deprecated
+     */
   termsAgreements?: TermsAgreementRequest[];
 }

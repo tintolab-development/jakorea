@@ -16,6 +16,7 @@ function toCalendarEvents(events: MypageScheduleEvent[]): PFCalendarEvent[] {
     id: event.id,
     programName: event.programName,
     title: event.title,
+    time: event.time,
     type: event.type,
     startDate: event.startDate,
     endDate: event.endDate,

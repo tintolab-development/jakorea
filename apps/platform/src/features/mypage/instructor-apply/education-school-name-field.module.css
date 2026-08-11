@@ -1,0 +1,11 @@
+.trigger {
+  flex-shrink: 0;
+}
+
+.trigger input {
+  cursor: pointer;
+}
+
+.trigger input:disabled {
+  cursor: not-allowed;
+}

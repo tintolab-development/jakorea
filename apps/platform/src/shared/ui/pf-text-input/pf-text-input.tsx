@@ -1,5 +1,6 @@
 import {
   type ChangeEvent,
+  type CSSProperties,
   type InputHTMLAttributes,
   useId,
   useState,
@@ -10,16 +11,26 @@ import searchIconUrl from './icons/search.svg'
 import styles from './pf-text-input.module.css'
 
 type PFTextInputSize = 'medium' | 'large' | 'xlarge'
+type PFTextInputVariant = 'default' | 'formPage'
 type PFTextInputMessageStatus = 'neutral' | 'success' | 'error'
 
-type PFTextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> & {
+type PFTextInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'width'> & {
   size?: PFTextInputSize
+  /** Platform 양식 페이지(PFFormPage) 내부 전용 스타일 */
+  variant?: PFTextInputVariant
+  /** 지정 시 루트 width (숫자는 px) */
+  width?: number | string
   label?: string
   hasIcon?: boolean
   error?: boolean
   message?: string
   messageStatus?: PFTextInputMessageStatus
   onValueChange?: (value: string) => void
+}
+
+function toWidthStyle(width: number | string | undefined): CSSProperties | undefined {
+  if (width == null) return undefined
+  return { width: typeof width === 'number' ? `${width}px` : width }
 }
 
 const sizeTypographyClassMap: Record<PFTextInputSize, string> = {
@@ -30,6 +41,8 @@ const sizeTypographyClassMap: Record<PFTextInputSize, string> = {
 
 export function PFTextInput({
   size = 'medium',
+  variant = 'default',
+  width,
   label,
   hasIcon = false,
   error = false,
@@ -43,6 +56,7 @@ export function PFTextInput({
   onChange,
   onValueChange,
   className,
+  style,
   ...props
 }: PFTextInputProps) {
   const generatedId = useId()
@@ -51,17 +65,23 @@ export function PFTextInput({
   const [internalValue, setInternalValue] = useState(defaultValue?.toString() ?? '')
   const currentValue = isControlled ? value?.toString() ?? '' : internalValue
   const shouldShowClearButton = !disabled && (currentValue.length > 0 || error)
+  const isFormPage = variant === 'formPage'
+  const rootStyle = { ...toWidthStyle(width), ...style }
 
   const fieldClassName = [
     styles.field,
     styles[size],
+    isFormPage ? styles.formPage : undefined,
     error ? styles.error : undefined,
     disabled ? styles.disabled : undefined,
   ]
     .filter(Boolean)
     .join(' ')
 
-  const inputClassName = [styles.input, sizeTypographyClassMap[size]].join(' ')
+  const inputClassName = [
+    styles.input,
+    isFormPage ? styles.formPageInput : sizeTypographyClassMap[size],
+  ].join(' ')
   const messageStatusClassMap = {
     neutral: styles.messageNeutral,
     success: styles.messageSuccess,
@@ -87,7 +107,10 @@ export function PFTextInput({
   }
 
   return (
-    <div className={[styles.root, className].filter(Boolean).join(' ')}>
+    <div
+      className={[styles.root, className].filter(Boolean).join(' ')}
+      style={rootStyle}
+    >
       {label ? (
         <label className={styles.label} htmlFor={inputId}>
           <PFText as="span" typo="label-md" color="inherit" className={styles.labelText}>

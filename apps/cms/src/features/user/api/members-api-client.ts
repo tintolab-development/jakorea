@@ -28,12 +28,17 @@ import type {
   ListAdminsParams,
   ListInstructorRoleRequestsParams,
   ListMembersParams,
+  ListSchoolsParams,
   MemberDetailResponse,
   MemberWorkflowResponse,
   PageResponse,
   PageResponseAdminAccountListItemResponse,
   PageResponseInstructorRoleRequestListItemResponse,
+  PageResponseSchoolOrganizationListItemResponse,
+  SchoolAffiliatedTeacherResponse,
   SchoolMemberDetailResponse,
+  SchoolOrganizationListItemResponse,
+  SchoolOrganizationUpsertRequest,
   TeacherMemberDetailResponse,
 } from '@/shared/api/generated/members/schemas'
 import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
@@ -62,6 +67,43 @@ const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
 
 export async function fetchMembersPageRemote(params: ListMembersParams): Promise<PageResponse> {
   return unwrapApiBody(await membersApi.listMembers(params))
+}
+
+export async function fetchSchoolsPageRemote(
+  params: ListSchoolsParams
+): Promise<PageResponseSchoolOrganizationListItemResponse> {
+  return unwrapApiBody(await membersApi.listSchools(params))
+}
+
+export async function fetchSchoolOrganizationRemote(
+  organizationId: number
+): Promise<SchoolOrganizationListItemResponse> {
+  return unwrapApiBody(await membersApi.getSchool(organizationId))
+}
+
+export async function fetchSchoolTeachersRemote(
+  organizationId: number
+): Promise<SchoolAffiliatedTeacherResponse[]> {
+  const data = await unwrapApiBody(await membersApi.listTeachers(organizationId))
+  return Array.isArray(data) ? data : []
+}
+
+export async function createSchoolOrganizationRemote(
+  body: SchoolOrganizationUpsertRequest
+): Promise<SchoolOrganizationListItemResponse> {
+  return unwrapApiBody(await membersApi.createSchool(body))
+}
+
+export async function updateTeacherEmploymentStatusRemote(
+  organizationId: number,
+  teacherMemberId: number,
+  employmentStatus: string
+): Promise<SchoolAffiliatedTeacherResponse> {
+  return unwrapApiBody(
+    await membersApi.updateTeacherEmploymentStatus(organizationId, teacherMemberId, {
+      employmentStatus,
+    })
+  )
 }
 
 /**

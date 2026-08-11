@@ -9,12 +9,14 @@
   border-radius: var(--radius-16);
   background: var(--color-primary-500);
   box-shadow: var(--shadow-card-sm);
-  cursor: not-allowed;
+  cursor: pointer;
   text-align: left;
+  text-decoration: none;
+  color: inherit;
 }
 
-.cta:disabled {
-  opacity: 1;
+.cta:hover {
+  filter: brightness(1.02);
 }
 
 .icon {

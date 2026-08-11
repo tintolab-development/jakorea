@@ -363,7 +363,7 @@ const listTemplates = (
  * - 검토 메모: Auto-synced from implemented controller route
  * @summary POST /api/admin/form-templates
  */
-const createTemplate = (
+const createTemplate2 = (
     formTemplateCreateRequest: FormTemplateCreateRequest,
  options?: SecondParameter<typeof customInstance<FormTemplateResponse>>,) => {
       return customInstance<FormTemplateResponse>(
@@ -1413,13 +1413,13 @@ const autoFillKeys = (
       options);
     }
 
-return {getVersion,updateVersion,formBindings,createFormBinding,listTemplates,createTemplate,listVersions,createVersion1,copyVersion,publishVersion,submitResponse,deactivateFormBinding,updateFormBinding,getTemplate,deleteTemplate,updateTemplate,createOptions,getTemplatePayloadByCode,render1,submissionFileDownload,listResponses,getResponse,getDocumentSnapshot,listBusinessProjections,autoFillKeys}};
+return {getVersion,updateVersion,formBindings,createFormBinding,listTemplates,createTemplate2,listVersions,createVersion1,copyVersion,publishVersion,submitResponse,deactivateFormBinding,updateFormBinding,getTemplate,deleteTemplate,updateTemplate,createOptions,getTemplatePayloadByCode,render1,submissionFileDownload,listResponses,getResponse,getDocumentSnapshot,listBusinessProjections,autoFillKeys}};
 export type GetVersionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['getVersion']>>>
 export type UpdateVersionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['updateVersion']>>>
 export type FormBindingsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['formBindings']>>>
 export type CreateFormBindingResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['createFormBinding']>>>
 export type ListTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['listTemplates']>>>
-export type CreateTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['createTemplate']>>>
+export type CreateTemplate2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['createTemplate2']>>>
 export type ListVersionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['listVersions']>>>
 export type CreateVersion1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['createVersion1']>>>
 export type CopyVersionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIFormsSurveysSubset>['copyVersion']>>>

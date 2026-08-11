@@ -3,6 +3,11 @@ import { Form, Space } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import type { FormListFieldData } from 'antd/es/form/FormList'
 import {
+  INSTRUCTOR_FORM_PLACEHOLDERS,
+  INSTRUCTOR_FORM_SECTION_DESCRIPTIONS,
+} from '@jakorea/domain/instructor/form-copy'
+import { getInstructorFormLayout } from '@jakorea/domain/instructor/form-layout'
+import {
   AddressSearch,
   CmsButton,
   CmsCheckbox,
@@ -48,7 +53,6 @@ import {
   INITIAL_VALUES,
   INSTRUCTOR_FREE_WRITE_ITEMS,
   MEMBER_TYPE_OPTIONS,
-  TERMS_CONSENT_DESCRIPTION,
   TERMS_CONSENT_LABEL_WIDTH,
   type ConsentValue,
   type InstructorProfileFormValues,
@@ -80,7 +84,7 @@ function InstructorCareerRowEdit({
           <CmsDatePicker
             picker="month"
             inputSize="medium"
-            placeholder="입사연월"
+            placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.careerPeriodStart}
             format="YYYY.MM"
             width={140}
           />
@@ -92,7 +96,7 @@ function InstructorCareerRowEdit({
           <CmsDatePicker
             picker="month"
             inputSize="medium"
-            placeholder="퇴사연월"
+            placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.careerPeriodEnd}
             format="YYYY.MM"
             width={140}
             disabled={currentlyEmployed}
@@ -102,10 +106,10 @@ function InstructorCareerRowEdit({
       <DetailInfoForm.InputsSeparator />
       <div className="instructor-register-modal__inline-group">
         <Form.Item name={[field.name, 'companyName']} noStyle>
-          <CmsInput placeholder="회사명" inputSize="medium" width={220} />
+          <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.companyName} inputSize="medium" width={220} />
         </Form.Item>
         <Form.Item name={[field.name, 'roleName']} noStyle>
-          <CmsInput placeholder="담당 업무" inputSize="medium" width={160} />
+          <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.roleName} inputSize="medium" width={160} />
         </Form.Item>
         <Form.Item
           name={[field.name, 'currentlyEmployed']}
@@ -136,16 +140,28 @@ function InstructorCareerRowEdit({
 
 function ConsentDocumentFieldEdit({
   value,
+  onDisagree,
   onWrite,
 }: {
   value: ConsentValue
+  onDisagree: () => void
   onWrite: () => void
 }) {
   return (
     <span className="instructor-register-modal__consent-document">
-      <span className="instructor-register-modal__consent-status">
-        {value === 'agree' ? '동의' : '미동의'}
-      </span>
+      <CmsRadioGroup
+        options={CONSENT_RADIO_OPTIONS}
+        size="large"
+        value={value}
+        onChange={event => {
+          const next = event.target.value as ConsentValue
+          if (next === 'disagree') {
+            onDisagree()
+            return
+          }
+          onWrite()
+        }}
+      />
       <span className="instructor-register-modal__consent-sep" aria-hidden>
         |
       </span>
@@ -186,6 +202,7 @@ export function InstructorProfileFormBody({
   className,
 }: InstructorProfileFormBodyProps) {
   const isDetailEdit = layoutVariant === 'detailEdit'
+  const formLayout = getInstructorFormLayout(isDetailEdit ? 'cmsDetailEdit' : 'cmsRegister')
   const { showAlert } = useCmsAlert()
   const [activeConsentField, setActiveConsentField] = useState<InstructorConsentFieldKey | null>(
     null
@@ -256,7 +273,7 @@ export function InstructorProfileFormBody({
   )
 
   const handleConsentWrite = (fieldKey: InstructorConsentFieldKey) => {
-    if (!isDetailEdit) {
+    if (!formLayout.consent.skipBasicInfoGate) {
       const values = allValues ?? form.getFieldsValue()
       if (isInstructorRegisterBasicInfoIncompleteForConsent(values)) {
         showAlert({
@@ -284,7 +301,7 @@ export function InstructorProfileFormBody({
         <SchoolSearch
           value={schoolName}
           onChange={nextSchoolName => form.setFieldValue('schoolName', nextSchoolName)}
-          placeholder="소속 학교명"
+          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.schoolName}
           inputSize="medium"
           width={FORM_INPUTS_2_WIDTHS[0]}
         />
@@ -292,7 +309,7 @@ export function InstructorProfileFormBody({
       <DetailInfoForm.InputsSeparator />
       <Form.Item name="employmentStatus" noStyle>
         <CmsSelect
-          placeholder="재직현황"
+          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.employmentStatus}
           inputSize="medium"
           width={FORM_INPUTS_2_WIDTHS[1]}
           options={EMPLOYMENT_STATUS_OPTIONS}
@@ -304,7 +321,7 @@ export function InstructorProfileFormBody({
     <div className="instructor-register-modal__affiliation-row">
       <Form.Item name="affiliationName" style={{ ...FORM_ITEM_STYLE, flex: 1, minWidth: 0 }}>
         <CmsInput
-          placeholder="소속 기관명"
+          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.affiliationName}
           inputSize="medium"
           width="100%"
           disabled={affiliationNone}
@@ -318,7 +335,7 @@ export function InstructorProfileFormBody({
 
   const instructorCareerFieldEdit = (
     <Form.Item name="instructorCareer" style={FORM_ITEM_STYLE}>
-      <CmsInput placeholder="강사 경력" inputSize="medium" width="100%" />
+      <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.instructorCareer} inputSize="medium" width="100%" />
     </Form.Item>
   )
 
@@ -359,7 +376,7 @@ export function InstructorProfileFormBody({
               view="-"
               edit={
                 <Form.Item name="name" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder="성명" inputSize="medium" width="100%" />
+                  <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.name} inputSize="medium" width="100%" />
                 </Form.Item>
               }
             />
@@ -379,7 +396,7 @@ export function InstructorProfileFormBody({
                     getValueFromEvent={(value: string) => value}
                   >
                     <CmsDateTextInput
-                      placeholder="YYYY.MM.DD"
+                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.birthDate}
                       maxLength={10}
                       inputSize="medium"
                       width="100%"
@@ -395,7 +412,7 @@ export function InstructorProfileFormBody({
               view="-"
               edit={
                 <Form.Item name="contact" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder="연락처" inputSize="medium" width="100%" />
+                  <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.contact} inputSize="medium" width="100%" />
                 </Form.Item>
               }
             />
@@ -404,7 +421,7 @@ export function InstructorProfileFormBody({
               view="-"
               edit={
                 <Form.Item name="email" style={FORM_ITEM_STYLE}>
-                  <CmsInput placeholder="이메일" inputSize="medium" width="100%" />
+                  <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.email} inputSize="medium" width="100%" />
                 </Form.Item>
               }
             />
@@ -442,14 +459,14 @@ export function InstructorProfileFormBody({
                     <AddressSearch
                       value={homeAddress}
                       onChange={next => form.setFieldValue('homeAddress', next)}
-                      placeholder="건물명, 도로명 또는 지번"
+                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.homeAddress}
                       inputSize="medium"
                       width="100%"
                     />
                   </Form.Item>
                   <DetailInfoForm.InputsSeparator />
                   <Form.Item name="homeAddressDetail" noStyle>
-                    <CmsInput placeholder="상세 주소" inputSize="medium" width="100%" />
+                    <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.homeAddressDetail} inputSize="medium" width="100%" />
                   </Form.Item>
                 </Space.Compact>
               }
@@ -469,12 +486,12 @@ export function InstructorProfileFormBody({
                 <div className="instructor-register-modal__settlement-account">
                   <div className="instructor-register-modal__bank-account-pair">
                     <Form.Item name="bankName" noStyle>
-                      <CmsInput placeholder="은행명" inputSize="medium" width={120} />
+                      <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.bankName} inputSize="medium" width={120} />
                     </Form.Item>
                     <Form.Item name="accountNumber" trigger="onValueChange" noStyle>
                       <CmsNumericInput
                         mode="numericText"
-                        placeholder="계좌번호"
+                        placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountNumber}
                         inputSize="medium"
                         width={240}
                       />
@@ -482,7 +499,7 @@ export function InstructorProfileFormBody({
                   </div>
                   <DetailInfoForm.InputsSeparator />
                   <Form.Item name="accountHolder" noStyle>
-                    <CmsInput placeholder="예금주명" inputSize="medium" width={240} />
+                    <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountHolder} inputSize="medium" width={240} />
                   </Form.Item>
                 </div>
               }
@@ -510,7 +527,7 @@ export function InstructorProfileFormBody({
                 <div className="instructor-register-modal__full-width-input">
                   <Form.Item name="oneLineIntro" noStyle>
                     <CmsInput
-                      placeholder="한 줄 소개를 간략하게 작성해 주세요"
+                      placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.oneLineIntro}
                       inputSize="medium"
                       width="100%"
                     />
@@ -521,7 +538,7 @@ export function InstructorProfileFormBody({
           </DetailInfoForm.Row>
         </DetailInfoForm>
 
-        {!isDetailEdit ? (
+        {formLayout.showInstructorGradeSection ? (
           <DetailInfoForm title="강사 등급" mode="edit">
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
@@ -556,9 +573,9 @@ export function InstructorProfileFormBody({
         ) : null}
 
         <DetailInfoForm
-          title="약관 및 동의"
+          title={formLayout.consent.title}
           mode="edit"
-          description={TERMS_CONSENT_DESCRIPTION}
+          description={formLayout.consent.description}
           className="instructor-register-modal__consent-heading"
         >
           <div className="instructor-register-modal__consent-form-stack">
@@ -610,6 +627,7 @@ export function InstructorProfileFormBody({
                       <Form.Item name="consentPortrait" hidden preserve />
                       <ConsentDocumentFieldEdit
                         value={allValues?.consentPortrait ?? INITIAL_VALUES.consentPortrait}
+                        onDisagree={() => form.setFieldValue('consentPortrait', 'disagree')}
                         onWrite={() => handleConsentWrite('consentPortrait')}
                       />
                     </>
@@ -637,6 +655,7 @@ export function InstructorProfileFormBody({
                           allValues?.consentPaymentStatement ??
                           INITIAL_VALUES.consentPaymentStatement
                         }
+                        onDisagree={() => form.setFieldValue('consentPaymentStatement', 'disagree')}
                         onWrite={() => handleConsentWrite('consentPaymentStatement')}
                       />
                     </>
@@ -653,6 +672,7 @@ export function InstructorProfileFormBody({
                         value={
                           allValues?.consentEducatorPledge ?? INITIAL_VALUES.consentEducatorPledge
                         }
+                        onDisagree={() => form.setFieldValue('consentEducatorPledge', 'disagree')}
                         onWrite={() => handleConsentWrite('consentEducatorPledge')}
                       />
                     </>
@@ -672,6 +692,9 @@ export function InstructorProfileFormBody({
                           allValues?.consentAdministrativeJoint ??
                           INITIAL_VALUES.consentAdministrativeJoint
                         }
+                        onDisagree={() =>
+                          form.setFieldValue('consentAdministrativeJoint', 'disagree')
+                        }
                         onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
                       />
                     </>
@@ -688,6 +711,7 @@ export function InstructorProfileFormBody({
                         value={
                           allValues?.consentSexOffenseCheck ?? INITIAL_VALUES.consentSexOffenseCheck
                         }
+                        onDisagree={() => form.setFieldValue('consentSexOffenseCheck', 'disagree')}
                         onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
                       />
                     </>
@@ -771,7 +795,7 @@ export function InstructorProfileFormBody({
                               <Form.Item name={[field.name, 'periodStart']} noStyle>
                                 <CmsDatePicker
                                   inputSize="medium"
-                                  placeholder="활동 시작일"
+                                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaPeriodStart}
                                   format="YYYY.MM.DD"
                                   width={140}
                                 />
@@ -782,7 +806,7 @@ export function InstructorProfileFormBody({
                               <Form.Item name={[field.name, 'periodEnd']} noStyle>
                                 <CmsDatePicker
                                   inputSize="medium"
-                                  placeholder="활동 종료일"
+                                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaPeriodEnd}
                                   format="YYYY.MM.DD"
                                   width={140}
                                 />
@@ -791,10 +815,10 @@ export function InstructorProfileFormBody({
                             <DetailInfoForm.InputsSeparator />
                             <div className="instructor-register-modal__inline-group">
                               <Form.Item name={[field.name, 'title']} noStyle>
-                                <CmsInput placeholder="프로그램명" inputSize="medium" width={220} />
+                                <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaProgramName} inputSize="medium" width={220} />
                               </Form.Item>
                               <Form.Item name={[field.name, 'note']} noStyle>
-                                <CmsInput placeholder="비고" inputSize="medium" width={160} />
+                                <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.jaNote} inputSize="medium" width={160} />
                               </Form.Item>
                               {index === 0 ? (
                                 <CmsCircleAddButton
@@ -844,7 +868,7 @@ export function InstructorProfileFormBody({
                               <CmsDatePicker
                                 picker="year"
                                 inputSize="medium"
-                                placeholder="취득연도"
+                                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseYear}
                                 format="YYYY"
                                 width={140}
                               />
@@ -853,13 +877,13 @@ export function InstructorProfileFormBody({
                             <div className="instructor-register-modal__inline-group">
                               <Form.Item name={[field.name, 'title']} noStyle>
                                 <CmsInput
-                                  placeholder="자격증/면허명"
+                                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseTitle}
                                   inputSize="medium"
                                   width={220}
                                 />
                               </Form.Item>
                               <Form.Item name={[field.name, 'issuer']} noStyle>
-                                <CmsInput placeholder="발행처" inputSize="medium" width={160} />
+                                <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseIssuer} inputSize="medium" width={160} />
                               </Form.Item>
                               {index === 0 ? (
                                 <CmsCircleAddButton
@@ -909,7 +933,7 @@ export function InstructorProfileFormBody({
                               <CmsDatePicker
                                 picker="year"
                                 inputSize="medium"
-                                placeholder="수상/수료연도"
+                                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.awardYear}
                                 format="YYYY"
                                 width={140}
                               />
@@ -917,10 +941,10 @@ export function InstructorProfileFormBody({
                             <DetailInfoForm.InputsSeparator />
                             <div className="instructor-register-modal__inline-group">
                               <Form.Item name={[field.name, 'title']} noStyle>
-                                <CmsInput placeholder="수상/수료명" inputSize="medium" width={220} />
+                                <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.awardTitle} inputSize="medium" width={220} />
                               </Form.Item>
                               <Form.Item name={[field.name, 'issuer']} noStyle>
-                                <CmsInput placeholder="발행처" inputSize="medium" width={160} />
+                                <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.licenseIssuer} inputSize="medium" width={160} />
                               </Form.Item>
                               {index === 0 ? (
                                 <CmsCircleAddButton
@@ -947,10 +971,10 @@ export function InstructorProfileFormBody({
 
         <FreeWriteItemsSection
           required
-          description="1~4번 문항은 1,000자 이내로 자유롭게 작성 가능합니다."
+          description={INSTRUCTOR_FORM_SECTION_DESCRIPTIONS.freeWrite}
           items={INSTRUCTOR_FREE_WRITE_ITEMS}
           rows={3}
-          placeholder="자유롭게 작성해주세요"
+          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.freeWrite}
           className={isDetailEdit ? 'detail-info-form--gap-bottom' : undefined}
         />
       </div>

@@ -41,55 +41,16 @@ export function isMemberInstructorSettlementsRemoteEnabled(): boolean {
   )
 }
 
-const UNSUPPORTED_LIST_FILTER_LABELS: Record<string, string> = {
-  createdAtFrom: '가입일(시작)',
-  createdAtTo: '가입일(종료)',
-  institutionLocation: '기관 지역',
-  jaEvaluationGrade: 'JA 평가 등급',
-  settlementStatus: '정산 현황',
-  adminPermissionVariant: '관리자 권한 유형',
-  instructorListPureOnly: '순수 강사만',
-}
-
+/**
+ * remote에서 아직 서버 미지원인 목록 필터 라벨.
+ * 회원/학교 목록 필터는 서버 전송으로 전환됨. 관리자 목록의 가입일만 미지원.
+ */
 export function getUnsupportedMemberListFilterLabels(
   filters: GetUsersPageParams | undefined
 ): string[] {
   if (!isMembersRemoteEnabled() || !filters) return []
-  const labels: string[] = []
-  if (filters.createdAtFrom || filters.createdAtTo) {
-    labels.push(UNSUPPORTED_LIST_FILTER_LABELS.createdAtFrom)
+  if (filters.role === 'ADMIN' && (filters.createdAtFrom || filters.createdAtTo)) {
+    return ['가입일']
   }
-  if (filters.institutionLocation?.trim()) {
-    labels.push(UNSUPPORTED_LIST_FILTER_LABELS.institutionLocation)
-  }
-  if (filters.jaEvaluationGrade?.trim()) {
-    labels.push(UNSUPPORTED_LIST_FILTER_LABELS.jaEvaluationGrade)
-  }
-  if (filters.settlementStatus?.trim()) {
-    labels.push(UNSUPPORTED_LIST_FILTER_LABELS.settlementStatus)
-  }
-  if (filters.adminPermissionVariant) {
-    labels.push(UNSUPPORTED_LIST_FILTER_LABELS.adminPermissionVariant)
-  }
-  if (filters.instructorListPureOnly) {
-    labels.push(UNSUPPORTED_LIST_FILTER_LABELS.instructorListPureOnly)
-  }
-  return labels
-}
-
-export function stripUnsupportedMemberListFilters(
-  filters: GetUsersPageParams | undefined
-): GetUsersPageParams {
-  if (!filters || !isMembersRemoteEnabled()) return filters ?? {}
-  const {
-    createdAtFrom: _a,
-    createdAtTo: _b,
-    institutionLocation: _c,
-    jaEvaluationGrade: _d,
-    settlementStatus: _e,
-    adminPermissionVariant: _f,
-    instructorListPureOnly: _g,
-    ...rest
-  } = filters
-  return rest
+  return []
 }

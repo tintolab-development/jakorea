@@ -34,7 +34,10 @@ import {
 import { applyMemberConsentToSchema } from '@/features/user/api/map-member-consent-records'
 import { buildMemberConsentContextFromUser } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
-import { updateAffiliatedTeacherEmploymentStatusRemote } from '@/features/user/api/members-api-client'
+import {
+  updateAffiliatedTeacherEmploymentStatusRemote,
+  updateTeacherEmploymentStatusRemote,
+} from '@/features/user/api/members-api-client'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { MemberDetailMockDataBanner } from '@/features/user/detail/ui/member-detail-mock-data-banner'
@@ -106,7 +109,8 @@ export function UserDetailFullpageBasicTabContent({
 
   const { data: affiliatedTeachers = [], isError: teachersError } = useAffiliatedTeachersQuery(
     user.memberId,
-    membersRemote && basicTab.showSchoolAffiliatedTeachers
+    membersRemote && basicTab.showSchoolAffiliatedTeachers,
+    user.organizationId
   )
 
   const userForAdminComment = useMemo(() => {
@@ -124,7 +128,7 @@ export function UserDetailFullpageBasicTabContent({
 
   const handleEmploymentStatusChange = useCallback(
     async (teacherId: string, status: SchoolTeacherEmploymentStatus) => {
-      if (!membersRemote || user.memberId == null) return
+      if (!membersRemote) return
       const row = affiliatedTeacherRows.find(r => r.id === teacherId)
       const teacherMemberId = row?.teacherMemberId
       if (teacherMemberId == null) {
@@ -134,21 +138,37 @@ export function UserDetailFullpageBasicTabContent({
         return
       }
       try {
-        await updateAffiliatedTeacherEmploymentStatusRemote(
-          user.memberId,
-          teacherMemberId,
-          status
-        )
-        await queryClient.invalidateQueries({
-          queryKey: memberQueryKeys.affiliatedTeachers(user.memberId),
-        })
+        if (user.organizationId != null) {
+          await updateTeacherEmploymentStatusRemote(
+            user.organizationId,
+            teacherMemberId,
+            status
+          )
+          await queryClient.invalidateQueries({
+            queryKey: memberQueryKeys.schoolTeachers(user.organizationId),
+          })
+        } else if (user.memberId != null) {
+          await updateAffiliatedTeacherEmploymentStatusRemote(
+            user.memberId,
+            teacherMemberId,
+            status
+          )
+          await queryClient.invalidateQueries({
+            queryKey: memberQueryKeys.affiliatedTeachers(user.memberId),
+          })
+        } else {
+          handleError(new Error('학교 organizationId가 없어 재직 현황을 저장할 수 없습니다.'), {
+            context: 'userDetailBasicTab.employmentStatus.missingOrganizationId',
+          })
+          return
+        }
       } catch (error) {
         handleError(error, {
           defaultMessage: getMemberApiErrorMessage(error, '재직 현황 변경에 실패했습니다.'),
         })
       }
     },
-    [membersRemote, user.memberId, affiliatedTeacherRows, queryClient]
+    [membersRemote, user.organizationId, user.memberId, affiliatedTeacherRows, queryClient]
   )
 
   const remoteConsentRows = useMemo(() => {

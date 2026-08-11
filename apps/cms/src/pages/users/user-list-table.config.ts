@@ -14,6 +14,10 @@ import {
 } from '@/shared/config/member-list-kinds'
 import { parseLegacyRoleFilterParam } from '@/features/user/api/map-member-role'
 import {
+  instructorListRolesExactAnyOf,
+  rolesExactAnyOfForAllTabRoleFilter,
+} from '@/features/user/api/map-roles-exact-any-of'
+import {
   INSTITUTION_SIDO_VALUES,
   LEGACY_INSTITUTION_LOCATION_TO_SIDO_SIGUNGU,
   buildInstitutionLocationFilterToken,
@@ -46,11 +50,17 @@ export type UserListApiFilters = {
   search?: string
   createdAtFrom?: string
   createdAtTo?: string
+  /** 학교 목록 API — 시/도 */
+  regionSido?: string
+  /** 학교 목록 API — 시/군/구 */
+  regionSigungu?: string
+  /** mock·레거시 호환 — remote institutions는 region* 사용 */
   institutionLocation?: string
   jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
-  instructorListPureOnly?: boolean
+  /** `listMembers` exact-set allowlist 직렬화 */
+  rolesExactAnyOf?: string
 }
 
 export type UserListPendingFilters = {
@@ -144,11 +154,15 @@ export function pendingToApiFilters(
     | 'createdAtRange'
   >,
   listKind: MemberListKind
-): Omit<UserListApiFilters, 'role' | 'instructorListPureOnly'> {
-  const api: Omit<UserListApiFilters, 'role' | 'instructorListPureOnly'> = {}
+): Omit<UserListApiFilters, 'role' | 'rolesExactAnyOf'> {
+  const api: Omit<UserListApiFilters, 'role' | 'rolesExactAnyOf'> = {}
   if (pending.search) api.search = pending.search
   if (listKind === 'institutions') {
-    const loc = buildInstitutionLocationFilterToken(pending.institutionSido, pending.institutionSigungu).trim()
+    const s = pending.institutionSido.trim()
+    const g = pending.institutionSigungu.trim()
+    if (s) api.regionSido = s
+    if (g) api.regionSigungu = g
+    const loc = buildInstitutionLocationFilterToken(s, g).trim()
     if (loc) api.institutionLocation = loc
   }
   if (listKind === 'instructors') {
@@ -182,6 +196,8 @@ export function buildListQueryApiFilters(params: UserListQueryParams): UserListA
   }
   if (kind === 'institutions') {
     const { institutionSido, institutionSigungu } = parseInstitutionRegionFromUserListParams(params)
+    if (institutionSido) api.regionSido = institutionSido
+    if (institutionSigungu) api.regionSigungu = institutionSigungu
     const loc = buildInstitutionLocationFilterToken(institutionSido, institutionSigungu).trim()
     if (loc) api.institutionLocation = loc
   }
@@ -190,10 +206,18 @@ export function buildListQueryApiFilters(params: UserListQueryParams): UserListA
     if (grade) api.jaEvaluationGrade = grade
     const ss = params.settlementStatus?.trim()
     if (ss) api.settlementStatus = ss
+    api.rolesExactAnyOf = instructorListRolesExactAnyOf()
   }
   if (kind === 'admins') {
     const apv = parseAdminPermissionVariantParam(params.adminPermissionVariant)
     if (apv) api.adminPermissionVariant = apv
+  }
+  if (kind === 'individual') {
+    api.rolesExactAnyOf = rolesExactAnyOfForAllTabRoleFilter('INDIVIDUAL')
+  }
+  if (kind === 'all' && params.role) {
+    const fromRole = rolesExactAnyOfForAllTabRoleFilter(params.role)
+    if (fromRole) api.rolesExactAnyOf = fromRole
   }
   const role = resolveRoleFilterFromMemberListParams({
     kind: params.kind,
@@ -202,7 +226,6 @@ export function buildListQueryApiFilters(params: UserListQueryParams): UserListA
   return {
     ...api,
     ...(role ? { role } : {}),
-    ...(kind === 'instructors' ? { instructorListPureOnly: true as const } : {}),
   }
 }
 

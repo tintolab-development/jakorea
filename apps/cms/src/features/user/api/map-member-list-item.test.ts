@@ -76,6 +76,31 @@ describe('mapMemberListItemToUser — ADMIN', () => {
     expect(user.adminAccountId).toBeUndefined()
   })
 
+  it('memberId 필드가 없어도 id가 member-{n}이면 memberId를 채운다', () => {
+    const user = mapMemberListItemToUser({
+      uuid: 'a1c1b91b-d1ce-4bec-a192-8b3290113227',
+      id: 'member-55',
+      roles: ['INSTRUCTOR'],
+      email: 'i@test.com',
+      name: '강사',
+    })
+
+    expect(user.memberId).toBe(55)
+    expect(user.id).toBe('a1c1b91b-d1ce-4bec-a192-8b3290113227')
+  })
+
+  it('memberId·id 모두 없고 id가 숫자 문자열이면 memberId로 사용', () => {
+    const user = mapMemberListItemToUser({
+      uuid: 'uuid-only',
+      id: '88',
+      roles: ['INDIVIDUAL'],
+      email: 'u@test.com',
+      name: '회원',
+    })
+
+    expect(user.memberId).toBe(88)
+  })
+
   it('UserResponse.id slug(local-admin-*)는 admin path id로 쓰지 않음', () => {
     const user = mapMemberListItemToUser({
       id: 'local-admin-member-viewer',

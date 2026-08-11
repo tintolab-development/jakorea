@@ -1,0 +1,282 @@
+/* —— Page shell ——
+ * layout: full → ContentShell 없이 main 전폭
+ * .inner: 양식 단락 컬럼 max 1440
+ */
+.page {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  flex: 1 0 auto;
+  padding-block: var(--spacing-100);
+  padding-inline: var(--page-padding-x);
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-40);
+  align-self: stretch;
+  background: linear-gradient(180deg, #f5f7f7 0%, #f5f7f7 100%);
+}
+
+.inner {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1440px;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-40);
+  margin-inline: auto;
+}
+
+/* PC · 1080+ : 양식 컬럼 max 1440, 좌우는 배경 풀블리드 */
+@media (--bp-pc-up) {
+  .page {
+    /* 1920 시안: (100% - 1440) / 2 = 240 · 좁은 PC는 최소 80 */
+    padding-inline: max(80px, calc((100% - 1440px) / 2));
+  }
+
+  .inner {
+    max-width: 1440px;
+  }
+}
+
+.back {
+  width: 100%;
+}
+
+.titleBlock {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.pageTitle {
+  margin: 0;
+}
+
+.pageDescription {
+  margin: 0;
+}
+
+.content {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  min-width: 0;
+}
+
+/* —— Section card —— */
+.section {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--spacing-20);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-16);
+  align-self: stretch;
+  border-radius: var(--radius-24);
+  background: var(--color-neutral-white);
+  box-shadow: var(--shadow-card-lg);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  align-self: stretch;
+}
+
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+}
+
+.sectionRequired {
+  flex-shrink: 0;
+}
+
+.sectionDescription {
+  margin: 0;
+}
+
+.sectionBody {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-16);
+  align-self: stretch;
+  min-width: 0;
+}
+
+/* 단락 본문 안내 텍스트 (필드 하단 footer 등) */
+.sectionBodyText {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* —— Field table (label / content grid) —— */
+.fieldTable {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-self: stretch;
+  box-sizing: border-box;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-16);
+  overflow: hidden;
+  background: var(--color-neutral-white);
+}
+
+.fieldRow {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  align-items: stretch;
+}
+
+.fieldRow:last-child {
+  border-bottom: none;
+}
+
+.fieldRowSingle {
+  flex-direction: column;
+}
+
+.fieldRowDouble {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+.fieldRowSingle > .field {
+  width: 100%;
+}
+
+.fieldRowDouble > .field {
+  flex: 1 1 50%;
+  min-width: min(100%, 280px);
+}
+
+.fieldRowDouble > .fieldFull {
+  flex: 1 1 100%;
+}
+
+.fieldLabel {
+  display: flex;
+  box-sizing: border-box;
+  width: 200px;
+  flex-shrink: 0;
+  padding: 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  align-self: stretch;
+  min-height: 64px;
+  background: #f5f6f7;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+}
+
+.fieldLabelWide {
+  width: 220px;
+}
+
+.fieldLabelText {
+  margin: 0;
+  text-align: center;
+  color: var(--color-neutral-black, #3d3d3d);
+}
+
+.fieldLabelRequired {
+  flex-shrink: 0;
+}
+
+.fieldContent {
+  display: flex;
+  box-sizing: border-box;
+  padding: 12px;
+  align-items: center;
+  gap: 12px;
+  flex: 1 0 0;
+  min-width: 0;
+  min-height: 64px;
+}
+
+/* 세로형 테이블 단락 — 상단 라벨 / 하단 값 */
+.fieldVertical {
+  flex-direction: column;
+}
+
+.fieldLabelVertical {
+  width: 100%;
+  min-height: auto;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 12px 16px;
+  border-right: none;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.fieldLabelTextVertical {
+  text-align: left;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.fieldContentVertical {
+  align-items: stretch;
+  padding: 12px 16px;
+  flex: 1 1 auto;
+  min-height: auto;
+}
+
+/* value 영역 — 일반 텍스트 */
+.fieldValueText {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+@media (--bp-below-pc) {
+  .fieldRowDouble {
+    flex-direction: column;
+  }
+
+  .fieldRowDouble > .field {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .fieldLabel {
+    width: 140px;
+  }
+}

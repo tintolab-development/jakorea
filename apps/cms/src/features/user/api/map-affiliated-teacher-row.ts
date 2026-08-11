@@ -1,6 +1,9 @@
 import type { SchoolAffiliatedTeacherRow as ApiSchoolAffiliatedTeacherRow } from '@/shared/api/generated/members/schemas/schoolAffiliatedTeacherRow'
+import type { SchoolAffiliatedTeacherResponse } from '@/shared/api/generated/members/schemas/schoolAffiliatedTeacherResponse'
 import type { SchoolAffiliatedTeacherRow, SchoolTeacherEmploymentStatus } from '@/types/user'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
+
+type AffiliatedTeacherApiRow = ApiSchoolAffiliatedTeacherRow | SchoolAffiliatedTeacherResponse
 
 function mapEmploymentStatus(raw?: string): SchoolTeacherEmploymentStatus {
   const v = raw?.trim().toUpperCase()
@@ -10,16 +13,14 @@ function mapEmploymentStatus(raw?: string): SchoolTeacherEmploymentStatus {
   return 'ACTIVE'
 }
 
-function resolveTeacherMemberId(row: ApiSchoolAffiliatedTeacherRow): number | undefined {
+function resolveTeacherMemberId(row: AffiliatedTeacherApiRow): number | undefined {
   if (typeof row.memberId === 'number' && Number.isFinite(row.memberId)) {
     return row.memberId
   }
   return undefined
 }
 
-export function mapAffiliatedTeacherRow(
-  row: ApiSchoolAffiliatedTeacherRow
-): SchoolAffiliatedTeacherRow {
+export function mapAffiliatedTeacherRow(row: AffiliatedTeacherApiRow): SchoolAffiliatedTeacherRow {
   const teacherMemberId = resolveTeacherMemberId(row)
   /** API UUID가 없으면 memberId로 상세 이동 식별자를 보정한다. */
   const linkedUserId =
@@ -47,7 +48,7 @@ export function mapAffiliatedTeacherRow(
 }
 
 export function mapAffiliatedTeacherRows(
-  rows: ApiSchoolAffiliatedTeacherRow[] | undefined
+  rows: AffiliatedTeacherApiRow[] | undefined
 ): SchoolAffiliatedTeacherRow[] {
   if (!rows?.length) return []
   return rows.map(mapAffiliatedTeacherRow)

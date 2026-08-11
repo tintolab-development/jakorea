@@ -13,6 +13,7 @@ export {
   MEMBER_TYPE_OPTIONS,
   TERMS_CONSENT_DESCRIPTION,
   TERMS_CONSENT_LABEL_WIDTH,
+  mapInstructorRegisterFormValuesToValidationInput,
   type CareerRow,
   type ConsentValue,
   type InstructorProfileFormValues,

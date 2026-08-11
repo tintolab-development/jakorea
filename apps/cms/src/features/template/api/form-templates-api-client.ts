@@ -51,7 +51,7 @@ export async function copyFormTemplateVersionRemote(
 export async function createFormTemplateRemote(
   body: FormTemplateCreateRequest
 ): Promise<FormTemplateResponse> {
-  return unwrapApiBody(await formsSurveysApi.createTemplate(body))
+  return unwrapApiBody(await formsSurveysApi.createTemplate2(body))
 }
 
 export async function fetchFormTemplateVersionsRemote(

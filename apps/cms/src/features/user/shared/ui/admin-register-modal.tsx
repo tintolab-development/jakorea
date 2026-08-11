@@ -11,6 +11,11 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+  buildRequiredConsentDisagreeAlertMessage,
+  collectDisagreedRequiredConsentLabels,
+} from '@jakorea/domain/shared/required-consent-alert'
 import './admin-register-modal.css'
 
 const FORM_ID = 'cms-admin-register-modal-form'
@@ -63,6 +68,15 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const FORM_ITEM_STYLE = { marginBottom: 0, width: '100%' } as const
 
+const ADMIN_REGISTER_REQUIRED_CONSENT_FIELDS = [
+  { key: 'consentTermsOfService', label: '서비스 이용약관' },
+  { key: 'consentPersonalInfo', label: '개인정보 수집·이용 동의' },
+  { key: 'consentMfaSetup', label: '2단계 인증(MFA) 설정 동의' },
+] as const satisfies ReadonlyArray<{
+  key: keyof AdminRegisterModalFormValues
+  label: string
+}>
+
 function normalizeSubmitValues(
   values: AdminRegisterModalFormValues
 ): AdminRegisterModalFormValues {
@@ -106,13 +120,6 @@ function collectAdminRegisterValidation(
     formatMessages.push('올바른 이메일 형식이 아닙니다')
   }
 
-  if (values.consentTermsOfService !== 'agree') {
-    missingRequired = true
-  }
-  if (values.consentPersonalInfo !== 'agree') {
-    missingRequired = true
-  }
-
   return { missingRequired, formatMessages }
 }
 
@@ -149,6 +156,17 @@ export function AdminRegisterModal({
   }
 
   const handleSubmitAttempt = (values: AdminRegisterModalFormValues) => {
+    const disagreedRequiredLabels = collectDisagreedRequiredConsentLabels(values, [
+      ...ADMIN_REGISTER_REQUIRED_CONSENT_FIELDS,
+    ])
+    if (disagreedRequiredLabels.length > 0) {
+      showAlert({
+        title: REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+        content: buildRequiredConsentDisagreeAlertMessage(disagreedRequiredLabels),
+      })
+      return
+    }
+
     const { missingRequired, formatMessages } = collectAdminRegisterValidation(values)
     if (missingRequired) {
       showAlert({

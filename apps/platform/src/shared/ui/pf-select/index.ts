@@ -4,4 +4,5 @@ export type {
   PFSelectOption,
   PFSelectProps,
   PFSelectSize,
+  PFSelectVariant,
 } from './pf-select'
