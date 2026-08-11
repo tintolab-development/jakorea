@@ -11,10 +11,12 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 
 ## Common
 
-- **Signup/register required consents (only 2):** Terms of service + PII collection — block submit if not agreed.
+- **Signup/register required consents:** Terms of service + PII collection. **Admin also requires MFA setup consent.** Block submit if required items are disagreed.
 - **All other items are optional** for signup/register completion; declining still applies feature blocks below.
+- Every item must have **동의 or 미동의** selected.
+- Required disagree → alert title `필수 동의 항목 안내` listing item labels.
 - Each item tracks **consent status**, **timestamp**, and **document** when required.
-- **Document items**: show **동의** only after agreement submission completes — not radio-only.
+- **Document items**: radio (동의/미동의) + 「동의서 작성」; show **동의** only after agreement submission completes.
 
 ## CMS field ↔ policy (summary)
 
@@ -22,7 +24,7 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 |-------------|-------------------|----------|---------------------|-----------------|
 | 서비스 이용약관 | 서비스 이용약관 | — | **Yes** | Individual register; Admin register |
 | 개인정보 수집·이용 | 개인정보 수집·이용 동의 | — | **Yes** | Individual, Instructor, Admin register; detail |
-| MFA 설정 동의 | 2단계 인증(MFA) 설정 동의 | — | No | Admin register only |
+| MFA 설정 동의 | 2단계 인증(MFA) 설정 동의 | — | **Yes (admin)** | Admin register only |
 | 마케팅 | 마케팅 제공 동의 | — | No | Register; detail |
 | 초상권 | 초상권 수집·이용 동의 | ✓ `agreement-portrait` | No | Individual register; detail |
 | 지급조서 | 지급조서 사전 동의서 / 지급조서 작성 동의 | ✓ `agreement-third-party` | No | Instructor; detail; settlement first-time |
@@ -56,4 +58,4 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 - `preview` 모드 + 슬롯 CSS로 잠그지 말 것 — 지급조서·라디오까지 막힘
 - 애매하면 코드 변경 전 사용자에게 확인
 
-**Last updated:** 2026-07-30
+**Last updated:** 2026-08-11
