@@ -1,9 +1,15 @@
 import { useMemo, useState } from 'react'
+import { useMediaQuery } from '@/shared/hooks'
+import { platformMediaQueries } from '@/shared/lib'
 import { PFButton } from '@/shared/ui/pf-button'
 import { PFPageButton } from '@/shared/ui/pf-page-button'
 import { PFText } from '@/shared/ui/pf-text'
 import { CALENDAR_EVENT_COLORS } from './calendar-event-colors'
-import { buildCalendarWeekLayouts, type PFCalendarEvent } from './calendar-events'
+import {
+  buildCalendarWeekLayouts,
+  getCalendarEventsOnDate,
+  type PFCalendarEvent,
+} from './calendar-events'
 import { CALENDAR_LEGEND_ITEMS } from './calendar-legend'
 import {
   addMonths,
@@ -12,6 +18,7 @@ import {
   isSameDay,
   startOfDay,
 } from './calendar-month'
+import closeIconUrl from './icons/close.svg'
 import styles from './pf-calendar.module.css'
 
 const WEEKDAYS = [
@@ -23,6 +30,8 @@ const WEEKDAYS = [
   { key: 'fri', label: 'Fri', className: styles.weekdayDefault },
   { key: 'sat', label: 'Sat', className: styles.weekdaySat },
 ] as const
+
+const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
 export type { PFCalendarEvent }
 
@@ -42,6 +51,19 @@ function toMonthStart(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1)
 }
 
+function toDateKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+}
+
+function formatPopoverDate(date: Date): { monthDay: string; weekday: string } {
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return {
+    monthDay: `${month}.${day}`,
+    weekday: WEEKDAY_KO[date.getDay()],
+  }
+}
+
 export function PFCalendar({
   value,
   defaultValue,
@@ -54,12 +76,15 @@ export function PFCalendar({
   showLegend = true,
 }: PFCalendarProps) {
   const today = startOfDay(new Date())
+  const isPc = useMediaQuery(platformMediaQueries.pcUp)
   const [uncontrolledSelected, setUncontrolledSelected] = useState(() =>
     startOfDay(defaultValue ?? today),
   )
   const [uncontrolledMonth, setUncontrolledMonth] = useState(() =>
     toMonthStart(defaultMonth ?? defaultValue ?? today),
   )
+  const [hoveredDateKey, setHoveredDateKey] = useState<string | null>(null)
+  const [dismissedDateKey, setDismissedDateKey] = useState<string | null>(null)
 
   const selectedDate = value ? startOfDay(value) : uncontrolledSelected
   const viewMonth = month ? toMonthStart(month) : uncontrolledMonth
@@ -174,6 +199,14 @@ export function PFCalendar({
               <div className={styles.weekDays}>
                 {week.days.map((day, col) => {
                   const selected = isSameDay(day.date, selectedDate)
+                  const dateKey = toDateKey(day.date)
+                  const dayEvents = getCalendarEventsOnDate(events, day.date)
+                  const hasEvents = dayEvents.length > 0
+                  const showPopover =
+                    isPc &&
+                    hasEvents &&
+                    hoveredDateKey === dateKey &&
+                    dismissedDateKey !== dateKey
                   const dayToneClass = !day.isCurrentMonth
                     ? styles.dayOutside
                     : day.weekday === 0
@@ -182,34 +215,119 @@ export function PFCalendar({
                         ? styles.daySat
                         : styles.dayCurrent
                   const overflow = week.overflowByCol[col]
+                  const popoverDate = formatPopoverDate(day.date)
 
                   return (
-                    <button
-                      key={`${day.date.getFullYear()}-${day.date.getMonth()}-${day.date.getDate()}`}
-                      type="button"
-                      className={[styles.cell, !day.isCurrentMonth ? styles.cellOutside : undefined]
+                    <div
+                      key={dateKey}
+                      className={[styles.cellHost, showPopover ? styles.cellHostOpen : undefined]
                         .filter(Boolean)
                         .join(' ')}
-                      aria-label={`${day.date.getFullYear()}년 ${day.date.getMonth() + 1}월 ${day.day}일`}
-                      aria-pressed={selected}
-                      onClick={() => handleSelectDay(day.date)}
+                      onMouseEnter={() => {
+                        if (!isPc || !hasEvents) return
+                        setHoveredDateKey(dateKey)
+                        setDismissedDateKey(null)
+                      }}
+                      onMouseLeave={() => {
+                        setHoveredDateKey(prev => (prev === dateKey ? null : prev))
+                        setDismissedDateKey(prev => (prev === dateKey ? null : prev))
+                      }}
                     >
-                      <span
+                      <button
+                        type="button"
                         className={[
-                          styles.dayText,
-                          'typo-bd-md-md',
-                          dayToneClass,
-                          selected ? styles.daySelected : undefined,
+                          styles.cell,
+                          !day.isCurrentMonth ? styles.cellOutside : undefined,
                         ]
                           .filter(Boolean)
                           .join(' ')}
+                        aria-label={`${day.date.getFullYear()}년 ${day.date.getMonth() + 1}월 ${day.day}일`}
+                        aria-pressed={selected}
+                        onClick={() => handleSelectDay(day.date)}
                       >
-                        {day.day}
-                      </span>
-                      {overflow > 0 ? (
-                        <span className={styles.overflowLabel}>외 {overflow}개</span>
+                        <span
+                          className={[
+                            styles.dayText,
+                            'typo-bd-md-md',
+                            dayToneClass,
+                            selected ? styles.daySelected : undefined,
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                        >
+                          {day.day}
+                        </span>
+                        {overflow > 0 ? (
+                          <span className={styles.overflowLabel}>외 {overflow}개</span>
+                        ) : null}
+                      </button>
+
+                      {showPopover ? (
+                        <div
+                          className={styles.popover}
+                          role="dialog"
+                          aria-label={`${popoverDate.monthDay} ${popoverDate.weekday} 일정`}
+                        >
+                          <div className={styles.popoverTitle}>
+                            <div className={styles.popoverDateGroup}>
+                              <PFText as="span" typo="bd-md-bd" className={styles.popoverDateText}>
+                                {popoverDate.monthDay}
+                              </PFText>
+                              <PFText
+                                as="span"
+                                typo="bd-sm-md"
+                                className={styles.popoverWeekdayText}
+                              >
+                                {popoverDate.weekday}
+                              </PFText>
+                            </div>
+                            <button
+                              type="button"
+                              className={styles.popoverClose}
+                              aria-label="일정 팝오버 닫기"
+                              onClick={event => {
+                                event.stopPropagation()
+                                setDismissedDateKey(dateKey)
+                              }}
+                            >
+                              <img src={closeIconUrl} alt="" width={12} height={12} />
+                            </button>
+                          </div>
+
+                          <div className={styles.popoverList}>
+                            {dayEvents.map(event => (
+                              <div key={event.id} className={styles.popoverItem}>
+                                <PFText
+                                  as="span"
+                                  typo="label-md"
+                                  className={styles.popoverProgram}
+                                >
+                                  {event.programName}
+                                </PFText>
+                                <div className={styles.popoverMeta}>
+                                  <PFText
+                                    as="span"
+                                    typo="bd-md-sb"
+                                    className={styles.popoverEventTitle}
+                                  >
+                                    {event.title}
+                                  </PFText>
+                                  {event.time ? (
+                                    <PFText
+                                      as="span"
+                                      typo="bd-md-rg"
+                                      className={styles.popoverEventTime}
+                                    >
+                                      {event.time}
+                                    </PFText>
+                                  ) : null}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       ) : null}
-                    </button>
+                    </div>
                   )
                 })}
               </div>
@@ -227,13 +345,6 @@ export function PFCalendar({
                           gridRow: segment.lane + 1,
                           backgroundColor: colors.background,
                           borderLeftColor: segment.isRangeStart ? colors.accent : 'transparent',
-                        }}
-                        onClick={event => {
-                          const rect = event.currentTarget.getBoundingClientRect()
-                          const ratio = (event.clientX - rect.left) / Math.max(rect.width, 1)
-                          const span = segment.endCol - segment.startCol + 1
-                          const colOffset = Math.min(span - 1, Math.max(0, Math.floor(ratio * span)))
-                          handleSelectDay(week.days[segment.startCol + colOffset].date)
                         }}
                       >
                         <span className={styles.eventBarProgram}>{segment.programName}</span>

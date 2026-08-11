@@ -50,10 +50,9 @@
 .description {
   width: 100%;
   margin: 0;
-  overflow: hidden;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: keep-all;
+  white-space: pre-line;
 }
 
 .confirmButton {

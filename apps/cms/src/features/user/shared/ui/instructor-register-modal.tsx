@@ -6,6 +6,12 @@
 
 import { useEffect, useId, useState } from 'react'
 import { Form } from 'antd'
+import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
+import {
+  REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+  buildRequiredConsentDisagreeAlertMessage,
+  collectDisagreedRequiredConsentLabels,
+} from '@jakorea/domain/shared/required-consent-alert'
 import {
   isBirthDateInputIncomplete,
   isValidBirthDateFormValue,
@@ -19,6 +25,7 @@ import {
   EMPTY_CAREER,
   INITIAL_VALUES,
   InstructorProfileFormBody,
+  mapInstructorRegisterFormValuesToValidationInput,
   type CareerRow,
   type InstructorRegisterModalFormValues,
 } from '@/features/user/shared/ui/instructor-profile-form'
@@ -28,6 +35,11 @@ export type { InstructorRegisterModalFormValues } from '@/features/user/shared/u
 
 const FORM_ID = 'cms-instructor-register-modal-form'
 
+const INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS = [
+  { key: 'consentTermsOfService', label: '서비스 이용약관' },
+  { key: 'consentPersonal', label: '개인정보 수집·이용 동의' },
+] as const
+
 export interface InstructorRegisterModalProps {
   open: boolean
   onClose: () => void
@@ -35,56 +47,15 @@ export interface InstructorRegisterModalProps {
   loading?: boolean
 }
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-type InstructorRegisterValidation = {
-  missingRequired: boolean
-  formatMessages: string[]
-}
-
-function collectInstructorRegisterValidation(
-  values: InstructorRegisterModalFormValues
-): InstructorRegisterValidation {
-  let missingRequired = false
-  const formatMessages: string[] = []
-
-  if (!values.name?.trim()) {
-    missingRequired = true
-  }
-
-  const birthDate = values.birthDate?.trim()
-  if (!birthDate || isBirthDateInputIncomplete(birthDate)) {
-    missingRequired = true
-  } else if (!isValidBirthDateFormValue(birthDate)) {
-    formatMessages.push('올바른 생년월일을 입력해 주세요.')
-  }
-
-  const contact = values.contact?.trim()
-  if (!contact) {
-    missingRequired = true
-  } else if (!KOREAN_PHONE_REGEX.test(contact)) {
-    formatMessages.push('올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)')
-  }
-
-  const email = values.email?.trim()
-  if (!email) {
-    missingRequired = true
-  } else if (!EMAIL_PATTERN.test(email)) {
-    formatMessages.push('올바른 이메일 형식이 아닙니다')
-  }
-
-  if (values.memberType === 'school_teacher' && !values.schoolName?.trim()) {
-    missingRequired = true
-  }
-
-  if (values.consentTermsOfService !== 'agree') {
-    missingRequired = true
-  }
-  if (values.consentPersonal !== 'agree') {
-    missingRequired = true
-  }
-
-  return { missingRequired, formatMessages }
+function validateInstructorRegister(values: InstructorRegisterModalFormValues) {
+  return collectInstructorRegisterValidation(
+    mapInstructorRegisterFormValuesToValidationInput(values),
+    {
+      isBirthDateIncomplete: isBirthDateInputIncomplete,
+      isBirthDateValid: isValidBirthDateFormValue,
+      isPhoneValid: value => KOREAN_PHONE_REGEX.test(value),
+    }
+  )
 }
 
 export function InstructorRegisterModal({
@@ -134,7 +105,22 @@ export function InstructorRegisterModal({
   }
 
   const handleSubmitAttempt = (values: InstructorRegisterModalFormValues) => {
-    const { missingRequired, formatMessages } = collectInstructorRegisterValidation(values)
+    const disagreedRequiredLabels = collectDisagreedRequiredConsentLabels(
+      {
+        consentTermsOfService: values.consentTermsOfService,
+        consentPersonal: values.consentPersonal,
+      },
+      [...INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS]
+    )
+    if (disagreedRequiredLabels.length > 0) {
+      showAlert({
+        title: REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+        content: buildRequiredConsentDisagreeAlertMessage(disagreedRequiredLabels),
+      })
+      return
+    }
+
+    const { missingRequired, formatMessages } = validateInstructorRegister(values)
     if (missingRequired) {
       showAlert({
         title: '안내',

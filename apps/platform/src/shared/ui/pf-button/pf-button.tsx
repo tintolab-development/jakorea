@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react'
 import styles from './pf-button.module.css'
 
-type PFButtonSize = 'small' | 'medium' | 'large' | 'xlarge'
+type PFButtonSize = 'small' | 'medium' | 'large' | 'xlarge' | 'formPage'
 type PFButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'text'
 
 type PFButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -15,6 +15,8 @@ type PFButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 const sizeTypographyClassMap: Record<PFButtonSize, string> = {
   small: 'typo-label-md',
   medium: 'typo-bd-sm-md',
+  /** Platform 양식 페이지(PFFormPage) 내부 전용 */
+  formPage: 'typo-bd-sm-md',
   large: 'typo-bd-md-sb',
   xlarge: 'typo-bd-lg-sb',
 }

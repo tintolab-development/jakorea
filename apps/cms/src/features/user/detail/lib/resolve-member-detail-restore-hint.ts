@@ -2,6 +2,7 @@ import type { InfiniteData, QueryClient } from '@tanstack/react-query'
 import type { GetUsersPageResult } from '@/entities/user/api/user-service'
 import { getMemberIdByUuid, registerMemberIdMapping } from '@/features/user/api/member-id-registry'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
+import { parseOrganizationIdFromUserId } from '@/features/user/api/map-school-organization-to-user'
 import type { MemberDetailUrlContext } from '@/features/user/detail/lib/teacher-detail-url-context'
 import {
   memberListKindToUserRole,
@@ -11,6 +12,7 @@ import type { User, UserRole } from '@/types/user'
 
 export type MemberDetailRestoreHint = {
   memberId?: number
+  organizationId?: number
   role?: UserRole
   email?: string
   adminAccountId?: number
@@ -31,9 +33,14 @@ export function findUserInMemberListQueries(
   queryClient: QueryClient,
   userId: string
 ): Omit<User, 'password'> | undefined {
-  const queries = queryClient.getQueriesData<InfiniteData<GetUsersPageResult>>({
-    queryKey: [...memberQueryKeys.all, 'list'],
-  })
+  const queries = [
+    ...queryClient.getQueriesData<InfiniteData<GetUsersPageResult>>({
+      queryKey: [...memberQueryKeys.all, 'list'],
+    }),
+    ...queryClient.getQueriesData<InfiniteData<GetUsersPageResult>>({
+      queryKey: [...memberQueryKeys.all, 'schoolsList'],
+    }),
+  ]
 
   for (const [, data] of queries) {
     if (!data?.pages) continue
@@ -63,6 +70,8 @@ export function resolveMemberDetailRestoreHint(options: {
       : undefined
 
   const user = fromStore ?? fromList ?? fromCache
+  const organizationId =
+    user?.organizationId ?? parseOrganizationIdFromUserId(userId) ?? undefined
   const memberId =
     urlCtx.memberId ??
     user?.memberId ??
@@ -77,10 +86,12 @@ export function resolveMemberDetailRestoreHint(options: {
     user?.role ??
     urlCtx.role ??
     (urlCtx.instructorMemberProfile != null ? ('INSTRUCTOR' as const) : undefined) ??
+    (organizationId != null ? ('SCHOOL' as const) : undefined) ??
     memberListKindToUserRole(listKind)
 
   return {
     memberId,
+    organizationId,
     role,
     email: user?.email,
     adminAccountId: user?.adminAccountId,
@@ -90,7 +101,11 @@ export function resolveMemberDetailRestoreHint(options: {
 
 export function canResolveMemberIdForDetailRestore(
   userId: string,
-  hint: Pick<MemberDetailRestoreHint, 'memberId'>
+  hint: Pick<MemberDetailRestoreHint, 'memberId' | 'organizationId' | 'role'>
 ): boolean {
+  if (hint.organizationId != null || parseOrganizationIdFromUserId(userId) != null) {
+    return true
+  }
+  if (hint.role === 'SCHOOL' && hint.organizationId != null) return true
   return hint.memberId != null || parseMemberIdFromUserId(userId) != null
 }

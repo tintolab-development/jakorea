@@ -49,7 +49,7 @@ export function ProgramStatusBadges({
       </PFStateBadge>
 
       {showRole ? (
-        <PFCategoryBadge size="large" iconVariant="secondary">
+        <PFCategoryBadge size="small" variant="primary">
           {recruitmentRoleLabel}
         </PFCategoryBadge>
       ) : null}

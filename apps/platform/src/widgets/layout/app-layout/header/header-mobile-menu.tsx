@@ -138,7 +138,7 @@ export function HeaderMobileMenu({
           <img className={styles.backIcon} src={chevronLeftGrayUrl} alt="" aria-hidden="true" />
         </button>
         {isLoggedIn ? (
-          <button className={styles.topBarButton} type="button" aria-label="알림확인">
+          <button className={styles.topBarButton} type="button" aria-label="알림">
             <img
               className={styles.notificationIcon}
               src={notificationsIconUrl}

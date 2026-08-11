@@ -1,0 +1,22 @@
+.root {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.root:disabled {
+  cursor: default;
+}
+
+.root:focus-visible {
+  outline: 2px solid var(--color-mint-01, #01a1af);
+  outline-offset: 2px;
+  border-radius: 50%;
+}

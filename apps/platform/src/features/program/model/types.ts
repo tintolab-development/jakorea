@@ -144,7 +144,7 @@ export type ProgramsListParams = {
   /** 모집대상 필터 — 초등~성인 (탭과 분리) */
   recruitmentTarget: string
   recruitmentStatus: string
-  /** 운영 연도 (`all` | `YYYY`) */
+  /** 운영 기간 (`all` | `YYYY-MM-DD~YYYY-MM-DD`, 단일·레거시 `YYYY` 허용) */
   operatingPeriod: string
   educationTarget: string
   educationForm: string

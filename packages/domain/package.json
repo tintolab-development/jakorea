@@ -31,6 +31,58 @@
     "./shared/types": {
       "types": "./dist/shared/types.d.ts",
       "import": "./dist/shared/types.js"
+    },
+    "./shared/required-consent-alert": {
+      "types": "./dist/shared/required-consent-alert.d.ts",
+      "import": "./dist/shared/required-consent-alert.js"
+    },
+    "./instructor/gender": {
+      "types": "./dist/instructor/gender.d.ts",
+      "import": "./dist/instructor/gender.js"
+    },
+    "./instructor/member-type": {
+      "types": "./dist/instructor/member-type.d.ts",
+      "import": "./dist/instructor/member-type.js"
+    },
+    "./instructor/business-income": {
+      "types": "./dist/instructor/business-income.d.ts",
+      "import": "./dist/instructor/business-income.js"
+    },
+    "./instructor/career-level": {
+      "types": "./dist/instructor/career-level.d.ts",
+      "import": "./dist/instructor/career-level.js"
+    },
+    "./instructor/employment-status": {
+      "types": "./dist/instructor/employment-status.d.ts",
+      "import": "./dist/instructor/employment-status.js"
+    },
+    "./instructor/consent": {
+      "types": "./dist/instructor/consent.d.ts",
+      "import": "./dist/instructor/consent.js"
+    },
+    "./instructor/free-write": {
+      "types": "./dist/instructor/free-write.d.ts",
+      "import": "./dist/instructor/free-write.js"
+    },
+    "./instructor/education-options": {
+      "types": "./dist/instructor/education-options.d.ts",
+      "import": "./dist/instructor/education-options.js"
+    },
+    "./instructor/profile-form-values": {
+      "types": "./dist/instructor/profile-form-values.d.ts",
+      "import": "./dist/instructor/profile-form-values.js"
+    },
+    "./instructor/validate-register": {
+      "types": "./dist/instructor/validate-register.d.ts",
+      "import": "./dist/instructor/validate-register.js"
+    },
+    "./instructor/form-copy": {
+      "types": "./dist/instructor/form-copy.d.ts",
+      "import": "./dist/instructor/form-copy.js"
+    },
+    "./instructor/form-layout": {
+      "types": "./dist/instructor/form-layout.d.ts",
+      "import": "./dist/instructor/form-layout.js"
     }
   },
   "devDependencies": {

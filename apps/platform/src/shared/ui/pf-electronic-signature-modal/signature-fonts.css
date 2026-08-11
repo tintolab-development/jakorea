@@ -1,0 +1,47 @@
+@font-face {
+  font-family: 'JA Signature NanumPen';
+  src: url('../../../assets/fonts/autograph/NanumPen.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JA Signature NanumDahaeng';
+  src: url('../../../assets/fonts/autograph/NanumHandwriting-Dahaeng.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JA Signature OngleipKimKonghae';
+  src: url('../../../assets/fonts/autograph/Ongleip-KimKonghae.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JA Signature OngleipParkDahyun';
+  src: url('../../../assets/fonts/autograph/Ongleip-ParkDahyun.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JA Signature GangwonEduAll';
+  src: url('../../../assets/fonts/autograph/GangwonEduAll-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JA Signature KimjungchulScript';
+  src: url('../../../assets/fonts/autograph/KimjungchulScript-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

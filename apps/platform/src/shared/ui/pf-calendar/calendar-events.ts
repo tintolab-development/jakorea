@@ -8,6 +8,8 @@ export type PFCalendarEvent = {
   id: string
   programName: string
   title: string
+  /** 팝오버·목록용 시간 문구 (예: 종일, 09:00~15:00) */
+  time?: string
   type: CalendarLegendItem['key']
   startDate: Date | string
   endDate: Date | string
@@ -64,6 +66,21 @@ function compareEvents(a: PFCalendarEvent, b: PFCalendarEvent): number {
   const bEnd = toTime(parseDate(b.endDate))
   // longer first for stabler packing
   return bEnd - aEnd
+}
+
+/** 해당 일자에 걸친 일정 (시작~종료 포함) */
+export function getCalendarEventsOnDate(
+  events: PFCalendarEvent[],
+  date: Date,
+): PFCalendarEvent[] {
+  const dayTime = toTime(startOfDay(date))
+  return events
+    .filter(event => {
+      const start = toTime(parseDate(event.startDate))
+      const end = toTime(parseDate(event.endDate))
+      return start <= dayTime && dayTime <= end
+    })
+    .sort(compareEvents)
 }
 
 export function buildCalendarWeekLayouts(

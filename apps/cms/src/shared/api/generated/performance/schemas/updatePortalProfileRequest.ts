@@ -45,4 +45,20 @@ export interface UpdatePortalProfileRequest {
      * @maxLength 255
      */
   affiliationName?: string;
+  schoolOrganizationId?: number;
+  /**
+     * @minLength 0
+     * @maxLength 30
+     */
+  schoolEnrollmentStatus?: string;
+  /**
+     * @minLength 0
+     * @maxLength 30
+     */
+  teacherEmploymentStatus?: string;
+  /**
+     * @minLength 0
+     * @maxLength 100
+     */
+  external1365Id?: string;
 }

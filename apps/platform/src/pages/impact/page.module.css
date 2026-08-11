@@ -1,0 +1,186 @@
+.page {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  overflow: visible;
+}
+
+/**
+ * 임팩트 스토리 히어로 배경 — impact-gradient.png (1920×1000)
+ * 헤더 영역까지 확장 (transparent header / layout: hero)
+ */
+.pageBackground {
+  position: absolute;
+  top: calc(-1 * (var(--app-header-height) + var(--content-padding-block)));
+  left: 50%;
+  z-index: 0;
+  width: 100vw;
+  height: 1000px;
+  pointer-events: none;
+  background-color: transparent;
+  background-image: url('../../assets/background_gradient/impact-gradient.png');
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+  transform: translateX(-50%);
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  padding-inline: var(--page-padding-x);
+  /* 페이지네이션 ↔ 뉴스레터 Spacing/100 */
+  padding-bottom: var(--spacing-100);
+}
+
+.hero {
+  margin-bottom: var(--spacing-32);
+}
+
+.heroTitle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  text-align: center;
+  word-break: keep-all;
+}
+
+.heroLine {
+  display: block;
+}
+
+.featured {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: var(--spacing-100);
+}
+
+.toolbar {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-24);
+  margin-bottom: var(--spacing-40);
+}
+
+.tabs {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  overflow-x: auto;
+}
+
+.categoryTabs {
+  width: auto;
+  min-height: 54px;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* Headline/Large + 검색 인풋(54px)과 세로 정렬 */
+.categoryTabs button {
+  height: 54px;
+  color: var(--color-neutral-black-30);
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%; /* 36px */
+  letter-spacing: -0.24px;
+}
+
+.search {
+  display: flex;
+  width: 100%;
+  max-width: 360px;
+  min-width: 0;
+  height: 54px;
+  align-items: center;
+}
+
+.searchField {
+  width: 100%;
+  max-width: 100%;
+  height: 54px;
+}
+
+.grid {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--spacing-40);
+  column-gap: var(--spacing-28);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--spacing-40) 0;
+}
+
+.pagination {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--spacing-60);
+}
+
+@media (--bp-below-pc) {
+  .heroTitle {
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+@media (--bp-pc-up) {
+  .content {
+    padding-inline: 80px;
+  }
+
+  .toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-40);
+    min-height: 54px;
+  }
+
+  .tabs {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  .search {
+    width: 360px;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 461px));
+    justify-content: start;
+    column-gap: var(--spacing-28);
+    row-gap: var(--spacing-40);
+  }
+
+  .pagination {
+    margin-top: var(--spacing-100);
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .content {
+    padding-inline: 0;
+  }
+}

@@ -606,6 +606,9 @@ export function mapSchoolMemberDetailToUser(
   const address = detail.address?.trim() ?? ''
   const addressDetail = detail.addressDetail?.trim() || undefined
   user.role = 'SCHOOL'
+  if (typeof detail.organizationId === 'number' && Number.isFinite(detail.organizationId)) {
+    user.organizationId = detail.organizationId
+  }
   user.schoolInfo = {
     schoolName,
     address,

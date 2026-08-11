@@ -40,6 +40,20 @@
   height: 38px;
 }
 
+/* Platform 양식 페이지 내부 전용 — 동의서 작성 등 */
+.formPage {
+  display: flex;
+  box-sizing: border-box;
+  width: 120px;
+  height: 40px;
+  padding: 6px 16px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-8, 8px);
+}
+
 .large {
   height: 42px;
 }
@@ -127,6 +141,10 @@
   }
 
   .button.medium {
+    font-size: 12px;
+  }
+
+  .button.formPage {
     font-size: 12px;
   }
 

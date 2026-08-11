@@ -1,0 +1,129 @@
+.page {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0;
+  margin-inline: auto;
+}
+
+.main {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-40);
+  padding-block: var(--spacing-24) var(--spacing-80);
+  padding-inline: var(--page-padding-x);
+}
+
+.back {
+  width: 100%;
+}
+
+.layout {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+}
+
+.header {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-16) var(--spacing-24);
+}
+
+.headerLead {
+  display: flex;
+  width: 100%;
+  max-width: 1069px;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-16);
+}
+
+.title {
+  margin: 0;
+}
+
+.meta {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-24);
+}
+
+.viewCount {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-4);
+}
+
+.body {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-32);
+}
+
+/** 본문 이미지 플레이스홀더 — 폭 1106, 높이는 이미지에 따라 가변 */
+.imagePlaceholder {
+  width: 1106px;
+  max-width: 100%;
+  flex-shrink: 0;
+  margin-inline: auto;
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-100);
+}
+
+.footerNav {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-32);
+  margin-top: var(--spacing-24);
+}
+
+.listAction {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.listButton {
+  box-sizing: border-box;
+  width: 240px;
+  min-width: 160px;
+}
+
+@media (--bp-pc-up) {
+  .main {
+    padding-block: var(--spacing-40) var(--spacing-80);
+    padding-inline: 80px;
+  }
+
+  .layout {
+    gap: var(--spacing-40);
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .main {
+    width: 100%;
+    max-width: var(--content-shell-max-width);
+    margin-inline: auto;
+    padding-inline: 0;
+  }
+}

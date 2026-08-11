@@ -27,7 +27,7 @@ export const DEFAULT_PROGRAMS_LIST_PARAMS = {
   page: 1,
 } as const
 
-/** 운영기간 필터 — 연 단위 (mock/API 공통 value = YYYY) */
+/** 운영기간 필터 — 레거시 연 단위 옵션 (날짜 필터로 전환됨) */
 export const OPERATING_PERIOD_FILTER_OPTIONS = [
   { value: 'all', label: '전체' },
   { value: '2026', label: '2026년' },

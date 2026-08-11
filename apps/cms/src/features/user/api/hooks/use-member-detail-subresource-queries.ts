@@ -6,6 +6,7 @@ import {
   fetchMemberApplicationsRemote,
   fetchMemberCommentsRemote,
   fetchMemberProgramHistoryRemote,
+  fetchSchoolTeachersRemote,
 } from '@/features/user/api/members-api-client'
 import { mapAffiliatedTeacherRows } from '@/features/user/api/map-affiliated-teacher-row'
 import { mapMemberAdminPrograms } from '@/features/user/api/map-member-admin-program'
@@ -54,12 +55,29 @@ export function useMemberCommentsQuery(
   })
 }
 
-export function useAffiliatedTeachersQuery(memberId: number | undefined, enabled = true) {
+/**
+ * 학교 소속 교사 — `organizationId` 우선 (`listTeachers`),
+ * 없으면 legacy `memberId` affiliated-teachers.
+ */
+export function useAffiliatedTeachersQuery(
+  memberId: number | undefined,
+  enabled = true,
+  organizationId?: number
+) {
+  const useOrgApi = organizationId != null
   return useQuery({
-    queryKey: memberQueryKeys.affiliatedTeachers(memberId ?? 0),
-    enabled: Boolean(enabled && memberId != null && isMembersRemoteEnabled()),
+    queryKey: useOrgApi
+      ? memberQueryKeys.schoolTeachers(organizationId)
+      : memberQueryKeys.affiliatedTeachers(memberId ?? 0),
+    enabled: Boolean(
+      enabled &&
+        isMembersRemoteEnabled() &&
+        (useOrgApi || memberId != null)
+    ),
     queryFn: async (): Promise<SchoolAffiliatedTeacherRow[]> => {
-      const rows = await fetchAffiliatedTeachersRemote(memberId!)
+      const rows = useOrgApi
+        ? await fetchSchoolTeachersRemote(organizationId)
+        : await fetchAffiliatedTeachersRemote(memberId!)
       return mapAffiliatedTeacherRows(rows)
     },
     meta: {

@@ -59,6 +59,20 @@ function parsePositiveInt(value: string | null, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
 }
 
+function parseOperatingPeriodFilter(value: string | null): string {
+  if (!value || value === 'all') {
+    return DEFAULT_PROGRAMS_LIST_PARAMS.operatingPeriod
+  }
+  if (
+    /^\d{4}-\d{2}-\d{2}~\d{4}-\d{2}-\d{2}$/.test(value) ||
+    /^\d{4}-\d{2}-\d{2}$/.test(value) ||
+    /^\d{4}$/.test(value)
+  ) {
+    return value
+  }
+  return DEFAULT_PROGRAMS_LIST_PARAMS.operatingPeriod
+}
+
 /** 기간 기반 3단 모집현황 필터 */
 const VALID_RECRUITMENT_STATUS = new Set(['recruiting', 'closed', 'scheduled', 'all'])
 
@@ -80,7 +94,7 @@ export function readProgramsListParams(search = window.location.search): Program
     q: params.get('q') ?? DEFAULT_PROGRAMS_LIST_PARAMS.q,
     recruitmentTarget: parseEducationTargetFilter(params.get('recruitmentTarget')),
     recruitmentStatus: parseRecruitmentStatusFilter(params.get('recruitmentStatus')),
-    operatingPeriod: params.get('operatingPeriod') ?? DEFAULT_PROGRAMS_LIST_PARAMS.operatingPeriod,
+    operatingPeriod: parseOperatingPeriodFilter(params.get('operatingPeriod')),
     educationTarget: parseEducationTargetFilter(params.get('educationTarget')),
     educationForm: params.get('educationForm') ?? DEFAULT_PROGRAMS_LIST_PARAMS.educationForm,
     sort: parseSort(params.get('sort')),

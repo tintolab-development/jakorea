@@ -26,7 +26,7 @@ import {
   SocialErrorPage,
 } from '@/pages/auth'
 import { HomePage } from '@/pages/home'
-import { MypageHomePage } from '@/pages/mypage'
+import { MypageHomePage, MypageInstructorApplyPage } from '@/pages/mypage'
 import {
   ProgramApplyCompletePage,
   ProgramApplyPage,
@@ -40,7 +40,22 @@ import { DirectionsPage } from '@/pages/about/directions'
 import { PeoplePage } from '@/pages/about/people'
 import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
 import { DesignSystemPage } from '@/pages/design-system'
+import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
+import { TemporaryPage } from '@/pages/temporary'
 import { YoutubeEmbedPage } from '@/pages/youtube-embed'
+import { IMPACT_STORIES_PATH } from '@/features/impact-story'
+import {
+  ABOUT_CAREERS_PATH,
+  ABOUT_HISTORY_PATH,
+  ABOUT_INTRODUCTION_PATH,
+  EDUCATION_CAREER_PATH,
+  EDUCATION_DIGITAL_LITERACY_PATH,
+  EDUCATION_ENTREPRENEURSHIP_PATH,
+  EDUCATION_FINANCE_PATH,
+  SUPPORT_CORPORATE_PATH,
+  SUPPORT_INDIVIDUAL_PATH,
+  SUPPORT_TALENT_PATH,
+} from '@/shared/config/gnb-temporary-paths'
 import { AppLayoutRoute } from './app-layout-route'
 
 export const router = createBrowserRouter([
@@ -53,6 +68,7 @@ export const router = createBrowserRouter([
       { path: '/programs/:programId/apply/complete', element: <ProgramApplyCompletePage /> },
       { path: '/notices/:noticeId', element: <NoticeDetailPage /> },
       { path: '/results/:resultId', element: <ResultDetailPage /> },
+      { path: '/impact/:storyId', element: <ImpactStoryDetailPage /> },
     ],
   },
   {
@@ -61,6 +77,10 @@ export const router = createBrowserRouter([
       { path: '/results', element: <ResultsPage /> },
       { path: '/notices', element: <NoticesPage /> },
       { path: '/education/textbooks', element: <TextbooksPage /> },
+      { path: EDUCATION_CAREER_PATH, element: <TemporaryPage /> },
+      { path: EDUCATION_FINANCE_PATH, element: <TemporaryPage /> },
+      { path: EDUCATION_ENTREPRENEURSHIP_PATH, element: <TemporaryPage /> },
+      { path: EDUCATION_DIGITAL_LITERACY_PATH, element: <TemporaryPage /> },
       { path: '/about/people', element: <PeoplePage /> },
       { path: '/about/directions', element: <DirectionsPage /> },
       { path: '/about/transparency', element: <TransparencyPage /> },
@@ -72,6 +92,13 @@ export const router = createBrowserRouter([
         path: '/about/transparency/audit-reports',
         element: <TransparencyReportsPage type="audit" />,
       },
+      { path: ABOUT_INTRODUCTION_PATH, element: <TemporaryPage /> },
+      { path: ABOUT_HISTORY_PATH, element: <TemporaryPage /> },
+      { path: ABOUT_CAREERS_PATH, element: <TemporaryPage /> },
+      { path: IMPACT_STORIES_PATH, element: <ImpactStoriesPage /> },
+      { path: SUPPORT_INDIVIDUAL_PATH, element: <TemporaryPage /> },
+      { path: SUPPORT_CORPORATE_PATH, element: <TemporaryPage /> },
+      { path: SUPPORT_TALENT_PATH, element: <TemporaryPage /> },
     ],
   },
   {
@@ -123,6 +150,7 @@ export const router = createBrowserRouter([
         element: <SignUpGuardianIdentityMockNicePage />,
       },
       { path: '/programs/:programId/apply', element: <ProgramApplyPage /> },
+      { path: '/mypage/instructor-apply', element: <MypageInstructorApplyPage /> },
       { path: '/design-system', element: <DesignSystemPage /> },
       { path: '/dev/youtube', element: <YoutubeEmbedPage /> },
     ],

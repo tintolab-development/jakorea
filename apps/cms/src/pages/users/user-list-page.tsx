@@ -11,7 +11,7 @@ import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useModalState } from '@/shared/hooks/use-modal-state'
-import { useInView } from '@/shared/hooks/use-in-view'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { UserList } from '@/features/user/shared/ui/user-list'
 import {
   UserDetailFullPageModal,
@@ -92,7 +92,8 @@ import {
   getUnsupportedMemberListFilterLabels,
   isMembersRemoteEnabled,
 } from '@/features/user/api/member-remote-capabilities'
-import { memberQueryKeys } from '@/features/user/api/member-query-keys'
+import { memberQueryKeys, serializeMemberListFilters } from '@/features/user/api/member-query-keys'
+import { resolveDeleteUserOptions } from '@/features/user/api/resolve-delete-user-options'
 import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
 import { applyAffiliatedTeacherLinkToUser } from '@/features/user/api/apply-affiliated-teacher-link'
 import { buildAdminAccountCreateTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
@@ -196,6 +197,10 @@ export function UserListPage() {
   const canWrite = canPerformWriteAction(user)
 
   const listQueryFilters = useMemo(() => buildListQueryApiFilters(params), [params])
+  const listQueryFiltersKey = useMemo(
+    () => serializeMemberListFilters(listQueryFilters),
+    [listQueryFilters]
+  )
 
   const unsupportedRemoteFilterLabels = useMemo(
     () => (isMembersRemoteEnabled() ? getUnsupportedMemberListFilterLabels(listQueryFilters) : []),
@@ -214,13 +219,12 @@ export function UserListPage() {
   /** 조회 버튼 — 무한스크롤 next page fetch는 제외 */
   const filterSearchLoading = listFetching && !isFetchingNextPage
 
-  // 무한 스크롤: 하단 센티넬이 보이면 다음 페이지 로드
-  const { ref: loadMoreRef, inView } = useInView({ rootMargin: '200px', threshold: 0 })
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage()
-    }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage: hasNextPage ?? false,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: listQueryFiltersKey,
+  })
 
   // 스토어: 선택 사용자(드로어), mutations
   const createUser = useUserStore(state => state.createUser)
@@ -522,6 +526,7 @@ export function UserListPage() {
         const roleHint = restoreHint.role
         await fetchUserById(targetId, {
           memberId: restoreHint.memberId,
+          organizationId: restoreHint.organizationId ?? hintUser?.organizationId,
           role: roleHint,
           adminAccountId: restoreHint.adminAccountId ?? hintUser?.adminAccountId,
           email: restoreHint.email ?? hintUser?.email,
@@ -628,7 +633,9 @@ export function UserListPage() {
             ...page,
             users: page.users.map(u =>
               u.id === updated.id ||
-              (updated.memberId != null && u.memberId === updated.memberId)
+              (updated.memberId != null && u.memberId === updated.memberId) ||
+              (updated.organizationId != null &&
+                u.organizationId === updated.organizationId)
                 ? mergeListUserWithFetchedDetail(u, updated)
                 : u
             ),
@@ -640,9 +647,13 @@ export function UserListPage() {
         { queryKey: ['users', 'list'] },
         patchListCache
       )
-      // remote 목록 키 (`['cms','members','list', …]`)
+      // remote 목록 키 (`['cms','members','list'|schoolsList', …]`)
       queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
         { queryKey: [...memberQueryKeys.all, 'list'] },
+        patchListCache
+      )
+      queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+        { queryKey: [...memberQueryKeys.all, 'schoolsList'] },
         patchListCache
       )
       if (!options?.skipListInvalidate) {
@@ -698,6 +709,7 @@ export function UserListPage() {
       try {
         const fetched = await fetchUserById(user.id, {
           memberId: user.memberId,
+          organizationId: user.organizationId,
           role: user.role,
           adminAccountId: user.adminAccountId,
           email: user.email,
@@ -994,12 +1006,7 @@ export function UserListPage() {
     setDeleteLoading(true)
     try {
       for (const u of toDelete) {
-        await deleteUser(u.id, {
-          role: u.role,
-          adminAccountId: u.adminAccountId,
-          memberId: u.memberId,
-          email: u.email,
-        })
+        await deleteUser(u.id, resolveDeleteUserOptions(u))
       }
       const domain = memberDeleteGuideDomain(resolvedMemberListKind)
       setDeleteResultTitle(buildDeleteCompletedTitle(domain.domainLabel))
@@ -1036,12 +1043,7 @@ export function UserListPage() {
       flushUserDetailModal()
       setDeleteLoading(true)
       try {
-        await deleteUser(u.id, {
-          role: u.role,
-          adminAccountId: u.adminAccountId,
-          memberId: u.memberId,
-          email: u.email,
-        })
+        await deleteUser(u.id, resolveDeleteUserOptions(u))
         const entityLabel = entityLabelForWithdrawDeletedUser(u)
         setDeleteResultTitle(buildDeleteCompletedTitle(entityLabel))
         setDeleteResultMessage(
@@ -1103,6 +1105,10 @@ export function UserListPage() {
         )
         queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
           { queryKey: [...memberQueryKeys.all, 'list'] },
+          patchListCache
+        )
+        queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+          { queryKey: [...memberQueryKeys.all, 'schoolsList'] },
           patchListCache
         )
         if (drawerUser?.id === ctx.userId) {

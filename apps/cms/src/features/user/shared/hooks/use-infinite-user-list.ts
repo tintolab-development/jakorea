@@ -17,8 +17,11 @@ export type UseInfiniteUserListFilters = GetUsersPageParams
 
 export function useInfiniteUserList(filters: UseInfiniteUserListFilters) {
   const remote = isMembersRemoteEnabled()
+  const filtersKey = serializeMemberListFilters(filters)
   const queryKey = remote
-    ? memberQueryKeys.list(serializeMemberListFilters(filters))
+    ? filters.role === 'SCHOOL'
+      ? memberQueryKeys.schoolsList(filtersKey)
+      : memberQueryKeys.list(filtersKey)
     : (['users', 'list', filters] as const)
 
   const query = useInfiniteQuery({
@@ -32,6 +35,8 @@ export function useInfiniteUserList(filters: UseInfiniteUserListFilters) {
       if (!lastPage.hasMore) return undefined
       return allPages.length
     },
+    staleTime: 0,
+    refetchOnMount: 'always',
   })
 
   const users = useMemo(() => {

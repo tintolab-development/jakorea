@@ -43,7 +43,6 @@ const MEMBER_ROLE_SELECT_FIELD: FilterFieldConfig = {
   options: [
     { label: '전체', value: 'ALL' },
     { label: '개인', value: 'INDIVIDUAL' },
-    { label: '학교(교사)', value: 'SCHOOL' },
     { label: '강사', value: 'INSTRUCTOR' },
     { label: '관리자', value: 'ADMIN' },
   ],

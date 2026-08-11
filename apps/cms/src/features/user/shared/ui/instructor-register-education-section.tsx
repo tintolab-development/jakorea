@@ -9,6 +9,20 @@
 import { useEffect, useMemo } from 'react'
 import { Form } from 'antd'
 import type { Dayjs } from 'dayjs'
+import {
+  EDUCATION_DEGREE_OPTIONS,
+  EDUCATION_DETAIL_OPTIONS as DOMAIN_EDUCATION_DETAIL_OPTIONS,
+  EDUCATION_SCHOOL_TYPE_OPTIONS,
+  EDUCATION_STATUS_OPTIONS,
+  isEducationDetailKey,
+  orderEducationDetailKeys,
+  resolveAvailableEducationDetailKeys,
+  type EducationDetailKey,
+} from '@jakorea/domain/instructor/education-options'
+import {
+  INSTRUCTOR_FORM_PLACEHOLDERS,
+  INSTRUCTOR_FORM_SECTION_DESCRIPTIONS,
+} from '@jakorea/domain/instructor/form-copy'
 import { CAREER_NET_UNIV_SCH1 } from '@jakorea/location/career-net'
 import {
   CmsCheckbox,
@@ -25,39 +39,27 @@ import './instructor-register-education-section.css'
 
 const LABEL_WIDTH = 200 as const
 
-const EDU_SCHOOL_TYPE_OPTIONS = [
-  { label: '고등학교', value: 'high' },
-  { label: '대학교 2, 3년제', value: 'college23' },
-  { label: '대학교 4년제', value: 'college4' },
-  { label: '대학원', value: 'graduate' },
-]
+const EDU_SCHOOL_TYPE_OPTIONS = EDUCATION_SCHOOL_TYPE_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+}))
 
-const EDU_STATUS_OPTIONS = [
-  { label: '재학', value: 'enrolled' },
-  { label: '졸업', value: 'graduated' },
-  { label: '수료', value: 'completed' },
-]
+const EDU_STATUS_OPTIONS = EDUCATION_STATUS_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+}))
 
-const DEGREE_OPTIONS = [
-  { label: '석사', value: 'master' },
-  { label: '박사', value: 'doctor' },
-]
+const DEGREE_OPTIONS = EDUCATION_DEGREE_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+}))
 
-export const EDUCATION_DETAIL_OPTIONS = [
-  { label: '고등학교', value: 'high' },
-  { label: '대학교 2, 3년제', value: 'college23' },
-  { label: '대학교 4년제', value: 'college4' },
-  { label: '대학원', value: 'graduate' },
-] as const
+export const EDUCATION_DETAIL_OPTIONS = DOMAIN_EDUCATION_DETAIL_OPTIONS.map(option => ({
+  label: option.label,
+  value: option.value,
+})) as readonly { label: string; value: EducationDetailKey }[]
 
-export type EducationDetailKey = (typeof EDUCATION_DETAIL_OPTIONS)[number]['value']
-
-const EDUCATION_LEVEL_ORDER: EducationDetailKey[] = [
-  'high',
-  'college23',
-  'college4',
-  'graduate',
-]
+export type { EducationDetailKey }
 
 export type EducationSchoolRow = {
   admitYear: Dayjs | null
@@ -82,23 +84,7 @@ export const EMPTY_EDUCATION_GRADUATE_ROW: EducationGraduateRow = {
   degree: '',
 }
 
-function isEducationDetailKey(value: string): value is EducationDetailKey {
-  return EDUCATION_LEVEL_ORDER.includes(value as EducationDetailKey)
-}
-
-/** 최종 학력 이하(포함)만 학력 상세 체크 옵션으로 노출 */
-export function resolveAvailableEducationDetailKeys(
-  eduSchoolType: string | undefined
-): EducationDetailKey[] {
-  if (!eduSchoolType || !isEducationDetailKey(eduSchoolType)) return []
-  const index = EDUCATION_LEVEL_ORDER.indexOf(eduSchoolType)
-  return EDUCATION_LEVEL_ORDER.slice(0, index + 1)
-}
-
-function orderEducationDetailKeys(keys: EducationDetailKey[]): EducationDetailKey[] {
-  const set = new Set(keys)
-  return EDUCATION_LEVEL_ORDER.filter(key => set.has(key))
-}
+export { resolveAvailableEducationDetailKeys }
 
 function YearRangeFields({
   admitName,
@@ -126,7 +112,7 @@ function YearRangeFields({
         <CmsDatePicker
           picker="year"
           inputSize="medium"
-          placeholder="입학년도"
+          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.admitYear}
           format="YYYY"
           width={140}
         />
@@ -138,7 +124,7 @@ function YearRangeFields({
         <CmsDatePicker
           picker="year"
           inputSize="medium"
-          placeholder="졸업년도"
+          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.gradYear}
           format="YYYY"
           width={140}
           disabled={gradDisabled}
@@ -163,7 +149,7 @@ function SchoolNameField({
       <SchoolSearch
         value={value}
         onChange={next => form.setFieldValue(name, next)}
-        placeholder="학교명"
+        placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.educationSchoolName}
         inputSize="medium"
         width={width}
         allowedSchoolLevels={['고등학교']}
@@ -189,7 +175,7 @@ function UniversityNameField({
       <UniversitySearch
         value={value}
         onChange={next => form.setFieldValue(name, next)}
-        placeholder="대학교명"
+        placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.universityName}
         inputSize="medium"
         width={width}
         defaultSch1={defaultSch1}
@@ -265,7 +251,7 @@ export function InstructorRegisterEducationSection() {
     <DetailInfoForm
       title="학력사항"
       mode="edit"
-      description="고등학교 이후의 학력사항만 기재해 주세요."
+      description={INSTRUCTOR_FORM_SECTION_DESCRIPTIONS.education}
       className="instructor-register-education"
     >
       <DetailInfoForm.Row type="single">
@@ -278,7 +264,7 @@ export function InstructorRegisterEducationSection() {
             <div className="detail-info-form-inputs-wrapper-no-gap">
               <Form.Item name="eduSchoolType" noStyle>
                 <CmsSelect
-                  placeholder="학교"
+                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.eduSchoolType}
                   inputSize="medium"
                   width={160}
                   options={EDU_SCHOOL_TYPE_OPTIONS}
@@ -289,7 +275,7 @@ export function InstructorRegisterEducationSection() {
               <DetailInfoForm.InputsSeparator />
               <Form.Item name="eduStatus" noStyle>
                 <CmsSelect
-                  placeholder="상태"
+                  placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.eduStatus}
                   inputSize="medium"
                   width={120}
                   options={EDU_STATUS_OPTIONS}
@@ -389,7 +375,7 @@ export function InstructorRegisterEducationSection() {
                               defaultSch1={CAREER_NET_UNIV_SCH1.college}
                             />
                             <Form.Item name={[field.name, 'major']} noStyle>
-                              <CmsInput placeholder="전공" inputSize="medium" width={160} />
+                              <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.major} inputSize="medium" width={160} />
                             </Form.Item>
                             {index === 0 ? (
                               <CmsCircleAddButton
@@ -446,7 +432,7 @@ export function InstructorRegisterEducationSection() {
                               defaultSch1={CAREER_NET_UNIV_SCH1.university4}
                             />
                             <Form.Item name={[field.name, 'major']} noStyle>
-                              <CmsInput placeholder="전공" inputSize="medium" width={160} />
+                              <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.major} inputSize="medium" width={160} />
                             </Form.Item>
                             {index === 0 ? (
                               <CmsCircleAddButton
@@ -498,7 +484,7 @@ export function InstructorRegisterEducationSection() {
                             />
                             <Form.Item name={[field.name, 'degree']} noStyle>
                               <CmsSelect
-                                placeholder="학위"
+                                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.degree}
                                 inputSize="medium"
                                 width={120}
                                 options={DEGREE_OPTIONS}
@@ -510,7 +496,7 @@ export function InstructorRegisterEducationSection() {
                           <div className="instructor-register-education__school-major">
                             <UniversityNameField name={[field.name, 'schoolName']} width={180} />
                             <Form.Item name={[field.name, 'major']} noStyle>
-                              <CmsInput placeholder="전공" inputSize="medium" width={140} />
+                              <CmsInput placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.major} inputSize="medium" width={140} />
                             </Form.Item>
                             {index === 0 ? (
                               <CmsCircleAddButton

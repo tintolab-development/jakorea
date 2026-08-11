@@ -3,7 +3,8 @@
 }
 
 .large {
-  padding: 6px var(--spacing-12);
+  height: 32px;
+  padding: 0 var(--spacing-12);
   justify-content: center;
   align-items: center;
   gap: 10px;
@@ -13,7 +14,7 @@
   width: 80px;
   height: 32px;
   flex-shrink: 0;
-  padding: 10px var(--spacing-12);
+  padding: 0 var(--spacing-12);
   justify-content: center;
   align-items: center;
   gap: 6px;

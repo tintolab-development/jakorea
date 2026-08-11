@@ -184,3 +184,22 @@
   line-height: 140%;
   letter-spacing: 0;
 }
+
+/* 양식 단락 전용 — 페이지 공통 Headline/Body와 시맨틱 분리 */
+.typo-form-section-title {
+  font-family: var(--font-family-base);
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+}
+
+.typo-form-field-label {
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+  letter-spacing: 0;
+}

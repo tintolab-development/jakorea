@@ -21,6 +21,10 @@ export type PFTypography =
   | 'label-md'
   | 'caption-rg'
   | 'caption-sb'
+  /** 양식 단락 타이틀 (Headline/Small 스펙, 양식 시맨틱) */
+  | 'form-section-title'
+  /** 양식 격자 제목 셀 (16/700/140%) */
+  | 'form-field-label'
 
 export type PFTextColor =
   | 'inherit'
@@ -74,6 +78,8 @@ const typographyClassMap: Record<PFTypography, string> = {
   'label-md': 'typo-label-md',
   'caption-rg': 'typo-caption-rg',
   'caption-sb': 'typo-caption-sb',
+  'form-section-title': 'typo-form-section-title',
+  'form-field-label': 'typo-form-field-label',
 }
 
 const colorClassMap: Record<PFTextColor, string> = {

@@ -113,6 +113,7 @@ export const menuItems: MenuItemConfig[] = [
     label: '교육 소개 관리',
     icon: <EducationMenuIcon />,
     children: [
+      { key: '/education/programs', label: '프로그램 소개' },
       {
         key: 'education-textbook-intro-group',
         label: '교재 소개',
@@ -273,6 +274,7 @@ const PAGE_TITLE_BY_PATH: Record<string, string> = {
   '/ja-korea/recruit/postings': '공고 관리',
   '/ja-korea/recruit/applicants': '지원자 관리',
   '/ja-korea/notices': '공지사항',
+  '/education/programs': '프로그램 소개',
   '/education/fields': '사업분야 관리',
   '/education/textbooks': '교재 관리',
   '/ja-korea/directions': '오시는 길 관리',

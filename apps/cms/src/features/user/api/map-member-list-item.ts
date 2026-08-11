@@ -20,6 +20,7 @@ import {
   resolveIdentitySelfSignupCompletedAfterAdminRegistration,
   resolveRegisteredByAdmin,
 } from '@/features/user/api/resolve-member-registration-flags'
+import { parseMemberIdFromUserId } from '@/features/user/detail/lib/resolve-member-detail-restore-hint'
 
 function fallbackUuid(memberId?: number): string {
   if (memberId != null) return `member-${memberId}`
@@ -91,6 +92,18 @@ function resolveListItemRole(item: MemberListItemResponse): UserRole {
   return role
 }
 
+function resolveListItemMemberId(item: MemberListItemResponse): number | undefined {
+  const fromField = coercePositiveInt(item.memberId)
+  if (fromField != null) return fromField
+
+  const listItemId = typeof item.id === 'string' ? item.id.trim() : ''
+  const fromListItemId = parseMemberIdFromUserId(listItemId)
+  if (fromListItemId != null) return fromListItemId
+
+  const uuid = typeof item.uuid === 'string' ? item.uuid.trim() : ''
+  return parseMemberIdFromUserId(uuid)
+}
+
 function resolveListItemAdminAccountId(
   item: MemberListItemResponse,
   role: UserRole
@@ -114,7 +127,7 @@ function resolveListItemAdminAccountId(
 }
 
 export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User, 'password'> {
-  const memberId = coercePositiveInt(item.memberId)
+  const memberId = resolveListItemMemberId(item)
   const role = resolveListItemRole(item)
   const adminAccountId = resolveListItemAdminAccountId(item, role)
   const uuid = resolveListItemUuid(item, memberId, adminAccountId)

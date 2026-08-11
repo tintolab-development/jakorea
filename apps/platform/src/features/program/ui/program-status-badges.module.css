@@ -3,6 +3,6 @@
   width: 100%;
   min-width: 0;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--spacing-12);
 }

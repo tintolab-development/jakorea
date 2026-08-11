@@ -79,6 +79,8 @@ export interface User {
   id: UUID
   /** 백엔드 회원 숫자 ID — remote API 연동 시 목록·상세에서 채움 */
   memberId?: number
+  /** 학교 organization canonical id — 학교 목록/상세/소속 교사 API */
+  organizationId?: number
   /** admin-accounts API numeric id — 관리자 회원 상세·권한 유형 변경 */
   adminAccountId?: number
   email: string

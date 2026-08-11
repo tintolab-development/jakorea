@@ -1,3 +1,6 @@
+/* Outfit — 숫자·캘린더 년월/요일 등 (CMS·Admin과 동일) */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
 @font-face {
   font-family: 'Pretendard';
   src: url('/fonts/PretendardVariable.woff2') format('woff2');
@@ -28,6 +31,7 @@
   /* Typography */
   --font-family-base: 'Pretendard', system-ui, -apple-system, 'Segoe UI', Roboto,
     'Noto Sans KR', sans-serif;
+  --font-family-number: 'Outfit', sans-serif;
   --font-size-body: 16px;
   --font-size-small: 14px;
   --line-height-body: 1.5;
