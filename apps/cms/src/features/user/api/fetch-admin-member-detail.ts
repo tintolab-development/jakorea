@@ -51,6 +51,9 @@ export function shouldUseAdminAccountDetailApi(options?: {
   if (options?.role != null && options.role !== 'ADMIN') {
     return false
   }
+  if (options?.adminAccountId != null && options.adminAccountId > 0) {
+    return true
+  }
   const userId = options?.userId?.trim() ?? ''
   if (isMemberScopedUserId(userId)) {
     return false
