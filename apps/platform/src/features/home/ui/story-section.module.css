@@ -1,0 +1,188 @@
+.section {
+  width: 100%;
+  padding-block: var(--spacing-64);
+  /* 삼각 패턴 배경 placeholder — 실제 패턴 에셋 수급 후 교체 */
+  background-color: var(--color-neutral-white);
+  background-image: conic-gradient(
+    from 135deg at 50% 0%,
+    rgba(230, 233, 235, 0.18) 0deg 90deg,
+    transparent 90deg 360deg
+  );
+  background-size: 48px 48px;
+}
+
+@media (--bp-pc-up) {
+  .section {
+    padding-block: var(--spacing-100);
+  }
+}
+
+.inner {
+  display: flex;
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  padding-inline: var(--spacing-20);
+  flex-direction: column;
+  gap: var(--spacing-48);
+}
+
+@media (--bp-pc-up) {
+  .inner {
+    padding-inline: var(--spacing-40);
+    gap: var(--spacing-64);
+  }
+}
+
+.featured {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-20);
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (--bp-pc-up) {
+  .featured {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-64);
+  }
+}
+
+.featured:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 4px;
+  border-radius: var(--radius-16);
+}
+
+.featuredMedia {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-16);
+  overflow: hidden;
+}
+
+@media (--bp-pc-up) {
+  .featuredMedia {
+    width: 44%;
+    flex-shrink: 0;
+  }
+}
+
+.featuredBody {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+.featuredCategory {
+  margin: 0;
+}
+
+.featuredTitle {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.featured:hover .featuredTitle {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.featuredDate {
+  margin: 0;
+}
+
+.subGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-24);
+}
+
+@media (--bp-pc-up) {
+  .subGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-32);
+  }
+}
+
+.subCard {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-12);
+  color: inherit;
+  text-decoration: none;
+}
+
+.subCard:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 4px;
+  border-radius: var(--radius-12);
+}
+
+.subCardMedia {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-12);
+  overflow: hidden;
+}
+
+.subCardBadge {
+  position: absolute;
+  top: var(--spacing-12);
+  left: var(--spacing-12);
+}
+
+.subCardTitle {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.subCard:hover .subCardTitle {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.viewAllRow {
+  display: flex;
+  justify-content: center;
+}
+
+.viewAllLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 89px;
+  height: 38px;
+  padding: 6px var(--spacing-20);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-white);
+  color: var(--color-neutral-black);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.viewAllLink:hover {
+  border-color: var(--color-primary-500);
+  color: var(--color-primary-500);
+}
+
+.viewAllLink:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
