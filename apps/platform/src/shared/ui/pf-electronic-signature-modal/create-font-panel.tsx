@@ -2,10 +2,7 @@ import { useEffect } from 'react'
 import { PFText } from '../pf-text'
 import { PFTextInput } from '../pf-text-input'
 import signatureCreateIconUrl from '@/assets/autograph/icon-signature-create.png'
-import {
-  SIGNATURE_FONT_STYLES,
-  SIGNATURE_GOOGLE_FONTS_HREF,
-} from './signature-fonts'
+import { SIGNATURE_FONT_STYLES, ensureSignatureFontsReady } from './signature-fonts'
 import styles from './pf-electronic-signature-modal.module.css'
 
 type CreateFontPanelProps = {
@@ -16,13 +13,7 @@ type CreateFontPanelProps = {
 }
 
 function ensureSignatureFontsLoaded() {
-  const id = 'pf-electronic-signature-fonts'
-  if (document.getElementById(id)) return
-  const link = document.createElement('link')
-  link.id = id
-  link.rel = 'stylesheet'
-  link.href = SIGNATURE_GOOGLE_FONTS_HREF
-  document.head.appendChild(link)
+  void ensureSignatureFontsReady()
 }
 
 export function CreateFontPanel({
@@ -96,12 +87,14 @@ export function CreateFontPanel({
   )
 }
 
-export function renderCreateSignatureDataUrl(args: {
+export async function renderCreateSignatureDataUrl(args: {
   name: string
   fontStyleCode: string
-}): string | null {
+}): Promise<string | null> {
   const style = SIGNATURE_FONT_STYLES.find(item => item.code === args.fontStyleCode)
   if (!style) return null
+
+  await ensureSignatureFontsReady()
 
   const width = 720
   const height = 240
