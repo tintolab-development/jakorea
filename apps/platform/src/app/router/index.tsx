@@ -40,8 +40,10 @@ import { DirectionsPage } from '@/pages/about/directions'
 import { PeoplePage } from '@/pages/about/people'
 import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
 import { DesignSystemPage } from '@/pages/design-system'
+import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
 import { TemporaryPage } from '@/pages/temporary'
 import { YoutubeEmbedPage } from '@/pages/youtube-embed'
+import { IMPACT_STORIES_PATH } from '@/features/impact-story'
 import {
   ABOUT_CAREERS_PATH,
   ABOUT_HISTORY_PATH,
@@ -50,7 +52,6 @@ import {
   EDUCATION_DIGITAL_LITERACY_PATH,
   EDUCATION_ENTREPRENEURSHIP_PATH,
   EDUCATION_FINANCE_PATH,
-  IMPACT_STORIES_PATH,
   SUPPORT_CORPORATE_PATH,
   SUPPORT_INDIVIDUAL_PATH,
   SUPPORT_TALENT_PATH,
@@ -67,6 +68,7 @@ export const router = createBrowserRouter([
       { path: '/programs/:programId/apply/complete', element: <ProgramApplyCompletePage /> },
       { path: '/notices/:noticeId', element: <NoticeDetailPage /> },
       { path: '/results/:resultId', element: <ResultDetailPage /> },
+      { path: '/impact/:storyId', element: <ImpactStoryDetailPage /> },
     ],
   },
   {
@@ -93,7 +95,7 @@ export const router = createBrowserRouter([
       { path: ABOUT_INTRODUCTION_PATH, element: <TemporaryPage /> },
       { path: ABOUT_HISTORY_PATH, element: <TemporaryPage /> },
       { path: ABOUT_CAREERS_PATH, element: <TemporaryPage /> },
-      { path: IMPACT_STORIES_PATH, element: <TemporaryPage /> },
+      { path: IMPACT_STORIES_PATH, element: <ImpactStoriesPage /> },
       { path: SUPPORT_INDIVIDUAL_PATH, element: <TemporaryPage /> },
       { path: SUPPORT_CORPORATE_PATH, element: <TemporaryPage /> },
       { path: SUPPORT_TALENT_PATH, element: <TemporaryPage /> },

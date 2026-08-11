@@ -1,0 +1,167 @@
+.carousel {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  box-sizing: border-box;
+  padding: var(--spacing-40);
+  border-radius: var(--radius-24);
+  background: linear-gradient(168deg, rgb(247 248 249 / 70%) 4.97%, #fff 94.14%);
+  box-shadow:
+    0 0 9px 4px rgb(41 96 118 / 2%),
+    0 20px 42px 0 rgb(30 71 75 / 5%);
+}
+
+.mediaLink {
+  display: block;
+  width: 630px;
+  max-width: 100%;
+  flex-shrink: 0;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-16);
+}
+
+.mediaLink:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+.media {
+  display: flex;
+  width: 100%;
+  height: 335px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 126 / 71;
+  border-radius: var(--radius-16);
+  background: #000;
+  box-shadow: 0 0 140.4px 0 rgb(0 0 0 / 6%) inset;
+}
+
+.content {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-28);
+  /* 이미지 영역(335)과 맞춰 슬라이드 전환 시 높이 시프트 방지 */
+  min-height: 335px;
+}
+
+.header {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+}
+
+.titleLink {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.titleLink:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-8);
+}
+
+/* Figma: Heading/Small — 2줄 높이 예약 */
+.title {
+  display: -webkit-box;
+  min-height: calc(30px * 1.44 * 2);
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-neutral-black, #3d3d3d);
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-break: keep-all;
+}
+
+/* Figma: Body/Large/regular */
+.date {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/**
+ * Figma: 24px / 400 / 150% / -0.24px
+ * 2줄 높이 예약 — 슬라이드별 디스크립션 길이 차이로 UI shifting 방지
+ */
+.summary {
+  display: -webkit-box;
+  min-height: calc(24px * 1.5 * 2);
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-neutral-black, #3d3d3d);
+  text-overflow: ellipsis;
+  font-family: var(--font-family-base);
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%; /* 36px */
+  letter-spacing: -0.24px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-break: keep-all;
+}
+
+.controls {
+  display: flex;
+  gap: var(--spacing-12);
+  margin-top: auto;
+}
+
+.navButton,
+.prevButton {
+  border-radius: var(--radius-999);
+  background:
+    linear-gradient(
+      0deg,
+      var(--color-element-hover) 0%,
+      var(--color-element-hover) 100%
+    ),
+    var(--color-neutral-white);
+}
+
+.prevButton {
+  transform: scaleX(-1);
+}
+
+@media (--bp-below-pc) {
+  .mediaLink {
+    width: 100%;
+  }
+
+  .media {
+    width: 100%;
+    height: auto;
+  }
+}
+
+@media (--bp-pc-up) {
+  .carousel {
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--spacing-80);
+    column-gap: var(--spacing-80);
+  }
+
+  .content {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}

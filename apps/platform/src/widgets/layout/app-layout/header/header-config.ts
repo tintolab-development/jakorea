@@ -1,5 +1,6 @@
 import { isNoticesPath, NOTICES_PATH } from '@/features/notice'
 import { isDirectionsPath, DIRECTIONS_PATH } from '@/features/directions'
+import { IMPACT_STORIES_PATH, isImpactStoriesPath } from '@/features/impact-story'
 import { isPeoplePath, PEOPLE_PATH } from '@/features/people'
 import { isProgramsPath, PROGRAMS_PATH } from '@/features/program'
 import { isResultsPath, RESULTS_PATH } from '@/features/result'
@@ -14,7 +15,6 @@ import {
   EDUCATION_DIGITAL_LITERACY_PATH,
   EDUCATION_ENTREPRENEURSHIP_PATH,
   EDUCATION_FINANCE_PATH,
-  IMPACT_STORIES_PATH,
   isTemporaryPagePath,
   SUPPORT_CORPORATE_PATH,
   SUPPORT_INDIVIDUAL_PATH,
@@ -125,7 +125,7 @@ export function getActiveNavigationItem(pathname: string): NavigationItemLabel {
     return '교육 소개'
   }
 
-  if (pathname === IMPACT_STORIES_PATH || pathname.startsWith(`${IMPACT_STORIES_PATH}/`)) {
+  if (isImpactStoriesPath(pathname)) {
     return '임팩트 스토리'
   }
 

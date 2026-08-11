@@ -4,8 +4,6 @@ export const ABOUT_INTRODUCTION_PATH = '/about/introduction'
 export const ABOUT_HISTORY_PATH = '/about/history'
 export const ABOUT_CAREERS_PATH = '/about/careers'
 
-export const IMPACT_STORIES_PATH = '/impact'
-
 export const EDUCATION_CAREER_PATH = '/education/career'
 export const EDUCATION_FINANCE_PATH = '/education/finance'
 export const EDUCATION_ENTREPRENEURSHIP_PATH = '/education/entrepreneurship'
@@ -19,7 +17,6 @@ export const TEMPORARY_PAGE_TITLES: Record<string, string> = {
   [ABOUT_INTRODUCTION_PATH]: '기관소개',
   [ABOUT_HISTORY_PATH]: 'JA History',
   [ABOUT_CAREERS_PATH]: '채용',
-  [IMPACT_STORIES_PATH]: '임팩트 스토리',
   [EDUCATION_CAREER_PATH]: '진로취업',
   [EDUCATION_FINANCE_PATH]: '경제금융',
   [EDUCATION_ENTREPRENEURSHIP_PATH]: '기업가 정신',
