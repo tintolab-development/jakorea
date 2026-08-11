@@ -70,7 +70,13 @@ interface UserStore {
   fetchUsers: (filters?: UserFilters) => Promise<void>
   fetchUserById: (
     userId: UserId,
-    options?: { memberId?: number; role?: UserRole; adminAccountId?: number; email?: string }
+    options?: {
+      memberId?: number
+      organizationId?: number
+      role?: UserRole
+      adminAccountId?: number
+      email?: string
+    }
   ) => Promise<UserWithoutPassword | null>
   createUser: (request: CreateUserRequest) => Promise<UserWithoutPassword>
   deleteUser: (

@@ -3,6 +3,7 @@ import type {
   AdminPreRegisterIndividualRequest,
   AdminPreRegisterInstructorRequest,
   AdminPreRegisterSchoolRequest,
+  SchoolOrganizationUpsertRequest,
 } from '@/shared/api/generated/members/schemas'
 import type { AdminPreRegisterMemberRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterMemberRequest'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
@@ -96,6 +97,7 @@ export function mapCreateUserRequestToPreRegisterIndividual(
   return attachTermsAgreements(body, request)
 }
 
+/** @deprecated 학교 등록은 `mapCreateUserRequestToCreateSchool` + `createSchool` 사용 */
 export function mapCreateUserRequestToPreRegisterSchool(
   request: CreateUserRequest
 ): AdminPreRegisterSchoolRequest {
@@ -118,6 +120,26 @@ export function mapCreateUserRequestToPreRegisterSchool(
   if (request.regionSigungu?.trim()) body.regionSigungu = request.regionSigungu.trim()
   if (request.zipCode?.trim()) body.zipCode = request.zipCode.trim()
   return attachTermsAgreements(body, request)
+}
+
+/** CMS 학교 organization 등록 — `POST /api/admin/organizations/schools` */
+export function mapCreateUserRequestToCreateSchool(
+  request: CreateUserRequest
+): SchoolOrganizationUpsertRequest {
+  const organizationName = request.schoolInfo?.schoolName?.trim() || request.name.trim()
+  const address = request.schoolInfo?.address?.trim() || request.address?.trim() || ''
+  const body: SchoolOrganizationUpsertRequest = {
+    name: organizationName || request.name.trim(),
+    address,
+  }
+  const addressDetail =
+    request.schoolInfo?.addressDetail?.trim() || request.detailAddress?.trim() || undefined
+  if (addressDetail) body.addressDetail = addressDetail
+  if (request.neisCode?.trim()) body.externalOrganizationCode = request.neisCode.trim()
+  if (request.regionSido?.trim()) body.regionSido = request.regionSido.trim()
+  if (request.regionSigungu?.trim()) body.regionSigungu = request.regionSigungu.trim()
+  if (request.zipCode?.trim()) body.zipcode = request.zipCode.trim()
+  return body
 }
 
 export function mapCreateUserRequestToPreRegisterInstructor(

@@ -13,7 +13,6 @@ import {
   matchesInstructorJaEvaluationGradeFilter,
   matchesInstructorSettlementFilter,
 } from '@/entities/user/lib/matches-instructor-list-filters'
-import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import { applyInstructorPermissionRevokedToUser } from '@/features/user/shared/lib/apply-instructor-permission-revoked'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
 import { markInstructorPermissionRevoked } from '@/features/user/shared/lib/revoked-instructor-overlay'
@@ -28,12 +27,17 @@ import {
   isAdminPermissionVariantPatchRemoteEnabled,
   isMemberBasicInfoPatchRemoteEnabled,
   isMembersRemoteEnabled,
-  stripUnsupportedMemberListFilters,
 } from '@/features/user/api/member-remote-capabilities'
+import { mapMemberListItems } from '@/features/user/api/map-member-list-item'
 import {
-  filterMemberListItemsForSchoolRole,
-  mapMemberListItems,
-} from '@/features/user/api/map-member-list-item'
+  mapSchoolOrganizationToUser,
+  mapSchoolOrganizationsToUsers,
+  parseOrganizationIdFromUserId,
+} from '@/features/user/api/map-school-organization-to-user'
+import {
+  instructorListRolesExactAnyOf,
+  rolesExactAnyOfForAllTabRoleFilter,
+} from '@/features/user/api/map-roles-exact-any-of'
 import {
   applySavedBasicInfoPatchToUser,
   mergeListUserWithFetchedDetail,
@@ -45,9 +49,9 @@ import {
   mapSchoolMemberDetailToUser,
 } from '@/features/user/api/map-member-detail-to-user'
 import {
+  mapCreateUserRequestToCreateSchool,
   mapCreateUserRequestToPreRegisterIndividual,
   mapCreateUserRequestToPreRegisterInstructor,
-  mapCreateUserRequestToPreRegisterSchool,
 } from '@/features/user/api/map-pre-register-request'
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
@@ -59,6 +63,7 @@ import {
 import {
   changeAdminAccountRoleRemote,
   createAdminAccountRemote,
+  createSchoolOrganizationRemote,
   deleteMemberRemote,
   deleteAdminAccountRemote,
   fetchAdminsPageRemote,
@@ -68,9 +73,10 @@ import {
   fetchMemberExternalIdentifiersRemote,
   fetchMembersPageRemote,
   fetchSchoolMemberDetailRemote,
+  fetchSchoolOrganizationRemote,
+  fetchSchoolsPageRemote,
   preRegisterIndividualRemote,
   preRegisterInstructorRemote,
-  preRegisterSchoolRemote,
   revokeInstructorPermissionRemote,
   updateMemberBasicInfoRemote,
   updateAdminBasicInfoRemote,
@@ -113,7 +119,13 @@ export async function getUsers(filters?: {
   jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
-  /** 강사 회원 관리(`kind=instructors`) — 순수 강사만, 교사·교사 및 강사 제외 */
+  rolesExactAnyOf?: string
+  regionSido?: string
+  regionSigungu?: string
+  /**
+   * @deprecated 목록은 `rolesExactAnyOf` 사용. 프로그램 후보 조회 호환용 —
+   * mock에서는 활성 강사(교사겸 포함)만 남긴다.
+   */
   instructorListPureOnly?: boolean
 }): Promise<Omit<User, 'password'>[]> {
   await new Promise(resolve => setTimeout(resolve, 300))
@@ -126,11 +138,9 @@ export async function getUsers(filters?: {
   }
 
   if (filters?.instructorListPureOnly) {
+    // 활성 강사(교사겸 포함). 권한박탈 제외 — dual 제외하던 FE 후처리 제거
     users = users.filter(
-      user =>
-        !isInstructorPermissionRevoked(user) &&
-        user.role === 'INSTRUCTOR' &&
-        resolveInstructorMemberProfile(user) === 'instructor_only'
+      user => !isInstructorPermissionRevoked(user) && user.role === 'INSTRUCTOR'
     )
   }
 
@@ -207,9 +217,13 @@ export interface GetUsersPageParams {
   createdAtFrom?: string
   createdAtTo?: string
   institutionLocation?: string
+  regionSido?: string
+  regionSigungu?: string
   jaEvaluationGrade?: string
   settlementStatus?: string
   adminPermissionVariant?: AdminPermissionTagVariant
+  rolesExactAnyOf?: string
+  /** @deprecated use rolesExactAnyOf */
   instructorListPureOnly?: boolean
 }
 
@@ -231,7 +245,7 @@ export async function getUsersPage(
 ): Promise<GetUsersPageResult> {
   if (isMembersRemoteEnabled()) {
     try {
-      const apiFilters = stripUnsupportedMemberListFilters(filters)
+      const apiFilters = filters ?? {}
 
       if (apiFilters.role === 'ADMIN') {
         const res = await fetchAdminsPageRemote({
@@ -242,38 +256,50 @@ export async function getUsersPage(
           page,
           size: PAGE_SIZE,
         })
-        let users = mapAdminAccountListItems(res.items)
-        if (apiFilters.adminPermissionVariant) {
-          users = users.filter(
-            user => getAdminPermissionVariant(user) === apiFilters.adminPermissionVariant
-          )
-        }
+        const users = mapAdminAccountListItems(res.items)
         const total = res.totalElements ?? users.length
         const totalPages = res.totalPages ?? 0
         const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
         return { users, total, hasMore }
       }
 
+      if (apiFilters.role === 'SCHOOL') {
+        const res = await fetchSchoolsPageRemote({
+          keyword: apiFilters.search?.trim() || undefined,
+          regionSido: apiFilters.regionSido?.trim() || undefined,
+          regionSigungu: apiFilters.regionSigungu?.trim() || undefined,
+          createdAtFrom: apiFilters.createdAtFrom || undefined,
+          createdAtTo: apiFilters.createdAtTo || undefined,
+          page,
+          size: PAGE_SIZE,
+        })
+        const users = mapSchoolOrganizationsToUsers(res.items)
+        const total = res.totalElements ?? users.length
+        const totalPages = res.totalPages ?? 0
+        const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
+        return { users, total, hasMore }
+      }
+
+      const rolesExactAnyOf =
+        apiFilters.rolesExactAnyOf?.trim() ||
+        (apiFilters.instructorListPureOnly || apiFilters.role === 'INSTRUCTOR'
+          ? instructorListRolesExactAnyOf()
+          : rolesExactAnyOfForAllTabRoleFilter(apiFilters.role))
+
       const res = await fetchMembersPageRemote({
         keyword: apiFilters.search?.trim() || undefined,
-        role: mapUserRoleToApiRole(apiFilters.role),
+        ...(rolesExactAnyOf
+          ? { rolesExactAnyOf }
+          : { role: mapUserRoleToApiRole(apiFilters.role) }),
         memberStatus: mapIsActiveToMemberStatus(apiFilters.isActive),
+        createdAtFrom: apiFilters.createdAtFrom || undefined,
+        createdAtTo: apiFilters.createdAtTo || undefined,
+        instructorType: apiFilters.jaEvaluationGrade?.trim() || undefined,
+        settlementStatus: apiFilters.settlementStatus?.trim() || undefined,
         page,
         size: PAGE_SIZE,
       })
-      const listItems =
-        apiFilters.role === 'SCHOOL'
-          ? filterMemberListItemsForSchoolRole(res.items)
-          : res.items
-      let users = mapMemberListItems(listItems)
-      if (filters?.instructorListPureOnly) {
-        users = users.filter(
-          user =>
-            !isInstructorPermissionRevoked(user) &&
-            user.role === 'INSTRUCTOR' &&
-            resolveInstructorMemberProfile(user) === 'instructor_only'
-        )
-      }
+      const users = mapMemberListItems(res.items)
       const total = res.totalElements ?? users.length
       const totalPages = res.totalPages ?? 0
       const hasMore = totalPages > 0 ? page + 1 < totalPages : users.length >= PAGE_SIZE
@@ -726,7 +752,13 @@ function snapshotUserWithoutPassword(userId: UUID): Omit<User, 'password'> | nul
 
 export async function getUserById(
   userId: UUID,
-  options?: { memberId?: number; role?: UserRole; adminAccountId?: number; email?: string }
+  options?: {
+    memberId?: number
+    organizationId?: number
+    role?: UserRole
+    adminAccountId?: number
+    email?: string
+  }
 ): Promise<Omit<User, 'password'> | null> {
   if (isMembersRemoteEnabled()) {
     try {
@@ -740,8 +772,22 @@ export async function getUserById(
         return fetchAdminMemberDetailAsUser(userId, options)
       }
 
+      const organizationId =
+        options?.organizationId ?? parseOrganizationIdFromUserId(userId) ?? undefined
+
+      if (options?.role === 'SCHOOL' || organizationId != null) {
+        if (organizationId != null) {
+          return mapSchoolOrganizationToUser(await fetchSchoolOrganizationRemote(organizationId))
+        }
+        const memberId = resolveMemberIdForApi(userId, options)
+        return mapSchoolMemberDetailToUser(await fetchSchoolMemberDetailRemote(memberId), {
+          fallbackRole: 'SCHOOL',
+        })
+      }
+
       const memberId = resolveMemberIdForApi(userId, options)
-      let role = options?.role
+      // options.role은 위에서 SCHOOL early-return 후 좁혀질 수 있어 명시 타입 유지
+      let role: UserRole | undefined = options?.role
 
       if (!role) {
         const legacy = await fetchMemberDetailRemote(memberId)
@@ -791,6 +837,9 @@ export async function getUserById(
       }
 
       if (role === 'SCHOOL') {
+        if (organizationId != null) {
+          return mapSchoolOrganizationToUser(await fetchSchoolOrganizationRemote(organizationId))
+        }
         const detail = await fetchSchoolMemberDetailRemote(memberId)
         return mapSchoolMemberDetailToUser(detail, { fallbackRole: 'SCHOOL' })
       }
@@ -926,6 +975,7 @@ export interface CreateUserRequest {
   schoolInfo?: {
     schoolName: string
     address: string
+    addressDetail?: string
     position?: string
   }
   instructorInfo?: {
@@ -965,6 +1015,7 @@ async function fetchCreatedMemberAsUser(
   role: UserRole
 ): Promise<Omit<User, 'password'>> {
   if (role === 'SCHOOL') {
+    // legacy: synthetic school member detail (organization create path does not use this)
     return mapSchoolMemberDetailToUser(await fetchSchoolMemberDetailRemote(memberId), {
       fallbackRole: 'SCHOOL',
     })
@@ -1070,16 +1121,21 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
         }
       }
 
+      if (resolvedRequest.role === 'SCHOOL') {
+        const createdSchool = await createSchoolOrganizationRemote(
+          mapCreateUserRequestToCreateSchool(resolvedRequest)
+        )
+        return mapSchoolOrganizationToUser(createdSchool)
+      }
+
       const created =
-        resolvedRequest.role === 'SCHOOL'
-          ? await preRegisterSchoolRemote(mapCreateUserRequestToPreRegisterSchool(resolvedRequest))
-          : resolvedRequest.role === 'INSTRUCTOR'
-            ? await preRegisterInstructorRemote(
-                mapCreateUserRequestToPreRegisterInstructor(resolvedRequest)
-              )
-            : await preRegisterIndividualRemote(
-                mapCreateUserRequestToPreRegisterIndividual(resolvedRequest)
-              )
+        resolvedRequest.role === 'INSTRUCTOR'
+          ? await preRegisterInstructorRemote(
+              mapCreateUserRequestToPreRegisterInstructor(resolvedRequest)
+            )
+          : await preRegisterIndividualRemote(
+              mapCreateUserRequestToPreRegisterIndividual(resolvedRequest)
+            )
 
       const memberId = created.memberId
       if (memberId != null && !Number.isNaN(memberId)) {

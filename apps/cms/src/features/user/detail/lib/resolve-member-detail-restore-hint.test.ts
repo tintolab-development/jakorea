@@ -96,6 +96,32 @@ describe('findUserInMemberListQueries', () => {
   })
 })
 
+describe('resolveMemberDetailRestoreHint — school organization', () => {
+  it('organization- id와 목록 행에서 organizationId를 복원한다', () => {
+    const hint = resolveMemberDetailRestoreHint({
+      userId: 'organization-12',
+      urlCtx: {},
+      listKind: 'institutions',
+      storeUsersById: {},
+      listUsers: [
+        {
+          id: 'organization-12',
+          organizationId: 12,
+          email: '-',
+          name: '테스트고',
+          role: 'SCHOOL',
+          isActive: true,
+          createdAt: '2026-01-01',
+          updatedAt: '2026-01-01',
+        },
+      ],
+    })
+    expect(hint.organizationId).toBe(12)
+    expect(hint.role).toBe('SCHOOL')
+    expect(canResolveMemberIdForDetailRestore('organization-12', hint)).toBe(true)
+  })
+})
+
 describe('canResolveMemberIdForDetailRestore', () => {
   it('memberId 또는 member- prefix가 있으면 true', () => {
     expect(canResolveMemberIdForDetailRestore('member-3', {})).toBe(true)

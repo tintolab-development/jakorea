@@ -93,6 +93,7 @@ import {
   isMembersRemoteEnabled,
 } from '@/features/user/api/member-remote-capabilities'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
+import { resolveDeleteUserOptions } from '@/features/user/api/resolve-delete-user-options'
 import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
 import { applyAffiliatedTeacherLinkToUser } from '@/features/user/api/apply-affiliated-teacher-link'
 import { buildAdminAccountCreateTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
@@ -522,6 +523,7 @@ export function UserListPage() {
         const roleHint = restoreHint.role
         await fetchUserById(targetId, {
           memberId: restoreHint.memberId,
+          organizationId: restoreHint.organizationId ?? hintUser?.organizationId,
           role: roleHint,
           adminAccountId: restoreHint.adminAccountId ?? hintUser?.adminAccountId,
           email: restoreHint.email ?? hintUser?.email,
@@ -628,7 +630,9 @@ export function UserListPage() {
             ...page,
             users: page.users.map(u =>
               u.id === updated.id ||
-              (updated.memberId != null && u.memberId === updated.memberId)
+              (updated.memberId != null && u.memberId === updated.memberId) ||
+              (updated.organizationId != null &&
+                u.organizationId === updated.organizationId)
                 ? mergeListUserWithFetchedDetail(u, updated)
                 : u
             ),
@@ -640,9 +644,13 @@ export function UserListPage() {
         { queryKey: ['users', 'list'] },
         patchListCache
       )
-      // remote 목록 키 (`['cms','members','list', …]`)
+      // remote 목록 키 (`['cms','members','list'|schoolsList', …]`)
       queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
         { queryKey: [...memberQueryKeys.all, 'list'] },
+        patchListCache
+      )
+      queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+        { queryKey: [...memberQueryKeys.all, 'schoolsList'] },
         patchListCache
       )
       if (!options?.skipListInvalidate) {
@@ -698,6 +706,7 @@ export function UserListPage() {
       try {
         const fetched = await fetchUserById(user.id, {
           memberId: user.memberId,
+          organizationId: user.organizationId,
           role: user.role,
           adminAccountId: user.adminAccountId,
           email: user.email,
@@ -994,12 +1003,7 @@ export function UserListPage() {
     setDeleteLoading(true)
     try {
       for (const u of toDelete) {
-        await deleteUser(u.id, {
-          role: u.role,
-          adminAccountId: u.adminAccountId,
-          memberId: u.memberId,
-          email: u.email,
-        })
+        await deleteUser(u.id, resolveDeleteUserOptions(u))
       }
       const domain = memberDeleteGuideDomain(resolvedMemberListKind)
       setDeleteResultTitle(buildDeleteCompletedTitle(domain.domainLabel))
@@ -1036,12 +1040,7 @@ export function UserListPage() {
       flushUserDetailModal()
       setDeleteLoading(true)
       try {
-        await deleteUser(u.id, {
-          role: u.role,
-          adminAccountId: u.adminAccountId,
-          memberId: u.memberId,
-          email: u.email,
-        })
+        await deleteUser(u.id, resolveDeleteUserOptions(u))
         const entityLabel = entityLabelForWithdrawDeletedUser(u)
         setDeleteResultTitle(buildDeleteCompletedTitle(entityLabel))
         setDeleteResultMessage(
@@ -1103,6 +1102,10 @@ export function UserListPage() {
         )
         queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
           { queryKey: [...memberQueryKeys.all, 'list'] },
+          patchListCache
+        )
+        queryClient.setQueriesData<InfiniteData<GetUsersPageResult>>(
+          { queryKey: [...memberQueryKeys.all, 'schoolsList'] },
           patchListCache
         )
         if (drawerUser?.id === ctx.userId) {
