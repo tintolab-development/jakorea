@@ -44,6 +44,8 @@ export {
   getMockPrograms,
   loadMockProgramById,
   loadMockPrograms,
+  programIncludesOperatingDate,
+  programOverlapsOperatingDateRange,
   programOverlapsOperatingYear,
 } from './lib/mock-programs'
 export { mergeSeedAndCatalogPrograms } from './lib/merge-seed-catalog'
