@@ -42,6 +42,7 @@ import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transpa
 import { DesignSystemPage } from '@/pages/design-system'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
 import { TemporaryPage } from '@/pages/temporary'
+import { SupportIndividualPage } from '@/pages/support/individual'
 import { YoutubeEmbedPage } from '@/pages/youtube-embed'
 import { IMPACT_STORIES_PATH } from '@/features/impact-story'
 import {
@@ -99,7 +100,7 @@ export const router = createBrowserRouter([
       { path: ABOUT_HISTORY_PATH, element: <TemporaryPage /> },
       { path: ABOUT_CAREERS_PATH, element: <TemporaryPage /> },
       { path: IMPACT_STORIES_PATH, element: <ImpactStoriesPage /> },
-      { path: SUPPORT_INDIVIDUAL_PATH, element: <TemporaryPage /> },
+      { path: SUPPORT_INDIVIDUAL_PATH, element: <SupportIndividualPage /> },
       { path: SUPPORT_CORPORATE_PATH, element: <TemporaryPage /> },
       { path: SUPPORT_TALENT_PATH, element: <TemporaryPage /> },
     ],
