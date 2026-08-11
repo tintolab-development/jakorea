@@ -230,6 +230,7 @@
   align-items: flex-start;
   gap: var(--spacing-20);
   align-self: stretch;
+  overflow-x: clip;
 }
 
 .weekdayRow,
@@ -237,6 +238,17 @@
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-20);
+  --day-cell-size: 32px;
+  --day-cell-gap: var(--spacing-20);
+}
+
+.weeks {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-20);
+  overflow-x: clip;
 }
 
 .weekday {
@@ -260,14 +272,9 @@
   text-transform: uppercase;
 }
 
-.weeks {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-20);
-}
-
 .day {
+  position: relative;
+  isolation: isolate;
   display: flex;
   width: 32px;
   height: 32px;
@@ -292,7 +299,7 @@
   cursor: pointer;
 }
 
-.day:hover:not(.daySelected) {
+.day:hover:not(.daySelected):not(.dayRangeStart):not(.dayRangeEnd):not(.dayInRange):not(:disabled) {
   background: var(--color-element-hover);
 }
 
@@ -308,6 +315,80 @@
   color: var(--color-neutral-warm-400);
 }
 
+.dayDisabled,
+.day:disabled {
+  color: var(--color-neutral-warm-400);
+  cursor: not-allowed;
+}
+
+/* 기간 선택 — 중간 */
+.dayInRange {
+  z-index: 0;
+  border-radius: 0;
+  background: var(--color-primary-100);
+  color: var(--color-neutral-black);
+}
+
+/* 기간 선택 — 시작 (좌측 radius만) */
+.dayRangeStart:not(.dayRangeEnd) {
+  z-index: 1;
+  border-radius: var(--radius-8) 0 0 var(--radius-8);
+  background: var(--color-primary-200);
+  color: var(--color-neutral-black);
+}
+
+/* 기간 선택 — 끝 (우측 radius만) */
+.dayRangeEnd:not(.dayRangeStart) {
+  z-index: 1;
+  border-radius: 0 var(--radius-8) var(--radius-8) 0;
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+}
+
+/* 시작=끝 (하루만 선택) */
+.dayRangeStart.dayRangeEnd {
+  border-radius: var(--radius-8);
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+}
+
+/* 같은 주 행 내 인접 선택일 gap 연결 (32px 높이) */
+.dayBridgeRight::after,
+.dayBridgeLeft::before {
+  position: absolute;
+  top: 0;
+  width: var(--day-cell-gap);
+  height: var(--day-cell-size);
+  background: var(--color-primary-100);
+  content: '';
+  pointer-events: none;
+}
+
+.dayBridgeRight::after {
+  right: calc(var(--day-cell-gap) * -1);
+}
+
+.dayBridgeLeft::before {
+  left: calc(var(--day-cell-gap) * -1);
+}
+
+.dayRangeStart:hover {
+  background: var(--color-primary-200);
+  color: var(--color-neutral-black);
+}
+
+.dayRangeEnd:hover,
+.dayRangeStart.dayRangeEnd:hover {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+}
+
+.dayInRange:hover {
+  background: var(--color-primary-100);
+  color: var(--color-neutral-black);
+}
+
+/* 단일 선택 */
 .daySelected {
   background: var(--color-primary-500);
   color: var(--color-neutral-white);
@@ -319,6 +400,86 @@
 }
 
 .day:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* —— Year / month picker popover —— */
+
+.yearPopover {
+  min-width: 280px;
+  gap: var(--spacing-20);
+}
+
+.yearHeaderBlock {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-16);
+}
+
+.headerRule {
+  width: 100%;
+  height: 1px;
+  background: var(--color-border-default);
+}
+
+.yearGrid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-12) var(--spacing-16);
+}
+
+.yearCell {
+  display: flex;
+  box-sizing: border-box;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-8) var(--spacing-12);
+  border: 0;
+  border-radius: var(--radius-8);
+  background: transparent;
+  color: var(--color-neutral-black);
+  text-align: center;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
+  font-family: var(--font-family-number);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+  cursor: pointer;
+}
+
+.yearCell:hover:not(.daySelected):not(:disabled) {
+  background: var(--color-element-hover);
+}
+
+.yearCell.dayOutside {
+  color: var(--color-neutral-warm-400);
+}
+
+.yearCell.dayDisabled,
+.yearCell:disabled {
+  color: var(--color-neutral-warm-400);
+  cursor: not-allowed;
+}
+
+.yearCell.daySelected {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+}
+
+.yearCell.daySelected:hover {
+  background: var(--color-primary-500);
+  color: var(--color-neutral-white);
+}
+
+.yearCell:focus-visible {
   outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }

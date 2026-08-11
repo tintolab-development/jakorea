@@ -7,6 +7,8 @@ export type PFFormSectionProps = {
   /** 단락 타이틀 옆 필수 `*` */
   required?: boolean
   description?: ReactNode
+  /** 단락 본문(필드) 하단 안내 텍스트 */
+  footer?: ReactNode
   children: ReactNode
   className?: string
   id?: string
@@ -16,6 +18,7 @@ export function PFFormSection({
   title,
   required = false,
   description,
+  footer,
   children,
   className,
   id,
@@ -63,7 +66,16 @@ export function PFFormSection({
           )
         ) : null}
       </div>
-      <div className={styles.sectionBody}>{children}</div>
+      <div className={styles.sectionBody}>
+        {children}
+        {footer ? (
+          typeof footer === 'string' ? (
+            <p className={styles.sectionBodyText}>{footer}</p>
+          ) : (
+            footer
+          )
+        ) : null}
+      </div>
     </section>
   )
 }

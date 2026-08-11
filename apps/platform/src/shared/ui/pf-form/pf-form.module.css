@@ -121,6 +121,17 @@
   min-width: 0;
 }
 
+/* 단락 본문 안내 텍스트 (필드 하단 footer 등) */
+.sectionBodyText {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 /* —— Field table (label / content grid) —— */
 .fieldTable {
   display: flex;
@@ -190,6 +201,10 @@
   border-right: 1px solid var(--table-line, #e0e0e0);
 }
 
+.fieldLabelWide {
+  width: 220px;
+}
+
 .fieldLabelText {
   margin: 0;
   text-align: center;
@@ -209,6 +224,45 @@
   flex: 1 0 0;
   min-width: 0;
   min-height: 64px;
+}
+
+/* 세로형 테이블 단락 — 상단 라벨 / 하단 값 */
+.fieldVertical {
+  flex-direction: column;
+}
+
+.fieldLabelVertical {
+  width: 100%;
+  min-height: auto;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 12px 16px;
+  border-right: none;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.fieldLabelTextVertical {
+  text-align: left;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.fieldContentVertical {
+  align-items: stretch;
+  padding: 12px 16px;
+  flex: 1 1 auto;
+  min-height: auto;
+}
+
+/* value 영역 — 일반 텍스트 */
+.fieldValueText {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 @media (--bp-below-pc) {

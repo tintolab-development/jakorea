@@ -10,22 +10,29 @@ import {
 import { createPortal } from 'react-dom'
 import calendarBlackUrl from '@/shared/assets/icons/calendar-black.svg'
 import calendarGrayUrl from '@/shared/assets/icons/calendar-gray.svg'
-import {
-  addMonths,
-  formatYearMonth,
-  getMonthGridDays,
-  isSameDay,
-  startOfDay,
-  type CalendarDay,
-} from '../pf-calendar/calendar-month'
-import { PFPageButton } from '../pf-page-button'
 import { PFText } from '../pf-text'
 import cancelIconUrl from '../pf-text-input/icons/cancel.svg'
+import {
+  formatDisplayDate,
+  formatDisplayYear,
+  formatDisplayYearMonth,
+  isIsoDateWithinInputBounds,
+  isYearMonthWithinInputBounds,
+  isYearWithinInputBounds,
+  parseIsoDate,
+  parseYear,
+  parseYearMonth,
+} from './date-utils'
+import { PFDatePickerCalendar } from './pf-date-picker-calendar'
+import { PFDatePickerMonthPanel } from './pf-date-picker-month-panel'
+import { PFDatePickerYearPanel } from './pf-date-picker-year-panel'
 import styles from './pf-date-input.module.css'
 
 export type PFDateInputSize = 'medium' | 'large' | 'xlarge'
 export type PFDateInputVariant = 'default' | 'formPage'
 export type PFDateInputMessageStatus = 'neutral' | 'success' | 'error'
+/** date=`YYYY-MM-DD` · month=`YYYY-MM` · year=`YYYY` */
+export type PFDateInputPicker = 'date' | 'month' | 'year'
 
 export type PFDateInputProps = {
   size?: PFDateInputSize
@@ -33,11 +40,16 @@ export type PFDateInputProps = {
   variant?: PFDateInputVariant
   /** 지정 시 루트 width (숫자는 px) */
   width?: number | string
+  /**
+   * 선택 단위.
+   * - `date`: `YYYY-MM-DD`
+   * - `month`: `YYYY-MM`
+   * - `year`: `YYYY`
+   */
+  picker?: PFDateInputPicker
   label?: string
   placeholder?: string
-  /** `YYYY-MM-DD` */
   value?: string
-  /** `YYYY-MM-DD` */
   defaultValue?: string
   onValueChange?: (value: string) => void
   required?: boolean
@@ -51,8 +63,15 @@ export type PFDateInputProps = {
   'aria-label'?: string
 }
 
-const WEEKDAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'] as const
 const POPOVER_GAP_PX = 8
+const POPOVER_FALLBACK_SIZE: Record<
+  PFDateInputPicker,
+  { width: number; height: number }
+> = {
+  date: { width: 384, height: 320 },
+  month: { width: 280, height: 280 },
+  year: { width: 280, height: 280 },
+}
 
 const sizeTypographyClassMap: Record<PFDateInputSize, string> = {
   medium: 'typo-bd-sm-md',
@@ -60,54 +79,93 @@ const sizeTypographyClassMap: Record<PFDateInputSize, string> = {
   xlarge: 'typo-bd-md-md',
 }
 
+const DEFAULT_PLACEHOLDER: Record<PFDateInputPicker, string> = {
+  date: '날짜를 선택해 주세요',
+  month: '연월을 선택해 주세요',
+  year: '연도를 선택해 주세요',
+}
+
+function getPopoverPositionStyle(
+  trigger: DOMRect,
+  popoverWidth: number,
+  popoverHeight: number
+): CSSProperties {
+  const viewportHeight = window.innerHeight
+  const viewportWidth = window.innerWidth
+  const spaceBelow = viewportHeight - trigger.bottom - POPOVER_GAP_PX
+  const spaceAbove = trigger.top - POPOVER_GAP_PX
+  const openUpward = spaceBelow < popoverHeight && spaceAbove > spaceBelow
+
+  let left = trigger.left
+  if (left + popoverWidth > viewportWidth - 8) {
+    // 트리거 오른쪽 정렬을 우선 — 뷰포트 왼쪽으로 점프하지 않음
+    left = Math.max(8, trigger.right - popoverWidth)
+  }
+  if (left + popoverWidth > viewportWidth - 8) {
+    left = Math.max(8, viewportWidth - popoverWidth - 8)
+  }
+
+  return {
+    position: 'fixed',
+    top: openUpward ? undefined : trigger.bottom + POPOVER_GAP_PX,
+    bottom: openUpward ? viewportHeight - trigger.top + POPOVER_GAP_PX : undefined,
+    left,
+    width: 'max-content',
+    zIndex: 1100,
+  }
+}
+
+function measurePopoverSize(
+  popover: HTMLElement | null,
+  picker: PFDateInputPicker
+): { width: number; height: number } {
+  const fallback = POPOVER_FALLBACK_SIZE[picker]
+  if (!popover) return fallback
+
+  // wrapper가 position 적용 전 block으로 펼쳐지면 offsetWidth가 뷰포트만큼 커짐 → 콘텐츠 기준 측정
+  const content = popover.firstElementChild as HTMLElement | null
+  const width = content?.offsetWidth || popover.offsetWidth
+  const height = content?.offsetHeight || popover.offsetHeight
+  if (!width || width >= window.innerWidth - 16) {
+    return { width: fallback.width, height: height || fallback.height }
+  }
+  return {
+    width,
+    height: height || fallback.height,
+  }
+}
+
 function toWidthStyle(width: number | string | undefined): CSSProperties | undefined {
   if (width == null) return undefined
   return { width: typeof width === 'number' ? `${width}px` : width }
 }
 
-function parseIsoDate(value: string): Date | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim())
-  if (!match) return null
-  const year = Number(match[1])
-  const month = Number(match[2])
-  const day = Number(match[3])
-  const date = new Date(year, month - 1, day)
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
-    return null
+function hasValidValue(value: string, picker: PFDateInputPicker): boolean {
+  if (!value) return false
+  if (picker === 'year') {
+    const year = parseYear(value)
+    return year != null && isYearWithinInputBounds(year)
   }
-  return startOfDay(date)
-}
-
-function toIsoDate(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function formatDisplayDate(value: string): string {
-  const date = parseIsoDate(value)
-  if (!date) return ''
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}. ${month}. ${day}`
-}
-
-function chunkWeeks(days: CalendarDay[]): CalendarDay[][] {
-  const weeks: CalendarDay[][] = []
-  for (let index = 0; index < days.length; index += 7) {
-    weeks.push(days.slice(index, index + 7))
+  if (picker === 'month') {
+    const parsed = parseYearMonth(value)
+    return parsed != null && isYearMonthWithinInputBounds(parsed.year, parsed.month)
   }
-  return weeks
+  return parseIsoDate(value) != null && isIsoDateWithinInputBounds(value)
+}
+
+function formatTriggerDisplay(value: string, picker: PFDateInputPicker): string {
+  if (picker === 'year') return formatDisplayYear(value)
+  if (picker === 'month') return formatDisplayYearMonth(value)
+  return formatDisplayDate(value)
 }
 
 export function PFDateInput({
   size = 'medium',
   variant = 'default',
   width,
+  picker = 'date',
   label,
-  placeholder = '날짜를 선택해 주세요',
+  placeholder,
   value,
   defaultValue = '',
   onValueChange,
@@ -133,15 +191,11 @@ export function PFDateInput({
   const [internalValue, setInternalValue] = useState(defaultValue)
   const [isOpen, setIsOpen] = useState(false)
   const [popoverStyle, setPopoverStyle] = useState<CSSProperties>()
-  const [viewMonth, setViewMonth] = useState(() => {
-    const initial = parseIsoDate(value ?? defaultValue)
-    return initial ? new Date(initial.getFullYear(), initial.getMonth(), 1) : new Date()
-  })
 
   const currentValue = isControlled ? value : internalValue
-  const selectedDate = currentValue ? parseIsoDate(currentValue) : null
-  const hasValue = selectedDate != null
-  const displayValue = hasValue ? formatDisplayDate(currentValue) : ''
+  const hasValue = hasValidValue(currentValue, picker)
+  const displayValue = hasValue ? formatTriggerDisplay(currentValue, picker) : ''
+  const resolvedPlaceholder = placeholder ?? DEFAULT_PLACEHOLDER[picker]
   const isFormPage = variant === 'formPage'
   const rootStyle = { ...toWidthStyle(width), ...style }
   const shouldShowClearButton = !disabled && (hasValue || error)
@@ -179,8 +233,6 @@ export function PFDateInput({
   } as const
   const messageClassName = [styles.message, messageStatusClassMap[messageStatus]].join(' ')
 
-  const weeks = chunkWeeks(getMonthGridDays(viewMonth))
-
   const setValue = (next: string) => {
     if (!isControlled) {
       setInternalValue(next)
@@ -188,59 +240,55 @@ export function PFDateInput({
     onValueChange?.(next)
   }
 
+  const updatePopoverPosition = () => {
+    const field = fieldRef.current
+    if (!field) return
+    const rect = field.getBoundingClientRect()
+    const { width, height } = measurePopoverSize(popoverRef.current, picker)
+    setPopoverStyle(getPopoverPositionStyle(rect, width, height))
+  }
+
   const openPopover = () => {
     if (disabled) return
-    const nextView = selectedDate
-      ? new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
-      : new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-    setViewMonth(nextView)
+    const field = fieldRef.current
+    if (field) {
+      const fallback = POPOVER_FALLBACK_SIZE[picker]
+      // 첫 paint부터 트리거 아래에 붙임 (미측정 시 left 클램프 오차 방지)
+      setPopoverStyle(
+        getPopoverPositionStyle(field.getBoundingClientRect(), fallback.width, fallback.height)
+      )
+    }
     setIsOpen(true)
   }
 
   const closePopover = () => {
     setIsOpen(false)
+    setPopoverStyle(undefined)
   }
 
   useLayoutEffect(() => {
     if (!isOpen) return
 
-    const updatePosition = () => {
-      const field = fieldRef.current
-      const popover = popoverRef.current
-      if (!field) return
+    updatePopoverPosition()
 
-      const rect = field.getBoundingClientRect()
-      const popoverHeight = popover?.offsetHeight ?? 320
-      const popoverWidth = popover?.offsetWidth ?? 384
-      const viewportHeight = window.innerHeight
-      const viewportWidth = window.innerWidth
-      const spaceBelow = viewportHeight - rect.bottom - POPOVER_GAP_PX
-      const spaceAbove = rect.top - POPOVER_GAP_PX
-      const openUpward = spaceBelow < popoverHeight && spaceAbove > spaceBelow
-
-      let left = rect.left
-      if (left + popoverWidth > viewportWidth - 8) {
-        left = Math.max(8, viewportWidth - popoverWidth - 8)
-      }
-
-      setPopoverStyle({
-        position: 'fixed',
-        top: openUpward ? undefined : rect.bottom + POPOVER_GAP_PX,
-        bottom: openUpward ? viewportHeight - rect.top + POPOVER_GAP_PX : undefined,
-        left,
-        zIndex: 1100,
-      })
+    const popover = popoverRef.current
+    const resizeObserver =
+      popover && typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => updatePopoverPosition())
+        : null
+    if (popover && resizeObserver) {
+      resizeObserver.observe(popover)
     }
 
-    updatePosition()
-    window.addEventListener('resize', updatePosition)
-    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePopoverPosition)
+    window.addEventListener('scroll', updatePopoverPosition, true)
 
     return () => {
-      window.removeEventListener('resize', updatePosition)
-      window.removeEventListener('scroll', updatePosition, true)
+      resizeObserver?.disconnect()
+      window.removeEventListener('resize', updatePopoverPosition)
+      window.removeEventListener('scroll', updatePopoverPosition, true)
     }
-  }, [isOpen, viewMonth])
+  }, [isOpen, picker])
 
   useEffect(() => {
     if (!isOpen) return
@@ -279,95 +327,64 @@ export function PFDateInput({
     }
   }
 
-  const handleSelectDay = (day: CalendarDay) => {
-    setValue(toIsoDate(day.date))
-    setViewMonth(new Date(day.date.getFullYear(), day.date.getMonth(), 1))
-    closePopover()
-    triggerRef.current?.focus()
-  }
-
   const handleClear = () => {
     setValue('')
     closePopover()
   }
 
+  const handleSelectValue = (next: string) => {
+    setValue(next)
+    closePopover()
+    triggerRef.current?.focus()
+  }
+
+  const selectedDate = picker === 'date' && hasValue ? parseIsoDate(currentValue) : null
+  const selectedYearMonth = picker === 'month' && hasValue ? parseYearMonth(currentValue) : null
+  const selectedYear = picker === 'year' && hasValue ? parseYear(currentValue) : null
+
+  const popoverContent =
+    picker === 'year' ? (
+      <PFDatePickerYearPanel
+        id={popoverId}
+        selectedYear={hasValue ? currentValue : null}
+        initialViewYear={selectedYear ?? undefined}
+        onSelectYear={handleSelectValue}
+      />
+    ) : picker === 'month' ? (
+      <PFDatePickerMonthPanel
+        id={popoverId}
+        selectedMonth={hasValue ? currentValue : null}
+        initialViewYear={selectedYearMonth?.year}
+        onSelectMonth={handleSelectValue}
+      />
+    ) : (
+      <PFDatePickerCalendar
+        id={popoverId}
+        selectionMode="single"
+        selectedDate={hasValue ? currentValue : null}
+        initialViewMonth={
+          selectedDate
+            ? new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+            : undefined
+        }
+        onSelectDate={handleSelectValue}
+      />
+    )
+
   const popover =
     isOpen && typeof document !== 'undefined'
       ? createPortal(
-          <div
-            ref={popoverRef}
-            id={popoverId}
-            className={styles.popover}
-            style={popoverStyle}
-            role="dialog"
-            aria-label="날짜 선택"
-          >
-            <div className={styles.header}>
-              <PFPageButton
-                size="large"
-                direction="left"
-                aria-label="이전 달"
-                onClick={() => setViewMonth(prev => addMonths(prev, -1))}
-              />
-              <p className={styles.yearMonth}>{formatYearMonth(viewMonth)}</p>
-              <PFPageButton
-                size="large"
-                direction="right"
-                aria-label="다음 달"
-                onClick={() => setViewMonth(prev => addMonths(prev, 1))}
-              />
-            </div>
-
-            <div className={styles.body}>
-              <div className={styles.weekdayRow} aria-hidden="true">
-                {WEEKDAYS.map(weekday => (
-                  <span key={weekday} className={styles.weekday}>
-                    {weekday}
-                  </span>
-                ))}
-              </div>
-
-              <div className={styles.weeks}>
-                {weeks.map(week => {
-                  const weekKey = toIsoDate(week[0].date)
-                  return (
-                    <div className={styles.week} key={weekKey}>
-                      {week.map(day => {
-                        const selected = selectedDate != null && isSameDay(day.date, selectedDate)
-                        const isSunday = day.weekday === 0
-                        const isSaturday = day.weekday === 6
-                        const dayClassName = [
-                          styles.day,
-                          !day.isCurrentMonth ? styles.dayOutside : undefined,
-                          day.isCurrentMonth && isSunday ? styles.daySunday : undefined,
-                          day.isCurrentMonth && isSaturday ? styles.daySaturday : undefined,
-                          selected ? styles.daySelected : undefined,
-                        ]
-                          .filter(Boolean)
-                          .join(' ')
-
-                        return (
-                          <button
-                            key={toIsoDate(day.date)}
-                            type="button"
-                            className={dayClassName}
-                            aria-label={`${day.date.getFullYear()}년 ${day.date.getMonth() + 1}월 ${day.day}일`}
-                            aria-pressed={selected}
-                            onClick={() => handleSelectDay(day)}
-                          >
-                            {day.day}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
+          <div ref={popoverRef} style={popoverStyle}>
+            {popoverContent}
           </div>,
-          document.body,
+          document.body
         )
       : null
+
+  const triggerAriaLabel =
+    ariaLabel ??
+    label ??
+    (picker === 'year' ? '연도' : picker === 'month' ? '연월' : '날짜')
 
   return (
     <div
@@ -399,7 +416,7 @@ export function PFDateInput({
           aria-haspopup="dialog"
           aria-expanded={isOpen}
           aria-controls={isOpen ? popoverId : undefined}
-          aria-label={ariaLabel ?? label ?? '날짜'}
+          aria-label={triggerAriaLabel}
           aria-required={required || undefined}
           onClick={() => {
             if (isOpen) {
@@ -410,7 +427,7 @@ export function PFDateInput({
           }}
           onKeyDown={handleTriggerKeyDown}
         >
-          {hasValue ? displayValue : placeholder}
+          {hasValue ? displayValue : resolvedPlaceholder}
         </button>
         {shouldShowClearButton ? (
           <button
