@@ -4,12 +4,16 @@ import { PFButton } from '../pf-button'
 import { PFText } from '../pf-text'
 import styles from './pf-alert-modal.module.css'
 
+type PFAlertConfirmVariant = 'primary' | 'secondary' | 'tertiary'
+
 export type PFAlertModalProps = {
   open: boolean
   onConfirm: () => void
   title: ReactNode
   description?: ReactNode
   confirmLabel?: string
+  /** 확인 버튼 variant. 기본 tertiary */
+  confirmVariant?: PFAlertConfirmVariant
   className?: string
   ariaLabelledBy?: string
   ariaDescribedBy?: string
@@ -21,6 +25,7 @@ export function PFAlertModal({
   title,
   description,
   confirmLabel = '확인',
+  confirmVariant = 'tertiary',
   className,
   ariaLabelledBy,
   ariaDescribedBy,
@@ -84,7 +89,7 @@ export function PFAlertModal({
 
         <PFButton
           className={styles.confirmButton}
-          variant="tertiary"
+          variant={confirmVariant}
           size="xlarge"
           width="100%"
           onClick={onConfirm}
