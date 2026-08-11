@@ -22,6 +22,7 @@ import { ContentsPage } from '@/pages/main/contents/page'
 import { PopupsPage } from '@/pages/main/popups/page'
 import { DesignSystemPage } from '@/pages/design-system/page'
 import { EducationFieldsPage } from '@/pages/education/fields/page'
+import { EducationProgramsPage } from '@/pages/education/programs/page'
 import { EducationTextbooksPage } from '@/pages/education/textbooks/page'
 import { IndividualDonationPage } from '@/pages/sponsor/individual/page'
 import { CorporateGuidePage } from '@/pages/sponsor/corporate/guide/page'
@@ -59,6 +60,7 @@ const IMPLEMENTED_LEAF_PATHS = new Set([
   '/ja-korea/directions',
   '/ja-korea/people',
   '/impact/stories',
+  '/education/programs',
   '/education/fields',
   '/education/textbooks',
   '/sponsor/individual',
@@ -124,6 +126,7 @@ export const router = createBrowserRouter([
       },
       { path: 'impact/stories', element: <ImpactStoriesPage /> },
       { path: 'impact/stories/:id', element: <ImpactStoryDetailPage /> },
+      { path: 'education/programs', element: <EducationProgramsPage /> },
       { path: 'education/fields', element: <EducationFieldsPage /> },
       { path: 'education/textbooks', element: <EducationTextbooksPage /> },
       {

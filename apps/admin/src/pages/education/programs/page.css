@@ -1,0 +1,40 @@
+/**
+ * 프로그램 소개 관리 페이지
+ * @see apps/admin/.cursor/rules/design/detail-document-form-card.mdc
+ */
+
+.program-intro-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: calc(100vh - var(--header-height, 64px) - 64px);
+  height: calc(100vh - var(--header-height, 64px) - 64px);
+}
+
+.program-intro-page__tabs {
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.program-intro-page > .program-intro-card,
+.program-intro-page > .page-content-loading {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.program-intro-page__empty {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 140%;
+  opacity: 0.7;
+  background: #fff;
+  border-radius: var(--radius-12, 12px);
+}
