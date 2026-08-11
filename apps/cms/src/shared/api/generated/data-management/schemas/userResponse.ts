@@ -12,7 +12,6 @@ import type { TermsAgreementRow } from './termsAgreementRow';
 import type { UserDetailActionState } from './userDetailActionState';
 import type { UserListRowMetrics } from './userListRowMetrics';
 import type { UserResponseInstructorStatus } from './userResponseInstructorStatus';
-import type { UserResponseProgramRoles } from './userResponseProgramRoles';
 
 export interface UserResponse {
   email?: string;
@@ -20,12 +19,30 @@ export interface UserResponse {
   nameEn?: string;
   profileImageUrl?: string;
   phone?: string;
+  /**
+     * [Deprecated compatibility] 목록 표시용 단일 역할. 권한/필터 판단은 roles를 사용합니다.
+     * @deprecated
+     */
   role?: string;
-  adminLevel?: string;
-  programRoles?: UserResponseProgramRoles;
+  /**
+     * [Deprecated compatibility] 학교는 organization API를 사용합니다.
+     * @deprecated
+     */
   schoolInfo?: SchoolInfo;
+  /**
+     * [Deprecated compatibility] organizationName/organizationId 기반 응답으로 전환합니다.
+     * @deprecated
+     */
   affiliatedSchoolName?: string;
+  /**
+     * [Deprecated compatibility] roles exact-set으로 일반/교사/강사 조합을 판단합니다.
+     * @deprecated
+     */
   instructorMemberProfile?: string;
+  /**
+     * [Deprecated compatibility] 강사 상세/settlement 전용 DTO를 사용합니다.
+     * @deprecated
+     */
   instructorInfo?: InstructorInfo;
   /** 강사 프로필 PK. 회원 PK인 memberId와 구분됩니다. */
   instructorId?: number;
@@ -48,12 +65,20 @@ export interface UserResponse {
   zipCode?: string;
   birthDate?: string;
   gender?: string;
+  /**
+     * [Deprecated compatibility] 학교/기관 소속은 organizationId 기반 affiliation DTO를 사용합니다.
+     * @deprecated
+     */
   affiliation?: string;
   socialAccounts?: string[];
   listMetrics?: UserListRowMetrics;
   guardianInfo?: GuardianInfo;
   termsAgreements?: TermsAgreementRow[];
   actionState?: UserDetailActionState;
+  /**
+     * [Deprecated compatibility] role과 동일한 단일 표시값입니다. canonical roles[]를 사용합니다.
+     * @deprecated
+     */
   roleCode?: string;
   /** 회원 PK. 일반/학교/강사 회원 응답에서만 반환됩니다. */
   memberId?: number;

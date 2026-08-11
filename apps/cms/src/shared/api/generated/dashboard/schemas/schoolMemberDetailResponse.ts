@@ -6,7 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { MemberDetailResponse } from './memberDetailResponse';
-import type { SchoolAffiliatedTeacherRow } from './schoolAffiliatedTeacherRow';
+import type { SchoolAffiliatedTeacherResponse } from './schoolAffiliatedTeacherResponse';
 
 export interface SchoolMemberDetailResponse {
   member?: MemberDetailResponse;
@@ -20,5 +20,5 @@ export interface SchoolMemberDetailResponse {
   regionSido?: string;
   regionSigungu?: string;
   position?: string;
-  affiliatedTeachers?: SchoolAffiliatedTeacherRow[];
+  affiliatedTeachers?: SchoolAffiliatedTeacherResponse[];
 }

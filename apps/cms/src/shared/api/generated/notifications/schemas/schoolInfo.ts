@@ -5,12 +5,12 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { SchoolAffiliatedTeacherRow } from './schoolAffiliatedTeacherRow';
+import type { SchoolAffiliatedTeacherResponse } from './schoolAffiliatedTeacherResponse';
 
 export interface SchoolInfo {
   schoolName?: string;
   address?: string;
   addressDetail?: string;
   position?: string;
-  affiliatedTeachers?: SchoolAffiliatedTeacherRow[];
+  affiliatedTeachers?: SchoolAffiliatedTeacherResponse[];
 }

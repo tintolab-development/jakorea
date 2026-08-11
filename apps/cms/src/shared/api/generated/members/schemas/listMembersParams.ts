@@ -16,6 +16,10 @@ keyword?: string;
  */
 role?: string;
 /**
+ * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ */
+rolesExactAnyOf?: string;
+/**
  * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
  */
 memberStatus?: string;

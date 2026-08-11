@@ -7,6 +7,8 @@
  */
 
 export interface Affiliation {
+  /** 학교의 canonical 식별자입니다. CMS의 학교/회원 관계는 synthetic school memberId가 아니라 organizationId를 사용합니다. */
+  organizationId?: number;
   schoolName?: string;
   employmentStatus?: string;
   /**
@@ -14,5 +16,9 @@ export interface Affiliation {
      * @maxItems 20
      */
   organizationNames?: string[];
+  /**
+     * 레거시 synthetic school member 식별자입니다. 신규 연동에서는 organizationId를 사용합니다.
+     * @deprecated
+     */
   affiliatedSchoolUserId?: number;
 }

@@ -27,6 +27,7 @@ export interface PortalProfileResponse {
   affiliationName?: string;
   schoolEnrollmentStatus?: string;
   teacherEmploymentStatus?: string;
+  external1365Id?: string;
   accountStatus?: string;
   joinedAt?: string;
 }

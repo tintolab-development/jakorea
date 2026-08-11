@@ -5,6 +5,7 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { RequestedScheduleRequest } from './requestedScheduleRequest';
 import type { SaveApplicationRequestAnswers } from './saveApplicationRequestAnswers';
 
 export interface SaveApplicationRequest {
@@ -16,4 +17,9 @@ export interface SaveApplicationRequest {
   applicationType: string;
   formBindingId: number;
   answers?: SaveApplicationRequestAnswers;
+  /**
+     * @minItems 0
+     * @maxItems 2
+     */
+  requestedSchedules?: RequestedScheduleRequest[];
 }
