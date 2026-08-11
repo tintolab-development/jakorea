@@ -1,7 +1,7 @@
 export const INSTRUCTOR_FREE_WRITE_ITEMS = [
   {
     name: 'freeWrite1' as const,
-    label: '1. 자기소개 및 지원동기',
+    label: '1. 자기소개 및 지원동기를 자유롭게 작성해 주세요.',
   },
   {
     name: 'freeWrite2' as const,

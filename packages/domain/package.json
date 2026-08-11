@@ -75,6 +75,10 @@
     "./instructor/form-copy": {
       "types": "./dist/instructor/form-copy.d.ts",
       "import": "./dist/instructor/form-copy.js"
+    },
+    "./instructor/form-layout": {
+      "types": "./dist/instructor/form-layout.d.ts",
+      "import": "./dist/instructor/form-layout.js"
     }
   },
   "devDependencies": {

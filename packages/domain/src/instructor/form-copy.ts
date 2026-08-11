@@ -45,5 +45,5 @@ export const INSTRUCTOR_FORM_PLACEHOLDERS = {
   awardYear: '수상/수료연도',
   awardTitle: '수상/수료명',
   awardIssuer: '발행처',
-  freeWrite: '자유롭게 작성해주세요',
+  freeWrite: '자유롭게 작성해 주세요',
 } as const

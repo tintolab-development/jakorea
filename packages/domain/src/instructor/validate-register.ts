@@ -1,12 +1,20 @@
+import { CAREER_LEVEL } from './career-level.js'
 import type { ConsentValue } from './consent.js'
+import { EDUCATION_STATUS } from './education-options.js'
+import type { EducationDetailKey } from './education-options.js'
 import type { InstructorMemberType } from './member-type.js'
-import type { InstructorSharedProfileFormValues } from './profile-form-values.js'
+import type {
+  InstructorCareerRow,
+  InstructorEducationGraduateRow,
+  InstructorEducationSchoolRow,
+  InstructorSharedProfileFormValues,
+} from './profile-form-values.js'
 
 const DEFAULT_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 /** 010-1234-5678 형태 (하이픈 포함) */
 const DEFAULT_KOREAN_PHONE_PATTERN = /^01[016789]-?\d{3,4}-?\d{4}$/
 
-/** 제출 시 기본 정보 전 항목 + 필수 동의 2개 */
+/** 제출 시 기본 정보 전 항목 + 동의(키는 options로 확장 가능) */
 export type InstructorRegisterValidationInput = Pick<
   InstructorSharedProfileFormValues,
   | 'name'
@@ -29,6 +37,25 @@ export type InstructorRegisterValidationInput = Pick<
   | 'oneLineIntro'
   | 'consentTermsOfService'
   | 'consentPersonal'
+  | 'consentMarketing'
+  | 'consentPortrait'
+  | 'consentPaymentStatement'
+  | 'consentEducatorPledge'
+  | 'consentAdministrativeJoint'
+  | 'consentSexOffenseCheck'
+  | 'eduSchoolType'
+  | 'eduStatus'
+  | 'educationDetailKeys'
+  | 'highSchool'
+  | 'college23Rows'
+  | 'college4Rows'
+  | 'graduateRows'
+  | 'careerLevel'
+  | 'careers'
+  | 'freeWrite1'
+  | 'freeWrite2'
+  | 'freeWrite3'
+  | 'freeWrite4'
 >
 
 export type InstructorRegisterFormatChecks = {
@@ -40,18 +67,162 @@ export type InstructorRegisterFormatChecks = {
   isEmailValid?: (value: string) => boolean
 }
 
+export type InstructorRegisterValidationOptions = {
+  /**
+   * 동의(agree) 필수 키. 기본: 서비스 이용약관·개인정보.
+   * Platform `allItemsRequired` 시 form-layout 키 목록을 전달.
+   */
+  requiredConsentAgreeKeys?: readonly (keyof InstructorRegisterValidationInput)[]
+  /**
+   * Platform 강사 신청: 최종 학력(학교·상태) + 체크된 학력 상세 행 필수.
+   * CMS 등록 검증은 기본 false 유지.
+   */
+  requireEducation?: boolean
+  /**
+   * Platform 강사 신청: 경력 구분 필수 + 경력일 때 경력 행 입력값 필수.
+   * CMS 등록 검증은 기본 false 유지.
+   */
+  requireCareer?: boolean
+  /**
+   * Platform 강사 신청: 자유 작성 1~4 필수.
+   * CMS 등록 검증은 기본 false 유지.
+   */
+  requireFreeWrite?: boolean
+}
+
 export type InstructorRegisterValidationResult = {
   missingRequired: boolean
   formatMessages: string[]
 }
 
+const DEFAULT_REQUIRED_CONSENT_KEYS = [
+  'consentTermsOfService',
+  'consentPersonal',
+] as const satisfies ReadonlyArray<keyof InstructorRegisterValidationInput>
+
 function isBlank(value: string | null | undefined): boolean {
   return !value?.trim()
+}
+
+function isEducationSchoolRowIncomplete(
+  row: InstructorEducationSchoolRow,
+  options: { requireMajor: boolean; requireGradYear: boolean },
+): boolean {
+  if (isBlank(row.admitYear)) return true
+  if (options.requireGradYear && isBlank(row.gradYear)) return true
+  if (isBlank(row.schoolName)) return true
+  if (options.requireMajor && isBlank(row.major)) return true
+  return false
+}
+
+function isEducationGraduateRowIncomplete(
+  row: InstructorEducationGraduateRow,
+  requireGradYear: boolean,
+): boolean {
+  return (
+    isEducationSchoolRowIncomplete(row, { requireMajor: true, requireGradYear }) ||
+    isBlank(row.degree)
+  )
+}
+
+function isEducationSectionIncomplete(
+  values: Pick<
+    InstructorRegisterValidationInput,
+    | 'eduSchoolType'
+    | 'eduStatus'
+    | 'educationDetailKeys'
+    | 'highSchool'
+    | 'college23Rows'
+    | 'college4Rows'
+    | 'graduateRows'
+  >,
+): boolean {
+  if (isBlank(values.eduSchoolType) || isBlank(values.eduStatus)) return true
+
+  const enrolledFinal =
+    values.eduStatus === EDUCATION_STATUS.enrolled && Boolean(values.eduSchoolType)
+  const requireGradYearFor = (key: EducationDetailKey) =>
+    !(enrolledFinal && values.eduSchoolType === key)
+
+  for (const key of values.educationDetailKeys) {
+    switch (key) {
+      case 'high':
+        if (
+          isEducationSchoolRowIncomplete(values.highSchool, {
+            requireMajor: false,
+            requireGradYear: requireGradYearFor('high'),
+          })
+        ) {
+          return true
+        }
+        break
+      case 'college23':
+        if (values.college23Rows.length === 0) return true
+        if (
+          values.college23Rows.some(row =>
+            isEducationSchoolRowIncomplete(row, {
+              requireMajor: true,
+              requireGradYear: requireGradYearFor('college23'),
+            }),
+          )
+        ) {
+          return true
+        }
+        break
+      case 'college4':
+        if (values.college4Rows.length === 0) return true
+        if (
+          values.college4Rows.some(row =>
+            isEducationSchoolRowIncomplete(row, {
+              requireMajor: true,
+              requireGradYear: requireGradYearFor('college4'),
+            }),
+          )
+        ) {
+          return true
+        }
+        break
+      case 'graduate':
+        if (values.graduateRows.length === 0) return true
+        if (
+          values.graduateRows.some(row =>
+            isEducationGraduateRowIncomplete(row, requireGradYearFor('graduate')),
+          )
+        ) {
+          return true
+        }
+        break
+      default:
+        break
+    }
+  }
+
+  return false
+}
+
+function isCareerRowIncomplete(row: InstructorCareerRow): boolean {
+  if (isBlank(row.periodStart)) return true
+  if (!row.currentlyEmployed && isBlank(row.periodEnd)) return true
+  if (isBlank(row.companyName)) return true
+  if (isBlank(row.roleName)) return true
+  return false
+}
+
+function isCareerSectionIncomplete(
+  values: Pick<InstructorRegisterValidationInput, 'careerLevel' | 'careers'>,
+): boolean {
+  if (values.careerLevel !== CAREER_LEVEL.new && values.careerLevel !== CAREER_LEVEL.experienced) {
+    return true
+  }
+  if (values.careerLevel === CAREER_LEVEL.new) return false
+  if (values.careers.length === 0) return true
+  return values.careers.some(isCareerRowIncomplete)
 }
 
 export function collectInstructorRegisterValidation(
   values: InstructorRegisterValidationInput,
   formatChecks: InstructorRegisterFormatChecks = {},
+  options: InstructorRegisterValidationOptions = {},
 ): InstructorRegisterValidationResult {
   let missingRequired = false
   const formatMessages: string[] = []
@@ -105,11 +276,30 @@ export function collectInstructorRegisterValidation(
   if (!values.isBusinessIncome) missingRequired = true
   if (isBlank(values.oneLineIntro)) missingRequired = true
 
-  if (values.consentTermsOfService !== ('agree' satisfies ConsentValue)) {
+  const requiredConsentKeys = options.requiredConsentAgreeKeys ?? DEFAULT_REQUIRED_CONSENT_KEYS
+  for (const key of requiredConsentKeys) {
+    if (values[key] !== ('agree' satisfies ConsentValue)) {
+      missingRequired = true
+    }
+  }
+
+  if (options.requireEducation && isEducationSectionIncomplete(values)) {
     missingRequired = true
   }
-  if (values.consentPersonal !== ('agree' satisfies ConsentValue)) {
+
+  if (options.requireCareer && isCareerSectionIncomplete(values)) {
     missingRequired = true
+  }
+
+  if (options.requireFreeWrite) {
+    if (
+      isBlank(values.freeWrite1) ||
+      isBlank(values.freeWrite2) ||
+      isBlank(values.freeWrite3) ||
+      isBlank(values.freeWrite4)
+    ) {
+      missingRequired = true
+    }
   }
 
   return { missingRequired, formatMessages }
