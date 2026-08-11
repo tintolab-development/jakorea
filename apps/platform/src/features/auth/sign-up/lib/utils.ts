@@ -1,5 +1,6 @@
 import type {
   ConfirmationRow,
+  ConsentChoice,
   EmploymentStatus,
   GenderType,
   MemberType,
@@ -105,18 +106,31 @@ export function formatTeacherAffiliation(schoolName: string, schoolAddress: stri
   return [schoolName.trim(), schoolAddress.trim()].filter(Boolean).join(', ') || '-'
 }
 
+export function isConsentAgreed(value: ConsentChoice | boolean | null | undefined): boolean {
+  return value === true || value === 'agree'
+}
+
 export function isAllAgreed<T extends string>(
-  agreements: Record<T, boolean>,
+  agreements: Record<T, ConsentChoice | boolean | null | undefined>,
   items: { key: T }[],
 ) {
-  return items.every(item => agreements[item.key])
+  return items.every(item => isConsentAgreed(agreements[item.key]))
 }
 
 export function isRequiredAgreed<T extends string>(
-  agreements: Record<T, boolean>,
+  agreements: Record<T, ConsentChoice | boolean | null | undefined>,
   items: { key: T; required: boolean }[],
 ) {
-  return items.filter(item => item.required).every(item => agreements[item.key])
+  return items.filter(item => item.required).every(item => isConsentAgreed(agreements[item.key]))
+}
+
+export function listDisagreedRequiredLabels<T extends string>(
+  agreements: Record<T, ConsentChoice | boolean | null | undefined>,
+  items: { key: T; required: boolean; label: string }[],
+): string[] {
+  return items
+    .filter(item => item.required && !isConsentAgreed(agreements[item.key]))
+    .map(item => item.label)
 }
 
 export function buildConfirmationRows(input: {
