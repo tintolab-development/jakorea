@@ -5,6 +5,7 @@ import type {
   MemberType,
   SchoolStatus,
 } from '../model/sign-up.types'
+import { isDateWithinInputBounds } from '@/shared/ui/pf-date-input/date-utils'
 import {
   MOCK_VERIFIED_NAME,
   MOCK_VERIFIED_PHONE,
@@ -39,6 +40,10 @@ export function parseBirthDate(value: string) {
   const date = new Date(year, month - 1, day)
 
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null
+  }
+
+  if (!isDateWithinInputBounds(date)) {
     return null
   }
 

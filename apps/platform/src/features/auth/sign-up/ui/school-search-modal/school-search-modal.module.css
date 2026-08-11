@@ -1,9 +1,16 @@
+.schoolModalFilterRow {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--spacing-12);
+}
+
+/* UniversitySearchModal — 시/도 · 시/군/구 2열 */
 .schoolModalRegionRow {
   display: grid;
   width: 100%;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-12);
-  margin-top: var(--spacing-28);
 }
 
 .schoolModalSearchRow {
@@ -11,7 +18,7 @@
   width: 100%;
   grid-template-columns: 1fr 160px;
   gap: var(--spacing-12);
-  margin: var(--spacing-12) 0 var(--spacing-28) 0;
+  margin: var(--spacing-12) 0 0;
 }
 
 .schoolModalSearchRowActive {
@@ -19,6 +26,7 @@
 }
 
 .schoolModalGuide {
+  margin: var(--spacing-28) 0 0;
   padding-left: var(--spacing-8);
 }
 
@@ -58,84 +66,69 @@
   margin: 0;
 }
 
-.schoolResultList {
-  display: flex;
+.schoolResultTableWrap {
   width: 100%;
-  flex: 0 0 auto;
-  flex-direction: column;
-  margin: 0;
-  padding: var(--spacing-16) var(--spacing-20);
-  list-style: none;
+  max-height: 464px;
+  overflow: auto;
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-16);
   background: var(--color-neutral-white);
-  max-height: 464px;
-  overflow-y: auto;
 }
 
-.schoolResultItem {
-  display: flex;
+.schoolResultTable {
   width: 100%;
-  align-items: center;
-  gap: var(--spacing-12);
-  padding: var(--spacing-16) 0;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.schoolResultTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--spacing-12) var(--spacing-16);
+  border-bottom: 1px solid var(--color-border-default);
+  background: var(--color-neutral-cool-50);
+  color: var(--color-neutral-black);
+  text-align: left;
+  font-family: var(--font-family-base);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 140%;
+}
+
+.schoolResultTable thead th:last-child {
+  width: 104px;
+  text-align: center;
+}
+
+.schoolResultTable tbody td {
+  padding: var(--spacing-12) var(--spacing-16);
   border-bottom: 1px solid rgb(61 61 61 / 10%);
+  vertical-align: middle;
 }
-.schoolResultItem:first-child {
-  padding-top: 0;
-}
-.schoolResultItem:last-child {
-  padding-bottom: 0;
+
+.schoolResultTable tbody tr:last-child td {
   border-bottom: 0;
 }
 
-.schoolResultContent {
-  display: flex;
-  min-width: 0;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: var(--spacing-12);
+.schoolResultTable tbody td:nth-child(1) {
+  width: 96px;
 }
 
-.schoolResultName {
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.schoolResultTable tbody td:nth-child(2) {
+  width: 34%;
 }
 
-.schoolResultAddressRow {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-8);
-  min-width: 0;
-}
-
-.schoolResultTag {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-2) var(--spacing-8);
-  border-radius: var(--radius-4);
-  background: var(--color-neutral-cool-50);
-  color: var(--color-neutral-cool-700);
-  font-family: var(--font-family-base);
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 140%;
-  letter-spacing: 0;
-}
-
+.schoolResultName,
 .schoolResultAddress {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.schoolResultSelectButton {
-  height: 60px;
+.schoolResultSelectCell {
+  text-align: center;
 }
 
 .schoolResultHit {
@@ -148,4 +141,3 @@
   justify-content: center;
   margin-top: var(--spacing-16);
 }
-
