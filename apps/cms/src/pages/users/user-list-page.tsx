@@ -11,7 +11,7 @@ import { useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
 import { useModalState } from '@/shared/hooks/use-modal-state'
-import { useInView } from '@/shared/hooks/use-in-view'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { UserList } from '@/features/user/shared/ui/user-list'
 import {
   UserDetailFullPageModal,
@@ -92,7 +92,7 @@ import {
   getUnsupportedMemberListFilterLabels,
   isMembersRemoteEnabled,
 } from '@/features/user/api/member-remote-capabilities'
-import { memberQueryKeys } from '@/features/user/api/member-query-keys'
+import { memberQueryKeys, serializeMemberListFilters } from '@/features/user/api/member-query-keys'
 import { resolveDeleteUserOptions } from '@/features/user/api/resolve-delete-user-options'
 import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
 import { applyAffiliatedTeacherLinkToUser } from '@/features/user/api/apply-affiliated-teacher-link'
@@ -197,6 +197,10 @@ export function UserListPage() {
   const canWrite = canPerformWriteAction(user)
 
   const listQueryFilters = useMemo(() => buildListQueryApiFilters(params), [params])
+  const listQueryFiltersKey = useMemo(
+    () => serializeMemberListFilters(listQueryFilters),
+    [listQueryFilters]
+  )
 
   const unsupportedRemoteFilterLabels = useMemo(
     () => (isMembersRemoteEnabled() ? getUnsupportedMemberListFilterLabels(listQueryFilters) : []),
@@ -215,13 +219,12 @@ export function UserListPage() {
   /** 조회 버튼 — 무한스크롤 next page fetch는 제외 */
   const filterSearchLoading = listFetching && !isFetchingNextPage
 
-  // 무한 스크롤: 하단 센티넬이 보이면 다음 페이지 로드
-  const { ref: loadMoreRef, inView } = useInView({ rootMargin: '200px', threshold: 0 })
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage()
-    }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
+  const { sentinelRef: loadMoreRef } = useGatedInfiniteScroll({
+    hasNextPage: hasNextPage ?? false,
+    isFetchingNextPage,
+    fetchNextPage,
+    resetKey: listQueryFiltersKey,
+  })
 
   // 스토어: 선택 사용자(드로어), mutations
   const createUser = useUserStore(state => state.createUser)
