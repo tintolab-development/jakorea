@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ProgramBackButton } from '@/features/program'
-import { INSTRUCTOR_APPLY_PATH, InstructorApplyForm, MYPAGE_PATH } from '@/features/mypage'
+import {
+  INSTRUCTOR_APPLY_PATH,
+  InstructorApplyForm,
+  MYPAGE_PATH,
+  useInstructorApplyLockedBasic,
+} from '@/features/mypage'
 import { getDevAuthLoggedIn } from '@/shared/lib'
-import { PFAlertModal, PFFormPage } from '@/shared/ui'
+import { PFAlertModal, PFFormPage, PFText } from '@/shared/ui'
 
 export function MypageInstructorApplyPage() {
   const navigate = useNavigate()
   const [isAuthReady, setIsAuthReady] = useState(false)
   const [successOpen, setSuccessOpen] = useState(false)
+  const { isLoading, isError, lockedBasic } = useInstructorApplyLockedBasic()
 
   useEffect(() => {
     if (!getDevAuthLoggedIn()) {
@@ -30,7 +36,20 @@ export function MypageInstructorApplyPage() {
         back={<ProgramBackButton label="이전으로" onClick={() => navigate(MYPAGE_PATH)} />}
         title="강사 신청"
       >
-        <InstructorApplyForm onSubmitSuccess={() => setSuccessOpen(true)} />
+        {isLoading ? (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            회원 정보를 불러오는 중…
+          </PFText>
+        ) : isError ? (
+          <PFText as="p" typo="bd-md-rg" color="error">
+            회원 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+          </PFText>
+        ) : (
+          <InstructorApplyForm
+            lockedBasic={lockedBasic}
+            onSubmitSuccess={() => setSuccessOpen(true)}
+          />
+        )}
       </PFFormPage>
 
       <PFAlertModal

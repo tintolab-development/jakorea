@@ -51,8 +51,16 @@ export function parsePortalProfileResponse(payload: unknown): PortalProfileRespo
     memberId: optionalNumber(root.memberId),
     email: optionalString(root.email),
     name: optionalString(root.name),
+    phone: optionalString(root.phone),
+    birthDate: optionalString(root.birthDate),
+    gender: optionalString(root.gender),
     memberType: optionalString(root.memberType),
     teacher: optionalBoolean(root.teacher),
     instructor: optionalBoolean(root.instructor),
+    address: optionalString(root.address),
+    addressDetail: optionalString(root.addressDetail),
+    schoolName: optionalString(root.schoolName),
+    affiliationName: optionalString(root.affiliationName),
+    teacherEmploymentStatus: optionalString(root.teacherEmploymentStatus),
   }
 }

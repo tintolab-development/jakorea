@@ -32,5 +32,11 @@ export {
 } from './lib/map-portal-member-profile'
 export { useMypageMember } from './hooks/use-mypage-member'
 export type { MypageMemberView } from './hooks/use-mypage-member'
-export { InstructorApplyForm } from './instructor-apply'
-export type { InstructorApplyFormProps } from './instructor-apply'
+export {
+  InstructorApplyForm,
+  useInstructorApplyLockedBasic,
+} from './instructor-apply'
+export type {
+  InstructorApplyFormProps,
+  InstructorApplyLockedBasicInfo,
+} from './instructor-apply'

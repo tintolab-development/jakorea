@@ -28,12 +28,23 @@ export type HomepageMeResponse = {
   lastLoginAt?: string
 }
 
-/** GET /api/portal/me/profile — PortalProfileResponse (마이페이지 역할 매핑용 최소 필드) */
+/** GET /api/portal/me/profile — PortalProfileResponse */
 export type PortalProfileResponse = {
   memberId?: number
   email?: string
   name?: string
+  phone?: string
+  /** API `YYYY-MM-DD` */
+  birthDate?: string
+  /** API `M` | `F` (또는 male/female) */
+  gender?: string
   memberType?: string
   teacher?: boolean
   instructor?: boolean
+  address?: string
+  addressDetail?: string
+  schoolName?: string
+  affiliationName?: string
+  /** API `ACTIVE` | `ON_LEAVE` | `EMPLOYED` 등 */
+  teacherEmploymentStatus?: string
 }

@@ -1,14 +1,16 @@
-import { useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { BUSINESS_INCOME_OPTIONS } from '@jakorea/domain/instructor/business-income'
 import { CAREER_LEVEL_OPTIONS } from '@jakorea/domain/instructor/career-level'
 import {
-  CONSENT_RADIO_OPTIONS,
   CONSENT_VALUE,
-  INSTRUCTOR_CONSENT_DOCUMENT_ITEMS,
-  INSTRUCTOR_CONSENT_RADIO_ITEMS,
-  TERMS_CONSENT_DESCRIPTION,
   type InstructorConsentDocumentKey,
 } from '@jakorea/domain/instructor/consent'
+import {
+  getInstructorConsentDocumentItems,
+  getInstructorFormLayout,
+  getInstructorFormSectionDisplayTitle,
+  getInstructorRequiredConsentAgreeKeys,
+} from '@jakorea/domain/instructor/form-layout'
 import {
   EDUCATION_DEGREE_OPTIONS,
   EDUCATION_DETAIL_OPTIONS,
@@ -26,7 +28,6 @@ import {
 } from '@jakorea/domain/instructor/form-copy'
 import { INSTRUCTOR_FREE_WRITE_ITEMS } from '@jakorea/domain/instructor/free-write'
 import { GENDER_OPTIONS } from '@jakorea/domain/instructor/gender'
-import { INSTRUCTOR_MEMBER_TYPE_OPTIONS } from '@jakorea/domain/instructor/member-type'
 import {
   EMPTY_INSTRUCTOR_CAREER,
   EMPTY_INSTRUCTOR_EDUCATION_GRADUATE_ROW,
@@ -44,18 +45,85 @@ import { isValidEmail, parseBirthDate } from '@/features/auth/sign-up'
 import {
   PFAlertModal,
   PFButton,
+  PFCheckbox,
+  PFCircleAddButton,
+  PFDateInput,
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
+  PFFormFieldValueText,
   PFFormSection,
+  PFItemDeleteButton,
   PFSelect,
   PFText,
   PFTextInput,
 } from '@/shared/ui'
+import { EducationSchoolNameField } from './education-school-name-field'
+import type { InstructorApplyLockedBasicInfo } from './map-locked-basic-info'
 import styles from './instructor-apply-form.module.css'
 
 const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE = '필수 항목을 모두 작성해주세요'
+const FORM_SURFACE = 'platformApply' as const
+const FORM_LAYOUT = getInstructorFormLayout(FORM_SURFACE)
+const CONSENT_DOCUMENT_ITEMS = getInstructorConsentDocumentItems(FORM_SURFACE)
+const REQUIRED_CONSENT_AGREE_KEYS = getInstructorRequiredConsentAgreeKeys(FORM_SURFACE)
+
+function chunkPairs<T>(items: readonly T[]): T[][] {
+  const rows: T[][] = []
+  for (let index = 0; index < items.length; index += 2) {
+    rows.push(items.slice(index, index + 2) as T[])
+  }
+  return rows
+}
+
+const CONSENT_DOCUMENT_ROWS = chunkPairs(CONSENT_DOCUMENT_ITEMS)
+const SECTION_TITLE = {
+  consent: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'consent'),
+  basic: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'basic'),
+  education: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'education'),
+  career: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'career'),
+  ja: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'ja'),
+  license: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'license'),
+  award: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'award'),
+  freeWrite: getInstructorFormSectionDisplayTitle(FORM_SURFACE, 'freeWrite'),
+} as const
 const CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE = '기본 정보를 먼저 작성 해주세요.'
+
+const LOCKED_BASIC_KEYS = [
+  'name',
+  'gender',
+  'birthDate',
+  'contact',
+  'email',
+  'homeAddress',
+  'homeAddressDetail',
+  'memberType',
+  'schoolName',
+  'employmentStatus',
+  'affiliationName',
+  'affiliationNone',
+] as const satisfies ReadonlyArray<keyof InstructorApplyLockedBasicInfo>
+
+function applyLockedBasic(
+  base: InstructorSharedProfileFormValues,
+  locked: InstructorApplyLockedBasicInfo
+): InstructorSharedProfileFormValues {
+  return {
+    ...base,
+    name: locked.name,
+    gender: locked.gender || base.gender,
+    birthDate: locked.birthDate,
+    contact: locked.contact,
+    email: locked.email,
+    homeAddress: locked.homeAddress,
+    homeAddressDetail: locked.homeAddressDetail,
+    memberType: locked.memberType,
+    schoolName: locked.memberType === 'school_teacher' ? locked.schoolName : '',
+    employmentStatus: locked.memberType === 'school_teacher' ? locked.employmentStatus : '',
+    affiliationName: locked.memberType === 'general' ? locked.affiliationName : '',
+    affiliationNone: locked.memberType === 'general' ? locked.affiliationNone : false,
+  }
+}
 
 type AlertState = {
   title: string
@@ -73,11 +141,13 @@ function RadioGroup<T extends string>({
   value,
   options,
   onChange,
+  disabled = false,
 }: {
   name: string
   value: T
   options: readonly { value: T; label: string }[]
   onChange: (next: T) => void
+  disabled?: boolean
 }) {
   return (
     <div className={styles.radioGroup} role="radiogroup" aria-label={name}>
@@ -88,6 +158,7 @@ function RadioGroup<T extends string>({
             name={name}
             value={option.value}
             checked={value === option.value}
+            disabled={disabled}
             onChange={() => onChange(option.value)}
           />
           <PFText as="span" typo="bd-md-rg" color="black">
@@ -109,26 +180,28 @@ function ListRowActions({
   onRemove: () => void
 }) {
   return isFirst ? (
-    <PFButton type="button" variant="secondary" size="small" onClick={onAdd}>
-      추가
-    </PFButton>
+    <PFCircleAddButton onClick={onAdd} aria-label="항목 추가" />
   ) : (
-    <PFButton type="button" variant="secondary" size="small" onClick={onRemove}>
-      삭제
-    </PFButton>
+    <PFItemDeleteButton onClick={onRemove} aria-label="항목 삭제" />
   )
 }
 
 export type InstructorApplyFormProps = {
   onSubmitSuccess: () => void
+  /** 회원가입(포털 프로필) 기본정보 — 해당 항목은 비활성·고정 노출 */
+  lockedBasic: InstructorApplyLockedBasicInfo
 }
 
-export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProps) {
-  const [values, setValues] = useState<InstructorSharedProfileFormValues>(
-    INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES
+export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: InstructorApplyFormProps) {
+  const [values, setValues] = useState<InstructorSharedProfileFormValues>(() =>
+    applyLockedBasic(INITIAL_INSTRUCTOR_SHARED_PROFILE_VALUES, lockedBasic)
   )
   const [alert, setAlert] = useState<AlertState>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    setValues(prev => applyLockedBasic(prev, lockedBasic))
+  }, [lockedBasic])
 
   const availableEducationKeys = useMemo(
     () => resolveAvailableEducationDetailKeys(values.eduSchoolType),
@@ -143,17 +216,8 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
     key: K,
     next: InstructorSharedProfileFormValues[K]
   ) => {
+    if ((LOCKED_BASIC_KEYS as readonly string[]).includes(key)) return
     setValues(prev => ({ ...prev, [key]: next }))
-  }
-
-  const handleMemberTypeChange = (memberType: InstructorSharedProfileFormValues['memberType']) => {
-    setValues(prev => ({
-      ...prev,
-      memberType,
-      ...(memberType === 'school_teacher'
-        ? { affiliationName: '', affiliationNone: false }
-        : { schoolName: '', employmentStatus: '' }),
-    }))
   }
 
   const handleEduSchoolTypeChange = (eduSchoolType: string) => {
@@ -187,6 +251,7 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
 
   const handleConsentDocumentWrite = (key: InstructorConsentDocumentKey) => {
     if (
+      !FORM_LAYOUT.consent.skipBasicInfoGate &&
       isInstructorRegisterBasicInfoIncompleteForConsent(
         values,
         value => parseBirthDate(value) == null
@@ -208,14 +273,23 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
   }
 
   const handleSubmit = () => {
-    const { missingRequired, formatMessages } = collectInstructorRegisterValidation(values, {
-      isBirthDateIncomplete: value => {
-        const digits = value.replace(/\D/g, '')
-        return digits.length > 0 && digits.length < 8
+    const { missingRequired, formatMessages } = collectInstructorRegisterValidation(
+      values,
+      {
+        isBirthDateIncomplete: value => {
+          const digits = value.replace(/\D/g, '')
+          return digits.length > 0 && digits.length < 8
+        },
+        isBirthDateValid: value => parseBirthDate(value) != null,
+        isEmailValid: isValidEmail,
       },
-      isBirthDateValid: value => parseBirthDate(value) != null,
-      isEmailValid: isValidEmail,
-    })
+      {
+        requiredConsentAgreeKeys: [...REQUIRED_CONSENT_AGREE_KEYS],
+        requireEducation: true,
+        requireCareer: true,
+        requireFreeWrite: true,
+      }
+    )
 
     if (missingRequired) {
       setAlert({ title: '안내', description: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE })
@@ -243,7 +317,46 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
           handleSubmit()
         }}
       >
-        <PFFormSection id="instructor-apply-basic" title="기본 정보" required>
+        <PFFormSection
+          id="instructor-apply-consent"
+          title={SECTION_TITLE.consent}
+          description={FORM_LAYOUT.consent.description}
+          footer={FORM_LAYOUT.consent.footerText}
+          required={FORM_LAYOUT.consent.allItemsRequired}
+        >
+          <PFFormFieldTable>
+            {CONSENT_DOCUMENT_ROWS.map(row => (
+              <PFFormFieldRow key={row.map(item => item.key).join('-')} type="double">
+                {row.map(item => {
+                  const agreed = values[item.key] === CONSENT_VALUE.agree
+                  return (
+                    <PFFormField
+                      key={item.key}
+                      label={item.label}
+                      labelWidth="wide"
+                      required={!FORM_LAYOUT.consent.allItemsRequired && item.required}
+                    >
+                      <div className={styles.consentStatus}>
+                        <PFFormFieldValueText>{agreed ? '동의' : '미동의'}</PFFormFieldValueText>
+                        <span className={styles.inlineSeparator} aria-hidden />
+                        <PFButton
+                          type="button"
+                          variant="secondary"
+                          size="formPage"
+                          onClick={() => handleConsentDocumentWrite(item.key)}
+                        >
+                          동의서 작성
+                        </PFButton>
+                      </div>
+                    </PFFormField>
+                  )
+                })}
+              </PFFormFieldRow>
+            ))}
+          </PFFormFieldTable>
+        </PFFormSection>
+
+        <PFFormSection id="instructor-apply-basic" title={SECTION_TITLE.basic} required>
           <PFFormFieldTable>
             <PFFormFieldRow type="double">
               <PFFormField label="성명">
@@ -252,6 +365,7 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                   size="large"
                   width="200px"
                   placeholder={PH.name}
+                  disabled
                   value={values.name}
                   onValueChange={value => patch('name', value)}
                 />
@@ -262,6 +376,7 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                     name="gender"
                     value={values.gender}
                     options={GENDER_OPTIONS}
+                    disabled
                     onChange={value => patch('gender', value)}
                   />
                   <span className={styles.inlineSeparator} aria-hidden />
@@ -270,6 +385,7 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                     size="large"
                     width="180px"
                     placeholder={PH.birthDate}
+                    disabled
                     value={values.birthDate}
                     onValueChange={value => patch('birthDate', value)}
                   />
@@ -283,6 +399,7 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                   size="large"
                   width="200px"
                   placeholder={PH.contact}
+                  disabled
                   value={values.contact}
                   onValueChange={value => patch('contact', value)}
                 />
@@ -293,28 +410,22 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                   size="large"
                   width="200px"
                   placeholder={PH.email}
+                  disabled
                   value={values.email}
                   onValueChange={value => patch('email', value)}
                 />
               </PFFormField>
             </PFFormFieldRow>
-            <PFFormFieldRow type="double">
-              <PFFormField label="회원 유형">
-                <RadioGroup
-                  name="memberType"
-                  value={values.memberType}
-                  options={INSTRUCTOR_MEMBER_TYPE_OPTIONS}
-                  onChange={handleMemberTypeChange}
-                />
-              </PFFormField>
-              {values.memberType === 'school_teacher' ? (
-                <PFFormField label="소속">
+            <PFFormFieldRow type="single">
+              <PFFormField label="소속">
+                {values.memberType === 'school_teacher' ? (
                   <div className={styles.inlineControls}>
                     <PFTextInput
                       variant="formPage"
                       size="large"
-                      width="200px"
+                      width={200}
                       placeholder={PH.schoolName}
+                      disabled
                       value={values.schoolName}
                       onValueChange={value => patch('schoolName', value)}
                     />
@@ -322,9 +433,10 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                     <PFSelect
                       variant="formPage"
                       size="large"
-                      width="200px"
+                      width={200}
                       placeholder={PH.employmentStatus}
                       options={toSelectOptions(SCHOOL_TEACHER_EMPLOYMENT_STATUS_FORM_OPTIONS)}
+                      disabled
                       value={values.employmentStatus}
                       onValueChange={value =>
                         patch(
@@ -334,39 +446,35 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                       }
                     />
                   </div>
-                </PFFormField>
-              ) : (
-                <PFFormField label="소속">
+                ) : (
                   <div className={styles.inlineControls}>
                     <PFTextInput
                       variant="formPage"
                       size="large"
-                      width="200px"
+                      width={200}
                       placeholder={PH.affiliationName}
-                      disabled={values.affiliationNone}
+                      disabled
                       value={values.affiliationName}
                       onValueChange={value => patch('affiliationName', value)}
                     />
                     <span className={styles.inlineSeparator} aria-hidden />
-                    <label className={styles.checkboxOption}>
-                      <input
-                        type="checkbox"
-                        checked={values.affiliationNone}
-                        onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                          setValues(prev => ({
-                            ...prev,
-                            affiliationNone: event.target.checked,
-                            affiliationName: event.target.checked ? '' : prev.affiliationName,
-                          }))
-                        }}
-                      />
-                      <PFText as="span" typo="bd-md-rg" color="black">
-                        소속 없음
-                      </PFText>
-                    </label>
+                    <PFCheckbox
+                      size="large"
+                      checked={values.affiliationNone}
+                      disabled
+                      onCheckedChange={checked => {
+                        setValues(prev => ({
+                          ...prev,
+                          affiliationNone: checked,
+                          affiliationName: checked ? '' : prev.affiliationName,
+                        }))
+                      }}
+                    >
+                      소속 없음
+                    </PFCheckbox>
                   </div>
-                </PFFormField>
-              )}
+                )}
+              </PFFormField>
             </PFFormFieldRow>
 
             <PFFormFieldRow type="single">
@@ -377,6 +485,7 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                     size="large"
                     width={240}
                     placeholder={PH.homeAddress}
+                    disabled
                     value={values.homeAddress}
                     onValueChange={value => patch('homeAddress', value)}
                   />
@@ -386,6 +495,7 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                     size="large"
                     width={240}
                     placeholder={PH.homeAddressDetail}
+                    disabled
                     value={values.homeAddressDetail}
                     onValueChange={value => patch('homeAddressDetail', value)}
                   />
@@ -463,56 +573,10 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
         </PFFormSection>
 
         <PFFormSection
-          id="instructor-apply-consent"
-          title="약관 및 동의"
-          description={TERMS_CONSENT_DESCRIPTION}
-        >
-          <PFFormFieldTable>
-            {INSTRUCTOR_CONSENT_RADIO_ITEMS.map(item => (
-              <PFFormFieldRow key={item.key} type="single">
-                <PFFormField label={item.label} required={item.required}>
-                  <RadioGroup
-                    name={item.key}
-                    value={values[item.key]}
-                    options={CONSENT_RADIO_OPTIONS}
-                    onChange={value => patch(item.key, value)}
-                  />
-                </PFFormField>
-              </PFFormFieldRow>
-            ))}
-            {INSTRUCTOR_CONSENT_DOCUMENT_ITEMS.map(item => {
-              const agreed = values[item.key] === CONSENT_VALUE.agree
-              return (
-                <PFFormFieldRow key={item.key} type="single">
-                  <PFFormField label={item.label}>
-                    <div className={styles.consentStatus}>
-                      <PFText
-                        as="span"
-                        typo="bd-md-rg"
-                        color={agreed ? 'black' : 'neutral-cool-500'}
-                      >
-                        {agreed ? '동의' : '미동의'}
-                      </PFText>
-                      <PFButton
-                        type="button"
-                        variant="secondary"
-                        size="small"
-                        onClick={() => handleConsentDocumentWrite(item.key)}
-                      >
-                        동의서 작성
-                      </PFButton>
-                    </div>
-                  </PFFormField>
-                </PFFormFieldRow>
-              )
-            })}
-          </PFFormFieldTable>
-        </PFFormSection>
-
-        <PFFormSection
           id="instructor-apply-education"
-          title="학력사항"
+          title={SECTION_TITLE.education}
           description={INSTRUCTOR_FORM_SECTION_DESCRIPTIONS.education}
+          required
         >
           <PFFormFieldTable>
             <PFFormFieldRow type="single">
@@ -550,35 +614,32 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                       const locked = option.value === values.eduSchoolType
                       const checked = values.educationDetailKeys.includes(option.value)
                       return (
-                        <label key={option.value} className={styles.checkboxOption}>
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            disabled={locked}
-                            onChange={() => toggleEducationDetail(option.value)}
-                          />
-                          <PFText as="span" typo="bd-md-rg" color="black">
-                            {option.label}
-                          </PFText>
-                        </label>
+                        <PFCheckbox
+                          key={option.value}
+                          size="large"
+                          checked={checked}
+                          disabled={locked}
+                          onCheckedChange={() => toggleEducationDetail(option.value)}
+                        >
+                          {option.label}
+                        </PFCheckbox>
                       )
                     })}
                   </div>
                 </PFFormField>
               </PFFormFieldRow>
             ) : null}
-          </PFFormFieldTable>
 
-          {values.educationDetailKeys.includes('high') ? (
-            <PFFormFieldTable>
+            {values.educationDetailKeys.includes('high') ? (
               <PFFormFieldRow type="single">
                 <PFFormField label="고등학교">
                   <div className={styles.inlineControls}>
                     <div className={styles.period}>
-                      <PFTextInput
+                      <PFDateInput
                         variant="formPage"
                         size="large"
-                        width={140}
+                        width={200}
+                        picker="year"
                         placeholder={PH.admitYear}
                         value={values.highSchool.admitYear ?? ''}
                         onValueChange={value =>
@@ -591,10 +652,11 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                       <span className={styles.tilde} aria-hidden>
                         ~
                       </span>
-                      <PFTextInput
+                      <PFDateInput
                         variant="formPage"
                         size="large"
-                        width={140}
+                        width={200}
+                        picker="year"
                         placeholder={PH.gradYear}
                         disabled={finalEducationEnrolled && lockedEducationKey === 'high'}
                         value={values.highSchool.gradYear ?? ''}
@@ -607,34 +669,30 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                       />
                     </div>
                     <span className={styles.inlineSeparator} aria-hidden />
-                    <PFTextInput
-                      variant="formPage"
-                      size="large"
-                      className={styles.inlineBirthInput}
-                      placeholder={PH.educationSchoolName}
+                    <EducationSchoolNameField
+                      detailKey="high"
                       value={values.highSchool.schoolName}
-                      onValueChange={value =>
-                        patch('highSchool', { ...values.highSchool, schoolName: value })
+                      onChange={schoolName =>
+                        patch('highSchool', { ...values.highSchool, schoolName })
                       }
                     />
                   </div>
                 </PFFormField>
               </PFFormFieldRow>
-            </PFFormFieldTable>
-          ) : null}
+            ) : null}
 
-          {values.educationDetailKeys.includes('college23') ? (
-            <PFFormFieldTable>
+            {values.educationDetailKeys.includes('college23') ? (
               <PFFormFieldRow type="single">
                 <PFFormField label="대학교 2, 3년제">
                   <div className={styles.fieldStack}>
                     {values.college23Rows.map((row, index) => (
                       <div key={`college23-${index}`} className={styles.fieldStackRow}>
                         <div className={styles.period}>
-                          <PFTextInput
+                          <PFDateInput
                             variant="formPage"
                             size="large"
-                            width={140}
+                            width={200}
+                            picker="year"
                             placeholder={PH.admitYear}
                             value={row.admitYear ?? ''}
                             onValueChange={value => {
@@ -646,10 +704,11 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                           <span className={styles.tilde} aria-hidden>
                             ~
                           </span>
-                          <PFTextInput
+                          <PFDateInput
                             variant="formPage"
                             size="large"
-                            width={140}
+                            width={200}
+                            picker="year"
                             placeholder={PH.gradYear}
                             disabled={finalEducationEnrolled && lockedEducationKey === 'college23'}
                             value={row.gradYear ?? ''}
@@ -662,15 +721,12 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                         </div>
                         <span className={styles.inlineSeparator} aria-hidden />
                         <div className={styles.inlineGroup}>
-                          <PFTextInput
-                            variant="formPage"
-                            size="large"
-                            width={200}
-                            placeholder={PH.universityName}
+                          <EducationSchoolNameField
+                            detailKey="college23"
                             value={row.schoolName}
-                            onValueChange={value => {
+                            onChange={schoolName => {
                               const next = [...values.college23Rows]
-                              next[index] = { ...row, schoolName: value }
+                              next[index] = { ...row, schoolName }
                               patch('college23Rows', next)
                             }}
                           />
@@ -707,21 +763,20 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                   </div>
                 </PFFormField>
               </PFFormFieldRow>
-            </PFFormFieldTable>
-          ) : null}
+            ) : null}
 
-          {values.educationDetailKeys.includes('college4') ? (
-            <PFFormFieldTable>
+            {values.educationDetailKeys.includes('college4') ? (
               <PFFormFieldRow type="single">
                 <PFFormField label="대학교 4년제">
                   <div className={styles.fieldStack}>
                     {values.college4Rows.map((row, index) => (
                       <div key={`college4-${index}`} className={styles.fieldStackRow}>
                         <div className={styles.period}>
-                          <PFTextInput
+                          <PFDateInput
                             variant="formPage"
                             size="large"
-                            width={140}
+                            width={200}
+                            picker="year"
                             placeholder={PH.admitYear}
                             value={row.admitYear ?? ''}
                             onValueChange={value => {
@@ -733,10 +788,11 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                           <span className={styles.tilde} aria-hidden>
                             ~
                           </span>
-                          <PFTextInput
+                          <PFDateInput
                             variant="formPage"
                             size="large"
-                            width={140}
+                            width={200}
+                            picker="year"
                             placeholder={PH.gradYear}
                             disabled={finalEducationEnrolled && lockedEducationKey === 'college4'}
                             value={row.gradYear ?? ''}
@@ -749,15 +805,12 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                         </div>
                         <span className={styles.inlineSeparator} aria-hidden />
                         <div className={styles.inlineGroup}>
-                          <PFTextInput
-                            variant="formPage"
-                            size="large"
-                            width={200}
-                            placeholder={PH.universityName}
+                          <EducationSchoolNameField
+                            detailKey="college4"
                             value={row.schoolName}
-                            onValueChange={value => {
+                            onChange={schoolName => {
                               const next = [...values.college4Rows]
-                              next[index] = { ...row, schoolName: value }
+                              next[index] = { ...row, schoolName }
                               patch('college4Rows', next)
                             }}
                           />
@@ -794,21 +847,20 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                   </div>
                 </PFFormField>
               </PFFormFieldRow>
-            </PFFormFieldTable>
-          ) : null}
+            ) : null}
 
-          {values.educationDetailKeys.includes('graduate') ? (
-            <PFFormFieldTable>
+            {values.educationDetailKeys.includes('graduate') ? (
               <PFFormFieldRow type="single">
                 <PFFormField label="대학원">
                   <div className={styles.fieldStack}>
                     {values.graduateRows.map((row, index) => (
                       <div key={`graduate-${index}`} className={styles.fieldStackRow}>
                         <div className={styles.period}>
-                          <PFTextInput
+                          <PFDateInput
                             variant="formPage"
                             size="large"
-                            width={140}
+                            width={200}
+                            picker="year"
                             placeholder={PH.admitYear}
                             value={row.admitYear ?? ''}
                             onValueChange={value => {
@@ -820,10 +872,11 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                           <span className={styles.tilde} aria-hidden>
                             ~
                           </span>
-                          <PFTextInput
+                          <PFDateInput
                             variant="formPage"
                             size="large"
-                            width={140}
+                            width={200}
+                            picker="year"
                             placeholder={PH.gradYear}
                             disabled={finalEducationEnrolled && lockedEducationKey === 'graduate'}
                             value={row.gradYear ?? ''}
@@ -850,15 +903,12 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                         </div>
                         <span className={styles.inlineSeparator} aria-hidden />
                         <div className={styles.inlineGroup}>
-                          <PFTextInput
-                            variant="formPage"
-                            size="large"
-                            width={200}
-                            placeholder={PH.universityName}
+                          <EducationSchoolNameField
+                            detailKey="graduate"
                             value={row.schoolName}
-                            onValueChange={value => {
+                            onChange={schoolName => {
                               const next = [...values.graduateRows]
-                              next[index] = { ...row, schoolName: value }
+                              next[index] = { ...row, schoolName }
                               patch('graduateRows', next)
                             }}
                           />
@@ -895,11 +945,11 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                   </div>
                 </PFFormField>
               </PFFormFieldRow>
-            </PFFormFieldTable>
-          ) : null}
+            ) : null}
+          </PFFormFieldTable>
         </PFFormSection>
 
-        <PFFormSection id="instructor-apply-career" title="경력사항">
+        <PFFormSection id="instructor-apply-career" title={SECTION_TITLE.career} required>
           <PFFormFieldTable>
             <PFFormFieldRow type="single">
               <PFFormField label="경력 구분">
@@ -918,10 +968,11 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                     {values.careers.map((row, index) => (
                       <div key={`career-${index}`} className={styles.fieldStackRow}>
                         <div className={styles.period}>
-                          <PFTextInput
+                          <PFDateInput
                             variant="formPage"
                             size="large"
-                            width={140}
+                            width={200}
+                            picker="month"
                             placeholder={PH.careerPeriodStart}
                             value={row.periodStart ?? ''}
                             onValueChange={value => {
@@ -933,10 +984,11 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                           <span className={styles.tilde} aria-hidden>
                             ~
                           </span>
-                          <PFTextInput
+                          <PFDateInput
                             variant="formPage"
                             size="large"
-                            width={140}
+                            width={200}
+                            picker="month"
                             placeholder={PH.careerPeriodEnd}
                             disabled={row.currentlyEmployed}
                             value={row.periodEnd ?? ''}
@@ -973,24 +1025,21 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                               patch('careers', next)
                             }}
                           />
-                          <label className={styles.checkboxOption}>
-                            <input
-                              type="checkbox"
-                              checked={row.currentlyEmployed}
-                              onChange={event => {
-                                const next = [...values.careers]
-                                next[index] = {
-                                  ...row,
-                                  currentlyEmployed: event.target.checked,
-                                  periodEnd: event.target.checked ? null : row.periodEnd,
-                                }
-                                patch('careers', next)
-                              }}
-                            />
-                            <PFText as="span" typo="bd-md-rg" color="black">
-                              재직중
-                            </PFText>
-                          </label>
+                          <PFCheckbox
+                            size="large"
+                            checked={row.currentlyEmployed}
+                            onCheckedChange={checked => {
+                              const next = [...values.careers]
+                              next[index] = {
+                                ...row,
+                                currentlyEmployed: checked,
+                                periodEnd: checked ? null : row.periodEnd,
+                              }
+                              patch('careers', next)
+                            }}
+                          >
+                            재직중
+                          </PFCheckbox>
                           <ListRowActions
                             isFirst={index === 0}
                             onAdd={() =>
@@ -1013,7 +1062,7 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
           </PFFormFieldTable>
         </PFFormSection>
 
-        <PFFormSection id="instructor-apply-ja" title="JA Korea 활동 경험">
+        <PFFormSection id="instructor-apply-ja" title={SECTION_TITLE.ja}>
           <PFFormFieldTable>
             <PFFormFieldRow type="single">
               <PFFormField label="활동 이력">
@@ -1021,10 +1070,10 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                   {values.jaKoreaRows.map((row, index) => (
                     <div key={`ja-${index}`} className={styles.fieldStackRow}>
                       <div className={styles.period}>
-                        <PFTextInput
+                        <PFDateInput
                           variant="formPage"
                           size="large"
-                          width={140}
+                          width={200}
                           placeholder={PH.jaPeriodStart}
                           value={row.periodStart ?? ''}
                           onValueChange={value => {
@@ -1036,10 +1085,10 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
                         <span className={styles.tilde} aria-hidden>
                           ~
                         </span>
-                        <PFTextInput
+                        <PFDateInput
                           variant="formPage"
                           size="large"
-                          width={140}
+                          width={200}
                           placeholder={PH.jaPeriodEnd}
                           value={row.periodEnd ?? ''}
                           onValueChange={value => {
@@ -1099,17 +1148,18 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
           </PFFormFieldTable>
         </PFFormSection>
 
-        <PFFormSection id="instructor-apply-license" title="자격 및 면허">
+        <PFFormSection id="instructor-apply-license" title={SECTION_TITLE.license}>
           <PFFormFieldTable>
             <PFFormFieldRow type="single">
               <PFFormField label="자격 및 면허 내역">
                 <div className={styles.fieldStack}>
                   {values.licenseRows.map((row, index) => (
                     <div key={`license-${index}`} className={styles.fieldStackRow}>
-                      <PFTextInput
+                      <PFDateInput
                         variant="formPage"
                         size="large"
-                        width={140}
+                        width={200}
+                        picker="year"
                         placeholder={PH.licenseYear}
                         value={row.acquiredYear ?? ''}
                         onValueChange={value => {
@@ -1168,17 +1218,18 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
           </PFFormFieldTable>
         </PFFormSection>
 
-        <PFFormSection id="instructor-apply-award" title="수상 및 수료">
+        <PFFormSection id="instructor-apply-award" title={SECTION_TITLE.award}>
           <PFFormFieldTable>
             <PFFormFieldRow type="single">
               <PFFormField label="수상 및 수료 내역">
                 <div className={styles.fieldStack}>
                   {values.awardRows.map((row, index) => (
                     <div key={`award-${index}`} className={styles.fieldStackRow}>
-                      <PFTextInput
+                      <PFDateInput
                         variant="formPage"
                         size="large"
-                        width={140}
+                        width={200}
+                        picker="year"
                         placeholder={PH.awardYear}
                         value={row.acquiredYear ?? ''}
                         onValueChange={value => {
@@ -1239,17 +1290,19 @@ export function InstructorApplyForm({ onSubmitSuccess }: InstructorApplyFormProp
 
         <PFFormSection
           id="instructor-apply-free-write"
-          title="자유 작성"
+          title={SECTION_TITLE.freeWrite}
           description={INSTRUCTOR_FORM_SECTION_DESCRIPTIONS.freeWrite}
+          required
         >
           {INSTRUCTOR_FREE_WRITE_ITEMS.map(item => (
             <PFFormFieldTable key={item.name}>
               <PFFormFieldRow type="single">
-                <PFFormField label={item.label}>
+                <PFFormField label={item.label} layout="vertical">
                   <textarea
                     className={styles.textarea}
                     placeholder={PH.freeWrite}
                     value={values[item.name]}
+                    maxLength={1000}
                     onChange={event => patch(item.name, event.target.value)}
                   />
                 </PFFormField>
