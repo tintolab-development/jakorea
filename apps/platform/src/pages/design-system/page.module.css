@@ -477,6 +477,13 @@
   max-width: 640px;
 }
 
+.checkboxStack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-24);
+  max-width: 720px;
+}
+
 .paginationStack {
   display: flex;
   flex-direction: column;

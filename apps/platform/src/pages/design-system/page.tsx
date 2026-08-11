@@ -24,6 +24,7 @@ import {
   PFChevronButton,
   PFPageButton,
   PFButton,
+  PFCheckbox,
   PFDivider,
   PFAttachmentDropdown,
   PFFileDownload,
@@ -1618,6 +1619,48 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
               onChange={() => undefined}
               disabled
             />
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFCheckbox
+        </PFText>
+        <div className={styles.checkboxStack}>
+          <div className={styles.buttonRow}>
+            <PFText as="span" typo="label-md" color="neutral-cool-500">
+              large
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCheckbox size="large">text</PFCheckbox>
+              <PFCheckbox size="large" defaultChecked>
+                text
+              </PFCheckbox>
+              <PFCheckbox size="large" disabled>
+                text
+              </PFCheckbox>
+              <PFCheckbox size="large" defaultChecked disabled>
+                text
+              </PFCheckbox>
+            </div>
+          </div>
+          <div className={styles.buttonRow}>
+            <PFText as="span" typo="label-md" color="neutral-cool-500">
+              small
+            </PFText>
+            <div className={styles.buttonList}>
+              <PFCheckbox size="small">text</PFCheckbox>
+              <PFCheckbox size="small" defaultChecked>
+                text
+              </PFCheckbox>
+              <PFCheckbox size="small" disabled>
+                text
+              </PFCheckbox>
+              <PFCheckbox size="small" defaultChecked disabled>
+                text
+              </PFCheckbox>
+            </div>
           </div>
         </div>
       </div>
