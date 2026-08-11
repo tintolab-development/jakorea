@@ -140,16 +140,28 @@ function InstructorCareerRowEdit({
 
 function ConsentDocumentFieldEdit({
   value,
+  onDisagree,
   onWrite,
 }: {
   value: ConsentValue
+  onDisagree: () => void
   onWrite: () => void
 }) {
   return (
     <span className="instructor-register-modal__consent-document">
-      <span className="instructor-register-modal__consent-status">
-        {value === 'agree' ? '동의' : '미동의'}
-      </span>
+      <CmsRadioGroup
+        options={CONSENT_RADIO_OPTIONS}
+        size="large"
+        value={value}
+        onChange={event => {
+          const next = event.target.value as ConsentValue
+          if (next === 'disagree') {
+            onDisagree()
+            return
+          }
+          onWrite()
+        }}
+      />
       <span className="instructor-register-modal__consent-sep" aria-hidden>
         |
       </span>
@@ -615,6 +627,7 @@ export function InstructorProfileFormBody({
                       <Form.Item name="consentPortrait" hidden preserve />
                       <ConsentDocumentFieldEdit
                         value={allValues?.consentPortrait ?? INITIAL_VALUES.consentPortrait}
+                        onDisagree={() => form.setFieldValue('consentPortrait', 'disagree')}
                         onWrite={() => handleConsentWrite('consentPortrait')}
                       />
                     </>
@@ -642,6 +655,7 @@ export function InstructorProfileFormBody({
                           allValues?.consentPaymentStatement ??
                           INITIAL_VALUES.consentPaymentStatement
                         }
+                        onDisagree={() => form.setFieldValue('consentPaymentStatement', 'disagree')}
                         onWrite={() => handleConsentWrite('consentPaymentStatement')}
                       />
                     </>
@@ -658,6 +672,7 @@ export function InstructorProfileFormBody({
                         value={
                           allValues?.consentEducatorPledge ?? INITIAL_VALUES.consentEducatorPledge
                         }
+                        onDisagree={() => form.setFieldValue('consentEducatorPledge', 'disagree')}
                         onWrite={() => handleConsentWrite('consentEducatorPledge')}
                       />
                     </>
@@ -677,6 +692,9 @@ export function InstructorProfileFormBody({
                           allValues?.consentAdministrativeJoint ??
                           INITIAL_VALUES.consentAdministrativeJoint
                         }
+                        onDisagree={() =>
+                          form.setFieldValue('consentAdministrativeJoint', 'disagree')
+                        }
                         onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
                       />
                     </>
@@ -693,6 +711,7 @@ export function InstructorProfileFormBody({
                         value={
                           allValues?.consentSexOffenseCheck ?? INITIAL_VALUES.consentSexOffenseCheck
                         }
+                        onDisagree={() => form.setFieldValue('consentSexOffenseCheck', 'disagree')}
                         onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
                       />
                     </>

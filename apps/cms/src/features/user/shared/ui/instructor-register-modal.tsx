@@ -8,6 +8,11 @@ import { useEffect, useId, useState } from 'react'
 import { Form } from 'antd'
 import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
 import {
+  REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+  buildRequiredConsentDisagreeAlertMessage,
+  collectDisagreedRequiredConsentLabels,
+} from '@jakorea/domain/shared/required-consent-alert'
+import {
   isBirthDateInputIncomplete,
   isValidBirthDateFormValue,
 } from '@/shared/ui/date-text-input'
@@ -29,6 +34,11 @@ import './instructor-register-modal.css'
 export type { InstructorRegisterModalFormValues } from '@/features/user/shared/ui/instructor-profile-form'
 
 const FORM_ID = 'cms-instructor-register-modal-form'
+
+const INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS = [
+  { key: 'consentTermsOfService', label: '서비스 이용약관' },
+  { key: 'consentPersonal', label: '개인정보 수집·이용 동의' },
+] as const
 
 export interface InstructorRegisterModalProps {
   open: boolean
@@ -95,6 +105,21 @@ export function InstructorRegisterModal({
   }
 
   const handleSubmitAttempt = (values: InstructorRegisterModalFormValues) => {
+    const disagreedRequiredLabels = collectDisagreedRequiredConsentLabels(
+      {
+        consentTermsOfService: values.consentTermsOfService,
+        consentPersonal: values.consentPersonal,
+      },
+      [...INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS]
+    )
+    if (disagreedRequiredLabels.length > 0) {
+      showAlert({
+        title: REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+        content: buildRequiredConsentDisagreeAlertMessage(disagreedRequiredLabels),
+      })
+      return
+    }
+
     const { missingRequired, formatMessages } = validateInstructorRegister(values)
     if (missingRequired) {
       showAlert({

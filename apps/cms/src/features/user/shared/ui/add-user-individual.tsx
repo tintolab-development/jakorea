@@ -20,8 +20,12 @@ import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-  REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
+import {
+  REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+  buildRequiredConsentDisagreeAlertMessage,
+  collectDisagreedRequiredConsentLabels,
+} from '@jakorea/domain/shared/required-consent-alert'
 import type { MemberConsentFieldKey } from '@/features/user/shared/lib/member-consent-template-map'
 import {
   isAgreementMemberConsentField,
@@ -82,16 +86,28 @@ const TERMS_CONSENT_LABEL_WIDTH = 220 as const
 
 function ConsentDocumentFieldEdit({
   value,
+  onDisagree,
   onWrite,
 }: {
   value: ConsentValue
+  onDisagree: () => void
   onWrite: () => void
 }) {
   return (
     <span className="add-user-individual__consent-document">
-      <span className="add-user-individual__consent-status">
-        {value === 'agree' ? '동의' : '미동의'}
-      </span>
+      <CmsRadioGroup
+        options={CONSENT_RADIO_OPTIONS}
+        size="large"
+        value={value}
+        onChange={event => {
+          const next = event.target.value as ConsentValue
+          if (next === 'disagree') {
+            onDisagree()
+            return
+          }
+          onWrite()
+        }}
+      />
       <span className="add-user-individual__consent-sep" aria-hidden>
         |
       </span>
@@ -147,20 +163,13 @@ function isUnder14BirthDate(value: string, today = new Date()): boolean {
   return !Number.isNaN(birthDate.getTime()) && fourteenthBirthday > today
 }
 
-const MEMBER_REGISTER_CONSENT_FIELD_KEYS = [
-  'consentTermsOfService',
-  'consentPersonalInfo',
-  'consentMarketing',
-  'consentPortrait',
-  'consentWithholdingTax',
-  'consentFacilitatorPledge',
-  'consentAdministrativeJoint',
-  'consentSexOffenseCheck',
-] as const satisfies ReadonlyArray<keyof AddUserIndividualFormValues>
-
-function hasAllMemberRegisterTermsAgreed(values: AddUserIndividualFormValues): boolean {
-  return MEMBER_REGISTER_CONSENT_FIELD_KEYS.every(key => values[key] === 'agree')
-}
+const MEMBER_REGISTER_REQUIRED_CONSENT_FIELDS = [
+  { key: 'consentTermsOfService', label: '서비스 이용약관' },
+  { key: 'consentPersonalInfo', label: '개인정보 수집·이용 동의' },
+] as const satisfies ReadonlyArray<{
+  key: keyof AddUserIndividualFormValues
+  label: string
+}>
 
 function collectMemberRegisterValidation(
   values: AddUserIndividualFormValues
@@ -339,10 +348,13 @@ export function AddUserIndividual({
   }
 
   const handleSubmitAttempt = (values: AddUserIndividualFormValues) => {
-    if (!hasAllMemberRegisterTermsAgreed(values)) {
+    const disagreedRequiredLabels = collectDisagreedRequiredConsentLabels(values, [
+      ...MEMBER_REGISTER_REQUIRED_CONSENT_FIELDS,
+    ])
+    if (disagreedRequiredLabels.length > 0) {
       showAlert({
-        title: '안내',
-        content: REQUIRED_TERMS_AGREEMENT_ALERT_MESSAGE,
+        title: REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
+        content: buildRequiredConsentDisagreeAlertMessage(disagreedRequiredLabels),
       })
       return
     }
@@ -600,6 +612,7 @@ export function AddUserIndividual({
                       <Form.Item name="consentPortrait" hidden preserve />
                       <ConsentDocumentFieldEdit
                         value={allValues?.consentPortrait ?? INITIAL_VALUES.consentPortrait}
+                        onDisagree={() => form.setFieldValue('consentPortrait', 'disagree')}
                         onWrite={() => handleConsentWrite('consentPortrait')}
                       />
                     </>
@@ -624,6 +637,7 @@ export function AddUserIndividual({
                       <Form.Item name="consentWithholdingTax" hidden preserve />
                       <ConsentDocumentFieldEdit
                         value={allValues?.consentWithholdingTax ?? INITIAL_VALUES.consentWithholdingTax}
+                        onDisagree={() => form.setFieldValue('consentWithholdingTax', 'disagree')}
                         onWrite={() => handleConsentWrite('consentWithholdingTax')}
                       />
                     </>
@@ -640,6 +654,7 @@ export function AddUserIndividual({
                         value={
                           allValues?.consentFacilitatorPledge ?? INITIAL_VALUES.consentFacilitatorPledge
                         }
+                        onDisagree={() => form.setFieldValue('consentFacilitatorPledge', 'disagree')}
                         onWrite={() => handleConsentWrite('consentFacilitatorPledge')}
                       />
                     </>
@@ -659,6 +674,9 @@ export function AddUserIndividual({
                           allValues?.consentAdministrativeJoint ??
                           INITIAL_VALUES.consentAdministrativeJoint
                         }
+                        onDisagree={() =>
+                          form.setFieldValue('consentAdministrativeJoint', 'disagree')
+                        }
                         onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
                       />
                     </>
@@ -675,6 +693,7 @@ export function AddUserIndividual({
                         value={
                           allValues?.consentSexOffenseCheck ?? INITIAL_VALUES.consentSexOffenseCheck
                         }
+                        onDisagree={() => form.setFieldValue('consentSexOffenseCheck', 'disagree')}
                         onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
                       />
                     </>

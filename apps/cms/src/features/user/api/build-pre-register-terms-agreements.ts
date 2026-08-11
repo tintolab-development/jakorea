@@ -131,7 +131,7 @@ export function buildAdminAccountCreateTermsAgreements(
     {
       termsType: 'MFA_SETUP_CONSENT',
       version: ADMIN_PRE_REGISTER_TERMS_VERSION,
-      required: false,
+      required: true,
       agreed: toAgreed(values.consentMfaSetup),
     },
     {
