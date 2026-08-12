@@ -78,8 +78,6 @@ describe('mapUserToInstructorProfileFormValues', () => {
 
     expect(draft.termsAgreements).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ termsType: 'SERVICE_TERMS', agreed: true }),
-        expect.objectContaining({ termsType: 'PRIVACY_COLLECTION', agreed: true }),
         expect.objectContaining({ termsType: 'MARKETING', agreed: false }),
         expect.objectContaining({ termsType: 'PORTRAIT_RIGHTS', agreed: true }),
         expect.objectContaining({ termsType: 'PAYMENT_STATEMENT_PRE_CONSENT', agreed: false }),
@@ -88,5 +86,7 @@ describe('mapUserToInstructorProfileFormValues', () => {
         expect.objectContaining({ termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT', agreed: true }),
       ])
     )
+    expect(draft.termsAgreements?.some(r => r.termsType === 'SERVICE_TERMS')).toBe(false)
+    expect(draft.termsAgreements?.some(r => r.termsType === 'PRIVACY_COLLECTION')).toBe(false)
   })
 })

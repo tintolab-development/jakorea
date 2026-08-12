@@ -15,7 +15,7 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     ])
   })
 
-  it('termsAgreements를 PATCH body에 포함한다', () => {
+  it('선택 termsAgreements만 PATCH body에 포함하고 필수는 제외한다', () => {
     const body = mapPatchUserBasicInfoToApiRequest({
       name: '김강사',
       termsAgreements: [
@@ -25,7 +25,6 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
     })
 
     expect(body.termsAgreements).toEqual([
-      { termsType: 'SERVICE_TERMS', version: '1.0', required: true, agreed: true },
       { termsType: 'MARKETING', version: '1.0', required: false, agreed: false },
     ])
   })

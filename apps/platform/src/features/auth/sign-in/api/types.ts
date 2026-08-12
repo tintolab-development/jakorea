@@ -41,10 +41,20 @@ export type PortalProfileResponse = {
   memberType?: string
   teacher?: boolean
   instructor?: boolean
+  postalCode?: string
   address?: string
   addressDetail?: string
+  regionSido?: string
+  regionSigungu?: string
+  schoolOrganizationId?: number
   schoolName?: string
+  grade?: string
   affiliationName?: string
+  /** API `ENROLLED` | `NONE` 등 */
+  schoolEnrollmentStatus?: string
   /** API `ACTIVE` | `ON_LEAVE` | `EMPLOYED` 등 */
   teacherEmploymentStatus?: string
+  external1365Id?: string
+  accountStatus?: string
+  joinedAt?: string
 }

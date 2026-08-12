@@ -21,7 +21,7 @@ export interface TermsAgreementRequest {
      * @minLength 1
      */
   version: string;
-  /** 필수 동의 여부 */
+  /** 클라이언트 표시용 필수 여부 힌트입니다. CMS 개인/강사 pre-register에서는 서버가 등록 유형×termsType 정책으로 필수 여부를 다시 판정하므로 이 값을 신뢰하지 않습니다. */
   required?: boolean;
   /** 동의 여부 */
   agreed?: boolean;

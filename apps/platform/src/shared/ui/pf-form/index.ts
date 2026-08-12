@@ -16,3 +16,13 @@ export type {
   PFFormFieldTableProps,
   PFFormFieldValueTextProps,
 } from './pf-form-field'
+export {
+  PFFormInlineRow,
+  PFFormInlineSegment,
+  PFFormInlineSeparator,
+} from './pf-form-inline'
+export type {
+  PFFormInlineRowProps,
+  PFFormInlineSegmentProps,
+  PFFormInlineSeparatorProps,
+} from './pf-form-inline'

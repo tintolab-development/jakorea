@@ -37,4 +37,11 @@ export const platformQueryKeys = {
         params.page,
       ] as const,
   },
+
+  mypage: {
+    all: () => [...platformQueryKeys.all, 'mypage'] as const,
+    /** 내 강사 권한 신청 상태 — GET /api/portal/me/instructor-role-requests/current */
+    instructorRoleRequestCurrent: () =>
+      [...platformQueryKeys.mypage.all(), 'instructor-role-request', 'current'] as const,
+  },
 } as const

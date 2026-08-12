@@ -615,7 +615,12 @@ export function InstructorProfileFormBody({
                   view="-"
                   edit={
                     <Form.Item name="consentTermsOfService" noStyle>
-                      <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="large" />
+                      {/* 상세 수정: 필수 약관 변경 불가 (FE/BE 공통) */}
+                      <CmsRadioGroup
+                        options={CONSENT_RADIO_OPTIONS}
+                        size="large"
+                        disabled={isDetailEdit}
+                      />
                     </Form.Item>
                   }
                 />
@@ -625,7 +630,11 @@ export function InstructorProfileFormBody({
                   view="-"
                   edit={
                     <Form.Item name="consentPersonal" noStyle>
-                      <CmsRadioGroup options={CONSENT_RADIO_OPTIONS} size="large" />
+                      <CmsRadioGroup
+                        options={CONSENT_RADIO_OPTIONS}
+                        size="large"
+                        disabled={isDetailEdit}
+                      />
                     </Form.Item>
                   }
                 />
