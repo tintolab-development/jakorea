@@ -669,8 +669,6 @@ export function UserListPage() {
       suppressDetailRestoreRef.current = false
       detailCloseIntentRef.current = false
       setSelectedUserId(displayUser.id)
-      setDetailBridgeUser(displayUser)
-      openDrawer(displayUser)
       setParams(
         {
           id: displayUser.id,
@@ -680,6 +678,8 @@ export function UserListPage() {
         },
         { replace: opts?.replace ?? false }
       )
+      setDetailBridgeUser(displayUser)
+      openDrawer(displayUser)
       pendingOpenedUserIdRef.current = null
     },
     [setSelectedUserId, openDrawer, setParams]
@@ -695,6 +695,15 @@ export function UserListPage() {
       detailCloseIntentRef.current = false
       pendingOpenedUserIdRef.current = user.id
       setSelectedUserId(user.id)
+      setParams(
+        {
+          id: user.id,
+          lnb: 'detail-info',
+          [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
+          ...memberDetailUrlParamsFromUser(user),
+        },
+        { replace: opts?.replace ?? false }
+      )
 
       if (!isMembersRemoteEnabled() || opts?.skipRemoteFetch) {
         const displayUser = applyTeacherDetailUrlContext(user, {
@@ -733,7 +742,7 @@ export function UserListPage() {
         setMemberDetailLoading(false)
       }
     },
-    [setSelectedUserId, fetchUserById, openMemberDetailFetched]
+    [setSelectedUserId, fetchUserById, openMemberDetailFetched, setParams]
   )
 
   const handleNavigateToLinkedUser = useCallback(

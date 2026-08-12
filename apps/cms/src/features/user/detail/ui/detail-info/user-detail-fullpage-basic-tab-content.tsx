@@ -32,7 +32,6 @@ import {
   useMemberCommentsQuery,
 } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { applyMemberConsentToSchema } from '@/features/user/api/map-member-consent-records'
-import { buildMemberConsentContextFromUser } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import {
   updateAffiliatedTeacherEmploymentStatusRemote,
@@ -193,11 +192,6 @@ export function UserDetailFullpageBasicTabContent({
     user.termsAgreements,
   ])
 
-  const memberConsentContext = useMemo(
-    () => buildMemberConsentContextFromUser(user),
-    [user]
-  )
-
   const isInstructorPermissionDetail = mode === 'permission' && permissionRole === 'instructor'
   const isAdminPermissionDetail = mode === 'permission' && permissionRole === 'admin'
   const showInstructorRegisterLikeEdit =
@@ -271,7 +265,6 @@ export function UserDetailFullpageBasicTabContent({
               viewVariant={consentViewVariant}
               remoteConsentRows={remoteConsentRows}
               remoteConsentLoading={membersRemote && consentLoading}
-              memberConsentContext={memberConsentContext}
             />
           ) : null}
           {instructorResumeApplicantRow ? (
