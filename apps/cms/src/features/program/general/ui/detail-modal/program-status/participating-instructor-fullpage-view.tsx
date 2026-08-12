@@ -903,7 +903,7 @@ export function ParticipatingInstructorFullpageView({
                       .join(' ')
                   : NO_DATA
                 return (
-                  <div key={idx} className="instructor-resume-row instructor-resume-row--career">
+                  <div key={idx} className="instructor-resume-row instructor-resume-row--timeline">
                     <span className="instructor-resume-row-left">{period || NO_DATA}</span>
                     <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
                       <span className="instructor-resume-emphasis">{schoolLabel}</span>
@@ -936,7 +936,7 @@ export function ParticipatingInstructorFullpageView({
           <div className="instructor-resume-card">
             {(d.careerDetails?.length ?? 0) > 0 ? (
               d.careerDetails!.map((item, idx) => (
-                <div key={idx} className="instructor-resume-row instructor-resume-row--career">
+                <div key={idx} className="instructor-resume-row instructor-resume-row--timeline">
                   <span className="instructor-resume-row-left">{formatCareerPeriod(item)}</span>
                   <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
                     {item.companyName || item.role ? (
@@ -978,8 +978,8 @@ export function ParticipatingInstructorFullpageView({
                   <span className="instructor-resume-row-left instructor-resume-row-left--single-year">
                     {q.year ?? '-'}
                   </span>
-                  <span className="instructor-resume-row-right instructor-resume-row-right--black">
-                    {q.name ?? '-'}
+                  <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
+                    <span className="instructor-resume-emphasis">{q.name ?? '-'}</span>
                   </span>
                 </div>
               ))

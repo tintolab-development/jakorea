@@ -8,13 +8,15 @@ import {
   InstructorResumeCareerCardBody,
   InstructorResumeEducationCardBody,
   InstructorResumeFreeWritingSections,
+  InstructorResumeJaKoreaCardBody,
   InstructorResumeQualificationsCardBody,
   instructorAwardsSectionDescription,
   instructorCareerSectionDescription,
   instructorEducationSectionDescription,
+  instructorJaKoreaSectionDescription,
   instructorQualificationsSectionDescription,
-} from './instructor-resume-blocks'
-import './applicant-instructor-resume.css'
+} from '@/features/user/detail/ui/instructor-resume/blocks'
+import '@/features/user/detail/ui/instructor-resume/resume.css'
 
 export interface ApplicantInstructorResumeProps {
   instructor: ApplicantInstructorRow
@@ -38,6 +40,7 @@ export function ApplicantInstructorResume({
 }: ApplicantInstructorResumeProps) {
   const educationSummary = instructorEducationSectionDescription(d)
   const careerSummary = instructorCareerSectionDescription(d)
+  const jaKoreaSummary = instructorJaKoreaSectionDescription(d)
   const qualificationSummary = instructorQualificationsSectionDescription(d)
   const awardsSummary = instructorAwardsSectionDescription(d)
 
@@ -51,6 +54,11 @@ export function ApplicantInstructorResume({
       <section className="instructor-resume-section">
         <ResumeSectionTitle title="경력사항" summary={careerSummary} />
         <InstructorResumeCareerCardBody d={d} />
+      </section>
+
+      <section className="instructor-resume-section">
+        <ResumeSectionTitle title="JA Korea 활동 경험" summary={jaKoreaSummary} />
+        <InstructorResumeJaKoreaCardBody d={d} />
       </section>
 
       <section className="instructor-resume-section">

@@ -170,6 +170,7 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
     freeWriting3: '',
     freeWriting4: '',
     careerDetails: [],
+    jaKoreaActivities: [],
     educations: educationsFromSummary,
     qualifications,
     awards: remote
@@ -204,6 +205,10 @@ export function userToApplicantInstructorRow(user: Omit<User, 'password'>): Appl
       (cmsPartial.careerDetails?.length ?? 0) > 0
         ? cmsPartial.careerDetails
         : baseRow.careerDetails,
+    jaKoreaActivities:
+      (cmsPartial.jaKoreaActivities?.length ?? 0) > 0
+        ? cmsPartial.jaKoreaActivities
+        : baseRow.jaKoreaActivities,
     educations:
       (cmsPartial.educations?.length ?? 0) > 0 ? cmsPartial.educations : baseRow.educations,
   }

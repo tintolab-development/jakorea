@@ -603,6 +603,7 @@ function mapLicenseRowsToQualifications(
     .map(row => ({
       name: row.title.trim(),
       ...(row.acquiredYear ? { year: row.acquiredYear.slice(0, 4) } : {}),
+      ...(row.issuer?.trim() ? { issuer: row.issuer.trim() } : {}),
     }))
 }
 
@@ -612,6 +613,26 @@ function mapAwardRows(awards: InstructorCmsLicenseOrAwardRow[] | undefined): App
     .map(row => ({
       name: row.title.trim(),
       ...(row.acquiredYear ? { year: row.acquiredYear.slice(0, 4) } : {}),
+      ...(row.issuer?.trim() ? { issuer: row.issuer.trim() } : {}),
+    }))
+}
+
+function mapJaKoreaRowsToApplicantActivities(
+  activities: InstructorCmsJaActivityRow[] | undefined
+): NonNullable<ApplicantInstructorRow['jaKoreaActivities']> {
+  return (activities ?? [])
+    .filter(
+      row =>
+        row.title?.trim() ||
+        row.note?.trim() ||
+        row.periodStart?.trim() ||
+        row.periodEnd?.trim()
+    )
+    .map(row => ({
+      ...(row.periodStart?.trim() ? { periodStart: row.periodStart.trim() } : {}),
+      ...(row.periodEnd?.trim() ? { periodEnd: row.periodEnd.trim() } : {}),
+      ...(row.title?.trim() ? { title: row.title.trim() } : {}),
+      ...(row.note?.trim() ? { note: row.note.trim() } : {}),
     }))
 }
 
@@ -621,6 +642,7 @@ export function instructorCmsProfileToApplicantInstructorRowPartial(
 ): Pick<
   ApplicantInstructorRow,
   | 'careerDetails'
+  | 'jaKoreaActivities'
   | 'educations'
   | 'qualifications'
   | 'awards'
@@ -652,6 +674,7 @@ export function instructorCmsProfileToApplicantInstructorRowPartial(
 
   return {
     careerDetails: mapCareerRowsToApplicantDetails(profile),
+    jaKoreaActivities: mapJaKoreaRowsToApplicantActivities(profile.jaKoreaActivities),
     educations,
     qualifications: mapLicenseRowsToQualifications(profile.licenses),
     awards: mapAwardRows(profile.awards),

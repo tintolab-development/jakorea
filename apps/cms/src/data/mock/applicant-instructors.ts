@@ -36,16 +36,26 @@ export interface ApplicantInstructorCareerDetail {
   isCurrent?: boolean
 }
 
+/** 강사 이력서 — JA Korea 활동 경험 */
+export interface ApplicantInstructorJaKoreaActivity {
+  periodStart?: string
+  periodEnd?: string
+  title?: string
+  note?: string
+}
+
 /** 강사 이력서 - 자격 및 면허 */
 export interface ApplicantInstructorQualification {
   name?: string
   year?: string
+  issuer?: string
 }
 
 /** 강사 이력서 - 수상 및 수료 내역 */
 export interface ApplicantInstructorAward {
   name?: string
   year?: string
+  issuer?: string
 }
 
 /** 강사 이력서 - 학력사항 (강사 추가 모달 educations와 연동) */
@@ -133,6 +143,8 @@ export interface ApplicantInstructorRow {
   rejectionReason?: string
   /** 강사 이력서 - 경력 상세 (강사 이력서 탭) */
   careerDetails?: ApplicantInstructorCareerDetail[]
+  /** 강사 이력서 — JA Korea 활동 경험 */
+  jaKoreaActivities?: ApplicantInstructorJaKoreaActivity[]
   /** 강사 이력서 - 자격 및 면허 */
   qualifications?: ApplicantInstructorQualification[]
   /** 강사 이력서 - 수상 및 수료 내역 */
