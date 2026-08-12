@@ -11,6 +11,7 @@ import {
   type UserDetailUrlSyncUser,
   type TabState,
 } from './user-detail-fullpage-helpers'
+import { memberDetailUrlParamsFromUser } from './teacher-detail-url-context'
 
 /**
  * URL(`id`, `lnb`, `programsChild`) ↔ 사이드바
@@ -106,6 +107,19 @@ export function useUserDetailUrlSync(params: {
 
     const nextParams = new URLSearchParams(sp)
     let urlDirty = false
+
+    for (const [key, value] of Object.entries(memberDetailUrlParamsFromUser(displayUser))) {
+      const current = sp.get(key)
+      if (value != null && value !== '') {
+        if (current !== value) {
+          nextParams.set(key, value)
+          urlDirty = true
+        }
+      } else if (current != null) {
+        nextParams.delete(key)
+        urlDirty = true
+      }
+    }
 
     if ((sp.get('lnb') ?? '') !== nextLnb) {
       nextParams.set('lnb', nextLnb)

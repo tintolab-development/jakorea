@@ -11,6 +11,7 @@ import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-inst
 import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { resolveBasicInfoLayout, type BasicInfoBodyKey } from './user-basic-info-layout-resolver'
 import { BasicInfoLayoutRenderer } from './user-basic-info-layout-renderer'
+import { AdminBasicInfoSection } from './user-basic-info/admin-basic-info-section'
 import type { BasicInfoSectionRenderContext } from './user-basic-info-section-renderer'
 import {
   parseUserBasicInfoEntryQuery,
@@ -118,12 +119,28 @@ export function UserBasicInfoSection({
   return (
     <div className="user-detail-modal__basic-inner">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-        <BasicInfoLayoutRenderer
-          resolution={resolvedLayout}
-          caption={caption}
-          mode={detailInfoFormMode}
-          shared={sectionContext}
-        />
+        {bodyKey === 'admin' ? (
+          <AdminBasicInfoSection
+            user={user}
+            mode={detailInfoFormMode}
+            caption={caption}
+            personalInfoRevealed={personalInfoRevealed}
+            isAdminPermissionDetail={isAdminPermissionDetail}
+            memberInfoDraft={memberInfoDraft}
+            onMemberInfoDraftChange={onMemberInfoDraftChange}
+            adminMemberProfileFieldsEditableWhenEditing={adminMemberProfileFieldsEditableWhenEditing}
+            adminPermissionVariantPatching={adminPermissionVariantPatching}
+            onPatchAdminPermissionVariantFromDetailView={onPatchAdminPermissionVariantFromDetailView}
+            onPermissionResendNotification={onPermissionResendNotification}
+          />
+        ) : (
+          <BasicInfoLayoutRenderer
+            resolution={resolvedLayout}
+            caption={caption}
+            mode={detailInfoFormMode}
+            shared={sectionContext}
+          />
+        )}
         <GuardianSection user={user} personalInfoRevealed={personalInfoRevealed} />
       </div>
     </div>

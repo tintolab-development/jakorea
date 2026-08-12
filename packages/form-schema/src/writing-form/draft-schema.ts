@@ -481,8 +481,11 @@ export function rehomeFieldCellValue(
 /** 테이블 하단 설명 영역 — 동의 여부(미리보기·저장) */
 export type TableBottomConsent = 'agree' | 'disagree'
 
-export function normalizeTableBottomConsent(raw: unknown): TableBottomConsent {
-  return raw === 'disagree' ? 'disagree' : 'agree'
+/** 미설정(undefined/null)은 그대로 유지 — 동의서 작성(fill) 등에서 'agree'로 덮어쓰지 않음 */
+export function normalizeTableBottomConsent(raw: unknown): TableBottomConsent | undefined {
+  if (raw === 'disagree') return 'disagree'
+  if (raw === 'agree') return 'agree'
+  return undefined
 }
 
 /** 작성 양식 — 테이블 가로형(가변 행·열, 각 dataRows[i] 길이는 columnHeaders와 동일) */

@@ -11,6 +11,7 @@ describe('isMemberRegisterBasicInfoIncompleteForConsent', () => {
     contact: '010-1234-5678',
     email: 'test@example.com',
     address: '서울특별시 강남구',
+    detailAddress: '101호',
   }
 
   it('returns true when required basic info is missing', () => {
@@ -50,7 +51,17 @@ describe('isMemberRegisterBasicInfoIncompleteForConsent', () => {
         contact: '010-1234-5678',
         email: 'test@example.com',
         address: '서울특별시 강남구',
+        detailAddress: '101호',
       })
     ).toBe(false)
+  })
+
+  it('requires detail address for person', () => {
+    expect(
+      isMemberRegisterBasicInfoIncompleteForConsent({
+        ...completeEnrolled,
+        detailAddress: '',
+      })
+    ).toBe(true)
   })
 })

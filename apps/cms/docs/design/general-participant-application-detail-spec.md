@@ -238,7 +238,7 @@ Mock: `applicant-school-1` — `apps/cms/src/data/mock/applicant-institutions.ts
 | 알림 버튼 | `SendNotiButton` (`mode: 'send' \| 'resend'`) |
 | 헤더 액션 분기 | `applicants-detail-contents.tsx` → `resolveApplicantHeaderItems` |
 | 구분선 `\|` | `withProgramDetailTdDivider`, `ProgramDetailTdSegmentWrap` |
-| 자유 기술 블록 | `applicant-instructor-resume.css` |
+| 자유 기술 블록 | `user/detail/ui/instructor-resume/resume.css` |
 | 팀장 태그 | `school-detail-fullpage-view__role-tag--lead` |
 
 ---

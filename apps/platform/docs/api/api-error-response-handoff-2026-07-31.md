@@ -44,7 +44,7 @@ Bean Validation 기본 문구·영문 개발자 메시지·필드 path가 내려
 |-----|----------------|-----|
 | `POST …/privacy/unmask` | `reason 크기가 5에서 500 사이여야 합니다` | CMS 「열람 실패」 모달 |
 
-→ unmask `reason` minLength 완화: [members handoff §2.7](../../../cms/docs/api/members/members-api-backend-handoff-2026-07-31.md#27-unmask-reason-길이-제한-p0--2026-07-31-관측)
+→ unmask `reason` minLength 완화: [CMS backend-handoff §에러 응답](../../../cms/docs/api/backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통)
 
 ---
 

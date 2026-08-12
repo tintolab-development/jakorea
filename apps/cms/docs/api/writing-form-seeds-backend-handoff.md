@@ -80,7 +80,7 @@
 |--------------|--------------|---------|-----------|--------:|
 | `agreement-third-party` | 지급조서 사전 동의서 | A | [agreement-third-party.json](./form-template-seeds/agreement-third-party.json) | 14 |
 | `agreement-crime` | 성범죄 경력조회 동의서 | D | [agreement-crime.json](./form-template-seeds/agreement-crime.json) | 0 |
-| `agreement-notice` | 행정정보 공동이용 사전 동의서 | A | [agreement-notice.json](./form-template-seeds/agreement-notice.json) | 8 |
+| `agreement-notice` | 행정정보 공동이용 사전 동의서 | A | [agreement-notice.json](./form-template-seeds/agreement-notice.json) | 9 |
 | `agreement-expense` | 교육진행자 동의 서약서 | A | [agreement-expense.json](./form-template-seeds/agreement-expense.json) | 9 |
 | `agreement-portrait` | 초상권 수집/이용 동의 | A | [agreement-portrait.json](./form-template-seeds/agreement-portrait.json) | 8 |
 
@@ -351,7 +351,7 @@
 |----|------|---------|----------------|
 | `payment-statement-pre-consent-seed-title` | description | survey_title_with_period |  |
 | `payment-statement-pre-consent-seed-intro` | single_item | agreement_explanation_text | 개인정보 수집‧이용 및 제공 동의서 |
-| `payment-statement-pre-consent-seed-p1-collection` | single_item | horizontal_table | 개인정보 수집‧이용 |
+| `payment-statement-pre-consent-seed-p1-collection` | single_item | horizontal_table | 개인정보 수집·이용 |
 | `payment-statement-pre-consent-seed-p2-rrn-collection` | single_item | horizontal_table | 고유식별번호(주민등록번호) 수집·이용 |
 | `payment-statement-pre-consent-seed-p3-third-party` | single_item | horizontal_table | 개인정보 제3자 제공·이용 |
 | `payment-statement-pre-consent-seed-p4-rrn-third-party` | single_item | horizontal_table | 고유식별번호 제3자 제공·이용 |
@@ -380,6 +380,7 @@ _(paragraphs 없음)_
 | `agreement-notice-table` | single_item | horizontal_table | 공동이용 행정정보(구비서류) |
 | `agreement-notice-consent-static` | description | static_description_lines | 정보주체(본인) 동의사항 |
 | `agreement-notice-subject` | single_item | short_essay | 대상자 본인 |
+| `agreement-notice-confirmation-closing` | description | closing |  |
 | `agreement-notice-system-date` | description | system | 날짜 유형 |
 | `agreement-notice-system-signature` | description | system | 서명란 유형 |
 

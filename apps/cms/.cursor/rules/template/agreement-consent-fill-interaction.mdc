@@ -24,11 +24,18 @@ alwaysApply: false
 ## 필수 패턴 (회원 동의 작성)
 
 - 진입점: `buildAgreementConsentFillParagraphBodyOptions` + `MemberConsentAgreementModal`
+- 작성 진입 시 `normalizeMemberConsentWriteDraft` — **모든 응답 필드(라디오·input·객관식) 빈 상태**
+- **기본 정보 단락 ↔ 동의서 데이터 연동 금지** (prefill/autofill·양방향 sync 없음)
 - `paragraphInteractionMode`: **`user`** (`resolveAgreementConsentFillInteractionMode`)
 - 양식 본문만 잠금: **`agreementConsentFillReadOnlyBody: true`**
 - 하단 동의 라디오: `structureLockedAuthoringChoicePreview: true` (fill에서 user와 함께 동작하도록 렌더러 유지)
 - 초상권 1번 표: `portraitConsentResponseFieldsInteractive: true`
 - 행정정보 공동이용: `agreementConsentFillInteractiveParagraphIds`(이용기관·이용사무·대상자 본인) + `agreementNoticeIdTypeInteractive`
+- **소속**(초상권·지급조서): `input + 소속 없음` 체크박스 — 회원 유형 무관, 셀렉트 prefill 옵션 사용 안 함
+
+### ❌ 등록 폼 기본정보 → 동의서 prefill
+
+`applyMemberPortraitConsentPrefill`, `applyMemberNoticeConsentPrefill`, `buildMemberPaymentStatementBasicInfoAutofill`, `applyEducatorFacilitatorPledgeDefaultAgree` 등 **write 경로에서 호출 금지**.
 
 ## 금지 · 주의
 
@@ -58,15 +65,16 @@ fill에서 양식만 잠그려면 `preview` 대신 **`user` + `agreementConsentF
 - [ ] 동의 문구·가로형 표 **데이터 셀** — 입력 불가
 - [ ] **동의 / 동의하지 않음** 라디오 — 선택 가능
 - [ ] **지급조서 기본정보** (`BasicInfoParagraph`) — 입력 가능
-- [ ] **초상권** 성명·소속 — 입력 가능(해당 템플릿)
+- [ ] **초상권** 성명·소속 — input + 소속 없음(해당 템플릿)
 - [ ] **행정정보 공동이용** 이용기관·이용사무·대상자 본인·식별번호 — 입력 가능
 - [ ] 템플릿 관리(authoring) 화면 — 기존 편집 동작 회귀 없음
 
 ## 관련 코드
 
 - `apps/cms/src/features/template/lib/build-agreement-consent-fill-options.ts`
+- `apps/cms/src/features/user/shared/lib/normalize-member-consent-write-draft.ts`
 - `render-form-paragraph-body.tsx` — `agreementConsentFillReadOnlyBody`, `structureLockedConsentChoiceInteractive`
 - `apps/cms/.cursor/rules/process/member-detail-consent-agreement-cms.md` — 정책·필드 매핑
 - [form-editor-modes.mdc](./form-editor-modes.mdc) — authoring vs write 용어
 
-**Last updated:** 2026-07-30
+**Last updated:** 2026-08-11

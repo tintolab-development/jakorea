@@ -1,5 +1,5 @@
 /**
- * 신청 강사 상세 - 학력/경력/자격/수상/자기소개 섹션
+ * 강사 이력 — 학력/경력/자격/수상/자기소개 섹션 (회원 상세·프로그램 신청 상세 공용)
  */
 
 .applicant-instructor-resume {
@@ -73,7 +73,7 @@
   min-width: 0;
 }
 
-.instructor-resume-row--career .instructor-resume-row-left {
+.instructor-resume-row--timeline .instructor-resume-row-left {
   min-width: 170px;
 }
 
@@ -101,10 +101,6 @@
   font-weight: 500;
   line-height: 150%;
   margin-left: 4px;
-}
-
-.instructor-resume-row-right--black {
-  font-weight: 500;
 }
 
 .instructor-resume-empty {

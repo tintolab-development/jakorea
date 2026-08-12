@@ -179,32 +179,6 @@
   text-align: left;
 }
 
-.agreementChoiceBlock {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  flex-direction: column;
-  gap: var(--spacing-8);
-}
-
-.agreementChoiceGroup {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-12);
-  padding-left: 42px;
-}
-
-.agreementChoiceOption {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-6);
-  cursor: pointer;
-}
-
-.agreementChoiceOption input {
-  margin: 0;
-}
-
 .agreementText {
   display: flex;
   min-width: 0;

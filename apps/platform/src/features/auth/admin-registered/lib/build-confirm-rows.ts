@@ -1,3 +1,4 @@
+import { isRequiredAddressIncomplete } from '@jakorea/domain/shared/required-address'
 import { buildConfirmationRows } from '@/features/auth/sign-up'
 import { MOCK_ADMIN_REGISTERED_PROFILE } from './constants'
 import type { AdminRegisteredWizardState } from './wizard-state'
@@ -25,7 +26,13 @@ export function isAdminRegisteredEditValid(state: {
   address: string
   addressDetail: string
 }) {
-  if (!state.address.trim() || !state.addressDetail.trim()) {
+  if (
+    isRequiredAddressIncomplete({
+      address: state.address,
+      addressDetail: state.addressDetail,
+      subject: 'person',
+    })
+  ) {
     return false
   }
 

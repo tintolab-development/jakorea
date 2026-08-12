@@ -120,7 +120,7 @@ export function MultipleChoice({
       <CmsRadioGroup
         className="multiple-choice-radio-group"
         disabled={controlDisabled}
-        value={singleId ?? undefined}
+        value={singleId}
         onChange={e => patch({ selectedPreviewSingleId: e.target.value })}
       >
         {items.map(item => (

@@ -12,21 +12,39 @@ import {
   mapInstructorProfileFormToBasicInfoDraftPartial,
   mapUserToInstructorProfileFormValues,
 } from '@/features/user/detail/lib/map-user-to-instructor-profile-form'
-import {
-  jaEvaluationGradeLine,
-  socialView,
-} from '@/features/user/detail/ui/user-basic-info/display'
+import { socialView } from '@/features/user/detail/ui/user-basic-info/display'
+import { InstructorJaEvaluationGradeField } from '@/features/user/detail/ui/user-basic-info/instructor-ja-grade-field'
 import { settlementStatusView } from '@/features/user/detail/ui/user-basic-info/status'
 import {
   InstructorProfileFormBody,
   type InstructorProfileFormValues,
 } from '@/features/user/shared/ui/instructor-profile-form'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsButton, CmsSelect } from '@/shared/ui'
+import { CmsSelect } from '@/shared/ui'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 import { formatDate } from '@/shared/utils'
 import '@/features/user/shared/ui/instructor-register-modal.css'
 import './instructor-detail-edit-form.css'
+
+/**
+ * 강사 상세 기본 정보의 **수정 UI SSOT 판정** — 조회 카드
+ * (`InstructorMetaSection`/`InstructorSection`) 대신 이 폼을 렌더할지.
+ *
+ * 수정 진입 자체가 `startBasicInfoEdit`에서 `role === 'INSTRUCTOR' && bodyKey === 'instructor'`
+ * 로만 허용되므로, 강사 편집 중에는 항상 이 폼이 조회 카드를 대체한다.
+ * draft·onChange를 함께 반환해 호출부에서 별도 non-null 처리가 필요 없다.
+ */
+export function resolveInstructorRegisterLikeEdit(params: {
+  user: Pick<Omit<User, 'password'>, 'role'>
+  memberInfoEditing?: boolean
+  memberInfoDraft?: AdminProvisionedMemberBasicInfoDraft | null
+  onMemberInfoDraftChange?: (partial: Partial<AdminProvisionedMemberBasicInfoDraft>) => void
+}): Pick<InstructorDetailEditFormProps, 'memberInfoDraft' | 'onMemberInfoDraftChange'> | null {
+  const { user, memberInfoEditing, memberInfoDraft, onMemberInfoDraftChange } = params
+  if (!memberInfoEditing || user.role !== 'INSTRUCTOR') return null
+  if (memberInfoDraft == null || onMemberInfoDraftChange == null) return null
+  return { memberInfoDraft, onMemberInfoDraftChange }
+}
 
 export interface InstructorDetailEditFormProps {
   user: Omit<User, 'password'>
@@ -61,24 +79,17 @@ export function InstructorDetailEditForm({
     onMemberInfoDraftChange(mapInstructorProfileFormToBasicInfoDraftPartial(values))
   }
 
-  const gradeEvaluateButton = (
-    <CmsButton
-      type="button"
-      variant="secondary"
-      size="small"
-      onClick={() => onOpenJaGradeEvaluation?.()}
-    >
-      등급 평가
-    </CmsButton>
-  )
-  const jaEvaluationGradeDisplay = user.listMetrics?.jaEvaluationGrade?.trim() ? (
-    <span className="instructor-detail-edit-form__ja-grade">
-      <span>{jaEvaluationGradeLine(user)}</span>
-      <DetailInfoForm.InputsSeparator />
-      {gradeEvaluateButton}
-    </span>
-  ) : (
-    gradeEvaluateButton
+  /** setFieldValue(동의서 완료)는 onValuesChange를 안 타므로 form 전체로 draft flush */
+  const flushDraftFromForm = () => {
+    syncDraftFromForm(form.getFieldsValue(true) as InstructorProfileFormValues)
+  }
+
+  const jaEvaluationGradeDisplay = (
+    <InstructorJaEvaluationGradeField
+      user={user}
+      wrapClassName="instructor-detail-edit-form__ja-grade"
+      onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
+    />
   )
 
   const basicInfoPrefix = (
@@ -148,6 +159,7 @@ export function InstructorDetailEditForm({
         layoutVariant="detailEdit"
         basicInfoPrefix={basicInfoPrefix}
         basicInfoExtraBeforeBusinessIncome={basicInfoExtraBeforeBusinessIncome}
+        onConsentValuesCommit={flushDraftFromForm}
       />
     </Form>
   )

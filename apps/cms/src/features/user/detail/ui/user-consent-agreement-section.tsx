@@ -9,9 +9,6 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import {
-  type MemberConsentMemberContext,
-} from '@/features/user/shared/lib/build-member-portrait-consent-draft'
-import {
   resolveMemberConsentTemplateByLabel,
   type MemberConsentTemplateEntry,
 } from '@/features/user/shared/lib/member-consent-template-map'
@@ -37,8 +34,6 @@ export interface UserConsentAgreementSectionProps {
   remoteConsentRows?: ConsentRowSchema[]
   /** remote 모드에서 API 로딩 중 */
   remoteConsentLoading?: boolean
-  /** 동의서 보기 — 회원 정보 프리필(미지정 시 member 미전달) */
-  memberConsentContext?: MemberConsentMemberContext
 }
 
 const DEFAULT_CAPTION = '*미동의 시 서비스 가입 및 프로그램 참여에 제한이 있을 수 있습니다.'
@@ -72,6 +67,7 @@ export type ConsentFieldValueSchema =
       type: 'document'
       agreed: boolean
       agreedAtDisplay?: string
+      formResponseId?: number
     }
   /** 더블 행 우측 빈 절반(격자·하단 보더만 유지) */
   | { type: 'empty_half' }
@@ -195,10 +191,7 @@ const MARKETING_AND_MFA_ROW: ConsentRowSchema = {
 }
 
 /** 관리자 회원 — 약관·동의 4항목(2열×2행) */
-export const CONSENT_ROWS_ADMIN: ConsentRowSchema[] = [
-  TERMS_AND_PRIVACY_ROW,
-  MARKETING_AND_MFA_ROW,
-]
+export const CONSENT_ROWS_ADMIN: ConsentRowSchema[] = [TERMS_AND_PRIVACY_ROW, MARKETING_AND_MFA_ROW]
 
 /** 회원 상세 약관·동의 — 스크린샷 기준 8항목(2열×4행) */
 const CONSENT_ROWS_FULL: ConsentRowSchema[] = [
@@ -208,8 +201,7 @@ const CONSENT_ROWS_FULL: ConsentRowSchema[] = [
   ADMIN_AND_CRIME_ROW,
 ]
 
-const ADMIN_CONSENT_CAPTION =
-  '* 미동의 시 서비스 가입 및 관리자 활동에 제한이 있을 수 있습니다.'
+const ADMIN_CONSENT_CAPTION = '* 미동의 시 서비스 가입 및 관리자 활동에 제한이 있을 수 있습니다.'
 
 /** 프리셋별 행·필드 구조 (표시 데이터와 분리) */
 export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
@@ -223,7 +215,7 @@ export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
 export const CONSENT_ROWS_PERMISSION_INSTRUCTOR: ConsentRowSchema[] = CONSENT_ROWS_FULL
 
 export interface ConsentRenderCtx {
-  openDocumentForLabel: (label: string) => void
+  openDocumentForLabel: (label: string, formResponseId?: number) => void
 }
 
 /** `동의 | 2026.01.15 09:15:42` 형태면 상태·구분자·날짜시간으로 나누어 날짜에 전용 스타일 적용 */
@@ -302,9 +294,7 @@ function resolveConsentFieldView(
   switch (value.type) {
     case 'remote_consent': {
       const status = value.agreed ? '동의' : '미동의'
-      const text = value.agreedAtDisplay
-        ? `${status} | ${value.agreedAtDisplay}`
-        : status
+      const text = value.agreedAtDisplay ? `${status} | ${value.agreedAtDisplay}` : status
       return consentFieldContent(text)
     }
     case 'document':
@@ -313,7 +303,9 @@ function resolveConsentFieldView(
           agreed={value.agreed}
           agreedAtDisplay={value.agreedAtDisplay}
           onOpenDocument={
-            value.agreed ? () => ctx.openDocumentForLabel(fieldLabel) : undefined
+            value.agreed
+              ? () => ctx.openDocumentForLabel(fieldLabel, value.formResponseId)
+              : undefined
           }
         />
       )
@@ -373,6 +365,11 @@ export function renderConsentRow(
   )
 }
 
+type ActiveConsentView = {
+  entry: MemberConsentTemplateEntry
+  formResponseId?: number
+}
+
 export function UserConsentAgreementSection({
   preset = 'individual',
   viewVariant = 'default',
@@ -380,23 +377,20 @@ export function UserConsentAgreementSection({
   onOpenAgreementDocument,
   remoteConsentRows,
   remoteConsentLoading = false,
-  memberConsentContext,
 }: UserConsentAgreementSectionProps) {
-  const [activeViewEntry, setActiveViewEntry] = useState<MemberConsentTemplateEntry | null>(null)
+  const [activeView, setActiveView] = useState<ActiveConsentView | null>(null)
 
-  const effectiveCaption =
-    caption ??
-    (preset === 'admin' ? ADMIN_CONSENT_CAPTION : DEFAULT_CAPTION)
+  const effectiveCaption = caption ?? (preset === 'admin' ? ADMIN_CONSENT_CAPTION : DEFAULT_CAPTION)
 
   const openDocumentForLabel = useCallback(
-    (label: string) => {
+    (label: string, formResponseId?: number) => {
       if (onOpenAgreementDocument) {
         onOpenAgreementDocument()
         return
       }
       const entry = resolveMemberConsentTemplateByLabel(label)
       if (entry) {
-        setActiveViewEntry(entry)
+        setActiveView({ entry, formResponseId })
       }
     },
     [onOpenAgreementDocument]
@@ -433,13 +427,13 @@ export function UserConsentAgreementSection({
           ) : null}
         </div>
       </Spin>
-      {activeViewEntry != null && memberConsentContext != null ? (
+      {activeView != null ? (
         <MemberConsentDocumentViewModal
           open
-          templateId={activeViewEntry.templateId}
-          modalTitle={activeViewEntry.modalTitle}
-          memberContext={memberConsentContext}
-          onClose={() => setActiveViewEntry(null)}
+          templateId={activeView.entry.templateId}
+          modalTitle={activeView.entry.modalTitle}
+          formResponseId={activeView.formResponseId}
+          onClose={() => setActiveView(null)}
         />
       ) : null}
     </div>

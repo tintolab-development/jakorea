@@ -53,7 +53,7 @@ import {
 } from './individual-screening-sections'
 import { GeneralIndividualTeamRoleDropdown } from './individual-team-role-dropdown'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
-import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-resume.css'
+import '@/features/user/detail/ui/instructor-resume/resume.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import '@/features/program/general/ui/detail-modal/applications/volunteer-screening/detail.css'
 

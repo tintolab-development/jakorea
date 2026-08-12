@@ -15,7 +15,9 @@ import {
   type InstructorProfileFormValues,
   type LicenseOrAwardRow,
 } from '@/features/user/shared/ui/instructor-profile-form'
+import { buildPreRegisterTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
 import {
+  ensureInstructorFormListRows,
   instructorCmsProfileToFormValues,
   instructorProfileFormValuesToCmsProfile,
   instructorProfileFormValuesToCmsSettlement,
@@ -24,6 +26,7 @@ import type {
   InstructorCmsProfileProposal,
   InstructorCmsSettlement,
 } from '@/features/user/api/types/instructor-cms-profile-proposal'
+import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import {
   EMPTY_EDUCATION_GRADUATE_ROW,
   EMPTY_EDUCATION_SCHOOL_ROW,
@@ -259,7 +262,7 @@ export function mapUserToInstructorProfileFormValues(
       ? instructorResume.freeWriting4
       : ''
 
-  return {
+  const values: InstructorProfileFormValues = {
     ...INITIAL_VALUES,
     ...(fromCmsProfile ?? {}),
     name: user.name ?? '',
@@ -324,6 +327,17 @@ export function mapUserToInstructorProfileFormValues(
     freeWrite3: fromCmsProfile?.freeWrite3 ?? freeWrite3,
     freeWrite4: fromCmsProfile?.freeWrite4 ?? freeWrite4,
   }
+
+  return {
+    ...values,
+    jaKoreaRows: ensureInstructorFormListRows(values.jaKoreaRows, EMPTY_JA_KOREA_ROW),
+    licenseRows: ensureInstructorFormListRows(values.licenseRows, EMPTY_LICENSE_OR_AWARD_ROW),
+    awardRows: ensureInstructorFormListRows(values.awardRows, EMPTY_LICENSE_OR_AWARD_ROW),
+    careers:
+      values.careerLevel === 'experienced'
+        ? ensureInstructorFormListRows(values.careers, EMPTY_CAREER)
+        : values.careers,
+  }
 }
 
 /** 폼 값 → 상세 저장용 basicInfo draft partial */
@@ -350,6 +364,7 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
   licenseRows: InstructorProfileFormValues['licenseRows']
   instructorCmsProfile: InstructorCmsProfileProposal
   instructorCmsSettlement: InstructorCmsSettlement
+  termsAgreements: TermsAgreementRequest[]
 } {
   const birthDigits = values.birthDate.replace(/\D/g, '')
   const birthDate =
@@ -390,5 +405,19 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
     licenseRows: values.licenseRows,
     instructorCmsProfile: instructorProfileFormValuesToCmsProfile(values),
     instructorCmsSettlement: instructorProfileFormValuesToCmsSettlement(values),
+    termsAgreements: buildPreRegisterTermsAgreements(
+      {
+        consentTermsOfService: values.consentTermsOfService,
+        consentPersonal: values.consentPersonal,
+        consentMarketing: values.consentMarketing,
+      },
+      {
+        consentPortrait: values.consentPortrait,
+        consentPaymentStatement: values.consentPaymentStatement,
+        consentEducatorPledge: values.consentEducatorPledge,
+        consentAdministrativeJoint: values.consentAdministrativeJoint,
+        consentSexOffenseCheck: values.consentSexOffenseCheck,
+      }
+    ),
   }
 }

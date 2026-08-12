@@ -55,6 +55,7 @@ const DOCUMENT_LABELS = new Set([
 type AgreementOverlay = {
   agreed: boolean
   agreedAt?: string
+  formResponseId?: number
 }
 
 export function resolveTermsTypeToConsentLabel(type: string | undefined): string | undefined {
@@ -82,7 +83,12 @@ function agreementToFieldValue(
   const agreedAtDisplay = formatConsentedAt(agreement.agreedAt)
 
   if (DOCUMENT_LABELS.has(label)) {
-    return { type: 'document', agreed, agreedAtDisplay: agreed ? agreedAtDisplay : undefined }
+    return {
+      type: 'document',
+      agreed,
+      agreedAtDisplay: agreed ? agreedAtDisplay : undefined,
+      formResponseId: agreement.formResponseId,
+    }
   }
 
   return {
@@ -135,6 +141,7 @@ function buildConsentRecordLabelMap(
     map.set(label, {
       agreed: record.consentValue === true,
       agreedAt: record.consentedAt,
+      formResponseId: record.formResponseId,
     })
   }
   return map

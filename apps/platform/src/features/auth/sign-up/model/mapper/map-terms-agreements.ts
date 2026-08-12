@@ -49,10 +49,6 @@ function resolveUiKeyForTermsType(
   return null
 }
 
-function isChoiceAgreed(value: unknown): boolean {
-  return value === true || value === 'agree'
-}
-
 function isAgreedForUiKey(
   uiKey: AgreementKey | GuardianAgreementKey,
   agreements: AgreementState,
@@ -60,15 +56,15 @@ function isAgreedForUiKey(
   isUnderAge: boolean,
 ): boolean {
   if (uiKey === 'guardianLegal') {
-    return isChoiceAgreed(guardianAgreements?.guardianLegal)
+    return Boolean(guardianAgreements?.guardianLegal)
   }
 
   if (isUnderAge && guardianAgreements && uiKey in guardianAgreements) {
-    return isChoiceAgreed(guardianAgreements[uiKey as GuardianAgreementKey])
+    return Boolean(guardianAgreements[uiKey as GuardianAgreementKey])
   }
 
   if (uiKey in agreements) {
-    return isChoiceAgreed(agreements[uiKey as AgreementKey])
+    return Boolean(agreements[uiKey as AgreementKey])
   }
 
   return false

@@ -164,6 +164,39 @@ describe('mergeListUserWithFetchedDetail', () => {
     expect(merged.listMetrics?.instructorCareerYearsLabel).toBe('10년')
     expect(merged.listMetrics?.highestEducationLabel).toBe('대학교 4년제 | 졸업')
   })
+
+  it('상세 GET의 비마스킹 listMetrics가 목록(구) 값보다 우선한다', () => {
+    const list = baseUser({
+      id: 'teacher-uuid',
+      role: 'INSTRUCTOR',
+      name: '김강사',
+      listMetrics: {
+        instructorCareerYearsLabel: '10년',
+        instructorCareerSummaryLabel: '10년',
+        highestEducationLabel: '대학교 4년제 | 졸업',
+        jaEvaluationGrade: 'A',
+      },
+    })
+    const fetched = baseUser({
+      id: 'teacher-uuid',
+      role: 'INSTRUCTOR',
+      name: '김강사',
+      listMetrics: {
+        instructorCareerYearsLabel: '12년',
+        instructorCareerSummaryLabel: '12년',
+        highestEducationLabel: '대학원 | 졸업',
+        jaEvaluationGrade: 'B',
+      },
+      participationHistory: 0,
+    })
+
+    const merged = mergeListUserWithFetchedDetail(list, fetched)
+
+    expect(merged.listMetrics?.instructorCareerYearsLabel).toBe('12년')
+    expect(merged.listMetrics?.instructorCareerSummaryLabel).toBe('12년')
+    expect(merged.listMetrics?.highestEducationLabel).toBe('대학원 | 졸업')
+    expect(merged.listMetrics?.jaEvaluationGrade).toBe('B')
+  })
 })
 
 describe('applySavedBasicInfoPatchToUser', () => {

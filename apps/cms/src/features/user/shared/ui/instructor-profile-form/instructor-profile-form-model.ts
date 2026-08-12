@@ -118,15 +118,15 @@ export type InstructorRegisterModalFormValues = {
   homeAddress: string
   homeAddressDetail: string
   oneLineIntro: string
-  consentTermsOfService: ConsentValue
-  consentPersonal: ConsentValue
-  consentMarketing: ConsentValue
-  consentPortrait: ConsentValue
-  consentPaymentStatement: ConsentValue
-  consentEducatorPledge: ConsentValue
-  consentSexOffenseCheck: ConsentValue
+  consentTermsOfService: ConsentValue | undefined
+  consentPersonal: ConsentValue | undefined
+  consentMarketing: ConsentValue | undefined
+  consentPortrait: ConsentValue | undefined
+  consentPaymentStatement: ConsentValue | undefined
+  consentEducatorPledge: ConsentValue | undefined
+  consentSexOffenseCheck: ConsentValue | undefined
   /** 행정정보 공동이용 사전 동의 */
-  consentAdministrativeJoint: ConsentValue
+  consentAdministrativeJoint: ConsentValue | undefined
   eduSchoolType: string
   eduStatus: string
   educationDetailKeys: EducationDetailKey[]
@@ -190,14 +190,14 @@ export const INITIAL_VALUES: InstructorProfileFormValues = {
   homeAddress: '',
   homeAddressDetail: '',
   oneLineIntro: '',
-  consentTermsOfService: 'agree',
-  consentPersonal: 'agree',
-  consentMarketing: 'agree',
-  consentPortrait: 'disagree',
-  consentPaymentStatement: 'disagree',
-  consentEducatorPledge: 'disagree',
-  consentSexOffenseCheck: 'disagree',
-  consentAdministrativeJoint: 'disagree',
+  consentTermsOfService: undefined,
+  consentPersonal: undefined,
+  consentMarketing: undefined,
+  consentPortrait: undefined,
+  consentPaymentStatement: undefined,
+  consentEducatorPledge: undefined,
+  consentSexOffenseCheck: undefined,
+  consentAdministrativeJoint: undefined,
   eduSchoolType: '',
   eduStatus: '',
   educationDetailKeys: [],
@@ -219,6 +219,25 @@ export const INITIAL_VALUES: InstructorProfileFormValues = {
 function formatOptionalDayjs(value: Dayjs | null | undefined, pattern: string): string | null {
   if (value == null || !value.isValid()) return null
   return value.format(pattern)
+}
+
+/** 제출·검증용 — 중첩 배열만 INITIAL_VALUES로 보강 (스칼라 기본값으로 필수 누락을 가리지 않음) */
+export function mergeInstructorRegisterFormValues(
+  raw: Partial<InstructorRegisterModalFormValues>
+): InstructorRegisterModalFormValues {
+  return {
+    ...INITIAL_VALUES,
+    ...raw,
+    educationDetailKeys: raw.educationDetailKeys ?? INITIAL_VALUES.educationDetailKeys,
+    highSchool: raw.highSchool ?? INITIAL_VALUES.highSchool,
+    college23Rows: raw.college23Rows ?? INITIAL_VALUES.college23Rows,
+    college4Rows: raw.college4Rows ?? INITIAL_VALUES.college4Rows,
+    graduateRows: raw.graduateRows ?? INITIAL_VALUES.graduateRows,
+    careers: raw.careers ?? INITIAL_VALUES.careers,
+    jaKoreaRows: raw.jaKoreaRows ?? INITIAL_VALUES.jaKoreaRows,
+    licenseRows: raw.licenseRows ?? INITIAL_VALUES.licenseRows,
+    awardRows: raw.awardRows ?? INITIAL_VALUES.awardRows,
+  }
 }
 
 function mapEducationSchoolRowToValidation(row: EducationSchoolRow) {
@@ -253,26 +272,26 @@ export function mapInstructorRegisterFormValuesToValidationInput(
     accountHolder: values.accountHolder,
     isBusinessIncome: values.isBusinessIncome,
     oneLineIntro: values.oneLineIntro,
-    consentTermsOfService: values.consentTermsOfService,
-    consentPersonal: values.consentPersonal,
-    consentMarketing: values.consentMarketing,
-    consentPortrait: values.consentPortrait,
-    consentPaymentStatement: values.consentPaymentStatement,
-    consentEducatorPledge: values.consentEducatorPledge,
-    consentAdministrativeJoint: values.consentAdministrativeJoint,
-    consentSexOffenseCheck: values.consentSexOffenseCheck,
+    consentTermsOfService: values.consentTermsOfService as ConsentValue,
+    consentPersonal: values.consentPersonal as ConsentValue,
+    consentMarketing: values.consentMarketing as ConsentValue,
+    consentPortrait: values.consentPortrait as ConsentValue,
+    consentPaymentStatement: values.consentPaymentStatement as ConsentValue,
+    consentEducatorPledge: values.consentEducatorPledge as ConsentValue,
+    consentAdministrativeJoint: values.consentAdministrativeJoint as ConsentValue,
+    consentSexOffenseCheck: values.consentSexOffenseCheck as ConsentValue,
     eduSchoolType: values.eduSchoolType,
     eduStatus: values.eduStatus,
-    educationDetailKeys: values.educationDetailKeys,
-    highSchool: mapEducationSchoolRowToValidation(values.highSchool),
-    college23Rows: values.college23Rows.map(mapEducationSchoolRowToValidation),
-    college4Rows: values.college4Rows.map(mapEducationSchoolRowToValidation),
-    graduateRows: values.graduateRows.map(row => ({
+    educationDetailKeys: values.educationDetailKeys ?? [],
+    highSchool: mapEducationSchoolRowToValidation(values.highSchool ?? { ...EMPTY_EDUCATION_SCHOOL_ROW }),
+    college23Rows: (values.college23Rows ?? []).map(mapEducationSchoolRowToValidation),
+    college4Rows: (values.college4Rows ?? []).map(mapEducationSchoolRowToValidation),
+    graduateRows: (values.graduateRows ?? []).map(row => ({
       ...mapEducationSchoolRowToValidation(row),
       degree: row.degree,
     })),
     careerLevel: values.careerLevel,
-    careers: values.careers.map(row => ({
+    careers: (values.careers ?? []).map(row => ({
       companyName: row.companyName,
       roleName: row.roleName,
       periodStart: formatOptionalDayjs(row.periodStart, 'YYYY-MM'),

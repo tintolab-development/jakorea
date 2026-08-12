@@ -6,22 +6,23 @@ import type {
   ApplicantInstructorRow,
   ApplicantInstructorCareerDetail,
   ApplicantInstructorEducationItem,
+  ApplicantInstructorJaKoreaActivity,
 } from '@/data/mock/applicant-instructors'
 import dayjs from 'dayjs'
 import {
   formatInstructorEducationLevelDisplay,
   isInstructorMaskedPlaceholder,
 } from '@/features/user/api/map-instructor-activity-display'
-import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
-import './applicant-instructor-resume.css'
+import {
+  INSTRUCTOR_RESUME_EMPTY_DISPLAY,
+  InstructorResumeListCard,
+  InstructorResumeTimelineRow,
+} from './timeline-row'
+import './resume.css'
 
 export const INSTRUCTOR_RESUME_NO_DATA = '데이터 없음'
 /** 카드 본문·필드 빈 값 표시 */
-export const INSTRUCTOR_RESUME_EMPTY_DISPLAY = '-'
-
-function InstructorResumeEmptyCardBody() {
-  return <p className="instructor-resume-empty">{INSTRUCTOR_RESUME_EMPTY_DISPLAY}</p>
-}
+export { INSTRUCTOR_RESUME_EMPTY_DISPLAY }
 
 const EDUCATION_TYPE_PRIORITY: Record<string, number> = {
   graduate: 4,
@@ -224,6 +225,38 @@ export function instructorCareerSectionDescription(d: ApplicantInstructorRow): s
   return formatCareerDurationSummary(getTotalCareerMonths(d.careerDetails))
 }
 
+const JA_KOREA_ACTIVITY_DATE_PARSE_FORMATS = [
+  'YYYY-MM-DD',
+  'YYYY-MM',
+  'YYYY.MM.DD',
+  'YYYY.MM',
+  'YYYY',
+] as const
+
+function formatJaKoreaActivityDate(raw: string | undefined): string | undefined {
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  const parsed = dayjs(trimmed, [...JA_KOREA_ACTIVITY_DATE_PARSE_FORMATS], true)
+  if (!parsed.isValid()) return trimmed
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed) || /^\d{4}\.\d{2}\.\d{2}$/.test(trimmed)) {
+    return parsed.format('YYYY. MM. DD')
+  }
+  return parsed.format('YYYY. MM')
+}
+
+export function formatJaKoreaActivityPeriod(item: ApplicantInstructorJaKoreaActivity): string {
+  const start = formatJaKoreaActivityDate(item.periodStart)
+  if (!start) return '-'
+  const end = formatJaKoreaActivityDate(item.periodEnd)
+  if (!end) return start
+  return `${start} ~ ${end}`
+}
+
+export function instructorJaKoreaSectionDescription(d: ApplicantInstructorRow): string {
+  const n = d.jaKoreaActivities?.length ?? 0
+  return n > 0 ? `${n}개` : ''
+}
+
 export function instructorQualificationsSectionDescription(d: ApplicantInstructorRow): string {
   return (d.qualifications?.length ?? 0) > 0 ? `${d.qualifications?.length}개` : ''
 }
@@ -238,137 +271,129 @@ export function InstructorResumeEducationCardBody({ d }: { d: ApplicantInstructo
 
   if (items.length > 1) {
     return (
-      <div className="instructor-resume-card">
-        {items.map((item, idx) => {
-          const period = formatEducationPeriod(item)
-          const schoolName = item.schoolName?.trim()
+      <InstructorResumeListCard
+        items={items}
+        renderRow={(item, idx) => {
+          const row = item
+          const period = formatEducationPeriod(row)
           return (
-            <div key={idx} className="instructor-resume-row instructor-resume-row--career">
-              <span className="instructor-resume-row-left">{period !== '-' ? period : '-'}</span>
-              <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
-                {schoolName ? (
-                  <>
-                    <span className="instructor-resume-emphasis">{schoolName}</span>
-                    {item.major ? (
-                      <>
-                        <ProgramDetailTdDivider />
-                        <span className="instructor-resume-role">{item.major}</span>
-                      </>
-                    ) : null}
-                  </>
-                ) : (
-                  item.schoolType ?? INSTRUCTOR_RESUME_EMPTY_DISPLAY
-                )}
-              </span>
-            </div>
+            <InstructorResumeTimelineRow
+              key={idx}
+              dateLabel={period !== '-' ? period : '-'}
+              dateLayout="range"
+              primary={row.schoolName?.trim()}
+              secondary={row.major?.trim()}
+              fallbackLabel={row.schoolType}
+            />
           )
-        })}
-      </div>
+        }}
+      />
     )
   }
 
   const display = resolveFinalEducationDisplay(d)
 
   return (
-    <div className="instructor-resume-card">
-      {display ? (
-        <div className="instructor-resume-row instructor-resume-row--career">
-          <span className="instructor-resume-row-left">{display.period ?? '-'}</span>
-          <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
-            <span className="instructor-resume-emphasis">{display.schoolName}</span>
-            {display.major ? (
-              <>
-                <ProgramDetailTdDivider />
-                <span className="instructor-resume-role">{display.major}</span>
-              </>
-            ) : null}
-          </span>
-        </div>
-      ) : (
-        <InstructorResumeEmptyCardBody />
-      )}
-    </div>
+    <InstructorResumeListCard
+      items={display ? [display] : []}
+      renderRow={(item, idx) => {
+        const row = item
+        return (
+          <InstructorResumeTimelineRow
+            key={idx}
+            dateLabel={row.period ?? '-'}
+            dateLayout="range"
+            primary={row.schoolName}
+            secondary={row.major}
+          />
+        )
+      }}
+    />
+  )
+}
+
+export function InstructorResumeJaKoreaCardBody({ d }: { d: ApplicantInstructorRow }) {
+  const items = d.jaKoreaActivities ?? []
+  return (
+    <InstructorResumeListCard
+      items={items}
+      renderRow={(item, idx) => {
+        const row = item
+        return (
+          <InstructorResumeTimelineRow
+            key={idx}
+            dateLabel={formatJaKoreaActivityPeriod(row)}
+            dateLayout="range"
+            primary={row.title}
+            secondary={row.note}
+          />
+        )
+      }}
+    />
   )
 }
 
 export function InstructorResumeCareerCardBody({ d }: { d: ApplicantInstructorRow }) {
+  const items = d.careerDetails ?? []
   return (
-    <div className="instructor-resume-card">
-      {(d.careerDetails?.length ?? 0) > 0 ? (
-        d.careerDetails?.map((item, idx) => {
-          const period = formatCareerPeriod(item)
-          const isSingleYear = !period.includes(' ~ ')
-          return (
-            <div key={idx} className="instructor-resume-row instructor-resume-row--career">
-              <span
-                className={`instructor-resume-row-left ${isSingleYear ? 'instructor-resume-row-left--single-year' : ''}`}
-              >
-                {period}
-              </span>
-              <span className="instructor-resume-row-right instructor-resume-row-right--with-divider">
-                {item.companyName || item.role ? (
-                  <>
-                    {item.companyName && (
-                      <span className="instructor-resume-emphasis">{item.companyName}</span>
-                    )}
-                    {item.companyName && item.role ? <ProgramDetailTdDivider /> : null}
-                    {item.role != null && item.role !== '' ? (
-                      <span className="instructor-resume-role">{item.role}</span>
-                    ) : null}
-                  </>
-                ) : (
-                  INSTRUCTOR_RESUME_EMPTY_DISPLAY
-                )}
-              </span>
-            </div>
-          )
-        })
-      ) : (
-        <InstructorResumeEmptyCardBody />
-      )}
-    </div>
+    <InstructorResumeListCard
+      items={items}
+      renderRow={(item, idx) => {
+        const row = item
+        const period = formatCareerPeriod(row)
+        return (
+          <InstructorResumeTimelineRow
+            key={idx}
+            dateLabel={period}
+            dateLayout={period.includes(' ~ ') ? 'range' : 'compact'}
+            primary={row.companyName}
+            secondary={row.role}
+          />
+        )
+      }}
+    />
   )
 }
 
 export function InstructorResumeQualificationsCardBody({ d }: { d: ApplicantInstructorRow }) {
+  const items = d.qualifications ?? []
   return (
-    <div className="instructor-resume-card">
-      {(d.qualifications?.length ?? 0) > 0 ? (
-        d.qualifications?.map((item, idx) => (
-          <div key={idx} className="instructor-resume-row">
-            <span className="instructor-resume-row-left">
-              {item.year ?? INSTRUCTOR_RESUME_EMPTY_DISPLAY}
-            </span>
-            <span className="instructor-resume-row-right instructor-resume-row-right--black">
-              {item.name ?? INSTRUCTOR_RESUME_EMPTY_DISPLAY}
-            </span>
-          </div>
-        ))
-      ) : (
-        <InstructorResumeEmptyCardBody />
-      )}
-    </div>
+    <InstructorResumeListCard
+      items={items}
+      renderRow={(item, idx) => {
+        const row = item
+        return (
+          <InstructorResumeTimelineRow
+            key={idx}
+            dateLabel={row.year ?? INSTRUCTOR_RESUME_EMPTY_DISPLAY}
+            dateLayout="compact"
+            primary={row.name}
+            secondary={row.issuer}
+          />
+        )
+      }}
+    />
   )
 }
 
 export function InstructorResumeAwardsCardBody({ d }: { d: ApplicantInstructorRow }) {
+  const items = d.awards ?? []
   return (
-    <div className="instructor-resume-card">
-      {(d.awards?.length ?? 0) > 0 ? (
-        d.awards?.map((item, idx) => (
-          <div key={idx} className="instructor-resume-row">
-            <span className="instructor-resume-row-left">
-              {item.year ?? INSTRUCTOR_RESUME_EMPTY_DISPLAY}
-            </span>
-            <span className="instructor-resume-row-right instructor-resume-row-right--black">
-              {item.name ?? INSTRUCTOR_RESUME_EMPTY_DISPLAY}
-            </span>
-          </div>
-        ))
-      ) : (
-        <InstructorResumeEmptyCardBody />
-      )}
-    </div>
+    <InstructorResumeListCard
+      items={items}
+      renderRow={(item, idx) => {
+        const row = item
+        return (
+          <InstructorResumeTimelineRow
+            key={idx}
+            dateLabel={row.year ?? INSTRUCTOR_RESUME_EMPTY_DISPLAY}
+            dateLayout="compact"
+            primary={row.name}
+            secondary={row.issuer}
+          />
+        )
+      }}
+    />
   )
 }
 

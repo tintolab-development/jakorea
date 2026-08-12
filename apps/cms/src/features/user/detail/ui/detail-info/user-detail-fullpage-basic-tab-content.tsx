@@ -15,8 +15,10 @@ import {
   CONSENT_ROWS_PERMISSION_INSTRUCTOR,
 } from '@/features/user/detail/ui/user-consent-agreement-section'
 import { InstructorResumeDetailForms } from '@/features/user/detail/ui/instructor-resume-detail-forms'
-import { InstructorDetailEditForm } from '@/features/user/detail/ui/instructor-detail-edit/instructor-detail-edit-form'
-import { AdminDetailEditForm } from '@/features/user/detail/ui/admin-detail-edit/admin-detail-edit-form'
+import {
+  InstructorDetailEditForm,
+  resolveInstructorRegisterLikeEdit,
+} from '@/features/user/detail/ui/instructor-detail-edit/instructor-detail-edit-form'
 import { SchoolAffiliatedTeachersSection } from '@/features/user/detail/ui/school-affiliated-teachers-section'
 import { UserDetailAdminCommentSection } from './user-detail-admin-comment-section'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
@@ -32,7 +34,6 @@ import {
   useMemberCommentsQuery,
 } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { applyMemberConsentToSchema } from '@/features/user/api/map-member-consent-records'
-import { buildMemberConsentContextFromUser } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import {
   updateAffiliatedTeacherEmploymentStatusRemote,
@@ -193,23 +194,14 @@ export function UserDetailFullpageBasicTabContent({
     user.termsAgreements,
   ])
 
-  const memberConsentContext = useMemo(
-    () => buildMemberConsentContextFromUser(user),
-    [user]
-  )
-
   const isInstructorPermissionDetail = mode === 'permission' && permissionRole === 'instructor'
-  const isAdminPermissionDetail = mode === 'permission' && permissionRole === 'admin'
-  const showInstructorRegisterLikeEdit =
-    memberInfoEditing &&
-    memberInfoDraft != null &&
-    onMemberInfoDraftChange != null &&
-    user.role === 'INSTRUCTOR'
-  const showAdminRegisterLikeEdit =
-    memberInfoEditing &&
-    memberInfoDraft != null &&
-    onMemberInfoDraftChange != null &&
-    user.role === 'ADMIN'
+  // 강사 수정은 등록 폼 재사용(InstructorDetailEditForm)이 SSOT — 동의·이력 섹션까지 폼이 직접 렌더한다
+  const instructorRegisterLikeEdit = resolveInstructorRegisterLikeEdit({
+    user,
+    memberInfoEditing,
+    memberInfoDraft,
+    onMemberInfoDraftChange,
+  })
 
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
@@ -223,27 +215,14 @@ export function UserDetailFullpageBasicTabContent({
           />
         </>
       ) : null}
-      {showInstructorRegisterLikeEdit ? (
-        <>
-          <InstructorDetailEditForm
-            user={user}
-            instructorResumeApplicantRow={instructorResumeApplicantRow}
-            memberInfoDraft={memberInfoDraft}
-            onMemberInfoDraftChange={onMemberInfoDraftChange}
-            onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
-            isInstructorPermissionDetail={isInstructorPermissionDetail}
-          />
-        </>
-      ) : showAdminRegisterLikeEdit ? (
-        <AdminDetailEditForm
+      {instructorRegisterLikeEdit ? (
+        <InstructorDetailEditForm
           user={user}
-          memberInfoDraft={memberInfoDraft}
-          onMemberInfoDraftChange={onMemberInfoDraftChange}
-          profileFieldsEditable={adminMemberProfileFieldsEditableWhenEditing}
-          isAdminPermissionDetail={isAdminPermissionDetail}
-          remoteConsentRows={remoteConsentRows}
-          remoteConsentLoading={membersRemote && consentLoading}
-          onPermissionResendNotification={onPermissionResendNotification}
+          instructorResumeApplicantRow={instructorResumeApplicantRow}
+          memberInfoDraft={instructorRegisterLikeEdit.memberInfoDraft}
+          onMemberInfoDraftChange={instructorRegisterLikeEdit.onMemberInfoDraftChange}
+          onOpenJaGradeEvaluation={onOpenJaGradeEvaluation}
+          isInstructorPermissionDetail={isInstructorPermissionDetail}
         />
       ) : (
         <>
@@ -271,7 +250,6 @@ export function UserDetailFullpageBasicTabContent({
               viewVariant={consentViewVariant}
               remoteConsentRows={remoteConsentRows}
               remoteConsentLoading={membersRemote && consentLoading}
-              memberConsentContext={memberConsentContext}
             />
           ) : null}
           {instructorResumeApplicantRow ? (
