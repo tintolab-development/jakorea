@@ -1,5 +1,5 @@
-import { Input } from 'antd'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
+import { CmsInput } from '@/shared/ui/cms-input'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import type { VerticalTableRow } from '@/features/template/model/writing-form-draft.schema'
 import '@/features/template/ui/paragraph/table/agreement-portrait-personal-consent-name-row.css'
@@ -70,20 +70,19 @@ export function AgreementPortraitPersonalConsentNameRow({
           </span>
         </div>
         <div className="form-editor-vertical-table__td" role="gridcell">
-          <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body form-editor-vertical-table__cell-input-shell--body-subjective agreement-portrait-personal-consent-name-row__name-shell">
-            <Input
-              variant="borderless"
+          <div className="agreement-portrait-personal-consent-name-row__name-shell">
+            <CmsInput
+              inputSize="medium"
+              width="100%"
               value={nameValue}
               placeholder={NAME_PLACEHOLDER}
               readOnly={!interactive}
+              disabled={!interactive}
               onChange={e => {
                 if (!interactive) return
                 onNameChange(e.target.value)
               }}
               onFocus={() => onSelectRow?.()}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
-              }}
             />
           </div>
         </div>
@@ -100,27 +99,26 @@ export function AgreementPortraitPersonalConsentNameRow({
           role="gridcell"
         >
           <div className="agreement-portrait-personal-consent-name-row__affiliation">
-            <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body form-editor-vertical-table__cell-input-shell--body-subjective agreement-portrait-personal-consent-name-row__affiliation-input-shell">
-              <Input
-                variant="borderless"
+            <div className="agreement-portrait-personal-consent-name-row__affiliation-input-shell">
+              <CmsInput
+                inputSize="medium"
+                width="100%"
                 value={noAffiliation ? '' : affiliation}
                 placeholder={AFFILIATION_PLACEHOLDER}
-                disabled={noAffiliation}
+                disabled={noAffiliation || !interactive}
                 readOnly={!interactive}
                 onChange={e => {
-                  if (!interactive) return
+                  if (!interactive || noAffiliation) return
                   onAffiliationChange(e.target.value)
                 }}
                 onFocus={() => onSelectRow?.()}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
-                }}
               />
             </div>
             <DividerVertical />
             <CmsCheckbox
               checkboxSize="large"
               checked={noAffiliation}
+              disabled={!interactive}
               onChange={e => {
                 if (!interactive) return
                 onAffiliationChange(e.target.checked ? NO_AFFILIATION : '')

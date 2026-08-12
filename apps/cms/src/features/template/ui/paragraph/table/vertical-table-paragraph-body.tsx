@@ -9,6 +9,7 @@ import type {
   VerticalTableParagraph,
   VerticalTableRow,
 } from '@/features/template/model/writing-form-draft.schema'
+import { resolveTableBottomConsentRadioValue } from '@/features/template/lib/resolve-table-bottom-consent-radio-value'
 import {
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
   DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL,
@@ -147,6 +148,7 @@ export function VerticalTableParagraphBody({
   onTableRowSelectionChange,
   portraitConsentResponseFieldsInteractive = false,
   bottomConsentInteractive: bottomConsentInteractiveProp,
+  consentFillMode = false,
 }: {
   paragraph: VerticalTableParagraph
   onChange: (next: VerticalTableParagraph) => void
@@ -164,6 +166,8 @@ export function VerticalTableParagraphBody({
   portraitConsentResponseFieldsInteractive?: boolean
   /** preview fill — 하단 동의 라디오만 조작 허용 */
   bottomConsentInteractive?: boolean
+  /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
+  consentFillMode?: boolean
 }) {
   const bottomConsentInteractive = bottomConsentInteractiveProp ?? isEditMode
   const dtCellsInteractive = dateTimeCellsInteractiveProp ?? isEditMode
@@ -603,7 +607,13 @@ export function VerticalTableParagraphBody({
           <CmsRadioGroup
             className="form-editor-table-bottom-consent"
             size="large"
-            value={p.bottomConsent ?? 'agree'}
+            value={resolveTableBottomConsentRadioValue(
+              consentFillMode ? paragraph.bottomConsent : p.bottomConsent,
+              {
+                consentFillMode,
+                interactive: bottomConsentInteractive,
+              }
+            )}
             onChange={e => {
               if (!bottomConsentInteractive) return
               onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })

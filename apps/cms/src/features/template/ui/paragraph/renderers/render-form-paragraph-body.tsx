@@ -346,6 +346,7 @@ export function renderFormParagraphBody(
           isEditMode={isBodyInteractive}
           bodyDisplayMode={explanationBodyDisplayMode}
           bottomConsentInteractive={isBodyInteractive || structureLockedConsentChoiceInteractive}
+          consentFillMode={consentFillBodyReadOnly}
         />
       )
     }
@@ -375,6 +376,7 @@ export function renderFormParagraphBody(
           isEditMode={isEditMode}
           tableCanvasInteractive={tableCanvasInteractive}
           bottomConsentPreviewInAuthoring={structureLockedConsentChoiceInteractive}
+          consentFillMode={consentFillBodyReadOnly}
           tableRowSelection={options?.horizontalTableRowSelection}
           onTableRowSelectionChange={options?.onHorizontalTableRowSelectionChange}
           paymentStatementBasicInfoValues={options?.paymentStatementBasicInfoValues}
@@ -498,6 +500,7 @@ export function renderFormParagraphBody(
             options?.portraitConsentResponseFieldsInteractive
           }
           bottomConsentInteractive={structureLockedConsentChoiceInteractive}
+          consentFillMode={consentFillBodyReadOnly}
         />
       )
     }

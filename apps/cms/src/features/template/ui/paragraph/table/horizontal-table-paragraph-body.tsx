@@ -26,6 +26,7 @@ import type { PaymentStatementBasicInfoAutofillValues } from '@/features/templat
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { resolveTableBottomConsentRadioValue } from '@/features/template/lib/resolve-table-bottom-consent-radio-value'
 import { renderPaymentStatementIssuanceParagraphBody } from '@/features/template/ui/form-set/payment-statement-issuance/paragraph-body'
 import { renderApplicantRecruitFormIndividualParagraphBody } from '@/features/template/ui/form-set/recruit-form/individual/paragraph-body'
 import { renderApplicantRecruitFormInstitutionParagraphBody } from '@/features/template/ui/form-set/recruit-form/institution/paragraph-body'
@@ -418,6 +419,8 @@ export function HorizontalTableParagraphBody({
   tableCanvasInteractive = true,
   /** 구조 잠금 작성 중에도 하단 동의 라디오만 조작 가능 */
   bottomConsentPreviewInAuthoring = false,
+  /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
+  consentFillMode = false,
   tableRowSelection: controlledSelection,
   onTableRowSelectionChange,
   paymentStatementBasicInfoValues,
@@ -461,6 +464,8 @@ export function HorizontalTableParagraphBody({
   isEditMode: boolean
   tableCanvasInteractive?: boolean
   bottomConsentPreviewInAuthoring?: boolean
+  /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
+  consentFillMode?: boolean
   /** 있으면 상위(우측 패널)와 행 선택 동기화 */
   tableRowSelection?: HorizontalTableRowSelection | null
   onTableRowSelectionChange?: (next: HorizontalTableRowSelection | null) => void
@@ -1048,7 +1053,13 @@ export function HorizontalTableParagraphBody({
             <CmsRadioGroup
               className="form-editor-table-bottom-consent"
               size="large"
-              value={p.bottomConsent ?? 'agree'}
+              value={resolveTableBottomConsentRadioValue(
+                consentFillMode ? paragraph.bottomConsent : p.bottomConsent,
+                {
+                  consentFillMode,
+                  interactive: bottomConsentInteractive,
+                }
+              )}
               onChange={e => {
                 if (!bottomConsentInteractive) return
                 onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })

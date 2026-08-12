@@ -6,6 +6,7 @@ import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/pay
 import { PaymentPreConsentFixedBlock } from '@/features/template/ui/paragraph/explanation/payment-pre-consent-fixed-block'
 import { ParagraphInput } from '@/features/template/ui/shared/paragraph-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
+import { resolveTableBottomConsentRadioValue } from '@/features/template/lib/resolve-table-bottom-consent-radio-value'
 import '@/features/template/ui/form-editor/form-editor.css'
 import './text.css'
 
@@ -18,6 +19,7 @@ export function ExplanationText({
   isEditMode,
   bodyDisplayMode = 'input',
   bottomConsentInteractive,
+  consentFillMode = false,
 }: {
   paragraph: AgreementExplanationTextParagraph
   onChange: (next: AgreementExplanationTextParagraph) => void
@@ -29,6 +31,8 @@ export function ExplanationText({
    * 미지정 시 `isEditMode`와 동일. 구조 잠금 작성 미리체크는 true를 넘긴다.
    */
   bottomConsentInteractive?: boolean
+  /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
+  consentFillMode?: boolean
 }) {
   const consentInteractive = bottomConsentInteractive ?? isEditMode
   /** 초상권 intro는 구 저장본에 필드가 없어도 하단 동의 라디오 필수 */
@@ -39,7 +43,10 @@ export function ExplanationText({
     <CmsRadioGroup
       className="form-editor-table-bottom-consent"
       size="large"
-      value={paragraph.bottomConsent ?? 'agree'}
+      value={resolveTableBottomConsentRadioValue(paragraph.bottomConsent, {
+        consentFillMode,
+        interactive: consentInteractive,
+      })}
       onChange={e => {
         if (!consentInteractive) return
         onChange({
