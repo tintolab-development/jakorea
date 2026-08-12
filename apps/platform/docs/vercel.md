@@ -69,6 +69,26 @@ npx vercel pull --yes --environment=production
 2. Vercel Deployments 에서 Production 빌드 성공 확인
 3. SPA 딥링크(예: `/programs/...`) 새로고침 시 `index.html` rewrite로 404가 나지 않는지 확인
 
+## 6. 빌드 실패 트러블슈팅
+
+### `Cannot find module '@jakorea/ui'` + `src/App.tsx`
+
+| 원인 | 조치 |
+|------|------|
+| **Production Branch가 `main`** | `main`은 구 스캐폴드(`src/App.tsx`)만 있음 → **Production Branch = `development`** |
+| **Build Command가 `pnpm build`만** | Dashboard에서 Install/Build를 `vercel.json`과 동일하게 설정하거나, `development`의 `prebuild`가 포함된 `package.json` 사용 |
+| **Install이 `apps/platform`만** | Install Command: `cd ../.. && HUSKY=0 pnpm install` (모노레포 루트) |
+
+권장 Dashboard 값 ( `vercel.json` 미적용 시 ):
+
+- Install: `cd ../.. && HUSKY=0 pnpm install`
+- Build: `cd ../.. && pnpm turbo run build --filter=platform`  
+  또는 Root `apps/platform`에서 `pnpm build` (`prebuild`가 workspace 패키지를 먼저 빌드)
+
+### `tsc` / `vite-plugin` 관련
+
+Platform production build는 **`vite build`** 만 실행한다. 타입 검사는 `pnpm typecheck` / CI pre-commit에서 수행한다.
+
 ## 관련 파일
 
 - `apps/platform/vercel.json` — 빌드·ignore·SPA rewrite
