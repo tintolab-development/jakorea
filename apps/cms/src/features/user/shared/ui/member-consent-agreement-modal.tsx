@@ -98,9 +98,11 @@ export function MemberConsentAgreementModal({
     void loadWritingFormTemplateDraft(templateId)
       .then(saved => {
         if (cancelled) return
-        const seed = saved?.draft ?? resolveSeedDraft(templateId)
-        if (seed == null) return
-        let next = normalizeWritingFormDraft(seed)
+        /** 양식 구조는 저장본·API draft, 응답(라디오·입력)은 항상 시드 기준으로 비움 */
+        const seed = resolveSeedDraft(templateId)
+        const structureSource = saved?.draft ?? seed
+        if (structureSource == null || seed == null) return
+        let next = normalizeWritingFormDraft(structureSource)
         if (templateId === 'agreement-notice') {
           next = ensureAgreementNoticeConfirmationClosing(next)
           next = overlayAgreementNoticeSeedHorizontalTable(next)
