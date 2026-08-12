@@ -64,16 +64,18 @@ export function ScrollRevealYoutubeVideo({
         </PFText>
       ) : null}
 
-      <div className={styles.mask}>
-        <div className={styles.iframeWrap}>
-          <iframe
-            className={styles.iframe}
-            src={embedSrc}
-            title={iframeTitle}
-            allow="autoplay; encrypted-media; picture-in-picture"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-          />
+      <div className={styles.maskTrack}>
+        <div className={styles.mask}>
+          <div className={styles.iframeWrap}>
+            <iframe
+              className={styles.iframe}
+              src={embedSrc}
+              title={iframeTitle}
+              allow="autoplay; encrypted-media; picture-in-picture"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
         </div>
       </div>
     </section>

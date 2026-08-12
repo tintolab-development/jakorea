@@ -4,7 +4,7 @@
   --reveal-mask-height: clamp(160px, 18vw, 280px);
   --reveal-duration: 3200ms;
   --reveal-easing: cubic-bezier(0.22, 1, 0.36, 1);
-  /* opacity는 짧게 — clip-path 커튼이 보이도록 */
+  /* opacity는 짧게 — 커튼(width)이 보이도록 */
   --reveal-fade-duration: 480ms;
 
   display: flex;
@@ -35,25 +35,40 @@
     transform var(--reveal-duration) var(--reveal-easing);
 }
 
-.mask {
+/*
+ * clip-path inset(... round)는 브라우저에서 보간이 깨져 fade만 남음.
+ * 트랙은 최종 크기 고정, 마스크 width 0→100% 로 중앙 커튼 + border-radius 유지.
+ */
+.maskTrack {
   position: relative;
   width: var(--reveal-mask-width);
   height: var(--reveal-mask-height);
   margin: 0 auto;
+}
+
+.mask {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 0;
   overflow: hidden;
   border-radius: var(--reveal-radius);
   background: var(--color-neutral-black);
   opacity: 0;
-  /* literal inset만 보간됨 — var()로 감싸면 스냅되어 fade만 보임 */
-  clip-path: inset(0 50% 0 50%);
+  transform: translateX(-50%);
   transition:
-    clip-path var(--reveal-duration) var(--reveal-easing),
+    width var(--reveal-duration) var(--reveal-easing),
     opacity var(--reveal-fade-duration) var(--reveal-easing);
 }
 
 .iframeWrap {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 50%;
+  width: var(--reveal-mask-width);
+  height: 100%;
+  transform: translateX(-50%);
 }
 
 .iframe {
@@ -75,15 +90,19 @@
 }
 
 .isInView .mask {
+  width: 100%;
   opacity: 1;
-  clip-path: inset(0 0% 0 0%);
 }
 
-.reducedMotion .title,
-.reducedMotion .mask {
+.reducedMotion .title {
   opacity: 1;
   transform: none;
-  clip-path: inset(0 0% 0 0%);
+  transition: none;
+}
+
+.reducedMotion .mask {
+  width: 100%;
+  opacity: 1;
   transition: none;
 }
 

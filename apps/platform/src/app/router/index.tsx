@@ -43,7 +43,6 @@ import { DesignSystemPage } from '@/pages/design-system'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
 import { TemporaryPage } from '@/pages/temporary'
 import { SupportIndividualPage } from '@/pages/support/individual'
-import { YoutubeEmbedPage } from '@/pages/youtube-embed'
 import { IMPACT_STORIES_PATH } from '@/features/impact-story'
 import {
   ABOUT_CAREERS_PATH,
@@ -156,7 +155,6 @@ export const router = createBrowserRouter([
       { path: '/programs/:programId/apply', element: <ProgramApplyPage /> },
       { path: '/mypage/instructor-apply', element: <MypageInstructorApplyPage /> },
       { path: '/design-system', element: <DesignSystemPage /> },
-      { path: '/dev/youtube', element: <YoutubeEmbedPage /> },
     ],
   },
   {

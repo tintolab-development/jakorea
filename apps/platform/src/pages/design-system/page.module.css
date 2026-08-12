@@ -179,6 +179,26 @@
   scroll-margin-top: var(--spacing-80);
 }
 
+.youtubeRevealDemo {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50);
+}
+
+.youtubeReveal.youtubeReveal {
+  padding-block: var(--spacing-64);
+  background: transparent;
+}
+
+@media (--bp-pc-up) {
+  .youtubeReveal.youtubeReveal {
+    --reveal-mask-width: min(960px, calc(100% - 48px));
+    --reveal-mask-height: min(240px, calc((100% - 48px) / 4));
+  }
+}
+
 .stack {
   display: flex;
   flex-direction: column;
