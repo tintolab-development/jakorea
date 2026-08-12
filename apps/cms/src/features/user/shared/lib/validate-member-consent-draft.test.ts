@@ -9,8 +9,7 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { applyMemberPortraitConsentPrefill } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
-import { INSTRUCTOR_PORTRAIT_CONSENT_AFFILIATION_OPTIONS } from '@/features/user/shared/lib/instructor-portrait-consent-affiliation-options'
+import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/normalize-member-consent-write-draft'
 import {
   hasMemberConsentDisagreement,
   hasMemberConsentIncompleteRequiredFields,
@@ -76,25 +75,23 @@ function withPledgeClausesAgreed(draft: WritingFormDraft): WritingFormDraft {
 }
 
 describe('hasMemberConsentIncompleteRequiredFields', () => {
-  it('allows portrait when instructor affiliation is prefilled from school name', () => {
-    const draft = applyMemberPortraitConsentPrefill(createAgreementPortraitDraft(), {
-      name: '홍길동',
-      schoolEnrollmentStatus: 'enrolled',
-      schoolName: '○○고등학교',
-      portraitAffiliationSelectOptions: INSTRUCTOR_PORTRAIT_CONSENT_AFFILIATION_OPTIONS,
-    })
+  it('blocks portrait on write entry when name and affiliation are empty', () => {
+    const draft = normalizeMemberConsentWriteDraft(
+      createAgreementPortraitDraft(),
+      'agreement-portrait'
+    )
 
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-portrait' })
-    ).toBe(false)
+    ).toBe(true)
   })
 
-  it('blocks instructor portrait when affiliation is empty', () => {
-    const draft = applyMemberPortraitConsentPrefill(createAgreementPortraitDraft(), {
-      name: '홍길동',
-      schoolEnrollmentStatus: 'not_enrolled',
-      portraitAffiliationSelectOptions: INSTRUCTOR_PORTRAIT_CONSENT_AFFILIATION_OPTIONS,
-    })
+  it('blocks portrait when affiliation is empty but name is filled', () => {
+    const draft = withPersonalConsentCells(
+      normalizeMemberConsentWriteDraft(createAgreementPortraitDraft(), 'agreement-portrait'),
+      '홍길동',
+      ''
+    )
 
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-portrait' })
@@ -146,8 +143,11 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     ).toBe(true)
   })
 
-  it('blocks educator pledge when required multiple-choice is unanswered', () => {
-    const draft = normalizeWritingFormDraft(createEducatorFacilitatorPledgeDraft())
+  it('blocks educator pledge on write entry when required multiple-choice is unanswered', () => {
+    const draft = normalizeMemberConsentWriteDraft(
+      createEducatorFacilitatorPledgeDraft(),
+      'agreement-expense'
+    )
 
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-expense' })
@@ -185,8 +185,11 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     ).toBe(false)
   })
 
-  it('blocks agreement-notice when subject paragraph is empty', () => {
-    const draft = normalizeWritingFormDraft(createAgreementNoticeDraft())
+  it('blocks agreement-notice on write entry when subject paragraph is empty', () => {
+    const draft = normalizeMemberConsentWriteDraft(
+      normalizeWritingFormDraft(createAgreementNoticeDraft()),
+      'agreement-notice'
+    )
 
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-notice' })
