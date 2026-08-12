@@ -84,6 +84,30 @@ export function AddressSearchDetailInputs({
   )
 }
 
+/** 연락처·이메일 조회 전용 행 — 수정 슬롯이 없는 섹션(강사 등)에서 사용 */
+export function ContactInfoViewRow({
+  user,
+  personalInfoRevealed,
+}: {
+  user: Omit<User, 'password'>
+  personalInfoRevealed: boolean
+}) {
+  return (
+    <EditableRow type="double">
+      <EditableField
+        label="연락처"
+        readOnlyDisplay
+        view={<span>{detailPhoneDisplay(user, personalInfoRevealed)}</span>}
+      />
+      <EditableField
+        label="이메일"
+        readOnlyDisplay
+        view={<span>{detailEmailDisplay(user, personalInfoRevealed)}</span>}
+      />
+    </EditableRow>
+  )
+}
+
 export function ContactInfoFieldsRow({
   user,
   personalInfoRevealed,

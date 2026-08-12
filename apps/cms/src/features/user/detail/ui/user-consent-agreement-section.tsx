@@ -191,10 +191,7 @@ const MARKETING_AND_MFA_ROW: ConsentRowSchema = {
 }
 
 /** 관리자 회원 — 약관·동의 4항목(2열×2행) */
-export const CONSENT_ROWS_ADMIN: ConsentRowSchema[] = [
-  TERMS_AND_PRIVACY_ROW,
-  MARKETING_AND_MFA_ROW,
-]
+export const CONSENT_ROWS_ADMIN: ConsentRowSchema[] = [TERMS_AND_PRIVACY_ROW, MARKETING_AND_MFA_ROW]
 
 /** 회원 상세 약관·동의 — 스크린샷 기준 8항목(2열×4행) */
 const CONSENT_ROWS_FULL: ConsentRowSchema[] = [
@@ -204,8 +201,7 @@ const CONSENT_ROWS_FULL: ConsentRowSchema[] = [
   ADMIN_AND_CRIME_ROW,
 ]
 
-const ADMIN_CONSENT_CAPTION =
-  '* 미동의 시 서비스 가입 및 관리자 활동에 제한이 있을 수 있습니다.'
+const ADMIN_CONSENT_CAPTION = '* 미동의 시 서비스 가입 및 관리자 활동에 제한이 있을 수 있습니다.'
 
 /** 프리셋별 행·필드 구조 (표시 데이터와 분리) */
 export const CONSENT_PRESET_SCHEMA: ConsentPresetSchema = {
@@ -298,9 +294,7 @@ function resolveConsentFieldView(
   switch (value.type) {
     case 'remote_consent': {
       const status = value.agreed ? '동의' : '미동의'
-      const text = value.agreedAtDisplay
-        ? `${status} | ${value.agreedAtDisplay}`
-        : status
+      const text = value.agreedAtDisplay ? `${status} | ${value.agreedAtDisplay}` : status
       return consentFieldContent(text)
     }
     case 'document':
@@ -386,9 +380,7 @@ export function UserConsentAgreementSection({
 }: UserConsentAgreementSectionProps) {
   const [activeView, setActiveView] = useState<ActiveConsentView | null>(null)
 
-  const effectiveCaption =
-    caption ??
-    (preset === 'admin' ? ADMIN_CONSENT_CAPTION : DEFAULT_CAPTION)
+  const effectiveCaption = caption ?? (preset === 'admin' ? ADMIN_CONSENT_CAPTION : DEFAULT_CAPTION)
 
   const openDocumentForLabel = useCallback(
     (label: string, formResponseId?: number) => {
