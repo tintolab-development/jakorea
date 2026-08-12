@@ -2,10 +2,10 @@
   --reveal-radius: 18px;
   --reveal-mask-width: clamp(320px, 72vw, 960px);
   --reveal-mask-height: clamp(160px, 18vw, 280px);
-  --reveal-clip-inactive: inset(0 50% 0 50% round var(--reveal-radius));
-  --reveal-clip-active: inset(0 0 0 0 round var(--reveal-radius));
   --reveal-duration: 3200ms;
   --reveal-easing: cubic-bezier(0.22, 1, 0.36, 1);
+  /* opacity는 짧게 — clip-path 커튼이 보이도록 */
+  --reveal-fade-duration: 480ms;
 
   display: flex;
   flex-direction: column;
@@ -44,11 +44,11 @@
   border-radius: var(--reveal-radius);
   background: var(--color-neutral-black);
   opacity: 0;
-  transform: scale(1);
-  clip-path: var(--reveal-clip-inactive);
+  /* literal inset만 보간됨 — var()로 감싸면 스냅되어 fade만 보임 */
+  clip-path: inset(0 50% 0 50%);
   transition:
     clip-path var(--reveal-duration) var(--reveal-easing),
-    opacity var(--reveal-duration) var(--reveal-easing);
+    opacity var(--reveal-fade-duration) var(--reveal-easing);
 }
 
 .iframeWrap {
@@ -76,14 +76,14 @@
 
 .isInView .mask {
   opacity: 1;
-  clip-path: var(--reveal-clip-active);
+  clip-path: inset(0 0% 0 0%);
 }
 
 .reducedMotion .title,
 .reducedMotion .mask {
   opacity: 1;
   transform: none;
-  clip-path: var(--reveal-clip-active);
+  clip-path: inset(0 0% 0 0%);
   transition: none;
 }
 
@@ -92,7 +92,6 @@
     --reveal-radius: var(--radius-16);
     --reveal-mask-width: calc(100vw - 40px);
     --reveal-mask-height: clamp(180px, 52vw, 260px);
-    --reveal-clip-inactive: inset(0 50% 0 50% round var(--reveal-radius));
     --reveal-duration: 2800ms;
     padding: 96px 0;
     gap: var(--spacing-32);
