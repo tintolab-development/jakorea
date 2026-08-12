@@ -25,15 +25,12 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
-import { INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
-import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
   isAgreementInstructorConsentField,
   isInstructorCrimeConsentField,
   resolveInstructorConsentTemplateEntry,
   type InstructorConsentFieldKey,
 } from '@/features/user/shared/lib/instructor-consent-field-map'
-import { isInstructorRegisterBasicInfoIncompleteForConsent } from '@/features/user/shared/lib/validate-instructor-consent-basic-info'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import { InstructorRegisterEducationSection } from '@/features/user/shared/ui/instructor-register-education-section'
@@ -47,7 +44,6 @@ import {
   EMPLOYMENT_STATUS_OPTIONS,
   FORM_ITEM_STYLE,
   GENDER_OPTIONS,
-  INITIAL_VALUES,
   INSTRUCTOR_FREE_WRITE_ITEMS,
   MEMBER_TYPE_OPTIONS,
   TERMS_CONSENT_LABEL_WIDTH,
@@ -135,13 +131,14 @@ function InstructorCareerRowEdit({
   )
 }
 
+/** Form.Item 자식 — value/onChange로 미동의 시 draft·onValuesChange까지 동기화 */
 function ConsentDocumentFieldEdit({
   value,
-  onDisagree,
+  onChange,
   onWrite,
 }: {
-  value: ConsentValue | undefined
-  onDisagree: () => void
+  value?: ConsentValue
+  onChange?: (value: ConsentValue) => void
   onWrite: () => void
 }) {
   return (
@@ -153,7 +150,7 @@ function ConsentDocumentFieldEdit({
         onChange={event => {
           const next = event.target.value as ConsentValue
           if (next === 'disagree') {
-            onDisagree()
+            onChange?.('disagree')
             return
           }
           onWrite()
@@ -181,6 +178,11 @@ export interface InstructorProfileFormBodyProps {
   basicInfoExtraBeforeBusinessIncome?: ReactNode
   /** 신규 등록 — JA 등급 평가 모달 열기 */
   onOpenJaGradeEvaluation?: () => void
+  /**
+   * 동의서 작성 완료 등 `setFieldValue`로 동의값을 바꾼 뒤 호출.
+   * Ant Design Form은 setFieldValue 시 onValuesChange를 호출하지 않음.
+   */
+  onConsentValuesCommit?: () => void
   className?: string
 }
 
@@ -196,11 +198,11 @@ export function InstructorProfileFormBody({
   basicInfoPrefix,
   basicInfoExtraBeforeBusinessIncome,
   onOpenJaGradeEvaluation,
+  onConsentValuesCommit,
   className,
 }: InstructorProfileFormBodyProps) {
   const isDetailEdit = layoutVariant === 'detailEdit'
   const formLayout = getInstructorFormLayout(isDetailEdit ? 'cmsDetailEdit' : 'cmsRegister')
-  const { showAlert } = useCmsAlert()
   const [activeConsentField, setActiveConsentField] = useState<InstructorConsentFieldKey | null>(
     null
   )
@@ -210,23 +212,12 @@ export function InstructorProfileFormBody({
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
   const jaEvaluationGrade = Form.useWatch('jaEvaluationGrade', form) ?? ''
   const isTeacherMember = memberType === 'school_teacher'
-  const allValues = Form.useWatch([], form) as InstructorProfileFormValues | undefined
   const careerLevel = Form.useWatch('careerLevel', form) ?? 'new'
 
   const activeConsentEntry =
     activeConsentField != null ? resolveInstructorConsentTemplateEntry(activeConsentField) : null
 
   const handleConsentWrite = (fieldKey: InstructorConsentFieldKey) => {
-    if (!formLayout.consent.skipBasicInfoGate) {
-      const values = allValues ?? form.getFieldsValue()
-      if (isInstructorRegisterBasicInfoIncompleteForConsent(values)) {
-        showAlert({
-          title: '안내',
-          content: INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
-        })
-        return
-      }
-    }
     setActiveConsentField(fieldKey)
   }
 
@@ -237,6 +228,7 @@ export function InstructorProfileFormBody({
   const handleConsentComplete = (fieldKey: InstructorConsentFieldKey) => {
     form.setFieldValue(fieldKey, 'agree')
     setActiveConsentField(null)
+    onConsentValuesCommit?.()
   }
 
   const affiliationFieldEdit = isTeacherMember ? (
@@ -271,7 +263,18 @@ export function InstructorProfileFormBody({
           disabled={affiliationNone}
         />
       </Form.Item>
-      <Form.Item name="affiliationNone" valuePropName="checked" noStyle>
+      <Form.Item
+        name="affiliationNone"
+        valuePropName="checked"
+        noStyle
+        getValueFromEvent={event => {
+          const checked = event.target.checked === true
+          if (checked) {
+            form.setFieldValue('affiliationName', '')
+          }
+          return checked
+        }}
+      >
         <CmsCheckbox checkboxSize="medium">소속 없음</CmsCheckbox>
       </Form.Item>
     </div>
@@ -570,14 +573,11 @@ export function InstructorProfileFormBody({
                   labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                   view="-"
                   edit={
-                    <>
-                      <Form.Item name="consentPortrait" hidden preserve />
+                    <Form.Item name="consentPortrait" noStyle>
                       <ConsentDocumentFieldEdit
-                        value={allValues?.consentPortrait ?? INITIAL_VALUES.consentPortrait}
-                        onDisagree={() => form.setFieldValue('consentPortrait', 'disagree')}
                         onWrite={() => handleConsentWrite('consentPortrait')}
                       />
-                    </>
+                    </Form.Item>
                   }
                 />
               </DetailInfoForm.Row>
@@ -595,17 +595,11 @@ export function InstructorProfileFormBody({
                   labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                   view="-"
                   edit={
-                    <>
-                      <Form.Item name="consentPaymentStatement" hidden preserve />
+                    <Form.Item name="consentPaymentStatement" noStyle>
                       <ConsentDocumentFieldEdit
-                        value={
-                          allValues?.consentPaymentStatement ??
-                          INITIAL_VALUES.consentPaymentStatement
-                        }
-                        onDisagree={() => form.setFieldValue('consentPaymentStatement', 'disagree')}
                         onWrite={() => handleConsentWrite('consentPaymentStatement')}
                       />
-                    </>
+                    </Form.Item>
                   }
                 />
                 <DetailInfoForm.Field
@@ -613,16 +607,11 @@ export function InstructorProfileFormBody({
                   labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                   view="-"
                   edit={
-                    <>
-                      <Form.Item name="consentEducatorPledge" hidden preserve />
+                    <Form.Item name="consentEducatorPledge" noStyle>
                       <ConsentDocumentFieldEdit
-                        value={
-                          allValues?.consentEducatorPledge ?? INITIAL_VALUES.consentEducatorPledge
-                        }
-                        onDisagree={() => form.setFieldValue('consentEducatorPledge', 'disagree')}
                         onWrite={() => handleConsentWrite('consentEducatorPledge')}
                       />
-                    </>
+                    </Form.Item>
                   }
                 />
               </DetailInfoForm.Row>
@@ -632,19 +621,11 @@ export function InstructorProfileFormBody({
                   labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                   view="-"
                   edit={
-                    <>
-                      <Form.Item name="consentAdministrativeJoint" hidden preserve />
+                    <Form.Item name="consentAdministrativeJoint" noStyle>
                       <ConsentDocumentFieldEdit
-                        value={
-                          allValues?.consentAdministrativeJoint ??
-                          INITIAL_VALUES.consentAdministrativeJoint
-                        }
-                        onDisagree={() =>
-                          form.setFieldValue('consentAdministrativeJoint', 'disagree')
-                        }
                         onWrite={() => handleConsentWrite('consentAdministrativeJoint')}
                       />
-                    </>
+                    </Form.Item>
                   }
                 />
                 <DetailInfoForm.Field
@@ -652,16 +633,11 @@ export function InstructorProfileFormBody({
                   labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                   view="-"
                   edit={
-                    <>
-                      <Form.Item name="consentSexOffenseCheck" hidden preserve />
+                    <Form.Item name="consentSexOffenseCheck" noStyle>
                       <ConsentDocumentFieldEdit
-                        value={
-                          allValues?.consentSexOffenseCheck ?? INITIAL_VALUES.consentSexOffenseCheck
-                        }
-                        onDisagree={() => form.setFieldValue('consentSexOffenseCheck', 'disagree')}
                         onWrite={() => handleConsentWrite('consentSexOffenseCheck')}
                       />
-                    </>
+                    </Form.Item>
                   }
                 />
               </DetailInfoForm.Row>

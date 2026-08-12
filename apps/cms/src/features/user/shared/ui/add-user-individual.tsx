@@ -19,7 +19,6 @@ import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-w
 import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
-  INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import {
@@ -28,13 +27,13 @@ import {
   collectDisagreedRequiredConsentLabels,
   hasUnsetConsentSelections,
 } from '@jakorea/domain/shared/required-consent-alert'
+import { isRequiredAddressIncomplete } from '@jakorea/domain/shared/required-address'
 import type { MemberConsentFieldKey } from '@/features/user/shared/lib/member-consent-template-map'
 import {
   isAgreementMemberConsentField,
   isMemberCrimeConsentField,
   resolveMemberConsentTemplateEntry,
 } from '@/features/user/shared/lib/member-consent-template-map'
-import { isMemberRegisterBasicInfoIncompleteForConsent } from '@/features/user/shared/lib/validate-member-consent-basic-info'
 import { MEMBER_REGISTER_ALL_CONSENT_KEYS } from '@/features/user/shared/lib/member-register-consent-fields'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
@@ -217,7 +216,13 @@ function collectMemberRegisterValidation(
     formatMessages.push('올바른 이메일 형식이 아닙니다')
   }
 
-  if (!values.address?.trim()) {
+  if (
+    isRequiredAddressIncomplete({
+      address: values.address,
+      addressDetail: values.detailAddress,
+      subject: 'person',
+    })
+  ) {
     missingRequired = true
   }
 
@@ -246,14 +251,6 @@ export function AddUserIndividual({
     activeConsentField != null ? resolveMemberConsentTemplateEntry(activeConsentField) : null
 
   const handleConsentWrite = (fieldKey: MemberConsentFieldKey) => {
-    const values = allValues ?? form.getFieldsValue()
-    if (isMemberRegisterBasicInfoIncompleteForConsent(values)) {
-      showAlert({
-        title: '안내',
-        content: INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
-      })
-      return
-    }
     setActiveConsentField(fieldKey)
   }
 
@@ -518,7 +515,7 @@ export function AddUserIndividual({
                   </Form.Item>
                   <DetailInfoForm.InputsSeparator />
                   <Form.Item name="detailAddress" noStyle>
-                    <CmsInput placeholder="상세 주소" inputSize="medium" width="100%" />
+                    <CmsInput placeholder="상세 주소 (필수)" inputSize="medium" width="100%" />
                   </Form.Item>
                 </Space.Compact>
               }

@@ -210,6 +210,7 @@ export function InstructorRegisterModal({
         instructorMemberId={null}
         instructorUserId={`instructor-register-draft:${registerDraftId}:${formBodyKey}`}
         persistMode="localOnly"
+        restoreStoredDraft={false}
         onClose={() => setJaGradeEvaluationOpen(false)}
         onComplete={({ grade }) => {
           form.setFieldValue('jaEvaluationGrade', grade)
