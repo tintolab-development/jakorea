@@ -27,6 +27,13 @@
   }
 }
 
+/* 고해상도: 기존 스펙 유지, 상단만 조금 더 여유 */
+@media (--bp-pc-full-up) {
+  .section {
+    padding-top: 210px;
+  }
+}
+
 .inner {
   display: flex;
   width: 100%;
