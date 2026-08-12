@@ -6,7 +6,7 @@ CMS Playwright E2E · `/e2e-error-log` · 회원 관리 연동에서 **관측·�
 |------|-----|
 | **작성일** | 2026-07-20 (등록·상세 path 분리: 2026-07-23) |
 | **수집 출처** | Playwright E2E · `e2e-error-log` · 회원 관리 FE 연동 |
-| **관련 FE 문서** | [playwright-flows.md](../e2e/playwright-flows.md) · [members-api-integration-2026-07-23.md](./members/members-api-integration-2026-07-23.md) |
+| **관련 FE 문서** | [playwright-flows.md](../e2e/playwright-flows.md) |
 
 ---
 
@@ -14,14 +14,13 @@ CMS Playwright E2E · `/e2e-error-log` · 회원 관리 연동에서 **관측·�
 
 | 우선순위 | 도메인 | 대표 증상 | 문서 |
 |----------|--------|-----------|------|
-| **P0** | **members (종합)** | 개인·학교·강사 **등록·상세 path 분리(B안)** · createAdmin↔users 정합 · teacherMemberId · 필터 · 관리자 재발송 등 | [**members-api-backend-handoff-2026-07-31.md**](./members/members-api-backend-handoff-2026-07-31.md) ← **백엔드 전달용 요약** |
-| **P0** | **members (권한 박탈·E2E)** | 박탈 후 목록 `instructorStatus=REVOKED` 미하달 · `evaluation-grade` `DATABASE_ERROR` · 목록 500 등 | [e2e-members-instructor-revoke-list-status-handoff-2026-07-29.md](./members/e2e-members-instructor-revoke-list-status-handoff-2026-07-29.md) |
+| **P0** | **members (등록 약관)** | 선택 약관까지 필수 검증 · pre-register 400 | [**members-pre-register-terms-required-policy-backend-request-2026-08-11.md**](./members/members-pre-register-terms-required-policy-backend-request-2026-08-11.md) |
+| **P0** | **members (관리자 회원)** | 일괄 삭제 불가 · 전체 목록 미노출 · 상세 약관·생년월일 누락 | [**admin-member-server-modification-request-2026-08-12.md**](./members/admin-member-server-modification-request-2026-08-12.md) |
 | **P0** | **programs** | `POST /api/admin/programs` → `DATABASE_ERROR` (HTTP 500) | [e2e-programs-create-database-error-handoff.md](./e2e-programs-create-database-error-handoff.md) |
-| **P0** | **members (E2E 상세)** | 단일 pre-register·상세 DTO 갭(M2) · (구) 관리자 pre-register 500(M1, FE는 createAdmin) | [e2e-members-pre-register-handoff-2026-07-23.md](./members/e2e-members-pre-register-handoff-2026-07-23.md) |
-| **P0** | **API 공통 (CMS·Platform)** | validation Bean 메시지 UI 직접 노출 · unmask `reason` minLength 5 | [backend-handoff §에러 응답](./backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통) · [members §2.7](./members/members-api-backend-handoff-2026-07-31.md#27-unmask-reason-길이-제한-p0--2026-07-31-관측) · [Platform](./../../platform/docs/api/api-error-response-handoff-2026-07-31.md) |
+| **P0** | **API 공통 (CMS·Platform)** | validation Bean 메시지 UI 직접 노출 · unmask `reason` minLength 5 | [backend-handoff §에러 응답](./backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통) · [Platform](./../../platform/docs/api/api-error-response-handoff-2026-07-31.md) |
 | **P2** | **adminAuth** | 동일 계정 병렬 MFA → `MFA_CHALLENGE_INVALID` (FE는 storageState 로 완화) | [e2e-admin-auth-mfa-concurrency-handoff.md](./e2e-admin-auth-mfa-concurrency-handoff.md) |
 
-> **회원 관리 백엔드 전달:** [members/](./members/README.md) 아래 **종합 handoff**를 우선 전달하면 됩니다. E2E 재현 디테일은 pre-register·등록 path 문서를 첨부하세요. **관리자 등록**은 `admin-accounts` · **개인·학교·강사**는 역할별 path 분리가 canonical ([handoff §4](./members/members-api-backend-handoff-2026-07-31.md)).
+> **회원 관리 백엔드 전달:** [members/](./members/README.md) 아래 최신 handoff 문서를 전달합니다.
 
 ---
 
@@ -45,8 +44,8 @@ pnpm --filter cms test:e2e:members
 
 ## 범위 밖 (이 묶음에서 다루지 않음)
 
-- 예전 갭 목록(일부 outdated 가능) → [members-api-backend-gaps-2026-07-23.md](./members/members-api-backend-gaps-2026-07-23.md) · [programs-api-backend-gaps.md](./programs-api-backend-gaps.md)
-- 회원 **권한 관리** LNB의 ProgramRole 매트릭스 설계 — 종합 핸드오프 P2 참고
+- 예전 갭 목록(일부 outdated 가능) → [programs-api-backend-gaps.md](./programs-api-backend-gaps.md)
+- 회원 **권한 관리** LNB의 ProgramRole 매트릭스 설계
 
 ---
 
@@ -66,4 +65,4 @@ pnpm --filter cms test:e2e:members
 
 이 항목은 백엔드 **비즈니스 에러 코드 수정** 대상이 아니며, 인프라 복구가 우선입니다.
 
-**Last updated:** 2026-07-29
+**Last updated:** 2026-08-11

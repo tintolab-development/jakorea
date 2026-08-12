@@ -17,6 +17,7 @@ type HeaderDesktopProps = {
   isLoggedIn?: boolean
   onLogout?: () => void
   transparent?: boolean
+  inverse?: boolean
 }
 
 function NavigationSubMenuItem({
@@ -83,26 +84,33 @@ export function HeaderDesktop({
   isLoggedIn = false,
   onLogout,
   transparent = false,
+  inverse = false,
 }: HeaderDesktopProps) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const [activeNavigationItem, setActiveNavigationItem] = useState(() =>
-    getActiveNavigationItem(pathname),
-  )
+  const [activeNavigationItem, setActiveNavigationItem] = useState<
+    ReturnType<typeof getActiveNavigationItem>
+  >(() => getActiveNavigationItem(pathname))
+  const [hoveredNavigationItem, setHoveredNavigationItem] = useState<
+    ReturnType<typeof getActiveNavigationItem>
+  >(null)
   const [isNavOpen, setIsNavOpen] = useState(false)
 
   useEffect(() => {
     setActiveNavigationItem(getActiveNavigationItem(pathname))
+    setHoveredNavigationItem(null)
     setIsNavOpen(false)
   }, [pathname])
 
   const closeNav = () => {
     setIsNavOpen(false)
+    setHoveredNavigationItem(null)
   }
 
   const headerClassName = [
     styles.header,
     transparent ? styles.headerTransparent : undefined,
+    inverse ? styles.headerInverse : undefined,
     isNavOpen ? styles.headerNavOpen : undefined,
   ]
     .filter(Boolean)
@@ -112,11 +120,14 @@ export function HeaderDesktop({
     .filter(Boolean)
     .join(' ')
 
+  const highlightedNavigationItem = hoveredNavigationItem ?? activeNavigationItem
+
   return (
     <header
       className={headerClassName}
       onMouseLeave={() => {
         setIsNavOpen(false)
+        setHoveredNavigationItem(null)
       }}
     >
       <div className={styles.inner}>
@@ -133,10 +144,11 @@ export function HeaderDesktop({
           }}
         >
           {navigationGroups.map(group => {
-            const isActive = group.label === activeNavigationItem
+            const isHighlighted = group.label === highlightedNavigationItem
+            const isRouteActive = group.label === activeNavigationItem
             const buttonClassName = [
               styles.navigationButton,
-              isActive ? styles.navigationButtonActive : undefined,
+              isHighlighted ? styles.navigationButtonActive : undefined,
             ]
               .filter(Boolean)
               .join(' ')
@@ -145,8 +157,11 @@ export function HeaderDesktop({
               <button
                 className={buttonClassName}
                 type="button"
-                aria-pressed={isActive}
+                aria-pressed={isRouteActive}
                 key={group.label}
+                onMouseEnter={() => {
+                  setHoveredNavigationItem(group.label)
+                }}
                 onClick={() => {
                   setActiveNavigationItem(group.label)
                   const href = 'href' in group ? group.href : undefined
@@ -157,7 +172,10 @@ export function HeaderDesktop({
                 }}
               >
                 <span className={styles.navigationButtonLabel}>
-                  <PFText typo="bd-lg-sb" color={isActive ? 'primary-500' : 'black'}>
+                  <PFText
+                    typo="bd-lg-sb"
+                    color={isHighlighted ? 'primary-500' : inverse ? 'white' : 'black'}
+                  >
                     {group.label}
                   </PFText>
                 </span>
@@ -202,7 +220,7 @@ export function HeaderDesktop({
                   key={action}
                   onClick={() => navigate(route)}
                 >
-                  <PFText typo="bd-md-rg" color="neutral-cool-600">
+                  <PFText typo="bd-md-rg" color={inverse ? 'white' : 'neutral-cool-600'}>
                     {action}
                   </PFText>
                 </button>
@@ -229,6 +247,9 @@ export function HeaderDesktop({
                 role="group"
                 aria-label={group.label}
                 key={group.label}
+                onMouseEnter={() => {
+                  setHoveredNavigationItem(group.label)
+                }}
               >
                 {group.children.map(item => (
                   <NavigationSubMenuItem

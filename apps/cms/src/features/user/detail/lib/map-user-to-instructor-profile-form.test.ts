@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { User } from '@/types/user'
-import { mapUserToInstructorProfileFormValues } from './map-user-to-instructor-profile-form'
+import { INITIAL_VALUES } from '@/features/user/shared/ui/instructor-profile-form'
+import {
+  mapInstructorProfileFormToBasicInfoDraftPartial,
+  mapUserToInstructorProfileFormValues,
+} from './map-user-to-instructor-profile-form'
 
 describe('mapUserToInstructorProfileFormValues', () => {
   it('자택 주소와 상세 주소를 수정 폼 필드에 분리한다', () => {
@@ -52,5 +56,37 @@ describe('mapUserToInstructorProfileFormValues', () => {
     expect(values.memberType).toBe('school_teacher')
     expect(values.schoolName).toBe('진월초등학교')
     expect(values.employmentStatus).toBe('ACTIVE')
+  })
+
+  it('상세 수정 draft에 termsAgreements(동의 여부)를 포함한다', () => {
+    const draft = mapInstructorProfileFormToBasicInfoDraftPartial({
+      ...INITIAL_VALUES,
+      name: '김강사',
+      gender: 'male',
+      birthDate: '1990.01.01',
+      contact: '01012345678',
+      email: 'a@b.com',
+      consentTermsOfService: 'agree',
+      consentPersonal: 'agree',
+      consentMarketing: 'disagree',
+      consentPortrait: 'agree',
+      consentPaymentStatement: 'disagree',
+      consentEducatorPledge: 'agree',
+      consentAdministrativeJoint: 'disagree',
+      consentSexOffenseCheck: 'agree',
+    })
+
+    expect(draft.termsAgreements).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ termsType: 'MARKETING', agreed: false }),
+        expect.objectContaining({ termsType: 'PORTRAIT_RIGHTS', agreed: true }),
+        expect.objectContaining({ termsType: 'PAYMENT_STATEMENT_PRE_CONSENT', agreed: false }),
+        expect.objectContaining({ termsType: 'FACILITATOR_PLEDGE', agreed: true }),
+        expect.objectContaining({ termsType: 'ADMINISTRATIVE_INFO_CONSENT', agreed: false }),
+        expect.objectContaining({ termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT', agreed: true }),
+      ])
+    )
+    expect(draft.termsAgreements?.some(r => r.termsType === 'SERVICE_TERMS')).toBe(false)
+    expect(draft.termsAgreements?.some(r => r.termsType === 'PRIVACY_COLLECTION')).toBe(false)
   })
 })

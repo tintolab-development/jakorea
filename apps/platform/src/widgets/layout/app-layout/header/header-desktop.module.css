@@ -22,6 +22,16 @@
   background: transparent;
 }
 
+/* 어두운 히어로 위 — 로고·아이콘 흰색 반전 (전용 흰색 에셋 수급 전 임시 filter) */
+.headerInverse {
+  border-bottom-color: transparent;
+}
+
+.headerInverse .logo,
+.headerInverse .actionIcon {
+  filter: brightness(0) invert(1);
+}
+
 .inner {
   position: relative;
   z-index: 2;

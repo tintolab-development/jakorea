@@ -1,0 +1,1 @@
+export { SupportIndividualPage } from './page'

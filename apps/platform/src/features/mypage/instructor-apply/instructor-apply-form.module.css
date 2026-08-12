@@ -34,13 +34,6 @@
   accent-color: var(--color-primary-500);
 }
 
-.consentStatus {
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  flex-wrap: wrap;
-}
-
 .textarea {
   box-sizing: border-box;
   width: 100%;
@@ -61,38 +54,8 @@
   outline-offset: -1px;
 }
 
-/* CMS DetailInfoForm inputs-wrapper-no-gap + separator 대응 */
-.inlineControls {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  width: 100%;
-  min-width: 0;
-}
-
-.inlineSeparator {
-  flex-shrink: 0;
-  align-self: center;
-  width: 1px;
-  height: 13px;
-  margin-inline: var(--spacing-12);
-  opacity: 0.5;
-  background: var(--default-BK, #3d3d3d);
-}
-
-.inlineControls .radioGroup {
-  flex-shrink: 0;
-}
-
-.settlementAccount {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-width: 0;
-}
-
 .bankAccountPair {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--spacing-8);
   flex: 0 1 auto;
@@ -108,8 +71,7 @@
 }
 
 .fieldStackRow {
-  display: flex;
-  align-items: center;
+  display: block;
   width: 100%;
   min-width: 0;
   min-height: 48px;
@@ -148,33 +110,13 @@
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-12);
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .degreeSelectMargin {
   margin-left: var(--spacing-8);
-}
-
-@media (--bp-below-pc) {
-  .settlementAccount {
-    flex-wrap: wrap;
-    row-gap: var(--spacing-8);
-  }
-
-  .bankAccountPair {
-    flex: 1 1 100%;
-  }
-
-  .fieldStackRow {
-    flex-wrap: wrap;
-    row-gap: var(--spacing-8);
-  }
-
-  .inlineGroup {
-    flex: 1 1 100%;
-  }
 }
 
 .actions {

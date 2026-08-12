@@ -19,16 +19,16 @@
 }
 
 .admin-register-modal__section--terms .detail-info-form__field {
-  height: 50px;
   min-height: 50px;
-  max-height: 50px;
 }
 
 .admin-register-modal__section--terms .detail-info-form__field-label,
 .admin-register-modal__section--terms .detail-info-form__field-content {
-  height: 50px;
   min-height: 50px;
-  max-height: 50px;
   box-sizing: border-box;
   padding-block: 5px;
+}
+
+.admin-register-modal__section--terms .detail-info-form__field-content--edit {
+  align-items: center;
 }

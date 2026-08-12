@@ -5,12 +5,22 @@ import styles from './header-mobile.module.css'
 
 type HeaderMobileProps = {
   transparent?: boolean
+  inverse?: boolean
   isMenuOpen?: boolean
   onMenuOpen?: () => void
 }
 
-export function HeaderMobile({ transparent = false, isMenuOpen = false, onMenuOpen }: HeaderMobileProps) {
-  const headerClassName = [styles.header, transparent ? styles.headerTransparent : undefined]
+export function HeaderMobile({
+  transparent = false,
+  inverse = false,
+  isMenuOpen = false,
+  onMenuOpen,
+}: HeaderMobileProps) {
+  const headerClassName = [
+    styles.header,
+    transparent ? styles.headerTransparent : undefined,
+    inverse ? styles.headerInverse : undefined,
+  ]
     .filter(Boolean)
     .join(' ')
 

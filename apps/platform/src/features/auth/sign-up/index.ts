@@ -7,6 +7,7 @@ export type {
   ConfirmationRow,
   ConsentChoice,
   EmailCheckStatus,
+  EmploymentStatus,
   GenderType,
   MemberType,
   SchoolStatus,

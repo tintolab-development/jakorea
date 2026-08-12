@@ -249,7 +249,8 @@ function buildTypeFixture(args: TypeSeedArgs): CmsRegistrationFixture {
   const absoluteOps = {
     startDate: '2025-12-08T00:00:00+09:00',
     endDate: '2026-12-30T23:59:59+09:00',
-    ...appPeriod('closed'),
+    /** 홈 캐러셀(앞 8건) 상태배지용 — 모집 중 창 */
+    ...appPeriod('recruiting'),
   }
 
   const recruitCase: AppCase =
@@ -318,7 +319,8 @@ function buildTypeFixture(args: TypeSeedArgs): CmsRegistrationFixture {
 
 /**
  * CMS GENERAL_PROGRAM_VARIANTS 순서 (index 0~7).
- * special: org curriculum single/multi, org schedule single → 절대 기간 + education_in_progress
+ * special: org curriculum single/multi, org schedule single → 절대 운영기간 + 모집 중 창
+ * 홈 캐러셀(slice 0~7) 상태배지용으로 일반 8건 모두 recruiting_students
  */
 export const GENERAL_REGISTRATION_FIXTURES: CmsRegistrationFixture[] = [
   buildTypeFixture({
@@ -329,7 +331,7 @@ export const GENERAL_REGISTRATION_FIXTURES: CmsRegistrationFixture[] = [
     educationStructure: 'curriculum',
     sessionRound: 'single',
     special: 'org-curriculum',
-    lifecycleStatus: 'education_in_progress',
+    lifecycleStatus: 'recruiting_students',
     type: 'online',
     businessArea: '진로취업',
     targetLevel: 'high',
@@ -343,7 +345,7 @@ export const GENERAL_REGISTRATION_FIXTURES: CmsRegistrationFixture[] = [
     educationStructure: 'curriculum',
     sessionRound: 'multi',
     special: 'org-curriculum',
-    lifecycleStatus: 'education_in_progress',
+    lifecycleStatus: 'recruiting_students',
     type: 'online',
     businessArea: '진로취업',
     targetLevel: 'high',
@@ -356,7 +358,7 @@ export const GENERAL_REGISTRATION_FIXTURES: CmsRegistrationFixture[] = [
     audience: 'individual',
     educationStructure: 'curriculum',
     sessionRound: 'single',
-    lifecycleStatus: 'planned',
+    lifecycleStatus: 'recruiting_students',
     type: 'offline',
     businessArea: '경제금융',
     targetLevel: 'high',
@@ -369,7 +371,7 @@ export const GENERAL_REGISTRATION_FIXTURES: CmsRegistrationFixture[] = [
     audience: 'individual',
     educationStructure: 'curriculum',
     sessionRound: 'multi',
-    lifecycleStatus: 'planned',
+    lifecycleStatus: 'recruiting_students',
     type: 'offline',
     businessArea: '경제금융',
     targetLevel: 'high',
@@ -385,7 +387,7 @@ export const GENERAL_REGISTRATION_FIXTURES: CmsRegistrationFixture[] = [
     educationStructure: 'schedule',
     sessionRound: 'single',
     special: 'org-schedule',
-    lifecycleStatus: 'education_in_progress',
+    lifecycleStatus: 'recruiting_students',
     type: 'online',
     businessArea: '진로취업',
     targetLevel: 'high',
@@ -411,7 +413,7 @@ export const GENERAL_REGISTRATION_FIXTURES: CmsRegistrationFixture[] = [
     audience: 'individual',
     educationStructure: 'schedule',
     sessionRound: 'single',
-    lifecycleStatus: 'planned',
+    lifecycleStatus: 'recruiting_students',
     type: 'offline',
     businessArea: '경제금융',
     targetLevel: 'high',
@@ -424,7 +426,7 @@ export const GENERAL_REGISTRATION_FIXTURES: CmsRegistrationFixture[] = [
     audience: 'individual',
     educationStructure: 'schedule',
     sessionRound: 'multi',
-    lifecycleStatus: 'planned',
+    lifecycleStatus: 'recruiting_students',
     type: 'offline',
     businessArea: '경제금융',
     targetLevel: 'high',

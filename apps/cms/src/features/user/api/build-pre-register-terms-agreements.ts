@@ -7,11 +7,13 @@ export const ADMIN_PRE_REGISTER_TERMS_VERSION = '1.0'
 
 export type PreRegisterConsentValue = 'agree' | 'disagree'
 
+export type PreRegisterConsentFieldValue = PreRegisterConsentValue | undefined
+
 export type PreRegisterRadioConsentFields = {
-  consentTermsOfService: PreRegisterConsentValue
+  consentTermsOfService: PreRegisterConsentFieldValue
   /** 강사·개인 등록 폼 필드명 차이 (`consentPersonal` | `consentPersonalInfo`) */
-  consentPersonal: PreRegisterConsentValue
-  consentMarketing: PreRegisterConsentValue
+  consentPersonal: PreRegisterConsentFieldValue
+  consentMarketing: PreRegisterConsentFieldValue
 }
 
 /** 동의서 작성형 — `termsAgreements.termsType` (consent-records 매핑과 동일 계열) */
@@ -34,7 +36,7 @@ const DOCUMENT_TERMS_TYPE: Record<PreRegisterDocumentConsentKey, TermsAgreementR
   consentSexOffenseCheck: 'CRIMINAL_HISTORY_CHECK_CONSENT',
 }
 
-function toAgreed(value: PreRegisterConsentValue): boolean {
+function toAgreed(value: PreRegisterConsentFieldValue): boolean {
   return value === 'agree'
 }
 
@@ -69,7 +71,7 @@ export function buildPreRegisterRadioTermsAgreements(
  * formResponseId·전문 스냅샷 API는 BE 확정 전 — agreed 플래그만 전송.
  */
 export function buildPreRegisterDocumentTermsAgreements(
-  documents: Partial<Record<PreRegisterDocumentConsentKey, PreRegisterConsentValue>> | undefined
+  documents: Partial<Record<PreRegisterDocumentConsentKey, PreRegisterConsentFieldValue>> | undefined
 ): TermsAgreementRequest[] {
   if (!documents) return []
 
@@ -77,7 +79,7 @@ export function buildPreRegisterDocumentTermsAgreements(
   const rows: TermsAgreementRequest[] = []
 
   for (const [key, value] of Object.entries(documents) as Array<
-    [PreRegisterDocumentConsentKey, PreRegisterConsentValue | undefined]
+    [PreRegisterDocumentConsentKey, PreRegisterConsentFieldValue | undefined]
   >) {
     if (value == null) continue
     const termsType = DOCUMENT_TERMS_TYPE[key]
@@ -96,7 +98,7 @@ export function buildPreRegisterDocumentTermsAgreements(
 
 export function buildPreRegisterTermsAgreements(
   radio: PreRegisterRadioConsentFields,
-  documents?: Partial<Record<PreRegisterDocumentConsentKey, PreRegisterConsentValue>>
+  documents?: Partial<Record<PreRegisterDocumentConsentKey, PreRegisterConsentFieldValue>>
 ): TermsAgreementRequest[] {
   return [
     ...buildPreRegisterRadioTermsAgreements(radio),

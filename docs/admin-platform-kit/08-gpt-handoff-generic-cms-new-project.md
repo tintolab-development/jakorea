@@ -121,8 +121,7 @@ jakorea/
 │  ├─ cms-studio/          ← NEW (목표 제품)
 │  ├─ admin/               ← shell of record (건드리지 않고 복사 원본)
 │  ├─ cms/                 ← JA 제품 (읽기 전용 참고)
-│  ├─ platform/            ← preview adapter 후보 (선택)
-│  └─ lms/                 ← 금지 시드
+│  └─ platform/            ← preview adapter 후보 (선택)
 ├─ packages/               ← form-*, rich-text, utils 등 opt-in
 ├─ extensions/             ← NEW 권장 (또는 apps/cms-studio/src/extensions)
 │  ├─ jakorea/             ← JA 전용 (지연)
@@ -233,7 +232,6 @@ apps/cms/src/data/mock/**
 VITE_REAL_API_MODULES 매트릭스
 CMS menu-config 본문 (~1500 lines)
 CMS permissions MASTER+program roles 본문
-apps/lms/**
 ```
 
 ---

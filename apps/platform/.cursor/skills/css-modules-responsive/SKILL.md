@@ -24,16 +24,17 @@ Use these defaults unless the existing project has stronger conventions:
 
 ```css
 .wrapper {
-  width: min(100%, 1200px);
+  width: min(100%, var(--content-max-width));
   margin-inline: auto;
-  padding-inline: clamp(16px, 4vw, 40px);
+  padding-inline: var(--page-padding-x);
 }
 ```
 
 Prefer:
 
+- Role-based structure in JSX (`shell`, `main`, `aside`, `toolbar`, `content`, `actions`) before adding media queries.
 - `grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));`
-- `gap: clamp(12px, 2vw, 24px);`
+- `gap: clamp(12px, 2vw, 24px);` or token `--section-gap`
 - `font-size: clamp(16px, 2vw, 20px);`
 - `max-width: 100%;`
 - `min-width: 0;` on flex/grid children that contain text.
@@ -47,31 +48,45 @@ Avoid:
 - global selectors from module files unless explicitly using `:global(...)`.
 - breakpoint-only design that has no safe base mobile layout.
 - `100vw` for full-width content when scrollbars can create overflow.
+- duplicate mobile/desktop DOM trees when CSS composition is enough.
 
 ## Breakpoint guidance
 
-Use breakpoints only after a fluid base layout is already safe. Prefer Platform 3-tier aliases from `shared/styles/breakpoints.css`:
+Use breakpoints only after a fluid, role-based base layout is already safe. Prefer Platform 3-tier aliases from `shared/styles/breakpoints.css`:
 
 ```css
 @media (--bp-below-pc) {
-  /* Mobile · ~1079 */
+  /* Mobile · ~1079 — rare if base is mobile-first */
 }
 
 @media (--bp-pc-up) {
-  /* PC compact + PC full · 1080+ */
+  /* Default PC fork · compact + full · 1080+ */
 }
 
 @media (--bp-pc-compact) {
-  /* PC compact only · 1080~1599 */
+  /* Middle only · 1080~1599 — when compact must differ from full */
 }
 
 @media (--bp-pc-full-up) {
-  /* PC full · 1600+ */
+  /* Wide-only · 1600+ */
 }
 ```
 
-Do not invent intermediate breakpoints (768 / 1024 / 1360 등). Do not create many narrow breakpoint patches unless the component truly needs them.
+### Decision ladder
 
+1. Spacing/type only → tokens / `clamp` (no new query).
+2. Shared PC structure change → `--bp-pc-up`.
+3. Middle needs different composition than full → `--bp-pc-compact` (+ optional `--bp-pc-full-up`).
+4. Wide-only enhancement → `--bp-pc-full-up`.
+
+### Middle (PC compact)
+
+- Canonical check width: **1280**.
+- Default: shared PC via `--bp-pc-up`; do not invent 768/1024/1360.
+- Add `--bp-pc-compact` only when full-width rules crush or over-stretch middle UI (columns, aside width, toolbar wrap).
+- Own chrome in `widgets/layout`, page shells in `pages`, local composition in `features`.
+
+Do not invent intermediate breakpoints. Do not create many narrow breakpoint patches unless the component truly needs them.
 ## Component output pattern
 
 When generating a React component:
@@ -89,7 +104,9 @@ Use the template in `.cursor/references/templates/component-css-modules-template
 
 Before finalizing frontend CSS Modules work, check:
 
-- Does the layout work at 320px and 360px without horizontal scroll?
+- Does the layout work at 390 / 1280 / 1600 without horizontal scroll?
+- Is PC structure shared via `--bp-pc-up`, with `--bp-pc-compact` only when middle differs from full?
+- Are layout roles clear in markup (not breakpoint-only class hacks)?
 - Are all flex/grid children protected with `min-width: 0` where needed?
 - Are images/videos constrained with `max-width: 100%`?
 - Are long titles, URLs, names, and chips wrapped safely?
@@ -100,7 +117,6 @@ Before finalizing frontend CSS Modules work, check:
 - Are files named in kebab-case?
 
 See `.cursor/references/responsive-review-checklist.md` for the expanded checklist.
-
 ## Related rules
 
 - `.cursor/rules/frontend-css-modules-responsive.mdc`

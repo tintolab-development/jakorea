@@ -5,7 +5,9 @@ import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
   buildRequiredConsentDisagreeAlertMessage,
   collectDisagreedRequiredConsentLabels,
+  hasUnsetConsentSelections,
 } from '@jakorea/domain/shared/required-consent-alert'
+import { INSTRUCTOR_REGISTER_ALL_CONSENT_KEYS } from '@jakorea/domain/instructor/consent'
 
 function baseValues(
   overrides: Partial<InstructorRegisterValidationInput> = {}
@@ -80,5 +82,39 @@ describe('instructor register consent validation', () => {
       '서비스 이용약관, 개인정보 수집·이용 동의에 동의하지 않을 경우, 가입이 불가합니다.'
     )
     expect(collectInstructorRegisterValidation(values).missingRequired).toBe(true)
+  })
+
+  it('약관·동의 라디오 미선택 시 hasUnsetConsentSelections가 true다', () => {
+    expect(
+      hasUnsetConsentSelections(
+        baseValues({
+          consentTermsOfService: undefined,
+          consentPersonal: undefined,
+          consentMarketing: undefined,
+          consentPortrait: undefined,
+          consentPaymentStatement: undefined,
+          consentEducatorPledge: undefined,
+          consentAdministrativeJoint: undefined,
+          consentSexOffenseCheck: undefined,
+        }),
+        INSTRUCTOR_REGISTER_ALL_CONSENT_KEYS
+      )
+    ).toBe(true)
+
+    expect(
+      hasUnsetConsentSelections(
+        baseValues({
+          consentTermsOfService: 'agree',
+          consentPersonal: 'agree',
+          consentMarketing: 'disagree',
+          consentPortrait: 'disagree',
+          consentPaymentStatement: 'disagree',
+          consentEducatorPledge: 'disagree',
+          consentAdministrativeJoint: 'disagree',
+          consentSexOffenseCheck: 'disagree',
+        }),
+        INSTRUCTOR_REGISTER_ALL_CONSENT_KEYS
+      )
+    ).toBe(false)
   })
 })

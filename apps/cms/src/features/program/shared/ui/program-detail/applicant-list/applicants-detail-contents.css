@@ -183,7 +183,8 @@
   padding-bottom: 16px;
 }
 
-.applicant-info-section--instructor:has(.applicant-general-instructor-basic-info) .applicant-instructor-resume {
+.applicant-info-section--instructor:has(.applicant-general-instructor-basic-info)
+  .applicant-instructor-resume {
   gap: 32px;
 }
 
@@ -213,7 +214,7 @@
   background: #f0f0f0;
 }
 
-/* `.instructor-resume-card` 외곽선 — `applicant-instructor-resume.css` SSOT (DetailInfoForm 중첩 시 이중선 방지 포함) */
+/* `.instructor-resume-card` 외곽선 — `user/detail/ui/instructor-resume/resume.css` SSOT (DetailInfoForm 중첩 시 이중선 방지 포함) */
 
 .instructor-resume-row {
   display: flex;
@@ -231,7 +232,7 @@
   min-width: 0;
 }
 
-.instructor-resume-row--career .instructor-resume-row-left {
+.instructor-resume-row--timeline .instructor-resume-row-left {
   min-width: 170px;
 }
 
@@ -259,10 +260,6 @@
   font-weight: 500;
   line-height: 150%;
   margin-left: 4px;
-}
-
-.instructor-resume-row-right--black {
-  font-weight: 500;
 }
 
 .instructor-resume-empty {

@@ -161,3 +161,20 @@ export function toInstructorFeeGradeDisplayLabel(
 
   return trimmed
 }
+
+/** CMS 폼·표시 라벨 → BE `defaultFeeGrade` / `feeGrade` wire 값 (예: `2급 강사비` → `2`) */
+export function toInstructorFeeGradeApiValue(
+  raw: string | undefined | null
+): string | undefined {
+  const trimmed = raw?.trim()
+  if (!trimmed) return undefined
+  if (/^[123]$/.test(trimmed)) return trimmed
+
+  const levelKey = trimmed.replace(/\s*강사비\s*$/u, '').trim()
+  if (/^[123]급$/.test(levelKey)) return levelKey.replace('급', '')
+
+  const fromLabel = /^([123])급\s*강사비$/.exec(trimmed)
+  if (fromLabel) return fromLabel[1]
+
+  return trimmed
+}

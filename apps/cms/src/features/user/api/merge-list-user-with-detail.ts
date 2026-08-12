@@ -107,10 +107,11 @@ function resolveMergedListMetrics(
   const next: NonNullable<User['listMetrics']> = {}
   for (const key of allKeys) {
     if (MASK_GUARDED_LIST_METRIC_KEYS.has(key)) {
+      // patch > fetched(상세 GET) > list — 둘 다 비마스킹이면 상세가 최신
       const val = pickFirstNonMaskedString(
         patchM[key] as string | undefined,
-        listM[key] as string | undefined,
-        fetchedM[key] as string | undefined
+        fetchedM[key] as string | undefined,
+        listM[key] as string | undefined
       )
       if (val !== undefined) {
         ;(next as Record<string, unknown>)[key as string] = val
@@ -349,6 +350,15 @@ export function applySavedBasicInfoPatchToUser(
       }
       next.instructorCareerText = careerDisplay.replace(/년$/, '') || careerSummary
     }
+  }
+
+  if (patch.termsAgreements != null) {
+    next.termsAgreements = patch.termsAgreements.map(row => ({
+      termsType: row.termsType,
+      termsVersion: row.version,
+      required: row.required,
+      agreed: row.agreed,
+    }))
   }
 
   return next

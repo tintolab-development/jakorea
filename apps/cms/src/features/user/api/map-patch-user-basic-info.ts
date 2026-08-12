@@ -1,13 +1,24 @@
 import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import type { AdminAccountBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminAccountBasicInfoUpdateRequest'
 import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
+import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
+import { filterEditableTermsAgreementsForBasicInfoPatch } from '@/features/user/api/member-basic-info-terms-patch'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
+import {
+  toApiInstructorCmsProfile,
+  toApiInstructorCmsSettlement,
+} from '@/features/user/api/map-instructor-cms-profile'
+
+/** OpenAPI 생성 스키마에 아직 없을 수 있는 `termsAgreements` 확장 */
+export type AdminMemberBasicInfoUpdateRequestWithTerms = AdminMemberBasicInfoUpdateRequest & {
+  termsAgreements?: TermsAgreementRequest[]
+}
 
 /** 관리자 코멘트는 POST comments API로 분리 — PATCH body에서 제외 */
 export function mapPatchUserBasicInfoToApiRequest(
   patch: PatchUserBasicInfoInput
-): AdminMemberBasicInfoUpdateRequest {
-  const body: AdminMemberBasicInfoUpdateRequest = {}
+): AdminMemberBasicInfoUpdateRequestWithTerms {
+  const body: AdminMemberBasicInfoUpdateRequestWithTerms = {}
 
   if (patch.name !== undefined) body.name = patch.name
   if (patch.phone !== undefined) body.phone = patch.phone
@@ -62,19 +73,18 @@ export function mapPatchUserBasicInfoToApiRequest(
     }
   }
 
-  const extendedBody = body as Omit<AdminMemberBasicInfoUpdateRequest, 'profile' | 'settlement'> & {
-    profile?: PatchUserBasicInfoInput['instructorCmsProfile']
-    settlement?: PatchUserBasicInfoInput['instructorCmsSettlement']
-  }
   if (patch.instructorCmsProfile != null) {
-    extendedBody.profile = patch.instructorCmsProfile
+    body.profile = toApiInstructorCmsProfile(patch.instructorCmsProfile)
   }
   if (patch.instructorCmsSettlement != null) {
-    extendedBody.settlement = patch.instructorCmsSettlement
+    body.settlement = toApiInstructorCmsSettlement(patch.instructorCmsSettlement)
+  }
+  const editableTerms = filterEditableTermsAgreementsForBasicInfoPatch(patch.termsAgreements)
+  if (editableTerms != null && editableTerms.length > 0) {
+    body.termsAgreements = editableTerms
   }
 
-  // CMS proposal DTO → OpenAPI InstructorCmsProfile (wire JSON 동일, affiliatedSchoolUserId 등 형만 상이)
-  return extendedBody as AdminMemberBasicInfoUpdateRequest
+  return body
 }
 
 export function hasAdminCommentPatch(patch: PatchUserBasicInfoInput): boolean {

@@ -45,6 +45,7 @@ import {
 } from '@/features/user/shared/lib/admin-permission-display'
 import {
   draftToAdminMemberRestrictedPatch,
+  draftToAdminProvisionedIndividualBasicInfoPatch,
   draftToAdminProvisionedInstructorBasicInfoPatch,
   draftToBasicInfoPatch,
   draftToSchoolAdminCommentOnlyPatch,
@@ -596,6 +597,8 @@ export function useUserDetailController({
         patch = canEditAdminMemberInfo(currentUser, displayUser)
           ? draftToBasicInfoPatch(basicInfoDraft)
           : draftToAdminMemberRestrictedPatch(basicInfoDraft)
+      } else if (displayUser.role === 'INDIVIDUAL') {
+        patch = draftToAdminProvisionedIndividualBasicInfoPatch(basicInfoDraft)
       } else {
         patch = draftToBasicInfoPatch(basicInfoDraft)
       }

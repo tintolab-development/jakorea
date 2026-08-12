@@ -4,6 +4,9 @@ import {
   instructorCmsProfileToApplicantInstructorRowPartial,
   instructorCmsProfileToFormValues,
   instructorProfileFormValuesToCmsProfile,
+  instructorProfileFormValuesToCmsSettlement,
+  toApiInstructorCmsProfile,
+  toApiInstructorCmsSettlement,
 } from '@/features/user/api/map-instructor-cms-profile'
 import { INITIAL_VALUES } from '@/features/user/shared/ui/instructor-profile-form'
 
@@ -123,6 +126,33 @@ describe('map-instructor-cms-profile', () => {
     expect(back.instructorFeeGrade).toBe('2급 강사비')
   })
 
+  it('toApiInstructorCmsProfile은 강사비 등급을 BE 코드로 정규화한다', () => {
+    const profile = instructorProfileFormValuesToCmsProfile({
+      ...INITIAL_VALUES,
+      instructorFeeGrade: '2급 강사비',
+    })
+    expect(toApiInstructorCmsProfile(profile).defaultFeeGrade).toBe('2')
+  })
+
+  it('toApiInstructorCmsSettlement은 bankAccounts를 제외한다', () => {
+    const settlement = instructorProfileFormValuesToCmsSettlement({
+      ...INITIAL_VALUES,
+      bankName: '국민',
+      accountNumber: '123',
+      accountHolder: '홍길동',
+    })
+    expect(settlement.bankAccounts).toHaveLength(1)
+
+    const wire = toApiInstructorCmsSettlement(settlement)
+    expect(wire).toEqual({
+      bankName: '국민',
+      accountNumber: '123',
+      accountHolder: '홍길동',
+      businessIncome: false,
+    })
+    expect('bankAccounts' in wire).toBe(false)
+  })
+
   it('JA 평가 등급(jaEvaluationGrade) → defaultJaGrade round-trip', () => {
     const profile = instructorProfileFormValuesToCmsProfile({
       ...INITIAL_VALUES,
@@ -132,6 +162,23 @@ describe('map-instructor-cms-profile', () => {
 
     const back = instructorCmsProfileToFormValues(profile)
     expect(back.jaEvaluationGrade).toBe('B')
+  })
+
+  it('profile 목록 필드가 빈 배열이어도 Form.List용 최소 1행을 반환한다', () => {
+    const profile = instructorProfileFormValuesToCmsProfile({
+      ...INITIAL_VALUES,
+      careerLevel: 'experienced',
+    })
+    profile.jaKoreaActivities = []
+    profile.licenses = []
+    profile.awards = []
+    profile.career.rows = []
+
+    const back = instructorCmsProfileToFormValues(profile)
+    expect(back.jaKoreaRows).toHaveLength(1)
+    expect(back.licenseRows).toHaveLength(1)
+    expect(back.awardRows).toHaveLength(1)
+    expect(back.careers).toHaveLength(1)
   })
 
   it('Form.List sparse row(undefined)가 있어도 profile 변환에 실패하지 않는다', () => {

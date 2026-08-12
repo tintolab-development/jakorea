@@ -669,8 +669,6 @@ export function UserListPage() {
       suppressDetailRestoreRef.current = false
       detailCloseIntentRef.current = false
       setSelectedUserId(displayUser.id)
-      setDetailBridgeUser(displayUser)
-      openDrawer(displayUser)
       setParams(
         {
           id: displayUser.id,
@@ -680,6 +678,8 @@ export function UserListPage() {
         },
         { replace: opts?.replace ?? false }
       )
+      setDetailBridgeUser(displayUser)
+      openDrawer(displayUser)
       pendingOpenedUserIdRef.current = null
     },
     [setSelectedUserId, openDrawer, setParams]
@@ -695,6 +695,15 @@ export function UserListPage() {
       detailCloseIntentRef.current = false
       pendingOpenedUserIdRef.current = user.id
       setSelectedUserId(user.id)
+      setParams(
+        {
+          id: user.id,
+          lnb: 'detail-info',
+          [USER_DETAIL_PROGRAMS_CHILD_QUERY_KEY]: undefined,
+          ...memberDetailUrlParamsFromUser(user),
+        },
+        { replace: opts?.replace ?? false }
+      )
 
       if (!isMembersRemoteEnabled() || opts?.skipRemoteFetch) {
         const displayUser = applyTeacherDetailUrlContext(user, {
@@ -721,11 +730,8 @@ export function UserListPage() {
           pendingOpenedUserIdRef.current = null
           return
         }
-        const displayUser = applyTeacherDetailUrlContext(fetched, {
-          affiliatedSchoolName: user.affiliatedSchoolName,
-          instructorMemberProfile: user.instructorMemberProfile,
-        })
-        openMemberDetailFetched(displayUser, { replace: opts?.replace ?? false })
+        // 상세 GET만 본문으로 사용 — 목록 행 필드(소속·프로필 등)를 덮어쓰지 않음
+        openMemberDetailFetched(fetched, { replace: opts?.replace ?? false })
       } catch (error) {
         pendingOpenedUserIdRef.current = null
         handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })
@@ -733,7 +739,7 @@ export function UserListPage() {
         setMemberDetailLoading(false)
       }
     },
-    [setSelectedUserId, fetchUserById, openMemberDetailFetched]
+    [setSelectedUserId, fetchUserById, openMemberDetailFetched, setParams]
   )
 
   const handleNavigateToLinkedUser = useCallback(

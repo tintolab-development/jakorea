@@ -21,7 +21,7 @@ export type RequiredConsentFieldSpec<TKey extends string = string> = {
   label: string
 }
 
-/** 필수 동의 필드 중 `agree`가 아닌 항목의 라벨 목록 */
+/** 필수 동의 필드 중 `agree`가 아닌 항목의 라벨 목록 (미선택·명시적 `disagree` 포함) */
 export function collectDisagreedRequiredConsentLabels<TKey extends string>(
   values: Partial<Record<TKey, ConsentAgreeValue | boolean | null | undefined>>,
   requiredFields: readonly RequiredConsentFieldSpec<TKey>[]
@@ -30,7 +30,19 @@ export function collectDisagreedRequiredConsentLabels<TKey extends string>(
     .filter(field => {
       const value = values[field.key]
       if (value === true || value === 'agree') return false
-      return true
+      if (value === false || value === 'disagree') return true
+      return false
     })
     .map(field => field.label)
+}
+
+/** 약관·동의 라디오 미선택 여부 (`agree`/`disagree` 모두 아님) */
+export function hasUnsetConsentSelections<TKey extends string>(
+  values: Partial<Record<TKey, ConsentAgreeValue | boolean | null | undefined>>,
+  keys: readonly TKey[]
+): boolean {
+  return keys.some(key => {
+    const value = values[key]
+    return value !== 'agree' && value !== 'disagree'
+  })
 }

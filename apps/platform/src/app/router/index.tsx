@@ -42,7 +42,7 @@ import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transpa
 import { DesignSystemPage } from '@/pages/design-system'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
 import { TemporaryPage } from '@/pages/temporary'
-import { YoutubeEmbedPage } from '@/pages/youtube-embed'
+import { SupportIndividualPage } from '@/pages/support/individual'
 import { IMPACT_STORIES_PATH } from '@/features/impact-story'
 import {
   ABOUT_CAREERS_PATH,
@@ -60,9 +60,12 @@ import { AppLayoutRoute } from './app-layout-route'
 
 export const router = createBrowserRouter([
   {
+    element: <AppLayoutRoute layout="home" />,
+    children: [{ path: '/', element: <HomePage /> }],
+  },
+  {
     element: <AppLayoutRoute layout="default" />,
     children: [
-      { path: '/', element: <HomePage /> },
       { path: '/programs', element: <ProgramsPage /> },
       { path: '/programs/:programId', element: <ProgramDetailPage /> },
       { path: '/programs/:programId/apply/complete', element: <ProgramApplyCompletePage /> },
@@ -96,7 +99,7 @@ export const router = createBrowserRouter([
       { path: ABOUT_HISTORY_PATH, element: <TemporaryPage /> },
       { path: ABOUT_CAREERS_PATH, element: <TemporaryPage /> },
       { path: IMPACT_STORIES_PATH, element: <ImpactStoriesPage /> },
-      { path: SUPPORT_INDIVIDUAL_PATH, element: <TemporaryPage /> },
+      { path: SUPPORT_INDIVIDUAL_PATH, element: <SupportIndividualPage /> },
       { path: SUPPORT_CORPORATE_PATH, element: <TemporaryPage /> },
       { path: SUPPORT_TALENT_PATH, element: <TemporaryPage /> },
     ],
@@ -152,11 +155,10 @@ export const router = createBrowserRouter([
       { path: '/programs/:programId/apply', element: <ProgramApplyPage /> },
       { path: '/mypage/instructor-apply', element: <MypageInstructorApplyPage /> },
       { path: '/design-system', element: <DesignSystemPage /> },
-      { path: '/dev/youtube', element: <YoutubeEmbedPage /> },
     ],
   },
   {
-    element: <AppLayoutRoute layout="default" />,
+    element: <AppLayoutRoute layout="home" />,
     children: [{ path: '*', element: <HomePage /> }],
   },
 ])

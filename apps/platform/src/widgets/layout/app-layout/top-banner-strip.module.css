@@ -1,0 +1,41 @@
+/*
+ * 띠배너 1개 높이: padding 16×2 + Body/Medium/bold line-height 24 = 56px
+ * 홈 첫 폴드(1920×1080) 계산용 — 히어로 height에서 차감
+ */
+.strip {
+  --home-strip-banner-height: 56px;
+
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.banner {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--home-strip-banner-height);
+  padding: var(--spacing-16) 0;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--color-neutral-cool-80);
+}
+
+.banner:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: -2px;
+}
+
+.label {
+  min-width: 0;
+}
+
+.arrow {
+  flex-shrink: 0;
+  display: block;
+  width: 16px;
+  height: 16px;
+}

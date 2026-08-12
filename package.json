@@ -23,7 +23,6 @@
         "format:check": "prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --check",
         "prepare": "husky",
         "admin": "pnpm --filter admin dev",
-        "lms": "pnpm --filter lms dev",
         "cms": "pnpm --filter cms dev",
         "platform": "pnpm --filter platform dev"
     },

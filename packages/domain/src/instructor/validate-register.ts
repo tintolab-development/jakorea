@@ -1,3 +1,4 @@
+import { isRequiredAddressIncomplete } from '../shared/required-address.js'
 import { CAREER_LEVEL } from './career-level.js'
 import type { ConsentValue } from './consent.js'
 import { EDUCATION_STATUS } from './education-options.js'
@@ -267,8 +268,15 @@ export function collectInstructorRegisterValidation(
     missingRequired = true
   }
 
-  if (isBlank(values.homeAddress)) missingRequired = true
-  if (isBlank(values.homeAddressDetail)) missingRequired = true
+  if (
+    isRequiredAddressIncomplete({
+      address: values.homeAddress,
+      addressDetail: values.homeAddressDetail,
+      subject: 'person',
+    })
+  ) {
+    missingRequired = true
+  }
   if (isBlank(values.instructorCareer)) missingRequired = true
   if (isBlank(values.bankName)) missingRequired = true
   if (isBlank(values.accountNumber)) missingRequired = true
@@ -312,6 +320,7 @@ export type InstructorConsentBasicInfoInput = Pick<
   | 'contact'
   | 'email'
   | 'homeAddress'
+  | 'homeAddressDetail'
   | 'bankName'
   | 'accountNumber'
   | 'accountHolder'
@@ -339,7 +348,15 @@ export function isInstructorRegisterBasicInfoIncompleteForConsent(
   if (!values.contact?.trim()) return true
   if (!values.email?.trim()) return true
 
-  if (!values.homeAddress?.trim()) return true
+  if (
+    isRequiredAddressIncomplete({
+      address: values.homeAddress,
+      addressDetail: values.homeAddressDetail,
+      subject: 'person',
+    })
+  ) {
+    return true
+  }
 
   if (!values.bankName?.trim()) return true
   if (!values.accountNumber?.trim()) return true

@@ -47,6 +47,8 @@ export type UserListQueryParams = Record<string, string | undefined> & {
 
 export type UserListApiFilters = {
   role?: UserRole
+  /** 전체 회원 — members + admin-accounts 병합 조회 */
+  mergeAdminAccounts?: boolean
   search?: string
   createdAtFrom?: string
   createdAtTo?: string
@@ -223,6 +225,9 @@ export function buildListQueryApiFilters(params: UserListQueryParams): UserListA
     kind: params.kind,
     role: params.role,
   })
+  if (kind === 'all' && !role && !api.rolesExactAnyOf) {
+    api.mergeAdminAccounts = true
+  }
   return {
     ...api,
     ...(role ? { role } : {}),

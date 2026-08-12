@@ -80,6 +80,14 @@
   user-select: none;
 }
 
+.add-user-individual__affiliation-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
 .add-user-individual__actions {
   display: flex;
   justify-content: flex-end;

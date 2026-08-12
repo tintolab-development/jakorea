@@ -203,7 +203,7 @@ export function PaymentStatementBasicInfoDetailForm({
               <CmsInput
                 disabled={allAutofillLocked || v.noAffiliation}
                 inputSize="medium"
-                placeholder="소속"
+                placeholder="소속 기관명"
                 value={v.affiliation}
                 onChange={e => patch({ affiliation: e.target.value })}
                 width="100%"

@@ -9,13 +9,15 @@ import {
   InstructorResumeCareerCardBody,
   InstructorResumeEducationCardBody,
   InstructorResumeFreeWritingSections,
+  InstructorResumeJaKoreaCardBody,
   InstructorResumeQualificationsCardBody,
   instructorAwardsSectionDescription,
   instructorCareerSectionDescription,
   instructorEducationSectionDescription,
+  instructorJaKoreaSectionDescription,
   instructorQualificationsSectionDescription,
-} from '@/features/program/shared/ui/program-detail/applicant-list/instructor-resume-blocks'
-import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-resume.css'
+} from '@/features/user/detail/ui/instructor-resume/blocks'
+import '@/features/user/detail/ui/instructor-resume/resume.css'
 import './instructor-resume-detail-forms.css'
 
 function resumeSectionDescription(text: string) {
@@ -47,6 +49,15 @@ export function InstructorResumeDetailForms({
       >
         <DetailInfoForm.Row type="custom">
           <InstructorResumeCareerCardBody d={instructor} />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+      <DetailInfoForm
+        title="JA Korea 활동 경험"
+        className="detail-info-form--gap instructor-resume-detail-forms__form"
+        description={resumeSectionDescription(instructorJaKoreaSectionDescription(instructor))}
+      >
+        <DetailInfoForm.Row type="custom">
+          <InstructorResumeJaKoreaCardBody d={instructor} />
         </DetailInfoForm.Row>
       </DetailInfoForm>
       <DetailInfoForm

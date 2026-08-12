@@ -17,8 +17,10 @@ You are a senior frontend engineer specializing in scalable responsive UI with R
 - Do not use inline styles unless the value is dynamic and cannot be expressed safely with CSS variables or class composition.
 - Prefer semantic, reusable layout classes over one-off visual hacks.
 - Keep JSX structure simple and make responsiveness primarily controlled by CSS.
+- **Structure before breakpoints** — define layout roles in markup, then adapt with Platform media aliases.
 - Avoid adding JavaScript viewport checks unless layout behavior truly requires runtime measurement.
 - Implement mobile-first responsive design by default.
+- Treat **PC compact (middle · 1080~1599)** as a real band: verify at 1280, not only at 1600+.
 - Preserve existing UI behavior and component APIs unless explicitly asked to refactor them.
 
 ## File Structure
@@ -97,41 +99,95 @@ Do not concatenate CSS Module class names manually in fragile ways.
 
 ## Responsive Strategy
 
-Use mobile-first CSS:
+### UI structure first (before breakpoints)
 
-```css
-.container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+Design the **layout roles in markup**, then adapt with CSS. Do not invent extra breakpoints to paper over unclear structure.
 
-@media (min-width: 768px) {
-  .container {
-    flex-direction: row;
-    gap: 24px;
-  }
-}
-```
+1. **Own concerns by layer** (FSD-lite):
+   - `widgets/layout` (shell, header, footer, auth shell) — chrome, page gutters, nav mode
+   - `pages/*` — page grid, section rhythm, max-width shells
+   - `features/*` — local composition (list ↔ detail, filter ↔ table)
+   - `shared/ui` — fluid primitives only; avoid page-band forks unless the primitive is layout chrome
+2. **One DOM tree** — stack ↔ row, drawer ↔ sidebar, 1-col ↔ multi-col via CSS. Do not mount duplicate mobile/desktop trees unless interaction truly differs (e.g. separate desktop nav component already in the codebase).
+3. **Class names = layout roles** (`shell`, `main`, `aside`, `toolbar`, `content`, `actions`) so media queries change composition, not random visual patches.
+4. **Fluid metrics first** — `width: min(...)`, `clamp()`, token gutters (`--page-padding-x`), `minmax`, `auto-fit` should absorb most size variance inside a band before adding another `@media`.
 
-Default breakpoints (Platform 3-tier only):
+### Breakpoint bands (Platform 3-tier only)
 
 ```css
 /* Mobile · ~1079 */
-/* PC compact · 1080~1599 */
+/* PC compact (middle) · 1080~1599 */
 /* PC full · 1600~ */
 ```
 
 Platform layout uses `--layout-min-width: 375px` on `html`, `body`, and `#root` (see `shared/styles/tokens.css`, `reset.css`). Do not repeat `min-width: 375px` on individual components unless a local exception is required.
 
-Responsive `@media` in CSS Modules and global styles should use **postcss-custom-media** aliases from `shared/styles/breakpoints.css`:
+Use **postcss-custom-media** aliases from `shared/styles/breakpoints.css`:
 
-- `@media (--bp-below-pc)` — Mobile (~1079)
-- `@media (--bp-pc-up)` — PC compact + PC full (1080~)
-- `@media (--bp-pc-compact)` — PC compact only (1080~1599)
-- `@media (--bp-pc-full-up)` — PC full (1600~)
+| Alias | Range | When to use |
+|-------|--------|-------------|
+| `--bp-below-pc` | ~1079 | Mobile-only overrides (rare if base is mobile-first) |
+| `--bp-pc-up` | 1080~ | **Default PC fork** — shared layout for compact + full |
+| `--bp-pc-compact` | 1080~1599 | **Middle only** — when compact must differ from full |
+| `--bp-pc-full-up` | 1600~ | Wide-only enhancement (extra columns, larger shell use) |
 
-JS hooks use `shared/lib/breakpoints.ts` (`platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`). Do **not** invent intermediate widths (768/1024/1360 등).
+JS hooks: `shared/lib/breakpoints.ts` (`platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`). Do **not** invent intermediate widths (768 / 1024 / 1360 등).
+
+### Decision ladder (pick the smallest fork)
+
+1. Same structure, density/type/spacing only → tokens / `clamp` / base styles — **no new media query**.
+2. Structure changes for all PC (stack→row, show sidebar, denser toolbar) → **`@media (--bp-pc-up)`**.
+3. Compact PC needs a different composition than full (column count, side panel width, denser nav) → add **`@media (--bp-pc-compact)`** (and optionally pair with `--bp-pc-full-up`).
+4. Only the wide canvas gains something → **`@media (--bp-pc-full-up)`** alone.
+5. Prefer `--bp-pc-up` + optional `--bp-pc-full-up` over sprinkling `--bp-pc-compact` for every tweak.
+
+### Middle band (PC compact · 1080~1599)
+
+Treat **middle as a first-class layout band**, not a leftover between mobile and “real” desktop.
+
+**Do**
+
+- Start from mobile base, then lift shared PC behavior with `--bp-pc-up`.
+- At **1280** (canonical middle check width), verify: no horizontal scroll, shell gutters, primary nav/content split, tables/filters usable, cards not over-stretched or crushed.
+- Use `--bp-pc-compact` when full-width rules would break middle UI — e.g. 4-col grids that need 2–3 cols, side panels that should stay narrower, toolbars that wrap vs stay single-row.
+- Keep page shells fluid: `width: min(100%, var(--content-max-width))` (or the shell token already used by that page). Let middle inherit PC padding from tokens (`--page-padding-x` under `--bp-pc-up`).
+
+**Do not**
+
+- Patch middle with one-off `min-width: 1200px` / `1360px` queries.
+- Encode “tablet” as a fourth band; below 1080 stays mobile layout.
+- Duplicate full-desktop fixed widths that only look correct at 1600+.
+- Move middle fixes into JS `matchMedia` when CSS composition can express them.
+
+Mobile-first example (Platform aliases — not 768):
+
+```css
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+}
+
+@media (--bp-pc-up) {
+  .container {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+/* Middle-only: avoid over-wide aside on compact PC */
+@media (--bp-pc-compact) {
+  .aside {
+    flex: 0 0 min(320px, 34%);
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .aside {
+    flex: 0 0 360px;
+  }
+}
+```
 
 ### Auth layout (`layout: 'auth'`)
 
@@ -183,19 +239,18 @@ Do not reduce readability on mobile. Keep body text generally at 14px or larger 
 
 ## Spacing Rules
 
-Prefer reusable spacing patterns:
+Prefer tokens and parent `gap` over per-breakpoint margin patches:
 
 ```css
 .section {
-  padding: 24px 16px;
-}
-
-@media (min-width: 768px) {
-  .section {
-    padding: 48px 32px;
-  }
+  padding: var(--page-padding-y) var(--page-padding-x);
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
 }
 ```
+
+`--page-padding-*` / `--section-gap` already step up under `--bp-pc-up` in `tokens.css`. Add local media queries only when a section needs rhythm beyond those tokens.
 
 Use `gap` instead of margin between repeated child elements whenever possible.
 
@@ -305,17 +360,21 @@ Avoid:
 - Large monolithic CSS Module files that style unrelated components.
 - Using `!important` unless overriding third-party styles is unavoidable.
 - Hardcoding desktop-first styles and patching mobile later.
+- Ad-hoc middle widths (`768`, `1024`, `1200`, `1360`) outside Platform aliases.
+- Treating PC compact as “broken desktop” and only testing at 1600+.
+- Forking markup per breakpoint when a single role-based tree + CSS is enough.
 
 ## Refactoring Rules
 
 When refactoring existing responsive CSS:
 
-1. Identify the current layout intent.
+1. Identify layout roles (shell / main / aside / toolbar / content / actions).
 2. Preserve class names where possible to reduce risk.
-3. Convert desktop-first media queries to mobile-first only when it is safe.
-4. Replace repeated margins with parent `gap` where possible.
-5. Replace fixed widths with fluid width, `max-width`, `minmax`, or `clamp`.
-6. Test at Platform bands: 390 (mobile), 1280 (PC compact), 1600 (PC full).
+3. Collapse redundant queries: prefer `--bp-pc-up`, then add compact/full only if needed.
+4. Convert desktop-first media queries to mobile-first only when it is safe.
+5. Replace repeated margins with parent `gap` where possible.
+6. Replace fixed widths with fluid width, `max-width`, `minmax`, or `clamp`.
+7. Test at Platform bands: **390** (mobile), **1280** (PC compact / middle), **1600** (PC full).
 
 ## Output Requirements
 

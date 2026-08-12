@@ -42,122 +42,41 @@
         ],
         "dataRows": [
           [
-            "",
+            "성명",
             ""
           ],
           [
-            "",
+            "영문 성명",
             ""
           ],
           [
-            "",
+            "주민등록번호",
             ""
           ],
           [
-            "",
+            "소속",
             ""
           ],
           [
-            "",
+            "자택 주소",
             ""
           ],
           [
-            "",
-            ""
+            "정산 계좌 정보",
+            "은행 · 계좌번호 · 예금주"
           ],
           [
-            "",
+            "지급 목적",
             ""
           ]
         ],
-        "columnFields": [
-          {
-            "kind": "text",
-            "placeholder": "성명"
-          },
-          {
-            "kind": "text",
-            "placeholder": "텍스트를 입력해 주세요"
-          }
-        ],
+        "columnFields": [],
         "fieldDataRows": [],
         "bottomText": "",
         "showBottomText": false,
         "showBottomConsent": false,
         "bottomConsent": "agree",
         "answerRequired": true,
-        "cellColumnFields": [
-          [
-            {
-              "kind": "text",
-              "placeholder": "성명"
-            },
-            {
-              "kind": "text",
-              "placeholder": "텍스트를 입력해 주세요"
-            }
-          ],
-          [
-            {
-              "kind": "text",
-              "placeholder": "영문 성명"
-            },
-            {
-              "kind": "text",
-              "placeholder": "텍스트를 입력해 주세요"
-            }
-          ],
-          [
-            {
-              "kind": "text",
-              "placeholder": "주민등록번호"
-            },
-            {
-              "kind": "text",
-              "placeholder": "텍스트를 입력해 주세요"
-            }
-          ],
-          [
-            {
-              "kind": "text",
-              "placeholder": "소속"
-            },
-            {
-              "kind": "text",
-              "placeholder": "텍스트를 입력해 주세요"
-            }
-          ],
-          [
-            {
-              "kind": "text",
-              "placeholder": "자택 주소"
-            },
-            {
-              "kind": "text",
-              "placeholder": "텍스트를 입력해 주세요"
-            }
-          ],
-          [
-            {
-              "kind": "text",
-              "placeholder": "정산 계좌 정보"
-            },
-            {
-              "kind": "text",
-              "placeholder": "은행 · 계좌번호 · 예금주"
-            }
-          ],
-          [
-            {
-              "kind": "text",
-              "placeholder": "지급 목적"
-            },
-            {
-              "kind": "text",
-              "placeholder": "텍스트를 입력해 주세요"
-            }
-          ]
-        ],
         "idTypeWithInput": null
       },
       {
@@ -175,94 +94,33 @@
         ],
         "dataRows": [
           [
-            "",
+            "강의비 유형",
             ""
           ],
           [
-            "",
+            "강사비 책정",
             ""
           ],
           [
-            "",
+            "사업소득자 여부",
             ""
           ],
           [
-            "",
+            "교육 진행 차시",
             ""
           ],
           [
-            "",
+            "총 강의비",
             ""
           ]
         ],
-        "columnFields": [
-          {
-            "kind": "text",
-            "placeholder": "강의비 유형"
-          },
-          {
-            "kind": "text",
-            "placeholder": "텍스트를 입력해 주세요"
-          }
-        ],
+        "columnFields": [],
         "fieldDataRows": [],
         "bottomText": "",
         "showBottomText": false,
         "showBottomConsent": false,
         "bottomConsent": "agree",
         "answerRequired": true,
-        "cellColumnFields": [
-          [
-            {
-              "kind": "text",
-              "placeholder": "강의비 유형"
-            },
-            {
-              "kind": "text",
-              "placeholder": "텍스트를 입력해 주세요"
-            }
-          ],
-          [
-            {
-              "kind": "text",
-              "placeholder": "강사비 책정"
-            },
-            {
-              "kind": "text",
-              "placeholder": "텍스트를 입력해 주세요"
-            }
-          ],
-          [
-            {
-              "kind": "text",
-              "placeholder": "사업소득자 여부"
-            },
-            {
-              "kind": "text",
-              "placeholder": "텍스트를 입력해 주세요"
-            }
-          ],
-          [
-            {
-              "kind": "text",
-              "placeholder": "교육 진행 차시"
-            },
-            {
-              "kind": "text",
-              "placeholder": "텍스트를 입력해 주세요"
-            }
-          ],
-          [
-            {
-              "kind": "text",
-              "placeholder": "총 강의비"
-            },
-            {
-              "kind": "text",
-              "placeholder": "텍스트를 입력해 주세요"
-            }
-          ]
-        ],
         "idTypeWithInput": null
       },
       {

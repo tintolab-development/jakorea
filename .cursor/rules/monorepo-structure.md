@@ -8,8 +8,7 @@ Turborepo + pnpm 기반의 JaKorea 모노레포입니다.
 jakorea/
 ├── apps/              # 애플리케이션
 │   ├── admin/         # 관리 콘솔
-│   ├── cms/           # CMS (Automation)
-│   ├── lms/           # 학습 관리 시스템
+│   ├── cms/           # CMS (플랫폼 어드민)
 │   └── platform/      # 사용자용 플랫폼
 ├── packages/           # 공유 패키지
 │   ├── ui/            # 공유 UI 컴포넌트
@@ -38,9 +37,6 @@ pnpm install
 ```bash
 # CMS 개발 서버
 pnpm --filter cms dev
-
-# LMS 개발 서버
-pnpm --filter lms dev
 
 # Admin 개발 서버
 pnpm --filter admin dev
@@ -71,7 +67,7 @@ pnpm format       # Prettier 포맷팅
 | **`.cursor/rules/cms-admin-ui/`** | **CMS · Admin 공유 UI SSOT** (필터 치수·URL 동기화 의도·테이블 셸 등) |
 | `apps/cms/.cursor/rules/` | CMS 전용 (스택·도메인 process/*) |
 | `apps/admin/.cursor/rules/` | Admin 전용 (스택 어댑터 · CMS import 금지) |
-| `apps/lms/.cursor/rules/` | LMS 전용 |
+| `apps/platform/.cursor/rules/` | Platform 전용 |
 
 공유 UI 스펙 변경 시 **cms-admin-ui 폴더만** 수정하고, 앱 룰은 구현 path·훅 이름(어댑터)만 유지한다.
 

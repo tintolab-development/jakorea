@@ -14,6 +14,7 @@ import { ContentShell } from '@/widgets/layout/content-shell'
 import styles from './app-layout.module.css'
 import { Footer } from './footer'
 import { Header } from './header/header'
+import { TopBannerStrip } from './top-banner-strip'
 
 type AppLayoutProps = {
   children: ReactNode
@@ -26,8 +27,9 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
   const isMypage = layout === 'mypage'
   const isHero = layout === 'hero'
   const isAuth = layout === 'auth'
+  const isHome = layout === 'home'
   const useContentShell = layout === 'default' || isHero
-  const transparentHeader = isMypage || isHero
+  const transparentHeader = isMypage || isHero || isHome
 
   useEffect(() => {
     const handleDevAuthChange = (event: Event) => {
@@ -66,11 +68,19 @@ export function AppLayout({ children, layout = 'default' }: AppLayoutProps) {
     children
   )
 
+  const mainClassName = isMypage ? styles.mainMypage : isHome ? styles.mainHome : styles.main
+
   return (
     <div className={styles.layout}>
       <ScrollRestoration />
-      <Header isLoggedIn={isLoggedIn} onLogout={handleLogout} transparent={transparentHeader} />
-      <main className={isMypage ? styles.mainMypage : styles.main}>{mainContent}</main>
+      {isHome ? <TopBannerStrip /> : null}
+      <Header
+        isLoggedIn={isLoggedIn}
+        onLogout={handleLogout}
+        transparent={transparentHeader}
+        inverse={isHome}
+      />
+      <main className={mainClassName}>{mainContent}</main>
       <Footer />
     </div>
   )

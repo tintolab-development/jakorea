@@ -10014,7 +10014,7 @@
           },
           "required": {
             "type": "boolean",
-            "description": "필수 동의 여부",
+            "description": "클라이언트 표시용 필수 여부 힌트입니다. CMS 개인/강사 pre-register에서는 서버가 등록 유형×termsType 정책으로 필수 여부를 다시 판정하므로 이 값을 신뢰하지 않습니다.",
             "example": true
           },
           "agreed": {
@@ -12179,7 +12179,7 @@
           },
           "requiredYn": {
             "type": "boolean",
-            "description": "필수 동의 여부. MARKETING은 false입니다.",
+            "description": "게시 약관 문서의 기본 필수 플래그입니다. CMS 개인/강사 pre-register의 등록 차단 여부는 이 값이나 FE required 요청값이 아니라 서버의 등록 컨텍스트 정책(SERVICE_TERMS, PRIVACY_COLLECTION 필수)으로 판정합니다. MARKETING 및 등록 선택 동의서는 false입니다.",
             "example": true
           },
           "publishedYn": {
@@ -17038,15 +17038,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "businessStartDate": {
-            "type": "string"
+          "businessYear": {
+            "type": "integer",
+            "format": "int32"
           },
           "businessEndDate": {
             "type": "string"
           },
-          "businessYear": {
-            "type": "integer",
-            "format": "int32"
+          "businessStartDate": {
+            "type": "string"
           }
         }
       },
@@ -17135,10 +17135,10 @@
           "ujatPartnerRecommendationPath": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           }
         }

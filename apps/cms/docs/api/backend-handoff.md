@@ -12,7 +12,7 @@ Orval 코드 생성: [orval-codegen.md](./orval-codegen.md)
 
 **API 에러 사용자 메시지 (CMS·Platform 공통)**: [backend-handoff §에러 응답](./backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통) · [Platform handoff](../../platform/docs/api/api-error-response-handoff-2026-07-31.md)
 
-**회원 관리 (members)**: [members/README.md](./members/README.md) · [**백엔드 handoff**](./members/members-api-backend-handoff-2026-07-31.md) · [FE 연동 명세](./members/members-api-integration-2026-07-23.md)
+**회원 관리 (members)**: [members/README.md](./members/README.md) · [**백엔드 handoff (등록 약관)**](./members/members-pre-register-terms-required-policy-backend-request-2026-08-11.md)
 
 **프로그램 유형별 전환**: [**UJAT 백엔드 핸드오프**](./programs-ujat-api-backend-handoff.md) · [**1사1교 백엔드 핸드오프**](./programs-company-school-api-backend-handoff.md) · [**1사1교 더미 시드**](./company-school-program-dummy-seed-backend-request.md) · [**일반 프로그램 더미 시드**](./general-program-dummy-seed-backend-request.md)
 
@@ -235,7 +235,7 @@ CMS·Platform FE는 API 실패 시 서버가 내려준 **`message` 문자열을 
 ### 수락 기준
 
 - [ ] validation 400 — FE alert에 **필드명·minLength/maxLength 리터럴 미노출**
-- [ ] CMS unmask reason 1글자 — § [members handoff §2.7](./members/members-api-backend-handoff-2026-07-31.md#27-unmask-reason-길이-제한-p0--2026-07-31-관측)
+- [ ] CMS unmask reason 1글자 — 본 문서 §에러 응답 · [Platform handoff](../../platform/docs/api/api-error-response-handoff-2026-07-31.md)
 - [ ] Platform 회원가입 401/400 — [signup handover](../../platform/docs/api/signup-public-api-401-and-nice-mismatch-handover.md) 재현 시 사용자 문구
 
 ---

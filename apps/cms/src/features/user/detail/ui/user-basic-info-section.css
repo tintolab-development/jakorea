@@ -264,18 +264,31 @@
   vertical-align: baseline;
 }
 
-/* 관리자 상세 — 권한 유형 값 셀(r1) 가로·세로 중앙
- * 태그 기본 `margin-inline: auto`는 flex 부모 `justify-content`와 겹치면 한쪽으로 밀릴 수 있어 0으로 둠 */
-.user-basic-info-section__admin-name-block.detail-info-form__name-block
-  .detail-info-form__name-block-cell--r1 {
-  justify-content: left;
+/* 관리자 상세 — 권한 유형 인라인 (테이블 tag160·이중 패딩 없음) */
+.user-basic-info-section__admin-permission-inline {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  vertical-align: middle;
+  position: relative;
+  overflow: visible;
+}
+
+.user-basic-info-section__admin-permission-inline .user-list-admin-perm-tag {
+  margin-inline: 0;
+}
+
+.user-basic-info-section__admin-permission-inline .ant-dropdown-trigger,
+.user-basic-info-section__admin-permission-inline .status-dropdown-cell__status-trigger {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  justify-content: center;
   align-items: center;
 }
 
-.user-basic-info-section__admin-name-block.detail-info-form__name-block
-  .detail-info-form__name-block-cell--r1
-  .user-list-admin-perm-tag {
-  margin-inline: 0;
+.user-basic-info-section__admin-permission-inline .status-dropdown-cell__status-trigger--open {
+  box-shadow: none !important;
 }
 
 /* 조회 슬롯만 상단 정렬 — `--edit` 값 셀에는 적용되지 않음 */

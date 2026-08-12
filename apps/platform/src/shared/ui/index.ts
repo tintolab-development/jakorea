@@ -39,6 +39,9 @@ export {
   PFFormFieldRow,
   PFFormFieldTable,
   PFFormFieldValueText,
+  PFFormInlineRow,
+  PFFormInlineSegment,
+  PFFormInlineSeparator,
   PFFormPage,
   PFFormSection,
 } from './pf-form'
@@ -49,6 +52,9 @@ export type {
   PFFormFieldRowProps,
   PFFormFieldTableProps,
   PFFormFieldValueTextProps,
+  PFFormInlineRowProps,
+  PFFormInlineSegmentProps,
+  PFFormInlineSeparatorProps,
   PFFormPageProps,
   PFFormSectionProps,
 } from './pf-form'

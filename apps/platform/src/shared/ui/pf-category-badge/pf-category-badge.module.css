@@ -11,10 +11,10 @@
 }
 
 .small {
-  height: 32px;
-  padding: 0 var(--spacing-12);
+  padding: var(--spacing-4) var(--spacing-12);
+  justify-content: center;
   align-items: center;
-  gap: var(--spacing-6);
+  gap: 10px;
 }
 
 .largeWithIcon {

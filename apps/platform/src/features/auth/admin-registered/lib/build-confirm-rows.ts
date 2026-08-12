@@ -1,13 +1,14 @@
+import { isRequiredAddressIncomplete } from '@jakorea/domain/shared/required-address'
 import { buildConfirmationRows } from '@/features/auth/sign-up'
-import { MOCK_ADMIN_REGISTERED_PROFILE } from './constants'
 import type { AdminRegisteredWizardState } from './wizard-state'
 import { getAdminRegisteredProfileFields } from './wizard-state'
 
 export function buildAdminRegisteredConfirmationRows(state: AdminRegisteredWizardState) {
   const profile = getAdminRegisteredProfileFields(state)
+  const memberType = state.memberType ?? 'general'
 
   return buildConfirmationRows({
-    selectedType: MOCK_ADMIN_REGISTERED_PROFILE.memberType,
+    selectedType: memberType,
     birthDate: state.birthDate ?? '',
     gender: state.gender ?? null,
     schoolStatus: profile.schoolStatus,
@@ -15,6 +16,11 @@ export function buildAdminRegisteredConfirmationRows(state: AdminRegisteredWizar
     addressDetail: profile.addressDetail,
     email: state.email,
     volunteerId: profile.volunteerId,
+    name: state.verifiedName,
+    phone: state.verifiedPhone,
+    schoolName: profile.schoolName || state.schoolName,
+    schoolAddress: state.schoolAddress,
+    employmentStatus: state.employmentStatus ?? null,
   })
 }
 
@@ -25,7 +31,13 @@ export function isAdminRegisteredEditValid(state: {
   address: string
   addressDetail: string
 }) {
-  if (!state.address.trim() || !state.addressDetail.trim()) {
+  if (
+    isRequiredAddressIncomplete({
+      address: state.address,
+      addressDetail: state.addressDetail,
+      subject: 'person',
+    })
+  ) {
     return false
   }
 

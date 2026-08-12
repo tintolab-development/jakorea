@@ -14,4 +14,18 @@ describe('mapPatchUserBasicInfoToApiRequest', () => {
       { id: 3, certificationName: '평생교육사', issuer: '교육부', issuedDate: '2020-01-01' },
     ])
   })
+
+  it('선택 termsAgreements만 PATCH body에 포함하고 필수는 제외한다', () => {
+    const body = mapPatchUserBasicInfoToApiRequest({
+      name: '김강사',
+      termsAgreements: [
+        { termsType: 'SERVICE_TERMS', version: '1.0', required: true, agreed: true },
+        { termsType: 'MARKETING', version: '1.0', required: false, agreed: false },
+      ],
+    })
+
+    expect(body.termsAgreements).toEqual([
+      { termsType: 'MARKETING', version: '1.0', required: false, agreed: false },
+    ])
+  })
 })

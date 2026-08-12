@@ -42,7 +42,7 @@
 | API | 기존 훅 시그니처는 1차 PR에서 유지 가능 (`editorHostRef` → 점진적 컴포넌트 API) |
 | 포맷 | **경계별 Markdown/HTML 유지**(백엔드 계약 변경 없음) |
 | 스타일 | `.toastui-editor-contents` → `.rich-text-content` 등 단일 prose 클래스 |
-| 범위 외 | `apps/lms`, `packages/*` (Toast UI 미사용) |
+| 범위 외 | `packages/*` (Toast UI 미사용) |
 
 ### 비목표 (이번 마이그레이션에서 하지 않음)
 
@@ -470,7 +470,6 @@ useEditor({
 - 1차 PR에서 DB Markdown→HTML 일괄 변환
 - `use-template-editor`의 blur/MutationObserver를 Tiptap PR에 **그대로 복사** (원인 제거 후 최소 보완만)
 - 뷰어만 Tiptap, 프로그램 읽기는 `innerHTML` 유지 (스타일 불일치 재발)
-- `apps/lms`에 동일 패키지 선제 도입(이번 범위 밖)
 
 ---
 
