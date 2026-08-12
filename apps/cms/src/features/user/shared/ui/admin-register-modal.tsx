@@ -60,7 +60,7 @@ const INITIAL_VALUES: AdminRegisterModalFormValues = {
   email: '',
   consentTermsOfService: 'agree',
   consentPersonalInfo: 'agree',
-  consentMarketing: 'agree',
+  consentMarketing: 'disagree',
   consentMfaSetup: 'agree',
 }
 
@@ -86,6 +86,7 @@ function normalizeSubmitValues(
     birthDate: birthDateFormValueToApi(values.birthDate),
     contact: values.contact.trim(),
     email: values.email.trim(),
+    consentMarketing: 'disagree',
   }
 }
 
@@ -311,11 +312,8 @@ export function AdminRegisterModal({
                 labelWidth={220}
                 view="-"
                 edit={
-                  <Form.Item
-                    name="consentTermsOfService"
-                    style={FORM_ITEM_STYLE}
-                  >
-                    <CmsRadioGroup options={CONSENT_OPTIONS} size="medium" />
+                  <Form.Item name="consentTermsOfService" noStyle>
+                    <CmsRadioGroup options={CONSENT_OPTIONS} size="large" />
                   </Form.Item>
                 }
               />
@@ -324,11 +322,8 @@ export function AdminRegisterModal({
                 labelWidth={220}
                 view="-"
                 edit={
-                  <Form.Item
-                    name="consentPersonalInfo"
-                    style={FORM_ITEM_STYLE}
-                  >
-                    <CmsRadioGroup options={CONSENT_OPTIONS} size="medium" />
+                  <Form.Item name="consentPersonalInfo" noStyle>
+                    <CmsRadioGroup options={CONSENT_OPTIONS} size="large" />
                   </Form.Item>
                 }
               />
@@ -340,7 +335,7 @@ export function AdminRegisterModal({
                 view="-"
                 edit={
                   <Form.Item name="consentMarketing" noStyle>
-                    <CmsRadioGroup options={CONSENT_OPTIONS} size="medium" />
+                    <CmsRadioGroup options={CONSENT_OPTIONS} size="large" disabled />
                   </Form.Item>
                 }
               />
@@ -350,7 +345,7 @@ export function AdminRegisterModal({
                 view="-"
                 edit={
                   <Form.Item name="consentMfaSetup" noStyle>
-                    <CmsRadioGroup options={CONSENT_OPTIONS} size="medium" />
+                    <CmsRadioGroup options={CONSENT_OPTIONS} size="large" />
                   </Form.Item>
                 }
               />
