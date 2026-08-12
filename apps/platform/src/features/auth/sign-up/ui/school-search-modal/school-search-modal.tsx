@@ -18,7 +18,6 @@ import {
   getResultDisplayName,
   getResultKey,
   getResultLocation,
-  getResultSchoolLevel,
   toCareerNetDisplayName,
   type SchoolSearchResultItem,
 } from './school-search-sort'
@@ -84,8 +83,8 @@ type SchoolSearchModalProps = {
   /** 모달 제목 (기본: 소속/학교 검색) */
   title?: string
   /**
-   * NEIS `schulKndScNm` 필터 (예: `고등학교`).
-   * 지정 시 해당 학교급만 결과에 노출하고 CareerNet은 호출하지 않음.
+   * 학교급 고정 (예: `고등학교`, `전문대학`, `대학교`).
+   * 지정 시 해당 급만 검색하고 학교급 셀렉트를 비활성화한다.
    */
   schoolKindFilter?: string
 }
@@ -417,67 +416,49 @@ export function SchoolSearchModal({
             ) : null}
             {hasResults ? (
               <>
-                <div className={styles.schoolResultTableWrap}>
-                  <table className={styles.schoolResultTable}>
-                    <thead>
-                      <tr>
-                        <th scope="col">학교급</th>
-                        <th scope="col">학교명</th>
-                        <th scope="col">학교 소재지</th>
-                        <th scope="col">선택</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pagedResults.map(result => {
-                        const displayName = getResultDisplayName(result)
-                        const schoolLevel = getResultSchoolLevel(result)
-                        const location = getResultLocation(result)
+                <ul className={styles.schoolResultList} aria-label="학교 검색 결과">
+                  {pagedResults.map(result => {
+                    const displayName = getResultDisplayName(result)
+                    const location = getResultLocation(result)
 
-                        return (
-                          <tr key={getResultKey(result)}>
-                            <td>
-                              <PFText as="span" typo="bd-sm-md" color="black">
-                                {schoolLevel}
-                              </PFText>
-                            </td>
-                            <td>
-                              <PFText
-                                as="span"
-                                typo="bd-sm-md"
-                                color="black"
-                                className={styles.schoolResultName}
-                              >
-                                {highlightKeyword(displayName, keyword, styles.schoolResultHit)}
-                              </PFText>
-                            </td>
-                            <td>
-                              <PFText
-                                as="span"
-                                typo="bd-sm-md"
-                                color="black"
-                                className={styles.schoolResultAddress}
-                              >
-                                {location}
-                              </PFText>
-                            </td>
-                            <td className={styles.schoolResultSelectCell}>
-                              <PFButton
-                                size="medium"
-                                variant="secondary"
-                                width="72px"
-                                onClick={() => {
-                                  handleSelectResult(result)
-                                }}
-                              >
-                                선택
-                              </PFButton>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                    return (
+                      <li key={getResultKey(result)} className={styles.schoolResultItem}>
+                        <div className={styles.schoolResultHeader}>
+                          <PFText
+                            as="p"
+                            typo="bd-md-bd"
+                            color="black"
+                            className={styles.schoolResultName}
+                          >
+                            {highlightKeyword(displayName, keyword, styles.schoolResultHit)}
+                          </PFText>
+                          <PFButton
+                            size="small"
+                            variant="secondary"
+                            onClick={() => {
+                              handleSelectResult(result)
+                            }}
+                          >
+                            선택
+                          </PFButton>
+                        </div>
+                        {location !== '-' ? (
+                          <div className={styles.schoolResultAddressRow}>
+                            <span className={styles.schoolResultTag}>소재지</span>
+                            <PFText
+                              as="span"
+                              typo="bd-sm-md"
+                              color="black"
+                              className={styles.schoolResultAddress}
+                            >
+                              {location}
+                            </PFText>
+                          </div>
+                        ) : null}
+                      </li>
+                    )
+                  })}
+                </ul>
                 <div className={styles.schoolPagination}>
                   <PFPagination
                     currentPage={currentPage}

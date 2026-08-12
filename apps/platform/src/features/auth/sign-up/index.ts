@@ -6,6 +6,7 @@ export type {
   AgreementState,
   ConfirmationRow,
   EmailCheckStatus,
+  EmploymentStatus,
   GenderType,
   MemberType,
   SchoolStatus,
