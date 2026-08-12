@@ -145,7 +145,6 @@ export function VerticalTableParagraphBody({
   tableCanvasInteractive = true,
   tableRowSelection: controlledRow,
   onTableRowSelectionChange,
-  portraitPersonalConsentAffiliationOptions,
   portraitConsentResponseFieldsInteractive = false,
   bottomConsentInteractive: bottomConsentInteractiveProp,
 }: {
@@ -161,7 +160,6 @@ export function VerticalTableParagraphBody({
   /** 있으면 상위와 본문 행 선택 동기화(다른 위젯 th/td 선택 시 단일 포커스) */
   tableRowSelection?: number | null
   onTableRowSelectionChange?: (row: number | null) => void
-  portraitPersonalConsentAffiliationOptions?: ReadonlyArray<{ value: string; label: string }>
   /** preview fill — 초상권 1번 표 성명·소속만 입력 허용 */
   portraitConsentResponseFieldsInteractive?: boolean
   /** preview fill — 하단 동의 라디오만 조작 허용 */
@@ -696,7 +694,6 @@ export function VerticalTableParagraphBody({
                 key={`vr-${rowIdx}-portrait-name`}
                 row={row}
                 interactive={isEditMode || portraitConsentResponseFieldsInteractive}
-                affiliationSelectOptions={portraitPersonalConsentAffiliationOptions}
                 onNameChange={value => setCell(0, 0, value)}
                 onAffiliationChange={value => setCell(0, 1, value)}
                 onSelectRow={() => {

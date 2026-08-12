@@ -1,13 +1,11 @@
 import { Input } from 'antd'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
-import { CmsSelect } from '@/shared/ui/cms-select'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import type { VerticalTableRow } from '@/features/template/model/writing-form-draft.schema'
-import { resolvePortraitAffiliationSelectOptions } from '@/features/template/ui/paragraph/table/agreement-portrait-personal-consent-affiliation-options'
 import '@/features/template/ui/paragraph/table/agreement-portrait-personal-consent-name-row.css'
 
 const NAME_PLACEHOLDER = '한글 성명'
-const AFFILIATION_PLACEHOLDER = '소속'
+const AFFILIATION_PLACEHOLDER = '소속 기관명'
 const NO_AFFILIATION = '소속 없음'
 /** 구 시드·저장본 셀 문구 — 빈 입력(placeholder)으로 취급 */
 const LEGACY_NAME_CELL = '한글 성명'
@@ -36,17 +34,15 @@ export function portraitPersonalConsentAffiliationState(raw: string): {
 type Props = {
   row: VerticalTableRow
   interactive: boolean
-  affiliationSelectOptions?: ReadonlyArray<{ value: string; label: string }>
   onNameChange: (value: string) => void
   onAffiliationChange: (value: string) => void
   onSelectRow?: () => void
 }
 
-/** 초상권 동의서 1번 표 첫 행 — 성명 인풋 + 소속 셀렉트·소속 없음 */
+/** 초상권 동의서 1번 표 첫 행 — 성명 인풋 + 소속 기관명 인풋·소속 없음 */
 export function AgreementPortraitPersonalConsentNameRow({
   row,
   interactive,
-  affiliationSelectOptions,
   onNameChange,
   onAffiliationChange,
   onSelectRow,
@@ -54,10 +50,6 @@ export function AgreementPortraitPersonalConsentNameRow({
   const nameValue = portraitPersonalConsentNameValue(row.cells[0] ?? '')
   const { noAffiliation, affiliation } = portraitPersonalConsentAffiliationState(
     row.cells[1] ?? ''
-  )
-  const affiliationOptions = resolvePortraitAffiliationSelectOptions(
-    affiliation,
-    affiliationSelectOptions
   )
 
   return (
@@ -108,21 +100,23 @@ export function AgreementPortraitPersonalConsentNameRow({
           role="gridcell"
         >
           <div className="agreement-portrait-personal-consent-name-row__affiliation">
-            <CmsSelect
-              className="agreement-portrait-personal-consent-name-row__affiliation-select"
-              inputSize="large"
-              width="100%"
-              placeholder={AFFILIATION_PLACEHOLDER}
-              withAllOption={false}
-              allowClear
-              options={affiliationOptions}
-              value={noAffiliation ? undefined : affiliation || undefined}
-              onChange={v => {
-                if (!interactive) return
-                onAffiliationChange(String(v ?? ''))
-              }}
-              onClick={() => onSelectRow?.()}
-            />
+            <div className="form-editor-vertical-table__cell-input-shell form-editor-vertical-table__cell-input-shell--body form-editor-vertical-table__cell-input-shell--body-subjective agreement-portrait-personal-consent-name-row__affiliation-input-shell">
+              <Input
+                variant="borderless"
+                value={noAffiliation ? '' : affiliation}
+                placeholder={AFFILIATION_PLACEHOLDER}
+                disabled={noAffiliation}
+                readOnly={!interactive}
+                onChange={e => {
+                  if (!interactive) return
+                  onAffiliationChange(e.target.value)
+                }}
+                onFocus={() => onSelectRow?.()}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') e.stopPropagation()
+                }}
+              />
+            </div>
             <DividerVertical />
             <CmsCheckbox
               checkboxSize="large"

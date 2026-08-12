@@ -101,8 +101,6 @@ export type RenderFormParagraphBodyOptions = {
    * `agreementSystemParticipantName`과 함께 쓰며, 날짜·서명 단락은 `hiddenParagraphIds`로 숨긴다.
    */
   agreementAdminProxyConfirm?: boolean
-  /** 초상권 동의서 1번 표 — 소속 셀렉트 고정 옵션(강사 신규 등록 등) */
-  portraitPersonalConsentAffiliationOptions?: ReadonlyArray<{ value: string; label: string }>
   /**
    * 기본 authoring.
    * - user: 카드 선택은 유지(우측 패널 등)하되, 본문 입력은 카드 비선택에서도 가능(`isBodyInteractive`).
@@ -496,9 +494,6 @@ export function renderFormParagraphBody(
           tableCanvasInteractive={tableCanvasInteractive}
           tableRowSelection={options?.verticalTableRowSelection}
           onTableRowSelectionChange={options?.onVerticalTableRowSelectionChange}
-          portraitPersonalConsentAffiliationOptions={
-            options?.portraitPersonalConsentAffiliationOptions
-          }
           portraitConsentResponseFieldsInteractive={
             options?.portraitConsentResponseFieldsInteractive
           }

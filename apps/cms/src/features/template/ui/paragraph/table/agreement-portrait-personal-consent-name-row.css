@@ -21,10 +21,11 @@
   gap: 0;
 }
 
-.agreement-portrait-personal-consent-name-row__affiliation-select {
+.agreement-portrait-personal-consent-name-row__affiliation-input-shell {
   flex: 1 1 auto;
   min-width: 0;
   max-width: 249px;
+  width: 100%;
 }
 
 .agreement-portrait-personal-consent-name-row__affiliation .app-divider-vertical {
