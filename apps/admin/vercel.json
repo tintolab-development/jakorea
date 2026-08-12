@@ -2,9 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
   "installCommand": "cd ../.. && HUSKY=0 pnpm install",
-  "buildCommand": "cd ../.. && pnpm turbo run build --filter=cms",
+  "buildCommand": "cd ../.. && pnpm turbo run build --filter=admin",
   "outputDirectory": "dist",
-  "ignoreCommand": "cd ../.. && npx turbo-ignore cms --fallback=HEAD^1",
+  "ignoreCommand": "cd ../.. && npx turbo-ignore admin --fallback=HEAD^1",
   "rewrites": [
     {
       "source": "/(.*)",

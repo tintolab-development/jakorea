@@ -14,3 +14,4 @@ playwright/.auth/
 apps/*/tests/e2e/.auth/
 .playwright-mcp/
 .dev-mock/
+**/.vercel

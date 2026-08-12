@@ -32,4 +32,8 @@ pnpm --filter cms lint
 
 - [문서 인덱스 (카테고리별)](./docs/README.md) - 요구사항, 검증, 전략, 구현 등 전체 문서 목록
 
+## Vercel (`development` Production)
+
+Root Directory `apps/cms`, Production Branch `development`.  
+설정·환경 변수 체크리스트: [docs/vercel.md](./docs/vercel.md)
 

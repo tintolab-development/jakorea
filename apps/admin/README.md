@@ -16,6 +16,11 @@ pnpm admin
 
 환경 변수: `.env.example`을 `.env` / `.env.local`로 복사 후 설정.
 
+## Vercel (`development` Production)
+
+Root Directory `apps/admin`, Production Branch `development`.  
+설정·환경 변수 체크리스트: [docs/vercel.md](./docs/vercel.md)
+
 ## 현재 상태
 
 - **LNB·레이아웃 셸** + **상단 GNB**(CMS MainHeader 이식, mock 유저·알림)

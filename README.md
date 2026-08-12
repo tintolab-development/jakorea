@@ -64,6 +64,7 @@ pnpm install
 - **로컬 실행**: `pnpm admin` (또는 `pnpm --filter admin dev`) → 기본 포트 `5173`.
 - **빌드/미리보기**: `pnpm --filter admin build`, `pnpm --filter admin preview`.
 - **품질 검사**: `pnpm --filter admin lint`, `pnpm --filter admin typecheck`.
+- **Vercel**: Root Directory `apps/admin`, Production Branch `development`. 상세는 [`apps/admin/docs/vercel.md`](./apps/admin/docs/vercel.md).
 
 ### CMS (플랫폼 어드민)
 
@@ -79,6 +80,7 @@ pnpm install
 - **로컬 실행**: `pnpm cms` (또는 `pnpm --filter cms dev`) → 기본 포트 `3000`.
 - **빌드/미리보기**: `pnpm --filter cms build`, `pnpm --filter cms preview`.
 - **품질 검사**: `pnpm --filter cms lint`, `pnpm --filter cms typecheck`.
+- **Vercel**: Root Directory `apps/cms`, Production Branch `development`. 상세는 [`apps/cms/docs/vercel.md`](./apps/cms/docs/vercel.md).
 
 ### Platform (사용자용 플랫폼)
 
