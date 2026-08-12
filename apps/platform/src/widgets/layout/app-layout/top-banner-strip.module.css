@@ -1,4 +1,10 @@
+/*
+ * 띠배너 1개 높이: padding 16×2 + Body/Medium/bold line-height 24 = 56px
+ * 홈 첫 폴드(1920×1080) 계산용 — 히어로 height에서 차감
+ */
 .strip {
+  --home-strip-banner-height: 56px;
+
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -6,23 +12,16 @@
 
 .banner {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-8);
+  box-sizing: border-box;
   width: 100%;
-  min-height: 40px;
-  padding: var(--spacing-8) var(--spacing-16);
+  height: var(--home-strip-banner-height);
+  padding: var(--spacing-16) 0;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
   text-align: center;
   text-decoration: none;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-@media (--bp-pc-up) {
-  .banner {
-    min-height: 44px;
-    font-size: 15px;
-  }
+  color: var(--color-neutral-cool-80);
 }
 
 .banner:focus-visible {
@@ -30,27 +29,13 @@
   outline-offset: -2px;
 }
 
-.bannerLight {
-  background: var(--color-neutral-white);
-  color: var(--color-neutral-black);
-  border-bottom: 1px solid var(--color-border-default);
-}
-
-.bannerPrimary {
-  background: var(--color-primary-500);
-  color: var(--color-neutral-white);
-}
-
 .label {
   min-width: 0;
-  font-weight: 600;
 }
 
 .arrow {
   flex-shrink: 0;
-  transition: transform 160ms ease;
-}
-
-.banner:hover .arrow {
-  transform: translateX(4px);
+  display: block;
+  width: 16px;
+  height: 16px;
 }

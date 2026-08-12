@@ -1,4 +1,8 @@
 .layout {
+  /* 홈 첫 폴드 시안 1920×1080 · 띠배너 2개(56×2) 기본 */
+  --home-fold-height: 1080px;
+  --home-strip-height: calc(2 * 56px);
+
   display: flex;
   flex-direction: column;
   min-height: 100vh;
