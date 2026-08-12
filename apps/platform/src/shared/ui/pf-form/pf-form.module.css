@@ -1,6 +1,7 @@
-/* —— Page shell ——
- * layout: full → ContentShell 없이 main 전폭
- * .inner: 양식 단락 컬럼 max 1440
+/* —— Page shell (PC 양식 SSOT) ——
+ * ≥1600 (--bp-pc-full-up): 단락 max 1440 + 좌우 max(80, (100%-1440)/2)
+ * 1080–1599 (--bp-pc-compact): 좌우 패딩 80 고정
+ * ≤1079 (--bp-below-pc): 모바일 전용 레이아웃 별도 — 이번 범위 밖 (현상 유지)
  */
 .page {
   display: flex;
@@ -21,7 +22,7 @@
   display: flex;
   box-sizing: border-box;
   width: 100%;
-  max-width: 1440px;
+  max-width: var(--content-shell-max-width);
   min-width: 0;
   flex-direction: column;
   align-items: flex-start;
@@ -29,15 +30,24 @@
   margin-inline: auto;
 }
 
-/* PC · 1080+ : 양식 컬럼 max 1440, 좌우는 배경 풀블리드 */
-@media (--bp-pc-up) {
+@media (--bp-pc-compact) {
   .page {
-    /* 1920 시안: (100% - 1440) / 2 = 240 · 좁은 PC는 최소 80 */
-    padding-inline: max(80px, calc((100% - 1440px) / 2));
+    padding-inline: 80px;
   }
 
   .inner {
-    max-width: 1440px;
+    max-width: var(--content-shell-max-width);
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .page {
+    /* 1920: (100% - 1440) / 2 = 240 · 최소 80 */
+    padding-inline: max(80px, calc((100% - var(--content-shell-max-width)) / 2));
+  }
+
+  .inner {
+    max-width: var(--content-shell-max-width);
   }
 }
 
@@ -252,6 +262,35 @@
   padding: 12px 16px;
   flex: 1 1 auto;
   min-height: auto;
+}
+
+/* —— Inline row: Divider(세그먼트) 기준 줄바꿈 (PC compact 폭 축소 대응) —— */
+.inlineRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12) 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.inlineSegment {
+  display: inline-flex;
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  min-width: 0;
+  gap: 0;
+}
+
+.inlineSeparator {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 1px;
+  height: 13px;
+  margin-inline: var(--spacing-12);
+  opacity: 0.5;
+  background: var(--default-BK, #3d3d3d);
 }
 
 /* value 영역 — 일반 텍스트 */
