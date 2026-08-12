@@ -35,10 +35,12 @@ import {
 } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { applyMemberConsentToSchema } from '@/features/user/api/map-member-consent-records'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
+import { upsertEditableTermsAgreementInDraft } from '@/features/user/api/member-basic-info-terms-patch'
 import {
   updateAffiliatedTeacherEmploymentStatusRemote,
   updateTeacherEmploymentStatusRemote,
 } from '@/features/user/api/members-api-client'
+import { shouldShowCmsMemberInfoEditButton } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { MemberDetailMockDataBanner } from '@/features/user/detail/ui/member-detail-mock-data-banner'
@@ -203,6 +205,28 @@ export function UserDetailFullpageBasicTabContent({
     onMemberInfoDraftChange,
   })
 
+  const individualConsentEditing = Boolean(
+    memberInfoEditing &&
+      user.role === 'INDIVIDUAL' &&
+      shouldShowCmsMemberInfoEditButton(user) &&
+      memberInfoDraft != null &&
+      onMemberInfoDraftChange != null
+  )
+
+  const handleIndividualEditableConsentChange = useCallback(
+    (label: string, agreed: boolean) => {
+      if (!onMemberInfoDraftChange) return
+      onMemberInfoDraftChange({
+        termsAgreements: upsertEditableTermsAgreementInDraft(
+          memberInfoDraft?.termsAgreements,
+          label,
+          agreed
+        ),
+      })
+    },
+    [memberInfoDraft?.termsAgreements, onMemberInfoDraftChange]
+  )
+
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
       {canShowAdminCommentForTarget ? (
@@ -250,6 +274,11 @@ export function UserDetailFullpageBasicTabContent({
               viewVariant={consentViewVariant}
               remoteConsentRows={remoteConsentRows}
               remoteConsentLoading={membersRemote && consentLoading}
+              editing={individualConsentEditing}
+              draftTermsAgreements={memberInfoDraft?.termsAgreements}
+              onEditableConsentChange={
+                individualConsentEditing ? handleIndividualEditableConsentChange : undefined
+              }
             />
           ) : null}
           {instructorResumeApplicantRow ? (

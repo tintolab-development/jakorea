@@ -2,6 +2,7 @@ import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import type { AdminAccountBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminAccountBasicInfoUpdateRequest'
 import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
+import { filterEditableTermsAgreementsForBasicInfoPatch } from '@/features/user/api/member-basic-info-terms-patch'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import {
   toApiInstructorCmsProfile,
@@ -78,8 +79,9 @@ export function mapPatchUserBasicInfoToApiRequest(
   if (patch.instructorCmsSettlement != null) {
     body.settlement = toApiInstructorCmsSettlement(patch.instructorCmsSettlement)
   }
-  if (patch.termsAgreements != null && patch.termsAgreements.length > 0) {
-    body.termsAgreements = patch.termsAgreements
+  const editableTerms = filterEditableTermsAgreementsForBasicInfoPatch(patch.termsAgreements)
+  if (editableTerms != null && editableTerms.length > 0) {
+    body.termsAgreements = editableTerms
   }
 
   return body

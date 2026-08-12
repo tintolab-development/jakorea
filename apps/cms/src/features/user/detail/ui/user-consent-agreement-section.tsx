@@ -5,14 +5,22 @@
 import { Spin } from 'antd'
 import { useCallback, useState, type CSSProperties, type ReactNode } from 'react'
 import type { User } from '@/types/user'
+import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { CmsRadioGroup } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
+import {
+  CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE,
+  isMemberBasicInfoImmutableConsentLabel,
+  resolveEditableConsentAgreedFromDraft,
+} from '@/features/user/api/member-basic-info-terms-patch'
 import {
   resolveMemberConsentTemplateByLabel,
   type MemberConsentTemplateEntry,
 } from '@/features/user/shared/lib/member-consent-template-map'
 import { MemberConsentDocumentViewModal } from '@/features/user/shared/ui/member-consent-document-view-modal'
+import { CONSENT_RADIO_OPTIONS } from '@/features/user/shared/ui/instructor-profile-form'
 import './detail-info/user-detail-section-head.css'
 import './user-consent-agreement-section.css'
 
@@ -34,6 +42,13 @@ export interface UserConsentAgreementSectionProps {
   remoteConsentRows?: ConsentRowSchema[]
   /** remote 모드에서 API 로딩 중 */
   remoteConsentLoading?: boolean
+  /**
+   * 관리자 등록 회원 기본정보 수정 — 선택 동의만 편집.
+   * 필수(서비스·개인정보·MFA)는 조회 고정.
+   */
+  editing?: boolean
+  draftTermsAgreements?: TermsAgreementRequest[]
+  onEditableConsentChange?: (label: string, agreed: boolean) => void
 }
 
 const DEFAULT_CAPTION = '*미동의 시 서비스 가입 및 프로그램 참여에 제한이 있을 수 있습니다.'
@@ -216,6 +231,9 @@ export const CONSENT_ROWS_PERMISSION_INSTRUCTOR: ConsentRowSchema[] = CONSENT_RO
 
 export interface ConsentRenderCtx {
   openDocumentForLabel: (label: string, formResponseId?: number) => void
+  editing?: boolean
+  draftTermsAgreements?: TermsAgreementRequest[]
+  onEditableConsentChange?: (label: string, agreed: boolean) => void
 }
 
 /** `동의 | 2026.01.15 09:15:42` 형태면 상태·구분자·날짜시간으로 나누어 날짜에 전용 스타일 적용 */
@@ -318,6 +336,38 @@ function resolveConsentFieldView(
   }
 }
 
+function resolveConsentFieldEdit(
+  field: ConsentFieldSchema,
+  ctx: ConsentRenderCtx
+): ReactNode | undefined {
+  if (!ctx.editing || !ctx.onEditableConsentChange) return undefined
+  if (field.value.type === 'empty_half') return undefined
+  if (isMemberBasicInfoImmutableConsentLabel(field.label)) return undefined
+  if (!(field.label in CONSENT_LABEL_TO_EDITABLE_TERMS_TYPE)) return undefined
+
+  const fallbackAgreed =
+    field.value.type === 'remote_consent' || field.value.type === 'document'
+      ? field.value.agreed
+      : false
+  const agreed = resolveEditableConsentAgreedFromDraft(
+    ctx.draftTermsAgreements,
+    field.label,
+    fallbackAgreed
+  )
+
+  return (
+    <CmsRadioGroup
+      options={CONSENT_RADIO_OPTIONS}
+      size="large"
+      value={agreed ? 'agree' : 'disagree'}
+      onChange={e => {
+        const next = e.target.value === 'agree'
+        ctx.onEditableConsentChange?.(field.label, next)
+      }}
+    />
+  )
+}
+
 export function renderConsentField(
   field: ConsentFieldSchema,
   ctx: ConsentRenderCtx,
@@ -340,6 +390,7 @@ export function renderConsentField(
   }
 
   const view = resolveConsentFieldView(field.value, ctx, field.label)
+  const edit = resolveConsentFieldEdit(field, ctx)
   return (
     <DetailInfoForm.Field
       key={fieldKey}
@@ -347,6 +398,7 @@ export function renderConsentField(
       labelWidth={field.labelWidth}
       {...(field.fullRow ? { fullRow: true } : {})}
       view={view}
+      {...(edit != null ? { edit } : {})}
     />
   )
 }
@@ -377,6 +429,9 @@ export function UserConsentAgreementSection({
   onOpenAgreementDocument,
   remoteConsentRows,
   remoteConsentLoading = false,
+  editing = false,
+  draftTermsAgreements,
+  onEditableConsentChange,
 }: UserConsentAgreementSectionProps) {
   const [activeView, setActiveView] = useState<ActiveConsentView | null>(null)
 
@@ -403,7 +458,13 @@ export function UserConsentAgreementSection({
   const schema = remoteConsentRows ?? baseSchema
   const upperRows = schema.slice(0, 2)
   const lowerRows = schema.slice(2)
-  const ctx: ConsentRenderCtx = { openDocumentForLabel }
+  const ctx: ConsentRenderCtx = {
+    openDocumentForLabel,
+    editing,
+    draftTermsAgreements,
+    onEditableConsentChange,
+  }
+  const formMode = editing ? 'edit' : 'view'
 
   return (
     <div className="user-consent-agreement-section">
@@ -413,6 +474,7 @@ export function UserConsentAgreementSection({
             title="약관 및 동의"
             description={effectiveCaption}
             className="user-consent-agreement-section__form"
+            mode={formMode}
           >
             {upperRows.map((row, rowIndex) => renderConsentRow(row, ctx, rowIndex))}
           </DetailInfoForm>
@@ -421,6 +483,7 @@ export function UserConsentAgreementSection({
               title="약관 및 동의 상세"
               hideHeader
               className="user-consent-agreement-section__form"
+              mode={formMode}
             >
               {lowerRows.map((row, rowIndex) => renderConsentRow(row, ctx, rowIndex + 2))}
             </DetailInfoForm>

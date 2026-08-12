@@ -16,6 +16,7 @@ import {
   type LicenseOrAwardRow,
 } from '@/features/user/shared/ui/instructor-profile-form'
 import { buildPreRegisterTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
+import { filterEditableTermsAgreementsForBasicInfoPatch } from '@/features/user/api/member-basic-info-terms-patch'
 import {
   ensureInstructorFormListRows,
   instructorCmsProfileToFormValues,
@@ -405,19 +406,23 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
     licenseRows: values.licenseRows,
     instructorCmsProfile: instructorProfileFormValuesToCmsProfile(values),
     instructorCmsSettlement: instructorProfileFormValuesToCmsSettlement(values),
-    termsAgreements: buildPreRegisterTermsAgreements(
-      {
-        consentTermsOfService: values.consentTermsOfService,
-        consentPersonal: values.consentPersonal,
-        consentMarketing: values.consentMarketing,
-      },
-      {
-        consentPortrait: values.consentPortrait,
-        consentPaymentStatement: values.consentPaymentStatement,
-        consentEducatorPledge: values.consentEducatorPledge,
-        consentAdministrativeJoint: values.consentAdministrativeJoint,
-        consentSexOffenseCheck: values.consentSexOffenseCheck,
-      }
-    ),
+    // 상세 수정 PATCH — 필수 약관 제외(선택만). 등록 모달은 createUser 경로를 씀.
+    termsAgreements:
+      filterEditableTermsAgreementsForBasicInfoPatch(
+        buildPreRegisterTermsAgreements(
+          {
+            consentTermsOfService: values.consentTermsOfService,
+            consentPersonal: values.consentPersonal,
+            consentMarketing: values.consentMarketing,
+          },
+          {
+            consentPortrait: values.consentPortrait,
+            consentPaymentStatement: values.consentPaymentStatement,
+            consentEducatorPledge: values.consentEducatorPledge,
+            consentAdministrativeJoint: values.consentAdministrativeJoint,
+            consentSexOffenseCheck: values.consentSexOffenseCheck,
+          }
+        )
+      ) ?? [],
   }
 }
