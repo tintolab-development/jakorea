@@ -93,4 +93,5 @@ Platform production build는 **`vite build`** 만 실행한다. 타입 검사는
 
 - `apps/platform/vercel.json` — 빌드·ignore·SPA rewrite
 - `apps/cms/vercel.json` — CMS는 별도 Vercel 프로젝트 (Root: `apps/cms`)
+- `apps/admin/vercel.json` — Admin은 별도 Vercel 프로젝트 (Root: `apps/admin`)
 - 루트 `vercel.json` — 레거시/루트 연결용. **Platform 프로젝트 Root는 `apps/platform`** 을 쓴다.
