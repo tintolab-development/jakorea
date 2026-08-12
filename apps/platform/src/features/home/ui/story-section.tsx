@@ -25,13 +25,13 @@ function FeaturedStory({ story }: { story: ImpactStoryListItem }) {
         aria-hidden="true"
       />
       <div className={styles.featuredBody}>
-        <PFText as="p" typo="bd-md-sb" color="primary-500" className={styles.featuredCategory}>
+        <PFText as="p" typo="hl-lg" color="primary-500" className={styles.featuredCategory}>
           {story.categoryLabel}
         </PFText>
-        <PFText as="h3" typo="hd-sm" color="black" className={styles.featuredTitle}>
+        <PFText as="h3" typo="hd-lg" color="black" className={styles.featuredTitle}>
           {story.title}
         </PFText>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.featuredDate}>
+        <PFText as="p" typo="hl-lg" color="black" className={styles.featuredDate}>
           {story.publishedAtLabel}
         </PFText>
       </div>
@@ -54,7 +54,7 @@ function SubStoryCard({ story }: { story: ImpactStoryListItem }) {
           {story.categoryLabel}
         </PFCategoryBadge>
       </div>
-      <PFText as="h4" typo="bd-lg-rg" color="black" className={styles.subCardTitle}>
+      <PFText as="h4" typo="hl-lg" color="black" className={styles.subCardTitle}>
         {story.title}
       </PFText>
     </Link>
@@ -87,7 +87,7 @@ export function StorySection() {
         </div>
 
         <div className={styles.viewAllRow}>
-          <Link className={styles.viewAllLink} to={IMPACT_STORIES_PATH}>
+          <Link className={[styles.viewAllLink, 'typo-bd-lg-sb'].join(' ')} to={IMPACT_STORIES_PATH}>
             전체보기
           </Link>
         </div>
