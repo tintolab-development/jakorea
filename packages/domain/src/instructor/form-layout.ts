@@ -57,7 +57,7 @@ export type InstructorFormConsentLayout = {
   documentKeys: readonly InstructorConsentDocumentKey[]
   /** true면 해당 surface 동의 단락의 모든 항목을 필수(*)·제출 검증 */
   allItemsRequired: boolean
-  /** true면 동의서 작성 전 기본정보 완성 게이트 생략 (CMS 상세 수정) */
+  /** true면 동의서 작성 전 기본정보 완성 게이트 생략 (CMS — 기본정보·동의서 미연동) */
   skipBasicInfoGate: boolean
 }
 
@@ -84,7 +84,7 @@ const CMS_CONSENT_LAYOUT: InstructorFormConsentLayout = {
   radioKeys: ALL_CONSENT_RADIO_KEYS,
   documentKeys: ALL_CONSENT_DOCUMENT_KEYS,
   allItemsRequired: false,
-  skipBasicInfoGate: false,
+  skipBasicInfoGate: true,
 }
 
 /**
