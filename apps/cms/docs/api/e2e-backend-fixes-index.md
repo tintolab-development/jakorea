@@ -15,6 +15,7 @@ CMS Playwright E2E · `/e2e-error-log` · 회원 관리 연동에서 **관측·�
 | 우선순위 | 도메인 | 대표 증상 | 문서 |
 |----------|--------|-----------|------|
 | **P0** | **members (등록 약관)** | 선택 약관까지 필수 검증 · pre-register 400 | [**members-pre-register-terms-required-policy-backend-request-2026-08-11.md**](./members/members-pre-register-terms-required-policy-backend-request-2026-08-11.md) |
+| **P0** | **members (관리자 회원)** | 일괄 삭제 불가 · 전체 목록 미노출 · 상세 약관·생년월일 누락 | [**admin-member-server-modification-request-2026-08-12.md**](./members/admin-member-server-modification-request-2026-08-12.md) |
 | **P0** | **programs** | `POST /api/admin/programs` → `DATABASE_ERROR` (HTTP 500) | [e2e-programs-create-database-error-handoff.md](./e2e-programs-create-database-error-handoff.md) |
 | **P0** | **API 공통 (CMS·Platform)** | validation Bean 메시지 UI 직접 노출 · unmask `reason` minLength 5 | [backend-handoff §에러 응답](./backend-handoff.md#에러-응답--사용자-노출-메시지-p0--cms--platform-공통) · [Platform](./../../platform/docs/api/api-error-response-handoff-2026-07-31.md) |
 | **P2** | **adminAuth** | 동일 계정 병렬 MFA → `MFA_CHALLENGE_INVALID` (FE는 storageState 로 완화) | [e2e-admin-auth-mfa-concurrency-handoff.md](./e2e-admin-auth-mfa-concurrency-handoff.md) |
