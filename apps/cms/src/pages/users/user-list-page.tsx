@@ -730,11 +730,8 @@ export function UserListPage() {
           pendingOpenedUserIdRef.current = null
           return
         }
-        const displayUser = applyTeacherDetailUrlContext(fetched, {
-          affiliatedSchoolName: user.affiliatedSchoolName,
-          instructorMemberProfile: user.instructorMemberProfile,
-        })
-        openMemberDetailFetched(displayUser, { replace: opts?.replace ?? false })
+        // 상세 GET만 본문으로 사용 — 목록 행 필드(소속·프로필 등)를 덮어쓰지 않음
+        openMemberDetailFetched(fetched, { replace: opts?.replace ?? false })
       } catch (error) {
         pendingOpenedUserIdRef.current = null
         handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })

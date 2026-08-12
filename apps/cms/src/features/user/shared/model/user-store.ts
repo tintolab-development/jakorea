@@ -23,8 +23,6 @@ import {
   type PatchUserBasicInfoInput,
   type PatchUserBasicInfoOptions,
 } from '@/entities/user/api/user-service'
-import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
-import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
 import { matchesUserInstitutionLocation } from '@/entities/user/lib/matches-institution-location'
 import {
   matchesInstructorJaEvaluationGradeFilter,
@@ -225,22 +223,12 @@ export const useUserStore = create<UserStore>((set, get) => ({
     set({ loading: true, error: null })
     try {
       const state = get()
-      const existingHint =
-        state.usersById[userId] ??
-        (options?.memberId != null
-          ? Object.values(state.usersById).find(u => u.memberId === options.memberId)
-          : undefined)
-
-      const fetched = await getUserById(userId, options)
-      if (!fetched) {
+      // 상세 본문은 GET 응답만 사용 — 목록/store 힌트와 merge하지 않음
+      const user = await getUserById(userId, options)
+      if (!user) {
         set({ loading: false })
         return null
       }
-
-      const user =
-        existingHint && isMembersRemoteEnabled()
-          ? mergeListUserWithFetchedDetail(existingHint, fetched)
-          : fetched
 
       // usersById에 추가/업데이트 — 요청 키·canonical id 모두 저장
       const nextUsersById = {
