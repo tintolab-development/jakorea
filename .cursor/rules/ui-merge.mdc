@@ -41,7 +41,7 @@ alwaysApply: true
    - Ant Design `Table` / `Modal` / `Form` 래핑·공통 필터(`UnifiedFilterCard`, `CmsButton` 등)
 
 7. **모노레포·앱 경로**  
-   - 경로가 `apps/cms`인지 `apps/lms` 등인지 먼저 구분한다.  
+   - 경로가 `apps/cms`인지 `apps/platform`·`apps/admin`인지 먼저 구분한다. 
    - 한 앱의 패턴을 다른 앱 파일에 이식하지 않는다.
 
 8. **CMS·Ant Design 관행**  
