@@ -1,17 +1,36 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
+import type { RecruitmentStatus } from '@jakorea/domain/recruitment/recruitment-status'
 import {
   PROGRAMS_PATH,
   getMockPrograms,
   programDetailPath,
   type ProgramListItem,
 } from '@/features/program'
+import { RECRUITMENT_STATUS_TONE_MAP } from '@/features/program/lib/badge-config'
 import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { useMediaQuery } from '@/shared/hooks'
-import { PFArrowButton, PFPageButton, PFStateBadge, PFText } from '@/shared/ui'
+import { PFArrowButton, PFStateBadge, PFText } from '@/shared/ui'
+import chevronRightUrl from '../image/icon/chevron-right-black-12.svg'
 import styles from './program-carousel-section.module.css'
 
 const MAX_ITEMS = 8
+
+/** 홈 카드 상태배지 — 시안 compact 라벨 */
+function homeRecruitmentStatusLabel(status: RecruitmentStatus) {
+  if (status === 'closed') return '모집완료'
+  if (status === 'scheduled') return '모집예정'
+  return '모집중'
+}
+
+/** 분류 라벨 구분자를 ` · ` 로 통일 */
+function formatClassificationLabel(label: string) {
+  return label
+    .split(/\s*[·•|,/]\s*/)
+    .map(part => part.trim())
+    .filter(Boolean)
+    .join(' · ')
+}
 
 function ProgramCard({ program }: { program: ProgramListItem }) {
   return (
@@ -29,18 +48,20 @@ function ProgramCard({ program }: { program: ProgramListItem }) {
       </div>
 
       <div className={styles.cardBody}>
-        {program.recruitmentStatus === 'recruiting' ? (
-          <PFStateBadge size="small" tone="progress" className={styles.cardBadge}>
-            모집중
-          </PFStateBadge>
-        ) : null}
+        <PFStateBadge
+          size="large"
+          tone={RECRUITMENT_STATUS_TONE_MAP[program.recruitmentStatus]}
+          className={styles.cardBadge}
+        >
+          {homeRecruitmentStatusLabel(program.recruitmentStatus)}
+        </PFStateBadge>
 
-        <PFText as="h3" typo="hl-sm" color="black" className={styles.cardTitle}>
+        <PFText as="h3" typo="hd-sm" color="black" className={styles.cardTitle}>
           {program.title}
         </PFText>
 
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.cardTarget}>
-          {program.educationTargetLabel}
+        <PFText as="p" typo="bd-lg-sb" color="neutral-cool-700" className={styles.cardTarget}>
+          {formatClassificationLabel(program.educationTargetLabel)}
         </PFText>
 
         <PFArrowButton
@@ -56,6 +77,7 @@ function ProgramCard({ program }: { program: ProgramListItem }) {
 
 export function ProgramCarouselSection() {
   const isPcUp = useMediaQuery(platformMediaQueries.pcUp)
+  /** PC: 아이템 617px × 3 + gap → 약 3장 노출 */
   const visibleCount = isPcUp ? 3 : 1
   const [index, setIndex] = useState(0)
 
@@ -73,40 +95,58 @@ export function ProgramCarouselSection() {
   return (
     <section className={styles.section}>
       <div className={styles.inner}>
-        <div className={styles.header}>
-          <PFText as="h2" typo="hd-lg" color="black" className={styles.title}>
-            새로운 배움이 기다리고 있어요
-          </PFText>
-          <Link className={styles.viewAllLink} to={PROGRAMS_PATH}>
-            전체보기
-          </Link>
-        </div>
+        <div className={styles.content}>
+          <div className={styles.header}>
+            <PFText as="h2" typo="hd-lg" color="black" className={styles.title}>
+              새로운 배움이 기다리고 있어요
+            </PFText>
+            <Link className={[styles.viewAllLink, 'typo-bd-lg-sb'].join(' ')} to={PROGRAMS_PATH}>
+              전체보기
+            </Link>
+          </div>
 
-        <div className={styles.viewport}>
-          <ul className={styles.track} style={trackStyle}>
-            {programs.map(program => (
-              <li className={styles.slide} key={program.id}>
-                <ProgramCard program={program} />
-              </li>
-            ))}
-          </ul>
+          <div className={styles.viewport}>
+            <ul className={styles.track} style={trackStyle}>
+              {programs.map(program => (
+                <li className={styles.slide} key={program.id}>
+                  <ProgramCard program={program} />
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         <div className={styles.controls}>
-          <PFPageButton
-            size="large"
-            direction="left"
+          <button
+            className={styles.pageButton}
+            type="button"
             aria-label="이전 프로그램"
-            disabled={clampedIndex <= 0}
-            onClick={() => setIndex(Math.max(0, clampedIndex - 1))}
-          />
-          <PFPageButton
-            size="large"
-            direction="right"
+            onClick={() =>
+              setIndex(clampedIndex <= 0 ? maxIndex : clampedIndex - 1)
+            }
+          >
+            <img
+              className={[styles.pageButtonIcon, styles.pageButtonIconPrev].join(' ')}
+              src={chevronRightUrl}
+              alt=""
+              aria-hidden="true"
+            />
+          </button>
+          <button
+            className={styles.pageButton}
+            type="button"
             aria-label="다음 프로그램"
-            disabled={clampedIndex >= maxIndex}
-            onClick={() => setIndex(Math.min(maxIndex, clampedIndex + 1))}
-          />
+            onClick={() =>
+              setIndex(clampedIndex >= maxIndex ? 0 : clampedIndex + 1)
+            }
+          >
+            <img
+              className={styles.pageButtonIcon}
+              src={chevronRightUrl}
+              alt=""
+              aria-hidden="true"
+            />
+          </button>
         </div>
       </div>
     </section>
