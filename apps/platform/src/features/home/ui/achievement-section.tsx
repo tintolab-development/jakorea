@@ -11,20 +11,29 @@ export function AchievementSection() {
         </div>
 
         <dl className={styles.statGrid}>
-          {HOME_ACHIEVEMENT_STATS.map(stat => (
-            <div className={styles.stat} key={stat.label}>
-              <dt className={styles.statLabel}>{stat.label}</dt>
-              <dd className={styles.statValue}>
-                <span className={styles.statNumber}>{stat.value}</span>
-                <span className={styles.statUnit}>{stat.unit}</span>
-              </dd>
-            </div>
-          ))}
+          {HOME_ACHIEVEMENT_STATS.flatMap((stat, index) => {
+            const nodes = []
+            if (index > 0) {
+              nodes.push(
+                <span
+                  className={styles.statDivider}
+                  key={`divider-${stat.label}`}
+                  aria-hidden="true"
+                />
+              )
+            }
+            nodes.push(
+              <div className={styles.stat} key={stat.label}>
+                <dt className={styles.statLabel}>{stat.label}</dt>
+                <dd className={styles.statValue}>
+                  <span className={styles.statNumber}>{stat.value}</span>
+                  <span className={styles.statUnit}>{stat.unit}</span>
+                </dd>
+              </div>
+            )
+            return nodes
+          })}
         </dl>
-
-        <div className={styles.arcDivider} aria-hidden="true">
-          <span className={styles.arcDot} />
-        </div>
 
         <div className={styles.highlight}>
           <p className={styles.highlightLabel}>{HOME_ACHIEVEMENT_HIGHLIGHT.label}</p>
