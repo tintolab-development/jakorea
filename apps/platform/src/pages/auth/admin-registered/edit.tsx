@@ -1,37 +1,59 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   getAdminRegisteredProfileFields,
   isAdminRegisteredEditValid,
   requireAdminRegisteredWizardState,
   updateAdminRegisteredWizardState,
+  useAdminRegisteredProfileHydration,
 } from '@/features/auth/admin-registered'
 import { AddressSearchModal } from '@/features/auth/sign-up/ui/address-search-modal'
-import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE, schoolGradeOptions } from '@/features/auth/sign-up'
+import { schoolGradeOptions } from '@/features/auth/sign-up'
 import type { SchoolStatus } from '@/features/auth/sign-up'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
-import sharedStyles from './shared.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
-import { useNavigate } from 'react-router-dom'
+import sharedStyles from './shared.module.css'
 
 export function AdminRegisteredEditPage() {
   const navigate = useNavigate()
-  const wizardState = requireAdminRegisteredWizardState()
+  const initialWizardState = requireAdminRegisteredWizardState()
+  const { wizardState, isHydrating } = useAdminRegisteredProfileHydration(initialWizardState)
 
-  if (!wizardState?.birthDate || !wizardState.gender) {
-    navigate('/auth/admin-registered/birth')
+  const profile = wizardState ? getAdminRegisteredProfileFields(wizardState) : null
+  const [schoolStatus, setSchoolStatus] = useState<SchoolStatus>(profile?.schoolStatus ?? 'none')
+  const [schoolName, setSchoolName] = useState(profile?.schoolName ?? '')
+  const [grade, setGrade] = useState(profile?.grade ?? '')
+  const [address, setAddress] = useState(profile?.address ?? '')
+  const [addressDetail, setAddressDetail] = useState(profile?.addressDetail ?? '')
+  const [volunteerId, setVolunteerId] = useState(profile?.volunteerId ?? '')
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+  const [fieldsSynced, setFieldsSynced] = useState(Boolean(wizardState?.profileHydrated))
+
+  useEffect(() => {
+    if (!wizardState?.birthDate || !wizardState.gender) {
+      navigate('/auth/admin-registered/birth', { replace: true })
+    }
+  }, [navigate, wizardState?.birthDate, wizardState?.gender])
+
+  useEffect(() => {
+    if (!wizardState?.profileHydrated || fieldsSynced) return
+    const next = getAdminRegisteredProfileFields(wizardState)
+    setSchoolStatus(next.schoolStatus)
+    setSchoolName(next.schoolName)
+    setGrade(next.grade)
+    setAddress(next.address)
+    setAddressDetail(next.addressDetail)
+    setVolunteerId(next.volunteerId)
+    setFieldsSynced(true)
+  }, [wizardState, fieldsSynced])
+
+  if (!initialWizardState || !wizardState?.birthDate || !wizardState.gender) {
     return null
   }
 
-  const profile = getAdminRegisteredProfileFields(wizardState)
-
-  const [schoolStatus, setSchoolStatus] = useState<SchoolStatus>(profile.schoolStatus)
-  const [schoolName, setSchoolName] = useState(profile.schoolName)
-  const [grade, setGrade] = useState(profile.grade)
-  const [address, setAddress] = useState(profile.address)
-  const [addressDetail, setAddressDetail] = useState(profile.addressDetail)
-  const [volunteerId, setVolunteerId] = useState(profile.volunteerId)
-  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+  const displayName = wizardState.verifiedName?.trim() || '-'
+  const displayPhone = wizardState.verifiedPhone?.trim() || '-'
 
   const isValid = isAdminRegisteredEditValid({
     schoolStatus,
@@ -83,131 +105,134 @@ export function AdminRegisteredEditPage() {
         </PFText>
       </div>
 
-        <div className={sharedStyles.content}>
-          <PFTextInput size="xlarge" label="이름" value={MOCK_VERIFIED_NAME} required disabled />
-          <PFTextInput
-            size="xlarge"
-            label="휴대폰 번호"
-            value={MOCK_VERIFIED_PHONE}
-            required
-            disabled
-          />
+      <div className={sharedStyles.content}>
+        <PFTextInput size="xlarge" label="이름" value={displayName} required disabled />
+        <PFTextInput size="xlarge" label="휴대폰 번호" value={displayPhone} required disabled />
+        {isHydrating ? (
+          <PFText as="p" typo="bd-sm-rg" color="neutral-cool-500">
+            가입 정보를 불러오는 중…
+          </PFText>
+        ) : null}
 
-          <div className={sharedStyles.schoolStatusField}>
-            <PFText as="span" typo="label-md" color="inherit" className={sharedStyles.fieldLabel}>
-              현재 학교에 재학 중이신가요?{' '}
-              <span className={sharedStyles.inlineRequiredMark}>*</span>
-            </PFText>
-            <div className={sharedStyles.schoolStatusOptions}>
-              <PFButton
-                size="xlarge"
-                variant="tertiary"
-                selected={schoolStatus === 'enrolled'}
-                width="100%"
-                onClick={() => handleSchoolStatusChange('enrolled')}
-              >
-                재학 중
-              </PFButton>
-              <PFButton
-                size="xlarge"
-                variant="tertiary"
-                selected={schoolStatus === 'none'}
-                width="100%"
-                onClick={() => handleSchoolStatusChange('none')}
-              >
-                해당 없음
-              </PFButton>
-            </div>
+        <div className={sharedStyles.schoolStatusField}>
+          <PFText as="span" typo="label-md" color="inherit" className={sharedStyles.fieldLabel}>
+            현재 학교에 재학 중이신가요? <span className={sharedStyles.inlineRequiredMark}>*</span>
+          </PFText>
+          <div className={sharedStyles.schoolStatusOptions}>
+            <PFButton
+              size="xlarge"
+              variant="tertiary"
+              selected={schoolStatus === 'enrolled'}
+              width="100%"
+              onClick={() => handleSchoolStatusChange('enrolled')}
+            >
+              재학 중
+            </PFButton>
+            <PFButton
+              size="xlarge"
+              variant="tertiary"
+              selected={schoolStatus === 'none'}
+              width="100%"
+              onClick={() => handleSchoolStatusChange('none')}
+            >
+              해당 없음
+            </PFButton>
           </div>
+        </div>
 
-          {schoolStatus === 'enrolled' ? (
-            <>
-              <PFTextInput
-                size="xlarge"
-                label="소속/학교명"
-                placeholder="소속 또는 학교명을 입력해 주세요"
-                required
-                value={schoolName}
-                onValueChange={setSchoolName}
-              />
-
-              <div className={sharedStyles.gradeField}>
-                <PFText as="span" typo="label-md" color="inherit" className={sharedStyles.fieldLabel}>
-                  학년 <span className={sharedStyles.inlineRequiredMark}>*</span>
-                </PFText>
-                <div className={sharedStyles.gradeSelectWrap}>
-                  <select
-                    className={sharedStyles.gradeSelect}
-                    required
-                    value={grade}
-                    onChange={event => setGrade(event.target.value)}
-                  >
-                    <option value="" disabled hidden>
-                      학년을 선택해 주세요
-                    </option>
-                    {schoolGradeOptions.map(option => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                  <img
-                    className={sharedStyles.gradeSelectArrow}
-                    src={chevronRightGrayUrl}
-                    alt=""
-                    aria-hidden="true"
-                  />
-                </div>
-              </div>
-            </>
-          ) : null}
-
-          <div className={sharedStyles.addressField}>
-            <PFText as="span" typo="label-md" color="inherit" className={sharedStyles.fieldLabel}>
-              자택 주소 <span className={sharedStyles.inlineRequiredMark}>*</span>
-            </PFText>
-            <div className={sharedStyles.addressSearchRow}>
-              <PFTextInput
-                size="xlarge"
-                placeholder="주소를 검색해 주세요"
-                value={address}
-                readOnly
-                onClick={() => setIsAddressModalOpen(true)}
-              />
-              <PFButton
-                size="xlarge"
-                variant="secondary"
-                width="100%"
-                onClick={() => setIsAddressModalOpen(true)}
-              >
-                주소 검색
-              </PFButton>
-            </div>
+        {schoolStatus === 'enrolled' ? (
+          <>
             <PFTextInput
               size="xlarge"
-              placeholder="상세주소를 입력해 주세요"
-              value={addressDetail}
-              onValueChange={setAddressDetail}
+              label="소속/학교명"
+              placeholder="소속 또는 학교명을 입력해 주세요"
+              required
+              value={schoolName}
+              onValueChange={setSchoolName}
             />
-          </div>
 
+            <div className={sharedStyles.gradeField}>
+              <PFText as="span" typo="label-md" color="inherit" className={sharedStyles.fieldLabel}>
+                학년 <span className={sharedStyles.inlineRequiredMark}>*</span>
+              </PFText>
+              <div className={sharedStyles.gradeSelectWrap}>
+                <select
+                  className={sharedStyles.gradeSelect}
+                  required
+                  value={grade}
+                  onChange={event => setGrade(event.target.value)}
+                >
+                  <option value="" disabled hidden>
+                    학년을 선택해 주세요
+                  </option>
+                  {schoolGradeOptions.map(option => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <img
+                  className={sharedStyles.gradeSelectArrow}
+                  src={chevronRightGrayUrl}
+                  alt=""
+                  aria-hidden="true"
+                />
+              </div>
+            </div>
+          </>
+        ) : null}
+
+        <div className={sharedStyles.addressField}>
+          <PFText as="span" typo="label-md" color="inherit" className={sharedStyles.fieldLabel}>
+            자택 주소 <span className={sharedStyles.inlineRequiredMark}>*</span>
+          </PFText>
+          <div className={sharedStyles.addressSearchRow}>
+            <PFTextInput
+              size="xlarge"
+              placeholder="주소를 검색해 주세요"
+              value={address}
+              readOnly
+              onClick={() => setIsAddressModalOpen(true)}
+            />
+            <PFButton
+              size="xlarge"
+              variant="secondary"
+              width="100%"
+              onClick={() => setIsAddressModalOpen(true)}
+            >
+              주소 검색
+            </PFButton>
+          </div>
           <PFTextInput
             size="xlarge"
-            label="1365 ID"
-            placeholder="1365 ID를 입력해 주세요"
-            value={volunteerId}
-            onValueChange={setVolunteerId}
+            placeholder="상세주소를 입력해 주세요"
+            value={addressDetail}
+            onValueChange={setAddressDetail}
           />
         </div>
 
-        <div className={sharedStyles.actionsTerms}>
-          <PFButton size="xlarge" width="100%" disabled={!isValid} onClick={handleSubmit}>
-            가입 정보 수정하기
-          </PFButton>
-          <PFButton size="xlarge" variant="tertiary" width="100%" onClick={handlePrevious}>
-            이전
-          </PFButton>
-        </div>
+        <PFTextInput
+          size="xlarge"
+          label="1365 ID"
+          placeholder="1365 ID를 입력해 주세요"
+          value={volunteerId}
+          onValueChange={setVolunteerId}
+        />
+      </div>
+
+      <div className={sharedStyles.actionsTerms}>
+        <PFButton
+          size="xlarge"
+          width="100%"
+          disabled={!isValid || isHydrating}
+          onClick={handleSubmit}
+        >
+          가입 정보 수정하기
+        </PFButton>
+        <PFButton size="xlarge" variant="tertiary" width="100%" onClick={handlePrevious}>
+          이전
+        </PFButton>
+      </div>
 
       <AddressSearchModal
         open={isAddressModalOpen}

@@ -1,4 +1,10 @@
-import type { GenderType, SchoolStatus } from '@/features/auth/sign-up'
+import type {
+  EmploymentStatus,
+  GenderType,
+  MemberType,
+  SchoolStatus,
+} from '@/features/auth/sign-up'
+import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { MOCK_ADMIN_REGISTERED_PROFILE } from './constants'
 
 const ADMIN_REGISTERED_WIZARD_STORAGE_KEY = 'platform:dev:admin-registered-wizard'
@@ -8,6 +14,7 @@ export type AdminRegisteredEntrySource = 'first-login' | 'sign-up'
 export type AdminRegisteredWizardState = {
   email: string
   entrySource?: AdminRegisteredEntrySource
+  memberType?: MemberType
   birthDate?: string
   gender?: GenderType
   /** 본인인증 세션 — 인증 완료 후에만 설정 */
@@ -16,10 +23,14 @@ export type AdminRegisteredWizardState = {
   verifiedPhone?: string
   schoolStatus?: SchoolStatus
   schoolName?: string
+  schoolAddress?: string
   grade?: string
   address?: string
   addressDetail?: string
   volunteerId?: string
+  employmentStatus?: EmploymentStatus
+  /** GET /api/portal/me/profile 반영 여부 */
+  profileHydrated?: boolean
 }
 
 function readWizardState(): AdminRegisteredWizardState | null {
@@ -70,10 +81,12 @@ export function initAdminRegisteredWizardState(
   email: string,
   entrySource: AdminRegisteredEntrySource = 'first-login',
 ) {
+  const seedMock = !isRemoteApiConfigured()
   const state: AdminRegisteredWizardState = {
     email: email.trim(),
     entrySource,
-    ...MOCK_ADMIN_REGISTERED_PROFILE,
+    ...(seedMock ? MOCK_ADMIN_REGISTERED_PROFILE : {}),
+    profileHydrated: seedMock,
   }
 
   writeWizardState(state)
@@ -99,13 +112,24 @@ export function requireAdminRegisteredWizardState() {
   return state
 }
 
+const EMPTY_PROFILE_FALLBACK = {
+  schoolStatus: 'none' as SchoolStatus,
+  schoolName: '',
+  grade: '',
+  address: '',
+  addressDetail: '',
+  volunteerId: '',
+}
+
 export function getAdminRegisteredProfileFields(state: AdminRegisteredWizardState) {
+  const fallback = state.profileHydrated ? EMPTY_PROFILE_FALLBACK : MOCK_ADMIN_REGISTERED_PROFILE
+
   return {
-    schoolStatus: state.schoolStatus ?? MOCK_ADMIN_REGISTERED_PROFILE.schoolStatus,
-    schoolName: state.schoolName ?? MOCK_ADMIN_REGISTERED_PROFILE.schoolName,
-    grade: state.grade ?? MOCK_ADMIN_REGISTERED_PROFILE.grade,
-    address: state.address ?? MOCK_ADMIN_REGISTERED_PROFILE.address,
-    addressDetail: state.addressDetail ?? MOCK_ADMIN_REGISTERED_PROFILE.addressDetail,
-    volunteerId: state.volunteerId ?? MOCK_ADMIN_REGISTERED_PROFILE.volunteerId,
+    schoolStatus: state.schoolStatus ?? fallback.schoolStatus,
+    schoolName: state.schoolName ?? fallback.schoolName,
+    grade: state.grade ?? fallback.grade,
+    address: state.address ?? fallback.address,
+    addressDetail: state.addressDetail ?? fallback.addressDetail,
+    volunteerId: state.volunteerId ?? fallback.volunteerId,
   }
 }
