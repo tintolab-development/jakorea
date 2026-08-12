@@ -14,7 +14,11 @@ Use this checklist when reviewing CSS Modules and responsive UI changes.
 
 - Mobile-first default styles are present.
 - Only Platform 3-tier media queries when needed (mobile / PC compact / PC full).
-- Common widths are considered: 390 (mobile), 1280 (PC compact), 1600 (PC full).
+- Decision ladder followed: tokens/`clamp` → `--bp-pc-up` → `--bp-pc-compact` / `--bp-pc-full-up`.
+- Middle (PC compact) verified at **1280**; not only at 1600+.
+- `--bp-pc-compact` used only when middle composition must differ from full.
+- No ad-hoc widths (768 / 1024 / 1200 / 1360).
+- Layout roles are clear in markup; no duplicate mobile/desktop trees unless required.
 - Fixed widths are replaced with fluid alternatives where possible.
 - Layout does not create horizontal scrolling.
 

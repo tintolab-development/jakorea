@@ -71,8 +71,14 @@
 | 구간 | 조건 | CSS custom media |
 |------|------|------------------|
 | Mobile | ~1079 (`max-width: 1079px`) | `--bp-below-pc` |
-| PC compact | 1080~1599 | `--bp-pc-compact` · (`--bp-pc-up` for 1080+) |
+| PC compact (middle) | 1080~1599 | `--bp-pc-compact` · (`--bp-pc-up` for 1080+) |
 | PC full | 1600~ | `--bp-pc-full-up` |
 
 토큰: `src/shared/styles/breakpoints.css`, `src/shared/lib/breakpoints.ts`
+
+### 미들(PC compact) 구현 원칙
+
+- UI **역할(structure) 먼저** → fluid 토큰/`clamp` → `--bp-pc-up` → 필요할 때만 `--bp-pc-compact` / `--bp-pc-full-up`
+- 검증 폭: **390 / 1280 / 1600** (미들은 1600만 보지 말 것)
+- 768·1024·1360 등 임의 중간폭 금지 — 상세는 [frontend-css-modules-responsive.mdc](./frontend-css-modules-responsive.mdc)
 
