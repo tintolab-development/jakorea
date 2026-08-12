@@ -8,20 +8,12 @@ import type {
 import type { AdminPreRegisterMemberRequest } from '@/shared/api/generated/members/schemas/adminPreRegisterMemberRequest'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
-import { buildLegacyFlatFieldsFromCmsProfile } from '@/features/user/api/map-instructor-cms-profile'
-import type {
-  InstructorCmsProfileProposal,
-  InstructorCmsSettlement,
-} from '@/features/user/api/types/instructor-cms-profile-proposal'
-
-type AdminPreRegisterInstructorRequestExtended = Omit<
-  AdminPreRegisterInstructorRequest,
-  'profile' | 'settlement'
-> & {
-  profile?: InstructorCmsProfileProposal
-  settlement?: InstructorCmsSettlement
-  organizationText?: string
-}
+import {
+  buildLegacyFlatFieldsFromCmsProfile,
+  toApiInstructorCmsProfile,
+  toApiInstructorCmsSettlement,
+} from '@/features/user/api/map-instructor-cms-profile'
+import { toInstructorFeeGradeApiValue } from '@/features/user/api/map-instructor-activity-display'
 
 function attachTermsAgreements<
   T extends { termsAgreements?: AdminPreRegisterIndividualRequest['termsAgreements'] },
@@ -149,7 +141,7 @@ export function mapCreateUserRequestToPreRegisterInstructor(
   if (!email) {
     throw new Error('강사 회원 등록에는 이메일이 필요합니다.')
   }
-  const body: AdminPreRegisterInstructorRequestExtended = {
+  const body: AdminPreRegisterInstructorRequest = {
     email,
     name,
     rawPassword: resolveAdminProvisionedTempPassword(email),
@@ -165,7 +157,7 @@ export function mapCreateUserRequestToPreRegisterInstructor(
   }
 
   if (request.instructorCmsProfile) {
-    body.profile = request.instructorCmsProfile
+    body.profile = toApiInstructorCmsProfile(request.instructorCmsProfile)
     const legacy = buildLegacyFlatFieldsFromCmsProfile(request.instructorCmsProfile)
     if (legacy.educationLevel) body.educationLevel = legacy.educationLevel
     if (legacy.careerText) body.careerText = legacy.careerText
@@ -177,6 +169,10 @@ export function mapCreateUserRequestToPreRegisterInstructor(
     if (request.instructorCmsProfile.homeAddress.detail?.trim()) {
       body.homeAddressDetail = request.instructorCmsProfile.homeAddress.detail.trim()
     }
+    const feeGrade = toInstructorFeeGradeApiValue(request.instructorCmsProfile.defaultFeeGrade)
+    if (feeGrade) body.feeGrade = feeGrade
+    const jaGrade = request.instructorCmsProfile.defaultJaGrade?.trim()
+    if (jaGrade) body.jaGrade = jaGrade
   } else {
     if (request.address?.trim()) body.homeAddress = request.address.trim()
     if (request.detailAddress?.trim()) body.homeAddressDetail = request.detailAddress.trim()
@@ -188,7 +184,7 @@ export function mapCreateUserRequestToPreRegisterInstructor(
 
   const settlement = request.instructorCmsSettlement
   if (settlement) {
-    body.settlement = settlement
+    body.settlement = toApiInstructorCmsSettlement(settlement)
     if (settlement.bankName) body.bankName = settlement.bankName
     if (settlement.accountNumber) body.accountNumber = settlement.accountNumber
     if (settlement.accountHolder) body.accountHolder = settlement.accountHolder
@@ -219,20 +215,5 @@ export function mapCreateUserRequestToPreRegisterInstructor(
     }
   }
 
-  const cmsProfile = request.instructorCmsProfile
-  if (cmsProfile) {
-    const orgs = cmsProfile.affiliation?.organizationNames?.map(name => name.trim()).filter(Boolean) ?? []
-    if (orgs.length > 0) {
-      body.organizationText = orgs.join(', ')
-    } else if (cmsProfile.memberType === 'SCHOOL_TEACHER') {
-      const school = cmsProfile.affiliation?.schoolName?.trim()
-      if (school) body.organizationText = school
-    }
-  }
-  if (!body.organizationText && request.affiliation?.trim()) {
-    body.organizationText = request.affiliation.trim()
-  }
-
-  // CMS proposal DTO → OpenAPI InstructorCmsProfile (wire JSON 동일, affiliatedSchoolUserId 등 형만 상이)
-  return body as AdminPreRegisterInstructorRequest
+  return body
 }

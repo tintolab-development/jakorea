@@ -16,6 +16,7 @@ import {
   type LicenseOrAwardRow,
 } from '@/features/user/shared/ui/instructor-profile-form'
 import {
+  ensureInstructorFormListRows,
   instructorCmsProfileToFormValues,
   instructorProfileFormValuesToCmsProfile,
   instructorProfileFormValuesToCmsSettlement,
@@ -259,7 +260,7 @@ export function mapUserToInstructorProfileFormValues(
       ? instructorResume.freeWriting4
       : ''
 
-  return {
+  const values: InstructorProfileFormValues = {
     ...INITIAL_VALUES,
     ...(fromCmsProfile ?? {}),
     name: user.name ?? '',
@@ -323,6 +324,17 @@ export function mapUserToInstructorProfileFormValues(
     freeWrite2: fromCmsProfile?.freeWrite2 ?? freeWrite2,
     freeWrite3: fromCmsProfile?.freeWrite3 ?? freeWrite3,
     freeWrite4: fromCmsProfile?.freeWrite4 ?? freeWrite4,
+  }
+
+  return {
+    ...values,
+    jaKoreaRows: ensureInstructorFormListRows(values.jaKoreaRows, EMPTY_JA_KOREA_ROW),
+    licenseRows: ensureInstructorFormListRows(values.licenseRows, EMPTY_LICENSE_OR_AWARD_ROW),
+    awardRows: ensureInstructorFormListRows(values.awardRows, EMPTY_LICENSE_OR_AWARD_ROW),
+    careers:
+      values.careerLevel === 'experienced'
+        ? ensureInstructorFormListRows(values.careers, EMPTY_CAREER)
+        : values.careers,
   }
 }
 

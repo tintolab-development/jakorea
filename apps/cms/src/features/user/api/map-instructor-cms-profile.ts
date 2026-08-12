@@ -5,7 +5,12 @@ import type {
   ApplicantInstructorCareerDetail,
   ApplicantInstructorEducationItem,
 } from '@/data/mock/applicant-instructors'
-import type { InstructorProfileFormValues } from '@/features/user/shared/ui/instructor-profile-form'
+import {
+  EMPTY_CAREER,
+  EMPTY_JA_KOREA_ROW,
+  EMPTY_LICENSE_OR_AWARD_ROW,
+  type InstructorProfileFormValues,
+} from '@/features/user/shared/ui/instructor-profile-form'
 import type { EducationDetailKey } from '@/features/user/shared/ui/instructor-register-education-section'
 import {
   buildInstructorRegisterCertifications,
@@ -28,7 +33,11 @@ import type { InstructorCmsProfile as ApiInstructorCmsProfile } from '@/shared/a
 import type { InstructorCmsSettlement as ApiInstructorCmsSettlement } from '@/shared/api/generated/members/schemas/instructorCmsSettlement'
 import type { InstructorDetailResponse } from '@/shared/api/generated/members/schemas/instructorDetailResponse'
 import type { SchoolTeacherEmploymentStatus } from '@/types/user'
-import { formatInstructorEducationLevelDisplay } from '@/features/user/api/map-instructor-activity-display'
+import {
+  formatInstructorEducationLevelDisplay,
+  toInstructorFeeGradeApiValue,
+} from '@/features/user/api/map-instructor-activity-display'
+import type { Affiliation } from '@/shared/api/generated/members/schemas/affiliation'
 import { parseOrganizationNamesFromText } from '@/features/user/detail/lib/parse-instructor-affiliation-text'
 
 const MONTH_FORMAT = 'YYYY-MM'
@@ -61,6 +70,11 @@ function parseYear(value: string | undefined): Dayjs | null {
 function trimOptional(value: string | undefined): string | undefined {
   const trimmed = value?.trim()
   return trimmed ? trimmed : undefined
+}
+
+/** Form.List는 빈 배열이면 행·입력 UI가 0개 — 편집 화면에서 최소 1행 보장 */
+export function ensureInstructorFormListRows<T>(rows: T[] | undefined, emptyRow: T): T[] {
+  return rows != null && rows.length > 0 ? rows : [{ ...emptyRow }]
 }
 
 function mapCmsEmploymentStatus(
@@ -442,33 +456,41 @@ export function instructorCmsProfileToFormValues(
     graduateRows:
       profile.education.graduate?.map(row => mapGraduateRowToForm(row)!).filter(Boolean) ?? undefined,
     careerLevel: profile.career.level ?? 'experienced',
-    careers:
+    careers: ensureInstructorFormListRows(
       profile.career.rows?.map(row => ({
         companyName: row.companyName ?? '',
         roleName: row.roleName ?? '',
         periodStart: parseMonth(row.periodStart),
         periodEnd: parseMonth(row.periodEnd),
         currentlyEmployed: row.currentlyEmployed ?? false,
-      })) ?? undefined,
-    jaKoreaRows:
+      })),
+      EMPTY_CAREER
+    ),
+    jaKoreaRows: ensureInstructorFormListRows(
       profile.jaKoreaActivities?.map(row => ({
         title: row.title ?? '',
         note: row.note ?? '',
         periodStart: parseMonth(row.periodStart),
         periodEnd: parseMonth(row.periodEnd),
-      })) ?? undefined,
-    licenseRows:
+      })),
+      EMPTY_JA_KOREA_ROW
+    ),
+    licenseRows: ensureInstructorFormListRows(
       profile.licenses?.map(row => ({
         title: row.title ?? '',
         issuer: row.issuer ?? '',
         acquiredYear: parseYear(row.acquiredYear),
-      })) ?? undefined,
-    awardRows:
+      })),
+      EMPTY_LICENSE_OR_AWARD_ROW
+    ),
+    awardRows: ensureInstructorFormListRows(
       profile.awards?.map(row => ({
         title: row.title ?? '',
         issuer: row.issuer ?? '',
         acquiredYear: parseYear(row.acquiredYear),
-      })) ?? undefined,
+      })),
+      EMPTY_LICENSE_OR_AWARD_ROW
+    ),
     freeWrite1: profile.essays.freeWrite1 ?? '',
     freeWrite2: profile.essays.freeWrite2 ?? '',
     freeWrite3: profile.essays.freeWrite3 ?? '',
@@ -706,6 +728,68 @@ export function normalizeInstructorCmsProfileFromApi(
     essays: (profile.essays ?? {}) as InstructorCmsEssays,
     defaultFeeGrade: profile.defaultFeeGrade ?? null,
     defaultJaGrade: profile.defaultJaGrade ?? null,
+  }
+}
+
+function toApiAffiliation(
+  affiliation: InstructorCmsProfileProposal['affiliation']
+): Affiliation {
+  const result: Affiliation = {}
+  if (affiliation.schoolName?.trim()) result.schoolName = affiliation.schoolName.trim()
+  if (affiliation.employmentStatus) result.employmentStatus = affiliation.employmentStatus
+  const orgs = affiliation.organizationNames?.map(name => name.trim()).filter(Boolean) ?? []
+  if (orgs.length > 0) result.organizationNames = orgs
+  const schoolUserId = affiliation.affiliatedSchoolUserId?.trim()
+  if (schoolUserId) {
+    const parsed = Number(schoolUserId)
+    if (Number.isFinite(parsed)) result.affiliatedSchoolUserId = parsed
+  }
+  return result
+}
+
+/** CMS proposal DTO → OpenAPI `InstructorCmsProfile` (pre-register·PATCH wire) */
+export function toApiInstructorCmsProfile(
+  profile: InstructorCmsProfileProposal
+): ApiInstructorCmsProfile {
+  const feeGrade = toInstructorFeeGradeApiValue(profile.defaultFeeGrade)
+  const jaGrade = profile.defaultJaGrade?.trim() || undefined
+
+  return {
+    memberType: profile.memberType,
+    affiliation: toApiAffiliation(profile.affiliation),
+    ...(profile.instructorCareerSummary?.trim()
+      ? { instructorCareerSummary: profile.instructorCareerSummary.trim() }
+      : {}),
+    ...(profile.oneLineIntro?.trim() ? { oneLineIntro: profile.oneLineIntro.trim() } : {}),
+    homeAddress: {
+      line: profile.homeAddress.line.trim(),
+      ...(profile.homeAddress.detail?.trim()
+        ? { detail: profile.homeAddress.detail.trim() }
+        : {}),
+    },
+    education: profile.education as ApiInstructorCmsProfile['education'],
+    career: profile.career as unknown as ApiInstructorCmsProfile['career'],
+    jaKoreaActivities:
+      profile.jaKoreaActivities as unknown as ApiInstructorCmsProfile['jaKoreaActivities'],
+    licenses: profile.licenses as unknown as ApiInstructorCmsProfile['licenses'],
+    awards: profile.awards as unknown as ApiInstructorCmsProfile['awards'],
+    essays: profile.essays as ApiInstructorCmsProfile['essays'],
+    ...(feeGrade ? { defaultFeeGrade: feeGrade } : {}),
+    ...(jaGrade ? { defaultJaGrade: jaGrade } : {}),
+  }
+}
+
+/** CMS proposal DTO → OpenAPI `InstructorCmsSettlement` (pre-register·PATCH wire) */
+export function toApiInstructorCmsSettlement(
+  settlement: InstructorCmsSettlement
+): ApiInstructorCmsSettlement {
+  return {
+    ...(settlement.bankName?.trim() ? { bankName: settlement.bankName.trim() } : {}),
+    ...(settlement.accountNumber?.trim()
+      ? { accountNumber: settlement.accountNumber.trim() }
+      : {}),
+    ...(settlement.accountHolder?.trim() ? { accountHolder: settlement.accountHolder.trim() } : {}),
+    businessIncome: settlement.businessIncome ?? false,
   }
 }
 

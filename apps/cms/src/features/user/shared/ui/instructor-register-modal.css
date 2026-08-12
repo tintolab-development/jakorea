@@ -45,7 +45,26 @@
   align-items: center;
   gap: 0;
   min-width: 0;
+}
+
+.instructor-register-modal__grade-section .detail-info-form__field-content--edit {
+  align-items: center;
+}
+
+.instructor-register-modal__fee-grade-select {
+  flex: 1 1 0;
+  min-width: 0;
   width: 100%;
+}
+
+.instructor-register-modal__fee-grade-select .cms-select {
+  width: 100%;
+}
+
+.instructor-register-modal__ja-grade-field {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
 }
 
 /** DetailInfoForm 편집 슬롯에서 CmsInput width 100%가 실제로 꽉 차도록 */

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Form, Space } from 'antd'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import { buildPreRegisterTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
@@ -7,6 +7,7 @@ import { individualAffiliationGradeSelectOptions } from '@/features/user/detail/
 import {
   AddressSearch,
   CmsButton,
+  CmsCheckbox,
   CmsInput,
   CmsRadioGroup,
   CmsSelect,
@@ -25,6 +26,7 @@ import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
   buildRequiredConsentDisagreeAlertMessage,
   collectDisagreedRequiredConsentLabels,
+  hasUnsetConsentSelections,
 } from '@jakorea/domain/shared/required-consent-alert'
 import type { MemberConsentFieldKey } from '@/features/user/shared/lib/member-consent-template-map'
 import {
@@ -32,14 +34,14 @@ import {
   isMemberCrimeConsentField,
   resolveMemberConsentTemplateEntry,
 } from '@/features/user/shared/lib/member-consent-template-map'
-import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
-import { buildMemberPaymentStatementBasicInfoAutofill } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
 import { isMemberRegisterBasicInfoIncompleteForConsent } from '@/features/user/shared/lib/validate-member-consent-basic-info'
+import { MEMBER_REGISTER_ALL_CONSENT_KEYS } from '@/features/user/shared/lib/member-register-consent-fields'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import './add-user-individual.css'
 
 type ConsentValue = 'agree' | 'disagree'
+type ConsentFieldValue = ConsentValue | undefined
 type GenderValue = 'male' | 'female'
 type SchoolEnrollmentStatus = 'enrolled' | 'not_enrolled'
 
@@ -51,19 +53,20 @@ interface AddUserIndividualFormValues {
   schoolName: string
   grade: string
   affiliationOrganization: string
+  affiliationNone: boolean
   contact: string
   email: string
   address: string
   detailAddress: string
   volunteerId: string
-  consentTermsOfService: ConsentValue
-  consentPersonalInfo: ConsentValue
-  consentMarketing: ConsentValue
-  consentPortrait: ConsentValue
-  consentWithholdingTax: ConsentValue
-  consentFacilitatorPledge: ConsentValue
-  consentAdministrativeJoint: ConsentValue
-  consentSexOffenseCheck: ConsentValue
+  consentTermsOfService: ConsentFieldValue
+  consentPersonalInfo: ConsentFieldValue
+  consentMarketing: ConsentFieldValue
+  consentPortrait: ConsentFieldValue
+  consentWithholdingTax: ConsentFieldValue
+  consentFacilitatorPledge: ConsentFieldValue
+  consentAdministrativeJoint: ConsentFieldValue
+  consentSexOffenseCheck: ConsentFieldValue
 }
 
 interface AddUserIndividualProps {
@@ -89,7 +92,7 @@ function ConsentDocumentFieldEdit({
   onDisagree,
   onWrite,
 }: {
-  value: ConsentValue
+  value: ConsentFieldValue
   onDisagree: () => void
   onWrite: () => void
 }) {
@@ -139,19 +142,20 @@ const INITIAL_VALUES: AddUserIndividualFormValues = {
   schoolName: '',
   grade: '',
   affiliationOrganization: '',
+  affiliationNone: false,
   contact: '',
   email: '',
   address: '',
   detailAddress: '',
   volunteerId: '',
-  consentTermsOfService: 'agree',
-  consentPersonalInfo: 'agree',
-  consentMarketing: 'disagree',
-  consentPortrait: 'disagree',
-  consentWithholdingTax: 'disagree',
-  consentFacilitatorPledge: 'disagree',
-  consentAdministrativeJoint: 'disagree',
-  consentSexOffenseCheck: 'disagree',
+  consentTermsOfService: undefined,
+  consentPersonalInfo: undefined,
+  consentMarketing: undefined,
+  consentPortrait: undefined,
+  consentWithholdingTax: undefined,
+  consentFacilitatorPledge: undefined,
+  consentAdministrativeJoint: undefined,
+  consentSexOffenseCheck: undefined,
 }
 
 function isUnder14BirthDate(value: string, today = new Date()): boolean {
@@ -232,55 +236,11 @@ export function AddUserIndividual({
   const [activeConsentField, setActiveConsentField] = useState<MemberConsentFieldKey | null>(null)
   const allValues = Form.useWatch([], form) as AddUserIndividualFormValues | undefined
   const address = Form.useWatch('address', form) ?? ''
-  const detailAddress = Form.useWatch('detailAddress', form) ?? ''
   const schoolName = Form.useWatch('schoolName', form) ?? ''
-  const memberName = Form.useWatch('name', form) ?? ''
-  const memberGrade = Form.useWatch('grade', form) ?? ''
-  const affiliationOrganization = Form.useWatch('affiliationOrganization', form) ?? ''
+  const affiliationNone = Form.useWatch('affiliationNone', form) === true
   const schoolEnrollmentStatus =
     Form.useWatch('schoolEnrollmentStatus', form) ?? INITIAL_VALUES.schoolEnrollmentStatus
   const isEnrolled = schoolEnrollmentStatus === 'enrolled'
-
-  const memberConsentContext = useMemo((): MemberConsentMemberContext => {
-    return {
-      name: memberName,
-      birthDate: allValues?.birthDate,
-      phone: allValues?.contact,
-      schoolEnrollmentStatus,
-      schoolName,
-      grade: memberGrade,
-      affiliationOrganization,
-    }
-  }, [
-    affiliationOrganization,
-    allValues?.birthDate,
-    allValues?.contact,
-    memberGrade,
-    memberName,
-    schoolEnrollmentStatus,
-    schoolName,
-  ])
-
-  const paymentStatementBasicInfoAutofill = useMemo(
-    () =>
-      buildMemberPaymentStatementBasicInfoAutofill({
-        name: memberName,
-        birthDate: allValues?.birthDate,
-        homeAddress: address,
-        homeAddressDetail: detailAddress,
-        memberType: 'general',
-        affiliationName: isEnrolled ? schoolName : affiliationOrganization,
-      }),
-    [
-      address,
-      affiliationOrganization,
-      allValues?.birthDate,
-      detailAddress,
-      isEnrolled,
-      memberName,
-      schoolName,
-    ]
-  )
 
   const activeConsentEntry =
     activeConsentField != null ? resolveMemberConsentTemplateEntry(activeConsentField) : null
@@ -310,7 +270,9 @@ export function AddUserIndividual({
     const enrolled = values.schoolEnrollmentStatus === 'enrolled'
     const affiliation = enrolled
       ? values.schoolName.trim()
-      : values.affiliationOrganization.trim() || undefined
+      : values.affiliationNone
+        ? undefined
+        : values.affiliationOrganization.trim() || undefined
 
     const request: CreateUserRequest = {
       email: values.email.trim(),
@@ -348,6 +310,14 @@ export function AddUserIndividual({
   }
 
   const handleSubmitAttempt = (values: AddUserIndividualFormValues) => {
+    if (hasUnsetConsentSelections(values, MEMBER_REGISTER_ALL_CONSENT_KEYS)) {
+      showAlert({
+        title: '안내',
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
+      return
+    }
+
     const disagreedRequiredLabels = collectDisagreedRequiredConsentLabels(values, [
       ...MEMBER_REGISTER_REQUIRED_CONSENT_FIELDS,
     ])
@@ -382,7 +352,7 @@ export function AddUserIndividual({
       form.setFieldsValue({ schoolName: '', grade: '' })
       return
     }
-    form.setFieldsValue({ affiliationOrganization: '' })
+    form.setFieldsValue({ affiliationOrganization: '', affiliationNone: false })
   }, [form, schoolEnrollmentStatus])
 
   return (
@@ -484,9 +454,22 @@ export function AddUserIndividual({
                     </Form.Item>
                   </div>
                 ) : (
-                  <Form.Item name="affiliationOrganization" noStyle>
-                    <CmsInput placeholder="소속 기관" inputSize="medium" width="100%" />
-                  </Form.Item>
+                  <div className="add-user-individual__affiliation-row">
+                    <Form.Item
+                      name="affiliationOrganization"
+                      style={{ ...FORM_ITEM_STYLE, flex: 1, minWidth: 0 }}
+                    >
+                      <CmsInput
+                        placeholder="소속 기관명"
+                        inputSize="medium"
+                        width="100%"
+                        disabled={affiliationNone}
+                      />
+                    </Form.Item>
+                    <Form.Item name="affiliationNone" valuePropName="checked" noStyle>
+                      <CmsCheckbox checkboxSize="medium">소속 없음</CmsCheckbox>
+                    </Form.Item>
+                  </div>
                 )
               }
             />
@@ -730,8 +713,6 @@ export function AddUserIndividual({
         open
         templateId={activeConsentEntry.templateId}
         modalTitle={activeConsentEntry.modalTitle}
-        memberContext={memberConsentContext}
-        paymentStatementBasicInfoAutofill={paymentStatementBasicInfoAutofill}
         onClose={handleConsentModalClose}
         onComplete={() => handleConsentComplete(activeConsentField)}
       />

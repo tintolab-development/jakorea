@@ -3,6 +3,7 @@ import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
   buildRequiredConsentDisagreeAlertMessage,
   collectDisagreedRequiredConsentLabels,
+  hasUnsetConsentSelections,
 } from '@jakorea/domain/shared/required-consent-alert'
 
 describe('required-consent-alert', () => {
@@ -41,6 +42,28 @@ describe('required-consent-alert', () => {
         { key: 'consentMfaSetup', label: '2단계 인증(MFA) 설정 동의' },
       ]
     )
-    expect(labels).toEqual(['개인정보 수집·이용 동의', '2단계 인증(MFA) 설정 동의'])
+    expect(labels).toEqual(['개인정보 수집·이용 동의'])
+  })
+
+  it('미선택 항목은 미동의 라벨 수집에서 제외한다', () => {
+    expect(
+      hasUnsetConsentSelections(
+        {
+          consentTermsOfService: undefined,
+          consentPersonalInfo: 'disagree',
+        },
+        ['consentTermsOfService', 'consentPersonalInfo'] as const
+      )
+    ).toBe(true)
+
+    expect(
+      hasUnsetConsentSelections(
+        {
+          consentTermsOfService: 'agree',
+          consentPersonalInfo: 'disagree',
+        },
+        ['consentTermsOfService', 'consentPersonalInfo'] as const
+      )
+    ).toBe(false)
   })
 })

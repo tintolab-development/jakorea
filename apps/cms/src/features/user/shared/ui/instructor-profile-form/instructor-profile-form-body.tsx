@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Form, Space } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import type { FormListFieldData } from 'antd/es/form/FormList'
@@ -27,9 +27,6 @@ import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
 import { INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
-import { buildMemberPaymentStatementBasicInfoAutofill } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
-import { INSTRUCTOR_PORTRAIT_CONSENT_AFFILIATION_OPTIONS } from '@/features/user/shared/lib/instructor-portrait-consent-affiliation-options'
 import {
   isAgreementInstructorConsentField,
   isInstructorCrimeConsentField,
@@ -143,7 +140,7 @@ function ConsentDocumentFieldEdit({
   onDisagree,
   onWrite,
 }: {
-  value: ConsentValue
+  value: ConsentValue | undefined
   onDisagree: () => void
   onWrite: () => void
 }) {
@@ -209,7 +206,6 @@ export function InstructorProfileFormBody({
   )
   const homeAddress = Form.useWatch('homeAddress', form) ?? ''
   const memberType = Form.useWatch('memberType', form) ?? 'general'
-  const memberName = Form.useWatch('name', form) ?? ''
   const schoolName = Form.useWatch('schoolName', form) ?? ''
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
   const jaEvaluationGrade = Form.useWatch('jaEvaluationGrade', form) ?? ''
@@ -219,58 +215,6 @@ export function InstructorProfileFormBody({
 
   const activeConsentEntry =
     activeConsentField != null ? resolveInstructorConsentTemplateEntry(activeConsentField) : null
-
-  const memberConsentContext = useMemo((): MemberConsentMemberContext => {
-    return {
-      name: memberName,
-      birthDate: allValues?.birthDate,
-      phone: allValues?.contact,
-      schoolEnrollmentStatus: isTeacherMember ? 'enrolled' : 'not_enrolled',
-      schoolName: isTeacherMember ? schoolName : undefined,
-      affiliationOrganization:
-        !isTeacherMember && !affiliationNone ? allValues?.affiliationName?.trim() : undefined,
-      affiliationNone: !isTeacherMember && affiliationNone,
-      portraitAffiliationSelectOptions: INSTRUCTOR_PORTRAIT_CONSENT_AFFILIATION_OPTIONS,
-    }
-  }, [
-    affiliationNone,
-    allValues?.affiliationName,
-    allValues?.birthDate,
-    allValues?.contact,
-    isTeacherMember,
-    memberName,
-    schoolName,
-  ])
-
-  const paymentStatementBasicInfoAutofill = useMemo(
-    () =>
-      buildMemberPaymentStatementBasicInfoAutofill({
-        name: memberName,
-        birthDate: allValues?.birthDate,
-        homeAddress,
-        homeAddressDetail: allValues?.homeAddressDetail,
-        bankName: allValues?.bankName,
-        accountNumber: allValues?.accountNumber,
-        accountHolder: allValues?.accountHolder,
-        memberType,
-        affiliationNone,
-        schoolName,
-        affiliationName: allValues?.affiliationName,
-      }),
-    [
-      affiliationNone,
-      allValues?.accountHolder,
-      allValues?.accountNumber,
-      allValues?.affiliationName,
-      allValues?.bankName,
-      allValues?.birthDate,
-      allValues?.homeAddressDetail,
-      homeAddress,
-      memberName,
-      memberType,
-      schoolName,
-    ]
-  )
 
   const handleConsentWrite = (fieldKey: InstructorConsentFieldKey) => {
     if (!formLayout.consent.skipBasicInfoGate) {
@@ -343,7 +287,8 @@ export function InstructorProfileFormBody({
     <CmsButton
       type="button"
       variant="secondary"
-      size="small"
+      size="medium"
+      disabled={!onOpenJaGradeEvaluation}
       onClick={() => onOpenJaGradeEvaluation?.()}
     >
       등급 평가
@@ -352,11 +297,11 @@ export function InstructorProfileFormBody({
 
   const jaEvaluationGradeFieldEdit =
     jaEvaluationGrade.trim() !== '' ? (
-      <span className="instructor-register-modal__ja-grade">
+      <div className="instructor-register-modal__ja-grade">
         <span>{formatJaEvaluationGradeDisplay(jaEvaluationGrade)}</span>
         <DetailInfoForm.InputsSeparator />
         {gradeEvaluateButton}
-      </span>
+      </div>
     ) : (
       gradeEvaluateButton
     )
@@ -539,33 +484,35 @@ export function InstructorProfileFormBody({
         </DetailInfoForm>
 
         {formLayout.showInstructorGradeSection ? (
-          <DetailInfoForm title="강사 등급" mode="edit">
+          <DetailInfoForm title="강사 등급" mode="edit" className="instructor-register-modal__grade-section">
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="강사비 등급"
                 view="-"
                 edit={
-                  <Form.Item name="instructorFeeGrade" noStyle>
-                    <CmsSelect
-                      placeholder="강사비 등급을 선택하세요"
-                      options={INSTRUCTOR_FEE_GRADE_OPTIONS}
-                      inputSize="medium"
-                      width="100%"
-                      allowClear
-                    />
-                  </Form.Item>
+                  <div className="instructor-register-modal__fee-grade-select">
+                    <Form.Item name="instructorFeeGrade" noStyle>
+                      <CmsSelect
+                        placeholder="강사비 등급을 선택하세요"
+                        options={INSTRUCTOR_FEE_GRADE_OPTIONS}
+                        inputSize="large"
+                        width="100%"
+                        allowClear
+                      />
+                    </Form.Item>
+                  </div>
                 }
               />
               <DetailInfoForm.Field
                 label="JA 평가 등급"
                 view="-"
                 edit={
-                  <>
+                  <div className="instructor-register-modal__ja-grade-field">
                     <Form.Item name="jaEvaluationGrade" hidden noStyle>
                       <CmsInput />
                     </Form.Item>
                     {jaEvaluationGradeFieldEdit}
-                  </>
+                  </div>
                 }
               />
             </DetailInfoForm.Row>
@@ -986,8 +933,6 @@ export function InstructorProfileFormBody({
           open
           templateId={activeConsentEntry.templateId}
           modalTitle={activeConsentEntry.modalTitle}
-          memberContext={memberConsentContext}
-          paymentStatementBasicInfoAutofill={paymentStatementBasicInfoAutofill}
           onClose={handleConsentModalClose}
           onComplete={() => handleConsentComplete(activeConsentField)}
         />

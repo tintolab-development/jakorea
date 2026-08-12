@@ -6,26 +6,29 @@
 
 import { useEffect, useId, useState } from 'react'
 import { Form } from 'antd'
-import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
 import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
   buildRequiredConsentDisagreeAlertMessage,
   collectDisagreedRequiredConsentLabels,
+  hasUnsetConsentSelections,
 } from '@jakorea/domain/shared/required-consent-alert'
+import { INSTRUCTOR_REGISTER_ALL_CONSENT_KEYS } from '@jakorea/domain/instructor/consent'
 import {
   isBirthDateInputIncomplete,
   isValidBirthDateFormValue,
 } from '@/shared/ui/date-text-input'
 import { CmsButton, ContentModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
 import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
+import { collectCmsInstructorRegisterValidation } from '@/features/user/shared/lib/validate-cms-instructor-register'
 import { JaGradeEvaluationModal } from '@/features/user/detail/ui/modal/ja-grade-evaluation-modal'
 import {
   EMPTY_CAREER,
   INITIAL_VALUES,
   InstructorProfileFormBody,
-  mapInstructorRegisterFormValuesToValidationInput,
+  mergeInstructorRegisterFormValues,
   type CareerRow,
   type InstructorRegisterModalFormValues,
 } from '@/features/user/shared/ui/instructor-profile-form'
@@ -48,14 +51,23 @@ export interface InstructorRegisterModalProps {
 }
 
 function validateInstructorRegister(values: InstructorRegisterModalFormValues) {
-  return collectInstructorRegisterValidation(
-    mapInstructorRegisterFormValuesToValidationInput(values),
-    {
-      isBirthDateIncomplete: isBirthDateInputIncomplete,
-      isBirthDateValid: isValidBirthDateFormValue,
-      isPhoneValid: value => KOREAN_PHONE_REGEX.test(value),
-    }
-  )
+  return collectCmsInstructorRegisterValidation(values, {
+    isBirthDateIncomplete: isBirthDateInputIncomplete,
+    isBirthDateValid: isValidBirthDateFormValue,
+    isPhoneValid: value => KOREAN_PHONE_REGEX.test(value),
+  })
+}
+
+function showRegisterAlert(
+  showAlert: ReturnType<typeof useCmsAlert>['showAlert'],
+  content: string,
+  title = '안내'
+) {
+  showAlert({
+    title,
+    content,
+    zIndex: CMS_ALERT_MODAL_Z_INDEX,
+  })
 }
 
 export function InstructorRegisterModal({
@@ -104,38 +116,48 @@ export function InstructorRegisterModal({
     }
   }
 
-  const handleSubmitAttempt = (values: InstructorRegisterModalFormValues) => {
-    const disagreedRequiredLabels = collectDisagreedRequiredConsentLabels(
-      {
-        consentTermsOfService: values.consentTermsOfService,
-        consentPersonal: values.consentPersonal,
-      },
-      [...INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS]
-    )
-    if (disagreedRequiredLabels.length > 0) {
-      showAlert({
-        title: REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
-        content: buildRequiredConsentDisagreeAlertMessage(disagreedRequiredLabels),
-      })
-      return
-    }
+  const handleSubmitAttempt = (rawValues: InstructorRegisterModalFormValues) => {
+    try {
+      const values = mergeInstructorRegisterFormValues(rawValues)
 
-    const { missingRequired, formatMessages } = validateInstructorRegister(values)
-    if (missingRequired) {
-      showAlert({
-        title: '안내',
-        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
-      })
-      return
+      if (hasUnsetConsentSelections(values, INSTRUCTOR_REGISTER_ALL_CONSENT_KEYS)) {
+        showRegisterAlert(showAlert, REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE)
+        return
+      }
+
+      const disagreedRequiredLabels = collectDisagreedRequiredConsentLabels(
+        {
+          consentTermsOfService: values.consentTermsOfService,
+          consentPersonal: values.consentPersonal,
+        },
+        [...INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS]
+      )
+      if (disagreedRequiredLabels.length > 0) {
+        showRegisterAlert(
+          showAlert,
+          buildRequiredConsentDisagreeAlertMessage(disagreedRequiredLabels),
+          REQUIRED_CONSENT_DISAGREE_ALERT_TITLE
+        )
+        return
+      }
+
+      const { missingRequired, formatMessages } = validateInstructorRegister(values)
+      if (missingRequired) {
+        showRegisterAlert(showAlert, REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE)
+        return
+      }
+      if (formatMessages.length > 0) {
+        showRegisterAlert(showAlert, formatMessages[0])
+        return
+      }
+      void handleFinish(values)
+    } catch {
+      showRegisterAlert(showAlert, REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE)
     }
-    if (formatMessages.length > 0) {
-      showAlert({
-        title: '안내',
-        content: formatMessages[0],
-      })
-      return
-    }
-    void handleFinish(values)
+  }
+
+  const handleRegisterClick = () => {
+    form.submit()
   }
 
   return (
@@ -159,8 +181,8 @@ export function InstructorRegisterModal({
           <CmsButton
             variant="primary"
             size="medium"
-            type="submit"
-            form={FORM_ID}
+            type="button"
+            onClick={handleRegisterClick}
             loading={loading}
             disabled={loading}
           >
