@@ -1,52 +1,79 @@
 .section {
   display: flex;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding-top: var(--spacing-64);
   flex-direction: column;
-  gap: var(--spacing-48);
-  background-color: var(--color-primary-800);
-  overflow: hidden;
+  gap: 0;
+  /* 홈 achievements 밴드 배경이 비치도록 투명 */
+  background: transparent;
+  overflow-x: clip;
+  overflow-y: hidden;
 }
 
 @media (--bp-pc-up) {
   .section {
-    padding-top: var(--spacing-100);
-    gap: var(--spacing-64);
+    /* 배경 중단 솔리드 + 하단 포토 구역 */
+    display: grid;
+    min-height: 0;
+    height: 100%;
+    /* 밴드 row-gap(260)이 클로징 ↔ Partners 간격을 담당 */
+    padding-top: 0;
+    /* 헤더 · 로고 롤링 · CTA(포토 구역) */
+    grid-template-rows: auto auto minmax(0, 1fr);
   }
 }
 
 .header {
   display: flex;
+  width: 100%;
+  min-width: 0;
   padding-inline: var(--spacing-20);
   flex-direction: column;
-  gap: var(--spacing-12);
+  /* eyebrow ↔ title */
+  gap: var(--spacing-16);
+  /* 헤더(배움에 함께하는…) ↔ 로고 롤링 */
+  margin-bottom: var(--spacing-80);
   text-align: center;
 }
 
 .eyebrow {
   margin: 0;
-  color: var(--color-primary-400);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  color: var(--color-primary-600);
+  font-family: var(--font-family-base);
+  font-size: 26px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 144%;
+  letter-spacing: -0.52px;
 }
 
 .title {
   margin: 0;
-  color: var(--color-neutral-white);
-  font-size: clamp(24px, 3vw, 36px);
-  font-weight: 700;
-  line-height: 1.4;
+  color: var(--color-neutral-cool-80);
+  font-family: var(--font-family-base);
+  font-size: 46px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 144%;
+  letter-spacing: -0.92px;
 }
 
 .marqueeArea {
   display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   flex-direction: column;
   gap: var(--spacing-20);
+  overflow: hidden;
 }
 
 .marqueeRow {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
 }
 
@@ -59,6 +86,7 @@
 
   display: flex;
   width: max-content;
+  max-width: none;
   gap: var(--marquee-gap);
   animation: marquee 36s linear infinite;
 }
@@ -93,26 +121,23 @@
 
 .logoChip {
   display: flex;
-  min-width: 180px;
-  height: 72px;
-  padding-inline: var(--spacing-32);
-  align-items: center;
+  box-sizing: border-box;
+  width: 300px;
+  height: 110px;
+  flex-shrink: 0;
+  padding: 24.956px 76.782px 22.836px 77.117px;
   justify-content: center;
+  align-items: center;
   border-radius: var(--radius-12);
   background: var(--color-neutral-white);
 }
 
-@media (--bp-pc-up) {
-  .logoChip {
-    min-width: 220px;
-    height: 84px;
-  }
-}
-
 .logoImage {
   display: block;
-  max-width: 160px;
-  max-height: 44px;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
 }
 
@@ -126,24 +151,34 @@
 
 .cta {
   position: relative;
+  display: flex;
   width: 100%;
-  padding-block: var(--spacing-64);
-  /* 배경 사진 placeholder — 에셋 수급 후 background-image 교체 */
-  background:
-    linear-gradient(0deg, rgba(20, 46, 56, 0.72) 0%, rgba(20, 46, 56, 0.72) 100%),
-    linear-gradient(115deg, #1c3a46 0%, #285f74 70%, #337791 110%);
+  min-width: 0;
+  max-width: 100%;
+  /* 로고 롤링 ↔ CTA 텍스트/버튼 column gap 200px */
+  margin-top: var(--spacing-200);
+  padding-top: 0;
+  padding-bottom: var(--spacing-64);
+  flex-direction: column;
+  justify-content: center;
+  /* 밴드 하단 포토 영역이 비치도록 투명 */
+  background: transparent;
 }
 
 @media (--bp-pc-up) {
   .cta {
-    padding-block: var(--spacing-100);
+    /* 배경 하단 포토 구역을 채우며 CTA 수직 정렬 */
+    min-height: 0;
+    margin-top: var(--spacing-200);
+    padding-bottom: var(--spacing-100);
   }
 }
 
 .ctaInner {
   display: flex;
   width: 100%;
-  max-width: var(--content-max-width);
+  min-width: 0;
+  max-width: var(--content-shell-max-width);
   margin-inline: auto;
   padding-inline: var(--spacing-20);
   flex-direction: column;
@@ -161,50 +196,58 @@
 
 .ctaCopy {
   margin: 0;
+  min-width: 0;
   color: var(--color-neutral-white);
-  font-size: clamp(20px, 2.4vw, 30px);
-  font-weight: 700;
-  line-height: 1.5;
+  font-family: var(--font-family-base);
+  font-size: 36px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 144%;
+  letter-spacing: -0.72px;
 }
 
 .ctaActions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-16);
+  flex-shrink: 0;
+  gap: var(--spacing-20);
 }
 
 .ctaPrimaryLink,
 .ctaSecondaryLink {
-  display: inline-flex;
-  height: 52px;
-  padding-inline: var(--spacing-28);
+  display: flex;
+  box-sizing: border-box;
   align-items: center;
-  justify-content: center;
+  gap: var(--spacing-8);
+  padding: var(--spacing-20) var(--spacing-40) var(--spacing-20) var(--spacing-32);
   border-radius: var(--radius-999);
-  font-size: 16px;
-  font-weight: 600;
   text-decoration: none;
-  transition:
-    background-color 160ms ease,
-    color 160ms ease;
 }
 
 .ctaPrimaryLink {
-  background: var(--color-primary-500);
-  color: var(--color-neutral-white);
-}
-
-.ctaPrimaryLink:hover {
-  background: var(--color-primary-400);
+  border-radius: var(--radius-999);
+  background: linear-gradient(
+    90deg,
+    var(--color-primary-700) -11.94%,
+    var(--color-primary-500) 71.52%
+  );
 }
 
 .ctaSecondaryLink {
-  background: var(--color-neutral-white);
-  color: var(--color-primary-600);
+  background: #defafd;
 }
 
-.ctaSecondaryLink:hover {
-  background: var(--color-primary-100);
+.ctaLabel {
+  display: block;
+  width: 200px;
+  flex-shrink: 0;
+}
+
+.ctaIcon {
+  display: block;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
 }
 
 .ctaPrimaryLink:focus-visible,

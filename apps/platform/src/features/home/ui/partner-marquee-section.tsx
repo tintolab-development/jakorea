@@ -3,6 +3,9 @@ import {
   SUPPORT_CORPORATE_PATH,
   SUPPORT_INDIVIDUAL_PATH,
 } from '@/shared/config/gnb-temporary-paths'
+import { PFText } from '@/shared/ui'
+import jaArrowCtaMintUrl from '../image/icon/ja-arrow-cta-mint.svg'
+import jaArrowCtaTealUrl from '../image/icon/ja-arrow-cta-teal.svg'
 import { HOME_PARTNER_LOGO_ROWS, type HomePartnerLogo } from '../lib/mock'
 import styles from './partner-marquee-section.module.css'
 
@@ -57,10 +60,28 @@ export function PartnerMarqueeSection() {
           </p>
           <div className={styles.ctaActions}>
             <Link className={styles.ctaPrimaryLink} to={SUPPORT_INDIVIDUAL_PATH}>
-              개인후원 시작하기
+              <PFText as="span" typo="hl-lg" color="white" className={styles.ctaLabel}>
+                개인후원 시작하기
+              </PFText>
+              <img
+                className={styles.ctaIcon}
+                src={jaArrowCtaMintUrl}
+                alt=""
+                width={32}
+                height={32}
+              />
             </Link>
             <Link className={styles.ctaSecondaryLink} to={SUPPORT_CORPORATE_PATH}>
-              기업후원 문의하기
+              <PFText as="span" typo="hl-lg" color="primary-500" className={styles.ctaLabel}>
+                기업후원 문의하기
+              </PFText>
+              <img
+                className={styles.ctaIcon}
+                src={jaArrowCtaTealUrl}
+                alt=""
+                width={32}
+                height={32}
+              />
             </Link>
           </div>
         </div>
