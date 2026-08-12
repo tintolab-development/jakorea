@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { usePrefersReducedMotion } from '@/shared/hooks/use-prefers-reduced-motion'
-import { PFText } from '@/shared/ui'
 import { HOME_HERO_AUTOPLAY_MS, type HomeHeroSlide } from '../lib/mock'
 import styles from './hero-carousel.module.css'
 
@@ -53,7 +52,12 @@ export function HeroCarousel({ slides, autoplayMs = HOME_HERO_AUTOPLAY_MS }: Her
   const activeSlide = slides[safeIndex]!
 
   return (
-    <section className={styles.hero} aria-roledescription="carousel" aria-label="메인 배너">
+    <section
+      className={styles.hero}
+      aria-roledescription="carousel"
+      aria-label="메인 배너"
+      data-home-hero=""
+    >
       {slides.map((slide, slideIndex) => (
         <div
           className={[styles.slide, slideIndex === safeIndex ? styles.slideActive : '']
@@ -74,10 +78,8 @@ export function HeroCarousel({ slides, autoplayMs = HOME_HERO_AUTOPLAY_MS }: Her
       <div className={styles.scrim} aria-hidden="true" />
 
       <div className={styles.inner}>
-        <div className={styles.copy} key={activeSlide.id}>
-          <PFText as="p" typo="bd-lg-sb" color="white" className={styles.eyebrow}>
-            {activeSlide.eyebrow}
-          </PFText>
+        <div className={styles.copy}>
+          <p className={styles.eyebrow}>{activeSlide.eyebrow}</p>
           <h1 className={styles.title}>
             {activeSlide.titleLines.map(line => (
               <span className={styles.titleLine} key={line}>
@@ -99,20 +101,22 @@ export function HeroCarousel({ slides, autoplayMs = HOME_HERO_AUTOPLAY_MS }: Her
             {isPlaying ? <PauseIcon /> : <PlayIcon />}
           </button>
 
-          <span className={styles.counter} aria-live="polite">
-            <span className={styles.counterCurrent}>{safeIndex + 1}</span>
-            <span className={styles.counterDivider} aria-hidden="true">
-              /
+          <div className={styles.controlsMeta}>
+            <span className={styles.counter} aria-live="polite">
+              <span className={styles.counterCurrent}>{safeIndex + 1}</span>
+              <span className={styles.counterDivider} aria-hidden="true">
+                /
+              </span>
+              <span className={styles.counterTotal}>{total}</span>
             </span>
-            <span className={styles.counterTotal}>{total}</span>
-          </span>
 
-          <span className={styles.progressTrack} aria-hidden="true">
-            <span
-              className={styles.progressFill}
-              style={{ width: `${((safeIndex + 1) / total) * 100}%` }}
-            />
-          </span>
+            <span className={styles.progressTrack} aria-hidden="true">
+              <span
+                className={styles.progressFill}
+                style={{ width: `${((safeIndex + 1) / total) * 100}%` }}
+              />
+            </span>
+          </div>
         </div>
       </div>
     </section>
