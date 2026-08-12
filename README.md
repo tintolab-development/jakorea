@@ -94,6 +94,7 @@ pnpm install
 - **로컬 실행**: `pnpm platform` (또는 `pnpm --filter platform dev`) → 기본 포트 `5173`.
 - **빌드/미리보기**: `pnpm --filter platform build`, `pnpm --filter platform preview`.
 - **품질 검사**: `pnpm --filter platform lint`, `pnpm --filter platform typecheck`.
+- **Vercel**: Root Directory `apps/platform`, Production Branch `development`. 상세는 [`apps/platform/docs/vercel.md`](./apps/platform/docs/vercel.md).
 
 ## 구조
 
