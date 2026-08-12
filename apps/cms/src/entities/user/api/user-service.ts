@@ -104,6 +104,11 @@ import {
   shouldUseAdminAccountDetailApi,
 } from '@/features/user/api/fetch-admin-member-detail'
 import { mapAdminAccountListItems } from '@/features/user/api/map-admin-account-list-item-to-user'
+import {
+  createInitialMergeCursor,
+  fetchAllMembersMergedPage,
+  type AllMembersMergeCursor,
+} from '@/features/user/api/fetch-all-members-merged-page'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 
 /**
@@ -212,6 +217,8 @@ export async function getUsers(filters?: {
 
 export interface GetUsersPageParams {
   role?: UserRole
+  /** 전체 회원 — members + admin-accounts 병합 조회 */
+  mergeAdminAccounts?: boolean
   search?: string
   isActive?: boolean
   createdAtFrom?: string
@@ -231,6 +238,7 @@ export interface GetUsersPageResult {
   users: Omit<User, 'password'>[]
   total: number
   hasMore: boolean
+  nextPageParam?: number | AllMembersMergeCursor
 }
 
 const PAGE_SIZE = 15
@@ -241,11 +249,19 @@ const PAGE_SIZE = 15
  */
 export async function getUsersPage(
   filters: GetUsersPageParams | undefined,
-  page: number
+  pageParam: number | AllMembersMergeCursor = 0
 ): Promise<GetUsersPageResult> {
   if (isMembersRemoteEnabled()) {
     try {
       const apiFilters = filters ?? {}
+
+      if (apiFilters.mergeAdminAccounts) {
+        const cursor =
+          typeof pageParam === 'number' ? createInitialMergeCursor() : pageParam
+        return fetchAllMembersMergedPage(apiFilters, cursor, PAGE_SIZE)
+      }
+
+      const page = typeof pageParam === 'number' ? pageParam : 0
 
       if (apiFilters.role === 'ADMIN') {
         const res = await fetchAdminsPageRemote({
@@ -310,6 +326,7 @@ export async function getUsersPage(
   }
 
   const all = await getUsers(filters)
+  const page = typeof pageParam === 'number' ? pageParam : 0
   const offset = page * PAGE_SIZE
   const users = all.slice(offset, offset + PAGE_SIZE)
   return {
@@ -347,6 +364,8 @@ export type PatchUserBasicInfoInput = Partial<
   instructorCmsProfile?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsProfileProposal
   /** PATCH `settlement` */
   instructorCmsSettlement?: import('@/features/user/api/types/instructor-cms-profile-proposal').InstructorCmsSettlement
+  /** PATCH `termsAgreements` — 약관·동의 여부 수정 */
+  termsAgreements?: TermsAgreementRequest[]
 }
 
 /** 코멘트 전용 저장 시 상세 GET·코멘트 목록 GET을 줄이기 위한 힌트 */
@@ -502,7 +521,15 @@ async function patchUserBasicInfoRemote(
     }
 
     const { adminComment: _adminComment, ...patchWithoutComment } = patch
-    const body = mapPatchUserBasicInfoToApiRequest(patchWithoutComment)
+    let resolvedTerms = patchWithoutComment.termsAgreements
+    if (resolvedTerms != null && resolvedTerms.length > 0) {
+      resolvedTerms = await resolvePreRegisterTermsAgreementVersions(resolvedTerms)
+    }
+    const patchWithResolvedTerms: PatchUserBasicInfoInput = {
+      ...patchWithoutComment,
+      ...(resolvedTerms != null ? { termsAgreements: resolvedTerms } : {}),
+    }
+    const body = mapPatchUserBasicInfoToApiRequest(patchWithResolvedTerms)
     const hasBodyFields = Object.keys(body).length > 0
 
     if (!hasBodyFields && hasAdminCommentPatch(patch)) {
@@ -529,7 +556,10 @@ async function patchUserBasicInfoRemote(
     return mergeUserFromApiResponse(
       userId,
       response,
-      patch,
+      {
+        ...patch,
+        ...(resolvedTerms != null ? { termsAgreements: resolvedTerms } : {}),
+      },
       options?.baseUser ?? existingForRole ?? undefined
     )
   } catch (error) {
@@ -723,6 +753,14 @@ export async function patchUserBasicInfo(
         Object.entries(patch.listMetrics).filter(([, v]) => v !== undefined)
       ),
     }
+  }
+  if (patch.termsAgreements != null) {
+    user.termsAgreements = patch.termsAgreements.map(row => ({
+      termsType: row.termsType,
+      termsVersion: row.version,
+      required: row.required,
+      agreed: row.agreed,
+    }))
   }
   user.updatedAt = new Date().toISOString()
 
