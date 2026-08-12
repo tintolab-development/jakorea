@@ -10,6 +10,10 @@ export type AdminRegisteredWizardState = {
   entrySource?: AdminRegisteredEntrySource
   birthDate?: string
   gender?: GenderType
+  /** 본인인증 세션 — 인증 완료 후에만 설정 */
+  identityVerificationSessionId?: number
+  verifiedName?: string
+  verifiedPhone?: string
   schoolStatus?: SchoolStatus
   schoolName?: string
   grade?: string
