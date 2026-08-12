@@ -71,3 +71,10 @@
     width: var(--reveal-mask-width);
   }
 }
+
+/* 고해상도: 기존 스펙 유지, 상단만 조금 더 여유 */
+@media (--bp-pc-full-up) {
+  .youtubeReveal.youtubeReveal {
+    padding-top: 180px;
+  }
+}
