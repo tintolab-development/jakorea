@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import type {
   AgreementKey,
   AgreementState,
+  ConsentChoice,
   EmploymentStatus,
   GenderType,
   GuardianAgreementKey,
@@ -24,15 +25,15 @@ import {
   agreementItems,
   createInitialAgreementState,
   getAgreementDerived,
-  toggleAgreementState,
-  toggleAllAgreementState,
+  setAgreementChoice,
+  setAllAgreementChoices,
 } from '../agreement/agreement.logic'
 import {
   createInitialGuardianAgreementState,
   getGuardianAgreementDerived,
   guardianAgreementItems,
-  toggleAllGuardianAgreementState,
-  toggleGuardianAgreementState,
+  setAllGuardianAgreementChoices,
+  setGuardianAgreementChoice,
 } from '../agreement/guardian-agreement.logic'
 import { validateEmailDuplicateCheck } from '../email/email.logic'
 import {
@@ -348,20 +349,22 @@ export function useSignUp() {
     pushWizard(step)
   }
 
-  const toggleAgreement = (key: AgreementKey) => {
-    setAgreements(prev => toggleAgreementState(prev, key))
+  const setAgreement = (key: AgreementKey, choice: ConsentChoice) => {
+    setAgreements(prev => setAgreementChoice(prev, key, choice))
   }
 
   const toggleAllAgreements = () => {
-    setAgreements(toggleAllAgreementState(!agreementDerived.isAllAgreed))
+    setAgreements(setAllAgreementChoices(agreementDerived.isAllAgreed ? 'disagree' : 'agree'))
   }
 
-  const toggleGuardianAgreement = (key: GuardianAgreementKey) => {
-    setGuardianAgreements(prev => toggleGuardianAgreementState(prev, key))
+  const setGuardianAgreement = (key: GuardianAgreementKey, choice: ConsentChoice) => {
+    setGuardianAgreements(prev => setGuardianAgreementChoice(prev, key, choice))
   }
 
   const toggleAllGuardianAgreements = () => {
-    setGuardianAgreements(toggleAllGuardianAgreementState(!guardianAgreementDerived.isAllAgreed))
+    setGuardianAgreements(
+      setAllGuardianAgreementChoices(guardianAgreementDerived.isAllAgreed ? 'disagree' : 'agree'),
+    )
   }
 
   const handleGuardianAgreementContinue = () => {
@@ -679,7 +682,8 @@ export function useSignUp() {
         state: guardianAgreements,
         isAllAgreed: guardianAgreementDerived.isAllAgreed,
         isRequiredAgreed: guardianAgreementDerived.isRequiredAgreed,
-        toggle: toggleGuardianAgreement,
+        disagreedRequiredLabels: guardianAgreementDerived.disagreedRequiredLabels,
+        setChoice: setGuardianAgreement,
         toggleAll: toggleAllGuardianAgreements,
         continue: handleGuardianAgreementContinue,
       },
@@ -728,7 +732,8 @@ export function useSignUp() {
       state: agreements,
       isAllAgreed: agreementDerived.isAllAgreed,
       isRequiredAgreed: agreementDerived.isRequiredAgreed,
-      toggle: toggleAgreement,
+      disagreedRequiredLabels: agreementDerived.disagreedRequiredLabels,
+      setChoice: setAgreement,
       toggleAll: toggleAllAgreements,
       continue: handleAgreementContinue,
       termsLoading: termsQuery.isFetching,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Form, Space } from 'antd'
 import type { CreateUserRequest } from '@/entities/user/api/user-service'
 import { buildPreRegisterTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
@@ -19,6 +19,7 @@ import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-w
 import { KOREAN_PHONE_REGEX } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import {
+  INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import {
@@ -35,6 +36,9 @@ import {
   resolveMemberConsentTemplateEntry,
 } from '@/features/user/shared/lib/member-consent-template-map'
 import { MEMBER_REGISTER_ALL_CONSENT_KEYS } from '@/features/user/shared/lib/member-register-consent-fields'
+import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
+import { buildMemberPaymentStatementBasicInfoAutofill } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
+import { isMemberRegisterBasicInfoIncompleteForConsent } from '@/features/user/shared/lib/validate-member-consent-basic-info'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import './add-user-individual.css'
@@ -241,16 +245,74 @@ export function AddUserIndividual({
   const [activeConsentField, setActiveConsentField] = useState<MemberConsentFieldKey | null>(null)
   const allValues = Form.useWatch([], form) as AddUserIndividualFormValues | undefined
   const address = Form.useWatch('address', form) ?? ''
+  const detailAddress = Form.useWatch('detailAddress', form) ?? ''
   const schoolName = Form.useWatch('schoolName', form) ?? ''
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
   const schoolEnrollmentStatus =
     Form.useWatch('schoolEnrollmentStatus', form) ?? INITIAL_VALUES.schoolEnrollmentStatus
   const isEnrolled = schoolEnrollmentStatus === 'enrolled'
 
+  const memberName = Form.useWatch('name', form) ?? ''
+  const memberGrade = Form.useWatch('grade', form) ?? ''
+  const affiliationOrganization = Form.useWatch('affiliationOrganization', form) ?? ''
+
+  const memberConsentContext = useMemo((): MemberConsentMemberContext => {
+    return {
+      name: memberName,
+      birthDate: allValues?.birthDate,
+      phone: allValues?.contact,
+      schoolEnrollmentStatus,
+      schoolName,
+      grade: memberGrade,
+      affiliationOrganization,
+    }
+  }, [
+    affiliationOrganization,
+    allValues?.birthDate,
+    allValues?.contact,
+    memberGrade,
+    memberName,
+    schoolEnrollmentStatus,
+    schoolName,
+  ])
+
+  const paymentStatementBasicInfoAutofill = useMemo(
+    () =>
+      buildMemberPaymentStatementBasicInfoAutofill({
+        name: memberName,
+        birthDate: allValues?.birthDate,
+        homeAddress: address,
+        homeAddressDetail: detailAddress,
+        memberType: 'general',
+        affiliationName: isEnrolled ? schoolName : affiliationOrganization,
+      }),
+    [
+      address,
+      affiliationOrganization,
+      allValues?.birthDate,
+      detailAddress,
+      isEnrolled,
+      memberName,
+      schoolName,
+    ]
+  )
+  const consentAutofillProps = {
+    memberContext: memberConsentContext,
+    paymentStatementBasicInfoAutofill,
+  }
+
   const activeConsentEntry =
     activeConsentField != null ? resolveMemberConsentTemplateEntry(activeConsentField) : null
 
   const handleConsentWrite = (fieldKey: MemberConsentFieldKey) => {
+    const values = allValues ?? form.getFieldsValue()
+    if (isMemberRegisterBasicInfoIncompleteForConsent(values)) {
+      showAlert({
+        title: '안내',
+        content: INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
+      })
+      return
+    }
     setActiveConsentField(fieldKey)
   }
 
@@ -710,6 +772,7 @@ export function AddUserIndividual({
         open
         templateId={activeConsentEntry.templateId}
         modalTitle={activeConsentEntry.modalTitle}
+        {...consentAutofillProps}
         onClose={handleConsentModalClose}
         onComplete={() => handleConsentComplete(activeConsentField)}
       />

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Form, Space } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import type { FormListFieldData } from 'antd/es/form/FormList'
@@ -25,12 +25,17 @@ import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-butt
 import { FORM_INPUTS_2_WIDTHS } from '@/features/template/constants/form-input-widths'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
+import { INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import type { MemberConsentMemberContext } from '@/features/user/shared/lib/build-member-portrait-consent-draft'
+import { buildMemberPaymentStatementBasicInfoAutofill } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
 import {
   isAgreementInstructorConsentField,
   isInstructorCrimeConsentField,
   resolveInstructorConsentTemplateEntry,
   type InstructorConsentFieldKey,
 } from '@/features/user/shared/lib/instructor-consent-field-map'
+import { isInstructorRegisterBasicInfoIncompleteForConsent } from '@/features/user/shared/lib/validate-instructor-consent-basic-info'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import { InstructorRegisterEducationSection } from '@/features/user/shared/ui/instructor-register-education-section'
@@ -203,21 +208,89 @@ export function InstructorProfileFormBody({
 }: InstructorProfileFormBodyProps) {
   const isDetailEdit = layoutVariant === 'detailEdit'
   const formLayout = getInstructorFormLayout(isDetailEdit ? 'cmsDetailEdit' : 'cmsRegister')
+  const { showAlert } = useCmsAlert()
   const [activeConsentField, setActiveConsentField] = useState<InstructorConsentFieldKey | null>(
     null
   )
   const homeAddress = Form.useWatch('homeAddress', form) ?? ''
   const memberType = Form.useWatch('memberType', form) ?? 'general'
+  const memberName = Form.useWatch('name', form) ?? ''
   const schoolName = Form.useWatch('schoolName', form) ?? ''
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
   const jaEvaluationGrade = Form.useWatch('jaEvaluationGrade', form) ?? ''
   const isTeacherMember = memberType === 'school_teacher'
+  const allValues = Form.useWatch([], form) as InstructorProfileFormValues | undefined
   const careerLevel = Form.useWatch('careerLevel', form) ?? 'new'
 
   const activeConsentEntry =
     activeConsentField != null ? resolveInstructorConsentTemplateEntry(activeConsentField) : null
 
+  const memberConsentContext = useMemo((): MemberConsentMemberContext => {
+    return {
+      name: memberName,
+      birthDate: allValues?.birthDate,
+      phone: allValues?.contact,
+      schoolEnrollmentStatus: isTeacherMember ? 'enrolled' : 'not_enrolled',
+      schoolName: isTeacherMember ? schoolName : undefined,
+      affiliationOrganization:
+        !isTeacherMember && !affiliationNone ? allValues?.affiliationName?.trim() : undefined,
+      affiliationNone: !isTeacherMember && affiliationNone,
+    }
+  }, [
+    affiliationNone,
+    allValues?.affiliationName,
+    allValues?.birthDate,
+    allValues?.contact,
+    isTeacherMember,
+    memberName,
+    schoolName,
+  ])
+
+  const paymentStatementBasicInfoAutofill = useMemo(
+    () =>
+      buildMemberPaymentStatementBasicInfoAutofill({
+        name: memberName,
+        birthDate: allValues?.birthDate,
+        homeAddress,
+        homeAddressDetail: allValues?.homeAddressDetail,
+        bankName: allValues?.bankName,
+        accountNumber: allValues?.accountNumber,
+        accountHolder: allValues?.accountHolder,
+        memberType,
+        affiliationNone,
+        schoolName,
+        affiliationName: allValues?.affiliationName,
+      }),
+    [
+      affiliationNone,
+      allValues?.accountHolder,
+      allValues?.accountNumber,
+      allValues?.affiliationName,
+      allValues?.bankName,
+      allValues?.birthDate,
+      allValues?.homeAddressDetail,
+      homeAddress,
+      memberName,
+      memberType,
+      schoolName,
+    ]
+  )
+  const consentAutofillProps = {
+    memberContext: memberConsentContext,
+    paymentStatementBasicInfoAutofill,
+  }
+
   const handleConsentWrite = (fieldKey: InstructorConsentFieldKey) => {
+    if (!formLayout.consent.skipBasicInfoGate) {
+      const values = allValues ?? form.getFieldsValue()
+      if (isInstructorRegisterBasicInfoIncompleteForConsent(values)) {
+        showAlert({
+          title: '안내',
+          content: INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE,
+        })
+        return
+      }
+    }
     setActiveConsentField(fieldKey)
   }
 
@@ -909,6 +982,7 @@ export function InstructorProfileFormBody({
           open
           templateId={activeConsentEntry.templateId}
           modalTitle={activeConsentEntry.modalTitle}
+          {...consentAutofillProps}
           onClose={handleConsentModalClose}
           onComplete={() => handleConsentComplete(activeConsentField)}
         />
