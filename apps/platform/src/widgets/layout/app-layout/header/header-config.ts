@@ -113,7 +113,7 @@ export function getLoggedInActionRoute(label: string) {
   return loggedInActionRoutes[label]
 }
 
-export function getActiveNavigationItem(pathname: string): NavigationItemLabel {
+export function getActiveNavigationItem(pathname: string): NavigationItemLabel | null {
   if (isProgramsPath(pathname) || isResultsPath(pathname)) {
     return '참여하기'
   }
@@ -143,5 +143,6 @@ export function getActiveNavigationItem(pathname: string): NavigationItemLabel {
     return 'JA Korea'
   }
 
-  return 'JA Korea'
+  // 메인(/) 등 GNB 하위 경로가 아니면 활성 탭 없음
+  return null
 }
