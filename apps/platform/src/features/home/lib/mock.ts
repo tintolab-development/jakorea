@@ -3,6 +3,8 @@
  * 히어로 이미지·후원사 로고는 에셋 수급 전 placeholder(그라데이션·텍스트)로 표시한다.
  */
 
+import heroClassroomUrl from '../image/background/hero-classroom.png'
+
 export type HomeHeroSlide = {
   id: string
   eyebrow: string
@@ -16,6 +18,9 @@ export type HomeHeroSlide = {
 
 export const HOME_HERO_AUTOPLAY_MS = 5000
 
+/** TODO: 슬라이드별 히어로 사진 수급 전 임시 공통 이미지 */
+const TEMP_HERO_IMAGE_URL = heroClassroomUrl
+
 export const HOME_HERO_SLIDES: readonly HomeHeroSlide[] = [
   {
     id: 'hero-1',
@@ -24,6 +29,7 @@ export const HOME_HERO_SLIDES: readonly HomeHeroSlide[] = [
     description: 'JA는 학생들이 멘토와 연결되어 실제 세상을 경험하며 배울 수 있는 교육 기회를 제공합니다.',
     placeholderBackground:
       'linear-gradient(115deg, #16323c 0%, #22404d 45%, #285f74 100%)',
+    imageUrl: TEMP_HERO_IMAGE_URL,
   },
   {
     id: 'hero-2',
@@ -32,6 +38,7 @@ export const HOME_HERO_SLIDES: readonly HomeHeroSlide[] = [
     description: '전국 200여 개 지역에서 전문 봉사자·교사·강사가 청소년의 배움과 함께합니다.',
     placeholderBackground:
       'linear-gradient(115deg, #1c3a46 0%, #285f74 55%, #01a1af 130%)',
+    imageUrl: TEMP_HERO_IMAGE_URL,
   },
   {
     id: 'hero-3',
@@ -40,6 +47,7 @@ export const HOME_HERO_SLIDES: readonly HomeHeroSlide[] = [
     description: '기업과 지역사회가 함께 만드는 실질적인 경제·금융·진로 교육을 경험해 보세요.',
     placeholderBackground:
       'linear-gradient(115deg, #22404d 0%, #337791 60%, #46b17b 140%)',
+    imageUrl: TEMP_HERO_IMAGE_URL,
   },
 ]
 
