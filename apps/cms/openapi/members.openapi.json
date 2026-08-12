@@ -19650,6 +19650,13 @@
           },
           "settlement": {
             "$ref": "#/components/schemas/InstructorCmsSettlement"
+          },
+          "termsAgreements": {
+            "type": "array",
+            "description": "약관·동의 여부 수정. 항목별 agreed를 갱신한다.",
+            "items": {
+              "$ref": "#/components/schemas/TermsAgreementRequest"
+            }
           }
         }
       },

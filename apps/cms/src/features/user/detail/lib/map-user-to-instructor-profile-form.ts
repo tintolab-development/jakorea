@@ -15,6 +15,7 @@ import {
   type InstructorProfileFormValues,
   type LicenseOrAwardRow,
 } from '@/features/user/shared/ui/instructor-profile-form'
+import { buildPreRegisterTermsAgreements } from '@/features/user/api/build-pre-register-terms-agreements'
 import {
   ensureInstructorFormListRows,
   instructorCmsProfileToFormValues,
@@ -25,6 +26,7 @@ import type {
   InstructorCmsProfileProposal,
   InstructorCmsSettlement,
 } from '@/features/user/api/types/instructor-cms-profile-proposal'
+import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import {
   EMPTY_EDUCATION_GRADUATE_ROW,
   EMPTY_EDUCATION_SCHOOL_ROW,
@@ -362,6 +364,7 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
   licenseRows: InstructorProfileFormValues['licenseRows']
   instructorCmsProfile: InstructorCmsProfileProposal
   instructorCmsSettlement: InstructorCmsSettlement
+  termsAgreements: TermsAgreementRequest[]
 } {
   const birthDigits = values.birthDate.replace(/\D/g, '')
   const birthDate =
@@ -402,5 +405,19 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
     licenseRows: values.licenseRows,
     instructorCmsProfile: instructorProfileFormValuesToCmsProfile(values),
     instructorCmsSettlement: instructorProfileFormValuesToCmsSettlement(values),
+    termsAgreements: buildPreRegisterTermsAgreements(
+      {
+        consentTermsOfService: values.consentTermsOfService,
+        consentPersonal: values.consentPersonal,
+        consentMarketing: values.consentMarketing,
+      },
+      {
+        consentPortrait: values.consentPortrait,
+        consentPaymentStatement: values.consentPaymentStatement,
+        consentEducatorPledge: values.consentEducatorPledge,
+        consentAdministrativeJoint: values.consentAdministrativeJoint,
+        consentSexOffenseCheck: values.consentSexOffenseCheck,
+      }
+    ),
   }
 }
