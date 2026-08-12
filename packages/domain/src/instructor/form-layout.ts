@@ -105,7 +105,8 @@ const PLATFORM_APPLY_CONSENT_LAYOUT: InstructorFormConsentLayout = {
     'consentSexOffenseCheck',
   ],
   allItemsRequired: true,
-  skipBasicInfoGate: false,
+  /** Platform: 동의서↔기본정보 연동·작성 전 기본정보 게이트 없음 */
+  skipBasicInfoGate: true,
 }
 
 export const INSTRUCTOR_FORM_LAYOUT: Record<InstructorFormSurface, InstructorFormLayout> = {
