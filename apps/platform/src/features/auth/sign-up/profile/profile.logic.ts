@@ -1,3 +1,5 @@
+import { isRequiredAddressIncomplete } from '@jakorea/domain/shared/required-address'
+
 export function isProfileStepValid(
   address: string,
   addressDetail: string,
@@ -10,7 +12,11 @@ export function isProfileStepValid(
     schoolOrganizationId?: number | null
   },
 ) {
-  const hasAddress = address.trim().length > 0 && addressDetail.trim().length > 0
+  const hasAddress = !isRequiredAddressIncomplete({
+    address,
+    addressDetail,
+    subject: 'person',
+  })
 
   if (!hasAddress) {
     return false
