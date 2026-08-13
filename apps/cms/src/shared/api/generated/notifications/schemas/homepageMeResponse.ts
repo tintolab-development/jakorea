@@ -30,4 +30,14 @@ export interface HomepageMeResponse {
   identityVerified?: boolean;
   /** 마지막 로그인 시각 */
   lastLoginAt?: string;
+  /** 관리자에 의해 생성된 회원인지 여부 */
+  registeredByAdmin?: boolean;
+  /** 관리자 등록 회원 온보딩이 남아 있는지 여부 */
+  adminProvisionedOnboardingRequired?: boolean;
+  /** 다음 서버 처리 단계: PROFILE, IDENTITY, PASSWORD, DONE */
+  adminProvisionedOnboardingStep?: string;
+  /** 관리자 등록 이후 본인 가입 온보딩 완료 여부 */
+  identitySelfSignupCompletedAfterAdminRegistration?: boolean;
+  /** 현재 임시 비밀번호 변경이 필요한지 여부 */
+  passwordChangeRequired?: boolean;
 }

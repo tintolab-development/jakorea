@@ -195,7 +195,7 @@ const answer = (
  * - 검토 메모: Frontend bulk API handoff implemented with max 100 and partial-success contract
  * @summary POST /api/admin/inquiries/bulk-delete
  */
-const bulkDelete1 = (
+const bulkDelete2 = (
     bulkIdsRequest: BulkIdsRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseBulkActionResponse>>,) => {
       return customInstance<ApiResponseBulkActionResponse>(
@@ -1529,10 +1529,10 @@ const deleteInquiry = (
       options);
     }
 
-return {answers,answer,bulkDelete1,notices,createNotice,bulkDeleteNotices,noticeCategories,createNoticeCategory,faqs,createFaq,bulkDeleteFaqs,faqCategories,createFaqCategory,updateInquiryAnswer,notice,deleteNotice,updateNotice,deleteNoticeCategory,updateNoticeCategory,faq,deleteFaq,updateFaq,deleteFaqCategory,updateFaqCategory,inquiries1,inquiry1,deleteInquiry}};
+return {answers,answer,bulkDelete2,notices,createNotice,bulkDeleteNotices,noticeCategories,createNoticeCategory,faqs,createFaq,bulkDeleteFaqs,faqCategories,createFaqCategory,updateInquiryAnswer,notice,deleteNotice,updateNotice,deleteNoticeCategory,updateNoticeCategory,faq,deleteFaq,updateFaq,deleteFaqCategory,updateFaqCategory,inquiries1,inquiry1,deleteInquiry}};
 export type AnswersResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['answers']>>>
 export type AnswerResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['answer']>>>
-export type BulkDelete1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['bulkDelete1']>>>
+export type BulkDelete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['bulkDelete2']>>>
 export type NoticesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['notices']>>>
 export type CreateNoticeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['createNotice']>>>
 export type BulkDeleteNoticesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIPostsSubset>['bulkDeleteNotices']>>>
