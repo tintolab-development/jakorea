@@ -5,10 +5,20 @@ import {
   getMypageProfileLabel,
   isGeneralMypageReady,
   MOCK_MYPAGE_PROGRAM_STATS,
+  MOCK_MYPAGE_SCHEDULE_EVENTS,
   MYPAGE_PATH,
   showInstructorApplyCta,
   useMypageMember,
+  type MypageProgramStats,
+  type MypageScheduleEvent,
 } from '@/features/mypage'
+
+const EMPTY_PROGRAM_STATS: MypageProgramStats = {
+  applied: 0,
+  inProgress: 0,
+  completed: 0,
+}
+const EMPTY_SCHEDULE_EVENTS: MypageScheduleEvent[] = []
 import { getDevAuthLoggedIn } from '@/shared/lib'
 import { MypageLayout, mypageSettingsIconUrl } from '@/widgets/mypage-layout'
 import { PFText } from '@/shared/ui'
@@ -22,6 +32,11 @@ export function MypageHomePage() {
   const member = useMypageMember()
   const lnbItems = getMypageLnbItems(member.profile)
   const isGeneralReady = isGeneralMypageReady(member.profile)
+  /** API 로그인 세션에서는 mock 통계·일정을 쓰지 않음 (실 API 연동 전 빈 값) */
+  const programStats = member.isRemoteSession ? EMPTY_PROGRAM_STATS : MOCK_MYPAGE_PROGRAM_STATS
+  const scheduleEvents = member.isRemoteSession
+    ? EMPTY_SCHEDULE_EVENTS
+    : MOCK_MYPAGE_SCHEDULE_EVENTS
 
   useEffect(() => {
     if (!getDevAuthLoggedIn()) {
@@ -75,11 +90,14 @@ export function MypageHomePage() {
           </header>
 
           <div className={styles.stats}>
-            <ProgramStatCards stats={MOCK_MYPAGE_PROGRAM_STATS} />
+            <ProgramStatCards stats={programStats} />
           </div>
 
           <div className={styles.schedule}>
-            <ScheduleSection />
+            <ScheduleSection
+              events={scheduleEvents}
+              useMockDemoMonth={!member.isRemoteSession}
+            />
           </div>
         </div>
       ) : (
