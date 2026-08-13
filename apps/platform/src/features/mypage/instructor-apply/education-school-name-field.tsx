@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { INSTRUCTOR_FORM_PLACEHOLDERS as PH } from '@jakorea/domain/instructor/form-copy'
 import type { EducationDetailKey } from '@jakorea/domain/instructor/education-options'
-import { SchoolSearchModal } from '@/features/auth/sign-up/ui/school-search-modal'
+import { SchoolSearchModal } from '@/features/auth/sign-up'
 import { PFTextInput } from '@/shared/ui'
 import styles from './education-school-name-field.module.css'
 

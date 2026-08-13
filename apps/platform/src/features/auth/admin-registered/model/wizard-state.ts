@@ -5,7 +5,7 @@ import type {
   SchoolStatus,
 } from '@/features/auth/sign-up'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
-import { MOCK_ADMIN_REGISTERED_PROFILE } from './constants'
+import { MOCK_ADMIN_REGISTERED_PROFILE } from '../lib/constants'
 
 const ADMIN_REGISTERED_WIZARD_STORAGE_KEY = 'platform:dev:admin-registered-wizard'
 

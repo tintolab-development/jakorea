@@ -34,7 +34,7 @@ export {
   requireAdminRegisteredWizardState,
   setAdminRegisteredWizardState,
   updateAdminRegisteredWizardState,
-} from './lib/wizard-state'
-export type { AdminRegisteredEntrySource, AdminRegisteredWizardState } from './lib/wizard-state'
+} from './model/wizard-state'
+export type { AdminRegisteredEntrySource, AdminRegisteredWizardState } from './model/wizard-state'
 export { useAdminRegisteredProfileHydration } from './hooks/use-admin-registered-profile-hydration'
 export { mapPortalProfileToAdminRegisteredWizardPartial } from './lib/map-portal-profile-to-wizard'

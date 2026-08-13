@@ -1,8 +1,10 @@
-import type { UseSignUpReturn } from '@/features/auth/sign-up'
-import { schoolGradeOptions } from '@/features/auth/sign-up'
+import {
+  AddressSearchModal,
+  SchoolSearchModal,
+  schoolGradeOptions,
+  type UseSignUpReturn,
+} from '@/features/auth/sign-up'
 import { PFButton, PFSelect, PFText, PFTextInput } from '@/shared/ui'
-import { AddressSearchModal } from '@/features/auth/sign-up/ui/address-search-modal'
-import { SchoolSearchModal } from '@/features/auth/sign-up/ui/school-search-modal'
 import { SignUpLayout } from '../layout/shell'
 import { SignUpStepLayout } from '../layout/sign-up-step-layout'
 import styles from '../wizard.module.css'

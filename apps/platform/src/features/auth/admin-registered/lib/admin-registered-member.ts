@@ -6,7 +6,7 @@ import {
   getAdminRegisteredWizardState,
   initAdminRegisteredWizardState,
   updateAdminRegisteredWizardState,
-} from './wizard-state'
+} from '../model/wizard-state'
 
 export function isMockAdminRegisteredEmail(email: string) {
   return normalizeEmailId(email) === normalizeEmailId(MOCK_ADMIN_REGISTERED_EMAIL)

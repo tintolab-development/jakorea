@@ -13,8 +13,18 @@
   margin: var(--spacing-12) 0 0;
 }
 
+.schoolModalSearchRow > :first-child {
+  min-width: 0;
+}
+
 .schoolModalSearchRowActive {
   margin-bottom: var(--spacing-12);
+}
+
+.schoolModalSearchButton {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
 }
 
 .schoolModalGuide {
@@ -153,4 +163,44 @@
   width: 100%;
   justify-content: center;
   margin-top: var(--spacing-16);
+}
+
+@media (--bp-below-pc) {
+  .schoolModalFilterRow {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--spacing-8);
+  }
+
+  .schoolModalFilterRow > * {
+    min-width: 0;
+  }
+
+  .schoolModalSearchRow {
+    grid-template-columns: minmax(0, 1fr) 72px;
+    gap: var(--spacing-8);
+  }
+
+  .schoolModalSearchButton {
+    min-width: 0 !important;
+    padding: 13px var(--spacing-8) !important;
+  }
+
+  .schoolModalMain {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .schoolModalMainActive {
+    min-height: 0;
+  }
+
+  .schoolResultList {
+    max-height: none;
+    flex: 1 1 auto;
+  }
+
+  .schoolPagination {
+    margin-top: var(--spacing-20);
+    margin-bottom: var(--spacing-8);
+  }
 }

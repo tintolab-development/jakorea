@@ -2,9 +2,9 @@ import type {
   ConsentChoice,
   GuardianAgreementKey,
   GuardianAgreementState,
-} from '../model/sign-up.types'
-import { guardianAgreementItems } from '../lib/constants'
-import { isAllAgreed, isRequiredAgreed, listDisagreedRequiredLabels } from '../lib/utils'
+} from '../../model/sign-up.types'
+import { guardianAgreementItems } from '../constants'
+import { isAllAgreed, isRequiredAgreed, listDisagreedRequiredLabels } from '../utils'
 
 export { guardianAgreementItems }
 

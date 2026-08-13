@@ -1,4 +1,4 @@
-import type { EmploymentStatus } from '../model/sign-up.types'
+import type { EmploymentStatus } from '../../model/sign-up.types'
 
 export function isTeacherProfileValid(
   affiliation: string,

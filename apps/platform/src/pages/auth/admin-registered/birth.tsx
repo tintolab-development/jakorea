@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import {
+  formatBirthDateInput,
   isBirthStepValid,
   validateBirthStep,
-} from '@/features/auth/sign-up/identity/identity.logic'
-import { formatBirthDateInput, type GenderType } from '@/features/auth/sign-up'
+  type GenderType,
+} from '@/features/auth/sign-up'
 import {
   requireAdminRegisteredWizardState,
   updateAdminRegisteredWizardState,
