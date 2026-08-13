@@ -19,6 +19,8 @@ export type EducationTarget = {
   /** 고정 hex (#RRGGBB) — UI에서 변경 불가 */
   indexColor: string
   updatedAt: string
+  /** remote optimistic concurrency */
+  version?: number
 }
 
 export type EducationTargetNamePatch = {

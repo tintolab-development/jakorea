@@ -26,7 +26,6 @@ import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_C
 
 import './page.css'
 type DraftRow = {
-  name: string
   description: string
   guideText: string
 }
@@ -43,7 +42,6 @@ function buildDraft(mainText: string, fields: EducationBusinessField[]): DraftSt
       fields.map(row => [
         row.id,
         {
-          name: row.name,
           description: row.description,
           guideText: row.guideText,
         },
@@ -139,7 +137,8 @@ export function EducationFieldsPage() {
         mainText: draft.mainText,
         patches: fields.map(row => ({
           id: row.id,
-          name: draft.rows[row.id]?.name ?? row.name,
+          // 사업분야명은 고정(기획·API) — 수정 불가
+          name: row.name,
           description: draft.rows[row.id]?.description ?? row.description,
           guideText: draft.rows[row.id]?.guideText ?? row.guideText,
         })),
@@ -191,28 +190,17 @@ export function EducationFieldsPage() {
         key: 'name',
         width: 160,
         align: 'center',
-        render: (_value, record) => {
-          const value = draft?.rows[record.id]?.name ?? record.name
-          return (
-            <CmsInput
-              className={
-                isEditing
-                  ? 'education-fields-inline-field education-fields-inline-field--edit'
-                  : 'education-fields-inline-field education-fields-inline-field--readonly'
-              }
-              inputSize="medium"
-              width="100%"
-              value={value}
-              readOnly={!isEditing}
-              tabIndex={isEditing ? 0 : -1}
-              onChange={e => {
-                if (!isEditing) return
-                handleRowFieldChange(record.id, 'name', e.target.value)
-              }}
-              aria-label={`사업분야명 ${record.sortOrder}`}
-            />
-          )
-        },
+        render: (_value, record) => (
+          <CmsInput
+            className="education-fields-inline-field education-fields-inline-field--readonly"
+            inputSize="medium"
+            width="100%"
+            value={record.name}
+            readOnly
+            tabIndex={-1}
+            aria-label={`사업분야명 ${record.sortOrder}`}
+          />
+        ),
       },
       {
         title: '설명 텍스트',

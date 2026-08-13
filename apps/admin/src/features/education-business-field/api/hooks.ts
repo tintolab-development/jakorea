@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { EducationBusinessFieldTextPatch } from '@/entities/education-business-field/model/types'
+import type {
+  EducationBusinessFieldDocument,
+  EducationBusinessFieldTextPatch,
+} from '@/entities/education-business-field/model/types'
 import { shouldUseEducationBusinessFieldRemoteApi } from './capabilities'
 import { educationBusinessFieldQueryKeys } from './query-keys'
 import {
@@ -12,6 +15,22 @@ import {
 
 function source(): 'remote' | 'local' {
   return shouldUseEducationBusinessFieldRemoteApi() ? 'remote' : 'local'
+}
+
+function cachedDocument(
+  queryClient: ReturnType<typeof useQueryClient>,
+): EducationBusinessFieldDocument | undefined {
+  return queryClient.getQueryData<EducationBusinessFieldDocument>(
+    educationBusinessFieldQueryKeys.document(source()),
+  )
+}
+
+function setDocumentCaches(
+  queryClient: ReturnType<typeof useQueryClient>,
+  doc: EducationBusinessFieldDocument,
+) {
+  queryClient.setQueryData(educationBusinessFieldQueryKeys.document(source()), doc)
+  queryClient.setQueryData(educationBusinessFieldQueryKeys.list(source()), doc.fields)
 }
 
 export function useEducationBusinessFieldsList(enabled = true) {
@@ -39,10 +58,11 @@ export function useEducationBusinessFieldDocument(enabled = true) {
 export function useReorderEducationBusinessFields() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (orderedIds: string[]) => reorderEducationBusinessFieldsService(orderedIds),
+    mutationFn: (orderedIds: string[]) =>
+      reorderEducationBusinessFieldsService(orderedIds, cachedDocument(queryClient)),
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: educationBusinessFieldQueryKeys.all })
+    onSuccess: doc => {
+      setDocumentCaches(queryClient, doc)
     },
   })
 }
@@ -51,10 +71,10 @@ export function useSetEducationBusinessFieldActive() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      setEducationBusinessFieldActiveService(id, isActive),
+      setEducationBusinessFieldActiveService(id, isActive, cachedDocument(queryClient)),
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: educationBusinessFieldQueryKeys.all })
+    onSuccess: doc => {
+      setDocumentCaches(queryClient, doc)
     },
   })
 }
@@ -63,12 +83,10 @@ export function useSaveEducationBusinessFieldDocument() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (input: { mainText: string; patches: EducationBusinessFieldTextPatch[] }) =>
-      saveEducationBusinessFieldDocumentService(input),
+      saveEducationBusinessFieldDocumentService(input, cachedDocument(queryClient)),
     retry: false,
     onSuccess: doc => {
-      queryClient.setQueryData(educationBusinessFieldQueryKeys.document(source()), doc)
-      queryClient.setQueryData(educationBusinessFieldQueryKeys.list(source()), doc.fields)
-      void queryClient.invalidateQueries({ queryKey: educationBusinessFieldQueryKeys.all })
+      setDocumentCaches(queryClient, doc)
     },
   })
 }
