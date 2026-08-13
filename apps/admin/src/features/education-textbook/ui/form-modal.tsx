@@ -176,6 +176,8 @@ function TextbookFormBody({
   const [description, setDescription] = useState('')
   const [thumbnailUrl, setThumbnailUrl] = useState('')
   const [thumbnailFileName, setThumbnailFileName] = useState('')
+  const [thumbnailFile, setThumbnailFile] = useState<File | undefined>()
+  const [thumbnailAssetId, setThumbnailAssetId] = useState<number | undefined>()
   const [unitCount, setUnitCount] = useState('')
   const [unitSessionText, setUnitSessionText] = useState('')
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -209,6 +211,8 @@ function TextbookFormBody({
       setDescription(initial.description)
       setThumbnailUrl(initial.thumbnailUrl || DEFAULT_TEXTBOOK_THUMBNAIL)
       setThumbnailFileName(initial.thumbnailFileName ?? '')
+      setThumbnailFile(undefined)
+      setThumbnailAssetId(initial.thumbnailAssetId)
       setUnitCount(String(initial.unitCount || ''))
       setUnitSessionText(initial.unitSessionText)
     } else {
@@ -220,6 +224,8 @@ function TextbookFormBody({
       setDescription('')
       setThumbnailUrl('')
       setThumbnailFileName('')
+      setThumbnailFile(undefined)
+      setThumbnailAssetId(undefined)
       setUnitCount('')
       setUnitSessionText('')
     }
@@ -289,6 +295,7 @@ function TextbookFormBody({
         const dataUrl = await readFileAsDataUrl(file)
         setThumbnailUrl(dataUrl)
         setThumbnailFileName(file.name)
+        setThumbnailFile(file)
       } catch {
         showAlert({
           title: '파일 읽기 실패',
@@ -302,6 +309,8 @@ function TextbookFormBody({
   const handleRemoveFile = useCallback(() => {
     setThumbnailUrl('')
     setThumbnailFileName('')
+    setThumbnailFile(undefined)
+    setThumbnailAssetId(undefined)
   }, [])
 
   const handleSubmit = useCallback(() => {
@@ -346,6 +355,8 @@ function TextbookFormBody({
       description: description.trim(),
       thumbnailUrl: thumbnailUrl.trim() || DEFAULT_TEXTBOOK_THUMBNAIL,
       thumbnailFileName: thumbnailFileName || undefined,
+      thumbnailFile,
+      thumbnailAssetId,
       unitCount: units,
       unitSessionText: unitSessionText.trim(),
       unitIntroMarkdown,
@@ -364,6 +375,8 @@ function TextbookFormBody({
     onSubmit,
     showAlert,
     thumbnailFileName,
+    thumbnailFile,
+    thumbnailAssetId,
     thumbnailUrl,
     title,
     unitCount,

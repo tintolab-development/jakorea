@@ -86,6 +86,7 @@ function buildSeedDoc(): GnbMenuDoc {
         sortOrder: i + 1,
         isActive: item.isActive !== false,
         name: item.name,
+        version: 0,
       })),
     })),
     updatedAt: '2026-07-01T00:00:00.000Z',
@@ -117,6 +118,7 @@ function normalizeItems(raw: unknown, seedItems: GnbSubMenu[]): GnbSubMenu[] {
       sortOrder: typeof r.sortOrder === 'number' ? r.sortOrder : seed.sortOrder,
       isActive: asBool(r.isActive, seed.isActive),
       name: asString(r.name, seed.name).trim() || seed.name,
+      version: typeof r.version === 'number' ? r.version : seed.version,
     })
     seedById.delete(id)
   }

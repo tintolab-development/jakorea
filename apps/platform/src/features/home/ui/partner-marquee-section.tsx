@@ -1,8 +1,7 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import {
-  SUPPORT_CORPORATE_PATH,
-  SUPPORT_INDIVIDUAL_PATH,
-} from '@/shared/config/gnb-temporary-paths'
+import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
+import { SUPPORT_CORPORATE_PATH } from '@/shared/config/gnb-temporary-paths'
 import { PFText } from '@/shared/ui'
 import jaArrowCtaMintUrl from '../image/icon/ja-arrow-cta-mint.svg'
 import jaArrowCtaTealUrl from '../image/icon/ja-arrow-cta-teal.svg'
@@ -26,12 +25,29 @@ function LogoChips({ logos, hidden }: { logos: readonly HomePartnerLogo[]; hidde
 }
 
 export function PartnerMarqueeSection() {
+  const flatLogos = useMemo(
+    () => HOME_PARTNER_LOGO_ROWS.flatMap(row => [...row]),
+    [],
+  )
+
   return (
     <section className={styles.section}>
       <div className={styles.header}>
         <p className={styles.eyebrow}>Our Partners in Education</p>
         <h2 className={styles.title}>배움에 함께하는 후원 기업들</h2>
       </div>
+
+      <ul className={styles.logoGrid} aria-label="후원 기업 로고">
+        {flatLogos.map(logo => (
+          <li className={styles.logoChip} key={logo.name}>
+            {logo.logoUrl ? (
+              <img className={styles.logoImage} src={logo.logoUrl} alt={logo.name} />
+            ) : (
+              <span className={styles.logoText}>{logo.name}</span>
+            )}
+          </li>
+        ))}
+      </ul>
 
       <div className={styles.marqueeArea} aria-label="후원 기업 로고">
         {HOME_PARTNER_LOGO_ROWS.map((row, rowIndex) => (
@@ -59,7 +75,7 @@ export function PartnerMarqueeSection() {
             만날 수 있게 함께해 주세요
           </p>
           <div className={styles.ctaActions}>
-            <Link className={styles.ctaPrimaryLink} to={SUPPORT_INDIVIDUAL_PATH}>
+            <Link className={styles.ctaPrimaryLink} to={INDIVIDUAL_DONATION_PATH}>
               <PFText as="span" typo="hl-lg" color="white" className={styles.ctaLabel}>
                 개인후원 시작하기
               </PFText>

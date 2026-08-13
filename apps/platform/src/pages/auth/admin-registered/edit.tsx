@@ -7,9 +7,11 @@ import {
   updateAdminRegisteredWizardState,
   useAdminRegisteredProfileHydration,
 } from '@/features/auth/admin-registered'
-import { AddressSearchModal } from '@/features/auth/sign-up/ui/address-search-modal'
-import { schoolGradeOptions } from '@/features/auth/sign-up'
-import type { SchoolStatus } from '@/features/auth/sign-up'
+import {
+  AddressSearchModal,
+  schoolGradeOptions,
+  type SchoolStatus,
+} from '@/features/auth/sign-up'
 import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import chevronRightGrayUrl from '@/shared/assets/icons/chevron-right-gray.svg'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'

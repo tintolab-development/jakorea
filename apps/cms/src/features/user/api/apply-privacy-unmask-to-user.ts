@@ -3,12 +3,14 @@ import type { AdminAccountPrivacyResponse } from '@/shared/api/generated/members
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import type { IndividualMemberDetailResponse } from '@/shared/api/generated/members/schemas/individualMemberDetailResponse'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas/instructorMemberDetailResponse'
+import type { InstructorRoleRequestDetailResponse } from '@/shared/api/generated/members/schemas/instructorRoleRequestDetailResponse'
 import type { MemberDetailResponse } from '@/shared/api/generated/members/schemas/memberDetailResponse'
 import {
   mapIndividualMemberDetailToUser,
   mapInstructorMemberDetailToUser,
   mapMemberDetailToUser,
 } from '@/features/user/api/map-member-detail-to-user'
+import { mapInstructorRoleRequestDetailToUser } from '@/features/user/api/map-instructor-role-request-detail-to-user'
 import { mergeListUserWithFetchedDetail } from '@/features/user/api/merge-list-user-with-detail'
 
 /**
@@ -25,6 +27,21 @@ export function applyPrivacyUnmaskResponseToUser(
   }
 
   try {
+    if (
+      current.instructorRoleRequestId != null ||
+      'requestId' in unmaskPayload
+    ) {
+      const mapped = mapInstructorRoleRequestDetailToUser(
+        unmaskPayload as InstructorRoleRequestDetailResponse,
+        { fallbackId: current.id }
+      )
+      return mergeListUserWithFetchedDetail(current, {
+        ...mapped,
+        instructorRoleRequestId:
+          mapped.instructorRoleRequestId ?? current.instructorRoleRequestId,
+      })
+    }
+
     if (role === 'ADMIN') {
       const privacy = unmaskPayload as AdminAccountPrivacyResponse
       const genderDisplay = privacy.gender != null ? toDisplayGender(privacy.gender) : undefined

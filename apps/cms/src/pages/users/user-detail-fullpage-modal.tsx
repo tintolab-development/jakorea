@@ -129,6 +129,8 @@ export function UserDetailFullPageModal({
     tabState: state.tabState,
     applications: state.applications,
     enrollmentApplications: state.enrollmentApplications,
+    mode,
+    permissionRole,
   })
 
   const shell = useMemo((): UserDetailFullpageShellValue | null => {
@@ -235,7 +237,7 @@ export function UserDetailFullPageModal({
   }
 
   const { displayUser } = shell
-  const title = userDetailModalTitle(displayUser)
+  const title = userDetailModalTitle(displayUser, { mode, permissionRole })
   const activeSidebarItem = derived.sidebarItems.find(item => item.key === state.tabState.lnb)
   const activeChildItem = activeSidebarItem?.children?.find(
     child => child.key === state.tabState.child

@@ -2,8 +2,11 @@ import type { SchoolTeacherEmploymentStatus } from '@jakorea/domain/instructor/e
 import type { Gender } from '@jakorea/domain/instructor/gender'
 import type { InstructorMemberType } from '@jakorea/domain/instructor/member-type'
 import type { PortalProfileResponse } from '@/features/auth/sign-in'
-import { formatBirthDateInput } from '@/features/auth/sign-up'
-import { MOCK_VERIFIED_NAME, MOCK_VERIFIED_PHONE } from '@/features/auth/sign-up/lib/constants'
+import {
+  formatBirthDateInput,
+  MOCK_VERIFIED_NAME,
+  MOCK_VERIFIED_PHONE,
+} from '@/features/auth/sign-up'
 import { getDevMemberProfile } from '@/shared/lib/dev-member-profile'
 import { MOCK_MYPAGE_USER_NAME } from '../lib/constants'
 import type { PlatformMemberProfile } from '../model/types'

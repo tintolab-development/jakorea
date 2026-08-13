@@ -25,7 +25,8 @@ CMS `FilterTableLayout` / `useTablePage` / `TableFilterGroup` **사용 금지**.
    - 조회 `applySearch()` · 즉시 반영은 `patchSearchParams`  
    - 접두어 예: `sb_`, `pu_`, `h_`, `a_`, `c_`
 3. **테이블 카드:** `admin-list-toolbar` + Ant `Table` `className="cms-data-table …"` ([table-implementation](../tables/table-implementation.mdc))
-4. **데이터:** feature `api/hooks`. applied 필터는 searchParams 파생.
+4. **데이터:** feature `api/hooks`. applied 필터는 searchParams 파생.  
+   **조회 API 연결:** `useXxxList(applied)` + queryKey filter — [list-filter-query-api](../data/list-filter-query-api.mdc) (URL만 동기화하고 list GET에 params 안 넘기지 말 것).
 
 ```tsx
 const { pendingFilters, setPendingFilters, applied, applySearch } = useListFilterUrl({…})

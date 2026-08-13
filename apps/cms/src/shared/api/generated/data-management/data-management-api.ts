@@ -1151,7 +1151,7 @@ const create6 = (
  * - 검토 메모: Frontend bulk API handoff implemented with max 100 and partial-success contract
  * @summary POST /api/admin/detailed-programs/bulk-delete
  */
-const bulkDelete2 = (
+const bulkDelete3 = (
     bulkIdsRequest: BulkIdsRequest,
  options?: SecondParameter<typeof customInstance<ApiResponseBulkActionResponse>>,) => {
       return customInstance<ApiResponseBulkActionResponse>(
@@ -2267,7 +2267,7 @@ const calculate = (
       options);
     }
 
-return {textbooks,create1,bulkDelete,sponsors,create3,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,bulkDeleteContacts,bulkDeleteSponsors,kits,create5,versions,createVersion,addTargetCount,detailedPrograms,create6,bulkDelete2,textbook,_delete,update,sponsor,delete1,update2,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,kit,delete2,update3,detailedProgram,delete3,update4,matches,programHistories,currentKitCalculation,calculate}};
+return {textbooks,create1,bulkDelete,sponsors,create3,yearlyBusinesses,addYearlyBusiness,end,contacts,addContact,bulkDeleteContacts,bulkDeleteSponsors,kits,create5,versions,createVersion,addTargetCount,detailedPrograms,create6,bulkDelete3,textbook,_delete,update,sponsor,delete1,update2,deleteYearlyBusiness,updateYearlyBusiness,deleteContact,updateContact,kit,delete2,update3,detailedProgram,delete3,update4,matches,programHistories,currentKitCalculation,calculate}};
 export type TextbooksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbooks']>>>
 export type Create1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create1']>>>
 export type BulkDeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDelete']>>>
@@ -2287,7 +2287,7 @@ export type CreateVersionResult = NonNullable<Awaited<ReturnType<ReturnType<type
 export type AddTargetCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['addTargetCount']>>>
 export type DetailedProgramsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['detailedPrograms']>>>
 export type Create6Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['create6']>>>
-export type BulkDelete2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDelete2']>>>
+export type BulkDelete3Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['bulkDelete3']>>>
 export type TextbookResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['textbook']>>>
 export type _DeleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['_delete']>>>
 export type UpdateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDataManagementSubset>['update']>>>

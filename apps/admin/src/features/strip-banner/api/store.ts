@@ -22,7 +22,10 @@ type StripBannerFile = {
   items: StripBanner[]
 }
 
-const SEED_ROWS: readonly Omit<StripBanner, 'id' | 'sortOrder' | 'createdAt' | 'updatedAt'>[] = [
+const SEED_ROWS: readonly Omit<
+  StripBanner,
+  'id' | 'sortOrder' | 'createdAt' | 'updatedAt' | 'version'
+>[] = [
   {
     isActive: true,
     text: '경제교육 봉사자 모집 중',
@@ -81,10 +84,15 @@ function buildSeedStripBanners(): StripBanner[] {
       ...row,
       id: `strip-banner-${index + 1}`,
       sortOrder: index + 1,
+      version: 0,
       createdAt: ts,
       updatedAt: ts,
     }
   })
+}
+
+function ensureStripBannerVersion(row: StripBanner): StripBanner {
+  return { ...row, version: row.version ?? 0 }
 }
 
 function readFile(): StripBannerFile {
@@ -174,7 +182,8 @@ function matchesFilter(row: StripBanner, filter?: StripBannerListFilter): boolea
 
 export function readStripBanners(filter?: StripBannerListFilter): StripBanner[] {
   const file = readFile()
-  const { items, changed } = applyExpiry(normalizeSortOrders(file.items))
+  const normalized = file.items.map(ensureStripBannerVersion)
+  const { items, changed } = applyExpiry(normalizeSortOrders(normalized))
   if (changed || !localStorage.getItem(STORAGE_KEY)) {
     writeFile({ version: 1, items })
   }
@@ -193,6 +202,7 @@ export function createStripBanner(input: StripBannerCreateInput): StripBanner {
   const item: StripBanner = {
     id: `strip-banner-${Date.now()}`,
     sortOrder: baseItems.length + 1,
+    version: 0,
     isActive: input.isActive,
     text: input.text.trim(),
     periodStart: input.periodStart,

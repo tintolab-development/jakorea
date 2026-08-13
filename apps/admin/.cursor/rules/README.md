@@ -39,6 +39,10 @@ Development standards for **Homepage Admin** (`apps/admin`).
 | [detail-info-nested-table.mdc](./design/detail-info-nested-table.mdc) | Field 값 안 nested 격자 |
 | [table-td-divider.mdc](./design/table-td-divider.mdc) | Admin TdDivider import |
 | [styling-tokens.mdc](./design/styling-tokens.mdc) | admin theme-provider path |
+| [api-mock-remote.mdc](./data/api-mock-remote.mdc) | Mock/API 로그인 · 이중 프록시 · capabilities |
+| [list-filter-query-api.mdc](./data/list-filter-query-api.mdc) | 필터 `applied` → list GET query · queryKey · DnD 병합 |
+| [mutation-fetch-amplification.mdc](./data/mutation-fetch-amplification.mdc) | mutation 후 불필요 list GET 금지 |
+| [mutation-failure-alert.mdc](./data/mutation-failure-alert.mdc) | 저장·수정 실패 시 필드/원인 알림 모달 |
 
 ## CMS 전용 — Admin에 이식하지 않음
 
@@ -48,4 +52,4 @@ Development standards for **Homepage Admin** (`apps/admin`).
 | `process/*` · 프로그램 유형 · 캘린더 필터 | CMS 도메인 |
 | `cross-table.md` | admin 미사용 |
 
-**Last updated:** 2026-08-06
+**Last updated:** 2026-08-13

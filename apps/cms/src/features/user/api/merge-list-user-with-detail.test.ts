@@ -225,4 +225,28 @@ describe('applySavedBasicInfoPatchToUser', () => {
     expect(merged.listMetrics?.instructorCareerYearsLabel).toBe('12년')
     expect(merged.instructorCareerText).toBe('12')
   })
+
+  it('선택 약관 PATCH는 기존 필수 약관을 유지한 채 해당 항목만 갱신한다', () => {
+    const user = baseUser({
+      id: 'individual-uuid',
+      role: 'INDIVIDUAL',
+      name: '홍길동',
+      email: 'hong@example.com',
+      termsAgreements: [
+        { termsType: 'SERVICE_TERMS', termsVersion: '1', required: true, agreed: true },
+        { termsType: 'PRIVACY_COLLECTION', termsVersion: '1', required: true, agreed: true },
+        { termsType: 'MARKETING', termsVersion: '1', required: false, agreed: false },
+      ],
+    })
+
+    const merged = applySavedBasicInfoPatchToUser(user, {
+      termsAgreements: [{ termsType: 'MARKETING', version: '1', required: false, agreed: true }],
+    })
+
+    expect(merged.termsAgreements).toEqual([
+      { termsType: 'SERVICE_TERMS', termsVersion: '1', required: true, agreed: true },
+      { termsType: 'PRIVACY_COLLECTION', termsVersion: '1', required: true, agreed: true },
+      { termsType: 'MARKETING', termsVersion: '1', required: false, agreed: true },
+    ])
+  })
 })

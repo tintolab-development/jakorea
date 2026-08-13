@@ -36,6 +36,7 @@ import {
   FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -227,7 +228,8 @@ export function ImpactStoriesPage() {
   const saveCategoriesMutation = useSaveImpactStoryCategories()
   const pinCountQuery = usePinnedImpactStoryCount(undefined)
 
-  useInvalidateOnWindowEvent(IMPACT_STORIES_CHANGED_EVENT, impactStoriesQueryKeys.all)
+  // lists만 — all이면 공개 토글 시 categories GET까지 과호출됨
+  useInvalidateOnWindowEvent(IMPACT_STORIES_CHANGED_EVENT, impactStoriesQueryKeys.lists())
 
   const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
   const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data])
@@ -375,7 +377,8 @@ export function ImpactStoriesPage() {
         dataIndex: 'categoryId',
         key: 'categoryId',
         width: 120,
-        render: (id: string) => categoryNameMap.get(id) ?? '-',
+        render: (id: string, row: ImpactStory) =>
+          categoryNameMap.get(id) ?? row.categoryName ?? '-',
       },
       {
         title: '제목',
@@ -610,7 +613,10 @@ export function ImpactStoriesPage() {
               columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             }}
             onRow={record => ({
-              onClick: () => goDetail(record),
+              onClick: e => {
+                if (isTableSelectionClick(e)) return
+                goDetail(record)
+              },
               style: { cursor: 'pointer' },
             })}
             scroll={{ x: true }}

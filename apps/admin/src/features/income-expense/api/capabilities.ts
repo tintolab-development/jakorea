@@ -1,6 +1,8 @@
 /**
- * 수입&지출 관리 — remote API opt-in stub.
+ * 수입&지출 — remote API opt-in
  */
+import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
+
 export function shouldUseIncomeExpenseRemoteApi(): boolean {
-  return false
+  return shouldUseHomepageRemoteApi()
 }

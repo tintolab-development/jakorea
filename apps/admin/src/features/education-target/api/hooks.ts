@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { EducationTargetNamePatch } from '@/entities/education-target/model/types'
+import type {
+  EducationTarget,
+  EducationTargetNamePatch,
+} from '@/entities/education-target/model/types'
 import { shouldUseEducationTargetRemoteApi } from './capabilities'
 import { educationTargetQueryKeys } from './query-keys'
 import { listEducationTargetsService, saveEducationTargetsService } from './service'
@@ -22,11 +25,15 @@ export function useEducationTargetsList(enabled = true) {
 export function useSaveEducationTargets() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (patches: EducationTargetNamePatch[]) => saveEducationTargetsService(patches),
+    mutationFn: (patches: EducationTargetNamePatch[]) => {
+      const cached = queryClient.getQueryData<EducationTarget[]>(
+        educationTargetQueryKeys.list(source()),
+      )
+      return saveEducationTargetsService(patches, cached)
+    },
     retry: false,
     onSuccess: rows => {
       queryClient.setQueryData(educationTargetQueryKeys.list(source()), rows)
-      void queryClient.invalidateQueries({ queryKey: educationTargetQueryKeys.lists() })
     },
   })
 }

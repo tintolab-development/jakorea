@@ -1,7 +1,8 @@
 .hero {
   position: relative;
   width: 100%;
-  height: clamp(520px, calc(100svh - 96px), 760px);
+  /* 모바일: 헤더가 히어로 밖(불투명) — 뷰포트에서 띠배너·헤더 제외 */
+  height: clamp(420px, calc(100svh - 168px), 560px);
   overflow: hidden;
 }
 
@@ -49,19 +50,21 @@
   max-width: 1920px;
   height: 100%;
   margin-inline: auto;
-  padding: calc(var(--app-header-height) + var(--spacing-32)) var(--spacing-20)
-    var(--spacing-40);
+  /* 모바일: 헤더 비겹침 — 상단 여유만 */
+  padding: var(--spacing-40) var(--spacing-20) var(--spacing-32);
   flex-direction: column;
   justify-content: flex-end;
-  /* 디스크립션 ↔ 페이지 상태 영역 */
-  gap: 50px;
+  align-items: flex-start;
+  gap: var(--spacing-32);
   box-sizing: border-box;
 }
 
 .copy {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   max-width: min(711px, 100%);
+  text-align: left;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -71,27 +74,28 @@
 }
 
 .eyebrow {
-  margin: 0 0 var(--spacing-12);
+  margin: 0 0 var(--spacing-8);
   color: var(--color-neutral-white);
   font-family: var(--font-family-base);
-  font-size: clamp(28px, 3vw, 38px);
+  font-size: 14px;
   font-style: normal;
-  font-weight: 300;
+  font-weight: 400;
   line-height: 140%;
-  letter-spacing: -0.76px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .title {
   display: flex;
   flex-direction: column;
-  margin: 0 0 var(--spacing-16);
+  margin: 0 0 var(--spacing-12);
   color: var(--color-neutral-white);
   font-family: var(--font-family-base);
-  font-size: clamp(36px, 4.5vw, 64px);
+  font-size: 28px;
   font-style: normal;
   font-weight: 700;
-  line-height: 132%;
-  letter-spacing: -1.92px;
+  line-height: 136%;
+  letter-spacing: -0.56px;
 }
 
 .titleLine {
@@ -102,7 +106,7 @@
   margin: 0;
   color: var(--color-neutral-cool-300);
   font-family: var(--font-family-base);
-  font-size: clamp(16px, 1.5vw, 20px);
+  font-size: 14px;
   font-style: normal;
   font-weight: 400;
   line-height: 150%;
@@ -111,7 +115,8 @@
 .controls {
   display: flex;
   align-items: center;
-  gap: var(--spacing-24);
+  align-self: flex-start;
+  gap: var(--spacing-16);
 }
 
 .controlsMeta {
@@ -122,19 +127,27 @@
 
 .playToggle {
   display: flex;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   justify-content: center;
   align-items: center;
   aspect-ratio: 1 / 1;
   padding: 0;
-  border: 1.2px solid var(--color-border-default);
+  border: 1.2px solid rgba(255, 255, 255, 0.85);
   border-radius: var(--radius-999);
   background: transparent;
   color: var(--color-neutral-white);
   cursor: pointer;
   transition: background-color 160ms ease;
+}
+
+@media (--bp-pc-up) {
+  .playToggle {
+    width: 40px;
+    height: 40px;
+    border-color: var(--color-border-default);
+  }
 }
 
 .playToggle:hover {
@@ -152,7 +165,7 @@
   justify-content: center;
   align-items: center;
   gap: var(--spacing-4);
-  color: var(--color-neutral-warm-600);
+  color: rgba(255, 255, 255, 0.55);
   font-family: var(--font-family-base);
   font-size: 14px;
   font-style: normal;
@@ -166,13 +179,24 @@
 
 .counterDivider,
 .counterTotal {
-  color: var(--color-neutral-warm-600);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+@media (--bp-pc-up) {
+  .counter {
+    color: var(--color-neutral-warm-600);
+  }
+
+  .counterDivider,
+  .counterTotal {
+    color: var(--color-neutral-warm-600);
+  }
 }
 
 .progressTrack {
   position: relative;
   display: block;
-  width: 169px;
+  width: min(120px, 32vw);
   max-width: 100%;
   height: 4px;
   flex-shrink: 0;
@@ -188,6 +212,36 @@
   left: 0;
   background: var(--color-neutral-white-60);
   transition: width 400ms ease;
+}
+
+/* PC · 공통 타이포 (compact/full) */
+@media (--bp-pc-up) {
+  .eyebrow {
+    margin-bottom: var(--spacing-12);
+    font-size: clamp(28px, 3vw, 38px);
+    font-weight: 300;
+    letter-spacing: -0.76px;
+    text-transform: none;
+  }
+
+  .title {
+    margin-bottom: var(--spacing-16);
+    font-size: clamp(36px, 4.5vw, 64px);
+    line-height: 132%;
+    letter-spacing: -1.92px;
+  }
+
+  .description {
+    font-size: clamp(16px, 1.5vw, 20px);
+  }
+
+  .controls {
+    gap: var(--spacing-24);
+  }
+
+  .progressTrack {
+    width: 169px;
+  }
 }
 
 /* PC compact · 1080~1599 — 시안 비율 축소 */

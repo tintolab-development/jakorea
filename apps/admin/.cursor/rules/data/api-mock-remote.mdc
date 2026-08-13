@@ -1,0 +1,49 @@
+---
+description: Homepage Admin mock vs remote API 연동 규칙
+globs: apps/admin/src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Admin API — Mock / Remote
+
+## 세션 게이트
+
+| 로그인 | 토큰 | 데이터 |
+|--------|------|--------|
+| **Mock 로그인** | `hp_admin_auth_token` = `mock-jwt-token-…` | feature local mock (localStorage) |
+| **API 로그인** (MFA 완료) | 실 JWT (`.` 3조각) | OpenAPI generated client → Homepage API |
+
+헬퍼: `shouldUseHomepageRemoteApi()` = `isRemoteApiConfigured() && hasRemoteAdminJwt()`  
+(`shared/lib/remote-api-session.ts`)
+
+- CMS식 `VITE_REAL_API_MODULES`는 Admin에 **도입하지 않는다**.
+- feature `capabilities.ts`는 `shouldUseHomepageRemoteApi()`를 반환한다 (추가 조건만 AND).
+
+## 이중 프록시
+
+| Path | Target env |
+|------|------------|
+| `/api/admin/auth` | `VITE_API_SERVER` (CMS) |
+| `/api` (그 외) | `VITE_HOMEPAGE_API_SERVER` (기본 `http://localhost:8081`) |
+
+로그인·refresh·MFA만 CMS. 도메인 CRUD·assets는 Homepage.
+
+## 구현 규칙
+
+1. **UI에서 generated import 금지** — `features/*/api/service` + mapper만 호출
+2. queryKey에 `source: 'remote' | 'local'` 유지
+3. logout / MFA 완료 시 관련 query cache clear
+4. OpenAPI 필드명 ↔ 도메인 매핑은 `mappers.ts`에 집중
+5. update/delete/reorder/toggle에 `version` 필수인 API는 entity에 `version` 보관
+6. **목록 필터 → list GET query** — [list-filter-query-api.mdc](./list-filter-query-api.mdc) (`applied` → hooks → `to*ListParams`)
+7. **목록 `page`/`size`** — [list-page-size.mdc](./list-page-size.mdc) (기본 `size=20`, 100·200 등 일괄 fetch 금지)
+8. **Mutation fetch 증폭 금지** — [mutation-fetch-amplification.mdc](./mutation-fetch-amplification.mdc)  
+   (캐시 우선 · PUT 전체 응답은 `setQueryData` only · `setQueryData` 직후 list `invalidate` 금지)
+9. **Mutation 실패 알림** — [mutation-failure-alert.mdc](./mutation-failure-alert.mdc)  
+   (필드/원인 명시 · 선검증 + API 에러 매핑 · 제네릭 문구만 금지)
+
+## 점진 연동
+
+한 feature씩 capabilities + service remote 분기. 미연동 feature는 `return false` stub 유지.
+
+**Last updated:** 2026-08-13

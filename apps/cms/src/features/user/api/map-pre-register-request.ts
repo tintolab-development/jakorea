@@ -14,12 +14,16 @@ import {
   toApiInstructorCmsSettlement,
 } from '@/features/user/api/map-instructor-cms-profile'
 import { toInstructorFeeGradeApiValue } from '@/features/user/api/map-instructor-activity-display'
+import { omitOptionalDisagreedPreRegisterTerms } from '@/features/user/api/build-pre-register-terms-agreements'
 
 function attachTermsAgreements<
   T extends { termsAgreements?: AdminPreRegisterIndividualRequest['termsAgreements'] },
 >(body: T, request: CreateUserRequest): T {
   if (request.termsAgreements != null && request.termsAgreements.length > 0) {
-    body.termsAgreements = request.termsAgreements
+    const termsAgreements = omitOptionalDisagreedPreRegisterTerms(request.termsAgreements)
+    if (termsAgreements != null && termsAgreements.length > 0) {
+      body.termsAgreements = termsAgreements
+    }
   }
   return body
 }

@@ -39,3 +39,44 @@ export function PFFormInlineSeparator({ className, ...rest }: PFFormInlineSepara
     />
   )
 }
+
+export type PFFormControlClusterProps = {
+  children: ReactNode
+  className?: string
+}
+
+/** PC 가로 / 모바일(≤1079) 세로 스택 — 은행명+계좌, 학교+전공 등 */
+export function PFFormControlCluster({ children, className }: PFFormControlClusterProps) {
+  return (
+    <div className={[styles.controlCluster, className].filter(Boolean).join(' ')}>{children}</div>
+  )
+}
+
+export type PFFormPeriodPairProps = {
+  children: ReactNode
+  className?: string
+}
+
+/** 입사~퇴사 / 주민 앞·뒤 — 모바일에서도 50% ~ 50% 가로 유지 */
+export function PFFormPeriodPair({ children, className }: PFFormPeriodPairProps) {
+  return (
+    <div className={[styles.periodPair, className].filter(Boolean).join(' ')}>{children}</div>
+  )
+}
+
+export type PFFormPeriodTildeProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children'> & {
+  className?: string
+}
+
+/** 기간·주민번호 쌍 사이 `~` (모바일 margin-inline 2px) */
+export function PFFormPeriodTilde({ className, ...rest }: PFFormPeriodTildeProps) {
+  return (
+    <span
+      className={[styles.periodTilde, className].filter(Boolean).join(' ')}
+      aria-hidden
+      {...rest}
+    >
+      ~
+    </span>
+  )
+}

@@ -33,7 +33,10 @@ const SEED_IMAGE =
     </svg>`
   )
 
-const SEED_ROWS: readonly Omit<HeroBanner, 'id' | 'sortOrder' | 'createdAt' | 'updatedAt'>[] = [
+const SEED_ROWS: readonly Omit<
+  HeroBanner,
+  'id' | 'sortOrder' | 'createdAt' | 'updatedAt' | 'version'
+>[] = [
   {
     isActive: true,
     imageUrl: SEED_IMAGE,
@@ -96,6 +99,10 @@ const SEED_ROWS: readonly Omit<HeroBanner, 'id' | 'sortOrder' | 'createdAt' | 'u
   },
 ]
 
+function withVersion(row: HeroBanner): HeroBanner {
+  return { ...row, version: row.version ?? 0 }
+}
+
 function buildSeedBanners(): HeroBanner[] {
   const base = new Date('2026-07-01T00:00:00.000Z')
   return SEED_ROWS.map((row, index) => {
@@ -104,6 +111,7 @@ function buildSeedBanners(): HeroBanner[] {
       ...row,
       id: `hero-banner-${index + 1}`,
       sortOrder: index + 1,
+      version: 0,
       createdAt: ts,
       updatedAt: ts,
     }
@@ -120,7 +128,10 @@ function readFile(): BannerFile {
     if (parsed?.version !== 1 || !Array.isArray(parsed.items)) {
       return { version: 1, items: buildSeedBanners() }
     }
-    return parsed
+    return {
+      version: 1,
+      items: parsed.items.map(withVersion),
+    }
   } catch {
     return { version: 1, items: buildSeedBanners() }
   }
@@ -154,6 +165,7 @@ export function createHeroBanner(input: HeroBannerCreateInput): HeroBanner {
     id: `hero-banner-${Date.now()}`,
     sortOrder: file.items.length + 1,
     isActive: input.isActive,
+    version: 0,
     imageUrl: input.imageUrl,
     imageFileName: input.imageFileName,
     topText: input.topText.trim(),

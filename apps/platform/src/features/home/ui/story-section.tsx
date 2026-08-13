@@ -78,6 +78,12 @@ export function StorySection() {
   return (
     <section className={styles.section}>
       <div className={styles.inner}>
+        <h2 className={styles.mobileTitle}>
+          JA Korea와 함께
+          <br />
+          청소년의 가능성을 넓혀주세요
+        </h2>
+
         <FeaturedStory story={featured} />
 
         <div className={styles.subGrid}>

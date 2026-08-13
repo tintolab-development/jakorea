@@ -116,6 +116,7 @@ function buildSeedRows(): CorporateConsultation[] {
       appliedAt: applied.toISOString(),
       confirmedAt,
       confirmedByName,
+      version: 0,
     })
   }
 
@@ -177,6 +178,7 @@ function normalizeItem(raw: Partial<CorporateConsultation>, fallbackId: string):
       typeof raw.confirmedByName === 'string' && raw.confirmedByName.trim()
         ? raw.confirmedByName.trim()
         : null,
+    version: typeof raw.version === 'number' ? raw.version : 0,
   }
 }
 

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { GlobalValueTextPatch } from '@/entities/global-value/model/types'
+import type { GlobalValue, GlobalValueTextPatch } from '@/entities/global-value/model/types'
 import { shouldUseGlobalValueRemoteApi } from './capabilities'
 import { globalValueQueryKeys } from './query-keys'
 import {
@@ -11,6 +11,10 @@ import {
 
 function source(): 'remote' | 'local' {
   return shouldUseGlobalValueRemoteApi() ? 'remote' : 'local'
+}
+
+function cachedList(queryClient: ReturnType<typeof useQueryClient>): GlobalValue[] | undefined {
+  return queryClient.getQueryData<GlobalValue[]>(globalValueQueryKeys.list(source()))
 }
 
 export function useGlobalValuesList(enabled = true) {
@@ -27,11 +31,11 @@ export function useGlobalValuesList(enabled = true) {
 export function useReorderGlobalValues() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (orderedIds: string[]) => reorderGlobalValuesService(orderedIds),
+    mutationFn: (orderedIds: string[]) =>
+      reorderGlobalValuesService(orderedIds, cachedList(queryClient)),
     retry: false,
     onSuccess: rows => {
       queryClient.setQueryData(globalValueQueryKeys.list(source()), rows)
-      void queryClient.invalidateQueries({ queryKey: globalValueQueryKeys.lists() })
     },
   })
 }
@@ -40,10 +44,10 @@ export function useSetGlobalValueActive() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      setGlobalValueActiveService(id, isActive),
+      setGlobalValueActiveService(id, isActive, cachedList(queryClient)),
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: globalValueQueryKeys.lists() })
+    onSuccess: rows => {
+      queryClient.setQueryData(globalValueQueryKeys.list(source()), rows)
     },
   })
 }
@@ -51,11 +55,11 @@ export function useSetGlobalValueActive() {
 export function useSaveGlobalValues() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (patches: GlobalValueTextPatch[]) => saveGlobalValuesService(patches),
+    mutationFn: (patches: GlobalValueTextPatch[]) =>
+      saveGlobalValuesService(patches, cachedList(queryClient)),
     retry: false,
     onSuccess: rows => {
       queryClient.setQueryData(globalValueQueryKeys.list(source()), rows)
-      void queryClient.invalidateQueries({ queryKey: globalValueQueryKeys.lists() })
     },
   })
 }

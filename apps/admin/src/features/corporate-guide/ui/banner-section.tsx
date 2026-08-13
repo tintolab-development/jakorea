@@ -10,6 +10,7 @@ import type {
   CorporateGuideBanner,
 } from '@/entities/corporate-guide/model/types'
 import { useSaveCorporateBanner } from '@/features/corporate-guide/api/hooks'
+import { corporateGuideSaveFailureAlert } from '@/features/corporate-guide/lib/save-failure-alert'
 import { BannerFormModal } from '@/features/corporate-guide/ui/banner-form-modal'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 
@@ -73,23 +74,12 @@ export function BannerSectionCard({ banner }: Props) {
         await saveMutation.mutateAsync(values)
         setModalOpen(false)
       } catch (err) {
-        const message = err instanceof Error ? err.message : ''
-        if (message === 'BANNER_IMAGE_REQUIRED') {
-          showAlert({ title: '입력 확인', content: '배너 이미지를 등록해 주세요.' })
-          return
-        }
-        if (message === 'BANNER_MAIN_TEXT_REQUIRED') {
-          showAlert({ title: '입력 확인', content: '메인 텍스트를 입력해 주세요.' })
-          return
-        }
-        if (message === 'BANNER_SUB_TEXT_REQUIRED') {
-          showAlert({ title: '입력 확인', content: '서브 텍스트를 입력해 주세요.' })
-          return
-        }
-        showAlert({
-          title: '저장 실패',
-          content: '상단 배너 저장에 실패했습니다. 다시 시도해 주세요.',
-        })
+        showAlert(
+          corporateGuideSaveFailureAlert(
+            err,
+            '상단 배너 저장에 실패했습니다. 다시 시도해 주세요.'
+          )
+        )
       }
     },
     [saveMutation, showAlert]

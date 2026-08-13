@@ -24,6 +24,7 @@ import type {
   IndividualMemberDetailResponse,
   InstructorDetailResponse,
   InstructorMemberDetailResponse,
+  InstructorRoleRequestDetailResponse,
   InstructorRoleReviewRequest,
   ListAdminsParams,
   ListInstructorRoleRequestsParams,
@@ -62,11 +63,55 @@ import type { AdminRoleResponse } from '@/shared/api/generated/members/schemas/a
 import type { MemberConsentRecordResponse } from '@/shared/api/generated/members/schemas/memberConsentRecordResponse'
 import type { ExternalIdentifierResponse } from '@/shared/api/generated/members/schemas/externalIdentifierResponse'
 import type { InstructorEvaluationGradeChangeRequest } from '@/shared/api/generated/members/schemas/instructorEvaluationGradeChangeRequest'
+import type { AccountDirectoryBulkDeleteRequest } from '@/shared/api/generated/members/schemas/accountDirectoryBulkDeleteRequest'
+import type { BulkDecisionRequest } from '@/shared/api/generated/members/schemas/bulkDecisionRequest'
+import type { ListAllCmsMembersAndAdminsParams } from '@/shared/api/generated/members/schemas/listAllCmsMembersAndAdminsParams'
+import type { PageResponseAccountDirectoryItemResponse } from '@/shared/api/generated/members/schemas/pageResponseAccountDirectoryItemResponse'
+import type { DeleteSchoolParams } from '@/shared/api/generated/members/schemas/deleteSchoolParams'
 
 const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
 
 export async function fetchMembersPageRemote(params: ListMembersParams): Promise<PageResponse> {
   return unwrapApiBody(await membersApi.listMembers(params))
+}
+
+/** Swagger `listAllCmsMembersAndAdmins` — `GET /api/admin/members/all` */
+export type FetchAllCmsMembersAndAdminsParams = ListAllCmsMembersAndAdminsParams & {
+  createdAtFrom?: string
+  createdAtTo?: string
+}
+
+export async function fetchAllCmsMembersAndAdminsPageRemote(
+  params?: FetchAllCmsMembersAndAdminsParams
+): Promise<PageResponseAccountDirectoryItemResponse> {
+  return unwrapApiBody(
+    await membersApi.listAllCmsMembersAndAdmins(params as ListAllCmsMembersAndAdminsParams)
+  )
+}
+
+/** Swagger `bulkDelete1` — `POST /api/admin/members/all/bulk-delete` */
+export async function bulkDeleteAllAccountsRemote(body: AccountDirectoryBulkDeleteRequest) {
+  return unwrapApiBody(await membersApi.bulkDelete1(body))
+}
+
+/** Swagger `bulkDeleteAndAnonymize` — `POST /api/admin/users/bulk-delete` */
+export async function bulkDeleteMembersRemote(body: BulkDecisionRequest) {
+  return unwrapApiBody(await membersApi.bulkDeleteAndAnonymize(body))
+}
+
+/** Swagger `bulkDeleteAdmins` — `POST /api/admin/admin-accounts/bulk-delete` */
+export async function bulkDeleteAdminsRemote(body: BulkDecisionRequest) {
+  return unwrapApiBody(await membersApi.bulkDeleteAdmins(body))
+}
+
+/** Swagger `bulkDeleteSchools` — `POST /api/admin/organizations/schools/bulk-delete` */
+export async function bulkDeleteSchoolsRemote(body: BulkDecisionRequest) {
+  return unwrapApiBody(await membersApi.bulkDeleteSchools(body))
+}
+
+/** Swagger `deleteSchool` — `DELETE /api/admin/organizations/schools/{organizationId}` */
+export async function deleteSchoolRemote(organizationId: number, params?: DeleteSchoolParams) {
+  await membersApi.deleteSchool(organizationId, params)
 }
 
 export async function fetchSchoolsPageRemote(
@@ -349,11 +394,20 @@ export async function unmaskMemberPrivacyRemote(
   return unwrapApiBody(await membersApi.unmaskMemberPrivacy(memberId, body))
 }
 
+/** Swagger `unmask1` — `POST /api/admin/admin-accounts/{adminAccountId}/privacy/unmask` */
 export async function unmaskAdminAccountPrivacyRemote(
   adminAccountId: number,
   body: AdminPrivacyUnmaskRequest
 ) {
-  return unwrapApiBody(await membersApi.unmask(adminAccountId, body))
+  return unwrapApiBody(await membersApi.unmask1(adminAccountId, body))
+}
+
+/** Swagger `unmask` — `POST /api/admin/instructor-role-requests/{requestId}/privacy/unmask` */
+export async function unmaskInstructorRoleRequestPrivacyRemote(
+  requestId: number,
+  body: AdminPrivacyUnmaskRequest
+): Promise<InstructorRoleRequestDetailResponse> {
+  return unwrapApiBody(await membersApi.unmask(requestId, body))
 }
 
 export async function deleteMemberRemote(memberId: number, body: AdminMemberDeleteRequest) {
@@ -364,6 +418,13 @@ export async function fetchInstructorRoleRequestsPageRemote(
   params: ListInstructorRoleRequestsParams
 ): Promise<PageResponseInstructorRoleRequestListItemResponse> {
   return unwrapApiBody(await membersApi.listInstructorRoleRequests(params))
+}
+
+/** Swagger `getDetail` — `GET /api/admin/instructor-role-requests/{requestId}` */
+export async function fetchInstructorRoleRequestDetailRemote(
+  requestId: number
+): Promise<InstructorRoleRequestDetailResponse> {
+  return unwrapApiBody(await membersApi.getDetail(requestId))
 }
 
 export async function approveInstructorRoleRequestRemote(

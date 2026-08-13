@@ -304,7 +304,14 @@ export function SchoolSearchModal({
   }
 
   return (
-    <PFModal open={open} title={title} onClose={handleClose}>
+    <PFModal
+      open={open}
+      title={title}
+      onClose={handleClose}
+      mobilePlacement="full"
+      closeOnBackdropClick={false}
+      closeOnEscape={false}
+    >
       <div
         className={[
           styles.schoolModalMain,
@@ -375,7 +382,12 @@ export function SchoolSearchModal({
               }
             }}
           />
-          <PFButton size="xlarge" width="160px" disabled={loading} onClick={handleSearch}>
+          <PFButton
+            size="xlarge"
+            className={styles.schoolModalSearchButton}
+            disabled={loading}
+            onClick={handleSearch}
+          >
             검색
           </PFButton>
         </div>

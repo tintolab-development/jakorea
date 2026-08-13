@@ -106,6 +106,22 @@ export function buildPreRegisterTermsAgreements(
   ]
 }
 
+/**
+ * pre-register wire용 — 선택 약관 `agreed: false` 는 요청에서 제외한다.
+ *
+ * BE가 선택 미동의를 400으로 거절하는 경우가 있어(문서:
+ * `members-pre-register-terms-required-policy-backend-request-2026-08-11.md` §5.2),
+ * 미전송(=미동의)으로 우회한다. 필수(`required: true`) 미동의는 그대로 보내 서버 검증을 탄다.
+ *
+ * BE가 선택 `agreed: false` round-trip을 지원하면 이 필터를 제거할 수 있다.
+ */
+export function omitOptionalDisagreedPreRegisterTerms<
+  T extends { required?: boolean; agreed?: boolean },
+>(agreements: T[] | undefined): T[] | undefined {
+  if (agreements == null) return agreements
+  return agreements.filter(row => row.agreed === true || row.required === true)
+}
+
 export type AdminAccountCreateConsentFields = PreRegisterRadioConsentFields & {
   consentMfaSetup: PreRegisterConsentValue
 }

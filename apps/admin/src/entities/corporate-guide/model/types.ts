@@ -9,22 +9,28 @@ export type PartnershipStepNumber = 1 | 2 | 3 | 4 | 5 | 6
 export type CorporateGuideBanner = {
   imageUrl: string
   imageFileName?: string
+  imageAssetId?: number
   mainText: string
   subText: string
+  version: number
 }
 
 export type MetricItem = {
   id: MetricItemId
+  apiId: number
   /** 고정 노출 — 수정 불가 */
   itemLabel: string
   title: string
   description: string
+  version: number
 }
 
 export type PartnershipStep = {
   step: PartnershipStepNumber
+  apiId: number
   title: string
   description: string
+  version: number
 }
 
 export type CorporateGuideData = {
@@ -37,18 +43,25 @@ export type CorporateGuideData = {
 export type BannerSaveInput = {
   imageUrl: string
   imageFileName?: string
+  imageFile?: File | null
+  imageAssetId?: number
   mainText: string
   subText: string
+  version: number
 }
 
 export type MetricSaveItem = {
   id: MetricItemId
+  apiId: number
   title: string
   description: string
+  version: number
 }
 
 export type PartnershipSaveItem = {
   step: PartnershipStepNumber
+  apiId: number
   title: string
   description: string
+  version: number
 }

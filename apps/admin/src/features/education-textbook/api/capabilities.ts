@@ -1,6 +1,8 @@
 /**
- * 교재 목록 — remote API opt-in stub.
+ * 교재 — remote API opt-in
  */
+import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
+
 export function shouldUseEducationTextbookRemoteApi(): boolean {
-  return false
+  return shouldUseHomepageRemoteApi()
 }

@@ -5,6 +5,10 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { CertCreateInput, CertItem } from '@/entities/history-awards-certs/model/types'
 import { coerceRadioBoolean } from '@/features/history-awards-certs/lib/format'
 import {
+  deleteConfirmContent,
+  publishedMustUnpublishAlert,
+} from '@/features/history-awards-certs/lib/delete-guards'
+import {
   CmsButton,
   CmsDatePicker,
   CmsInput,
@@ -125,7 +129,13 @@ function CertFormBody({
                   variant="delete"
                   size="large"
                   type="button"
-                  onClick={() => setDeleteConfirmOpen(true)}
+                  onClick={() => {
+                    if (initial?.isPublic) {
+                      showAlert(publishedMustUnpublishAlert('인증'))
+                      return
+                    }
+                    setDeleteConfirmOpen(true)
+                  }}
                   disabled={confirmLoading || deleteLoading}
                   loading={deleteLoading}
                 >
@@ -225,7 +235,7 @@ function CertFormBody({
       <ConfirmModal
         open={deleteConfirmOpen}
         title="인증 삭제"
-        content={'선택한 인증 정보를 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.'}
+        content={deleteConfirmContent('인증')}
         confirmText="삭제"
         cancelText="취소"
         danger

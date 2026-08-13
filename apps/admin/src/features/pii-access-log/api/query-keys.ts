@@ -7,6 +7,7 @@ export const piiAccessLogQueryKeys = {
       ...piiAccessLogQueryKeys.all,
       'list',
       source,
+      filter.targetName ?? '',
       filter.purpose ?? '',
       filter.accessorName ?? '',
       filter.from ?? '',

@@ -19,7 +19,7 @@ type BoardMembersFile = {
   items: BoardMember[]
 }
 
-type SeedRow = Omit<BoardMember, 'id' | 'sortOrder'>
+type SeedRow = Omit<BoardMember, 'id' | 'sortOrder' | 'version'>
 
 const SEED_ROWS: readonly SeedRow[] = [
   {
@@ -129,6 +129,7 @@ function buildSeedMembers(): BoardMember[] {
       ...row,
       id: `board-member-${index + 1}`,
       sortOrder: count,
+      version: 0,
     }
   })
 }
@@ -166,6 +167,7 @@ function normalizeMember(raw: Partial<BoardMember>, fallbackId: string): BoardMe
     nameEn: typeof raw.nameEn === 'string' ? raw.nameEn : '',
     position: typeof raw.position === 'string' ? raw.position : '',
     affiliation: typeof raw.affiliation === 'string' ? raw.affiliation : '',
+    version: typeof raw.version === 'number' ? raw.version : 0,
   }
 }
 
@@ -211,6 +213,7 @@ export function createBoardMember(input: BoardMemberCreateInput): BoardMember {
     nameEn: input.nameEn.trim(),
     position: input.position.trim(),
     affiliation: input.affiliation.trim(),
+    version: 0,
   }
   const items = normalizeItems([...file.items, item])
   writeFile({ version: 1, items })

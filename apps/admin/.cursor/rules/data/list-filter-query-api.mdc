@@ -1,0 +1,53 @@
+---
+description: Admin 목록 필터 → 조회(list) API 쿼리 연결 (useListFilterUrl + hooks)
+globs:
+  - apps/admin/src/pages/**/*.{ts,tsx}
+  - apps/admin/src/features/**/api/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Admin 목록 — 필터 조회 API 연결
+
+URL 필터(`useListFilterUrl`)만 두고 **list GET에 query를 안 넘기는 것 금지**.  
+Mock/Remote 공통: `applied` 필터 → `list*Service(filter)` → (remote) OpenAPI `params`.
+
+관련: [list-filter-url-sync](../../../../.cursor/rules/cms-admin-ui/list-filter-url-sync.mdc) · [api-mock-remote](./api-mock-remote.mdc) · [list-page-size](./list-page-size.mdc) · [list-page-composition](../coding/list-page-composition.mdc)
+
+## 필수 파이프라인
+
+```
+pending UI → 조회(applySearch) → URL → parseApplied(applied)
+  → useXxxList(applied)
+  → queryKey.list(source, filter)
+  → listXxxService(filter)
+  → remote: generated list*(toListParams(filter))
+     local: store.read*(filter)
+```
+
+1. **페이지**: `const listQuery = useXxxList(appliedFilter)` — 인자 없이 전체 fetch 후 `matchesClientFilter`만 돌리지 말 것.
+2. **hooks**: `queryFn: () => listXxxService(filter)`, **queryKey에 filter 포함**.
+3. **mappers**: 도메인 filter → OpenAPI `*Params` (`toXxxListParams`).
+4. **service**: remote/local 모두 `filter?` 인자 수용.
+
+## API에 없는 필터
+
+OpenAPI list params에 없는 필드(예: 팝업 `altText`)만 응답 후 **클라이언트 보조 필터**.  
+서버에 있는 필드(`enabled`, `popupName`, 기간 등)를 클라이언트로만 거르지 말 것.
+
+## DnD / 전체 순서
+
+목록이 필터된 상태면 reorder는 **비필터 전체 목록**을 불러 부분 순서를 병합한 뒤 `reorder*Service(mergedIds)` 호출.  
+(참고: `pages/main/popups/page.tsx` `hasPopupListFilter` + `listPopupsService()`)
+
+## 금지 / 체크
+
+| 금지 | 올바른 예 |
+|------|-----------|
+| `useXxxList()` + 페이지 `rows.filter(…)`만 | `useXxxList(applied)` |
+| queryKey에 source만, filter 누락 | `list(source, filter)` |
+| UI→URL만 연동, service 미전달 | `toListParams` + `list4(params)` |
+| API 있는 필드를 이중 클라이언트 필터 | 서비스 결과 그대로 테이블 |
+
+**기준 구현:** `features/popup/api/{hooks,mappers,service,query-keys}.ts` · `pages/main/popups/page.tsx`
+
+**Last updated:** 2026-08-13

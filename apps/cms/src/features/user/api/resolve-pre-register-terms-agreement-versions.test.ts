@@ -12,11 +12,12 @@ describe('resolvePreRegisterTermsAgreementVersions', () => {
     vi.mocked(fetchCurrentTermsDocumentsMetaMap).mockReset()
   })
 
-  it('현재 게시 약관 version으로 termsAgreements를 갱신한다', async () => {
+  it('현재 게시 약관 version만 갱신하고 required는 FE 값을 유지한다', async () => {
     vi.mocked(fetchCurrentTermsDocumentsMetaMap).mockResolvedValue(
       new Map([
         ['SERVICE_TERMS', { version: '2026-01', required: true }],
-        ['MARKETING', { version: '2026-02', required: false }],
+        // meta가 필수로 잘못 내려와도 FE required:false 를 덮어쓰지 않는다
+        ['MARKETING', { version: '2026-02', required: true }],
       ])
     )
 

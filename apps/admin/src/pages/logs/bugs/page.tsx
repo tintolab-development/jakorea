@@ -2,7 +2,7 @@
  * 버그/이슈 이력
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -10,7 +10,10 @@ import type {
   BugIssueListFilter,
   BugIssueLog,
 } from '@/entities/bug-issue-log/model/types'
-import { useBugIssueLogsList } from '@/features/bug-issue-log/api/hooks'
+import {
+  useBugIssueLogsList,
+  useExportBugIssueLogs,
+} from '@/features/bug-issue-log/api/hooks'
 import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
 import { LogResultToolbar } from '@/features/logs/shared/ui/log-result-toolbar'
@@ -20,35 +23,61 @@ import {
   FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
-import { CmsButton, CmsDateRangePicker, CmsInput } from '@/shared/ui'
+import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
+import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
+import {
+  applyDateRangeToSearchParams,
+  pendingDateRangeTupleEqual,
+  resolvePendingDateRangeFromUrl,
+  type PendingDateRange,
+  type UrlDateRangePendingSyncRef,
+} from '@/shared/lib/url-date-range-pending-sync'
+import { CmsButton, CmsDateRangePicker, CmsInput, useCmsAlert } from '@/shared/ui'
 
 import '@/features/logs/shared/ui/log-list-layout.css'
 
 type PendingFilters = {
   userName: string
-  range: [Dayjs | null, Dayjs | null] | null
+  range: PendingDateRange
 }
 
-const EMPTY_PENDING: PendingFilters = {
+const INITIAL_PENDING: PendingFilters = {
   userName: '',
   range: null,
 }
 
-const EMPTY_APPLIED: BugIssueListFilter = {}
+const rangeSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 
-function buildApplied(pending: PendingFilters): BugIssueListFilter {
-  const userName = pending.userName.trim()
-  const from = pending.range?.[0]?.isValid()
-    ? pending.range[0]!.format('YYYY-MM-DD')
-    : null
-  const to = pending.range?.[1]?.isValid()
-    ? pending.range[1]!.format('YYYY-MM-DD')
-    : null
-  return {
-    ...(userName ? { userName } : {}),
-    ...(from ? { from } : {}),
-    ...(to ? { to } : {}),
-  }
+function parseApplied(searchParams: URLSearchParams): BugIssueListFilter {
+  const filter: BugIssueListFilter = {}
+  const userName = (searchParams.get('bg_user') ?? '').trim()
+  if (userName) filter.userName = userName
+  const from = searchParams.get('bg_from')
+  const to = searchParams.get('bg_to')
+  if (from) filter.from = from
+  if (to) filter.to = to
+  return filter
+}
+
+const searchSyncRules: readonly TableSearchParamRule<PendingFilters>[] = [
+  {
+    kind: 'param',
+    filterKey: 'userName',
+    paramKey: 'bg_user',
+    condition: f => f.userName.trim().length > 0,
+    transform: v => String(v).trim(),
+  },
+  {
+    kind: 'apply',
+    apply: (nextParams, f) => {
+      applyDateRangeToSearchParams(nextParams, f.range, 'bg_from', 'bg_to')
+    },
+  },
+]
+
+function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
+  if (!period) return [null, null]
+  return [period[0] ?? null, period[1] ?? null]
 }
 
 const COL = {
@@ -61,30 +90,72 @@ const COL = {
 const EMPTY_TEXT = '검색 결과가 없습니다. 필터 조건을 변경해 주세요.'
 
 export function BugIssueLogPage() {
-  const [pending, setPending] = useState<PendingFilters>(EMPTY_PENDING)
-  const [applied, setApplied] = useState<BugIssueListFilter>(EMPTY_APPLIED)
+  const { showAlert } = useCmsAlert()
 
-  const listQuery = useBugIssueLogsList(applied)
+  const {
+    pendingFilters,
+    setPendingFilters,
+    applied: appliedFilter,
+    applySearch,
+  } = useListFilterUrl<PendingFilters, BugIssueListFilter>({
+    initialPending: INITIAL_PENDING,
+    paramConfig: searchSyncRules,
+    parseApplied,
+    syncPendingFromUrl: ({ searchParams, setPendingFilters: setPending }) => {
+      const userName = searchParams.get('bg_user') ?? ''
+      const from = searchParams.get('bg_from')
+      const to = searchParams.get('bg_to')
+
+      setPending(prev => {
+        const range = resolvePendingDateRangeFromUrl({
+          ref: rangeSyncRef,
+          from,
+          to,
+          prev: prev.range,
+        }) as PendingDateRange
+
+        const next: PendingFilters = { userName, range }
+        if (
+          prev.userName === next.userName &&
+          pendingDateRangeTupleEqual(prev.range, next.range)
+        ) {
+          return prev
+        }
+        return next
+      })
+    },
+  })
+
+  const listQuery = useBugIssueLogsList(appliedFilter)
+  const exportMutation = useExportBugIssueLogs()
   const rows = listQuery.data?.rows ?? []
   const total = listQuery.data?.total ?? 0
   const loading = listQuery.isLoading || listQuery.isFetching
 
-  const handleSearch = useCallback(() => {
-    setApplied(buildApplied(pending))
-  }, [pending])
-
   const handleExcel = useCallback(() => {
-    downloadCsv({
-      filenameBase: '버그_이슈_이력',
-      headers: ['No.', '에러 메시지', '사용자명', '발생일시'],
-      rows: rows.map((row, index) => [
-        total - index,
-        row.errorMessage,
-        row.userName,
-        formatLogDateTime(row.occurredAt),
-      ]),
-    })
-  }, [rows, total])
+    void exportMutation
+      .mutateAsync(appliedFilter)
+      .then(mode => {
+        if (mode === 'use-local-csv') {
+          downloadCsv({
+            filenameBase: '버그_이슈_이력',
+            headers: ['No.', '에러 메시지', '사용자명', '발생일시'],
+            rows: rows.map((row, index) => [
+              total - index,
+              row.errorMessage,
+              row.userName,
+              formatLogDateTime(row.occurredAt),
+            ]),
+          })
+        }
+      })
+      .catch(() => {
+        showAlert({
+          title: '내보내기 실패',
+          content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
+        })
+      })
+  }, [appliedFilter, exportMutation, rows, showAlert, total])
 
   const columns = useMemo<ColumnsType<BugIssueLog>>(
     () => [
@@ -131,11 +202,11 @@ export function BugIssueLogPage() {
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="사용자명을 입력하세요"
-              value={pending.userName}
+              value={pendingFilters.userName}
               onChange={e =>
-                setPending(prev => ({ ...prev, userName: e.target.value }))
+                setPendingFilters(prev => ({ ...prev, userName: e.target.value }))
               }
-              onPressEnter={handleSearch}
+              onPressEnter={applySearch}
             />
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--date-range">
@@ -143,9 +214,9 @@ export function BugIssueLogPage() {
             <CmsDateRangePicker
               inputSize="large"
               width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={pending.range}
+              value={rangeAsPicker(pendingFilters.range)}
               onChange={dates =>
-                setPending(prev => ({
+                setPendingFilters(prev => ({
                   ...prev,
                   range: dates ?? null,
                 }))
@@ -160,7 +231,7 @@ export function BugIssueLogPage() {
               size="large"
               type="button"
               width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-              onClick={handleSearch}
+              onClick={applySearch}
             >
               조회
             </CmsButton>

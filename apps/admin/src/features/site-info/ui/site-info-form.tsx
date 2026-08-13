@@ -32,26 +32,40 @@ type Props = {
   data: SiteInfo
 }
 
-function cloneInfo(data: SiteInfo): SiteInfo {
+type DraftState = SiteInfo & {
+  ogImageFile?: File | null
+  faviconFile?: File | null
+}
+
+function cloneInfo(data: SiteInfo): DraftState {
   return {
     siteName: data.siteName,
     siteDescription: data.siteDescription,
     ogImageUrl: data.ogImageUrl,
     ogImageFileName: data.ogImageFileName,
+    ogAssetId: data.ogAssetId,
+    ogImageFile: null,
     faviconUrl: data.faviconUrl,
     faviconFileName: data.faviconFileName,
+    faviconAssetId: data.faviconAssetId,
+    faviconFile: null,
     updatedAt: data.updatedAt,
+    version: data.version,
   }
 }
 
-function toSaveInput(data: SiteInfo): SiteInfoSaveInput {
+function toSaveInput(data: DraftState): SiteInfoSaveInput {
   return {
     siteName: data.siteName,
     siteDescription: data.siteDescription,
     ogImageUrl: data.ogImageUrl,
     ogImageFileName: data.ogImageFileName,
+    ogAssetId: data.ogImageFile ? undefined : data.ogAssetId,
+    ogImageFile: data.ogImageFile,
     faviconUrl: data.faviconUrl,
     faviconFileName: data.faviconFileName,
+    faviconAssetId: data.faviconFile ? undefined : data.faviconAssetId,
+    faviconFile: data.faviconFile,
   }
 }
 
@@ -133,7 +147,7 @@ type ImageEditFieldProps = {
   fileName: string
   alt: string
   variant?: 'default' | 'favicon'
-  onChange: (url: string, fileName: string) => void
+  onChange: (url: string, fileName: string, file: File) => void
   onRemove: () => void
 }
 
@@ -169,7 +183,7 @@ function ImageEditField({
       }
       try {
         const dataUrl = await readFileAsDataUrl(file)
-        onChange(dataUrl, file.name)
+        onChange(dataUrl, file.name, file)
       } catch {
         showAlert({
           title: '파일 읽기 실패',
@@ -210,7 +224,7 @@ export function SiteInfoFormCard({ data }: Props) {
   const { showAlert } = useCmsAlert()
   const saveMutation = useSaveSiteInfo()
   const [isEditing, setIsEditing] = useState(false)
-  const [draft, setDraft] = useState<SiteInfo>(() => cloneInfo(data))
+  const [draft, setDraft] = useState<DraftState>(() => cloneInfo(data))
   const [nameError, setNameError] = useState<string | undefined>()
 
   const handleEdit = useCallback(() => {
@@ -244,7 +258,7 @@ export function SiteInfoFormCard({ data }: Props) {
     }
   }, [draft, saveMutation, showAlert])
 
-  const updateDraft = useCallback((patch: Partial<SiteInfoSaveInput>) => {
+  const updateDraft = useCallback((patch: Partial<DraftState>) => {
     setDraft(prev => ({ ...prev, ...patch }))
   }, [])
 
@@ -343,10 +357,22 @@ export function SiteInfoFormCard({ data }: Props) {
                   imageUrl={draft.ogImageUrl}
                   fileName={draft.ogImageFileName ?? ''}
                   alt="링크 공유용 이미지 미리보기"
-                  onChange={(url, fileName) =>
-                    updateDraft({ ogImageUrl: url, ogImageFileName: fileName })
+                  onChange={(url, fileName, file) =>
+                    updateDraft({
+                      ogImageUrl: url,
+                      ogImageFileName: fileName,
+                      ogImageFile: file,
+                      ogAssetId: undefined,
+                    })
                   }
-                  onRemove={() => updateDraft({ ogImageUrl: '', ogImageFileName: undefined })}
+                  onRemove={() =>
+                    updateDraft({
+                      ogImageUrl: '',
+                      ogImageFileName: undefined,
+                      ogImageFile: null,
+                      ogAssetId: undefined,
+                    })
+                  }
                 />
               }
             />
@@ -368,10 +394,22 @@ export function SiteInfoFormCard({ data }: Props) {
                   fileName={draft.faviconFileName ?? ''}
                   alt="브라우저탭 아이콘 미리보기"
                   variant="favicon"
-                  onChange={(url, fileName) =>
-                    updateDraft({ faviconUrl: url, faviconFileName: fileName })
+                  onChange={(url, fileName, file) =>
+                    updateDraft({
+                      faviconUrl: url,
+                      faviconFileName: fileName,
+                      faviconFile: file,
+                      faviconAssetId: undefined,
+                    })
                   }
-                  onRemove={() => updateDraft({ faviconUrl: '', faviconFileName: undefined })}
+                  onRemove={() =>
+                    updateDraft({
+                      faviconUrl: '',
+                      faviconFileName: undefined,
+                      faviconFile: null,
+                      faviconAssetId: undefined,
+                    })
+                  }
                 />
               }
             />

@@ -82,7 +82,7 @@ function buildSeedValues(): GlobalValue[] {
   return SEED_ROWS.map((row, index) => {
     const ts = new Date(base.getTime() + index * 60_000).toISOString()
     return {
-      id: `global-value-${row.key}`,
+      id: String(index + 1),
       key: row.key,
       sortOrder: index + 1,
       isActive: row.isActive,
@@ -90,6 +90,7 @@ function buildSeedValues(): GlobalValue[] {
       subText: row.subText,
       iconKey: row.key,
       updatedAt: ts,
+      version: 0,
     }
   })
 }
@@ -112,6 +113,7 @@ function ensureFixedKeys(items: GlobalValue[]): GlobalValue[] {
       subText: typeof row.subText === 'string' ? row.subText : seed.subText,
       updatedAt: typeof row.updatedAt === 'string' ? row.updatedAt : seed.updatedAt,
       sortOrder: typeof row.sortOrder === 'number' ? row.sortOrder : seed.sortOrder,
+      version: typeof row.version === 'number' ? row.version : 0,
     })
   }
 

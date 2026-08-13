@@ -21,6 +21,7 @@ import {
   useUpdatePopup,
 } from '@/features/popup/api/hooks'
 import { popupQueryKeys } from '@/features/popup/api/query-keys'
+import { listPopupsService } from '@/features/popup/api/service'
 import { POPUPS_CHANGED_EVENT } from '@/features/popup/api/store'
 import {
   PopupFormModal,
@@ -137,6 +138,18 @@ function formatCreatedDate(iso: string): string {
   return d.format('YYYY.MM.DD')
 }
 
+function hasPopupListFilter(filter: PopupListFilter): boolean {
+  return (
+    filter.isActive === true ||
+    filter.isActive === false ||
+    Boolean(filter.name?.trim()) ||
+    Boolean(filter.altText?.trim()) ||
+    Boolean(filter.periodStart?.trim()) ||
+    Boolean(filter.periodEnd?.trim())
+  )
+}
+
+/** 필터된 목록에서 DnD 시, 전체 순서에 부분 순서를 병합할 때 사용 */
 function matchesClientFilter(row: Popup, filter: PopupListFilter): boolean {
   if (filter.isActive === true && !row.isActive) return false
   if (filter.isActive === false && row.isActive) return false
@@ -166,7 +179,6 @@ function periodAsPickerValue(period: PendingDateRange): [Dayjs | null, Dayjs | n
 
 export function PopupsPage() {
   const { showAlert } = useCmsAlert()
-  const listQuery = usePopupsList()
   const createMutation = useCreatePopup()
   const updateMutation = useUpdatePopup()
   const removeMutation = useRemovePopups()
@@ -211,7 +223,8 @@ export function PopupsPage() {
     },
   })
 
-  const allRows = useMemo(() => listQuery.data ?? [], [listQuery.data])
+  const listQuery = usePopupsList(appliedFilter)
+  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [formOpen, setFormOpen] = useState(false)
   const [formVariant, setFormVariant] = useState<'create' | 'detail'>('create')
@@ -220,11 +233,6 @@ export function PopupsPage() {
 
   useInvalidateOnWindowEvent(POPUPS_CHANGED_EVENT, popupQueryKeys.lists())
 
-  const rows = useMemo(
-    () => allRows.filter(row => matchesClientFilter(row, appliedFilter)),
-    [allRows, appliedFilter]
-  )
-
   const handleSearch = useCallback(() => {
     applySearch()
     setSelectedRowKeys([])
@@ -232,27 +240,33 @@ export function PopupsPage() {
 
   const handleRowsReorder = useCallback(
     (reorderedRows: Popup[]) => {
-      const reorderedIds = reorderedRows.map(row => row.id)
-      let cursor = 0
-      const mergedIds =
-        reorderedRows.length === allRows.length
-          ? reorderedIds
-          : allRows.map(row => {
-              if (matchesClientFilter(row, appliedFilter)) {
-                return reorderedIds[cursor++]!
-              }
-              return row.id
-            })
+      void (async () => {
+        const reorderedIds = reorderedRows.map(row => row.id)
+        let mergedIds = reorderedIds
 
-      void reorderMutation.mutateAsync(mergedIds).catch(() => {
-        showAlert({
-          title: '순서 변경 실패',
-          content: '팝업 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
-        })
-        void listQuery.refetch()
-      })
+        if (hasPopupListFilter(appliedFilter)) {
+          const fullRows = await listPopupsService()
+          let cursor = 0
+          mergedIds = fullRows.map(row => {
+            if (matchesClientFilter(row, appliedFilter)) {
+              return reorderedIds[cursor++]!
+            }
+            return row.id
+          })
+        }
+
+        try {
+          await reorderMutation.mutateAsync(mergedIds)
+        } catch {
+          showAlert({
+            title: '순서 변경 실패',
+            content: '팝업 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
+          })
+          void listQuery.refetch()
+        }
+      })()
     },
-    [allRows, appliedFilter, listQuery, reorderMutation, showAlert]
+    [appliedFilter, listQuery, reorderMutation, showAlert]
   )
 
   const handleToggleActive = useCallback(

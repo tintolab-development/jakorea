@@ -23,28 +23,32 @@ export function Lnb({ items, showInstructorApply = false }: LnbProps) {
             .join(' ')
 
           return (
-            <button
-              key={item.key}
-              className={itemClassName}
-              type="button"
-              aria-current={item.active ? 'page' : undefined}
-              disabled={item.enabled === false}
-            >
-              <img
-                className={styles.icon}
-                src={getLnbIconUrl(item.key, Boolean(item.active))}
-                alt=""
-                aria-hidden="true"
-              />
-              <PFText
-                as="span"
-                typo="bd-md-md"
-                color={item.active ? 'primary-700' : 'neutral-cool-600'}
-                className={item.active ? styles.labelActive : styles.label}
+            <div key={item.key} className={styles.itemBlock}>
+              <button
+                className={itemClassName}
+                type="button"
+                aria-current={item.active ? 'page' : undefined}
+                disabled={item.enabled === false}
               >
-                {item.label}
-              </PFText>
-            </button>
+                <img
+                  className={styles.icon}
+                  src={getLnbIconUrl(item.key, Boolean(item.active))}
+                  alt=""
+                  aria-hidden="true"
+                />
+                <PFText
+                  as="span"
+                  typo="bd-md-md"
+                  color={item.active ? 'primary-700' : 'neutral-cool-600'}
+                  className={item.active ? styles.labelActive : styles.label}
+                >
+                  {item.label}
+                </PFText>
+              </button>
+              {item.dividerAfter ? (
+                <div className={styles.divider} role="separator" aria-hidden="true" />
+              ) : null}
+            </div>
           )
         })}
       </div>

@@ -40,11 +40,12 @@
 }
 
 .field {
+  position: relative;
   display: flex;
+  width: 100%;
   align-self: stretch;
   align-items: center;
   gap: var(--spacing-8);
-  overflow: hidden;
   box-sizing: border-box;
   padding: var(--spacing-12) var(--spacing-12) var(--spacing-12) 14px;
   border: 1px solid var(--color-border-default);
@@ -82,19 +83,28 @@
 }
 
 .trigger {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   display: flex;
   min-width: 0;
-  flex: 1 1 auto;
   align-items: center;
-  padding: 0;
+  box-sizing: border-box;
+  padding: var(--spacing-12) 52px var(--spacing-12) 14px;
   border: 0;
   background: transparent;
   text-align: left;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .trigger:disabled {
   cursor: not-allowed;
+}
+
+.field.completed.open:not(.disabled) .trigger {
+  padding-right: 72px;
 }
 
 .value {
@@ -140,10 +150,14 @@
 }
 
 .trailing {
+  position: relative;
+  z-index: 2;
   display: inline-flex;
+  margin-left: auto;
   flex: 0 0 auto;
   align-items: center;
   gap: var(--spacing-4);
+  pointer-events: none;
 }
 
 .clearButton {
@@ -157,12 +171,14 @@
   border: 0;
   background: transparent;
   cursor: pointer;
+  pointer-events: auto;
 }
 
-/* completed + hover/active → clear 노출 */
-.field.completed:hover:not(.disabled) .clearButton,
-.field.completed.open:not(.disabled) .clearButton,
-.field.completed:focus-within:not(.disabled) .clearButton {
+/*
+ * clear는 열린 상태에서만 노출.
+ * 닫힌 채 hover 시 X가 쉐브론 자리를 가로채면 "클릭해도 안 열림"(실제로는 clear)으로 보임.
+ */
+.field.completed.open:not(.disabled) .clearButton {
   display: inline-flex;
 }
 
@@ -179,13 +195,6 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.chevronButton:disabled {
-  cursor: not-allowed;
 }
 
 .chevron {
@@ -194,15 +203,12 @@
   height: 22px;
 }
 
+/* 포털 마운트 전제 — absolute 기본값으로 body 하단에 붙는 문제 방지 */
 .listbox {
-  position: absolute;
-  top: calc(100% + var(--spacing-8));
-  left: 0;
-  z-index: 20;
-  display: inline-flex;
+  position: fixed;
+  z-index: 1100;
+  display: flex;
   box-sizing: border-box;
-  width: 100%;
-  max-height: 290px;
   flex-direction: column;
   align-items: flex-start;
   overflow: auto;

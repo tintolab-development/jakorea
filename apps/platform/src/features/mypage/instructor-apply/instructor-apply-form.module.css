@@ -3,7 +3,8 @@
   width: 100%;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-24);
+  /* PFFormPage .content 단락 간격 SSOT (PC 24 / 모바일 16) */
+  gap: inherit;
   align-self: stretch;
 }
 
@@ -54,14 +55,6 @@
   outline-offset: -1px;
 }
 
-.bankAccountPair {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-8);
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
 .fieldStack {
   display: flex;
   flex-direction: column;
@@ -87,32 +80,6 @@
 
 .fieldStackRow:first-child {
   padding-top: 0;
-}
-
-.period {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  min-width: 0;
-  gap: 0;
-}
-
-.tilde {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
-  color: var(--color-neutral-black);
-  flex-shrink: 0;
-}
-
-.inlineGroup {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-12);
-  flex: 0 1 auto;
-  min-width: 0;
-  flex-wrap: nowrap;
 }
 
 .degreeSelectMargin {

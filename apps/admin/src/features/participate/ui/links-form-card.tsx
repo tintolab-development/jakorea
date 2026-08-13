@@ -103,9 +103,9 @@ export function ParticipateLinksFormCard({ data }: Props) {
   const handleSave = useCallback(async () => {
     try {
       await saveMutation.mutateAsync({
+        ...data,
         onlineLearningUrl: draft.onlineLearningUrl,
         alumniUrl: draft.alumniUrl,
-        updatedAt: data.updatedAt,
       })
       setIsEditing(false)
     } catch {
@@ -115,7 +115,7 @@ export function ParticipateLinksFormCard({ data }: Props) {
       })
       void queryClient.invalidateQueries({ queryKey: participateQueryKeys.all })
     }
-  }, [data.updatedAt, draft, queryClient, saveMutation, showAlert])
+  }, [data, draft, queryClient, saveMutation, showAlert])
 
   return (
     <div

@@ -51,6 +51,7 @@ function buildSeed(): SiteInfo {
     faviconUrl: FAVICON_PLACEHOLDER,
     faviconFileName: 'JA Korea_favicon image.png',
     updatedAt: '2026-07-01T00:00:00.000Z',
+    version: 0,
   }
 }
 
@@ -67,10 +68,13 @@ function normalize(raw: Partial<SiteInfo> | null | undefined): SiteInfo {
     ogImageUrl: asString(raw.ogImageUrl, ''),
     ogImageFileName:
       typeof raw.ogImageFileName === 'string' ? raw.ogImageFileName : undefined,
+    ogAssetId: typeof raw.ogAssetId === 'number' ? raw.ogAssetId : undefined,
     faviconUrl: asString(raw.faviconUrl, ''),
     faviconFileName:
       typeof raw.faviconFileName === 'string' ? raw.faviconFileName : undefined,
+    faviconAssetId: typeof raw.faviconAssetId === 'number' ? raw.faviconAssetId : undefined,
     updatedAt: asString(raw.updatedAt, seed.updatedAt),
+    version: typeof raw.version === 'number' ? raw.version : 0,
   }
 }
 
@@ -106,14 +110,18 @@ export function saveSiteInfo(input: SiteInfoSaveInput): SiteInfo {
   if (!siteName) {
     throw new Error('SITE_NAME_REQUIRED')
   }
+  const prev = readFile().data
   const next = normalize({
     siteName,
     siteDescription: input.siteDescription.trimEnd(),
     ogImageUrl: input.ogImageUrl.trim(),
     ogImageFileName: input.ogImageFileName?.trim() || undefined,
+    ogAssetId: input.ogAssetId ?? prev.ogAssetId,
     faviconUrl: input.faviconUrl.trim(),
     faviconFileName: input.faviconFileName?.trim() || undefined,
+    faviconAssetId: input.faviconAssetId ?? prev.faviconAssetId,
     updatedAt: new Date().toISOString(),
+    version: prev.version,
   })
   writeFile({ version: 1, data: next })
   return next

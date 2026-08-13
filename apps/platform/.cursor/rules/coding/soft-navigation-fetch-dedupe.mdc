@@ -51,7 +51,7 @@ window.history.pushState(null, '', buildListPath(merged))
 참고 구현: [`features/program/lib/mock-program-catalog-client.ts`](../../../src/features/program/lib/mock-program-catalog-client.ts)  
 (`inflightRequest` + `cachedCatalog` + `clearMockProgramCatalogCache`).
 
-POST·일회성 콜백(예: 본인인증) 도 모듈 `Set`/키 dedupe를 고려 — [`identity-callback-once.ts`](../../../src/features/auth/identity-verification/identity-callback-once.ts).
+POST·일회성 콜백(예: 본인인증) 도 모듈 `Set`/키 dedupe를 고려 — [`identity-callback-once.ts`](../../../src/features/auth/identity-verification/lib/identity-callback-once.ts).
 
 ## 3. 체크리스트 (목록·catalog·mock API 작업 시)
 

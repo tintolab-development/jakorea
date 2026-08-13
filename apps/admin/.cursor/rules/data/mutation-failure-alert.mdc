@@ -1,0 +1,56 @@
+---
+description: Admin 저장·수정 실패 시 원인/필드 알림 모달 규칙
+globs: apps/admin/src/features/**/{ui,lib,pages}/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Admin — Mutation 실패 원인 알림
+
+저장·수정·토글·삭제 등 mutation이 실패하면 **어디서/왜 실패했는지** `showAlert`(Confirm/Alert 모달)로 인지 가능하게 한다.  
+제네릭 문구만(`저장에 실패했습니다`) 두고 끝내면 안 된다.
+
+## 필수
+
+1. **클라이언트 선검증** — BE와 동일 규칙(URL 스키마, Kakao Roughmap HTML, 길이, 이메일 등)을 저장 전에 검사하고, **필드명**을 제목·본문에 넣는다.
+2. **API 실패 매핑** — `readApiErrorMessage` / `readApiErrorCode`(`shared/lib/api-error-message.ts`)로 envelope를 읽고, 알려진 코드·메시지를 **한글 필드/원인 알림**으로 변환한다.
+3. **낙관적 잠금** — `OPTIMISTIC_LOCK_CONFLICT` / “changed by another administrator” → 새로고침 유도 문구.
+4. **소셜 링크·오시는 길처럼** 채널/필드가 여러 개면 **실패한 대상 이름**을 본문에 나열한다 (예: `Instagram, YouTube의 연결 링크는 https://…`).
+
+## 금지
+
+```ts
+// ❌ 원인·필드 없는 고정 문구만
+catch {
+  showAlert({ title: '저장 실패', content: '저장에 실패했습니다. 다시 시도해 주세요.' })
+}
+```
+
+```ts
+// ✅ 선검증 + API 매핑
+const alert = validateXxxBeforeSave(draft)
+if (alert) {
+  showAlert(alert)
+  return
+}
+try {
+  await mutateAsync(draft)
+} catch (error) {
+  showAlert(xxxSaveFailureAlert(error))
+}
+```
+
+## 참고 구현
+
+| Feature | 파일 |
+|---------|------|
+| 소셜 링크 URL | `features/social-link/lib/url-validation.ts` |
+| 오시는 길 | `features/directions/lib/save-validation.ts` |
+| 연혁 등 삭제 CONFLICT | `features/history-awards-certs/lib/delete-guards.ts` |
+
+## 체크
+
+- [ ] 실패 알림 제목 또는 본문에 **필드/대상**이 드러나는가
+- [ ] BE 특수 규칙(공개 중 삭제, Kakao HTML, http(s) URL)이 선검증 또는 매핑되어 있는가
+- [ ] version 충돌 시 재조회 안내가 있는가
+
+**Last updated:** 2026-08-13

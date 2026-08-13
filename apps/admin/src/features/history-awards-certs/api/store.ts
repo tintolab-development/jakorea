@@ -61,6 +61,7 @@ function buildSeedHistory(): HistoryItem[] {
     month: ((5 - i + 12) % 12) + 1,
     content,
     createdAt: isoDaysAgo(i * 12),
+    version: 0,
   }))
 }
 
@@ -73,6 +74,7 @@ function buildSeedAwards(): AwardItem[] {
       organization: '행정안전부, 한국자원봉사센터협회',
       awardedOn: '2026-05-15',
       createdAt: isoDaysAgo(10),
+      version: 0,
     },
     {
       id: 'award-2',
@@ -81,6 +83,7 @@ function buildSeedAwards(): AwardItem[] {
       organization: '교육부',
       awardedOn: '2025-11-20',
       createdAt: isoDaysAgo(40),
+      version: 0,
     },
     {
       id: 'award-3',
@@ -89,6 +92,7 @@ function buildSeedAwards(): AwardItem[] {
       organization: '한국사회복지협의회',
       awardedOn: '2025-06-01',
       createdAt: isoDaysAgo(80),
+      version: 0,
     },
     {
       id: 'award-4',
@@ -97,6 +101,7 @@ function buildSeedAwards(): AwardItem[] {
       organization: '중소벤처기업부',
       awardedOn: '2024-12-10',
       createdAt: isoDaysAgo(120),
+      version: 0,
     },
     {
       id: 'award-5',
@@ -105,6 +110,7 @@ function buildSeedAwards(): AwardItem[] {
       organization: '과학기술정보통신부',
       awardedOn: '2024-08-22',
       createdAt: isoDaysAgo(160),
+      version: 0,
     },
   ]
 }
@@ -118,6 +124,7 @@ function buildSeedCerts(): CertItem[] {
       organization: '교육부',
       certifiedOn: '2025-09-15',
       createdAt: isoDaysAgo(5),
+      version: 0,
     },
     {
       id: 'cert-2',
@@ -126,6 +133,7 @@ function buildSeedCerts(): CertItem[] {
       organization: '여성가족부',
       certifiedOn: '2024-11-01',
       createdAt: isoDaysAgo(50),
+      version: 0,
     },
     {
       id: 'cert-3',
@@ -134,6 +142,7 @@ function buildSeedCerts(): CertItem[] {
       organization: '행정안전부',
       certifiedOn: '2023-03-20',
       createdAt: isoDaysAgo(100),
+      version: 0,
     },
     {
       id: 'cert-4',
@@ -142,13 +151,14 @@ function buildSeedCerts(): CertItem[] {
       organization: '한국표준협회',
       certifiedOn: '2022-07-08',
       createdAt: isoDaysAgo(150),
+      version: 0,
     },
   ]
 }
 
 /* ── Generic file helpers ───────────────────────── */
 
-function readFile<T>(key: string, seed: () => T[]): T[] {
+function readFile<T extends { version?: number }>(key: string, seed: () => T[]): T[] {
   try {
     const raw = localStorage.getItem(key)
     if (!raw) {
@@ -162,7 +172,10 @@ function readFile<T>(key: string, seed: () => T[]): T[] {
       localStorage.setItem(key, JSON.stringify({ version: 1, items } satisfies FileV1<T>))
       return items
     }
-    return parsed.items
+    return parsed.items.map(item => ({
+      ...item,
+      version: typeof item.version === 'number' ? item.version : 0,
+    }))
   } catch {
     return seed()
   }
@@ -219,6 +232,7 @@ export function createHistoryItem(input: HistoryCreateInput): HistoryItem {
     month: input.month,
     content: input.content.trim(),
     createdAt: new Date().toISOString(),
+    version: 0,
   }
   writeFile(HISTORY_KEY, [row, ...items], HISTORY_CHANGED_EVENT)
   return row
@@ -287,6 +301,7 @@ export function createAwardItem(input: AwardCreateInput): AwardItem {
     organization: input.organization.trim(),
     awardedOn: input.awardedOn,
     createdAt: new Date().toISOString(),
+    version: 0,
   }
   writeFile(AWARD_KEY, [row, ...items], AWARD_CHANGED_EVENT)
   return row
@@ -357,6 +372,7 @@ export function createCertItem(input: CertCreateInput): CertItem {
     organization: input.organization.trim(),
     certifiedOn: input.certifiedOn,
     createdAt: new Date().toISOString(),
+    version: 0,
   }
   writeFile(CERT_KEY, [row, ...items], CERT_CHANGED_EVENT)
   return row

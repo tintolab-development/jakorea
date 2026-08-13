@@ -108,21 +108,21 @@ export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
   return (
     <>
       <EditableRow type="double">
-        <EditableField
-          label={isInstructorPermissionDetail ? '권한 승인 현황' : '정산 현황'}
-          readOnlyDisplay
-          view={
-            isInstructorPermissionDetail ? (
+        {isInstructorPermissionDetail ? (
+          <EditableField
+            label="권한 승인 현황"
+            readOnlyDisplay
+            view={
               <PermissionApprovalStatusWithResend
                 user={user}
                 onPermissionResendNotification={onPermissionResendNotification}
                 notifyPermissionRole="instructor"
               />
-            ) : (
-              settlementStatusView(user)
-            )
-          }
-        />
+            }
+          />
+        ) : (
+          <EditableField label="정산 현황" readOnlyDisplay view={settlementStatusView(user)} />
+        )}
         <EditableField
           label="JA 평가 등급"
           readOnlyDisplay

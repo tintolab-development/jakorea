@@ -43,6 +43,7 @@ function cloneIntro(data: JaKoreaIntro): JaKoreaIntro {
     vision: { ...data.vision },
     mission: { ...data.mission },
     updatedAt: data.updatedAt,
+    version: data.version,
   }
 }
 

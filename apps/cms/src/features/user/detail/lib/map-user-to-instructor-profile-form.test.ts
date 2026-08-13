@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { User } from '@/types/user'
 import { INITIAL_VALUES } from '@/features/user/shared/ui/instructor-profile-form'
 import {
+  mapInstructorFormConsentToEditableTermsAgreements,
   mapInstructorProfileFormToBasicInfoDraftPartial,
   mapUserToInstructorProfileFormValues,
 } from './map-user-to-instructor-profile-form'
@@ -58,7 +59,7 @@ describe('mapUserToInstructorProfileFormValues', () => {
     expect(values.employmentStatus).toBe('ACTIVE')
   })
 
-  it('상세 수정 draft에 termsAgreements(동의 여부)를 포함한다', () => {
+  it('상세 수정 draft에 termsAgreements를 포함하지 않는다 (동의는 별도 sync)', () => {
     const draft = mapInstructorProfileFormToBasicInfoDraftPartial({
       ...INITIAL_VALUES,
       name: '김강사',
@@ -69,16 +70,29 @@ describe('mapUserToInstructorProfileFormValues', () => {
       consentTermsOfService: 'agree',
       consentPersonal: 'agree',
       consentMarketing: 'disagree',
-      consentPortrait: 'agree',
-      consentPaymentStatement: 'disagree',
-      consentEducatorPledge: 'agree',
-      consentAdministrativeJoint: 'disagree',
-      consentSexOffenseCheck: 'agree',
     })
 
-    expect(draft.termsAgreements).toEqual(
+    expect(draft).not.toHaveProperty('termsAgreements')
+  })
+
+  it('동의 폼값 → 선택 termsAgreements 매핑 (기존 version 유지)', () => {
+    const terms = mapInstructorFormConsentToEditableTermsAgreements(
+      {
+        consentTermsOfService: 'agree',
+        consentPersonal: 'agree',
+        consentMarketing: 'disagree',
+        consentPortrait: 'agree',
+        consentPaymentStatement: 'disagree',
+        consentEducatorPledge: 'agree',
+        consentAdministrativeJoint: 'disagree',
+        consentSexOffenseCheck: 'agree',
+      },
+      [{ termsType: 'MARKETING', version: '2026-01', required: false, agreed: true }]
+    )
+
+    expect(terms).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ termsType: 'MARKETING', agreed: false }),
+        expect.objectContaining({ termsType: 'MARKETING', agreed: false, version: '2026-01' }),
         expect.objectContaining({ termsType: 'PORTRAIT_RIGHTS', agreed: true }),
         expect.objectContaining({ termsType: 'PAYMENT_STATEMENT_PRE_CONSENT', agreed: false }),
         expect.objectContaining({ termsType: 'FACILITATOR_PLEDGE', agreed: true }),
@@ -86,7 +100,7 @@ describe('mapUserToInstructorProfileFormValues', () => {
         expect.objectContaining({ termsType: 'CRIMINAL_HISTORY_CHECK_CONSENT', agreed: true }),
       ])
     )
-    expect(draft.termsAgreements?.some(r => r.termsType === 'SERVICE_TERMS')).toBe(false)
-    expect(draft.termsAgreements?.some(r => r.termsType === 'PRIVACY_COLLECTION')).toBe(false)
+    expect(terms?.some(r => r.termsType === 'SERVICE_TERMS')).toBe(false)
+    expect(terms?.some(r => r.termsType === 'PRIVACY_COLLECTION')).toBe(false)
   })
 })

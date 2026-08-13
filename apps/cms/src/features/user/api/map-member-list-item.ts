@@ -9,6 +9,7 @@ import {
   mapMemberStatusToIsActive,
   memberRolesIncludeSchool,
   resolvePrimaryUserRoleFromRoles,
+  inferInstructorMemberProfileFromRoles,
 } from '@/features/user/api/map-member-role'
 import { mapApiUserListRowMetrics } from '@/features/user/api/map-user-list-row-metrics'
 import {
@@ -57,6 +58,9 @@ function inferInstructorMemberProfileFromListItem(
   if (fromApi) return fromApi
 
   if (item.affiliatedSchoolUserId?.trim()) return 'instructor_dual'
+
+  const fromRoles = inferInstructorMemberProfileFromRoles(item.roles)
+  if (fromRoles) return fromRoles
 
   const typeLabel =
     item.listMetrics?.permissionApplicationTypeLabel?.trim() ||

@@ -5,7 +5,7 @@ import { ADMIN_PRE_REGISTER_TERMS_VERSION } from '@/features/user/api/build-pre-
 
 /**
  * 회원 기본정보 PATCH로 **수정 불가**인 필수 약관.
- * FE·BE 공통 — 상세에서 라디오 잠금, PATCH body에서 제외, 서버도 거부.
+ * FE·BE 공통 — 상세 수정 모드에서 라디오 disabled 노출, PATCH body에서 제외, 서버도 거부.
  */
 export const MEMBER_BASIC_INFO_IMMUTABLE_TERMS_TYPES = [
   'SERVICE_TERMS',
@@ -66,7 +66,7 @@ export function termsAgreementRowsToRequests(
     }))
 }
 
-/** draft에 선택 동의만 upsert */
+/** draft에 선택 동의만 upsert — 기존 version 유지 */
 export function upsertEditableTermsAgreementInDraft(
   existing: TermsAgreementRequest[] | undefined,
   label: string,
@@ -78,16 +78,52 @@ export function upsertEditableTermsAgreementInDraft(
   const base = (existing ?? []).filter(
     row => !isMemberBasicInfoImmutableTermsType(row.termsType)
   )
+  const prev = base.find(row => row.termsType === termsType)
   const without = base.filter(row => row.termsType !== termsType)
   return [
     ...without,
     {
       termsType,
-      version: ADMIN_PRE_REGISTER_TERMS_VERSION,
+      version: prev?.version?.trim() || ADMIN_PRE_REGISTER_TERMS_VERSION,
       required: false,
       agreed,
     },
   ]
+}
+
+/** PATCH 선택 약관을 상세 termsAgreements에 항목별로 병합 (필수 약관 유지) */
+export function mergeTermsAgreementRowsFromPatch(
+  existing: TermsAgreementRow[] | undefined,
+  patchRows: TermsAgreementRequest[]
+): TermsAgreementRow[] {
+  const overlay = new Map<string, TermsAgreementRow>()
+  for (const row of patchRows) {
+    const termsType = row.termsType?.trim()
+    if (!termsType) continue
+    overlay.set(termsType, {
+      termsType,
+      termsVersion: row.version,
+      required: row.required,
+      agreed: row.agreed,
+    })
+  }
+
+  const seen = new Set<string>()
+  const merged: TermsAgreementRow[] = []
+  for (const row of existing ?? []) {
+    const key = row.termsType?.trim()
+    if (!key) {
+      merged.push(row)
+      continue
+    }
+    seen.add(key)
+    const next = overlay.get(key)
+    merged.push(next ? { ...row, ...next } : row)
+  }
+  for (const [key, row] of overlay) {
+    if (!seen.has(key)) merged.push(row)
+  }
+  return merged
 }
 
 export function resolveEditableConsentAgreedFromDraft(

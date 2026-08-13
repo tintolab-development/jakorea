@@ -46,6 +46,12 @@ import { FindPasswordPage } from '@/pages/auth/find-password-page'
 import { FindPasswordIdentityCallbackPage } from '@/pages/auth/find-password-identity-callback-page'
 import { FindPasswordIdentityMockNicePage } from '@/pages/auth/find-password-identity-mock-nice-page'
 import { MfaPage } from '@/pages/auth/mfa-page'
+import { PasswordChangeRequiredPage } from '@/pages/auth/password-change-required-page'
+import { PasswordChangeRequiredBirthPage } from '@/pages/auth/password-change-required-birth-page'
+import { PasswordChangeRequiredIdentityPage } from '@/pages/auth/password-change-required-identity-page'
+import { PasswordChangeRequiredChangePasswordPage } from '@/pages/auth/password-change-required-change-password-page'
+import { PasswordChangeRequiredIdentityCallbackPage } from '@/pages/auth/password-change-required-identity-callback-page'
+import { PasswordChangeRequiredIdentityMockNicePage } from '@/pages/auth/password-change-required-identity-mock-nice-page'
 import { OAuthCallbackPage } from '@/pages/auth/oauth-callback-page'
 import { LoginSocialCompletePage } from '@/pages/auth/login-social-complete-page'
 import { RegisterSocialSignupCallbackPage } from '@/pages/auth/register-social-signup-callback-page'
@@ -275,6 +281,30 @@ export const router = createBrowserRouter([
   {
     path: '/auth/mfa',
     element: <MfaPage />,
+  },
+  {
+    path: '/auth/password-change-required',
+    element: <PasswordChangeRequiredPage />,
+  },
+  {
+    path: '/auth/password-change-required/birth',
+    element: <PasswordChangeRequiredBirthPage />,
+  },
+  {
+    path: '/auth/password-change-required/identity',
+    element: <PasswordChangeRequiredIdentityPage />,
+  },
+  {
+    path: '/auth/password-change-required/identity/callback',
+    element: <PasswordChangeRequiredIdentityCallbackPage />,
+  },
+  {
+    path: '/auth/password-change-required/identity/mock',
+    element: <PasswordChangeRequiredIdentityMockNicePage />,
+  },
+  {
+    path: '/auth/password-change-required/change-password',
+    element: <PasswordChangeRequiredChangePasswordPage />,
   },
   {
     path: '/forbidden',

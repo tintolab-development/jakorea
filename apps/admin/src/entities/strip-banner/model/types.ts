@@ -7,6 +7,8 @@ export type StripBanner = {
   /** 1-based 노출 순서 */
   sortOrder: number
   isActive: boolean
+  /** 낙관적 잠금 (remote 필수). mock은 0 */
+  version: number
   /** 배너 문구 */
   text: string
   /** YYYY-MM-DD */

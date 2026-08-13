@@ -16,6 +16,8 @@ export type BoardMember = {
   nameEn: string
   position: string
   affiliation: string
+  /** 낙관적 잠금 (remote 필수). mock은 0 */
+  version: number
 }
 
 export type BoardMemberCreateInput = {

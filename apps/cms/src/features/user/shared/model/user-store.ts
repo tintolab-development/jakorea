@@ -74,12 +74,19 @@ interface UserStore {
       role?: UserRole
       adminAccountId?: number
       email?: string
+      instructorMemberProfile?: UserWithoutPassword['instructorMemberProfile']
     }
   ) => Promise<UserWithoutPassword | null>
   createUser: (request: CreateUserRequest) => Promise<UserWithoutPassword>
   deleteUser: (
     userId: UserId,
-    options?: { memberId?: number; adminAccountId?: number; role?: UserRole; email?: string }
+    options?: {
+      memberId?: number
+      adminAccountId?: number
+      organizationId?: number
+      role?: UserRole
+      email?: string
+    }
   ) => Promise<void>
   changeUserRole: (
     userId: UserId,

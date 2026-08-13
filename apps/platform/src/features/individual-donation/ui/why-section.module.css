@@ -1,0 +1,187 @@
+.section {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-40);
+  box-sizing: border-box;
+  padding-block: var(--spacing-48);
+  padding-inline: var(--page-padding-x);
+}
+
+.sectionHeader {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-20);
+}
+
+.title,
+.actionDescription {
+  margin: 0;
+}
+
+.action {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-12);
+}
+
+.actionButton {
+  display: inline-flex;
+  gap: var(--spacing-4);
+}
+
+.actionIcon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.cardList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.card {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-24);
+  background: var(--color-neutral-white);
+}
+
+.cardContent {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  overflow: hidden;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.cardContentFutureCapability {
+  background-image: url('../image/illustration/why-illustration-01.svg');
+}
+
+.cardContentEducationAccess {
+  background-image: url('../image/illustration/why-illustration-02.svg');
+}
+
+.cardInfo {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-20);
+  box-sizing: border-box;
+  padding: var(--spacing-24);
+}
+
+.badge {
+  flex-shrink: 0;
+  background-color: #fff;
+}
+
+.cardMessage {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.cardTitle,
+.cardDescription {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.media {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 220px;
+  aspect-ratio: 16 / 11;
+}
+
+.imageFrame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.image,
+.imagePlaceholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imagePlaceholder {
+  background: var(--color-neutral-cool-100);
+}
+
+@media (--bp-pc-up) {
+  .section {
+    gap: var(--spacing-48);
+    padding-block: var(--spacing-80);
+  }
+
+  .sectionHeader {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-24);
+  }
+
+  .action {
+    width: auto;
+    flex-direction: row;
+    flex-shrink: 0;
+    align-items: center;
+    gap: var(--spacing-16);
+  }
+
+  .cardList {
+    gap: var(--spacing-32);
+  }
+
+  .card {
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 320px;
+  }
+
+  .cardContent {
+    flex: 1 1 50%;
+    max-width: 50%;
+  }
+
+  .cardInfo {
+    padding: var(--spacing-60) var(--spacing-52);
+  }
+
+  .media {
+    flex: 1 1 50%;
+    max-width: 50%;
+    min-height: auto;
+    aspect-ratio: auto;
+  }
+}

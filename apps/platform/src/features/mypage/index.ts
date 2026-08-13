@@ -8,6 +8,8 @@ export type {
 } from './model/types'
 export {
   INSTRUCTOR_APPLY_PATH,
+  MOCK_MYPAGE_AFFILIATION,
+  MOCK_MYPAGE_EMPLOYMENT_LABEL,
   MOCK_MYPAGE_PROGRAM_STATS,
   MOCK_MYPAGE_USER_NAME,
   MYPAGE_PATH,
@@ -23,7 +25,7 @@ export {
 export { getMypageLnbItems } from './lib/lnb-config'
 export {
   getMypageProfileLabel,
-  isGeneralMypageReady,
+  isInstructorMypageProfile,
   showInstructorApplyCta,
 } from './lib/member-profile'
 export {

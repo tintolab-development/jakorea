@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { AdminLinkedSocialAccountResponse } from './adminLinkedSocialAccountResponse';
+import type { AdminTermsAgreementResponse } from './adminTermsAgreementResponse';
 
 export interface AdminAccountApprovalDetailResponse {
   /** 관리자 계정 PK. 관리자 조회/수정/삭제 경로에 사용합니다. */
@@ -30,4 +31,6 @@ export interface AdminAccountApprovalDetailResponse {
   createdAt?: string;
   updatedAt?: string;
   socialAccounts?: AdminLinkedSocialAccountResponse[];
+  /** 관리자 등록 약관 4종의 최신 동의 상태. SERVICE_TERMS, PRIVACY_COLLECTION, MFA_SETUP_CONSENT, MARKETING을 포함합니다. */
+  termsAgreements?: AdminTermsAgreementResponse[];
 }

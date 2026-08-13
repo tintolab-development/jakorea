@@ -1,12 +1,11 @@
-import { PFButton } from '@/shared/ui'
+import { HeroSection, WhySection } from '@/features/individual-donation'
 import styles from './page.module.css'
 
-export function SupportIndividualPage() {
+export function IndividualDonationPage() {
   return (
     <section className={styles.page}>
-      <PFButton size="large" variant="primary" type="button">
-        후원하기
-      </PFButton>
+      <HeroSection />
+      <WhySection />
     </section>
   )
 }

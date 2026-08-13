@@ -7,7 +7,7 @@ import {
   getAdminRegisteredWizardState,
   updateAdminRegisteredWizardState,
   type AdminRegisteredWizardState,
-} from '../lib/wizard-state'
+} from '../model/wizard-state'
 
 /**
  * 관리자 등록 온보딩 — 로그인 세션의 포털 프로필을 wizard에 반영.

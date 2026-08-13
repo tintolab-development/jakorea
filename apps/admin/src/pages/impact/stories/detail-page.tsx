@@ -54,7 +54,7 @@ export function ImpactStoryDetailPage() {
   const removeMutation = useRemoveImpactStories()
   const pinCountQuery = usePinnedImpactStoryCount(id)
 
-  useInvalidateOnWindowEvent(IMPACT_STORIES_CHANGED_EVENT, impactStoriesQueryKeys.all)
+  useInvalidateOnWindowEvent(IMPACT_STORIES_CHANGED_EVENT, impactStoriesQueryKeys.lists())
 
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -311,7 +311,12 @@ function ImpactStoryDetailView({
           )}
 
           <div className="impact-story-detail-page__body">
-            <RichTextViewer content={story.contentMarkdown} contentFormat="markdown" />
+            <RichTextViewer
+              content={story.contentMarkdown}
+              contentFormat={
+                story.contentMarkdown.trim().startsWith('<') ? 'html' : 'markdown'
+              }
+            />
           </div>
         </div>
 

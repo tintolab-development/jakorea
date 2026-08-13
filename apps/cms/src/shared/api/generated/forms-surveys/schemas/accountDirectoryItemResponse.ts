@@ -28,4 +28,8 @@ export interface AccountDirectoryItemResponse {
   roles?: string[];
   lastLoginAt?: string;
   createdAt?: string;
+  /** 관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다. */
+  adminAccountId?: number;
+  /** 사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다. */
+  memberId?: number;
 }

@@ -12,6 +12,7 @@ export type PiiAccessLog = {
 }
 
 export type PiiAccessListFilter = {
+  targetName?: string
   purpose?: string
   accessorName?: string
   from?: string | null

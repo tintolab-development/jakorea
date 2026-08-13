@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   BannerSaveInput,
   DonateCtaSaveInput,
+  IndividualDonationData,
   UsageGuideSaveItem,
 } from '@/entities/individual-donation/model/types'
 import { shouldUseIndividualDonationRemoteApi } from './capabilities'
@@ -17,6 +18,14 @@ function source(): 'remote' | 'local' {
   return shouldUseIndividualDonationRemoteApi() ? 'remote' : 'local'
 }
 
+function cachedDetail(
+  queryClient: ReturnType<typeof useQueryClient>,
+): IndividualDonationData | undefined {
+  return queryClient.getQueryData<IndividualDonationData>(
+    individualDonationQueryKeys.detail(source()),
+  )
+}
+
 export function useIndividualDonation(enabled = true) {
   const dataSource = source()
   return useQuery({
@@ -28,36 +37,40 @@ export function useIndividualDonation(enabled = true) {
   })
 }
 
-function useInvalidateDonation() {
+function useSetDonationCache() {
   const queryClient = useQueryClient()
-  return (data: Awaited<ReturnType<typeof getIndividualDonationService>>) => {
+  return (data: IndividualDonationData) => {
     queryClient.setQueryData(individualDonationQueryKeys.detail(source()), data)
-    void queryClient.invalidateQueries({ queryKey: individualDonationQueryKeys.all })
   }
 }
 
 export function useSaveBanner() {
-  const setCache = useInvalidateDonation()
+  const queryClient = useQueryClient()
+  const setCache = useSetDonationCache()
   return useMutation({
-    mutationFn: (input: BannerSaveInput) => saveBannerService(input),
+    mutationFn: (input: BannerSaveInput) => saveBannerService(input, cachedDetail(queryClient)),
     retry: false,
     onSuccess: data => setCache(data),
   })
 }
 
 export function useSaveUsageGuide() {
-  const setCache = useInvalidateDonation()
+  const queryClient = useQueryClient()
+  const setCache = useSetDonationCache()
   return useMutation({
-    mutationFn: (items: UsageGuideSaveItem[]) => saveUsageGuideService(items),
+    mutationFn: (items: UsageGuideSaveItem[]) =>
+      saveUsageGuideService(items, cachedDetail(queryClient)),
     retry: false,
     onSuccess: data => setCache(data),
   })
 }
 
 export function useSaveDonateCta() {
-  const setCache = useInvalidateDonation()
+  const queryClient = useQueryClient()
+  const setCache = useSetDonationCache()
   return useMutation({
-    mutationFn: (input: DonateCtaSaveInput) => saveDonateCtaService(input),
+    mutationFn: (input: DonateCtaSaveInput) =>
+      saveDonateCtaService(input, cachedDetail(queryClient)),
     retry: false,
     onSuccess: data => setCache(data),
   })

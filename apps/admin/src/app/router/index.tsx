@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
-import { HomePage } from '@/pages/home/page'
+import { ProtectedRoute } from '@/app/components/protected-route'
+import { LoginPage } from '@/pages/auth/login-page'
+import { AuthPlaceholderPage } from '@/pages/auth/auth-placeholder-page'
 import { BiPage } from '@/pages/ja-korea/bi/page'
 import { DirectionsPage } from '@/pages/ja-korea/directions/page'
 import { HistoryAwardsCertsPage } from '@/pages/ja-korea/history-awards-certs/page'
@@ -91,14 +93,52 @@ const leafRoutes = getLeafMenuPaths()
 
 export const router = createBrowserRouter([
   {
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
+    path: '/find-email',
+    element: (
+      <AuthPlaceholderPage
+        title="이메일 찾기"
+        description="이메일 찾기 화면은 이후 Phase에서 CMS Auth 플로우와 동일하게 연동합니다."
+      />
+    ),
+  },
+  {
+    path: '/find-password',
+    element: (
+      <AuthPlaceholderPage
+        title="비밀번호 찾기"
+        description="비밀번호 찾기 화면은 이후 Phase에서 CMS Auth 플로우와 동일하게 연동합니다."
+      />
+    ),
+  },
+  {
+    path: '/register',
+    element: (
+      <AuthPlaceholderPage
+        title="회원가입"
+        description="관리자 회원가입 화면은 이후 Phase에서 CMS 가입 위저드와 동일하게 연동합니다."
+      />
+    ),
+  },
+  {
     path: '/design-system',
     element: <DesignSystemPage />,
   },
   {
     path: '/',
-    element: <Layout />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     children: [
-      { index: true, element: <HomePage /> },
+      {
+        index: true,
+        element: <Navigate to="/main/popups" replace />,
+      },
       { path: 'main/strip-banners', element: <StripBannersPage /> },
       { path: 'main/hero-banners', element: <HeroBannersPage /> },
       { path: 'main/social-links', element: <SocialLinksPage /> },
@@ -164,7 +204,7 @@ export const router = createBrowserRouter([
       { path: 'logs/pii-access', element: <PiiAccessLogPage /> },
       { path: 'logs/bugs', element: <BugIssueLogPage /> },
       ...leafRoutes,
-      { path: '*', element: <Navigate to="/" replace /> },
+      { path: '*', element: <Navigate to="/main/popups" replace /> },
     ],
   },
 ])

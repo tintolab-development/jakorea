@@ -49,6 +49,7 @@ function buildSeedIntro(): JaKoreaIntro {
       mainText: '청소년이 마음껏 역량을 발휘하며 성공할 수 있도록 함께합니다.',
     },
     updatedAt: now,
+    version: 0,
   }
 }
 
@@ -107,6 +108,7 @@ function normalizeIntro(raw: Partial<JaKoreaIntro> | null | undefined): JaKoreaI
     vision: normalizeVisionMission(raw.vision, seed.vision),
     mission: normalizeVisionMission(raw.mission, seed.mission),
     updatedAt: asString(raw.updatedAt, seed.updatedAt),
+    version: typeof raw.version === 'number' ? raw.version : 0,
   }
 }
 
@@ -165,6 +167,7 @@ export function saveJaKoreaIntro(data: JaKoreaIntro): JaKoreaIntro {
       mainText: data.mission.mainText.trim(),
     },
     updatedAt: new Date().toISOString(),
+    version: data.version ?? 0,
   })
   writeIntroFile({ version: 1, data: next })
   return next

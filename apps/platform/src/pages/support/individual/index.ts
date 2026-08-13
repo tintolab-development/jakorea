@@ -1,1 +1,1 @@
-export { SupportIndividualPage } from './page'
+export { IndividualDonationPage } from './page'

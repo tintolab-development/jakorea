@@ -1,0 +1,59 @@
+---
+description: Admin mutation 후 불필요한 list GET 중복 방지 (캐시·PUT 응답 활용)
+globs: apps/admin/src/features/**/api/{hooks,service,mappers}.ts
+alwaysApply: false
+---
+
+# Admin API — Mutation fetch 증폭 방지
+
+토글·순서·일괄 저장 시 **mutation 1회당 list GET이 2번 이상** 나가면 버그로 본다.  
+(사례: 소셜 링크 사용여부 — `GET → PUT → invalidate GET`)
+
+목록 `size`를 키워 version을 모으는 것도 금지 — [list-page-size.mdc](./list-page-size.mdc).
+
+## 금지
+
+```ts
+// ❌ mutation 안에서 최신 version 위해 무조건 list GET
+const current = await api.list()
+await api.update(toRequest(current))
+
+// ❌ PUT/업데이트 응답으로 setQueryData 한 뒤 곧바로 invalidate (활성 쿼리 추가 GET)
+onSuccess: rows => {
+  queryClient.setQueryData(keys.list(source()), rows)
+  void queryClient.invalidateQueries({ queryKey: keys.lists() }) // 중복 GET
+}
+```
+
+## 필수
+
+1. **쓰기 전 스냅샷** — `queryClient.getQueryData(listKey)` 우선. 캐시 없거나 불완전할 때만 list GET.
+2. **응답이 전체 목록(+version)이면** `setQueryData`만. 성공 경로에서 list `invalidate`/`refetch` 하지 않음.
+3. **단건 응답만** 오면 해당 행 패치 또는 **그때만** list invalidate.
+4. **낙관적 잠금(version) 연속 조작** — mutation `isPending` 동안 토글/DnD 비활성(또는 직렬화). 캐시 version이 다음 요청에 쓰이게 한다.
+
+```ts
+// ✅
+mutationFn: input => {
+  const cached = queryClient.getQueryData<Row[]>(keys.list(source()))
+  return service.update(input, cached) // service: cached ?? await list()
+},
+onSuccess: rows => {
+  queryClient.setQueryData(keys.list(source()), rows) // PUT 전체 응답
+},
+```
+
+## 적용 판단
+
+| API 형태 | mutation 성공 후 |
+|----------|------------------|
+| bulk PUT/reorder가 **배열 전체** 반환 | `setQueryData` only |
+| toggle/update가 **단건** 반환 | 단건 패치 또는 list invalidate 1회 |
+| 로컬 mock 이벤트(`*CHANGED_EVENT`)만 | window invalidate 유지 (remote와 혼동 금지) |
+
+실패 시 UI에서 `refetch`/`invalidate`는 허용.
+
+참고 구현: `features/social-link/api/{service,hooks}.ts`  
+연동 게이트: [api-mock-remote.mdc](./api-mock-remote.mdc)
+
+**Last updated:** 2026-08-13

@@ -1,4 +1,8 @@
-/** 백엔드 연동 전까지 항상 로컬 mock */
+/**
+ * 방문자 통계 — remote API opt-in
+ */
+import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
+
 export function shouldUseVisitorStatsRemoteApi(): boolean {
-  return false
+  return shouldUseHomepageRemoteApi()
 }

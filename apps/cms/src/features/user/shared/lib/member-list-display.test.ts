@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getAllMemberListRoleTypeLabel,
   isInstructorPermissionRevoked,
+  matchesAllTabRoleFilter,
 } from './member-list-display'
 import { markInstructorPermissionRevoked } from './revoked-instructor-overlay'
 
@@ -54,5 +55,62 @@ describe('getAllMemberListRoleTypeLabel', () => {
         instructorMemberProfile: 'instructor_only',
       })
     ).toBe('강사')
+  })
+
+  it('SCHOOL_TEACHER(교사 단독)는 학교(교사)', () => {
+    expect(
+      getAllMemberListRoleTypeLabel({
+        role: 'INDIVIDUAL',
+        instructorMemberProfile: 'school_teacher',
+      })
+    ).toBe('학교(교사)')
+  })
+
+  it('교사 겸 강사는 학교(교사), 강사', () => {
+    expect(
+      getAllMemberListRoleTypeLabel({
+        role: 'INSTRUCTOR',
+        instructorMemberProfile: 'instructor_dual',
+      })
+    ).toBe('학교(교사), 강사')
+  })
+})
+
+describe('matchesAllTabRoleFilter', () => {
+  it('개인은 학교(교사)를 제외한다', () => {
+    expect(matchesAllTabRoleFilter({ role: 'INDIVIDUAL' }, 'INDIVIDUAL')).toBe(true)
+    expect(
+      matchesAllTabRoleFilter(
+        { role: 'INDIVIDUAL', instructorMemberProfile: 'school_teacher' },
+        'INDIVIDUAL'
+      )
+    ).toBe(false)
+    expect(
+      matchesAllTabRoleFilter(
+        { role: 'INDIVIDUAL', instructorMemberProfile: 'school_teacher' },
+        'SCHOOL_TEACHER'
+      )
+    ).toBe(true)
+  })
+
+  it('강사와 겸직을 구분한다', () => {
+    expect(
+      matchesAllTabRoleFilter(
+        { role: 'INSTRUCTOR', instructorMemberProfile: 'instructor_only' },
+        'INSTRUCTOR'
+      )
+    ).toBe(true)
+    expect(
+      matchesAllTabRoleFilter(
+        { role: 'INSTRUCTOR', instructorMemberProfile: 'instructor_dual' },
+        'INSTRUCTOR'
+      )
+    ).toBe(false)
+    expect(
+      matchesAllTabRoleFilter(
+        { role: 'INSTRUCTOR', instructorMemberProfile: 'instructor_dual' },
+        'INSTRUCTOR_DUAL'
+      )
+    ).toBe(true)
   })
 })

@@ -33,6 +33,7 @@ import {
   useAffiliatedTeachersQuery,
   useMemberCommentsQuery,
 } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
+import { parseOrganizationIdFromUserId } from '@/features/user/api/map-school-organization-to-user'
 import { applyMemberConsentToSchema } from '@/features/user/api/map-member-consent-records'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { upsertEditableTermsAgreementInDraft } from '@/features/user/api/member-basic-info-terms-patch'
@@ -99,21 +100,35 @@ export function UserDetailFullpageBasicTabContent({
   const consentViewVariant =
     mode === 'permission' && permissionRole === 'instructor' ? 'permission_instructor' : 'default'
 
+  /** 권한 승인 상세는 동의·소속교사 등은 신청 스냅샷 우선 — 관리자 코멘트는 memberId로 회원 상세와 동일 조회 */
+  const loadMemberSubresources = mode !== 'permission'
+  const loadMemberAdminComments =
+    membersRemote && canShowAdminCommentForTarget && user.memberId != null
+
+  /** 상세 `termsAgreements`가 있으면 consent-records는 사용하지 않음 — 중복 GET 생략 */
+  const needsConsentRecordsFallback =
+    loadMemberSubresources &&
+    basicTab.showConsentAgreement &&
+    (user.termsAgreements == null || user.termsAgreements.length === 0)
+
   const { data: consentRecords = [], isLoading: consentLoading } = useMemberConsentRecordsQuery(
     user.memberId,
-    membersRemote && basicTab.showConsentAgreement
+    membersRemote && needsConsentRecordsFallback
   )
 
   const {
     data: commentsData,
     isError: commentsError,
     isLoading: commentsLoading,
-  } = useMemberCommentsQuery(user.memberId, membersRemote && canShowAdminCommentForTarget)
+  } = useMemberCommentsQuery(user.memberId, loadMemberAdminComments)
+
+  const schoolOrganizationId =
+    user.organizationId ?? parseOrganizationIdFromUserId(user.id) ?? undefined
 
   const { data: affiliatedTeachers = [], isError: teachersError } = useAffiliatedTeachersQuery(
     user.memberId,
-    membersRemote && basicTab.showSchoolAffiliatedTeachers,
-    user.organizationId
+    membersRemote && loadMemberSubresources && basicTab.showSchoolAffiliatedTeachers,
+    schoolOrganizationId
   )
 
   const userForAdminComment = useMemo(() => {
@@ -141,14 +156,14 @@ export function UserDetailFullpageBasicTabContent({
         return
       }
       try {
-        if (user.organizationId != null) {
+        if (schoolOrganizationId != null) {
           await updateTeacherEmploymentStatusRemote(
-            user.organizationId,
+            schoolOrganizationId,
             teacherMemberId,
             status
           )
           await queryClient.invalidateQueries({
-            queryKey: memberQueryKeys.schoolTeachers(user.organizationId),
+            queryKey: memberQueryKeys.schoolTeachers(schoolOrganizationId),
           })
         } else if (user.memberId != null) {
           await updateAffiliatedTeacherEmploymentStatusRemote(
@@ -171,7 +186,7 @@ export function UserDetailFullpageBasicTabContent({
         })
       }
     },
-    [membersRemote, user.organizationId, user.memberId, affiliatedTeacherRows, queryClient]
+    [membersRemote, schoolOrganizationId, user.memberId, affiliatedTeacherRows, queryClient]
   )
 
   const remoteConsentRows = useMemo(() => {
@@ -205,15 +220,17 @@ export function UserDetailFullpageBasicTabContent({
     onMemberInfoDraftChange,
   })
 
-  const individualConsentEditing = Boolean(
+  /** 개인·관리자 상세 — 선택 동의 편집 / 필수 동의는 라디오 disabled */
+  const memberConsentEditing = Boolean(
     memberInfoEditing &&
-      user.role === 'INDIVIDUAL' &&
+      (user.role === 'INDIVIDUAL' || user.role === 'ADMIN') &&
       shouldShowCmsMemberInfoEditButton(user) &&
+      (user.role !== 'ADMIN' || adminMemberProfileFieldsEditableWhenEditing) &&
       memberInfoDraft != null &&
       onMemberInfoDraftChange != null
   )
 
-  const handleIndividualEditableConsentChange = useCallback(
+  const handleEditableConsentChange = useCallback(
     (label: string, agreed: boolean) => {
       if (!onMemberInfoDraftChange) return
       onMemberInfoDraftChange({
@@ -274,10 +291,10 @@ export function UserDetailFullpageBasicTabContent({
               viewVariant={consentViewVariant}
               remoteConsentRows={remoteConsentRows}
               remoteConsentLoading={membersRemote && consentLoading}
-              editing={individualConsentEditing}
+              editing={memberConsentEditing}
               draftTermsAgreements={memberInfoDraft?.termsAgreements}
               onEditableConsentChange={
-                individualConsentEditing ? handleIndividualEditableConsentChange : undefined
+                memberConsentEditing ? handleEditableConsentChange : undefined
               }
             />
           ) : null}
