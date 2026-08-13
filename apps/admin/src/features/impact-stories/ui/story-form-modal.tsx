@@ -11,6 +11,7 @@ import type {
   ImpactStoryCreateInput,
 } from '@/entities/impact-stories/model/types'
 import { DEFAULT_AUTHOR } from '@/features/impact-stories/api/store'
+import { shouldUseImpactStoriesRemoteApi } from '@/features/impact-stories/api/capabilities'
 import { useStoryWysiwygEditor } from '@/features/impact-stories/hooks/use-story-wysiwyg-editor'
 import { IMPACT_STORY_PIN_MAX } from '@/features/impact-stories/lib/pin-limits'
 import { RichTextEditor } from '@/shared/rich-text'
@@ -116,16 +117,28 @@ export function StoryFormModal({
     return ''
   }, [open, mode, initial])
 
+  const useRemote = shouldUseImpactStoriesRemoteApi()
+  const editorContentFormat = useMemo((): 'markdown' | 'html' => {
+    if (!useRemote) return 'markdown'
+    const body = initialMarkdown.trim()
+    return body.startsWith('<') ? 'html' : 'markdown'
+  }, [initialMarkdown, useRemote])
+
   const editorResetKey = useMemo(
-    () => (open ? `${mode}-${initial?.id ?? 'new'}` : 'closed'),
-    [open, mode, initial?.id]
+    () => (open ? `${mode}-${initial?.id ?? 'new'}-${editorContentFormat}` : 'closed'),
+    [open, mode, initial?.id, editorContentFormat]
   )
 
-  const { editor, getMarkdown } = useStoryWysiwygEditor(
+  const { editor, editorMinHeight, getMarkdown, getHTML } = useStoryWysiwygEditor(
     open,
     initialMarkdown,
     editorResetKey,
-    { placeholder: '게시글 내용을 입력하세요' }
+    {
+      placeholder: '게시글 내용을 입력하세요',
+      contentFormat: editorContentFormat,
+      // 기존 스펙: 삽입(이미지·YouTube) 유지
+      allowInlineMedia: true,
+    }
   )
 
   const categoryOptions = useMemo(
@@ -184,6 +197,7 @@ export function StoryFormModal({
             name: file.name,
             mime: mimeFromFile(file),
             dataUrl,
+            file: shouldUseImpactStoriesRemoteApi() ? file : undefined,
           })
         } catch {
           showAlert({
@@ -225,7 +239,9 @@ export function StoryFormModal({
       showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
       return
     }
-    const contentMarkdown = getMarkdown().trim()
+    const contentMarkdown = (
+      shouldUseImpactStoriesRemoteApi() ? getHTML() : getMarkdown()
+    ).trim()
     if (!contentMarkdown) {
       showAlert({ title: '입력 확인', content: '게시글 내용을 입력해 주세요.' })
       return
@@ -252,6 +268,7 @@ export function StoryFormModal({
     categoryId,
     title,
     getMarkdown,
+    getHTML,
     isPublic,
     isPinned,
     pinnedCountExcludingSelf,
@@ -385,7 +402,11 @@ export function StoryFormModal({
           <div className="story-form-modal__section story-form-modal__section--editor">
             <FieldLabel required>내용</FieldLabel>
             <div className="story-form-modal__editor-host">
-              <RichTextEditor editor={editor} />
+              <RichTextEditor
+                editor={editor}
+                minHeight={editorMinHeight}
+                allowInlineMedia
+              />
             </div>
           </div>
 

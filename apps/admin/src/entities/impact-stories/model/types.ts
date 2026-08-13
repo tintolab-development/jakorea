@@ -8,20 +8,31 @@ export type ImpactStoryAttachment = {
   id: string
   name: string
   mime: ImpactStoryAttachmentMime
-  /** mock: data URL */
+  /** mock: data URL / remote: publicUrl */
   dataUrl?: string
+  /** remote upload용 원본 File (신규 선택 시) */
+  file?: File
+  /** remote asset id */
+  assetId?: number
 }
 
 export type ImpactStoryCategory = {
   id: string
   name: string
   sortOrder: number
+  /** remote optimistic concurrency */
+  version?: number
+  /** remote: 연결된 스토리 수 (삭제 가드) */
+  storyCount?: number
 }
 
 export type ImpactStory = {
   id: string
   categoryId: string
+  /** list API 편의 필드 */
+  categoryName?: string
   title: string
+  /** 에디터 본문 — local은 markdown, remote 응답은 HTML일 수 있음 */
   contentMarkdown: string
   isPublic: boolean
   isPinned: boolean
@@ -32,6 +43,8 @@ export type ImpactStory = {
   updatedAt: string
   viewCount: number
   attachments: ImpactStoryAttachment[]
+  /** Optimistic locking — remote API */
+  version?: number
 }
 
 export type ImpactStoryListFilter = {
