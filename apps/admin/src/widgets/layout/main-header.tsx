@@ -1,12 +1,13 @@
 /**
  * 콘텐츠 상단 GNB — CMS MainHeader 이식
- * (auth/알림 API 연동 전: mock 유저·알림 UI)
+ * (알림 API 연동 전: mock 알림 UI · 유저는 auth store)
  */
 
 import { Layout, Space, Typography, Dropdown, message } from 'antd'
 import { BellOutlined, BellFilled } from '@ant-design/icons'
 import { useMemo, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import {
   NotificationDropdown,
@@ -16,12 +17,6 @@ import './main-header.css'
 
 const { Header: AntHeader } = Layout
 const { Text } = Typography
-
-/** 셸용 mock 세션 — 이후 auth store로 교체 */
-const MOCK_USER = {
-  roleLabel: '최고관리자',
-  name: '홍길동',
-} as const
 
 const MOCK_NOTIFICATIONS: HeaderNotification[] = [
   {
@@ -56,6 +51,9 @@ const MOCK_NOTIFICATIONS: HeaderNotification[] = [
 
 export function MainHeader() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const user = useAuthStore(state => state.user)
+  const logout = useAuthStore(state => state.logout)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false)
   const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS)
@@ -69,6 +67,10 @@ export function MainHeader() {
     () => notifications.filter(n => !n.read).length,
     [notifications]
   )
+
+  const roleLabel =
+    user?.adminLevel === 'MASTER' || !user?.adminLevel ? '최고관리자' : '관리자'
+  const displayName = user?.name?.trim() || user?.email || '관리자'
 
   const handleNotificationClick = (notification: HeaderNotification) => {
     setNotifications(prev =>
@@ -86,7 +88,8 @@ export function MainHeader() {
       message.info('알림 설정은 이후 Phase에서 연동합니다.')
       return
     }
-    message.info('로그아웃은 이후 Phase에서 연동합니다.')
+    logout()
+    navigate('/login', { replace: true })
   }
 
   return (
@@ -126,10 +129,10 @@ export function MainHeader() {
             </Dropdown>
 
             <div className="main-header-user-info">
-              <Text className="main-header-user-role">{MOCK_USER.roleLabel}</Text>
+              <Text className="main-header-user-role">{roleLabel}</Text>
               <div className="main-header-user-divider" />
               <Text className="main-header-user-name" strong>
-                {MOCK_USER.name}
+                {displayName}
               </Text>
               <div className="main-header-avatar-button" aria-hidden="true">
                 <svg

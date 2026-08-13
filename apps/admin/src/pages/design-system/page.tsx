@@ -5,6 +5,7 @@
 
 import { useEffect } from 'react'
 import { ButtonsSection } from './ui/buttons-section'
+import { AuthSection } from './ui/auth-section'
 import { DetailFormsSection } from './ui/detail-forms-section'
 import { FoundationsSection } from './ui/foundations-section'
 import { FormsSection } from './ui/forms-section'
@@ -38,6 +39,7 @@ export function DesignSystemPage() {
 
           <FoundationsSection />
           <ButtonsSection />
+          <AuthSection />
           <FormsSection />
           <DetailFormsSection />
           <ListLayoutSection />
