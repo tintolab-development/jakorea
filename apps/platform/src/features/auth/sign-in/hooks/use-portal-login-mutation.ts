@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
-import { postPortalLogin } from './client'
-import type { MemberLoginRequest } from './types'
+import { postPortalLogin } from '../api/client'
+import type { MemberLoginRequest } from '../api/types'
 
 export function usePortalLoginMutation() {
   return useMutation({

@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
-import { portalMePaths } from '@/features/auth/sign-in/api/endpoints'
+import { portalMePaths } from '@/features/auth/sign-in'
 import {
   parseInstructorRoleRequestSummary,
   parseInstructorRoleWorkflowResponse,
