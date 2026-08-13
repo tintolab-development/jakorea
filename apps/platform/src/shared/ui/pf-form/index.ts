@@ -17,12 +17,18 @@ export type {
   PFFormFieldValueTextProps,
 } from './pf-form-field'
 export {
+  PFFormControlCluster,
   PFFormInlineRow,
   PFFormInlineSegment,
   PFFormInlineSeparator,
+  PFFormPeriodPair,
+  PFFormPeriodTilde,
 } from './pf-form-inline'
 export type {
+  PFFormControlClusterProps,
   PFFormInlineRowProps,
   PFFormInlineSegmentProps,
   PFFormInlineSeparatorProps,
+  PFFormPeriodPairProps,
+  PFFormPeriodTildeProps,
 } from './pf-form-inline'

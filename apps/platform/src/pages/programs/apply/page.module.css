@@ -38,6 +38,10 @@
   margin-bottom: var(--spacing-32);
 }
 
+.pageTitle {
+  margin: 0;
+}
+
 .summary {
   display: flex;
   flex-direction: column;
@@ -105,9 +109,45 @@
   justify-content: center;
 }
 
-/* ── PC 양식 셸 (PFFormPage와 동일 compact/full) ──
- * ≤1079 모바일 레이아웃은 별도 — 이번 범위 밖
+/* ── 양식 셸 (PFFormPage와 동일) ──
+ * ≤1079: 상하 40 · 바깥 여백 max(20,(100%-520)/2)
+ *   · .inner 375–520 (border-box, 좌우 20 패딩 포함)
+ * 1080–1599: 좌우 80
+ * ≥1600: fluid 1440
  */
+@media (--bp-below-pc) {
+  .page {
+    padding-block: 40px;
+    /* 바깥 여백: 최소 20, 뷰포트 > 560이면 (100%-520)/2 로 증가 */
+    padding-inline: max(20px, calc((100% - 520px) / 2));
+    gap: 0;
+  }
+
+  .back {
+    margin-bottom: var(--spacing-16);
+  }
+
+  .inner {
+    /* border-box: 520/375에 좌우 20 패딩 포함 (안쪽 가용 ≈ 480/335) */
+    width: 100%;
+    max-width: 520px;
+    min-width: min(100%, 375px);
+    padding-inline: 20px;
+  }
+
+  .header {
+    margin-bottom: var(--spacing-20);
+  }
+
+  /* PFFormPage 모바일 타이틀과 동일 — 완전 일치 토큰 없음 */
+  .header .pageTitle {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: normal;
+    letter-spacing: -0.48px;
+  }
+}
+
 @media (--bp-pc-compact) {
   .page {
     gap: var(--spacing-74);

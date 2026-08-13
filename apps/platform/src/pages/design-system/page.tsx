@@ -34,6 +34,7 @@ import {
   PFMetaBadge,
   PFPagination,
   PFSearchFilter,
+  PFSearchDateFilter,
   PFSearchInput,
   PFStateBadge,
   PFStepProgress,
@@ -66,6 +67,7 @@ import {
   mockOrgFilterOptions,
   recruitmentStatusFilterOptions,
 } from '@/shared/lib/filter-options'
+import { DATE_INPUT_MIN_YEAR, getDateInputMaxYear } from '@/shared/ui/pf-date-input/date-utils'
 import styles from './page.module.css'
 import { FormTemplateSmokeDemo } from '@/features/form-template/form-template-smoke-demo'
 
@@ -760,6 +762,7 @@ export function DesignSystemPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFilterValue, setSearchFilterValue] = useState('all')
   const [searchFilterStatus, setSearchFilterStatus] = useState('all')
+  const [searchDateFilterValue, setSearchDateFilterValue] = useState('all')
   const [selectValue, setSelectValue] = useState('')
   const [selectCompletedValue, setSelectCompletedValue] = useState('edit')
   const [toggleLarge, setToggleLarge] = useState(false)
@@ -781,6 +784,7 @@ export function DesignSystemPage() {
   const [isAddressSearchModalOpen, setIsAddressSearchModalOpen] = useState(false)
   const [selectedAddress, setSelectedAddress] = useState('')
   const [isSchoolSearchModalOpen, setIsSchoolSearchModalOpen] = useState(false)
+  const [schoolSearchKindFilter, setSchoolSearchKindFilter] = useState<string | undefined>()
   const [selectedSchool, setSelectedSchool] = useState('')
   const [isElectronicSignatureOpen, setIsElectronicSignatureOpen] = useState(false)
   const [isElectronicSignatureEditConfirmOpen, setIsElectronicSignatureEditConfirmOpen] =
@@ -1245,20 +1249,34 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
         <div className={styles.buttonStack}>
           <div className={styles.buttonRow}>
             <PFText typo="label-md" color="neutral-cool-500">
-              default
+              large (default)
             </PFText>
             <div className={styles.buttonList}>
-              <PFChevronButton direction="left" aria-label="이전" />
-              <PFChevronButton direction="right" aria-label="다음" />
+              <PFChevronButton direction="left" aria-label="이전 large" />
+              <PFChevronButton direction="right" aria-label="다음 large" />
+              <PFChevronButton direction="left" disabled aria-label="이전 large disabled" />
+              <PFChevronButton direction="right" disabled aria-label="다음 large disabled" />
             </div>
           </div>
           <div className={styles.buttonRow}>
             <PFText typo="label-md" color="neutral-cool-500">
-              disabled
+              small
             </PFText>
             <div className={styles.buttonList}>
-              <PFChevronButton direction="left" disabled aria-label="이전 disabled" />
-              <PFChevronButton direction="right" disabled aria-label="다음 disabled" />
+              <PFChevronButton size="small" direction="left" aria-label="이전 small" />
+              <PFChevronButton size="small" direction="right" aria-label="다음 small" />
+              <PFChevronButton
+                size="small"
+                direction="left"
+                disabled
+                aria-label="이전 small disabled"
+              />
+              <PFChevronButton
+                size="small"
+                direction="right"
+                disabled
+                aria-label="다음 small disabled"
+              />
             </div>
           </div>
           <div className={styles.buttonRow}>
@@ -1268,6 +1286,8 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
             <div className={styles.buttonList}>
               <PFChevronButton direction="left" decorative />
               <PFChevronButton direction="right" decorative />
+              <PFChevronButton size="small" direction="left" decorative />
+              <PFChevronButton size="small" direction="right" decorative />
             </div>
           </div>
         </div>
@@ -1501,6 +1521,10 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
         <PFText as="div" typo="hl-sm" color="black">
           PFDateInput
         </PFText>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          선택 가능 연도: {DATE_INPUT_MIN_YEAR}년 ~ {getDateInputMaxYear()}년 (당일 + 10년). `picker`로
+          일·월·년 단위를 지정합니다.
+        </PFText>
         <div className={styles.inputStack}>
           {inputSizes.map(size => (
             <div className={styles.inputRow} key={size}>
@@ -1527,6 +1551,14 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
               />
             </div>
           ))}
+          <div className={styles.inputRow}>
+            <PFText as="span" typo="label-md" color="neutral-cool-500">
+              picker
+            </PFText>
+            <PFDateInput picker="date" label="일" placeholder="YYYY-MM-DD" defaultValue="2026-03-21" />
+            <PFDateInput picker="month" label="월" placeholder="YYYY-MM" defaultValue="2026-03" />
+            <PFDateInput picker="year" label="년" placeholder="YYYY" defaultValue="2026" />
+          </div>
         </div>
       </div>
 
@@ -1622,6 +1654,36 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
             <PFSearchFilter
               label="모집현황"
               options={recruitmentStatusFilterOptions}
+              value="all"
+              onChange={() => undefined}
+              disabled
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
+        <PFText as="div" typo="hl-sm" color="black">
+          PFSearchDateFilter
+        </PFText>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          목록 필터용 날짜 범위 선택. `PFSearchFilter`와 동일한 트리거 스타일이며, 팝오버에서
+          `PFDatePickerCalendar` range 모드를 사용합니다.
+        </PFText>
+        <div className={styles.searchStack}>
+          <div className={styles.searchFilterRow}>
+            <PFSearchDateFilter
+              label="기간"
+              value={searchDateFilterValue}
+              onChange={setSearchDateFilterValue}
+            />
+            <PFSearchDateFilter
+              label="기간"
+              value="2026-01-01~2026-03-31"
+              onChange={() => undefined}
+            />
+            <PFSearchDateFilter
+              label="기간"
               value="all"
               onChange={() => undefined}
               disabled
@@ -2035,15 +2097,51 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
           학교 검색창 팝업 (SchoolSearchModal)
         </PFText>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          회원가입 소속/학교 검색과 동일한 NEIS 학교 검색 모달입니다. 시·도 / 시·군·구 선택 후
-          학교명 검색.
+          회원가입·강사 신청 등에서 공통 사용. NEIS(초·중·고) + CareerNet(대학·전문대) 통합 검색.
+          1행: 학교급 · 시/도 · 시/군/구(선택) · 2행: 학교명 + 검색. 학교명 미입력 시 빨간 스트로크.
+          `schoolKindFilter`로 학교급 고정 시 해당 API만 호출합니다.
         </PFText>
         <div className={styles.specCompareRow}>
           <div className={styles.specCompareDemo}>
             <div className={styles.modalStack}>
-              <PFButton variant="secondary" onClick={() => setIsSchoolSearchModalOpen(true)}>
-                학교 검색 팝업 열기
-              </PFButton>
+              <div className={styles.buttonList}>
+                <PFButton
+                  variant="secondary"
+                  onClick={() => {
+                    setSchoolSearchKindFilter(undefined)
+                    setIsSchoolSearchModalOpen(true)
+                  }}
+                >
+                  전체 학교급
+                </PFButton>
+                <PFButton
+                  variant="secondary"
+                  onClick={() => {
+                    setSchoolSearchKindFilter('고등학교')
+                    setIsSchoolSearchModalOpen(true)
+                  }}
+                >
+                  고등학교 고정
+                </PFButton>
+                <PFButton
+                  variant="secondary"
+                  onClick={() => {
+                    setSchoolSearchKindFilter('전문대학')
+                    setIsSchoolSearchModalOpen(true)
+                  }}
+                >
+                  전문대학 고정
+                </PFButton>
+                <PFButton
+                  variant="secondary"
+                  onClick={() => {
+                    setSchoolSearchKindFilter('대학교')
+                    setIsSchoolSearchModalOpen(true)
+                  }}
+                >
+                  대학교 고정
+                </PFButton>
+              </div>
               {selectedSchool ? (
                 <PFText as="p" typo="bd-sm-md" color="black">
                   선택 학교: {selectedSchool}
@@ -2058,22 +2156,7 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
             <ul className={styles.specCompareGapsList}>
               <li className={styles.specCompareGapsItem}>
                 <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
-                  시/도·시/군/구는 기획상 선택인데, 현재 시/도가 검색 필수
-                </PFText>
-              </li>
-              <li className={styles.specCompareGapsItem}>
-                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
-                  미입력 시 빨간 스트로크 미구현
-                </PFText>
-              </li>
-              <li className={styles.specCompareGapsItem}>
-                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
-                  결과 정렬(학교명 → 소재지 → 학교급 고/중/초/유) 미구현
-                </PFText>
-              </li>
-              <li className={styles.specCompareGapsItem}>
-                <PFText as="span" typo="bd-sm-rg" color="neutral-cool-600">
-                  결과 항목에 학교급(`schulKndScNm`) 미표시
+                  결과 항목에 학교급(`schulKndScNm`) 미표시 — 학교명·소재지만 노출
                 </PFText>
               </li>
             </ul>
@@ -2356,6 +2439,7 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
       <SchoolSearchModal
         open={isSchoolSearchModalOpen}
         onClose={() => setIsSchoolSearchModalOpen(false)}
+        schoolKindFilter={schoolSearchKindFilter}
         onSelect={school => {
           const detail = [school.name, school.address].filter(Boolean).join(' · ')
           setSelectedSchool(detail)

@@ -5,7 +5,11 @@ export type { PFAlertModalProps } from './pf-alert-modal'
 export { PFArrowButton } from './pf-arrow-button'
 export type { PFArrowButtonProps, PFArrowButtonSize, PFArrowButtonVariant } from './pf-arrow-button'
 export { PFChevronButton } from './pf-chevron-button'
-export type { PFChevronButtonDirection, PFChevronButtonProps } from './pf-chevron-button'
+export type {
+  PFChevronButtonDirection,
+  PFChevronButtonProps,
+  PFChevronButtonSize,
+} from './pf-chevron-button'
 export { PFPageButton } from './pf-page-button'
 export type {
   PFPageButtonDirection,
@@ -39,13 +43,17 @@ export {
   PFFormFieldRow,
   PFFormFieldTable,
   PFFormFieldValueText,
+  PFFormControlCluster,
   PFFormInlineRow,
   PFFormInlineSegment,
   PFFormInlineSeparator,
   PFFormPage,
+  PFFormPeriodPair,
+  PFFormPeriodTilde,
   PFFormSection,
 } from './pf-form'
 export type {
+  PFFormControlClusterProps,
   PFFormFieldLabelWidth,
   PFFormFieldLayout,
   PFFormFieldProps,
@@ -56,6 +64,8 @@ export type {
   PFFormInlineSegmentProps,
   PFFormInlineSeparatorProps,
   PFFormPageProps,
+  PFFormPeriodPairProps,
+  PFFormPeriodTildeProps,
   PFFormSectionProps,
 } from './pf-form'
 export { PFAttachmentDropdown } from './pf-attachment-dropdown'

@@ -1,20 +1,29 @@
-/* —— Page shell (PC 양식 SSOT) ——
- * ≥1600 (--bp-pc-full-up): 단락 max 1440 + 좌우 max(80, (100%-1440)/2)
- * 1080–1599 (--bp-pc-compact): 좌우 패딩 80 고정
- * ≤1079 (--bp-below-pc): 모바일 전용 레이아웃 별도 — 이번 범위 밖 (현상 유지)
- */
+/* =============================================================================
+ * PF Form — Platform 양식 SSOT
+ *
+ * Page shell
+ *   ≥1600 (--bp-pc-full-up): max 1440 · 좌우 max(80, (100%-1440)/2)
+ *   1080–1599 (--bp-pc-compact): 좌우 80
+ *   ≤1079 (--bp-below-pc): 상하 40 · .inner max 520(+패딩 20) · 타이틀 간격 16/20
+ *
+ * Field table / inline (≤1079)
+ *   cool-50 카드 · 라벨 상단 · divider 숨김 · 컨트롤 100%
+ *   periodPair만 50% ~ 50% (tilde 좌우 2px)
+ * ============================================================================= */
+
+/* —— Page shell —— */
 .page {
   display: flex;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
   flex: 1 0 auto;
-  padding-block: var(--spacing-100);
-  padding-inline: var(--page-padding-x);
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-40);
   align-self: stretch;
+  gap: var(--spacing-40);
+  padding-block: var(--spacing-100);
+  padding-inline: var(--page-padding-x);
   background: linear-gradient(180deg, #f5f7f7 0%, #f5f7f7 100%);
 }
 
@@ -28,27 +37,6 @@
   align-items: flex-start;
   gap: var(--spacing-40);
   margin-inline: auto;
-}
-
-@media (--bp-pc-compact) {
-  .page {
-    padding-inline: 80px;
-  }
-
-  .inner {
-    max-width: var(--content-shell-max-width);
-  }
-}
-
-@media (--bp-pc-full-up) {
-  .page {
-    /* 1920: (100% - 1440) / 2 = 240 · 최소 80 */
-    padding-inline: max(80px, calc((100% - var(--content-shell-max-width)) / 2));
-  }
-
-  .inner {
-    max-width: var(--content-shell-max-width);
-  }
 }
 
 .back {
@@ -73,10 +61,24 @@
 .content {
   display: flex;
   width: 100%;
+  min-width: 0;
   flex-direction: column;
   align-items: flex-start;
   align-self: stretch;
-  min-width: 0;
+  /* 단락(섹션) 스택 간격 — 하위 form은 gap: inherit */
+  gap: var(--spacing-24);
+}
+
+@media (--bp-pc-compact) {
+  .page {
+    padding-inline: 80px;
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .page {
+    padding-inline: max(80px, calc((100% - var(--content-shell-max-width)) / 2));
+  }
 }
 
 /* —— Section card —— */
@@ -84,11 +86,11 @@
   display: flex;
   box-sizing: border-box;
   width: 100%;
-  padding: var(--spacing-20);
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-16);
   align-self: stretch;
+  gap: var(--spacing-16);
+  padding: var(--spacing-20);
   border-radius: var(--radius-24);
   background: var(--color-neutral-white);
   box-shadow: var(--shadow-card-lg);
@@ -98,8 +100,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-2);
   align-self: stretch;
+  gap: var(--spacing-2);
 }
 
 .sectionTitleRow {
@@ -124,14 +126,13 @@
 .sectionBody {
   display: flex;
   width: 100%;
+  min-width: 0;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-16);
   align-self: stretch;
-  min-width: 0;
+  gap: var(--spacing-16);
 }
 
-/* 단락 본문 안내 텍스트 (필드 하단 footer 등) */
 .sectionBodyText {
   margin: 0;
   color: var(--default-BK, #3d3d3d);
@@ -142,25 +143,25 @@
   line-height: 150%;
 }
 
-/* —— Field table (label / content grid) —— */
+/* —— Field table —— */
 .fieldTable {
   display: flex;
+  box-sizing: border-box;
   width: 100%;
   flex-direction: column;
   align-self: stretch;
-  box-sizing: border-box;
+  overflow: hidden;
   border: 1px solid var(--table-line, #e0e0e0);
   border-radius: var(--radius-16);
-  overflow: hidden;
   background: var(--color-neutral-white);
 }
 
 .fieldRow {
   display: flex;
-  width: 100%;
   box-sizing: border-box;
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  width: 100%;
   align-items: stretch;
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
 }
 
 .fieldRow:last-child {
@@ -178,9 +179,9 @@
 
 .field {
   display: flex;
+  box-sizing: border-box;
   min-width: 0;
   align-items: stretch;
-  box-sizing: border-box;
 }
 
 .fieldRowSingle > .field {
@@ -200,15 +201,15 @@
   display: flex;
   box-sizing: border-box;
   width: 200px;
-  flex-shrink: 0;
-  padding: 10px;
-  justify-content: center;
-  align-items: center;
-  gap: 2px;
-  align-self: stretch;
   min-height: 64px;
-  background: #f5f6f7;
+  flex-shrink: 0;
+  align-items: center;
+  align-self: stretch;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px;
   border-right: 1px solid var(--table-line, #e0e0e0);
+  background: #f5f6f7;
 }
 
 .fieldLabelWide {
@@ -217,8 +218,8 @@
 
 .fieldLabelText {
   margin: 0;
-  text-align: center;
   color: var(--color-neutral-black, #3d3d3d);
+  text-align: center;
 }
 
 .fieldLabelRequired {
@@ -228,15 +229,15 @@
 .fieldContent {
   display: flex;
   box-sizing: border-box;
-  padding: 12px;
-  align-items: center;
-  gap: 12px;
-  flex: 1 0 0;
   min-width: 0;
   min-height: 64px;
+  flex: 1 0 0;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
 }
 
-/* 세로형 테이블 단락 — 상단 라벨 / 하단 값 */
+/* 세로형 단락 — 상단 라벨 / 하단 값 */
 .fieldVertical {
   flex-direction: column;
 }
@@ -244,42 +245,52 @@
 .fieldLabelVertical {
   width: 100%;
   min-height: auto;
-  justify-content: flex-start;
   align-items: center;
+  justify-content: flex-start;
   padding: 12px 16px;
   border-right: none;
   border-bottom: 1px solid var(--table-line, #e0e0e0);
 }
 
 .fieldLabelTextVertical {
-  text-align: left;
   font-weight: 700;
   line-height: 140%;
+  text-align: left;
 }
 
 .fieldContentVertical {
+  min-height: auto;
+  flex: 1 1 auto;
   align-items: stretch;
   padding: 12px 16px;
-  flex: 1 1 auto;
-  min-height: auto;
 }
 
-/* —— Inline row: Divider(세그먼트) 기준 줄바꿈 (PC compact 폭 축소 대응) —— */
+.fieldValueText {
+  margin: 0;
+  color: var(--default-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+/* —— Inline / cluster / period —— */
 .inlineRow {
   display: flex;
+  width: 100%;
+  min-width: 0;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--spacing-12) 0;
-  width: 100%;
-  min-width: 0;
 }
 
 .inlineSegment {
   display: inline-flex;
+  min-width: 0;
   flex: 0 1 auto;
   flex-wrap: nowrap;
   align-items: center;
-  min-width: 0;
   gap: 0;
 }
 
@@ -293,29 +304,193 @@
   background: var(--default-BK, #3d3d3d);
 }
 
-/* value 영역 — 일반 텍스트 */
-.fieldValueText {
-  margin: 0;
-  color: var(--default-BK, #3d3d3d);
-  font-family: var(--font-family-base);
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
+.controlCluster {
+  display: inline-flex;
+  min-width: 0;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: var(--spacing-12);
 }
 
+.periodPair {
+  display: inline-flex;
+  min-width: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0;
+}
+
+.periodTilde {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  color: var(--color-neutral-black);
+}
+
+/* =============================================================================
+ * ≤1079 — Mobile
+ * ============================================================================= */
 @media (--bp-below-pc) {
+  /* Page shell */
+  .page {
+    padding-block: 40px;
+    padding-inline: 0;
+  }
+
+  .inner {
+    width: 100%;
+    max-width: 520px;
+    min-width: min(100%, 375px);
+    gap: 0;
+    padding-inline: 20px;
+  }
+
+  .back {
+    margin-bottom: var(--spacing-16);
+  }
+
+  .titleBlock {
+    margin-bottom: var(--spacing-20);
+  }
+
+  /* hd-lg 대체 — 24/700/normal/-0.48 (완전 일치 토큰 없음) */
+  .pageTitle {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: normal;
+    letter-spacing: -0.48px;
+  }
+
+  .content {
+    gap: var(--spacing-16);
+  }
+
+  /* Field table */
+  .fieldTable {
+    overflow: hidden;
+    padding: 0 var(--spacing-16);
+    border: none;
+    border-radius: var(--radius-12, 12px);
+    background: var(--color-neutral-cool-50, #f5f7f7);
+  }
+
+  .fieldRow,
   .fieldRowDouble {
     flex-direction: column;
+    border-bottom: none;
   }
 
   .fieldRowDouble > .field {
-    flex: 1 1 auto;
     width: 100%;
     min-width: 0;
+    flex: 1 1 auto;
   }
 
-  .fieldLabel {
-    width: 140px;
+  .fieldRow .field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-16);
+    padding: var(--spacing-16) 0;
+    border-bottom: 1px solid var(--table-line, #e0e0e0);
+  }
+
+  .fieldRow:last-child .field:last-child {
+    border-bottom: none;
+  }
+
+  .fieldLabel,
+  .fieldLabelVertical,
+  .fieldLabelWide {
+    width: 100%;
+    min-height: auto;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0;
+    border-right: none;
+    border-bottom: none;
+    background: transparent;
+  }
+
+  .fieldLabelText,
+  .fieldLabelTextVertical {
+    color: var(--color-neutral-cool-600, #667278);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 140%;
+    letter-spacing: 0;
+    text-align: left;
+  }
+
+  .fieldContent,
+  .fieldContentVertical {
+    min-height: auto;
+    flex: 1 1 auto;
+    align-items: stretch;
+    padding: 0;
+  }
+
+  /* Inline — divider 숨김 · 세로 스택 · 100% / period만 50%~50% */
+  .inlineRow {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: var(--spacing-8);
+  }
+
+  .inlineSeparator {
+    display: none;
+  }
+
+  .inlineSegment {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-8);
+  }
+
+  .controlCluster {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-8);
+  }
+
+  .controlCluster > * {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .inlineSegment > *:not(.periodPair),
+  .fieldContent > *:not(.periodPair):not(.inlineRow) {
+    box-sizing: border-box;
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .periodPair {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+  }
+
+  .periodPair > *:not(.periodTilde) {
+    min-width: 0;
+    flex: 1 1 0;
+    width: auto !important;
+    max-width: none;
+  }
+
+  .periodTilde {
+    flex: 0 0 auto;
+    margin-inline: 2px;
+    padding: 0;
   }
 }

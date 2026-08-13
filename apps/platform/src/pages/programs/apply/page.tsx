@@ -55,12 +55,12 @@ export function ProgramApplyPage() {
   return (
     <section className={styles.page}>
       <div className={styles.back}>
-        <ProgramBackButton label="이전으로" onClick={handleBack} />
+        <ProgramBackButton size="small" label="이전으로" onClick={handleBack} />
       </div>
 
       <div className={styles.inner}>
         <header className={styles.header}>
-          <PFText as="h1" typo="page-title" color="black">
+          <PFText as="h1" typo="page-title" color="black" className={styles.pageTitle}>
             프로그램 신청하기
           </PFText>
         </header>
