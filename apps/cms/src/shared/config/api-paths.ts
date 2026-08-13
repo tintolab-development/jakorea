@@ -21,4 +21,5 @@ export const adminAuthPaths = {
   emailCheck: () => `${adminAuthPaths.prefix}/email/check`,
   emailRecoveryLookup: () => `${adminAuthPaths.prefix}/email-recovery/lookup`,
   passwordResetConfirm: () => `${adminAuthPaths.prefix}/password-reset/confirm`,
+  passwordChange: () => `${adminAuthPaths.prefix}/password/change`,
 } as const

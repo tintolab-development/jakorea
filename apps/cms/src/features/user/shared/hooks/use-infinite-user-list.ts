@@ -7,10 +7,6 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { getUsersPage, type GetUsersPageParams } from '@/entities/user/api/user-service'
 import {
-  createInitialMergeCursor,
-  type AllMembersMergeCursor,
-} from '@/features/user/api/fetch-all-members-merged-page'
-import {
   memberQueryKeys,
   serializeMemberListFilters,
 } from '@/features/user/api/member-query-keys'
@@ -28,14 +24,12 @@ export function useInfiniteUserList(filters: UseInfiniteUserListFilters) {
       : memberQueryKeys.list(filtersKey)
     : (['users', 'list', filters] as const)
 
-  const mergeAdminAccounts = Boolean(filters.mergeAdminAccounts)
-
   const query = useInfiniteQuery({
     queryKey,
     queryFn: async ({ pageParam }) => {
-      return getUsersPage(filters, pageParam as number | AllMembersMergeCursor)
+      return getUsersPage(filters, pageParam as number)
     },
-    initialPageParam: mergeAdminAccounts ? createInitialMergeCursor() : 0,
+    initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage.hasMore) return undefined
       if (lastPage.nextPageParam !== undefined) return lastPage.nextPageParam

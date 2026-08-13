@@ -6,7 +6,9 @@ import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 import {
+  DEFAULT_MEMBER_LIST_KIND,
   memberListKindToPendingRole,
+  memberListKindToUserRole,
   normalizeMemberListKind,
   pendingRoleToMemberListKind,
   resolveRoleFilterFromMemberListParams,
@@ -14,8 +16,11 @@ import {
 } from '@/shared/config/member-list-kinds'
 import { parseLegacyRoleFilterParam } from '@/features/user/api/map-member-role'
 import {
+  accountTypeForDirectoryRoleFilter,
   instructorListRolesExactAnyOf,
+  parseAllTabRoleFilterParam,
   rolesExactAnyOfForAllTabRoleFilter,
+  type AllTabRoleFilterValue,
 } from '@/features/user/api/map-roles-exact-any-of'
 import {
   INSTITUTION_SIDO_VALUES,
@@ -27,7 +32,7 @@ export type UserListRow = Omit<User, 'password'>
 
 export type UserListQueryParams = Record<string, string | undefined> & {
   kind?: string
-  role?: UserRole | 'ALL'
+  role?: UserRole | AllTabRoleFilterValue | 'ALL'
   search?: string
   id?: string
   lnb?: string
@@ -47,8 +52,8 @@ export type UserListQueryParams = Record<string, string | undefined> & {
 
 export type UserListApiFilters = {
   role?: UserRole
-  /** 전체 회원 — members + admin-accounts 병합 조회 */
-  mergeAdminAccounts?: boolean
+  /** 전체 회원 탭 — `GET /api/admin/members/all` */
+  listAllAccounts?: boolean
   search?: string
   createdAtFrom?: string
   createdAtTo?: string
@@ -63,11 +68,15 @@ export type UserListApiFilters = {
   adminPermissionVariant?: AdminPermissionTagVariant
   /** `listMembers` exact-set allowlist 직렬화 */
   rolesExactAnyOf?: string
+  /** 전체 회원 디렉터리 — MEMBER / ADMIN_ACCOUNT */
+  accountType?: 'MEMBER' | 'ADMIN_ACCOUNT'
+  /** 전체 회원 탭 유형 필터 — `/members/all` 클라이언트 매칭용 */
+  allTabRoleFilter?: AllTabRoleFilterValue | 'ALL'
 }
 
 export type UserListPendingFilters = {
   search: string
-  role: UserRole | 'ALL'
+  role: AllTabRoleFilterValue | UserRole | 'ALL'
   institutionSido: string
   institutionSigungu: string
   jaEvaluationGrade: string
@@ -134,14 +143,19 @@ export function parseInstitutionRegionFromUserListParams(params: UserListQueryPa
   return { institutionSido: '', institutionSigungu: '' }
 }
 
-export function pendingRoleFromParams(params: UserListQueryParams): UserRole | 'ALL' {
-  if (params.kind !== undefined && params.kind !== '') {
-    return memberListKindToPendingRole(normalizeMemberListKind(params.kind))
+export function pendingRoleFromParams(
+  params: UserListQueryParams
+): AllTabRoleFilterValue | UserRole | 'ALL' {
+  const kind =
+    params.kind !== undefined && params.kind !== ''
+      ? normalizeMemberListKind(params.kind)
+      : DEFAULT_MEMBER_LIST_KIND
+
+  if (kind === 'all') {
+    return parseAllTabRoleFilterParam(params.role)
   }
-  if (params.role && params.role !== 'ALL') {
-    return parseLegacyRoleFilterParam(params.role) ?? 'ALL'
-  }
-  return 'ALL'
+
+  return memberListKindToPendingRole(kind)
 }
 
 export function pendingToApiFilters(
@@ -217,17 +231,18 @@ export function buildListQueryApiFilters(params: UserListQueryParams): UserListA
   if (kind === 'individual') {
     api.rolesExactAnyOf = rolesExactAnyOfForAllTabRoleFilter('INDIVIDUAL')
   }
-  if (kind === 'all' && params.role) {
-    const fromRole = rolesExactAnyOfForAllTabRoleFilter(params.role)
-    if (fromRole) api.rolesExactAnyOf = fromRole
+  if (kind === 'all') {
+    api.listAllAccounts = true
+    const allTabRole = parseAllTabRoleFilterParam(params.role)
+    api.allTabRoleFilter = allTabRole
+    const accountType = accountTypeForDirectoryRoleFilter(allTabRole)
+    if (accountType) api.accountType = accountType
+    return api
   }
   const role = resolveRoleFilterFromMemberListParams({
     kind: params.kind,
     role: params.role,
   })
-  if (kind === 'all' && !role && !api.rolesExactAnyOf) {
-    api.mergeAdminAccounts = true
-  }
   return {
     ...api,
     ...(role ? { role } : {}),
@@ -262,14 +277,27 @@ export function userListPendingFiltersFromParams(params: UserListQueryParams): U
   }
 }
 
-function applyUserListSearchToParams(nextParams: URLSearchParams, filters: UserListPendingFilters): void {
-  const nextKind = normalizeMemberListKind(pendingRoleToMemberListKind(filters.role))
+export function applyUserListSearchToParams(
+  nextParams: URLSearchParams,
+  filters: UserListPendingFilters
+): void {
+  const currentKind = normalizeMemberListKind(nextParams.get('kind'))
+  const stayOnAllList = currentKind === 'all'
+  const nextKind = stayOnAllList
+    ? 'all'
+    : normalizeMemberListKind(pendingRoleToMemberListKind(filters.role))
 
   if (filters.search?.trim()) nextParams.set('search', filters.search.trim())
   else nextParams.delete('search')
 
   nextParams.set('kind', nextKind)
-  nextParams.delete('role')
+
+  if (nextKind === 'all') {
+    if (filters.role && filters.role !== 'ALL') nextParams.set('role', filters.role)
+    else nextParams.delete('role')
+  } else {
+    nextParams.delete('role')
+  }
 
   if (nextKind === 'institutions') {
     nextParams.delete('institutionLocation')
@@ -398,10 +426,13 @@ export function createUserListTablePageConfig(opts: {
     getSearchSync: () => ({
       paramConfig,
       tableConfig: {},
-      afterApplyParams: (_nextParams, filters) => {
-        const nextKind = normalizeMemberListKind(pendingRoleToMemberListKind(filters.role))
+      afterApplyParams: (nextParams, filters) => {
+        const nextKind = normalizeMemberListKind(nextParams.get('kind'))
         const api = pendingToApiFilters(filters, nextKind)
-        const roleForStore = filters.role === 'ALL' ? undefined : (filters.role as UserRole)
+        const roleForStore =
+          nextKind === 'all'
+            ? parseLegacyRoleFilterParam(filters.role === 'ALL' ? undefined : filters.role)
+            : memberListKindToUserRole(nextKind)
         opts.setFilters({ ...api, role: roleForStore })
       },
     }),

@@ -83,6 +83,8 @@ export interface User {
   organizationId?: number
   /** admin-accounts API numeric id — 관리자 회원 상세·권한 유형 변경 */
   adminAccountId?: number
+  /** 강사 권한 신청 requestId — 권한 승인 상세·privacy unmask */
+  instructorRoleRequestId?: number
   email: string
   password: string // Mock 데이터용 (실제로는 해시된 값)
   name: string
