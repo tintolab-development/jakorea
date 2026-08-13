@@ -241,18 +241,7 @@
   display: none;
 }
 
-@media (max-width: 640px) {
-  .auth-card,
-  .login-card {
-    height: auto;
-    min-height: 0;
-    padding: 40px 0;
-  }
-
-  .auth-logo-wrapper,
-  .auth-form-body,
-  .login-logo-wrapper {
-    padding-left: 24px;
-    padding-right: 24px;
-  }
+.auth-card,
+.register-card {
+  padding: 72px 60px;
 }
