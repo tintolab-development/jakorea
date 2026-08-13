@@ -15,6 +15,11 @@ import {
 import { socialLinkQueryKeys } from '@/features/social-link/api/query-keys'
 import { SOCIAL_LINKS_CHANGED_EVENT } from '@/features/social-link/api/store'
 import {
+  findInvalidHttpLinkChannels,
+  socialLinkUrlFormatAlert,
+  socialLinkUrlRequiredAlert,
+} from '@/features/social-link/lib/url-validation'
+import {
   SocialLinkDragHandle,
   SocialLinksSortableTable,
 } from '@/features/social-link/ui/sortable-table'
@@ -55,6 +60,21 @@ export function SocialLinksPage() {
 
   const handleToggleActive = useCallback(
     (id: string, isActive: boolean) => {
+      if (isActive) {
+        const row = rows.find(item => item.id === id)
+        if (!row) return
+        const url = row.linkUrl.trim()
+        if (!url) {
+          showAlert(socialLinkUrlRequiredAlert([row.name]))
+          return
+        }
+        const invalid = findInvalidHttpLinkChannels([{ ...row, linkUrl: url }])
+        if (invalid.length > 0) {
+          showAlert(socialLinkUrlFormatAlert(invalid))
+          return
+        }
+      }
+
       void setActiveMutation.mutateAsync({ id, isActive }).catch(() => {
         showAlert({
           title: '사용 여부 변경 실패',
@@ -63,7 +83,7 @@ export function SocialLinksPage() {
         void listQuery.refetch()
       })
     },
-    [listQuery, setActiveMutation, showAlert]
+    [listQuery, rows, setActiveMutation, showAlert]
   )
 
   const handleStartEdit = useCallback(() => {
@@ -81,24 +101,30 @@ export function SocialLinksPage() {
   }, [])
 
   const handleSave = useCallback(async () => {
-    const invalid = rows.filter(row => {
-      if (!row.isActive) return false
-      const url = (draftUrls[row.id] ?? row.linkUrl).trim()
-      return url.length === 0
-    })
-    if (invalid.length > 0) {
-      showAlert({
-        title: '연결 링크 필수',
-        content: `사용 중인 채널(${invalid.map(r => r.name).join(', ')})의 연결 링크를 입력해 주세요.`,
-      })
+    const draftRows = rows.map(row => ({
+      ...row,
+      linkUrl: draftUrls[row.id] ?? row.linkUrl,
+    }))
+
+    const missingRequired = draftRows
+      .filter(row => row.isActive && row.linkUrl.trim().length === 0)
+      .map(row => row.name)
+    if (missingRequired.length > 0) {
+      showAlert(socialLinkUrlRequiredAlert(missingRequired))
+      return
+    }
+
+    const invalidFormat = findInvalidHttpLinkChannels(draftRows)
+    if (invalidFormat.length > 0) {
+      showAlert(socialLinkUrlFormatAlert(invalidFormat))
       return
     }
 
     try {
       await saveMutation.mutateAsync(
-        rows.map(row => ({
+        draftRows.map(row => ({
           id: row.id,
-          linkUrl: draftUrls[row.id] ?? row.linkUrl,
+          linkUrl: row.linkUrl,
         }))
       )
       setDraftUrls({})
@@ -138,6 +164,7 @@ export function SocialLinksPage() {
         render: (_value, record) => (
           <Switch
             checked={record.isActive}
+            disabled={setActiveMutation.isPending}
             onChange={checked => handleToggleActive(record.id, checked)}
             aria-label={`${record.name} 사용 여부`}
           />
@@ -171,7 +198,7 @@ export function SocialLinksPage() {
           ),
       },
     ],
-    [draftUrls, handleDraftChange, handleToggleActive, isEditing]
+    [draftUrls, handleDraftChange, handleToggleActive, isEditing, setActiveMutation.isPending]
   )
 
   return (

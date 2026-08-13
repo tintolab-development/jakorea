@@ -34,7 +34,10 @@ const SEED_IMAGE =
     </svg>`
   )
 
-const SEED_ROWS: readonly Omit<Popup, 'id' | 'sortOrder' | 'createdAt' | 'updatedAt'>[] = [
+const SEED_ROWS: readonly Omit<
+  Popup,
+  'id' | 'sortOrder' | 'createdAt' | 'updatedAt' | 'version'
+>[] = [
   {
     isActive: true,
     imageUrl: SEED_IMAGE,
@@ -163,10 +166,15 @@ function buildSeedPopups(): Popup[] {
       ...row,
       id: `popup-${index + 1}`,
       sortOrder: index + 1,
+      version: 0,
       createdAt: ts,
       updatedAt: ts,
     }
   })
+}
+
+function ensurePopupVersion(row: Popup): Popup {
+  return { ...row, version: row.version ?? 0 }
 }
 
 function readFile(): PopupFile {
@@ -179,7 +187,10 @@ function readFile(): PopupFile {
     if (parsed?.version !== 1 || !Array.isArray(parsed.items)) {
       return { version: 1, items: buildSeedPopups() }
     }
-    return parsed
+    return {
+      version: 1,
+      items: parsed.items.map(row => ensurePopupVersion(row as Popup)),
+    }
   } catch {
     return { version: 1, items: buildSeedPopups() }
   }
@@ -278,6 +289,7 @@ export function createPopup(input: PopupCreateInput): Popup {
   const item: Popup = {
     id: `popup-${Date.now()}`,
     sortOrder: baseItems.length + 1,
+    version: 0,
     isActive: input.isActive,
     imageUrl: input.imageUrl,
     imageFileName: input.imageFileName,

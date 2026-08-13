@@ -11,6 +11,11 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 import type { HeroBanner, HeroBannerCreateInput } from '@/entities/hero-banner/model/types'
+import { shouldUseHeroBannerRemoteApi } from '@/features/hero-banner/api/capabilities'
+import {
+  HTTP_LINK_URL_FORMAT_ALERT,
+  isValidHttpLinkUrl,
+} from '@/shared/lib/http-link-url'
 import './form-modal.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
@@ -111,6 +116,8 @@ function HeroBannerFormBody({
   const [linkUrl, setLinkUrl] = useState(() =>
     mode === 'edit' && initial ? initial.linkUrl : ''
   )
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null)
+  const [imageCleared, setImageCleared] = useState(false)
 
   const handleFilesChange = useCallback(
     async (files: File[]) => {
@@ -127,6 +134,8 @@ function HeroBannerFormBody({
         const dataUrl = await readFileAsDataUrl(file)
         setImageUrl(dataUrl)
         setImageFileName(file.name)
+        setPendingImageFile(file)
+        setImageCleared(false)
       } catch {
         showAlert({
           title: '파일 읽기 실패',
@@ -140,29 +149,65 @@ function HeroBannerFormBody({
   const handleRemoveFile = useCallback(() => {
     setImageUrl('')
     setImageFileName('')
+    setPendingImageFile(null)
+    setImageCleared(true)
   }, [])
 
   const handleSubmit = useCallback(() => {
-    if (!imageUrl.trim()) {
+    const useRemote = shouldUseHeroBannerRemoteApi()
+    const hasExistingRemoteImage =
+      useRemote &&
+      !imageCleared &&
+      !pendingImageFile &&
+      Boolean(initial?.imageAssetId) &&
+      Boolean(imageUrl.trim())
+
+    if (!imageUrl.trim() && !hasExistingRemoteImage) {
       showAlert({
         title: '배너 이미지 필수',
         content: '배너 이미지를 등록해 주세요.',
       })
       return
     }
+    if (useRemote && mode === 'create' && !pendingImageFile) {
+      showAlert({
+        title: '배너 이미지 필수',
+        content: '배너 이미지를 파일로 등록해 주세요.',
+      })
+      return
+    }
+    if (useRemote && mode === 'edit' && imageCleared && !pendingImageFile) {
+      showAlert({
+        title: '배너 이미지 필수',
+        content: '배너 이미지를 등록해 주세요.',
+      })
+      return
+    }
+    const trimmedLinkUrl = linkUrl.trim()
+    if (trimmedLinkUrl && !isValidHttpLinkUrl(trimmedLinkUrl)) {
+      showAlert(HTTP_LINK_URL_FORMAT_ALERT)
+      return
+    }
     onSubmit({
       isActive,
       imageUrl,
       imageFileName: imageFileName || undefined,
+      imageFile: pendingImageFile,
+      imageAssetId:
+        !pendingImageFile && !imageCleared ? initial?.imageAssetId : undefined,
       topText,
       mainTitle,
       bottomText,
-      linkUrl,
+      linkUrl: trimmedLinkUrl,
     })
   }, [
+    imageCleared,
     imageUrl,
     imageFileName,
+    initial?.imageAssetId,
     isActive,
+    mode,
+    pendingImageFile,
     topText,
     mainTitle,
     bottomText,

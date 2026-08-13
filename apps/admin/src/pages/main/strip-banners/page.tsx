@@ -22,6 +22,7 @@ import {
   type StripBannerListFilter,
 } from '@/features/strip-banner/api/hooks'
 import { stripBannerQueryKeys } from '@/features/strip-banner/api/query-keys'
+import { listStripBannersService } from '@/features/strip-banner/api/service'
 import { STRIP_BANNERS_CHANGED_EVENT } from '@/features/strip-banner/api/store'
 import {
   StripBannerFormModal,
@@ -127,6 +128,17 @@ function formatCreatedDate(iso: string): string {
   return d.format('YYYY.MM.DD')
 }
 
+function hasStripBannerListFilter(filter: StripBannerListFilter): boolean {
+  return (
+    filter.isActive === true ||
+    filter.isActive === false ||
+    Boolean(filter.text?.trim()) ||
+    Boolean(filter.periodStart?.trim()) ||
+    Boolean(filter.periodEnd?.trim())
+  )
+}
+
+/** 필터된 목록에서 DnD 시, 전체 순서에 부분 순서를 병합할 때 사용 */
 function matchesClientFilter(row: StripBanner, filter: StripBannerListFilter): boolean {
   if (filter.isActive === true && !row.isActive) return false
   if (filter.isActive === false && row.isActive) return false
@@ -190,18 +202,14 @@ export function StripBannersPage() {
     },
   })
 
-  const listQuery = useStripBannersList()
+  const listQuery = useStripBannersList(appliedFilter)
   const createMutation = useCreateStripBanner()
   const updateMutation = useUpdateStripBanner()
   const removeMutation = useRemoveStripBanners()
   const reorderMutation = useReorderStripBanners()
   const setActiveMutation = useSetStripBannerActive()
 
-  const allRows = useMemo(() => listQuery.data ?? [], [listQuery.data])
-  const rows = useMemo(
-    () => allRows.filter(row => matchesClientFilter(row, appliedFilter)),
-    [allRows, appliedFilter]
-  )
+  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [formOpen, setFormOpen] = useState(false)
   const [formVariant, setFormVariant] = useState<'create' | 'detail'>('create')
@@ -217,27 +225,33 @@ export function StripBannersPage() {
 
   const handleRowsReorder = useCallback(
     (reorderedRows: StripBanner[]) => {
-      const reorderedIds = reorderedRows.map(row => row.id)
-      let cursor = 0
-      const mergedIds =
-        reorderedRows.length === allRows.length
-          ? reorderedIds
-          : allRows.map(row => {
-              if (matchesClientFilter(row, appliedFilter)) {
-                return reorderedIds[cursor++]!
-              }
-              return row.id
-            })
+      void (async () => {
+        const reorderedIds = reorderedRows.map(row => row.id)
+        let mergedIds = reorderedIds
 
-      void reorderMutation.mutateAsync(mergedIds).catch(() => {
-        showAlert({
-          title: '순서 변경 실패',
-          content: '배너 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
-        })
-        void listQuery.refetch()
-      })
+        if (hasStripBannerListFilter(appliedFilter)) {
+          const fullRows = await listStripBannersService()
+          let cursor = 0
+          mergedIds = fullRows.map(row => {
+            if (matchesClientFilter(row, appliedFilter)) {
+              return reorderedIds[cursor++]!
+            }
+            return row.id
+          })
+        }
+
+        try {
+          await reorderMutation.mutateAsync(mergedIds)
+        } catch {
+          showAlert({
+            title: '순서 변경 실패',
+            content: '배너 순서 저장에 실패했습니다. 목록을 다시 불러옵니다.',
+          })
+          void listQuery.refetch()
+        }
+      })()
     },
-    [allRows, appliedFilter, listQuery, reorderMutation, showAlert]
+    [appliedFilter, listQuery, reorderMutation, showAlert]
   )
 
   const handleToggleActive = useCallback(
@@ -366,7 +380,7 @@ export function StripBannersPage() {
         width: TABLE_COLUMN_WIDTHS.index,
         className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
-        render: (_value, _record, index) => totalCount - index,
+        render: (_value, _record, index) => index + 1,
       },
       {
         title: '사용 여부',
@@ -424,7 +438,7 @@ export function StripBannersPage() {
         ),
       },
     ],
-    [handleToggleActive, openDetail, totalCount]
+    [handleToggleActive, openDetail]
   )
 
   const formLoading =

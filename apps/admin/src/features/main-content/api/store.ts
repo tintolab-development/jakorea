@@ -48,17 +48,20 @@ function buildSeedContents(): MainContents {
   return {
     education: {
       title: '새로운 배움이 기다리고 있어요',
+      version: 0,
     },
     impactStory: {
       title: 'JA Korea와 함께\n청소년의 가능성을 넓혀주세요',
       youtubeUrl: 'https://youtu.be/sJYCV5yMa9M?si=4OMis_K0Cc_qVgQk',
       featuredContentId: 'impact-story-1',
+      version: 0,
     },
     performance: {
       title: '함께 만들어온 배움의 여정',
       metrics: buildSeedMetrics(),
       bottomText:
         '학생들이 스스로 미래를 설계하도록\n전국 200여개 지역의 JA 네트워크가 함께합니다',
+      version: 0,
     },
     donation: {
       title: '더 많은 학생들이 배움의 기회를\n만날 수 있게 함께해 주세요',
@@ -70,6 +73,7 @@ function buildSeedContents(): MainContents {
         label: '기업후원 문의하기',
         linkUrl: 'https://online.mrm.or.kr/WJEP4tk',
       },
+      version: 0,
     },
     updatedAt: now,
   }
@@ -109,6 +113,10 @@ function normalizeMetrics(metrics: PerformanceMetric[] | undefined): Performance
   })
 }
 
+function normalizeVersion(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
 function normalizeContents(raw: Partial<MainContents> | null | undefined): MainContents {
   const seed = buildSeedContents()
   if (!raw || typeof raw !== 'object') return seed
@@ -116,6 +124,7 @@ function normalizeContents(raw: Partial<MainContents> | null | undefined): MainC
     education: {
       title:
         typeof raw.education?.title === 'string' ? raw.education.title : seed.education.title,
+      version: normalizeVersion(raw.education?.version, seed.education.version),
     },
     impactStory: {
       title:
@@ -130,6 +139,7 @@ function normalizeContents(raw: Partial<MainContents> | null | undefined): MainC
         typeof raw.impactStory?.featuredContentId === 'string'
           ? raw.impactStory.featuredContentId
           : seed.impactStory.featuredContentId,
+      version: normalizeVersion(raw.impactStory?.version, seed.impactStory.version),
     },
     performance: {
       title:
@@ -141,6 +151,7 @@ function normalizeContents(raw: Partial<MainContents> | null | undefined): MainC
         typeof raw.performance?.bottomText === 'string'
           ? raw.performance.bottomText
           : seed.performance.bottomText,
+      version: normalizeVersion(raw.performance?.version, seed.performance.version),
     },
     donation: {
       title:
@@ -165,6 +176,7 @@ function normalizeContents(raw: Partial<MainContents> | null | undefined): MainC
             ? raw.donation.cta2.linkUrl
             : seed.donation.cta2.linkUrl,
       },
+      version: normalizeVersion(raw.donation?.version, seed.donation.version),
     },
     updatedAt: typeof raw.updatedAt === 'string' ? raw.updatedAt : seed.updatedAt,
   }
@@ -229,7 +241,7 @@ function patchAndSave(patch: (prev: MainContents) => MainContents): MainContents
 export function saveEducationSection(section: EducationSection): MainContents {
   return patchAndSave(prev => ({
     ...prev,
-    education: { title: section.title.trim() },
+    education: { title: section.title.trim(), version: section.version },
   }))
 }
 
@@ -240,6 +252,7 @@ export function saveImpactStorySection(section: ImpactStorySection): MainContent
       title: section.title.trimEnd(),
       youtubeUrl: section.youtubeUrl.trim(),
       featuredContentId: section.featuredContentId.trim(),
+      version: section.version,
     },
   }))
 }
@@ -257,6 +270,7 @@ export function savePerformanceSection(section: PerformanceSection): MainContent
           unit: m.unit.trim(),
         }))
       ),
+      version: section.version,
     },
   }))
 }
@@ -274,6 +288,7 @@ export function saveDonationSection(section: DonationSection): MainContents {
         label: section.cta2.label.trim(),
         linkUrl: section.cta2.linkUrl.trim(),
       },
+      version: section.version,
     },
   }))
 }

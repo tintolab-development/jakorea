@@ -9,6 +9,10 @@ export type Popup = {
   isActive: boolean
   imageUrl: string
   imageFileName?: string
+  /** Homepage asset id (remote). mock에서는 없을 수 있음 */
+  imageAssetId?: number
+  /** 낙관적 잠금 (remote 필수). mock은 0 */
+  version: number
   name: string
   altText: string
   /** YYYY-MM-DD */
@@ -25,6 +29,10 @@ export type PopupCreateInput = {
   isActive: boolean
   imageUrl: string
   imageFileName?: string
+  /** remote create: 업로드된 asset id. mock은 imageUrl만 사용 */
+  imageAssetId?: number
+  /** remote: 새 이미지 File (submit 시 upload). mock은 data URL */
+  imageFile?: File | null
   name: string
   altText: string
   periodStart: string
@@ -37,6 +45,8 @@ export type PopupUpdateInput = {
   isActive?: boolean
   imageUrl?: string
   imageFileName?: string
+  imageAssetId?: number
+  imageFile?: File | null
   name?: string
   altText?: string
   periodStart?: string
