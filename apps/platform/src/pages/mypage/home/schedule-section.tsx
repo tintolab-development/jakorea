@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import {
-  MOCK_MYPAGE_SCHEDULE_EVENTS,
   getMypageScheduleEventsOnDate,
   syncSelectedDateToMonth,
   type MypageScheduleEvent,
@@ -8,8 +7,9 @@ import {
 import { CALENDAR_EVENT_COLORS, PFCalendar, PFText, type PFCalendarEvent } from '@/shared/ui'
 import styles from './schedule-section.module.css'
 
-const INITIAL_MONTH = new Date(2026, 0, 1)
-const INITIAL_SELECTED = new Date(2026, 0, 3)
+/** mock 일정 데모용 초기 월(실 API 세션은 오늘 기준) */
+const MOCK_DEMO_MONTH = new Date(2026, 0, 1)
+const MOCK_DEMO_SELECTED = new Date(2026, 0, 3)
 
 function toCalendarEvents(events: MypageScheduleEvent[]): PFCalendarEvent[] {
   return events.map(event => ({
@@ -27,15 +27,34 @@ function toMonthStart(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1)
 }
 
-export function ScheduleSection() {
-  const [selectedDate, setSelectedDate] = useState(INITIAL_SELECTED)
-  const [viewMonth, setViewMonth] = useState(INITIAL_MONTH)
+function toDayStart(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
 
-  const calendarEvents = useMemo(() => toCalendarEvents(MOCK_MYPAGE_SCHEDULE_EVENTS), [])
+type ScheduleSectionProps = {
+  events?: readonly MypageScheduleEvent[]
+  /** true면 mock 데모 월(2026-01)로 시작 — API 세션에서는 false */
+  useMockDemoMonth?: boolean
+}
+
+export function ScheduleSection({
+  events = [],
+  useMockDemoMonth = false,
+}: ScheduleSectionProps) {
+  const [selectedDate, setSelectedDate] = useState(() =>
+    useMockDemoMonth ? MOCK_DEMO_SELECTED : toDayStart(new Date()),
+  )
+  const [viewMonth, setViewMonth] = useState(() =>
+    useMockDemoMonth ? MOCK_DEMO_MONTH : toMonthStart(new Date()),
+  )
+
+  const scheduleEvents = useMemo(() => [...events], [events])
+
+  const calendarEvents = useMemo(() => toCalendarEvents(scheduleEvents), [scheduleEvents])
 
   const selectedEvents = useMemo(
-    () => getMypageScheduleEventsOnDate(MOCK_MYPAGE_SCHEDULE_EVENTS, selectedDate),
-    [selectedDate],
+    () => getMypageScheduleEventsOnDate(scheduleEvents, selectedDate),
+    [scheduleEvents, selectedDate],
   )
 
   const handleDateChange = (nextDate: Date) => {
@@ -47,9 +66,7 @@ export function ScheduleSection() {
   const handleMonthChange = (nextMonth: Date) => {
     const monthStart = toMonthStart(nextMonth)
     setViewMonth(monthStart)
-    setSelectedDate(prev =>
-      syncSelectedDateToMonth(monthStart, prev, MOCK_MYPAGE_SCHEDULE_EVENTS),
-    )
+    setSelectedDate(prev => syncSelectedDateToMonth(monthStart, prev, scheduleEvents))
   }
 
   return (

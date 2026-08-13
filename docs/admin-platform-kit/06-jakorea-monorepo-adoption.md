@@ -16,7 +16,6 @@
 | **Homepage Admin (`apps/admin`)** | 셸·목록 패턴은 이미 Kit of record. **갭 보완**(auth·FSD 규약 강화)만 05 기준으로 맞춤. 제품 feature는 Kit이 아님 |
 | **CMS (`apps/cms`)** | **전면 리팩터 대상 아님**. 신규·리팩터 구간만 05 경계·import·UI SSOT를 따르고, JA 도메인은 유지 |
 | **Platform (`apps/platform`)** | Admin Kit 대상 아님. 사용자 홈/회원 UI 규약 별도 |
-| **LMS (`apps/lms`)** | 레거시·별 스택. Kit 스캐폴드 원본으로 쓰지 않음 |
 
 **금지:** CMS 전체를 05 디렉터리로 마이그레이션하거나, `features/program|settlement|template` 를 신규 앱 시드로 복사.
 
@@ -122,12 +121,13 @@ Admin 기능 개발 시: 05 교차검증은 **변경한 feature/page**에 적용
 
 ---
 
-### 3.3 `apps/platform` / `apps/lms`
+### 3.3 `apps/platform`
 
 | 앱 | 05 적용 |
 |-----|---------|
 | platform | **적용 대상 아님** (사용자 홈). UI 토큰·폼 런타임만 일부 공유 가능 |
-| lms | 레거시 참조 금지. 신규 백오피스는 admin 셸 기반 `apps/<name>` |
+
+신규 백오피스는 admin 셸 기반 `apps/<name>`으로 추가한다.
 
 ---
 

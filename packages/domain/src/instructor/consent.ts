@@ -67,3 +67,12 @@ export const INSTRUCTOR_CONSENT_DOCUMENT_ITEMS = [
 
 export type InstructorConsentDocumentKey =
   (typeof INSTRUCTOR_CONSENT_DOCUMENT_ITEMS)[number]['key']
+
+/** CMS 강사 신규 등록 — 약관 및 동의 섹션 전체 필드 */
+export const INSTRUCTOR_REGISTER_ALL_CONSENT_KEYS = [
+  ...INSTRUCTOR_CONSENT_RADIO_ITEMS.map(item => item.key),
+  ...INSTRUCTOR_CONSENT_DOCUMENT_ITEMS.map(item => item.key),
+] as const
+
+export type InstructorRegisterAllConsentKey =
+  (typeof INSTRUCTOR_REGISTER_ALL_CONSENT_KEYS)[number]

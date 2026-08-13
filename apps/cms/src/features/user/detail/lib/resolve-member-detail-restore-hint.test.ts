@@ -128,4 +128,9 @@ describe('canResolveMemberIdForDetailRestore', () => {
     expect(canResolveMemberIdForDetailRestore('uuid', { memberId: 1 })).toBe(true)
     expect(canResolveMemberIdForDetailRestore('uuid', {})).toBe(false)
   })
+
+  it('admin-account-{id} 또는 adminAccountId 힌트면 memberId 없이도 true', () => {
+    expect(canResolveMemberIdForDetailRestore('admin-account-168404', {})).toBe(true)
+    expect(canResolveMemberIdForDetailRestore('uuid', { adminAccountId: 168404 })).toBe(true)
+  })
 })

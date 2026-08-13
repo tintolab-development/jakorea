@@ -1,5 +1,6 @@
 import type { InfiniteData, QueryClient } from '@tanstack/react-query'
 import type { GetUsersPageResult } from '@/entities/user/api/user-service'
+import { parseAdminAccountIdFromUserId } from '@/features/user/api/fetch-admin-member-detail'
 import { getMemberIdByUuid, registerMemberIdMapping } from '@/features/user/api/member-id-registry'
 import { memberQueryKeys } from '@/features/user/api/member-query-keys'
 import { parseOrganizationIdFromUserId } from '@/features/user/api/map-school-organization-to-user'
@@ -72,6 +73,7 @@ export function resolveMemberDetailRestoreHint(options: {
   const user = fromStore ?? fromList ?? fromCache
   const organizationId =
     user?.organizationId ?? parseOrganizationIdFromUserId(userId) ?? undefined
+  const adminAccountId = user?.adminAccountId ?? parseAdminAccountIdFromUserId(userId)
   const memberId =
     urlCtx.memberId ??
     user?.memberId ??
@@ -94,16 +96,25 @@ export function resolveMemberDetailRestoreHint(options: {
     organizationId,
     role,
     email: user?.email,
-    adminAccountId: user?.adminAccountId,
+    adminAccountId,
     user,
   }
 }
 
 export function canResolveMemberIdForDetailRestore(
   userId: string,
-  hint: Pick<MemberDetailRestoreHint, 'memberId' | 'organizationId' | 'role'>
+  hint: Pick<
+    MemberDetailRestoreHint,
+    'memberId' | 'organizationId' | 'role' | 'adminAccountId'
+  >
 ): boolean {
   if (hint.organizationId != null || parseOrganizationIdFromUserId(userId) != null) {
+    return true
+  }
+  if (hint.adminAccountId != null && hint.adminAccountId > 0) {
+    return true
+  }
+  if (parseAdminAccountIdFromUserId(userId) != null) {
     return true
   }
   if (hint.role === 'SCHOOL' && hint.organizationId != null) return true

@@ -5,14 +5,6 @@
   gap: var(--spacing-12);
 }
 
-/* UniversitySearchModal — 시/도 · 시/군/구 2열 */
-.schoolModalRegionRow {
-  display: grid;
-  width: 100%;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-12);
-}
-
 .schoolModalSearchRow {
   display: grid;
   width: 100%;
@@ -21,8 +13,18 @@
   margin: var(--spacing-12) 0 0;
 }
 
+.schoolModalSearchRow > :first-child {
+  min-width: 0;
+}
+
 .schoolModalSearchRowActive {
   margin-bottom: var(--spacing-12);
+}
+
+.schoolModalSearchButton {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
 }
 
 .schoolModalGuide {
@@ -66,69 +68,90 @@
   margin: 0;
 }
 
-.schoolResultTableWrap {
+.schoolResultList {
+  display: flex;
   width: 100%;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: var(--spacing-16);
   max-height: 464px;
-  overflow: auto;
+  margin: 0;
+  padding: var(--spacing-16) var(--spacing-20);
+  list-style: none;
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-16);
   background: var(--color-neutral-white);
+  overflow-y: auto;
 }
 
-.schoolResultTable {
+.schoolResultItem {
+  display: flex;
   width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.schoolResultTable thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding: var(--spacing-12) var(--spacing-16);
-  border-bottom: 1px solid var(--color-border-default);
-  background: var(--color-neutral-cool-50);
-  color: var(--color-neutral-black);
-  text-align: left;
-  font-family: var(--font-family-base);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 140%;
-}
-
-.schoolResultTable thead th:last-child {
-  width: 104px;
-  text-align: center;
-}
-
-.schoolResultTable tbody td {
-  padding: var(--spacing-12) var(--spacing-16);
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  padding-bottom: var(--spacing-16);
   border-bottom: 1px solid rgb(61 61 61 / 10%);
-  vertical-align: middle;
 }
 
-.schoolResultTable tbody tr:last-child td {
+.schoolResultItem:last-child {
+  padding-bottom: 0;
   border-bottom: 0;
 }
 
-.schoolResultTable tbody td:nth-child(1) {
-  width: 96px;
+.schoolResultHeader {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-12);
 }
 
-.schoolResultTable tbody td:nth-child(2) {
-  width: 34%;
-}
-
-.schoolResultName,
-.schoolResultAddress {
-  display: block;
+.schoolResultName {
+  min-width: 0;
+  flex: 1 1 auto;
+  margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--color-neutral-black);
 }
 
-.schoolResultSelectCell {
-  text-align: center;
+.schoolResultAddressRow {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.schoolResultTag {
+  display: inline-flex;
+  width: 50px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--spacing-8);
+  padding: var(--spacing-2) var(--spacing-8);
+  border-radius: var(--radius-4);
+  background: var(--color-neutral-cool-80);
+  color: var(--color-neutral-cool-700);
+  font-family: var(--font-family-base);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 140%;
+  letter-spacing: 0;
+}
+
+.schoolResultAddress {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-neutral-black);
 }
 
 .schoolResultHit {
@@ -140,4 +163,44 @@
   width: 100%;
   justify-content: center;
   margin-top: var(--spacing-16);
+}
+
+@media (--bp-below-pc) {
+  .schoolModalFilterRow {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--spacing-8);
+  }
+
+  .schoolModalFilterRow > * {
+    min-width: 0;
+  }
+
+  .schoolModalSearchRow {
+    grid-template-columns: minmax(0, 1fr) 72px;
+    gap: var(--spacing-8);
+  }
+
+  .schoolModalSearchButton {
+    min-width: 0 !important;
+    padding: 13px var(--spacing-8) !important;
+  }
+
+  .schoolModalMain {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .schoolModalMainActive {
+    min-height: 0;
+  }
+
+  .schoolResultList {
+    max-height: none;
+    flex: 1 1 auto;
+  }
+
+  .schoolPagination {
+    margin-top: var(--spacing-20);
+    margin-bottom: var(--spacing-8);
+  }
 }

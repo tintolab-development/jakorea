@@ -7,12 +7,12 @@ import {
 import { MYPAGE_PATH } from '@/features/mypage'
 import type { PlatformMemberProfile } from '@/features/mypage'
 import {
+  AddressSearchModal,
   MOCK_DUPLICATE_EMAIL,
   MOCK_VERIFIED_NAME,
   MOCK_VERIFIED_PHONE,
+  SchoolSearchModal,
 } from '@/features/auth/sign-up'
-import { AddressSearchModal } from '@/features/auth/sign-up/ui/address-search-modal'
-import { SchoolSearchModal } from '@/features/auth/sign-up/ui/school-search-modal'
 import { PfRichTextEditor, RichTextViewer, useRichTextEditor } from '@/shared/rich-text'
 import {
   GoogleSocialLoginIcon,
@@ -44,7 +44,9 @@ import {
   PFDateInput,
   PFSelect,
   PFSort,
+  ScrollRevealYoutubeVideo,
 } from '@/shared/ui'
+import { HOME_YOUTUBE_URL } from '@/features/home'
 import searchMintIconUrl from '@/shared/assets/icons/search-mint.svg'
 import { SearchListLayout } from '@/widgets/search-list-layout'
 import {
@@ -482,6 +484,7 @@ const designSystemNav = [
   { id: 'address-search-modal', label: '주소 검색' },
   { id: 'school-search-modal', label: '학교 검색' },
   { id: 'icons', label: 'Social Icons' },
+  { id: 'youtube-reveal', label: 'YouTube Reveal' },
   { id: 'rich-text', label: 'Rich Text' },
   { id: 'form-template', label: 'FormTemplate' },
   { id: 'dev-tools', label: 'Dev Tools' },
@@ -2100,6 +2103,31 @@ platformMediaQueries.belowPc | pcUp | pcCompact | pcFullUp`}
           <GoogleSocialLoginIcon />
           <NaverSocialLoginIcon />
           <KakaoSocialLoginIcon />
+        </div>
+      </div>
+
+      <div className={styles.section} id="youtube-reveal">
+        <PFText as="div" typo="hl-sm" color="black">
+          ScrollRevealYoutubeVideo
+        </PFText>
+        <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+          컴포넌트: <code>shared/ui/scroll-reveal-youtube-video</code> · 뷰포트 진입 시 중앙에서
+          좌우로 열리는 커튼 리빌(border-radius 유지). 홈 소개 영상과 동일 mock URL을 사용합니다.
+        </PFText>
+        <div className={styles.youtubeRevealDemo}>
+          <ScrollRevealYoutubeVideo
+            youtubeUrl={HOME_YOUTUBE_URL}
+            title={
+              <>
+                JA Korea와 함께
+                <br />
+                청소년의 가능성을 넓혀주세요
+              </>
+            }
+            iframeTitle="JA Korea 소개 영상"
+            animateOnce
+            className={styles.youtubeReveal}
+          />
         </div>
       </div>
 

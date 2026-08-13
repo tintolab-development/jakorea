@@ -6,7 +6,7 @@ import {
   shouldShowGeneralVolunteerFreeWriteItems,
   type GeneralEssayColumnKey,
 } from '@/features/program/general/lib/volunteer-screening-constants'
-import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-resume.css'
+import '@/features/user/detail/ui/instructor-resume/resume.css'
 
 const ESSAY_KEYS: GeneralEssayColumnKey[] = [
   'essayIntro',

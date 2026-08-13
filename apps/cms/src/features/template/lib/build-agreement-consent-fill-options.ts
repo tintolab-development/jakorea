@@ -11,8 +11,6 @@ export type AgreementConsentFillContext = {
   templateId: string
   /** write 모드 서명란 */
   participantName?: string
-  /** 초상권 동의서 소속 셀렉트 고정 옵션 */
-  portraitAffiliationSelectOptions?: ReadonlyArray<{ value: string; label: string }>
 }
 
 /** 회원관리(등록·상세) 동의서 작성 — user 모드 + 양식 본문만 잠금 */
@@ -68,7 +66,6 @@ export function buildAgreementConsentFillParagraphBodyOptions(
     structureLockedParagraphIds: agreementConfig.structureLockedParagraphIds,
     agreementSystemDisplayMode: 'write',
     agreementSystemParticipantName: participantName,
-    portraitPersonalConsentAffiliationOptions: context?.portraitAffiliationSelectOptions,
     /** 초상권 1번 표 — 성명·소속 등 응답 입력만 허용(양식 문구·다른 표 셀은 preview 잠금) */
     portraitConsentResponseFieldsInteractive: templateId === 'agreement-portrait' ? true : undefined,
     /** 행정정보 공동이용 — 이용기관·이용사무·대상자 본인 응답 입력 */
@@ -77,8 +74,7 @@ export function buildAgreementConsentFillParagraphBodyOptions(
         ? AGREEMENT_NOTICE_CONSENT_FILL_INTERACTIVE_PARAGRAPH_IDS
         : undefined,
     agreementNoticeIdTypeInteractive: templateId === 'agreement-notice' ? true : undefined,
-    /** 행정정보 — 회원 정보로 prefill된 대상자 본인 항목은 수정 불가 */
-    agreementNoticeSubjectPrefilledReadOnly: templateId === 'agreement-notice' ? true : undefined,
+    agreementNoticeSubjectPrefilledReadOnly: false,
     /** 구조 잠금 단락 — 본문은 preview 잠금, 하단 동의 라디오만 조작 */
     structureLockedAuthoringChoicePreview:
       baseOptions?.structureLockedAuthoringChoicePreview ?? true,

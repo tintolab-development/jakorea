@@ -8,7 +8,7 @@ import {
   type GeneralEssayColumnKey,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
-import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-resume.css'
+import '@/features/user/detail/ui/instructor-resume/resume.css'
 
 const NO_DATA = '작성 내용이 없습니다.'
 

@@ -33,7 +33,12 @@ export {
 export { useMypageMember } from './hooks/use-mypage-member'
 export type { MypageMemberView } from './hooks/use-mypage-member'
 export {
+  canSubmitInstructorRoleRequest,
+  getInstructorRoleRequestStatusMessage,
   InstructorApplyForm,
+  mapInstructorApplyFormToCreateRequest,
+  useCreateInstructorRoleRequestMutation,
+  useCurrentInstructorRoleRequestQuery,
   useInstructorApplyLockedBasic,
 } from './instructor-apply'
 export type {

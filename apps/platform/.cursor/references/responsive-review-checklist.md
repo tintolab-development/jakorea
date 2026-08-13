@@ -4,11 +4,19 @@ Use this checklist when reviewing CSS Modules responsive implementation in `apps
 
 ## Layout safety
 
-- Validate Platform bands: 390 (mobile), 1280 (PC compact), 1600 (PC full).
-- Replace fixed container widths with `width: min(100%, max-width)`.
+- Validate Platform bands: **390** (mobile), **1280** (PC compact / middle), **1600** (PC full).
+- Prefer `--bp-pc-up` for shared PC; use `--bp-pc-compact` only when middle must differ from full.
+- Replace fixed container widths with `width: min(100%, max-width)` / content tokens.
 - Add `min-width: 0` to grid/flex children containing text.
 - Avoid `100vw` unless scrollbar overflow is accounted for.
 - Use `box-sizing: border-box` if the project does not already define it globally.
+
+## UI structure
+
+- Layout roles (`shell` / `main` / `aside` / `toolbar` / `content` / `actions`) are expressed in markup.
+- Responsive forks live at the owning layer (shell → page → feature → shared).
+- No duplicate mobile/desktop DOM when CSS composition is enough.
+- No ad-hoc middle breakpoints outside Platform aliases.
 
 ## Content safety
 

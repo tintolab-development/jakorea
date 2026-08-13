@@ -4,9 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predev": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/form-template-runtime --filter @jakorea/rich-text build",
+    "predev": "pnpm run build:workspace-deps",
+    "prebuild": "pnpm run build:workspace-deps",
+    "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/form-template-runtime --filter @jakorea/rich-text build",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint . --max-warnings=-1",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "preview": "vite preview",

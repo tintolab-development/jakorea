@@ -123,7 +123,7 @@
 |----|------|---------|----------------|
 | `payment-statement-pre-consent-seed-title` | description | survey_title_with_period |  |
 | `payment-statement-pre-consent-seed-intro` | single_item | agreement_explanation_text | 개인정보 수집‧이용 및 제공 동의서 |
-| `payment-statement-pre-consent-seed-p1-collection` | single_item | horizontal_table | 개인정보 수집‧이용 |
+| `payment-statement-pre-consent-seed-p1-collection` | single_item | horizontal_table | 개인정보 수집·이용 |
 | `payment-statement-pre-consent-seed-p2-rrn-collection` | single_item | horizontal_table | 고유식별번호(주민등록번호) 수집·이용 |
 | `payment-statement-pre-consent-seed-p3-third-party` | single_item | horizontal_table | 개인정보 제3자 제공·이용 |
 | `payment-statement-pre-consent-seed-p4-rrn-third-party` | single_item | horizontal_table | 고유식별번호 제3자 제공·이용 |

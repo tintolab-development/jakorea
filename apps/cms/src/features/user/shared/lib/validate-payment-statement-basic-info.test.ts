@@ -9,6 +9,7 @@ describe('isPaymentStatementBasicInfoIncomplete', () => {
     affiliation: 'JA Korea',
     noAffiliation: false,
     addressRoad: '서울특별시 마포구',
+    addressDetail: '101호',
     bankName: '우리은행',
     accountNumber: '1002859723089',
     accountHolder: '김필수',
@@ -34,5 +35,14 @@ describe('isPaymentStatementBasicInfoIncomplete', () => {
         noAffiliation: true,
       })
     ).toBe(false)
+  })
+
+  it('requires address detail for person', () => {
+    expect(
+      isPaymentStatementBasicInfoIncomplete({
+        ...complete,
+        addressDetail: '',
+      })
+    ).toBe(true)
   })
 })

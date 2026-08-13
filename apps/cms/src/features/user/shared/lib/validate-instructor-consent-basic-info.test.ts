@@ -10,6 +10,7 @@ describe('isInstructorRegisterBasicInfoIncompleteForConsent', () => {
     contact: '010-1234-5678',
     email: 'test@example.com',
     homeAddress: '서울특별시 강남구',
+    homeAddressDetail: '101호',
     bankName: 'KB국민은행',
     accountNumber: '1234567890',
     accountHolder: '홍길동',
@@ -54,5 +55,14 @@ describe('isInstructorRegisterBasicInfoIncompleteForConsent', () => {
         affiliationNone: true,
       })
     ).toBe(false)
+  })
+
+  it('requires home address detail for person', () => {
+    expect(
+      isInstructorRegisterBasicInfoIncompleteForConsent({
+        ...completeGeneral,
+        homeAddressDetail: '',
+      })
+    ).toBe(true)
   })
 })

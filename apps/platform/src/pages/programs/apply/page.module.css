@@ -105,12 +105,31 @@
   justify-content: center;
 }
 
-/* ── PC · 1080+ : 양식 컬럼 max 1440, 좌우는 배경 풀블리드 ── */
-@media (--bp-pc-up) {
+/* ── PC 양식 셸 (PFFormPage와 동일 compact/full) ──
+ * ≤1079 모바일 레이아웃은 별도 — 이번 범위 밖
+ */
+@media (--bp-pc-compact) {
   .page {
     gap: var(--spacing-74);
     padding-block: var(--spacing-74) 127px;
-    /* 1920 시안: (100% - 1440) / 2 = 240 · 좁은 PC는 최소 80 */
+    padding-inline: 80px;
+  }
+
+  .inner {
+    width: 100%;
+    max-width: var(--content-shell-max-width);
+  }
+
+  .form {
+    gap: var(--spacing-60);
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .page {
+    gap: var(--spacing-74);
+    padding-block: var(--spacing-74) 127px;
+    /* 1920: (100% - 1440) / 2 = 240 · 최소 80 */
     padding-inline: max(80px, calc((100% - var(--content-shell-max-width)) / 2));
   }
 
@@ -120,7 +139,6 @@
   }
 
   .form {
-    /* 단락 스택 ↔ 신청하기 버튼 시안 60 */
     gap: var(--spacing-60);
   }
 }

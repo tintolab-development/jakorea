@@ -2,10 +2,10 @@
   --reveal-radius: 18px;
   --reveal-mask-width: clamp(320px, 72vw, 960px);
   --reveal-mask-height: clamp(160px, 18vw, 280px);
-  --reveal-clip-inactive: inset(0 50% 0 50% round var(--reveal-radius));
-  --reveal-clip-active: inset(0 0 0 0 round var(--reveal-radius));
   --reveal-duration: 3200ms;
   --reveal-easing: cubic-bezier(0.22, 1, 0.36, 1);
+  /* opacity는 짧게 — 커튼(width)이 보이도록 */
+  --reveal-fade-duration: 480ms;
 
   display: flex;
   flex-direction: column;
@@ -35,25 +35,40 @@
     transform var(--reveal-duration) var(--reveal-easing);
 }
 
-.mask {
+/*
+ * clip-path inset(... round)는 브라우저에서 보간이 깨져 fade만 남음.
+ * 트랙은 최종 크기 고정, 마스크 width 0→100% 로 중앙 커튼 + border-radius 유지.
+ */
+.maskTrack {
   position: relative;
   width: var(--reveal-mask-width);
   height: var(--reveal-mask-height);
   margin: 0 auto;
+}
+
+.mask {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 0;
   overflow: hidden;
   border-radius: var(--reveal-radius);
   background: var(--color-neutral-black);
   opacity: 0;
-  transform: scale(1);
-  clip-path: var(--reveal-clip-inactive);
+  transform: translateX(-50%);
   transition:
-    clip-path var(--reveal-duration) var(--reveal-easing),
-    opacity var(--reveal-duration) var(--reveal-easing);
+    width var(--reveal-duration) var(--reveal-easing),
+    opacity var(--reveal-fade-duration) var(--reveal-easing);
 }
 
 .iframeWrap {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 50%;
+  width: var(--reveal-mask-width);
+  height: 100%;
+  transform: translateX(-50%);
 }
 
 .iframe {
@@ -75,15 +90,19 @@
 }
 
 .isInView .mask {
+  width: 100%;
   opacity: 1;
-  clip-path: var(--reveal-clip-active);
 }
 
-.reducedMotion .title,
-.reducedMotion .mask {
+.reducedMotion .title {
   opacity: 1;
   transform: none;
-  clip-path: var(--reveal-clip-active);
+  transition: none;
+}
+
+.reducedMotion .mask {
+  width: 100%;
+  opacity: 1;
   transition: none;
 }
 
@@ -92,7 +111,6 @@
     --reveal-radius: var(--radius-16);
     --reveal-mask-width: calc(100vw - 40px);
     --reveal-mask-height: clamp(180px, 52vw, 260px);
-    --reveal-clip-inactive: inset(0 50% 0 50% round var(--reveal-radius));
     --reveal-duration: 2800ms;
     padding: 96px 0;
     gap: var(--spacing-32);

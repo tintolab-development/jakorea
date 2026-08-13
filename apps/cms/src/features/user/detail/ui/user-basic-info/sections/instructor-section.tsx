@@ -1,9 +1,12 @@
+/**
+ * 강사 기본 정보 — **조회 전용** 섹션.
+ * 수정 화면은 등록 폼을 재사용하는 `InstructorDetailEditForm`이 SSOT이므로
+ * 이 파일에 `edit` 슬롯을 추가하지 않는다.
+ */
+
 import type { ReactNode } from 'react'
-import { DetailInfoForm, DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
+import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import { CmsButton, CmsInput, CmsSelect } from '@/shared/ui'
-import { CmsDateTextInput } from '@/shared/ui/date-text-input'
-import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { isInstructorDualProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import {
   parseSchoolTeacherEmploymentStatus,
@@ -18,20 +21,17 @@ import {
   instructorBankView,
   instructorCareerYearsLine,
   instructorFeeGradeLine,
-  jaEvaluationGradeLine,
   oneLineIntroLine,
   resolveInstructorAffiliationParts,
   socialView,
 } from '../display'
+import { InstructorJaEvaluationGradeField } from '../instructor-ja-grade-field'
 import {
   PermissionApprovalStatusWithResend,
   settlementStatusView,
 } from '../status'
-import { useBasicInfoEditing } from '../use-basic-info-editing'
 import type { BasicInfoSectionContext } from './types'
-import { ContactInfoFieldsRow, FullWidthAddressEdit } from './shared'
-import { GENDER_EDIT_OPTIONS, INDIVIDUAL_AFFILIATION_FIELDS_WIDTH } from './constants'
-import { INSTRUCTOR_FEE_GRADE_OPTIONS } from '@/data/mock/program-wage-info'
+import { ContactInfoViewRow } from './shared'
 import { formatDate } from '@/shared/utils'
 
 function instructorBusinessIncomeView(user: BasicInfoSectionContext['user']) {
@@ -96,41 +96,6 @@ function InstructorAffiliationView({ user }: { user: BasicInfoSectionContext['us
   )
 }
 
-/** JA 평가 등급은 직접 수정 불가 — view/수정 모드 동일 노출(등급 평가 모달만) */
-function JaEvaluationGradeWithAction({
-  user,
-  onOpenJaGradeEvaluation,
-}: {
-  user: BasicInfoSectionContext['user']
-  onOpenJaGradeEvaluation?: () => void
-}) {
-  const hasGrade = Boolean(user.listMetrics?.jaEvaluationGrade?.trim())
-  const gradeEvaluateButton = (
-    <CmsButton
-      type="button"
-      variant="secondary"
-      size="small"
-      onClick={() => {
-        onOpenJaGradeEvaluation?.()
-      }}
-    >
-      등급 평가
-    </CmsButton>
-  )
-
-  if (!hasGrade) {
-    return gradeEvaluateButton
-  }
-
-  return (
-    <span className="user-basic-info-section__permission-approval-dropdown-wrap">
-      <span>{jaEvaluationGradeLine(user)}</span>
-      <DetailInfoForm.InputsSeparator />
-      {gradeEvaluateButton}
-    </span>
-  )
-}
-
 export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
   const {
     user,
@@ -162,8 +127,9 @@ export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
           label="JA 평가 등급"
           readOnlyDisplay
           view={
-            <JaEvaluationGradeWithAction
+            <InstructorJaEvaluationGradeField
               user={user}
+              wrapClassName="user-basic-info-section__permission-approval-dropdown-wrap"
               onOpenJaGradeEvaluation={ctx.onOpenJaGradeEvaluation}
             />
           }
@@ -178,25 +144,9 @@ export function InstructorMetaSection(ctx: BasicInfoSectionContext) {
 }
 
 export function InstructorSection(ctx: BasicInfoSectionContext) {
-  const {
-    user,
-    scheduleChangeCount,
-    personalInfoRevealed,
-    memberInfoEditing,
-    memberInfoDraft,
-    onMemberInfoDraftChange,
-    cmsMayEditBasicProfileFields,
-    viewContext,
-  } = ctx
+  const { user, scheduleChangeCount, personalInfoRevealed, viewContext } = ctx
   const isInstructorPermissionDetail =
     viewContext.permissionView && viewContext.permissionRole === 'instructor'
-  const editing = useBasicInfoEditing({
-    memberInfoEditing,
-    memberInfoDraft,
-    onMemberInfoDraftChange,
-    cmsMayEditBasicProfileFields,
-  })
-  const d = memberInfoDraft
   const nameWithBadge = (nameNode: ReactNode) => (
     <span className="user-basic-info-section__name-with-badge">
       {nameNode}
@@ -209,75 +159,17 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
   return (
     <>
       <EditableRow type="double">
-        <EditableField
-          label="성명"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={nameWithBadge(user.name)}
-          edit={nameWithBadge(
-            <CmsInput
-              value={d?.name ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ name: e.target.value })}
-              inputSize="medium"
-              width="100%"
-              placeholder="한글 성명"
-              aria-label="성명"
-            />
-          )}
-        />
-        <EditableField
-          label="성별 및 생년월일"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={genderBirthView(user)}
-          edit={
-            <span className="user-basic-info-section__inline-controls">
-              <CmsSelect
-                value={d?.gender || undefined}
-                onChange={v => onMemberInfoDraftChange?.({ gender: v != null ? String(v) : '' })}
-                options={GENDER_EDIT_OPTIONS}
-                placeholder="성별"
-                inputSize="medium"
-                width={120}
-              />
-              <CmsDateTextInput
-                value={(d?.birthDate ?? '').replace(/-/g, '.')}
-                onValueChange={value =>
-                  onMemberInfoDraftChange?.({ birthDate: value.replace(/\./g, '-') })
-                }
-                inputSize="medium"
-                width={160}
-                placeholder="YYYY-MM-DD"
-                maxLength={10}
-                aria-label="생년월일"
-              />
-            </span>
-          }
-        />
+        <EditableField label="성명" readOnlyDisplay view={nameWithBadge(user.name)} />
+        <EditableField label="성별 및 생년월일" readOnlyDisplay view={genderBirthView(user)} />
       </EditableRow>
 
-      <ContactInfoFieldsRow
-        user={user}
-        personalInfoRevealed={personalInfoRevealed}
-        readOnlyDisplay={editing.isReadOnlyDisplay}
-        phoneValue={d?.phone ?? ''}
-        emailValue={d?.email ?? ''}
-        onPhoneChange={next => onMemberInfoDraftChange?.({ phone: next })}
-        onEmailChange={next => onMemberInfoDraftChange?.({ email: next })}
-      />
+      <ContactInfoViewRow user={user} personalInfoRevealed={personalInfoRevealed} />
 
       <EditableRow type="double">
         <EditableField
           label="소속"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
+          readOnlyDisplay
           view={<InstructorAffiliationView user={user} />}
-          edit={
-            <CmsInput
-              value={d?.affiliationInstitution ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ affiliationInstitution: e.target.value })}
-              inputSize="medium"
-              width="100%"
-              placeholder="소속 (예: ㅇㅇ초등학교, JA 강사단)"
-            />
-          }
         />
         <EditableField
           label="강사 경력"
@@ -289,52 +181,13 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
       <EditableRow type="double">
         <EditableField
           label="자택 주소지"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
+          readOnlyDisplay
           view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
-          edit={
-            <FullWidthAddressEdit
-              searchValue={d?.detailAddressSearch ?? ''}
-              onSearchChange={next => onMemberInfoDraftChange?.({ detailAddressSearch: next })}
-              detailValue={d?.detailAddressDetail ?? ''}
-              onDetailChange={next => onMemberInfoDraftChange?.({ detailAddressDetail: next })}
-              detailAriaLabel="자택 주소 상세"
-            />
-          }
         />
         <EditableField
           label="정산 계좌 정보"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
+          readOnlyDisplay
           view={<span>{instructorBankView(user, personalInfoRevealed)}</span>}
-          edit={
-            <span className="detail-info-form-inputs-wrapper-no-gap">
-              <CmsInput
-                value={d?.instructorBankName ?? ''}
-                onChange={e => onMemberInfoDraftChange?.({ instructorBankName: e.target.value })}
-                inputSize="medium"
-                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
-                placeholder="은행명"
-              />
-              <DetailInfoForm.InputsSeparator />
-              <CmsNumericInput
-                mode="numericText"
-                value={d?.instructorAccountNumber ?? ''}
-                onValueChange={value =>
-                  onMemberInfoDraftChange?.({ instructorAccountNumber: value })
-                }
-                inputSize="medium"
-                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
-                placeholder="계좌번호"
-              />
-              <DetailInfoForm.InputsSeparator />
-              <CmsInput
-                value={d?.instructorAccountHolder ?? ''}
-                onChange={e => onMemberInfoDraftChange?.({ instructorAccountHolder: e.target.value })}
-                inputSize="medium"
-                width={INDIVIDUAL_AFFILIATION_FIELDS_WIDTH}
-                placeholder="예금주"
-              />
-            </span>
-          }
         />
       </EditableRow>
 
@@ -342,20 +195,8 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         {!isInstructorPermissionDetail ? (
           <EditableField
             label="강사비 등급"
-            readOnlyDisplay={!editing.isEditing}
+            readOnlyDisplay
             view={<span>{instructorFeeGradeLine(user)}</span>}
-            edit={
-              <CmsSelect
-                value={memberInfoDraft?.instructorFeeGrade || undefined}
-                onChange={v =>
-                  onMemberInfoDraftChange?.({ instructorFeeGrade: v != null ? String(v) : '' })
-                }
-                options={INSTRUCTOR_FEE_GRADE_OPTIONS}
-                placeholder="선택"
-                inputSize="medium"
-                width="100%"
-              />
-            }
           />
         ) : (
           <EditableField
@@ -366,41 +207,16 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         )}
         <EditableField
           label="사업소득자 여부"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
+          readOnlyDisplay
           view={instructorBusinessIncomeView(user)}
-          edit={
-            <CmsSelect
-              value={d?.instructorBusinessIncome || undefined}
-              onChange={v =>
-                onMemberInfoDraftChange?.({
-                  instructorBusinessIncome: v != null ? (String(v) as '해당' | '해당 없음') : '',
-                })
-              }
-              options={[
-                { value: '해당', label: '해당' },
-                { value: '해당 없음', label: '해당 없음' },
-              ]}
-              placeholder="선택"
-              inputSize="medium"
-              width="100%"
-            />
-          }
         />
       </EditableRow>
 
       <EditableRow type="single">
         <EditableField
           label="한 줄 소개"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
+          readOnlyDisplay
           view={<span>{oneLineIntroLine(user)}</span>}
-          edit={
-            <CmsInput
-              value={d?.bio ?? ''}
-              onChange={e => onMemberInfoDraftChange?.({ bio: e.target.value })}
-              inputSize="medium"
-              width="100%"
-            />
-          }
         />
       </EditableRow>
     </>

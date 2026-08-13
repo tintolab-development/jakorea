@@ -131,4 +131,27 @@ describe('applyMemberConsentToSchema', () => {
     const marketing = rows.flatMap(r => r.fields).find(f => f.label === '마케팅 제공 동의')?.value
     expect(marketing).toMatchObject({ type: 'remote_consent', agreed: true })
   })
+
+  it('consent-records의 formResponseId를 document 필드에 전달한다', () => {
+    const rows = applyMemberConsentToSchema(individualSchema, {
+      consentRecords: [
+        {
+          consentType: 'PORTRAIT_RIGHTS',
+          consentValue: true,
+          consentedAt: '2026-01-15T09:15:42Z',
+          formResponseId: 42,
+        },
+      ],
+    })
+
+    const portrait = rows
+      .flatMap(r => r.fields)
+      .find(f => f.label === '초상권 수집·이용 동의')?.value
+
+    expect(portrait).toMatchObject({
+      type: 'document',
+      agreed: true,
+      formResponseId: 42,
+    })
+  })
 })

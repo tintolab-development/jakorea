@@ -5,6 +5,11 @@ import {
   mapCreateUserRequestToPreRegisterInstructor,
   mapCreateUserRequestToPreRegisterSchool,
 } from './map-pre-register-request'
+import {
+  instructorProfileFormValuesToCmsProfile,
+  instructorProfileFormValuesToCmsSettlement,
+} from './map-instructor-cms-profile'
+import { INITIAL_VALUES } from '@/features/user/shared/ui/instructor-profile-form'
 import { toApiBirthDate, toApiGender, toDisplayGender } from './map-member-gender-birth'
 
 describe('map-member-gender-birth', () => {
@@ -168,5 +173,47 @@ describe('mapCreateUserRequestToPreRegisterInstructor', () => {
     expect(body.bankName).toBe('농협')
     expect(body.businessIncome).toBe(false)
     expect(body.bankAccounts?.[0]?.bankName).toBe('농협')
+  })
+
+  it('profile/settlement를 OpenAPI wire 형식으로 정규화한다', () => {
+    const profile = instructorProfileFormValuesToCmsProfile({
+      ...INITIAL_VALUES,
+      memberType: 'school_teacher',
+      schoolName: '고양고등학교',
+      employmentStatus: 'ACTIVE',
+      instructorFeeGrade: '2급 강사비',
+      homeAddress: '자택로 1',
+      homeAddressDetail: '201',
+    })
+    const settlement = instructorProfileFormValuesToCmsSettlement({
+      ...INITIAL_VALUES,
+      bankName: '국민',
+      accountNumber: '123',
+      accountHolder: '홍길동',
+      isBusinessIncome: 'yes',
+    })
+
+    const body = mapCreateUserRequestToPreRegisterInstructor({
+      email: 'i@test.com',
+      password: 'i@test.com',
+      name: '강사',
+      role: 'INSTRUCTOR',
+      instructorType: 'SCHOOL_TEACHER',
+      instructorCmsProfile: profile,
+      instructorCmsSettlement: settlement,
+      isActive: true,
+    })
+
+    expect(body.profile?.defaultFeeGrade).toBe('2')
+    expect(body.feeGrade).toBe('2')
+    expect(body.profile?.affiliation?.schoolName).toBe('고양고등학교')
+    expect(body.settlement).toEqual({
+      bankName: '국민',
+      accountNumber: '123',
+      accountHolder: '홍길동',
+      businessIncome: true,
+    })
+    expect('bankAccounts' in (body.settlement ?? {})).toBe(false)
+    expect('organizationText' in body).toBe(false)
   })
 })

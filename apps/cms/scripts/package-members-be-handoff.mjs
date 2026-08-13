@@ -4,7 +4,7 @@
  *
  * Usage (from repo root or apps/cms):
  *   pnpm --filter cms package:members-be-handoff
- *   pnpm --filter cms package:members-be-handoff -- --full --openapi
+ *   pnpm --filter cms package:members-be-handoff -- --openapi
  *   pnpm --filter cms package:members-be-handoff -- --out=/path/to/zip-root
  */
 import fs from 'node:fs'
@@ -14,29 +14,19 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const cmsRoot = path.resolve(__dirname, '..')
 const docsDir = path.join(cmsRoot, 'docs/api/members')
-const bundleTemplateDir = path.join(docsDir, 'be-handoff-bundle')
 
 const args = process.argv.slice(2)
-const full = args.includes('--full')
-const withOpenApi = args.includes('--openapi') || full
+const withOpenApi = args.includes('--openapi')
 const outArg = args.find(a => a.startsWith('--out='))
 const date = new Date().toISOString().slice(0, 10)
 const defaultOut = path.join(cmsRoot, 'dist', `members-be-handoff-${date}`)
 const outDir = outArg ? path.resolve(outArg.slice('--out='.length)) : defaultOut
 
-/** 2026-07-31: 통합 handoff + 권한 설정 UI/API 정합 */
 const coreFiles = [
-  'members-api-backend-handoff-2026-07-31.md',
-  'admin-permission-settings-ui-api-handoff-2026-07-30.md',
+  'members-pre-register-terms-required-policy-backend-request-2026-08-11.md',
 ]
 
-const fullFiles = [
-  'members-api-integration-2026-07-23.md',
-  'members-api-backend-gaps-2026-07-23.md',
-  'members-api-detail-missing-endpoints-handoff-2026-06-26.md',
-]
-
-const toCopy = [...coreFiles, ...(full ? fullFiles : [])]
+const toCopy = [...coreFiles]
 
 if (!fs.existsSync(docsDir)) {
   console.error('Missing docs dir:', docsDir)
@@ -54,12 +44,12 @@ for (const name of toCopy) {
   fs.copyFileSync(src, path.join(outDir, name))
 }
 
-const readmeBe = path.join(bundleTemplateDir, 'README-BE.md')
-if (!fs.existsSync(readmeBe)) {
-  console.error('Missing template:', readmeBe)
+const readmeSrc = path.join(docsDir, 'README.md')
+if (!fs.existsSync(readmeSrc)) {
+  console.error('Missing README:', readmeSrc)
   process.exit(1)
 }
-fs.copyFileSync(readmeBe, path.join(outDir, 'README.md'))
+fs.copyFileSync(readmeSrc, path.join(outDir, 'README.md'))
 
 if (withOpenApi) {
   const oasSrc = path.join(cmsRoot, 'openapi/members.openapi.json')

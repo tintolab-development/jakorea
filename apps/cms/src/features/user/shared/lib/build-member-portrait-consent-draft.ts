@@ -103,7 +103,7 @@ function fillNoticeSubjectParagraph(
   }
 }
 
-/** 회원 신규 등록 — `agreement-portrait` 양식에 기본 정보 반영 */
+/** @deprecated 회원 동의서 작성 — 기본정보 prefill 사용 안 함. 조회용 context 빌더만 유지 */
 export function applyMemberPortraitConsentPrefill(
   draft: WritingFormDraft,
   ctx: MemberConsentMemberContext
@@ -115,7 +115,7 @@ export function applyMemberPortraitConsentPrefill(
   }
 }
 
-/** 교육진행자 동의 서약서 — write 모드 진입 시 필수 객관식 단락 기본 「동의」 선택 */
+/** @deprecated 회원 동의서 작성 — 기본 「동의」 자동 선택 사용 안 함 */
 export function applyEducatorFacilitatorPledgeDefaultAgree(
   draft: WritingFormDraft
 ): WritingFormDraft {
@@ -138,7 +138,7 @@ export function applyEducatorFacilitatorPledgeDefaultAgree(
   }
 }
 
-/** 회원 신규 등록 — `agreement-notice` 대상자 본인 단락에 기본 정보 반영 */
+/** @deprecated 회원 동의서 작성 — 기본정보 prefill 사용 안 함 */
 export function applyMemberNoticeConsentPrefill(
   draft: WritingFormDraft,
   ctx: MemberConsentMemberContext

@@ -1,7 +1,7 @@
 /**
  * CMS 화면 기준 강사 프로필 DTO — BE OpenAPI `InstructorCmsProfile` (2026-08-06 FE 연동)
  *
- * - SSOT 문서: `apps/cms/docs/api/members/instructor-pre-register-detail-roundtrip-handoff-2026-08-06.md` §3.8
+ * - Mapper SSOT: `map-instructor-cms-profile.ts` · 폼 SSOT: `instructor-profile-form-model.ts`
  * - FE 등록·수정 폼 SSOT: `InstructorRegisterModalFormValues` (`instructor-profile-form-model.ts`)
  * - Mapper: `map-instructor-cms-profile.ts`
  */

@@ -46,6 +46,7 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 ## API / state (align with backend)
 
 - Per-item: `agreedAt`, document id/version, expiry (1y / 10y / until withdraw).
+- **동의서 보기**: `consent-records.formResponseId` → `MemberConsentDocumentViewModal` — **제출본만** 표시(회원 기본정보 prefill 금지). API 미연동 시 empty state.
 - Payment statement: **first settlement** flag, **PII-expiry re-consent** flag.
 - CMS: mostly read + status; e-sign payload in separate API spec when available.
 
@@ -54,6 +55,7 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 회원 등록·상세·강사 신규 등 **템플릿 관리 밖** 동의서 작성 UI는 아래 규칙을 따른다.  
 → **[agreement-consent-fill-interaction.mdc](../template/agreement-consent-fill-interaction.mdc)**
 
+- **기본 정보 단락과 동의서 필드 분리** — 작성 진입 시 응답 전부 빈 상태, 등록 폼과 양방향 연동 없음
 - **양식 본문**(동의 문구·표 셀) 수정 불가 / **응답**(지급조서 기본정보, 동의 라디오, 초상권 성명·소속) 입력 가능
 - `preview` 모드 + 슬롯 CSS로 잠그지 말 것 — 지급조서·라디오까지 막힘
 - 애매하면 코드 변경 전 사용자에게 확인

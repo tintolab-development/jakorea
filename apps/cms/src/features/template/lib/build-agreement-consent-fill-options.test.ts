@@ -119,7 +119,7 @@ describe('buildAgreementConsentFillParagraphBodyOptions', () => {
     expect(options?.agreementSystemParticipantName).toBe('김철수')
     expect(options?.hideSurveyWritingPeriod).toBe(true)
     expect(options?.agreementNoticeIdTypeInteractive).toBe(true)
-    expect(options?.agreementNoticeSubjectPrefilledReadOnly).toBe(true)
+    expect(options?.agreementNoticeSubjectPrefilledReadOnly).toBe(false)
     expect(options?.agreementConsentFillInteractiveParagraphIds).toEqual(
       new Set([
         'agreement-notice-institution',

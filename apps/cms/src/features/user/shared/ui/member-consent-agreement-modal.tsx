@@ -24,12 +24,7 @@ import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
-import {
-  applyEducatorFacilitatorPledgeDefaultAgree,
-  applyMemberNoticeConsentPrefill,
-  applyMemberPortraitConsentPrefill,
-  type MemberConsentMemberContext,
-} from '@/features/user/shared/lib/build-member-portrait-consent-draft'
+import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/normalize-member-consent-write-draft'
 import { hasMemberConsentIncompleteRequiredFields } from '@/features/user/shared/lib/validate-member-consent-draft'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
@@ -42,13 +37,25 @@ const PAYMENT_STATEMENT_TEMPLATE_IDS = new Set([
   'document-payment-order-pre-consent',
 ])
 
+const EMPTY_PAYMENT_BASIC_INFO: Partial<PaymentStatementBasicInfoAutofillValues> = {
+  nameKo: '',
+  nameEn: '',
+  residentFront: '',
+  residentBack: '',
+  affiliation: '',
+  noAffiliation: false,
+  addressRoad: '',
+  addressDetail: '',
+  bankName: '',
+  accountNumber: '',
+  accountHolder: '',
+  paymentPurpose: '',
+}
+
 export interface MemberConsentAgreementModalProps {
   open: boolean
   templateId: string
   modalTitle: string
-  memberContext: MemberConsentMemberContext
-  /** 지급조서 사전 동의서 — 등록 폼에 입력된 기본정보 prefill */
-  paymentStatementBasicInfoAutofill?: Partial<PaymentStatementBasicInfoAutofillValues>
   onClose: () => void
   onComplete: () => void
 }
@@ -64,8 +71,6 @@ export function MemberConsentAgreementModal({
   open,
   templateId,
   modalTitle,
-  memberContext,
-  paymentStatementBasicInfoAutofill,
   onClose,
   onComplete,
 }: MemberConsentAgreementModalProps) {
@@ -88,25 +93,21 @@ export function MemberConsentAgreementModal({
     let cancelled = false
     setIsDraftLoading(true)
     setDraft(null)
-    setPaymentBasicInfo(paymentStatementBasicInfoAutofill ?? {})
+    setPaymentBasicInfo({})
 
     void loadWritingFormTemplateDraft(templateId)
       .then(saved => {
         if (cancelled) return
-        const seed = saved?.draft ?? resolveSeedDraft(templateId)
-        if (seed == null) return
-        let next = normalizeWritingFormDraft(seed)
+        /** 양식 구조는 저장본·API draft, 응답(라디오·입력)은 항상 시드 기준으로 비움 */
+        const seed = resolveSeedDraft(templateId)
+        const structureSource = saved?.draft ?? seed
+        if (structureSource == null || seed == null) return
+        let next = normalizeWritingFormDraft(structureSource)
         if (templateId === 'agreement-notice') {
           next = ensureAgreementNoticeConfirmationClosing(next)
           next = overlayAgreementNoticeSeedHorizontalTable(next)
-          next = applyMemberNoticeConsentPrefill(next, memberContext)
         }
-        if (templateId === 'agreement-portrait') {
-          next = applyMemberPortraitConsentPrefill(next, memberContext)
-        }
-        if (templateId === 'agreement-expense') {
-          next = applyEducatorFacilitatorPledgeDefaultAgree(next)
-        }
+        next = normalizeMemberConsentWriteDraft(next, templateId)
         setDraft(next)
       })
       .finally(() => {
@@ -116,7 +117,7 @@ export function MemberConsentAgreementModal({
     return () => {
       cancelled = true
     }
-  }, [memberContext, open, paymentStatementBasicInfoAutofill, templateId])
+  }, [open, templateId])
 
   const updateParagraph = useCallback(
     (id: string, updater: (paragraph: WritingFormParagraph) => WritingFormParagraph) => {
@@ -161,10 +162,8 @@ export function MemberConsentAgreementModal({
     if (PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) {
       return paymentBasicInfo?.nameKo?.trim() ?? ''
     }
-    const fromDraft = extractAgreementDraftAuthorName(templateId, draft)
-    if (fromDraft.trim()) return fromDraft
-    return memberContext.name?.trim() ?? ''
-  }, [draft, memberContext.name, paymentBasicInfo?.nameKo, templateId])
+    return extractAgreementDraftAuthorName(templateId, draft).trim()
+  }, [draft, paymentBasicInfo?.nameKo, templateId])
 
   const authorDisplayName = useMemo(
     () => resolveAgreementUserModeAuthorDisplayName(syncedAuthorName),
@@ -176,37 +175,22 @@ export function MemberConsentAgreementModal({
       buildAgreementConsentFillParagraphBodyOptions(agreementConfig, {
         templateId,
         participantName: authorDisplayName,
-        portraitAffiliationSelectOptions: memberContext.portraitAffiliationSelectOptions,
       }),
-    [
-      agreementConfig,
-      authorDisplayName,
-      memberContext.portraitAffiliationSelectOptions,
-      templateId,
-    ]
+    [agreementConfig, authorDisplayName, templateId]
   )
 
-  const paragraphBodyOptionsWithAutofill = useMemo(() => {
+  const paragraphBodyOptionsWithPayment = useMemo(() => {
     if (paragraphBodyOptions == null) return undefined
     if (!PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) return paragraphBodyOptions
-    if (paymentStatementBasicInfoAutofill == null) return paragraphBodyOptions
     return {
       ...paragraphBodyOptions,
       paymentStatementBasicInfoValues: {
-        ...paragraphBodyOptions.paymentStatementBasicInfoValues,
-        ...paymentStatementBasicInfoAutofill,
+        ...EMPTY_PAYMENT_BASIC_INFO,
+        ...(paymentBasicInfo ?? {}),
       },
-    }
-  }, [paragraphBodyOptions, paymentStatementBasicInfoAutofill, templateId])
-
-  const paragraphBodyOptionsWithPaymentSync = useMemo(() => {
-    if (paragraphBodyOptionsWithAutofill == null) return undefined
-    if (!PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) return paragraphBodyOptionsWithAutofill
-    return {
-      ...paragraphBodyOptionsWithAutofill,
       paymentStatementBasicInfoOnValuesChange: handlePaymentBasicInfoValuesChange,
     }
-  }, [handlePaymentBasicInfoValuesChange, paragraphBodyOptionsWithAutofill, templateId])
+  }, [handlePaymentBasicInfoValuesChange, paragraphBodyOptions, paymentBasicInfo, templateId])
 
   const paragraphInteractionMode = useMemo(
     () => resolveAgreementConsentFillInteractionMode(templateId),
@@ -280,7 +264,7 @@ export function MemberConsentAgreementModal({
                   structureLockedParagraphIds={agreementConfig?.structureLockedParagraphIds}
                   hideDragHandleForParagraphIds={agreementConfig?.hideDragHandleForParagraphIds}
                   hideParagraphRequiredChrome={false}
-                  paragraphBodyOptions={paragraphBodyOptionsWithPaymentSync}
+                  paragraphBodyOptions={paragraphBodyOptionsWithPayment}
                   agreementClosingFooter={{
                     onSubmit: handleSubmit,
                     submitDisabled: isDraftLoading || draft == null,

@@ -10,6 +10,11 @@ import {
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
+import {
+  filterEditableTermsAgreementsForBasicInfoPatch,
+  termsAgreementRowsToRequests,
+} from '@/features/user/api/member-basic-info-terms-patch'
 
 /** `user.affiliation` 저장 시 기관·학년 구분에 사용 (목·API와 동일) */
 export const USER_AFFILIATION_PIPE_SEP = ' | ' as const
@@ -67,6 +72,8 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   instructorCmsProfile?: InstructorCmsProfileProposal
   /** BE §3.8 — CMS 강사 settlement */
   instructorCmsSettlement?: InstructorCmsSettlement
+  /** 약관·동의 수정 — PATCH `termsAgreements` */
+  termsAgreements?: TermsAgreementRequest[]
   /** 관리자 — 권한 유형 태그 */
   adminPermissionVariant?: AdminPermissionTagVariant | ''
 }
@@ -272,6 +279,9 @@ export function userToAdminProvisionedBasicDraft(
             affiliationGrade
           ),
           id1365: user.id1365 ?? '',
+          termsAgreements: filterEditableTermsAgreementsForBasicInfoPatch(
+            termsAgreementRowsToRequests(user.termsAgreements)
+          ),
         }
       : {}),
   }
@@ -330,6 +340,18 @@ export function draftToBasicInfoPatch(draft: AdminProvisionedMemberBasicInfoDraf
   }
 }
 
+/** 관리자 등록 개인 — 기본정보 + 선택 동의만 PATCH */
+export function draftToAdminProvisionedIndividualBasicInfoPatch(
+  draft: AdminProvisionedMemberBasicInfoDraft
+): PatchUserBasicInfoInput {
+  const base = draftToBasicInfoPatch(draft)
+  const termsAgreements = filterEditableTermsAgreementsForBasicInfoPatch(draft.termsAgreements)
+  return {
+    ...base,
+    ...(termsAgreements ? { termsAgreements } : {}),
+  }
+}
+
 /** 학교 계정 — 본인 가입 완료 후 등: 기본 정보는 잠금일 때 `adminComment`만 patch */
 export function draftToSchoolAdminCommentOnlyPatch(
   draft: AdminProvisionedMemberBasicInfoDraft
@@ -383,6 +405,10 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
     ...(certifications != null ? { instructorCertifications: certifications } : {}),
     ...(draft.instructorCmsProfile ? { instructorCmsProfile: draft.instructorCmsProfile } : {}),
     ...(draft.instructorCmsSettlement ? { instructorCmsSettlement: draft.instructorCmsSettlement } : {}),
+    ...(() => {
+      const termsAgreements = filterEditableTermsAgreementsForBasicInfoPatch(draft.termsAgreements)
+      return termsAgreements ? { termsAgreements } : {}
+    })(),
     listMetrics: {
       ...(feeGrade ? { instructorFeeGradeLabel: feeGrade } : {}),
       ...(jaGrade ? { jaEvaluationGrade: jaGrade } : {}),

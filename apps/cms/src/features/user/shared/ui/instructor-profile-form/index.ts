@@ -14,6 +14,7 @@ export {
   TERMS_CONSENT_DESCRIPTION,
   TERMS_CONSENT_LABEL_WIDTH,
   mapInstructorRegisterFormValuesToValidationInput,
+  mergeInstructorRegisterFormValues,
   type CareerRow,
   type ConsentValue,
   type InstructorProfileFormValues,

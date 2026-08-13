@@ -43,7 +43,6 @@ import { DesignSystemPage } from '@/pages/design-system'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
 import { IndividualDonationPage } from '@/pages/support/individual'
 import { TemporaryPage } from '@/pages/temporary'
-import { YoutubeEmbedPage } from '@/pages/youtube-embed'
 import { IMPACT_STORIES_PATH } from '@/features/impact-story'
 import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
 import {
@@ -61,9 +60,12 @@ import { AppLayoutRoute } from './app-layout-route'
 
 export const router = createBrowserRouter([
   {
+    element: <AppLayoutRoute layout="home" />,
+    children: [{ path: '/', element: <HomePage /> }],
+  },
+  {
     element: <AppLayoutRoute layout="default" />,
     children: [
-      { path: '/', element: <HomePage /> },
       { path: '/programs', element: <ProgramsPage /> },
       { path: '/programs/:programId', element: <ProgramDetailPage /> },
       { path: '/programs/:programId/apply/complete', element: <ProgramApplyCompletePage /> },
@@ -153,11 +155,10 @@ export const router = createBrowserRouter([
       { path: '/programs/:programId/apply', element: <ProgramApplyPage /> },
       { path: '/mypage/instructor-apply', element: <MypageInstructorApplyPage /> },
       { path: '/design-system', element: <DesignSystemPage /> },
-      { path: '/dev/youtube', element: <YoutubeEmbedPage /> },
     ],
   },
   {
-    element: <AppLayoutRoute layout="default" />,
+    element: <AppLayoutRoute layout="home" />,
     children: [{ path: '*', element: <HomePage /> }],
   },
 ])

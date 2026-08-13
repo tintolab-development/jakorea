@@ -24,7 +24,7 @@ export interface TermsDocumentResponse {
   content?: string;
   /** 본문 형식. 현재 피그마 약관 모달은 HTML 렌더링 기준입니다. */
   contentFormat?: TermsDocumentResponseContentFormat;
-  /** 필수 동의 여부. MARKETING은 false입니다. */
+  /** 게시 약관 문서의 기본 필수 플래그입니다. CMS 개인/강사 pre-register의 등록 차단 여부는 이 값이나 FE required 요청값이 아니라 서버의 등록 컨텍스트 정책(SERVICE_TERMS, PRIVACY_COLLECTION 필수)으로 판정합니다. MARKETING 및 등록 선택 동의서는 false입니다. */
   requiredYn?: boolean;
   /** 게시 여부 */
   publishedYn?: boolean;

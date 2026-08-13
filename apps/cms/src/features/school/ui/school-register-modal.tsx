@@ -13,6 +13,7 @@ import { CmsButton, CmsInput, ContentModal, SchoolSearch } from '@/shared/ui'
 import type { SchoolSearchSelection, SchoolSearchSelectMeta } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { isRequiredAddressIncomplete } from '@jakorea/domain/shared/required-address'
 
 const FORM_ID = 'cms-school-register-modal-form'
 
@@ -64,7 +65,12 @@ function normalizeSubmitValues(
 }
 
 function hasSchoolRegisterMissingRequired(values: SchoolRegisterModalFormValues): boolean {
-  return !values.institutionName?.trim() || !values.roadAddress?.trim()
+  if (!values.institutionName?.trim()) return true
+  return isRequiredAddressIncomplete({
+    address: values.roadAddress,
+    addressDetail: values.detailAddress,
+    subject: 'organization',
+  })
 }
 
 export function SchoolRegisterModal({
@@ -224,7 +230,7 @@ export function SchoolRegisterModal({
                     <CmsInput
                       value={roadAddress}
                       readOnly
-                      disabled={!roadAddress.trim()}
+                      disabled
                       placeholder="건물명, 도로명 또는 지번"
                       inputSize="medium"
                       width="100%"

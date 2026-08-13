@@ -18,10 +18,7 @@ import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-pan
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { downloadBlob } from '@/shared/utils/file-download'
-import {
-  applyMemberPortraitConsentPrefill,
-  type MemberConsentMemberContext,
-} from '@/features/user/shared/lib/build-member-portrait-consent-draft'
+import { useFormResponseDraftQuery } from '@/features/user/api/hooks/use-form-response-draft-query'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
@@ -31,20 +28,17 @@ import './member-consent-document-view-modal.css'
 
 const MEMBER_CONSENT_VIEW_MODAL_Z_INDEX = 1200
 const DEFAULT_CRIME_DOWNLOAD_FILENAME = '성범죄_경력조회_동의서.png'
+const NO_SUBMITTED_CONSENT_MESSAGE = '제출된 동의서를 불러올 수 없습니다.'
+const SUBMITTED_CONSENT_LOAD_FAILED_MESSAGE =
+  '제출된 동의서를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
 
 export interface MemberConsentDocumentViewModalProps {
   open: boolean
   templateId: string
   modalTitle: string
-  memberContext: MemberConsentMemberContext
+  /** 제출된 동의서 formResponse ID — API 연동 후 draft 로드에 사용 */
+  formResponseId?: number
   onClose: () => void
-}
-
-function resolveSeedDraft(templateId: string): WritingFormDraft | null {
-  const config = resolveAgreementWritingFormConfig(templateId)
-  if (config == null) return null
-  const initialDraft = config.initialDraft
-  return typeof initialDraft === 'function' ? initialDraft() : initialDraft
 }
 
 function MemberConsentCrimeDocumentView({
@@ -148,47 +142,12 @@ function MemberConsentAgreementDocumentView({
   open,
   templateId,
   modalTitle,
-  memberContext,
+  formResponseId,
   onClose,
 }: MemberConsentDocumentViewModalProps) {
   const agreementConfig = useMemo(() => resolveAgreementWritingFormConfig(templateId), [templateId])
-  const [draft, setDraft] = useState<WritingFormDraft | null>(null)
-  const [isDraftLoading, setIsDraftLoading] = useState(false)
-
-  useEffect(() => {
-    if (!open) {
-      setDraft(null)
-      setIsDraftLoading(false)
-      return
-    }
-
-    let cancelled = false
-    setIsDraftLoading(true)
-    setDraft(null)
-
-    void loadWritingFormTemplateDraft(templateId)
-      .then(saved => {
-        if (cancelled) return
-        const seed = saved?.draft ?? resolveSeedDraft(templateId)
-        if (seed == null) return
-        let next = normalizeWritingFormDraft(seed)
-        if (templateId === 'agreement-notice') {
-          next = ensureAgreementNoticeConfirmationClosing(next)
-          next = overlayAgreementNoticeSeedHorizontalTable(next)
-        }
-        if (templateId === 'agreement-portrait') {
-          next = applyMemberPortraitConsentPrefill(next, memberContext)
-        }
-        setDraft(next)
-      })
-      .finally(() => {
-        if (!cancelled) setIsDraftLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [memberContext, open, templateId])
+  const { draft: submittedDraft, isLoading: isSubmittedDraftLoading, isUnavailable } =
+    useFormResponseDraftQuery(formResponseId)
 
   const paragraphBodyOptions = useMemo(() => {
     const base = agreementConfig?.paragraphBodyOptions
@@ -200,6 +159,21 @@ function MemberConsentAgreementDocumentView({
       paragraphInteractionMode: 'preview' as const,
     }
   }, [agreementConfig?.paragraphBodyOptions])
+
+  const displayDraft = useMemo((): WritingFormDraft | null => {
+    if (submittedDraft == null) return null
+    let next = normalizeWritingFormDraft(submittedDraft)
+    if (templateId === 'agreement-notice') {
+      next = ensureAgreementNoticeConfirmationClosing(next)
+      next = overlayAgreementNoticeSeedHorizontalTable(next)
+    }
+    return next
+  }, [submittedDraft, templateId])
+
+  const emptyMessage =
+    formResponseId == null ? NO_SUBMITTED_CONSENT_MESSAGE : SUBMITTED_CONSENT_LOAD_FAILED_MESSAGE
+  const showEmpty = formResponseId == null || isUnavailable
+  const showLoading = formResponseId != null && isSubmittedDraftLoading
 
   return (
     <TealHeaderModal
@@ -236,15 +210,17 @@ function MemberConsentAgreementDocumentView({
           </div>
 
           <div className="member-consent-agreement-modal__workspace">
-            {isDraftLoading ? (
+            {showLoading ? (
               <div className="member-consent-agreement-modal__loading">
                 <Spin tip="동의서를 불러오는 중입니다." />
               </div>
-            ) : draft != null ? (
+            ) : showEmpty ? (
+              <p className="member-consent-agreement-modal__error">{emptyMessage}</p>
+            ) : displayDraft != null ? (
               <div className="member-consent-agreement-modal__form-panel form-editor-left--paragraph-body-preview">
                 <FormEditorLeftPanel
-                  paragraphs={draft.paragraphs}
-                  titleNumbering={draft.formSettings.titleNumbering}
+                  paragraphs={displayDraft.paragraphs}
+                  titleNumbering={displayDraft.formSettings.titleNumbering}
                   selectedCardId={null}
                   onSelectCard={() => {}}
                   onReorderMiddle={() => {}}
@@ -260,9 +236,7 @@ function MemberConsentAgreementDocumentView({
                 />
               </div>
             ) : (
-              <p className="member-consent-agreement-modal__error">
-                동의서를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-              </p>
+              <p className="member-consent-agreement-modal__error">{emptyMessage}</p>
             )}
           </div>
           <div className="full-page-modal__body-bottom" aria-hidden="true" />
@@ -276,7 +250,7 @@ export function MemberConsentDocumentViewModal({
   open,
   templateId,
   modalTitle,
-  memberContext,
+  formResponseId,
   onClose,
 }: MemberConsentDocumentViewModalProps) {
   if (templateId === AGREEMENT_CRIME_TEMPLATE_CODE) {
@@ -290,7 +264,7 @@ export function MemberConsentDocumentViewModal({
       open={open}
       templateId={templateId}
       modalTitle={modalTitle}
-      memberContext={memberContext}
+      formResponseId={formResponseId}
       onClose={onClose}
     />
   )

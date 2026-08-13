@@ -34,7 +34,7 @@ import {
   instructorEducationSectionDescription,
   instructorQualificationsSectionDescription,
   resolveFinalEducationDisplay,
-} from '@/features/program/shared/ui/program-detail/applicant-list/instructor-resume-blocks'
+} from '@/features/user/detail/ui/instructor-resume/blocks'
 import './applicant-instructor-detail-modal.css'
 
 const TAB_BASIC = 'basic'

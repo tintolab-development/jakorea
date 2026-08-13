@@ -9,6 +9,7 @@ import type {
   VerticalTableParagraph,
   VerticalTableRow,
 } from '@/features/template/model/writing-form-draft.schema'
+import { resolveTableBottomConsentRadioValue } from '@/features/template/lib/resolve-table-bottom-consent-radio-value'
 import {
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
   DEFAULT_VERTICAL_FILE_ATTACHMENT_HEADER_LABEL,
@@ -145,9 +146,9 @@ export function VerticalTableParagraphBody({
   tableCanvasInteractive = true,
   tableRowSelection: controlledRow,
   onTableRowSelectionChange,
-  portraitPersonalConsentAffiliationOptions,
   portraitConsentResponseFieldsInteractive = false,
   bottomConsentInteractive: bottomConsentInteractiveProp,
+  consentFillMode = false,
 }: {
   paragraph: VerticalTableParagraph
   onChange: (next: VerticalTableParagraph) => void
@@ -161,11 +162,12 @@ export function VerticalTableParagraphBody({
   /** 있으면 상위와 본문 행 선택 동기화(다른 위젯 th/td 선택 시 단일 포커스) */
   tableRowSelection?: number | null
   onTableRowSelectionChange?: (row: number | null) => void
-  portraitPersonalConsentAffiliationOptions?: ReadonlyArray<{ value: string; label: string }>
   /** preview fill — 초상권 1번 표 성명·소속만 입력 허용 */
   portraitConsentResponseFieldsInteractive?: boolean
   /** preview fill — 하단 동의 라디오만 조작 허용 */
   bottomConsentInteractive?: boolean
+  /** 동의서 작성(fill) — bottomConsent 미선택 시 agree 폴백 금지 */
+  consentFillMode?: boolean
 }) {
   const bottomConsentInteractive = bottomConsentInteractiveProp ?? isEditMode
   const dtCellsInteractive = dateTimeCellsInteractiveProp ?? isEditMode
@@ -605,7 +607,13 @@ export function VerticalTableParagraphBody({
           <CmsRadioGroup
             className="form-editor-table-bottom-consent"
             size="large"
-            value={p.bottomConsent ?? 'agree'}
+            value={resolveTableBottomConsentRadioValue(
+              consentFillMode ? paragraph.bottomConsent : p.bottomConsent,
+              {
+                consentFillMode,
+                interactive: bottomConsentInteractive,
+              }
+            )}
             onChange={e => {
               if (!bottomConsentInteractive) return
               onChange({ ...p, bottomConsent: e.target.value as TableBottomConsent })
@@ -696,7 +704,6 @@ export function VerticalTableParagraphBody({
                 key={`vr-${rowIdx}-portrait-name`}
                 row={row}
                 interactive={isEditMode || portraitConsentResponseFieldsInteractive}
-                affiliationSelectOptions={portraitPersonalConsentAffiliationOptions}
                 onNameChange={value => setCell(0, 0, value)}
                 onAffiliationChange={value => setCell(0, 1, value)}
                 onSelectRow={() => {

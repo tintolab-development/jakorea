@@ -10,6 +10,11 @@ pnpm --filter platform build
 pnpm --filter platform typecheck
 ```
 
+## Vercel (`development` Production)
+
+모노레포에서 **Root Directory = `apps/platform`**, Production Branch = **`development`**.  
+설정·환경 변수 체크리스트: [docs/vercel.md](./docs/vercel.md)
+
 ## 디렉터리 구조
 
 ```txt

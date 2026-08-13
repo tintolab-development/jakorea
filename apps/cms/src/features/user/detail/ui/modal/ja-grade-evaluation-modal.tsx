@@ -42,6 +42,8 @@ export interface JaGradeEvaluationModalProps {
   instructorUserId?: string | null
   /** `localOnly`: API 저장 없이 평가 결과만 반환 (신규 등록 등 memberId 없을 때) */
   persistMode?: JaGradeEvaluationPersistMode
+  /** false — localStorage 저장본 복원 없이 빈 평가지로 시작 (강사 신규 등록 등) */
+  restoreStoredDraft?: boolean
   scheduleChangeCount?: number
   lateReportCount?: number
   onClose: () => void
@@ -54,6 +56,7 @@ export function JaGradeEvaluationModal({
   instructorMemberId,
   instructorUserId,
   persistMode = 'remote',
+  restoreStoredDraft = true,
   scheduleChangeCount = 0,
   lateReportCount = 0,
   onClose,
@@ -78,9 +81,9 @@ export function JaGradeEvaluationModal({
       setDraft(null)
       return
     }
-    const stored = loadJaGradeEvaluationRecord(storageKey)
+    const stored = restoreStoredDraft ? loadJaGradeEvaluationRecord(storageKey) : null
     setDraft(buildJaGradeEvaluationDraft(stored))
-  }, [open, storageKey])
+  }, [open, restoreStoredDraft, storageKey])
 
   const updateParagraph = useCallback(
     (id: string, updater: (paragraph: WritingFormParagraph) => WritingFormParagraph) => {
