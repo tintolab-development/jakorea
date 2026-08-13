@@ -15,6 +15,8 @@ import {
   type MembersPermissionListHandle,
 } from '@/features/user/permission-management/members-permission-list'
 import { mapPermissionApplicationRowToDetailUser } from '@/features/user/permission-management/lib/map-permission-application-row-to-detail-user'
+import { mapInstructorRoleRequestDetailToUser } from '@/features/user/api/map-instructor-role-request-detail-to-user'
+import { fetchInstructorRoleRequestDetailRemote } from '@/features/user/api/members-api-client'
 import {
   InstructorPermissionApproveModal,
   type InstructorPermissionApprovePayload,
@@ -104,6 +106,23 @@ type PermissionStatusResetConfirmState = {
 
 type PermissionListTabKey = 'instructor' | 'admin'
 
+function resolvePermissionDetailRequestId(
+  permissionRole: UserDetailPermissionRole,
+  userId: string,
+  detailUser: Omit<User, 'password'> | null,
+  listRef: React.RefObject<MembersPermissionListHandle | null>
+): number | undefined {
+  if (permissionRole === 'instructor') {
+    return (
+      detailUser?.instructorRoleRequestId ?? listRef.current?.getRequestIdForUser(userId)
+    )
+  }
+  if (permissionRole === 'admin') {
+    return detailUser?.adminAccountId ?? listRef.current?.getRequestIdForUser(userId)
+  }
+  return undefined
+}
+
 export function PermissionRequestListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const instructorListRef = useRef<MembersPermissionListHandle>(null)
@@ -144,10 +163,7 @@ export function PermissionRequestListPage() {
   const [permissionStatusResetConfirm, setPermissionStatusResetConfirm] =
     useState<PermissionStatusResetConfirmState | null>(null)
   const [activeListTab, setActiveListTab] = useState<PermissionListTabKey>('instructor')
-  /**
-   * 권한 승인 상세 — 전용 GET 없음.
-   * 회원 상세(individual 등) 대체 조회 없이 목록 행으로만 모달을 연다.
-   */
+  /** 권한 승인 상세 — 강사는 request detail GET, 관리자는 목록 스텁 */
   const [detailUser, setDetailUser] = useState<Omit<User, 'password'> | null>(null)
 
   const basicInfoEntrySource = useMemo(() => {
@@ -156,15 +172,33 @@ export function PermissionRequestListPage() {
   }, [permissionRole])
 
   const applyDetailRow = useCallback(
-    (row: MemberPermissionApplicationRow, role: UserDetailPermissionRole) => {
-      setDetailUser(mapPermissionApplicationRowToDetailUser(row, role))
+    async (row: MemberPermissionApplicationRow, role: UserDetailPermissionRole) => {
+      const stub = mapPermissionApplicationRowToDetailUser(row, role)
+
+      if (role !== 'instructor' || row.requestId == null || !isInstructorRoleRequestsRemoteEnabled()) {
+        setDetailUser(stub)
+        return
+      }
+
+      setDetailUser(null)
+      try {
+        const detail = await fetchInstructorRoleRequestDetailRemote(row.requestId)
+        setDetailUser(
+          mapInstructorRoleRequestDetailToUser(detail, { fallbackId: row.userId })
+        )
+      } catch (error) {
+        handleError(error, {
+          defaultMessage: '권한 신청 상세를 불러오지 못했습니다. 목록 정보로 표시합니다.',
+        })
+        setDetailUser(stub)
+      }
     },
     []
   )
 
   const handleOpenUserDetail = useCallback(
     (userId: string, role: UserDetailPermissionRole, row: MemberPermissionApplicationRow) => {
-      applyDetailRow(row, role)
+      void applyDetailRow(row, role)
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev)
@@ -181,7 +215,7 @@ export function PermissionRequestListPage() {
   const handleResolveDetailRow = useCallback(
     (row: MemberPermissionApplicationRow) => {
       if (!urlPermissionRole) return
-      applyDetailRow(row, urlPermissionRole)
+      void applyDetailRow(row, urlPermissionRole)
     },
     [applyDetailRow, urlPermissionRole]
   )
@@ -216,6 +250,12 @@ export function PermissionRequestListPage() {
         setInstructorApproveModal({
           variant: 'single',
           userId: ctx.userId,
+          requestId: resolvePermissionDetailRequestId(
+            'instructor',
+            ctx.userId,
+            detailUser,
+            instructorListRef
+          ),
           displayName: name,
           source: 'detail',
         })
@@ -229,6 +269,7 @@ export function PermissionRequestListPage() {
         setAdminApproveModal({
           variant: 'single',
           userId: ctx.userId,
+          requestId: resolvePermissionDetailRequestId('admin', ctx.userId, detailUser, adminListRef),
           displayName: name,
           source: 'detail',
         })
@@ -432,6 +473,12 @@ export function PermissionRequestListPage() {
         setInstructorRejectModal({
           variant: 'single',
           userId: ctx.userId,
+          requestId: resolvePermissionDetailRequestId(
+            'instructor',
+            ctx.userId,
+            detailUser,
+            instructorListRef
+          ),
           displayName: name,
           source: 'detail',
         })
@@ -445,6 +492,7 @@ export function PermissionRequestListPage() {
         setAdminRejectModal({
           variant: 'single',
           userId: ctx.userId,
+          requestId: resolvePermissionDetailRequestId('admin', ctx.userId, detailUser, adminListRef),
           displayName: name,
           source: 'detail',
         })

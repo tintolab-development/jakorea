@@ -1,6 +1,7 @@
 /**
  * 권한 승인 목록 행 → 상세 모달용 User 스텁.
- * 전용 상세 GET이 없어 회원 상세 API를 호출하지 않고 목록 필드만 사용한다.
+ * 강사: remote일 때 `GET …/instructor-role-requests/{requestId}`로 교체.
+ * 관리자·fallback: 목록 필드만 사용.
  */
 
 import type { MemberPermissionApplicationRow } from '@/types/member-permission-application'
@@ -15,7 +16,7 @@ export function mapPermissionApplicationRowToDetailUser(
     registerMemberIdMapping(row.userId, row.memberId)
   }
 
-  const role: User['role'] = permissionRole === 'admin' ? 'ADMIN' : 'INDIVIDUAL'
+  const role: User['role'] = permissionRole === 'admin' ? 'ADMIN' : 'INSTRUCTOR'
 
   const appliedAt = row.appliedAt || new Date().toISOString()
 
@@ -23,6 +24,7 @@ export function mapPermissionApplicationRowToDetailUser(
     id: row.userId,
     memberId: row.memberId,
     adminAccountId: row.adminId,
+    instructorRoleRequestId: permissionRole === 'instructor' ? row.requestId : undefined,
     name: row.name?.trim() || '-',
     phone: row.phone ?? '',
     email: row.email ?? '',
