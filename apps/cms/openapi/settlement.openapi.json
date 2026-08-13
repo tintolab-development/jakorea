@@ -133,10 +133,6 @@
       "description": "Gemini 찾아가는 연수 CMS API"
     },
     {
-      "name": "기타 API",
-      "description": "레거시 호환용 통합 계정 검색. 신규 CMS 화면은 회원과 관리자 API를 분리해서 사용합니다."
-    },
-    {
       "name": "시스템 준비도",
       "description": "운영 readiness, local RC, staging rehearsal 점검 API"
     },
@@ -279,6 +275,10 @@
     {
       "name": "콘텐츠/고객지원",
       "description": "공지사항, FAQ, 문의, 공개 콘텐츠 관리 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "CMS 전체 회원 화면에서 사람 회원과 관리자 계정을 하나의 정렬/페이지네이션 계약으로 조회합니다."
     },
     {
       "name": "로그 관리",
@@ -9295,56 +9295,80 @@
       },
       "InstructorRoleRequestCreateRequest": {
         "type": "object",
-        "description": "포털 강사 권한 신청 생성 요청. CMS AdminPreRegisterInstructorRequest와 동일하게 profile/settlement/termsAgreements 구조체를 사용합니다. 기존 *Snapshot / *SnapshotJson flat 필드는 breaking change로 제거되었습니다.",
         "properties": {
           "requestedActivityType": {
             "type": "string",
             "minLength": 1
           },
-          "name": {
+          "nameSnapshot": {
             "type": "string",
             "minLength": 1
           },
-          "gender": {
+          "genderSnapshot": {
             "type": "string",
             "minLength": 1
           },
-          "birthDate": {
+          "birthDateSnapshot": {
             "type": "string",
             "format": "date"
           },
-          "phone": {
+          "phoneSnapshot": {
             "type": "string",
             "minLength": 1
           },
-          "email": {
+          "emailSnapshot": {
             "type": "string",
             "format": "email",
             "minLength": 1
           },
-          "profile": {
-            "$ref": "#/components/schemas/InstructorCmsProfile"
+          "homeAddressSnapshot": {
+            "type": "string",
+            "minLength": 1
           },
-          "settlement": {
-            "$ref": "#/components/schemas/InstructorCmsSettlement"
+          "bankAccountSnapshotJson": {
+            "type": "string",
+            "minLength": 1
           },
-          "termsAgreements": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TermsAgreementRequest"
-            }
+          "educationLevelSnapshot": {
+            "type": "string"
+          },
+          "careerTextSnapshot": {
+            "type": "string"
+          },
+          "businessIncomeYn": {
+            "type": "boolean"
+          },
+          "selfIntroductionSnapshot": {
+            "type": "string"
+          },
+          "youthEconomyEducationOpinionSnapshot": {
+            "type": "string"
+          },
+          "youthCommunicationOpinionSnapshot": {
+            "type": "string"
+          },
+          "unexpectedSituationResponseSnapshot": {
+            "type": "string"
+          },
+          "oneLineIntroSnapshot": {
+            "type": "string"
+          },
+          "agreementSnapshotJson": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
-          "requestedActivityType",
-          "name",
-          "gender",
-          "birthDate",
-          "phone",
-          "email",
-          "profile",
-          "settlement",
-          "termsAgreements"
+          "agreementSnapshotJson",
+          "bankAccountSnapshotJson",
+          "birthDateSnapshot",
+          "businessIncomeYn",
+          "emailSnapshot",
+          "genderSnapshot",
+          "homeAddressSnapshot",
+          "nameSnapshot",
+          "phoneSnapshot",
+          "requestedActivityType"
         ]
       },
       "InstructorRoleWorkflowResponse": {
@@ -10187,6 +10211,25 @@
             "type": "boolean",
             "description": "관리자 발급 임시 비밀번호를 변경해야 하는지 여부",
             "example": false
+          },
+          "adminProvisionedOnboardingRequired": {
+            "type": "boolean",
+            "description": "CMS 관리자가 등록한 회원의 포털 온보딩이 아직 남아 있는지 여부",
+            "example": true
+          },
+          "adminProvisionedOnboardingStep": {
+            "type": "string",
+            "description": "다음 서버 처리 단계. PROFILE, IDENTITY, PASSWORD, DONE 중 하나이며 일반 회원은 null입니다."
+          },
+          "registeredByAdmin": {
+            "type": "boolean",
+            "description": "CMS 관리자에 의해 생성된 회원인지 여부",
+            "example": true
+          },
+          "identitySelfSignupCompletedAfterAdminRegistration": {
+            "type": "boolean",
+            "description": "관리자 등록 후 본인 프로필·본인인증·비밀번호 변경까지 완료했는지 여부",
+            "example": false
           }
         }
       },
@@ -10857,6 +10900,52 @@
             "items": {
               "$ref": "#/components/schemas/EmailRecoveryAccountResponse"
             }
+          }
+        }
+      },
+      "AdminProvisionedIdentityConfirmRequest": {
+        "type": "object",
+        "description": "CMS 관리자 등록 회원의 NICE 본인인증 결과 연결 요청",
+        "properties": {
+          "identityVerificationSessionId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "profileToken": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "identityVerificationSessionId",
+          "profileToken"
+        ]
+      },
+      "AdminProvisionedOnboardingResponse": {
+        "type": "object",
+        "description": "CMS 관리자 등록 회원 온보딩 진행 상태",
+        "properties": {
+          "registeredByAdmin": {
+            "type": "boolean"
+          },
+          "adminProvisionedOnboardingRequired": {
+            "type": "boolean"
+          },
+          "adminProvisionedOnboardingStep": {
+            "type": "string"
+          },
+          "profileCompleted": {
+            "type": "boolean"
+          },
+          "identityCompleted": {
+            "type": "boolean"
+          },
+          "passwordChangeRequired": {
+            "type": "boolean"
+          },
+          "identitySelfSignupCompletedAfterAdminRegistration": {
+            "type": "boolean"
           }
         }
       },
@@ -16224,6 +16313,134 @@
           }
         }
       },
+      "AccountDirectoryBulkDeleteRequest": {
+        "type": "object",
+        "description": "CMS 전체 회원 통합 일괄 삭제 요청",
+        "properties": {
+          "targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Target"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "targets"
+        ]
+      },
+      "Target": {
+        "type": "object",
+        "properties": {
+          "accountType": {
+            "type": "string",
+            "description": "MEMBER 또는 ADMIN_ACCOUNT",
+            "minLength": 1
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "accountType",
+          "id"
+        ]
+      },
+      "AccountDirectoryBulkDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "requestedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "successCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failureCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "successes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetResult"
+            }
+          },
+          "failures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetFailure"
+            }
+          }
+        }
+      },
+      "ApiResponseAccountDirectoryBulkDeleteResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "type": "null",
+            "$ref": "#/components/schemas/AccountDirectoryBulkDeleteResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다."
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다."
+          },
+          "error": {
+            "type": "null",
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다."
+          }
+        }
+      },
+      "TargetFailure": {
+        "type": "object",
+        "properties": {
+          "accountType": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "TargetResult": {
+        "type": "object",
+        "properties": {
+          "accountType": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "AdminSsoLinkSessionConsumeRequest": {
         "type": "object",
         "properties": {
@@ -17591,10 +17808,10 @@
           "ujatPartnerRecommendationPath": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           }
         }
@@ -20052,6 +20269,25 @@
           }
         }
       },
+      "AdminProvisionedProfileRequest": {
+        "type": "object",
+        "description": "CMS 관리자 등록 회원의 본인 프로필 확인 요청",
+        "properties": {
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "birthDate",
+          "gender"
+        ]
+      },
       "AdminMemberBasicInfoUpdateRequest": {
         "type": "object",
         "properties": {
@@ -20106,6 +20342,14 @@
           },
           "settlement": {
             "$ref": "#/components/schemas/InstructorCmsSettlement"
+          },
+          "termsAgreements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermsAgreementRequest"
+            },
+            "maxItems": 20,
+            "minItems": 0
           }
         }
       },
@@ -25042,6 +25286,26 @@
             "type": "string",
             "format": "date-time",
             "description": "마지막 로그인 시각"
+          },
+          "registeredByAdmin": {
+            "type": "boolean",
+            "description": "관리자에 의해 생성된 회원인지 여부"
+          },
+          "adminProvisionedOnboardingRequired": {
+            "type": "boolean",
+            "description": "관리자 등록 회원 온보딩이 남아 있는지 여부"
+          },
+          "adminProvisionedOnboardingStep": {
+            "type": "string",
+            "description": "다음 서버 처리 단계: PROFILE, IDENTITY, PASSWORD, DONE"
+          },
+          "identitySelfSignupCompletedAfterAdminRegistration": {
+            "type": "boolean",
+            "description": "관리자 등록 이후 본인 가입 온보딩 완료 여부"
+          },
+          "passwordChangeRequired": {
+            "type": "boolean",
+            "description": "현재 임시 비밀번호 변경이 필요한지 여부"
           }
         }
       },
@@ -30609,6 +30873,98 @@
           }
         }
       },
+      "AccountDirectoryItemResponse": {
+        "type": "object",
+        "description": "CMS 전체 계정 디렉터리 항목. 회원과 관리자 계정을 한 화면에서 검색하기 위한 읽기 전용 응답입니다.",
+        "properties": {
+          "accountType": {
+            "type": "string",
+            "description": "계정 도메인",
+            "enum": [
+              "MEMBER",
+              "ADMIN_ACCOUNT"
+            ],
+            "example": "MEMBER"
+          },
+          "accountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "accountType 도메인의 PK. MEMBER면 memberId, ADMIN_ACCOUNT면 adminAccountId입니다.",
+            "example": 168005
+          },
+          "uuid": {
+            "type": "string",
+            "description": "외부 참조 및 감사용 UUID. CRUD 경로에는 사용하지 않습니다."
+          },
+          "email": {
+            "type": "string",
+            "description": "마스킹된 로그인 이메일"
+          },
+          "name": {
+            "type": "string",
+            "description": "마스킹된 이름"
+          },
+          "phone": {
+            "type": "string",
+            "description": "마스킹된 연락처"
+          },
+          "status": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "description": "회원 역할 또는 관리자 권한 코드",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          }
+        }
+      },
+      "PageResponseAccountDirectoryItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountDirectoryItemResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "AdminSocialAccountListResponse": {
         "type": "object",
         "properties": {
@@ -33162,6 +33518,13 @@
             "items": {
               "$ref": "#/components/schemas/AdminLinkedSocialAccountResponse"
             }
+          },
+          "termsAgreements": {
+            "type": "array",
+            "description": "관리자 등록 약관 4종의 최신 동의 상태. SERVICE_TERMS, PRIVACY_COLLECTION, MFA_SETUP_CONSENT, MARKETING을 포함합니다.",
+            "items": {
+              "$ref": "#/components/schemas/AdminTermsAgreementResponse"
+            }
           }
         }
       },
@@ -33185,6 +33548,48 @@
             "type": "string",
             "format": "date-time",
             "description": "연결 시각. 연결되지 않은 경우 null"
+          }
+        }
+      },
+      "AdminTermsAgreementResponse": {
+        "type": "object",
+        "description": "CMS 관리자 등록 약관·동의 저장 이력",
+        "properties": {
+          "agreementId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "consentType": {
+            "type": "string",
+            "description": "프론트 consentType과 동일하게 사용하는 약관 유형"
+          },
+          "termsType": {
+            "type": "string",
+            "description": "consentType과 1:1인 서버 약관 유형"
+          },
+          "version": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "agreed": {
+            "type": "boolean"
+          },
+          "agreedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "withdrawnAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceFlow": {
+            "type": "string"
           }
         }
       },
@@ -33252,48 +33657,6 @@
           "totalPages": {
             "type": "integer",
             "format": "int32"
-          }
-        }
-      },
-      "AdminTermsAgreementResponse": {
-        "type": "object",
-        "description": "CMS 관리자 등록 약관·동의 저장 이력",
-        "properties": {
-          "agreementId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "consentType": {
-            "type": "string",
-            "description": "프론트 consentType과 동일하게 사용하는 약관 유형"
-          },
-          "termsType": {
-            "type": "string",
-            "description": "consentType과 1:1인 서버 약관 유형"
-          },
-          "version": {
-            "type": "string"
-          },
-          "required": {
-            "type": "boolean"
-          },
-          "agreed": {
-            "type": "boolean"
-          },
-          "agreedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "withdrawnAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "sourceFlow": {
-            "type": "string"
           }
         }
       },
@@ -33414,88 +33777,6 @@
           },
           "settlement": {
             "$ref": "#/components/schemas/SettlementResponse"
-          }
-        }
-      },
-      "AccountDirectoryItemResponse": {
-        "type": "object",
-        "description": "CMS 전체 계정 디렉터리 항목. 회원과 관리자 계정을 한 화면에서 검색하기 위한 읽기 전용 응답입니다.",
-        "properties": {
-          "accountType": {
-            "type": "string",
-            "description": "계정 도메인",
-            "enum": [
-              "MEMBER",
-              "ADMIN_ACCOUNT"
-            ],
-            "example": "MEMBER"
-          },
-          "accountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "accountType 도메인의 PK. MEMBER면 memberId, ADMIN_ACCOUNT면 adminAccountId입니다.",
-            "example": 168005
-          },
-          "uuid": {
-            "type": "string",
-            "description": "외부 참조 및 감사용 UUID. CRUD 경로에는 사용하지 않습니다."
-          },
-          "email": {
-            "type": "string",
-            "description": "마스킹된 로그인 이메일"
-          },
-          "name": {
-            "type": "string",
-            "description": "마스킹된 이름"
-          },
-          "phone": {
-            "type": "string",
-            "description": "마스킹된 연락처"
-          },
-          "status": {
-            "type": "string"
-          },
-          "roles": {
-            "type": "array",
-            "description": "회원 역할 또는 관리자 권한 코드",
-            "items": {
-              "type": "string"
-            }
-          },
-          "lastLoginAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "PageResponseAccountDirectoryItemResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AccountDirectoryItemResponse"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
           }
         }
       },

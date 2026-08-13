@@ -9,6 +9,7 @@ import type { InstructorCmsProfile } from './instructorCmsProfile';
 import type { InstructorCmsSettlement } from './instructorCmsSettlement';
 import type { InstructorInfoPatch } from './instructorInfoPatch';
 import type { SchoolInfoPatch } from './schoolInfoPatch';
+import type { TermsAgreementRequest } from './termsAgreementRequest';
 import type { UserListRowMetricsPatch } from './userListRowMetricsPatch';
 
 export interface AdminMemberBasicInfoUpdateRequest {
@@ -28,4 +29,9 @@ export interface AdminMemberBasicInfoUpdateRequest {
   bio?: string;
   profile?: InstructorCmsProfile;
   settlement?: InstructorCmsSettlement;
+  /**
+     * @minItems 0
+     * @maxItems 20
+     */
+  termsAgreements?: TermsAgreementRequest[];
 }
