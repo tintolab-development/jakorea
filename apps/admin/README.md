@@ -35,7 +35,6 @@ pnpm --filter admin generate:api
 
 상세: [docs/api/orval-codegen.md](./docs/api/orval-codegen.md) · [api-mock-remote rule](./.cursor/rules/data/api-mock-remote.mdc)
 
-
 ## Vercel (`development` Production)
 
 Root Directory `apps/admin`, Production Branch `development`.  
