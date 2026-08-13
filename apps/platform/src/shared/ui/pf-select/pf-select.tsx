@@ -7,6 +7,7 @@ import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
 import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
@@ -61,6 +62,30 @@ const sizeTypographyClassMap: Record<PFSelectSize, string> = {
 
 const LISTBOX_GAP_PX = 8
 const LISTBOX_MAX_HEIGHT_PX = 290
+const LISTBOX_MIN_HEIGHT_PX = 160
+
+function computeListboxStyle(field: HTMLElement): CSSProperties {
+  const rect = field.getBoundingClientRect()
+  const viewportHeight = window.innerHeight
+  const spaceBelow = Math.max(0, viewportHeight - rect.bottom - LISTBOX_GAP_PX)
+  const spaceAbove = Math.max(0, rect.top - LISTBOX_GAP_PX)
+  const openUpward = spaceAbove > spaceBelow
+  const availableHeight = openUpward ? spaceAbove : spaceBelow
+  const maxHeight = Math.min(
+    LISTBOX_MAX_HEIGHT_PX,
+    Math.max(LISTBOX_MIN_HEIGHT_PX, availableHeight || LISTBOX_MIN_HEIGHT_PX),
+  )
+
+  return {
+    position: 'fixed',
+    top: openUpward ? undefined : rect.bottom + LISTBOX_GAP_PX,
+    bottom: openUpward ? viewportHeight - rect.top + LISTBOX_GAP_PX : undefined,
+    left: rect.left,
+    width: Math.max(rect.width, 80),
+    maxHeight,
+    zIndex: 1100,
+  }
+}
 
 export function PFSelect({
   size = 'medium',
@@ -88,12 +113,14 @@ export function PFSelect({
   const fieldRef = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const listboxRef = useRef<HTMLUListElement>(null)
+  /** 트리거 pointerdown으로 연 직후, 같은 이벤트의 capture outside 닫기 무시 */
+  const suppressOutsideCloseRef = useRef(false)
   const selectId = id ?? generatedId
 
   const isControlled = value !== undefined
   const [internalValue, setInternalValue] = useState(defaultValue)
   const [isOpen, setIsOpen] = useState(false)
-  const [listboxStyle, setListboxStyle] = useState<CSSProperties>()
+  const [listboxStyle, setListboxStyle] = useState<CSSProperties | null>(null)
   const currentValue = isControlled ? value : internalValue
   const selectedOption = options.find(option => option.value === currentValue)
   const hasValue = Boolean(selectedOption)
@@ -136,29 +163,15 @@ export function PFSelect({
   const messageClassName = [styles.message, messageStatusClassMap[messageStatus]].join(' ')
 
   useLayoutEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) {
+      setListboxStyle(null)
+      return
+    }
 
     const updatePosition = () => {
       const field = fieldRef.current
       if (!field) return
-
-      const rect = field.getBoundingClientRect()
-      const viewportHeight = window.innerHeight
-      const spaceBelow = viewportHeight - rect.bottom - LISTBOX_GAP_PX
-      const spaceAbove = rect.top - LISTBOX_GAP_PX
-      const openUpward = spaceBelow < LISTBOX_MAX_HEIGHT_PX && spaceAbove > spaceBelow
-      const availableHeight = Math.max(0, openUpward ? spaceAbove : spaceBelow)
-      const maxHeight = Math.min(LISTBOX_MAX_HEIGHT_PX, availableHeight)
-
-      setListboxStyle({
-        position: 'fixed',
-        top: openUpward ? undefined : rect.bottom + LISTBOX_GAP_PX,
-        bottom: openUpward ? viewportHeight - rect.top + LISTBOX_GAP_PX : undefined,
-        left: rect.left,
-        width: rect.width,
-        maxHeight,
-        zIndex: 1100,
-      })
+      setListboxStyle(computeListboxStyle(field))
     }
 
     updatePosition()
@@ -174,8 +187,10 @@ export function PFSelect({
   useEffect(() => {
     if (!isOpen) return
 
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target as Node
+    const handlePointerDown = (event: PointerEvent) => {
+      if (suppressOutsideCloseRef.current) return
+      const target = event.target as Node | null
+      if (!target) return
       if (rootRef.current?.contains(target) || listboxRef.current?.contains(target)) {
         return
       }
@@ -189,11 +204,11 @@ export function PFSelect({
       }
     }
 
-    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('pointerdown', handlePointerDown, true)
     document.addEventListener('keydown', handleKeyDown)
 
     return () => {
-      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('pointerdown', handlePointerDown, true)
       document.removeEventListener('keydown', handleKeyDown)
     }
   }, [isOpen])
@@ -205,9 +220,16 @@ export function PFSelect({
     onValueChange?.(nextValue)
   }
 
-  const handleToggle = () => {
+  const handleTriggerPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (disabled) return
+    if (event.button !== 0) return
+    // click 중복 토글·포커스 스크롤로 인한 즉시 닫힘 방지
+    event.preventDefault()
+    suppressOutsideCloseRef.current = true
     setIsOpen(prev => !prev)
+    window.requestAnimationFrame(() => {
+      suppressOutsideCloseRef.current = false
+    })
   }
 
   const handleSelect = (nextValue: string, isDisabled?: boolean) => {
@@ -235,43 +257,44 @@ export function PFSelect({
     }
   }
 
-  const listbox = isOpen ? (
-    <ul
-      ref={listboxRef}
-      className={styles.listbox}
-      id={listboxId}
-      role="listbox"
-      aria-labelledby={selectId}
-      style={listboxStyle}
-    >
-      {options.map(option => {
-        const isSelected = option.value === currentValue
-        const optionClassName = [
-          styles.option,
-          'typo-bd-sm-md',
-          isSelected ? styles.optionSelected : undefined,
-          option.disabled ? styles.optionDisabled : undefined,
-        ]
-          .filter(Boolean)
-          .join(' ')
+  const listbox =
+    isOpen && listboxStyle ? (
+      <ul
+        ref={listboxRef}
+        className={styles.listbox}
+        id={listboxId}
+        role="listbox"
+        aria-labelledby={selectId}
+        style={listboxStyle}
+      >
+        {options.map(option => {
+          const isSelected = option.value === currentValue
+          const optionClassName = [
+            styles.option,
+            'typo-bd-sm-md',
+            isSelected ? styles.optionSelected : undefined,
+            option.disabled ? styles.optionDisabled : undefined,
+          ]
+            .filter(Boolean)
+            .join(' ')
 
-        return (
-          <li key={option.value} role="presentation">
-            <button
-              type="button"
-              role="option"
-              className={optionClassName}
-              aria-selected={isSelected}
-              disabled={option.disabled}
-              onClick={() => handleSelect(option.value, option.disabled)}
-            >
-              {option.label}
-            </button>
-          </li>
-        )
-      })}
-    </ul>
-  ) : null
+          return (
+            <li key={option.value} role="presentation">
+              <button
+                type="button"
+                role="option"
+                className={optionClassName}
+                aria-selected={isSelected}
+                disabled={option.disabled}
+                onClick={() => handleSelect(option.value, option.disabled)}
+              >
+                {option.label}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    ) : null
 
   return (
     <div className={rootClassName} ref={rootRef} style={rootStyle}>
@@ -302,7 +325,7 @@ export function PFSelect({
             aria-label={ariaLabel ?? label}
             aria-required={required || undefined}
             aria-invalid={error || undefined}
-            onClick={handleToggle}
+            onPointerDown={handleTriggerPointerDown}
             onKeyDown={handleTriggerKeyDown}
           >
             <span className={valueClassName}>{displayLabel}</span>
@@ -315,25 +338,22 @@ export function PFSelect({
                 className={styles.clearButton}
                 aria-label="선택 지우기"
                 disabled={disabled}
+                onPointerDown={event => {
+                  event.preventDefault()
+                  event.stopPropagation()
+                }}
                 onClick={handleClear}
               >
                 <img className={styles.clearIcon} src={cancelIconUrl} alt="" aria-hidden="true" />
               </button>
             ) : null}
-            <button
-              type="button"
-              className={styles.chevronButton}
-              tabIndex={-1}
-              aria-hidden="true"
-              disabled={disabled}
-              onClick={handleToggle}
-            >
+            <span className={styles.chevronButton} aria-hidden="true">
               <img
                 className={styles.chevron}
                 src={hasValue ? chevronDownBlackUrl : chevronDownGrayUrl}
                 alt=""
               />
-            </button>
+            </span>
           </span>
         </div>
       </div>
