@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint . --max-warnings=-1",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "test": "node --experimental-strip-types --experimental-transform-types src/features/program/lib/map-from-cms.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/program/lib/apply-form-drafts.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/auth/sign-up/agreement/agreement.logic.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/auth/sign-up/profile/profile.logic.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/mypage/instructor-apply/api/map-create-request.selfcheck.ts",
+    "test": "node --experimental-strip-types --experimental-transform-types src/features/program/lib/map-from-cms.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/program/lib/apply-form-drafts.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/auth/sign-up/lib/agreement/agreement.logic.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/auth/sign-up/lib/profile/profile.logic.selfcheck.ts && node --experimental-strip-types --experimental-transform-types src/features/mypage/instructor-apply/api/map-create-request.selfcheck.ts",
     "preview": "vite preview"
   },
   "dependencies": {

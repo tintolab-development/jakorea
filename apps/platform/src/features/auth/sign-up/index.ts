@@ -1,5 +1,6 @@
 export { useSignUp } from './hooks/use-sign-up'
 export type { UseSignUpReturn } from './hooks/use-sign-up'
+export { useSignUpConsent } from './hooks/use-consent'
 export type {
   AgreementKey,
   AgreementItem,
@@ -13,6 +14,7 @@ export type {
   SignUpStepComponent,
   SignUpStepNumber,
 } from './model/sign-up.types'
+export type { SignUpConsentFieldKey, SignUpConsentState } from './model/consent.types'
 export {
   agreementItems,
   memberTypeOptions,
@@ -38,6 +40,12 @@ export {
   isValidPassword,
   parseBirthDate,
 } from './lib/utils'
+export { isBirthStepValid, validateBirthStep } from './lib/identity/identity.logic'
+export type { BirthStepValidationResult } from './lib/identity/identity.logic'
+export { AddressSearchModal } from './ui/address-search-modal'
+export type { SelectedAddress } from './ui/address-search-modal'
+export { SchoolSearchModal } from './ui/school-search-modal'
+export type { SelectedSchool } from './ui/school-search-modal'
 export {
   EMAIL_ID_MESSAGES,
   isValidEmailId,

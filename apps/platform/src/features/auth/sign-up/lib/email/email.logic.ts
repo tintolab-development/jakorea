@@ -1,7 +1,7 @@
-import type { EmailCheckStatus } from '../model/sign-up.types'
+import type { EmailCheckStatus } from '../../model/sign-up.types'
 import { isMockAdminRegisteredEmail } from '@/features/auth/admin-registered'
 import { EMAIL_ID_MESSAGES, normalizeEmailId, validateEmailId } from '@/shared/lib/email-id'
-import { MOCK_DUPLICATE_EMAIL } from '../lib/constants'
+import { MOCK_DUPLICATE_EMAIL } from '../constants'
 
 export function validateEmailDuplicateCheck(email: string): {
   status: EmailCheckStatus

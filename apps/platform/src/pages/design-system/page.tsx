@@ -7,12 +7,12 @@ import {
 import { MYPAGE_PATH } from '@/features/mypage'
 import type { PlatformMemberProfile } from '@/features/mypage'
 import {
+  AddressSearchModal,
   MOCK_DUPLICATE_EMAIL,
   MOCK_VERIFIED_NAME,
   MOCK_VERIFIED_PHONE,
+  SchoolSearchModal,
 } from '@/features/auth/sign-up'
-import { AddressSearchModal } from '@/features/auth/sign-up/ui/address-search-modal'
-import { SchoolSearchModal } from '@/features/auth/sign-up/ui/school-search-modal'
 import { PfRichTextEditor, RichTextViewer, useRichTextEditor } from '@/shared/rich-text'
 import {
   GoogleSocialLoginIcon,

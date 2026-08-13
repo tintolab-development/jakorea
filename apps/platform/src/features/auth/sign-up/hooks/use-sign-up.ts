@@ -26,15 +26,15 @@ import {
   getAgreementDerived,
   toggleAgreementState,
   toggleAllAgreementState,
-} from '../agreement/agreement.logic'
+} from '../lib/agreement/agreement.logic'
 import {
   createInitialGuardianAgreementState,
   getGuardianAgreementDerived,
   guardianAgreementItems,
   toggleAllGuardianAgreementState,
   toggleGuardianAgreementState,
-} from '../agreement/guardian-agreement.logic'
-import { validateEmailDuplicateCheck } from '../email/email.logic'
+} from '../lib/agreement/guardian-agreement.logic'
+import { validateEmailDuplicateCheck } from '../lib/email/email.logic'
 import {
   ADMIN_REGISTERED_NOTICE_PATH,
   isMockAdminRegisteredEmail,
@@ -42,11 +42,11 @@ import {
   setAdminRegisteredPasswordChangeRequired,
   startAdminRegisteredFlowFromSignUp,
 } from '@/features/auth/admin-registered'
-import { getPasswordDerived } from '../password/password.logic'
-import { isProfileStepValid } from '../profile/profile.logic'
-import { isTeacherProfileValid } from '../profile/teacher-profile.logic'
-import { isGuardianProfileValid } from '../guardian/guardian-profile.logic'
-import { isBirthStepValid, validateBirthStep } from '../identity/identity.logic'
+import { getPasswordDerived } from '../lib/password/password.logic'
+import { isProfileStepValid } from '../lib/profile/profile.logic'
+import { isTeacherProfileValid } from '../lib/profile/teacher-profile.logic'
+import { isGuardianProfileValid } from '../lib/guardian/guardian-profile.logic'
+import { isBirthStepValid, validateBirthStep } from '../lib/identity/identity.logic'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { EMAIL_ID_MESSAGES, normalizeEmailId, validateEmailId } from '@/shared/lib/email-id'
 import type { SelectedAddress } from '../ui/address-search-modal'
