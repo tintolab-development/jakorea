@@ -5,31 +5,30 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { InstructorCmsProfile } from './instructorCmsProfile';
+import type { InstructorCmsSettlement } from './instructorCmsSettlement';
+import type { TermsAgreementRequest } from './termsAgreementRequest';
 
+/**
+ * 회원포탈 강사 권한 신청. CMS 강사 등록과 같은 구조화 profile/settlement/termsAgreements 계약을 사용합니다.
+ */
 export interface InstructorRoleRequestCreateRequest {
   /** @minLength 1 */
   requestedActivityType: string;
   /** @minLength 1 */
-  nameSnapshot: string;
+  name: string;
   /** @minLength 1 */
-  genderSnapshot: string;
-  birthDateSnapshot: string;
+  gender: string;
+  birthDate: string;
   /** @minLength 1 */
-  phoneSnapshot: string;
+  phone: string;
   /** @minLength 1 */
-  emailSnapshot: string;
-  /** @minLength 1 */
-  homeAddressSnapshot: string;
-  /** @minLength 1 */
-  bankAccountSnapshotJson: string;
-  educationLevelSnapshot?: string;
-  careerTextSnapshot?: string;
-  businessIncomeYn: boolean;
-  selfIntroductionSnapshot?: string;
-  youthEconomyEducationOpinionSnapshot?: string;
-  youthCommunicationOpinionSnapshot?: string;
-  unexpectedSituationResponseSnapshot?: string;
-  oneLineIntroSnapshot?: string;
-  /** @minLength 1 */
-  agreementSnapshotJson: string;
+  email: string;
+  profile: InstructorCmsProfile;
+  settlement: InstructorCmsSettlement;
+  /**
+     * @minItems 4
+     * @maxItems 4
+     */
+  termsAgreements: TermsAgreementRequest[];
 }
