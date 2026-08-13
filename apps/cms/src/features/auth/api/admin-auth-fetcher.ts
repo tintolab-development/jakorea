@@ -67,6 +67,22 @@ function unwrapTokenResponse(payload: unknown): AuthTokenResponse {
         tokenType: typeof o.tokenType === 'string' ? o.tokenType : undefined,
         expiresInSeconds:
           typeof o.expiresInSeconds === 'number' ? o.expiresInSeconds : undefined,
+        passwordChangeRequired:
+          typeof o.passwordChangeRequired === 'boolean' ? o.passwordChangeRequired : undefined,
+        adminProvisionedOnboardingRequired:
+          typeof o.adminProvisionedOnboardingRequired === 'boolean'
+            ? o.adminProvisionedOnboardingRequired
+            : undefined,
+        adminProvisionedOnboardingStep:
+          typeof o.adminProvisionedOnboardingStep === 'string'
+            ? o.adminProvisionedOnboardingStep
+            : undefined,
+        registeredByAdmin:
+          typeof o.registeredByAdmin === 'boolean' ? o.registeredByAdmin : undefined,
+        identitySelfSignupCompletedAfterAdminRegistration:
+          typeof o.identitySelfSignupCompletedAfterAdminRegistration === 'boolean'
+            ? o.identitySelfSignupCompletedAfterAdminRegistration
+            : undefined,
       }
     }
   }

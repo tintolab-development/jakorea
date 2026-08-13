@@ -6,10 +6,12 @@ import type { AdminRegisterGender } from '@/types/admin-register'
 import { cmsIdentityVerificationClient } from './cms-client'
 import { findEmailIdentityVerificationClient } from './find-email-client'
 import { findPasswordIdentityVerificationClient } from './find-password-client'
+import { passwordChangeRequiredIdentityClient } from './password-change-required-client'
 
 export { cmsIdentityVerificationClient } from './cms-client'
 export { findEmailIdentityVerificationClient } from './find-email-client'
 export { findPasswordIdentityVerificationClient } from './find-password-client'
+export { passwordChangeRequiredIdentityClient } from './password-change-required-client'
 
 export type {
   IdentityCallbackOutcome,
@@ -81,6 +83,23 @@ export function useFindPasswordIdentityVerification(
     client: findPasswordIdentityVerificationClient,
     requireBirthGender: false,
     requireName: false,
+    onSuccess: options.onSuccess,
+  })
+}
+
+interface UsePasswordChangeRequiredIdentityVerificationOptions {
+  birthDate?: string
+  gender?: AdminRegisterGender
+  onSuccess: (result: IdentityChallengeCompleteResult) => void
+}
+
+export function usePasswordChangeRequiredIdentityVerification(
+  options: UsePasswordChangeRequiredIdentityVerificationOptions
+) {
+  return useIdentityVerificationBase({
+    client: passwordChangeRequiredIdentityClient,
+    birthDate: options.birthDate,
+    gender: options.gender,
     onSuccess: options.onSuccess,
   })
 }

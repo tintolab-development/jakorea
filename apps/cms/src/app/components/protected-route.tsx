@@ -11,6 +11,7 @@
 import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { ComingSoonPage } from '@/pages/error/coming-soon-page'
+import { PASSWORD_CHANGE_REQUIRED_PATH } from '@/shared/utils/post-auth-redirect'
 import type { UserRole } from '@/types/user'
 
 interface ProtectedRouteProps {
@@ -24,7 +25,7 @@ export function ProtectedRoute({
   requiredRoles,
   requireAuth = true,
 }: ProtectedRouteProps) {
-  const { isAuthenticated, user, requiresMfa, mfaState } = useAuthStore()
+  const { isAuthenticated, user, requiresMfa, mfaState, passwordChangeRequired } = useAuthStore()
 
   if (requireAuth && !isAuthenticated) {
     return <Navigate to="/login" replace />
@@ -32,6 +33,10 @@ export function ProtectedRoute({
 
   if (requireAuth && user?.role === 'ADMIN' && requiresMfa && !mfaState?.isVerified) {
     return <Navigate to="/login" replace />
+  }
+
+  if (requireAuth && passwordChangeRequired) {
+    return <Navigate to={PASSWORD_CHANGE_REQUIRED_PATH} replace />
   }
 
   if (requiredRoles && requiredRoles.length > 0 && user) {
