@@ -16,6 +16,26 @@ pnpm admin
 
 환경 변수: `.env.example`을 `.env` / `.env.local`로 복사 후 설정.
 
+## OpenAPI · 로그인 API
+
+| 용도 | 백엔드 | env |
+| --- | --- | --- |
+| 로그인·MFA·refresh (`/api/admin/auth/*`) | **CMS** | `VITE_API_SERVER` |
+| 도메인 CRUD (`/api/admin/main` 등) | Homepage Admin | `VITE_HOMEPAGE_API_SERVER` |
+| Homepage OpenAPI 스냅샷 | Homepage Admin | `VITE_HOMEPAGE_API_SERVER` |
+
+Vite 이중 프록시: `/api/admin/auth` → CMS, 그 외 `/api` → Homepage.
+
+로그인: **API 로그인**(실 JWT → remote) / **Mock 로그인**(목 데이터).
+
+```bash
+pnpm --filter admin fetch:openapi
+pnpm --filter admin generate:api
+```
+
+상세: [docs/api/orval-codegen.md](./docs/api/orval-codegen.md) · [api-mock-remote rule](./.cursor/rules/data/api-mock-remote.mdc)
+
+
 ## Vercel (`development` Production)
 
 Root Directory `apps/admin`, Production Branch `development`.  
