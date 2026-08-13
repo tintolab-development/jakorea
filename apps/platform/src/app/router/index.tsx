@@ -41,9 +41,11 @@ import { PeoplePage } from '@/pages/about/people'
 import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
 import { DesignSystemPage } from '@/pages/design-system'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
+import { IndividualDonationPage } from '@/pages/support/individual'
 import { TemporaryPage } from '@/pages/temporary'
 import { YoutubeEmbedPage } from '@/pages/youtube-embed'
 import { IMPACT_STORIES_PATH } from '@/features/impact-story'
+import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
 import {
   ABOUT_CAREERS_PATH,
   ABOUT_HISTORY_PATH,
@@ -53,7 +55,6 @@ import {
   EDUCATION_ENTREPRENEURSHIP_PATH,
   EDUCATION_FINANCE_PATH,
   SUPPORT_CORPORATE_PATH,
-  SUPPORT_INDIVIDUAL_PATH,
   SUPPORT_TALENT_PATH,
 } from '@/shared/config/gnb-temporary-paths'
 import { AppLayoutRoute } from './app-layout-route'
@@ -96,7 +97,7 @@ export const router = createBrowserRouter([
       { path: ABOUT_HISTORY_PATH, element: <TemporaryPage /> },
       { path: ABOUT_CAREERS_PATH, element: <TemporaryPage /> },
       { path: IMPACT_STORIES_PATH, element: <ImpactStoriesPage /> },
-      { path: SUPPORT_INDIVIDUAL_PATH, element: <TemporaryPage /> },
+      { path: INDIVIDUAL_DONATION_PATH, element: <IndividualDonationPage /> },
       { path: SUPPORT_CORPORATE_PATH, element: <TemporaryPage /> },
       { path: SUPPORT_TALENT_PATH, element: <TemporaryPage /> },
     ],

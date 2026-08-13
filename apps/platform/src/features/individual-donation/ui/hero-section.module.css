@@ -1,0 +1,137 @@
+.hero {
+  /**
+   * ContentShell(max 1440) 밖으로 풀블리드 — 헤더(transparent) 영역까지 확장
+   */
+  position: relative;
+  left: 50%;
+  display: flex;
+  width: 100vw;
+  min-width: 0;
+  min-height: 420px;
+  flex-direction: column;
+  margin-top: calc(-1 * (var(--app-header-height) + var(--content-padding-block)));
+  margin-bottom: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  transform: translateX(-50%);
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: inherit;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.textArea {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+
+.text {
+  display: flex;
+  width: 100%;
+  max-width: 520px;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-20);
+  box-sizing: border-box;
+  padding: 0;
+}
+
+.eyebrow,
+.title,
+.description {
+  margin: 0;
+}
+
+.title,
+.description {
+  word-break: keep-all;
+}
+
+.media {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 280px;
+  background: transparent;
+}
+
+.imageFrame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.image,
+.imagePlaceholder {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imagePlaceholder {
+  background: rgb(255 255 255 / 35%);
+}
+
+@media (--bp-pc-up) {
+  .hero {
+    min-height: 640px;
+  }
+
+  .content {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .textArea {
+    flex: 0 0 44%;
+    max-width: 44%;
+  }
+
+  .media {
+    flex: 1 1 56%;
+    min-height: auto;
+  }
+
+  .text {
+    max-width: 480px;
+    gap: var(--spacing-24);
+    padding: 0;
+    margin-inline: auto 0;
+  }
+}
+
+@media (--bp-pc-full-up) {
+  .hero {
+    min-height: 720px;
+  }
+
+  .text {
+    max-width: 520px;
+    padding: 0;
+    margin: 0;
+  }
+}
