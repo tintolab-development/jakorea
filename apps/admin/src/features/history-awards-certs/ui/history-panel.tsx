@@ -24,6 +24,11 @@ import {
   formatCreatedDateTime,
   formatYearMonth,
 } from '@/features/history-awards-certs/lib/format'
+import {
+  deleteConfirmContent,
+  deleteFailureAlert,
+  publishedMustUnpublishAlert,
+} from '@/features/history-awards-certs/lib/delete-guards'
 import { HistoryFormModal } from '@/features/history-awards-certs/ui/history-form-modal'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -297,16 +302,17 @@ export function HistoryPanel() {
 
   const handleDetailDelete = useCallback(async () => {
     if (!editing) return
+    if (editing.isPublic) {
+      showAlert(publishedMustUnpublishAlert('연혁'))
+      return
+    }
     try {
       await removeMutation.mutateAsync([editing.id])
       setFormOpen(false)
       setEditing(null)
       setSelectedRowKeys(prev => prev.filter(k => String(k) !== editing.id))
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '연혁 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(deleteFailureAlert('연혁', error))
     }
   }, [editing, removeMutation, showAlert])
 
@@ -315,19 +321,21 @@ export function HistoryPanel() {
       showAlert({ title: '선택 항목 없음', content: '삭제할 연혁을 선택해 주세요.' })
       return
     }
+    const idSet = new Set(selectedRowKeys.map(String))
+    if (rows.some(row => idSet.has(row.id) && row.isPublic)) {
+      showAlert(publishedMustUnpublishAlert('연혁'))
+      return
+    }
     setDeleteConfirmOpen(true)
-  }, [selectedRowKeys.length, showAlert])
+  }, [rows, selectedRowKeys, showAlert])
 
   const handleDeleteConfirm = useCallback(async () => {
     try {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
-    } catch {
-      showAlert({
-        title: '삭제 실패',
-        content: '연혁 삭제에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      showAlert(deleteFailureAlert('연혁', error))
     }
   }, [removeMutation, selectedRowKeys, showAlert])
 
@@ -564,7 +572,7 @@ export function HistoryPanel() {
       <ConfirmModal
         open={deleteConfirmOpen}
         title="연혁 삭제"
-        content={`선택한 연혁 ${selectedRowKeys.length}건을 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.`}
+        content={deleteConfirmContent('연혁', selectedRowKeys.length)}
         confirmText="삭제"
         cancelText="취소"
         danger

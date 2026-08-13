@@ -81,6 +81,7 @@ function buildSeedReports(kind: ReportKind): TransparencyReport[] {
       thumbnailFileName: `${fileBase}-thumb.png`,
       attachmentFileName: `${fileBase}.pdf`,
       attachmentUrl: `data:application/pdf;base64,`,
+      version: 0,
       downloadCount: 915,
       createdAt: created.toISOString(),
       updatedAt: created.toISOString(),
@@ -93,6 +94,7 @@ function buildSeedNts(): NtsDisclosure {
     linkUrl:
       'https://teht.hometax.go.kr/websquare/websquare.wq?w2xPath=/ui/sf/a/c/UTESFACJ01.xml&tmIdx=0&tm2lIdx=&tm3lIdx=',
     updatedAt: '2026-07-01T00:00:00.000Z',
+    version: 0,
   }
 }
 
@@ -109,6 +111,7 @@ function normalizeReport(
     thumbnailFileName: asString(raw.thumbnailFileName, seed.thumbnailFileName),
     attachmentFileName: asString(raw.attachmentFileName, seed.attachmentFileName),
     attachmentUrl: asString(raw.attachmentUrl, seed.attachmentUrl),
+    version: asNumber(raw.version, seed.version),
     downloadCount: asNumber(raw.downloadCount, seed.downloadCount),
     createdAt: asString(raw.createdAt, seed.createdAt),
     updatedAt: asString(raw.updatedAt, seed.updatedAt),
@@ -197,6 +200,7 @@ export function createReport(
     thumbnailFileName: input.thumbnailFileName,
     attachmentFileName: input.attachmentFileName,
     attachmentUrl: input.attachmentUrl,
+    version: 0,
     downloadCount: 0,
     createdAt: now,
     updatedAt: now,
@@ -255,6 +259,7 @@ function readNtsFile(): NtsFile {
       data: {
         linkUrl: asString(parsed.data.linkUrl, buildSeedNts().linkUrl),
         updatedAt: asString(parsed.data.updatedAt, buildSeedNts().updatedAt),
+        version: asNumber(parsed.data.version, 0),
       },
     }
   } catch {
@@ -276,9 +281,11 @@ export function readNtsDisclosure(): NtsDisclosure {
 }
 
 export function saveNtsDisclosure(linkUrl: string): NtsDisclosure {
+  const prev = readNtsDisclosure()
   const next: NtsDisclosure = {
     linkUrl: linkUrl.trim(),
     updatedAt: new Date().toISOString(),
+    version: prev.version,
   }
   writeNtsFile({ version: 1, data: next })
   return next

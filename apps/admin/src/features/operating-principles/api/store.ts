@@ -93,6 +93,7 @@ function buildSeedPrinciples(): OperatingPrinciple[] {
       isActive: row.isActive,
       title: row.title,
       subText: row.subText,
+      version: 0,
       updatedAt: ts,
     }
   })
@@ -101,6 +102,7 @@ function buildSeedPrinciples(): OperatingPrinciple[] {
 function buildSeedDoc(): OperatingPrinciplesDoc {
   return {
     intro: { ...SEED_INTRO },
+    settingVersion: 0,
     principles: buildSeedPrinciples(),
     updatedAt: '2026-07-01T00:00:00.000Z',
   }
@@ -129,6 +131,7 @@ function ensureFixedPrinciples(items: OperatingPrinciple[]): OperatingPrinciple[
       isActive: Boolean(row.isActive),
       title: typeof row.title === 'string' ? row.title : seed.title,
       subText: typeof row.subText === 'string' ? row.subText : seed.subText,
+      version: typeof row.version === 'number' ? row.version : 0,
       updatedAt: typeof row.updatedAt === 'string' ? row.updatedAt : seed.updatedAt,
       sortOrder: typeof row.sortOrder === 'number' ? row.sortOrder : seed.sortOrder,
     })
@@ -158,6 +161,8 @@ function normalizeDoc(raw: Partial<OperatingPrinciplesDoc> | null | undefined): 
     : seed.principles
   return {
     intro: normalizeIntro(raw.intro),
+    settingVersion:
+      typeof raw.settingVersion === 'number' ? raw.settingVersion : seed.settingVersion,
     principles,
     updatedAt: asString(raw.updatedAt, seed.updatedAt),
   }
@@ -259,6 +264,7 @@ export function saveOperatingPrinciplesContent(
       topSubText: payload.intro.topSubText.trim(),
       mainText: payload.intro.mainText.trimEnd(),
     },
+    settingVersion: file.data.settingVersion,
     principles: normalizeSortOrders(updated),
     updatedAt: now,
   }

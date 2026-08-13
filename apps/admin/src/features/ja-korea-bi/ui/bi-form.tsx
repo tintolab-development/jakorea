@@ -21,6 +21,7 @@ function cloneBi(data: JaKoreaBi): JaKoreaBi {
     mainText: data.mainText,
     subText: data.subText,
     updatedAt: data.updatedAt,
+    version: data.version,
   }
 }
 

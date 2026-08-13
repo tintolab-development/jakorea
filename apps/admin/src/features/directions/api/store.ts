@@ -1,5 +1,8 @@
 /**
  * 오시는 길 관리 — localStorage mock (API 연동 전)
+ *
+ * 카카오맵 HTML은 BE `KakaoRoughmapPolicy`와 동일한 생성 스니펫 형식만 허용.
+ * DB는 timestamp/key/width/height로 분해 저장한다.
  */
 
 import type { DirectionsInfo } from '@/entities/directions/model/types'
@@ -8,16 +11,11 @@ const STORAGE_KEY = 'admin.jakorea.directions.v1'
 
 export const DIRECTIONS_CHANGED_EVENT = 'jakorea:directions-changed' as const
 
-const SEED_KAKAO_MAP_HTML = `<div id="daumRoughmapContainer1783579310022" class="root_daum_roughmap root_daum_roughmap_landing"></div>
-<script class="daum_roughmap_loader_script" src="https://ssl.daumcdn.net/dmaps/map_js_init/roughmapLoader.js"></script>
-<script>
-  new daum.roughmap.Lander({
-    "timestamp" : "1783579310022",
-    "key" : "2xyz",
-    "mapWidth" : "1440",
-    "mapHeight" : "728"
-  }).render();
-</script>`
+/** BE KakaoRoughmapPolicy.renderNullable 과 동일 형식 */
+export const SEED_KAKAO_MAP_HTML =
+  '<div id="daumRoughmapContainer1783579310022" class="root_daum_roughmap root_daum_roughmap_landing"></div>\n' +
+  '<script charset="UTF-8" class="daum_roughmap_loader_script" src="https://ssl.daumcdn.net/dmaps/map_js_init/roughmapLoader.js"></script>\n' +
+  '<script charset="UTF-8">new daum.roughmap.Lander({"timestamp":"1783579310022","key":"2xyz","mapWidth":"1440","mapHeight":"728"}).render();</script>'
 
 type DirectionsFile = {
   version: 1
@@ -34,6 +32,7 @@ function buildSeedDirections(): DirectionsInfo {
     fax: '070-4275-5115',
     email: 'jakorea@jakorea.org',
     updatedAt: '2026-07-01T00:00:00.000Z',
+    version: 0,
   }
 }
 
@@ -54,6 +53,7 @@ function normalizeDirections(
     fax: asString(raw.fax, seed.fax),
     email: asString(raw.email, seed.email),
     updatedAt: asString(raw.updatedAt, seed.updatedAt),
+    version: typeof raw.version === 'number' ? raw.version : seed.version,
   }
 }
 
@@ -93,6 +93,7 @@ export function saveDirections(data: DirectionsInfo): DirectionsInfo {
     fax: data.fax.trimEnd(),
     email: data.email.trimEnd(),
     updatedAt: new Date().toISOString(),
+    version: data.version,
   })
   writeDirectionsFile({ version: 1, data: next })
   return next

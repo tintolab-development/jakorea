@@ -60,6 +60,7 @@ function normalizeNotice(raw: Partial<Notice>, i: number): Notice {
     updatedAt: asString(raw.updatedAt, now),
     viewCount: asNumber(raw.viewCount, 0),
     attachments: atts,
+    version: asNumber(raw.version, 0),
   }
 }
 
@@ -85,7 +86,7 @@ function buildSeed(): Notice[] {
     '시스템 점검으로 인한 일시 장애 안내',
   ]
 
-  const base = new Date('2026-01-15T12:00:32.000Z')
+  const base = new Date('2026-01-15T12:00:00.000Z')
   return titles.map((title, i) => {
     const published = new Date(base.getTime() - i * 86_400_000 * 2)
     const isPinned = i < 3
@@ -117,6 +118,7 @@ function buildSeed(): Notice[] {
         createdAt: new Date(published.getTime() - 3_600_000).toISOString(),
         updatedAt: published.toISOString(),
         viewCount: isPinned ? 9150000 + i * 1000 : 915 + i * 37,
+        version: 0,
         attachments: hasAtt
           ? [
               {
@@ -242,6 +244,7 @@ export function createNotice(input: NoticeCreateInput): Notice {
     updatedAt: now,
     viewCount: 0,
     attachments: input.attachments,
+    version: 0,
   }
   writeFile([notice, ...file.items])
   return notice
@@ -262,6 +265,7 @@ export function updateNotice(input: NoticeUpdateInput): Notice {
     publishedAt: input.publishedAt,
     attachments: input.attachments,
     updatedAt: new Date().toISOString(),
+    version: prev.version,
   }
   const items = [...file.items]
   items[idx] = next

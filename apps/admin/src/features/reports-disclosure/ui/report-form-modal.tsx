@@ -11,6 +11,7 @@ import type {
   TransparencyReport,
 } from '@/entities/reports-disclosure/model/types'
 import { ThumbnailEmptyIcon } from '@/features/reports-disclosure/ui/thumbnail-empty-icon'
+import { shouldUseReportsDisclosureRemoteApi } from '@/features/reports-disclosure/api/capabilities'
 import {
   CmsButton,
   CmsInput,
@@ -107,6 +108,10 @@ export function ReportFormModal({
   const [thumbnailFileName, setThumbnailFileName] = useState('')
   const [attachmentFileName, setAttachmentFileName] = useState('')
   const [attachmentUrl, setAttachmentUrl] = useState('')
+  const [pendingThumbFile, setPendingThumbFile] = useState<File | null>(null)
+  const [pendingAttachFile, setPendingAttachFile] = useState<File | null>(null)
+  const [thumbCleared, setThumbCleared] = useState(false)
+  const [attachCleared, setAttachCleared] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   const resetFromInitial = useCallback(() => {
@@ -123,6 +128,10 @@ export function ReportFormModal({
       setAttachmentFileName('')
       setAttachmentUrl('')
     }
+    setPendingThumbFile(null)
+    setPendingAttachFile(null)
+    setThumbCleared(false)
+    setAttachCleared(false)
   }, [mode, initial])
 
   useEffect(() => {
@@ -150,6 +159,8 @@ export function ReportFormModal({
       const url = await readFileAsDataUrl(file)
       setThumbnailUrl(url)
       setThumbnailFileName(file.name)
+      setPendingThumbFile(file)
+      setThumbCleared(false)
     } catch {
       showAlert({
         title: '파일 읽기 실패',
@@ -179,6 +190,8 @@ export function ReportFormModal({
       const url = await readFileAsDataUrl(file)
       setAttachmentUrl(url)
       setAttachmentFileName(file.name)
+      setPendingAttachFile(file)
+      setAttachCleared(false)
     } catch {
       showAlert({
         title: '파일 읽기 실패',
@@ -193,12 +206,37 @@ export function ReportFormModal({
       showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
       return
     }
+    const useRemote = shouldUseReportsDisclosureRemoteApi()
+    const hasExistingThumb =
+      useRemote &&
+      !thumbCleared &&
+      !pendingThumbFile &&
+      Boolean(initial?.thumbnailAssetId) &&
+      Boolean(thumbnailUrl.trim())
+    const hasExistingAttach =
+      useRemote &&
+      !attachCleared &&
+      !pendingAttachFile &&
+      Boolean(initial?.attachmentAssetId) &&
+      Boolean(attachmentUrl.trim())
+
     if (!thumbnailUrl || !thumbnailFileName) {
-      showAlert({ title: '입력 확인', content: '썸네일 이미지를 등록해 주세요.' })
-      return
+      if (!(useRemote && hasExistingThumb)) {
+        showAlert({ title: '입력 확인', content: '썸네일 이미지를 등록해 주세요.' })
+        return
+      }
     }
     if (!attachmentUrl || !attachmentFileName) {
-      showAlert({ title: '입력 확인', content: '첨부파일을 등록해 주세요.' })
+      if (!(useRemote && hasExistingAttach)) {
+        showAlert({ title: '입력 확인', content: '첨부파일을 등록해 주세요.' })
+        return
+      }
+    }
+    if (useRemote && mode === 'create' && (!pendingThumbFile || !pendingAttachFile)) {
+      showAlert({
+        title: '입력 확인',
+        content: '썸네일과 첨부파일을 파일로 등록해 주세요.',
+      })
       return
     }
     onSubmit({
@@ -207,6 +245,12 @@ export function ReportFormModal({
       thumbnailFileName,
       attachmentFileName,
       attachmentUrl,
+      thumbnailFile: pendingThumbFile,
+      attachmentFile: pendingAttachFile,
+      thumbnailAssetId:
+        !pendingThumbFile && !thumbCleared ? initial?.thumbnailAssetId : undefined,
+      attachmentAssetId:
+        !pendingAttachFile && !attachCleared ? initial?.attachmentAssetId : undefined,
     })
   }
 
@@ -313,6 +357,8 @@ export function ReportFormModal({
                       onRemoveFile={() => {
                         setThumbnailUrl('')
                         setThumbnailFileName('')
+                        setPendingThumbFile(null)
+                        setThumbCleared(true)
                       }}
                     />
                   </div>
@@ -338,6 +384,8 @@ export function ReportFormModal({
                       onRemoveFile={() => {
                         setAttachmentUrl('')
                         setAttachmentFileName('')
+                        setPendingAttachFile(null)
+                        setAttachCleared(true)
                       }}
                     />
                   </div>

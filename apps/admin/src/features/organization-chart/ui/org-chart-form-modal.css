@@ -18,26 +18,30 @@
   width: 100%;
 }
 
-/* DetailInfoForm edit 슬롯이 FileSelect 레이아웃을 깨지 않도록 원복 */
+/*
+ * DetailInfoForm edit 슬롯 기본값:
+ *   .detail-info-form__field-content--edit > * { display:flex; align-items:center; margin-block:auto }
+ * 전체에 display:block 을 걸면 image-row 가로 flex가 깨져 프리뷰·버튼이 세로로 쌓인다.
+ * → margin만 리셋하고, 컨트롤별로 display를 지정 (corporate-partner / rd-form-modal 패턴)
+ */
 .org-chart-form-modal .detail-info-form__field-content--edit > * {
-  display: block;
   margin-block: 0 !important;
   width: 100%;
   min-width: 0;
 }
 
-.org-chart-form-modal .file-select-field {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
+.org-chart-form-modal .detail-info-form__field-content--edit > .cms-input {
+  display: block;
 }
 
-.org-chart-form-modal .file-select-field__actions {
+.org-chart-form-modal .detail-info-form__field-content--edit > .org-chart-form-modal__image-row {
   display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
 }
 
 .org-chart-form-modal__image-row {
@@ -46,11 +50,14 @@
   align-items: flex-start;
   gap: 16px;
   width: 100%;
+  min-width: 0;
 }
 
+/* empty·filled 공통 슬롯 — 권장비 1440×826 ≈ 16:9 근사, empty는 시안 86 정사각 */
 .org-chart-form-modal__preview {
-  width: 160px;
-  height: 100px;
+  width: 120px;
+  height: 80px;
+  flex: 0 0 auto;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -59,11 +66,21 @@
   border: 1px solid var(--table-line, #e0e0e0);
   border-radius: 4px;
   overflow: hidden;
-  padding: 8px;
   box-sizing: border-box;
 }
 
+.org-chart-form-modal__preview--empty {
+  width: 86px;
+  height: 86px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+  padding: 0;
+}
+
 .org-chart-form-modal__preview img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -71,5 +88,37 @@
 
 .org-chart-form-modal__file-field {
   flex: 1 1 280px;
+  min-width: 0;
+}
+
+.org-chart-form-modal .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100%;
+  min-width: 0;
+  margin-block: 0 !important;
+}
+
+.org-chart-form-modal .file-select-field--empty {
+  gap: 0;
+}
+
+.org-chart-form-modal .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.org-chart-form-modal .file-select-field__actions > .cms-button {
+  flex: 0 0 auto;
+}
+
+.org-chart-form-modal .file-select-field__guide {
+  flex: 1 1 200px;
   min-width: 0;
 }

@@ -13,6 +13,7 @@ import type {
   NoticeCreateInput,
 } from '@/entities/notices/model/types'
 import { DEFAULT_AUTHOR } from '@/features/notices/api/store'
+import { shouldUseNoticesRemoteApi } from '@/features/notices/api/capabilities'
 import { useNoticeWysiwygEditor } from '@/features/notices/hooks/use-notice-wysiwyg-editor'
 import { RichTextEditor } from '@/shared/rich-text'
 import {
@@ -111,16 +112,26 @@ export function NoticeFormModal({
     return ''
   }, [open, mode, initial])
 
+  const editorContentFormat = useMemo<'markdown' | 'html'>(() => {
+    const content = initialMarkdown.trim()
+    return content.startsWith('<') ? 'html' : 'markdown'
+  }, [initialMarkdown])
+
   const editorResetKey = useMemo(
-    () => (open ? `${mode}-${initial?.id ?? 'new'}` : 'closed'),
-    [open, mode, initial?.id]
+    () => (open ? `${mode}-${initial?.id ?? 'new'}-${editorContentFormat}` : 'closed'),
+    [open, mode, initial?.id, editorContentFormat]
   )
 
-  const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
+  const { editor, editorMinHeight, getMarkdown, getHTML } = useNoticeWysiwygEditor(
     open,
     initialMarkdown,
     editorResetKey,
-    { placeholder: '공지사항 내용을 입력하세요' }
+    {
+      placeholder: '공지사항 내용을 입력하세요',
+      contentFormat: editorContentFormat,
+      // 기존 스펙: 삽입(이미지·YouTube) 유지. remote sanitize와 무관하게 UI는 full
+      allowInlineMedia: true,
+    }
   )
 
   const resetFromInitial = useCallback(() => {
@@ -173,6 +184,7 @@ export function NoticeFormModal({
             name: file.name,
             mime: mimeFromFile(file),
             dataUrl,
+            file,
           })
         } catch {
           showAlert({
@@ -210,7 +222,11 @@ export function NoticeFormModal({
       showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
       return
     }
-    const contentMarkdown = getMarkdown().trim()
+    const contentMarkdown = (
+      shouldUseNoticesRemoteApi() || editorContentFormat === 'html'
+        ? getHTML()
+        : getMarkdown()
+    ).trim()
     if (!contentMarkdown) {
       showAlert({ title: '입력 확인', content: '공지사항 내용을 입력해 주세요.' })
       return
@@ -228,6 +244,8 @@ export function NoticeFormModal({
     publishedAt,
     title,
     getMarkdown,
+    getHTML,
+    editorContentFormat,
     isPublic,
     isPinned,
     attachments,
@@ -350,7 +368,11 @@ export function NoticeFormModal({
           <div className="notice-form-modal__section notice-form-modal__section--editor">
             <FieldLabel required>내용</FieldLabel>
             <div className="notice-form-modal__editor-host">
-              <RichTextEditor editor={editor} minHeight={editorMinHeight} />
+              <RichTextEditor
+                editor={editor}
+                minHeight={editorMinHeight}
+                allowInlineMedia
+              />
             </div>
           </div>
 

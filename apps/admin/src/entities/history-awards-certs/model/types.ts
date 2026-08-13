@@ -15,6 +15,8 @@ export type HistoryItem = {
   month: number
   content: string
   createdAt: string
+  /** 낙관적 잠금 (remote 필수). mock은 0 */
+  version: number
 }
 
 export type HistoryCreateInput = {
@@ -41,6 +43,8 @@ export type AwardItem = {
   organization: string
   awardedOn: string
   createdAt: string
+  /** 낙관적 잠금 (remote 필수). mock은 0 */
+  version: number
 }
 
 export type AwardCreateInput = {
@@ -68,6 +72,8 @@ export type CertItem = {
   organization: string
   certifiedOn: string
   createdAt: string
+  /** 낙관적 잠금 (remote 필수). mock은 0 */
+  version: number
 }
 
 export type CertCreateInput = {

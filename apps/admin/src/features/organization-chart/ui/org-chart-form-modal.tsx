@@ -80,6 +80,7 @@ function OrgChartFormBody({
   const [mainTitle, setMainTitle] = useState(initial.mainTitle)
   const [imageUrl, setImageUrl] = useState(initial.imageUrl)
   const [imageFileName, setImageFileName] = useState(initial.imageFileName ?? '')
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null)
 
   const handleFilesChange = useCallback(
     async (files: File[]) => {
@@ -103,6 +104,7 @@ function OrgChartFormBody({
         const dataUrl = await readFileAsDataUrl(file)
         setImageUrl(dataUrl)
         setImageFileName(file.name)
+        setPendingImageFile(file)
       } catch {
         showAlert({
           title: '파일 읽기 실패',
@@ -116,6 +118,7 @@ function OrgChartFormBody({
   const handleRemoveFile = useCallback(() => {
     setImageUrl('')
     setImageFileName('')
+    setPendingImageFile(null)
   }, [])
 
   const handleSubmit = useCallback(() => {
@@ -137,8 +140,18 @@ function OrgChartFormBody({
       mainTitle: mainTitle.trim(),
       imageUrl,
       imageFileName: imageFileName || undefined,
+      imageAssetId: pendingImageFile ? undefined : initial.imageAssetId,
+      imageFile: pendingImageFile,
     })
-  }, [imageFileName, imageUrl, mainTitle, onSubmit, showAlert])
+  }, [
+    imageFileName,
+    imageUrl,
+    initial.imageAssetId,
+    mainTitle,
+    onSubmit,
+    pendingImageFile,
+    showAlert,
+  ])
 
   return (
     <ContentModal
@@ -201,7 +214,13 @@ function OrgChartFormBody({
             view={null}
             edit={
               <div className="org-chart-form-modal__image-row">
-                <div className="org-chart-form-modal__preview">
+                <div
+                  className={
+                    imageUrl
+                      ? 'org-chart-form-modal__preview'
+                      : 'org-chart-form-modal__preview org-chart-form-modal__preview--empty'
+                  }
+                >
                   {imageUrl ? (
                     <img src={imageUrl} alt="조직도 미리보기" />
                   ) : (

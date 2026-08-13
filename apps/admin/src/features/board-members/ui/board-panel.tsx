@@ -1,8 +1,11 @@
 /**
  * 이사회 관리 패널 — 그룹 테이블 + 일괄 수정 + 등록/삭제
+ *
+ * 수정 모드 타이핑 성능: draft는 ref에만 쓰고, 셀 인풋은 로컬 state로 고립한다.
+ * (부모 setState → columns 재생성 → 3테이블 전체 리렌더 방지)
  */
 
-import { useCallback, useMemo, useState, type Key } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type Key } from 'react'
 import { Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type {
@@ -70,6 +73,8 @@ type DraftFields = {
 
 type DraftMap = Record<string, DraftFields>
 
+type DraftFieldKey = keyof DraftFields
+
 function buildDraftMap(rows: BoardMember[]): DraftMap {
   return Object.fromEntries(
     rows.map(row => [
@@ -91,6 +96,46 @@ function inlineFieldClass(isEditing: boolean) {
   ].join(' ')
 }
 
+const BoardInlineTextField = memo(function BoardInlineTextField({
+  rowId,
+  field,
+  sourceValue,
+  isEditing,
+  ariaLabel,
+  onDraftChange,
+}: {
+  rowId: string
+  field: DraftFieldKey
+  sourceValue: string
+  isEditing: boolean
+  ariaLabel: string
+  onDraftChange: (id: string, field: DraftFieldKey, value: string) => void
+}) {
+  const [localValue, setLocalValue] = useState(sourceValue)
+
+  useEffect(() => {
+    setLocalValue(sourceValue)
+  }, [sourceValue, isEditing])
+
+  return (
+    <CmsInput
+      className={inlineFieldClass(isEditing)}
+      inputSize="medium"
+      width="100%"
+      value={isEditing ? localValue : sourceValue}
+      readOnly={!isEditing}
+      tabIndex={isEditing ? 0 : -1}
+      onChange={e => {
+        if (!isEditing) return
+        const next = e.target.value
+        setLocalValue(next)
+        onDraftChange(rowId, field, next)
+      }}
+      aria-label={ariaLabel}
+    />
+  )
+})
+
 export function BoardPanel() {
   const { showAlert } = useCmsAlert()
   const listQuery = useBoardMembersList()
@@ -102,7 +147,7 @@ export function BoardPanel() {
 
   const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
   const [isEditing, setIsEditing] = useState(false)
-  const [draftMap, setDraftMap] = useState<DraftMap>({})
+  const draftMapRef = useRef<DraftMap>({})
   const [selectedKeys, setSelectedKeys] = useState<Key[]>([])
   const [registerOpen, setRegisterOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -151,31 +196,31 @@ export function BoardPanel() {
   )
 
   const handleStartEdit = useCallback(() => {
-    setDraftMap(buildDraftMap(rows))
+    draftMapRef.current = buildDraftMap(rows)
     setIsEditing(true)
   }, [rows])
 
   const handleCancelEdit = useCallback(() => {
-    setDraftMap({})
+    draftMapRef.current = {}
     setIsEditing(false)
   }, [])
 
-  const handleDraftChange = useCallback(
-    (id: string, field: keyof DraftFields, value: string) => {
-      setDraftMap(prev => ({
-        ...prev,
-        [id]: {
-          nameKo: field === 'nameKo' ? value : (prev[id]?.nameKo ?? ''),
-          nameEn: field === 'nameEn' ? value : (prev[id]?.nameEn ?? ''),
-          position: field === 'position' ? value : (prev[id]?.position ?? ''),
-          affiliation: field === 'affiliation' ? value : (prev[id]?.affiliation ?? ''),
-        },
-      }))
-    },
-    []
-  )
+  /** 타이핑 중 부모 setState 금지 — ref만 갱신 */
+  const handleDraftChange = useCallback((id: string, field: DraftFieldKey, value: string) => {
+    const prev = draftMapRef.current[id] ?? {
+      nameKo: '',
+      nameEn: '',
+      position: '',
+      affiliation: '',
+    }
+    draftMapRef.current = {
+      ...draftMapRef.current,
+      [id]: { ...prev, [field]: value },
+    }
+  }, [])
 
   const handleSave = useCallback(async () => {
+    const draftMap = draftMapRef.current
     const patches: BoardMemberTextPatch[] = rows.map(row => ({
       id: row.id,
       nameKo: draftMap[row.id]?.nameKo ?? row.nameKo,
@@ -185,7 +230,7 @@ export function BoardPanel() {
     }))
     try {
       await bulkUpdateMutation.mutateAsync(patches)
-      setDraftMap({})
+      draftMapRef.current = {}
       setIsEditing(false)
     } catch {
       showAlert({
@@ -194,7 +239,7 @@ export function BoardPanel() {
       })
       void listQuery.refetch()
     }
-  }, [bulkUpdateMutation, draftMap, listQuery, rows, showAlert])
+  }, [bulkUpdateMutation, listQuery, rows, showAlert])
 
   const handleDeleteClick = useCallback(() => {
     if (selectedKeys.length === 0) {
@@ -236,15 +281,17 @@ export function BoardPanel() {
     [createMutation, showAlert]
   )
 
-  const buildColumns = useCallback(
-    (): ColumnsType<BoardMember> => [
+  const columns = useMemo<ColumnsType<BoardMember>>(
+    () => [
       {
         title: '순서',
         key: 'sort',
         width: BOARD_COLUMN_WIDTHS.sort,
         align: 'center',
         className: `${CMS_TABLE_SORT_COL_CLASS} board-members-table__col--sort`,
-        onHeaderCell: () => ({ className: `${CMS_TABLE_SORT_COL_CLASS} board-members-table__col--sort` }),
+        onHeaderCell: () => ({
+          className: `${CMS_TABLE_SORT_COL_CLASS} board-members-table__col--sort`,
+        }),
         render: () => <BoardMemberDragHandle />,
       },
       {
@@ -270,7 +317,7 @@ export function BoardPanel() {
             checked={record.isPublic}
             onChange={checked => handleTogglePublic(record.id, checked)}
             aria-label={`${record.nameKo} 공개 여부`}
-            disabled={isEditing}
+            disabled={setPublicMutation.isPending}
           />
         ),
       },
@@ -282,24 +329,16 @@ export function BoardPanel() {
         ellipsis: true,
         className: 'board-members-table__col--name-ko',
         onHeaderCell: () => ({ className: 'board-members-table__col--name-ko' }),
-        render: (_value, record) => {
-          const value = draftMap[record.id]?.nameKo ?? record.nameKo
-          return (
-            <CmsInput
-              className={inlineFieldClass(isEditing)}
-              inputSize="medium"
-              width="100%"
-              value={value}
-              readOnly={!isEditing}
-              tabIndex={isEditing ? 0 : -1}
-              onChange={e => {
-                if (!isEditing) return
-                handleDraftChange(record.id, 'nameKo', e.target.value)
-              }}
-              aria-label={`${record.nameKo || '구성원'} 한글 성명`}
-            />
-          )
-        },
+        render: (_value, record) => (
+          <BoardInlineTextField
+            rowId={record.id}
+            field="nameKo"
+            sourceValue={record.nameKo}
+            isEditing={isEditing}
+            ariaLabel={`${record.nameKo || '구성원'} 한글 성명`}
+            onDraftChange={handleDraftChange}
+          />
+        ),
       },
       {
         title: '영문 성명',
@@ -309,24 +348,16 @@ export function BoardPanel() {
         ellipsis: true,
         className: 'board-members-table__col--name-en',
         onHeaderCell: () => ({ className: 'board-members-table__col--name-en' }),
-        render: (_value, record) => {
-          const value = draftMap[record.id]?.nameEn ?? record.nameEn
-          return (
-            <CmsInput
-              className={inlineFieldClass(isEditing)}
-              inputSize="medium"
-              width="100%"
-              value={value}
-              readOnly={!isEditing}
-              tabIndex={isEditing ? 0 : -1}
-              onChange={e => {
-                if (!isEditing) return
-                handleDraftChange(record.id, 'nameEn', e.target.value)
-              }}
-              aria-label={`${record.nameKo || '구성원'} 영문 성명`}
-            />
-          )
-        },
+        render: (_value, record) => (
+          <BoardInlineTextField
+            rowId={record.id}
+            field="nameEn"
+            sourceValue={record.nameEn}
+            isEditing={isEditing}
+            ariaLabel={`${record.nameKo || '구성원'} 영문 성명`}
+            onDraftChange={handleDraftChange}
+          />
+        ),
       },
       {
         title: '직위',
@@ -336,24 +367,16 @@ export function BoardPanel() {
         ellipsis: true,
         className: 'board-members-table__col--position',
         onHeaderCell: () => ({ className: 'board-members-table__col--position' }),
-        render: (_value, record) => {
-          const value = draftMap[record.id]?.position ?? record.position
-          return (
-            <CmsInput
-              className={inlineFieldClass(isEditing)}
-              inputSize="medium"
-              width="100%"
-              value={value}
-              readOnly={!isEditing}
-              tabIndex={isEditing ? 0 : -1}
-              onChange={e => {
-                if (!isEditing) return
-                handleDraftChange(record.id, 'position', e.target.value)
-              }}
-              aria-label={`${record.nameKo || '구성원'} 직위`}
-            />
-          )
-        },
+        render: (_value, record) => (
+          <BoardInlineTextField
+            rowId={record.id}
+            field="position"
+            sourceValue={record.position}
+            isEditing={isEditing}
+            ariaLabel={`${record.nameKo || '구성원'} 직위`}
+            onDraftChange={handleDraftChange}
+          />
+        ),
       },
       {
         title: '소속 및 직책',
@@ -363,30 +386,20 @@ export function BoardPanel() {
         ellipsis: true,
         className: 'board-members-table__col--affiliation',
         onHeaderCell: () => ({ className: 'board-members-table__col--affiliation' }),
-        render: (_value, record) => {
-          const value = draftMap[record.id]?.affiliation ?? record.affiliation
-          return (
-            <CmsInput
-              className={inlineFieldClass(isEditing)}
-              inputSize="medium"
-              width="100%"
-              value={value}
-              readOnly={!isEditing}
-              tabIndex={isEditing ? 0 : -1}
-              onChange={e => {
-                if (!isEditing) return
-                handleDraftChange(record.id, 'affiliation', e.target.value)
-              }}
-              aria-label={`${record.nameKo || '구성원'} 소속 및 직책`}
-            />
-          )
-        },
+        render: (_value, record) => (
+          <BoardInlineTextField
+            rowId={record.id}
+            field="affiliation"
+            sourceValue={record.affiliation}
+            isEditing={isEditing}
+            ariaLabel={`${record.nameKo || '구성원'} 소속 및 직책`}
+            onDraftChange={handleDraftChange}
+          />
+        ),
       },
     ],
-    [draftMap, handleDraftChange, handleTogglePublic, isEditing]
+    [handleDraftChange, handleTogglePublic, isEditing, setPublicMutation.isPending]
   )
-
-  const columns = useMemo(() => buildColumns(), [buildColumns])
 
   if (listQuery.isLoading) {
     return (

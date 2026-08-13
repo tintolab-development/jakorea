@@ -1,10 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   AwardCreateInput,
+  AwardItem,
   AwardListFilter,
   CertCreateInput,
+  CertItem,
   CertListFilter,
   HistoryCreateInput,
+  HistoryItem,
   HistoryListFilter,
 } from '@/entities/history-awards-certs/model/types'
 import { shouldUseHistoryAwardsCertsRemoteApi } from './capabilities'
@@ -23,6 +26,43 @@ const localStale = () => ({
   staleTime: source() === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
   retry: source() === 'remote' ? 1 : false,
 })
+
+function collectCached<T extends { id: string }>(
+  qc: ReturnType<typeof useQueryClient>,
+  listsKey: readonly unknown[],
+): T[] | undefined {
+  const merged = new Map<string, T>()
+  for (const [, rows] of qc.getQueriesData<T[]>({ queryKey: listsKey })) {
+    for (const row of rows ?? []) merged.set(row.id, row)
+  }
+  return merged.size > 0 ? [...merged.values()] : undefined
+}
+
+function patchInLists<T extends { id: string }>(
+  qc: ReturnType<typeof useQueryClient>,
+  listsKey: readonly unknown[],
+  row: T,
+) {
+  qc.setQueriesData<T[]>({ queryKey: listsKey }, old => {
+    if (!old) return old
+    const idx = old.findIndex(item => item.id === row.id)
+    if (idx < 0) return old
+    const next = [...old]
+    next[idx] = row
+    return next
+  })
+}
+
+function removeFromLists(
+  qc: ReturnType<typeof useQueryClient>,
+  listsKey: readonly unknown[],
+  ids: string[],
+) {
+  const idSet = new Set(ids)
+  qc.setQueriesData<{ id: string }[]>({ queryKey: listsKey }, old =>
+    (old ?? []).filter(row => !idSet.has(row.id)),
+  )
+}
 
 export function useHistoryList(filter: HistoryListFilter = {}, enabled = true) {
   return useQuery({
@@ -46,35 +86,39 @@ export function useCreateHistory() {
 
 export function useUpdateHistory() {
   const qc = useQueryClient()
+  const listsKey = historyAwardsCertsQueryKeys.history.lists()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: HistoryCreateInput }) =>
-      service.updateHistoryService(id, input),
+      service.updateHistoryService(id, input, collectCached<HistoryItem>(qc, listsKey)),
     retry: false,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: historyAwardsCertsQueryKeys.history.lists() })
+    onSuccess: data => {
+      patchInLists(qc, listsKey, data)
     },
   })
 }
 
 export function useSetHistoryPublic() {
   const qc = useQueryClient()
+  const listsKey = historyAwardsCertsQueryKeys.history.lists()
   return useMutation({
     mutationFn: ({ id, isPublic }: { id: string; isPublic: boolean }) =>
-      service.setHistoryPublicService(id, isPublic),
+      service.setHistoryPublicService(id, isPublic, collectCached<HistoryItem>(qc, listsKey)),
     retry: false,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: historyAwardsCertsQueryKeys.history.lists() })
+    onSuccess: data => {
+      patchInLists(qc, listsKey, data)
     },
   })
 }
 
 export function useRemoveHistory() {
   const qc = useQueryClient()
+  const listsKey = historyAwardsCertsQueryKeys.history.lists()
   return useMutation({
-    mutationFn: (ids: string[]) => service.removeHistoryService(ids),
+    mutationFn: (ids: string[]) =>
+      service.removeHistoryService(ids, collectCached<HistoryItem>(qc, listsKey)),
     retry: false,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: historyAwardsCertsQueryKeys.history.lists() })
+    onSuccess: (_data, ids) => {
+      removeFromLists(qc, listsKey, ids)
     },
   })
 }
@@ -101,35 +145,39 @@ export function useCreateAward() {
 
 export function useUpdateAward() {
   const qc = useQueryClient()
+  const listsKey = historyAwardsCertsQueryKeys.award.lists()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: AwardCreateInput }) =>
-      service.updateAwardService(id, input),
+      service.updateAwardService(id, input, collectCached<AwardItem>(qc, listsKey)),
     retry: false,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: historyAwardsCertsQueryKeys.award.lists() })
+    onSuccess: data => {
+      patchInLists(qc, listsKey, data)
     },
   })
 }
 
 export function useSetAwardPublic() {
   const qc = useQueryClient()
+  const listsKey = historyAwardsCertsQueryKeys.award.lists()
   return useMutation({
     mutationFn: ({ id, isPublic }: { id: string; isPublic: boolean }) =>
-      service.setAwardPublicService(id, isPublic),
+      service.setAwardPublicService(id, isPublic, collectCached<AwardItem>(qc, listsKey)),
     retry: false,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: historyAwardsCertsQueryKeys.award.lists() })
+    onSuccess: data => {
+      patchInLists(qc, listsKey, data)
     },
   })
 }
 
 export function useRemoveAward() {
   const qc = useQueryClient()
+  const listsKey = historyAwardsCertsQueryKeys.award.lists()
   return useMutation({
-    mutationFn: (ids: string[]) => service.removeAwardService(ids),
+    mutationFn: (ids: string[]) =>
+      service.removeAwardService(ids, collectCached<AwardItem>(qc, listsKey)),
     retry: false,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: historyAwardsCertsQueryKeys.award.lists() })
+    onSuccess: (_data, ids) => {
+      removeFromLists(qc, listsKey, ids)
     },
   })
 }
@@ -156,35 +204,39 @@ export function useCreateCert() {
 
 export function useUpdateCert() {
   const qc = useQueryClient()
+  const listsKey = historyAwardsCertsQueryKeys.cert.lists()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: CertCreateInput }) =>
-      service.updateCertService(id, input),
+      service.updateCertService(id, input, collectCached<CertItem>(qc, listsKey)),
     retry: false,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: historyAwardsCertsQueryKeys.cert.lists() })
+    onSuccess: data => {
+      patchInLists(qc, listsKey, data)
     },
   })
 }
 
 export function useSetCertPublic() {
   const qc = useQueryClient()
+  const listsKey = historyAwardsCertsQueryKeys.cert.lists()
   return useMutation({
     mutationFn: ({ id, isPublic }: { id: string; isPublic: boolean }) =>
-      service.setCertPublicService(id, isPublic),
+      service.setCertPublicService(id, isPublic, collectCached<CertItem>(qc, listsKey)),
     retry: false,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: historyAwardsCertsQueryKeys.cert.lists() })
+    onSuccess: data => {
+      patchInLists(qc, listsKey, data)
     },
   })
 }
 
 export function useRemoveCert() {
   const qc = useQueryClient()
+  const listsKey = historyAwardsCertsQueryKeys.cert.lists()
   return useMutation({
-    mutationFn: (ids: string[]) => service.removeCertService(ids),
+    mutationFn: (ids: string[]) =>
+      service.removeCertService(ids, collectCached<CertItem>(qc, listsKey)),
     retry: false,
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: historyAwardsCertsQueryKeys.cert.lists() })
+    onSuccess: (_data, ids) => {
+      removeFromLists(qc, listsKey, ids)
     },
   })
 }

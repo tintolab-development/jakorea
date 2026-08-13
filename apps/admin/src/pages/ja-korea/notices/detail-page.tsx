@@ -41,6 +41,10 @@ function formatMetaDate(iso: string): string {
   return d.format('YYYY년 M월 D일 HH:mm:ss')
 }
 
+function resolveNoticeBodyFormat(content: string): 'markdown' | 'html' {
+  return content.trim().startsWith('<') ? 'html' : 'markdown'
+}
+
 export function NoticeDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -58,17 +62,21 @@ export function NoticeDetailPage() {
 
   const notice = detailQuery.data ?? null
 
-  const goList = useCallback(() => {
-    navigate({ pathname: '/ja-korea/notices', search: location.search })
-  }, [navigate, location.search])
+  const goList = useCallback(
+    (replace = false) => {
+      navigate({ pathname: '/ja-korea/notices', search: location.search }, { replace })
+    },
+    [navigate, location.search]
+  )
 
   const handleDelete = useCallback(async () => {
     if (!id) return
     try {
       await removeMutation.mutateAsync([id])
-      setDeleteOpen(false)
-      goList()
+      // 상세 캐시 제거 직후 빈 화면이 보이지 않도록 즉시 목록으로 교체 이동
+      goList(true)
     } catch {
+      setDeleteOpen(false)
       showAlert({
         title: '삭제 실패',
         content: '공지 삭제에 실패했습니다. 다시 시도해 주세요.',
@@ -93,6 +101,15 @@ export function NoticeDetailPage() {
     [detailQuery, id, showAlert, updateMutation]
   )
 
+  // 삭제 성공 직후 목록 이동 전: 빈 상태(찾을 수 없음) 대신 로딩 유지
+  if (removeMutation.isSuccess || (removeMutation.isPending && !notice)) {
+    return (
+      <div className="notice-detail-page">
+        <PageContentLoading variant="viewport" />
+      </div>
+    )
+  }
+
   if (detailQuery.isLoading) {
     return (
       <div className="notice-detail-page">
@@ -109,7 +126,7 @@ export function NoticeDetailPage() {
             <p className="notice-detail-page__empty" role="alert">
               공지를 찾을 수 없습니다.
             </p>
-            <CmsButton variant="secondary" size="large" type="button" onClick={goList}>
+            <CmsButton variant="secondary" size="large" type="button" onClick={() => goList()}>
               목록
             </CmsButton>
           </div>
@@ -121,7 +138,7 @@ export function NoticeDetailPage() {
   return (
     <NoticeDetailView
       notice={notice}
-      onList={goList}
+      onList={() => goList()}
       onEdit={() => setEditOpen(true)}
       onDelete={() => setDeleteOpen(true)}
       editOpen={editOpen}
@@ -273,7 +290,10 @@ function NoticeDetailView({
           )}
 
           <div className="notice-detail-page__body">
-            <RichTextViewer content={notice.contentMarkdown} contentFormat="markdown" />
+            <RichTextViewer
+              content={notice.contentMarkdown}
+              contentFormat={resolveNoticeBodyFormat(notice.contentMarkdown)}
+            />
           </div>
         </div>
 
