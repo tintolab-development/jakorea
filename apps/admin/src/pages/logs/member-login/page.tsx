@@ -2,7 +2,7 @@
  * 회원 로그인 이력
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { Dayjs } from 'dayjs'
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -11,7 +11,10 @@ import type {
   MemberLoginListFilter,
   MemberLoginLog,
 } from '@/entities/member-login-log/model/types'
-import { useMemberLoginLogsList } from '@/features/member-login-log/api/hooks'
+import {
+  useExportMemberLoginLogs,
+  useMemberLoginLogsList,
+} from '@/features/member-login-log/api/hooks'
 import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
 import { LogResultToolbar } from '@/features/logs/shared/ui/log-result-toolbar'
@@ -21,50 +24,92 @@ import {
   FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
+import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
+import {
+  applyDateRangeToSearchParams,
+  pendingDateRangeTupleEqual,
+  resolvePendingDateRangeFromUrl,
+  type PendingDateRange,
+  type UrlDateRangePendingSyncRef,
+} from '@/shared/lib/url-date-range-pending-sync'
 import {
   CmsButton,
   CmsDateRangePicker,
   CmsInput,
   CmsTextTabs,
+  useCmsAlert,
 } from '@/shared/ui'
 
 import '@/features/logs/shared/ui/log-list-layout.css'
 
 type PendingFilters = {
+  audience: MemberLoginAudience
   name: string
   loginId: string
-  range: [Dayjs | null, Dayjs | null] | null
+  range: PendingDateRange
 }
 
-const EMPTY_PENDING: PendingFilters = {
+const INITIAL_PENDING: PendingFilters = {
+  audience: 'admin',
   name: '',
   loginId: '',
   range: null,
 }
 
-function emptyApplied(audience: MemberLoginAudience): MemberLoginListFilter {
-  return { audience }
+const rangeSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
+
+function parseAudience(raw: string | null): MemberLoginAudience {
+  return raw === 'user' ? 'user' : 'admin'
 }
 
-function buildApplied(
-  audience: MemberLoginAudience,
-  pending: PendingFilters
-): MemberLoginListFilter {
-  const name = pending.name.trim()
-  const loginId = pending.loginId.trim()
-  const from = pending.range?.[0]?.isValid()
-    ? pending.range[0]!.format('YYYY-MM-DD')
-    : null
-  const to = pending.range?.[1]?.isValid()
-    ? pending.range[1]!.format('YYYY-MM-DD')
-    : null
-  return {
-    audience,
-    ...(name ? { name } : {}),
-    ...(loginId ? { loginId } : {}),
-    ...(from ? { from } : {}),
-    ...(to ? { to } : {}),
+function parseApplied(searchParams: URLSearchParams): MemberLoginListFilter {
+  const filter: MemberLoginListFilter = {
+    audience: parseAudience(searchParams.get('ml_aud')),
   }
+  const name = (searchParams.get('ml_name') ?? '').trim()
+  if (name) filter.name = name
+  const loginId = (searchParams.get('ml_id') ?? '').trim()
+  if (loginId) filter.loginId = loginId
+  const from = searchParams.get('ml_from')
+  const to = searchParams.get('ml_to')
+  if (from) filter.from = from
+  if (to) filter.to = to
+  return filter
+}
+
+const searchSyncRules: readonly TableSearchParamRule<PendingFilters>[] = [
+  {
+    kind: 'param',
+    filterKey: 'audience',
+    paramKey: 'ml_aud',
+    condition: f => f.audience === 'admin' || f.audience === 'user',
+  },
+  {
+    kind: 'param',
+    filterKey: 'name',
+    paramKey: 'ml_name',
+    condition: f => f.name.trim().length > 0,
+    transform: v => String(v).trim(),
+  },
+  {
+    kind: 'param',
+    filterKey: 'loginId',
+    paramKey: 'ml_id',
+    condition: f => f.loginId.trim().length > 0,
+    transform: v => String(v).trim(),
+  },
+  {
+    kind: 'apply',
+    apply: (nextParams, f) => {
+      applyDateRangeToSearchParams(nextParams, f.range, 'ml_from', 'ml_to')
+    },
+  },
+]
+
+function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
+  if (!period) return [null, null]
+  return [period[0] ?? null, period[1] ?? null]
 }
 
 const TAB_ITEMS = [
@@ -83,13 +128,50 @@ const COL = {
 const EMPTY_TEXT = '검색 결과가 없습니다. 필터 조건을 변경해 주세요.'
 
 export function MemberLoginLogPage() {
-  const [audience, setAudience] = useState<MemberLoginAudience>('admin')
-  const [pending, setPending] = useState<PendingFilters>(EMPTY_PENDING)
-  const [applied, setApplied] = useState<MemberLoginListFilter>(() =>
-    emptyApplied('admin')
-  )
+  const { showAlert } = useCmsAlert()
 
-  const listQuery = useMemberLoginLogsList(applied)
+  const {
+    pendingFilters,
+    setPendingFilters,
+    applied: appliedFilter,
+    applySearch,
+    setSearchParams,
+  } = useListFilterUrl<PendingFilters, MemberLoginListFilter>({
+    initialPending: INITIAL_PENDING,
+    paramConfig: searchSyncRules,
+    parseApplied,
+    syncPendingFromUrl: ({ searchParams, setPendingFilters: setPending }) => {
+      const audience = parseAudience(searchParams.get('ml_aud'))
+      const name = searchParams.get('ml_name') ?? ''
+      const loginId = searchParams.get('ml_id') ?? ''
+      const from = searchParams.get('ml_from')
+      const to = searchParams.get('ml_to')
+
+      setPending(prev => {
+        const range = resolvePendingDateRangeFromUrl({
+          ref: rangeSyncRef,
+          from,
+          to,
+          prev: prev.range,
+        }) as PendingDateRange
+
+        const next: PendingFilters = { audience, name, loginId, range }
+        if (
+          prev.audience === next.audience &&
+          prev.name === next.name &&
+          prev.loginId === next.loginId &&
+          pendingDateRangeTupleEqual(prev.range, next.range)
+        ) {
+          return prev
+        }
+        return next
+      })
+    },
+  })
+
+  const audience = appliedFilter.audience
+  const listQuery = useMemberLoginLogsList(appliedFilter)
+  const exportMutation = useExportMemberLoginLogs()
   const rows = listQuery.data?.rows ?? []
   const total = listQuery.data?.total ?? 0
   const loading = listQuery.isLoading || listQuery.isFetching
@@ -100,29 +182,48 @@ export function MemberLoginLogPage() {
       ? '관리자명을 입력하세요'
       : '사용자명을 입력하세요'
 
-  const handleSearch = useCallback(() => {
-    setApplied(buildApplied(audience, pending))
-  }, [audience, pending])
-
-  const handleTabChange = useCallback((next: MemberLoginAudience) => {
-    setAudience(next)
-    setPending(EMPTY_PENDING)
-    setApplied(emptyApplied(next))
-  }, [])
+  const handleTabChange = useCallback(
+    (next: MemberLoginAudience) => {
+      setPendingFilters({
+        audience: next,
+        name: '',
+        loginId: '',
+        range: null,
+      })
+      setSearchParams(() => {
+        const params = new URLSearchParams()
+        params.set('ml_aud', next)
+        return params
+      }, { replace: true })
+    },
+    [setPendingFilters, setSearchParams]
+  )
 
   const handleExcel = useCallback(() => {
-    downloadCsv({
-      filenameBase: '회원_로그인_이력',
-      headers: ['No.', nameLabel, '아이디', '로그인 일시', 'IP'],
-      rows: rows.map((row, index) => [
-        total - index,
-        row.name,
-        row.loginId,
-        formatLogDateTime(row.loggedAt),
-        row.ip,
-      ]),
-    })
-  }, [rows, total, nameLabel])
+    void exportMutation
+      .mutateAsync(appliedFilter)
+      .then(mode => {
+        if (mode === 'use-local-csv') {
+          downloadCsv({
+            filenameBase: '회원_로그인_이력',
+            headers: ['No.', nameLabel, '아이디', '로그인 일시', 'IP'],
+            rows: rows.map((row, index) => [
+              total - index,
+              row.name,
+              row.loginId,
+              formatLogDateTime(row.loggedAt),
+              row.ip,
+            ]),
+          })
+        }
+      })
+      .catch(() => {
+        showAlert({
+          title: '내보내기 실패',
+          content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
+        })
+      })
+  }, [appliedFilter, exportMutation, nameLabel, rows, showAlert, total])
 
   const columns = useMemo<ColumnsType<MemberLoginLog>>(
     () => [
@@ -183,11 +284,11 @@ export function MemberLoginLogPage() {
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder={namePlaceholder}
-              value={pending.name}
+              value={pendingFilters.name}
               onChange={e =>
-                setPending(prev => ({ ...prev, name: e.target.value }))
+                setPendingFilters(prev => ({ ...prev, name: e.target.value }))
               }
-              onPressEnter={handleSearch}
+              onPressEnter={applySearch}
             />
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--control">
@@ -196,11 +297,11 @@ export function MemberLoginLogPage() {
               inputSize="large"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="아이디를 입력하세요"
-              value={pending.loginId}
+              value={pendingFilters.loginId}
               onChange={e =>
-                setPending(prev => ({ ...prev, loginId: e.target.value }))
+                setPendingFilters(prev => ({ ...prev, loginId: e.target.value }))
               }
-              onPressEnter={handleSearch}
+              onPressEnter={applySearch}
             />
           </div>
           <div className="admin-filter-area__field admin-filter-area__field--date-range">
@@ -208,9 +309,9 @@ export function MemberLoginLogPage() {
             <CmsDateRangePicker
               inputSize="large"
               width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-              value={pending.range}
+              value={rangeAsPicker(pendingFilters.range)}
               onChange={dates =>
-                setPending(prev => ({
+                setPendingFilters(prev => ({
                   ...prev,
                   range: dates ?? null,
                 }))
@@ -225,7 +326,7 @@ export function MemberLoginLogPage() {
               size="large"
               type="button"
               width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-              onClick={handleSearch}
+              onClick={applySearch}
             >
               조회
             </CmsButton>

@@ -59,6 +59,11 @@ export function listPiiAccessLogs(
   filter: PiiAccessListFilter
 ): PiiAccessListResult {
   let rows = [...SEED]
+  if (filter.targetName) {
+    rows = rows.filter(r =>
+      includesIgnoreCase(r.targetName, filter.targetName!)
+    )
+  }
   if (filter.purpose) {
     rows = rows.filter(r => includesIgnoreCase(r.purpose, filter.purpose!))
   }
