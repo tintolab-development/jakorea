@@ -1,7 +1,7 @@
 import { isRequiredAddressIncomplete } from '@jakorea/domain/shared/required-address'
 import { buildConfirmationRows } from '@/features/auth/sign-up'
-import type { AdminRegisteredWizardState } from './wizard-state'
-import { getAdminRegisteredProfileFields } from './wizard-state'
+import type { AdminRegisteredWizardState } from '../model/wizard-state'
+import { getAdminRegisteredProfileFields } from '../model/wizard-state'
 
 export function buildAdminRegisteredConfirmationRows(state: AdminRegisteredWizardState) {
   const profile = getAdminRegisteredProfileFields(state)

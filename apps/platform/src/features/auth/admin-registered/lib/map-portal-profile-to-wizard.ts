@@ -6,7 +6,7 @@ import type {
   MemberType,
   SchoolStatus,
 } from '@/features/auth/sign-up'
-import type { AdminRegisteredWizardState } from './wizard-state'
+import type { AdminRegisteredWizardState } from '../model/wizard-state'
 
 function mapMemberType(profile: PortalProfileResponse): MemberType {
   if (profile.teacher === true) return 'teacher'
