@@ -62,6 +62,10 @@ export function SignInPage() {
   const resolveRedirectPath = () => searchParams.get('redirect') ?? '/'
 
   const completeDevSignIn = (profile?: PlatformMemberProfile) => {
+    // mock 로그인: 실 API 토큰이 남아 있으면 remote 세션으로 오인 → mock 데이터가 안 나옴
+    clearAuthTokens()
+    queryClient.removeQueries({ queryKey: platformQueryKeys.auth.me() })
+    queryClient.removeQueries({ queryKey: platformQueryKeys.auth.memberProfile() })
     if (profile) {
       setDevMemberProfile(profile)
     }
@@ -84,7 +88,7 @@ export function SignInPage() {
     refreshToken: string
     expiresInSeconds?: number
   }) => {
-    // 이전 세션 회원 캐시 제거 후 새 토큰 저장
+    // 이전 세션 회원 캐시 제거 후 새 토큰 저장 (mock 프로필 잔여와 분리)
     queryClient.removeQueries({ queryKey: platformQueryKeys.auth.me() })
     queryClient.removeQueries({ queryKey: platformQueryKeys.auth.memberProfile() })
     setAuthTokens({
@@ -92,6 +96,7 @@ export function SignInPage() {
       refreshToken: input.refreshToken,
       expiresAt: expiresAtFromExpiresInSeconds(input.expiresInSeconds),
     })
+    setDevMemberProfile('individual')
     setDevAuthLoggedIn(true)
   }
 
