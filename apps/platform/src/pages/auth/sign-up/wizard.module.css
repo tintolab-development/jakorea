@@ -329,6 +329,31 @@
   color: var(--color-status-error-default);
 }
 
+@media (--bp-below-pc) {
+  .emailInputRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-8);
+  }
+
+  .emailInputControl {
+    flex: none;
+    width: 100%;
+  }
+
+  .emailButtonControl {
+    width: 100%;
+    height: auto;
+  }
+
+  .emailButtonControl .duplicateCheckButton {
+    width: 100%;
+    height: 53px !important;
+    min-height: 53px !important;
+    max-height: none !important;
+  }
+}
+
 .passwordContent {
   display: flex;
   width: 100%;
@@ -379,6 +404,20 @@
 
 .addressSearchRow > :last-child {
   flex: 0 0 auto;
+}
+
+@media (--bp-below-pc) {
+  .addressSearchRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-8);
+  }
+
+  .addressSearchRow > :first-child,
+  .addressSearchRow > :last-child {
+    flex: none;
+    width: 100%;
+  }
 }
 
 .confirmReview {
@@ -438,4 +477,10 @@
   border: 0;
   background: transparent;
   cursor: pointer;
+}
+
+@media (--bp-below-pc) {
+  .confirmReviewValue {
+    text-align: right;
+  }
 }
