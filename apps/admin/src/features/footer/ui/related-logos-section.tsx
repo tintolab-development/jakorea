@@ -78,6 +78,8 @@ export function FooterRelatedLogosSection() {
           name: values.name,
           logoUrl: values.logoUrl,
           logoFileName: values.logoFileName,
+          logoAssetId: values.logoAssetId,
+          logoFile: values.logoFile,
         })
         setEditing(null)
       } catch {

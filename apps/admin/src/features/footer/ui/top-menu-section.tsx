@@ -25,14 +25,11 @@ import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
 import './section-shared.css'
 
 type DraftRow = {
-  name: string
   linkUrl: string
 }
 
 function buildDraft(rows: FooterTopMenu[]): Record<string, DraftRow> {
-  return Object.fromEntries(
-    rows.map(row => [row.id, { name: row.name, linkUrl: row.linkUrl }])
-  )
+  return Object.fromEntries(rows.map(row => [row.id, { linkUrl: row.linkUrl }]))
 }
 
 export function FooterTopMenuSection() {
@@ -89,7 +86,6 @@ export function FooterTopMenuSection() {
           const d = draft[row.id]
           return {
             id: row.id,
-            name: d?.name ?? row.name,
             linkUrl: d?.linkUrl ?? row.linkUrl,
           }
         })
@@ -142,26 +138,7 @@ export function FooterTopMenuSection() {
         width: 200,
         align: 'center',
         ellipsis: true,
-        render: (_v, record) =>
-          isEditing ? (
-            <CmsInput
-              inputSize="medium"
-              width="100%"
-              value={draft[record.id]?.name ?? record.name}
-              onChange={e =>
-                setDraft(prev => ({
-                  ...prev,
-                  [record.id]: {
-                    name: e.target.value,
-                    linkUrl: prev[record.id]?.linkUrl ?? record.linkUrl,
-                  },
-                }))
-              }
-              aria-label={`${record.name} 항목명`}
-            />
-          ) : (
-            <span>{record.name}</span>
-          ),
+        render: (_v, record) => <span>{record.name}</span>,
       },
       {
         title: '연결 링크',
@@ -170,7 +147,7 @@ export function FooterTopMenuSection() {
         align: 'center',
         ellipsis: true,
         render: (_v, record) => {
-          if (isEditing) {
+          if (isEditing && !record.isInternal) {
             return (
               <CmsInput
                 inputSize="medium"
@@ -180,16 +157,11 @@ export function FooterTopMenuSection() {
                   setDraft(prev => ({
                     ...prev,
                     [record.id]: {
-                      name: prev[record.id]?.name ?? record.name,
                       linkUrl: e.target.value,
                     },
                   }))
                 }
-                placeholder={
-                  record.isInternal
-                    ? '사이트 내부 연결 경로를 입력하세요'
-                    : '연결 링크를 입력하세요'
-                }
+                placeholder="연결 링크를 입력하세요"
                 aria-label={`${record.name} 연결 링크`}
               />
             )
@@ -197,9 +169,7 @@ export function FooterTopMenuSection() {
           if (record.isInternal) {
             const url = record.linkUrl.trim()
             return (
-              <span title={url || undefined}>
-                {url || INTERNAL_LINK_LABEL}
-              </span>
+              <span title={url || undefined}>{url || INTERNAL_LINK_LABEL}</span>
             )
           }
           return (

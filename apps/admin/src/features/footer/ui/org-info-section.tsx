@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
-import type { FooterOrgInfo } from '@/entities/footer/model/types'
+import type { FooterOrgInfo, FooterOrgInfoSaveInput } from '@/entities/footer/model/types'
 import { useFooterOrgInfo, useSaveFooterOrgInfo } from '@/features/footer/api/hooks'
 import {
   CmsButton,
@@ -33,8 +33,21 @@ function fieldClass(isEditing: boolean) {
   ].join(' ')
 }
 
-function cloneOrg(data: FooterOrgInfo): FooterOrgInfo {
-  return { ...data }
+function cloneOrg(data: FooterOrgInfo): FooterOrgInfoSaveInput {
+  return {
+    name: data.name,
+    address: data.address,
+    zipCode: data.zipCode,
+    representative: data.representative,
+    businessNumber: data.businessNumber,
+    phone: data.phone,
+    fax: data.fax,
+    email: data.email,
+    logoUrl: data.logoUrl,
+    logoFileName: data.logoFileName,
+    logoAssetId: data.logoAssetId,
+    logoFile: null,
+  }
 }
 
 function isAllowedImageFile(file: File): boolean {
@@ -83,7 +96,7 @@ export function FooterOrgInfoSection() {
   const data = query.data
 
   const [isEditing, setIsEditing] = useState(false)
-  const [draft, setDraft] = useState<FooterOrgInfo | null>(null)
+  const [draft, setDraft] = useState<FooterOrgInfoSaveInput | null>(null)
 
   useEffect(() => {
     if (!isEditing && data) {
@@ -146,7 +159,15 @@ export function FooterOrgInfoSection() {
       try {
         const dataUrl = await readFileAsDataUrl(file)
         setDraft(prev =>
-          prev ? { ...prev, logoUrl: dataUrl, logoFileName: file.name } : prev
+          prev
+            ? {
+                ...prev,
+                logoUrl: dataUrl,
+                logoFileName: file.name,
+                logoFile: file,
+                logoAssetId: undefined,
+              }
+            : prev
         )
       } catch {
         showAlert({
@@ -174,7 +195,7 @@ export function FooterOrgInfoSection() {
     )
   }
 
-  const patch = (partial: Partial<FooterOrgInfo>) => {
+  const patch = (partial: Partial<FooterOrgInfoSaveInput>) => {
     if (!isEditing) return
     setDraft(prev => (prev ? { ...prev, ...partial } : prev))
   }
@@ -385,7 +406,13 @@ export function FooterOrgInfoSection() {
                       onRemoveFile={() =>
                         setDraft(prev =>
                           prev
-                            ? { ...prev, logoUrl: '', logoFileName: undefined }
+                            ? {
+                                ...prev,
+                                logoUrl: '',
+                                logoFileName: undefined,
+                                logoFile: null,
+                                logoAssetId: undefined,
+                              }
                             : prev
                         )
                       }

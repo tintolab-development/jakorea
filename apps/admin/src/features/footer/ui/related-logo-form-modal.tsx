@@ -85,6 +85,8 @@ export type RelatedLogoFormValues = {
   name: string
   logoUrl: string
   logoFileName?: string
+  logoAssetId?: number
+  logoFile?: File | null
 }
 
 type Props = {
@@ -107,6 +109,8 @@ export function RelatedLogoFormModal({
   const [name, setName] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
   const [logoFileName, setLogoFileName] = useState('')
+  const [logoAssetId, setLogoAssetId] = useState<number | undefined>()
+  const [logoFile, setLogoFile] = useState<File | null>(null)
 
   useEffect(() => {
     if (!open || !initial) return
@@ -114,6 +118,8 @@ export function RelatedLogoFormModal({
     setName(initial.name)
     setLogoUrl(initial.logoUrl)
     setLogoFileName(initial.logoFileName ?? '')
+    setLogoAssetId(initial.logoAssetId)
+    setLogoFile(null)
   }, [open, initial])
 
   const handleFilesChange = useCallback(
@@ -140,6 +146,8 @@ export function RelatedLogoFormModal({
         const dataUrl = await readFileAsDataUrl(file)
         setLogoUrl(dataUrl)
         setLogoFileName(file.name)
+        setLogoFile(file)
+        setLogoAssetId(undefined)
       } catch {
         showAlert({
           title: '파일 읽기 실패',
@@ -156,8 +164,10 @@ export function RelatedLogoFormModal({
       name: name.trim(),
       logoUrl: logoUrl.trim(),
       logoFileName: logoFileName || undefined,
+      logoAssetId: logoFile ? undefined : logoAssetId,
+      logoFile,
     })
-  }, [isActive, logoFileName, logoUrl, name, onSubmit])
+  }, [isActive, logoAssetId, logoFile, logoFileName, logoUrl, name, onSubmit])
 
   return (
     <ContentModal
@@ -258,6 +268,8 @@ export function RelatedLogoFormModal({
                   onRemoveFile={() => {
                     setLogoUrl('')
                     setLogoFileName('')
+                    setLogoFile(null)
+                    setLogoAssetId(undefined)
                   }}
                 />
               </div>
