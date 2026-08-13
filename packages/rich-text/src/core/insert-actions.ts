@@ -55,8 +55,21 @@ export function insertImageFromFile(editor: Editor, file: File): void {
     window.alert('이미지는 10MB 이하만 삽입할 수 있습니다.')
     return
   }
-  const url = URL.createObjectURL(file)
-  editor.chain().focus().setImage({ src: url, alt: file.name }).run()
+  // blob: URL은 세션 한정 — 저장 후 뷰어에서 깨져 alt(파일명)만 보인다.
+  // data URL로 넣어 본문에 영속화한다 (ImageResize allowBase64: true).
+  const reader = new FileReader()
+  reader.onload = () => {
+    const src = typeof reader.result === 'string' ? reader.result : ''
+    if (!src.startsWith('data:')) {
+      window.alert('이미지를 읽을 수 없습니다. 다시 시도해 주세요.')
+      return
+    }
+    editor.chain().focus().setImage({ src, alt: file.name }).run()
+  }
+  reader.onerror = () => {
+    window.alert('이미지를 읽을 수 없습니다. 다시 시도해 주세요.')
+  }
+  reader.readAsDataURL(file)
 }
 
 export function insertYoutubeFromUrl(editor: Editor, url: string): void {

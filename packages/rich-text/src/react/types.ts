@@ -17,6 +17,8 @@ export type UseRichTextEditorOptions = {
   resetKey?: string | number
   placeholder?: string
   autofocus?: boolean
+  /** `full`(기본) | `basic` — basic은 paste/드롭 이미지·emoji 등 제외 */
+  preset?: 'full' | 'basic'
   onReady?: (api: RichTextEditorApi) => void
 }
 

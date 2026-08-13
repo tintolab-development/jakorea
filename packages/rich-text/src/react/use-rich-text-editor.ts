@@ -19,14 +19,15 @@ export function useRichTextEditor({
   resetKey,
   placeholder,
   autofocus = false,
+  preset = 'full',
   onReady,
 }: UseRichTextEditorOptions) {
   const onReadyRef = useRef(onReady)
   onReadyRef.current = onReady
 
   const extensions = useMemo(
-    () => createRichTextExtensions({ placeholder }),
-    [placeholder]
+    () => createRichTextExtensions({ placeholder, preset }),
+    [placeholder, preset]
   )
 
   const { content, contentType } = useMemo(
