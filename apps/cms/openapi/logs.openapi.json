@@ -4014,80 +4014,56 @@
       },
       "InstructorRoleRequestCreateRequest": {
         "type": "object",
+        "description": "포털 강사 권한 신청 생성 요청. CMS AdminPreRegisterInstructorRequest와 동일하게 profile/settlement/termsAgreements 구조체를 사용합니다. 기존 *Snapshot / *SnapshotJson flat 필드는 breaking change로 제거되었습니다.",
         "properties": {
           "requestedActivityType": {
             "type": "string",
             "minLength": 1
           },
-          "nameSnapshot": {
+          "name": {
             "type": "string",
             "minLength": 1
           },
-          "genderSnapshot": {
+          "gender": {
             "type": "string",
             "minLength": 1
           },
-          "birthDateSnapshot": {
+          "birthDate": {
             "type": "string",
             "format": "date"
           },
-          "phoneSnapshot": {
+          "phone": {
             "type": "string",
             "minLength": 1
           },
-          "emailSnapshot": {
+          "email": {
             "type": "string",
             "format": "email",
             "minLength": 1
           },
-          "homeAddressSnapshot": {
-            "type": "string",
-            "minLength": 1
+          "profile": {
+            "$ref": "#/components/schemas/InstructorCmsProfile"
           },
-          "bankAccountSnapshotJson": {
-            "type": "string",
-            "minLength": 1
+          "settlement": {
+            "$ref": "#/components/schemas/InstructorCmsSettlement"
           },
-          "educationLevelSnapshot": {
-            "type": "string"
-          },
-          "careerTextSnapshot": {
-            "type": "string"
-          },
-          "businessIncomeYn": {
-            "type": "boolean"
-          },
-          "selfIntroductionSnapshot": {
-            "type": "string"
-          },
-          "youthEconomyEducationOpinionSnapshot": {
-            "type": "string"
-          },
-          "youthCommunicationOpinionSnapshot": {
-            "type": "string"
-          },
-          "unexpectedSituationResponseSnapshot": {
-            "type": "string"
-          },
-          "oneLineIntroSnapshot": {
-            "type": "string"
-          },
-          "agreementSnapshotJson": {
-            "type": "string",
-            "minLength": 1
+          "termsAgreements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TermsAgreementRequest"
+            }
           }
         },
         "required": [
-          "agreementSnapshotJson",
-          "bankAccountSnapshotJson",
-          "birthDateSnapshot",
-          "businessIncomeYn",
-          "emailSnapshot",
-          "genderSnapshot",
-          "homeAddressSnapshot",
-          "nameSnapshot",
-          "phoneSnapshot",
-          "requestedActivityType"
+          "requestedActivityType",
+          "name",
+          "gender",
+          "birthDate",
+          "phone",
+          "email",
+          "profile",
+          "settlement",
+          "termsAgreements"
         ]
       },
       "InstructorRoleWorkflowResponse": {

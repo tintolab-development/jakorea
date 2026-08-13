@@ -1,0 +1,39 @@
+/**
+ * 권한 승인 목록 행 → 상세 모달용 User 스텁.
+ * 전용 상세 GET이 없어 회원 상세 API를 호출하지 않고 목록 필드만 사용한다.
+ */
+
+import type { MemberPermissionApplicationRow } from '@/types/member-permission-application'
+import type { User } from '@/types/user'
+import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
+
+export function mapPermissionApplicationRowToDetailUser(
+  row: MemberPermissionApplicationRow,
+  permissionRole: 'instructor' | 'admin'
+): Omit<User, 'password'> {
+  if (row.memberId != null) {
+    registerMemberIdMapping(row.userId, row.memberId)
+  }
+
+  const role: User['role'] = permissionRole === 'admin' ? 'ADMIN' : 'INDIVIDUAL'
+
+  const appliedAt = row.appliedAt || new Date().toISOString()
+
+  return {
+    id: row.userId,
+    memberId: row.memberId,
+    adminAccountId: row.adminId,
+    name: row.name?.trim() || '-',
+    phone: row.phone ?? '',
+    email: row.email ?? '',
+    role,
+    isActive: true,
+    permissionApprovalStatus: row.approvalStatus,
+    listMetrics: {
+      permissionApplicationTypeLabel: row.applicationTypeLabel,
+    },
+    instructorMemberProfile: permissionRole === 'instructor' ? 'instructor_only' : undefined,
+    createdAt: appliedAt,
+    updatedAt: appliedAt,
+  }
+}

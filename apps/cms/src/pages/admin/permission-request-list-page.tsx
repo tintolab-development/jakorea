@@ -2,17 +2,19 @@
  * 권한 승인 — 강사·관리자 탭, 회원 권한 신청 목록
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import '@/shared/ui/detail-fullpage-modal.css'
 import type { User } from '@/types/user'
+import type { MemberPermissionApplicationRow } from '@/types/member-permission-application'
 import {
   MembersPermissionList,
   type MembersPermissionListHandle,
 } from '@/features/user/permission-management/members-permission-list'
+import { mapPermissionApplicationRowToDetailUser } from '@/features/user/permission-management/lib/map-permission-application-row-to-detail-user'
 import {
   InstructorPermissionApproveModal,
   type InstructorPermissionApprovePayload,
@@ -24,8 +26,6 @@ import {
 import { InstructorPermissionApprovedCompleteModal } from '@/features/user/permission-management/instructor-permission-approved-complete-modal'
 import { InstructorPermissionStatusResetConfirmModal } from '@/features/user/permission-management/instructor-permission-status-reset-confirm-modal'
 import { UserDetailFullPageModal } from '@/pages/users/user-detail-fullpage-modal'
-import { useUserStore } from '@/features/user/shared/model/user-store'
-import { userRoleToBasicInfoEntrySource } from '@/shared/config/member-list-kinds'
 import type { UserDetailPermissionRole } from '@/pages/users/user-detail-fullpage-modal'
 import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
 import { updateMockUserById } from '@/data/mock/users'
@@ -106,7 +106,6 @@ type PermissionListTabKey = 'instructor' | 'admin'
 
 export function PermissionRequestListPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const fetchUserById = useUserStore(s => s.fetchUserById)
   const instructorListRef = useRef<MembersPermissionListHandle>(null)
   const adminListRef = useRef<MembersPermissionListHandle>(null)
   const instructorRemote = isInstructorRoleRequestsRemoteEnabled()
@@ -145,44 +144,27 @@ export function PermissionRequestListPage() {
   const [permissionStatusResetConfirm, setPermissionStatusResetConfirm] =
     useState<PermissionStatusResetConfirmState | null>(null)
   const [activeListTab, setActiveListTab] = useState<PermissionListTabKey>('instructor')
-  /** 이번 상세 GET 결과만 — stale usersById로 본문 선표시하지 않음 */
+  /**
+   * 권한 승인 상세 — 전용 GET 없음.
+   * 회원 상세(individual 등) 대체 조회 없이 목록 행으로만 모달을 연다.
+   */
   const [detailUser, setDetailUser] = useState<Omit<User, 'password'> | null>(null)
-  const [detailLoading, setDetailLoading] = useState(false)
 
-  useEffect(() => {
-    if (!detailUserId || !urlPermissionRole) {
-      setDetailUser(null)
-      setDetailLoading(false)
-      return
-    }
-    let cancelled = false
-    setDetailLoading(true)
-    setDetailUser(null)
-    ;(async () => {
-      try {
-        const fetched = await fetchUserById(detailUserId)
-        if (cancelled) return
-        if (fetched) setDetailUser(fetched)
-      } catch (error) {
-        if (!cancelled) {
-          handleError(error, { defaultMessage: '회원 상세를 불러오지 못했습니다.' })
-        }
-      } finally {
-        if (!cancelled) setDetailLoading(false)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [detailUserId, urlPermissionRole, fetchUserById])
+  const basicInfoEntrySource = useMemo(() => {
+    if (!permissionRole) return undefined
+    return permissionRole === 'admin' ? ('admin' as const) : ('instructor' as const)
+  }, [permissionRole])
 
-  const basicInfoEntrySource = useMemo(
-    () => (detailUser ? userRoleToBasicInfoEntrySource(detailUser.role) : undefined),
-    [detailUser]
+  const applyDetailRow = useCallback(
+    (row: MemberPermissionApplicationRow, role: UserDetailPermissionRole) => {
+      setDetailUser(mapPermissionApplicationRowToDetailUser(row, role))
+    },
+    []
   )
 
   const handleOpenUserDetail = useCallback(
-    (userId: string, role: UserDetailPermissionRole) => {
+    (userId: string, role: UserDetailPermissionRole, row: MemberPermissionApplicationRow) => {
+      applyDetailRow(row, role)
       setSearchParams(
         prev => {
           const next = new URLSearchParams(prev)
@@ -193,12 +175,19 @@ export function PermissionRequestListPage() {
         { replace: false }
       )
     },
-    [setSearchParams]
+    [applyDetailRow, setSearchParams]
+  )
+
+  const handleResolveDetailRow = useCallback(
+    (row: MemberPermissionApplicationRow) => {
+      if (!urlPermissionRole) return
+      applyDetailRow(row, urlPermissionRole)
+    },
+    [applyDetailRow, urlPermissionRole]
   )
 
   const handleCloseDetail = useCallback(() => {
     setDetailUser(null)
-    setDetailLoading(false)
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)
       next.delete(PR_DETAIL_USER)
@@ -209,12 +198,12 @@ export function PermissionRequestListPage() {
 
   const syncDetailUserIfOpened = useCallback(
     (userId: string) => {
-      if (!detailOpen || !detailUserId || detailUserId !== userId) return
-      void fetchUserById(userId).then(fetched => {
-        if (fetched) setDetailUser(fetched)
-      })
+      if (!detailOpen || !detailUserId || detailUserId !== userId || !permissionRole) return
+      const listRef = permissionRole === 'instructor' ? instructorListRef : adminListRef
+      const row = listRef.current?.getRowForUser(userId)
+      if (row) applyDetailRow(row, permissionRole)
     },
-    [detailOpen, detailUserId, fetchUserById]
+    [detailOpen, detailUserId, permissionRole, applyDetailRow]
   )
 
   const handlePermissionApprove = useCallback(
@@ -705,6 +694,10 @@ export function PermissionRequestListPage() {
         <MembersPermissionList
                 ref={instructorListRef}
                 memberType="instructor"
+                detailUserId={permissionRole === 'instructor' ? detailUserId : null}
+                onResolveDetailRow={
+                  permissionRole === 'instructor' ? handleResolveDetailRow : undefined
+                }
                 onOpenUserDetail={handleOpenUserDetail}
                 onInstructorApproveRequest={payload => {
                   setAdminApproveModal(null)
@@ -755,6 +748,10 @@ export function PermissionRequestListPage() {
         <MembersPermissionList
                 ref={adminListRef}
                 memberType="admin"
+                detailUserId={permissionRole === 'admin' ? detailUserId : null}
+                onResolveDetailRow={
+                  permissionRole === 'admin' ? handleResolveDetailRow : undefined
+                }
                 onOpenUserDetail={handleOpenUserDetail}
                 onAdminApproveRequest={payload => {
                   setInstructorApproveModal(null)
@@ -803,8 +800,8 @@ export function PermissionRequestListPage() {
               />
       )}
 
-      {detailOpen && detailLoading && detailUser == null ? (
-        <DetailFullPageModal open onClose={handleCloseDetail} title="회원 상세">
+      {detailOpen && detailUser == null ? (
+        <DetailFullPageModal open onClose={handleCloseDetail} title="강사 신청 상세">
           <div
             className="detail-fullpage-modal__loading"
             role="status"

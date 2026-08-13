@@ -134,18 +134,34 @@ function formatUserDetailModalTitle(kindLabel: string, subject: string): string 
   return `${kindLabel} (${subject})`
 }
 
-export function userDetailModalTitle(user: Pick<
-  User,
-  | 'name'
-  | 'role'
-  | 'instructorMemberProfile'
-  | 'affiliatedSchoolUserId'
-  | 'affiliatedSchoolName'
-  | 'schoolInfo'
-  | 'listMetrics'
-  | 'programRoles'
->): string {
+export type UserDetailModalTitleOptions = {
+  mode?: 'default' | 'permission'
+  permissionRole?: 'instructor' | 'admin'
+}
+
+export function userDetailModalTitle(
+  user: Pick<
+    User,
+    | 'name'
+    | 'role'
+    | 'instructorMemberProfile'
+    | 'affiliatedSchoolUserId'
+    | 'affiliatedSchoolName'
+    | 'schoolInfo'
+    | 'listMetrics'
+    | 'programRoles'
+  >,
+  options?: UserDetailModalTitleOptions
+): string {
   const displayName = user.name?.trim() || '-'
+  if (options?.mode === 'permission') {
+    if (options.permissionRole === 'instructor') {
+      return formatUserDetailModalTitle('강사 신청 상세', displayName)
+    }
+    if (options.permissionRole === 'admin') {
+      return formatUserDetailModalTitle('관리자 신청 상세', displayName)
+    }
+  }
   switch (user.role) {
     case 'ADMIN':
       return formatUserDetailModalTitle('관리자 상세', displayName)

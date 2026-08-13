@@ -58,7 +58,6 @@ import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gend
 import {
   mapIsActiveToMemberStatus,
   mapUserRoleToApiRole,
-  resolvePrimaryUserRole,
 } from '@/features/user/api/map-member-role'
 import {
   changeAdminAccountRoleRemote,
@@ -96,6 +95,7 @@ import {
 } from '@/features/user/api/map-patch-user-basic-info'
 import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-external-identifiers'
 import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
+import { probeMemberDetailAsUser } from '@/features/user/api/probe-member-detail-as-user'
 import {
   fetchAdminMemberDetailAsUser,
   isAdminMemberDetailRole,
@@ -825,33 +825,14 @@ export async function getUserById(
 
       const memberId = resolveMemberIdForApi(userId, options)
       // options.role은 위에서 SCHOOL early-return 후 좁혀질 수 있어 명시 타입 유지
-      let role: UserRole | undefined = options?.role
+      const role: UserRole | undefined = options?.role
 
       if (!role) {
-        const legacy = await fetchMemberDetailRemote(memberId)
-        role = resolvePrimaryUserRole(legacy.roles)
-        if (
-          isAdminMemberDetailRole(role) &&
-          shouldUseAdminAccountDetailApi({ userId, adminAccountId: options?.adminAccountId })
-        ) {
-          return fetchAdminMemberDetailAsUser(userId, {
-            memberId,
-            adminAccountId: options?.adminAccountId,
-            email: legacy.email,
-          })
-        }
-        if (role !== 'SCHOOL' && role !== 'INSTRUCTOR' && role !== 'INDIVIDUAL') {
-          const externalIdentifiers = await fetchMemberExternalIdentifiersRemote(memberId).catch(
-            () => []
-          )
-          const user = mapMemberDetailToUser(legacy, null)
-          const id1365 = resolve1365IdFromExternalIdentifiers(
-            externalIdentifiers,
-            legacy.external1365Id
-          )
-          if (id1365) user.id1365 = id1365
-          return user
-        }
+        // individual→school→instructor 탐침 1회 + 즉시 매핑 (역할별 GET 재호출 금지)
+        return probeMemberDetailAsUser(userId, memberId, {
+          adminAccountId: options?.adminAccountId,
+          email: options?.email,
+        })
       }
 
       if (
@@ -872,14 +853,6 @@ export async function getUserById(
         throw new Error(
           '관리자 회원 상세를 조회하려면 목록 응답에 adminAccountId가 필요합니다.'
         )
-      }
-
-      if (role === 'SCHOOL') {
-        if (organizationId != null) {
-          return mapSchoolOrganizationToUser(await fetchSchoolOrganizationRemote(organizationId))
-        }
-        const detail = await fetchSchoolMemberDetailRemote(memberId)
-        return mapSchoolMemberDetailToUser(detail, { fallbackRole: 'SCHOOL' })
       }
 
       if (role === 'INSTRUCTOR') {

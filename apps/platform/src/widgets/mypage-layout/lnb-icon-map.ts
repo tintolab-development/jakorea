@@ -5,11 +5,17 @@ import handGrayIconUrl from './image/icon/hand-gray-24.svg'
 import handMintIconUrl from './image/icon/hand-mint-24.svg'
 import homeGrayIconUrl from './image/icon/home-gray-24.svg'
 import homeMintIconUrl from './image/icon/home-mint-24.svg'
+import monitorGrayIconUrl from './image/icon/monitor-gray-24.svg'
+import monitorMintIconUrl from './image/icon/monitor-mint-24.svg'
 import speechBubbleGrayIconUrl from './image/icon/speechbubble-gray-24.svg'
 import speechBubbleMintIconUrl from './image/icon/speechbubble-mint-24.svg'
+import walletGrayIconUrl from './image/icon/wallet-gray-24.svg'
+import walletMintIconUrl from './image/icon/wallet-mint-24.svg'
 
 const LNB_ICON_MAP: Record<MypageLnbItemKey, { gray: string; mint: string }> = {
   home: { gray: homeGrayIconUrl, mint: homeMintIconUrl },
+  lectures: { gray: monitorGrayIconUrl, mint: monitorMintIconUrl },
+  settlement: { gray: walletGrayIconUrl, mint: walletMintIconUrl },
   education: { gray: bookGrayIconUrl, mint: bookMintIconUrl },
   volunteer: { gray: handGrayIconUrl, mint: handMintIconUrl },
   inquiries: { gray: speechBubbleGrayIconUrl, mint: speechBubbleMintIconUrl },

@@ -137,15 +137,18 @@ export function useUserDetailController({
   const queryClient = useQueryClient()
 
   const [tabState, setTabState] = useState<TabState>({ lnb: 'detail-info' })
+  /** 권한 승인 상세는 신청 정보(기본/약관/이력서)만 — 프로그램 신청·참여 이력 API 생략 */
+  const loadProgramHistoryResources = open && mode !== 'permission'
+
   const { applications, enrollmentApplications, applicationsLoading, refetchApplications } =
-    useUserDetailApplications(open, displayUser)
+    useUserDetailApplications(open, displayUser, { enabled: loadProgramHistoryResources })
 
   const membersRemote = isMembersRemoteEnabled()
   const { data: programHistoryData, isLoading: programHistoryLoading } =
     useMemberProgramHistoryQuery(
       displayUser?.memberId,
       displayUser?.id,
-      open && membersRemote
+      loadProgramHistoryResources && membersRemote
     )
 
   const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
@@ -916,7 +919,9 @@ export function useUserDetailController({
   )
 
   const instructorResumeApplicantRow = useMemo((): ApplicantInstructorRow | null => {
-    if (!displayUser || displayUser.role !== 'INSTRUCTOR') return null
+    // 권한 승인 상세는 전용 신청 상세 API 전까지 회원/이력 매핑 조회 안 함
+    if (!displayUser || mode === 'permission') return null
+    if (displayUser.role !== 'INSTRUCTOR') return null
     const profile = resolveInstructorMemberProfile(displayUser)
     if (
       profile !== 'instructor_dual' &&
@@ -927,7 +932,7 @@ export function useUserDetailController({
     }
     const src = personalInfoRevealed ? displayUser : maskedUserForInstructorDetail(displayUser)
     return userToApplicantInstructorRow(src)
-  }, [displayUser, personalInfoRevealed])
+  }, [displayUser, personalInfoRevealed, mode])
 
   return {
     state: {

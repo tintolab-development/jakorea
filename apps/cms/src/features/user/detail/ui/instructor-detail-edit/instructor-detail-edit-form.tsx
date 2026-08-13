@@ -14,7 +14,10 @@ import {
 } from '@/features/user/detail/lib/map-user-to-instructor-profile-form'
 import { socialView } from '@/features/user/detail/ui/user-basic-info/display'
 import { InstructorJaEvaluationGradeField } from '@/features/user/detail/ui/user-basic-info/instructor-ja-grade-field'
-import { settlementStatusView } from '@/features/user/detail/ui/user-basic-info/status'
+import {
+  PermissionApprovalStatusWithResend,
+  settlementStatusView,
+} from '@/features/user/detail/ui/user-basic-info/status'
 import {
   InstructorProfileFormBody,
   type InstructorProfileFormValues,
@@ -92,14 +95,26 @@ export function InstructorDetailEditForm({
     />
   )
 
+  const permissionApprovalStatus = (
+    <PermissionApprovalStatusWithResend user={user} notifyPermissionRole="instructor" />
+  )
+
   const basicInfoPrefix = (
     <>
       <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label={isInstructorPermissionDetail ? '권한 승인 현황' : '정산 현황'}
-          view={settlementStatusView(user)}
-          edit={<span>{settlementStatusView(user)}</span>}
-        />
+        {isInstructorPermissionDetail ? (
+          <DetailInfoForm.Field
+            label="권한 승인 현황"
+            view={permissionApprovalStatus}
+            edit={permissionApprovalStatus}
+          />
+        ) : (
+          <DetailInfoForm.Field
+            label="정산 현황"
+            view={settlementStatusView(user)}
+            edit={<span>{settlementStatusView(user)}</span>}
+          />
+        )}
         <DetailInfoForm.Field
           label="JA 평가 등급"
           view={jaEvaluationGradeDisplay}

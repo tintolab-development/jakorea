@@ -99,20 +99,32 @@ export function UserDetailFullpageBasicTabContent({
   const consentViewVariant =
     mode === 'permission' && permissionRole === 'instructor' ? 'permission_instructor' : 'default'
 
+  /** 권한 승인 상세는 전용 API 전까지 회원 서브리소스(동의/코멘트 등) 조회하지 않음 */
+  const loadMemberSubresources = mode !== 'permission'
+
+  /** 상세 `termsAgreements`가 있으면 consent-records는 사용하지 않음 — 중복 GET 생략 */
+  const needsConsentRecordsFallback =
+    loadMemberSubresources &&
+    basicTab.showConsentAgreement &&
+    (user.termsAgreements == null || user.termsAgreements.length === 0)
+
   const { data: consentRecords = [], isLoading: consentLoading } = useMemberConsentRecordsQuery(
     user.memberId,
-    membersRemote && basicTab.showConsentAgreement
+    membersRemote && needsConsentRecordsFallback
   )
 
   const {
     data: commentsData,
     isError: commentsError,
     isLoading: commentsLoading,
-  } = useMemberCommentsQuery(user.memberId, membersRemote && canShowAdminCommentForTarget)
+  } = useMemberCommentsQuery(
+    user.memberId,
+    membersRemote && loadMemberSubresources && canShowAdminCommentForTarget
+  )
 
   const { data: affiliatedTeachers = [], isError: teachersError } = useAffiliatedTeachersQuery(
     user.memberId,
-    membersRemote && basicTab.showSchoolAffiliatedTeachers,
+    membersRemote && loadMemberSubresources && basicTab.showSchoolAffiliatedTeachers,
     user.organizationId
   )
 
