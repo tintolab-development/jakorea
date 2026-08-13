@@ -299,7 +299,11 @@ function mapTermsAgreements(
   }))
 }
 
-/** Platform 강사 신청 폼 → POST InstructorRoleRequestCreateRequest */
+/**
+ * Platform 강사 신청 폼 → POST InstructorRoleRequestCreateRequest
+ * BE는 Snapshot이 아닌 profile/settlement/termsAgreements 구조체를 수용해야 함.
+ * @see apps/cms/docs/api/portal-instructor-role-request-create-structured-handoff-2026-08-13.md
+ */
 export function mapInstructorApplyFormToCreateRequest(
   values: InstructorSharedProfileFormValues,
   options?: { requestedActivityType?: string },
