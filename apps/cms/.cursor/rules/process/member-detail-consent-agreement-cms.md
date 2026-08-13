@@ -43,6 +43,16 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 
 **ADMIN** preset may hide items — if code diverges, update both this doc and the component.
 
+## 상세 수정 모드 (관리자 등록 회원)
+
+| 구분 | `termsType` | UI | PATCH |
+|------|-------------|-----|-------|
+| **필수 — 수정 불가** | `SERVICE_TERMS`, `PRIVACY_COLLECTION`, `MFA_SETUP_CONSENT` | 동의/미동의 **라디오 노출 + disabled** | body에서 제외 (서버도 거부/무시) |
+| **선택 — 수정 가능** | `MARKETING`, 동의서 5종 등 | 라디오(또는 동의서 작성형) 편집 | `termsAgreements`로 persist |
+
+FE SSOT: `member-basic-info-terms-patch.ts` · `user-consent-agreement-section.tsx` · 강사 폼 `disabled={isDetailEdit}`  
+적용 대상: **개인·관리자** 상세(`memberConsentEditing`) · **강사** 상세 등록 폼
+
 ## API / state (align with backend)
 
 - Per-item: `agreedAt`, document id/version, expiry (1y / 10y / until withdraw).
@@ -60,4 +70,4 @@ Spec for consent UI in **member detail**, **registration modals**, and related f
 - `preview` 모드 + 슬롯 CSS로 잠그지 말 것 — 지급조서·라디오까지 막힘
 - 애매하면 코드 변경 전 사용자에게 확인
 
-**Last updated:** 2026-08-11
+**Last updated:** 2026-08-13

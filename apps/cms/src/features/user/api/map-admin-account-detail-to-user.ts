@@ -1,14 +1,30 @@
 import type { AdminAccountApprovalDetailResponse } from '@/shared/api/generated/members/schemas/adminAccountApprovalDetailResponse'
+import type { AdminTermsAgreementResponse } from '@/shared/api/generated/members/schemas/adminTermsAgreementResponse'
+import type { TermsAgreementRow } from '@/shared/api/generated/members/schemas/termsAgreementRow'
 import { registerMemberIdMapping } from '@/features/user/api/member-id-registry'
 import { roleCodeToAdminPermissionVariant } from '@/features/user/api/admin-approval-role'
 import {
   resolveIdentitySelfSignupCompletedAfterAdminRegistration,
   resolveRegisteredByAdmin,
 } from '@/features/user/api/resolve-member-registration-flags'
-import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import { mapMemberStatusToIsActive } from '@/features/user/api/map-member-role'
 import { resolveCanonicalUserDetailId } from '@/features/user/api/user-response-row-id'
 import type { User } from '@/types/user'
+
+function mapAdminTermsAgreementsToRows(
+  rows: AdminTermsAgreementResponse[] | undefined
+): TermsAgreementRow[] | undefined {
+  if (!rows?.length) return undefined
+  return rows.map(row => ({
+    termsType: row.termsType?.trim() || row.consentType?.trim() || undefined,
+    termsVersion: row.version?.trim() || undefined,
+    required: row.required,
+    agreed: row.agreed,
+    agreedAt: row.agreedAt,
+    sourceFlow: row.sourceFlow,
+  }))
+}
 
 function fallbackUuid(memberId?: number): string {
   if (memberId != null) return `member-${memberId}`
@@ -38,6 +54,8 @@ export function mapAdminAccountDetailToUser(
   const now = new Date().toISOString()
   const permissionVariant = roleCodeToAdminPermissionVariant(detail.roleCode)
   const role = 'ADMIN' as const
+  const normalizedBirthDate = toApiBirthDate(detail.birthDate)
+  const termsAgreements = mapAdminTermsAgreementsToRows(detail.termsAgreements)
 
   return {
     id: resolveCanonicalUserDetailId(
@@ -54,7 +72,7 @@ export function mapAdminAccountDetailToUser(
       const display = toDisplayGender(detail.gender)
       return display === '-' ? undefined : display
     })(),
-    birthDate: detail.birthDate ?? undefined,
+    birthDate: normalizedBirthDate ?? detail.birthDate ?? undefined,
     isActive: mapMemberStatusToIsActive(undefined, detail.status),
     createdAt: detail.createdAt ?? now,
     updatedAt: detail.updatedAt ?? now,
@@ -69,5 +87,6 @@ export function mapAdminAccountDetailToUser(
     identitySelfSignupCompletedAfterAdminRegistration:
       resolveIdentitySelfSignupCompletedAfterAdminRegistration({ role, adminAccountId }),
     listMetrics: permissionVariant ? { adminPermissionVariant: permissionVariant } : undefined,
+    ...(termsAgreements ? { termsAgreements } : {}),
   }
 }

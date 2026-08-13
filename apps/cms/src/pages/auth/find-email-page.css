@@ -62,23 +62,22 @@
 }
 
 .register-step-header__title {
-  margin: 0;
   color: var(--Color-netural-black, #3d3d3d);
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 24px;
+  font-family: Pretendard;
+  font-size: 30px;
+  font-style: normal;
   font-weight: 700;
-  line-height: 144%;
-  letter-spacing: -0.48px;
+  line-height: 144%; /* 43.2px */
 }
 
 .register-step-header__description {
-  margin: 0;
-  color: var(--Color-netural-cool-500, #85969d);
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 16px;
+  color: var(--Color-primary-boundless_blue, #285f74);
+  font-family: Pretendard;
+  font-size: 18px;
+  font-style: normal;
   font-weight: 400;
-  line-height: 150%;
-  letter-spacing: -0.16px;
+  line-height: 150%; /* 27px */
+  letter-spacing: -0.18px;
 }
 
 .register-identity-module {

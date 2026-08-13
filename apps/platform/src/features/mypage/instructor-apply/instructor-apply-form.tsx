@@ -45,6 +45,7 @@ import {
   PFCheckbox,
   PFCircleAddButton,
   PFDateInput,
+  PFFormControlCluster,
   PFFormField,
   PFFormFieldRow,
   PFFormFieldTable,
@@ -52,6 +53,8 @@ import {
   PFFormInlineRow,
   PFFormInlineSegment,
   PFFormInlineSeparator,
+  PFFormPeriodPair,
+  PFFormPeriodTilde,
   PFFormSection,
   PFItemDeleteButton,
   PFSelect,
@@ -551,7 +554,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
               <PFFormField label="정산 계좌 정보">
                 <PFFormInlineRow>
                   <PFFormInlineSegment>
-                    <div className={styles.bankAccountPair}>
+                    <PFFormControlCluster>
                       <PFTextInput
                         variant="formPage"
                         size="large"
@@ -568,7 +571,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                         value={values.accountNumber}
                         onValueChange={value => patch('accountNumber', value)}
                       />
-                    </div>
+                    </PFFormControlCluster>
                   </PFFormInlineSegment>
                   <PFFormInlineSeparator />
                   <PFFormInlineSegment>
@@ -676,7 +679,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                 <PFFormField label="고등학교">
                   <PFFormInlineRow>
                     <PFFormInlineSegment>
-                      <div className={styles.period}>
+                      <PFFormPeriodPair>
                         <PFDateInput
                           variant="formPage"
                           size="large"
@@ -691,9 +694,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                             })
                           }
                         />
-                        <span className={styles.tilde} aria-hidden>
-                          ~
-                        </span>
+                        <PFFormPeriodTilde />
                         <PFDateInput
                           variant="formPage"
                           size="large"
@@ -709,7 +710,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                             })
                           }
                         />
-                      </div>
+                      </PFFormPeriodPair>
                     </PFFormInlineSegment>
                     <PFFormInlineSeparator />
                     <PFFormInlineSegment>
@@ -734,7 +735,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                       <div key={`college23-${index}`} className={styles.fieldStackRow}>
                         <PFFormInlineRow>
                           <PFFormInlineSegment>
-                        <div className={styles.period}>
+                        <PFFormPeriodPair>
                               <PFDateInput
                                 variant="formPage"
                                 size="large"
@@ -748,9 +749,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                   patch('college23Rows', next)
                                 }}
                               />
-                              <span className={styles.tilde} aria-hidden>
-                                ~
-                              </span>
+                              <PFFormPeriodTilde />
                               <PFDateInput
                                 variant="formPage"
                                 size="large"
@@ -765,11 +764,11 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                   patch('college23Rows', next)
                                 }}
                               />
-                            </div>
+                            </PFFormPeriodPair>
                           </PFFormInlineSegment>
                           <PFFormInlineSeparator />
                           <PFFormInlineSegment>
-                        <div className={styles.inlineGroup}>
+                        <PFFormControlCluster>
                               <EducationSchoolNameField
                                 detailKey="college23"
                                 value={row.schoolName}
@@ -806,7 +805,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                   )
                                 }
                               />
-                            </div>
+                            </PFFormControlCluster>
                           </PFFormInlineSegment>
                         </PFFormInlineRow>
                       </div>
@@ -824,7 +823,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                       <div key={`college4-${index}`} className={styles.fieldStackRow}>
                         <PFFormInlineRow>
                           <PFFormInlineSegment>
-                        <div className={styles.period}>
+                        <PFFormPeriodPair>
                               <PFDateInput
                                 variant="formPage"
                                 size="large"
@@ -838,9 +837,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                   patch('college4Rows', next)
                                 }}
                               />
-                              <span className={styles.tilde} aria-hidden>
-                                ~
-                              </span>
+                              <PFFormPeriodTilde />
                               <PFDateInput
                                 variant="formPage"
                                 size="large"
@@ -855,11 +852,11 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                   patch('college4Rows', next)
                                 }}
                               />
-                            </div>
+                            </PFFormPeriodPair>
                           </PFFormInlineSegment>
                           <PFFormInlineSeparator />
                           <PFFormInlineSegment>
-                        <div className={styles.inlineGroup}>
+                        <PFFormControlCluster>
                               <EducationSchoolNameField
                                 detailKey="college4"
                                 value={row.schoolName}
@@ -896,7 +893,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                   )
                                 }
                               />
-                            </div>
+                            </PFFormControlCluster>
                           </PFFormInlineSegment>
                         </PFFormInlineRow>
                       </div>
@@ -914,7 +911,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                       <div key={`graduate-${index}`} className={styles.fieldStackRow}>
                         <PFFormInlineRow>
                           <PFFormInlineSegment>
-                        <div className={styles.period}>
+                        <PFFormPeriodPair>
                               <PFDateInput
                                 variant="formPage"
                                 size="large"
@@ -928,9 +925,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                   patch('graduateRows', next)
                                 }}
                               />
-                              <span className={styles.tilde} aria-hidden>
-                                ~
-                              </span>
+                              <PFFormPeriodTilde />
                               <PFDateInput
                                 variant="formPage"
                                 size="large"
@@ -959,11 +954,11 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                   patch('graduateRows', next)
                                 }}
                               />
-                            </div>
+                            </PFFormPeriodPair>
                           </PFFormInlineSegment>
                           <PFFormInlineSeparator />
                           <PFFormInlineSegment>
-                        <div className={styles.inlineGroup}>
+                        <PFFormControlCluster>
                               <EducationSchoolNameField
                                 detailKey="graduate"
                                 value={row.schoolName}
@@ -1000,7 +995,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                   )
                                 }
                               />
-                            </div>
+                            </PFFormControlCluster>
                           </PFFormInlineSegment>
                         </PFFormInlineRow>
                       </div>
@@ -1032,7 +1027,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                       <div key={`career-${index}`} className={styles.fieldStackRow}>
                         <PFFormInlineRow>
                           <PFFormInlineSegment>
-                        <div className={styles.period}>
+                        <PFFormPeriodPair>
                               <PFDateInput
                                 variant="formPage"
                                 size="large"
@@ -1046,9 +1041,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                   patch('careers', next)
                                 }}
                               />
-                              <span className={styles.tilde} aria-hidden>
-                                ~
-                              </span>
+                              <PFFormPeriodTilde />
                               <PFDateInput
                                 variant="formPage"
                                 size="large"
@@ -1063,11 +1056,11 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                   patch('careers', next)
                                 }}
                               />
-                            </div>
+                            </PFFormPeriodPair>
                           </PFFormInlineSegment>
                           <PFFormInlineSeparator />
                           <PFFormInlineSegment>
-                        <div className={styles.inlineGroup}>
+                        <PFFormControlCluster>
                               <PFTextInput
                                 variant="formPage"
                                 size="large"
@@ -1119,7 +1112,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                   )
                                 }
                               />
-                            </div>
+                            </PFFormControlCluster>
                           </PFFormInlineSegment>
                         </PFFormInlineRow>
                       </div>
@@ -1140,7 +1133,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                     <div key={`ja-${index}`} className={styles.fieldStackRow}>
                       <PFFormInlineRow>
                         <PFFormInlineSegment>
-                      <div className={styles.period}>
+                      <PFFormPeriodPair>
                             <PFDateInput
                               variant="formPage"
                               size="large"
@@ -1153,9 +1146,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                 patch('jaKoreaRows', next)
                               }}
                             />
-                            <span className={styles.tilde} aria-hidden>
-                              ~
-                            </span>
+                            <PFFormPeriodTilde />
                             <PFDateInput
                               variant="formPage"
                               size="large"
@@ -1168,11 +1159,11 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                 patch('jaKoreaRows', next)
                               }}
                             />
-                          </div>
+                          </PFFormPeriodPair>
                         </PFFormInlineSegment>
                         <PFFormInlineSeparator />
                         <PFFormInlineSegment>
-                      <div className={styles.inlineGroup}>
+                      <PFFormControlCluster>
                             <PFTextInput
                               variant="formPage"
                               size="large"
@@ -1212,7 +1203,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                 )
                               }
                             />
-                          </div>
+                          </PFFormControlCluster>
                         </PFFormInlineSegment>
                       </PFFormInlineRow>
                     </div>
@@ -1248,7 +1239,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                         </PFFormInlineSegment>
                         <PFFormInlineSeparator />
                         <PFFormInlineSegment>
-                      <div className={styles.inlineGroup}>
+                      <PFFormControlCluster>
                             <PFTextInput
                               variant="formPage"
                               size="large"
@@ -1288,7 +1279,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                 )
                               }
                             />
-                          </div>
+                          </PFFormControlCluster>
                         </PFFormInlineSegment>
                       </PFFormInlineRow>
                     </div>
@@ -1324,7 +1315,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                         </PFFormInlineSegment>
                         <PFFormInlineSeparator />
                         <PFFormInlineSegment>
-                      <div className={styles.inlineGroup}>
+                      <PFFormControlCluster>
                             <PFTextInput
                               variant="formPage"
                               size="large"
@@ -1364,7 +1355,7 @@ export function InstructorApplyForm({ onSubmitSuccess, lockedBasic }: Instructor
                                 )
                               }
                             />
-                          </div>
+                          </PFFormControlCluster>
                         </PFFormInlineSegment>
                       </PFFormInlineRow>
                     </div>

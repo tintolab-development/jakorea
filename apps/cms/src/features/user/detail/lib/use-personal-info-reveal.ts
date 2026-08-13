@@ -17,6 +17,7 @@ import {
 } from '@/features/logs/api/privacy-unmask-fetcher'
 import {
   fetchAdminAccountPrivacyUnmask,
+  fetchInstructorRoleRequestPrivacyUnmask,
   fetchMemberRolePrivacyUnmask,
 } from '@/features/user/api/member-privacy-unmask'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
@@ -40,6 +41,8 @@ export interface UsePersonalInfoRevealOptions {
   resolveMemberRole?: () => UserRole | undefined
   /** ADMIN unmask — `adminAccountId`(숫자). `User.id`의 `admin-account-*`와 별개 */
   resolveAdminAccountId?: () => number | undefined
+  /** 강사 권한 신청 상세 unmask — `instructor-role-requests/{requestId}/privacy/unmask` */
+  resolveInstructorRoleRequestId?: () => number | undefined
   /**
    * 역할별 unmask API가 원문 상세 DTO를 반환하면 호출.
    * 회원 상세 화면에서 주소·계좌 등 표시 갱신에 사용.
@@ -77,13 +80,33 @@ async function revealPersonalInfoWithAudit(
   resolveMemberId: (() => string | undefined) | undefined,
   reason: string,
   resolveMemberRole?: () => UserRole | undefined,
-  resolveAdminAccountId?: () => number | undefined
+  resolveAdminAccountId?: () => number | undefined,
+  resolveInstructorRoleRequestId?: () => number | undefined
 ): Promise<{ ok: true; payload?: unknown; role?: UserRole } | { ok: false }> {
   const memberIdRaw = resolveMemberId?.()?.trim()
   const memberIdNum = memberIdRaw != null ? Number(memberIdRaw) : NaN
   const role = resolveMemberRole?.()
   const adminAccountId =
     role === 'ADMIN' ? resolveAdminAccountId?.() : undefined
+  const instructorRoleRequestId = resolveInstructorRoleRequestId?.()
+
+  if (isMembersRemoteEnabled() && instructorRoleRequestId != null) {
+    try {
+      const payload = await fetchInstructorRoleRequestPrivacyUnmask(
+        instructorRoleRequestId,
+        reason
+      )
+      void queryClient.invalidateQueries({ queryKey: logsQueryKeys.all })
+      return { ok: true, payload, role: role ?? 'INSTRUCTOR' }
+    } catch (error) {
+      const message =
+        error instanceof PrivacyUnmaskApiError
+          ? error.message
+          : '개인정보 원문 조회에 실패했습니다.'
+      cmsAlertModal.show({ title: '열람 실패', content: message })
+      return { ok: false }
+    }
+  }
 
   if (isMembersRemoteEnabled() && adminAccountId != null) {
     try {
@@ -139,6 +162,7 @@ export function usePersonalInfoReveal({
   resolveMemberId,
   resolveMemberRole,
   resolveAdminAccountId,
+  resolveInstructorRoleRequestId,
   onPrivacyUnmasked,
   resetDeps,
   controlMode,
@@ -167,7 +191,8 @@ export function usePersonalInfoReveal({
         resolveMemberId,
         reason,
         resolveMemberRole,
-        resolveAdminAccountId
+        resolveAdminAccountId,
+        resolveInstructorRoleRequestId
       )
       if (!result.ok) return { ok: false }
       if (result.payload !== undefined) {
@@ -183,6 +208,7 @@ export function usePersonalInfoReveal({
       resolveMemberId,
       resolveMemberRole,
       resolveAdminAccountId,
+      resolveInstructorRoleRequestId,
     ]
   )
 

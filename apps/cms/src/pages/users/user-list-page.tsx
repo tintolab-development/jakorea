@@ -30,6 +30,7 @@ import {
   canResolveMemberIdForDetailRestore,
   resolveMemberDetailRestoreHint,
 } from '@/features/user/detail/lib/resolve-member-detail-restore-hint'
+import { prefetchSchoolAffiliatedTeachers } from '@/features/user/api/hooks/use-member-detail-subresource-queries'
 import { MemberRegisterModal } from '@/features/user/shared/ui/member-register-modal'
 import {
   AdminRegisterModal,
@@ -51,7 +52,11 @@ import {
 } from '@/shared/constants'
 import { useUserStore, selectSelectedUser } from '@/features/user/shared/model/user-store'
 import type { User, AffiliatedTeacherLinkTarget } from '@/types/user'
-import type { CreateUserRequest, GetUsersPageResult } from '@/entities/user/api/user-service'
+import {
+  deleteUsersByListKind,
+  type CreateUserRequest,
+  type GetUsersPageResult,
+} from '@/entities/user/api/user-service'
 import { resolveAdminProvisionedTempPassword } from '@/features/user/lib/admin-provisioned-temp-password'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
@@ -530,6 +535,8 @@ export function UserListPage() {
           role: roleHint,
           adminAccountId: restoreHint.adminAccountId ?? hintUser?.adminAccountId,
           email: restoreHint.email ?? hintUser?.email,
+          instructorMemberProfile:
+            urlDetailCtx.instructorMemberProfile ?? hintUser?.instructorMemberProfile,
         })
         if (cancelled) return
         const fetched = useUserStore.getState().usersById[targetId]
@@ -542,6 +549,7 @@ export function UserListPage() {
         const displayUser = withTeacherCtx(fetched)
         openDrawer(displayUser)
         setDetailBridgeUser(displayUser)
+        prefetchSchoolAffiliatedTeachers(queryClient, displayUser)
         setParams(
           {
             id: displayUser.id,
@@ -681,8 +689,10 @@ export function UserListPage() {
       setDetailBridgeUser(displayUser)
       openDrawer(displayUser)
       pendingOpenedUserIdRef.current = null
+      // 학교 상세 직후 소속 교사 목록을 항상 다시 조회
+      prefetchSchoolAffiliatedTeachers(queryClient, displayUser)
     },
-    [setSelectedUserId, openDrawer, setParams]
+    [setSelectedUserId, openDrawer, setParams, queryClient]
   )
 
   // 사용자 상세 보기 — remote면 상세 GET 완료 후에만 오픈
@@ -722,6 +732,7 @@ export function UserListPage() {
           role: user.role,
           adminAccountId: user.adminAccountId,
           email: user.email,
+          instructorMemberProfile: user.instructorMemberProfile,
         })
         if (!fetched) {
           handleError(new Error('회원 상세를 불러오지 못했습니다.'), {
@@ -761,6 +772,8 @@ export function UserListPage() {
         const fetched = await fetchUserById(userId, {
           memberId: teacherMemberId,
           role: 'INSTRUCTOR',
+          // 학교 소속 교사 → GET /api/admin/users/{id}/teacher (instructor 아님)
+          instructorMemberProfile: 'school_teacher',
         })
         if (!fetched) {
           pendingOpenedUserIdRef.current = null
@@ -1011,9 +1024,7 @@ export function UserListPage() {
 
     setDeleteLoading(true)
     try {
-      for (const u of toDelete) {
-        await deleteUser(u.id, resolveDeleteUserOptions(u))
-      }
+      await deleteUsersByListKind(toDelete, resolvedMemberListKind)
       const domain = memberDeleteGuideDomain(resolvedMemberListKind)
       setDeleteResultTitle(buildDeleteCompletedTitle(domain.domainLabel))
       setDeleteResultMessage(

@@ -44,6 +44,7 @@ import {
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import {
+  draftToAdminAccountBasicInfoPatch,
   draftToAdminMemberRestrictedPatch,
   draftToAdminProvisionedIndividualBasicInfoPatch,
   draftToAdminProvisionedInstructorBasicInfoPatch,
@@ -137,15 +138,18 @@ export function useUserDetailController({
   const queryClient = useQueryClient()
 
   const [tabState, setTabState] = useState<TabState>({ lnb: 'detail-info' })
+  /** 권한 승인 상세는 신청 정보(기본/약관/이력서)만 — 프로그램 신청·참여 이력 API 생략 */
+  const loadProgramHistoryResources = open && mode !== 'permission'
+
   const { applications, enrollmentApplications, applicationsLoading, refetchApplications } =
-    useUserDetailApplications(open, displayUser)
+    useUserDetailApplications(open, displayUser, { enabled: loadProgramHistoryResources })
 
   const membersRemote = isMembersRemoteEnabled()
   const { data: programHistoryData, isLoading: programHistoryLoading } =
     useMemberProgramHistoryQuery(
       displayUser?.memberId,
       displayUser?.id,
-      open && membersRemote
+      loadProgramHistoryResources && membersRemote
     )
 
   const [volunteerHistories, setVolunteerHistories] = useState<UserHistory[]>([])
@@ -224,8 +228,15 @@ export function useUserDetailController({
       const id = displayUser?.id
       return id ? parseAdminAccountIdFromUserId(id) : undefined
     },
+    resolveInstructorRoleRequestId: () => displayUser?.instructorRoleRequestId,
     onPrivacyUnmasked: handlePrivacyUnmasked,
-    resetDeps: [open, displayUser?.id, displayUser?.memberId, displayUser?.role],
+    resetDeps: [
+      open,
+      displayUser?.id,
+      displayUser?.memberId,
+      displayUser?.role,
+      displayUser?.instructorRoleRequestId,
+    ],
     controlMode: 'hideWhenRevealed',
     modalZIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
   })
@@ -595,7 +606,7 @@ export function useUserDetailController({
         patch = draftToAdminProvisionedInstructorBasicInfoPatch(basicInfoDraft)
       } else if (displayUser.role === 'ADMIN') {
         patch = canEditAdminMemberInfo(currentUser, displayUser)
-          ? draftToBasicInfoPatch(basicInfoDraft)
+          ? draftToAdminAccountBasicInfoPatch(basicInfoDraft)
           : draftToAdminMemberRestrictedPatch(basicInfoDraft)
       } else if (displayUser.role === 'INDIVIDUAL') {
         patch = draftToAdminProvisionedIndividualBasicInfoPatch(basicInfoDraft)
@@ -916,7 +927,18 @@ export function useUserDetailController({
   )
 
   const instructorResumeApplicantRow = useMemo((): ApplicantInstructorRow | null => {
-    if (!displayUser || displayUser.role !== 'INSTRUCTOR') return null
+    if (!displayUser) return null
+
+    // 권한 승인(강사): getDetail → instructorCmsProfile 이 있으면 이력서 카드에 반영
+    if (mode === 'permission') {
+      if (!displayUser.instructorCmsProfile) return null
+      const src = personalInfoRevealed
+        ? displayUser
+        : maskedUserForInstructorDetail(displayUser)
+      return userToApplicantInstructorRow(src)
+    }
+
+    if (displayUser.role !== 'INSTRUCTOR') return null
     const profile = resolveInstructorMemberProfile(displayUser)
     if (
       profile !== 'instructor_dual' &&
@@ -927,7 +949,7 @@ export function useUserDetailController({
     }
     const src = personalInfoRevealed ? displayUser : maskedUserForInstructorDetail(displayUser)
     return userToApplicantInstructorRow(src)
-  }, [displayUser, personalInfoRevealed])
+  }, [displayUser, personalInfoRevealed, mode])
 
   return {
     state: {

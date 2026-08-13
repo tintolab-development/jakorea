@@ -90,12 +90,13 @@ const CMS_CONSENT_LAYOUT: InstructorFormConsentLayout = {
 /**
  * Platform 강사 신청 — 동의 상단·제목 별도.
  * 동의서 4건만 2열 노출 (지급조서|교육진행자 / 행정정보|성범죄). CMS 8건과 별개.
+ * 필수 동의는 강사 신규 등록과 동일(이용약관·개인정보). 위 4건은 선택(미작성=미동의).
  */
 const PLATFORM_APPLY_CONSENT_LAYOUT: InstructorFormConsentLayout = {
   title: '필수 작성 동의서',
   description: '',
   footerText:
-    '위의 정보 수집•이용에 대한 동의를 거부할 권리가 있습니다. 그러나 동의하지 않을 시 JA Korea 강사 신청 및 활동이 불가합니다.',
+    '위의 정보 수집•이용에 대한 동의를 거부할 권리가 있습니다. 다만 미동의 시 프로그램 참여 및 강사 활동에 제한이 있을 수 있습니다.',
   layout: 'cmsGrid',
   radioKeys: [],
   documentKeys: [
@@ -104,7 +105,7 @@ const PLATFORM_APPLY_CONSENT_LAYOUT: InstructorFormConsentLayout = {
     'consentAdministrativeJoint',
     'consentSexOffenseCheck',
   ],
-  allItemsRequired: true,
+  allItemsRequired: false,
   /** Platform: 동의서↔기본정보 연동·작성 전 기본정보 게이트 없음 */
   skipBasicInfoGate: true,
 }
@@ -202,7 +203,7 @@ export function getInstructorConsentDocumentItems(surface: InstructorFormSurface
   }))
 }
 
-/** 제출 시 동의(agree)가 필요한 키 — surface 동의 단락 기준 */
+/** 제출 시 동의(agree)가 필요한 키 — 강사 신규 등록과 동일(이용약관·개인정보). `allItemsRequired`만 예외 */
 export function getInstructorRequiredConsentAgreeKeys(surface: InstructorFormSurface) {
   const layout = INSTRUCTOR_FORM_LAYOUT[surface]
   if (layout.consent.allItemsRequired) {

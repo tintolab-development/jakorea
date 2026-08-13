@@ -5,7 +5,13 @@ export type PlatformMemberProfile =
   | 'instructor_only'
   | 'instructor_dual'
 
-export type MypageLnbItemKey = 'home' | 'education' | 'volunteer' | 'inquiries'
+export type MypageLnbItemKey =
+  | 'home'
+  | 'lectures'
+  | 'settlement'
+  | 'education'
+  | 'volunteer'
+  | 'inquiries'
 
 export type MypageLnbItem = {
   key: MypageLnbItemKey
@@ -14,6 +20,8 @@ export type MypageLnbItem = {
   active?: boolean
   /** 클릭 가능 여부 — 미구현 메뉴는 false */
   enabled?: boolean
+  /** 메뉴 아래 구분선 (강사 LNB 상·하단 섹션) */
+  dividerAfter?: boolean
 }
 
 export type MypageProgramStats = {

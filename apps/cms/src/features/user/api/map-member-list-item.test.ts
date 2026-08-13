@@ -126,4 +126,16 @@ describe('mapMemberListItemToUser — ADMIN', () => {
     expect(user.adminAccountId).toBe(9)
     expect(user.id).toBe('admin-account-9')
   })
+
+  it('roles SCHOOL_TEACHER는 instructorMemberProfile school_teacher로 매핑한다', () => {
+    const user = mapMemberListItemToUser({
+      uuid: 'teacher-member',
+      roles: ['SCHOOL_TEACHER'],
+      email: 't@test.com',
+      name: '김교사',
+    })
+
+    expect(user.role).toBe('INDIVIDUAL')
+    expect(user.instructorMemberProfile).toBe('school_teacher')
+  })
 })

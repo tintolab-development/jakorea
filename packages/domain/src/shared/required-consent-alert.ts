@@ -21,7 +21,7 @@ export type RequiredConsentFieldSpec<TKey extends string = string> = {
   label: string
 }
 
-/** 필수 동의 필드 중 `agree`가 아닌 항목의 라벨 목록 (미선택·명시적 `disagree` 포함) */
+/** 필수 동의 필드 중 `agree`가 아닌 항목의 라벨 목록 (명시적 `disagree`만, 미선택은 제외) */
 export function collectDisagreedRequiredConsentLabels<TKey extends string>(
   values: Partial<Record<TKey, ConsentAgreeValue | boolean | null | undefined>>,
   requiredFields: readonly RequiredConsentFieldSpec<TKey>[]

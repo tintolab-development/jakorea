@@ -45,7 +45,13 @@ export function MypageInstructorApplyPage() {
     <>
       <PFFormPage
         aria-label="강사 신청"
-        back={<ProgramBackButton label="이전으로" onClick={() => navigate(MYPAGE_PATH)} />}
+        back={
+          <ProgramBackButton
+            size="small"
+            label="이전으로"
+            onClick={() => navigate(MYPAGE_PATH)}
+          />
+        }
         title="강사 신청"
       >
         {isPageLoading ? (

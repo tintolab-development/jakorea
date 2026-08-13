@@ -72,7 +72,7 @@ export function memberListKindToPendingRole(kind: MemberListKind): UserRole | 'A
   }
 }
 
-export function pendingRoleToMemberListKind(role: UserRole | 'ALL'): MemberListKind {
+export function pendingRoleToMemberListKind(role: string): MemberListKind {
   if (role === 'ALL') return 'all'
   if (role === 'INDIVIDUAL') return 'individual'
   if (role === 'SCHOOL') return 'institutions'

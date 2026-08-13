@@ -28,7 +28,7 @@ import { resolve1365IdFromExternalIdentifiers } from '@/features/user/api/map-ex
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
 import { resolveMemberIdForApi } from '@/features/user/api/member-id-registry'
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
-import { resolvePrimaryUserRole } from '@/features/user/api/map-member-role'
+import { probeMemberDetailAsUser } from '@/features/user/api/probe-member-detail-as-user'
 import type { User, UserRole } from '@/types/user'
 
 export function useMemberDetailQuery(
@@ -86,33 +86,13 @@ export function useMemberDetailQuery(
 
       const memberId = resolveMemberIdForApi(userId, { memberId: options?.memberId })
       // options.role은 위에서 SCHOOL early-return 후 좁혀질 수 있어 명시 타입 유지
-      let role: UserRole | undefined = options?.role
+      const role: UserRole | undefined = options?.role
 
       if (!role) {
-        const legacy = await fetchMemberDetailRemote(memberId)
-        role = resolvePrimaryUserRole(legacy.roles)
-        if (
-          isAdminMemberDetailRole(role) &&
-          shouldUseAdminAccountDetailApi({ userId, adminAccountId: options?.adminAccountId })
-        ) {
-          return fetchAdminMemberDetailAsUser(userId, {
-            memberId,
-            adminAccountId: options?.adminAccountId,
-            email: legacy.email,
-          })
-        }
-        if (role !== 'SCHOOL' && role !== 'INSTRUCTOR' && role !== 'INDIVIDUAL') {
-          const externalIdentifiers = await fetchMemberExternalIdentifiersRemote(memberId).catch(
-            () => []
-          )
-          const user = mapMemberDetailToUser(legacy, null)
-          const id1365 = resolve1365IdFromExternalIdentifiers(
-            externalIdentifiers,
-            legacy.external1365Id
-          )
-          if (id1365) user.id1365 = id1365
-          return user
-        }
+        return probeMemberDetailAsUser(userId, memberId, {
+          adminAccountId: options?.adminAccountId,
+          email: options?.email,
+        })
       }
 
       if (
@@ -133,15 +113,6 @@ export function useMemberDetailQuery(
         throw new Error(
           '관리자 회원 상세를 조회하려면 목록 응답에 adminAccountId가 필요합니다.'
         )
-      }
-
-      if (role === 'SCHOOL') {
-        if (organizationId != null) {
-          return mapSchoolOrganizationToUser(await fetchSchoolOrganizationRemote(organizationId))
-        }
-        return mapSchoolMemberDetailToUser(await fetchSchoolMemberDetailRemote(memberId), {
-          fallbackRole: 'SCHOOL',
-        })
       }
 
       if (role === 'INSTRUCTOR') {

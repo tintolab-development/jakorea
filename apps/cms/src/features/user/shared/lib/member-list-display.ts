@@ -10,7 +10,17 @@ const MEMBER_LIST_ROLE_LABELS = {
   ADMIN: '관리자',
 } as const
 
-const REVOKED_INSTRUCTOR_ROLE_TYPE_LABEL = '강사(권한박탈)'
+export const REVOKED_INSTRUCTOR_ROLE_TYPE_LABEL = '강사(권한박탈)'
+export const DUAL_MEMBER_ROLE_TYPE_LABEL = `${MEMBER_LIST_ROLE_LABELS.SCHOOL}, ${MEMBER_LIST_ROLE_LABELS.INSTRUCTOR}`
+
+export const ALL_MEMBER_LIST_ROLE_TYPE_LABELS = {
+  INDIVIDUAL: MEMBER_LIST_ROLE_LABELS.INDIVIDUAL,
+  SCHOOL_TEACHER: MEMBER_LIST_ROLE_LABELS.SCHOOL,
+  INSTRUCTOR: MEMBER_LIST_ROLE_LABELS.INSTRUCTOR,
+  INSTRUCTOR_DUAL: DUAL_MEMBER_ROLE_TYPE_LABEL,
+  INSTRUCTOR_REVOKED: REVOKED_INSTRUCTOR_ROLE_TYPE_LABEL,
+  ADMIN: MEMBER_LIST_ROLE_LABELS.ADMIN,
+} as const
 
 /** 강사 권한 박탈 여부 — 목록·상세 회원 유형 표시용 */
 export function isInstructorPermissionRevoked(
@@ -38,18 +48,30 @@ export function getAllMemberListRoleTypeLabel(
     return REVOKED_INSTRUCTOR_ROLE_TYPE_LABEL
   }
 
-  if (record.role === 'INSTRUCTOR') {
-    const profile = resolveInstructorMemberProfile(record)
-    if (profile === 'instructor_dual') {
-      return `${MEMBER_LIST_ROLE_LABELS.SCHOOL}, ${MEMBER_LIST_ROLE_LABELS.INSTRUCTOR}`
-    }
-    if (profile === 'school_teacher') {
-      return MEMBER_LIST_ROLE_LABELS.SCHOOL
-    }
-    return MEMBER_LIST_ROLE_LABELS.INSTRUCTOR
+  const profile =
+    record.role === 'INSTRUCTOR'
+      ? resolveInstructorMemberProfile(record)
+      : record.instructorMemberProfile
+
+  if (profile === 'instructor_dual') {
+    return DUAL_MEMBER_ROLE_TYPE_LABEL
+  }
+  if (profile === 'school_teacher') {
+    return MEMBER_LIST_ROLE_LABELS.SCHOOL
   }
 
   return MEMBER_LIST_ROLE_LABELS[record.role] ?? '-'
+}
+
+type AllTabRoleFilterRecord = Parameters<typeof getAllMemberListRoleTypeLabel>[0]
+
+/** 전체 회원 유형 필터 — 목록 유형 열과 동일 기준 */
+export function matchesAllTabRoleFilter(
+  record: AllTabRoleFilterRecord,
+  filter: keyof typeof ALL_MEMBER_LIST_ROLE_TYPE_LABELS | 'ALL'
+): boolean {
+  if (filter === 'ALL') return true
+  return getAllMemberListRoleTypeLabel(record) === ALL_MEMBER_LIST_ROLE_TYPE_LABELS[filter]
 }
 
 /** 전체 회원 목록 — 가입 유형 열 (직접 가입 / 관리자 등록) */

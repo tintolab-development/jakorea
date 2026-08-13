@@ -10,11 +10,16 @@ import type { User } from '@/types/user'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import {
   mapInstructorProfileFormToBasicInfoDraftPartial,
+  mapInstructorFormConsentToEditableTermsAgreements,
   mapUserToInstructorProfileFormValues,
+  isInstructorConsentFormFieldKey,
 } from '@/features/user/detail/lib/map-user-to-instructor-profile-form'
 import { socialView } from '@/features/user/detail/ui/user-basic-info/display'
 import { InstructorJaEvaluationGradeField } from '@/features/user/detail/ui/user-basic-info/instructor-ja-grade-field'
-import { settlementStatusView } from '@/features/user/detail/ui/user-basic-info/status'
+import {
+  PermissionApprovalStatusWithResend,
+  settlementStatusView,
+} from '@/features/user/detail/ui/user-basic-info/status'
 import {
   InstructorProfileFormBody,
   type InstructorProfileFormValues,
@@ -72,6 +77,7 @@ export function InstructorDetailEditForm({
 
   useEffect(() => {
     form.setFieldsValue(initialValues)
+    // 기본정보만 draft 동기화 — termsAgreements는 userToAdminProvisionedBasicDraft 초기값 유지
     onMemberInfoDraftChange(mapInstructorProfileFormToBasicInfoDraftPartial(initialValues))
   }, [form, initialValues, onMemberInfoDraftChange])
 
@@ -79,9 +85,22 @@ export function InstructorDetailEditForm({
     onMemberInfoDraftChange(mapInstructorProfileFormToBasicInfoDraftPartial(values))
   }
 
+  const syncConsentDraftFromForm = (values: InstructorProfileFormValues) => {
+    const termsAgreements = mapInstructorFormConsentToEditableTermsAgreements(
+      values,
+      memberInfoDraft.termsAgreements
+    )
+    onMemberInfoDraftChange({
+      termsAgreements,
+      consentTermsDirty: true,
+    })
+  }
+
   /** setFieldValue(동의서 완료)는 onValuesChange를 안 타므로 form 전체로 draft flush */
   const flushDraftFromForm = () => {
-    syncDraftFromForm(form.getFieldsValue(true) as InstructorProfileFormValues)
+    const values = form.getFieldsValue(true) as InstructorProfileFormValues
+    syncDraftFromForm(values)
+    syncConsentDraftFromForm(values)
   }
 
   const jaEvaluationGradeDisplay = (
@@ -92,14 +111,26 @@ export function InstructorDetailEditForm({
     />
   )
 
+  const permissionApprovalStatus = (
+    <PermissionApprovalStatusWithResend user={user} notifyPermissionRole="instructor" />
+  )
+
   const basicInfoPrefix = (
     <>
       <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label={isInstructorPermissionDetail ? '권한 승인 현황' : '정산 현황'}
-          view={settlementStatusView(user)}
-          edit={<span>{settlementStatusView(user)}</span>}
-        />
+        {isInstructorPermissionDetail ? (
+          <DetailInfoForm.Field
+            label="권한 승인 현황"
+            view={permissionApprovalStatus}
+            edit={permissionApprovalStatus}
+          />
+        ) : (
+          <DetailInfoForm.Field
+            label="정산 현황"
+            view={settlementStatusView(user)}
+            edit={<span>{settlementStatusView(user)}</span>}
+          />
+        )}
         <DetailInfoForm.Field
           label="JA 평가 등급"
           view={jaEvaluationGradeDisplay}
@@ -152,7 +183,12 @@ export function InstructorDetailEditForm({
       initialValues={initialValues}
       requiredMark={false}
       className="instructor-detail-edit-form"
-      onValuesChange={(_, all) => syncDraftFromForm(all)}
+      onValuesChange={(changed, all) => {
+        syncDraftFromForm(all)
+        if (Object.keys(changed).some(isInstructorConsentFormFieldKey)) {
+          syncConsentDraftFromForm(all)
+        }
+      }}
     >
       <InstructorProfileFormBody
         form={form}

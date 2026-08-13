@@ -74,11 +74,15 @@ function memberPermissionApprovalStatusTextTag(status: MemberPermissionApplicati
 
 export interface MembersPermissionListProps {
   memberType: 'instructor' | 'admin'
-  /** 행 클릭 시 회원 상세 풀페이지 모달 오픈 */
+  /** 행 클릭 시 신청 상세 풀페이지 모달 오픈 (목록 행만 전달 — 회원 상세 API 미사용) */
   onOpenUserDetail?: (
     userId: string,
-    permissionRole: UserDetailPermissionRole
+    permissionRole: UserDetailPermissionRole,
+    row: MemberPermissionApplicationRow
   ) => void | Promise<void>
+  /** URL 복원 등 — 목록 로드 후 상세 대상 행 해석 */
+  detailUserId?: string | null
+  onResolveDetailRow?: (row: MemberPermissionApplicationRow) => void
   /**
    * 강사 탭: 승인 대기 행 선택 후 [신청 승인] — 단건은 이름, 다건은 일괄 승인 모달로 연결
    */
@@ -113,6 +117,7 @@ export type MembersPermissionListHandle = {
   applyInstructorPermissionPending: (userId: string) => void
   /** 상세 알림 재발송용 — userId → instructor requestId */
   getRequestIdForUser: (userId: string) => number | undefined
+  getRowForUser: (userId: string) => MemberPermissionApplicationRow | undefined
   clearRowSelection: () => void
 }
 
@@ -123,6 +128,8 @@ export const MembersPermissionList = forwardRef<
   {
     memberType,
     onOpenUserDetail,
+    detailUserId,
+    onResolveDetailRow,
     onInstructorApproveRequest,
     onInstructorRejectRequest,
     onAdminApproveRequest,
@@ -203,6 +210,12 @@ export const MembersPermissionList = forwardRef<
     setBulkRejectBlockedSelectedCount(null)
   }, [baseRows])
 
+  useEffect(() => {
+    if (!detailUserId || !onResolveDetailRow) return
+    const row = rows.find(r => r.userId === detailUserId)
+    if (row) onResolveDetailRow(row)
+  }, [detailUserId, onResolveDetailRow, rows])
+
   useImperativeHandle(
     ref,
     () => ({
@@ -229,6 +242,7 @@ export const MembersPermissionList = forwardRef<
         const row = rowsRef.current.find(r => r.userId === userId)
         return row?.requestId ?? row?.adminId
       },
+      getRowForUser: (userId: string) => rowsRef.current.find(r => r.userId === userId),
       clearRowSelection: () => {
         selectedRowKeysRef.current = []
         setSelectedRowKeys([])
@@ -623,7 +637,7 @@ export const MembersPermissionList = forwardRef<
         onRow={record => ({
           onClick: (e: MouseEvent<HTMLElement>) => {
             if ((e.target as HTMLElement).closest('.ant-table-selection-column')) return
-            void onOpenUserDetail?.(record.userId, memberType)
+            void onOpenUserDetail?.(record.userId, memberType, record)
           },
           style: { cursor: onOpenUserDetail ? 'pointer' : undefined },
         })}

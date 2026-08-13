@@ -3,6 +3,7 @@ import {
   filterEditableTermsAgreementsForBasicInfoPatch,
   isMemberBasicInfoImmutableConsentLabel,
   isMemberBasicInfoImmutableTermsType,
+  mergeTermsAgreementRowsFromPatch,
   upsertEditableTermsAgreementInDraft,
 } from './member-basic-info-terms-patch'
 
@@ -32,7 +33,37 @@ describe('member-basic-info-terms-patch', () => {
       true
     )
     expect(next).toEqual([
+      { termsType: 'MARKETING', version: '1', required: false, agreed: true },
+    ])
+  })
+
+  it('없는 선택 동의는 기본 version으로 추가한다', () => {
+    const next = upsertEditableTermsAgreementInDraft(
+      undefined,
+      '마케팅 제공 동의',
+      true
+    )
+    expect(next).toEqual([
       { termsType: 'MARKETING', version: '1.0', required: false, agreed: true },
+    ])
+  })
+
+  it('PATCH 선택 약관을 기존 필수 약관과 항목별로 병합한다', () => {
+    const merged = mergeTermsAgreementRowsFromPatch(
+      [
+        { termsType: 'SERVICE_TERMS', termsVersion: '1', required: true, agreed: true },
+        { termsType: 'PRIVACY_COLLECTION', termsVersion: '1', required: true, agreed: true },
+        { termsType: 'MARKETING', termsVersion: '1', required: false, agreed: false },
+        { termsType: 'PORTRAIT_RIGHTS', termsVersion: '1', required: false, agreed: true },
+      ],
+      [{ termsType: 'MARKETING', version: '1', required: false, agreed: true }]
+    )
+
+    expect(merged).toEqual([
+      { termsType: 'SERVICE_TERMS', termsVersion: '1', required: true, agreed: true },
+      { termsType: 'PRIVACY_COLLECTION', termsVersion: '1', required: true, agreed: true },
+      { termsType: 'MARKETING', termsVersion: '1', required: false, agreed: true },
+      { termsType: 'PORTRAIT_RIGHTS', termsVersion: '1', required: false, agreed: true },
     ])
   })
 })

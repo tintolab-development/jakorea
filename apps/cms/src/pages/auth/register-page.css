@@ -65,15 +65,14 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  width: 328px;
+  width: auto;
   height: 32px;
 }
 
 .register-step-progress__item {
   display: flex;
   align-items: center;
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 auto;
   height: 32px;
 }
 
@@ -82,9 +81,9 @@
 }
 
 .register-step-progress__line {
-  flex: 1;
+  flex: 0 0 22px;
+  width: 22px;
   height: 1px;
-  min-width: 0;
   background: var(--table-line, #e0e0e0);
 }
 
@@ -127,12 +126,12 @@
   align-items: flex-start;
   gap: 12px;
   width: 100%;
+  padding-left: 8px;
 }
 
 .register-step-header__title {
   margin: 0;
-  color: var(--Color-netural-black, #3d3d3d);
-  font-family: Pretendard, system-ui, sans-serif;
+  color: #3d3d3d;
   font-size: 30px;
   font-style: normal;
   font-weight: 700;
@@ -141,8 +140,7 @@
 
 .register-step-header__description {
   margin: 0;
-  color: var(--Color-primary-boundless_blue, #285f74);
-  font-family: Pretendard, system-ui, sans-serif;
+  color: #285f74 !important;
   font-size: 18px;
   font-style: normal;
   font-weight: 400;
@@ -490,16 +488,6 @@
   gap: 48px;
 }
 
-.admin-register-step--email .register-step-header__description {
-  color: var(--Color-primary-boundless_blue, #285f74) !important;
-  font-family: Pretendard, system-ui, sans-serif;
-  font-size: 18px !important;
-  font-style: normal;
-  font-weight: 400 !important;
-  line-height: 150% !important;
-  letter-spacing: -0.18px;
-}
-
 .register-email-field {
   display: flex;
   align-items: stretch;
@@ -662,13 +650,19 @@
   white-space: nowrap;
 }
 
-.admin-register-step--password .auth-form .register-password-field.ant-input-password .ant-input::placeholder {
+.admin-register-step--password
+  .auth-form
+  .register-password-field.ant-input-password
+  .ant-input::placeholder {
   font-size: 16px !important;
   font-weight: 500 !important;
   line-height: 150% !important;
 }
 
-.admin-register-step--password .auth-form .register-password-field.ant-input-password .ant-input-suffix {
+.admin-register-step--password
+  .auth-form
+  .register-password-field.ant-input-password
+  .ant-input-suffix {
   gap: 0;
 }
 
@@ -708,7 +702,9 @@
 }
 
 .admin-register-step--password .auth-form .register-password-field--error.ant-input-password,
-.admin-register-step--password .auth-form .register-password-field--error.ant-input-affix-wrapper-focused {
+.admin-register-step--password
+  .auth-form
+  .register-password-field--error.ant-input-affix-wrapper-focused {
   border-radius: var(--8, 8px);
   border: 1px solid var(--color-red, #c32f4a) !important;
   background: var(--main-WT, #fff) !important;

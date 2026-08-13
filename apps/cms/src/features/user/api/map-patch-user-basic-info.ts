@@ -1,7 +1,6 @@
 import type { PatchUserBasicInfoInput } from '@/entities/user/api/user-service'
 import type { AdminAccountBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminAccountBasicInfoUpdateRequest'
 import type { AdminMemberBasicInfoUpdateRequest } from '@/shared/api/generated/members/schemas/adminMemberBasicInfoUpdateRequest'
-import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import { filterEditableTermsAgreementsForBasicInfoPatch } from '@/features/user/api/member-basic-info-terms-patch'
 import { toApiBirthDate, toApiGender } from '@/features/user/api/map-member-gender-birth'
 import {
@@ -9,16 +8,11 @@ import {
   toApiInstructorCmsSettlement,
 } from '@/features/user/api/map-instructor-cms-profile'
 
-/** OpenAPI 생성 스키마에 아직 없을 수 있는 `termsAgreements` 확장 */
-export type AdminMemberBasicInfoUpdateRequestWithTerms = AdminMemberBasicInfoUpdateRequest & {
-  termsAgreements?: TermsAgreementRequest[]
-}
-
 /** 관리자 코멘트는 POST comments API로 분리 — PATCH body에서 제외 */
 export function mapPatchUserBasicInfoToApiRequest(
   patch: PatchUserBasicInfoInput
-): AdminMemberBasicInfoUpdateRequestWithTerms {
-  const body: AdminMemberBasicInfoUpdateRequestWithTerms = {}
+): AdminMemberBasicInfoUpdateRequest {
+  const body: AdminMemberBasicInfoUpdateRequest = {}
 
   if (patch.name !== undefined) body.name = patch.name
   if (patch.phone !== undefined) body.phone = patch.phone

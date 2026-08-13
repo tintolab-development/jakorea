@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
+  inferInstructorMemberProfileFromRoles,
   memberRolesIncludeSchool,
+  memberRolesIncludeSchoolTeacher,
   parseLegacyRoleFilterParam,
   resolvePrimaryUserRole,
   resolvePrimaryUserRoleFromRoles,
@@ -40,5 +42,24 @@ describe('memberRolesIncludeSchool', () => {
     expect(memberRolesIncludeSchool(['INSTITUTION'])).toBe(true)
     expect(memberRolesIncludeSchool(['INSTRUCTOR'])).toBe(false)
     expect(memberRolesIncludeSchool(['SCHOOL_TEACHER'])).toBe(false)
+  })
+})
+
+describe('memberRolesIncludeSchoolTeacher', () => {
+  it('SCHOOL_TEACHER·school_teacher 토큰을 인식한다', () => {
+    expect(memberRolesIncludeSchoolTeacher(['SCHOOL_TEACHER'])).toBe(true)
+    expect(memberRolesIncludeSchoolTeacher(['school_teacher'])).toBe(true)
+    expect(memberRolesIncludeSchoolTeacher(['SCHOOL'])).toBe(false)
+    expect(memberRolesIncludeSchoolTeacher(['INSTRUCTOR'])).toBe(false)
+  })
+})
+
+describe('inferInstructorMemberProfileFromRoles', () => {
+  it('교사 단독은 school_teacher, 강사 겸직은 instructor_dual', () => {
+    expect(inferInstructorMemberProfileFromRoles(['SCHOOL_TEACHER'])).toBe('school_teacher')
+    expect(inferInstructorMemberProfileFromRoles(['SCHOOL_TEACHER', 'INSTRUCTOR'])).toBe(
+      'instructor_dual'
+    )
+    expect(inferInstructorMemberProfileFromRoles(['INSTRUCTOR'])).toBeUndefined()
   })
 })

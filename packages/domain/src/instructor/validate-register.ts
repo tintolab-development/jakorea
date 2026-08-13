@@ -70,8 +70,7 @@ export type InstructorRegisterFormatChecks = {
 
 export type InstructorRegisterValidationOptions = {
   /**
-   * 동의(agree) 필수 키. 기본: 서비스 이용약관·개인정보.
-   * Platform `allItemsRequired` 시 form-layout 키 목록을 전달.
+   * 동의(agree) 필수 키. 기본: 서비스 이용약관·개인정보(강사 신규 등록과 동일).
    */
   requiredConsentAgreeKeys?: readonly (keyof InstructorRegisterValidationInput)[]
   /**

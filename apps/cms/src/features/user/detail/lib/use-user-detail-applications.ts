@@ -96,14 +96,17 @@ export async function loadApplicationsForUser(
 
 export function useUserDetailApplications(
   open: boolean,
-  displayUser: UserDetailDisplayUser | null | undefined
+  displayUser: UserDetailDisplayUser | null | undefined,
+  /** 권한 승인 상세 등 — 프로그램 이력 탭이 없으면 호출 생략 */
+  options?: { enabled?: boolean }
 ) {
+  const enabled = options?.enabled !== false
   const [applications, setApplications] = useState<Application[]>([])
   const [enrollmentApplications, setEnrollmentApplications] = useState<Application[]>([])
   const [applicationsLoading, setApplicationsLoading] = useState(false)
 
   const refetchApplications = useCallback(async () => {
-    if (!displayUser) return
+    if (!displayUser || !enabled) return
     try {
       const { applications: nextApps, enrollmentApplications: nextEnrollment } =
         await loadApplicationsForUser(displayUser)
@@ -114,14 +117,14 @@ export function useUserDetailApplications(
       setApplications([])
       setEnrollmentApplications([])
     }
-  }, [displayUser])
+  }, [displayUser, enabled])
 
   const applicationLoadKey = displayUser
     ? `${displayUser.id}:${displayUser.memberId ?? ''}:${displayUser.role}`
     : ''
 
   useEffect(() => {
-    if (open && displayUser) {
+    if (open && displayUser && enabled) {
       const run = async () => {
         setApplicationsLoading(true)
         try {
@@ -145,7 +148,7 @@ export function useUserDetailApplications(
       setApplications([])
       setEnrollmentApplications([])
     }
-  }, [open, applicationLoadKey])
+  }, [open, applicationLoadKey, enabled])
 
   return {
     applications,
