@@ -44,6 +44,7 @@ import {
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import {
+  draftToAdminAccountBasicInfoPatch,
   draftToAdminMemberRestrictedPatch,
   draftToAdminProvisionedIndividualBasicInfoPatch,
   draftToAdminProvisionedInstructorBasicInfoPatch,
@@ -227,8 +228,15 @@ export function useUserDetailController({
       const id = displayUser?.id
       return id ? parseAdminAccountIdFromUserId(id) : undefined
     },
+    resolveInstructorRoleRequestId: () => displayUser?.instructorRoleRequestId,
     onPrivacyUnmasked: handlePrivacyUnmasked,
-    resetDeps: [open, displayUser?.id, displayUser?.memberId, displayUser?.role],
+    resetDeps: [
+      open,
+      displayUser?.id,
+      displayUser?.memberId,
+      displayUser?.role,
+      displayUser?.instructorRoleRequestId,
+    ],
     controlMode: 'hideWhenRevealed',
     modalZIndex: PERSONAL_INFO_REVEAL_MODAL_Z_INDEX,
   })
@@ -598,7 +606,7 @@ export function useUserDetailController({
         patch = draftToAdminProvisionedInstructorBasicInfoPatch(basicInfoDraft)
       } else if (displayUser.role === 'ADMIN') {
         patch = canEditAdminMemberInfo(currentUser, displayUser)
-          ? draftToBasicInfoPatch(basicInfoDraft)
+          ? draftToAdminAccountBasicInfoPatch(basicInfoDraft)
           : draftToAdminMemberRestrictedPatch(basicInfoDraft)
       } else if (displayUser.role === 'INDIVIDUAL') {
         patch = draftToAdminProvisionedIndividualBasicInfoPatch(basicInfoDraft)
@@ -919,8 +927,17 @@ export function useUserDetailController({
   )
 
   const instructorResumeApplicantRow = useMemo((): ApplicantInstructorRow | null => {
-    // 권한 승인 상세는 전용 신청 상세 API 전까지 회원/이력 매핑 조회 안 함
-    if (!displayUser || mode === 'permission') return null
+    if (!displayUser) return null
+
+    // 권한 승인(강사): getDetail → instructorCmsProfile 이 있으면 이력서 카드에 반영
+    if (mode === 'permission') {
+      if (!displayUser.instructorCmsProfile) return null
+      const src = personalInfoRevealed
+        ? displayUser
+        : maskedUserForInstructorDetail(displayUser)
+      return userToApplicantInstructorRow(src)
+    }
+
     if (displayUser.role !== 'INSTRUCTOR') return null
     const profile = resolveInstructorMemberProfile(displayUser)
     if (

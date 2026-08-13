@@ -74,6 +74,8 @@ export type AdminProvisionedMemberBasicInfoDraft = {
   instructorCmsSettlement?: InstructorCmsSettlement
   /** 약관·동의 수정 — PATCH `termsAgreements` */
   termsAgreements?: TermsAgreementRequest[]
+  /** 강사 상세 — 이번 수정 세션에서 약관·동의를 변경했을 때만 PATCH에 termsAgreements 포함 */
+  consentTermsDirty?: boolean
   /** 관리자 — 권한 유형 태그 */
   adminPermissionVariant?: AdminPermissionTagVariant | ''
 }
@@ -279,9 +281,14 @@ export function userToAdminProvisionedBasicDraft(
             affiliationGrade
           ),
           id1365: user.id1365 ?? '',
+        }
+      : {}),
+    ...((user.role === 'INDIVIDUAL' || user.role === 'ADMIN' || user.role === 'INSTRUCTOR')
+      ? {
           termsAgreements: filterEditableTermsAgreementsForBasicInfoPatch(
             termsAgreementRowsToRequests(user.termsAgreements)
           ),
+          consentTermsDirty: false,
         }
       : {}),
   }
@@ -352,6 +359,13 @@ export function draftToAdminProvisionedIndividualBasicInfoPatch(
   }
 }
 
+/** 관리자 계정 상세 — 기본정보 + 선택 동의(MARKETING) PATCH */
+export function draftToAdminAccountBasicInfoPatch(
+  draft: AdminProvisionedMemberBasicInfoDraft
+): PatchUserBasicInfoInput {
+  return draftToAdminProvisionedIndividualBasicInfoPatch(draft)
+}
+
 /** 학교 계정 — 본인 가입 완료 후 등: 기본 정보는 잠금일 때 `adminComment`만 patch */
 export function draftToSchoolAdminCommentOnlyPatch(
   draft: AdminProvisionedMemberBasicInfoDraft
@@ -406,6 +420,7 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
     ...(draft.instructorCmsProfile ? { instructorCmsProfile: draft.instructorCmsProfile } : {}),
     ...(draft.instructorCmsSettlement ? { instructorCmsSettlement: draft.instructorCmsSettlement } : {}),
     ...(() => {
+      if (!draft.consentTermsDirty) return {}
       const termsAgreements = filterEditableTermsAgreementsForBasicInfoPatch(draft.termsAgreements)
       return termsAgreements ? { termsAgreements } : {}
     })(),

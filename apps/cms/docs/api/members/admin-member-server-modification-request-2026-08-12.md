@@ -3,7 +3,7 @@
 **작성일:** 2026-08-12  
 **우선순위:** P0 (일괄 삭제·목록·상세·등록) / P1 (포털 최초 로그인 플래그)  
 **요청 대상:** Members API · Admin Accounts API · Portal Auth API  
-**관련 FE (CMS):** `user-list-page.tsx` · `fetch-all-members-merged-page.ts` · `admin-register-modal.tsx` · `fetch-admin-member-detail.ts` · `map-admin-account-detail-to-user.ts` · `member-basic-info-terms-patch.ts` · 회원 상세 기본정보/동의 수정  
+**관련 FE (CMS):** `user-list-page.tsx` · `map-account-directory-item-to-user.ts` · `partition-users-for-bulk-delete.ts` · `admin-register-modal.tsx` · `fetch-admin-member-detail.ts` · `map-admin-account-detail-to-user.ts` · `member-basic-info-terms-patch.ts` · 회원 상세 기본정보/동의 수정  
 **관련 FE (Platform):** `sign-in/page.tsx` · `admin-registered/*`  
 **OpenAPI:** `apps/cms/openapi/members.openapi.json`
 
@@ -84,8 +84,8 @@ for (const u of toDelete) {
 | `GET /api/admin/users` | 일반·강사·학교 등 member |
 | `GET /api/admin/admin-accounts` | 관리자 계정 |
 
-- 구현: `fetch-all-members-merged-page.ts` · `mergeAdminAccounts: true` 플래그
-- **한계:** 필터·total count·페이지네이션이 서버 단일 API 대비 복잡 · 성능·정합성 리스크
+- ~~구현: `fetch-all-members-merged-page.ts` · `mergeAdminAccounts`~~ → **FE 연결 완료:** `GET /api/admin/members/all` · `listAllAccounts`
+- **한계(과거):** 필터·total count·페이지네이션이 서버 단일 API 대비 복잡 · 성능·정합성 리스크
 
 ### 3.3 요청 (택1)
 
@@ -253,7 +253,7 @@ CMS에서 **관리자에 의해 등록**된 회원(`registeredByAdmin`, 본인 �
 
 | 구분 | `termsType` (canonical) | 상세에서 수정 |
 |------|-------------------------|---------------|
-| **필수 — 수정 불가** | `SERVICE_TERMS`, `PRIVACY_COLLECTION`, `MFA_SETUP_CONSENT` | UI 잠금(조회만) · PATCH에 포함해도 **서버 무시 또는 4xx** |
+| **필수 — 수정 불가** | `SERVICE_TERMS`, `PRIVACY_COLLECTION`, `MFA_SETUP_CONSENT` | 수정 모드에서도 **라디오 노출 + disabled** · PATCH에 포함해도 **서버 무시 또는 4xx** |
 | **선택 — 수정 가능** | `MARKETING`, `PORTRAIT_RIGHTS`, `PAYMENT_STATEMENT_PRE_CONSENT`, `FACILITATOR_PLEDGE`, `ADMINISTRATIVE_INFO_CONSENT`, `CRIMINAL_HISTORY_CHECK_CONSENT` 등 정책상 선택 항목 | 동의/미동의 변경 후 기본정보 저장으로 persist |
 
 - 가입·등록 시점의 **필수 동의 원장**은 유지한다 (관리자가 사후 철회·변경 불가).
@@ -266,8 +266,8 @@ CMS에서 **관리자에 의해 등록**된 회원(`registeredByAdmin`, 본인 �
    - **선택** `termsType`만 동의 원장 upsert.
    - **필수** `termsType`이 body에 있으면 **거부(권장 400)** 또는 **무시(문서화 필수)**. FE는 필수를 보내지 않음.
 3. 저장 후 상세 GET / `consent-records` round-trip으로 선택 동의 상태 일치.
-4. 대상: **개인·강사(교사겸 포함)** 등 member 기본정보 PATCH를 쓰는 관리자 등록 회원.  
-   (관리자 계정 `AdminAccountBasicInfoUpdateRequest`는 본 이슈 범위 밖 — 필요 시 별도.)
+4. 대상: **개인·강사(교사겸 포함)** member PATCH · **관리자 계정** `PATCH …/admin-accounts/{id}/basic-info`  
+   (`AdminAccountBasicInfoUpdateRequest.termsAgreements` — 선택 동의만, 필수 거부/무시).
 
 **예시 (선택만 전송):**
 
@@ -284,9 +284,10 @@ CMS에서 **관리자에 의해 등록**된 회원(`registeredByAdmin`, 본인 �
 ### 7.4 FE 현행·후속
 
 - FE 헬퍼: `member-basic-info-terms-patch.ts` — 필수 타입 상수·PATCH 필터.
-- 관리자 등록 **개인** 상세: 정보 수정 시 선택 동의 라디오 편집 → draft → PATCH.
-- 관리자 등록 **강사** 상세: 필수 약관 라디오 잠금 · PATCH에서 필수 제외.
-- OpenAPI에 필드 복구되면 `AdminMemberBasicInfoUpdateRequestWithTerms` 임시 확장 제거 가능.
+- 관리자 등록 **개인** 상세: 정보 수정 시 선택 동의 라디오 편집 → draft → PATCH. 필수 약관은 라디오 **disabled**.
+- 관리자 등록 **강사** 상세: 필수 약관 라디오 **disabled** · PATCH에서 필수 제외.
+- **관리자 계정** 상세: 동일 UI(필수 disabled / 마케팅 편집) → `AdminAccountBasicInfoUpdateRequest.termsAgreements`.
+- OpenAPI: `AdminMemberBasicInfoUpdateRequest` · `AdminAccountBasicInfoUpdateRequest` 모두 `termsAgreements` 포함.
 
 ### 7.5 수용 테스트
 
@@ -319,27 +320,27 @@ OpenAPI: `apps/cms/openapi/members.openapi.json` (v9)
 
 ## 9. BE 확인 체크리스트
 
-- [ ] **#1** 관리자 `adminAccountId[]` 일괄 삭제 API (또는 혼합 bulk-delete)
-- [ ] **#2** 전체 회원 목록 단일(또는 통합) API로 관리자 포함 · `adminAccountId` in list row
+- [x] **#1** 관리자 `adminAccountId[]` 일괄 삭제 API (또는 혼합 bulk-delete) — OpenAPI: `bulkDeleteAdmins` · `POST .../members/all/bulk-delete`
+- [x] **#2** 전체 회원 목록 단일(또는 통합) API로 관리자 포함 · `adminAccountId` in list row — `GET /api/admin/members/all`
 - [ ] **#3** `POST admin-accounts` → `termsAgreements` 4건 DB 저장 · consent-records round-trip
-- [ ] **#4** 상세 GET `termsAgreements` 포함 **또는** consent-records 신뢰 가능
-- [ ] **#4** 상세 GET `birthDate` 마스킹 없이 반환 (unmask 불필요)
-- [ ] **#5** 로그인 response 온보딩 플래그 · step · 완료 후 `identitySelfSignupCompletedAfterAdminRegistration`
-- [ ] **#6** `AdminMemberBasicInfoUpdateRequest.termsAgreements` 복구 · 선택만 upsert · 필수 거부/무시 문서화
-- [ ] OpenAPI 갱신 → CMS `pnpm --filter cms fetch:openapi && pnpm --filter cms generate:api`
+- [x] **#4** 상세 GET `termsAgreements` 포함 **또는** consent-records 신뢰 가능 — OpenAPI `AdminAccountApprovalDetailResponse.termsAgreements`
+- [x] **#4** 상세 GET `birthDate` 마스킹 없이 반환 (unmask 불필요)
+- [ ] **#5** 로그인 response 온보딩 플래그 · step · 완료 후 `identitySelfSignupCompletedAfterAdminRegistration` (Platform)
+- [x] **#6** `AdminMemberBasicInfoUpdateRequest.termsAgreements` 복구 · 선택만 upsert · 필수 거부/무시 문서화
+- [x] OpenAPI 갱신 → CMS members filter에 `/api/admin/members` 포함 · `generate:api`
 
 ---
 
 ## 10. FE 후속 (BE 반영 후)
 
-| 이슈 | FE 조치 |
-|------|---------|
-| #1 | `handleDeleteConfirm` → bulk API 단일 호출 · 관리자/일반 id 분기 제거 |
-| #2 | `fetch-all-members-merged-page.ts` 제거 · `mergeAdminAccounts` 플래그 제거 |
-| #3 | 등록 E2E — 약관 4종 저장 후 상세 동의 섹션 검증 |
-| #4 | `map-admin-account-detail-to-user` · `termsAgreements` 매핑 · unmask 없이 birthDate 표시 |
-| #5 | Platform admin-registered wizard mock 제거 · login response 플래그 기반 분기 |
-| #6 | OpenAPI 복구 후 타입 확장 제거 · E2E로 선택 동의 round-trip 검증 |
+| 이슈 | FE 조치 | 상태 |
+|------|---------|------|
+| #1 | `deleteUsersByListKind` — 탭별 bulk · SCHOOL `deleteSchool` · 혼합 `members/all/bulk-delete` | **완료** |
+| #2 | `listAllCmsMembersAndAdmins` · `listAllAccounts` · FE merge 제거 | **완료** |
+| #3 | 등록 E2E — 약관 4종 저장 후 상세 동의 섹션 검증 | 대기 |
+| #4 | `map-admin-account-detail-to-user` · `termsAgreements` · `toApiBirthDate` | **완료** |
+| #5 | Platform admin-registered wizard mock 제거 · login response 플래그 기반 분기 | 범위 밖 (Platform) |
+| #6 | `AdminMemberBasicInfoUpdateRequestWithTerms` 제거 · 필수 필터 유지 | **완료** |
 
 ---
 
@@ -350,4 +351,4 @@ OpenAPI: `apps/cms/openapi/members.openapi.json` (v9)
 - pre-register 약관 정책 핸드오프: [members-pre-register-terms-required-policy-backend-request-2026-08-11.md](./members-pre-register-terms-required-policy-backend-request-2026-08-11.md)
 - FE 필터: `apps/cms/src/features/user/api/member-basic-info-terms-patch.ts`
 
-**Last updated:** 2026-08-12
+**Last updated:** 2026-08-13

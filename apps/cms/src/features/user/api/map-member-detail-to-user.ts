@@ -45,6 +45,7 @@ import {
   resolveIdentitySelfSignupCompletedAfterAdminRegistration,
   resolveRegisteredByAdmin,
 } from '@/features/user/api/resolve-member-registration-flags'
+import { coercePositiveInt } from '@/features/user/api/user-response-row-id'
 
 const USER_AFFILIATION_PIPE_SEP = ' | ' as const
 
@@ -606,8 +607,11 @@ export function mapSchoolMemberDetailToUser(
   const address = detail.address?.trim() ?? ''
   const addressDetail = detail.addressDetail?.trim() || undefined
   user.role = 'SCHOOL'
-  if (typeof detail.organizationId === 'number' && Number.isFinite(detail.organizationId)) {
-    user.organizationId = detail.organizationId
+  {
+    const organizationId = coercePositiveInt(detail.organizationId)
+    if (organizationId != null) {
+      user.organizationId = organizationId
+    }
   }
   user.schoolInfo = {
     schoolName,

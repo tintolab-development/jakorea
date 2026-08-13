@@ -134,7 +134,7 @@ describe('map-instructor-cms-profile', () => {
     expect(toApiInstructorCmsProfile(profile).defaultFeeGrade).toBe('2')
   })
 
-  it('toApiInstructorCmsSettlement은 bankAccounts를 제외한다', () => {
+  it('toApiInstructorCmsSettlement은 bankAccounts를 포함한다', () => {
     const settlement = instructorProfileFormValuesToCmsSettlement({
       ...INITIAL_VALUES,
       bankName: '국민',
@@ -149,8 +149,15 @@ describe('map-instructor-cms-profile', () => {
       accountNumber: '123',
       accountHolder: '홍길동',
       businessIncome: false,
+      bankAccounts: [
+        {
+          bankName: '국민',
+          accountNumber: '123',
+          accountHolder: '홍길동',
+          current: true,
+        },
+      ],
     })
-    expect('bankAccounts' in wire).toBe(false)
   })
 
   it('JA 평가 등급(jaEvaluationGrade) → defaultJaGrade round-trip', () => {

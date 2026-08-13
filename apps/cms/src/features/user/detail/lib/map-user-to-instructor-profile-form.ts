@@ -38,6 +38,56 @@ function toConsentValue(agreed: boolean | undefined): ConsentValue {
   return agreed === true ? 'agree' : 'disagree'
 }
 
+/** 강사 수정 폼 — 약관·동의 필드명 (draft terms 동기화 트리거) */
+export const INSTRUCTOR_CONSENT_FORM_FIELD_KEYS = [
+  'consentTermsOfService',
+  'consentPersonal',
+  'consentMarketing',
+  'consentPortrait',
+  'consentPaymentStatement',
+  'consentEducatorPledge',
+  'consentAdministrativeJoint',
+  'consentSexOffenseCheck',
+] as const satisfies readonly (keyof InstructorProfileFormValues)[]
+
+export type InstructorConsentFormFieldKey = (typeof INSTRUCTOR_CONSENT_FORM_FIELD_KEYS)[number]
+
+export function isInstructorConsentFormFieldKey(key: string): key is InstructorConsentFormFieldKey {
+  return (INSTRUCTOR_CONSENT_FORM_FIELD_KEYS as readonly string[]).includes(key)
+}
+
+/** 강사 수정 폼 동의값 → PATCH용 선택 termsAgreements (기존 version 유지) */
+export function mapInstructorFormConsentToEditableTermsAgreements(
+  values: Pick<
+    InstructorProfileFormValues,
+    InstructorConsentFormFieldKey
+  >,
+  existing?: TermsAgreementRequest[]
+): TermsAgreementRequest[] | undefined {
+  const built = filterEditableTermsAgreementsForBasicInfoPatch(
+    buildPreRegisterTermsAgreements(
+      {
+        consentTermsOfService: values.consentTermsOfService,
+        consentPersonal: values.consentPersonal,
+        consentMarketing: values.consentMarketing,
+      },
+      {
+        consentPortrait: values.consentPortrait,
+        consentPaymentStatement: values.consentPaymentStatement,
+        consentEducatorPledge: values.consentEducatorPledge,
+        consentAdministrativeJoint: values.consentAdministrativeJoint,
+        consentSexOffenseCheck: values.consentSexOffenseCheck,
+      }
+    )
+  )
+  if (!built?.length) return undefined
+  return built.map(row => {
+    const prev = existing?.find(e => e.termsType === row.termsType)
+    const version = prev?.version?.trim()
+    return version ? { ...row, version } : row
+  })
+}
+
 function mapGender(gender: string | undefined): 'male' | 'female' {
   const g = gender?.trim()
   if (
@@ -365,7 +415,6 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
   licenseRows: InstructorProfileFormValues['licenseRows']
   instructorCmsProfile: InstructorCmsProfileProposal
   instructorCmsSettlement: InstructorCmsSettlement
-  termsAgreements: TermsAgreementRequest[]
 } {
   const birthDigits = values.birthDate.replace(/\D/g, '')
   const birthDate =
@@ -406,23 +455,5 @@ export function mapInstructorProfileFormToBasicInfoDraftPartial(
     licenseRows: values.licenseRows,
     instructorCmsProfile: instructorProfileFormValuesToCmsProfile(values),
     instructorCmsSettlement: instructorProfileFormValuesToCmsSettlement(values),
-    // 상세 수정 PATCH — 필수 약관 제외(선택만). 등록 모달은 createUser 경로를 씀.
-    termsAgreements:
-      filterEditableTermsAgreementsForBasicInfoPatch(
-        buildPreRegisterTermsAgreements(
-          {
-            consentTermsOfService: values.consentTermsOfService,
-            consentPersonal: values.consentPersonal,
-            consentMarketing: values.consentMarketing,
-          },
-          {
-            consentPortrait: values.consentPortrait,
-            consentPaymentStatement: values.consentPaymentStatement,
-            consentEducatorPledge: values.consentEducatorPledge,
-            consentAdministrativeJoint: values.consentAdministrativeJoint,
-            consentSexOffenseCheck: values.consentSexOffenseCheck,
-          }
-        )
-      ) ?? [],
   }
 }

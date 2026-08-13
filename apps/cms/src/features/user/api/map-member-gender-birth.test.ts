@@ -207,13 +207,15 @@ describe('mapCreateUserRequestToPreRegisterInstructor', () => {
     expect(body.profile?.defaultFeeGrade).toBe('2')
     expect(body.feeGrade).toBe('2')
     expect(body.profile?.affiliation?.schoolName).toBe('고양고등학교')
-    expect(body.settlement).toEqual({
+    expect(body.settlement?.bankName).toBe('국민')
+    expect(body.settlement?.accountNumber).toBe('123')
+    expect(body.settlement?.accountHolder).toBe('홍길동')
+    expect(body.settlement?.businessIncome).toBe(true)
+    expect(body.settlement?.bankAccounts?.[0]).toMatchObject({
       bankName: '국민',
       accountNumber: '123',
       accountHolder: '홍길동',
-      businessIncome: true,
     })
-    expect('bankAccounts' in (body.settlement ?? {})).toBe(false)
     expect('organizationText' in body).toBe(false)
   })
 })
