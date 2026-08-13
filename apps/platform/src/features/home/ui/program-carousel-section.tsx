@@ -77,7 +77,7 @@ function ProgramCard({ program }: { program: ProgramListItem }) {
 
 export function ProgramCarouselSection() {
   const isPcUp = useMediaQuery(platformMediaQueries.pcUp)
-  /** PC: 아이템 617px × 3 + gap → 약 3장 노출 */
+  /** PC: 아이템 617px × 3 + gap → 약 3장 노출 · 모바일은 네이티브 가로 스크롤 */
   const visibleCount = isPcUp ? 3 : 1
   const [index, setIndex] = useState(0)
 
@@ -90,7 +90,9 @@ export function ProgramCarouselSection() {
     return null
   }
 
-  const trackStyle = { '--slide-index': clampedIndex } as CSSProperties
+  const trackStyle = isPcUp
+    ? ({ '--slide-index': clampedIndex } as CSSProperties)
+    : undefined
 
   return (
     <section className={styles.section}>
@@ -116,38 +118,40 @@ export function ProgramCarouselSection() {
           </div>
         </div>
 
-        <div className={styles.controls}>
-          <button
-            className={styles.pageButton}
-            type="button"
-            aria-label="이전 프로그램"
-            onClick={() =>
-              setIndex(clampedIndex <= 0 ? maxIndex : clampedIndex - 1)
-            }
-          >
-            <img
-              className={[styles.pageButtonIcon, styles.pageButtonIconPrev].join(' ')}
-              src={chevronRightUrl}
-              alt=""
-              aria-hidden="true"
-            />
-          </button>
-          <button
-            className={styles.pageButton}
-            type="button"
-            aria-label="다음 프로그램"
-            onClick={() =>
-              setIndex(clampedIndex >= maxIndex ? 0 : clampedIndex + 1)
-            }
-          >
-            <img
-              className={styles.pageButtonIcon}
-              src={chevronRightUrl}
-              alt=""
-              aria-hidden="true"
-            />
-          </button>
-        </div>
+        {isPcUp ? (
+          <div className={styles.controls}>
+            <button
+              className={styles.pageButton}
+              type="button"
+              aria-label="이전 프로그램"
+              onClick={() =>
+                setIndex(clampedIndex <= 0 ? maxIndex : clampedIndex - 1)
+              }
+            >
+              <img
+                className={[styles.pageButtonIcon, styles.pageButtonIconPrev].join(' ')}
+                src={chevronRightUrl}
+                alt=""
+                aria-hidden="true"
+              />
+            </button>
+            <button
+              className={styles.pageButton}
+              type="button"
+              aria-label="다음 프로그램"
+              onClick={() =>
+                setIndex(clampedIndex >= maxIndex ? 0 : clampedIndex + 1)
+              }
+            >
+              <img
+                className={styles.pageButtonIcon}
+                src={chevronRightUrl}
+                alt=""
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+        ) : null}
       </div>
     </section>
   )

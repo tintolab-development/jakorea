@@ -9,15 +9,42 @@
 /*
  * YouTube 소개 + 스토리 — 시안상 한 밴드
  * 배경: home-youtube-section-bg.png (1920×2110), 하단으로 페이드
+ * 모바일: YouTube 숨김 · 흰 배경만
  */
 .youtubeStoryBand {
   width: 100%;
   align-self: stretch;
   background-color: var(--color-neutral-white);
-  background-image: url('../../assets/background_gradient/home-youtube-section-bg.png');
-  background-repeat: no-repeat;
-  background-position: center top;
-  background-size: 100% auto;
+}
+
+@media (--bp-pc-up) {
+  .youtubeStoryBand {
+    background-image: url('../../assets/background_gradient/home-youtube-section-bg.png');
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: 100% auto;
+  }
+}
+
+.youtubeReveal.youtubeReveal {
+  display: none;
+  background: transparent;
+  padding-bottom: 0;
+}
+
+@media (--bp-pc-up) {
+  .youtubeReveal.youtubeReveal {
+    /* block이면 gap 무시 — flex column 유지 */
+    display: flex;
+    flex-direction: column;
+    --reveal-mask-width: min(1440px, calc(100vw - 80px));
+    --reveal-mask-height: min(360px, calc((100vw - 80px) / 4));
+    gap: 40px;
+  }
+
+  .youtubeReveal.youtubeReveal iframe {
+    width: var(--reveal-mask-width);
+  }
 }
 
 /*
@@ -53,22 +80,6 @@
   .achievementsBand > * {
     min-width: 0;
     max-width: 100%;
-  }
-}
-
-.youtubeReveal.youtubeReveal {
-  background: transparent;
-  padding-bottom: 0;
-}
-
-@media (--bp-pc-up) {
-  .youtubeReveal.youtubeReveal {
-    --reveal-mask-width: min(1440px, calc(100vw - 80px));
-    --reveal-mask-height: min(360px, calc((100vw - 80px) / 4));
-  }
-
-  .youtubeReveal.youtubeReveal iframe {
-    width: var(--reveal-mask-width);
   }
 }
 

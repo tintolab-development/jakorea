@@ -66,22 +66,38 @@
   margin: 0;
   color: var(--color-primary-600);
   font-family: var(--font-family-base);
-  font-size: 26px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 144%;
-  letter-spacing: -0.52px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (--bp-pc-up) {
+  .eyebrow {
+    font-size: 26px;
+    letter-spacing: -0.52px;
+    text-transform: none;
+  }
 }
 
 .title {
   margin: 0;
   color: var(--color-neutral-white);
   font-family: var(--font-family-base);
-  font-size: 46px;
+  font-size: 24px;
   font-style: normal;
   font-weight: 600;
   line-height: 144%;
-  letter-spacing: -0.92px;
+  letter-spacing: -0.48px;
+}
+
+@media (--bp-pc-up) {
+  .title {
+    font-size: 46px;
+    letter-spacing: -0.92px;
+  }
 }
 
 .statGrid {
@@ -138,11 +154,18 @@
   color: var(--color-primary-100);
   text-align: center;
   font-family: var(--font-family-base);
-  font-size: 20px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 400;
   line-height: 150%;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.14px;
+}
+
+@media (--bp-pc-up) {
+  .statLabel {
+    font-size: 20px;
+    letter-spacing: -0.2px;
+  }
 }
 
 .statValue {
@@ -157,32 +180,78 @@
 
 .statNumber {
   font-family: var(--font-family-base);
-  font-size: 56px;
+  font-size: 36px;
   font-style: normal;
   font-weight: 700;
   line-height: 140%;
-  letter-spacing: -0.56px;
+  letter-spacing: -0.36px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (--bp-pc-up) {
+  .statNumber {
+    font-size: 56px;
+    letter-spacing: -0.56px;
+  }
 }
 
 .statUnit {
   font-family: var(--font-family-base);
-  font-size: 37px;
+  font-size: 22px;
   font-style: normal;
   font-weight: 400;
   line-height: 140%;
-  letter-spacing: -0.74px;
+  letter-spacing: -0.44px;
+}
+
+@media (--bp-pc-up) {
+  .statUnit {
+    font-size: 37px;
+    letter-spacing: -0.74px;
+  }
 }
 
 .highlight {
+  position: relative;
   display: inline-flex;
   box-sizing: border-box;
-  padding: 51px 60px 0;
+  padding: var(--spacing-40) var(--spacing-20) 0;
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
   gap: 0;
-  /* 레이아웃(통계·클로징·파트너 갭)에 영향 없이 시각적으로만 50px 하향 */
-  transform: translateY(50px);
+  transform: none;
+}
+
+/* 모바일 시안: 통계 ↔ 하이라이트 곡선 디바이더 */
+.highlight::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: min(220px, 70vw);
+  height: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 20%,
+    rgba(255, 255, 255, 0.35) 80%,
+    transparent 100%
+  );
+  opacity: 0.8;
+}
+
+@media (--bp-pc-up) {
+  .highlight {
+    padding: 51px 60px 0;
+    /* 레이아웃(통계·클로징·파트너 갭)에 영향 없이 시각적으로만 50px 하향 */
+    transform: translateY(50px);
+  }
+
+  .highlight::before {
+    display: none;
+  }
 }
 
 .highlightLabel {
@@ -190,11 +259,18 @@
   color: var(--color-primary-100);
   text-align: center;
   font-family: var(--font-family-base);
-  font-size: 24px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 600;
   line-height: 150%;
-  letter-spacing: -0.24px;
+  letter-spacing: -0.14px;
+}
+
+@media (--bp-pc-up) {
+  .highlightLabel {
+    font-size: 24px;
+    letter-spacing: -0.24px;
+  }
 }
 
 .highlightValue {
@@ -209,30 +285,44 @@
 
 .highlightNumber {
   font-family: var(--font-family-base);
-  font-size: 62px;
+  font-size: 40px;
   font-style: normal;
   font-weight: 700;
   line-height: 140%;
-  letter-spacing: -0.62px;
+  letter-spacing: -0.4px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (--bp-pc-up) {
+  .highlightNumber {
+    font-size: 62px;
+    letter-spacing: -0.62px;
+  }
 }
 
 .highlightUnit {
   font-family: var(--font-family-base);
-  font-size: 48px;
+  font-size: 28px;
   font-style: normal;
   font-weight: 400;
   line-height: 140%;
-  letter-spacing: -0.48px;
+  letter-spacing: -0.28px;
+}
+
+@media (--bp-pc-up) {
+  .highlightUnit {
+    font-size: 48px;
+    letter-spacing: -0.48px;
+  }
 }
 
 .closing {
   margin: 0;
-  /* 하이라이트 ↔ 디스크립션 58px (inner gap 상쇄) */
-  margin-top: calc(58px - var(--spacing-48));
+  margin-top: var(--spacing-8);
   color: var(--color-primary-100);
   text-align: center;
   font-family: var(--font-family-base);
-  font-size: 22px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 300;
   line-height: 155%;
@@ -240,14 +330,16 @@
 
 @media (--bp-pc-up) {
   .closing {
+    /* 하이라이트 ↔ 디스크립션 58px (inner gap 상쇄) */
     margin-top: calc(58px - var(--spacing-64));
+    font-size: 22px;
   }
 }
 
 .closing strong {
   color: var(--color-primary-200);
   font-family: var(--font-family-base);
-  font-size: 22px;
+  font-size: inherit;
   font-style: normal;
   font-weight: 700;
   line-height: 155%;
