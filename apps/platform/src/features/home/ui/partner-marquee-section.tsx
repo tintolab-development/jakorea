@@ -1,8 +1,6 @@
 import { Link } from 'react-router-dom'
-import {
-  SUPPORT_CORPORATE_PATH,
-  SUPPORT_INDIVIDUAL_PATH,
-} from '@/shared/config/gnb-temporary-paths'
+import { INDIVIDUAL_DONATION_PATH } from '@/features/individual-donation'
+import { SUPPORT_CORPORATE_PATH } from '@/shared/config/gnb-temporary-paths'
 import { PFText } from '@/shared/ui'
 import jaArrowCtaMintUrl from '../image/icon/ja-arrow-cta-mint.svg'
 import jaArrowCtaTealUrl from '../image/icon/ja-arrow-cta-teal.svg'
@@ -59,7 +57,7 @@ export function PartnerMarqueeSection() {
             만날 수 있게 함께해 주세요
           </p>
           <div className={styles.ctaActions}>
-            <Link className={styles.ctaPrimaryLink} to={SUPPORT_INDIVIDUAL_PATH}>
+            <Link className={styles.ctaPrimaryLink} to={INDIVIDUAL_DONATION_PATH}>
               <PFText as="span" typo="hl-lg" color="white" className={styles.ctaLabel}>
                 개인후원 시작하기
               </PFText>
